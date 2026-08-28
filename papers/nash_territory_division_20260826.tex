@@ -268,62 +268,13 @@ $\rho\sum_{e}y_e$ with $y_e\ge|x_u-x_v|$, at the cost of changing the objective.
 \end{center}
 
 \section{The Nash solution}\label{sec:nash}
-The Nash bargaining solution maximises the product of gains,
-$\max_S\ g_a(S)\,g_b(S)$ subject to $g_a,g_b>0$. Define the utility ratio
-\begin{equation}
-r_z=\frac{u_a(z)}{u_b(z)},
-\end{equation}
-the rate at which utility transfers between the wholesalers when zip $z$ changes hands.
+Section~\ref{sec:statement} reduced fair division to the criterion
+\eqref{eq:nashcriterion}, $\max_{S\subseteq Z}g_a(S)g_b(S)$ subject to $g_a,g_b>0$. This
+section gives the exact algorithm. A fast, solver-free heuristic based on ordering zips
+by exchange rate --- useful as a preview or sanity check, but not exact for Nash --- is
+developed in Appendix~\ref{app:prefix}.
 
-\begin{resultbox}
-\begin{proposition}[Prefix heuristic]\label{prop:prefix}
-Order the zips so that $r_{(1)}\ge\dots\ge r_{(n)}$ and write $P_k=\{(1),\dots,(k)\}$.
-Then the utilitarian optimum is exactly $P_k$ with $k=|\{z:r_z>1\}|$, and
-$\arg\max_k g_a[k]g_b[k]$ is a fast approximation to the Nash optimum.
-\end{proposition}
-\end{resultbox}
-
-\noindent The utilitarian claim is exact: the objective is
-$\sum_{z\in S}(u_a(z)-u_b(z))+\text{const}$, maximised by taking every zip with
-$u_a>u_b$. The Nash claim is not. The usual argument --- at an optimum every included
-zip satisfies $u_a(z)/g_a\ge u_b(z)/g_b$, a threshold on $r_z$ --- is \emph{marginal},
-treating $g_a,g_b$ as fixed while a zip moves. Discretely they jump by a finite amount,
-so the threshold characterisation is only asymptotically valid.
-
-\begin{warnbox}
-\textbf{The prefix rule is an approximation, and it is wrong about half the time.}
-Against exhaustive enumeration over $200$ random instances per size:
-
-\begin{center}
-\begin{tabular}{crrr}
-\toprule
-$n$ & prefix optimal & mean shortfall & worst shortfall\\
-\midrule
-$6$ & $40.0\%$ & $3.91\%$ & $53.9\%$\\
-$10$ & $47.5\%$ & $1.17\%$ & $13.9\%$\\
-$14$ & $45.0\%$ & $0.57\%$ & $10.7\%$\\
-\bottomrule
-\end{tabular}
-\qquad
-\begin{tabular}{cr}
-\toprule
-$n$ & shortfall vs.\ local optimum\\
-\midrule
-$20$ & $0.16\%$\\
-$50$ & $0.02\%$\\
-$100$ & $0.002\%$\\
-$400$ & $0.0009\%$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent The error vanishes as the discretisation refines, because the jumps shrink
-relative to the gains. At realistic sizes it is far below the uncertainty in $\theta$
-or in the sales data --- but it is not zero, and the rule should be described as a
-heuristic.
-\end{warnbox}
-
-\subsection{The exact method}\label{sec:exact}
+\label{sec:exact}
 Taking logarithms, $\log(g_ag_b)=\log g_a+\log g_b$, does not linearise the objective:
 $g_a$ is linear in $x$, so $\log g_a$ is \emph{concave} in a linear expression. The
 problem is therefore a convex MINLP --- maximising a concave function over a
@@ -342,7 +293,8 @@ not a stopping heuristic.
 Validated against exhaustive enumeration, $120$ random instances per size: exact match
 in $100\%$ of cases at every $n$ tested, with bound gap identically zero. Cost is $6$--$7$
 iterations regardless of size --- $0.10$s at $n=50$, $0.84$s at $n=400$. \textbf{Use the
-exact method by default}; the prefix table is a fast preview and a sanity check.
+exact method by default}; the prefix table (Appendix~\ref{app:prefix}) is a fast preview
+and a sanity check.
 \end{resultbox}
 
 \begin{remark}[Convexity, and what "Nash" means over indivisible zips]
@@ -367,8 +319,9 @@ the outer approximation requires it.
 \end{remark}
 
 \section{Why Nash}\label{sec:why}
-\paragraph{Exactly solvable.} Proposition~\ref{prop:prefix} makes the optimum reachable
-in one pass. The equalisation criteria require search for their exact optima.
+\paragraph{Exactly solvable.} Outer approximation (Section~\ref{sec:exact}) reaches a
+certified global optimum in $6$--$7$ iterations regardless of $n$. The equalisation
+criteria require search for their exact optima and carry no such certificate.
 
 \paragraph{Pareto efficient by construction.} Maximising a product cannot be improved
 for both parties simultaneously. The min-$|$difference$|$ criteria carry no such
@@ -415,7 +368,7 @@ proportional to magnitude, stars at metro centres.}\end{figure}
 \begin{center}\begin{tabular}{lrrrr}\toprule
 & $k$ & $g_a$ & $g_b$ & $g_ag_b$\\ \midrule
 Nash, exact (outer approximation) & $25$ & $4.9787$ & $4.8388$ & $\mathbf{24.09117}$\\
-Nash, prefix heuristic & $25$ & $4.9360$ & $4.8807$ & $24.09096$\\ \bottomrule
+Nash, prefix heuristic (Appendix~\ref{app:prefix}) & $25$ & $4.9360$ & $4.8807$ & $24.09096$\\ \bottomrule
 \end{tabular}\end{center}
 
 \noindent The two select \emph{different} allocations of the same size; the heuristic's
@@ -662,7 +615,68 @@ prefix. The remedy is a welfare floor $g_a+g_b\ge\kappa\max_S(g_a+g_b)$, whose
 right-hand side is available in closed form because the utilitarian optimum is the
 prefix $\{z:u_a(z)>u_b(z)\}$. Nash needs no such guard.
 
-\section{Where the prefix property fails}\label{app:prefix}
+\section{The prefix heuristic}\label{app:prefix}
+Section~\ref{sec:nash} solves \eqref{eq:nashcriterion} exactly by outer approximation.
+This appendix records a fast, solver-free alternative --- a sanity check and a preview,
+not a substitute --- and the extent to which it can be trusted.
+
+\subsection{Definition, and exactness for the utilitarian criterion only}
+Define the utility ratio
+\begin{equation}
+r_z=\frac{u_a(z)}{u_b(z)},
+\end{equation}
+the rate at which utility transfers between the wholesalers when zip $z$ changes hands.
+
+\begin{resultbox}
+\begin{proposition}[Prefix heuristic]\label{prop:prefix}
+Order the zips so that $r_{(1)}\ge\dots\ge r_{(n)}$ and write $P_k=\{(1),\dots,(k)\}$.
+Then the utilitarian optimum is exactly $P_k$ with $k=|\{z:r_z>1\}|$, and
+$\arg\max_k g_a[k]g_b[k]$ is a fast approximation to the Nash optimum.
+\end{proposition}
+\end{resultbox}
+
+\noindent The utilitarian claim is exact: the objective is
+$\sum_{z\in S}(u_a(z)-u_b(z))+\text{const}$, maximised by taking every zip with
+$u_a>u_b$. The Nash claim is not. The usual argument --- at an optimum every included
+zip satisfies $u_a(z)/g_a\ge u_b(z)/g_b$, a threshold on $r_z$ --- is \emph{marginal},
+treating $g_a,g_b$ as fixed while a zip moves. Discretely they jump by a finite amount,
+so the threshold characterisation is only asymptotically valid.
+
+\begin{warnbox}
+\textbf{The prefix rule is an approximation, and it is wrong about half the time.}
+Against exhaustive enumeration over $200$ random instances per size:
+
+\begin{center}
+\begin{tabular}{crrr}
+\toprule
+$n$ & prefix optimal & mean shortfall & worst shortfall\\
+\midrule
+$6$ & $40.0\%$ & $3.91\%$ & $53.9\%$\\
+$10$ & $47.5\%$ & $1.17\%$ & $13.9\%$\\
+$14$ & $45.0\%$ & $0.57\%$ & $10.7\%$\\
+\bottomrule
+\end{tabular}
+\qquad
+\begin{tabular}{cr}
+\toprule
+$n$ & shortfall vs.\ local optimum\\
+\midrule
+$20$ & $0.16\%$\\
+$50$ & $0.02\%$\\
+$100$ & $0.002\%$\\
+$400$ & $0.0009\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The error vanishes as the discretisation refines, because the jumps shrink
+relative to the gains. At realistic sizes it is far below the uncertainty in $\theta$
+or in the sales data --- but it is not zero, and the rule should be described as a
+heuristic, never substituted for Section~\ref{sec:nash}'s exact method where a
+certificate matters.
+\end{warnbox}
+
+\subsection{Where it fails on other criteria}
 Proposition~\ref{prop:prefix} covers Nash and the utilitarian criterion. It does not
 extend to criteria that minimise a \emph{distance}, for which an off-frontier subset can
 hit the target more precisely. Over $400{,}000$ random subsets of the worked instance:
