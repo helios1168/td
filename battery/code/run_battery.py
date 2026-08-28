@@ -1,5 +1,5 @@
 """Re-run the full C1-C8 battery under the final code (d=0 + HiGHS tolerances)."""
-import json, os, subprocess, time
+import json, os, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -49,13 +49,13 @@ def run_case(c):
     p = f"/tmp/cfg_{c['name']}.json"
     with open(p, "w") as f: json.dump(cfg, f)
     t0 = time.time()
-    r = subprocess.run(["python3", "case_pipeline.py", p], cwd=PIPELINE_DIR,
+    r = subprocess.run([sys.executable, "case_pipeline.py", p], cwd=PIPELINE_DIR,
                        capture_output=True, text=True, timeout=1800)
     return c["name"], r.returncode, time.time() - t0, r.stdout[-400:], r.stderr[-400:]
 
 def run_c8():
     t0 = time.time()
-    r = subprocess.run(["python3", "c8_rho_sweep.py"], cwd=PIPELINE_DIR,
+    r = subprocess.run([sys.executable, "c8_rho_sweep.py"], cwd=PIPELINE_DIR,
                        capture_output=True, text=True, timeout=1800)
     return "C8_rho_frontier", r.returncode, time.time() - t0, r.stdout[-400:], r.stderr[-400:]
 
