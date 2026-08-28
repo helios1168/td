@@ -1,0 +1,139 @@
+{
+ "name": "C7_scale_n400",
+ "params": {
+  "n": 400,
+  "n_rep_a": 4,
+  "n_rep_b": 4,
+  "alpha": 1.0,
+  "rho_books": 0.7,
+  "n_states": 0,
+  "sliver": 0.0,
+  "saturation": 0.12,
+  "tail": 0.25,
+  "tight": false,
+  "cap_corr": 1.0,
+  "seed": 1,
+  "m_tail_alpha": null,
+  "m_tail_beta": null,
+  "sales_tail": 0.2,
+  "sales_tail_alpha": null,
+  "sales_tail_beta": null
+ },
+ "corr_AB": 0.7383684171132742,
+ "Sa": 23.999999999999993,
+ "Sb": 14.399999999999999,
+ "Mtot": 320.0,
+ "validate": [],
+ "census": [
+  {
+   "shape": "1-1 pair",
+   "share": 0.5476030756483445,
+   "M": 175.23298420747028
+  },
+  {
+   "shape": "1-1 pair",
+   "share": 0.2835703830967041,
+   "M": 90.74252259094534
+  },
+  {
+   "shape": "1-1 pair",
+   "share": 0.11516975312824317,
+   "M": 36.85432100103782
+  },
+  {
+   "shape": "1-1 pair",
+   "share": 0.05365678812670747,
+   "M": 17.170172200546393
+  }
+ ],
+ "pairs": [
+  {
+   "ra": 3,
+   "rb": 3,
+   "n_zips": 205,
+   "dense": false,
+   "nash": {
+    "k": 100,
+    "exact": true,
+    "g_a": 33.41193008918196,
+    "g_b": 32.30983485965482,
+    "product": 1079.533943523801,
+    "bound_gap": -8.881784197001252e-16,
+    "iters": 10,
+    "s": 1.9068892002105713
+   },
+   "cont": {
+    "status": "solver failed",
+    "iters": 2,
+    "s": 23.670739889144897
+   }
+  },
+  {
+   "ra": 0,
+   "rb": 0,
+   "n_zips": 125,
+   "dense": false,
+   "nash": {
+    "k": 82,
+    "exact": true,
+    "g_a": 15.191604365369757,
+    "g_b": 15.339887579027941,
+    "product": 233.0375031098422,
+    "bound_gap": 0.0,
+    "iters": 8,
+    "s": 1.2436108589172363
+   },
+   "cont": {
+    "status": "iteration limit",
+    "s": 186.7343897819519
+   }
+  },
+  {
+   "ra": 1,
+   "rb": 1,
+   "n_zips": 44,
+   "dense": false,
+   "nash": {
+    "k": 15,
+    "exact": true,
+    "g_a": 7.155181963128081,
+    "g_b": 6.71987514223903,
+    "product": 48.081929412221456,
+    "bound_gap": -4.440892098500626e-16,
+    "iters": 7,
+    "s": 0.6022851467132568
+   },
+   "cont": {
+    "status": "iteration limit",
+    "s": 13.4016752243042
+   }
+  },
+  {
+   "ra": 2,
+   "rb": 2,
+   "n_zips": 26,
+   "dense": false,
+   "nash": {
+    "k": 10,
+    "exact": true,
+    "g_a": 3.2875916522179987,
+    "g_b": 3.1074044894599226,
+    "product": 10.215877059613174,
+    "bound_gap": 0.0,
+    "iters": 5,
+    "s": 0.19512677192687988
+   },
+   "cont": {
+    "status": "optimal",
+    "k": 9,
+    "g_a": 3.1919286006288408,
+    "g_b": 3.167655057533474,
+    "product": 10.110928775067691,
+    "perimeter": 4,
+    "n_edges": 50,
+    "iters": 4,
+    "s": 0.2527780532836914
+   }
+  }
+ ]
+}
