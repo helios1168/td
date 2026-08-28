@@ -3,6 +3,7 @@
 \usepackage[margin=1.0in]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs,graphicx,microtype,xcolor,mdframed,float}
+\graphicspath{{../figures/}}
 \usepackage[colorlinks=true,linkcolor=RoyalBlue,urlcolor=RoyalBlue]{hyperref}
 \usepackage[shortlabels]{enumitem}
 \definecolor{RoyalBlue}{HTML}{1F4E79}
@@ -24,8 +25,10 @@
 
 \begin{abstract}
 \noindent Two merging wholesaling forces must divide a common territory. We formulate
-the problem directly over postal codes and solve it by Nash bargaining against
-pre-merger production. Ordering zips by the ratio of the two wholesalers' utilities
+the problem directly over postal codes and solve it by Nash bargaining from the zero
+disagreement point: neither wholesaler can unilaterally revert to a pre-merger book once
+the merger is executed, so the outside option is nothing, not the legacy territory.
+Ordering zips by the ratio of the two wholesalers' utilities
 gives a fast heuristic and, via outer approximation on the concave log-objective, an
 exact solution with an optimality certificate. Nash is Pareto efficient
 by construction, satisfies envy-freeness up to one zip, and cannot purchase fairness by
@@ -39,64 +42,150 @@ appendices.
 \end{abstract}
 
 \section{Setup}\label{sec:setup}
-Index postal codes $z=1,\dots,n$ with observed sales $A_z$ by wholesaler $a$, $B_z$ by
-$b$, and market opportunity $M_z$; totals $\Sa,\Sb,M$. With transfer capture $\theta$,
-headroom credit $\lambda$, and headroom taken \emph{net},
+Index postal codes $z=1,\dots,n$, each carrying pre-merger sales $A_z$ to wholesaler $a$
+and $B_z$ to wholesaler $b$, and total market opportunity $M_z$ (demand net of what
+either has already written); write $M=\sum_zM_z$. Two parameters govern how a zip's
+value splits between whichever wholesaler is assigned it and whichever is not.
+\emph{Transfer capture} $\theta\in[0,1]$ is the share of a book the non-incumbent retains
+after taking over the zip --- attrition and persistency account for $1-\theta$.
+\emph{Headroom credit} $\lambda\in[0,1]$ is how much a dollar of unwritten opportunity
+counts against a dollar of booked production.
+
+Headroom is taken \emph{net}: whoever is assigned $z$ is credited with opportunity net of
+business already on the books there, not gross of it. Gross double-counts and is
+incoherent whenever $\lambda>\theta$ --- it would make an inherited book of business a
+\emph{liability}, since the same dollar of production is worth more credited as headroom
+than credited as a captured book. Under the net convention, with
 \begin{equation}\label{eq:coefs}
-c_1=1-\lambda,\qquad c_2=\theta(1-\lambda),\qquad
+c_1=1-\lambda,\qquad c_2=\theta(1-\lambda),
+\end{equation}
+the value of zip $z$ to each wholesaler, were it assigned the whole territory, is
+\begin{equation}\label{eq:util}
 u_a(z)=c_1A_z+c_2B_z+\lambda M_z,\qquad u_b(z)=c_2A_z+c_1B_z+\lambda M_z .
 \end{equation}
-Headroom must be non-negative pointwise: $M_z\ge\max(A_z+\theta B_z,\ B_z+\theta A_z)$.
-An allocation is a set $S$ given to $a$. Gains against pre-merger production, and the
-attainable maxima from receiving every zip, are
-\begin{equation}\label{eq:gains}
-g_a(S)=\sum_{z\in S}u_a(z)-\Sa,\quad g_b(S)=\sum_{z\notin S}u_b(z)-\Sb,\qquad
-\Amax=\sum_z u_a(z)-\Sa,\quad \Bmax=\sum_z u_b(z)-\Sb .
+$u_a$ credits wholesaler $a$ with all of their own book, a $\theta$-share of $b$'s, and a
+$\lambda$-share of what neither has written; $u_b$ is the mirror image. Net headroom is
+feasible only if it is non-negative pointwise,
+\begin{equation}\label{eq:headroom}
+M_z\ \ge\ \max\bigl(A_z+\theta B_z,\ B_z+\theta A_z\bigr)\qquad\text{for every }z,
 \end{equation}
+which we take as maintained throughout. An \emph{allocation} is a partition of
+$Z=\{1,\dots,n\}$ into a set $S$ given to wholesaler $a$ and its complement
+$Z\setminus S$ given to $b$: every zip is assigned, to exactly one side, with no third
+disposition.
 
+\section{The bargaining problem}\label{sec:statement}
 
-\section{Problem statement: from bargaining to a MINLP}\label{sec:statement}
+This section poses territory division as a two-person bargaining problem in the classical
+sense (Nash 1950), then works down from that object to the program actually solved.
+Seven layers.
 
-This section states the problem end to end, from the game-theoretic object down to the
-program actually solved. Four layers.
-
-\subsection{Layer 1 --- the bargaining problem}
-A two-player bargaining problem is a pair $(F,d)$ where $F\subset\mathbb{R}^2$ is the set
-of attainable utility pairs and $d\in F$ is the \emph{disagreement point}, the outcome if
-no agreement is reached. Nash's axioms --- Pareto efficiency, symmetry, invariance to
-positive affine rescaling of either utility, and independence of irrelevant alternatives
---- select the unique point maximising
-\begin{equation}\label{eq:nashprod}
-\bigl(U_a-d_a\bigr)\bigl(U_b-d_b\bigr)
-\qquad\text{over } (U_a,U_b)\in F,\ U_a>d_a,\ U_b>d_b .
-\end{equation}
-
-\subsection{Layer 2 --- what generates $F$}
-Here $F$ is not given abstractly: it is generated by a combinatorial allocation. Let
-$Z=\{1,\dots,n\}$ index postal codes, and let $S\subseteq Z$ be the set given to
-wholesaler $a$. With coefficients \eqref{eq:coefs},
-\begin{equation}
+\subsection{Layer 1 --- players, outcomes, and the feasible set}
+The players are the two wholesalers, $a$ and $b$. An outcome is an allocation $S\subseteq
+Z$ as defined above, giving each player the payoff
+\begin{equation}\label{eq:payoffs}
 U_a(S)=\sum_{z\in S}u_a(z),\qquad U_b(S)=\sum_{z\notin S}u_b(z),
-\qquad
-d=(\Sa,\ \Sb),
 \end{equation}
-the disagreement point being each wholesaler's pre-merger production --- what they hold
-if the territory is not redivided. Writing $g_a=U_a-\Sa$ and $g_b=U_b-\Sb$,
+using the utilities \eqref{eq:util}. The \emph{feasible set}
 \begin{equation}
-F=\bigl\{\bigl(g_a(S),\,g_b(S)\bigr)\ :\ S\subseteq Z\bigr\},
+F=\bigl\{\bigl(U_a(S),\,U_b(S)\bigr)\ :\ S\subseteq Z\bigr\}\ \subset\ \mathbb{R}^2
 \end{equation}
-a set of at most $2^n$ points in the plane. The bargaining problem is entirely
-determined by the data $(A_z,B_z,M_z)$ and the two parameters $\theta,\lambda$.
+is the set of attainable payoff pairs: a cloud of at most $2^n$ points, entirely
+determined by the data $(A_z,B_z,M_z)$ and the parameters $\theta,\lambda$.
+
+\subsection{Layer 2 --- the disagreement point}
+A bargaining problem is a pair $(F,d)$, where $d\in\mathbb{R}^2$ is the
+\emph{disagreement point}: the payoff each player secures unilaterally, without the
+other's cooperation, if no allocation is agreed. Getting $d$ right is not a normalisation
+--- it is a claim about what each wholesaler can actually walk away with, and it is the
+single most consequential modelling choice in this paper.
+
+An earlier draft set $d=(\Sa,\Sb)$, each wholesaler's pre-merger production: if the
+division fails, each keeps the book they walked in with. This is the natural first guess,
+and it is wrong. A disagreement point must be an outcome a player can execute
+\emph{unilaterally} if bargaining breaks down. Once the merger closes, pre-merger
+production is not such an outcome: the separate sales forces, appointments, and client
+relationships that generated $\Sa$ and $\Sb$ are dissolved into the merged entity, and
+neither wholesaler can unilaterally resurrect them regardless of how the territory
+dispute resolves. $\Sa$ is a historical number, not a threat point. What each wholesaler
+can secure by failing to agree is nothing: absent an assignment, neither is appointed or
+staffed to write business anywhere in the disputed territory. The disagreement point is
+therefore the origin,
+\begin{equation}\label{eq:dpoint}
+d=(0,0).
+\end{equation}
 
 \begin{warnbox}
-\textbf{$F$ is not convex.} Nash's theorem assumes a convex feasible set; here $F$ is a
-finite point cloud, so strictly the axioms select a \emph{lottery} over two adjacent
-allocations and \eqref{eq:nashprod} maximised over $F$ is the discrete analogue. The
-measured cost of refusing to randomise was $0.0034\%$ on the worked instance. Known,
-small, ignored in practice.
+\textbf{This is not a matter of taste.} $d=(\Sa,\Sb)$ with $\Sa\ne\Sb$ is not a neutral
+rescaling: bargaining from an asymmetric threat point is observationally equivalent to
+an \emph{asymmetric} Nash solution at $d=0$ with an implicit, undisclosed weight (here
+$\omega\approx0.54$ on the worked instance) --- a tilt toward whichever side had the
+bigger pre-merger book, smuggled in through the disagreement point rather than argued for
+on its merits. It also forfeits envy-freeness up to one good (EF1): the Nash bargaining
+solution is EF1 \emph{at $d=0$} (Caragiannis et al.\ 2019) and the guarantee does not
+survive moving $d$ away from the origin. Both defects disappear at $d=(0,0)$.
 \end{warnbox}
 
-\subsection{Layer 3 --- constraints shrink $F$}
+Writing $g_a(S)=U_a(S)-0$ and $g_b(S)=U_b(S)-0$ for the gains relative to $d$, gains are
+simply bundle utilities:
+\begin{equation}\label{eq:gains}
+g_a(S)=\sum_{z\in S}u_a(z),\qquad g_b(S)=\sum_{z\notin S}u_b(z),\qquad
+\Amax=\sum_zu_a(z),\qquad \Bmax=\sum_zu_b(z),
+\end{equation}
+with $\Amax,\Bmax$ the attainable maxima from receiving the whole territory. Because
+$\theta,\lambda\in[0,1]$ and \eqref{eq:headroom} holds, $u_a(z),u_b(z)\ge0$ pointwise, so
+$g_a(S)>0$ for every non-empty $S$ and $g_b(S)>0$ for every $S\ne Z$: unlike the
+pre-merger baseline, where headroom below a threshold $\lambda^\ast$ left the bargaining
+set empty, feasibility of both gains is automatic here for any non-trivial split. That
+threshold was an artefact of the discarded convention and does not arise at $d=0$.
+
+\subsection{Layer 3 --- Nash's axioms and the solution}
+Nash (1950) shows that if $F$ is convex and compact and contains a point strictly
+dominating $d$, exactly one point of $F$ satisfies four axioms:
+\begin{description}[leftmargin=1.6em,itemsep=1pt]
+\item[Pareto optimality.] No other feasible point makes both players weakly better off
+  and one strictly better off.
+\item[Symmetry.] If $F$ is symmetric in the two players and $d_a=d_b$, the solution gives
+  them equal payoff.
+\item[Invariance to affine transformations.] The solution commutes with independently
+  rescaling and shifting either player's utility --- utility is cardinal only up to a
+  positive affine transformation, and the solution must not depend on the choice of
+  units.
+\item[Independence of irrelevant alternatives.] Shrinking $F$ to a subset that still
+  contains the solution does not change it.
+\end{description}
+That point is the maximiser of the \emph{Nash product}, the product of gains over the
+disagreement point:
+\begin{equation}\label{eq:nashprod}
+\max_{(U_a,U_b)\in F}\ \bigl(U_a-d_a\bigr)\bigl(U_b-d_b\bigr)
+\qquad\text{subject to } U_a>d_a,\ U_b>d_b .
+\end{equation}
+No other point of $F$ satisfies all four axioms simultaneously; this is what makes
+\eqref{eq:nashprod} a characterisation rather than one criterion among several equally
+defensible ones.
+
+\begin{warnbox}
+\textbf{$F$ is not convex here.} Nash's theorem is stated for convex, compact $F$; with
+indivisible postal codes $F$ is a finite point cloud instead, so strictly the axioms
+select a \emph{lottery} over two adjacent allocations, and \eqref{eq:nashprod} maximised
+over the point cloud is the discrete analogue rather than the axiomatic solution itself.
+The gap is quantified in the remark on convexity in Section~\ref{sec:exact}: $0.0034\%$
+on the worked instance. Known, small, ignored in practice; worth re-checking on real
+data.
+\end{warnbox}
+
+\subsection{Layer 4 --- specializing to the discrete allocation problem}
+At $d=(0,0)$, applying \eqref{eq:nashprod} to the feasible set generated by allocations
+gives the criterion actually solved throughout this paper:
+\begin{equation}\label{eq:nashcriterion}
+\max_{S\subseteq Z}\ g_a(S)\,g_b(S),\qquad g_a(S)>0,\ g_b(S)>0,
+\end{equation}
+with $g_a,g_b$ as in \eqref{eq:gains}. The remainder of this section turns
+\eqref{eq:nashcriterion} into a program that can be handed to a solver: first restricting
+$F$ by operational constraints (contiguity, state borders), then writing the result as a
+mixed-integer program, then solving it exactly.
+
+\subsection{Layer 5 --- constraints shrink $F$}
 Operational requirements restrict which $S$ are admissible, and therefore which points of
 $F$ are attainable. Contiguity --- each wholesaler receiving one connected territory on
 the postal-code adjacency graph $G=(Z,E)$ --- is the binding one:
@@ -108,12 +197,13 @@ game-theoretic content of the districting constraints: they do not change the cr
 they shrink the feasible set.} State-border restrictions act identically, by deleting
 cross-state edges from $G$ before connectivity is assessed.
 
-\subsection{Layer 4 --- the program}
-Maximising \eqref{eq:nashprod} over $F_{\text{cont}}$, with $x_z=\mathbf{1}[z\in S]$:
+\subsection{Layer 6 --- the program}
+Maximising \eqref{eq:nashprod} over $F_{\text{cont}}$ at $d=(0,0)$, with
+$x_z=\mathbf{1}[z\in S]$:
 \begin{align}
 \max_{x\in\{0,1\}^n}\quad & \log g_a+\log g_b \label{eq:obj}\\
 \text{s.t.}\quad
-& g_a=\sum_z x_z u_a(z)-\Sa, \qquad g_b=\sum_z (1-x_z)u_b(z)-\Sb, \label{eq:lin}\\
+& g_a=\sum_z x_z u_a(z), \qquad g_b=\sum_z (1-x_z)u_b(z), \label{eq:lin}\\
 & g_a>0,\quad g_b>0, \label{eq:feas}\\
 & G[S]\ \text{and}\ G[Z\setminus S]\ \text{connected}. \label{eq:conn}
 \end{align}
@@ -151,7 +241,7 @@ inspect the incumbent for disconnected components, add the violated cuts, re-sol
 practice a handful of rounds suffice. This is the encoding used here; it keeps the model
 small at the cost of repeated solves.
 
-\subsection{Layer 5 --- solving it}
+\subsection{Layer 7 --- solving it}
 Outer approximation linearises the concave objective from above. Introduce
 $z_a\le\log g_a$, $z_b\le\log g_b$ enforced by supporting hyperplanes \eqref{eq:tangent},
 and maximise $z_a+z_b$. Each relaxation is a pure MILP; its optimum is an upper bound on
@@ -162,15 +252,17 @@ termination when the incumbent's true log-product meets the bound is an optimali
 $\rho\sum_{e}y_e$ with $y_e\ge|x_u-x_v|$, at the cost of changing the objective.
 
 \begin{center}
-\begin{tabular}{lll}
+\begin{tabular}{clll}
 \toprule
 \textbf{layer} & \textbf{object} & \textbf{form}\\
 \midrule
-bargaining problem & $(F,d)$, Nash axioms & --- \\
-generation of $F$ & allocations $S\subseteq Z$ & $2^n$ points\\
-constraints & contiguity, state borders & shrink $F$\\
-program & \eqref{eq:obj}--\eqref{eq:conn} & convex MINLP\\
-method & outer approximation + lazy cuts & finite, certified\\
+1 & players, outcomes, feasible set $F$ & $2^n$ points\\
+2 & disagreement point & $d=(0,0)$\\
+3 & Nash's axioms $\Rightarrow$ solution & $\max(U_a-d_a)(U_b-d_b)$\\
+4 & discrete specialisation & $\max\,g_a(S)g_b(S)$\\
+5 & constraints (contiguity, state borders) & shrink $F$\\
+6 & program & \eqref{eq:obj}--\eqref{eq:conn}, convex MINLP\\
+7 & method & outer approximation + lazy cuts, finite, certified\\
 \bottomrule
 \end{tabular}
 \end{center}

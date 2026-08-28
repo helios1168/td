@@ -187,6 +187,17 @@ python3 census_stress.py
 # Outputs: figures/census_stress.png
 ```
 
+### Build the paper PDF
+
+MacTeX (full TeX Live, installed 2026-08-27 via `brew install --cask mactex`) provides
+`pdflatex`/`latexmk` at `/Library/TeX/texbin`, on `PATH` for every new shell.
+
+```bash
+cd papers
+make            # latexmk -pdf nash_territory_division_20260826.tex
+make clean      # remove latexmk-generated aux/log/etc.
+```
+
 ---
 
 ## Next Steps (Priority Order)
