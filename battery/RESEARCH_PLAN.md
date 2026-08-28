@@ -33,6 +33,6 @@ objection 2's operational use needs a non-book-size capacity signal first);
 theta-heterogeneity (open half of objection 2); leximin over dense components (unbuilt).
 
 **Deliverables:** `figures/C*.png`, `figures/C*.json`, findings summary; committed to
-`Work/td/handoff/battery/` alongside this plan.
+`Work/td/battery/` alongside this plan.
 
 **Post-hoc addendum (same day):** C9 added after `synth.py` gained a dPlN tail dial for A_z/B_z (`code/TAIL_DISTRIBUTION_NOTE.md`); run through the same case_pipeline.py pipeline as C1-C8, not a separate script.

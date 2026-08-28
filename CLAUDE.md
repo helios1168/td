@@ -8,15 +8,15 @@
 
 ## Quick Start
 
-**Entry point:** Read `handoff/HANDOFF.md` first. It contains:
+**Entry point:** Read `HANDOFF.md` first. It contains:
 - Settled decisions (model form, fairness baseline, solution concept)
 - One-page model summary with parameters and usage
 - Traps already discovered during development
 - Code inventory and expected graph schema
 
 For context on what happens next, also read:
-- `handoff/battery/FINDINGS.md` — synthetic case studies (C1–C9), what broke, why, and what it tells us about the three contiguity failure mechanisms
-- `handoff/battery/RESEARCH_PLAN.md` — the test plan for those cases
+- `battery/FINDINGS.md` — synthetic case studies (C1–C9), what broke, why, and what it tells us about the three contiguity failure mechanisms
+- `battery/RESEARCH_PLAN.md` — the test plan for those cases
 
 **Minimal working example:**
 ```python
@@ -53,7 +53,7 @@ contiguous = D.solve_contiguous_nash(G, zips, rho=2e-3)  # + separator cuts
 
 ## Code Structure
 
-### Main modules (`handoff/code/`)
+### Main modules (`code/`)
 
 | Module | Role | Key functions |
 |--------|------|---|
@@ -116,12 +116,13 @@ The outer-approximation + separator-cut loop in `solve_contiguous_nash` fails to
   (line 48). It cannot certify d=(0,0) and did not catch the migration. The numeric
   anchor for the solver is `review/code/dzero.py`'s self-test, which needs
   `/tmp/z50.pkl` from `code/zip50.py`.
-- **The battery pipeline is not runnable from this layout.**
-  `battery/code/run_battery.py:5-6` and `c8_rho_sweep.py:26` hard-code
-  `/home/claude/td/...`, and `run_battery.py:50` shells out to `case_pipeline.py`
-  expecting `synth.py`/`territory.py`/`districting.py` beside it — they live in
-  `handoff/code/`, with no `sys.path` insertion. Treat `battery/figures/*.png` as
-  **primary artifacts, not derived outputs**.
+- **The battery pipeline is runnable again (fixed 2026-08-27, during the `handoff/`
+  flatten).** `battery/code/run_battery.py`, `case_pipeline.py`, and `c8_rho_sweep.py`
+  now resolve `code/` and `battery/figures/` relative to the repo root instead of the
+  old hard-coded `/home/claude/td/...`. Still treat `battery/figures/*.png` as
+  **primary artifacts, not derived outputs** — a full run is a ~17-case MINLP sweep
+  that takes ~6.5 minutes and C7/C9 don't reliably converge, so don't re-run
+  `run_battery.py` casually; it will overwrite them.
 
 ### Algorithmic gaps
 
@@ -147,7 +148,7 @@ The d=(0,0) migration and the battery results (C1–C9) need to be reflected in 
 ### Generate a synthetic case
 
 ```bash
-cd handoff/code
+cd code
 python3 synth.py --scenario S1_aligned --seed 1
 # Outputs: (n_zips, S_a, S_b, M, A_z[], B_z[], M_z[], state[], rep_a[], rep_b[], adj_matrix)
 ```
@@ -157,7 +158,7 @@ Pick from S1–S7 in `SCENARIOS`. New in C9: `S7_heavytail` (dPlN tail dial for 
 ### Run the full battery (C1–C9)
 
 ```bash
-cd handoff/battery
+cd battery/code
 python3 run_battery.py
 # Generates figures/C*.png + figures/C*.json + figures/battery_run_log.json
 # ~6.5 min on one machine (case_pipeline.py runs each instance through validate → census → exact Nash → contiguous MINLP)
@@ -170,17 +171,17 @@ Each case produces:
 ### Verify the algebra
 
 ```bash
-cd handoff/code
+cd code
 python3 verify_algebra.py
 # 35 SymPy checks; exits nonzero on failure. Standalone symbolic — does NOT exercise territory.py
 ```
 
-The numeric anchor is `handoff/review/code/dzero.py` (self-test validates d=0 migration).
+The numeric anchor is `review/code/dzero.py` (self-test validates d=0 migration).
 
 ### Stress-test the census
 
 ```bash
-cd handoff/code
+cd code
 python3 census_stress.py
 # Exercises census(min_share) sweep, corr dial check, state binding
 # Outputs: figures/census_stress.png
@@ -253,7 +254,7 @@ These are necessary before going live but can proceed in parallel with 1–3 abo
 
 - **papers/nash_territory_division_20260826.{pdf,tex}** — the paper (pending d=0 edits)
 - **review/HANDOFF_REVIEW.md** — adversarial review finding the d=0 reversal, objections 1–4, and fixes
-- **handoff/HANDOFF.md** — settled decisions, model, traps, code inventory, where to start (read first)
+- **HANDOFF.md** — settled decisions, model, traps, code inventory, where to start (read first)
 
 ### Synthetic battery & findings
 

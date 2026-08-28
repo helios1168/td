@@ -1,9 +1,11 @@
 """Re-run the full C1-C8 battery under the final code (d=0 + HiGHS tolerances)."""
 import json, os, subprocess, time
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
-OUT = "/home/claude/td/figures"
-CODE = "/home/claude/td/code"
+ROOT = Path(__file__).resolve().parents[2]
+PIPELINE_DIR = ROOT / "battery" / "code"
+OUT = str(ROOT / "battery" / "figures")
 os.makedirs(OUT, exist_ok=True)
 
 CASES = [
@@ -47,13 +49,13 @@ def run_case(c):
     p = f"/tmp/cfg_{c['name']}.json"
     with open(p, "w") as f: json.dump(cfg, f)
     t0 = time.time()
-    r = subprocess.run(["python3", "case_pipeline.py", p], cwd=CODE,
+    r = subprocess.run(["python3", "case_pipeline.py", p], cwd=PIPELINE_DIR,
                        capture_output=True, text=True, timeout=1800)
     return c["name"], r.returncode, time.time() - t0, r.stdout[-400:], r.stderr[-400:]
 
 def run_c8():
     t0 = time.time()
-    r = subprocess.run(["python3", "c8_rho_sweep.py"], cwd=CODE,
+    r = subprocess.run(["python3", "c8_rho_sweep.py"], cwd=PIPELINE_DIR,
                        capture_output=True, text=True, timeout=1800)
     return "C8_rho_frontier", r.returncode, time.time() - t0, r.stdout[-400:], r.stderr[-400:]
 

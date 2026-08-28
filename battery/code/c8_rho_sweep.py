@@ -7,23 +7,25 @@ S1_aligned(n=200, seed=1) and report product and perimeter together, against
 the unconstrained exact Nash product as reference.
 
 Writes:
-  /home/claude/td/figures/C8_rho_frontier.png
-  /home/claude/td/figures/C8_rho_frontier.json
+  battery/figures/C8_rho_frontier.png
+  battery/figures/C8_rho_frontier.json
 """
 from __future__ import annotations
-import json, time
+import json, os, sys, time
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "code"))
 import synth, territory as T, districting as D
 from mapviz import draw_zip_map, zip_polygons, MAP_RC
 
 plt.rcParams.update(MAP_RC)
 
-OUTDIR = "/home/claude/td/figures"
+OUTDIR = os.path.join(ROOT, "battery", "figures")
 RHOS = [0.0, 1e-4, 5e-4, 2e-3, 8e-3, 3e-2]
 MAP_RHOS = [1e-4, 2e-3, 3e-2]
 

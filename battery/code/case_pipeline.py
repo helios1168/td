@@ -19,7 +19,7 @@ Usage:
 Writes <outdir>/<name>.png and <outdir>/<name>.json (metrics).
 """
 from __future__ import annotations
-import json, sys, time, itertools
+import json, os, sys, time, itertools
 import numpy as np, networkx as nx
 import matplotlib
 matplotlib.use("Agg")
@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "code"))
 import synth, territory as T, districting as D
 from mapviz import draw_zip_map, draw_zip_heatmap, zip_polygons, MAP_RC
 

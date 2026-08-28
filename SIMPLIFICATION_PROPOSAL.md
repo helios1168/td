@@ -4,16 +4,26 @@
 recommended several deletions which would have broken the paper. Those recommendations
 were checked file by file and are corrected below.
 
+**Historical record, paths as of 2026-08-27.** Later the same day the repo was baselined
+into git (commit `5b1bf4c`) and `handoff/` was flattened into the repo root — every
+`handoff/...` path below should be read with that prefix dropped. Left unrewritten so
+this stays an accurate record of what was found and why, not a live reference.
+
 ---
 
-## Standing constraints
+## Standing constraints (void as of the 2026-08-27 baseline commit)
 
-1. **Only `README.md` is tracked in git** (one commit, `01f88ea`). Every other file is
-   untracked, so deletion is permanent — `git checkout` restores nothing.
-2. **Nothing here can be regenerated on this machine.** No `numpy`/`scipy`/`networkx`/
-   `matplotlib`, system Python 3.9.6 only, no venv, and no LaTeX toolchain.
+1. ~~Only `README.md` is tracked in git (one commit, `01f88ea`). Every other file is
+   untracked, so deletion is permanent — `git checkout` restores nothing.~~ Everything is
+   now tracked (`git ls-files` = 97 files as of the baseline commit); deletions are
+   git-recoverable.
+2. ~~Nothing here can be regenerated on this machine. No `numpy`/`scipy`/`networkx`/
+   `matplotlib`, system Python 3.9.6 only, no venv, and no LaTeX toolchain.~~ A `.venv`
+   with the full scientific stack (see `requirements.txt`) exists and has been verified
+   to import cleanly.
 
-Treat both as gating before any further deletion.
+A future reader should not inherit these as live gates — they applied only to the
+pre-baseline state.
 
 ---
 
