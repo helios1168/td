@@ -17,3 +17,6 @@ __pycache__/
 .venv/
 venv/
 .claude/.headroom_wrap_settings.lock
+
+# Claude Code worktrees (nested checkouts, never commit)
+.claude/worktrees/

@@ -4,7 +4,8 @@
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs,graphicx,microtype,xcolor,mdframed,float}
 \graphicspath{{figures/}}
-\usepackage[colorlinks=true,linkcolor=RoyalBlue,urlcolor=RoyalBlue]{hyperref}
+\usepackage[round]{natbib}
+\usepackage[colorlinks=true,linkcolor=RoyalBlue,urlcolor=RoyalBlue,citecolor=RoyalBlue]{hyperref}
 \usepackage[shortlabels]{enumitem}
 \definecolor{RoyalBlue}{HTML}{1F4E79}
 \definecolor{BoxBG}{HTML}{F4F6F8}
@@ -77,7 +78,7 @@ disposition.
 \section{The bargaining problem}\label{sec:statement}
 
 This section poses territory division as a two-person bargaining problem in the classical
-sense (Nash 1950), then works down from that object to the program actually solved.
+sense \citep{nash1950}, then works down from that object to the program actually solved.
 Seven layers.
 
 \subsection{Layer 1 --- players, outcomes, and the feasible set}
@@ -122,7 +123,7 @@ an \emph{asymmetric} Nash solution at $d=0$ with an implicit, undisclosed weight
 $\omega\approx0.54$ on the worked instance) --- a tilt toward whichever side had the
 bigger pre-merger book, smuggled in through the disagreement point rather than argued for
 on its merits. It also forfeits envy-freeness up to one good (EF1): the Nash bargaining
-solution is EF1 \emph{at $d=0$} (Caragiannis et al.\ 2019) and the guarantee does not
+solution is EF1 \emph{at $d=0$} \citep{caragiannis2019} and the guarantee does not
 survive moving $d$ away from the origin. Both defects disappear at $d=(0,0)$.
 \end{warnbox}
 
@@ -140,7 +141,7 @@ set empty, feasibility of both gains is automatic here for any non-trivial split
 threshold was an artefact of the discarded convention and does not arise at $d=0$.
 
 \subsection{Layer 3 --- Nash's axioms and the solution}
-Nash (1950) shows that if $F$ is convex and compact and contains a point strictly
+\citet{nash1950} shows that if $F$ is convex and compact and contains a point strictly
 dominating $d$, exactly one point of $F$ satisfies four axioms:
 \begin{description}[leftmargin=1.6em,itemsep=1pt]
 \item[Pareto optimality.] No other feasible point makes both players weakly better off
@@ -332,6 +333,16 @@ $0.000161$ while giving up $18\%$ of attainable welfare (Appendix~\ref{app:other
 territory once a single zip is removed from it --- the strongest fairness guarantee
 available for indivisible goods, and legible in a room.
 
+\paragraph{The continuum limit agrees.} \citet{warren2025} studies Nash bargaining
+over a continuum of goods and finds that at a zero disagreement point the solution is an
+optimal-transport map, whose allocation boundaries are Laguerre cells --- contiguous by
+construction. That corroborates $d=(0,0)$ from a direction independent of the axiomatic
+argument of Section~\ref{sec:statement}: the correspondence is stated at the zero
+baseline, and the contiguity that must be imposed here as a hard constraint
+(Section~\ref{sec:contig}) comes for free there. The problem solved in this note is a
+finite sampling of that continuum, so the agreement is a consistency check rather than a
+corollary.
+
 \paragraph{If seniority should count.} Asymmetric Nash,
 $\max g_a^{\omega}g_b^{1-\omega}$, retains the prefix property with threshold
 $\tfrac{1-\omega}{\omega}\cdot\tfrac{g_a}{g_b}$. An explicit weight is preferable to a
@@ -390,7 +401,7 @@ Taking logarithms separates the Nash product, $\log(g_ag_b)=\log g_a+\log g_b$, 
 not linearise it: $g_a$ is linear in $x$, so $\log g_a$ is \emph{concave} in a linear
 expression. That is the useful case. A concave function is the lower envelope of its
 tangents, so introduce $z_a\le\log g_a$ and add supporting cuts
-\begin{equation}\label{eq:tangent}
+\begin{equation}\label{eq:tangent2}
 z_a\ \le\ \log(\hat g)+\frac{g_a-\hat g}{\hat g},
 \end{equation}
 one linear constraint per tangent point $\hat g$, with no additional binaries. The
@@ -400,7 +411,7 @@ program is then
 \text{objective}\quad & \max\ z_a+z_b-\rho\textstyle\sum_{e\in E}y_e,
 \qquad y_e\ \ge\ |x_u-x_v| ,
 \end{align}
-with $z_a,z_b$ bounded by tangent cuts \eqref{eq:tangent}. The tangent set is an
+with $z_a,z_b$ bounded by tangent cuts \eqref{eq:tangent2}. The tangent set is an
 \emph{outer} approximation --- an upper bound --- which tightens as tangents are added
 at the incumbent solution. This is Kelley's cutting-plane method, and it interleaves
 naturally with the contiguity cuts of Section~\ref{sec:cuts}: both converge together,
@@ -570,7 +581,9 @@ availability and producer appointments are state-scoped.
 
 \paragraph{Not covered.} Capacity and travel constraints. Three or more wholesalers, for
 which no threshold rule exists and the natural extension is leximin over each dense
-component of the overlap graph. Estimation of $\theta$ from historical reassignments,
+component of the overlap graph; \citet{warren2025} points to a second route, since
+semi-discrete transport to $N$ sites yields $N$ Laguerre cells and would deliver the
+multi-party division and its geography together rather than in two stages. Estimation of $\theta$ from historical reassignments,
 on which everything ultimately rests. At national scale, a solver with lazy-constraint
 callbacks is preferable to re-solving from scratch each round.
 
@@ -737,4 +750,8 @@ $0.449$ where $k=25$ gives $0.055$.
 interpretable, yields closed-form comparative statics, and reveals that $\lambda$
 governs the weight on opportunity (Section~\ref{sec:opp}) --- but it is the wrong
 algorithm for discrete data, and it does not arise for Nash at all.
+
+\bibliographystyle{plainnat}
+\bibliography{literature/territory_bibliography}
+
 \end{document}

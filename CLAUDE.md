@@ -294,22 +294,21 @@ opportunity-balance numbers all recomputed at d=0 via `code/mkfig_zip50.py`.
 
 - **Appendix C (mixture-quantile shortcut)** still derives its closed form under the
   discarded d=(S_a,S_b) baseline. Flagged in-paper as an open item, not re-derived.
-- **The paper has no bibliography at all.** Verified by grep: no `\bibliography`, no
-  `thebibliography`, no `\bibitem`, no `\cite` — the sole reference anywhere in the
-  `.tex` is an inline "(Caragiannis et al.\ 2019)" at line 125. A references section is
-  therefore a *prerequisite* for any citation work, not a side effect of it; adding
-  `\cite{...}` without one silently yields `[?]`. `literature/territory_bibliography.bib`
-  is ready to be wired in with `\bibliography` + `bibliographystyle`, and the `Makefile`'s
-  `latexmk -pdf` already runs BibTeX automatically once it is.
-- **Warren 2025 is not cited anywhere in the `.tex`** (verified by grep). The `.bib` entry
-  now exists as `warren2025`; once the bibliography above exists, cite it in "Why Nash" as
-  corroboration for d=(0,0) and in the scope section for the N>2 remark.
+- **The related-work grounding is thin.** The bibliography is wired up and builds
+  (natbib + `plainnat`, sourced from `literature/territory_bibliography.bib`), but only
+  3 of its 34 entries are cited: `nash1950`, `caragiannis2019`, `warren2025`. The
+  districting literature (`hess1971`, `zoltners*`, `validi2021`), the non-convex
+  bargaining entries (`mariotti1998`, `xu2005` — directly relevant to trap 9), and
+  `kalai1975` for the Kalai–Smorodinsky comparison in Appendix A are all uncited. An
+  editorial pass, not a mechanical one.
 - **No battery content in the paper.** `C1`–`C9`, "battery", and "heavy tail" appear
   nowhere in the `.tex` (verified by grep). §5 / §6 need the three contiguity failure
   mechanisms folded in.
-- **The "equalisation can destroy value" numbers in Appendix A** (KS gap 0.000161 at 82.1%
-  welfare) were computed under the old baseline and not re-verified at d=0.
-- **`eq:tangent` is multiply defined** — latexmk warns on every build. Cosmetic, one-line.
+- **Appendix C (mixture-quantile shortcut)** still derives its closed form under the
+  discarded d=(S_a,S_b) baseline. Flagged in-paper as an open item, not re-derived.
+- **The "equalisation can destroy value" numbers** — a KS gap of 0.000161 at 82.1% of
+  attainable welfare, appearing at line 329 *and* line 617 — were computed under the old
+  baseline and have not been re-verified at d=0. Both sites must move together.
 
 ---
 
@@ -404,7 +403,12 @@ make clean      # remove latexmk-generated aux/log/etc.
 ```
 
 The `.tex`, the `Makefile`, and the PDF all live at the repo root;
-`\graphicspath{{figures/}}` resolves the four figures from there.
+`\graphicspath{{figures/}}` resolves the four figures from there. The PDF target depends
+on the `.tex`, `literature/territory_bibliography.bib`, and `figures/*.png`, so a
+bibliography or figure change triggers a rebuild; `latexmk` runs BibTeX automatically.
+
+Proper nouns in `.bib` titles are brace-protected (`{Nash}`, `{MINLP}`, `{COSTA}`) —
+`plainnat` lowercases titles otherwise. Protect them in any new entry.
 
 ---
 
