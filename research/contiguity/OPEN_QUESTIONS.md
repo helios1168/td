@@ -135,6 +135,24 @@ real-opportunity instances overnight at a 20-min cap — the baseline every opti
     inequalities are the closest published family).
 28. **A discrete analogue of continuum contiguity** (Warren 2025 optimal transport / power
     diagrams) — none known; the ratio-threshold rule is empirically not contiguous (HANDOFF trap).
+    Assessed 2026-08-28 (OPTIONS.md §12): OT does not help the solver because Warren's
+    contiguity comes from distance-structured utilities, not from transport. What survives:
+    (i) F3 OT-threshold warm start (TEST_PLAN §7); (ii) the two-sink Kantorovich LP is the
+    fractional MNW relaxation = the convex-hull UB already in the paper, now recorded on every
+    harness row as `UB_free`.
+28b. **Modelling option — emergent contiguity via an explicit travel-cost term.** With
+    `u_i(z) = c₁A_z + c₂B_z + λM_z − κ·d(z, p_i)` (`d` = graph shortest-path distance to rep
+    `i`'s base `p_i`) and κ large relative to the data-term variation, the free Nash solution
+    is an additively weighted graph-Voronoi partition, whose cells are connected (a vertex on
+    a shortest path from `z` to its centre inherits `z`'s assignment). κ would replace ρ with a
+    behavioural interpretation (rep travel) and is the natural N>2 route (Warren 2025).
+    Open: (a) it changes the settled utility model and needs distribution sign-off; (b) needs
+    rep base locations, which do not exist in the data; (c) redistributes welfare, so it is a
+    different fairness question, not a reformulation; (d) for moderate κ the data term breaks
+    cells and the hard constraint is still required — the threshold κ* at which contiguity
+    becomes emergent on real data is unknown and measurable with the harness once `p_i` exist.
+    Ties to CLAUDE.md's unbuilt "capacity constraints: travel time" item. Not pursued as a
+    solver fix.
 29. **Zhang, Validi, Buchanan & Hicks 2024 linear-size planar formulation** — rejected because
     integrality is lost under balance-type constraints; whether that carries over when the value
     coupling is in the *objective* (our case) rather than a hard constraint is untested.

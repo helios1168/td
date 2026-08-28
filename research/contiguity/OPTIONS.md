@@ -224,9 +224,18 @@ one-sided; write the proof or restrict E1 to the two rules above that are obviou
   Certified EF1 and G-MMS when the block-tree is a path — a *provable* fairness floor for the
   fallback, which F1 lacks.
 
+- **F3 OT-threshold warm start (added 2026-08-28).** Smooth `u_a`, `u_b` over the adjacency
+  graph (a few steps of neighbour averaging, or a kernel on centroids), take the ratio
+  threshold `ũ_a/ũ_b ≥ λ` at the free-Nash `λ = g_a/g_b`, repair connectivity (attach stray
+  components to the side of their largest-boundary neighbour), then local-search as F1. This
+  is the discretised continuum (Warren 2025) solution; it is compact by construction but
+  carries no bound — smoothing erases the heavy tail and the zero-value glue, and rounding the
+  cell boundary loses the certificate. Warm start only.
+
 **Literature.** DeFord, Duchin & Solomon 2021 (ReCom; `gerrychain` on PyPI); Bilò et al. 2022
 Thm 3.10 / Prop. 3.2; Ríos-Mercado & Fernández 2009 and Bozkaya et al. 2003 (feasible-only
-metaheuristics, no bound — lower priority).
+metaheuristics, no bound — lower priority); Warren 2025 and Aurenhammer, Hoffmann & Aronov 1998
+for F3.
 
 **Guarantee.** None on welfare; F2 carries EF1/G-MMS. Gap is measured against the best UB from
 any exact option (cross-method gap).
@@ -349,6 +358,27 @@ Results, stated for our concept under the contiguity constraint:
   power diagrams). No discrete analogue exists — a hard constraint is genuinely necessary on the
   grid, which is the bargaining-lens statement "contiguity shrinks `F`" made precise.
 - Warren 2025: DOI 10.1007/s00030-025-01118-7 (NoDEA 32:109), arXiv:1712.07202.
+
+**Optimal transport — what it does and does not offer (assessed 2026-08-28).** The
+contiguity in Warren's continuum result comes from the *spatial structure of the utilities*
+(cost to a rep's base point → ratio threshold → power-diagram cell), not from transport
+machinery. With data-driven per-zip `A_z, B_z, M_z` the ratio threshold is simply the free Nash
+solution — the object that is already disconnected in mechanism (a). Consequently:
+(i) *continuum-then-discretise* is a warm start (F3), not a method; (ii) *discrete OT* — the
+two-sink Kantorovich LP with free marginals — is the fractional relaxation of two-agent MNW,
+whose solution is the ratio threshold with at most one split zip: the convex-hull upper bound
+the paper already discusses, computable in `O(n log n)` from `prefix_table` and used in the
+harness as a free UB on the unconstrained value (it bounds the contiguous problem no tighter
+than the free solve); (iii) the one place OT is structural is a **modelling change**: with an
+explicit travel-cost term `u_i(z) = c₁A_z + c₂B_z + λM_z − κ·d(z, p_i)` (`d` = graph
+shortest-path distance to rep `i`'s base), and κ dominating the data-term variation, the free
+Nash solution is an additively weighted graph-Voronoi partition, whose cells are connected
+(any vertex on a shortest path from `z` to its centre inherits `z`'s assignment). Contiguity
+then becomes emergent and κ replaces ρ with a behavioural reading (rep travel) instead of a
+geometric proxy. This changes the settled utility model, needs rep base locations and
+distribution sign-off, redistributes welfare, and for moderate κ still needs the constraint —
+recorded in `OPEN_QUESTIONS.md` §C as the paper's N>2 / capacity route, not pursued as a solver
+fix.
 
 ---
 

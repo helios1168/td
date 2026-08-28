@@ -27,7 +27,8 @@ battery/code/contig_methods/
     scip_tree.py                          Option A  (PySCIPOpt Conshdlr; A′ native-log variant)
     cbc_tree.py                           Option B  (python-mip lazy_constrs_generator)
     prep.py                               Option E1/E2/E3 as wrappers around any method
-    warm.py                               Option F1 spanning-tree bisection, F2 cut-and-choose
+    warm.py                               Option F1 spanning-tree bisection, F2 cut-and-choose, F3 OT-threshold
+    bounds.py                             method-independent UBs: fractional (discrete-OT) bound, free-Nash value
     loop_v2.py                            Option G  (in-out, minimal-separator cuts, highspy)
     frontier.py                           Option H  (audit only, small instances)
     brute.py                              ground truth, n ≤ 20
@@ -47,6 +48,7 @@ returns:
 | `g_a, g_b, product, perimeter` | recomputed by the harness from `to_a`, never trusted from the method |
 | `LB` | true objective `log g_a + log g_b − ρ·perimeter` of the returned incumbent |
 | `UB` | tightest valid bound the method produced (`None` for heuristics) |
+| `UB_free` | harness-computed, method-independent: the fractional (discrete-OT / convex-hull) bound from the ratio threshold with one split zip, `O(n log n)` via `prefix_table`; and the exact free-Nash value from `nash_exact`. Both bound the contiguous optimum from above; recorded on every row for the cross-method gap |
 | `gap` | `(UB − LB)/|UB|`, or `None` |
 | `eps` | a-priori approximation bound for ε-methods (Option C), else 0 |
 | `t_first_feasible, t_total, iters, n_cuts, n_tangents, nodes` | effort profile |
@@ -206,6 +208,7 @@ three-panel map for the four largest pairs only.
 | **E3 quotient** | fix stray free-Nash components; solve quotient; report gap vs. unfixed UB | cross-method gap reported; never labelled `optimal` |
 | **F1 warm** | 50 random spanning trees × best cut + boundary-swap local search; contiguity-preserving | feasible on 100% of instances in < 5 s at n=800; cross-method gap reported |
 | **F2 cut-and-choose** | st-numbering of each biconnected block; best prefix | EF1 check passes on T0 where block-tree is a path |
+| **F3 OT-threshold warm** | smooth `u_a, u_b` on the graph (k neighbour-averaging steps, k∈{1,2,4}); threshold `ũ_a/ũ_b ≥ g_a/g_b` at the free-Nash ratio; attach stray components to the side of their largest-boundary neighbour; boundary-swap local search as F1 | feasible on 100% of instances; cross-method gap reported next to F1; kept only if it beats F1 on median gap or on time-to-certificate when used as MIP start |
 | **G loop_v2** | in-out tangent step (λ=0.5), min vertex-cut separators, `highspy` warm start + `threads`, quantile-seeded tangents | iteration count on C9 pairs vs. current; no regression on T1 |
 | **H frontier** | ε-constraint on `g_a` with contiguity via D; Nash-best frontier point | agrees with D on T0/T1 ≤ 50 zips |
 
