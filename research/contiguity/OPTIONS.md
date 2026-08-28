@@ -5,6 +5,17 @@
 DOI Crossref-verified unless marked UNVERIFIED), `literature/territory_bibliography.*`
 (entries appended in the same pass).
 
+**The problem in three sentences.** We can split the map fairly, or we can split it into two
+connected territories — doing both at once is the hard part. Finding the fairest split (max
+Nash welfare) is easy and certifies in seconds at any size; requiring each wholesaler's
+territory to be one connected piece turns it into a districting problem that is NP-hard even
+for two people, and the current solver — which restarts the whole MILP every time it discovers
+an island — stops converging above ~125 zips, while real pairs will be 400–800. The cure the
+literature points to is engineering, not a new model: keep the formulation, run it in a single
+branch-and-cut tree with lazy connectivity cuts (SCIP or CBC), shrink the instance first (most
+real zips have zero value), hand it a feasible warm start, and report the optimality gap so we
+always know how far from the true optimum we are.
+
 **Question answered here:** given the paper's program — maximise `log g_a + log g_b` over
 `x ∈ {0,1}^n` with both `G[S]` and `G[Z∖S]` connected, optional `ρ·perimeter` — what are the
 credible ways to enforce connectivity at 400–800 ZCTAs per pair, sparse active zips, open-source
