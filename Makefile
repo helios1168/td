@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-TEX := nash_territory_division_20260826.tex
+TEX := nash_territory_division.tex
 PDF := $(TEX:.tex=.pdf)
 
 all: $(PDF)

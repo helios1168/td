@@ -94,6 +94,10 @@ Provides microfoundations for 'Nash-in-Nash' bargaining used in applied IO, clar
 *Bearing on this problem:* Template for stating what a bargaining assumption buys and costs in an applied model.
 
 
+**[Warren 2025](https://doi.org/10.1007/s00030-025-01118-7)** — Continuum Nash bargaining solutions. *Nonlinear Differential Equations and Applications NoDEA* **32**:109. Cited by 1.  
+Characterises the Nash bargaining solution over a continuum of goods; at a zero disagreement point the solution is an optimal-transport map, so the allocation boundary is a Laguerre-cell tessellation.  
+*Bearing on this problem:* Independent corroboration of the d=(0,0) baseline, and the natural route to N>2 wholesalers — semi-discrete transport gives Laguerre cells, which are contiguous by construction.
+
 ## Bargaining on non-convex / discrete sets
 
 **[Mariotti 1998](https://doi.org/10.1007/s003550050114)** — Nash bargaining theory when the number of alternatives can be finite. *Social Choice and Welfare*. Cited by 57.  
