@@ -176,6 +176,35 @@ real-opportunity instances overnight at a 20-min cap — the baseline every opti
     wanted for the N>2 dense-component case (E.35), where Nash's two-player guarantees do not
     compose.
 
+28d. **Relax exactness to an approximate-fairness guarantee (Suksompong 2019 style)?
+    Assessed 2026-08-28: relax the certificate, not the criterion.** Two things are
+    conflated under "exactness":
+    (1) *Exact optimisation* — a zero-gap certificate. Relaxing this is cheap and already
+    planned: Option C (ε-certified PWL log), time-capped B&C with the gap reported, EF1
+    checked ex post (TEST_PLAN §3).
+    (2) *Exact criterion* — replacing "maximise Nash welfare s.t. contiguity" by "construct
+    any contiguous allocation with envy ≤ u_max / share ≥ proportional − u_max" (Suksompong
+    2019 on paths; Bilò et al. 2022 lift EF1 to any graph whose block-tree is a path, O(m)
+    cut-and-choose). Polynomial, but four losses, two landing on our hard instances:
+    (a) efficiency — the construction optimises nothing; MNW is EF1 *and* Pareto-optimal,
+    cut-and-choose is EF1 only, and the value left on the table is unbounded;
+    (b) selection — many allocations satisfy the guarantee, so a secondary rule is needed,
+    and the natural one (Nash-best prefix of an st-order) is Option F2, a heuristic with a
+    measurable but unbounded gap; (c) the bound is additive in u_max — under heavy tails one
+    mega-zip can be a large share of a book, so the guarantee is weakest in mechanism (c)'s
+    regime; (d) topology — Bilò's characterisation is tight: a "trident" (cut vertex splitting
+    the pair into ≥3 pieces) voids the 2-agent EF1 guarantee, i.e. the non-biconnected pairs
+    of mechanism (a) are exactly where the approximate route gives up too.
+    Middle grounds that keep the concept: use the constructions as fallbacks with a certified
+    floor (F2/F3: "EF1 yes, envy ≤ u_max yes, gap to best UB x%"); report EF1 / envy-over-u_max
+    / share − ½·total for the *Nash* solution on every harness row (answers item 23
+    empirically); or restrict to intervals of a fixed ordering and solve exactly there
+    (Suksompong's path results apply verbatim; loss vs. the true contiguous optimum measured
+    by the harness — see 28c). Decision: keep MNW; relax the certificate; approximate fairness
+    is the reported floor and the fallback, not the solution concept.
+    Follow-up for TEST_PLAN: add `ef1`, `envy_over_umax`, `prop_shortfall` to the harness
+    Result fields so every option's incumbent carries the approximate-fairness audit.
+
 29. **Zhang, Validi, Buchanan & Hicks 2024 linear-size planar formulation** — rejected because
     integrality is lost under balance-type constraints; whether that carries over when the value
     coupling is in the *objective* (our case) rather than a hard constraint is untested.

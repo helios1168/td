@@ -53,6 +53,7 @@ returns:
 | `eps` | a-priori approximation bound for ε-methods (Option C), else 0 |
 | `t_first_feasible, t_total, iters, n_cuts, n_tangents, nodes` | effort profile |
 | `pieces_a, pieces_b` | harness-computed component counts (must be 1/1 on `optimal`) |
+| `ef1, envy_over_umax, prop_shortfall` | approximate-fairness audit of the incumbent, harness-computed: EF1 holds (bool, both directions); max envy divided by `u_max` of the envied bundle; `max(0, ½·Σu_i − g_i)/u_max` per side. Reported for every option so the Nash solution's EF1 status (open in the literature) and the fallbacks' certified floors sit in one table (`OPEN_QUESTIONS.md` 28d) |
 | `trace` | list of `(t, LB, UB)` at each improvement, for gap-vs-time curves |
 
 **Validators (run on every row).** Assignment is a partition; both sides connected (or the
