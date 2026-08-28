@@ -153,6 +153,29 @@ real-opportunity instances overnight at a 20-min cap — the baseline every opti
     becomes emergent on real data is unknown and measurable with the harness once `p_i` exist.
     Ties to CLAUDE.md's unbuilt "capacity constraints: travel time" item. Not pursued as a
     solver fix.
+28c. **Would a different solution concept be more tractable? Assessed 2026-08-28: no.**
+    The nonlinearity `log g_a + log g_b` is the easy part (concave in linear expressions;
+    6–7 OA rounds free; Option C removes it at a certified ε). The hard part is contiguity,
+    which is criterion-independent — connected fair division is NP-hard for two agents even
+    with identical valuations (Deligkas et al. 2021), where every criterion coincides.
+    Switching to utilitarian gives a pure MILP but corner solutions (paper: b left with 2.04);
+    maximin / egalitarian / KS / equal-gain give a pure MILP (`t ≤ g_a, t ≤ g_b`) but lose
+    Pareto efficiency (needs leximin), the EF1 theorem, and hit Trap 2 (equalising can make
+    both worse — needs a welfare floor) — and their `min(·,·)` objective is *flat on a plateau*
+    at the optimum, which is exactly the degeneracy that stops connectivity cuts biting
+    (Trap 4). Nash's strict concavity is what the cut loop pushes against.
+    What does buy tractability is on the feasible-set side: (a) restrict partitions to a
+    structured family — for a 2-connected graph an st-numbering (Lempel–Even–Cederbaum) makes
+    every prefix/suffix connected and the Győri–Lovász theorem guarantees connected
+    2-partitions of any prescribed sizes, so any criterion is O(n) over prefixes (this is
+    discrete cut-and-choose: fast, EF1-certified, heuristic w.r.t. the true contiguous
+    optimum — Options F2/F3); (b) weaken the constraint (≤ k pieces; slivers below a share
+    allowed); (c) coarsen the graph. All three change what is promised. Decision: keep Nash;
+    spend effort on Option C and the feasible-set restrictions as warm starts.
+    Still open: whether a leximin refinement of maximin over the *contiguous* set is ever
+    wanted for the N>2 dense-component case (E.35), where Nash's two-player guarantees do not
+    compose.
+
 29. **Zhang, Validi, Buchanan & Hicks 2024 linear-size planar formulation** — rejected because
     integrality is lost under balance-type constraints; whether that carries over when the value
     coupling is in the *objective* (our case) rather than a hard constraint is untested.
