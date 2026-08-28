@@ -1,6 +1,6 @@
 # Territory Division (td) — Claude Code Setup
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-08-28
 **Project:** Fair division of ZCTA territories between two merging annuity wholesaling forces
 **Status:** Model and reference implementation settled; ready for production Python against real ZCTA data
 
@@ -19,6 +19,10 @@
    three contiguity failure mechanisms. `battery/RESEARCH_PLAN.md` is the test plan.
 4. **`SYNTH.md`** — the synthetic generator (S1–S7) and census `min_share` sensitivity.
    Read before running the census on real data.
+5. **`research/contiguity/`** — the 2026-08-28 literature study on enforcing contiguity at
+   real scale: `OPTIONS.md` (eight option briefs, ranked), `TEST_PLAN.md` (harness, gap
+   metrics, real-opportunity C10), `OPEN_QUESTIONS.md` (40 items; **§0 is the resume point
+   for a fresh session**). Read before touching `districting.py` or the paper's §5.
 
 **Environment.** Use `.venv/bin/python3` for everything — the system `python3` has no
 numpy/scipy/networkx. Dependencies are pinned in `requirements.txt`. Scripts assume the
@@ -245,6 +249,20 @@ candidate must be validated against all three. "Decouple fairness from compactne
 disconnection nor the scale mechanism — it relocates where the difficulty shows up, from
 one joint MILP to two sequential ones.
 
+**Research verdict (2026-08-28, `research/contiguity/OPTIONS.md`).** The architecture is
+right and the engine is wrong: lazily separated connectivity cuts in branch-and-cut are the
+state of the art (Validi, Buchanan & Lykhovyd 2022 certify ~1,500 units), but HiGHS has **no
+cut-injection callback**, so the restart-per-round loop is structural. The two cut families
+have different convergence theories (OA: Duran–Grossmann; connectivity: combinatorial
+Benders) and their iteration bounds *multiply*. The ρ=0 thrash is textbook Kelley
+instability, fixable by in-out stabilisation. Corrections to the candidate fixes above:
+Gurobi is excluded (open-source only — PySCIPOpt is the primary candidate, python-mip/CBC
+the cross-check); component-quotient preprocessing has **no published precedent and is not
+optimality-preserving** — keep it only as a fallback that reports its gap; a fourth regime,
+**(d) sparse active zips with zero-value glue**, is what real data adds and is addressed
+only by the reduction layer (Option E). Real pairs will be 400–800 ZCTAs (180 wholesalers
+across both firms).
+
 ### Baseline inconsistencies (found 2026-08-27, re-verified; flagged not fixed)
 
 - **`districting.py:161` is still on the old baseline.** `solve_contiguous` sets
@@ -271,7 +289,12 @@ one joint MILP to two sequential ones.
 
 - **Three+ wholesalers:** no threshold rule. Leximin over dense components is the natural
   extension; unimplemented. Warren (2025)'s semi-discrete transport → Laguerre cells is
-  the other route worth exploring.
+  the other route worth exploring — but note (assessed 2026-08-28, `OPEN_QUESTIONS.md`
+  28/28b): the continuum contiguity comes from distance-structured utilities, not from
+  transport; on data-driven per-zip utilities the OT/threshold solution *is* the free Nash
+  solution. It becomes structural only under a modelling change (an explicit travel-cost
+  term `−κ·d(z, p_i)`, which makes the free solution a connected graph-Voronoi partition
+  for large κ). Not a solver fix.
 - **Dense components (C2 at alpha=0):** two-player fairness does not compose. Every pair
   within a dense blob gets its own bilateral solve, which looks perfect while no
   component-level fairness is defined. Unimplemented.
@@ -304,11 +327,83 @@ opportunity-balance numbers all recomputed at d=0 via `code/mkfig_zip50.py`.
 - **No battery content in the paper.** `C1`–`C9`, "battery", and "heavy tail" appear
   nowhere in the `.tex` (verified by grep). §5 / §6 need the three contiguity failure
   mechanisms folded in.
-- **Appendix C (mixture-quantile shortcut)** still derives its closed form under the
-  discarded d=(S_a,S_b) baseline. Flagged in-paper as an open item, not re-derived.
 - **The "equalisation can destroy value" numbers** — a KS gap of 0.000161 at 82.1% of
   attainable welfare, appearing at line 329 *and* line 617 — were computed under the old
   baseline and have not been re-verified at d=0. Both sites must move together.
+- **The contiguity research (2026-08-28) is not yet in the paper.** See the next
+  subsection for the section-by-section instructions.
+
+### Integrating the contiguity research into `nash_territory_division.tex`
+
+Source of truth: `research/contiguity/OPTIONS.md` (§0 for the four-sentence verdict, §12 for
+the theory results and framing, §11 for the portfolio) and `OPEN_QUESTIONS.md` §C for what
+to state as open. All 45 new references are already in
+`literature/territory_bibliography.bib` (keys below are the `.bib` keys — `grep "^@"` to
+confirm before citing). Rules: cite only keys that exist; brace-protect proper nouns in any
+new `.bib` entry; **do not add numbers the harness has not produced** — the existing ρ-sweep
+table on the 50-zip instance stays as is until `TEST_PLAN.md` Stage 1 results exist; build
+with `make` (needs `export PATH=/Library/TeX/texbin:$PATH`) and check the `.blg` for
+undefined citations.
+
+1. **§2 "The bargaining problem" (`sec:statement`), Layer 3 or 4.** Name the concept once:
+   "maximum Nash welfare — the Nash bargaining solution at `d=0`" — so both literatures can
+   be cited. Keep the bargaining exposition; it supplies the axioms and the "constraints
+   shrink `F`" argument (Layer 5). Cite `caragiannis2019` (already) and, for the graph
+   setting, `bouveret2017`.
+2. **§2 Layer 2 / §4 "Why Nash" — scope the EF1 claim.** "EF1 is a theorem at `d=0`" holds
+   for the unconstrained solve. Add: a connected EF1 allocation for two agents exists on any
+   graph whose block-tree is a path (`bilo2022`, Thm 3.10; every biconnected census
+   component qualifies), computable in O(m) by discrete cut-and-choose; whether the
+   *contiguous Nash maximiser* is EF1 for two agents is **open** (known counterexamples use
+   ≥3 agents — `igarashipeters2019`). The harness reports it empirically (`TEST_PLAN.md` §1 audit
+   fields).
+3. **§2 "Two representations of connectivity" + §5 `sec:cuts`.** Cite the encodings:
+   flow (`shirabe2005`, `shirabe2009`), separator cuts and the CUT/MCF/LCUT comparison
+   (`validi2021`, `validibuchanan2022`), the three-way one-shot comparison (`duque2011`), the
+   linear-size planar formulation and why it is not used here (`zhang2024`). State that the
+   separator-cut loop as implemented is a *multi-tree* scheme and that the production route
+   is a single branch-and-cut tree with lazy cuts (`quesada1992`, `bonami2008`,
+   `validi2021`); note the aggregated one-cut-per-component separation.
+4. **§5 "Formulation" warnbox — add the convergence-theory trap.** The tangent cuts and the
+   connectivity cuts have different finite-convergence arguments (`duran1986`,
+   `fletcher1994` vs. `hooker2003`, `codato2006`); the combined worst-case bound is their
+   product. The ρ=0 thrash is Kelley instability (`lemarechal1995`); the remedy is in-out
+   stabilisation (`benameur2007`, `fischettisalvagnin2010`). Mention the ε-certified
+   piecewise-linear alternative that removes the OA loop (`caragiannis2019` §6,
+   `vielma2011`).
+5. **§5 "Result" → new subsection "Failure mechanisms at scale".** Fold in
+   `battery/FINDINGS.md`: the three mechanisms with their named instances (C1-seed2 A0/B0,
+   C5 A2/B2, C7 125/205, C9-seed2 A2/B2), the 2–5× cost inflation under heavy tails
+   (`pisinger2005` as the hardness analogy), and the fourth regime real data adds (sparse
+   active zips). Cite the reduction literature for that regime (`rehfeldt2019`,
+   `buchanan2018`, `fischetti2017`). Keep it qualitative until Stage 1 numbers exist; then
+   add the option-comparison table from `RESULTS.md`.
+6. **§5 — price of connectivity.** Report the battery's 0.03–5% cost of contiguity against
+   the theoretical price of connectivity: exactly 4/3 for MMS on biconnected graphs, 1/k at
+   a k-way cut vertex (`bei2022`); no published bound for Nash welfare — state as open.
+   Connected fair division is NP-hard even for two agents with identical valuations
+   (`deligkas2021`) — cite where the MILP is justified.
+7. **§4 "The continuum limit agrees" paragraph.** Keep `warren2025`; add that the continuum
+   contiguity comes from distance-structured utilities (power diagrams —
+   Aurenhammer, Hoffmann & Aronov 1998 is **not** in the `.bib`; add it via the
+   `LITERATURE_WORKFLOW.md` DOI check first, else cite `warren2025` only) and has no discrete analogue,
+   which is why the hard constraint is needed; the discrete-OT relaxation is the convex-hull
+   bound already discussed in §4. Mention the travel-cost κ route as future work here or in
+   §"Implementation and scope" alongside the N>2 remark (line ~584).
+8. **§"Implementation and scope"** — replace "Gurobi or CBC" style remarks with the
+   open-source stack decision (PySCIPOpt primary, python-mip/CBC cross-check; HiGHS has no
+   lazy-cut callback) and point to `research/contiguity/TEST_PLAN.md` for the harness.
+9. **Related work / §1.** The districting lineage (`hess1971`, `zoltners*`,
+   `salazaraguilar2011`, `rosmercado2012` — note the pre-existing key's spelling) and the fair-division-on-graphs lineage
+   (`bouveret2017`, `bilo2022`, `suksompong2019`, `bei2022`) are both now in the `.bib`;
+   this is the editorial pass the "related-work grounding is thin" item asks for.
+10. **Appendix B (prefix heuristic).** One sentence: the prefix/ratio-threshold rule is the
+    fractional (discrete-OT) relaxation of two-agent MNW, hence an upper bound on the free
+    value; contiguity restricts the feasible set further (`OPEN_QUESTIONS.md` 28c/28d for
+    why neither maximin nor an approximate-fairness criterion is more tractable).
+
+After the edit: `make`, confirm no `Citation ... undefined` in `nash_territory_division.blg`,
+and update the "Still open" list above.
 
 ---
 
@@ -416,22 +511,39 @@ Proper nouns in `.bib` titles are brace-protected (`{Nash}`, `{MINLP}`, `{COSTA}
 
 ### 1. Paper edits (publish & communicate)
 
-Work the **Still open** list under *Paper edits pending* above: cite `warren2025`, fold
-the C1–C9 battery findings and the three contiguity mechanisms into §5/§6, re-derive or
-retire Appendix C, re-verify the Appendix A equalisation numbers at d=0.
+Work the **Still open** list under *Paper edits pending* above: fold the C1–C9 battery
+findings and the three contiguity mechanisms into §5/§6, re-derive or retire Appendix C,
+re-verify the Appendix A equalisation numbers at d=0, and apply the ten-step
+*Integrating the contiguity research* list (framing sentence in §2, scoped EF1 claim,
+encodings and convergence-theory citations in §5, price-of-connectivity paragraph,
+related-work pass).
 
 Outcome: paper ready for circulation.
 
 ### 2. Fix contiguity convergence (unblock real data at scale)
 
-Test one or both candidate fixes on the battery:
-- **Component-quotient preprocessing:** detect and pre-fix undisputed stray components
-  before the MINLP; recompute C1-seed2 A0/B0 and C5 A2/B2.
-- **Lazy-callback or flow formulation:** replace `scipy.optimize.milp` (which re-solves
-  from scratch) with Gurobi or CBC/PuLP; test on C7 (n=400) and C9 (heavy tail).
+Follow `research/contiguity/TEST_PLAN.md`; the option briefs are in `OPTIONS.md` §2–§9 and
+the recommended order in §11:
 
-**Validation must cover all three failure mechanisms** before declaring sufficiency.
-Acceptance: all C1–C9 pairs converge without iteration/time limits, gaps < 1e-8.
+- **Stage 0 (½ day):** Option D (Shirabe flow one-shot on scipy/HiGHS — the constraints are
+  already in the paper) as the oracle; F1 spanning-tree warm start; G2/G4 cut and tangent
+  hygiene (minimal-separator cuts; data-scaled tangent seeds — the current `g0 ∈ {1..11}`
+  and `z ∈ [−50, 50]` are absolute and wrong on dollar-scaled data).
+- **Stage 1 (2–3 days):** Option A PySCIPOpt single-tree branch-and-cut (primary), B
+  python-mip/CBC (cross-check), C ε-certified PWL log, E1 safe reductions, E3 quotient as a
+  gap-reporting fallback. Screening at 60 s caps ≈ 20 min wall on 11 workers.
+- **Stage 2 (overnight):** finalists at 20-min caps, ρ ∈ {2e-3, 2e-4, 1e-5}, plus C10
+  real-opportunity instances (400–800 zips) — the machinery is specified in `TEST_PLAN.md`
+  §6 and needs the opportunity file (`OPEN_QUESTIONS.md` §A, items 1–2 are gated).
+- **First thing when the opportunity file lands:** run the *current* solver on C10 overnight
+  for the baseline gap-vs-time profile.
+
+**Validation must cover all three failure mechanisms plus the sparse-glue regime** before
+declaring sufficiency. Acceptance (`TEST_PLAN.md` §3, §7): brute-force match on n ≤ 20; all
+C1–C9 pairs certified with gap ≤ 1e-8 (ε-methods: ≤ ε); the six named failures certified
+within cap; `pieces = 1/1`; product ≤ free product; the deviation-from-optimality metrics
+(certified gap, cross-method gap, gap-vs-time) reported for every option. Open-source
+solvers only. State borders off, but `--respect-state` must remain a one-flag rerun.
 
 ### 3. Leximin over dense components (future architecture)
 
@@ -489,10 +601,28 @@ welfare subject to it — or adopt a lexicographic rule. Test on C2 at alpha=0.
 - **`code/TAIL_DISTRIBUTION_NOTE.md`** — the heavy-tail dial (dPlN), citations,
   backward-compatibility verification.
 
+### Contiguity research (2026-08-28)
+
+- **`research/contiguity/OPTIONS.md`** — the problem in three sentences; eight option briefs
+  (A SCIP single tree, B CBC lazy constraints, C ε-certified PWL log, D Shirabe flow,
+  E reductions/fixing, F warm starts incl. OT-threshold, G loop engineering, H frontier
+  audit) scored against mechanisms (a)–(d); not-recommended table; portfolio; §12 theory
+  results and the solution-concept framing; OT assessment.
+- **`research/contiguity/TEST_PLAN.md`** — harness layout (`battery/code/contig_methods/`,
+  results under `battery/results/contiguity/`, never `battery/figures/`), instance tiers
+  T0–T4, optimality-gap metrics, stage/cap/wall-time table, `--respect-state` switch, C10
+  real-opportunity machinery, per-option acceptance, dependencies to add.
+- **`research/contiguity/OPEN_QUESTIONS.md`** — 40 items in six groups plus resume notes
+  and the table of decisions already taken. **Start here in a new session.**
+- **`research/contiguity/raw/*.md`** — the five literature legs (encodings, algorithms,
+  solvers, preprocessing, fair division on graphs); verbose; grep them for a source.
+
 ### Literature
 
 - **`literature/territory_bibliography.{md,csv,bib}`** — the full annotated citation set,
-  three synchronised formats. Every entry carries a resolving DOI.
+  three synchronised formats (78 entries; 45 added 2026-08-28 under "Contiguity: encodings,
+  algorithms, preprocessing" and "Fair division on graphs"). Every entry carries a
+  resolving DOI; the `.bib` parses under `plainnat` with `\nocite{*}`.
 - **`literature/LITERATURE_WORKFLOW.md`** — how that bibliography was built and how to
   extend it (DOI resolution against fabrication; citation-graph traversal against silent
   incompleteness). Generic and reusable; not territory-specific.
