@@ -332,11 +332,13 @@ $0.000161$ while giving up $18\%$ of attainable welfare (Appendix~\ref{app:other
 territory once a single zip is removed from it --- the strongest fairness guarantee
 available for indivisible goods, and legible in a room.
 
-\paragraph{The one limitation.} Nash requires $g_a,g_b>0$, so below the feasibility
-threshold $\lambda^\ast$ the bargaining set is empty. Report $\lambda^\ast$ explicitly;
-under the net convention it was $0.069$ on the instances tested, well below any
-defensible $\lambda$. Below it the merger is negative-sum for the wholesalers and the
-conversation is not about criteria. The egalitarian criterion is the fallback there.
+\paragraph{No feasibility threshold.} Nash requires $g_a,g_b>0$. At $d=(0,0)$ this holds
+automatically for any non-trivial split (Section~\ref{sec:statement}), since gains are
+bare bundle utilities and $\theta,\lambda\in[0,1]$ keep them non-negative pointwise. This
+is not true of the discarded pre-merger baseline, where headroom below a threshold
+$\lambda^\ast$ --- $0.069$ on the instances tested, under the net convention --- left the
+bargaining set empty and forced a fallback to the egalitarian criterion. That threshold
+was an artefact of measuring gains against pre-merger production; it does not arise here.
 
 \paragraph{If seniority should count.} Asymmetric Nash,
 $\max g_a^{\omega}g_b^{1-\omega}$, retains the prefix property with threshold
