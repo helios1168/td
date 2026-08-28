@@ -192,7 +192,8 @@ return argmax_k g_a[k]*g_b[k]  over k with both gains > 0
 | `territory.py` | Core module against a networkx ZCTA graph: `validate`, `census`, `overlap_graph`, `zips_for_pair`, `prefix_table`, **`nash_exact`**, `solve` (exact Nash by default; `exact=False` for the heuristic), `compare_criteria`, `contiguity_report`, `contestability`, `write_back` |
 | `districting.py` | Contiguity MILP. `solve_contiguous_nash` = outer approximation + separator cuts. `solve_contiguous` = the KS-gap variant with welfare floor |
 | `territory_demo.py` | End-to-end smoke test on a synthetic lattice with deliberately misaligned territories and state bands |
-| `zip50.py` | Generates the 50-zip worked instance from a Gaussian mixture |
+| `zip50.py` | Generates the 50-zip worked instance from a Gaussian mixture (seed=17, deterministic) |
+| `mkfig_zip50.py` | **Regenerates the paper's Section 5 worked-instance numbers and three of its four zip50 figures** (`nash_solution.png`, `zip50_nash_milp.png`, `nash_contestability.png`) at the current `d=(0,0)` baseline. Builds the adjacency graph via Delaunay triangulation on the zip centroids — reproduces the paper's stated 132 edges exactly, and is the natural dual of the Voronoi-cell maps. `zip50_distributions.png` is deliberately NOT regenerated here: every one of its panels is a function of the raw instance data only, not of the disagreement point, so it is unaffected by the `d=0` migration and was never stale. Run: `.venv/bin/python3 code/mkfig_zip50.py` from the repo root (~2 min, dominated by the 600-draw contestability bootstrap and the 400k-subset Appendix B check) |
 | `synth.py` | Multi-rep synthetic generator: alignment, correlation, sliver, state, headroom, capacity and (same-day addendum) a heavy-tail dial for `A_z`/`B_z`/`M_z` (double Pareto-lognormal, backward compatible, default off — see `TAIL_DISTRIBUTION_NOTE.md`), each aimed at a named kill criterion; `SCENARIOS` battery including `S7_heavytail`. See `SYNTH.md` |
 | `TAIL_DISTRIBUTION_NOTE.md` | Same-day addendum: what changed in `synth.py`'s tail dial and why (Eeckhout 2004 AER; Reed 2001/2002/2004; Giesen, Zimmermann & Suedekum 2010 JUE), backward-compatibility verification (12/12 PASS), and how to use `S7_heavytail` |
 | `census_stress.py` | Exercises `census()` against the battery: alpha sweep, `min_share` audit, corr-dial check, state binding. Found and motivated the census split patch |
@@ -318,6 +319,9 @@ before enforcing connectivity. **Settle this with distribution before tuning any
   knowing: **bimodal books do not disconnect a territory in the plane**, unlike on a
   line, so part of the apparent contiguity cost in 1-D is a projection artefact.
 - `figures/` — the four figures from the paper, plus `census_stress.png` (see `SYNTH.md`).
+  Three of the four (`nash_solution.png`, `zip50_nash_milp.png`, `nash_contestability.png`)
+  now regenerate via `code/mkfig_zip50.py` at `d=(0,0)`; `zip50_distributions.png` is
+  d-independent and was left untouched.
 - `SYNTH.md` — the synthetic battery (`synth.py`) and the census stress test: the
   census split patch, the `min_share` sensitivity table, and per-kill-criterion
   scenario instances. Read before running the census on real data.

@@ -134,10 +134,20 @@ The outer-approximation + separator-cut loop in `solve_contiguous_nash` fails to
 ### Paper edits pending
 
 The d=(0,0) migration and the battery results (C1–C9) need to be reflected in `nash_territory_division_20260826.tex`:
-- Rewrite introduction to cite d=0 throughout
+- ~~Rewrite introduction to cite d=0 throughout~~ — done: Setup and "The bargaining
+  problem" sections rewritten around d=(0,0), classical Nash-axioms exposition (2026-08-27)
 - Rename solution concept to "maximum Nash welfare" (already done in HANDOFF.md)
-- §3.1: EF1 is a theorem at d=0; drop lambda* section (it was an artifact of the old baseline)
-- Appendix: recompute comparison tables (KS, egalitarian, equal-gain) at d=0 instead of d=(S_a, S_b)
+- ~~§3.1: EF1 is a theorem at d=0; drop lambda* section~~ — done: "Why Nash"'s stale
+  lambda* paragraph removed (2026-08-27)
+- ~~Appendix A: recompute comparison tables (KS, egalitarian, equal-gain) at d=0~~ — done,
+  via `code/mkfig_zip50.py` (2026-08-27); worked-instance numbers throughout §5, §6,
+  Contestability, breakpoints, opportunity balance, and Appendix B also recomputed at d=0
+  in the same pass
+- **Still open:** Appendix C (mixture-quantile shortcut) still derives its closed form
+  under the discarded d=(S_a,S_b) baseline — flagged in-paper as an open item, not
+  re-derived; the "equalisation can destroy value" MILP numbers in Appendix A (KS gap
+  0.000161 at 82.1% welfare) were not verified against the d=0 instance and may also be
+  stale
 - §5: fold in battery findings and contiguity mechanisms
 - Reference M. Warren 2025 on Nash–optimal-transport correspondence
 

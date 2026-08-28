@@ -169,7 +169,7 @@ defensible ones.
 indivisible postal codes $F$ is a finite point cloud instead, so strictly the axioms
 select a \emph{lottery} over two adjacent allocations, and \eqref{eq:nashprod} maximised
 over the point cloud is the discrete analogue rather than the axiomatic solution itself.
-The gap is quantified in the remark on convexity in Section~\ref{sec:exact}: $0.0034\%$
+The gap is quantified in the remark on convexity in Section~\ref{sec:exact}: $0.0045\%$
 on the worked instance. Known, small, ignored in practice; worth re-checking on real
 data.
 \end{warnbox}
@@ -305,8 +305,8 @@ $F=\{(g_a(S),g_b(S))\}$ is a finite point cloud, so strictly the axioms deliver 
 \emph{lottery} over two adjacent allocations, and $\max g_ag_b$ over $F$ is the natural
 discrete analogue rather than the axiomatic solution itself. The distinction is
 quantitatively small here: the Nash product on the convex hull, where randomisation is
-permitted, is $24.09177$ against $24.09096$ for the best deterministic allocation --- a
-difference of $0.0034\%$. The frontier is dense enough that the deterministic vertex
+permitted, is $53.30998$ against $53.30759$ for the best deterministic allocation --- a
+difference of $0.0045\%$. The frontier is dense enough that the deterministic vertex
 lies essentially on the hull. It is worth re-checking on real data, and not worth
 randomising territory assignments over.
 \end{remark}
@@ -361,26 +361,26 @@ proportional to magnitude, stars at metro centres.}\end{figure}
 \subsection{Solution}
 \begin{center}\begin{tabular}{lrrrr}\toprule
 & $k$ & $g_a$ & $g_b$ & $g_ag_b$\\ \midrule
-Nash, exact (outer approximation) & $25$ & $4.9787$ & $4.8388$ & $\mathbf{24.09117}$\\
-Nash, prefix heuristic (Appendix~\ref{app:prefix}) & $25$ & $4.9360$ & $4.8807$ & $24.09096$\\ \bottomrule
+Nash, exact (outer approximation) & $22$ & $7.3715$ & $7.2318$ & $\mathbf{53.30907}$\\
+Nash, prefix heuristic (Appendix~\ref{app:prefix}) & $22$ & $7.4423$ & $7.1628$ & $53.30759$\\ \bottomrule
 \end{tabular}\end{center}
 
 \noindent The two select \emph{different} allocations of the same size; the heuristic's
-shortfall is $8.4\times10^{-6}$, which is negligible here but not zero.
+shortfall is $2.8\times10^{-5}$, which is negligible here but not zero.
 
-\noindent $a$ receives $25$ zips, $53.1\%$ of opportunity. Equal gain and the
-egalitarian criterion select the same allocation; Kalai--Smorodinsky differs by one zip
-(Appendix~\ref{app:other}).
+\noindent $a$ receives $22$ zips, $48.9\%$ of opportunity. Kalai--Smorodinsky and equal
+opportunity coincide exactly with Nash here; equal gain and the egalitarian criterion
+differ by one zip (Appendix~\ref{app:other}).
 
 \begin{figure}[H]\centering\includegraphics[width=\textwidth]{nash_solution.png}
 \caption{Left: the Nash allocation. Centre: the entire optimisation --- the bargaining
-product over the $n+1$ prefixes, maximised at $k=25$. Right: the allocation is
+product over the $n+1$ prefixes, maximised at $k=22$. Right: the allocation is
 piecewise constant in $\lambda$, with $\lambda=0.30$ inside a flat interval running
-from $0.265$ to $0.506$.}\end{figure}
+from $0.208$ to at least $0.994$.}\end{figure}
 
 \section{Contiguity}\label{sec:contig}
 Nothing above forces each territory to be connected, and the Nash allocation is not:
-$a$ holds two pieces and $b$ three, in each case a stray single zip. Imposing
+$a$ is already a single contiguous block, but $b$ holds a four-zip island. Imposing
 connectivity turns the problem into a \emph{districting} integer program --- the
 formulation used for electoral redistricting and sales-territory alignment --- with one
 binary per zip.
@@ -435,20 +435,20 @@ district. Aggregating one cut per island rather than one per zip matters for
 convergence.
 
 \subsection{Result}
-The exact unconstrained Nash allocation leaves $a$ in three pieces and $b$ in two, in
-each case a stray single zip. Enforcing connectivity, and sweeping the compactness weight on
-a graph of $50$ zips and $132$ adjacency edges:
+The exact unconstrained Nash allocation leaves $a$ in one piece and $b$ in two, a
+$24$-zip block plus a stray $4$-zip island. Enforcing connectivity, and sweeping the
+compactness weight on a graph of $50$ zips and $132$ adjacency edges:
 
 \begin{center}\begin{tabular}{lrrrrrl}\toprule
 $\rho$ & $g_ag_b$ & perimeter & \% of edges & iterations & time & pieces $a/b$\\ \midrule
---- (unconstrained) & $24.0910$ & --- & --- & --- & --- & $2/3$\\
-$2\times10^{-3}$ & $24.0146$ & $15$ & $11.4\%$ & $5$ & $0.7$s & $1/1$\\
-$2\times10^{-4}$ & $24.0569$ & $18$ & $13.6\%$ & $5$ & $0.1$s & $1/1$\\
-$1\times10^{-5}$ & $24.0774$ & $33$ & $25.0\%$ & $10$ & $0.4$s & $1/1$\\
+--- (unconstrained) & $53.3091$ & --- & --- & --- & --- & $1/2$\\
+$2\times10^{-3}$ & $53.2046$ & $15$ & $11.4\%$ & $4$ & $0.2$s & $1/1$\\
+$2\times10^{-4}$ & $53.2769$ & $21$ & $15.9\%$ & $6$ & $0.3$s & $1/1$\\
+$1\times10^{-5}$ & $53.2918$ & $27$ & $20.5\%$ & $9$ & $0.1$s & $1/1$\\
 \bottomrule\end{tabular}\end{center}
 
 \begin{resultbox}
-The price of contiguity under Nash is between $0.06\%$ and $0.32\%$ of the bargaining
+The price of contiguity under Nash is between $0.03\%$ and $0.20\%$ of the bargaining
 product, depending on how clean a boundary is wanted. Contiguity is close to free when
 solved exactly. A greedy island-repair heuristic, by contrast, degraded the objective by
 more than three orders of magnitude and should be used only to \emph{detect}
@@ -456,16 +456,16 @@ fragmentation, never to fix it.
 \end{resultbox}
 
 \noindent $\rho$ competes directly with the log objective and should be swept rather
-than fixed: at $\rho=10^{-5}$ the boundary cuts a quarter of all adjacency edges for a
-$0.26\%$ gain in product over the compact solution. Report the product and the
-perimeter together.
+than fixed: at $\rho=10^{-5}$ the boundary cuts a fifth of all adjacency edges for a
+$0.16\%$ gain in product over the $\rho=2\times10^{-3}$ solution. Report the product and
+the perimeter together.
 
 \begin{figure}[H]\centering\includegraphics[width=\textwidth]{zip50_nash_milp.png}
-\caption{Left: unconstrained Nash with the Rook adjacency overlaid; each wholesaler
-holds a stray single-zip island. Centre: the contiguous MILP solution. Right: the
+\caption{Left: unconstrained Nash with the Delaunay adjacency overlaid; $a$ is already
+one block, $b$ holds a four-zip island. Centre: the contiguous MILP solution. Right: the
 bargaining set --- grey points are the prefix frontier, dotted curves are level sets of
 $g_ag_b$, and the Nash point is where the highest attainable level curve touches the
-frontier. The utilitarian corner leaves $b$ with $0.24$.}\end{figure}
+frontier. The utilitarian corner leaves $b$ with a gain of $2.04$.}\end{figure}
 
 \section{Contestability}\label{sec:contest}
 Where are the hard decisions? Two components, multiplied.
@@ -475,11 +475,12 @@ Where are the hard decisions? Two components, multiplied.
 \text{stake}_z=\frac{u_a(z)}{g_a}+\frac{u_b(z)}{g_b},
 \end{equation}
 the relative swing in $\log g_ag_b$. On the instance it ranged over
-$[0.0336,\ 0.3556]$.
+$[0.0115,\ 0.1216]$.
 
 \paragraph{Doubt.} The flip rate $2\min(p,1-p)$ under uncertainty. Sweeping
-$\theta\in[0.20,0.60]$ and $\lambda\in[0.10,0.50]$ moves few zips; perturbing the
-\emph{data} by $10\%$ on sales and $6\%$ on opportunity moves $34$ of $50$.
+$\theta\in[0.20,0.60]$ and $\lambda\in[0.10,0.50]$ alone moves $3$ of $50$ zips;
+perturbing the \emph{data} by $10\%$ on sales and $6\%$ on opportunity moves $32$ of
+$50$.
 
 \begin{resultbox}
 Parameter uncertainty is nearly irrelevant here; data uncertainty dominates. Getting
@@ -488,17 +489,18 @@ $A_z$ and $B_z$ right matters more than settling $\lambda$.
 
 \begin{center}\begin{tabular}{lrrrl}\toprule
 rank & zip & stake & doubt & quadrant\\ \midrule
-1 & 32 & $0.3387$ & $0.362$ & adjudicate\\
-2 & 22 & $0.1378$ & $0.792$ & adjudicate\\
-3 & 19 & $0.1028$ & $0.873$ & adjudicate\\
-4 & 28 & $0.0882$ & $0.915$ & coin-flip\\
-5 & 10 & $0.0597$ & $0.992$ & coin-flip\\
+1 & 37 & $0.0541$ & $0.613$ & adjudicate\\
+2 & 32 & $0.1159$ & $0.243$ & adjudicate\\
+3 & 22 & $0.0471$ & $0.537$ & adjudicate\\
+4 & 19 & $0.0352$ & $0.540$ & adjudicate\\
+5 & 28 & $0.0302$ & $0.570$ & coin-flip\\
 \bottomrule\end{tabular}\end{center}
 
-\noindent Four zips fall in the adjudicate quadrant; the top five carry $52\%$ of total
-contestability. Zip $32$ carries by far the largest stake and moderate doubt, so it is
-both the biggest and the most genuinely open question --- unlike under an equalising
-criterion, where it registered as large but settled.
+\noindent Splitting stake and doubt at their medians, nine zips fall in the adjudicate
+quadrant; the top five carry $52\%$ of total contestability. Zip $37$ carries the
+largest doubt at moderate stake and zip $32$ the largest stake at moderate doubt --- the
+two biggest open questions are different zips for different reasons, not one dominant
+dispute.
 
 \begin{figure}[H]\centering\includegraphics[width=\textwidth]{nash_contestability.png}
 \caption{Contestability as stake $\times$ doubt. Left: mapped, Nash boundary in cyan,
@@ -519,14 +521,16 @@ L_{ij}&=P_iM_j-P_jM_i+Q_jM_i-Q_iM_j .
 \end{aligned}
 \end{equation}
 One explicit expression per pair; in $\theta$ the condition is quadratic, hence also
-closed form. On the instance the Nash allocation takes only \textbf{ten distinct values}
-across $\lambda\in[0.02,0.90]$.
+closed form. This ordering is unaffected by the disagreement point --- $r_z=u_a(z)/u_b(z)$
+does not involve $d$ --- but which prefix the Nash criterion selects does. On the
+instance at $d=(0,0)$ the Nash allocation takes only \textbf{two distinct values} across
+$\lambda\in[0.02,0.90]$: $21$ zips on a narrow band, $22$ elsewhere.
 
 \begin{resultbox}
-$\lambda=0.30$ sits inside a flat interval from $0.265$ to $0.506$: anyone who believes
-a dollar of untapped opportunity is worth between roughly $27$ and $50$ cents of booked
-production obtains the same map. Nearly all sensitivity is crowded below
-$\lambda\approx0.14$.
+$\lambda=0.30$ sits inside a flat interval from $0.208$ to at least $0.994$: anyone who
+believes a dollar of untapped opportunity is worth between roughly $21$ cents and
+essentially all of a dollar of booked production obtains the same map. All of the
+switching happens in a narrow band, $\lambda\in(0.026,\,0.208)$.
 \end{resultbox}
 
 \noindent This is a stronger instrument than a local derivative: rather than reporting
@@ -536,15 +540,17 @@ produces each.
 \section{Opportunity balance}\label{sec:opp}
 Before the merger both wholesalers covered the whole market, each with access to
 $M=40$ at penetrations of $7.5\%$ and $4.5\%$. The honest framing is that both end with
-roughly half of what they had. Under Nash, $M_a=21.23$ ($53.1\%$) against $M_b=18.77$,
-an imbalance of $6.1\%$.
+roughly half of what they had. Under Nash, $M_a=19.57$ ($48.9\%$) against $M_b=20.43$,
+an imbalance of $2.2\%$.
 
 \begin{resultbox}
 \textbf{$\lambda$ is the opportunity-balance dial.} The headroom term places most of the
 weight on opportunity at moderate $\lambda$, so the criterion balances market size
-without being asked to. Imbalance falls monotonically from $19.5\%$ at $\lambda=0.02$ to
-about $1\%$ at $\lambda=0.70$. ``How much should untapped opportunity count?'' and
-``should territories carry equal market size?'' are the same question.
+without being asked to. Here the effect is a single step rather than a smooth decline:
+imbalance sits at $4.4\%$ for $\lambda\lesssim0.21$ and drops to $1.1\%$ once
+$\lambda\gtrsim0.21$, tracking the same breakpoint identified in
+Section~\ref{sec:breaks}. ``How much should untapped opportunity count?'' and ``should
+territories carry equal market size?'' are the same question.
 \end{resultbox}
 
 \noindent Imposing equal opportunity as a hard condition is possible but is a strong
@@ -586,21 +592,25 @@ Section~\ref{sec:instance}:
 \begin{center}\begin{tabular}{lrrrrrr}\toprule
 \textbf{criterion} & $k$ & $g_a$ & $g_b$ & $g_ag_b$ & $\min(g)$ & $|g_a/\Amax-g_b/\Bmax|$\\
 \midrule
-\textbf{Nash} & $25$ & $4.9360$ & $4.8807$ & $\mathbf{24.091}$ & $4.8807$ & $0.0286$\\
-equal gain & $25$ & $4.9360$ & $4.8807$ & $24.091$ & $4.8807$ & $0.0286$\\
-egalitarian & $25$ & $4.9360$ & $4.8807$ & $24.091$ & $4.8807$ & $0.0286$\\
-Kalai--Smorodinsky & $24$ & $4.6807$ & $5.1301$ & $24.012$ & $4.6807$ & $0.0137$\\
-equal opportunity & $22$ & $4.4423$ & $5.3628$ & $23.823$ & $4.4423$ & $0.0532$\\
-utilitarian & $46$ & $9.6330$ & $0.2395$ & $2.307$ & $0.2395$ & $0.8107$\\
+\textbf{Nash} & $22$ & $7.4423$ & $7.1628$ & $\mathbf{53.308}$ & $7.1628$ & $0.0016$\\
+equal gain & $21$ & $7.2232$ & $7.3765$ & $53.282$ & $7.2232$ & $0.0286$\\
+egalitarian & $21$ & $7.2232$ & $7.3765$ & $53.282$ & $7.2232$ & $0.0286$\\
+Kalai--Smorodinsky & $22$ & $7.4423$ & $7.1628$ & $53.308$ & $7.1628$ & $0.0016$\\
+equal opportunity & $22$ & $7.4423$ & $7.1628$ & $53.308$ & $7.1628$ & $0.0016$\\
+utilitarian & $46$ & $12.6330$ & $2.0395$ & $25.765$ & $2.0395$ & $0.7204$\\
 \bottomrule\end{tabular}\end{center}
 
-\noindent Nash, equal gain and the egalitarian criterion coincide. Kalai--Smorodinsky
-differs substantively rather than by artefact: it equalises \emph{fractions} of
-attainable gain, and $\Bmax=12.30$ exceeds $\Amax=11.60$ precisely because $b$ brought
-the smaller book and has the lower baseline to clear. KS therefore awards more absolute
-gain to the wholesaler who brought less production --- defensible in principle, awkward
-to deliver. The utilitarian row shows what fairness buys: unconstrained, $a$ takes $46$
-zips and leaves $b$ a gain of $0.24$.
+\noindent Nash, Kalai--Smorodinsky and equal opportunity coincide here; equal gain and
+the egalitarian criterion agree with each other but differ from Nash by one zip. This is
+the reverse pairing from the pre-merger baseline, where Nash coincided with equal gain
+and egalitarian instead --- a reminder that which criteria happen to agree is a property
+of the baseline, not a robust structural fact. Unlike the pre-merger baseline,
+$\Amax=14.604$ now exceeds $\Bmax=14.100$ in the natural direction: $a$ brought the
+bigger book ($S_a=3.0$ against $S_b=1.8$) and, at $d=(0,0)$, also has the bigger
+attainable maximum, so Kalai--Smorodinsky no longer has to award more absolute gain to
+the smaller-book wholesaler to reach its target fraction --- which is presumably why it
+now coincides with Nash rather than fighting it. The utilitarian row shows what fairness
+buys: unconstrained, $a$ takes $46$ zips and leaves $b$ a gain of $2.04$.
 
 \paragraph{Equalisation can destroy value.} Minimising a difference is not a monotone
 objective, and the unconstrained equalising MILP illustrates the hazard: it reached a KS
@@ -677,11 +687,11 @@ hit the target more precisely. Over $400{,}000$ random subsets of the worked ins
 
 \begin{center}\begin{tabular}{lrrl}\toprule
 criterion & best prefix & best random subset & \\ \midrule
-utilitarian $\max g_a+g_b$ & $32.983$ & $32.894$ & prefix holds\\
-Nash $\max g_ag_b$ & $210.253$ & $201.896$ & prefix holds\\
-egalitarian $\max\min(g)$ & $13.382$ & $14.096$ & \textbf{violated}\\
-equal gain $\min|g_a-g_b|$ & $2.3287$ & $0.0001$ & \textbf{violated}\\
-Kalai--Smorodinsky & $0.02240$ & $0.000004$ & \textbf{violated}\\
+utilitarian $\max g_a+g_b$ & $14.673$ & $14.630$ & prefix holds\\
+Nash $\max g_ag_b$ & $53.308$ & $53.101$ & prefix holds\\
+egalitarian $\max\min(g)$ & $7.223$ & $7.273$ & \textbf{violated}\\
+equal gain $\min|g_a-g_b|$ & $0.1533$ & $0.0000$ & \textbf{violated}\\
+Kalai--Smorodinsky & $0.00160$ & $0.00000$ & \textbf{violated}\\
 \bottomrule\end{tabular}\end{center}
 
 \noindent The prefix table therefore remains exact for Nash, and is a fast restriction
@@ -689,6 +699,20 @@ for the others --- one with the merit of staying on a family of allocations orde
 exchange rate.
 
 \section{The mixture-quantile shortcut}\label{app:mixture}
+
+\begin{warnbox}
+\textbf{Open item: this appendix still assumes the discarded $d=(\Sa,\Sb)$ baseline.}
+The derivation below collects $g_a=g_b$ under the pre-merger convention, so $q$'s
+numerator carries $\Sa,\Sb$ terms that do not belong to \eqref{eq:gains} at $d=(0,0)$.
+At the zero baseline the equal-gain condition is simply
+$\sum_{z\in S}u_a(z)=\sum_{z\notin S}u_b(z)$, i.e.\ $\Phi(S)=q$ with $\Sa=\Sb=0$
+substituted into $q$ below --- a strictly simpler target, not a harder one --- but the
+closed-form $K_a,K_b,K_M,q_{KS}$ for Kalai--Smorodinsky have not been re-derived at
+$d=0$, and \texttt{verify\_algebra.py} still certifies only the superseded baseline
+(HANDOFF.md trap list). Left as pending rather than silently repatched with unverified
+numbers.
+\end{warnbox}
+
 For the \emph{equalisation} criteria the continuum analysis yields an appealing
 shortcut. Collecting \eqref{eq:gains} under $g_a=g_b$ gives
 \begin{equation}
