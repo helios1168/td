@@ -139,6 +139,122 @@ def _density_base(dens, n, gamma, dens_floor, core_tail, core_cap, rng_core):
     return (1.0 - dens_floor) * dn ** gamma + dens_floor
 
 
+def _zscore(x):
+    x = np.asarray(x, float); s = x.std()
+    return (x - x.mean()) / (s if s > 0 else 1.0)
+
+
+def _smooth(G, x, k=3, nodelist=None):
+    """`k` rounds of x <- 0.5*x + 0.5*(W @ x) on the row-normalised adjacency, standardised.
+
+    Gives a spatially autocorrelated field on the actual adjacency graph (not on the
+    coordinates), which is what the twin's Moran's I is measured against.  Isolated nodes
+    keep degree 1 so W stays well defined.
+    """
+    import scipy.sparse as sp
+    nodes = list(G) if nodelist is None else list(nodelist)
+    A = nx.to_scipy_sparse_array(G, nodelist=nodes, format="csr", dtype=float)
+    deg = np.asarray(A.sum(axis=1)).ravel()
+    deg[deg == 0] = 1.0
+    W = sp.diags(1.0 / deg) @ A
+    x = np.asarray(x, float).copy()
+    for _ in range(int(k)):
+        x = 0.5 * x + 0.5 * (W @ x)
+    return _zscore(x)
+
+
+def _sigmoid(t):
+    return 1.0 / (1.0 + np.exp(-t))
+
+
+def _fit_intercept(z, slope, target, lo=-40.0, hi=40.0):
+    """b with mean(sigmoid(b - slope*z)) == target (monotone in b, so plain bisection)."""
+    target = float(np.clip(target, 1e-9, 1 - 1e-9))
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if _sigmoid(mid - slope * z).mean() < target:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
+def _top_frac(s, pool, frac):
+    """Boolean mask: the top `frac` of `pool` (a boolean mask) by score `s`."""
+    out = np.zeros(len(s), bool)
+    idx = np.flatnonzero(pool)
+    k = int(round(float(frac) * len(idx)))
+    if k <= 0 or len(idx) == 0:
+        return out
+    k = min(k, len(idx))
+    out[idx[np.argsort(-s[idx], kind="stable")[:k]]] = True
+    return out
+
+
+def _activity_masks(G, Mz, cfg, rng_act):
+    """(glue, untapped) masks: which zips have nothing, and which have only opportunity.
+
+    A graph-smoothed Gaussian field `f` is tilted by log density,
+    `s = f - slope * z(log M)`, so quiet zips cluster spatially *and* sit in the thin part
+    of the map -- exactly the "sparse active zips with zero-value glue" regime (mechanism
+    (d)) that real data adds.  `mode="quantile"` (the default) hits the requested
+    fractions exactly; `mode="bernoulli"` hits them in expectation via a fitted logistic
+    intercept, which is the closer analogue of the twin's per-decile P(A>0).
+    """
+    n = len(Mz)
+    p_glue = float(cfg.get("p_glue", 0.0) or 0.0)
+    p_unt = float(cfg.get("p_untapped", 0.0) or 0.0)
+    slope = float(cfg.get("slope", 1.5))
+    k = int(cfg.get("smooth_k", 3))
+    mode = cfg.get("mode", "quantile")
+    by_dec = cfg.get("p_untapped_by_decile")
+    if mode not in ("quantile", "bernoulli"):
+        raise ValueError(f"activity mode must be 'quantile' or 'bernoulli', got {mode!r}")
+    if p_glue + p_unt >= 1.0:
+        raise ValueError(f"p_glue + p_untapped must be < 1, got {p_glue} + {p_unt}")
+
+    f = _smooth(G, rng_act.standard_normal(n), k)
+    zM = _zscore(np.log(np.maximum(Mz, np.finfo(float).tiny)))
+    s = f - slope * zM                       # high s = quiet zip
+    dec = _deciles(Mz)
+
+    if mode == "quantile":
+        glue = _top_frac(s, np.ones(n, bool), p_glue)
+    else:
+        b0 = _fit_intercept(zM, slope, p_glue)
+        glue = _uniform_from(f) < _sigmoid(b0 - slope * zM)
+    rest = ~glue
+
+    if by_dec is not None:
+        by_dec = np.asarray(by_dec, float)
+        untapped = np.zeros(n, bool)
+        for d in range(10):
+            pool = rest & (dec == d)
+            untapped |= _top_frac(s, pool, by_dec[min(d, len(by_dec) - 1)])
+    elif mode == "quantile":
+        share = p_unt / max(1e-12, 1.0 - p_glue)
+        untapped = _top_frac(s, rest, share)
+    else:
+        b1 = _fit_intercept(zM[rest], slope, p_unt / max(1e-12, 1.0 - p_glue))
+        f2 = _smooth(G, rng_act.standard_normal(n), k)
+        untapped = rest & (_uniform_from(f2) < _sigmoid(b1 - slope * zM))
+    return glue, untapped & ~glue
+
+
+def _uniform_from(f):
+    """Standard-normal field -> spatially correlated uniform (probability integral xform)."""
+    from scipy.stats import norm
+    return norm.cdf(f)
+
+
+def _deciles(v):
+    """Rank-based decile index 0..9 (ties broken by position; exact 10-way split)."""
+    n = len(v)
+    order = np.argsort(np.asarray(v, float), kind="stable")
+    rank = np.empty(n, int); rank[order] = np.arange(n)
+    return np.minimum(rank * 10 // max(n, 1), 9)
+
+
 def _split_seeds(P, Mz, rep_host, host_seeds, k, split_pos, split_weight, rng_s):
     """Zips at which to plant an intruding seed inside `k` of the host firm's territories.
 
@@ -186,23 +302,29 @@ def _gini(v):
 def activity_report(G):
     """Instance-level activity/concentration summary (the `activity` knob's target stats).
 
-    active   : the zip has a book to fight over        (A + B > 0)
-    untapped : opportunity but no book yet             (M > 0, A = B = 0)
+    active   : the zip is worth something to somebody  (A + B + M > 0)
+    booked   : the zip has a book to fight over        (A + B > 0)
+    untapped : opportunity but no book yet             (M > 0, A = B = 0)  -- still active
     glue     : nothing at all                          (A = B = M = 0) -- mechanism (d)
-    `active_pieces` counts the components of the active subgraph; > 1 is the point of
-    S10_glue (zero-value zips that only connect other zips).
+
+    `active` is defined to agree with `contig_methods/base.covariates`, which calls a zip
+    active when `u_a + u_b > 0`; at lam > 0 an untapped zip has u > 0, so
+    `active_frac == 1 - glue_frac`.  `active_pieces` counts the components of the active
+    subgraph; > 1 is the point of S10_glue (zero-value zips that only connect other zips).
     """
     nodes = list(G)
     A = np.array([G.nodes[z]["A"] for z in nodes], float)
     B = np.array([G.nodes[z]["B"] for z in nodes], float)
     M = np.array([G.nodes[z]["M"] for z in nodes], float)
-    act = (A + B) > 0
-    glue = (M <= 0) & ~act
-    untapped = (M > 0) & ~act
+    booked = (A + B) > 0
+    act = (A + B + M) > 0
+    glue = ~act
+    untapped = (M > 0) & ~booked
     sub = G.subgraph([z for z, a in zip(nodes, act) if a])
     sizes = sorted((len(c) for c in nx.connected_components(sub)), reverse=True)
     return dict(n=len(nodes),
                 active_frac=float(act.mean()) if len(nodes) else 0.0,
+                booked_frac=float(booked.mean()) if len(nodes) else 0.0,
                 glue_frac=float(glue.mean()) if len(nodes) else 0.0,
                 untapped_frac=float(untapped.mean()) if len(nodes) else 0.0,
                 active_pieces=len(sizes),
@@ -375,6 +497,24 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
     need = np.maximum(Az + theta * Bz, Bz + theta * Az)
     bad = Mz < need                              # renorm may re-break a few: hard-fix
     Mz[bad] = 1.001 * need[bad]
+
+    # ---- activity: glue / untapped / active (mechanism (d)) --------------------
+    # Applied AFTER the two-pass headroom repair, never before: zeroing A, B, M only
+    # slackens M >= max(A + theta*B, B + theta*A), so the repair cannot be undone, while
+    # running it before would let the repair put opportunity back on a glue zip.  The
+    # final renormalisation of M to 40n/50 scales A and B by the same factor, so the
+    # saturation ratio survives losing the glue zips' opportunity.
+    if activity is not None:
+        glue_m, untapped_m = _activity_masks(G, Mz, activity, r_act)
+        off = glue_m | untapped_m
+        Az = Az.copy(); Bz = Bz.copy(); Mz = Mz.copy()
+        Az[off] = 0.0; Bz[off] = 0.0
+        Mz[glue_m] = 0.0
+        tot_M = Mz.sum()
+        if tot_M <= 0:
+            raise ValueError("activity zeroed every zip's opportunity (p_glue too high)")
+        f_act = (40.0 * n / 50) / tot_M
+        Mz *= f_act; Az *= f_act; Bz *= f_act
 
     # ---- states ------------------------------------------------------------------
     states = None
