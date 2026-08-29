@@ -497,6 +497,37 @@ def test_14_chord_error_closed_form():
     assert k == 50 and e > 1e-12
 
 
+def test_15_arc_capacities_match_their_definition():
+    """D5 says `cap_(u,v) = |R_K(v, K\\{u})|` and computes it from articulation points; this
+    checks that against the definition itself, by brute force, on 250 random graphs.
+
+    A cap that is too *small* silently cuts off feasible allocations -- the same class of
+    bug as CLAUDE.md trap 13, and one that `test_1` would only catch if it happened to bite
+    on those four tiny graphs.
+    """
+    rng = np.random.default_rng(0)
+    checked = 0
+    for _ in range(250):
+        n = int(rng.integers(3, 16))
+        G = nx.gnp_random_graph(n, float(rng.uniform(0.15, 0.6)),
+                                seed=int(rng.integers(10 ** 6)))
+        for K in nx.connected_components(G):
+            K = sorted(K)
+            if len(K) < flow.MIN_COMPONENT:
+                continue
+            sub = G.subgraph(K)
+            caps = flow.arc_caps(G, K, tight=True)
+            loose = flow.arc_caps(G, K, tight=False)
+            for (u, v), c in caps.items():
+                H = sub.subgraph([z for z in K if z != u])
+                want = float(len(nx.node_connected_component(H, v))) if v in H else 0.0
+                assert abs(c - want) < 1e-9, (K, (u, v), c, want)
+                assert c <= loose[(u, v)] + 1e-9        # tight is never looser than |K|-1
+                checked += 1
+    assert checked > 1000, checked
+    print(f"[D5] {checked} arc capacities match |R_K(v, K\\{{u}})| exactly")
+
+
 if __name__ == "__main__":
     t0 = time.time()
     for name, fn in sorted(((k, v) for k, v in list(globals().items())
