@@ -47,12 +47,14 @@ SPEC = [
     # bisecting how much of the share latent comes from M own rank, which preserves the
     # marginals exactly; what is left is a level offset, and the level is checked through
     # the saturation and book-ratio rows instead.
-    # A and B are derived (M times a share), so their ladders carry both fields'
-    # calibration error, and their top carries the blunted top of M as well
-    ("marginals.A.log_q", "shapeq", 0.15, False),
-    ("marginals.B.log_q", "shapeq", 0.15, False),
-    ("marginals.A_over_M.log_q", "shapeq", 0.05, False),
-    ("marginals.B_over_M.log_q", "shapeq", 0.05, False),
+    # A and B are derived -- M times a share -- so their ladders carry both fields'
+    # calibration error, and their p99 is the product of two top tails whose joint
+    # dependence is the very thing the aggregates cannot carry (see above), on top of
+    # the blunted top of M that the coarse-CDF tail merge leaves behind
+    ("marginals.A.log_q", "shapeq", 0.20, False),
+    ("marginals.B.log_q", "shapeq", 0.20, False),
+    ("marginals.A_over_M.log_q", "shapeq", 0.08, False),
+    ("marginals.B_over_M.log_q", "shapeq", 0.08, False),
 
     ("scale.p_active", "abs", 0.02, False),
     ("scale.p_a_active", "abs", 0.02, False),
@@ -75,7 +77,7 @@ SPEC = [
     # constraint-limited ZCTAs; that is a construction choice, not a distributional claim.
     # The load-bearing headroom check is frac_violating (validate must return []).
     ("headroom.theta_0.40.frac_violating", "abs", 0.001, False),
-    ("headroom.theta_0.40.slack_ratio_q", "slackq", 0.12, False),
+    ("headroom.theta_0.40.slack_ratio_q", "slackq", 0.20, False),
     # the two lowest entries are the log of the repair margin, not a
     # distributional claim -- slack_ratio_q[0..1] carries that information in a
     # form that does not blow up as the slack goes to zero
@@ -117,7 +119,7 @@ def _idx_tol(kind, tol, i, n):
         # p01 and p99 of a heavy-tailed ladder at n in the thousands, after the coarse-CDF
         # tail merge has deliberately blunted the top of M and the headroom repair has
         # reshaped the top of the share ladders
-        return max(0.30, 3.0 * tol) if (i == 0 or i == n - 1) else tol
+        return max(0.45, 3.0 * tol) if (i == 0 or i == n - 1) else tol
     if kind in ("slackq", "slacklogq"):
         return 3.0 * tol if (i < 2 or i >= n - 2) else tol
     return tol

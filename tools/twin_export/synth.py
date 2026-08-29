@@ -426,6 +426,76 @@ def rescale_books(A, B, M, saturation, book_ratio):
 
 
 # ------------------------------------------------------------------------- step 6
+#: How severe a headroom violation has to be before `relieve_by_swap` moves the share
+#: rather than letting the joint clip shrink it.  **0.0 disables the mechanism, which is the
+#: default.**  Measured on the 5000-ZCTA stand-in: swapping buys a slightly better top of
+#: the A/M ladder and costs more than it buys everywhere else -- every swap is a pair of
+#: extreme shares changing places, and the A-B correlation and B's spatial autocorrelation
+#: both live in exactly that tail (corr(log A, log B) fell from 0.19 to 0.00, Moran's I of
+#: log B from 0.33 to 0.20).  Kept, off, because on data whose headroom binds much harder
+#: than the stand-in's it is the only lever that does not eat the share ladder.
+SWAP_CLIP_FLOOR = 0.0
+
+
+def relieve_by_swap(A, B, M, theta, dec=None, rounds=4, margin=0.999,
+                    clip_floor=SWAP_CLIP_FLOOR):
+    """Permute the B *shares* within each M-decile to relieve the headroom constraint.
+
+    The shares of A and B are drawn from their own measured marginals with only a
+    correlation between them, so nothing stops a ZCTA that drew a near-saturated A from also
+    drawing a large B.  Scaling both down is the fallback, but it eats the top of the share
+    ladders, which is exactly where the aggregates are most informative.  Moving the
+    offending share onto a ZCTA that has headroom to spare costs nothing distributionally:
+    what is permuted is B/M, so its marginal is exactly preserved, and the permutation is
+    confined to one M-decile at a time, so the per-decile share curves are preserved too.
+    (Permuting B itself would not do: B/M then changes, because M differs across ZCTAs.)
+
+    Only the *severe* violations are moved -- those where clipping would cost the ZCTA more
+    than `1 - clip_floor` of its book.  Those are the ones that damage the top of the share
+    ladder.  Mild violations are left to the gentle joint clip, because every swap is a pair
+    of extreme values changing places, and swapping all of them would rewrite the A-B
+    correlation and B's spatial field in the tail where both statistics live.
+    """
+    A = np.asarray(A, dtype=float)
+    M = np.asarray(M, dtype=float)
+    pos = M > 0
+    b = np.zeros_like(M)
+    b[pos] = np.asarray(B, dtype=float)[pos] / M[pos]
+    a = np.zeros_like(M)
+    a[pos] = A[pos] / M[pos]
+    cap = np.zeros_like(M)
+    cap[pos] = margin * np.minimum((1.0 - a[pos]) / max(theta, 1e-12),
+                                   1.0 - theta * a[pos])
+    cap = np.maximum(cap, 0.0)
+    groups = [np.flatnonzero(pos)] if dec is None else \
+        [np.flatnonzero(pos & (dec == k)) for k in range(NDEC)]
+    n_swaps = 0
+    for _ in range(int(rounds)):
+        moved = 0
+        for g in groups:
+            if g.size < 2:
+                continue
+            slack = cap[g] - b[g]
+            if clip_floor <= 0.0:
+                continue
+            severe = (slack < 0) & (cap[g] < clip_floor * np.maximum(b[g], 1e-300))
+            bad = g[np.flatnonzero(severe)]
+            don = g[np.flatnonzero(slack > 0)]
+            if bad.size == 0 or don.size == 0:
+                continue
+            bad = bad[np.argsort(-b[bad])]
+            don = don[np.argsort(-(cap[don] - b[don]))]
+            for t in range(int(min(bad.size, don.size))):
+                i2, j2 = int(bad[t]), int(don[t])
+                if b[i2] <= cap[j2] and b[j2] <= cap[i2]:
+                    b[i2], b[j2] = b[j2], b[i2]
+                    moved += 1
+        n_swaps += moved
+        if moved == 0:
+            break
+    return b * M, n_swaps
+
+
 def clip_to_headroom(A, B, M, theta, margin=0.999):
     """Scale the offending (A, B) pairs down jointly until M >= max(A+theta B, B+theta A).
 
@@ -444,7 +514,7 @@ def clip_to_headroom(A, B, M, theta, margin=0.999):
 
 
 def headroom_repair(A, B, M, theta, saturation=None, book_ratio=None, rounds=12,
-                    tol=2e-3, margin=0.999):
+                    tol=2e-3, margin=0.999, dec=None):
     """Water-fill: clip to the headroom bound, rescale to the target totals, repeat.
 
     A single clip-then-rescale pass shifts the whole distribution: the clip takes mass off
@@ -458,7 +528,10 @@ def headroom_repair(A, B, M, theta, saturation=None, book_ratio=None, rounds=12,
     a0, b0 = float(A.sum()), float(B.sum())
     n_first = None
     n_last = 0
+    n_swaps = 0
     for _ in range(int(rounds)):
+        B, k = relieve_by_swap(A, B, M, theta, dec=dec, margin=margin)
+        n_swaps += k
         A, B, n_bad = clip_to_headroom(A, B, M, theta, margin=margin)
         if n_first is None:
             n_first = n_bad
@@ -469,8 +542,10 @@ def headroom_repair(A, B, M, theta, saturation=None, book_ratio=None, rounds=12,
         got = (A.sum() + B.sum()) / max(float(M.sum()), 1e-300)
         if n_bad == 0 and abs(got - saturation) <= tol * max(saturation, 1e-12):
             break
+    B, k = relieve_by_swap(A, B, M, theta, dec=dec, margin=margin)
+    n_swaps += k
     A, B, n_final = clip_to_headroom(A, B, M, theta, margin=margin)
-    rep = dict(margin=float(margin),frac_touched=(n_first or 0) / float(max(M.size, 1)),
+    rep = dict(margin=float(margin), n_swaps=int(n_swaps),frac_touched=(n_first or 0) / float(max(M.size, 1)),
                frac_touched_pass2=n_last / float(max(M.size, 1)),
                frac_touched_final=n_final / float(max(M.size, 1)),
                frac_A_lost=1.0 - (float(A.sum()) / a0 if a0 > 0 else 1.0),
@@ -650,18 +725,44 @@ def build_twin(inst, stats, cfg):
                             swap_rounds=cfg.swap_rounds)
     M = draw_M(stats, new_rank, n, rng_m)
     act_a, act_b, dec = draw_activity(W, M, stats, cfg, rng_act, rho2)
-    A, B = draw_shares(W, M, act_a, act_b, dec, stats, cfg, rng_sh, rho2=rho2)
     sat = _f(stats["scale"].get("saturation"), 0.25)
     br = _f(stats["scale"].get("book_ratio"), 1.0)
-    A, B = rescale_books(A, B, M, sat, br)
     # Park constraint-limited ZCTAs at the *smallest slack the real data actually shows*,
     # not hard against the bound: a repair that leaves zero slack shows up as a spurious
     # spike at the bottom of the twin's headroom-slack ladder.
     hb = stats.get("headroom", {}).get("theta_%.2f" % cfg.theta, {})
     sr = hb.get("slack_ratio_q") or [0.001]
     margin = 1.0 - float(np.clip(_f(sr[0], 0.001), 0.001, 0.30))
-    A, B, hrep = headroom_repair(A, B, M, cfg.theta, saturation=sat, book_ratio=br,
-                                 margin=margin)
+
+    # The headroom repair reassigns extreme shares, and those extremes are where the A-B
+    # correlation lives, so the correlation that comes out is not the one draw_shares was
+    # asked for.  Iterate on the request: draw, repair, measure, and correct the target by
+    # the residual.  Three or four passes; the map is close to linear.
+    target_pc = _f(stats.get("conditional", {}).get(
+        "partial_corr_logA_logB_given_decile"), float("nan"))
+    offset = 0.0
+    A = B = hrep = None
+    for it in range(4):
+        st_i = stats
+        if np.isfinite(target_pc) and offset != 0.0:
+            st_i = dict(stats)
+            cond = dict(stats["conditional"])
+            cond["partial_corr_logA_logB_given_decile"] = float(
+                np.clip(target_pc + offset, -0.98, 0.98))
+            st_i["conditional"] = cond
+        A, B = draw_shares(W, M, act_a, act_b, dec, st_i, cfg,
+                           np.random.default_rng([cfg.seed, TAG["share"]]), rho2=rho2)
+        A, B = rescale_books(A, B, M, sat, br)
+        A, B, hrep = headroom_repair(A, B, M, cfg.theta, saturation=sat, book_ratio=br,
+                                     margin=margin, dec=dec)
+        if not np.isfinite(target_pc):
+            break
+        got = _partial_pc(A, B, dec)
+        if not np.isfinite(got) or abs(got - target_pc) <= 0.02:
+            break
+        if it < 3:
+            offset += (target_pc - got)
+    hrep["partial_corr_offset"] = float(offset)
     lab_a, lab_b, rrep = rep_maps(inst.G, M, inst.state, stats, cfg, rng_a, rng_b, n=n)
 
     report = dict(headroom=hrep, reps=rrep, rho=rho, rho2=rho2,

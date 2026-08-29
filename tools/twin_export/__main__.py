@@ -416,8 +416,9 @@ BLOCK_NOTES = {
 
 def write_leaving(st, path, cfg):
     meta = st.get("meta", {})
-    scale_note = ("stripped -- every value column was divided by its own median before "
-                  "fitting, so no dollar amount appears anywhere"
+    scale_note = ("stripped -- M, A and B were all divided by one common number, the "
+                  "median positive M, so no dollar amount appears anywhere and every "
+                  "ratio is untouched"
                   if meta.get("strip_scale", True)
                   else "NOT stripped -- values are in their own units (--no-strip-scale)")
     txt = [LEAVING_INTRO % dict(min_support=meta.get("min_support", cfg.min_support),
