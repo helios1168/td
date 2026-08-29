@@ -108,8 +108,9 @@ instance's own `[g_lo, g_hi]`, never absolute constants.
 
 Known environment issue (2026-08-29): HiGHS 1.15.1 can return "Status 4: Solve error" after
 proving optimality, because its own post-check finds the returned solution 1e-6 primal
-infeasible.  `run_milp`'s docstring has the diagnosis and the deterministic retry ladder;
-`extra["retried_without_tol"]` / `extra["retried_random_seed"]` record when it fired.
+infeasible.  `run_milp`'s docstring has the diagnosis and the six-rung deterministic escape
+ladder; `extra["retried_without_tol"]`, `extra["retried_random_seed"]` and
+`extra["milp_rung"]` record when it fired.
 """
 from __future__ import annotations
 
@@ -138,7 +139,18 @@ VARIANTS = {
 MIN_COMPONENT = 3          # components of 1 or 2 nodes need no connectivity rows
 Z_FLOOR = -60.0            # z_a / z_b lower bound when g_lo is 0 (feasibility probes only)
 _TOL_OPTS = dict(mip_feasibility_tolerance=1e-9, primal_feasibility_tolerance=1e-9)
-_RETRY_SEEDS = (1, 7, 17)   # deterministic ladder for the HiGHS "Solve error" post-check
+# Deterministic escape ladder for the HiGHS "Solve error" post-check (see run_milp).  Rung 0
+# is the intended configuration; each later rung perturbs the search enough to land on a
+# numerically cleaner optimal vertex.  Both `presolve=False` and `random_seed` are needed:
+# each rescues a model the other does not.
+_LADDER = (
+    dict(),
+    dict(drop_tol=True),
+    dict(presolve=False),
+    dict(drop_tol=True, presolve=False),
+    dict(random_seed=1),
+    dict(drop_tol=True, presolve=False, random_seed=7),
+)
 
 
 # ============================================================================ row buffer
@@ -687,7 +699,8 @@ def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bo
     Forces `mip_rel_gap = mip_abs_gap = 0` (CLAUDE.md trap 12: HiGHS' default 1e-4 relative
     gap silently turns "optimal" into "gap_limit") and walks a deterministic retry ladder
     when HiGHS returns "Status 4: Solve error".  Returns `(res, flags)` with
-    `flags = {"retried_without_tol": bool, "retried_random_seed": bool}`.
+    `flags = {"retried_without_tol", "retried_random_seed", "milp_rung", "milp_retries"}`
+    (`milp_rung` is the `_LADDER` index that succeeded, or -1 if none did).
 
     The 2026-08-29 environment issue, diagnosed here (scipy 1.18.1 / HiGHS 1.15.1) on
     `T0_n40_s8__A0_B0` under `flow_selroot` with `disp=True`:
@@ -707,9 +720,16 @@ def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bo
         instead does *not* help: 1e-4 and 1e-3 still error, so the check is not simply
         reading the option back.)
       * Once enough tangents are in, *every* option set errors -- default tolerances
-        included.  What does recover it is `random_seed`: 1, 7 and 17 all return the same
-        optimum and the same dual bound.  A different search path lands on an equally
-        optimal but numerically cleaner vertex.
+        included.  What recovers it is a different search path onto an equally optimal but
+        numerically cleaner vertex, and no single perturbation is enough for every model:
+        on `T0_n40_s8__A0_B0` `random_seed in {1, 7, 17}` all work while `presolve=False`
+        does not, and on `hand_p8` (second OA round) it is exactly the other way round.
+        Hence the six-rung `_LADDER`, which crosses the two.  Also useless on both:
+        `mip_detect_symmetry`, `mip_heuristic_effort`, `simplex_strategy`, `solver=ipm/pdlp`,
+        and any value of `primal_feasibility_tolerance`.  Loosening
+        `mip_feasibility_tolerance` to 1e-7/1e-8 does help on `hand_p8` -- consistent with
+        the violation being big-M slop `cap * x` on a near-integral x -- but tightening it
+        to 1e-10 does not, so it is not a monotone knob and is not used as a rung.
       * Forwarding **`threads`** is unsafe on its own: `threads=1` with nothing else set
         returns "HiGHS Status 0: Not Set" on the same model, so it is never passed.
         Single-threading is the harness' job anyway (the bench pins OMP/OPENBLAS/MKL to 1
@@ -717,8 +737,9 @@ def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bo
 
     Both failures are model-dependent, not universal -- the identical option sets solve a
     random dense MILP fine -- which is why this is a retry ladder and not a global setting.
-    The ladder is deterministic (fixed seeds in a fixed order), so the method stays
-    reproducible as the contract requires.
+    The ladder is deterministic (fixed seeds, fixed order), so the method stays reproducible
+    as the contract requires, and rung 0 is what runs on a healthy model -- the perturbed
+    rungs cost nothing unless something has already gone wrong.
     """
     opts = dict(time_limit=max(float(time_limit), 1e-3), mip_rel_gap=0.0, mip_abs_gap=0.0)
     if extra_opts:
@@ -738,10 +759,28 @@ def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bo
         return (getattr(r, "status", None) == 4
                 or "solve error" in str(getattr(r, "message", "")).lower())
 
-    flags = dict(retried_without_tol=False, retried_random_seed=False)
-    res = _call(opts)
-    if not _broken(res):
-        return res, flags
+    rungs = []
+    for delta in _LADDER:
+        o = dict(opts)
+        if delta.get("drop_tol"):
+            for k in _TOL_OPTS:
+                o.pop(k, None)
+        o.update({k: v for k, v in delta.items() if k != "drop_tol"})
+        rungs.append((delta, o))
+
+    flags = dict(retried_without_tol=False, retried_random_seed=False, milp_rung=0,
+                 milp_retries=0)
+    res = None
+    for i, (delta, o) in enumerate(rungs):
+        res = _call(o)
+        flags["milp_rung"] = i
+        flags["milp_retries"] = i
+        if not _broken(res):
+            flags["retried_without_tol"] = bool(delta.get("drop_tol"))
+            flags["retried_random_seed"] = "random_seed" in delta
+            return res, flags
+    flags["milp_rung"] = -1
+    return res, flags
     if use_tol:
         flags["retried_without_tol"] = True
         res = _call({k: v for k, v in opts.items() if k not in _TOL_OPTS})
