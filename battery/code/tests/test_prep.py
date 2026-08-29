@@ -103,11 +103,15 @@ def test_registry_variants():
 
 
 def test_missing_inner_is_a_clean_error_row():
+    # (was prep_e1_flow until W4 merged and `flow` became real -- use an inner that can
+    # never exist)
     G = path_instance(8); nodes = sorted(G)
-    _, res = _spec_run("prep_e1_flow", G, nodes)
+    from contig_methods import REGISTRY as _R
+    res = base.run_method(_R["prep"].solve, G, nodes, theta=THETA, lam=LAM, rho=0.0,
+                          time_limit=5.0, inner="no_such_method", rules=("e1",))
     row = base.evaluate(G, nodes, res, theta=THETA, lam=LAM, rho=0.0)
     assert res.status == "error" and row["valid"]
-    assert "flow" in res.message and "not registered" in res.message
+    assert "no_such_method" in res.message and "not registered" in res.message
 
 
 # ============================================================================ hand: Rule L
