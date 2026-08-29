@@ -105,7 +105,7 @@ def _brute(G, nodes, rho=0.0):
 def test_registry():
     assert "cbc_tree" in REGISTRY
     spec = REGISTRY["cbc_tree"]
-    assert spec.base_name == "cbc_tree" and spec.exact and spec.max_n is None
+    assert spec.base_name == "cbc_tree" and not spec.exact and spec.max_n is None   # demoted 2026-08-30
     assert spec.kwargs == {}
     assert "cbc_tree_minsep" in REGISTRY
     assert REGISTRY["cbc_tree_minsep"].base_name == "cbc_tree"
@@ -119,8 +119,8 @@ def test_hand_instances_match_brute():
         res, row = _run(G, nodes)
         bres = _brute(G, nodes)
         assert row["valid"], (name, row["violations"])
-        assert res.status == "optimal", (name, res.status, res.message)
-        assert row["valid_certificate"], (name, row)
+        assert res.extra.get("cbc_claimed_status") == "optimal", (name, res.status, res.message)
+        assert row["valid"] and res.status == "heuristic" and res.UB is None, (name, row)
         assert row["excess_pieces"] == 0, (name, row)
         assert res.ub_scope == "global"
         assert abs(res.LB - bres.LB) < 1e-9, (name, res.LB, bres.LB)
@@ -132,7 +132,7 @@ def test_hand_instances_minsep_variant_also_matches():
         res, row = _run(G, nodes, minsep=True)
         bres = _brute(G, nodes)
         assert row["valid"], (name, row["violations"])
-        assert res.status == "optimal", (name, res.status, res.message)
+        assert res.extra.get("cbc_claimed_status") == "optimal", (name, res.status, res.message)
         assert abs(res.LB - bres.LB) < 1e-9, (name, res.LB, bres.LB)
 
 
@@ -162,17 +162,17 @@ def test_t0_matches_brute_exactly():
         res, row = _run(pi.G, pi.nodes)
         bres = _brute(pi.G, pi.nodes)
         assert row["valid"], (sp.name, row["violations"])
-        assert res.status in ("optimal", "gap_limit", "time_limit"), \
+        assert res.status in ("heuristic", "optimal", "gap_limit", "time_limit"), \
             (sp.name, res.status, res.message)
         if res.LB is not None:
             assert row["excess_pieces"] == 0, (sp.name, row)
             # never a claimed lower bound above the true optimum (this session's core bug)
             assert res.LB <= bres.LB + 1e-9, (sp.name, res.LB, bres.LB)
-        if res.status == "optimal":
+        if res.extra.get("cbc_claimed_status") == "optimal":
             n_optimal += 1
             assert res.LB is not None and abs(res.LB - bres.LB) < 1e-9, \
                 (sp.name, res.LB, bres.LB)
-            assert res.UB is not None and abs(res.UB - res.LB) <= base.CERT_TOL
+            assert res.UB is None and res.extra.get("cbc_claimed_UB") is not None and abs(res.extra["cbc_claimed_UB"] - res.LB) <= base.CERT_TOL
     print(f"\n  T0: {n_optimal}/{len(_t0())} certified optimal within OUTER_ROUNDS="
           f"{cbc_tree.OUTER_ROUNDS} (never a false certificate on any of them)")
     assert n_optimal >= 1, "not even the smallest T0 pairs certified -- investigate"
@@ -220,7 +220,7 @@ def test_deterministic_to_a():
     res1, _ = _run(pi.G, pi.nodes)
     res2, _ = _run(pi.G, pi.nodes)
     assert res1.to_a == res2.to_a
-    assert res1.status == res2.status == "optimal"
+    assert res1.extra.get("cbc_claimed_status") == res2.extra.get("cbc_claimed_status") == "optimal"
     assert abs(res1.LB - res2.LB) < 1e-12
 
 
@@ -230,7 +230,7 @@ def test_warm_start_from_brute_optimum_accepted():
     bres = _brute(pi.G, pi.nodes)
     res, row = _run(pi.G, pi.nodes, warm_start=bres.to_a)
     assert row["valid"], row["violations"]
-    assert res.status == "optimal"
+    assert res.extra.get("cbc_claimed_status") == "optimal"
     assert res.LB >= bres.LB - 1e-9
 
 
@@ -252,12 +252,12 @@ def test_harness_smoke_all_valid_and_certified():
             # reach `"optimal"` within a bounded cap (cbc_tree.py's `solve()` docstring
             # findings #1-#5).
             assert r["valid"], (r["instance"], r["violations"])
-            assert r["status_eff"] in ("optimal", "gap_limit", "time_limit"), \
+            assert r["status_eff"] in ("heuristic", "optimal", "gap_limit", "time_limit"), \
                 (r["instance"], r["status_eff"])
         with open(run / "summary.csv") as f:
             rd = list(csv_reader(f))
         row = [r for r in rd if r["method"] == "cbc_tree"][0]
-        assert float(row["certified_frac"]) > 0.0, row
+        assert float(row["certified_frac"]) == 0.0 and float(row["feasible_frac"]) > 0.0, row   # heuristic after demotion
     finally:
         shutil.rmtree(run, ignore_errors=True)
 
@@ -278,7 +278,7 @@ def test_t1_spot_check_small_pairs():
         t0 = time.perf_counter()
         res, row = _run(pi.G, pi.nodes)
         assert row["valid"], (sp.name, row["violations"])
-        assert res.status in ("optimal", "gap_limit", "time_limit"), (sp.name, res.status)
-        if res.status == "optimal":
+        assert res.status in ("heuristic", "optimal", "gap_limit", "time_limit"), (sp.name, res.status)
+        if res.extra.get("cbc_claimed_status") == "optimal":
             assert row["excess_pieces"] == 0
         assert time.perf_counter() - t0 < CAP + 15

@@ -119,7 +119,7 @@ except ImportError as _e:                                              # pragma:
 from . import base
 
 NAME = "cbc_tree"
-EXACT = True
+EXACT = False   # demoted 2026-08-30: python-mip's lazy rows are unreliable (see _demote)
 MAX_N = None
 N_SEEDS = 8            # geomspace tangent seeds per side, mirrors territory.nash_exact
 TANGENT_TOL = 1e-9      # z - log(g) violation threshold for a new lazy tangent
@@ -507,7 +507,7 @@ def _build_and_solve(G, nodes, idx, ua, ub, ua_sum, ub_sum, comps, edges, rho, s
 
 
 # --------------------------------------------------------------------------------- solve
-def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
+def _solve_cbc(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
           warm_start=None, reductions=None, trace=None, kappa=0.0,
           minsep=False, check_cuts=False, reference_to_a=None, **opts) -> base.Result:
     """Component-wise lazy connectivity cuts, best-effort, inside a CBC branch-and-cut tree
@@ -787,3 +787,27 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
                        extra=dict(minsep=bool(minsep), n_outer=n_outer),
                        message="cbc_tree: outer OA-restart budget exhausted before "
                                "tangent convergence")
+
+
+def solve(G, nodes, **kw):
+    """Run the CBC tree and **demote the result to a heuristic** (main-session decision,
+    2026-08-30, S1 review).
+
+    In the S1 screening `cbc_tree` returned `status="optimal"` with a global UB *below*
+    `brute`'s true optimum on two C2 pairs (a false certificate: python-mip 2.0's
+    `lazy_constrs_generator` does not reliably enforce a just-added row before CBC
+    finalises an incumbent -- the five findings in the module docstring), and two of its
+    jobs ignored both `max_seconds` and the SIGALRM backstop.  A bound that can be wrong
+    must not enter the cross-method UB*, so every result is reported as `heuristic`
+    with `UB=None`; the engine's own claim is preserved in `extra["cbc_claimed_status"]`
+    / `extra["cbc_claimed_UB"]` for the record.  `error` and `infeasible` pass through.
+    """
+    res = _solve_cbc(G, nodes, **kw)
+    if res.status in ("error", "infeasible"):
+        return res
+    res.extra = dict(res.extra or {}, cbc_claimed_status=res.status, cbc_claimed_UB=res.UB)
+    res.status = "heuristic"
+    res.UB = None
+    res.message = (res.message + "; " if res.message else "") + \
+        "cbc_tree: demoted to heuristic (python-mip lazy rows unreliable; see solve())"
+    return res

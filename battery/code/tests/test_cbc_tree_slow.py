@@ -47,9 +47,9 @@ def test_named_failures_report():
         row = base.evaluate(pi.G, pi.nodes, res, theta=THETA, lam=LAM, rho=0.0)
         t = time.perf_counter() - t0
         assert row["valid"], (sp.name, row["violations"])
-        if res.status == "optimal":
+        if res.extra.get("cbc_claimed_status") == "optimal":
             assert row["excess_pieces"] == 0, (sp.name, row)
-            assert row["valid_certificate"], (sp.name, row)
+            assert row["valid"] and res.status == "heuristic", (sp.name, row)
         ub = f"{res.UB:.6f}" if res.UB is not None else "None"
         lb = f"{row['LB']:.6f}" if row.get("LB") is not None else "None"
         gap = row.get("gap_nats")
