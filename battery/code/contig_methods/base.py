@@ -514,6 +514,9 @@ def _from_trace(tr: Trace, status: str, message: str) -> Result:
 
 
 # ------------------------------------------------------------------- lexi post-pass
+_LEXI_ENGINE_OPTS = frozenset(("lambda_inout", "cut_family", "minimal", "max_iter"))
+
+
 def lexi_perimeter(G, nodes, to_a, opt_value: float, method: Callable, *,
                    theta: float = 0.40, lam: float = 0.30, kappa: float = 0.0,
                    time_limit: float = 60.0, seed: int = 0, **opts):
@@ -522,5 +525,75 @@ def lexi_perimeter(G, nodes, to_a, opt_value: float, method: Callable, *,
     reuses the chosen engine; reported as `perimeter_lexi`, never changes LB/UB.
 
     Signature frozen here; the body is W9a's (the one sanctioned edit to this file).
+
+    Implementation (W9a).  The engine is always `contig_methods.loop_v2.solve_lexi` (the
+    only wired engine to date; other engines can be plugged in later without touching this
+    signature).  `method` names the engine the caller wants reused -- the harness passes
+    `mspec.solve`, i.e. whichever method's own `solve` produced `to_a` (see
+    `contiguity_bench.py::_lexi`).  If `method` is (or belongs to) `loop_v2` -- checked by
+    name, by `__module__`, or by identity with `loop_v2.solve` -- it is used silently;
+    otherwise a warning is issued (`method` is "not wired for the perimeter post-pass") and
+    `loop_v2`'s engine is used anyway, since it is the only one available -- this keeps
+    `--lexi` usable for every method in `rows.jsonl`, at the cost of the post-pass not
+    literally being method-specific except for `loop_v2` itself (the one case this unit's
+    acceptance test exercises: `--lexi --methods loop_v2`).  Recognised engine options
+    (`lambda_inout`, `cut_family`, `minimal`, `max_iter`) are passed through from `**opts`
+    when present (so a row produced by e.g. `loop_v2_nbr` gets its perimeter tie-break run
+    with `cut_family="nbr"` too); anything else in `**opts` (variant kwargs belonging to a
+    different method, such as `current`'s `milp_options`) is dropped, not forwarded.
+
+    Never trusts the engine: independently recomputes g_a, g_b, the value floor and
+    contiguity on whatever `to_a` the engine returns, and never returns a perimeter larger
+    than the input allocation's -- any failure (engine exception, no feasible iterate, value
+    floor violated, infeasible, or no improvement) falls back to the *original* `to_a` and
+    its own perimeter, status "fallback".
     """
-    raise NotImplementedError("lexi_perimeter is implemented by W9a (contig_methods/loop_v2)")
+    import warnings
+    from . import loop_v2 as _loop_v2   # deferred: avoids a base<->loop_v2 import cycle
+
+    nodes = list(nodes)
+    to_a_in = set(to_a) & set(nodes)
+    per_in = perimeter(G, nodes, to_a_in)
+
+    def _fallback(msg: str) -> dict:
+        return dict(perimeter=int(per_in), to_a=set(to_a_in), obj=None, status="fallback",
+                   iters=0, message=msg)
+
+    engine_name = method if isinstance(method, str) else getattr(method, "__name__", "")
+    engine_module = getattr(method, "__module__", "")
+    is_loop_v2 = (engine_name == "loop_v2" or engine_module.endswith(".loop_v2")
+                 or engine_module == "loop_v2" or method is getattr(_loop_v2, "solve", None))
+    if not is_loop_v2:
+        warnings.warn(
+            f"lexi_perimeter: engine {method!r} is not wired for the perimeter post-pass; "
+            "falling back to loop_v2's own engine", stacklevel=2)
+
+    engine_kwargs = {k: v for k, v in opts.items() if k in _LEXI_ENGINE_OPTS}
+    t0 = time.perf_counter()
+    try:
+        out = _loop_v2.solve_lexi(G, nodes, opt_value, theta=theta, lam=lam, kappa=kappa,
+                                  time_limit=max(time_limit - (time.perf_counter() - t0), 0.1),
+                                  seed=seed, **engine_kwargs)
+    except Exception as e:                                   # noqa: BLE001
+        return _fallback(f"lexi_perimeter: engine error {type(e).__name__}: {e}")
+
+    cand_to_a = out.get("to_a")
+    if cand_to_a is None:
+        return _fallback("lexi_perimeter: no feasible iterate from the engine")
+    cand_to_a = set(cand_to_a) & set(nodes)
+
+    ua, ub = utilities(G, nodes, theta, lam, kappa)
+    x = mask(nodes, cand_to_a)
+    ga, gb = gains(ua, ub, x)
+    if ga <= 0 or gb <= 0 or (math.log(ga) + math.log(gb)) < opt_value - 1e-9:
+        return _fallback("lexi_perimeter: candidate violates the value floor")
+    if not is_feasible(G, nodes, cand_to_a):
+        return _fallback("lexi_perimeter: candidate is not contiguous")
+
+    per = perimeter(G, nodes, cand_to_a)
+    if per > per_in:
+        return _fallback("lexi_perimeter: candidate did not improve on the input perimeter")
+
+    status = "optimal" if out.get("status") == "optimal" else "capped"
+    return dict(perimeter=int(per), to_a=cand_to_a, obj=float(math.log(ga) + math.log(gb)),
+               status=status, iters=int(out.get("iters", 0)))
