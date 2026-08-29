@@ -1130,11 +1130,35 @@ def _f1_warm_start(G, nodes, *, theta, lam, rho, respect_state, seed, budget):
     return set(res.to_a), "warm_f1"
 
 
+_TIGHTEN_WINDOW = 1e-5              # a certified-but-uncertifiable gap this small is the
+                                    # loosened rung's tolerance floor, nothing else
+
+
+def _near_certified(merged) -> bool:
+    """Is the merged answer inside `_TIGHTEN_WINDOW` of a certificate?
+
+    A rung at feastol f stores a solution that satisfies `za <= log(ga)` to about f, so its
+    recomputed certificate gap bottoms out near `2f` -- above `base.CERT_TOL` for every rung
+    but the first.  On the 124- and 135-zip C7b pairs that is exactly where the 1200 s re-run
+    landed: SCIP status `optimal`, recomputed gap 1.1e-7 and 3.0e-8, with ~1000 s unspent.
+
+    A gap this small is a *tolerance* result, not a search result, so it puts the ladder into
+    a terminal mode: try the rungs at the tolerance originally asked for (native, then OA,
+    warm-started at the allocation just proved -- which also tightens `_gain_floor`), and if
+    neither survives, stop.  Continuing the ordinary ladder from here is measurably wasted
+    budget: on the 124-zip pair it spent 1027 s in an OA rung whose dual bound came back at
+    6.4592 against the 6.45885 already in hand.
+    """
+    return (merged.LB is not None and merged.UB is not None
+            and base.CERT_TOL < merged.UB - merged.LB <= _TIGHTEN_WINDOW)
+
+
 def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
           warm_start=None, reductions=None, trace=None, kappa=0.0,
           formulation="native", repair=True, feastol=1e-9, check_opt=None,
           verbose=False, ls_moves=_MAX_LS_MOVES, refactor_interval=100,
           fallback_warm_start=True, mip_start="f1", max_rungs=_MAX_RUNGS,
+          tighten_back=True,
           sepa_frac=True, max_sepa_rounds=30, max_sepa_depth=0,
           sepa_thresholds=(0.5,), max_sepa_cuts=40, lp_params=None,
           **opts) -> base.Result:
@@ -1155,6 +1179,11 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
     If the ladder runs out while budget remains and the last rung was still aborting, extra
     OA rungs are appended (up to `max_rungs`) with a shifted random seed, so the budget is
     actually spent rather than returned unused.
+
+    The mirror case is `tighten_back`: a merged gap just above `base.CERT_TOL` is a
+    *tolerance* result, not a search result, so it ends the ordinary ladder and tries only
+    the rungs at the tolerance originally asked for -- native, then OA -- before stopping.
+    (`_near_certified`.)
     """
     t0 = time.perf_counter()
     deadline0 = t0 + float(time_limit)
@@ -1183,6 +1212,7 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
 
     merged = None
     attempts = []
+    tried = set()                             # (feastol, formulation) rungs already run
     k = 0
     while k < len(rungs) and len(attempts) < int(max_rungs):
         ft, form, seed_shift = rungs[k]
@@ -1212,12 +1242,21 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
                              nodes=res.nodes,
                              n_sepa_cuts=res.extra.get("n_sepa_cuts", 0)))
         merged = _merge(merged, res)
-        if merged.status == "optimal":
-            break
-        if not retryable:
-            break
+        tried.add((ft, form))
         if res.to_a is not None and res.LB is not None:
             ws = res.to_a                     # restart from the best allocation we did prove
+        if merged.status == "optimal":
+            break
+        if tighten_back and _near_certified(merged):
+            nxt = next((c for c in ((float(feastol), formulation), (float(feastol), "oa"))
+                        if c not in tried), None)
+            if nxt is None or (deadline0 - time.perf_counter()) <= _MIN_RUNG:
+                break                         # nothing tighter left to try: this is the answer
+            attempts[-1]["tighten_back"] = True
+            rungs.insert(k, (nxt[0], nxt[1], seed_shift))
+            continue
+        if not retryable:
+            break
         if k >= len(rungs) and (deadline0 - time.perf_counter()) > _MIN_RUNG:
             # the ladder is exhausted but the engine is still aborting and the budget is not
             # spent: keep going on the most robust rung with a shifted seed

@@ -2,8 +2,9 @@
 test_scip_tree_slow.py -- the W6 regression floor: the six named contiguity failures at a
 60 s cap, and the two largest C7b pairs (320 and 464 zips) as a gap-at-cap record.
 
-`SLOW = True`, so `run_all.py` skips this unless `TD_SLOW=1`.  Budget: ~5 minutes (five of
-the six named pairs certify in under 2 s; C7 A3/B3 and both C7b pairs run to the cap).
+`SLOW = True`, so `run_all.py` skips this unless `TD_SLOW=1`.  Budget: ~10 minutes (five of
+the six named pairs certify in under 2 s; C7 A3/B3 and both C7b pairs run to the cap -- since
+W6b they really do run to it, where before the retry ladder stopped them after 1-4 s).
 
 The printed tables are the numbers the W6 review asks for; the assertions are deliberately
 weak floors, not the measurements -- they exist so a regression in the separator, the primal
@@ -78,6 +79,27 @@ def test_named_failures_at_60s():
     assert len(certified) >= 5, f"regression: only {certified} certified, open {open_cases}"
     # C7 A3/B3 is the known-open one; if something *else* stopped certifying, say so loudly
     assert set(open_cases) <= {"C7_scale_n400__A3_B3"}, open_cases
+
+
+def test_the_open_case_spends_its_whole_budget():
+    """The W6b regression: an uncertified pair must use the cap, not 3 s of it.
+
+    Before W6b the retry ladder stopped on the first numerical abort, so C7 A3/B3 returned a
+    3e-3 gap after 3 s of a 60 s budget (and after 3 s of a 1200 s budget in S2).  It now runs
+    several rungs to the cap and lands near 1e-3.
+    """
+    sp = [s for s in I.named_failures() if s.name == "C7_scale_n400__A3_B3"]
+    assert len(sp) == 1
+    pi = I.build_pair(sp[0])
+    res, row = _solve(pi)
+    print(f"\n-- C7 A3/B3 budget use: t={res.t_total:.1f}s of {CAP:g}s, "
+          f"gap={row['gap_nats']:.2e}, rungs={res.extra['n_rungs']}")
+    for a in res.extra["attempts"]:
+        print("   ", a)
+    assert res.extra["n_rungs"] >= 2, res.extra["attempts"]
+    assert res.t_total > 0.8 * CAP, (res.t_total, CAP)
+    assert row["gap_nats"] < 3e-3, row["gap_nats"]
+    assert row["excess_pieces"] == 0
 
 
 def test_c7b_320_and_464_gap_at_cap():

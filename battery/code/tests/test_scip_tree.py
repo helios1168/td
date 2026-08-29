@@ -415,6 +415,88 @@ def test_short_stop_treats_scips_own_clock_as_a_failure_not_a_spent_budget():
     assert all(a["short_stop"] for a in res.extra["attempts"])
 
 
+def test_a_loosened_rung_that_certifies_is_retried_at_the_tight_tolerance():
+    """`tighten_back`: SCIP `optimal` at 1e-6 leaves a ~1e-7 gap; re-solve at 1e-9.
+
+    The S2 re-run landed exactly there on the 124- and 135-zip C7b pairs -- certified by
+    SCIP, gap 1.1e-7 / 3.0e-8, and ~1000 s of the 1200 s budget unspent.
+    """
+    pi = _t0()[0]
+    calls = []
+
+    def fake(G, nodes, **kw):
+        calls.append((kw["feastol"], kw["formulation"]))
+        if len(calls) == 3:                    # the loosened rung certifies to its tolerance
+            return base.Result(status="gap_limit", to_a=set(nodes[:1]), LB=5.0, UB=5.0 + 1e-7,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        if len(calls) == 4:                    # ... and the tight retry closes it
+            return base.Result(status="optimal", to_a=set(nodes[:1]), LB=5.0, UB=5.0,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="unknown", retryable=True))
+
+    real = ST._solve_once
+    ST._solve_once = fake
+    try:
+        res = ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                       time_limit=60.0, seed=0, mip_start=None)
+    finally:
+        ST._solve_once = real
+    # the tight native rung already ran as rung 1, so the retry is the tight OA one
+    assert calls == [(1e-9, "native"), (1e-7, "native"), (1e-6, "native"),
+                     (1e-9, "oa")], calls
+    assert res.extra["attempts"][2]["tighten_back"] is True
+    assert res.status == "optimal" and res.UB == 5.0 and res.LB == 5.0
+
+    # a near-certified gap is terminal: when the tight rungs are used up, stop -- do not
+    # spend the rest of the budget on the ordinary ladder (measured waste: 1027 s)
+    calls3 = []
+
+    def fake3(G, nodes, **kw):
+        calls3.append((kw["feastol"], kw["formulation"]))
+        if len(calls3) >= 3:
+            return base.Result(status="gap_limit", to_a=set(nodes[:1]), LB=5.0, UB=5.0 + 1e-7,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="unknown", retryable=True))
+
+    ST._solve_once = fake3
+    try:
+        res3 = ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                        time_limit=60.0, seed=0, mip_start=None)
+    finally:
+        ST._solve_once = real
+    assert calls3 == [(1e-9, "native"), (1e-7, "native"), (1e-6, "native"),
+                      (1e-9, "oa")], calls3
+    assert res3.status == "gap_limit"
+
+    # switched off, the ladder stops on the certified-but-coarse rung
+    calls2 = []
+
+    def fake2(G, nodes, **kw):
+        calls2.append(kw["feastol"])
+        if len(calls2) == 3:
+            return base.Result(status="gap_limit", to_a=set(nodes[:1]), LB=5.0, UB=5.0 + 1e-7,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="unknown", retryable=True))
+
+    ST._solve_once = fake2
+    try:
+        ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                 time_limit=60.0, seed=0, mip_start=None, tighten_back=False)
+    finally:
+        ST._solve_once = real
+    assert calls2 == [1e-9, 1e-7, 1e-6], calls2
+
+
 def test_mip_start_f1_feeds_the_solver_and_is_switchable():
     """`mip_start="f1"` hands `warm.solve(method="f1")`'s allocation to SCIP as a MIP start."""
     pi = _t0()[-1]
