@@ -283,12 +283,17 @@ def coarse_cdf(x, n_bins=200, min_support=20, tail_dominance=0.5):
 
     counts = np.array([b.size for b in bins], dtype=float)
     means = np.array([b.mean() for b in bins], dtype=float)
+    share = float(bins[-1].max() / max(bins[-1].sum(), 1e-30))
     return dict(n=int(n), n_bins=int(len(bins)),
                 bin_p=[float(c / n) for c in counts],
                 bin_mean=[float(m) for m in means],
                 n_bins_merged=int(merged),
                 min_bin_count=int(counts.min()),
-                top_bin_share=float(bins[-1].max() / max(bins[-1].sum(), 1e-30)))
+                top_bin_share=share,
+                # False only when a single value dominates the *entire* sample, so that
+                # merging every bin together still leaves it above the threshold.  Merging
+                # has no further lever there; the run reports it rather than pretending.
+                tail_dominance_resolved=bool(share < tail_dominance))
 
 
 def quantile_fn_from_coarse(block, tail_fit=None):

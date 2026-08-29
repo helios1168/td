@@ -483,6 +483,13 @@ def _marginal_block(agg, name, v, cfg):
             agg.put("n_bins_merged", cc["n_bins_merged"], pos.size)
             agg.put("min_bin_count", cc.get("min_bin_count", 0), pos.size)
             agg.put("top_bin_share", cc.get("top_bin_share", 0.0), pos.size)
+            agg.put("tail_dominance_resolved",
+                    bool(cc.get("tail_dominance_resolved", True)), pos.size)
+            if not cc.get("tail_dominance_resolved", True):
+                print("WARNING: %s: one ZCTA still supplies more than half of the top "
+                      "coarse-CDF bin after merging every bin together -- its value is "
+                      "recoverable from the bin mean.  Consider dropping the %s marginal."
+                      % (name, name))
             agg.put_vec("bin_p", cc["bin_p"], int(cc.get("min_bin_count", 0)))
             agg.put_vec("bin_mean", cc["bin_mean"], int(cc.get("min_bin_count", 0)))
 
