@@ -2,7 +2,9 @@
 
 **Last updated:** 2026-08-28
 **Project:** Fair division of ZCTA territories between two merging annuity wholesaling forces
-**Status:** Model and reference implementation settled; ready for production Python against real ZCTA data
+**Status:** Model and reference implementation settled. **Contiguity development programme
+approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point; no programme code
+written yet.**
 
 ---
 
@@ -10,7 +12,7 @@
 
 **Entry points, in order:**
 
-1. **`nash_territory_division.pdf`** — the paper. Nash formulation, prefix property,
+1. **`nash_territory_division.tex`** — the paper. Nash formulation, prefix property,
    contiguity MILP, contestability, parameter breakpoints, the worked 50-zip instance.
    Alternative criteria are in its appendices.
 2. **This file** — settled decisions, the model on one page, the trap list, code
@@ -19,10 +21,16 @@
    three contiguity failure mechanisms. `battery/RESEARCH_PLAN.md` is the test plan.
 4. **`SYNTH.md`** — the synthetic generator (S1–S7) and census `min_share` sensitivity.
    Read before running the census on real data.
-5. **`research/contiguity/`** — the 2026-08-28 literature study on enforcing contiguity at
-   real scale: `OPTIONS.md` (eight option briefs, ranked), `TEST_PLAN.md` (harness, gap
-   metrics, real-opportunity C10), `OPEN_QUESTIONS.md` (40 items; **§0 is the resume point
-   for a fresh session**). Read before touching `districting.py` or the paper's §5.
+5. **`research/contiguity/PLAN.md`** — **the approved development programme (2026-08-28) and
+   the resume point for a fresh session.** §0 = kick-off sequence and environment facts;
+   "Decisions taken" = what not to re-ask; Parts A–G = parallel-work protocol, workstreams
+   and open questions, harness contract, twin export, graphics library, model assignment,
+   generator v2 and regional instances.
+6. **`research/contiguity/`** (the rest) — the 2026-08-28 literature study behind the plan:
+   `OPTIONS.md` (eight option briefs, ranked), `TEST_PLAN.md` (harness spec, tiers, gap
+   metrics, acceptance — still authoritative where PLAN.md does not override it),
+   `OPEN_QUESTIONS.md` (40 items; §A partly superseded by PLAN.md). Read before touching
+   `districting.py` or the paper's §5.
 
 **Environment.** Use `.venv/bin/python3` for everything — the system `python3` has no
 numpy/scipy/networkx. Dependencies are pinned in `requirements.txt`. Scripts assume the
@@ -60,6 +68,9 @@ contiguous = D.solve_contiguous_nash(G, zips, rho=2e-3)  # + separator cuts
 | **Solution concept** | Maximum Nash welfare (max g_a·g_b) | Exactly solvable via outer approximation; Pareto efficient by construction; finite algorithm with optimality certificates |
 | **Fairness applies to** | All criteria (Nash, KS, egalitarian, equal-gain) | All use d=(0,0) |
 | **Domain** | Discrete zips, not continuum | Exact, not approximate; matches data; Rook adjacency from networkx |
+| **Compactness weight ρ** (decided 2026-08-28) | **ρ = 0 is the model**; contiguity is a hard constraint | ρ>0 was an engineering crutch for the multi-tree cut loop (traps 4, 7), not part of the model. Headline results at ρ=0; ρ=2e-3 only as a secondary column for the legacy solver. Tie-break by lexicographic perimeter post-pass, never a penalty. Travel-cost κ is explored separately (PLAN.md W11). |
+| **Real data route** (decided 2026-08-28) | Synthetic twin exported from the work machine; nothing real per-ZCTA leaves | Data is confidential. `tools/twin_export/` (PLAN.md Part C.2) emits k-anonymised aggregates + a rank-jittered instance on public ZCTA IDs; TIGER geometry is rebuilt here. |
+| **Development mode** (decided 2026-08-28) | Subagents in git worktrees; main session reviews at ★ checkpoints | PLAN.md Part A; agent teams / Agent View not used for building. |
 
 ### Why d=(0,0) — the full rationale
 
@@ -126,6 +137,8 @@ Requires non-negative headroom pointwise:
   Reference: 0.30.
 - **rho** (compactness weight): fairness-versus-perimeter trade-off. Knee at 2e-3 on the
   battery (C8). `rho = 0` is exact Nash; anything positive solves Nash-minus-a-penalty.
+  **Decision 2026-08-28: ρ=0 is the model** — the battery's ρ=2e-3 numbers are the legacy
+  solver's, kept only for continuity (see *What's Settled*).
 
 ### Two algorithms — use the exact one
 
@@ -283,7 +296,10 @@ across both firms).
 
 ### Real data blocking
 
-- No real ZCTA data ingested yet. Data source and procurement process undecided. **Gate.**
+- Real data (opportunity, sales, rep maps) exists on the user's confidential work machine
+  and **cannot be brought here**. Route decided 2026-08-28: the synthetic twin
+  (`PLAN.md` Part C.2, unit U3) plus public TIGER geometry (U4) and public-data regional
+  instances (U8: NY+, CA+, TX). The twin gates only the T3/T4 tiers; S0/S1 run without it.
 
 ### Algorithmic gaps
 
@@ -297,7 +313,10 @@ across both firms).
   for large κ). Not a solver fix.
 - **Dense components (C2 at alpha=0):** two-player fairness does not compose. Every pair
   within a dense blob gets its own bilateral solve, which looks perfect while no
-  component-level fairness is defined. Unimplemented.
+  component-level fairness is defined. Unimplemented. **Recommended design (PLAN.md G.4,
+  W12):** every zip has exactly two candidate owners (its legacy A-rep, its legacy B-rep),
+  so component-level maximum Nash welfare `Σ_i log g_i` stays one binary per zip, convex,
+  OA-exact, with per-rep contiguity — MNW over leximin. User decides at ★.
 - **State borders:** life and annuity product availability is state-scoped. If
   `respect_state=True`, the state constraint becomes the binding one (C5: shatters 18.6%
   of edges, can fragment multi-state pairs into 5+ pieces). **Must be settled with
@@ -509,6 +528,15 @@ Proper nouns in `.bib` titles are brace-protected (`{Nash}`, `{MINLP}`, `{COSTA}
 
 ## Next Steps (Priority Order)
 
+### 0. The active programme: `research/contiguity/PLAN.md` (approved 2026-08-28)
+
+Everything under items 2–3 below is now scheduled inside PLAN.md. Kick-off order (PLAN.md §0):
+U0a anchors → U0b `districting.py` hygiene → U0c deps → U1a harness contract (freeze) →
+parallel wave (U1b tiers/bench, U2 current/brute/bounds, U3 twin export, U4 TIGER loader,
+U5 synth v2, U7 gfx) → S0 smoke → method wave W4–W9a → S1 screening → finalists → S2/S3.
+Plus W11 (travel-cost κ), U8 (regional instances), W12 (component MNW). Every leg has a ★
+review checkpoint; model per unit in Part E; own-plan-step units in Part F.
+
 ### 1. Paper edits (publish & communicate)
 
 Work the **Still open** list under *Paper edits pending* above: fold the C1–C9 battery
@@ -520,10 +548,12 @@ related-work pass).
 
 Outcome: paper ready for circulation.
 
-### 2. Fix contiguity convergence (unblock real data at scale)
+### 2. Fix contiguity convergence (unblock real data at scale) — scheduled in PLAN.md
 
-Follow `research/contiguity/TEST_PLAN.md`; the option briefs are in `OPTIONS.md` §2–§9 and
-the recommended order in §11:
+Follow `research/contiguity/PLAN.md` (which sequences the below); the option briefs are in
+`OPTIONS.md` §2–§9, the harness spec in `TEST_PLAN.md`. Note PLAN.md's overrides: **ρ=0
+headline** (ρ=2e-3 secondary for `current` only; the ρ sweep below is dropped), C10 is the
+synthetic twin, G1 in-out is required, G3/H dropped:
 
 - **Stage 0 (½ day):** Option D (Shirabe flow one-shot on scipy/HiGHS — the constraints are
   already in the paper) as the oracle; F1 spanning-tree warm start; G2/G4 cut and tangent
@@ -555,13 +585,15 @@ welfare subject to it — or adopt a lexicographic rule. Test on C2 at alpha=0.
 
 ## Prerequisites (parallel / blocking)
 
-### Real ZCTA data ingestion (GATE)
+### Real ZCTA data ingestion (GATE → resolved by the twin route, PLAN.md C.2/C.3)
 
-- Decide data source (USPS, Census Bureau, commercial vendor).
-- Build the graph loader: nodes = ZCTAs, edges = Rook adjacency, attributes per schema.
-- Validate: headroom pointwise, no islands, rep-territory assignments correct.
-- Run `T.census(G, split=True)` at a `min_share` sweep; report component count and orphan
-  share.
+- Geometry: Census TIGER ZCTA5 2020 (public) downloaded here; Rook adjacency cached to
+  `data/zcta_adjacency.npz` (U4). State membership from the Census ZCTA→state relationship
+  file; population/income from public Census tables (U8).
+- Values: `tools/twin_export/` run by the user on the work machine → `twin_stats.json`
+  (aggregates) + `twin_instance.json.gz` (synthetic twin), user-audited before export (U3).
+- Loader: `battery/code/twin.py::load_twin` → repo graph schema; validate headroom, census
+  at `min_share` sweep, active-zip fraction per pair.
 
 ### Estimate theta (parameter identification)
 
@@ -603,6 +635,9 @@ welfare subject to it — or adopt a lexicographic rule. Test on C2 at alpha=0.
 
 ### Contiguity research (2026-08-28)
 
+- **`research/contiguity/PLAN.md`** — **the approved development programme; resume point.**
+  §0 kick-off, decisions table, Parts A–G (parallel protocol, workstreams + open questions,
+  harness contract, twin export, graphics, models, generator v2 / regional / component MNW).
 - **`research/contiguity/OPTIONS.md`** — the problem in three sentences; eight option briefs
   (A SCIP single tree, B CBC lazy constraints, C ε-certified PWL log, D Shirabe flow,
   E reductions/fixing, F warm starts incl. OT-threshold, G loop engineering, H frontier
@@ -704,6 +739,22 @@ When starting a task on this project:
 5. **Test on the smallest instance that exhibits the failure mode** before running the
    full battery.
 6. **Update this file** after discovering a new trap or resolving an open item.
+
+**Kicking off the contiguity programme (fresh session, 2026-08-28 onward):**
+
+7. Open `research/contiguity/PLAN.md` §0 and follow the kick-off sequence literally — U0a
+   (anchors) comes *before* any solver edit. Create `contiguity-harness` off `main`; one
+   worktree branch `wt/<unit>` per unit; main session merges.
+8. Every unit gets a brief = its PLAN.md section verbatim + files owned + files forbidden +
+   acceptance command + "stop and report rather than improvise". Use plan mode /
+   `AskUserQuestion` at each ★ (brief, plan, diff, stage gate). Models: PLAN.md Part E.
+   Units with their own plan step: Part F. Serial-only files (main session, never a
+   subagent): `requirements.txt`, `.gitignore`, `code/districting.py`, `code/territory.py`,
+   `CLAUDE.md`, `research/contiguity/*.md`, and the `params` edit to `code/synth.py`.
+9. Harness output goes to `battery/results/contiguity/<run_id>/`, never `battery/figures/`.
+   New figures come from `code/gfx/` (PLAN.md Part D); old figure scripts stay frozen.
+10. Decisions in PLAN.md's "Decisions taken" table are final; the remaining user calls are
+    listed there and land at stage gates.
 
 The codebase is mature and tested; most changes will be algorithmic (contiguity fixes) or
 operational (real data loading) rather than model changes.

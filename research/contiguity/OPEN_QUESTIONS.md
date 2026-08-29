@@ -10,6 +10,11 @@ close each item. Items marked **[gate]** block something downstream.
 
 ## 0. How to resume
 
+> **2026-08-28 (later): the development programme is approved — `research/contiguity/PLAN.md`**
+> **is now the resume point.** Its §0 kick-off sequence and "Decisions taken" table supersede
+> §A items 1, 2, 5, 6, 8, 9 below (opportunity file → synthetic twin; implementation in this
+> repo; ρ=0 is the model; deps approved) and `TEST_PLAN.md` §6. Read PLAN.md first.
+
 1. Read `CLAUDE.md` (repo root; carries traps 1–11), then `research/contiguity/OPTIONS.md`
    (the option briefs) and `research/contiguity/TEST_PLAN.md` (how to run them).
 2. Sources: `research/contiguity/raw/{encodings,algorithms,solvers,preprocessing,fairdivision_graphs}.md`
