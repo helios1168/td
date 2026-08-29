@@ -148,3 +148,54 @@ Certified share by pair size (ρ=0):
 - Cost of contiguity stays ≈ 0.4 % on T0/T1; EF1 holds on every certified incumbent.
 
 **Recommendation for S2/S3 finalists:** `scip_tree` (primary, with `warm_f1` as MIP start), `flow_pwl` (dependency-free oracle/cross-check up to ~125 zips), `loop_v2` (control for the paper's multi-tree argument). Drop `flow`, `cbc_tree`, `prep_*` (until T3), `current_*` except `current_tu` at ρ=2e-3 as the continuity column.
+
+## S2 finalists — 2026-08-30 (`s2_2026-08-30`)
+
+T1 + T2 (75 instances), ρ=0, **cap 1200 s**, 11 workers, hard-kill scheduler; methods `scip_tree`, `flow_pwl`, `loop_v2`, `current_tu` (control); 300 rows, 0 post-pass bugs, 0 invalid; ~5 h wall.
+
+| method | tier | rows | certified | feasible | median t→cert | worst gap vs UB* | named failures | errors |
+|---|---|---|---|---|---|---|---|---|
+| `current_tu` | T1 | 63 | 0.00 | 0.81 | — s | 0.0368 | 0/6 | 5 |
+| `current_tu` | T2 | 12 | 0.00 | 0.33 | — s | 0.0000 | 0/6 | 1 |
+| `flow_pwl` | T1 | 63 | 0.97 | 1.00 | 1.150 s | 0.0016 | 2/6 | 0 |
+| `flow_pwl` | T2 | 12 | 0.42 | 1.00 | 3.297 s | 0.0192 | 2/6 | 0 |
+| `loop_v2` | T1 | 63 | 0.90 | 0.90 | 0.918 s | 0.0000 | 2/6 | 0 |
+| `loop_v2` | T2 | 12 | 0.42 | 0.42 | 6.801 s | 0.0000 | 2/6 | 0 |
+| `scip_tree` | T1 | 63 | 0.92 | 1.00 | 0.079 s | 0.0048 | 2/6 | 0 |
+| `scip_tree` | T2 | 12 | 0.42 | 1.00 | 0.679 s | 0.0110 | 2/6 | 0 |
+
+T2 (scale) pairs — status / gap / t at the 1200 s cap:
+
+| instance | n | `scip_tree` | `flow_pwl` | `loop_v2` | `current_tu` |
+|---|---|---|---|---|---|
+| C7_scale_n400__A2_B2 | 26 | optimal / 2e-09 / 0 s | optimal / 6e-08 / 1 s | optimal / 0e+00 / 1 s | optimal_rooted / 0e+00 / 1 s |
+| C7_scale_n400__A1_B1 | 44 | optimal / 0e+00 / 1 s | optimal / 4e-07 / 7 s | optimal / 4e-14 / 19 s | heuristic / — / 63 s |
+| C7b_scale_n800_seed2__A2_B2 | 77 | optimal / 0e+00 / 1 s | optimal / 5e-07 / 16 s | optimal / 0e+00 / 28 s | gap_limit / 7e-07 / 215 s |
+| C7b_scale_n800_seed1__A3_B3 | 114 | optimal / 1e-14 / 0 s | optimal / 3e-07 / 1 s | optimal / 0e+00 / 7 s | gap_limit / 1e-06 / 2 s |
+| C7b_scale_n800_seed2__A1_B1 | 124 | time_limit / 4e-03 / 2 s | time_limit / 1e-03 / 1201 s | time_limit / — / 1200 s | time_limit / — / 1200 s |
+| C7_scale_n400__A0_B0 | 125 | optimal / 0e+00 / 1 s | optimal / 4e-07 / 3 s | optimal / 0e+00 / 1 s | time_limit / — / 1200 s |
+| C7b_scale_n800_seed2__A3_B3 | 135 | time_limit / 9e-04 / 5 s | time_limit / 1e-04 / 1200 s | time_limit / — / 1200 s | time_limit / — / 1200 s |
+| C7b_scale_n800_seed1__A0_B0 | 169 | time_limit / 5e-03 / 36 s | time_limit / — / 1200 s | time_limit / — / 1200 s | error / — / 781 s |
+| C7b_scale_n800_seed1__A2_B2 | 197 | time_limit / 6e-03 / 58 s | time_limit / — / 1200 s | time_limit / — / 1200 s | time_limit / — / 659 s |
+| C7_scale_n400__A3_B3 | 205 | time_limit / 3e-03 / 3 s | time_limit / 6e-03 / 1200 s | time_limit / — / 1200 s | time_limit / — / 620 s |
+| C7b_scale_n800_seed1__A1_B1 | 320 | time_limit / 1e-03 / 1 s | time_limit / 2e-04 / 1200 s | time_limit / — / 1200 s | time_limit / — / 352 s |
+| C7b_scale_n800_seed2__A0_B0 | 464 | time_limit / 1e-02 / 4 s | time_limit / — / 1200 s | time_limit / — / 1200 s | time_limit / — / 1200 s |
+
+Certified by pair size:
+
+| method | 0–45 | 46–82 | 83–125 | 126–205 | 206–464 |
+|---|---|---|---|---|---|
+| `scip_tree` | 38/38 | 23/28 | 2/3 | 0/4 | 0/2 |
+| `flow_pwl` | 38/38 | 26/28 | 2/3 | 0/4 | 0/2 |
+| `loop_v2` | 38/38 | 22/28 | 2/3 | 0/4 | 0/2 |
+
+**Reading.**
+
+- **The 20× larger budget changed nothing above ~125 zips.** Every exact method certifies 38/38 pairs ≤ 45 zips and 2/3 at 83–125, and 0/6 at 126–464 — identical to S1's 60 s picture. Mechanism (b) is not a budget problem.
+- `scip_tree` never uses the budget on the large pairs: it stops after 1–58 s with a valid 1e-3–1e-2 gap because its native-log retry ladder exhausts on LP numerical aborts (W6's open item) and the OA rung is not given the remaining time. Fixing that, plus `warm_f1` as `addSol` and fractional separation at the root, is the concrete next engineering step — the dual bound is already tight (gap 1e-3 at 320 zips after 1 s).
+- `flow_pwl` does spend the 1200 s and gets to 1e-4–2e-4 nats on the 135- and 320-zip pairs without closing: the flow LP is the wall (Validi et al.'s crossover, measured here at ~125 zips). It is the best *bound* producer among the three at scale and certifies 97 % of T1 given time.
+- `loop_v2` (multi-tree) ends the large pairs on infeasible master iterates (no incumbent) — the paper's argument that the multi-tree loop is the wrong architecture at scale stands, with numbers.
+- `current_tu` (legacy control): 0 certified, 5 trap-14 errors on T1, 1 on T2; feasible on 81 % / 33 %.
+- Cost of contiguity and EF1 unchanged from S1 (≈ 0.4 %, EF1 on every certified incumbent).
+
+**Where this leaves the programme.** The formulation questions are settled (root-free component-wise cuts; native log or chord PWL; SCIP as engine). The remaining gap to the 400–800-zip production band is primal-side engineering in `scip_tree` (W6 follow-up), plus the reduction layer (E1) once real glue zips exist (T3). S3 (T3a at 3600 s) should wait for that follow-up and the twin; running it now would reproduce this table at higher cost.
