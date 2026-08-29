@@ -528,6 +528,31 @@ def compute_bounds(G, nodes, ua, ub, *, theta=THETA, lam=LAM, kappa=0.0,
     return out
 
 
+def mechanism_tag(spec: InstanceSpec, cov: dict) -> str:
+    """Failure-mechanism tag (CLAUDE.md trap 11 / `research/contiguity/OPTIONS.md`): a string
+    concatenating one letter per mechanism this instance's covariates exhibit --
+
+      a  pre-existing disconnection   pair_components > 1
+      b  pure scale                   n >= 125
+      c  value concentration          "heavytail" in the case name, or top5_share_u >= 0.35
+      d  sparse active zips / glue    active_frac < 1   (what real data adds; U8/twin-only
+                                       so far -- no T0-T2 synthetic instance sets it)
+
+    Letters concatenate in a-b-c-d order (e.g. "ab"); "" if none apply.  A gap-reporting
+    aggregate only, not a solver hint -- `run_summary`'s mechanism panel groups rows by it.
+    """
+    letters = []
+    if cov.get("pair_components", 1) > 1:
+        letters.append("a")
+    if cov.get("n", 0) >= 125:
+        letters.append("b")
+    if "heavytail" in (spec.case or "") or cov.get("top5_share_u", 0.0) >= 0.35:
+        letters.append("c")
+    if cov.get("active_frac", 1.0) < 1:
+        letters.append("d")
+    return "".join(letters)
+
+
 def build_pair(spec: InstanceSpec, *, theta: float = THETA, lam: float = LAM,
                rescale: bool = True, kappa: float = 0.0,
                distances: Optional[Callable] = None, with_bounds: bool = False,
@@ -565,6 +590,7 @@ def build_pair(spec: InstanceSpec, *, theta: float = THETA, lam: float = LAM,
     cov.update(edge_share_deleted=float(edge_share_deleted), scale=float(scale),
                n_expected=spec.n_expected, dense=bool(spec.dense),
                comp_share=float(spec.comp_share))
+    cov["mechanism"] = mechanism_tag(spec, cov)
     return PairInstance(spec=spec, G=H, nodes=nodes, scale=float(scale),
                         edge_share_deleted=float(edge_share_deleted), covariates=cov,
                         bounds=bnd)
@@ -594,17 +620,23 @@ def _jsonable(o):
 
 def instance_json(pi: PairInstance) -> dict:
     """The `gfx.producers.instance_card` input.  `rows` is null: the card joins `rows.jsonl`
-    by instance name rather than carrying a copy of the run's results (PLAN.md ★1 Q5)."""
+    by instance name rather than carrying a copy of the run's results (PLAN.md ★1 Q5).
+
+    `edges` are *index* pairs into `nodes` (`gfx.schemas.validate_instance_json`'s contract,
+    matched by `gfx.schemas.make_fixture_instance` and every gfx consumer) -- not zip ids, so
+    they must be remapped through `nodes`'s position order."""
     G0 = _graph_for(pi.spec.params_json)
     nodes, H = pi.nodes, pi.G
+    node_idx = {z: i for i, z in enumerate(nodes)}
     d = dict.fromkeys(INSTANCE_JSON_KEYS)
     d.update(
         schema_version=SCHEMA_VERSION,
         spec={k: v for k, v in vars(pi.spec).items()},
         nodes=list(nodes),
         pos=[list(H.nodes[z].get("pos", (0.0, 0.0))) for z in nodes],
-        edges=[[u, v] for u, v in sorted(H.edges(), key=lambda e: (base._sort_key(e[0]),
-                                                                  base._sort_key(e[1])))],
+        edges=[[node_idx[u], node_idx[v]]
+               for u, v in sorted(H.edges(), key=lambda e: (base._sort_key(e[0]),
+                                                            base._sort_key(e[1])))],
         A=[float(H.nodes[z]["A"]) for z in nodes],
         B=[float(H.nodes[z]["B"]) for z in nodes],
         M=[float(H.nodes[z]["M"]) for z in nodes],

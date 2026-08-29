@@ -337,6 +337,72 @@ def test_producer_cli_run_summary_end_to_end():
     assert os.path.exists(out)
 
 
+# --------------------------------------------------------- real S0 run (U10 regression)
+# `fixtures/gfx/s0c/` is a subset of the real S0 run `battery/results/contiguity/
+# s0c_2026-08-29/` (165 rows, 9 methods, the six named failures) that exposed three U10
+# defects: `edges` written as zip ids instead of index pairs, the named-failure grid keyed
+# off a stale hardcoded name list, and no `mechanism` column in instances.csv. `rows.jsonl`
+# here has `trace` stripped (fixture-size budget) but is otherwise the real rows for the six
+# named-failure instances; `instances/*.json` were regenerated from the same specs with the
+# *fixed* `write_instance_json` (same nodes/A/B/M as the archived real-run JSONs -- only the
+# edges encoding and the added `mechanism` covariate differ).
+S0C = os.path.join(FX, "s0c")
+S0C_NAMED_FAILURES = (
+    "C1_aligned_seed2__A0_B0", "C5_states_resp__A2_B2", "C7_scale_n400__A0_B0",
+    "C7_scale_n400__A1_B1", "C7_scale_n400__A3_B3", "C9_heavytail_seed2__A2_B2",
+)
+
+
+def test_real_run_fixture_instance_jsons_are_valid():
+    for name in S0C_NAMED_FAILURES:
+        d = _common.load_json(os.path.join(S0C, "instances", f"{name}.json"))
+        assert schemas.validate_instance_json(d) == [], name
+        assert all(0 <= i < len(d["nodes"]) and 0 <= j < len(d["nodes"]) for i, j in d["edges"])
+
+
+def test_real_run_summary_shows_all_six_named_failures_and_a_mechanism_row():
+    rows = _common.load_jsonl(os.path.join(S0C, "rows.jsonl"))
+    instances = _common.load_csv(os.path.join(S0C, "instances.csv"))
+    summary = _common.load_csv(os.path.join(S0C, "summary.csv"))
+    assert sum(1 for r in rows if r.get("named_failure")) == 48       # 6 instances x 8 methods
+    assert any(r.get("mechanism") for r in instances)
+
+    (fig,), dt = _timed(lambda: (run_summary.build_summary(rows, instances, summary),))
+    assert style.lint_text_overlap(fig) == []
+    assert dt < RENDER_BUDGET_S
+
+    named_ax = fig.axes[3]          # axes[1, 0]: named-failure status grid
+    ylabels = {t.get_text() for t in named_ax.get_yticklabels()}
+    assert ylabels == set(S0C_NAMED_FAILURES), ylabels
+
+    # heat_matrix adds its own colorbar Axes right after axes[1, 1] in fig.axes, so find the
+    # mechanism panel by title rather than a fixed index -- heat_matrix/status_grid set the
+    # title at loc="left", so it is not the default (loc="center") ax.get_title().
+    mech_ax = next(a for a in fig.axes if a.get_title(loc="left").startswith("mechanism"))
+    # a populated heat_matrix sets real xticks (the placeholder branch leaves default/empty
+    # ticks on an ax.axis("off") panel), so non-placeholder mechanism letters are proof
+    xlabels = {t.get_text() for t in mech_ax.get_xticklabels()}
+    assert xlabels and xlabels <= {"a", "b", "c", "d", "ab", "ac", "ad", "bc", "bd", "cd"}
+    plt_close(fig)
+
+
+def test_real_run_instance_card_renders_with_rows_join():
+    """`--rows` joins the phase-1 instance JSON (rows: null) against rows.jsonl by instance
+    name, so the 'best contiguous incumbent' panel is populated instead of grey/unsolved."""
+    for name in S0C_NAMED_FAILURES:
+        out = _tmp(f"card_{name}.png")
+        rc = instance_card.main([os.path.join(S0C, "instances", f"{name}.json"),
+                                 "--rows", os.path.join(S0C, "rows.jsonl"), "--out", out])
+        assert rc == 0
+        assert os.path.exists(out)
+        d = _common.load_json(os.path.join(S0C, "instances", f"{name}.json"))
+        rows = [r for r in _common.load_jsonl(os.path.join(S0C, "rows.jsonl"))
+               if r.get("instance") == name]
+        best = instance_card._best_contiguous_row(rows)
+        assert best is not None, f"{name}: no valid, excess_pieces==0 row in the fixture"
+        assert best.get("excess_pieces") == 0 and best.get("valid")
+
+
 # ------------------------------------------------------------------------- dependency policy
 _IMPORT_RE = re.compile(r"^\s*(?:import|from)\s+(networkx|geopandas|shapely)\b")
 _SOLVER_IMPORT_RE = re.compile(r"^\s*(?:import|from)\s+(territory|districting|contig_methods)\b")
