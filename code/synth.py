@@ -139,6 +139,166 @@ def _density_base(dens, n, gamma, dens_floor, core_tail, core_cap, rng_core):
     return (1.0 - dens_floor) * dn ** gamma + dens_floor
 
 
+def _neighbour_lists(G):
+    """{node: sorted neighbours} -- BFS order must not depend on dict insertion order."""
+    return {u: sorted(G.neighbors(u)) for u in G}
+
+
+def _bfs_voronoi(G, seed_nodes, P=None):
+    """Multi-source BFS Voronoi on the adjacency graph: label = index of the nearest seed
+    in hops, ties broken by lowest rep index.  O(V + E).
+
+    Written out rather than taken from `nx.voronoi_cells` because that returns cells keyed
+    by seed with no tie-break guarantee; here each BFS level is drained in (label, node)
+    order, so a node reached from several seeds at the same distance takes the smallest
+    label deterministically.  Duplicate seed nodes give the later rep an empty territory
+    (that is the honest outcome of two reps sharing a base).  Nodes in a component with no
+    seed fall back to the Euclidean-nearest seed.
+    """
+    lab, frontier = {}, []
+    for i, s in enumerate(seed_nodes):
+        if s not in lab:
+            lab[s] = i
+            frontier.append(s)
+    nbrs = _neighbour_lists(G)
+    while frontier:
+        nxt = []
+        for u in sorted(frontier, key=lambda z: (lab[z], z)):
+            for v in nbrs[u]:
+                if v not in lab:
+                    lab[v] = lab[u]
+                    nxt.append(v)
+        frontier = nxt
+    n = G.number_of_nodes()
+    out = np.zeros(n, int)
+    missing = []
+    for z in range(n):
+        if z in lab:
+            out[z] = lab[z]
+        else:
+            missing.append(z)
+    if missing and P is not None:
+        sp = P[list(seed_nodes)]
+        for z in missing:
+            out[z] = int(np.argmin(np.linalg.norm(sp - P[z], axis=1)))
+    return out
+
+
+def _bfs_dists(G, seed_nodes):
+    """(n, k) hop distances to each seed; unreachable = n.  Only built when `sliver` needs
+    a second-nearest rep in graph-assignment mode."""
+    n = G.number_of_nodes()
+    nbrs = _neighbour_lists(G)
+    D = np.full((n, len(seed_nodes)), float(n))
+    for j, s in enumerate(seed_nodes):
+        d = {s: 0}
+        frontier = [s]
+        while frontier:
+            nxt = []
+            for u in frontier:
+                for v in nbrs[u]:
+                    if v not in d:
+                        d[v] = d[u] + 1
+                        nxt.append(v)
+            frontier = nxt
+        for z, dz in d.items():
+            D[z, j] = dz
+    return D
+
+
+def _graph_b_seeds(G, a_nodes, n_rep_b, alpha, b_hops, Mz, rng_as):
+    """B-rep base zips in graph-assignment mode: copy A's base with probability `alpha`,
+    else take a `b_hops`-step random walk away from it; extra B reps land on zips drawn
+    proportional to opportunity.
+
+    NOTE the different meaning of `alpha` here.  In `assign="euclid"` alpha interpolates
+    the B seed's *coordinates* towards a random point, so alpha=0.7 still moves every seed
+    a little; here it is the *probability* that a B rep keeps A's base exactly.
+    """
+    n_shared = min(len(a_nodes), n_rep_b)
+    keep = rng_as.random(n_shared) < alpha
+    nbrs = _neighbour_lists(G)
+    out = []
+    for i in range(n_shared):
+        z = a_nodes[i]
+        if not keep[i]:
+            for _ in range(int(b_hops)):
+                nb = nbrs[z]
+                if nb:
+                    z = nb[int(rng_as.integers(len(nb)))]
+        out.append(int(z))
+    if n_rep_b > n_shared:
+        extra = rng_as.choice(len(Mz), n_rep_b - n_shared, replace=False, p=Mz / Mz.sum())
+        out += [int(e) for e in extra]
+    return out
+
+
+def _external_geography(graph, pos, n_arg):
+    """Adopt a caller-supplied adjacency graph (real ZCTA geography, U8/twin).
+
+    Nodes are relabelled to 0..n-1 in `sorted(graph)` order and the original ids are kept
+    in `G.graph["node_labels"]`.  Positions are min-max rescaled into the unit square (the
+    rest of the generator, and every plotting helper, assumes it); the affine transform is
+    recorded so a caller can map back.
+    """
+    import hashlib
+    order = sorted(graph)
+    n = len(order)
+    if n_arg != n:
+        raise ValueError(f"make_instance(graph=...) has {n} nodes but n={n_arg}; "
+                         f"pass n=graph.number_of_nodes()")
+    idx = {z: i for i, z in enumerate(order)}
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+    G.add_edges_from((idx[u], idx[v]) for u, v in graph.edges() if u != v)
+    G.graph["node_labels"] = [str(z) for z in order]
+    if pos is None:
+        try:
+            pts = np.array([graph.nodes[z]["pos"] for z in order], float)
+        except KeyError as e:
+            raise ValueError("make_instance(graph=...) needs pos=, or a 'pos' node "
+                             "attribute on every node") from e
+    elif isinstance(pos, dict):
+        pts = np.array([pos[z] for z in order], float)
+    else:
+        pts = np.asarray(pos, float)
+        if pts.shape != (n, 2):
+            raise ValueError(f"pos must be ({n}, 2), got {pts.shape}")
+    lo, hi = pts.min(axis=0), pts.max(axis=0)
+    span = np.where(hi > lo, hi - lo, 1.0)
+    P = (pts - lo) / span
+    G.graph["pos_xform"] = dict(offset=lo.tolist(), scale=(1.0 / span).tolist())
+    st = None
+    if all("state" in graph.nodes[z] for z in order):
+        st = [str(graph.nodes[z]["state"]) for z in order]
+    h = hashlib.sha256()
+    h.update(repr(G.graph["node_labels"]).encode())
+    h.update(np.ascontiguousarray(
+        np.array(sorted((min(u, v), max(u, v)) for u, v in G.edges()), dtype=np.int64)
+    ).tobytes())
+    return G, P, n, st, h.hexdigest()[:16]
+
+
+def _log_moments(sigma, alpha, beta):
+    """(mean, sd) of log X for the `_dpln` draw -- analytic, so the standardisation does
+    not depend on the sample.  Normal-Laplace: E[log X] = 1/alpha - 1/beta,
+    Var[log X] = sigma^2 + 1/alpha^2 + 1/beta^2 (Reed & Jorgensen 2004)."""
+    if alpha is None or beta is None:
+        return 0.0, float(sigma)
+    return (1.0 / alpha - 1.0 / beta,
+            float(np.sqrt(sigma ** 2 + 1.0 / alpha ** 2 + 1.0 / beta ** 2)))
+
+
+def _curve(share_curve, key, fallback):
+    v = share_curve.get(key, share_curve.get(fallback))
+    if v is None:
+        raise ValueError(f"share_curve needs {key!r} or {fallback!r}")
+    v = np.asarray(v, float)
+    if v.ndim != 1 or len(v) == 0:
+        raise ValueError(f"share_curve[{key!r}] must be a non-empty 1-D sequence")
+    return v[np.minimum(np.arange(10), len(v) - 1)]      # pad/truncate to 10 deciles
+
+
 def _zscore(x):
     x = np.asarray(x, float); s = x.std()
     return (x - x.mean()) / (s if s > 0 else 1.0)
@@ -392,34 +552,56 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
     density_field_hash = graph_hash = None
 
     # ---- geography: metro clusters + rural scatter, planar adjacency -----------
-    # metro_weights=None must reproduce the literal `np.ones(n_metros)/n_metros` that
-    # rng.multinomial saw before v2: multinomial consumes a data-dependent number of
-    # bit-generator words, so an equal-but-differently-computed p moves every later draw.
-    if metro_weights is None:
-        mw = np.ones(n_metros) / n_metros
-    elif isinstance(metro_weights, str):
-        if metro_weights != "zipf":
-            raise ValueError(f"metro_weights must be None, 'zipf' or an array, "
-                             f"got {metro_weights!r}")
-        mw = _zipf_weights(n_metros, zipf_s)
+    ext_states = None
+    if graph is not None:
+        # Real geography (U8 regional instances, the twin).  Off the S1-S7 path entirely:
+        # rng calls #1-#5 never happen, so there is nothing here to keep bit-identical.
+        G, P, n, ext_states, graph_hash = _external_geography(graph, pos, n)
+        metros = covs = mw = None
+        n_metros = 0
     else:
-        mw = np.asarray(metro_weights, float); mw = mw / mw.sum()
-    metros = rng.random((n_metros, 2)) * .76 + .12
-    covs = [np.diag(rng.uniform(.008, .022, 2)) for _ in range(n_metros)]
-    n_clust = int(.70 * n)
-    counts = rng.multinomial(n_clust, mw)
-    P = np.vstack([rng.multivariate_normal(metros[m], covs[m] * 2.2, counts[m])
-                   for m in range(n_metros)] + [rng.random((n - n_clust, 2))])
-    P = np.clip(P, .02, .98)
-    G = _adjacency(P)
+        if pos is not None:
+            raise ValueError("pos= is only meaningful together with graph=")
+        # metro_weights=None must reproduce the literal `np.ones(n_metros)/n_metros` that
+        # rng.multinomial saw before v2: multinomial consumes a data-dependent number of
+        # bit-generator words, so an equal-but-differently-computed p moves every later draw.
+        if metro_weights is None:
+            mw = np.ones(n_metros) / n_metros
+        elif isinstance(metro_weights, str):
+            if metro_weights != "zipf":
+                raise ValueError(f"metro_weights must be None, 'zipf' or an array, "
+                                 f"got {metro_weights!r}")
+            mw = _zipf_weights(n_metros, zipf_s)
+        else:
+            mw = np.asarray(metro_weights, float); mw = mw / mw.sum()
+        metros = rng.random((n_metros, 2)) * .76 + .12
+        covs = [np.diag(rng.uniform(.008, .022, 2)) for _ in range(n_metros)]
+        n_clust = int(.70 * n)
+        counts = rng.multinomial(n_clust, mw)
+        P = np.vstack([rng.multivariate_normal(metros[m], covs[m] * 2.2, counts[m])
+                       for m in range(n_metros)] + [rng.random((n - n_clust, 2))])
+        P = np.clip(P, .02, .98)
+        G = _adjacency(P)
 
     # ---- opportunity: density field x heavy-tail multiplier --------------------
-    if metro_weights is None:
+    if density_field is not None:
+        import hashlib
+        dens = np.asarray(density_field, float)
+        if dens.shape != (n,):
+            raise ValueError(f"density_field must have shape ({n},), got {dens.shape}")
+        if not np.all(np.isfinite(dens)) or (dens < 0).any() or dens.sum() <= 0:
+            raise ValueError("density_field must be finite, non-negative and not all zero")
+        density_field_hash = hashlib.sha256(
+            np.ascontiguousarray(dens).tobytes()).hexdigest()[:16]
+    elif metros is None:
+        dens = np.ones(n)               # external graph, no density supplied: flat field
+    elif metro_weights is None:
         dens = sum(_gauss(P, metros[m], covs[m]) for m in range(n_metros))
     else:                       # metro m carries n_metros*mw[m] x its equal-weight mass
         dens = sum(n_metros * mw[m] * _gauss(P, metros[m], covs[m])
                    for m in range(n_metros))
-    if gamma == 1.0 and dens_floor == 0.20 and core_tail is None and density_field is None:
+    if (gamma == 1.0 and dens_floor == 0.20 and core_tail is None
+            and density_field is None and metros is not None):
         base = 0.80 * dens / dens.max() + 0.20          # the literal legacy expression
     else:
         base = _density_base(dens, n, gamma, dens_floor, core_tail, core_cap, r_core)
@@ -433,31 +615,48 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
                          + (1 - alpha) * (rng.random((n_shared, 2)) * .76 + .12)]
                         + ([rng.random((n_rep_b - n_shared, 2)) * .76 + .12]
                            if n_rep_b > n_shared else []))
+    # ^ that vstack's first `rng.random((n_shared, 2))` is drawn even at alpha=1.0, where
+    #   it is multiplied by zero.  It runs under assign="graph" too (result discarded)
+    #   because removing it would move every subsequent draw.
+    if assign not in ("euclid", "graph"):
+        raise ValueError(f"assign must be 'euclid' or 'graph', got {assign!r}")
+    a_nodes = [int(z) for z in a_idx]
+    b_nodes = (_graph_b_seeds(G, a_nodes, n_rep_b, alpha, b_hops, Mz, r_assign)
+               if assign == "graph" else a_nodes)
+
+    def _lab(seed_pts, seed_nodes):
+        if assign == "graph":
+            return _bfs_voronoi(G, seed_nodes, P)
+        return np.argmin(np.linalg.norm(P[:, None] - seed_pts[None], axis=2), axis=1)
 
     # ---- designed dense components (split_b: 1Ax2B, split_a: 2Ax1B) -------------
     # Provisional labels from the un-split seed sets decide which territories get an
     # intruder; split_b runs first so split_a sees the post-split B map.  Pure
     # post-transform of already-drawn arrays + r_split, so `rng` is untouched.
     if split_a or split_b:
-        rep_a0 = np.argmin(np.linalg.norm(P[:, None] - a_seeds[None], axis=2), axis=1)
-        rep_b0 = np.argmin(np.linalg.norm(P[:, None] - b_seeds[None], axis=2), axis=1)
+        rep_a0 = _lab(a_seeds, a_nodes)
+        rep_b0 = _lab(b_seeds, b_nodes)
         if split_b:
             add = _split_seeds(P, Mz, rep_a0, a_seeds, split_b, split_pos,
                                split_weight, r_split)
             if add:
-                b_seeds = np.vstack([b_seeds, P[add]])
-                rep_b0 = np.argmin(np.linalg.norm(P[:, None] - b_seeds[None], axis=2),
-                                   axis=1)
+                b_seeds = np.vstack([b_seeds, P[add]]); b_nodes = list(b_nodes) + add
+                rep_b0 = _lab(b_seeds, b_nodes)
         if split_a:
             add = _split_seeds(P, Mz, rep_b0, b_seeds, split_a, split_pos,
                                split_weight, r_split)
             if add:
-                a_seeds = np.vstack([a_seeds, P[add]])
+                a_seeds = np.vstack([a_seeds, P[add]]); a_nodes = list(a_nodes) + add
         n_rep_a, n_rep_b = len(a_seeds), len(b_seeds)
 
-    rep_a = np.argmin(np.linalg.norm(P[:, None] - a_seeds[None], axis=2), axis=1)
-    db = np.linalg.norm(P[:, None] - b_seeds[None], axis=2)
-    rep_b = np.argmin(db, axis=1)
+    if assign == "graph":
+        rep_a = _bfs_voronoi(G, a_nodes, P)
+        rep_b = _bfs_voronoi(G, b_nodes, P)
+        db = _bfs_dists(G, b_nodes) if (sliver > 0 and n_rep_b > 1) else None
+    else:
+        rep_a = np.argmin(np.linalg.norm(P[:, None] - a_seeds[None], axis=2), axis=1)
+        db = np.linalg.norm(P[:, None] - b_seeds[None], axis=2)
+        rep_b = np.argmin(db, axis=1)
     if sliver > 0 and n_rep_b > 1:              # flip a fraction to 2nd-nearest B seed
         flip = rng.random(n) < sliver
         second = np.argsort(db, axis=1)[:, 1]
@@ -470,10 +669,17 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
     # floored above zero by the shared M_z factor (real books share market size);
     # negative rho_books cancels that floor -- S4_separate uses it. Realized corr
     # is reported in G.graph["corr_AB"]; the dial is monotone, not calibrated.
-    gm = np.stack([_gauss(P, metros[m], covs[m]) for m in range(n_metros)])
-    gm = gm / gm.max(axis=1, keepdims=True)
-    FA = rng.normal(0, 1, n_metros) @ gm
-    FI = rng.normal(0, 1, n_metros) @ gm
+    if metros is None:
+        # No metro basis on real geography: draw the two latent fields as graph-smoothed
+        # white noise instead, then run the identical orthogonalisation + rho_books mix.
+        k_sm = int((activity or {}).get("smooth_k", 3))
+        FA = _smooth(G, r_books.standard_normal(n), k_sm)
+        FI = _smooth(G, r_books.standard_normal(n), k_sm)
+    else:
+        gm = np.stack([_gauss(P, metros[m], covs[m]) for m in range(n_metros)])
+        gm = gm / gm.max(axis=1, keepdims=True)
+        FA = rng.normal(0, 1, n_metros) @ gm
+        FI = rng.normal(0, 1, n_metros) @ gm
     FA0 = FA - FA.mean(); FI0 = FI - FI.mean()
     FI0 -= (FI0 @ FA0) / (FA0 @ FA0) * FA0
     FA_n = FA0 / FA0.std(); FI_n = FI0 / FI0.std()
@@ -481,8 +687,27 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
     def _share(f):
         u = (f - f.mean()) / (f.std() + 1e-9)
         return .02 + .43 * (1 / (1 + np.exp(-1.5 * u))) ** 1.5
-    Az = Mz * _share(FA_n) * _dpln(rng, n, sales_tail, sales_tail_alpha, sales_tail_beta)
-    Bz = Mz * _share(FB_n) * _dpln(rng, n, sales_tail, sales_tail_alpha, sales_tail_beta)
+    if share_curve is None:
+        Az = Mz * _share(FA_n) * _dpln(rng, n, sales_tail, sales_tail_alpha, sales_tail_beta)
+        Bz = Mz * _share(FB_n) * _dpln(rng, n, sales_tail, sales_tail_alpha, sales_tail_beta)
+    else:
+        # Fitted conditional share curve: log(A/M) ~ Normal(mu[d], sd[d]) per M-decile d,
+        # the form twin_stats measures.  The two _dpln draws stay in place and in order --
+        # they are just re-used as the idiosyncratic half of a unit-variance mix with the
+        # spatial field, standardised by the ANALYTIC moments of log(dPlN) so the fitted
+        # sd[d] is recovered rather than inflated by the noise's own spread.
+        eA = _dpln(rng, n, sales_tail, sales_tail_alpha, sales_tail_beta)
+        eB = _dpln(rng, n, sales_tail, sales_tail_alpha, sales_tail_beta)
+        m_l, s_l = _log_moments(sales_tail, sales_tail_alpha, sales_tail_beta)
+        zA = (np.log(eA) - m_l) / (s_l if s_l > 0 else 1.0)
+        zB = (np.log(eB) - m_l) / (s_l if s_l > 0 else 1.0)
+        w_sp = float(share_curve.get("w_spatial", 0.6))
+        w_id = float(np.sqrt(max(0.0, 1.0 - w_sp ** 2)))
+        d_idx = _deciles(Mz)
+        mu_a = _curve(share_curve, "mu_a", "mu"); sd_a = _curve(share_curve, "sd_a", "sd")
+        mu_b = _curve(share_curve, "mu_b", "mu"); sd_b = _curve(share_curve, "sd_b", "sd")
+        Az = Mz * np.exp(mu_a[d_idx] + sd_a[d_idx] * (w_sp * FA_n + w_id * zA))
+        Bz = Mz * np.exp(mu_b[d_idx] + sd_b[d_idx] * (w_sp * FB_n + w_id * zB))
 
     # ---- scale to target totals, enforce pointwise headroom --------------------
     Mz *= (40.0 * n / 50) / Mz.sum()
@@ -517,10 +742,23 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
         Mz *= f_act; Az *= f_act; Bz *= f_act
 
     # ---- states ------------------------------------------------------------------
-    states = None
+    # Real labels win over synthetic ones, and asking for both is a bug, not a merge:
+    # n_states>0 draws random Voronoi bands that would overwrite the actual borders.
+    state_lab = None
+    if states is not None:
+        state_lab = [str(s) for s in states]
+        if len(state_lab) != n:
+            raise ValueError(f"states must have {n} entries, got {len(state_lab)}")
+    elif ext_states is not None:
+        state_lab = ext_states
+    if state_lab is not None and n_states > 0:
+        raise ValueError("n_states>0 cannot be combined with real state labels "
+                         "(states= or a 'state' attribute on graph=): the synthetic "
+                         "Voronoi bands would overwrite the real borders")
     if n_states > 0:
         s_seeds = rng.random((n_states, 2))
-        states = np.argmin(np.linalg.norm(P[:, None] - s_seeds[None], axis=2), axis=1)
+        state_lab = [f"S{int(v)}" for v in
+                     np.argmin(np.linalg.norm(P[:, None] - s_seeds[None], axis=2), axis=1)]
 
     # ---- per-rep capacity field (objection 2 follow-up) -------------------------
     book_a = np.array([Az[rep_a == r].sum() for r in range(n_rep_a)])
@@ -535,8 +773,8 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
         G.nodes[z].update(rep_a=int(rep_a[z]), rep_b=int(rep_b[z]),
                           A=float(Az[z]), B=float(Bz[z]), M=float(Mz[z]),
                           pos=(float(P[z, 0]), float(P[z, 1])))
-        if states is not None:
-            G.nodes[z]["state"] = f"S{int(states[z])}"
+        if state_lab is not None:
+            G.nodes[z]["state"] = state_lab[z]
     act_rep = activity_report(G)
     G.graph.update(params=dict(n=n, n_rep_a=n_rep_a, n_rep_b=n_rep_b, alpha=alpha,
                                rho_books=rho_books, n_states=n_states, sliver=sliver,
