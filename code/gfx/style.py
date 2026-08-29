@@ -23,6 +23,11 @@ PALETTE = {
     "B": "#b2182b",
     "neutral": "#4d4d4d",
     "unsolved": (0.9, 0.9, 0.9),
+    # cells drawn for geographic context only -- the parent instance's zips that are *not*
+    # in the pair being solved (U12: every pair panel now shares the parent tessellation, so
+    # a "not part of this pair" fill is needed that no data scale ever produces; lighter than
+    # `unsolved`, which means "no allocation" and can legitimately appear inside a pair)
+    "outside": (0.945, 0.945, 0.945),
     "status": {
         "optimal": "#1a9850",
         "optimal_rooted": "#66bd63",

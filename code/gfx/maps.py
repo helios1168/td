@@ -27,11 +27,20 @@ def _apply_frame(ax, bounds, title=None, fontsize=9):
         ax.set_title(title, fontsize=fontsize)
 
 
-def choropleth(ax, polys, color_of, *, bounds=None, legend=None, title=None,
+# default keyword arguments for an axes legend on a map panel. `choropleth(legend_kw=...)`
+# overrides them per call -- U12 moved the card's map legends *outside* the axes
+# (`loc="upper center"`, anchored just under the axes) because a legend at `loc="lower left"`
+# sits on top of the cells it describes.
+LEGEND_KW = dict(fontsize=6, loc="lower left", frameon=False, ncol=2, handletextpad=0.3,
+                 columnspacing=0.8, borderaxespad=0.2)
+
+
+def choropleth(ax, polys, color_of, *, bounds=None, legend=None, legend_kw=None, title=None,
                edge_color="white", edge_lw=None, fontsize=9):
     """Fill each node's polygon with `color_of(node)`. `polys`: {node: (m,2) ndarray}
     from `geom.polys_from_pos` / `geom.polys_from_shapes`. `edge_lw=None` derives the
-    seam width from `geom.seam_width(len(polys))` (0 at n >= 5000: no seam haze)."""
+    seam width from `geom.seam_width(len(polys))` (0 at n >= 5000: no seam haze).
+    `legend_kw` overrides `LEGEND_KW` for this call (placement, columns, frame)."""
     nodes = list(polys)
     keep = [z for z in nodes if len(polys[z]) >= 3]
     verts = [polys[z] for z in keep]
@@ -46,8 +55,9 @@ def choropleth(ax, polys, color_of, *, bounds=None, legend=None, title=None,
         bounds = (allv[:, 0].min(), allv[:, 0].max(), allv[:, 1].min(), allv[:, 1].max())
     _apply_frame(ax, bounds, title, fontsize)
     if legend:
-        ax.legend(handles=legend, fontsize=6, loc="lower left", frameon=False,
-                  ncol=2, handletextpad=0.3, columnspacing=0.8)
+        kw = dict(LEGEND_KW)
+        kw.update(legend_kw or {})
+        ax.legend(handles=legend, **kw)
     return pc
 
 
@@ -107,15 +117,18 @@ def adjacency(ax, segments, *, color="0.6", lw=0.3, alpha=0.6, zorder=1, **kwarg
     return lc
 
 
-def seeds(ax, pos, *, n=None, marker="*", color="black", edgecolor="white", zorder=5,
-          label=None):
+def seeds(ax, pos, *, n=None, size=None, marker="*", color="black", edgecolor="white",
+          zorder=5, label=None):
     """Star marker(s) at `pos` ((k,2) array-like), sized by `geom.marker_scale(n)` --
-    metro centers / rep bases, scaled so they stay legible from n~10 to n~30000."""
+    metro centers / rep bases, scaled so they stay legible from n~10 to n~30000. `size`
+    (matplotlib `s`, points^2) overrides the derived size when a caller needs a legible
+    marker on a panel with many cells but few seeds (U12: 5 metro stars on a 400-zip
+    context map rendered as near-invisible dots)."""
     P = np.asarray(pos, float)
     if P.size == 0:
         return None
     if P.ndim == 1:
         P = P[None, :]
-    s = geom.marker_scale(n if n is not None else len(P))
+    s = size if size is not None else geom.marker_scale(n if n is not None else len(P))
     return ax.scatter(P[:, 0], P[:, 1], marker=marker, s=s, c=color,
                       edgecolors=edgecolor, linewidths=0.6, zorder=zorder, label=label)

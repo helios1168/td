@@ -299,7 +299,8 @@ def test_producer_instance_card_pair_context_panel_present():
     d = _common.load_json(os.path.join(FX, "instance_t0.json"))
     fig = instance_card.build(d)
     titles = [ax.get_title() for ax in fig.axes]
-    assert any(t == "pair in context" for t in titles)
+    # U12 appended a "<n> of <N> zips" second line to the title
+    assert any(t.startswith("pair in context") for t in titles)
     assert not any("pre-merger" in t for t in titles)
     assert any(t.startswith("log $u_a/u_b$") for t in titles)
     plt_close(fig)
@@ -326,6 +327,124 @@ def test_producer_instance_card_legends_carry_AB_counts():
                     if ax.get_legend() else []) for t in leg.get_texts()]
     assert any("|A|=" in t for t in legend_texts)
     assert any("|B|=" in t for t in legend_texts)
+    plt_close(fig)
+
+
+def _cell_keys(ax):
+    """The set of polygons a map panel actually drew, each keyed by its (rounded, order-
+    independent) vertex set. Used to compare *geometry* across panels without depending on
+    draw order, colour, or the closing vertex `PolyCollection` appends."""
+    import matplotlib.collections as mcoll
+    keys = set()
+    for coll in ax.collections:
+        if not isinstance(coll, mcoll.PolyCollection):
+            continue
+        for path in coll.get_paths():
+            v = np.asarray(path.vertices, float)
+            if len(v) > 1 and np.allclose(v[0], v[-1]):
+                v = v[:-1]
+            keys.add(tuple(sorted(map(tuple, np.round(v, 6)))))
+    return keys
+
+
+def _poly_key(verts):
+    v = np.asarray(verts, float)
+    return tuple(sorted(map(tuple, np.round(v, 6))))
+
+
+def test_instance_card_every_panel_shares_the_context_tessellation():
+    """U12 item 1: with a `context` block, the pair's cells must be *the same polygons* in
+    the pair-context panel and in every pair panel (free Nash, incumbent, log-ratio, u_a,
+    u_b). Before U12 the pair panels re-tessellated the pair's own positions, so the pair
+    stretched to fill its bounding box and appeared as a differently-shaped block from the
+    region outlined in the context panel -- the second assertion pins that the two
+    tessellations really do differ, i.e. that this test would have failed then."""
+    for name in ("C7_scale_n400__A3_B3", "C1_aligned_seed2__A0_B0", "C5_states_resp__A2_B2"):
+        d = _common.load_json(os.path.join(S0C, "instances", f"{name}.json"))
+        gg = instance_card._geometry(d)
+        assert gg["shared"], name
+        expected = {_poly_key(gg["polys"][z]) for z in d["nodes"] if len(gg["polys"][z]) >= 3}
+
+        pair_only, _ = geom.polys_from_pos(d["nodes"], d["pos"])
+        assert {_poly_key(v) for v in pair_only.values() if len(v) >= 3} != expected, name
+
+        fig = instance_card.build(d)
+        for i, panel in enumerate(fig.axes[:6]):          # ctx, free, incumbent, ratio, ua, ub
+            assert expected <= _cell_keys(panel), f"{name}: panel {i} has other cell shapes"
+        plt_close(fig)
+
+
+def test_instance_card_falls_back_to_pair_only_cells_and_says_so():
+    """No `context` block -> the pre-U11 pair-only tessellation, with every pair panel's
+    title flagging it rather than implying the panels share a parent geometry."""
+    d = dict(_common.load_json(os.path.join(S0C, "instances", "C7_scale_n400__A1_B1.json")))
+    del d["context"]
+    gg = instance_card._geometry(d)
+    assert not gg["shared"]
+    fig = instance_card.build(d)
+    titles = [ax.get_title() for ax in fig.axes]
+    assert sum("pair-only cells" in t for t in titles) >= 4
+    plt_close(fig)
+
+
+def _legend_texts(ax):
+    leg = ax.get_legend()
+    return [t.get_text() for t in leg.get_texts()] if leg else []
+
+
+def test_instance_card_context_legend_lists_only_non_empty_classes():
+    """U12 item 2: the fixed three-entry legend promised "A legacy only" / "B legacy only"
+    swatches that never appear in the *aligned* scenarios, where the two legacy territories
+    coincide exactly (a data fact, not a `color_of` bug). The legend now carries counts and
+    lists a class only when it has cells; the title says when the territories coincide."""
+    # aligned: both legacy-only classes are empty
+    d = _common.load_json(os.path.join(S0C, "instances", "C1_aligned_seed2__A0_B0.json"))
+    fig = instance_card.build(d)
+    ctx_ax = fig.axes[0]
+    texts = _legend_texts(ctx_ax)
+    assert not any("legacy only" in t for t in texts), texts
+    assert any(t.startswith("this pair") and "69 zips" in t for t in texts), texts
+    assert any("metro seed" in t for t in texts), texts            # U12 item 3
+    assert "identical territories" in ctx_ax.get_title()
+    plt_close(fig)
+
+    # entangled/state pair: B's legacy territory is strictly bigger, so that class renders
+    d = _common.load_json(os.path.join(S0C, "instances", "C5_states_resp__A2_B2.json"))
+    fig = instance_card.build(d)
+    ctx_ax = fig.axes[0]
+    texts = _legend_texts(ctx_ax)
+    assert any(t.startswith("B-rep") and "legacy only: 7 zips" in t for t in texts), texts
+    assert not any(t.startswith("A-rep") for t in texts), texts
+    assert "identical territories" not in ctx_ax.get_title()
+    # every legend entry's colour must actually be on the map
+    drawn = set()
+    for coll in ctx_ax.collections:
+        if hasattr(coll, "get_facecolor"):
+            for c in np.atleast_2d(coll.get_facecolor()):
+                drawn.add(tuple(np.round(c[:3], 3)))
+    for handle, t in zip(ctx_ax.get_legend().legend_handles, texts):
+        if "metro seed" in t:
+            continue
+        rgb = tuple(np.round(matplotlib.colors.to_rgb(handle.get_color()), 3))
+        assert rgb in drawn, f"legend entry {t!r} has a colour no cell uses"
+    plt_close(fig)
+
+
+def test_instance_card_map_panels_are_top_aligned():
+    """U12 item 5: the panels are aspect-locked, so a landscape pair panel next to a square
+    context panel used to float mid-row (and `Figure.colorbar` silently re-anchors its
+    parent). Every map panel in a row must share a top edge, and each colorbar must be its
+    panel's height rather than the full row's."""
+    d = _common.load_json(os.path.join(S0C, "instances", "C1_aligned_seed2__A0_B0.json"))
+    fig = instance_card.build(d)
+    fig.canvas.draw()
+    tops = [round(fig.axes[i].get_position().y1, 4) for i in range(3)]
+    assert len(set(tops)) == 1, tops
+    tops2 = [round(fig.axes[i].get_position().y1, 4) for i in (3, 4, 5)]
+    assert len(set(tops2)) == 1, tops2
+    row2_h = fig.axes[3].get_position().height
+    for cb_ax in fig.axes[7:]:                      # the colorbars, added after ax_cov
+        assert cb_ax.get_position().height <= row2_h + 1e-6
     plt_close(fig)
 
 
