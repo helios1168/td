@@ -66,9 +66,12 @@ time the rung was actually given (seen at 57 s of 106 s under harness load) is S
 talking, not ours, and is retried like an abort.  When the ladder runs out with budget left,
 further OA rungs are appended at a shifted seed up to `max_rungs`.
 
-Effect at a 120 s cap on the seven S2 stragglers, against S2's own numbers at 1200 s:
-124 zips 4.3e-3 -> 5.1e-4, 135 8.8e-4 -> 1.5e-4, 169 4.9e-3 -> 4.4e-3, 197 5.8e-3 -> 5.1e-3,
-205 3.4e-3 -> 7.0e-4, 320 1.4e-3 -> 4.8e-4, 464 1.2e-2 -> 3.3e-3.
+Effect on the seven S2 stragglers, same 1200 s cap, ρ=0 (`w6b_2026-08-30`; S2 -> W6b):
+124 zips 4.3e-3 -> 1.1e-07 (219 s), 135 8.8e-4 -> 3.0e-08 (281 s), 169 4.9e-3 -> 4.2e-3,
+197 5.8e-3 -> 4.2e-3, 205 3.4e-3 -> 3.4e-4, 320 1.4e-3 -> 1.3e-4, 464 1.2e-2 -> 2.3e-3.
+Four of the seven now beat `flow_pwl`'s 1200 s bound, and the two smallest are at their
+tolerance floor rather than at a search limit.  The two certified controls in the same run
+(77 and 114 zips) still certify in 0.8 s and 0.08 s on the first rung.
 
 *LP settings swept and rejected* (five pairs, 120 s, 2026-08-30; every number below within
 +-30 % of the default, i.e. inside the run-to-run spread): `lp/scaling = 2`,
