@@ -693,7 +693,8 @@ def gain_bounds(ua, ub, *, product_floor: Optional[float] = None, bound_g: bool 
 
 # ======================================================================= solver plumbing
 def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bool = True,
-             use_tol: bool = True, extra_opts: Optional[dict] = None):
+             use_tol: bool = True, extra_opts: Optional[dict] = None,
+             deadline: Optional[float] = None):
     """One `scipy.optimize.milp` call under the harness' conventions.
 
     Forces `mip_rel_gap = mip_abs_gap = 0` (CLAUDE.md trap 12: HiGHS' default 1e-4 relative
@@ -772,6 +773,13 @@ def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bo
                  milp_retries=0)
     res = None
     for i, (delta, o) in enumerate(rungs):
+        if i and deadline is not None:
+            # the ladder shares the caller's budget: a rescue attempt must not multiply the
+            # wall clock by six and hand the SIGALRM backstop a run it would have certified
+            left = deadline - time.perf_counter()
+            if left <= 0:
+                break
+            o = dict(o, time_limit=max(left, 1e-3))
         res = _call(o)
         flags["milp_rung"] = i
         flags["milp_retries"] = i
@@ -792,6 +800,25 @@ def run_milp(core: Core, ext: Optional[Rows], time_limit: float, *, integral: bo
         if not _broken(res):
             break
     return res, flags
+
+
+def safe_exp(v) -> Optional[float]:
+    """`exp(v)` or None -- the incumbent objective is in nats and can overflow on raw
+    dollar-scaled data (the harness rescales to 100, but a method must not assume it)."""
+    if v is None or not math.isfinite(v):
+        return None
+    try:
+        return math.exp(v)
+    except OverflowError:
+        return None
+
+
+def _merge_flags(extra: dict, flags: dict) -> None:
+    for k, v in flags.items():
+        if isinstance(v, bool):
+            extra[k] = bool(extra.get(k, False)) or v
+        else:
+            extra[k] = max(int(extra.get(k, 0) or 0), int(v))
 
 
 def _dual_bound(res) -> Optional[float]:
@@ -858,10 +885,9 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
         if any(ra not in inc_to_a or rb in inc_to_a for ra, rb in rr.values()):
             inc_to_a, inc_obj = None, -math.inf
 
-    g_lo_a, g_hi_a, g_lo_b, g_hi_b = gain_bounds(
-        ua, ub, product_floor=(math.exp(inc_obj) if inc_to_a is not None
-                               and math.isfinite(inc_obj) else None),
-        bound_g=bound_g)
+    product_floor = safe_exp(inc_obj) if inc_to_a is not None else None
+    g_lo_a, g_hi_a, g_lo_b, g_hi_b = gain_bounds(ua, ub, product_floor=product_floor,
+                                                 bound_g=bound_g)
 
     core = build_core(H, nodes, ua, ub, rho, root_mode=root_mode, caps=caps,
                       g_lo_a=g_lo_a, g_hi_a=g_hi_a, g_lo_b=g_lo_b, g_hi_b=g_hi_b,
@@ -875,9 +901,7 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
             trace.incumbent(best_to_a, best_lb)
 
     extra.update(g_lo_a=core.g_lo_a, g_hi_a=core.g_hi_a, g_lo_b=core.g_lo_b,
-                 g_hi_b=core.g_hi_b, warm_product=(math.exp(inc_obj)
-                                                   if math.isfinite(inc_obj) else None),
-                 n_cols=core.n_col, n_rows_static=core.n_static_rows, n_arcs=core.n_arcs,
+                 g_hi_b=core.g_hi_b, warm_product=product_floor, n_cols=core.n_col, n_rows_static=core.n_static_rows, n_arcs=core.n_arcs,
                  n_components=len(core.comps))
 
     # ---- OA seeds: eight geomspace points on the instance's own range, never constants
@@ -903,9 +927,8 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
             status = "time_limit"
             message = "flow: wall clock exhausted before the next master solve"
             break
-        res, flags = run_milp(core, ext, rem)
-        for k, v in flags.items():
-            extra[k] = extra.get(k, False) or v
+        res, flags = run_milp(core, ext, rem, deadline=t0 + time_limit - reserve)
+        _merge_flags(extra, flags)
         iters += 1
         nc = getattr(res, "mip_node_count", None)
         if nc:

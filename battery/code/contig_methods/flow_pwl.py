@@ -69,8 +69,8 @@ from typing import Optional
 import numpy as np
 
 from . import base
-from .flow import (Rows, build_core, gain_bounds, run_milp, tree_cut_incumbent,
-                   _dual_bound, _round_x)
+from .flow import (Rows, build_core, gain_bounds, run_milp, safe_exp,
+                   tree_cut_incumbent, _dual_bound, _merge_flags, _round_x)
 
 NAME = "flow_pwl"
 EXACT = True
@@ -164,9 +164,9 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
         if trace is not None:
             trace.incumbent(best_to_a, best_lb)
 
-    g_lo_a, g_hi_a, g_lo_b, g_hi_b = gain_bounds(
-        ua, ub, product_floor=(math.exp(inc_obj) if best_to_a is not None else None),
-        bound_g=bound_g)
+    product_floor = safe_exp(inc_obj) if best_to_a is not None else None
+    g_lo_a, g_hi_a, g_lo_b, g_hi_b = gain_bounds(ua, ub, product_floor=product_floor,
+                                                 bound_g=bound_g)
     # the grid needs a strictly positive left end; at kappa > 0 with negative utilities the
     # min-positive-u floor is unavailable, so fall back to a numerical domain guard (which
     # only widens the range, hence only widens eps -- it never invalidates the bound chain
@@ -186,7 +186,7 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
     extra.update(k_a=int(k_a), k_b=int(k_b), eps_a=float(eps_a), eps_b=float(eps_b),
                  g_lo_a=float(g_lo_a), g_hi_a=float(g_hi_a), g_lo_b=float(g_lo_b),
                  g_hi_b=float(g_hi_b), L_a=float(math.log(R_a)), L_b=float(math.log(R_b)),
-                 warm_product=(math.exp(inc_obj) if best_to_a is not None else None),
+                 warm_product=product_floor,
                  k_max_binding=bool(k_a >= k_max or k_b >= k_max))
 
     core = build_core(H, nodes, ua, ub, rho, root_mode=root_mode, caps=caps,
@@ -204,8 +204,8 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
                            extra=extra, iters=0,
                            message="flow_pwl: wall clock exhausted before the MILP")
 
-    res, flags = run_milp(core, ext, rem)
-    extra.update(flags)
+    res, flags = run_milp(core, ext, rem, deadline=t0 + time_limit - reserve)
+    _merge_flags(extra, flags)
     nodes_bb = int(getattr(res, "mip_node_count", 0) or 0)
     st = getattr(res, "status", 4)
     D = _dual_bound(res)
