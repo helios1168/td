@@ -81,3 +81,70 @@ Named failures — status / gap (nats) / wall time at the 60 s cap:
 - EF1 holds on every certified T0 incumbent; cost of contiguity on T0 stays ≈ 0.4 % of the free product.
 
 Open items carried into S1: `scip_tree`'s retry ladder stops early under harness load on C7 A3/B3 (3 s of a 60 s budget — the remaining time should go to the OA rung); `flow` returns no dual bound at all on the 205 pair (a root-LP bound would fix that); `loop_v2` had one infeasible last iterate on a named failure (feasible 0.95).
+
+## S1 screening — 2026-08-30 (`s1_2026-08-30`)
+
+T0 (13 curated) + T1 (63 battery pairs, 30–82 zips) + T2 (12 scale pairs, 26–464 zips) = 88 instances; ρ=0 (+ ρ=2e-3 for `current_tu`); cap 60 s; 11 workers; 822 rows; ~50 min wall. 0 post-pass bugs **after** the `cbc_tree` correction below; 0 invalid rows.
+
+| method | tier | rows | certified | gap_limit | feasible | median t→cert | worst gap vs UB* | named failures | errors |
+|---|---|---|---|---|---|---|---|---|---|
+| `brute` | T0 | 13 | 1.00 | 0.00 | 1.00 | 0.019 s | 0.0000 | 0/6 | 0 |
+| `brute` | T1 | 18 | 1.00 | 0.00 | 1.00 | 0.012 s | 0.0000 | 0/6 | 0 |
+| `cbc_tree` | T0 | 13 | 0.00 | 0.00 | 1.00 | — s | 0.0188 | 0/6 | 0 |
+| `cbc_tree` | T1 | 62 | 0.00 | 0.00 | 0.68 | — s | 0.0272 | 0/6 | 0 |
+| `cbc_tree` | T2 | 12 | 0.00 | 0.00 | 0.17 | — s | 0.0241 | 0/6 | 0 |
+| `current_tu` | T0 | 13 | 0.00 | 0.08 | 1.00 | — s | 0.0000 | 0/6 | 0 |
+| `current_tu` | T1 | 63 | 0.00 | 0.19 | 0.73 | — s | 0.0368 | 0/6 | 5 |
+| `current_tu` | T2 | 12 | 0.00 | 0.08 | 0.25 | — s | 0.0000 | 0/6 | 0 |
+| `current_tu` (ρ=0.002) | T0 | 13 | 0.00 | 0.00 | 1.00 | — s | 0.0000 | 0/6 | 0 |
+| `current_tu` (ρ=0.002) | T1 | 63 | 0.00 | 0.00 | 0.98 | — s | 0.0000 | 0/6 | 0 |
+| `current_tu` (ρ=0.002) | T2 | 12 | 0.00 | 0.00 | 0.92 | — s | 0.9814 | 0/6 | 0 |
+| `flow` | T0 | 13 | 1.00 | 0.00 | 1.00 | 0.282 s | 0.0000 | 0/6 | 0 |
+| `flow` | T1 | 63 | 0.73 | 0.00 | 1.00 | 0.699 s | 0.0053 | 2/6 | 0 |
+| `flow` | T2 | 12 | 0.33 | 0.00 | 1.00 | 4.861 s | 0.0256 | 2/6 | 0 |
+| `flow_pwl` | T0 | 13 | 1.00 | 0.00 | 1.00 | 0.181 s | 0.0000 | 0/6 | 0 |
+| `flow_pwl` | T1 | 63 | 0.78 | 0.00 | 1.00 | 0.623 s | 0.0069 | 2/6 | 0 |
+| `flow_pwl` | T2 | 12 | 0.42 | 0.00 | 1.00 | 2.626 s | 0.0256 | 2/6 | 0 |
+| `loop_v2` | T0 | 13 | 1.00 | 0.00 | 1.00 | 0.200 s | 0.0000 | 0/6 | 0 |
+| `loop_v2` | T1 | 63 | 0.78 | 0.00 | 0.78 | 0.687 s | 0.0000 | 2/6 | 1 |
+| `loop_v2` | T2 | 12 | 0.42 | 0.00 | 0.42 | 5.136 s | 0.0000 | 2/6 | 0 |
+| `prep_e1_flow` | T0 | 13 | 1.00 | 0.00 | 1.00 | 0.242 s | 0.0000 | 0/6 | 0 |
+| `prep_e1_flow` | T1 | 63 | 0.73 | 0.00 | 1.00 | 0.708 s | 0.0053 | 2/6 | 0 |
+| `prep_e1_flow` | T2 | 12 | 0.33 | 0.00 | 1.00 | 4.355 s | 0.0256 | 2/6 | 0 |
+| `scip_tree` | T0 | 13 | 1.00 | 0.00 | 1.00 | 0.025 s | 0.0000 | 0/6 | 0 |
+| `scip_tree` | T1 | 63 | 0.92 | 0.00 | 1.00 | 0.081 s | 0.0049 | 2/6 | 0 |
+| `scip_tree` | T2 | 12 | 0.42 | 0.00 | 1.00 | 0.608 s | 0.0110 | 2/6 | 0 |
+| `warm_f1` | T0 | 13 | 0.00 | 0.00 | 1.00 | — s | 0.0115 | 0/6 | 0 |
+| `warm_f1` | T1 | 63 | 0.00 | 0.00 | 1.00 | — s | 0.0248 | 0/6 | 0 |
+| `warm_f1` | T2 | 12 | 0.00 | 0.00 | 1.00 | — s | 0.0106 | 0/6 | 0 |
+
+Named failures (ρ=0) — status / gap / t:
+
+| instance | n | `scip_tree` | `loop_v2` | `flow` | `flow_pwl` | `cbc_tree` | `current_tu` |
+|---|---|---|---|---|---|---|---|
+| C9_heavytail_seed2__A2_B2 | 31 | optimal / 0e+00 / 0 s | optimal / 0e+00 / 0 s | optimal / 0e+00 / 1 s | optimal / 2e-07 / 2 s | heuristic / — / 1 s | time_limit / — / 60 s |
+| C7_scale_n400__A1_B1 | 44 | optimal / 0e+00 / 1 s | optimal / 4e-14 / 16 s | optimal / 8e-15 / 15 s | optimal / 4e-07 / 7 s | heuristic / — / 61 s | heuristic / — / 52 s |
+| C1_aligned_seed2__A0_B0 | 69 | optimal / 0e+00 / 2 s | optimal / 0e+00 / 38 s | optimal / 2e-13 / 50 s | optimal / 2e-07 / 53 s | heuristic / — / 61 s | time_limit / — / 60 s |
+| C7_scale_n400__A0_B0 | 125 | optimal / 0e+00 / 1 s | optimal / 0e+00 / 1 s | optimal / 2e-15 / 4 s | optimal / 4e-07 / 3 s | heuristic / — / 10 s | time_limit / — / 60 s |
+| C7_scale_n400__A3_B3 | 205 | time_limit / 3e-03 / 3 s | time_limit / — / 60 s | time_limit / — / 60 s | time_limit / — / 60 s | heuristic / — / 35 s | time_limit / — / 60 s |
+
+Certified share by pair size (ρ=0):
+
+| method | 0–20 | 21–45 | 46–82 | 83–125 | 126–205 | 206–464 |
+|---|---|---|---|---|---|---|
+| `scip_tree` | 31/31 | 20/20 | 23/28 | 2/3 | 0/4 | 0/2 |
+| `loop_v2` | 31/31 | 20/20 | 14/28 | 2/3 | 0/4 | 0/2 |
+| `flow` | 31/31 | 20/20 | 10/28 | 2/3 | 0/4 | 0/2 |
+| `flow_pwl` | 31/31 | 20/20 | 14/28 | 2/3 | 0/4 | 0/2 |
+
+**Reading.**
+
+- `scip_tree` leads on every tier: 92 % of T1 certified (median 0.08 s), 42 % of T2; the uncertified T2 pairs are the 205/320/464-zip ones (mechanism (b)). `flow_pwl` ≈ `loop_v2` (78 % T1) > `flow` (73 %); all four agree exactly wherever they certify (0 bugs).
+- **`cbc_tree` was corrected post hoc.** It claimed `optimal` with a global UB *below* `brute`'s optimum on `C2_entangled_a0` A0/B2 and A0/B3 (python-mip's lazy rows are not enforced reliably — W7's finding), and two of its jobs hung past the cap ignoring `max_seconds` and the SIGALRM backstop (killed; one rerun under `--scheduler proc`, one left missing). All 87 `cbc_tree` rows were demoted to `heuristic`/`UB=None` (`rows.jsonl.orig` keeps the originals) and the method is now `EXACT=False` in code (`664857c`). Option B is out.
+- `current_tu` (legacy loop, tight+unbounded) certifies nothing at ρ=0 and hits trap 14 ('Solve error') on 5 T1 pairs; at ρ=2e-3 it is feasible on 92–100 % but still only `optimal_rooted` (the paper's ρ-penalised numbers are reproducible, not certified).
+- `loop_v2`: feasible on only 78 % of T1 rows (time-limited runs end on an infeasible master iterate, `LB=None`) and one `error`; 0 row(s) with a poor feasible incumbent (gap vs UB* > 1 nat). Its certificates are sound; the primal side is weak without a warm start.
+- `warm_f1` feasible on 100 % in ≤ 0.2 s; worst gap vs UB* 0.025 nats — the natural MIP start for SCIP.
+- `prep_e1_flow` ≡ `flow` on every row: no zero-value zips in T0–T2 (E1 needs the glue regime, T3).
+- Cost of contiguity stays ≈ 0.4 % on T0/T1; EF1 holds on every certified incumbent.
+
+**Recommendation for S2/S3 finalists:** `scip_tree` (primary, with `warm_f1` as MIP start), `flow_pwl` (dependency-free oracle/cross-check up to ~125 zips), `loop_v2` (control for the paper's multi-tree argument). Drop `flow`, `cbc_tree`, `prep_*` (until T3), `current_*` except `current_tu` at ρ=2e-3 as the continuity column.
