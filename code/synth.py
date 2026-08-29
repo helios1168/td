@@ -79,22 +79,63 @@ def _adjacency(P, trim=2.5):
             E.add((min(u, v), max(u, v)))
     E = list(E)
     L = np.array([np.linalg.norm(P[u] - P[v]) for u, v in E])
-    keep = [e for e, l in zip(E, L) if l <= trim * np.median(L)]
+    thr = trim * np.median(L)                   # hoisted out of the comprehension:
+    keep = [e for e, l in zip(E, L) if l <= thr]   # identical output, O(|E|) not O(|E|^2)
     G = nx.Graph(); G.add_nodes_from(range(len(P))); G.add_edges_from(keep)
     comps = list(nx.connected_components(G))
     while len(comps) > 1:                       # reattach by shortest bridging pair
         main = max(comps, key=len)
+        main_l = list(main); Pm = P[main_l]      # hoisted: same list, built once
         best = None
         for C in comps:
             if C is main: continue
             for u in C:
-                d = np.linalg.norm(P[list(main)] - P[u], axis=1)
+                d = np.linalg.norm(Pm - P[u], axis=1)
                 j = int(np.argmin(d))
                 if best is None or d[j] < best[0]:
-                    best = (d[j], u, list(main)[j])
+                    best = (d[j], u, main_l[j])
         G.add_edge(best[1], best[2])
         comps = list(nx.connected_components(G))
     return G
+
+
+def _gini(v):
+    v = np.sort(np.asarray(v, float)); m = len(v); s = v.sum()
+    if m == 0 or s <= 0:
+        return 0.0
+    return float((2.0 * np.arange(1, m + 1) - m - 1).dot(v) / (m * s))
+
+
+def activity_report(G):
+    """Instance-level activity/concentration summary (the `activity` knob's target stats).
+
+    active   : the zip has a book to fight over        (A + B > 0)
+    untapped : opportunity but no book yet             (M > 0, A = B = 0)
+    glue     : nothing at all                          (A = B = M = 0) -- mechanism (d)
+    `active_pieces` counts the components of the active subgraph; > 1 is the point of
+    S10_glue (zero-value zips that only connect other zips).
+    """
+    nodes = list(G)
+    A = np.array([G.nodes[z]["A"] for z in nodes], float)
+    B = np.array([G.nodes[z]["B"] for z in nodes], float)
+    M = np.array([G.nodes[z]["M"] for z in nodes], float)
+    act = (A + B) > 0
+    glue = (M <= 0) & ~act
+    untapped = (M > 0) & ~act
+    sub = G.subgraph([z for z, a in zip(nodes, act) if a])
+    sizes = sorted((len(c) for c in nx.connected_components(sub)), reverse=True)
+    return dict(n=len(nodes),
+                active_frac=float(act.mean()) if len(nodes) else 0.0,
+                glue_frac=float(glue.mean()) if len(nodes) else 0.0,
+                untapped_frac=float(untapped.mean()) if len(nodes) else 0.0,
+                active_pieces=len(sizes),
+                largest_active_share=float(sizes[0] / act.sum()) if sizes else 0.0,
+                M_share_untapped=float(M[untapped].sum() / M.sum()) if M.sum() > 0 else 0.0,
+                gini_M=_gini(M), gini_u=_gini(A + B + M),
+                top1_share_M=float(np.sort(M)[-max(1, len(M) // 100):].sum() / M.sum())
+                if M.sum() > 0 else 0.0,
+                top10_share_M=float(np.sort(M)[-max(1, len(M) // 10):].sum() / M.sum())
+                if M.sum() > 0 else 0.0)
 
 
 def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
@@ -220,18 +261,56 @@ SCENARIOS = {
 }
 
 
-def scenario(name, n=200, seed=0, **overrides):
+def scenario(name, n=200, seed=0, stats=None, **overrides):
     kw = dict(SCENARIOS[name]); kw.update(overrides)
     return make_instance(n=n, seed=seed, **kw)
 
 
+def _report(name, G, T):
+    probs = T.validate(G)
+    cen = T.census(G)
+    share11 = sum(c["share"] for c in cen if c["shape"] == "1-1 pair")
+    act = activity_report(G)
+    print(f"{name:<14} n={G.number_of_nodes():<5} corr={G.graph['corr_AB']:+.2f}  "
+          f"comps={len(cen)}  1-1 opp share={share11:.0%}  "
+          f"active={act['active_frac']:.2f}  gini(M)={act['gini_M']:.2f}  "
+          f"validate: {'ok' if not probs else probs}")
+
+
 if __name__ == "__main__":
+    import argparse
     import territory as T
-    for name in SCENARIOS:
-        G = scenario(name, seed=1)
-        probs = T.validate(G)
-        cen = T.census(G)
-        share11 = sum(c["share"] for c in cen if c["shape"] == "1-1 pair")
-        print(f"{name:<14} corr={G.graph['corr_AB']:+.2f}  comps={len(cen)}  "
-              f"1-1 opp share={share11:.0%}  validate: "
-              f"{'ok' if not probs else probs}")
+
+    ap = argparse.ArgumentParser(
+        description="Generate a synthetic ZCTA instance (or self-test every scenario).")
+    ap.add_argument("--scenario", help="name from SCENARIOS; omit to sweep them all")
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--n", type=int, default=200)
+    ap.add_argument("--stats", help="twin_stats.json for the calibrated scenarios")
+    ap.add_argument("--dump", help="write the instance summary to this JSON path")
+    args = ap.parse_args()
+
+    if args.scenario is None:
+        for nm in SCENARIOS:
+            if SCENARIOS[nm].get("regional"):
+                print(f"{nm:<14} (regional: needs U8 battery/code/regions.py)")
+                continue
+            _report(nm, scenario(nm, n=args.n, seed=args.seed, stats=args.stats), T)
+    else:
+        G = scenario(args.scenario, n=args.n, seed=args.seed, stats=args.stats)
+        _report(args.scenario, G, T)
+        if args.dump:
+            import json
+            zs = list(G)
+            json.dump(dict(n_zips=len(zs), S_a=G.graph["Sa"], S_b=G.graph["Sb"],
+                           M=G.graph["Mtot"],
+                           A_z=[G.nodes[z]["A"] for z in zs],
+                           B_z=[G.nodes[z]["B"] for z in zs],
+                           M_z=[G.nodes[z]["M"] for z in zs],
+                           state=[G.nodes[z].get("state") for z in zs],
+                           rep_a=[G.nodes[z]["rep_a"] for z in zs],
+                           rep_b=[G.nodes[z]["rep_b"] for z in zs],
+                           edges=[[int(u), int(v)] for u, v in G.edges()],
+                           params=G.graph["params"]),
+                      open(args.dump, "w"), indent=1, default=float)
+            print(f"wrote {args.dump}")
