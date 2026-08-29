@@ -1,0 +1,67 @@
+  n=50   S_a=3.0000  S_b=1.8000  M=40.0000
+  headroom min (net, a / b) : 0.2335 / 0.2377   (need >= 0)
+  zip opportunity range     : [0.2474, 2.2118]
+  combined share of market  : 0.1200
+  corr(A_z, B_z) across zips: +0.6846
+  utility ratio range       : [0.9531, 1.1373]
+======================================================================
+instance: n=50  Sa=3.0000  Sb=1.8000  M=40.0000  graph: 132 edges
+Amax=14.6040  Bmax=14.1000
+
+--- Section 5: fifty-zip instance ---
+exact:  k=22  g_a=7.3715  g_b=7.2318  product=53.30907
+prefix: k=22  g_a=7.4423  g_b=7.1628  product=53.30759  shortfall=2.78e-05  different_allocation=True
+a receives 22 zips, 48.9% of opportunity  (M_a=19.57 M_b=20.43 imbalance=2.2%)
+
+--- Appendix A: other solution concepts ---
+  equal_gain           k= 21  g_a=7.2232  g_b=7.3765  prod=53.282  min_g=7.2232  ks_gap=0.0286  M_a_share=47.8%
+  egalitarian          k= 21  g_a=7.2232  g_b=7.3765  prod=53.282  min_g=7.2232  ks_gap=0.0286  M_a_share=47.8%
+  ks                   k= 22  g_a=7.4423  g_b=7.1628  prod=53.308  min_g=7.1628  ks_gap=0.0016  M_a_share=49.4%
+  nash                 k= 22  g_a=7.4423  g_b=7.1628  prod=53.308  min_g=7.1628  ks_gap=0.0016  M_a_share=49.4%
+  utilitarian          k= 46  g_a=12.6330  g_b=2.0395  prod=25.765  min_g=2.0395  ks_gap=0.7204  M_a_share=86.2%
+  equal_opportunity    k= 22  g_a=7.4423  g_b=7.1628  prod=53.308  min_g=7.1628  ks_gap=0.0016  M_a_share=49.4%
+
+--- Section 6: contiguity ---
+unconstrained pieces a/b: 1/2  sizes_a=[22] sizes_b=[24, 4]
+  rho=2e-03: product=53.2046  perimeter=15  (11.4% of 132)  iters=4  time=<T>  pieces=1/1  zips_to_a=24
+  rho=2e-04: product=53.2769  perimeter=21  (15.9% of 132)  iters=6  time=<T>  pieces=1/1  zips_to_a=22
+  rho=1e-05: product=53.2918  perimeter=27  (20.5% of 132)  iters=9  time=<T>  pieces=1/1  zips_to_a=21
+  price of contiguity: 0.03% -- 0.20% of the bargaining product
+
+--- Contestability ---
+  computed in <T>
+  stake range: [0.0115, 0.1216]
+  1. zip 37: stake=0.0541 doubt=0.6133 contestability=0.0332
+  2. zip 32: stake=0.1159 doubt=0.2433 contestability=0.0282
+  3. zip 22: stake=0.0471 doubt=0.5367 contestability=0.0253
+  4. zip 19: stake=0.0352 doubt=0.5400 contestability=0.0190
+  5. zip 28: stake=0.0302 doubt=0.5700 contestability=0.0172
+  top 5 share of total contestability: 52%
+
+--- Exact parameter breakpoints ---
+  distinct k over lambda in [0.02,0.90]: [21, 22]  breakpoints at [0.02620265 0.20836042]
+  distinct k over full [0.001,0.999]: [21, 22, 23]  all breakpoints at [0.00673922 0.02620265 0.20836042 0.99375984]
+  k at lambda=0.30: 22  contiguous flat interval containing it: [0.2085, 0.9938]
+
+--- Opportunity balance ---
+  lambda=0.02: k=22  M_a=19.12  imbalance=4.4%
+  lambda=0.21: k=22  M_a=19.78  imbalance=1.1%
+  lambda=0.30: k=22  M_a=19.78  imbalance=1.1%
+  lambda=0.70: k=22  M_a=19.78  imbalance=1.1%
+  lambda=0.90: k=22  M_a=19.78  imbalance=1.1%
+
+--- Appendix B: prefix property on 400k random subsets ---
+  utilitarian  best prefix 14.67251  best random 14.62975  prefix holds
+  nash         best prefix 53.30759  best random 53.10118  prefix holds
+  egalitarian  best prefix 7.22320  best random 7.27279  VIOLATED
+  equal gain   best prefix 0.15331  best random 0.00000  VIOLATED
+  KS           best prefix 0.00160  best random 0.00000  VIOLATED
+
+figures written to <FIGDIR>
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
+HighsMipSolverData::transformNewIntegerFeasibleSolution tmpSolver.run();
