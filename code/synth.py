@@ -139,6 +139,43 @@ def _density_base(dens, n, gamma, dens_floor, core_tail, core_cap, rng_core):
     return (1.0 - dens_floor) * dn ** gamma + dens_floor
 
 
+def _split_seeds(P, Mz, rep_host, host_seeds, k, split_pos, split_weight, rng_s):
+    """Zips at which to plant an intruding seed inside `k` of the host firm's territories.
+
+    Picks the territories with probability proportional to their opportunity
+    (`split_weight="M"`) or uniformly, then one zip inside each: the metro core
+    (`split_pos="core"`, argmax M) or the periphery (`"edge"`, farthest from the host
+    seed).  The host's own seed zip is excluded so the intruder never lands on top of it
+    (an exact positional tie would silently give the new rep an empty territory).
+    """
+    n_host = len(host_seeds)
+    terr_M = np.array([Mz[rep_host == r].sum() for r in range(n_host)])
+    ok = np.flatnonzero(terr_M > 0)
+    k = int(min(k, len(ok)))
+    if k <= 0:
+        return []
+    if split_weight == "M":
+        p = terr_M[ok] / terr_M[ok].sum()
+    elif split_weight == "uniform":
+        p = None
+    else:
+        raise ValueError(f"split_weight must be 'M' or 'uniform', got {split_weight!r}")
+    out = []
+    for r in rng_s.choice(ok, k, replace=False, p=p):
+        members = np.flatnonzero(rep_host == r)
+        keep = members[~np.all(P[members] == host_seeds[r], axis=1)]
+        if len(keep):
+            members = keep
+        if split_pos == "core":
+            z = members[int(np.argmax(Mz[members]))]
+        elif split_pos == "edge":
+            z = members[int(np.argmax(np.linalg.norm(P[members] - host_seeds[r], axis=1)))]
+        else:
+            raise ValueError(f"split_pos must be 'core' or 'edge', got {split_pos!r}")
+        out.append(int(z))
+    return out
+
+
 def _gini(v):
     v = np.sort(np.asarray(v, float)); m = len(v); s = v.sum()
     if m == 0 or s <= 0:
@@ -274,6 +311,28 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
                          + (1 - alpha) * (rng.random((n_shared, 2)) * .76 + .12)]
                         + ([rng.random((n_rep_b - n_shared, 2)) * .76 + .12]
                            if n_rep_b > n_shared else []))
+
+    # ---- designed dense components (split_b: 1Ax2B, split_a: 2Ax1B) -------------
+    # Provisional labels from the un-split seed sets decide which territories get an
+    # intruder; split_b runs first so split_a sees the post-split B map.  Pure
+    # post-transform of already-drawn arrays + r_split, so `rng` is untouched.
+    if split_a or split_b:
+        rep_a0 = np.argmin(np.linalg.norm(P[:, None] - a_seeds[None], axis=2), axis=1)
+        rep_b0 = np.argmin(np.linalg.norm(P[:, None] - b_seeds[None], axis=2), axis=1)
+        if split_b:
+            add = _split_seeds(P, Mz, rep_a0, a_seeds, split_b, split_pos,
+                               split_weight, r_split)
+            if add:
+                b_seeds = np.vstack([b_seeds, P[add]])
+                rep_b0 = np.argmin(np.linalg.norm(P[:, None] - b_seeds[None], axis=2),
+                                   axis=1)
+        if split_a:
+            add = _split_seeds(P, Mz, rep_b0, b_seeds, split_a, split_pos,
+                               split_weight, r_split)
+            if add:
+                a_seeds = np.vstack([a_seeds, P[add]])
+        n_rep_a, n_rep_b = len(a_seeds), len(b_seeds)
+
     rep_a = np.argmin(np.linalg.norm(P[:, None] - a_seeds[None], axis=2), axis=1)
     db = np.linalg.norm(P[:, None] - b_seeds[None], axis=2)
     rep_b = np.argmin(db, axis=1)
