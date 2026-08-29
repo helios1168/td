@@ -1,11 +1,13 @@
 # Territory Division (td) — Claude Code Setup
 
-**Last updated:** 2026-08-29
+**Last updated:** 2026-08-30
 **Project:** Fair division of ZCTA territories between two merging annuity wholesaling forces
 **Status:** Model and reference implementation settled. **Contiguity development programme
-approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point. Kick-off U0a–U1a
-done 2026-08-29 on branch `contiguity-harness` (anchors, `districting.py` hooks, deps, the frozen
-harness contract `battery/code/contig_methods/base.py`); the parallel unit wave is next.**
+approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point.** On branch
+`contiguity-harness`: harness, unit wave and method wave merged; S0/S1/S2 and the W6b follow-up
+run (`research/contiguity/RESULTS.md`). `scip_tree` (SCIP single tree, root-free separator cuts)
+is the finalist: certifies every pair ≤ 125 zips in seconds, holds 1e-7–4e-3 at 124–464 zips.
+Next: S3 once the synthetic twin lands; candidate units W6c / in-tree primal (PLAN.md §0).
 
 ---
 
@@ -271,6 +273,19 @@ return argmax_k g_a[k]*g_b[k]
     draws; the anchor was deliberately refreshed on 2026-08-29 (zip 22 doubt 0.5367 → 0.5400,
     zip 28 0.5700 → 0.5667, `nash_contestability.png` regenerated). The paper's Contestability
     numbers must be checked against the new `mkfig_zip50.py` output (see *Paper edits pending*).
+
+15. **A solver abort reported as `time_limit` silently disables a retry ladder.** Found
+    2026-08-30 (W6b): `scip_tree` maps SCIP's LP abort (`error in LP solver`, status `unknown`) to
+    `time_limit` so the harness counts crashes, not capped runs, under `errors` — and its own
+    `solve()` then continued the 1e-7/1e-6/OA ladder only on status `error`. Every S2 pair above
+    ~125 zips stopped after 1–58 s of a 1200 s budget and the ladder never ran once; the "scale
+    wall at ~125 zips regardless of budget" in `RESULTS.md` §S2 was this bug for `scip_tree`.
+    Rules that follow: a retry decision must key on the *engine's* stop reason (`extra["retryable"]`),
+    never on the harness-facing status; SCIP's `limits/time` runs on its own clock and under
+    load can fire at ~half the wall budget (`_short_stop` retries such a stop); and a bound from a
+    rung at feastol f is trustworthy only to O(f) — the recomputed gap bottoms out near 2f, so a
+    loosened rung can never self-certify at `CERT_TOL = 1e-8`, which is the intended behaviour (the
+    124/135-zip pairs sit at 1.1e-7 / 3.0e-8 for exactly this reason).
 
 ### Contiguity MILP: three independent failure mechanisms (trap 11)
 
