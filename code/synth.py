@@ -38,6 +38,30 @@ graphs matching territory.py's expected schema, with every dial aimed at a named
                 default off -- ZCTA-level population looks near-lognormal, not
                 power-law (USPS boundary redrawing smooths it), so M_z stays as-is
 
+Generator v2 (U5, PLAN.md Part G) adds a second set of dials, **all default-off**, aimed at
+what the census and the contiguity harness will meet on real data. See SYNTH.md section 6.
+
+  dial                          gate it targets
+  ----                          ---------------
+  split_a / split_b /           designed dense components (1Ax2B, 2Ax1B) instead of the
+  split_pos / split_weight      incidental ones S2 and `sliver` produce by accident
+  activity                      mechanism (d): glue zips (A=B=M=0) and untapped zips
+                                (M>0, A=B=0); `active_frac`, `active_pieces`
+  metro_weights / zipf_s /      value concentration: Gini(M) and top-1%/top-10% share far
+  gamma / dens_floor /          above what equal-weight metros over a 0.20 floor can reach
+  core_tail / core_cap
+  assign="graph" / b_hops       multi-source BFS Voronoi territories -- required on real
+                                geography, where "nearest seed in the plane" is meaningless
+  graph / pos / density_field   real ZCTA geography and public population x income (U8),
+  / states                      and the twin
+  share_curve                   log(A/M) ~ Normal(mu[d], sd[d]) by M-decile, the form
+                                twin_stats measures
+  calibrate() / fit_rho_books   twin_stats.json -> overrides; S8_twin/_ln/_ht
+
+S1-S7 at every seed are byte-identical to the pre-v2 generator; the invariance rule and its
+two traps are documented at the top of `make_instance`, and guarded by
+`battery/code/tests/test_synth_compat.py::test_bit_identity`.
+
 Schema produced (matches territory.py REQUIRED + optional state):
   G.nodes[z] = {rep_a, rep_b, A, B, M, state?, pos}
   G.graph    = {params, corr_AB, Sa, Sb, Mtot, cap_a, cap_b}
