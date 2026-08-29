@@ -811,6 +811,289 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
     return G
 
 
+# ---------------------------------------------------------------- rho_books fitting
+def _log_corr_AB(G):
+    """corr(log A, log B) over the zips where both books are positive -- the statistic
+    twin_stats reports as `corr.log_AB` (raw corr(A,B) is dominated by the shared M)."""
+    A = np.array([G.nodes[z]["A"] for z in G], float)
+    B = np.array([G.nodes[z]["B"] for z in G], float)
+    m = (A > 0) & (B > 0)
+    if m.sum() < 3:
+        return 0.0
+    return float(np.corrcoef(np.log(A[m]), np.log(B[m]))[0, 1])
+
+
+def fit_rho_books(target_log_corr, *, probe_kw=None, n_probe=1500, seed_probe=104729,
+                  tol=5e-3, max_iter=25):
+    """Invert the rho_books dial: find the latent-field correlation whose *realised*
+    corr(log A, log B) matches the twin's.
+
+    rho_books is a dial on the latent fields, not on the realised books -- the shared M_z
+    factor and the share curve both move the realised correlation -- so the only honest way
+    to hit a fitted target is to probe.  Median over three probe seeds keeps a single
+    unlucky instance from setting the answer.  Lives here and never inside `make_instance`:
+    a generator that silently ran a 75-instance bisection would be neither cheap nor
+    reproducible from its own params.
+
+    Returns dict(rho_books, rho_books_fit_err, n_probe_evals).
+    """
+    probe_kw = dict(probe_kw or {})
+    probe_kw.pop("rho_books", None)
+    probe_kw.pop("n", None); probe_kw.pop("seed", None)
+    calls = [0]
+
+    def f(rho):
+        calls[0] += 1
+        vals = [_log_corr_AB(make_instance(n=n_probe, seed=seed_probe + i,
+                                           rho_books=rho, validate_self=False, **probe_kw))
+                for i in range(3)]
+        return float(np.median(vals))
+
+    lo, hi = -1.0, 1.0
+    f_lo, f_hi = f(lo) - target_log_corr, f(hi) - target_log_corr
+    if f_lo * f_hi > 0:                      # target outside the achievable range
+        grid = np.linspace(-1.0, 1.0, 21)
+        errs = [(abs(f(r) - target_log_corr), float(r)) for r in grid]
+        err, best = min(errs)
+        return dict(rho_books=best, rho_books_fit_err=err, n_probe_evals=calls[0])
+    for _ in range(int(max_iter)):
+        mid = 0.5 * (lo + hi)
+        f_mid = f(mid) - target_log_corr
+        if abs(f_mid) <= tol:
+            return dict(rho_books=float(mid), rho_books_fit_err=abs(f_mid),
+                        n_probe_evals=calls[0])
+        if f_lo * f_mid <= 0:
+            hi, f_hi = mid, f_mid
+        else:
+            lo, f_lo = mid, f_mid
+    mid = 0.5 * (lo + hi)
+    return dict(rho_books=float(mid), rho_books_fit_err=abs(f(mid) - target_log_corr),
+                n_probe_evals=calls[0])
+
+
+# ------------------------------------------------------------------- calibration
+# CALIB_MAP: knob key -> tuple of CANDIDATE paths into twin_stats.json.  U3 writes that
+# file and this file reads it, in different sessions on different machines, so every entry
+# lists the spellings we think U3 might use and the first one that resolves wins.  A key
+# that resolves nowhere lands in `calib_missing` and falls back to LITERATURE_DEFAULTS --
+# so a spelling drift is a one-line fix here, never a silent wrong number.
+#
+# >>> If you are U3: make twin_stats.json use the FIRST path of each tuple. <<<
+CALIB_MAP = {
+    "M_sigma_log":      (("marginals", "M", "lognormal", "sigma"),
+                         ("marginals", "M", "lognormal", "sigma_log"),
+                         ("marginals", "M", "sigma")),
+    "M_dpln_alpha":     (("marginals", "M", "dpln", "alpha"),
+                         ("marginals", "M", "dpln_alpha")),
+    "M_dpln_beta":      (("marginals", "M", "dpln", "beta"),
+                         ("marginals", "M", "dpln_beta")),
+    "M_prefer_dpln":    (("marginals", "M", "prefer_dpln"),
+                         ("marginals", "M", "dpln", "prefer_dpln")),
+    "A_sigma_log":      (("marginals", "A_over_M", "lognormal", "sigma"),
+                         ("marginals", "A/M", "lognormal", "sigma"),
+                         ("marginals", "A", "lognormal", "sigma")),
+    "A_dpln_alpha":     (("marginals", "A_over_M", "dpln", "alpha"),
+                         ("marginals", "A/M", "dpln", "alpha"),
+                         ("marginals", "A", "dpln", "alpha")),
+    "A_dpln_beta":      (("marginals", "A_over_M", "dpln", "beta"),
+                         ("marginals", "A/M", "dpln", "beta"),
+                         ("marginals", "A", "dpln", "beta")),
+    "A_prefer_dpln":    (("marginals", "A_over_M", "prefer_dpln"),
+                         ("marginals", "A/M", "prefer_dpln"),
+                         ("marginals", "A", "prefer_dpln")),
+    "share_A_mean_log": (("share_curves", "A", "by_decile", "mean_log"),
+                         ("share_curves", "A", "mean_log")),
+    "share_A_sd_log":   (("share_curves", "A", "by_decile", "sd_log"),
+                         ("share_curves", "A", "sd_log")),
+    "share_B_mean_log": (("share_curves", "B", "by_decile", "mean_log"),
+                         ("share_curves", "B", "mean_log")),
+    "share_B_sd_log":   (("share_curves", "B", "by_decile", "sd_log"),
+                         ("share_curves", "B", "sd_log")),
+    "share_A_p_pos":    (("share_curves", "A", "by_decile", "p_positive"),
+                         ("share_curves", "A", "p_positive")),
+    "share_B_p_pos":    (("share_curves", "B", "by_decile", "p_positive"),
+                         ("share_curves", "B", "p_positive")),
+    "glue_frac":        (("activity", "glue_frac"), ("activity", "zero_frac")),
+    "active_frac":      (("activity", "active_frac"),),
+    "moran_log_share":  (("spatial", "moran_I", "log_share"),
+                         ("spatial", "moran_I", "log_A"), ("spatial", "moran_I", "logA")),
+    "corr_log_AB":      (("corr", "log_AB"), ("share_curves", "corr_log_AB"),
+                         ("corr", "logA_logB")),
+    "saturation":       (("headroom", "saturation"), ("totals", "saturation"),
+                         ("headroom", "sum_AB_over_M")),
+    "headroom_slack_p05": (("headroom", "slack_quantiles", "p05"),
+                           ("headroom", "slack", "p05")),
+    "book_ratio":       (("totals", "book_ratio"), ("totals", "A_over_B"),
+                         ("headroom", "book_ratio")),
+    "reps_per_firm":    (("territories", "reps_per_firm"),
+                         ("territories", "n_reps_per_firm")),
+    "zips_per_rep":     (("territories", "zips_per_rep", "median"),
+                         ("territories", "zips_per_rep_median")),
+    "misalign_jaccard": (("territories", "misalignment", "jaccard"),
+                         ("misalignment", "jaccard")),
+    "dense_share":      (("territories", "census", "dense_share"),
+                         ("census", "dense_share")),
+    "gini_M":           (("marginals", "M", "gini"), ("concentration", "gini_M"),
+                         ("spatial", "gini_M")),
+    "zipf_s":           (("concentration", "zipf_s"), ("spatial", "zipf_s")),
+    "n_metros":         (("concentration", "n_metros"), ("spatial", "n_clusters")),
+}
+
+# Fallbacks when twin_stats.json does not exist (it will not for at least a day) or a key
+# is missing.  Sources: the ZCTA/city-size literature in code/TAIL_DISTRIBUTION_NOTE.md
+# and the repo's own pre-v2 defaults, NOT the confidential book.
+LITERATURE_DEFAULTS = dict(
+    M_sigma_log=0.25, M_dpln_alpha=None, M_dpln_beta=None, M_prefer_dpln=False,
+    A_sigma_log=0.20, A_dpln_alpha=1.0, A_dpln_beta=3.5, A_prefer_dpln=False,
+    share_A_mean_log=None, share_A_sd_log=None,
+    share_B_mean_log=None, share_B_sd_log=None,
+    share_A_p_pos=None, share_B_p_pos=None,
+    glue_frac=0.10, active_frac=0.90, moran_log_share=0.35,
+    corr_log_AB=0.70, saturation=0.12, headroom_slack_p05=None, book_ratio=5 / 3,
+    reps_per_firm=90, zips_per_rep=None, misalign_jaccard=0.70, dense_share=0.0,
+    gini_M=None, zipf_s=1.0, n_metros=None,
+)
+
+# The S11-measured concentration preset: at these settings Gini(M) comes out ~0.55.
+_CONCENTRATED = dict(gamma=1.2, dens_floor=0.05, core_tail=(1.5, 0.05))
+_FLAT = dict(gamma=1.0, dens_floor=0.20, core_tail=None)
+
+
+def _get(stats, paths, default, missing, key):
+    """First resolving candidate path, else `default` with `key` recorded in `missing`."""
+    for path in paths:
+        cur = stats
+        for p in path:
+            if not isinstance(cur, dict) or p not in cur:
+                cur = None
+                break
+            cur = cur[p]
+        if cur is not None:
+            return cur
+    missing.append(key)
+    return default
+
+
+def calibrate(stats=None, *, n=2000, n_rep=90, strict=False, fit_rho=True):
+    """twin_stats.json -> `make_instance` overrides.
+
+    `stats` may be a path, a parsed dict, or None.  **None (or a partial file) is the
+    normal case right now** -- U3 has not produced the file yet -- and it must still return
+    a usable instance description, so every knob has a literature/repo fallback and the
+    result is honest about which is which:
+
+        overrides      kwargs to splat into make_instance / scenario
+        calibrated     True only if at least one key came from `stats`
+        calib_source   "twin" (everything resolved) | "partial" | "literature"
+        calib_missing  the CALIB_MAP keys that fell back
+        variants       {"ln": {...}, "ht": {...}} when the fit prefers dPlN, so S8_twin_ln
+                       and S8_twin_ht are the same instance under the two tail models
+
+    `strict=True` raises instead of falling back -- use it once twin_stats.json is real, to
+    catch a key-spelling drift loudly.  Rep count scales with `n` at the twin's measured
+    zips-per-rep, so S8 is meaningful at n=200 as well as n=8000.
+    """
+    if isinstance(stats, str):
+        import json
+        with open(stats) as fh:
+            stats = json.load(fh)
+    if stats is not None and not isinstance(stats, dict):
+        raise TypeError(f"calibrate(stats=) wants a path, a dict or None, "
+                        f"got {type(stats).__name__}")
+
+    missing: list = []
+    v = {k: _get(stats or {}, paths, LITERATURE_DEFAULTS[k], missing, k)
+         for k, paths in CALIB_MAP.items()}
+    if strict and missing:
+        raise KeyError(f"twin_stats.json is missing {missing}; fix CALIB_MAP or the "
+                       f"exporter (the first path of each CALIB_MAP tuple is canonical)")
+    n_hit = len(CALIB_MAP) - len(missing)
+    source = "twin" if not missing else ("partial" if n_hit else "literature")
+
+    zpr = v["zips_per_rep"] or (2000.0 / max(1, float(v["reps_per_firm"] or n_rep)))
+    reps = int(max(2, round(n / zpr)))
+    n_metros = int(v["n_metros"] or max(2, min(40, n // 50)))
+
+    ov = dict(
+        n_rep_a=reps, n_rep_b=reps, n_metros=n_metros,
+        tail=float(v["M_sigma_log"]),
+        sales_tail=float(v["A_sigma_log"]),
+        saturation=float(v["saturation"]),
+        book_ratio=float(v["book_ratio"]),
+        alpha=float(v["misalign_jaccard"]),
+        assign="graph", b_hops=4,
+        metro_weights="zipf", zipf_s=float(v["zipf_s"]),
+    )
+    if v["M_prefer_dpln"] and v["M_dpln_alpha"] and v["M_dpln_beta"]:
+        ov.update(m_tail_alpha=float(v["M_dpln_alpha"]), m_tail_beta=float(v["M_dpln_beta"]))
+
+    # concentration: coarse, and deliberately so -- the exact (gamma, dens_floor,
+    # core_tail) that reproduces a measured Gini is a fit, not a formula.  S11 pins the
+    # concentrated preset at Gini(M) ~ 0.55; below 0.45 the legacy flat field is closer.
+    gini = v["gini_M"]
+    if gini is None or float(gini) >= 0.45:
+        ov.update(_CONCENTRATED)
+        if gini is not None:
+            ov["gamma"] = float(np.clip(1.0 + 0.4 * (float(gini) - 0.30) / 0.25, 1.0, 1.8))
+    else:
+        ov.update(_FLAT)
+
+    # activity: glue fraction, and untapped from P(A>0 | M-decile) when the twin has it
+    p_glue = float(v["glue_frac"])
+    act = dict(p_glue=p_glue, p_untapped=0.15, slope=1.5, smooth_k=3, mode="quantile")
+    if v["moran_log_share"] is not None:
+        act["slope"] = float(np.clip(4.0 * float(v["moran_log_share"]), 0.2, 4.0))
+    p_pos = v["share_A_p_pos"]
+    if p_pos is not None:
+        act["p_untapped_by_decile"] = [float(np.clip(1.0 - p, 0.0, 0.95)) for p in p_pos]
+        act.pop("p_untapped", None)
+    ov["activity"] = act
+
+    if v["share_A_mean_log"] is not None and v["share_A_sd_log"] is not None:
+        sc = dict(mu_a=list(v["share_A_mean_log"]), sd_a=list(v["share_A_sd_log"]),
+                  w_spatial=0.6)
+        sc["mu_b"] = list(v["share_B_mean_log"] or v["share_A_mean_log"])
+        sc["sd_b"] = list(v["share_B_sd_log"] or v["share_A_sd_log"])
+        if v["moran_log_share"] is not None:
+            sc["w_spatial"] = float(np.clip(np.sqrt(max(0.0, float(v["moran_log_share"]))),
+                                            0.0, 0.95))
+        ov["share_curve"] = sc
+
+    if v["headroom_slack_p05"] is not None:
+        ov["tight"] = bool(float(v["headroom_slack_p05"]) < 0.05)
+
+    dense = float(v["dense_share"] or 0.0)
+    if dense > 0.05:
+        ov["split_b"] = int(max(1, round(dense * reps)))
+        ov["split_a"] = int(round(0.5 * ov["split_b"]))
+        ov["split_pos"] = "core"
+
+    fit = None
+    if fit_rho:
+        probe = {k: val for k, val in ov.items()
+                 if k in ("tail", "sales_tail", "saturation", "book_ratio", "alpha",
+                          "gamma", "dens_floor", "core_tail", "metro_weights", "zipf_s",
+                          "share_curve", "m_tail_alpha", "m_tail_beta")}
+        probe.update(n_rep_a=4, n_rep_b=4, n_metros=6)
+        fit = fit_rho_books(float(v["corr_log_AB"]), probe_kw=probe)
+        ov["rho_books"] = fit["rho_books"]
+    else:
+        ov["rho_books"] = 0.7
+
+    variants = {}
+    if v["A_prefer_dpln"] and v["A_dpln_alpha"] and v["A_dpln_beta"]:
+        variants = {"ln": dict(sales_tail_alpha=None, sales_tail_beta=None),
+                    "ht": dict(sales_tail_alpha=float(v["A_dpln_alpha"]),
+                               sales_tail_beta=float(v["A_dpln_beta"]))}
+    else:                       # no fit available: the literature dPlN dial (S7's values)
+        variants = {"ln": dict(sales_tail_alpha=None, sales_tail_beta=None),
+                    "ht": dict(sales_tail_alpha=float(LITERATURE_DEFAULTS["A_dpln_alpha"]),
+                               sales_tail_beta=float(LITERATURE_DEFAULTS["A_dpln_beta"]))}
+
+    return dict(overrides=ov, calibrated=bool(n_hit), calib_source=source,
+                calib_missing=missing, variants=variants, rho_fit=fit, resolved=v)
+
+
 # ---- the scenario battery: each row names the gate it instantiates --------------
 SCENARIOS = {
     "S1_aligned":   dict(alpha=1.0, n_rep_a=4, n_rep_b=4),                 # sanity: pure 1-1
@@ -820,12 +1103,60 @@ SCENARIOS = {
     "S5_states":    dict(alpha=0.7, n_states=6),                           # kill criterion 3
     "S6_tight":     dict(saturation=0.55, tight=True),                     # headroom stress
     "S7_heavytail": dict(alpha=1.0, sales_tail_alpha=1.0, sales_tail_beta=3.5),  # kill criterion: commercially-concentrated sales (heavy Pareto tail, Zipf-like) independent of population/opportunity smoothing
+    # ---- generator v2 (PLAN.md G.2).  S1-S7 above are frozen; these are the new gates.
+    "S8_twin":      dict(calibrated=True),                          # fitted to twin_stats
+    "S8_twin_ln":   dict(calibrated=True, variant="ln"),            # lognormal sales tail
+    "S8_twin_ht":   dict(calibrated=True, variant="ht"),            # dPlN sales tail
+    # S9 is at 8x8 reps, not the 4x4 of the plan: with four reps on a unit square every
+    # intruder's Voronoi cell spills across its neighbours and the map collapses into one
+    # chained 4Ax5B blob (1 dense census row).  At 8x8 the cells stay local and the
+    # designed small components appear -- 2-3 dense rows per seed, incl. 1Ax2B and 2Ax1B.
+    "S9_dense":     dict(alpha=1.0, n_rep_a=8, n_rep_b=8, split_b=2, split_a=1,
+                         split_pos="core"),                         # designed dense comps
+    "S10_glue":     dict(alpha=1.0, n_rep_a=4, n_rep_b=4,
+                         activity=dict(p_glue=.45, p_untapped=.15, slope=1.5,
+                                       smooth_k=3)),                # mechanism (d)
+    "S11_metro":    dict(alpha=1.0, n_metros=8, metro_weights="zipf", zipf_s=1.0,
+                         gamma=1.2, dens_floor=0.05,
+                         core_tail=(1.5, 0.05)),                    # value concentration
+    "S12_regional": dict(regional=True),                            # real geography (U8)
 }
+
+S11_GINI_TARGET = 0.55   # TODO(U8): re-pin from data/public ZCTA population x income
+S10_ACTIVE_TARGET = 0.55
+
+_CALIB_CACHE: dict = {}
+
+
+def _calibrate_cached(stats, n):
+    """calibrate() memoised per (stats, n): the rho_books bisection probes ~75 instances,
+    which is fine once per configuration and not fine once per scenario() call."""
+    key = (stats if isinstance(stats, (str, type(None))) else id(stats), n)
+    if key not in _CALIB_CACHE:
+        _CALIB_CACHE[key] = calibrate(stats, n=n)
+    return _CALIB_CACHE[key]
 
 
 def scenario(name, n=200, seed=0, stats=None, **overrides):
-    kw = dict(SCENARIOS[name]); kw.update(overrides)
-    return make_instance(n=n, seed=seed, **kw)
+    """Build a named scenario.  `calibrated`, `variant` and `regional` are scenario-level
+    sentinels resolved here; `make_instance` never sees them."""
+    kw = dict(SCENARIOS[name])
+    calibrated = kw.pop("calibrated", False)
+    variant = kw.pop("variant", None)
+    if kw.pop("regional", False):
+        raise NotImplementedError(
+            f"{name} is a real-geography scenario and needs U8's builder "
+            f"(battery/code/regions.py): assemble the regional ZCTA subgraph, positions "
+            f"and density_field there, then call synth.make_instance(graph=..., pos=..., "
+            f"density_field=..., assign='graph', **synth.calibrate(stats)['overrides']).")
+    calib = None
+    if calibrated:
+        calib = _calibrate_cached(stats, n)
+        kw.update(calib["overrides"])
+        if variant:
+            kw.update(calib["variants"][variant])
+    kw.update(overrides)
+    return make_instance(n=n, seed=seed, _calib=calib, **kw)
 
 
 def _report(name, G, T):
