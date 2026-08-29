@@ -85,7 +85,9 @@ mutated.
 """
 from __future__ import annotations
 
+import contextlib
 import math
+import os
 import time
 
 import numpy as np
@@ -115,6 +117,31 @@ VARIANTS = {
 _LOG_FLOOR = 1e-9                # lower bound on g_a, g_b (keeps log defined)
 _MAX_LS_MOVES = 50               # boundary-swap moves per repair
 _REPAIR_TIME_SHARE = 0.25        # at most this share of the budget goes to in-callback repair
+
+
+@contextlib.contextmanager
+def _quiet_c_stdout():
+    """Silence SCIP's C-level stdout for the duration of the block.
+
+    `numerics/feastol = 1e-9` makes SCIP derive an LP tolerance of 1e-12, which it cannot
+    honour without GMP; it says so ("Cannot set feasibility tolerance to small value 1e-12
+    without GMP - using 1e-10") on file descriptor 1, before -- and regardless of --
+    `display/verblevel`.  The message is harmless but it would land in every worker's stdout,
+    which the harness keeps clean by design (contiguity_bench: "stdout is not a data channel").
+    """
+    try:
+        saved = os.dup(1)
+    except OSError:                                              # no fd 1 to save
+        yield
+        return
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull, 1)
+        yield
+    finally:
+        os.dup2(saved, 1)
+        os.close(devnull)
+        os.close(saved)
 
 
 # ============================================================================ context
@@ -408,8 +435,17 @@ class _Contig(Conshdlr):
             self.model.interruptSolve()
             raise AssertionError(msg)
 
-    def _add_cuts(self, to_a):
-        """One cut per violating piece, both sides, de-duplicated on (side, C, u, v)."""
+    def _add_cuts(self, to_a, *, fresh_only=False):
+        """One cut per violating piece, both sides, de-duplicated on (side, C, u, v).
+
+        From an *LP* solution a duplicate should be impossible: the earlier copy is a global
+        constraint the LP already satisfies, and a cut derived from a violated point is
+        violated by it.  Re-adding one is still sound and still cuts the point off, so
+        `fresh_only=False` never returns 0 on an infeasible point.  From a *pseudo* solution
+        (`consenfops`) duplicates are the norm -- adding a constraint does not move a
+        bound-derived point -- so that path passes `fresh_only=True` and asks for an LP
+        instead of spinning.  Returns (n_added, n_duplicates_seen).
+        """
         st = self.st
         fresh, dup = [], []
         for side, piece, big, K_set in _violations(self.ctx, to_a):
@@ -419,12 +455,8 @@ class _Contig(Conshdlr):
             u, v, C = found
             key = (side, C, u, v)
             (dup if key in st["cut_keys"] else fresh).append((key, side, u, v, C))
-        # A cut derived from a violated integral point is itself violated by that point, so a
-        # "duplicate" should be impossible (the earlier copy is a global constraint the LP
-        # already satisfies).  If one turns up anyway, re-adding it is still sound and still
-        # cuts the point off -- never silently return FEASIBLE on an infeasible point.
-        chosen = fresh if fresh else dup
-        st["n_dup_cuts"] += len(dup) if fresh else 0
+        chosen = fresh if (fresh or fresh_only) else dup
+        st["n_dup_cuts"] += len(dup)
         for key, side, u, v, C in chosen:
             self._check_opt(side, u, v, C)
             self.model.addCons(self._cut_expr(side, u, v, C),
@@ -432,7 +464,7 @@ class _Contig(Conshdlr):
                                local=False, modifiable=False, removable=False)
             st["cut_keys"].add(key)
             st["n_cuts_total"] += 1
-        return len(chosen)
+        return len(chosen), len(dup)
 
     # -- callbacks -----------------------------------------------------------------
     def conscheck(self, constraints, solution, checkintegrality, checklprows, printreason,
@@ -455,7 +487,7 @@ class _Contig(Conshdlr):
                 pass
         to_a = self._to_a(None)
         st["last_integral"] = to_a
-        n = self._add_cuts(to_a)
+        n, _ = self._add_cuts(to_a)
         if n == 0:
             return {"result": SCIP_RESULT.FEASIBLE}
         _maybe_repair(self.model, self.ctx, st, to_a)
@@ -465,7 +497,29 @@ class _Contig(Conshdlr):
         return self._enforce("n_enfolp")
 
     def consenfops(self, constraints, nusefulconss, solinfeasible, objinfeasible):
-        return self._enforce("n_enfops")
+        """Pseudo solutions: ask for an LP rather than cut.
+
+        SCIP falls back to pseudo enforcement when the node LP is unresolved ("numerical
+        troubles in LP", which the 1e-9 feastol provokes on the larger pairs).  A separator
+        cut does not move a *pseudo* solution -- it is built from variable bounds, not from a
+        relaxation that the new constraint enters -- so returning CONSADDED here spins
+        forever on the same point (120,234 calls in 25 s on C7 A0/B0, found 2026-08-29).
+        SCIP_SOLVELP is the documented answer for a handler that cannot enforce a pseudo
+        solution: SCIP solves the LP, or branches if it cannot.  The point is still worth a
+        repair, so the primal side keeps running.
+        """
+        st = self.st
+        st["n_enfops"] += 1
+        if st["deadline"] is not None and time.perf_counter() > st["deadline"]:
+            st["interrupted"] = True
+            self.model.interruptSolve()
+        to_a = self._to_a(None)
+        if not _violations(self.ctx, to_a):
+            return {"result": SCIP_RESULT.FEASIBLE}
+        st["last_integral"] = to_a
+        _maybe_repair(self.model, self.ctx, st, to_a)
+        n, _ = self._add_cuts(to_a, fresh_only=True)
+        return {"result": SCIP_RESULT.CONSADDED if n else SCIP_RESULT.SOLVELP}
 
     def conslock(self, constraint, locktype, nlockspos, nlocksneg):
         for var in self.x.values():
@@ -475,24 +529,37 @@ class _Contig(Conshdlr):
 class _OAContig(_Contig):
     """`formulation="oa"`: the same separator, plus log tangents at integral points."""
 
-    def _add_tangents(self, to_a):
+    def _gvals(self, sol):
+        """(g_a, g_b) of a solution, evaluated on x -- not on the `ga`/`gb` variables.
+
+        In the OA formulation nothing ties `ga` to the objective, so the LP parks it at its
+        lower bound and a tangent taken there is vacuous (the first OA build added zero
+        tangents for exactly this reason).  The tangent must be taken at the *implied* gain.
+        """
+        get = self.model.getSolVal
+        ga = gb = 0.0
+        for i, z in enumerate(self.ctx.nodes):
+            xv = get(sol, self.x[z])
+            ga += float(self.ctx.ua[i]) * xv
+            gb += float(self.ctx.ub[i]) * (1.0 - xv)
+        return ga, gb
+
+    def _add_tangents(self, sol):
+        """`z <= log(ghat) + (sum u x - ghat)/ghat` at the current implied gains."""
         st = self.st
         m = self.model
         added = 0
-        for name, var_g, var_z, gval in (
-                ("a", st["V"]["ga"], st["V"]["za"], None),
-                ("b", st["V"]["gb"], st["V"]["zb"], None)):
-            g = m.getSolVal(None, var_g)
-            z = m.getSolVal(None, var_z)
-            if g <= _LOG_FLOOR:
-                continue
-            if z <= math.log(g) + 1e-9:
+        for name, lin, var_z in (("a", st["lin_a"], st["V"]["za"]),
+                                 ("b", st["lin_b"], st["V"]["zb"])):
+            g = st["gvals"][0] if name == "a" else st["gvals"][1]
+            z = m.getSolVal(sol, var_z)
+            if g <= _LOG_FLOOR or z <= math.log(g) + 1e-11:
                 continue
             key = (name, round(float(g), 12))
             if key in st["tangent_keys"]:
                 continue
             st["tangent_keys"].add(key)
-            m.addCons(var_z <= math.log(g) + (var_g - g) / g,
+            m.addCons(var_z <= math.log(g) + (lin() - g) / g,
                       name=f"tan{st['n_tangents']}", local=False, modifiable=False,
                       removable=False)
             st["n_tangents"] += 1
@@ -512,7 +579,9 @@ class _OAContig(_Contig):
                 pass
         to_a = self._to_a(None)
         st["last_integral"] = to_a
-        n = self._add_cuts(to_a) + self._add_tangents(to_a)
+        st["gvals"] = self._gvals(None)
+        n_cuts, _ = self._add_cuts(to_a)
+        n = n_cuts + self._add_tangents(None)
         if n == 0:
             return {"result": SCIP_RESULT.FEASIBLE}
         _maybe_repair(self.model, self.ctx, st, to_a)
@@ -524,12 +593,10 @@ class _OAContig(_Contig):
         to_a = self._to_a(solution)
         if _violations(self.ctx, to_a):
             return {"result": SCIP_RESULT.INFEASIBLE}
-        m = self.model
-        for var_g, var_z in ((self.st["V"]["ga"], self.st["V"]["za"]),
-                             (self.st["V"]["gb"], self.st["V"]["zb"])):
-            g = m.getSolVal(solution, var_g)
-            z = m.getSolVal(solution, var_z)
-            if g <= _LOG_FLOOR or z > math.log(g) + 1e-7:
+        ga, gb = self._gvals(solution)
+        for g, var_z in ((ga, self.st["V"]["za"]), (gb, self.st["V"]["zb"])):
+            z = self.model.getSolVal(solution, var_z)
+            if g <= _LOG_FLOOR or z > math.log(g) + 1e-9:
                 return {"result": SCIP_RESULT.INFEASIBLE}
         return {"result": SCIP_RESULT.FEASIBLE}
 
@@ -667,7 +734,18 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose):
     m.setParam("limits/time", float(max(time_limit, 0.01)))
     m.setParam("limits/gap", 0.0)
     m.setParam("limits/absgap", 0.0)
-    m.setParam("numerics/feastol", float(feastol))
+    with _quiet_c_stdout():
+        m.setParam("numerics/feastol", float(feastol))
+    # Lazy constraints and dual reductions do not mix: SCIP's presolve/propagation may fix a
+    # variable on locks counted over the constraints it can *see*, and the separator cuts (and,
+    # in the OA formulation, the tangents) are not there yet.  Observed 2026-08-29 on the OA
+    # build: with no tangent in the model za has a single up-lock from the objective, so
+    # presolve fixed za to its upper bound log(sum u_a) and ga to its lower bound 1e-9 -- and
+    # tangents added afterwards could no longer move them, so the method "certified" the warm
+    # start (6.4539 against brute's 6.4545 on the first T0 pair).  Both flags off is the
+    # documented requirement for lazily separated models.
+    m.setParam("misc/allowstrongdualreds", False)
+    m.setParam("misc/allowweakdualreds", False)
     m.setParam("parallel/maxnthreads", 1)
     try:
         m.setParam("lp/threads", 1)
@@ -712,7 +790,11 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose):
             y[(i, j)] = e
         obj = obj - float(rho) * quicksum(y.values())
     m.setObjective(obj, "maximize")
-    return m, dict(x=x, ga=ga, gb=gb, za=za, zb=zb, y=y)
+    V = dict(x=x, ga=ga, gb=gb, za=za, zb=zb, y=y)
+    # rebuilt per call: a pyscipopt Expr is consumed by addCons, so it cannot be cached
+    V["lin_a"] = lambda: quicksum(float(ctx.ua[i]) * x[z] for i, z in enumerate(ctx.nodes))
+    V["lin_b"] = lambda: quicksum(float(ctx.ub[i]) * (1 - x[z]) for i, z in enumerate(ctx.nodes))
+    return m, V
 
 
 # ================================================================================ solve
@@ -741,11 +823,13 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
               best_obj=None, best_to_a=None, last_integral=None, interrupted=False,
               invalid_cut=None,
               repair=bool(repair), ls_moves=int(ls_moves), repair_spent=0.0,
-              repair_budget=_REPAIR_TIME_SHARE * float(time_limit))
+              repair_budget=_REPAIR_TIME_SHARE * float(time_limit),
+              lin_a=None, lin_b=None, gvals=(0.0, 0.0), feastol=float(feastol))
 
     m, V = _build_model(ctx, rho=rho, time_limit=max(deadline - time.perf_counter(), 0.01),
                         seed=seed, formulation=formulation, feastol=feastol, verbose=verbose)
     st["V"] = V
+    st["lin_a"], st["lin_b"] = V["lin_a"], V["lin_b"]
 
     hdlr = (_OAContig if formulation == "oa" else _Contig)(ctx, V["x"], st)
     m.includeConshdlr(hdlr, "contig", "component-wise contiguity (lazy separator cuts)",
