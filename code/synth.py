@@ -143,9 +143,54 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
                   book_ratio=5/3, theta=0.40, lam=0.30, tight=False, cap_corr=1.0,
                   n_metros=None, seed=0,
                   m_tail_alpha=None, m_tail_beta=None, sales_tail=0.20,
-                  sales_tail_alpha=None, sales_tail_beta=None):
+                  sales_tail_alpha=None, sales_tail_beta=None,
+                  # ---- generator v2 (PLAN.md G.2); every default below is a no-op ----
+                  metro_weights=None, zipf_s=1.0, gamma=1.0, dens_floor=0.20,
+                  core_tail=None, core_cap=50.0,
+                  split_a=0, split_b=0, split_pos="core", split_weight="M",
+                  activity=None, assign="euclid", b_hops=4, share_curve=None,
+                  graph=None, pos=None, density_field=None, states=None,
+                  validate_self=True, _calib=None, **unknown):
+    """Synthetic ZCTA instance.  See the module docstring for the dial-to-gate map.
+
+    THE INVARIANCE RULE (generator v2, U5)
+    --------------------------------------
+    S1-S7 at every seed must stay **byte-identical** to the pre-v2 generator, guarded by
+    `battery/code/tests/test_synth_compat.py::test_bit_identity`.  That holds because every
+    knob added below is one of exactly three things:
+
+      (a) a pure post-transform of arrays `rng` has already produced;
+      (b) an argument substitution whose default branch is the *literal* current
+          expression (`metro_weights`, `gamma`/`dens_floor`, `share_curve`); or
+      (c) a consumer of `rng2` -- a disjoint child generator -- only.
+
+    `rng` is never called from a new code path, no existing `rng` call is moved, removed,
+    or made conditional, and no existing call's arguments change shape.  Two traps that
+    make this stricter than it looks:
+
+      * the `rng.random((n_shared, 2))` at the `b_seeds` vstack is drawn **unconditionally**,
+        including at alpha=1.0 where its value is multiplied by zero.  It still runs under
+        `assign="graph"` (result discarded) for exactly this reason.
+      * `rng.multinomial` and `rng.choice(p=...)` consume a *data-dependent* number of
+        bit-generator words, so any change to `w` or `Mz` shifts every later draw.  The
+        default `metro_weights=None` branch is therefore textually `np.ones(n_metros)/n_metros`.
+
+    `rng2 = default_rng([seed, 7919])` is spawned into one stream per knob, so switching one
+    knob on can never move another knob's draws.
+    """
+    if unknown:
+        if "calibrated" in unknown:
+            raise TypeError(
+                "make_instance() got 'calibrated=': that is a scenario() sentinel, not a "
+                "generator argument.  Use synth.scenario('S8_twin', stats=...), or splat "
+                "synth.calibrate(stats)['overrides'] yourself.")
+        raise TypeError(f"make_instance() got unexpected keyword argument(s) "
+                        f"{sorted(unknown)}")
     rng = np.random.default_rng(seed)
+    rng2 = np.random.default_rng([seed, 7919])
+    (r_core, r_act, r_split, r_assign, r_books, r_share, r_geo, _r_spare) = rng2.spawn(8)
     n_metros = n_metros or max(2, min(6, n_rep_a + 1))
+    density_field_hash = graph_hash = None
 
     # ---- geography: metro clusters + rural scatter, planar adjacency -----------
     metros = rng.random((n_metros, 2)) * .76 + .12
@@ -233,6 +278,7 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
                           pos=(float(P[z, 0]), float(P[z, 1])))
         if states is not None:
             G.nodes[z]["state"] = f"S{int(states[z])}"
+    act_rep = activity_report(G)
     G.graph.update(params=dict(n=n, n_rep_a=n_rep_a, n_rep_b=n_rep_b, alpha=alpha,
                                rho_books=rho_books, n_states=n_states, sliver=sliver,
                                saturation=saturation, tail=tail, tight=tight,
@@ -241,11 +287,30 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
                                n_metros=n_metros,
                                m_tail_alpha=m_tail_alpha, m_tail_beta=m_tail_beta,
                                sales_tail=sales_tail, sales_tail_alpha=sales_tail_alpha,
-                               sales_tail_beta=sales_tail_beta),
+                               sales_tail_beta=sales_tail_beta,
+                               # ---- generator v2 ----
+                               split_a=split_a, split_b=split_b, split_pos=split_pos,
+                               split_weight=split_weight, activity=activity,
+                               metro_weights=metro_weights, zipf_s=zipf_s, gamma=gamma,
+                               dens_floor=dens_floor, core_tail=core_tail,
+                               core_cap=core_cap, assign=assign, b_hops=b_hops,
+                               share_curve=share_curve,
+                               calibrated=bool((_calib or {}).get("calibrated", False)),
+                               calib_source=(_calib or {}).get("calib_source"),
+                               active_frac=act_rep["active_frac"],
+                               glue_frac=act_rep["glue_frac"],
+                               untapped_frac=act_rep["untapped_frac"],
+                               density_field_hash=density_field_hash,
+                               graph_hash=graph_hash),
                    corr_AB=float(np.corrcoef(Az, Bz)[0, 1]),
                    Sa=float(Az.sum()), Sb=float(Bz.sum()), Mtot=float(Mz.sum()),
                    cap_a=cap_a.tolist(), cap_b=cap_b.tolist(),
-                   metros=metros.tolist())
+                   metros=(metros.tolist() if metros is not None else []))
+    if validate_self and (activity is not None or graph is not None
+                          or density_field is not None):
+        import territory as _T
+        probs = _T.validate(G)
+        assert probs == [], f"make_instance produced an invalid instance: {probs}"
     return G
 
 
