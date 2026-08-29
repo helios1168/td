@@ -43,9 +43,21 @@ from scipy.optimize import milp, LinearConstraint, Bounds
 from scipy.sparse import lil_matrix, csr_matrix
 
 
+def _ratio_guard(ua, ub):
+    """u_a/u_b with the zero-value-zip guard (PLAN.md C.0 #9).
+
+    Identical to ua/ub wherever ub > 0.  A zip with ub == 0 and ua > 0 ranks first
+    (ratio +inf); a zip with ua == ub == 0 (regime (d) glue) gets ratio 1 -- neutral.
+    """
+    ua = np.asarray(ua, float); ub = np.asarray(ub, float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(ub > 0, ua / ub, np.where(ua > 0, np.inf, 1.0))
+
+
 def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
                           respect_state=False, max_iter=30, time_limit=20.0,
-                          verbose=True):
+                          verbose=True, deadline=None, on_iter=None,
+                          g0_seeds=None, z_bound=50.0, seed=None, threads=None):
     """
     Contiguous NASH by OUTER APPROXIMATION.
 
@@ -62,8 +74,33 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
     MILP solves for an epsilon-constraint sweep.
 
     `rho` prices boundary edges (compactness). It competes directly with the log
-    objective: sweep it and report both the product and the perimeter.
+    objective: sweep it and report both the product and the perimeter.  The model
+    decision (2026-08-28) is rho = 0 with contiguity as a hard constraint; rho > 0 is
+    kept for continuity with the battery numbers.
+
+    Harness hooks (PLAN.md C.4; every default reproduces the pre-2026-08-29 behaviour):
+
+      deadline   absolute time.time() at which to stop; each MILP gets
+                 min(time_limit, deadline - now).  If that is <= 0 before a solve the
+                 function returns status "time limit" carrying the last iterate.
+      on_iter    callback(dict(it, x, ga, gb, master_obj, dual_bound, added, n_cuts,
+                 n_tangents, pieces, perimeter_true)) after every master solve, the
+                 converging one included.  master_obj / dual_bound are in maximisation
+                 units (z_a + z_b - rho * perimeter); dual_bound is NaN if HiGHS gave none.
+      g0_seeds   None -> the legacy absolute seeds (1, 3, 5, 8, 11); "quantile" -> the
+                 data-scaled geomspace that territory.nash_exact uses; or an iterable.
+      z_bound    box on z_a, z_b (legacy 50.0 -- absolute, wrong on dollar data).
+      seed, threads   recorded in the result only; HiGHS through scipy.milp is
+                 single-threaded and deterministic already.
+
+    Every return dict carries `status`, `iters`, `n_cuts`, `n_tangents`, `seed`, `threads`
+    and, whenever an iterate exists, `to_a, k, g_a, g_b, product, perimeter,
+    perimeter_true, pieces, n_edges, message`.  `perimeter` reads the edge variables (at
+    rho = 0 they are unpriced slack); `perimeter_true` counts boundary edges of `to_a`.
+    `pieces` = (components of a's side, components of b's side) in the filtered graph.
+    Statuses: "optimal", "iteration limit", "time limit", "solver failed".
     """
+    import time as _time
     nodes = list(nodes); n = len(nodes); idx = {z: i for i, z in enumerate(nodes)}
     A = np.array([G.nodes[z]["A"] for z in nodes], float)
     B = np.array([G.nodes[z]["B"] for z in nodes], float)
@@ -77,7 +114,7 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
         H.remove_edges_from([(u, v) for u, v in H.edges()
                              if G.nodes[u].get("state") != G.nodes[v].get("state")])
     E = [(idx[u], idx[v]) for u, v in H.edges()]; m = len(E)
-    r = ua / ub
+    r = _ratio_guard(ua, ub)
     root_a = int(np.argmax(r)); root_b = int(np.argmin(r))
 
     NV = n + 2 + m; IA, IB = n, n + 1
@@ -88,7 +125,9 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
         add([(n+2+e, 1.0), (i, -1.0), (j, 1.0)], 0, np.inf)
         add([(n+2+e, 1.0), (i, 1.0), (j, -1.0)], 0, np.inf)
 
+    n_cuts = 0; n_tangents = 0
     def tangent(side, ghat):
+        nonlocal n_tangents
         if ghat <= 1e-9: return
         if side == "a":
             add([(IA, 1.0)] + [(i, -ua[i]/ghat) for i in range(n)],
@@ -96,13 +135,21 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
         else:
             add([(IB, 1.0)] + [(i, ub[i]/ghat) for i in range(n)],
                 -np.inf, np.log(ghat) - 1.0 + (ub.sum() - Sb)/ghat)
-    for g0 in (1.0, 3.0, 5.0, 8.0, 11.0):
+        n_tangents += 1
+    if g0_seeds is None:
+        seeds = (1.0, 3.0, 5.0, 8.0, 11.0)
+    elif isinstance(g0_seeds, str) and g0_seeds == "quantile":
+        span = max(ua.sum() - Sa, ub.sum() - Sb)
+        seeds = np.geomspace(max(span*1e-3, 1e-3), span, 8)
+    else:
+        seeds = tuple(float(g) for g in g0_seeds)
+    for g0 in seeds:
         tangent("a", g0); tangent("b", g0)
 
     c_obj = np.zeros(NV); c_obj[IA] = c_obj[IB] = -1.0; c_obj[n+2:] = rho
     integ = np.zeros(NV); integ[:n] = 1
     lo = np.zeros(NV); hi = np.ones(NV)
-    lo[IA] = lo[IB] = -50.0; hi[IA] = hi[IB] = 50.0
+    lo[IA] = lo[IB] = -float(z_bound); hi[IA] = hi[IB] = float(z_bound)
 
     def build():
         Am = lil_matrix((len(rows), NV))
@@ -110,11 +157,44 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
             for c_, v_ in pr: Am[k, c_] += v_
         return LinearConstraint(csr_matrix(Am), np.array(rl), np.array(ru))
 
+    def pieces_of(x):
+        sel_a = [z for z in nodes if x[idx[z]]]
+        sel_b = [z for z in nodes if not x[idx[z]]]
+        return (nx.number_connected_components(H.subgraph(sel_a)) if sel_a else 0,
+                nx.number_connected_components(H.subgraph(sel_b)) if sel_b else 0)
+
+    def iterate(status, x, ga, gb, per, iters, message=""):
+        return dict(status=status, to_a={nodes[i] for i in range(n) if x[i]},
+                    k=int(x.sum()), g_a=float(ga), g_b=float(gb),
+                    product=float(ga*gb), perimeter=per,
+                    perimeter_true=int(sum(1 for i, j in E if x[i] != x[j])),
+                    pieces=pieces_of(x), n_edges=m, iters=iters, message=message,
+                    n_cuts=n_cuts, n_tangents=n_tangents, seed=seed, threads=threads)
+
+    last = None
     for it in range(max_iter):
+        tl = time_limit
+        if deadline is not None:
+            tl = min(time_limit, deadline - _time.time())
+            if tl <= 0:
+                if last is None:
+                    return dict(status="time limit", iters=it, n_cuts=n_cuts,
+                                n_tangents=n_tangents, seed=seed, threads=threads,
+                                message="deadline reached before the first master solve")
+                last.update(status="time limit", iters=it,
+                            message="deadline reached between master solves")
+                return last
         res = milp(c=c_obj, constraints=build(), integrality=integ,
-                   bounds=Bounds(lo, hi), options=dict(time_limit=time_limit))
+                   bounds=Bounds(lo, hi), options=dict(time_limit=tl))
         if not res.success:
-            return dict(status="solver failed", message=str(res.message), iters=it)
+            out = dict(status="solver failed", message=str(res.message), iters=it,
+                       n_cuts=n_cuts, n_tangents=n_tangents, seed=seed, threads=threads)
+            if getattr(res, "x", None) is not None:
+                x = np.round(res.x[:n]).astype(bool)
+                ga = ua[x].sum() - Sa; gb = ub[~x].sum() - Sb
+                out.update(iterate("solver failed", x, ga, gb,
+                                   int(round(res.x[n+2:].sum())), it, str(res.message)))
+            return out
         x = np.round(res.x[:n]).astype(bool)
         ga = ua[x].sum() - Sa; gb = ub[~x].sum() - Sb
         added = 0
@@ -132,20 +212,31 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
                 else:
                     add([(idx[w], -float(k_)) for w in nb] +
                         [(idx[v], 1.0) for v in S], k_ - k_*len(nb), np.inf)
-                added += 1
-        sa = res.x[IA] - (np.log(ga) if ga > 0 else -50)
-        sb = res.x[IB] - (np.log(gb) if gb > 0 else -50)
+                added += 1; n_cuts += 1
+        sa = res.x[IA] - (np.log(ga) if ga > 0 else -float(z_bound))
+        sb = res.x[IB] - (np.log(gb) if gb > 0 else -float(z_bound))
         if ga > 0 and sa > 1e-6: tangent("a", ga); added += 1
         if gb > 0 and sb > 1e-6: tangent("b", gb); added += 1
+        per = int(round(res.x[n+2:].sum()))
+        last = iterate("iteration limit", x, ga, gb, per, it + 1)
         if verbose:
             print(f"    it {it:>2}: g_a={ga:8.4f} g_b={gb:8.4f} product={ga*gb:9.5f} "
                   f"log-slack {sa:.1e}/{sb:.1e}  cuts+={added}")
+        if on_iter is not None:
+            db = getattr(res, "mip_dual_bound", None)
+            on_iter(dict(it=it, x=x.copy(), ga=float(ga), gb=float(gb),
+                         master_obj=float(-res.fun),
+                         dual_bound=float(-db) if db is not None else float("nan"),
+                         added=added, n_cuts=n_cuts, n_tangents=n_tangents,
+                         pieces=last["pieces"], perimeter_true=last["perimeter_true"]))
         if added == 0:
-            return dict(status="optimal", to_a={nodes[i] for i in range(n) if x[i]},
-                        k=int(x.sum()), g_a=float(ga), g_b=float(gb),
-                        product=float(ga*gb), perimeter=int(round(res.x[n+2:].sum())),
-                        n_edges=m, iters=it+1)
-    return dict(status="iteration limit")
+            last["status"] = "optimal"
+            return last
+    if last is None:
+        return dict(status="iteration limit", iters=0, n_cuts=n_cuts,
+                    n_tangents=n_tangents, seed=seed, threads=threads, message="max_iter=0")
+    last["message"] = f"iteration limit ({max_iter}) reached"
+    return last
 
 
 def solve_contiguous(G, nodes, theta=0.40, lam=0.30, rho=1e-3, welfare_floor=0.95,

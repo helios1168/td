@@ -139,6 +139,17 @@ def _fields(G, nodes, theta, lam):
     return A, B, M, c1 * A + c2 * B + lam * M, c2 * A + c1 * B + lam * M
 
 
+def ratio_guard(ua, ub):
+    """u_a/u_b with the zero-value-zip guard (PLAN.md C.0 #9).
+
+    Identical to ua/ub wherever ub > 0.  A zip with ub == 0 < ua ranks first (+inf);
+    a zip with ua == ub == 0 (regime (d) glue) gets ratio 1 -- neutral.
+    """
+    ua = np.asarray(ua, float); ub = np.asarray(ub, float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(ub > 0, ua / ub, np.where(ua > 0, np.inf, 1.0))
+
+
 def prefix_table(G, nodes, theta=0.40, lam=0.30):
     """
     Sort by utility ratio, then cumulative gains for every prefix k = 0..n.
@@ -147,7 +158,7 @@ def prefix_table(G, nodes, theta=0.40, lam=0.30):
     nodes = list(nodes)
     A, B, M, ua, ub = _fields(G, nodes, theta, lam)
     Sa, Sb = 0.0, 0.0   # disagreement point d=(0,0): gains ARE bundle utilities
-    order = np.argsort(-(ua / ub))
+    order = np.argsort(-ratio_guard(ua, ub))
     ga = np.concatenate([[0.0], np.cumsum(ua[order])]) - Sa
     gb = np.concatenate([[ub.sum()], ub.sum() - np.cumsum(ub[order])]) - Sb
     return dict(nodes=nodes, order=order, ga=ga, gb=gb,
