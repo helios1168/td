@@ -26,9 +26,15 @@ import matplotlib.pyplot as plt
 from .. import charts, style
 from . import _common
 
-NAMED_FAILURES = (
-    "C1-seed2_A0_B0", "C5-respect_state_A2_B2", "C7_125_205", "C7_A3_B3",
-    "C9-seed2_A2_B2", "C9-seed2_A0_B0",
+# Fallback only, for a rows.jsonl written before rows carried `named_failure` -- primary
+# selection is `row["named_failure"]` truthy (set by battery/code/instances.py::InstanceSpec
+# and threaded onto every row by contiguity_bench.py). Producers must not import solvers or
+# battery/code/instances.py, so this list is a hand-kept mirror of
+# instances.py::NAMED_FAILURE_NAMES (CLAUDE.md trap 11 / TEST_PLAN.md §2) -- keep the two in
+# sync if the six named failures ever change.
+NAMED_FAILURES_FALLBACK = (
+    "C1_aligned_seed2__A0_B0", "C5_states_resp__A2_B2", "C7_scale_n400__A0_B0",
+    "C7_scale_n400__A1_B1", "C7_scale_n400__A3_B3", "C9_heavytail_seed2__A2_B2",
 )
 
 
@@ -99,7 +105,9 @@ def build_summary(rows: list, instances: list, summary: list) -> plt.Figure:
 
     # 4. named-failure status grid
     ax = axes[1, 0]
-    grid_rows = [n for n in NAMED_FAILURES if any(r.get("instance") == n for r in rows)]
+    grid_rows = sorted({r["instance"] for r in rows if r.get("named_failure") and r.get("instance")})
+    if not grid_rows:
+        grid_rows = [n for n in NAMED_FAILURES_FALLBACK if any(r.get("instance") == n for r in rows)]
     if grid_rows:
         status = {}
         for r in rows:

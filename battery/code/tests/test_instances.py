@@ -164,11 +164,65 @@ def test_instance_json_schema():
         for k in ("pos", "A", "B", "M", "state", "rep_a", "rep_b"):
             assert len(d[k]) == n, k
         assert all(len(e) == 2 for e in d["edges"])
+        # `edges` are index pairs into `nodes` (gfx.schemas' contract), not zip ids -- every
+        # index must be in range, and (U10) `gfx.schemas.validate_instance_json` must pass.
+        assert all(0 <= i < n and 0 <= j < n for i, j in d["edges"])
+        from gfx import schemas                     # lazy: gfx is not a harness dependency
+        assert schemas.validate_instance_json(d) == []
         assert d["spec"]["name"] == sp.name and d["covariates"]["n"] == n
         assert set(d["rep_a"]) == {sp.rep_a} and set(d["rep_b"]) == {sp.rep_b}
         assert "free_to_a" not in d["bounds"]
     finally:
         shutil.rmtree(run, ignore_errors=True)
+
+
+# ---------------------------------------------------------- 9b. every instance JSON is valid
+def test_every_written_instance_json_is_gfx_valid():
+    """U10: `write_instance_json`'s `edges` were zip-id pairs, which `gfx.schemas` rejects as
+    out-of-range indices once n zip ids exceed len(nodes). Covers every family: small T0
+    (ids are small ints, so the old bug could hide), all six named failures (bigger ids,
+    where it always surfaced), and a hand graph (string-ish ids)."""
+    from gfx import schemas                         # lazy: gfx is not a harness dependency
+
+    run = CB.RESULTS_ROOT / f"_test_json_valid_{os.getpid()}"
+    try:
+        specs = I.build_T0()[:3] + list(I.named_failures()) + I.build_hand()[:1]
+        for sp in specs:
+            pi = I.build_pair(sp, with_bounds=False)
+            p = I.write_instance_json(pi, run / "instances" / f"{sp.name}.json")
+            d = json.load(open(p))
+            v = schemas.validate_instance_json(d)
+            assert v == [], f"{sp.name}: {v}"
+    finally:
+        shutil.rmtree(run, ignore_errors=True)
+
+
+# --------------------------------------------------------------- 9c. mechanism covariate
+def test_mechanism_tag_matches_the_six_named_failures():
+    """CLAUDE.md trap 11 / `research/contiguity/OPTIONS.md`: mechanism (a) pre-existing
+    disconnection, (b) pure scale, (c) value concentration. The six named failures were
+    discovered under exactly these three regimes; check `mechanism_tag` reproduces that
+    grouping on the real covariates (not just the synthetic rule in isolation)."""
+    want = {
+        "C1_aligned_seed2__A0_B0": "a",     # pair_components=2 (disconnected)
+        "C5_states_resp__A2_B2": "a",       # pair_components=5
+        "C7_scale_n400__A3_B3": "b",        # n=205 >= 125
+        "C7_scale_n400__A0_B0": "b",        # n=125 >= 125
+        "C7_scale_n400__A1_B1": "a",        # n=44, but pair_components=2
+        "C9_heavytail_seed2__A2_B2": "c",   # case name contains "heavytail"
+    }
+    got = {}
+    for sp in I.named_failures():
+        pi = I.build_pair(sp, with_bounds=False)
+        got[sp.name] = pi.covariates["mechanism"]
+        assert pi.covariates["mechanism"] == I.mechanism_tag(sp, pi.covariates)
+    assert got == want, got
+    # a T0 instance with no disconnection/scale/tail/sparsity signal tags empty
+    t0 = I.build_T0()[0]
+    pi = I.build_pair(t0, with_bounds=False)
+    if (pi.covariates["pair_components"] == 1 and pi.covariates["n"] < 125
+            and pi.covariates["top5_share_u"] < 0.35 and pi.covariates["active_frac"] >= 1):
+        assert pi.covariates["mechanism"] == ""
 
 
 # ---------------------------------------------------------------------------- 10. dry run

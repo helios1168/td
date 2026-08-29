@@ -7,6 +7,7 @@ shared scale · covariate box.
 
 Usage:
     python -m gfx.producers.instance_card <instance.json> --out <png>
+    python -m gfx.producers.instance_card <instance.json> --rows <rows.jsonl> --out <png>
 """
 from __future__ import annotations
 
@@ -25,11 +26,14 @@ def _rep_legend(reps):
 
 
 def _best_contiguous_row(rows):
-    """Best feasible allocation among `rows` (row schema from contig_methods.base.evaluate):
-    prefer status 'optimal'/'optimal_rooted', else the highest LB among feasible rows."""
+    """Best contiguous allocation among `rows` (row schema from contig_methods.base.evaluate):
+    a valid row with zero excess pieces (truly contiguous, not merely `feasible` -- a row can
+    be feasible/valid with excess_pieces > 0, e.g. a time-limited fragmented iterate), then
+    prefer status_eff == 'optimal'(_rooted), else the highest LB."""
     if not rows:
         return None
-    feasible = [r for r in rows if r.get("feasible") and r.get("to_a") is not None]
+    feasible = [r for r in rows if r.get("valid") and r.get("excess_pieces") == 0
+               and r.get("to_a")]
     if not feasible:
         return None
     def key(r):
@@ -127,8 +131,15 @@ def build(d: dict) -> plt.Figure:
 def main(argv=None):
     p = _common.base_parser(__doc__)
     p.add_argument("instance_json")
+    p.add_argument("--rows", help="rows.jsonl to join by instance name, for the 'best "
+                   "contiguous incumbent' panel -- phase-1 instance JSONs carry rows=null "
+                   "by design (PLAN.md ★1 Q5)")
     args = p.parse_args(argv)
     d = _common.load_json(args.instance_json)
+    if args.rows and d.get("rows") is None:
+        name = (d.get("spec") or {}).get("name")
+        joined = [r for r in _common.load_jsonl(args.rows) if r.get("instance") == name]
+        d = dict(d, rows=joined)
     fig = build(d)
     style.check_text_overlap(fig)
     style.save(fig, args.out, inputs=[args.instance_json], producer="instance_card")

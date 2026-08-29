@@ -21,6 +21,11 @@ Shape (all node-aligned arrays have length len(nodes); `edges` are *index* pairs
       "covariates": {...} | null,              # base.covariates(...) dict, if computed
       "rows": [ {method, to_a: [id,...], status, ...}, ... ] | null   # evaluate() rows
     }
+
+`battery/code/instances.py::write_instance_json` writes `rows: null` by decision (PLAN.md ★1
+Q5) -- the phase-1 instance JSON does not carry a copy of the run's results. `instance_card`'s
+`--rows <rows.jsonl>` flag joins them in by `spec.name == row["instance"]` at render time
+instead, so a valid instance JSON with `rows: null` is expected, not a bug.
 """
 from __future__ import annotations
 
