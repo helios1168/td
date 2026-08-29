@@ -54,6 +54,36 @@ restarting from the best allocation proved so far.  Every attempt bounds the sam
 the merged answer keeps the smallest UB and the largest LB of all of them, and a rung that
 adds nothing is simply discarded.
 
+**The ladder has to be driven off `extra["retryable"]`, not off the status** (W6b,
+2026-08-30).  An LP abort reaches `_finish` as a raised `Exception: SCIP: error in LP solver!`
+with `getStatus() == "unknown"`, and `_finish` deliberately rewrites that to `time_limit` when
+valid bounds survive, so that `errors` in the harness summary counts crashes only.  `solve`
+used to continue only on status `error`, so it never continued at all: every S2 pair of 124
+zips or more returned after 1-58 s of a **1200 s** budget with the 1e-7, 1e-6 and OA rungs
+unrun.  `_retryable` now answers the real question -- did SCIP consume the budget or certify?
+-- and `_short_stop` adds the other half of it: a SCIP `timelimit` fired well inside the wall
+time the rung was actually given (seen at 57 s of 106 s under harness load) is SCIP's clock
+talking, not ours, and is retried like an abort.  When the ladder runs out with budget left,
+further OA rungs are appended at a shifted seed up to `max_rungs`.
+
+Effect at a 120 s cap on the seven S2 stragglers, against S2's own numbers at 1200 s:
+124 zips 4.3e-3 -> 5.1e-4, 135 8.8e-4 -> 1.5e-4, 169 4.9e-3 -> 4.4e-3, 197 5.8e-3 -> 5.1e-3,
+205 3.4e-3 -> 7.0e-4, 320 1.4e-3 -> 4.8e-4, 464 1.2e-2 -> 3.3e-3.
+
+*LP settings swept and rejected* (five pairs, 120 s, 2026-08-30; every number below within
++-30 % of the default, i.e. inside the run-to-run spread): `lp/scaling = 2`,
+`lp/checkstability = False`, `lp/refactorinterval = 10` (the 10..100 sweep already recorded
+below), `constraints/nonlinear/tightenlpfeastol = False` (the setting that asks for the
+1e-12 LP tolerance -- turning it off changed nothing measurable), and two that turned out to
+be no-ops on this model: `lp/fastmip = 0` and `numerics/lpfeastolfactor = 1000`.  None of
+them stopped the native rung aborting.  The one setting that did anything is primal simplex
+(`lp/initalgorithm = lp/resolvealgorithm = "p"`), which keeps the 1e-6 native rung alive to
+the cap on the 464-zip pair (gap 1.7e-3 twice, against 3.3-3.6e-3 for the default) while
+costing 10-20 % of the gap on three of the other four large pairs; it is kept as the
+`scip_tree_psimplex` variant rather than promoted, because the sign of the effect is
+instance-dependent.  `lp_params` is the escape hatch that made the sweep possible and stays
+for the next one.
+
 `misc/allowstrongdualreds` and `misc/allowweakdualreds` are **off**.  Dual reductions count
 locks over the constraints SCIP can see, and the connectivity cuts (and, in the OA build, the
 tangents) are not there yet: with them on, the OA build had presolve fix `za` to its upper
@@ -64,10 +94,20 @@ Contiguity: root-free lazy minimal-separator cuts
 -------------------------------------------------
 A constraint handler with `needscons=False` and `chckpriority = enfopriority = -10` sits
 *below* the integrality handler, so `consenfolp` only ever sees integral LP solutions and
-`conscheck` guards every solution SCIP wants to accept.  Fractional separation
-(`conssepalp`) is deliberately **not** implemented (decision at the W6 review): integral-only
-separation keeps every cut a genuine combinatorial Benders cut and avoids paying Python
-callback cost at every LP.
+`conscheck` guards every solution SCIP wants to accept.
+
+Fractional separation (`conssepalp` / `conssepasol`, added in W6b; skipped at the W6 review)
+runs **at the root only** by default and is bounded by `max_sepa_rounds` and
+`max_sepa_cuts`.  For side y and a threshold t, `S = {z : y_z >= t}` is the part of the graph
+the LP has committed to y; if S splits inside a pair component K, each non-largest piece P
+gives the same cut with `C` a minimal separator seeded at `N_K(P)`, and it is added only when
+the LP point violates it by more than 1e-6.  Validity is untouched -- the cut family, the
+component-wise scope and the absence of roots are the same, and `_check_opt` audits every
+fractional cut against the reference optimum on all 13 T0 pairs -- because *any* u,v-separator
+gives a valid cut, however u, v and C were chosen.  Measured effect is small and mixed: at a
+120 s cap it improves the gap on three of five large pairs (124, 320, 464) and is neutral to
+slightly worse on the other two, and its clearest win is on the OA rung's dual bound at 464
+zips (6.4789 with, 6.5468 without).  Off with `sepa_frac=False`.
 
 Feasibility is component-wise (`base.pieces`, PLAN.md C.0 #1): inside each connected
 component K of the pair graph, both sides must be connected *or empty*.  For a violating
@@ -99,10 +139,14 @@ stopped at a *tight* dual bound with a worthless incumbent (LB 1.55): SCIP's own
 are contiguity-blind, so almost nothing they produce survives `conscheck`.  Mechanism (b) is a
 **primal** problem here, and this module attacks it three ways:
 
-1. `warm_start` -- or, absent one, an internal fallback: the better of a repaired ratio-order
-   prefix and the best spanning-tree subtree split (PLAN.md F1) -- turned into a *full*
-   variable assignment and handed to `model.addSol` before `optimize()`.  An x-only partial
-   solution is accepted but not exploited by SCIP.
+1. `warm_start` -- or, absent one and with `mip_start="f1"` (the default), W5's
+   `warm.solve(method="f1")` run for at most 5 % of the budget (cap 30 s) -- turned into a
+   *full* variable assignment and handed to `model.addSol` before `optimize()`.  An x-only
+   partial solution is accepted but not exploited by SCIP.  `mip_start="internal"` falls back
+   to this module's own construction (the better of a repaired ratio-order prefix and the best
+   spanning-tree subtree split, PLAN.md F1) and reproduces the S2 behaviour; `mip_start=None`
+   is the same thing.  The incumbent matters twice over: it is the LB, and through
+   `_gain_floor` it is what keeps the native log's LPs stable.
 2. Every integral point `consenfolp` rejects is also *repaired* (flip whole stray pieces until
    each side is one piece, then a bounded boundary-swap local search) and offered back with
    `trySol` whenever it beats SCIP's own incumbent.
@@ -149,6 +193,14 @@ VARIANTS = {
     # `z <= log(g)` constraints are replaced by tangents added at integral points.  A
     # cross-check on the convexity handling, not an S1 default.
     "scip_tree_oa": dict(formulation="oa"),
+    # Primal simplex instead of SCIP's automatic choice.  The one LP setting in the W6b
+    # sweep that changed anything: on the 464-zip C7b A0/B0 pair it is what keeps the 1e-6
+    # native rung alive to the cap (gap 1.7e-3 against 3.3e-3 for the default, which falls
+    # through to the OA rung), while costing 10-20 % of the gap on three of the other four
+    # large pairs.  Kept as a variant, not promoted, because the sign of the effect is
+    # instance-dependent.
+    "scip_tree_psimplex": dict(lp_params={"lp/initalgorithm": "p",
+                                          "lp/resolvealgorithm": "p"}),
 }
 
 _LOG_FLOOR = 1e-9                # lower bound on g_a, g_b (keeps log defined)
@@ -1034,6 +1086,25 @@ _MIP_START_SHARE = 0.05             # share of the budget the F1 warm start may 
 _MIP_START_CAP = 30.0               # ... and its absolute cap, in seconds
 
 
+_SHORT_STOP_SHARE = 0.75            # a "timelimit" below this share of the rung's budget
+                                    # is SCIP's clock talking, not ours
+
+
+def _short_stop(scip_status, used: float, allotted: float) -> bool:
+    """A SCIP `timelimit` that our own wall clock does not agree with.
+
+    SCIP's `limits/time` runs on SCIP's clock, and under load (four to eleven harness
+    workers) it has been seen to fire after 57 s of a 106 s budget -- measured 2026-08-30 on
+    the 197-zip C7b pair, which then returned after 65 s of a 120 s cap with a rung still
+    unspent.  The point of the ladder is that the budget gets used, so a stop this early is
+    treated exactly like an abort: another rung, from the best allocation so far.  Genuine
+    time limits (SCIP and our own clock agreeing) still end it.
+    """
+    if scip_status != "timelimit":
+        return False
+    return allotted > _MIN_RUNG and used < _SHORT_STOP_SHARE * allotted
+
+
 def _f1_warm_start(G, nodes, *, theta, lam, rho, respect_state, seed, budget):
     """`warm.solve(method="f1")` as a MIP start.  Returns (allocation | None, source tag).
 
@@ -1130,11 +1201,15 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
                           sepa_frac=sepa_frac, max_sepa_rounds=max_sepa_rounds,
                           max_sepa_depth=max_sepa_depth, sepa_thresholds=sepa_thresholds,
                           max_sepa_cuts=max_sepa_cuts, lp_params=lp_params)
+        used = time.perf_counter() - t_rung
         retryable = bool(res.extra.get("retryable"))
+        short = _short_stop(res.extra.get("scip_status"), used, remaining)
+        retryable = retryable or short
         attempts.append(dict(feastol=ft, formulation=form, seed_shift=seed_shift,
                              status=res.status, scip_status=res.extra.get("scip_status"),
-                             retryable=retryable, t=round(time.perf_counter() - t_rung, 3),
-                             LB=res.LB, UB=res.UB, nodes=res.nodes,
+                             retryable=retryable, short_stop=short, t=round(used, 3),
+                             asked=round(remaining, 3), LB=res.LB, UB=res.UB,
+                             nodes=res.nodes,
                              n_sepa_cuts=res.extra.get("n_sepa_cuts", 0)))
         merged = _merge(merged, res)
         if merged.status == "optimal":
