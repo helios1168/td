@@ -238,6 +238,21 @@ return argmax_k g_a[k]*g_b[k]
     6.47177 → 6.47234, 9 iterations instead of 14); the harness reports the loose case as
     status `gap_limit`.
 
+13. **The legacy separator cuts are *invalid* on a disconnected pair graph.** Found
+    2026-08-29 by U2's brute-force cross-check (S1_aligned n=50 seed=2, pair A1/B1: components
+    {8,11} and {14,15,16,39,44,46}). `solve_contiguous_nash` fixes one root per side; a cut
+    generated for a component `S` of a's side whose outside neighbours lie *inside a stray
+    component* (e.g. `x_8 ≤ x_11`) forces growth toward a root that is unreachable, so it
+    excludes allocations that are feasible under component-wise contiguity (PLAN.md C.0 #1).
+    The master problem is then no longer a relaxation: its "optimal" value (6.283) sat *below*
+    a feasible iterate the loop had already seen (6.436). Three consequences: (i) the loop's
+    dual bound is unsound, not merely loose, whenever `pair_components > 1` (three of the six
+    named failures); (ii) `contig_methods/current.py` detects `LB > UB` after recomputation
+    and downgrades to `heuristic` with `UB=None`; (iii) every root-based formulation in the
+    method wave (flow, SCIP/CBC trees, loop_v2) needs **one root per pair component** (or
+    selectable roots) — this is the mechanism-(a) fix, and it is a formulation fix, not a
+    solver fix.
+
 ---
 
 ## Known Challenges & Open Gates
