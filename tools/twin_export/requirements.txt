@@ -1,0 +1,20 @@
+# twin_export -- work-machine dependencies.
+#
+# Deliberately loose: this runs on an unknown interpreter (Python 3.9+) with whatever
+# numpy the machine already has.  The tool is written against the 1.24-2.x numpy API and
+# uses no 3.10+ syntax.
+#
+# Required
+numpy>=1.24
+scipy>=1.10
+networkx>=3.0
+#
+# Expected (the work-machine graph cache is a pyarrow/parquet edge table).  Without one of
+# these the parquet/feather readers fail with an explicit message and the CSV edge-list
+# path still works.
+pandas>=1.5
+pyarrow>=10.0
+#
+# Optional -- only for `--build-rook-from SHAPEFILE` and `--tiger-shapefile`
+# geopandas>=0.13
+# shapely>=2.0
