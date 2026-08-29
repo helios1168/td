@@ -235,16 +235,20 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
         trace.bound(UB)
     LB = best_lb if best_to_a is not None else None
 
-    if st == 1:
-        status = "time_limit"
-        message = "flow_pwl: MILP hit the time limit"
-    elif D is None or LB is None:
+    if D is None or LB is None:
         status = "heuristic" if best_to_a is not None else "error"
         UB = None if status == "heuristic" else UB
-        message = "flow_pwl: no usable dual bound" if D is None else "flow_pwl: no feasible iterate"
+        message = ("flow_pwl: no usable dual bound" if D is None
+                   else "flow_pwl: no feasible iterate")
     elif D - LB <= base.CERT_TOL:
+        # the certificate is checked *before* the time limit: the bound chain is valid
+        # whatever made HiGHS stop, so a run that hit the cap having already closed the gap
+        # is still an eps-certified optimum, not a time_limit
         status = "optimal"
-        message = ""
+        message = "" if st == 0 else "flow_pwl: certified at the time limit"
+    elif st == 1:
+        status = "time_limit"
+        message = "flow_pwl: MILP hit the time limit"
     else:
         status = "gap_limit"
         message = (f"flow_pwl: MILP dual bound {D:.12g} exceeds the best true objective "

@@ -135,6 +135,36 @@ def _table(rows, methods, sort_key=lambda r: (r["n"], r["instance"])):
         print(f"{name:<30}{r0['n']:>5}{_g(r0, 'pair_components', 0):>4}  " + "".join(cells))
 
 
+def _covariate_report(rows, methods):
+    """What actually predicts a miss.
+
+    OPTIONS.md's fourth regime is "sparse active zips with zero-value glue", and the W4 brief
+    flags glue degeneracy as out of scope for the formulation but worth *measuring* -- so the
+    point-biserial correlation between certification and `active_frac` is reported here
+    alongside size and structure.  Reported, never asserted: with 63 pairs these are
+    descriptive, not inferential.
+    """
+    import numpy as np                                       # noqa: PLC0415
+    cov = {sp.name: build_pair(sp).covariates for sp in build_T1()}
+    keys = ("n", "n_edges", "pair_components", "articulation_points", "gini_u",
+            "top5_share_u", "active_frac")
+    print("\n[what predicts a miss]  point-biserial corr(certified, covariate), "
+          "and the two group means")
+    hdr = f"{'method':<10}{'covariate':<22}{'corr':>8}{'mean|certified':>17}{'mean|missed':>14}"
+    print(hdr)
+    print("-" * len(hdr))
+    for m in methods:
+        rr = [r for r in rows if r["method"] == m]
+        y = np.array([1.0 if r["status_eff"] == "optimal" else 0.0 for r in rr])
+        if y.min() == y.max():
+            print(f"{m:<10}(all rows agree; no contrast)")
+            continue
+        for k in keys:
+            v = np.array([float(cov[r["instance"]].get(k) or 0.0) for r in rr])
+            c = float(np.corrcoef(y, v)[0, 1]) if v.std() > 0 else float("nan")
+            print(f"{m:<10}{k:<22}{c:>8.3f}{v[y == 1].mean():>17.3f}{v[y == 0].mean():>14.3f}")
+
+
 # ================================================================ 1. T0 through the driver
 def test_flow_slow_1_t0_full_harness():
     """The curated ground-truth tier, three methods, through the pool.  `bugs.json` is the
@@ -195,6 +225,7 @@ def test_flow_slow_2_t1_sweep():
                     f"/{sum(1 for r in rows if r['method'] == m)}" for m in methods))
     uncert = sorted({r["n"] for r in rows if r["status_eff"] != "optimal"})
     print(f"[T1 uncertified sizes] {uncert}")
+    _covariate_report(rows, methods)
     assert share >= CERT_FLOOR, f"certified share {share:.3f} below the {CERT_FLOOR} guard"
 
 
