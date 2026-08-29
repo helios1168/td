@@ -99,6 +99,46 @@ def _adjacency(P, trim=2.5):
     return G
 
 
+def _zipf_weights(k, s=1.0):
+    """Zipf metro shares: metro m (1-indexed, m=1 the largest) gets mass proportional to
+    m^-s.  s=1 is the classic rank-size law; s=0 recovers equal weights."""
+    w = np.arange(1, k + 1, dtype=float) ** (-float(s))
+    return w / w.sum()
+
+
+def _density_base(dens, n, gamma, dens_floor, core_tail, core_cap, rng_core):
+    """Normalised density -> the multiplicative base of M_z, with the concentration dials.
+
+    `gamma` is superlinear urban scaling (M ~ dens^gamma, gamma in [1.1, 1.3] in the
+    scaling literature); `dens_floor` is the rural floor the legacy code fixed at 0.20;
+    `core_tail=(alpha, frac)` mixes a Pareto multiplier into the densest `frac` of zips so
+    the top of the distribution is genuinely heavy rather than merely peaked.  The Pareto
+    draw is capped at `core_cap` -- uncapped, a single seed's draw can carry a third of
+    total M and Gini swings by 0.1 between seeds.
+
+    Renormalisation after the boost is **mean-preserving, not max-preserving**.  The U5
+    plan specified `dn /= dn.max()`, but that divides the whole field by the single largest
+    Pareto draw, so `dn` collapses towards zero, `dens_floor` dominates the sum, and the
+    field comes out *more* uniform than with `core_tail=None`: measured Gini(M) 0.16 vs
+    0.43 at the S11 settings.  Restoring the pre-boost mean instead keeps the floor at its
+    intended size relative to a typical zip and gives Gini(M) ~ 0.55, the S11 target.
+    """
+    dn0 = dens / dens.max()
+    dn = dn0
+    if core_tail is not None:
+        ct_alpha, ct_frac = core_tail
+        k_core = int(ct_frac * n)
+        if k_core > 0:
+            idx = np.argsort(-dn)[:k_core]
+            dn = dn.copy()
+            dn[idx] *= np.minimum((1.0 - rng_core.random(k_core)) ** (-1.0 / ct_alpha),
+                                  core_cap)
+        m = dn.mean()
+        if m > 0:
+            dn = dn * (dn0.mean() / m)
+    return (1.0 - dens_floor) * dn ** gamma + dens_floor
+
+
 def _gini(v):
     v = np.sort(np.asarray(v, float)); m = len(v); s = v.sum()
     if m == 0 or s <= 0:
@@ -193,18 +233,38 @@ def make_instance(n=200, n_rep_a=4, n_rep_b=4, alpha=1.0, rho_books=0.7,
     density_field_hash = graph_hash = None
 
     # ---- geography: metro clusters + rural scatter, planar adjacency -----------
+    # metro_weights=None must reproduce the literal `np.ones(n_metros)/n_metros` that
+    # rng.multinomial saw before v2: multinomial consumes a data-dependent number of
+    # bit-generator words, so an equal-but-differently-computed p moves every later draw.
+    if metro_weights is None:
+        mw = np.ones(n_metros) / n_metros
+    elif isinstance(metro_weights, str):
+        if metro_weights != "zipf":
+            raise ValueError(f"metro_weights must be None, 'zipf' or an array, "
+                             f"got {metro_weights!r}")
+        mw = _zipf_weights(n_metros, zipf_s)
+    else:
+        mw = np.asarray(metro_weights, float); mw = mw / mw.sum()
     metros = rng.random((n_metros, 2)) * .76 + .12
     covs = [np.diag(rng.uniform(.008, .022, 2)) for _ in range(n_metros)]
     n_clust = int(.70 * n)
-    counts = rng.multinomial(n_clust, np.ones(n_metros) / n_metros)
+    counts = rng.multinomial(n_clust, mw)
     P = np.vstack([rng.multivariate_normal(metros[m], covs[m] * 2.2, counts[m])
                    for m in range(n_metros)] + [rng.random((n - n_clust, 2))])
     P = np.clip(P, .02, .98)
     G = _adjacency(P)
 
     # ---- opportunity: density field x heavy-tail multiplier --------------------
-    dens = sum(_gauss(P, metros[m], covs[m]) for m in range(n_metros))
-    Mz = (0.80 * dens / dens.max() + 0.20) * _dpln(rng, n, tail, m_tail_alpha, m_tail_beta)
+    if metro_weights is None:
+        dens = sum(_gauss(P, metros[m], covs[m]) for m in range(n_metros))
+    else:                       # metro m carries n_metros*mw[m] x its equal-weight mass
+        dens = sum(n_metros * mw[m] * _gauss(P, metros[m], covs[m])
+                   for m in range(n_metros))
+    if gamma == 1.0 and dens_floor == 0.20 and core_tail is None and density_field is None:
+        base = 0.80 * dens / dens.max() + 0.20          # the literal legacy expression
+    else:
+        base = _density_base(dens, n, gamma, dens_floor, core_tail, core_cap, r_core)
+    Mz = base * _dpln(rng, n, tail, m_tail_alpha, m_tail_beta)
 
     # ---- rep territories: the alignment dial -----------------------------------
     a_idx = rng.choice(n, n_rep_a, replace=False, p=Mz / Mz.sum())
