@@ -187,7 +187,8 @@ do not export.
 - with `--strip-scale` (on by default) M, A and B are divided by one common number, the
   median positive M, so no dollar amount appears anywhere; ratios are untouched
 
-The blocks: `scale` (saturation = (ΣA + ΣB)/ΣM, book ratio, active/glue shares),
+The blocks: `scale` (saturation = (ΣA + ΣB)/ΣM, book ratio, active/glue shares, Gini
+coefficient of M over positive-M ZCTAs),
 `marginals` (distribution shape of M, A, B, A/M, B/M: lognormal and dPlN fits, windowed
 quantiles, a coarse CDF of bin means), `conditional` (share curves by M-decile and how A
 and B co-move), `headroom` (slack over `max(A + θB, B + θA)` at θ ∈ {0.2, 0.4, 0.6}),

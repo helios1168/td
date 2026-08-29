@@ -44,6 +44,16 @@ def _median_positive(v):
     return float(np.median(pos)) if pos.size else 1.0
 
 
+def _gini(v):
+    """Gini coefficient of a nonnegative vector (assumed already restricted to v > 0)."""
+    v = np.sort(np.asarray(v, dtype=float))
+    m = v.size
+    s = float(v.sum())
+    if m == 0 or s <= 0:
+        return 0.0
+    return float((2.0 * np.arange(1, m + 1) - m - 1).dot(v) / (m * s))
+
+
 def _decile_index(M):
     """M-decile 0..9 by rank over ALL zips (zeros land in the bottom deciles)."""
     n = M.size
@@ -197,6 +207,10 @@ def blocks(inst, cfg, agg, tiger_edges=None, is_twin=False):
         agg.put("p_untapped", float(((M > 0) & (A + B <= 0)).mean()), n)
         agg.put("p_a_active", float((A > 0).mean()), n)
         agg.put("p_b_active", float((B > 0).mean()), n)
+        agg.put("gini_M", _gini(M[M > 0]), n,
+                note="Gini coefficient of M over positive-M ZCTAs only (zero/glue ZCTAs "
+                     "excluded, since they are a separate mechanism -- see p_glue -- not "
+                     "part of the concentration of what IS active)")
         agg.put("scale_convention", "median_M", n,
                 note="M, A and B were all divided by the median positive M")
         agg.put("strip_scale", bool(cfg.strip_scale), n)
