@@ -183,6 +183,47 @@ def test_edge_segments_and_partition_boundary():
     assert boundary.shape == (1, 2, 2)  # only edge (1, 2) crosses sides
 
 
+def test_partition_boundary_polygon_form_needs_no_graph():
+    """U11 polish: `geom.partition_boundary(polys, side_of=fn)` -- the exact shared ridge
+    between geometrically adjacent polygons, needing no adjacency graph/edge list at all
+    (unlike the schematic `partition_boundary(G, pos, side_of)` form, still exercised
+    above). Four points on a 2x2 grid give two horizontally-adjacent pairs across a
+    bottom/top split; same-side splits must return nothing."""
+    pos = {0: (0.25, 0.25), 1: (0.75, 0.25), 2: (0.25, 0.75), 3: (0.75, 0.75)}
+    nodes = list(pos)
+    polys, bounds = geom.polys_from_pos(nodes, pos)
+
+    bottom = {0, 1}
+    seg = geom.partition_boundary(polys, side_of=lambda z: z in bottom)
+    assert seg.shape[1:] == (2, 2)
+    assert seg.shape[0] == 2                 # (0,2) and (1,3) are the crossing pairs
+
+    same_side = geom.partition_boundary(polys, side_of=lambda z: True)
+    assert same_side.shape == (0, 2, 2)      # no side differs -> no boundary
+
+
+def test_partition_boundary_polygon_form_traces_the_cell_edge_not_a_straight_centerline():
+    """The polygon-ridge boundary must differ from the schematic node-center segment for
+    an irregular polygon layout -- this is the actual fix for the "spiky lines sticking
+    out" artifact: the old edge-based tracer drew straight lines between node centers
+    (which can lie far outside the shared cell edge), the new one traces the real ridge."""
+    rng = np.random.default_rng(3)
+    pos = {i: tuple(p) for i, p in enumerate(rng.uniform(0, 1, size=(24, 2)))}
+    nodes = list(pos)
+    polys, bounds = geom.polys_from_pos(nodes, pos)
+    half = set(nodes[:12])
+
+    poly_seg = geom.partition_boundary(polys, side_of=lambda z: z in half)
+    assert len(poly_seg) > 0
+    # every polygon-ridge endpoint must lie on some cell's actual boundary polygon (within
+    # a small tolerance), unlike a node-center-to-node-center line which generally does not
+    all_verts = np.concatenate([v for v in polys.values() if len(v) >= 3])
+    for seg2 in poly_seg:
+        for pt in seg2:
+            d = np.min(np.linalg.norm(all_verts - pt, axis=1))
+            assert d < 1e-6, f"ridge endpoint {pt} is not a polygon vertex (d={d})"
+
+
 def test_polys_from_shapes_with_shapely():
     from shapely.geometry import Polygon
     import geopandas as gpd

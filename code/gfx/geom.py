@@ -233,16 +233,77 @@ def edge_segments(G, pos):
     return segs if len(segs) else np.empty((0, 2, 2))
 
 
-def partition_boundary(G, pos, side_of):
-    """(m, 2, 2) ndarray of segments on the boundary between assignment sides: graph
-    edges (u, v) with `side_of(u) != side_of(v)`, drawn as the straight segment between
-    the two nodes' positions.
+def partition_boundary(G, pos=None, side_of=None):
+    """(m, 2, 2) ndarray of segments on the boundary between assignment sides. Two calling
+    conventions:
 
-    This is a schematic overlay (the segment between cell centers), not the exact shared
-    polygon ridge -- adequate for highlighting where a partition cuts the graph, which is
-    all this library uses it for; `maps.boundary` draws it bold over a `choropleth`.
+        partition_boundary(G, pos, side_of)   -- schematic: graph edges (u, v) with
+            `side_of(u) != side_of(v)`, drawn as the straight segment between the two
+            nodes' positions (not the exact shared polygon ridge -- adequate for
+            highlighting where a partition cuts the graph).
+
+        partition_boundary(polys, side_of=fn) -- exact: the true shared ridge between
+            every pair of *geometrically* adjacent polygons in `polys` ({node: (m, 2)
+            ndarray}, from `polys_from_pos`/`polys_from_shapes`) whose `side_of` differs.
+            Detected from shared polygon vertices, so it needs no graph/edge list at all
+            (works even when the caller has none) and traces the actual cell boundary
+            instead of a straight line between centers.
+
+    `maps.boundary` draws either result bold over a `choropleth`.
     """
+    if pos is None:
+        return _polygon_ridge_boundary(G, side_of)
     d = _pos_dict(G, pos)
     edges = _pair_edges(G)
     cut = [(u, v) for u, v in edges if side_of(u) != side_of(v)]
     return edge_segments(cut, d)
+
+
+def _polygon_ridge_boundary(polys: dict, side_of) -> np.ndarray:
+    """The exact segment shared by every pair of geometrically adjacent polygons in
+    `polys` whose `side_of` differs. Two polygons are Voronoi/tiling-adjacent iff they
+    share >= 2 vertices (the ridge endpoints); vertices are matched by rounding to a
+    tolerance scaled to the overall extent, absorbing the float noise `_clip_poly_to_box`
+    introduces. No adjacency graph is needed -- purely a function of the polygon geometry.
+    """
+    verts_by_node = {z: np.asarray(v, float) for z, v in polys.items() if len(v) >= 3}
+    if not verts_by_node:
+        return np.empty((0, 2, 2))
+    allv = np.concatenate(list(verts_by_node.values()))
+    span = float(max(np.ptp(allv[:, 0]), np.ptp(allv[:, 1]))) if len(allv) else 1.0
+    decimals = max(0, int(round(-np.log10(max(span * 1e-7, 1e-12)))))
+
+    owners_by_vertex: dict = {}
+    for z, vs in verts_by_node.items():
+        for p in vs:
+            key = (round(float(p[0]), decimals), round(float(p[1]), decimals))
+            owners_by_vertex.setdefault(key, {})[z] = p
+
+    shared_by_pair: dict = {}
+    for owners in owners_by_vertex.values():
+        if len(owners) < 2:
+            continue
+        zs = list(owners)
+        for i in range(len(zs)):
+            for j in range(i + 1, len(zs)):
+                key = frozenset((zs[i], zs[j]))
+                shared_by_pair.setdefault(key, []).append(owners[zs[i]])
+
+    segs = []
+    for pair, pts in shared_by_pair.items():
+        a, b = tuple(pair)
+        if side_of(a) == side_of(b):
+            continue
+        if len(pts) < 2:
+            continue
+        pts = np.asarray(pts, float)
+        if len(pts) > 2:
+            best, best_d = (0, 1), -1.0
+            for i in range(len(pts)):
+                for j in range(i + 1, len(pts)):
+                    dd = float(np.linalg.norm(pts[i] - pts[j]))
+                    if dd > best_d:
+                        best_d, best = dd, (i, j)
+            pts = pts[list(best)]
+        segs.append(pts[:2])
+    return np.asarray(segs, float) if segs else np.empty((0, 2, 2))
