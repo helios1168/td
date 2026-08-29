@@ -64,3 +64,13 @@ privacy audit. Not landed as of this unit (U4); `battery/code/twin.py::make_stan
 is a locally fabricated stand-in used only by `battery/code/tests/test_twin.py` -- real
 ZCTA ids/edges from `zcta_adjacency.npz`, synthetic A/B/M/rep maps -- and must never be
 mistaken for privacy-audited data.
+
+## Vintage check (2026-08-29)
+
+TIGER/Line **2025** `tl_2025_us_zcta520` was downloaded and run through the same
+`build_rook_adjacency`: 33,791 ZCTAs and 90,429 Rook edges, **byte-identical edge set**
+(Jaccard 1.000000) to the committed TIGER2020 cache. The 2020-vs-2025 release difference is
+nil for ZCTA5 (both carry the 2020-census ZCTAs), so a work-machine graph on the 2025 vintage
+will pass `edge_diff`'s ≥ 0.999 check provided it was built with the Rook (shared-boundary)
+rule. `fetch_tiger` hard-codes the 2020 file name; a 2025 zip extracts to
+`tl_2025_us_zcta520.*` and must be pointed at explicitly.
