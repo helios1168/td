@@ -925,40 +925,82 @@ CALIB_MAP = {
     "A_prefer_dpln":    (("marginals", "A_over_M", "prefer_dpln"),
                          ("marginals", "A/M", "prefer_dpln"),
                          ("marginals", "A", "prefer_dpln")),
-    "share_A_mean_log": (("share_curves", "A", "by_decile", "mean_log"),
+    # conditional.mean_log_A_over_M / sd_log_A_over_M / p_A_active_by_decile are U3's real
+    # per-decile arrays (agg.put_vec, one entry per M-decile) -- the residual fit synth.py
+    # calibrates against, per stats.py's `_residual_block` docstring.  Old share_curves.*
+    # paths kept as later candidates in case a differently-shaped export ever exists.
+    "share_A_mean_log": (("conditional", "mean_log_A_over_M"),
+                         ("share_curves", "A", "by_decile", "mean_log"),
                          ("share_curves", "A", "mean_log")),
-    "share_A_sd_log":   (("share_curves", "A", "by_decile", "sd_log"),
+    "share_A_sd_log":   (("conditional", "sd_log_A_over_M"),
+                         ("share_curves", "A", "by_decile", "sd_log"),
                          ("share_curves", "A", "sd_log")),
-    "share_B_mean_log": (("share_curves", "B", "by_decile", "mean_log"),
+    "share_B_mean_log": (("conditional", "mean_log_B_over_M"),
+                         ("share_curves", "B", "by_decile", "mean_log"),
                          ("share_curves", "B", "mean_log")),
-    "share_B_sd_log":   (("share_curves", "B", "by_decile", "sd_log"),
+    "share_B_sd_log":   (("conditional", "sd_log_B_over_M"),
+                         ("share_curves", "B", "by_decile", "sd_log"),
                          ("share_curves", "B", "sd_log")),
-    "share_A_p_pos":    (("share_curves", "A", "by_decile", "p_positive"),
+    "share_A_p_pos":    (("conditional", "p_A_active_by_decile"),
+                         ("share_curves", "A", "by_decile", "p_positive"),
                          ("share_curves", "A", "p_positive")),
-    "share_B_p_pos":    (("share_curves", "B", "by_decile", "p_positive"),
+    "share_B_p_pos":    (("conditional", "p_B_active_by_decile"),
+                         ("share_curves", "B", "by_decile", "p_positive"),
                          ("share_curves", "B", "p_positive")),
-    "glue_frac":        (("activity", "glue_frac"), ("activity", "zero_frac")),
-    "active_frac":      (("activity", "active_frac"),),
-    "moran_log_share":  (("spatial", "moran_I", "log_share"),
+    "glue_frac":        (("scale", "p_glue"),
+                         ("activity", "glue_frac"), ("activity", "zero_frac")),
+    "active_frac":      (("scale", "p_active"), ("activity", "active_frac")),
+    # M is the field the rank jitter acts on (audit.py), so its residual Moran's I is
+    # `spatial.moran_resid_A`/`_B` for the A/B share residual, not a "log_share" key that
+    # does not exist in the export; `spatial.moran_A` (the raw-field Moran, undemeaned) is
+    # the fallback if the residual block is ever absent.
+    "moran_log_share":  (("spatial", "moran_resid_A"), ("spatial", "moran_A"),
+                         ("spatial", "moran_I", "log_share"),
                          ("spatial", "moran_I", "log_A"), ("spatial", "moran_I", "logA")),
-    "corr_log_AB":      (("corr", "log_AB"), ("share_curves", "corr_log_AB"),
+    "corr_log_AB":      (("conditional", "corr_logA_logB"),
+                         ("corr", "log_AB"), ("share_curves", "corr_log_AB"),
                          ("corr", "logA_logB")),
-    "saturation":       (("headroom", "saturation"), ("totals", "saturation"),
+    "saturation":       (("scale", "saturation"),
+                         ("headroom", "saturation"), ("totals", "saturation"),
                          ("headroom", "sum_AB_over_M")),
-    "headroom_slack_p05": (("headroom", "slack_quantiles", "p05"),
+    # QLEVELS = (0.01, 0.05, 0.10, ...) -> index 1 is p05.  "theta_0.40" is U3's own
+    # dotted-fraction block name ("theta_%.2f" % th), which the JSON flattener in Agg
+    # splits on "." into nested keys "theta_0" -> "40" (see stats.py / agg.py), not a
+    # literal "theta_0.40" dict key -- confirmed against a generated stand-in.
+    "headroom_slack_p05": (("headroom", "theta_0", "40", "slack_ratio_q", 1),
+                           ("headroom", "slack_quantiles", "p05"),
                            ("headroom", "slack", "p05")),
-    "book_ratio":       (("totals", "book_ratio"), ("totals", "A_over_B"),
+    "book_ratio":       (("scale", "book_ratio"),
+                         ("totals", "book_ratio"), ("totals", "A_over_B"),
                          ("headroom", "book_ratio")),
-    "reps_per_firm":    (("territories", "reps_per_firm"),
+    # U3 reports n_rep_a / n_rep_b separately rather than one "reps per firm" figure; the
+    # generator's own model is symmetric (n_rep_a=n_rep_b=reps in `calibrate`'s overrides
+    # below), so n_rep_a is the resolving candidate -- a real asymmetry between the firms'
+    # rep counts is not carried through this knob.
+    "reps_per_firm":    (("territories", "n_rep_a"),
+                         ("territories", "reps_per_firm"),
                          ("territories", "n_reps_per_firm")),
-    "zips_per_rep":     (("territories", "zips_per_rep", "median"),
+    # REPQ = (0.25, 0.50, 0.75, 0.90) -> index 1 is the median.
+    "zips_per_rep":     (("territories", "zips_per_rep_a_q", 1),
+                         ("territories", "zips_per_rep", "median"),
                          ("territories", "zips_per_rep_median")),
-    "misalign_jaccard": (("territories", "misalignment", "jaccard"),
+    "misalign_jaccard": (("territories", "misalignment_jaccard"),
+                         ("territories", "misalignment", "jaccard"),
                          ("misalignment", "jaccard")),
-    "dense_share":      (("territories", "census", "dense_share"),
+    # "census_0.02" is likewise a dotted block name ("census_%.2f" % ms) that flattens to
+    # nested keys "census_0" -> "02".
+    "dense_share":      (("territories", "census_0", "02", "dense_share"),
+                         ("territories", "census", "dense_share"),
                          ("census", "dense_share")),
-    "gini_M":           (("marginals", "M", "gini"), ("concentration", "gini_M"),
+    # scale.gini_M is the one new aggregate this unit added to tools/twin_export (U9); the
+    # older candidates are kept in case a future export reshuffles it.
+    "gini_M":           (("scale", "gini_M"),
+                         ("marginals", "M", "gini"), ("concentration", "gini_M"),
                          ("spatial", "gini_M")),
+    # Not computed by tools/twin_export -- "zipf_s" (a metro-weighting dial) and
+    # "n_metros" are generator concepts with no definition on real per-ZCTA data.  They
+    # are *expected* to stay on LITERATURE_DEFAULTS and show up in calib_missing; that is
+    # correct behaviour, not a gap (main-session decision, U9 brief).
     "zipf_s":           (("concentration", "zipf_s"), ("spatial", "zipf_s")),
     "n_metros":         (("concentration", "n_metros"), ("spatial", "n_clusters")),
 }
@@ -984,14 +1026,26 @@ _FLAT = dict(gamma=1.0, dens_floor=0.20, core_tail=None)
 
 
 def _get(stats, paths, default, missing, key):
-    """First resolving candidate path, else `default` with `key` recorded in `missing`."""
+    """First resolving candidate path, else `default` with `key` recorded in `missing`.
+
+    A path element that is an `int` indexes into a *list* rather than a dict key -- U3's
+    quantile ladders (`slack_ratio_q`, `zips_per_rep_a_q`, ...) are JSON arrays keyed by
+    position (QLEVELS / REPQ order), not named fields, so `("headroom", "theta_0", "40",
+    "slack_ratio_q", 1)` means "index 1 of that array" (QLEVELS[1] == 0.05 == p05).
+    """
     for path in paths:
         cur = stats
         for p in path:
-            if not isinstance(cur, dict) or p not in cur:
-                cur = None
-                break
-            cur = cur[p]
+            if isinstance(p, int) and not isinstance(p, bool):
+                if not isinstance(cur, list) or not (-len(cur) <= p < len(cur)):
+                    cur = None
+                    break
+                cur = cur[p]
+            else:
+                if not isinstance(cur, dict) or p not in cur:
+                    cur = None
+                    break
+                cur = cur[p]
         if cur is not None:
             return cur
     missing.append(key)

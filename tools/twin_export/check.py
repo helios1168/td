@@ -61,6 +61,7 @@ SPEC = [
     ("scale.p_b_active", "abs", 0.02, False),
     ("scale.saturation", "rel", 0.02, False),
     ("scale.book_ratio", "rel", 0.05, False),
+    ("scale.gini_M", "abs", 0.03, False),
 
     ("conditional.p_A_active_by_decile", "abs", 0.02, False),
     ("conditional.p_B_active_by_decile", "abs", 0.02, False),

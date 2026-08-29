@@ -202,6 +202,31 @@ def test_quantile_function():
     assert not cc3["tail_dominance_resolved"] and cc3["n_bins"] == 1
 
 
+# --------------------------------------------------------------- 6b. gini_M (U9)
+def test_gini_M():
+    """`scale.gini_M` is the Gini coefficient of M over positive-M ZCTAs, k-anonymised at
+    full instance support -- verify it against a direct Gini computation on the same
+    positive-M values `stats.blocks` sees."""
+    G = FX.lattice_instance(side=20, n_rep_a=4, n_rep_b=4, n_states=2, seed=2, p_zero=0.15)
+    d = tempfile.mkdtemp()
+    paths = FX.write_inputs(G, d)
+    cfg = Cfg(min_support=5, min_state=100, verbose=False)
+    g, _ = IO.read_graph(paths["graph_csv"], states=paths["states"], verbose=False)
+    inst, _ = IO.join_inputs(g, paths["opportunity"], paths["sales"], paths["reps"], cfg)
+    st = ST.blocks(inst, cfg, AG.Agg(min_support=cfg.min_support))
+
+    assert "gini_M" in st["scale"], "scale.gini_M is missing from the export"
+    got = st["scale"]["gini_M"]
+    assert st["_support"]["scale.gini_M"] == inst.n
+
+    pos = np.sort(inst.M[inst.M > 0].astype(float))
+    m, s = pos.size, float(pos.sum())
+    direct = float((2.0 * np.arange(1, m + 1) - m - 1).dot(pos) / (m * s))
+    assert abs(got - direct) < 1e-9, (got, direct)
+    assert 0.0 <= got < 1.0
+    assert (inst.M <= 0).any(), "fixture must actually exercise zero/glue M for this check"
+
+
 # ------------------------------------------------------------------- 7. spatial
 def test_spatial():
     G = nx.convert_node_labels_to_integers(nx.grid_2d_graph(30, 30))
