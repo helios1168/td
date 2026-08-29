@@ -59,17 +59,25 @@ def run_c8():
                        capture_output=True, text=True, timeout=1800)
     return "C8_rho_frontier", r.returncode, time.time() - t0, r.stdout[-400:], r.stderr[-400:]
 
-jobs = [lambda c=c: run_case(c) for c in CASES] + [run_c8]
-results = []
-with ThreadPoolExecutor(max_workers=4) as ex:
-    for res in ex.map(lambda f: f(), jobs):
-        results.append(res)
-        print(f"[done {len(results)}/{len(jobs)}] {res[0]} rc={res[1]} {res[2]:.0f}s",
-              flush=True)
-        if res[1] != 0:
-            print("  STDERR:", res[4], flush=True)
+def main():
+    """Run the full C1-C9 battery. Overwrites battery/figures/ (primary artifacts).
+    Guarded so that importing this module (e.g. for CASES) never runs it -- an
+    unguarded import regenerated all 34 artifacts by accident on 2026-08-29."""
+    jobs = [lambda c=c: run_case(c) for c in CASES] + [run_c8]
+    results = []
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        for res in ex.map(lambda f: f(), jobs):
+            results.append(res)
+            print(f"[done {len(results)}/{len(jobs)}] {res[0]} rc={res[1]} {res[2]:.0f}s",
+                  flush=True)
+            if res[1] != 0:
+                print("  STDERR:", res[4], flush=True)
 
-with open(f"{OUT}/battery_run_log.json", "w") as f:
-    json.dump([dict(name=n, rc=rc, secs=s, tail=o, err=e)
-               for n, rc, s, o, e in results], f, indent=1)
-print("ALL DONE")
+    with open(f"{OUT}/battery_run_log.json", "w") as f:
+        json.dump([dict(name=n, rc=rc, secs=s, tail=o, err=e)
+                   for n, rc, s, o, e in results], f, indent=1)
+    print("ALL DONE")
+
+
+if __name__ == "__main__":
+    main()
