@@ -341,6 +341,12 @@ def build_core(H, nodes, ua, ub, rho, *, root_mode: str = "chain", caps: str = "
         then          h^a_z, h^b_z                 [0, 1]
         then          y_e                          [0, 1]      only when rho > 0
         then          r^a_z, r^b_z                 binary      only when root_mode="binary"
+
+    `h` is allocated for every zip even in the non-chain modes, and for zips in components
+    of fewer than `MIN_COMPONENT` nodes, where it appears in no row.  Empty columns with a
+    zero objective are free (presolve drops them), and the flat layout keeps the index
+    arithmetic in one place; verified not to be behind the HiGHS "Solve error" (pinning them
+    to zero changes nothing).
     """
     nodes = list(nodes)
     n = len(nodes)
@@ -352,10 +358,8 @@ def build_core(H, nodes, ua, ub, rho, *, root_mode: str = "chain", caps: str = "
     arcs: list[tuple[int, int]] = []
     arc_cap: list[float] = []
     arc_of: dict[tuple[int, int], int] = {}
-    comp_caps = {}
     for K in active:
         cp = arc_caps(H, K, tight=(caps != "loose"))
-        comp_caps[id(K)] = cp
         for (u, v), cval in sorted(cp.items(), key=lambda kv: (idx[kv[0][0]], idx[kv[0][1]])):
             arc_of[(idx[u], idx[v])] = len(arcs)
             arcs.append((idx[u], idx[v]))
