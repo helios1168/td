@@ -1,6 +1,27 @@
+# Pinned for .venv (uv-managed: `uv pip install --python .venv/bin/python3 -r requirements.txt`).
+# Core model (frozen since 2026-08-27; the zip50 anchor depends on these exact versions)
 numpy==2.5.2
 scipy==1.18.1
 networkx==3.6.1
 matplotlib==3.11.1
 sympy==1.14.0
 mpmath==1.3.0
+# Contiguity programme (PLAN.md U0c, approved 2026-08-28): open-source MILP engines
+pyscipopt==6.2.1
+mip==2.0.0
+cbcbox==2.935
+highspy==1.15.1
+# Contiguity programme: TIGER geometry / twin loader
+geopandas==1.1.4
+shapely==2.1.2
+pyogrio==0.13.0
+pyproj==3.7.2
+pandas==3.0.5
+#
+# macOS note (found 2026-08-29): the cbcbox wheel ships GCC runtime dylibs
+# (libgfortran.5, libquadmath.0, libgcc_s.1.1) whose code signatures are invalid on
+# Apple Silicon, so `mip.Model(solver_name="CBC")` dies with SIGKILL (Code Signature
+# Invalid) straight after a fresh install.  Fix once per venv, then re-run
+# battery/code/tests/run_all.py -k env:
+#   find .venv/lib/python3.13/site-packages/cbcbox -name "*.dylib" \
+#        -exec codesign --verify {} \; -o -exec codesign -s - -f {} \;

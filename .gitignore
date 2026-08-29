@@ -20,3 +20,8 @@ venv/
 
 # Claude Code worktrees (nested checkouts, never commit)
 .claude/worktrees/
+
+# Contiguity programme data (PLAN.md U0c): TIGER download and the synthetic twin
+data/tiger/
+data/twin_*
+data/public/
