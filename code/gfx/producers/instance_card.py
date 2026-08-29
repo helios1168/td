@@ -2,14 +2,16 @@
 gfx/producers/instance_card.py -- the instance card (PLAN.md Part D "Common figure set",
 redesigned U11).
 
-Panels (2x6 GridSpec, no blank cells):
+Panels (nested GridSpecs, no blank cells):
   row 1: pair-in-context (the pair's zips inside the whole synthetic instance, legacy
-         A/B territories outlined+coloured) · free-Nash map · best contiguous incumbent
-         (grey = unsolved)
+         A/B territories outlined+coloured, the pair's own outline traced along the
+         actual Voronoi/cell boundary) · free-Nash map · best contiguous incumbent
+         (grey = unsolved) -- three equal columns
   row 2: log(u_a/u_b) ratio map (wide -- the quantity that actually drives the
          allocation; a shared-scale u_a/u_b heat map is dominated by the common lam*M
          term and looks near-identical for both reps) · u_a heatmap · u_b heatmap
-         (shared scale) · covariate box
+         (shared scale) · covariate box -- width_ratios=[3, 1.5, 1.5, 1], so u_a/u_b
+         render close to half of the log-ratio panel's height instead of a sliver
 
 U11 replaced the old "pre-merger firm A / firm B territories" panels (two uniform,
 information-free blocks -- inside a pair every zip belongs to the pair's two reps by
@@ -26,7 +28,6 @@ import sys
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 
 from .. import geom, maps, schemas, style
@@ -115,13 +116,14 @@ def _context_panel(ax, d, ra, rb):
     maps.choropleth(ax, polys_c, color_of, bounds=bounds_c, title="pair in context",
                     legend=legend)
 
-    edges_c = ctx.get("edges")
-    if edges_c:
-        pos_dict = {z: ctx["pos"][i] for i, z in enumerate(nodes_c)}
-        edge_pairs = [(nodes_c[i], nodes_c[j]) for i, j in edges_c]
-        pair_zips = set(d["nodes"])
-        seg = geom.partition_boundary(edge_pairs, pos_dict, lambda z: z in pair_zips)
-        maps.boundary(ax, seg, color=style.PALETTE["neutral"], lw=1.6)
+    # the pair's own outline, traced along the actual Voronoi/cell boundary (the ridge
+    # between in-pair and out-of-pair polygons) rather than schematic straight lines
+    # between adjacency-graph node centers -- avoids the "spiky segments sticking out of
+    # the region" artifact edge-based tracing produced, and needs no `context.edges` at
+    # all (works purely from `polys_c`'s geometry).
+    pair_zips = set(d["nodes"])
+    seg = geom.partition_boundary(polys_c, side_of=lambda z: z in pair_zips)
+    maps.boundary(ax, seg, color=style.PALETTE["neutral"], lw=1.5)
 
     metros = ctx.get("metros")
     if metros:
@@ -190,14 +192,26 @@ def build(d: dict) -> plt.Figure:
     # `constrained_layout` sizes each row from the panels actually placed in it instead.
     fig = plt.figure(figsize=style.FIGSIZE["card"], layout="constrained")
     fig.suptitle(spec.get("name", "instance"), fontsize=11)
-    gs = GridSpec(2, 6, figure=fig, hspace=0.12, wspace=0.12)
-    ax_ctx = fig.add_subplot(gs[0, 0:2])
-    ax_free = fig.add_subplot(gs[0, 2:4])
-    ax_inc = fig.add_subplot(gs[0, 4:6])
-    ax_ratio = fig.add_subplot(gs[1, 0:3])
-    ax_ua = fig.add_subplot(gs[1, 3])
-    ax_ub = fig.add_subplot(gs[1, 4])
-    ax_cov = fig.add_subplot(gs[1, 5])
+    # Nested gridspecs (not one shared 2x6 grid): row 1's three equal panels and row 2's
+    # log-ratio/u_a/u_b/covariates mix need different column proportions, and row 2's
+    # panels are aspect-locked squares whose *rendered* size is set by the narrower of
+    # (their column width, the row height) -- giving u_a/u_b only 1/6 of the row's width
+    # (the original 6-column grid) made them render far smaller than "half the log-ratio
+    # panel's height": they were width-limited to a square a fraction of log-ratio's size,
+    # not height-limited like log-ratio itself. width_ratios=[3, 1.5, 1.5, 1] here fixes
+    # that -- u_a/u_b now get enough column width to render close to half of log-ratio's
+    # rendered height (both are still ultimately height-limited or width-limited by their
+    # own cell, never stretched past their data's equal-area aspect).
+    outer = fig.add_gridspec(2, 1, hspace=0.12)
+    gs_top = outer[0].subgridspec(1, 3, wspace=0.12)
+    gs_bot = outer[1].subgridspec(1, 4, wspace=0.12, width_ratios=[3, 1.5, 1.5, 1])
+    ax_ctx = fig.add_subplot(gs_top[0, 0])
+    ax_free = fig.add_subplot(gs_top[0, 1])
+    ax_inc = fig.add_subplot(gs_top[0, 2])
+    ax_ratio = fig.add_subplot(gs_bot[0, 0])
+    ax_ua = fig.add_subplot(gs_bot[0, 1])
+    ax_ub = fig.add_subplot(gs_bot[0, 2])
+    ax_cov = fig.add_subplot(gs_bot[0, 3])
 
     # -- pair in context ------------------------------------------------------
     _context_panel(ax_ctx, d, ra, rb)
