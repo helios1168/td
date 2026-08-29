@@ -67,6 +67,9 @@ VARIANTS = {
     "current_unbounded": dict(max_iter=10 ** 6),
     "current_q": dict(g0_seeds="quantile"),
     "current_tight": dict(milp_options=dict(mip_rel_gap=0.0)),
+    # tight + no iteration cap: the legacy loop's time-capped behaviour (S0 showed every
+    # named failure stopping on max_iter=30 in 1-20 s, never reaching the 60 s cap)
+    "current_tu": dict(milp_options=dict(mip_rel_gap=0.0), max_iter=10 ** 6),
 }
 
 
