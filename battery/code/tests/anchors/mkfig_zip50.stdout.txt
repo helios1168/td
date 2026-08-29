@@ -33,9 +33,9 @@ unconstrained pieces a/b: 1/2  sizes_a=[22] sizes_b=[24, 4]
   stake range: [0.0115, 0.1216]
   1. zip 37: stake=0.0541 doubt=0.6133 contestability=0.0332
   2. zip 32: stake=0.1159 doubt=0.2433 contestability=0.0282
-  3. zip 22: stake=0.0471 doubt=0.5367 contestability=0.0253
+  3. zip 22: stake=0.0471 doubt=0.5400 contestability=0.0254
   4. zip 19: stake=0.0352 doubt=0.5400 contestability=0.0190
-  5. zip 28: stake=0.0302 doubt=0.5700 contestability=0.0172
+  5. zip 28: stake=0.0302 doubt=0.5667 contestability=0.0171
   top 5 share of total contestability: 52%
 
 --- Exact parameter breakpoints ---

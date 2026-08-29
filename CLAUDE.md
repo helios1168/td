@@ -260,7 +260,11 @@ return argmax_k g_a[k]*g_b[k]
     `nash_exact`'s comment); 1e-8 solves the same instance exactly. `nash_exact` now retries
     down a ladder (1e-9 → 1e-8 → HiGHS defaults) on "Solve error", and `solve` warns when it
     falls back. Any new method forwarding tolerance options to HiGHS must guard the same way
-    (W4's `flow` does).
+    (W4's `flow` does). **Consequence for the anchor:** the contestability bootstrap in
+    `mkfig_zip50.py` had been hitting this silently, so the 2026-08-28 anchor carried heuristic
+    draws; the anchor was deliberately refreshed on 2026-08-29 (zip 22 doubt 0.5367 → 0.5400,
+    zip 28 0.5700 → 0.5667, `nash_contestability.png` regenerated). The paper's Contestability
+    numbers must be checked against the new `mkfig_zip50.py` output (see *Paper edits pending*).
 
 ### Contiguity MILP: three independent failure mechanisms (trap 11)
 
@@ -376,6 +380,9 @@ opportunity-balance numbers all recomputed at d=0 via `code/mkfig_zip50.py`.
 - **No battery content in the paper.** `C1`–`C9`, "battery", and "heavy tail" appear
   nowhere in the `.tex` (verified by grep). §5 / §6 need the three contiguity failure
   mechanisms folded in.
+- **Contestability top-5 (zips 22 and 28)** changed by ~0.003 in `doubt` when trap 14 was
+  fixed on 2026-08-29; re-check the numbers quoted in the Contestability section and the
+  `nash_contestability.png` figure against the refreshed anchor.
 - **The "equalisation can destroy value" numbers** — a KS gap of 0.000161 at 82.1% of
   attainable welfare, appearing at line 329 *and* line 617 — were computed under the old
   baseline and have not been re-verified at d=0. Both sites must move together.
