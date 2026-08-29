@@ -124,3 +124,102 @@ code/census_stress.py   the four experiments; numbers above reproduce from it
 code/mkfig_census.py    figure generation
 figures/census_stress.png
 ```
+
+---
+
+## 6. Generator v2 (U5, 2026-08-29) — new dials, new scenarios
+
+`research/contiguity/PLAN.md` Part G lists four things the generator could not produce:
+dense components by design, zero-value zips, real value concentration, and real geography.
+All four are now dials. **Every one defaults to a no-op**, and S1–S7 at every seed are
+byte-for-byte what they were — see *Verification* below.
+
+### 6.1 The new dials
+
+| dial | default | effect |
+|---|---|---|
+| `split_b: int` / `split_a: int` | `0` | plant an intruding seed of the other firm inside k host territories → designed 1A×2B / 2A×1B components |
+| `split_pos` | `"core"` | intruder sits on the territory's metro core (argmax `M`) or its periphery (`"edge"`) |
+| `split_weight` | `"M"` | host territories drawn ∝ their opportunity, or `"uniform"` |
+| `activity: dict` | `None` | three states per zip from a graph-smoothed field tilted by log density: **glue** (`A=B=M=0`), **untapped** (`M>0, A=B=0`), **active**. Keys: `p_glue, p_untapped, slope, smooth_k, mode, p_untapped_by_decile` |
+| `metro_weights="zipf"`, `zipf_s` | `None`, `1.0` | metro *m* gets cluster count and density mass ∝ `m^-s` instead of equal shares |
+| `gamma` | `1.0` | `M ∝ dens^γ` before noise (superlinear urban scaling; γ ∈ [1.1, 1.3] in the scaling literature) |
+| `dens_floor` | `0.20` | the rural floor the legacy code hard-coded |
+| `core_tail=(alpha, frac)`, `core_cap` | `None`, `50.0` | capped Pareto multiplier mixed into the densest `frac` of zips |
+| `assign="graph"`, `b_hops` | `"euclid"`, `4` | multi-source BFS Voronoi on the adjacency graph instead of nearest-seed-in-the-plane; B bases copy A's with probability `alpha`, else a `b_hops` random walk |
+| `share_curve: dict` | `None` | `log(A/M) ~ Normal(mu[d], sd[d])` by M-decile — the form `twin_stats` measures. Keys: `mu`/`sd` (or `mu_a/sd_a/mu_b/sd_b`), `w_spatial` |
+| `graph`, `pos`, `density_field`, `states` | `None` | adopt real geography: caller-supplied adjacency, coordinates, per-node density and state labels (U8 regional instances, the twin) |
+| `validate_self` | `True` | assert `territory.validate(G) == []` inside `make_instance` whenever a knob is on |
+
+`activity_report(G)` reports `active_frac, booked_frac, glue_frac, untapped_frac,
+active_pieces, largest_active_share, M_share_untapped, gini_M, gini_u, top1_share_M,
+top10_share_M`. **`active` means `A+B+M > 0`**, matching `contig_methods/base.covariates`
+(which calls a zip active when `u_a+u_b > 0`); an untapped zip has `u > 0`, so
+`active_frac == 1 - glue_frac`.
+
+### 6.2 New scenarios
+
+| scenario | what it instantiates |
+|---|---|
+| `S8_twin`, `S8_twin_ln`, `S8_twin_ht` | fitted to `twin_stats.json`; `_ln`/`_ht` are the same instance under the lognormal and dPlN sales tails |
+| `S9_dense` | designed dense components (`split_b=2, split_a=1, split_pos="core"`) |
+| `S10_glue` | mechanism (d): 45 % glue, 15 % untapped |
+| `S11_metro` | value concentration (Zipf metros, γ=1.2, `core_tail=(1.5, .05)`) |
+| `S12_regional` | real geography — raises `NotImplementedError` naming U8 / `battery/code/regions.py` |
+
+`calibrate(stats, n=…)` turns `twin_stats.json` into overrides. `stats=None` (the situation
+until U3's export lands) returns literature/repo fallbacks with `calibrated=False`,
+`calib_source="literature"` and every key listed in `calib_missing`; `strict=True` raises
+instead, for use once the real file exists. `fit_rho_books` inverts the `rho_books` dial by
+probing — `rho_books` moves the *latent* fields while the shared `M_z` factor and the share
+curve both move realised `corr(log A, log B)`, so a fitted target can only be hit by
+bisection. It lives in `calibrate`, never inside `make_instance`.
+
+**`CALIB_MAP` is a map of knob → tuple of candidate paths into `twin_stats.json`**, because
+U3 writes that file on a different machine in a different session. The first path of each
+tuple is canonical; a spelling drift is a one-line fix here, never a silent wrong number.
+
+### 6.3 Two deviations from the U5 plan, and why
+
+1. **`core_tail` renormalises the mean, not the max.** The plan said `dn /= dn.max()` after
+   the Pareto boost. That divides the whole field by the single largest draw, so `dn`
+   collapses towards zero, `dens_floor` dominates, and the instance comes out *more* uniform
+   than with `core_tail=None`: Gini(M) 0.16 vs 0.43 at the S11 settings. Restoring the
+   pre-boost mean keeps the floor at its intended size and gives Gini(M) ≈ 0.55.
+2. **`S9_dense` is 8×8 reps, not 4×4.** With four reps on a unit square every intruder's
+   Voronoi cell spills across its neighbours and the whole map collapses into one chained
+   4A×5B blob — one dense census row, the opposite of the designed small components. At 8×8
+   the cells stay local: 2–3 dense rows per seed, including clean `1A × 2B` and `2A × 1B`.
+
+### 6.4 Verification
+
+`battery/code/tests/test_synth_compat.py` (fast, ~8 s) has three layers.
+
+- **Layer A — bit identity.** `tests/anchors/synth_baseline.json` was generated from the
+  *untouched* generator and holds the sha256 of the raw bytes of `M, A, B, pos, rep_a,
+  rep_b, state, edges` plus the `repr` of `corr_AB, Sa, Sb, Mtot, cap_a, cap_b`, for the 17
+  battery cases and S1–S7 × seeds 1–2. It ran after every single step of the build. **A
+  failure is never a reason to re-anchor.**
+- **Layer B — battery compatibility.** Every `battery/figures/C*.json` regenerates:
+  `params` as a subset (U0c added four keys after the run), `corr_AB/Sa/Sb/Mtot` to 1e-12,
+  census shapes exactly with shares to 1e-12, the pair set as a dict keyed by `(ra, rb)`,
+  free-Nash product to 1e-9. Read-only — nothing under `battery/figures/` is ever written,
+  and `run_battery.py` is never imported (its `CASES` table is copied into the test).
+- **Layer C — targets.** S10 `active_frac` 0.5500 exactly at n ∈ {200, 2000}, seeds 1–3,
+  with `active_pieces` 26–47 at n=2000; S11 mean Gini(M) 0.571 (0.589/0.586/0.540) against
+  the 0.55 ± 0.05 target and top-10 % M share 0.45–0.51; S9 2–3 dense census rows per seed;
+  per-decile share-curve `sd` recovered to ±0.11 at n=4000; n=8000 builds in 0.28 s.
+
+`S11_GINI_TARGET = 0.55` carries a `TODO(U8)`: re-pin it from public ZCTA population ×
+income once `data/public/` exists.
+
+**One solver finding, recorded not fixed.** Under the pinned `scipy==1.18.1` /
+`highspy==1.15.1`, `territory.nash_exact` fails on exactly one recorded battery pair —
+`C4_contested` A0/B0, 27 zips — with `HiGHS Status 4: Solve error` after two
+outer-approximation rounds, and `territory.solve` then falls back to the prefix heuristic
+*without saying so* (product 8.961104634 against the recorded exact 8.963157397). The
+instance is byte-identical, so this is a solver-environment regression, not a generator one;
+the likeliest cause is the two options scipy reports as unrecognized and forwards to HiGHS
+verbatim at `territory.py:223`. Layer B asserts the weaker real invariant for such pairs
+(heuristic product ≤ recorded exact optimum) and prints a banner. `territory.py` is
+main-session/serial, so U5 left it alone.
