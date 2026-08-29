@@ -1,10 +1,11 @@
 # Territory Division (td) — Claude Code Setup
 
-**Last updated:** 2026-08-28
+**Last updated:** 2026-08-29
 **Project:** Fair division of ZCTA territories between two merging annuity wholesaling forces
 **Status:** Model and reference implementation settled. **Contiguity development programme
-approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point; no programme code
-written yet.**
+approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point. Kick-off U0a–U1a
+done 2026-08-29 on branch `contiguity-harness` (anchors, `districting.py` hooks, deps, the frozen
+harness contract `battery/code/contig_methods/base.py`); the parallel unit wave is next.**
 
 ---
 
@@ -227,6 +228,15 @@ return argmax_k g_a[k]*g_b[k]
 
 11. **Contiguity non-convergence has (at least) three independent causes.** See the next
     section — this is the live blocker, not a historical trap.
+
+12. **`solve_contiguous_nash`'s "optimal" is certified only to `mip_rel_gap = 1e-4`.** Found
+    2026-08-29 through the harness validator: `scipy.optimize.milp` defaults HiGHS to a 1e-4
+    relative MIP gap, so the loop's master value (and hence its bound) can sit ~1e-4·|obj|
+    above the incumbent when the cut loop stops (C8 pair, ρ=0: 6.3e-4 nats). `nash_exact`
+    sets `mip_rel_gap=0.0`; the legacy loop did not. Pass `milp_options=dict(mip_rel_gap=0.0)`
+    for a real certificate — on the C8 pair this also *moves the incumbent* (log-product
+    6.47177 → 6.47234, 9 iterations instead of 14); the harness reports the loose case as
+    status `gap_limit`.
 
 ---
 
@@ -743,8 +753,11 @@ When starting a task on this project:
 **Kicking off the contiguity programme (fresh session, 2026-08-28 onward):**
 
 7. Open `research/contiguity/PLAN.md` §0 and follow the kick-off sequence literally — U0a
-   (anchors) comes *before* any solver edit. Create `contiguity-harness` off `main`; one
-   worktree branch `wt/<unit>` per unit; main session merges.
+   (anchors) comes *before* any solver edit. `contiguity-harness` exists (U0a–U1a committed
+   2026-08-29); one worktree branch `wt/<unit>` per unit; main session merges. Fast tests:
+   `.venv/bin/python3 battery/code/tests/run_all.py`; add `TD_SLOW=1` for the zip50 anchor
+   whenever `districting/territory/synth` change. `tests/test_env.py` guards the solver stack
+   (see the macOS `cbcbox` code-signing note in `requirements.txt`).
 8. Every unit gets a brief = its PLAN.md section verbatim + files owned + files forbidden +
    acceptance command + "stop and report rather than improvise". Use plan mode /
    `AskUserQuestion` at each ★ (brief, plan, diff, stage gate). Models: PLAN.md Part E.

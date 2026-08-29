@@ -8,10 +8,16 @@ does not override them.
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-08-28:** plan approved, **no code written**. Working tree clean after the commit
-that added this file. Branch `main`. The programme runs on an integration branch
-`contiguity-harness` (create it from `main` at kick-off) with one worktree branch `wt/<unit>`
-per unit.
+**State on 2026-08-29:** kick-off steps 1–5 done on branch `contiguity-harness` (U0a anchors,
+U0b `districting.py` hygiene, U0c deps/params, **U1a contract frozen** —
+`battery/code/contig_methods/base.py`, registry, `fake.py`, `tests/test_base.py`; 23 fast tests
+green, zip50 anchor byte-identical). Next: ★ brief the parallel wave (step 6: U1b, U2, U3, U4, U5,
+U7). Findings while building: (i) the legacy loop's "optimal" is certified only to HiGHS'
+default `mip_rel_gap=1e-4` (C8 pair at ρ=0: 6.3e-4 nats) — `districting.solve_contiguous_nash`
+gained `milp_options` so U2 can build a tight `current` variant, and the contract has a
+`gap_limit` status; (ii) the `cbcbox` wheel's GCC dylibs fail macOS code-signing (SIGKILL) —
+fix documented in `requirements.txt`, guarded by `tests/test_env.py`. The programme runs on
+`contiguity-harness` with one worktree branch `wt/<unit>` per unit.
 
 **Kick-off sequence (main session, in order):**
 

@@ -57,7 +57,8 @@ def _ratio_guard(ua, ub):
 def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
                           respect_state=False, max_iter=30, time_limit=20.0,
                           verbose=True, deadline=None, on_iter=None,
-                          g0_seeds=None, z_bound=50.0, seed=None, threads=None):
+                          g0_seeds=None, z_bound=50.0, seed=None, threads=None,
+                          milp_options=None):
     """
     Contiguous NASH by OUTER APPROXIMATION.
 
@@ -92,6 +93,10 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
       z_bound    box on z_a, z_b (legacy 50.0 -- absolute, wrong on dollar data).
       seed, threads   recorded in the result only; HiGHS through scipy.milp is
                  single-threaded and deterministic already.
+      milp_options   dict merged into scipy.optimize.milp's `options` for every master
+                 solve (e.g. dict(mip_rel_gap=0.0) -- scipy's default 1e-4 means the loop's
+                 "optimal" is only certified to 1e-4 relative; found 2026-08-29).  None =
+                 legacy behaviour.
 
     Every return dict carries `status`, `iters`, `n_cuts`, `n_tangents`, `seed`, `threads`
     and, whenever an iterate exists, `to_a, k, g_a, g_b, product, perimeter,
@@ -184,8 +189,10 @@ def solve_contiguous_nash(G, nodes, theta=0.40, lam=0.30, rho=2e-3,
                 last.update(status="time limit", iters=it,
                             message="deadline reached between master solves")
                 return last
+        opts = dict(time_limit=tl)
+        if milp_options: opts.update(milp_options)
         res = milp(c=c_obj, constraints=build(), integrality=integ,
-                   bounds=Bounds(lo, hi), options=dict(time_limit=tl))
+                   bounds=Bounds(lo, hi), options=opts)
         if not res.success:
             out = dict(status="solver failed", message=str(res.message), iters=it,
                        n_cuts=n_cuts, n_tangents=n_tangents, seed=seed, threads=threads)
