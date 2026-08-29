@@ -282,10 +282,13 @@ return argmax_k g_a[k]*g_b[k]
     wall at ~125 zips regardless of budget" in `RESULTS.md` §S2 was this bug for `scip_tree`.
     Rules that follow: a retry decision must key on the *engine's* stop reason (`extra["retryable"]`),
     never on the harness-facing status; SCIP's `limits/time` runs on its own clock and under
-    load can fire at ~half the wall budget (`_short_stop` retries such a stop); and a bound from a
-    rung at feastol f is trustworthy only to O(f) — the recomputed gap bottoms out near 2f, so a
-    loosened rung can never self-certify at `CERT_TOL = 1e-8`, which is the intended behaviour (the
-    124/135-zip pairs sit at 1.1e-7 / 3.0e-8 for exactly this reason).
+    load can fire at ~half the wall budget (`_short_stop` retries such a stop); and a certificate from a
+    rung at feastol f is a floating-point certificate, rigorous only to O(f·‖duals‖) — usually far
+    tighter in practice (simplex vertices are exact unless a tolerance binds: C1-seed2 A3/B3
+    certified to 2e-9 from a 1e-6 rung), but the 124/135-zip residuals of 1.1e-7 / 3.0e-8 may be
+    tolerance rather than search and the harness cannot tell. Cross-method agreement and brute
+    force at n ≤ 20 are the independent checks; a rigorous certificate needs an exact post-hoc
+    bound (candidate unit W6c).
 
 ### Contiguity MILP: three independent failure mechanisms (trap 11)
 
