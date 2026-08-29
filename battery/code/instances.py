@@ -599,7 +599,41 @@ def build_pair(spec: InstanceSpec, *, theta: float = THETA, lam: float = LAM,
 # ================================================================== instance JSON (gfx input)
 INSTANCE_JSON_KEYS = ("schema_version", "spec", "nodes", "pos", "edges", "A", "B", "M",
                       "state", "rep_a", "rep_b", "free_to_a", "covariates", "scale",
-                      "edge_share_deleted", "bounds", "rows")
+                      "edge_share_deleted", "bounds", "rows", "context")
+
+# above this many whole-instance zips, `_context_block` drops `edges` (nodes/pos/rep_a/rep_b
+# stay -- cheap at any size) rather than shipping a huge adjacency list; every tier built so
+# far (T0-T2, the six named failures) is n<=800, well under this
+CONTEXT_MAX_EDGES_NODES = 3000
+
+
+def _context_block(G0) -> dict:
+    """Whole-instance context for the gfx `instance_card` pair-context panel (U11):
+    every zip of the parent graph the pair was cut from (not just the pair's own zips),
+    its pre-merger owners, and -- when cheap -- its adjacency, so the card can draw the
+    pair's two legacy territories inside the full instance instead of two uniform,
+    information-free "pre-merger" blocks (the pair's zips already belong to `rep_a`/
+    `rep_b` by construction, so a same-pair-only panel is degenerate).
+
+    Regenerating `G0` from `params_json` costs ~0.01-0.04s (module docstring), so this is
+    computed unconditionally rather than gated behind a flag. Positions are rounded to 4
+    decimals and rep ids passed through as-is to keep the block small.
+    """
+    nodes = sorted(G0, key=base._sort_key)
+    idx = {z: i for i, z in enumerate(nodes)}
+    pos = [[round(float(x), 4), round(float(y), 4)]
+          for x, y in (G0.nodes[z].get("pos", (0.0, 0.0)) for z in nodes)]
+    out = dict(nodes=nodes, pos=pos,
+              rep_a=[G0.nodes[z].get("rep_a") for z in nodes],
+              rep_b=[G0.nodes[z].get("rep_b") for z in nodes])
+    if len(nodes) <= CONTEXT_MAX_EDGES_NODES:
+        out["edges"] = [[idx[u], idx[v]] for u, v in
+                        sorted(G0.edges(), key=lambda e: (base._sort_key(e[0]),
+                                                          base._sort_key(e[1])))]
+    metros = G0.graph.get("metros")
+    if metros:
+        out["metros"] = [[round(float(x), 4), round(float(y), 4)] for x, y in metros]
+    return out
 
 
 def _jsonable(o):
@@ -649,6 +683,7 @@ def instance_json(pi: PairInstance) -> dict:
         edge_share_deleted=pi.edge_share_deleted,
         bounds={k: v for k, v in pi.bounds.items() if k != "free_to_a"},
         rows=None,
+        context=_context_block(G0),
     )
     return d
 

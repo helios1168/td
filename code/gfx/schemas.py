@@ -84,6 +84,45 @@ def validate_instance_json(d: dict) -> list:
                 bad = [z for z in to_a if z not in nodeset]
                 if bad:
                     v.append(f"rows[{i}].to_a contains {len(bad)} id(s) outside nodes")
+    v.extend(_validate_context(d.get("context"), nodeset))
+    return v
+
+
+def _validate_context(ctx, pair_nodeset: set) -> list:
+    """Validate the optional whole-instance `context` block (U11): tolerant of absence
+    entirely (older instance JSONs, or a run that skipped it) -- only checked when present."""
+    if ctx is None:
+        return []
+    v = []
+    if not isinstance(ctx, dict):
+        return ["context is not an object"]
+    required = ("nodes", "pos", "rep_a", "rep_b")
+    for k in required:
+        if k not in ctx:
+            v.append(f"context missing key {k!r}")
+    if any(k not in ctx for k in required):
+        return v
+    cnodes = ctx["nodes"]
+    n = len(cnodes)
+    if len(set(cnodes)) != n:
+        v.append("context.nodes contains duplicate ids")
+    for k in ("pos", "rep_a", "rep_b"):
+        if len(ctx[k]) != n:
+            v.append(f"context.{k!r} has length {len(ctx[k])}, expected {n} (len(context.nodes))")
+    for i, p in enumerate(ctx.get("pos") or []):
+        if len(p) != 2:
+            v.append(f"context.pos[{i}] is not an [x, y] pair")
+            break
+    edges = ctx.get("edges")
+    if edges is not None:
+        for e in edges:
+            if len(e) != 2 or not (0 <= e[0] < n) or not (0 <= e[1] < n):
+                v.append(f"context.edge {e!r} is not a valid index pair into context.nodes (n={n})")
+                break
+    cnodeset = set(cnodes)
+    bad = [z for z in pair_nodeset if z not in cnodeset]
+    if bad:
+        v.append(f"nodes contains {len(bad)} id(s) not present in context.nodes (e.g. {bad[:3]!r})")
     return v
 
 
@@ -189,6 +228,14 @@ def make_fixture_instance(seed: int = 0, n: int = 40, *, name: Optional[str] = N
                 trace=[[0.02, None, 6.0], [1.0, None, 5.0]]),
         ]
 
+    # `context` stand-in (U11): this fixture has no real "parent instance" the pair was
+    # cut from, so the pair itself doubles as its own context -- every zip legacy-owned
+    # by the same (rep_a="A0", rep_b="B0") pair, which exercises the schema and the
+    # pair-context panel's overlap-fill/outline path without needing a second generator.
+    context = dict(nodes=list(nodes), pos=pos.tolist(),
+                   rep_a=["A0"] * n, rep_b=["B0"] * n,
+                   edges=[[i, j] for i, j in edges])
+
     return {
         "spec": dict(name=name or f"fixture_seed{seed}_n{n}", tier=tier,
                     scenario="fixture", n=n, seed=seed, rep_a="A0", rep_b="B0",
@@ -202,4 +249,5 @@ def make_fixture_instance(seed: int = 0, n: int = 40, *, name: Optional[str] = N
         "free_to_a": free_to_a,
         "covariates": covariates,
         "rows": rows,
+        "context": context,
     }
