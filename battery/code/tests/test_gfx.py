@@ -243,10 +243,49 @@ def test_validate_instance_json_catches_violations():
 # ------------------------------------------------------------------------- producers
 def test_producer_instance_card():
     d = _common.load_json(os.path.join(FX, "instance_t0.json"))
+    assert "context" in d and d["context"]      # U11: the fixture carries a context block
     (fig,), dt = _timed(lambda: (instance_card.build(d),))
     assert style.lint_text_overlap(fig) == []
     assert dt < RENDER_BUDGET_S
     style.save(fig, _tmp("instance_card.png"), producer="test")
+
+
+def test_producer_instance_card_pair_context_panel_present():
+    """U11: the old two uniform "pre-merger firm A / firm B" panels (degenerate -- every
+    zip in a pair belongs to the pair's two reps by construction) are gone; the
+    replacement pair-context panel is titled 'pair in context' and the log-ratio panel is
+    titled with the observed log(u_a/u_b) range."""
+    d = _common.load_json(os.path.join(FX, "instance_t0.json"))
+    fig = instance_card.build(d)
+    titles = [ax.get_title() for ax in fig.axes]
+    assert any(t == "pair in context" for t in titles)
+    assert not any("pre-merger" in t for t in titles)
+    assert any(t.startswith("log $u_a/u_b$") for t in titles)
+    plt_close(fig)
+
+
+def test_producer_instance_card_tolerates_missing_context():
+    """`context` is optional throughout: an instance JSON written before U11 (no `context`
+    key at all) still renders, with the pair-context panel saying so instead of crashing."""
+    d = dict(_common.load_json(os.path.join(FX, "instance_t0.json")))
+    del d["context"]
+    fig = instance_card.build(d)
+    texts = [t.get_text() for t in fig.findobj(matplotlib.text.Text)]
+    assert any("no context in JSON" in t for t in texts)
+    assert style.lint_text_overlap(fig) == []
+    plt_close(fig)
+
+
+def test_producer_instance_card_legends_carry_AB_counts():
+    """Free-Nash and best-contiguous-incumbent panels show |A|/|B| counts (U11); the
+    incumbent's title also carries method/status/pieces when a row joins in."""
+    d = _common.load_json(os.path.join(FX, "instance_t0.json"))
+    fig = instance_card.build(d)
+    legend_texts = [t.get_text() for ax in fig.axes for leg in ([ax.get_legend()]
+                    if ax.get_legend() else []) for t in leg.get_texts()]
+    assert any("|A|=" in t for t in legend_texts)
+    assert any("|B|=" in t for t in legend_texts)
+    plt_close(fig)
 
 
 def test_producer_method_trace():

@@ -172,8 +172,66 @@ def test_instance_json_schema():
         assert d["spec"]["name"] == sp.name and d["covariates"]["n"] == n
         assert set(d["rep_a"]) == {sp.rep_a} and set(d["rep_b"]) == {sp.rep_b}
         assert "free_to_a" not in d["bounds"]
+        # -- U11: whole-instance `context` block (pair-context gfx panel) -----------
+        ctx = d["context"]
+        for k in ("nodes", "pos", "rep_a", "rep_b", "edges"):
+            assert k in ctx, k
+        cn = len(ctx["nodes"])
+        assert cn >= n                          # the parent instance is >= the pair itself
+        for k in ("pos", "rep_a", "rep_b"):
+            assert len(ctx[k]) == cn, k
+        assert all(0 <= i < cn and 0 <= j < cn for i, j in ctx["edges"])
+        assert set(d["nodes"]) <= set(ctx["nodes"])          # pair zips are a subset
+        assert schemas.validate_instance_json(d) == []       # re-check with context present
     finally:
         shutil.rmtree(run, ignore_errors=True)
+
+
+# --------------------------------------------------------- 9a2. context block (U11)
+def test_context_block_covers_the_parent_instance_and_reflects_legacy_owners():
+    """The `context` block is the whole synthetic instance the pair was cut from (not the
+    pair subgraph): more nodes than the pair whenever the pair's reps also appear outside
+    the pair, and `rep_a`/`rep_b` vary across it (unlike the pair-only `rep_a`/`rep_b`
+    arrays at the top level, which are constant -- every pair zip is legacy-owned by both
+    `spec.rep_a` and `spec.rep_b` simultaneously, by `zips_for_pair`'s definition)."""
+    sp = I.named_failures()[0]                              # C1_aligned_seed2__A0_B0
+    pi = I.build_pair(sp, with_bounds=False)
+    d = I.instance_json(pi)
+    ctx = d["context"]
+    assert len(ctx["nodes"]) > len(d["nodes"])
+    assert len(set(ctx["rep_a"])) > 1 or len(set(ctx["rep_b"])) > 1
+    # every pair zip is legacy-owned by (spec.rep_a, spec.rep_b) in the context arrays too
+    idx = {z: i for i, z in enumerate(ctx["nodes"])}
+    for z in d["nodes"]:
+        i = idx[z]
+        assert ctx["rep_a"][i] == sp.rep_a and ctx["rep_b"][i] == sp.rep_b
+
+
+def test_context_block_omits_edges_above_the_node_cap():
+    old = I.CONTEXT_MAX_EDGES_NODES
+    try:
+        I.CONTEXT_MAX_EDGES_NODES = 5
+        sp = I.build_T0()[0]
+        pi = I.build_pair(sp, with_bounds=False)
+        d = I.instance_json(pi)
+        assert "edges" not in d["context"]
+        for k in ("nodes", "pos", "rep_a", "rep_b"):
+            assert k in d["context"]
+    finally:
+        I.CONTEXT_MAX_EDGES_NODES = old
+
+
+def test_instance_json_without_context_still_validates():
+    """Older instance JSONs (written before U11) have no `context` key at all -- the gfx
+    schema validator must keep accepting them (`context` is optional throughout)."""
+    from gfx import schemas
+
+    sp = I.build_T0()[0]
+    pi = I.build_pair(sp, with_bounds=False)
+    d = I.instance_json(pi)
+    assert schemas.validate_instance_json(d) == []
+    del d["context"]
+    assert schemas.validate_instance_json(d) == []           # still valid without it
 
 
 # ---------------------------------------------------------- 9b. every instance JSON is valid
