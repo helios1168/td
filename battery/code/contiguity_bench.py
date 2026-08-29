@@ -98,7 +98,7 @@ class Preset:
 PRESETS: dict[str, Preset] = {
     # rho = 0 is the model everywhere (PLAN.md "Decisions taken"); 2e-3 survives only as a
     # secondary column for the legacy `current` control.
-    "S0": Preset(("T0",), ("current", "current_inout", "brute", "flow", "warm"), (0.0,), 60.0,
+    "S0": Preset(("T0",), ("current", "current_tight", "current_inout", "brute", "flow", "warm"), (0.0,), 60.0,
                  include_named=True),
     "S1": Preset(("T0", "T1", "T2"), None, (0.0,), 60.0, rho_current_extra=(2e-3,)),
     "S2": Preset(("T1", "T2", "T3"), None, (0.0, 2e-3), 1200.0, methods_required=True),

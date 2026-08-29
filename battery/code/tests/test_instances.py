@@ -210,8 +210,14 @@ def test_output_guard_refuses_figures_and_outside_paths():
 def test_end_to_end_smoke():
     run_id = f"_test_{os.getpid()}"
     run = CB.RESULTS_ROOT / run_id
-    methods = ["fake_optimal", "fake_time_limit"]
-    methods += [m for m in ("brute", "current") if m in REGISTRY]
+    # fake_optimal's UB is a *lie* on general graphs (best feasible prefix); once brute is
+    # registered its true optimum exceeds that UB and the phase-3 post-pass rightly files a
+    # bug.  So use the honest fakes alongside brute, and check certificates on brute.
+    have_brute = "brute" in REGISTRY
+    methods = (["fake_heuristic", "fake_time_limit"] if have_brute      # UB None / UB loose
+               else ["fake_optimal", "fake_time_limit"])
+    methods += [m for m in ("brute", "current_tight") if m in REGISTRY]
+    cert_method = "brute" if have_brute else "fake_optimal"
     names = [s.name for s in I.build_T0()[:3]]
     rx = "|".join(names)
     try:
@@ -226,7 +232,7 @@ def test_end_to_end_smoke():
         for r in rows:
             assert "valid" in r and "violations" in r
             assert r["instance"] in names and r["run_id"] == run_id
-        opt = [r for r in rows if r["method"] == "fake_optimal"]
+        opt = [r for r in rows if r["method"] == cert_method]
         assert len(opt) == 3
         for r in opt:
             assert r["valid"] and r["valid_certificate"], r["violations"]
