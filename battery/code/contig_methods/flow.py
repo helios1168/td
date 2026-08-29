@@ -939,6 +939,15 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
             nodes_bb += int(nc)
         st = getattr(res, "status", 4)
 
+        # read the dual bound BEFORE any early exit: a master that stopped on the time
+        # limit without a solution still reports its root bound, and that bound is valid.
+        # (C7_scale_n400 A3/B3, 205 zips, is exactly this case.)
+        db = _dual_bound(res)
+        if db is not None and db < UB:
+            UB = db
+            if trace is not None:
+                trace.bound(UB)
+
         if st == 2:
             if it == 0:
                 return base.Result(status="infeasible", ub_scope=ub_scope, iters=iters,
@@ -951,12 +960,6 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
             status = "time_limit" if st == 1 else "error"
             message = f"flow: milp status {st} -- {getattr(res, 'message', '')}"
             break
-
-        db = _dual_bound(res)
-        if db is not None and db < UB:
-            UB = db
-            if trace is not None:
-                trace.bound(UB)
 
         x = _round_x(res, n)
         to_a = {nodes[i] for i in range(n) if x[i]}
