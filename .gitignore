@@ -25,3 +25,6 @@ venv/
 data/tiger/
 data/twin_*
 data/public/
+
+# Contiguity harness output (PLAN.md C.1): rows.jsonl, assignments, instance JSONs
+battery/results/
