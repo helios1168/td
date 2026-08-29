@@ -347,7 +347,10 @@ def _repair(ctx, to_a, *, ls_moves=_MAX_LS_MOVES, deadline=None):
     if not ctx.is_feasible(cur):
         return None
     if math.isinf(ctx.objective(cur)):
-        return None
+        # phase 1 emptied a side (objective -inf): fall back to a guaranteed-feasible split
+        cur, obj = _subtree_splits(ctx, deadline=deadline)
+        if cur is None or not math.isfinite(obj):
+            return None
     return _local_search(ctx, cur, ls_moves=ls_moves, deadline=deadline)
 
 
@@ -385,13 +388,59 @@ def _ratio_prefix(ctx):
     return {ctx.nodes[i] for i in order[:k]}
 
 
-def _fallback_warm_start(ctx, *, deadline=None):
-    """A feasible allocation with no outside help: repaired ratio prefix, else all-but-one."""
-    cand = _repair(ctx, _ratio_prefix(ctx), deadline=deadline)
-    if cand is not None:
-        return cand, "ratio_prefix_repaired"
-    # last resort: one component entirely to a, the rest to b (always feasible when it scores)
+def _subtree_splits(ctx, *, deadline=None):
+    """The best allocation among the spanning-tree subtree splits (PLAN.md F1).
+
+    Root a BFS tree at each of the two extreme-ratio zips of each pair component.  For any
+    vertex v, `subtree(v)` and its complement inside the component are *both* connected, so
+    each of the 2|K| splits is feasible by construction -- no articulation-point test, one
+    BFS per root.  Other components go to b, which keeps them feasible too.  This is the
+    guaranteed-feasible fallback: it needs no incumbent to repair and cannot fail on a
+    connected component of size >= 2.
+    """
+    best, best_obj = None, -math.inf
+    r = base.ratio(ctx.ua, ctx.ub)
+    rank = {z: float(r[i]) for i, z in enumerate(ctx.nodes)}
     for K in ctx.comps:
+        if len(K) < 2:
+            continue
+        roots = {max(K, key=lambda z: (rank[z], base._sort_key(z))),
+                 min(K, key=lambda z: (rank[z], base._sort_key(z)))}
+        for root in sorted(roots, key=base._sort_key):
+            if deadline is not None and time.perf_counter() > deadline:
+                return (best, best_obj) if best is not None else (None, -math.inf)
+            order, parent = [root], {root: None}
+            for v in order:                                   # BFS, growing `order` in place
+                for w in ctx.nbrs[v]:
+                    if w not in parent:
+                        parent[w] = v
+                        order.append(w)
+            subtree = {v: {v} for v in order}
+            for v in reversed(order[1:]):                     # children before parents
+                subtree[parent[v]] |= subtree[v]
+            for v in order[1:]:                               # v == root is the whole component
+                cand = set(subtree[v])
+                obj = ctx.objective(cand)
+                if obj > best_obj:
+                    best, best_obj = cand, obj
+    return best, best_obj
+
+
+def _fallback_warm_start(ctx, *, deadline=None):
+    """A feasible allocation with no outside help: the better of a repaired ratio prefix and
+    the best spanning-tree subtree split."""
+    cands = []
+    fixed = _repair(ctx, _ratio_prefix(ctx), deadline=deadline)
+    if fixed is not None:
+        cands.append((ctx.objective(fixed), fixed, "ratio_prefix_repaired"))
+    sub, sub_obj = _subtree_splits(ctx, deadline=deadline)
+    if sub is not None and math.isfinite(sub_obj):
+        cands.append((sub_obj, sub, "subtree_split"))
+    if cands:
+        obj, cand, src = max(cands, key=lambda c: c[0])
+        if math.isfinite(obj):
+            return cand, src
+    for K in ctx.comps:                       # last resort: one whole component to a
         cand = set(K)
         if ctx.is_feasible(cand) and math.isfinite(ctx.objective(cand)):
             return cand, "single_component"
@@ -726,7 +775,36 @@ def _maybe_repair(model, ctx, st, to_a):
 
 
 # =========================================================================== the model
-def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose):
+def _gain_floor(ctx, lb0):
+    """Valid lower bounds (ga_min, gb_min) implied by a known achievable objective `lb0`.
+
+    Every allocation at least as good as the incumbent has `log ga + log gb >= lb0 + rho*per
+    >= lb0`, so `ga >= exp(lb0) / sum(u_b)` and symmetrically -- and the optimum is one of
+    those allocations, so tightening the variable bounds this way keeps both the argmax and
+    the dual bound valid.
+
+    This is what makes the native (SCIP `log`) build numerically usable.  With the bare
+    `1e-9` floor the log's gradient at the lower bound is 1e9, and SCIP's LPs go unstable:
+    on the 205-zip C7 A3/B3 pair every feastol from 1e-9 to 1e-8 aborted with "unresolved
+    numerical troubles in LP" inside 0.3 s (2026-08-29).  On a rescaled instance the derived
+    floor is ~12.6 against a 50 upper bound, i.e. a gradient of 0.08.
+    """
+    ua_sum, ub_sum = float(ctx.ua.sum()), float(ctx.ub.sum())
+    if lb0 is None or not math.isfinite(lb0):
+        return _LOG_FLOOR, _LOG_FLOOR
+    try:
+        ga_min = math.exp(lb0 - math.log(ub_sum)) if ub_sum > 0 else _LOG_FLOOR
+        gb_min = math.exp(lb0 - math.log(ua_sum)) if ua_sum > 0 else _LOG_FLOOR
+    except (ValueError, OverflowError):
+        return _LOG_FLOOR, _LOG_FLOOR
+    eps = 1e-12                                   # never cut off the incumbent itself
+    ga_min = min(max(ga_min * (1 - eps), _LOG_FLOOR), max(ua_sum, _LOG_FLOOR))
+    gb_min = min(max(gb_min * (1 - eps), _LOG_FLOOR), max(ub_sum, _LOG_FLOOR))
+    return ga_min, gb_min
+
+
+def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose,
+                 gain_floor=(_LOG_FLOOR, _LOG_FLOOR)):
     m = Model("scip_tree")
     if not verbose:
         m.hideOutput()
@@ -756,8 +834,9 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose):
     x = {z: m.addVar(vtype="B", name=f"x{i}") for i, z in enumerate(ctx.nodes)}
     ua_sum = float(ctx.ua.sum())
     ub_sum = float(ctx.ub.sum())
-    ga = m.addVar(lb=_LOG_FLOOR, ub=max(ua_sum, _LOG_FLOOR), name="ga")
-    gb = m.addVar(lb=_LOG_FLOOR, ub=max(ub_sum, _LOG_FLOOR), name="gb")
+    ga_min, gb_min = gain_floor
+    ga = m.addVar(lb=ga_min, ub=max(ua_sum, ga_min), name="ga")
+    gb = m.addVar(lb=gb_min, ub=max(ub_sum, gb_min), name="gb")
     # `<=`, not `==`: the objective is increasing in ga and gb (through za <= log ga), so the
     # inequality is tight at every optimum, while an *equality* lets SCIP multi-aggregate ga
     # and gb out of the transformed problem -- after which `setSolVal` on them raises
@@ -765,9 +844,8 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose):
     # `trySol` dies (found while porting the W6 prototype, 2026-08-29).
     m.addCons(ga <= quicksum(float(ctx.ua[i]) * x[z] for i, z in enumerate(ctx.nodes)))
     m.addCons(gb <= quicksum(float(ctx.ub[i]) * (1 - x[z]) for i, z in enumerate(ctx.nodes)))
-    lo = math.log(_LOG_FLOOR)
-    za = m.addVar(lb=lo, ub=math.log(max(ua_sum, _LOG_FLOOR)), name="za")
-    zb = m.addVar(lb=lo, ub=math.log(max(ub_sum, _LOG_FLOOR)), name="zb")
+    za = m.addVar(lb=math.log(ga_min), ub=math.log(max(ua_sum, ga_min)), name="za")
+    zb = m.addVar(lb=math.log(gb_min), ub=math.log(max(ub_sum, gb_min)), name="zb")
     if formulation == "native":
         m.addCons(za <= _scip_log(ga))
         m.addCons(zb <= _scip_log(gb))
@@ -798,10 +876,78 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose):
 
 
 # ================================================================================ solve
+_FEASTOL_LADDER = (1e-7, 1e-6)      # retried, in order, after a numerical abort
+
+
 def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
           warm_start=None, reductions=None, trace=None, kappa=0.0,
           formulation="native", repair=True, feastol=1e-9, check_opt=None,
           verbose=False, ls_moves=_MAX_LS_MOVES, **opts) -> base.Result:
+    """One branch-and-cut solve, retried at a looser feastol after a numerical abort.
+
+    SCIP can stop with "unresolved numerical troubles in LP -- aborting" -- an engine
+    failure, not a model one, and the tighter the feasibility tolerance the likelier it is.
+    The retry re-solves the same problem from the best allocation found so far, and the
+    merged answer keeps the tightest *valid* bound of all attempts (every attempt's dual
+    bound bounds the same optimum, so the minimum of them does too, and the maximum LB is
+    still achieved by an allocation this method has exhibited).
+    """
+    t0 = time.perf_counter()
+    deadline0 = t0 + float(time_limit)
+    ladder = [float(feastol)] + [f for f in _FEASTOL_LADDER if f > float(feastol) * 1.001]
+    merged = None
+    attempts = []
+    ws = warm_start
+    for ft in ladder:
+        remaining = deadline0 - time.perf_counter()
+        if remaining <= 0.05 and merged is not None:
+            break
+        res = _solve_once(G, nodes, theta=theta, lam=lam, rho=rho, time_limit=max(remaining, 0.05),
+                          seed=seed, warm_start=ws, trace=trace, kappa=kappa,
+                          formulation=formulation, repair=repair, feastol=ft,
+                          check_opt=check_opt, verbose=verbose, ls_moves=ls_moves)
+        attempts.append(dict(feastol=ft, status=res.status,
+                             scip_status=res.extra.get("scip_status")))
+        merged = _merge(merged, res)
+        if res.status != "error":
+            break
+        if res.to_a is not None and res.LB is not None:
+            ws = res.to_a                     # restart from the best allocation we did prove
+    if merged is None:                        # ladder never ran (no budget at all)
+        return base.Result(status="time_limit", message="scip_tree: no time budget")
+    merged.extra["attempts"] = attempts
+    return merged
+
+
+def _merge(a: "base.Result", b: "base.Result") -> "base.Result":
+    """Keep the better allocation and the tightest valid bound across two attempts."""
+    if a is None:
+        return b
+    ubs = [u for u in (a.UB, b.UB) if u is not None and math.isfinite(u)]
+    keep, other = (a, b) if (a.LB is not None and (b.LB is None or a.LB >= b.LB)) else (b, a)
+    out = b                                   # the later attempt carries the engine's verdict
+    out.to_a = keep.to_a if keep.LB is not None else (b.to_a if b.to_a is not None else a.to_a)
+    out.LB = keep.LB
+    out.UB = min(ubs) if ubs else None
+    out.nodes = a.nodes + b.nodes
+    out.iters = a.iters + b.iters
+    out.n_cuts = a.n_cuts + b.n_cuts
+    out.n_tangents = a.n_tangents + b.n_tangents
+    if out.t_first_feasible is None:
+        out.t_first_feasible = a.t_first_feasible
+    if out.status != "optimal" and out.UB is not None and out.LB is not None \
+            and out.UB - out.LB <= base.CERT_TOL:
+        out.status = "optimal"
+    if out.status == "optimal" and (out.UB is None or out.LB is None
+                                    or out.UB - out.LB > base.CERT_TOL):
+        out.status = "gap_limit" if out.LB is not None else "time_limit"
+    return out
+
+
+def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
+                warm_start=None, trace=None, kappa=0.0, formulation="native", repair=True,
+                feastol=1e-9, check_opt=None, verbose=False,
+                ls_moves=_MAX_LS_MOVES) -> base.Result:
     t0 = time.perf_counter()
     if _SCIP_ERROR is not None:
         return base.Result(status="error", message=f"scip_tree: pyscipopt unavailable "
@@ -826,8 +972,27 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
               repair_budget=_REPAIR_TIME_SHARE * float(time_limit),
               lin_a=None, lin_b=None, gvals=(0.0, 0.0), feastol=float(feastol))
 
+    # ------------------------------------------------------------------ warm start
+    # Computed *before* the model: its objective is a valid floor on both gains, which is
+    # what keeps the log's gradient tame (see `_gain_floor`).
+    warm_source = "none"
+    ws = None
+    if warm_start is not None and not isinstance(warm_start, str):
+        cand = set(warm_start) & ctx.node_set
+        if ctx.is_feasible(cand) and math.isfinite(ctx.objective(cand)):
+            ws, warm_source = cand, "given"
+        else:
+            fixed = _repair(ctx, cand, ls_moves=ls_moves, deadline=deadline)
+            if fixed is not None:
+                ws, warm_source = fixed, "given_repaired"
+    if ws is None and warm_start != "__none__":                 # "__none__": tests, cold start
+        ws, warm_source = _fallback_warm_start(ctx, deadline=deadline)
+    if ws is not None:
+        _record(ctx, st, ws)
+
     m, V = _build_model(ctx, rho=rho, time_limit=max(deadline - time.perf_counter(), 0.01),
-                        seed=seed, formulation=formulation, feastol=feastol, verbose=verbose)
+                        seed=seed, formulation=formulation, feastol=feastol, verbose=verbose,
+                        gain_floor=_gain_floor(ctx, st["best_obj"]))
     st["V"] = V
     st["lin_a"], st["lin_b"] = V["lin_a"], V["lin_b"]
 
@@ -836,21 +1001,7 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
                       chckpriority=-10, enfopriority=-10, needscons=False)
     m.includeEventhdlr(_Events(ctx, st), "scip_tree_events", "incumbent trace")
 
-    # ------------------------------------------------------------------ warm start
-    warm_source = "none"
-    ws = None
-    if warm_start is not None:
-        cand = set(warm_start) & ctx.node_set
-        if ctx.is_feasible(cand) and math.isfinite(ctx.objective(cand)):
-            ws, warm_source = cand, "given"
-        else:
-            fixed = _repair(ctx, cand, ls_moves=ls_moves, deadline=deadline)
-            if fixed is not None:
-                ws, warm_source = fixed, "given_repaired"
-    if ws is None:
-        ws, warm_source = _fallback_warm_start(ctx, deadline=deadline)
     if ws is not None:
-        _record(ctx, st, ws)
         sol = _full_solution(m, ctx, V, ws)
         if sol is not None:
             try:
