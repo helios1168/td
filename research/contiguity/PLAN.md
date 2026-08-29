@@ -8,7 +8,13 @@ does not override them.
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-08-29:** kick-off steps 1–5 done on branch `contiguity-harness` (U0a anchors,
+**State on 2026-08-29 (evening):** on `contiguity-harness`: U0a–U1a, **U1b, U2, U4, U7 merged**;
+**S0 smoke done** (`RESULTS.md` §S0: brute ground truth on T0; legacy control certifies 0/6 named
+failures; CLAUDE.md traps 12–13 recorded). In flight in worktrees: U3 (`wt/u3`), U5 (`wt/u5`),
+the method wave W4 (plan), W5, W6 (plan), W7, W8, W9a (`wt/w*`). Next ★: W4/W6 plans, then merges,
+S0 rerun with each method, ★3 before S1. User decisions taken today: all three twin privacy
+aggregates may leave; work graph is a pyarrow edge cache on the ZCTA 2025 vintage (edge set
+identical to TIGER2020 — `data/README.md`). Earlier that day: kick-off steps 1–5 done on branch `contiguity-harness` (U0a anchors,
 U0b `districting.py` hygiene, U0c deps/params, **U1a contract frozen** —
 `battery/code/contig_methods/base.py`, registry, `fake.py`, `tests/test_base.py`; 23 fast tests
 green, zip50 anchor byte-identical). Next: ★ brief the parallel wave (step 6: U1b, U2, U3, U4, U5,
