@@ -109,10 +109,13 @@ def _context_panel(ax, d, ra, rb):
             return b_light
         return style.PALETTE["unsolved"]
 
-    legend = [Line2D([], [], marker="s", ls="", color=style.PALETTE["A"],
-                     label=f"A legacy (rep {ra})"),
-             Line2D([], [], marker="s", ls="", color=style.PALETTE["B"],
-                    label=f"B legacy (rep {rb})")]
+    n_pair = sum(1 for z in rep_a_c if rep_a_c.get(z) == ra and rep_b_c.get(z) == rb)
+    legend = [Line2D([], [], marker="s", ls="", color=a_light,
+                     label=f"A legacy only (rep {ra})"),
+             Line2D([], [], marker="s", ls="", color=b_light,
+                    label=f"B legacy only (rep {rb})"),
+             Line2D([], [], marker="s", ls="", color=overlap_color,
+                    label=f"overlap = this pair ({n_pair} zips)")]
     maps.choropleth(ax, polys_c, color_of, bounds=bounds_c, title="pair in context",
                     legend=legend)
 
