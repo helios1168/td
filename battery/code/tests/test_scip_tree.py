@@ -85,6 +85,8 @@ def test_registry_exposes_scip_tree_and_the_oa_variant():
     assert REGISTRY["scip_tree"].max_n is None
     assert REGISTRY["scip_tree_oa"].base_name == "scip_tree"
     assert REGISTRY["scip_tree_oa"].kwargs == dict(formulation="oa")
+    assert REGISTRY["scip_tree_psimplex"].base_name == "scip_tree"
+    assert REGISTRY["scip_tree_psimplex"].kwargs["lp_params"]["lp/initalgorithm"] == "p" 
 
 
 # ------------------------------------------------------------- T0 ground truth + cuts
@@ -276,3 +278,264 @@ def test_harness_run_certifies_every_t0_row():
         assert json.load(open(run_dir / "bugs.json")) == []
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
+
+
+# ------------------------------------------------- W6b: the ladder and the MIP start
+def test_retryable_classifies_a_numerical_abort_but_not_a_spent_budget():
+    """`_retryable` is what continues the ladder; the reported status is not.
+
+    The S2 regression this guards: an LP abort reaches `_finish` as `scip_status ==
+    "unknown"` plus a raised exception, and `_finish` deliberately rewrites it to
+    `time_limit` (so `errors` in summary.csv counts crashes only).  Reading the *status* to
+    decide whether to retry therefore stopped the ladder on its first rung.
+    """
+    ours = dict(interrupted=True)
+    theirs = dict(interrupted=False)
+    # continue: the engine gave up on its own LPs
+    assert ST._retryable("unknown", theirs, aborted=True)
+    assert ST._retryable("unknown", theirs, aborted=False)
+    assert ST._retryable(None, theirs, aborted=False)
+    assert ST._retryable("userinterrupt", theirs, aborted=False)   # SCIP's own interrupt
+    # stop: the budget really is gone, or the answer really is in
+    assert not ST._retryable("timelimit", theirs, aborted=False)
+    assert not ST._retryable("optimal", theirs, aborted=False)
+    assert not ST._retryable("infeasible", theirs, aborted=False)
+    assert not ST._retryable("gaplimit", theirs, aborted=False)
+    assert not ST._retryable("userinterrupt", ours, aborted=False)  # our deadline
+
+
+def test_ladder_runs_every_rung_after_repeated_aborts():
+    """A mocked `_solve_once` that always aborts must be called on all four rungs.
+
+    Each rung sees the remaining budget, restarts from the previous rung's allocation, and
+    the merged answer keeps the tightest UB and the best LB; `extra["attempts"]` records
+    all of them with wall times.  With budget left over the ladder is *extended* with
+    further OA rungs at a shifted seed, up to `max_rungs`.
+    """
+    pi = _t0()[0]
+
+    def make_fake(calls):
+        def fake(G, nodes, **kw):
+            calls.append((kw["feastol"], kw["formulation"], kw["seed"], kw["time_limit"],
+                          kw["warm_start"]))
+            k = len(calls)
+            return base.Result(status="time_limit", to_a=set(nodes[:1]),
+                               LB=1.0 + 0.01 * k, UB=9.0 - 0.01 * k, ub_scope="global",
+                               extra=dict(scip_status="unknown", retryable=True))
+        return fake
+
+    calls = []
+    real = ST._solve_once
+    ST._solve_once = make_fake(calls)
+    try:
+        res = ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                       time_limit=20.0, seed=0, mip_start=None, max_rungs=4)
+    finally:
+        ST._solve_once = real
+
+    assert len(calls) == 4, calls                      # 1e-9, 1e-7, 1e-6 native, then oa
+    assert [c[0] for c in calls] == [1e-9, 1e-7, 1e-6, 1e-6]
+    assert [c[1] for c in calls] == ["native", "native", "native", "oa"]
+    assert calls[1][4] is not None, "a rung must restart from the previous allocation"
+    assert all(c[3] > 0 for c in calls)
+    attempts = res.extra["attempts"]
+    assert len(attempts) == 4 and res.extra["n_rungs"] == 4
+    assert all(a["retryable"] and "t" in a for a in attempts)
+    assert abs(res.LB - 1.04) < 1e-12 and abs(res.UB - 8.96) < 1e-12   # best LB, tightest UB
+
+    # budget left over -> extension rungs, on the robust formulation, at a shifted seed
+    calls2 = []
+    ST._solve_once = make_fake(calls2)
+    try:
+        ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                 time_limit=20.0, seed=0, mip_start=None, max_rungs=7)
+    finally:
+        ST._solve_once = real
+    assert len(calls2) == 7, calls2
+    assert [c[1] for c in calls2[3:]] == ["oa"] * 4
+    assert [c[2] for c in calls2[3:]] == [0, 1, 2, 3], "extension rungs must shift the seed"
+
+
+def test_ladder_stops_when_the_budget_is_spent_or_the_answer_is_certified():
+    """A genuine `timelimit`, and a certificate, both end the ladder on the first rung."""
+    import time as _time
+    pi = _t0()[0]
+    for scip_status, lb, ub, burn in (("timelimit", 1.0, 9.0, 1.8), ("optimal", 5.0, 5.0, 0.0)):
+        calls = []
+
+        def fake(G, nodes, _s=scip_status, _lb=lb, _ub=ub, _burn=burn, **kw):
+            calls.append(kw["feastol"])
+            _time.sleep(_burn)                 # a genuine time limit costs the whole budget
+            return base.Result(status="time_limit" if _s == "timelimit" else "optimal",
+                               to_a=set(nodes[:1]), LB=_lb, UB=_ub, ub_scope="global",
+                               extra=dict(scip_status=_s,
+                                          retryable=ST._retryable(_s, dict(interrupted=False),
+                                                                  aborted=False)))
+
+        real = ST._solve_once
+        ST._solve_once = fake
+        try:
+            ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                     time_limit=2.0, seed=0, mip_start=None)
+        finally:
+            ST._solve_once = real
+        assert calls == [1e-9], (scip_status, calls)
+
+
+def test_short_stop_treats_scips_own_clock_as_a_failure_not_a_spent_budget():
+    """SCIP has been seen to report `timelimit` after 57 s of a 106 s rung under load.
+
+    Our wall clock is the authority on whether the budget is gone, so a `timelimit` well
+    inside the rung's allocation continues the ladder instead of ending the solve early.
+    """
+    assert ST._short_stop("timelimit", 57.0, 106.0)
+    assert not ST._short_stop("timelimit", 100.0, 106.0)
+    assert not ST._short_stop("unknown", 1.0, 106.0)     # already retryable for other reasons
+    assert not ST._short_stop("optimal", 1.0, 106.0)
+    assert not ST._short_stop("timelimit", 0.1, 0.5)     # sub-_MIN_RUNG rungs never retry
+
+    # end to end: an instant "timelimit" is retried, and the attempt says why
+    pi = _t0()[0]
+    calls = []
+
+    def fake(G, nodes, **kw):
+        calls.append(kw["feastol"])
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="timelimit", retryable=False))
+
+    real = ST._solve_once
+    ST._solve_once = fake
+    try:
+        res = ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                       time_limit=20.0, seed=0, mip_start=None, max_rungs=3)
+    finally:
+        ST._solve_once = real
+    assert len(calls) == 3, calls
+    assert all(a["short_stop"] for a in res.extra["attempts"])
+
+
+def test_a_loosened_rung_that_certifies_is_retried_at_the_tight_tolerance():
+    """`tighten_back`: SCIP `optimal` at 1e-6 leaves a ~1e-7 gap; re-solve at 1e-9.
+
+    The S2 re-run landed exactly there on the 124- and 135-zip C7b pairs -- certified by
+    SCIP, gap 1.1e-7 / 3.0e-8, and ~1000 s of the 1200 s budget unspent.
+    """
+    pi = _t0()[0]
+    calls = []
+
+    def fake(G, nodes, **kw):
+        calls.append((kw["feastol"], kw["formulation"]))
+        if len(calls) == 3:                    # the loosened rung certifies to its tolerance
+            return base.Result(status="gap_limit", to_a=set(nodes[:1]), LB=5.0, UB=5.0 + 1e-7,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        if len(calls) == 4:                    # ... and the tight retry closes it
+            return base.Result(status="optimal", to_a=set(nodes[:1]), LB=5.0, UB=5.0,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="unknown", retryable=True))
+
+    real = ST._solve_once
+    ST._solve_once = fake
+    try:
+        res = ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                       time_limit=60.0, seed=0, mip_start=None)
+    finally:
+        ST._solve_once = real
+    # the tight native rung already ran as rung 1, so the retry is the tight OA one
+    assert calls == [(1e-9, "native"), (1e-7, "native"), (1e-6, "native"),
+                     (1e-9, "oa")], calls
+    assert res.extra["attempts"][2]["tighten_back"] is True
+    assert res.status == "optimal" and res.UB == 5.0 and res.LB == 5.0
+
+    # a near-certified gap is terminal: when the tight rungs are used up, stop -- do not
+    # spend the rest of the budget on the ordinary ladder (measured waste: 1027 s)
+    calls3 = []
+
+    def fake3(G, nodes, **kw):
+        calls3.append((kw["feastol"], kw["formulation"]))
+        if len(calls3) >= 3:
+            return base.Result(status="gap_limit", to_a=set(nodes[:1]), LB=5.0, UB=5.0 + 1e-7,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="unknown", retryable=True))
+
+    ST._solve_once = fake3
+    try:
+        res3 = ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                        time_limit=60.0, seed=0, mip_start=None)
+    finally:
+        ST._solve_once = real
+    assert calls3 == [(1e-9, "native"), (1e-7, "native"), (1e-6, "native"),
+                      (1e-9, "oa")], calls3
+    assert res3.status == "gap_limit"
+
+    # switched off, the ladder stops on the certified-but-coarse rung
+    calls2 = []
+
+    def fake2(G, nodes, **kw):
+        calls2.append(kw["feastol"])
+        if len(calls2) == 3:
+            return base.Result(status="gap_limit", to_a=set(nodes[:1]), LB=5.0, UB=5.0 + 1e-7,
+                               ub_scope="global",
+                               extra=dict(scip_status="optimal", retryable=False))
+        return base.Result(status="time_limit", to_a=set(nodes[:1]), LB=1.0, UB=9.0,
+                           ub_scope="global",
+                           extra=dict(scip_status="unknown", retryable=True))
+
+    ST._solve_once = fake2
+    try:
+        ST.solve(pi.G, pi.nodes, theta=THETA, lam=LAM, rho=0.0, respect_state=False,
+                 time_limit=60.0, seed=0, mip_start=None, tighten_back=False)
+    finally:
+        ST._solve_once = real
+    assert calls2 == [1e-9, 1e-7, 1e-6], calls2
+
+
+def test_mip_start_f1_feeds_the_solver_and_is_switchable():
+    """`mip_start="f1"` hands `warm.solve(method="f1")`'s allocation to SCIP as a MIP start."""
+    pi = _t0()[-1]
+    res_f1, row_f1 = _run(pi.G, pi.nodes, mip_start="f1")
+    assert res_f1.extra["mip_start"] == "warm_f1"
+    assert res_f1.extra["warm_source"] == "given"          # F1's allocation is feasible
+    assert row_f1["valid_certificate"]
+
+    res_int, row_int = _run(pi.G, pi.nodes, mip_start="internal")
+    assert res_int.extra["mip_start"] == "off"
+    assert res_int.extra["warm_source"] in ("ratio_prefix_repaired", "subtree_split",
+                                            "single_component")
+    assert row_int["valid_certificate"]
+    assert abs(res_f1.LB - res_int.LB) < 1e-9
+
+    # an explicit warm start still wins over the F1 call
+    b = _brute(pi)
+    res_given, _ = _run(pi.G, pi.nodes, warm_start=b.to_a, mip_start="f1")
+    assert res_given.extra["mip_start"] == "given"
+    assert res_given.extra["warm_source"] == "given"
+
+
+def test_fractional_separation_runs_and_keeps_the_certificate():
+    """`conssepalp` fires at the root, its cuts pass `check_opt`, and T0 still certifies."""
+    n_with_cuts = 0
+    for pi in _t0():
+        b = _brute(pi)
+        res, row = _run(pi.G, pi.nodes, check_opt=b.to_a, sepa_frac=True)
+        assert row["valid_certificate"], (pi.spec.name, res.status, row["gap_nats"])
+        assert abs(res.LB - b.LB) < 1e-9, (pi.spec.name, res.LB, b.LB)
+        assert res.extra["n_sepa_rounds"] >= 1, pi.spec.name
+        n_with_cuts += res.extra["n_sepa_cuts"] > 0
+    assert n_with_cuts >= 1, "no fractional cut was ever separated on T0"
+
+
+def test_fractional_separation_can_be_switched_off():
+    pi = _t0()[-1]
+    b = _brute(pi)
+    res, row = _run(pi.G, pi.nodes, check_opt=b.to_a, sepa_frac=False)
+    assert res.extra["n_sepa_rounds"] == 0 and res.extra["n_sepa_cuts"] == 0
+    assert row["valid_certificate"]
+    assert abs(res.LB - b.LB) < 1e-9
