@@ -220,14 +220,19 @@ def nash_exact(A, B, M, theta=0.40, lam=0.30, graph=None, nodes=None,
 
     best = (-np.inf, None)
     for it in range(max_iter):
-        res = milp(c=c, constraints=build(), integrality=integ, bounds=Bounds(lo, hi),
-                   options=dict(time_limit=30, mip_rel_gap=0.0,
-                                # HiGHS default integrality tol 1e-6 lets x_i sit
-                                # ~1e-7 off {0,1}; the rounded incumbent then looks
-                                # to violate its own tangent by ~1e-7 > tol and the
-                                # loop stalls re-adding an identical cut forever.
-                                mip_feasibility_tolerance=1e-9,
-                                primal_feasibility_tolerance=1e-9))
+        # HiGHS default integrality tol 1e-6 lets x_i sit ~1e-7 off {0,1}; the rounded
+        # incumbent then looks to violate its own tangent by ~1e-7 > tol and the loop
+        # stalls re-adding an identical cut forever -- hence the tight tolerances.
+        # But 1e-9 makes HiGHS 1.15 fail with "Status 4: Solve error" on some instances
+        # (C4_contested A0/B0, found 2026-08-29), so retry down a ladder; every rung is
+        # still far below the 1e-6 that stalls.
+        for tol in (1e-9, 1e-8, None):
+            opts = dict(time_limit=30, mip_rel_gap=0.0)
+            if tol is not None:
+                opts.update(mip_feasibility_tolerance=tol, primal_feasibility_tolerance=tol)
+            res = milp(c=c, constraints=build(), integrality=integ, bounds=Bounds(lo, hi),
+                       options=opts)
+            if res.success or "Solve error" not in str(res.message): break
         if not res.success: return dict(status="solver failed", message=str(res.message))
         UB = -(res.fun) if rho == 0 else -(res.x[IA] + res.x[IB]) * -1
         UB = res.x[IA] + res.x[IB]
@@ -286,6 +291,10 @@ def solve(G, nodes, criterion="nash", theta=0.40, lam=0.30, exact=True):
                         ks_gap=float(abs(ga/t["Amax"] - gb/t["Bmax"])),
                         M_a=float(t["M"][r["x"]].sum()), M_total=float(t["M"].sum()),
                         table=t)
+        import warnings
+        warnings.warn(f"territory.solve: nash_exact did not certify "
+                      f"({r.get('status')}: {r.get('message', '')}); falling back to the "
+                      f"prefix heuristic (exact=False) -- CLAUDE.md trap 1", RuntimeWarning)
     k = int(CRITERIA[criterion](t))
     to_a = {t["nodes"][i] for i in t["order"][:k]}
     ga, gb = t["ga"][k], t["gb"][k]

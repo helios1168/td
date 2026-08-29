@@ -253,9 +253,14 @@ return argmax_k g_a[k]*g_b[k]
     selectable roots) — this is the mechanism-(a) fix, and it is a formulation fix, not a
     solver fix.
 
----
-
-## Known Challenges & Open Gates
+14. **HiGHS 1.15 returns "Status 4: Solve error" under `*_feasibility_tolerance=1e-9`.** Found
+    2026-08-29 (U5's compat test): `nash_exact` failed on C4_contested A0/B0 (27 zips) after two
+    OA rounds, and `territory.solve` *silently* fell back to the prefix heuristic (8.96110 vs
+    the exact 8.96316). The 1e-9 tolerances exist to stop the 1e-6-default stall (trap in
+    `nash_exact`'s comment); 1e-8 solves the same instance exactly. `nash_exact` now retries
+    down a ladder (1e-9 → 1e-8 → HiGHS defaults) on "Solve error", and `solve` warns when it
+    falls back. Any new method forwarding tolerance options to HiGHS must guard the same way
+    (W4's `flow` does).
 
 ### Contiguity MILP: three independent failure mechanisms (trap 11)
 
