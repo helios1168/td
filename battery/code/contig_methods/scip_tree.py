@@ -1157,6 +1157,13 @@ def _finish(ctx, st, m, scip_status, t0, formulation, warm_source, *,
                  repair_spent=round(st["repair_spent"], 4))
     if status == "heuristic":
         UB = None
+    if status == "error" and LB is not None and UB is not None:
+        # main-session decision (W6 star-2): an exhausted retry ladder that still holds a
+        # feasible incumbent and a valid dual bound is a capped run, not a crash --
+        # `errors` in summary.csv should count crashes only.  The message keeps the cause.
+        status = "time_limit"
+        extra_note = "scip_tree: reported as time_limit (ladder exhausted with valid bounds)"
+        message = (message + "; " if message else "") + extra_note
     return base.Result(status=status, to_a=to_a, LB=LB, UB=UB, ub_scope="global",
                        iters=st["n_enfolp"], n_cuts=len(st["cut_keys"]),
                        n_tangents=st["n_tangents"], nodes=nodes_used,
