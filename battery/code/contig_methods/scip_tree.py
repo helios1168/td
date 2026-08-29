@@ -48,9 +48,11 @@ its stored solution may satisfy `za <= log(ga)` only to `feastol`, so the *recom
 certificate gap is about `2*feastol` (measured: 1.04e-8 at feastol 1e-8, 1.72e-8 at 1e-7 --
 both above `base.CERT_TOL`).  Hence the 1e-9 default.  Small tolerances also make the LP
 harder, so two things guard it: `lp/refactorinterval = 100` (accuracy only, no tolerance is
-relaxed) and a **retry ladder** -- after a numerical abort the solve is repeated at 1e-7 and
-then 1e-6 within the remaining budget, restarting from the best allocation proved so far, and
-the merged answer keeps the tightest valid bound of all attempts.
+relaxed) and a **retry ladder** -- after a numerical abort the solve is repeated at 1e-7, then
+1e-6, then once more in the OA formulation, each time within the remaining budget and
+restarting from the best allocation proved so far.  Every attempt bounds the same optimum, so
+the merged answer keeps the smallest UB and the largest LB of all of them, and a rung that
+adds nothing is simply discarded.
 
 `misc/allowstrongdualreds` and `misc/allowweakdualreds` are **off**.  Dual reductions count
 locks over the constraints SCIP can see, and the connectivity cuts (and, in the OA build, the
@@ -110,8 +112,9 @@ are contiguity-blind, so almost nothing they produce survives `conscheck`.  Mech
 
 `formulation="oa"` (registry key `scip_tree_oa`) swaps SCIP's native log for tangent cuts
 `z <= log(ghat) + (sum u x - ghat)/ghat`, added by the same handler at integral points.  It is
-a cross-check on the convexity handling, not the S1 default; it is slower on every pair
-measured but has no nonlinear relaxation to destabilise.
+a cross-check on the convexity handling, not the S1 default: it is slower on every pair that
+`native` certifies, but it has no nonlinear relaxation to destabilise, which is why it is also
+the ladder's last rung.
 
 Not used: `respect_state` (the harness has already deleted cross-state edges) and
 `reductions` (Option E's business).  Utilities come only from `base.utilities`; `G` is never
@@ -925,7 +928,7 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
           warm_start=None, reductions=None, trace=None, kappa=0.0,
           formulation="native", repair=True, feastol=1e-9, check_opt=None,
           verbose=False, ls_moves=_MAX_LS_MOVES, refactor_interval=100,
-          **opts) -> base.Result:
+          fallback_warm_start=True, **opts) -> base.Result:
     """One branch-and-cut solve, retried at a looser feastol after a numerical abort.
 
     SCIP can stop with "unresolved numerical troubles in LP -- aborting" -- an engine
@@ -937,20 +940,29 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
     """
     t0 = time.perf_counter()
     deadline0 = t0 + float(time_limit)
-    ladder = [float(feastol)] + [f for f in _FEASTOL_LADDER if f > float(feastol) * 1.001]
+    ladder = [(float(feastol), formulation)]
+    ladder += [(f, formulation) for f in _FEASTOL_LADDER if f > float(feastol) * 1.001]
+    if formulation == "native":
+        # Last resort: the same tree with tangents instead of SCIP's `log`.  A pure MILP has
+        # no nonlinear relaxation to destabilise, so it survives where the native build
+        # aborts at every tolerance (the 464-zip C7b A0/B0 pair does exactly that, at every
+        # feastol in the ladder and every `lp/refactorinterval` from 10 to 100).  The bound
+        # merge means this rung can only help: it either tightens something or is discarded.
+        ladder.append((_FEASTOL_LADDER[-1], "oa"))
     merged = None
     attempts = []
     ws = warm_start
-    for ft in ladder:
+    for ft, form in ladder:
         remaining = deadline0 - time.perf_counter()
         if remaining <= 0.05 and merged is not None:
             break
         res = _solve_once(G, nodes, theta=theta, lam=lam, rho=rho, time_limit=max(remaining, 0.05),
                           seed=seed, warm_start=ws, trace=trace, kappa=kappa,
-                          formulation=formulation, repair=repair, feastol=ft,
+                          formulation=form, repair=repair, feastol=ft,
                           check_opt=check_opt, verbose=verbose, ls_moves=ls_moves,
-                          refactor_interval=refactor_interval)
-        attempts.append(dict(feastol=ft, status=res.status,
+                          refactor_interval=refactor_interval,
+                          fallback_warm_start=fallback_warm_start)
+        attempts.append(dict(feastol=ft, formulation=form, status=res.status,
                              scip_status=res.extra.get("scip_status")))
         merged = _merge(merged, res)
         if res.status != "error":
@@ -960,6 +972,7 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
     if merged is None:                        # ladder never ran (no budget at all)
         return base.Result(status="time_limit", message="scip_tree: no time budget")
     merged.extra["attempts"] = attempts
+    merged.extra["formulation"] = formulation
     return merged
 
 
@@ -968,7 +981,7 @@ def _merge(a: "base.Result", b: "base.Result") -> "base.Result":
     if a is None:
         return b
     ubs = [u for u in (a.UB, b.UB) if u is not None and math.isfinite(u)]
-    keep, other = (a, b) if (a.LB is not None and (b.LB is None or a.LB >= b.LB)) else (b, a)
+    keep = a if (a.LB is not None and (b.LB is None or a.LB >= b.LB)) else b
     out = b                                   # the later attempt carries the engine's verdict
     out.to_a = keep.to_a if keep.LB is not None else (b.to_a if b.to_a is not None else a.to_a)
     out.LB = keep.LB
@@ -991,7 +1004,8 @@ def _merge(a: "base.Result", b: "base.Result") -> "base.Result":
 def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
                 warm_start=None, trace=None, kappa=0.0, formulation="native", repair=True,
                 feastol=1e-9, check_opt=None, verbose=False,
-                ls_moves=_MAX_LS_MOVES, refactor_interval=100) -> base.Result:
+                ls_moves=_MAX_LS_MOVES, refactor_interval=100,
+                fallback_warm_start=True) -> base.Result:
     t0 = time.perf_counter()
     if _SCIP_ERROR is not None:
         return base.Result(status="error", message=f"scip_tree: pyscipopt unavailable "
@@ -1021,7 +1035,7 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
     # what keeps the log's gradient tame (see `_gain_floor`).
     warm_source = "none"
     ws = None
-    if warm_start is not None and not isinstance(warm_start, str):
+    if warm_start is not None:
         cand = set(warm_start) & ctx.node_set
         if ctx.is_feasible(cand) and math.isfinite(ctx.objective(cand)):
             ws, warm_source = cand, "given"
@@ -1029,7 +1043,7 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
             fixed = _repair(ctx, cand, ls_moves=ls_moves, deadline=deadline)
             if fixed is not None:
                 ws, warm_source = fixed, "given_repaired"
-    if ws is None and warm_start != "__none__":                 # "__none__": tests, cold start
+    if ws is None and fallback_warm_start:
         ws, warm_source = _fallback_warm_start(ctx, deadline=deadline)
     if ws is not None:
         _record(ctx, st, ws)
