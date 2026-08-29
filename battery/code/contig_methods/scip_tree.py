@@ -290,16 +290,20 @@ def _reachable(src, K_set, blocked, nbrs):
     return seen
 
 
-def _minimal_separator(ctx, K_set, piece, big, side):
+def _minimal_separator(ctx, K_set, piece, big, side, pick=None):
     """A minimal u,v-separator inside K, seeded at N_K(piece).
 
-    `u` is the highest-`u_side` zip of the violating piece, `v` the highest of the largest
-    piece.  `N_K(piece)` separates them by construction (piece is a *maximal* connected block
-    of side `side` inside K, so all its K-neighbours are on the other side).  Candidates are
-    then dropped in descending `u_side` order whenever u and v stay disconnected without
-    them: one BFS pair per successful drop, O(|C| * |K|) overall.
+    `u` is the highest-weight zip of the violating piece, `v` the highest of the largest
+    piece; the weight is `u_side` by default and the LP value `pick` when the caller is
+    separating a *fractional* point (there the cut's right-hand side is `x_u + x_v - 1`, so
+    the largest x is what makes it bite).  `N_K(piece)` separates them by construction --
+    `piece` is a *maximal* connected block inside K, so all its K-neighbours are outside it
+    and every u,v-path in K meets them.  Candidates are then dropped in descending weight
+    order whenever u and v stay disconnected without them: one BFS pair per successful drop,
+    O(|C| * |K|) overall.  Validity does not depend on how u, v or C were chosen -- any
+    u,v-separator gives a valid cut -- so the fractional caller reuses this unchanged.
     """
-    us = ctx.u_side[side]
+    us = ctx.u_side[side] if pick is None else pick
     u = max(sorted(piece, key=base._sort_key), key=lambda z: us[z])
     v = max(sorted(big, key=base._sort_key), key=lambda z: us[z])
     C = set()
@@ -551,6 +555,99 @@ class _Contig(Conshdlr):
             st["cut_keys"].add(key)
             st["n_cuts_total"] += 1
         return len(chosen), len(dup)
+
+    # -- fractional separation (W6b deliverable 3) ---------------------------------
+    def _frac_values(self, sol, side):
+        get = self.model.getSolVal
+        if side == "a":
+            return {z: float(get(sol, self.x[z])) for z in self.ctx.nodes}
+        return {z: 1.0 - float(get(sol, self.x[z])) for z in self.ctx.nodes}
+
+    def _frac_candidates(self, sol):
+        """Violated separator cuts read off the *support* of a fractional point.
+
+        For side y and a threshold t, `S = {z : y_z >= t}` is the part of the graph the LP
+        has already committed to y.  If S splits into several pieces inside a pair component
+        K, the LP is paying for a y-territory that is not connected, and each non-largest
+        piece P yields the cut `sum_{w in C} y_w >= y_u + y_v - 1` with `C` a minimal
+        separator seeded at `N_K(P)` (Validi, Buchanan & Lykhovyd 2022 sec.4 in the vertex-cut
+        form this module already uses at integral points).  The cut is kept only when the LP
+        point actually violates it by more than 1e-6, so a round that finds nothing costs one
+        pass over the graph and returns DIDNOTFIND.
+
+        Nothing here touches the validity argument: the cut is the same family, still
+        root-free and still component-wise (trap 13), and `_check_opt` audits every one of
+        them against the reference optimum in the tests.
+        """
+        st, ctx = self.st, self.ctx
+        out = []
+        for side in ("a", "b"):
+            f = self._frac_values(sol, side)
+            for t in st["sepa_thresholds"]:
+                for K in ctx.comps:
+                    K_set = set(K)
+                    S = [z for z in K if f[z] >= t]
+                    if len(S) < 2:
+                        continue
+                    ps = _components(S, ctx.nbrs)
+                    if len(ps) <= 1:
+                        continue
+                    ps.sort(key=lambda P: (-sum(f[z] for z in P), -len(P),
+                                           base._sort_key(min(P, key=base._sort_key))))
+                    big = ps[0]
+                    for piece in ps[1:]:
+                        got = _minimal_separator(ctx, K_set, piece, big, side, pick=f)
+                        if got is None:
+                            continue
+                        u, v, C = got
+                        key = (side, C, u, v)
+                        if key in st["cut_keys"]:
+                            continue           # already a global constraint; the LP obeys it
+                        viol = (f[u] + f[v] - 1.0) - sum(f[w] for w in C)
+                        if viol > 1e-6:
+                            out.append((viol, key, side, u, v, C))
+        out.sort(key=lambda c: (-c[0], c[2], base._sort_key(c[3]), base._sort_key(c[4]),
+                                tuple(sorted((base._sort_key(w) for w in c[5])))))
+        return out
+
+    def _separate_frac(self, sol):
+        st = self.st
+        if not st["sepa_frac"] or st["sepa_rounds"] >= st["max_sepa_rounds"]:
+            return {"result": SCIP_RESULT.DIDNOTRUN}
+        try:
+            depth = int(self.model.getDepth())
+        except Exception:                                        # noqa: BLE001
+            depth = 0
+        if depth > st["max_sepa_depth"]:
+            return {"result": SCIP_RESULT.DIDNOTRUN}
+        if st["deadline"] is not None and time.perf_counter() > st["deadline"]:
+            st["interrupted"] = True
+            self.model.interruptSolve()
+            return {"result": SCIP_RESULT.DIDNOTRUN}
+        st["sepa_rounds"] += 1
+        try:
+            cands = self._frac_candidates(sol)
+        except Exception:                                        # noqa: BLE001
+            return {"result": SCIP_RESULT.DIDNOTRUN}
+        if not cands:
+            return {"result": SCIP_RESULT.DIDNOTFIND}
+        for _viol, key, side, u, v, C in cands[:st["max_sepa_cuts"]]:
+            if key in st["cut_keys"]:
+                continue
+            self._check_opt(side, u, v, C)
+            self.model.addCons(self._cut_expr(side, u, v, C),
+                               name=f"fsep{st['n_cuts_total']}",
+                               local=False, modifiable=False, removable=False)
+            st["cut_keys"].add(key)
+            st["n_cuts_total"] += 1
+            st["n_sepa_cuts"] += 1
+        return {"result": SCIP_RESULT.CONSADDED}
+
+    def conssepalp(self, constraints, nusefulconss):
+        return self._separate_frac(None)
+
+    def conssepasol(self, constraints, nusefulconss, solution):
+        return self._separate_frac(solution)
 
     # -- callbacks -----------------------------------------------------------------
     def conscheck(self, constraints, solution, checkintegrality, checklprows, printreason,
@@ -841,7 +938,8 @@ def _gain_floor(ctx, lb0):
 
 
 def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose,
-                 gain_floor=(_LOG_FLOOR, _LOG_FLOOR), refactor_interval=100):
+                 gain_floor=(_LOG_FLOOR, _LOG_FLOOR), refactor_interval=100,
+                 lp_params=None):
     m = Model("scip_tree")
     if not verbose:
         m.hideOutput()
@@ -875,6 +973,14 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose,
         # ladder (13 s in), while at 100 the same run uses its whole 60 s budget and closes
         # the gap further (7.60e-4 -> 6.93e-4).  Measured 2026-08-29.
         m.setParam("lp/refactorinterval", int(refactor_interval))
+    for key, val in (lp_params or {}).items():
+        # escape hatch for the LP-stability sweep (W6b deliverable 4); an unknown or
+        # out-of-range parameter must not take the whole method down
+        try:
+            with _quiet_c_stdout():
+                m.setParam(key, val)
+        except Exception:                                        # noqa: BLE001
+            pass
 
     x = {z: m.addVar(vtype="B", name=f"x{i}") for i, z in enumerate(ctx.nodes)}
     ua_sum = float(ctx.ua.sum())
@@ -922,57 +1028,132 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose,
 
 # ================================================================================ solve
 _FEASTOL_LADDER = (1e-7, 1e-6)      # retried, in order, after a numerical abort
+_MAX_RUNGS = 8                      # hard cap on ladder attempts (incl. the extension rungs)
+_MIN_RUNG = 1.0                     # do not start another rung for less than this many seconds
+_MIP_START_SHARE = 0.05             # share of the budget the F1 warm start may spend
+_MIP_START_CAP = 30.0               # ... and its absolute cap, in seconds
+
+
+def _f1_warm_start(G, nodes, *, theta, lam, rho, respect_state, seed, budget):
+    """`warm.solve(method="f1")` as a MIP start.  Returns (allocation | None, source tag).
+
+    W5's F1 (ReCom-style spanning-tree bisection + boundary local search) is a much better
+    primal than this module's internal fallback -- the repaired ratio prefix / best subtree
+    split -- and mechanism (b) is *primal* on the large pairs: SCIP's own heuristics are
+    contiguity-blind, so nearly everything they produce fails `conscheck`, and a poor
+    incumbent also loosens `_gain_floor`, which is what keeps the native log's LPs stable.
+    Imported lazily: `warm` pulls in `bounds`, which imports `territory`, and `scip_tree`
+    must stay importable for registry discovery without the repo's `code/` on the path.
+    """
+    if budget < _MIN_RUNG:
+        return None, "skipped_no_budget"
+    try:
+        from . import warm as _warm
+        res = _warm.solve(G, nodes, theta=theta, lam=lam, rho=rho,
+                          respect_state=respect_state, time_limit=budget, seed=seed,
+                          method="f1")
+    except Exception as e:                                       # noqa: BLE001
+        return None, f"failed:{type(e).__name__}"
+    if res.to_a is None or res.LB is None or not math.isfinite(res.LB):
+        return None, "empty"
+    return set(res.to_a), "warm_f1"
 
 
 def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
           warm_start=None, reductions=None, trace=None, kappa=0.0,
           formulation="native", repair=True, feastol=1e-9, check_opt=None,
           verbose=False, ls_moves=_MAX_LS_MOVES, refactor_interval=100,
-          fallback_warm_start=True, **opts) -> base.Result:
-    """One branch-and-cut solve, retried at a looser feastol after a numerical abort.
+          fallback_warm_start=True, mip_start="f1", max_rungs=_MAX_RUNGS,
+          sepa_frac=True, max_sepa_rounds=30, max_sepa_depth=0,
+          sepa_thresholds=(0.5,), max_sepa_cuts=40, lp_params=None,
+          **opts) -> base.Result:
+    """One branch-and-cut solve, retried down a ladder after a numerical abort.
 
     SCIP can stop with "unresolved numerical troubles in LP -- aborting" -- an engine
     failure, not a model one, and the tighter the feasibility tolerance the likelier it is.
-    The retry re-solves the same problem from the best allocation found so far, and the
-    merged answer keeps the tightest *valid* bound of all attempts (every attempt's dual
-    bound bounds the same optimum, so the minimum of them does too, and the maximum LB is
-    still achieved by an allocation this method has exhibited).
+    The ladder answers it: 1e-7, then 1e-6, then the tangent (OA) build, which has no
+    nonlinear relaxation to destabilise; each rung re-solves the same problem from the best
+    allocation proved so far and gets **all** the remaining budget.  Every attempt bounds
+    the same optimum, so the merged answer keeps the smallest UB and the largest LB, and a
+    rung that adds nothing is discarded (`_merge`).
+
+    Continuation is decided by `extra["retryable"]` (`_retryable`), never by the status: the
+    status the harness sees is deliberately `time_limit` for an abort that still holds valid
+    bounds, and reading *that* is what silently disabled the whole ladder in S2.
+
+    If the ladder runs out while budget remains and the last rung was still aborting, extra
+    OA rungs are appended (up to `max_rungs`) with a shifted random seed, so the budget is
+    actually spent rather than returned unused.
     """
     t0 = time.perf_counter()
     deadline0 = t0 + float(time_limit)
-    ladder = [(float(feastol), formulation)]
-    ladder += [(f, formulation) for f in _FEASTOL_LADDER if f > float(feastol) * 1.001]
+
+    # ------------------------------------------------------------- F1 MIP start (W6b)
+    mip_start_src = "given" if warm_start is not None else "off"
+    ws = warm_start
+    if warm_start is None and mip_start == "f1":
+        budget = min(_MIP_START_SHARE * float(time_limit), _MIP_START_CAP)
+        budget = min(budget, max(deadline0 - time.perf_counter() - _MIN_RUNG, 0.0))
+        cand, mip_start_src = _f1_warm_start(G, nodes, theta=theta, lam=lam, rho=rho,
+                                             respect_state=respect_state, seed=seed,
+                                             budget=budget)
+        if cand is not None:
+            ws = cand
+
+    rungs = [(float(feastol), formulation, 0)]
+    rungs += [(f, formulation, 0) for f in _FEASTOL_LADDER if f > float(feastol) * 1.001]
     if formulation == "native":
         # Last resort: the same tree with tangents instead of SCIP's `log`.  A pure MILP has
         # no nonlinear relaxation to destabilise, so it survives where the native build
         # aborts at every tolerance (the 464-zip C7b A0/B0 pair does exactly that, at every
         # feastol in the ladder and every `lp/refactorinterval` from 10 to 100).  The bound
         # merge means this rung can only help: it either tightens something or is discarded.
-        ladder.append((_FEASTOL_LADDER[-1], "oa"))
+        rungs.append((_FEASTOL_LADDER[-1], "oa", 0))
+
     merged = None
     attempts = []
-    ws = warm_start
-    for ft, form in ladder:
+    k = 0
+    while k < len(rungs) and len(attempts) < int(max_rungs):
+        ft, form, seed_shift = rungs[k]
+        k += 1
         remaining = deadline0 - time.perf_counter()
-        if remaining <= 0.05 and merged is not None:
+        if remaining <= (_MIN_RUNG if merged is not None else 0.05):
             break
-        res = _solve_once(G, nodes, theta=theta, lam=lam, rho=rho, time_limit=max(remaining, 0.05),
-                          seed=seed, warm_start=ws, trace=trace, kappa=kappa,
-                          formulation=form, repair=repair, feastol=ft,
+        t_rung = time.perf_counter()
+        res = _solve_once(G, nodes, theta=theta, lam=lam, rho=rho,
+                          time_limit=max(remaining, 0.05),
+                          seed=int(seed) + seed_shift, warm_start=ws, trace=trace,
+                          kappa=kappa, formulation=form, repair=repair, feastol=ft,
                           check_opt=check_opt, verbose=verbose, ls_moves=ls_moves,
                           refactor_interval=refactor_interval,
-                          fallback_warm_start=fallback_warm_start)
-        attempts.append(dict(feastol=ft, formulation=form, status=res.status,
-                             scip_status=res.extra.get("scip_status")))
+                          fallback_warm_start=fallback_warm_start,
+                          sepa_frac=sepa_frac, max_sepa_rounds=max_sepa_rounds,
+                          max_sepa_depth=max_sepa_depth, sepa_thresholds=sepa_thresholds,
+                          max_sepa_cuts=max_sepa_cuts, lp_params=lp_params)
+        retryable = bool(res.extra.get("retryable"))
+        attempts.append(dict(feastol=ft, formulation=form, seed_shift=seed_shift,
+                             status=res.status, scip_status=res.extra.get("scip_status"),
+                             retryable=retryable, t=round(time.perf_counter() - t_rung, 3),
+                             LB=res.LB, UB=res.UB, nodes=res.nodes,
+                             n_sepa_cuts=res.extra.get("n_sepa_cuts", 0)))
         merged = _merge(merged, res)
-        if res.status != "error":
+        if merged.status == "optimal":
+            break
+        if not retryable:
             break
         if res.to_a is not None and res.LB is not None:
             ws = res.to_a                     # restart from the best allocation we did prove
+        if k >= len(rungs) and (deadline0 - time.perf_counter()) > _MIN_RUNG:
+            # the ladder is exhausted but the engine is still aborting and the budget is not
+            # spent: keep going on the most robust rung with a shifted seed
+            rungs.append((_FEASTOL_LADDER[-1], "oa" if formulation == "native" else formulation,
+                          seed_shift + 1))
     if merged is None:                        # ladder never ran (no budget at all)
         return base.Result(status="time_limit", message="scip_tree: no time budget")
     merged.extra["attempts"] = attempts
     merged.extra["formulation"] = formulation
+    merged.extra["mip_start"] = mip_start_src
+    merged.extra["n_rungs"] = len(attempts)
     return merged
 
 
@@ -1005,7 +1186,9 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
                 warm_start=None, trace=None, kappa=0.0, formulation="native", repair=True,
                 feastol=1e-9, check_opt=None, verbose=False,
                 ls_moves=_MAX_LS_MOVES, refactor_interval=100,
-                fallback_warm_start=True) -> base.Result:
+                fallback_warm_start=True, sepa_frac=True, max_sepa_rounds=30,
+                max_sepa_depth=0, sepa_thresholds=(0.5,), max_sepa_cuts=40,
+                lp_params=None) -> base.Result:
     t0 = time.perf_counter()
     if _SCIP_ERROR is not None:
         return base.Result(status="error", message=f"scip_tree: pyscipopt unavailable "
@@ -1028,7 +1211,11 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
               invalid_cut=None,
               repair=bool(repair), ls_moves=int(ls_moves), repair_spent=0.0,
               repair_budget=_REPAIR_TIME_SHARE * float(time_limit),
-              lin_a=None, lin_b=None, gvals=(0.0, 0.0), feastol=float(feastol))
+              lin_a=None, lin_b=None, gvals=(0.0, 0.0), feastol=float(feastol),
+              sepa_frac=bool(sepa_frac), sepa_rounds=0, n_sepa_cuts=0,
+              max_sepa_rounds=int(max_sepa_rounds), max_sepa_depth=int(max_sepa_depth),
+              sepa_thresholds=tuple(float(t) for t in sepa_thresholds),
+              max_sepa_cuts=int(max_sepa_cuts))
 
     # ------------------------------------------------------------------ warm start
     # Computed *before* the model: its objective is a valid floor on both gains, which is
@@ -1051,13 +1238,16 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
     m, V = _build_model(ctx, rho=rho, time_limit=max(deadline - time.perf_counter(), 0.01),
                         seed=seed, formulation=formulation, feastol=feastol, verbose=verbose,
                         gain_floor=_gain_floor(ctx, st["best_obj"]),
-                        refactor_interval=refactor_interval)
+                        refactor_interval=refactor_interval, lp_params=lp_params)
     st["V"] = V
     st["lin_a"], st["lin_b"] = V["lin_a"], V["lin_b"]
 
     hdlr = (_OAContig if formulation == "oa" else _Contig)(ctx, V["x"], st)
+    # `sepafreq = 1` turns on `conssepalp` (W6b deliverable 3); the handler itself refuses to
+    # run below `max_sepa_depth` or after `max_sepa_rounds`, so this is cheap when it is off.
     m.includeConshdlr(hdlr, "contig", "component-wise contiguity (lazy separator cuts)",
-                      chckpriority=-10, enfopriority=-10, needscons=False)
+                      chckpriority=-10, enfopriority=-10, needscons=False,
+                      sepapriority=0, sepafreq=(1 if st["sepa_frac"] else -1))
     m.includeEventhdlr(_Events(ctx, st), "scip_tree_events", "incumbent trace")
 
     if ws is not None:
@@ -1093,6 +1283,33 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
     return _finish(ctx, st, m, scip_status, t0, formulation, warm_source,
                    message="" if err is None else f"scip_tree: {err}",
                    forced_status="error" if err is not None else None)
+
+
+def _retryable(scip_status, st, *, aborted: bool) -> bool:
+    """Did this attempt stop for a reason another rung of the ladder could survive?
+
+    The ladder exists for exactly one failure: SCIP giving up on its own LPs ("unresolved
+    numerical troubles in LP -- aborting"), which surfaces as a raised `Exception: SCIP:
+    error in LP solver!` *and* `getStatus() == "unknown"`.  Everything else -- a genuine
+    time limit, our own deadline interrupt, an optimality or gap certificate, infeasibility
+    -- means either the budget really is gone or the answer really is in, and a retry would
+    only repeat it.
+
+    Found 2026-08-30 (W6b): `_finish` used to rewrite that abort to `time_limit` (so the
+    harness counts crashes, not capped runs, in `errors`) *before* `solve` looked at it, and
+    `solve` continued only `if res.status == "error"`.  So every large pair in S2 burned
+    1-58 s of a 1200 s budget on the first rung and stopped: the 1e-7 / 1e-6 / OA rungs the
+    docstring promises never ran once.  The verdict is now carried in `extra["retryable"]`,
+    independent of the status the harness sees.
+    """
+    if aborted:
+        return True
+    if scip_status is None:
+        return True
+    if scip_status == "userinterrupt":
+        # ours (deadline hit inside a callback) => the budget is gone; SCIP's own => retry
+        return not st["interrupted"]
+    return scip_status in ("unknown", "unbounded", "inforunbd")
 
 
 def _finish(ctx, st, m, scip_status, t0, formulation, warm_source, *,
@@ -1154,7 +1371,9 @@ def _finish(ctx, st, m, scip_status, t0, formulation, warm_source, *,
                  n_repairs=st["n_repairs"], n_injected=st["n_injected"],
                  n_dup_cuts=st["n_dup_cuts"], warm_source=warm_source,
                  formulation=formulation, interrupted=st["interrupted"],
-                 repair_spent=round(st["repair_spent"], 4))
+                 repair_spent=round(st["repair_spent"], 4),
+                 n_sepa_rounds=st["sepa_rounds"], n_sepa_cuts=st["n_sepa_cuts"],
+                 retryable=_retryable(scip_status, st, aborted=forced_status == "error"))
     if status == "heuristic":
         UB = None
     if status == "error" and LB is not None and UB is not None:
