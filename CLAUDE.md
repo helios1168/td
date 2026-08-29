@@ -260,7 +260,13 @@ return argmax_k g_a[k]*g_b[k]
     `nash_exact`'s comment); 1e-8 solves the same instance exactly. `nash_exact` now retries
     down a ladder (1e-9 → 1e-8 → HiGHS defaults) on "Solve error", and `solve` warns when it
     falls back. Any new method forwarding tolerance options to HiGHS must guard the same way
-    (W4's `flow` does). **Consequence for the anchor:** the contestability bootstrap in
+    (W4's `flow` does). **SCIP (W6):** any lazily separated model needs
+    `misc/allowstrongdualreds` and `misc/allowweakdualreds` **off** — with them on, presolve fixed
+    a tangent-bounded variable to its bound before the lazy rows existed and "certified" a
+    suboptimal warm start; `numerics/feastol=1e-9` is needed because the residual gap is primal
+    slack ≈ 2·feastol; gains must be `ga ≤ Σu·x` (not `==`) or presolve multi-aggregates them and
+    `trySol` dies; and the gain lower bound must come from the incumbent (`exp(LB0)/Σu_other`),
+    not 1e-9, or the log's 1e9 gradient destabilises the LP. **Consequence for the anchor:** the contestability bootstrap in
     `mkfig_zip50.py` had been hitting this silently, so the 2026-08-28 anchor carried heuristic
     draws; the anchor was deliberately refreshed on 2026-08-29 (zip 22 doubt 0.5367 → 0.5400,
     zip 28 0.5700 → 0.5667, `nash_contestability.png` regenerated). The paper's Contestability
