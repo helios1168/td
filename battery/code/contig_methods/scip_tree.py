@@ -12,26 +12,51 @@ multi-tree structure is not fixable inside scipy.  SCIP does have one, and it al
 the convexity of `z <= log(g)` itself, so the whole problem goes into **one** branch-and-bound
 tree with a globally valid dual bound at every moment.
 
-Formulation (A', "native")
---------------------------
+Formulation (A', `formulation="native"`)
+----------------------------------------
     maximise   za + zb - rho * sum_e y_e
-    s.t.       ga == sum_z u_a(z) x_z                 ga in [1e-9, sum u_a]
-               gb == sum_z u_b(z) (1 - x_z)           gb in [1e-9, sum u_b]
-               za <= log(ga)                          za, zb in [log 1e-9, log sum u]
-               zb <= log(gb)
-               sum_{z : u_a(z) > 0} x_z       >= 1     (ga > 0; excludes only obj = -inf)
-               sum_{z : u_b(z) > 0} (1 - x_z) >= 1     (gb > 0)
+    s.t.       ga <= sum_z u_a(z) x_z                  ga in [ga_min, sum u_a]
+               gb <= sum_z u_b(z) (1 - x_z)            gb in [gb_min, sum u_b]
+               za <= log(ga)                           za in [log ga_min, log sum u_a]
+               zb <= log(gb)                           zb in [log gb_min, log sum u_b]
+               sum_{z : u_a(z) > 0} x_z       >= 1     (g_a > 0; only cuts obj = -inf)
+               sum_{z : u_b(z) > 0} (1 - x_z) >= 1     (g_b > 0)
                y_e >= |x_i - x_j|                      (only when rho > 0)
-               x contiguous, component-wise            (lazy, below)
+               x contiguous, component-wise            (lazy; see below)
 
-`za <= log(ga)` is a convex constraint that SCIP recognises, so `getDualbound()` is a valid
-*global* upper bound on `log g_a + log g_b - rho*perimeter` throughout -- verified at the W6
-smoke test against `territory.nash_exact` to <= 9e-16 with contiguity switched off.
+`za <= log(ga)` is convex and SCIP recognises it, so `getDualbound()` is a valid *global*
+upper bound on `log g_a + log g_b - rho*perimeter` throughout -- checked at the W6 smoke test
+against `territory.nash_exact` to <= 9e-16 with contiguity switched off.
 
-`numerics/feastol = 1e-9` is **required**: at SCIP's 1e-6 default the certificate carries
-~1e-7 of slack, which is above `base.CERT_TOL`.  (SCIP prints "Cannot set feasibility
-tolerance to 1e-12 without GMP -- using 1e-10" when it clamps its dependent tolerances; that
-message is harmless and is suppressed at verblevel 0.)
+Two details of that model are load-bearing and were both found while porting (2026-08-29):
+
+* **`<=`, not `==`, on the gains.**  The objective increases in ga and gb through the logs, so
+  the inequality is tight at every optimum -- but an equality lets presolve *multi-aggregate*
+  ga and gb out of the transformed problem, after which `setSolVal` on them raises and every
+  in-callback `trySol` dies.  `_set` additionally skips a variable presolve aggregated anyway.
+* **`ga_min`, `gb_min` come from the warm start, not from 1e-9** (`_gain_floor`).  Any
+  allocation at least as good as an incumbent worth `lb0` has `ga >= exp(lb0)/sum(u_b)`, so
+  tightening the bound this way keeps both the argmax and the dual bound valid -- and it takes
+  the log's gradient at the lower bound from 1e9 down to about 0.08 on a rescaled instance.
+  With the bare floor SCIP's LPs go unstable ("unresolved numerical troubles in LP") on the
+  larger pairs at every feasibility tolerance tried.
+
+Numerics
+--------
+`numerics/feastol` has to be small: SCIP stops when its own primal and dual bounds meet, and
+its stored solution may satisfy `za <= log(ga)` only to `feastol`, so the *recomputed*
+certificate gap is about `2*feastol` (measured: 1.04e-8 at feastol 1e-8, 1.72e-8 at 1e-7 --
+both above `base.CERT_TOL`).  Hence the 1e-9 default.  Small tolerances also make the LP
+harder, so two things guard it: `lp/refactorinterval = 100` (accuracy only, no tolerance is
+relaxed) and a **retry ladder** -- after a numerical abort the solve is repeated at 1e-7 and
+then 1e-6 within the remaining budget, restarting from the best allocation proved so far, and
+the merged answer keeps the tightest valid bound of all attempts.
+
+`misc/allowstrongdualreds` and `misc/allowweakdualreds` are **off**.  Dual reductions count
+locks over the constraints SCIP can see, and the connectivity cuts (and, in the OA build, the
+tangents) are not there yet: with them on, the OA build had presolve fix `za` to its upper
+bound and then "certify" the warm start (6.4539 against brute's 6.4545 on the first T0 pair).
+This is a correctness requirement for any lazily separated model, not a tuning knob.
 
 Contiguity: root-free lazy minimal-separator cuts
 -------------------------------------------------
@@ -54,30 +79,39 @@ the cut is
     sum_{w in C} y_w  >=  y_u + y_v - 1          (y_z = x_z on side a, 1 - x_z on side b)
 
 *Validity.*  Any feasible allocation that puts both u and v on side y needs a y-path from u
-to v inside K; every u,v-path in K meets C, so some w in C is on side y and the left side is
->= 1 = the right side.  If either endpoint is on the other side the right side is <= 0 and the
-cut is slack.  The cut is global (`local=False`), never removed, and root-free: no zip is
-fixed to a side anywhere, so the bound is `ub_scope = "global"` (unlike `current`, whose
-fixed roots make its bound certify only a restriction -- PLAN.md C.0 #3).
+to v inside K; every u,v-path in K meets C, so some w in C is on side y and the left-hand side
+is >= 1 = the right-hand side.  If either endpoint is on the other side the right-hand side is
+<= 0 and the cut is slack.  Cuts are global (`local=False`), never removed, and root-free: no
+zip is fixed to a side anywhere, so the bound is `ub_scope = "global"` -- unlike `current`,
+whose fixed roots make its bound certify only a restriction, and are outright unsound on a
+disconnected pair graph (CLAUDE.md trap 13, PLAN.md C.0 #3).
 
 `check_opt=<set|dict>` asserts every cut against a known-optimal allocation before it is
 added; the fast test suite runs all of T0 with brute's optimum in that slot, because an
-invalid cut is the one failure mode that is silent (it would just look like a good bound).
+invalid cut is the one failure mode that is silent -- it would just look like a good bound.
 
 The primal side (mechanism (b))
 -------------------------------
 At the W6 smoke test 5 of the 6 named failures certified in <= 2.1 s, but C7 A3/B3 (205 zips)
-stopped at a *tight* dual bound with a worthless incumbent: SCIP's own heuristics are
-contiguity-blind, so almost nothing they produce survives `conscheck`.  Mechanism (b) is
-therefore a **primal** problem here, and this module attacks it three ways:
+stopped at a *tight* dual bound with a worthless incumbent (LB 1.55): SCIP's own heuristics
+are contiguity-blind, so almost nothing they produce survives `conscheck`.  Mechanism (b) is a
+**primal** problem here, and this module attacks it three ways:
 
-1. `warm_start` (or, absent one, an internal ratio-prefix + repair fallback) is turned into a
-   *full* variable assignment and handed to `model.addSol` before `optimize()` -- an x-only
-   partial solution is accepted but not exploited by SCIP.
-2. Every integral point that `consenfolp` rejects is also *repaired* into a feasible
-   allocation (flip the cheapest stray piece until the piece count reaches 1 per side, then a
-   bounded boundary-swap local search) and offered back with `trySol`.
-3. Cuts are de-duplicated on `(side, C, u, v)` across the whole solve.
+1. `warm_start` -- or, absent one, an internal fallback: the better of a repaired ratio-order
+   prefix and the best spanning-tree subtree split (PLAN.md F1) -- turned into a *full*
+   variable assignment and handed to `model.addSol` before `optimize()`.  An x-only partial
+   solution is accepted but not exploited by SCIP.
+2. Every integral point `consenfolp` rejects is also *repaired* (flip whole stray pieces until
+   each side is one piece, then a bounded boundary-swap local search) and offered back with
+   `trySol` whenever it beats SCIP's own incumbent.
+3. Cuts are de-duplicated on `(side, C, u, v)`.  From an LP solution a duplicate cannot
+   happen; from a *pseudo* solution it is the norm, which is why `consenfops` returns
+   SCIP_SOLVELP rather than spinning (it did: 120,234 calls in 25 s before the fix).
+
+`formulation="oa"` (registry key `scip_tree_oa`) swaps SCIP's native log for tangent cuts
+`z <= log(ghat) + (sum u x - ghat)/ghat`, added by the same handler at integral points.  It is
+a cross-check on the convexity handling, not the S1 default; it is slower on every pair
+measured but has no nonlinear relaxation to destabilise.
 
 Not used: `respect_state` (the harness has already deleted cross-state edges) and
 `reductions` (Option E's business).  Utilities come only from `base.utilities`; `G` is never
@@ -804,7 +838,7 @@ def _gain_floor(ctx, lb0):
 
 
 def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose,
-                 gain_floor=(_LOG_FLOOR, _LOG_FLOOR)):
+                 gain_floor=(_LOG_FLOOR, _LOG_FLOOR), refactor_interval=100):
     m = Model("scip_tree")
     if not verbose:
         m.hideOutput()
@@ -830,6 +864,14 @@ def _build_model(ctx, *, rho, time_limit, seed, formulation, feastol, verbose,
     except Exception:                                            # noqa: BLE001
         pass
     m.setParam("randomization/randomseedshift", int(seed))
+    if refactor_interval:
+        # Refactorise the simplex basis every `refactor_interval` iterations instead of
+        # SCIP's automatic choice.  Pure accuracy, no tolerance is relaxed -- and it is what
+        # keeps the larger pairs alive: on the 320-zip C7b A1/B1 pair the default setting
+        # aborts with "unresolved numerical troubles in LP" at every rung of the feastol
+        # ladder (13 s in), while at 100 the same run uses its whole 60 s budget and closes
+        # the gap further (7.60e-4 -> 6.93e-4).  Measured 2026-08-29.
+        m.setParam("lp/refactorinterval", int(refactor_interval))
 
     x = {z: m.addVar(vtype="B", name=f"x{i}") for i, z in enumerate(ctx.nodes)}
     ua_sum = float(ctx.ua.sum())
@@ -882,7 +924,8 @@ _FEASTOL_LADDER = (1e-7, 1e-6)      # retried, in order, after a numerical abort
 def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
           warm_start=None, reductions=None, trace=None, kappa=0.0,
           formulation="native", repair=True, feastol=1e-9, check_opt=None,
-          verbose=False, ls_moves=_MAX_LS_MOVES, **opts) -> base.Result:
+          verbose=False, ls_moves=_MAX_LS_MOVES, refactor_interval=100,
+          **opts) -> base.Result:
     """One branch-and-cut solve, retried at a looser feastol after a numerical abort.
 
     SCIP can stop with "unresolved numerical troubles in LP -- aborting" -- an engine
@@ -905,7 +948,8 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
         res = _solve_once(G, nodes, theta=theta, lam=lam, rho=rho, time_limit=max(remaining, 0.05),
                           seed=seed, warm_start=ws, trace=trace, kappa=kappa,
                           formulation=formulation, repair=repair, feastol=ft,
-                          check_opt=check_opt, verbose=verbose, ls_moves=ls_moves)
+                          check_opt=check_opt, verbose=verbose, ls_moves=ls_moves,
+                          refactor_interval=refactor_interval)
         attempts.append(dict(feastol=ft, status=res.status,
                              scip_status=res.extra.get("scip_status")))
         merged = _merge(merged, res)
@@ -947,7 +991,7 @@ def _merge(a: "base.Result", b: "base.Result") -> "base.Result":
 def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
                 warm_start=None, trace=None, kappa=0.0, formulation="native", repair=True,
                 feastol=1e-9, check_opt=None, verbose=False,
-                ls_moves=_MAX_LS_MOVES) -> base.Result:
+                ls_moves=_MAX_LS_MOVES, refactor_interval=100) -> base.Result:
     t0 = time.perf_counter()
     if _SCIP_ERROR is not None:
         return base.Result(status="error", message=f"scip_tree: pyscipopt unavailable "
@@ -992,7 +1036,8 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
 
     m, V = _build_model(ctx, rho=rho, time_limit=max(deadline - time.perf_counter(), 0.01),
                         seed=seed, formulation=formulation, feastol=feastol, verbose=verbose,
-                        gain_floor=_gain_floor(ctx, st["best_obj"]))
+                        gain_floor=_gain_floor(ctx, st["best_obj"]),
+                        refactor_interval=refactor_interval)
     st["V"] = V
     st["lin_a"], st["lin_b"] = V["lin_a"], V["lin_b"]
 
