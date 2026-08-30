@@ -238,3 +238,36 @@ No pair flips to `optimal`; all seven improve, five by 5–40 000×; four now be
 - Any other PySCIPOpt-based method has the same exposure to SCIP's clock under load (`_short_stop` covers it inside `scip_tree` only).
 
 **Where this leaves the programme.** Unchanged in direction, changed in numbers: `scip_tree` is the finalist at every size; 124–135-zip pairs are certified to the solver's tolerance floor (1e-7) and would certify at `CERT_TOL` with an exact post-hoc bound; 160–464-zip pairs hold 1e-4–4e-3 with the budget spent. S3 (T3a at 3600 s, once the twin lands) should run `scip_tree` (default) + `scip_tree_psimplex` + `flow_pwl` (bound cross-check). Follow-ups worth a unit: an exact post-hoc certificate (W6c), and the in-tree primal (E1 reductions + a repair-aware diving heuristic) for 160+ zips.
+
+## Primal/dual diagnostic — 2026-08-30 (`w6b_ils_diag`)
+
+**Question.** W6b left the 126–464-zip pairs uncertified with the budget spent and read the cause as primal (the bound looked done, the incumbent missing). Test in two halves: (1) can a strong external search beat `scip_tree`'s 1200 s incumbent? (2) if it can, does handing SCIP that allocation as a MIP start let the tree close the bound?
+
+**Half 1 — iterated local search** (`ils_diag.py`: F1 multi-start + kick-and-descend perturbation over `warm._local_search`, 2×450 s per pair, starts = fresh F1 and the W6b incumbent):
+
+| n | gain over W6b LB | found in | evidence of optimality |
+|---|---|---|---|
+| 169 | +3.1e-4 | 0.1 s | both starts converge to the **identical** value (6.458895639); 27k kicks, 668 restarts find nothing more |
+| 197 | +1.2e-3 | 0.5 s | incumbent start wins; F1 start plateaus 1e-3 lower |
+| 205 | 0 | — | W6b's incumbent never improved (25k kicks) |
+| 320 | +9.6e-5 | 98 s | both starts within 1e-5 of each other |
+| 464 | +1.6e-3 | 1.4 s | both starts converge to the identical value (6.475755908) |
+
+Two findings: SCIP's 1200 s incumbents on 169/197/464 were not even 1-swap locally optimal (the first local-search pass improved them in ≤ 1.4 s — the in-callback repair's 25 % budget share cuts the descent short); and the search then hits a hard plateau that ~25k perturbations cannot leave, with independent starts agreeing to 9–10 digits on 169/464.
+
+**Half 2 — `scip_tree` warm-started at the ILS best** (`scip_from_ils.py`, 1200 s per pair):
+
+| n | LB (moved?) | UB: W6b → now | gap: W6b → now | nodes (1e-6 rung) |
+|---|---|---|---|---|
+| 169 | unchanged | 6.46275 → 6.46280 | 4.2e-3 → **3.9e-3** | 179k |
+| 197 | unchanged | 6.45818 → 6.45820 | 4.2e-3 → **3.0e-3** | 135k |
+| 205 | unchanged | 6.47078 → 6.47058 | 3.4e-4 → **1.35e-4** | 916k |
+| 320 | +5.5e-6 (SCIP beat ILS) | 6.46897 → 6.46896 | 1.3e-4 → **2.4e-5** | 1.48M |
+| 464 | unchanged | 6.47647 → 6.47641 | 2.3e-3 → **6.6e-4** | OA rung, 2.2k |
+
+**Verdict: the residual gap is dual.** With the (almost certainly) optimal allocation in hand from t = 0, 1200 s of branching still cannot prove it: the bound crawls at ~5e-7 per 1000 nodes on 169/197 and the remaining 3–4e-3 extrapolates to hours-to-days of tree. 205 and 320 nearly close (1.35e-4, 2.4e-5 — another ~2× budget likely finishes them); 169/197 (C7b seed1, the value-concentrated 800-zip scenario) are the hard duals — difficulty tracks value structure, not n. The earlier reading "the bound is essentially done above ~160 zips; the incumbent is what is missing" is **withdrawn**: the incumbent was missing *and* cheap to find; the bound is the expensive half.
+
+**Programme consequences.**
+- **W6d (in-tree primal) shrinks to a wiring task, not a unit:** run `warm._local_search` to convergence on every accepted incumbent (or take `mip_start` through the ILS loop for ~5 s). Worth doing — it is +1e-3 LB on three pairs for seconds of work — but it does not close anything by itself.
+- **The dual side is the real 160+ work:** deeper-than-root fractional separation, E1 reductions (fewer nodes to bound), or honestly reported 1e-3-scale certified gaps at production size. In economic terms the certified uncertainty is already ≤ 0.4 % of the Nash product on every pair, with the allocation itself agreed by two independent methods.
+- W6c (exact post-hoc certificate) unchanged for the 125–160 tolerance-floor regime.
