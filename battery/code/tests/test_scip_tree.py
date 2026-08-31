@@ -539,3 +539,49 @@ def test_fractional_separation_can_be_switched_off():
     assert res.extra["n_sepa_rounds"] == 0 and res.extra["n_sepa_cuts"] == 0
     assert row["valid_certificate"]
     assert abs(res.LB - b.LB) < 1e-9
+
+
+# ------------------------------------------------------------------------- W6d polish
+def test_polish_descends_to_a_local_optimum():
+    """`_polish` runs the descent to convergence: a deliberately kicked (worse, feasible)
+    allocation comes back at least as good as before the kick, feasible, and 1-swap
+    locally optimal -- the exact property the 2026-08-30 diagnostic found missing."""
+    pi = _t0()[-1]
+    ua, ub = base.utilities(pi.G, pi.nodes, THETA, LAM)
+    ctx = ST._Ctx(pi.G, pi.nodes, ua, ub, 0.0)
+    st = dict(deadline=None, n_polish=0, polish_spent=0.0)
+    start, _src = ST._fallback_warm_start(ctx)
+    start = ST._local_search(ctx, start, ls_moves=ST._POLISH_MOVES)
+    obj0 = ctx.objective(start)
+    kicked = None                                # one feasibility-preserving worsening flip
+    for z in sorted(ctx.nodes, key=base._sort_key):
+        cand = (start - {z}) if z in start else (start | {z})
+        if cand and (ctx.node_set - cand) and ctx.is_feasible(cand) \
+                and ctx.objective(cand) < obj0 - 1e-12:
+            kicked = cand
+            break
+    assert kicked is not None
+    out = ST._polish(ctx, st, kicked)
+    assert st["n_polish"] == 1 and ctx.is_feasible(out)
+    assert ctx.objective(out) >= ctx.objective(kicked) - 1e-15
+    for z in ctx.nodes:                          # 1-swap local optimality
+        cand = (out - {z}) if z in out else (out | {z})
+        if cand and (ctx.node_set - cand) and ctx.is_feasible(cand):
+            assert ctx.objective(cand) <= ctx.objective(out) + 1e-12
+
+
+def test_ils_start_is_gated_by_size_and_never_worse():
+    """T0 solves keep the plain `warm_f1` start (no 5 s ILS below `_ILS_MIN_N`); called
+    directly, `_ils_start` returns a feasible allocation at least as good as the descended
+    start, deterministically for a fixed seed."""
+    pi = _t0()[-1]
+    res, _ = _run(pi.G, pi.nodes, mip_start="f1")
+    assert res.extra["mip_start"] == "warm_f1"           # not "+ils": n < _ILS_MIN_N
+    ua, ub = base.utilities(pi.G, pi.nodes, THETA, LAM)
+    ctx = ST._Ctx(pi.G, pi.nodes, ua, ub, 0.0)
+    start, _src = ST._fallback_warm_start(ctx)
+    ref = ctx.objective(ST._local_search(ctx, set(start), ls_moves=ST._POLISH_MOVES))
+    b1, o1 = ST._ils_start(ctx, start, 17, 2.0)
+    b2, o2 = ST._ils_start(ctx, start, 17, 2.0)
+    assert ctx.is_feasible(b1) and o1 >= ref - 1e-15
+    assert b1 == b2 and abs(o1 - o2) < 1e-15
