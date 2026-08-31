@@ -209,6 +209,20 @@ VARIANTS = {
 _LOG_FLOOR = 1e-9                # lower bound on g_a, g_b (keeps log defined)
 _MAX_LS_MOVES = 50               # boundary-swap moves per repair
 _REPAIR_TIME_SHARE = 0.25        # at most this share of the budget goes to in-callback repair
+# ------------------------------------------------------------------------------- W6d
+# The 2026-08-30 primal/dual diagnostic (RESULTS.md section "Primal/dual") found the
+# 1200 s incumbents on the 169/197/464-zip pairs were not even 1-swap locally optimal:
+# `_repair`'s descent is truncated by `ls_moves` and the 25% repair budget share, and
+# SCIP's own accepted solutions are never descended at all.  W6d wires the existing
+# first-improvement descent to *convergence* on every new incumbent (`_polish`, its own
+# absolute per-call cap, outside the repair budget share) and takes the F1 MIP start
+# through a short kick-and-descend loop (`_ils_start`, the ils_diag.py pattern).
+_POLISH_MOVES = 10 ** 9          # "to convergence": descent stops only at a local optimum
+_POLISH_TIME = 5.0               # absolute per-call cap so a callback cannot starve the tree
+_ILS_START_TIME = 5.0            # kick-and-descend budget for the MIP start
+_ILS_MIN_N = 100                 # below this the first rung certifies in well under a second,
+                                 # so an ILS start would only delay it (S0 t->cert 0.029 s)
+_ILS_STALE_KICKS = 40            # stop the loop after this many non-improving kicks
 
 
 @contextlib.contextmanager
@@ -469,6 +483,68 @@ def _local_search(ctx, cur, *, ls_moves=_MAX_LS_MOVES, deadline=None):
         if not moved:
             break
     return cur
+
+
+def _polish(ctx, st, to_a, *, cap=_POLISH_TIME):
+    """W6d: first-improvement descent run to convergence on an incumbent.
+
+    Unlike the in-repair descent this is not truncated by `ls_moves` or charged to the
+    repair budget share -- the diagnostic showed the truncation left +1e-3-nat improvements
+    one swap away after 1200 s.  A per-call absolute cap (and the global deadline) is the
+    only limit, and it is only ever called on a *new best* allocation, so the number of
+    calls is bounded by the number of incumbent improvements.
+    """
+    if to_a is None:
+        return None
+    now = time.perf_counter()
+    deadline = now + cap
+    if st["deadline"] is not None:
+        deadline = min(deadline, st["deadline"])
+    out = _local_search(ctx, to_a, ls_moves=_POLISH_MOVES, deadline=deadline)
+    st["n_polish"] += 1
+    st["polish_spent"] += time.perf_counter() - now
+    return out
+
+
+def _ils_start(ctx, start, seed, budget):
+    """W6d: kick-and-descend on the MIP start (the ils_diag.py loop on ctx primitives).
+
+    kick = up to k in [2, 12] random feasibility-preserving boundary flips (worse accepted);
+    descend = `_local_search` to convergence; accept if better, else keep with prob 0.05.
+    Returns the best allocation seen (never worse than the descended start).
+    """
+    rng = np.random.default_rng(seed)
+    deadline = time.perf_counter() + float(budget)
+    cur = _local_search(ctx, set(start), ls_moves=_POLISH_MOVES, deadline=deadline)
+    best, best_obj = set(cur), ctx.objective(cur)
+    cur_obj = best_obj
+    stale = 0
+    while time.perf_counter() < deadline and stale < _ILS_STALE_KICKS:
+        k = int(rng.integers(2, 13))
+        cand = set(cur)
+        for _ in range(20 * k):
+            if k <= 0:
+                break
+            z = ctx.nodes[int(rng.integers(ctx.n))]
+            if not any(((w in cand) != (z in cand)) for w in ctx.nbrs[z]):
+                continue                                          # interior: no boundary move
+            trial = (cand - {z}) if z in cand else (cand | {z})
+            if trial and (ctx.node_set - trial) and ctx.is_feasible(trial) \
+                    and math.isfinite(ctx.objective(trial)):
+                cand = trial
+                k -= 1
+        cand = _local_search(ctx, cand, ls_moves=_POLISH_MOVES, deadline=deadline)
+        if not ctx.is_feasible(cand):
+            continue
+        o = ctx.objective(cand)
+        if o > cur_obj + 1e-12 or rng.random() < 0.05:
+            cur, cur_obj = set(cand), o
+        if o > best_obj + 1e-12:
+            best, best_obj = set(cand), o
+            stale = 0
+        else:
+            stale += 1
+    return best, best_obj
 
 
 def _ratio_prefix(ctx):
@@ -860,7 +936,21 @@ class _Events(Eventhdlr):
             return
         get = self.model.getSolVal
         to_a = {z for z in self.ctx.nodes if get(sol, self.st["V"]["x"][z]) > 0.5}
-        _record(self.ctx, self.st, to_a)
+        if not _record(self.ctx, self.st, to_a) or self.st["in_polish"]:
+            return
+        # W6d: SCIP's own accepted solutions were never descended at all (the diagnostic
+        # found them not 1-swap optimal after 1200 s).  Descend to convergence, and hand an
+        # improvement back so the tree prunes with it.  `in_polish` stops the recursion a
+        # successful `trySol` (-> BESTSOLFOUND -> here) would otherwise start.
+        self.st["in_polish"] = True
+        try:
+            polished = _polish(self.ctx, self.st, to_a)
+            if polished is not None and _record(self.ctx, self.st, polished):
+                _inject(self.model, self.ctx, self.st, polished)
+        except Exception:                                        # noqa: BLE001
+            pass                                  # a polish failure must never kill the solve
+        finally:
+            self.st["in_polish"] = False
 
 
 # ======================================================================== primal glue
@@ -953,7 +1043,12 @@ def _maybe_repair(model, ctx, st, to_a):
     st["n_repairs"] += 1
     if fixed is None:
         return
-    _record(ctx, st, fixed)
+    if _record(ctx, st, fixed):
+        # W6d: a repaired point good enough to become the incumbent gets the full descent
+        # (outside the repair budget share -- see `_polish`).
+        polished = _polish(ctx, st, fixed)
+        if polished is not None and _record(ctx, st, polished):
+            fixed = polished
     obj = ctx.objective(fixed)
     try:
         incumbent = float(model.getPrimalbound())
@@ -1202,6 +1297,23 @@ def solve(G, nodes, *, theta, lam, rho, respect_state, time_limit, seed,
                                              budget=budget)
         if cand is not None:
             ws = cand
+            # W6d: take the F1 start through a short kick-and-descend loop.  The diagnostic
+            # measured +1e-3 nats over the F1 plateau in ~1 s on three of the five large
+            # pairs; a start this much better also tightens `_gain_floor` from t = 0.
+            ils_budget = min(_ILS_START_TIME,
+                             max(deadline0 - time.perf_counter() - _MIN_RUNG, 0.0))
+            if ils_budget >= 0.5 and len(list(nodes)) >= _ILS_MIN_N:
+                try:
+                    nlist = list(nodes)
+                    ua0, ub0 = base.utilities(G, nlist, theta, lam, kappa)
+                    ctx0 = _Ctx(G, nlist, ua0, ub0, rho)
+                    if ctx0.is_feasible(ws) and math.isfinite(ctx0.objective(ws)):
+                        better, obj_b = _ils_start(ctx0, ws, int(seed) + 17, ils_budget)
+                        if better is not None and obj_b > ctx0.objective(ws) + 1e-12:
+                            ws = better
+                            mip_start_src = "warm_f1+ils"
+                except Exception:                                # noqa: BLE001
+                    pass                          # the plain F1 start is still a valid start
 
     rungs = [(float(feastol), formulation, 0)]
     rungs += [(f, formulation, 0) for f in _FEASTOL_LADDER if f > float(feastol) * 1.001]
@@ -1328,6 +1440,7 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
               invalid_cut=None,
               repair=bool(repair), ls_moves=int(ls_moves), repair_spent=0.0,
               repair_budget=_REPAIR_TIME_SHARE * float(time_limit),
+              n_polish=0, polish_spent=0.0, in_polish=False,
               lin_a=None, lin_b=None, gvals=(0.0, 0.0), feastol=float(feastol),
               sepa_frac=bool(sepa_frac), sepa_rounds=0, n_sepa_cuts=0,
               max_sepa_rounds=int(max_sepa_rounds), max_sepa_depth=int(max_sepa_depth),
@@ -1351,6 +1464,11 @@ def _solve_once(G, nodes, *, theta, lam, rho, time_limit, seed,
         ws, warm_source = _fallback_warm_start(ctx, deadline=deadline)
     if ws is not None:
         _record(ctx, st, ws)
+        # W6d: descend the start to convergence before `_gain_floor` reads `best_obj` -- a
+        # better start is a tighter floor, and the floor is what keeps the log's LPs stable.
+        polished = _polish(ctx, st, ws)
+        if polished is not None and _record(ctx, st, polished):
+            ws = polished
 
     m, V = _build_model(ctx, rho=rho, time_limit=max(deadline - time.perf_counter(), 0.01),
                         seed=seed, formulation=formulation, feastol=feastol, verbose=verbose,
@@ -1489,6 +1607,7 @@ def _finish(ctx, st, m, scip_status, t0, formulation, warm_source, *,
                  n_dup_cuts=st["n_dup_cuts"], warm_source=warm_source,
                  formulation=formulation, interrupted=st["interrupted"],
                  repair_spent=round(st["repair_spent"], 4),
+                 n_polish=st["n_polish"], polish_spent=round(st["polish_spent"], 4),
                  n_sepa_rounds=st["sepa_rounds"], n_sepa_cuts=st["n_sepa_cuts"],
                  retryable=_retryable(scip_status, st, aborted=forced_status == "error"))
     if status == "heuristic":
