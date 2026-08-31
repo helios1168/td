@@ -75,6 +75,18 @@ $Z=\{1,\dots,n\}$ into a set $S$ given to wholesaler $a$ and its complement
 $Z\setminus S$ given to $b$: every zip is assigned, to exactly one side, with no third
 disposition.
 
+\paragraph{Related work.} The problem sits at the meet of two literatures that rarely
+cite each other. Sales-territory alignment and districting build the optimisation
+machinery: the assignment formulation of \citet{hess1971}, its sales-management line
+\citep{zoltners1983,zoltners2000,zoltners2005}, the modern exact treatments of
+territory design \citep{salazaraguilar2011,rosmercado2012}, and the contiguity
+encodings compared in Section~\ref{sec:statement} --- but it optimises managerial
+objectives, not fairness between the two parties. Fair division on graphs supplies the
+fairness theory --- allocations restricted to connected pieces \citep{bouveret2017},
+existence of connected EF1 divisions \citep{bilo2022,suksompong2019}, and the price of
+connectivity \citep{bei2022} --- but rarely an exact solver at data scale. This paper
+takes the criterion from the second literature and the machinery from the first.
+
 \section{The bargaining problem}\label{sec:statement}
 
 This section poses territory division as a two-person bargaining problem in the classical
@@ -181,10 +193,15 @@ gives the criterion actually solved throughout this paper:
 \begin{equation}\label{eq:nashcriterion}
 \max_{S\subseteq Z}\ g_a(S)\,g_b(S),\qquad g_a(S)>0,\ g_b(S)>0,
 \end{equation}
-with $g_a,g_b$ as in \eqref{eq:gains}. The remainder of this section turns
-\eqref{eq:nashcriterion} into a program that can be handed to a solver: first restricting
-$F$ by operational constraints (contiguity, state borders), then writing the result as a
-mixed-integer program, then solving it exactly.
+with $g_a,g_b$ as in \eqref{eq:gains}. In the fair-division literature this same
+criterion is \emph{maximum Nash welfare}: the two literatures meet at $d=0$, where the
+bargaining solution and the welfare maximiser coincide, and the fair-division results ---
+Pareto efficiency and envy-freeness up to one good over indivisible items
+\citep{caragiannis2019}, and the study of allocations constrained to connected pieces of
+a graph \citep{bouveret2017} --- apply to the bargaining problem verbatim. The remainder
+of this section turns \eqref{eq:nashcriterion} into a program that can be handed to a
+solver: first restricting $F$ by operational constraints (contiguity, state borders),
+then writing the result as a mixed-integer program, then solving it exactly.
 
 \subsection{Layer 5 --- constraints shrink $F$}
 Operational requirements restrict which $S$ are admissible, and therefore which points of
@@ -222,9 +239,9 @@ logarithm is not cosmetic: it is what places the problem in the tractable class.
 \subsection{Two representations of connectivity}
 Constraint \eqref{eq:conn} is not a linear inequality as written. Two standard encodings.
 
-\paragraph{(a) Compact, single-commodity flow.} Fix roots $r_a,r_b$. Introduce
-$f^a_{uv}\ge0$ on each arc. Every zip assigned to $a$ absorbs one unit of flow sent from
-$r_a$ through arcs internal to $a$'s territory:
+\paragraph{(a) Compact, single-commodity flow.} \citep{shirabe2005,shirabe2009} Fix
+roots $r_a,r_b$. Introduce $f^a_{uv}\ge0$ on each arc. Every zip assigned to $a$ absorbs
+one unit of flow sent from $r_a$ through arcs internal to $a$'s territory:
 \begin{align}
 \sum_{(u,z)\in E} f^a_{uz}-\sum_{(z,v)\in E} f^a_{zv} &= x_z, && z\ne r_a,\\
 f^a_{uv} &\le (n-1)\,x_u, \qquad f^a_{uv}\le (n-1)\,x_v, && (u,v)\in E,
@@ -241,6 +258,16 @@ There are exponentially many such inequalities, so they are generated \emph{lazi
 inspect the incumbent for disconnected components, add the violated cuts, re-solve. In
 practice a handful of rounds suffice. This is the encoding used here; it keeps the model
 small at the cost of repeated solves.
+
+The two encodings, a multicommodity-flow strengthening, and the separator-cut family
+are compared head-to-head in the districting literature: \citet{duque2011} for the
+one-shot formulations, \citet{validi2021,validibuchanan2022} for lazily separated cuts
+inside branch-and-cut, which certify instances of $\sim$1{,}500 units and are the state
+of the art. A linear-size planar-graph formulation exists \citep{zhang2024} but ties the
+model to a planar embedding; ZCTA adjacency is near-planar, not planar, so it is not
+used here. How the lazy scheme is best organised --- one restarted MILP per round versus
+one branch-and-cut tree fed cuts through callbacks \citep{quesada1992,bonami2008} ---
+turns out to matter more than the encoding; Section~\ref{sec:cuts} returns to this.
 
 \subsection{Layer 7 --- solving it}
 Outer approximation linearises the concave objective from above. Introduce
@@ -326,12 +353,22 @@ criteria require search for their exact optima and carry no such certificate.
 
 \paragraph{Pareto efficient by construction.} Maximising a product cannot be improved
 for both parties simultaneously. The min-$|$difference$|$ criteria carry no such
-guarantee and do fail in practice: an unconstrained equalising program reached a gap of
-$0.000161$ while giving up $18\%$ of attainable welfare (Appendix~\ref{app:other}).
+guarantee and do fail in practice: on the worked instance the unconstrained equalising
+program achieves near-perfect equality at gains of $(7.323,\,7.070)$ --- \emph{both}
+strictly below the Nash allocation's $(7.371,\,7.232)$. Equalisation purchased fairness
+by making both wholesalers worse off (Appendix~\ref{app:other}).
 
 \paragraph{Envy-freeness up to one zip.} Neither wholesaler prefers the other's
 territory once a single zip is removed from it --- the strongest fairness guarantee
-available for indivisible goods, and legible in a room.
+available for indivisible goods, and legible in a room. The guarantee is a theorem for
+the \emph{unconstrained} maximiser \citep{caragiannis2019}; under contiguity the picture
+is more delicate. A \emph{connected} EF1 allocation for two agents exists on any graph
+whose block-tree is a path \citep[Thm.~3.10]{bilo2022} --- every biconnected census
+component qualifies --- and is computable in $O(m)$ by a discrete cut-and-choose.
+Whether the contiguous \emph{Nash maximiser} is itself EF1 for two agents is open: the
+known counterexamples to EF1 on graphs use three or more agents
+\citep{igarashipeters2019}. We therefore report EF1 empirically alongside every
+contiguous solve; it held on every certified incumbent in the 2026 benchmark runs.
 
 \paragraph{The continuum limit agrees.} \citet{warren2025} studies Nash bargaining
 over a continuum of goods and finds that at a zero disagreement point the solution is an
@@ -339,9 +376,15 @@ optimal-transport map, whose allocation boundaries are Laguerre cells --- contig
 construction. That corroborates $d=(0,0)$ from a direction independent of the axiomatic
 argument of Section~\ref{sec:statement}: the correspondence is stated at the zero
 baseline, and the contiguity that must be imposed here as a hard constraint
-(Section~\ref{sec:contig}) comes for free there. The problem solved in this note is a
-finite sampling of that continuum, so the agreement is a consistency check rather than a
-corollary.
+(Section~\ref{sec:contig}) comes for free there. One caution about importing the
+geometry: the continuum contiguity is produced by \emph{distance-structured} utilities
+--- the power-diagram cells inherit their shape from a spatial cost --- and has no
+analogue for data-driven per-zip utilities, where the transport solution is exactly the
+free ratio-threshold allocation and no more connected than it. Contiguity would become
+structural rather than imposed only under a modelling change, an explicit travel cost
+$-\kappa\,d(z,p_i)$ in the utilities, which we treat as an open modelling experiment,
+not a solver device. The problem solved in this note is a finite sampling of that
+continuum, so the agreement is a consistency check rather than a corollary.
 
 \paragraph{If seniority should count.} Asymmetric Nash,
 $\max g_a^{\omega}g_b^{1-\omega}$, retains the prefix property with threshold
@@ -379,7 +422,8 @@ Nash, prefix heuristic (Appendix~\ref{app:prefix}) & $22$ & $7.4423$ & $7.1628$ 
 \noindent The two select \emph{different} allocations of the same size; the heuristic's
 shortfall is $2.8\times10^{-5}$, which is negligible here but not zero.
 
-\noindent $a$ receives $22$ zips, $48.9\%$ of opportunity. Kalai--Smorodinsky and equal
+\noindent $a$ receives $22$ zips, $48.9\%$ of opportunity. Kalai--Smorodinsky
+\citep{kalai1975} and equal
 opportunity coincide exactly with Nash here; equal gain and the egalitarian criterion
 differ by one zip (Appendix~\ref{app:other}).
 
@@ -423,13 +467,24 @@ exact for Nash-minus-a-perimeter-penalty, a legitimate modelling choice but not 
 Nash. Set $\rho=0$ for the latter.
 
 \begin{warnbox}
-\textbf{Two traps.} First, the compactness term is not optional: fairness alone is
-degenerate, many allocations achieve near-identical objective values, and contiguity
-cuts never bite --- an implementation without it thrashed for seventeen rounds without
-converging. Second, a weighted-sum scalarisation $wg_a+(1-w)g_b$ collapses to corner
+\textbf{Three traps.} First, in the restart-per-round loop the compactness term is not
+optional: fairness alone is degenerate, many allocations achieve near-identical
+objective values, and contiguity cuts never bite --- an implementation without it
+thrashed for seventeen rounds without converging. This is textbook instability of
+Kelley's method \citep{lemarechal1995}; the principled remedies are in--out
+stabilisation of the cut loop \citep{benameur2007,fischettisalvagnin2010} or moving to
+a single search tree (Section~\ref{sec:cuts}), after which $\rho=0$ --- exact Nash, the
+model of record --- solves cleanly and $\rho>0$ is no longer needed as an engineering
+crutch. Second, a weighted-sum scalarisation $wg_a+(1-w)g_b$ collapses to corner
 solutions when the frontier is close to linear, as it is here, and an
-$\varepsilon$-constraint sweep needs one MILP solve per frontier point. Outer
-approximation avoids both, at roughly a twentieth of the cost.
+$\varepsilon$-constraint sweep needs one MILP solve per frontier point. Third, the
+tangent cuts and the connectivity cuts obey \emph{different} finite-convergence
+theories --- outer approximation's \citep{duran1986,fletcher1994} versus combinatorial
+Benders' \citep{hooker2003,codato2006} --- and in a restarted loop their iteration
+bounds multiply rather than add. An alternative that removes the tangent loop entirely
+is an $\varepsilon$-certified piecewise-linear encoding of the logarithm
+\citep[\S6]{caragiannis2019}, with the standard MILP encodings of
+\citet{vielma2011}; it trades the certificate's exactness for a fixed $\varepsilon$.
 \end{warnbox}
 
 \subsection{Contiguity by separator cuts}\label{sec:cuts}
@@ -441,9 +496,30 @@ containing $a$'s root add
 ``if any of $S$ is with $a$, some neighbour just outside must be too''; symmetric in
 $(1-x)$ for $b$. Re-solve and repeat. The alternative is a single-commodity \emph{flow}
 formulation --- ship one unit from each assigned zip to its root along in-district
-edges --- exact in one solve but requiring $O(|E|)$ extra continuous variables per
-district. Aggregating one cut per island rather than one per zip matters for
-convergence.
+edges \citep{shirabe2005} --- exact in one solve but requiring $O(|E|)$ extra continuous
+variables per district. Aggregating one cut per island rather than one per zip matters
+for convergence.
+
+\begin{warnbox}
+\textbf{Rooted cuts are invalid on a disconnected instance.} When the contested region
+itself has several graph components --- routine on real geography --- a rooted cut can
+force growth toward a root that is unreachable, excluding allocations that are feasible
+under the right notion, \emph{component-wise} contiguity. The master problem is then no
+longer a relaxation and its ``bound'' can sit below feasible values already seen. The
+production formulation therefore uses \emph{root-free} pairwise cuts: for $u,v$ on the
+same side and $C$ a minimal $u,v$-separator,
+$\sum_{w\in C}x_w\ \ge\ x_u+x_v-1$, the vertex-separator family of
+\citet{validi2021,validibuchanan2022} with the root dependence removed. Any $u,v$ and
+any separator give a valid cut, which also makes separation at fractional points safe.
+\end{warnbox}
+
+How the cuts are delivered matters as much as their form. The restart-per-round
+(multi-tree) loop described above re-proves the same tree from scratch each round; the
+state of the art places both cut families --- log tangents and separator cuts --- as
+lazy constraints inside \emph{one} branch-and-cut tree
+\citep{quesada1992,bonami2008,validi2021}, which is the architecture the benchmark of
+Section~\ref{sec:mechanisms} converged on. Its engine must expose a cut-injection
+callback; of the open-source stack, SCIP does and HiGHS does not.
 
 \subsection{Result}
 The exact unconstrained Nash allocation leaves $a$ in one piece and $b$ in two, a
@@ -466,10 +542,13 @@ more than three orders of magnitude and should be used only to \emph{detect}
 fragmentation, never to fix it.
 \end{resultbox}
 
-\noindent $\rho$ competes directly with the log objective and should be swept rather
-than fixed: at $\rho=10^{-5}$ the boundary cuts a fifth of all adjacency edges for a
-$0.16\%$ gain in product over the $\rho=2\times10^{-3}$ solution. Report the product and
-the perimeter together.
+\noindent $\rho$ competes directly with the log objective: at $\rho=10^{-5}$ the
+boundary cuts a fifth of all adjacency edges for a $0.16\%$ gain in product over the
+$\rho=2\times10^{-3}$ solution, so if a positive $\rho$ is used it should be swept and
+reported with the perimeter. The model of record, however, is $\rho=0$ --- exact Nash
+under hard contiguity, with ties broken by a lexicographic perimeter post-pass rather
+than a penalty; positive $\rho$ was a stabilisation crutch for the restarted loop that
+the single-tree architecture (Section~\ref{sec:mechanisms}) does not need.
 
 \begin{figure}[H]\centering\includegraphics[width=\textwidth]{zip50_nash_milp.png}
 \caption{Left: unconstrained Nash with the Delaunay adjacency overlaid; $a$ is already
@@ -477,6 +556,63 @@ one block, $b$ holds a four-zip island. Centre: the contiguous MILP solution. Ri
 bargaining set --- grey points are the prefix frontier, dotted curves are level sets of
 $g_ag_b$, and the Nash point is where the highest attainable level curve touches the
 frontier. The utilitarian corner leaves $b$ with a gain of $2.04$.}\end{figure}
+
+\subsection{Failure mechanisms at scale}\label{sec:mechanisms}
+The fifty-zip instance solves in a fraction of a second; real bilateral pairs run to
+$400$--$800$ ZCTAs. A synthetic battery --- varying territory alignment, book
+correlation, state borders, headroom tightness, and the tail weight of the value
+distributions --- shows that the restart-per-round loop fails to converge for three
+\emph{independent} reasons, so a fix aimed at one is not guaranteed to touch the others:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{Pre-existing disconnection.} The contested region itself arrives in
+several graph components, and rooted cuts are then unsound (the warning in
+Section~\ref{sec:cuts}). This is a formulation defect, fully repaired by root-free
+component-wise cuts --- not a solver limitation.
+\item \textbf{Pure scale.} Beyond roughly $125$ zips the restarted loop exhausts time
+regardless of topology; the single-tree architecture is the repair.
+\item \textbf{Value concentration.} Replacing lognormal by heavy-tailed
+(double Pareto-lognormal) sales noise --- same geometry, same adjacency --- \emph{moves
+which pairs fail}: a previously trivial $31$-zip pair stalls while a previously failing
+disconnected pair converges, and the cost of contiguity inflates two- to five-fold.
+The analogy with knapsack hardness under correlated, concentrated weights
+\citep{pisinger2005} is apt: difficulty tracks value structure, not size.
+\end{enumerate}
+Real data adds a fourth regime the battery cannot: \emph{sparse active zips} ---
+a minority of zips carrying nearly all value, glued by many near-zero ones. That regime
+is addressed by safe reduction and variable-fixing techniques from the Steiner-tree and
+MILP-presolve literature \citep{rehfeldt2019,buchanan2018,fischetti2017}, applied before
+the tree is grown.
+
+In the 2026 benchmark of these repairs, the single search tree (SCIP) with root-free
+separator cuts and the native concave logarithm certifies every battery pair up to
+$\sim$$125$ zips in under a second; from $125$ to $464$ zips it holds certified gaps
+between $10^{-7}$ and $4\times10^{-3}$ nats with the time budget genuinely spent. The
+residuals have two distinct characters. Up to $\sim$$160$ zips the residual is the LP
+feasibility \emph{tolerance floor} --- the solver reaches its own optimum on a loosened
+rung and nothing tighter is numerically available; an exact post-hoc bound, not more
+time, is the cure. Above that the residual is \emph{dual slack over near-ties}: an
+iterated local search finds, in seconds, an allocation that independent restarts agree
+on to nine digits, and the tree warm-started \emph{at that allocation} still cannot
+prove it within the budget --- the bound, not the incumbent, is the expensive half, and
+its difficulty tracks value concentration (mechanism~3), not $n$.
+
+Certification is therefore two-tier. Small and mid-size pairs carry exact certificates
+(gap $\le10^{-8}$ nats). At production size a pair is accepted at gap
+$\le\varepsilon=5\times10^{-3}$ nats together with cross-method agreement on the
+allocation itself. The $\varepsilon$ is not a concession chosen for convenience but is
+calibrated to the data: re-drawing the books under the measurement-noise model of
+Section~\ref{sec:contest} moves the \emph{optimal} log-product by $8.4\times10^{-3}$
+nats ($1\sigma$) and reassigns one zip in eight, so $\varepsilon$ bounds the
+unproven improvement strictly below what the data can distinguish.
+
+\paragraph{The price of connectivity.} Across the battery the cost of contiguity ranges
+from $0.03\%$ to $5\%$ of the bargaining product, typically $\sim$$0.4\%$ at scale ---
+against which the known theory is: for maximin-share fairness the worst-case price of
+connectivity is exactly $4/3$ on biconnected graphs and $1/k$ at a $k$-way cut vertex
+\citep{bei2022}; for Nash welfare no bound is published, and we state it as open.
+Connected fair division is NP-hard already for two agents with \emph{identical}
+valuations \citep{deligkas2021}, which is what justifies reaching for an exact integer
+program rather than a rule.
 
 \section{Contestability}\label{sec:contest}
 Where are the hard decisions? Two components, multiplied.
@@ -502,9 +638,9 @@ $A_z$ and $B_z$ right matters more than settling $\lambda$.
 rank & zip & stake & doubt & quadrant\\ \midrule
 1 & 37 & $0.0541$ & $0.613$ & adjudicate\\
 2 & 32 & $0.1159$ & $0.243$ & adjudicate\\
-3 & 22 & $0.0471$ & $0.537$ & adjudicate\\
+3 & 22 & $0.0471$ & $0.540$ & adjudicate\\
 4 & 19 & $0.0352$ & $0.540$ & adjudicate\\
-5 & 28 & $0.0302$ & $0.570$ & coin-flip\\
+5 & 28 & $0.0302$ & $0.567$ & coin-flip\\
 \bottomrule\end{tabular}\end{center}
 
 \noindent Splitting stake and doubt at their medians, nine zips fall in the adjudicate
@@ -572,9 +708,9 @@ a compensation-philosophy decision rather than a modelling one.
 \texttt{territory.py} operates on a \texttt{networkx} graph of ZCTAs with Rook adjacency
 and attributes \texttt{rep\_a}, \texttt{rep\_b}, \texttt{A}, \texttt{B}, \texttt{M},
 \texttt{state}: it validates headroom, builds the bipartite overlap graph of wholesaler
-pairs and reports its component structure, solves each pair by prefix table, and writes
-results back for mapping. \texttt{districting.py} adds the contiguous MILP, with
-\texttt{solve\_contiguous\_nash} performing the $\varepsilon$-constraint sweep. Setting
+pairs and reports its component structure, solves each pair exactly by outer approximation
+(the prefix table remains as a preview), and writes
+results back for mapping. \texttt{districting.py} adds the contiguous MILP. Setting
 \texttt{respect\_state=True} deletes cross-state edges before enforcing connectivity;
 for life and annuity distribution this may bind harder than contiguity, since product
 availability and producer appointments are state-scoped.
@@ -584,8 +720,14 @@ which no threshold rule exists and the natural extension is leximin over each de
 component of the overlap graph; \citet{warren2025} points to a second route, since
 semi-discrete transport to $N$ sites yields $N$ Laguerre cells and would deliver the
 multi-party division and its geography together rather than in two stages. Estimation of $\theta$ from historical reassignments,
-on which everything ultimately rests. At national scale, a solver with lazy-constraint
-callbacks is preferable to re-solving from scratch each round.
+on which everything ultimately rests. At national scale the production stack is
+open-source single-tree branch-and-cut: PySCIPOpt as the primary engine (SCIP exposes
+the constraint-handler callback that lazy separator and tangent cuts require; HiGHS has
+no cut-injection callback, which is why the restart-per-round loop was structural), with
+python-mip/CBC as an independent cross-check. The benchmark harness behind
+Section~\ref{sec:mechanisms} --- instance tiers, gap metrics, and acceptance criteria,
+including the two-tier certificate --- is specified in
+\texttt{research/contiguity/TEST\_PLAN.md} of the accompanying repository.
 
 \paragraph{Three checks on real data.}
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
@@ -626,11 +768,17 @@ now coincides with Nash rather than fighting it. The utilitarian row shows what 
 buys: unconstrained, $a$ takes $46$ zips and leaves $b$ a gain of $2.04$.
 
 \paragraph{Equalisation can destroy value.} Minimising a difference is not a monotone
-objective, and the unconstrained equalising MILP illustrates the hazard: it reached a KS
-gap of $0.000161$ at $82.1\%$ of attainable welfare, against $85.8\%$ for the best
-prefix. The remedy is a welfare floor $g_a+g_b\ge\kappa\max_S(g_a+g_b)$, whose
-right-hand side is available in closed form because the utilitarian optimum is the
-prefix $\{z:u_a(z)>u_b(z)\}$. Nash needs no such guard.
+objective, and the unconstrained equalising MILP illustrates the hazard. At $d=(0,0)$,
+minimising the KS gap over \emph{all} subsets reaches a gap of $5\times10^{-8}$ ---
+essentially perfect equality --- but at gains $(7.323,\,7.070)$ and product $51.77$:
+$98.1\%$ of attainable welfare against $99.5\%$ for the Nash prefix, and
+Pareto-dominated by the Nash allocation $(7.371,\,7.232)$, so \emph{both} wholesalers
+pay for the equality. (Under the discarded pre-merger baseline the same experiment was
+more dramatic --- a gap of $0.000161$ at $82.1\%$ of welfare --- the hazard shrinks at
+$d=0$ but does not vanish.) The remedy, if an equalising criterion must be used, is a
+welfare floor $g_a+g_b\ge\kappa\max_S(g_a+g_b)$, whose right-hand side is available in
+closed form because the utilitarian optimum is the prefix $\{z:u_a(z)>u_b(z)\}$. Nash
+needs no such guard.
 
 \section{The prefix heuristic}\label{app:prefix}
 Section~\ref{sec:nash} solves \eqref{eq:nashcriterion} exactly by outer approximation.
@@ -651,6 +799,13 @@ Then the utilitarian optimum is exactly $P_k$ with $k=|\{z:r_z>1\}|$, and
 $\arg\max_k g_a[k]g_b[k]$ is a fast approximation to the Nash optimum.
 \end{proposition}
 \end{resultbox}
+
+\noindent The prefix family has a second characterisation worth recording: allowing a
+single zip to be split fractionally, the optimal fractional allocation of two-agent
+maximum Nash welfare is exactly a ratio threshold --- the discrete optimal-transport
+solution --- so the \emph{fractional} threshold value is an upper bound on the free
+Nash value, the best integral prefix sits within one zip's contribution of it, and
+contiguity only restricts the feasible set further below both.
 
 \noindent The utilitarian claim is exact: the objective is
 $\sum_{z\in S}(u_a(z)-u_b(z))+\text{const}$, maximised by taking every zip with

@@ -192,7 +192,10 @@ return argmax_k g_a[k]*g_b[k]
    of attainable welfare. Nash cannot do this. If you ever use an equalising criterion,
    add a welfare floor `g_a + g_b >= kappa * max(g_a + g_b)`; the right-hand side is
    closed-form because the utilitarian optimum is the prefix `{z : u_a(z) > u_b(z)}`.
-   *(These numbers were computed under the old baseline and are unverified at d=0.)*
+   *(Re-verified at d=0 on 2026-08-30: the unconstrained equaliser reaches KS gap 5.2e-8
+   at 98.1% of welfare but is Pareto-dominated by Nash — gains (7.3226, 7.0699) vs
+   (7.3715, 7.2318). The 0.000161/82% figures are the old baseline's; the paper labels
+   them as such.)*
 
 3. **The mixture-quantile shortcut is off by one zip on discrete data.** Exact in a
    continuum only. Do not use it — enumerate the `n+1` prefixes instead.
@@ -390,30 +393,36 @@ around d=(0,0) with the classical Nash axioms; the stale `lambda*` paragraph rem
 comparison tables (KS, egalitarian, equal-gain) and the §5/§6/Contestability/breakpoints/
 opportunity-balance numbers all recomputed at d=0 via `code/mkfig_zip50.py`.
 
+**Done in the 2026-08-30 pass (do not redo):** all ten steps of the *Integrating the
+contiguity research* list below (framing sentence in §2 Layer 4; scoped EF1 with
+`bilo2022`/`igarashipeters2019`; encoding citations + one-shot comparison in §2; root-free
+cut warnbox + single-tree paragraph in §5 `sec:cuts`; three-trap warnbox with the
+convergence-theory multiplication and in-out/PWL remedies; new §5 subsection "Failure
+mechanisms at scale" (`sec:mechanisms`) carrying the three mechanisms, the sparse-glue
+regime, the 2026 harness results, and the two-tier ε=5e-3 certificate; price-of-connectivity
+paragraph (`bei2022`, `deligkas2021`); continuum-paragraph caution + travel-cost κ;
+open-source stack in §Implementation; Related-work paragraph in §Setup; prefix-as-OT-bound
+sentence in Appendix B; `kalai1975` cited). **Contestability doubts updated** from the
+refreshed anchor (zip 22 0.537→0.540, zip 28 0.570→0.567; other rows re-verified
+unchanged, figures byte-identical). **Equalisation numbers re-verified at d=0** and both
+sites rewritten: the unconstrained equalising MILP over all subsets reaches KS gap 5.2e-8
+at 98.1% of attainable welfare (vs 99.5% for the Nash prefix), gains (7.3226, 7.0699) —
+Pareto-dominated by Nash's (7.3715, 7.2318), so "both parties worse off" survives at d=0
+in a cleaner form; the old 0.000161/82.1% figures are kept only as the labelled pre-merger
+baseline comparison. Builds clean, `.blg` and `.log` free of undefined citations/references.
+
 **Still open in `nash_territory_division.tex`:**
 
 - **Appendix C (mixture-quantile shortcut)** still derives its closed form under the
   discarded d=(S_a,S_b) baseline. Flagged in-paper as an open item, not re-derived.
-- **The related-work grounding is thin.** The bibliography is wired up and builds
-  (natbib + `plainnat`, sourced from `literature/territory_bibliography.bib`), but only
-  3 of its 34 entries are cited: `nash1950`, `caragiannis2019`, `warren2025`. The
-  districting literature (`hess1971`, `zoltners*`, `validi2021`), the non-convex
-  bargaining entries (`mariotti1998`, `xu2005` — directly relevant to trap 9), and
-  `kalai1975` for the Kalai–Smorodinsky comparison in Appendix A are all uncited. An
-  editorial pass, not a mechanical one.
-- **No battery content in the paper.** `C1`–`C9`, "battery", and "heavy tail" appear
-  nowhere in the `.tex` (verified by grep). §5 / §6 need the three contiguity failure
-  mechanisms folded in.
-- **Contestability top-5 (zips 22 and 28)** changed by ~0.003 in `doubt` when trap 14 was
-  fixed on 2026-08-29; re-check the numbers quoted in the Contestability section and the
-  `nash_contestability.png` figure against the refreshed anchor.
-- **The "equalisation can destroy value" numbers** — a KS gap of 0.000161 at 82.1% of
-  attainable welfare, appearing at line 329 *and* line 617 — were computed under the old
-  baseline and have not been re-verified at d=0. Both sites must move together.
-- **The contiguity research (2026-08-28) is not yet in the paper.** See the next
-  subsection for the section-by-section instructions.
+- `mariotti1998` / `xu2005` (non-convex bargaining, relevant to trap 9) remain uncited —
+  a candidate one-sentence addition to the §2 non-convexity warnbox.
+- The S3/real-data results are not yet in the paper (blocked on the twin); when they land,
+  extend `sec:mechanisms` with the production-size table.
 
 ### Integrating the contiguity research into `nash_territory_division.tex`
+
+**Completed 2026-08-30 (see "Done in the 2026-08-30 pass" above); kept for provenance.**
 
 Source of truth: `research/contiguity/OPTIONS.md` (§0 for the four-sentence verdict, §12 for
 the theory results and framing, §11 for the portfolio) and `OPEN_QUESTIONS.md` §C for what
