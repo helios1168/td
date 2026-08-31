@@ -316,3 +316,48 @@ the dual-side work (deeper fractional separation, E1) is thereby an improvement 
 blocker. The ε value should be revisited once against the *twin's* noise floor when T3 lands
 (same script, twin instance) — value concentration on real data could plausibly widen, not
 narrow, the floor.
+
+## W6d — in-tree primal wiring + 2× budget rerun — 2026-08-30 (`w6d_2026-08-30`, `w6d_s0`)
+
+**Scope.** `scip_tree.py` only (merged `cf7b0b2`; 230 fast tests). Wiring per the primal/dual
+diagnostic: every new incumbent — repaired points, SCIP's own accepted solutions
+(`BESTSOLFOUND`), the warm start — is descended to convergence (`_polish`: no `ls_moves`
+truncation, outside the repair budget share, 5 s per-call cap, reentrancy-guarded
+re-injection), and the F1 MIP start goes through a 5 s kick-and-descend loop (`_ils_start`,
+gated to n ≥ 100). Counters in `extra` (`n_polish`, `polish_spent`, `mip_start=warm_f1+ils`).
+
+**S0 non-regression (`w6d_s0`).** 13/13 T0 certified, median t→cert 0.032 s (was 0.029 s),
+0 errors — unchanged within noise; the ILS gate keeps small pairs untouched.
+
+**The five large pairs at 2400 s** (ρ=0, 4 workers; W6b @1200 s and the ILS-warm-started
+diagnostic @1200 s as baselines):
+
+| instance | n | gap W6b | gap ILS-warm | **gap W6d @2400 s** | ε-cert (5e-3) | t | polish calls |
+|---|---|---|---|---|---|---|---|
+| C7b_s1 A0/B0 | 169 | 4.2e-3 | 3.9e-3 | 3.93e-3 | ✓ | 2400 s | 2 |
+| C7b_s1 A2/B2 | 197 | 4.2e-3 | 3.0e-3 | 3.15e-3 | ✓ | 2400 s | 3 |
+| C7 A3/B3 | 205 | 3.4e-4 | 1.35e-4 | 2.69e-4 | ✓ | 2400 s | 6 |
+| C7b_s1 A1/B1 | 320 | 1.3e-4 | 2.4e-5 | **1.22e-6** | ✓ | 1883 s | 1 |
+| C7b_s2 A0/B0 | 464 | 2.3e-3 | 6.6e-4 | 5.61e-4 | ✓ | 2116 s | 1 |
+
+**Readings.**
+
+- **All five pairs are ε-certified — the first full sweep of the large-pair set under the
+  two-tier criterion.** Nothing above 3.9e-3; worst pair's unproven improvement ≤ 0.4 % of
+  the Nash product with the allocation cross-method agreed.
+- **320 nearly reaches tier 1** (1.22e-6, two orders below W6b, stopping at 1883 s with the
+  ladder exhausted); it is the next candidate for a W6c exact post-hoc bound.
+- **The dual wall on 169/197 is confirmed:** doubling the budget *and* the primal wiring
+  moved their gaps by ~zero versus the ILS-warm baseline. The diagnostic's optimism on 205
+  is withdrawn — at 2400 s a fresh tree landed at 2.7e-4, slightly *worse* than the
+  diagnostic run's 1.35e-4 (tree/seed variance dominates at this gap scale; 1.35e-4 remains
+  the best-known certificate for 205).
+- **The wiring is essentially free** (≤ 6 polish calls, < 1 s total per pair) and every MIP
+  start improved through the ILS loop — but a 5 s start-ILS is not the diagnostic's 900 s
+  search: on 169/197 the run's incumbents sit ~1e-4 *below* the known ILS plateau values.
+  Feeding the known-best allocations (or scaling the start-ILS budget with n) is a
+  one-line follow-up; it changes LB cosmetics, not the dual wall.
+- **Consequence:** below ~1e-3 on the value-concentrated pairs only dual-side work moves the
+  needle — deeper-than-root fractional separation, E1 reductions on real sparse-glue
+  instances, or W6c exact bounds. The ε tier is already met everywhere, so none of it blocks
+  S3.

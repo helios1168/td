@@ -8,6 +8,17 @@ does not override them.
 
 ## 0. Resume — read this first in a fresh session
 
+**State on 2026-08-30 (22:30):** **W6d merged** (`cf7b0b2`; `RESULTS.md` §W6d): incumbents
+descended to convergence + 5 s ILS on the F1 start; S0 unchanged. 2400 s rerun of the five
+large pairs: **all five ε-certified** (first full sweep under the two-tier criterion); 320
+reaches 1.22e-6 (W6c candidate); 169/197 flat vs the ILS-warm baseline — the dual wall is
+confirmed, and 205's 1.35e-4 (diagnostic run) stands as best-known (tree variance at 2400 s
+gave 2.7e-4). Below ~1e-3 on value-concentrated pairs only dual-side work moves the needle;
+none of it blocks S3. **Paper integration pass done and pushed** (`2f2b6f0`): all ten
+CLAUDE.md steps, §sec:mechanisms with harness results + two-tier ε, equalisation re-verified
+at d=0 (Pareto-domination form), contestability refreshed. Ops note: the machine's launchd
+wedged this evening (llama-server crash cluster from another session + memory pressure);
+main-session ssh is broken until a reboot — user pushes. Earlier —
 **State on 2026-08-30 (21:00):** two decisions + one artefact. (i) **Two-tier acceptance
 decided** (`RESULTS.md` §Two-tier): tier 1 = `CERT_TOL 1e-8` on T0/T1 + named failures; tier 2 =
 `EPS_CERT = 5e-3` nats for T2+, read with cross-method primal agreement. ε grounded by
