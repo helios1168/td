@@ -271,3 +271,48 @@ Two findings: SCIP's 1200 s incumbents on 169/197/464 were not even 1-swap local
 - **W6d (in-tree primal) shrinks to a wiring task, not a unit:** run `warm._local_search` to convergence on every accepted incumbent (or take `mip_start` through the ILS loop for ~5 s). Worth doing — it is +1e-3 LB on three pairs for seconds of work — but it does not close anything by itself.
 - **The dual side is the real 160+ work:** deeper-than-root fractional separation, E1 reductions (fewer nodes to bound), or honestly reported 1e-3-scale certified gaps at production size. In economic terms the certified uncertainty is already ≤ 0.4 % of the Nash product on every pair, with the allocation itself agreed by two independent methods.
 - W6c (exact post-hoc certificate) unchanged for the 125–160 tolerance-floor regime.
+
+## Two-tier acceptance and the objective's noise floor — 2026-08-30 (`eps_noise_floor`)
+
+**Decision (user, 2026-08-30).** Acceptance becomes two-tier. Tier 1 unchanged: `CERT_TOL = 1e-8`
+rigorous certificates, required on T0/T1 and the named failures (W6c upgrades the 124–135-zip
+tolerance-floor rows to this tier). Tier 2, for production sizes (T2+): a feasible, valid row
+with best-available gap ≤ **`EPS_CERT = 5e-3` nats** counts as *ε-certified*, to be read together
+with cross-method primal agreement (ILS plateau + `scip_tree` incumbent). Rationale: the
+primal/dual diagnostic above showed the residual 160+ gap is dual slack over near-ties, and the
+question "is the last 3e-3 worth proving" is answered by measuring what the objective is even
+determined to.
+
+**The noise-floor measurement** (`battery/results/contiguity/eps_noise_floor/eps_bootstrap.py`).
+On the hardest dual pair, C7b_s1 A2/B2 (197 zips), 60 bootstrap draws under the contestability
+noise model with **θ/λ held fixed** at reference (so parameter uncertainty is excluded):
+`A_z, B_z ← ·lognormal(0, 0.10)`, `M_z ← ·lognormal(0, 0.06)` floored at `1.02(A+B)`, free Nash
+solved exactly per draw (35 s total):
+
+| statistic of the optimal log-product | value (nats) |
+|---|---|
+| std across draws | **8.4e-3** |
+| IQR | 1.33e-2 |
+| median \|shift vs base\| | 8.0e-3 |
+| p90 \|shift vs base\| | 2.15e-2 |
+| zips flipped vs base allocation | median 24 / 197 (p90 28) |
+
+So `EPS_CERT = 5e-3` sits at ~0.6× the one-σ *data*-noise of the objective itself — and the
+measured floor is a lower bound on the real uncertainty, since θ/λ ranges (which contestability
+also sweeps) add more. In economic terms ε = 5e-3 bounds the unproven improvement at ≤ 0.5 % of
+the Nash product (~0.25 % per gain), while a single re-measurement of the books moves the
+optimum by ~0.8 % and reassigns ~12 % of the zips. The achievability side: the worst W6b/ILS
+residual is 3.9e-3 (169 zips), so all seven large pairs are ε-certified today with ~25 %
+headroom; 1e-3 would fail 169/197 and was rejected for that reason; 1e-2 exceeds the noise IQR
+and certifies nothing the data could distinguish anyway.
+
+**Implementation.** `contig_methods/base.py` gains `EPS_CERT` (method-level status semantics
+untouched — `optimal` still requires `CERT_TOL`); `contiguity_bench.py` phase 3 stamps a per-row
+`eps_certified` flag (feasible ∧ valid ∧ min(own gap, gap vs UB\*) ≤ ε, cumulative over tier 1)
+into `rows_scored.jsonl` and an `eps_certified_frac` column into `summary.csv`.
+
+**Consequence for the programme.** S3's pass criterion on T3 is tier 2 + primal agreement;
+the dual-side work (deeper fractional separation, E1) is thereby an improvement track, not a
+blocker. The ε value should be revisited once against the *twin's* noise floor when T3 lands
+(same script, twin instance) — value concentration on real data could plausibly widen, not
+narrow, the floor.

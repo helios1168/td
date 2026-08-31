@@ -513,6 +513,7 @@ def _frac(rows, pred):
 
 
 SUMMARY_COLS = ["method", "base_method", "rho", "tier", "n_rows", "certified_frac",
+                "eps_certified_frac",
                 "rooted_optimal_frac", "gap_limit_frac", "feasible_frac", "median_t_to_cert",
                 "median_gap_nats_at_cap", "worst_gap", "mean_cost_of_contiguity", "ef1_frac",
                 "named_failures_certified", "errors"] + [f"gap_at_{t}" for t in GAP_TIMES]
@@ -543,6 +544,13 @@ def phase3(run_dir: Path, log: Log) -> dict:
         r["UB_star_global"] = u
         lb = r.get("LB")
         r["gap_vs_UB_star"] = None if (u is None or lb is None) else u - lb
+        # two-tier acceptance (2026-08-30): eps-certified = a feasible, valid row whose
+        # best available gap (own certificate or cross-method UB*) is <= base.EPS_CERT.
+        # Cumulative: every CERT_TOL-certified row is also eps-certified.
+        _gaps = [g for g in (r.get("gap_vs_UB_star"), r.get("gap_nats")) if g is not None]
+        r["eps_certified"] = bool(
+            r.get("valid") and r.get("feasible") is True
+            and (r.get("valid_certificate") or (_gaps and min(_gaps) <= base.EPS_CERT)))
         if u is not None and lb is not None and lb > u + base.CERT_TOL:
             bugs.append(dict(instance=r.get("instance"), method=r.get("method"),
                              rho=r.get("rho"), LB=lb, UB_star_global=u,
@@ -567,6 +575,7 @@ def phase3(run_dir: Path, log: Log) -> dict:
         row = dict(method=method, base_method=(rs[0].get("base_method") if rs else ""),
                    rho=rho, tier=tier, n_rows=len(rs),
                    certified_frac=_frac(rs, lambda r: bool(r.get("valid_certificate"))),
+                   eps_certified_frac=_frac(rs, lambda r: bool(r.get("eps_certified"))),
                    rooted_optimal_frac=_frac(rs, lambda r: r.get("status_eff") == "optimal_rooted"),
                    gap_limit_frac=_frac(rs, lambda r: r.get("status") == "gap_limit"),
                    feasible_frac=_frac(rs, lambda r: r.get("feasible") is True),
