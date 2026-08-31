@@ -8,6 +8,14 @@ does not override them.
 
 ## 0. Resume — read this first in a fresh session
 
+**State on 2026-08-31 (early):** **W6c merged** (`063e556`; `RESULTS.md` §W6c): exact post-hoc
+certificate with zero new deps (HiGHS as oracle, all pruning re-derived in exact integer
+arithmetic; product/AM-GM OA — no logs; Farkas pruning + cut ageing). **124/135-zip incumbents
+proved exact global optima** (trap 15's tolerance-floor caveat settled: gap 0), C4/C9-named
+incumbents also optimal, no incumbent refuted; 320 rigorous 1.7e-4 at 3600 s (depth-first
+frontier limit — best-first is the follow-up). Tier 1 now has a rigorous instrument via the
+`cert_exact` post-pass. Waiting on: user's Snowflake schema (critical path), Studio reboot
+(launchd wedge), then S3 when the twin lands. Earlier —
 **State on 2026-08-30 (22:30):** **W6d merged** (`cf7b0b2`; `RESULTS.md` §W6d): incumbents
 descended to convergence + 5 s ILS on the F1 start; S0 unchanged. 2400 s rerun of the five
 large pairs: **all five ε-certified** (first full sweep under the two-tier criterion); 320

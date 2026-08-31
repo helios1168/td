@@ -361,3 +361,57 @@ diagnostic @1200 s as baselines):
   needle — deeper-than-root fractional separation, E1 reductions on real sparse-glue
   instances, or W6c exact bounds. The ε tier is already met everywhere, so none of it blocks
   S3.
+
+## W6c — exact post-hoc optimality certificate — 2026-08-31 (`w6c_2026-08-30`)
+
+**Scope.** New standalone certifier `contig_methods/cert_exact.py` + tests (merged `063e556`;
+240 fast tests). No solver file touched; registry unchanged (defines no `solve`).
+
+**Route.** Every planned exact-MILP engine was unavailable on this machine (the pyscipopt
+wheel's SCIP lacks exact-solve support; no scip/soplex/glpk binaries; no pip, no network), so
+the certifier is a **hybrid exact branch-and-bound with zero new dependencies**: HiGHS
+(`highspy`) is only an oracle, and every pruning decision is re-derived in exact
+integer/rational arithmetic. Three load-bearing ideas: (i) **no logarithm is ever evaluated**
+— the objective is monotone in the product `g_a·g_b`, an exact rational in the dyadic float
+data, so "is the incumbent optimal" is a purely rational question; (ii) **rational OA by
+AM–GM**: for any rationals p,q>0 with p·q ≥ 1, √(g_a g_b) ≤ (p·g_a + q·g_b)/2 — tangent
+validity is one integer comparison, replacing rounded log tangents; (iii) **only the pruning
+is exact**: Neumaier–Shcherbina holds for any y ≥ 0, so float duals are rounded to dyadic
+rationals and evaluated over the integers (measured looseness vs the LP optimum: 1.7e-13).
+Two mechanisms were each worth ~2 orders of magnitude: exactly-verified **Farkas-ray pruning**
+(99.7 % of node LPs are infeasible; 660k nodes stuck → 1,752 nodes / 1.0 s on the 44-zip
+pair) and **cut-pool ageing** (135-zip pair 2,633 s → 187 s).
+
+**Results** (ρ=0, one core; `gap_exact` rigorous, nats):
+
+| n | pair | verdict | wall | nodes |
+|---|---|---|---|---|
+| 8–20 | 13 T0 pairs | certified; `UB_exact == brute` as rationals | ≤0.03 s | — |
+| 44–125 | 10 pairs incl. 114/125 | certified | 0.02–324 s | ≤437k |
+| **124** | C7b_s2 A1/B1 | **certified — exact global optimum, gap 0** | 1,692 s | 1.74M |
+| **135** | C7b_s2 A3/B3 | **certified — exact global optimum, gap 0** | 187 s | 174k |
+| 82 | C9-seed2 A3/B3 (named failure, mech. c) | certified — incumbent optimal | 2,529 s | 3.12M |
+| 61 | C4_contested A2/B2 | certified — incumbent optimal | 324 s | 437k |
+| **320** | C7b_s1 A1/B1 | open at 3,600 s; rigorous gap **1.7e-4** | 3,600 s | 3.2M |
+
+**Readings.**
+
+- **The tolerance-floor question (trap 15's caveat) is settled where it was posed:** the
+  124/135-zip `scip_tree` incumbents are the exact global optima — their 1.09e-7 / 2.96e-8
+  residuals were floating-point tolerance, not unclosed search. Both rows are now tier-1
+  certified by a rigorous certificate.
+- **No incumbent anywhere was refuted.** Two pairs `scip_tree` cannot close in its own cap
+  (C4_contested A2/B2, C9-seed2 A3/B3 — the named mechanism-(c) failure) also have provably
+  optimal incumbents.
+- The 320-zip pair's rigorous 1.7e-4 plateaus under the certifier's depth-first frontier
+  (one shallow weakly-bounded sibling dominates the max from 20k to 3.2M nodes); best-first
+  or a bounded-width hybrid is the noted follow-up. Its float gap (1.22e-6, W6d) remains the
+  best working estimate; the exact bound is honest but frontier-limited.
+- Deviations from the ★-approved plan, all reviewed and accepted: product/AM-GM formulation
+  instead of log tangents (logs cannot be exact); a `slack_rel` knob (default 0; a rigorous
+  rational slack, not a tolerance); Farkas pruning and cut ageing added for performance.
+
+**Consequence for the two-tier criterion.** Tier 1 now has a rigorous instrument: any
+tolerance-floor row can be upgraded by a `cert_exact` post-pass (~minutes below ~150 zips).
+The 160+ dual-wall pairs (169/197) remain tier 2 by nature, as expected — no certificate
+scheme fixes real search residuals.

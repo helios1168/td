@@ -6,8 +6,9 @@
 approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point.** On branch
 `contiguity-harness`: harness, unit wave and method wave merged; S0/S1/S2 and the W6b follow-up
 run (`research/contiguity/RESULTS.md`). `scip_tree` (SCIP single tree, root-free separator cuts)
-is the finalist: certifies every pair ≤ 125 zips in seconds, holds 1e-7–4e-3 at 124–464 zips.
-Next: S3 once the synthetic twin lands; candidate units W6c / in-tree primal (PLAN.md §0).
+is the finalist: certifies every pair ≤ 135 zips (124/135 proved exact global optima by W6c's
+`cert_exact` post-pass), all large pairs ε-certified at 5e-3 (two-tier acceptance, W6d);
+169/197 are a confirmed dual wall. Next: S3 once the synthetic twin lands (PLAN.md §0).
 
 ---
 
@@ -288,10 +289,13 @@ return argmax_k g_a[k]*g_b[k]
     load can fire at ~half the wall budget (`_short_stop` retries such a stop); and a certificate from a
     rung at feastol f is a floating-point certificate, rigorous only to O(f·‖duals‖) — usually far
     tighter in practice (simplex vertices are exact unless a tolerance binds: C1-seed2 A3/B3
-    certified to 2e-9 from a 1e-6 rung), but the 124/135-zip residuals of 1.1e-7 / 3.0e-8 may be
-    tolerance rather than search and the harness cannot tell. Cross-method agreement and brute
-    force at n ≤ 20 are the independent checks; a rigorous certificate needs an exact post-hoc
-    bound (candidate unit W6c).
+    certified to 2e-9 from a 1e-6 rung). **Resolved 2026-08-31 by W6c**
+    (`contig_methods/cert_exact.py`, RESULTS.md §W6c): an exact post-hoc branch-and-bound
+    (HiGHS as oracle, all pruning re-derived in exact integer arithmetic, product/AM-GM OA —
+    no logs ever evaluated) proved the 124/135-zip incumbents are the exact global optima —
+    those residuals were tolerance, not search. Run it as a post-pass on any
+    tolerance-floor row; the 160+ dual-wall residuals (169/197) are real search and stay
+    tier 2 (ε=5e-3).
 
 ### Contiguity MILP: three independent failure mechanisms (trap 11)
 
