@@ -8,6 +8,15 @@ does not override them.
 
 ## 0. Resume — read this first in a fresh session
 
+**Queued (approved 2026-08-31): W6e — AM–GM formulation experiment.** Add
+`formulation="amgm"` to `scip_tree`: replace the log objective with `max t`,
+`t ≤ (p·g_a + q·g_b)/2` cuts (p·q ≥ 1; tangency p = √(ĝ_b/ĝ_a)) — the OA of the equivalent
+geometric-mean objective, from W6c's `cert_exact`. Hypothesis: corner gradients grow
+O(1/√g) not O(1/g), so the 1e-9/1e-7 rungs stop aborting and ladder churn drops; expect
+zero change on the 169/197 dual wall (equal relaxation strength). A/B: S0 preset
+non-regression + the seven large pairs at 1200 s + the five former T1 stragglers, `amgm`
+rungs vs the W6b/W6d baselines; report aborts-per-rung, t→cert, gaps. Opus 5 worktree
+build per Part E; scip_tree variant only, no contract changes. Earlier —
 **State on 2026-08-31 (early):** **W6c merged** (`063e556`; `RESULTS.md` §W6c): exact post-hoc
 certificate with zero new deps (HiGHS as oracle, all pruning re-derived in exact integer
 arithmetic; product/AM-GM OA — no logs; Farkas pruning + cut ageing). **124/135-zip incumbents
