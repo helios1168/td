@@ -264,20 +264,103 @@ def test_reps_order_is_deterministic():
     assert R1 == R2 and np.array_equal(U1, U2)
 
 
-def test_bad_candidate_lists_raise():
-    G = nx.path_graph(2)
-    for z in (0, 1):
-        G.nodes[z].update(cand=("A1",), S={"A1": 1.0}, M=5.0)
-    try:
-        nway.candidates(G, 0)
-    except ValueError as e:
-        assert "candidate" in str(e)
-    else:
-        raise AssertionError("expected ValueError for a single-candidate zip")
-    G.nodes[0]["cand"] = ("A1", "A1")
+def test_candidate_arity_is_a_subproblem_matter_not_a_schema_one():
+    """Empty and single candidate lists are legal; `is_contested` is the predicate.
+
+    They were briefly a hard error, which made `candidates()` unusable on exactly the
+    uncontested / vacant / untapped nodes the loader produces.
+    """
+    G = nx.path_graph(3)
+    G.nodes[0].update(cand=(), S={}, M=5.0)
+    G.nodes[1].update(cand=("A1",), S={"A1": 1.0}, M=5.0)
+    G.nodes[2].update(cand=("A1", "B1"), S={"A1": 1.0, "B1": 2.0}, M=9.0)
+    assert nway.candidates(G, 0) == ()
+    assert nway.candidates(G, 1) == ("A1",)
+    assert [nway.is_contested(G, z) for z in (0, 1, 2)] == [False, False, True]
+
+
+def test_duplicate_candidates_raise():
+    G = nx.path_graph(1)
+    G.nodes[0].update(cand=("A1", "A1"), S={"A1": 1.0}, M=5.0)
     try:
         nway.candidates(G, 0)
     except ValueError as e:
         assert "duplicate" in str(e)
     else:
         raise AssertionError("expected ValueError for duplicate candidates")
+
+
+# ------------------------------------------------------- unowned book (vacancy filler)
+def filler_path(n=6):
+    """Every zip contested by A1/B1, with a slab of book carrying no incumbent."""
+    G = nx.path_graph(n)
+    for i in range(n):
+        S = {"A1": 1.0 + 0.5 * i, "B1": 2.0}
+        free = 3.0
+        T = sum(S.values()) + free
+        need = max(v + THETA * (T - v) for v in list(S.values()) + [free])
+        G.nodes[i].update(cand=("A1", "B1"), S=S, S_free=free, M=need + 1.0)
+    return G
+
+
+def test_filler_is_never_a_candidate_but_counts_as_book():
+    """S_free raises every candidate's utility and adds no rep of its own."""
+    G = filler_path()
+    nodes = sorted(G)
+    U, R = nway.utilities(G, nodes, theta=THETA, lam=LAM)
+    assert R == ["A1", "B1"], R                       # no phantom filler rep
+    H = G.copy()
+    for z in H:
+        H.nodes[z]["S_free"] = 0.0
+    U0, R0 = nway.utilities(H, nodes, theta=THETA, lam=LAM)
+    assert R0 == R
+    assert (U > U0).all(), "unowned book must raise every candidate's utility"
+
+
+def test_filler_capture_modes_are_ordered_and_exact():
+    """c_free is c2 / c1 / lam, and full > theta because c1 > c2 for theta < 1."""
+    G = filler_path()
+    nodes = sorted(G)
+    c1, c2 = 1.0 - LAM, THETA * (1.0 - LAM)
+    got = {}
+    for mode in ("theta", "full", "opportunity"):
+        U, R = nway.utilities(G, nodes, theta=THETA, lam=LAM, filler_capture=mode)
+        got[mode] = U
+    base = {"theta": c2, "full": c1, "opportunity": LAM}
+    for mode, U in got.items():
+        for j, z in enumerate(nodes):
+            S = nway.books(G, z)
+            T = sum(S.values())
+            free = nway.free_book(G, z)
+            for k, i in enumerate(R):
+                want = (c1 * S[i] + c2 * (T - S[i]) + base[mode] * free
+                        + LAM * G.nodes[z]["M"])
+                assert math.isclose(U[k, j], want, rel_tol=0, abs_tol=1e-12), (mode, z, i)
+    assert (got["full"] > got["theta"]).all()          # c1 > c2 whenever theta < 1
+
+
+def test_filler_capture_rejects_unknown_mode():
+    G = filler_path()
+    try:
+        nway.utilities(G, sorted(G), theta=THETA, lam=LAM, filler_capture="whatever")
+    except ValueError as e:
+        assert "filler_capture" in str(e)
+    else:
+        raise AssertionError("expected ValueError for an unknown filler_capture")
+
+
+def test_no_free_book_reduces_to_the_plain_model():
+    """Absent S_free, every capture mode gives the two-rep answer -- no silent drift."""
+    G = two_rep_path(8)
+    nodes = sorted(G)
+    ua, ub = base.utilities(G, nodes, THETA, LAM)
+    for mode in ("theta", "full", "opportunity"):
+        U, R = nway.utilities(G, nodes, theta=THETA, lam=LAM, filler_capture=mode)
+        assert np.allclose(U[0], ua) and np.allclose(U[1], ub), mode
+
+
+def test_headroom_counts_the_unowned_book():
+    G = filler_path()
+    assert nway.headroom_violations(G, theta=THETA) == []
+    G.nodes[0]["S_free"] = 500.0
+    assert [z for z, *_ in nway.headroom_violations(G, theta=THETA)] == [0]

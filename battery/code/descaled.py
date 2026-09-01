@@ -15,17 +15,25 @@ this graph and the real one have the same optimal allocations, the same gaps and
 certificates.  Only rho > 0 mixes a log-scale term with a raw perimeter count and therefore
 notices the scale -- see NWAY.md.
 
-Three node classes come out of `cand(z) = {i : S_i(z) > 0}`:
+Four node classes come out of `cand(z) = {i : S_i(z) > 0}`, filler keys excluded:
 
     contested    >= 2 candidates   the actual decision problem
     uncontested  == 1 candidate    owner is forced; no binary, but the zip still carries
                                    utility into that rep's gain and occupies adjacency
-    untapped     == 0 candidates   opportunity with nobody's book on it; no candidate can
-                                   own it, so it is carried for adjacency only
+    vacant       == 0 candidates   sales exist but only under a vacancy filler key -- real
+                                   book, real firm, no incumbent person.  Nobody can claim
+                                   it by legacy, which makes these the zips most genuinely
+                                   up for grabs.
+    untapped     == 0 candidates   no sales at all; opportunity with nobody's book on it
 
-`load_descaled` returns all three, and the caller decides.  Silently dropping the untapped
-zips would change the graph's connectivity -- they are exactly the "zero-value glue" of
-failure regime (d) -- so they stay in `G` and are named in the result instead.
+`load_descaled` returns all four, and the caller decides.  Silently dropping untapped or
+vacant zips would change the graph's connectivity -- they are exactly the "zero-value glue"
+of failure regime (d) -- so they stay in `G` and are named in the result instead.
+
+Filler book arrives as the node attribute `S_free` and is *never* a candidate: an objective
+term for a vacancy would have the solver bargaining on behalf of an empty chair.  It is
+still real production, so it stays in the instance and every candidate capitalises it at a
+rate set by `nway.utilities(filler_capture=...)` -- see NWAY.md 6.7.
 """
 from __future__ import annotations
 
@@ -43,7 +51,8 @@ class Descaled:
     G: "nx.Graph"                              # every zip, with cand/S/M/state
     contested: list = field(default_factory=list)    # >= 2 candidates
     uncontested: dict = field(default_factory=dict)  # zip -> its single forced owner
-    untapped: list = field(default_factory=list)     # no candidate at all
+    vacant: list = field(default_factory=list)       # only filler book; no candidate
+    untapped: list = field(default_factory=list)     # no sales at all
     firm: dict = field(default_factory=dict)         # rep -> firm label
     meta: dict = field(default_factory=dict)
 
@@ -55,7 +64,13 @@ class Descaled:
     def summary(self) -> str:
         return (f"{self.G.number_of_nodes():,} zips / {self.G.number_of_edges():,} edges; "
                 f"{len(self.contested):,} contested, {len(self.uncontested):,} uncontested, "
-                f"{len(self.untapped):,} untapped; {len(self.reps):,} reps")
+                f"{len(self.vacant):,} vacant, {len(self.untapped):,} untapped; "
+                f"{len(self.reps):,} reps")
+
+    @property
+    def undecided(self) -> list:
+        """Zips no candidate can own: vacant plus untapped.  Needs an allocation rule."""
+        return sorted(self.vacant + self.untapped)
 
 
 def load_descaled(path, keep_untapped: bool = True) -> Descaled:
@@ -71,16 +86,17 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
     n = obj["nodes"]
     zips, m_rel, shares = n["z"], n["m_rel"], n["share"]
     states = n.get("state") or [""] * len(zips)
-    if not (len(zips) == len(m_rel) == len(shares) == len(states)):
+    free = n.get("share_free") or [0.0] * len(zips)
+    if not (len(zips) == len(m_rel) == len(shares) == len(states) == len(free)):
         raise ValueError(f"{path}: node columns have mismatched lengths")
 
     G = nx.Graph()
-    contested, uncontested, untapped = [], {}, []
-    for z, m, sh, st in zip(zips, m_rel, shares, states):
+    contested, uncontested, vacant, untapped = [], {}, [], []
+    for z, m, sh, st, fr in zip(zips, m_rel, shares, states, free):
         m = float(m)
         S = {rep: float(s) * m for rep, s in sh.items()}       # S_i = s_i * m_rel
         cand = tuple(sorted(S))
-        attrs = dict(cand=cand, S=S, M=m)
+        attrs = dict(cand=cand, S=S, M=m, S_free=float(fr or 0.0) * m)
         if st:
             attrs["state"] = st
         G.add_node(z, **attrs)
@@ -88,6 +104,8 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
             contested.append(z)
         elif len(cand) == 1:
             uncontested[z] = cand[0]
+        elif attrs["S_free"] > 0:
+            vacant.append(z)
         else:
             untapped.append(z)
 
@@ -99,9 +117,10 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
     if not keep_untapped:
         G.remove_nodes_from(untapped)
 
-    return Descaled(G=G, contested=sorted(contested), uncontested=dict(sorted(uncontested.items())),
-                    untapped=sorted(untapped), firm=dict(obj.get("firm") or {}),
-                    meta=dict(obj.get("meta") or {}))
+    return Descaled(G=G, contested=sorted(contested),
+                    uncontested=dict(sorted(uncontested.items())),
+                    vacant=sorted(vacant), untapped=sorted(untapped),
+                    firm=dict(obj.get("firm") or {}), meta=dict(obj.get("meta") or {}))
 
 
 def check_descaled(d: Descaled, theta: float = 0.40) -> list:

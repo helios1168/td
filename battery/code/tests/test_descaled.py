@@ -247,3 +247,77 @@ def test_summary_and_meta():
         assert d.meta.get("scale_stripped") is True
         assert set(d.firm) == set(d.reps) | set(d.firm)      # firms keyed by surrogate ids
         assert all(r.startswith("R") for r in d.reps)
+
+
+# ------------------------------------------------------------- vacancy filler keys
+FILLER = "VACANT_TERRITORY"
+
+
+def fake_real_with_filler(n=12, seed=5):
+    """As `fake_real`, plus zips whose only book sits under a vacancy filler key."""
+    zips, reps, M, sales, edges = fake_real(n, seed)
+    sales = list(sales)
+    vacant_zips = [z for i, z in enumerate(zips) if i % 5 == 4]     # the untapped ones
+    for z in vacant_zips:
+        sales.append((z, FILLER, "F_A", M[z] * 0.05))               # now vacant, not untapped
+    sales.append((zips[0], FILLER, "F_A", M[zips[0]] * 0.03))       # filler beside real reps
+    return zips, reps, M, sales, edges, vacant_zips
+
+
+def _round_trip_filler(tmp):
+    ex = _exporter()
+    zips, reps, M, sales, edges, vacant_zips = fake_real_with_filler()
+    sp, op, gp = _write_inputs(tmp, zips, M, sales, edges)
+    rc = ex.main(["export", "--sales", sp, "--opportunity", op, "--graph", gp,
+                  "--filler-key", FILLER, "--out", tmp, "--yes"])
+    assert rc == 0, f"exporter returned {rc}"
+    d = descaled.load_descaled(os.path.join(tmp, "instance_descaled.json.gz"))
+    return d, vacant_zips
+
+
+def test_filler_never_becomes_a_candidate():
+    """The vacancy key must not appear as a rep -- an objective term for an empty chair."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d, _ = _round_trip_filler(tmp)
+        assert FILLER not in d.reps
+        assert FILLER not in d.firm
+        for z in d.G:
+            assert FILLER not in d.G.nodes[z]["cand"]
+            assert FILLER not in d.G.nodes[z]["S"]
+        import gzip
+        assert FILLER not in gzip.open(
+            os.path.join(tmp, "instance_descaled.json.gz"), "rt").read()
+
+
+def test_filler_only_zips_become_vacant_not_untapped():
+    """Sales under a filler key make a zip vacant: real book, no incumbent, no candidate."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d, vacant_zips = _round_trip_filler(tmp)
+        assert set(d.vacant) == set(vacant_zips), (d.vacant, vacant_zips)
+        assert not d.untapped, "these zips have sales, so nothing should be untapped now"
+        for z in d.vacant:
+            assert d.G.nodes[z]["cand"] == ()
+            assert d.G.nodes[z]["S_free"] > 0
+        assert set(d.undecided) == set(d.vacant)
+
+
+def test_filler_book_reaches_candidates_as_free_book():
+    """Where a filler sits beside real reps, its book raises their utility via S_free."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d, _ = _round_trip_filler(tmp)
+        withfree = [z for z in d.contested if d.G.nodes[z]["S_free"] > 0]
+        assert withfree, "fixture should put filler book on a contested zip"
+        nodes = d.contested
+        U, R = nway.utilities(d.G, nodes, theta=THETA, lam=LAM)
+        H = d.G.copy()
+        for z in H:
+            H.nodes[z]["S_free"] = 0.0
+        U0, _ = nway.utilities(H, nodes, reps_order=R, theta=THETA, lam=LAM)
+        j = nodes.index(withfree[0])
+        assert (U[:, j] >= U0[:, j]).all() and (U[:, j] > U0[:, j]).any()
+
+
+def test_check_descaled_accepts_a_filler_instance():
+    with tempfile.TemporaryDirectory() as tmp:
+        d, _ = _round_trip_filler(tmp)
+        assert descaled.check_descaled(d, theta=THETA) == []

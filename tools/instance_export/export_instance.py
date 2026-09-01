@@ -145,7 +145,8 @@ class Instance(object):
     """Descaled instance.  `share[z][rep]` in [0,1]; `m_rel[z]` = M_z / median(positive M)."""
 
     def __init__(self):
-        self.share = defaultdict(dict)     # zip -> {rep -> s}
+        self.share = defaultdict(dict)     # zip -> {rep -> s}, real reps only
+        self.free = {}                     # zip -> share booked under a vacancy filler key
         self.m_rel = {}                    # zip -> relative opportunity
         self.firm = {}                     # rep -> firm label
         self.state = {}                    # zip -> state (optional)
@@ -154,7 +155,8 @@ class Instance(object):
 
 
 def build(sales_path, opp_path, graph_path, states_path=None,
-          theta=THETA_DEFAULT, u_col=None, v_col=None, keep_scale=False):
+          theta=THETA_DEFAULT, u_col=None, v_col=None, keep_scale=False,
+          filler_keys=()):
     sales = read_rows(sales_path)
     opp = read_rows(opp_path)
     if not sales or not opp:
@@ -186,8 +188,9 @@ def build(sales_path, opp_path, graph_path, states_path=None,
 
     # --- sales -> shares -------------------------------------------------------
     inst = Instance()
-    raw = defaultdict(dict)
-    n_rows = n_joined = n_nonpositive = 0
+    raw, raw_free = defaultdict(dict), defaultdict(float)
+    fillers = {str(k).strip() for k in filler_keys}
+    n_rows = n_joined = n_nonpositive = n_filler = 0
     for r in sales:
         n_rows += 1
         z, rep = norm_id(r[c_zip]), str(r[c_rep]).strip()
@@ -201,6 +204,13 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         if z not in M or M[z] <= 0:
             continue
         n_joined += 1
+        if rep in fillers:
+            # a vacancy placeholder: real book, real firm, but no incumbent person.  It must
+            # never become a candidate owner (the objective would try to be fair to a
+            # vacancy) while its production still counts as book at z.
+            n_filler += 1
+            raw_free[z] += v
+            continue
         raw[z][rep] = raw[z].get(rep, 0.0) + v
         if c_firm is not None and rep not in inst.firm:
             inst.firm[rep] = str(r[c_firm]).strip()
@@ -216,10 +226,13 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         inst.m_rel[z] = M[z] / kappa
         for rep, v in per_rep.items():
             inst.share[z][rep] = v / M[z]
+    for z, v in raw_free.items():
+        inst.m_rel[z] = M[z] / kappa
+        inst.free[z] = v / M[z]
 
-    # zips with opportunity but no sales: untapped glue, carried for adjacency only
+    # zips with opportunity but no sales at all: untapped glue, carried for adjacency only
     for z, v in M.items():
-        if z not in inst.share and v > 0:
+        if z not in inst.m_rel and v > 0:
             inst.m_rel[z] = v / kappa
 
     # --- states ----------------------------------------------------------------
@@ -238,6 +251,10 @@ def build(sales_path, opp_path, graph_path, states_path=None,
 
     # --- candidate structure ---------------------------------------------------
     ncand = Counter(len(inst.share.get(z, {})) for z in inst.m_rel)
+    n_vacant = sum(1 for z in inst.m_rel
+                   if not inst.share.get(z) and inst.free.get(z, 0.0) > 0)
+    n_untapped = sum(1 for z in inst.m_rel
+                     if not inst.share.get(z) and not inst.free.get(z, 0.0))
     inst.report = dict(
         n_zips=len(inst.m_rel),
         n_edges=len(inst.edges),
@@ -247,7 +264,11 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         join_rate=round(join_rate, 6),
         cand_histogram={str(k): v for k, v in sorted(ncand.items())},
         zips_uncontested=ncand.get(1, 0),
-        zips_untapped=ncand.get(0, 0),
+        zips_vacant=n_vacant,
+        zips_untapped=n_untapped,
+        zips_with_filler=sum(1 for v in inst.free.values() if v > 0),
+        n_filler_rows=n_filler,
+        n_filler_keys=len(fillers),
         zips_contested=sum(v for k, v in ncand.items() if k >= 2),
         max_candidates=max(ncand) if ncand else 0,
         scale_stripped=not keep_scale,
@@ -262,15 +283,21 @@ def validate(inst, theta=THETA_DEFAULT):
     """Model validity in share space.  Returns a list of problems (empty == valid)."""
     problems = []
     bad_share = [z for z, d in inst.share.items() if any(s < 0 or s > 1 for s in d.values())]
+    bad_share += [z for z, f in inst.free.items() if f < 0 or f > 1]
     if bad_share:
         problems.append(f"{len(bad_share)} zip(s) with a share outside [0,1] "
                         f"(e.g. {bad_share[:3]}) -- sales exceed opportunity there")
 
     # headroom, share form:  1 >= max_i ( s_i + theta*(t - s_i) )
     viol = []
-    for z, d in inst.share.items():
-        t = sum(d.values())
-        need = max((s + theta * (t - s)) for s in d.values())
+    for z in inst.m_rel:
+        d = inst.share.get(z, {})
+        f = inst.free.get(z, 0.0)
+        vals = list(d.values()) + ([f] if f > 0 else [])
+        if not vals:
+            continue
+        t = sum(d.values()) + f
+        need = max((s + theta * (t - s)) for s in vals)
         if need > 1.0 + 1e-9:
             viol.append((z, need))
     if viol:
@@ -292,7 +319,7 @@ def mask_reps(inst):
     only job is to guarantee no upstream label -- however innocuous it looks -- rides along.
     """
     total = defaultdict(float)
-    for z, d in inst.share.items():
+    for z, d in inst.share.items():  # noqa: PLC0206
         for rep, s in d.items():
             total[rep] += s * inst.m_rel[z]
     order = sorted(total, key=lambda r: (-total[r], str(r)))
@@ -310,7 +337,7 @@ def mask_reps(inst):
 
 # ------------------------------------------------------------------------ write
 def guard(payload):
-    """Refuse to emit anything that looks like a currency amount.
+    """Refuse to emit anything that looks like a currency amount, or an upstream label.
 
     Shares are in [0,1] by construction and m_rel is a ratio to the median, so a value in the
     thousands means the descaling did not happen.  This is the last line before the file is
@@ -330,11 +357,21 @@ def guard(payload):
         for s in row.values():
             if not (0.0 <= s <= 1.0):
                 raise GuardError(f"share {s!r} outside [0,1] -- not a share")
+    for s in payload["nodes"]["share_free"]:
+        if not (0.0 <= s <= 1.0):
+            raise GuardError(f"free share {s!r} outside [0,1] -- not a share")
+    for key in guard.filler_keys:
+        if key and key in json.dumps(payload):
+            raise GuardError(f"filler key {key!r} appears in the payload; the sentinel's "
+                             f"own name must not leave -- only the count does")
     if "kappa" in json.dumps(payload.get("meta", {})):
         raise GuardError("meta carries kappa; the divisor must not leave")
 
 
-def write(inst, out_dir, theta, lam, verbose=True):
+guard.filler_keys = ()          # set by `write`; checked above against the whole payload
+
+
+def write(inst, out_dir, theta, lam, verbose=True, filler_keys=()):
     os.makedirs(out_dir, exist_ok=True)
     zips = sorted(inst.m_rel)
     payload = dict(
@@ -344,6 +381,7 @@ def write(inst, out_dir, theta, lam, verbose=True):
             m_rel=[rsig(inst.m_rel[z]) for z in zips],
             share=[{r: rsig(s) for r, s in sorted(inst.share.get(z, {}).items())}
                    for z in zips],
+            share_free=[rsig(inst.free.get(z, 0.0)) for z in zips],
             state=[inst.state.get(z, "") for z in zips],
         ),
         edges=dict(u=[u for u, _ in inst.edges], v=[v for _, v in inst.edges]),
@@ -355,6 +393,7 @@ def write(inst, out_dir, theta, lam, verbose=True):
             **{k: v for k, v in inst.report.items() if k != "kappa"},
         ),
     )
+    guard.filler_keys = tuple(filler_keys)
     guard(payload)
     path = os.path.join(out_dir, "instance_descaled.json.gz")
     with gzip.open(path, "wt", encoding="utf-8") as fh:
@@ -372,11 +411,13 @@ def report_text(inst):
          f"  reps                 {r['n_reps']:>10,}",
          f"  sales rows joined    {r['join_rate']:>10.4f}",
          "",
-         "candidate structure (cand(z) = reps with positive sales)", "-" * 46,
-         f"  untapped   (0 reps)  {r['zips_untapped']:>10,}   carried for adjacency only",
+         "candidate structure (cand(z) = real reps with positive sales)", "-" * 46,
+         f"  untapped   (0 reps)  {r['zips_untapped']:>10,}   no sales at all; adjacency only",
+         f"  vacant     (0 reps)  {r['zips_vacant']:>10,}   sales, but only under a filler key",
          f"  uncontested(1 rep )  {r['zips_uncontested']:>10,}   owner forced, no decision",
          f"  contested  (2+ reps) {r['zips_contested']:>10,}   the actual problem",
          f"  max candidates       {r['max_candidates']:>10,}",
+         f"  zips with filler book{r['zips_with_filler']:>10,}   ({r['n_filler_rows']:,} rows)",
          "", "  |cand| histogram: " + ", ".join(f"{k}:{v}" for k, v in
                                                  r["cand_histogram"].items()),
          "",
@@ -398,12 +439,16 @@ def main(argv=None):
     p.add_argument("--lam", type=float, default=0.30)
     p.add_argument("--u-col", default=None)
     p.add_argument("--v-col", default=None)
+    p.add_argument("--filler-key", action="append", default=[], metavar="KEY",
+                   help="a rep_id that marks a VACANCY rather than a person. Repeatable. "
+                        "Its sales stay in the instance as unowned book but it never "
+                        "becomes a candidate owner.")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     a = p.parse_args(argv)
 
     try:
         inst = build(a.sales, a.opportunity, a.graph, a.states, theta=a.theta,
-                     u_col=a.u_col, v_col=a.v_col)
+                     u_col=a.u_col, v_col=a.v_col, filler_keys=a.filler_key)
     except InputError as e:
         print(f"input error: {e}", file=sys.stderr)
         return 4
@@ -433,7 +478,7 @@ def main(argv=None):
             print("nothing written.")
             return 0
     try:
-        write(inst, a.out, a.theta, a.lam)
+        write(inst, a.out, a.theta, a.lam, filler_keys=a.filler_key)
     except GuardError as e:
         print(f"GUARD: {e}\nnothing written.", file=sys.stderr)
         return 2

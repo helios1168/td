@@ -36,20 +36,38 @@ import numpy as np
 # rep_a/rep_b/A/B and are read through `candidates` / `books` below.
 CAND = "cand"
 BOOK = "S"
+FREE = "S_free"          # book at z with no incumbent rep (vacancy filler); never a candidate
+
+# How an inheriting rep capitalises unowned book.  The coefficient multiplies S_free in
+# `utilities`; see NWAY.md 6.7 for why this is a decision and not a default.
+FILLER_CAPTURE = ("theta", "full", "opportunity")
 
 
 # ------------------------------------------------------------------ schema shim
 def candidates(G, z) -> tuple:
-    """Candidate owners of zip `z`, as a tuple, for native and legacy two-rep nodes."""
+    """Candidate owners of zip `z`, as a tuple, for native and legacy two-rep nodes.
+
+    May be empty (untapped, or vacant with only filler book) or a single rep (uncontested).
+    The ">= 2 candidates" requirement belongs to the *subproblem* a solver decides, not to
+    the schema -- `is_contested` is the predicate for that.
+    """
     d = G.nodes[z]
     if CAND in d:
         c = tuple(d[CAND])
-        if len(c) < 2:
-            raise ValueError(f"zip {z!r} has {len(c)} candidate(s); need >= 2")
         if len(set(c)) != len(c):
             raise ValueError(f"zip {z!r} has duplicate candidates {c!r}")
         return c
     return (d["rep_a"], d["rep_b"])
+
+
+def is_contested(G, z) -> bool:
+    """True iff `z` has two or more candidate owners -- i.e. there is a decision to make."""
+    return len(candidates(G, z)) >= 2
+
+
+def free_book(G, z) -> float:
+    """Book at `z` carrying no incumbent rep (the vacancy filler).  0 when absent."""
+    return float(G.nodes[z].get(FREE, 0.0) or 0.0)
 
 
 def books(G, z) -> dict:
@@ -76,28 +94,44 @@ def reps(G, nodes) -> list:
 
 
 # ------------------------------------------------------------------- utilities
-def utilities(G, nodes, reps_order=None, theta: float = 0.40, lam: float = 0.30):
+def utilities(G, nodes, reps_order=None, theta: float = 0.40, lam: float = 0.30,
+              filler_capture: str = "theta"):
     """(U, reps) with `U[k, j]` = u of rep `reps[k]` for `nodes[j]`, 0 where not a candidate.
 
     Non-candidates are held at 0 rather than at their notional utility: a rep cannot own a zip
     it is not a candidate for, so the entry is never read by a feasible allocation, and 0
     keeps `gains` a plain masked sum.  Use `candidate_matrix` for the feasibility mask itself.
+
+    Unowned book (`S_free`, the vacancy filler) is real production with no incumbent, so it
+    is never a candidate but every candidate capitalises it::
+
+        u_i(z) = c1*S_i + c2*(T_z - S_i) + c_free*S_free + lam*M_z
+
+    `filler_capture` sets `c_free`: "theta" -> c2, the same discount as a live rep's book;
+    "full" -> c1, on the argument that theta < 1 exists because a *departing* rep pulls
+    business away and a vacancy has nobody left to pull it; "opportunity" -> lam, treating
+    the orphaned book as untapped market.  These give materially different allocations --
+    NWAY.md 6.7.
     """
     nodes = list(nodes)
     R = list(reps_order) if reps_order is not None else reps(G, nodes)
     idx = {i: k for k, i in enumerate(R)}
     c1, c2 = 1.0 - lam, theta * (1.0 - lam)
+    if filler_capture not in FILLER_CAPTURE:
+        raise ValueError(f"filler_capture {filler_capture!r} not in {FILLER_CAPTURE}")
+    c_free = {"theta": c2, "full": c1, "opportunity": lam}[filler_capture]
     U = np.zeros((len(R), len(nodes)), float)
     for j, z in enumerate(nodes):
         S = books(G, z)
         T = float(sum(S.values()))
+        free = free_book(G, z)
         M = float(G.nodes[z]["M"])
         for i in candidates(G, z):
             k = idx.get(i)
             if k is None:                      # rep filtered out of this subproblem
                 continue
             s = float(S.get(i, 0.0))
-            U[k, j] = c1 * s + c2 * (T - s) + lam * M
+            U[k, j] = c1 * s + c2 * (T - s) + c_free * free + lam * M
     return U, R
 
 
@@ -122,8 +156,12 @@ def headroom_violations(G, nodes=None, theta: float = 0.40) -> list:
     bad = []
     for z in (G.nodes() if nodes is None else nodes):
         S = books(G, z)
-        T = float(sum(S.values()))
-        need = max((s + theta * (T - s)) for s in S.values()) if S else 0.0
+        free = free_book(G, z)
+        T = float(sum(S.values())) + free
+        # conservative: the unowned book counts as a possible holder, so a zip whose filler
+        # production alone exceeds its opportunity is still flagged
+        vals = list(S.values()) + ([free] if free > 0 else [])
+        need = max((s + theta * (T - s)) for s in vals) if vals else 0.0
         M = float(G.nodes[z]["M"])
         if M < need - 1e-12:
             bad.append((z, M, need))

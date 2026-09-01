@@ -39,6 +39,7 @@ It is one file. **Read it before you run it** — that is the point of it being 
 | `--opportunity` | `zip_code, M` | one row per zip |
 | `--graph` | edge table | parquet / feather / csv; `u,v` or `src,dst` or first two columns |
 | `--states` | `zip_code, state` | optional |
+| `--filler-key KEY` | — | repeatable; a `rep_id` that marks a **vacancy**, not a person |
 
 Column names are matched case- and underscape-insensitively, with the usual synonyms
 (`zcta`/`zip`/`postal_code`, `rep`/`wholesaler_id`, `amount`/`production`/`premium`).
@@ -66,17 +67,28 @@ Step 2 prints the same report and asks for confirmation before writing (`--yes` 
 ## What the report tells you
 
 ```
-candidate structure (cand(z) = reps with positive sales)
-  untapped   (0 reps)       1,204   carried for adjacency only
+candidate structure (cand(z) = real reps with positive sales)
+  untapped   (0 reps)         412   no sales at all; adjacency only
+  vacant     (0 reps)         792   sales, but only under a filler key
   uncontested(1 rep )       8,110   owner forced, no decision
   contested  (2+ reps)     23,900   the actual problem
   max candidates                5
+  zips with filler book     1,340   (1,655 rows)
 ```
+
+Pass `--filler-key` for every sentinel your extract uses for a vacant territory. Its sales
+stay in the instance as **unowned book** (`S_free`) that any inheriting rep partly captures,
+but it never becomes a candidate owner — an objective term for a vacancy would have the
+solver bargaining on behalf of an empty chair. The sentinel's own name does not leave: only
+the counts do.
 
 Under the rule agreed 2026-08-31, **a rep is a candidate for a zip only where it has
 positive sales there.** That produces three classes and you should look at their sizes:
 
 - **contested** — two or more claimants. The actual optimisation problem.
+- **vacant** — sales exist but only under a filler key. Real book, real firm, no incumbent
+  person. Nobody can claim these by legacy, which makes them the zips most genuinely up for
+  grabs — and, under the candidacy rule, ownable by nobody until an allocation rule is set.
 - **uncontested** — exactly one claimant. The owner is forced; the zip still carries utility
   into that rep's gain and still occupies space in the adjacency graph, but there is no
   decision to make. If this class is very large, most of the map is already settled.

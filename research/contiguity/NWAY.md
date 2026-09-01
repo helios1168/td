@@ -1,6 +1,6 @@
 # N-way division — adapting the two-player machinery to 3+ reps per zip
 
-**Opened:** 2026-08-31 · **Branch:** `wt/adapt-8-31-2026` · **Status:** design + Phase 1 landed + real-instance data route
+**Opened:** 2026-08-31 · **Branch:** `wt/adapt-8-31-2026` · **Status:** design + Phase 1 landed + real-instance data route + national-channel reframing
 
 The problem in practice has taken a new shape: **a single ZCTA can be claimed by three or more
 wholesalers**, not one legacy A-rep against one legacy B-rep. This file is the design for
@@ -212,9 +212,36 @@ Two consequences to carry forward:
    generator's tail knobs need recalibrating, not re-pointing.
 
 `cand(z) = {i : S_i(z) > 0}` — a rep is a candidate only where it has sales (settled
-2026-08-31). This makes `cand` derivable from the sales table alone, with no coverage source,
-and produces three node classes: **contested** (≥2, the problem), **uncontested** (=1, owner
-forced), **untapped** (=0, nobody's book — kept for adjacency, allocation rule open).
+2026-08-31). This makes `cand` derivable from the sales table alone, with no coverage source.
+
+### Vacancies: the filler key (2026-08-31)
+
+Some territories have no official rep and their sales are booked under a **filler key** — a
+rep-shaped sentinel that is not a person. It carries real sales, real opportunity and a real
+firm. It must **never** become a candidate: an objective term for a vacancy has the solver
+bargaining on behalf of an empty chair, and `Σ log g_i` would trade real reps' welfare away
+to feed it.
+
+The schema already separates the two roles, which is what makes this cheap: `utilities`
+computes `T_z` from *all* books but loops over `cand` only. So filler book arrives as a
+separate node attribute `S_free`, is excluded from `cand`, and every candidate capitalises it:
+
+```
+u_i(z) = c1·S_i + c2·(T_z − S_i) + c_free·S_free + λ·M_z
+```
+
+That gives **four** node classes:
+
+| class | `cand` | book | meaning |
+|---|---|---|---|
+| contested | ≥ 2 | real | the decision problem |
+| uncontested | 1 | real | owner forced, no binary |
+| **vacant** | 0 | filler only | real book, no incumbent — nobody can claim it by legacy |
+| untapped | 0 | none | opportunity with no book at all |
+
+Vacant zips are commercially the most interesting: they are genuinely up for grabs, with no
+legacy claim on either side. They are also, under the candidacy rule, ownable by nobody — so
+they need an allocation rule, same as untapped. See §6.6.
 
 ## 6. Open — needs your call
 
@@ -233,8 +260,116 @@ forced), **untapped** (=0, nobody's book — kept for adjacency, allocation rule
    now that real instances can be exported rather than generated.
 5. ~~Does a rep's bundle stay inside its candidate zips?~~ **Settled 2026-08-31:** yes, and
    `cand(z) = {i : S_i(z) > 0}`, so candidacy is derivable from sales alone.
+7. **How is vacancy book capitalised?** `filler_capture` selects `c_free`:
+   - `theta` → `c2`, the same discount as a live rep's book. Conservative; assumes vacant
+     business is as person-sticky as anyone's.
+   - `full` → `c1`. **My recommendation.** `theta < 1` exists because a *departing* rep pulls
+     relationships away with them; a vacancy has nobody left to pull. Whatever book survives
+     an already-departed rep has, by definition, survived the departure.
+   - `opportunity` → `λ`, treating orphaned book as untapped market. Defensible if the
+     "sales" in vacant territories are house or inbound business with no relationship at all.
+
+   These give materially different allocations, so the exporter reports the vacant count and
+   `nway.utilities` takes the mode explicitly rather than defaulting quietly. The default is
+   `theta` only because it is the no-change case; it is probably not the right answer.
+
 6. **What owns an untapped zip?** `cand(z) = ∅` there, so no rep can take it under the rule
    above, yet it carries opportunity and it holds the graph together (regime (d) glue).
    Options: leave unallocated, assign by adjacency to the owner of a neighbouring zip, or
    admit a wider candidate set for these zips only. The exporter reports the count so the
    magnitude is visible before this is decided.
+
+
+---
+
+## 7. The national channel — reframing, decided 2026-08-31
+
+The business is standing up a **new "national" channel**, carving the two largest firms out
+of the financial-institutions and wirehouse channels, with territories targeted at roughly
+equal opportunity — about **$1B each**.
+
+That is not the two-player merger problem, and it is not quite the N-way problem either. It
+is **greenfield balanced districting**. Decided: **two-stage**, with the $1B as an emergent
+target rather than a constraint.
+
+### 7.1 Nash welfare on a common measure *is* equal-size districting
+
+Every zip lands in exactly one district, so `Σ_j M_j` is the same for every partition.
+Maximising `Σ_j log M_j` subject to a fixed sum equalises the terms (`∂/∂M_j → 1/M_j = μ`).
+So the Nash objective already *is* the balance objective — the same optimum, not an
+approximation of it. Set `k = total_opportunity / $1B` and balance falls out.
+
+This is why the target does not need to be a hard band. It also sidesteps **trap 2**:
+explicitly minimising a spread can leave everyone worse off, whereas Nash reaches the same
+balance as the maximiser of a concave objective and stays Pareto efficient. The battery's
+own equalisation finding (an unconstrained equaliser reaching KS gap 5.2e-8 but
+Pareto-dominated by Nash) is the same phenomenon from the other side.
+
+`test_channel.py::test_nash_welfare_is_equal_size_districting` brute-forces every contiguous
+3-way cut of P₁₂ and confirms the argmax is the balanced one.
+
+### 7.2 The welfare decomposition
+
+```
+Σ_i g_i = Σ_z [ λ·M_z + c2·T_z + c_free·S_free ]     ← partition-invariant
+        + Σ_z (c1 − c2)·S_owner(z)(z)                ← maximised by keeping zips with their incumbent
+```
+
+The objective splits into **balance the territories** and **where there is slack, leave
+business with the rep who already has it**. At ~5% saturation with λ=0.3 the opportunity term
+is roughly 90% of `u_i` and the book differentiation roughly 10% — so a balanced map with a
+modest continuity tilt. *Check the ratio against real saturation*: it decides how much the
+legacy books move the map at all.
+
+### 7.3 Two stages
+
+| stage | problem | status |
+|---|---|---|
+| **1 — draw** | k balanced contiguous districts on opportunity alone | **the hard part**; balanced contiguous districting |
+| **2 — match** | assign retained reps to districts | **built** — `contig_methods/channel.py`, exact |
+
+Stage 2 is a max-weight matching on **log** weights: `g_ij = Σ_{z∈A_j} u_i(z)`, maximise
+`Σ_i log g_{i,σ(i)}` by the Hungarian algorithm. Same objective as stage 1, O(n³), exact.
+Nash rather than utilitarian matching matters — a utilitarian match will hand one rep a
+district holding almost none of their book if the total looks good.
+
+**Rectangular matching selects the retained set.** With more reps than districts the unmatched
+reps are the ones not retained, and the choice is well-posed precisely because k is fixed
+(§6.3's objection does not bite).
+
+**Known cost of the split.** Stage 1 cannot see relationships, so a good matching may not be
+available at stage 2 — the same objection CLAUDE.md raises to "decouple fairness from
+compactness": it relocates the difficulty rather than removing it. Mitigation, cheap because
+stage 2 is milliseconds: generate a *portfolio* of stage-1 draws and keep the one that staffs
+best (`channel.score_draws`). Not the joint optimum, but close to free.
+
+### 7.4 What this does to the data requirement
+
+**Stage 1 needs almost none of the confidential data** — only `(zip, M)` and the adjacency
+graph. No books, no rep ids, no shares. Opportunity is plausibly third-party market sizing.
+
+**Stage 2 can run entirely on the work machine**, since it needs only the returned district
+map plus internal books.
+
+The descaled-export route (§5b) stays correct and is still the right channel for anything
+that does need to travel, but the national-channel problem needs a fraction of it.
+
+### 7.5 What is now the open risk
+
+Stage 1 destroys the census decomposition. The bilateral pair structure came from *overlap
+between two legacy rep maps*; a greenfield channel has no such structure, so stage 1 is one
+k-way partition over the whole footprint.
+
+- `scip_tree` certifies to **135 zips**. Validi, Buchanan & Lykhovyd certify ~**1,500 units**
+  for political districting, which is the published state of the art for exactly this problem.
+- If the footprint is larger than that, the options are pre-aggregation (cluster ZCTAs, or
+  work at county/CBSA level), ε-certified acceptance (tier 2, already in the harness), or a
+  heuristic with a reported bound.
+- **Symmetry** is the new hazard: k anonymous districts are interchangeable labels, which
+  costs branch-and-bound its pruning. The standard remedy is the centre-based (Hess)
+  formulation — assign each zip to one of k *centres* — which breaks the symmetry by
+  construction and is what the districting literature uses.
+
+**Open, and gating stage 1: how many ZCTAs carry business for these two firms, and what is
+the total opportunity?** The second gives `k`; the first decides whether certified optimality
+is reachable at all.
