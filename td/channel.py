@@ -166,6 +166,78 @@ def allocate_districts(component_M: dict, k: int, target=None) -> dict:
     )
 
 
+# --------------------------------------- completing a draw: zips stage 1 could not see
+def place_by_state(states, to_district, missing, M=None) -> dict:
+    """Place zips with no coordinates into an existing draw, by state co-membership.
+
+    Stage 1 (`solvers.centers`) is geometric, so a zip the gazetteer carries no internal point
+    for is simply absent from the draw -- 6 of the real instance's 1,229.  They still carry
+    opportunity and still have to land in some district, and the cheapest honest signal left
+    is the state:
+
+    * assign `z` to the district holding the **plurality of already-placed zips from z's own
+      state**.  A district is a compact cluster, so its state composition says where it sits;
+      the plurality district for `NY` is the New York district.
+    * **ties** among plurality districts, and an **unknown state** (absent from `states`, or a
+      state no placed zip carries), fall back to the district with the **smallest total M** --
+      the placement that helps balance rather than hurting it.  A tie is broken *within* the
+      tied set, so the state signal is never thrown away when it exists.
+
+    Placements are made one at a time in sorted order, and both the state counts and the
+    district masses are updated after each, so a run of fallback zips spreads over districts
+    instead of piling onto whichever happened to be lightest at the start.
+
+    `states` is `{zip: state}`; a zip absent from it or mapped to a falsy value is unknown.
+    `M` is `{zip: opportunity}` and should cover the missing zips too -- without it the mass
+    fallback degrades to "the district with the fewest zips", which is a poorer proxy but
+    still a balance-helping one.  Returns a **new** completed mapping; nothing is mutated.
+
+    This lives in `channel` rather than in `centers` by dependency direction: it needs no
+    geometry at all, only the `{zip: district}` representation that `channel` already owns
+    (`districts_from`, `district_opportunity`, `balance_report`), while `centers` is by
+    contract pure functions on arrays.
+    """
+    out = dict(to_district)
+    todo = [z for z in sorted(set(missing), key=base._sort_key) if z not in out]
+    if not todo:
+        return out
+    D = districts_from(to_district)
+    if not D:
+        raise ValueError("cannot place zips into a draw with no districts")
+
+    states = states or {}
+
+    def _mass(z):
+        return float(M.get(z, 0.0)) if M is not None else 1.0
+
+    mass = {d: 0.0 for d in D}
+    per_state = {}                              # state -> {district: count of placed zips}
+    for z, d in to_district.items():
+        mass[d] = mass.get(d, 0.0) + _mass(z)
+        st = states.get(z) or ""
+        if st:
+            counts = per_state.setdefault(st, {})
+            counts[d] = counts.get(d, 0) + 1
+
+    def lightest(cands):
+        return min(cands, key=lambda d: (mass.get(d, 0.0), base._sort_key(d)))
+
+    for z in todo:
+        st = states.get(z) or ""
+        counts = per_state.get(st) if st else None
+        if counts:
+            top = max(counts.values())
+            d = lightest([c for c in D if counts.get(c, 0) == top])
+        else:
+            d = lightest(D)
+        out[z] = d
+        mass[d] = mass.get(d, 0.0) + _mass(z)
+        if st:
+            seen = per_state.setdefault(st, {})
+            seen[d] = seen.get(d, 0) + 1
+    return out
+
+
 def component_opportunity(G, nodes=None) -> dict:
     """Opportunity per connected component of the footprint, keyed by a sorted-first node."""
     import networkx as nx

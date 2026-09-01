@@ -134,3 +134,124 @@ def test_off_map_and_missing_zips_are_reported_not_raised():
     assert missing == ["00000"] and off_map == ["99501"]
     n, share = um.drop_share({"10001": 3.0, "99501": 1.0}, xy)
     assert n == 1 and abs(share - 0.25) < 1e-12
+
+
+# ------------------------------------------------------------------ the districts map
+def _clustered(per=10, k=3):
+    """~30 fake CONUS zips in `k` well-separated clusters, with a district label each."""
+    rng = np.random.default_rng(5)
+    mids = [(-120.0, 37.0), (-97.0, 31.0), (-75.0, 41.0)][:k]
+    zips, lons, lats, labels = [], [], [], {}
+    for j, (lo, la) in enumerate(mids):
+        for i in range(per):
+            z = f"{10000 + 1000 * j + i:05d}"
+            zips.append(z)
+            lons.append(lo + float(rng.normal(0, 1.2)))
+            lats.append(la + float(rng.normal(0, 1.2)))
+            labels[z] = f"D{j + 1:02d}"
+    x, y = geo.project(lons, lats)
+    xy = {z: (float(a), float(b)) for z, a, b in zip(zips, x, y)}
+    M = {z: float(v) for z, v in zip(zips, rng.uniform(0.5, 30.0, len(zips)))}
+    return zips, xy, M, labels
+
+
+def test_figure_districts_writes_png_without_a_basemap():
+    um = _us_maps()
+    _, xy, M, labels = _clustered()
+    with tempfile.TemporaryDirectory() as tmp:
+        p = um.figure_districts(labels, M, xy, None, os.path.join(tmp, "districts.png"))
+        assert os.path.basename(p) == "districts.png"
+        assert os.path.getsize(p) > 10_000, os.path.getsize(p)
+
+
+def test_district_centroids_are_M_weighted():
+    """A heavy zip pulls the label to itself; an unweighted mean would sit in the middle."""
+    um = _us_maps()
+    xy = {"a": (0.0, 0.0), "b": (10.0, 0.0)}
+    cx, _ = um.district_centroids({"a": "D01", "b": "D01"}, {"a": 9.0, "b": 1.0}, xy)["D01"]
+    assert abs(cx - 1.0) < 1e-9, cx
+
+
+def test_neighbor_coloring_is_valid_on_a_small_adjacency():
+    """Only neighbour-distinctness is promised, and it must actually hold."""
+    um = _us_maps()
+    adj = {"D01": {"D02", "D03"}, "D02": {"D01", "D03"}, "D03": {"D01", "D02", "D04"},
+           "D04": {"D03"}}
+    colors = um.color_districts(adj)
+    assert set(colors) == set(adj)
+    for d, nbrs in adj.items():
+        for e in nbrs:
+            assert colors[d] != colors[e], (d, e, colors[d])
+    # a 3-clique needs 3 hues, and the pendant may reuse one -- global uniqueness is not
+    # promised, so assert the count is at most, not exactly, the vertex count
+    assert 3 <= len(set(colors.values())) <= 4
+
+
+def test_neighbor_coloring_survives_a_palette_shorter_than_the_clique():
+    """The palette can run out; that must degrade to a duplicate, not raise."""
+    um = _us_maps()
+    adj = {a: {b for b in "abcd" if b != a} for a in "abcd"}     # K4, 2 colours available
+    colors = um.color_districts(adj, palette=["#111111", "#222222"])
+    assert set(colors) == set(adj)
+    assert set(colors.values()) <= {"#111111", "#222222"}
+
+
+def test_centroid_neighbors_is_symmetric_and_local():
+    um = _us_maps()
+    cent = {f"D{i:02d}": (float(i), 0.0) for i in range(1, 7)}   # a line of six
+    adj = um.centroid_neighbors(cent, n_near=1)
+    for d, nbrs in adj.items():
+        for e in nbrs:
+            assert d in adj[e], (d, e)                           # symmetrised
+    assert adj["D01"] == {"D02"}                                 # nearest is the next along
+
+
+def test_figure_districts_colors_neighbors_apart():
+    """The colouring the figure would use, on the figure's own centroids."""
+    um = _us_maps()
+    _, xy, M, labels = _clustered()
+    cent = um.district_centroids(labels, M, xy)
+    adj = um.centroid_neighbors(cent, n_near=2)
+    colors = um.color_districts(adj)
+    for d, nbrs in adj.items():
+        for e in nbrs:
+            assert colors[d] != colors[e]
+
+
+def test_read_draw_round_trips_a_draw_csv():
+    um = _us_maps()
+    with tempfile.TemporaryDirectory() as tmp:
+        p = os.path.join(tmp, "draw.csv")
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write("zip,district\n01103,D01\n90001,D02\n")
+        got = um.read_draw(p)
+    assert got == {"01103": "D01", "90001": "D02"}        # leading zero survives
+
+
+def test_zip_neighbors_sees_interleaving_the_centroids_miss():
+    """Two scattered districts whose centroids coincide still come out as neighbours.
+
+    Districts here are center-based, not contiguous, so a district's M-weighted centroid can
+    sit where it holds nothing.  These two interleave point-by-point and their centroids land
+    on top of each other, so the centroid graph is uninformative and the zip graph is not.
+    """
+    um = _us_maps()
+    xy = {f"z{i:02d}": (float(i), 0.0) for i in range(10)}
+    districts = {f"z{i:02d}": ("D01" if i % 2 == 0 else "D02") for i in range(10)}
+    adj = um.zip_neighbors(districts, xy, n_near=2)
+    assert adj["D01"] == {"D02"} and adj["D02"] == {"D01"}
+    colors = um.color_districts(adj)
+    assert colors["D01"] != colors["D02"]
+
+
+def test_merge_adjacency_unions_and_symmetrises():
+    um = _us_maps()
+    merged = um.merge_adjacency({"a": {"b"}}, {"b": {"c"}, "c": set()})
+    assert merged["a"] == {"b"} and merged["b"] == {"a", "c"} and merged["c"] == {"b"}
+
+
+def test_color_districts_spreads_over_the_palette():
+    """Least-used-first, not first-fit: an edgeless graph must not collapse onto one hue."""
+    um = _us_maps()
+    adj = {f"D{i:02d}": set() for i in range(1, 7)}
+    assert len(set(um.color_districts(adj).values())) == 6

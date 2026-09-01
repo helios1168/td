@@ -1,8 +1,14 @@
-"""us_maps.py -- four US bubble maps of the national-channel instance.
+"""us_maps.py -- US bubble maps of the national-channel instance.
 
     .venv/bin/python3 tools/us_maps.py instance_descaled.json.gz --out figures/
 
-writes `opportunity.png`, `firm_a.png`, `firm_b.png`, `contestability.png`.
+writes `opportunity.png`, `firm_a.png`, `firm_b.png`, `contestability.png`.  Adding
+
+    --districts battery/results/<run-id>/draw.csv
+
+writes a fifth, `districts.png`: the stage-1 draw on the same basemap and the same area
+encoding as `opportunity.png`, recoloured by district identity.  The four originals are
+unaffected by the flag.
 
 What the maps are for
 ---------------------
@@ -265,6 +271,246 @@ def figure_contestability(a_values, b_values, xy, states, out, *, firm_a="A", fi
     return _save(fig, out)
 
 
+# ------------------------------------------------------------------ the districts map
+# A qualitative palette: tab20's even entries (the saturated member of each light/dark pair)
+# plus two of tab20b's, with the two near-duplicate greys and the second olive dropped.  Hues
+# only need to be *locally* distinguishable -- see `color_districts` -- so 12 is ample for
+# k = 13 and the palette is chosen for separation at bubble size, not for a global ordering.
+QUAL = [
+    "#1f77b4",   # blue
+    "#ff7f0e",   # orange
+    "#2ca02c",   # green
+    "#d62728",   # red
+    "#9467bd",   # purple
+    "#8c564b",   # brown
+    "#e377c2",   # pink
+    "#17becf",   # cyan
+    "#bcbd22",   # olive
+    "#393b79",   # indigo
+    "#8c6d31",   # bronze
+    "#7f7f7f",   # grey  (last on purpose: it reads as "other" and is the least wanted hue)
+]
+LABEL_TEXT = "#2b2b2b"         # district labels: dark grey, never the district's own colour
+
+
+def district_centroids(districts, values, xy) -> dict:
+    """`{district: (x, y)}` at the M-weighted centroid of its plottable zips.
+
+    Weighted by value rather than by zip count so the label lands where the district's
+    *business* is, which is where a reader's eye already is -- a district with one dense metro
+    and a long rural tail would otherwise be labelled out in the tail.
+    """
+    acc = {}
+    for z, d in districts.items():
+        if z not in xy:
+            continue
+        w = max(float(values.get(z, 0.0)), 0.0)
+        sx, sy, sw, n = acc.get(d, (0.0, 0.0, 0.0, 0))
+        acc[d] = (sx + w * xy[z][0], sy + w * xy[z][1], sw + w, n + 1)
+    out = {}
+    for d, (sx, sy, sw, n) in acc.items():
+        if sw > 0:
+            out[d] = (sx / sw, sy / sw)
+        elif n:                                   # a district of value-less zips: plain mean
+            pts = [xy[z] for z, dd in districts.items() if dd == d and z in xy]
+            out[d] = (sum(p[0] for p in pts) / n, sum(p[1] for p in pts) / n)
+    return out
+
+
+def centroid_neighbors(centroids, n_near=4) -> dict:
+    """Symmetric nearest-neighbour graph over district centroids: `{district: set(...)}`.
+
+    A proper district adjacency would need the zip adjacency, which is shattered on this
+    instance (547 components) and would leave most district pairs unrelated.  The centroid
+    kNN graph is the honest stand-in: it is exactly the relation the colouring has to respect,
+    "these two districts sit next to each other on the page".
+    """
+    ids = sorted(centroids)
+    adj = {d: set() for d in ids}
+    for d in ids:
+        x0, y0 = centroids[d]
+        order = sorted((e for e in ids if e != d),
+                       key=lambda e: ((centroids[e][0] - x0) ** 2
+                                      + (centroids[e][1] - y0) ** 2, str(e)))
+        for e in order[:max(int(n_near), 0)]:
+            adj[d].add(e)
+            adj[e].add(d)                          # symmetrised: kNN is not itself symmetric
+    return adj
+
+
+def zip_neighbors(districts, xy, n_near=6) -> dict:
+    """District adjacency read off the *zips*: two districts are neighbours when a zip of one
+    is among the `n_near` nearest zips of the other.  `{district: set(...)}`, symmetric.
+
+    This is the graph a reader's eye actually builds.  It is kept alongside the centroid graph
+    rather than instead of it because a district here need not be one blob -- stage 1 is
+    center-based, not contiguous -- and the M-weighted centroid of a scattered district can
+    land in empty country (D04's sits in west Texas, where it holds nothing), which makes the
+    centroid graph blind to exactly the pairs whose bubbles interleave on the page.
+
+    Measured on the real k=13 draw: degrees 2-5, i.e. far sparser than the 12-colour palette
+    needs -- the districts really are spatially separated at zip level even when their
+    centroids are not informative.
+    """
+    ids = sorted({districts[z] for z in districts if z in xy}, key=str)
+    zs = [z for z in sorted(districts, key=str) if z in xy]
+    adj = {d: set() for d in ids}
+    if len(zs) < 2:
+        return adj
+    P = np.array([xy[z] for z in zs], float)
+    lab = [districts[z] for z in zs]
+    k = min(int(n_near) + 1, len(zs))
+    for lo in range(0, len(zs), 256):                    # chunked: n^2 in one array is avoidable
+        hi = min(lo + 256, len(zs))
+        d2 = ((P[lo:hi, None, :] - P[None, :, :]) ** 2).sum(axis=2)
+        idx = np.argpartition(d2, k - 1, axis=1)[:, :k]
+        for r in range(hi - lo):
+            a = lab[lo + r]
+            for b in (lab[int(j)] for j in idx[r]):
+                if b != a:
+                    adj[a].add(b)
+                    adj[b].add(a)
+    return adj
+
+
+def merge_adjacency(*graphs) -> dict:
+    """Union of several `{node: set}` graphs over the union of their nodes."""
+    out = {}
+    for g in graphs:
+        for d, nbrs in g.items():
+            out.setdefault(d, set()).update(nbrs)
+            for e in nbrs:
+                out.setdefault(e, set()).add(d)
+    return out
+
+
+def color_districts(adj, palette=QUAL) -> dict:
+    """Greedy graph colouring: `{district: colour}` with **no two neighbours sharing a hue**.
+
+    Only neighbour-distinctness is guaranteed.  Global uniqueness is best-effort -- with 13
+    districts over a 12-colour palette two of them *must* repeat, and the point of colouring
+    the spatial graph is that the repeat is then guaranteed to be somewhere far away on the
+    map, e.g. a Californian and a Floridian district, where no reader can confuse them.
+
+    Vertices are taken in Welsh-Powell order (highest degree first, id as tie-break).  Each
+    takes the **least-used** palette entry no already-coloured neighbour holds -- not the
+    first free one: first-fit is equally valid but collapses onto the head of the palette (5
+    hues for 13 districts on the real draw), which throws away the best-effort half of the
+    promise for nothing.  If the palette runs out -- it does not on a graph this sparse, but
+    the branch is real -- the vertex takes the globally least-used colour, so the failure
+    degrades to a duplicate rather than an exception.
+    """
+    ids = sorted(adj, key=lambda d: (-len(adj[d]), str(d)))
+    rank = {c: i for i, c in enumerate(palette)}
+    used, out = {c: 0 for c in palette}, {}
+    for d in ids:
+        taken = {out[e] for e in adj[d] if e in out}
+        free = [c for c in palette if c not in taken] or list(palette)
+        c = min(free, key=lambda c: (used[c], rank[c]))
+        out[d] = c
+        used[c] += 1
+    return out
+
+
+def _district_legend(fig, districts, values, colors, order):
+    """Compact table in the right margin: swatch, district id, share of total M.
+
+    Replaces the colourbar -- district identity is nominal, so a continuous ramp would be a
+    category error; and the one number a reader wants per district is its share of the whole,
+    which is the balance the draw exists to deliver.
+    """
+    import matplotlib.patches as mpatches
+
+    per = {}
+    for z, d in districts.items():
+        per[d] = per.get(d, 0.0) + float(values.get(z, 0.0))
+    total = sum(per.values()) or 1.0
+    ax = fig.add_axes([0.868, 0.5 - 0.021 * len(order) - 0.02, 0.125,
+                       0.042 * len(order) + 0.04])
+    ax.set_axis_off()
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, len(order) + 1)
+    ax.text(0.0, len(order) + 0.45, "district   share of M", color=TEXT, fontsize=8,
+            fontweight="bold", va="center")
+    for i, d in enumerate(order):
+        y = len(order) - 1 - i + 0.5
+        ax.add_patch(mpatches.Rectangle((0.0, y - 0.28), 0.13, 0.56,
+                                        facecolor=colors[d], edgecolor="white",
+                                        linewidth=0.4, alpha=0.9))
+        ax.text(0.2, y, str(d), color=TEXT, fontsize=8, va="center")
+        ax.text(1.0, y, f"{100.0 * per.get(d, 0.0) / total:.1f}%", color=TEXT, fontsize=8,
+                va="center", ha="right")
+    return ax
+
+
+def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKER,
+                     alpha=ALPHA, footer=FOOTER, title=None, subtitle=None, n_near=4,
+                     palette=QUAL, label=True):
+    """The drawn districts: area ∝ M as on `opportunity.png`, colour = district identity.
+
+    `districts` is `{zip: district_id}` -- exactly the mapping stage 2 consumes, so the figure
+    is drawn from the same object the staffing was computed on and cannot drift from it.
+
+    Sizing is deliberately identical to `figure_opportunity` (same `_sizes`, same
+    `_size_legend`), so the two maps overlay in the reader's memory: the districts map is the
+    opportunity map recoloured, and nothing about the value encoding changed.
+
+    Colour is *nominal*, so there is no colourbar and no ordering to read into the hues --
+    only "these two bubbles are in different districts".  Districts are direct-labelled at
+    their M-weighted centroids in a white-haloed box, which removes the legend round-trip for
+    the identity question and leaves the margin table to carry the one quantity that matters,
+    each district's share of total M.
+    """
+    vals = {z: float(values.get(z, 0.0)) for z in districts}
+    # `keep` is built once and everything (positions, sizes, colours) is read off it in the
+    # same order -- recomputing the small-first sort separately for the colours would put a
+    # silent mis-pairing one equal-value tie away.
+    keep = sorted(((z, v) for z, v in vals.items() if v > 0 and z in xy),
+                  key=lambda kv: kv[1])
+    x = np.array([xy[z][0] for z, _ in keep], float)
+    y = np.array([xy[z][1] for z, _ in keep], float)
+    v = np.array([w for _, w in keep], float)
+    order = sorted({d for z, d in districts.items() if z in xy}, key=str)
+    centroids = district_centroids(districts, values, xy)
+    adj = merge_adjacency(centroid_neighbors(centroids, n_near),
+                          zip_neighbors(districts, xy, n_near + 2))
+    colors = color_districts(adj, palette)
+
+    title = title or f"Drawn districts — {len(order)} territories on equal opportunity"
+    subtitle = subtitle or ("bubble area ∝ M_z  ·  colour = district (nominal; adjacent "
+                            "districts never share a hue)  ·  labels at M-weighted centroids")
+    fig, ax = _canvas(states, title, subtitle, footer)
+    if v.size == 0:
+        return _save(fig, out)
+
+    c = [colors[districts[z]] for z, _ in keep]
+    ax.scatter(x, y, s=_sizes(v, float(v.max()), max_marker), c=c, alpha=alpha,
+               linewidths=EDGE_W, edgecolors="white")
+
+    if label:
+        for d in order:
+            if d not in centroids:
+                continue
+            cx, cy = centroids[d]
+            ax.text(cx, cy, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
+                    ha="center", va="center", zorder=5,
+                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
+                              edgecolor="none", alpha=0.82))
+    _district_legend(fig, districts, values, colors, order)
+    _size_legend(ax, v, float(v.max()), "M (descaled)", max_marker)
+    return _save(fig, out)
+
+
+def read_draw(path) -> dict:
+    """`{zip: district}` from a `draw.csv` written by `tools/run_draw.py` (`zip,district`)."""
+    import csv as _csv
+    with open(path, newline="", encoding="utf-8") as fh:
+        rows = list(_csv.DictReader(fh))
+    if not rows or "zip" not in rows[0] or "district" not in rows[0]:
+        raise ValueError(f"{path}: expected a CSV with columns zip,district")
+    return {r["zip"].strip(): r["district"].strip() for r in rows}
+
+
 # ------------------------------------------------------------------ instance -> value dicts
 def firm_books(d) -> dict:
     """`{firm: {zip: book}}` from the instance's rep -> firm map.  Reps with no firm are kept
@@ -295,6 +541,8 @@ def main(argv=None):
     ap.add_argument("--out", default="figures", help="output directory (created if absent)")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--no-basemap", action="store_true", help="skip the state outlines")
+    ap.add_argument("--districts", default=None, metavar="DRAW_CSV",
+                    help="a draw.csv from tools/run_draw.py; adds districts.png")
     args = ap.parse_args(argv)
 
     from td import instance as descaled
@@ -341,6 +589,23 @@ def main(argv=None):
     written.append(figure_contestability(books[fa], books[fb], xy, states,
                                          os.path.join(args.out, "contestability.png"),
                                          firm_a=fa, firm_b=fb))
+
+    if args.districts:
+        draw = read_draw(args.districts)
+        stray = [z for z in draw if z not in M]
+        if stray:
+            print(f"WARNING: {len(stray)} zip(s) in the draw are not in the instance, "
+                  f"ignored e.g. {stray[:5]}")
+            draw = {z: d for z, d in draw.items() if z in M}
+        unplaced = [z for z in M if z not in draw]
+        ids = sorted(set(draw.values()), key=str)
+        n_off, share = drop_share({z: M[z] for z in draw}, xy)
+        print(f"{'districts.png':<18} {len(draw):>5,} zips in {len(ids)} districts; "
+              f"{n_off} unplottable ({share:.2%} of their M); "
+              f"{len(unplaced)} instance zip(s) not in the draw")
+        written.append(figure_districts(draw, M, xy, states,
+                                        os.path.join(args.out, "districts.png")))
+
     for p in written:
         print(f"wrote {p}  ({os.path.getsize(p) / 1024:.0f} KB)")
     return 0

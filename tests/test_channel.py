@@ -270,3 +270,86 @@ def test_spread_optima_agree_when_components_are_even():
     r = channel.allocate_districts({"A": 1e9, "B": 1e9, "C": 1e9}, k=3)
     assert r["spread_optima_agree"] is True
     assert r["min_spread_rel"] == r["ceiling_spread_rel"] == 0.0
+
+
+# ------------------------------------- placing the zips stage 1 has no coordinates for
+def _placed_draw():
+    """A 3-district draw whose districts are cleanly state-coded, plus per-zip M.
+
+    D0 is four CA zips, D1 three NY zips, D2 two NY zips -- so NY has a *plurality* district
+    (D1) that is not its only one, which is what the rule has to get right.  Masses are set so
+    D2 is the lightest district, i.e. the fallback target.
+    """
+    to_d = {"CA0": "D0", "CA1": "D0", "CA2": "D0", "CA3": "D0",
+            "NY0": "D1", "NY1": "D1", "NY2": "D1",
+            "NY3": "D2", "NY4": "D2"}
+    states = {"CA0": "CA", "CA1": "CA", "CA2": "CA", "CA3": "CA",
+              "NY0": "NY", "NY1": "NY", "NY2": "NY", "NY3": "NY", "NY4": "NY"}
+    M = {z: 10.0 for z in to_d}
+    M["NY3"] = M["NY4"] = 1.0                      # D2 total 2.0 < D1 30.0 < D0 40.0
+    return states, to_d, M
+
+
+def test_place_by_state_follows_the_same_state_plurality():
+    """A NY zip goes to the district holding most NY zips, even though it is not the lightest."""
+    states, to_d, M = _placed_draw()
+    states["NYX"] = "NY"
+    M["NYX"] = 5.0
+    out = channel.place_by_state(states, to_d, ["NYX"], M)
+    assert out["NYX"] == "D1", out["NYX"]          # plurality (3 NY) beats lightest (D2)
+    assert to_d.get("NYX") is None                 # the input mapping is not mutated
+    assert {z: out[z] for z in to_d} == to_d       # and nothing already placed moves
+
+
+def test_place_by_state_falls_back_to_the_lightest_district():
+    """Unknown state -> smallest total M, which is the balance-helping placement."""
+    states, to_d, M = _placed_draw()
+    M["???"] = 1.0
+    out = channel.place_by_state(states, to_d, ["???"], M)     # no entry in `states` at all
+    assert out["???"] == "D2"
+    # a state no placed zip carries is unknown for this purpose too
+    out2 = channel.place_by_state({**states, "TX0": "TX"}, to_d, ["TX0"], {**M, "TX0": 1.0})
+    assert out2["TX0"] == "D2"
+
+
+def test_place_by_state_breaks_a_plurality_tie_by_mass_within_the_tie():
+    """Two districts hold the state equally: the lighter of *those two* wins, not the lightest."""
+    to_d = {"a0": "D0", "a1": "D0", "b0": "D1", "b1": "D1", "c0": "D2"}
+    states = {"a0": "AZ", "a1": "AZ", "b0": "AZ", "b1": "AZ", "c0": "NV", "a2": "AZ"}
+    M = {"a0": 10.0, "a1": 10.0, "b0": 4.0, "b1": 4.0, "c0": 0.1}
+    out = channel.place_by_state(states, to_d, ["a2"], {**M, "a2": 1.0})
+    # D2 is far lighter, but it holds no AZ zip; among the tied {D0, D1} the lighter is D1
+    assert out["a2"] == "D1"
+
+
+def test_place_by_state_spreads_a_run_of_fallbacks():
+    """Masses update after each placement, so two unknown zips do not both take D2."""
+    states, to_d, M = _placed_draw()
+    M.update({"u0": 40.0, "u1": 1.0})
+    out = channel.place_by_state(states, to_d, ["u0", "u1"], M)
+    assert out["u0"] == "D2"                       # D2 is the lightest at 2.0
+    assert out["u1"] == "D1"                       # D2 is now 42.0, so D1 (30.0) is lightest
+    assert len({out["u0"], out["u1"]}) == 2
+
+
+def test_place_by_state_without_masses_uses_zip_counts():
+    """No `M`: the fallback degrades to the district with the fewest zips, still deterministic."""
+    states, to_d, _ = _placed_draw()
+    out = channel.place_by_state(states, to_d, ["u0"])
+    assert out["u0"] == "D2"                       # 2 zips vs 3 and 4
+    assert channel.place_by_state(states, to_d, ["u0"])["u0"] == out["u0"]
+
+
+def test_place_by_state_is_a_no_op_when_nothing_is_missing():
+    states, to_d, M = _placed_draw()
+    assert channel.place_by_state(states, to_d, [], M) == to_d
+    assert channel.place_by_state(states, to_d, ["CA0"], M) == to_d   # already placed
+
+
+def test_place_by_state_completes_the_draw_for_stage_2():
+    """The completed mapping is what stage 2 consumes: every zip placed, k unchanged."""
+    states, to_d, M = _placed_draw()
+    out = channel.place_by_state({**states, "NYX": "NY"}, to_d, ["NYX", "u0"],
+                                 {**M, "NYX": 3.0, "u0": 3.0})
+    assert set(out) == set(to_d) | {"NYX", "u0"}
+    assert sorted(channel.districts_from(out)) == ["D0", "D1", "D2"]
