@@ -26,9 +26,11 @@ data/tiger/
 data/twin_*
 data/public/
 
-# Census gazetteer / cartographic-boundary cache (td/geo.py) and the maps built from it
+# Census gazetteer / cartographic-boundary cache (td/geo.py).  The cache is ignored; the maps
+# built from it are NOT -- `figures/` is committed, because a figure is a primary artifact and
+# a claim in the docs that nobody can see is worse than 3 MB of PNG.  Regenerate with
+# `tools/us_maps.py` (the header names the flags) and commit the result alongside the change.
 data/geo/
-figures/
 
 # Contiguity harness output (PLAN.md C.1): rows.jsonl, assignments, instance JSONs
 battery/results/
