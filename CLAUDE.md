@@ -1,6 +1,12 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-08-31 · **Branch:** `national-channel`
+**Last updated:** 2026-08-31 (evening) · **Branch:** `national-channel` · **Head:** `6cfdd67`
+
+**Status:** the 2026-08-31 pivot is landed and the tree matches it. Stage 2 (staffing) is
+built and exact; **stage 1 (drawing the districts) is the open work**, and the next step is
+not code — it is the balance ceiling, blocked on **four numbers: opportunity by region**
+(west coast / east coast / Texas / Florida). 33 tracked files, **64 tests pass, 0 fail**.
+**Resume point: `docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -103,7 +109,7 @@ available at stage 2. Mitigation, near-free because stage 2 is milliseconds:
 
 Vacant and untapped zips are **kept in the graph** — dropping them changes connectivity, and
 they are exactly the "zero-value glue" of failure regime (d). Who may own them is open
-(`docs/MODEL.md` §6.6).
+(`docs/MODEL.md` §6).
 
 ---
 

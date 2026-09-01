@@ -4,6 +4,57 @@
 
 Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the export route.
 
+---
+
+## 0. Resume — read this first in a fresh session
+
+**State on 2026-08-31 (evening).** The problem changed shape three times today and the repo
+now matches the final shape. Branch **`national-channel`** (`6cfdd67`), 33 tracked files,
+**64 tests pass, 0 fail, 0 skipped** (`.venv/bin/python3 tests/run_all.py`).
+
+*What landed.* (i) **N-way primitives** — `b8ae73d`: `td/model.py`, a zip can be claimed by
+3+ reps; the two-rep reduction is asserted against the old contract so the existing corpus
+stays interpretable. (ii) **Descaled real-instance route** — `85492ef`: replaces the synthetic
+twin, since the dollar scale is not information the model uses; `tools/instance_export/` +
+`td/instance.py`. (iii) **National-channel reframing and stage 2** — `549e377`: greenfield
+balanced districting, two-stage, staffing solved exactly by Hungarian matching on log weights.
+(iv) **Instance sized and the balance ceiling** — `82d7b6a`: 2,232 zips, 72 reps, ~$6.2B,
+k ≈ 6, disconnected footprint. (v) **Prune and restructure** — `acfdbfe`, `ecbbf84`: 199
+tracked files → 33, `td/` package, `docs/` split, explicit registry, plus the 16-page
+`docs/channel_note/`. (vi) **Adjacency cache dropped** — `6cfdd67`, recipe kept in
+`data/README.md`.
+
+*What it means.* Two results carry the work. **Nash welfare on a common measure IS
+equal-size districting** (§1) — same optimum, not an approximation — so the $1B target needs
+no constraint and trap 2's equalisation pathology is avoided. And **the footprint is
+disconnected**, which both decomposes the problem by region (~500 zips each, near where
+`scip_tree` already works) and puts a **geometric ceiling on balance**: `allocate_districts`
+computes it as a free dual bound, and on illustrative splits $1B ± 10% is already out of reach
+before any solver runs. A correction landed in `ecbbf84`: the earlier claim that ρ > 0 breaks
+scale invariance was **wrong** — the objective is scale-invariant at every ρ ≥ 0, which
+strengthens the descaled export rather than qualifying it.
+
+*What is next, and the decision it needs.* **Stage 1 is the open work** — draw k balanced
+contiguous districts. Before writing any solver, the cheapest and most informative step is the
+balance ceiling, and it is blocked on **four numbers from the user: opportunity by region
+(west coast / east coast / Texas / Florida).** Those give `k`, say whether ~$1B is reachable
+at all, and need no solver and no per-zip data. After that: the stage-1 MILP per §8 of the
+note, centre-based (Hess) to break the k-district symmetry, on the largest region first.
+
+*Also open, and mine to ask rather than assume* (`MODEL.md` §6): empty bundles /
+lexicographic MNW · θ directionality (`θ_{i←j}`) · the brute-force tier re-cut by
+`Π|cand(z)|` · who owns untapped and vacant zips · the filler-capture mode (`theta` is the
+default only because it is the no-change case; `full` is the better argument) · and whether
+71 reps against ~6 territories means a specialist carve-out staffed thinly, which is the
+reading stage 2's "unmatched" output assumes.
+
+Earlier — the two-player merger programme (harness, method wave, S0/S1/S2, W6b/W6c/W6d,
+`scip_tree` certifying every pair ≤ 135 zips with 124/135 proved exact global optima) is on
+branch `contiguity-harness`; its resume point was `research/contiguity/PLAN.md` §0 and its
+record is `docs/RESULTS.md`.
+
+---
+
 
 The business is standing up a **new "national" channel**, carving the two largest firms out
 of the financial-institutions and wirehouse channels, with territories targeted at roughly
