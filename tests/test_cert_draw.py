@@ -223,12 +223,12 @@ def test_proved_is_keyed_on_the_engine_status_only():
 
 
 # ------------------------------------------------------------------- merged report
-def test_certify_merges_all_three_and_says_what_is_not_proved():
+def test_certify_merges_all_four_and_says_what_is_not_proved():
     xy, M, centers, good = two_clusters()
     rep = cert_draw.certify(xy, M, good, centers, 2, time_limit=30.0)
     assert set(rep) >= {"balance_ceiling", "integer_balance_floor",
-                        "assignment_at_centers", "summary", "proved_all"}
-    assert isinstance(rep["summary"], list) and len(rep["summary"]) == 4
+                        "assignment_at_centers", "power_diagram", "summary", "proved_all"}
+    assert isinstance(rep["summary"], list) and len(rep["summary"]) == 5
     assert all(isinstance(line, str) and line for line in rep["summary"])
     blob = " ".join(rep["summary"])
     assert "NOT PROVED" in blob
@@ -246,3 +246,86 @@ def test_certify_reports_an_improvable_draw_as_such():
     rep = cert_draw.certify(xy, M, bad, centers, 2, time_limit=30.0)
     assert rep["assignment_at_centers"]["improved"] is True
     assert "NOT optimal" in " ".join(rep["summary"])
+
+
+# ------------------------------------------ 4. the power-diagram duals, the solver-free bound
+def test_power_diagram_confirms_an_optimal_draw():
+    """The good draw IS the power diagram of its centers, so nothing sits outside its cell."""
+    xy, M, centers, good = two_clusters()
+    res = cert_draw.cert_power_diagram(xy, M, good, centers)
+    assert res["proved"] is True, res["status"]
+    assert res["is_power_diagram"] is True
+    assert res["n_outside_cell"] == 0
+    assert abs(res["rel_gap"]) < 1e-9, res["rel_gap"]
+    assert len(res["weights"]) == 2 and min(res["weights"]) == 0.0   # canonical shift
+
+
+def test_power_diagram_catches_the_swap_the_milp_catches():
+    """Two certificates, one finding: both must call the same swapped draw suboptimal.
+
+    They are computed by different machinery -- a MILP against a max-deviation band, and one
+    LP's duals against mass equalities -- so agreement here is a real cross-check, not a
+    tautology.  The dual bound is the *stronger* statement about the equal-mass problem and
+    the cheaper one to verify; what it adds over the MILP is `n_outside_cell`, which names the
+    zips rather than only the gap.
+    """
+    xy, M, centers, good = two_clusters()
+    bad = good.copy()
+    bad[2], bad[3] = 1, 0
+    power = cert_draw.cert_power_diagram(xy, M, bad, centers)
+    milp = cert_draw.cert_assignment_at_centers(xy, M, bad, centers, time_limit=30.0)
+    assert power["proved"] is True and power["is_power_diagram"] is False
+    assert power["n_outside_cell"] == 2                    # exactly the two swapped points
+    assert power["rel_gap"] > 0.0 and milp["improved"] is True
+    # the masses are equal either way here, so the band buys the MILP nothing and the two
+    # optima coincide -- which is the case where they are directly comparable
+    assert math.isclose(power["lp_bound"], milp["opt_cost"], rel_tol=1e-9)
+
+
+def test_power_bound_is_never_above_the_draw_it_certifies():
+    """A lower bound that exceeded the incumbent would be unsound, not merely loose."""
+    xy, M, centers, good = two_clusters()
+    for lab in (good, np.array([0, 1, 0, 1, 0, 1])):
+        res = cert_draw.cert_power_diagram(xy, M, lab, centers)
+        assert res["lp_bound"] <= res["draw_cost"] + 1e-9, res
+
+
+def test_the_default_targets_are_the_draws_own_masses():
+    """The default is the draw's own balance, and it has to be, for the gap to be a gap.
+
+    A 4-2 draw is *infeasible* for a 3-3 target, so the bound over 3-3 assignments can exceed
+    its cost and `rel_gap` would come out negative -- a number that certifies nothing.  The
+    default sidesteps that: at its own masses the draw is feasible by construction, and here it
+    is also the nearest-center split, so the gap closes to zero.  Asking at 3-3 explicitly must
+    be *refused* as a gap rather than reported as one.
+    """
+    xy = np.array([[0.0, 0.0], [0.5, 0.3], [-0.4, 0.2], [0.2, -0.5],
+                   [10.0, 0.0], [10.5, 0.3]])
+    M = np.ones(6)
+    centers = np.array([[0.0, 0.0], [10.0, 0.0]])
+    lab = np.array([0, 0, 0, 0, 1, 1])
+
+    at_own = cert_draw.cert_power_diagram(xy, M, lab, centers)
+    assert at_own["targets_are_draw_masses"] is True
+    assert at_own["draw_meets_targets"] is True
+    assert at_own["proved"] is True
+    assert at_own["targets"] == [4.0, 2.0]
+    assert at_own["n_outside_cell"] == 0 and abs(at_own["rel_gap"]) < 1e-9
+
+    at_equal = cert_draw.cert_power_diagram(xy, M, lab, centers, targets=[3.0, 3.0])
+    assert at_equal["targets_are_draw_masses"] is False
+    assert at_equal["draw_meets_targets"] is False
+    assert at_equal["draw_target_max_dev"] == 1.0
+    assert at_equal["rel_gap"] is None                 # refused, not reported
+    assert at_equal["lp_bound"] > at_equal["draw_cost"]        # the very trap being guarded
+    assert "NOT a gap" in at_equal["proves"]
+
+
+def test_certify_carries_the_power_certificate_and_its_caveat():
+    xy, M, centers, good = two_clusters()
+    rep = cert_draw.certify(xy, M, good, centers, time_limit=30.0, floor_time_limit=30.0)
+    assert "power_diagram" in rep
+    assert rep["power_diagram"]["proved"] is True
+    line = next(s for s in rep["summary"] if s.startswith("POWER-DIAGRAM"))
+    assert "NOT PROVED" in line
+    assert any("all four certificates" in s for s in rep["summary"])

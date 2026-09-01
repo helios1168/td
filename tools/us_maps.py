@@ -11,9 +11,13 @@ encoding as `opportunity.png`, recoloured by district identity.  And
 
     --regions battery/results/<run-id>/draw.csv
 
-writes `district_regions.png`: the same draw as **filled territory** rather than bubbles --
-each zip's Voronoi catchment, clipped to the landmass and dissolved by district, which is the
-map the business is shown.  The four originals are unaffected by either flag.
+writes `district_regions.png`: the same draw as **filled territory** rather than bubbles, and
+the map the business is shown.  The fill is the **power (Laguerre) diagram** of the 13 district
+centers, weighted by the transportation LP's mass-balance duals -- `k` convex regions with
+exact straight borders, which is the territory a center-based balanced assignment actually
+produces.  `--regions-voronoi` writes the superseded rendering (`district_regions_voronoi.png`,
+each zip's Voronoi catchment dissolved by district) for comparison.  The four originals are
+unaffected by any flag.
 
 What the maps are for
 ---------------------
@@ -417,12 +421,18 @@ def color_districts(adj, palette=QUAL) -> dict:
     return out
 
 
-def _district_legend(fig, districts, values, colors, order):
+def _district_legend(fig, districts, values, colors, order, second=None, second_label=""):
     """Compact table in the right margin: swatch, district id, share of total M.
 
     Replaces the colourbar -- district identity is nominal, so a continuous ramp would be a
     category error; and the one number a reader wants per district is its share of the whole,
     which is the balance the draw exists to deliver.
+
+    `second` adds one more numeric column, `{district: share in [0, 1]}` under the header
+    `second_label`.  The territory map uses it for each district's share of the *map area*,
+    which is where the power diagram's whole point lands: the shares of M are all 7.7% by
+    construction, and the shares of area run from 0.06% to 28%.  Equal opportunity is not equal
+    ground, and putting the two columns side by side is the only way to say so in a legend.
     """
     import matplotlib.patches as mpatches
 
@@ -430,21 +440,29 @@ def _district_legend(fig, districts, values, colors, order):
     for z, d in districts.items():
         per[d] = per.get(d, 0.0) + float(values.get(z, 0.0))
     total = sum(per.values()) or 1.0
-    ax = fig.add_axes([0.868, 0.5 - 0.021 * len(order) - 0.02, 0.125,
-                       0.042 * len(order) + 0.04])
+    wide = second is not None
+    ax = fig.add_axes([0.868 if not wide else 0.855, 0.5 - 0.021 * len(order) - 0.02,
+                       0.125 if not wide else 0.14, 0.042 * len(order) + 0.04])
     ax.set_axis_off()
     ax.set_xlim(0, 1)
     ax.set_ylim(0, len(order) + 1)
-    ax.text(0.0, len(order) + 0.45, "district   share of M", color=TEXT, fontsize=8,
+    head = "district  M" + (f"   {second_label}" if wide else "     share of M")
+    ax.text(0.0, len(order) + 0.45, head, color=TEXT, fontsize=8,
             fontweight="bold", va="center")
+    x_first = 0.62 if wide else 1.0
     for i, d in enumerate(order):
         y = len(order) - 1 - i + 0.5
         ax.add_patch(mpatches.Rectangle((0.0, y - 0.28), 0.13, 0.56,
                                         facecolor=colors[d], edgecolor="white",
                                         linewidth=0.4, alpha=0.9))
         ax.text(0.2, y, str(d), color=TEXT, fontsize=8, va="center")
-        ax.text(1.0, y, f"{100.0 * per.get(d, 0.0) / total:.1f}%", color=TEXT, fontsize=8,
+        ax.text(x_first, y, f"{100.0 * per.get(d, 0.0) / total:.1f}%", color=TEXT, fontsize=8,
                 va="center", ha="right")
+        if wide:
+            v = float(second.get(d, 0.0))
+            # two significant figures at the bottom of the range: 0.06% must not print as 0.1%
+            txt = f"{100.0 * v:.2f}%" if v < 0.01 else f"{100.0 * v:.1f}%"
+            ax.text(1.0, y, txt, color=TEXT, fontsize=8, va="center", ha="right")
     return ax
 
 
@@ -817,10 +835,12 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
                             palette=QUAL, label=True, pad=0.05, report=None):
     """The draw as **filled territory**: each zip's Voronoi catchment, dissolved by district.
 
-    This is the district figure for the business.  `districts.png` answers "how much value sits
-    where"; this one answers "where does my territory stop", which is the question a rep asks
-    first, and it answers it with a boundary that is exact rather than drawn by hand: the line
-    between two adjacent zips of different districts is their perpendicular bisector.
+    **Superseded by `figure_power_regions`** as the business territory map, and kept because the
+    comparison is worth having: this fill is a true statement about the *zips* (the line between
+    two adjacent zips of different districts really is their perpendicular bisector) and a false
+    one about the *method*, whose optimal territory is a power diagram of the centers, not a
+    Voronoi diagram of anything.  Where the two disagree, this one shows the committed draw
+    faithfully and the power diagram shows what compactness would have asked for.
 
     Colours come from `draw_palette`, the same call `figure_districts` makes, so the two maps
     agree hue-for-hue.  The z-order is the whole design: light fills, then the white zip
@@ -905,6 +925,301 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
     return _save(fig, out)
 
 
+# ------------------------------------------------------------------ the power diagram
+# `district_regions.png` above fills the plane from the *zips*: a Voronoi catchment each,
+# dissolved by district.  That is a true statement about the zips and a false one about the
+# method.  Stage 1 is center-based balanced assignment, and the optimal territory of a
+# center-based balanced assignment is not a Voronoi diagram of anything -- it is the **power
+# (Laguerre) diagram** of the k centers, weighted by the transportation LP's mass-balance duals
+# (Aurenhammer-Hoffmann-Aronov; docs/RESEARCH_FINDINGS.md §9-A1).  Equal *opportunity*, not
+# equal area, is what is being equalised, and the weights are exactly that correction: a
+# district over thin country has to reach further, and its weight says how much further.
+#
+# The practical difference is that a power cell is **convex**, with straight borders, because
+# cell j is the intersection of the half-planes `||x-c_j||^2 - w_j <= ||x-c_i||^2 - w_i` and
+# each of those is linear -- the quadratic terms cancel.  So the territory map is 13 convex
+# regions rather than a ragged union of 1,223 little cells, and it is exact rather than a
+# rendering choice.
+DOT_MARKER = 9.0               # zip dots on the region map: present, subordinate to the fill
+DOT_EDGE_W = 0.25
+SLIVER_SHARE = 0.01            # a cell under 1% of the map is stroked, not merely filled
+SLIVER_W = 2.2
+
+
+def halfplane_clip(verts: np.ndarray, a: np.ndarray, b: float) -> np.ndarray:
+    """Sutherland-Hodgman: the part of convex polygon `verts` satisfying `a·x <= b`.
+
+    Exact for a convex input, which is all this is ever handed -- the running intersection of
+    half-planes stays convex by construction.  Returns an empty `(0, 2)` array when the
+    half-plane misses the polygon entirely, which is a real case: a district can be squeezed
+    out of the frame by its neighbours' weights.
+    """
+    if len(verts) == 0:
+        return verts
+    s = verts @ a - b
+    out = []
+    for i in range(len(verts)):
+        j = (i + 1) % len(verts)
+        si, sj = s[i], s[j]
+        if si <= 0:
+            out.append(verts[i])
+        if (si < 0) != (sj < 0) and si != sj:
+            out.append(verts[i] + (si / (si - sj)) * (verts[j] - verts[i]))
+    return np.asarray(out, float).reshape(-1, 2)
+
+
+def power_cell(j: int, centers: np.ndarray, weights: np.ndarray, box) -> np.ndarray:
+    """Cell `j` of the power diagram, as a convex polygon clipped to the rectangle `box`.
+
+    `box` is `(x0, y0, x1, y1)`.  The bisector of cells `i` and `j` is
+    `2(c_i - c_j)·x = |c_i|^2 - w_i - |c_j|^2 + w_j` -- a straight line, since the `|x|^2` terms
+    cancel -- so the cell is `box` cut by `k - 1` half-planes and nothing more.  With `k = 13`
+    that is 12 clips; there is no reason to reach for a convex-hull or lifting routine.
+    """
+    C = np.asarray(centers, float)
+    w = np.asarray(weights, float)
+    x0, y0, x1, y1 = box
+    verts = np.array([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], float)
+    cj, wj = C[j], w[j]
+    for i in range(len(C)):
+        if i == j:
+            continue
+        a = 2.0 * (C[i] - cj)
+        b = float(C[i] @ C[i] - w[i] - cj @ cj + wj)
+        verts = halfplane_clip(verts, a, b)
+        if len(verts) == 0:
+            break
+    return verts
+
+
+def power_cells(centers: dict, weights: dict, clip) -> dict:
+    """`{district: polygon}` -- the power diagram, clipped to `clip` (the landmass or the hull).
+
+    `centers` and `weights` are keyed by district id so the caller never has to hold a parallel
+    index.  A cell that misses `clip` entirely is dropped rather than returned empty; on a real
+    draw that does not happen, because every center is itself a point of the country.
+    """
+    from shapely import Polygon
+    ids = sorted(centers, key=str)
+    C = np.array([centers[d] for d in ids], float)
+    w = np.array([float(weights[d]) for d in ids], float)
+    x0, y0, x1, y1 = clip.bounds
+    pad = 0.05 * max(x1 - x0, y1 - y0) + 1.0
+    box = (x0 - pad, y0 - pad, x1 + pad, y1 + pad)
+    out = {}
+    for j, d in enumerate(ids):
+        verts = power_cell(j, C, w, box)
+        if len(verts) < 3:
+            continue
+        g = _valid(shapely_intersection(Polygon(verts), clip))
+        if not g.is_empty and g.area > 0:
+            out[d] = g
+    return out
+
+
+def shapely_intersection(a, b):
+    import shapely
+    return shapely.intersection(_valid(a), _valid(b))
+
+
+def cell_borders(cells, clip, eps) -> list:
+    """Each cell's boundary **minus the coastline**: the district-vs-district lines only.
+
+    `district_borders` takes the pairwise `∂A ∩ ∂B`, which is right when both polygons are
+    unions of cells from one Voronoi diagram and therefore share numerically identical edges.
+    Power cells are clipped independently, half-plane by half-plane, so their shared edges agree
+    only to floating point and a pairwise intersection can come back empty.  Subtracting the
+    clip's own boundary is robust to that: what is left of a convex cell's outline once the
+    coastline is removed is exactly its borders with other districts.  Each internal border is
+    drawn twice, once from each side, which is invisible -- they coincide.
+    """
+    outline = clip.boundary.buffer(eps)
+    segs = []
+    for g in cells.values():
+        segs.extend(_lines_of(g.boundary.difference(outline)))
+    return segs
+
+
+def power_diagram_of_draw(districts, values, xy, targets=None) -> dict:
+    """The power diagram a `{zip: district}` draw implies: centers, weights, and the audit.
+
+    The centers are recovered rather than read from a file, and exactly: `centers.draw` returns
+    the M-weighted centroids of its final labels, so recomputing them from the draw and the
+    instance reproduces the run's own centers bit for bit -- which is why `metrics.json` does
+    not need to carry them.  The weights then come from one transportation LP
+    (`centers.power_weights`).
+
+    `outside` is the honest number this figure exists to expose: the zips whose committed
+    district is not the district whose power cell they sit in.  Zero would mean the draw is a
+    power diagram, i.e. compactness-optimal at its own centers.  A positive count is where the
+    Nash polish bought balance with compactness -- the open lexicographic decision, made
+    visible instead of averaged away.
+
+    `targets` defaults to the draw's **own** district masses, which is what makes that
+    comparison fair: the cells and the committed draw then hold identical masses district for
+    district, and the only thing that differs is which zips.  Asking at the exactly-equal split
+    instead would mix in a balance difference the draw never claimed to have (its max-deviation
+    is 0.4% of target, not zero), and the fill would be answering a question the dots are not.
+    """
+    from td.solvers import centers as _centers
+
+    keys = sorted((z for z in districts if z in xy), key=str)
+    ids = sorted({districts[z] for z in keys}, key=str)
+    lut = {d: i for i, d in enumerate(ids)}
+    pts = np.array([xy[z] for z in keys], float)
+    M = np.array([max(float(values.get(z, 0.0)), 0.0) for z in keys], float)
+    lab = np.array([lut[districts[z]] for z in keys], int)
+    if (M <= 0).any():
+        raise ValueError("the power-diagram duals divide by M_z; every drawn zip needs M > 0")
+
+    C = _centers._centroids(pts, M, lab, len(ids))
+    if targets is None:
+        targets = np.bincount(lab, weights=M, minlength=len(ids))
+    res = _centers.power_weights(pts, M, C, targets=targets)
+    cell = np.asarray(res["labels"], int)
+    return dict(
+        centers={d: (float(C[i][0]), float(C[i][1])) for d, i in lut.items()},
+        weights={d: float(res["weights"][i]) for d, i in lut.items()},
+        cell_of={z: ids[int(c)] for z, c in zip(keys, cell)},
+        outside=[z for z, c in zip(keys, cell) if ids[int(c)] != districts[z]],
+        n_zips=len(keys),
+        lp_bound=float(res["lp_bound"]),
+        max_dual_violation_rel=float(res["max_dual_violation_rel"]),
+        n_fractional=int(res["n_fractional"]),
+    )
+
+
+def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALPHA,
+                         footer=FOOTER, title=None, subtitle=None, n_near=4, palette=QUAL,
+                         label=True, pad=0.05, targets=None, report=None, dots=True):
+    """The draw as **power-diagram territory**: `k` convex cells, weights from the LP duals.
+
+    This replaces the Voronoi-catchment fill as the territory map, because it is the shape the
+    method actually produces.  What a reader gets that the old figure could not give them:
+
+    * a border that is a *straight line* with a meaning -- "beyond here the other district's
+      center is closer, once the weights correct for how much opportunity each has to cover";
+    * one region per district instead of a ragged interleave, so "where does my territory stop"
+      has an answer that fits in a sentence;
+    * the shape of the trade, in the legend.  Every cell holds the same share of M and between
+      0.06% and 28% of the ground, so the two columns say the thing the map is for: a district
+      is an equal slice of *opportunity*, and opportunity is not spread evenly over the country.
+      The three metro slivers are the extreme of that, not a rendering failure -- which is why
+      every centre gets a marker and a leader line, so a district too small to see is still
+      locatable;
+    * and the discrepancy on the same page.  The zips are drawn as dots in their **committed**
+      district's colour, over the cells.  A dot whose colour differs from the ground under it is
+      a zip the draw assigned against compactness -- no extra encoding, the mismatch *is* the
+      mark -- and the count goes in the subtitle rather than a footnote.
+
+    Colours come from `draw_palette`, the call `figure_districts` also makes, so all three
+    district figures agree hue-for-hue.  `report` is an optional callable taking one string.
+    """
+    from matplotlib.collections import LineCollection
+    from matplotlib.patches import PathPatch
+
+    say = report or (lambda _s: None)
+    keys = [z for z in sorted(districts, key=str) if z in xy]
+    order, centroids, colors = draw_palette(districts, values, xy, n_near=n_near,
+                                            palette=palette)
+    pd = power_diagram_of_draw(districts, values, xy, targets=targets)
+    n_out = len(pd["outside"])
+    say(f"power: weights from the transportation duals, max dual violation "
+        f"{pd['max_dual_violation_rel']:.1e} relative, {pd['n_fractional']} split zip(s); "
+        f"{n_out} of {pd['n_zips']} zips ({n_out / max(pd['n_zips'], 1):.1%}) lie outside "
+        f"their own district's cell")
+
+    title = title or f"District territories — {len(order)} power cells on equal opportunity"
+    if len(keys) < 2:
+        fig, _ = _canvas(None, title, subtitle or "", footer)
+        return _save(fig, out)
+
+    clip = clip_region([xy[z] for z in keys], states, pad)
+    cells = power_cells(pd["centers"], pd["weights"], clip)
+    missing = [d for d in order if d not in cells]
+    if missing:
+        say(f"power: {len(missing)} cell(s) fell outside the clip polygon entirely: {missing}")
+    area_total = sum(g.area for g in cells.values()) or 1.0
+    shares = sorted(g.area / area_total for g in cells.values()) or [0.0]
+    say("power: cell area shares run " + ", ".join(
+        f"{d}={100 * cells[d].area / area_total:.2f}%" for d in sorted(cells, key=str)))
+
+    subtitle = subtitle or (
+        "fill = each district's power (Laguerre) cell — its centre plus a weight from the "
+        "transportation LP's duals, so every border is an exact straight line\nequal "
+        f"opportunity is not equal ground: every cell holds {100.0 / max(len(cells), 1):.1f}% "
+        f"of M and between {100 * shares[0]:.2f}% and {100 * shares[-1]:.0f}% of the map  ·  "
+        f"dots = the committed draw, {n_out} of {pd['n_zips']} outside their own cell")
+    fig, ax = _canvas(None, title, subtitle, footer)          # states drawn last, on top
+
+    x0, y0, x1, y1 = clip.bounds
+    eps = 1e-4 * float(np.hypot(x1 - x0, y1 - y0))
+
+    for d in order:                                            # 1. fills
+        g = cells.get(d)
+        if g is None:
+            continue
+        for path in _poly_paths(g):
+            ax.add_patch(PathPatch(path, facecolor=colors[d], edgecolor="none",
+                                   alpha=alpha, zorder=1))
+    # 2. a sliver cell is real territory that no fill can show -- D09's is 0.06% of the map, a
+    # hairline over Los Angeles -- so anything under `SLIVER_SHARE` is additionally stroked in
+    # its own colour.  The stroke is the only mark that survives at that size; without it the
+    # district simply is not on the map.
+    tiny = [d for d, g in cells.items() if g.area / area_total < SLIVER_SHARE]
+    for d in tiny:
+        ax.add_collection(LineCollection(_lines_of(cells[d].boundary), colors=colors[d],
+                                         linewidths=SLIVER_W, capstyle="round", zorder=2))
+    if tiny:
+        say(f"power: {len(tiny)} sliver cell(s) stroked in their own colour: "
+            + ", ".join(f"{d} ({100 * cells[d].area / area_total:.2f}%)" for d in sorted(tiny)))
+    borders = cell_borders(cells, clip, eps)                   # 3. cell vs cell
+    ax.add_collection(LineCollection(borders, colors=BORDER, linewidths=BORDER_W,
+                                     capstyle="round", joinstyle="round", zorder=3))
+    say(f"power: {len(cells)} cells, {len(borders):,} border segments")
+
+    if dots:                                                   # 4. the committed draw
+        px = np.array([xy[z][0] for z in keys], float)
+        py = np.array([xy[z][1] for z in keys], float)
+        ax.scatter(px, py, s=DOT_MARKER, c=[colors[districts[z]] for z in keys],
+                   linewidths=DOT_EDGE_W, edgecolors="white", zorder=4)
+    if states is not None:                                     # 5. states, on top but light
+        states.boundary.plot(ax=ax, color=OUTLINE, linewidth=STATE_W_REGIONS, zorder=5)
+
+    # 6. a marker at every centre.  The centre is the one point of a district that always
+    # exists and always reads, so it anchors the label; a leader line closes the gap whenever
+    # the label had to move.  A sliver's label is *forced* off its centre -- a box sitting on a
+    # hairline hides the only mark the district has -- and the leader is what puts it back.
+    cen = pd["centers"]
+    for d in order:
+        if d in cen:
+            ax.scatter([cen[d][0]], [cen[d][1]], s=26, facecolor="white", edgecolor=BORDER,
+                       linewidths=0.9, zorder=6)
+    if label:
+        min_sep = LABEL_SEP * (x1 - x0)
+        anchors = {d: p for d, p in cen.items() if d not in tiny}
+        spots = label_points(order, cells, anchors, min_sep)
+        for d, (lx, ly) in spots.items():
+            if d in tiny:                       # push clear of the hairline, then point back
+                cx, cy = cen[d]
+                ang = np.arctan2(cy - 0.5 * (y0 + y1), cx - 0.5 * (x0 + x1))
+                lx, ly = cx + 1.2 * min_sep * np.cos(ang), cy + 1.2 * min_sep * np.sin(ang)
+            if d in cen and float(np.hypot(lx - cen[d][0], ly - cen[d][1])) > 0.35 * min_sep:
+                ax.plot([cen[d][0], lx], [cen[d][1], ly], color=BORDER, linewidth=0.7,
+                        alpha=0.8, zorder=6, solid_capstyle="round")
+            ax.text(lx, ly, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
+                    ha="center", va="center", zorder=7,
+                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
+                              edgecolor="none", alpha=0.82))
+    _district_legend(fig, districts, values, colors, order,
+                     second={d: g.area / area_total for d, g in cells.items()},
+                     second_label="area")
+    mx, my = 0.02 * (x1 - x0), 0.02 * (y1 - y0)
+    ax.set_xlim(x0 - mx, x1 + mx)
+    ax.set_ylim(y0 - my, y1 + my)
+    return _save(fig, out)
+
+
 def read_draw(path) -> dict:
     """`{zip: district}` from a `draw.csv` written by `tools/run_draw.py` (`zip,district`)."""
     import csv as _csv
@@ -948,7 +1263,11 @@ def main(argv=None):
     ap.add_argument("--districts", default=None, metavar="DRAW_CSV",
                     help="a draw.csv from tools/run_draw.py; adds districts.png")
     ap.add_argument("--regions", default=None, metavar="DRAW_CSV",
-                    help="the same draw.csv; adds district_regions.png (filled territories)")
+                    help="the same draw.csv; adds district_regions.png (power-diagram "
+                         "territories)")
+    ap.add_argument("--regions-voronoi", default=None, metavar="DRAW_CSV",
+                    help="the superseded zip-catchment rendering, as "
+                         "district_regions_voronoi.png")
     args = ap.parse_args(argv)
 
     from td import instance as descaled
@@ -996,7 +1315,9 @@ def main(argv=None):
                                          os.path.join(args.out, "contestability.png"),
                                          firm_a=fa, firm_b=fb))
 
-    for flag, name in (("districts", "districts.png"), ("regions", "district_regions.png")):
+    for flag, name in (("districts", "districts.png"),
+                       ("regions", "district_regions.png"),
+                       ("regions_voronoi", "district_regions_voronoi.png")):
         path = getattr(args, flag)
         if not path:
             continue
@@ -1013,8 +1334,11 @@ def main(argv=None):
               f"{n_off} unplottable ({share:.2%} of their M); "
               f"{len(unplaced)} instance zip(s) not in the draw")
         dest = os.path.join(args.out, name)
-        written.append(figure_districts(draw, M, xy, states, dest) if flag == "districts"
-                       else figure_district_regions(draw, M, xy, states, dest, report=print))
+        builder = {"districts": figure_districts,
+                   "regions": figure_power_regions,
+                   "regions_voronoi": figure_district_regions}[flag]
+        kw = {} if flag == "districts" else dict(report=print)
+        written.append(builder(draw, M, xy, states, dest, **kw))
 
     for p in written:
         print(f"wrote {p}  ({os.path.getsize(p) / 1024:.0f} KB)")

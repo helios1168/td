@@ -1,6 +1,6 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 (late night) · **Branch:** `national-channel` · **Head:** `98f3c0e`
+**Last updated:** 2026-09-01 (latest) · **Branch:** `national-channel` · **Head:** `98f3c0e` + uncommitted A1
 
 **Status:** **both stages are built and a certified k=13 draw exists; literature recon is
 in.** The real export (`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229
@@ -15,8 +15,15 @@ now gated on `docs/RESEARCH_FINDINGS.md` §9-C4/D). **`98f3c0e`: overnight liter
 reconnaissance landed** — `docs/RESEARCH_FINDINGS.md` (~130 verified entries + prioritized
 reframings; headlines: stage 1 is a published method, the territory map should be a
 **power diagram** with the LP duals as weights = a free exact certificate, the niche is
-unoccupied) and `docs/RESEARCH_ADDITIONS.bib`. **131 tests pass, 0 fail** (as of
-`f45bf89`; docs-only since). **Resume point: `docs/CHANNEL.md` §0.**
+unoccupied) and `docs/RESEARCH_ADDITIONS.bib`. **FINDINGS §9-A1 is now done** (uncommitted):
+the transportation LP re-solved for its duals gives the power weights
+(`centers.power_weights`), a solver-free lower bound (`cert_draw.cert_power_diagram`,
+certificate 4) and the redrawn `figures/district_regions.png` (13 convex cells,
+`us_maps.figure_power_regions`; old renderer at `--regions-voronoi`). The draw sits **8.22%
+above the bound with 132 of 1,223 zips outside their own cell** — it is *not* a power diagram,
+which independently reproduces the MILP's 8.53% and turns open question 1 into "adopt the
+cells or keep the 132 dots". **151 tests pass, 0 fail.** **Resume point: `docs/CHANNEL.md`
+§0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing

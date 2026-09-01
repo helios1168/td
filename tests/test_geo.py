@@ -413,3 +413,139 @@ def test_both_district_figures_share_one_colour_assignment():
     for d, nbrs in adj.items():
         for e in nbrs:
             assert colors[d] != colors[e], (d, e)
+
+
+# ------------------------------------------------------------------ the power diagram
+# `states=None` again, so the clip is the padded hull and no cell can escape the frame.  The
+# properties asserted are the ones that make the figure a *statement* rather than a picture:
+# the cells tile the clip exactly, they reduce to the Voronoi diagram when the weights vanish,
+# and a weight moves ground in the direction the duals say it should.
+def test_power_cells_tile_the_clip_exactly():
+    um = _us_maps()
+    from shapely import box
+    C = {"D01": (0.0, 0.0), "D02": (10.0, 0.0), "D03": (5.0, 8.0)}
+    W = {"D01": 6.0, "D02": 0.0, "D03": 2.0}
+    clip = box(-20, -20, 30, 30)
+    cells = um.power_cells(C, W, clip)
+    assert set(cells) == set(C)
+    total = sum(g.area for g in cells.values())
+    assert abs(total - clip.area) < 1e-9 * clip.area, (total, clip.area)
+    ids = sorted(cells)
+    for i, a in enumerate(ids):                          # and the interiors are disjoint
+        for b in ids[i + 1:]:
+            assert cells[a].intersection(cells[b]).area < 1e-9 * clip.area, (a, b)
+
+
+def test_power_cells_are_convex():
+    """The whole point of the object: each cell is an intersection of half-planes."""
+    um = _us_maps()
+    from shapely import box
+    C = {"D01": (0.0, 0.0), "D02": (10.0, 0.0), "D03": (5.0, 8.0), "D04": (5.0, -8.0)}
+    W = {"D01": 9.0, "D02": 0.0, "D03": 4.0, "D04": 1.0}
+    clip = box(-20, -20, 30, 30)                          # a convex clip, so convexity survives
+    for d, g in um.power_cells(C, W, clip).items():
+        assert g.geom_type == "Polygon", (d, g.geom_type)
+        assert abs(g.area - g.convex_hull.area) < 1e-9 * g.area, d
+
+
+def test_zero_weights_reproduce_the_voronoi_diagram():
+    """`power_cells` at w = 0 must colour every point by its nearest centre, and does."""
+    um = _us_maps()
+    from shapely import Point, box
+    C = {"D01": (0.0, 0.0), "D02": (10.0, 0.0), "D03": (5.0, 8.0)}
+    clip = box(-20, -20, 30, 30)
+    cells = um.power_cells(C, {d: 0.0 for d in C}, clip)
+    ids = sorted(C)
+    P = np.array([C[d] for d in ids], float)
+    for x in np.linspace(-19, 29, 25):
+        for y in np.linspace(-19, 29, 25):
+            near = ids[int(((P - [x, y]) ** 2).sum(axis=1).argmin())]
+            assert cells[near].covers(Point(x, y)), (x, y, near)
+
+
+def test_a_weight_takes_ground_and_a_common_shift_does_not():
+    um = _us_maps()
+    from shapely import box
+    C = {"D01": (0.0, 0.0), "D02": (10.0, 0.0)}
+    clip = box(-20, -20, 30, 30)
+    plain = um.power_cells(C, {"D01": 0.0, "D02": 0.0}, clip)
+    heavy = um.power_cells(C, {"D01": 40.0, "D02": 0.0}, clip)
+    shifted = um.power_cells(C, {"D01": 7.0, "D02": 7.0}, clip)
+    assert heavy["D01"].area > plain["D01"].area
+    assert heavy["D02"].area < plain["D02"].area
+    assert abs(shifted["D01"].area - plain["D01"].area) < 1e-9 * clip.area
+
+
+def test_halfplane_clip_can_empty_a_polygon():
+    """A cell squeezed out entirely is a real case, not an exception -- it returns empty."""
+    um = _us_maps()
+    square = np.array([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
+    assert len(um.halfplane_clip(square, np.array([1.0, 0.0]), -5.0)) == 0
+    assert len(um.halfplane_clip(square, np.array([1.0, 0.0]), 5.0)) == 4      # untouched
+    half = um.halfplane_clip(square, np.array([1.0, 0.0]), 0.5)
+    from shapely import Polygon
+    assert abs(Polygon(half).area - 0.5) < 1e-12
+
+
+def _equal_mass_clusters(per=12):
+    """`_clustered` with every zip worth the same, so a balanced draw is exactly the clusters.
+
+    The default fixture draws `M` from `uniform(0.5, 30)`, which makes the three blobs unequal
+    in mass -- so a *balanced* draw has to move zips across the gaps and is legitimately not its
+    own power diagram.  Equal masses remove that confound, which is what these two tests need.
+    """
+    zips, xy, _, _ = _clustered(per=per)
+    return zips, xy, {z: 1.0 for z in zips}
+
+
+def _draw_labels(zips, xy, M, k=3, seed=0):
+    from td.solvers import centers as _c
+    pts = np.array([xy[z] for z in zips], float)
+    m = np.array([M[z] for z in zips], float)
+    res = _c.draw(pts, m, k, seed=seed)
+    return {z: f"D{int(v) + 1:02d}" for z, v in zip(zips, res["labels"])}
+
+
+def test_power_diagram_of_a_clean_draw_has_nobody_outside_their_cell():
+    """Three equal blobs: the balanced draw *is* its own power diagram, so `outside` is empty."""
+    um = _us_maps()
+    zips, xy, M = _equal_mass_clusters()
+    labels = _draw_labels(zips, xy, M)
+    pd = um.power_diagram_of_draw(labels, M, xy)
+    assert pd["n_zips"] == len(zips)
+    assert set(pd["centers"]) == set(labels.values())
+    assert abs(pd["max_dual_violation_rel"]) < 1e-9
+    assert pd["outside"] == [], pd["outside"]
+
+
+def test_power_diagram_of_a_draw_flags_a_zip_put_in_the_wrong_cluster():
+    """Swap two zips across the gap and both come back in `outside`.
+
+    Only "both are flagged" is asserted, not "only these two".  `power_diagram_of_draw`
+    recomputes the centres from the labels it is given, and moving one point of twelve drags a
+    blob's centroid a long way toward the other blob -- so the swap legitimately unsettles a few
+    of its neighbours too.  The exact-count version of this claim is tested where the centres
+    are held fixed, in `test_cert_draw.py::test_power_diagram_catches_the_swap_the_milp_catches`.
+    """
+    um = _us_maps()
+    zips, xy, M = _equal_mass_clusters()
+    labels = _draw_labels(zips, xy, M)
+    clean = um.power_diagram_of_draw(labels, M, xy)
+    assert clean["outside"] == []
+    a = next(z for z in zips if labels[z] == "D01")
+    b = next(z for z in zips if labels[z] == "D02")
+    labels[a], labels[b] = labels[b], labels[a]           # masses unchanged, positions wrong
+    pd = um.power_diagram_of_draw(labels, M, xy)
+    assert {a, b} <= set(pd["outside"]), (a, b, pd["outside"])
+
+
+def test_figure_power_regions_writes_png_without_a_basemap():
+    um = _us_maps()
+    _, xy, M, labels = _clustered()
+    lines = []
+    with tempfile.TemporaryDirectory() as tmp:
+        p = um.figure_power_regions(labels, M, xy, None, os.path.join(tmp, "regions.png"),
+                                    report=lines.append)
+        assert os.path.getsize(p) > 10_000, os.path.getsize(p)
+    assert any("outside their own district's cell" in s for s in lines), lines
+    assert any("cell area shares run" in s for s in lines), lines

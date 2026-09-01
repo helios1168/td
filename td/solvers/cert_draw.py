@@ -7,8 +7,8 @@ local search.  This module says, after the fact and with a solver where a solver
 **how far from optimal the draw actually is** -- and, just as importantly, which questions the
 certificates do *not* answer.
 
-Three certificates, three different things proved
--------------------------------------------------
+Four certificates, four different things proved
+-----------------------------------------------
 ``cert_balance_ceiling``          analytic, no solver.  `sum_j log M_j <= k log(sum M / k)` by
                                   concavity of `log` (Jensen), with equality iff every district
                                   is exactly `sum M / k`.  So the ceiling bounds **every**
@@ -40,6 +40,19 @@ Three certificates, three different things proved
                                   and the resulting model is a transportation problem with two
                                   side bounds per district -- nearly integral, so HiGHS closes
                                   it fast.
+
+``cert_power_diagram``            the same geometric question asked of the LP's **duals**
+                                  instead of a MILP.  Dual feasibility of the transportation
+                                  problem reads `alpha_z + M_z beta_j <= M_z d^2(z, c_j)`, so
+                                  an optimal assignment puts each zip in the district
+                                  minimising `d^2(z, c_j) - beta_j`: the **power (Laguerre)
+                                  diagram** of the centers, weights `beta`.  That yields a
+                                  lower bound whose verification is `O(nk)` arithmetic with no
+                                  solver in the trusted path -- and the territory map, exactly,
+                                  as `k` convex cells.  It is the cheaper and stronger half of
+                                  certificate 3 for the equal-mass question; certificate 3
+                                  stays because its max-deviation *band* is a different and
+                                  looser feasible set that the equality rows cannot express.
 
 What is NOT proved
 ------------------
@@ -100,6 +113,10 @@ from scipy.optimize import Bounds, LinearConstraint, milp
 COST_TOL = 1e-9
 # feasibility slack added to the mass window so the draw itself is never rejected by rounding
 FEAS_TOL = 1e-9
+# a dual vector is accepted as feasible when no constraint is violated by more than this
+# *relative to the bound it certifies* -- the raw units are M times squared metres, so on the
+# real instance an absolute residual of 1e-3 against a bound of 1e14 is exact arithmetic
+DUAL_TOL = 1e-9
 DEFAULT_TIME_LIMIT = 180.0
 
 
@@ -628,6 +645,126 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
     return out
 
 
+# --------------------------------- 4. the power-diagram dual bound at the SAME pinned centers
+def cert_power_diagram(xy, M, labels, centers, targets=None) -> dict:
+    """The transportation duals as a solver-free lower bound, and the territory they draw.
+
+    Certificate 3 asks the compactness question with a MILP.  This one asks it with **one LP
+    and a page of arithmetic**, and answers more.  The balanced assignment at fixed centers is
+    a transportation problem; its dual feasibility `alpha_z + M_z beta_j <= M_z d^2(z, c_j)`
+    says an optimal assignment sends each zip to a district minimising `d^2(z, c_j) - beta_j`.
+    So two things fall out of the same solve:
+
+    * `lp_bound = sum_z alpha_z + sum_j m_j beta_j` is a valid lower bound on the compactness
+      cost of **every** assignment meeting `targets` -- fractional and integer alike, since an
+      integer assignment is LP-feasible.  Checking it needs no solver and no trust in one: the
+      returned `alpha`, `beta` are verified against all `n*k` dual constraints here
+      (`max_dual_violation`), and a reader can redo that in `O(nk)` arithmetic.
+    * `weights = beta` (rescaled to squared distance) are the weights of the **power diagram**
+      of the centers, which is the optimal territory as a partition of the plane: `k` convex
+      cells with straight borders.  That is the map, and it is exact rather than a rendering
+      choice.
+
+    Which masses to ask about, and the trap in the other choice
+    -----------------------------------------------------------
+    `targets` defaults to the **draw's own realised masses**, not to the equal split, and that
+    default is load-bearing.  A bound is only comparable to an incumbent the bound's own
+    feasible set contains: at exactly-equal targets a draw whose max-deviation is 0.4% of
+    target is *infeasible*, `lp_bound` can legitimately exceed `draw_cost`, and `rel_gap` comes
+    out **negative** -- not a certificate of anything.  (Measured on the six-point fixture:
+    `rel_gap = -76.9` for a 4-2 draw asked about at 3-3.)  At the draw's own masses the draw is
+    feasible by construction, so `lp_bound <= draw_cost` always holds and the gap is a true
+    suboptimality gap: it isolates *where the zips are* from *how big the districts are*, which
+    is exactly the question a territory map asks.  `draw_meets_targets` reports which case a
+    caller-supplied `targets` landed in, and `rel_gap` is `None` when it is False.
+
+    This is also where certificate 3 differs, and legitimately: it constrains balance by a
+    **max-deviation band**, a strictly larger feasible set than any equality rows, so its
+    optimum can sit below the bound here without either being wrong.
+
+    `n_outside_cell` is the sharpest single number: how many of the draw's zips sit in another
+    district's power cell.  Zero would mean the draw *is* a power diagram and is therefore
+    compactness-optimal at its centers.  A large count means the draw traded compactness for
+    something -- here, for balance, in `centers.improve`'s Nash polish -- and that trade is the
+    open lexicographic decision, not a bug.
+
+    Not proved, same scope as certificate 3: nothing about the centers.  The bound is
+    conditional on `centers` exactly as a k-means assignment step is.
+    """
+    from . import centers as _centers                       # a pure-numpy sibling; no cycle
+
+    xy = np.asarray(xy, float)
+    M = np.asarray(M, float)
+    labels = np.asarray(labels, int)
+    C = np.asarray(centers, float)
+    n, k = xy.shape[0], C.shape[0]
+
+    d2 = ((xy[:, None, :] - C[None, :, :]) ** 2).sum(axis=2)
+    cost = M[:, None] * d2
+    draw_cost = float(cost[np.arange(n), labels].sum())
+    mass_draw = _masses(M, labels, k)
+    target = float(M.sum()) / k
+
+    own = targets is None
+    res = _centers.power_weights(xy, M, C, targets=mass_draw if own else targets)
+    cell = np.asarray(res["labels"], int)
+    mass_cell = _masses(M, cell, k)
+    # the incumbent has to be inside the bound's own feasible set for the gap to mean anything
+    t = np.asarray(res["targets"], float)
+    dev = float(np.abs(mass_draw - t).max())
+    meets = bool(own or dev <= FEAS_TOL * max(float(M.sum()), 1.0))
+
+    out = dict(certificate="power_diagram_duals",
+               method="transportation LP duals (HiGHS), verified by O(nk) arithmetic",
+               n=int(n), k=int(k), centers_pinned=True,
+               targets_are_draw_masses=bool(own),
+               draw_meets_targets=meets,
+               draw_target_max_dev=dev,
+               weights=[float(v) for v in res["weights"]],
+               targets=[float(v) for v in res["targets"]],
+               alpha_sum=float(np.sum(res["alpha"])),
+               beta=[float(v) for v in res["beta"]],
+               n_fractional=int(res["n_fractional"]),
+               max_dual_violation=float(res["max_dual_violation"]),
+               max_dual_violation_rel=float(res["max_dual_violation_rel"]),
+               max_cs_residual_rel=float(res["max_cs_residual_rel"]),
+               lp_bound=float(res["lp_bound"]),
+               draw_cost=draw_cost,
+               rel_gap=((float((draw_cost - res["lp_bound"]) / draw_cost) if draw_cost > 0
+                         else 0.0) if meets else None),
+               cell_cost=float(cost[np.arange(n), cell].sum()),
+               n_outside_cell=int((cell != labels).sum()),
+               outside_cell_share=float((cell != labels).mean()) if n else 0.0,
+               cell_masses=[float(v) for v in mass_cell],
+               cell_max_dev_rel=float(np.abs(mass_cell - target).max() / target) if target else 0.0,
+               draw_max_dev_rel=float(np.abs(mass_draw - target).max() / target) if target else 0.0,
+               )
+    # the dual vector is only a bound if it is dual-feasible; say so from the residual, not
+    # from the solver's word for it
+    out["proved"] = bool(abs(res["max_dual_violation_rel"]) <= DUAL_TOL)
+    out["status"] = "optimal" if out["proved"] else "dual vector failed its own feasibility check"
+    out["is_power_diagram"] = bool(out["n_outside_cell"] == 0)
+    if not out["proved"]:
+        out["proves"] = "nothing -- the returned duals are not feasible to the stated tolerance"
+    elif not meets:
+        out["proves"] = ("the lower bound only, and NOT a gap: the draw's own masses miss the "
+                         "supplied targets by " + f"{dev:.6g}" + ", so it is not in the feasible "
+                         "set the bound covers and lp_bound may exceed draw_cost. Re-run with "
+                         "targets=None to ask the question at the draw's own masses")
+    elif out["is_power_diagram"]:
+        out["proves"] = ("the draw IS the power diagram of its centers with these weights, and "
+                         "therefore the most compact assignment meeting the mass targets")
+    else:
+        out["proves"] = ("no assignment of these zips to these centers meeting the mass targets "
+                         "costs less than lp_bound -- a bound checkable in O(nk) arithmetic from "
+                         "alpha and beta, with no solver in the trusted path")
+    out["does_not_prove"] = ("nothing about the centers, which are the heuristic's; and nothing "
+                             "about the stage-1 Nash objective, which this LP does not see -- "
+                             "the zips outside their cell are where the draw bought balance "
+                             "with compactness")
+    return out
+
+
 # --------------------------------------------------------------------------- the report
 def certify(xy, M, labels, centers, k: int = None, *,
             time_limit: float = DEFAULT_TIME_LIMIT,
@@ -653,6 +790,7 @@ def certify(xy, M, labels, centers, k: int = None, *,
     floor = cert_integer_balance_floor(M, k, time_limit=floor_time_limit, warm_labels=labels)
     assign = cert_assignment_at_centers(xy, M, labels, centers, slack=slack,
                                         time_limit=time_limit)
+    power = cert_power_diagram(xy, M, labels, centers)
 
     s = []
     s.append(
@@ -709,8 +847,33 @@ def certify(xy, M, labels, centers, k: int = None, *,
         s.append(
             f"ASSIGNMENT AT PINNED CENTERS: {assign['status']}. PROVED: at most a bound pair; "
             f"read cost_lower_bound, not a claim of optimality.")
+    if not power.get("proved"):
+        s.append(
+            f"POWER-DIAGRAM DUALS: {power['status']}. PROVED: nothing -- the dual vector did "
+            f"not pass its own feasibility check, so the bound is not claimed.")
+    elif power.get("is_power_diagram"):
+        s.append(
+            f"POWER-DIAGRAM DUALS (exact, solver-free to check): every zip lies in its own "
+            f"district's power cell, so the draw IS the power diagram of its centers with "
+            f"weights {['%.3g' % w for w in power['weights']]}. PROVED: no assignment to these "
+            f"centers at these masses is more compact. NOT PROVED: anything about the centers.")
+    else:
+        s.append(
+            f"POWER-DIAGRAM DUALS (exact, solver-free to check): at the draw's own district "
+            f"masses -- so the draw is feasible for its own test and the gap is a real one -- "
+            f"the transportation duals bound the compactness cost of every assignment to these "
+            f"centers from below by {power['lp_bound']:.6g}; the draw sits "
+            f"{power['rel_gap']:.3%} above it, and {power['n_outside_cell']} of {power['n']} "
+            f"zips ({power['outside_cell_share']:.1%}) lie outside their own district's power "
+            f"cell -- so the draw is NOT a power diagram, which is exactly where it bought "
+            f"balance with compactness. PROVED: the lower bound, verifiable in O(nk) arithmetic "
+            f"from alpha and beta with no solver in the trusted path (max dual violation "
+            f"{power['max_dual_violation_rel']:.1e} relative). NOT PROVED: that a *better* map "
+            f"exists on the stage-1 objective -- this LP does not see sum_j log M_j, and the "
+            f"cells' own spread is {power['cell_max_dev_rel']:.2%} of target against the "
+            f"draw's {power['draw_max_dev_rel']:.2%}.")
     s.append(
-        "SCOPE: all three certificates are conditional on the zip set and weights handed in. "
+        "SCOPE: all four certificates are conditional on the zip set and weights handed in. "
         "Center placement is heuristic and is NOT certified; contiguity is not modelled at all "
         "(the sold-zip adjacency of the real instance is shattered, so compactness stands in "
         "for it); and stage 2 (staffing) is a separate exact problem, untouched here.")
@@ -720,6 +883,8 @@ def certify(xy, M, labels, centers, k: int = None, *,
         balance_ceiling=ceil_,
         integer_balance_floor=floor,
         assignment_at_centers=assign,
-        proved_all=bool(ceil_.get("proved") and floor.get("proved") and assign.get("proved")),
+        power_diagram=power,
+        proved_all=bool(ceil_.get("proved") and floor.get("proved") and assign.get("proved")
+                        and power.get("proved")),
         summary=s,
     )

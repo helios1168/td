@@ -946,6 +946,41 @@ wording (image-only PDF).
   human-checkable optimality certificate for the assignment at fixed centers. The
   pinned-centers MILP demotes to a cross-check. (aha1998, bbg2017, brieden2012;
   flagged independently by three agents.)
+
+  **DONE (2026-09-01).** `centers.power_weights` / `centers.power_labels` (the duals and the
+  cells), `cert_draw.cert_power_diagram` (certificate 4, wired into `certify`),
+  `us_maps.power_cells` / `figure_power_regions` (the figure; the old zip-catchment renderer
+  survives as `--regions-voronoi`). 151 tests pass, 0 fail. What it returned on the k=13 draw,
+  at the draw's own district masses:
+
+  | | |
+  |---|---|
+  | max dual-feasibility violation | `3.5e-18` relative — the duals are exact |
+  | split zips | 12 (= `k − 1`, as the basic-solution bound predicts) |
+  | dual lower bound on compactness | `2.8910e14`, draw at `3.1498e14` ⇒ **8.22% above** |
+  | zips outside their own power cell | **132 of 1,223 (10.8%)** |
+  | cell area shares | 0.06% (D09) to 28.3% (D11), each holding 7.7% of M |
+  | weights (canonical, min 0, ×1e11) | D01 2.545 · D02 3.482 · D03 4.037 · D04 6.330 · D05 3.433 · D06 4.948 · D07 4.412 · D08 4.767 · D09 3.466 · D10 2.687 · D11 6.757 · D12 0 · D13 2.541 |
+
+  Three things came out of it that were not in the plan. **(i)** The draw is *not* a power
+  diagram of its own centers — 132 zips sit in another district's cell — so the "free exact
+  certificate" certifies a map the committed draw is 8.22% away from, and the figure now shows
+  both (fill = cells, dots = the committed draw) rather than quietly presenting one as the
+  other. That 8.22% independently reproduces the pinned-centers MILP's 8.53%, which is the
+  cross-check A1 predicted, and the residual difference is explained, not noise: the MILP's
+  max-deviation *band* is a strictly larger feasible set than mass equalities. **(ii)** The
+  bound must be taken at the **draw's own masses**, not the equal split. A draw whose
+  max-deviation is 0.4% of target is infeasible for exact equality, `lp_bound` can then exceed
+  `draw_cost`, and the "gap" comes out **negative** — pinned by
+  `test_the_default_targets_are_the_draws_own_masses`. **(iii)** The LP must be posed with
+  bounds `[0, inf)`, not `[0, 1]`: the feasible sets are identical (the placement rows already
+  force `x <= 1`), but with an explicit upper bound HiGHS parks a reduced cost on it and the
+  returned duals violate dual feasibility by `-0.80` instead of `-5e-17`. That one is a silent
+  wrong-answer bug, not a tolerance issue.
+
+  Still open, and now sharper: **the lexicographic decision is exactly the 132 dots**. Adopting
+  compactness-first means adopting the cells; keeping Nash-first means keeping the dots where
+  they are. §9-D and C4 still gate it.
 - **A2. Update the stale scale claim** in `CLAUDE.md` / `docs/CHANNEL.md`: exact districting
   now certifies all US instances at county level (shahmizad2026) and runs at 175k vertices
   (jolly2026); our difficulty is the objective and the 547 components, not 1,229 zips.

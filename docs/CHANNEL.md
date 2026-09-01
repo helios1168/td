@@ -8,7 +8,36 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-01 (late night): literature reconnaissance complete — the niche is
+**State on 2026-09-01 (latest): FINDINGS §9-A1 is done — the territory map is a power
+diagram, and its duals are certificate 4.** 151 tests pass, 0 fail (was 131).
+
+*What landed.* `centers.power_weights` / `power_labels` — the transportation LP re-solved for
+its **duals**, which are the power-diagram weights; `cert_draw.cert_power_diagram` —
+certificate 4, a lower bound on the compactness of every assignment to these centers, valid
+without a solver in the trusted path (`O(nk)` arithmetic on `alpha`, `beta`);
+`us_maps.power_cells` / `figure_power_regions` — `figures/district_regions.png` redrawn as 13
+convex cells with exact straight borders, the old zip-catchment rendering kept behind
+`--regions-voronoi`.
+
+*What it says about the draw.* At the draw's own district masses the duals are exact (max
+violation `3.5e-18` relative, 12 split zips = `k − 1`), and the draw sits **8.22% above the
+bound** with **132 of 1,223 zips outside their own power cell**. So the committed draw is not
+a power diagram of its centers, and the 8.22% independently reproduces the pinned-centers
+MILP's 8.53% — the cross-check A1 predicted. The figure shows both: fill = the cells, dots =
+the committed draw, and a dot whose colour differs from the ground under it is one of the 132.
+The legend now carries share of M beside share of *area* (all 7.7% of M; 0.06% to 28.3% of the
+map), which is the power diagram's whole content — equal opportunity is not equal ground.
+
+*Two traps found in the doing, both recorded in FINDINGS §9-A1.* The bound must be taken at
+the draw's **own masses**, not the equal split, or a near-balanced draw is infeasible for its
+own test and the gap comes out negative. And the LP must use bounds `[0, inf)`, not `[0, 1]`:
+same feasible set, but an explicit upper bound lets HiGHS park a reduced cost on it and the
+duals come back infeasible by `-0.80` instead of `-5e-17`.
+
+*What is next.* Unchanged, minus A1: A2/A3, then C1–C4. **The lexicographic decision is now
+exactly the 132 dots** — adopt the cells, or keep the draw where it is.
+
+**Earlier — 2026-09-01 (late night): literature reconnaissance complete — the niche is
 unoccupied, and stage 1 turns out to be a published method.** Head `98f3c0e` (docs-only
 since `b289f3a`; 131 tests as recorded at `f45bf89`, no code touched).
 

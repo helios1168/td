@@ -29,6 +29,17 @@ at most `k - 1` zips split between two districts.  `assign` rounds each split zi
 largest component, which perturbs the district masses by at most one zip each -- expected and
 fine at 1.1% per zip.  `improve` then repairs what the rounding cost.
 
+What the districts *are*, geometrically
+---------------------------------------
+The same LP answers a question the heuristic never asks out loud: what shape is a district?
+Its dual says a zip is optimally served by the district minimising `d^2(z, c_j) - beta_j`,
+where `beta_j` is the multiplier on district `j`'s mass row -- so the optimal territory is the
+**power (Laguerre) diagram** of the centers with the duals as weights, `k` convex cells whose
+borders are straight lines.  Not the Voronoi diagram: equal opportunity, not equal area, is
+what is being equalised, and the weights are exactly the correction.  `power_weights` returns
+them, along with the dual bound they certify; `power_labels` evaluates the cells.  This is
+Aurenhammer-Hoffmann-Aronov constrained least-squares assignment (docs/RESEARCH_FINDINGS.md).
+
 No contiguity, no adjacency: this module is pure functions on arrays (`xy`, `M`, `k`, `rng`)
 and depends on nothing else in `td/`.  `to_district` converts a labelling into the
 `{zip_id: district}` mapping that `channel.stage2` consumes, so wiring stage 1 into stage 2 is
@@ -168,6 +179,139 @@ def _repair_empty(labels: np.ndarray, d2: np.ndarray, k: int) -> None:
         counts[labels[z]] -= 1
         labels[z] = j
         counts[j] += 1
+
+
+# ---------------------------------------------------- the duals, and the power diagram
+def power_labels(xy, centers, weights) -> np.ndarray:
+    """`argmin_j ||x - c_j||^2 - w_j` -- the **power** (Laguerre) cell each point falls in.
+
+    At `weights = 0` this is the nearest-center rule, i.e. the ordinary Voronoi diagram; a
+    larger `w_j` enlarges cell `j` at its neighbours' expense.  Two facts make the object the
+    right one for a territory map.  The bisector of cells `i` and `j` is
+    `2(c_j - c_i)·x = |c_j|^2 - |c_i|^2 - w_j + w_i`, a **straight line**, so every cell is an
+    intersection of half-planes and therefore a convex polygon -- a district is one connected
+    region with flat borders, not a ragged union.  And the diagram is invariant under a common
+    shift of every weight, which is why `power_weights` returns them shifted to `min = 0`.
+    """
+    xy = np.asarray(xy, float)
+    centers = np.asarray(centers, float)
+    w = np.asarray(weights, float)
+    return (_dist2(xy, centers) - w[None, :]).argmin(axis=1).astype(int)
+
+
+def power_weights(xy, M, centers, targets=None) -> dict:
+    """The transportation LP of `assign`, solved for its **duals**: the power-diagram weights.
+
+    The balanced assignment at fixed centers is the transportation problem
+
+        min  sum_z sum_j M_z d^2(z, c_j) x_zj
+        s.t. sum_j x_zj = 1        (dual alpha_z)
+             sum_z M_z x_zj = m_j  (dual beta_j)
+             x >= 0
+
+    whose dual feasibility is `alpha_z + M_z beta_j <= M_z d^2(z, c_j)`.  Divide by `M_z > 0`
+    and complementary slackness reads: an optimal assignment sends zip `z` to a district
+    minimising `d^2(z, c_j) - beta_j`.  **That is exactly a power diagram** with weights
+    `w_j = beta_j` -- Aurenhammer-Hoffmann-Aronov's constrained least-squares assignment.  So
+    the optimal territory of a center-based balanced draw is a partition of the *plane* into
+    `k` convex cells, and the LP hands us the cells for free.
+
+    Two things this buys, both of which the pinned-centers MILP had to work for:
+
+    * **An exact optimality certificate that needs no solver to check.**  `lp_bound` is the dual
+      objective, a valid lower bound on the cost of *every* assignment meeting `targets`,
+      integer ones included (an integer assignment is LP-feasible).  Verifying it is `O(nk)`
+      arithmetic on the returned `alpha`/`beta` -- no branch-and-bound, no trust in HiGHS.
+    * **The map.**  `weights` are in squared-distance units and drop straight into
+      `power_labels` or into a half-plane clip, which is what draws the territory figure.
+
+    `targets` are district masses in the units of `M`, defaulting to the equal split
+    `sum(M)/k`.  Pass the draw's own realised masses to ask the compactness question at the
+    draw's balance rather than at perfect balance.
+
+    Conditioning follows `assign`: masses by their mean, objective by its mean.  The **bounds
+    are `[0, inf)`, not `[0, 1]`** -- the two feasible sets are identical, since
+    `sum_j x_zj = 1` with `x >= 0` already forces `x_zj <= 1`, but an explicit upper bound lets
+    the solver park a reduced cost on it and the returned duals then violate
+    `alpha_z + M_z beta_j <= c_zj` by an arbitrary amount.  Measured on the real k=13 instance:
+    max violation `-0.80` in descaled cost units with `[0, 1]`, `-5e-17` with `[0, inf)`.
+
+    Everything returned is in the caller's units.  `n_fractional` counts the split zips, at
+    most `k - 1` at a basic solution.  Note what `lp_labels_cost` is **not**: rounding a split
+    zip to its largest share breaks the mass rows, so that labelling is infeasible for
+    `targets` and its cost can and does sit *below* `lp_bound`.  It is reported with
+    `lp_labels_max_dev` beside it so the infeasibility is visible, and it is not an upper bound
+    on anything.  The only bound here is the dual one, and it points down.
+    """
+    xy = np.asarray(xy, float)
+    M = np.asarray(M, float)
+    C = np.asarray(centers, float)
+    n, k = xy.shape[0], C.shape[0]
+    if n < k:
+        raise ValueError(f"cannot fill {k} districts with {n} zips")
+    if (M <= 0).any():
+        raise ValueError("every zip needs positive M: the dual argument divides by M_z")
+
+    d2 = _dist2(xy, C)
+    mscale = float(M.mean())
+    w = M / mscale
+    cost = w[:, None] * d2
+    scale = float(cost.mean()) or 1.0
+    c = (cost / scale).ravel()
+
+    if targets is None:
+        t = np.full(k, w.sum() / k)
+    else:
+        t = np.asarray(targets, float) / mscale
+        if t.shape != (k,):
+            raise ValueError(f"targets must have one entry per district; got {t.shape}")
+
+    cols = np.arange(n * k)
+    A_place = sparse.coo_matrix((np.ones(n * k), (np.repeat(np.arange(n), k), cols)),
+                                shape=(n, n * k))
+    A_mass = sparse.coo_matrix((np.repeat(w, k), (np.tile(np.arange(k), n), cols)),
+                               shape=(k, n * k))
+    A_eq = sparse.vstack([A_place, A_mass]).tocsc()
+    b_eq = np.concatenate([np.ones(n), t])
+
+    res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, None), method="highs")
+    if not res.success:
+        raise RuntimeError(f"transportation LP failed: {res.message}")
+
+    lam = np.asarray(res.eqlin.marginals, float)
+    alpha, beta = lam[:n], lam[n:]
+    raw = scale * mscale                       # descaled cost units -> the caller's units
+    omega = scale * beta                       # squared-distance units, as `power_labels` wants
+
+    X = np.asarray(res.x, float).reshape(n, k)
+    lp_labels = X.argmax(axis=1).astype(int)
+    reduced = c.reshape(n, k) - (alpha[:, None] + w[:, None] * beta[None, :])
+    support = X > 1e-9
+
+    bound = float(alpha.sum() + beta @ t) * raw
+    viol = float(min(reduced.min(), 0.0)) * raw
+    cs = float(np.abs(reduced[support]).max()) * raw if support.any() else 0.0
+    mass_lp = np.bincount(lp_labels, weights=M, minlength=k).astype(float)
+    tgt = t * mscale
+    return dict(
+        weights=(omega - omega.min()),         # canonical shift; the diagram is unchanged
+        weights_raw=omega,
+        centers=C,
+        targets=tgt,
+        alpha=alpha, beta=beta,
+        labels=power_labels(xy, C, omega),
+        lp_labels=lp_labels,
+        n_fractional=int((X.max(axis=1) < 1.0 - FRAC_TOL).sum()),
+        lp_bound=bound,
+        lp_labels_cost=float(cost[np.arange(n), lp_labels].sum()) * mscale,
+        lp_labels_max_dev=float(np.abs(mass_lp - tgt).max()),
+        max_dual_violation=viol,
+        max_cs_residual=cs,
+        # relative to the bound, because the raw units are M times squared metres: on the real
+        # instance the costs are ~1e14 and an absolute residual of 1e-3 says nothing on its own
+        max_dual_violation_rel=abs(viol) / abs(bound) if bound else 0.0,
+        max_cs_residual_rel=cs / abs(bound) if bound else 0.0,
+    )
 
 
 # ---------------------------------------------------------------------- local polish
