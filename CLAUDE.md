@@ -1,6 +1,7 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 (latest) · **Branch:** `national-channel` · **Head:** `937460e`
+**Last updated:** 2026-09-01 (latest) · **Branch:** `national-channel` · **Head:** `72e5f07`
+(pushed to `origin/national-channel`)
 
 **Status:** **both stages are built, a certified k=13 draw exists, literature recon is in,
 and the territory map is now a power diagram (FINDINGS §9-A1).** The real export
@@ -23,8 +24,10 @@ certificate 4) and the redrawn `figures/district_regions.png` (13 convex cells,
 `us_maps.figure_power_regions`; old renderer at `--regions-voronoi`). The draw sits **8.22%
 above the bound with 132 of 1,223 zips outside their own cell** — it is *not* a power diagram,
 which independently reproduces the MILP's 8.53% and turns open question 1 into "adopt the
-cells or keep the 132 dots". **151 tests pass, 0 fail.** **Resume point: `docs/CHANNEL.md`
-§0.**
+cells or keep the 132 dots". `80c13ee` republished the atlas artifact on the new figure;
+`72e5f07` committed `figures/` (it had been gitignored, so the maps the docs cite existed
+nowhere but the machine that drew them). **151 tests pass, 0 fail.** **Resume point:
+`docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -217,10 +220,14 @@ grounded on a measured data-noise floor. Re-measure the floor on the real instan
 - MacTeX at `/Library/TeX/texbin`; **not** on `PATH` in non-interactive shells, so prefix
   `export PATH=/Library/TeX/texbin:$PATH` when building any note.
 - Never write under `battery/figures/` (primary artifacts, and not carried into this worktree).
-- `data/` is empty in git. The national ZCTA Rook adjacency was dropped 2026-08-31 — nothing
-  here reads it, and the real graph arrives with the exported instance. `data/README.md` is
-  the rebuild recipe if a real-geography test instance is ever needed.
-- Harness output goes to `battery/results/<run_id>/`.
+- **`figures/` is tracked** as of `72e5f07` — a map is a primary artifact, and a claim in the
+  docs nobody can see is worse than 3 MB of PNG. Regenerate and commit together:
+  `tools/us_maps.py <instance> --out figures/ --districts/--regions/--regions-voronoi <draw.csv>`.
+- `data/` is empty in git, and `data/geo/` (the gazetteer cache), `instance_descaled.json.gz`
+  and `battery/results/` stay ignored. The national ZCTA Rook adjacency was dropped
+  2026-08-31 — nothing here reads it, and the real graph arrives with the exported instance.
+  `data/README.md` is the rebuild recipe if a real-geography test instance is ever needed.
+- Harness output goes to `battery/results/<run_id>/` (gitignored).
 
 ## Where to read next
 

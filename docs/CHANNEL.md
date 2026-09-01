@@ -9,8 +9,8 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 ## 0. Resume — read this first in a fresh session
 
 **State on 2026-09-01 (latest): FINDINGS §9-A1 is done — the territory map is a power
-diagram, and its duals are certificate 4.** Head `937460e`; **151 tests pass, 0 fail** (131 at
-`f45bf89`).
+diagram, and its duals are certificate 4.** Head `72e5f07`, **pushed to
+`origin/national-channel`**; **151 tests pass, 0 fail** (131 at `f45bf89`).
 
 *What landed, all in `937460e`.* `centers.power_weights` / `power_labels` — the transportation
 LP re-solved for its **duals**, which are the power-diagram weights;
@@ -19,9 +19,19 @@ certificate 4, a lower bound on the compactness of every assignment to these cen
 without a solver in the trusted path (`O(nk)` arithmetic on `alpha`, `beta`);
 `us_maps.power_cells` / `figure_power_regions` — `figures/district_regions.png` redrawn as 13
 convex cells with exact straight borders, the old zip-catchment rendering kept behind
-`--regions-voronoi`. The **atlas artifact is republished** at the same URL (§0's link below,
-version `power-diagram-territories`): the territory map is the new figure, and that card's copy
-no longer describes a Voronoi catchment fill the method does not produce.
+`--regions-voronoi`.
+
+*And the two commits that made it visible to anyone else.* `80c13ee` — the **atlas artifact is
+republished** at the same URL (§0's link below, version `power-diagram-territories`): the
+territory map is the new figure, and that card's copy no longer describes a Voronoi catchment
+fill the method does not produce. `72e5f07` — **`figures/` is now committed.** It had been
+ignored under the gazetteer-cache rule, so every figure this file cites existed only on the
+machine that drew it; `937460e` made that worse by changing what `district_regions.png` *means*
+while a clone still got no picture. All seven regenerated in one run so they share a code
+version (`opportunity`, `firm_a`, `firm_b`, `contestability`, `districts`, `district_regions`,
+`district_regions_voronoi`; 3.0 MB), plus `docs/channel_note/figures/draw_k13.png`, whose
+sibling `ceiling.png` was already tracked. The gazetteer cache (`data/geo/`), the instance and
+`battery/results/` all stay ignored.
 
 *What it says about the draw.* At the draw's own district masses the duals are exact (max
 violation `3.5e-18` relative, 12 split zips = `k − 1`), and the draw sits **8.22% above the
