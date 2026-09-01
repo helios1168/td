@@ -7,8 +7,13 @@ writes `opportunity.png`, `firm_a.png`, `firm_b.png`, `contestability.png`.  Add
     --districts battery/results/<run-id>/draw.csv
 
 writes a fifth, `districts.png`: the stage-1 draw on the same basemap and the same area
-encoding as `opportunity.png`, recoloured by district identity.  The four originals are
-unaffected by the flag.
+encoding as `opportunity.png`, recoloured by district identity.  And
+
+    --regions battery/results/<run-id>/draw.csv
+
+writes `district_regions.png`: the same draw as **filled territory** rather than bubbles --
+each zip's Voronoi catchment, clipped to the landmass and dissolved by district, which is the
+map the business is shown.  The four originals are unaffected by either flag.
 
 What the maps are for
 ---------------------
@@ -443,6 +448,20 @@ def _district_legend(fig, districts, values, colors, order):
     return ax
 
 
+def draw_palette(districts, values, xy, *, n_near=4, palette=QUAL):
+    """`(order, centroids, colors)` -- the identity encoding **both** district figures share.
+
+    Factored out so `districts.png` and `district_regions.png` cannot drift: the colouring is a
+    function of the draw, not of the figure, and a reader flipping between the two maps has to
+    see D07 in the same hue on both.
+    """
+    order = sorted({d for z, d in districts.items() if z in xy}, key=str)
+    centroids = district_centroids(districts, values, xy)
+    adj = merge_adjacency(centroid_neighbors(centroids, n_near),
+                          zip_neighbors(districts, xy, n_near + 2))
+    return order, centroids, color_districts(adj, palette)
+
+
 def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKER,
                      alpha=ALPHA, footer=FOOTER, title=None, subtitle=None, n_near=4,
                      palette=QUAL, label=True):
@@ -470,11 +489,8 @@ def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKE
     x = np.array([xy[z][0] for z, _ in keep], float)
     y = np.array([xy[z][1] for z, _ in keep], float)
     v = np.array([w for _, w in keep], float)
-    order = sorted({d for z, d in districts.items() if z in xy}, key=str)
-    centroids = district_centroids(districts, values, xy)
-    adj = merge_adjacency(centroid_neighbors(centroids, n_near),
-                          zip_neighbors(districts, xy, n_near + 2))
-    colors = color_districts(adj, palette)
+    order, centroids, colors = draw_palette(districts, values, xy, n_near=n_near,
+                                            palette=palette)
 
     title = title or f"Drawn districts — {len(order)} territories on equal opportunity"
     subtitle = subtitle or ("bubble area ∝ M_z  ·  colour = district (nominal; adjacent "
@@ -498,6 +514,394 @@ def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKE
                               edgecolor="none", alpha=0.82))
     _district_legend(fig, districts, values, colors, order)
     _size_legend(ax, v, float(v.max()), "M (descaled)", max_marker)
+    return _save(fig, out)
+
+
+# ------------------------------------------------------------------ the district regions map
+# Bubbles answer "how much is here"; a business audience asks "where does my territory stop".
+# The honest way to fill the plane from scattered points is the Voronoi diagram: every point of
+# the country is coloured by its *nearest* zip's district.  That is a real statement -- the
+# boundary between two adjacent zips of different districts is exactly their perpendicular
+# bisector -- and it invents no value anywhere, unlike a KDE or an interpolated surface.
+REGION_ALPHA = 0.45            # fills must stay light enough for the dark borders to read
+CELL_EDGE = "white"            # the zip lattice inside a district: present, never assertive
+CELL_EDGE_W = 0.4
+CELL_EDGE_ALPHA = 0.5
+BORDER = "#444444"             # district vs district: the one line a reader is meant to follow
+BORDER_W = 1.4
+STATE_W_REGIONS = 0.6          # heavier than the bubble maps: it is competing with a fill now
+LABEL_SEP = 0.035              # minimum label separation, as a fraction of the frame width
+_LAND_CACHE: dict = {}         # id(states) -> (states, unioned geometry); see `land_union`
+
+
+def land_union(states):
+    """The dissolved lower-48 landmass as one (multi)polygon, cached per basemap object.
+
+    Cached because the union of 49 state polygons is the single most expensive geometry step
+    here and the same basemap is reused across every figure in a run.  The cache holds a
+    reference to `states` itself, so `id()` cannot be recycled underneath the key.
+    """
+    key = id(states)
+    hit = _LAND_CACHE.get(key)
+    if hit is not None and hit[0] is states:
+        return hit[1]
+    import shapely
+    geom = shapely.union_all([_valid(g) for g in states.geometry])
+    _LAND_CACHE[key] = (states, geom)
+    return geom
+
+
+def _valid(geom):
+    """`make_valid` only where it is needed -- it is not free and most rings are already fine."""
+    import shapely
+    return geom if geom.is_valid else shapely.make_valid(geom)
+
+
+def clip_region(pts, states, pad=0.05):
+    """The polygon every Voronoi cell is trimmed to.
+
+    With a basemap that is the landmass, which is what stops a coastal zip's cell from
+    spilling a hundred miles into the Atlantic or across the Canadian border.  Without one
+    (`states=None`, the test path) it is the convex hull of the points, padded by `pad` of the
+    frame -- the cells still get a finite, point-respecting boundary, just not a real coastline.
+    """
+    if states is not None:
+        return land_union(states)
+    from shapely import MultiPoint
+    hull = MultiPoint([tuple(p) for p in pts]).convex_hull
+    x0, y0, x1, y1 = hull.bounds
+    return _valid(hull.buffer(max(pad * max(x1 - x0, y1 - y0), 1e-9)))
+
+
+def match_cells_to_points(cells, coords) -> list:
+    """`[cell index for each point]` -- the bijection between Voronoi cells and generators.
+
+    The fallback for when the diagram does not come back in input order.  Each generator lies
+    in the closed cell of exactly one polygon, so the lookup is a tree query narrowed to a
+    `covers` test; a point that lands on a shared edge (coincident inputs, or a snapped
+    tolerance) can match two, and is broken in favour of a cell nothing has claimed yet, then
+    by nearest centroid.  Both halves of "bijection" are asserted -- every point matched, no
+    cell matched twice -- because the failure is silent otherwise: the map would still draw,
+    with the wrong ground under the wrong district.
+
+    The tree predicate is `intersects`, not `covers`, and that is not a slack choice.  Shapely
+    applies the predicate as `input.predicate(tree_geometry)`, so `covers` here asks whether
+    the *point* covers the polygon and matches nothing at all; the containment test has to be
+    made explicitly on the candidates the bbox filter returns.
+    """
+    from shapely import Point, STRtree
+    cells = list(cells)
+    tree = STRtree(cells)
+    idx, used = [], set()
+    for c in coords:
+        p = Point(c)
+        hit = [j for j in (int(j) for j in tree.query(p, predicate="intersects"))
+               if cells[j].covers(p)]
+        free = [j for j in hit if j not in used] or hit or list(range(len(cells)))
+        j = free[0] if len(free) == 1 else min(free, key=lambda j: cells[j].centroid.distance(p))
+        idx.append(j)
+        used.add(j)
+    assert len(idx) == len(coords), (len(idx), len(coords))
+    assert len(set(idx)) == len(idx), "two points claimed the same Voronoi cell"
+    return idx
+
+
+def voronoi_cells(keys, xy, clip) -> dict:
+    """`{key: cell}` -- the Voronoi cell of each point, clipped to `clip`.
+
+    Two things are easy to get wrong and both are checked rather than assumed.  First, the
+    cells come back as a GeometryCollection whose order is **not** the input order unless
+    `ordered=True` is both available (shapely >= 2.1, GEOS >= 3.12) and honoured; the result is
+    verified point-by-point and falls back to an STRtree lookup otherwise.  Second, the
+    matching must be a *bijection* -- one cell per point, no cell claimed twice -- which is
+    asserted, because a silent off-by-one here mislabels territory rather than crashing.
+
+    Clipping can empty a cell whose point falls in the sea on the generalised 1:20m coastline.
+    Those keys are dropped from the result (their ground is covered by the neighbouring cells
+    regardless) and the caller reports the count.
+    """
+    import shapely
+    from shapely import MultiPoint, Point
+
+    keys = list(keys)
+    coords = [tuple(xy[k]) for k in keys]
+    if len(coords) < 2:
+        return {}
+    env = _valid(clip.envelope.buffer(0.02 * max(clip.bounds[2] - clip.bounds[0],
+                                                 clip.bounds[3] - clip.bounds[1]) + 1.0))
+    cells = list(shapely.voronoi_polygons(MultiPoint(coords), extend_to=env,
+                                          ordered=True).geoms)
+    pts = [Point(c) for c in coords]
+    ok = len(cells) == len(pts) and all(cells[i].covers(pts[i]) for i in range(len(pts)))
+    if not ok:                                   # `ordered` unavailable or not honoured
+        cells = [cells[j] for j in match_cells_to_points(cells, coords)]
+    assert len(cells) == len(pts), (len(cells), len(pts))
+
+    out = {}
+    for k, cell in zip(keys, cells):
+        g = _valid(shapely.intersection(_valid(cell), clip))
+        if not g.is_empty and g.area > 0:
+            out[k] = g
+    return out
+
+
+def dissolve(cells, districts) -> dict:
+    """`{district: (multi)polygon}` -- the union of that district's zip cells.
+
+    A district may come out **multi-part**, and legitimately so: stage 1 is centre-based, not
+    contiguity-constrained, so another district's zips can interleave and split it.  Nothing
+    here forces a single polygon; the map shows what the draw actually is.
+    """
+    import shapely
+    groups = {}
+    for k, g in cells.items():
+        d = districts.get(k)
+        if d is not None:
+            groups.setdefault(d, []).append(g)
+    return {d: _valid(shapely.union_all(gs)) for d, gs in groups.items()}
+
+
+def _lines_of(geom, out=None) -> list:
+    """Every LineString inside a geometry, as `(n, 2)` coordinate arrays.  Points dropped."""
+    out = [] if out is None else out
+    if geom is None or geom.is_empty:
+        return out
+    gt = geom.geom_type
+    if gt in ("LineString", "LinearRing"):
+        if geom.length > 0:
+            out.append(np.asarray(geom.coords, float))
+    elif gt == "Polygon":
+        _lines_of(geom.exterior, out)
+        for r in geom.interiors:
+            _lines_of(r, out)
+    elif hasattr(geom, "geoms"):
+        for g in geom.geoms:
+            _lines_of(g, out)
+    return out
+
+
+def district_borders(polys, eps=0.0) -> list:
+    """The district-vs-district boundaries only: shared edges, never the coastline.
+
+    Drawing each district's whole boundary would put the same heavy stroke on the Pacific coast
+    and the Rio Grande as on the line between D03 and D05, and the internal borders -- the only
+    thing this figure exists to show -- would stop reading.  So the shared edges are taken
+    pairwise: `∂A ∩ ∂B` for districts whose bounding boxes meet.
+
+    Since both polygons are unions of cells from one Voronoi diagram clipped by one polygon,
+    the shared edges are numerically identical and the plain intersection finds them.  `eps`
+    (a fraction of a pixel on the real map) is the fallback for the case where it does not.
+    """
+    ids = sorted(polys, key=str)
+    buffered, segs = {}, []
+    for i, a in enumerate(ids):
+        pa = polys[a]
+        if pa.is_empty:
+            continue
+        for b in ids[i + 1:]:
+            pb = polys[b]
+            if pb.is_empty:
+                continue
+            ax0, ay0, ax1, ay1 = pa.bounds
+            bx0, by0, bx1, by1 = pb.bounds
+            if ax1 + eps < bx0 or bx1 + eps < ax0 or ay1 + eps < by0 or by1 + eps < ay0:
+                continue
+            got = _lines_of(pa.boundary.intersection(pb.boundary))
+            if not got and eps > 0:
+                if b not in buffered:
+                    buffered[b] = pb.buffer(eps)
+                got = _lines_of(pa.boundary.intersection(buffered[b]))
+            segs.extend(got)
+    return segs
+
+
+def _poly_paths(geom) -> list:
+    """Matplotlib `Path`s for a (Multi)Polygon, one per part, **holes included**.
+
+    Built by hand rather than via geopandas so the whole renderer runs with `states=None` and
+    no geo stack at all, which is what keeps the tests network-free.
+    """
+    from matplotlib.path import Path
+    out = []
+    for poly in (geom.geoms if geom.geom_type == "MultiPolygon" else [geom]):
+        if poly.is_empty:
+            continue
+        verts, codes = [], []
+        for ring in [poly.exterior, *poly.interiors]:
+            c = np.asarray(ring.coords, float)
+            if len(c) < 3:
+                continue
+            verts.append(c)
+            codes.append(np.r_[Path.MOVETO, np.full(len(c) - 1, Path.LINETO)])
+        if verts:
+            out.append(Path(np.concatenate(verts), np.concatenate(codes)))
+    return out
+
+
+def _largest_part(geom):
+    return max(geom.geoms, key=lambda g: g.area) if geom.geom_type == "MultiPolygon" else geom
+
+
+def _parts(geom) -> list:
+    """A district's polygons, largest first."""
+    gs = list(geom.geoms) if geom.geom_type == "MultiPolygon" else [geom]
+    return sorted((g for g in gs if not g.is_empty), key=lambda g: -g.area)
+
+
+def _inside_points(poly) -> list:
+    """A handful of points spread across one polygon, all guaranteed inside it.
+
+    `representative_point` gives one, which is not enough: a label that has to move needs
+    somewhere else in the *same* region to go, not a different region.  The quadrants of the
+    bounding box supply the rest, and each quadrant's own representative point is inside the
+    part by construction, so a concave or ring-shaped territory is still handled.
+    """
+    from shapely import box
+    out = [poly.representative_point()]
+    x0, y0, x1, y1 = poly.bounds
+    mx, my = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
+    for bx0, by0, bx1, by1 in ((x0, my, mx, y1), (mx, my, x1, y1),
+                               (x0, y0, mx, my), (mx, y0, x1, my)):
+        piece = poly.intersection(box(bx0, by0, bx1, by1))
+        if not piece.is_empty and piece.area > 0:
+            out.append(_largest_part(piece).representative_point())
+    return out
+
+
+def label_points(order, polys, centroids, min_sep=0.0, min_part=0.15) -> dict:
+    """`{district: (x, y)}` -- a label point **inside its own region** and clear of the labels
+    already placed.
+
+    The M-weighted centroid is the point we want (it lands where the district's business is),
+    but on a filled map it is only usable if it is in the district: a multi-part district's
+    weighted centroid can sit in a hole, or inside a neighbour.  So each district offers its
+    centroid, then points spread across each part holding at least `min_part` of its area, and
+    takes the first candidate `min_sep` clear of every label already down.  Districts are
+    served largest-part-first, so the big regions keep the preferred point and the small
+    interleaved ones move.
+
+    `min_part` is the guard that matters.  Allowing *any* part as a fallback sends a crowded
+    label off to a sliver -- on the real k=13 draw D09 landed on a hairline in Colorado while
+    its territory is in southern California, which is a worse error than the overlap it was
+    fixing.  A label may only move within the district's substantial ground; if that ground is
+    genuinely crowded the label stays where separation is largest and merely touches.
+
+    Without any of this, two districts whose value concentrates in the same metro print their
+    labels on top of each other -- D01/D13 in New England, D02/D09 in southern California.
+    """
+    from shapely import Point
+    out, placed = {}, []
+    ranked = sorted((d for d in order if d in polys and not polys[d].is_empty),
+                    key=lambda e: (-_largest_part(polys[e]).area, str(e)))
+    for d in ranked:
+        g = polys[d]
+        cand = []
+        c = centroids.get(d)
+        if c is not None and g.covers(Point(c)):
+            cand.append(Point(c))
+        parts = _parts(g)
+        floor = min_part * sum(p.area for p in parts)
+        for p in parts:
+            if p.area >= floor or p is parts[0]:
+                cand.extend(_inside_points(p))
+        far = [min((q.distance(p) for q in placed), default=float("inf")) for p in cand]
+        pick = next((i for i, s in enumerate(far) if s >= min_sep),
+                    max(range(len(cand)), key=lambda i: far[i]))
+        out[d] = (cand[pick].x, cand[pick].y)
+        placed.append(cand[pick])
+    return out
+
+
+def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_ALPHA,
+                            footer=FOOTER, title=None, subtitle=None, n_near=4,
+                            palette=QUAL, label=True, pad=0.05, report=None):
+    """The draw as **filled territory**: each zip's Voronoi catchment, dissolved by district.
+
+    This is the district figure for the business.  `districts.png` answers "how much value sits
+    where"; this one answers "where does my territory stop", which is the question a rep asks
+    first, and it answers it with a boundary that is exact rather than drawn by hand: the line
+    between two adjacent zips of different districts is their perpendicular bisector.
+
+    Colours come from `draw_palette`, the same call `figure_districts` makes, so the two maps
+    agree hue-for-hue.  The z-order is the whole design: light fills, then the white zip
+    lattice (so a reader can see the map is built of zips, not painted), then the district
+    borders dark on top of it, then the state outlines -- which are lighter than the district
+    borders on purpose, since a state line that fights a territory line is worse than no state
+    line at all.
+
+    `report` is an optional callable taking one string; the CLI passes `print`.
+    """
+    from matplotlib.collections import LineCollection
+    from matplotlib.patches import PathPatch
+
+    say = report or (lambda _s: None)
+    keys = [z for z in sorted(districts, key=str) if z in xy]
+    order, centroids, colors = draw_palette(districts, values, xy, n_near=n_near,
+                                            palette=palette)
+    title = title or f"District territories — {len(order)} regions on equal opportunity"
+    subtitle = subtitle or (
+        "fill = the Voronoi catchment of each ZIP: every point is coloured by its nearest "
+        "ZIP's district  ·  boundaries between\nadjacent ZIPs of different districts are "
+        "exact  ·  clipped to the US landmass  ·  colours match districts.png")
+    fig, ax = _canvas(None, title, subtitle, footer)          # states drawn last, on top
+    if len(keys) < 2:
+        return _save(fig, out)
+
+    clip = clip_region([xy[z] for z in keys], states, pad)
+    cells = voronoi_cells(keys, xy, clip)
+    if len(cells) < len(keys):
+        say(f"regions: {len(keys) - len(cells)} zip(s) fell outside the clip polygon "
+            f"(generalised coastline); their ground goes to the neighbouring cells")
+    polys = dissolve(cells, districts)
+    for d, g in polys.items():
+        assert g.area > 0, f"district {d} dissolved to zero area"
+    # Part counts are reported two ways on purpose.  The raw count is inflated by the
+    # coastline -- clipping a single cell against islands and bays splits it -- so the number
+    # that means "this district is genuinely in pieces" is the count of parts holding more than
+    # 1% of its area, alongside the share the largest part carries.
+    split = []
+    for d in sorted(polys, key=str):
+        ps = _parts(polys[d])
+        tot = sum(p.area for p in ps) or 1.0
+        big = sum(1 for p in ps if p.area / tot > 0.01)
+        if len(ps) > 1:
+            split.append(f"{d}: {big} part(s) >1% of {len(ps)}, largest {ps[0].area / tot:.0%}")
+    if split:
+        say("regions: districts in pieces (centre-based draw, drawn as it is) — "
+            + "; ".join(split))
+
+    x0, y0, x1, y1 = clip.bounds
+    eps = 1e-4 * float(np.hypot(x1 - x0, y1 - y0))
+
+    for d in order:                                            # 1. fills
+        g = polys.get(d)
+        if g is None:
+            continue
+        for path in _poly_paths(g):
+            ax.add_patch(PathPatch(path, facecolor=colors[d], edgecolor="none",
+                                   alpha=alpha, zorder=1))
+    lattice = [seg for g in cells.values() for seg in _lines_of(g.boundary)]
+    ax.add_collection(LineCollection(lattice, colors=CELL_EDGE, linewidths=CELL_EDGE_W,
+                                     alpha=CELL_EDGE_ALPHA, zorder=2))   # 2. the zip lattice
+    borders = district_borders(polys, eps)                     # 3. district vs district
+    ax.add_collection(LineCollection(borders, colors=BORDER, linewidths=BORDER_W,
+                                     capstyle="round", joinstyle="round", zorder=3))
+    say(f"regions: {len(cells):,} cells, {len(polys)} districts, "
+        f"{len(borders):,} shared border segments")
+    if states is not None:                                     # 4. states, on top but light
+        states.boundary.plot(ax=ax, color=OUTLINE, linewidth=STATE_W_REGIONS, zorder=4)
+
+    if label:                                                  # 5. labels
+        for d, (lx, ly) in label_points(order, polys, centroids,
+                                        LABEL_SEP * (x1 - x0)).items():
+            ax.text(lx, ly, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
+                    ha="center", va="center", zorder=6,
+                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
+                              edgecolor="none", alpha=0.82))
+    _district_legend(fig, districts, values, colors, order)
+    mx, my = 0.02 * (x1 - x0), 0.02 * (y1 - y0)
+    ax.set_xlim(x0 - mx, x1 + mx)
+    ax.set_ylim(y0 - my, y1 + my)
     return _save(fig, out)
 
 
@@ -543,6 +947,8 @@ def main(argv=None):
     ap.add_argument("--no-basemap", action="store_true", help="skip the state outlines")
     ap.add_argument("--districts", default=None, metavar="DRAW_CSV",
                     help="a draw.csv from tools/run_draw.py; adds districts.png")
+    ap.add_argument("--regions", default=None, metavar="DRAW_CSV",
+                    help="the same draw.csv; adds district_regions.png (filled territories)")
     args = ap.parse_args(argv)
 
     from td import instance as descaled
@@ -590,8 +996,11 @@ def main(argv=None):
                                          os.path.join(args.out, "contestability.png"),
                                          firm_a=fa, firm_b=fb))
 
-    if args.districts:
-        draw = read_draw(args.districts)
+    for flag, name in (("districts", "districts.png"), ("regions", "district_regions.png")):
+        path = getattr(args, flag)
+        if not path:
+            continue
+        draw = read_draw(path)
         stray = [z for z in draw if z not in M]
         if stray:
             print(f"WARNING: {len(stray)} zip(s) in the draw are not in the instance, "
@@ -600,11 +1009,12 @@ def main(argv=None):
         unplaced = [z for z in M if z not in draw]
         ids = sorted(set(draw.values()), key=str)
         n_off, share = drop_share({z: M[z] for z in draw}, xy)
-        print(f"{'districts.png':<18} {len(draw):>5,} zips in {len(ids)} districts; "
+        print(f"{name:<20} {len(draw):>5,} zips in {len(ids)} districts; "
               f"{n_off} unplottable ({share:.2%} of their M); "
               f"{len(unplaced)} instance zip(s) not in the draw")
-        written.append(figure_districts(draw, M, xy, states,
-                                        os.path.join(args.out, "districts.png")))
+        dest = os.path.join(args.out, name)
+        written.append(figure_districts(draw, M, xy, states, dest) if flag == "districts"
+                       else figure_district_regions(draw, M, xy, states, dest, report=print))
 
     for p in written:
         print(f"wrote {p}  ({os.path.getsize(p) / 1024:.0f} KB)")

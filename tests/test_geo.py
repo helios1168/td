@@ -255,3 +255,161 @@ def test_color_districts_spreads_over_the_palette():
     um = _us_maps()
     adj = {f"D{i:02d}": set() for i in range(1, 7)}
     assert len(set(um.color_districts(adj).values())) == 6
+
+
+# ------------------------------------------------------------------ the district regions map
+# `states=None` throughout, so nothing here touches the network or the geo cache: the clip
+# polygon falls back to the padded convex hull of the points, which is the branch that exists
+# for exactly this reason.
+def _regions(um, xy, labels):
+    """`(clip, cells, polys)` for a synthetic draw, on the no-basemap path."""
+    keys = sorted(k for k in labels if k in xy)
+    clip = um.clip_region([xy[k] for k in keys], None)
+    cells = um.voronoi_cells(keys, xy, clip)
+    return clip, cells, um.dissolve(cells, labels)
+
+
+def test_clip_region_without_a_basemap_is_the_padded_hull():
+    """No states: the cells still need a finite boundary, and it must contain every point."""
+    um = _us_maps()
+    from shapely import Point
+    _, xy, _, _ = _clustered()
+    pts = [xy[z] for z in xy]
+    clip = um.clip_region(pts, None, pad=0.05)
+    assert clip.geom_type in ("Polygon", "MultiPolygon") and clip.area > 0
+    for p in pts:
+        assert clip.covers(Point(p)), p
+    from shapely import MultiPoint
+    hull = MultiPoint([tuple(p) for p in pts]).convex_hull
+    assert clip.area > hull.area                       # padded outwards, not merely the hull
+
+
+def test_voronoi_cells_are_a_bijection_with_the_points():
+    """One cell per point, no cell claimed twice -- an off-by-one here mislabels territory."""
+    um = _us_maps()
+    from shapely import Point
+    _, xy, _, labels = _clustered()
+    keys = sorted(labels)
+    clip, cells, _ = _regions(um, xy, labels)
+    assert set(cells) == set(keys), set(keys) ^ set(cells)          # onto, and no extras
+    for z in keys:
+        assert cells[z].covers(Point(xy[z])), z                     # each cell holds its point
+    for z in keys:                                                  # and nobody else's
+        for w in keys:
+            if w != z:
+                assert not cells[z].contains(Point(xy[w])), (z, w)
+    for i, z in enumerate(keys):                                    # interiors are disjoint
+        for w in keys[i + 1:]:
+            assert cells[z].intersection(cells[w]).area < 1e-6 * cells[z].area, (z, w)
+    covered = sum(cells[z].area for z in keys)
+    assert abs(covered - clip.area) < 1e-6 * clip.area              # and they tile the clip
+
+
+def test_cell_matching_recovers_a_shuffled_diagram():
+    """The fallback for `ordered=True` being unavailable, exercised on purpose.
+
+    Shapely 2.1 on GEOS >= 3.12 returns the cells in input order and `voronoi_cells` takes
+    that fast path, so this branch would otherwise never run on this box -- and it is the
+    branch that saves the figure on any older stack.
+    """
+    um = _us_maps()
+    import shapely
+    from shapely import MultiPoint
+    coords = [(0.0, 0.0), (10.0, 1.0), (3.0, 9.0), (11.0, 8.0), (5.0, 4.0)]
+    cells = list(shapely.voronoi_polygons(MultiPoint(coords), ordered=True).geoms)
+    perm = [3, 0, 4, 2, 1]
+    idx = um.match_cells_to_points([cells[j] for j in perm], coords)
+    assert sorted(idx) == list(range(len(coords)))          # a permutation: bijection
+    assert [perm[j] for j in idx] == list(range(len(coords)))   # and it undoes the shuffle
+
+
+def test_dissolved_districts_have_area_and_do_not_overlap():
+    """Every district is real ground, and no point of one district's cells is in another."""
+    um = _us_maps()
+    from shapely import Point
+    _, xy, _, labels = _clustered()
+    _, cells, polys = _regions(um, xy, labels)
+    assert set(polys) == set(labels.values())
+    for d, g in polys.items():
+        assert g.area > 0, d
+    for z in sorted(labels)[::4]:                       # a sample of generator points
+        p = Point(xy[z])
+        assert polys[labels[z]].covers(p), z
+        for d, g in polys.items():
+            if d != labels[z]:
+                assert not g.covers(p), (z, d)          # strictly inside its own, only
+
+
+def test_district_borders_are_the_shared_edges_not_the_outline():
+    """Two districts split left/right: the border is the seam, not the frame."""
+    um = _us_maps()
+    from shapely import LineString
+    xy = {f"z{i:02d}": (float(i), float(i % 3)) for i in range(12)}
+    labels = {k: ("D01" if xy[k][0] < 5.5 else "D02") for k in xy}
+    clip, _, polys = _regions(um, xy, labels)
+    segs = um.district_borders(polys, eps=1e-9)
+    assert segs, "two adjacent districts must share a border"
+    total = sum(LineString(s).length for s in segs)
+    assert 0 < total < clip.exterior.length             # a seam, not the whole outline
+    for s in segs:                                      # and it lies on both boundaries
+        line = LineString(s)
+        assert polys["D01"].buffer(1e-6).covers(line)
+        assert polys["D02"].buffer(1e-6).covers(line)
+
+
+def test_label_points_stay_inside_their_own_region_and_apart():
+    """Two districts sharing a metro must not print their labels on top of each other."""
+    um = _us_maps()
+    from shapely import Point
+    _, xy, M, labels = _clustered()
+    # force the pathology: D02's value all sits next to D01's, so the weighted centroids meet
+    M = {z: (100.0 if z in ("10000", "11000") else 0.1) for z in labels}
+    _, _, polys = _regions(um, xy, labels)
+    cent = um.district_centroids(labels, M, xy)
+    sep = 0.035 * (max(p.bounds[2] for p in polys.values())
+                   - min(p.bounds[0] for p in polys.values()))
+    pts = um.label_points(sorted(polys), polys, cent, sep)
+    assert set(pts) == set(polys)
+    for d, p in pts.items():
+        assert polys[d].covers(Point(p)), d                    # inside its own region
+    ids = sorted(pts)
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            assert Point(pts[a]).distance(Point(pts[b])) > 0.0, (a, b)
+
+
+def test_label_points_do_not_flee_to_a_sliver():
+    """A crowded label may move only within the district's substantial ground."""
+    um = _us_maps()
+    from shapely import Point, box
+    big = box(0.0, 0.0, 10.0, 10.0)
+    sliver = box(50.0, 50.0, 50.01, 50.01)               # 1e-6 of the district's area
+    polys = {"D01": big.union(sliver), "D02": box(10.0, 0.0, 20.0, 10.0)}
+    pts = um.label_points(["D01", "D02"], polys, {"D01": (5.0, 5.0), "D02": (15.0, 5.0)},
+                          min_sep=1000.0)                # unsatisfiable: nothing is that far
+    assert big.covers(Point(pts["D01"])), pts["D01"]     # stays on the real territory
+    assert not sliver.covers(Point(pts["D01"]))
+
+
+def test_figure_district_regions_writes_png_without_a_basemap():
+    um = _us_maps()
+    _, xy, M, labels = _clustered()
+    with tempfile.TemporaryDirectory() as tmp:
+        p = um.figure_district_regions(labels, M, xy, None,
+                                       os.path.join(tmp, "district_regions.png"))
+        assert os.path.basename(p) == "district_regions.png"
+        assert os.path.getsize(p) > 10_000, os.path.getsize(p)
+
+
+def test_both_district_figures_share_one_colour_assignment():
+    """`draw_palette` is the single source of the hues, so the two maps cannot drift apart."""
+    um = _us_maps()
+    _, xy, M, labels = _clustered()
+    order, cent, colors = um.draw_palette(labels, M, xy)
+    assert order == sorted(set(labels.values()))
+    assert set(colors) == set(order) and set(cent) == set(order)
+    assert um.draw_palette(labels, M, xy)[2] == colors          # deterministic
+    adj = um.merge_adjacency(um.centroid_neighbors(cent, 4), um.zip_neighbors(labels, xy, 6))
+    for d, nbrs in adj.items():
+        for e in nbrs:
+            assert colors[d] != colors[e], (d, e)
