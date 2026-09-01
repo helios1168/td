@@ -396,3 +396,30 @@ def test_build_adjacency_rook_rule_and_states():
         st = ba.state_membership(gdf, "ZCTA5CE20", sp, verbose=False)
     assert st == {"10001": "CA", "10002": "NY", "10003": "CA",
                   "10004": "NY", "99999": "NY"}
+
+
+def test_join_floor_override_drops_unjoined_and_reports_value():
+    """--join-floor accepts a known loss; the failure message names the worst zips."""
+    ex = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        zips, reps, M, sales, edges = fake_real()
+        # corrupt one zip's id in sales only: those rows cannot join
+        bad_zip = sales[0][0]
+        broken = [(("XXXX" if z == bad_zip else z), rep, firm, v)
+                  for z, rep, firm, v in sales]
+        sp, op, gp = _write_inputs(tmp, zips, M, broken, edges)
+
+        # default floor: refuses, and the message carries the diagnostics
+        try:
+            ex.build(sp, op, gp)
+            raise AssertionError("expected InputError")
+        except ex.InputError as e:
+            msg = str(e)
+            assert "00xxx" in msg.lower() or "0xxxx" in msg.lower()  # zfill'd bad id named
+            assert "% of sales value" in msg
+            assert "--join-floor" in msg
+
+        # lowered floor: builds, with the unjoined zip's rows dropped
+        inst = ex.build(sp, op, gp, join_floor=0.5)
+        assert bad_zip not in inst.share
+        assert ex.validate(inst) == []

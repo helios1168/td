@@ -156,7 +156,7 @@ class Instance(object):
 
 def build(sales_path, opp_path, graph_path, states_path=None,
           theta=THETA_DEFAULT, u_col=None, v_col=None, keep_scale=False,
-          filler_keys=()):
+          filler_keys=(), join_floor=JOIN_FLOOR):
     sales = read_rows(sales_path)
     opp = read_rows(opp_path)
     if not sales or not opp:
@@ -191,6 +191,7 @@ def build(sales_path, opp_path, graph_path, states_path=None,
     raw, raw_free = defaultdict(dict), defaultdict(float)
     fillers = {str(k).strip() for k in filler_keys}
     n_rows = n_joined = n_nonpositive = n_filler = 0
+    unjoined_value, total_value = defaultdict(float), 0.0
     for r in sales:
         n_rows += 1
         z, rep = norm_id(r[c_zip]), str(r[c_rep]).strip()
@@ -201,7 +202,9 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         if v <= 0:                          # cand(z) = {i : S_i > 0}, per the 2026-08-31 rule
             n_nonpositive += 1
             continue
+        total_value += v
         if z not in M or M[z] <= 0:
+            unjoined_value[z] += v
             continue
         n_joined += 1
         if rep in fillers:
@@ -216,11 +219,19 @@ def build(sales_path, opp_path, graph_path, states_path=None,
             inst.firm[rep] = str(r[c_firm]).strip()
 
     join_rate = n_joined / max(n_rows - n_nonpositive, 1)
-    if join_rate < JOIN_FLOOR:
+    if join_rate < join_floor:
+        lost_share = sum(unjoined_value.values()) / total_value if total_value else 0.0
+        top = sorted(unjoined_value.items(), key=lambda kv: -kv[1])[:8]
+        top_txt = ", ".join(f"{z} ({v / total_value:.2%})" for z, v in top)
         raise InputError(
             f"only {join_rate:.4f} of positive sales rows joined to an opportunity zip "
-            f"(floor {JOIN_FLOOR}). Almost always an id-vintage or leading-zero problem "
-            f"rather than missing data -- check both id columns before continuing.")
+            f"(floor {join_floor}); the unjoined rows carry {lost_share:.2%} of sales value.\n"
+            f"  worst zips by lost value: {top_txt}\n"
+            f"  Check those ids before overriding: 4-digit ids mean dropped leading zeros; "
+            f"ids missing from any ZCTA table are usually PO-box/unique USPS zips, which "
+            f"never exist as ZCTAs (fix: a zip->ZCTA crosswalk upstream). If the loss is "
+            f"understood and acceptable, rerun with --join-floor {join_rate:.2f} -- the "
+            f"unjoined rows are then dropped from the instance.")
 
     for z, per_rep in raw.items():
         inst.m_rel[z] = M[z] / kappa
@@ -554,6 +565,10 @@ def main(argv=None):
     p.add_argument("--lam", type=float, default=0.30)
     p.add_argument("--u-col", default=None)
     p.add_argument("--v-col", default=None)
+    p.add_argument("--join-floor", type=float, default=JOIN_FLOOR,
+                   help=f"minimum share of positive sales rows that must join to an "
+                        f"opportunity zip (default {JOIN_FLOOR}). Lower it only after "
+                        f"reading the failure report: unjoined rows are dropped.")
     p.add_argument("--filler-key", action="append", default=[], metavar="KEY",
                    help="a rep_id that marks a VACANCY rather than a person. Repeatable. "
                         "Its sales stay in the instance as unowned book but it never "
@@ -563,7 +578,8 @@ def main(argv=None):
 
     try:
         inst = build(a.sales, a.opportunity, a.graph, a.states, theta=a.theta,
-                     u_col=a.u_col, v_col=a.v_col, filler_keys=a.filler_key)
+                     u_col=a.u_col, v_col=a.v_col, filler_keys=a.filler_key,
+                     join_floor=a.join_floor)
     except InputError as e:
         print(f"input error: {e}", file=sys.stderr)
         return 4
