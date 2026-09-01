@@ -23,11 +23,11 @@ equal opportunity, **~$1B each**.
 
 | | |
 |---|---|
-| zips carrying sales | **2,232** |
+| zips carrying sales | **~1,229** (2,232 was a double-count; corrected 2026-09-01) |
 | distinct reps | **72**, including an "open" (vacancy) key → 71 real |
-| total opportunity | **≈ $6.2B** |
+| total opportunity | **≈ $6.2B** — from the same 2026-08-31 sizing; re-confirm on the corrected extract |
 | footprint | west coast, east coast, Texas, Florida — **midwest uncovered** |
-| ⇒ `k` | **≈ 6** at $1B |
+| ⇒ `k` | **≈ 6** at $1B, pending that re-confirmation |
 
 This is **greenfield balanced districting**, not the two-player fair-division problem the
 repo was built for. `docs/CHANNEL.md` is the problem; `docs/MODEL.md` is the model.
@@ -137,7 +137,7 @@ original tests were left behind because they pull `instances → synth → terri
 Stage 1 destroys the census decomposition — the bilateral pair structure came from overlap
 between two legacy rep maps, and a greenfield channel has none.
 
-- `scip_tree` certifies to **135 zips** (two-player). 2,232 × 6 ≈ 13,392 binaries.
+- `scip_tree` certifies to **135 zips** (two-player). ~1,229 × 6 ≈ 7,400 binaries.
 - Validi, Buchanan & Lykhovyd certify ~**1,500 units** for political districting — the
   published state of the art for exactly this problem.
 - **But the footprint is disconnected.** No contiguous district spans California and Florida,

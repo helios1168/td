@@ -57,7 +57,7 @@ build. Both carry the 2020-census ZCTAs, so a work-machine graph on the 2025 vin
 with a 2020 rebuild here, *provided* it used the Rook shared-boundary rule. `fetch_tiger`
 hard-codes the 2020 filename; point it at a 2025 zip explicitly if you want that vintage.
 
-Note the national footprint is 33,791 ZCTAs against the channel's **2,232** — the national
+Note the national footprint is 33,791 ZCTAs against the channel's **~1,229** — the national
 cache was always far larger than this problem needs.
 
 ## `tiger/` — gitignored, never commit

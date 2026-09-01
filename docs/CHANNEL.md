@@ -160,29 +160,30 @@ k-way partition over the whole footprint.
   formulation — assign each zip to one of k *centres* — which breaks the symmetry by
   construction and is what the districting literature uses.
 
-### 6 The instance, sized (2026-08-31)
+### 6 The instance, sized (2026-08-31; zip count corrected 2026-09-01)
 
 | | |
 |---|---|
-| zips carrying sales | **2,232** |
+| zips carrying sales | **~1,229** — the 2026-08-31 figure of 2,232 was a double-count in the source pull (user's correction, 2026-09-01) |
 | distinct reps | **72**, including the "open" (vacancy) key → 71 real |
-| total opportunity | **≈ $6.2B** |
+| total opportunity | **≈ $6.2B** — from the same 2026-08-31 sizing; **re-read it off the corrected extract** before trusting `k` |
 | footprint | west coast, east coast, Texas, Florida — **midwest uncovered** |
-| ⇒ `k` | **≈ 6** at $1B, or 7 at ~$886M |
+| ⇒ `k` | **≈ 6** at $1B *if* the $6.2B stands; the validate report settles it |
 
 Two consequences, and the second is the important one.
 
-**Scale is at the frontier but not past it.** 2,232 units × 6 districts ≈ 13,392 binaries.
-Validi, Buchanan & Lykhovyd certify ~1,500 units for political districting, so this is the
-same order of magnitude as the published state of the art — attemptable, not routine.
+**Scale is at the frontier but not past it.** ~1,229 units × 6 districts ≈ 7,400 binaries —
+half the pre-correction estimate. Validi, Buchanan & Lykhovyd certify ~1,500 units for
+political districting, so this is the same order of magnitude as the published state of the
+art — attemptable, not routine.
 
 **The footprint is disconnected, and that is a gift.** No contiguous district spans
 California and Florida, so the adjacency graph has ≥ 4 major components and **the problem
 separates**: allocate an integer district count to each component, then solve each
 independently. Failure mechanism (a) — pre-existing graph disconnection, the thing that
 broke the legacy cut loop — arrives here as the structure that makes the problem tractable.
-At roughly 500 zips per region the subproblems are far closer to where `scip_tree` already
-works than the 2,232-zip whole would be.
+At roughly 200–500 zips per region the subproblems are far closer to where `scip_tree`
+already works than the ~1,229-zip whole would be.
 
 ### 7 Balance has a geometric ceiling — compute it first
 
