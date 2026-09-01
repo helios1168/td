@@ -1,0 +1,521 @@
+% Candidate additions to docs/channel_note/references.bib
+% From the 2026-09-01 literature reconnaissance (docs/RESEARCH_FINDINGS.md).
+% Tier 1 = should be cited by the note as it stands; Tier 2 = cited by the
+% reframings/roadmap if adopted. DOIs verified against OpenAlex/Crossref/arXiv
+% by the research agents; re-resolve before merging into references.bib.
+
+% ---------- Tier 1: name our constructions / retire our proofs ----------
+
+@article{hess1965,
+  author  = {Sidney W. Hess and J. B. Weaver and H. J. Siegfeldt and J. N. Whelan and P. A. Zitlau},
+  title   = {Nonpartisan Political Redistricting by Computer},
+  year    = {1965},
+  journal = {Operations Research},
+  volume  = {13}, number = {6}, pages = {998--1006},
+  doi     = {10.1287/opre.13.6.998}
+}
+
+@article{aurenhammer1987,
+  author  = {Franz Aurenhammer},
+  title   = {Power Diagrams: Properties, Algorithms and Applications},
+  year    = {1987},
+  journal = {SIAM Journal on Computing},
+  volume  = {16}, number = {1}, pages = {78--96},
+  doi     = {10.1137/0216006}
+}
+
+@article{aurenhammer1998,
+  author  = {Franz Aurenhammer and Friedrich Hoffmann and Boris Aronov},
+  title   = {Minkowski-Type Theorems and Least-Squares Clustering},
+  year    = {1998},
+  journal = {Algorithmica},
+  volume  = {20}, number = {1}, pages = {61--76},
+  doi     = {10.1007/PL00009187}
+}
+
+@article{brieden2012,
+  author  = {Andreas Brieden and Peter Gritzmann},
+  title   = {On Optimal Weighted Balanced Clusterings: Gravity Bodies and Power Diagrams},
+  year    = {2012},
+  journal = {SIAM Journal on Discrete Mathematics},
+  volume  = {26}, number = {2}, pages = {415--434},
+  doi     = {10.1137/110832707}
+}
+
+@article{brieden2017,
+  author  = {Andreas Brieden and Peter Gritzmann and Fabian Klemm},
+  title   = {Constrained clustering via diagrams: A unified theory and its application to electoral district design},
+  year    = {2017},
+  journal = {European Journal of Operational Research},
+  volume  = {263}, number = {1}, pages = {18--34},
+  doi     = {10.1016/j.ejor.2017.04.018}
+}
+
+@article{borgwardt2017,
+  author  = {Steffen Borgwardt and Andreas Brieden and Peter Gritzmann},
+  title   = {An {LP}-based $k$-means algorithm for balancing weighted point sets},
+  year    = {2017},
+  journal = {European Journal of Operational Research},
+  volume  = {263}, number = {2}, pages = {349--355},
+  doi     = {10.1016/j.ejor.2017.04.054}
+}
+
+@article{bourne2015,
+  author  = {David P. Bourne and Steven M. Roper},
+  title   = {Centroidal Power Diagrams, {L}loyd's Algorithm, and Applications to Optimal Location Problems},
+  year    = {2015},
+  journal = {SIAM Journal on Numerical Analysis},
+  volume  = {53}, number = {6}, pages = {2545--2569},
+  doi     = {10.1137/141000993}
+}
+
+@inproceedings{cohenaddad2018,
+  author    = {Vincent Cohen-Addad and Philip N. Klein and Neal E. Young},
+  title     = {Balanced centroidal power diagrams for redistricting},
+  year      = {2018},
+  booktitle = {Proceedings of the 26th {ACM} {SIGSPATIAL} International Conference on Advances in Geographic Information Systems},
+  pages     = {389--396},
+  doi       = {10.1145/3274895.3274979}
+}
+
+@techreport{bennett2000,
+  author      = {Kristin P. Bennett and Paul S. Bradley and Ayhan Demiriz},
+  title       = {Constrained $K$-Means Clustering},
+  year        = {2000},
+  institution = {Microsoft Research},
+  number      = {MSR-TR-2000-65}
+}
+
+@book{marshall2011,
+  author    = {Albert W. Marshall and Ingram Olkin and Barry C. Arnold},
+  title     = {Inequalities: Theory of Majorization and Its Applications},
+  edition   = {2nd},
+  year      = {2011},
+  publisher = {Springer},
+  doi       = {10.1007/978-0-387-68276-1}
+}
+
+@book{moulin2003,
+  author    = {Herv{\'e} Moulin},
+  title     = {Fair Division and Collective Welfare},
+  year      = {2003},
+  publisher = {MIT Press},
+  doi       = {10.7551/mitpress/2954.001.0001}
+}
+
+@article{kelly1998,
+  author  = {Frank P. Kelly and Aman K. Maulloo and David K. H. Tan},
+  title   = {Rate Control for Communication Networks: Shadow Prices, Proportional Fairness and Stability},
+  year    = {1998},
+  journal = {Journal of the Operational Research Society},
+  volume  = {49}, pages = {237--252},
+  doi     = {10.2307/3010473}
+}
+
+@article{kaneko1979,
+  author  = {Mamoru Kaneko and Kenjiro Nakamura},
+  title   = {The {Nash} Social Welfare Function},
+  year    = {1979},
+  journal = {Econometrica},
+  volume  = {47}, pages = {423--435},
+  doi     = {10.2307/1914191}
+}
+
+@article{trockel2008,
+  author  = {Walter Trockel},
+  title   = {The {Nash} product is a utility representation of the {Pareto} ordering},
+  year    = {2008},
+  journal = {Economics Letters},
+  doi     = {10.1016/j.econlet.2007.04.017}
+}
+
+@article{eisenberg1961,
+  author  = {Edmund Eisenberg},
+  title   = {Aggregation of Utility Functions},
+  year    = {1961},
+  journal = {Management Science},
+  volume  = {7}, number = {4}, pages = {337--350},
+  doi     = {10.1287/mnsc.7.4.337}
+}
+
+@book{dantzig1963,
+  author    = {George B. Dantzig},
+  title     = {Linear Programming and Extensions},
+  year      = {1963},
+  publisher = {Princeton University Press}
+}
+
+@book{ahuja1993,
+  author    = {Ravindra K. Ahuja and Thomas L. Magnanti and James B. Orlin},
+  title     = {Network Flows: Theory, Algorithms, and Applications},
+  year      = {1993},
+  publisher = {Prentice Hall}
+}
+
+@incollection{kalcsics2019,
+  author    = {J{\"o}rg Kalcsics and Roger Z. R{\'i}os-Mercado},
+  title     = {Districting Problems},
+  year      = {2019},
+  booktitle = {Location Science},
+  edition   = {2nd},
+  publisher = {Springer},
+  pages     = {705--743},
+  doi       = {10.1007/978-3-030-32177-2_25}
+}
+
+@misc{barman2018greedy,
+  author = {Siddharth Barman and Sanath Kumar Krishnamurthy and Rohit Vaish},
+  title  = {Greedy Algorithms for Maximizing {Nash} Social Welfare},
+  year   = {2018},
+  note   = {arXiv:1801.09046; AAMAS 2018 (venue unconfirmed)}
+}
+
+@article{nguyen2014,
+  author  = {Trung Thanh Nguyen and J{\"o}rg Rothe},
+  title   = {Minimizing envy and maximizing average {Nash} social welfare in the allocation of indivisible goods},
+  year    = {2014},
+  journal = {Discrete Applied Mathematics},
+  doi     = {10.1016/j.dam.2014.09.010}
+}
+
+@inproceedings{inoue2022,
+  author    = {Asei Inoue and Yusuke Kobayashi},
+  title     = {An Additive Approximation Scheme for the {Nash} Social Welfare Maximization with Identical Additive Valuations},
+  year      = {2022},
+  booktitle = {Integer Programming and Combinatorial Optimization ({IPCO} 2022)},
+  doi       = {10.1007/978-3-031-06678-8_25}
+}
+
+@inproceedings{madathil2023,
+  author    = {Jayakrishnan Madathil},
+  title     = {Fair Division of a Graph into Compact Bundles},
+  year      = {2023},
+  booktitle = {Proceedings of the Thirty-Second International Joint Conference on Artificial Intelligence ({IJCAI} 2023)},
+  pages     = {2835--2843},
+  doi       = {10.24963/ijcai.2023/316}
+}
+
+@article{bei2026,
+  author  = {Xiaohui Bei and Alexander Lam and Xinhang Lu and Warut Suksompong},
+  title   = {Welfare loss in connected resource allocation},
+  year    = {2026},
+  journal = {Discrete Applied Mathematics},
+  volume  = {385}, pages = {1--23},
+  doi     = {10.1016/j.dam.2026.01.007}
+}
+
+@article{fryer2011,
+  author  = {Roland G. {Fryer Jr.} and Richard Holden},
+  title   = {Measuring the Compactness of Political Districting Plans},
+  year    = {2011},
+  journal = {The Journal of Law and Economics},
+  volume  = {54}, number = {3}, pages = {493--535},
+  doi     = {10.1086/661511}
+}
+
+@article{mehrotra1998,
+  author  = {Anuj Mehrotra and Ellis L. Johnson and George L. Nemhauser},
+  title   = {An Optimization Based Heuristic for Political Districting},
+  year    = {1998},
+  journal = {Management Science},
+  volume  = {44}, number = {8}, pages = {1100--1114},
+  doi     = {10.1287/mnsc.44.8.1100}
+}
+
+@article{graham1969,
+  author  = {Ronald L. Graham},
+  title   = {Bounds on Multiprocessing Timing Anomalies},
+  year    = {1969},
+  journal = {SIAM Journal on Applied Mathematics},
+  volume  = {17}, number = {2}, pages = {416--429},
+  doi     = {10.1137/0117039}
+}
+
+@inproceedings{jain2024,
+  author    = {Pallavi Jain and Rohit Vaish},
+  title     = {Maximizing {Nash} Social Welfare under Two-Sided Preferences},
+  year      = {2024},
+  booktitle = {Proceedings of the {AAAI} Conference on Artificial Intelligence ({AAAI} 2024)},
+  pages     = {9798--9806},
+  doi       = {10.1609/AAAI.V38I9.28839}
+}
+
+@article{suksompong2023char,
+  author  = {Warut Suksompong},
+  title   = {A Characterization of Maximum {Nash} Welfare for Indivisible Goods},
+  year    = {2023},
+  journal = {Economics Letters},
+  volume  = {222}, pages = {110956},
+  doi     = {10.1016/j.econlet.2022.110956},
+  note    = {DOI inferred from volume/article number -- verify before use}
+}
+
+@article{fravel2026,
+  author  = {Jamie Fravel and Robert Hildebrand and Nicholas Goedert and Laurel Travis and Matthew Pierson},
+  title   = {Optimizing representation in redistricting: dual bounds for partitioning problems with non-convex objectives},
+  year    = {2026},
+  journal = {Mathematical Methods of Operations Research},
+  volume  = {103}, pages = {21--86},
+  doi     = {10.1007/s00186-026-00919-5}
+}
+
+@misc{jolly2026,
+  author = {Ishaan Jolly and Austin Buchanan},
+  title  = {A guide to inexact contiguity constraints},
+  year   = {2026},
+  note   = {Optimization Online, posted 2026-08-17; submitted}
+}
+
+% ---------- Tier 2: cited if the corresponding reframing/roadmap item is adopted ----------
+
+@article{saghand2022,
+  author  = {Payman {Ghasemi Saghand} and Hadi Charkhgard},
+  title   = {A criterion space search algorithm for mixed integer linear maximum multiplicative programs: a multiobjective optimization approach},
+  year    = {2022},
+  journal = {International Transactions in Operational Research},
+  volume  = {29}, number = {3}, pages = {1659--1687},
+  doi     = {10.1111/itor.12964}
+}
+
+@article{coey2020,
+  author  = {Chris Coey and Miles Lubin and Juan Pablo Vielma},
+  title   = {Outer approximation with conic certificates for mixed-integer convex problems},
+  year    = {2020},
+  journal = {Mathematical Programming Computation},
+  volume  = {12}, number = {2}, pages = {249--293},
+  doi     = {10.1007/s12532-020-00178-3}
+}
+
+@article{lubin2018,
+  author  = {Miles Lubin and Emre Yamangil and Russell Bent and Juan Pablo Vielma},
+  title   = {Polyhedral approximation in mixed-integer convex optimization},
+  year    = {2018},
+  journal = {Mathematical Programming},
+  volume  = {172}, pages = {139--168},
+  doi     = {10.1007/s10107-017-1191-y}
+}
+
+@article{schreiber2018,
+  author  = {Ethan L. Schreiber and Richard E. Korf and Michael D. Moffitt},
+  title   = {Optimal Multi-Way Number Partitioning},
+  year    = {2018},
+  journal = {Journal of the ACM},
+  volume  = {65}, number = {4},
+  doi     = {10.1145/3184400}
+}
+
+@article{michiels2007,
+  author  = {Wil Michiels and Jan Korst and Emile Aarts and Jan van Leeuwen},
+  title   = {Performance ratios of the {Karmarkar--Karp} differencing method},
+  year    = {2007},
+  journal = {Journal of Combinatorial Optimization},
+  volume  = {13}, number = {1}, pages = {19--32},
+  doi     = {10.1007/s10878-006-9010-z}
+}
+
+@article{kaibel2008,
+  author  = {Volker Kaibel and Marc E. Pfetsch},
+  title   = {Packing and partitioning orbitopes},
+  year    = {2008},
+  journal = {Mathematical Programming},
+  volume  = {114}, number = {1}, pages = {1--36},
+  doi     = {10.1007/s10107-006-0081-5}
+}
+
+@article{pfetsch2019,
+  author  = {Marc E. Pfetsch and Thomas Rehn},
+  title   = {A computational comparison of symmetry handling methods for mixed integer programs},
+  year    = {2019},
+  journal = {Mathematical Programming Computation},
+  volume  = {11}, number = {1}, pages = {37--93},
+  doi     = {10.1007/s12532-018-0140-y}
+}
+
+@article{aloise2012,
+  author  = {Daniel Aloise and Pierre Hansen and Leo Liberti},
+  title   = {An improved column generation algorithm for minimum sum-of-squares clustering},
+  year    = {2012},
+  journal = {Mathematical Programming},
+  volume  = {131}, pages = {195--220},
+  doi     = {10.1007/s10107-010-0349-7}
+}
+
+@article{iguchi2017,
+  author  = {Takayuki Iguchi and Dustin G. Mixon and Jesse Peterson and Soledad Villar},
+  title   = {Probably certifiably correct $k$-means clustering},
+  year    = {2017},
+  journal = {Mathematical Programming},
+  volume  = {165}, number = {2}, pages = {605--642},
+  doi     = {10.1007/s10107-016-1097-0}
+}
+
+@article{piccialli2022,
+  author  = {Veronica Piccialli and Antonio M. Sudoso and Angelika Wiegele},
+  title   = {{SOS-SDP}: An Exact Solver for Minimum Sum-of-Squares Clustering},
+  year    = {2022},
+  journal = {INFORMS Journal on Computing},
+  volume  = {34}, number = {4}, pages = {2144--2162},
+  doi     = {10.1287/ijoc.2022.1166}
+}
+
+@article{kitagawa2019,
+  author  = {Jun Kitagawa and Quentin M{\'e}rigot and Boris Thibert},
+  title   = {Convergence of a {Newton} algorithm for semi-discrete optimal transport},
+  year    = {2019},
+  journal = {Journal of the European Mathematical Society},
+  volume  = {21}, number = {9}, pages = {2603--2651},
+  doi     = {10.4171/jems/889}
+}
+
+@article{peyre2019,
+  author  = {Gabriel Peyr{\'e} and Marco Cuturi},
+  title   = {Computational Optimal Transport},
+  year    = {2019},
+  journal = {Foundations and Trends in Machine Learning},
+  volume  = {11}, number = {5--6}, pages = {355--607},
+  doi     = {10.1561/2200000073}
+}
+
+@inproceedings{halpern2019subsidy,
+  author    = {Daniel Halpern and Nisarg Shah},
+  title     = {Fair Division with Subsidy},
+  year      = {2019},
+  booktitle = {Algorithmic Game Theory ({SAGT} 2019)},
+  pages     = {374--389},
+  doi       = {10.1007/978-3-030-30473-7_25}
+}
+
+@inproceedings{halpern2020,
+  author    = {Daniel Halpern and Ariel D. Procaccia and Alexandros Psomas and Nisarg Shah},
+  title     = {Fair Division with Binary Valuations: One Rule to Rule Them All},
+  year      = {2020},
+  booktitle = {Web and Internet Economics ({WINE} 2020)},
+  pages     = {370--383},
+  doi       = {10.1007/978-3-030-64946-3_26}
+}
+
+@article{fotakis2014,
+  author  = {Dimitris Fotakis and Christos Tzamos},
+  title   = {On the Power of Deterministic Mechanisms for Facility Location Games},
+  year    = {2014},
+  journal = {ACM Transactions on Economics and Computation},
+  volume  = {2}, number = {4},
+  doi     = {10.1145/2665005}
+}
+
+@article{schummer1996,
+  author  = {James Schummer},
+  title   = {Strategy-proofness versus efficiency on restricted domains of exchange economies},
+  year    = {1996},
+  journal = {Social Choice and Welfare},
+  volume  = {14}, number = {1}, pages = {47--56},
+  doi     = {10.1007/s003550050050}
+}
+
+@article{sasaki1996,
+  author  = {Hiroo Sasaki and Manabu Toda},
+  title   = {Two-Sided Matching Problems with Externalities},
+  year    = {1996},
+  journal = {Journal of Economic Theory},
+  volume  = {70}, number = {1}, pages = {93--108},
+  doi     = {10.1006/jeth.1996.0077}
+}
+
+@article{velez2016,
+  author  = {Rodrigo A. Velez},
+  title   = {Fairness and externalities},
+  year    = {2016},
+  journal = {Theoretical Economics},
+  volume  = {11}, number = {1}, pages = {381--410},
+  doi     = {10.3982/te1651}
+}
+
+@article{bei2025incentive,
+  author  = {Xiaohui Bei and Biaoshuai Tao and Jiajun Wu and Mingwei Yang},
+  title   = {The incentive guarantees behind {Nash} welfare in divisible resources allocation},
+  year    = {2025},
+  journal = {Artificial Intelligence},
+  volume  = {344}, pages = {104335},
+  doi     = {10.1016/j.artint.2025.104335}
+}
+
+@article{riosmercado2021,
+  author  = {Roger Z. R{\'i}os-Mercado and Ada M. {\'A}lvarez-Socarr{\'a}s and Alejandro Castrill{\'o}n-Escobar and M. C. L{\'o}pez-Loc{\'e}s},
+  title   = {A location-allocation-improvement heuristic for districting with multiple-activity balancing constraints and $p$-median-based dispersion minimization},
+  year    = {2021},
+  journal = {Computers \& Operations Research},
+  volume  = {126}, pages = {105106},
+  doi     = {10.1016/j.cor.2020.105106}
+}
+
+@article{danna2009,
+  author  = {Emilie Danna and David L. Woodruff},
+  title   = {How to select a small set of diverse solutions to mixed integer programming problems},
+  year    = {2009},
+  journal = {Operations Research Letters},
+  volume  = {37}, number = {4}, pages = {255--260},
+  doi     = {10.1016/j.orl.2009.03.004},
+  note    = {DOI inferred from PII S0167637709000431 -- verify before use}
+}
+
+@article{mccartan2023,
+  author  = {Cory McCartan and Kosuke Imai},
+  title   = {Sequential {Monte Carlo} for sampling balanced and compact redistricting plans},
+  year    = {2023},
+  journal = {The Annals of Applied Statistics},
+  volume  = {17}, number = {4},
+  doi     = {10.1214/23-AOAS1763}
+}
+
+@article{cannon2026,
+  author  = {Sarah Cannon and Moon Duchin and Dana Randall and Parker Rule},
+  title   = {Spanning Trees and Redistricting: New Methods for Sampling and Validation},
+  year    = {2026},
+  journal = {SIAM Review},
+  volume  = {68}, number = {2}, pages = {349--381},
+  doi     = {10.1137/24M166944X}
+}
+
+@inproceedings{chandran2018,
+  author    = {L. Sunil Chandran and Yun Kuen Cheung and Davis Issac},
+  title     = {Spanning Tree Congestion and Computation of Generalized {Gy{\H o}ri--Lov{\'a}sz} Partition},
+  year      = {2018},
+  booktitle = {45th International Colloquium on Automata, Languages, and Programming ({ICALP} 2018)},
+  doi       = {10.4230/LIPIcs.ICALP.2018.32}
+}
+
+@inproceedings{borndorfer2021,
+  author    = {Ralf Bornd{\"o}rfer and Katrin Casel and Davis Issac and Aikaterini Niklanovits and Stephan Schwartz and Ziena Zeif},
+  title     = {Connected $k$-partition of $k$-connected graphs and $c$-claw-free graphs},
+  year      = {2021},
+  booktitle = {Approximation, Randomization, and Combinatorial Optimization ({APPROX/RANDOM} 2021)},
+  doi       = {10.4230/LIPIcs.APPROX/RANDOM.2021.27}
+}
+
+@article{shahmizad2025,
+  author  = {Maral Shahmizad and Austin Buchanan},
+  title   = {Political Districting to Minimize County Splits},
+  year    = {2025},
+  journal = {Operations Research},
+  volume  = {73}, number = {2}, pages = {752--774},
+  doi     = {10.1287/opre.2023.0094}
+}
+
+@article{belotti2025,
+  author  = {Pietro Belotti and Austin Buchanan and Soraya Ezazipour},
+  title   = {Political districting to optimize the {Polsby--Popper} compactness score with application to voting rights},
+  year    = {2025},
+  journal = {Operations Research},
+  volume  = {73}, number = {5}, pages = {2330--2350},
+  doi     = {10.1287/opre.2024.1078}
+}
+
+@article{barnes2021,
+  author  = {Richard Barnes and Justin Solomon},
+  title   = {Gerrymandering and Compactness: Implementation Flexibility and Abuse},
+  year    = {2021},
+  journal = {Political Analysis},
+  volume  = {29}, number = {4}, pages = {448--466},
+  doi     = {10.1017/pan.2020.36},
+  note    = {DOI inferred (agent verified via arXiv:1803.02857) -- verify before use}
+}
