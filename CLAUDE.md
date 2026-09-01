@@ -1,14 +1,41 @@
 # Territory Division (td) — Claude Code Setup
 
-**Last updated:** 2026-08-30
-**Project:** Fair division of ZCTA territories between two merging annuity wholesaling forces
-**Status:** Model and reference implementation settled. **Contiguity development programme
-approved 2026-08-28 — `research/contiguity/PLAN.md` §0 is the resume point.** On branch
-`contiguity-harness`: harness, unit wave and method wave merged; S0/S1/S2 and the W6b follow-up
-run (`research/contiguity/RESULTS.md`). `scip_tree` (SCIP single tree, root-free separator cuts)
-is the finalist: certifies every pair ≤ 135 zips (124/135 proved exact global optima by W6c's
-`cert_exact` post-pass), all large pairs ε-certified at 5e-3 (two-tier acceptance, W6d);
-169/197 are a confirmed dual wall. Next: S3 once the synthetic twin lands (PLAN.md §0).
+**Last updated:** 2026-08-31
+**Project:** Territory design for a new "national" annuity wholesaling channel
+**Status: THE PROBLEM CHANGED SHAPE ON 2026-08-31. Read
+`research/contiguity/NWAY.md` before anything else in this file** — much of what follows
+describes the superseded two-player problem and is kept for provenance, not as instruction.
+
+**What it is now.** The business is standing up a **new "national" channel**, carving the two
+largest firms out of the financial-institutions and wirehouse channels. Territories are
+targeted at roughly equal opportunity, ~$1B each. Sized 2026-08-31: **2,232 ZCTAs carrying
+sales, 72 reps** (including an "open"/vacancy key), **~$6.2B opportunity**, footprint = west
+coast / east coast / Texas / Florida with the **midwest uncovered**, so **k ≈ 6**.
+
+**What that changed, in one line each.**
+- Not two players. A zip can be claimed by 3+ reps → `battery/code/contig_methods/nway.py`.
+- Not a merger. Greenfield balanced districting, solved in **two stages**: draw k balanced
+  contiguous districts, then match reps to them → `contig_methods/channel.py` (stage 2 built,
+  exact; stage 1 open).
+- **Nash welfare on a common measure *is* equal-size districting** — same optimum, not an
+  approximation — so the $1B target needs no constraint. This is why the existing Nash
+  machinery still applies. NWAY.md §7.1.
+- Not a synthetic twin. The **real instance leaves descaled** (shares + M/median(M), no
+  currency amount), because at ρ=0 the objective is invariant to the dollar scale →
+  `tools/instance_export/` + `battery/code/descaled.py`. NWAY.md §5b.
+- The footprint is **disconnected**, which decomposes the problem by region *and* puts a
+  **geometric ceiling on balance** — `channel.allocate_districts` computes it, and it is a
+  free dual bound. $1B ± 10% may be unreachable. NWAY.md §7.7.
+
+**Still true and still load-bearing:** the d=(0,0) rationale, every trap in the trap list
+(12–15 are about tolerances and solver behaviour, none of it two-player), the two-tier
+acceptance criterion, and `scip_tree`'s architecture. `scip_tree` certifies to 135 zips;
+the new subproblems are ~500 zips per region.
+
+**Legacy state (superseded, kept for provenance).** On `contiguity-harness`: harness, unit and
+method waves merged; S0/S1/S2, W6b/W6c/W6d in `research/contiguity/RESULTS.md`. `scip_tree`
+was the two-player finalist — every pair ≤ 135 zips certified, 124/135 proved exact global
+optima by W6c, large pairs ε-certified at 5e-3.
 
 ---
 
