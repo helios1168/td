@@ -23,13 +23,8 @@ import sys
 
 import networkx as nx
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-for p in (os.path.join(ROOT, "battery", "code"),):
-    if p not in sys.path:
-        sys.path.insert(0, p)
 
-from contig_methods import REGISTRY, base                      # noqa: E402
+from td.solvers import REGISTRY, base                      # noqa: E402
 
 THETA, LAM = 0.40, 0.30
 
@@ -143,7 +138,7 @@ def test_result_validates_under_the_contract():
 
 def test_cert_exact_confirms_the_incumbent():
     """The exact post-hoc certificate (W6c) must agree with exhaustive search."""
-    from contig_methods import cert_exact
+    from td.solvers import cert_exact
 
     G = path_pair(10)
     nodes = sorted(G)

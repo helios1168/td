@@ -1211,8 +1211,9 @@ def _f1_warm_start(G, nodes, *, theta, lam, rho, respect_state, seed, budget):
     split -- and mechanism (b) is *primal* on the large pairs: SCIP's own heuristics are
     contiguity-blind, so nearly everything they produce fails `conscheck`, and a poor
     incumbent also loosens `_gain_floor`, which is what keeps the native log's LPs stable.
-    Imported lazily: `warm` pulls in `bounds`, which imports `territory`, and `scip_tree`
-    must stay importable for registry discovery without the repo's `code/` on the path.
+    Imported lazily and guarded: `warm` did not survive the 2026-08-31 prune (it pulled in
+    `bounds`, which imported the legacy `territory`).  Absent, this returns None and the solve
+    runs without a MIP start -- slower on large instances, never wrong.
     """
     if budget < _MIN_RUNG:
         return None, "skipped_no_budget"

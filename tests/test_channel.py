@@ -14,13 +14,8 @@ import sys
 import networkx as nx
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-for p in (os.path.join(ROOT, "code"), os.path.join(ROOT, "battery", "code")):
-    if p not in sys.path:
-        sys.path.insert(0, p)
 
-from contig_methods import channel, nway        # noqa: E402
+from td import channel, model        # noqa: E402
 
 THETA, LAM = 0.40, 0.30
 
@@ -134,7 +129,7 @@ def test_gain_matrix_matches_a_hand_sum():
         for j, d in enumerate(D):
             want = 0.0
             for z in (z for z in to_d if to_d[z] == d):
-                S = nway.books(G, z)
+                S = model.books(G, z)
                 T = sum(S.values())
                 s = float(S.get(r, 0.0))
                 want += c1 * s + c2 * (T - s) + LAM * G.nodes[z]["M"]
@@ -246,3 +241,32 @@ def test_component_opportunity_splits_a_disconnected_graph():
     comps = channel.component_opportunity(G)
     assert len(comps) == 2
     assert sorted(comps.values()) == [400.0, 600.0]
+
+
+def test_objective_and_spread_optima_can_disagree():
+    """The Nash-optimal budget is not always the most even one -- report both, not one.
+
+    east-heavy at k=6 is the worked counterexample: the objective optimum has a wider
+    spread than the spread optimum, so quoting the former as "the ceiling spread" would
+    overstate how uneven the geometry forces the districts to be.
+    """
+    comps = {"W": 1.6e9, "E": 3.0e9, "T": 0.9e9, "F": 0.7e9}
+    r = channel.allocate_districts(comps, k=6)
+    assert r["spread_optima_agree"] is False
+    assert r["min_spread_rel"] < r["ceiling_spread_rel"]
+    assert r["min_spread_per_component"] != r["districts_per_component"]
+    # and the reported floor really is the minimum over all budgets
+    import itertools
+    names = sorted(comps)
+    best = min(
+        (max(s) - min(s)) / (sum(s) / len(s))
+        for a in itertools.product(range(1, 4), repeat=4) if sum(a) == 6
+        for s in [[comps[n] / kc for n, kc in zip(names, a) for _ in range(kc)]]
+    )
+    assert math.isclose(r["min_spread_rel"], best, rel_tol=0, abs_tol=1e-12)
+
+
+def test_spread_optima_agree_when_components_are_even():
+    r = channel.allocate_districts({"A": 1e9, "B": 1e9, "C": 1e9}, k=3)
+    assert r["spread_optima_agree"] is True
+    assert r["min_spread_rel"] == r["ceiling_spread_rel"] == 0.0

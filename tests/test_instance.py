@@ -17,14 +17,11 @@ import tempfile
 import networkx as nx
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-for p in (os.path.join(ROOT, "code"), os.path.join(ROOT, "battery", "code")):
-    if p not in sys.path:
-        sys.path.insert(0, p)
+ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-import descaled                              # noqa: E402
-from contig_methods import nway              # noqa: E402
+
+from td import instance as descaled                              # noqa: E402
+from td import model              # noqa: E402
 
 THETA, LAM = 0.40, 0.30
 KAPPA = 91_000.0                             # the "dollar" scale the export must strip
@@ -154,21 +151,21 @@ def test_objective_is_scale_invariant_at_rho_zero():
         nodes = d.contested
         if len(nodes) < 2:
             return
-        U, R = nway.utilities(d.G, nodes, theta=THETA, lam=LAM)
+        U, R = model.utilities(d.G, nodes, theta=THETA, lam=LAM)
         H = d.G.copy()                                   # a 10x-rescaled copy of the same graph
         for z in H:
             H.nodes[z]["M"] *= 10.0
             H.nodes[z]["S"] = {r: v * 10.0 for r, v in H.nodes[z]["S"].items()}
-        U10, R10 = nway.utilities(H, nodes, theta=THETA, lam=LAM)
+        U10, R10 = model.utilities(H, nodes, theta=THETA, lam=LAM)
         assert R == R10
         rng = np.random.default_rng(0)
         best, best10 = None, None
         for _ in range(60):
             alloc = {z: d.G.nodes[z]["cand"][rng.integers(len(d.G.nodes[z]["cand"]))]
                      for z in nodes}
-            oi = nway.owner_index(nodes, alloc, R)
-            o1 = nway.objective(U, oi)
-            o2 = nway.objective(U10, oi)
+            oi = model.owner_index(nodes, alloc, R)
+            o1 = model.objective(U, oi)
+            o2 = model.objective(U10, oi)
             if not math.isfinite(o1):
                 assert not math.isfinite(o2)
                 continue
@@ -231,12 +228,12 @@ def test_nway_primitives_accept_the_loaded_graph():
     with tempfile.TemporaryDirectory() as tmp:
         _, d, _ = _round_trip(tmp)
         nodes = d.contested
-        U, R = nway.utilities(d.G, nodes, theta=THETA, lam=LAM)
+        U, R = model.utilities(d.G, nodes, theta=THETA, lam=LAM)
         assert U.shape == (len(R), len(nodes))
-        C = nway.candidate_matrix(d.G, nodes, R)
+        C = model.candidate_matrix(d.G, nodes, R)
         assert (U[~C] == 0).all()
         alloc = {z: d.G.nodes[z]["cand"][0] for z in nodes}
-        assert isinstance(nway.pieces(d.G, nodes, alloc)["excess_pieces"], int)
+        assert isinstance(model.pieces(d.G, nodes, alloc)["excess_pieces"], int)
 
 
 def test_summary_and_meta():
@@ -308,11 +305,11 @@ def test_filler_book_reaches_candidates_as_free_book():
         withfree = [z for z in d.contested if d.G.nodes[z]["S_free"] > 0]
         assert withfree, "fixture should put filler book on a contested zip"
         nodes = d.contested
-        U, R = nway.utilities(d.G, nodes, theta=THETA, lam=LAM)
+        U, R = model.utilities(d.G, nodes, theta=THETA, lam=LAM)
         H = d.G.copy()
         for z in H:
             H.nodes[z]["S_free"] = 0.0
-        U0, _ = nway.utilities(H, nodes, reps_order=R, theta=THETA, lam=LAM)
+        U0, _ = model.utilities(H, nodes, reps_order=R, theta=THETA, lam=LAM)
         j = nodes.index(withfree[0])
         assert (U[:, j] >= U0[:, j]).all() and (U[:, j] > U0[:, j]).any()
 

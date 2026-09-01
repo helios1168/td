@@ -12,8 +12,12 @@ to the 6-significant-figure rounding the exporter applies on write (a relative e
 1e-6, orders of magnitude below anything the model resolves).  At rho = 0
 the objective `sum_i log g_i` is invariant to that constant (it shifts by n*log kappa), so
 this graph and the real one have the same optimal allocations, the same gaps and the same
-certificates.  Only rho > 0 mixes a log-scale term with a raw perimeter count and therefore
-notices the scale -- see NWAY.md.
+certificates -- at every rho >= 0, not only at rho = 0.  Rescaling shifts `sum log g_i` by
+`n log kappa`, the same constant for every partition, and the perimeter is a combinatorial
+count, so every objective *difference* is untouched and rho transports unchanged.  (An earlier
+note here claimed rho > 0 broke this; it does not -- the log term's scale dependence is
+additive and constant, so it cancels in every comparison.)  What descaling does change is
+conditioning: solver feasibility tolerances are absolute in gain units.
 
 Four node classes come out of `cand(z) = {i : S_i(z) > 0}`, filler keys excluded:
 
@@ -129,10 +133,10 @@ def check_descaled(d: Descaled, theta: float = 0.40) -> list:
     Headroom is checked in the descaled units, which is equivalent to the share form
     `1 >= max_i(s_i + theta*(t - s_i))` because both sides carry one factor of M.
     """
-    from contig_methods import nway
+    from . import model
 
     problems = []
-    bad = nway.headroom_violations(d.G, theta=theta)
+    bad = model.headroom_violations(d.G, theta=theta)
     if bad:
         worst = max(need - M for _, M, need in bad)
         problems.append(f"{len(bad)} zip(s) violate pointwise headroom at theta={theta} "

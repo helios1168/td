@@ -24,7 +24,7 @@ balanced contiguous districting problem -- see NWAY.md 7 for its status.
 
 Stage 2 in one line
 -------------------
-Rep `i`'s utility from district `j` is `g_ij = sum_{z in A_j} u_i(z)` (`nway.utilities`, so
+Rep `i`'s utility from district `j` is `g_ij = sum_{z in A_j} u_i(z)` (`model.utilities`, so
 the vacancy and unowned-book handling comes along).  Nash-optimal staffing maximises
 `sum_i log g_{i,sigma(i)}` over assignments sigma, which is a max-weight matching on the
 *logs* -- solvable exactly by the Hungarian algorithm.  With more reps than districts the
@@ -38,7 +38,8 @@ import math
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from . import base, nway
+from . import model
+from .solvers import base
 
 
 def districts_from(to_district: dict) -> list:
@@ -101,7 +102,10 @@ def allocate_districts(component_M: dict, k: int, target=None) -> dict:
     move.
 
     Maximises the stage-1 objective `sum_c k_c * log(M_c / k_c)`, which is Nash welfare under
-    perfect within-component balance.
+    perfect within-component balance.  It also reports `min_spread_rel` -- the *lowest*
+    reachable spread over budgets, generally at a different allocation -- because the
+    objective-optimal budget is not always the most even one, and quoting the first as "the
+    ceiling spread" conflates the two.  `spread_optima_agree` says whether they coincide.
     """
     comps = {c: float(m) for c, m in component_M.items() if float(m) > 0}
     n = len(comps)
@@ -115,14 +119,28 @@ def allocate_districts(component_M: dict, k: int, target=None) -> dict:
     total = sum(comps.values())
     tgt = total / k if target is None else float(target)
 
-    best = None
+    # Two different optima, and they are NOT the same budget: the allocation maximising the
+    # Nash objective can have a wider spread than the spread-minimising one (east-heavy at
+    # k=6 is the worked case -- 87.1% at the objective optimum, 77.4% at the spread optimum).
+    # Reporting only the first and calling it "the ceiling spread" conflates them, so both
+    # are returned.
+    best = None          # maximises sum_c k_c log(M_c / k_c)   -- the dual bound
+    tight = None         # minimises (max - min)/mean            -- the reachable-spread floor
+
+    def _spread(acc):
+        sizes = [comps[c] / kc for c, kc in zip(names, acc) for _ in range(kc)]
+        return (max(sizes) - min(sizes)) / (sum(sizes) / len(sizes))
+
     def walk(i, left, acc):
-        nonlocal best
+        nonlocal best, tight
         if i == n - 1:
             acc = acc + [left]
             val = sum(kc * math.log(comps[c] / kc) for c, kc in zip(names, acc))
             if best is None or val > best[0]:
                 best = (val, list(acc))
+            sp = _spread(acc)
+            if tight is None or sp < tight[0]:
+                tight = (sp, list(acc))
             return
         # leave at least one district for each remaining component
         for kc in range(1, left - (n - i - 1) + 1):
@@ -141,6 +159,10 @@ def allocate_districts(component_M: dict, k: int, target=None) -> dict:
         ceiling_min=float(sizes.min()), ceiling_max=float(sizes.max()),
         ceiling_spread_rel=float((sizes.max() - sizes.min()) / sizes.mean()),
         ceiling_max_dev_rel=float(np.abs(sizes - tgt).max() / tgt),
+        # the spread-minimising budget, which is generally a *different* allocation
+        min_spread_rel=float(tight[0]),
+        min_spread_per_component=dict(zip(names, tight[1])),
+        spread_optima_agree=bool(tight[1] == alloc),
     )
 
 
@@ -159,30 +181,30 @@ def gain_matrix(G, to_district, reps_order=None, districts=None, *,
                 theta: float = 0.40, lam: float = 0.30, filler_capture: str = "theta"):
     """`(g, reps, districts)` with `g[i, j]` = rep `reps[i]`'s utility from district `j`.
 
-    Utilities come from `nway.utilities`, so unowned book (`S_free`) and the vacancy
+    Utilities come from `model.utilities`, so unowned book (`S_free`) and the vacancy
     treatment carry through unchanged.  A rep's utility is evaluated on **every** district,
     not only where it holds book -- staffing is not restricted by legacy candidacy, which is
     the whole point of drawing the map first.
     """
     nodes = sorted(to_district)
-    R = list(reps_order) if reps_order is not None else nway.reps(G, nodes)
+    R = list(reps_order) if reps_order is not None else model.reps(G, nodes)
     D = list(districts) if districts is not None else districts_from(to_district)
     if not R or not D:
         return np.zeros((len(R), len(D)), float), R, D
 
     # utilities of every rep on every node, ignoring candidacy: staffing is unconstrained
     c1, c2 = 1.0 - lam, theta * (1.0 - lam)
-    if filler_capture not in nway.FILLER_CAPTURE:
-        raise ValueError(f"filler_capture {filler_capture!r} not in {nway.FILLER_CAPTURE}")
+    if filler_capture not in model.FILLER_CAPTURE:
+        raise ValueError(f"filler_capture {filler_capture!r} not in {model.FILLER_CAPTURE}")
     c_free = {"theta": c2, "full": c1, "opportunity": lam}[filler_capture]
     jd = {d: j for j, d in enumerate(D)}
     ir = {r: i for i, r in enumerate(R)}
     g = np.zeros((len(R), len(D)), float)
     for z in nodes:
         j = jd[to_district[z]]
-        S = nway.books(G, z)
+        S = model.books(G, z)
         T = float(sum(S.values()))
-        free = nway.free_book(G, z)
+        free = model.free_book(G, z)
         M = float(G.nodes[z]["M"])
         common = c2 * T + c_free * free + lam * M
         for r, i in ir.items():

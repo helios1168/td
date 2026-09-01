@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "td"
+version = "0.2.0"
+description = "Territory design for a new national annuity wholesaling channel"
+requires-python = ">=3.11"
+dependencies = ["numpy", "scipy", "networkx"]
+
+# pyscipopt is the stage-1 engine and is pinned in requirements.txt rather than here:
+# it needs a SCIP build on the machine, so `pip install -e .` should not fail without it.
+# `td.solvers.scip_tree` imports it at module scope, so the registry skips that entry when
+# it is absent (see td/solvers/__init__.py).
+
+[tool.setuptools.packages.find]
+include = ["td*"]

@@ -558,7 +558,13 @@ def lexi_perimeter(G, nodes, to_a, opt_value: float, method: Callable, *,
     its own perimeter, status "fallback".
     """
     import warnings
-    from . import loop_v2 as _loop_v2   # deferred: avoids a base<->loop_v2 import cycle
+    # `loop_v2` was the only engine needing special handling here and did not survive the
+    # 2026-08-31 prune.  Absent, every method takes the general path, which is correct -- so
+    # this degrades instead of raising and `lexi_perimeter` keeps working for `scip_tree`.
+    try:
+        from . import loop_v2 as _loop_v2      # deferred: avoids a base<->loop_v2 cycle
+    except ImportError:
+        _loop_v2 = None
 
     nodes = list(nodes)
     to_a_in = set(to_a) & set(nodes)
@@ -571,7 +577,7 @@ def lexi_perimeter(G, nodes, to_a, opt_value: float, method: Callable, *,
     engine_name = method if isinstance(method, str) else getattr(method, "__name__", "")
     engine_module = getattr(method, "__module__", "")
     is_loop_v2 = (engine_name == "loop_v2" or engine_module.endswith(".loop_v2")
-                 or engine_module == "loop_v2" or method is getattr(_loop_v2, "solve", None))
+                 or engine_module == "loop_v2" or (_loop_v2 is not None and method is getattr(_loop_v2, "solve", None)))
     if not is_loop_v2:
         warnings.warn(
             f"lexi_perimeter: engine {method!r} is not wired for the perimeter post-pass; "

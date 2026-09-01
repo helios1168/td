@@ -17,10 +17,10 @@ u_i(z) = c1·S_i + c2·(T_z − S_i) + λ·M_z  =  M_z · [ c1·s_i + c2·(t_z �
 ```
 
 `M_z` factors out, and the objective `Σ_i log g_i` shifts by `n·log κ` under a global
-rescale — an additive constant that cannot move the argmax. **At ρ = 0 (the model) the
-optimal allocation, the gaps and the certificates are exactly identical** on the descaled
-instance and the real one. Only ρ > 0 mixes a log-scale term with a raw perimeter count and
-therefore notices the scale.
+rescale — an additive constant that cannot move the argmax. **The optimal allocation, the gaps and the certificates are exactly identical** on the descaled
+instance and the real one — **at every ρ ≥ 0.** Rescaling shifts `Σ log g_i` by `n·log κ`,
+the same constant for every partition, and the perimeter is a combinatorial count, so every
+objective *difference* is untouched and ρ transports unchanged.
 
 So this is not a lossy privacy compromise. It is dropping a constant the solver never reads.
 

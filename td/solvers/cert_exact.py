@@ -146,11 +146,10 @@ import numpy as np
 try:
     from . import base
 except ImportError:                      # run directly as a script, not as a package member
-    _here = Path(__file__).resolve()
-    for _p in (_here.parents[1], _here.parents[3] / "code"):
-        if str(_p) not in sys.path:
-            sys.path.insert(0, str(_p))
-    from contig_methods import base      # noqa: PLC0415
+    _root = Path(__file__).resolve().parents[2]        # repo root; td/ lives under it
+    if str(_root) not in sys.path:
+        sys.path.insert(0, str(_root))
+    from td.solvers import base          # noqa: PLC0415
 
 NAME_CERT = "cert_exact"          # deliberately NOT `NAME`: this module is not a method
 KP = 30                           # fractional bits of the tangent coefficients p, q
@@ -864,8 +863,15 @@ def main(argv=None) -> int:
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args(argv)
 
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    import instances as I                                    # noqa: PLC0415
+    try:
+        import instances as I                                # noqa: PLC0415
+    except ImportError:
+        raise SystemExit(
+            "cert_exact's CLI needs battery/code/instances.py, which was not carried into "
+            "this worktree (it pulls synth -> territory -> the two-player battery). Recover "
+            "it with `git show contiguity-harness:battery/code/instances.py`, or call "
+            "cert_exact.certify(G, nodes, to_a, ...) directly -- that path has no such "
+            "dependency and is what tests/test_engines.py exercises.")
 
     rows_path = a.run_dir / "rows_scored.jsonl"
     if not rows_path.exists():

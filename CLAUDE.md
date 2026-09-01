@@ -23,7 +23,7 @@ equal opportunity, **~$1B each**.
 | ⇒ `k` | **≈ 6** at $1B |
 
 This is **greenfield balanced districting**, not the two-player fair-division problem the
-repo was built for. `research/contiguity/NWAY.md` is the source of truth; read §7 first.
+repo was built for. `docs/CHANNEL.md` is the problem; `docs/MODEL.md` is the model.
 
 ---
 
@@ -39,7 +39,7 @@ max    Σ_i log g_i          (maximum Nash welfare, d = 0)
 ```
 
 At two reps with `S = {a: A, b: B}` and `S_free = 0` this is **identically** the old
-`u_a`/`u_b` — pinned by `test_nway.py::test_two_rep_reduction`, which is what keeps the
+`u_a`/`u_b` — pinned by `tests/test_model.py::test_two_rep_reduction`, which is what keeps the
 existing corpus of results interpretable.
 
 **Headroom:** `M_z ≥ max_i(S_i + θ(T_z − S_i))`, unowned book included conservatively.
@@ -51,14 +51,17 @@ one district, so `Σ_j M_j` is partition-invariant, and maximising `Σ_j log M_j
 equalises the terms. Same optimum, not an approximation — so **the $1B target needs no
 constraint**: set `k = total/$1B` and balance falls out. It also sidesteps trap 2, since Nash
 reaches the balance as the maximiser of a concave objective rather than by minimising a
-spread. Pinned by `test_channel.py::test_nash_welfare_is_equal_size_districting`.
+spread. Pinned by `tests/test_channel.py::test_nash_welfare_is_equal_size_districting`.
 
-**The objective is scale-invariant at ρ=0.** `u_i(z) = M_z·[c1·s_i + c2·(t_z − s_i) + λ]` with
+**The objective is scale-invariant.** `u_i(z) = M_z·[c1·s_i + c2·(t_z − s_i) + λ]` with
 `s_i = S_i/M_z`, so `M_z` factors out and `Σ log g_i` shifts by `n·log κ` under a global
-rescale — an additive constant. The descaled instance and the real one have identical optima,
-gaps and certificates. **Exception: ρ > 0 is not scale-invariant** (it mixes a log-scale term
-with a raw perimeter count), so any ρ or κ carried over from dollar-scaled data is meaningless
-here and must be re-derived.
+rescale — an additive constant. The descaled instance and the real one therefore have
+identical optima, gaps and certificates — **at every ρ ≥ 0, not only at ρ = 0.** Rescaling shifts `Σ log g_i` by `n·log κ`, which is the
+same constant for every partition, and the perimeter is a combinatorial count, so all
+objective *differences* are untouched. ρ therefore transports across the descaling unchanged.
+What descaling does change is conditioning: solver feasibility tolerances are absolute in gain
+units, so descaled values are better conditioned, while certificate tolerances are in nats and
+are scale-free either way.
 
 ### Welfare decomposition
 
@@ -100,7 +103,7 @@ available at stage 2. Mitigation, near-free because stage 2 is milliseconds:
 
 Vacant and untapped zips are **kept in the graph** — dropping them changes connectivity, and
 they are exactly the "zero-value glue" of failure regime (d). Who may own them is open
-(NWAY.md §6.6).
+(`docs/MODEL.md` §6.6).
 
 ---
 
@@ -108,15 +111,15 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 
 | file | role |
 |---|---|
-| `battery/code/contig_methods/nway.py` | N-way primitives: schema shim, per-rep utilities, gains, objective, perimeter, per-rep pieces, n-agent EF1 |
-| `battery/code/contig_methods/channel.py` | stage 2 (Hungarian on logs), balance report, **`allocate_districts`** (the ceiling / dual bound) |
-| `battery/code/descaled.py` | loads the descaled real instance into the N-way schema |
+| `td/model.py` | N-way primitives: schema shim, per-rep utilities, gains, objective, perimeter, per-rep pieces, n-agent EF1 |
+| `td/channel.py` | stage 2 (Hungarian on logs), balance report, **`allocate_districts`** (the ceiling / dual bound) |
+| `td/instance.py` | loads the descaled real instance into the N-way schema |
 | `tools/instance_export/export_instance.py` | work-machine exporter — stdlib only, single file, **read it before running it** |
-| `battery/code/contig_methods/scip_tree.py` | the finalist MILP engine; stage 1 will be built on it |
-| `battery/code/contig_methods/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
-| `battery/code/contig_methods/{base,brute}.py` | harness contract; brute-force oracle |
+| `td/solvers/scip_tree.py` | the finalist MILP engine; stage 1 will be built on it |
+| `td/solvers/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
+| `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
-Tests: `.venv/bin/python3 battery/code/tests/run_all.py` — **62 fast tests, no slow tier.**
+Tests: `.venv/bin/python3 tests/run_all.py` — **62 fast tests, no slow tier.**
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their
 original tests were left behind because they pull `instances → synth → territory`.
 
@@ -187,16 +190,17 @@ grounded on a measured data-noise floor. Re-measure the floor on the real instan
 
 ## Where to read next
 
-1. `research/contiguity/NWAY.md` — **source of truth.** §7 is the national channel, §5b the
-   data route, §6 the open decisions.
-2. `research/contiguity/channel_note/` — the standalone LaTeX note: model, propositions, proofs.
-3. `research/contiguity/RESULTS.md` — the empirical record of `scip_tree` at scale. Tells you
+1. `docs/CHANNEL.md` — the problem, the two stages, the sizing and the balance ceiling.
+2. `docs/MODEL.md` — the N-way model, what the reframing broke, the engine sketch, open decisions.
+3. `docs/DATA.md` — the descaled export route and why the dollar scale is not needed.
+4. `docs/channel_note/` — the standalone LaTeX note: model, propositions, proofs.
+5. `docs/RESULTS.md` — the empirical record of `scip_tree` at scale. Tells you
    what to expect from stage 1.
-4. `research/contiguity/TEST_PLAN.md` — harness spec, tiers, gap metrics, acceptance. The tier
-   definitions need re-cutting for N-way (NWAY.md §2).
-5. `tools/instance_export/README.md` — the work-machine runbook.
+6. `docs/TEST_PLAN.md` — harness spec, tiers, gap metrics, acceptance. The tier
+   definitions need re-cutting for N-way (`docs/MODEL.md` §2).
+7. `tools/instance_export/README.md` — the work-machine runbook.
 
-## Open decisions (NWAY.md §6)
+## Open decisions (`docs/MODEL.md` §6)
 
 Empty bundles / lexicographic MNW · θ directionality (`θ_{i←j}`) · the brute-force tier
 re-cut by `Π|cand(z)|` · who owns untapped and vacant zips · the filler-capture mode ·

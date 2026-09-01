@@ -1,25 +1,24 @@
 """
-run_all.py -- plain test runner for battery/code/tests (pytest-compatible layout).
+run_all.py -- plain test runner for tests (pytest-compatible layout).
 
 Discovers every `test_*.py` in this directory, imports it, and runs every callable
 whose name starts with `test_`.  A module that sets `SLOW = True` is skipped unless
 the environment variable `TD_SLOW=1` is set (the zip50 anchor takes ~2 min).
 
 Run from the repo root:
-    .venv/bin/python3 battery/code/tests/run_all.py            # fast tests
-    TD_SLOW=1 .venv/bin/python3 battery/code/tests/run_all.py  # + anchors
-    .venv/bin/python3 battery/code/tests/run_all.py -k base    # name filter
+    .venv/bin/python3 tests/run_all.py            # fast tests
+    TD_SLOW=1 .venv/bin/python3 tests/run_all.py  # + anchors
+    .venv/bin/python3 tests/run_all.py -k base    # name filter
 
-Exit status is nonzero if any test fails.  Also works under `pytest battery/code/tests`.
+Exit status is nonzero if any test fails.  Also works under `pytest tests`.
 """
 from __future__ import annotations
 import importlib.util, os, sys, time, traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-for p in (os.path.join(ROOT, "code"), os.path.join(ROOT, "battery", "code"), HERE):
-    if p not in sys.path:
-        sys.path.insert(0, p)
+ROOT = os.path.abspath(os.path.join(HERE, ".."))
+if ROOT not in sys.path:            # so `import td` works however this is invoked
+    sys.path.insert(0, ROOT)
 
 
 def _load(path):
