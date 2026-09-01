@@ -76,6 +76,28 @@ candidate structure (cand(z) = real reps with positive sales)
   zips with filler book     1,340   (1,655 rows)
 ```
 
+Below the candidate structure, the report prints the **footprint components and the balance
+ceiling** — the numbers stage 1 is blocked on:
+
+```
+footprint components (a contiguous district cannot span two)
+  share of M      zips   states
+      46.8%        612   NY NJ MA
+      30.6%        870   CA WA OR
+      ...
+
+balance ceiling (k_c equal districts per component; crumbs excluded)
+  k   districts/component     ceiling spread   best possible spread
+  6   2/2/1/1                      91.9%          91.9%  (same split)
+  ...
+```
+
+Everything in it is a **share or a count** — no currency amount — so the `validate` run
+(which writes nothing) is enough: read the share column and the ceiling table off the
+console and carry them back by eye. Components below 1% of total opportunity are reported
+as crumbs and excluded from the ceiling; since every disconnected component must host a
+whole district, any crumb is a decision to surface, not to size.
+
 Pass `--filler-key` for every sentinel your extract uses for a vacant territory. Its sales
 stay in the instance as **unowned book** (`S_free`) that any inheriting rep partly captures,
 but it never becomes a candidate owner — an objective term for a vacancy would have the

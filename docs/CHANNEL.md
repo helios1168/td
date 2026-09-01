@@ -38,8 +38,13 @@ strengthens the descaled export rather than qualifying it.
 contiguous districts. Before writing any solver, the cheapest and most informative step is the
 balance ceiling, and it is blocked on **four numbers from the user: opportunity by region
 (west coast / east coast / Texas / Florida).** Those give `k`, say whether ~$1B is reachable
-at all, and need no solver and no per-zip data. After that: the stage-1 MILP per §8 of the
-note, centre-based (Hess) to break the k-district symmetry, on the largest region first.
+at all, and need no solver and no per-zip data. **As of 2026-09-01 the exporter's `validate`
+run prints them itself** — footprint components as shares of total opportunity, plus the
+ceiling table for k = n..n+5 (an inlined `alloc_ceiling`, cross-checked against
+`channel.allocate_districts` by `test_instance.py::test_footprint_report_components_and_ceiling`).
+`validate` writes nothing and the section is all shares and counts, so one read-only run on
+the work machine settles k. After that: the stage-1 MILP per §8 of the note, centre-based
+(Hess) to break the k-district symmetry, on the largest region first.
 
 *Also open, and mine to ask rather than assume* (`MODEL.md` §6): empty bundles /
 lexicographic MNW · θ directionality (`θ_{i←j}`) · the brute-force tier re-cut by

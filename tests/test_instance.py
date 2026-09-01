@@ -318,3 +318,46 @@ def test_check_descaled_accepts_a_filler_instance():
     with tempfile.TemporaryDirectory() as tmp:
         d, _ = _round_trip_filler(tmp)
         assert descaled.check_descaled(d, theta=THETA) == []
+
+
+def test_footprint_report_components_and_ceiling():
+    """The exporter's footprint section: components in shares, ceiling == td.channel's."""
+    from td import channel
+    ex = _exporter()
+
+    # two path components with known opportunity, plus a crumb far below CRUMB_SHARE
+    inst = ex.Instance()
+    west = [f"9{i:04d}" for i in range(4)]           # m_rel 10 each -> share ~0.615
+    east = [f"1{i:04d}" for i in range(3)]           # m_rel  8 each -> share ~0.369
+    crumb = ["50000"]                                # m_rel  1      -> share ~0.015? keep < 1%
+    for z in west:
+        inst.m_rel[z] = 10.0
+        inst.state[z] = "CA"
+    for z in east:
+        inst.m_rel[z] = 8.0
+        inst.state[z] = "NY"
+    inst.m_rel[crumb[0]] = 0.5                       # 0.5/64.5 ~ 0.8% < CRUMB_SHARE
+    inst.edges = ([(west[i], west[i + 1]) for i in range(3)] +
+                  [(east[i], east[i + 1]) for i in range(2)])
+
+    comps = ex.components(inst)
+    assert [set(c) for c in comps] == [set(west), set(east), set(crumb)]
+
+    total = sum(inst.m_rel.values())
+    shares = [40.0 / total, 24.0 / total]            # crumb excluded by the report
+    for k in range(2, 8):
+        mine = ex.alloc_ceiling(shares, k)
+        ref = channel.allocate_districts({"W": 40.0, "E": 24.0}, k=k)
+        assert ref["feasible"]
+        assert mine["alloc"] == [ref["districts_per_component"]["W"],
+                                 ref["districts_per_component"]["E"]]
+        assert math.isclose(mine["spread"], ref["ceiling_spread_rel"], rel_tol=1e-12)
+        assert math.isclose(mine["min_spread"], ref["min_spread_rel"], rel_tol=1e-12)
+    assert ex.alloc_ceiling(shares, 1) is None       # k < number of components
+
+    txt = ex.footprint_text(inst)
+    assert "62.0%" in txt and "37.2%" in txt         # 40/64.5, 24/64.5
+    assert "CA" in txt and "NY" in txt
+    assert "crumb" in txt
+    for tok in ("$", "40.0", "24.0"):                # shares only, no raw magnitudes
+        assert tok not in txt

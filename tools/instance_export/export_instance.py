@@ -335,6 +335,121 @@ def mask_reps(inst):
     return rep_map, firm_map
 
 
+# -------------------------------------------------------------- footprint report
+CRUMB_SHARE = 0.01                # components below this share of M are reported, not sized
+
+
+def components(inst):
+    """Connected components of the footprint graph, as lists of zips (largest M first)."""
+    parent = {z: z for z in inst.m_rel}
+
+    def find(z):
+        while parent[z] != z:
+            parent[z] = parent[parent[z]]
+            z = parent[z]
+        return z
+
+    for u, v in inst.edges:
+        ru, rv = find(u), find(v)
+        if ru != rv:
+            parent[ru] = rv
+    groups = defaultdict(list)
+    for z in inst.m_rel:
+        groups[find(z)].append(z)
+    return sorted(groups.values(),
+                  key=lambda zs: -sum(inst.m_rel[z] for z in zs))
+
+
+def alloc_ceiling(shares, k):
+    """Best integer split of k districts over disconnected components, on shares alone.
+
+    Mirrors `td/channel.py::allocate_districts` (cross-checked by the repo's tests): each
+    component c gets k_c >= 1 districts, and within c the best conceivable outcome is k_c
+    equal districts of M_c/k_c -- an upper bound on any real partition.  Maximises
+    sum_c k_c*log(M_c/k_c); also returns the spread-minimising allocation, which is
+    generally a different budget.  Shares suffice: the objective is scale-invariant.
+    """
+    n = len(shares)
+    if k < n:
+        return None
+    best = tight = None
+
+    def spread(acc):
+        sizes = [m / kc for m, kc in zip(shares, acc) for _ in range(kc)]
+        return (max(sizes) - min(sizes)) / (sum(sizes) / len(sizes))
+
+    def walk(i, left, acc):
+        nonlocal best, tight
+        if i == n - 1:
+            acc = acc + [left]
+            val = sum(kc * math.log(m / kc) for m, kc in zip(shares, acc))
+            if best is None or val > best[0]:
+                best = (val, acc)
+            sp = spread(acc)
+            if tight is None or sp < tight[0]:
+                tight = (sp, acc)
+            return
+        for kc in range(1, left - (n - i - 1) + 1):
+            walk(i + 1, left - kc, acc + [kc])
+
+    walk(0, k, [])
+    return dict(alloc=best[1], spread=spread(best[1]),
+                min_spread=tight[0], min_spread_alloc=tight[1])
+
+
+def footprint_text(inst):
+    """Components of the footprint and the balance ceiling, in shares -- no currency amount.
+
+    These are the four numbers stage 1 is blocked on: a contiguous district cannot span two
+    components, so the per-component opportunity shares bound the reachable balance before
+    any solver runs.  Read the share column off this report; nothing here needs to leave as
+    a file.
+    """
+    comps = components(inst)
+    total = sum(inst.m_rel.values())
+    if not comps or total <= 0:
+        return "\nfootprint: no zips with positive opportunity\n"
+
+    rows, crumb_zs, crumb_share = [], 0, 0.0
+    sized = []                                  # shares entering the ceiling
+    for zs in comps:
+        share = sum(inst.m_rel[z] for z in zs) / total
+        if share < CRUMB_SHARE:
+            crumb_zs += len(zs)
+            crumb_share += share
+            continue
+        st = Counter(inst.state.get(z, "") for z in zs
+                     if inst.state.get(z))
+        label = " ".join(s for s, _ in st.most_common(3)) or "?"
+        rows.append((share, len(zs), label))
+        sized.append(share)
+
+    L = ["", "footprint components (a contiguous district cannot span two)", "-" * 46,
+         "  share of M      zips   states"]
+    for share, nz, label in rows:
+        L.append(f"  {share:>9.1%} {nz:>9,}   {label}")
+    if crumb_zs:
+        n_crumbs = len(comps) - len(rows)
+        L += [f"  {crumb_share:>9.1%} {crumb_zs:>9,}   in {n_crumbs} crumb component(s) "
+              f"below {CRUMB_SHARE:.0%} each",
+              "  NOTE every component must host a whole district, so each crumb would be",
+              "  one on its own -- decide upstream whether crumbs join the channel at all."]
+
+    n = len(sized)
+    L += ["", "balance ceiling (k_c equal districts per component; crumbs excluded)",
+          "-" * 46,
+          "  k   districts/component     ceiling spread   best possible spread"]
+    for k in range(n, n + 6):
+        c = alloc_ceiling(sized, k)
+        agree = "  (same split)" if c["alloc"] == c["min_spread_alloc"] else ""
+        L.append(f"  {k}   {'/'.join(map(str, c['alloc'])):<22}    {c['spread']:>8.1%}"
+                 f"       {c['min_spread']:>8.1%}{agree}")
+    L += ["", "  spread = (max - min)/mean district size.  A real contiguous partition can",
+          "  only be worse than the ceiling; if every k misses the band, move k or the band.",
+          ""]
+    return "\n".join(L)
+
+
 # ------------------------------------------------------------------------ write
 def guard(payload):
     """Refuse to emit anything that looks like a currency amount, or an upstream label.
@@ -454,6 +569,7 @@ def main(argv=None):
         return 4
 
     print(report_text(inst))
+    print(footprint_text(inst))
     problems = validate(inst, a.theta)
     if problems:
         print("VALIDATION PROBLEMS")
