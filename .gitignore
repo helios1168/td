@@ -26,6 +26,10 @@ data/tiger/
 data/twin_*
 data/public/
 
+# Census gazetteer / cartographic-boundary cache (td/geo.py) and the maps built from it
+data/geo/
+figures/
+
 # Contiguity harness output (PLAN.md C.1): rows.jsonl, assignments, instance JSONs
 battery/results/
 
