@@ -1,13 +1,14 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 · **Branch:** `national-channel` · **Head:** `0d3b556`
+**Last updated:** 2026-09-01 · **Branch:** `national-channel` · **Head:** `98d042d`
 
-**Status:** the 2026-08-31 pivot is landed and the tree matches it. Stage 2 (staffing) is
-built and exact; **stage 1 (drawing the districts) is the open work**, and the next step is
-not code — it is one read-only run of `export_instance.py validate` on the work machine:
-since `1272c72` its report prints the **regional opportunity shares and the balance ceiling
-table** itself (all shares and counts, nothing written); `build_adjacency.py` rebuilds the
-graph from TIGER if none exists. 38 tracked files, **66 tests pass, 0 fail**. **Resume point: `docs/CHANNEL.md` §0.**
+**Status:** the descaled real export **landed 2026-09-01** (`instance_descaled.json.gz` at
+the worktree root, gitignored, checks clean) and rewrote the problem: **1,229 zips / 111
+reps / ~$13B ⇒ k ≈ 13**, the footprint is national (not four islands), and the sold-zip
+graph has **547 components**, so adjacency contiguity is dead — **decided 2026-09-01:
+stage 1 is center-based (Hess) compact assignment on distances**, no adjacency. Granularity
+is benign (largest zip = 1.07% of M). Stage 2 (staffing) unchanged, built, exact. **69
+tests pass, 0 fail**. **Resume point: `docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -23,11 +24,11 @@ equal opportunity, **~$1B each**.
 
 | | |
 |---|---|
-| zips carrying sales | **~1,229** (2,232 was a double-count; corrected 2026-09-01) |
-| distinct reps | **72**, including an "open" (vacancy) key → 71 real |
-| total opportunity | **≈ $6.2B** — from the same 2026-08-31 sizing; re-confirm on the corrected extract |
-| footprint | west coast, east coast, Texas, Florida — **midwest uncovered** |
-| ⇒ `k` | **≈ 6** at $1B, pending that re-confirmation |
+| zips carrying sales | **1,229** (2,232 was a double-count; corrected 2026-09-01) |
+| distinct reps | **111** (confirmed 2026-09-01; the 72 was the same SQL error) |
+| total opportunity | **≈ $13B** (the $6.2B did not survive the double-count correction) |
+| footprint | national with concentration — west 33% / east 31% / TX 11.5% / FL 6.7% / ~18% spread over the rest; the "midwest uncovered" premise was wrong |
+| ⇒ `k` | **≈ 13** at $1B |
 
 This is **greenfield balanced districting**, not the two-player fair-division problem the
 repo was built for. `docs/CHANNEL.md` is the problem; `docs/MODEL.md` is the model.

@@ -8,8 +8,36 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-01.** Branch **`national-channel`** (`1272c72`), 37 tracked files,
-**65 tests pass, 0 fail, 0 skipped** (`.venv/bin/python3 tests/run_all.py`).
+**State on 2026-09-01 (later): the export landed and rewrote the problem.** Head `98d042d`,
+**69 tests pass** (`.venv/bin/python3 tests/run_all.py`).
+
+*What landed.* The real descaled instance (`instance_descaled.json.gz`, worktree root,
+gitignored, `check_descaled` clean): **1,229 zips, 111 reps, 675 contested / 477
+uncontested / 2 vacant / 75 untapped**. Exporter grew work-machine ergonomics on the way
+(`0d3b556` adjacency builder from TIGER; `0a23b9b` `--join-floor`; `5f3b4c2` combined-file
+input + `--impute-missing-m`; `91e203c` `--repair-headroom`; `98d042d` rounding margin +
+loader tolerance).
+
+*What the data said — three corrections from the user, all their SQL/double-count errors:*
+total opportunity is **~$13B, not $6.2B** ⇒ **k ≈ 13** at $1B; reps are **111, not 72**;
+and the footprint is **national, not four islands** — shares: west 33.2%, east 31.0%,
+TX 11.5%, FL 6.7%, **~18% spread across the "uncovered" midwest+rest**. And the sold-zip
+graph is shattered: **547 components**, largest 5.1% of M, 68% of M in sub-1% crumbs —
+adjacency contiguity over sold zips is meaningless.
+
+*Decisions (user, 2026-09-01).* **Stage 1 is center-based (Hess) compact assignment on
+distances — option (a)** — no adjacency contiguity, no glue re-export. Granularity is
+benign: the largest zip (10017) is 1.07% of total M ≈ 14% of one k=13 district, so
+near-perfect balance is geometrically reachable and the old ceiling machinery is moot
+under (a).
+
+*What is next.* Build stage 1: ZCTA coordinates from the public Census Gazetteer
+(~1MB, `pyproj` in the venv), then a balanced center-based heuristic (portfolio of draws)
+feeding the existing exact stage 2 (`channel.score_draws`). The exact MILP comes after the
+heuristic maps exist.
+
+**Earlier — 2026-09-01.** Branch **`national-channel`** (`1272c72`), 37 tracked files,
+**65 tests pass, 0 fail, 0 skipped**.
 
 *What landed.* `1272c72`: the exporter's `validate` run now prints the **footprint
 components as shares of total opportunity and the balance ceiling table** (k = n..n+5) —
