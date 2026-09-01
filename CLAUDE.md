@@ -8,7 +8,7 @@ and the territory map is now a power diagram (FINDINGS §9-A1).** The real expor
 zips / 111 reps / ~$13B ⇒ k=13; the sold-zip graph's 547 components killed adjacency
 contiguity, so stage 1 is **center-based balanced assignment** (`td/solvers/centers.py`,
 transportation-LP core), certified post-hoc by `td/solvers/cert_draw.py`, mapped by
-`tools/us_maps.py` (five figures incl. the territory map; atlas artifact in
+`tools/us_maps.py` (six figures incl. the power-diagram territory map; atlas artifact in
 `docs/CHANNEL.md` §0), and formalized in `docs/channel_note/` (21 pp). Winner draw: spread
 0.78%, all 13 staffed, 4.5e-5 nats off the ceiling. **Open: the lexicographic
 compactness-vs-Nash decision** (a proved 8.53% compacter assignment exists, unadopted —

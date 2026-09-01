@@ -19,7 +19,9 @@ certificate 4, a lower bound on the compactness of every assignment to these cen
 without a solver in the trusted path (`O(nk)` arithmetic on `alpha`, `beta`);
 `us_maps.power_cells` / `figure_power_regions` — `figures/district_regions.png` redrawn as 13
 convex cells with exact straight borders, the old zip-catchment rendering kept behind
-`--regions-voronoi`.
+`--regions-voronoi`. The **atlas artifact is republished** at the same URL (§0's link below,
+version `power-diagram-territories`): the territory map is the new figure, and that card's copy
+no longer describes a Voronoi catchment fill the method does not produce.
 
 *What it says about the draw.* At the draw's own district masses the duals are exact (max
 violation `3.5e-18` relative, 12 split zips = `k − 1`), and the draw sits **8.22% above the
