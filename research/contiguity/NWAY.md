@@ -370,6 +370,62 @@ k-way partition over the whole footprint.
   formulation — assign each zip to one of k *centres* — which breaks the symmetry by
   construction and is what the districting literature uses.
 
-**Open, and gating stage 1: how many ZCTAs carry business for these two firms, and what is
-the total opportunity?** The second gives `k`; the first decides whether certified optimality
-is reachable at all.
+### 7.6 The instance, sized (2026-08-31)
+
+| | |
+|---|---|
+| zips carrying sales | **2,232** |
+| distinct reps | **72**, including the "open" (vacancy) key → 71 real |
+| total opportunity | **≈ $6.2B** |
+| footprint | west coast, east coast, Texas, Florida — **midwest uncovered** |
+| ⇒ `k` | **≈ 6** at $1B, or 7 at ~$886M |
+
+Two consequences, and the second is the important one.
+
+**Scale is at the frontier but not past it.** 2,232 units × 6 districts ≈ 13,392 binaries.
+Validi, Buchanan & Lykhovyd certify ~1,500 units for political districting, so this is the
+same order of magnitude as the published state of the art — attemptable, not routine.
+
+**The footprint is disconnected, and that is a gift.** No contiguous district spans
+California and Florida, so the adjacency graph has ≥ 4 major components and **the problem
+separates**: allocate an integer district count to each component, then solve each
+independently. Failure mechanism (a) — pre-existing graph disconnection, the thing that
+broke the legacy cut loop — arrives here as the structure that makes the problem tractable.
+At roughly 500 zips per region the subproblems are far closer to where `scip_tree` already
+works than the 2,232-zip whole would be.
+
+### 7.7 Balance has a geometric ceiling — compute it first
+
+`channel.allocate_districts(component_M, k)` maximises `Σ_c k_c·log(M_c/k_c)` over integer
+allocations with `k_c ≥ 1`. Within a component the best conceivable outcome is `k_c` equal
+districts, so this is an **upper bound on any real partition** — a free dual bound for
+stage 1, available before a solver runs (`test_ceiling_is_an_upper_bound_on_any_real_partition`).
+
+It is also the answer to whether the target is reachable at all. Illustrative splits of
+$6.2B (real regional totals still needed):
+
+| split | k=6 | k=7 | k=8 |
+|---|---|---|---|
+| even-ish (2.0 / 2.2 / 1.1 / 0.9) | **19.4%** | 41.4% | 55.9% |
+| east-heavy (1.6 / 3.0 / 0.9 / 0.7) | 87.1% | 33.9% | **25.8%** |
+| coast-heavy (2.6 / 2.6 / 0.6 / 0.4) | 87.1% | 101.6% | **60.2%** |
+
+(spread = (max−min)/mean across districts, at the ceiling)
+
+Three things follow:
+
+1. **$1B ± 10% is probably not reachable.** Even the friendliest split tops out near 20%
+   spread, because a ~$0.9B region gets exactly one district and cannot be subdivided.
+2. **The best `k` depends entirely on the regional composition** — the table moves in
+   opposite directions across scenarios. `k` is a balance decision, not just headcount.
+3. **This is four numbers of work.** Regional opportunity totals answer it immediately, with
+   no solver and no confidential per-zip data.
+
+**Next input needed: opportunity by region (west / east / TX / FL).** Everything above is
+illustrative until those land.
+
+**Also to confirm:** 71 real reps against ~6 territories is a 12:1 ratio. The reading that
+makes sense is that the national channel is a *specialist* carve-out staffed by a handful of
+senior wholesalers, while the other reps keep covering the remaining firms in the existing
+FI/wirehouse channel — i.e. stage 2's "unmatched" reps are *not selected for this channel*,
+not released. If that is wrong the framing of stage 2 needs revisiting.

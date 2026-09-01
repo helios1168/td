@@ -85,6 +85,76 @@ def balance_report(G, to_district, target=None) -> dict:
     )
 
 
+# ------------------------------------------- district budget across graph components
+def allocate_districts(component_M: dict, k: int, target=None) -> dict:
+    """Best split of `k` districts among disconnected components, and the balance ceiling.
+
+    A contiguous district cannot span two components, so when the footprint is disconnected
+    (here: west coast / east coast / Texas / Florida, with the midwest uncovered) the problem
+    separates -- each component `c` gets an integer `k_c >= 1`, and `sum k_c = k`.
+
+    Within a component the best conceivable outcome is `k_c` equal districts of `M_c / k_c`.
+    That is an **upper bound** on any real partition, since contiguity may not permit an even
+    split, so the balance reported here is a *ceiling*: the geometry cannot do better, and a
+    solver can only do worse.  Compute it before any solver work -- if the ceiling already
+    misses the target band, no amount of solving will reach it and `k` (or the band) has to
+    move.
+
+    Maximises the stage-1 objective `sum_c k_c * log(M_c / k_c)`, which is Nash welfare under
+    perfect within-component balance.
+    """
+    comps = {c: float(m) for c, m in component_M.items() if float(m) > 0}
+    n = len(comps)
+    if n == 0:
+        return dict(feasible=False, reason="no components with positive opportunity")
+    if k < n:
+        return dict(feasible=False, k=k, n_components=n,
+                    reason=f"k={k} districts cannot cover {n} disconnected components; "
+                           f"every component needs at least one")
+    names = sorted(comps, key=base._sort_key)
+    total = sum(comps.values())
+    tgt = total / k if target is None else float(target)
+
+    best = None
+    def walk(i, left, acc):
+        nonlocal best
+        if i == n - 1:
+            acc = acc + [left]
+            val = sum(kc * math.log(comps[c] / kc) for c, kc in zip(names, acc))
+            if best is None or val > best[0]:
+                best = (val, list(acc))
+            return
+        # leave at least one district for each remaining component
+        for kc in range(1, left - (n - i - 1) + 1):
+            walk(i + 1, left - kc, acc + [kc])
+    walk(0, k, [])
+
+    val, alloc = best
+    per = {c: comps[c] / kc for c, kc in zip(names, alloc)}
+    sizes = np.array([comps[c] / kc for c, kc in zip(names, alloc)
+                      for _ in range(kc)], float)
+    return dict(
+        feasible=True, k=k, n_components=n, total=total, target=tgt,
+        districts_per_component=dict(zip(names, alloc)),
+        district_size=per,                       # the size every district in c would have
+        ceiling_log_sum=val,
+        ceiling_min=float(sizes.min()), ceiling_max=float(sizes.max()),
+        ceiling_spread_rel=float((sizes.max() - sizes.min()) / sizes.mean()),
+        ceiling_max_dev_rel=float(np.abs(sizes - tgt).max() / tgt),
+    )
+
+
+def component_opportunity(G, nodes=None) -> dict:
+    """Opportunity per connected component of the footprint, keyed by a sorted-first node."""
+    import networkx as nx
+    H = G if nodes is None else G.subgraph(nodes)
+    out = {}
+    for comp in nx.connected_components(H):
+        key = sorted(comp, key=base._sort_key)[0]
+        out[key] = sum(float(G.nodes[z]["M"]) for z in comp)
+    return out
+
+
 def gain_matrix(G, to_district, reps_order=None, districts=None, *,
                 theta: float = 0.40, lam: float = 0.30, filler_capture: str = "theta"):
     """`(g, reps, districts)` with `g[i, j]` = rep `reps[i]`'s utility from district `j`.

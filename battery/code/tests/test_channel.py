@@ -176,3 +176,73 @@ def test_empty_input_is_not_a_crash():
     G = opportunity_path(4)
     res = channel.stage2(G, {}, theta=THETA, lam=LAM)
     assert res["assignment"] == {} and res["balance"]["k"] == 0
+
+
+# --------------------------------------------- district budget across components
+def test_allocate_needs_one_district_per_component():
+    r = channel.allocate_districts({"A": 1e9, "B": 1e9, "C": 1e9}, k=2)
+    assert r["feasible"] is False and "at least one" in r["reason"]
+
+
+def test_allocate_equal_components():
+    r = channel.allocate_districts({"A": 1e9, "B": 1e9, "C": 1e9}, k=3)
+    assert r["districts_per_component"] == {"A": 1, "B": 1, "C": 1}
+    assert r["ceiling_spread_rel"] == 0.0
+
+
+def test_allocate_gives_more_districts_to_bigger_components():
+    r = channel.allocate_districts({"BIG": 4e9, "SMALL": 1e9}, k=5)
+    assert r["districts_per_component"] == {"BIG": 4, "SMALL": 1}
+    assert r["ceiling_spread_rel"] == 0.0
+
+
+def test_allocate_maximises_the_stage1_objective():
+    """The reported split must beat every other integer split, by brute force."""
+    comps = {"W": 2.0e9, "E": 2.2e9, "T": 1.1e9, "F": 0.9e9}
+    k = 6
+    r = channel.allocate_districts(comps, k)
+    names = sorted(comps)
+    best = -math.inf
+    for a in range(1, k):
+        for b in range(1, k):
+            for c in range(1, k):
+                d = k - a - b - c
+                if d < 1:
+                    continue
+                val = sum(kc * math.log(comps[n] / kc)
+                          for n, kc in zip(names, (a, b, c, d)))
+                best = max(best, val)
+    assert math.isclose(r["ceiling_log_sum"], best, rel_tol=0, abs_tol=1e-9)
+
+
+def test_ceiling_is_an_upper_bound_on_any_real_partition():
+    """No contiguous draw can beat the ceiling -- it assumes a perfect within-component split.
+
+    That makes it a free dual bound for stage 1, available before any solver runs.
+    """
+    G = opportunity_path(12)                       # one component, 1200 total
+    r = channel.allocate_districts({"all": 1200.0}, k=3)
+    ceiling = r["ceiling_log_sum"]
+    n = 12
+    for a in range(1, n - 1):
+        for b in range(a + 1, n):
+            to_d = {z: (0 if z < a else 1 if z < b else 2) for z in range(n)}
+            got = channel.balance_report(G, to_d)["log_sum"]
+            assert got <= ceiling + 1e-9, (a, b, got, ceiling)
+
+
+def test_disconnected_footprint_forces_an_undersized_district():
+    """A component below the target gets one district and nothing can fix it."""
+    r = channel.allocate_districts({"BIG": 5.4e9, "TINY": 0.8e9}, k=6)
+    assert r["districts_per_component"]["TINY"] == 1
+    assert math.isclose(r["district_size"]["TINY"], 0.8e9)
+    assert r["ceiling_spread_rel"] > 0.1, "the small component must show up as spread"
+
+
+def test_component_opportunity_splits_a_disconnected_graph():
+    G = opportunity_path(6)
+    H = nx.relabel_nodes(opportunity_path(4), {i: 100 + i for i in range(4)})
+    G = nx.union(G, H)
+    comps = channel.component_opportunity(G)
+    assert len(comps) == 2
+    assert sorted(comps.values()) == [400.0, 600.0]
