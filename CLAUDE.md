@@ -186,6 +186,9 @@ grounded on a measured data-noise floor. Re-measure the floor on the real instan
 - MacTeX at `/Library/TeX/texbin`; **not** on `PATH` in non-interactive shells, so prefix
   `export PATH=/Library/TeX/texbin:$PATH` when building any note.
 - Never write under `battery/figures/` (primary artifacts, and not carried into this worktree).
+- `data/` is empty in git. The national ZCTA Rook adjacency was dropped 2026-08-31 — nothing
+  here reads it, and the real graph arrives with the exported instance. `data/README.md` is
+  the rebuild recipe if a real-geography test instance is ever needed.
 - Harness output goes to `battery/results/<run_id>/`.
 
 ## Where to read next

@@ -1,76 +1,65 @@
 # `data/`
 
-Contents relevant to the contiguity development programme (PLAN.md Part C.3, unit U4).
+Empty in git. This file is the recipe for what used to live here.
 
-## `zcta_adjacency.npz` (committed, ~700 KB)
+## ZCTA Rook adjacency — dropped 2026-08-31, rebuild on demand
 
-Rook adjacency (shared-boundary length > 0) over every ZCTA5 in TIGER2020, built by
-`battery/code/twin.py::build_rook_adjacency` and cached with `save_adjacency`. numpy-only
-format (`np.load(allow_pickle=False)` succeeds) so the fast test suite and
-`battery/code/twin.py::load_twin` / `twin_pairs` never import geopandas.
+`zcta_adjacency.npz` (717 KB, national ZCTA5 Rook adjacency) was carried through the
+2026-08-31 prune and then dropped: **nothing in this worktree reads it.** Its consumers
+(`battery/code/twin.py`, `code/gfx/producers/twin_map.py`) went with the two-player stack, and
+the national-channel route gets its graph from the work machine instead — `instance_export`
+takes `--graph` from the firm's own pyarrow edge cache, and `td/instance.py` reads the edge
+list out of the exported instance.
 
-Arrays:
+So adjacency is only needed here to build **test instances on real geography**. When that
+happens, rebuild rather than restore: the file is a derived artifact and TIGER is public.
 
-| key | shape / dtype | meaning |
-|---|---|---|
-| `zcta` | `(n,) '<U5'` | ZCTA5 ids, ascending sort order |
-| `edges` | `(m,2) int32` | index pairs into `zcta`, `i < j`, no duplicates |
-| `lon`, `lat` | `(n,) float32` | internal point (`INTPTLON20`/`INTPTLAT20`), degrees, source CRS |
-| `x`, `y` | `(n,) float32` | internal point reprojected to EPSG:2163 and rescaled to `[0,1]^2` with aspect preserved (one axis fills `[0,1]`, the other is `<= 1`) |
-| `meta_json` | `(1,) '<U8000'` | JSON string: `vintage, build_date, crs, source_crs, n, m, build_seconds` |
+### How it was built
 
-Build provenance (this run, 2026-08-29, TIGER2020 `tl_2020_us_zcta520.zip`):
+Builder: `battery/code/twin.py::build_rook_adjacency` / `save_adjacency` —
+`git show contiguity-harness:battery/code/twin.py`. Reproducibility was checked by
+`git show contiguity-harness:battery/code/tests/test_twin_build.py`.
 
 ```
-n = 33,791 ZCTAs, m = 90,429 rook edges
-92,130 candidate pairs from the spatial-index query, 90,429 (98.2%) had a
-positive-length shared boundary (the rest touch at a single point or share only
-a bounding-box overlap)
-build time: 65.6s wall (read 0.9s, sindex query 8.7s, vectorised shapely
-intersection+length 56.9s, reprojection negligible)
-190 connected components: one giant CONUS component (32,921 ZCTAs), 151 isolates
-(islands / remote ZCTAs with no adjacent ZCTA polygon), the rest small
-archipelago-like clusters (Hawaii, coastal Alaska, Puerto Rico, etc.)
-degree: min 0, mean 5.35, max 25
-.npz size: 717,100 bytes (well under the ~2 MB budget; savez_compressed)
+.venv/bin/python3 battery/code/twin.py build --out data/zcta_adjacency.npz
 ```
 
-CRS: internal points are reprojected from TIGER's native NAD83 (EPSG:4269) to
-**EPSG:2163** ("US National Atlas Equal Area" -- a Lambert Azimuthal Equal-Area
-projection centered at `lat_0=45, lon_0=-100` on a sphere; equivalent to
-`+proj=laea +lat_0=45 +lon_0=-100`, the form PLAN.md names) before the `[0,1]^2`
-rescale. National scope pulls Alaska/Hawaii/Puerto Rico into the same frame as CONUS,
-so the rescaled `x, y` are a correct equal-area embedding but not a visually pleasing
-one for a CONUS-only map; that is a graphics-layer concern (PLAN.md Part D / U7), not
-this cache's.
+Fetches `tl_2020_us_zcta520.zip` (~528 MB) from
+`https://www2.census.gov/geo/tiger/TIGER2020/ZCTA520/` into `data/tiger/` if absent.
 
-Rebuild: `.venv/bin/python3 battery/code/twin.py build --out data/zcta_adjacency.npz`
-(downloads TIGER2020 to `data/tiger/` first if absent). Reproducibility is checked by
-the SLOW test `battery/code/tests/test_twin_build.py` (`TD_SLOW=1 ... -k twin_build`).
+**Rook means shared boundary of positive length**, not mere touching — of 92,130 candidate
+pairs from the spatial-index query, 90,429 (98.2%) survived that test; the rest touch at a
+single point or only overlap in their bounding boxes. Getting this wrong inflates the edge
+set by ~2% and silently changes every contiguity answer.
 
-## `tiger/` (gitignored, not committed)
+### What a correct rebuild produces
 
-TIGER2020 ZCTA5 download target (`tl_2020_us_zcta520.zip`, ~528 MB, and its extracted
-shapefile parts). Fetched by `twin.py::fetch_tiger()` from
-`https://www2.census.gov/geo/tiger/TIGER2020/ZCTA520/tl_2020_us_zcta520.zip`; skipped if
-already present. Never `git add` this directory (`.gitignore` already excludes
-`data/tiger/`).
+| | |
+|---|---|
+| n | 33,791 ZCTAs |
+| m | 90,429 Rook edges |
+| components | 190 — one giant CONUS component (32,921), 151 isolates (islands), the rest small archipelagos |
+| degree | min 0, mean 5.35, max 25 |
+| build time | ~66 s wall (the vectorised shapely intersection dominates at ~57 s) |
 
-## `twin_*` (gitignored, not committed; not present yet)
+npz layout, numpy-only so `np.load(allow_pickle=False)` succeeds and no geopandas import is
+needed at read time: `zcta` `(n,) '<U5'` ascending · `edges` `(m,2) int32` index pairs with
+`i < j` · `lon`, `lat` `(n,) float32` internal points (`INTPTLON20`/`INTPTLAT20`) ·
+`x`, `y` `(n,) float32` reprojected to **EPSG:2163** (US National Atlas Equal Area, Lambert
+azimuthal, `lat_0=45 lon_0=-100`) and rescaled to `[0,1]²` preserving aspect ·
+`meta_json` `(1,) '<U8000'`.
 
-Reserved for `twin_instance.json.gz` / `twin_stats.json`, produced on the work machine by
-`tools/twin_export/` (PLAN.md Part C.2, unit U3) and copied in by hand after the user's
-privacy audit. Not landed as of this unit (U4); `battery/code/twin.py::make_standin_twin`
-is a locally fabricated stand-in used only by `battery/code/tests/test_twin.py` -- real
-ZCTA ids/edges from `zcta_adjacency.npz`, synthetic A/B/M/rep maps -- and must never be
-mistaken for privacy-audited data.
+### Vintage does not matter
 
-## Vintage check (2026-08-29)
+Checked 2026-08-29: TIGER **2025** `tl_2025_us_zcta520` run through the same builder gives
+33,791 ZCTAs and 90,429 edges — a **byte-identical edge set** (Jaccard 1.000000) to the 2020
+build. Both carry the 2020-census ZCTAs, so a work-machine graph on the 2025 vintage agrees
+with a 2020 rebuild here, *provided* it used the Rook shared-boundary rule. `fetch_tiger`
+hard-codes the 2020 filename; point it at a 2025 zip explicitly if you want that vintage.
 
-TIGER/Line **2025** `tl_2025_us_zcta520` was downloaded and run through the same
-`build_rook_adjacency`: 33,791 ZCTAs and 90,429 Rook edges, **byte-identical edge set**
-(Jaccard 1.000000) to the committed TIGER2020 cache. The 2020-vs-2025 release difference is
-nil for ZCTA5 (both carry the 2020-census ZCTAs), so a work-machine graph on the 2025 vintage
-will pass `edge_diff`'s ≥ 0.999 check provided it was built with the Rook (shared-boundary)
-rule. `fetch_tiger` hard-codes the 2020 file name; a 2025 zip extracts to
-`tl_2025_us_zcta520.*` and must be pointed at explicitly.
+Note the national footprint is 33,791 ZCTAs against the channel's **2,232** — the national
+cache was always far larger than this problem needs.
+
+## `tiger/` — gitignored, never commit
+
+TIGER download target. Already excluded by `.gitignore`.
