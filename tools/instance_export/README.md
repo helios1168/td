@@ -49,6 +49,24 @@ ZCTA ids are `zfill(5)`-normalised on read, so a source that dropped leading zer
 `firm` is optional and kept only as a masked group label — it is the natural grouping for
 the merger structure, and masking it costs nothing.
 
+## No adjacency graph? Build it from TIGER
+
+If the work machine has no edge table but does have the TIGER shapefiles,
+`build_adjacency.py` produces both side inputs from them (needs `pip install geopandas`):
+
+```bash
+python3 build_adjacency.py --zcta tl_2020_us_zcta520.zip \
+                           --state tl_2020_us_state.zip --out ./adj
+# -> ./adj/edges.csv (--graph) and ./adj/states.csv (--states)
+```
+
+Rook rule: **shared boundary of positive length**, not corner-touching — the corner pairs
+are ~2% of candidates and including them silently changes every contiguity answer. The
+script self-checks against the verified national build (33,791 ZCTAs, 90,429 edges, 190
+components; TIGER 2020 and 2025 give identical edge sets) and says so either way. State
+membership is by the ZCTA's internal point, which is all the region labelling needs.
+Everything derives from public TIGER data — the outputs are not confidential.
+
 ## Run
 
 ```bash

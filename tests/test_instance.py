@@ -361,3 +361,38 @@ def test_footprint_report_components_and_ceiling():
     assert "crumb" in txt
     for tok in ("$", "40.0", "24.0"):                # shares only, no raw magnitudes
         assert tok not in txt
+
+
+def test_build_adjacency_rook_rule_and_states():
+    """build_adjacency: corner-touch pairs excluded, island disconnects, states by point."""
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    path = os.path.join(ROOT, "tools", "instance_export", "build_adjacency.py")
+    spec = importlib.util.spec_from_file_location("build_adjacency", path)
+    ba = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ba)
+
+    # 2x2 grid (diagonals touch only at a corner point) plus a far island
+    cells = {"10001": (0, 0), "10002": (1, 0), "10003": (0, 1), "10004": (1, 1),
+             "99999": (5, 5)}
+    gdf = gpd.GeoDataFrame(
+        {"ZCTA5CE20": list(cells),
+         "INTPTLAT20": [y + 0.5 for _, y in cells.values()],
+         "INTPTLON20": [x + 0.5 for x, _ in cells.values()]},
+        geometry=[box(x, y, x + 1, y + 1) for x, y in cells.values()], crs="EPSG:4269")
+
+    edges = ba.rook_edges(gdf, "ZCTA5CE20", verbose=False)
+    assert edges == [("10001", "10002"), ("10001", "10003"),
+                     ("10002", "10004"), ("10003", "10004")], \
+        "rook must drop the corner-touch diagonals and the island"
+    assert ba.n_components(list(cells), edges) == 2
+
+    with tempfile.TemporaryDirectory() as tmp:
+        sp = os.path.join(tmp, "states.geojson")
+        gpd.GeoDataFrame({"STUSPS": ["CA", "NY"]},
+                         geometry=[box(-1, -1, 1, 3), box(1, -1, 7, 7)],
+                         crs="EPSG:4269").to_file(sp, driver="GeoJSON")
+        st = ba.state_membership(gdf, "ZCTA5CE20", sp, verbose=False)
+    assert st == {"10001": "CA", "10002": "NY", "10003": "CA",
+                  "10004": "NY", "99999": "NY"}
