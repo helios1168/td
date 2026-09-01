@@ -1,17 +1,22 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 (night) · **Branch:** `national-channel` · **Head:** `b289f3a`
+**Last updated:** 2026-09-01 (late night) · **Branch:** `national-channel` · **Head:** `98f3c0e`
 
-**Status:** **both stages are built and a certified k=13 draw exists.** The real export
-(`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229 zips / 111 reps / ~$13B
-⇒ k=13; the sold-zip graph's 547 components killed adjacency contiguity, so stage 1 is
-**center-based balanced assignment** (`td/solvers/centers.py`, transportation-LP core),
-certified post-hoc by `td/solvers/cert_draw.py`, mapped by `tools/us_maps.py` (five
-figures incl. the Voronoi territory map; atlas artifact in `docs/CHANNEL.md` §0), and
-formalized in `docs/channel_note/` (21 pp). Winner draw: spread 0.78%, all 13 staffed,
-4.5e-5 nats off the ceiling. **Open: the lexicographic compactness-vs-Nash decision** (a
-proved 8.53% compacter assignment exists, unadopted). **131 tests pass, 0 fail.**
-**Resume point: `docs/CHANNEL.md` §0.**
+**Status:** **both stages are built and a certified k=13 draw exists; literature recon is
+in.** The real export (`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229
+zips / 111 reps / ~$13B ⇒ k=13; the sold-zip graph's 547 components killed adjacency
+contiguity, so stage 1 is **center-based balanced assignment** (`td/solvers/centers.py`,
+transportation-LP core), certified post-hoc by `td/solvers/cert_draw.py`, mapped by
+`tools/us_maps.py` (five figures incl. the territory map; atlas artifact in
+`docs/CHANNEL.md` §0), and formalized in `docs/channel_note/` (21 pp). Winner draw: spread
+0.78%, all 13 staffed, 4.5e-5 nats off the ceiling. **Open: the lexicographic
+compactness-vs-Nash decision** (a proved 8.53% compacter assignment exists, unadopted —
+now gated on `docs/RESEARCH_FINDINGS.md` §9-C4/D). **`98f3c0e`: overnight literature
+reconnaissance landed** — `docs/RESEARCH_FINDINGS.md` (~130 verified entries + prioritized
+reframings; headlines: stage 1 is a published method, the territory map should be a
+**power diagram** with the LP duals as weights = a free exact certificate, the niche is
+unoccupied) and `docs/RESEARCH_ADDITIONS.bib`. **131 tests pass, 0 fail** (as of
+`f45bf89`; docs-only since). **Resume point: `docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -142,8 +147,10 @@ Stage 1 destroys the census decomposition — the bilateral pair structure came 
 between two legacy rep maps, and a greenfield channel has none.
 
 - `scip_tree` certifies to **135 zips** (two-player). ~1,229 × 6 ≈ 7,400 binaries.
-- Validi, Buchanan & Lykhovyd certify ~**1,500 units** for political districting — the
-  published state of the art for exactly this problem.
+- Validi, Buchanan & Lykhovyd certify ~**1,500 units** for political districting.
+  **[Stale as of 2026-09-01 recon — the frontier is now all-US instances certified at
+  county level and ~175k vertices with inexact contiguity; our difficulty is the log
+  objective + 547 components, not size. `docs/RESEARCH_FINDINGS.md` §0.5.]**
 - **But the footprint is disconnected.** No contiguous district spans California and Florida,
   so the graph has ≥4 components and the problem *separates*: allocate integer district counts
   per component, then solve each independently at ~500 zips. Failure mechanism (a) — the thing
@@ -213,6 +220,9 @@ grounded on a measured data-noise floor. Re-measure the floor on the real instan
 6. `docs/TEST_PLAN.md` — harness spec, tiers, gap metrics, acceptance. The tier
    definitions need re-cutting for N-way (`docs/MODEL.md` §2).
 7. `tools/instance_export/README.md` — the work-machine runbook.
+8. `docs/RESEARCH_FINDINGS.md` — the 2026-09-01 literature map: what our constructions are
+   called, what to cite instead of prove, the absence ledger, and the prioritized roadmap
+   (§9). `docs/RESEARCH_ADDITIONS.bib` holds the BibTeX candidates.
 
 ## Open decisions (`docs/MODEL.md` §6)
 

@@ -8,7 +8,46 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-01 (night): stage 1 built, drawn, certified, mapped, and formalized.**
+**State on 2026-09-01 (late night): literature reconnaissance complete — the niche is
+unoccupied, and stage 1 turns out to be a published method.** Head `98f3c0e` (docs-only
+since `b289f3a`; 131 tests as recorded at `f45bf89`, no code touched).
+
+*What landed.* `acb34f9` — the research brief (`docs/RESEARCH_GUIDE.md`). `98f3c0e` — the
+results of the overnight run (seven parallel verification-required sweeps, every citation
+checked against a fetched source): `docs/RESEARCH_FINDINGS.md` (~130 entries organised by
+guide §§1–7; headline findings §0; absence-claim ledger with search provenance §8;
+prioritized reframings/roadmap §9) and `docs/RESEARCH_ADDITIONS.bib` (tiered BibTeX
+candidates for `channel_note/references.bib`; three inferred DOIs flagged for
+re-resolution).
+
+*What it means (FINDINGS §0, in order of consequence).* (1) Stage 1 is a published named
+method — Aurenhammer–Hoffmann–Aronov constrained least-squares assignment / semi-discrete
+OT / weight-balanced k-means / capacitated Lloyd for centroidal power diagrams / the Hess
+model — with an inheritable convergence theorem (Bourne–Roper 2015) and a redistricting
+precedent (Cohen-Addad–Klein–Young 2018). (2) **`figures/district_regions.png` should be a
+power diagram, not Voronoi** — the transportation-LP mass-balance duals *are* the cell
+weights, giving a free exact assignment certificate at fixed centers that supersedes the
+pinned-centers MILP (flagged independently by three sweeps). (3) The MNW-equals-balance
+proposition is Schur-concavity (Marshall–Olkin); its integer form is NP-hard balanced
+partitioning; the ≤ k−1 split lemma is Brieden–Gritzmann–Klemm 2017 Lemma 4 — cite, don't
+prove. (4) The "~1,500 units is the SOTA" claim was stale (all-US instances now certified;
+175k vertices with inexact contiguity). (5) caragiannis2019 already defines lexicographic
+MNW — adopting it verbatim closes the empty-bundle decision in `MODEL.md` §6. (6) Verified
+absences ours to claim: no price-of-connectivity for Nash welfare anywhere; no Nash-welfare
+districting formulation; no sales-territory power diagrams; no joint alignment +
+retention-selection. The five-paper shortlist says the niche is unoccupied (FINDINGS §7).
+
+*What is next, and the decision it needs.* FINDINGS §9 is the menu, prioritized: **A1**
+(power-diagram redraw + dual-weight certificate — a correctness fix to a primary artifact,
+do first), then the cheap experiments **C1** (quadratic objective vs log — may delete the
+OA machinery), **C2** (utilitarian-vs-Nash matching — envy-freeability), **C3** (EG
+fractional dual bound), **C4** (compactness-measure robustness of the 8.53%). The
+**lexicographic decision (open question 1) should now wait** on C4 + the frontier sweep
+(§9-D) and the in-press ezazipour2025 Pareto paper. Then the citation pass over
+`channel_note` (§9-B). The decision to make: adopt A1+B before presenting the draw, or
+present as-is.
+
+**Earlier — 2026-09-01 (night): stage 1 built, drawn, certified, mapped, and formalized.**
 Head `b289f3a`, **131 tests pass**.
 
 *What landed (all Opus-subagent builds from written plans).* `td/solvers/centers.py` —
