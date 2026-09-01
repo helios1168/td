@@ -1,13 +1,13 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 · **Branch:** `national-channel` · **Head:** `1272c72`
+**Last updated:** 2026-09-01 · **Branch:** `national-channel` · **Head:** `0d3b556`
 
 **Status:** the 2026-08-31 pivot is landed and the tree matches it. Stage 2 (staffing) is
 built and exact; **stage 1 (drawing the districts) is the open work**, and the next step is
 not code — it is one read-only run of `export_instance.py validate` on the work machine:
 since `1272c72` its report prints the **regional opportunity shares and the balance ceiling
-table** itself (all shares and counts, nothing written). 37 tracked files, **65 tests pass,
-0 fail**. **Resume point: `docs/CHANNEL.md` §0.**
+table** itself (all shares and counts, nothing written); `build_adjacency.py` rebuilds the
+graph from TIGER if none exists. 38 tracked files, **66 tests pass, 0 fail**. **Resume point: `docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
