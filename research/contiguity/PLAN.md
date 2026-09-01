@@ -8,6 +8,16 @@ does not override them.
 
 ## 0. Resume — read this first in a fresh session
 
+**NEW SHAPE (2026-08-31): 3+ candidate reps per zip.** The problem in practice now lets a
+single ZCTA be claimed by three or more wholesalers, which breaks the one-binary-per-zip
+decision variable the whole programme is built on. Design, what breaks, and the phasing are in
+**`research/contiguity/NWAY.md`** — read it before planning any further two-player work.
+This is *not* G.4/W12 (which kept exactly two candidates per zip and is now the special case).
+Phase 1 has landed on `wt/adapt-8-31-2026`: `contig_methods/nway.py` (schema shim, per-rep
+utilities/gains/objective/perimeter/pieces/fairness) + `tests/test_nway.py`, with a
+two-rep reduction test pinning every primitive to `base.py` so the existing corpus stays
+interpretable. `base.py` itself is untouched — the contract edit is Phase 3, main session.
+Open decisions for the user are NWAY.md §6. Earlier —
 **Queued (approved 2026-08-31): W6e — AM–GM formulation experiment.** Add
 `formulation="amgm"` to `scip_tree`: replace the log objective with `max t`,
 `t ≤ (p·g_a + q·g_b)/2` cuts (p·q ≥ 1; tangency p = √(ĝ_b/ĝ_a)) — the OA of the equivalent
