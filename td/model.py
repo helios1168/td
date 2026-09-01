@@ -148,10 +148,11 @@ def candidate_matrix(G, nodes, reps_order) -> np.ndarray:
     return C
 
 
-def headroom_violations(G, nodes=None, theta: float = 0.40) -> list:
+def headroom_violations(G, nodes=None, theta: float = 0.40, tol: float = 0.0) -> list:
     """Zips violating `M_z >= max_i (S_i + theta*(T - S_i))`; the N-way headroom condition.
 
     Reduces to `M >= max(A + theta*B, B + theta*A)` at two reps (`territory.validate`).
+    `tol` is a relative slack on the floor, for callers reading a rounded file format.
     """
     bad = []
     for z in (G.nodes() if nodes is None else nodes):
@@ -163,7 +164,7 @@ def headroom_violations(G, nodes=None, theta: float = 0.40) -> list:
         vals = list(S.values()) + ([free] if free > 0 else [])
         need = max((s + theta * (T - s)) for s in vals) if vals else 0.0
         M = float(G.nodes[z]["M"])
-        if M < need - 1e-12:
+        if M < need * (1.0 - tol) - 1e-12:
             bad.append((z, M, need))
     return bad
 

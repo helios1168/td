@@ -136,7 +136,9 @@ def check_descaled(d: Descaled, theta: float = 0.40) -> list:
     from . import model
 
     problems = []
-    bad = model.headroom_violations(d.G, theta=theta)
+    # the export format rounds to 6 significant figures and t sums up to ~100 rounded
+    # shares, so deficits up to a few 1e-5 are format rounding, not data violations
+    bad = model.headroom_violations(d.G, theta=theta, tol=5e-5)
     if bad:
         worst = max(need - M for _, M, need in bad)
         problems.append(f"{len(bad)} zip(s) violate pointwise headroom at theta={theta} "

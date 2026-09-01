@@ -506,8 +506,9 @@ def test_repair_headroom_is_minimal_and_reported():
             d = inst.share[z]
             t = sum(d.values()) + inst.free.get(z, 0.0)
             need = max(s + theta * (t - s) for s in d.values())
-            # minimal: the repaired zip sits exactly at the floor, within float error
-            assert abs(need - 1.0) < 1e-12, (z, need)
+            # minimal: the repaired zip sits just below the floor, by the 5e-5 rounding
+            # margin the repair adds so that 6-sig-fig rounding cannot tip need past 1
+            assert 1 - 2e-4 < need <= 1.0 + 1e-12, (z, need)
 
         # untouched zips keep their M (kappa is computed before the repair, so m_rel
         # of every other zip is identical to the unrepaired build)

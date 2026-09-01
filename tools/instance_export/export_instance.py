@@ -279,6 +279,11 @@ def build(sales_path, opp_path, graph_path, states_path=None,
                 vals.append(f)
             T = sum(vals)
             need = max(v + theta * (T - v) for v in vals)
+            # the export rounds to SIG significant figures and a zip's t sums up to ~100
+            # rounded shares, so landing exactly on the floor lets that accumulated
+            # rounding tip headroom past 1 downstream; this margin dominates the rounding
+            # error (a few 1e-5 relative) while staying far below any data noise
+            need *= 1 + 5e-5
             if M.get(z, 0.0) < need:
                 repair_added += need - M.get(z, 0.0)
                 M[z] = need
