@@ -8,9 +8,26 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-08-31 (evening).** The problem changed shape three times today and the repo
-now matches the final shape. Branch **`national-channel`** (`6cfdd67`), 33 tracked files,
-**64 tests pass, 0 fail, 0 skipped** (`.venv/bin/python3 tests/run_all.py`).
+**State on 2026-09-01.** Branch **`national-channel`** (`1272c72`), 37 tracked files,
+**65 tests pass, 0 fail, 0 skipped** (`.venv/bin/python3 tests/run_all.py`).
+
+*What landed.* `1272c72`: the exporter's `validate` run now prints the **footprint
+components as shares of total opportunity and the balance ceiling table** (k = n..n+5) —
+an inlined stdlib `alloc_ceiling`, cross-checked against `channel.allocate_districts` by
+`test_instance.py::test_footprint_report_components_and_ceiling`. Components below 1% of
+total M are surfaced as crumbs, not sized, since each would have to host a whole district.
+
+*What it means.* The four numbers stage 1 is blocked on no longer need a manual pull:
+`validate` writes nothing and the new section is all shares and counts, so **one read-only
+run on the work machine settles k** and whether ~$1B is reachable.
+
+*What is next.* Run `export_instance.py validate` on the work machine (runbook:
+`tools/instance_export/README.md`) and bring back the share column and the ceiling table —
+or the full export, which supersedes them. Then the stage-1 MILP per §8 of the note,
+centre-based (Hess), largest region first. The open modelling decisions below are unchanged.
+
+**Earlier — 2026-08-31 (evening).** The problem changed shape three times that day and the
+repo matches the final shape (then `6cfdd67`, 64 tests).
 
 *What landed.* (i) **N-way primitives** — `b8ae73d`: `td/model.py`, a zip can be claimed by
 3+ reps; the two-rep reduction is asserted against the old contract so the existing corpus
@@ -38,13 +55,9 @@ strengthens the descaled export rather than qualifying it.
 contiguous districts. Before writing any solver, the cheapest and most informative step is the
 balance ceiling, and it is blocked on **four numbers from the user: opportunity by region
 (west coast / east coast / Texas / Florida).** Those give `k`, say whether ~$1B is reachable
-at all, and need no solver and no per-zip data. **As of 2026-09-01 the exporter's `validate`
-run prints them itself** — footprint components as shares of total opportunity, plus the
-ceiling table for k = n..n+5 (an inlined `alloc_ceiling`, cross-checked against
-`channel.allocate_districts` by `test_instance.py::test_footprint_report_components_and_ceiling`).
-`validate` writes nothing and the section is all shares and counts, so one read-only run on
-the work machine settles k. After that: the stage-1 MILP per §8 of the note, centre-based
-(Hess) to break the k-district symmetry, on the largest region first.
+at all, and need no solver and no per-zip data. *(Resolved 2026-09-01 — see the entry
+above.)* After that: the stage-1 MILP per §8 of the note, centre-based (Hess) to break the
+k-district symmetry, on the largest region first.
 
 *Also open, and mine to ask rather than assume* (`MODEL.md` §6): empty bundles /
 lexicographic MNW · θ directionality (`θ_{i←j}`) · the brute-force tier re-cut by
@@ -103,7 +116,7 @@ legacy books move the map at all.
 | stage | problem | status |
 |---|---|---|
 | **1 — draw** | k balanced contiguous districts on opportunity alone | **the hard part**; balanced contiguous districting |
-| **2 — match** | assign retained reps to districts | **built** — `contig_methods/channel.py`, exact |
+| **2 — match** | assign retained reps to districts | **built** — `td/channel.py`, exact |
 
 Stage 2 is a max-weight matching on **log** weights: `g_ij = Σ_{z∈A_j} u_i(z)`, maximise
 `Σ_i log g_{i,σ(i)}` by the Hungarian algorithm. Same objective as stage 1, O(n³), exact.
