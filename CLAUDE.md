@@ -1,7 +1,7 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 (latest) · **Branch:** `national-channel` · **Head:** `72e5f07`
-(pushed to `origin/national-channel`)
+**Last updated:** 2026-09-01 (post-review) · **Branch:** `national-channel` · **Head:**
+`72e5f07` (pushed) + the docs-only Gromov-review commit
 
 **Status:** **both stages are built, a certified k=13 draw exists, literature recon is in,
 and the territory map is now a power diagram (FINDINGS §9-A1).** The real export
@@ -26,8 +26,13 @@ above the bound with 132 of 1,223 zips outside their own cell** — it is *not* 
 which independently reproduces the MILP's 8.53% and turns open question 1 into "adopt the
 cells or keep the 132 dots". `80c13ee` republished the atlas artifact on the new figure;
 `72e5f07` committed `figures/` (it had been gitignored, so the maps the docs cite existed
-nowhere but the machine that drew them). **151 tests pass, 0 fail.** **Resume point:
-`docs/CHANNEL.md` §0.**
+nowhere but the machine that drew them). **Gromov review in (`docs/REVIEW_GROMOV.md`):
+measured real saturation is 41.9%, not the assumed 5%** — channel_note §5.1's sizing and
+§5.2's "derived rather than assumed" claim fail on the real instance (the premium at stake
+is ~3.7 nats vs a 4.5e-5-nat balance residual); the cells-vs-dots call gains a noise-floor
+argument (cells' Nash cost ≪ the 5e-3-nat tier-2 floor) gated on a stage-2 rescore; the EG
+bound (= FINDINGS C3) is upgraded to certificate 5; seven local note fixes queued (R4).
+**151 tests pass, 0 fail.** **Resume point: `docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -98,8 +103,11 @@ are scale-free either way.
 ```
 
 Balance the territories, and where there is slack leave business with the rep who already has
-it. At ~5% saturation with λ=0.3 the opportunity term is ~90% of `u_i`. **Check that ratio
-against real saturation** — it decides how much the legacy books move the map at all.
+it. **Measured 2026-09-01 (`docs/REVIEW_GROMOV.md` R1): real aggregate saturation is 41.9%**
+(median zip 46.8%) — the opportunity term is ~59% of an incumbent's `u_i`, not ~90%, the
+hold-vs-not swing is ~42%, and the legacy books move the map a lot. `ceiling.py` still
+hard-codes `SATURATION = 0.05` and channel_note §5.1 still carries the old arithmetic —
+R1's rewrite is open.
 
 ---
 
@@ -243,9 +251,13 @@ grounded on a measured data-noise floor. Re-measure the floor on the real instan
 8. `docs/RESEARCH_FINDINGS.md` — the 2026-09-01 literature map: what our constructions are
    called, what to cite instead of prove, the absence ledger, and the prioritized roadmap
    (§9). `docs/RESEARCH_ADDITIONS.bib` holds the BibTeX candidates.
+9. `docs/REVIEW_GROMOV.md` — the 2026-09-01 review of the note and formulation: the measured
+   saturation correction (R1), the noise-floor resolution of cells-vs-dots (R2), the EG
+   bound as certificate 5 (R3), seven note fixes (R4).
 
 ## Open decisions (`docs/MODEL.md` §6)
 
 Empty bundles / lexicographic MNW · θ directionality (`θ_{i←j}`) · the brute-force tier
 re-cut by `Π|cand(z)|` · who owns untapped and vacant zips · the filler-capture mode ·
-regional opportunity totals.
+regional opportunity totals · **book-aware stage 1 vs FINDINGS §9-G's
+books-enter-at-stage-2-only invariant** (`REVIEW_GROMOV.md` R1 — live at 42% saturation).

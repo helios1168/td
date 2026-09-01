@@ -8,7 +8,56 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-01 (latest): FINDINGS §9-A1 is done — the territory map is a power
+**State on 2026-09-01 (latest): a Gromov-method review of the note and formulation is in
+(`docs/REVIEW_GROMOV.md`) — and its check of §5.1's one assumed number came back an order
+of magnitude off: real saturation is 41.9%, not ~5%.** Docs-only on top of `83dee5f`
+(pushed head `72e5f07`); **151 tests as recorded at `937460e`, no code touched.**
+
+*What landed.* `docs/REVIEW_GROMOV.md` — four recommendations R1–R4, plus the moves that
+did not fire. The load-bearing one is measured, not argued: `ceiling.py` hard-codes
+`SATURATION = 0.05`, but computing `t_z` from `instance_descaled.json.gz` gives aggregate
+`Σ(T+S_free)/ΣM` = **41.9%**, median per-zip **46.8%**, and **48% of opportunity** in zips
+above the 30% threshold channel_note §5.1 itself names as disqualifying; the hold-vs-not
+utility swing is **~42%** (not 6.7%) and the incumbency premium is bounded by **~25% of
+total welfare** (not ~6%).
+
+*What it means (R1).* channel_note §5.1's sizing paragraph is wrong on the real instance,
+and §5.2's claim that the two-stage scheme is "now **derived** rather than assumed" fails:
+across solver-realistic imbalances the premium window (**≈3.7 nats**) dwarfs the balance
+term (10⁻⁴–10⁻² nats), so the ordering inverts and the scheme survives as a *business
+constraint*, not a derivation. The effort ledger is lopsided — balance solved to 4.5e-5
+nats, the 5-seed portfolio exploring 7.1e-2 nats of staffing value, ~3.7 nats of premium
+swing unexplored and unbounded. The certified draw itself is untouched: "MNW = balance" is
+about the common measure `M`.
+
+*(R2) The 132-dots decision gains a decisive input.* Δ ≈ ½Σδ² — the log objective is
+second-order flat at balance — and the cells' stage-1 Nash cost (~4.7e-5 nats) is two
+orders below the programme's own tier-2 floor (5e-3 nats): by our own tolerance, dots and
+cells are Nash-*indistinguishable*, and the polish's tie-break rule ("ties toward the more
+compact destination") already picks the cells. The gate that remains is not stage-1 Nash
+but the **stage-2 staffing value of the cells map** — at 42% saturation, relabelling 132
+zips moves `g_ij` materially. Order: C4 → stage-2 rescore of the cells → adopt unless
+staffing drops by more than the portfolio spread. §9-D's frontier sweep stays the picture
+to present.
+
+*(R3, R4.)* The EG fractional bound (= FINDINGS C3, independently converged) is upgraded to
+**certificate 5**: it is the only missing upper bound in the composed retreat audit — the
+joint (map, staffing) value has a lower bound only (59.9375 nats). R4 lists seven local
+note fixes (Prop. hungarian's "injections" at m>k; the non-compact "compact" set in Prop.
+equal; the n = |Z| vs n = reps collision; the `\chPinNash` sign; the ceiling *demonstrably*
+reachable to 2e-6 nats by the portfolio's best draw; §5.1's rewrite; concur with §9-A3) —
+fold into the §9-B citation pass.
+
+*What is next, and the decision it needs.* R1's fixes: `ceiling.py`'s constant and
+channel_note §5.1 (open); this file's and `CLAUDE.md`'s ~5%/90% lines are corrected in this
+commit; FINDINGS §4C/C6's "α ≈ 0.9 expected" is stale — measured α ≈ 0.6. Then C4 → the
+stage-2 rescore of the cells. **The new decision: at 42% saturation, does stage 1 get to
+see books?** The value on the table says yes (~3.7 nats); FINDINGS §9-G's invariant
+("books enter at stage 2 only", fotakis2014) says no — and `score_draws` already breaches
+it mildly. Audited system-of-record books (per §9-G) are the likely escape; needs the
+user's call.
+
+**Earlier — 2026-09-01: FINDINGS §9-A1 is done — the territory map is a power
 diagram, and its duals are certificate 4.** Head `72e5f07`, **pushed to
 `origin/national-channel`**; **151 tests pass, 0 fail** (131 at `f45bf89`).
 
@@ -246,10 +295,13 @@ Pareto-dominated by Nash) is the same phenomenon from the other side.
 ```
 
 The objective splits into **balance the territories** and **where there is slack, leave
-business with the rep who already has it**. At ~5% saturation with λ=0.3 the opportunity term
-is roughly 90% of `u_i` and the book differentiation roughly 10% — so a balanced map with a
-modest continuity tilt. *Check the ratio against real saturation*: it decides how much the
-legacy books move the map at all.
+business with the rep who already has it**. The ratio was checked against the real export
+on 2026-09-01 (`docs/REVIEW_GROMOV.md` R1): **aggregate saturation is 41.9%** (median zip
+46.8%), so the opportunity term is ~59% of an incumbent's `u_i`, the hold-vs-not swing is
+~42%, and the incumbency premium is up to ~25% of total welfare — the books move the map
+a lot, and the "balanced map with a modest continuity tilt" reading (written when ~5% was
+assumed) does not hold. Balance still dominates *asymptotically* (log blows up as a
+territory starves), but on realistic imbalances the premium is the larger term.
 
 ### 3 Two stages
 
