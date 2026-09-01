@@ -1,6 +1,6 @@
 # N-way division — adapting the two-player machinery to 3+ reps per zip
 
-**Opened:** 2026-08-31 · **Branch:** `wt/adapt-8-31-2026` · **Status:** design + Phase 1 landed
+**Opened:** 2026-08-31 · **Branch:** `wt/adapt-8-31-2026` · **Status:** design + Phase 1 landed + real-instance data route
 
 The problem in practice has taken a new shape: **a single ZCTA can be claimed by three or more
 wholesalers**, not one legacy A-rep against one legacy B-rep. This file is the design for
@@ -183,6 +183,39 @@ edit lands once, in the main session, with the reduction test already passing.
 
 ---
 
+## 5b. Data route — settled 2026-08-31
+
+**The synthetic twin is superseded for this problem.** With PII and firm masked upstream, and
+the dollar scale removed, the *real* instance can be exported: real ZCTAs, real adjacency,
+real territory structure, real share patterns. That is strictly better than a twin calibrated
+to aggregates, and it skips the rank-jitter and fidelity-audit apparatus entirely.
+
+The justification is algebraic, not statistical. `u_i(z) = M_z · [c1·s_i + c2·(t_z − s_i) + λ]`
+with `s_i = S_i/M_z`, so `M_z` factors out; and `Σ_i log g_i` shifts by `n·log κ` under a
+global rescale. At ρ = 0 the descaled instance and the real one have the **same** optimal
+allocation, gaps and certificates. Removing the scale drops a constant the solver never reads.
+
+- `tools/instance_export/export_instance.py` — work-machine exporter, single file, auditable.
+  Emits shares in [0,1] plus `m_rel = M/median(M)`; surrogate rep ids; guards that refuse to
+  write a currency amount or the divisor.
+- `battery/code/descaled.py` — repo-side loader; `S_i = share_i · m_rel` reconstructs the
+  instance to within the exporter's 6-sig-fig rounding.
+
+Two consequences to carry forward:
+
+1. **ρ > 0 is not scale-invariant.** `Σ log g_i − ρ·perimeter` mixes a log-scale term with a
+   raw count. ρ = 0 is the model, so this only touches the legacy `current` ρ=2e-3 continuity
+   column — but any ρ carried over from dollar-scaled data is meaningless here and must be
+   re-derived. Same for κ's units in W11.
+2. **Tail fits move to share space.** The dPlN/lognormal calibration and `S7_heavytail` were
+   fitted to sales *values*; shares are bounded in [0,1] with different tail behaviour. The
+   generator's tail knobs need recalibrating, not re-pointing.
+
+`cand(z) = {i : S_i(z) > 0}` — a rep is a candidate only where it has sales (settled
+2026-08-31). This makes `cand` derivable from the sales table alone, with no coverage source,
+and produces three node classes: **contested** (≥2, the problem), **uncontested** (=1, owner
+forced), **untapped** (=0, nobody's book — kept for adjacency, allocation rule open).
+
 ## 6. Open — needs your call
 
 1. **Empty bundles.** Lexicographic (maximise count of positive-utility reps, then MNW among
@@ -196,6 +229,12 @@ edit lands once, in the main session, with the reduction test already passing.
    weakens a stated acceptance criterion, so it is yours to accept.
 4. **Where do the extra candidates come from?** Three-way merger, sub-territory overlap within
    one firm, or something else? It changes what the generator should produce and whether
-   `cand(z)` correlates with geography. Phase 2 needs this.
-5. **Does a rep's bundle stay inside its candidate zips?** Assumed yes (a rep can only own a
-   zip it is a candidate for). Same default as G.4.
+   `cand(z)` correlates with geography. Phase 2 needs this. **Still open** — but less urgent
+   now that real instances can be exported rather than generated.
+5. ~~Does a rep's bundle stay inside its candidate zips?~~ **Settled 2026-08-31:** yes, and
+   `cand(z) = {i : S_i(z) > 0}`, so candidacy is derivable from sales alone.
+6. **What owns an untapped zip?** `cand(z) = ∅` there, so no rep can take it under the rule
+   above, yet it carries opportunity and it holds the graph together (regime (d) glue).
+   Options: leave unallocated, assign by adjacency to the owner of a neighbouring zip, or
+   admit a wider candidate set for these zips only. The exporter reports the count so the
+   magnitude is visible before this is decided.
