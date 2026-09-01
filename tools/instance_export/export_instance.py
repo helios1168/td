@@ -156,7 +156,7 @@ class Instance(object):
 
 def build(sales_path, opp_path, graph_path, states_path=None,
           theta=THETA_DEFAULT, u_col=None, v_col=None, keep_scale=False,
-          filler_keys=(), join_floor=JOIN_FLOOR):
+          filler_keys=(), join_floor=JOIN_FLOOR, impute_missing_m=False):
     sales = read_rows(sales_path)
     opp = read_rows(opp_path)
     if not sales or not opp:
@@ -175,9 +175,15 @@ def build(sales_path, opp_path, graph_path, states_path=None,
     for r in opp:
         z = norm_id(r[o_zip])
         try:
-            M[z] = float(r[o_val])
+            v = float(r[o_val])
         except (TypeError, ValueError):
-            continue
+            continue                        # blank/absent M: the zip stays out of M here
+        if z in M and M[z] > 0 and v > 0 and abs(v - M[z]) > 1e-6 * max(v, M[z]):
+            raise InputError(
+                f"zip {z} carries two different opportunity values ({M[z]:g} vs {v:g}). "
+                f"With a combined sales+opportunity file, M must be identical on every "
+                f"row of a zip -- this looks like a bad merge.")
+        M[z] = max(v, M.get(z, v))          # a positive value wins over a stray 0
     pos = sorted(v for v in M.values() if v > 0)
     if not pos:
         raise InputError("no positive opportunity values")
@@ -190,7 +196,30 @@ def build(sales_path, opp_path, graph_path, states_path=None,
     inst = Instance()
     raw, raw_free = defaultdict(dict), defaultdict(float)
     fillers = {str(k).strip() for k in filler_keys}
-    n_rows = n_joined = n_nonpositive = n_filler = 0
+
+    # opt-in: a zip with book but no (or nonpositive) M gets M = its total book.  The
+    # conservative floor -- it values the zip at exactly what is already sold there (no
+    # upside, satisfies pointwise headroom with equality at theta<=1) and keeps the zip in
+    # the graph instead of punching a hole in contiguity.  kappa above is computed from
+    # real M values only, so imputation never moves the descaling constant.
+    n_imputed = 0
+    if impute_missing_m:
+        book = defaultdict(float)
+        for r in sales:
+            z = norm_id(r[c_zip])
+            if z in M and M[z] > 0:
+                continue
+            try:
+                v = float(r[c_val])
+            except (TypeError, ValueError):
+                continue
+            if v > 0:
+                book[z] += v
+        for z, t in book.items():
+            M[z] = t
+            n_imputed += 1
+
+    n_rows = n_joined = n_nonpositive = n_unparsed = n_filler = 0
     unjoined_value, total_value = defaultdict(float), 0.0
     for r in sales:
         n_rows += 1
@@ -198,7 +227,8 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         try:
             v = float(r[c_val])
         except (TypeError, ValueError):
-            continue
+            n_unparsed += 1                 # blank/non-numeric: not a sales row at all
+            continue                        # (a combined file's opportunity-only rows land here)
         if v <= 0:                          # cand(z) = {i : S_i > 0}, per the 2026-08-31 rule
             n_nonpositive += 1
             continue
@@ -218,7 +248,7 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         if c_firm is not None and rep not in inst.firm:
             inst.firm[rep] = str(r[c_firm]).strip()
 
-    join_rate = n_joined / max(n_rows - n_nonpositive, 1)
+    join_rate = n_joined / max(n_rows - n_nonpositive - n_unparsed, 1)
     if join_rate < join_floor:
         lost_share = sum(unjoined_value.values()) / total_value if total_value else 0.0
         top = sorted(unjoined_value.items(), key=lambda kv: -kv[1])[:8]
@@ -280,6 +310,7 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         zips_with_filler=sum(1 for v in inst.free.values() if v > 0),
         n_filler_rows=n_filler,
         n_filler_keys=len(fillers),
+        zips_m_imputed=n_imputed,
         zips_contested=sum(v for k, v in ncand.items() if k >= 2),
         max_candidates=max(ncand) if ncand else 0,
         scale_stripped=not keep_scale,
@@ -544,6 +575,7 @@ def report_text(inst):
          f"  contested  (2+ reps) {r['zips_contested']:>10,}   the actual problem",
          f"  max candidates       {r['max_candidates']:>10,}",
          f"  zips with filler book{r['zips_with_filler']:>10,}   ({r['n_filler_rows']:,} rows)",
+         f"  zips with M imputed  {r['zips_m_imputed']:>10,}   book but no M; M = total book",
          "", "  |cand| histogram: " + ", ".join(f"{k}:{v}" for k, v in
                                                  r["cand_histogram"].items()),
          "",
@@ -565,6 +597,10 @@ def main(argv=None):
     p.add_argument("--lam", type=float, default=0.30)
     p.add_argument("--u-col", default=None)
     p.add_argument("--v-col", default=None)
+    p.add_argument("--impute-missing-m", action="store_true",
+                   help="a zip with book but no (or nonpositive) opportunity value gets "
+                        "M = its total book -- the conservative floor: no upside, zip "
+                        "stays in the graph. Off by default; the count is reported.")
     p.add_argument("--join-floor", type=float, default=JOIN_FLOOR,
                    help=f"minimum share of positive sales rows that must join to an "
                         f"opportunity zip (default {JOIN_FLOOR}). Lower it only after "
@@ -579,7 +615,7 @@ def main(argv=None):
     try:
         inst = build(a.sales, a.opportunity, a.graph, a.states, theta=a.theta,
                      u_col=a.u_col, v_col=a.v_col, filler_keys=a.filler_key,
-                     join_floor=a.join_floor)
+                     join_floor=a.join_floor, impute_missing_m=a.impute_missing_m)
     except InputError as e:
         print(f"input error: {e}", file=sys.stderr)
         return 4

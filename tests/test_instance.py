@@ -423,3 +423,52 @@ def test_join_floor_override_drops_unjoined_and_reports_value():
         inst = ex.build(sp, op, gp, join_floor=0.5)
         assert bad_zip not in inst.share
         assert ex.validate(inst) == []
+
+
+def test_combined_file_and_missing_m_handling():
+    """One wide file for both --sales and --opportunity; missing M drops or imputes."""
+    ex = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        zips, reps, M, sales, edges = fake_real()
+        # wide file: every sales row carries its zip's M; two zips lose their M value
+        no_m = sorted({z for z, *_ in sales})[:2]
+        cp = os.path.join(tmp, "combined.csv")
+        with open(cp, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["zip_code", "rep_id", "firm", "opportunity", "sales"])
+            for z, rep, firm, v in sales:
+                w.writerows([(z, rep, firm, "" if z in no_m else M[z], v)])
+            for z in zips:                       # untapped zips: opportunity-only rows
+                if not any(s[0] == z for s in sales):
+                    w.writerow((z, "", "", M[z], ""))
+        gp = os.path.join(tmp, "edges.csv")
+        with open(gp, "w", newline="") as fh:
+            w = csv.writer(fh); w.writerow(["u", "v"]); w.writerows(edges)
+
+        # default: the missing-M zips drop out (here below the floor -> InputError)
+        try:
+            ex.build(cp, cp, gp)
+            raise AssertionError("expected InputError from the join floor")
+        except ex.InputError as e:
+            assert "--join-floor" in str(e)
+        inst = ex.build(cp, cp, gp, join_floor=0.0)
+        assert all(z not in inst.m_rel for z in no_m)
+
+        # imputed: M = total book, zip stays in, headroom holds with t = 1
+        inst = ex.build(cp, cp, gp, impute_missing_m=True)
+        assert inst.report["zips_m_imputed"] == len(no_m)
+        assert ex.validate(inst) == []
+        for z in no_m:
+            t = sum(inst.share[z].values()) + inst.free.get(z, 0.0)
+            assert abs(t - 1.0) < 1e-9
+
+        # a conflicting M within one zip is a bad merge and must refuse
+        z_conf = sales[-1][0]
+        assert z_conf not in no_m
+        with open(cp, "a", newline="") as fh:
+            csv.writer(fh).writerow((z_conf, reps[0], "F_A", M[z_conf] * 2, 1.0))
+        try:
+            ex.build(cp, cp, gp, impute_missing_m=True)
+            raise AssertionError("expected InputError for conflicting M")
+        except ex.InputError as e:
+            assert "two different opportunity values" in str(e)
