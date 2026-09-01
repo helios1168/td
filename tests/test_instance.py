@@ -472,3 +472,45 @@ def test_combined_file_and_missing_m_handling():
             raise AssertionError("expected InputError for conflicting M")
         except ex.InputError as e:
             assert "two different opportunity values" in str(e)
+
+
+def test_repair_headroom_is_minimal_and_reported():
+    """--repair-headroom lifts M to exactly the pointwise floor, only where violated."""
+    ex = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        zips, reps, M, sales, edges = fake_real()
+        # understate M in two zips with book, relative to their actual headroom floor:
+        # one mildly below it, one below even its own total book
+        theta = ex.THETA_DEFAULT
+        book = {}
+        for z, _rep, _firm, v in sales:
+            book.setdefault(z, []).append(v)
+        def floor_of(z):
+            T = sum(book[z])
+            return max(v + theta * (T - v) for v in book[z])
+        with_book = sorted(book)
+        broken = {with_book[0]: 0.8 * floor_of(with_book[0]),
+                  with_book[1]: 0.3 * floor_of(with_book[1])}
+        M2 = {z: broken.get(z, M[z]) for z in M}
+        sp, op, gp = _write_inputs(tmp, zips, M2, sales, edges)
+
+        plain = ex.build(sp, op, gp)
+        assert any("headroom" in p_ for p_ in ex.validate(plain))
+
+        inst = ex.build(sp, op, gp, repair_headroom=True)
+        assert ex.validate(inst) == []
+        assert inst.report["zips_headroom_repaired"] == 2
+        assert 0.0 < inst.report["repair_added_share"] < 0.5
+
+        for z in broken:
+            d = inst.share[z]
+            t = sum(d.values()) + inst.free.get(z, 0.0)
+            need = max(s + theta * (t - s) for s in d.values())
+            # minimal: the repaired zip sits exactly at the floor, within float error
+            assert abs(need - 1.0) < 1e-12, (z, need)
+
+        # untouched zips keep their M (kappa is computed before the repair, so m_rel
+        # of every other zip is identical to the unrepaired build)
+        for z in inst.m_rel:
+            if z not in broken:
+                assert inst.m_rel[z] == plain.m_rel[z]

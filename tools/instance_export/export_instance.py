@@ -156,7 +156,8 @@ class Instance(object):
 
 def build(sales_path, opp_path, graph_path, states_path=None,
           theta=THETA_DEFAULT, u_col=None, v_col=None, keep_scale=False,
-          filler_keys=(), join_floor=JOIN_FLOOR, impute_missing_m=False):
+          filler_keys=(), join_floor=JOIN_FLOOR, impute_missing_m=False,
+          repair_headroom=False):
     sales = read_rows(sales_path)
     opp = read_rows(opp_path)
     if not sales or not opp:
@@ -263,6 +264,26 @@ def build(sales_path, opp_path, graph_path, states_path=None,
             f"understood and acceptable, rerun with --join-floor {join_rate:.2f} -- the "
             f"unjoined rows are then dropped from the instance.")
 
+    # opt-in: where the opportunity figure is smaller than the book it must contain, lift
+    # M to exactly the pointwise-headroom floor max_i(S_i + theta*(T - S_i)) -- the least
+    # repair that makes the model well-posed.  Anything larger (e.g. M += T everywhere it
+    # violates) overshoots where M is only slightly understated and distorts the balance
+    # measure more than the data requires.  Count and added share are reported and ride
+    # into the export meta: this is a recorded data repair, not a silent fix.
+    n_repaired, repair_added = 0, 0.0
+    if repair_headroom:
+        for z in set(raw) | set(raw_free):
+            vals = list(raw.get(z, {}).values())
+            f = raw_free.get(z, 0.0)
+            if f > 0:
+                vals.append(f)
+            T = sum(vals)
+            need = max(v + theta * (T - v) for v in vals)
+            if M.get(z, 0.0) < need:
+                repair_added += need - M.get(z, 0.0)
+                M[z] = need
+                n_repaired += 1
+
     for z, per_rep in raw.items():
         inst.m_rel[z] = M[z] / kappa
         for rep, v in per_rep.items():
@@ -311,6 +332,8 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         n_filler_rows=n_filler,
         n_filler_keys=len(fillers),
         zips_m_imputed=n_imputed,
+        zips_headroom_repaired=n_repaired,
+        repair_added_share=round(repair_added / max(sum(M.values()), 1e-300), 6),
         zips_contested=sum(v for k, v in ncand.items() if k >= 2),
         max_candidates=max(ncand) if ncand else 0,
         scale_stripped=not keep_scale,
@@ -576,6 +599,8 @@ def report_text(inst):
          f"  max candidates       {r['max_candidates']:>10,}",
          f"  zips with filler book{r['zips_with_filler']:>10,}   ({r['n_filler_rows']:,} rows)",
          f"  zips with M imputed  {r['zips_m_imputed']:>10,}   book but no M; M = total book",
+         f"  zips headroom-repaired{r['zips_headroom_repaired']:>9,}   M lifted to the floor; "
+         f"added {r['repair_added_share']:.2%} of total M",
          "", "  |cand| histogram: " + ", ".join(f"{k}:{v}" for k, v in
                                                  r["cand_histogram"].items()),
          "",
@@ -601,6 +626,11 @@ def main(argv=None):
                    help="a zip with book but no (or nonpositive) opportunity value gets "
                         "M = its total book -- the conservative floor: no upside, zip "
                         "stays in the graph. Off by default; the count is reported.")
+    p.add_argument("--repair-headroom", action="store_true",
+                   help="where M is smaller than the book it must contain, lift it to "
+                        "exactly the pointwise-headroom floor max_i(S_i + theta*(T-S_i)). "
+                        "The minimal repair for messy opportunity data; off by default, "
+                        "count and added share are reported.")
     p.add_argument("--join-floor", type=float, default=JOIN_FLOOR,
                    help=f"minimum share of positive sales rows that must join to an "
                         f"opportunity zip (default {JOIN_FLOOR}). Lower it only after "
@@ -615,7 +645,8 @@ def main(argv=None):
     try:
         inst = build(a.sales, a.opportunity, a.graph, a.states, theta=a.theta,
                      u_col=a.u_col, v_col=a.v_col, filler_keys=a.filler_key,
-                     join_floor=a.join_floor, impute_missing_m=a.impute_missing_m)
+                     join_floor=a.join_floor, impute_missing_m=a.impute_missing_m,
+                     repair_headroom=a.repair_headroom)
     except InputError as e:
         print(f"input error: {e}", file=sys.stderr)
         return 4
