@@ -13,6 +13,7 @@
 \input{ceiling_numbers}
 
 \newtheorem{prop}{Proposition}
+\newtheorem{lem}[prop]{Lemma}
 \newtheorem{cor}[prop]{Corollary}
 \newtheorem{obs}{Observation}
 \theoremstyle{definition}
@@ -24,42 +25,46 @@
 \newcommand{\owner}{\operatorname{own}}
 
 \title{Balanced districting for a national sales channel:\\
-the model, the two-stage scheme, and the balance ceiling}
+the model, the two-stage scheme, and the certified draw}
 \author{Territory-division project\thanks{A self-contained companion to
-\texttt{nash\_territory\_division.tex} and to
-\texttt{research/contiguity/math\_note/math\_note.tex}, which treats the two-player
-merger problem this note re-scopes. The source of record is
-\texttt{research/contiguity/NWAY.md}; the implementations are
-\texttt{td/model.py} and \texttt{td/channel.py}, with
-\texttt{battery/code/tests/test\_nway.py} and \texttt{test\_channel.py} asserting the
-identities proved below. Every number in Section~\ref{sec:ceiling} and in the
-saturation arithmetic of Section~\ref{sec:decomp} is computed by \texttt{ceiling.py}
-and injected as a macro, never transcribed.}}
-\date{2026-08-31}
+\texttt{docs/CHANNEL.md} (the problem), \texttt{docs/MODEL.md} (the model) and
+\texttt{docs/DATA.md} (the descaled export route), which are the source of record. The
+implementations are \texttt{td/model.py} (the $n$-way primitives), \texttt{td/channel.py}
+(stage~2 and the ceiling), \texttt{td/solvers/centers.py} (stage~1) and
+\texttt{td/solvers/cert\_draw.py} (the certificates), with \texttt{tests/test\_model.py},
+\texttt{test\_channel.py}, \texttt{test\_centers.py} and \texttt{test\_cert\_draw.py}
+asserting the identities proved below. Every derived number in this note is computed by
+\texttt{ceiling.py} and injected as a macro; the handful that only a solver run can produce
+(node counts, wall-clock times) are frozen there as literals, cited to their run, and
+cross-checked against that run's \texttt{metrics.json} when it is on disk.}}
+\date{2026-09-01}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
 \noindent
-The territory problem has been re-scoped. Instead of dividing a contested region between
-two legacy representatives of merging firms, the business is standing up a
-\emph{new} ``national'' channel --- the two largest product manufacturers carved out of
-the financial-institutions and wirehouse channels --- and wants it cut into territories
-of roughly equal market opportunity. This note develops the mathematics of that problem.
-We generalise the utility model to $n$ representatives per postal code and show it
-reduces identically to the two-player model at $n=2$; we prove the model is invariant
-under a global rescaling of the dollar fields, which licenses exporting a descaled
-instance from the confidential machine; we prove the central structural fact, that
-\emph{maximum Nash welfare on a common measure is exactly equal-size districting}, so the
-${\sim}\$\chTargetB$B target is an emergent property rather than a constraint; we
-decompose total welfare into a partition-invariant part and an incumbency premium, and
-size the two on real saturation; and we prove that a \emph{disconnected} footprint --- the
-channel covers the two coasts, Texas and Florida but not the midwest --- imposes a
-computable \emph{balance ceiling} that bounds every partition from above, is available
-before any solver runs, and already shows that a $\pm10\%$ band around $\$\chTargetB$B is
-probably geometrically unreachable. We close with the stage-1 mixed-integer formulation
-and the open modelling questions.
+The business is standing up a \emph{new} ``national'' channel --- the two largest product
+manufacturers carved out of the financial-institutions and wirehouse channels --- and wants
+it cut into territories of roughly equal market opportunity. This note develops the
+mathematics of that problem and reports the first certified draw. We generalise the utility
+model to $n$ representatives per postal code and show it reduces identically to the
+two-player model the programme was built for; we prove the model is invariant under a global
+rescaling of the dollar fields, which licenses exporting a descaled instance from the
+confidential machine; we prove the central structural fact, that \emph{maximum Nash welfare
+on a common measure is exactly equal-size districting}, so the ${\sim}\$\chTargetB$B target
+is an emergent property rather than a constraint; and we decompose total welfare into a
+partition-invariant part and an incumbency premium. The real export (2026-09-01) then
+rewrote the instance: $\chZips$ zips, $\chReps$ representatives, ${\approx}\$\chTotalB$B of
+opportunity, $k=\chKAtTarget$ --- and a \emph{national} footprint whose sold-zip adjacency
+graph has $\chComponentsSold$ components, which makes a contiguity constraint vacuous rather
+than binding. Stage~1 is therefore \emph{center-based balanced assignment} on planar
+equal-area coordinates. We prove the transportation-relaxation lemma that makes it work ---
+with the centers fixed, the relaxed assignment LP is a transportation problem, so a basic
+optimum splits at most $k-1$ zips --- and give three post-hoc certificates for a drawn map,
+with the real run's numbers: the draw sits $\chCeilGap$ nats below an analytic balance
+ceiling that bounds every partition. The superseded contiguity formulation and the
+component-allocation ceiling are retained, demoted, at the end.
 \end{abstract}
 
 \section{The instance and the re-scoping}\label{sec:setup}
@@ -81,42 +86,75 @@ subproblems becomes one $k$-way partition of the whole footprint. Second, \emph{
 objective's argument changes measure}: what is to be balanced is \emph{opportunity}, a
 quantity attached to the territory and not to any representative --- the same for every
 candidate owner. That single change turns the Nash criterion into a balance criterion
-exactly (Section~\ref{sec:equalsize}), which is the main result of this note.
+exactly (Section~\ref{sec:equalsize}), which is the main structural result of this note.
 
 \begin{center}
+\small
 \begin{tabular}{ll}
 \toprule
-zips carrying sales & $\chZips$\\
-distinct representative keys & $\chReps$, including an ``open'' vacancy key $\Rightarrow$ $\chRealReps$ real\\
+zips carrying sales & $\chZips$ ($\chZipsGeo$ with a gazetteer internal point)\\
+distinct representatives & $\chReps$\\
+node classes & $\chNContested$ contested / $\chNUncontested$ uncontested /
+                $\chNVacant$ vacant / $\chNUntapped$ untapped\\
 total market opportunity & ${\approx}\$\chTotalB$B\\
-footprint & west coast, east coast, Texas, Florida; \textbf{midwest uncovered}\\
-territory target & ${\sim}\$\chTargetB$B $\Rightarrow$ $k \approx \chKAtTarget$ (or $\chKPlusOne$ at ${\sim}\$\chSizeAtKPlusOne$M)\\
+footprint & \textbf{national}: west $\chShareW\%$, east $\chShareE\%$,
+            TX $\chShareTX\%$, FL $\chShareFL\%$, rest $\chShareRest\%$\\
+sold-zip Rook adjacency & $\chComponentsSold$ components; largest
+            $\chLargestCompShare\%$ of opportunity\\
+territory target & ${\sim}\$\chTargetB$B $\Rightarrow$ $k = \chKAtTarget$ at
+            $\$\chDistrictB$B each\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Three readings matter. First, \emph{scale sits at the frontier but not past it}: $\chZips$
-units against $\chKAtTarget$ districts is ${\approx}\chBinaries$ assignment binaries, the
-same order of magnitude as the ${\sim}1{,}500$ units \citet{validibuchanan2022} certify for
-political districting with lazily separated connectivity cuts, and an order of magnitude
-above the $135$ zips the programme's own single-tree solver currently certifies.
-Attemptable, not routine.
+\paragraph{What the export changed.}
+The instance above is the descaled real export of 2026-09-01. It corrected the 2026-08-31
+sizing on three points, and the third is the one that changed the algorithm.
+\emph{(i)~Size.} The earlier count of $2{,}232$ sold zips was a double-count in the source
+pull; the real figure is $\chZips$. \emph{(ii)~Scale and headcount.} Total opportunity is
+${\approx}\$\chTotalB$B, not $\$\chOldTotalB$B, and there are $\chReps$ representatives, not
+$72$; at a $\$\chTargetB$B target that moves $k$ from $\chOldK$ to $\chKAtTarget$.
+\emph{(iii)~Geography.} The footprint is \emph{national}. The premise that the channel
+covered the two coasts, Texas and Florida with the midwest uncovered was empirically false:
+$\chShareRest\%$ of opportunity sits outside those four regions. There are no four islands,
+and Section~\ref{sec:ceiling}'s component-allocation planning ceiling has nothing to
+allocate over.
 
-Second --- and this is the useful one --- \emph{the footprint is disconnected}. No
-contiguous territory spans California and Florida, so the adjacency graph has at least
-$\chComponents$ major components and the problem \emph{separates}: give each component an
-integer district count, then solve each independently at ${\sim}500$ zips rather than
-$\chZips$ at once. Failure mechanism~(a) of the two-player programme --- pre-existing graph
-disconnection, the thing that made the legacy cut loop's dual bound unsound --- arrives
-here as the structure that makes the problem tractable. It also imposes a hard limit on
-achievable balance, which Section~\ref{sec:ceiling} makes precise.
+Three readings of the table matter.
 
-Third, $\chRealReps$ representatives against ${\approx}\chKAtTarget$ territories is a
-$\chRepRatio{:}1$ ratio. The reading that makes sense of it is that the channel is a
-\emph{specialist carve-out} staffed by a handful of senior wholesalers while the remaining
-representatives keep covering the other manufacturers in the existing channel; the
-unmatched representatives of Section~\ref{sec:stages} are therefore \emph{not selected for
-this channel}, not released. If that reading is wrong, stage~2's framing needs revisiting.
+First, \emph{scale sits at the frontier}: $\chZips$ units against $\chKAtTarget$ districts is
+${\approx}\chBinaries$ assignment binaries. The unit count is of the same order as the
+${\sim}1{,}500$ units \citet{validibuchanan2022} certify for political districting with
+lazily separated connectivity cuts, and an order of magnitude above the $135$ zips the
+programme's own single-tree solver certifies on the two-player problem --- but at
+$k=\chKAtTarget$ districts rather than two, which is where the binaries come from.
+
+Second --- and this is the decisive one --- \emph{adjacency contiguity is not a usable
+constraint on this footprint}. The channel sells in $\chZips$ zips scattered across the
+country, so the Rook adjacency graph \emph{restricted to sold zips} has
+$\chComponentsSold$ components: the largest holds $\chLargestCompShare\%$ of opportunity and
+$\chCrumbShare\%$ of opportunity sits in components holding under $1\%$ each. A contiguous
+$k$-partition of that graph does not exist for any $k$ below several hundred, and at
+$k=\chKAtTarget$ the constraint is not binding-but-hard, it is \emph{infeasible}. Restoring
+contiguity would mean re-exporting the unsold ``glue'' zips --- most of the country --- and
+districting an object the channel does not sell in. The decision (2026-09-01) is therefore
+to drop adjacency and keep the geometric requirement that contiguity was standing in for:
+\textbf{compactness}. Stage~1 becomes center-based balanced assignment on planar equal-area
+coordinates (Section~\ref{sec:centers}); the contiguity formulation is retained, demoted, in
+Section~\ref{sec:formulation}.
+
+Third, granularity is benign. The largest single zip carries $\chMaxZipShare\%$ of total
+opportunity, about $\chMaxZipOfDistrict\%$ of one $k=\chKAtTarget$ district, so
+near-perfect balance is not obstructed by indivisibility --- a claim Section~\ref{sec:certs}
+turns into a certificate rather than leaving as an intuition.
+
+A fourth reading is a business question rather than a mathematical one: $\chReps$
+representatives against $\chKAtTarget$ territories is a $\chRepRatio{:}1$ ratio. The reading
+that makes sense of it is that the channel is a \emph{specialist carve-out} staffed by a
+handful of senior wholesalers while the remaining representatives keep covering the other
+manufacturers in the existing channel; the unmatched representatives of
+Section~\ref{sec:stages} are therefore \emph{not selected for this channel}, not released.
+If that reading is wrong, stage~2's framing needs revisiting.
 
 \section{The utility model with \texorpdfstring{$n$}{n} representatives}\label{sec:model}
 
@@ -141,8 +179,8 @@ The inheriting representative keeps $c_1$ of their own book, captures $c_2$ of e
 else's, capitalises unowned book at a rate $\cfree$ decided separately, and is credited
 $\lambda$ of the whole opportunity. Note that $T_z$ in \eqref{eq:Tz} runs over named
 representatives only; $\Sfree$ enters \eqref{eq:util} through its own term.\footnote{The
-implementation follows this exactly (\texttt{nway.utilities}). Its headroom validator
-\texttt{nway.headroom\_violations} is deliberately \emph{more} conservative: it folds
+implementation follows this exactly (\texttt{model.utilities}). Its headroom validator
+\texttt{model.headroom\_violations} is deliberately \emph{more} conservative: it folds
 $\Sfree$ into $T_z$ and treats the filler as a possible holder, so a zip whose orphaned
 book alone exceeds its opportunity is still flagged.}
 
@@ -160,7 +198,7 @@ The criterion is maximum Nash welfare (MNW), the Nash bargaining solution
 \citep{nash1950} at $d=0$, equivalently the Eisenberg--Gale objective
 \citep{eisenberg1959}:
 \begin{equation}\label{eq:mnw}
-\max_{\owner}\;\sum_i \log g_i \qquad\text{subject to per-representative contiguity.}
+\max_{\owner}\;\sum_i \log g_i \qquad\text{subject to the geometric constraint.}
 \end{equation}
 Nothing in the outer-approximation argument that makes \eqref{eq:mnw} exactly solvable was
 ever two-player: $\log$ is concave, $g_i$ is linear in the assignment, so this remains a
@@ -190,7 +228,7 @@ $\max(A_z+\theta B_z,\,B_z+\theta A_z)$.
 This is not a formality. It is what keeps the entire committed corpus of two-player
 results --- the paper's worked 50-zip instance, the C1--C9 battery, every certified
 harness row --- interpretable under the new model, and it is asserted numerically rather
-than argued: \texttt{test\_nway.py::test\_two\_rep\_reduction} requires every $n$-way
+than argued: \texttt{test\_model.py::test\_two\_rep\_reduction} requires every $n$-way
 primitive to agree with the frozen two-player \texttt{base.py} to floating-point equality
 on a two-representative instance.
 
@@ -207,21 +245,27 @@ The schema separates the two roles, which is what makes the exclusion cheap: $T_
 computed from \emph{all} books, but the assignment ranges over \emph{candidates} only,
 and candidacy is $\mathrm{cand}(z)=\{i: S_i(z)>0\}$ with filler keys removed. Orphaned
 production therefore arrives as its own attribute $\Sfree$ and is capitalised by whoever
-inherits the zip. Four node classes result:
+inherits the zip. Four node classes result, with the export's counts:
 
 \begin{center}
 \small
-\begin{tabular}{llll}
+\begin{tabular}{lllr}
 \toprule
-class & $|\mathrm{cand}(z)|$ & book & meaning\\
+class & $|\mathrm{cand}(z)|$ & book & count\\
 \midrule
-contested & $\ge 2$ & real & the decision problem\\
-uncontested & $1$ & real & owner forced; no binary, but carries utility and adjacency\\
-vacant & $0$ & filler only & real book, no incumbent --- nobody can claim it by legacy\\
-untapped & $0$ & none & opportunity with no book at all\\
+contested & $\ge 2$ & real & $\chNContested$\\
+uncontested & $1$ & real & $\chNUncontested$\\
+vacant & $0$ & filler only & $\chNVacant$\\
+untapped & $0$ & none & $\chNUntapped$\\
 \bottomrule
 \end{tabular}
 \end{center}
+
+Contested zips are the decision problem; an uncontested zip's owner is forced under a
+legacy rule but it still carries utility; a vacant zip has real book and no incumbent, so
+nobody can claim it by legacy; an untapped zip is opportunity with no book at all. Under
+the two-stage scheme none of the four is dropped --- stage~1 partitions on $M_z$ alone, so
+every zip lands in a district by construction, and candidacy re-enters only at stage~2.
 
 \paragraph{Choosing $\cfree$.}
 Three coefficients are defensible, and they give materially different maps, so the
@@ -236,7 +280,8 @@ relationships away with them, and a vacancy has nobody left to pull --- whatever
 survived an already-departed representative has, by definition, survived the departure, so
 discounting it again double-counts an attrition that has already happened. The current
 default is \texttt{theta}, only because it is the no-change case. It is probably not the
-right answer.
+right answer. At $\chNVacant$ vacant zips out of $\chZips$ the choice cannot move this
+instance's map; it is recorded because the model outlives the instance.
 
 \section{Scale invariance, and what it licenses}\label{sec:scale}
 
@@ -272,9 +317,10 @@ $\kappa\mathcal I$.
 (1) Each of the four terms of \eqref{eq:util} is homogeneous of degree one in the dollar
 fields, so $u_i$ is; $g_i$ is a sum of such terms over a fixed set, hence also. (2) Take
 logarithms: $\log(\kappa g_i)=\log g_i+\log\kappa$, and sum over the $n$ representatives.
-(3) The perimeter $P(\owner)$ is a count of boundary edges and does not involve the
-dollar fields at all, so the full objective shifts by the constant $n\log\kappa$; adding a
-constant changes neither the argmax nor any difference of objective values.
+(3) The penalty $P(\owner)$ --- a perimeter count, or the moment of inertia of
+Section~\ref{sec:centers} once its own weights are descaled --- does not involve the dollar
+fields, so the full objective shifts by the constant $n\log\kappa$; adding a constant
+changes neither the argmax nor any difference of objective values.
 (4) Both sides of \eqref{eq:headroom} are homogeneous of degree one.
 \end{proof}
 
@@ -286,12 +332,14 @@ $M=m_{\mathrm{rel}}$, i.e.\ exactly $\mathcal I/\kappa$ up to six-significant-fi
 rounding, so by Proposition~\ref{prop:scale} it has the \emph{same} optimal allocations,
 gaps and certificates as the real instance. Removing the scale drops a constant the solver
 never reads. That is strictly better than the synthetic twin it supersedes: real ZCTAs,
-real adjacency, real territory structure, real share patterns, and no rank-jitter or
-fidelity-audit apparatus at all.
+real coordinates, real territory structure, real share patterns, and no rank-jitter or
+fidelity-audit apparatus at all. Every district mass quoted in Section~\ref{sec:run} is in
+descaled units for this reason; only ratios, spreads and nats are reported, and all three
+are scale-free.
 
 \begin{remark}[What \emph{is} scale-dependent]\label{rem:rho}
 Part~(3) of Proposition~\ref{prop:scale} holds for every $\rho\ge0$, including $\rho>0$.
-This corrects a claim recorded in \texttt{NWAY.md}~\S5b, that a positive compactness
+This corrects a claim recorded earlier in the programme, that a positive compactness
 weight ``mixes a log-scale term with a raw perimeter count and is therefore
 scale-dependent''. For the Nash objective it is not: the log-sum's response to a rescale is
 a constant, which cancels in every comparison. Three genuinely scale-dependent things
@@ -303,12 +351,12 @@ $\kappa$ multiplies one term and not the other, so that objective's argmax reall
 $\rho=2\times10^{-3}$ knee prices one boundary edge against a fixed number of nats on a
 particular family of synthetic instances, and nats per edge depends on $n$ and on the value
 distribution, neither of which survives the move to this footprint. Any $\rho$ carried over
-must be re-derived, as must the units of the travel-cost weight explored separately.
-($\rho=0$ is the model; contiguity is a hard constraint.) \emph{(iii)~Solver tolerances are
-absolute:} a feasibility tolerance of $10^{-9}$ is stated in gain units and gains scale with
-$\kappa$, whereas the certificate tolerance of $10^{-8}$ nats does not. Normalising $M$ by
-its median keeps gains at order $n$ rather than order $10^9$, which is the numerically
-favourable end of that trade and an additional reason to descale.
+must be re-derived. \emph{(iii)~Solver tolerances are absolute:} a feasibility tolerance of
+$10^{-9}$ is stated in gain units and gains scale with $\kappa$, whereas the certificate
+tolerance of $10^{-8}$ nats does not. This is why both stage-1 programmes descale their mass
+rows and their cost coefficients before calling HiGHS: scaling a constraint row together
+with its right-hand side leaves the feasible set identical, and scaling the objective by a
+positive constant leaves the argmin identical, so only the arithmetic changes.
 \end{remark}
 
 One further caveat: the heavy-tail calibration of the synthetic generator (double
@@ -323,7 +371,7 @@ two territories were different things; the Nash criterion was chosen for its axi
 its efficiency, and balance was a by-product. On a \emph{common measure} they coincide
 exactly.
 
-Let $G=(Z,E)$ be the footprint graph with $M_z>0$, and let
+Let $Z$ be the footprint with $M_z>0$, and let
 $\mathcal A=(A_1,\dots,A_k)$ be a partition of $Z$ into $k$ districts, with masses
 \[
 M_j \;=\; \sum_{z\in A_j} M_z .
@@ -362,11 +410,11 @@ equality case identifies exactly the equal partitions.
 So the Nash objective \emph{is} the balance objective on a common measure. It is not an
 approximation of it, and it is not a proxy: the argmax is the same. That is the whole
 justification for treating $\$\chTargetB$B as an emergent target rather than a hard band ---
-set $k=\lceil$total opportunity$/\$\chTargetB$B$\rceil$ and balance falls out of the
-criterion the project already uses for fairness.
+set $k=\lceil$total opportunity$/\$\chTargetB$B$\rceil=\chKAtTarget$ and balance falls out
+of the criterion the project already uses for fairness.
 
 Two refinements make the statement useful when perfect equality is unattainable, which on
-a real graph it always is.
+a real instance it always is.
 
 \begin{cor}[Strict Schur-concavity: the objective always prefers the flatter vector]
 \label{cor:schur}
@@ -385,7 +433,7 @@ at $m_i=m_j$; strictness of the inequality off the diagonal gives strict Schur-c
 \end{proof}
 
 Corollary~\ref{cor:schur} is what makes \eqref{eq:mnw} a usable objective on a constrained
-feasible set: among contiguous partitions the criterion orders any two comparable mass
+feasible set: among admissible partitions the criterion orders any two comparable mass
 vectors by evenness, so the solver's search is a search for balance even when the perfectly
 balanced vector is not attainable.
 
@@ -406,8 +454,7 @@ $(7.3226,\,7.0699)$, and is \emph{Pareto-dominated} by Nash's $(7.3715,\,7.2318)
 parties strictly prefer the Nash allocation to the ``perfectly fair'' one.
 Proposition~\ref{prop:equal} gives the balance without the pathology, because a strictly
 concave increasing objective stays on the Pareto frontier by construction. A hard band
-$\$\chTargetB\text{B}\pm\epsilon$ would import the pathology back as an infeasibility
-risk, and Section~\ref{sec:ceiling} shows it may be unattainable anyway.
+$\$\chTargetB\text{B}\pm\epsilon$ would import the pathology back as an infeasibility risk.
 
 \section{The welfare decomposition}\label{sec:decomp}
 
@@ -481,8 +528,8 @@ by opportunity with a modest continuity tilt; at $30\%$ it would not be.
 \toprule
 stage & problem & status\\
 \midrule
-1 --- draw & $k$ balanced contiguous districts on opportunity alone & the hard part\\
-2 --- match & assign retained representatives to districts & built; exact\\
+1 --- draw & $k$ balanced compact districts on opportunity alone & heuristic, certified\\
+2 --- match & assign representatives to districts & exact\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -529,7 +576,7 @@ picks the swap. A staffing that hands a senior wholesaler a territory containing
 none of their book is exactly the failure mode the channel cannot afford.
 \end{example}
 
-\subsection{The cost of splitting, and the portfolio mitigation}
+\subsection{The cost of splitting, and the portfolio mitigation}\label{sec:portfolio}
 
 Stage~1 cannot see relationships, so a good staffing may simply not be available on the map
 it draws. This is the same objection the programme raises to ``decouple fairness from
@@ -539,21 +586,324 @@ sequential one --- it is attained by first-stage maps that a balance-only stage~
 reason to prefer among its own optima.
 
 The mitigation is cheap precisely because stage~2 is milliseconds: generate a
-\emph{portfolio} of stage-1 draws --- near-optimal balanced maps, which a branch-and-cut
-solver produces as a by-product of its incumbent sequence, or which a recombination-style
-sampler produces directly \citep{deford2021} --- score each by its best staffing value, and
-keep the best pair. This is not the joint optimum and should not be reported as one; it is
-a cheap lower bound on it, and the spread between the best and worst draw in the portfolio
-diagnoses how much the split is costing.
+\emph{portfolio} of stage-1 draws --- here one per random seed, elsewhere the incumbent
+sequence of a branch-and-cut solver or a recombination-style sampler
+\citep{deford2021} --- score each by its best staffing value, and keep the best pair. This
+is not the joint optimum and should not be reported as one; it is a cheap lower bound on
+it, and the spread between the best and worst draw in the portfolio diagnoses how much the
+split is costing. Section~\ref{sec:run} reports a run in which the portfolio changed the
+answer: the draw that staffed best was \emph{not} the stage-1-best draw.
 
 A pleasant side effect: stage~1 needs almost none of the confidential data --- only
-$(z,M_z)$ and the adjacency graph, with opportunity plausibly third-party market sizing ---
+$(z,M_z)$ and public coordinates, with opportunity plausibly third-party market sizing ---
 while stage~2 needs the books but not the geometry, and can therefore run entirely on the
-work machine given only the returned district map. The descaled export of
-Section~\ref{sec:scale} remains the right channel for anything that does need to travel,
-but this problem needs a fraction of it.
+work machine given only the returned district map.
 
-\section{Disconnection and the balance ceiling}\label{sec:ceiling}
+\section{Stage 1 as center-based balanced assignment}\label{sec:centers}
+
+Contiguity is unavailable on this footprint (Section~\ref{sec:setup}), and it was never the
+requirement --- it was a proxy for one. What a sales territory actually needs is that a
+representative can cover it: a tight cluster of zips around a place, not a connected subgraph
+of a lattice. So stage~1 optimises \emph{compactness} directly, in the centre-based
+formulation \citet{hess1971} introduced for exactly this problem and the districting
+literature has used since \citep{zoltners2005,riosmercado2009,duque2011}.
+
+\subsection{The programme}
+
+Let $x_z\in\mathbb R^2$ be zip $z$'s internal point in an equal-area planar projection, so
+that squared Euclidean distance is a real area-weighted moment and not a lat/lon
+approximation. With $k$ centers $c_1,\dots,c_k\in\mathbb R^2$ and binaries $y_{zj}=1$ iff
+zip $z$ joins district $j$:
+\begin{equation}\label{eq:centers}
+\begin{aligned}
+\min_{y}\;\; & \sum_{z\in Z}\sum_{j=1}^{k} M_z\,\lVert x_z-c_j\rVert^2\, y_{zj}\\
+\text{s.t.}\;\;
+& \sum_{j=1}^{k} y_{zj} = 1 && \forall z\in Z,\\
+& \sum_{z\in Z} M_z\,y_{zj} \;=\; \frac{M(Z)}{k}
+   && \forall j\in\{1,\dots,k\},\\
+& y_{zj}\in\{0,1\}.
+\end{aligned}
+\end{equation}
+The mass equalities are \emph{hard}, so any feasible point is exactly balanced and the
+objective only chooses among balanced maps; in the band form used in practice they are
+relaxed to $\lvert\sum_z M_z y_{zj} - M(Z)/k\rvert\le\delta$. By
+Proposition~\ref{prop:equal} this is the right division of labour: balance \emph{is} the
+Nash objective on a common measure, and compactness is the tie-break among its optima ---
+exactly the ordering \eqref{eq:split} derives. Centers are then updated Lloyd-style, each to
+the $M$-weighted centroid of its district, and \eqref{eq:centers} re-solved; the loop stops
+when the labels repeat.
+
+Two things are bought by the reformulation. The $k!$ label symmetry that would cripple
+branch-and-bound on an anonymous-district model is gone --- district $j$ is the one at
+$c_j$, so the labels are pinned by geography, which is why Hess's formulation is the
+standard remedy for it. And the constraint matrix of the relaxation is a network matrix,
+which is the content of the next lemma.
+
+\subsection{The transportation-relaxation lemma}
+
+\begin{lem}[Fixed centers: the relaxation is a transportation problem]\label{lem:transport}
+Fix the centers and relax $y_{zj}\in\{0,1\}$ to $y_{zj}\ge0$ in \eqref{eq:centers}. Then:
+\begin{enumerate}
+\item the substitution $\eta_{zj}=M_z\,y_{zj}$ turns the constraints into a Hitchcock
+transportation problem with supplies $M_z$, demands $M(Z)/k$ and no upper bounds --- the
+bounds $y_{zj}\le1$ are implied;
+\item the relaxation is feasible, and every basic solution has acyclic support, hence at
+most $n+k-1$ positive entries, where $n=\lvert Z\rvert$;
+\item consequently at most $k-1$ zips are \emph{split}, i.e.\ have $y_{zj}>0$ for two or
+more $j$. Every other zip is assigned integrally by the relaxation itself.
+\end{enumerate}
+\end{lem}
+
+\begin{proof}
+(1) Substituting $\eta_{zj}=M_z y_{zj}$ ($M_z>0$) sends $\sum_j y_{zj}=1$ to
+$\sum_j\eta_{zj}=M_z$ and $\sum_z M_z y_{zj}=M(Z)/k$ to $\sum_z\eta_{zj}=M(Z)/k$; supplies
+and demands both total $M(Z)$, so the problem is a balanced transportation problem, and
+$\eta_{zj}\ge0$ with $\sum_j \eta_{zj}=M_z$ forces $\eta_{zj}\le M_z$, i.e.\ $y_{zj}\le1$.
+(2) $\eta_{zj}=M_z/k$ is feasible, so the feasible set is nonempty; it is bounded, so a
+basic optimal solution exists. The constraint matrix is the node--arc incidence matrix of
+the complete bipartite network on the $n$ supply nodes and $k$ demand nodes, and a set of
+its columns is linearly independent iff the corresponding edge set contains no cycle;
+hence the support of a basic solution is a forest on $n+k$ nodes and has at most $n+k-1$
+edges.
+(3) Let $F$ be the number of split zips. Every zip node has degree at least one in the
+support, since $M_z>0$ must be shipped somewhere, and a split zip has degree at least two.
+Counting edges, $n+F\le\#\text{edges}\le n+k-1$, so $F\le k-1$.
+\end{proof}
+
+\begin{cor}[Rounding damage is confined to $k-1$ zips]\label{cor:rounding}
+Rounding a basic optimum by giving each split zip to the district holding its largest share
+changes at most $k-1$ of the $n$ assignments; every other zip keeps the district the exactly
+balanced relaxation gave it, and no district's mass moves by more than the total mass of the
+split zips, at most $(k-1)\max_z M_z$.
+\end{cor}
+
+\begin{proof}
+Immediate from Lemma~\ref{lem:transport}(3): the rounded solution differs from the basic
+optimum only on split zips, and the basic optimum's masses are exactly $M(Z)/k$, so each
+district's mass changes by at most the mass it gains or loses from those $F\le k-1$ zips.
+\end{proof}
+
+The crude bound $(k-1)\max_z M_z$ is not the operative fact --- $\max_z M_z$ is
+$\chMaxZipShare\%$ of $M(Z)$ here, so the bound is weak. What matters is the \emph{count}:
+at $k=\chKAtTarget$ over $\chZipsGeo$ zips, rounding touches at most $\chKminusOne$ zips,
+under $1\%$ of the map, and the real run hit that bound exactly ($\chNFractional$ split zips
+in the winning draw's final LP). A greedy repair pass then recovers what the rounding cost.
+That is why a heuristic can land within $\chCeilGap$ nats of a bound that holds for every
+partition (Section~\ref{sec:run}): the only unbalanced part of the answer is $k-1$ zips
+wide.
+
+\subsection{The rest of the pipeline}
+
+Three components surround \eqref{eq:centers}, and each is a heuristic that
+Section~\ref{sec:certs} then measures rather than trusts.
+
+\emph{Seeding.} $M$-weighted \mbox{$k$-means}$++$: the first center is a zip drawn with
+probability proportional to $M_z$, each further center with probability proportional to
+$M_z\,d^2(z,\text{nearest chosen center})$. Weighting by $M$ rather than by zip count is the
+right prior when districts are equal in \emph{mass}: a dense but light region should not
+attract centers the way its zip count would suggest.
+
+\emph{The Lloyd loop.} Assign by \eqref{eq:centers}, move each center to its district's
+$M$-weighted centroid, repeat. Unlike plain $k$-means there is no drift to a lopsided fixed
+point, because every round's assignment is exactly balanced before rounding; the rounds buy
+compactness only.
+
+\emph{The polish.} A greedy pass over single-zip moves that strictly increase
+$\sum_j\log M_j$, restricted to destinations among the $3$ nearest centers --- the
+compactness guard, without which a Nash-greedy move would send a California zip to a Florida
+district for an epsilon of balance. Ties in the objective are broken by the more compact
+destination, and a district is never emptied (that would send the objective to $-\infty$).
+
+\emph{Zips with no coordinates.} Six of the $\chZips$ zips carry no gazetteer internal point
+(retired or non-ZCTA codes) and so are absent from the geometry. They are placed afterwards
+by a state-plurality rule: each goes to the district holding the plurality of already-placed
+zips from its own state, with ties and unknown states broken toward the district of smallest
+total mass, one zip at a time with counts and masses updated after each placement.
+
+\section{Certifying a draw}\label{sec:certs}
+
+Nothing in Section~\ref{sec:centers} proves anything: the seeding is random, the rounding of
+the $k-1$ split zips is arbitrary, and the polish is a local search. Three post-hoc
+certificates say how far from optimal a drawn map actually is --- and, as importantly, which
+questions they leave open. They are implemented in \texttt{td/solvers/cert\_draw.py} and
+exercised against brute force at small $k$ in \texttt{tests/test\_cert\_draw.py}.
+
+\subsection{(i) The balance ceiling: analytic, and valid for every partition}
+
+\begin{prop}[Balance ceiling at fixed $k$]\label{prop:ceilk}
+Let $Z$ be any finite set with $M_z>0$ and let $A_1,\dots,A_k$ be any partition of it into
+$k$ parts of positive mass. Then
+\[
+\sum_{j=1}^k \log M_j \;\le\; k\log\frac{M(Z)}{k},
+\]
+with equality iff every $M_j=M(Z)/k$. The gap
+$\Delta=k\log(M(Z)/k)-\sum_j\log M_j\ \ge 0$ is invariant under a global rescaling
+$M\mapsto\kappa M$, and $1-e^{-\Delta}$ is the equivalent proportional shortfall in the Nash
+\emph{product}.
+\end{prop}
+
+\begin{proof}
+The inequality is Proposition~\ref{prop:equal} with no structural constraint imposed, i.e.\
+the case $C=1$ of the component bound of Section~\ref{sec:ceiling}: the total $M(Z)$ is
+partition-invariant, and $\sum_j\log m_j$ is maximised over $\{m>0:\sum_j m_j=M(Z)\}$
+uniquely at $m_j=M(Z)/k$. For invariance, rescaling sends $\sum_j\log M_j$ to
+$\sum_j\log M_j+k\log\kappa$ and $k\log(M(Z)/k)$ to $k\log(M(Z)/k)+k\log\kappa$, so $\Delta$
+is unchanged; the last claim is the definition of $\Delta$ as a log-ratio of products.
+\end{proof}
+
+This is a free dual bound: it needs $M(Z)$ and $k$ and nothing else --- no geometry, no
+contiguity, no solver --- and it holds for \emph{every} partition of these zips into $k$
+districts, so a draw's gap to it is an unconditional statement about how much balance was
+left on the table. What it does not say is whether the ceiling is reachable. Zips are
+indivisible, so in general it is not, which is the next certificate's subject.
+
+\subsection{(ii) The integer balance floor: an honest bound pair}
+
+Write $\tau=M(Z)/k$ for the target. The best balance indivisible zips permit, with geometry
+ignored entirely, is the optimum $t^\ast$ of
+\begin{equation}\label{eq:floor}
+\begin{aligned}
+\min_{x,t}\;\; & t\\
+\text{s.t.}\;\;
+& \sum_{j} x_{zj}=1 && \forall z\in Z,\\
+& \Bigl\lvert\sum_z M_z x_{zj}-\tau\Bigr\rvert \le t && \forall j,\\
+& x_{zj}\in\{0,1\},\quad t\ge0 .
+\end{aligned}
+\end{equation}
+Every real draw's max-deviation is at least $t^\ast$, so $t^\ast$ separates the heuristic's
+loss from the arithmetic's: it says how much of the gap to Proposition~\ref{prop:ceilk}'s
+ceiling was ever available. The trouble is that \eqref{eq:floor} is a
+multiway-number-partitioning problem, and its relaxation is worthless.
+
+\begin{prop}[The relaxation of \eqref{eq:floor} is vacuous]\label{prop:vacuous}
+The linear relaxation of \eqref{eq:floor}, replacing $x_{zj}\in\{0,1\}$ by $x_{zj}\ge0$, has
+optimal value $0$ for every instance and every $k\ge1$.
+\end{prop}
+
+\begin{proof}
+Take $x_{zj}=1/k$ for all $z,j$. The placement rows hold, and
+$\sum_z M_z x_{zj}=M(Z)/k=\tau$ for every $j$, so $t=0$ is feasible; $t\ge0$ is imposed, so
+$0$ is optimal.
+\end{proof}
+
+The root bound therefore carries no information, and every nat of the dual side must be
+earned in the tree --- against the full $k!$ label symmetry, which is what branch-and-bound
+cannot prune. Two valid symmetry breaks help and do not fix it: fix the heaviest zip into
+district~$0$ (a relabelling, so it costs nothing), and force districts $1,\dots,k-1$ to
+non-increasing mass (valid because after fixing that one zip those labels remain freely
+permutable).
+
+So the certificate is a \textbf{pair}, and it is reported as one. The lower bound is $0$ from
+Proposition~\ref{prop:vacuous} --- or whatever the solver has earned above it within its time
+limit. The upper bound is \emph{constructive}: any partition anyone exhibits is an upper
+bound on $t^\ast$, needing no proof beyond arithmetic, so one is built directly by
+longest-processing-time greedy (heaviest zip first, into the lightest district) followed by a
+steepest single-move/single-swap descent on the max-deviation. Both take a fraction of a
+second, the partition is returned with the certificate, and its masses are recomputed from
+it. The primal half is the operative one for judging a draw: it is what says whether the
+draw's imbalance is arithmetic or geometry.
+
+\subsection{(iii) The pinned-centers assignment MILP}
+
+The third certificate asks the geometric question with the draw's own centers held fixed:
+minimise $\sum_{z,j} M_z\lVert x_z-c_j\rVert^2 y_{zj}$ subject to
+$\sum_j y_{zj}=1$, $\lvert\sum_z M_z y_{zj}-\tau\rvert\le\delta$ and $y$ binary, with
+$\delta$ defaulting to the draw's own max-deviation so that the draw is feasible for its own
+test. Pinning the centers removes the label symmetry entirely, and what remains is the
+transportation problem of Lemma~\ref{lem:transport} with two side rows per district --- so
+the relaxation is nearly integral, the root bound is tight, and a real certificate
+($\texttt{mip\_rel\_gap}=0$, trap~12) closes in minutes at production size.
+
+\begin{remark}[What (iii) does not certify]\label{rem:notcert}
+The centers are the heuristic's. Certificate~(iii) proves the \emph{assignment} is optimal
+\emph{given} them, in exactly the sense a $k$-means assignment step is optimal given its
+centroids; it says nothing about whether those $k$ points are the right ones, and the joint
+problem over centers \emph{and} assignment is untouched by anything here. Nor does it
+certify the stage-1 objective: the constraint is a max-deviation band, not
+$\sum_j\log M_j$, so a strictly more compact assignment inside the band may have slightly
+\emph{lower} Nash value. Both values are returned so the trade is visible rather than
+implied.
+\end{remark}
+
+\subsection{The real run}\label{sec:run}
+
+Numbers below are from run \texttt{battery/results/draw\_k13\_20260901} (the portfolio) and
+the certification run of 2026-09-01 (the three certificates on that portfolio's winner),
+both on the descaled export at $k=\chKAtTarget$ over the $\chZipsGeo$ zips carrying
+coordinates. Masses are in descaled units; every quoted spread, ratio and nat is scale-free
+by Proposition~\ref{prop:scale}.
+
+\paragraph{The portfolio did its job.}
+Five seeds were drawn and scored by stage~2. The winner is seed~$\chWinnerSeed$, at a
+staffing value of $\chStageTwoWin$ nats, and it is \emph{not} the stage-1-best draw: its
+stage-1 Nash value is $\chNashWin$ against the best draw's $\chNashBest$, a stage-1 shortfall
+of $\chNashLoss$ nats bought for $\chStageTwoSpread$ nats of staffing value. That is the
+split-stage mitigation of Section~\ref{sec:portfolio} working exactly as designed --- and a
+reminder that stage-1 optimality is not the quantity of interest.
+
+\paragraph{The draw.}
+The winner's $\chKAtTarget$ districts span $\chSpreadWin\%$ of the target (max-deviation
+$\chMaxDevWin\%$); after the $\chNoGeo$ coordinate-less zips are placed by the
+state-plurality rule the spread is $\chSpreadCompleted\%$. Its final transportation LP split
+exactly $\chNFractional=k-1$ zips, the bound of Lemma~\ref{lem:transport}(3).
+
+\paragraph{The certificates.}
+\begin{itemize}
+\item \textbf{Ceiling (proved, analytic).} The draw scores $\chNashWin$ nats against a
+ceiling of $\chCeilingWin$: a gap of $\chCeilGap$ nats, or $\chCeilGapPct\%$ of the Nash
+product. \emph{Proved:} no partition of these zips into $\chKAtTarget$ districts scores
+above the ceiling, whatever its geometry. \emph{Not proved:} that the ceiling is reachable.
+\item \textbf{Integer balance floor (bound pair).} $t^\ast\in[0,\ \chFloorUpper]$ as a
+fraction of target. The upper end is constructive --- an explicit partition from the greedy
+plus polish --- and the lower end is Proposition~\ref{prop:vacuous}'s vacuous zero: with
+$t$ capped at the constructed value the MILP explored $\chFloorNodes$ nodes in
+$\chFloorSeconds$\,s and returned no incumbent, and uncapped its own best after
+$\chFloorSeconds$\,s was a max-deviation of $\chFloorIncumbentPct\%$, worse than the
+geometric draw it was meant to bound. The reading does not depend on closing that gap: the
+draw sits at $\chMaxDevWin\%$, about $\chFloorRatio$ times a \emph{demonstrably reachable}
+balance, so \textbf{the draw's residual imbalance is the price of geometry, not of
+indivisibility}.
+\item \textbf{Pinned-centers assignment (proved).} In $\chPinSeconds$\,s and
+$\chPinNodes$ nodes, with the gap closed to zero, the MILP proved that an assignment
+$\chPinGain\%$ more compact than the draw exists at the same balance band, relabelling
+$\chPinRelabelled$ zips at a cost of $\chPinNash$ nats of stage-1 Nash. It has \emph{not}
+been adopted: which of balance and compactness is the tie-break for the other is a decision,
+not a solver setting, and it is recorded as an open question in
+Section~\ref{sec:open}. Per Remark~\ref{rem:notcert} this says nothing about the centers.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{draw_k13.png}
+\caption{The $k=\chKAtTarget$ draw of \texttt{draw\_k13\_20260901} and what the certificates
+say about it. \emph{Left:} each district's deviation from the $\$\chDistrictB$B target;
+the dashed lines are the realised max-deviation of $\chMaxDevWin\%$.
+\emph{Right, log scale:} the same max-deviation against the two reference points of
+certificate~(ii) --- a constructed partition proving $\chFloorUpperPct\%$ is reachable when
+geometry is ignored, and the geometry-free MILP's own $\chFloorSeconds$\,s incumbent. The
+draw sits three orders of magnitude above the reachable floor and an order of magnitude
+below the MILP's incumbent: its imbalance is bought by compactness, not forced by
+indivisible zips.}
+\label{fig:draw}
+\end{figure}
+
+\section{The balance ceiling under a disconnected footprint
+(superseded as a planning tool)}\label{sec:ceiling}
+
+\emph{Why this section is demoted.} It was written when the footprint was believed to be four
+disconnected regions --- two coasts, Texas, Florida --- and its purpose was to decide $k$
+before any solver ran, from four regional totals. The export refuted the premise: the
+footprint is national (Section~\ref{sec:setup}), and under center-based stage~1 the map is
+one connected canvas, so there are no components to allocate districts across. The
+propositions below are unaffected --- they are statements about partitions of a disconnected
+set, and Proposition~\ref{prop:ceiling} at $C=1$ is exactly certificate~(i) of
+Section~\ref{sec:certs}. What is withdrawn is the \emph{illustrative table} that followed
+them: computed on a $\$\chOldTotalB$B total across four components, it reported ceiling
+spreads from $\chOldSpreadLo\%$ to $\chOldSpreadHi\%$ at $k=\chOldK$ and concluded that
+$\$\chTargetB$B${}\pm10\%$ was probably geometrically unreachable. Both inputs were wrong,
+and the real answer runs the other way: the drawn map holds every district within
+$\chMaxDevWin\%$ of target. The section is kept because the argument becomes live again the
+moment a genuinely disconnected sub-problem appears --- a single-state carve-out, say.
 
 \subsection{The bound}
 
@@ -583,12 +933,10 @@ budgets. If $k<C$ then some component receives no district and is uncovered, so 
 partition exists.
 \end{proof}
 
-Two things make \eqref{eq:ceiling} valuable out of proportion to its difficulty. It is a
-\emph{dual bound available before any solver runs} --- it needs the component masses and
-nothing else, so four numbers suffice --- and it is \emph{tight in the right way}: it
-assumes a perfect split inside each component, so any shortfall it reports is geometric and
-no algorithm can recover it. The implementation (\texttt{channel.allocate\_districts})
-enumerates budgets directly, and
+At $C=1$ the maximisation is vacuous and \eqref{eq:ceiling} reads
+$\sum_j\log M_j\le k\log(M(Z)/k)$ --- Proposition~\ref{prop:ceilk}, the certificate actually
+used. The implementation (\texttt{channel.allocate\_districts}) enumerates budgets
+directly, and
 \texttt{test\_ceiling\_\allowbreak is\_an\_\allowbreak upper\_bound\_\allowbreak on\_any\_\allowbreak real\_partition}
 checks the inequality against brute force on every contiguous three-way cut of a path.
 
@@ -602,9 +950,6 @@ algorithm.
 \begin{proof}
 The districts inside $K_c$ partition it, so the smallest has mass at most $M_c/k_c\le M_c$.
 \end{proof}
-
-Because the reported \emph{spread} matters commercially as much as the objective, one more
-statement is worth making precisely, since it is weaker than the objective bound.
 
 \begin{prop}[Spread floor]\label{prop:spread}
 Fix a district budget $(k_c)$. Every contiguous partition realising it has
@@ -627,72 +972,31 @@ follows by minimising over the finitely many budgets.
 
 \begin{remark}[The two optima need not coincide]\label{rem:budget}
 The budget maximising the objective \eqref{eq:ceiling} is not always the budget minimising
-the ceiling spread, so the two bounds are reported from different budgets. In the table
-below this happens in exactly one cell: at $k=\chKAtTarget$ the \chEastLabel{} split's
-objective-optimal budget $\chEastkSixAlloc$ has ceiling spread $\chEastkSix\%$, while the
-budget $\chEastkSixMinAlloc$ has ceiling spread $\chEastkSixMinSpread\%$ at a lower
-objective. Both are valid bounds of their respective kinds; neither dominates.
+the ceiling spread, so the two bounds must be reported from different budgets and never
+quoted interchangeably. In the withdrawn illustrative table this happened in exactly one
+cell: the east-heavy split's objective-optimal budget gave a ceiling spread of
+$\chOldSpreadHi\%$ at $k=\chOldK$, while the spread-minimising budget reached
+$\chOldEastMinSpread\%$ at a lower objective. Both are valid bounds of their respective
+kinds; neither dominates. \texttt{channel.allocate\_districts} returns both
+(\texttt{ceiling\_spread\_rel} and \texttt{min\_spread\_rel}, with
+\texttt{spread\_optima\_agree}).
 \end{remark}
 
-\subsection{What the ceiling says about this instance}
+\section{The contiguity formulation (superseded by the data)}\label{sec:formulation}
 
-The regional totals for the $\$\chTotalB$B footprint are the outstanding input --- four
-numbers, requiring no solver and no confidential per-zip data. Until they land, the table
-below is illustrative, using three plausible splits across the $\chComponents$ components
-(west coast / east coast / Texas / Florida, in $\$$B). Each cell is
-$100\times$ the ceiling spread $(\max-\min)/\text{mean}$ over districts at the
-objective-optimal budget, computed by \texttt{channel.allocate\_districts}.
+\emph{Why this section is demoted.} This was the stage-1 formulation until the export
+arrived. It fell for one empirical reason: the sold-zip Rook adjacency graph has
+$\chComponentsSold$ components, the largest holding $\chLargestCompShare\%$ of opportunity
+and $\chCrumbShare\%$ of opportunity sitting in components below $1\%$ each, so a contiguity
+constraint at $k=\chKAtTarget$ is not hard, it is infeasible --- and on any graph where it
+\emph{is} feasible over sold zips it is nearly vacuous, since almost every district would be
+a crumb. Contiguity was a proxy for coverability, and Section~\ref{sec:centers} optimises
+that requirement directly instead. The formulation is kept intact because its four notes are
+traps already paid for in the two-player programme, and any future contiguity variant --- a
+re-export including the unsold glue zips, a single-state carve-out, a county-level
+aggregation --- will meet all four again.
 
-\begin{center}
-\begin{tabular}{lccc}
-\toprule
-split ($\$$B: W / E / TX / FL) & $k=6$ & $k=7$ & $k=8$\\
-\midrule
-\chEvenLabel{} \;($\chEvenSplit$)   & \textbf{\chEvenkSix\%}  & \chEvenkSeven\%  & \chEvenkEight\%\\
-\chEastLabel{} \;($\chEastSplit$)   & \chEastkSix\%   & \chEastkSeven\%  & \textbf{\chEastkEight\%}\\
-\chCoastLabel{} \;($\chCoastSplit$) & \chCoastkSix\%  & \chCoastkSeven\% & \textbf{\chCoastkEight\%}\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Three conclusions, and the second is the one that changes a decision.
-
-\begin{enumerate}
-\item \textbf{$\$\chTargetB$B $\pm10\%$ is probably not reachable.} Even the friendliest
-split tops out at $\chEvenBestSpread\%$ ceiling spread, because a ${\sim}\$0.9$B region
-receives exactly one district (Corollary~\ref{cor:small}) and cannot be subdivided. Either
-the band becomes a target with a reported spread, or $k$ moves --- there is no third
-option, and no solver will find one.
-\item \textbf{The best $k$ depends on regional composition, and moves in opposite
-directions.} Under \chEvenLabel{} the ceiling is best at $k=\chEvenBestK$ and degrades as
-$k$ grows; under \chEastLabel{} and \chCoastLabel{} it is best at $k=\chEastBestK$ and
-\emph{worst} near $k=\chKAtTarget$--$\chKPlusOne$. So $k$ is a \emph{balance} decision
-informed by geography, not a headcount obtained by dividing $\$\chTotalB$B by
-$\$\chTargetB$B.
-\item \textbf{This is four numbers of work.} Regional opportunity totals answer both
-questions immediately, with no solver and no confidential per-zip data.
-\end{enumerate}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{ceiling.png}
-\caption{The balance ceiling of Proposition~\ref{prop:ceiling} on three illustrative
-splits of the $\$\chTotalB$B footprint across its $\chComponents$ components.
-\emph{Left:} ceiling spread against $k$; the dotted line marks the $k$ implied by a
-$\$\chTargetB$B target. The curves cross repeatedly --- there is no composition-free
-best $k$. \emph{Right:} the $\chKAtTarget$ ceiling district sizes under each split,
-sorted, against the $\$\chTargetB$B target. Under \chCoastLabel{} two districts are pinned
-below $\$0.6$B by components too small to divide, while the coastal districts sit at
-$\$\chCoastkSixMax$B; no contiguous draw can improve on this picture, only fall short of
-it.}
-\label{fig:ceiling}
-\end{figure}
-
-\section{Stage-1 formulation}\label{sec:formulation}
-
-Stage~1 is a balanced contiguous districting problem, the classical shape in the sales-
-and political-districting literatures \citep{hess1971,zoltners2005,riosmercado2009,duque2011}.
-Written in the $n$-way form the harness already carries, with $y_{z,i}=1$ iff zip $z$ is
+Written in the $n$-way form the harness carries, with $y_{z,i}=1$ iff zip $z$ is
 assigned to candidate $i$:
 \begin{equation}\label{eq:milp}
 \begin{aligned}
@@ -707,8 +1011,6 @@ assigned to candidate $i$:
 & y_{z,i}\in\{0,1\}.
 \end{aligned}
 \end{equation}
-
-Four notes, each of which is a trap already paid for in the two-player programme.
 
 \begin{itemize}
 \item \textbf{$\le$, not $=$, on the gains.} The objective is increasing in $g_i$ through
@@ -731,8 +1033,8 @@ elsewhere the right-hand side is $\le0$ and the cut is slack. Validity does not 
 how $u$, $v$, $C$ were chosen, which is what lets the same construction separate fractional
 points. Crucially, \emph{no root is fixed}: a rooted formulation is unsound on a
 disconnected graph, since it forces growth toward a vertex other components cannot reach,
-and its ``dual bound'' can sit strictly below feasible allocations already visited --- not
-a corner case on a footprint that is disconnected by design. Encoding alternatives ---
+and its ``dual bound'' can sit strictly below feasible allocations already visited --- and
+this footprint's graph is disconnected $\chComponentsSold$ ways. Encoding alternatives ---
 single-commodity flow from a root \citep{shirabe2005}, lazily separated cuts
 \citep{validi2021,validibuchanan2022}, cutting-plane aggregation \citep{oehrlein2017} ---
 differ mainly in how they pay for this.
@@ -749,22 +1051,20 @@ Formulation \eqref{eq:milp} inherited its index $i$ from the merger problem, whe
 representatives are named and distinguishable. In stage~1 they are not: the $k$ districts
 are \emph{anonymous}, so any permutation of the labels maps a feasible solution to an
 equally good one and branch-and-bound must re-derive and re-prune $k!$ copies of every
-subtree --- $720$ copies at $k=\chKAtTarget$. The standard remedy is the centre-based
-formulation of \citet{hess1971}: introduce $k$ \emph{centres} chosen from the units, index
-districts by their centre, and require $y_{z,c}\le y_{c,c}$. Labels are then pinned by
-geography and the symmetry is broken by construction, which is why the districting
-literature uses it \citep{zoltners2005,salazaraguilar2011,rosmercado2012}. The centre choice
-is itself a decision and interacts with contiguity, so this buys pruning with a larger
-model, not for free.
+subtree. The standard remedy is the centre-based formulation of \citet{hess1971}: index
+districts by a centre and pin the labels by geography
+\citep{zoltners2005,salazaraguilar2011,rosmercado2012}. Section~\ref{sec:centers} is that
+remedy, adopted for a second reason as well --- and Proposition~\ref{prop:vacuous} is the
+same hazard surviving into the one place the certificates still meet it, the geometry-free
+balance floor.
 
-\paragraph{If $\chZips$ units proves too large.}
-In increasing order of concession: per-component solves at ${\sim}500$ zips, which the
-disconnection already licenses; pre-aggregation to clusters or county/CBSA level, then
-disaggregation \citep{karypis1998}; $\varepsilon$-certified acceptance at the harness's
-existing tier-2 tolerance; and last a heuristic with a reported bound, for which
-Proposition~\ref{prop:ceiling} supplies the dual side for free and column generation or
-recombination sampling the primal \citep{gurnee2021,deford2021,bozkaya2003}. Connected fair
-division is NP-hard already for two agents with identical valuations
+\paragraph{If an exact contiguous model is ever needed at this size.}
+In increasing order of concession: per-component solves; pre-aggregation to clusters or
+county/CBSA level, then disaggregation \citep{karypis1998}; $\varepsilon$-certified
+acceptance at the harness's existing tier-2 tolerance; and last a heuristic with a reported
+bound, for which Proposition~\ref{prop:ceiling} supplies the dual side for free and column
+generation or recombination sampling the primal \citep{gurnee2021,deford2021,bozkaya2003}.
+Connected fair division is NP-hard already for two agents with identical valuations
 \citep{deligkas2021}, so exactness with certificates --- not a closed form --- is the
 realistic target; see \citet{bouveret2017,bilo2022,suksompong2019} for the
 fair-division-on-graphs setting and \citet{bei2022} for the only price-of-connectivity
@@ -772,33 +1072,47 @@ bounds available (none is known for Nash welfare).
 
 \section{Open questions}\label{sec:open}
 
-These are modelling decisions, not implementation gaps. Each changes the answer.
+These are decisions, not implementation gaps. Each changes the answer.
 
 \begin{enumerate}
+\item \textbf{Lexicographic priority: balance or compactness?} Certificate~(iii) proved that
+an assignment $\chPinGain\%$ more compact than the drawn map exists inside the same
+max-deviation band, relabelling $\chPinRelabelled$ zips for $\chPinNash$ nats of stage-1
+Nash. Adopting it means declaring balance-within-a-band the constraint and compactness the
+objective; declining it means the reverse. The current pipeline declines by default, which
+is a choice made silently and should be made explicitly --- along with the band's width, the
+one number that makes the question well-posed.
+\item \textbf{Center choice.} Every certificate here is conditional on the centers, which
+come from $k$-means$++$ seeding and Lloyd rounds. The exact question --- choose the $k$
+centers \emph{and} the assignment jointly, as Hess's own formulation does with centre
+binaries $y_{c,c}$ and $y_{z,c}\le y_{c,c}$ --- is untouched, and at
+$\chZipsGeo\times\chKAtTarget$ it is the natural next MILP. Until it is solved, the honest
+statement is the one Remark~\ref{rem:notcert} makes: the assignment is certified, the
+districts are not.
 \item \textbf{Empty bundles.} Insisting that every representative receive a non-empty
-contiguous bundle is a real and possibly infeasible constraint, and a single $g_i=0$ sends
+bundle is a real and possibly infeasible constraint, and a single $g_i=0$ sends
 $\sum_i\log g_i$ to $-\infty$. The standard treatment is lexicographic --- maximise the
 count of representatives with positive utility, then maximise Nash welfare among them
-\citep{caragiannis2019} --- and is the recommendation.
+\citep{caragiannis2019} --- and is the recommendation. Under rectangular stage-2 matching
+the question is currently moot ($\chReps$ representatives, $\chKAtTarget$ districts, none
+unstaffed), but it returns the moment $k$ approaches the headcount.
 \item \textbf{Directionality of $\theta$.} If capture depends on \emph{which}
 representative is displaced, the single scalar becomes $\theta_{i\leftarrow j}$ and the
 identification problem grows from one parameter to $O(n^2)$ --- and $\theta$ is already the
 one parameter resting on unfinished causal work.
+\item \textbf{The filler capture mode.} $\cfree\in\{c_2,c_1,\lambda\}$ per
+Section~\ref{sec:free}; \texttt{full} ($c_1$) is the recommendation, \texttt{theta} is the
+default only because it is the no-change case. At $\chNVacant$ vacant zips it cannot move
+this map, so the decision is cheap to take and should be taken before it is not.
 \item \textbf{The brute-force acceptance tier.} The harness accepts a method partly on
 matching exhaustive enumeration at $n\le20$; at three candidates per zip that is
 $3^{20}\approx3.5\times10^9$ leaves. The tier must be re-cut by candidate-weighted size
 $\prod_z|\mathrm{cand}(z)|\le10^6$--$10^7$. This weakens a stated acceptance criterion and
 needs sign-off, not a quiet redefinition.
-\item \textbf{Who owns an untapped or vacant zip?} Under $\mathrm{cand}(z)=\{i:S_i(z)>0\}$
-neither class has a candidate, yet both carry opportunity and both hold the graph together
-(the ``zero-value glue'' of failure regime~(d)), so dropping them changes connectivity.
-Options: leave unallocated, assign by adjacency, or widen candidacy for these zips only.
-\emph{For the national channel the question largely dissolves}: stage~1 partitions the whole
-footprint on opportunity alone, so every zip lands somewhere by construction, and candidacy
-re-enters only at stage~2 through \eqref{eq:gij}.
-\item \textbf{The filler capture mode.} $\cfree\in\{c_2,c_1,\lambda\}$ per
-Section~\ref{sec:free}; \texttt{full} ($c_1$) is the recommendation. The three modes give
-materially different maps, so this is a decision and not a default.
+\item \textbf{The staffing ratio.} $\chReps$ representatives against $\chKAtTarget$
+territories is $\chRepRatio{:}1$. Stage~2's rectangular matching reads the unmatched as
+\emph{not selected for this channel}; if instead the channel is meant to absorb the whole
+force, $k$ is wrong and the target is not $\$\chTargetB$B.
 \end{enumerate}
 
 \bibliographystyle{plainnat}
