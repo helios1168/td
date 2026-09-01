@@ -9,10 +9,12 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 ## 0. Resume — read this first in a fresh session
 
 **State on 2026-09-01 (latest): FINDINGS §9-A1 is done — the territory map is a power
-diagram, and its duals are certificate 4.** 151 tests pass, 0 fail (was 131).
+diagram, and its duals are certificate 4.** Head `937460e`; **151 tests pass, 0 fail** (131 at
+`f45bf89`).
 
-*What landed.* `centers.power_weights` / `power_labels` — the transportation LP re-solved for
-its **duals**, which are the power-diagram weights; `cert_draw.cert_power_diagram` —
+*What landed, all in `937460e`.* `centers.power_weights` / `power_labels` — the transportation
+LP re-solved for its **duals**, which are the power-diagram weights;
+`cert_draw.cert_power_diagram` —
 certificate 4, a lower bound on the compactness of every assignment to these centers, valid
 without a solver in the trusted path (`O(nk)` arithmetic on `alpha`, `beta`);
 `us_maps.power_cells` / `figure_power_regions` — `figures/district_regions.png` redrawn as 13
@@ -34,8 +36,14 @@ own test and the gap comes out negative. And the LP must use bounds `[0, inf)`, 
 same feasible set, but an explicit upper bound lets HiGHS park a reduced cost on it and the
 duals come back infeasible by `-0.80` instead of `-5e-17`.
 
-*What is next.* Unchanged, minus A1: A2/A3, then C1–C4. **The lexicographic decision is now
-exactly the 132 dots** — adopt the cells, or keep the draw where it is.
+*What is next, and the decision it needs.* FINDINGS §9 minus A1: **A2** (the stale scale claim
+in `CLAUDE.md` / here), **A3** (re-scope the "≤ k−1 splits" statement — note the new
+certificate observes exactly 12 splits at k=13, which is the bound), then the cheap
+experiments C1–C4. **The lexicographic decision is now exactly the 132 dots**: adopt the power
+cells (compactness-first, −8.22% moment of inertia) or keep the committed draw
+(Nash-first). Still gated on C4 + the §9-D frontier sweep. The decision to make: whether to
+present the draw with the power-diagram figure as it now stands, which shows both answers on
+one page, or resolve the 132 first.
 
 **Earlier — 2026-09-01 (late night): literature reconnaissance complete — the niche is
 unoccupied, and stage 1 turns out to be a published method.** Head `98f3c0e` (docs-only

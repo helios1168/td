@@ -1,9 +1,10 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 (latest) · **Branch:** `national-channel` · **Head:** `98f3c0e` + uncommitted A1
+**Last updated:** 2026-09-01 (latest) · **Branch:** `national-channel` · **Head:** `937460e`
 
-**Status:** **both stages are built and a certified k=13 draw exists; literature recon is
-in.** The real export (`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229
+**Status:** **both stages are built, a certified k=13 draw exists, literature recon is in,
+and the territory map is now a power diagram (FINDINGS §9-A1).** The real export
+(`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229
 zips / 111 reps / ~$13B ⇒ k=13; the sold-zip graph's 547 components killed adjacency
 contiguity, so stage 1 is **center-based balanced assignment** (`td/solvers/centers.py`,
 transportation-LP core), certified post-hoc by `td/solvers/cert_draw.py`, mapped by
@@ -15,7 +16,7 @@ now gated on `docs/RESEARCH_FINDINGS.md` §9-C4/D). **`98f3c0e`: overnight liter
 reconnaissance landed** — `docs/RESEARCH_FINDINGS.md` (~130 verified entries + prioritized
 reframings; headlines: stage 1 is a published method, the territory map should be a
 **power diagram** with the LP duals as weights = a free exact certificate, the niche is
-unoccupied) and `docs/RESEARCH_ADDITIONS.bib`. **FINDINGS §9-A1 is now done** (uncommitted):
+unoccupied) and `docs/RESEARCH_ADDITIONS.bib`. **`937460e`: FINDINGS §9-A1 done** —
 the transportation LP re-solved for its duals gives the power weights
 (`centers.power_weights`), a solver-free lower bound (`cert_draw.cert_power_diagram`,
 certificate 4) and the redrawn `figures/district_regions.png` (13 convex cells,
@@ -103,7 +104,7 @@ against real saturation** — it decides how much the legacy books move the map 
 
 | stage | problem | status |
 |---|---|---|
-| **1 — draw** | k balanced contiguous districts on opportunity alone | **open — the hard part** |
+| **1 — draw** | k balanced **compact** districts on opportunity alone — contiguity was abandoned, the sold-zip graph has 547 components | **built, certified** (`solvers/centers.py`, `solvers/cert_draw.py`); the territory is a power diagram |
 | **2 — match** | assign reps to districts | **built, exact** (`channel.py`) |
 
 Stage 2 is a max-weight matching on **log** weights (`g_ij = Σ_{z∈A_j} u_i(z)`, maximise
@@ -135,14 +136,19 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | file | role |
 |---|---|
 | `td/model.py` | N-way primitives: schema shim, per-rep utilities, gains, objective, perimeter, per-rep pieces, n-agent EF1 |
-| `td/channel.py` | stage 2 (Hungarian on logs), balance report, **`allocate_districts`** (the ceiling / dual bound) |
+| `td/channel.py` | stage 2 (Hungarian on logs), balance report, `place_by_state`, **`allocate_districts`** (the ceiling / dual bound) |
 | `td/instance.py` | loads the descaled real instance into the N-way schema |
+| `td/solvers/centers.py` | **stage 1**: k-means++ seeding, transportation-LP balanced assignment, Lloyd, Nash polish, portfolio — plus `power_weights` / `power_labels`, the LP duals and the power diagram they define |
+| `td/solvers/cert_draw.py` | **four** post-hoc certificates: analytic balance ceiling, integer balance floor, assignment optimality at pinned centers (MILP), and `cert_power_diagram` — the duals as a solver-free `O(nk)`-checkable bound |
+| `td/geo.py` + `tools/us_maps.py` | ZCTA points, LAEA projection, state basemap; six figures incl. `figure_power_regions` (the territory map) and `figure_district_regions` (the superseded zip-catchment fill, `--regions-voronoi`) |
+| `tools/run_draw.py` | the reproducible pipeline: instance → portfolio of draws → stage 2 → `battery/results/<run-id>/` |
 | `tools/instance_export/export_instance.py` | work-machine exporter — stdlib only, single file, **read it before running it** |
-| `td/solvers/scip_tree.py` | the finalist MILP engine; stage 1 will be built on it |
+| `td/solvers/scip_tree.py` | the two-player MILP engine; **not** what stage 1 was built on in the end |
 | `td/solvers/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
-Tests: `.venv/bin/python3 tests/run_all.py` — **65 fast tests, no slow tier.**
+Tests: `.venv/bin/python3 tests/run_all.py` — **151 fast tests, 0 fail, no slow tier**
+(as of `937460e`; 131 at `f45bf89`, 65 at the prune).
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their
 original tests were left behind because they pull `instances → synth → territory`.
 
