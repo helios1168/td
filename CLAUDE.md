@@ -1,14 +1,17 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 · **Branch:** `national-channel` · **Head:** `98d042d`
+**Last updated:** 2026-09-01 (night) · **Branch:** `national-channel` · **Head:** `b289f3a`
 
-**Status:** the descaled real export **landed 2026-09-01** (`instance_descaled.json.gz` at
-the worktree root, gitignored, checks clean) and rewrote the problem: **1,229 zips / 111
-reps / ~$13B ⇒ k ≈ 13**, the footprint is national (not four islands), and the sold-zip
-graph has **547 components**, so adjacency contiguity is dead — **decided 2026-09-01:
-stage 1 is center-based (Hess) compact assignment on distances**, no adjacency. Granularity
-is benign (largest zip = 1.07% of M). Stage 2 (staffing) unchanged, built, exact. **69
-tests pass, 0 fail**. **Resume point: `docs/CHANNEL.md` §0.**
+**Status:** **both stages are built and a certified k=13 draw exists.** The real export
+(`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229 zips / 111 reps / ~$13B
+⇒ k=13; the sold-zip graph's 547 components killed adjacency contiguity, so stage 1 is
+**center-based balanced assignment** (`td/solvers/centers.py`, transportation-LP core),
+certified post-hoc by `td/solvers/cert_draw.py`, mapped by `tools/us_maps.py` (five
+figures incl. the Voronoi territory map; atlas artifact in `docs/CHANNEL.md` §0), and
+formalized in `docs/channel_note/` (21 pp). Winner draw: spread 0.78%, all 13 staffed,
+4.5e-5 nats off the ceiling. **Open: the lexicographic compactness-vs-Nash decision** (a
+proved 8.53% compacter assignment exists, unadopted). **131 tests pass, 0 fail.**
+**Resume point: `docs/CHANNEL.md` §0.**
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing

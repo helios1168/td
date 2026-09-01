@@ -8,8 +8,32 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-01 (later): the export landed and rewrote the problem.** Head `98d042d`,
-**69 tests pass** (`.venv/bin/python3 tests/run_all.py`).
+**State on 2026-09-01 (night): stage 1 built, drawn, certified, mapped, and formalized.**
+Head `b289f3a`, **131 tests pass**.
+
+*What landed (all Opus-subagent builds from written plans).* `td/solvers/centers.py` —
+center-based draw (k-means++ seeding, transportation-LP balanced assignment, Lloyd,
+Nash polish, portfolio). `tools/run_draw.py` + `channel.place_by_state` — reproducible
+runs into `battery/results/` (gitignored). `td/solvers/cert_draw.py` — three certificates.
+`td/geo.py` + `tools/us_maps.py` — five map figures incl. the Voronoi territory map.
+`docs/channel_note/` rewritten (21 pp, builds clean): §7 center-based formulation +
+transportation lemma, §8 certificates + real run, old ceiling/contiguity demoted intact.
+Atlas artifact (5 maps): https://claude.ai/code/artifact/1f2cddd9-b98b-4213-83ea-784566147c6a
+
+*The draw (battery/results/draw_k13_20260901).* Winner seed 3 of 5 by stage-2 value
+59.9375 (not the stage-1-best — the portfolio earning its keep); spread 0.642% drawn /
+0.781% after placing the 6 coordinate-less zips; all 13 districts staffed (13 of 111 reps
+selected). Certified: 4.51e-5 nats under the analytic ceiling; max-dev ~1,975× the
+constructive indivisibility floor (imbalance = price of geometry); pinned-centers MILP
+*proved* an 8.53% more compact assignment exists in the same balance band (152 relabels,
+−4.66e-5 nats) — **not adopted; lexicographic priority is open question 1**.
+
+*What is next.* The lexicographic decision (adopt the compacter assignment or keep
+Nash-first); exact center choice (k-means-hard — column generation or center-MILP if
+wanted); the θ/filler open decisions in `MODEL.md` §6; and presenting the draw.
+
+**Earlier — 2026-09-01 (evening): the export landed and rewrote the problem.** Head
+`98d042d`, 69 tests.
 
 *What landed.* The real descaled instance (`instance_descaled.json.gz`, worktree root,
 gitignored, `check_descaled` clean): **1,229 zips, 111 reps, 675 contested / 477
