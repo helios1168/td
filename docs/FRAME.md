@@ -12,7 +12,58 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02:** This is the first framing pass, written *after* the work rather than
+**State on 2026-09-02 (latest): the framework 0.1 dry run reached stage 5 on branch
+`wt/workflow-dryrun` — stages 1–5 all ran, and the first verified unit came back 13/13
+VERIFIED with nothing refuted.** Head `ab15133`; **docs-only — no file under `td/`, `tests/`,
+`tools/` or `figures/` was touched**, so the 151-test result recorded at `937460e` stands
+unchanged (not re-run on this branch). This file's §0 is the resume point for this branch and
+supersedes `docs/CHANNEL.md` §6–7 (see the header above); `CHANNEL.md` §0 now carries a
+pointer here rather than a second narrative.
+
+*What landed*, five commits:
+
+- **`0ca54e6` — stages 1–3.** `FRAME.md` (this file), `LENS_GROTHENDIECK.md` (uncited) and
+  `LENS_GROMOV.md` (cited), then `DOMAIN_optimization.md` and `DOMAIN_economic-theory.md`, and
+  the economic-theory literature run `LIT_economic-theory.md` + `.bib` — **46 entries, every
+  one carrying a DOI**, with an absence ledger.
+- **`bef533d` — stage 4.** `BRIEF.md` and eight unit briefs under `docs/units/`
+  (`U0-lit`, `U1-cert`, `U2-stab`, `U3-inv`, `U4-disp`, `U5-crit`, `U6-sel`, `U7-meas`); four
+  launchable in wave 1, four specified but not launched under the stated budget.
+- **`4d0dbab` — stage 5a.** `MODEL_U2-stab.md` (the roster-stability unit) with runnable
+  artifacts under `docs/artifacts/U2-stab/`.
+- **`fb72bdc` — stage 5b.** `VERIFY_U2-stab.md`: `math-verify` attacked all 13 rows of the
+  §7 handoff table and returned **13 VERIFIED, 0 REFUTED**, each backed by a standalone
+  script that recomputes every matching independently of `stab.py`.
+- **`ab15133`** — agent memory harvested from the run under `.claude/agent-memory/`.
+
+*What it means.* Two things, one about the framework and one about the problem. **The
+framework:** a unit brief cut from FRAME/LENS/DOMAIN/LIT was executable end to end by
+`modeler` → `math-verify` with no chat-history dependency, and the verifier did real work
+rather than rubber-stamping — it raised **two documentation caveats** that stand as open doc
+fixes: §4 row 6's auxiliary counts (2,187 / 3,672 rosters with a blocking pair) are
+**tie-break dependent** and are not labelled as such, and **P2.2's raw-Hungarian threshold of
+5 depends on the distinctness hypothesis** — without distinctness a max entry of 4 suffices.
+Neither touches a proposition. **The problem:** U2-stab establishes that the roster-stability
+question is live, non-vacuous *because* saturation is 41.9% (the rep-dependent term is a 42%
+modulation of `g`, its row 13 recovering FRAME §6's 0.42 to 0.0017), and decidable in **169
+comparisons rather than 1,443** — no unselected wholesaler among the 98 can ever block a
+max-weight roster (P3.3), so only the 13×13 selected sub-matrix matters. It also predicts,
+against `LIT_economic-theory.md` §0.4's expectation, that at the real 111-of-13 shape the
+delivered Hungarian roster coincides with the unique stable roster **~70% of the time** (0.011
+at 13×13, rising with slack) — a prediction, not a measurement.
+
+*What is next, and the decision it needs.* The blocking one is **★6 — may a unit run code
+against `instance_descaled.json.gz`?** The instance is not in this worktree and the plan's own
+constraint forbids it, which is why every wave-1 result is conditional and why U7-meas (the
+measurement stage both domains wanted to run *first*) is unlaunched. `BRIEF.md` §7 records the
+risk plainly: two measured numbers could *cancel* the rest of the plan. Second, **★3 — should
+roster stability become a sixth acceptance criterion?** `BRIEF.md` §5 says to ask this only
+after U2-stab reports, and it now has: the question is cheap, so the ask is warranted.
+Then: launch the remaining wave-1 units (**U0-lit**, **U1-cert**, **U3-inv** — all independent
+and none needing the instance), and consider **★7**, `/domain econometrics`, which is the only
+route to U5/A4 and U6.
+
+**Earlier — 2026-09-02: the framing pass itself.** This is the first framing pass, written *after* the work rather than
 before it, so most of §9 is already settled by evidence: the real descaled instance is in
 (1,229 zips / 111 reps / ~$13B ⇒ k=13), a certified k=13 draw exists (0.78% opportunity
 spread, all 13 territories staffed, 4.5e-5 nats under the analytic ceiling), the territory map

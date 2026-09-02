@@ -8,6 +8,13 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
+> **Pointer (2026-09-02, branch `wt/workflow-dryrun`, head `ab15133`): the resume point for
+> this branch is `docs/FRAME.md` §0, not this section.** The framework 0.1 dry run reached
+> stage 5 there (FRAME → two lenses → two domain plans → `LIT_economic-theory` → `BRIEF` + 8
+> unit briefs → `MODEL_U2-stab` → `VERIFY_U2-stab`, 13/13 VERIFIED). `FRAME.md`'s header
+> supersedes **§6** (the 72-rep / $6.2B / k≈6 sizing) and **§7**'s illustrative ceiling table
+> of this file; everything else below stands. Docs-only — no code touched.
+
 **State on 2026-09-01 (latest): a Gromov-method review of the note and formulation is in
 (`docs/REVIEW_GROMOV.md`) — and its check of §5.1's one assumed number came back an order
 of magnitude off: real saturation is 41.9%, not ~5%.** Docs-only on top of `83dee5f`
