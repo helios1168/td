@@ -1,7 +1,7 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `7359c6e` (not
-pushed; merges `wt/workflow-dryrun`) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
+**Last updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `ec8e727`
+(pushed; `7359c6e` merges `wt/workflow-dryrun`) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
 
 **Status:** both stages built and a **balance-certified** k=13 draw exists (spread 0.78%,
 all 13 staffed, 4.5e-5 nats off the ceiling); the territory map is a power diagram

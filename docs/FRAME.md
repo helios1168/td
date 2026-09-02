@@ -14,7 +14,7 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `national-channel`, head `7359c6e`, not pushed): a
+**State on 2026-09-02 (latest, branch `national-channel`, head `ec8e727`, pushed; content head `7359c6e`): a
 second framing pass — a catch-up walk of the two-stage method plus an alternatives ledger —
 with no code touched; 151 tests pass, 0 fail, re-run 2026-09-02 after the merge.**
 `7359c6e` **merges `wt/workflow-dryrun`** (head `750a7cc`) **into `national-channel`** together

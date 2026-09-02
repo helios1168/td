@@ -1,6 +1,6 @@
 # Handoff — national channel territory design / framework 0.1 dry run (`national-channel`)
 
-**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `7359c6e` (not pushed) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
+**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `ec8e727` (pushed) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 — supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
