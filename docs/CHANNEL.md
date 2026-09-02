@@ -8,7 +8,42 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-01 (latest): a Gromov-method review of the note and formulation is in
+**State on 2026-09-02 (latest): orientation session — no code or note landed; the
+uncommitted residue of 2026-09-01 evening is inventoried, and one note gap is queued.**
+Head still `01e1e84` (docs-only on the pushed `72e5f07`); **151 tests pass, 0 fail**, re-run
+2026-09-02 with the main checkout's interpreter (`../../.venv/bin/python3 tests/run_all.py` —
+this worktree has no `.venv` of its own).
+
+*What is in the working tree, uncommitted.* (a) `HANDOFF.md` — the fast-orientation index,
+written 2026-09-01 19:53, staged, never committed; refreshed and re-staged today. (b)
+`td/solvers/greedy_balanced.py` — 93 lines, written 2026-09-01 20:39, **untracked, referenced
+by nothing, covered by no test**: a one-pass greedy sibling of `centers.py` (heaviest-first
+onto the nearest center under a soft `(ΣM/k)(1+SLACK)` cap, `SLACK = 0.10`, overflow counted
+as `n_over`; reuses `centers`' seeding, empty-district repair and metrics). Its purpose is not
+recorded anywhere — commit with a test and a one-line role in `CLAUDE.md`'s build table, or
+delete; it is not part of the certified pipeline (`tools/run_draw.py` does not import it).
+
+*What the session did.* Walked stage 2 from the math, game-theory and modelling sides against
+`channel_note` §6 and FINDINGS §4/headlines 9–10, and confirmed those are the documents. One
+gap surfaced that neither states: **stage 2 is unit-demand (one district per rep), so
+"envy-free up to one good" is vacuous there** — removing the single good empties the bundle.
+`channel_note` §3 (line ~207) claims EF1 "survives the move" for the *joint* n-agent MNW
+problem, which is right; it does not carry to the fixed-bundle matching except trivially.
+FINDINGS §4B already flags that the MNW/EF1 axiomatisations are for endogenous bundles, and
+§4C (velez2016) that swap-based envy is the right notion under θ — so this is an eighth R4
+item, not a new finding. Also noted: the repository-root checkout is still on
+`contiguity-harness` at `7f2826d`, whose `CLAUDE.md` describes the superseded programme and
+does not point here; a fresh session that opens `~/projects/td` rather than this worktree
+reads stale state.
+
+*What is next — unchanged from 2026-09-01.* (1) The decision that needs the user: at 41.9%
+saturation, does stage 1 get to see books (≈3.7 nats on the table vs. FINDINGS §9-G's
+invariant)? (2) C4 → stage-2 rescore of the power-diagram cells → adopt unless staffing drops
+by more than the portfolio spread. (3) R1 fixes: `ceiling.py`'s `SATURATION = 0.05` and
+`channel_note` §5.1; FINDINGS §4C/C6's α ≈ 0.9 → measured ≈ 0.6. (4) R4's seven local note
+fixes plus the EF1-vacuity sentence above. (5) Dispose of `greedy_balanced.py`.
+
+**Earlier — 2026-09-01 (post-review): a Gromov-method review of the note and formulation is in
 (`docs/REVIEW_GROMOV.md`) — and its check of §5.1's one assumed number came back an order
 of magnitude off: real saturation is 41.9%, not ~5%.** Docs-only on top of `83dee5f`
 (pushed head `72e5f07`); **151 tests as recorded at `937460e`, no code touched.**

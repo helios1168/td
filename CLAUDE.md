@@ -1,38 +1,14 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-01 (post-review) · **Branch:** `national-channel` · **Head:**
-`72e5f07` (pushed) + the docs-only Gromov-review commit
+**Last updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `01e1e84`
+(docs-only on the pushed `72e5f07`) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
 
-**Status:** **both stages are built, a certified k=13 draw exists, literature recon is in,
-and the territory map is now a power diagram (FINDINGS §9-A1).** The real export
-(`instance_descaled.json.gz`, worktree root, gitignored) gave 1,229
-zips / 111 reps / ~$13B ⇒ k=13; the sold-zip graph's 547 components killed adjacency
-contiguity, so stage 1 is **center-based balanced assignment** (`td/solvers/centers.py`,
-transportation-LP core), certified post-hoc by `td/solvers/cert_draw.py`, mapped by
-`tools/us_maps.py` (six figures incl. the power-diagram territory map; atlas artifact in
-`docs/CHANNEL.md` §0), and formalized in `docs/channel_note/` (21 pp). Winner draw: spread
-0.78%, all 13 staffed, 4.5e-5 nats off the ceiling. **Open: the lexicographic
-compactness-vs-Nash decision** (a proved 8.53% compacter assignment exists, unadopted —
-now gated on `docs/RESEARCH_FINDINGS.md` §9-C4/D). **`98f3c0e`: overnight literature
-reconnaissance landed** — `docs/RESEARCH_FINDINGS.md` (~130 verified entries + prioritized
-reframings; headlines: stage 1 is a published method, the territory map should be a
-**power diagram** with the LP duals as weights = a free exact certificate, the niche is
-unoccupied) and `docs/RESEARCH_ADDITIONS.bib`. **`937460e`: FINDINGS §9-A1 done** —
-the transportation LP re-solved for its duals gives the power weights
-(`centers.power_weights`), a solver-free lower bound (`cert_draw.cert_power_diagram`,
-certificate 4) and the redrawn `figures/district_regions.png` (13 convex cells,
-`us_maps.figure_power_regions`; old renderer at `--regions-voronoi`). The draw sits **8.22%
-above the bound with 132 of 1,223 zips outside their own cell** — it is *not* a power diagram,
-which independently reproduces the MILP's 8.53% and turns open question 1 into "adopt the
-cells or keep the 132 dots". `80c13ee` republished the atlas artifact on the new figure;
-`72e5f07` committed `figures/` (it had been gitignored, so the maps the docs cite existed
-nowhere but the machine that drew them). **Gromov review in (`docs/REVIEW_GROMOV.md`):
-measured real saturation is 41.9%, not the assumed 5%** — channel_note §5.1's sizing and
-§5.2's "derived rather than assumed" claim fail on the real instance (the premium at stake
-is ~3.7 nats vs a 4.5e-5-nat balance residual); the cells-vs-dots call gains a noise-floor
-argument (cells' Nash cost ≪ the 5e-3-nat tier-2 floor) gated on a stage-2 rescore; the EG
-bound (= FINDINGS C3) is upgraded to certificate 5; seven local note fixes queued (R4).
-**151 tests pass, 0 fail.** **Resume point: `docs/CHANNEL.md` §0.**
+**Status:** both stages built; a certified k=13 draw exists (spread 0.78%, all 13 staffed,
+4.5e-5 nats off the ceiling); literature recon and the Gromov review are in. The long-form
+state narrative lives **only** in `docs/CHANNEL.md` §0 — **resume there.** Open items,
+briefly: the books-at-stage-1 decision (measured saturation 41.9%), the 132-dots-vs-cells
+call gated on a stage-2 rescore, R1/R4 note fixes, and an untracked `greedy_balanced.py`
+to commit or delete.
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -159,7 +135,8 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
 Tests: `.venv/bin/python3 tests/run_all.py` — **151 fast tests, 0 fail, no slow tier**
-(as of `937460e`; 131 at `f45bf89`, 65 at the prune).
+(re-run 2026-09-02 at `01e1e84`; 131 at `f45bf89`, 65 at the prune). This worktree has no
+`.venv`; use the main checkout's: `../../.venv/bin/python3 tests/run_all.py`.
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their
 original tests were left behind because they pull `instances → synth → territory`.
 
