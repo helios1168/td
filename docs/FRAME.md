@@ -14,10 +14,11 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `national-channel`): a second framing pass — a
-catch-up walk of the two-stage method plus an alternatives ledger — with no code touched.**
-`wt/workflow-dryrun` (head `750a7cc`) is **merged into `national-channel`** in the same
-commit as this revision, so the dry run's companions — `LENS_*.md`, `DOMAIN_*.md`, `BRIEF.md`,
+**State on 2026-09-02 (latest, branch `national-channel`, head `7359c6e`, not pushed): a
+second framing pass — a catch-up walk of the two-stage method plus an alternatives ledger —
+with no code touched; 151 tests pass, 0 fail, re-run 2026-09-02 after the merge.**
+`7359c6e` **merges `wt/workflow-dryrun`** (head `750a7cc`) **into `national-channel`** together
+with this revision, so the dry run's companions — `LENS_*.md`, `DOMAIN_*.md`, `BRIEF.md`,
 `units/`, `MODEL_U2-stab.md`, `VERIFY_U2-stab.md` — now live here, alongside the two state
 commits the dry run lacked (`96d2ee8` HANDOFF.md tracked, `f0f045a` `greedy_balanced.py`
 deleted). Conflicts were docs-only (`CLAUDE.md`, `HANDOFF.md`, `CHANNEL.md` §0).
@@ -27,7 +28,7 @@ not state — that every dollar of `M` is geographically attributable (no home-o
 national-accounts carve-out), that the zip is the decision grain the sponsor manages by, and
 that one wholesaler per territory is a rule rather than a default. (ii) §9: the stage-2 EF1
 vacuity gap (from `CHANNEL.md` §0 on this branch — a unit-demand matching cannot be EF1
-non-trivially) and the branch divergence itself. (ii) also records the branch merge as settled. (iii) §10 Q8–Q12: five alternative approaches
+non-trivially) and the branch merge, recorded as settled. (iii) §10 Q8–Q12: five alternative approaches
 to the original ask, phrased as questions for the lenses — a premium-maximising *balanced*
 draw as a transportation LP at fixed roster (one cost-matrix change to `centers.py`), a
 roster-first ordering of the stages, a coarser decision grain (metro / branch), the

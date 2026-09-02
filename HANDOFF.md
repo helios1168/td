@@ -1,6 +1,6 @@
 # Handoff — national channel territory design / framework 0.1 dry run (`national-channel`)
 
-**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** merge of `wt/workflow-dryrun` into `f0f045a` · **Tests:** 151 pass, 0 fail (recorded 2026-09-02)
+**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `7359c6e` (not pushed) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 — supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
@@ -8,9 +8,9 @@
 - **Status header:** `CLAUDE.md`
 - **Caution:** the repository-root checkout (`~/projects/td`) is on `contiguity-harness` and
   describes the superseded programme. Work in this worktree. It has no `.venv`; run tests with
-  `../../.venv/bin/python3 tests/run_all.py`.
+  `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py` (three levels up).
 - **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`
-- **Key docs:** `docs/BRIEF.md` (the plan, units, ★ decisions) · `docs/units/*.md` (8 briefs) ·
+- **Key docs:** `docs/FRAME.md` (§8 A1–A13 sponsor asks, §10 Q1–Q12 lens questions) · `docs/BRIEF.md` (the plan, units, ★ decisions) · `docs/units/*.md` (8 briefs) ·
   `docs/MODEL_U2-stab.md` + `docs/VERIFY_U2-stab.md` (the one finished unit) ·
   `docs/DOMAIN_optimization.md`, `docs/DOMAIN_economic-theory.md`, `docs/LIT_economic-theory.md`
   (46 DOIs) · `docs/LENS_GROMOV.md`, `docs/LENS_GROTHENDIECK.md` · `docs/CHANNEL.md`,
@@ -25,6 +25,12 @@
       after U2-stab reports; it has (question is live, non-vacuous, decidable in 169 comparisons).
 - [ ] Launch the rest of wave 1 — **U0-lit**, **U1-cert**, **U3-inv**; independent, no instance
       needed. U0-lit gates wave 2 (U4-disp, U5-crit, U6-sel).
+- [ ] **Sponsor questions, one sentence each** (FRAME §8): A1 ($1B target or constraint), A2 (are
+      the 98 released), A6 (any operational coverage rule), **A11** (home-office / national-accounts
+      share of `M` — changes `k`), **A12** (what grain the signed territory is described in),
+      **A13** (any team-staffed territory — changes the matching's shape).
+- [ ] **FRAME §10 Q8** is the cheapest new experiment: premium-max *balanced* draw at fixed roster
+      = `centers.py`'s transportation LP with cost `−u_i(z)`; gated on ★6 (needs the instance).
 - [ ] **★7** — run `/domain econometrics`? Only route to U5/A4 (regional bias in `M`) and U6
       (the tier-2 noise floor); neither has a domain file or a seeded `FOUNDATIONS.md`.
 - [ ] Two doc fixes from `VERIFY_U2-stab.md`: `MODEL_U2-stab.md` §4 row 6's counts
