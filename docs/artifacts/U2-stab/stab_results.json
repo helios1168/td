@@ -1,0 +1,483 @@
+{
+  "meta": {
+    "seed": 20260902,
+    "python": "3.13.15",
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+    "command": "/Users/ntlee/projects/td/.venv/bin/python3 docs/artifacts/U2-stab/stab.py"
+  },
+  "E1_minimal_log_separating": {
+    "min_max_entry": 4,
+    "n_witnesses_at_that_max": 8,
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "greedy": {
+      "1": 1,
+      "0": 0
+    },
+    "log_hungarian": {
+      "1": 0,
+      "0": 1
+    },
+    "raw_hungarian": {
+      "1": 0,
+      "0": 1
+    },
+    "greedy_product": "4",
+    "log_hungarian_product": "6",
+    "greedy_sum": 5,
+    "raw_hungarian_sum": 5,
+    "blocking_pairs_of_log_hungarian": [
+      [
+        1,
+        1
+      ]
+    ],
+    "raw_agrees_with_greedy": false
+  },
+  "E1b_minimal_raw_separating": {
+    "min_max_entry": 5,
+    "n_witnesses_at_that_max": 8,
+    "matrix": [
+      [
+        1,
+        3
+      ],
+      [
+        4,
+        5
+      ]
+    ],
+    "greedy": {
+      "1": 1,
+      "0": 0
+    },
+    "raw_hungarian": {
+      "1": 0,
+      "0": 1
+    },
+    "log_hungarian": {
+      "1": 0,
+      "0": 1
+    },
+    "greedy_sum": 6,
+    "raw_hungarian_sum": 7,
+    "greedy_product": "5",
+    "log_hungarian_product": "12",
+    "blocking_pairs_of_raw_hungarian": [
+      [
+        1,
+        1
+      ]
+    ],
+    "blocking_pairs_of_log_hungarian": [
+      [
+        1,
+        1
+      ]
+    ],
+    "log_also_separates": true
+  },
+  "E2_minimal_log_only_separating": {
+    "min_max_entry": 5,
+    "n_witnesses_at_that_max": 8,
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        5
+      ]
+    ],
+    "greedy": {
+      "1": 1,
+      "0": 0
+    },
+    "log_hungarian": {
+      "1": 0,
+      "0": 1
+    },
+    "raw_hungarian": {
+      "0": 0,
+      "1": 1
+    },
+    "greedy_sum": 6,
+    "alternative_sum": 5,
+    "greedy_product": "5",
+    "log_hungarian_product": "6",
+    "blocking_pairs_of_log_hungarian": [
+      [
+        1,
+        1
+      ]
+    ],
+    "blocking_pairs_of_raw_hungarian": []
+  },
+  "E3_reverse_separation_search": {
+    "exhaustive_bound": 40,
+    "exhaustive_matrices_checked": 2433600,
+    "exhaustive_violations": 0,
+    "random": {
+      "n=3": {
+        "trials": 133333,
+        "violations": 151,
+        "witness": {
+          "matrix": [
+            [
+              2638,
+              3920,
+              2123
+            ],
+            [
+              3750,
+              368,
+              6698
+            ],
+            [
+              406,
+              5843,
+              7243
+            ]
+          ],
+          "greedy": {
+            "2": 2,
+            "1": 0,
+            "0": 1
+          },
+          "log_hungarian": {
+            "1": 0,
+            "0": 1,
+            "2": 2
+          },
+          "raw_hungarian": {
+            "0": 0,
+            "2": 1,
+            "1": 2
+          },
+          "greedy_sum": 14913,
+          "raw_hungarian_sum": 15179,
+          "blocking_pairs_of_raw_hungarian": [
+            [
+              2,
+              2
+            ]
+          ]
+        }
+      },
+      "n=4": {
+        "trials": 133333,
+        "violations": 191,
+        "witness": {
+          "matrix": [
+            [
+              487,
+              5647,
+              8506,
+              4327
+            ],
+            [
+              2466,
+              9152,
+              649,
+              8420
+            ],
+            [
+              1772,
+              2722,
+              973,
+              2955
+            ],
+            [
+              5469,
+              9145,
+              8141,
+              1298
+            ]
+          ],
+          "greedy": {
+            "1": 1,
+            "2": 0,
+            "0": 3,
+            "3": 2
+          },
+          "log_hungarian": {
+            "2": 0,
+            "1": 1,
+            "3": 2,
+            "0": 3
+          },
+          "raw_hungarian": {
+            "2": 0,
+            "3": 1,
+            "0": 2,
+            "1": 3
+          },
+          "greedy_sum": 26082,
+          "raw_hungarian_sum": 27843,
+          "blocking_pairs_of_raw_hungarian": [
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      },
+      "n=5": {
+        "trials": 133333,
+        "violations": 140,
+        "witness": {
+          "matrix": [
+            [
+              8609,
+              7137,
+              5413,
+              78,
+              3240
+            ],
+            [
+              8642,
+              1482,
+              2866,
+              7528,
+              3209
+            ],
+            [
+              3051,
+              8428,
+              4004,
+              1065,
+              8378
+            ],
+            [
+              1176,
+              2353,
+              4267,
+              7377,
+              5733
+            ],
+            [
+              756,
+              6380,
+              1355,
+              9694,
+              354
+            ]
+          ],
+          "greedy": {
+            "3": 4,
+            "0": 1,
+            "1": 2,
+            "4": 3,
+            "2": 0
+          },
+          "log_hungarian": {
+            "2": 0,
+            "0": 1,
+            "1": 2,
+            "4": 3,
+            "3": 4
+          },
+          "raw_hungarian": {
+            "1": 0,
+            "0": 1,
+            "4": 2,
+            "2": 3,
+            "3": 4
+          },
+          "greedy_sum": 37910,
+          "raw_hungarian_sum": 38118,
+          "blocking_pairs_of_raw_hungarian": [
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "E4_unmatched_cannot_block": {
+    "shape": [
+      3,
+      2
+    ],
+    "entry_bound": 6,
+    "matrices_checked": 46656,
+    "rosters_with_any_blocking_pair": {
+      "raw": 2187,
+      "log": 3672
+    },
+    "rosters_with_an_unmatched_rep_blocking_pair": {
+      "raw": 0,
+      "log": 0
+    },
+    "minimal_unstable_log_witness": {
+      "matrix": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "greedy": {
+        "1": 2,
+        "0": 0
+      },
+      "log_hungarian": {
+        "1": 1,
+        "0": 2
+      },
+      "raw_hungarian": {
+        "1": 1,
+        "0": 2
+      },
+      "greedy_product": "3",
+      "log_hungarian_product": "4",
+      "blocking_pairs": [
+        [
+          2,
+          1
+        ]
+      ],
+      "unmatched_reps": [
+        0
+      ],
+      "blocking_pairs_with_unmatched_rep": []
+    }
+  },
+  "E5_structured_toy": {
+    "n": 111,
+    "k": 13,
+    "w": 42,
+    "exact_ties_within_a_district_column": 56872,
+    "zero_book_rep_district_pairs": 1222,
+    "all_g_distinct": false,
+    "per_round_argmax_unique": true,
+    "greedy_equals_log_hungarian": false,
+    "greedy_equals_raw_hungarian": false,
+    "blocking_pairs_of_log_hungarian": 1,
+    "first_deviation_round": 5,
+    "first_deviation_pair": [
+      8,
+      2
+    ],
+    "first_deviation_pair_blocks": true,
+    "blocking_pair_list": [
+      [
+        8,
+        2
+      ]
+    ],
+    "stable_matching_unique": true
+  },
+  "E5b_structured_replicates": {
+    "replicates": 200,
+    "greedy_eq_log_hungarian": 160,
+    "frac_greedy_eq_log": 0.8,
+    "per_round_argmax_unique_all": 200,
+    "blocking_pairs_mean": 0.245,
+    "blocking_pairs_max": 2,
+    "blocking_pairs_zero_count": 160
+  },
+  "E6_genericity": {
+    "2x2": {
+      "trials": 20000,
+      "greedy_eq_log_hungarian": 15949,
+      "frac_greedy_eq_log": 0.79745,
+      "greedy_eq_raw_hungarian": 16667,
+      "frac_greedy_eq_raw": 0.83335
+    },
+    "4x2": {
+      "trials": 20000,
+      "greedy_eq_log_hungarian": 17642,
+      "frac_greedy_eq_log": 0.8821,
+      "greedy_eq_raw_hungarian": 17835,
+      "frac_greedy_eq_raw": 0.89175
+    },
+    "13x13": {
+      "trials": 20000,
+      "greedy_eq_log_hungarian": 217,
+      "frac_greedy_eq_log": 0.01085,
+      "greedy_eq_raw_hungarian": 258,
+      "frac_greedy_eq_raw": 0.0129
+    },
+    "111x13": {
+      "trials": 1000,
+      "greedy_eq_log_hungarian": 692,
+      "frac_greedy_eq_log": 0.692,
+      "greedy_eq_raw_hungarian": 692,
+      "frac_greedy_eq_raw": 0.692
+    }
+  },
+  "E6c_slack_sweep": {
+    "n=13": {
+      "trials": 4000,
+      "frac_greedy_eq_log": 0.011,
+      "blocking_pairs_mean": 4.63275,
+      "blocking_pairs_max": 15
+    },
+    "n=20": {
+      "trials": 4000,
+      "frac_greedy_eq_log": 0.09775,
+      "blocking_pairs_mean": 2.43225,
+      "blocking_pairs_max": 9
+    },
+    "n=30": {
+      "trials": 4000,
+      "frac_greedy_eq_log": 0.2255,
+      "blocking_pairs_mean": 1.49475,
+      "blocking_pairs_max": 7
+    },
+    "n=50": {
+      "trials": 4000,
+      "frac_greedy_eq_log": 0.435,
+      "blocking_pairs_mean": 0.84075,
+      "blocking_pairs_max": 5
+    },
+    "n=80": {
+      "trials": 4000,
+      "frac_greedy_eq_log": 0.60925,
+      "blocking_pairs_mean": 0.4995,
+      "blocking_pairs_max": 8
+    },
+    "n=111": {
+      "trials": 4000,
+      "frac_greedy_eq_log": 0.6995,
+      "blocking_pairs_mean": 0.3525,
+      "blocking_pairs_max": 5
+    }
+  },
+  "E7_frame_consistency": {
+    "theta": 0.4,
+    "lam": 0.3,
+    "saturation_tau": 0.419,
+    "c1": 0.7,
+    "c2": 0.27999999999999997,
+    "c1_minus_c2": 0.42,
+    "hold_vs_not_swing": 0.4216907888430941,
+    "frame_s6_reported_swing": 0.42,
+    "abs_diff_vs_frame": 0.0016907888430940932,
+    "degenerate_at": {
+      "theta_eq_1": true,
+      "lam_eq_1": true
+    }
+  }
+}
