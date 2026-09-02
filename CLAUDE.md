@@ -1,13 +1,17 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `01e1e84`
-(docs-only on the pushed `72e5f07`) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
+**Last updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** merge of `wt/workflow-dryrun`
+into `f0f045a` (not pushed)
 
-**Status:** both stages built; a certified k=13 draw exists (spread 0.78%, all 13 staffed,
-4.5e-5 nats off the ceiling); literature recon and the Gromov review are in. The long-form
-state narrative lives **only** in `docs/CHANNEL.md` §0 — **resume there.** Open items,
-briefly: the books-at-stage-1 decision (measured saturation 41.9%), the 132-dots-vs-cells
-call gated on a stage-2 rescore, and the R1/R4 note fixes.
+**Status:** both stages built and a **balance-certified** k=13 draw exists (spread 0.78%,
+all 13 staffed, 4.5e-5 nats off the ceiling); the territory map is a power diagram
+(certificate 4). Measured saturation is **41.9%**, not the 5% `ceiling.py` still hard-codes —
+`docs/REVIEW_GROMOV.md` R1's fixes are open. The framework 0.1 dry run is merged in,
+docs-only through stage 5 (`VERIFY_U2-stab`, 13/13 VERIFIED). **151 tests pass, 0 fail** as
+recorded at `937460e`; no code touched since, not re-run on this branch.
+
+**Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
+carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing

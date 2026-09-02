@@ -8,7 +8,14 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest): orientation session — no code or note landed; the
+> **Pointer (2026-09-02, merged from `wt/workflow-dryrun` on `national-channel`): the resume point for
+> this branch is `docs/FRAME.md` §0, not this section.** The framework 0.1 dry run reached
+> stage 5 there (FRAME → two lenses → two domain plans → `LIT_economic-theory` → `BRIEF` + 8
+> unit briefs → `MODEL_U2-stab` → `VERIFY_U2-stab`, 13/13 VERIFIED). `FRAME.md`'s header
+> supersedes **§6** (the 72-rep / $6.2B / k≈6 sizing) and **§7**'s illustrative ceiling table
+> of this file; everything else below stands. Docs-only — no code touched.
+
+**Earlier — 2026-09-02: orientation session — no code or note landed; the
 uncommitted residue of 2026-09-01 evening is inventoried, and one note gap is queued.**
 Head still `01e1e84` (docs-only on the pushed `72e5f07`); **151 tests pass, 0 fail**, re-run
 2026-09-02 with the main checkout's interpreter (`../../.venv/bin/python3 tests/run_all.py` —

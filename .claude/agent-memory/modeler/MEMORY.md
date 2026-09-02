@@ -1,0 +1,3 @@
+- [U2-stab traps and premise corrections](project_u2-stab-traps.md) — ρ absent from stage 2, "generically unstable" overstated, unmatched agents can't block, ties are structural.
+- [Economic-theory matching citations that mattered](reference_foundations-econ-theory-matching.md) — which FOUNDATIONS/LIT keys carry weight for stability work, and which cannot be read.
+- [grothendieck-toy unit traps](project_grothendieck_toy.md) — scratch dry-run project: spec/lens mismatch, no FOUNDATIONS, exact-arithmetic convention.
