@@ -7,8 +7,7 @@
 4.5e-5 nats off the ceiling); literature recon and the Gromov review are in. The long-form
 state narrative lives **only** in `docs/CHANNEL.md` §0 — **resume there.** Open items,
 briefly: the books-at-stage-1 decision (measured saturation 41.9%), the 132-dots-vs-cells
-call gated on a stage-2 rescore, R1/R4 note fixes, and an untracked `greedy_balanced.py`
-to commit or delete.
+call gated on a stage-2 rescore, and the R1/R4 note fixes.
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing

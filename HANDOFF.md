@@ -27,5 +27,4 @@
 - [ ] **R4:** seven local note fixes to fold into the §9-B citation pass (see
       `docs/REVIEW_GROMOV.md`), plus an eighth queued 2026-09-02: stage 2 is unit-demand, so
       EF1 is vacuous there; `channel_note` §3's "EF1 survives" holds for the joint problem only.
-- [ ] **Dispose of `td/solvers/greedy_balanced.py`** (untracked, unreferenced, untested, written
-      2026-09-01 20:39): commit with a test and a build-table line, or delete.
+- [x] `td/solvers/greedy_balanced.py` deleted 2026-09-02 (was untracked, unreferenced, untested).

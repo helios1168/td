@@ -41,7 +41,8 @@ saturation, does stage 1 get to see books (≈3.7 nats on the table vs. FINDINGS
 invariant)? (2) C4 → stage-2 rescore of the power-diagram cells → adopt unless staffing drops
 by more than the portfolio spread. (3) R1 fixes: `ceiling.py`'s `SATURATION = 0.05` and
 `channel_note` §5.1; FINDINGS §4C/C6's α ≈ 0.9 → measured ≈ 0.6. (4) R4's seven local note
-fixes plus the EF1-vacuity sentence above. (5) Dispose of `greedy_balanced.py`.
+fixes plus the EF1-vacuity sentence above. ~~(5) Dispose of `greedy_balanced.py`.~~ Deleted
+2026-09-02, never tracked.
 
 **Earlier — 2026-09-01 (post-review): a Gromov-method review of the note and formulation is in
 (`docs/REVIEW_GROMOV.md`) — and its check of §5.1's one assumed number came back an order
