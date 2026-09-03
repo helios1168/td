@@ -260,3 +260,105 @@ def test_power_weights_rejects_a_zero_mass_zip():
         assert "M" in str(e)
     else:
         raise AssertionError("expected ValueError for a zero-mass zip")
+
+
+# ------------------------------------------------------------------ anchored districts
+def test_residual_targets_water_fills():
+    """Water-fill against a fixed point: a saturated anchor keeps exactly its own mass."""
+    total, k = 400.0, 4
+    cases = [
+        ([0.0, 0.0, 0.0, 0.0], [100.0, 100.0, 100.0, 100.0]),
+        ([30.0, 0.0, 0.0, 0.0], [70.0, 100.0, 100.0, 100.0]),
+        ([250.0, 0.0, 0.0, 0.0], [0.0, 50.0, 50.0, 50.0]),
+        ([250.0, 120.0, 0.0, 0.0], [0.0, 0.0, 15.0, 15.0]),
+    ]
+    for locked, want in cases:
+        locked = np.array(locked)
+        out = centers.residual_targets(total, locked, k)
+        assert np.allclose(out, want), (locked, out, want)
+        assert math.isclose(out.sum() + locked.sum(), total, rel_tol=0, abs_tol=1e-9)
+
+    try:
+        centers.residual_targets(total, np.array([500.0, 0.0, 0.0, 0.0]), k)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("expected ValueError when locked mass exceeds the total")
+
+
+def test_assign_honours_targets():
+    """`targets=` steers the LP's mass rows; a zero target gets no zip at all."""
+    xy, M = heavy_cluster()
+    c = centers.seed_centers(xy, M, 3, 0)
+    labels, _ = centers.assign(xy, M, c, targets=[150.0, 75.0, 75.0])
+    mass = np.bincount(labels, weights=M, minlength=3)
+    assert np.abs(mass - np.array([150.0, 75.0, 75.0])).max() <= 2.0, mass
+
+    labels0, _ = centers.assign(xy, M, c, targets=[300.0, 0.0, 0.0])
+    assert set(labels0.tolist()) == {0}, labels0
+
+
+def test_draw_without_locks_is_unchanged():
+    """`locked=None` and an all-free `locked` array must draw byte-identical labels."""
+    for xy, M in [three_clusters()[:2], heavy_cluster()]:
+        n = xy.shape[0]
+        for seed in range(3):
+            a = centers.draw(xy, M, 3, seed=seed)
+            b = centers.draw(xy, M, 3, seed=seed, locked=np.full(n, -1))
+            assert np.array_equal(a["labels"], b["labels"])
+
+
+def test_draw_respects_anchor():
+    """Locking 30 of the heavy cluster's points to district 0 must not move them, and the
+    solver must still balance the three districts around the common target."""
+    xy, M = heavy_cluster()
+    n = xy.shape[0]
+    locked = np.full(n, -1)
+    locked[:30] = 0
+    res = centers.draw(xy, M, 3, seed=0, locked=locked)
+    assert np.all(np.asarray(res["labels"])[:30] == 0)
+    mass = np.array(res["masses"])
+    assert np.abs(mass - 100.0).max() / 100.0 < 0.05, mass
+    assert np.allclose(res["targets"], [100.0, 100.0, 100.0], atol=1e-6), res["targets"]
+
+
+def test_draw_saturated_anchor_gets_nothing():
+    """Locking the whole heavy cluster (mass 200, already past the 100 target) saturates
+    district 0: it must gain nothing further, and its target is its own realised mass."""
+    xy, M = heavy_cluster()
+    n = xy.shape[0]
+    locked = np.full(n, -1)
+    locked[:100] = 0
+    res = centers.draw(xy, M, 3, seed=0, locked=locked)
+    labels = np.asarray(res["labels"])
+    assert set(np.flatnonzero(labels == 0).tolist()) == set(range(100))
+    assert math.isclose(res["targets"][0], 200.0, rel_tol=0, abs_tol=1e-6)
+    mass = np.array(res["masses"])
+    assert abs(mass[1] - 50.0) / 50.0 < 0.05, mass
+    assert abs(mass[2] - 50.0) / 50.0 < 0.05, mass
+
+
+def test_improve_never_moves_locked():
+    """`movable=False` zips must keep their label through `improve`, whatever they started at."""
+    xy, M = heavy_cluster()
+    n = xy.shape[0]
+    rng = np.random.default_rng(5)
+    labels = rng.integers(0, 3, size=n)
+    movable = np.ones(n, bool)
+    fixed_idx = rng.choice(n, size=40, replace=False)
+    movable[fixed_idx] = False
+    before = labels[fixed_idx].copy()
+    after = centers.improve(xy, M, labels, movable=movable)
+    assert np.array_equal(after[fixed_idx], before)
+
+
+def test_seed_centers_initial_first():
+    """`initial` centers occupy rows `0..a-1`; the remaining seed avoids sitting on them."""
+    xy, M = heavy_cluster()
+    initial = xy[:2].copy()
+    c = centers.seed_centers(xy, M, 3, 0, initial=initial)
+    assert np.allclose(c[:2], initial)
+    for pt in initial:
+        assert np.linalg.norm(c[2] - pt) > 1e-9
+    # the free seed is still a real zip's coordinate
+    assert np.isclose(xy, c[2]).all(axis=1).any()

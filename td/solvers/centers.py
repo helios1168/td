@@ -40,6 +40,18 @@ what is being equalised, and the weights are exactly the correction.  `power_wei
 them, along with the dual bound they certify; `power_labels` evaluates the cells.  This is
 Aurenhammer-Hoffmann-Aronov constrained least-squares assignment (docs/RESEARCH_FINDINGS.md).
 
+Anchored districts
+------------------
+`draw(..., locked=...)` pins some zips to districts before the solver runs.  Locked zips are
+excluded from the LP entirely and their mass is subtracted from the district's target via
+`residual_targets`, a water-fill that lets an anchor already at or past its share become
+*saturated* -- it receives no further zips, and the remaining target is spread over the
+districts still below it.  The final centers are still the M-weighted centroids of the final
+labels, locked zips included, so `us_maps.power_diagram_of_draw`'s exact recovery stays valid
+for anchor districts too.  Not handled here: certificate 4 (`cert_draw.py`) on an anchored draw
+needs `targets` set to the realised masses (already its default) and the locked zips excluded
+from the free-cell check -- that adaptation is out of scope for this module.
+
 No contiguity, no adjacency: this module is pure functions on arrays (`xy`, `M`, `k`, `rng`)
 and depends on nothing else in `td/`.  `to_district` converts a labelling into the
 `{zip_id: district}` mapping that `channel.stage2` consumes, so wiring stage 1 into stage 2 is
@@ -84,25 +96,43 @@ def _centroids(xy: np.ndarray, M: np.ndarray, labels: np.ndarray, k: int,
 
 
 # ------------------------------------------------------------------------ seeding
-def seed_centers(xy: np.ndarray, M: np.ndarray, k: int, rng=0) -> np.ndarray:
+def seed_centers(xy: np.ndarray, M: np.ndarray, k: int, rng=0,
+                 initial: np.ndarray | None = None) -> np.ndarray:
     """M-weighted k-means++ seeding: `(k, 2)` centers, deterministic given the seed.
 
     The first center is a zip drawn with probability proportional to `M`; each further center
     is drawn with probability proportional to `M_z * d^2(z, nearest chosen center)`.  Weighting
     by `M` rather than by count is the right prior here: the districts are equal in *mass*, so
     a dense-but-light region should not attract centers the way its zip count would suggest.
+
+    `initial` is `(a, 2)` centers already chosen (an anchored district's own centroid, say).
+    When given, they occupy rows `0..a-1` of the result and only the remaining `k - a` centers
+    are seeded, with `d2` initialised against `initial` rather than against a first center drawn
+    from `xy` -- so a free seed is steered away from the anchored regions from the start, and
+    there is no separate "first center ∝ M" step.
     """
     xy = np.asarray(xy, float)
     M = np.asarray(M, float)
     n = xy.shape[0]
-    if k < 1 or n < k:
-        raise ValueError(f"need 1 <= k <= n; got k={k}, n={n}")
     g = _as_rng(rng)
     p = M / M.sum()
-    first = int(g.choice(n, p=p))
-    idx = [first]
-    d2 = ((xy - xy[first]) ** 2).sum(axis=1)
-    for _ in range(k - 1):
+    if initial is None:
+        if k < 1 or n < k:
+            raise ValueError(f"need 1 <= k <= n; got k={k}, n={n}")
+        init = np.empty((0, xy.shape[1]))
+        first = int(g.choice(n, p=p))
+        idx = [first]
+        d2 = ((xy - xy[first]) ** 2).sum(axis=1)
+    else:
+        init = np.asarray(initial, float)
+        a = init.shape[0]
+        if not (0 <= a <= k) or n < k - a:
+            raise ValueError(f"need 0 <= a <= k and n >= k - a; got a={a}, k={k}, n={n}")
+        if a == k:
+            return init.copy()
+        idx = []
+        d2 = _dist2(xy, init).min(axis=1)
+    for _ in range(k - init.shape[0] - len(idx)):
         w = M * d2
         s = w.sum()
         # every remaining zip coincides with a chosen center (duplicate coordinates): fall
@@ -110,17 +140,23 @@ def seed_centers(xy: np.ndarray, M: np.ndarray, k: int, rng=0) -> np.ndarray:
         pick = int(g.choice(n, p=(w / s) if s > 0 else p))
         idx.append(pick)
         d2 = np.minimum(d2, ((xy - xy[pick]) ** 2).sum(axis=1))
-    return xy[np.array(idx)].copy()
+    return np.vstack([init, xy[np.array(idx)]])
 
 
 # --------------------------------------------------------------- balanced assignment
-def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray):
+def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
+           targets: np.ndarray | None = None):
     """Balanced assignment to fixed centers by the transportation LP.  `(labels, n_fractional)`.
 
     Solves the LP in the module docstring with `scipy.optimize.linprog(method="highs")` on the
     flattened `n*k` variables (n=1,229, k=13 -> ~16k columns, which HiGHS eats).  The mass
     equality uses the exact target `(sum M)/k`; after rounding the split zips the realised
     masses deviate slightly, which is expected -- `improve` is what cleans it up.
+
+    `targets` overrides the equal-split mass row with per-district masses in the units of `M`
+    (must sum to the total mass carried by `xy`/`M`, to 1e-6 relative); a target of 0 is
+    allowed and means the district is meant to take nothing from these zips -- `assign` neither
+    requires nor repairs a zip into it.
 
     Conditioning: both the objective coefficients and the mass column are descaled (distances
     by their mean, masses by their mean) before solving.  HiGHS' feasibility tolerances are
@@ -139,11 +175,18 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray):
     n, k = xy.shape[0], centers.shape[0]
     if k == 1:
         return np.zeros(n, int), 0
-    if n < k:
-        raise ValueError(f"cannot fill {k} districts with {n} zips")
+
+    w = M / M.mean()                                     # descaled mass column
+    if targets is None:
+        t = np.full(k, w.sum() / k)
+    else:
+        t = np.asarray(targets, float) / M.mean()
+        if t.shape != (k,) or (t < 0).any() or abs(t.sum() - w.sum()) > 1e-6 * w.sum():
+            raise ValueError(f"targets must be {k} nonnegative values summing to the total mass")
+    if n < int((t > 0).sum()):
+        raise ValueError(f"cannot fill {int((t > 0).sum())} nonempty districts with {n} zips")
 
     d2 = _dist2(xy, centers)
-    w = M / M.mean()                                     # descaled mass column
     c = (w[:, None] * d2).ravel()
     scale = c.mean()
     if scale > 0:
@@ -155,7 +198,7 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray):
     A_place = sparse.coo_matrix((np.ones(n * k), (rows_z, cols)), shape=(n, n * k))
     A_mass = sparse.coo_matrix((np.repeat(w, k), (rows_j, cols)), shape=(k, n * k))
     A_eq = sparse.vstack([A_place, A_mass]).tocsc()
-    b_eq = np.concatenate([np.ones(n), np.full(k, w.sum() / k)])
+    b_eq = np.concatenate([np.ones(n), t])
 
     res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, 1.0), method="highs")
     if not res.success:
@@ -164,21 +207,62 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray):
     X = np.asarray(res.x, float).reshape(n, k)
     labels = X.argmax(axis=1).astype(int)
     n_fractional = int((X.max(axis=1) < 1.0 - FRAC_TOL).sum())
-    _repair_empty(labels, d2, k)
+    _repair_empty(labels, d2, k, required=(t > 0))
     return labels, n_fractional
 
 
-def _repair_empty(labels: np.ndarray, d2: np.ndarray, k: int) -> None:
-    """In place: give every empty district its nearest zip taken from a district of size >= 2."""
+def _repair_empty(labels: np.ndarray, d2: np.ndarray, k: int,
+                  movable: np.ndarray | None = None, required: np.ndarray | None = None) -> None:
+    """In place: give every empty *required* district its nearest zip taken from a district of
+    size >= 2 -- and, when `movable` is given, only from among the zips it marks `True`, so a
+    locked zip is never donated.  `required` (default all `True`) skips a district whose target
+    is meant to be 0 (a saturated anchor): it is left empty on purpose.
+    """
     counts = np.bincount(labels, minlength=k)
-    for j in np.flatnonzero(counts == 0):
-        donors = np.flatnonzero(counts[labels] > 1)
+    req = np.ones(k, bool) if required is None else np.asarray(required, bool)
+    for j in np.flatnonzero((counts == 0) & req):
+        eligible = counts[labels] > 1
+        if movable is not None:
+            eligible = eligible & movable
+        donors = np.flatnonzero(eligible)
         if donors.size == 0:
             return
         z = int(donors[np.argmin(d2[donors, j])])
         counts[labels[z]] -= 1
         labels[z] = j
         counts[j] += 1
+
+
+def residual_targets(total: float, locked: np.ndarray, k: int) -> np.ndarray:
+    """Water-fill the per-district LP target that is left after subtracting locked mass.
+
+    `locked[j]` is the mass already locked into district `j` (0 for a free district). Start
+    from the equal split `total / k`; any district already at or past that share is
+    *saturated* -- its target is its own locked mass, it gets nothing more -- and the equal
+    split is recomputed over the districts still below it. Repeat to a fixed point (at most
+    `k` iterations, since each round saturates at least one more district). Returns the
+    per-district target for the **zips still to be assigned**, i.e. `target_j - locked_j`, so
+    a saturated district returns 0 and the unsaturated ones share what is left.
+
+    `out.sum() + locked.sum() == total` (to `1e-9 * total`): nothing is created or lost, only
+    redistributed among the districts not yet saturated.
+    """
+    locked = np.asarray(locked, float)
+    if locked.shape != (k,) or (locked < 0).any() or locked.sum() > total * (1 + 1e-9):
+        raise ValueError(f"locked must be {k} nonnegative values summing to at most {total}")
+    sat = np.zeros(k, bool)
+    t = 0.0
+    while True:
+        free = ~sat
+        if not free.any():
+            break
+        t = (total - locked[sat].sum()) / free.sum()
+        new = free & (locked >= t)
+        if not new.any():
+            break
+        sat |= new
+    target = np.where(sat, locked, t)
+    return np.maximum(target - locked, 0.0)
 
 
 # ---------------------------------------------------- the duals, and the power diagram
@@ -316,8 +400,12 @@ def power_weights(xy, M, centers, targets=None) -> dict:
 
 # ---------------------------------------------------------------------- local polish
 def improve(xy: np.ndarray, M: np.ndarray, labels: np.ndarray, iters: int = 20,
-            n_near: int = 3):
+            n_near: int = 3, movable: np.ndarray | None = None):
     """Greedy single-zip moves that raise `sum_j log M_j`.  Returns new labels (a copy).
+
+    `movable` (boolean, one per zip) skips a zip entirely when `False` -- a locked zip is never
+    moved, though its mass and count still count towards its district's `mass`/`counts` (it can
+    still be a *donor's* district shrinking, just not the donor itself).
 
     Accept rule, exactly as implemented:
 
@@ -353,6 +441,8 @@ def improve(xy: np.ndarray, M: np.ndarray, labels: np.ndarray, iters: int = 20,
         counts = np.bincount(labels, minlength=k)
         moved = 0
         for z in range(labels.size):
+            if movable is not None and not movable[z]:
+                continue
             a = int(labels[z])
             if counts[a] <= 1:
                 continue
@@ -426,7 +516,8 @@ def metrics(M: np.ndarray, labels: np.ndarray, xy: np.ndarray = None,
 
 # ------------------------------------------------------------------------- pipeline
 def draw(xy: np.ndarray, M: np.ndarray, k: int, seed=0, rounds: int = 10,
-         improve_iters: int = 20, n_near: int = 3) -> dict:
+         improve_iters: int = 20, n_near: int = 3,
+         locked: np.ndarray | None = None) -> dict:
     """Seed -> (assign, recenter)* -> polish.  One draw, as a dict of labels + centers + metrics.
 
     The loop is Lloyd's algorithm with the balanced assignment step in place of the nearest-
@@ -437,26 +528,68 @@ def draw(xy: np.ndarray, M: np.ndarray, k: int, seed=0, rounds: int = 10,
 
     Every round's assignment is exactly balanced *before* rounding, so unlike plain k-means
     there is no drift to a lopsided fixed point -- the rounds only buy compactness.
+
+    `locked` pins some zips to districts before any of this runs: `-1` for a free zip, else a
+    district index `0..a-1` (the anchor districts occupy the first `a` labels). Locked zips
+    never enter the LP; their mass is subtracted from each anchor's target via
+    `residual_targets`, the anchor centers seed `seed_centers` so the free centers start away
+    from them, and `improve` never moves them (see "Anchored districts" in the module
+    docstring). `locked=None`, or a `locked` with no entry `>= 0`, reproduces the unanchored
+    draw exactly and adds `locked_mass` (all 0) and `targets` (the equal split) to the result
+    for a uniform return shape.
     """
     xy = np.asarray(xy, float)
     M = np.asarray(M, float)
     if (M <= 0).any():
         raise ValueError("every zip needs positive opportunity M (a zero makes log M_j -inf)")
-    centers = seed_centers(xy, M, k, seed)
-    labels, n_frac, used, converged = None, 0, 0, False
+    n = xy.shape[0]
+
+    # -1 everywhere (or None) is the unanchored draw; keep that path literally identical --
+    # `targets=None`, `initial=None`, `movable=None` -- so existing draws reproduce bit-for-bit
+    locked_arr = np.full(n, -1) if locked is None else np.asarray(locked, int)
+    if locked_arr.shape != (n,):
+        raise ValueError(f"locked must have shape ({n},); got {locked_arr.shape}")
+    is_locked = locked_arr >= 0
+    free = ~is_locked
+    a = int(locked_arr.max()) + 1 if is_locked.any() else 0
+    if a > k:
+        raise ValueError(f"locked references district {a - 1} but k={k}")
+    counts_a = np.bincount(locked_arr[is_locked], minlength=a)
+    if (counts_a == 0).any():
+        raise ValueError(f"anchor district(s) {np.flatnonzero(counts_a == 0).tolist()} "
+                         f"have no locked zips")
+
+    locked_mass = np.bincount(locked_arr[is_locked], weights=M[is_locked], minlength=k)
+    lp_targets = residual_targets(float(M.sum()), locked_mass, k)
+    if a:
+        anchor_centers = _centroids(xy[is_locked], M[is_locked], locked_arr[is_locked], a)
+        centers = seed_centers(xy[free], M[free], k, seed, initial=anchor_centers)
+    else:
+        centers = seed_centers(xy, M, k, seed)
+
+    labels = locked_arr.copy()
+    prev, converged, n_frac, used = None, False, 0, 0
     for r in range(max(int(rounds), 1)):
-        new, n_frac = assign(xy, M, centers)
+        if free.any():
+            new_free, n_frac = assign(xy[free], M[free], centers,
+                                      targets=lp_targets if a else None)
+            labels = locked_arr.copy()
+            labels[free] = new_free
         used = r + 1
-        if labels is not None and np.array_equal(new, labels):
-            labels, converged = new, True
+        if prev is not None and np.array_equal(labels, prev):
+            converged = True
             break
-        labels = new
+        prev = labels
         centers = _centroids(xy, M, labels, k, prev=centers)
-    polished = improve(xy, M, labels, iters=improve_iters, n_near=n_near)
+
+    polished = improve(xy, M, labels, iters=improve_iters, n_near=n_near,
+                       movable=free if a else None)
     centers = _centroids(xy, M, polished, k, prev=centers)
     out = dict(labels=polished, centers=centers, seed=seed, rounds_used=used,
                converged=bool(converged), n_fractional=int(n_frac),
-               n_moved=int((polished != labels).sum()))
+               n_moved=int((polished != labels).sum()),
+               locked_mass=[float(v) for v in locked_mass],
+               targets=[float(v) for v in (locked_mass + lp_targets)])
     out.update(metrics(M, polished, xy, centers))
     return out
 
