@@ -50,6 +50,19 @@ k=13, and at k=16 saturated at Florida's own 183.6 against a 171.6 target. No TX
 out of SOUTHWEST at any k. The k=13 map renders; SOUTHWEST and D07 share a hue (the 12-colour
 palette).
 
+*Later the same day — the ten-seed sweep and its artifact.* `battery/results/sweep_20260902_s10/`
+(`--k 8-16 --seeds 0-9 --workers 8`, 56 s, no pins): every k lands every district within 5% of
+target and staffs all of them; spread 0.47%–1.31%. **At k=13 seed 9 staffs at 60.0401 nats,
++0.103 over the certified seed-3 draw (59.9375)** — the five extra seeds changed the k=13 map,
+and the portfolio's gain (winner minus stage-1-best) is 0.03–0.11 nats at k ≥ 11 and zero at
+k ≤ 10. Maps for k = 10, 13, 16 are tracked under `figures/sweep_20260902_s10/k<kk>/`
+(`districts.png`, `district_regions.png`). Artifact, sweep table + charts + maps:
+https://claude.ai/code/artifact/c007d61d-c753-4151-9026-2288b9d5eb38 (the 2026-09-01 atlas
+at `1f2cddd9…` still shows the certified k=13 draw). Decision this raises: adopt the seed-9
+k=13 map, or keep the certified seed-3 one? The two are Nash-indistinguishable (0.84% vs
+0.78% spread, both far under the 5e-3-nat tier-2 floor); staffing is the only difference, and
+the certificates were run on seed 3.
+
 *Process note.* The first implementation attempt used the `python-typed` agent, whose Serena
 binding pointed at the session's launch worktree (`national-channel`) and edited
 `centers.py` there; the residue was reverted by file copy and verified by `diff`. Both the

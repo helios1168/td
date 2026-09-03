@@ -22,9 +22,15 @@
 - **The scenario runner:** `tools/run_draw.py instance_descaled.json.gz --k 8-16 --seeds 0-4
   --fix SOUTHWEST=TX,OK --anchor FLORIDA=FL --workers 8 --out battery/results/<run>/`
   (module docstring has the layout; `--scenario file.json` takes the same `fix`/`anchor` keys).
-  Latest runs: `battery/results/sweep_20260902/` (unpinned) and `sweep_20260902_south/`.
+  Latest runs: `battery/results/sweep_20260902_s10/` (unpinned, seeds 0–9 — the published one),
+  `sweep_20260902/` (seeds 0–4) and `sweep_20260902_south/` (SOUTHWEST fixed, FLORIDA anchored).
+- **Sweep artifact** (table, charts, maps at k = 10/13/16):
+  https://claude.ai/code/artifact/c007d61d-c753-4151-9026-2288b9d5eb38 · maps tracked under
+  `figures/sweep_20260902_s10/`. The 2026-09-01 atlas (`1f2cddd9…`) still shows the certified k=13 draw.
 
 ## Next actions
+- [ ] **Adopt the seed-9 k=13 map (60.040 nats) or keep the certified seed-3 one (59.938)?**
+      Nash-indistinguishable; staffing differs by 0.103 nats; certificates were run on seed 3.
 - [ ] **Sponsor: which states, if any, are hand-drawn?** The pin is by state, so FRAME §8
       A12 (decision grain) is live; the `--fix` cost shows as the other districts' uniform
       shortfall in `sweep.csv` (`vs_target` is against `total / k` on purpose).
