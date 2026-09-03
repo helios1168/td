@@ -10,14 +10,18 @@
 `td/model.py`, `td/instance.py`; `instance_descaled.json.gz`;
 `battery/results/draw_k13_20260901/` ·
 **Owns:** this file, `docs/artifacts/U1-cert/**` ·
-**Not read (does not exist):** `docs/LIT_optimization.md` — U0-lit has not run, so the split-unit
-count is proved here and marked *pending citation*.
+**Not read (does not exist):** `docs/LIT_optimization.md` — U0-lit has not run. The split-unit
+count is proved here, but *not* as a new result: `VERIFY_U1-cert` §5 shows it is the standard
+`≤ k − 1` already cited in the lens as `brieden2017 Lem. 4`.
 
 **Headline.** Three of the four certificates collapse; the fourth does not, and its resistance is
 informative rather than a defect. Measured on the real instance, the fibre bound at the delivered
 roster is `EG_{S₁₃} = 60.697416` against a delivered `V = 59.937470` — a **0.7599-nat** optimality
 gap on the objective the business signs, where the analytic balance ceiling gives only **9.6491**
 nats. The EG bound is decision-relevant against FRAME §6's ~3.7-nat premium; the ceiling is not.
+The gap is **conditional on the delivered roster `S₁₃`**; `max_S EG_S` is bounded above only by
+the ceiling. Verified adversarially in `docs/VERIFY_U1-cert.md` (2026-09-03); the corrections it
+returned are applied below and marked in place.
 
 ---
 
@@ -105,8 +109,13 @@ statement of which existing certificates are redundant.
 >   `cert_balance_ceiling` returns as `ceiling_nash`. The certificate is therefore
 >   *EG's dual evaluated at prices proportional to opportunity*, checkable in `O(n)`. `[proved]`
 > - **P2.2 `cert_integer_balance_floor` is NOT a degeneration or restriction of the dual.**
->   Its LP relaxation has optimum `t = 0` (split every unit fractionally), so it carries no dual
->   bound at all; its entire content is primal-constructive. What it measures is the **slack in
+>   Its LP relaxation has optimum `t = 0` (split every unit fractionally), so **its LP root bound
+>   is vacuous — which is what rules out its being a degeneration of a linear dual**. *(Corrected
+>   2026-09-03 per `VERIFY_U1-cert` §4: an earlier version said "carries no dual bound at all",
+>   which is too strong — when the MILP closes, branch-and-bound does return a valid
+>   `t_lower > 0`; on the toy `proved=True` with `t_lower = 0.6667`. What is vacuous is the root
+>   relaxation, not the certificate.)* Its usable content at production size is
+>   primal-constructive. What it measures is the **slack in
 >   P1** at `u_i ≡ λM` — the achievability half of the same sandwich — and the conversion to
 >   nats is `k log(T/k) − max_π Σ_j log m_j ≤ k ε²/(2(1−ε)²)` with `ε = t*/(T/k)`.
 >   `[proved]` — **this is a partial refutation of `DOMAIN_optimization.md` §3's load-bearing
@@ -125,12 +134,26 @@ statement of which existing certificates are redundant.
 >   different, equally valid, dual optimum which is *not* the EG multiplier. `[proved; the
 >   nondegeneracy caveat is new and is a caveat on an existing certificate]`
 
-> **P3a (the split-unit count, and where `k−1` comes from).** The set of `EG_S` optima at `ρ = 0`
-> is exactly `{X feasible : g(X) = g*}` with `g*` unique. Its constraint matrix has rank
-> `n + k` in general and `n + k − 1` **exactly when the `u_i` are mutually proportional**. Hence a
-> vertex optimum splits at most `k` units in general and at most `k − 1` in the common-measure
-> (`τ = 0`) case. **The lens's `[standard]` `≤ |S| − 1` is a `τ = 0` privilege**; the honest
-> heterogeneous statement is `≤ k`. `[proved here — pending citation, U0-lit has not run]`
+> **P3a (the split-unit count) — corrected 2026-09-03 per `VERIFY_U1-cert`.** At `ρ = 0`, every
+> vertex of the optimal face splits at most **`k − 1`** units, heterogeneous `u` or not. The
+> argument is the equilibrium one: a vertex `X` is an EG optimum, so it carries KKT prices `p`
+> with `supp(X) ⊆ MBB(p)`, `Σ_i x_{zi} = 1` and `Σ_z p_z x_{zi} = 1`; on the MBB-restricted face
+> `P'` those two constraint families are linearly dependent
+> (`Σ_z p_z·supply_z − Σ_i budget_i = k − Σ_z p_z`, which contains no `x` and vanishes because
+> every good is sold and every budget spent), so `rank(P') ≤ n + k − 1` and `X` has at most
+> `n + k − 1` nonzeros. **`brieden2017 Lem. 4`'s `≤ |S| − 1` therefore needs no replacement and
+> is not a `τ = 0` privilege.** `[proved — VERIFY_U1-cert §5; the standard
+> linear-Fisher-market / transportation forest argument, to be cited rather than re-proved]`
+
+> **P3a′ (the coarser rank statement, kept as true but non-minimal) — corrected 2026-09-03.**
+> Let `A` be the constraint matrix of `P = {X ≥ 0 : Σ_i x_{zi} = 1 ∀z, Σ_z u_i(z) x_{zi} = g*_i
+> ∀i}`, the *unrestricted* description of the optimal face. Assuming `u_i ≢ 0` for every `i`,
+> `rank(A) = n + k` in general and `n + k − 1` **exactly when the `u_i` are mutually
+> proportional**; hence `A` alone yields only `≤ k` splits. `A` is **not a minimal description of
+> the face** — P3a's `P' ⊆ P` is tighter — so the `≤ k` reading is valid but never attained
+> (`≤ k − 1` in every instance searched, and `|F| = 10` here). The `u_i ≢ 0` hypothesis is
+> needed for the "iff": `u_1 ≡ 0` with the other columns non-proportional also gives rank
+> `n + k − 1`. On this instance P1b discharges it. `[proved; superseded as a bound by P3a]`
 
 > **P3b (the gap in value, not count).** Let `X*` be a vertex optimum with split set `F` and
 > `L_i = Σ_{z∈F} u_i(z) x*_{zi}`. Rounding each split unit to one of its buyers gives an integral
@@ -147,11 +170,14 @@ statement of which existing certificates are redundant.
 > gap actually realised is `5.131e-4` nats. `[measured]`
 
 > **P4 (what the fibre bound says about the instance).** At the delivered roster `S₁₃`,
-> `EG_{S₁₃} = 60.697416` (certified bracket width `1.3e-13` nats), so no coverage staffed by
-> those 13 reps is worth more than `0.7599` nats above the delivered draw — and rounding the EG
-> vertex realises `0.7594` of it constructively. But the rounded coverage has an `M`-spread of
-> **54.21%** against the delivered `0.781%`, so essentially the whole gap is bought by abandoning
-> the balance FRAME §9 records as settled. `[measured]`
+> `EG_{S₁₃} = 60.697416` (certified bracket width **`7.1e-15`** nats by `math.fsum` on
+> `VERIFY_U1-cert`'s independent iterate, `3.6e-15` at 50 mpmath digits; this unit's own iterate
+> gives `1.35e-13` — the width is a property of the iterate, not of the instance, and both
+> brackets contain the same value), so no coverage staffed by those 13 reps is worth more than
+> `0.7599` nats above the delivered draw — and rounding the EG vertex realises `≈ 0.758` of it
+> constructively (`0.7594` at this unit's vertex, `0.7580` at the verifier's). But the rounded
+> coverage abandons balance: `M`-spread `≥ 50 %` on both runs against the delivered `0.781 %`.
+> `[measured; bracket corrected 2026-09-03 per VERIFY_U1-cert]`
 
 ---
 
@@ -211,12 +237,17 @@ k log(T/k)`. ∎
 the composite `V` too. It is therefore *already* the outer term of the sandwich, and §5 #7's
 barrier solve of `EG_R` can only tighten a bound that is available for free.
 
-**Where this breaks.** `filler_capture` is an open FRAME §9 decision. At `"full"` (`c_free = c1`,
-`docs/MODEL.md` §6.7's *recommended* option) the measured `max_{i,z} u_i(z)/M_z = 1.294899 > 1`
-and headroom in the strong form fails; the corrected bound is
-`EG_S ≤ k log(T/k) + Σ_{i∈S} log ν_i`, and the correction is up to `+3.360` nats — the same order
-as the premium term the certificate exists to bound. **P1c is conditional on a business decision
-that is open.**
+**Where this breaks — corrected 2026-09-03 per `VERIFY_U1-cert` §5.** `filler_capture` is an open
+FRAME §9 decision. At `"full"` (`c_free = c1`, `docs/MODEL.md` §6.7's *recommended* option) the
+measured `max_{i,z} u_i(z)/M_z = 1.294899 > 1` on 74 zips and headroom in the strong form fails;
+the corrected bound is `EG_S ≤ k log(T/k) + Σ_{i∈S} log ν_i`. The correction is
+**`+0.258438` nats** at `S₁₃`, and `max_S Σ_{i∈S} log ν_i` over all `C(111,13)` staff sets is
+**also `0.258438`** (the top-13 `log ν_i` are attained by the delivered roster). *An earlier
+version of this note quoted `+3.360` nats and called it "the same order as the premium term";
+that figure is the uniform coarsening `k·log ν_max`, which is a valid but 13× loose bound and is
+not what P1c states. The sharp correction is `0.26` nats against a `3.7`-nat premium — material
+for a tier-2 claim, not for the premium question.* **P1c remains conditional on a business
+decision that is open**, but the conditional is cheap.
 
 ### P2.1 — the ceiling is EG's dual at prices proportional to opportunity
 
@@ -239,11 +270,21 @@ ceiling, which is P1c's corrected form.
 ### P2.2 — the integer balance floor does not collapse, and why that is the useful answer
 
 `cert_integer_balance_floor` solves `min t s.t. |Σ_z M_z x_{zj} − T/k| ≤ t, Σ_j x_{zj} = 1,
-x ∈ {0,1}`. Its LP relaxation has optimum `t = 0` — set `x_{zj} = 1/k` for all `z,j` — so **no
-dual of that model bounds anything**; the certificate's docstring says as much
+x ∈ {0,1}`. Its LP relaxation has optimum `t = 0` — set `x_{zj} = 1/k` for all `z,j`, and the two
+symmetry breaks in the implementation (`td/solvers/cert_draw.py:405-445`) do not move it — so
+**its LP root bound is vacuous**; the certificate's docstring says as much
 (`td/solvers/cert_draw.py:340-357`: "the root bound is vacuous", "the primal side therefore does
 not go through the MILP", measured `0` nodes and no incumbent in 300 s at `n=1,223, k=13`).
-A certificate whose LP dual is identically zero cannot be a degeneration of a dual that is not.
+A certificate whose *linear* dual is identically zero cannot be a degeneration of a dual that is
+not — that is the argument, and it is unaffected by branch-and-bound.
+
+*Corrected 2026-09-03 per `VERIFY_U1-cert` §4:* an earlier version of this paragraph said the
+certificate "carries no dual bound at all", which is too strong. When the MILP **closes**, B&B
+returns a valid `t_lower > 0` (on a toy, `proved=True` with `t_lower = 0.6667`), and `t*` is
+itself a legitimate outer bound in balance space on every partition's `max_dev`. What the
+argument needs, and all it needs, is that the *LP root* bound is `0`. At production size the
+MILP does not close, so the primal reading below is the operative one — but it is a reading, not
+the only one.
 
 What it *is*: the achievability half of P1's sandwich at `τ = 0`. P1 says `EG_S` bounds every
 integral coverage from above; at `u_i ≡ λM`, `EG_S` equals the ceiling and is generally not
@@ -310,30 +351,49 @@ multipliers. Recorded because the programme's reading of the weights as "the EG 
 only off the degenerate locus, and a balance-tight transportation LP is degenerate by construction
 (`DOMAIN_optimization.md` §2.6 failure mode makes the same observation about ranging).
 
-### P3a — the split-unit count
+### P3a / P3a′ — the split-unit count · **corrected 2026-09-03 per `VERIFY_U1-cert` §5**
 
 `Σ log` is strictly concave and `G := {g(X) : X feasible}` is convex and compact, so the optimal
-gain vector `g*` is unique and the optimal face is `P := {X ≥ 0 : Σ_i x_{zi} = 1 ∀z,
-Σ_z u_i(z) x_{zi} = g*_i ∀i}`. A vertex of `P` has at most `rank(A)` nonzeros, where `A` has rows
-`P_z` (coefficient `1` on `(z,i)` for all `i`) and `G_i` (coefficient `u_i(z)` on `(z,i)` for all
-`z`).
+gain vector `g*` is unique and the set of optima is `P := {X ≥ 0 : Σ_i x_{zi} = 1 ∀z,
+Σ_z u_i(z) x_{zi} = g*_i ∀i}`.
 
-*Rank.* A left-null vector `(a, b)` satisfies `a_z + b_i u_i(z) = 0` for every `(z,i)`. If some
-`b_i ≠ 0` then `u_i(z) = −a_z/b_i` for all `z`, i.e. `u_i ∝ a`; if some other `b_{i'} = 0` then
-`a ≡ 0` and hence `b_i u_i ≡ 0`, a contradiction unless `u_i ≡ 0`. So a nontrivial dependency
-exists **iff all the `u_i` are mutually proportional**, in which case there is exactly one.
-Therefore `rank(A) = n + k` in general and `n + k − 1` under proportionality.
+**P3a (the bound that holds).** Let `X` be a vertex of `P`. Because `X` is an EG optimum it is a
+Fisher-market equilibrium allocation: there are prices `p > 0` with `supp(X) ⊆ MBB(p) :=
+{(z,i) : u_i(z)/p_z = max_{z'} u_i(z')/p_{z'}}`, every good sold (`Σ_i x_{zi} = 1`) and every
+unit budget spent (`Σ_z p_z x_{zi} = 1`). Let `P'` be the polytope cut out by those three
+conditions. Every point of `P'` is an equilibrium allocation at the same `p`, hence an EG
+optimum, so `P' ⊆ P`; and `X ∈ P'`, so `X` is a vertex of `P'` as well. In `P'` the two equality
+families are linearly dependent:
 
-Each unit has at least one positive entry, so the number of units with two or more is at most
-`rank(A) − n`: **`≤ k` in general, `≤ k − 1` at `τ = 0`.** ∎
+```
+Σ_z p_z·(supply row z)  −  Σ_i (budget row i)  =  k − Σ_z p_z  =  0,
+```
 
-Verified numerically on the toy (`heterogeneous 11, u_i = M 10, u_i = c_i M 10; n+k = 11`) and
-consistent with the instance (`|F| = 10 ≤ 13`). **Label: proved here, pending citation.**
-`DOMAIN_optimization.md` §6 Q5 asks `lit-search` for the balanced-fractional-clustering version;
-`LENS_GROTHENDIECK.md` §2 attributes `≤ k−1` to `brieden2017 Lem. 4`, which is a common-measure
-statement and is therefore the `τ = 0` half of the above, correctly cited. The heterogeneous `≤ k`
-appears to be new to this programme; if U0-lit returns a citation the proof here should be
-replaced by it, not kept alongside it.
+an identity in the *constants* with no `x` in it (it vanishes because the market clears and all
+`k` unit budgets are spent). So `rank(P') ≤ n + k − 1`, a vertex of `P'` has at most `n + k − 1`
+nonzeros, every unit has at least one, and therefore **at most `k − 1` units are split — with no
+hypothesis on the `u_i`.** ∎
+
+This is the standard linear-Fisher-market / transportation forest argument.
+`LENS_GROTHENDIECK.md` §2's `[standard, brieden2017 Lem. 4]` `≤ |S| − 1` **stands as cited and
+needs no replacement**; it is not a common-measure privilege. Measured: the vertex support on the
+instance is `1240 = n + k − 2` edges (a forest over two components), inside `n + k − 1 = 1241`.
+
+**P3a′ (the coarser statement, retained because it is true and was checked).** Working instead
+with the unrestricted description `P` and its matrix `A` — rows `P_z` (coefficient `1` on `(z,i)`
+for all `i`) and `G_i` (coefficient `u_i(z)` on `(z,i)` for all `z`) — a left-null vector `(a,b)`
+satisfies `a_z + b_i u_i(z) = 0` for every `(z,i)`. If some `b_i ≠ 0` then `u_i ∝ a`; if some
+other `b_{i'} = 0` then `a ≡ 0` and hence `b_i u_i ≡ 0`, a contradiction **provided `u_i ≢ 0`**.
+So, under `u_i ≢ 0` for all `i`, a nontrivial dependency exists iff all the `u_i` are mutually
+proportional, and `rank(A) = n + k` in general, `n + k − 1` under proportionality — giving only
+`≤ k`. Verified on the toy (`heterogeneous 11, u_i = M 10, u_i = c_i M 10; n+k = 11`).
+
+**What was wrong and what replaced it.** The `u_i ≢ 0` hypothesis was unstated (a counterexample
+is `u_1 ≡ 0` with the remaining columns non-proportional, which also gives `n + k − 1`; P1b
+discharges it here). More importantly, `A` is not a minimal description of the face, so the `≤ k`
+it yields is loose: `P' ⊆ P` gives `≤ k − 1` unconditionally, and `≤ k` is never attained in any
+instance searched. **The earlier claim that "`≤ |S| − 1` is a `τ = 0` privilege and the honest
+heterogeneous statement is `≤ k`" is retracted.**
 
 ### P3b — the gap in value
 
@@ -377,7 +437,7 @@ Command C: `docs/artifacts/U1-cert/check_p2.py` (≈5 s).
 | — agrees with `metrics.json` `winner.stage2_value` | `59.9374697984` | A |
 | **`EG_{S₁₃}` primal (feasible `X`)** | **`60.6974156139`** | A |
 | **`EG_{S₁₃}` dual (weak duality, any `p>0`)** | **`60.6974156139`** | A |
-| certified bracket width | `1.279e-13` nats | A |
+| certified bracket width | **`7.1e-15`** (`VERIFY_U1-cert`, fsum); `1.35e-13` at this unit's iterate | A / VERIFY |
 | **`EG_{S₁₃} − V(delivered)`** | **`0.7599458154`** nats | A |
 | `k log(T/k) − EG_{S₁₃}` | `8.8891095303` nats | A |
 | `k log(T/k) − V(delivered)` | `9.6490553457` nats | A |
@@ -399,36 +459,53 @@ Command C: `docs/artifacts/U1-cert/check_p2.py` (≈5 s).
 
 | quantity | value | script |
 |---|---|---|
-| split units at a vertex of the optimal face | `10` (`≤ k = 13`) | A |
-| the split zips | `07059 07901 11230 21401 27408 45236 55391 84111 92020 92614` | A |
-| `M(F)` | `66.1681` = `2.410 %` of `T` | A |
+**Vertex-dependent, corrected 2026-09-03 per `VERIFY_U1-cert` §5.** The optimal face has many
+vertices and which one a simplex lands on is solver-path dependent. `VERIFY_U1-cert`'s independent
+run reaches the *same* `g*` (to `7e-14`) and the same `EG` (to `1e-13`) but a **different split
+set of the same size**. Both columns are reported below; **no single-vertex figure in this block
+should be quoted as "the" value.**
+
+| quantity | this unit (`instance_numbers.py`) | `VERIFY_U1-cert`'s vertex | invariant? |
+|---|---|---|---|
+| split units `|F|` | `10` | `10` | **yes, `≤ k−1 = 12`** (P3a) |
+| the split zips | `07059 07901 11230 21401 27408 45236 55391 84111 92020 92614` | `11230 21401 22102 33301 55110 63103 70005 84111 92130 92614` | no |
+| `M(F)` | `66.1681` (`2.410 %` of `T`) | `87.6585` (`3.193 %`) | **`M(F) < g_min`**, so P3b is finite |
+| P3b with per-agent `L_i` | `0.2448` nats | `0.3227` nats | no — but always `≥` the realised gap |
+| P3b with the realised `M(F)` | `1.0177` nats | `1.8707` nats | no — but always `≥` the per-agent form |
+| integrality gap realised | `5.131e-4` nats | `1.919e-3` nats | no; **`≤` both bounds** (the chain's direction *is* invariant) |
+| `V` of the rounded EG vertex | `60.6969024656` | `60.6954967680` | no; improvement over delivered `≈ 0.758` either way |
+| rounded `M`-spread | `54.21 %` | `58.97 %` | **`≥ 50 %` on both runs — the rounded EG optimum abandons balance** |
+| rounded max deviation | `33.00 %` | `33.00 %` | yes on both runs |
+| `max_i L_i/g*_i` (P3b's strictness step) | `0.040296` | — | no |
+
+Instance-level and vertex-independent:
+
+| quantity | value | script |
+|---|---|---|
 | a-priori worst case: `12` largest zips | `249.392` = `9.083 %` of `T` | A |
 | `M(F)_worst / g_min` | `2.4069` → **bound `= +∞`, vacuous** | A |
-| P3b with the realised `M(F)` | `1.0177` nats | A |
-| P3b with per-agent `L_i` | `0.2448` nats | A |
-| **integrality gap actually realised** | **`5.131e-4`** nats | A |
-| `max_i L_i/g*_i` (used in P3b's strictness step) | `0.040296` | A |
-| `V` of the rounded EG vertex | `60.6969024656` | A |
-| — its improvement over the delivered draw | `+0.7594` nats | A |
-| — its `M`-spread / max deviation | `54.21 %` / `33.00 %` | A |
+| `g_min` at the EG optimum | `103.617149` | A |
 
 ### 4.4 Hypothesis checks and flipping thresholds
 
 | quantity | value | reading | script |
 |---|---|---|---|
 | `min_z M_z` | `1.80577e-3 > 0` | P1b holds; no starvation guard needed | A |
-| `max_{i,z} u_i(z)/M_z`, `filler="theta"` | `1.00000042` | headroom holds to export rounding | A |
-| ceiling correction for that slack | `5.46e-6` nats | `≫` tier 1 (`1e-8`), `≪` tier 2 (`5e-3`) | A |
-| `max_{i,z} u_i(z)/M_z`, `filler="full"` | `1.2948988` | **headroom fails**; P1c needs `+3.360` nats | A |
+| `max_{i,z} u_i(z)/M_z`, `filler="theta"` | `1.00000042` on `69` zips | headroom holds to export rounding | A |
+| — coarse correction `k log ν_max` | `5.46e-6` nats | `≫` tier 1 (`1e-8`), `≪` tier 2 (`5e-3`) | A |
+| — **sharp** correction `Σ_{i∈S} log ν_i` at `S₁₃` / `max_S` | `−6.59e-2` / `+4.20e-6` nats | the proposition's own form; negative because most `ν_i < 1` | A |
+| `max_{i,z} u_i(z)/M_z`, `filler="full"` | `1.2948988` on `74` zips | **headroom fails** | A |
+| — coarse correction `k log ν_max` | `+3.3596` nats | valid but `13×` loose; **not** what P1c states | A |
+| — **sharp** correction `Σ_{i∈S} log ν_i` at `S₁₃` / `max_S` | **`+0.258438` / `+0.258438`** nats | corrected 2026-09-03 per `VERIFY_U1-cert` §5 | A |
 | **threshold — `EG_R` useful** | `EG_R ≤ 63.637` | else the outer term cannot see FRAME §6's `3.7`-nat premium | A |
 | **threshold — `M(F)` swamps the premium** | `M(F) ≥ 101.055` (`3.68 %` of `T`) | measured `2.410 %`, so P3b bites at `1.018` nats but is not decorative | A |
-| toy: rank of the optimal face | `11` heterogeneous, `10` proportional (`n+k = 11`) | P3a's `k` vs `k−1` | B |
+| toy: rank of `A` (the *non-minimal* face description) | `11` heterogeneous, `10` proportional (`n+k = 11`) | P3a′ only; **P3a's `≤ k−1` comes from `P′`, not from `A`** | B |
 | toy: `P1` over all `4 × 3^8` coverages | `max(V − EG_upper) = −4.02e-3` | P1 at `ρ=0` | B |
 | toy: `P1` at `ρ = 0.05` with `C_TV` | `max(V_ρ − EG_ρ) ≤ −5.5e-2` | P1 at `ρ>0` | B |
 | toy: `P1` proof identity over all `3^8` | `max |V − objective(X_π)| = 0` | the proof, checked | B |
 | toy: H3 violated by `c = 26.02` | bound violated by `≥ 1` nat | P1a | B |
 | toy: `D(p*)` at `p_z = (k/T)M_z` | `= k log(λT/k)` to `1e-12` | P2.1 | C |
-| toy: integer-floor LP relaxation | `t = 0` exactly | P2.2, no dual exists | C |
+| toy: integer-floor LP relaxation | `t = 0` exactly | P2.2, the **root** bound is vacuous | C |
 | toy: `ceiling − max_π Σ log m_j` vs bound | `1.041e-3 ≤ 1.667e-3` | P2.2's nat conversion | C |
 | toy: `cert_assignment_at_centers` vs brute force | `41.005296320` both | P2.3 | C |
 | toy: `ω = 1/(ρm*)` dual objective vs cost(`X*`) | equal, violation `≤ 3.1e-15` | P2.4b | C |
@@ -438,17 +515,22 @@ Command C: `docs/artifacts/U1-cert/check_p2.py` (≈5 s).
 
 ## 5. Failure modes
 
-1. **`filler_capture` is open and it decides P1c.** At `"full"` — `docs/MODEL.md` §6.7's own
-   recommendation — headroom in the strong form fails (`1.2949`) and the ceiling stops bounding
-   `V` without a `+3.360`-nat correction, larger than the premium term. Degrades gracefully: the
-   corrected bound `k log(T/k) + Σ_i log ν_i` is still `O(nk)`-computable. **FRAME §9 open item.**
+1. **`filler_capture` is open and it decides P1c — corrected 2026-09-03 per `VERIFY_U1-cert`
+   §5.** At `"full"` — `docs/MODEL.md` §6.7's own recommendation — headroom in the strong form
+   fails (`1.2949` on 74 zips) and the ceiling stops bounding `V` without the correction
+   `Σ_{i∈S} log ν_i`, which is **`+0.258438` nats** at `S₁₃` and `+0.258438` maximised over all
+   staff sets. *An earlier version quoted `+3.360` nats — the uniform coarsening `k log ν_max` —
+   and called it larger than the premium term; that reading is withdrawn.* The correction is
+   material against the tier-2 floor (`5e-3` nats) and immaterial against the `3.7`-nat premium.
+   Degrades gracefully: the corrected bound is still `O(nk)`-computable. **FRAME §9 open item.**
 2. **Export rounding (FRAME §5, 6 significant figures)** makes `u_i(z)` exceed `M_z` by up to
    `4.2e-7` relative on 69 zips. The ceiling then holds only to `5.46e-6` nats — three orders
    below the tier-2 floor, two orders above tier 1. Any tier-1 (`1e-8`) claim about the ceiling as
    a bound on `V` is unsupported by the data as exported.
 3. **`EG_S` ignores balance, which is the business's settled constraint.** The rounded EG optimum
-   has a `54.21 %` `M`-spread. So `0.7599` nats is a bound over a feasible set the sponsor would
-   reject, and the balance-constrained fibre value `EG^bal_{S₁₃} ∈ [59.9375, 60.6974]` is the
+   has an `M`-spread of `≥ 50 %` (`54.21 %` at this unit's vertex, `58.97 %` at the verifier's;
+   the max deviation is `33.00 %` on both). So `0.7599` nats is a bound over a feasible set the
+   sponsor would reject, and the balance-constrained fibre value `EG^bal_{S₁₃} ∈ [59.9375, 60.6974]` is the
    number a decision actually needs. This is the same warning `MODEL_U7-meas.md` §2 attaches to
    the premium ladder, and it is why P4 is stated with the spread beside it.
 4. **`ρ > 0` needs a named extension.** P1a shows the bound is not automatic. The programme
@@ -467,6 +549,11 @@ Command C: `docs/artifacts/U1-cert/check_p2.py` (≈5 s).
 8. **The masked/unmasked convention.** Under `td/model.py::utilities` a rep with no candidacy
    anywhere in a district has `g_i = 0` and `EG_S = −∞`. P1 is stated and measured in the
    unmasked convention only.
+9. **Single-vertex quotation (added 2026-09-03 per `VERIFY_U1-cert` §5).** The split set `F` and
+   everything derived from it are properties of *a* vertex of the optimal face, not of the
+   instance. Two independent solves at the same `g*` return different `F` of the same size. Quote
+   `|F| ≤ k−1`, `M(F) < g_min`, the direction of the bound chain, and the `≥ 50 %` spread — never
+   a bare `M(F) = 66.168` or `gap = 5.13e-4`.
 
 ### What the bound does not cover
 
@@ -486,7 +573,7 @@ exposure is reduced by the collapse; the collapse reduces the *number of things 
 ## 6. What this says about the problem in FRAME's terms
 
 **FRAME §10 Q3 (why is there no premium bound?) is answered, and the number is small.** One
-concave solve, certified by its own dual to `1.3e-13` nats, gives `EG_{S₁₃} = 60.697416` against
+concave solve, certified by its own dual to `7.1e-15` nats, gives `EG_{S₁₃} = 60.697416` against
 a delivered `59.937470`. **At the delivered roster, no map is worth more than `0.760` nats above
 the one that was drawn** — against FRAME §6's `~3.7`-nat premium swing. `LENS_GROTHENDIECK`'s yoga
 ("the premium is won by relabelling the roster, not by redrawing the map") is *supported*: at most
@@ -495,8 +582,8 @@ it exists, must come from selection — i.e. from `MODEL_U7-meas.md`'s ladder, n
 
 **The refutation, in the words `docs/units/U1-cert.md` asks for.** The four certificates do **not**
 all collapse. Three of four are degenerations or restrictions of `EG_S`'s dual;
-`cert_integer_balance_floor` is not, because its LP relaxation has value `0` and it therefore
-carries no dual at all. To that extent `LENS_GROTHENDIECK.md`'s central reframing is weaker than it
+`cert_integer_balance_floor` is not, because its LP relaxation has value `0` and therefore carries
+no *linear* dual bound. To that extent `LENS_GROTHENDIECK.md`'s central reframing is weaker than it
 reads (`DOMAIN_optimization.md` §8 Q4). But the note should *not* keep its five-certificate
 structure: the correct replacement is **one duality gap with two sides** — an EG dual (certificates
 1, 3, 4, and R3's "certificate 5", all one object) and a constructive primal (certificate 2), which
@@ -506,11 +593,18 @@ is a shorter and more honest organisation than either "five certificates" or "on
 is `60.65 %` against a published `M`-spread of `0.781 %` — a factor of `77.63`. Stage 1 equalises the
 wrong vector, exactly as `LENS_GROMOV` Move 3 consequence 1 says. But the *cost* of that is
 `0.760` nats at the delivered roster, and buying it back costs the balance the sponsor asked for
-(`54.21 %` spread at the EG optimum). The two-stage split is not costless and it is not the main
-term; both readings are now numbers rather than positions.
+(`≥ 50 %` spread at the EG optimum, on two independent solves). The two-stage split is not costless
+and it is not the main term; both readings are now numbers rather than positions.
 
 **`REVIEW_GROMOV` R3 is settled.** The EG bound is not a fifth certificate. It is *the* dual, and
 it is **`12.70×`** tighter than the ceiling on this instance (`0.760` vs `9.649` nats).
+
+**What was retracted (2026-09-03, per `VERIFY_U1-cert`).** This unit briefly claimed that the
+lens's `[standard, brieden2017 Lem. 4]` `≤ |S| − 1` split-unit bound was a `τ = 0` privilege and
+that the heterogeneous statement is `≤ k`. **That is wrong**: the equilibrium/forest argument on
+the MBB-restricted face gives `≤ k − 1` with no hypothesis on the `u_i`, so the lens's citation
+stands untouched and this unit contributes no new split-unit result. Nothing else depends on it —
+§4.3 and P3c already used `k − 1 = 12`.
 
 **FRAME §10 Q7 (units).** Unchanged by this unit and not helped by it: the gap is still in nats.
 The prices `p_z` this unit computes are the input `DOMAIN_optimization.md` §2.4 needs to convert
@@ -526,19 +620,26 @@ Ordered by how much the unit's headline depends on the proposition.
 | # | proposition | expected mode | independent oracle |
 |---|---|---|---|
 | 1 | **P1** — `V(π,σ) ≤ EG_S` for every integral coverage with `im σ = S`, at every `ρ ≥ 0` under H3 | SYMBOLIC | Re-derive: `X_π` feasible, objective identity, sup. Then NUMERIC confirmation by exhausting all `C(4,3)·3^8` toy coverages against the certified dual (`check_p1_p3.py`, `P1(proof)` and `P1a`). |
-| 2 | **P4 / the headline numbers** — `EG_{S₁₃} = 60.697416` with a `1.3e-13` bracket, `EG − V = 0.7599` | NUMERIC | Independent of proportional response: check `eg_dual(U, p) ≥ eg_primal(U, X)` by direct `O(nk)` arithmetic on the returned `p, X`; separately verify `V(delivered)` against `metrics.json` `winner.stage2_value` and `td/channel.py::stage2`. A second EG solver (any convex solver, or `cvxpy` if available) should land inside the bracket. |
+| 2 | **P4 / the headline numbers** — `EG_{S₁₃} = 60.697416` with a `7.1e-15` bracket, `EG − V = 0.7599` | NUMERIC | Independent of proportional response: check `eg_dual(U, p) ≥ eg_primal(U, X)` by direct `O(nk)` arithmetic on the returned `p, X`; separately verify `V(delivered)` against `metrics.json` `winner.stage2_value` and `td/channel.py::stage2`. A second EG solver (any convex solver, or `cvxpy` if available) should land inside the bracket. |
 | 3 | **P2.1** — `cert_balance_ceiling` = `D(p)` at `p_z = (k/T)M_z` | SYMBOLIC | Evaluate `D(p)` by hand at `u_i ≡ λM`; compare against `cert_draw.cert_balance_ceiling(...)["ceiling_nash"]` on the toy and on the instance's realised labels. |
-| 4 | **P2.2** — the integer floor is *not* a degeneration | SYMBOLIC + NUMERIC | Symbolic: exhibit `x_{zj} = 1/k` as an LP-feasible point with `t = 0`, so the LP optimum is `0` and its dual is `0`. Numeric: `check_p2.py` `P2.2a`. Then check the nat conversion `k ε²/(2(1−ε)²)` by exhaustion (`P2.2b`). |
-| 5 | **P1c** — `EG_S ≤ k log(T/k)` under `u_i(z) ≤ M_z`, and the same for `EG_R` | SYMBOLIC | Two Jensen applications; check the perspective step `Σ y_i log c_i ≤ k log(Σ y_i c_i /k)` separately. NUMERIC side: verify `max_{i,z} u_i(z)/M_z ≤ 1 + 4.2e-7` on the instance and that `EG_{S₁₃} < k log(T/k)`. |
-| 6 | **P3a** — split units `≤ k`, and `≤ k−1` iff the `u_i` are proportional | SYMBOLIC | Redo the left-null-space argument `a_z + b_i u_i(z) = 0`. NUMERIC oracle: `numpy.linalg.matrix_rank` on the toy's constraint matrix in the three configurations (`check_p1_p3.py` `P3a'`), plus `|F| = 10 ≤ 13` on the instance. **Flag if a citation for the heterogeneous case surfaces.** |
-| 7 | **P3b / P3c** — the value bound, and its vacuity a priori | SYMBOLIC + NUMERIC | Symbolic: `g_i ≥ g*_i − L_i`; `Σ_i L_i ≤ M(F)`; convexity of `−log(1−·)` for the concentration step. Numeric: confirm `2.4069 > 1` so the a-priori bound is `+∞`, and that the realised chain `5.131e-4 ≤ 0.2448 ≤ 1.0177` holds. |
+| 4 | **P2.2** — the integer floor is *not* a degeneration (its **LP root** bound is vacuous) | SYMBOLIC + NUMERIC | Symbolic: exhibit `x_{zj} = 1/k` as an LP-feasible point with `t = 0`, so the LP optimum is `0` and its linear dual is `0`; check the two symmetry breaks in `cert_draw.py:405-445` do not move it. Numeric: `check_p2.py` `P2.2a`. Then the nat conversion `k ε²/(2(1−ε)²)` by exhaustion (`P2.2b`). **Do not read the claim as "no dual bound at all" — a closed MILP returns `t_lower > 0`.** |
+| 5 | **P1c** — `EG_S ≤ k log(T/k) + Σ_{i∈S} log ν_i`, and the same for `EG_R` | SYMBOLIC | Two Jensen applications; check the perspective step `Σ y_i log c_i ≤ k log(Σ y_i c_i /k)` separately. NUMERIC side: `max_{i,z} u_i(z)/M_z ≤ 1 + 4.2e-7` at `filler="theta"`, `EG_{S₁₃} < k log(T/k)`, and the **sharp** correction `Σ_{i∈S} log ν_i = +0.258438` at `filler="full"` — **not** the coarse `k log ν_max = 3.3596`. |
+| 6 | **P3a** — split units `≤ k−1`, heterogeneous or not (corrected 2026-09-03) | SYMBOLIC | Re-derive the dependency on the MBB-restricted face: `Σ_z p_z·supply_z − Σ_i budget_i = k − Σ_z p_z = 0`, hence `rank ≤ n+k−1`. NUMERIC oracle: vertex support `1240 ≤ n+k−1 = 1241` on the instance and `|F| = 10 ≤ 12`. **Cite `brieden2017 Lem. 4` when U0-lit runs; do not re-prove, and do not carry a `≤ k` claim.** |
+| 6′ | **P3a′** — `rank(A) = n+k`, `n+k−1` iff the `u_i` are proportional (given `u_i ≢ 0`) | SYMBOLIC | Redo the left-null-space argument `a_z + b_i u_i(z) = 0`; check the `u_i ≢ 0` hypothesis is used. NUMERIC oracle: `numpy.linalg.matrix_rank` in the three configurations (`check_p1_p3.py` `P3a'`). True but **non-minimal** — it is not the source of the split-unit bound. |
+| 7 | **P3b / P3c** — the value bound, and its vacuity a priori | SYMBOLIC + NUMERIC | Symbolic: `g_i ≥ g*_i − L_i`; `Σ_i L_i ≤ M(F)`; convexity of `−log(1−·)` for the concentration step. Numeric: confirm `2.4069 > 1` so the a-priori bound is `+∞`, and that the **direction** of the chain `realised ≤ per-agent ≤ M(F)-form` holds. **Do not pin the split-set numbers**: they are vertex-dependent (`5.131e-4 ≤ 0.2448 ≤ 1.0177` here, `1.919e-3 ≤ 0.3227 ≤ 1.8707` at `VERIFY_U1-cert`'s vertex). |
 | 8 | **P2.4** — power weights are the EG multipliers, with the nondegeneracy caveat | SYMBOLIC + NUMERIC | Symbolic: KKT of the penalised fibre; dual feasibility of `(α, ω)`; complementary slackness. Numeric: `check_p2.py` `P2.4a–d` at both `ρ`, and confirm the *caveat* reproduces (identity fails at `ρ=0.02` while `lp_bound` is unchanged). |
 | 9 | **P2.3** — assignment at pinned centers is the ε-constraint integral restriction | NUMERIC | Brute-force enumeration in the same band on the toy vs `cert_draw.cert_assignment_at_centers` (`check_p2.py` `P2.3`). Check `mip_rel_gap = 0.0` was used (trap 12). |
 | 10 | **P1a / P1b** — H3's necessity, and finiteness | NUMERIC | `check_p1_p3.py` `P1c`; and `min_z M_z > 0` from `instance_numbers.py`. |
 
 **Artifacts.** `docs/artifacts/U1-cert/eg.py` (the fibre program, its dual, the toy),
 `check_p1_p3.py`, `check_p2.py`, `instance_numbers.py`. `check_*` print `FAILURES: none` and exit
-`0` on success; both currently do.
+`0` on success; both currently do. `check_p1_p3.py`'s `P3a` / `P3a'` rows now test P3a′ (the
+non-minimal rank statement), **not** the split-unit bound of P3a, which comes from the
+MBB-restricted face. The verifier's own artifacts are `docs/artifacts/U1-cert/verify_*.py`.
+
+**Verification status.** `docs/VERIFY_U1-cert.md` (2026-09-03) returns VERIFIED on P1, P2, P2.1–2.4,
+P1a–P1c, P3b, P3c and the headline numbers, and REFUTES the interpretive half of the original P3a.
+All of its corrections are applied above and marked with the date.
 
 ---
 
@@ -559,10 +660,16 @@ Ordered by how much the unit's headline depends on the proposition.
    ("is the solver-free `O(nk)` certificate available at `τ > 0`?") is untouched: P2.4's power
    structure is a `τ = 0` result, and whether the heterogeneous fibre's cells are generalized
    power diagrams remains `DOMAIN_optimization.md` §6 Q5.
-4. **The `≤ k` heterogeneous split-unit bound's provenance.** Proved here; U0-lit has not run and
-   `docs/LIT_optimization.md` does not exist. If §6 Q5 returns a citation, replace the proof.
+4. ~~**The `≤ k` heterogeneous split-unit bound's provenance.**~~ **Closed 2026-09-03 — not a
+   result.** `VERIFY_U1-cert` §5 shows `≤ k − 1` holds heterogeneously via the MBB-restricted face,
+   so there is no new bound to source: `brieden2017 Lem. 4` as cited in `LENS_GROTHENDIECK.md` §2
+   covers it. U0-lit should still be asked for the standard reference (the linear-Fisher-market /
+   transportation forest argument) so P3a can be cited rather than re-proved — but the claim to
+   cite is `≤ k − 1`, not `≤ k`.
 5. **The displacement modulus.** The prices `p_z` are computed and returned but not converted into
    a lower bound on displacement-to-any-better-coverage (`DOMAIN_optimization.md` §2.4, §8 Q3).
    This unit supplies the input and settles nothing about the output.
-6. **`filler_capture` (FRAME §9).** P1c's applicability is conditional on it; the correction is
-   `3.360` nats at `"full"`. One business answer removes the conditional.
+6. **`filler_capture` (FRAME §9).** P1c's applicability is conditional on it; the sharp
+   correction is `+0.258438` nats at `"full"` (corrected 2026-09-03 — the `3.360` figure quoted
+   earlier was the coarse `k log ν_max`). One business answer removes the conditional, and the
+   conditional is cheap either way.

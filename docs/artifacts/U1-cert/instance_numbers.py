@@ -70,10 +70,15 @@ def main():
     out["ceiling_k_log_T_over_k"] = k * math.log(target)
 
     # ---- headroom: is u_i(z) <= M_z?  (the hypothesis that makes the ceiling bound V)
+    # P1c's correction term is `sum_{i in S} log nu_i`, NOT `k log nu_max`; both are recorded
+    # because the model quoted the coarse form until VERIFY_U1-cert corrected it (2026-09-03).
+    all_reps = sorted({r for z in nodes for r in model.books(G, z)})
+    nu = {}
     for filler in ("theta", "full"):
-        U_all = utility_matrix(G, nodes, sorted({r for z in nodes
-                                                 for r in model.books(G, z)}), filler)
-        out[f"max_u_over_M[{filler}]"] = float((U_all.max(axis=1) / M).max())
+        U_all = utility_matrix(G, nodes, all_reps, filler)
+        nu[filler] = (U_all / M[:, None]).max(axis=0)          # nu_i per rep, over all 111
+        out[f"max_u_over_M[{filler}]"] = float(nu[filler].max())
+        out[f"n_zips_u_over_M[{filler}]"] = int((U_all.max(axis=1) > M).sum())
 
     # ---- the delivered coverage
     to_district = {row["zip"]: row["district"]
@@ -94,7 +99,15 @@ def main():
     X, p, gstar, prim, dual = eg.eg_solve(U, iters=ITERS)
     out["EG_S13_primal"] = prim
     out["EG_S13_dual"] = dual
-    out["EG_S13_bracket_width"] = dual - prim
+    # numpy's pairwise sum leaves ~1e-13 of noise in a 13-term log sum built from 1229x13
+    # products; math.fsum is exactly rounded, and VERIFY_U1-cert confirms 7.1e-15 (2026-09-03)
+    prim_f = math.fsum(math.log(v) for v in (U * X).sum(axis=0))
+    r_f = (U / p[:, None]).max(axis=0)
+    dual_f = math.fsum(p) - k + math.fsum(math.log(v) for v in r_f)
+    out["EG_S13_primal_fsum"] = prim_f
+    out["EG_S13_dual_fsum"] = dual_f
+    out["EG_S13_bracket_width"] = dual_f - prim_f
+    out["EG_S13_bracket_width_numpy"] = dual - prim
     out["EG_minus_V_delivered"] = dual - out["V_delivered"]
     out["ceiling_minus_EG"] = out["ceiling_k_log_T_over_k"] - prim
     out["ceiling_minus_V_delivered"] = out["ceiling_k_log_T_over_k"] - out["V_delivered"]
@@ -145,8 +158,14 @@ def main():
     gm = float(gstar.min())
     out["threshold_MF_swamps_premium"] = gm * (1.0 - math.exp(-PREMIUM))
     out["threshold_MF_share_of_T"] = out["threshold_MF_swamps_premium"] / T
-    out["ceiling_correction_export_rounding"] = k * math.log(out["max_u_over_M[theta]"])
-    out["ceiling_correction_filler_full"] = k * math.log(out["max_u_over_M[full]"])
+    out["ceiling_correction_coarse[theta]"] = k * math.log(out["max_u_over_M[theta]"])
+    out["ceiling_correction_coarse[full]"] = k * math.log(out["max_u_over_M[full]"])
+    idx13 = [all_reps.index(r) for r in S13]
+    for filler in ("theta", "full"):
+        lg = np.log(nu[filler])
+        out[f"ceiling_correction_sharp_S13[{filler}]"] = float(lg[idx13].sum())
+        out[f"ceiling_correction_sharp_maxS[{filler}]"] = float(
+            np.sort(lg)[::-1][:k].sum())
     out["ceiling_over_EG_tightness_factor"] = (out["ceiling_minus_V_delivered"]
                                                / out["EG_minus_V_delivered"])
     out["EG_gap_as_share_of_premium"] = out["EG_minus_V_delivered"] / PREMIUM
