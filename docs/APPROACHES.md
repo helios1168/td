@@ -4,11 +4,11 @@
 `docs/LENS_GROTHENDIECK.md` (concepts, descent, open questions), `docs/LENS_GROMOV.md`
 (Move 14 ledger, open questions), `docs/DOMAIN_optimization.md` §2.1, §2.5, §2.6, §7,
 `docs/DOMAIN_economic-theory.md` §7–8, `docs/BRIEF.md` §1–§7, `docs/RESEARCH_FINDINGS.md`
-§3C, §9-G/H/I, `CLAUDE.md`, `docs/TRACKS.md` · **Supersedes:** none
+§3C, §9-G/H/I, `CLAUDE.md` · **Supersedes:** none
 
 This file names methodology **families**, not methods. Each `## <ID>` section is a charter
-that `helios new <id>` cuts out verbatim; a track re-runs stages 2–6 under it and reports on
-FRAME §3's six criteria in `docs/TRACKS.md`. Numbers here are FRAME §6's or carry a citation.
+that a track — one tmux window or worktree — takes verbatim; the track re-runs stages 2–6 under
+it and reports on FRAME §3's six criteria. Numbers here are FRAME §6's or carry a citation.
 Anything that reads `instance_descaled.json.gz` is gated on **★6** (BRIEF §5).
 
 Seeded domains: `optimization`, `economic-theory` only (global `CLAUDE.md` §5).
@@ -60,7 +60,7 @@ bound `V` (LENS_GROTHENDIECK §3).
 - C6 reproducible and auditable — **met, by computation**: `tools/run_draw.py` on the descaled
   export; 151 tests.
 
-**Stage reached** — 5b: `VERIFY_U2-stab.md` 13/13 VERIFIED; `docs/TRACKS.md` row A0.
+**Stage reached** — 5b: `VERIFY_U2-stab.md` 13/13 VERIFIED; `FRAME.md` §0.
 
 **Kill experiment** — Score the hand-drawn baseline (A3) with `V` and with C4. If A3 ties or
 beats the committed draw on `V` within the tier-2 floor, A0's headline claim is false

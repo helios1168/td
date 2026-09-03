@@ -38,6 +38,3 @@ battery/results/
 # editor scratch
 *.swp
 instance_descaled.json.gz
-
-# helios track charter (per worktree, written by tools/track-setup.sh)
-CLAUDE.local.md
