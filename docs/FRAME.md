@@ -14,7 +14,21 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `national-channel`, head `0d0ea96`, pushed — `cf4170b` was
+**State on 2026-09-03 (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`, branched from
+`national-channel` at `a4eb488`): the A1 track (`docs/APPROACHES.md` §A1, joint coverage
+optimisation) is open. ★6 is lifted in full — units may run code against
+`instance_descaled.json.gz` for any purpose (user decision, 2026-09-03). The instance, the
+gazetteer cache and the two k=13 draws (`draw_k13_20260901` seed 3, `sweep_20260902_s10/k13`
+seed 9) were copied into this worktree by hand (all gitignored).** Launched here: **U7-meas**
+(the measurement stage, `docs/MODEL_U7-meas.md`) as A1's kill experiment — the premium ladder
+`P₀ ≤ P*(A) ≤ P_S ≤ P₁₃ ≤ P_free`, the realised-gain spread (U1), contested-among-the-13 (U4)
+and `corr(S_i, M)` (U8) — and **U1-cert** (`units/U1-cert.md`, EG dual vs the four
+certificates) in parallel. The lens and domain re-runs under the A1 charter wait for the
+numbers. Hub files edited here (this file, `BRIEF.md`, `APPROACHES.md`, the two unit briefs)
+reach `national-channel` only by a merge the user approves. Everything below this entry is
+the hub's state at `a4eb488`.
+
+**State on 2026-09-02 (branch `national-channel`, head `0d0ea96`, branch `national-channel`, head `0d0ea96`, pushed — `cf4170b` was
 the fast-forward of `stage1-scenarios`, `0d0ea96` adds the ten-seed sweep, its maps and the
 artifact link, see "Later the same day" below; the work was done in worktree
 `.claude/worktrees/stage1-scenarios`, branched at `544504e`, code commit `8eece3f`, and the

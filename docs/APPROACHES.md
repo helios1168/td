@@ -18,7 +18,7 @@ Seeded domains: `optimization`, `economic-theory` only (global `CLAUDE.md` §5).
 | ID | family | decides, in order | measure | domains | kill experiment | state |
 |---|---|---|---|---|---|---|
 | A0 | draw-then-match | k → partition on `M` → roster by Hungarian on `log g` | stage 1 common (`M`); stage 2 per-agent (`u_i`) | optimization, economic-theory | A3 ties or beats A0 on `V` (★6) | running |
-| A1 | joint coverage | (partition, roster) together by rep-indexed MINLP; EG relaxation as the bound | per-agent `V(π,σ)` throughout; balance as a band | optimization, economic-theory | `P₀ ≈ P*(A)` and few zips contested among the 13 (★6) | planned |
+| A1 | joint coverage | (partition, roster) together by rep-indexed MINLP; EG relaxation as the bound | per-agent `V(π,σ)` throughout; balance as a band | optimization, economic-theory | `P₀ ≈ P*(A)` and few zips contested among the 13 (★6) | running (2026-09-03, `wt/A1`) |
 | A2 | roster-first, invariant draw | roster by max-coverage on audited book → sites from `G`-invariant profiles → balanced transport | audited book (per-agent, un-inflatable) then `M` (common) | economic-theory (mechanism design), optimization | fibre spread `spread_S EG_S` small (★6); no audited book (★2) | planned |
 | A3 | sales-ops baseline | group states to ≈ `$total/k` by hand → top-book rep per bucket | `M` by state (common), book share (per-agent) | none | none — it is the baseline; dies as a *candidate* if `V` and C1 both lose (★6) | planned |
 | A4 | coarse-grain districting | grain (metro / branch) → exact partition of ~hundreds of units, contiguity optional → roster → zip map derived | `M` at the coarse grain (common) | optimization; geometry unseeded | largest metro's `M` exceeds the C1 band (★6 + public ZCTA→CBSA crosswalk) | planned |
@@ -106,7 +106,8 @@ seeded) and `economic-theory` (EG/CEEI interpretation, the duals as prices; seed
 
 **The six criteria under this approach**
 - C1 — **by computation**: the band is a constraint, so met if feasible; the width is a sponsor
-  input (FRAME A1).
+  input that has never been elicited (FRAME §3 Tolerance's ±10% is the only number; LENS_GROMOV
+  U12).
 - C2 — **by construction**: `Σ_i x_{zi} = 1`.
 - C3 — **by construction**: `Σ y = k`, `x ≤ y`.
 - C4 — **by construction**: each `g_i` is the continuity term for rep `i`; the report is the

@@ -1,8 +1,9 @@
-# Unit U7-meas — the measurement stage *(blocked on ★6 and on the instance — not launched)*
+# Unit U7-meas — the measurement stage *(launched 2026-09-03 on `wt/A1`; ★6 lifted in full)*
 
-**This is the unit both domains would have run first.** It is blocked by this plan's own
-constraint ("nothing that touches `td/` code yet") *and* by the instance's absence from this
-worktree. It is written down so that lifting ★6 launches it without re-planning.
+**This is the unit both domains would have run first.** It was blocked by the plan's own
+constraint ("nothing that touches `td/` code yet") and by the instance's absence; both are
+lifted — the user answered ★6 in full on 2026-09-03 and the instance is at this worktree's
+root. It runs as the A1 track's kill experiment; the spec is `docs/MODEL_U7-meas.md`.
 
 ## Spec (verbatim from `docs/DOMAIN_optimization.md`:§4, Stage 0)
 
@@ -13,11 +14,11 @@ worktree. It is written down so that lifting ★6 launches it without re-plannin
 
 ## Files owned
 
-- `td/` — **a new module and its tests only**; the exact paths to be fixed when the unit is
-  launched, since ★6's answer may scope them narrowly (e.g. read-only analysis under
-  `tools/measure/` rather than anything under `td/`)
+- `tools/measure/__init__.py`, `tools/measure/premium.py` — read-only analysis over `td/`;
+  no existing `td/` module changes
+- `tests/test_measure.py`
 - `docs/MODEL_U7-meas.md` (the measurement spec) · `docs/CODEVERIFY_U7-meas.md`
-- `battery/results/<run-id>/` for outputs (gitignored)
+- `battery/results/meas_20260903/` for outputs (gitignored)
 
 ## Files forbidden
 
@@ -52,13 +53,13 @@ Move 4 and the U-ledger · `docs/FRAME.md` §5 (data defects), §6 · `docs/DATA
 
 ## Open questions for ★0
 
-**★6 — may a unit run code against the instance?** And, practically: the instance is at the main
-checkout root, gitignored, not in this worktree (FRAME §5). Launching this unit requires deciding
-where it runs. Both must be answered before launch.
+Answered 2026-09-03: ★6 lifted in full; the instance is at this worktree's root
+(`instance_descaled.json.gz`, gitignored, hand-copied) together with the two k=13 draws under
+`battery/results/`. The unit runs on `wt/A1`.
 
 ## Branch
 
-`wt/U7-meas` (from `wt/workflow-dryrun`)
+`wt/A1` (from `national-channel` at `a4eb488`)
 
 ## Stop rule
 

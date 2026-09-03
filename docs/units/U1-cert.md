@@ -36,8 +36,9 @@ Every other unit's owned files (`docs/MODEL_U2-stab.md`, `docs/MODEL_U3-inv.md`,
 `docs/BRIEF.md` · `docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/RESEARCH_FINDINGS.md` ·
 `docs/REVIEW_GROMOV.md` · `docs/channel_note/**` · `CLAUDE.md` · **all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`** (read-only at most; this unit writes no project code) ·
-`instance_descaled.json.gz` (absent from this worktree; do not go looking for it in the main
-checkout).
+`instance_descaled.json.gz` is **present** at this worktree's root and ★6 is lifted in full
+(2026-09-03), so the numbers under "Numbers to compute first" are computable here — read it
+through `td/instance.py`, write nothing outside the owned files.
 
 ## Agent → verifier
 
@@ -113,7 +114,7 @@ get checked and how a refutation gets its counterexample.
 
 ## Branch
 
-`wt/U1-cert` (from `wt/workflow-dryrun`)
+`wt/A1` (from `national-channel` at `a4eb488`); this is the A1 track's first unit
 
 ## Stop rule
 
