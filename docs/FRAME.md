@@ -14,7 +14,41 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-03 (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`, branched from
+**State on 2026-09-03, end of the overnight run (latest, branch `wt/A1`, worktree
+`.claude/worktrees/A1`, head `d82a0fa`, 13 commits over `national-channel` at `a4eb488`;
+tests 184 pass, 0 fail at `74eff38`): the A1 track has run the charter's stages 2–4 with the
+measurements in hand, and stops before launching units.** *What landed* (all on `wt/A1`, hub
+untouched): U7-meas (`74eff38`, `f7b9917`) and U1-cert (`2f965d1`, `dcc2a69`, `a253b1a`) —
+numbers in §6; the (★) roster-free screen (`795ea8e`: `max_S EG_S ≤ 60.8025`, 0.865 nats over
+the delivered draw, no solve; `δ₀` is the 0.39% max deviation, not the 0.78% spread);
+`LENS_GROMOV.md` re-run under the charter (`67adc92`: Moves 8/11/12/13 — `EG^bal_S(δ)`, the
+band-constrained EG program, replaces `EG_S` as the certificate; the frontier `δ ↦ EG^bal(δ)`;
+band duals as the un-elicited exchange rate; "MINLP"/"jointly" purged; ledger U13–U19);
+`DOMAIN_optimization.md` (`30c1fae`: §2.1 retired to a contingency, §2.10–§2.15 new, D1′ the
+one-solve softness certificate replaces the τ-homotopy) and `DOMAIN_economic-theory.md`
+(`173089b`: §2.8 `EG^bal` as CEEI with quantity bands, §2.9 MRT-vs-MRS, §2.10 the roster
+market; D5 split, D6 `fotakis2014` scope correction, D7 tie-break policy) re-run;
+`LIT_optimization.md` new (`8a63445`, 46 entries: `EG^bal_S` is an Eisenberg–Gale market,
+`jainvazirani2010`, but its price reading breaks at stated budgets, `jalota2023`; `≤ k−1` is
+`lenstra1990`; `budish2013` closes rounding-by-citation; `borgwardt2019` keeps the
+power-diagram certificate at `δ > 0`) and a 2026-09-03 section in `LIT_economic-theory.md`
+(`913a7f0`, 38 entries: `echenique2021constrained` prices constraints and proves envy is lost
+under per-agent bands; `kawase2026balanced`; `breugem2022vertical`); `BRIEF.md` superseded on
+this branch (`d82a0fa`) with units **U8-band, U9-bandthm, U10-round, U11-roster, U12-menu,
+U13-base** and ★8–★12. *What it means:* A1's kill test passed (matching gap 0, map 0.64 nats,
+roster 0.04), but everything it can win is ≤ 0.865 nats over all rosters and ≤ 0.760 at the
+delivered one, all of it above 33% max deviation; the live question is what survives a band,
+and it is one concave solve per roster (U8-band), not a MINLP. A0's soft kill fired
+(`g`-spread 60.65% vs 0.78%). *What's next, in order:* (1) **★12 — merge `wt/A1` into
+`national-channel`?** Nothing merges without the user. (2) Launch **U8-band** from a session
+started in `.claude/worktrees/A1` (Serena binds to the launch directory) — its D1′ certificate
+can end the track in one solve; U9-bandthm, U13-base, U6-sel, U3-inv run alongside. (3) After
+U8: ★11 rewrite the charter's step 3; ★9 the sponsor's `δ` as a menu (U12), ★10 the tie-break
+policy (U11's evidence), ★8 the `fotakis2014` correction. Assumption recorded: the user asked
+for the overnight run to continue without stopping; the track went one stage past the
+approved plan (lens, domains, literature, research plan) and launched nothing.
+
+**Earlier on 2026-09-03 (branch `wt/A1`, worktree `.claude/worktrees/A1`, branched from
 `national-channel` at `a4eb488`): the A1 track (`docs/APPROACHES.md` §A1, joint coverage
 optimisation) is open. ★6 is lifted in full — units may run code against
 `instance_descaled.json.gz` for any purpose (user decision, 2026-09-03). The instance, the

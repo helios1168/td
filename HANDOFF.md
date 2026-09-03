@@ -1,68 +1,48 @@
-# Handoff — national channel territory design / stage-1 scenarios (`national-channel`)
+# Handoff — national channel territory design / A1 track (`wt/A1`)
 
-**Updated:** 2026-09-03 · **Branch:** `national-channel` · **Head:** `0d0ea96` (pushed; scenario code at `8eece3f`, ten-seed sweep + maps at `0d0ea96`) · **Tests:** 174 pass, 0 fail (re-run 2026-09-02 at `cf4170b`; no code change since)
+**Updated:** 2026-09-03 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`; 13 commits over
+`national-channel` at `a4eb488`, **not merged** — ask first) · **Head:** `d82a0fa` · **Tests:**
+184 pass, 0 fail (2026-09-03 at `74eff38`)
 
 ## Start here
-- **Resume point:** `docs/FRAME.md` §0 — supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
-  holds a pointer plus the pre-dry-run narrative.
+- **Resume point:** `docs/FRAME.md` §0 (the 2026-09-03 "end of the overnight run" entry; §6 has
+  the measured rows).
 - **Status header:** `CLAUDE.md`
-- **Caution:** the repository-root checkout (`~/projects/td`) is on `contiguity-harness` and
-  describes the superseded programme. Work in this worktree. It has no `.venv`; run tests with
-  `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py` (three levels up). The instance
-  (`instance_descaled.json.gz`) and the gazetteer cache (`data/geo/`) are gitignored and live
-  only in this worktree — a fresh worktree needs both copied in by hand.
-- **Do not use Serena from any worktree other than the session's launch directory:** the MCP server binds to the session's launch
-  directory and edits the wrong tree (it did, once, on 2026-09-02 — reverted).
-- **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`
-- **Key docs:** `docs/FRAME.md` (§0 resume, §8 A1–A13 sponsor asks, §10 Q1–Q12 lens questions) · `docs/BRIEF.md` (the plan, units, ★ decisions) · `docs/units/*.md` (8 briefs) ·
-  `docs/MODEL_U2-stab.md` + `docs/VERIFY_U2-stab.md` (the one finished unit) ·
-  `docs/DOMAIN_optimization.md`, `docs/DOMAIN_economic-theory.md`, `docs/LIT_economic-theory.md`
-  (46 DOIs) · `docs/LENS_GROMOV.md`, `docs/LENS_GROTHENDIECK.md` · `docs/CHANNEL.md`,
-  `docs/MODEL.md`, `docs/DATA.md` · `docs/RESEARCH_FINDINGS.md`, `docs/REVIEW_GROMOV.md`
-- **The scenario runner:** `tools/run_draw.py instance_descaled.json.gz --k 8-16 --seeds 0-4
-  --fix SOUTHWEST=TX,OK --anchor FLORIDA=FL --workers 8 --out battery/results/<run>/`
-  (module docstring has the layout; `--scenario file.json` takes the same `fix`/`anchor` keys).
-  Latest runs: `battery/results/sweep_20260902_s10/` (unpinned, seeds 0–9 — the published one),
-  `sweep_20260902/` (seeds 0–4) and `sweep_20260902_south/` (SOUTHWEST fixed, FLORIDA anchored).
-- **Sweep artifact** (table, charts, maps at k = 10/13/16):
-  https://claude.ai/code/artifact/c007d61d-c753-4151-9026-2288b9d5eb38 · maps tracked under
-  `figures/sweep_20260902_s10/`. The 2026-09-01 atlas (`1f2cddd9…`) still shows the certified k=13 draw.
+- **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`;
+  the merge rule is `ask-before-merging-to-hub.md`.
+- **Caution:** run tests with `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
+  from this worktree. `instance_descaled.json.gz`, `data/geo/` and `battery/results/`
+  (`draw_k13_20260901`, `sweep_20260902_s10/k13`, `meas_20260903`) are gitignored and were
+  hand-copied into this worktree; a fresh worktree needs them again.
+- **Serena binds to the session's launch directory.** Launch `python-typed` only from a session
+  started in `.claude/worktrees/A1`, and check `initial_instructions`' active-project path first.
+- **Key docs (A1 versions on this branch):** `docs/APPROACHES.md` §A1 (charter) ·
+  `docs/BRIEF.md` (units U8–U13, ★8–★12) · `docs/units/*.md` · `docs/LENS_GROMOV.md` (2026-09-03) ·
+  `docs/DOMAIN_optimization.md`, `docs/DOMAIN_economic-theory.md` (2026-09-03) ·
+  `docs/LIT_optimization.md` + `.bib`, `docs/LIT_economic-theory.md` (2026-09-03 section) +
+  `LIT_economic-theory_A1.bib` · `docs/MODEL_U7-meas.md` + `CODEVERIFY_U7-meas.md`,
+  `tools/measure/premium.py` · `docs/MODEL_U1-cert.md` + `VERIFY_U1-cert.md` ·
+  `docs/LENS_GROTHENDIECK.md` (inherited) · hub docs `CHANNEL.md`, `MODEL.md`, `DATA.md`,
+  `RESEARCH_FINDINGS.md`, `REVIEW_GROMOV.md`.
+- **The measurement CLI:** `tools/measure/premium.py instance_descaled.json.gz
+  battery/results/draw_k13_20260901 --out battery/results/meas_20260903` (both draw layouts;
+  outputs the premium ladder, U1/U4/U8, verdict conversions).
 
 ## Next actions
-- [ ] **Adopt the seed-9 k=13 map (60.040 nats) or keep the certified seed-3 one (59.938)?**
-      Nash-indistinguishable; staffing differs by 0.103 nats; certificates were run on seed 3.
-- [ ] **Sponsor: which states, if any, are hand-drawn?** The pin is by state, so FRAME §8
-      A12 (decision grain) is live; the `--fix` cost shows as the other districts' uniform
-      shortfall in `sweep.csv` (`vs_target` is against `total / k` on purpose).
-- [ ] **Certificates 1–4 are not adapted to anchored draws** — certificate 4 needs the locked
-      zips excluded from the free-cell check (`centers.py` module docstring, "Anchored districts").
-- [x] `stage1-scenarios` fast-forwarded into `national-channel` and pushed (2026-09-02); the
-      `stage1-scenarios` worktree can be removed.
-- [ ] `us_maps.py`'s 12-colour palette repeats hues at k ≥ 13 (SOUTHWEST and D07 at k=13).
-- [ ] **★6** — answered in practice on this branch (the user asked for real-instance runs);
-      whether framework *units* may read `instance_descaled.json.gz` is still formally open,
-      and **U7-meas** stays unlaunched behind it.
-- [ ] **★3 — should roster stability be a sixth acceptance criterion?** `BRIEF.md` §5 said to ask
-      after U2-stab reports; it has (question is live, non-vacuous, decidable in 169 comparisons).
-- [ ] Launch the rest of wave 1 — **U0-lit**, **U1-cert**, **U3-inv**; independent, no instance
-      needed. U0-lit gates wave 2 (U4-disp, U5-crit, U6-sel).
-- [ ] **Sponsor questions, one sentence each** (FRAME §8): A1 ($1B target or constraint), A2 (are
-      the 98 released), A6 (any operational coverage rule), **A11** (home-office / national-accounts
-      share of `M` — changes `k`), **A12** (what grain the signed territory is described in),
-      **A13** (any team-staffed territory — changes the matching's shape).
-- [ ] **FRAME §10 Q8** is the cheapest new experiment: premium-max *balanced* draw at fixed roster
-      = `centers.py`'s transportation LP with cost `−u_i(z)`; `assign(targets=)` now exists, the
-      cost-matrix change is what is left.
-- [ ] **★7** — run `/domain econometrics`? Only route to U5/A4 (regional bias in `M`) and U6
-      (the tier-2 noise floor); neither has a domain file or a seeded `FOUNDATIONS.md`.
-- [ ] Two doc fixes from `VERIFY_U2-stab.md`: `MODEL_U2-stab.md` §4 row 6's counts
-      (2,187 / 3,672) are tie-break dependent and unlabelled; P2.2's raw threshold of 5 holds
-      only under the distinctness hypothesis (4 suffices without it).
-- [ ] Carried from `docs/REVIEW_GROMOV.md`, untouched by this branch: **R1** (`ceiling.py`'s
-      `SATURATION = 0.05`, channel_note §5.1, FINDINGS §4C/C6's stale "α ≈ 0.9"), then C4 →
-      stage-2 rescore of the cells → the cells-vs-dots call; the EG bound as certificate 5;
-      R4's seven note fixes plus an eighth queued 2026-09-02 (stage 2 is unit-demand, so EF1 is
-      vacuous there; `channel_note` §3's "EF1 survives" holds for the joint problem only). `BRIEF.md` §6 adds a free rename pass: *certified* → *balance-certified*.
-- [ ] Open from before, unchanged: the `docs/MODEL.md` §6 list, and book-aware stage 1 vs
-      `RESEARCH_FINDINGS` §9-G's books-at-stage-2-only invariant.
-- [x] `td/solvers/greedy_balanced.py` deleted 2026-09-02 (was untracked, unreferenced, untested).
+- [ ] **★12 — merge `wt/A1` into `national-channel`?** Nothing merges without the user.
+- [ ] **Launch U8-band** (`docs/units/U8-band.md`) from a session started in this worktree —
+      the band-constrained kill test; its one-solve D1′ certificate can end A1. Alongside:
+      U9-bandthm, U13-base, U6-sel, U3-inv (independent).
+- [ ] Then U10-round, U11-roster, U4-disp (gated on U8); U12-menu (U8 + U11 + U13).
+- [ ] **★11** — rewrite A1's charter step 3 in `APPROACHES.md` after U8 reports.
+- [ ] **★9** — the sponsor's band `δ`, put as U12's menu, not an elicitation; **★4** is its
+      second knob `ε`.
+- [ ] **★10** — tie-break policy (disclose vs randomise), on U11's evidence; `S₁₃`'s margin is
+      8.1e-3 nats on seed 9.
+- [ ] **★8** — accept the `fotakis2014` scope correction (D6); edits four hub files.
+- [ ] Carried: ★1 (are the 98 released), ★2 (audited book — now for selection only), ★3
+      (stability as a criterion, after U6-sel), ★5 (least core), ★7 (`/domain econometrics`).
+- [ ] Hub items untouched by this branch: seed-3 vs seed-9 k=13 map; which states are
+      hand-drawn (A12); certificates 1–4 not adapted to anchored draws; palette at k ≥ 13;
+      `REVIEW_GROMOV` R1 fixes and the rename pass *certified → balance-certified*;
+      `CLAUDE.md`'s "$1B ± 10% probably not reachable" sentence is stale (BRIEF §6.5).

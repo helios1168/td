@@ -1,16 +1,15 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-03 · **Branch:** `national-channel` · **Head:** `0d0ea96`
-(pushed; scenario code at `8eece3f`, ten-seed sweep + maps at `0d0ea96`) · **Tests:** 174 pass, 0 fail (re-run 2026-09-02 at `cf4170b`; no code change since)
+**Last updated:** 2026-09-03 · **Branch:** `wt/A1` (the A1 track; 13 commits over
+`national-channel` at `a4eb488`, **not merged**) · **Head:** `d82a0fa` · **Tests:** 184 pass, 0 fail
+(run 2026-09-03 at `74eff38`; `tools/measure/` added 10)
 
-**Status:** both stages built and a **balance-certified** k=13 draw exists (spread 0.78%,
-all 13 staffed, 4.5e-5 nats off the ceiling); the territory map is a power diagram
-(certificate 4). Measured saturation is **41.9%**, not the 5% `ceiling.py` still hard-codes —
-`docs/REVIEW_GROMOV.md` R1's fixes are open. The framework 0.1 dry run is merged in,
-docs-only through stage 5 (`VERIFY_U2-stab`, 13/13 VERIFIED); `FRAME.md` rev. 2 adds the
-alternatives ledger (§10 Q8–Q12) and sponsor assumptions A11–A13. **This branch adds stage-1
-scenarios** — `tools/run_draw.py --fix/--anchor NAME=ST,ST --k 8-16` — with the certificates
-not yet adapted to anchored draws; see `docs/FRAME.md` §0.
+**Status:** the A1 track (`docs/APPROACHES.md` §A1) on `wt/A1`: ★6 lifted, U7-meas and
+U1-cert landed and verified, A1's kill test passed but its upside is ≤ 0.865 nats over all
+rosters (FRAME §6); lens, both domain plans, literature and `BRIEF.md` re-run under the
+charter, units U8–U13 written and **not launched**. Hub state (`national-channel` at
+`a4eb488`): both stages built, balance-certified k=13 draw, stage-1 scenarios and the
+ten-seed sweep. See `docs/FRAME.md` §0.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
