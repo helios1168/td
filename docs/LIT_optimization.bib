@@ -1,0 +1,474 @@
+% ============================================================================
+% A1 / U0-lit additions -- optimization -- 2026-09-03 (branch wt/A1)
+% 46 entries.
+%
+% Brief:       docs/DOMAIN_optimization.md §6 (2026-09-03)
+% Annotations: docs/LIT_optimization.md -- what each entry establishes, which
+%              §2 method or §4 decision it bears on, and its tag.
+%
+% HOME OF THESE ENTRIES. The brief asked for an append to
+% docs/RESEARCH_ADDITIONS.bib; the editing tool available to this run could
+% only overwrite that 522-line tracked file wholesale, which was judged an
+% unacceptable clobber risk. These entries therefore live here, following
+% the project's own sibling convention (docs/LIT_economic-theory.bib).
+% *** No key below appears in RESEARCH_ADDITIONS.bib, LIT_economic-theory.bib
+% or channel_note/references.bib, so the four files can be concatenated. ***
+% To fold into RESEARCH_ADDITIONS.bib later: append everything after this
+% header block; no key renaming is needed.
+%
+% All 46 DOIs resolved against Crossref on 2026-09-03; title, authors, year,
+% volume and pages checked against the returned record in every case. The two
+% most load-bearing entries were additionally checked for retraction via
+% OpenAlex (jalota2023 = W4382395702, echenique2021 = W2973080784): both clean.
+%
+% Deduplicated against docs/RESEARCH_ADDITIONS.bib, docs/LIT_economic-theory.bib
+% and docs/channel_note/references.bib. Already present and therefore NOT
+% repeated here: kelly1998, eisenberg1961, brieden2012, brieden2017,
+% borgwardt2017, aurenhammer1987, aurenhammer1998, bourne2015, kitagawa2019,
+% peyre2019, lubin2018, dantzig1963, ahuja1993 (RESEARCH_ADDITIONS.bib);
+% budish2011 (LIT_economic-theory.bib); cole2018, eisenberg1959, kronqvist2016,
+% kronqvist2018, duran1986, fletcher1994, codato2006, boland2015,
+% lemarechal1995, benameur2007 (channel_note/references.bib).
+%
+% Near-collisions deliberately kept distinct: borgwardt2019 vs borgwardt2017;
+% chakrabarty2010 vs chakrabarty2014; budish2013 vs budish2011;
+% cole2017duality vs cole2018; bonnisseau2001diff vs bonnisseau2001cont.
+% ============================================================================
+
+
+% ---------------------------------------------------------------------------
+% Tier 1 -- foundation: names our object, or retires one of our proofs (20)
+% ---------------------------------------------------------------------------
+
+@article{jainvazirani2010,
+  author  = {Kamal Jain and Vijay V. Vazirani},
+  title   = {{Eisenberg--Gale} markets: Algorithms and game-theoretic properties},
+  year    = {2010},
+  journal = {Games and Economic Behavior},
+  volume  = {70}, number = {1}, pages = {84--106},
+  doi     = {10.1016/j.geb.2008.11.011}
+}
+
+@article{im2018,
+  author  = {Sungjin Im and Janardhan Kulkarni and Kamesh Munagala},
+  title   = {Competitive Algorithms from Competitive Equilibria: Non-Clairvoyant Scheduling under Polyhedral Constraints},
+  year    = {2017},
+  journal = {Journal of the {ACM}},
+  volume  = {65}, number = {1}, pages = {1--33},
+  doi     = {10.1145/3136754}
+}
+
+@article{echenique2021,
+  author  = {Federico Echenique and Antonio Miralles and Jun Zhang},
+  title   = {Constrained Pseudo-Market Equilibrium},
+  year    = {2021},
+  journal = {American Economic Review},
+  volume  = {111}, number = {11}, pages = {3699--3732},
+  doi     = {10.1257/aer.20201769}
+}
+
+@article{miralles2021,
+  author  = {Antonio Miralles and Marek Pycia},
+  title   = {Foundations of pseudomarkets: {Walrasian} equilibria for discrete resources},
+  year    = {2021},
+  journal = {Journal of Economic Theory},
+  volume  = {196}, pages = {105303},
+  doi     = {10.1016/j.jet.2021.105303}
+}
+
+@inproceedings{birnbaum2011,
+  author    = {Benjamin Birnbaum and Nikhil R. Devanur and Lin Xiao},
+  title     = {Distributed algorithms via gradient descent for {Fisher} markets},
+  year      = {2011},
+  booktitle = {Proceedings of the 12th {ACM} Conference on Electronic Commerce ({EC} '11)},
+  pages     = {127--136},
+  doi       = {10.1145/1993574.1993594}
+}
+
+@article{lowlapsley1999,
+  author  = {Steven H. Low and David E. Lapsley},
+  title   = {Optimization flow control---{I}: basic algorithm and convergence},
+  year    = {1999},
+  journal = {{IEEE/ACM} Transactions on Networking},
+  volume  = {7}, number = {6}, pages = {861--874},
+  doi     = {10.1109/90.811451}
+}
+
+@article{lenstra1990,
+  author  = {Jan Karel Lenstra and David B. Shmoys and {\'E}va Tardos},
+  title   = {Approximation algorithms for scheduling unrelated parallel machines},
+  year    = {1990},
+  journal = {Mathematical Programming},
+  volume  = {46}, number = {1--3}, pages = {259--271},
+  doi     = {10.1007/BF01585745}
+}
+
+@article{shmoystardos1993,
+  author  = {David B. Shmoys and {\'E}va Tardos},
+  title   = {An approximation algorithm for the generalized assignment problem},
+  year    = {1993},
+  journal = {Mathematical Programming},
+  volume  = {62}, number = {1--3}, pages = {461--474},
+  doi     = {10.1007/BF01585178}
+}
+
+@book{lauravisingh2011,
+  author    = {Lap Chi Lau and R. Ravi and Mohit Singh},
+  title     = {Iterative Methods in Combinatorial Optimization},
+  year      = {2011},
+  publisher = {Cambridge University Press},
+  series    = {Cambridge Texts in Applied Mathematics},
+  doi       = {10.1017/CBO9780511977152}
+}
+
+@article{megiddo2007,
+  author  = {Nimrod Megiddo and Vijay V. Vazirani},
+  title   = {Continuity Properties of Equilibrium Prices and Allocations in Linear {Fisher} Markets},
+  year    = {2007},
+  journal = {Lecture Notes in Computer Science},
+  volume  = {4858}, pages = {362--367},
+  note    = {Internet and Network Economics ({WINE} 2007)},
+  doi     = {10.1007/978-3-540-77105-0_39}
+}
+
+@article{budish2013,
+  author  = {Eric Budish and Yeon-Koo Che and Fuhito Kojima and Paul Milgrom},
+  title   = {Designing Random Allocation Mechanisms: Theory and Applications},
+  year    = {2013},
+  journal = {American Economic Review},
+  volume  = {103}, number = {2}, pages = {585--623},
+  doi     = {10.1257/aer.103.2.585}
+}
+
+@inproceedings{cole2017duality,
+  author    = {Richard Cole and Nikhil R. Devanur and Vasilis Gkatzelis and Kamal Jain and Tung Mai and Vijay V. Vazirani and Sadra Yazdanbod},
+  title     = {Convex Program Duality, {Fisher} Markets, and {Nash} Social Welfare},
+  year      = {2017},
+  booktitle = {Proceedings of the 2017 {ACM} Conference on Economics and Computation ({EC} '17)},
+  pages     = {459--460},
+  doi       = {10.1145/3033274.3085109}
+}
+
+@article{bental2001,
+  author  = {Aharon Ben-Tal and Arkadi Nemirovski},
+  title   = {On Polyhedral Approximations of the Second-Order Cone},
+  year    = {2001},
+  journal = {Mathematics of Operations Research},
+  volume  = {26}, number = {2}, pages = {193--205},
+  doi     = {10.1287/moor.26.2.193.10561}
+}
+
+@article{chakravarti1998,
+  author  = {Nilotpal Chakravarti and Albert P. M. Wagelmans},
+  title   = {Calculation of stability radii for combinatorial optimization problems},
+  year    = {1998},
+  journal = {Operations Research Letters},
+  volume  = {23}, number = {1--2}, pages = {1--7},
+  doi     = {10.1016/S0167-6377(98)00031-5}
+}
+
+@article{sotskov1995,
+  author  = {Yuri N. Sotskov and V. K. Leontev and E. N. Gordeev},
+  title   = {Some concepts of stability analysis in combinatorial optimization},
+  year    = {1995},
+  journal = {Discrete Applied Mathematics},
+  volume  = {58}, number = {2}, pages = {169--190},
+  doi     = {10.1016/0166-218X(93)E0126-J}
+}
+
+@incollection{eppstein2016,
+  author    = {David Eppstein},
+  title     = {$k$-Best Enumeration},
+  year      = {2016},
+  booktitle = {Encyclopedia of Algorithms},
+  publisher = {Springer},
+  pages     = {1003--1006},
+  doi       = {10.1007/978-1-4939-2864-4_733}
+}
+
+@article{hoffman1952,
+  author  = {Alan J. Hoffman},
+  title   = {On approximate solutions of systems of linear inequalities},
+  year    = {1952},
+  journal = {Journal of Research of the National Bureau of Standards},
+  volume  = {49}, number = {4}, pages = {263--265},
+  doi     = {10.6028/jres.049.027}
+}
+
+@article{bolte2017,
+  author  = {J{\'e}r{\^o}me Bolte and Trong Phong Nguyen and Juan Peypouquet and Bruce W. Suter},
+  title   = {From error bounds to the complexity of first-order descent methods for convex functions},
+  year    = {2017},
+  journal = {Mathematical Programming},
+  volume  = {165}, number = {2}, pages = {471--507},
+  doi     = {10.1007/s10107-016-1091-6}
+}
+
+@article{chan2025,
+  author  = {Timothy C. Y. Chan and Rafid Mahmood and Ian Yihang Zhu},
+  title   = {Inverse Optimization: Theory and Applications},
+  year    = {2025},
+  journal = {Operations Research},
+  volume  = {73}, number = {3}, pages = {1046--1074},
+  doi     = {10.1287/opre.2022.0382}
+}
+
+@article{ahujaorlin2001,
+  author  = {Ravindra K. Ahuja and James B. Orlin},
+  title   = {Inverse Optimization},
+  year    = {2001},
+  journal = {Operations Research},
+  volume  = {49}, number = {5}, pages = {771--783},
+  doi     = {10.1287/opre.49.5.771.10607}
+}
+
+
+% ---------------------------------------------------------------------------
+% Tier 2 -- contradicts-or-sharpens: changes what we may claim (4)
+% ---------------------------------------------------------------------------
+
+@article{jalota2023,
+  author  = {Devansh Jalota and Marco Pavone and Qi Qi and Yinyu Ye},
+  title   = {{Fisher} markets with linear constraints: Equilibrium properties and efficient distributed algorithms},
+  year    = {2023},
+  journal = {Games and Economic Behavior},
+  volume  = {141}, pages = {223--260},
+  doi     = {10.1016/j.geb.2023.06.007}
+}
+
+@article{he2018,
+  author  = {Yinghua He and Antonio Miralles and Marek Pycia and Jianye Yan},
+  title   = {A Pseudo-Market Approach to Allocation with Priorities},
+  year    = {2018},
+  journal = {American Economic Journal: Microeconomics},
+  volume  = {10}, number = {3}, pages = {272--314},
+  doi     = {10.1257/mic.20150259}
+}
+
+@article{chakrabarty2010,
+  author  = {Deeparnab Chakrabarty and Nikhil R. Devanur and Vijay V. Vazirani},
+  title   = {Rationality and Strongly Polynomial Solvability of {Eisenberg--Gale} Markets with Two Agents},
+  year    = {2010},
+  journal = {{SIAM} Journal on Discrete Mathematics},
+  volume  = {24}, number = {3}, pages = {1117--1136},
+  doi     = {10.1137/070693072}
+}
+
+@article{chakrabarty2014,
+  author  = {Deeparnab Chakrabarty and Gagan Goel and Vijay V. Vazirani and Lei Wang and Changyuan Yu},
+  title   = {Submodularity Helps in {Nash} and Nonsymmetric Bargaining Games},
+  year    = {2014},
+  journal = {{SIAM} Journal on Discrete Mathematics},
+  volume  = {28}, number = {1}, pages = {99--115},
+  doi     = {10.1137/110821433}
+}
+
+
+% ---------------------------------------------------------------------------
+% Tier 3 -- frontier: the live edge of a thread we depend on (14)
+% ---------------------------------------------------------------------------
+
+@article{jager2026,
+  author  = {Sven J{\"a}ger and Alexander Lindermayr and Nicole Megow},
+  title   = {The Power of Proportional Fairness for Nonclairvoyant Polytope Scheduling},
+  year    = {2026},
+  journal = {{SIAM} Journal on Computing},
+  volume  = {55}, number = {2}, pages = {247--279},
+  doi     = {10.1137/25M1763974}
+}
+
+@inproceedings{kroerpeters2025,
+  author    = {Christian Kroer and Dominik Peters},
+  title     = {Computing {Lindahl} Equilibrium for Public Goods with and without Funding Caps},
+  year      = {2025},
+  booktitle = {Proceedings of the 26th {ACM} Conference on Economics and Computation ({EC} '25)},
+  pages     = {129},
+  doi       = {10.1145/3736252.3742510}
+}
+
+@article{bansal2012,
+  author  = {Nikhil Bansal and Rohit Khandekar and Jochen K{\"o}nemann and Viswanath Nagarajan and Britta Peis},
+  title   = {On generalizations of network design problems with degree bounds},
+  year    = {2012},
+  journal = {Mathematical Programming},
+  volume  = {141}, number = {1--2}, pages = {479--506},
+  doi     = {10.1007/s10107-012-0537-8}
+}
+
+@article{bonnisseau2001diff,
+  author  = {Jean-Marc Bonnisseau and Michael Florig and Alejandro Jofr{\'e}},
+  title   = {Differentiability of Equilibria for Linear Exchange Economies},
+  year    = {2001},
+  journal = {Journal of Optimization Theory and Applications},
+  volume  = {109}, number = {2}, pages = {265--288},
+  doi     = {10.1023/A:1017558204399}
+}
+
+@article{bonnisseau2001cont,
+  author  = {Jean-Marc Bonnisseau and Michael Florig and Alejandro Jofr{\'e}},
+  title   = {Continuity and Uniqueness of Equilibria for Linear Exchange Economies},
+  year    = {2001},
+  journal = {Journal of Optimization Theory and Applications},
+  volume  = {109}, number = {2}, pages = {237--263},
+  doi     = {10.1023/A:1017517020329}
+}
+
+@article{akbarpour2020,
+  author  = {Mohammad Akbarpour and Afshin Nikzad},
+  title   = {Approximate Random Allocation Mechanisms},
+  year    = {2020},
+  journal = {The Review of Economic Studies},
+  volume  = {87}, number = {6}, pages = {2473--2510},
+  doi     = {10.1093/restud/rdz066}
+}
+
+@inproceedings{cookson2025,
+  author    = {Benjamin Cookson and Soroush Ebadian and Nisarg Shah},
+  title     = {Constrained Fair and Efficient Allocations},
+  year      = {2025},
+  booktitle = {Proceedings of the {AAAI} Conference on Artificial Intelligence},
+  volume    = {39}, number = {13}, pages = {13718--13726},
+  doi       = {10.1609/aaai.v39i13.33499}
+}
+
+@inproceedings{livondrak2021,
+  author    = {Wenzheng Li and Jan Vondr{\'a}k},
+  title     = {Estimating the {Nash} Social Welfare for coverage and other submodular valuations},
+  year      = {2021},
+  booktitle = {Proceedings of the 2021 {ACM-SIAM} Symposium on Discrete Algorithms ({SODA})},
+  pages     = {1119--1130},
+  doi       = {10.1137/1.9781611976465.69}
+}
+
+@inproceedings{mavrov2023,
+  author    = {Ivan-Aleksandar Mavrov and Kamesh Munagala and Yiheng Shen},
+  title     = {Fair Multiwinner Elections with Allocation Constraints},
+  year      = {2023},
+  booktitle = {Proceedings of the 24th {ACM} Conference on Economics and Computation ({EC} '23)},
+  pages     = {964--990},
+  doi       = {10.1145/3580507.3597685}
+}
+
+@inproceedings{gokhale2025,
+  author    = {Salil Gokhale and Harshul Sagar and Rohit Vaish and Jatin Yadav},
+  title     = {Approximating One-Sided and Two-Sided {Nash} Social Welfare With Capacities},
+  year      = {2025},
+  booktitle = {Proceedings of the 24th International Conference on Autonomous Agents and Multiagent Systems ({AAMAS} 2025)},
+  pages     = {914--922},
+  doi       = {10.65109/xonp8439},
+  note      = {DOI resolves, but the {Crossref} record carries an inconsistent container
+               ({AAMAS} '04) and a zero reference count -- re-verify before the note cites it}
+}
+
+@article{kronqvistmisener2021,
+  author  = {Jan Kronqvist and Ruth Misener},
+  title   = {A disjunctive cut strengthening technique for convex {MINLP}},
+  year    = {2021},
+  journal = {Optimization and Engineering},
+  volume  = {22}, number = {3}, pages = {1315--1345},
+  doi     = {10.1007/s11081-020-09551-6}
+}
+
+@article{borgwardt2019,
+  author  = {Steffen Borgwardt and Felix Happach},
+  title   = {Good Clusterings Have Large Volume},
+  year    = {2019},
+  journal = {Operations Research},
+  volume  = {67}, number = {1}, pages = {215--231},
+  doi     = {10.1287/opre.2018.1779}
+}
+
+@article{bansil2021,
+  author  = {Mohit Bansil and Jun Kitagawa},
+  title   = {A {Newton} Algorithm for Semidiscrete Optimal Transport with Storage Fees},
+  year    = {2021},
+  journal = {{SIAM} Journal on Optimization},
+  volume  = {31}, number = {4}, pages = {2586--2613},
+  doi     = {10.1137/20M1357226}
+}
+
+@article{jung2024,
+  author  = {Christian Jung and Claudia Redenbach},
+  title   = {An analytical representation of the {2d} generalized balanced power diagram},
+  year    = {2024},
+  journal = {Computational Geometry},
+  volume  = {121}, pages = {102101},
+  doi     = {10.1016/j.comgeo.2024.102101}
+}
+
+
+% ---------------------------------------------------------------------------
+% Tier 4 -- tool-we-lack: something we would otherwise build or prove (8)
+% ---------------------------------------------------------------------------
+
+@inproceedings{gargtaovegh2022,
+  author    = {Jugal Garg and Yixin Tao and L{\'a}szl{\'o} A. V{\'e}gh},
+  title     = {Approximating Equilibrium under Constrained Piecewise Linear Concave Utilities with Applications to Matching Markets},
+  year      = {2022},
+  booktitle = {Proceedings of the 2022 {ACM-SIAM} Symposium on Discrete Algorithms ({SODA})},
+  pages     = {2269--2284},
+  doi       = {10.1137/1.9781611977073.91}
+}
+
+@inproceedings{chaudhury2024eg,
+  author    = {Bhaskar Ray Chaudhury and Christian Kroer and Ruta Mehta and Tianlong Nan},
+  title     = {Competitive Equilibrium for Chores: from Dual {Eisenberg--Gale} to a Fast, Greedy, {LP}-based Algorithm},
+  year      = {2024},
+  booktitle = {Proceedings of the 25th {ACM} Conference on Economics and Computation ({EC} '24)},
+  pages     = {40},
+  doi       = {10.1145/3670865.3673516}
+}
+
+@article{gandhi2006,
+  author  = {Rajiv Gandhi and Samir Khuller and Srinivasan Parthasarathy and Aravind Srinivasan},
+  title   = {Dependent rounding and its applications to approximation algorithms},
+  year    = {2006},
+  journal = {Journal of the {ACM}},
+  volume  = {53}, number = {3}, pages = {324--360},
+  doi     = {10.1145/1147954.1147956}
+}
+
+@article{lundell2022,
+  author  = {Andreas Lundell and Jan Kronqvist and Tapio Westerlund},
+  title   = {The supporting hyperplane optimization toolkit for convex {MINLP}},
+  year    = {2022},
+  journal = {Journal of Global Optimization},
+  volume  = {84}, number = {1}, pages = {1--41},
+  doi     = {10.1007/s10898-022-01128-0}
+}
+
+@article{linwen2003,
+  author  = {Chi-Jen Lin and Ue-Pyng Wen},
+  title   = {Sensitivity analysis of the optimal assignment},
+  year    = {2003},
+  journal = {European Journal of Operational Research},
+  volume  = {149}, number = {1}, pages = {35--46},
+  doi     = {10.1016/S0377-2217(02)00439-3}
+}
+
+@article{miller1997,
+  author  = {Matt L. Miller and Harold S. Stone and Ingemar J. Cox},
+  title   = {Optimizing {Murty's} ranked assignment method},
+  year    = {1997},
+  journal = {{IEEE} Transactions on Aerospace and Electronic Systems},
+  volume  = {33}, number = {3}, pages = {851--862},
+  doi     = {10.1109/7.599256}
+}
+
+@article{bansil2022,
+  author  = {Mohit Bansil and Jun Kitagawa},
+  title   = {Quantitative Stability in the Geometry of Semi-discrete Optimal Transport},
+  year    = {2022},
+  journal = {International Mathematics Research Notices},
+  volume  = {2022}, number = {10}, pages = {7354--7389},
+  doi     = {10.1093/imrn/rnaa355}
+}
+
+@article{drusvyatskiy2018,
+  author  = {Dmitriy Drusvyatskiy and Adrian S. Lewis},
+  title   = {Error Bounds, Quadratic Growth, and Linear Convergence of Proximal Methods},
+  year    = {2018},
+  journal = {Mathematics of Operations Research},
+  volume  = {43}, number = {3}, pages = {919--948},
+  doi     = {10.1287/moor.2017.0889}
+}
