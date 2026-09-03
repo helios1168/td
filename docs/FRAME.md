@@ -14,7 +14,59 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `national-channel`, head `ec8e727`, pushed; content head `7359c6e`): a
+**State on 2026-09-02 (latest, branch `stage1-scenarios`, head `8eece3f`, not pushed; worktree
+`.claude/worktrees/stage1-scenarios`, branched from `national-channel` at `544504e`): stage 1
+now runs *scenarios* on the real instance — hand-drawn districts by state, a k sweep, and
+per-district opportunity statistics — and the unpinned k=13 draw reproduces
+`draw_k13_20260901` bit-for-bit; 174 tests pass, 0 fail (151 + 23 new).**
+
+*What landed* (`8eece3f`, code + tests, one commit). `td/solvers/centers.py`: `draw(locked=)`
+anchors zips to districts before the LP — locked zips leave the LP, their mass comes off the
+district's target through the new `residual_targets` water-fill (an anchor already past its
+share is *saturated* and receives nothing), the anchors' centroids seed the free centers
+(`seed_centers(initial=)`), and `improve(movable=)` never moves them; `assign(targets=)` takes
+per-district masses. `locked=None` is the old path literally (`targets=None`, `initial=None`,
+`movable=None`), pinned by `test_draw_without_locks_is_unchanged` and by the real-instance
+regression. `tools/run_draw.py`: `--fix NAME=ST,ST` (closed: exactly those states, removed
+before the solver, k reduced by one) and `--anchor NAME=ST,ST` (open: locked in, filled to the
+common target), or both in `--scenario file.json`; `--k 8-16` / `--seeds 0-4` ranges; every
+(k, seed) draw on a `ProcessPoolExecutor` (`--workers`, default 8); per-k `k<kk>/draw.csv` +
+`metrics.json` plus `sweep.csv` / `sweep.json`; per district `mode`, `vs_target`, `n_states`,
+largest-zip share, median zip, stage-2 gain. Tests: 7 new in `test_centers.py`, 16 in the new
+`test_run_draw.py` (parsers, scenario validation, `complete` with pins, serial-vs-pool
+determinism).
+
+*Measured on the real instance* (all under `battery/results/`, gitignored):
+`draw_k13_regress/` — identical `draw.csv` to the 2026-09-01 run, winner seed 3, 59.9375, 1.2 s
+for 5 seeds on the pool (the earlier 4-minute wall time was the gazetteer download, not
+compute). `sweep_20260902/` — k = 8..16 unpinned, spread 0.47%–1.31%, every district staffed
+at every k, 31 s. `sweep_20260902_south/` — `--fix SOUTHWEST=TX,OK --anchor FLORIDA=FL`, 10 s:
+SOUTHWEST is 317.6 at every k (7.5% *under* target at k=8, 50% *over* at k=13, 85% at k=16),
+and its excess lands on the other districts — at k=13 all twelve sit 4% under the $1B-scale
+target; FLORIDA grew across eight south-eastern states at k=8 to reach 346.7, held FL + LA at
+k=13, and at k=16 saturated at Florida's own 183.6 against a 171.6 target. No TX/OK zip leaks
+out of SOUTHWEST at any k. The k=13 map renders; SOUTHWEST and D07 share a hue (the 12-colour
+palette).
+
+*Process note.* The first implementation attempt used the `python-typed` agent, whose Serena
+binding pointed at the session's launch worktree (`national-channel`) and edited
+`centers.py` there; the residue was reverted by file copy and verified by `diff`. Both the
+implementation and the tests were then written by Sonnet `general-purpose` agents barred from
+Serena, against the plan's Section D body spec.
+
+*What it means, and what is next.* A fixed hand-drawn district is not free: the sweep table
+makes its cost visible as the other districts' uniform shortfall, and k is a decision the
+table now supports directly. Next: (i) ask the sponsor which states, if any, are hand-drawn —
+FRAME §8 A12's grain question is live here, since the pin is by state; (ii) certificates 1–4
+are **not** adapted to anchored draws (certificate 4 needs the locked zips excluded from the
+free-cell check — noted in the `centers.py` docstring); (iii) `vs_target` is measured against
+`total / k`, the $1B-scale target, deliberately, so a fixed district's cost shows on its
+neighbours; (iv) review and merge `stage1-scenarios` into `national-channel`. ★6 is answered
+in practice for *this* branch — the user asked for runs on the real instance and they were
+made — but whether framework *units* may read it is still formally open. The earlier entry's
+decision order (★3, U0-lit / U1-cert / U3-inv, A11–A13) stands.
+
+**Earlier — 2026-09-02 (branch `national-channel`, head `ec8e727`, pushed; content head `7359c6e`): a
 second framing pass — a catch-up walk of the two-stage method plus an alternatives ledger —
 with no code touched; 151 tests pass, 0 fail, re-run 2026-09-02 after the merge.**
 `7359c6e` **merges `wt/workflow-dryrun`** (head `750a7cc`) **into `national-channel`** together

@@ -1,14 +1,16 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `ec8e727`
-(pushed; `7359c6e` merges `wt/workflow-dryrun`) · **Tests:** 151 pass, 0 fail (re-run 2026-09-02)
+**Last updated:** 2026-09-02 · **Branch:** `stage1-scenarios` · **Head:** `8eece3f`
+(not pushed; off `national-channel` at `544504e`) · **Tests:** 174 pass, 0 fail (run 2026-09-02)
 
 **Status:** both stages built and a **balance-certified** k=13 draw exists (spread 0.78%,
 all 13 staffed, 4.5e-5 nats off the ceiling); the territory map is a power diagram
 (certificate 4). Measured saturation is **41.9%**, not the 5% `ceiling.py` still hard-codes —
 `docs/REVIEW_GROMOV.md` R1's fixes are open. The framework 0.1 dry run is merged in,
 docs-only through stage 5 (`VERIFY_U2-stab`, 13/13 VERIFIED); `FRAME.md` rev. 2 adds the
-alternatives ledger (§10 Q8–Q12) and sponsor assumptions A11–A13.
+alternatives ledger (§10 Q8–Q12) and sponsor assumptions A11–A13. **This branch adds stage-1
+scenarios** — `tools/run_draw.py --fix/--anchor NAME=ST,ST --k 8-16` — with the certificates
+not yet adapted to anchored draws; see `docs/FRAME.md` §0.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
@@ -131,14 +133,14 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | `td/solvers/centers.py` | **stage 1**: k-means++ seeding, transportation-LP balanced assignment, Lloyd, Nash polish, portfolio — plus `power_weights` / `power_labels`, the LP duals and the power diagram they define |
 | `td/solvers/cert_draw.py` | **four** post-hoc certificates: analytic balance ceiling, integer balance floor, assignment optimality at pinned centers (MILP), and `cert_power_diagram` — the duals as a solver-free `O(nk)`-checkable bound |
 | `td/geo.py` + `tools/us_maps.py` | ZCTA points, LAEA projection, state basemap; six figures incl. `figure_power_regions` (the territory map) and `figure_district_regions` (the superseded zip-catchment fill, `--regions-voronoi`) |
-| `tools/run_draw.py` | the reproducible pipeline: instance → portfolio of draws → stage 2 → `battery/results/<run-id>/` |
+| `tools/run_draw.py` | the reproducible pipeline: instance → (k, seed) draws on a process pool → stage 2 → `battery/results/<run-id>/k<kk>/` + `sweep.csv`; `--fix`/`--anchor NAME=ST,ST` or `--scenario file.json` for hand-drawn (partial) districts, `--k 8-16` for the sweep |
 | `tools/instance_export/export_instance.py` | work-machine exporter — stdlib only, single file, **read it before running it** |
 | `td/solvers/scip_tree.py` | the two-player MILP engine; **not** what stage 1 was built on in the end |
 | `td/solvers/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
-Tests: `.venv/bin/python3 tests/run_all.py` — **151 fast tests, 0 fail, no slow tier**
-(re-run 2026-09-02 at `7359c6e`; 131 at `f45bf89`, 65 at the prune). This worktree has no
+Tests: `.venv/bin/python3 tests/run_all.py` — **174 fast tests, 0 fail, no slow tier**
+(run 2026-09-02 at `8eece3f`; 151 at `7359c6e`, 131 at `f45bf89`, 65 at the prune). This worktree has no
 `.venv`; use the main checkout's: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
 (three levels up from this worktree, not two).
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their
