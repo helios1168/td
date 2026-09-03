@@ -1,8 +1,8 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-03 · **Branch:** `wt/A1` (the A1 track; 13 commits over
-`national-channel` at `a4eb488`, **not merged**) · **Head:** `d82a0fa` · **Tests:** 184 pass, 0 fail
-(run 2026-09-03 at `74eff38`; `tools/measure/` added 10)
+**Last updated:** 2026-09-03 · **Branch:** `national-channel` (fast-forwarded to `wt/A1`, the
+A1 track, on 2026-09-03 with the user's approval; pushed) · **Head:** `8546de6` · **Tests:** 184 pass,
+0 fail (run 2026-09-03 at `74eff38` on `wt/A1`; the merge was a fast-forward, not re-run here)
 
 **Status:** the A1 track (`docs/APPROACHES.md` §A1) on `wt/A1`: ★6 lifted, U7-meas and
 U1-cert landed and verified, A1's kill test passed but its upside is ≤ 0.865 nats over all

@@ -39,8 +39,9 @@ U13-base** and ★8–★12. *What it means:* A1's kill test passed (matching ga
 roster 0.04), but everything it can win is ≤ 0.865 nats over all rosters and ≤ 0.760 at the
 delivered one, all of it above 33% max deviation; the live question is what survives a band,
 and it is one concave solve per roster (U8-band), not a MINLP. A0's soft kill fired
-(`g`-spread 60.65% vs 0.78%). *What's next, in order:* (1) **★12 — merge `wt/A1` into
-`national-channel`?** Nothing merges without the user. (2) Launch **U8-band** from a session
+(`g`-spread 60.65% vs 0.78%). *What's next, in order:* (1) **★12 — done: `national-channel` was
+fast-forwarded to `wt/A1` at `8546de6` on 2026-09-03 with the user's approval and pushed;**
+the two branches share a head and `wt/A1`'s worktree continues from it. (2) Launch **U8-band** from a session
 started in `.claude/worktrees/A1` (Serena binds to the launch directory) — its D1′ certificate
 can end the track in one solve; U9-bandthm, U13-base, U6-sel, U3-inv run alongside. (3) After
 U8: ★11 rewrite the charter's step 3; ★9 the sponsor's `δ` as a menu (U12), ★10 the tie-break

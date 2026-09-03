@@ -1,8 +1,9 @@
-# Handoff — national channel territory design / A1 track (`wt/A1`)
+# Handoff — national channel territory design / A1 track merged (`national-channel`)
 
-**Updated:** 2026-09-03 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`; 13 commits over
-`national-channel` at `a4eb488`, **not merged** — ask first) · **Head:** `d82a0fa` · **Tests:**
-184 pass, 0 fail (2026-09-03 at `74eff38`)
+**Updated:** 2026-09-03 · **Branch:** `national-channel`, fast-forwarded to `wt/A1` (the A1
+track) with the user's approval and pushed; `wt/A1` and its worktree `.claude/worktrees/A1`
+continue from the same head · **Head:** `8546de6` · **Tests:** 184 pass, 0 fail (2026-09-03 at
+`74eff38`; merge was a fast-forward, not re-run)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 (the 2026-09-03 "end of the overnight run" entry; §6 has
@@ -29,7 +30,8 @@
   outputs the premium ladder, U1/U4/U8, verdict conversions).
 
 ## Next actions
-- [ ] **★12 — merge `wt/A1` into `national-channel`?** Nothing merges without the user.
+- [x] **★12 — merged.** `national-channel` fast-forwarded to `wt/A1` at `8546de6` on 2026-09-03
+      (user approved); future track work still asks before merging.
 - [ ] **Launch U8-band** (`docs/units/U8-band.md`) from a session started in this worktree —
       the band-constrained kill test; its one-solve D1′ certificate can end A1. Alongside:
       U9-bandthm, U13-base, U6-sel, U3-inv (independent).
