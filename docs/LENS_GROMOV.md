@@ -55,11 +55,19 @@ the proof only needs `X_π` feasible. So the surrogate the charter should have n
 exactly one more solve than the one it did name, and it is sandwiched today:
 
 ```
-59.9375 = V(delivered)  ≤  EG^bal_{S₁₃}(0.0078)  ≤  EG^bal_{S₁₃}(δ)  ≤  EG^bal_{S₁₃}(0.33) = EG_{S₁₃} = 60.6974
+59.9375 = V(delivered)  ≤  EG^bal_{S₁₃}(δ₀)  ≤  EG^bal_{S₁₃}(δ)  ≤  EG^bal_{S₁₃}(0.33) = EG_{S₁₃} = 60.6974
 ```
 
 (the right end because the unconstrained vertex has max deviation 33.00% on both independent
-solves, U1-cert §4.3). **U13.** This is the cheapest decisive experiment in the file and it
+solves, U1-cert §4.3; the left end at `δ₀`, the committed draw's own **max deviation** —
+0.39% on seed 3, 0.62% on seed 9 — not its 0.78% spread, since the band is a per-district
+deviation. `DOMAIN_optimization` §2.10 caught the distinction; computed 2026-09-03 from
+`metrics.json`.) *Added the same day, from `DOMAIN_optimization` §2.14's screening bound
+`EG_S ≤ k·log((B_tot + w·P_S)/k)` with `B_tot = 1145.81` partition-invariant:* at `P_S` it
+gives 60.7615 (0.064 above the true `EG_{S₁₃}`, so the screen is tight), and at `P₁₃` it gives
+**60.8025 — a roster-free bound with no solve**: no coverage by *any* 13 of the 111 beats the
+delivered draw by more than **0.865 nats**, against the 9.65-nat ceiling. U19 is answered to
+within the screen's slack. **U13.** This is the cheapest decisive experiment in the file and it
 replaces `DOMAIN_optimization.md` §2.6's τ-homotopy as the first thing to run: the homotopy
 asks whether the *map* moves as books switch on; `EG^bal(δ)` asks directly how much *value*
 the band leaves on the table, and it is convex where the homotopy is an empirical claim about
@@ -266,7 +274,7 @@ number and carry the value.
 | **U16** | `EG^bal` at the `P₁₃` roster (R0009, R0012 in for R0017, R0018) and at every roster within the floor of it | E | two to tens of solves; bypasses OQ3's selection non-convexity by enumeration |
 | **U17** | fragility of `S₁₃` to Nash ties: the best alternative Nash optimum is 1.37e-2 nats away on seed 3 and **8.1e-3 on seed 9** (1.6× the floor) | E | `P_S`, U4, U8 are functions of the set `S₁₃`; nothing detects a tie (CODEVERIFY U7-meas). Report the margin with every `S₁₃`-conditional number |
 | **U18** | the rounding gap of the `EG^bal` vertex at the sponsor's δ, in nats and in moved `M` | E | decides whether any integer programming is needed at all (Move 13.1) |
-| **U19** | `max_S EG^bal_S` — the roster-free bound | T | only the ceiling (69.59) bounds it today; enumeration (U16) gives a lower bound, the ladder's `P₁₃` a heuristic upper one. Whether `S ↦ EG^bal_S` has any submodular-like structure is the theorem-shaped question |
+| **U19** | `max_S EG^bal_S` — the roster-free bound | T → **E, mostly** | **bounded 2026-09-03 by the (★) screen: `max_S EG_S ≤ 60.8025`, i.e. ≤ 0.865 nats over the delivered draw, no solve** (`DOMAIN_optimization` §2.14; 0.064 slack at `S₁₃`). Enumeration (U16) gives the lower bound. Whether `S ↦ EG^bal_S` has submodular-like structure remains the theorem-shaped residue |
 
 ---
 
