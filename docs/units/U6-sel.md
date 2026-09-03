@@ -1,5 +1,7 @@
 # Unit U6-sel — is "the 13" defensible? *(wave 2, gated on ★5 — not launched)*
 
+**Status 2026-09-03 (A1 track, `wt/A1`): carried, re-scoped, now a `python-typed` → `code-verify` unit** (★6 lifted). Scope: the 13 × 13 audits on the delivered artifact — EF1 / FEFx-w.r.t.-band / proportionality (N1, N9), the 169-pair blocking test with each block's gain (N3, from U2-stab), closed-form Shapley of all 111 via `littlechild1973` + additivity and the least core via `deng1999` / `kern2003` (N5, N6) — per `DOMAIN_economic-theory.md` §2.1, §2.4–§2.6, §4 step 1. Files owned become `tools/measure/audits.py`, `tests/test_audits.py`, `docs/MODEL_U6-sel.md`, `docs/CODEVERIFY_U6-sel.md`. ★5 gates N5 only. Branch `wt/A1`. See `docs/BRIEF.md` §4.
+
 ## Spec (verbatim from `docs/LIT_economic-theory.md`:§0.1 and §0.2)
 
 > **The Shapley value of the roster game has a closed form; the §2.5 Monte-Carlo hand-off to

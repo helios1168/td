@@ -1,5 +1,7 @@
 # Unit U3-inv — may the drawing read books? The invariant message space, against the Nested Range Condition
 
+**Status 2026-09-03 (A1 track, `wt/A1`): carried, sharpened.** Books now enter the draw only through the objective of one concave program per roster (`EG^bal_S`, `DOMAIN_optimization` §2.10); ask the `G`-invariance question of that program's map *and* its duals (P-G1–P-G3, `DOMAIN_economic-theory` §2.7), add N10 (the `c2·T_z` coupling), and take D6 / ★8 (the `fotakis2014` scope correction) as an input, not a conclusion. ★6 is lifted: the instance is readable. Branch `wt/A1`. See `docs/BRIEF.md` §4.
+
 ## Spec (verbatim from `docs/DOMAIN_economic-theory.md`:§2.7(b))
 
 > **Restricting the message space** to `G`-invariants (normalised per-rep profiles, GROTH §5b)
