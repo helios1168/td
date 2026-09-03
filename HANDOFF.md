@@ -1,6 +1,6 @@
 # Handoff — national channel territory design / stage-1 scenarios (`national-channel`)
 
-**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `5c150d8` (fast-forward of `stage1-scenarios`, pushed; code at `8eece3f`) · **Tests:** 174 pass, 0 fail (run 2026-09-02)
+**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `cf4170b` (pushed; a fast-forward of `stage1-scenarios`, code at `8eece3f`) · **Tests:** 174 pass, 0 fail (re-run 2026-09-02 at `cf4170b`)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 — supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
@@ -9,9 +9,9 @@
 - **Caution:** the repository-root checkout (`~/projects/td`) is on `contiguity-harness` and
   describes the superseded programme. Work in this worktree. It has no `.venv`; run tests with
   `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py` (three levels up). The instance
-  (`instance_descaled.json.gz`) and the gazetteer cache (`data/geo/`) are gitignored and were
-  copied into this worktree by hand — a fresh worktree needs the same two copies.
-- **Do not use Serena in this worktree:** the MCP server binds to the session's launch
+  (`instance_descaled.json.gz`) and the gazetteer cache (`data/geo/`) are gitignored and live
+  only in this worktree — a fresh worktree needs both copied in by hand.
+- **Do not use Serena from any worktree other than the session's launch directory:** the MCP server binds to the session's launch
   directory and edits the wrong tree (it did, once, on 2026-09-02 — reverted).
 - **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`
 - **Key docs:** `docs/FRAME.md` (§0 resume, §8 A1–A13 sponsor asks, §10 Q1–Q12 lens questions) · `docs/BRIEF.md` (the plan, units, ★ decisions) · `docs/units/*.md` (8 briefs) ·

@@ -14,9 +14,10 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `national-channel`, fast-forwarded from
-`stage1-scenarios` at `5c150d8`, pushed; the work was done in worktree
-`.claude/worktrees/stage1-scenarios`, branched at `544504e`, code commit `8eece3f`): stage 1
+**State on 2026-09-02 (latest, branch `national-channel`, head `cf4170b`, pushed — a
+fast-forward of `stage1-scenarios`; the work was done in worktree
+`.claude/worktrees/stage1-scenarios`, branched at `544504e`, code commit `8eece3f`, and the
+174 tests were re-run in this worktree after the fast-forward): stage 1
 now runs *scenarios* on the real instance — hand-drawn districts by state, a k sweep, and
 per-district opportunity statistics — and the unpinned k=13 draw reproduces
 `draw_k13_20260901` bit-for-bit; 174 tests pass, 0 fail (151 + 23 new).**
