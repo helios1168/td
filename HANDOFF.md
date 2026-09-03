@@ -1,6 +1,6 @@
-# Handoff — national channel territory design / stage-1 scenarios (`stage1-scenarios`)
+# Handoff — national channel territory design / stage-1 scenarios (`national-channel`)
 
-**Updated:** 2026-09-02 · **Branch:** `stage1-scenarios` · **Head:** `8eece3f` (pushed as `origin/stage1-scenarios`; off `national-channel` at `544504e`) · **Tests:** 174 pass, 0 fail (run 2026-09-02)
+**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `5c150d8` (fast-forward of `stage1-scenarios`, pushed; code at `8eece3f`) · **Tests:** 174 pass, 0 fail (run 2026-09-02)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 — supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
@@ -30,7 +30,8 @@
       shortfall in `sweep.csv` (`vs_target` is against `total / k` on purpose).
 - [ ] **Certificates 1–4 are not adapted to anchored draws** — certificate 4 needs the locked
       zips excluded from the free-cell check (`centers.py` module docstring, "Anchored districts").
-- [ ] Review and merge `stage1-scenarios` into `national-channel`; push.
+- [x] `stage1-scenarios` fast-forwarded into `national-channel` and pushed (2026-09-02); the
+      `stage1-scenarios` worktree can be removed.
 - [ ] `us_maps.py`'s 12-colour palette repeats hues at k ≥ 13 (SOUTHWEST and D07 at k=13).
 - [ ] **★6** — answered in practice on this branch (the user asked for real-instance runs);
       whether framework *units* may read `instance_descaled.json.gz` is still formally open,

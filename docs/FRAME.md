@@ -14,8 +14,9 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `stage1-scenarios`, head `8eece3f`, pushed; worktree
-`.claude/worktrees/stage1-scenarios`, branched from `national-channel` at `544504e`): stage 1
+**State on 2026-09-02 (latest, branch `national-channel`, fast-forwarded from
+`stage1-scenarios` at `5c150d8`, pushed; the work was done in worktree
+`.claude/worktrees/stage1-scenarios`, branched at `544504e`, code commit `8eece3f`): stage 1
 now runs *scenarios* on the real instance — hand-drawn districts by state, a k sweep, and
 per-district opportunity statistics — and the unpinned k=13 draw reproduces
 `draw_k13_20260901` bit-for-bit; 174 tests pass, 0 fail (151 + 23 new).**
@@ -61,7 +62,8 @@ FRAME §8 A12's grain question is live here, since the pin is by state; (ii) cer
 are **not** adapted to anchored draws (certificate 4 needs the locked zips excluded from the
 free-cell check — noted in the `centers.py` docstring); (iii) `vs_target` is measured against
 `total / k`, the $1B-scale target, deliberately, so a fixed district's cost shows on its
-neighbours; (iv) review and merge `stage1-scenarios` into `national-channel`. ★6 is answered
+neighbours; (iv) ~~review and merge `stage1-scenarios` into `national-channel`~~ — done, a
+fast-forward, same day. ★6 is answered
 in practice for *this* branch — the user asked for runs on the real instance and they were
 made — but whether framework *units* may read it is still formally open. The earlier entry's
 decision order (★3, U0-lit / U1-cert / U3-inv, A11–A13) stands.
