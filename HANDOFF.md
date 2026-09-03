@@ -1,6 +1,6 @@
 # Handoff — national channel territory design / stage-1 scenarios (`national-channel`)
 
-**Updated:** 2026-09-02 · **Branch:** `national-channel` · **Head:** `cf4170b` (pushed; a fast-forward of `stage1-scenarios`, code at `8eece3f`) · **Tests:** 174 pass, 0 fail (re-run 2026-09-02 at `cf4170b`)
+**Updated:** 2026-09-03 · **Branch:** `national-channel` · **Head:** `0d0ea96` (pushed; scenario code at `8eece3f`, ten-seed sweep + maps at `0d0ea96`) · **Tests:** 174 pass, 0 fail (re-run 2026-09-02 at `cf4170b`; no code change since)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 — supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
