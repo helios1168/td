@@ -18,7 +18,7 @@ Seeded domains: `optimization`, `economic-theory` only (global `CLAUDE.md` §5).
 | ID | family | decides, in order | measure | domains | kill experiment | state |
 |---|---|---|---|---|---|---|
 | A0 | draw-then-match | k → partition on `M` → roster by Hungarian on `log g` | stage 1 common (`M`); stage 2 per-agent (`u_i`) | optimization, economic-theory | A3 ties or beats A0 on `V` (★6) | running |
-| A1 | joint coverage | (partition, roster) together by rep-indexed MINLP; EG relaxation as the bound | per-agent `V(π,σ)` throughout; balance as a band | optimization, economic-theory | `P₀ ≈ P*(A)` and few zips contested among the 13 (★6) | running (2026-09-03, `wt/A1`) |
+| A1 | joint coverage | (partition, roster) together by rep-indexed MINLP; EG relaxation as the bound | per-agent `V(π,σ)` throughout; balance as a band | optimization, economic-theory | `P₀ ≈ P*(A)` and few zips contested among the 13 (★6) | running — **kill test passed 2026-09-03** (`MODEL_U7-meas` §6: matching gap 0, map gap 0.64 nats, roster 0.04; ceiling 0.76 nats at `S₁₃` from U1-cert) |
 | A2 | roster-first, invariant draw | roster by max-coverage on audited book → sites from `G`-invariant profiles → balanced transport | audited book (per-agent, un-inflatable) then `M` (common) | economic-theory (mechanism design), optimization | fibre spread `spread_S EG_S` small (★6); no audited book (★2) | planned |
 | A3 | sales-ops baseline | group states to ≈ `$total/k` by hand → top-book rep per bucket | `M` by state (common), book share (per-agent) | none | none — it is the baseline; dies as a *candidate* if `V` and C1 both lose (★6) | planned |
 | A4 | coarse-grain districting | grain (metro / branch) → exact partition of ~hundreds of units, contiguity optional → roster → zip map derived | `M` at the coarse grain (common) | optimization; geometry unseeded | largest metro's `M` exceeds the C1 band (★6 + public ZCTA→CBSA crosswalk) | planned |
@@ -66,7 +66,8 @@ bound `V` (LENS_GROTHENDIECK §3).
 beats the committed draw on `V` within the tier-2 floor, A0's headline claim is false
 (LENS_GROMOV Move 4, ledger U10). Depends on ★6 and FRAME §6's committed draw. A second,
 softer kill: LENS_GROMOV U1 — if the spread of realised `g_i` is far from the 0.781% spread of
-`M`, the headline balance number measures the wrong thing.
+`M`, the headline balance number measures the wrong thing. **Fired 2026-09-03:** realised-gain
+spread 60.65% on the committed draw (`MODEL_U7-meas` U1, FRAME §6).
 
 **Why it might beat A0** — Not applicable; this is A0. Its case against the others is
 FRAME §9's settled business constraint "territories shall be opportunity-balanced" and

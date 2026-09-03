@@ -56,8 +56,11 @@ evaluates (`P₀`'s and `P*(A)`'s); the ceilings `P_S`, `P₁₃`, `P_free` have
 
 ## 3. The ladder
 
-For a fixed draw `π₀` (the committed map) with stage-2 roster `σ₀` and selected staff
-`S₁₃ = im σ₀`:
+For a fixed draw `π₀` (the committed map) with the roster `σ₀` being scored and selected
+staff `S₁₃ = im σ_nash`, the image of the model's *own* stage-2 (Nash) roster at `π₀` —
+whatever `σ₀` is. For the committed draws `σ₀ = σ_nash`; only a hand-staffed override (§4,
+U10) separates them. *(Corrected 2026-09-03 per `CODEVERIFY_U7-meas`: the earlier
+`S₁₃ = im σ₀` was inconsistent with §4 and breaks `P*(A) ≤ P_S` under an override.)*
 
 | symbol | held fixed | varies | value | method | ledger |
 |---|---|---|---|---|---|
@@ -71,9 +74,13 @@ For a fixed draw `π₀` (the committed map) with stage-2 roster `σ₀` and sel
 P₀  ≤  P*(A)  ≤  P_S  ≤  P₁₃  ≤  P_free
 ```
 
-Each inequality is a restriction: `σ₀` is one roster; a Hungarian roster at `π₀` is one map for
-`S₁₃`; `S₁₃` is one 13-set; a 13-set is one subset of `R`. The gaps locate the unrealised
-premium:
+`P₀ ≤ P*(A)` because `σ₀` is one roster. `P*(A) ≤ P_S` is **not** a plain restriction —
+`P*(A)` ranges over all 111 reps and can use one outside `S₁₃` (seed 9 does) — it holds by an
+exchange argument on the Nash matching: for every district `j` and every unmatched rep `c`,
+`b_{c,j} ≤ b_{σ_nash(j),j}`, so the Hungarian value is at most `Σ_j max_{i∈S₁₃} b_{ij} ≤ P_S`
+(checked on both draws, 0 of 98 × 13 pairs violate; `CODEVERIFY_U7-meas` row 7). `P_S ≤ P₁₃`
+because `S₁₃` is one 13-set; `P₁₃ ≤ P_free` because a 13-set is one subset of `R`. The gaps
+locate the unrealised premium:
 
 - `P*(A) − P₀` — the matching. Large means A0's stage 2 is choosing the wrong roster on this
   map, fixable in milliseconds with no redraw.
@@ -104,8 +111,10 @@ s.t.  Σ_i w_zi ≤ 1            ∀z
 
 `w` is integral at an optimum for fixed `y` (each zip picks its best selected rep), so the
 LP-relaxed `w` loses nothing. `scipy.optimize.milp` with `mip_rel_gap = 0.0` (trap 12). The
-greedy `(1 − 1/e)` solution seeds it and is reported alongside; a `time_limit` stop is
-reported as *no bound* (trap 15), never as `P₁₃`.
+greedy `(1 − 1/e)` solution is computed and reported alongside as a lower bound — it does
+**not** seed the solve, `scipy.optimize.milp` accepts no initial solution *(corrected
+2026-09-03 per `CODEVERIFY_U7-meas`)*; a `time_limit` stop is reported as *no bound*
+(trap 15), never as `P₁₃`.
 
 ## 4. Worked example
 
@@ -168,6 +177,27 @@ a first-order conversion, reported next to the raw gap, not a certificate.
   stage 2 is wrong), map (A1's redraw), or roster (A1's `Σ y = k` selection).
 - Independently, U1: if the `g`-spread is far from the 0.781% `M`-spread, A0's headline
   balance number measures the wrong thing (A0's soft kill).
+
+**Measured 2026-09-03** (`battery/results/meas_20260903/`, `CODEVERIFY_U7-meas` 15/17 VERIFIED,
+the two REFUTED rows being text defects fixed above; `ḡ = 102.10`):
+
+| draw | `P₀` | `P*(A)` | `P_S` | `P₁₃` | `P_free` | match gap | map gap | roster gap |
+|---|---|---|---|---|---|---|---|---|
+| seed 3 (`draw_k13_20260901`) | 37.82% | 37.82% | 51.43% | 52.34% | 79.44% | 0 nats, **small** | 13.61% of book, **0.640 nats** | 0.92%, 0.043 nats |
+| seed 9 (`sweep_20260902_s10/k13`) | 39.28% | 39.41% | 51.43% | 52.34% | 79.44% | 0.14%, 0.0065 nats | 12.15%, 0.568 nats | 0.92%, 0.043 nats |
+
+Shares are of total book 1142.50. **Verdict: A1 is not killed.** The matching is already
+premium-optimal on the committed map (seed 9's relabel buys 1.58 book and *loses* 0.008 nats
+of `V`); the map gap is two orders above the floor; the roster gap is eight times the floor
+(`P₁₃` swaps R0017, R0018 for R0009, R0012; greedy attains the MILP optimum). Cross-read with
+`MODEL_U1-cert.md` P4: at this roster no coverage beats the committed draw by more than
+**0.760 nats** (the EG bound), and the EG vertex that realises it has an `M`-spread above 50%.
+So the 0.64 nats the ladder puts on the map is real but is bought with balance; how much of it
+survives a balance band is exactly A1's band-constrained joint program, and the answer is
+bounded above by 0.76 nats at `S₁₃`. FRAME §6's "~3.7 nats of swing" is the size of the
+*term*, not of what any redraw can win. Other numbers: U1 `g`-spread **60.65%** vs `M`-spread
+0.781% (seed 9: 59.47% vs 0.836%) — A0's soft kill fires; U4 **83 zips, 6.12% of `M`**; U8
+pooled `corr(T_z, M_z) = 0.650`, per selected rep 0.23–0.93 (median ≈ 0.52).
 
 ## 7. Inputs, outputs, provenance
 

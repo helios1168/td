@@ -28,7 +28,22 @@ numbers. Hub files edited here (this file, `BRIEF.md`, `APPROACHES.md`, the two 
 reach `national-channel` only by a merge the user approves. Everything below this entry is
 the hub's state at `a4eb488`.
 
-**State on 2026-09-02 (branch `national-channel`, head `0d0ea96`, branch `national-channel`, head `0d0ea96`, pushed — `cf4170b` was
+*Later the same day — both units landed.* **U1-cert** (`MODEL_U1-cert.md`, `VERIFY_U1-cert.md`,
+`docs/artifacts/U1-cert/`): P1 VERIFIED at every `ρ ≥ 0` under a named extension hypothesis;
+P2 three-of-four (the integer balance floor is not an EG-dual degeneration); the modeler's
+"`≤ k` splits heterogeneously" REFUTED and retracted (`≤ k − 1` holds via the MBB face);
+`EG_{S₁₃} = 60.6974` vs `V = 59.9375`. **U7-meas** (`MODEL_U7-meas.md`, `tools/measure/`,
+`CODEVERIFY_U7-meas.md` 15/17 VERIFIED, the two refuted rows being spec text since fixed;
+184 tests): the premium ladder and the other numbers are in §6. **A1's kill test passed** —
+the matching is already right, the map holds 0.64 nats of premium, the roster 0.04 — but
+U1-cert caps the whole thing at 0.76 nats at this roster and shows it is bought with balance.
+A0's soft kill (U1) fires: `g`-spread 60.65% vs `M`-spread 0.78%. *Assumption recorded:* the
+user asked for the run to continue overnight without stopping, so the track proceeds past the
+approved plan into the charter's next stage — `/gromov`, `/domain optimization`,
+`/domain economic-theory` and `/research-plan` under the A1 charter with these numbers — and
+stops before launching new units. Still no merge into `national-channel` without asking.
+
+**State on 2026-09-02 (branch `national-channel`, head `0d0ea96`, pushed — `cf4170b` was
 the fast-forward of `stage1-scenarios`, `0d0ea96` adds the ten-seed sweep, its maps and the
 artifact link, see "Later the same day" below; the work was done in worktree
 `.claude/worktrees/stage1-scenarios`, branched at `544504e`, code commit `8eece3f`, and the
@@ -336,7 +351,14 @@ have identical optima, gaps and certificates.
 | portfolio staffing spread across 5 seeds | 7.1e-2 nats | `score_draws` | the effort ledger's middle term |
 | compactness headroom | a **8.53%** more compact assignment exists in the same balance band (152 relabels); power-diagram bound independently gives 8.22%, with **132 of 1,223** zips outside their own cell | pinned-centers MILP; `cert_power_diagram` | open question 1, in one number |
 | acceptance floors | tier 1 `1e-8` nats · tier 2 `5e-3` nats | `td/solvers/base.py:72,81` | the cells-vs-dots gap (4.66e-5) sits **below** tier 2 |
-| tests | **151** pass, 0 fail | `tests/run_all.py` at `937460e` | the regression surface |
+| **premium ladder** on the committed draw, share of total book | `P₀` 37.82% · `P*(A)` 37.82% · `P_S` **51.43%** · `P₁₃` 52.34% · `P_free` 79.44% | `MODEL_U7-meas` §6, `battery/results/meas_20260903` (2026-09-03) | matching gap 0 (stage 2 is already right); **map gap 13.6% of book ≈ 0.64 nats**; roster gap 0.9% ≈ 0.043 nats — A1's kill test *passed*, and what redrawing can win is ≤ 0.76 nats, not 3.7 |
+| **EG bound at the delivered roster** `EG_{S₁₃}` | **60.6974** vs `V` 59.9375 → **0.760 nats**, bracket 7e-15; the EG vertex realising it has `M`-spread ≥ 50% | `MODEL_U1-cert` P4, `VERIFY_U1-cert` | the first bound ever on the term the business signs; the gain is bought with balance |
+| certificate collapse into the EG dual | **3 of 4** (ceiling, pinned-centers MILP, power diagram); the integer balance floor is primal-only | `VERIFY_U1-cert` P2 | partial refutation of `DOMAIN_optimization` §3 / `LENS_GROTHENDIECK` descent 3 |
+| split units at an EG vertex | `≤ k − 1` heterogeneously (the MBB face); measured 10, `M(F)` 2.4–3.2% of `T`, vertex-dependent | `VERIFY_U1-cert` P3 | the a-priori value bound is vacuous; quote only with the split masses |
+| **realised-gain spread** across the 13 | **60.65%** (seed 9: 59.47%) against the 0.781% `M`-spread | `MODEL_U7-meas` U1 | A0's soft kill (LENS_GROMOV U1) fires: the headline balance number measures territory size, not what each rep gets |
+| zips contested among the selected 13 | **83** of 675, **6.12%** of `M` | `MODEL_U7-meas` U4 | the redraw has little *choice*; its premium comes from moving uncontested book, not from adjudicating overlaps |
+| `corr(T_z, M_z)` | 0.650 pooled; per selected rep 0.23–0.93 | `MODEL_U7-meas` U8 | the premium ladder bites moderately (DOMAIN_optimization §2.3's escape clause does not fire) |
+| tests | **184** pass, 0 fail | `tests/run_all.py` at `74eff38` (`wt/A1`; 174 at `8eece3f`) | the regression surface |
 | decision horizon | one stand-up; re-examined on data refresh | §8 assumption | rules out anything needing quarterly re-solve |
 
 **What these bound.** At 1,229 units and k=13 the instance is *small* by the current
