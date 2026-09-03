@@ -14,7 +14,7 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-02 (latest, branch `stage1-scenarios`, head `8eece3f`, not pushed; worktree
+**State on 2026-09-02 (latest, branch `stage1-scenarios`, head `8eece3f`, pushed; worktree
 `.claude/worktrees/stage1-scenarios`, branched from `national-channel` at `544504e`): stage 1
 now runs *scenarios* on the real instance — hand-drawn districts by state, a k sweep, and
 per-district opportunity statistics — and the unpinned k=13 draw reproduces

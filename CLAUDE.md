@@ -1,7 +1,7 @@
 # National channel territory design — Claude Code setup
 
 **Last updated:** 2026-09-02 · **Branch:** `stage1-scenarios` · **Head:** `8eece3f`
-(not pushed; off `national-channel` at `544504e`) · **Tests:** 174 pass, 0 fail (run 2026-09-02)
+(pushed as `origin/stage1-scenarios`; off `national-channel` at `544504e`) · **Tests:** 174 pass, 0 fail (run 2026-09-02)
 
 **Status:** both stages built and a **balance-certified** k=13 draw exists (spread 0.78%,
 all 13 staffed, 4.5e-5 nats off the ceiling); the territory map is a power diagram
