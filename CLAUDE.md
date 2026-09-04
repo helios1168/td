@@ -1,7 +1,8 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-04 · **Branch:** `national-channel` · **Head:** `b3931fa` ·
-**Tests:** 184 pass, 0 fail (run 2026-09-04 at `b3931fa` in this worktree)
+**Last updated:** 2026-09-04 · **Branch:** `national-channel`, pushed · **Head:** `b3931fa`
+(state commit `2ce052e`) · **Tests:** 184 pass, 0 fail (run 2026-09-04 at `b3931fa` in this
+worktree)
 
 **Status:** the A1 track's units U8–U13 are written under `docs/tracks/A1/` and **not
 launched** here — U8-band is the gating one and launches from `.claude/worktrees/A1`. Hub:

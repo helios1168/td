@@ -1,7 +1,8 @@
 # Handoff — national channel territory design (`national-channel`, the hub)
 
-**Updated:** 2026-09-04 · **Branch:** `national-channel` · **Head:** `b3931fa` ·
-**Tests:** 184 pass, 0 fail (run 2026-09-04 at `b3931fa` in this worktree)
+**Updated:** 2026-09-04 · **Branch:** `national-channel`, pushed · **Head:** `b3931fa`
+(state commit `2ce052e`) · **Tests:** 184 pass, 0 fail (run 2026-09-04 at `b3931fa` in this
+worktree)
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 — the 2026-09-04 entry is the top one; §6 carries the

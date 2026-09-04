@@ -15,7 +15,8 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 ## 0. Resume — read this first in a fresh session
 
 **State on 2026-09-04 (latest, branch `national-channel`, worktree
-`.claude/worktrees/national-channel`, head `b3931fa`; tests 184 pass, 0 fail at `b3931fa`):
+`.claude/worktrees/national-channel`, head `b3931fa`, recorded by state commit `2ce052e` and
+pushed to origin the same day; tests 184 pass, 0 fail at `b3931fa`):
 the stage-1 ten-seed sweep is now visible at every k it was run for — the k-Sweep artifact
 carries a map section for all nine k instead of three.** *What landed* (`b3931fa`, hub work,
 no `td/` or `tools/` change): the six unrendered k values of `sweep_20260902_s10` — k = 8, 9,
