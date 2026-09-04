@@ -1,16 +1,16 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-03 · **Branch:** `national-channel` (fast-forwarded to `wt/A1`, the
-A1 track, on 2026-09-03 with the user's approval; pushed) · **Head:** `8546de6` · **Tests:** 184 pass,
-0 fail (run 2026-09-03 at `74eff38` on `wt/A1`; the merge was a fast-forward, not re-run here)
+**Last updated:** 2026-09-04 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
+**Head:** `ed5a9a8` · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new, run 2026-09-04 at
+`ddd162d` in this worktree; `ed5a9a8` is docs-only)
 
-**Status:** the A1 track (`docs/APPROACHES.md` §A1) on `wt/A1`: ★6 lifted, U7-meas and
-U1-cert landed and verified, A1's kill test passed but its upside is ≤ 0.865 nats over all
-rosters (FRAME §6); lens, both domain plans, literature and `BRIEF.md` re-run under the
-charter, units U8–U13 written and **not launched** — A1's documents live under
-`docs/tracks/A1/`; the hub copies at `docs/` are the neutral `a4eb488` versions plus
-`APPROACHES.md` §0's inherited facts. Hub state otherwise: both stages built, balance-certified
-k=13 draw, stage-1 scenarios and the ten-seed sweep. See `docs/FRAME.md` §0.
+**Status:** A1 wave 1 landed and is verified — **U8-band**'s D1′ certificate says the premium is
+**NOT SOFT** (gap 0.683–0.737 nats against the 5e-3 floor, no `δ*` on `[δ₀, 0.33]`), so A1
+continues and wave 2 (U10-round, U11-roster, U4-disp) is unblocked. **U9-bandthm** verified all
+five propositions it rests on. Four user-gated items are reported, not done: the merge into
+`national-channel`, ★11's charter rewrite, ★8, and the source-document corrections this wave
+implies. A1's documents live under `docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full
+narrative and the numbers.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
@@ -139,8 +139,9 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | `td/solvers/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
-Tests: `.venv/bin/python3 tests/run_all.py` — **174 fast tests, 0 fail, no slow tier**
-(run 2026-09-02 at `8eece3f`; 151 at `7359c6e`, 131 at `f45bf89`, 65 at the prune). This worktree has no
+Tests: `.venv/bin/python3 tests/run_all.py` — **208 fast tests, 0 fail, no slow tier**
+(run 2026-09-04 at `ddd162d`; 184 at `74eff38`, 174 at `8eece3f`, 151 at `7359c6e`, 131 at
+`f45bf89`, 65 at the prune). This worktree has no
 `.venv`; use the main checkout's: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
 (three levels up from this worktree, not two).
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their
@@ -172,11 +173,14 @@ allocations with `k_c ≥ 1`. Within a component the best conceivable outcome is
 districts, so this is an **upper bound on any real partition** — a free dual bound, and the
 answer to whether the target is reachable at all.
 
-On illustrative splits of $6.2B the ceiling spread at k=6 ranges 19.4%–87.1%, so **$1B ± 10%
-is probably not geometrically reachable**: a ~$0.9B region gets exactly one district and
-cannot be subdivided. The best `k` moves in *opposite* directions across scenarios, so k is a
-balance decision, not just headcount. **Four numbers — regional opportunity totals — settle
-this with no solver and no per-zip data.**
+**Retired 2026-09-04 (BRIEF §6.5).** This section used to say "$1B ± 10% is probably not
+geometrically reachable", from illustrative splits of the superseded $6.2B sizing at k=6. The
+real instance settles it the other way: the committed k=13 draw sits at **0.39 % max deviation**
+(0.78 % spread), four orders inside the old worry, and `sweep_20260902_s10` balances every k from
+8 to 16 within 5 %. Balance is not the binding difficulty (FRAME §9). What survives of the
+paragraph is the structural point: the best `k` moves in *opposite* directions across regional
+scenarios, so `k` is a balance decision and not just headcount, and four numbers — the regional
+opportunity totals — settle it with no solver and no per-zip data.
 
 ---
 

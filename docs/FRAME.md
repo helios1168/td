@@ -14,7 +14,98 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-03, end of the overnight run (latest, branch `wt/A1`, worktree
+**State on 2026-09-04 (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`, head `ed5a9a8`,
+5 commits over `629e3da`; tests 208 pass, 0 fail — 184 pre-existing + 24 new, run at `ddd162d`;
+`ed5a9a8` is docs-only): wave 1 launched,
+landed and was verified. `D1′ says the premium is NOT SOFT: A1 continues and wave 2 is live.**
+
+*What landed.* **U9-bandthm** (`954d9eb` MODEL, `f199e92` VERIFY; `modeler` → `math-verify`) and
+**U8-band** (`69997ac` code+MODEL+figures, `ddd162d` CODEVERIFY + both refuted rows fixed;
+`python-typed` → `code-verify`), launched in parallel from this worktree after activating Serena
+to it *by path* (six registered projects are named `td`).
+
+*The number that decides the track.* The hard gate passed first: `EG_{S₁₃}` reproduced as
+`[60.69741561132, 60.69741562001]` — `6.11e-9` from the published `60.6974156139`, confirming the
+**unmasked** utility convention (`channel.gain_matrix`, not `model.utilities`). Then the frontier,
+every bracket tier-1 (`2.8e-9`–`8.2e-9`), 15–57 tangents, monotone and concave with **zero**
+violations:
+
+| `δ` | 0.0039 (`δ₀`) | 0.02 | 0.05 | 0.10 | 0.33 |
+|---|---|---|---|---|---|
+| `EG^bal_{S₁₃}(δ)` | 60.620441 | 60.628865 | 60.641601 | 60.657725 | 60.697416 |
+| gap to `V` = 59.9375 | **0.682971** | 0.691975 | 0.708802 | 0.736845 | 0.759946 |
+
+**D1′: NOT SOFT at every `δ`** — 137–147× the 5e-3 tier-2 floor. **`δ*` does not exist on
+`[δ₀, 0.33]`**: the gap is already 0.683 nats at the left endpoint, so zero bisection solves were
+needed, and the verdict does not rest on the slope at all. `s_min(δ₀) = 0.5608759` nats per unit
+`δ`, a *verified* supergradient (tangent slack `+5.8e-4` to `+1.7e-2`). SCIP cross-checked at
+`δ = 0.02` and `0.33`, status `optimal` (never `time_limit`), agreeing to `1.58e-9` and `1.10e-9`.
+`EG^bal(0.33) = EG_{S₁₃}` exactly, because the band goes slack there (the EG vertex's max
+deviation is 0.3224 < 0.33) — the sandwich closes at its right endpoint.
+
+*What it means.* **The band was never what was binding.** The whole frontier rises `0.077` nats
+while `δ` widens 84-fold, so relaxing balance from 0.39 % to 33 % buys back almost nothing of the
+0.760-nat premium. A1's charter survives its own kill test a second time, and the `collapsed-on-
+softness` branch in `APPROACHES.md` §0 does **not** fire. ★9 changes character: the sponsor's `δ`
+is nearly free on value grounds, so it is a governance choice, not a trade-off.
+
+*Structure measured at `δ₀`.* **N8:** 12 of 13 bands tight, six `ν_i > 0` and six `ν_i < 0` — **not
+CEEI**; from `δ = 0.02` outward only lower bands bind, and at `0.33` all `ν = 0` and anonymity is
+restored. The single band-slack agent pins the multiplier gauge, so `p` and `ν` are quotable here
+(U9 P2b). **Splits:** 19, under the cap `k−1+t = 24` and the unconditional `2k−1 = 25`; rank
+1248/1248, cleaned at 1e-6 with **zero** phantom splits. **First movers:** degenerate — 75 exact
+MBB ties carrying 2.90 % of `T`, so `ν` is one dual optimum and no first-mover list is named from
+it alone (the unit's stop rule fired as written).
+
+*Four published claims were refuted, all deliberately, none contradicting a settled result.*
+(1) `DOMAIN_optimization` §2.12's first-mover rule `argmax_i u_i(z)/(p_z + ν_i M_z)` omits `1/g*_i`
+and is false even at `ν ≡ 0` — `math-verify` reproduced it at **one zip, `k = 2`, integer data**.
+The corrected additive margin `max_i(u_i/g*_i − ν_i M_z) − 2nd-max` **selects a different set of
+zips entirely**, so U14 and U4-disp would have inherited a wrong list. (2) The slope
+`Σ(μ⁺+μ⁻)` is not unique and is unbounded at `δ = 0`; only `s_min = (T/k)Σ|ν_i|` is quotable.
+(3) The brief's own "finite convergence under `ĝ > 0`" fails for a purely continuous master
+(Duran–Grossmann / Fletcher–Leyffer are MINLP theorems); only `ε`-termination holds — validity is
+untouched, since every master optimum bounds `EG^bal` at every iteration. (4) **`DOMAIN_economic-
+theory` §2.8's "proportionality is the first casualty" is refuted: no rep is below proportionality
+at any `δ`.** Four reps are below it in the *delivered draw* (R0010 −7.14, R0013 −4.70, R0017
+−2.33, R0018 −1.73) — **the starvation is the map's, not the band's**, though the minimum gap does
+fall 32 % (+13.36 → +9.09) as the band tightens.
+
+*Verification.* `VERIFY_U9-bandthm.md`: all five brief-mandated propositions VERIFIED against
+rigorous brackets (`6.3e-10`–`3.2e-7`) from two independent SCIP solves with exact-rational
+endpoint repair; `P6-cells` VERIFIED for the direct half, PLAUSIBLE for the `[conjectured]`
+`borgwardt2019` half. `CODEVERIFY_U8-band.md`: **20 rows, 18 VERIFIED / 2 REFUTED / 0
+INCONCLUSIVE**, acceptance 1–6 all PASS, `frontier.png` regenerated **byte-identical** by two
+fresh full runs, manifest byte-identical modulo `{written, wall_seconds}`. Both refuted rows were
+fixed in `ddd162d`: a real hole in the `ĝ > 0` guarantee on the `delta=None` path (P5.3's floor
+comes from the band's *lower* row, so it does not hold there; a per-iterate check now raises, and
+the gate re-runs bit-identically in the same 23 cuts), and a wrong "≈ 27 nats" figure for the
+masked convention — measured `EG = 55.9763` masked and `51.9343` at the masked delivered map, so
+the conclusion (masked lands below `V` and mimics a P1-band refutation) stands but the number was
+off by ~29 nats. Two declined instructions were adjudicated in the unit's favour: the exact
+`s_min` LP could have tightened D1′ by at most `1.6e-5` nats against a 5e-3 floor (the whole
+superdifferential at `δ₀` sits inside `[0.560711, 0.560995]`), and the Slater-point tangent seed
+`u_i(Z)/k ≈ 89–93` is exact and 1.4–2.2× tighter than P5.3's constant.
+
+*Two extensions to settled results, neither a contradiction.* The district mass vector `m` is not
+an invariant of the unconstrained optimum (add it to `VERIFY_U9-bandthm` §10.E's non-invariant
+list), and the *primal* vertex is as fragile as the dual under a last-bit input change.
+
+*What's next, in order.* (1) **Wave 2 is unblocked:** U10-round, U11-roster, U4-disp (all gated on
+U8, all now free). U12-menu follows U8+U11+U13. (2) **User-gated, reported not done:** ★11 rewrite
+A1's charter step 3 in `APPROACHES.md`; the merge of `wt/A1` into `national-channel`; ★8's
+`fotakis2014` correction; and the three source documents this wave contradicts —
+`DOMAIN_optimization` §2.12 (refuted rule), §2.10 (`δ > 0` multiplier restriction too weak; the
+coarse `≤ 2k` superseded), §2.11 (supergradient wording), §8 (`borgwardt2019` is corroborating,
+not load-bearing), and `DOMAIN_economic-theory` N7 (grids on the spread 0.0078 rather than
+`δ₀ = 0.0039`) and §2.8 (the proportionality and EF1 rows). (3) **U3-inv is retired** (user,
+2026-09-04): books are measured from the data warehouse, not self-reported, so the
+strategy-proofness question has no referent; ★2 shrinks to a data-quality question.
+
+*Assumption recorded:* the session ran unattended through launch, verification, commit and this
+`/state` pass, stopping at the two gates BRIEF §7 sets (no merge, no hub edits on the D1′ outcome).
+
+**Earlier — state on 2026-09-03, end of the overnight run (branch `wt/A1`, worktree
 `.claude/worktrees/A1`, head `d82a0fa`, 13 commits over `national-channel` at `a4eb488`;
 tests 184 pass, 0 fail at `74eff38`): the A1 track has run the charter's stages 2–4 with the
 measurements in hand, and stops before launching units.** *What landed* (all on `wt/A1`, hub
