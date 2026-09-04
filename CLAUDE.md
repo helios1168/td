@@ -7,9 +7,10 @@ A1 track, on 2026-09-03 with the user's approval; pushed) · **Head:** `8546de6`
 **Status:** the A1 track (`docs/APPROACHES.md` §A1) on `wt/A1`: ★6 lifted, U7-meas and
 U1-cert landed and verified, A1's kill test passed but its upside is ≤ 0.865 nats over all
 rosters (FRAME §6); lens, both domain plans, literature and `BRIEF.md` re-run under the
-charter, units U8–U13 written and **not launched**. Hub state (`national-channel` at
-`a4eb488`): both stages built, balance-certified k=13 draw, stage-1 scenarios and the
-ten-seed sweep. See `docs/FRAME.md` §0.
+charter, units U8–U13 written and **not launched** — A1's documents live under
+`docs/tracks/A1/`; the hub copies at `docs/` are the neutral `a4eb488` versions plus
+`APPROACHES.md` §0's inherited facts. Hub state otherwise: both stages built, balance-certified
+k=13 draw, stage-1 scenarios and the ten-seed sweep. See `docs/FRAME.md` §0.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.

@@ -41,7 +41,11 @@ delivered one, all of it above 33% max deviation; the live question is what surv
 and it is one concave solve per roster (U8-band), not a MINLP. A0's soft kill fired
 (`g`-spread 60.65% vs 0.78%). *What's next, in order:* (1) **★12 — done: `national-channel` was
 fast-forwarded to `wt/A1` at `8546de6` on 2026-09-03 with the user's approval and pushed;**
-the two branches share a head and `wt/A1`'s worktree continues from it. (2) Launch **U8-band** from a session
+the two branches share a head and `wt/A1`'s worktree continues from it. *Reorganised the same
+day:* A1's lens, domain plans, brief and units U8–U13 moved to `docs/tracks/A1/`; the hub's
+`docs/LENS_GROMOV.md`, `DOMAIN_*.md`, `BRIEF.md` restored to their neutral `a4eb488` versions
+with a header; `APPROACHES.md` §0 gained the "what every track inherits" block and each
+charter's kill line was updated; `HANDOFF.md` gained the track-start checklist. (2) Launch **U8-band** from a session
 started in `.claude/worktrees/A1` (Serena binds to the launch directory) — its D1′ certificate
 can end the track in one solve; U9-bandthm, U13-base, U6-sel, U3-inv run alongside. (3) After
 U8: ★11 rewrite the charter's step 3; ★9 the sponsor's `δ` as a menu (U12), ★10 the tie-break

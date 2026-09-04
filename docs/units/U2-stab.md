@@ -1,6 +1,6 @@
 # Unit U2-stab — is the delivered roster stable, and does the question have an answer before it is computed?
 
-**Status 2026-09-03 (A1 track, `wt/A1`): landed** (hub, `VERIFY_U2-stab` 13/13). Its blocking test is now 169 comparisons and moves into U6-sel. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): landed** (hub, `VERIFY_U2-stab` 13/13). Its blocking test is now 169 comparisons and moves into U6-sel. See `docs/tracks/A1/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/LIT_economic-theory.md`:§0.4 and §3)
 

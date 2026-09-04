@@ -13,7 +13,30 @@ Anything that reads `instance_descaled.json.gz` is gated on **★6** (BRIEF §5)
 
 Seeded domains: `optimization`, `economic-theory` only (global `CLAUDE.md` §5).
 
+**Where a track writes.** The hub copies of `LENS_*.md`, `DOMAIN_*.md` and `BRIEF.md` at
+`docs/` are the neutral starting point and are not overwritten by a track: a track's re-runs
+go under `docs/tracks/<ID>/` (pass that path to `/gromov`, `/domain`, `/research-plan`), and
+only instance facts, code and verified unit results merge to the hub paths. Track-start
+checklist: `HANDOFF.md` "Starting a track".
+
 ## 0. Summary table
+
+**What every track inherits (measured 2026-09-03 on the committed k=13 draw; FRAME §6 has the
+rows and sources; ★6 is lifted, so any track may read the instance and run code).**
+
+- **Premium ladder**, share of total book: `P₀` 37.82% = `P*(A)` 37.82% < `P_S` 51.43% <
+  `P₁₃` 52.34% < `P_free` 79.44%. The matching on the committed map is already premium-optimal;
+  the map holds ≈ 0.64 nats; the roster ≈ 0.04. `tools/measure/premium.py`, `MODEL_U7-meas.md`.
+- **EG bound at the delivered roster** 60.6974 vs `V` 59.9375 → 0.760 nats, reachable only above
+  33% max deviation (`MODEL_U1-cert` P4). **Roster-free screen** `max_S EG_S ≤ 60.8025` → no
+  coverage by *any* 13 of 111 beats the delivered draw by more than **0.865 nats**, no solve.
+- **Realised-gain spread across the 13 is 60.65%** against a 0.78% opportunity spread
+  (max deviation 0.39%). The headline balance number measures territory size, not what a rep gets.
+- **83 zips (6.12% of `M`) are contested among the selected 13**; `corr(T_z, M_z)` = 0.65;
+  `S₁₃`'s Nash-tie margin is 8.1e-3 nats on the seed-9 draw (1.6× the tier-2 floor).
+- **Certificates:** three of the four collapse into the EG dual; the integer balance floor is
+  primal-only (`VERIFY_U1-cert`). Split units `≤ k−1` even heterogeneously. The band-constrained
+  program `EG^bal_S(δ)` is one concave solve per roster (`docs/tracks/A1/`).
 
 | ID | family | decides, in order | measure | domains | kill experiment | state |
 |---|---|---|---|---|---|---|
@@ -67,7 +90,8 @@ beats the committed draw on `V` within the tier-2 floor, A0's headline claim is 
 (LENS_GROMOV Move 4, ledger U10). Depends on ★6 and FRAME §6's committed draw. A second,
 softer kill: LENS_GROMOV U1 — if the spread of realised `g_i` is far from the 0.781% spread of
 `M`, the headline balance number measures the wrong thing. **Fired 2026-09-03:** realised-gain
-spread 60.65% on the committed draw (`MODEL_U7-meas` U1, FRAME §6).
+spread 60.65% on the committed draw (`MODEL_U7-meas` U1, FRAME §6). The hard kill (A3 on `V`)
+is `docs/tracks/A1/units/U13-base.md`, unbuilt; whichever track builds A3 first shares it.
 
 **Why it might beat A0** — Not applicable; this is A0. Its case against the others is
 FRAME §9's settled business constraint "territories shall be opportunity-balanced" and
@@ -123,7 +147,10 @@ seeded) and `economic-theory` (EG/CEEI interpretation, the duals as prices; seed
 **Kill experiment** — LENS_GROMOV ledger U2–U4 in one script: `P₀` (premium of the committed
 draw), `P*(A)` (best matching at the committed partition), and the count of zips contested
 among the selected 13. If `P₀ ≈ P*(A)` and the count is small, redrawing cannot buy premium and
-A1 collapses to A0 plus a relabel (BRIEF §7). DOMAIN_optimization §2.6's τ-homotopy is the
+A1 collapses to A0 plus a relabel (BRIEF §7). **Run 2026-09-03 — passed** (`MODEL_U7-meas` §6:
+matching gap 0, map 0.64 nats, roster 0.04; but ≤ 0.865 nats over all rosters, ≤ 0.760 at
+`S₁₃`, all of it above 33% max deviation). The live kill is now the band-constrained one:
+`docs/tracks/A1/units/U8-band.md`'s one-solve softness certificate (D1′). DOMAIN_optimization §2.6's τ-homotopy is the
 same test in parametric form. Depends on ★6 and FRAME §6's 41.9%.
 
 **Why it might beat A0** — FRAME §10 Q1 and §6: the incumbency premium is ~3.7 nats of swing
@@ -137,7 +164,9 @@ blocks deployment, not formulation.
 
 **Inherits** — `LENS_GROTHENDIECK.md` unchanged (its EG concept is this approach's core);
 `LIT_economic-theory.md` unchanged. Re-run `/gromov` and both `/domain` plans under this
-charter; `units/U1-cert.md` carries over as the first unit.
+charter; `units/U1-cert.md` carries over as the first unit. **Done 2026-09-03:** the re-runs,
+`LIT_optimization.md`, U1-cert and U7-meas landed; the track's documents are under
+`docs/tracks/A1/` and its next unit is U8-band, on `wt/A1`.
 
 ## A2 Roster-first, inflation-invariant draw
 
@@ -181,7 +210,10 @@ FRAME §10 Q5's requirement is met **by construction** rather than by theorem.
 **Kill experiment** — Two. (i) ★2: if audited book is not available at zip × wholesaler grain,
 step 2 has no un-inflatable input and the approach is A1 with the stages reordered. (ii)
 LENS_GROTHENDIECK OQ6: measure `spread_S EG_S` on a handful of staff sets; if the fibres are
-close, roster-first is bookkeeping and the ordering buys nothing. Depends on ★6, ★2 and
+close, roster-first is bookkeeping and the ordering buys nothing. *As of 2026-09-03 the spread
+is already bracketed: `EG_{S₁₃}` = 60.697 and every roster's `EG_S` ≤ 60.8025 (the (★) screen),
+so `spread_S EG_S ≤ 0.105` nats over all rosters — small, and the roster enumeration in
+`docs/tracks/A1/units/U11-roster.md` measures it exactly.* Depends on ★6, ★2 and
 FRAME §6's 675 contested zips (the count among the 13 is LENS_GROMOV U4).
 
 **Why it might beat A0** — FRAME §10 Q9 asks exactly this, and §10 Q5 states the need: a
@@ -230,7 +262,9 @@ roster, for free.
 
 **Kill experiment** — None kills it as a *baseline*; FRAME §3 requires it to exist. It dies as
 a *candidate* if it loses to A0 on both `V` and C1 by more than the tier-2 floor
-(LENS_GROMOV U10). Depends on ★6 and the state-level `M` split in FRAME §6.
+(LENS_GROMOV U10). Depends on ★6 and the state-level `M` split in FRAME §6. *Construction and
+scoring are specified in `docs/tracks/A1/units/U13-base.md` (state-grouped greedy rule, zip3
+split rule, scored as a point on the `(δ, V)` plane); unbuilt.*
 
 **Why it might beat A0** — FRAME §3 names it as the baseline to beat and records that the
 headline claim is unevidenced without it. LENS_GROMOV Move 4 warns it is premium-greedy and
@@ -333,7 +367,10 @@ districting-ensemble literature.
 
 **Kill experiment** — Draw a modest ensemble at the band and compute the spread of `V` after
 staffing. If it is within the tier-2 floor (FRAME §6: 5e-3 nats), every feasible map staffs
-the same and selection is decorative; A0's portfolio spread of 7.1e-2 nats (FRAME §6) is the
+the same and selection is decorative — *this is the same question as A1's band-constrained
+softness certificate (`docs/tracks/A1/units/U8-band.md`, D1′) at fixed roster: if
+`EG^bal_{S₁₃}(δ) − V ≤ 5e-3` at the sponsor's `δ`, A5's ensemble is decorative too, and the
+one convex solve settles both*; A0's portfolio spread of 7.1e-2 nats (FRAME §6) is the
 weak prior that it is not. Depends on ★6.
 
 **Why it might beat A0** — FRAME §10 Q4 and LENS_GROTHENDIECK descent 4: the objective is

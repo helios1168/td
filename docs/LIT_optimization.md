@@ -1,7 +1,7 @@
 # Literature — optimization — the band-constrained Eisenberg–Gale certificate (`EG^bal_S`)
 
 **Date:** 2026-09-03 · **Framework:** 0.1 · **Track:** A1 (branch `wt/A1`) ·
-**Reads:** `docs/DOMAIN_optimization.md` §6 (2026-09-03), with context from `docs/APPROACHES.md` §A1,
+**Reads:** `docs/tracks/A1/DOMAIN_optimization.md` §6 (2026-09-03; every `§2.x` reference below is to that A1 copy, not to the hub's `docs/DOMAIN_optimization.md`), with context from `docs/APPROACHES.md` §A1,
 `docs/LENS_GROMOV.md` (2026-09-03), `docs/MODEL_U1-cert.md` §6, `docs/FRAME.md` §6 ·
 **Queries logged:** 56 (19 Consensus conceptual/near-title · 4 WebSearch · 28 Crossref near-title
 resolutions · 5 OpenAlex citation-graph walks) · **DOIs resolved:** 46/46 (Crossref, 2026-09-03;

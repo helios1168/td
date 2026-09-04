@@ -1,6 +1,6 @@
 # Unit U4-disp — displacement as a certificate *(wave 2, gated on U0-lit — not launched)*
 
-**Status 2026-09-03 (A1 track, `wt/A1`): carried, gated on U8-band.** New inputs: the band duals `μ^±` (nats per unit of `M`) and the first-mover zip list from `docs/units/U8-band.md`; `LIT_optimization.md` absence D names the modulus a Hölderian error bound / KŁ exponent (`bolte2017`, `drusvyatskiy2018`) and `borgwardt2019`'s normal-cone volume is a second candidate. ★6 is lifted. Branch `wt/A1`. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): carried, gated on U8-band.** New inputs: the band duals `μ^±` (nats per unit of `M`) and the first-mover zip list from `docs/tracks/A1/units/U8-band.md`; `LIT_optimization.md` absence D names the modulus a Hölderian error bound / KŁ exponent (`bolte2017`, `drusvyatskiy2018`) and `borgwardt2019`'s normal-cone volume is a second candidate. ★6 is lifted. Branch `wt/A1`. See `docs/tracks/A1/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/DOMAIN_optimization.md`:§2.4)
 
