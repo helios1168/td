@@ -1,16 +1,13 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-03 · **Branch:** `national-channel` (fast-forwarded to `wt/A1`, the
-A1 track, on 2026-09-03 with the user's approval; pushed) · **Head:** `8546de6` · **Tests:** 184 pass,
-0 fail (run 2026-09-03 at `74eff38` on `wt/A1`; the merge was a fast-forward, not re-run here)
+**Last updated:** 2026-09-04 · **Branch:** `national-channel` · **Head:** `b3931fa` ·
+**Tests:** 184 pass, 0 fail (run 2026-09-04 at `b3931fa` in this worktree)
 
-**Status:** the A1 track (`docs/APPROACHES.md` §A1) on `wt/A1`: ★6 lifted, U7-meas and
-U1-cert landed and verified, A1's kill test passed but its upside is ≤ 0.865 nats over all
-rosters (FRAME §6); lens, both domain plans, literature and `BRIEF.md` re-run under the
-charter, units U8–U13 written and **not launched** — A1's documents live under
-`docs/tracks/A1/`; the hub copies at `docs/` are the neutral `a4eb488` versions plus
-`APPROACHES.md` §0's inherited facts. Hub state otherwise: both stages built, balance-certified
-k=13 draw, stage-1 scenarios and the ten-seed sweep. See `docs/FRAME.md` §0.
+**Status:** the A1 track's units U8–U13 are written under `docs/tracks/A1/` and **not
+launched** here — U8-band is the gating one and launches from `.claude/worktrees/A1`. Hub:
+both stages built, balance-certified k=13 draw, stage-1 scenarios, and the ten-seed sweep now
+mapped at all nine k with the k-Sweep artifact showing one section per k (`b3931fa`).
+**The state narrative lives in `docs/FRAME.md` §0 — read it, not this block.**
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.

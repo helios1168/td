@@ -14,7 +14,34 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-03, end of the overnight run (latest, branch `wt/A1`, worktree
+**State on 2026-09-04 (latest, branch `national-channel`, worktree
+`.claude/worktrees/national-channel`, head `b3931fa`; tests 184 pass, 0 fail at `b3931fa`):
+the stage-1 ten-seed sweep is now visible at every k it was run for — the k-Sweep artifact
+carries a map section for all nine k instead of three.** *What landed* (`b3931fa`, hub work,
+no `td/` or `tools/` change): the six unrendered k values of `sweep_20260902_s10` — k = 8, 9,
+11, 12, 14, 15 — drawn from that run's existing `draw.csv` via
+`tools/us_maps.py --districts --regions` (no re-solve; the sweep already held every k), so
+`figures/sweep_20260902_s10/` now has all nine k with `districts.png` + `district_regions.png`
+each, matching `k10`/`k13`/`k16`. The artifact at
+`https://claude.ai/code/artifact/c007d61d-c753-4151-9026-2288b9d5eb38` was republished in
+place with one section per k, each section's numbers generated from that k's `metrics.json`
+rather than typed; the generator reproduces the already-published k=10 and k=16 sections
+byte-for-byte, which is what certifies the six new ones. Images are **lossless WebP** —
+9 sections at 5.0 MB against 3.6 MB for the previous 3. Lossy was tested and rejected: at
+q90 the power-diagram borders and labels reach max channel error 110 (PSNR 40.2 dB hides it,
+because the error concentrates on hard edges, not texture). The `assets` capability is not
+available on this account, so images remain data URIs. *Measured in passing:* at **k = 8 all
+ten seeds land on the same draw** — stage-2 spread exactly 0.00e+00, so the portfolio buys
+nothing there — while k = 9…16 spread 3.7e-2 to 2.1e-1 nats; this corroborates the sweep
+table's `gain 0.000` rows at k ≤ 10. *What it means:* the k decision can now be read off maps
+across the whole 8–16 range rather than three points; nothing in the model, the solver or the
+certificates moved. *What's next, unchanged by this entry:* the A1 track's **U8-band** is
+still the gating unit and still launches from `.claude/worktrees/A1` (a session was running
+U8-band and U9-bandthm there on 2026-09-04); the seed-3-vs-seed-9 k=13 decision below is
+still open; `--regions-voronoi` was deliberately not added to the artifact — it is the
+superseded zip-catchment rendering, and `district_regions.png` already *is* the power diagram.
+
+**Earlier — state on 2026-09-03, end of the overnight run (branch `wt/A1`, worktree
 `.claude/worktrees/A1`, head `d82a0fa`, 13 commits over `national-channel` at `a4eb488`;
 tests 184 pass, 0 fail at `74eff38`): the A1 track has run the charter's stages 2–4 with the
 measurements in hand, and stops before launching units.** *What landed* (all on `wt/A1`, hub
