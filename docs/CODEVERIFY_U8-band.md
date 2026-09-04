@@ -360,19 +360,21 @@ ATTACK    Wrote a *different* SCIP model: no auxiliary gain variable and no `g_l
           real instance at δ = 0.33.
 VERDICT   VERIFIED
 BASIS     Toy: my SCIP dual bounds agree with the OA to 2.9e-9 / 3.5e-9 / 2.7e-10 / 1.4e-10 at
-          δ = 0 / 0.02 / 0.33 / None.  Real instance at δ = 0.33: status `optimal`, dual bound
-          **60.697415617163756**, i.e. 2.9e-9 above the certified upper 60.697415614302656 and
-          within 1e-6 of it — an independent confirmation that does *not* inherit the incumbent
-          gain box.  The unit's own numbers (60.6288653576 at 0.02, 60.6974156182 at 0.33)
-          reproduced bit-for-bit on two fresh runs.  `limits/gap = limits/absgap = 0.0`,
-          `allow{strong,weak}dualreds` False, and `dual_bound=None` unless status == "optimal"
-          (eg_band.py:598) — trap 15 respected.
+          δ = 0 / 0.02 / 0.33 / None.  Real instance, all three stops `optimal`: δ = 0.33 →
+          **60.697415617163756** (381 s), δ = 0.05 → **60.641601275111** (426 s), δ = 0.10 →
+          **60.657725348422** (423 s), i.e. within 6e-9 of the certified values at all three and
+          far inside the 1e-6 agreement the brief asks for — an independent confirmation that
+          does *not* inherit the incumbent gain box.  The unit's own numbers (60.6288653576 at
+          0.02, 60.6974156182 at 0.33) reproduced bit-for-bit on two fresh runs.
+          `limits/gap = limits/absgap = 0.0`, `allow{strong,weak}dualreds` False, and
+          `dual_bound=None` unless status == "optimal" (eg_band.py:598) — trap 15 respected.
 ARTIFACT  /tmp/u8verify/oracle_scip.py
-CAVEATS   My formulation took 381 s at δ = 0.33 where the unit's takes 4.6 s — evidence *for* the
-          unit's trap-14 modelling choices (auxiliary g with `≤`, incumbent-derived lower bound).
-          My independent SCIP run at δ = 0.05 / 0.10 had not finished when this report was
-          written; the δ = 0.33 point plus the O(nk) dual recomputation at all five δ is what
-          carries the row.
+CAVEATS   My formulation took 381–426 s where the unit's takes 4.6 s at δ = 0.33 — evidence *for*
+          the unit's trap-14 modelling choices (auxiliary g with `≤`, incumbent-derived lower
+          bound).  And **SCIP's dual bound is not rigorous at tier-1 scale**: at δ = 0.05 mine
+          came back 5.9e-9 *below* my own certified-feasible primal 60.641601281035, i.e. it is
+          not a valid upper bound at that resolution (SCIP also prints "Cannot set feasibility
+          tolerance to small value 1e-12 without GMP - using 1e-10" on every solve).  See F7.
 ```
 
 ```
@@ -479,6 +481,9 @@ audited X and an independently derived D (all five points: 2.80/1.28/1.72/1.23/5
 agrees at 0.02 (1.58e-9) and 0.33 (1.10e-9), and my own independently written SCIP model agrees
 at 0.33 (2.9e-9). D recomputed from the manifest's published duals with pure numpy arithmetic —
 no solver anywhere in that path — matches bit for bit at all five δ, with min q > 0 and min μ = 0.
+My independent SCIP (no incumbent gain box) also agrees at δ = 0.33 / 0.05 / 0.10, all stops
+`optimal`, to 2.9e-9 / 5.9e-9 / 4.2e-9 — though see F7: at δ = 0.05 SCIP's dual bound is 5.9e-9
+*below* a certified-feasible primal, so it is a cross-check, not a tier-1 bound.
 
 **2. Sandwich, monotone and concave — PASS.** 59.9374697984 ≤ 60.6204408 ≤ 60.6288654 ≤
 60.6416013 ≤ 60.6577253 ≤ 60.6974156, with EG^bal(0.33) = 60.697415614 within 4.0e-10 of the
@@ -579,9 +584,20 @@ and it is a hole in robustness, not in any published number.
   of it is correct.
 - **F6 — the SCIP cross-check inherits a gain box from the OA incumbent** (`g_lower = 0.5·g*`,
   frontier.py:264), so `solve_scip`'s bound is, strictly, a bound for the restricted program. My
-  independently written SCIP model without that box agrees at δ = 0.33 to 2.9e-9, which closes the
-  loop at that point; the same check at 0.02/0.05/0.10 is expensive (381 s vs 4.6 s at 0.33) and
-  is not needed, because the O(nk) dual recomputation already certifies all five points.
+  independently written SCIP model without that box agrees at δ = 0.33 / 0.05 / 0.10 to
+  2.9e-9 / 5.9e-9 / 4.2e-9, which closes that loop; the O(nk) dual recomputation certifies all
+  five points regardless.
+- **F7 — SCIP's dual bound is a floating-point certificate, not a rigorous one, at 1e-9.** My
+  independent SCIP at δ = 0.05 returned `optimal` with dual bound 60.641601275111, which is
+  **5.9e-9 below** my own certified-feasible primal 60.641601281035 — so it is not an upper bound
+  at that resolution (CLAUDE.md trap 15's "rigorous only to O(f·‖duals‖)"; SCIP also derates
+  feastol to 1e-10 without GMP, which MODEL §9.7 finding 8 records). Consequence for the unit:
+  MODEL §5.2's rule "on disagreement both are reported and the *smaller valid upper bound*
+  stands" is **not implemented** — `Point.certified_upper` (frontier.py:126-131) takes the min of
+  the master's value and the `O(nk)` dual only, and never adopts SCIP's number. That is the safe
+  behaviour, and my δ = 0.05 result shows that implementing the model text literally at tier-1
+  scale would have been unsafe. The model text should be narrowed to "SCIP is a cross-check, not
+  a source of the reported bound"; no published number is affected.
 
 ## 6. Artifacts
 

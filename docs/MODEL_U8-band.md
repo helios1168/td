@@ -304,7 +304,18 @@ as `g_i ≤ Σ_z u_i(z)x_{zi}` (`≤`, not `==` — trap 14 multi-aggregation) w
 from the OA incumbent rather than from `1e-9`, or the log's gradient destabilises the LP.
 **Only `getDualbound()` is read**, never the primal incumbent. A `timelimit` or any non-optimal
 stop is reported as **no bound** (trap 15), never as a bound. Agreement is required to `1e-6`; on
-disagreement both are reported and the *smaller valid upper bound* stands.
+disagreement both are reported.
+
+**SCIP is a cross-check, not a source of the reported bound** (narrowed 2026-09-04,
+`CODEVERIFY_U8-band.md` F7). An earlier draft of this sentence said the *smaller valid upper
+bound* stands, which would license adopting SCIP's number when it is lower. That is unsafe at
+tier-1 scale, and `code-verify` produced the counterexample: at `δ = 0.05` an independently
+written SCIP model stopped `optimal` with dual bound `60.641601275111`, **`5.9e-9` below** a
+certified-feasible primal at `60.641601281035`. SCIP's dual bound is a *floating-point*
+certificate — rigorous only to `O(f·‖duals‖)` (trap 15), and SCIP derates `feastol` to `1e-10`
+without GMP (§9.7 finding 8). `Point.certified_upper` (`frontier.py:126-131`) therefore takes the
+minimum of the master's value and the solver-free `O(nk)` dual **only**, and never adopts SCIP's
+number. The code was already right; this text now matches it.
 
 ### 5.3 What is not on the path
 
