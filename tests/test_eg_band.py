@@ -11,8 +11,8 @@ would report a number that is not a bound.
 
 `test_utility_convention_matches_gain_matrix` is the unit's silent-failure guard: `frontier`'s
 `U` must be `channel.gain_matrix`'s **unmasked** convention.  `model.utilities` is masked (`0`
-where not a candidate) and on the real instance lands ~27 nats -- *below* `V` -- so a
-wrong-convention run mimics a refutation of P1-band rather than a units error.
+where not a candidate) and on the real instance lands at `EG = 55.98` -- *below* `V = 59.9375`
+-- so a wrong-convention run mimics a refutation of P1-band rather than a units error.
 
 The fixture is `docs/MODEL_U7-meas.md` §4's toy (three reps A/B/C, four zips,
 `M = [20, 15, 15, 20]`), the same one `tests/test_measure.py` pins the premium ladder on.

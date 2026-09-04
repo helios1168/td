@@ -9,8 +9,9 @@
 * **the hard gate** -- the unconstrained `EG_{S13}` reproduced to `1e-6` against
   `60.6974156139` before any frontier point is computed.  The utility matrix must be
   `channel.gain_matrix`'s **unmasked** convention (a rep is valued on every zip, not only where
-  it holds book); `model.utilities` is the masked form and lands ~27 nats, *below* `V`, which
-  would mimic a refutation of P1-band rather than a units error;
+  it holds book); `model.utilities` is the masked form and lands at `EG = 55.98` (and the masked
+  delivered map at `51.93`), *below* `V = 59.9375`, which would mimic a refutation of P1-band
+  rather than a units error (measured, `CODEVERIFY_U8-band.md` row 2);
 * **`delta_0`** = `max_j |m_j - T/k| / (T/k)` on the committed draw -- a **max deviation**, not
   the published 0.78% spread (`MODEL_U8-band.md` §6 records the N7 discrepancy);
 * **D1'** -- the one-solve concavity certificate `EG^bal(d0) + s(d0)(d - d0) - V <= 5e-3` at
@@ -248,8 +249,9 @@ def gate(setting: Setting, *, tol: float = GATE_TOL) -> dict[str, Any]:
             f"utility-convention gate FAILED: unconstrained EG_S13 = [{sol.primal!r}, "
             f"{sol.upper!r}] against the reference {EG_S13_REFERENCE!r} "
             f"(delta {sol.upper - EG_S13_REFERENCE:.3e} nats, tolerance {tol:g}). "
-            f"The masked utility convention lands ~27 nats and mimics a refutation of "
-            f"P1-band; do not compute a frontier point until this matches")
+            f"The masked utility convention lands at EG = 55.98, below V = 59.9375, and so "
+            f"mimics a refutation of P1-band; do not compute a frontier point until this "
+            f"matches")
     return out
 
 

@@ -502,6 +502,15 @@ def solve_band(U: np.ndarray, M: np.ndarray, delta: float | None, *,
         if len(pool) >= max_cuts:
             status = (f"cut limit: {max_cuts} tangents, bracket {upper - primal:.3e} nats")
             break
+        # The seed check at the top of this function covers the pool as it starts; iterates have
+        # to clear `ghat > 0` too.  P5.3's floor `g_i >= lam (1-delta) T/k` comes from the band's
+        # *lower* row, so it does not apply on the `delta is None` path, where an iterate can
+        # zero an agent -- raise here rather than let `log(0)` reach `_tangent_rows`.
+        if float(np.min(g)) <= 0.0:
+            raise ValueError(
+                f"OA iterate {len(pool)} has ghat_min {float(np.min(g)):.3e} <= 0, so its tangent "
+                f"is undefined (MODEL_U9-bandthm P5.3 guarantees a positive floor only when the "
+                f"band's lower row is present, i.e. delta is not None)")
         pool.append(g.copy())
         A, b = _tangent_rows(U, g)
         rows.append(A)

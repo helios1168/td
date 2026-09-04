@@ -43,9 +43,14 @@ certificate rather than an estimate.
 **Utility convention — the single silent failure mode.** `u_i(z)` must be the **unmasked** form
 that `td/channel.py::gain_matrix` scores `V` with: a rep's utility is evaluated on *every* zip,
 not only where it holds book. `td/model.py::utilities` is the **masked** form (`0` where not a
-candidate) and is wrong here — 96.75 % of the `13 × 1,229` entries differ, the total utility mass
-differs by 13.4×, and the masked bound lands ≈ 27 nats, i.e. *below* `V = 59.9375`, which would
-mimic a refutation of P1-band. `docs/artifacts/U1-cert/instance_numbers.py::utility_matrix` is
+candidate) and is wrong here — 96.75 % of the `13 × 1,229` entries differ and the total utility
+mass differs by 13.4×. Measured (`CODEVERIFY_U8-band.md` row 2): the masked bound lands at
+`EG = 55.9763` and the masked delivered map at `Σ log g = 51.9343`, i.e. *below* `V = 59.9375`,
+which would mimic a refutation of P1-band. The gate misses by 4.72 nats on the masked matrix.
+Note that EG *re-optimises* against the masked structure, so the loss is far smaller than the
+13.4× mass ratio suggests — an earlier ≈ 27-nat estimate scaled the gains directly and was
+wrong by ~29 nats; the conclusion it supported (masked lands below `V`) is unaffected.
+`docs/artifacts/U1-cert/instance_numbers.py::utility_matrix` is
 the reference implementation. **Hard gate:** the unconstrained `EG_{S₁₃}` must reproduce
 `60.6974156139` to `1e-6` before any frontier point is computed.
 
@@ -253,6 +258,13 @@ solved by `scipy.optimize.linprog(method="highs")`. Size: `nk + k ≈ 16,000` co
   `42.451` at `δ = 0.33`. The seed clears that floor by a factor of ~1.4 (`u_i(Z)/k ≈ 89–93`), so
   P5.3 enters as a runtime guard rather than as the seed itself. Then solve, add a cut at the
   incumbent `g`, repeat.
+  **Scope (`CODEVERIFY_U8-band.md` row 1).** P5.3's floor is derived from the band's *lower* row,
+  so the guarantee holds only where that row is present. `solve_band(delta=None)` drops it, and on
+  that path an OA iterate can zero an agent — `code-verify` exhibited such an instance. The
+  guarantee is therefore stated for `δ` finite; on the unconstrained path `ĝ > 0` is enforced by
+  an explicit per-iterate check that raises. In this unit every `delta=None` solve is the gate on
+  the real instance, where all 13 gains sit at ≈ 90 against a floor of `63.113`, so no published
+  number depends on the distinction.
 * **A final polish (U9 P5.4).** A single tangent per agent placed at `g*` makes the master
   **exact**, and that master's duals **are** the original program's `(p, μ^±)` — the accumulated
   pool's are only asymptotically so. One extra LP is therefore run after convergence on the cut
