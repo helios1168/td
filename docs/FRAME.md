@@ -14,7 +14,42 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-04 (latest, branch `national-channel`, worktree
+**State on 2026-09-04 (latest, branch `wt/runs`, worktree `.claude/worktrees/runs`, head
+`2f83d48`, branched from `national-channel` at `e3cc5d2`; tests 184 pass, 0 fail): the runs
+track validated the new instance, fixed one data-quality defect, and reframed its k-target
+from 13 to 18 on the sponsor's real total.** *What landed* (`2f83d48`, docs + gitignored data,
+no `td/`/`tools/` change; preceded by Serena onboarding `205a507` and this plan's commit
+`a2c102c`): the old-instance regression (`instance_descaled.json.gz`, `--k 8-16 --seeds 0-9`)
+reproduced `sweep_20260902_s10` byte-identical across `sweep.csv` and all nine `k*/draw.csv`,
+certifying the solver and seeding haven't moved. The new instance
+`instance_descaled_v2.json.gz` arrived and validated clean (`check_descaled` empty list; raw
+export 3,749 zips / 4,712 edges / 114 reps / total M 8,524.5 — 3.1× the old instance's 2,745.6;
+8 new states AK/HI/IA/ID/MS/MT/NE/NM, none dropped). One data-quality artifact found and fixed:
+a vacant pseudo-zip literally named `"BLANK"` carries no `state` field, so `place_by_state`
+can't place it the way the other 41 uncoordinated real zips can — dropped, leaving
+`instance_descaled_v2.json.gz` at 3,748 zips / total M 8,523.2 (`instance_descaled_v2.raw.json.gz`
+keeps the untouched export for provenance). The sponsor then confirmed the new instance's real
+total is **≈ $18B** (was ≈$13B on the old instance), moving the working target from k≈13 to
+**k≈18**; `docs/RUNS_PLAN.md` was reframed accordingly — the new-instance k-sweep (§4–§7) moves
+from `--k 8-16` to **`--k 14-22`** (same 9-value width, same `--seeds 0-9`), the map/table
+anchor moves from k=13 to k=18, and §3's region table was recomputed at the new target
+(k=18 → 473.5): CALIFORNIA 1,953.8 (4.13×), TEXAS 972.1 (2.05×), NEWYORK 849.6 (1.79×), MIDWEST
+876.5 (1.85×), CAROLINAS 535.2 (1.13×), SOUTHWEST 606.8 (1.28×), FLORIDA 661.9 (1.40×). *What it
+means:* **every one of the seven candidate regions is now oversized as a single district**, not
+just CALIFORNIA as on the old instance — CAROLINAS and SOUTHWEST are the closest fits. Region
+definitions stay fixed per the plan's own rule (re-tuning would curve-fit the thing being
+measured); this is a finding for §7's generator, not something resolved by regrouping. §1's
+old-instance regression keeps its original `--k 8-16` (pinned to `sweep_20260902_s10`, must
+never move). *What's next:* §4 onward — 14 committed scenario JSON specs (7 regions ×
+{`fix`,`anchor`}), the 14+1 run catalogue at `--k 14-22 --seeds 0-9` (~14 min), 15 power-diagram
+maps at k=18, the generator, and a new published artifact (must not touch `c007d61d`) — none of
+it has run yet, all gated on a go-ahead. Cross-branch note: `wt/A1` is separately proposing to
+merge into `national-channel`; confirmed by cross-session message that its merge touches none of
+the three files this entry updates in a way that conflicts with this branch, and its retirement
+of `CLAUDE.md`'s old "$1B ± 10% not geometrically reachable" paragraph is consistent with (not
+contradicted by) this entry's own region-oversized finding on the new numbers.
+
+**Earlier — state on 2026-09-04 (branch `national-channel`, worktree
 `.claude/worktrees/national-channel`, head `b3931fa`, recorded by state commit `2ce052e` and
 pushed to origin the same day; tests 184 pass, 0 fail at `b3931fa`):
 the stage-1 ten-seed sweep is now visible at every k it was run for — the k-Sweep artifact

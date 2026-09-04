@@ -1,17 +1,17 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-04 · **Branch:** `national-channel`, pushed · **Head:** `b3931fa`
-(state commit `2ce052e`) · **Tests:** 184 pass, 0 fail (run 2026-09-04 at `b3931fa` in this
-worktree)
+**Last updated:** 2026-09-04 · **Branch:** `wt/runs`, pushed · **Head:** `2f83d48`
+(branched from `national-channel` at `e3cc5d2`) · **Tests:** 184 pass, 0 fail (run 2026-09-04
+in this worktree)
 
-**Status:** the A1 track's units U8–U13 are written under `docs/tracks/A1/` and **not
-launched** here — U8-band is the gating one and launches from `.claude/worktrees/A1`. Hub:
-both stages built, balance-certified k=13 draw, stage-1 scenarios, and the ten-seed sweep now
-mapped at all nine k with the k-Sweep artifact showing one section per k (`b3931fa`).
-**The state narrative lives in `docs/FRAME.md` §0 — read it, not this block.**
+**Status:** this branch is the stage-1 pin-cost catalogue on a new, higher-quality instance
+(`docs/RUNS_PLAN.md`) — the new instance is validated and reframed to k≈18 (real total ≈$18B);
+the 14+1 run catalogue itself has not run yet. **The state narrative lives in `docs/FRAME.md`
+§0 — read it, not this block.**
 
-**Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
-carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
+**Resume point: `docs/FRAME.md` §0** (its top entry is this branch's; it supersedes
+`docs/CHANNEL.md` §6–7, `CHANNEL.md` §0 carries the pointer). Task detail: `docs/RUNS_PLAN.md`.
+Fast orientation: `HANDOFF.md`.
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
