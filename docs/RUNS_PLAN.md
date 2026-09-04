@@ -11,16 +11,26 @@
 
 ## 0. Kickoff — do these in order, before anything else
 
-> **Already done on 2026-09-04, do not redo:** step 1. The worktree exists at
-> `/Users/ntlee/projects/td/.claude/worktrees/runs` on branch `wt/runs`, branched from
-> `national-channel` at `e3cc5d2`, and this plan is committed there as `docs/RUNS_PLAN.md`.
+> **Already done on 2026-09-04, do not redo:** steps 1–5, then §1 and §2's validation. The
+> worktree exists, Serena is bound to it, the gitignored inputs are copied, `tests/run_all.py`
+> passed 184/0, this plan is committed as `docs/RUNS_PLAN.md`, the old-instance regression (§1)
+> came back byte-identical to `sweep_20260902_s10`, and `instance_descaled_v2.json.gz` arrived,
+> validated clean, and had its one data-quality finding fixed (below).
 >
-> **Still to do: steps 2, 3 and 4**, then §1 onward. Nothing else has been run — no inputs
-> copied, no tests run, no scenario has touched the solver.
+> **Resolved: the real-dollar total.** The sponsor confirmed the new instance's real total is
+> **≈ $18B**, replacing the old ≈$13B/k≈13 assumption with **k≈18**. Every k-anchor and the
+> k-sweep range in this file (§3–§7) have been updated accordingly; §1's regression keeps its
+> original `--k 8-16` because it is pinned to the historical `sweep_20260902_s10` artifact and
+> must never move.
 >
-> **Blocked on you:** §2 needs the new instance file. Drop it in the `runs` worktree under a
-> new name (e.g. `instance_v2.json.gz`), *not* over `instance_descaled.json.gz` — the old file
-> is what makes §1's regression check possible.
+> **Resolved: the `BLANK` pseudo-zip.** The raw export carried one vacant node literally named
+> `"BLANK"` (no state, `share_free=1.0`, no candidates) — a data-quality artifact, not a real
+> ZIP. It has been dropped: the untouched export is kept as `instance_descaled_v2.raw.json.gz`
+> and `instance_descaled_v2.json.gz` (used everywhere below) is the cleaned 3,748-zip version.
+> `check_descaled` is clean on the cleaned file; gazetteer-missing count is 41 (was 42).
+>
+> **Still to do: §4 onward** — scenario specs, the 14+1 run catalogue (~14 min of solver time),
+> maps, the generator, and the artifact. None of that has run yet.
 
 **1. ~~Create the worktree.~~ Done.** For the record, it was created explicitly rather than with
 `EnterWorktree(name:)`, because `worktree.baseRef` defaults to `fresh` and would have branched
@@ -36,7 +46,9 @@ Better still, **launch `claude` from that directory** — Serena binds to the se
 directory, and starting there removes the whole class of wrong-worktree failures described in
 step 2.
 
-**2. Initialize serena in the new worktree.** Serena binds to a project root, and the wrong root
+**2. ~~Initialize serena in the new worktree.~~ Done** — bound correctly on session launch (no
+`activate_project` call needed; the working directory was already the `runs` worktree). For
+the record, Serena binds to a project root, and the wrong root
 silently edits the wrong worktree — this exact failure happened on 2026-09-02 (FRAME §0's process
 note: `python-typed` edited `centers.py` in the hub worktree because its Serena binding pointed at
 the session's launch directory). So:
@@ -48,7 +60,7 @@ the session's launch directory). So:
 - **Confirm the returned active-project path is the `runs` worktree** before any edit. If it names
   `national-channel` or the main checkout, stop and re-activate.
 
-**3. Copy the gitignored inputs** from `national-channel` (HANDOFF's "Starting a track" step 2 —
+**3. ~~Copy the gitignored inputs.~~ Done.** From `national-channel` (HANDOFF's "Starting a track" step 2 —
 these are not in git and do not arrive with the branch):
 
 ```bash
@@ -58,10 +70,10 @@ cp -R ../national-channel/data/geo data/
 mkdir -p battery/results && cp -R ../national-channel/battery/results/sweep_20260902_s10 battery/results/
 ```
 
-**4. Sanity-check the environment.** This worktree has no `.venv`; use the main checkout's, three
-levels up: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py` → **184 pass, 0 fail**.
+**4. ~~Sanity-check the environment.~~ Done — 184 pass, 0 fail.** This worktree has no `.venv`;
+use the main checkout's, three levels up: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`.
 
-**5. Copy this plan into the repo** as `docs/RUNS_PLAN.md` and commit it, so the plan is
+**5. ~~Copy this plan into the repo~~ Done.** Committed as `docs/RUNS_PLAN.md`, so the plan is
 version-controlled alongside the work it describes.
 
 ---
@@ -118,7 +130,7 @@ Exactly one scenario has ever been run through it (`sweep_20260902_south`,
 item (i) is still open: *ask the sponsor which states, if any, are hand-drawn.*
 
 That question needs a price list. This builds one: for each candidate region, what pinning it
-costs, closed versus open, at every `k` from 8 to 16, in nats against the unpinned baseline.
+costs, closed versus open, at every `k` from 14 to 22, in nats against the unpinned baseline.
 
 **A new instance arrives with this work** — same descaled format, higher-quality opportunity data.
 It supersedes `instance_descaled.json.gz` for every catalogue number. The existing instance is
@@ -133,10 +145,12 @@ and "what is `k`?" one joint decision rather than two sequential ones.
 | | |
 |---|---|
 | scenario set | pin-cost catalogue: 7 regions × {`fix`, `anchor`} = 14 runs, + unpinned baseline. Sponsor-map and deliberately-infeasible variants were considered and declined. |
-| `k` coverage | `--k 8-16` for every scenario, `--seeds 0-9`, matching `sweep_20260902_s10`. |
-| visualization | one power-diagram map per scenario at k=13 (`--regions`), plus tables and cross-scenario charts. |
+| real total | sponsor-confirmed **≈ $18B** on the new instance (was ≈$13B on the old) ⇒ working target moves from k≈13 to **k≈18**. |
+| `k` coverage | **`--k 14-22`** for every new-instance scenario, `--seeds 0-9` — same 9-value width and seed set as the old sweep, recentered on 18 instead of 12/13. §1's old-instance regression keeps `--k 8-16` unchanged (pinned to `sweep_20260902_s10`). |
+| visualization | one power-diagram map per scenario at **k=18** (`--regions`), plus tables and cross-scenario charts. |
 | old instance | regression check only. The catalogue is **new-instance only** — no dual catalogue, no old-vs-new comparison table. |
 | file handling | the new instance arrives under a **new filename alongside** the old one, so the regression stays possible. |
+| data cleaning | the raw export's `BLANK` pseudo-zip (vacant, no state) is dropped before use — see §2. |
 
 ---
 
@@ -156,29 +170,44 @@ plays no further part.
 *Why this is worth 56 seconds:* a new dataset and an unverified pipeline are two unknowns, and you
 cannot debug a surprising pin cost with both in play. This collapses one to zero.
 
-## 2. Accept and validate the new instance
+## 2. ~~Accept and validate the new instance~~ Done
 
-It arrives under a new name alongside the existing one (e.g. `instance_v2.json.gz`). Before use:
+`instance_descaled_v2.json.gz` arrived alongside `instance_descaled.json.gz`. What was found and
+done, for the record (re-derivable, but stated here so a fresh session doesn't redo it):
 
-- `td.instance.load_descaled` → `td.instance.check_descaled` must return an **empty list**. It
-  gates four independent things: pointwise headroom `M_z ≥ max_i(S_i + θ(T_z − S_i))` at θ=0.40
-  (tol 5e-5, for the export's 6-significant-figure rounding); no negative `S` or `M`; `cand`/`S`
-  agreement on contested zips; and **median `M` ≈ 1.0**, which is what catches a file exported
-  without descaling — that would sail through everything else while silently wrecking solver
-  conditioning.
-- Report `d.summary()` against the current instance: zips, edges, contested / uncontested / vacant
-  / untapped, reps, total `M`.
-- Recompute the per-state opportunity table, and the gazetteer coverage — `run_draw.coordinates()`
-  prints how many zips are placed by state rather than by centroid. A new instance may carry zips
-  absent from the 2020 gazetteer cache; record the count, it degrades those zips' geometry.
+- `td.instance.load_descaled` → `td.instance.check_descaled` returned an **empty list** on the raw
+  export. It gates four independent things: pointwise headroom `M_z ≥ max_i(S_i + θ(T_z − S_i))` at
+  θ=0.40 (tol 5e-5, for the export's 6-significant-figure rounding); no negative `S` or `M`;
+  `cand`/`S` agreement on contested zips; and **median `M` ≈ 1.0**, which is what catches a file
+  exported without descaling — that would sail through everything else while silently wrecking
+  solver conditioning.
+- `d.summary()` on the raw export: 3,749 zips / 4,712 edges; 718 contested, 1,447 uncontested, 17
+  vacant, 1,567 untapped; 114 reps (three new: `R0111`–`R0113`); total descaled `M` 8,524.5 — a
+  3.1× increase over the old instance's 2,745.6. Eight states appear that the old instance did not
+  (`AK, HI, IA, ID, MS, MT, NE, NM`); none were dropped, so no region definition loses a state.
+- Gazetteer coverage on the raw export: 3,707 of 3,749 placed by coordinate (42 missing, up from 6
+  on the old instance) — the rest are placed by state via `channel.place_by_state`.
+
+**Finding, fixed rather than just flagged: the `BLANK` pseudo-zip.** One node in the raw export is
+literally named `"BLANK"` — vacant (`M=1.248`, `S_free=1.248`, no candidates) and, unlike every
+real zip, carries **no `state` field at all**, so it can't be placed by `place_by_state` the way
+the other 41 uncoordinated zips can. It is a data-quality artifact, not a real ZIP, and was
+**dropped**: the untouched export is kept as `instance_descaled_v2.raw.json.gz` for provenance,
+and `instance_descaled_v2.json.gz` (used by every command below) is the cleaned file — 3,748 zips,
+4,712 edges (no edges touched `BLANK`), 16 vacant, 41 gazetteer-missing, total `M` 8,523.2.
+`check_descaled` is clean on the cleaned file too. This was a targeted data edit to the instance
+file, not a change to `td/instance.py` or any loader — the "no change to `td/` or `tools/`" rule
+below still holds.
 
 **If `check_descaled` reports problems, stop and report** rather than cataloguing an invalid
-instance.
+instance — it did not, but this still gates any future re-export.
 
-**Assumption to flag, not resolve:** `k ≈ total / $1B`, but a descaled instance carries no currency
-scale. If the new data changes the real dollar total, the `k` the sponsor should target moves with
-it, and the `target` column's dollar meaning is theirs to state. The 8–16 sweep is deliberately
-wide enough to be robust to this; the artifact says so rather than asserting k=13.
+**Resolved (was "flag, not resolve"): the real dollar total.** A descaled instance carries no
+currency scale, so this needed the sponsor's number rather than a computation. The sponsor
+confirmed the new instance's real total is **≈ $18B**, so the working target is **k≈18**
+(was k≈13 on the old $13B instance). The k-sweep for the new-instance catalogue is recentered to
+`--k 14-22` (§3–§7) — still a range, not a single asserted k, for the same robustness reason the
+original 8–16 sweep was wide.
 
 ## 3. Regions — recomputed, not redefined
 
@@ -192,24 +221,28 @@ wide enough to be robust to this; the artifact says so rather than asserting k=1
 | SOUTHWEST | AZ, NV, UT, CO |
 | FLORIDA | FL |
 
-**On the current instance** (total M 2,745.6; k=13 target 211.2) these measure:
+**Recomputed on the cleaned new instance** (total M 8,523.2; k=18 target 473.5) — these are the
+numbers the artifact reports, not the old-instance table this section used to carry:
 
-| region | M | k-equivalents | natural k |
+| region | M | k-equivalents (k=18) | natural k |
 |---|---|---|---|
-| CALIFORNIA | 764.9 | 3.62 | — off the scale |
-| TEXAS | 317.6 | 1.50 | ~9 |
-| NEWYORK | 303.4 | 1.44 | ~9 |
-| MIDWEST | 250.6 | 1.19 | ~11 |
-| CAROLINAS | 221.4 | 1.05 | ~12 |
-| SOUTHWEST | 207.3 | 0.98 | ~13 |
-| FLORIDA | 183.6 | 0.87 | ~15 |
+| CALIFORNIA | 1,953.8 | 4.13 | 4.4 |
+| TEXAS | 972.1 | 2.05 | 8.8 |
+| NEWYORK | 849.6 | 1.79 | 10.0 |
+| MIDWEST | 876.5 | 1.85 | 9.7 |
+| CAROLINAS | 535.2 | 1.13 | 15.9 |
+| SOUTHWEST | 606.8 | 1.28 | 14.0 |
+| FLORIDA | 661.9 | 1.40 | 12.9 |
 
-These are **recomputed from the new instance**, and the new numbers are what the artifact reports.
-The table above is the prior, not the result.
+**Finding: at k=18, every region is oversized as a single district**, not just CALIFORNIA as on
+the old instance — every k-equivalent above is >1. CALIFORNIA remains the tightest constraint
+(natural k 4.4, far below the 14–22 sweep), but CAROLINAS and SOUTHWEST are now the closest to
+fitting (k-equivalents 1.13 and 1.28), a different ranking than the old table's. This is reported
+as a finding, not resolved by regrouping — see below.
 
 **Definitions stay fixed.** Re-tuning a grouping so it lands on target would be curve-fitting the
 very thing the catalogue measures. If the new data pushes a region's k-equivalent outside what
-k ∈ [8,16] can reach, report it as a finding — as CALIFORNIA already is: at 3.62 k-equivalents it
+k ∈ [14,22] can reach, report it as a finding — as CALIFORNIA already is: at natural k 4.4 it
 cannot be one district at any `k` in range, and pins are state-grain only (FRAME §8's A12 grain
 question). Pricing that limit explicitly is why it stays in.
 
@@ -228,9 +261,9 @@ twice and a state pinned to two districts.
 The unpinned baseline plus each spec:
 
 ```bash
-/Users/ntlee/projects/td/.venv/bin/python3 tools/run_draw.py instance_v2.json.gz \
+/Users/ntlee/projects/td/.venv/bin/python3 tools/run_draw.py instance_descaled_v2.json.gz \
   --scenario docs/artifacts/runs/scenarios/<s>.json \
-  --k 8-16 --seeds 0-9 --workers 8 --out battery/results/runs_<date>/<s>
+  --k 14-22 --seeds 0-9 --workers 8 --out battery/results/runs_<date>/<s>
 ```
 
 Same `k` range and seeds throughout — that is what makes Σ log M comparable across scenarios at
@@ -245,11 +278,11 @@ so the difference against the unpinned baseline is a pure additive cost in nats.
 scale-invariance argument in `CLAUDE.md`: a global rescale shifts `Σ log g_i` by `n·log κ`, the
 same constant for every partition, so differences survive descaling untouched.
 
-## 6. Maps — one per scenario at k = 13
+## 6. Maps — one per scenario at k = 18
 
 ```bash
-/Users/ntlee/projects/td/.venv/bin/python3 tools/us_maps.py instance_v2.json.gz \
-  --out figures/runs_<date>/<s>/ --regions battery/results/runs_<date>/<s>/k13/draw.csv
+/Users/ntlee/projects/td/.venv/bin/python3 tools/us_maps.py instance_descaled_v2.json.gz \
+  --out figures/runs_<date>/<s>/ --regions battery/results/runs_<date>/<s>/k18/draw.csv
 ```
 
 `--regions` is the power diagram (`district_regions.png`); `--regions-voronoi` is the superseded
@@ -259,9 +292,10 @@ zip-catchment fill and is deliberately not used. `us_maps.py` also writes four b
 as the visual record of what changed in the data. ~3 s per map with the gazetteer cached.
 
 Known cosmetic risk: `us_maps.color_districts` is a greedy colouring over a 12-colour palette
-(`QUAL`), so at k=13 two adjacent districts can share a hue — the `SOUTHWEST`/`D07` collision
-already noted in HANDOFF's open items. Report it if it makes a map unreadable; do not widen scope
-to fix the palette. Both district figures share `draw_palette`, so the two renderings cannot drift.
+(`QUAL`), so two adjacent districts can share a hue at any `k` — the `SOUTHWEST`/`D07` collision
+at k=13 already noted in HANDOFF's open items is one instance; k=18 has one more district and is
+no less exposed. Report it if it makes a map unreadable; do not widen scope to fix the palette.
+Both district figures share `draw_palette`, so the two renderings cannot drift.
 
 **Never write under `battery/figures/`** — primary artifacts of the superseded battery, and not
 carried into these worktrees.
@@ -290,14 +324,14 @@ Structure:
 - **Instance header** — what the new data is: zips, reps, total M, node classes, gazetteer
   coverage, per-state geometry, and how it differs from the 2026-09-01 export. A reader must know
   which dataset produced every number below.
-- **Headline table, k = 13** — per scenario: region, mode, states, pinned M, pinned vs target,
+- **Headline table, k = 18** — per scenario: region, mode, states, pinned M, pinned vs target,
   spread of the *unpinned* districts, Σ log M, Δ nats vs baseline, stage-2 value, Δ.
-- **Chart A** — pin cost at k=13, grouped bars, `fix` against `anchor` per region.
+- **Chart A** — pin cost at k=18, grouped bars, `fix` against `anchor` per region.
 - **Chart B** — pin cost (Δ nats vs baseline) against `k`, one line per region. This is the V, and
   the chart the artifact exists for.
 - **Chart C** — the pinned district's deviation from target against `k`, one line per region; each
   crosses zero at that region's natural `k`. The sponsor-facing reading of B.
-- **15 sections**, one per scenario: the k=13 power diagram, a nine-row `k` table, and the k=13
+- **15 sections**, one per scenario: the k=18 power diagram, a nine-row `k` table, and the k=18
   per-district table from `summary_rows` (district, mode, zips, M, vs target, top state +share,
   n_states, `max_zip_share`, `median_zip_M`, rep, stage-2 gain) with `mode` marking the pinned row.
 - **Reproduce** — the exact commands, naming the instance file.
@@ -344,12 +378,12 @@ code, not a licence to edit the solver on this branch.
 
 ## Verification, end to end
 
-1. `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py` → 184 pass, 0 fail.
-2. Old-instance no-pin run byte-identical to `sweep_20260902_s10` — the check that makes every
-   other number meaningful.
-3. `check_descaled` clean on the new instance; summary and per-state diff against the current one
-   reported before any catalogue run.
-4. All 15 runs: 0 unstaffed, masses sum to total; generator assertions pass.
+1. ~~`.venv/bin/python3 tests/run_all.py` → 184 pass, 0 fail.~~ Done.
+2. ~~Old-instance no-pin run byte-identical to `sweep_20260902_s10`~~ Done — the check that makes
+   every other number meaningful.
+3. ~~`check_descaled` clean on the new instance; summary and per-state diff reported.~~ Done
+   (§2) — including the `BLANK` pseudo-zip fix.
+4. All 15 runs (`--k 14-22`): 0 unstaffed, masses sum to total; generator assertions pass.
 5. Artifact published, renders in light and dark, under 16 MB.
 6. `wt/runs` clean and pushed; hub untouched.
 
