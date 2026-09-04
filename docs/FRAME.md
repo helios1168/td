@@ -124,9 +124,12 @@ palette).
 target and staffs all of them; spread 0.47%–1.31%. **At k=13 seed 9 staffs at 60.0401 nats,
 +0.103 over the certified seed-3 draw (59.9375)** — the five extra seeds changed the k=13 map,
 and the portfolio's gain (winner minus stage-1-best) is 0.03–0.11 nats at k ≥ 11 and zero at
-k ≤ 10. Maps for k = 10, 13, 16 are tracked under `figures/sweep_20260902_s10/k<kk>/`
-(`districts.png`, `district_regions.png`). Artifact, sweep table + charts + maps:
-https://claude.ai/code/artifact/c007d61d-c753-4151-9026-2288b9d5eb38 (the 2026-09-01 atlas
+k ≤ 10. Maps for **all nine k** are tracked under `figures/sweep_20260902_s10/k<kk>/`
+(`districts.png`, `district_regions.png`; k = 8, 9, 11, 12, 14, 15 rendered 2026-09-04 from
+the same run's `draw.csv`, no re-solve). Artifact, sweep table + charts + a map section per k:
+https://claude.ai/code/artifact/c007d61d-c753-4151-9026-2288b9d5eb38 (nine sections as of
+2026-09-04; images embedded as lossless WebP, 4.97 MB — the `assets` capability is not
+available on this account, so they are data URIs; the 2026-09-01 atlas
 at `1f2cddd9…` still shows the certified k=13 draw). Decision this raises: adopt the seed-9
 k=13 map, or keep the certified seed-3 one? The two are Nash-indistinguishable (0.84% vs
 0.78% spread, both far under the 5e-3-nat tier-2 floor); staffing is the only difference, and
