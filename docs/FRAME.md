@@ -91,8 +91,32 @@ superdifferential at `δ₀` sits inside `[0.560711, 0.560995]`), and the Slater
 an invariant of the unconstrained optimum (add it to `VERIFY_U9-bandthm` §10.E's non-invariant
 list), and the *primal* vertex is as fragile as the dual under a last-bit input change.
 
-*What's next, in order.* (1) **Wave 2 is unblocked:** U10-round, U11-roster, U4-disp (all gated on
-U8, all now free). U12-menu follows U8+U11+U13. (2) **User-gated, reported not done:** ★11 rewrite
+*⚠ Everything is HELD (user, 2026-09-04, end of session).* **A new instance landed in
+`.claude/worktrees/runs/` at 18:26 the same day, while wave 1 was running**, and it is not a minor
+revision. Measured directly: **3,748 zips against v1's 1,229** (3.05×), 114 reps against 111, and
+total descaled `M` **8,523.2 against 2,745.6** (3.10×). The `runs` session reports it as
+sponsor-confirmed, replacing the $13B / k ≈ 13 sizing with **k ≈ 18** (the dollar figures are not
+checkable from here — descaling removes the scale by design). **§9's "k = 13 at a $1B target —
+settled" and §8's assumption A1 are therefore reopened**, and the user's instruction is to hold:
+**no merge, no wave-2 launch** until the instance-and-`k` question is settled with the sponsor.
+
+This does **not** invalidate anything above. U8's manifest pins `instance_sha256 = cf7d66c0…` and
+`draw_sha256` precisely so the scope is unambiguous: **NOT SOFT is a certified fact about v1 at
+k = 13, roster `S₁₃`.** Whether it survives v2 at k ≈ 18 is open. The mechanism is plausibly
+scale-free — the verdict came from the **level** at `δ₀` (0.683 nats before any extrapolation),
+not from the slope — but that is a hypothesis. Scale is not the obstacle: `n·k` goes 15,977 →
+~67,000 while the OA converged in 15–57 tangents at 1e-9 brackets. What changes is every *number*
+— `δ₀`, `V`, `EG_S`, and the roster itself (13 of 111 → ~18 of 114). **The cheapest first move
+when the hold lifts is one re-run of `tools/measure/frontier.py` on v2 at the new `k`:** a single
+solve re-tests the verdict and re-anchors every downstream number before a wave-2 unit is spent.
+
+*What's next, in order.* (1) **HELD — wave 2:** U10-round, U11-roster, U4-disp are unblocked by
+the D1′ verdict but deliberately not launched (three units against a possibly-superseded instance
+is waste); U12-menu follows U8+U11+U13; U13-base likewise held. (2) **User-gated, reported not
+done:** the merge into `national-channel` — analysed and **safe** (6 ahead / 3 behind `629e3da`;
+`git merge-tree` gives exactly three conflicts, all state-stamp files, zero code conflicts; every
+`wt/A1` code change is an *add*, and `td-runs` confirmed no objection from the runs side) but not
+authorised; ★11 rewrite
 A1's charter step 3 in `APPROACHES.md`; the merge of `wt/A1` into `national-channel`; ★8's
 `fotakis2014` correction; and the three source documents this wave contradicts —
 `DOMAIN_optimization` §2.12 (refuted rule), §2.10 (`δ > 0` multiplier restriction too weak; the

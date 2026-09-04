@@ -5,12 +5,14 @@
 `ddd162d` in this worktree; `ed5a9a8` is docs-only)
 
 **Status:** A1 wave 1 landed and is verified — **U8-band**'s D1′ certificate says the premium is
-**NOT SOFT** (gap 0.683–0.737 nats against the 5e-3 floor, no `δ*` on `[δ₀, 0.33]`), so A1
-continues and wave 2 (U10-round, U11-roster, U4-disp) is unblocked. **U9-bandthm** verified all
-five propositions it rests on. Four user-gated items are reported, not done: the merge into
-`national-channel`, ★11's charter rewrite, ★8, and the source-document corrections this wave
-implies. A1's documents live under `docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full
-narrative and the numbers.
+**NOT SOFT** (gap 0.683–0.737 nats against the 5e-3 floor, no `δ*` on `[δ₀, 0.33]`) **on the v1
+instance at k = 13**; **U9-bandthm** verified all five propositions it rests on.
+**⚠ EVERYTHING IS HELD** (user, 2026-09-04): a new instance **3× larger** (3,748 zips vs 1,229)
+landed the same day and the sponsor's sizing moved to **k ≈ 18**, reopening §9's settled
+"k = 13" and assumption A1. **Do not merge, do not launch wave 2** until the instance-and-`k`
+question is settled. The merge itself was analysed and is safe (three state-file conflicts, zero
+code conflicts, `td-runs` has no objection) — it is simply not authorised. A1's documents live
+under `docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full narrative and the numbers.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.

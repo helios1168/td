@@ -4,8 +4,11 @@
 **Head:** `ed5a9a8` · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new, run 2026-09-04 at
 `ddd162d` in this worktree; `ed5a9a8` is docs-only)
 
-**One line:** A1 wave 1 landed and is verified — **D1′ says the premium is NOT SOFT**, so A1
-continues and wave 2 is unblocked. Four items are user-gated and waiting.
+**One line:** A1 wave 1 landed and is verified — **D1′ says the premium is NOT SOFT** on the v1
+instance at k = 13. **⚠ EVERYTHING IS ON HOLD** (user, 2026-09-04): a **new instance, 3× larger,
+landed the same day** and the sponsor's sizing moved to k ≈ 18, so nothing merges and no unit
+launches until the user settles the instance-and-`k` question. **Do not merge. Do not launch
+wave 2.**
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 (the 2026-09-04 entry; §6 has the measured rows)
@@ -39,8 +42,20 @@ continues and wave 2 is unblocked. Four items are user-gated and waiting.
 ## Next actions
 
 **User-gated — reported, not done. Ask before acting on any of these.**
-- [ ] **Merge `wt/A1` into `national-channel`?** Four commits (`954d9eb`, `f199e92`, `69997ac`,
-      `ddd162d`). Nothing merges without this answer.
+- [ ] **HELD — merge `wt/A1` into `national-channel`?** Six commits (`954d9eb`, `f199e92`,
+      `69997ac`, `ddd162d`, `ed5a9a8`, `4e5f566`). **The analysis is done and the merge is
+      safe** — it just is not authorised. Not a fast-forward: `wt/A1` is 6 ahead, the hub 3
+      ahead of the base `629e3da` (the hub's nine-k sweep maps). `git merge-tree` gives
+      **exactly three conflicts — `CLAUDE.md`, `HANDOFF.md`, `docs/FRAME.md` — and zero code
+      conflicts**; both sides simply restamped the same state files. Every code change on
+      `wt/A1` is an **add**, never a modify (`git diff --name-status` over `td/ tools/ tests/`
+      is four `A` lines, no `M`), and the hub's 3 commits touch no code at all — so the stage-1
+      draw path is bit-for-bit unchanged and the `runs` plan's byte-identical
+      `sweep_20260902_s10` re-run is unaffected. The `td-runs` session confirmed no objection:
+      `RUNS_PLAN.md` only *points at* the three conflicted files and quotes no line from them,
+      `wt/runs` has touched no code either, and its uncommitted work has zero overlap.
+      Resolution when authorised: keep both entries in `FRAME.md` §0's prepend-and-demote chain
+      (dated, both belong) and hand-merge the two stamps.
 - [ ] **★11 — rewrite A1's charter step 3** in `APPROACHES.md` from "rep-indexed MINLP" to
       "roster enumeration over band-constrained EG programs". A hub edit. U8 has now reported,
       so this is unblocked. Note `collapsed-on-softness` does **not** fire — the premium is not
@@ -62,11 +77,38 @@ continues and wave 2 is unblocked. Four items are user-gated and waiting.
 - [ ] **★10** — tie-break policy (disclose vs randomise), on U11's evidence; `S₁₃`'s margin is
       8.1e-3 nats on seed 9.
 
-**Unblocked work.**
-- [ ] **Wave 2 — U10-round, U11-roster, U4-disp.** All were gated on U8's D1′ verdict; all are
-      now free. Briefs at `docs/tracks/A1/units/`. U11 reuses `eg_band.py` as its solver.
-- [ ] **Wave 3 — U12-menu** (needs U8 + U11 + U13). **U13-base** is independent and can start
-      now.
+**⚠ HELD — the instance moved under us (user decision, 2026-09-04: "hold everything").**
+
+A new instance landed in `.claude/worktrees/runs/` at 18:26 on 2026-09-04, **while wave 1 was
+running**. Measured directly, not taken on report:
+
+| | `instance_descaled.json.gz` (v1, all of wave 1) | `instance_descaled_v2.json.gz` (new) |
+|---|---|---|
+| zips | 1,229 | **3,748** (3.05×) |
+| reps | 111 | 114 |
+| total descaled `M` | 2,745.6 | **8,523.2** (3.10×) |
+
+The `runs` session reports it as sponsor-confirmed, replacing the $13B / k ≈ 13 assumption with
+**k ≈ 18**, and describes it as "cleaned of one bad data node" — but the size change is the
+headline, and the dollar figures cannot be checked from here (descaling removes the scale by
+design). **`FRAME.md` §9's "k = 13 at a $1B target — settled" and assumption A1 are reopened.**
+
+*What this does and does not do to wave 1.* It does **not** invalidate it: U8's manifest pins
+`instance_sha256 = cf7d66c0…` and `draw_sha256`, so "NOT SOFT" is a certified fact about **v1 at
+k = 13, roster `S₁₃`**. It is not yet a fact about v2 at k ≈ 18. The mechanism is *plausibly*
+scale-free — the verdict came from the **level** at `δ₀`, not the slope — but that is a
+hypothesis, not a result. Scale is not the obstacle: `n·k` goes 15,977 → ~67,000 and the OA
+converged in 15–57 tangents at 1e-9 brackets; what changes is every *number* (`δ₀`, `V`,
+`EG_S`, and the roster itself, 13 of 111 → ~18 of 114).
+
+- [ ] **HELD — wave 2 (U10-round, U11-roster, U4-disp) and U13-base.** Technically unblocked by
+      the D1′ verdict, deliberately not launched: three units against a possibly-superseded
+      instance is waste. Briefs at `docs/tracks/A1/units/`; U11 reuses `eg_band.py`.
+- [ ] **HELD — wave 3, U12-menu** (needs U8 + U11 + U13).
+- [ ] **The decision that unblocks all of it:** does v2 supersede v1, and is `k ≈ 18` settled?
+      A sponsor question. When answered, the cheapest first move is **one re-run of
+      `tools/measure/frontier.py` on v2 at the new `k`** — a single solve re-tests whether NOT
+      SOFT survives and re-anchors every downstream number before any wave-2 unit is spent.
 - [ ] Carried: ★1 (are the 98 released), ★2 (audited book — now a data-quality question only),
       ★3 (stability as a criterion, after U6-sel), ★5 (least core), ★7 (`/domain econometrics`).
       **U3-inv is retired** (user, 2026-09-04) — books are measured from the data warehouse, not
