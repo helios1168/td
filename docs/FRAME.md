@@ -55,6 +55,10 @@ even though the *source* has one row per zip × rep with the zip's opportunity r
 - Visual check published as the **Opportunity Map Diff** artifact,
   `https://claude.ai/code/artifact/68eecbb9-3ce2-45d9-8161-5db7fe212957` (both instances on one
   projection and one circle-area scale; views for coverage and for real change).
+- **Every number above is reproducible:** `tools/measure/instance_diff.py <old> <new>` recovers
+  `K` from the unchanged zips and emits the whole comparison (10 tests, `test_instance_diff.py`;
+  218 total). Run it on any future export before trusting a sizing figure — it also reports the
+  row-inflation factor a dollar total should be checked against.
 
 *What this does to wave 1.* Nothing is retracted. U8's manifest pins
 `instance_sha256 = cf7d66c0…` and `draw_sha256`, so **"NOT SOFT" is a certified fact about v1 at

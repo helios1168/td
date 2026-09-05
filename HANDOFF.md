@@ -32,7 +32,13 @@ The merge into `national-channel` remains user-gated.
   `docs/MODEL_U1-cert.md` + `VERIFY_U1-cert.md` · `docs/LIT_optimization.md` + `.bib`,
   `docs/LIT_economic-theory.md` (2026-09-03 section) + `LIT_economic-theory_A1.bib` ·
   hub docs `CHANNEL.md`, `MODEL.md`, `DATA.md`, `RESEARCH_FINDINGS.md`, `REVIEW_GROMOV.md`
-- **The two CLIs:**
+- **Reproducing the v1↔v2 comparison:**
+  `tools/measure/instance_diff.py <old> <new> [--json out.json]` — recovers the descaling
+  divisor `K` from the unchanged zips, reports the real per-zip change `f = ratio/K`, the
+  composition shift, the saturation decomposition, and what a naive row-sum of opportunity
+  would have inflated each export by. Every number in FRAME §0's 2026-09-04 entry comes from
+  it. Run it on any future instance before trusting a sizing figure.
+- **The three CLIs:**
   `tools/measure/premium.py instance_descaled.json.gz battery/results/draw_k13_20260901 --out battery/results/meas_20260903`
   (the premium ladder, U1/U4/U8, verdict conversions) ·
   `tools/measure/frontier.py instance_descaled.json.gz battery/results/draw_k13_20260901 --out battery/results/u8_band_20260904`
@@ -103,10 +109,13 @@ goes 15,977 → ~67,000 and the OA converged in 15–57 tangents at 1e-9 bracket
 change.**
 
 - [ ] **1. Draw v2 at k = 18.** *This is the gating step* — `battery/results/draw_k13_20260901`
-      is a **v1** draw, and every A1 unit consumes a draw plus its stage-2 roster. Run
-      `tools/run_draw.py` on `instance_descaled_v2.json.gz`; `wt/runs`'s `RUNS_PLAN.md` covers
-      this ground with `--k 14-22`, so coordinate rather than duplicate. Copy the v2 instance
-      into this worktree first (gitignored).
+      is a **v1** draw, and every A1 unit consumes a draw plus its stage-2 roster. The instance
+      lives at
+      `/Users/ntlee/projects/td/.claude/worktrees/runs/instance_descaled_v2.json.gz`
+      (gitignored; `.raw.json.gz` beside it is the pre-clean original, before the `BLANK`
+      pseudo-zip was dropped) — **copy it into this worktree by hand first.** Then run
+      `tools/run_draw.py` on it; `wt/runs`'s `RUNS_PLAN.md` covers this ground with `--k 14-22`,
+      so coordinate rather than duplicate.
 - [ ] **2. Re-run the frontier on v2 at k = 18.**
       `tools/measure/frontier.py instance_descaled_v2.json.gz <v2 draw> --out battery/results/u8_band_v2_<date>`
       — one solve re-tests D1′ and re-anchors `δ₀`, `V`, `EG_S` and the roster. Expect the gate
