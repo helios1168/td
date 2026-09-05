@@ -6,6 +6,45 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-05 18:54 · main 9980732 — wave 2 Phase 0 and Phase 2 executed on `wt/w2-phase0`, unmerged
+
+**Wave 2 Phase 0 and Phase 2 are executed and committed on `wt/w2-phase0`** — five commits on
+`9cfcc2c`, 237 tests pass (222 baseline + 15 new from P2-B), branch **unmerged and unpushed**.
+Phase 1's four units are not launched; Phase 0 no longer blocks them.
+
+*What landed.* `3b968de` **P0-A**: 0a's eight source corrections; 0b rewrote A1's charter to
+roster enumeration over band-constrained EG programs, touching **12 sites** because `:44`,
+`:109`, `:388` all claimed "one solve"; 0d withdrew `fotakis2014`; 0c re-anchored five briefs.
+`2d472de` **P0-B**: `MODEL_U8-band` §10 for v2, §9 kept byte-identical as v1 history, plus
+`CODEVERIFY_U8-band-v2.md`. `8b7123b` **P0-C**: `B_tot` emitted from `premium.py::measure()`,
+(★) recomputed, `SATURATION` → 29.6 %, `channel_note` §5.1 retracted; `VERIFY_P0C-screen.md`.
+`4a724d6` **P2-A**, `3e59445` **P2-B**.
+
+*What the verifiers refuted* — seven claims, two of which would have shipped wrong numbers:
+
+- **The (★) screen direction was backwards.** The plan's `0.064 → 0.261` pairs v1's `P_S` slack
+  against v2's `P₁₈`. On `P_S` — U11's actual per-roster prune — slack goes `0.0641 → 0.0219`:
+  it **TIGHTENS 2.9×**. The loosening is real but lives on `P_k`, the roster-free bound.
+- **`Σᵢgᵢ = B_tot + w·P₀` is NOT an independent oracle** (`WAVE2_PLAN.md:320` overstates it). It
+  is one sum rearranged: doubling `free_book` in both paths leaves it passing while `B_tot`
+  moves. `B_tot` is verified instead by independent transcription (Δ = 0.0e+00).
+- **`MODEL_U8-band` §5.1's gate gains.** Not ≈206 (that is `mean(g_delivered)`); measured
+  211.786–228.663. Conclusion survives: min clears the 140.638 floor by 1.506×.
+- `channel_note` §5.1 had inherited v1's `D(g)`; true value **0.148 nats**, and the 1e-4–1e-2
+  range is `D(M)`. The 30 % threshold is **not** crossed at 29.588 %, so the passage now rests
+  on the measured 0.890-nat window. Inversion holds at **6.0×**, not orders of magnitude.
+
+*What it means.* ★8 was executed **removal only**: `fotakis2014` withdrawn at all seven sites,
+Gibbard–Satterthwaite withdrawn too (no citation exists anywhere in the corpus), **nothing put
+in its place** — the invariant has no cited basis and stands as a prudential design choice, with
+the misreporting exposure explicitly preserved. P2-B **established** cert 1's residual-targets
+equivalence by KKT proof plus 4,000-case numeric check, and **refused** `WAVE2_PLAN`'s literal
+cert-2 instruction after measuring that both inherited symmetry breaks cut off the optimum.
+
+*What's next.* **Decide whether `wt/w2-phase0` merges to `main`** — the wave-2 decision said
+verified tracks auto-merge *this batch only*, but nothing has merged and the push was refused by
+the auto-mode classifier. Then launch Phase 1's four units.
+
 ## 2026-09-05 02:35 · main 9cfcc2c — wave 2 planned but not executed
 
 **Wave 2 is planned but not executed.** `docs/WAVE2_PLAN.md` (this commit) is the execution
