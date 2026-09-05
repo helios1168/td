@@ -252,6 +252,13 @@ def measure(G: Any, to_district: dict[Zip, District], *,
 
     g, _, _ = channel.gain_matrix(G, to_district, R, D, theta=theta, lam=lam,
                                   filler_capture=filler_capture)
+    # ---- B_tot: the partition-invariant term of eq. (decomp), channel_note.tex:467-471 --
+    # W_0 = sum_z [lam*M_z + c2*T_z + c_free*S_free(z)], an O(n) one-pass sum over zips.
+    # `filler_capture` is already validated by the `gain_matrix` call above.
+    c1, c2 = 1.0 - lam, theta * (1.0 - lam)
+    c_free = {"theta": c2, "full": c1, "opportunity": lam}[filler_capture]
+    S_free = np.array([model.free_book(G, z) for z in nodes], float)
+    B_tot = float((lam * M + c2 * T + c_free * S_free).sum())
     nash: Roster = dict(channel.stage2(G, to_district, R, D, theta=theta, lam=lam,
                                        filler_capture=filler_capture)["assignment"])
     if sigma is None:
@@ -287,6 +294,13 @@ def measure(G: Any, to_district: dict[Zip, District], *,
     M_by_district = channel.district_opportunity(G, to_district, D)
     M_district = np.array([M_by_district[d] for d in D], float)
 
+    # ---- the independent oracle for B_tot: sum_i g_i = B_tot + w * P0 (eq. decomp)
+    identity_lhs, identity_rhs = float(gains.sum()), B_tot + w * P0
+    if not math.isclose(identity_lhs, identity_rhs, rel_tol=1e-9, abs_tol=1e-6):
+        raise ValueError(
+            f"decomposition identity failed: sum_i g_i={identity_lhs!r} != "
+            f"B_tot + w*P0={identity_rhs!r} (delta {identity_lhs - identity_rhs:.3e})")
+
     # ---- U4: zips two or more of the selected staff both hold book in
     selected = set(staff)
     u4_zips = [z for z in nodes if len(selected.intersection(model.candidates(G, z))) >= 2]
@@ -301,7 +315,7 @@ def measure(G: Any, to_district: dict[Zip, District], *,
 
     return dict(
         k=len(D), n_zips=len(nodes), n_reps=len(R), w=float(w),
-        total_book=total_book, total_M=total_M,
+        total_book=total_book, total_M=total_M, B_tot=B_tot,
         sigma_source="nash" if sigma is None else "given",
         sigma0=dict(sigma0), sigma_nash=dict(nash), staff=list(staff),
         ladder=dict(P0=rung(P0), P_star_A=rung(P_star), P_S=rung(P_S),

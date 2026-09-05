@@ -513,13 +513,26 @@ Propositions~\ref{prop:equal} and \ref{prop:decomp} through the AM--GM inequalit
 \end{equation}
 where $\bar g$ is the arithmetic mean of the gains and $D(g)\ge0$, the log of the
 arithmetic-to-geometric mean ratio, vanishes exactly at perfect balance. The first term is
-bounded within a $\chPremShare\%$-scale window by the incumbency premium; the second is
-unbounded and blows up as any territory is starved. Balance dominates, and incumbency is
-the tie-break --- which is precisely the two-stage scheme of the next section, now derived
-rather than assumed.
+bounded within a $\chPremShare\%$-scale window by the incumbency premium, and on the live
+$k=18$ draw that window is not small: to first order the premium ladder's map gap (this
+staff's shortfall from its best achievable map) costs $0.663$ nats and its roster gap (this
+staff's further shortfall from the best-staff ceiling) another $0.249$ nats, and evaluating
+the first term of \eqref{eq:split} exactly at the two ends of that ladder puts the combined
+window at $0.890$ nats. On the same draw $D(g)=0.148$ nats. The $10^{-4}$--$10^{-2}$ range
+one might expect belongs to the \emph{mass} imbalance $D(M)$, which is $1.5\times10^{-4}$
+nats at a mass spread of $1.4\%$; \eqref{eq:split} is written on $g$, not on $M$, and the
+realised \emph{gain} spread on this draw is ${\sim}60\%$. On the region the programme
+actually operates in the ordering therefore \emph{inverts} --- by a factor of $6.0$, not by
+orders of magnitude: incumbency, not balance, is the larger term. The two-stage scheme
+survives as a business constraint --- \emph{territories shall be opportunity-balanced} ---
+and not, as this section previously claimed, as a consequence derived from \eqref{eq:split}.
 
-\emph{This ratio must be checked against real saturation.} At $\chSat\%$ the map is drawn
-by opportunity with a modest continuity tilt; at $30\%$ it would not be.
+\emph{This ratio must be checked against real saturation.} The live instance measures
+$\chSat\%$, which sits just \emph{below} the $30\%$ threshold this note set for a ``modest
+continuity tilt'': saturation alone does not settle the question either way. What settles it
+is the directly measured premium window above --- $0.890$ nats against $D(g)=0.148$ --- which
+says incumbency book carries real weight in the objective whatever side of the $30\%$ line
+the instance happens to fall on.
 
 \section{The two-stage scheme}\label{sec:stages}
 

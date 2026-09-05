@@ -72,7 +72,7 @@ CRUMB_SHARE = 68             # % of total M in components below 1% each
 MAX_ZIP_SHARE = 1.07         # % of total M in the largest single zip (10017)
 
 THETA, LAM = 0.40, 0.30
-SATURATION = 0.05      # t_z = T_z / M_z, "~5%"
+SATURATION = 0.296     # t_z = T_z / M_z, v2 measured Sigma(T)/Sigma(M) = 29.588% (P0-C)
 
 # ------------------------------------------- the run: battery/results/draw_k13_20260901
 RUN_ID = "draw_k13_20260901"
