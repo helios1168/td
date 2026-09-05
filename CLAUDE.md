@@ -1,8 +1,8 @@
 # National channel territory design — Claude Code setup
 
 **Last updated:** 2026-09-04 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
-**Head:** `95e25fe` + the state commit · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new,
-run 2026-09-04 at `ddd162d` in this worktree; everything since is docs-only)
+**Head:** `fd619c7` · **Tests:** **218 pass, 0 fail** (184 pre-existing + 24 from U8-band + 10
+from `instance_diff`, run 2026-09-04 at `fd619c7` in this worktree)
 
 **Status:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — the sponsor's
 ≈$18B is confirmed and is not to be re-derived (user, 2026-09-04). A1 wave 1 landed and is

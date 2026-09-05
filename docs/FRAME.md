@@ -15,8 +15,8 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 ## 0. Resume — read this first in a fresh session
 
 **State on 2026-09-04, end of day (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`,
-content head `95e25fe` plus this state commit; tests 208 pass, 0 fail at `ddd162d`): the hold is
-lifted. `The sponsor's ≈$18B is confirmed, k = 18, and v2 supersedes v1.` A1's wave-1 results
+head `fd619c7`; tests **218 pass, 0 fail** at `fd619c7` — 184 + 24 from U8-band + 10 from
+`instance_diff`): the hold is lifted. `The sponsor's ≈$18B is confirmed, k = 18, and v2 supersedes v1.` A1's wave-1 results
 stand as certified facts about **v1 at k = 13** and must be re-run before they mean anything
 about the live problem.**
 
