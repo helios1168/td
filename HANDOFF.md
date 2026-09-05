@@ -1,8 +1,8 @@
 # Handoff — national channel territory design (`national-channel`, the hub)
 
 **Updated:** 2026-09-05 · **Branch:** `national-channel` — `wt/runs` and `wt/A1` merged in on
-2026-09-05 with the user's approval · **Head / Tests:** see the state commit that follows the
-merge (expected 222 pass, 0 fail — A1's 222 include every test on both tracks)
+2026-09-05 with the user's approval · **Head:** `f93f996` (the merge commit) · **Tests:** 222
+pass, 0 fail (run 2026-09-05 at `f93f996` in this worktree; A1's 222 cover both tracks)
 
 **One line:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`.** The hub now
 holds the runs track's 14+1 pin-cost catalogue and HiGHS fix, and the A1 track's wave 1 plus its

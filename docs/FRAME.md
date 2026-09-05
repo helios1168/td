@@ -15,8 +15,8 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 ## 0. Resume — read this first in a fresh session
 
 **State on 2026-09-05 (latest, branch `national-channel`, worktree
-`.claude/worktrees/national-channel`; head and test count in the state commit that follows the
-merge): `wt/runs` and `wt/A1` are both merged into the hub, with the user's approval. The live
+`.claude/worktrees/national-channel`, head `f93f996` — the merge commit; tests **222 pass,
+0 fail** at `f93f996`): `wt/runs` and `wt/A1` are both merged into the hub, with the user's approval. The live
 instance is `instance_descaled_v2.json.gz` at `k = 18`; the hub now carries the pin-cost
 catalogue, the HiGHS fix, A1's wave 1 and its v2 re-anchor.** *What landed.* `wt/runs` (head
 `aee40c8`, 7 commits) fast-forwarded — the hub was its ancestor. `wt/A1` (head `a0dd114`, 12
@@ -68,14 +68,18 @@ certified k=13 draw and its atlas are v1 history. `REVIEW_GROMOV` R1's premium a
 (41.9% saturation) is stale at v2's 29.6% and the (★) roster-free screen is v1-only; both are
 re-measurement items, not blockers.
 
-*What's next, in order — all user-gated except the first.* (1) Tests re-run on the merged tree
-and stamped (state commit). (2) **The sponsor's call: which states, if any, are hand-drawn** —
+*Verified after the merge.* 222 tests pass at `f93f996`; a fresh `tools/run_draw.py` k=18 seed-2
+draw on v2 with the merged solver (`highs-ds` + `options`, plus A1's additions on the tree) is
+byte-identical to A1's `draw_k18_v2_20260904/k18/draw.csv`; `git diff` against each track tip
+over code, tests, figures and unit docs shows nothing from either track missing in the hub.
+
+*What's next, in order — all user-gated.* (1) **The sponsor's call: which states, if any, are hand-drawn** —
 `docs/RUNS.md`'s region table is the price list, now in the same nats as the premium ladder.
-(3) **Wave 2** — U10-round, U11-roster (priority raised: roster gap 0.043 → 0.249 nats), U4-disp,
+(2) **Wave 2** — U10-round, U11-roster (priority raised: roster gap 0.043 → 0.249 nats), U4-disp,
 U13-base; briefs under `docs/tracks/A1/units/` are written against v1, re-read before launching.
-(4) ★11 (A1's charter step 3 rewrite), ★8, and the source-document corrections wave 1 implies
-(`DOMAIN_optimization` §2.10–2.12, §8; `DOMAIN_economic-theory` N7, §2.8). (5) R1 on v2; the
-roster-free screen on v2. (6) The HiGHS root cause, if it recurs (scipy 1.18.1 / HiGHS
+(3) ★11 (A1's charter step 3 rewrite), ★8, and the source-document corrections wave 1 implies
+(`DOMAIN_optimization` §2.10–2.12, §8; `DOMAIN_economic-theory` N7, §2.8). (4) R1 on v2; the
+roster-free screen on v2. (5) The HiGHS root cause, if it recurs (scipy 1.18.1 / HiGHS
 option-merging; a narrow fix is in place).
 
 **Earlier — state on 2026-09-04, 23:03 (branch `wt/runs`, worktree `.claude/worktrees/runs`, head

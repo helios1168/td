@@ -1,8 +1,8 @@
 # National channel territory design — Claude Code setup
 
 **Last updated:** 2026-09-05 · **Branch:** `national-channel` (the hub; `wt/runs` and `wt/A1`
-merged in on 2026-09-05 with the user's approval) · **Head:** see the state commit ·
-**Tests:** see the state commit
+merged in on 2026-09-05 with the user's approval) · **Head:** `f93f996` (the merge commit) ·
+**Tests:** **222 pass, 0 fail** (run 2026-09-05 at `f93f996` in this worktree)
 
 **Status:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — the sponsor's
 ≈$18B is confirmed and is not to be re-derived (user, 2026-09-04). The hub now carries both
@@ -152,7 +152,7 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
 Tests: `.venv/bin/python3 tests/run_all.py` — **222 fast tests, 0 fail, no slow tier**
-(run 2026-09-04 at `82dbe98`; 218 at `fd619c7`, 208 at `ddd162d`, 184 at `74eff38`, 174 at
+(run 2026-09-05 at `f93f996`, the merge; 222 at `82dbe98`, 218 at `fd619c7`, 208 at `ddd162d`, 184 at `74eff38`, 174 at
 `8eece3f`, 151 at `7359c6e`, 131 at `f45bf89`, 65 at the prune). This worktree has no
 `.venv`; use the main checkout's: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
 (three levels up from this worktree, not two).
