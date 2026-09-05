@@ -48,9 +48,11 @@ excluded from the LP entirely and their mass is subtracted from the district's t
 *saturated* -- it receives no further zips, and the remaining target is spread over the
 districts still below it.  The final centers are still the M-weighted centroids of the final
 labels, locked zips included, so `us_maps.power_diagram_of_draw`'s exact recovery stays valid
-for anchor districts too.  Not handled here: certificate 4 (`cert_draw.py`) on an anchored draw
-needs `targets` set to the realised masses (already its default) and the locked zips excluded
-from the free-cell check -- that adaptation is out of scope for this module.
+for anchor districts too.  Certifying an anchored draw is `cert_draw.py`'s job and is done:
+all four certificates take the same `locked` array this function does (see its "Anchored draws"
+section).  Worth knowing here: `residual_targets` is not merely a convenient split of the
+leftover mass -- it is the exact maximiser of `sum_j log(locked_j + f_j)` over the free mass,
+which is what makes it the anchored Nash ceiling as well as the LP's target.
 
 No contiguity, no adjacency: this module is pure functions on arrays (`xy`, `M`, `k`, `rng`)
 and depends on nothing else in `td/`.  `to_district` converts a labelling into the
@@ -254,6 +256,18 @@ def residual_targets(total: float, locked: np.ndarray, k: int) -> np.ndarray:
 
     `out.sum() + locked.sum() == total` (to `1e-9 * total`): nothing is created or lost, only
     redistributed among the districts not yet saturated.
+
+    What the water-fill actually is
+    -------------------------------
+    Not a convention: `locked + residual_targets(...)` is the exact maximiser of
+
+        sum_j log(locked_j + f_j)   over  f_j >= 0,  sum_j f_j = total - sum(locked)
+
+    -- the stage-1 Nash objective over the mass still to be handed out.  Strict concavity makes
+    the maximiser unique, and its KKT conditions say precisely that the unsaturated districts sit
+    at a common level `u` while any district already past `u` receives nothing, which is the loop
+    above.  So the same array is both the LP's target and the anchored Nash **ceiling**; the
+    proof is written out in `cert_draw.cert_balance_ceiling`, which relies on it.
     """
     locked = np.asarray(locked, float)
     if locked.shape != (k,) or (locked < 0).any() or locked.sum() > total * (1 + 1e-9):

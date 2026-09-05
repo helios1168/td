@@ -75,15 +75,42 @@ Traps observed
   code alone, and a time-limited solve reports a (primal, dual) bound pair rather than a claim.
 * **Symmetry** (the reason certificate 2 is the hard one).  The balance model has full
   district-label symmetry -- every one of the `k!` relabellings of a solution is another
-  solution, which is exactly what branch-and-bound cannot prune.  Two cheap breaks are applied:
-  the heaviest zip is fixed into district 0, and districts `1..k-1` are constrained to
-  non-increasing mass (valid, since after fixing that one zip those labels are still freely
-  interchangeable).  At tiny `k` this closes instantly; at `k = 13` over 1,223 zips the
+  solution, which is exactly what branch-and-bound cannot prune.  Two cheap breaks are applied
+  **on an un-anchored instance only**: the heaviest zip is fixed into district 0, and districts
+  `1..k-1` are constrained to non-increasing mass (valid, since after fixing that one zip those
+  labels are still freely interchangeable).  Both assume that symmetry, and a pin destroys it --
+  see "Anchored draws" below.  At tiny `k` this closes instantly; at `k = 13` over 1,223 zips the
   *dual* side still crawls -- the LP relaxation is `t = 0` (split the zips fractionally and
   every district is exactly on target), so the root bound is vacuous and the tree has to work
   for every nat of it.  That is reported honestly as a bound pair, and the primal side is the
   useful half regardless: a feasible `t` is a **constructive proof that balance that good is
   reachable**, which is what bounds the heuristic's loss.
+
+Anchored draws
+--------------
+`centers.draw(locked=)` pins some zips to districts, and the pin-cost catalogue in
+`docs/RUNS.md` is built on such draws.  Every certificate here takes the same optional `locked`
+(`-1` for a free zip, else its district); `None`, or an array with no entry `>= 0`, reproduces
+the un-anchored answer bit-for-bit.  Passing it is not cosmetic -- each certificate is wrong,
+vacuous, or answering a different question without it, and each failure was exhibited before it
+was fixed (`tests/test_cert_draw.py`, the ANCHORED section):
+
+1. `cert_balance_ceiling` stays **true** but stops being reachable.  The honest ceiling is the
+   constrained Jensen problem over the free mass, whose exact maximiser is `residual_targets`'
+   water-fill -- proved in the docstring, not assumed.  Un-told, it billed an anchored-*optimal*
+   draw 0.288 nats.
+2. `cert_integer_balance_floor` searched over partitions that move pinned zips: it reported a
+   floor of 0.5 where nothing lock-respecting beats 3.5, and offered a partition violating the
+   pins as its constructive proof.  Both inherited symmetry breaks are unsound once pins exist;
+   one is dropped and one is restricted (its docstring gives the measured counterexamples).
+3. `cert_assignment_at_centers` "improved" a pinned draw by undoing the pin.  Now the pins are
+   variable bounds, the analogue of `centers.improve(movable=)`.
+4. `cert_power_diagram` condemned an anchored-optimal draw at a 16.5% gap, because a pinned zip
+   cannot be expected to lie in its own cell.  The duals are now taken on the **free**
+   subproblem and the pinned cost added back as the constant it is.
+
+Certificates 3 and 4 also refuse labels that contradict `locked`: a certificate about an
+anchored draw is only about it if the draw honours the pins.
 
 Conditioning
 ------------
@@ -126,6 +153,51 @@ def _masses(M: np.ndarray, labels: np.ndarray, k: int) -> np.ndarray:
                        minlength=k).astype(float)
 
 
+def _anchor_state(M, k: int, locked) -> dict:
+    """Locked mass per district, and the per-district targets that are left over.
+
+    `locked` uses `centers.draw(locked=)`'s encoding: `-1` for a free zip, else the district it
+    is pinned to.  `None`, or an array with no entry `>= 0`, is the un-anchored case and every
+    field below collapses to it -- `locked_mass` all zero and `targets` the equal split -- so
+    each certificate can be written once and take the old path bit-for-bit.
+
+    `targets` is `locked_mass + residual_targets(...)`, the **water-fill**: see
+    `cert_balance_ceiling` for the proof that this is not a convention but the solution of the
+    anchored Jensen problem.
+    """
+    from .centers import residual_targets                  # a pure-numpy sibling; no cycle
+
+    M = np.asarray(M, float)
+    n = M.size
+    if locked is None:
+        lock = np.full(n, -1, int)
+    else:
+        lock = np.asarray(locked, int)
+        if lock.shape != (n,):
+            raise ValueError(f"locked must have shape ({n},); got {lock.shape}")
+        if lock.size and int(lock.max()) >= k:
+            raise ValueError(f"locked references district {int(lock.max())} but k={k}")
+    is_locked = lock >= 0
+    total = float(M.sum())
+    locked_mass = np.bincount(lock[is_locked], weights=M[is_locked], minlength=k).astype(float)
+    residual = residual_targets(total, locked_mass, k)
+    return dict(locked=lock, is_locked=is_locked, free=~is_locked, total=total,
+                locked_mass=locked_mass, residual=residual, targets=locked_mass + residual,
+                anchored=bool(is_locked.any()), supplied=locked is not None)
+
+
+def _check_labels_match_locks(labels, st: dict) -> None:
+    """A certificate about an anchored draw is only about it if the draw honours the pins."""
+    m = st["is_locked"]
+    if not m.any():
+        return
+    lab = np.asarray(labels, int)
+    bad = int((lab[m] != st["locked"][m]).sum())
+    if bad:
+        raise ValueError(f"{bad} labelled zip(s) contradict `locked`; these labels are not the "
+                         f"anchored draw those pins describe")
+
+
 def _milp_options(time_limit: float) -> dict:
     """HiGHS options for a *certificate*: `mip_rel_gap=0.0` (trap 12), never the 1e-4 default."""
     opts = dict(mip_rel_gap=0.0, presolve=True, disp=False)
@@ -149,18 +221,29 @@ def _interpret(res) -> dict:
                 status="proved_optimal" if raw == 0 else f"not_proved ({name})")
 
 
-def _lpt(M: np.ndarray, k: int):
+def _lpt(M: np.ndarray, k: int, targets=None):
     """Longest-processing-time greedy: heaviest zip first, always into the lightest district.
 
     The classical multiway-number-partitioning heuristic, here purely as a **constructive
     primal**: whatever it returns is a real partition, so its max-deviation is an upper bound on
     `t*` that needs no solver and no proof beyond arithmetic.
+
+    `targets` (one per district) generalises "lightest" to "furthest below its own target",
+    which is what an anchored instance needs: a saturated anchor has a target of 0 and must be
+    passed over.  `None` keeps the equal-target arithmetic literally unchanged.
     """
     order = np.argsort(-M)
     lab = np.empty(M.size, int)
     mass = np.zeros(k)
+    if targets is None:
+        for z in order:
+            j = int(np.argmin(mass))
+            lab[z] = j
+            mass[j] += M[z]
+        return lab, mass
+    t = np.asarray(targets, float)
     for z in order:
-        j = int(np.argmin(mass))
+        j = int(np.argmin(mass - t))
         lab[z] = j
         mass[j] += M[z]
     return lab, mass
@@ -178,16 +261,17 @@ def _polish_partition(M: np.ndarray, k: int, lab: np.ndarray, mass: np.ndarray,
     draw its balance.
     """
     lab, mass = lab.copy(), mass.copy()
+    tg = np.broadcast_to(np.asarray(target, float), (k,))   # scalar or one target per district
     for _ in range(int(iters)):
-        cur = float(np.abs(mass - target).max())
-        h, l = int(np.argmax(mass - target)), int(np.argmin(mass - target))
+        cur = float(np.abs(mass - tg).max())
+        h, l = int(np.argmax(mass - tg)), int(np.argmin(mass - tg))
         if h == l:
             break
         best = None
         hi, lo = np.flatnonzero(lab == h), np.flatnonzero(lab == l)
         for z in hi:                                    # move z: h -> l
-            v = float(max(abs(mass[h] - M[z] - target), abs(mass[l] + M[z] - target),
-                          *(abs(mass[j] - target) for j in range(k) if j not in (h, l))))
+            v = float(max(abs(mass[h] - M[z] - tg[h]), abs(mass[l] + M[z] - tg[l]),
+                          *(abs(mass[j] - tg[j]) for j in range(k) if j not in (h, l))))
             if v < cur - 1e-15 and (best is None or v < best[0]):
                 best = (v, int(z), None)
         for z in hi:                                    # swap z (in h) with y (in l)
@@ -195,8 +279,8 @@ def _polish_partition(M: np.ndarray, k: int, lab: np.ndarray, mass: np.ndarray,
                 dm = M[z] - M[y]
                 if dm <= 0:
                     continue
-                v = float(max(abs(mass[h] - dm - target), abs(mass[l] + dm - target),
-                              *(abs(mass[j] - target) for j in range(k) if j not in (h, l))))
+                v = float(max(abs(mass[h] - dm - tg[h]), abs(mass[l] + dm - tg[l]),
+                              *(abs(mass[j] - tg[j]) for j in range(k) if j not in (h, l))))
                 if v < cur - 1e-15 and (best is None or v < best[0]):
                     best = (v, int(z), int(y))
         if best is None:
@@ -227,7 +311,7 @@ def _mass_matrix(w: np.ndarray, k: int, extra_cols: int = 0) -> sparse.coo_matri
 
 
 # ------------------------------------------------------- 1. the analytic balance ceiling
-def cert_balance_ceiling(M, labels, k: int = None) -> dict:
+def cert_balance_ceiling(M, labels, k: int = None, locked=None) -> dict:
     """Jensen's bound on `sum_j log M_j`, and the draw's distance from it.  No solver.
 
     `log` is strictly concave, so for any k positive district masses summing to `T`
@@ -248,6 +332,45 @@ def cert_balance_ceiling(M, labels, k: int = None) -> dict:
     An empty district makes `achieved` `-inf` and the gap infinite, which is the honest reading
     (`centers.metrics` and `model.objective` agree): a district with no opportunity is not a
     near-miss, it is a different, worse problem.
+
+    Anchored draws: why `residual_targets` IS the ceiling
+    -----------------------------------------------------
+    `locked` (`centers.draw`'s encoding: `-1` free, else the pinned district) changes the
+    question.  The Jensen ceiling stays **true** under a pin -- it bounds every partition, so a
+    fortiori every pinned one -- but it stops being *reachable*, and quoting it charges the draw
+    for a gap no lock-respecting partition could ever have closed.  Measured on the fixture in
+    `tests/test_cert_draw.py`: an anchored-optimal draw is billed `log(4/3) = 0.288` nats.
+
+    With `A_j` the mass pinned into district `j` and `S` the free mass, the honest ceiling is
+
+        max  sum_j log(A_j + f_j)   s.t.  f_j >= 0,  sum_j f_j = S
+
+    -- the free mass, distributed as well as it can be, on top of what the pins already fixed.
+    That objective is strictly concave and the feasible set is a compact simplex, so the
+    maximiser is unique and characterised by KKT: with multiplier `lambda` on the sum and
+    `mu_j >= 0` on `f_j >= 0`, `1/(A_j + f_j) = lambda - mu_j` and `mu_j f_j = 0`.  Writing
+    `u = 1/lambda`, that says
+
+        f_j > 0  ==>  A_j + f_j = u          (every unsaturated district sits at a common level)
+        f_j = 0  ==>  A_j >= u               (a district already past the level takes nothing)
+
+    which is exactly a **water-fill at level `u`** -- and exactly what `centers.residual_targets`
+    computes.  Its loop stops at a level `t` with `sum_{j free}(t - A_j) = S`, `A_j < t` on the
+    unsaturated districts and `A_j >= t` on the saturated ones (the level is non-increasing as
+    districts saturate, so a district saturated at an earlier, higher level is still saturated at
+    `t`).  Those are the KKT conditions verbatim, so `residual_targets` returns the unique
+    maximiser and `ceiling_nash = sum_j log(A_j + residual_j)`.  Established, not assumed: the
+    argument above is a proof, and it was checked numerically against a general-purpose optimiser
+    over 4,000 random anchored instances (max excess 8e-14).
+
+    Two consequences worth stating.  The anchored ceiling is never above the free one, and equals
+    it exactly when no anchor exceeds its equal share (then `u = T/k` and nothing saturates) --
+    so a pin only costs Nash headroom once it is *over-weight*.  And `max_dev` is reported
+    against these targets rather than against `T/k`, which is what makes it commensurable with
+    `cert_integer_balance_floor`'s `t`.
+
+    Without `locked` the certificate cannot know a pin exists, so `locked_supplied` says whether
+    it was told.
     """
     M = np.asarray(M, float)
     labels = np.asarray(labels, int)
@@ -257,40 +380,76 @@ def cert_balance_ceiling(M, labels, k: int = None) -> dict:
     if k <= 0:
         return dict(certificate="balance_ceiling", k=0, feasible=False,
                     reason="no districts")
+    st = _anchor_state(M, k, locked)
+    _check_labels_match_locks(labels, st)
+    anchored = st["anchored"]
+    tg = st["targets"]                                   # the equal split when nothing is pinned
     mass = _masses(M, labels, k)
     total = float(mass.sum())
     target = total / k
     empty = [int(j) for j in np.flatnonzero(mass <= 0)]
     achieved = float(np.log(mass).sum()) if not empty else -math.inf
-    ceiling = k * math.log(target) if target > 0 else -math.inf
+    jensen = k * math.log(target) if target > 0 else -math.inf
+    if anchored:
+        ceiling = float(np.log(tg).sum()) if (tg > 0).all() else -math.inf
+        dev = float(np.abs(mass - tg).max())
+    else:
+        # bit-for-bit the pre-anchor numbers: `tg` is the same equal split, but it is derived
+        # from `M.sum()` where these two are derived from `mass.sum()`, and the two totals can
+        # differ in the last bit
+        ceiling = jensen
+        dev = float(np.abs(mass - target).max())
     gap = (ceiling - achieved) if math.isfinite(achieved) else math.inf
+    if anchored:
+        not_proved = ("nothing about compactness or contiguity, and not that the ceiling is "
+                      "reachable in whole zips (see cert_integer_balance_floor)")
+    else:
+        not_proved = ("nothing about compactness, contiguity, or whether the ceiling is "
+                      "reachable at all -- zips are indivisible (see "
+                      "cert_integer_balance_floor)")
+        if not st["supplied"]:
+            not_proved += (".  No `locked` was supplied, so this is the FREE ceiling: on a "
+                           "pinned draw it stays true but becomes unreachable, and the gap it "
+                           "reports is then an overstatement")
     return dict(
         certificate="balance_ceiling",
-        method="analytic (Jensen; no solver)",
+        method=("analytic (constrained Jensen at the water-fill; no solver)" if anchored
+                else "analytic (Jensen; no solver)"),
         k=k, n=int(labels.size), total=total, target=target,
         masses=[float(v) for v in mass],
         sizes=[int(v) for v in np.bincount(labels, minlength=k)],
         empty_districts=empty,
         achieved_nash=achieved,
         ceiling_nash=ceiling,
+        jensen_ceiling_nash=jensen,
+        anchored=anchored,
+        locked_supplied=bool(st["supplied"]),
+        n_locked=int(st["is_locked"].sum()),
+        locked_mass=[float(v) for v in st["locked_mass"]],
+        targets=[float(v) for v in tg],
+        residual_targets=[float(v) for v in st["residual"]],
+        saturated_districts=[int(j) for j in np.flatnonzero((st["residual"] <= 0)
+                                                            & (st["locked_mass"] > 0))],
         gap_nats=gap,
         gap_rel=(1.0 - math.exp(-gap)) if math.isfinite(gap) else 1.0,
         min=float(mass.min()), max=float(mass.max()),
         spread_rel=float((mass.max() - mass.min()) / target) if target else 0.0,
-        max_dev=float(np.abs(mass - target).max()),
-        max_dev_rel=float(np.abs(mass - target).max() / target) if target else 0.0,
+        max_dev=dev,
+        max_dev_rel=float(dev / target) if target else 0.0,
         proved=True,
-        proves=("sum_j log M_j <= k log(sum M / k) for EVERY partition of these zips into k "
-                "parts; the gap is this draw's distance from perfect balance"),
-        does_not_prove=("nothing about compactness, contiguity, or whether the ceiling is "
-                        "reachable at all -- zips are indivisible (see "
-                        "cert_integer_balance_floor)"),
+        proves=(("sum_j log M_j <= sum_j log(locked_j + residual_j) for every partition of the "
+                 "FREE zips that honours these pins -- the water-fill is the exact maximiser of "
+                 "the anchored problem, so this ceiling is reachable up to indivisibility")
+                if anchored else
+                ("sum_j log M_j <= k log(sum M / k) for EVERY partition of these zips into k "
+                 "parts; the gap is this draw's distance from perfect balance")),
+        does_not_prove=not_proved,
     )
 
 
 # ------------------------------------------- 2. the indivisible-zip floor on max-deviation
 def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT,
-                               warm_labels=None) -> dict:
+                               warm_labels=None, locked=None) -> dict:
     """`min over partitions of max_j |M_j - target|`, by MILP.  Geometry-free.
 
     The model, on `x_zj in {0,1}` and one continuous `t >= 0`::
@@ -354,6 +513,44 @@ def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT
     upper bound on `t*`, and labelled as such rather than as a certificate of `t*`.
     `warm_labels` is used only to report the reference draw's own `max_dev` alongside; HiGHS
     through `scipy.optimize.milp` takes no warm start.
+
+    Anchored draws, and the symmetry breaking that does NOT survive them
+    --------------------------------------------------------------------
+    `locked` restricts the search to partitions that honour the pins: only the free zips are
+    variables, and district `j` is asked for `residual_j` of free mass, the water-fill share
+    `cert_balance_ceiling` proves is the anchored optimum.  Deviation is measured against
+    `targets = locked_mass + residual`, which is what makes `t` commensurable with the ceiling's
+    gap.  Without `locked` the certificate answers a *different question* -- and not a
+    conservative one.  Measured on the seven-zip fixture in the tests: it reports `t = 0.5` where
+    no lock-respecting partition beats `3.5` on the same yardstick, and the partition it offers
+    as constructive proof moves pinned zips, so it is not a proof of anything about the anchored
+    instance.
+
+    Both inherited symmetry breaks assume **full label symmetry**, and a pin destroys it:
+    district `j` now has an identity (its locked mass, hence its own target).  Following
+    "solve on free zips against residual_targets" while keeping them is unsound, and measurably
+    so -- each of these was run:
+
+    * **heaviest zip into district 0** is dropped outright.  There is no valid restriction of
+      it: the heaviest free zip may belong in an anchor district, and no relabelling of the
+      other districts can put it there.  On `A = (10, 0)` with free zips `(4, 1, 1)` it turns
+      `t* = 0` into `t = 4`.
+    * **non-increasing mass on districts `1..k-1`** is restricted to the districts with **no
+      locked mass**.  Those are the only ones still interchangeable: they share a locked mass of
+      0 *and* a residual target (the common water level `u`), so permuting them maps any
+      solution to an equally good one.  Left unrestricted it is unsound under either reading --
+      ordering by free mass doubles the floor on `A = (0, 8, 1)` with four unit zips
+      (`t* = 0.5` becomes `t = 1`), and ordering by total mass makes the model **infeasible** on
+      `A = (0, 0, 8)`, where the true `t*` is 0.
+
+    The cost of dropping break 1 is a bigger tree on anchored instances.  That is the correct
+    trade: a fast wrong bound is worse than a slow honest one, and the primal side -- which is
+    the operative half at production size -- does not go through the MILP at all.
+
+    `labels` is always returned at full length with the pins in place, and `masses` is
+    recomputed from it, so the returned partition can be checked against `locked` directly.
+    `t_vs_equal_split` reports the same partition's deviation from `T/k`, because mixing the two
+    yardsticks silently is exactly the trap this certificate exists to avoid.
     """
     M = np.asarray(M, float)
     n, k = M.size, int(k)
@@ -367,27 +564,59 @@ def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT
 
     total = float(M.sum())
     target = total / k
-    out.update(total=total, target=target)
+    st = _anchor_state(M, k, locked)
+    anchored = st["anchored"]
+    lock, free = st["locked"], st["free"]
+    tg, resid = st["targets"], st["residual"]            # equal split / equal split when free
+    out.update(total=total, target=target, anchored=anchored,
+               targets=[float(v) for v in tg],
+               residual_targets=[float(v) for v in resid],
+               locked_mass=[float(v) for v in st["locked_mass"]],
+               n_locked=int(st["is_locked"].sum()), n_free=int(free.sum()))
     if warm_labels is not None:
+        _check_labels_match_locks(warm_labels, st)
         ref = _masses(M, warm_labels, k)
-        out["reference_max_dev"] = float(np.abs(ref - target).max())
-        out["reference_max_dev_rel"] = float(np.abs(ref - target).max() / target)
+        out["reference_max_dev"] = float(np.abs(ref - tg).max())
+        out["reference_max_dev_rel"] = float(np.abs(ref - tg).max() / target)
 
     if k == 1:
         out.update(proved=True, status="proved_optimal", t=0.0, t_rel=0.0,
                    t_lower=0.0, t_rel_lower=0.0, t_source="trivial", solver_status=0,
                    solver_status_name="trivial", solver_message="k == 1: one district",
-                   labels=[0] * n, masses=[total], t_seconds=0.0)
+                   labels=[0] * n, masses=[total], t_seconds=0.0, t_vs_equal_split=0.0)
         out["proves"] = "with one district the deviation is 0 by definition"
+        return out
+
+    # only the FREE zips are decisions; the pinned ones enter as constant mass per district
+    Mf = M[free]
+    nf = int(Mf.size)
+    if nf == 0:                                      # everything is pinned: nothing to choose
+        mass = _masses(M, lock, k)
+        t = float(np.abs(mass - tg).max())
+        out.update(proved=True, status="proved_optimal", t=t, t_rel=t / target,
+                   t_lower=t, t_rel_lower=t / target, t_source="forced (every zip is locked)",
+                   solver_status=0, solver_status_name="trivial",
+                   solver_message="every zip is locked: the partition is forced",
+                   labels=lock.tolist(), masses=[float(v) for v in mass], t_seconds=0.0,
+                   t_vs_equal_split=float(np.abs(mass - target).max()))
+        out["proves"] = "the partition is forced by the pins, so t is its deviation, exactly"
+        out["does_not_prove"] = "nothing geometric"
         return out
 
     # the constructive primal: a real partition, so a rigorous upper bound on t* with no solver
     t_g0 = time.perf_counter()
-    g_lab, g_mass = _lpt(M, k)
-    out["t_lpt"] = float(np.abs(g_mass - target).max())
-    g_lab, g_mass = _polish_partition(M, k, g_lab, g_mass, target)
+    if anchored:
+        g_lab_f, g_mass_f = _lpt(Mf, k, targets=resid)
+        out["t_lpt"] = float(np.abs(g_mass_f - resid).max())
+        g_lab_f, _ = _polish_partition(Mf, k, g_lab_f, g_mass_f, resid)
+    else:
+        g_lab_f, g_mass_f = _lpt(Mf, k)
+        out["t_lpt"] = float(np.abs(g_mass_f - target).max())
+        g_lab_f, _ = _polish_partition(Mf, k, g_lab_f, g_mass_f, target)
+    g_lab = lock.copy()
+    g_lab[free] = g_lab_f                            # the pins are put back before anything else
     g_mass = _masses(M, g_lab, k)                    # recomputed, never carried incrementally
-    t_greedy = float(np.abs(g_mass - target).max())
+    t_greedy = float(np.abs(g_mass - tg).max())
     out.update(t_greedy=t_greedy, t_greedy_rel=t_greedy / target,
                t_lpt_rel=out["t_lpt"] / target,
                t_greedy_seconds=float(time.perf_counter() - t_g0))
@@ -397,22 +626,26 @@ def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT
                    solver_status=None, solver_status_name="not_run", solver_message="",
                    t=t_greedy, t_rel=t_greedy / target, t_source="greedy_lpt_polish",
                    labels=g_lab.tolist(), masses=[float(v) for v in g_mass],
-                   t_lower=0.0, t_rel_lower=0.0)
+                   t_lower=0.0, t_rel_lower=0.0,
+                   t_vs_equal_split=float(np.abs(g_mass - target).max()))
         out["proves"] = ("only the constructed partition: t* <= t.  The MILP was not run, so "
                          "nothing bounds t* from below beyond the trivial t* >= 0")
         return out
 
     # conditioning: masses descaled by their mean, exactly as centers.assign descales its LP.
     # Scaling a row and its right-hand side together leaves the feasible set identical.
-    scale = float(M.mean())
-    w = M / scale
-    tw = float(w.sum()) / k
+    scale = float(Mf.mean())
+    w = Mf / scale
+    # the free mass district j is asked for.  Unanchored this is the equal split, computed the
+    # way it always was so the un-anchored solve is arithmetically untouched.
+    tw = np.full(k, float(w.sum()) / k) if not anchored else resid / scale
 
-    nv = n * k + 1                                   # ... + the max-deviation variable t
-    A_place = _placement_matrix(n, k, extra_cols=1)
+    nv = nf * k + 1                                  # ... + the max-deviation variable t
+    A_place = _placement_matrix(nf, k, extra_cols=1)
     A_mass = _mass_matrix(w, k, extra_cols=1)
-    # |M_j - target| <= t, as two one-sided families
-    e = sparse.coo_matrix((np.ones(k), (np.arange(k), np.full(k, n * k))), shape=(k, nv))
+    # |free mass_j - residual_j| <= t, as two one-sided families.  Since M_j = locked_j + f_j and
+    # target_j = locked_j + residual_j, this is |M_j - target_j| <= t with the locks folded in.
+    e = sparse.coo_matrix((np.ones(k), (np.arange(k), np.full(k, nf * k))), shape=(k, nv))
     A_up = (A_mass - e).tocsc()                      # sum_z w x_zj - t <= tw
     A_lo = (A_mass + e).tocsc()                      # sum_z w x_zj + t >= tw
 
@@ -420,32 +653,47 @@ def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT
             LinearConstraint(A_up, -np.inf, tw),
             LinearConstraint(A_lo, tw, np.inf)]
 
-    # symmetry break 2: districts 1..k-1 in non-increasing mass
-    if k >= 3:
-        base = np.arange(n) * k
-        rows, cols, vals = [], [], []
-        for r, j in enumerate(range(1, k - 1)):
-            rows.append(np.full(2 * n, r))
-            cols.append(np.concatenate([base + j, base + j + 1]))
-            vals.append(np.concatenate([w, -w]))
-        A_ord = sparse.coo_matrix((np.concatenate(vals),
-                                   (np.concatenate(rows), np.concatenate(cols))),
-                                  shape=(k - 2, nv)).tocsc()
-        cons.append(LinearConstraint(A_ord, 0.0, np.inf))
-
     lb = np.zeros(nv)
     ub = np.ones(nv)
     # t is continuous, and capped at the constructed primal: a partition that good exists, so
     # the cap removes no solution that could be optimal, and it shrinks the tree
-    ub[n * k] = (t_greedy / scale) * (1.0 + 1e-9) + 1e-12
-    z0 = int(np.argmax(M))                           # symmetry break 1: heaviest zip -> 0
-    lb[z0 * k] = 1.0
-    ub[z0 * k + 1:z0 * k + k] = 0.0
+    ub[nf * k] = (t_greedy / scale) * (1.0 + 1e-9) + 1e-12
+
+    # Symmetry breaking.  Both breaks are valid only under full label symmetry, which a pin
+    # destroys (see the docstring, and the measured counterexamples there).
+    if not anchored:
+        z0 = int(np.argmax(Mf))                      # break 1: heaviest zip -> district 0
+        lb[z0 * k] = 1.0
+        ub[z0 * k + 1:z0 * k + k] = 0.0
+        sym = list(range(1, k))                      # break 2: districts 1..k-1
+    else:
+        # break 1 has no sound restriction and is dropped.  Break 2 survives exactly on the
+        # districts with no locked mass: they share a locked mass of 0 and a residual target
+        # (the common water level), so permuting them maps a solution to an equally good one.
+        sym = [j for j in range(k) if st["locked_mass"][j] <= 0.0]
+        if len(sym) >= 2:
+            lvl = resid[sym]
+            if float(lvl.max() - lvl.min()) > 1e-9 * max(float(np.abs(lvl).max()), 1.0):
+                sym = []                             # not interchangeable after all; take none
+    out["symmetry_break_heaviest_zip"] = bool(not anchored)
+    out["symmetry_break_ordered_districts"] = [int(j) for j in sym] if len(sym) >= 2 else []
+    if len(sym) >= 2:
+        base = np.arange(nf) * k
+        rows, cols, vals = [], [], []
+        for r, (ja, jb) in enumerate(zip(sym[:-1], sym[1:])):
+            rows.append(np.full(2 * nf, r))
+            cols.append(np.concatenate([base + ja, base + jb]))
+            vals.append(np.concatenate([w, -w]))
+        A_ord = sparse.coo_matrix((np.concatenate(vals),
+                                   (np.concatenate(rows), np.concatenate(cols))),
+                                  shape=(len(sym) - 1, nv)).tocsc()
+        cons.append(LinearConstraint(A_ord, 0.0, np.inf))
+
     integrality = np.ones(nv)
-    integrality[n * k] = 0                           # t is continuous
+    integrality[nf * k] = 0                          # t is continuous
 
     c = np.zeros(nv)
-    c[n * k] = 1.0
+    c[nf * k] = 1.0
 
     t0 = time.perf_counter()
     res = milp(c, integrality=integrality, bounds=Bounds(lb, ub), constraints=cons,
@@ -459,18 +707,21 @@ def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT
     best_t, best_lab, best_mass, src = t_greedy, g_lab, g_mass, "greedy_lpt_polish"
     x = getattr(res, "x", None)
     if x is not None:
-        lab = np.asarray(x[:n * k], float).reshape(n, k).argmax(axis=1).astype(int)
+        lab_f = np.asarray(x[:nf * k], float).reshape(nf, k).argmax(axis=1).astype(int)
+        lab = lock.copy()
+        lab[free] = lab_f
         mass = _masses(M, lab, k)
-        t_milp = float(np.abs(mass - target).max())
+        t_milp = float(np.abs(mass - tg).max())
         out.update(t_milp=t_milp, t_milp_rel=t_milp / target,
-                   solver_t=float(x[n * k]) * scale)   # what the engine thinks, for comparison
+                   solver_t=float(x[nf * k]) * scale)  # what the engine thinks, for comparison
         if t_milp < best_t:
             best_t, best_lab, best_mass, src = t_milp, lab, mass, "milp"
     else:
         out["t_milp"] = out["t_milp_rel"] = None
     out.update(t=best_t, t_rel=best_t / target, t_source=src,
                labels=np.asarray(best_lab, int).tolist(),
-               masses=[float(v) for v in best_mass])
+               masses=[float(v) for v in best_mass],
+               t_vs_equal_split=float(np.abs(best_mass - target).max()))
 
     dual = getattr(res, "mip_dual_bound", None)
     if dual is not None and np.isfinite(dual):
@@ -489,23 +740,28 @@ def cert_integer_balance_floor(M, k: int, time_limit: float = DEFAULT_TIME_LIMIT
         out["proved"] = False
         out["status"] = ("not_proved (engine claimed optimal at t_milp but the constructed "
                          "partition is strictly better -- treated as a tolerance artefact)")
+    scope = ("of the FREE zips that honours the pins (deviation measured against "
+             "targets = locked_mass + residual)" if anchored else "of these zips")
     if out["proved"]:
         out["t_lower"] = out["t"]
         out["t_rel_lower"] = out["t_rel"]
-        out["proves"] = ("t* is exactly the smallest max-deviation ANY partition of these zips "
-                         "into k districts can achieve, geometry ignored")
+        out["proves"] = (f"t* is exactly the smallest max-deviation ANY partition {scope} "
+                         f"into k districts can achieve, geometry ignored")
     else:
-        out["proves"] = ("bound pair only: a partition achieving t was constructed (so balance "
-                         "that good is reachable), and no partition beats t_lower; the true t* "
-                         "lies in [t_lower, t]")
+        out["proves"] = (f"bound pair only: a partition {scope} achieving t was constructed (so "
+                         f"balance that good is reachable), and no such partition beats t_lower; "
+                         f"the true t* lies in [t_lower, t]")
     out["does_not_prove"] = ("nothing geometric -- the optimal partition here is generally "
                              "scattered and would make a nonsensical territory map")
+    if anchored:
+        out["does_not_prove"] += ("; and nothing about partitions that move a pinned zip, which "
+                                  "is a different and strictly easier problem")
     return out
 
 
 # ----------------------------------------- 3. optimal assignment with the centers PINNED
 def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
-                               time_limit: float = DEFAULT_TIME_LIMIT) -> dict:
+                               time_limit: float = DEFAULT_TIME_LIMIT, locked=None) -> dict:
     """With the draw's centers fixed, is a strictly more compact integer assignment available?
 
     The model, on `x_zj in {0,1}` and the draw's own centers `c_j`::
@@ -544,6 +800,19 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
     certified by anything here -- exactly the limitation a k-means "optimal assignment step"
     has.  A zero gap means the draw cannot be improved by moving zips between the districts it
     has; it does not mean the districts are the right ones.
+
+    Anchored draws
+    --------------
+    `locked` pins `x_{z,l(z)} = 1` through the variable bounds -- the direct analogue of
+    `centers.improve(movable=)`, which is what produced the draw in the first place.  Without it
+    the certificate happily "improves" a pinned draw by undoing the pin, and reports the result
+    as a finding: on the fixture in the tests it moves the one anchored zip back to the centroid
+    beside it and claims a 99% cut in the moment of inertia, which is not an improvement anyone
+    can take.  The balance band is centred on the water-fill `targets` rather than on `T/k` for
+    the same reason as `cert_balance_ceiling` -- with an over-weight anchor, `T/k` is a target no
+    lock-respecting assignment can reach, so a band around it is either vacuous or empty.
+
+    `locked_respected` is checked on the returned labels rather than assumed from the bounds.
     """
     xy = np.asarray(xy, float)
     M = np.asarray(M, float)
@@ -555,20 +824,28 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
                n=int(n), k=int(k), mip_rel_gap=0.0, time_limit=float(time_limit),
                centers_pinned=True)
 
+    st = _anchor_state(M, k, locked)
+    _check_labels_match_locks(labels, st)
+    anchored = st["anchored"]
+    tg = st["targets"]                                # the equal split when nothing is pinned
+
     d2 = ((xy[:, None, :] - C[None, :, :]) ** 2).sum(axis=2)      # (n, k)
     cost = M[:, None] * d2                                        # raw units
     draw_cost = float(cost[np.arange(n), labels].sum())
     total = float(M.sum())
     target = total / k
     mass_draw = _masses(M, labels, k)
-    delta = float(np.abs(mass_draw - target).max()) if slack is None else float(slack)
+    draw_dev = float(np.abs(mass_draw - tg).max())
+    delta = draw_dev if slack is None else float(slack)
     out.update(total=total, target=target, draw_cost=draw_cost,
-               draw_max_dev=float(np.abs(mass_draw - target).max()),
-               draw_max_dev_rel=float(np.abs(mass_draw - target).max() / target),
+               draw_max_dev=draw_dev,
+               draw_max_dev_rel=float(draw_dev / target),
                draw_nash=(float(np.log(mass_draw).sum()) if (mass_draw > 0).all()
                           else -math.inf),
                slack=delta, slack_rel=delta / target if target else 0.0,
-               slack_is_default=slack is None)
+               slack_is_default=slack is None,
+               anchored=anchored, n_locked=int(st["is_locked"].sum()),
+               targets=[float(v) for v in tg])
 
     if time_limit is not None and time_limit <= 0:
         out.update(proved=False, status="not_attempted (time_limit <= 0)",
@@ -580,17 +857,32 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
     # conditioning (see the module docstring): mass column by its mean, objective by its mean
     mscale = float(M.mean())
     w = M / mscale
-    tw = float(w.sum()) / k
+    # unanchored this is the equal split, computed as it always was; anchored it is the
+    # water-fill, the only per-district target a pinned assignment can actually meet
+    tw = np.full(k, float(w.sum()) / k) if not anchored else tg / mscale
     dw = delta / mscale
     cscale = float(cost.mean())
     c = (cost / (cscale if cscale > 0 else 1.0)).ravel()
 
-    tol = FEAS_TOL * max(tw, 1.0)
+    tol = FEAS_TOL * max(float(tw.max()), 1.0)
     cons = [LinearConstraint(_placement_matrix(n, k).tocsc(), 1.0, 1.0),
             LinearConstraint(_mass_matrix(w, k).tocsc(), tw - dw - tol, tw + dw + tol)]
 
+    # the pins, as variable bounds: the analogue of centers.improve(movable=)
+    if anchored:
+        lb = np.zeros(n * k)
+        ub = np.ones(n * k)
+        for z in np.flatnonzero(st["is_locked"]):
+            j = int(st["locked"][z])
+            ub[z * k:(z + 1) * k] = 0.0
+            lb[z * k + j] = 1.0
+            ub[z * k + j] = 1.0
+        bounds = Bounds(lb, ub)
+    else:
+        bounds = Bounds(0.0, 1.0)
+
     t0 = time.perf_counter()
-    res = milp(c, integrality=np.ones(n * k), bounds=Bounds(0.0, 1.0), constraints=cons,
+    res = milp(c, integrality=np.ones(n * k), bounds=bounds, constraints=cons,
                options=_milp_options(time_limit))
     elapsed = time.perf_counter() - t0
     out.update(_interpret(res))
@@ -606,10 +898,14 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
     lab = np.asarray(x, float).reshape(n, k).argmax(axis=1).astype(int)
     opt_cost = float(cost[np.arange(n), lab].sum())   # recomputed in raw units
     mass_opt = _masses(M, lab, k)
-    feasible = bool(np.abs(mass_opt - target).max() <= delta + 1e-6 * max(target, 1.0))
+    # checked on the returned labels, not assumed from the bounds we handed the solver
+    m = st["is_locked"]
+    respected = bool((not m.any()) or (lab[m] == st["locked"][m]).all())
+    out["locked_respected"] = respected
+    feasible = bool(np.abs(mass_opt - tg).max() <= delta + 1e-6 * max(target, 1.0)) and respected
     out.update(opt_cost=opt_cost,
-               opt_max_dev=float(np.abs(mass_opt - target).max()),
-               opt_max_dev_rel=float(np.abs(mass_opt - target).max() / target),
+               opt_max_dev=float(np.abs(mass_opt - tg).max()),
+               opt_max_dev_rel=float(np.abs(mass_opt - tg).max() / target),
                opt_masses=[float(v) for v in mass_opt],
                opt_nash=(float(np.log(mass_opt).sum()) if (mass_opt > 0).all() else -math.inf),
                opt_labels_respect_slack=feasible,
@@ -627,13 +923,14 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
     out["improved"] = bool(improved)
     out["n_relabelled"] = int((lab != labels).sum())
     out["improving_labels"] = lab.tolist() if improved else None
+    pins = " (among assignments that honour the pins)" if anchored else ""
     if improved:
         out["proves"] = ("the draw is NOT assignment-optimal at its own centers: a strictly "
-                         "cheaper assignment exists at balance no worse than the draw's")
+                         f"cheaper assignment{pins} exists at balance no worse than the draw's")
     elif out["proved"]:
-        out["proves"] = ("no integer assignment to THESE centers, at max-deviation <= slack, "
-                         "is more compact than the draw -- the assignment step is optimal "
-                         "given the centers")
+        out["proves"] = (f"no integer assignment{pins} to THESE centers, at max-deviation <= "
+                         "slack, is more compact than the draw -- the assignment step is "
+                         "optimal given the centers")
     else:
         out["proves"] = ("bound pair only: no assignment at these centers costs less than "
                          "cost_lower_bound, and the draw was not beaten within the time limit")
@@ -646,7 +943,7 @@ def cert_assignment_at_centers(xy, M, labels, centers, slack=None,
 
 
 # --------------------------------- 4. the power-diagram dual bound at the SAME pinned centers
-def cert_power_diagram(xy, M, labels, centers, targets=None) -> dict:
+def cert_power_diagram(xy, M, labels, centers, targets=None, locked=None) -> dict:
     """The transportation duals as a solver-free lower bound, and the territory they draw.
 
     Certificate 3 asks the compactness question with a MILP.  This one asks it with **one LP
@@ -688,6 +985,30 @@ def cert_power_diagram(xy, M, labels, centers, targets=None) -> dict:
     something -- here, for balance, in `centers.improve`'s Nash polish -- and that trade is the
     open lexicographic decision, not a bug.
 
+    Anchored draws: the bound has to be taken on the FREE subproblem
+    ----------------------------------------------------------------
+    A pinned zip need not lie in its own power cell -- it is there because it was pinned, not
+    because it is close -- so on an anchored draw the free-cell check condemns a draw that is
+    optimal given the pins.  Measured on the fixture in the tests: one pinned zip, and the
+    certificate reports a 16.5% gap and `is_power_diagram = False` for a draw no lock-respecting
+    assignment beats.
+
+    What `locked` does here is more than excluding those zips from the count, because that alone
+    would leave the *bound* wrong in the direction that matters.  Run over all `n` zips, the LP
+    may reassign the pinned ones, so `lp_bound` stays a valid lower bound (it is a relaxation)
+    but `is_power_diagram = True` would no longer mean the draw is optimal -- the claim, not the
+    number, is what breaks.  So the certificate is taken on the free subproblem instead.  Write
+
+        cost(draw) = sum_{z pinned} M_z d^2(z, c_{l(z)})  +  cost_F(draw)
+
+    -- the first term is a constant of the anchored instance.  `power_weights` is solved on the
+    free zips alone at the draw's own realised **free** mass per district, and its dual bound
+    bounds `cost_F` over every assignment of the free zips meeting those free masses.  Adding
+    the constant gives `lp_bound`, a genuine lower bound on every lock-respecting assignment,
+    and `n_outside_cell = 0` then means exactly what it means unanchored: the draw is the most
+    compact assignment available to it.  `locked_cost` and `lp_bound_free` are returned
+    separately so the split is checkable.
+
     Not proved, same scope as certificate 3: nothing about the centers.  The bound is
     conditional on `centers` exactly as a k-means assignment step is.
     """
@@ -699,6 +1020,12 @@ def cert_power_diagram(xy, M, labels, centers, targets=None) -> dict:
     C = np.asarray(centers, float)
     n, k = xy.shape[0], C.shape[0]
 
+    st = _anchor_state(M, k, locked)
+    _check_labels_match_locks(labels, st)
+    anchored = st["anchored"]
+    free, is_locked = st["free"], st["is_locked"]
+    nf = int(free.sum())
+
     d2 = ((xy[:, None, :] - C[None, :, :]) ** 2).sum(axis=2)
     cost = M[:, None] * d2
     draw_cost = float(cost[np.arange(n), labels].sum())
@@ -706,35 +1033,69 @@ def cert_power_diagram(xy, M, labels, centers, targets=None) -> dict:
     target = float(M.sum()) / k
 
     own = targets is None
-    res = _centers.power_weights(xy, M, C, targets=mass_draw if own else targets)
-    cell = np.asarray(res["labels"], int)
-    mass_cell = _masses(M, cell, k)
-    # the incumbent has to be inside the bound's own feasible set for the gap to mean anything
-    t = np.asarray(res["targets"], float)
-    dev = float(np.abs(mass_draw - t).max())
-    meets = bool(own or dev <= FEAS_TOL * max(float(M.sum()), 1.0))
+    if not anchored:
+        locked_cost = 0.0
+        res = _centers.power_weights(xy, M, C, targets=mass_draw if own else targets)
+        cell = np.asarray(res["labels"], int)
+        outside = cell != labels
+        mass_cell = _masses(M, cell, k)
+        # the incumbent has to be inside the bound's own feasible set for the gap to mean anything
+        t = np.asarray(res["targets"], float)
+        dev = float(np.abs(mass_draw - t).max())
+        meets = bool(own or dev <= FEAS_TOL * max(float(M.sum()), 1.0))
+        bound = float(res["lp_bound"])
+        cell_cost = float(cost[np.arange(n), cell].sum())
+        full_targets = [float(v) for v in res["targets"]]
+    else:
+        if nf < k:
+            return dict(certificate="power_diagram_duals", n=int(n), k=int(k), anchored=True,
+                        n_locked=int(is_locked.sum()), n_free=nf, proved=False,
+                        status="not_attempted (fewer free zips than districts)",
+                        proves="nothing -- the free subproblem is degenerate")
+        locked_cost = float(cost[is_locked, labels[is_locked]].sum())
+        mass_free = np.bincount(labels[free], weights=M[free], minlength=k).astype(float)
+        res = _centers.power_weights(xy[free], M[free], C,
+                                     targets=mass_free if own else targets)
+        cell_f = np.asarray(res["labels"], int)
+        cell = labels.copy()                       # the pins stay where they are on the map
+        cell[free] = cell_f
+        outside = np.zeros(n, bool)
+        outside[free] = cell_f != labels[free]
+        mass_cell = _masses(M, cell, k)
+        t = np.asarray(res["targets"], float)
+        dev = float(np.abs(mass_free - t).max())
+        meets = bool(own or dev <= FEAS_TOL * max(float(M.sum()), 1.0))
+        bound = locked_cost + float(res["lp_bound"])
+        cell_cost = float(cost[np.arange(n), cell].sum())
+        full_targets = [float(a + b) for a, b in zip(st["locked_mass"], res["targets"])]
 
     out = dict(certificate="power_diagram_duals",
-               method="transportation LP duals (HiGHS), verified by O(nk) arithmetic",
+               method=("transportation LP duals on the FREE zips (HiGHS), verified by O(nk) "
+                       "arithmetic" if anchored else
+                       "transportation LP duals (HiGHS), verified by O(nk) arithmetic"),
                n=int(n), k=int(k), centers_pinned=True,
+               anchored=anchored, n_locked=int(is_locked.sum()), n_free=nf,
+               locked_cost=locked_cost,
+               lp_bound_free=float(res["lp_bound"]),
+               free_targets=[float(v) for v in res["targets"]],
                targets_are_draw_masses=bool(own),
                draw_meets_targets=meets,
                draw_target_max_dev=dev,
                weights=[float(v) for v in res["weights"]],
-               targets=[float(v) for v in res["targets"]],
+               targets=full_targets,
                alpha_sum=float(np.sum(res["alpha"])),
                beta=[float(v) for v in res["beta"]],
                n_fractional=int(res["n_fractional"]),
                max_dual_violation=float(res["max_dual_violation"]),
                max_dual_violation_rel=float(res["max_dual_violation_rel"]),
                max_cs_residual_rel=float(res["max_cs_residual_rel"]),
-               lp_bound=float(res["lp_bound"]),
+               lp_bound=bound,
                draw_cost=draw_cost,
-               rel_gap=((float((draw_cost - res["lp_bound"]) / draw_cost) if draw_cost > 0
+               rel_gap=((float((draw_cost - bound) / draw_cost) if draw_cost > 0
                          else 0.0) if meets else None),
-               cell_cost=float(cost[np.arange(n), cell].sum()),
-               n_outside_cell=int((cell != labels).sum()),
-               outside_cell_share=float((cell != labels).mean()) if n else 0.0,
+               cell_cost=cell_cost,
+               n_outside_cell=int(outside.sum()),
+               outside_cell_share=float(outside.mean()) if n else 0.0,
                cell_masses=[float(v) for v in mass_cell],
                cell_max_dev_rel=float(np.abs(mass_cell - target).max() / target) if target else 0.0,
                draw_max_dev_rel=float(np.abs(mass_draw - target).max() / target) if target else 0.0,
@@ -752,23 +1113,35 @@ def cert_power_diagram(xy, M, labels, centers, targets=None) -> dict:
                          "set the bound covers and lp_bound may exceed draw_cost. Re-run with "
                          "targets=None to ask the question at the draw's own masses")
     elif out["is_power_diagram"]:
-        out["proves"] = ("the draw IS the power diagram of its centers with these weights, and "
-                         "therefore the most compact assignment meeting the mass targets")
+        out["proves"] = (("every FREE zip lies in its own cell of the power diagram of these "
+                          "centers, so the draw is the most compact assignment available to it "
+                          "at these masses WITHOUT moving a pinned zip")
+                         if anchored else
+                         ("the draw IS the power diagram of its centers with these weights, and "
+                          "therefore the most compact assignment meeting the mass targets"))
     else:
-        out["proves"] = ("no assignment of these zips to these centers meeting the mass targets "
-                         "costs less than lp_bound -- a bound checkable in O(nk) arithmetic from "
-                         "alpha and beta, with no solver in the trusted path")
+        out["proves"] = (("no assignment of the FREE zips to these centers meeting the free mass "
+                          "targets costs less than lp_bound - locked_cost, so no lock-respecting "
+                          "assignment costs less than lp_bound -- a bound checkable in O(nk) "
+                          "arithmetic from alpha and beta, with no solver in the trusted path")
+                         if anchored else
+                         ("no assignment of these zips to these centers meeting the mass targets "
+                          "costs less than lp_bound -- a bound checkable in O(nk) arithmetic "
+                          "from alpha and beta, with no solver in the trusted path"))
     out["does_not_prove"] = ("nothing about the centers, which are the heuristic's; and nothing "
                              "about the stage-1 Nash objective, which this LP does not see -- "
                              "the zips outside their cell are where the draw bought balance "
                              "with compactness")
+    if anchored:
+        out["does_not_prove"] += ("; and nothing about assignments that move a pinned zip, which "
+                                  "is a strictly larger and cheaper feasible set")
     return out
 
 
 # --------------------------------------------------------------------------- the report
 def certify(xy, M, labels, centers, k: int = None, *,
             time_limit: float = DEFAULT_TIME_LIMIT,
-            floor_time_limit: float = None, slack=None) -> dict:
+            floor_time_limit: float = None, slack=None, locked=None) -> dict:
     """Run all three certificates on one draw and merge them into a single report.
 
     `summary` is a list of plain sentences, each stating what IS and what IS NOT proved, in the
@@ -778,6 +1151,10 @@ def certify(xy, M, labels, centers, k: int = None, *,
 
     Nothing here certifies the centers.  That is stated in the summary every time, because it is
     the one thing a reader is most likely to assume and the one thing least true.
+
+    `locked` (`centers.draw`'s encoding) is passed to all four.  It changes what each of them
+    means -- see their docstrings -- so when it is given the summary says so in its first line,
+    rather than leaving a reader to notice that the numbers are about a pinned instance.
     """
     labels = np.asarray(labels, int)
     if k is None:
@@ -786,13 +1163,24 @@ def certify(xy, M, labels, centers, k: int = None, *,
     if floor_time_limit is None:
         floor_time_limit = time_limit
 
-    ceil_ = cert_balance_ceiling(M, labels, k)
-    floor = cert_integer_balance_floor(M, k, time_limit=floor_time_limit, warm_labels=labels)
+    ceil_ = cert_balance_ceiling(M, labels, k, locked=locked)
+    floor = cert_integer_balance_floor(M, k, time_limit=floor_time_limit, warm_labels=labels,
+                                       locked=locked)
     assign = cert_assignment_at_centers(xy, M, labels, centers, slack=slack,
-                                        time_limit=time_limit)
-    power = cert_power_diagram(xy, M, labels, centers)
+                                        time_limit=time_limit, locked=locked)
+    power = cert_power_diagram(xy, M, labels, centers, locked=locked)
+    anchored = bool(ceil_.get("anchored"))
 
     s = []
+    if anchored:
+        s.append(
+            f"ANCHORED DRAW: {ceil_['n_locked']} of {int(labels.size)} zips are pinned, so every "
+            f"certificate below is about the partitions that HONOUR those pins and no others. "
+            f"The per-district targets are the water-fill "
+            f"{['%.4g' % v for v in ceil_['targets']]} rather than the equal split "
+            f"{ceil_['target']:.4g}; districts {ceil_['saturated_districts']} are saturated "
+            f"(pinned at or past their share, so they take nothing more). Balance deviations "
+            f"below are measured against those targets.")
     s.append(
         f"BALANCE CEILING (analytic, always valid): the draw scores {ceil_['achieved_nash']:.6f} "
         f"nats against a ceiling of {ceil_['ceiling_nash']:.6f}, a gap of {ceil_['gap_nats']:.3e} "
@@ -880,6 +1268,7 @@ def certify(xy, M, labels, centers, k: int = None, *,
 
     return dict(
         k=k, n=int(labels.size),
+        anchored=anchored,
         balance_ceiling=ceil_,
         integer_balance_floor=floor,
         assignment_at_centers=assign,
