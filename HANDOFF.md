@@ -1,14 +1,13 @@
 # Handoff — national channel territory design / A1 track (`wt/A1`)
 
-**Updated:** 2026-09-04 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
-**Head:** `ed5a9a8` · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new, run 2026-09-04 at
-`ddd162d` in this worktree; `ed5a9a8` is docs-only)
+**Updated:** 2026-09-04 (end of day) · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
+**Head:** `95e25fe` + the state commit · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new,
+run 2026-09-04 at `ddd162d`; everything since is docs-only)
 
-**One line:** A1 wave 1 landed and is verified — **D1′ says the premium is NOT SOFT** on the v1
-instance at k = 13. **⚠ EVERYTHING IS ON HOLD** (user, 2026-09-04): a **new instance, 3× larger,
-landed the same day** and the sponsor's sizing moved to k ≈ 18, so nothing merges and no unit
-launches until the user settles the instance-and-`k` question. **Do not merge. Do not launch
-wave 2.**
+**One line:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — ≈$18B
+sponsor-confirmed, not to be re-derived (user, 2026-09-04). A1 wave 1 landed and is verified but
+is **scoped to v1 at k = 13**; the next move is a **v2 draw at k = 18**, then re-run the frontier.
+The merge into `national-channel` remains user-gated.
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 (the 2026-09-04 entry; §6 has the measured rows)
@@ -77,38 +76,48 @@ wave 2.**
 - [ ] **★10** — tie-break policy (disclose vs randomise), on U11's evidence; `S₁₃`'s margin is
       8.1e-3 nats on seed 9.
 
-**⚠ HELD — the instance moved under us (user decision, 2026-09-04: "hold everything").**
+**The instance moved, and the question is now settled (user, 2026-09-04).** ≈$18B is correct and
+is not to be re-derived; **v2 supersedes v1 and `k = 18`**. Measured directly:
 
-A new instance landed in `.claude/worktrees/runs/` at 18:26 on 2026-09-04, **while wave 1 was
-running**. Measured directly, not taken on report:
-
-| | `instance_descaled.json.gz` (v1, all of wave 1) | `instance_descaled_v2.json.gz` (new) |
+| | `instance_descaled.json.gz` (v1, all of wave 1) | `instance_descaled_v2.json.gz` (**live**) |
 |---|---|---|
-| zips | 1,229 | **3,748** (3.05×) |
-| reps | 111 | 114 |
-| total descaled `M` | 2,745.6 | **8,523.2** (3.10×) |
+| zips | 1,229 | **3,748** — v1 is a strict subset |
+| reps | 111 | **114** (all 111 retained) |
+| contested / uncontested / vacant / untapped | 675 / 477 / 2 / 75 | **718** / 1,447 / 17 / **1,567** |
+| untapped share of opportunity | 2.9% | **15.7%** |
+| aggregate saturation | 41.6% | **29.6%** |
+| total, real (v1 units) | 2,745.6 | 5,165.6 — **×1.8814** |
 
-The `runs` session reports it as sponsor-confirmed, replacing the $13B / k ≈ 13 assumption with
-**k ≈ 18**, and describes it as "cleaned of one bad data node" — but the size change is the
-headline, and the dollar figures cannot be checked from here (descaling removes the scale by
-design). **`FRAME.md` §9's "k = 13 at a $1B target — settled" and assumption A1 are reopened.**
+**Read the growth carefully.** ×1.8814 over all opportunity but only **×1.6333 over worked
+zips**, and the **contested set — the part A1 optimises — grew only 675 → 718**. v2's gain is
+overwhelmingly *untapped* market. Two consequences: `FRAME.md` §9's old "k = 13" is superseded
+(v1's true total was ≈$9.6B, so its consistent `k` was ≈10), and `REVIEW_GROMOV` R1's premium
+arithmetic, built on 41.9% saturation, is stale at 29.6%.
 
-*What this does and does not do to wave 1.* It does **not** invalidate it: U8's manifest pins
-`instance_sha256 = cf7d66c0…` and `draw_sha256`, so "NOT SOFT" is a certified fact about **v1 at
-k = 13, roster `S₁₃`**. It is not yet a fact about v2 at k ≈ 18. The mechanism is *plausibly*
-scale-free — the verdict came from the **level** at `δ₀`, not the slope — but that is a
-hypothesis, not a result. Scale is not the obstacle: `n·k` goes 15,977 → ~67,000 and the OA
-converged in 15–57 tangents at 1e-9 brackets; what changes is every *number* (`δ₀`, `V`,
-`EG_S`, and the roster itself, 13 of 111 → ~18 of 114).
+*Wave 1 is scoped, not retracted.* U8's manifest pins `instance_sha256 = cf7d66c0…` and
+`draw_sha256`, so "NOT SOFT" is a certified fact about **v1 at k = 13, roster `S₁₃`**. The
+mechanism is plausibly scale-free — the verdict came from the **level** at `δ₀`, not the slope,
+and the contested set barely grew — but that is a hypothesis. Scale is not the obstacle: `n·k`
+goes 15,977 → ~67,000 and the OA converged in 15–57 tangents at 1e-9 brackets.
+**`td/solvers/eg_band.py` and `tools/measure/frontier.py` are instance-agnostic and need no
+change.**
 
-- [ ] **HELD — wave 2 (U10-round, U11-roster, U4-disp) and U13-base.** Technically unblocked by
-      the D1′ verdict, deliberately not launched: three units against a possibly-superseded
-      instance is waste. Briefs at `docs/tracks/A1/units/`; U11 reuses `eg_band.py`.
-- [ ] **HELD — wave 3, U12-menu** (needs U8 + U11 + U13).
-- [ ] **The decision that unblocks all of it:** does v2 supersede v1, and is `k ≈ 18` settled?
-      A sponsor question. When answered, the cheapest first move is **one re-run of
-      `tools/measure/frontier.py` on v2 at the new `k`** — a single solve re-tests whether NOT
-      SOFT survives and re-anchors every downstream number before any wave-2 unit is spent.
+- [ ] **1. Draw v2 at k = 18.** *This is the gating step* — `battery/results/draw_k13_20260901`
+      is a **v1** draw, and every A1 unit consumes a draw plus its stage-2 roster. Run
+      `tools/run_draw.py` on `instance_descaled_v2.json.gz`; `wt/runs`'s `RUNS_PLAN.md` covers
+      this ground with `--k 14-22`, so coordinate rather than duplicate. Copy the v2 instance
+      into this worktree first (gitignored).
+- [ ] **2. Re-run the frontier on v2 at k = 18.**
+      `tools/measure/frontier.py instance_descaled_v2.json.gz <v2 draw> --out battery/results/u8_band_v2_<date>`
+      — one solve re-tests D1′ and re-anchors `δ₀`, `V`, `EG_S` and the roster. Expect the gate
+      constant to change: `EG_S13 = 60.6974156139` is v1's, so `frontier.py`'s hard gate must be
+      re-pointed at a v2 reference or the run will refuse to start.
+- [ ] **3. Then wave 2** — U10-round, U11-roster, U4-disp — and U13-base. Briefs at
+      `docs/tracks/A1/units/`; U11 reuses `eg_band.py` as its solver.
+- [ ] **4. Then wave 3, U12-menu** (needs U8 + U11 + U13).
+- [ ] **Re-measure on v2 before quoting:** the premium ladder (`tools/measure/premium.py`), the
+      (★) roster-free screen, `δ₀`, and R1's saturation-driven premium arithmetic. Every FRAME §6
+      row not marked v2 is a v1 number.
 - [ ] Carried: ★1 (are the 98 released), ★2 (audited book — now a data-quality question only),
       ★3 (stability as a criterion, after U6-sel), ★5 (least core), ★7 (`/domain econometrics`).
       **U3-inv is retired** (user, 2026-09-04) — books are measured from the data warehouse, not

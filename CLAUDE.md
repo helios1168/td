@@ -1,18 +1,19 @@
 # National channel territory design — Claude Code setup
 
 **Last updated:** 2026-09-04 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
-**Head:** `ed5a9a8` · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new, run 2026-09-04 at
-`ddd162d` in this worktree; `ed5a9a8` is docs-only)
+**Head:** `95e25fe` + the state commit · **Tests:** 208 pass, 0 fail (184 pre-existing + 24 new,
+run 2026-09-04 at `ddd162d` in this worktree; everything since is docs-only)
 
-**Status:** A1 wave 1 landed and is verified — **U8-band**'s D1′ certificate says the premium is
-**NOT SOFT** (gap 0.683–0.737 nats against the 5e-3 floor, no `δ*` on `[δ₀, 0.33]`) **on the v1
-instance at k = 13**; **U9-bandthm** verified all five propositions it rests on.
-**⚠ EVERYTHING IS HELD** (user, 2026-09-04): a new instance **3× larger** (3,748 zips vs 1,229)
-landed the same day and the sponsor's sizing moved to **k ≈ 18**, reopening §9's settled
-"k = 13" and assumption A1. **Do not merge, do not launch wave 2** until the instance-and-`k`
-question is settled. The merge itself was analysed and is safe (three state-file conflicts, zero
-code conflicts, `td-runs` has no objection) — it is simply not authorised. A1's documents live
-under `docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full narrative and the numbers.
+**Status:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — the sponsor's
+≈$18B is confirmed and is not to be re-derived (user, 2026-09-04). A1 wave 1 landed and is
+verified, but **scoped to v1 at k = 13**: U8-band's D1′ certificate says the premium is **NOT
+SOFT** there (gap 0.683–0.737 nats against the 5e-3 floor, no `δ*`), and U9-bandthm verified all
+five propositions it rests on. Those numbers must be re-run on v2 before they say anything about
+the live problem — **stage 1 has to draw v2 at k = 18 first**, since `draw_k13_20260901` is a v1
+draw. The solvers themselves (`td/solvers/eg_band.py`, `tools/measure/frontier.py`) are
+instance-agnostic and need no change. **Still user-gated:** the merge into `national-channel`
+(analysed and safe), ★11, ★8, and the source-document corrections. A1's documents live under
+`docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full narrative and the numbers.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
@@ -31,11 +32,12 @@ equal opportunity, **~$1B each**.
 
 | | |
 |---|---|
-| zips carrying sales | **1,229** (2,232 was a double-count; corrected 2026-09-01) |
-| distinct reps | **111** (confirmed 2026-09-01; the 72 was the same SQL error) |
-| total opportunity | **≈ $13B** (the $6.2B did not survive the double-count correction) |
+| zips | **3,748** on v2 (v1 had 1,229 and is a strict subset; 2,232 was an earlier double-count) |
+| distinct reps | **114** on v2 (v1's 111 all retained; the 72 was an SQL error) |
+| total opportunity | **≈ $18B** on v2, sponsor-confirmed 2026-09-04 (v1's "$13B" was overstated — the descaled ratio ×1.8814 puts v1 at ≈$9.6B) |
+| — of which untapped | **15.7%** on v2 vs 2.9% on v1: the growth is market with no book and no rep. Contested zips only went 675 → 718 |
 | footprint | national with concentration — west 33% / east 31% / TX 11.5% / FL 6.7% / ~18% spread over the rest; the "midwest uncovered" premise was wrong |
-| ⇒ `k` | **≈ 13** at $1B |
+| ⇒ `k` | **18** at $1B on v2 (v1's `k = 13` followed from the overstated $13B; the consistent v1 figure was ≈ 10) |
 
 This is **greenfield balanced districting**, not the two-player fair-division problem the
 repo was built for. `docs/CHANNEL.md` is the problem; `docs/MODEL.md` is the model.
@@ -90,7 +92,10 @@ it. **Measured 2026-09-01 (`docs/REVIEW_GROMOV.md` R1): real aggregate saturatio
 (median zip 46.8%) — the opportunity term is ~59% of an incumbent's `u_i`, not ~90%, the
 hold-vs-not swing is ~42%, and the legacy books move the map a lot. `ceiling.py` still
 hard-codes `SATURATION = 0.05` and channel_note §5.1 still carries the old arithmetic —
-R1's rewrite is open.
+R1's rewrite is open. **Stale at v2 (measured 2026-09-04): saturation there is 29.6%.** It
+decomposes as 41.6% → 34.5% on the shared zips (opportunity revised up ×1.226 while book stayed
+flat at ×1.016) and 34.5% → 29.6% from the 1,567 untapped new zips, which carry no book at all.
+Lower saturation shrinks the incumbency premium, so R1's premium arithmetic needs redoing on v2.
 
 ---
 

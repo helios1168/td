@@ -14,9 +14,69 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-04 (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`, head `ed5a9a8`,
-5 commits over `629e3da`; tests 208 pass, 0 fail — 184 pre-existing + 24 new, run at `ddd162d`;
-`ed5a9a8` is docs-only): wave 1 launched,
+**State on 2026-09-04, end of day (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`,
+content head `95e25fe` plus this state commit; tests 208 pass, 0 fail at `ddd162d`): the hold is
+lifted. `The sponsor's ≈$18B is confirmed, k = 18, and v2 supersedes v1.` A1's wave-1 results
+stand as certified facts about **v1 at k = 13** and must be re-run before they mean anything
+about the live problem.**
+
+*User decisions (2026-09-04, end of day).* The ≈$18B total **is correct and is not to be
+re-derived**. Work continues on `instance_descaled_v2.json.gz` at **k = 18**. This resolves the
+instance-and-`k` question the earlier hold was waiting on.
+
+*Consequence, recorded not acted on.* The two descaled exports pin the real growth ratio
+`D_v2 / D_v1 = ×1.8814` — robust, because the descaling divisor is recoverable (below). With
+`D_v2 = $18B` that puts **`D_v1` at ≈$9.6B, not the ≈$13B** §6 records. v1's `k = 13` therefore
+came from an overstated total; the consistent v1 sizing would have been `k ≈ 10`. **§6's
+"total opportunity ≈ $13B" and "⇒ territories k 13" rows, and §9's settled item "k = 13 at a
+$1B target", are superseded** — marked in place. Nothing downstream of them is re-derived here.
+
+*The instance review that produced this (2026-09-04, no code changed).* Both exports carry
+exactly one `m_rel` per zip (`nodes.z` / `nodes.m_rel`, column-oriented), so nothing double-counts,
+even though the *source* has one row per zip × rep with the zip's opportunity repeated on each.
+- **The descaling divisor changed.** `m_rel = M / median(positive M)`, and 440 of the 1,229 shared
+  zips land on one constant ratio `K = divisor_v1/divisor_v2 = 1.650015380` — they are the zips
+  **unchanged in dollars**, holding 37.9% of v1's opportunity. `f = ratio / K` is the real
+  per-zip change. Of the rest, **787 grew and exactly 2 shrank** (`92505` ×0.70, `11228` ×0.85);
+  median mover ×1.41, p95 ×5.04, max ×21.1 (`19801`, Wilmington DE). `K` is a uniform rescale and
+  therefore a **no-op for the objective** — it cannot move an optimum, a gap or a certificate.
+- **The growth is untapped market, not bigger territories.** Zips with no candidate rep go
+  77 → 1,584; `zips_untapped` 75 → **1,567**; uncontested 477 → 1,447; **contested barely moves,
+  675 → 718**. Untapped is 2.9% of v1's opportunity and **15.7% of v2's**. Growth is ×1.8814 over
+  all opportunity but only **×1.6333 over worked zips**. So the contested decision problem A1
+  actually optimises grew by ~6%, not by 3×.
+- **Saturation falls 41.6% → 29.6%, and it decomposes.** On the shared zips alone 41.6% → 34.5%,
+  because real opportunity was revised up ×1.2257 while book stayed flat at ×1.0162; the rest,
+  34.5% → 29.6%, is the new zips, 1,567 of which are untapped and carry no book at all. This is
+  the number `REVIEW_GROMOV` R1 measured at 41.9%, so **R1's premium arithmetic is now stale too**.
+- v2 also adds Alaska and Hawaii (3 zips, 0.095% of opportunity); v1 was CONUS-only. Other meta
+  moves: `zips_m_imputed` 5 → 90, `zips_headroom_repaired` 289 → 129, `repair_added_share`
+  0.0573 → 0.0095, `n_reps` 111 → 114 (all 111 retained), `n_sales_rows` 2,637 → 5,324.
+- Visual check published as the **Opportunity Map Diff** artifact,
+  `https://claude.ai/code/artifact/68eecbb9-3ce2-45d9-8161-5db7fe212957` (both instances on one
+  projection and one circle-area scale; views for coverage and for real change).
+
+*What this does to wave 1.* Nothing is retracted. U8's manifest pins
+`instance_sha256 = cf7d66c0…` and `draw_sha256`, so **"NOT SOFT" is a certified fact about v1 at
+k = 13, roster `S₁₃`** and is scoped as such. It is not yet a fact about v2 at k = 18. The
+mechanism is plausibly scale-free — the verdict came from the *level* at `δ₀`, not the slope —
+and the contested set barely grew, so the structure is likely intact; that is a hypothesis, not a
+result. `td/solvers/eg_band.py` and `tools/measure/frontier.py` are instance-agnostic and need no
+change.
+
+*What's next, in order.* (1) **A v2 draw at k = 18.** `battery/results/draw_k13_20260901` is a
+*v1* draw; every A1 unit consumes a draw plus its stage-2 roster, so stage 1 has to run on v2
+first (`tools/run_draw.py`, and `wt/runs`'s `RUNS_PLAN.md` catalogue covers this ground with
+`--k 14-22`). (2) **Re-run `tools/measure/frontier.py` on the v2 draw at k = 18** — one solve
+re-tests D1′ and re-anchors `δ₀`, `V`, `EG_S` and the roster before any wave-2 unit is spent.
+(3) Then wave 2 (U10-round, U11-roster, U4-disp) and U13-base. (4) **Still user-gated:** the merge
+of `wt/A1` into `national-channel` (analysed and safe — three state-file conflicts, zero code
+conflicts, additions only, `td-runs` has no objection), ★11's charter rewrite, ★8, and the
+source-document corrections wave 1 implies.
+
+**Earlier the same day — state on 2026-09-04 (branch `wt/A1`, worktree `.claude/worktrees/A1`,
+head `ed5a9a8`, 5 commits over `629e3da`; tests 208 pass, 0 fail — 184 pre-existing + 24 new, run
+at `ddd162d`; `ed5a9a8` is docs-only): wave 1 launched,
 landed and was verified. `D1′ says the premium is NOT SOFT: A1 continues and wave 2 is live.**
 
 *What landed.* **U9-bandthm** (`954d9eb` MODEL, `f199e92` VERIFY; `modeler` → `math-verify`) and
@@ -91,7 +151,9 @@ superdifferential at `δ₀` sits inside `[0.560711, 0.560995]`), and the Slater
 an invariant of the unconstrained optimum (add it to `VERIFY_U9-bandthm` §10.E's non-invariant
 list), and the *primal* vertex is as fragile as the dual under a last-bit input change.
 
-*⚠ Everything is HELD (user, 2026-09-04, end of session).* **A new instance landed in
+*⚠ Everything is HELD (user, 2026-09-04) — **LIFTED the same day; see the entry above**, which
+settles the instance-and-`k` question this hold was waiting on ($18B confirmed, k = 18, v2
+supersedes v1). Kept for provenance.* **A new instance landed in
 `.claude/worktrees/runs/` at 18:26 the same day, while wave 1 was running**, and it is not a minor
 revision. Measured directly: **3,748 zips against v1's 1,229** (3.05×), 114 reps against 111, and
 total descaled `M` **8,523.2 against 2,745.6** (3.10×). The `runs` session reports it as
@@ -489,15 +551,15 @@ have identical optima, gaps and certificates.
 
 | quantity | value | source | why it matters |
 |---|---|---|---|
-| zips carrying sales | **1,229** | export, 2026-09-01 | the decision's size |
-| — contested / uncontested / vacant / untapped | 675 / 477 / 2 / 75 | export | only 675 are genuinely contested |
-| distinct wholesalers | **111** | export | 111 → ~13 is an 8.5:1 selection ratio |
-| total opportunity | **≈ $13B** | export | sets `k` |
-| ⇒ territories `k` | **13** at $1B | arithmetic | the count is not itself in question |
+| zips | v1 **1,229** → **v2 3,748** | export; v2 2026-09-04 | v1 is a strict subset of v2 |
+| — contested / uncontested / vacant / untapped | v1 675 / 477 / 2 / 75 → **v2 718 / 1,447 / 17 / 1,567** | export meta `cand_histogram` | **the contested set barely grew (675 → 718); v2's gain is untapped market.** Untapped is 2.9% of v1's opportunity and **15.7% of v2's** |
+| distinct wholesalers | v1 **111** → **v2 114** (all 111 retained) | export | 114 → ~18 is a 6.3:1 selection ratio |
+| ~~total opportunity~~ | ~~**≈ $13B**~~ → **superseded 2026-09-04: ≈$9.6B for v1** | export | The sponsor confirmed **≈$18B for v2**, and the two descaled exports pin `D_v2/D_v1 = ×1.8814`, so v1's true total was ≈$9.6B and the $13B was overstated by ≈×1.36. **v2 ≈$18B is the live figure.** |
+| ~~⇒ territories `k`~~ | ~~**13** at $1B~~ → **`k = 18`** on v2 | arithmetic | v1's `k = 13` followed from the overstated $13B; the consistent v1 sizing was `k ≈ 10`. Every wave-1 result is scoped to v1 at k = 13. |
 | footprint concentration | west 33.2% · east 31.0% · TX 11.5% · FL 6.7% · ~18% elsewhere | export | national, not four islands — the earlier premise was wrong |
 | components of the sold-zip graph | **547**; largest 5.1% of M; 68% of M in sub-1% crumbs | export | why contiguity was dropped |
 | largest single zip | 10017 at **1.07%** of total M ≈ 14% of one territory | export | granularity is benign; near-perfect balance is reachable |
-| **aggregate saturation** Σ(booked)/Σ(opportunity) | **41.9%** (median zip 46.8%, p90 110%; 48% of opportunity sits above 30%) | `REVIEW_GROMOV` R1, measured | the load-bearing correction — existing books move the map a lot |
+| **aggregate saturation** Σ(booked)/Σ(opportunity) | v1 **41.9%** (median zip 46.8%, p90 110%) → **v2 29.6%** | `REVIEW_GROMOV` R1 measured on v1; v2 measured 2026-09-04 | the load-bearing correction — existing books move the map a lot. **On v2 it decomposes: 41.6% → 34.5% on the shared zips (opportunity revised up ×1.226, book flat at ×1.016), then → 29.6% from the 1,567 untapped new zips. R1's premium arithmetic is stale at v2.** |
 | hold-vs-not swing in a wholesaler's valuation of a zip | **≈ 42%** (assumed 6.7%) | ibid. | continuity is a first-order term, not a tilt |
 | incumbency premium as a share of total welfare | **≤ ≈ 25%** (assumed ~6%) | ibid. | ~3.7 nats of swing, unexplored |
 | achieved balance spread | 0.642% drawn / **0.781%** placed | `battery/results/draw_k13_20260901` | balance is solved |
@@ -561,8 +623,8 @@ Recorded rather than asked, per the unattended instruction.
 | item | status | date | owner | why |
 |---|---|---|---|---|
 | The problem is greenfield balanced territory design, not the two-player merger problem | **settled** | 2026-08-31 | user | The carve-out has no bilateral overlap structure; the pair census does not apply. |
-| `k = 13` at a $1B target | **settled** | 2026-09-01 | user | $13B total, from the corrected export. Assumption A1 attached. |
-| Instance sizing: 1,229 zips / 111 wholesalers / ~$13B / national footprint | **settled** | 2026-09-01 | user | The real descaled export, after three user corrections to the source pull. Supersedes `CHANNEL.md` §6. |
+| ~~`k = 13` at a $1B target~~ → **`k = 18` on v2** | **re-settled** | 2026-09-04 | user | The sponsor confirmed ≈$18B (not to be re-derived). The old $13B/k=13 came from an overstated total — the descaled ratio ×1.8814 puts v1 at ≈$9.6B, i.e. `k ≈ 10`. Assumption A1 still attached, now against $18B. |
+| ~~Instance sizing: 1,229 zips / 111 wholesalers / ~$13B~~ → **3,748 zips / 114 wholesalers / ≈$18B** (v2) | **re-settled** | 2026-09-04 | user | `instance_descaled_v2.json.gz` supersedes v1. v1 is a strict subset; the growth is overwhelmingly **untapped** market (untapped zips 75 → 1,567; contested only 675 → 718). Supersedes `CHANNEL.md` §6 and the 2026-09-01 row. |
 | Adjacency contiguity is not required | **settled** | 2026-09-01 | user | 547 components. Reopenable only by the full-ZCTA-graph experiment. |
 | Territories are drawn on opportunity, then staffed — two stages | **settled as a business constraint** | 2026-09-01 | user | Survives as "territories shall be opportunity-balanced"; the claim that it was *derived* was retracted at 41.9% saturation. |
 | Staffing is exact and selects the roster | **settled** | 2026-09-01 | programme | Exact, milliseconds, 13 of 111. |

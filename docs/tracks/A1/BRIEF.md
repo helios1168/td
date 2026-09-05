@@ -11,6 +11,15 @@
 **Supersedes:** the hub's `docs/BRIEF.md` of 2026-09-02 **on this branch only** — cited below as
 **[pred]**; its units U0–U7 keep their IDs and are marked landed / carried / retired in §4.
 
+> **⚠ Instance change, 2026-09-04.** Every number in this brief is computed on
+> `instance_descaled.json.gz` (v1) at **k = 13**. The live instance is now
+> **`instance_descaled_v2.json.gz` at `k = 18`** (≈$18B, sponsor-confirmed; v2 is a strict
+> superset of v1 whose growth is overwhelmingly *untapped* market — contested zips only went
+> 675 → 718). The units below are still the right units and the solvers are instance-agnostic,
+> but **`δ₀`, `V`, `EG_S`, the (★) screen, the premium ladder and the roster must all be
+> re-measured on v2 before they are quoted.** Stage 1 has to draw v2 at k = 18 first. See
+> `docs/FRAME.md` §0 (2026-09-04, end of day).
+
 **What changed since [pred].** ★6 is lifted in full (user, 2026-09-03). Two of [pred]'s units
 landed and their numbers are in FRAME §6: U7-meas (the premium ladder) and U1-cert (the
 Eisenberg–Gale bound). Those numbers re-shaped the charter: the lens (`LENS_GROMOV` M8, M13)
