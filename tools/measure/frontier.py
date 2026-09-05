@@ -6,12 +6,15 @@
 `docs/MODEL_U8-band.md` is the spec; `td/solvers/eg_band.py` is the solver.  Read-only over
 `td/`.  What this produces, in the order the unit brief asks for it:
 
-* **the hard gate** -- the unconstrained `EG_{S13}` reproduced to `1e-6` against
-  `60.6974156139` before any frontier point is computed.  The utility matrix must be
-  `channel.gain_matrix`'s **unmasked** convention (a rep is valued on every zip, not only where
-  it holds book); `model.utilities` is the masked form and lands at `EG = 55.98` (and the masked
-  delivered map at `51.93`), *below* `V = 59.9375`, which would mimic a refutation of P1-band
-  rather than a units error (measured, `CODEVERIFY_U8-band.md` row 2);
+* **the hard gate** -- the unconstrained `EG_S` checked against `V` before any frontier point is
+  computed.  `EG_S` is an upper bound on every band-feasible map's value and the delivered map is
+  one such map, so `EG_S >= V` holds on *any* instance and fails exactly when the utility matrix
+  is wrong.  It must be `channel.gain_matrix`'s **unmasked** convention (a rep is valued on every
+  zip, not only where it holds book); `model.utilities` is the masked form and lands at
+  `EG = 55.98` on v1 (the masked delivered map at `51.93`), *below* `V = 59.9375`, which would
+  mimic a refutation of P1-band rather than a units error (measured, `CODEVERIFY_U8-band.md`
+  row 2).  `--gate-reference VALUE` additionally pins `EG_S` to a published number to `1e-6`;
+  v1 at `k = 13` reproduces with `--gate-reference 60.6974156139`;
 * **`delta_0`** = `max_j |m_j - T/k| / (T/k)` on the committed draw -- a **max deviation**, not
   the published 0.78% spread (`MODEL_U8-band.md` §6 records the N7 discrepancy);
 * **D1'** -- the one-solve concavity certificate `EG^bal(d0) + s(d0)(d - d0) - V <= 5e-3` at
@@ -56,8 +59,8 @@ Roster = dict[District, Rep]
 
 SMALL_NATS = 5e-3                    # base.EPS_CERT, the tier-2 floor
 GATE_TOL = 1e-6                      # the utility-convention gate, in nats
-EG_S13_REFERENCE = 60.6974156139     # docs/MODEL_U1-cert.md §4.1
-V_DELIVERED_REFERENCE = 59.9374697984
+EG_S13_REFERENCE = 60.6974156139     # v1 at k=13 only; docs/MODEL_U1-cert.md §4.1
+V_DELIVERED_REFERENCE = 59.9374697984  # v1 at k=13 only
 CROSS_TOL = 1e-6                     # OA vs SCIP agreement
 GRID = (0.02, 0.05, 0.10, 0.33)      # delta_0 is prepended once measured (MODEL_U8-band.md §6)
 SPONSOR_DELTAS = (0.02, 0.05, 0.10)  # D1': FRAME §3's +-10% is the widest on record
@@ -228,13 +231,23 @@ def build_setting(G: Any, to_district: dict[Zip, District], sigma: Roster, *,
 
 
 # --------------------------------------------------------------------------- the numbers
-def gate(setting: Setting, *, tol: float = GATE_TOL) -> dict[str, Any]:
-    """Reproduce the unconstrained `EG_{S13}` before any frontier point.  Raises if it misses."""
+def gate(setting: Setting, *, reference: float | None = None,
+         tol: float = GATE_TOL) -> dict[str, Any]:
+    """Check the unconstrained `EG_S` against `V` before any frontier point.  Raises if it misses.
+
+    `EG_S` is an upper bound on every band-feasible map's value and the delivered map is one such
+    map, so `EG_S >= V` on any instance; the masked utility convention breaks it.  A `reference`
+    additionally pins `EG_S` to a published number (v1 at k=13: `EG_S13_REFERENCE`).
+    """
     sol = eg_band.solve_band(setting.U, setting.M, None)
     check = eg_band.check_dual(setting.U, setting.M, None, sol.X, sol.g, sol.duals)
     target = float(setting.M.sum()) / setting.k
-    out = dict(EG_S13_upper=sol.upper, EG_S13_primal=sol.primal, bracket=sol.bracket,
-               reference=EG_S13_REFERENCE, delta_upper=sol.upper - EG_S13_REFERENCE,
+    above_V = bool(sol.upper >= setting.V - tol)
+    matches = reference is None or bool(abs(sol.upper - reference) <= tol
+                                        and abs(sol.primal - reference) <= tol)
+    out = dict(EG_S_upper=sol.upper, EG_S_primal=sol.primal, bracket=sol.bracket,
+               reference=reference, gap_to_V=sol.upper - setting.V,
+               delta_upper=None if reference is None else sol.upper - reference,
                n_cuts=sol.n_cuts, converged=sol.converged, status=sol.status,
                lp_tol=sol.lp_tol, dual_bound=check.bound,
                dual_feasible=check.feasible,
@@ -242,16 +255,23 @@ def gate(setting: Setting, *, tol: float = GATE_TOL) -> dict[str, Any]:
                cs_residual_rel=check.cs_residual_rel,
                M_max_dev_rel=float(np.abs(sol.m - target).max() / target),
                M_spread_rel=float((sol.m.max() - sol.m.min()) / sol.m.mean()),
-               passed=bool(abs(sol.upper - EG_S13_REFERENCE) <= tol
-                           and abs(sol.primal - EG_S13_REFERENCE) <= tol))
-    if not out["passed"]:
+               above_V=above_V, matches_reference=matches,
+               passed=bool(above_V and matches))
+    if not above_V:
         raise ValueError(
-            f"utility-convention gate FAILED: unconstrained EG_S13 = [{sol.primal!r}, "
-            f"{sol.upper!r}] against the reference {EG_S13_REFERENCE!r} "
-            f"(delta {sol.upper - EG_S13_REFERENCE:.3e} nats, tolerance {tol:g}). "
-            f"The masked utility convention lands at EG = 55.98, below V = 59.9375, and so "
-            f"mimics a refutation of P1-band; do not compute a frontier point until this "
-            f"matches")
+            f"utility-convention gate FAILED: unconstrained EG_S = [{sol.primal!r}, "
+            f"{sol.upper!r}] is below the delivered V = {setting.V!r} "
+            f"(gap {sol.upper - setting.V:.3e} nats, tolerance {tol:g}). EG_S bounds every "
+            f"band-feasible map from above and the delivered map is one, so this cannot happen "
+            f"with the right utilities: the masked convention lands at EG = 55.98 against "
+            f"V = 59.9375 on v1, and so mimics a refutation of P1-band. Do not compute a "
+            f"frontier point until this passes")
+    if not matches and reference is not None:
+        raise ValueError(
+            f"gate reference MISSED: unconstrained EG_S = [{sol.primal!r}, {sol.upper!r}] "
+            f"against --gate-reference {reference!r} (delta {sol.upper - reference:.3e} nats, "
+            f"tolerance {tol:g}). The instance, the draw or the roster is not the one that "
+            f"produced the reference")
     return out
 
 
@@ -456,14 +476,15 @@ def plot_frontier(setting: Setting, points: Sequence[Point], star: DeltaStar,
 
     fig, ax = plt.subplots(figsize=(7.2, 4.6), dpi=150)
     ax.plot(d, v, "-o", color="#31688e", lw=1.8, ms=4.5,
-            label=r"$EG^{bal}_{S_{13}}(\delta)$  (upper bound on every band-feasible map)")
+            label=(rf"$EG^{{bal}}_{{S_{{{setting.k}}}}}(\delta)$  "
+                   r"(upper bound on every band-feasible map)"))
     ax.axhline(setting.V, color="#999999", lw=0.8, ls=":")
     ax.plot([setting.delta0], [setting.V], marker="*", ms=15, color="#d62728", ls="none",
             label=(f"delivered MNW draw  "
                    rf"$(\delta_0 = {setting.delta0:.4f},\ V = {setting.V:.4f})$"))
     ax.plot([end.delta], [end.certified_upper], marker="s", ms=7, color="#2ca02c", ls="none",
             label=(rf"unconstrained endpoint  $(\delta = {end.delta:g}$, "
-                   rf"$EG_{{S_{{13}}}} = {end.certified_upper:.4f})$"))
+                   rf"$EG_{{S_{{{setting.k}}}}} = {end.certified_upper:.4f})$"))
     ax.annotate(f"$M$-spread {end_spread:.0%}\nat the optimum",
                 xy=(end.delta, end.certified_upper), xytext=(-8, -34),
                 textcoords="offset points", ha="right", fontsize=8, color="#2ca02c")
@@ -477,7 +498,7 @@ def plot_frontier(setting: Setting, points: Sequence[Point], star: DeltaStar,
     ax.set_xlabel(r"band half-width $\delta$   (max deviation of $M(A_j)$ from $T/k$"
                   f" = {target:,.1f})")
     ax.set_ylabel(r"$\sum_i \log g_i$   (nats)")
-    ax.set_title("A1 U8-band: the band-constrained frontier at the roster $S_{13}$")
+    ax.set_title(rf"A1 U8-band: the band-constrained frontier at the roster $S_{{{setting.k}}}$")
     ax.legend(loc="lower right", fontsize=7.5, framealpha=0.95)
     ax.grid(alpha=0.25, lw=0.5)
     fig.tight_layout()
@@ -499,6 +520,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--no-scip", dest="scip", action="store_false", default=True)
     ap.add_argument("--scip-time-limit", type=float, default=eg_band.SCIP_TIME_LIMIT)
     ap.add_argument("--top-movers", type=int, default=25)
+    ap.add_argument("--gate-reference", type=float, default=None,
+                    help="pin the unconstrained EG_S to a published value to 1e-6 (v1 at k=13: "
+                         f"{EG_S13_REFERENCE!r}); omitted, the gate checks only EG_S >= V")
     args = ap.parse_args(argv)
 
     draw_dir, label = resolve_draw_dir(args.draw)
@@ -527,15 +551,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"the roster, the map or the parameters are not the ones that produced the draw")
 
     print(f"draw: {label} ({draw_dir}), {len(setting.nodes):,} zips, k={setting.k}")
-    print(f"V(delivered) = {setting.V:.12f}   (reference {V_DELIVERED_REFERENCE})")
+    print(f"V(delivered) = {setting.V:.12f}   (v1/k=13 reference {V_DELIVERED_REFERENCE})")
     print(f"delta_0 = {setting.delta0:.6f} (max deviation)   "
           f"spread = {setting.spread0:.6f}  -- the N7 grid uses the spread; this unit does not")
 
-    print("\ngate: unconstrained EG_{S13} in the unmasked utility convention")
-    g_out = gate(setting)
-    print(f"  [{g_out['EG_S13_primal']:.12f}, {g_out['EG_S13_upper']:.12f}]  "
-          f"bracket {g_out['bracket']:.3e}  vs reference {EG_S13_REFERENCE}  "
-          f"delta {g_out['delta_upper']:.3e}  PASS")
+    print(f"\ngate: unconstrained EG_{{S{setting.k}}} in the unmasked utility convention")
+    g_out = gate(setting, reference=args.gate_reference)
+    ref = ("" if args.gate_reference is None else
+           f"  vs reference {args.gate_reference!r}  delta {g_out['delta_upper']:.3e}")
+    print(f"  [{g_out['EG_S_primal']:.12f}, {g_out['EG_S_upper']:.12f}]  "
+          f"bracket {g_out['bracket']:.3e}  gap to V {g_out['gap_to_V']:+.6f}{ref}  PASS")
     print(f"  M max-dev at that optimum {g_out['M_max_dev_rel']:.4f}, "
           f"spread {g_out['M_spread_rel']:.4f}")
 
@@ -641,7 +666,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         n_zips=len(setting.nodes), k=setting.k,
         T=setting.T, target=setting.T / setting.k,
         staff=list(setting.staff), districts=list(setting.districts),
-        V_delivered=setting.V, V_reference=V_DELIVERED_REFERENCE,
+        V_delivered=setting.V, gate_reference=args.gate_reference,
+        V_reference_v1_k13=V_DELIVERED_REFERENCE,
         g_delivered=_jsonable(setting.g_delivered),
         m_delivered=_jsonable(setting.m_delivered),
         delta0=setting.delta0, spread0=setting.spread0,
