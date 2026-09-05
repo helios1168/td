@@ -1,8 +1,9 @@
-# Handoff — national channel territory design (`national-channel`, the hub)
+# Handoff — national channel territory design (`main`, the hub)
 
-**Updated:** 2026-09-05 · **Branch:** `national-channel` — `wt/runs` and `wt/A1` merged in on
-2026-09-05 with the user's approval · **Head:** `f93f996` (the merge commit) · **Tests:** 222
-pass, 0 fail (run 2026-09-05 at `f93f996` in this worktree; A1's 222 cover both tracks)
+**Updated:** 2026-09-05 · **Branch:** `main` — fast-forwarded to `national-channel` on 2026-09-05
+(the `national-channel` worktree retired; `wt/runs` and `wt/A1` merged in the same day with the
+user's approval) · **Head:** the commit after `1cb4f65` (restores `docs/math_note/`) ·
+**Tests:** 222 pass, 0 fail (run 2026-09-05; A1's 222 cover both tracks)
 
 **One line:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`.** The hub now
 holds the runs track's 14+1 pin-cost catalogue and HiGHS fix, and the A1 track's wave 1 plus its
@@ -20,10 +21,10 @@ floor, no `δ*`). The two tracks' k=18 draws are byte-identical (compared, not i
   FRAME §0's 2026-09-04 night entry (A1's v2 re-anchor numbers).
 - **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`;
   the merge rule is `ask-before-merging-to-hub.md`.
-- **Caution:** run tests with `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
-  from this worktree (no `.venv` here). Gitignored, so a fresh worktree needs them hand-copied
-  **from this hub worktree, which now holds all of them** (the `A1` and `runs` worktrees were
-  removed on 2026-09-05 after their data was copied here): `instance_descaled_v2.json.gz`
+- **Caution:** tests are `.venv/bin/python3 tests/run_all.py` from the repo root
+  `/Users/ntlee/projects/td`. The gitignored inputs live there too (moved from the retired
+  `national-channel` worktree on 2026-09-05), so a fresh `wt/*` worktree needs them hand-copied
+  from the repo root: `instance_descaled_v2.json.gz`
   (**live**, cleaned), `instance_descaled_v2.raw.json.gz` (uncleaned, provenance only),
   `instance_descaled.json.gz` (v1, regression only), `data/geo/`, and `battery/results/`:
   **v2** — `draw_k18_v2_20260904`, `u8_band_v2_20260904`, `meas_v2_20260904`, `runs_20260904/`
@@ -108,8 +109,8 @@ whole premium; CAROLINAS / SOUTHWEST / FLORIDA pins each cost less than the rost
 FLORIDA `fix` / CAROLINAS `anchor` out-staff the baseline at stage 2 (+0.029 / +0.012).
 
 ## Starting a track (A2–A5, or resuming A1)
-1. `git worktree add /Users/ntlee/projects/td/.claude/worktrees/<ID> -b wt/<ID> national-channel`.
-2. Hand-copy the gitignored inputs from this hub worktree: `instance_descaled_v2.json.gz`,
+1. `git worktree add /Users/ntlee/projects/td/.claude/worktrees/<ID> -b wt/<ID> main`.
+2. Hand-copy the gitignored inputs from the repo root: `instance_descaled_v2.json.gz`,
    `data/geo/`, `battery/results/draw_k18_v2_20260904/`, `battery/results/meas_v2_20260904/`,
    `battery/results/u8_band_v2_20260904/`, and `battery/results/runs_20260904/` if the
    catalogue is needed. v1 inputs only for a regression.

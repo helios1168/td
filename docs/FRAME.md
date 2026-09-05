@@ -14,7 +14,16 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-05 (latest, branch `national-channel`, worktree
+**State on 2026-09-05, later (latest, branch `main`, the primary checkout at
+`/Users/ntlee/projects/td`): `main` was fast-forwarded to `national-channel` (which was a
+strict descendant, 198 commits ahead, nothing behind) and the `national-channel` worktree was
+retired; the gitignored inputs it held moved to the repo root. `docs/math_note/` was restored
+from `contiguity-harness` (the 2026-08-30 two-player formulation note, with its own copy of
+`territory_bibliography.bib`; `\bibliography` and the Makefile paths re-pointed, nothing else
+touched). No `td/`, `tools/` or `tests/` file changed; 222 tests re-run, 0 fail.** New tracks
+branch from `main`. Everything below is unchanged.
+
+**State on 2026-09-05 (branch `national-channel`, worktree
 `.claude/worktrees/national-channel`, head `f93f996` — the merge commit; tests **222 pass,
 0 fail** at `f93f996`): `wt/runs` and `wt/A1` are both merged into the hub, with the user's approval. The live
 instance is `instance_descaled_v2.json.gz` at `k = 18`; the hub now carries the pin-cost
