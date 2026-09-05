@@ -1,6 +1,6 @@
 # Handoff — the `runs` track (`wt/runs`)
 
-**Updated:** 2026-09-04 · **Branch:** `wt/runs`, not yet pushed · **Head:** `d7c4503`
+**Updated:** 2026-09-04 · **Branch:** `wt/runs`, pushed · **Head:** `9e81d6b`
 (branched from `national-channel` at `e3cc5d2`) · **Tests:** 184 pass, 0 fail (run 2026-09-04
 in this worktree)
 
@@ -32,8 +32,6 @@ in this worktree)
   `1f2cddd9-b98b-4213-83ea-784566147c6a`).
 
 ## Next actions
-- [ ] Push `wt/runs` (this session did not push — confirm before assuming the branch is
-      backed up remotely).
 - [ ] The open decision this catalogue exists to inform: **which states, if any, are
       hand-drawn** — a sponsor call, not a solver one. `docs/RUNS.md`'s region table is the
       price list.
