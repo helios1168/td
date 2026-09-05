@@ -30,27 +30,44 @@ only) · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/APPROACHES.md` · `docs/LEN
 
 ## Agent → verifier
 
-`python-typed` → `code-verify` (launch from a session started in `.claude/worktrees/A1`).
+`python-typed` → `code-verify` (launch from a session started on `main`).
+
+**Tooling.** `cat`/`head`/`tail`/`sed`/`awk`/`grep` on a file are blocked by the
+`enforce-file-tools.sh` hook — use `Read`/`Edit` and the Serena symbol tools instead
+(`RUNS_PLAN.md:83-89`).
 
 ## Acceptance
 
-1. The exact Nash-tie margin on both draws (seed 3: expect 1.37e-2; seed 9: 8.1e-3, the
-   `CODEVERIFY_U7-meas` numbers) by `k` Hungarian re-solves, and the near-optimal roster sets at
-   5e-3 and 1.5e-2 nats with their cardinalities (N11).
-2. The (★) screen recomputed (60.7615 at `P_S`, 60.8025 at `P₁₃`, FRAME §6) and used as the stop
-   rule: the enumeration log lists every roster visited, its `P_S`, its (★), and whether
-   `EG^bal_S(δ)` was solved; the `P₁₃` roster (R0009, R0012 in for R0017, R0018) is solved first.
+1. The exact Nash-tie margin on the single k=18 **seed 2** draw (v1's seed-3/seed-9 pair is
+   retired) by `k` Hungarian re-solves, and the near-optimal roster sets at 5e-3 and 1.5e-2 nats
+   with their cardinalities (N11). **The v2 margin itself has not been measured** — v1's
+   `1.37e-2` / `8.1e-3` numbers do not carry over; do not assume a value, compute it.
+2. The (★) screen recomputed on v2 (P0-C, complete, math-verified): `B_tot = 3268.4069219934404`;
+   (★) = `96.55406280784752` at `P_S` — the per-roster screen, **this is the rung that drives
+   U11's own prune** (the formula above, evaluated at each candidate roster's own `P_S`) — and
+   `96.79300971267465` at `P₁₈` — the roster-free bound over all rosters (U19, Acceptance #3), a
+   **different rung, not U11's prune** — against `V = 95.75519165924108` and
+   `EG_{S₁₈} = 96.53215175`. Used as the stop rule: the enumeration log lists every roster
+   visited, its `P_S`, its (★), and whether `EG^bal_S(δ)` was solved; the `P₁₈` roster (R0007,
+   R0011, R0012, R0020 in for R0004, R0021, R0028, R0038) is solved first.
+   **On the `P_S` rung — the one that drives this unit's prune — the screen tightens on v2.**
+   Against `EG_{S₁₃} = 60.6974156139` (v1) / `EG_{S₁₈} = 96.53215175` (v2), the `P_S` slack goes
+   `0.0641` (v1) → `0.0219` (v2), **2.9× tighter**, so U11 prunes *more* on v2, not less. The
+   `P₁₈` (roster-free bound) slack moves the opposite way, `0.1051` (v1) → `0.2609` (v2), 2.5×
+   looser — but that is U19's bound, not this unit's screen; do not conflate the two rungs.
+   (P0-C separately reports the roster gap at 0.249 nats on v2, up from 0.043 on v1 — a distinct
+   quantity from either slack above.)
 3. `max_S EG^bal_S(δ)` over the survivors at `δ ∈ {0.02, 0.05, 0.10}` with the (★) upper bound
    beside it, so the roster-free bound is a bracket, not a point (U19).
 4. The tie-aware report: `P_S`, U4, U8, `EG^bal_{S}(δ)` as intervals over the 5e-3 set.
 5. Tests: on a seeded 6-rep / 12-zip fixture, the margin equals brute force over all second-best
    assignments; the (★) bound is never below the true `EG_S` (brute-force EG on the toy); the
    enumeration with the stop rule returns the same argmax as exhaustive enumeration; existing
-   tests green. `mip_rel_gap = 0.0` on the `P₁₃` master; provenance and byte-identity as U7-meas.
+   tests green. `mip_rel_gap = 0.0` on the `P₁₈` master; provenance and byte-identity as U7-meas.
 
 ## Numbers to compute first
 
-The margin (0c) · `|{S : V_S ≥ V_{S₁₃} − 5e-3}|` (N11) · (★) at every enumerated roster · the
+The margin (0c) · `|{S : V_S ≥ V_{S₁₈} − 5e-3}|` (N11) · (★) at every enumerated roster · the
 count of rosters actually solved.
 
 ## Inputs to read (paths and sections only)
@@ -59,7 +76,9 @@ count of rosters actually solved.
 step 7 · `docs/MODEL_U7-meas.md` §1, §3.1, §6 · `docs/CODEVERIFY_U7-meas.md` (the tie finding,
 row 4 caveats) · `docs/LIT_optimization.md` §5 (absence A: no submodularity for `S ↦ EG_S`), §7
 (stability radius / `k`-best assignments) · `tools/measure/premium.py` (`book_matrix`,
-`best_roster`, `coverage_premium`, the `P₁₃` MILP) · `td/channel.py::match`.
+`best_roster`, `coverage_premium`, the `P₁₈` MILP — the code keys `P13` / `P13_solve` are kept
+unchanged, a naming fossil, `premium.py` still emits them at k=18; don't chase it) ·
+`td/channel.py::match`.
 
 ## Open questions for ★0
 
@@ -69,13 +88,13 @@ deployability of the selection, not on the computation.
 
 ## Branch
 
-`wt/A1` (or `wt/U11-roster` from `wt/A1`)
+`main` (or `wt/U11-roster` from `main`)
 
 ## Stop rule
 
 If the near-optimal roster set at 5e-3 nats exceeds 100, stop enumerating `EG^bal` at that
 point and report the cardinality — the tie-break is then doing the selecting and the report
-must lead with that (`DOMAIN_economic-theory` §2.10 failure mode). If (★) at `P₁₃` is below the
+must lead with that (`DOMAIN_economic-theory` §2.10 failure mode). If (★) at `P₁₈` is below the
 best `EG^bal` found (it cannot be, by validity), report the contradiction rather than the number.
 
 **stop and report rather than improvise**

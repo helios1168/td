@@ -335,8 +335,9 @@ that picks among them can be gamed.**
   penalties), `benporath2019` (no commitment needed), `caragiannis2012` (probabilistic
   verification), `milgrom1981` (unravelling under a credible audit threat);
   **Crawford & Varian 1979** (the Nash-product criterion *is* manipulable by preference
-  distortion), **Gibbard 1973** / **Satterthwaite 1975**, **Myerson 1979**,
-  **Vickrey 1961** / **Clarke 1971** / **Groves 1973**, **Nash 1950**.
+  distortion), **Myerson 1979**, **Vickrey 1961** / **Clarke 1971** / **Groves 1973**,
+  **Nash 1950**. (**Gibbard 1973** / **Satterthwaite 1975** was listed here until ★8,
+  2026-09-05; it is withdrawn with nothing in its place — see (a).)
 - **What the charter changed.** Under A1 the draw reads books **only** through the objective of
   one concave program per roster (`LENS_GROMOV` M13.2). Three consequences, and the third is new
   to this file.
@@ -351,12 +352,24 @@ that picks among them can be gamed.**
   ours is a per-agent *measure* over 1,229 zips and enters an objective, not a facility-placement
   rule; (iii) the mechanism's output there is a location vector, ours is a partition plus a
   roster. **So ★`fotakis2014` does not directly apply, and the programme's `RESEARCH_FINDINGS`
-  §9-G invariant ("books enter at stage 2 only, because fotakis2014") over-reads it.** What
-  survives, and it is enough to keep the governance concern alive, is the generic
-  **Gibbard 1973** / **Satterthwaite 1975** obstruction on an unrestricted domain — from which
-  the escape is exactly domain restriction, which is what (b) and (c) are about. Correcting this
-  over-read is a deliverable in its own right: FINDINGS §9-G, `REVIEW_GROMOV`, `CHANNEL.md` §0
-  and `APPROACHES.md` all repeat it.
+  §9-G invariant ("books enter at stage 2 only, because fotakis2014") over-reads it.**
+  **What survives is an open citation gap (★8, 2026-09-05), not a weaker theorem.** Earlier
+  revisions of this file named the generic **Gibbard 1973** / **Satterthwaite 1975** obstruction
+  on an unrestricted domain as the surviving basis; that attribution is **withdrawn too**. No
+  Gibbard–Satterthwaite citation or argument exists anywhere in this corpus —
+  `LIT_economic-theory` §4 covers Green–Laffont and restricted message spaces, not
+  Gibbard–Satterthwaite — so it was rationale, not a source. **Nothing is put in its place, and
+  the exposure the invariant guards against is untouched:** the 98-of-111 losing majority still
+  has maximal inflation incentive (FINDINGS §9-G), and `LIT_economic-theory` A1-Q4 records that
+  no mechanism always outputs a Nash-welfare-maximising allocation even under the weakest
+  sensible incentive relaxation (non-obvious manipulability). Losing the citation removes a
+  justification, not the exposure. The invariant therefore stands as a **prudential design
+  choice pending a citation**, not as a theorem. (b) and (c) below still set out the
+  domain-restriction route this plan pursues, but they are now a design programme to be
+  discharged, **not an escape licensed by a cited impossibility result**; finding a result whose
+  hypotheses our draw actually meets — or establishing that none exists — is open work.
+  Correcting this over-read is a deliverable in its own right: FINDINGS §9-G, `REVIEW_GROMOV`,
+  `CHANNEL.md` §0 and `APPROACHES.md` all repeat it.
 
   **(b) `green1986` is the test, and it applies to a smaller object now.** The `G`-invariant
   message space (normalised per-rep profiles plus audited magnitudes, `LENS_GROTHENDIECK` §5b)
@@ -440,8 +453,8 @@ EG^bal_S(δ) = max { Σ_{i∈S} log Σ_z u_i(z) x_{zi} :  Σ_i x_{zi} = 1,  x �
   - Divisibility — not met; `≤ k−1` splits, verified (`U1-cert` P3a), and `LENS_GROMOV` **U15**
     asks whether the extra `2k` band rows raise it to `≤ 2k−1`. That is an optimization/LP-rank
     question and is handed over in §7, **not** answered here.
-  - A feasible band exists — **met and measured**: the delivered draw sits at `δ = 0.0078`, so
-    `EG^bal_{S₁₃}(δ)` is feasible for every `δ ≥ 0.0078` and the sandwich
+  - A feasible band exists — **met and measured**: the delivered draw sits at `δ = δ₀ = 0.009970`,
+    so `EG^bal_{S₁₃}(δ)` is feasible for every `δ ≥ 0.009970` and the sandwich
     `59.9375 ≤ EG^bal_{S₁₃}(δ) ≤ 60.6974` holds `[measured]`.
 - **Does the equilibrium reading survive the bands? — the answer, and it is a qualified yes.**
   Attach `p_z ≥ 0` to coverage and `μ_i^+, μ_i^- ≥ 0` to the upper and lower band rows. The KKT
@@ -471,13 +484,16 @@ EG^bal_S(δ) = max { Σ_{i∈S} log Σ_z u_i(z) x_{zi} :  Σ_i x_{zi} = 1,  x �
   |---|---|---|---|
   | Pareto optimality | yes, globally | yes, **within the band-feasible set only**; the band costs up to `EG_S − EG^bal_S(δ)` nats of unconstrained welfare | **Eisenberg & Gale 1959** |
   | Envy-freeness (fractional) | yes, via common prices | **lost** — prices are personalised | **Varian 1974** |
-  | EF1 (integral) | yes at the MNW optimum | **lost**; replaced by **FEFx** — envy only against band-feasible bundles | **Caragiannis et al. 2019**, `barman2023gac` |
-  | Proportionality `u_i(A_i) ≥ u_i(Z)/k` | yes (equal budgets) | **the first casualty** — an agent whose value concentrates on high-`M` zips is capped by the upper band | **Hylland & Zeckhauser 1979**, `budish2011` |
+  | EF1 (integral) | yes at the MNW optimum | **MNW's EF1 guarantee is lost, not EF1 itself** — maximising Nash welfare over balanced allocations need not be EF1 (`kawase2026balanced`'s existence result does not transfer: it is for cardinality balancedness under restricted valuations); replaced operationally by **FEFx** — envy only against band-feasible bundles | **Caragiannis et al. 2019**, `barman2023gac`, `kawase2026balanced` |
+  | Proportionality `u_i(A_i) ≥ u_i(Z)/k` | yes (equal budgets) | **REFUTED as stated** — measured `prop_gap_delivered` min is **`−12.0248`** at `k=18` (v1: `−7.1351`); the starvation is the **delivered map's**, not the band's (`MODEL_U8-band` §9.5, §9.7 finding 3) | **Hylland & Zeckhauser 1979**, `budish2011` |
   | Scale invariance in `u_i` | yes | **yes** — the band constrains `x`, not `u` (§2.7 P-G1) | **Nash 1950** |
   The proportionality row is the one to test first, because **proportionality is the property
-  FRAME §3's "do not starve anybody" most nearly names**, and the band is the thing that breaks
-  it. A two-agent counterexample is immediate: `k = 2`, one agent valuing only a zip carrying 60%
-  of `M`; the band forbids giving it to them.
+  FRAME §3's "do not starve anybody" most nearly names**. A two-agent example shows the band *can*
+  break it in principle: `k = 2`, one agent valuing only a zip carrying 60% of `M`; the band
+  forbids giving it to them. **Measured on the real instance it does not**: `prop_gap_delivered`
+  min is `−12.0248` at `k = 18` (v1: `−7.1351`), and the starvation is the **delivered map's**,
+  not the band's (`MODEL_U8-band` §9.5, §9.7 finding 3) — "proportionality is the first casualty"
+  is **REFUTED** as a claim about the band.
 - **What it would produce.** The number a decision actually needs (`U1-cert` §5.3's own words):
   `EG^bal_{S₁₃}(δ)` at the sponsor's `δ`, with its duals; the fairness verdicts above at that
   point; and the statement of what the band cost, in nats and in fairness properties, rather than
@@ -520,7 +536,7 @@ economics content is a distinction the programme has not drawn.
   *"at δ = 5% the marginal territory-dollar of balance costs X nats of continuity — is that the
   right δ?"*
 - **How to put it to the sponsor.** As a **menu, not an elicitation**. Compute
-  `EG^bal_{S₁₃}(δ)` on the grid `δ ∈ {0.0078, 0.02, 0.05, 0.10, 0.33}` (`U13`), plot `(δ, V)`
+  `EG^bal_{S₁₃}(δ)` on the grid `δ ∈ {0.009970, 0.02, 0.05, 0.10, 0.33}` (`U13`), plot `(δ, V)`
   with the delivered MNW point marked (`DOMAIN_optimization` §2.5's trap-2 discipline), and hand
   over three columns per row: the band, the continuity value in book share, and the fairness
   verdicts of §2.8's table. **Moulin 2019** is the citation for presentability, **Roth 2002** for
@@ -706,10 +722,17 @@ entirely.
 `RESEARCH_FINDINGS` §9-G, `REVIEW_GROMOV`, `CHANNEL.md` §0 and `APPROACHES.md`, plus one sentence
 in `MODEL.md`. Free, blocks nothing, and it removes a false impossibility that is currently doing
 argumentative work in four files.
-> **D6 — new.** Does the programme accept that the "books enter at stage 2 only" invariant rests
-> on Gibbard–Satterthwaite generically rather than on ★`fotakis2014` specifically? If yes, the
-> invariant is *weaker* than advertised and the A1 formulation is not forbidden by it — which is
-> what `DOMAIN_optimization` §8 Q7 already argues from the other side.
+> **D6 — new.** Does the programme accept that the "books enter at stage 2 only" invariant has
+> **no cited basis at all** — that ★`fotakis2014` is withdrawn (★8, 2026-09-05) and *nothing*
+> replaces it? An earlier draft of this step offered "Gibbard–Satterthwaite generically" as the
+> fallback; that is withdrawn too, because no such citation or argument exists in this corpus and
+> because §2.7's own assumptions ledger records the unrestricted-domain hypothesis as **not met**
+> here. If yes, the invariant is held as a **prudential design choice pending a citation**: the
+> A1 formulation is not *forbidden* by it — which is what `DOMAIN_optimization` §8 Q7 already
+> argues from the other side — but it is not *cleared* either, because the misreporting exposure
+> (98-of-111 losing majority; `LIT_economic-theory` A1-Q4's non-obvious-manipulability result)
+> survives the withdrawal untouched. Closing the gap, or establishing that no result fits our
+> hypotheses, is open work.
 
 **Step 7 — new. Decide the tie-break policy (§2.10, `U17`).**
 > **D7 — new.** `S₁₃` is not unique at the programme's own floor (8.1e-3 nats on seed 9). Choose:
@@ -739,7 +762,7 @@ charter. Every one is hours on the instance, which ★6 has lifted in full (FRAM
 | N4 | The criterion maps and the `M` they move | **changed** — no longer three maps; the `ε = 0` map is FRAME §10 Q8's transportation LP and belongs to optimization. Economic theory computes only the **menu rows** (§2.9) | D2 | the menu is flat within `5e-3` nats ⇒ FRAME §3's binding tolerance is not binding and **U12** closes for free |
 | N5 | Core test on the surplus game `f` | **changed** — use `deng1999` integrality, not the balancedness LP; and report the **least core** (`kern2003`), not a binary verdict | whether any coalition-proof selection exists | the least-core excess is *large* ⇒ §2.6's claims framing is the honest one. Small ⇒ report the number and move on. Scope with `goemans2004` |
 | N6 | Exact Shapley value of all 111 on `f`, top-13 vs delivered roster | **kept, cheapened** — `littlechild1973` + additivity, `O(#zips · n log n)`, no sampler | D4 | large disagreement ⇒ the welfare-optimal roster is not the attribution-defensible one. Expect *small* disagreement: books are near-disjoint, so `φ_i(f) ≈ S_i(Z)` |
-| **N7** | **new** — `EG^bal_{S₁₃}(δ)` and its duals `μ_i^±` on `δ ∈ {0.0078, 0.02, 0.05, 0.10, 0.33}`, with `ν_i = μ_i^+ − μ_i^-` per rep | new; this is `LENS_GROMOV` **U13/U14** and the single most decisive number in the file | D2, D3, §3 statements 1 and 6 | `EG^bal(δ) − V ≤ 5e-3` for every plausible `δ` ⇒ **the premium is soft inside the band, A1's redraw is decorative, and the charter hands the problem to A5** |
+| **N7** | **new** — `EG^bal_{S₁₃}(δ)` and its duals `μ_i^±` on `δ ∈ {0.009970 (δ₀), 0.02, 0.05, 0.10, 0.33}`, with `ν_i = μ_i^+ − μ_i^-` per rep | new; this is `LENS_GROMOV` **U13/U14** and the single most decisive number in the file | D2, D3, §3 statements 1 and 6 | `EG^bal(δ) − V ≤ 5e-3` for every plausible `δ` ⇒ **the premium is soft inside the band, A1's redraw is decorative, and the charter hands the problem to A5** |
 | **N8** | **new** — at each `δ`: the number of reps whose band binds, and the sign of `ν_i` | new | whether the equilibrium reading is "CEEI" (all `ν_i = 0`) or "CEEI with personalised prices" (§2.8) | all `ν_i = 0` at the sponsor's `δ` ⇒ §2.8 collapses to §2.2, price anonymity is restored, and **Varian 1974**'s envy argument is back in force. This is the *good* case and it is one read of the dual vector |
 | **N9** | **new** — the proportionality gap `u_i(A_{σ(i)}) − u_i(Z)/k` per selected rep, at the delivered draw and at each `δ` | new; §2.8's first-casualty row | whether FRAME §3's "do not starve anybody" is satisfied or is in conflict with the balance requirement | any rep below proportionality at the sponsor's `δ` ⇒ the two stated business goals conflict, and the sponsor must be told before signing |
 | **N10** | **new** — the size of the `c2·T_z` coupling: how far `u_i` is from homogeneous in `S_i`, i.e. P-G3 | new; §2.7(c) | whether P-G1's `G`-invariance of the map is a statement about the model the programme runs, or only about a nearby one | coupling material ⇒ P-G1 must not be quoted for the current `u_i`, and the design fix (normalised profile × audited magnitude) becomes a *requirement*, not an option |
@@ -914,10 +937,12 @@ Q1–Q8 keep [pred]'s numbering; Q9–Q12 are new.
     option or a requirement. *(Programme.)*
 11. **new — Does the programme accept the ★`fotakis2014` scope correction? (D6.)** Four files
     currently carry an impossibility that, on inspection, has hypotheses (anonymity; reported
-    locations) the A1 formulation does not satisfy. Correcting it weakens the "books enter at
-    stage 2 only" invariant to a generic Gibbard–Satterthwaite argument — which is honest, and
-    which removes a false blocker from A1. *(Programme, then user, because it changes a settled
-    item's stated reason.)*
+    locations) the A1 formulation does not satisfy. Correcting it leaves the "books enter at
+    stage 2 only" invariant with **no cited basis** — an open citation gap, not a weaker
+    citation; the "generic Gibbard–Satterthwaite" fallback an earlier draft named here is
+    withdrawn with it (★8, 2026-09-05). This removes a false *blocker* from A1 but **no part of
+    the underlying misreporting exposure**, which is unchanged and still unaddressed.
+    *(Programme, then user, because it changes a settled item's stated reason.)*
 12. **new — What is the tie-break policy? (D7, U17.)** `S₁₃` is not unique at `5e-3` nats.
     Disclose the tie-break and report the near-optimal set, or randomise. Recommend the former on
     FRAME §2 and `smith2000` grounds, but it is a decision and it must be made *before* a roster

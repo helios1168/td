@@ -96,9 +96,13 @@ channel_note §5.1 (open); this file's and `CLAUDE.md`'s ~5%/90% lines are corre
 commit; FINDINGS §4C/C6's "α ≈ 0.9 expected" is stale — measured α ≈ 0.6. Then C4 → the
 stage-2 rescore of the cells. **The new decision: at 42% saturation, does stage 1 get to
 see books?** The value on the table says yes (~3.7 nats); FINDINGS §9-G's invariant
-("books enter at stage 2 only", fotakis2014) says no — and `score_draws` already breaches
-it mildly. Audited system-of-record books (per §9-G) are the likely escape; needs the
-user's call.
+("books enter at stage 2 only") says no — and `score_draws` already breaches
+it mildly. That invariant was cited here to `fotakis2014`; on 2026-09-05 the citation was
+withdrawn as an over-read (★8, its anonymity and location-report hypotheses do not hold
+here) and **nothing has replaced it — the basis is now an open citation gap**. The invariant
+is held as a prudential choice, and the misreporting exposure it guards against is
+undiminished by the withdrawal. Audited system-of-record books (per §9-G) are the likely
+escape; needs the user's call.
 
 **Earlier — 2026-09-01: FINDINGS §9-A1 is done — the territory map is a power
 diagram, and its duals are certificate 4.** Head `72e5f07`, **pushed to

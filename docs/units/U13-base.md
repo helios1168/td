@@ -6,7 +6,7 @@ Construction is independent; placing the point on the frontier needs U8-band.
 
 ## Spec (verbatim from `docs/APPROACHES.md` §A3 and `docs/LENS_GROMOV.md` M11.3)
 
-> **The map** at state grain: contiguous groups of states accumulated to ≈ 1/13 of `M`, by a
+> **The map** at state grain: contiguous groups of states accumulated to ≈ 1/18 of `M`, by a
 > stated greedy rule (largest remaining neighbour first) so the construction is reproducible
 > rather than literally by hand. States above the band must be split; the rule for splitting
 > (by metro or by zip3) is part of the charter and must be written down.
@@ -19,9 +19,11 @@ Construction is independent; placing the point on the frontier needs U8-band.
 ## Files owned
 
 `tools/baseline/state_grouped.py` · `tests/test_state_grouped.py` · `docs/MODEL_U13-base.md`
-(the construction rule written down *before* the code, including the split rule for TX at 11.5%
-of `M` — zip3 is the only grain the instance carries) · `docs/CODEVERIFY_U13-base.md` ·
-`battery/results/u13_base_<date>/` · `figures/u13_base/` (the baseline map, tracked).
+(the construction rule written down *before* the code, including the split rule for TX — v1
+measured TX at 11.5% of `M` on the 1,229-zip instance; that number must be **re-measured on the
+live 3,748-zip instance**, do not assume it carries over — zip3 is the only grain the instance
+carries) · `docs/CODEVERIFY_U13-base.md` · `battery/results/u13_base_<date>/` ·
+`figures/u13_base/` (the baseline map, tracked).
 
 ## Files forbidden
 
@@ -30,22 +32,29 @@ Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/AP
 (`channel.stage2`, `channel.balance_report`, `tools/measure/premium.measure` by import only) ·
 `battery/figures/`.
 
+**Tooling.** `cat`/`head`/`tail`/`sed`/`awk`/`grep` on a file are blocked by the
+`enforce-file-tools.sh` hook — use `Read`/`Edit` and the Serena symbol tools instead
+(`RUNS_PLAN.md:83-89`).
+
 ## Agent → verifier
 
-`python-typed` → `code-verify` (launch from a session started in `.claude/worktrees/A1`).
+`python-typed` → `code-verify` (launch from a session started on `main`).
 
 ## Acceptance
 
 1. The greedy rule and the split rule stated in `MODEL_U13-base.md` such that a second
-   implementation would produce the same buckets; state adjacency from the gazetteer
-   (`td/geo.py`) or a written adjacency table under the artifacts.
+   implementation would produce the same buckets; the greedy rule's starting seed (which state
+   the accumulation begins from) stays **pluggable** — per the A12 decision (2026-09-05), the
+   sponsor's hand-drawn-states call is being taken in a separate session and this unit must not
+   hard-code its outcome; state adjacency from the gazetteer (`td/geo.py`) or a written adjacency
+   table under the artifacts.
 2. The baseline's `to_district`, its roster by the top-book rule with the conflict rule, and the
    scores: `M`-spread and max deviation `δ_base`, `V` via `channel.stage2` **and** `V` at the
    top-book roster (they differ; report both), `P` via `tools/measure/premium.measure`, the
    realised-gain spread `D(g)`.
 3. The comparison the lens asks for: the point `(δ_base, V_base)` against the delivered
-   `(0.0039, 59.9375)` and, when U8 exists, against `EG^bal_{S₁₃}(δ_base)` — i.e. how far below
-   the frontier the baseline sits at its own band.
+   `(0.009970, 95.755192)` and, when U8 exists, against `EG^bal_{S₁₈}(δ_base)` — i.e. how far
+   below the frontier the baseline sits at its own band.
 4. A0's kill verdict line, filled in: does A3 tie or beat the committed draw on `V` within 5e-3
    nats? (APPROACHES §A0 "Kill experiment".)
 5. Tests on a synthetic 6-state / 20-zip instance where the greedy buckets are computed by hand;
@@ -53,9 +62,12 @@ Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/AP
 
 ## Numbers to compute first
 
-`δ_base` (expected to fail the ±10% band at state grain — FRAME §6: TX 11.5% vs 7.7% target —
-which is why the split rule must be written) · `V_base` at both rosters · `P_base` share ·
-`D(g)_base`.
+`δ_base` (expected to fail the ±10% band at state grain — FRAME §6 (v1): TX 11.5% vs a 7.7%
+target; on v2 the target tightens to **5.56%** (1/18 of `M`), so the state-grain failure is
+**strictly worse** than v1 anticipated. TX's 11.5% was measured on v1's 1,229-zip instance and
+must be **re-measured on the live 3,748-zip instance** before it can be quoted on v2 — no v2 TX
+number exists yet, do not invent one — which is why the split rule must be written) · `V_base`
+at both rosters · `P_base` share · `D(g)_base`.
 
 ## Inputs to read (paths and sections only)
 
@@ -70,7 +82,7 @@ None; A3's charter says the split rule is the track's to write down, and this un
 
 ## Branch
 
-`wt/A1` (or `wt/U13-base` from `wt/A1`)
+`main` (or `wt/U13-base` from `main`)
 
 ## Stop rule
 

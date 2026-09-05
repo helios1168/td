@@ -547,9 +547,15 @@ follow.
   Already at 2 facilities, deterministic SP approximation grows with n.
 - **fotakis2014** — Fotakis & Tzamos, *ACM TEAC* 2(4), 2014, DOI 10.1145/2665005
   (ICALP 2013). `[frontier]` `[contradicts-or-sharpens]` **k ≥ 3 facilities: deterministic
-  anonymous strategyproof mechanisms have unbounded approximation.** At k=13, a
-  strategyproof center-based draw does not exist at any price — stage 1 must not read
-  reports (it doesn't; make it an invariant).
+  anonymous strategyproof mechanisms have unbounded approximation.** **Scope, corrected
+  2026-09-05 (★8):** the theorem's hypotheses are *anonymity*, a **location** report on a
+  line/metric, and a location-vector output. Our draw satisfies none of them — it is
+  rep-indexed, the reported type is a per-agent measure over 1,229 zips entering an objective,
+  and the output is a partition plus a roster. This entry therefore does **not** license the
+  reading earlier revisions of this file took from it ("at k=13 a strategyproof center-based
+  draw does not exist at any price — stage 1 must not read reports"). It positions the
+  strategic question; it does not settle it. What *does* license the §9-G invariant is an
+  **open citation gap** — see §9-G.
 - **pegden2017** — Pegden, Procaccia, Yu, arXiv:1710.08781. `[frontier]` I-cut-you-freeze:
   guarantees from strategic districting agents *without* truthful elicitation — the
   protocol-design alternative if the channel ever has contending factions.
@@ -1083,9 +1089,18 @@ Recommended resolution path, in order:
 
 ### G. Incentives and governance (before reps see the model)
 
-- Make **"books enter at stage 2 only"** an explicit design invariant in `docs/MODEL.md`
-  (fotakis2014 makes any report-reading stage 1 unfixable at k=13). Our current design is
-  right by accident; write it down.
+- Make **"books enter at stage 2 only"** an explicit design invariant in `docs/MODEL.md`. Our
+  current design is right by accident; write it down. **Its basis is an open citation gap
+  (★8, 2026-09-05).** This bullet used to read "(fotakis2014 makes any report-reading stage 1
+  unfixable at k=13)". That was an over-read — `fotakis2014`'s anonymity and location-report
+  hypotheses do not hold here (§4A) — and the attribution is withdrawn. **Nothing has been put
+  in its place, and the concern it was invoked for is untouched:** the 98/111 losing majority
+  still has maximal inflation incentive (next bullet), and a Nash-welfare-maximising rule
+  admits no mechanism even under the weakest sensible incentive relaxation
+  (`LIT_economic-theory` A1-Q4, non-obvious manipulability). Losing the citation removes a
+  justification, not the exposure. The invariant therefore stands as a **prudential design
+  choice pending a citation**, not as a theorem; finding a result whose hypotheses our draw
+  actually meets — or establishing that none exists — is open work.
 - **Separate retention from reported books**: compute selection from audited system-of-record
   revenue; use reports only within-retained — the 98/111 losing majority currently has
   maximal inflation incentive, and roth1986 gives no invariance cover.

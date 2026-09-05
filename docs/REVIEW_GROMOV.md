@@ -38,9 +38,14 @@ continuity tilt; at 30% it would not be" — is crossed by the aggregate. Conseq
   "derived rather than assumed"; correct CLAUDE.md's sizing line; correct FINDINGS C6's
   α-expectation (ghodsi2018 near-tightness claim weakens at α ≈ 0.6).
 - **A tension the recon didn't flag:** at 42% saturation the pressure to make stage 1
-  book-aware is large, but §9-G's invariant ("books enter at stage 2 only", fotakis2014)
-  pushes the other way — and `score_draws`/F6 already breach it mildly by selecting maps on
-  book-derived value. Decision needed; audited system-of-record books (per §9-G) are the
+  book-aware is large, but §9-G's invariant ("books enter at stage 2 only") pushes the other
+  way — and `score_draws`/F6 already breach it mildly by selecting maps on
+  book-derived value. *Scope note, 2026-09-05 (★8):* this bullet originally attributed that
+  invariant to `fotakis2014`; the attribution was an over-read and is withdrawn, and **no
+  replacement source has been established — the invariant's basis is an open citation gap.**
+  The tension above is unchanged by that, because losing a justification is not the same as
+  losing the misreporting risk it was cited against. Decision needed; audited
+  system-of-record books (per §9-G) are the
   likely escape. The certified draw itself is untouched — Prop. equal is about the common
   measure M.
 

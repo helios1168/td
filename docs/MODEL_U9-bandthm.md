@@ -847,10 +847,14 @@ Which FRAME §5 gaps and §6 bounds break these results, and how each degrades.
    minimisation are reported beside it. **Report `s_min`, the tight set, and the gauge width.**
 
 6. **The split count is worthless without the split masses.** `MODEL_U1-cert` P3c: at 12 splits
-   the a-priori value bound is already `+∞`; at 25 it is more so. And the split *set* is
-   vertex-dependent under the band exactly as it was without it (§4.7: 5–6 distinct split sets at
-   the same `g*`). Degrades: a bare "`≤ 25` splits" is a true sentence that supports no claim.
+   the a-priori value bound is already `+∞`; at the live v2 instance's a-priori `2k−1 = 35`
+   (`k = 18`) it is more so. And the split *set* is vertex-dependent under the band exactly as it
+   was without it (§4.7: 5–6 distinct split sets at the same `g*`). Degrades: a bare "`≤ 35`
+   splits" is a true sentence that supports no claim — and the a-priori cap is **loose**: the v2
+   manifest records the sharp per-vertex cap `k−1+t = 33` at `δ_0` (`t = 16` tight bands) and a
+   *measured* split count of `24`.
    **Quote `|F| ≤ k−1+t`, `M(F) < g_min`, and the direction of the chain** (`VERIFY_U1-cert` §5).
+   *(This item was written at v1's `k = 13`, where the corresponding figures were `25` and `12`.)*
 
 7. **A `time_limit` or a nonzero `mip_rel_gap` is not a bound (P5.6, traps 12 and 15).** The
    whole architecture rests on P5.1, which is about the master's *optimum*. Degrades: a reported
@@ -973,9 +977,14 @@ questions.
    and to U4-disp's displacement metric. Flagged, not pursued; it is not this unit's.
 6. **`budish2013`'s bihierarchy test.** `LIT_optimization` §0 records that our band is a
    *weighted* per-agent constraint and therefore outside the bihierarchy class, so §2.13's
-   325-binary rounding MIP is not avoidable by a decomposition theorem. I did not re-derive that;
-   it is a citation and it bears directly on whether P3-split's `≤ 25` splits can be rounded for
-   free. `math-verify` may wish to confirm the class membership claim.
-7. **The real instance's `t`** — how many of the 13 agents are band-tight at the optimum — decides
-   whether the split bound is nearer `12` or `25`, and whether the gauge of P2b is degenerate.
-   One line off U8's first solve; deliberately not computed here.
+   rounding MIP is not avoidable by a decomposition theorem. At the live v2 instance (`k = 18`)
+   that MIP is `≤ 630` binaries and `36` rows; the `325` written here originally is v1's `k = 13`.
+   I did not re-derive the class membership; it is a citation, and it bears directly on whether
+   P3-split's splits — a *measured* `24` at `δ_0`, against the loose a-priori `≤ 35` — can be
+   rounded for free. `math-verify` may wish to confirm the class membership claim.
+7. **The real instance's `t`** — how many of the `k` agents are band-tight at the optimum — decides
+   where the split bound sits between `k−1` and `2k−1`, and whether the gauge of P2b is degenerate.
+   Written here as "one line off U8's first solve, deliberately not computed"; **it has since been
+   computed on v2**: `t = 16` at `δ_0`, hence the sharp per-vertex cap `k−1+t = 33` against the
+   a-priori `2k−1 = 35`, with a measured split count of `24`. *(At v1's `k = 13` the question was
+   `12` vs `25`.)*

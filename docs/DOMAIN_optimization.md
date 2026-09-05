@@ -59,10 +59,10 @@ new lens changed or added are restated here.
 | lens construct (file §) | becomes | or "no counterpart, because" |
 |---|---|---|
 | **`EG^bal_S(δ)`** — band-constrained fibre (GROM M8, U13) | a **concave program over a polyhedron**: the same objective as `EG_S` with `2k` extra linear rows. Concavity untouched (**BoydVandenberghe2004**); Slater holds at every `δ ≥ 0` via `x ≡ 1/k` (**BoydVandenberghe2004** §5.2.3), so strong duality and multiplier existence hold (**KuhnTucker1951**, **Rockafellar1970**) | — |
-| **the frontier `δ ↦ EG^bal_{S₁₃}(δ)`** (GROM M11.1, U13) | the **perturbation / optimal-value function** of a concave program with an affine right-hand side in `δ`: concave and nondecreasing in `δ`, with the band multipliers as its supergradient (**Rockafellar1970**, **BoydVandenberghe2004** §5.6, **KuhnTucker1951**). Traced by parametric programming with warm-started dual simplex (**Chvatal1983**, **Dantzig1963**, **Bixby2002**) | the *elicitation* of the sponsor's `δ` is a business act, not an optimisation |
+| **the frontier `δ ↦ EG^bal_{S₁₃}(δ)`** (GROM M11.1, U13) | the **perturbation / optimal-value function** of a concave program with an affine right-hand side in `δ`: concave and nondecreasing in `δ`, with the minimised, gauge-reduced band-dual aggregate `(T/k)Σ_i|ν_i|` as its supergradient (**Rockafellar1970**, **BoydVandenberghe2004** §5.6, **KuhnTucker1951**). Traced by parametric programming with warm-started dual simplex (**Chvatal1983**, **Dantzig1963**, **Bixby2002**) | the *elicitation* of the sponsor's `δ` is a business act, not an optimisation |
 | **band duals `μ_i^±`** as the balance↔continuity exchange rate (GROM M11.2, U12→U14) | **KKT multipliers on a resource row**, i.e. shadow prices in nats per unit of `M` (**KuhnTucker1951**, **GaleKuhnTucker1951**, **Chvatal1983** on ranging). Their aggregate *is* the frontier's slope, so the exchange rate and the frontier are one object seen twice | — |
-| **"which zips move first as `δ` crosses `δ*`"** (GROM M12) | the **active set** of the modified bang-per-buck comparison `u_i(z)/(p_z + ν_i M_z)`, read off one solve by complementary slackness (**KuhnTucker1951**); the *mass* that moves is a transportation distance (**Hitchcock1941**, **Ahuja1993**) | — |
-| **U15** — does the band change the `≤ k−1` split count? | a **rank/vertex-support question on the optimal face**. At most one band row per agent is tight, so the coarse count goes `≤ k` → `≤ 2k`; the surviving budget dependency gives `≤ 2k−1` `[claim, §2.10]`. Its consequence is a **value** bound, not a count (**Schrijver1986** for the TU intuition, which does *not* apply here — the gain rows are not TU) | — |
+| **"which zips move first as `δ` crosses `δ*`"** (GROM M12) | the **active set** of the modified bang-per-buck comparison `u_i(z)/g*_i − ν_i M_z`, read off one solve by complementary slackness (**KuhnTucker1951**); the *mass* that moves is a transportation distance (**Hitchcock1941**, **Ahuja1993**) | — |
+| **U15** — does the band change the `≤ k−1` split count? | a **rank/vertex-support question on the optimal face**. At most one band row per agent is tight, so the coarse count goes `≤ k` → `≤ 2k`; the surviving budget dependency gives the unconditional `≤ 2k−1`, which supersedes it `[verified, §2.10]`. Its consequence is a **value** bound, not a count (**Schrijver1986** for the TU intuition, which does *not* apply here — the gain rows are not TU) | — |
 | **U16 / U19** — roster enumeration and `max_S EG^bal_S` | a **branch-and-bound over `k`-subsets with a closed-form bound** (§2.14): `EG_S ≤ k log((B_tot + w·P_S)/k)` by concavity of `log` (**BoydVandenberghe2004**), with `P_S` from the max-`k`-coverage MILP (**LandDoig1960**, **NemhauserWolsey1988**) and near-optimal rosters enumerated by no-good cuts (**CodatoFischetti2006**) | the *submodularity* question the lens asks about `S ↦ EG^bal_S` — **Schrijver2003** covers submodular *set functions*, not this composition; it is a §6 item |
 | **U17** — Nash-tie fragility of `S₁₃` (8.1e-3 nats on seed 9) | the **stability radius of an optimal assignment**: how far the cost matrix moves before the optimal permutation changes — objective-coefficient ranging (**Chvatal1983**) on a linear assignment problem (**Kuhn1955**, **GaleKuhnTucker1951**). The margin is computed exactly by `k` re-solves, each forbidding one matched edge | the *reporting* convention (margin, or an interval over near-optimal rosters) is partly a statistics question — §7 |
 | **U18** — the rounding gap at the sponsor's `δ` | a **tiny mixed-integer program on the split set only**: `≤ 2k−1` units × `k` buyers, concave separable objective, `2k` band rows — the tractable convex-MINLP class (**Kronqvist2018**, **GuptaRavindran1985**, **Bonami2012**), or equivalently one RINS neighbourhood (**Danna2005**) | — |
@@ -143,11 +143,39 @@ rather than a hopeful sample.
 **Chvatal1983**, **GaleKuhnTucker1951**.)*
 
 Unchanged in substance. What the new work adds is a **better input**: the band duals of §2.12 are
-denominated in nats per unit of `M` and the set of first-moving zips (§2.12) is a displacement by
-construction, so U4-disp has a concrete object to measure rather than a price vector to interpret.
+denominated in nats per unit of `M`, so U4-disp has a concrete quantity to measure rather than a
+price vector to interpret.
+
+**Correction (2026-09-05, v2).** This section previously read "the set of first-moving zips (§2.12)
+**is a displacement by construction**". **That clause is withdrawn — it is falsified on v2.**
+`MODEL_U8-band` §9.7 finding 5 records degeneracy at *every* reported `δ` (support `1240`–`1249`
+against an expected `1241`–`1253`, "so every `ν` … is one dual optimum"), and §10.6 repeats it on
+v2 (support `3773` against an expected `3781`). `ν` is therefore one dual optimum among many; and
+since `p` and the individual `ν_i` both sit on `VERIFY_U9-bandthm` §10.E's **non-invariant** list —
+against `g*` and the value `φ`, which are invariant — **no first-mover list may be named from `ν`
+alone.** The list is a function of exactly the two objects that are not invariant.
+
+**What survives and what does not.** Degeneracy destroys the dual's **interpretive** content while
+leaving its **bound-producing** content intact, because weak duality holds at *any* dual-feasible
+point, optimal or not. So §2.10's certificate and §2.11's one-solve slope bound are untouched; what
+is lost is only the reading "this list *is* a displacement". **The first-mover notion is not
+worthless** — it remains a legitimate **illustration** of where the band bites and is the right
+thing to put in front of a sponsor — but it is **not a proof object**, and nothing conditional on
+it may be certified.
+
+**The gap this leaves, recorded and not resolved.** `MODEL_U8-band` §10.6 asserts that the 25-zip
+near-tie *set* — R0008/R0021's closest zips, `Σ M = 33.09` = `0.39 %` of `T`, `n_exact_ties = 0` —
+"is the defensible object". **That is itself an assertion about one `ν`.** Nothing proves the set
+invariant over the dual-optimal face; the `25` is a report cap on a ranking, not a measured set
+size; and the LP that could test the face — `VERIFY_U9-bandthm` §10.A's dual-optimal-face LP, which
+as specified minimises the *slope* over that face rather than testing set invariance — **was not
+run** (`MODEL_U8-band` §9.7 finding 6). No computation of any kind has been performed over the
+dual-optimal face. **This plan records that gap; it does not close it.**
+
 The modulus `objective-gap ≥ φ(mass moved)` is still neither cited nor proved
-(`MODEL_U1-cert` §8.5). **Failure mode unchanged:** without the modulus, displacement is
-descriptive and acceptance stays in nats.
+(`MODEL_U1-cert` §8.5). **Failure mode, now doubled:** without the modulus, displacement is
+descriptive and acceptance stays in nats; and without face-invariance, the *object* a modulus would
+be applied to is not pinned either.
 
 ### 2.5 The `(premium, balance)` frontier — **changed: the object survives, the method is replaced**
 
@@ -189,7 +217,8 @@ The predecessor's own gate — "run `P₀` vs `P*(A)` before writing any neighbo
 the committed map, and the map gap is not reachable by local swaps that respect the band. What
 survives: **Danna2005**'s RINS *as the rounding repair* in §2.13 (fix the `≥ n − 2k + 1` units the
 `EG^bal` vertex assigns integrally, solve the rest exactly), and **FischettiLodi2003** local
-branching only if that reduced solve is itself too large — which at `≤ 25` free units it is not.
+branching only if that reduced solve is itself too large — which at v2's **measured `24`** free
+units (a-priori cap `2k−1 = 35`, sharp per-vertex cap `k−1+t = 33` at `δ_0`; §2.13) it is not.
 **FischettiGloverLodi2005**'s feasibility pump remains explicitly unnecessary: three feasible
 incumbents exist.
 
@@ -255,12 +284,14 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
   So the band turns the common price `p_z` into an **agent-specific effective price**
   `q_{zi} = p_z + ν_i M_z`: an agent pressed against its upper band pays a surcharge proportional
   to a zip's opportunity content, one pressed against its lower band receives a subsidy. The
-  bang-per-buck / MBB reading of the unconstrained program survives intact with `q` in place of
-  `p` (**KuhnTucker1951**). Multiplying by `x_{zi}` and summing gives the modified budget identity
+  bang-per-buck / MBB reading of the unconstrained program survives as the inequality above, not
+  as the ratio `u_i(z)/q_{zi}` — the correct comparison is `u_i(z)/g*_i − ν_i M_z` against `p_z`
+  (§2.12) (**KuhnTucker1951**). Multiplying by `x_{zi}` and summing gives the modified budget identity
   `Σ_z p_z x_{zi} = 1 − ν_i m_i`, and summing over `i`, `Σ_z p_z = k − Σ_i ν_i m_i`. `[claim;
   math-verify]` Strong duality and multiplier existence hold at every `δ ≥ 0` because `x ≡ 1/k` is
-  feasible with all `g_i > 0` (P1b) and lies in the relative interior of the band for `δ > 0`
-  (**BoydVandenberghe2004** §5.2.3). The dual value at *any* `(p, μ^±) ≥ 0` is a valid upper bound
+  feasible with all `g_i > 0` (P1b); every constraint is affine, so the refined Slater
+  condition needs only a feasible point in the relative interior of the objective's domain,
+  giving multipliers at `δ = 0` too (**BoydVandenberghe2004** §5.2.3). The dual value at *any* `(p, μ^±) ≥ 0` is a valid upper bound
   by weak duality, so the certificate is `O(nk)`-checkable without a solver, exactly as
   `cert_power_diagram` already is (**Khachiyan1980**).
 
@@ -268,17 +299,22 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
   - *Coarse (rank on the unrestricted face).* At most one of the two band rows per agent is tight
     at any point with `δ > 0`, so the optimal face is described by `n` supply rows, `k` gain rows
     and `≤ k` tight band rows; a vertex has `≤ n + 2k` nonzeros, every unit has `≥ 1`, hence
-    **`≤ 2k` split units**. `[claim]`
+    **`≤ 2k` split units** — superseded by the unconditional `≤ 2k−1` below
+    (`VERIFY_U9-bandthm` §4). `[claim, superseded]`
   - *Sharp (the MBB-restricted face, P3a's argument).* On the face cut out by the modified MBB
     support, the supply rows and the modified budget rows, the identity
     `Σ_z p_z·(supply)_z − Σ_i (budget)_i = k − Σ_i ν_i m_i − Σ_z p_z = 0` still contains no `x`
     (the `m_i` are constants on that face: tight bands are pinned, slack bands have `ν_i = 0` by
-    complementary slackness), so one dependency survives and the count is **`≤ 2k−1`**. `[claim;
-    this is `LENS_GROMOV` U15's prediction, with the argument written out]`
-  - *Consequence, and the trap.* At `k = 13` that is `≤ 25` split units of 1,229 — still tiny —
-    but P3b's value bound scales with `M(F)`, and its a-priori form was already vacuous at 12
-    splits (`M(F)/g_min = 2.41 > 1`, `MODEL_U1-cert` P3c). At 25 it is more vacuous. **Never quote
-    the count without the measured split masses** (`MODEL_U1-cert` failure mode 9).
+    complementary slackness), so one dependency survives and the count is **`≤ 2k−1`**.
+    `[verified, unconditional; VERIFY_U9-bandthm §4 — 440 certified vertices, the `−1` does not
+    depend on this face]`
+  - *Consequence, and the trap.* At the live v2 instance (`k = 18`, `n = 3,748`) the a-priori cap
+    is `≤ 35` split units — but it is **loose**: the v2 manifest's sharp per-vertex cap `k−1+t` is
+    `33` at `δ_0` (`t = 16` tight bands) and the *measured* split count there is `24` of 3,748 —
+    still tiny. P3b's value bound scales with `M(F)`, and its a-priori form was already vacuous at
+    12 splits (`M(F)/g_min = 2.41 > 1`, `MODEL_U1-cert` P3c); at 24, more so. **Never quote the
+    count without the measured split masses** (`MODEL_U1-cert` failure mode 9).
+    *(Historical: at v1's `k = 13`, `2k−1 = 25` of 1,229.)*
 
 - **Assumptions, against FRAME §5/§6.**
   | assumption | met? |
@@ -332,8 +368,10 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
 
 - **Shape facts, free before any solve.** `δ ↦ EG^bal(δ)` is **nondecreasing** (the feasible set
   grows) and **concave** (the value function of a concave maximisation with a right-hand side
-  affine in `δ`; **Rockafellar1970**). Its supergradient at `δ` is
-  `(T/k)·Σ_{i∈S} (μ_i^+ + μ_i^-)` — the aggregate band dual. Three consequences the plan uses:
+  affine in `δ`; **Rockafellar1970**). `(T/k)·Σ_{i∈S} (μ_i^+ + μ_i^-)` is **a** supergradient at
+  `δ`, for any optimal dual; the quotable value is the **minimised**, **gauge-reduced**
+  `(T/k)Σ_i|ν_i|` — at `δ = 0` the unminimised form is unbounded, and a loose minimisation
+  yields an **invalid** supergradient. Three consequences the plan uses:
   1. **One solve bounds the whole curve.** From any `δ` with slope `s(δ)`, concavity gives
      `EG^bal(δ') ≤ EG^bal(δ) + s(δ)·(δ' − δ)` for every `δ' > δ`. **So a single solve at `δ_0`
      plus its duals can *prove* softness at the sponsor's `δ`** if
@@ -414,17 +452,37 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
   mass as a transportation quantity).
 
 - **The exchange rate.** `ν_i = μ_i^+ − μ_i^-` is in **nats of `Σ log g` per unit of `M`**, and
-  `(T/k)Σ_i(μ_i^+ + μ_i^-)` is the frontier's slope at `δ`. This converts the sponsor question
+  the **minimised**, **gauge-reduced** `(T/k)Σ_i|ν_i|` is the frontier's slope at `δ` (§2.11).
+  This converts the sponsor question
   from "how much continuity would you trade for balance?" (unanswerable, never elicited, FRAME §3)
   into "at `δ = 5 %` the marginal territory-dollar of balance costs `X` nats of continuity — is
   that the right `δ`?" (answerable). **A computed shadow price is not a business decision**; the
   decision stays with leadership (§7).
 
-- **Which zips move first.** At the optimum, `supp(X) ⊆ argmax_i u_i(z)/(p_z + ν_i M_z)`. Rank
-  zips by the margin `max_i u_i(z)/q_{zi} − second-max_i u_i(z)/q_{zi}`: the near-ties are the
+- **Which zips move first — an illustration, not a proof object.** At the optimum,
+  `supp(X) ⊆ argmax_i (u_i(z)/g*_i − ν_i M_z)`, and that maximum equals `p_z`. Rank zips by the
+  margin `max_i(u_i(z)/g*_i − ν_i M_z) − 2nd-max_i(u_i(z)/g*_i − ν_i M_z)`: the near-ties are the
   units whose owner flips first as `δ` moves, and the ranking is read off **one** solve by
-  complementary slackness, with no second solve (`LENS_GROMOV` M11.2). Their `M`-mass is a
-  displacement and is the natural input to U4-disp (§2.4).
+  complementary slackness, with no second solve (`LENS_GROMOV` M11.2).
+
+  **Correction (2026-09-05, v2).** This bullet previously closed: "Their `M`-mass **is a
+  displacement and is the natural input to U4-disp** (§2.4)". **That clause is withdrawn — it is
+  falsified on v2**; this sentence is the source from which §2.4, §5 row 4 and §8 Q3 inherited it,
+  and §2.4's correction box is the corrected statement. `MODEL_U8-band` §9.7 finding 5 records
+  degeneracy at *every* reported `δ` (support `1240`–`1249` against an expected `1241`–`1253`), and
+  §10.6 repeats it on v2 (support `3773` against an expected `3781`), so `ν` is one dual optimum
+  among many. The ranking above is a function of `p` and the individual `ν_i`, and **both sit on
+  `VERIFY_U9-bandthm` §10.E's non-invariant list** — against `g*` and the value `φ`, which *are*
+  invariant. So **no first-mover list may be named from `ν` alone**, and no `M`-mass read off one
+  may be handed to U4-disp as *the* displacement.
+
+  **What survives.** Degeneracy destroys the dual's **interpretive** content while leaving its
+  **bound-producing** content intact, because weak duality holds at *any* dual-feasible point,
+  optimal or not. §2.10's certificate and §2.11's one-solve slope bound are therefore untouched —
+  the slope is the *minimised, gauge-reduced aggregate* `(T/k)Σ_i|ν_i|`, not any individual `ν_i`.
+  **The first-mover notion is not worthless**: it remains a legitimate **illustration** of where the
+  band bites and is the right thing to put in front of a sponsor — but it is **not a proof object**,
+  and nothing conditional on it may be certified.
 
 - **Assumptions vs FRAME §5/§6.** Multiplier uniqueness is **not met**: the polytope is degenerate
   at a tight band (`MODEL_U1-cert` failure mode 5, P2.4's nondegeneracy caveat), so `ν` is one of
@@ -434,8 +492,9 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
   assumption: `M` is a trustworthy common measure (FRAME A4) — **unaudited**, and a regional bias
   biases `p` and `ν` together, invisibly.
 
-- **Produces.** U14; the sponsor question in answerable form; the first-mover list. **Cannot say:**
-  what `δ` should be.
+- **Produces.** U14; the sponsor question in answerable form; the first-mover list **as an
+  illustration** (above). **Cannot say:** what `δ` should be; nor which zips flip first as a matter
+  of fact, since that list is a function of one dual optimum (§2.4).
 
 - **Failure mode.** If the dual is degenerate and the first-mover list is not stable across the two
   solvers of §2.11, report the *intersection* of the two lists and flag the rest as
@@ -460,25 +519,36 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
   s.t. the band rows on the rounded district masses
   ```
 
-  with `|F| ≤ 2k−1 ≤ 25` and `≤ k` buyers each: **≤ 325 binaries, `2k` rows, separable concave
-  objective.** That is the tractable convex-MINLP class (**Kronqvist2018**), solvable by the OA
+  **Sizing, at the live v2 instance (`k = 18`, `n = 3,748`).** `|F| ≤ 2k−1 = 35` — the v2 manifest
+  records `split_cap_2k_minus_1: 35` — with `≤ k = 18` buyers each: **≤ 630 binaries, `2k = 36`
+  rows, separable concave objective.** The a-priori `35` is loose: the manifest's sharp per-vertex
+  cap `k−1+t` is `33` at `δ_0` (`t = 16` tight bands) and the *measured* split count there is `24`.
+  **Quote the measured count and its masses, never the cap** (`MODEL_U1-cert` failure mode 9).
+  *(Historical: at v1's `k = 13` these were `2k−1 = 25`, `325` binaries and `26` rows. Any bare
+  `25` or `325` elsewhere in this file, or in a brief quoting it, is a v1 figure and not current.)*
+
+  That is the tractable convex-MINLP class (**Kronqvist2018**), solvable by the OA
   master already written (**WesterlundPettersson1995**) or by NLP-based B&B
   (**GuptaRavindran1985**) in seconds, with `mip_rel_gap = 0.0` (trap 12). Equivalently it is one
   RINS neighbourhood around the fractional solution (**Danna2005**).
 
 - **The criterion (U18, `LENS_GROMOV` M13.1).** Let `γ(δ) := EG^bal_S(δ) − V(rounded, δ)`.
-  - `γ(δ_sponsor) ≤ 5e-3` nats (tier 2) ⇒ **no integer programming beyond this 325-binary repair
+  - `γ(δ_sponsor) ≤ 5e-3` nats (tier 2) ⇒ **no integer programming beyond this 630-binary repair
     is needed**; §2.1 stays retired, and A1's deliverable is "a few convex programs plus rounding"
-    with a certified gap. This is the expected case: the unconstrained analogue realised
-    `5.1e-4`–`1.9e-3` nats (`MODEL_U1-cert` §4.3), already inside tier 2.
+    with a certified gap. This is the expected case on **v1 evidence only**: the unconstrained
+    analogue realised `5.1e-4`–`1.9e-3` nats (`MODEL_U1-cert` §4.3) — a **v1, `k = 13`**
+    measurement with **no v2 counterpart** — already inside tier 2.
   - `γ(δ_sponsor) > 5e-3` and the reduced solve is already exact ⇒ the gap is **structural**, not a
     rounding artefact, and §2.1 fires: only a full rep-indexed integer model can close it. Record
     which of the two solvers produced the vertex, since `F` is vertex-dependent.
   - Report `γ` at **both** §2.11 solvers' vertices, and never quote a single-vertex `M(F)`
     (`MODEL_U1-cert` failure mode 9).
 
-- **Assumptions vs FRAME §5/§6.** `|F| ≤ 2k−1` — a `[claim]` from §2.10, and the method degrades
-  gracefully if it is wrong: `F` is whatever the solve returns and is measured, not assumed.
+- **Assumptions vs FRAME §5/§6.** `|F| ≤ 2k−1` is **not** an assumption here: §2.10 now carries it
+  as `[verified, unconditional; VERIFY_U9-bandthm §4 — 440 certified vertices]`. It enters only as
+  a sizing input, and even that is measured rather than assumed — `F` is whatever the solve
+  returns, and the numbers to quote are the sharp per-vertex cap `k−1+t = 33` at `δ_0` and the
+  measured `24`, not the a-priori `35` (`MODEL_U1-cert` failure mode 9).
   Feasibility of the rounding problem is **not guaranteed** at very small `δ` (a band tight enough
   may admit no integral map at all — the integer balance floor `t*` of `cert_integer_balance_floor`
   is exactly the obstruction, and it is the one certificate that did **not** collapse into the EG
@@ -593,8 +663,9 @@ cuts are exactly how §2.14 enumerates near-optimal rosters from the `P₁₃` M
 
 ## 3. Solution concept and how it is verified
 
-**An answer is:** a coverage `(π, σ)` — a partition of the 1,229 zips into 13 territories and an
-injection into the 111 wholesalers — that is **band-feasible at a stated `δ`**, together with
+**An answer is:** a coverage `(π, σ)` — a partition of the live v2 instance's `n = 3,748` zips into
+`k = 18` territories and an injection into the wholesaler pool (`111` at v1; the v2 pool size is
+**not re-checked here**) — that is **band-feasible at a stated `δ`**, together with
 
 1. a **nested sandwich**, each term computable and each labelled with what it is conditional on:
 
@@ -621,14 +692,15 @@ injection into the 111 wholesalers — that is **band-feasible at a stated `δ`*
 
 - **P1 under the band** — `EG^bal_S(δ)` upper-bounds every integral coverage with roster `S` whose
   districts respect the band. (Expected: immediate from P1 plus one feasibility check.)
-- **Concavity and monotonicity of `δ ↦ EG^bal(δ)`**, and that `(T/k)Σ_i(μ_i^+ + μ_i^-)` is a
-  supergradient — this is what licenses both the one-solve bound on the whole curve and the
+- **Concavity and monotonicity of `δ ↦ EG^bal(δ)`**, and that the **minimised**,
+  **gauge-reduced** `(T/k)Σ_i|ν_i|` is a supergradient (§2.11) — this is what licenses both the
+  one-solve bound on the whole curve and the
   bisection for `δ*`. **The single most load-bearing new claim.**
 - **Slater at every `δ ≥ 0`** via `x ≡ 1/k`, hence strong duality and multiplier existence.
 - **The modified budget identity** `Σ_z p_z x_{zi} = 1 − ν_i m_i` and the MBB reading under
   agent-specific prices `q_{zi} = p_z + ν_i M_z`.
-- **The split-unit count under the band** — `≤ 2k` coarse, `≤ 2k−1` sharp (U15). Both, separately;
-  the sharp one is a `[claim]` with the dependency argument written out in §2.10.
+- **The split-unit count under the band** — `≤ 2k−1` (verified, unconditional), which supersedes
+  the coarse `≤ 2k` (U15). The dependency argument is written out in §2.10.
 - **The screening bound (★)** `EG_S ≤ k log((B_tot + w·P_S)/k)`, including that `B_tot` is
   partition-invariant and that the inequality survives fractional `X`. Then the roster-free
   corollary at `P₁₃`.
@@ -724,12 +796,12 @@ U1-cert); rows 5, 7 and 8 survive and are placed below.
 | 0c | the Nash-tie margin of `S₁₃` on both draws | `k` Hungarian re-solves (**Kuhn1955**) | **U17**: `8.1e-3` nats is already known on seed 9; the margin must be attached to every `S₁₃`-conditional number before any of them is published |
 | 1 | **`EG^bal_{S₁₃}(δ_0)` and its band duals** | §2.11 primary route, one OA solve (**WesterlundPettersson1995**) | **U13's first point + U14 + D1′.** With the concavity slope it can *prove* softness over the whole plausible band in one solve, killing or confirming A1 outright |
 | 2 | the frontier on `{δ_0, 0.02, 0.05, 0.10, δ_max}` + bisection for `δ*` | ~8 warm-started solves (**Chvatal1983**, **Dantzig1963**, **Bixby2002**) + 2 SCIP cross-checks (**VigerskeGleixner2018**) | **U13** in full; the softness verdict against tier 2; the shape (concave-rising vs flat-then-jump) is itself a finding |
-| 3 | **`γ(δ_sponsor)`** — the band-aware rounding gap, in nats and in moved `M` | §2.13, ≤ 325-binary MIP (**Danna2005**, **GuptaRavindran1985**) | **U18** and **D2′**: decides whether any integer programming is built at all |
-| 4 | the first-mover zips at `δ*` and their `M`-mass | read off #1's duals (§2.12) | **U14**; the input to U4-disp and the sponsor conversation |
+| 3 | **`γ(δ_sponsor)`** — the band-aware rounding gap, in nats and in moved `M` | §2.13, a `≤ 630`-binary MIP at v2's `k = 18` (**Danna2005**, **GuptaRavindran1985**) — sized from the a-priori cap `2k−1 = 35`; the sharp per-vertex cap is `33` at `δ_0` and the *measured* split count is `24`, which is what gets quoted (`MODEL_U1-cert` failure mode 9) | **U18** and **D2′**: decides whether any integer programming is built at all |
+| 4 | the first-mover zips at `δ*` and their `M`-mass — **illustration only, not a certifiable object** | read off #1's duals (§2.12). The dual is degenerate at every `δ` (`MODEL_U8-band` §9.7 finding 5; §10.6 on v2), so this is **one** `ν` of many, and `p` and the individual `ν_i` are on `VERIFY_U9-bandthm` §10.E's non-invariant list | **U14** and the sponsor conversation. **Not** a displacement by construction (§2.4): no first-mover list may be named from `ν` alone, so U4-disp consumes it as an illustration, never as evidence. Invariance over the dual-optimal face is untested — §10.A's LP was not run |
 | 5 | `EG^bal_S(δ)` at the `P₁₃` roster and at every roster surviving (★) | §2.14, tens of solves | **U16**; bypasses `LENS_GROTHENDIECK` OQ3's non-convexity by a *bounded* enumeration |
 | 6 | the hand-drawn state-grouped baseline as a point `(δ, V)` | construct + evaluate | **U10** in its corrected form (`LENS_GROMOV` M11.3). The headline claim "better than what we'd have done anyway" is still unevidenced |
 | 7 | `EG_R` — the relaxation over all 111 reps | one solve, if (★) at `P₁₃` turns out loose | predecessor row 7; **(★) may make it unnecessary**, which is the cheaper outcome. Threshold recorded: useful only below `63.637` (`MODEL_U1-cert` §4.4) |
-| 8 | displacement between dots and cells | transportation solve (**Hitchcock1941**) | predecessor row 8, unchanged; converts a `4.66e-5`-nat non-decision into a first-order quantity |
+| 8 | displacement between dots and cells | transportation solve (**Hitchcock1941**) | predecessor row 8. **The "unchanged" note was stale:** the `4.66e-5`-nat non-decision this converts into a first-order quantity is a **v1, `k = 13`** figure with **no v2 counterpart** — it has not been re-measured at `k = 18`, `n = 3,748`. Re-measure before quoting it; until then the row states an intent, not a magnitude |
 
 ---
 
@@ -842,7 +914,7 @@ being "no" is itself a publishable-shaped finding that must be defensible. Write
 |---|---|---|
 | **The CEEI reading of the band multipliers** — in a competitive equilibrium with quantity constraints, is `ν_i` interpretable as a price the *sponsor* pays for balance, and is there a welfare-theoretic reading of "the first goods to move as a capacity band loosens"? (`LENS_GROMOV` OQ3, U12) | **economic-theory** | §2.12 computes the multiplier; what it *means* to an equal-entitlement market is not an optimisation question. `DOMAIN_economic-theory` §2.2 owns the EG/CEEI interpretation and does not yet have the constrained version. |
 | **Is `S ↦ EG^bal_S` near-modular over near-optimal rosters?** (`LENS_GROMOV` OQ4, U16/U19) | **economic-theory / optimization jointly** | §2.14 supplies a *valid* bound (★) that makes enumeration sufficient regardless; the structural question — why book disjointness (83 contested among 13) makes selection nearly separable — is a welfare-structure question. `/research-plan` arbitrates. |
-| **The audited-vs-reported book split; `G`-invariance of the *duals* rather than of the map; what `fotakis2014` forbids once books enter only one concave objective** (`LENS_GROMOV` OQ6, `LENS_GROTHENDIECK` §5b, FRAME §10 Q5) | **mechanism design / economic-theory** | Every method here is indifferent to which `S` it is handed. **Still the paper-shaped question in the file**, and now sharper: the exposure is one objective, not a MINLP. |
+| **The audited-vs-reported book split; `G`-invariance of the *duals* rather than of the map; and — since `fotakis2014` was withdrawn as the basis for "books enter at stage 2 only" (★8, 2026-09-05) with nothing put in its place — what, if anything, forbids a book-reading draw under *our* hypotheses** (`LENS_GROMOV` OQ6, `LENS_GROTHENDIECK` §5b, FRAME §10 Q5) | **mechanism design / economic-theory** | Every method here is indifferent to which `S` it is handed. **Still the paper-shaped question in the file**, and now doubly open: the exposure is one concave objective per roster, not a MINLP, *and* its basis is an open citation gap — the withdrawal removed a justification, not the misreporting risk. |
 | **The tie-report convention** — margin, interval over near-optimal rosters, or both; and what a data refresh actually perturbs (`LENS_GROMOV` OQ5, U17, U6) | **statistics / econometrics** | §2.15 computes the margin exactly. Whether `8.1e-3` nats is *close* depends on a noise floor that has never been measured (FRAME §10 Q4). |
 | **U5 / A4 — regional bias in `M`** | **data-science, then back here** | §2.8 needs a `δ` before it is anything but decoration, and `VERIFY_U1-cert` §6 confirms the bias is invisible to every certificate. |
 | **U12 — choosing `δ`** | **the sponsor** (via the user) | §2.11 draws the frontier and §2.12 prices the axis; only leadership picks the point. FRAME A6's operational-rule question is the same ask in different clothes. |
@@ -864,8 +936,14 @@ Numbering keeps the predecessor's Q3, Q4 and Q7 (referenced from `docs/units/*` 
 3. **Does §2.4's modulus exist?** *(unchanged, and still the plan's highest-leverage unknown for
    FRAME §3.5.)* Everything about acceptance in business units rests on
    `objective-gap ≥ φ(mass moved)`. §2.12 gives U4-disp a better input — duals in nats per unit of
-   `M`, and a first-mover list that *is* a displacement — but proves nothing. Either §6 Q9 returns
-   it, or a `math-verify` unit attempts it, or acceptance stays in nats.
+   `M` — but proves nothing. **The clause "and a first-mover list that *is* a displacement" is
+   withdrawn (2026-09-05, v2):** the dual is degenerate at every `δ` (`MODEL_U8-band` §9.7 finding
+   5; §10.6 on v2), `p` and the individual `ν_i` are on `VERIFY_U9-bandthm` §10.E's non-invariant
+   list, and **no first-mover list may be named from `ν` alone** (§2.4). The list stays a
+   legitimate illustration; it is not a proof object. Either §6 Q9 returns the modulus, or a
+   `math-verify` unit attempts it, or acceptance stays in nats — and the question now has a
+   **second half**: *which object* the modulus would apply to, since invariance of the near-tie set
+   over the dual-optimal face is unproved and §10.A's dual-optimal-face LP was never run.
 4. **Do the four existing certificates collapse into one dual?** **Answered: three of four.**
    `cert_integer_balance_floor` does not (its LP root bound is vacuous; `VERIFY_U1-cert` row 4),
    and §2.13 now shows its resistance is *useful*: it is the feasibility obstruction for a

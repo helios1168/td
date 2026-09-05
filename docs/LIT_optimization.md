@@ -47,12 +47,15 @@ are the first thing to do if this brief is re-opened.
   general accounting "`#fractional ≤ #tight side rows`" is the **rank lemma** of `lauravisingh2011`
   Ch. 2 and `bansal2012`. **`math-verify` should cite this pattern rather than re-derive it**
   (`MODEL_U1-cert` §8.4 closes). What is *not* citable is the sharp `≤ 2k−1`, which depends on our
-  budget-identity dependency — that stays a `[claim]`.
+  budget-identity dependency — **no literature carries it**. It is no longer a `[claim]` internally:
+  `VERIFY_U9-bandthm` §4 makes it `[verified, unconditional]` on 440 certified vertices, so the
+  absence here is one of *citation*, not of proof.
 - **Q4 has a theorem, and our band fails its hypothesis.** `budish2013` characterises exactly when
   a fractional allocation decomposes into integral ones satisfying **the same** constraints:
   *bihierarchy*. Our band is a **weighted** per-agent constraint (`Σ_z M_z x_{zi}` in dollars, not a
-  count), which is outside the bihierarchy class, so **§2.13's 325-binary MIP is not avoidable by a
-  rounding theorem** — D2′ must be decided computationally. The fallbacks are `akbarpour2020`
+  count), which is outside the bihierarchy class, so **§2.13's rounding MIP is not avoidable by a
+  rounding theorem** — D2′ must be decided computationally. (At v2's `k = 18` that MIP is
+  `≤ 630` binaries and `36` rows; the `325` figure this row carried is v1's `k = 13`.) The fallbacks are `akbarpour2020`
   (downgrade the band from constraint to *goal*, get it approximately) and `gandhi2006`
   (dependent rounding: per-agent sums preserved to within one item, unweighted).
 - **Q5 returns nothing, and that is a result.** No published submodularity, subadditivity or
@@ -319,7 +322,8 @@ and Applications.* American Economic Review 103(2):585–623, 2013 · DOI `10.12
 > constraint set is `n` unit-supply rows plus `2k` per-agent rows on `Σ_z M_z x_{zi}`. The supply
 > rows and the agent rows do form two hierarchies, but the agent rows are **weighted by `M_z`**, not
 > counts, and bihierarchy is a theorem about counting constraints. **So the exact-decomposition
-> escape is unavailable and §2.13's 325-binary MIP stays on the path.** Worth stating explicitly in
+> escape is unavailable and §2.13's rounding MIP stays on the path** (`≤ 630` binaries at v2's
+> `k = 18`; the `325` originally written here is v1's `k = 13`). **Worth stating explicitly in
 > `MODEL` prose, because "why not just decompose?" is the obvious referee question.
 > `foundation`
 
@@ -528,7 +532,7 @@ Transactions on Aerospace and Electronic Systems 33(3):851–862, 1997 · DOI `1
 > partitioning, subproblem ordering by lower bound, optimised partition order; 100 best solutions of
 > a 100×100 instance in ~0.6 s, near-linear in both `k` and `N`.
 > **Bears on §2.15 and §2.14's merge.** The right algorithm for "the set of rosters within the
-> tier-2 floor": Murty's partition, not `k` independent re-solves. At `k = 13` this is
+> tier-2 floor": Murty's partition, not `k` independent re-solves. At v2's `k = 18` this is
 > sub-millisecond, and it produces the *ordered* list §2.15(iii) needs for interval reporting.
 > `tool-we-lack`
 
@@ -545,7 +549,9 @@ DOI `10.1007/978-1-4939-2864-4_733`
 ## 8. Q8 [carried] — power diagrams, constrained least-squares assignment, and the `O(nk)` cell certificate under a band
 
 **Verdict: yes — a band is a *bounded-shape* constraint, and the vertex-to-power-diagram
-correspondence is published for exactly that class. `borgwardt2019` is the load-bearing entry.**
+correspondence is published for exactly that class. `borgwardt2019` is corroborating only —
+`P6-cells` (`MODEL_U9-bandthm`) proves the `O(nk)` certificate directly; the citation is for the
+class of constraint, not the certificate.**
 
 **Borgwardt, S. & Happach, F.** *Good Clusterings Have Large Volume.* Operations Research
 67(1):215–231, 2019 · DOI `10.1287/opre.2018.1779`
@@ -670,7 +676,7 @@ DOI `10.1287/opre.49.5.771.10607`
 | 2 | **`jalota2023`** — Jalota, Pavone, Qi & Ye, GEB 2023 | The only paper on *per-agent* linear constraints in a Fisher market, and it says the equilibrium reading **breaks** without a budget perturbation — this constrains what §2.12 may tell a sponsor. |
 | 3 | **`lenstra1990`** — Lenstra, Shmoys & Tardos, Math. Prog. 1990 | The canonical `≤ k−1` extreme-point/pseudoforest lemma `MODEL_U1-cert` §8.4 asked for; with `shmoystardos1993` it also supplies the `+ #tight side rows` pattern, retiring the coarse `≤ 2k` from the proof burden. |
 | 4 | **`budish2013`** — Budish, Che, Kojima & Milgrom, AER 2013 | Settles D2′'s escape route: exact integral decomposition under the same constraints needs a **bihierarchy of counting constraints**; our `M`-weighted band is not one, so §2.13's MIP stays. |
-| 5 | **`borgwardt2019`** — Borgwardt & Happach, Oper. Res. 2019 | The band is a **bounded-shape** constraint, whose polytope vertices are exactly the clusterings with a **separating power diagram** — so `cert_power_diagram`'s `O(nk)` certificate survives at `δ > 0`, and the normal-cone volume is a second candidate for §2.4's modulus. |
+| 5 | **`borgwardt2019`** — Borgwardt & Happach, Oper. Res. 2019 | The band is a **bounded-shape** constraint, whose polytope vertices are exactly the clusterings with a **separating power diagram** — **corroborating only**: `cert_power_diagram`'s `O(nk)` certificate is proved directly by `P6-cells` (`MODEL_U9-bandthm`) without this citation; the normal-cone volume is a second candidate for §2.4's modulus. |
 
 *Runners-up, both engineering:* `lundell2022` (SHOT — §2.11's architecture already implemented and
 benchmarked; check availability before writing the tangent loop) and `chaudhury2024eg`
@@ -691,7 +697,7 @@ Optim., Manag. Sci., ACM EC, SAGT, WINE, ITCS, GEB, JPE, DCG, SIIMS, OMS, JOGO).
 | B | **The screening bound (★) `EG_S ≤ k log((B_tot + w·P_S)/k)` for the `common(z) + w·S_i(z)` utility structure has not appeared.** | C4, C12, W1 above; C3 "rounding fractional allocation Nash social welfare integral guarantee" | Consensus; WebSearch | 2026-09-03 | `livondrak2021` — a computable bound on the NSW *optimum value* from valuation structure, for coverage/matroid-rank valuations, via a multilinear-extension argument. Same object type, different mechanism, different valuation class. `cole2017duality`'s integrality-gap-2 result bounds the gap between fractional and integral NSW but not the fractional optimum itself. |
 | C | **No characterisation of the *shape* (piecewise structure, breakpoints, identity of first-moving goods) of the value function of an EG program as a per-agent capacity band widens.** | C14 "comparative statics competitive equilibrium prices with respect to endowment supply Lipschitz"; W3 "value function of Eisenberg-Gale convex program parametric capacity constraint breakpoints piecewise structure"; C1 "Fisher market equilibrium with capacity constraints convex program" | Consensus; WebSearch (returned the EG-markets and matching-markets threads but nothing on parametric value functions — the search engine's own summary confirmed the gap) | 2026-09-03 | `megiddo2007` — continuity of equilibrium *prices* (not allocations) in the market **data**, not in a capacity parameter. `bonnisseau2001diff` — real-analyticity of equilibrium prices on a generic set of endowments, and failure of local Lipschitzness on the uniqueness boundary; the right shape intuition, wrong parameter. **Consequence:** §2.12's first-mover list stays a computation, not a characterisation; `LENS_GROMOV` M12's "concave-rising vs flat-then-jump" remains a genuinely open empirical question. |
 | D | **No result of the form `objective-gap ≥ φ(mass that must move)` for balanced partitioning, districting or the assignment problem.** | C8 "inverse optimization suboptimality distance to optimal solution perturbation bound"; W2 "'error bound' OR 'growth condition' objective gap lower bound distance to optimal solution set optimization"; C6 "stability radius of optimal solution assignment problem sensitivity analysis" | Consensus; WebSearch; `chan2025` survey read directly for the inverse-optimization branch | 2026-09-03 | `bolte2017`/`drusvyatskiy2018` — Hölderian error bounds `f(x) − f* ≥ c·dist(x, argmin)^α` are exactly the right *form*, but generic: no instance-specific `c, α` for `Σ log` on an assignment polytope. `bansil2022` — quantitative invertibility of dual-variables ↦ cell-measures for semi-discrete OT, with explicit constants; the closest thing to a modulus, but for a quadratic OT cost on a continuous source. `borgwardt2019` — normal-cone volume as a stability measure for a clustering; a different modulus (data-perturbation, not objective-gap). **§8 Q3 stays open; the ledger now says what to try.** |
-| E | **No rounding theorem gives a value guarantee for rounding a fractional constrained-EG allocation under the same per-agent *weighted* capacity band.** | C3; C19 "rounding fractional assignment preserving capacity constraints bihierarchy implementation integral"; C15 "iterative rounding extreme point rank lemma degree bounded network design side constraints" | Consensus (STOC/FOCS/SODA/JACM/ToA/AER/ReStud indexed) | 2026-09-03 | `budish2013` — exact decomposition under the same constraints, but **requires a bihierarchy of counting constraints**; our band is `M`-weighted. `akbarpour2020` — approximate, with the band demoted to a "goal". `gandhi2006` — dependent rounding preserves per-agent *counts* to ±1, not weighted sums. `cole2017duality`/`cole2018` — value-guaranteed rounding of a market equilibrium, but the market is spending-restricted, not agent-capacity-constrained. **Consequence: §2.13's 325-binary MIP is not removable by citation; D2′ is a computation.** |
+| E | **No rounding theorem gives a value guarantee for rounding a fractional constrained-EG allocation under the same per-agent *weighted* capacity band.** | C3; C19 "rounding fractional assignment preserving capacity constraints bihierarchy implementation integral"; C15 "iterative rounding extreme point rank lemma degree bounded network design side constraints" | Consensus (STOC/FOCS/SODA/JACM/ToA/AER/ReStud indexed) | 2026-09-03 | `budish2013` — exact decomposition under the same constraints, but **requires a bihierarchy of counting constraints**; our band is `M`-weighted. `akbarpour2020` — approximate, with the band demoted to a "goal". `gandhi2006` — dependent rounding preserves per-agent *counts* to ±1, not weighted sums. `cole2017duality`/`cole2018` — value-guaranteed rounding of a market equilibrium, but the market is spending-restricted, not agent-capacity-constrained. **Consequence: §2.13's rounding MIP is not removable by citation; D2′ is a computation.** (Sized at v2's `k = 18` it is `≤ 630` binaries and `36` rows; the `325` this row originally carried is v1's `k = 13`.) |
 | F | **No proportional-response or combinatorial equilibrium algorithm accepts per-agent linear side constraints and returns exact duals.** | C1; C10 "linear Fisher market equilibrium spending graph forest structure sparsity of allocation"; C16 "Eisenberg-Gale market equilibrium rationality irrational equilibria polytope constraints" | Consensus; forward citation walk on `jalota2023` (OpenAlex `W4382395702`, 11 citing works, all read) | 2026-09-03 | `jalota2023` — ADMM with guarantees only for **homogeneous** linear constraints, plus an outer fixed point for the budget perturbation whose convergence is validated numerically, not proved. `gargtaovegh2022` — approximate equilibrium under constrained PLC utilities. `birnbaum2011` — PR is mirror descent, so the constrained variant is *projected* mirror descent, which nobody has written down for this market. **Confirms `MODEL_U1-cert` §8.2: a new solve path is required.** |
 | G | **No reported cut counts or accuracy figures for LP outer approximation on a *pure-continuous concave* `Σ log` program at ~16k variables.** | C5 "extended cutting plane outer approximation convex MINLP computational performance cut count" | Consensus (JOGO, Optim. Eng., Ann. OR, Comput. Chem. Eng., Math. Prog. indexed) | 2026-09-03 | `lundell2022` — 406 MINLPLib convex instances with full iteration statistics, but they are **mixed-integer** and far smaller; the pure-continuous concave case is a degenerate special case nobody benchmarks because an NLP solver is assumed available. `chaudhury2024eg` — 5–20 LP-subproblem iterations on EG-shaped chores instances at realistic scale; **the closest operational data point, and the number §2.11 should be judged against**. `kronqvistmisener2021` reports iteration reductions but again for MINLP. **Consequence: the `code-verify` item "every OA master optimum is a valid upper bound at every iteration" must be tested on our instance; there is no published run to inherit the answer from.** |
 
@@ -778,8 +784,9 @@ wrong id).
   on A4 for want of a `δ`, and searching it would produce entries no unit can use.
 - **The statistics half of Q7** — what a data refresh actually perturbs, and the noise floor against
   which `8.1e-3` nats is judged. §7 row 4 sends this to statistics/econometrics; nothing here.
-- **Second forward citation walk** on `budish2013` and `borgwardt2019`. Both are load-bearing and
-  both are >5 years old with substantial forward citation; the walk was cut by the Consensus quota
+- **Second forward citation walk** on `budish2013` and `borgwardt2019`. `budish2013` is
+  load-bearing; `borgwardt2019` is corroborating only (§8, `MODEL_U9-bandthm` P6-cells). Both are
+  >5 years old with substantial forward citation; the walk was cut by the Consensus quota
   and is the highest-value continuation.
 - **Mechanism-design exposure of the book** (`LENS_GROMOV` OQ6). Owned by
   `DOMAIN_economic-theory`; `fotakis2014` is already in our bib.

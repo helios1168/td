@@ -96,11 +96,14 @@ N6). Step 2: the sponsor-facing **menu** `(δ, V, book share, μ, fairness verdi
 MNW point marked — **★4 becomes a menu choice, not an elicitation**, and there are two knobs
 (`δ` on `M`, `ε` on `g`; they came apart by 77.6×). Step 3: **D3 re-issued** — does the
 equilibrium reading survive the band well enough to quote? Prices become personalised
-`π_i(z) = p_z + ν_i M_z`; envy-freeness is lost, EF1 is replaced by FEFx, proportionality is
-the first casualty. Step 5: **D5 splits** — audited book is needed for *selection* only; the
+`π_i(z) = p_z + ν_i M_z`; envy-freeness is lost; MNW's EF1 guarantee is lost, not EF1 itself,
+and FEFx holds; proportionality is not the band's casualty — the delivered map is what starves
+(`prop_gap_delivered` min `−12.0248` at `k=18`). Step 5: **D5 splits** — audited book is needed for *selection* only; the
 draw at fixed roster is `G`-invariant (P-G1, pending the `c2·T_z` coupling check N10). Step 6:
-**D6** — the `fotakis2014` impossibility is over-read in four files; the invariant rests on
-Gibbard–Satterthwaite generically. Step 7: **D7** — `S₁₃` is not unique at the programme's own
+**D6** — the `fotakis2014` impossibility is over-read in four files; ★8 (2026-09-05) withdrew it
+as the invariant's basis and put nothing in its place, so the invariant has **no cited basis** and
+stands as a prudential design choice. The misreporting exposure it guards against is untouched.
+Step 7: **D7** — `S₁₃` is not unique at the programme's own
 floor (8.1e-3 nats on seed 9); disclose the tie-break and report the near-optimal set.
 **`LIT_economic-theory` 2026-09-03 §0 folds in:** `echenique2021constrained` prices constraints
 and gives exactly `π_i(z) = p_z + ν_i M_z`, and proves fairness fails whenever constraints
@@ -137,7 +140,7 @@ conic solver · the sponsor's `δ` is un-elicited (FRAME §3's ±10% is the only
 |---|---|---|---|---|---|
 | **U8-band** | Solve `EG^bal_{S₁₃}(δ)` at `δ₀` with duals; apply D1′ (one-solve softness certificate); trace the frontier on `{δ₀, 0.02, 0.05, 0.10, 0.33}` with bisection for `δ*`, SCIP cross-check at two points, MNW point marked; emit the first-mover list, N8, N9 (`DOMAIN_optimization` §2.10–§2.12, §5 rows 1–2, 4). | `python-typed` → `code-verify` | — (Stage 0 done) | **L** | opus |
 | **U9-bandthm** | Prove or refute the four `[claim]`s U8 rests on: P1 with the band; the KKT price reading and its `jalota2023` caveat; `≤ 2k−1` splits; the envelope slope `dEG^bal/dδ = (T/k)Σ(μ⁺+μ⁻)` and the validity of every OA master optimum as an upper bound. | `modeler` → `math-verify` | — | M | opus |
-| **U10-round** | Band-aware rounding of the `EG^bal` vertex at the sponsor's `δ` (≤ 325 binaries, `mip_rel_gap = 0.0`); `γ(δ)` at both solvers' vertices; the integer-balance-floor feasibility check `t*/(T/k)`; decide D2′ (`DOMAIN_optimization` §2.13, §5 row 3). | `python-typed` → `code-verify` | **U8** | M | opus |
+| **U10-round** | Band-aware rounding of the `EG^bal` vertex at the sponsor's `δ` (at v2's `k = 18`: **≤ 630 binaries, 36 rows**, from the loose a-priori cap `2k−1 = 35` — the sharp per-vertex cap is `k−1+t = 33` at `δ_0` and the *measured* split count is `24`, which is the number to quote (`MODEL_U1-cert` failure mode 9); `mip_rel_gap = 0.0`); `γ(δ)` at both solvers' vertices; the integer-balance-floor feasibility check `t*/(T/k)`; decide D2′ (`DOMAIN_optimization` §2.13, §5 row 3). | `python-typed` → `code-verify` | **U8** | M | opus |
 | **U11-roster** | Roster enumeration in decreasing `P_S` under the (★) stop rule; `EG^bal_S(δ)` at every survivor (the `P₁₃` roster first); the exact Nash-tie margin on both draws; the near-optimal roster set at 5e-3 and 1.5e-2 nats; every `S₁₃`-conditional number as an interval (`DOMAIN_optimization` §2.14–§2.15, §5 rows 0c, 5; `DOMAIN_economic-theory` N11). | `python-typed` → `code-verify` | **U8** (the solver) | M | opus |
 | **U12-menu** | The sponsor menu: rows `(δ, V, book share, μ, N1/N8/N9 verdicts)`, `breugem2022`'s a-priori bound on N7 beside the computed curve, `haimes1979` MRT-vs-MRS framing, the `(δ, ε)` two-knob statement, MNW point marked; the tie-break disclosure text (`DOMAIN_economic-theory` §2.3, §2.8–§2.10, §4 steps 2–3, 7). | `modeler` → `math-verify` | **U8**, **U11**; U13 for the baseline point | M | opus |
 | **U13-base** | Construct A3's hand-drawn state-grouped baseline by its stated greedy rule (whole states to ≈ `T/k`, largest remaining neighbour first, split rule written down) and its top-book roster; score `(δ, V, P, D(g))`; place it on U8's frontier (`APPROACHES` §A3; `LENS_GROMOV` M11.3, ledger U10; `DOMAIN_optimization` §5 row 6). | `python-typed` → `code-verify` | — for construction; **U8** for the plot | S–M | opus |
@@ -171,7 +174,7 @@ in FRAME §6; defer U13, U6, U3, U4.
 | ★ | question | gates | who answers |
 |---|---|---|---|
 | **★6** | Lifted in full 2026-09-03. | — | done |
-| **★8** *(new)* | **Accept D6** — the `fotakis2014` scope correction: the "books enter at stage 2 only" invariant rests on Gibbard–Satterthwaite generically, not on `fotakis2014`, whose hypotheses A1's one-concave-objective formulation does not satisfy. Accepting it edits four hub files (`RESEARCH_FINDINGS` §9-G, `REVIEW_GROMOV`, `CHANNEL.md` §0, `APPROACHES.md`) and changes a settled item's *stated reason*. | the wording of A1's cost paragraph; U3-inv's framing | user (programme) |
+| **★8** | **Applied 2026-09-05, removal only.** `fotakis2014` is withdrawn as the "books enter at stage 2 only" basis at all seven sites, whose hypotheses A1's one-concave-objective formulation does not satisfy. An earlier draft named Gibbard–Satterthwaite as the surviving basis; that is withdrawn too, since no G–S citation or argument exists in the corpus (`LIT_economic-theory` §4 covers Green–Laffont and restricted message spaces). **Nothing is put in its place** — the invariant has no cited basis and stands as a prudential design choice. The misreporting exposure is untouched: the 98-of-111 losing majority's inflation incentive and A1-Q4's non-obvious-manipulability result both remain live. Grounding the basis by lit-search is deferred. | closed; the open citation gap carries forward | done |
 | **★9** *(new)* | **The sponsor's band `δ`** — put as a menu after U8/U12, not as an elicitation: "at `δ` = 2 / 5 / 10% the marginal territory-dollar of balance costs X nats of continuity; which row?" Plus the second knob `ε` on the same page. | U10's `δ_sponsor`; the deployable map | user → sponsor, **after U12** |
 | **★10** *(new)* | **Tie-break policy (D7):** disclose a named tie-break and report the near-optimal roster set, or randomise. Recommendation: disclose. Must be decided before any roster is announced. | U11's report format; every `S₁₃`-conditional number | user, on U11's evidence |
 | **★11** *(new)* | **Rewrite A1's charter step 3** in `APPROACHES.md` from "rep-indexed MINLP" to "roster enumeration over band-constrained EG programs" — after U8 reports, per `LENS_GROMOV` M13.1 and `DOMAIN_optimization` §8 Q12. A hub edit. | the charter text only | user |

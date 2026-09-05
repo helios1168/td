@@ -34,9 +34,17 @@ supersede the last without breaking `docs/BRIEF.md` / `docs/units/*.md` cross-re
   (needs transferable utility; FRAME §7 forbids transfers) · **Shapley & Scarf 1974** / TTC
   (needs initial endowments; greenfield) · **Kelso & Crawford 1982** gross substitutes
   (preferences are aligned/vertical, not horizontal).
-- **★`fotakis2014` is over-read across four project files.** It is anonymous-mechanism facility
-  *location* with reported positions; the A1 formulation is rep-indexed and reads a measure. The
-  surviving obstruction is generic Gibbard–Satterthwaite. Flagged as D6/Q11.
+- **★8 applied 2026-09-05, removal only.** `fotakis2014` was over-read across seven project files
+  as the basis for "books enter at stage 2 only". It is anonymous-mechanism facility *location*
+  with reported positions; the A1 formulation is rep-indexed and reads a measure. It is now
+  withdrawn at every site. An earlier draft of this note named generic Gibbard–Satterthwaite as
+  the surviving obstruction — **that is withdrawn too**, since no G–S citation or argument exists
+  anywhere in the corpus (`LIT_economic-theory` §4 covers Green–Laffont and restricted message
+  spaces instead). It was rationale, not a source. **Nothing replaces it:** the invariant has no
+  cited basis and stands as a prudential design choice with an open citation gap. The misreporting
+  exposure is untouched — the 98-of-111 losing majority's inflation incentive and A1-Q4's
+  non-obvious-manipulability result both remain live. Losing the citation removed a justification,
+  not the exposure. Do not re-derive a basis from memory; grounding it needs a lit-search.
 
 ## FRAME §6 numbers that actually drove the 2026-09-03 plan
 `g`-spread **60.65%** vs `M`-spread **0.781%** (ratio 77.6 ⇒ δ and ε are two knobs, not one) ·

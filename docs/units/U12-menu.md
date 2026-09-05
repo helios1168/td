@@ -28,6 +28,10 @@ Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/AP
 `docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` ·
 all of `td/`, `tests/`, `tools/` (read-only).
 
+**Tooling.** `cat`/`head`/`tail`/`sed`/`awk`/`grep` on a file are blocked by the
+`enforce-file-tools.sh` hook — use `Read`/`Edit` and the Serena symbol tools instead
+(`RUNS_PLAN.md:83-89`).
+
 ## Agent → verifier
 
 `modeler` → `math-verify` (the verifier checks every number in the table against the U8/U11/U13
@@ -36,18 +40,19 @@ artifacts and the `breugem2022` bound's hypotheses).
 ## Acceptance
 
 1. A table with one row per `δ ∈ {δ₀, 0.02, 0.05, 0.10, 0.33}`: `EG^bal` (nats), the gap to the
-   delivered draw in nats **and as a geometric-mean-gain percentage** (`e^{Δ/k} − 1`), premium in
-   book share, the aggregate band dual (the MRT, labelled as such, with left/right derivatives at
-   any kink), N8 (how many bands bind, sign of `ν`), N9 (proportionality verdict), the FEFx/EF1
-   verdict per `kawase2026balanced`, and the U11 interval where the row depends on `S₁₃`.
-2. The MNW point `(δ₀, 59.9375)` and the unconstrained endpoint marked on every rendering
-   (trap 2); the A3 baseline point from U13 if available.
+   delivered draw in nats **and as a geometric-mean-gain percentage** (`e^{Δ/k} − 1`, k=18),
+   premium in book share, the aggregate band dual (the MRT, labelled as such, with left/right
+   derivatives at any kink), N8 (how many bands bind, sign of `ν`), N9 (proportionality
+   verdict), the FEFx/EF1 verdict per `kawase2026balanced`, and the U11 interval where the row
+   depends on `S₁₈`.
+2. The MNW point `(δ₀, 95.755192)` and the unconstrained endpoint (`96.532152`) marked on every
+   rendering (trap 2); the A3 baseline point from U13 if available.
 3. `breugem2022vertical`'s a-priori bound on the utility lost to per-player constraints
    evaluated from FRAME §6's high-level parameters, placed beside U8's computed curve, with the
    hypotheses checked and the verdict "bound is / is not informative at 5e-3".
-4. The `(δ, ε)` two-knob statement with the 77.6× number, `haimes1979tradeoffs`'s MRT/MRS
-   procedure as the framing, and the explicit sentence (from U9 P2-price) that the prices are
-   multipliers, not competitive prices.
+4. The `(δ, ε)` two-knob statement with the **≈44.0× number (v2 re-measurement; v1's figure was
+   77.6×)**, `haimes1979tradeoffs`'s MRT/MRS procedure as the framing, and the explicit sentence
+   (from U9 P2-price) that the prices are multipliers, not competitive prices.
 5. The tie-break disclosure paragraph (★10 / D7): the named tie-break, the margin, the
    near-optimal roster set from U11.
 6. `math-verify` VERIFIED on the arithmetic and on the `breugem2022` application; PLAUSIBLE or
@@ -74,7 +79,7 @@ served by item 5. The unit must not pick the row.
 
 ## Branch
 
-`wt/A1` (or `wt/U12-menu` from `wt/A1`)
+`main` (or `wt/U12-menu` from `main`)
 
 ## Stop rule
 

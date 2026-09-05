@@ -41,7 +41,7 @@ rows and sources; ★6 is lifted, so any track may read the instance and run cod
 | ID | family | decides, in order | measure | domains | kill experiment | state |
 |---|---|---|---|---|---|---|
 | A0 | draw-then-match | k → partition on `M` → roster by Hungarian on `log g` | stage 1 common (`M`); stage 2 per-agent (`u_i`) | optimization, economic-theory | A3 ties or beats A0 on `V` (★6) | running |
-| A1 | joint coverage | (partition, roster) together by rep-indexed MINLP; EG relaxation as the bound | per-agent `V(π,σ)` throughout; balance as a band | optimization, economic-theory | `P₀ ≈ P*(A)` and few zips contested among the 13 (★6) | running — **kill test passed 2026-09-03** (`MODEL_U7-meas` §6: matching gap 0, map gap 0.64 nats, roster 0.04; ceiling 0.76 nats at `S₁₃` from U1-cert) |
+| A1 | joint coverage | k → roster candidates from the `P₁₃` master → one band-constrained EG solve per survivor; the (★) screen as the bound | per-agent `V(π,σ)` throughout; balance as a band | optimization, economic-theory | `P₀ ≈ P*(A)` and few zips contested among the 13 (★6) | running — **kill test passed 2026-09-03** (`MODEL_U7-meas` §6: matching gap 0, map gap 0.64 nats, roster 0.04; ceiling 0.76 nats at `S₁₃` from U1-cert) |
 | A2 | roster-first, invariant draw | roster by max-coverage on audited book → sites from `G`-invariant profiles → balanced transport | audited book (per-agent, un-inflatable) then `M` (common) | economic-theory (mechanism design), optimization | fibre spread `spread_S EG_S` small (★6); no audited book (★2) | planned |
 | A3 | sales-ops baseline | group states to ≈ `$total/k` by hand → top-book rep per bucket | `M` by state (common), book share (per-agent) | none | none — it is the baseline; dies as a *candidate* if `V` and C1 both lose (★6) | planned |
 | A4 | coarse-grain districting | grain (metro / branch) → exact partition of ~hundreds of units, contiguity optional → roster → zip map derived | `M` at the coarse grain (common) | optimization; geometry unseeded | largest metro's `M` exceeds the C1 band (★6 + public ZCTA→CBSA crosswalk) | planned |
@@ -105,44 +105,75 @@ the whole answer.
 
 ## A1 Joint coverage optimisation
 
-**Family** — One decision: choose the (map, roster) pair that maximises the value the business
-signs, `V(π,σ) = Σ_j log u_{σ(j)}(A_j)`, by a rep-indexed mixed-integer program whose
-continuous relaxation is the equal-budget Fisher market.
+**Family** — One objective for both halves of the decision: the (map, roster) pair that
+maximises the value the business signs, `V(π,σ) = Σ_j log u_{σ(j)}(A_j)`, on per-agent
+measures. The mechanism is **roster enumeration over band-constrained EG programs**. Candidate
+rosters are generated from the `P₁₃` max-coverage master in decreasing coverage `P_S`, and each
+survivor is priced by its own band-constrained Eisenberg–Gale program `EG^bal_S(δ)` — one
+concave solve per roster, whose allocation *is* the map. Selection is not a variable in any
+program: it is carried by the enumeration and screened by the closed-form bound
+`EG^bal_S(δ) ≤ EG_S ≤ k·log((B_tot + w·P_S)/k)` (★), so the search has a valid stop rule
+(DOMAIN_optimization §2.14).
 
 **What is decided, in what order**
 1. `k` by arithmetic, as A0.
-2. A candidate roster set (111 → a few dozen) from the `P₁₃` max-coverage solve
-   (DOMAIN_optimization §2.3) — a restriction for tractability, not a decision.
-3. **Partition and roster together**: `x_{zi}` (zip `z` to rep `i`) and `y_i` (rep `i`
-   staffs), `Σ_i y_i = k`, `x ≤ y`, objective `Σ_i y_i log(g_i / y_i)` — the perspective
-   reformulation of DOMAIN_optimization §2.1 — subject to an explicit opportunity band per
-   territory, since balance is no longer a theorem once the measure is per-agent.
-4. The fixed-roster Eisenberg–Gale relaxation as the single certificate; the existing four are
-   its degenerations at `u_i ≡ λM` (LENS_GROTHENDIECK "The general case"; U1-cert).
+2. **The enumeration order, with a stop rule**: rosters are generated from the `P₁₃`
+   max-coverage master (DOMAIN_optimization §2.3) in decreasing coverage `P_S`, by no-good cuts
+   on that same master. `P_S` costs `O(nk)`, so the order is cheap to produce. This is no
+   longer "a restriction for tractability": (★) bounds `EG_S` above by `k·log((B_tot+w·P_S)/k)`,
+   so any roster whose (★) falls below the best `EG^bal` already found is discarded *unsolved*,
+   and the enumeration terminates when the next `P_S` in the order can no longer clear the
+   incumbent. It is branch-and-bound over rosters with a valid bound, not a heuristic cut-down;
+   how many rosters get solved is an output of the run, not a parameter of it.
+3. **The map, one roster at a time**: for each surviving roster `S`, solve the band-constrained
+   Eisenberg–Gale program `EG^bal_S(δ)` — a single concave program in `x_{zi}` alone
+   (`Σ_{i∈S} x_{zi} = 1`), subject to an explicit opportunity band `δ` per territory, since
+   balance is no longer a theorem once the measure is per-agent (`docs/units/U8-band.md`).
+   There are no staffing binaries `y_i` and no perspective reformulation: the selection
+   non-convexity (LENS_GROTHENDIECK OQ3) is **bypassed by enumeration under a bound, not solved
+   inside one program**, so the bound's validity depends on neither a conic solver nor
+   branch-and-bound behaving.
+4. The answer as a bracket: `max_S EG^bal_S(δ)` over the rosters actually solved, reported
+   against the roster-free ceiling — (★) evaluated at `P₁₃`, which holds over all
+   `C(111,13) ≈ 10¹⁶` rosters with no further solve. Each roster's Eisenberg–Gale dual is the
+   certificate at that roster, and the existing four are its degenerations at `u_i ≡ λM`
+   (LENS_GROTHENDIECK "The general case"; U1-cert) — now available at every enumerated roster
+   rather than only at the delivered one.
 
 **Optimised / against what measure** — `V` on **per-agent** measures `u_i` throughout. Balance
-on the common measure `M` enters as a constraint band (or as the `(premium, balance)` frontier
-of DOMAIN_optimization §2.5, with the MNW point marked to stay clear of trap 2). FRAME §10 Q2's
-answer under this approach is LENS_GROTHENDIECK descent 2: the heterogeneous replacement for
-equal-size districting is the equal-budget equilibrium, not a weighted theorem.
+on the common measure `M` enters as a constraint band inside each roster's own program (or as
+the `(premium, balance)` frontier of DOMAIN_optimization §2.5, with the MNW point marked to
+stay clear of trap 2). Because the optimum is now a maximum over an *enumerated set* rather
+than the output of a single solve, the object optimised is `max_S EG^bal_S(δ)` and the object
+*reported* is that value bracketed by (★) at `P₁₃` — together with the near-optimal roster set,
+since within the tier-2 floor several rosters can be indistinguishable and the honest report is
+then an interval over that set rather than a point (`docs/units/U11-roster.md`; the `S₁₃`
+Nash-tie margin is 8.1e-3 nats on the seed-9 draw). FRAME §10 Q2's answer under this approach
+is LENS_GROTHENDIECK descent 2: the heterogeneous replacement for equal-size districting is the
+equal-budget equilibrium, not a weighted theorem.
 
-**Domains needed** — `optimization` (perspective MINLP, exponential-cone relaxation, B&B;
-seeded) and `economic-theory` (EG/CEEI interpretation, the duals as prices; seeded).
+**Domains needed** — `optimization` (the `P₁₃` max-coverage MILP and no-good cuts, the (★)
+screening bound, a concave / exponential-cone solve at fixed roster; seeded) and
+`economic-theory` (EG/CEEI interpretation, the duals as prices; seeded).
 
 **The six criteria under this approach**
 - C1 — **by computation**: the band is a constraint, so met if feasible; the width is a sponsor
   input that has never been elicited (FRAME §3 Tolerance's ±10% is the only number; LENS_GROMOV
   U12).
-- C2 — **by construction**: `Σ_i x_{zi} = 1`.
-- C3 — **by construction**: `Σ y = k`, `x ≤ y`.
+- C2 — **by construction**: `Σ_{i∈S} x_{zi} = 1` in every roster's program.
+- C3 — **by construction**: every roster the enumeration visits is a `k`-subset of the 111, so
+  injectivity is a property of the search space, not a constraint to be imposed.
 - C4 — **by construction**: each `g_i` is the continuity term for rep `i`; the report is the
   objective's own summands.
-- C5 — **by computation, in nats**: a branch-and-bound gap on `V` bounds balance, premium and
-  compactness at once (DOMAIN_optimization §2.1). Business units need the EG duals read as
-  prices on zips and a displacement bound from them (LENS_GROTHENDIECK OQ5; U4-disp) —
-  plausible, unproved.
-- C6 — **by computation**, conditional on a reproducible exponential-cone or OA solve on the
-  work machine; the solver stack is the risk (`CLAUDE.md` traps 12, 14).
+- C5 — **by computation, in nats**: the bracket between `max_S EG^bal_S(δ)` over the solved
+  rosters and (★) at `P₁₃` bounds balance, premium and roster choice at once, and unlike a
+  branch-and-bound gap it is *roster-unconditional* — it holds over all `C(111,13)` rosters
+  (DOMAIN_optimization §2.14). Business units still need the EG duals read as prices on zips
+  and a displacement bound from them (LENS_GROTHENDIECK OQ5; U4-disp) — plausible, unproved.
+- C6 — **by computation**, and on a lighter solver stack than the joint form asked for: no
+  MINLP, only the `P₁₃` MILP master (at `mip_rel_gap = 0.0`, `CLAUDE.md` trap 12) plus one
+  concave `EG^bal_S(δ)` solve per surviving roster. The residual risks are the number of
+  survivors and the reproducibility of that concave solve (`CLAUDE.md` traps 12, 14).
 
 **Kill experiment** — LENS_GROMOV ledger U2–U4 in one script: `P₀` (premium of the committed
 draw), `P*(A)` (best matching at the committed partition), and the count of zips contested
@@ -217,9 +248,13 @@ so `spread_S EG_S ≤ 0.105` nats over all rosters — small, and the roster enu
 FRAME §6's 675 contested zips (the count among the 13 is LENS_GROMOV U4).
 
 **Why it might beat A0** — FRAME §10 Q9 asks exactly this, and §10 Q5 states the need: a
-drawing that reads reported books is unfixable against misreporting (RESEARCH_FINDINGS §9-G,
-`fotakis2014`), while one that ignores them leaves up to ~25% of welfare (FRAME §6) on the
-table. LENS_GROTHENDIECK descent 5 converts the blocking decision from "books: yes or no" into
+drawing that reads reported books is exposed to misreporting (RESEARCH_FINDINGS §9-G), while
+one that ignores them leaves up to ~25% of welfare (FRAME §6) on the table. The strong form of
+that first clause — *unfixable*, cited to `fotakis2014` — is withdrawn as an over-read (★8,
+2026-09-05); **no source has replaced it, so the invariant's basis is an open citation gap.**
+A2's case does not rest on the strong form: the exposure is real and unresolved either way,
+and A2 is the approach that removes it by construction rather than by argument.
+LENS_GROTHENDIECK descent 5 converts the blocking decision from "books: yes or no" into
 "which invariants", and LENS_GROMOV Move 13 splits "books" into reported vs audited — this
 approach is the one that takes both literally. DOMAIN_economic-theory §8 Q7 flags the open
 risk: a `G`-invariant draw may be "safe and worthless" if it retains little premium.
@@ -234,7 +269,7 @@ then give each bucket to the wholesaler with the most book in it.
 
 **What is decided, in what order**
 1. `k` by arithmetic.
-2. **The map** at state grain: contiguous groups of states accumulated to ≈ 1/13 of `M`,
+2. **The map** at state grain: contiguous groups of states accumulated to ≈ 1/18 of `M`,
    by a stated greedy rule (largest remaining neighbour first) so the construction is
    reproducible rather than literally by hand. States above the band must be split; the rule
    for splitting (by metro or by zip3) is part of the charter and must be written down.
@@ -251,8 +286,11 @@ roster, for free.
 
 **The six criteria under this approach**
 - C1 — **by construction at state grain, likely failing the band**: FRAME §6 puts TX at 11.5%
-  and FL at 6.7% of `M` against a 1/13 ≈ 7.7% target, so an unsplit-state rule cannot land
-  inside ±10%; the splitting rule decides whether C1 is met at all.
+  and FL at 6.7% of `M` against a 1/18 ≈ 5.56% target, so an unsplit-state rule cannot land
+  inside ±10%; the splitting rule decides whether C1 is met at all. The state shares are **v1
+  numbers, measured on 1,229 zips, and have not been re-measured on v2's 3,748** — the target
+  moved from 7.7% to 5.56% with `k`, so the state-grain failure is strictly worse than these
+  figures imply, and re-measuring TX and FL can only widen the gap.
 - C2 — **by construction**: every zip is in its state.
 - C3 — **by construction**, given the conflict rule.
 - C4 — **by construction**: the assignment rule *is* the continuity number.
@@ -385,8 +423,9 @@ soft?") is the motivation. Re-run both lenses with this charter.
 
 ## Distinctness
 
-- **A0 / A1** — A1 decides the partition and the roster in one solve on `V`; A0 decides the
-  partition without ever seeing a roster.
+- **A0 / A1** — A1 grades every candidate roster by the map that roster induces, so partition
+  and roster are decided against the same objective `V` even though they are computed in
+  separate solves; A0 decides the partition without ever seeing a roster, then matches onto it.
 - **A0 / A2** — A2 decides the roster before any geometry exists; A0 decides it last.
 - **A0 / A3** — A3 decides at state grain by a greedy rule with no objective; A0 decides at
   zip grain as the maximiser of one.
@@ -417,11 +456,12 @@ soft?") is the motivation. Re-run both lenses with this charter.
 
 - **Q8 — transport LP at fixed roster with cost `−u_i(z)`, alternated with Hungarian** → **A0**
   as its roster polish (FRAME §10 calls it one cost-matrix change to `centers.py`); it is
-  also A1's fixed-`y` linearised restriction (DOMAIN_optimization §2.1), so A1 gets it free.
+  also the linearised restriction of A1's fixed-roster program (DOMAIN_optimization §2.1), so
+  A1 gets it free.
 - **Q11 — home-office / national-accounts carve-out (A11)** → **A0** (hub): a pre-draw step
   that changes `k` for every approach identically; a sponsor question, not a track.
 - **Q12 — team territories, `b`-matching (A13)** → **A1**: capacities are a one-line change to
-  the rep-indexed formulation; for A0 it replaces Hungarian with a harder problem
+  each roster's `EG^bal_S(δ)` program; for A0 it replaces Hungarian with a harder problem
   (RESEARCH_FINDINGS §4B). Gated on the sponsor's answer to A13.
 - **Contiguity on the full ZCTA graph (RESEARCH_FINDINGS §9-H, LENS_GROTHENDIECK OQ7,
   LENS_GROMOV OQ6)** → **A4**, as its contiguity option on the metro graph. Requires the
@@ -432,7 +472,7 @@ soft?") is the motivation. Re-run both lenses with this charter.
   frontier (DOMAIN_optimization §2.5)** → **A1**: changes of functional form and of the
   balance band inside the same joint decision.
 - **Eisenberg–Gale as "certificate 5" / the collapse of the four certificates (U1-cert)** →
-  **A1**: its relaxation, not a separate family.
+  **A1**: it is the program A1 solves at each roster, not a separate family.
 - **τ-homotopy (DOMAIN_optimization §2.6), matheuristic polish (§2.7), Benders (§2.9)** →
   kill experiments and engineering for **A1**; not tracks.
 - **Displacement as the acceptance unit (U4-disp)** → **A0**: a certificate shape every

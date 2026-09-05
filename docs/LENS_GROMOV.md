@@ -303,10 +303,15 @@ number and carry the value.
 5. **[optimization / statistics]** Nash-tie fragility (U17): the 8.1e-3-nat margin on seed 9
    means every `S₁₃`-conditional number is one data refresh from changing. What is the right
    report — the margin, a tie-aware `P_S` over all near-optimal rosters, or both?
-6. **[mechanism design]** Unchanged from the predecessor's Q4: now that books enter the draw
-   only through the objective of one concave program, what exactly does `fotakis2014` forbid,
-   and does `G`-invariance of the *duals* (rather than of the map) give the audited/reported
-   split a formal handle? A2's question, sharpened by A1's formulation.
+6. **[mechanism design]** Unchanged from the predecessor's Q4, and pushed back to the root by
+   ★8 (2026-09-05): books now enter the draw only through the objective of one concave program
+   per roster, and `fotakis2014` — long cited as the reason they must not enter stage 1 — is
+   **withdrawn** as that reason, its anonymity and location-report hypotheses failing here.
+   **No source has been put in its place, so the invariant's basis is an open citation gap**
+   and the question is: what, if anything, in the literature forbids a book-reading draw under
+   *our* hypotheses? Losing the citation does not lose the problem — the misreporting exposure
+   is exactly what it was. And does `G`-invariance of the *duals* (rather than of the map) give
+   the audited/reported split a formal handle? A2's question, sharpened by A1's formulation.
 
 **Recommended order.** U13 (one parametric solve; it is the A1 kill test for the
 band-constrained problem and it answers U7, and its duals give U14 for free) → U18 (round the

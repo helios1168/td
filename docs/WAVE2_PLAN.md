@@ -109,8 +109,17 @@ EG programs". Keep consistent with `:44`, `:109`, `:114-115`, `:388`. Unblocked:
 
 ### 0d. ★8 `fotakis2014` scope correction (D6) `[sonnet]`
 
-Six sites over-read `fotakis2014` as the reason for "books enter at stage 2 only"; the invariant
-rests on Gibbard–Satterthwaite generically. Sites: `RESEARCH_FINDINGS.md:548,1087`,
+Six sites over-read `fotakis2014` as the reason for "books enter at stage 2 only".
+
+> **Correction (2026-09-05, applied).** This step originally read "the invariant rests on
+> Gibbard–Satterthwaite generically". That basis is **unsourced** — no G–S citation or argument
+> exists in the corpus, and `LIT_economic-theory` §4 covers Green–Laffont and restricted message
+> spaces instead. Correcting one over-read by asserting a second unsourced claim repeats the
+> failure being fixed, so ★8 was executed as **removal only**: `fotakis2014` withdrawn at every
+> site, no replacement basis asserted, the invariant recorded as a prudential design choice with an
+> open citation gap, and the misreporting exposure explicitly preserved.
+
+Sites: `RESEARCH_FINDINGS.md:548,1087`,
 `REVIEW_GROMOV.md:41`, `CHANNEL.md:99`, `APPROACHES.md:221`, `DOMAIN_optimization.md:845`,
 `LENS_GROMOV.md:307`. Guard rail (`LIT_economic-theory.md:1154`): must not read as "the incentive
 concern goes away". ★8 lost its owning unit when U3-inv was retired, which is why it lands here.
