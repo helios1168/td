@@ -6,6 +6,35 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-05 01:21 · main 352b9d7 — the hub consolidated: one resume point on the live v2 instance
+
+**The live instance is `instance_descaled_v2.json.gz` at `k = 18`** (≈$18B, sponsor-confirmed
+2026-09-04, not to be re-derived). `main` became the hub on 2026-09-05: fast-forwarded to
+`national-channel` (a strict descendant, 198 commits), that worktree retired, the gitignored
+inputs moved to the repo root, `docs/math_note/` restored from `contiguity-harness`. The same
+day `wt/runs` and `wt/A1` were merged with the user's approval (three state-file conflicts,
+zero code conflicts): the hub carries the 14+1 pin-cost catalogue (`docs/RUNS.md`), the HiGHS
+hang fix in `td/solvers/centers.py::assign()`, A1's wave 1 (U8-band, U9-bandthm) and the v2
+re-anchor. The merge review established: **the two tracks' k=18 draws are byte-identical**
+(`cmp`, not inferred) — A1 drew with the unpatched LP and runs with the patched one, so the
+solver fix did not move the draw and every A1 v2 number is directly comparable with the
+catalogue's baseline; one nats scale for every lever (see `## Facts`); no contradictions
+between the tracks. Verified after the merge: 222 tests; a fresh k=18 seed-2 draw with the
+merged solver is byte-identical to A1's `draw_k18_v2_20260904/k18/draw.csv`.
+
+*Later on 2026-09-05 — the tree was restructured for a cheap start-up (this commit):* state
+consolidated into this file (CLAUDE.md carries invariants only, `HANDOFF.md` deleted, FRAME §0
+back to framing revisions, history in `docs/STATE_LOG.md`); A1's lens / domain plans / brief /
+units promoted to the hub paths (neutral copies in `docs/archive/hub-2026-09-02/`, user
+decision); `TEST_PLAN`, `RESULTS`, `RESEARCH_GUIDE` archived; `docs/CODE_MAP.md` holds the
+file map and run recipes; Serena indexes markdown (marksman) and its memories collapsed to
+one; `/state` rewritten around this file; headroom removed, `rtk` installed; pycache-only
+fossils deleted. No `td/`, `tools/` or `tests/` behaviour changed (docstring paths only).
+
+*What it means.* One resume point, on the live instance. The k=13 seed-3-vs-seed-9 decision,
+the atlas, and `REVIEW_GROMOV` R1's 41.9 %-saturation premium arithmetic are v1 history.
+*What's next, all user-gated:* the sponsor's hand-drawn-states call, then wave 2 (see `## Next`).
+
 ## 2026-09-04 23:03 · wt/runs d7c4503 — the 14+1 pin-cost catalogue ran; HiGHS hang fixed; artifact published
 
 **Earlier — state on 2026-09-04, 23:03 (branch `wt/runs`, worktree `.claude/worktrees/runs`, head

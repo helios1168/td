@@ -1,65 +1,77 @@
 # State — national channel territory design
 
 **Updated:** 2026-09-05 · **Branch:** `main` (the hub; new `wt/*` tracks branch from it) ·
-**Head:** the consolidation commit on top of `3c8a643` · **Tests:** 222 pass, 0 fail (2026-09-05)
+**Head:** the wave-2 plan commit on top of `352b9d7` · **Tests:** 222 pass, 0 fail (2026-09-05)
 
 ## Now
 
-**The live instance is `instance_descaled_v2.json.gz` at `k = 18`** (≈$18B, sponsor-confirmed
-2026-09-04, not to be re-derived). `main` became the hub on 2026-09-05: fast-forwarded to
-`national-channel` (a strict descendant, 198 commits), that worktree retired, the gitignored
-inputs moved to the repo root, `docs/math_note/` restored from `contiguity-harness`. The same
-day `wt/runs` and `wt/A1` were merged with the user's approval (three state-file conflicts,
-zero code conflicts): the hub carries the 14+1 pin-cost catalogue (`docs/RUNS.md`), the HiGHS
-hang fix in `td/solvers/centers.py::assign()`, A1's wave 1 (U8-band, U9-bandthm) and the v2
-re-anchor. The merge review established: **the two tracks' k=18 draws are byte-identical**
-(`cmp`, not inferred) — A1 drew with the unpatched LP and runs with the patched one, so the
-solver fix did not move the draw and every A1 v2 number is directly comparable with the
-catalogue's baseline; one nats scale for every lever (see `## Facts`); no contradictions
-between the tracks. Verified after the merge: 222 tests; a fresh k=18 seed-2 draw with the
-merged solver is byte-identical to A1's `draw_k18_v2_20260904/k18/draw.csv`.
+**Wave 2 is planned but not executed.** `docs/WAVE2_PLAN.md` (this commit) is the execution
+plan — 9 tracks in 3 phases, with per-track model assignments, worktree names and merge order.
+Nothing in it has run: no unit launched, no correction applied, no re-measure taken. The tree is
+otherwise unchanged from `352b9d7` — 222 tests, live instance at k=18.
 
-*Later on 2026-09-05 — the tree was restructured for a cheap start-up (this commit):* state
-consolidated into this file (CLAUDE.md carries invariants only, `HANDOFF.md` deleted, FRAME §0
-back to framing revisions, history in `docs/STATE_LOG.md`); A1's lens / domain plans / brief /
-units promoted to the hub paths (neutral copies in `docs/archive/hub-2026-09-02/`, user
-decision); `TEST_PLAN`, `RESULTS`, `RESEARCH_GUIDE` archived; `docs/CODE_MAP.md` holds the
-file map and run recipes; Serena indexes markdown (marksman) and its memories collapsed to
-one; `/state` rewritten around this file; headroom removed, `rtk` installed; pycache-only
-fossils deleted. No `td/`, `tools/` or `tests/` behaviour changed (docstring paths only).
+*What the planning found.* Three things filed as cleanup actually **gate** the units, which is
+why the plan is phased rather than a flat fan-out:
 
-*What it means.* One resume point, on the live instance. The k=13 seed-3-vs-seed-9 decision,
-the atlas, and `REVIEW_GROMOV` R1's 41.9 %-saturation premium arithmetic are v1 history.
-*What's next, all user-gated:* the sponsor's hand-drawn-states call, then wave 2 (see `## Next`).
+- **`MODEL_U8-band.md` was never re-anchored to v2, and its v2 re-run was never verified.** Its
+  whole §9 is k=13; `82dbe98` wrote only data — the gitignored manifest, one tracked figure, and
+  the headlines in `## Facts`. Wave 2 would consume a verified v1 document beside an unverified
+  v2 manifest, so U8's v2 `code-verify` is a prerequisite (P0-B), not a loose end.
+- **The wave-2 briefs are v1 artifacts, and two units' premises moved.** U4-disp's first-mover
+  tie set went from 75 exact ties (2.90 % of `T`) to `n_exact_ties = 0`; U10-round's acceptance
+  #2 is unsatisfiable as written, demanding a SCIP vertex that `CODEVERIFY_U8-band` F7 narrowed
+  to a cross-check `certified_upper` never adopts.
+- **The (★) roster-free screen has no implementation.** It was arithmetic in a docs-only commit
+  (`795ea8e`); `60.8025` survives only as a display literal at
+  `docs/artifacts/U9-bandthm/bandthm.py:957`. Its primitive `B_tot` is emitted by no tool, and
+  U11's branch-and-bound stop rule depends on it.
+
+*Four corrections to this file's own record*, all folded into the plan: the `borgwardt2019`
+downgrade belongs to `LIT_optimization.md` §8, **not** `DOMAIN_optimization` §8 (slip inherited
+from `VERIFY_U9-bandthm.md:419`); N7's defect is that it grids on the **spread**, and the fix is
+to grid on `δ₀`; the two `MODEL_U8-band` §5.1/§5.2 fixes already landed in `ddd162d` / `ed5a9a8`,
+leaving only a small residue; and `TD_SLOW=1` adds nothing — no test module has set `SLOW = True`
+since the `acfdbfe` prune, so the slow tier `CLAUDE.md` advertises does not exist.
+
+*What it means.* A fresh session can execute wave 2 from `docs/WAVE2_PLAN.md` without
+reconstructing any of the above. The user's four planning decisions are recorded there
+(all 4 units concurrent · U13 parameterised on A12 · all loose-end groups in scope · verified
+tracks auto-merge, **this batch only**).
+
+*What's next.* Execute **Phase 0** — it gates everything else. The one decision still
+outstanding is the sponsor's hand-drawn-states call (A12), being taken in a separate session.
 
 ## Next
 
+**`docs/WAVE2_PLAN.md` owns the wave-2 rows below** — it carries the per-track file lists, line
+numbers, evidence citations, model assignments and merge order. Execute in phase order.
+
 - [ ] **Sponsor's call: which states, if any, are hand-drawn** (A12). `docs/RUNS.md`'s region
-      table is the price list, in the same nats as the premium ladder.
-- [ ] **Wave 2** — U10-round, U11-roster (priority raised: roster gap 0.043 → 0.249 nats),
-      U4-disp, U13-base; briefs `docs/units/U8–U13` are written against v1 — re-read first.
-      Then U12-menu (needs U8 + U11 + U13).
-- [ ] **★11** — rewrite A1's charter step 3 in `APPROACHES.md` to "roster enumeration over
-      band-constrained EG programs" (unblocked; `collapsed-on-softness` does not fire).
-- [ ] **Source-document corrections wave 1 implies** (user-gated): `DOMAIN_optimization`
-      §2.12 first-mover rule REFUTED (use `max_i(u_i/g*_i − ν_i M_z) − 2nd-max`); §2.10 holds at
-      `δ = 0` too and `≤ 2k−1` supersedes `≤ 2k`; §2.11 "**a** supergradient — quote
-      `(T/k)Σ|ν_i|`"; §8 `borgwardt2019` corroborating only. `DOMAIN_economic-theory` N7 grids on
-      the spread not `δ₀`; §2.8 proportionality row refuted, EF1 row per `kawase2026balanced`.
-- [ ] **★8** `fotakis2014` scope correction (D6) · **★9** the sponsor's `δ` as U12's menu
-      (frontier rises 0.051 nats over a 33× widening — governance, not value) with **★4** `ε` ·
-      **★10** tie-break policy on U11's evidence · carried ★1 ★2 ★3 ★5 ★7 · U3-inv retired.
-- [ ] Re-measure on v2 before quoting: the (★) roster-free screen (v1: 60.8025, 0.865 nats
-      over the draw); R1's saturation-driven premium arithmetic (saturation 29.6 % on v2).
+      table is the price list, in the same nats as the premium ladder. Separate session.
+- [ ] **Phase 0 — gates everything.** `wt/w2-inputs` (source-doc corrections → ★11 → ★8 → brief
+      re-anchor, in that order) · `wt/w2-u8close` (MODEL_U8-band v2 section + residue, then
+      `code-verify` the v2 re-run) · `wt/w2-screen` (emit `B_tot` from `premium.py`, recompute
+      the (★) screen, `ceiling.py` saturation, `channel_note` §5.1).
+- [ ] **Phase 1 — the four units**, all concurrent: U10-round, U11-roster (roster gap 0.043 →
+      0.249 nats), U4-disp, U13-base. Then U12-menu (needs U8 + U11 + U13; its brief is
+      re-anchored in Phase 0 but the unit is not launched).
+- [ ] **Phase 2 — loose ends**, independent: `wt/w2-fixes` (`math_note/toy_*.py` broken imports;
+      `RUNS.md` absolute baseline; `build_artifact.py` assertions; palette **check**, not fix —
+      `RUNS_PLAN.md:294-298` says do not widen scope) · `wt/w2-cert` (certificates 1–4 for
+      anchored draws — soundness-bearing, the pin-cost catalogue rests on it).
+- [ ] **★9** the sponsor's `δ` as U12's menu (frontier rises 0.051 nats over a 33× widening —
+      governance, not value) with **★4** `ε` · **★10** tie-break policy on U11's evidence ·
+      carried ★1 ★2 ★3 ★5 ★7. (★8 and ★11 are Phase 0; U3-inv retired.)
+- [ ] **Bibliography gap:** `kawase2026balanced`, `borgwardt2019`, `fotakis2014` all resolve but
+      live only in the per-domain `.bib` files — none is in
+      `docs/math_note/territory_bibliography.bib` (78 entries), and there is no `.md`/`.csv`
+      sibling, so the three-format sync is unsatisfied. Phase 0's corrections cite all three.
 - [ ] `caveman` proxy: `caveman setup --install` was blocked by the auto-mode classifier on
-      2026-09-05 — the user runs it, then `caveman claude` (plan: `~/.claude/plans/help-me-simplify-and-splendid-turtle.md` C6).
-- [ ] Queued fixes: `docs/channel_note/ceiling.py:75` `SATURATION = 0.05` vs measured 29.6 %
-      and `channel_note` §5.1's arithmetic (R1); `MODEL_U8-band` §5.1 `ĝ > 0` scoped to finite
-      `δ`, §5.2 SCIP as cross-check only; U8's v2 re-run not through `code-verify`;
-      `docs/RUNS.md` reports deltas only; `build_artifact.py` asserts none of `RUNS_PLAN` §7;
-      certificates 1–4 not adapted to anchored draws; palette at k ≥ 13; HiGHS root cause
-      (scipy 1.18.1 option merging) only if it recurs; `docs/math_note/toy_{grid,path}.py`
-      import the deleted `code/gfx` (broken since the prune).
+      2026-09-05 — the user runs it, then `caveman claude` (plan:
+      `~/.claude/plans/help-me-simplify-and-splendid-turtle.md` C6).
+- [ ] Deferred, not in the plan: HiGHS root cause (scipy 1.18.1 option merging) only if it
+      recurs; `ceiling.py`'s remaining v1 content beyond `SATURATION`; `CLAUDE.md`'s `TD_SLOW=1`
+      line, which advertises a slow tier that no test module populates.
 
 ## Facts
 
@@ -98,6 +110,8 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   `CODEVERIFY_U8-band.md`, `MODEL_U9-bandthm.md`, `VERIFY_U9-bandthm.md` — wave 1 ·
   `MODEL_U7-meas.md`, `MODEL_U1-cert.md` (+ verifies) — the measurements · `docs/DATA.md`,
   `docs/RESEARCH_FINDINGS.md`, `docs/REVIEW_GROMOV.md` — data route, literature map, R1–R4
+- `docs/WAVE2_PLAN.md` — the wave-2 execution plan: 9 tracks, 3 phases, per-track files, model
+  assignments, merge order, and the four corrections to this file's record
 - Recipes and file map: `docs/CODE_MAP.md` · Memory:
   `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md` · History:
   `docs/STATE_LOG.md` · Archive: `docs/archive/README.md`
