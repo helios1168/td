@@ -1,6 +1,6 @@
 ---
 name: td-verification-oracles
-description: Oracles, anchors and environment traps for verifying td (national channel) research code — established verifying U7-meas 2026-09-03 and U8-band 2026-09-04 on wt/A1
+description: Oracles, anchors and environment traps for verifying td (national channel) research code — established verifying U7-meas 2026-09-03, U8-band 2026-09-04, U8-band v2 §10 2026-09-05
 metadata:
   type: project
 ---
@@ -55,8 +55,14 @@ which matters because `metrics.json` records an instance path in a *different* w
 - A `wt/*` worktree has **no `.venv`** — use `/Users/ntlee/projects/td/.venv/bin/python3`
   (three levels up from the worktree, not two).
 - Tests: `.venv/bin/python3 tests/run_all.py`, a custom runner (not pytest); 184 fast tests at
-  `74eff38`. `tools/` is not a package: tests load scripts via `importlib.util.spec_from_file_location`
-  and must register the module in `sys.modules` for `@dataclass` to resolve.
+  `74eff38`, **237 at `9cfcc2c`** (2026-09-05). `tools/` is not a package: tests load scripts via
+  `importlib.util.spec_from_file_location` and must register the module in `sys.modules` for
+  `@dataclass` to resolve.
+- In `.claude/worktrees/*`: `git` must be run as `/usr/bin/git -C <worktree>` (a hook refuses
+  `rtk`/`caveman`-wrapped git); `grep`/`cat`/heredocs over files are blocked by
+  `enforce-file-tools.sh`, so put helper scripts under `/tmp` with the **Write** tool and run
+  them with the venv python. `battery/` is a **symlink** into the shared checkout, so Write
+  refuses to create files there — use `docs/artifacts/<id>/` for durable artifacts.
 - Type check: `uvx pyright --pythonpath /Users/ntlee/projects/td/.venv/bin/python3 <files>`
   (1.1.411 clean on the U7 files).
 - `battery/results/` and `instance_descaled.json.gz` are gitignored; never write under
@@ -77,6 +83,33 @@ split sets and `t` as *one* optimum; only `φ` and `g*` are invariants.
 recipe is load-bearing, not ceremonial. And **SCIP's `getDualbound()` is not rigorous at 1e-9**
 on this program: at δ=0.05 it returned `optimal` with a bound 5.9e-9 *below* a certified-feasible
 primal. Use it as a cross-check only; never let it replace an LP/weak-duality bound at tier 1.
+
+**Oracles that worked (U8-band v2 §10, 2026-09-05 — reporting-fidelity verification):**
+- **Re-run the gate only.** `frontier.resolve_draw_dir` → `read_draw` → `td.channel.stage2` →
+  `frontier.build_setting` → `eg_band.solve_band(U, M, None)` takes ~40 s at k=18/n=3748 and
+  reproduces the whole `gate` block **bit-for-bit**. Cheapest way to (a) prove a manifest is not
+  stale and (b) recover quantities the manifest never stored (`sol.g` at the gate). Import is
+  `from td import instance as descaled`; there is no `frontier.load_setting`.
+- **Re-derive per-agent vectors from other stored vectors.** In a `draw_*.json` manifest,
+  `g = prop_gap + u_total/k` then `Σ log g` must equal `points[i].primal` (holds to 1.5e-14);
+  `Σ m == T` exactly; and counting masses on the band edge `tgt(1±δ)` at 1e-6 reproduces
+  `vertex.n_tight_bands` exactly. Three cross-checks with no solver.
+- **`districts` vs `staff` misalignment test.** Print what the *wrong* array would have given at
+  the same indices and show the doc contains none of those labels. Corroborate with
+  `vertex.tight_agents` (indices), which is independent of `nu`.
+
+**Two upper bounds live in the same manifest — always ask which one a doc row uses.**
+`points[i].upper` (the OA master's) and `certified_upper[i] = min(upper, dual_check.bound)`
+(`frontier.py:131-135`) differ by 2–5e-9. `frontier.shape` uses `upper`; `softness.direct`,
+`delta_star`, and the plot use `certified_upper`. §9/§10 tables print `upper`, §10.2 prints
+`certified_upper`. Any claim at 1e-9 scale (e.g. "SCIP sits below the OA's bound") flips
+depending on the field. State the field.
+
+**Fields that are vacuous when a flag is absent.** `gate.matches_reference` is
+`reference is None or …` and `gate.delta_upper` is `None if reference is None else
+sol.upper - reference` (`frontier.py:246, 250`) — both degenerate when `--gate-reference` is
+omitted, as on v2. Quoting `matches_reference = true` as a passed check, or reading a null
+`delta_upper` as anything about the model, is a live failure mode in generated results sections.
 
 **Recurring spec-vs-code pattern here:** `scipy.optimize.milp` accepts no warm start
 (options are only disp/presolve/time_limit/node_limit/mip_rel_gap), so any model text saying a

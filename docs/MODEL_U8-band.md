@@ -138,8 +138,14 @@ first-mover list is named from it alone.
 > any count, and the cleaning is re-certified rather than assumed — `g` must not move, the masses
 > must stay in band, and the rank of `(supply rows | tight band rows | gain rows)` restricted to
 > the support must equal `|supp|` for the point to be a vertex of the optimal face. §10.F settles
-> the cap as `splits ≤ k − 1 + t ≤ 2k − 1 = 25` with the `−1` **unconditional**, so the `2k`
+> the cap as `splits ≤ k − 1 + t ≤ 2k − 1` with the `−1` **unconditional**, so the `2k`
 > fallback of §2.10 is not needed and the bound binds exactly where solver dirt would flip it.
+> **The cap is a-priori and loose; never quote it as a result** (`MODEL_U1-cert` failure mode 9) —
+> quote the measured count. At the live `k = 18` the a-priori cap is `2k − 1 = 35`; the sharp
+> per-vertex form `k − 1 + t` is `33` at `δ₀` (`t = 16` tight bands); and the **measured** split
+> count there is `24` (§10.1, which reports counts and caps at all five `δ`). The `= 25` this
+> sentence used to print was `2k − 1` at the v1 `k = 13`, left unscoped when the unit moved to
+> `k = 18`.
 
 > **Correction (`VERIFY_U9-bandthm` §10.E) — what is quotable.** `g*` and the value `φ` are
 > invariants; `p`, the individual `ν_i` and the split *set* are not (`math-verify` saw 4–6
@@ -254,17 +260,26 @@ solved by `scipy.optimize.linprog(method="highs")`. Size: `nk + k ≈ 16,000` co
   iteration; tier 1 is `Φ_C − primal ≤ 1e-8` nats.
 * **The loop.** Seed one cut per agent at `ĝ = g(x ≡ 1/k) = u_i(Z)/k` — the Slater point of
   §2.10, so the seed is exact rather than heuristic. `ĝ > 0` at every iterate is guaranteed with
-  an explicit constant by U9 **P5.3**, `g_i(X) ≥ λ(1−δ)T/k` — `63.113` at `δ = 0.0039` and
-  `42.451` at `δ = 0.33`. The seed clears that floor by a factor of ~1.4 (`u_i(Z)/k ≈ 89–93`), so
-  P5.3 enters as a runtime guard rather than as the seed itself. Then solve, add a cut at the
-  incumbent `g`, repeat.
+  an explicit constant by U9 **P5.3**, `g_i(X) ≥ λ(1−δ)T/k` — `140.638` at `δ = δ₀ = 0.0099700233`
+  and `95.176` at `δ = 0.33` (live v2, `k = 18`, `T/k = 473.51347427615`, `λ = 0.3`). The seed
+  clears that floor by a factor of ~1.3 (`u_i(Z)/k ≈ 182–187`), so P5.3 enters as a runtime guard
+  rather than as the seed itself. Then solve, add a cut at the incumbent `g`, repeat.
   **Scope (`CODEVERIFY_U8-band.md` row 1).** P5.3's floor is derived from the band's *lower* row,
   so the guarantee holds only where that row is present. `solve_band(delta=None)` drops it, and on
   that path an OA iterate can zero an agent — `code-verify` exhibited such an instance. The
   guarantee is therefore stated for `δ` finite; on the unconstrained path `ĝ > 0` is enforced by
   an explicit per-iterate check that raises. In this unit every `delta=None` solve is the gate on
-  the real instance, where all 13 gains sit at ≈ 90 against a floor of `63.113`, so no published
-  number depends on the distinction.
+  the real instance, whose 18 gains at the unconstrained optimum run from `211.786` to `228.663`
+  — 16 of the 18 lie in `211.786–211.802`, with two outliers at `223.615` and `228.663` (mean
+  `213.390`), so no single central figure describes them. What carries the argument is the
+  **minimum against the floor**: `211.786 / 140.638 = 1.506`, so `ĝ > 0` is never at risk on the
+  gate and no published number depends on the distinction.
+  **Do not "restore" an earlier figure here** (`CODEVERIFY_U8-band-v2.md` row 18): this sentence
+  has twice quoted the wrong object. The `≈ 206` it replaced is `mean(g_delivered)`, the
+  *delivered* draw's gains, which themselves spread `169.88` to `293.83`; and the v1 sentence
+  before that ("all 13 gains sit at `≈ 90`") quoted the *seed* `u_i(Z)/k ≈ 88.7–92.7`, where v1's
+  gate gains are `103.6–136.8`. Three different quantities. Only the gate solve's own `sol.g`
+  answers this sentence, and the manifest stores no field for it — it must be re-solved.
 * **A final polish (U9 P5.4).** A single tangent per agent placed at `g*` makes the master
   **exact**, and that master's duals **are** the original program's `(p, μ^±)` — the accumulated
   pool's are only asymptotically so. One extra LP is therefore run after convergence on the cut
@@ -360,8 +375,23 @@ margin_z = max_i ( u_i(z)/g*_i − ν_i M_z ) − second-max_i ( u_i(z)/g*_i −
 
 reported both absolutely (in the units of `p_z`) and relative to `p_z`; the near-ties are the
 units whose owner flips first as `δ` moves, read off **one** solve in `O(nk)`, and their `M`-mass
-is the displacement handed to U4-disp. The list is void as an interpretation if the degeneracy
-check of §2 fails.
+is what is handed to U4-disp.
+
+> **Correction (2026-09-05) — the degeneracy hedge was a conditional whose antecedent fires.**
+> This paragraph previously ended "…is the displacement handed to U4-disp. The list is void as an
+> interpretation if the degeneracy check of §2 fails." That check is **reported as failing at every
+> `δ`, at both v1 (§9.7 finding 5) and v2 (§10.6: support `3773` against an expected `3781`)**, so
+> the sentence asserted the falsified reading while appearing to guard it. The correct statement:
+> `ν` is **one dual optimum among many**, and since `p` and the individual `ν_i` both sit on
+> `VERIFY_U9-bandthm` §10.E's **non-invariant** list (against `g*` and the value `φ`, which are
+> invariant), **no first-mover list may be named from `ν` alone**.
+> **What is lost is the dual's *interpretive* content only.** Its **bound-producing** content is
+> intact, because weak duality holds at *any* dual-feasible point, optimal or not — so §2.10's
+> certificate and §2.11's one-solve slope bound are untouched. The first-mover notion is
+> accordingly **not worthless**: it remains a legitimate **illustration** of where the band bites,
+> and the right thing to put in front of a sponsor. It is **not a proof object**, nothing
+> conditional on it may be certified, and U4-disp receives it on exactly those terms
+> (`DOMAIN_optimization.md` §2.4).
 
 **The sandwich (§3 of the domain plan).**
 
@@ -462,8 +492,9 @@ only, both stops `optimal`:
 | `0.02` | `60.6288653576` | `1.58e-9` | 853 s |
 | `0.33` | `60.6974156182` | `1.10e-9` | 4 s |
 
-Both inside `1e-6`. SCIP's bound sits marginally *above* the OA's at both points; both are valid
-upper bounds and the smaller — the OA's — is the one reported.
+Both inside `1e-6`. Per §5.2, SCIP is a cross-check on the reported bound, not a source of it:
+`Point.certified_upper` never adopts SCIP's number, so the OA's value stands regardless of which
+cross-check happens to come out smaller.
 
 ### 9.2 D1′ (number 2) — **NOT SOFT**
 
@@ -590,3 +621,215 @@ At `δ₀`, ranked by U9 P2.5's margin on `u_i(z)/g*_i − ν_i M_z`:
    1e-10`** on every solve. `numerics/feastol` was set to `1e-9`; the message concerns an
    internally derived tolerance. Both cross-checks stopped `optimal` and agreed to `1.6e-9`, so
    it is recorded, not acted on.
+
+---
+
+## 10. Results — v2 (`k = 18`, live instance)
+
+Run 2026-09-04 on the live v2 instance's committed draw. Machine-readable form:
+`battery/results/u8_band_v2_20260904/draw_k18_v2_20260904.json` (gitignored, reached through a
+symlink); `run_id = draw_k18_v2_20260904`. `instance_sha256` `c89f182003aeec32…`, `draw_sha256`
+`9e091c68f7fb9a24…`, θ = 0.40, λ = 0.30, `filler_capture = "theta"`; scipy 1.18.1, numpy 2.5.2,
+highspy 1.15.1, pyscipopt 6.2.1. `§9`'s `figures/u8_band/frontier.png` has **not** been
+regenerated for this run — it still plots the v1 / `k = 13` curve; no figure accompanies this
+section.
+
+> **Note (stale manifest provenance).** The manifest's `instance` field still reads
+> `.claude/worktrees/A1/instance_descaled_v2.json.gz`, a retired worktree path (`A1` no longer
+> exists as a worktree; see `3c8a643`). `instance_sha256` is reproduced independently above and is
+> unaffected; the stale path is recorded here, not corrected in the manifest.
+
+### 10.0 The gate, and `δ₀`
+
+`V(delivered) = 95.75519165924108`. The unconstrained fibre came back as
+`EG_{S₁₈} ∈ [96.53215175255613, 96.53215175853765]`, bracket `5.98e-9` in 30 tangents,
+`gap_to_V = 0.77696010` nats, `above_V = true`, status `optimal`. (`matches_reference` is `true`
+in the manifest, but *vacuously*: `frontier.py:246` returns `true` whenever no reference is passed,
+and none was — it is a transcribable field here, not a check that passed.)
+
+```
+δ₀ = 0.00997002334742   (max deviation)          spread₀ = 0.01368438936169
+spread₀ / δ₀ = 1.3725533918
+```
+
+The `M`-max-deviation at the *unconstrained* optimum is `0.36597373` with a spread of
+`0.57379699`. **Unlike v1, `0.33 < 0.36597`: the band never fully slackens on this grid** — even
+at `δ = 0.33`, `EG^bal(0.33) = 96.53097802696875` sits `0.00117373` nats below the unconstrained
+`EG_{S₁₈} = 96.53215175255613`, so the sandwich's last entry stays a strict inequality rather than
+closing exactly the way v1's did. That separation is certified — it is the gap between two valid
+bounds — and it is what the claim rests on. (`gate.delta_upper` is `null` in the manifest for one
+reason only: this run was invoked without `--gate-reference`, so `gate.reference` is `null` too.
+`frontier.py:250` defines the field as `sol.upper − reference`, the signed gap to a *published
+reference value*; it says nothing about band closure and is not indexed by grid point. The v1 run
+is the control — it passed `reference = 60.6974156139` and recorded
+`delta_upper = 6.11e-9`, which is what §9.0 reports.) Nothing downstream turns on the sandwich
+closing: D1′ and
+`δ*` are both decided at `δ₀` alone (§10.2, §10.3).
+
+### 10.1 The frontier (numbers 1 and 3)
+
+| `δ` | `EG^bal` bracket `[primal, upper]` | width | tangents | `s_min` | `−V` | `t` | splits (cap) |
+|---|---|---|---|---|---|---|---|
+| `0.0099700233` | `[96.4796985975, 96.4796986046]` | `7.07e-9` | 16 | `0.5856` | `0.724507` | 16 | 24 (33) |
+| `0.02` | `[96.4851908640, 96.4851908707]` | `6.67e-9` | 24 | `0.5097` | `0.729999` | 15 | 25 (32) |
+| `0.05` | `[96.4976902647, 96.4976902691]` | `4.38e-9` | 35 | `0.3440` | `0.742499` | 15 | 27 (32) |
+| `0.10` | `[96.5101232221, 96.5101232306]` | `8.44e-9` | 49 | `0.1828` | `0.754932` | 7 | 21 (24) |
+| `0.33` | `[96.5309780226, 96.5309780270]` | `4.33e-9` | 64 | `0.0549` | `0.775786` | 1 | 16 (18) |
+
+Every bracket is **tier 1** (`≤ 1e-8`). `s_min` matches the manifest's `slope_raw` at every `δ`
+that reports both, consistent with complementary slackness away from `δ = 0`. **The sandwich
+holds, up to the endpoint noted in §10.0**:
+
+```
+95.7551916592  ≤  96.4796986046  ≤  96.4851908707  ≤  96.4976902691  ≤  96.5101232306  ≤  96.5309780270  <  96.5321517585
+V(delivered)          δ₀               0.02               0.05               0.10             0.33         EG_{S₁₈} (unconstrained)
+```
+
+monotone and concave on the grid with **zero** violations (`shape.monotone = shape.concave =
+true`, `max_monotonicity_violation = max_concavity_violation = 0.0`). Every point is a genuine
+vertex of the optimal face (`rank = n_support` at all five), cleaning at `1e-6` moved `g` by `0.0`
+relative and left a maximum band violation of `≤ 5.95e-16` (floating-point noise), cleaned and raw
+split counts are **identical** at all five points (no phantom splits), and every count sits under
+`k − 1 + t` and under `2k − 1 = 35`. `integral_witness_in_band` is `true` at all five points, so no
+bound here is quantified over an empty set.
+
+**SCIP cross-check**, `limits/gap = limits/absgap = 0.0`, dual reductions off, `getDualbound()`
+only, both stops `optimal`:
+
+| `δ` | SCIP dual bound | `\|OA − SCIP\|` | wall |
+|---|---|---|---|
+| `0.02` | `96.4851908684` | `2.31e-9` | 31.8 s |
+| `0.33` | `96.5309780292` | `2.27e-9` | 32.2 s |
+
+Both inside `1e-6`. As at v1, per §5.2 SCIP is a cross-check, not a source: the reported bound is
+the OA's at both points regardless. Unlike v1, SCIP does not sit uniformly on one side here — its
+bound is `2.31e-9` *below* the OA's upper at `δ = 0.02` (and still `≥` the OA primal, so this is
+not the `code-verify`-style unsafe case of §5.2) and `2.27e-9` *above* it at `δ = 0.33`; both are
+within tolerance and neither is adopted.
+
+### 10.2 D1′ (number 2) — **NOT SOFT**
+
+From the single solve at `δ₀` (`EG^bal(δ₀) = 96.4796985975`, `s_min = 0.5855858097`):
+
+| `δ` | one-solve bound | `bound − V` | verdict | direct `EG^bal(δ)` | tangent slack |
+|---|---|---|---|---|---|
+| `0.02` | `96.48557202` | `0.73038036` | **not soft** | `96.48519087` | `+3.81e-4` |
+| `0.05` | `96.50313959` | `0.74794793` | **not soft** | `96.49769027` | `+5.45e-3` |
+| `0.10` | `96.53241888` | `0.77722722` | **not soft** | `96.51012323` | `+2.23e-2` |
+
+The tangent slack is positive at all three (`tangent_valid = true`), so `s_min` is a valid
+supergradient and §10.A's guard passes. The floor is `5e-3` nats and the smallest gap exceeds it
+by **146×**.
+
+**As at v1, the verdict does not turn on the slope.** `EG^bal(δ₀) − V = 0.724507` nats already
+(`145×` the floor), so the intercept alone refuses softness and no non-negative slope can rescue
+it.
+
+**A1 continues.** The premium survives the band on the live v2 instance as well.
+
+### 10.3 `δ*` (number 3, second half)
+
+`δ* ≤ δ₀ = 0.00997002334742`. `EG^bal(δ₀) − V` is `0.724507` nats at the left endpoint, already
+`145×` the tier-2 floor, so `min{δ : EG^bal(δ) − V > 5e-3}` is attained at or below `δ₀` and the
+bisection runs zero solves (`delta_star.n_solves = 0`). As at v1, this is the strongest of the
+brief's three possible cases.
+
+### 10.4 N8 — the band duals (number 5)
+
+`t` = tight band rows (some tight at zero dual — see below); `gauge_pinned = true` at every `δ`.
+
+| `δ` | `t` | `ν_i > 0` (upper binds) | `ν_i < 0` (lower binds) | `ν_i = 0` | `q` range |
+|---|---|---|---|---|---|
+| `0.0099700233` | 16 | R0018, R0013, R0021, R0038, R0028, R0014, R0017, R0015 | R0004, R0001, R0000, R0006, R0009, R0003, R0005, R0002 | R0010, R0008 | `[3.33e-8, 0.2553]` |
+| `0.02` | 15 | R0018, R0013, R0021, R0038, R0028, R0014, R0017, R0015 | R0004, R0001, R0000, R0006, R0003, R0005, R0002 | R0010, R0009, R0008 | `[3.35e-8, 0.2551]` |
+| `0.05` | 15 | — | R0004, R0001, R0000, R0003, R0005, R0002 | 12 reps\* | `[3.41e-8, 0.2557]` |
+| `0.10` | 7 | — | R0001, R0000, R0003, R0005 | 14 reps\* | `[3.49e-8, 0.2569]` |
+| `0.33` | 1 | — | R0000 | 17 reps | `[3.73e-8, 0.2649]` |
+
+\* At `δ = 0.05`, 9 of the 12 zero-dual reps sit on a *tight* band with a degenerate zero
+multiplier (`n_agents_band_slack = 3`, so only 3 are genuinely slack on both sides); at
+`δ = 0.10`, 3 of the 14 are tight-but-degenerate (`n_agents_band_slack = 11`). This is a v2-only
+wrinkle: at `δ₀`, `0.02` and `0.33`, `t` equals the size of the signed `ν` list exactly (`16, 15,
+1`) and the zero-dual reps there are genuinely both-sides-slack, matching `n_agents_band_slack`
+exactly (`2, 3, 17`) — the degeneracy is confined to the two interior grid points.
+
+**§2.8 does not collapse to CEEI at the delivered balance.** At `δ₀` sixteen of eighteen bands are
+tight, split eight-and-eight: eight reps would buy more opportunity and are prevented, eight are
+force-fed opportunity they do not want. From `δ = 0.05` outward **only lower bands bind**, and the
+group being force-fed shrinks from 6 reps (`δ = 0.05`) through 4 (`δ = 0.10`) to 1 (`δ = 0.33`). At
+`δ = 0.33` price anonymity is *nearly* restored — one rep, R0000, still binds — short of the clean
+`ν ≡ 0` state v1 reached at its widest grid point. That is the good case §2.8 asks to be detected
+rather than assumed; on v2 it is approached but not reached on this grid.
+
+### 10.5 N9 — proportionality (number 6)
+
+Gaps `u_i(A_i) − u_i(Z)/k` in descaled utility units (`u_i(Z)/k ≈ 181.9–187.1`):
+
+| | min gap | reps below proportionality |
+|---|---|---|
+| **delivered draw** | `−12.0248` | **3 of 18** — R0038 `−12.02`, R0013 `−7.79`, R0028 `−6.69` |
+| `EG^bal(δ₀)` | `+18.5526` | 0 |
+| `EG^bal(0.02)` | `+20.0169` | 0 |
+| `EG^bal(0.05)` | `+22.2690` | 0 |
+| `EG^bal(0.10)` | `+24.6734` | 0 |
+| `EG^bal(0.33)` | `+26.6363` | 0 |
+
+As at v1, `DOMAIN_economic-theory` §2.8's "first casualty" prediction **does not hold on the
+frontier**: no rep falls below proportionality at any band width, including `δ₀`. The **delivered
+integral draw** is what starves reps here too — 3 of 18 (`R0038` worst, `12.02` units short), a
+smaller fraction than v1's 4 of 13. The minimum gap falls monotonically as the band tightens,
+`+26.64 → +18.55` from `δ = 0.33` to `δ₀`, an erosion of about `30 %` — comparable in kind to v1's
+`32 %`, and still well short of exhausting the margin at `k = 18`. **The two business goals do not
+conflict at the fractional optimum; they conflict at the delivered map**, as at v1.
+
+### 10.6 First movers (number 4)
+
+At `δ₀`, ranked by U9 P2.5's margin on `u_i(z)/g*_i − ν_i M_z`:
+
+- **No exact MBB ties** (`n_exact_ties = 0`, `tied_M_share = 0.0`) — unlike v1's 75-zip tie block.
+  Both figures are computed over the **full** 3748-zip margin array (`frontier.py:685-686`), not
+  over the reported list. The top 25 by margin carry `33.09` of `M` = **0.39 % of `T`**, and every
+  one of them is owned by just two reps, R0008 or R0021, with margins from `5.6e-7` to `2.5e-6` —
+  near-ties, not ties. **The `25` is a report cap, not a measured set size:** `first_movers.zips`
+  holds the top 25 of a margin *ranking*, and v1 applied the same top-25 cut to a tie block that
+  actually had 75 members. Nothing here measures where the near-tie set ends.
+  The v1 comparison is by **mass**, not by tightness: nothing is tighter than v1's exact `0.0`
+  margins, but v1's tie block carried `tied_M_share = 0.0290` of `T` (2.90 %) against this
+  near-tie set's `0.0039` (0.39 %) — `7.47×` less mass.
+- The support is `3773` against an expected `3781` (`diff = 8`), so **the dual is degenerate**;
+  per the stop rule, `ν` is reported as **one** dual optimum and no first-mover ordering is named
+  from it alone. The near-tie *set* — the reported 25, all owned by R0008/R0021 — is the more
+  defensible object, but that too is an assertion about **one** `ν`: nothing here shows the set
+  invariant over the dual-optimal face, and the LP that could test it was not run (§9.7 finding 6;
+  `DOMAIN_optimization.md` §2.4 records the gap as open).
+  **Where `3781` comes from:** it is the manifest's `first_movers.vertex.expected`, not a hand
+  figure, and `eg_band.py:347` defines it as `expected = n + k − 1 + t = 3748 + 17 + 16 = 3781`.
+  The `+ t` term is the 16 tight bands at `δ₀`; dropping it gives `n + k − 1 = 3765`, which is
+  **not** the figure this bullet compares against. `degenerate = (n_support != expected)`
+  (`eg_band.py:351`) is therefore the code's own criterion, not a gloss.
+- The corrected additive rule (§2's correction box) is used throughout; no separate ratio-form
+  comparison was re-run for v2 — v1 §9.6 already established that form is an artifact.
+
+### 10.7 Findings, in the order they would change something
+
+1. **The band does not fully slacken on this grid.** At the unconstrained optimum the
+   `M`-max-deviation is `0.36597`, above the widest grid point `δ = 0.33`; `EG^bal(0.33)` sits
+   `0.00117` nats below `EG_{S₁₈}` rather than closing the sandwich, unlike v1 where `δ = 0.33`
+   reached `EG_{S₁₃}` exactly. Nothing downstream depends on the sandwich closing, so this changes
+   no verdict — recorded because it is a genuine structural difference from v1 (§10.0).
+2. **Degenerate zero-dual ties appear at interior grid points.** At `δ = 0.05` and `δ = 0.10`,
+   `t` exceeds the count of reps with a strictly signed `ν_i` by 9 and 3 respectively — tight
+   bands with a degenerate zero multiplier, not genuine slack. `gauge_pinned` still holds
+   throughout (§10.4).
+3. **First movers are not exact ties on v2.** `n_exact_ties = 0` at `δ₀`; the near-tie set is
+   small (25 zips, `0.39 %` of `T`) and concentrated on two reps, R0008 and R0021 (§10.6).
+4. **D1′ and `δ*` reproduce v1's structure exactly, at v2's numbers.** `EG^bal(δ₀) − V = 0.724507`
+   nats already exceeds the tier-2 floor by `145×`; softness fails on the intercept alone; `δ*`
+   runs zero solves (§10.2, §10.3).
+5. **§2.8's "proportionality is the first casualty" fails again, less severely.** 3 of 18 reps
+   (vs. 4 of 13 on v1) fall below proportionality on the delivered draw and none do anywhere on
+   the frontier; erosion across the grid is `30 %` (vs. v1's `32 %`) (§10.5).
+6. **The manifest's `instance` field is stale**, naming the retired `.claude/worktrees/A1/` path
+   rather than a live one. Recorded, not corrected (note above).
+7. **`figures/u8_band/frontier.png` has not been regenerated for v2** and still shows the
+   `k = 13` curve. No figure accompanies this section.
