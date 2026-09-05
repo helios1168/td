@@ -1,13 +1,13 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-04 · **Branch:** `wt/runs`, pushed · **Head:** `2f83d48`
+**Last updated:** 2026-09-04 · **Branch:** `wt/runs`, pushed · **Head:** `d7c4503`
 (branched from `national-channel` at `e3cc5d2`) · **Tests:** 184 pass, 0 fail (run 2026-09-04
 in this worktree)
 
-**Status:** this branch is the stage-1 pin-cost catalogue on a new, higher-quality instance
-(`docs/RUNS_PLAN.md`) — the new instance is validated and reframed to k≈18 (real total ≈$18B);
-the 14+1 run catalogue itself has not run yet. **The state narrative lives in `docs/FRAME.md`
-§0 — read it, not this block.**
+**Status:** the 14+1 pin-cost catalogue ran to completion on the new instance and is published:
+https://claude.ai/code/artifact/f903ee01-eefc-40cf-bd32-8f5536b6e65f. A solver hang was found
+and fixed along the way (`td/solvers/centers.py::assign()`, see `docs/RUNS.md`). **The state
+narrative lives in `docs/FRAME.md` §0 — read it, not this block.**
 
 **Resume point: `docs/FRAME.md` §0** (its top entry is this branch's; it supersedes
 `docs/CHANNEL.md` §6–7, `CHANNEL.md` §0 carries the pointer). Task detail: `docs/RUNS_PLAN.md`.

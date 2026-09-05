@@ -1,15 +1,15 @@
 # Handoff — the `runs` track (`wt/runs`)
 
-**Updated:** 2026-09-04 · **Branch:** `wt/runs`, pushed · **Head:** `2f83d48`
+**Updated:** 2026-09-04 · **Branch:** `wt/runs`, not yet pushed · **Head:** `d7c4503`
 (branched from `national-channel` at `e3cc5d2`) · **Tests:** 184 pass, 0 fail (run 2026-09-04
 in this worktree)
 
 ## Start here
-- **Resume point:** `docs/FRAME.md` §0 — the 2026-09-04 `wt/runs` entry is the top one.
-- **Task detail:** `docs/RUNS_PLAN.md` — self-contained, start at its §0. It has already done
-  steps 1–5 and §1–§2 (worktree, Serena, gitignored inputs, tests, old-instance regression,
-  new-instance validation and the `BLANK`-pseudo-zip fix); §4 onward (scenario specs, the run
-  catalogue, maps, the artifact) has not run.
+- **Resume point:** `docs/FRAME.md` §0 — the 2026-09-04 `d7c4503` `wt/runs` entry is the top one.
+- **Results:** `docs/RUNS.md` — the catalogue's numbers, the region table, the solver-fix
+  writeup. `docs/RUNS_PLAN.md` is the plan it executed (now fully done, §1–§8).
+- **Artifact:** https://claude.ai/code/artifact/f903ee01-eefc-40cf-bd32-8f5536b6e65f — headline
+  table, pin-cost charts, 15 scenario sections with maps and per-district tables.
 - **Status header:** `CLAUDE.md` (thin — it points here and at FRAME §0).
 - **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`;
   the merge rule is `ask-before-merging-to-hub.md`.
@@ -19,27 +19,26 @@ in this worktree)
   (new, uncleaned, provenance only), `data/geo/` and `battery/results/` are all gitignored.
 - **Serena binds to the session's launch directory** — start `claude` from this worktree, or
   confirm `initial_instructions`' active-project path before any edit.
-- **Real total ≈ $18B** (sponsor-confirmed, new instance) ⇒ working target k≈18. Every region
-  (§3 of `RUNS_PLAN.md`) is now oversized as a single district at that target — CAROLINAS and
-  SOUTHWEST are the closest fits, CALIFORNIA the furthest.
+- **Solver change on this branch:** `td/solvers/centers.py::assign()` now pins
+  `method="highs-ds"` with `options={"time_limit": 60.0}` instead of the bare
+  `method="highs"` — the auto-selecting method (and `highs-ds` with no `options` at all) hangs
+  indefinitely on the new instance. Full writeup and verification in `docs/RUNS.md`.
 - **Hub background (not this branch's job to update):** `docs/APPROACHES.md`, `docs/CHANNEL.md`,
   `docs/MODEL.md`, `docs/DATA.md`, `docs/RESEARCH_FINDINGS.md`, `docs/REVIEW_GROMOV.md` — the
   problem, the model, and the literature map. `wt/A1`'s track lives at `docs/tracks/A1/` and is
   independent of this branch (confirmed no file overlap as of 2026-09-04).
-- **Published artifacts (hub, unrelated to this branch's future one):** k-Sweep (all nine k,
+- **Published artifacts (hub, unrelated to this branch's):** k-Sweep (all nine k,
   `c007d61d-c753-4151-9026-2288b9d5eb38`) · Atlas (5 maps, certified k=13 draw,
-  `1f2cddd9-b98b-4213-83ea-784566147c6a`). This branch's eventual artifact must be a **new** one.
+  `1f2cddd9-b98b-4213-83ea-784566147c6a`).
 
 ## Next actions
-- [ ] §4 — write the 14 scenario specs at `docs/artifacts/runs/scenarios/*.json`
-      (`<region>_fix.json` / `<region>_anchor.json`, 7 regions).
-- [ ] §5 — run the catalogue (`docs/artifacts/runs/run_all.sh`): unpinned baseline + 14 scenarios,
-      `instance_descaled_v2.json.gz`, `--k 14-22 --seeds 0-9`, ~14 min total. Verify 0 unstaffed
-      and masses summing to the instance total on every run.
-- [ ] §6 — one power-diagram map per scenario at k=18, plus the instance's `opportunity.png` once.
-- [ ] §7 — `docs/artifacts/runs/build_artifact.py`: reuse the k-Sweep's stylesheet, embed maps as
-      lossless WebP, publish as a **new** artifact (never touch `c007d61d`).
-- [ ] §8 — write `docs/RUNS.md` (provenance, validation, region table, artifact URL), commit on
-      `wt/runs`, push. **Do not merge to `national-channel` without asking** — the standing rule.
-- [ ] Open finding to carry into §7/§8's writeup: at k=18 every region is oversized as a single
-      district (k-equivalents 1.13–4.13); this is reported, not resolved by regrouping.
+- [ ] Push `wt/runs` (this session did not push — confirm before assuming the branch is
+      backed up remotely).
+- [ ] The open decision this catalogue exists to inform: **which states, if any, are
+      hand-drawn** — a sponsor call, not a solver one. `docs/RUNS.md`'s region table is the
+      price list.
+- [ ] `td/solvers/centers.py`'s HiGHS fix has an unexplained root cause (a scipy 1.18.1 /
+      HiGHS option-merging quirk) — not chased further than confirming the fix is narrow and
+      correct. Worth a scipy/HiGHS upstream bug report if this recurs elsewhere.
+- [ ] Still open from `RUNS_PLAN.md`: no merge to `national-channel` without asking — the
+      standing rule. This branch has not proposed one.

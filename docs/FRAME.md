@@ -15,9 +15,52 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 ## 0. Resume — read this first in a fresh session
 
 **State on 2026-09-04 (latest, branch `wt/runs`, worktree `.claude/worktrees/runs`, head
-`2f83d48`, branched from `national-channel` at `e3cc5d2`; tests 184 pass, 0 fail): the runs
-track validated the new instance, fixed one data-quality defect, and reframed its k-target
-from 13 to 18 on the sponsor's real total.** *What landed* (`2f83d48`, docs + gitignored data,
+`d7c4503`, branched from `national-channel` at `e3cc5d2`; tests 184 pass, 0 fail): the runs
+track ran the 14+1 pin-cost catalogue to completion, found and fixed a solver hang along the
+way, and published the artifact.** *What landed* (`d7c4503`): 14 scenario specs
+(`docs/artifacts/runs/scenarios/*.json`, 7 regions × {`fix`,`anchor`}), the driver
+(`run_all.sh`), the map script (`make_maps.sh`) and the generator (`build_artifact.py`) — all
+new under `docs/artifacts/runs/`; 15 power-diagram maps plus one `opportunity.png` under
+`figures/runs_20260904/` (tracked); results and the region table in `docs/RUNS.md`. Every one
+of the 15 runs (`instance_descaled_v2.json.gz`, `--k 14-22 --seeds 0-9`) staffed all districts
+(0 unstaffed) with masses summing to the instance total. Artifact:
+https://claude.ai/code/artifact/f903ee01-eefc-40cf-bd32-8f5536b6e65f — headline table,
+7-region pin-cost catalogue, three charts (bar at k=18, cost-vs-k, deviation-vs-k), 15 scenario
+sections with maps and per-district tables.
+
+**Mid-run finding, fixed with the user's sign-off at each step (full detail in `docs/RUNS.md`):
+`td/solvers/centers.py::assign()`'s `scipy.optimize.linprog(method="highs")` hangs
+indefinitely on the new instance** — 0.08s on the old instance, up to 214s (and, at k=18 with
+no `options` dict at all, confirmed via `faulthandler` to never return) on the new one for the
+same shape of LP. Not the Alaska/Hawaii zips' extreme LAEA coordinates (ruled out by testing
+without them — no change). Fixed: `method="highs-ds"` pinned with an explicit
+`options={"time_limit": 60.0}` — scipy 1.18.1's HiGHS wrapper appears to need *any* options
+dict present to avoid the hang; root cause not chased further than confirming the fix is
+narrow and correct. Verified before resuming the catalogue: 184/184 tests unchanged; the
+old-instance regression (`--k 8-16 --seeds 0-9` vs. `sweep_20260902_s10`) is byte-identical at
+8 of 9 k-values — **k=9 differs only at the tie-noise floor** (all ten seeds land within
+~6e-6 nats of each other; the new LP method flips which tied seed wins, moving nash by ~3e-6,
+about 1,000× under `CLAUDE.md`'s 5e-3 nat tolerance) — accepted as expected tie noise, not a
+defect, with the user's explicit approval before resuming.
+
+**Region table (recomputed from the actual catalogue, not the earlier illustrative one):**
+cost tracks distance from natural k as designed — CALIFORNIA (natural k 4.36) costs ~2.04 nats
+against baseline at k=18, CAROLINAS (natural k 15.92, inside the 14–22 sweep) costs ~0.008, a
+~250× spread. `nash Δ` (balance cost) is identical between `fix` and `anchor` for every region
+(expected — both pin the same mass); `stage-2 Δ` (the staffed objective) diverges and isn't
+always negative: **FLORIDA `fix` staffs +0.029 nats *better* than the unpinned baseline**, and
+CAROLINAS `anchor` +0.012 better — stage 2 sees rep books stage 1 doesn't, so a hand-drawn
+district can occasionally out-staff a balance-only split even though it can never win on
+balance alone. Full table in `docs/RUNS.md`.
+
+*What's next:* the sponsor still needs to pick which states (if any) are hand-drawn — this
+catalogue is the price list `CHANNEL.md`'s open item asked for, not the decision itself. No
+merge to `national-channel` has happened or is proposed by this entry (ask-before-merging-to-hub
+stands).
+
+**Earlier — state on 2026-09-04, branch `wt/runs`, head `2f83d48`: the runs track validated the
+new instance, fixed one data-quality defect, and reframed its k-target from 13 to 18 on the
+sponsor's real total.** *What landed* (`2f83d48`, docs + gitignored data,
 no `td/`/`tools/` change; preceded by Serena onboarding `205a507` and this plan's commit
 `a2c102c`): the old-instance regression (`instance_descaled.json.gz`, `--k 8-16 --seeds 0-9`)
 reproduced `sweep_20260902_s10` byte-identical across `sweep.csv` and all nine `k*/draw.csv`,
