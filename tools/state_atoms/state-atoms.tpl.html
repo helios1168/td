@@ -1,0 +1,1031 @@
+<title>State Atoms at k=18</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap">
+<style>
+:root {
+  --ground: #e9eef1;
+  --surface: #f8fafb;
+  --surface-2: #eff3f5;
+  --ink: #12202a;
+  --ink-2: #4d616d;
+  --ink-3: #7b8d97;
+  --rule: #c3d0d7;
+  --rule-soft: #dae3e8;
+  --accent: #23407e;
+  --accent-soft: #dae1f0;
+  --over: #9c3a22;
+  --over-soft: #f0dcd6;
+  --ok: #2f6b52;
+  --bar: #8fa4b0;
+  --shadow: 0 1px 0 rgba(18, 32, 42, .06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0e1820;
+    --surface: #15222b;
+    --surface-2: #1a2933;
+    --ink: #e3ebef;
+    --ink-2: #9aadb8;
+    --ink-3: #6d818d;
+    --rule: #2c3f4b;
+    --rule-soft: #223440;
+    --accent: #86a4e6;
+    --accent-soft: #1e2c4a;
+    --over: #e08a6e;
+    --over-soft: #3b241d;
+    --ok: #74c39a;
+    --bar: #48606e;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .3);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0e1820;
+  --surface: #15222b;
+  --surface-2: #1a2933;
+  --ink: #e3ebef;
+  --ink-2: #9aadb8;
+  --ink-3: #6d818d;
+  --rule: #2c3f4b;
+  --rule-soft: #223440;
+  --accent: #86a4e6;
+  --accent-soft: #1e2c4a;
+  --over: #e08a6e;
+  --over-soft: #3b241d;
+  --ok: #74c39a;
+  --bar: #48606e;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+.sheet {
+  --pad: 24px;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 0 var(--pad) 96px;
+}
+
+.label {
+  font-family: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.num { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+h1, h2, h3 {
+  font-family: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+  text-wrap: balance;
+  margin: 0;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 40px 0 26px;
+  border-bottom: 2px solid var(--ink);
+}
+.masthead h1 {
+  font-size: clamp(34px, 6vw, 54px);
+  font-weight: 700;
+  letter-spacing: -.015em;
+  line-height: 1.02;
+}
+.masthead .standfirst {
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 60ch;
+  margin: 0;
+}
+.masthead .filed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+}
+.scopebar {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 66ch;
+}
+.scopebar .label { color: var(--accent); margin-right: 10px; }
+
+/* ---------- stats strip ---------- */
+
+/* 1px gap over a ruled ground draws the dividers, so wrapped rows stay correct
+   at every width instead of stranding a border-left at the start of a row. */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 1px;
+  background: var(--rule-soft);
+  border-bottom: 1px solid var(--rule);
+  margin: 0 -16px;
+  width: calc(100% + 32px);
+}
+.strip > div {
+  background: var(--ground);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.strip .v {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -.02em;
+}
+.strip .k { font-size: 13px; color: var(--ink-2); line-height: 1.35; font-family: "IBM Plex Sans Condensed", Arial, sans-serif; }
+
+/* ---------- sections ---------- */
+
+section { padding: 44px 0 0; }
+section > h2 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: 14px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--rule);
+}
+.prose { max-width: 68ch; display: flex; flex-direction: column; gap: 16px; }
+.prose p { margin: 0; }
+.prose h3 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin-top: 8px; }
+code, .mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .88em;
+  background: var(--surface-2);
+  padding: .1em .34em;
+  border-radius: 2px;
+}
+
+/* ---------- pull quote / finding ---------- */
+
+.finding {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 22px;
+  align-items: start;
+  background: var(--surface);
+  border-top: 2px solid var(--accent);
+  padding: 22px 24px;
+  margin: 26px 0 4px;
+  box-shadow: var(--shadow);
+}
+.finding .tag {
+  writing-mode: horizontal-tb;
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 4px;
+  white-space: nowrap;
+}
+.finding p { margin: 0 0 10px; max-width: 62ch; }
+.finding p:last-child { margin-bottom: 0; }
+
+/* ---------- atom inventory ---------- */
+
+.inventory { display: flex; flex-direction: column; gap: 34px; }
+.grouphead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule-soft);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+.grouphead h3 { font-size: 17px; font-weight: 600; }
+.grouphead .note { font-size: 13px; color: var(--ink-2); font-family: "IBM Plex Sans Condensed", Arial, sans-serif; }
+
+.bars { display: flex; flex-direction: column; gap: 3px; }
+.row {
+  display: grid;
+  grid-template-columns: 34px 1fr 62px;
+  align-items: center;
+  gap: 12px;
+}
+.row .st {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-align: right;
+}
+.row .track {
+  position: relative;
+  height: 15px;
+  background: var(--surface-2);
+}
+.row .fill { position: absolute; inset: 0 auto 0 0; background: var(--bar); }
+.row .ratio {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-2);
+  text-align: right;
+}
+.row.big .st, .row.big .ratio { color: var(--over); font-weight: 600; }
+.row.big .fill { background: var(--over); }
+.row.big .track { background: var(--over-soft); height: 22px; }
+.row.big { grid-template-columns: 66px 1fr 62px; }
+.row.big .st { font-size: 13px; }
+
+.scale {
+  display: grid;
+  grid-template-columns: 34px 1fr 62px;
+  gap: 12px;
+  margin-top: 8px;
+}
+.scale .ticks { position: relative; height: 18px; border-top: 1px solid var(--rule); }
+.scale .tick { position: absolute; top: 0; transform: translateX(-50%); font-size: 10.5px; color: var(--ink-3); font-family: "IBM Plex Mono", monospace; padding-top: 3px; }
+.scale.big { grid-template-columns: 66px 1fr 62px; }
+.scale .tick::before { content: ""; position: absolute; top: -1px; left: 50%; width: 1px; height: 4px; background: var(--rule); }
+
+.targetline { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--accent); }
+
+/* ---------- territory map ---------- */
+
+.mapframe {
+  background: var(--surface);
+  border: 1px solid var(--rule-soft);
+  padding: 10px 10px 4px;
+  box-shadow: var(--shadow);
+}
+.mapscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mapframe svg { display: block; width: 100%; height: auto; }
+.panhint { display: none; }
+.mapframe .outline path { fill: var(--surface-2); stroke: var(--rule); stroke-width: .9; }
+.mapframe .dots circle { stroke: none; }
+
+.dots .fa  { fill: #23407e; fill-opacity: .82; }
+.dots .fas { fill: #7d9bd4; fill-opacity: .8; }
+.dots .fbs { fill: #d8a24a; fill-opacity: .82; }
+.dots .fb  { fill: #9c5a12; fill-opacity: .84; }
+.dots .fn  { fill: #9aa8b0; fill-opacity: .34; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .dots .fa  { fill: #4d7ae0; }
+  :root:not([data-theme="light"]) .dots .fas { fill: #a9bde8; }
+  :root:not([data-theme="light"]) .dots .fbs { fill: #dfc999; }
+  :root:not([data-theme="light"]) .dots .fb  { fill: #e2933a; }
+  :root:not([data-theme="light"]) .dots .fn  { fill: #64798a; fill-opacity: .45; }
+}
+:root[data-theme="dark"] .dots .fa  { fill: #4d7ae0; }
+:root[data-theme="dark"] .dots .fas { fill: #a9bde8; }
+:root[data-theme="dark"] .dots .fbs { fill: #dfc999; }
+:root[data-theme="dark"] .dots .fb  { fill: #e2933a; }
+:root[data-theme="dark"] .dots .fn  { fill: #64798a; fill-opacity: .45; }
+
+.mapstats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+  gap: 1px;
+  background: var(--rule-soft);
+  border-top: 1px solid var(--rule);
+  margin: 18px -16px 0;
+  width: calc(100% + 32px);
+}
+.mapstat {
+  background: var(--ground);
+  display: grid;
+  grid-template-columns: 11px 1fr;
+  grid-template-areas: "sw k" ". v" ". n";
+  align-items: center;
+  gap: 2px 9px;
+  padding: 14px 16px;
+}
+.mapstat .sw { grid-area: sw; width: 11px; height: 11px; border-radius: 50%; }
+.mapstat .mk {
+  grid-area: k;
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.mapstat .mv {
+  grid-area: v;
+  font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+  font-size: 20px; font-weight: 500;
+  display: flex; align-items: baseline; gap: 8px;
+}
+.mapstat .mpc { font-size: 12px; color: var(--ink-3); }
+.mapstat .mn {
+  grid-area: n;
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-size: 12px; color: var(--ink-3);
+}
+.sw.fboth { background: linear-gradient(90deg, #7d9bd4 0 50%, #d8a24a 50% 100%); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sw.fboth { background: linear-gradient(90deg, #a9bde8 0 50%, #dfc999 50% 100%); }
+}
+:root[data-theme="dark"] .sw.fboth { background: linear-gradient(90deg, #a9bde8 0 50%, #dfc999 50% 100%); }
+.sw.fa  { background: #23407e; }
+.sw.fas { background: #7d9bd4; }
+.sw.fbs { background: #d8a24a; }
+.sw.fb  { background: #9c5a12; }
+.sw.fn  { background: #9aa8b0; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sw.fa  { background: #6f92e8; }
+  :root:not([data-theme="light"]) .sw.fas { background: #3f5f9e; }
+  :root:not([data-theme="light"]) .sw.fbs { background: #a8792c; }
+  :root:not([data-theme="light"]) .sw.fb  { background: #e8b062; }
+  :root:not([data-theme="light"]) .sw.fn  { background: #5b6f7b; }
+}
+:root[data-theme="dark"] .sw.fa  { background: #6f92e8; }
+:root[data-theme="dark"] .sw.fas { background: #3f5f9e; }
+:root[data-theme="dark"] .sw.fbs { background: #a8792c; }
+:root[data-theme="dark"] .sw.fb  { background: #e8b062; }
+:root[data-theme="dark"] .sw.fn  { background: #5b6f7b; }
+
+.mapnote {
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-size: 12.5px; color: var(--ink-3);
+  margin-top: 12px;
+}
+
+/* ---------- tables ---------- */
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 520px; }
+th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: baseline; }
+th {
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--rule);
+}
+td.n, th.n { text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; padding-right: 0; }
+tbody tr:last-child td { border-bottom: none; }
+td .sub { color: var(--ink-3); font-size: 12.5px; }
+
+/* ---------- open questions ---------- */
+
+.questions { display: flex; flex-direction: column; gap: 2px; }
+.q {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 22px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  align-items: start;
+}
+.q:last-child { border-bottom: none; }
+.q .qk {
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 3px;
+}
+.q h3 { font-size: 17px; font-weight: 600; margin-bottom: 7px; }
+.q p { margin: 0; max-width: 62ch; font-size: 15px; color: var(--ink-2); }
+.q .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.q .opt {
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  font-size: 12.5px;
+  padding: 4px 11px;
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+  background: var(--surface);
+}
+
+footer {
+  margin-top: 56px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  color: var(--ink-3);
+  font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+
+/* ---------- phones ---------- */
+
+@media (max-width: 700px) {
+  .sheet { --pad: 18px; padding-bottom: 64px; }
+
+  .masthead { padding: 28px 0 20px; gap: 14px; }
+  .masthead .standfirst { font-size: 17px; }
+  .masthead .filed { gap: 4px 14px; }
+
+  /* full-bleed the ruled grids and the map to the screen edges */
+  .strip, .mapstats { margin-left: calc(-1 * var(--pad)); margin-right: calc(-1 * var(--pad)); width: auto; }
+  .strip { grid-template-columns: repeat(2, 1fr); }
+  .strip > div { padding: 14px var(--pad); }
+  .strip .v { font-size: 22px; }
+  .mapstats { grid-template-columns: repeat(2, 1fr); }
+  .mapstat { padding: 12px var(--pad); }
+
+  section { padding-top: 34px; }
+
+  /* the map keeps a legible width and pans inside its own scroller */
+  .mapframe {
+    margin-left: calc(-1 * var(--pad));
+    margin-right: calc(-1 * var(--pad));
+    border-left: none;
+    border-right: none;
+    padding: 8px 0 2px;
+  }
+  .mapframe svg { min-width: 640px; }
+  .panhint {
+    display: block;
+    margin: 8px 0 0;
+    font-family: "IBM Plex Sans Condensed", Arial, sans-serif;
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  /* stack the finding tag above its text rather than starving the column */
+  .finding {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 18px var(--pad);
+    margin-left: calc(-1 * var(--pad));
+    margin-right: calc(-1 * var(--pad));
+  }
+  .finding .tag { padding-top: 0; }
+
+  .q { grid-template-columns: 1fr; gap: 8px; }
+  .q .opt { font-size: 12px; padding: 5px 10px; }
+
+  .row { grid-template-columns: 30px 1fr 50px; gap: 9px; }
+  .row.big, .scale.big { grid-template-columns: 58px 1fr 50px; }
+  .scale { grid-template-columns: 30px 1fr 50px; gap: 9px; }
+  .row .st { font-size: 11.5px; }
+  .row.big .st { font-size: 12px; }
+  .row .ratio { font-size: 11px; }
+
+  .grouphead { gap: 4px; }
+  .grouphead .note { font-size: 12px; }
+
+  table { min-width: 460px; font-size: 13.5px; }
+  th, td { padding: 8px 12px 8px 0; }
+  .tablewrap {
+    margin-left: calc(-1 * var(--pad));
+    margin-right: calc(-1 * var(--pad));
+    padding: 0 var(--pad);
+  }
+}
+
+@media (max-width: 344px) {
+  .strip, .mapstats { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="filed">
+      <span class="label">National channel &middot; territory design</span>
+      <span class="label">Instance v2 &middot; k = 18</span>
+      <span class="label">Drafted 2026-09-05</span>
+    </div>
+    <h1>State Atoms at k&nbsp;=&nbsp;18</h1>
+    <p class="standfirst">Can whole states, with the oversized ones cut into pieces, replace the
+      zip as the atomic unit for carving districts of roughly equal opportunity? Yes, but the cost
+      is set almost entirely by how finely the four big groups are cut. At three pieces for
+      California it exceeds the incumbency premium; at five it is a tenth of it.</p>
+    <p class="scopebar"><span class="label">Scope</span> Stage 1 only, the draw. Assigning reps to
+      districts stays a separate stage-2 problem, to be developed later, so nothing here depends on
+      rep books or on the staffed objective.</p>
+  </header>
+
+  <div class="strip">
+    <div><span class="v">8,523.2</span><span class="k">Total opportunity M, v2 units</span></div>
+    <div><span class="v">473.5</span><span class="k">Target per district at k = 18</span></div>
+    <div><span class="v">0.864</span><span class="k">Nats given up by CA 3, TX 2, NY+NJ 2, drawn contiguously</span></div>
+    <div><span class="v">0.094</span><span class="k">Nats given up by the finest cuts tested, CA 5 and FL 2</span></div>
+    <div><span class="v">0.72&ndash;0.78</span><span class="k">The incumbency premium, for scale</span></div>
+    <div><span class="v">52&ndash;56</span><span class="k">Atoms, depending on the cut, for 18 districts</span></div>
+  </div>
+
+  <section>
+    <h2>Where the model stands today</h2>
+    <div class="prose">
+      <p>Stage 1 draws <span class="mono">k</span> balanced districts over <strong>3,748 zips</strong>.
+        It is a transportation LP at fixed centers, solved for its duals, which makes each district a
+        convex power cell. <code>centers.py</code> states its own contract plainly: <em>"No contiguity,
+        no adjacency: this module is pure functions on arrays."</em></p>
+      <p>That omission is not an oversight. It is forced. The instance carries a real rook-adjacency
+        graph over sold zips, and on v2 that graph has <strong>862 connected components</strong> across
+        3,748 nodes, <strong>516 of them single zips</strong>. The largest component holds 13.5&nbsp;% of
+        opportunity, and 47.6&nbsp;% of opportunity sits in components worth under 1&nbsp;% each. A
+        contiguity constraint on that graph is either vacuous or infeasible, so stage 1 ignores it and
+        buys coherence indirectly, from the geometry of the power diagram.</p>
+      <p>Geometry has its own cost. Stage 1 needs a coordinate per zip, and 41 zips in the delivered
+        k&nbsp;=&nbsp;18 draw have none; they are placed afterwards by a state-plurality fallback in
+        <code>channel.place_by_state</code>.</p>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Finding</span>
+      <div>
+        <p>Contracting the instance's zip graph to states does not produce the US state map. It produces
+          <strong>10 edges and 42 components</strong>, with 36 states isolated, because the underlying zip
+          graph is shattered and most states touch their neighbours only in unsold territory.</p>
+        <p>So a state-atom model cannot derive its adjacency from the instance. It has to use the true
+          state rook graph, roughly 109 edges over the lower 48. That graph is public, fixed, and one
+          connected piece. <code>tools/instance_export/build_adjacency.py</code> already downloads the
+          TIGER state shapefile it would come from.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Whose territory it is now</h2>
+    <div class="prose" style="margin-bottom: 26px;">
+      <p>Before any of this is redrawn, here is what the two firms hold. One bubble per zip, area
+        proportional to opportunity, coloured by which firm has book there. Firm labels are masked in
+        the instance as <span class="mono">F0</span> and <span class="mono">F1</span>; A is
+        <span class="mono">F0</span> with 53 reps and 41.1&nbsp;% of booked production, B is
+        <span class="mono">F1</span> with 61 reps and 58.9&nbsp;%.</p>
+    </div>
+
+    <div class="mapframe"><div class="mapscroll"><!--MAP--></div></div>
+    <p class="panhint">Swipe the map sideways to pan.</p>
+    <div class="mapstats"><!--MAPSTATS--></div>
+    <p class="mapnote"><!--MAPNOTE--></p>
+
+    <div class="prose" style="margin-top: 26px;">
+      <p>Neither firm holds a region. The two are interleaved in every metro, and both firms hold book in
+        671 zips carrying nearly half of mapped opportunity. That is context for stage 2 rather than a
+        constraint on the draw: because stage 1 balances opportunity alone, none of this enters the atom
+        model. It does say something about how stage 2 will have to work, since no districting of any
+        grain can hand a firm a clean region that does not exist in the data.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>The atom inventory</h2>
+    <div class="prose" style="margin-bottom: 30px;">
+      <p>Every atom's opportunity, as a multiple of the 473.5 target. The question of whether states can
+        serve as atoms is settled almost entirely by this one distribution: a handful of atoms carry more
+        than a district's worth of opportunity and must be cut, and every other one fits inside a single
+        district with room to spare.</p>
+      <p>An atom is <strong>a state or a group of states</strong>, not a state alone. Where a metro
+        straddles a state line the two states have to be cut together, or the cut is drawn in the wrong
+        place. New York and New Jersey are the first such group.</p>
+    </div>
+
+    <div class="inventory">
+
+      <div>
+        <div class="grouphead">
+          <h3>Must be split</h3>
+          <span class="note">4 groups over 6 states &middot; 57.6&nbsp;% of all opportunity &middot; scale runs to 4.5&times;</span>
+        </div>
+        <div class="bars" id="bigbars"></div>
+        <div class="scale big">
+          <div></div>
+          <div class="ticks" id="bigticks"></div>
+          <div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="grouphead">
+          <h3>Usable whole</h3>
+          <span class="note">47 atoms &middot; 42.4&nbsp;% of opportunity &middot; scale runs to 1&times; target</span>
+        </div>
+        <div class="bars" id="smallbars"></div>
+        <div class="scale">
+          <div></div>
+          <div class="ticks" id="smallticks"></div>
+          <div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="prose" style="margin-top: 30px;">
+      <p>Cutting each oversized group into pieces no larger than one target gives <strong>13
+        pieces</strong> from the four, so the model runs on <strong>60 atoms</strong> for 18 districts.
+        Grouping New York with New Jersey is what removes a piece: taken separately they are 1.794&times;
+        and 1.037&times;, needing 2 and 2, and the second New Jersey piece would be a 3.7&nbsp;% sliver
+        with nowhere sensible to go.</p>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Evidence</span>
+      <div>
+        <p>The current draw already fuses the two, without being told to. <strong>D01 is 373.6 New York
+          plus 96.7 New Jersey out of 471.8</strong>, and <strong>D12 is 340.9 New Jersey plus 128.6 New
+          York out of 471.8</strong>. Each is over 99&nbsp;% metro mass from the two states combined. The
+          power diagram found the tri-state metro on geometry alone; grouping the atoms just states it
+          up front.</p>
+        <p>The remaining New York and New Jersey mass leaks into two neighbours: a New England district
+          (New York 291.2, Connecticut 86.8, Massachusetts 47) and a mid-Atlantic one (Pennsylvania 251,
+          Maryland 107, New York 54.3, New Jersey 43.6).</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Worth deciding</span>
+      <div>
+        <p>Adding Connecticut makes the group <strong>1,427.2, or 3.014&times; target</strong>. Three
+          pieces of a tri-state block, each 0.5&nbsp;% over a full district, with no spillover to
+          negotiate with New England at all. New York plus New Jersey alone is 2.831&times;, so its three
+          pieces each run 5.6&nbsp;% light and have to draw the balance from a neighbour.</p>
+        <p>That is a cleaner block, and it is the sponsor's call rather than the model's, so it is left
+          open here.</p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top: 22px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Atom group</th><th class="n">M</th><th class="n">&times; target</th>
+            <th class="n">Pieces</th><th>Districts it occupies in the current draw</th>
+          </tr>
+        </thead>
+        <tbody id="splittable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the coarsening buys</h2>
+    <div class="prose">
+      <h3>Contiguity becomes a constraint the model can actually carry</h3>
+      <p>On 61 atoms over one connected graph, contiguity is enforceable rather than decorative. The
+        separator-cut machinery already written for the two-player engine in <code>scip_tree.py</code>
+        applies directly, and at this size it is small work rather than the reason the approach was
+        abandoned.</p>
+
+      <h3>The Nash objective goes linear</h3>
+      <p>Enumerate connected atom subsets whose mass falls in a band around the target, precompute
+        <span class="mono">log M<sub>S</sub></span> for each, and the districting becomes a set-partition
+        program with a linear objective. That is an exact optimum with a certificate, not a heuristic draw
+        with a bound attached afterwards. It is also the idiom the project already uses elsewhere: A1's
+        charter is roster enumeration over band-constrained programs.</p>
+
+      <h3>Geometry drops out entirely</h3>
+      <p>No coordinates, no projection, no power cells, and no plurality fallback for the 41 zips the
+        gazetteer has no point for. The model would read only <span class="mono">M</span> per atom and the
+        state adjacency graph.</p>
+
+      <h3>State fragmentation ends by construction</h3>
+      <p>The delivered k&nbsp;=&nbsp;18 draw splits <strong>38 of 52 state codes across two or more
+        districts</strong>. California and New York land in five districts each; Florida, Georgia,
+        Nebraska, New Jersey, Ohio, Tennessee and Texas in four. Georgia is only 0.39&times; target and is
+        still cut four ways. Under state atoms only the five oversized states are ever divided.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the coarsening costs on balance</h2>
+    <div class="prose">
+      <p>This is now measured rather than argued. Stage 1 maximises
+        <span class="mono">&Sigma; log M<sub>j</sub></span>, and at a fixed total that objective is exactly
+        the balance objective, so the whole question reduces to one number: how close can 18 groups of
+        atoms get to the perfectly balanced ceiling of <strong>110.883247</strong>?</p>
+      <p>The partition below drops contiguity on purpose. Removing a constraint can only help, so each
+        value is an <strong>upper bound</strong> on what any contiguous draw of that kind could reach.
+        The point is to find out whether atom granularity is the obstacle before spending effort on the
+        contiguity machinery.</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top: 22px;">
+      <table>
+        <thead>
+          <tr><th>Atom rule</th><th class="n">Atoms</th><th class="n">&Sigma; log M</th>
+            <th class="n">Gap to ceiling</th><th class="n">Mass spread</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Perfect balance, the ceiling</td><td class="n">&mdash;</td><td class="n">110.883247</td><td class="n">0</td><td class="n">0</td></tr>
+          <tr><td>Inherit the baseline draw's cut</td><td class="n">65</td><td class="n">110.883176</td><td class="n">0.000070</td><td class="n">1.12&nbsp;%</td></tr>
+          <tr><td>Equal-mass cut of the four groups</td><td class="n">60</td><td class="n">110.883135</td><td class="n">0.000112</td><td class="n">1.36&nbsp;%</td></tr>
+          <tr><td>Zip-level baseline draw, k = 18 seed 2</td><td class="n">3,748</td><td class="n">110.883101</td><td class="n">0.000146</td><td class="n">1.40&nbsp;%</td></tr>
+          <tr><td>No splitting, every state whole</td><td class="n">52</td><td class="n">107.011866</td><td class="n">3.871381</td><td class="n">354.8&nbsp;%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Result</span>
+      <div>
+        <p><strong>Balance is free at this granularity.</strong> Both split rules land within 0.00012 nats
+          of the perfectly balanced ceiling, and both sit <em>above</em> the zip-level draw's own value,
+          because that draw is not perfectly balanced either. For scale, the incumbency premium the
+          programme exists to measure is 0.72 to 0.78 nats, roughly six thousand times larger than the
+          worst gap here.</p>
+        <p>The reason is that <span class="mono">log</span> is flat near its argument and the atom set has
+          a long tail of small states, from Illinois at 0.677&times; down to Wyoming at 0.002&times;, which
+          is more than enough change to settle 18 districts onto the target.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Read it carefully</span>
+      <div>
+        <p>That table drops contiguity, so it isolates one thing only: whether <em>atom size</em> is the
+          obstacle. It is not. The last row is the design point: refusing to split the oversized groups
+          costs <strong>3.87 nats</strong>, about five times the incumbency premium. Splitting them is not
+          a convenience, it is the whole mechanism.</p>
+        <p>What that table does <strong>not</strong> answer is what a real, contiguous draw achieves at a
+          given set of cuts. That is the next section, and it is where the cost actually appears.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The draw, with contiguity enforced</h2>
+    <div class="prose">
+      <p>Four sets of cuts were drawn for real: districts are unions of whole atoms, every district is
+        connected on the true US state rook graph, and the pieces inside each oversized group are cut by
+        the project's own balanced-draw solver rather than by hand.</p>
+      <p>Adjacency had to be imported. The instance's own zip graph contracts to 42 components and cannot
+        supply it, so the graph here is built from the cached TIGER state shapefile: 49 nodes, 107 edges.
+        Alaska rides with Washington and Hawaii with a California piece, since neither can be reached by
+        land.</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top: 22px;">
+      <table>
+        <thead>
+          <tr><th>Cuts</th><th class="n">&Sigma; log M</th><th class="n">Cost vs ceiling</th>
+            <th class="n">Mass spread</th><th class="n">Bound margin</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>CA 3, TX 2, NY+NJ 2</strong> <span class="sub">as specified</span></td>
+            <td class="n">110.019580</td><td class="n"><strong>0.864</strong></td><td class="n">98.2&nbsp;%</td><td class="n">0.151</td></tr>
+          <tr><td>CA 3, TX 2, NY+NJ 3</td><td class="n">110.427114</td><td class="n">0.456</td><td class="n">63.4&nbsp;%</td><td class="n">0.095</td></tr>
+          <tr><td>CA 4, TX 2, NY+NJ 3</td><td class="n">110.759967</td><td class="n">0.123</td><td class="n">52.1&nbsp;%</td><td class="n">0.043</td></tr>
+          <tr><td>CA 5, TX 2, NY+NJ 3, FL 2</td><td class="n">110.789532</td><td class="n"><strong>0.094</strong></td><td class="n">30.5&nbsp;%</td><td class="n">0.093</td></tr>
+          <tr><td>Zip-level baseline, k = 18 seed 2</td><td class="n">110.883101</td><td class="n">0.000146</td><td class="n">1.4&nbsp;%</td><td class="n">&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <span class="tag">The answer</span>
+      <div>
+        <p><strong>Cutting California into 3 costs 0.864 nats.</strong> That is more than the entire
+          incumbency premium of 0.72 to 0.78 nats, so at those cuts the coarsening gives up more value
+          than the effect the programme exists to measure. Three pieces of California are 1.375&times;
+          target each, and a piece above target can never be combined with anything, so it is stranded as
+          an oversized district.</p>
+        <p>Cutting it into 5, with New York and New Jersey into 3 and Florida into 2, brings the cost to
+          <strong>0.094 nats</strong>, about an eighth of the premium. Texas at 2 needs no revision at
+          any setting: its two pieces come out at 1.013&times; and 1.007&times; target.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Structural</span>
+      <div>
+        <p>Cutting New York and New Jersey into 2 <strong>severs New England from the country</strong>.
+          Those six states reach the rest of the network only through New York, so once both New York
+          pieces are too big to absorb anything, <span class="mono">CT MA ME NH RI VT</span> becomes its
+          own graph component and must form a district of <strong>0.434&times; target</strong>, the worst
+          in any draw here. A third New York piece at 0.944&times; repairs it, and the atom graph returns
+          to a single component.</p>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top: 26px;">
+      <h3>The recommended draw: CA 5, TX 2, NY+NJ 3, FL 2</h3>
+      <p>Eighteen districts, every one connected, masses from 0.826&times; to 1.130&times; target.</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top: 14px;">
+      <table>
+        <thead><tr><th class="n">M</th><th class="n">&times; target</th><th>Atoms</th></tr></thead>
+        <tbody>
+          <tr><td class="n">535.2</td><td class="n">1.130</td><td>NC SC VA</td></tr>
+          <tr><td class="n">533.5</td><td class="n">1.127</td><td>CT + NY/NJ piece 2</td></tr>
+          <tr><td class="n">531.9</td><td class="n">1.123</td><td>MA ME NH RI VT + NY/NJ piece 3</td></tr>
+          <tr><td class="n">515.2</td><td class="n">1.088</td><td>IN MI OH</td></tr>
+          <tr><td class="n">514.2</td><td class="n">1.086</td><td>AR IL LA MO</td></tr>
+          <tr><td class="n">512.1</td><td class="n">1.081</td><td>GA + FL piece 2</td></tr>
+          <tr><td class="n">499.0</td><td class="n">1.054</td><td>NV OR + CA piece 2</td></tr>
+          <tr><td class="n">483.9</td><td class="n">1.022</td><td>CO ID MN MT ND WA WI WY</td></tr>
+          <tr><td class="n">479.9</td><td class="n">1.013</td><td>TX piece 1</td></tr>
+          <tr><td class="n">476.6</td><td class="n">1.007</td><td>TX piece 2</td></tr>
+          <tr><td class="n">475.0</td><td class="n">1.003</td><td>AZ IA KS NE NM OK SD UT</td></tr>
+          <tr><td class="n">470.2</td><td class="n">0.993</td><td>DC KY MD PA WV</td></tr>
+          <tr><td class="n">460.7</td><td class="n">0.973</td><td>DE + NY/NJ piece 1</td></tr>
+          <tr><td class="n">433.2</td><td class="n">0.915</td><td>AL MS TN + FL piece 1</td></tr>
+          <tr><td class="n">423.9</td><td class="n">0.895</td><td>CA piece 3 + the stateless zips</td></tr>
+          <tr><td class="n">396.8</td><td class="n">0.838</td><td>CA piece 1</td></tr>
+          <tr><td class="n">390.9</td><td class="n">0.826</td><td>CA piece 4</td></tr>
+          <tr><td class="n">390.9</td><td class="n">0.826</td><td>CA piece 5</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <span class="tag">Method, and its limit</span>
+      <div>
+        <p>These draws come from seeded growth plus local search, where every move and swap is checked to
+          keep both districts connected. <strong>They are not certified optimal.</strong> The exact
+          set-partition route was tried first and abandoned on measurement: enumerating the connected
+          subsets of the 47- and 54-atom components passes a quarter of a million columns, and at 177,000
+          columns HiGHS could not find even a feasible cover in 180 seconds.</p>
+        <p>The <em>bound margin</em> column is what stands in for a certificate. It is the same atom set
+          partitioned with contiguity dropped, which can only do better, so the true contiguous optimum
+          lies between the draw and the draw plus that margin. The ranking of the four cut settings is
+          wider than every margin, so the comparison holds even though each individual value could
+          improve.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Open decisions</h2>
+    <div class="questions">
+
+      <div class="q">
+        <span class="qk">Formulation</span>
+        <div>
+          <h3>Hard atoms or soft?</h3>
+          <p>A hard model makes every district an exact union of atoms, which is what delivers the
+            certificate and the clean state story. A soft model treats state boundaries as a default the
+            solver may cut where the nats justify it, which recovers value but gives up the small,
+            exactly-solvable program.</p>
+          <div class="opts"><span class="opt">Hard union of atoms</span><span class="opt">Soft, priced deviations</span></div>
+        </div>
+      </div>
+
+      <div class="q">
+        <span class="qk">Grouping</span>
+        <div>
+          <h3>Which other states are cut together?</h3>
+          <p>New York with New Jersey is settled. The same argument reaches other metros that straddle a
+            line: Philadelphia over PA, NJ and DE; Chicago over IL, IN and WI; Kansas City over MO and KS;
+            Washington over DC, MD and VA. None of those groups exceeds one district of opportunity, so
+            grouping them changes nothing about splitting, only about whether the model is allowed to draw
+            a boundary through a single labour market.</p>
+          <div class="opts"><span class="opt">NY+NJ only</span><span class="opt">Add Connecticut</span><span class="opt">Group every straddling metro</span></div>
+        </div>
+      </div>
+
+      <div class="q">
+        <span class="qk">Geometry</span>
+        <div>
+          <h3>How are the four oversized groups cut?</h3>
+          <p>Three routes. Inherit the pieces the current v2 draw already carves inside each group, which
+            costs nothing and guarantees the pieces are coherent, and which for New York and New Jersey
+            hands back two near-complete districts already. Run k-means inside each group at the piece
+            count above. Or take named sponsor regions through the existing <code>--scenario</code> path,
+            which is defensible but waits on the A12 call.</p>
+          <div class="opts"><span class="opt">Inherit the baseline draw</span><span class="opt">k-means within group</span><span class="opt">Named sponsor regions</span></div>
+        </div>
+      </div>
+
+      <div class="q">
+        <span class="qk">Data</span>
+        <div>
+          <h3>What happens to the 32 stateless zips?</h3>
+          <p>They carry 33.4 M, about 0.4&nbsp;% of the total, and the current draw scatters them across
+            all 18 districts. A state-atom model has nowhere to put them without a rule: a 53rd floating
+            atom, an attachment to a neighbour by their zip-graph edges, or a correction to the export.</p>
+          <div class="opts"><span class="opt">Floating atom</span><span class="opt">Attach by zip adjacency</span><span class="opt">Fix upstream</span></div>
+        </div>
+      </div>
+
+      <div class="q">
+        <span class="qk">Next</span>
+        <div>
+          <h3>Settle the cuts, or build the engine?</h3>
+          <p>The cost is now known as a function of the cuts, so the remaining choice is how much of the
+            0.094-nat residual is worth chasing. Certifying optimality would need a working exact solver,
+            which the set-partition attempt showed is not free at this size. The alternative is to accept
+            the draw and ship it as a stage-1 engine under the <code>base.py</code> harness contract.</p>
+          <div class="opts"><span class="opt">Settle the cut counts</span><span class="opt">Build the exact solver</span><span class="opt">Ship the engine as drawn</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>Figures computed from <span class="mono">instance_descaled_v2.json.gz</span> and
+      <span class="mono">battery/results/draw_k18_v2_20260904/k18/draw.csv</span>.</span>
+    <span>Baselines from <span class="mono">docs/RUNS.md</span>. Partition bounds from a
+      local-search solve over the atom masses, contiguity dropped, best of 12 restarts.</span>
+    <span>Working draft. Nothing here is committed to the repository record.</span>
+  </footer>
+
+</div>
+
+<script>
+const TARGET = 473.5134742761501;
+
+const BIG = [
+  ["CA", 1953.76, 5, 5],
+  ["NY+NJ", 1340.41, 3, 5],
+  ["TX", 956.53, 3, 4],
+  ["FL", 661.88, 2, 4]
+];
+
+const SMALL = [
+  ["IL", 320.78], ["AZ", 260.48], ["NC", 258.66], ["PA", 253.09], ["MI", 220.10],
+  ["VA", 198.88], ["OH", 194.67], ["GA", 184.74], ["CO", 159.66], ["MD", 119.17],
+  ["WA", 118.25], ["UT", 106.67], ["IN", 100.44], ["MN", 98.30], ["LA", 92.82],
+  ["CT", 86.83], ["MO", 80.38], ["NV", 79.96], ["SC", 77.70], ["KY", 63.43],
+  ["WI", 56.47], ["AL", 54.97], ["MA", 48.70], ["TN", 34.74], ["—", 33.37],
+  ["ID", 30.27], ["OR", 28.55], ["IA", 25.09], ["NH", 22.82], ["NE", 22.66],
+  ["AR", 20.18], ["DC", 19.70], ["OK", 15.60], ["KS", 15.46], ["NM", 15.20],
+  ["WV", 14.84], ["ND", 14.62], ["SD", 13.78], ["DE", 13.72], ["RI", 10.13],
+  ["MS", 9.01], ["HI", 5.92], ["MT", 3.02], ["AK", 2.14], ["VT", 1.81],
+  ["ME", 1.75], ["WY", 1.12]
+];
+
+function bar(st, M, max, big) {
+  const r = M / TARGET;
+  const row = document.createElement("div");
+  row.className = big ? "row big" : "row";
+  const pct = Math.min(100, (r / max) * 100);
+  const tpct = (1 / max) * 100;
+  row.innerHTML =
+    '<span class="st">' + st + '</span>' +
+    '<span class="track"><span class="fill" style="width:' + pct.toFixed(2) + '%"></span>' +
+    (big ? '<span class="targetline" style="left:' + tpct.toFixed(2) + '%"></span>' : '') +
+    '</span>' +
+    '<span class="ratio">' + r.toFixed(r >= 1 ? 2 : 3) + '&times;</span>';
+  return row;
+}
+
+function ticks(el, max, marks) {
+  marks.forEach(function (v) {
+    const t = document.createElement("span");
+    t.className = "tick";
+    t.style.left = ((v / max) * 100).toFixed(2) + "%";
+    t.textContent = v.toFixed(v % 1 ? 1 : 0) + "×";
+    el.appendChild(t);
+  });
+}
+
+const BIG_MAX = 4.5, SMALL_MAX = 1.0;
+const bigEl = document.getElementById("bigbars");
+BIG.forEach(function (r) { bigEl.appendChild(bar(r[0], r[1], BIG_MAX, true)); });
+const smallEl = document.getElementById("smallbars");
+SMALL.forEach(function (r) { smallEl.appendChild(bar(r[0], r[1], SMALL_MAX, false)); });
+
+ticks(document.getElementById("bigticks"), BIG_MAX, [0, 1, 2, 3, 4]);
+ticks(document.getElementById("smallticks"), SMALL_MAX, [0, 0.25, 0.5, 0.75, 1]);
+
+const NAMES = {
+  CA: "California",
+  "NY+NJ": "New York and New Jersey",
+  TX: "Texas",
+  FL: "Florida"
+};
+const tb = document.getElementById("splittable");
+BIG.forEach(function (r) {
+  const tr = document.createElement("tr");
+  tr.innerHTML =
+    "<td>" + NAMES[r[0]] + ' <span class="sub">' + r[0] + "</span></td>" +
+    '<td class="n">' + r[1].toFixed(1) + "</td>" +
+    '<td class="n">' + (r[1] / TARGET).toFixed(3) + "</td>" +
+    '<td class="n">' + r[2] + "</td>" +
+    "<td>" + r[3] + "</td>";
+  tb.appendChild(tr);
+});
+</script>
