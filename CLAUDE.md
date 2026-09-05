@@ -1,17 +1,24 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-04 · **Branch:** `wt/runs`, pushed · **Head:** `d7c4503`
-(branched from `national-channel` at `e3cc5d2`) · **Tests:** 184 pass, 0 fail (run 2026-09-04
-in this worktree)
+**Last updated:** 2026-09-05 · **Branch:** `national-channel` (the hub; `wt/runs` and `wt/A1`
+merged in on 2026-09-05 with the user's approval) · **Head:** see the state commit ·
+**Tests:** see the state commit
 
-**Status:** the 14+1 pin-cost catalogue ran to completion on the new instance and is published:
-https://claude.ai/code/artifact/f903ee01-eefc-40cf-bd32-8f5536b6e65f. A solver hang was found
-and fixed along the way (`td/solvers/centers.py::assign()`, see `docs/RUNS.md`). **The state
-narrative lives in `docs/FRAME.md` §0 — read it, not this block.**
+**Status:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — the sponsor's
+≈$18B is confirmed and is not to be re-derived (user, 2026-09-04). The hub now carries both
+2026-09-04 tracks: **runs** — the 14+1 pin-cost catalogue on v2 (`docs/RUNS.md`, artifact
+https://claude.ai/code/artifact/f903ee01-eefc-40cf-bd32-8f5536b6e65f) and the HiGHS hang fix in
+`td/solvers/centers.py::assign()`; **A1** — wave 1 (U8-band, U9-bandthm) verified and the v2
+re-anchor done: k=18 draw (`δ₀ = 0.00997`, `V = 95.755192`), frontier and premium ladder all on
+v2, and **D1′ says the premium is NOT SOFT on the live instance** (gap 0.725–0.776 nats against
+the 5e-3 floor, no `δ*`, `EG_{S₁₈} = 96.532152`). The two tracks' k=18 draws are byte-identical.
+**Still user-gated:** wave 2, ★11, ★8, the source-document corrections, and the sponsor's
+hand-drawn-states call. **The state narrative lives in `docs/FRAME.md` §0 — read it, not this
+block.**
 
-**Resume point: `docs/FRAME.md` §0** (its top entry is this branch's; it supersedes
-`docs/CHANNEL.md` §6–7, `CHANNEL.md` §0 carries the pointer). Task detail: `docs/RUNS_PLAN.md`.
-Fast orientation: `HANDOFF.md`.
+**Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
+carries the pointer). Fast orientation: `HANDOFF.md`. A1's documents live under
+`docs/tracks/A1/`; the runs track's plan and results are `docs/RUNS_PLAN.md` / `docs/RUNS.md`.
 
 A pruned worktree. Everything from the superseded two-player merger programme is in git
 history on `contiguity-harness` — recover with `git show contiguity-harness:<path>`. Nothing
@@ -27,11 +34,12 @@ equal opportunity, **~$1B each**.
 
 | | |
 |---|---|
-| zips carrying sales | **1,229** (2,232 was a double-count; corrected 2026-09-01) |
-| distinct reps | **111** (confirmed 2026-09-01; the 72 was the same SQL error) |
-| total opportunity | **≈ $13B** (the $6.2B did not survive the double-count correction) |
+| zips | **3,748** on v2 (v1 had 1,229 and is a strict subset; 2,232 was an earlier double-count) |
+| distinct reps | **114** on v2 (v1's 111 all retained; the 72 was an SQL error) |
+| total opportunity | **≈ $18B** on v2, sponsor-confirmed 2026-09-04 (v1's "$13B" was overstated — the descaled ratio ×1.8814 puts v1 at ≈$9.6B) |
+| — of which untapped | **15.7%** on v2 vs 2.9% on v1: the growth is market with no book and no rep. Contested zips only went 675 → 718 |
 | footprint | national with concentration — west 33% / east 31% / TX 11.5% / FL 6.7% / ~18% spread over the rest; the "midwest uncovered" premise was wrong |
-| ⇒ `k` | **≈ 13** at $1B |
+| ⇒ `k` | **18** at $1B on v2 (v1's `k = 13` followed from the overstated $13B; the consistent v1 figure was ≈ 10) |
 
 This is **greenfield balanced districting**, not the two-player fair-division problem the
 repo was built for. `docs/CHANNEL.md` is the problem; `docs/MODEL.md` is the model.
@@ -86,7 +94,10 @@ it. **Measured 2026-09-01 (`docs/REVIEW_GROMOV.md` R1): real aggregate saturatio
 (median zip 46.8%) — the opportunity term is ~59% of an incumbent's `u_i`, not ~90%, the
 hold-vs-not swing is ~42%, and the legacy books move the map a lot. `ceiling.py` still
 hard-codes `SATURATION = 0.05` and channel_note §5.1 still carries the old arithmetic —
-R1's rewrite is open.
+R1's rewrite is open. **Stale at v2 (measured 2026-09-04): saturation there is 29.6%.** It
+decomposes as 41.6% → 34.5% on the shared zips (opportunity revised up ×1.226 while book stayed
+flat at ×1.016) and 34.5% → 29.6% from the 1,567 untapped new zips, which carry no book at all.
+Lower saturation shrinks the incumbency premium, so R1's premium arithmetic needs redoing on v2.
 
 ---
 
@@ -128,17 +139,21 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | `td/model.py` | N-way primitives: schema shim, per-rep utilities, gains, objective, perimeter, per-rep pieces, n-agent EF1 |
 | `td/channel.py` | stage 2 (Hungarian on logs), balance report, `place_by_state`, **`allocate_districts`** (the ceiling / dual bound) |
 | `td/instance.py` | loads the descaled real instance into the N-way schema |
-| `td/solvers/centers.py` | **stage 1**: k-means++ seeding, transportation-LP balanced assignment, Lloyd, Nash polish, portfolio — plus `power_weights` / `power_labels`, the LP duals and the power diagram they define |
+| `td/solvers/centers.py` | **stage 1**: k-means++ seeding, transportation-LP balanced assignment, Lloyd, Nash polish, portfolio — plus `power_weights` / `power_labels`, the LP duals and the power diagram they define. `assign()`'s LP is pinned to `method="highs-ds"` with an explicit `options` dict: scipy 1.18.1's HiGHS wrapper hangs on v2 without one (`docs/RUNS.md`) |
+| `td/solvers/eg_band.py` | **U8-band**: the band-constrained Eisenberg–Gale program `EG^bal_S(δ)` — `O(nk)` dual bound (no solver in the trusted path), HiGHS outer approximation, SCIP cross-check |
+| `tools/measure/frontier.py` | the D1′ driver: utility-convention gate (`EG_S ≥ V`), the `δ` frontier, `δ*`, first movers, N8/N9, the plot. Background it with `python3 -u` |
+| `tools/measure/instance_diff.py` | v1↔v2 comparison: recovers the descaling divisor from the unchanged zips; run on any new export before trusting a sizing figure |
 | `td/solvers/cert_draw.py` | **four** post-hoc certificates: analytic balance ceiling, integer balance floor, assignment optimality at pinned centers (MILP), and `cert_power_diagram` — the duals as a solver-free `O(nk)`-checkable bound |
 | `td/geo.py` + `tools/us_maps.py` | ZCTA points, LAEA projection, state basemap; six figures incl. `figure_power_regions` (the territory map) and `figure_district_regions` (the superseded zip-catchment fill, `--regions-voronoi`) |
-| `tools/run_draw.py` | the reproducible pipeline: instance → (k, seed) draws on a process pool → stage 2 → `battery/results/<run-id>/k<kk>/` + `sweep.csv`; `--fix`/`--anchor NAME=ST,ST` or `--scenario file.json` for hand-drawn (partial) districts, `--k 8-16` for the sweep |
+| `tools/run_draw.py` | the reproducible pipeline: instance → (k, seed) draws on a process pool → stage 2 → `battery/results/<run-id>/k<kk>/` + `sweep.csv`; `--fix`/`--anchor NAME=ST,ST` or `--scenario file.json` for hand-drawn (partial) districts, `--k 14-22` for the v2 sweep (`--k 8-16` is the v1 regression, pinned to `sweep_20260902_s10`) |
 | `tools/instance_export/export_instance.py` | work-machine exporter — stdlib only, single file, **read it before running it** |
 | `td/solvers/scip_tree.py` | the two-player MILP engine; **not** what stage 1 was built on in the end |
 | `td/solvers/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
-Tests: `.venv/bin/python3 tests/run_all.py` — **174 fast tests, 0 fail, no slow tier**
-(run 2026-09-02 at `8eece3f`; 151 at `7359c6e`, 131 at `f45bf89`, 65 at the prune). This worktree has no
+Tests: `.venv/bin/python3 tests/run_all.py` — **222 fast tests, 0 fail, no slow tier**
+(run 2026-09-04 at `82dbe98`; 218 at `fd619c7`, 208 at `ddd162d`, 184 at `74eff38`, 174 at
+`8eece3f`, 151 at `7359c6e`, 131 at `f45bf89`, 65 at the prune). This worktree has no
 `.venv`; use the main checkout's: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
 (three levels up from this worktree, not two).
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their
@@ -170,11 +185,14 @@ allocations with `k_c ≥ 1`. Within a component the best conceivable outcome is
 districts, so this is an **upper bound on any real partition** — a free dual bound, and the
 answer to whether the target is reachable at all.
 
-On illustrative splits of $6.2B the ceiling spread at k=6 ranges 19.4%–87.1%, so **$1B ± 10%
-is probably not geometrically reachable**: a ~$0.9B region gets exactly one district and
-cannot be subdivided. The best `k` moves in *opposite* directions across scenarios, so k is a
-balance decision, not just headcount. **Four numbers — regional opportunity totals — settle
-this with no solver and no per-zip data.**
+**Retired 2026-09-04 (BRIEF §6.5).** This section used to say "$1B ± 10% is probably not
+geometrically reachable", from illustrative splits of the superseded $6.2B sizing at k=6. The
+real instance settles it the other way: the committed k=13 draw sits at **0.39 % max deviation**
+(0.78 % spread), four orders inside the old worry, and `sweep_20260902_s10` balances every k from
+8 to 16 within 5 %. Balance is not the binding difficulty (FRAME §9). What survives of the
+paragraph is the structural point: the best `k` moves in *opposite* directions across regional
+scenarios, so `k` is a balance decision and not just headcount, and four numbers — the regional
+opportunity totals — settle it with no solver and no per-zip data.
 
 ---
 
@@ -212,8 +230,8 @@ grounded on a measured data-noise floor. Re-measure the floor on the real instan
 - **`figures/` is tracked** as of `72e5f07` — a map is a primary artifact, and a claim in the
   docs nobody can see is worse than 3 MB of PNG. Regenerate and commit together:
   `tools/us_maps.py <instance> --out figures/ --districts/--regions/--regions-voronoi <draw.csv>`.
-- `data/` is empty in git, and `data/geo/` (the gazetteer cache), `instance_descaled.json.gz`
-  and `battery/results/` stay ignored. The national ZCTA Rook adjacency was dropped
+- `data/` is empty in git, and `data/geo/` (the gazetteer cache), `instance_descaled*.json.gz`
+  (v1, v2 and v2's raw export — confidential) and `battery/results/` stay ignored. The national ZCTA Rook adjacency was dropped
   2026-08-31 — nothing here reads it, and the real graph arrives with the exported instance.
   `data/README.md` is the rebuild recipe if a real-geography test instance is ever needed.
 - Harness output goes to `battery/results/<run_id>/` (gitignored).

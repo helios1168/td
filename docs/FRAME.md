@@ -14,7 +14,71 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-04 (latest, branch `wt/runs`, worktree `.claude/worktrees/runs`, head
+**State on 2026-09-05 (latest, branch `national-channel`, worktree
+`.claude/worktrees/national-channel`; head and test count in the state commit that follows the
+merge): `wt/runs` and `wt/A1` are both merged into the hub, with the user's approval. The live
+instance is `instance_descaled_v2.json.gz` at `k = 18`; the hub now carries the pin-cost
+catalogue, the HiGHS fix, A1's wave 1 and its v2 re-anchor.** *What landed.* `wt/runs` (head
+`aee40c8`, 7 commits) fast-forwarded — the hub was its ancestor. `wt/A1` (head `a0dd114`, 12
+commits over `629e3da`) merged with exactly the three predicted conflicts, all state files
+(`CLAUDE.md`, `HANDOFF.md`, this §0), zero code conflicts: `wt/runs` modifies
+`td/solvers/centers.py` only, `wt/A1` only *adds* (`td/solvers/eg_band.py`,
+`tools/measure/frontier.py`, `tools/measure/instance_diff.py`, three test files). The
+`.gitignore` widening to `instance_descaled*.json.gz` was identical on both. This entry sits on
+top; the six 2026-09-04 entries below are the two tracks' and the hub's, kept verbatim and
+ordered by commit time (runs 23:03 · A1 22:41 · A1 19:13 · runs 18:33 · A1 17:50 · hub 16:03).
+
+*What the review of the two tracks established, beyond what either recorded.* **(1) The two
+tracks' k=18 draws are byte-identical.** Compared directly this session:
+`draw_k18_v2_20260904/k18/draw.csv` (A1's worktree) against
+`runs_20260904/baseline/k18/draw.csv` (the runs worktree) — `cmp` reports no difference. A1
+had asserted this from per-`(k, seed)` draw independence; it is now a comparison. It carries a
+second fact: A1 drew with the *unpatched* LP call (`method="highs"`, 21:18) and runs with the
+patched one (`highs-ds` + `options`), so **the solver fix did not move the k=18 draw**, and every
+A1 v2 number — `δ₀ = 0.009970`, `V = 95.755192`, `EG_{S₁₈} = 96.532152`, the frontier, the
+premium ladder — is directly comparable with the catalogue's unpinned baseline. (runs' own v1
+regression says the same at k ≠ 9: byte-identical at 8 of 9 k, k=9 tie-noise ~3e-6 nats.)
+**(2) One nats scale for every lever, on one instance, one `k`, one draw.** Balance is free:
+`δ₀ ≈ 1%` and widening the band 33-fold buys back 0.051 nats. The incumbency premium is
+0.72–0.78 nats and not soft. The roster is worth 0.249 nats. Hand-drawing a region as one
+district costs, on balance, 0.008 (CAROLINAS) to 2.04 (CALIFORNIA) nats — so **pinning
+CALIFORNIA costs about three times the entire incumbency premium**, while CAROLINAS, SOUTHWEST
+and FLORIDA pins each cost less than the roster gap. And FLORIDA `fix` / CAROLINAS `anchor`
+*out-staff* the unpinned baseline at stage 2 (+0.029 / +0.012): the same mechanism A1 measures
+as "stage 2 sees books stage 1 doesn't", now visible from the pin side too. **(3) No
+contradictions.** Both tracks took v2 / k = 18 / ≈$18B as settled (user, 2026-09-04); runs'
+"every region is oversized at k=18" and A1's retirement of the "$1B ± 10% unreachable"
+paragraph are consistent, as both said. **(4) Doc nits, recorded here and (one) fixed.**
+Fixed: `docs/RUNS_PLAN.md`'s critical-files table said `centers.py` **unchanged** — false since
+`d7c4503`; the row now says so. Recorded only: `wt/runs`'s `CLAUDE.md` problem table was still
+v1 (1,229 / 111 / $13B / k≈13) — the hub's is A1's v2 table; A1's own texts say v2 vacant = 16
+(§0, the cleaned instance) and 17 (§6 table, `HANDOFF`; the raw export's count before `BLANK`
+was dropped) — 16 is right; A1's **v1** frontier table below labels the D1′ one-solve bounds
+(0.691975 / 0.708802 / 0.736845) as the direct "gap to V" — the direct gaps per
+`MODEL_U8-band` §9.1 are 0.691396 / 0.704131 / 0.720256, and the v2 table is consistent, no
+verdict affected; `docs/RUNS.md` reports deltas only (the absolute k=18 baseline lives in the
+gitignored results and the artifact); `build_artifact.py` asserts none of the checks
+`RUNS_PLAN.md` §7 promised (the per-k tables corroborate them instead); the v2 re-run of U8
+was not re-passed through `code-verify` (`CODEVERIFY_U8-band.md` is the v1 document, 208
+tests); the three runs stamps disagreed on head (`d7c4503` / `9e81d6b` / `aee40c8`) — moot now.
+
+*What it means.* The hub is a single resume point again, on the live instance. The k=13
+seed-3-vs-seed-9 decision that the 2026-09-02 entry raised is **superseded** by k = 18 — the
+certified k=13 draw and its atlas are v1 history. `REVIEW_GROMOV` R1's premium arithmetic
+(41.9% saturation) is stale at v2's 29.6% and the (★) roster-free screen is v1-only; both are
+re-measurement items, not blockers.
+
+*What's next, in order — all user-gated except the first.* (1) Tests re-run on the merged tree
+and stamped (state commit). (2) **The sponsor's call: which states, if any, are hand-drawn** —
+`docs/RUNS.md`'s region table is the price list, now in the same nats as the premium ladder.
+(3) **Wave 2** — U10-round, U11-roster (priority raised: roster gap 0.043 → 0.249 nats), U4-disp,
+U13-base; briefs under `docs/tracks/A1/units/` are written against v1, re-read before launching.
+(4) ★11 (A1's charter step 3 rewrite), ★8, and the source-document corrections wave 1 implies
+(`DOMAIN_optimization` §2.10–2.12, §8; `DOMAIN_economic-theory` N7, §2.8). (5) R1 on v2; the
+roster-free screen on v2. (6) The HiGHS root cause, if it recurs (scipy 1.18.1 / HiGHS
+option-merging; a narrow fix is in place).
+
+**Earlier — state on 2026-09-04, 23:03 (branch `wt/runs`, worktree `.claude/worktrees/runs`, head
 `d7c4503`, branched from `national-channel` at `e3cc5d2`; tests 184 pass, 0 fail): the runs
 track ran the 14+1 pin-cost catalogue to completion, found and fixed a solver hang along the
 way, and published the artifact.** *What landed* (`d7c4503`): 14 scenario specs
@@ -58,6 +122,157 @@ catalogue is the price list `CHANNEL.md`'s open item asked for, not the decision
 merge to `national-channel` has happened or is proposed by this entry (ask-before-merging-to-hub
 stands).
 
+**Earlier — state on 2026-09-04, night, 22:41 (branch `wt/A1`, worktree `.claude/worktrees/A1`, head
+`82dbe98`, 2 commits over `9854fea`; tests **222 pass, 0 fail** — 218 + 4 from `test_frontier`):
+the v2 re-anchor is done. `D1′ is NOT SOFT on the live instance — v2 at k = 18, roster S₁₈.`
+Wave 1's verdict survives the instance change, and wave 2 is unblocked against real v2 numbers.**
+
+*What landed.* The gating step from the previous entry, in order. **(1)** `.gitignore` widened to
+`instance_descaled*.json.gz`, matching `wt/runs` — the literal rule left the confidential v2 export
+untracked *but committable*; then v2 copied in and re-validated (`check_descaled` → `[]`;
+3,748 / 718 / 1,447 / 16 / 1,567 / 114 exactly as `wt/runs` reported). **(2) The v2 draw at
+k = 18**, `battery/results/draw_k18_v2_20260904/k18/` (gitignored), `--seeds 0-9 --workers 8` —
+seeds 0–9 rather than v1's 0–4 so it agrees with the baseline `wt/runs`'s catalogue will produce.
+Winner **seed 2**, 0 unstaffed, masses sum to 8,523.21, spread **1.368%**, **`δ₀ = 0.009970`**
+(max deviation), **`V = 95.755191659241`**. Each `(k, seed)` draw is independent
+(`centers.draw(XY, M, k, seed=seed, locked=...)`), so this is bit-identical to the `k18` slice of
+`wt/runs`'s `--k 14-22` baseline — no duplication conflict. **(3) `frontier.py`'s gate re-pointed**
+(`82dbe98`, the session's only code change). **(4) The frontier on v2**,
+`battery/results/u8_band_v2_20260904/` + `figures/u8_band_v2/frontier.png`. **(5) The premium
+ladder on v2**, `battery/results/meas_v2_20260904/`.
+
+*The gate change, and why it is not a weakening.* `EG_S13_REFERENCE = 60.6974156139` was a hard
+constant that **raised** on any instance but v1 at k = 13, so it blocked the v2 run outright. It
+was standing in for a structural fact: `EG_S` maximises `Σ_i log g_i` over every coverage and the
+delivered map *is* a coverage, so **`EG_S ≥ V` is a theorem** that holds on any instance and fails
+exactly when `U` and `V` were built in different utility conventions — the `model.utilities`
+(masked) against `channel.gain_matrix` (unmasked) mistake `CODEVERIFY_U8-band` row 2 records. The
+gate now asserts that always; `--gate-reference VALUE` keeps the exact pin as an opt-in. **The v1
+draw with `--gate-reference 60.6974156139` reproduces wave 1 unchanged** —
+`[60.69741561132058, 60.69741562001393]`, delta `6.11e-9` — so the refactor is behaviour-preserving
+on the certified artifact. Four new tests in `tests/test_frontier.py`; `EG_S13_*` result keys and
+plot labels are now parametrised on `setting.k` (v1's manifest keeps the old key names).
+
+*The number that scopes the track.* Gate: `EG_{S₁₈} = [96.532151752556, 96.532151758538]`, bracket
+`5.98e-9`, **`+0.776960` above `V`**. Then the frontier — every bracket tier-1
+(`4.33e-9`–`8.44e-9`), 16–64 cuts, **monotone and concave with zero violations**:
+
+| `δ` | 0.009970 (`δ₀`) | 0.02 | 0.05 | 0.10 | 0.33 |
+|---|---|---|---|---|---|
+| `EG^bal_{S₁₈}(δ)` | 96.479699 | 96.485191 | 96.497690 | 96.510123 | 96.530978 |
+| gap to `V` = 95.755192 | **0.724507** | 0.729999 | 0.742499 | 0.754932 | 0.775786 |
+
+**D1′: NOT SOFT at every `δ`** — the one-solve bounds are 0.730 / 0.748 / 0.777 nats at
+`δ = 0.02 / 0.05 / 0.10`, **146–155× the 5e-3 tier-2 floor**, with tangent slack `+3.81e-4` to
+`+2.23e-2`. **`δ*` does not exist on `[δ₀, 0.33]`**: the gap is already 0.724507 nats at the left
+endpoint, so zero bisection solves were needed and the verdict does not rest on the slope at all.
+`s_min(δ₀) = 0.585586`. SCIP cross-checked at `δ = 0.02` and `0.33`, both status `optimal` (never
+`time_limit`, 31.8 s and 32.2 s), agreeing to `2.31e-9` and `2.27e-9`.
+
+*What it means.* **A1's charter survives its kill test a second time, now on the live instance**,
+and `APPROACHES.md` §0's `collapsed-on-softness` branch does **not** fire. **The band is still not
+what binds:** v2's whole frontier rises **0.0513 nats across a 33-fold widening** of `δ` (v1: 0.077
+across 84-fold), so ★9 remains a governance choice rather than a value trade-off. Note the premium
+is *slightly larger* on v2 in absolute nats (0.7245 vs 0.6830 at `δ₀`) even though saturation fell
+41.6% → 29.6% — it is not simply proportional to saturation, and `k` moved 13 → 18 as well.
+
+*Structure at `δ₀`, and one thing that changed character.* **N8:** 16 of 18 bands tight, 2 agents
+slack, `+8/−8` binding — **not CEEI**, the same shape as v1; from `δ = 0.05` outward only lower
+bands bind (`+0/−6`, `+0/−4`, `+0/−1`), and at 0.33 one tight / 17 slack. **Splits 24**, under the
+cap `k−1+t = 33` and the unconditional `2k−1 = 35`; rank 3773/3773, band residual `5.9e-16`,
+integral witness in band at every `δ`. **First movers are no longer tie-degenerate:** v1 had **75
+exact MBB ties carrying 2.90% of `T`; v2 has zero**. The list is still flagged DEGENERATE for a
+*different* reason — vertex support 3773 against an expected 3781, so `ν` is one dual optimum among
+several — but the named zips now carry strictly positive margins (`5.6e-7`–`2.5e-6`) and the top 25
+hold 0.39% of `T`, concentrated on R0008 / R0021 / R0014 / R0009. Quote the list only with that
+caveat.
+
+*The premium ladder moved in one place that matters.* Shares of total book (v1/k=13 → v2/k=18):
+`P₀` 37.82 → **41.53%**, `P_S` 51.43 → **54.42%**, `P₁₃` 52.34 → **59.27%**, `P_free` 79.44 →
+**84.17%**. The **match gap is exactly 0 on both** — the Hungarian matching is already optimal at
+the `P*(A)` roster. The map gap barely moves (0.640 → 0.663 nats). But the **roster gap grows
+0.0430 → 0.2494 nats, 5.8×**: on v1 the roster was nearly free, on v2 *which reps staff the channel*
+is worth a quarter nat. **That is the one downstream priority this re-anchor changes — it is
+U11-roster's subject.**
+
+*What's next, in order.* (1) **Wave 2** — U10-round, U11-roster, U4-disp, and U13-base; briefs at
+`docs/tracks/A1/units/`, **written against v1 assumptions, so re-read them before launching** (U11
+reuses `eg_band.py` as its solver, and its priority is now higher than the brief assumes). (2)
+`REVIEW_GROMOV` R1's premium arithmetic can now be redone on v2 — saturation 29.6% and the measured
+ladder above are both in hand. (3) **Still user-gated:** the merge of `wt/A1` into
+`national-channel`, ★11's charter rewrite, ★8, and the source-document corrections wave 1 implies.
+
+*Process note worth not re-learning.* `frontier.py` backgrounded writes **block-buffered** stdout to
+its log, so 34 minutes passed with an empty output file and no way to tell which stage was running;
+`sample <pid>` on the process showed it inside `SCIPsolve → heurExecMultistart`, which located it
+past the gate and past the `δ₀` point. **Run it with `python3 -u` when backgrounding.** Also: SCIP
+was only 64 s of that 34 minutes — the OA master solves dominate at `n·k = 67,464`.
+
+**Earlier the same day — state on 2026-09-04, end of day (branch `wt/A1`, worktree
+`.claude/worktrees/A1`,
+head `fd619c7`; tests **218 pass, 0 fail** at `fd619c7` — 184 + 24 from U8-band + 10 from
+`instance_diff`): the hold is lifted. `The sponsor's ≈$18B is confirmed, k = 18, and v2 supersedes v1.` A1's wave-1 results
+stand as certified facts about **v1 at k = 13** and must be re-run before they mean anything
+about the live problem.**
+
+*User decisions (2026-09-04, end of day).* The ≈$18B total **is correct and is not to be
+re-derived**. Work continues on `instance_descaled_v2.json.gz` at **k = 18**. This resolves the
+instance-and-`k` question the earlier hold was waiting on.
+
+*Consequence, recorded not acted on.* The two descaled exports pin the real growth ratio
+`D_v2 / D_v1 = ×1.8814` — robust, because the descaling divisor is recoverable (below). With
+`D_v2 = $18B` that puts **`D_v1` at ≈$9.6B, not the ≈$13B** §6 records. v1's `k = 13` therefore
+came from an overstated total; the consistent v1 sizing would have been `k ≈ 10`. **§6's
+"total opportunity ≈ $13B" and "⇒ territories k 13" rows, and §9's settled item "k = 13 at a
+$1B target", are superseded** — marked in place. Nothing downstream of them is re-derived here.
+
+*The instance review that produced this (2026-09-04, no code changed).* Both exports carry
+exactly one `m_rel` per zip (`nodes.z` / `nodes.m_rel`, column-oriented), so nothing double-counts,
+even though the *source* has one row per zip × rep with the zip's opportunity repeated on each.
+- **The descaling divisor changed.** `m_rel = M / median(positive M)`, and 440 of the 1,229 shared
+  zips land on one constant ratio `K = divisor_v1/divisor_v2 = 1.650015380` — they are the zips
+  **unchanged in dollars**, holding 37.9% of v1's opportunity. `f = ratio / K` is the real
+  per-zip change. Of the rest, **787 grew and exactly 2 shrank** (`92505` ×0.70, `11228` ×0.85);
+  median mover ×1.41, p95 ×5.04, max ×21.1 (`19801`, Wilmington DE). `K` is a uniform rescale and
+  therefore a **no-op for the objective** — it cannot move an optimum, a gap or a certificate.
+- **The growth is untapped market, not bigger territories.** Zips with no candidate rep go
+  77 → 1,584; `zips_untapped` 75 → **1,567**; uncontested 477 → 1,447; **contested barely moves,
+  675 → 718**. Untapped is 2.9% of v1's opportunity and **15.7% of v2's**. Growth is ×1.8814 over
+  all opportunity but only **×1.6333 over worked zips**. So the contested decision problem A1
+  actually optimises grew by ~6%, not by 3×.
+- **Saturation falls 41.6% → 29.6%, and it decomposes.** On the shared zips alone 41.6% → 34.5%,
+  because real opportunity was revised up ×1.2257 while book stayed flat at ×1.0162; the rest,
+  34.5% → 29.6%, is the new zips, 1,567 of which are untapped and carry no book at all. This is
+  the number `REVIEW_GROMOV` R1 measured at 41.9%, so **R1's premium arithmetic is now stale too**.
+- v2 also adds Alaska and Hawaii (3 zips, 0.095% of opportunity); v1 was CONUS-only. Other meta
+  moves: `zips_m_imputed` 5 → 90, `zips_headroom_repaired` 289 → 129, `repair_added_share`
+  0.0573 → 0.0095, `n_reps` 111 → 114 (all 111 retained), `n_sales_rows` 2,637 → 5,324.
+- Visual check published as the **Opportunity Map Diff** artifact,
+  `https://claude.ai/code/artifact/68eecbb9-3ce2-45d9-8161-5db7fe212957` (both instances on one
+  projection and one circle-area scale; views for coverage and for real change).
+- **Every number above is reproducible:** `tools/measure/instance_diff.py <old> <new>` recovers
+  `K` from the unchanged zips and emits the whole comparison (10 tests, `test_instance_diff.py`;
+  218 total). Run it on any future export before trusting a sizing figure — it also reports the
+  row-inflation factor a dollar total should be checked against.
+
+*What this does to wave 1.* Nothing is retracted. U8's manifest pins
+`instance_sha256 = cf7d66c0…` and `draw_sha256`, so **"NOT SOFT" is a certified fact about v1 at
+k = 13, roster `S₁₃`** and is scoped as such. It is not yet a fact about v2 at k = 18. The
+mechanism is plausibly scale-free — the verdict came from the *level* at `δ₀`, not the slope —
+and the contested set barely grew, so the structure is likely intact; that is a hypothesis, not a
+result. `td/solvers/eg_band.py` and `tools/measure/frontier.py` are instance-agnostic and need no
+change.
+
+*What's next, in order.* (1) **A v2 draw at k = 18.** `battery/results/draw_k13_20260901` is a
+*v1* draw; every A1 unit consumes a draw plus its stage-2 roster, so stage 1 has to run on v2
+first (`tools/run_draw.py`, and `wt/runs`'s `RUNS_PLAN.md` catalogue covers this ground with
+`--k 14-22`). (2) **Re-run `tools/measure/frontier.py` on the v2 draw at k = 18** — one solve
+re-tests D1′ and re-anchors `δ₀`, `V`, `EG_S` and the roster before any wave-2 unit is spent.
+(3) Then wave 2 (U10-round, U11-roster, U4-disp) and U13-base. (4) **Still user-gated:** the merge
+of `wt/A1` into `national-channel` (analysed and safe — three state-file conflicts, zero code
+conflicts, additions only, `td-runs` has no objection), ★11's charter rewrite, ★8, and the
+source-document corrections wave 1 implies.
+
 **Earlier — state on 2026-09-04, branch `wt/runs`, head `2f83d48`: the runs track validated the
 new instance, fixed one data-quality defect, and reframed its k-target from 13 to 18 on the
 sponsor's real total.** *What landed* (`2f83d48`, docs + gitignored data,
@@ -91,6 +306,123 @@ merge into `national-channel`; confirmed by cross-session message that its merge
 the three files this entry updates in a way that conflicts with this branch, and its retirement
 of `CLAUDE.md`'s old "$1B ± 10% not geometrically reachable" paragraph is consistent with (not
 contradicted by) this entry's own region-oversized finding on the new numbers.
+
+**Earlier the same day — state on 2026-09-04 (branch `wt/A1`, worktree `.claude/worktrees/A1`,
+head `ed5a9a8`, 5 commits over `629e3da`; tests 208 pass, 0 fail — 184 pre-existing + 24 new, run
+at `ddd162d`; `ed5a9a8` is docs-only): wave 1 launched,
+landed and was verified. `D1′ says the premium is NOT SOFT: A1 continues and wave 2 is live.**
+
+*What landed.* **U9-bandthm** (`954d9eb` MODEL, `f199e92` VERIFY; `modeler` → `math-verify`) and
+**U8-band** (`69997ac` code+MODEL+figures, `ddd162d` CODEVERIFY + both refuted rows fixed;
+`python-typed` → `code-verify`), launched in parallel from this worktree after activating Serena
+to it *by path* (six registered projects are named `td`).
+
+*The number that decides the track.* The hard gate passed first: `EG_{S₁₃}` reproduced as
+`[60.69741561132, 60.69741562001]` — `6.11e-9` from the published `60.6974156139`, confirming the
+**unmasked** utility convention (`channel.gain_matrix`, not `model.utilities`). Then the frontier,
+every bracket tier-1 (`2.8e-9`–`8.2e-9`), 15–57 tangents, monotone and concave with **zero**
+violations:
+
+| `δ` | 0.0039 (`δ₀`) | 0.02 | 0.05 | 0.10 | 0.33 |
+|---|---|---|---|---|---|
+| `EG^bal_{S₁₃}(δ)` | 60.620441 | 60.628865 | 60.641601 | 60.657725 | 60.697416 |
+| gap to `V` = 59.9375 | **0.682971** | 0.691975 | 0.708802 | 0.736845 | 0.759946 |
+
+**D1′: NOT SOFT at every `δ`** — 137–147× the 5e-3 tier-2 floor. **`δ*` does not exist on
+`[δ₀, 0.33]`**: the gap is already 0.683 nats at the left endpoint, so zero bisection solves were
+needed, and the verdict does not rest on the slope at all. `s_min(δ₀) = 0.5608759` nats per unit
+`δ`, a *verified* supergradient (tangent slack `+5.8e-4` to `+1.7e-2`). SCIP cross-checked at
+`δ = 0.02` and `0.33`, status `optimal` (never `time_limit`), agreeing to `1.58e-9` and `1.10e-9`.
+`EG^bal(0.33) = EG_{S₁₃}` exactly, because the band goes slack there (the EG vertex's max
+deviation is 0.3224 < 0.33) — the sandwich closes at its right endpoint.
+
+*What it means.* **The band was never what was binding.** The whole frontier rises `0.077` nats
+while `δ` widens 84-fold, so relaxing balance from 0.39 % to 33 % buys back almost nothing of the
+0.760-nat premium. A1's charter survives its own kill test a second time, and the `collapsed-on-
+softness` branch in `APPROACHES.md` §0 does **not** fire. ★9 changes character: the sponsor's `δ`
+is nearly free on value grounds, so it is a governance choice, not a trade-off.
+
+*Structure measured at `δ₀`.* **N8:** 12 of 13 bands tight, six `ν_i > 0` and six `ν_i < 0` — **not
+CEEI**; from `δ = 0.02` outward only lower bands bind, and at `0.33` all `ν = 0` and anonymity is
+restored. The single band-slack agent pins the multiplier gauge, so `p` and `ν` are quotable here
+(U9 P2b). **Splits:** 19, under the cap `k−1+t = 24` and the unconditional `2k−1 = 25`; rank
+1248/1248, cleaned at 1e-6 with **zero** phantom splits. **First movers:** degenerate — 75 exact
+MBB ties carrying 2.90 % of `T`, so `ν` is one dual optimum and no first-mover list is named from
+it alone (the unit's stop rule fired as written).
+
+*Four published claims were refuted, all deliberately, none contradicting a settled result.*
+(1) `DOMAIN_optimization` §2.12's first-mover rule `argmax_i u_i(z)/(p_z + ν_i M_z)` omits `1/g*_i`
+and is false even at `ν ≡ 0` — `math-verify` reproduced it at **one zip, `k = 2`, integer data**.
+The corrected additive margin `max_i(u_i/g*_i − ν_i M_z) − 2nd-max` **selects a different set of
+zips entirely**, so U14 and U4-disp would have inherited a wrong list. (2) The slope
+`Σ(μ⁺+μ⁻)` is not unique and is unbounded at `δ = 0`; only `s_min = (T/k)Σ|ν_i|` is quotable.
+(3) The brief's own "finite convergence under `ĝ > 0`" fails for a purely continuous master
+(Duran–Grossmann / Fletcher–Leyffer are MINLP theorems); only `ε`-termination holds — validity is
+untouched, since every master optimum bounds `EG^bal` at every iteration. (4) **`DOMAIN_economic-
+theory` §2.8's "proportionality is the first casualty" is refuted: no rep is below proportionality
+at any `δ`.** Four reps are below it in the *delivered draw* (R0010 −7.14, R0013 −4.70, R0017
+−2.33, R0018 −1.73) — **the starvation is the map's, not the band's**, though the minimum gap does
+fall 32 % (+13.36 → +9.09) as the band tightens.
+
+*Verification.* `VERIFY_U9-bandthm.md`: all five brief-mandated propositions VERIFIED against
+rigorous brackets (`6.3e-10`–`3.2e-7`) from two independent SCIP solves with exact-rational
+endpoint repair; `P6-cells` VERIFIED for the direct half, PLAUSIBLE for the `[conjectured]`
+`borgwardt2019` half. `CODEVERIFY_U8-band.md`: **20 rows, 18 VERIFIED / 2 REFUTED / 0
+INCONCLUSIVE**, acceptance 1–6 all PASS, `frontier.png` regenerated **byte-identical** by two
+fresh full runs, manifest byte-identical modulo `{written, wall_seconds}`. Both refuted rows were
+fixed in `ddd162d`: a real hole in the `ĝ > 0` guarantee on the `delta=None` path (P5.3's floor
+comes from the band's *lower* row, so it does not hold there; a per-iterate check now raises, and
+the gate re-runs bit-identically in the same 23 cuts), and a wrong "≈ 27 nats" figure for the
+masked convention — measured `EG = 55.9763` masked and `51.9343` at the masked delivered map, so
+the conclusion (masked lands below `V` and mimics a P1-band refutation) stands but the number was
+off by ~29 nats. Two declined instructions were adjudicated in the unit's favour: the exact
+`s_min` LP could have tightened D1′ by at most `1.6e-5` nats against a 5e-3 floor (the whole
+superdifferential at `δ₀` sits inside `[0.560711, 0.560995]`), and the Slater-point tangent seed
+`u_i(Z)/k ≈ 89–93` is exact and 1.4–2.2× tighter than P5.3's constant.
+
+*Two extensions to settled results, neither a contradiction.* The district mass vector `m` is not
+an invariant of the unconstrained optimum (add it to `VERIFY_U9-bandthm` §10.E's non-invariant
+list), and the *primal* vertex is as fragile as the dual under a last-bit input change.
+
+*⚠ Everything is HELD (user, 2026-09-04) — **LIFTED the same day; see the entry above**, which
+settles the instance-and-`k` question this hold was waiting on ($18B confirmed, k = 18, v2
+supersedes v1). Kept for provenance.* **A new instance landed in
+`.claude/worktrees/runs/` at 18:26 the same day, while wave 1 was running**, and it is not a minor
+revision. Measured directly: **3,748 zips against v1's 1,229** (3.05×), 114 reps against 111, and
+total descaled `M` **8,523.2 against 2,745.6** (3.10×). The `runs` session reports it as
+sponsor-confirmed, replacing the $13B / k ≈ 13 sizing with **k ≈ 18** (the dollar figures are not
+checkable from here — descaling removes the scale by design). **§9's "k = 13 at a $1B target —
+settled" and §8's assumption A1 are therefore reopened**, and the user's instruction is to hold:
+**no merge, no wave-2 launch** until the instance-and-`k` question is settled with the sponsor.
+
+This does **not** invalidate anything above. U8's manifest pins `instance_sha256 = cf7d66c0…` and
+`draw_sha256` precisely so the scope is unambiguous: **NOT SOFT is a certified fact about v1 at
+k = 13, roster `S₁₃`.** Whether it survives v2 at k ≈ 18 is open. The mechanism is plausibly
+scale-free — the verdict came from the **level** at `δ₀` (0.683 nats before any extrapolation),
+not from the slope — but that is a hypothesis. Scale is not the obstacle: `n·k` goes 15,977 →
+~67,000 while the OA converged in 15–57 tangents at 1e-9 brackets. What changes is every *number*
+— `δ₀`, `V`, `EG_S`, and the roster itself (13 of 111 → ~18 of 114). **The cheapest first move
+when the hold lifts is one re-run of `tools/measure/frontier.py` on v2 at the new `k`:** a single
+solve re-tests the verdict and re-anchors every downstream number before a wave-2 unit is spent.
+
+*What's next, in order.* (1) **HELD — wave 2:** U10-round, U11-roster, U4-disp are unblocked by
+the D1′ verdict but deliberately not launched (three units against a possibly-superseded instance
+is waste); U12-menu follows U8+U11+U13; U13-base likewise held. (2) **User-gated, reported not
+done:** the merge into `national-channel` — analysed and **safe** (6 ahead / 3 behind `629e3da`;
+`git merge-tree` gives exactly three conflicts, all state-stamp files, zero code conflicts; every
+`wt/A1` code change is an *add*, and `td-runs` confirmed no objection from the runs side) but not
+authorised; ★11 rewrite
+A1's charter step 3 in `APPROACHES.md`; the merge of `wt/A1` into `national-channel`; ★8's
+`fotakis2014` correction; and the three source documents this wave contradicts —
+`DOMAIN_optimization` §2.12 (refuted rule), §2.10 (`δ > 0` multiplier restriction too weak; the
+coarse `≤ 2k` superseded), §2.11 (supergradient wording), §8 (`borgwardt2019` is corroborating,
+not load-bearing), and `DOMAIN_economic-theory` N7 (grids on the spread 0.0078 rather than
+`δ₀ = 0.0039`) and §2.8 (the proportionality and EF1 rows). (3) **U3-inv is retired** (user,
+2026-09-04): books are measured from the data warehouse, not self-reported, so the
+strategy-proofness question has no referent; ★2 shrinks to a data-quality question.
+
+*Assumption recorded:* the session ran unattended through launch, verification, commit and this
+`/state` pass, stopping at the two gates BRIEF §7 sets (no merge, no hub edits on the D1′ outcome).
 
 **Earlier — state on 2026-09-04 (branch `national-channel`, worktree
 `.claude/worktrees/national-channel`, head `b3931fa`, recorded by state commit `2ce052e` and
@@ -483,31 +815,32 @@ have identical optima, gaps and certificates.
 
 | quantity | value | source | why it matters |
 |---|---|---|---|
-| zips carrying sales | **1,229** | export, 2026-09-01 | the decision's size |
-| — contested / uncontested / vacant / untapped | 675 / 477 / 2 / 75 | export | only 675 are genuinely contested |
-| distinct wholesalers | **111** | export | 111 → ~13 is an 8.5:1 selection ratio |
-| total opportunity | **≈ $13B** | export | sets `k` |
-| ⇒ territories `k` | **13** at $1B | arithmetic | the count is not itself in question |
+| zips | v1 **1,229** → **v2 3,748** | export; v2 2026-09-04 | v1 is a strict subset of v2 |
+| — contested / uncontested / vacant / untapped | v1 675 / 477 / 2 / 75 → **v2 718 / 1,447 / 17 / 1,567** | export meta `cand_histogram` | **the contested set barely grew (675 → 718); v2's gain is untapped market.** Untapped is 2.9% of v1's opportunity and **15.7% of v2's** |
+| distinct wholesalers | v1 **111** → **v2 114** (all 111 retained) | export | 114 → ~18 is a 6.3:1 selection ratio |
+| ~~total opportunity~~ | ~~**≈ $13B**~~ → **superseded 2026-09-04: ≈$9.6B for v1** | export | The sponsor confirmed **≈$18B for v2**, and the two descaled exports pin `D_v2/D_v1 = ×1.8814`, so v1's true total was ≈$9.6B and the $13B was overstated by ≈×1.36. **v2 ≈$18B is the live figure.** |
+| ~~⇒ territories `k`~~ | ~~**13** at $1B~~ → **`k = 18`** on v2 | arithmetic | v1's `k = 13` followed from the overstated $13B; the consistent v1 sizing was `k ≈ 10`. Every wave-1 result is scoped to v1 at k = 13. |
 | footprint concentration | west 33.2% · east 31.0% · TX 11.5% · FL 6.7% · ~18% elsewhere | export | national, not four islands — the earlier premise was wrong |
 | components of the sold-zip graph | **547**; largest 5.1% of M; 68% of M in sub-1% crumbs | export | why contiguity was dropped |
 | largest single zip | 10017 at **1.07%** of total M ≈ 14% of one territory | export | granularity is benign; near-perfect balance is reachable |
-| **aggregate saturation** Σ(booked)/Σ(opportunity) | **41.9%** (median zip 46.8%, p90 110%; 48% of opportunity sits above 30%) | `REVIEW_GROMOV` R1, measured | the load-bearing correction — existing books move the map a lot |
+| **aggregate saturation** Σ(booked)/Σ(opportunity) | v1 **41.9%** (median zip 46.8%, p90 110%) → **v2 29.6%** | `REVIEW_GROMOV` R1 measured on v1; v2 measured 2026-09-04 | the load-bearing correction — existing books move the map a lot. **On v2 it decomposes: 41.6% → 34.5% on the shared zips (opportunity revised up ×1.226, book flat at ×1.016), then → 29.6% from the 1,567 untapped new zips. R1's premium arithmetic is stale at v2.** |
 | hold-vs-not swing in a wholesaler's valuation of a zip | **≈ 42%** (assumed 6.7%) | ibid. | continuity is a first-order term, not a tilt |
 | incumbency premium as a share of total welfare | **≤ ≈ 25%** (assumed ~6%) | ibid. | ~3.7 nats of swing, unexplored |
-| achieved balance spread | 0.642% drawn / **0.781%** placed | `battery/results/draw_k13_20260901` | balance is solved |
+| achieved balance spread | v1/k=13 0.642% drawn / **0.781%** placed → **v2/k=18 0.060% drawn / 1.368% placed**, max deviation `δ₀ = 0.9970%` | `battery/results/draw_k13_20260901`; `draw_k18_v2_20260904` (seeds 0–9, winner seed 2) | balance is solved on both; v2's `δ₀` is 2.5× v1's 0.39%, expected at 3× the zips and k=18 |
 | distance to the analytic balance ceiling | **4.51e-5 nats** (portfolio best: 2e-6) | `cert_draw` | four orders below the premium term |
 | portfolio staffing spread across 5 seeds | 7.1e-2 nats | `score_draws` | the effort ledger's middle term |
 | compactness headroom | a **8.53%** more compact assignment exists in the same balance band (152 relabels); power-diagram bound independently gives 8.22%, with **132 of 1,223** zips outside their own cell | pinned-centers MILP; `cert_power_diagram` | open question 1, in one number |
 | acceptance floors | tier 1 `1e-8` nats · tier 2 `5e-3` nats | `td/solvers/base.py:72,81` | the cells-vs-dots gap (4.66e-5) sits **below** tier 2 |
-| **premium ladder** on the committed draw, share of total book | `P₀` 37.82% · `P*(A)` 37.82% · `P_S` **51.43%** · `P₁₃` 52.34% · `P_free` 79.44% | `MODEL_U7-meas` §6, `battery/results/meas_20260903` (2026-09-03) | matching gap 0 (stage 2 is already right); **map gap 13.6% of book ≈ 0.64 nats**; roster gap 0.9% ≈ 0.043 nats — A1's kill test *passed*, and what redrawing can win is ≤ 0.76 nats, not 3.7 |
-| **EG bound at the delivered roster** `EG_{S₁₃}` | **60.6974** vs `V` 59.9375 → **0.760 nats**, bracket 7e-15; the EG vertex realising it has `M`-spread ≥ 50% | `MODEL_U1-cert` P4, `VERIFY_U1-cert` | the first bound ever on the term the business signs; the gain is bought with balance |
+| **premium ladder** on the committed draw, share of total book | v1/k=13 `P₀` 37.82% · `P*(A)` 37.82% · `P_S` **51.43%** · `P₁₃` 52.34% · `P_free` 79.44% → **v2/k=18 41.53% · 41.53% · 54.42% · 59.27% · 84.17%** | `MODEL_U7-meas` §6, `battery/results/meas_20260903`; **v2 `meas_v2_20260904`** (2026-09-04) | matching gap **0 on both** (stage 2 is already right); map gap v1 13.6% ≈ 0.640 nats → **v2 12.9% ≈ 0.663 nats**; **roster gap v1 0.9% ≈ 0.043 nats → v2 4.85% ≈ 0.249 nats, 5.8×** — on v2, *which reps staff the channel* is worth a quarter nat, which raises U11-roster's priority |
+| **EG bound at the delivered roster** | v1 `EG_{S₁₃}` **60.6974** vs `V` 59.9375 → **0.760 nats**, bracket 7e-15 → **v2 `EG_{S₁₈}` 96.532152 vs `V` 95.755192 → 0.776960 nats**, bracket 5.98e-9 | `MODEL_U1-cert` P4, `VERIFY_U1-cert`; **v2 `u8_band_v2_20260904` gate** | the first bound ever on the term the business signs; the gain is bought with balance — the EG vertex's `M`-spread is ≥ 50% on v1 and **57.4%** on v2 |
+| **band frontier / D1′** — is the premium soft under a balance band? | v1/k=13 gap **0.683 → 0.760 nats** over `δ ∈ [0.0039, 0.33]` → **v2/k=18 gap 0.724507 → 0.775786 over `δ ∈ [0.00997, 0.33]`** | `MODEL_U8-band`, `battery/results/u8_band_20260904`; **v2 `u8_band_v2_20260904`**, `figures/u8_band_v2/frontier.png` | **NOT SOFT on both**, 137–147× the 5e-3 floor on v1 and **146–155× on v2**; **no `δ*` exists** on either — the gap is already large at `δ₀`, so the slope never decides it. The band was never what binds: v2's whole curve buys back **0.0513 nats across a 33-fold widening** (v1: 0.077 across 84-fold) |
 | **roster-free premium screen** `max_S EG_S ≤ k·log((B_tot + w·P₁₃)/k)` | **60.8025** → no coverage by *any* 13 of 111 beats the delivered draw by more than **0.865 nats**; the screen is 0.064 above `EG_{S₁₃}`, so it is tight | `DOMAIN_optimization` §2.14 (★), computed 2026-09-03 (`B_tot` 1145.81, `w` 0.42) | replaces the 9.65-nat ceiling as the unconditional bound; the delivered draw's own max deviation is 0.39% (seed 9: 0.62%) |
 | certificate collapse into the EG dual | **3 of 4** (ceiling, pinned-centers MILP, power diagram); the integer balance floor is primal-only | `VERIFY_U1-cert` P2 | partial refutation of `DOMAIN_optimization` §3 / `LENS_GROTHENDIECK` descent 3 |
 | split units at an EG vertex | `≤ k − 1` heterogeneously (the MBB face); measured 10, `M(F)` 2.4–3.2% of `T`, vertex-dependent | `VERIFY_U1-cert` P3 | the a-priori value bound is vacuous; quote only with the split masses |
-| **realised-gain spread** across the 13 | **60.65%** (seed 9: 59.47%) against the 0.781% `M`-spread | `MODEL_U7-meas` U1 | A0's soft kill (LENS_GROMOV U1) fires: the headline balance number measures territory size, not what each rep gets |
-| zips contested among the selected 13 | **83** of 675, **6.12%** of `M` | `MODEL_U7-meas` U4 | the redraw has little *choice*; its premium comes from moving uncontested book, not from adjudicating overlaps |
-| `corr(T_z, M_z)` | 0.650 pooled; per selected rep 0.23–0.93 | `MODEL_U7-meas` U8 | the premium ladder bites moderately (DOMAIN_optimization §2.3's escape clause does not fire) |
-| tests | **184** pass, 0 fail | `tests/run_all.py` at `74eff38` (`wt/A1`; 174 at `8eece3f`) | the regression surface |
+| **realised-gain spread** across the selected | v1 **60.65%** (seed 9: 59.47%) against a 0.781% `M`-spread → **v2 60.17%** against 1.368% | `MODEL_U7-meas` U1; v2 `meas_v2_20260904` | A0's soft kill (LENS_GROMOV U1) fires on both, and the ratio is **stable across a 3× instance change**: the headline balance number measures territory size, not what each rep gets |
+| zips contested among the selected | v1 **83** of 675, **6.12%** of `M` → **v2 124** of 718, **7.82%** | `MODEL_U7-meas` U4; v2 `meas_v2_20260904` | the redraw has little *choice*; its premium comes from moving uncontested book, not from adjudicating overlaps |
+| `corr(T_z, M_z)` | v1 0.650 pooled (per rep 0.23–0.93) → **v2 0.745** (per rep 0.11–0.95) | `MODEL_U7-meas` U8; v2 `meas_v2_20260904` | the premium ladder bites moderately (DOMAIN_optimization §2.3's escape clause does not fire) |
+| tests | **222** pass, 0 fail | `tests/run_all.py` at `82dbe98` (`wt/A1`; 218 at `fd619c7`, 184 at `74eff38`) | the regression surface |
 | decision horizon | one stand-up; re-examined on data refresh | §8 assumption | rules out anything needing quarterly re-solve |
 
 **What these bound.** At 1,229 units and k=13 the instance is *small* by the current
@@ -555,8 +888,8 @@ Recorded rather than asked, per the unattended instruction.
 | item | status | date | owner | why |
 |---|---|---|---|---|
 | The problem is greenfield balanced territory design, not the two-player merger problem | **settled** | 2026-08-31 | user | The carve-out has no bilateral overlap structure; the pair census does not apply. |
-| `k = 13` at a $1B target | **settled** | 2026-09-01 | user | $13B total, from the corrected export. Assumption A1 attached. |
-| Instance sizing: 1,229 zips / 111 wholesalers / ~$13B / national footprint | **settled** | 2026-09-01 | user | The real descaled export, after three user corrections to the source pull. Supersedes `CHANNEL.md` §6. |
+| ~~`k = 13` at a $1B target~~ → **`k = 18` on v2** | **re-settled** | 2026-09-04 | user | The sponsor confirmed ≈$18B (not to be re-derived). The old $13B/k=13 came from an overstated total — the descaled ratio ×1.8814 puts v1 at ≈$9.6B, i.e. `k ≈ 10`. Assumption A1 still attached, now against $18B. |
+| ~~Instance sizing: 1,229 zips / 111 wholesalers / ~$13B~~ → **3,748 zips / 114 wholesalers / ≈$18B** (v2) | **re-settled** | 2026-09-04 | user | `instance_descaled_v2.json.gz` supersedes v1. v1 is a strict subset; the growth is overwhelmingly **untapped** market (untapped zips 75 → 1,567; contested only 675 → 718). Supersedes `CHANNEL.md` §6 and the 2026-09-01 row. |
 | Adjacency contiguity is not required | **settled** | 2026-09-01 | user | 547 components. Reopenable only by the full-ZCTA-graph experiment. |
 | Territories are drawn on opportunity, then staffed — two stages | **settled as a business constraint** | 2026-09-01 | user | Survives as "territories shall be opportunity-balanced"; the claim that it was *derived* was retracted at 41.9% saturation. |
 | Staffing is exact and selects the roster | **settled** | 2026-09-01 | programme | Exact, milliseconds, 13 of 111. |

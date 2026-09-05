@@ -363,14 +363,16 @@ stable across redeploys.
 | `tools/run_draw.py` | **unchanged** — `Scenario`, `load_scenario`, `parse_pin`, `expand_states`, `solver_k`, `run_sweep`, `complete`, `summary_rows`, `sweep_row`, `write_sweep` already do all of it |
 | `tools/us_maps.py` | **unchanged** — `--regions` per scenario; `draw_palette` / `color_districts` own the colouring |
 | `td/instance.py` | **unchanged** — `load_descaled` / `check_descaled` gate the new file |
-| `td/solvers/centers.py` | **unchanged** — `draw(locked=)`, `residual_targets`, `seed_centers(initial=)`, `improve(movable=)` are what make pins work |
+| `td/solvers/centers.py` | **changed in `d7c4503`, with the user's sign-off** — `assign()`'s LP pinned to `method="highs-ds"` + an explicit `options` dict after the HiGHS hang (`docs/RUNS.md`); `draw(locked=)`, `residual_targets`, `seed_centers(initial=)`, `improve(movable=)` are what make pins work |
 | `docs/artifacts/runs/scenarios/*.json` | new — 14 specs |
 | `docs/artifacts/runs/run_all.sh` | new — the driver |
 | `docs/artifacts/runs/build_artifact.py` | new — the generator |
 | `docs/RUNS.md`, `docs/RUNS_PLAN.md` | new — the catalogue, and this plan |
 | `figures/runs_<date>/**` | new, tracked — 15 power diagrams + the instance's opportunity map |
 
-**No change to `td/` or `tools/`.** The scenario machinery is built, tested (16 tests in
+**No change to `td/` or `tools/`** *(as planned; in the event the HiGHS hang forced the one
+`centers.py` change above, reported and signed off before it was made — `docs/RUNS.md`)*. The
+scenario machinery is built, tested (16 tests in
 `tests/test_run_draw.py`, 7 in `test_centers.py`) and regression-pinned by
 `test_draw_without_locks_is_unchanged`; this task exercises it, it does not extend it. If the new
 instance turns out to need loader or solver changes, that is a finding to report before writing

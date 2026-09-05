@@ -11,6 +11,15 @@
 **Supersedes:** the hub's `docs/BRIEF.md` of 2026-09-02 **on this branch only** — cited below as
 **[pred]**; its units U0–U7 keep their IDs and are marked landed / carried / retired in §4.
 
+> **⚠ Instance change, 2026-09-04.** Every number in this brief is computed on
+> `instance_descaled.json.gz` (v1) at **k = 13**. The live instance is now
+> **`instance_descaled_v2.json.gz` at `k = 18`** (≈$18B, sponsor-confirmed; v2 is a strict
+> superset of v1 whose growth is overwhelmingly *untapped* market — contested zips only went
+> 675 → 718). The units below are still the right units and the solvers are instance-agnostic,
+> but **`δ₀`, `V`, `EG_S`, the (★) screen, the premium ladder and the roster must all be
+> re-measured on v2 before they are quoted.** Stage 1 has to draw v2 at k = 18 first. See
+> `docs/FRAME.md` §0 (2026-09-04, end of day).
+
 **What changed since [pred].** ★6 is lifted in full (user, 2026-09-03). Two of [pred]'s units
 landed and their numbers are in FRAME §6: U7-meas (the premium ladder) and U1-cert (the
 Eisenberg–Gale bound). Those numbers re-shaped the charter: the lens (`LENS_GROMOV` M8, M13)
@@ -113,7 +122,7 @@ conic solver · the sponsor's `δ` is un-elicited (FRAME §3's ±10% is the only
 | U0-lit | **landed** in A1 form (`LIT_optimization.md`, 46 entries, 2026-09-03) | the predecessor's nine questions were re-cut by `DOMAIN_optimization` §6; the split-count citation it was waiting for is `lenstra1990` |
 | U1-cert | **landed** (`MODEL_U1-cert`, `VERIFY_U1-cert`) | P1 VERIFIED, P2 three-of-four, P3a's `≤ k` retracted; `EG_{S₁₃} = 60.6974` |
 | U2-stab | **landed** (hub, `VERIFY_U2-stab` 13/13) | its N3 blocking test is now 169 comparisons and moves into U6-sel |
-| U3-inv | **carried, sharpened** | now asks the `G`-invariance question of one concave program's *duals*; gains N10 (the `c2·T_z` coupling) |
+| U3-inv | **RETIRED** (user, 2026-09-04) | the books `S_i(z)` are measured directly from the data warehouse, not self-reported, so the strategy-proofness / misreporting question has no referent. ★2 (audited book) shrinks to a data-quality question, not an incentive one. N10 (the `c2·T_z` coupling) carries into U11-roster if it is still wanted |
 | U4-disp | **carried** | still the highest-leverage unknown (FRAME §3.5); its new input is U8's band duals and first-mover list; `LIT_optimization` names the modulus a Hölderian error bound (absence D) |
 | U5-crit | **retired as a unit** — folded into U12-menu | the criterion is two knobs `(δ, ε)` on one menu (`DOMAIN_economic-theory` §2.3, D2) |
 | U6-sel | **carried, re-scoped and cheapened** | closed-form Shapley + least core, plus N1/N3/N9 audits on the delivered artifact; now a `python-typed` unit |
@@ -130,17 +139,24 @@ conic solver · the sponsor's `δ` is un-elicited (FRAME §3's ±10% is the only
 | **U12-menu** | The sponsor menu: rows `(δ, V, book share, μ, N1/N8/N9 verdicts)`, `breugem2022`'s a-priori bound on N7 beside the computed curve, `haimes1979` MRT-vs-MRS framing, the `(δ, ε)` two-knob statement, MNW point marked; the tie-break disclosure text (`DOMAIN_economic-theory` §2.3, §2.8–§2.10, §4 steps 2–3, 7). | `modeler` → `math-verify` | **U8**, **U11**; U13 for the baseline point | M | opus |
 | **U13-base** | Construct A3's hand-drawn state-grouped baseline by its stated greedy rule (whole states to ≈ `T/k`, largest remaining neighbour first, split rule written down) and its top-book roster; score `(δ, V, P, D(g))`; place it on U8's frontier (`APPROACHES` §A3; `LENS_GROMOV` M11.3, ledger U10; `DOMAIN_optimization` §5 row 6). | `python-typed` → `code-verify` | — for construction; **U8** for the plot | S–M | opus |
 | U6-sel *(carried)* | The 13 × 13 audits on the delivered artifact: EF1 / FEFx / proportionality (N1, N9), 169 blocking pairs with gains (N3), closed-form Shapley of all 111 and the least core (N5, N6) (`DOMAIN_economic-theory` §2.1, §2.4–§2.6, §4 step 1). | `python-typed` → `code-verify` | ★5 for N5 only | S–M | sonnet |
-| U3-inv *(carried)* | `G`-invariance of the fixed-roster map and of the `EG^bal` duals (P-G1–P-G3), N10, against `green1986`'s NRC; what `fotakis2014` forbids once books enter one concave objective (`DOMAIN_economic-theory` §2.7, §8 Q10–Q11). | `modeler` → `math-verify` | — (★2 decides which branch is live) | M | opus |
+| ~~U3-inv~~ *(**RETIRED** 2026-09-04)* | ~~`G`-invariance of the fixed-roster map and of the `EG^bal` duals (P-G1–P-G3), N10, against `green1986`'s NRC; what `fotakis2014` forbids once books enter one concave objective (`DOMAIN_economic-theory` §2.7, §8 Q10–Q11).~~ Retired by the user: books are measured, not reported, so there is nothing to misreport. | — | — | — | — |
 | U4-disp *(carried)* | The modulus `objective-gap ≥ φ(mass moved)`, now with U8's duals and first-mover list as input and `LIT_optimization` absence D's Hölderian-error-bound framing (`DOMAIN_optimization` §2.4, §8 Q3). | `modeler` → `math-verify` | **U8** | M–L | opus |
 
 **Order.**
 - **Wave 1 (independent, run in parallel):** U8-band, U9-bandthm, U13-base (construction),
-  U6-sel, U3-inv. U8 is the band-constrained kill test and goes first if only one runs.
-- **Wave 2 (gated on U8):** U10-round, U11-roster, U4-disp.
+  U6-sel, ~~U3-inv~~. U8 is the band-constrained kill test and goes first if only one runs.
+  **Run 2026-09-04: U8-band and U9-bandthm launched in parallel and both landed verified**
+  (`954d9eb`, `f199e92`, `69997ac`, `ddd162d`); U13-base and U6-sel were held for the D1′
+  verdict and are still unlaunched; U3-inv is retired.
+- **Wave 2 (gated on U8):** U10-round, U11-roster, U4-disp. **Unblocked 2026-09-04.**
 - **Wave 3:** U12-menu (U8 + U11 + U13).
 - **D1′ can end the track at wave 1:** if U8's one-solve certificate proves softness across
   the plausible band, record A1 `collapsed-on-softness` in `APPROACHES.md` §0, hand the
-  problem to A5, and do not launch wave 2.
+  problem to A5, and do not launch wave 2. **Did not fire (2026-09-04): the premium is NOT
+  soft.** The gap is 0.683 nats at `δ₀` and 0.737 at `δ = 0.10` — 137–147× the 5e-3 floor —
+  and there is no `δ*` on `[δ₀, 0.33]`. The whole frontier rises only 0.077 nats across an
+  84-fold widening of the band, so the band was never what was binding. A1 continues; wave 2
+  launches; `APPROACHES.md` §0 is **not** to be edited for softness. See FRAME §0 (2026-09-04).
 
 **Estimate.** Wave 1 ≈ 2 L + 2 M + 1 S of subagent time; waves 2–3 ≈ 3 M + 1 M–L. **If the
 budget halves:** run U8 and U9 only, then U10 at the single `δ = 0.10`; fold U11 down to the
