@@ -6,6 +6,44 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-05 02:35 · main 9cfcc2c — wave 2 planned but not executed
+
+**Wave 2 is planned but not executed.** `docs/WAVE2_PLAN.md` (this commit) is the execution
+plan — 9 tracks in 3 phases, with per-track model assignments, worktree names and merge order.
+Nothing in it has run: no unit launched, no correction applied, no re-measure taken. The tree is
+otherwise unchanged from `352b9d7` — 222 tests, live instance at k=18.
+
+*What the planning found.* Three things filed as cleanup actually **gate** the units, which is
+why the plan is phased rather than a flat fan-out:
+
+- **`MODEL_U8-band.md` was never re-anchored to v2, and its v2 re-run was never verified.** Its
+  whole §9 is k=13; `82dbe98` wrote only data — the gitignored manifest, one tracked figure, and
+  the headlines in `## Facts`. Wave 2 would consume a verified v1 document beside an unverified
+  v2 manifest, so U8's v2 `code-verify` is a prerequisite (P0-B), not a loose end.
+- **The wave-2 briefs are v1 artifacts, and two units' premises moved.** U4-disp's first-mover
+  tie set went from 75 exact ties (2.90 % of `T`) to `n_exact_ties = 0`; U10-round's acceptance
+  #2 is unsatisfiable as written, demanding a SCIP vertex that `CODEVERIFY_U8-band` F7 narrowed
+  to a cross-check `certified_upper` never adopts.
+- **The (★) roster-free screen has no implementation.** It was arithmetic in a docs-only commit
+  (`795ea8e`); `60.8025` survives only as a display literal at
+  `docs/artifacts/U9-bandthm/bandthm.py:957`. Its primitive `B_tot` is emitted by no tool, and
+  U11's branch-and-bound stop rule depends on it.
+
+*Four corrections to this file's own record*, all folded into the plan: the `borgwardt2019`
+downgrade belongs to `LIT_optimization.md` §8, **not** `DOMAIN_optimization` §8 (slip inherited
+from `VERIFY_U9-bandthm.md:419`); N7's defect is that it grids on the **spread**, and the fix is
+to grid on `δ₀`; the two `MODEL_U8-band` §5.1/§5.2 fixes already landed in `ddd162d` / `ed5a9a8`,
+leaving only a small residue; and `TD_SLOW=1` adds nothing — no test module has set `SLOW = True`
+since the `acfdbfe` prune, so the slow tier `CLAUDE.md` advertises does not exist.
+
+*What it means.* A fresh session can execute wave 2 from `docs/WAVE2_PLAN.md` without
+reconstructing any of the above. The user's four planning decisions are recorded there
+(all 4 units concurrent · U13 parameterised on A12 · all loose-end groups in scope · verified
+tracks auto-merge, **this batch only**).
+
+*What's next.* Execute **Phase 0** — it gates everything else. The one decision still
+outstanding is the sponsor's hand-drawn-states call (A12), being taken in a separate session.
+
 ## 2026-09-05 01:21 · main 352b9d7 — the hub consolidated: one resume point on the live v2 instance
 
 **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** (≈$18B, sponsor-confirmed
