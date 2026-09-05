@@ -88,15 +88,15 @@ the auto-mode classifier. Then launch Phase 1's four units.
 
 ## Facts
 
-| | v1 `instance_descaled.json.gz` (regression only) | **v2 `instance_descaled_v2.json.gz` (live)** |
-|---|---|---|
-| zips | 1,229 | **3,748** (strict superset; raw had 3,749, `BLANK` dropped) |
-| reps | 111 | **114** (all 111 retained) |
-| contested / uncontested / vacant / untapped | 675 / 477 / 2 / 75 | **718** / 1,447 / 16 / **1,567** |
-| untapped share of opportunity | 2.9 % | **15.7 %** |
-| aggregate saturation | 41.6 % | **29.6 %** |
-| total (v1 units) | 2,745.6 | 5,165.6 — ×1.8814 (8,523.2 in v2 units); v1's "$13B" was ≈$9.6B |
-| k at $1B | 13 (overstated; consistent ≈10) | **18** |
+|                                             | v1 `instance_descaled.json.gz` (regression only) | **v2 `instance_descaled_v2.json.gz` (live)**                    |
+|---------------------------------------------|--------------------------------------------------|-----------------------------------------------------------------|
+| zips                                        | 1,229                                            | 3,748 (strict superset; raw had 3,749, `BLANK` dropped)         |
+| reps                                        | 111                                              | 114 (all 111 retained)                                          |
+| contested / uncontested / vacant / untapped | 675 / 477 / 2 / 75                               | 718 / 1,447 / 16 / 1,567                                        |
+| untapped share of opportunity               | 2.9 %                                            | 15.7 %                                                          |
+| aggregate saturation                        | 41.6 %                                           | 29.6 %                                                          |
+| total (v1 units)                            | 2,745.6                                          | 5,165.6 — ×1.8814 (8,523.2 in v2 units); v1's "$13B" was ≈$9.6B |
+| k at $1B                                    | 13 (overstated; consistent ≈10)                  | 18                                                              |
 
 v2's growth is untapped market: ×1.6333 over worked zips, contested only 675 → 718.
 
