@@ -21,14 +21,14 @@ floor, no `δ*`). The two tracks' k=18 draws are byte-identical (compared, not i
 - **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`;
   the merge rule is `ask-before-merging-to-hub.md`.
 - **Caution:** run tests with `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
-  from this worktree (no `.venv` here). Gitignored and hand-copied, so a fresh worktree needs
-  them again: `instance_descaled_v2.json.gz` (**live**, cleaned; in `.claude/worktrees/runs`
-  and `.claude/worktrees/A1`), `instance_descaled_v2.raw.json.gz` (uncleaned, provenance only;
-  runs worktree), `instance_descaled.json.gz` (v1, regression only), `data/geo/`, and
-  `battery/results/`: **v2** — `draw_k18_v2_20260904`, `u8_band_v2_20260904`,
-  `meas_v2_20260904` (A1 worktree), `runs_20260904/` (the 15 catalogue runs, runs worktree);
-  **v1** — `draw_k13_20260901`, `sweep_20260902_s10` (here), `meas_20260903`,
-  `u8_band_20260904` (A1 worktree).
+  from this worktree (no `.venv` here). Gitignored, so a fresh worktree needs them hand-copied
+  **from this hub worktree, which now holds all of them** (the `A1` and `runs` worktrees were
+  removed on 2026-09-05 after their data was copied here): `instance_descaled_v2.json.gz`
+  (**live**, cleaned), `instance_descaled_v2.raw.json.gz` (uncleaned, provenance only),
+  `instance_descaled.json.gz` (v1, regression only), `data/geo/`, and `battery/results/`:
+  **v2** — `draw_k18_v2_20260904`, `u8_band_v2_20260904`, `meas_v2_20260904`, `runs_20260904/`
+  (the 15 catalogue runs); **v1** — `draw_k13_20260901`, `sweep_20260902_s10`, `meas_20260903`,
+  `u8_band_20260904`.
 - **Solver change (from `wt/runs`):** `td/solvers/centers.py::assign()` pins
   `method="highs-ds"` with `options={"time_limit": 60.0}` instead of the bare `method="highs"` —
   the auto-selecting method (and `highs-ds` with no `options` at all) hangs indefinitely on v2
@@ -109,11 +109,10 @@ FLORIDA `fix` / CAROLINAS `anchor` out-staff the baseline at stage 2 (+0.029 / +
 
 ## Starting a track (A2–A5, or resuming A1)
 1. `git worktree add /Users/ntlee/projects/td/.claude/worktrees/<ID> -b wt/<ID> national-channel`.
-2. Hand-copy the gitignored inputs: `instance_descaled_v2.json.gz` and `data/geo/` (from the
-   runs or A1 worktree), `battery/results/draw_k18_v2_20260904/`,
-   `battery/results/meas_v2_20260904/`, `battery/results/u8_band_v2_20260904/` (A1 worktree),
-   and `battery/results/runs_20260904/` if the catalogue is needed (runs worktree). v1 inputs
-   only for a regression.
+2. Hand-copy the gitignored inputs from this hub worktree: `instance_descaled_v2.json.gz`,
+   `data/geo/`, `battery/results/draw_k18_v2_20260904/`, `battery/results/meas_v2_20260904/`,
+   `battery/results/u8_band_v2_20260904/`, and `battery/results/runs_20260904/` if the
+   catalogue is needed. v1 inputs only for a regression.
 3. Start `claude` **from that directory**, and activate Serena to it **by path**.
 4. Read `docs/APPROACHES.md` §0's inherited facts and FRAME §6 before the charter; ★6 is lifted.
 5. Write the track's `/gromov`, `/domain` and `/research-plan` outputs under `docs/tracks/<ID>/`
