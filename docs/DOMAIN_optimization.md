@@ -1,5 +1,8 @@
 # optimization plan — the national channel territory problem, under the A1 charter
 
+> Promoted from `docs/tracks/A1/` to the hub path on 2026-09-05 (user decision); the neutral
+> 2026-09-02 hub plan is `docs/archive/hub-2026-09-02/DOMAIN_optimization.md`.
+
 **Date:** 2026-09-03 (branch `wt/A1`) · **Framework:** 0.1 · **Track:** A1
 (`docs/APPROACHES.md` §A1, taken verbatim as the problem) ·
 **Reads:** `docs/APPROACHES.md` §A1, `docs/FRAME.md` (all, §6 as extended 2026-09-03),

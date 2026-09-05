@@ -153,7 +153,7 @@ one page, or resolve the 132 first.
 unoccupied, and stage 1 turns out to be a published method.** Head `98f3c0e` (docs-only
 since `b289f3a`; 131 tests as recorded at `f45bf89`, no code touched).
 
-*What landed.* `acb34f9` — the research brief (`docs/RESEARCH_GUIDE.md`). `98f3c0e` — the
+*What landed.* `acb34f9` — the research brief (`docs/archive/RESEARCH_GUIDE.md`). `98f3c0e` — the
 results of the overnight run (seven parallel verification-required sweeps, every citation
 checked against a fetched source): `docs/RESEARCH_FINDINGS.md` (~130 entries organised by
 guide §§1–7; headline findings §0; absence-claim ledger with search provenance §8;
@@ -301,7 +301,7 @@ reading stage 2's "unmatched" output assumes.
 Earlier — the two-player merger programme (harness, method wave, S0/S1/S2, W6b/W6c/W6d,
 `scip_tree` certifying every pair ≤ 135 zips with 124/135 proved exact global optima) is on
 branch `contiguity-harness`; its resume point was `research/contiguity/PLAN.md` §0 and its
-record is `docs/RESULTS.md`.
+record is `docs/archive/RESULTS.md`.
 
 ---
 

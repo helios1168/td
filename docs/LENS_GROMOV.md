@@ -1,5 +1,8 @@
 # Gromov lens — the A1 track: joint coverage optimisation, after measurement
 
+> Promoted from `docs/tracks/A1/` to the hub path on 2026-09-05 (user decision); the neutral
+> 2026-09-02 hub lens is `docs/archive/hub-2026-09-02/LENS_GROMOV.md`.
+
 **Date:** 2026-09-03 (branch `wt/A1`; supersedes the hub's 2026-09-02 lens *on this branch only*)
 · **Framework:** 0.1 · **Reads:** `docs/APPROACHES.md` §A1 (the charter, taken verbatim),
 `docs/FRAME.md` §6 (as extended 2026-09-03), `docs/MODEL_U7-meas.md` §6,

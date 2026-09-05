@@ -1,6 +1,6 @@
 # Verify — unit U9-bandthm — adversarial check of the five claims `EG^bal_S(δ)` rests on
 
-**Date:** 2026-09-04 · **Track:** A1, branch `wt/A1` · **Unit:** `docs/tracks/A1/units/U9-bandthm.md` ·
+**Date:** 2026-09-04 · **Track:** A1, branch `wt/A1` · **Unit:** `docs/units/U9-bandthm.md` ·
 **Under test:** `docs/MODEL_U9-bandthm.md` and `docs/artifacts/U9-bandthm/bandthm.py` ·
 **Owns:** this file, `docs/artifacts/U9-bandthm/verify/**` ·
 **Did not touch:** `docs/MODEL_U9-bandthm.md`, `docs/MODEL_U8-band.md`, `td/`, `tests/`, `tools/`,
@@ -26,7 +26,7 @@
 3. **P2.5's refutation of `DOMAIN_optimization` §2.12 is correct, and admits a far smaller
    counterexample than the model's** — `n = 1` zip, `k = 2` agents, `M = [1]`, `u = [[2],[1]]`,
    `ν ≡ 0`, integer data, exact arithmetic. The published rule is false in one line.
-4. **A citation slip in P1b-band.** A1's `docs/tracks/A1/LENS_GROMOV.md` M8 (line 58) **already**
+4. **A citation slip in P1b-band.** A1's `docs/LENS_GROMOV.md` M8 (line 58) **already**
    writes the sandwich at `δ₀`, not at `0.0078`; the model describes M8 as if it still wrote
    `EG^bal_{S₁₃}(0.0078)`. The `0.0078` misplacement is real but lives in M8's U13/M12 grid
    (lines 118, 121, 155, 271) and in `DOMAIN_economic-theory` §2.8 line 440 and N7 line 739. The
@@ -229,7 +229,7 @@ the regime where the threshold flips the verdict. **U8 must clean-and-recertify 
 
 ## 5. P2.5 (priority target 4) — `DOMAIN_optimization` §2.12 is false as written
 
-`docs/tracks/A1/DOMAIN_optimization.md:420` states `supp(X) ⊆ argmax_i u_i(z)/(p_z + ν_i M_z)`.
+`docs/DOMAIN_optimization.md:420` states `supp(X) ⊆ argmax_i u_i(z)/(p_z + ν_i M_z)`.
 
 **The smallest counterexample. `n = 1` zip, `k = 2` agents, `M = [1]`, `u = [[2],[1]]`, integer data,
 exact arithmetic, `ν ≡ 0`.** `T/k = 1/2`. Feasible `x = (a, 1−a)`, masses `(a, 1−a)`.
@@ -388,9 +388,9 @@ Two further presentation points, not errors:
 ### To `docs/MODEL_U9-bandthm.md` (report only — I did not edit it)
 
 1. **§2 P1b-band / §3.** "`LENS_GROMOV` M8's `V ≤ EG^bal_{S₁₃}(0.0078)`" is out of date. A1's
-   `docs/tracks/A1/LENS_GROMOV.md:58` already writes the sandwich with `δ₀`, and lines 62–64 already
+   `docs/LENS_GROMOV.md:58` already writes the sandwich with `δ₀`, and lines 62–64 already
    carry the max-deviation-vs-spread distinction. The live `0.0078` sites are M8's U13 grid
-   (lines 118, 121, 155, 271) and `docs/tracks/A1/DOMAIN_economic-theory.md` lines 440–441, 520, 739.
+   (lines 118, 121, 155, 271) and `docs/DOMAIN_economic-theory.md` lines 440–441, 520, 739.
    The recommendation is unaffected.
 2. **§2 P4.4 / §6 item 2.** Add that at `δ = 0` **`Σ_i|ν_i|` is itself gauge-dependent** (factor 16.4
    measured), so "report `(T/k)Σ|ν_i|`" must read "report the value **minimised over the
@@ -407,7 +407,7 @@ Two further presentation points, not errors:
    correction to `DOMAIN_economic-theory` §2.8's EF1 row stands.
 5. **§4** is otherwise clean; §8 above lists the single non-reproducing number.
 
-### To `docs/tracks/A1/DOMAIN_optimization.md` (for whoever owns it)
+### To `docs/DOMAIN_optimization.md` (for whoever owns it)
 
 * **§2.12 line 420 is REFUTED.** Replace with the corrected rule in §5 above.
 * §2.10's "Slater ... in the relative interior of the band for `δ > 0`" is **weaker than the truth**;

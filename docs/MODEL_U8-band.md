@@ -1,9 +1,9 @@
 # MODEL U8-band — `EG^bal_{S₁₃}(δ)`: the band-constrained fibre, its duals, the softness certificate and the frontier
 
-**Date:** 2026-09-04 · **Unit:** `docs/tracks/A1/units/U8-band.md` · **Track:** A1
-(`docs/APPROACHES.md` §A1), run on `wt/A1` · **Reads:** `docs/tracks/A1/DOMAIN_optimization.md`
-§2.10–§2.12, §3, §4, §5 rows 1/2/4; `docs/tracks/A1/DOMAIN_economic-theory.md` §2.8, §2.9, N7–N9;
-`docs/tracks/A1/LENS_GROMOV.md` M8/M11/M12; `docs/MODEL_U1-cert.md` P1 and §4.1;
+**Date:** 2026-09-04 · **Unit:** `docs/units/U8-band.md` · **Track:** A1
+(`docs/APPROACHES.md` §A1), run on `wt/A1` · **Reads:** `docs/DOMAIN_optimization.md`
+§2.10–§2.12, §3, §4, §5 rows 1/2/4; `docs/DOMAIN_economic-theory.md` §2.8, §2.9, N7–N9;
+`docs/LENS_GROMOV.md` M8/M11/M12; `docs/MODEL_U1-cert.md` P1 and §4.1;
 `docs/MODEL_U7-meas.md` §4 and §6; `td/channel.py`, `td/model.py`, `td/instance.py`,
 `td/solvers/centers.py`, `docs/artifacts/U1-cert/{eg.py,instance_numbers.py}` ·
 **Implements:** `td/solvers/eg_band.py` and `tools/measure/frontier.py` (written by

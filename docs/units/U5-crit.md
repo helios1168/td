@@ -1,6 +1,6 @@
 # Unit U5-crit — the welfare criterion as one Atkinson scalar *(wave 2, gated on U2-stab — not launched)*
 
-**Status 2026-09-03 (A1 track, `wt/A1`): retired as a unit — folded into `docs/tracks/A1/units/U12-menu.md`.** The criterion is two knobs `(δ, ε)` on one sponsor menu (`DOMAIN_economic-theory` §2.3, §2.9, D2); the Atkinson-ε content survives as U12's second knob. See `docs/tracks/A1/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): retired as a unit — folded into `docs/units/U12-menu.md`.** The criterion is two knobs `(δ, ε)` on one sponsor menu (`DOMAIN_economic-theory` §2.3, §2.9, D2); the Atkinson-ε content survives as U12's second knob. See `docs/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/LIT_economic-theory.md`:§0.5)
 

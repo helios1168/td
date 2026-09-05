@@ -1,5 +1,8 @@
 # Research brief — the A1 track: joint coverage optimisation, after measurement
 
+> Promoted from `docs/tracks/A1/` to the hub path on 2026-09-05 (user decision); the neutral
+> 2026-09-02 hub brief is `docs/archive/hub-2026-09-02/BRIEF.md`. "On this branch only" below is historical.
+
 **Date:** 2026-09-03 · **Framework:** 0.1 · **Branch:** `wt/A1` (worktree
 `.claude/worktrees/A1`, from `national-channel` at `a4eb488`) · **Reads:** `docs/APPROACHES.md`
 §A1, `docs/FRAME.md` (§0, §3, §6 with the 2026-09-03 rows, §8–§10), `docs/LENS_GROTHENDIECK.md`

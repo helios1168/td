@@ -48,7 +48,7 @@ then the noise floor (U6, if a domain plan exists for it). N1–N3 do not depend
 
 `docs/DOMAIN_optimization.md` §5 · `docs/DOMAIN_economic-theory.md` §5 · `docs/LENS_GROMOV.md`
 Move 4 and the U-ledger · `docs/FRAME.md` §5 (data defects), §6 · `docs/DATA.md` ·
-`docs/TEST_PLAN.md` · `td/instance.py`, `td/channel.py`, `td/solvers/centers.py`,
+`docs/archive/TEST_PLAN.md` · `td/instance.py`, `td/channel.py`, `td/solvers/centers.py`,
 `td/solvers/cert_draw.py`
 
 ## Open questions for ★0

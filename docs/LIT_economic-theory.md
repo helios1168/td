@@ -742,7 +742,7 @@ absence A4 makes newly relevant.
 # 2026-09-03 — A1 track additions
 
 **Date:** 2026-09-03 · **Branch:** `wt/A1` · **Framework:** 0.1 ·
-**Reads:** `docs/tracks/A1/DOMAIN_economic-theory.md` (2026-09-03) §6, questions 1–6 (every `§2.x` below is to that A1 copy); context from
+**Reads:** `docs/DOMAIN_economic-theory.md` (2026-09-03) §6, questions 1–6 (every `§2.x` below is to that A1 copy); context from
 `docs/APPROACHES.md` §A1, `docs/LENS_GROMOV.md` (2026-09-03), `DOMAIN_economic-theory` §2.8–§2.10
 and §4, `docs/FRAME.md` §6 ·
 **Queries logged:** 36 conceptual/near-title (6 Consensus, 30 WebSearch) + 46

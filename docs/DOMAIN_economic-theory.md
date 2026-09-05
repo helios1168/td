@@ -1,5 +1,8 @@
 # economic-theory plan — the A1 track: joint coverage optimisation, after measurement
 
+> Promoted from `docs/tracks/A1/` to the hub path on 2026-09-05 (user decision); the neutral
+> 2026-09-02 hub plan is `docs/archive/hub-2026-09-02/DOMAIN_economic-theory.md`.
+
 **Date:** 2026-09-03 (branch `wt/A1`) · **Framework:** 0.1 ·
 **Reads:** `docs/APPROACHES.md` §A1 (the charter, taken verbatim as the problem),
 `docs/FRAME.md` (§3, §5, §6 as extended 2026-09-03, §8–§10), `docs/LENS_GROMOV.md` (2026-09-03,

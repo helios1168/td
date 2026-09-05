@@ -210,7 +210,7 @@ _LOG_FLOOR = 1e-9                # lower bound on g_a, g_b (keeps log defined)
 _MAX_LS_MOVES = 50               # boundary-swap moves per repair
 _REPAIR_TIME_SHARE = 0.25        # at most this share of the budget goes to in-callback repair
 # ------------------------------------------------------------------------------- W6d
-# The 2026-08-30 primal/dual diagnostic (RESULTS.md section "Primal/dual") found the
+# The 2026-08-30 primal/dual diagnostic (docs/archive/RESULTS.md section "Primal/dual") found the
 # 1200 s incumbents on the 169/197/464-zip pairs were not even 1-swap locally optimal:
 # `_repair`'s descent is truncated by `ls_moves` and the 25% repair budget share, and
 # SCIP's own accepted solutions are never descended at all.  W6d wires the existing

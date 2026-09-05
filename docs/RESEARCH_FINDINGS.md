@@ -1,6 +1,6 @@
 # Research findings — literature reconnaissance for the national-channel programme
 
-**Run:** 2026-09-01 (overnight), per `docs/RESEARCH_GUIDE.md` · **Method:** seven parallel
+**Run:** 2026-09-01 (overnight), per `docs/archive/RESEARCH_GUIDE.md` · **Method:** seven parallel
 research agents, one per section cluster, each required to verify every citation in a fetched
 source (OpenAlex, Crossref, arXiv/ar5iv, Semantic Scholar, dblp, publisher pages) before
 reporting, and to record search provenance for every absence claim. ~130 verified entries.
@@ -1077,7 +1077,7 @@ Recommended resolution path, in order:
    principled `score_draws`; also upgrade the portfolio to Fairmandering's master-selection
    IP for a pool-restricted bound.
 7. **Certificate endgame**: MIPLIB-style three-way status (certified/bounded/open) in
-   `docs/RESULTS.md` (gleixner2021), performance profiles (beiranvand2017), VIPR as the
+   `docs/archive/RESULTS.md` (gleixner2021), performance profiles (beiranvand2017), VIPR as the
    eventual machine-checkable target (cheung2017; szeider2026 removes the
    no-exact-rational-stack objection; eifler2023 for exact repair of float incumbents).
 

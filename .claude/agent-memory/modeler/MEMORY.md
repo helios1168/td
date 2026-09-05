@@ -2,4 +2,3 @@
 - [Economic-theory matching citations that mattered](reference_foundations-econ-theory-matching.md) — which FOUNDATIONS/LIT keys carry weight for stability work, and which cannot be read.
 - [U1-cert: EG dual vs the four certificates](project_u1-cert-eg-dual.md) — 3-of-4 collapse, EG gap 0.760 nats; two retractions (`≤k−1` is NOT τ=0-only; sharp vs coarse ν correction) + power-weight degeneracy trap.
 - [U9-bandthm: the EG^bal theory](project_u9-bandthm.md) — §2.12's MBB rule refuted, slope unbounded at δ=0, `2k−1`'s −1 is unconditional, OA finite convergence refuted; harness traps.
-- [grothendieck-toy unit traps](project_grothendieck_toy.md) — scratch dry-run project: spec/lens mismatch, no FOUNDATIONS, exact-arithmetic convention.

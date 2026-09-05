@@ -75,7 +75,7 @@ CERT_TOL = 1e-8          # certificate tolerance in nats (CLAUDE.md acceptance)
 # T2+), because 5e-3 sits below the measured data-noise floor of the objective itself --
 # bootstrap of the 197-zip C7b_s1 A2/B2 pair under the contestability noise model
 # (cv_sales=0.10, cv_opp=0.06, theta/lam fixed) moves the optimal log-product by
-# std 8.4e-3 / IQR 1.3e-2 nats and flips ~24/197 zips per draw (RESULTS.md
+# std 8.4e-3 / IQR 1.3e-2 nats and flips ~24/197 zips per draw (docs/archive/RESULTS.md
 # "Two-tier acceptance"). Method-level semantics are UNCHANGED: `optimal` still requires
 # CERT_TOL; this constant is read only by the harness scoring (contiguity_bench phase 3).
 EPS_CERT = 5e-3          # eps-certificate tolerance in nats (~0.5% of the Nash product)

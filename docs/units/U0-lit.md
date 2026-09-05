@@ -1,6 +1,6 @@
 # Unit U0-lit — run the optimization literature brief
 
-**Status 2026-09-03 (A1 track, `wt/A1`): landed in A1 form** — `docs/LIT_optimization.md` + `LIT_optimization.bib` (46 entries) answer `DOMAIN_optimization.md` §6 as re-cut for the A1 charter; the split-count citation this unit was waiting for is `lenstra1990`. See `docs/tracks/A1/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): landed in A1 form** — `docs/LIT_optimization.md` + `LIT_optimization.bib` (46 entries) answer `DOMAIN_optimization.md` §6 as re-cut for the A1 charter; the split-count citation this unit was waiting for is `lenstra1990`. See `docs/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/DOMAIN_optimization.md`:§6)
 

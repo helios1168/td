@@ -1,16 +1,18 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/ntlee/.local/bin/headroom wrap selfheal --marker headroom-wrap-selfheal",
-            "timeout": 10
-          }
-        ]
-      }
+  "permissions": {
+    "allow": [
+      "mcp__serena__replace_symbol_body",
+      "Read(//Users/ntlee/.claude/**)",
+      "Bash(git push *)",
+      "Bash(defaults read *)",
+      "Bash(tmux capture-pane *)",
+      "Bash(curl -s http://localhost:8000/sessions)",
+      "Bash(tmux list-sessions *)",
+      "Bash(tmux new-session *)",
+      "Bash(curl -sI http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:8000/agents)",
+      "Bash(curl -s http://localhost:8000/analytics)"
     ]
   },
   "outputStyle": "Concise"

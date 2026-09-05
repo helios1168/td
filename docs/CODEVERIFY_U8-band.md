@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-04 · **Worktree:** `.claude/worktrees/A1` (`wt/A1`, landing `69997ac`) ·
 **Verifier:** `code-verify` · **Spec:** `docs/MODEL_U8-band.md` · **Brief:**
-`docs/tracks/A1/units/U8-band.md` · **Interpreter:** `/Users/ntlee/projects/td/.venv/bin/python3`
+`docs/units/U8-band.md` · **Interpreter:** `/Users/ntlee/projects/td/.venv/bin/python3`
 (CPython 3.13.15; numpy 2.5.2, scipy 1.18.1, highspy 1.15.1, pyscipopt 6.2.1, matplotlib 3.11.1)
 
 ## 0. Summary

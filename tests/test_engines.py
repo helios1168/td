@@ -12,7 +12,7 @@ contract itself.  It is deliberately a *two-player* test -- that is what these e
 currently solve, and the point is to know they still work before the N-way variant is built
 on top of them, not to test the new model (test_nway / test_channel do that).
 
-Acceptance kept from TEST_PLAN.md 3: brute-force match on small n, a real certificate at
+Acceptance kept from docs/archive/TEST_PLAN.md 3: brute-force match on small n, a real certificate at
 CERT_TOL, and one connected piece per side.
 """
 from __future__ import annotations

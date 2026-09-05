@@ -1,12 +1,12 @@
 # Model — unit U9-bandthm — the four claims `EG^bal_S(δ)` rests on
 
 **Date:** 2026-09-04 · **Framework:** 0.1-dev · **Track:** A1 (`docs/APPROACHES.md` §A1), run on
-`wt/A1` · **Unit:** `docs/tracks/A1/units/U9-bandthm.md` ·
-**Reads:** `docs/tracks/A1/DOMAIN_optimization.md` §2.10–§2.13, §3 · `docs/tracks/A1/DOMAIN_economic-theory.md`
+`wt/A1` · **Unit:** `docs/units/U9-bandthm.md` ·
+**Reads:** `docs/DOMAIN_optimization.md` §2.10–§2.13, §3 · `docs/DOMAIN_economic-theory.md`
 §2.8–§2.9 · `docs/MODEL_U1-cert.md` §1–§3 · `docs/VERIFY_U1-cert.md` §2, §4–§7 ·
 `docs/MODEL_U7-meas.md` §4 · `docs/LIT_optimization.md` §0, §1, §2, §8 ·
 `docs/LIT_economic-theory.md` 2026-09-03 §0, A1-Q1 · `docs/LENS_GROTHENDIECK.md` "The general
-case, stated" · `docs/tracks/A1/LENS_GROMOV.md` M8, M11, M12 · read-only `td/channel.py`,
+case, stated" · `docs/LENS_GROMOV.md` M8, M11, M12 · read-only `td/channel.py`,
 `td/model.py` ·
 **Owns:** this file, `docs/artifacts/U9-bandthm/**` · **Does not own / did not touch:**
 `docs/MODEL_U8-band.md`, `td/`, `tests/`, `tools/`, `docs/FRAME.md`, `docs/BRIEF.md`,
@@ -14,7 +14,7 @@ case, stated" · `docs/tracks/A1/LENS_GROMOV.md` M8, M11, M12 · read-only `td/c
 
 > **Path note.** The brief's `docs/DOMAIN_*.md` and `docs/LENS_GROMOV.md` are stale: the hub
 > copies are the neutral versions and carry none of §2.8–§2.15 or Move 8. A1's copies are under
-> `docs/tracks/A1/`. Everything else the brief names is at the hub path.
+> `docs/`. Everything else the brief names is at the hub path.
 
 **Headline.** All five claims survive, four of them as theorems and one — P5's *finite*
 convergence — only after being restated. Three corrections fall out of the proofs and one of

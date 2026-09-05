@@ -97,7 +97,7 @@ Existing instances, the zip50 anchor and every committed result keep working unt
 
 Three consequences deserve calling out:
 
-**The brute-force oracle shrinks.** `TEST_PLAN.md` §3 acceptance is "brute-force match on
+**The brute-force oracle shrinks.** `docs/archive/TEST_PLAN.md` §3 acceptance is "brute-force match on
 n ≤ 20". At three candidates per zip that is `3^20 ≈ 3.5e9` — gone. The tier has to be
 re-cut by *candidate-weighted* size `Π_z |cand(z)|` rather than by `n`, with a budget of
 roughly `1e6`–`1e7` leaves. This is the one acceptance criterion the new shape genuinely
@@ -175,7 +175,7 @@ the same reason — the log's gradient blows up and destabilises the LP.
 | 3 | `base.py` contract extension — `to_owner`, per-rep validators, `evaluate`. **Main session, serial** (frozen contract, `CLAUDE.md` rule) | existing 230 fast tests still green |
 | 4 | `scip_tree` N-way variant per §4 | brute match on Phase-2 tier; per-rep contiguity; certificates at `CERT_TOL` |
 | 5 | `overlap_graph`/`census` hypergraph; `cert_exact` n-term AM–GM | census verdict on 3-way instances |
-| 6 | Re-measure the ε noise floor; N-way S1/S2 screening | RESULTS.md section |
+| 6 | Re-measure the ε noise floor; N-way S1/S2 screening | docs/archive/RESULTS.md section |
 
 Phase 1 deliberately adds a **new module rather than editing `base.py`**: the contract is
 frozen and serial-only, so the primitives get proved out standalone first and the contract
