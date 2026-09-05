@@ -1,30 +1,18 @@
-# Project Core
+# td — Serena entry point (the only memory)
 
-Territory design for a new "national" annuity wholesaling channel: carve two largest firms
-out of financial-institutions/wirehouse channels, split ~1,229 zips / 111 reps / ~$13B
-opportunity into k≈13 territories of ~$1B each. Greenfield balanced districting (not the
-two-player fair-division problem the repo predates), solved as maximum Nash welfare over a
-per-rep utility model.
+Greenfield balanced districting for a new national annuity channel: maximum Nash welfare over
+a per-rep utility model, two stages (draw k balanced compact districts; match reps by Hungarian
+on log gains). Live instance `instance_descaled_v2.json.gz`, k = 18.
 
-Two stages:
-- **Stage 1 (draw)**: k balanced compact districts on opportunity alone (no contiguity --
-  sold-zip graph has 547 components; treated as a power diagram).
-  `td/solvers/centers.py` (k-means++ seed, transportation-LP balance, Lloyd, Nash polish,
-  power diagram/duals), `td/solvers/cert_draw.py` (four post-hoc certificates).
-- **Stage 2 (match)**: assign reps to districts, exact max-weight matching on log gains
-  (Hungarian). `td/channel.py` (stage 2, balance report, `place_by_state`,
-  `allocate_districts` ceiling/dual bound).
+Where things are — do not duplicate them here:
+- State (what landed, what's next): `STATE.md` `## Now`, `## Next`. Never `docs/STATE_LOG.md`.
+- Environment, tests, traps, conventions: `CLAUDE.md` (root; project conventions:
+  `from __future__ import annotations`, full type hints, narrative module docstrings that cite
+  `tests/test_X.py::test_Y` and `docs/*.md`, `--` not em-dash in prose, match existing style).
+- File map and run recipes: `docs/CODE_MAP.md`.
+- Problem / model: `docs/CHANNEL.md`, `docs/MODEL.md`; problem statement `docs/FRAME.md`.
+- Superseded documents: `docs/archive/README.md` says what replaced what.
 
-Other core files: `td/model.py` (N-way primitives: utilities, gains, objective, perimeter,
-n-agent EF1), `td/instance.py` (loads the descaled real instance), `td/geo.py` +
-`tools/us_maps.py` (ZCTA points/projection/figures), `tools/run_draw.py` (the reproducible
-instance -> draws -> stage 2 -> results pipeline), `td/solvers/scip_tree.py` +
-`td/solvers/cert_exact.py` (two-player MILP engine + exact certificate, not what stage 1 is
-built on), `td/solvers/{base,brute}.py` (harness contract, brute-force oracle).
-
-This is a git worktree of `/Users/ntlee/projects/td` (current branch a `wt/*` track branch).
-The fast-moving state narrative (what's built, what's launched, resume point) lives in
-`docs/FRAME.md` §0 and the root `CLAUDE.md`, not here -- these memories cover durable
-structure/conventions only and should not be updated to track it.
-
-See `mem:tech_stack`, `mem:suggested_commands`, `mem:conventions`, `mem:task_completion`.
+Markdown is indexed (marksman): headings are symbols, so fetch one section with
+`find_symbol("<heading>", relative_path="<file>.md", include_body=True)` instead of reading
+the file. `docs/archive/**`, `docs/STATE_LOG.md` and `figures/**` are ignored.
