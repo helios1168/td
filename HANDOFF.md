@@ -1,13 +1,13 @@
 # Handoff — national channel territory design / A1 track (`wt/A1`)
 
-**Updated:** 2026-09-04 (end of day) · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
-**Head:** `fd619c7` · **Tests:** **218 pass, 0 fail** (184 pre-existing + 24 from U8-band + 10
-from `instance_diff`, run 2026-09-04 at `fd619c7` in this worktree)
+**Updated:** 2026-09-04 (night) · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
+**Head:** `82dbe98` · **Tests:** **222 pass, 0 fail** (218 + 4 from `test_frontier`, run
+2026-09-04 at `82dbe98` in this worktree)
 
-**One line:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — ≈$18B
-sponsor-confirmed, not to be re-derived (user, 2026-09-04). A1 wave 1 landed and is verified but
-is **scoped to v1 at k = 13**; the next move is a **v2 draw at k = 18**, then re-run the frontier.
-The merge into `national-channel` remains user-gated.
+**One line:** **The v2 re-anchor is done — `D1′ is NOT SOFT on the live instance`** (v2 at
+`k = 18`, roster `S₁₈`: gap 0.725–0.776 nats against the 5e-3 floor, no `δ*`). The draw, the
+frontier and the premium ladder have all been re-run on `instance_descaled_v2.json.gz`; wave 2 is
+unblocked. The merge into `national-channel` remains user-gated.
 
 ## Start here
 - **Resume point:** `docs/FRAME.md` §0 (the 2026-09-04 entry; §6 has the measured rows)
@@ -15,9 +15,15 @@ The merge into `national-channel` remains user-gated.
 - **Memory:** `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md`;
   the merge rule is `ask-before-merging-to-hub.md`
 - **Caution:** run tests with `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
-  from this worktree. `instance_descaled.json.gz`, `data/geo/` and `battery/results/`
-  (`draw_k13_20260901`, `sweep_20260902_s10/k13`, `meas_20260903`, `u8_band_20260904`) are
-  gitignored and were hand-copied in; a fresh worktree needs them again.
+  from this worktree. `instance_descaled.json.gz`, **`instance_descaled_v2.json.gz` (the live
+  one)**, `data/geo/` and `battery/results/` (**`draw_k18_v2_20260904`, `u8_band_v2_20260904`,
+  `meas_v2_20260904`** on v2; `draw_k13_20260901`, `sweep_20260902_s10/k13`, `meas_20260903`,
+  `u8_band_20260904` on v1) are gitignored and were hand-copied in or regenerated; a fresh
+  worktree needs them again. v2 came from
+  `/Users/ntlee/projects/td/.claude/worktrees/runs/instance_descaled_v2.json.gz`.
+- **Background a solver run with `python3 -u`.** `frontier.py` block-buffers stdout to the task
+  log, so a 34-minute run showed an empty file throughout; `sample <pid>` was the only way to
+  tell which stage it was in.
 - **Serena binds to the session's launch directory.** Launch `python-typed` only from a session
   started in `.claude/worktrees/A1`, and **activate by *path*** — six registered projects are
   named `td`, so activating by name is a coin flip across checkouts. Confirm with
@@ -38,18 +44,24 @@ The merge into `national-channel` remains user-gated.
   composition shift, the saturation decomposition, and what a naive row-sum of opportunity
   would have inflated each export by. Every number in FRAME §0's 2026-09-04 entry comes from
   it. Run it on any future instance before trusting a sizing figure.
-- **The three CLIs:**
-  `tools/measure/premium.py instance_descaled.json.gz battery/results/draw_k13_20260901 --out battery/results/meas_20260903`
+- **The three CLIs** (v2 forms — these are the live ones):
+  `tools/run_draw.py instance_descaled_v2.json.gz --k 18 --seeds 0-9 --workers 8 --out battery/results/draw_k18_v2_20260904` ·
+  `tools/measure/premium.py instance_descaled_v2.json.gz battery/results/draw_k18_v2_20260904 --out battery/results/meas_v2_20260904`
   (the premium ladder, U1/U4/U8, verdict conversions) ·
-  `tools/measure/frontier.py instance_descaled.json.gz battery/results/draw_k13_20260901 --out battery/results/u8_band_20260904`
-  (the gate, the `δ` frontier, D1′, `δ*`, first movers, N8/N9, the plot)
+  `tools/measure/frontier.py instance_descaled_v2.json.gz battery/results/draw_k18_v2_20260904 --out battery/results/u8_band_v2_20260904 --figure figures/u8_band_v2/frontier.png`
+  (the gate, the `δ` frontier, D1′, `δ*`, first movers, N8/N9, the plot).
+  The v1 runs reproduce by swapping the instance and draw back and adding
+  `--gate-reference 60.6974156139` to `frontier.py`.
 
 ## Next actions
 
 **User-gated — reported, not done. Ask before acting on any of these.**
-- [ ] **HELD — merge `wt/A1` into `national-channel`?** Six commits (`954d9eb`, `f199e92`,
-      `69997ac`, `ddd162d`, `ed5a9a8`, `4e5f566`). **The analysis is done and the merge is
-      safe** — it just is not authorised. Not a fast-forward: `wt/A1` is 6 ahead, the hub 3
+- [ ] **HELD — merge `wt/A1` into `national-channel`?** Now **twelve** commits (the original six
+      `954d9eb`, `f199e92`, `69997ac`, `ddd162d`, `ed5a9a8`, `4e5f566`, then `95e25fe`, `4ba7b77`,
+      `fd619c7`, `9854fea`, `82dbe98` and this state commit). **The analysis below was done at six
+      commits and its shape still holds** — the five since are state files, `tools/measure/`
+      additions and one edit to `tools/measure/frontier.py`, a file the hub does not have — **but
+      re-run `git merge-tree` before acting on it.** Not a fast-forward: the hub is 3
       ahead of the base `629e3da` (the hub's nine-k sweep maps). `git merge-tree` gives
       **exactly three conflicts — `CLAUDE.md`, `HANDOFF.md`, `docs/FRAME.md` — and zero code
       conflicts**; both sides simply restamped the same state files. Every code change on
@@ -108,25 +120,30 @@ goes 15,977 → ~67,000 and the OA converged in 15–57 tangents at 1e-9 bracket
 **`td/solvers/eg_band.py` and `tools/measure/frontier.py` are instance-agnostic and need no
 change.**
 
-- [ ] **1. Draw v2 at k = 18.** *This is the gating step* — `battery/results/draw_k13_20260901`
-      is a **v1** draw, and every A1 unit consumes a draw plus its stage-2 roster. The instance
-      lives at
-      `/Users/ntlee/projects/td/.claude/worktrees/runs/instance_descaled_v2.json.gz`
-      (gitignored; `.raw.json.gz` beside it is the pre-clean original, before the `BLANK`
-      pseudo-zip was dropped) — **copy it into this worktree by hand first.** Then run
-      `tools/run_draw.py` on it; `wt/runs`'s `RUNS_PLAN.md` covers this ground with `--k 14-22`,
-      so coordinate rather than duplicate.
-- [ ] **2. Re-run the frontier on v2 at k = 18.**
-      `tools/measure/frontier.py instance_descaled_v2.json.gz <v2 draw> --out battery/results/u8_band_v2_<date>`
-      — one solve re-tests D1′ and re-anchors `δ₀`, `V`, `EG_S` and the roster. Expect the gate
-      constant to change: `EG_S13 = 60.6974156139` is v1's, so `frontier.py`'s hard gate must be
-      re-pointed at a v2 reference or the run will refuse to start.
-- [ ] **3. Then wave 2** — U10-round, U11-roster, U4-disp — and U13-base. Briefs at
-      `docs/tracks/A1/units/`; U11 reuses `eg_band.py` as its solver.
+- [x] ~~**1. Draw v2 at k = 18.**~~ **Done** — `battery/results/draw_k18_v2_20260904/k18/`,
+      `--k 18 --seeds 0-9 --workers 8`, winner seed 2, 0 unstaffed, masses sum to 8,523.21,
+      spread 1.368%, **`δ₀ = 0.009970`**, **`V = 95.755191659241`**. Draws are independent per
+      `(k, seed)`, so this is bit-identical to the `k18` slice of `wt/runs`'s `--k 14-22` baseline.
+- [x] ~~**2. Re-run the frontier on v2 at k = 18.**~~ **Done** —
+      `battery/results/u8_band_v2_20260904/`, `figures/u8_band_v2/frontier.png`. **D1′: NOT SOFT**
+      at every `δ` (0.730 / 0.748 / 0.777 nats at `δ = 0.02/0.05/0.10`, 146–155× the 5e-3 floor);
+      **no `δ*`** on `[δ₀, 0.33]`; `EG_{S₁₈} = 96.532152`; monotone, concave, all brackets tier-1;
+      SCIP `optimal` at both cross-checks, agreeing to `2.3e-9`. The gate was re-pointed in
+      `82dbe98` — it now asserts the instance-agnostic `EG_S ≥ V`, with `--gate-reference` as an
+      opt-in exact pin (v1 reproduces with `--gate-reference 60.6974156139`).
+- [ ] **3. Wave 2** — U10-round, U11-roster, U4-disp — and U13-base. Briefs at
+      `docs/tracks/A1/units/`; U11 reuses `eg_band.py` as its solver. **Re-read the briefs first:
+      they are written against v1 assumptions.** **U11-roster's priority is now higher than its
+      brief assumes** — the roster gap grew 0.043 → 0.249 nats (5.8×) from v1 to v2.
 - [ ] **4. Then wave 3, U12-menu** (needs U8 + U11 + U13).
-- [ ] **Re-measure on v2 before quoting:** the premium ladder (`tools/measure/premium.py`), the
-      (★) roster-free screen, `δ₀`, and R1's saturation-driven premium arithmetic. Every FRAME §6
-      row not marked v2 is a v1 number.
+- [x] ~~Re-measure the premium ladder on v2.~~ **Done** — `battery/results/meas_v2_20260904/`.
+      `P₀`/`P*(A)`/`P_S`/`P₁₃`/`P_free` = 41.53 / 41.53 / 54.42 / 59.27 / 84.17 % of book; match
+      gap **0**, map gap 0.663 nats, **roster gap 0.249 nats**; U1 gains spread 60.17%, U4 124
+      zips (7.82% of M), U8 `corr(T,M)` 0.745.
+- [ ] **Still to re-measure on v2 before quoting:** the (★) roster-free screen, and R1's
+      saturation-driven premium arithmetic (saturation is 29.6% on v2, and the ladder above is now
+      in hand). FRAME §6 rows now carry both v1 and v2 where measured; anything still v1-only is
+      marked as such.
 - [ ] Carried: ★1 (are the 98 released), ★2 (audited book — now a data-quality question only),
       ★3 (stability as a criterion, after U6-sel), ★5 (least core), ★7 (`/domain econometrics`).
       **U3-inv is retired** (user, 2026-09-04) — books are measured from the data warehouse, not

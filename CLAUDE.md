@@ -1,19 +1,18 @@
 # National channel territory design — Claude Code setup
 
-**Last updated:** 2026-09-04 · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
-**Head:** `fd619c7` · **Tests:** **218 pass, 0 fail** (184 pre-existing + 24 from U8-band + 10
-from `instance_diff`, run 2026-09-04 at `fd619c7` in this worktree)
+**Last updated:** 2026-09-04 (night) · **Branch:** `wt/A1` (worktree `.claude/worktrees/A1`) ·
+**Head:** `82dbe98` · **Tests:** **222 pass, 0 fail** (218 + 4 from `test_frontier`, run
+2026-09-04 at `82dbe98` in this worktree)
 
 **Status:** **The live instance is `instance_descaled_v2.json.gz` at `k = 18`** — the sponsor's
-≈$18B is confirmed and is not to be re-derived (user, 2026-09-04). A1 wave 1 landed and is
-verified, but **scoped to v1 at k = 13**: U8-band's D1′ certificate says the premium is **NOT
-SOFT** there (gap 0.683–0.737 nats against the 5e-3 floor, no `δ*`), and U9-bandthm verified all
-five propositions it rests on. Those numbers must be re-run on v2 before they say anything about
-the live problem — **stage 1 has to draw v2 at k = 18 first**, since `draw_k13_20260901` is a v1
-draw. The solvers themselves (`td/solvers/eg_band.py`, `tools/measure/frontier.py`) are
-instance-agnostic and need no change. **Still user-gated:** the merge into `national-channel`
-(analysed and safe), ★11, ★8, and the source-document corrections. A1's documents live under
-`docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full narrative and the numbers.
+≈$18B is confirmed and is not to be re-derived (user, 2026-09-04). **The v2 re-anchor is done:**
+the k=18 draw (`battery/results/draw_k18_v2_20260904`, `δ₀ = 0.00997`, `V = 95.755192`), the
+re-run frontier (`u8_band_v2_20260904`) and the re-run premium ladder (`meas_v2_20260904`) are all
+on v2, and **D1′ says the premium is NOT SOFT on the live instance** (gap 0.725–0.776 nats against
+the 5e-3 floor, no `δ*`, `EG_{S₁₈} = 96.532152`). Wave 2 is unblocked. **Still user-gated:** the
+merge into `national-channel` (analysed and safe), ★11, ★8, and the source-document corrections.
+A1's documents live under `docs/tracks/A1/`. See **`docs/FRAME.md` §0** for the full narrative and
+the numbers.
 
 **Resume point: `docs/FRAME.md` §0** (it supersedes `docs/CHANNEL.md` §6–7; `CHANNEL.md` §0
 carries the pointer and the pre-dry-run narrative). Fast orientation: `HANDOFF.md`.
@@ -146,9 +145,9 @@ they are exactly the "zero-value glue" of failure regime (d). Who may own them i
 | `td/solvers/cert_exact.py` | exact post-hoc certificate (W6c); its AM–GM OA generalises to n terms |
 | `td/solvers/{base,brute}.py` | harness contract; brute-force oracle |
 
-Tests: `.venv/bin/python3 tests/run_all.py` — **208 fast tests, 0 fail, no slow tier**
-(run 2026-09-04 at `ddd162d`; 184 at `74eff38`, 174 at `8eece3f`, 151 at `7359c6e`, 131 at
-`f45bf89`, 65 at the prune). This worktree has no
+Tests: `.venv/bin/python3 tests/run_all.py` — **222 fast tests, 0 fail, no slow tier**
+(run 2026-09-04 at `82dbe98`; 218 at `fd619c7`, 208 at `ddd162d`, 184 at `74eff38`, 174 at
+`8eece3f`, 151 at `7359c6e`, 131 at `f45bf89`, 65 at the prune). This worktree has no
 `.venv`; use the main checkout's: `/Users/ntlee/projects/td/.venv/bin/python3 tests/run_all.py`
 (three levels up from this worktree, not two).
 `test_engines.py` is a self-contained two-player smoke test for `scip_tree`/`cert_exact`; their

@@ -14,7 +14,94 @@ table (computed on the superseded $6.2B split, and on a contiguity requirement s
 
 ## 0. Resume — read this first in a fresh session
 
-**State on 2026-09-04, end of day (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`,
+**State on 2026-09-04, night (latest, branch `wt/A1`, worktree `.claude/worktrees/A1`, head
+`82dbe98`, 2 commits over `9854fea`; tests **222 pass, 0 fail** — 218 + 4 from `test_frontier`):
+the v2 re-anchor is done. `D1′ is NOT SOFT on the live instance — v2 at k = 18, roster S₁₈.`
+Wave 1's verdict survives the instance change, and wave 2 is unblocked against real v2 numbers.**
+
+*What landed.* The gating step from the previous entry, in order. **(1)** `.gitignore` widened to
+`instance_descaled*.json.gz`, matching `wt/runs` — the literal rule left the confidential v2 export
+untracked *but committable*; then v2 copied in and re-validated (`check_descaled` → `[]`;
+3,748 / 718 / 1,447 / 16 / 1,567 / 114 exactly as `wt/runs` reported). **(2) The v2 draw at
+k = 18**, `battery/results/draw_k18_v2_20260904/k18/` (gitignored), `--seeds 0-9 --workers 8` —
+seeds 0–9 rather than v1's 0–4 so it agrees with the baseline `wt/runs`'s catalogue will produce.
+Winner **seed 2**, 0 unstaffed, masses sum to 8,523.21, spread **1.368%**, **`δ₀ = 0.009970`**
+(max deviation), **`V = 95.755191659241`**. Each `(k, seed)` draw is independent
+(`centers.draw(XY, M, k, seed=seed, locked=...)`), so this is bit-identical to the `k18` slice of
+`wt/runs`'s `--k 14-22` baseline — no duplication conflict. **(3) `frontier.py`'s gate re-pointed**
+(`82dbe98`, the session's only code change). **(4) The frontier on v2**,
+`battery/results/u8_band_v2_20260904/` + `figures/u8_band_v2/frontier.png`. **(5) The premium
+ladder on v2**, `battery/results/meas_v2_20260904/`.
+
+*The gate change, and why it is not a weakening.* `EG_S13_REFERENCE = 60.6974156139` was a hard
+constant that **raised** on any instance but v1 at k = 13, so it blocked the v2 run outright. It
+was standing in for a structural fact: `EG_S` maximises `Σ_i log g_i` over every coverage and the
+delivered map *is* a coverage, so **`EG_S ≥ V` is a theorem** that holds on any instance and fails
+exactly when `U` and `V` were built in different utility conventions — the `model.utilities`
+(masked) against `channel.gain_matrix` (unmasked) mistake `CODEVERIFY_U8-band` row 2 records. The
+gate now asserts that always; `--gate-reference VALUE` keeps the exact pin as an opt-in. **The v1
+draw with `--gate-reference 60.6974156139` reproduces wave 1 unchanged** —
+`[60.69741561132058, 60.69741562001393]`, delta `6.11e-9` — so the refactor is behaviour-preserving
+on the certified artifact. Four new tests in `tests/test_frontier.py`; `EG_S13_*` result keys and
+plot labels are now parametrised on `setting.k` (v1's manifest keeps the old key names).
+
+*The number that scopes the track.* Gate: `EG_{S₁₈} = [96.532151752556, 96.532151758538]`, bracket
+`5.98e-9`, **`+0.776960` above `V`**. Then the frontier — every bracket tier-1
+(`4.33e-9`–`8.44e-9`), 16–64 cuts, **monotone and concave with zero violations**:
+
+| `δ` | 0.009970 (`δ₀`) | 0.02 | 0.05 | 0.10 | 0.33 |
+|---|---|---|---|---|---|
+| `EG^bal_{S₁₈}(δ)` | 96.479699 | 96.485191 | 96.497690 | 96.510123 | 96.530978 |
+| gap to `V` = 95.755192 | **0.724507** | 0.729999 | 0.742499 | 0.754932 | 0.775786 |
+
+**D1′: NOT SOFT at every `δ`** — the one-solve bounds are 0.730 / 0.748 / 0.777 nats at
+`δ = 0.02 / 0.05 / 0.10`, **146–155× the 5e-3 tier-2 floor**, with tangent slack `+3.81e-4` to
+`+2.23e-2`. **`δ*` does not exist on `[δ₀, 0.33]`**: the gap is already 0.724507 nats at the left
+endpoint, so zero bisection solves were needed and the verdict does not rest on the slope at all.
+`s_min(δ₀) = 0.585586`. SCIP cross-checked at `δ = 0.02` and `0.33`, both status `optimal` (never
+`time_limit`, 31.8 s and 32.2 s), agreeing to `2.31e-9` and `2.27e-9`.
+
+*What it means.* **A1's charter survives its kill test a second time, now on the live instance**,
+and `APPROACHES.md` §0's `collapsed-on-softness` branch does **not** fire. **The band is still not
+what binds:** v2's whole frontier rises **0.0513 nats across a 33-fold widening** of `δ` (v1: 0.077
+across 84-fold), so ★9 remains a governance choice rather than a value trade-off. Note the premium
+is *slightly larger* on v2 in absolute nats (0.7245 vs 0.6830 at `δ₀`) even though saturation fell
+41.6% → 29.6% — it is not simply proportional to saturation, and `k` moved 13 → 18 as well.
+
+*Structure at `δ₀`, and one thing that changed character.* **N8:** 16 of 18 bands tight, 2 agents
+slack, `+8/−8` binding — **not CEEI**, the same shape as v1; from `δ = 0.05` outward only lower
+bands bind (`+0/−6`, `+0/−4`, `+0/−1`), and at 0.33 one tight / 17 slack. **Splits 24**, under the
+cap `k−1+t = 33` and the unconditional `2k−1 = 35`; rank 3773/3773, band residual `5.9e-16`,
+integral witness in band at every `δ`. **First movers are no longer tie-degenerate:** v1 had **75
+exact MBB ties carrying 2.90% of `T`; v2 has zero**. The list is still flagged DEGENERATE for a
+*different* reason — vertex support 3773 against an expected 3781, so `ν` is one dual optimum among
+several — but the named zips now carry strictly positive margins (`5.6e-7`–`2.5e-6`) and the top 25
+hold 0.39% of `T`, concentrated on R0008 / R0021 / R0014 / R0009. Quote the list only with that
+caveat.
+
+*The premium ladder moved in one place that matters.* Shares of total book (v1/k=13 → v2/k=18):
+`P₀` 37.82 → **41.53%**, `P_S` 51.43 → **54.42%**, `P₁₃` 52.34 → **59.27%**, `P_free` 79.44 →
+**84.17%**. The **match gap is exactly 0 on both** — the Hungarian matching is already optimal at
+the `P*(A)` roster. The map gap barely moves (0.640 → 0.663 nats). But the **roster gap grows
+0.0430 → 0.2494 nats, 5.8×**: on v1 the roster was nearly free, on v2 *which reps staff the channel*
+is worth a quarter nat. **That is the one downstream priority this re-anchor changes — it is
+U11-roster's subject.**
+
+*What's next, in order.* (1) **Wave 2** — U10-round, U11-roster, U4-disp, and U13-base; briefs at
+`docs/tracks/A1/units/`, **written against v1 assumptions, so re-read them before launching** (U11
+reuses `eg_band.py` as its solver, and its priority is now higher than the brief assumes). (2)
+`REVIEW_GROMOV` R1's premium arithmetic can now be redone on v2 — saturation 29.6% and the measured
+ladder above are both in hand. (3) **Still user-gated:** the merge of `wt/A1` into
+`national-channel`, ★11's charter rewrite, ★8, and the source-document corrections wave 1 implies.
+
+*Process note worth not re-learning.* `frontier.py` backgrounded writes **block-buffered** stdout to
+its log, so 34 minutes passed with an empty output file and no way to tell which stage was running;
+`sample <pid>` on the process showed it inside `SCIPsolve → heurExecMultistart`, which located it
+past the gate and past the `δ₀` point. **Run it with `python3 -u` when backgrounding.** Also: SCIP
+was only 64 s of that 34 minutes — the OA master solves dominate at `n·k = 67,464`.
+
+**Earlier the same day — state on 2026-09-04, end of day (branch `wt/A1`, worktree
+`.claude/worktrees/A1`,
 head `fd619c7`; tests **218 pass, 0 fail** at `fd619c7` — 184 + 24 from U8-band + 10 from
 `instance_diff`): the hold is lifted. `The sponsor's ≈$18B is confirmed, k = 18, and v2 supersedes v1.` A1's wave-1 results
 stand as certified facts about **v1 at k = 13** and must be re-run before they mean anything
@@ -566,20 +653,21 @@ have identical optima, gaps and certificates.
 | **aggregate saturation** Σ(booked)/Σ(opportunity) | v1 **41.9%** (median zip 46.8%, p90 110%) → **v2 29.6%** | `REVIEW_GROMOV` R1 measured on v1; v2 measured 2026-09-04 | the load-bearing correction — existing books move the map a lot. **On v2 it decomposes: 41.6% → 34.5% on the shared zips (opportunity revised up ×1.226, book flat at ×1.016), then → 29.6% from the 1,567 untapped new zips. R1's premium arithmetic is stale at v2.** |
 | hold-vs-not swing in a wholesaler's valuation of a zip | **≈ 42%** (assumed 6.7%) | ibid. | continuity is a first-order term, not a tilt |
 | incumbency premium as a share of total welfare | **≤ ≈ 25%** (assumed ~6%) | ibid. | ~3.7 nats of swing, unexplored |
-| achieved balance spread | 0.642% drawn / **0.781%** placed | `battery/results/draw_k13_20260901` | balance is solved |
+| achieved balance spread | v1/k=13 0.642% drawn / **0.781%** placed → **v2/k=18 0.060% drawn / 1.368% placed**, max deviation `δ₀ = 0.9970%` | `battery/results/draw_k13_20260901`; `draw_k18_v2_20260904` (seeds 0–9, winner seed 2) | balance is solved on both; v2's `δ₀` is 2.5× v1's 0.39%, expected at 3× the zips and k=18 |
 | distance to the analytic balance ceiling | **4.51e-5 nats** (portfolio best: 2e-6) | `cert_draw` | four orders below the premium term |
 | portfolio staffing spread across 5 seeds | 7.1e-2 nats | `score_draws` | the effort ledger's middle term |
 | compactness headroom | a **8.53%** more compact assignment exists in the same balance band (152 relabels); power-diagram bound independently gives 8.22%, with **132 of 1,223** zips outside their own cell | pinned-centers MILP; `cert_power_diagram` | open question 1, in one number |
 | acceptance floors | tier 1 `1e-8` nats · tier 2 `5e-3` nats | `td/solvers/base.py:72,81` | the cells-vs-dots gap (4.66e-5) sits **below** tier 2 |
-| **premium ladder** on the committed draw, share of total book | `P₀` 37.82% · `P*(A)` 37.82% · `P_S` **51.43%** · `P₁₃` 52.34% · `P_free` 79.44% | `MODEL_U7-meas` §6, `battery/results/meas_20260903` (2026-09-03) | matching gap 0 (stage 2 is already right); **map gap 13.6% of book ≈ 0.64 nats**; roster gap 0.9% ≈ 0.043 nats — A1's kill test *passed*, and what redrawing can win is ≤ 0.76 nats, not 3.7 |
-| **EG bound at the delivered roster** `EG_{S₁₃}` | **60.6974** vs `V` 59.9375 → **0.760 nats**, bracket 7e-15; the EG vertex realising it has `M`-spread ≥ 50% | `MODEL_U1-cert` P4, `VERIFY_U1-cert` | the first bound ever on the term the business signs; the gain is bought with balance |
+| **premium ladder** on the committed draw, share of total book | v1/k=13 `P₀` 37.82% · `P*(A)` 37.82% · `P_S` **51.43%** · `P₁₃` 52.34% · `P_free` 79.44% → **v2/k=18 41.53% · 41.53% · 54.42% · 59.27% · 84.17%** | `MODEL_U7-meas` §6, `battery/results/meas_20260903`; **v2 `meas_v2_20260904`** (2026-09-04) | matching gap **0 on both** (stage 2 is already right); map gap v1 13.6% ≈ 0.640 nats → **v2 12.9% ≈ 0.663 nats**; **roster gap v1 0.9% ≈ 0.043 nats → v2 4.85% ≈ 0.249 nats, 5.8×** — on v2, *which reps staff the channel* is worth a quarter nat, which raises U11-roster's priority |
+| **EG bound at the delivered roster** | v1 `EG_{S₁₃}` **60.6974** vs `V` 59.9375 → **0.760 nats**, bracket 7e-15 → **v2 `EG_{S₁₈}` 96.532152 vs `V` 95.755192 → 0.776960 nats**, bracket 5.98e-9 | `MODEL_U1-cert` P4, `VERIFY_U1-cert`; **v2 `u8_band_v2_20260904` gate** | the first bound ever on the term the business signs; the gain is bought with balance — the EG vertex's `M`-spread is ≥ 50% on v1 and **57.4%** on v2 |
+| **band frontier / D1′** — is the premium soft under a balance band? | v1/k=13 gap **0.683 → 0.760 nats** over `δ ∈ [0.0039, 0.33]` → **v2/k=18 gap 0.724507 → 0.775786 over `δ ∈ [0.00997, 0.33]`** | `MODEL_U8-band`, `battery/results/u8_band_20260904`; **v2 `u8_band_v2_20260904`**, `figures/u8_band_v2/frontier.png` | **NOT SOFT on both**, 137–147× the 5e-3 floor on v1 and **146–155× on v2**; **no `δ*` exists** on either — the gap is already large at `δ₀`, so the slope never decides it. The band was never what binds: v2's whole curve buys back **0.0513 nats across a 33-fold widening** (v1: 0.077 across 84-fold) |
 | **roster-free premium screen** `max_S EG_S ≤ k·log((B_tot + w·P₁₃)/k)` | **60.8025** → no coverage by *any* 13 of 111 beats the delivered draw by more than **0.865 nats**; the screen is 0.064 above `EG_{S₁₃}`, so it is tight | `DOMAIN_optimization` §2.14 (★), computed 2026-09-03 (`B_tot` 1145.81, `w` 0.42) | replaces the 9.65-nat ceiling as the unconditional bound; the delivered draw's own max deviation is 0.39% (seed 9: 0.62%) |
 | certificate collapse into the EG dual | **3 of 4** (ceiling, pinned-centers MILP, power diagram); the integer balance floor is primal-only | `VERIFY_U1-cert` P2 | partial refutation of `DOMAIN_optimization` §3 / `LENS_GROTHENDIECK` descent 3 |
 | split units at an EG vertex | `≤ k − 1` heterogeneously (the MBB face); measured 10, `M(F)` 2.4–3.2% of `T`, vertex-dependent | `VERIFY_U1-cert` P3 | the a-priori value bound is vacuous; quote only with the split masses |
-| **realised-gain spread** across the 13 | **60.65%** (seed 9: 59.47%) against the 0.781% `M`-spread | `MODEL_U7-meas` U1 | A0's soft kill (LENS_GROMOV U1) fires: the headline balance number measures territory size, not what each rep gets |
-| zips contested among the selected 13 | **83** of 675, **6.12%** of `M` | `MODEL_U7-meas` U4 | the redraw has little *choice*; its premium comes from moving uncontested book, not from adjudicating overlaps |
-| `corr(T_z, M_z)` | 0.650 pooled; per selected rep 0.23–0.93 | `MODEL_U7-meas` U8 | the premium ladder bites moderately (DOMAIN_optimization §2.3's escape clause does not fire) |
-| tests | **184** pass, 0 fail | `tests/run_all.py` at `74eff38` (`wt/A1`; 174 at `8eece3f`) | the regression surface |
+| **realised-gain spread** across the selected | v1 **60.65%** (seed 9: 59.47%) against a 0.781% `M`-spread → **v2 60.17%** against 1.368% | `MODEL_U7-meas` U1; v2 `meas_v2_20260904` | A0's soft kill (LENS_GROMOV U1) fires on both, and the ratio is **stable across a 3× instance change**: the headline balance number measures territory size, not what each rep gets |
+| zips contested among the selected | v1 **83** of 675, **6.12%** of `M` → **v2 124** of 718, **7.82%** | `MODEL_U7-meas` U4; v2 `meas_v2_20260904` | the redraw has little *choice*; its premium comes from moving uncontested book, not from adjudicating overlaps |
+| `corr(T_z, M_z)` | v1 0.650 pooled (per rep 0.23–0.93) → **v2 0.745** (per rep 0.11–0.95) | `MODEL_U7-meas` U8; v2 `meas_v2_20260904` | the premium ladder bites moderately (DOMAIN_optimization §2.3's escape clause does not fire) |
+| tests | **222** pass, 0 fail | `tests/run_all.py` at `82dbe98` (`wt/A1`; 218 at `fd619c7`, 184 at `74eff38`) | the regression surface |
 | decision horizon | one stand-up; re-examined on data refresh | §8 assumption | rules out anything needing quarterly re-solve |
 
 **What these bound.** At 1,229 units and k=13 the instance is *small* by the current
