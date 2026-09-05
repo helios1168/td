@@ -148,7 +148,7 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
            targets: np.ndarray | None = None):
     """Balanced assignment to fixed centers by the transportation LP.  `(labels, n_fractional)`.
 
-    Solves the LP in the module docstring with `scipy.optimize.linprog(method="highs")` on the
+    Solves the LP in the module docstring with `scipy.optimize.linprog(method="highs-ds")` on the
     flattened `n*k` variables (n=1,229, k=13 -> ~16k columns, which HiGHS eats).  The mass
     equality uses the exact target `(sum M)/k`; after rounding the split zips the realised
     masses deviate slightly, which is expected -- `improve` is what cleans it up.
@@ -200,7 +200,15 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
     A_eq = sparse.vstack([A_place, A_mass]).tocsc()
     b_eq = np.concatenate([np.ones(n), t])
 
-    res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, 1.0), method="highs")
+    # method="highs-ds" with an explicit `options` dict: scipy 1.18.1's HiGHS wrapper hangs
+    # indefinitely on some instances when called with *no* options at all (confirmed via
+    # faulthandler: it never returns from the C++ solver) -- passing any options dict, even
+    # one that changes nothing binding like a generous time_limit, avoids it and solves in
+    # well under a second on a 3,707-zip instance where the no-options call never returned.
+    # method="highs" (auto-select) has the same failure mode; highs-ds keeps the
+    # near-vertex fractional-count behavior the rest of this function assumes.
+    res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, 1.0), method="highs-ds",
+                  options={"time_limit": 60.0})
     if not res.success:
         raise RuntimeError(f"transportation LP failed: {res.message}")
 
