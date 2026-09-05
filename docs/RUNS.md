@@ -52,8 +52,10 @@ hit rather than silently returning a suboptimal split.
 ## Region table, recomputed from the catalogue
 
 Total M = 8,523.2; target at k=18 is 473.5. `nash Δ` and `stage-2 Δ` are against the unpinned
-baseline at k=18, in nats — exact at fixed k because every scenario partitions the same total
-into the same number of districts (`CLAUDE.md`'s scale-invariance argument).
+baseline at k=18 — `nash = 110.88310108262327`, `stage2_value = 95.75519165924106`
+(`battery/results/runs_20260904/baseline/sweep.csv`, winner seed 2) — in nats — exact at fixed k
+because every scenario partitions the same total into the same number of districts (`CLAUDE.md`'s
+scale-invariance argument). Add a row's Δ to the baseline figure above to recover its level.
 
 | region | pinned M | vs target (k=18) | natural k | fix: nash Δ | fix: stage-2 Δ | anchor: nash Δ | anchor: stage-2 Δ |
 |---|---:|---:|---:|---:|---:|---:|---:|

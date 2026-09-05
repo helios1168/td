@@ -17,7 +17,6 @@ B_z rises, M_z = 1.15 * pointwise headroom floor.
 from __future__ import annotations
 
 import pathlib
-import sys
 
 import matplotlib
 
@@ -26,10 +25,45 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 HERE = pathlib.Path(__file__).resolve().parent
-REPO = HERE.parent.parent.parent
-sys.path.insert(0, str(REPO / "code"))
+REPO = HERE.parent.parent
 
-from gfx import style  # noqa: E402
+# The house figure style lived in `code/gfx/style.py`, which did not survive the 2026-08-31
+# prune.  Only these four symbols were used, so they are inlined and the note stays
+# self-contained -- it builds with nothing but the package and matplotlib.
+PALETTE = {"A": "#2166ac", "B": "#b2182b", "neutral": "#4d4d4d"}
+RC = {"font.size": 8, "axes.titlesize": 8, "axes.labelsize": 8,
+      "xtick.labelsize": 6, "ytick.labelsize": 6, "legend.fontsize": 7,
+      "axes.spines.top": False, "axes.spines.right": False,
+      "xtick.direction": "out", "ytick.direction": "out",
+      "figure.titlesize": 10, "savefig.dpi": 200}
+
+
+def use_rc():
+    matplotlib.rcParams.update(RC)
+
+
+def tight_layout(fig, **kwargs):
+    kwargs.setdefault("h_pad", 2.2)
+    kwargs.setdefault("w_pad", 2.6)
+    if getattr(fig, "_suptitle", None) is not None and "rect" not in kwargs:
+        kwargs["rect"] = (0, 0, 1, 0.93)
+    fig.tight_layout(**kwargs)
+
+
+def lint_text_overlap(fig) -> list:
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    texts = [
+        (t, t.get_window_extent(renderer))
+        for t in fig.findobj(matplotlib.text.Text)
+        if t.get_text().strip() and t.get_visible()
+    ]
+    overlaps = []
+    for i, (t1, b1) in enumerate(texts):
+        for t2, b2 in texts[i + 1:]:
+            if b1.overlaps(b2):
+                overlaps.append((t1.get_text(), t2.get_text()))
+    return overlaps
 
 N = 10
 THETA, LAM = 0.40, 0.30
@@ -149,7 +183,7 @@ def main():
             fh.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
 
     # ---- figure --------------------------------------------------------------------
-    style.use_rc()
+    use_rc()
     fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.6), sharex=True, sharey=True)
 
     for ax in axes:
@@ -164,27 +198,27 @@ def main():
         ax.set_ylim(-4.0, ymax)
 
     ax = axes[0]
-    ax.plot(gr, free_prod / gr, color=style.PALETTE["neutral"], lw=1.1, zorder=3)
-    ax.scatter([free_ga], [free_gb], s=45, marker="*", color=style.PALETTE["A"],
+    ax.plot(gr, free_prod / gr, color=PALETTE["neutral"], lw=1.1, zorder=3)
+    ax.scatter([free_ga], [free_gb], s=45, marker="*", color=PALETTE["A"],
                zorder=5, label="free Nash optimum")
     ax.set_title(f"all $2^{{{N}}}$ allocations; hyperbola "
                  r"$g_a g_b = $" + f"{free_prod:.1f}")
     ax.legend(loc="lower left", frameon=False)
 
     ax = axes[1]
-    ax.scatter(ga[iv_masks], gb[iv_masks], s=16, c=style.PALETTE["B"], alpha=0.75,
+    ax.scatter(ga[iv_masks], gb[iv_masks], s=16, c=PALETTE["B"], alpha=0.75,
                linewidths=0, zorder=3, label=f"{n_intervals} intervals")
-    ax.plot(gr, iv_prod / gr, color=style.PALETTE["neutral"], lw=1.1, zorder=3)
-    ax.scatter([free_ga], [free_gb], s=45, marker="*", color=style.PALETTE["A"], zorder=5)
-    ax.scatter([iv_ga], [iv_gb], s=42, marker="D", color=style.PALETTE["B"],
+    ax.plot(gr, iv_prod / gr, color=PALETTE["neutral"], lw=1.1, zorder=3)
+    ax.scatter([free_ga], [free_gb], s=45, marker="*", color=PALETTE["A"], zorder=5)
+    ax.scatter([iv_ga], [iv_gb], s=42, marker="D", color=PALETTE["B"],
                edgecolors="black", linewidths=0.5, zorder=6, label="interval optimum")
     ax.set_title(f"interval subcloud; cost of contiguity {iv_cost_pct:.2f}\\%"
                  if False else
                  f"interval subcloud; cost of contiguity {iv_cost_pct:.2f}%")
     ax.legend(loc="lower left", frameon=False)
 
-    style.tight_layout(fig, w_pad=4.5)
-    overlaps = style.lint_text_overlap(fig)
+    tight_layout(fig, w_pad=4.5)
+    overlaps = lint_text_overlap(fig)
     assert not overlaps, overlaps
     figdir = HERE / "figures"
     figdir.mkdir(exist_ok=True)

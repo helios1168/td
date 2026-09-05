@@ -11,6 +11,7 @@ import argparse
 import base64
 import io
 import json
+import math
 import os
 
 from PIL import Image
@@ -19,6 +20,7 @@ REGIONS = ["CALIFORNIA", "TEXAS", "NEWYORK", "MIDWEST", "CAROLINAS", "SOUTHWEST"
 MODES = ["fix", "anchor"]
 K_RANGE = list(range(14, 23))
 K_MAP = 18
+NEW_INSTANCE_BASENAME = "instance_descaled_v2.json.gz"
 
 # dataviz skill's validated 8-slot categorical palette, slots 1-7 (skip red/slot 8)
 REGION_COLORS = {
@@ -163,6 +165,24 @@ def build(date, results_root, fig_root, scen_dir, out_path):
     total_m = sum(r["M"] for r in baseline_m18["summary"])
     n_zips = baseline_m18["n_zips"]
     n_solver_zips = baseline_m18["n_solver_zips"]
+
+    # ---- assertions from RUNS_PLAN.md §7 (:339-341), failing loudly ----
+    for key, region, mode, states in scenarios:
+        rows_by_k, m18 = runs[key]
+        mass_sum = sum(r["M"] for r in m18["summary"])
+        assert math.isclose(mass_sum, total_m, rel_tol=1e-9), (
+            f"{key}: district masses sum to {mass_sum}, not the instance total {total_m}")
+        want_fixed = 1 if mode == "fix" else 0
+        want_anchor = 1 if mode == "anchor" else 0
+        for k in K_RANGE:
+            row = rows_by_k[k]
+            assert row["n_unstaffed"] == 0, f"{key} k={k}: n_unstaffed = {row['n_unstaffed']}"
+            assert row["n_fixed"] == want_fixed, (
+                f"{key} k={k}: n_fixed {row['n_fixed']} != spec {want_fixed}")
+            assert row["n_anchor"] == want_anchor, (
+                f"{key} k={k}: n_anchor {row['n_anchor']} != spec {want_anchor}")
+        assert os.path.basename(m18["instance"]) == NEW_INSTANCE_BASENAME, (
+            f"{key}: instance {m18['instance']!r} is not {NEW_INSTANCE_BASENAME}")
 
     # ---- headline table @ k=18 ----
     headline = []

@@ -16,7 +16,6 @@ seed 0, but the search is kept so the construction is honest).
 from __future__ import annotations
 
 import pathlib
-import sys
 
 import matplotlib
 
@@ -26,10 +25,45 @@ import networkx as nx
 import numpy as np
 
 HERE = pathlib.Path(__file__).resolve().parent
-REPO = HERE.parent.parent.parent
-sys.path.insert(0, str(REPO / "code"))
+REPO = HERE.parent.parent
 
-from gfx import style  # noqa: E402
+# The house figure style lived in `code/gfx/style.py`, which did not survive the 2026-08-31
+# prune.  Only these four symbols were used, so they are inlined and the note stays
+# self-contained -- it builds with nothing but the package and matplotlib.
+PALETTE = {"A": "#2166ac", "B": "#b2182b", "neutral": "#4d4d4d"}
+RC = {"font.size": 8, "axes.titlesize": 8, "axes.labelsize": 8,
+      "xtick.labelsize": 6, "ytick.labelsize": 6, "legend.fontsize": 7,
+      "axes.spines.top": False, "axes.spines.right": False,
+      "xtick.direction": "out", "ytick.direction": "out",
+      "figure.titlesize": 10, "savefig.dpi": 200}
+
+
+def use_rc():
+    matplotlib.rcParams.update(RC)
+
+
+def tight_layout(fig, **kwargs):
+    kwargs.setdefault("h_pad", 2.2)
+    kwargs.setdefault("w_pad", 2.6)
+    if getattr(fig, "_suptitle", None) is not None and "rect" not in kwargs:
+        kwargs["rect"] = (0, 0, 1, 0.93)
+    fig.tight_layout(**kwargs)
+
+
+def lint_text_overlap(fig) -> list:
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    texts = [
+        (t, t.get_window_extent(renderer))
+        for t in fig.findobj(matplotlib.text.Text)
+        if t.get_text().strip() and t.get_visible()
+    ]
+    overlaps = []
+    for i, (t1, b1) in enumerate(texts):
+        for t2, b2 in texts[i + 1:]:
+            if b1.overlaps(b2):
+                overlaps.append((t1.get_text(), t2.get_text()))
+    return overlaps
 
 SIDE = 4
 N = SIDE * SIDE
@@ -189,13 +223,13 @@ def main():
             fh.write(f"\\newcommand{{\\{k}}}{{{v_}}}\n")
 
     # ---- figure: three map panels --------------------------------------------------
-    style.use_rc()
+    use_rc()
     fig, axes = plt.subplots(1, 3, figsize=(9.6, 3.5))
 
     def draw(ax, a_set, title, sep=None, mark=None):
         a_set = set(a_set)
         for (r, c), i in IDX.items():
-            col = style.PALETTE["A"] if i in a_set else style.PALETTE["B"]
+            col = PALETTE["A"] if i in a_set else PALETTE["B"]
             ax.add_patch(plt.Rectangle((c, SIDE - 1 - r), 1, 1, facecolor=col,
                                        alpha=0.55, edgecolor="white", lw=1.5))
             ax.text(c + 0.06, SIDE - 1 - r + 0.72, str(i), fontsize=6, color="0.25")
@@ -229,8 +263,8 @@ def main():
          f"contiguous optimum: $g_ag_b$ = {cont_prod:.1f}\n"
          f"cost of contiguity {cost_pct:.2f}%")
 
-    style.tight_layout(fig, w_pad=3.2)
-    overlaps = style.lint_text_overlap(fig)
+    tight_layout(fig, w_pad=3.2)
+    overlaps = lint_text_overlap(fig)
     assert not overlaps, overlaps
     figdir = HERE / "figures"
     figdir.mkdir(exist_ok=True)
