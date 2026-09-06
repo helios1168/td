@@ -1,6 +1,6 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `worktree-power-cell-contiguity` · **Head:** `1f6d956` ·
+**Updated:** 2026-09-06 · **Branch:** `worktree-power-cell-contiguity` · **Head:** `9f7b929` ·
 **Tests:** 269 pass, 0 fail (2026-09-06)
 
 ## Now
@@ -12,9 +12,8 @@ labelling it would actually ship.** Worktree `power-cell-contiguity`, branch
 options 1, 2-Route-A and 3, `1f6d956` qualified the zero-mismatch guarantee. Tests 269 pass.
 
 **Option 1, largest contiguous piece per district** (`us_maps.py --regions-voronoi`). The
-*committed* draw is badly fragmented — nine districts under 80% (D14 51%, D12 52%, D01 64%,
-D16 67%, D07 71%, D09 73%, D17 74%, D18 77%, D03 78%), only seven at ≥95% — which is *worse*
-than CA5's four under 80%. The *snapped*, zero-mismatch labelling reverses it: twelve districts
+*committed* draw is badly fragmented — nine districts under 80% (min D14 51%), only seven at
+≥95% — which is *worse* than CA5's four under 80%. The *snapped* labelling reverses it: twelve
 are a single piece, seventeen of eighteen are ≥96%, and only **D01 at 55%** lags. Shared border
 segments fall 1,591 → 636. Which labelling you measure decides which route wins.
 
