@@ -6,6 +6,22 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-06 15:24 · main bb0ff52 — push and merge already done before this session touched them
+
+**Push and merge, both already done before this session touched them.** `git push origin main`
+returned "Everything up-to-date": `origin/main` already sits at `bb0ff52`. `worktree-state-atoms`
+and `main` are the same commit, `bb0ff52` — the branch was already merged (or `main` was built
+directly on top of it). The prior entry's claims — "8 commits ahead" and worktree "ask before
+merging" — were stale; whatever merged and pushed this did so outside this session's record. No
+new code; the 269-pass count is a fresh run confirming the number the prior entry already
+carried.
+
+*What's next.* The real open item is the state-atom engine's **stage-2 cost**, still unmeasured
+and possibly exceeding the 0.094-nat stage-1 gap: run `channel.score_draws` on
+`battery/results/atoms_k18_v2_20260906/k18/draw.csv`, no new code needed. `.claude/settings.local.json`
+carries an uncommitted local edit (permissions + `outputStyle: "Caveman Clean"`) unrelated to
+this session's task and left uncommitted.
+
 ## 2026-09-06 14:19 · main bb0ff52 — state-atom stage-1 engine landed and reproduces the measurement
 
 **The state-atom stage-1 engine is in the package** (`ff63511`), and it reproduces the

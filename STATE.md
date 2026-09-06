@@ -1,23 +1,33 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `bb0ff52` · **Tests:** 269 pass,
+**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `3632b83` · **Tests:** 269 pass,
 0 fail (2026-09-06)
 
 ## Now
 
-**Push and merge, both already done before this session touched them.** `git push origin main`
-returned "Everything up-to-date": `origin/main` already sits at `bb0ff52`. `worktree-state-atoms`
-and `main` are the same commit, `bb0ff52` — the branch was already merged (or `main` was built
-directly on top of it). The prior entry's claims — "8 commits ahead" and worktree "ask before
-merging" — were stale; whatever merged and pushed this did so outside this session's record. No
-new code; the 269-pass count is a fresh run confirming the number the prior entry already
-carried.
+**Map contiguity for the CA5 state-atom draw is now measured, not assumed, and it fails for
+four districts.** Reran `tools/run_atoms.py` (`PYTHONHASHSEED=0`, instance v2, k=18) in worktree
+`ca5-map`; `draw.csv` reproduced bit-identical to the 2026-09-06 measurement (`Σ log M`
+110.789532, ceiling 110.883247, gap 0.093715, spread 30.484%, one atom-graph component).
+`tools/us_maps.py --regions-voronoi <draw.csv>` — each zip's Voronoi catchment dissolved by its
+committed district, no LP/centers/weights, so it applies to a contiguity-search draw the same as
+a center-based one (`--regions`, the power diagram, still does not) — gives the number this file
+has wanted since the engine landed: **D02's largest contiguous piece holds 48% of its territory,
+D11 53%, D17 55%, D06 73%**; D01/D03/D08/D09/D10/D13/D14/D16 (plus near-solid D07/D15/D18) come
+out 98–100% one piece. The atom graph's single connected component certifies reachability
+through `BORDER_TOL`-proximity links, not that every district is one polygon — these four are
+where that gap actually bites.
 
-*What's next.* The real open item is the state-atom engine's **stage-2 cost**, still unmeasured
-and possibly exceeding the 0.094-nat stage-1 gap: run `channel.score_draws` on
-`battery/results/atoms_k18_v2_20260906/k18/draw.csv`, no new code needed. `.claude/settings.local.json`
-carries an uncommitted local edit (permissions + `outputStyle: "Caveman Clean"`) unrelated to
-this session's task and left uncommitted.
+*What it means.* Not a new draw and not a new cost — the 0.093715-nat gap stands. It is the
+first hard evidence for the "atom-graph contiguity is not verified map contiguity" worry this
+file has carried since 2026-09-06: roughly a fifth of the districts are visibly fragmented on
+the ground.
+
+*What's next.* Decide whether D02/D11/D17/D06's fragmentation is tolerable as delivered, or
+forces a change to the cut/merge rules (tighter `BORDER_TOL`, a different NY+NJ/CA cut, or a
+rule against a district straddling a proximity link at all). Work is on branch
+`worktree-ca5-map` (`ce1ef67` the map figures, `9363c14` the boundary map), not merged into
+`main` — ask before merging.
 
 ## Next
 
@@ -29,10 +39,10 @@ this session's task and left uncommitted.
 - [ ] **Quote the 30.5 % spread beside the 0.094 nats.** `log` is flat near the optimum, so a
       small Nash gap sits alongside a large operational spread; the power-cell route gets
       1.37 %. Quoting the gap alone reads as "contiguity is nearly free".
-- [ ] **Atom-graph contiguity is not verified map contiguity.** A cut piece has no polygon, so
-      its adjacency to an outside state is proximity within `BORDER_TOL = 40 km` plus an
-      unconditional link from the nearest piece. `check_contiguous` certifies the atom graph.
-      Check the map: `tools/us_maps.py --districts <draw.csv>` (`--regions` does not apply).
+- [ ] **Map contiguity is measured, and D02/D11/D17/D06 fail it.** `--regions-voronoi` on the
+      reproduced draw: largest contiguous piece 48% / 53% / 55% / 73% of territory respectively
+      (14 other districts 98-100%). Decide: tolerable as delivered, or does `BORDER_TOL = 40 km`
+      / the NY+NJ / CA cut need to change? `worktree-ca5-map`, commits `ce1ef67`, `9363c14`.
 - [ ] **Only the CA5 scenario is re-measured.** The 2026-09-05 ladder (0.864 / 0.456 / 0.123 /
       0.094) came from the prototype. The ranking is unaffected — the four differ by far more
       than the 0.015-nat hash-order jitter — but the other three numbers are not the engine's.
@@ -117,6 +127,12 @@ NY+NJ 3 / FL 2**: 56 atoms, 126 edges, **one component**. Pieces CA1 0.838×, CA
 (max 1.130×, min 0.826×), all 18 districts connected. Of 52 state codes only 5 exceed target:
 CA 4.126×, TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037×; largest atom needing no cut is IL 0.677×.
 NY+NJ together 2.831×, +CT 3.014×.
+
+**Map contiguity, measured 2026-09-06** (`tools/us_maps.py --regions-voronoi`, worktree
+`ca5-map`, same draw). Dissolving each zip's Voronoi catchment by district: **D02's largest
+piece is 48% of its territory, D11 53%, D17 55%, D06 73%**; D01/D03/D08/D09/D10/D13/D14/D16
+(plus near-solid D07/D15/D18) are 98-100% one piece. The atom graph's one component certifies
+`BORDER_TOL`-proximity reachability, not that every district is a single polygon.
 
 **The bound, corrected.** The valid upper bound is the Jensen ceiling
 `cert_draw.cert_balance_ceiling` = **110.883247**. The contiguity-dropped local search is
