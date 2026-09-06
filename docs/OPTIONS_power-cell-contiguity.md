@@ -41,6 +41,11 @@ district's territory is not defensible in front of the sponsor, so the shipped l
 this; options 4 and 5 answer the different, harder graph question; options 0 and 1 are the
 measurements that rank them.
 
+**"Zero" always needs the diagram it is zero against** (§4). A labelling is a power diagram with
+respect to one set of centres and weights. Rebuild the diagram from that labelling and a handful
+of zips fall outside again — 16 of 3,704, measured 2026-09-06. So the requirement is met, but no
+figure currently drawn can show it: they all recentroid first.
+
 **Three sources of drift.** `improve()` moves zips after the LP to repair the balance that
 integral rounding cost. The LP's basic solution splits at most `k − 1` zips, each rounded to one
 side. And `power_weights` returns both `labels` (the true power cells) and `lp_labels`, which
@@ -210,6 +215,21 @@ Zero mismatches by construction, because the labelling *is* the diagram.
 **Guarantee.** Exact zero mismatch, and convex territory. No guarantee on balance beyond what
 the measurement shows.
 
+**Read the guarantee precisely — it is relative to one diagram.** The snapped labelling has zero
+zips outside their own cell *with respect to the diagram that produced it*, the one built at the
+committed draw's centroids. It is not zero against a diagram rebuilt from the snapped labels.
+Measured 2026-09-06 with `us_maps.py --regions` on the snapped `draw.csv`, which recomputes
+centroids from whatever draw it is handed and so takes a recentroid step before drawing:
+**16 of 3,704 zips (0.4%) lie outside their own cell, against 258 (7.0%) on the committed
+draw**, and the split-zip count falls from 17 to 10. The 16 are the same non-self-consistency
+that leaves the iteration below without a fixed point.
+
+The practical consequence is a reporting one. Every power-diagram figure recomputes the diagram
+from its input, so **no existing figure can display the zero**; it always reports the next
+iterate's mismatch. A figure that shows the guarantee has to hold centres and weights fixed and
+colour the dots by the labelling those weights produced. That figure does not exist yet, and
+until it does, "zero mismatched dots" must be quoted with the diagram it is zero against.
+
 **Two variants, and they differ.**
 
 - **Route A — snap post-hoc.** Take the committed draw's centers, get weights from the
@@ -375,17 +395,20 @@ Items 1 to 3 were done on 2026-09-06 and are struck through. What remains, in or
    spread 2.1051%, gap 0.000283.
 3. ~~Measure the 17 split zips' masses.~~ Done, §4. 17.03% of a mean district at equal-split
    targets.
-4. **Explain D01.** It is the one district the snap leaves fragmented, at 55%, while the other
+4. **Build the fixed-diagram figure.** Hold centres and weights fixed and colour the dots by the
+   labelling those weights produced, so the zero-mismatch guarantee can actually be shown. Today
+   every rendering recentroids and reports 16 instead. This is the figure a sponsor review needs.
+5. **Explain D01.** It is the one district the snap leaves fragmented, at 55%, while the other
    seventeen sit at 96–100%. Cheap to look at, and it is the single thing a sponsor would seize
    on in the §3 table.
-5. **Iterate Route A properly and keep the best iterate as an artifact.** The 2026-09-06 run
+6. **Iterate Route A properly and keep the best iterate as an artifact.** The 2026-09-06 run
    wrote no per-iteration draw, so iteration 15's labelling was not saved and its map contiguity
    is unmeasured. Re-run writing a `draw.csv` per iterate, then run `--regions-voronoi` on the
    best one. Each iteration is one transportation LP, a few minutes.
-6. **Option 2 Route B** — remove the polish from `centers.draw`, close balance with weights, and
+7. **Option 2 Route B** — remove the polish from `centers.draw`, close balance with weights, and
    re-run the portfolio scoring zero-mismatch draws. Judge it against iteration 15's
    2.1051% / 0.000283, not against the single-shot.
-7. Recompute the atom and power-cell gaps on one common base before any sponsor comparison.
+8. Recompute the atom and power-cell gaps on one common base before any sponsor comparison.
 
 ---
 
