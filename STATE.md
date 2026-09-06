@@ -1,48 +1,26 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `worktree-state-atoms` (this entry; branched from
-`main` 9980732) · **Head:** `ff63511` · **Tests:** 269 pass, 0 fail (2026-09-06)
+**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `bb0ff52` · **Tests:** 269 pass,
+0 fail (2026-09-06)
 
 ## Now
 
-**The state-atom stage-1 engine is in the package** (`ff63511`), and it reproduces the
-2026-09-05 exploration exactly. Scope stayed **stage 1 only** — nothing here reads rep books or
-the staffed objective. `td/atoms.py` builds the atoms, `td/solvers/atom_draw.py` draws on them,
-`tools/run_atoms.py` runs the pipeline, and `td/geo.py` gained `state_rook`. The prototype
-`tools/state_atoms/district4.py` is deleted; the rest of that directory is exploratory or builds
-the artifact and stays.
+**Push and merge, both already done before this session touched them.** `git push origin main`
+returned "Everything up-to-date": `origin/main` already sits at `bb0ff52`. `worktree-state-atoms`
+and `main` are the same commit, `bb0ff52` — the branch was already merged (or `main` was built
+directly on top of it). The prior entry's claims — "8 commits ahead" and worktree "ask before
+merging" — were stale; whatever merged and pushed this did so outside this session's record. No
+new code; the 269-pass count is a fresh run confirming the number the prior entry already
+carried.
 
-*The user's decision.* Cut counts are **CA 5 / TX 2 / NY+NJ 3 / FL 2**, the cheapest measured
-setting. Measured on v2 at k=18: 56 atoms in one component, `Σ log M` **110.789532** against the
-balanced ceiling **110.883247**, a gap of **0.093715 nats** at a **30.5 %** mass spread, all 18
-districts connected, `draw.csv` covering all 3,748 zips.
-
-*Two corrections the engine carries.* `STATE.md` said a stage-1 engine "would sit under the
-`base.py` harness contract" — wrong: `base.py` plus `REGISTRY` is the **two-player** harness
-(`Result.to_a`, `filter_pair`, `root_a`/`root_b`) and only `brute` and `scip_tree` are
-registered. Stage 1 is `centers.py`, unregistered, and the new engine is its sibling. And the
-prototype's `free_bound` **was not a bound**: a local search over the relaxation returns a
-feasible relaxed value `F ≤ U*`, while the contiguous optimum also satisfies `C* ≤ U*`, which
-orders the two not at all. It is renamed `free_search` and reported as a reference; the valid
-bound is `cert_draw.cert_balance_ceiling`. Measured, `free_search` = 110.812355, so quoting it
-as "the margin above the draw" understated the real gap **fourfold**.
-
-*Two behaviours preserved on the user's call*, so the numbers reproduce: the search tie-breaks
-on set iteration over atom names, so a run **requires `PYTHONHASHSEED=0`** and `run_atoms.py`
-refuses to start without it; and the stateless bucket goes into the lightest district as one
-block rather than being spread by `channel.place_by_state`.
-
-*What's next.* The engine's stage-2 cost is unmeasured, and `wt/w2-phase0` turns out to have
-been merged into `main` already — what is actually outstanding is the **push**.
+*What's next.* The real open item is the state-atom engine's **stage-2 cost**, still unmeasured
+and possibly exceeding the 0.094-nat stage-1 gap: run `channel.score_draws` on
+`battery/results/atoms_k18_v2_20260906/k18/draw.csv`, no new code needed. `.claude/settings.local.json`
+carries an uncommitted local edit (permissions + `outputStyle: "Caveman Clean"`) unrelated to
+this session's task and left uncommitted.
 
 ## Next
 
-- [ ] **Push `main` to `origin`.** Local `main` is **8 commits ahead** of `origin/main`
-      (`352b9d7`), and `wt/w2-phase0` is **already merged** into it (`main` 9980732 descends
-      from 96abb15) — the 2026-09-05 merge question was answered, only the push was refused.
-      Run `git push origin main` from the hub.
-- [ ] **Merge `worktree-state-atoms` into `main`?** One commit, `ff63511`, 269 tests green.
-      Ask before merging (the standing rule).
 - [ ] **The stage-2 cost of the atom map is unmeasured, and could exceed the 0.094.** Pinning
       CALIFORNIA costs **2.04 nats at stage 2** and this model forces CA into five pieces. Do
       not claim "the state-atom model costs 0.094 nats" until
@@ -94,8 +72,6 @@ been merged into `main` already — what is actually outstanding is the **push**
       live only in the per-domain `.bib` files — none is in
       `docs/math_note/territory_bibliography.bib` (78 entries), and there is no `.md`/`.csv`
       sibling, so the three-format sync is unsatisfied. P0-A's corrections cite all three.
-- [ ] `caveman` proxy: `caveman setup --install` was blocked by the auto-mode classifier on
-      2026-09-05 — the user runs it, then `caveman claude`.
 - [ ] Deferred: HiGHS root cause (scipy 1.18.1 option merging) only if it recurs; `ceiling.py`'s
       remaining v1 content beyond `SATURATION`; `DOMAIN_optimization` §2.14/§3's `C(111,13)` pool,
       left because no v2 rep-pool count is established and `P₁₃`/`S₁₃` are programme-wide names.

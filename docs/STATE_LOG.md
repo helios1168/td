@@ -6,6 +6,38 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-06 14:19 · main bb0ff52 — state-atom stage-1 engine landed and reproduces the measurement
+
+**The state-atom stage-1 engine is in the package** (`ff63511`), and it reproduces the
+2026-09-05 exploration exactly. Scope stayed **stage 1 only** — nothing here reads rep books or
+the staffed objective. `td/atoms.py` builds the atoms, `td/solvers/atom_draw.py` draws on them,
+`tools/run_atoms.py` runs the pipeline, and `td/geo.py` gained `state_rook`. The prototype
+`tools/state_atoms/district4.py` is deleted; the rest of that directory is exploratory or builds
+the artifact and stays.
+
+*The user's decision.* Cut counts are **CA 5 / TX 2 / NY+NJ 3 / FL 2**, the cheapest measured
+setting. Measured on v2 at k=18: 56 atoms in one component, `Σ log M` **110.789532** against the
+balanced ceiling **110.883247**, a gap of **0.093715 nats** at a **30.5 %** mass spread, all 18
+districts connected, `draw.csv` covering all 3,748 zips.
+
+*Two corrections the engine carries.* `STATE.md` said a stage-1 engine "would sit under the
+`base.py` harness contract" — wrong: `base.py` plus `REGISTRY` is the **two-player** harness
+(`Result.to_a`, `filter_pair`, `root_a`/`root_b`) and only `brute` and `scip_tree` are
+registered. Stage 1 is `centers.py`, unregistered, and the new engine is its sibling. And the
+prototype's `free_bound` **was not a bound**: a local search over the relaxation returns a
+feasible relaxed value `F ≤ U*`, while the contiguous optimum also satisfies `C* ≤ U*`, which
+orders the two not at all. It is renamed `free_search` and reported as a reference; the valid
+bound is `cert_draw.cert_balance_ceiling`. Measured, `free_search` = 110.812355, so quoting it
+as "the margin above the draw" understated the real gap **fourfold**.
+
+*Two behaviours preserved on the user's call*, so the numbers reproduce: the search tie-breaks
+on set iteration over atom names, so a run **requires `PYTHONHASHSEED=0`** and `run_atoms.py`
+refuses to start without it; and the stateless bucket goes into the lightest district as one
+block rather than being spread by `channel.place_by_state`.
+
+*What's next.* The engine's stage-2 cost is unmeasured, and `wt/w2-phase0` turns out to have
+been merged into `main` already — what is actually outstanding is the **push**.
+
 ## 2026-09-05 18:54 · worktree-state-atoms d1fdba8 — state-atom stage-1 model explored and measured, no repo code changed
 
 **A state-atom stage-1 model was explored and measured end-to-end. No repo code changed.** The
