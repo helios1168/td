@@ -6,6 +6,32 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-06 18:44 · main e29e328 — CA5 map contiguity is measured, and four districts fail it
+
+**Map contiguity for the CA5 state-atom draw is now measured, not assumed, and it fails for
+four districts.** Reran `tools/run_atoms.py` (`PYTHONHASHSEED=0`, instance v2, k=18) in worktree
+`ca5-map`; `draw.csv` reproduced bit-identical to the 2026-09-06 measurement (`Σ log M`
+110.789532, ceiling 110.883247, gap 0.093715, spread 30.484%, one atom-graph component).
+`tools/us_maps.py --regions-voronoi <draw.csv>` — each zip's Voronoi catchment dissolved by its
+committed district, no LP/centers/weights, so it applies to a contiguity-search draw the same as
+a center-based one (`--regions`, the power diagram, still does not) — gives the number this file
+has wanted since the engine landed: **D02's largest contiguous piece holds 48% of its territory,
+D11 53%, D17 55%, D06 73%**; D01/D03/D08/D09/D10/D13/D14/D16 (plus near-solid D07/D15/D18) come
+out 98–100% one piece. The atom graph's single connected component certifies reachability
+through `BORDER_TOL`-proximity links, not that every district is one polygon — these four are
+where that gap actually bites.
+
+*What it means.* Not a new draw and not a new cost — the 0.093715-nat gap stands. It is the
+first hard evidence for the "atom-graph contiguity is not verified map contiguity" worry this
+file has carried since 2026-09-06: roughly a fifth of the districts are visibly fragmented on
+the ground.
+
+*What's next.* Decide whether D02/D11/D17/D06's fragmentation is tolerable as delivered, or
+forces a change to the cut/merge rules (tighter `BORDER_TOL`, a different NY+NJ/CA cut, or a
+rule against a district straddling a proximity link at all). Work is on branch
+`worktree-ca5-map` (`ce1ef67` the map figures, `9363c14` the boundary map), not merged into
+`main` — ask before merging.
+
 ## 2026-09-06 15:24 · main bb0ff52 — push and merge already done before this session touched them
 
 **Push and merge, both already done before this session touched them.** `git push origin main`
