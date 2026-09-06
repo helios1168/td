@@ -33,7 +33,7 @@ recentroids, so none of them can display the zero.**
 
 *What's next.* Build the fixed-diagram figure (hold centres and weights, colour dots by the
 labelling those weights produced) — a sponsor review needs it and it does not exist. Then
-explain D01. Branch is **unmerged and unpushed** (push was refused by a permission rule) — ask
+explain D01. Branch is pushed to `origin/worktree-power-cell-contiguity` and **unmerged** — ask
 before merging. Review artifact: `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
 
 ## Next
@@ -56,9 +56,9 @@ before merging. Review artifact: `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
       against the 4.0041% single shot, or it will look better than it is. The split-zip floor
       says the room left is small.
 - [ ] **Merge decision on `worktree-power-cell-contiguity`** (`a0d96fd`, `2142be8`, `1f6d956`,
-      plus the state commit). Unmerged and **unpushed** — `git push -u origin
-      worktree-power-cell-contiguity` was refused by a permission rule. `main`'s `STATE.md`
-      still carries the CA5 entry, so a session started on `main` will not see any of the above.
+      `4c1c2d2`). Pushed to `origin`, **unmerged**. `main`'s `STATE.md` still carries the CA5
+      entry, so a session started on `main` will not see any of the above — resume in the
+      worktree `.claude/worktrees/power-cell-contiguity`, or merge this branch first.
 - [ ] **The two routes' gaps sit on different bases.** The atom gap 0.093715 is against the
       component-wise ceiling 110.883247 over the whole instance; the power-cell gaps are against
       `k·log(M/k)` = 110.766768 over the 3,704 plotted zips. Two orders of magnitude make the
