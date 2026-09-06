@@ -1086,6 +1086,7 @@ def power_diagram_of_draw(districts, values, xy, targets=None) -> dict:
         lp_bound=float(res["lp_bound"]),
         max_dual_violation_rel=float(res["max_dual_violation_rel"]),
         n_fractional=int(res["n_fractional"]),
+        split_zips={keys[i]: float(M[i]) for i in res["fractional"]},
     )
 
 

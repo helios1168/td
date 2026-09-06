@@ -1,6 +1,7 @@
 # Contiguity for the power-cell stage-1 route — option register
 
-**Opened:** 2026-09-06. **Branch:** `worktree-power-cell-contiguity` (unmerged).
+**Opened:** 2026-09-06. **Last measured:** 2026-09-06 (options 1, 2 Route A, and 3).
+**Branch:** `worktree-power-cell-contiguity` (unmerged).
 **Companions:** `docs/CODE_MAP.md` "Two stages" (which file owns what), `docs/CHANNEL.md` §3
 (the two stages) and §5 (the open risk), `research/contiguity/OPTIONS.md` on
 `origin/worktree-contiguity-research` (the 2026-08-28 two-agent option brief this one
@@ -61,16 +62,18 @@ leaving 3,704 with total M 8,468.3.
 | committed draw | 258 (6.97% of zips, **1.66% of M**) | 1.2902% | 110.766686 | **0.000082** |
 | snapped, targets = draw's own masses | 0 by construction | 7.6346% | 110.764808 | 0.001959 |
 | snapped, targets = exactly-equal split | 0 by construction | **4.0041%** | 110.766044 | **0.000724** |
+| snapped, equal split, best of 20 snap → recentroid iterates | 0 by construction | **2.1051%** | 110.766485 | **0.000283** |
 
 Ceiling is `k·log(M_total/k) = 110.766768` on the 3,704 plotted zips. Diagram health at the
 committed draw: 17 split zips (exactly the `k − 1` bound, so it is at the maximum) and max dual
 violation 1.9e-18 relative, so the cells themselves are numerically sound and the 7.0% is a real
 property of the draw rather than solver noise.
 
-**Price of the zero-mismatch requirement, best route measured:** gap 0.000082 → 0.000724 nats,
-spread 1.2902% → 4.0041%.
+**Price of the zero-mismatch requirement, best route measured:** gap 0.000082 → 0.000283 nats,
+spread 1.2902% → 2.1051%, at iteration 15 of Route A (§4). The single-shot snap's
+0.000724 / 4.0041% is what one step costs, not what the route costs.
 
-Three readings that a later session should not have to re-derive:
+Five readings that a later session should not have to re-derive:
 
 1. **Equal-split targets dominate own-masses targets** for *producing* a zero-mismatch draw —
    about half the spread and a third of the gap. Own-masses remains the right choice for
@@ -80,23 +83,35 @@ Three readings that a later session should not have to re-derive:
 2. **The drift is cheap because it moves small zips.** 6.97% of zips carry only 1.66% of M,
    which is why the welfare cost lands in the fourth decimal place. Worst per-district mass
    change under the own-masses snap: D12 +4.25% of mean, D05 −3.33%.
-3. **4.0041% is an upper bound, not the achievable spread.** The snap is single-shot, and
-   snapping moves the M-weighted centroids, so the result is not a fixed point of
-   snap → recentroid → snap. It also reuses one draw (seed 2, the winner of a 10-seed portfolio
-   selected under the old objective). Both slacks are unexplored.
+3. **4.0041% is an upper bound, and iterating recovers about half of it.** The snap is
+   single-shot, and snapping moves the M-weighted centroids. Iterating snap → recentroid reaches
+   2.1051% at gap 0.000283 (§4), and finds no fixed point along the way. The other slack is
+   untouched: this reuses one draw (seed 2, the winner of a 10-seed portfolio selected under the
+   old objective).
+4. **The split-zip floor is real.** The LP splits exactly `k − 1` = 17 zips, carrying 17.03% of a
+   mean district at equal-split targets, largest single zip 3.699% of one. Rounding them is
+   forced, so no zero-mismatch route should be expected near the committed draw's 1.2902%.
+5. **On map contiguity the snapped labelling is dramatically better than the committed one**, and
+   better than the atom route: one district at 55% and the other seventeen at 96–100% (§3).
 
 **Cross-route comparison, stated with its caveat.** The state-atom route sits at gap 0.093715
-nats and 30.484% spread. A zero-mismatch power-cell draw at 0.000724 nats and 4.0041% spread is
+nats and 30.484% spread. A zero-mismatch power-cell draw at 0.000283 nats and 2.1051% spread is
 better on both axes by a wide margin, and it is the only one of the two whose territory is
-convex and whose dots agree with its fill. But the two gaps are **not measured on the same
+convex and whose dots agree with its fill. It is also ahead on the shared zip-catchment
+contiguity measure once snapped (§3), which the committed draw was not. But the two gaps are
+**not measured on the same
 base**: the atom figure is against a component-wise `allocate_districts` ceiling of 110.883247
 over the whole instance, while the power-cell figure is against `k·log(M/k) = 110.766768` over
 the 3,704 plotted zips. The ranking is very unlikely to turn on that, given two orders of
 magnitude, but it is not certified. Recompute both on one base before quoting the comparison to
 a sponsor.
 
-Reproduce with `~/.claude/jobs/0974a42b/tmp/snap_cost.py` (job-temp, not durable — fold it into
-`tools/` if this route is adopted).
+Reproduce with `~/.claude/jobs/0974a42b/tmp/snap_cost.py` (the first three rows) and
+`~/.claude/jobs/4ce805a0/tmp/snap_fixpoint.py` / `snap_once.py` (the iteration, the split-zip
+masses, and the snapped `draw.csv` the §3 map measurement consumes). All are job-temp and not
+durable — fold them into `tools/` if this route is adopted. The split-zip masses need
+`centers.power_weights`' `fractional` return, added 2026-09-06 on this branch and surfaced as
+`power_diagram_of_draw`'s `split_zips`.
 
 ---
 
@@ -116,7 +131,7 @@ violation 1.9e-18 relative. See §1.
 
 ---
 
-## 3. Option 1 — Largest-contiguous-piece fractions · **OPEN, cheap, do next**
+## 3. Option 1 — Largest-contiguous-piece fractions · **DONE 2026-09-06**
 
 **Idea.** Run `tools/us_maps.py --regions-voronoi` on the power-cell draw, dissolving each
 zip's Voronoi catchment by its committed district, and report each district's largest
@@ -126,11 +141,64 @@ contiguous piece as a share of its territory.
 
 **Cost.** One command. The flag is already on `main`.
 
-**Status.** Not run for the power-cell draw. The same measurement on the CA5 state-atom draw
-gave D02 48%, D11 53%, D17 55%, D06 73%, with the other fourteen districts at 98–100%.
+**Status.** Run on the committed power-cell draw, 2026-09-06. Largest contiguous piece, as a
+share of the district's territory:
 
-**Verdict.** Run it. This is the apples-to-apples number against the atom route, and it is the
-one a sponsor will ask for.
+| | | | | | |
+|---|---|---|---|---|---|
+| D14 51% | D12 52% | D01 64% | D16 67% | D07 71% | D09 73% |
+| D17 74% | D18 77% | D03 78% | D15 88% | D05 89% | D06 95% |
+| D08 96% | D10 98% | D13 98% | D02 99% | D11 99% | D04 100% |
+
+The same measurement on the CA5 state-atom draw gave D02 48%, D11 53%, D17 55%, D06 73%, with
+the other fourteen districts at 98–100%.
+
+**On the committed draw the result inverts the ranking §1 gives on gap and spread.** Nine of its
+districts fall below 80% against the atom draw's four, and only seven reach 95% against the atom
+draw's fourteen. A route that wins by two orders of magnitude on the Nash gap loses, on the
+committed labelling, on the fragmentation a sponsor can see.
+
+**The snapped labelling reverses that, and it is the one this route would ship.** Repeating the
+measurement on the zero-mismatch labelling of §4 (single-shot snap, equal-split targets):
+
+| | | | | | |
+|---|---|---|---|---|---|
+| D01 55% | D09 96% | D14 97% | D10 98% | D07 99% | D08 99% |
+| D02 100% | D03 100% | D04 100% | D05 100% | D06 100% | D11 100% |
+| D12 100% | D13 100% | D15 100% | D16 100% | D17 100% | D18 100% |
+
+Twelve districts are a single piece, seventeen of eighteen are at 96% or better, and D01 at 55%
+is the lone outlier. Shared border segments fall from 1,591 to 636, which is the same fact seen
+from the other side: the snapped labelling is a far simpler object on the ground.
+
+**So the zero-mismatch requirement pays for itself twice.** It was adopted to remove the stray
+dots, and it removes most of the fragmentation as well. Ranked by worst-case fragmentation the
+order is: snapped power-cell (one district at 55%, the rest 96–100%), then the CA5 atom draw
+(four below 80%), then the committed power-cell draw (nine below 80%). That ordering agrees with
+the gap and spread ordering rather than contradicting it, which the committed-draw numbers alone
+would have suggested.
+
+**D01 is the open item.** At 55% it is the only district the snap does not repair, and nothing
+here explains why. It should be looked at before this table is shown to anyone.
+
+**Read all of this with the rendering in mind, because the two routes ship different maps.** The
+zip-catchment rendering is the only one that applies to both, which is what makes it
+apples-to-apples, but it is not what this route ships. The power-cell route's own map is
+`--regions`, the power diagram, and §0's theorem says each of those cells is a convex polygon:
+the shipped territory has no fragments at all. The fractions above measure the *labelling*
+scattered across catchments, not the territory the business is shown. For the atom route the
+catchment rendering is the map, so its fractions are the delivered object.
+
+That difference is the whole reason the comparison is hard, and this file does not resolve it.
+What the numbers do settle: **which labelling is measured decides the answer.** On the committed
+labelling the power-cell route is behind the atoms on the shared zip-catchment measure; on the
+snapped labelling it is ahead of them, and ahead by more than it is behind. Since the
+zero-mismatch requirement means the snapped labelling is what ships, the honest summary is that
+the power-cell route leads on every axis measured so far — welfare, balance, convex territory,
+and catchment fragmentation — with D01 the one blemish.
+
+**Verdict.** Closed, on both the committed and the snapped labelling. The one thing left in this
+option is D01.
 
 ---
 
@@ -146,8 +214,9 @@ the measurement shows.
 
 - **Route A — snap post-hoc.** Take the committed draw's centers, get weights from the
   transportation duals, relabel. Measured in §1. The single-shot snap is not self-consistent:
-  relabelling moves the M-weighted centroids, so the object actually wanted is a **fixed point
-  of snap → recentroid → snap**. Not yet iterated.
+  relabelling moves the M-weighted centroids, so this file expected the object wanted to be a
+  **fixed point of snap → recentroid → snap**. Iterated 2026-09-06, and there is no such fixed
+  point — see the iteration measurement below.
 - **Route B — make the diagram the search space.** Delete the `improve()` polish from
   `centers.draw` and close the residual balance error by moving *weights* rather than
   individual zips. Weights are the diagram-preserving lever, since a larger `w_j` enlarges
@@ -160,16 +229,65 @@ change to `centers.draw`'s final step, one to two days, and it needs the existin
 reproducible under a flag so the old numbers stay auditable.
 
 **Status.** Route A measured single-shot at equal-split targets: spread 4.0041%, gap 0.000724
-nats. Route A iterated and Route B both unmeasured.
+nats. Route A iterated 2026-09-06, 20 iterations, reported below. Route B unmeasured.
+
+**Route A iterated — snap → recentroid at equal-split targets, 20 iterations.** Selected values:
+
+| iter | zips moved | spread | Σ log M | gap |
+|---|---|---|---|---|
+| 1 (single-shot) | 266 | 4.0041% | 110.766044 | 0.000724 |
+| 2 | 15 | 2.6652% | 110.766297 | 0.000471 |
+| 3 | 8 | 2.5904% | 110.766237 | 0.000531 |
+| 5 | 8 | 5.6051% | 110.765497 | 0.001271 |
+| 8 | 9 | 2.5460% | 110.766392 | 0.000376 |
+| **15** | 12 | **2.1051%** | **110.766485** | **0.000283** |
+| 20 | 12 | 5.6051% | 110.765553 | 0.001215 |
+
+**There is no fixed point, and the iteration is not a descent.** After the first step, which
+moves 266 zips, every later step moves 5 to 15 and the objective goes both ways: iterations 4,
+5, 11, 13, 18 and 20 are all *worse* than their predecessor. Twenty iterations produced no exact
+repeat, so it is not a short cycle either — it wanders a band of roughly spread 2.1–5.6% and gap
+0.00028–0.00128. Open question 1 in §10 asked whether the fixed point exists and is unique; on
+this instance the iteration does not reach one, so the question as posed does not decide
+anything.
+
+**Read it as a search, not as a convergence.** Every iterate is a power diagram, so every one of
+them has zero mismatched zips and convex cells by construction. Feasibility is therefore not at
+stake in choosing among them, and taking the best iterate is legitimate rather than
+cherry-picking. Best of 20 is **iteration 15 at spread 2.1051% and gap 0.000283**, which beats
+the single-shot on both axes — spread nearly halved and gap cut to 39% of it. That is the number
+Route A can claim.
+
+**What this costs Route B.** Route B was justified as removing the polish so balance is closed
+with weights. Route A's best iterate already reaches 2.1051%, against the split-zip floor
+argument below, so the room Route B has left to win is small. Measure Route B against
+iteration 15, not against the 4.0041% single-shot, or it will look better than it is.
 
 **Shared hard limit, applying to both variants.** With indivisible zips, no power diagram hits
 exact equal masses in general. The LP hits them only fractionally, on at most `k − 1` = 17 split
 zips, and rounding those is irreducible. That residual, not the 258, sets the achievable spread
-floor — and under a heavy-tailed M a single split zip can be a large metro, so the floor is not
-guaranteed small. Measure the split zips' masses before promising a spread number.
+floor.
 
-**Verdict.** Primary route. Iterate Route A to a fixed point first, because it is cheap and it
-bounds what Route B can win.
+**Measured 2026-09-06, at the equal-split targets.** The LP splits exactly 17 zips, so it sits
+at the `k − 1` bound. Their masses total **80.13 = 0.9463% of M, which is 17.03% of a mean
+district**. The largest is `20814` at **3.699% of a mean district**, then `60462` 2.067%,
+`85254` 1.620%, `94104` 1.494%, `91786` 1.351%. At the own-masses targets the count is again
+exactly 17, and the mass is larger: 103.9 = 1.2266% of M = 22.08% of a mean district, largest
+`19067` at 4.108%. Both target choices sit at the bound, so the count is structural rather than
+a property of either question.
+
+That answers the question the previous paragraph asked, and the answer is not the reassuring
+one. A single split zip carries up to 3.7% of a district, and the seventeen together carry 17%
+of one, so rounding them can move max-minus-min by several percent on its own. The single-shot
+snapped spread of 4.0041% is therefore the same order as this residual, and the iteration
+measured above reaches 2.1051% without ever going far under it. The floor is a real constraint
+on every zero-mismatch route, and no route here should be expected to return to the committed
+draw's 1.2902%.
+
+**Verdict.** Primary route, and Route A is now measured: spread 2.1051% at gap 0.000283, with
+zero mismatches and near-solid territory (§3). That is the standing offer for the zero-mismatch
+requirement. Route B is worth building only if it beats it, and the split-zip floor says the
+room left is small.
 
 ---
 
@@ -249,24 +367,39 @@ new.
 
 ## 9. Recommended order
 
-1. **Option 1** — `--regions-voronoi` on the power-cell draw. One command, and it gives the
-   number that ranks this route against the atoms.
-2. **Option 2 Route A, iterated** — snap → recentroid to a fixed point, and report spread and
-   Σ log M at the fixed point. Bounds what Route B can win.
-3. **Measure the 17 split zips' masses.** This sets the achievable spread floor for every
-   zero-mismatch route, and it is arithmetic.
-4. **Option 2 Route B** — remove the polish from `centers.draw`, close balance with weights, and
-   re-run the portfolio scoring zero-mismatch draws.
-5. Recompute the atom and power-cell gaps on one common base before any sponsor comparison.
+Items 1 to 3 were done on 2026-09-06 and are struck through. What remains, in order:
+
+1. ~~Option 1 — `--regions-voronoi` on the power-cell draw.~~ Done, §3, on the committed draw
+   and on the snapped one.
+2. ~~Option 2 Route A, iterated.~~ Done, §4. There is no fixed point; best of 20 iterates is
+   spread 2.1051%, gap 0.000283.
+3. ~~Measure the 17 split zips' masses.~~ Done, §4. 17.03% of a mean district at equal-split
+   targets.
+4. **Explain D01.** It is the one district the snap leaves fragmented, at 55%, while the other
+   seventeen sit at 96–100%. Cheap to look at, and it is the single thing a sponsor would seize
+   on in the §3 table.
+5. **Iterate Route A properly and keep the best iterate as an artifact.** The 2026-09-06 run
+   wrote no per-iteration draw, so iteration 15's labelling was not saved and its map contiguity
+   is unmeasured. Re-run writing a `draw.csv` per iterate, then run `--regions-voronoi` on the
+   best one. Each iteration is one transportation LP, a few minutes.
+6. **Option 2 Route B** — remove the polish from `centers.draw`, close balance with weights, and
+   re-run the portfolio scoring zero-mismatch draws. Judge it against iteration 15's
+   2.1051% / 0.000283, not against the single-shot.
+7. Recompute the atom and power-cell gaps on one common base before any sponsor comparison.
 
 ---
 
 ## 10. Open questions this file does not settle
 
-1. Whether a fixed point of snap → recentroid exists and is unique. Nothing here proves it
-   terminates.
-2. The mass of the 17 split zips, hence whether the irreducible spread floor is small.
-3. Whether the 44 dropped zips (41 gazetteer-absent, placed by state; 3 non-CONUS) should be in
+1. ~~Whether a fixed point of snap → recentroid exists and is unique.~~ Settled negatively on
+   this instance, 2026-09-06: 20 iterations reach no fixed point and no exact repeat, and the
+   objective is non-monotone. What replaces it: whether the band the iteration wanders has a
+   floor, and whether a longer run beats iteration 15's 2.1051%.
+2. ~~The mass of the 17 split zips.~~ Measured, §4: 17.03% of a mean district at equal-split
+   targets, largest single zip 3.699%. The floor is not small.
+3. **Why D01 stays fragmented at 55% under the snap** when the other seventeen districts reach
+   96–100%.
+4. Whether the 44 dropped zips (41 gazetteer-absent, placed by state; 3 non-CONUS) should be in
    the objective at all. They are 0.65% of M and currently sit outside every measurement above.
-4. Whether zero mismatch should be enforced at every seed in the portfolio, or only at the
+5. Whether zero mismatch should be enforced at every seed in the portfolio, or only at the
    winner. Enforcing it at every seed changes what the portfolio is selecting over.

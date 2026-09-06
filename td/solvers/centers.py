@@ -343,7 +343,11 @@ def power_weights(xy, M, centers, targets=None) -> dict:
     max violation `-0.80` in descaled cost units with `[0, 1]`, `-5e-17` with `[0, inf)`.
 
     Everything returned is in the caller's units.  `n_fractional` counts the split zips, at
-    most `k - 1` at a basic solution.  Note what `lp_labels_cost` is **not**: rounding a split
+    most `k - 1` at a basic solution, and `fractional` gives their row indices into `xy`, so a
+    caller can weigh them: rounding those rows is the irreducible part of the balance error,
+    and under a heavy-tailed `M` a single split zip can carry a large mass.
+
+    Note what `lp_labels_cost` is **not**: rounding a split
     zip to its largest share breaks the mass rows, so that labelling is infeasible for
     `targets` and its cost can and does sit *below* `lp_bound`.  It is reported with
     `lp_labels_max_dev` beside it so the infeasibility is visible, and it is not an upper bound
@@ -391,6 +395,7 @@ def power_weights(xy, M, centers, targets=None) -> dict:
 
     X = np.asarray(res.x, float).reshape(n, k)
     lp_labels = X.argmax(axis=1).astype(int)
+    fractional = np.flatnonzero(X.max(axis=1) < 1.0 - FRAC_TOL)
     reduced = c.reshape(n, k) - (alpha[:, None] + w[:, None] * beta[None, :])
     support = X > 1e-9
 
@@ -407,7 +412,8 @@ def power_weights(xy, M, centers, targets=None) -> dict:
         alpha=alpha, beta=beta,
         labels=power_labels(xy, C, omega),
         lp_labels=lp_labels,
-        n_fractional=int((X.max(axis=1) < 1.0 - FRAC_TOL).sum()),
+        fractional=fractional,
+        n_fractional=int(fractional.size),
         lp_bound=bound,
         lp_labels_cost=float(cost[np.arange(n), lp_labels].sum()) * mscale,
         lp_labels_max_dev=float(np.abs(mass_lp - tgt).max()),
