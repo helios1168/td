@@ -20,6 +20,9 @@ venv/
 # Claude Code worktrees (nested checkouts, never commit)
 .claude/worktrees/
 
+# Local Claude Code settings — rely on global ~/.claude settings instead
+.claude/settings.local.json
+
 # Contiguity programme data (PLAN.md U0c): TIGER download and the synthetic twin
 data/tiger/
 data/twin_*
