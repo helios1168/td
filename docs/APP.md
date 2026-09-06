@@ -36,6 +36,11 @@ tools/app.sh --server.address=100.69.120.67   # bind the tailnet address
 `.streamlit/config.toml` sets `headless = true` and binds loopback by default. Run it inside
 tmux so it survives the SSH session dropping.
 
+Use `tools/app.sh` rather than calling Streamlit directly: `streamlit run app/main.py` puts
+`app/` on `sys.path` and not the worktree root, so `from app import ...` raises
+`ModuleNotFoundError: No module named 'app'` at the first line of the script. The launcher
+exports `PYTHONPATH` to fix it.
+
 Smoke test, no browser needed:
 
 ```
@@ -88,14 +93,14 @@ about how a draw was produced.
 
 Layers, app venv on the left, solver venv on the right:
 
-| module | role | status |
-|---|---|---|
-| `app/config.py` | paths, and the `TD_REPO` override | built |
-| `app/runs.py` | discover run directories, read `metrics.json` / `draw.csv` | built |
-| `app/main.py` | the UI | walking skeleton: browse a run, district table, balance numbers, map |
-| `app/scenario.py` | the saved scenario record: load, save, validate | planned |
-| `app/engines.py` | one entry per solver: driver script, argv builder, required env, which scenario fields it honours | planned |
-| `app/runner.py` | launch an engine as a subprocess, stream progress, collect the run directory | planned |
+| module | role |
+|---|---|
+| `app/config.py` | paths, and the `TD_REPO` override |
+| `app/scenario.py` | the saved scenario record: load, save, validate |
+| `app/engines.py` | one entry per solver: driver, argv builder, required env, which scenario fields it honours |
+| `app/runner.py` | launch an engine detached, poll its status, cancel it, render its maps |
+| `app/runs.py` | discover run directories, read `metrics.json` / `draw.csv` |
+| `app/main.py` | the UI: a Define-and-run tab and a Results tab |
 
 **Scenario format.** Do not invent one. `run_draw.py` already accepts
 `--scenario file.json` with exactly `{"fix": {NAME: [ST, ...]}, "anchor": {...}}` and rejects
@@ -124,19 +129,23 @@ driver detached, writes its stdout to a log inside the run directory, and the UI
 output files. Runs land in `battery/results/app/<scenario>_<timestamp>/`, which is already
 gitignored.
 
-**Maps.** Version 1 reuses `tools/us_maps.py` through the same subprocess boundary and displays
-the PNG it writes (`districts.png`, `district_regions.png`, `district_regions_voronoi.png`). That
-keeps one implementation of the map and inherits the fixes made for the CA5 measurement. The cost
-is no pan or zoom and about 3 s per render; an interactive in-browser map would need the
-geometry reimplemented on the app side, which is a decision to make after business users have
-seen the static one.
+**Maps: static PNGs, decided 2026-09-06.** `app/runner.render_maps` calls `tools/us_maps.py`
+through the same subprocess boundary and the UI displays the PNGs it writes (`districts.png`,
+`district_regions.png`, `district_regions_voronoi.png`). One implementation of the map, and the
+app inherits the fixes made for the CA5 measurement. The cost is no pan or zoom, and about 40 s
+per render including the gazetteer load. `--regions`, the power diagram, is asked for only when
+the engine produced a center-based draw; `--regions-voronoi` applies to any draw.
+
+Renderings land in `battery/results/app/figures/<run>/k<kk>/`, not in `figures/`. The tracked
+`figures/` directory holds committed, reviewed artifacts, and app output is neither.
 
 ## 5. Assumptions on the record
 
 1. Business users define scenarios and launch runs from the browser; the app is not a read-only
    viewer of runs someone else started.
 2. One user at a time, over the tailnet. No authentication, no multi-tenant session state.
-3. Only the power-cell engine is wired first, because it is the one that honours `fix` and
-   `anchor` — the hand-drawn-district knobs the scenario UI is about.
+3. Both engines are wired, but only the power-cell one has been exercised end to end from the
+   app. The state-atom entry builds `--cut` arguments and sets `PYTHONHASHSEED=0`; it has not
+   been launched through `app/runner.py` yet.
 4. The live instance is `instance_descaled_v2.json.gz` at k = 18, and it is confidential. It
    never leaves the Mac Studio; the app displays derived numbers only.

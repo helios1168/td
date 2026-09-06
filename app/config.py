@@ -23,4 +23,6 @@ RESULTS = REPO / "battery" / "results"
 APP_RESULTS = RESULTS / "app"
 SCENARIOS = REPO / "battery" / "scenarios"
 
-FIGURES = REPO / "figures" / "app"
+# Under `battery/results/` on purpose: `figures/` is tracked, because a committed map is a
+# primary artifact, and app renderings are neither reviewed nor committed.
+FIGURES = APP_RESULTS / "figures"
