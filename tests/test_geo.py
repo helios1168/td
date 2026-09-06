@@ -83,6 +83,47 @@ def test_project_is_finite_and_orders_east_west():
     assert n < s                           # and northward is up
 
 
+# ------------------------------------------------------------------ the state rook graph
+def _seed_states(dest, codes, geoms):
+    """Write a shapefile where `states_outline` looks for one -- no network, as above."""
+    import geopandas as gpd
+    root = os.path.join(dest, geo.STATES_DIR)
+    os.makedirs(root, exist_ok=True)
+    gdf = gpd.GeoDataFrame({"STUSPS": list(codes)}, geometry=list(geoms), crs="EPSG:4269")
+    gdf.to_file(os.path.join(root, geo.STATES_DIR + ".shp"))
+
+
+def test_state_rook_is_rook_not_queen():
+    """A shared edge is an adjacency; a shared corner is not.
+
+    This is the one thing in `state_rook` that can be silently wrong, and it matters: queen
+    adjacency would let a district reach across a corner -- Four Corners is the real case --
+    and the draw would report a contiguity the map does not have.
+    """
+    from shapely import box
+    with tempfile.TemporaryDirectory() as tmp:
+        # AA and BB share the edge x=1; CC meets BB only at the point (2, 1)
+        _seed_states(tmp, ["AA", "BB", "CC"],
+                     [box(0, 0, 1, 1), box(1, 0, 2, 1), box(2, 1, 3, 2)])
+        adj, polys = geo.state_rook(tmp)
+    assert set(adj) == {"AA", "BB", "CC"} and set(polys) == {"AA", "BB", "CC"}
+    assert adj["AA"] == ("BB",)
+    assert adj["BB"] == ("AA",), "a corner touch must not be an edge"
+    assert adj["CC"] == ()
+
+
+def test_state_rook_drops_non_conus_and_is_symmetric():
+    from shapely import box
+    with tempfile.TemporaryDirectory() as tmp:
+        _seed_states(tmp, ["AA", "BB", "AK"],
+                     [box(0, 0, 1, 1), box(1, 0, 2, 1), box(0, 5, 1, 6)])
+        adj, _ = geo.state_rook(tmp)
+    assert "AK" not in adj                                     # geo.NON_CONUS, as states_outline
+    for a, nbrs in adj.items():
+        for b in nbrs:
+            assert a in adj[b], f"{a}-{b} is one-directional"
+
+
 # ------------------------------------------------------------------ figure builders
 def _synthetic(n=10):
     """~10 fake CONUS zips with coordinates, opportunity and two firms' books."""

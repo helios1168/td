@@ -128,3 +128,30 @@ def states_outline(dest: str = DEFAULT_DEST):
     gdf = gpd.read_file(shp)
     gdf = gdf[~gdf["STUSPS"].isin(NON_CONUS)]
     return gdf.to_crs(LAEA)
+
+
+def state_rook(dest: str = DEFAULT_DEST) -> tuple[dict, dict]:
+    """`({state: (neighbour, ...)}, {state: polygon})` -- the state rook graph and its polygons.
+
+    Two states are adjacent when their shared boundary has positive **length**, so a corner
+    touch is not an edge (rook, not queen).  Same cached shapefile and same lower-48-plus-DC
+    filter as `states_outline`: 49 nodes, 107 edges.
+
+    A state-atom draw cannot get this from the instance.  Contracted to states, v2's zip
+    adjacency has 10 edges over 42 components -- it describes where the book is sold, not
+    which states touch -- so the geography has to come from TIGER.
+    """
+    import shapely
+    gdf = states_outline(dest).reset_index(drop=True)
+    codes = gdf["STUSPS"].astype(str).to_numpy()
+    geoms = gdf.geometry.to_numpy()
+    ia, ib = gdf.sindex.query(gdf.geometry, predicate="intersects")
+    keep = ia < ib
+    ia, ib = ia[keep], ib[keep]
+    shared = shapely.length(shapely.intersection(geoms[ia], geoms[ib]))
+    adj: dict = {c: set() for c in codes}
+    for i, j, ln in zip(ia, ib, shared):
+        if ln > 0:
+            adj[codes[i]].add(codes[j])
+            adj[codes[j]].add(codes[i])
+    return {c: tuple(sorted(adj[c])) for c in codes}, dict(zip(codes, geoms))

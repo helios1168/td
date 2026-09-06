@@ -27,8 +27,9 @@ only when a question needs it. This file carries invariants only and is never st
 
 ## Tests
 
-`.venv/bin/python3 tests/run_all.py` — 222 fast tests, 0 fail (2026-09-05). `TD_SLOW=1` adds the
-slow anchor tier. `tests/test_engines.py` is the self-contained two-player smoke test.
+`.venv/bin/python3 tests/run_all.py` — 269 fast tests, 0 fail (2026-09-06). `TD_SLOW=1` adds
+nothing: no module sets `SLOW = True`. `tests/test_engines.py` is the self-contained two-player
+smoke test.
 
 ## Traps that still apply
 
