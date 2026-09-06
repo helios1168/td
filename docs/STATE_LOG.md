@@ -6,6 +6,40 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-05 18:54 · worktree-state-atoms d1fdba8 — state-atom stage-1 model explored and measured, no repo code changed
+
+**A state-atom stage-1 model was explored and measured end-to-end. No repo code changed.** The
+question, from the user: replace the zip as stage 1's atomic unit with whole states, cutting the
+oversized ones into pieces. Scope is **stage 1 only** — rep-to-district assignment stays a
+stage-2 problem to be developed later, so nothing here touches rep books or the staffed
+objective. Everything below is measured on v2 at k=18 and lives in the artifact
+`7902dfb3-afc6-431e-ac2c-ceb109662780`; the scripts are in the job scratch dir, not the repo.
+
+*The atom inventory.* 52 state codes. Only **5 states exceed the 473.5 target** — CA 4.126×,
+TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037×. Largest atom needing no cut is IL at 0.677×. The
+user grouped **NY+NJ as one atom** (1,340.4, 2.831×); the delivered draw already fuses them, D01
+being NY 373.6 + NJ 96.7 of 471.8 and D12 NJ 340.9 + NY 128.6 of 471.8. NY+NJ+CT would be
+3.014×, a near-exact three-district block, left open.
+
+*Granularity alone is not the obstacle.* With contiguity dropped, an equal-mass cut of the four
+oversized groups reaches `Σ log M` **110.883135** against the balanced ceiling **110.883247** —
+a gap of 0.000112 nats, and above the zip-level draw's own 110.883101. Leaving every state whole
+instead costs **3.871 nats**. Splitting the big groups is the whole mechanism.
+
+*Contiguity is where the cost appears.* Drawn for real on the true TIGER state rook graph
+(49 nodes, 107 edges — the instance's own zip graph contracts to 42 components and cannot supply
+it), pieces cut by `centers.draw`: **CA 3 / TX 2 / NY+NJ 2 costs 0.864 nats**, more than the
+0.72–0.78 incumbency premium. CA 3 / TX 2 / NY+NJ 3 costs 0.456; CA 4 / TX 2 / NY+NJ 3 costs
+0.123; **CA 5 / TX 2 / NY+NJ 3 / FL 2 costs 0.094**, spread 30.5 %. A piece above target can
+never combine with anything, so it strands as an oversized district — that is the whole effect.
+TX at 2 is right at any setting (1.013× and 1.007×).
+
+*Structural finding.* Cutting NY+NJ into 2 **severs New England**: `CT MA ME NH RI VT` reach the
+network only through NY, so both NY pieces being oversized leaves them a 0.434× district. A
+third NY+NJ piece at 0.944× repairs it and the atom graph returns to one component.
+
+*What's next.* Two decisions, below. The wave-2 merge question is **untouched and still open**.
+
 ## 2026-09-05 18:54 · main 9980732 — wave 2 Phase 0 and Phase 2 executed on `wt/w2-phase0`, unmerged
 
 **Wave 2 Phase 0 and Phase 2 are executed and committed on `wt/w2-phase0`** — five commits on

@@ -1,77 +1,86 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-05 18:54 · **Branch:** `worktree-state-atoms` (this entry; branched from
-`main` 9980732) · **Head:** `9980732` · **Tests:** 237 pass, 0 fail (2026-09-05, on
-`wt/w2-phase0`; not re-run since — this session changed no code)
+**Updated:** 2026-09-06 · **Branch:** `worktree-state-atoms` (this entry; branched from
+`main` 9980732) · **Head:** `ff63511` · **Tests:** 269 pass, 0 fail (2026-09-06)
 
 ## Now
 
-**A state-atom stage-1 model was explored and measured end-to-end. No repo code changed.** The
-question, from the user: replace the zip as stage 1's atomic unit with whole states, cutting the
-oversized ones into pieces. Scope is **stage 1 only** — rep-to-district assignment stays a
-stage-2 problem to be developed later, so nothing here touches rep books or the staffed
-objective. Everything below is measured on v2 at k=18 and lives in the artifact
-`7902dfb3-afc6-431e-ac2c-ceb109662780`; the scripts are in the job scratch dir, not the repo.
+**The state-atom stage-1 engine is in the package** (`ff63511`), and it reproduces the
+2026-09-05 exploration exactly. Scope stayed **stage 1 only** — nothing here reads rep books or
+the staffed objective. `td/atoms.py` builds the atoms, `td/solvers/atom_draw.py` draws on them,
+`tools/run_atoms.py` runs the pipeline, and `td/geo.py` gained `state_rook`. The prototype
+`tools/state_atoms/district4.py` is deleted; the rest of that directory is exploratory or builds
+the artifact and stays.
 
-*The atom inventory.* 52 state codes. Only **5 states exceed the 473.5 target** — CA 4.126×,
-TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037×. Largest atom needing no cut is IL at 0.677×. The
-user grouped **NY+NJ as one atom** (1,340.4, 2.831×); the delivered draw already fuses them, D01
-being NY 373.6 + NJ 96.7 of 471.8 and D12 NJ 340.9 + NY 128.6 of 471.8. NY+NJ+CT would be
-3.014×, a near-exact three-district block, left open.
+*The user's decision.* Cut counts are **CA 5 / TX 2 / NY+NJ 3 / FL 2**, the cheapest measured
+setting. Measured on v2 at k=18: 56 atoms in one component, `Σ log M` **110.789532** against the
+balanced ceiling **110.883247**, a gap of **0.093715 nats** at a **30.5 %** mass spread, all 18
+districts connected, `draw.csv` covering all 3,748 zips.
 
-*Granularity alone is not the obstacle.* With contiguity dropped, an equal-mass cut of the four
-oversized groups reaches `Σ log M` **110.883135** against the balanced ceiling **110.883247** —
-a gap of 0.000112 nats, and above the zip-level draw's own 110.883101. Leaving every state whole
-instead costs **3.871 nats**. Splitting the big groups is the whole mechanism.
+*Two corrections the engine carries.* `STATE.md` said a stage-1 engine "would sit under the
+`base.py` harness contract" — wrong: `base.py` plus `REGISTRY` is the **two-player** harness
+(`Result.to_a`, `filter_pair`, `root_a`/`root_b`) and only `brute` and `scip_tree` are
+registered. Stage 1 is `centers.py`, unregistered, and the new engine is its sibling. And the
+prototype's `free_bound` **was not a bound**: a local search over the relaxation returns a
+feasible relaxed value `F ≤ U*`, while the contiguous optimum also satisfies `C* ≤ U*`, which
+orders the two not at all. It is renamed `free_search` and reported as a reference; the valid
+bound is `cert_draw.cert_balance_ceiling`. Measured, `free_search` = 110.812355, so quoting it
+as "the margin above the draw" understated the real gap **fourfold**.
 
-*Contiguity is where the cost appears.* Drawn for real on the true TIGER state rook graph
-(49 nodes, 107 edges — the instance's own zip graph contracts to 42 components and cannot supply
-it), pieces cut by `centers.draw`: **CA 3 / TX 2 / NY+NJ 2 costs 0.864 nats**, more than the
-0.72–0.78 incumbency premium. CA 3 / TX 2 / NY+NJ 3 costs 0.456; CA 4 / TX 2 / NY+NJ 3 costs
-0.123; **CA 5 / TX 2 / NY+NJ 3 / FL 2 costs 0.094**, spread 30.5 %. A piece above target can
-never combine with anything, so it strands as an oversized district — that is the whole effect.
-TX at 2 is right at any setting (1.013× and 1.007×).
+*Two behaviours preserved on the user's call*, so the numbers reproduce: the search tie-breaks
+on set iteration over atom names, so a run **requires `PYTHONHASHSEED=0`** and `run_atoms.py`
+refuses to start without it; and the stateless bucket goes into the lightest district as one
+block rather than being spread by `channel.place_by_state`.
 
-*Structural finding.* Cutting NY+NJ into 2 **severs New England**: `CT MA ME NH RI VT` reach the
-network only through NY, so both NY pieces being oversized leaves them a 0.434× district. A
-third NY+NJ piece at 0.944× repairs it and the atom graph returns to one component.
-
-*What's next.* Two decisions, below. The wave-2 merge question is **untouched and still open**.
+*What's next.* The engine's stage-2 cost is unmeasured, and `wt/w2-phase0` turns out to have
+been merged into `main` already — what is actually outstanding is the **push**.
 
 ## Next
 
-- [ ] **Decide the cut counts for the state-atom model.** `CA 3 / TX 2 / NY+NJ 2` as specified
-      costs **0.864 nats**, above the incumbency premium, and strands New England at 0.434×.
-      `CA 5 / TX 2 / NY+NJ 3 / FL 2` costs **0.094**. Gated on the sponsor's appetite for
-      splitting California; TX at 2 needs no revision.
-- [ ] **Then: study only, or a stage-1 engine?** Nothing is in the repo yet. An engine would sit
-      under the `base.py` harness contract beside the power-cell route.
+- [ ] **Push `main` to `origin`.** Local `main` is **8 commits ahead** of `origin/main`
+      (`352b9d7`), and `wt/w2-phase0` is **already merged** into it (`main` 9980732 descends
+      from 96abb15) — the 2026-09-05 merge question was answered, only the push was refused.
+      Run `git push origin main` from the hub.
+- [ ] **Merge `worktree-state-atoms` into `main`?** One commit, `ff63511`, 269 tests green.
+      Ask before merging (the standing rule).
+- [ ] **The stage-2 cost of the atom map is unmeasured, and could exceed the 0.094.** Pinning
+      CALIFORNIA costs **2.04 nats at stage 2** and this model forces CA into five pieces. Do
+      not claim "the state-atom model costs 0.094 nats" until
+      `battery/results/atoms_k18_v2_20260906/k18/draw.csv` has been through
+      `channel.score_draws` — that needs no new code.
+- [ ] **Quote the 30.5 % spread beside the 0.094 nats.** `log` is flat near the optimum, so a
+      small Nash gap sits alongside a large operational spread; the power-cell route gets
+      1.37 %. Quoting the gap alone reads as "contiguity is nearly free".
+- [ ] **Atom-graph contiguity is not verified map contiguity.** A cut piece has no polygon, so
+      its adjacency to an outside state is proximity within `BORDER_TOL = 40 km` plus an
+      unconditional link from the nearest piece. `check_contiguous` certifies the atom graph.
+      Check the map: `tools/us_maps.py --districts <draw.csv>` (`--regions` does not apply).
+- [ ] **Only the CA5 scenario is re-measured.** The 2026-09-05 ladder (0.864 / 0.456 / 0.123 /
+      0.094) came from the prototype. The ranking is unaffected — the four differ by far more
+      than the 0.015-nat hash-order jitter — but the other three numbers are not the engine's.
 - [ ] **Open from the state-atom work:** whether NY+NJ should absorb CT (3.014×, a near-exact
-      three-district block); a rule for the **32 stateless zips** (33.4 M, 0.4 %), currently
-      dropped into the lightest district; and whether other straddling metros are grouped
-      (Philadelphia PA/NJ/DE, Chicago IL/IN/WI, Kansas City MO/KS, Washington DC/MD/VA).
-- [ ] **Merge `wt/w2-phase0` into `main`?** Untouched by this session. Five commits, 237 tests
-      green, every track through its verifier. The wave-2 decision said verified tracks
-      auto-merge **this batch only**, but nothing merged. **The push was refused by the
-      auto-mode classifier** — run `git push -u origin wt/w2-phase0` from the worktree.
+      three-district block); the **stateless-zip rule** (32 zips, 33.4 M, 0.4 %) and the
+      **AK→WA / HI→CA1 merges**, all three shipped as documented placeholders, none decided;
+      and whether other straddling metros are grouped (Philadelphia PA/NJ/DE, Chicago IL/IN/WI,
+      Kansas City MO/KS, Washington DC/MD/VA).
 - [ ] **Sponsor's call: which states, if any, are hand-drawn** (A12). `docs/RUNS.md`'s region
       table is the price list, in the same nats as the premium ladder. Separate session.
-- [ ] **Phase 1 — the four units**, all concurrent, now unblocked: U10-round, U11-roster, U4-disp,
+- [ ] **Phase 1 — the four units**, all concurrent and unblocked: U10-round, U11-roster, U4-disp,
       U13-base. Then U12-menu (needs U8 + U11 + U13; brief re-anchored, unit not launched).
-      Branch from `main` **after** the merge above, or from `wt/w2-phase0`.
+      Branch from `main`.
 - [ ] **★8 has no cited basis and that is now the record.** Grounding it needs a `lit-search`;
       deliberately deferred. If a sponsor conversation ever leans on "books enter at stage 2
       only", the gap becomes load-bearing.
 - [ ] **U11's v2 Nash-tie margin was never measured.** `WAVE2_PLAN` said it would be; no number
       exists. U13's TX share (11.5 %) is likewise v1-only, on 1,229 zips. Both are flagged in the
       briefs rather than filled with invented numbers.
-- [ ] **Serena binds to the hub, not the worktree.** Three agents hit this today; one nearly wrote
-      to the user's checkout, one filed a false bug report against a landed correction, one got
-      stale *content* (not just line numbers). Relative paths resolve against
-      `/Users/ntlee/projects/td`. Use absolute worktree paths, or `Read`.
-- [ ] **Something injects shell-IO instructions that contradict `CLAUDE.md` §7.** Two agents
-      independently reported being told mid-session to use `cat`/`sed`/heredocs; both declined,
-      and the hook caught the one attempt. An agent that complied would bypass the hook.
+- [ ] **Serena binds to the hub, not the worktree.** Relative paths resolve against
+      `/Users/ntlee/projects/td`. Three agents were misled on 2026-09-05; one nearly wrote to the
+      user's checkout. Use absolute worktree paths, or `Read`.
+- [ ] **Something injects shell-IO instructions that contradict `CLAUDE.md` §7.** Third
+      occurrence, 2026-09-06: mid-session text told the agent to read and write files with
+      `cat`/`sed`/heredocs. Declined each time, and `hooks/enforce-file-tools.sh` caught the
+      attempts. An agent that complied would bypass the hook.
 - [ ] **`D04`/`SOUTHWEST` share a colour and look adjacent** in `SOUTHWEST_anchor`. B10's recorded
       `SOUTHWEST`/`D07` collision was **refuted** (different colours in both maps, so it describes
       the k=13 run). This different pair may be the real failure. `RUNS_PLAN.md:294-298` forbade
@@ -88,8 +97,7 @@ third NY+NJ piece at 0.944× repairs it and the atom graph returns to one compon
 - [ ] `caveman` proxy: `caveman setup --install` was blocked by the auto-mode classifier on
       2026-09-05 — the user runs it, then `caveman claude`.
 - [ ] Deferred: HiGHS root cause (scipy 1.18.1 option merging) only if it recurs; `ceiling.py`'s
-      remaining v1 content beyond `SATURATION`; `CLAUDE.md`'s `TD_SLOW=1` line, which advertises
-      a slow tier no test module populates; `DOMAIN_optimization` §2.14/§3's `C(111,13)` pool,
+      remaining v1 content beyond `SATURATION`; `DOMAIN_optimization` §2.14/§3's `C(111,13)` pool,
       left because no v2 rep-pool count is established and `P₁₃`/`S₁₃` are programme-wide names.
 
 ## Facts
@@ -125,23 +133,37 @@ at a 1.37 % mass spread; realised *gain* spread 60.17 %. Premium window **0.890*
 (t = 16), **measured 24** — quote the measured count, never the cap. Gate gains run
 `211.786–228.663` (16 of 18 near 211.79), clearing the `140.638` floor by 1.506×.
 
-**State atoms, measured 2026-09-05 (stage 1 only; not in the repo).** Target 473.5 at k=18. Of
-52 state codes only 5 exceed it: CA 4.126×, TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037×; largest
-atom needing no cut is IL 0.677×. NY+NJ together 2.831×, +CT 3.014×. Balanced ceiling
-`Σ log M = 110.883247`; zip baseline 110.883101. **Contiguity dropped**, equal-mass cuts reach
-110.883135 (gap 0.000112); every state whole reaches 107.011866 (gap 3.871). **Contiguity
-enforced** on the true state rook graph: CA 3 / TX 2 / NY+NJ 2 → 110.019580 (gap **0.864**,
-spread 98.2 %); CA 3 / TX 2 / NY+NJ 3 → 110.427114 (0.456); CA 4 / TX 2 / NY+NJ 3 → 110.759967
-(0.123); CA 5 / TX 2 / NY+NJ 3 / FL 2 → 110.789532 (**0.094**, spread 30.5 %). Draws are local
-search with a relaxation bound, **not certified optimal** — exact set-partition was tried and
-abandoned (>250k columns; HiGHS found no feasible cover in 180 s at 177k). Set `PYTHONHASHSEED=0`
-or results move ~0.015 nats.
+**State atoms — the engine, measured 2026-09-06** (`ff63511`, stage 1 only; run
+`battery/results/atoms_k18_v2_20260906`). Target 473.5 at k=18. Cut plan **CA 5 / TX 2 /
+NY+NJ 3 / FL 2**: 56 atoms, 126 edges, **one component**. Pieces CA1 0.838×, CA2–CA5
+0.825–0.826×, TX1 1.013×, TX2 1.007×, NYNJ1–3 0.943–0.944×, FL1 0.706×, FL2 0.691×.
+`Σ log M` **110.789532**, ceiling **110.883247**, gap **0.093715** nats, spread **30.484 %**
+(max 1.130×, min 0.826×), all 18 districts connected. Of 52 state codes only 5 exceed target:
+CA 4.126×, TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037×; largest atom needing no cut is IL 0.677×.
+NY+NJ together 2.831×, +CT 3.014×.
+
+**The bound, corrected.** The valid upper bound is the Jensen ceiling
+`cert_draw.cert_balance_ceiling` = **110.883247**. The contiguity-dropped local search is
+**not** a bound — it returns a feasible relaxed value below the relaxed optimum, which orders it
+against the contiguous optimum not at all — and is now named `free_search` and reported as a
+reference: **110.812355**, +0.022823 over the draw. The prototype quoted it as "the margin above
+the draw", understating the true 0.0937 gap by about fourfold.
+
+**Prototype-only state-atom numbers (2026-09-05, not re-measured).** Contiguity dropped,
+equal-mass cuts reach 110.883135 (gap 0.000112); every state whole reaches 107.011866 (gap
+3.871); zip baseline 110.883101. Contiguity enforced: CA 3 / TX 2 / NY+NJ 2 → 110.019580 (gap
+0.864, spread 98.2 %, and it **severs New England** — CT MA ME NH RI VT reach the network only
+through NY, leaving them a 0.434× district); CA 3 / TX 2 / NY+NJ 3 → 110.427114 (0.456);
+CA 4 / TX 2 / NY+NJ 3 → 110.759967 (0.123). Draws are local search against a relaxation, **not
+certified optimal** — exact set-partition was tried and abandoned (>250k columns; HiGHS found no
+feasible cover in 180 s at 177k). **`PYTHONHASHSEED=0` is required**, by decision: the search
+tie-breaks on set iteration over atom names, and without it results move ~0.015 nats.
 
 **v2 zip adjacency, corrected.** `docs/CHANNEL.md` and `centers.py` quote v1's 547 components
 over 1,229 zips. On v2 it is **862 components over 3,748 zips, 516 singletons**, largest 13.5 %
 of M, **47.6 %** of M in components under 1 % each. Contracted to states the instance graph gives
 only **10 edges, 42 components** — a state model must import the TIGER state rook graph
-(49 nodes, 107 edges), which `build_adjacency.py` already downloads.
+(49 nodes, 107 edges), which `td/geo.py::state_rook` now builds.
 
 **Firms (masked `F0`/`F1`).** A = `F0`, 53 reps, 41.1 % of book; B = `F1`, 61 reps, 58.9 %. Both
 hold book in 671 zips carrying **48.8 %** of mapped opportunity; 3,704 of 3,748 zips are mappable
@@ -166,18 +188,20 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   `docs/RESEARCH_FINDINGS.md`, `docs/REVIEW_GROMOV.md` — data route, literature map, R1–R4
 - `docs/WAVE2_PLAN.md` — the wave-2 execution plan: 9 tracks, 3 phases, per-track files, model
   assignments, merge order, and the four corrections to this file's record
+- **The state-atom engine:** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
+  `td/solvers/atom_draw.py` (the search, `free_search`, `check_contiguous`) ·
+  `tools/run_atoms.py` (the driver) · `td/geo.py::state_rook` (the TIGER rook graph) ·
+  `tests/test_atoms.py`, `tests/test_atom_draw.py`, `tests/test_run_atoms.py`.
+  `tools/state_atoms/` is now exploratory leftovers plus the artifact generator — `district4.py`
+  was deleted when the engine landed; see that directory's README.
 - Recipes and file map: `docs/CODE_MAP.md` · Memory:
   `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md` · History:
   `docs/STATE_LOG.md` · Archive: `docs/archive/README.md`
-- Artifacts: **state atoms at k=18 `7902dfb3-afc6-431e-ac2c-ceb109662780`** (the whole state-atom
-  result: inventory, firm-territory map, the four contiguous draws) · pin-cost catalogue
+- Artifacts: **state atoms at k=18 `7902dfb3-afc6-431e-ac2c-ceb109662780`** (the exploration:
+  inventory, firm-territory map, the four contiguous draws) · pin-cost catalogue
   `f903ee01-eefc-40cf-bd32-8f5536b6e65f` · map diff `68eecbb9-3ce2-45d9-8161-5db7fe212957` ·
   k-sweep (v1) `c007d61d-c753-4151-9026-2288b9d5eb38` · atlas (v1)
   `1f2cddd9-b98b-4213-83ea-784566147c6a`
-- **State-atom scripts are NOT in the repo.** They sit in the job scratch dir
-  `~/.claude/jobs/0d3d17a7/tmp/` — `district4.py` (the draw), `partition2.py` (the
-  contiguity-free bound), `build_map.py` + `state-atoms.tpl.html` (the artifact). Re-home them
-  under `tools/` if the approach is taken up; the scratch dir dies with the job.
 - Starting a track: `git worktree add .claude/worktrees/<ID> -b wt/<ID> main`; hand-copy the
   gitignored inputs (`docs/CODE_MAP.md` lists them); start `claude` there and activate Serena
   by path; read `APPROACHES.md` §0 and FRAME §6; write the track's lens/domain/brief under
