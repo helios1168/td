@@ -1,0 +1,8 @@
+# The app virtualenv (`.venv-app`), kept separate from the solver `.venv` on purpose: the solver
+# pins in the repo-root requirements.txt are frozen ("the zip50 anchor depends on these exact
+# versions"), and Streamlit's own dependency tree must never be allowed to move them.
+#
+#   uv venv --python 3.13 .venv-app
+#   uv pip install --python .venv-app/bin/python3 -r app/requirements.txt
+streamlit==1.63.0
+pandas==3.0.5

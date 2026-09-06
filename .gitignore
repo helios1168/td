@@ -15,6 +15,7 @@ __pycache__/
 
 # Local environments
 .venv/
+.venv-app/
 venv/
 
 # Claude Code worktrees (nested checkouts, never commit)
@@ -36,6 +37,10 @@ data/geo/
 
 # Contiguity harness output (PLAN.md C.1): rows.jsonl, assignments, instance JSONs
 battery/results/
+
+# Scenarios saved from the app (working data; promote one to docs/artifacts/runs/scenarios/
+# deliberately if it becomes part of the record)
+battery/scenarios/
 
 # editor scratch
 *.swp

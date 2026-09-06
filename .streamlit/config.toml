@@ -1,0 +1,9 @@
+[server]
+headless = true
+# Loopback only. Reach it from the iPad over an SSH tunnel, or override with
+# `--server.address` to bind the tailnet address instead (docs/APP.md).
+address = "127.0.0.1"
+port = 8501
+
+[browser]
+gatherUsageStats = false
