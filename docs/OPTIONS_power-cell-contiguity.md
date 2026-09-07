@@ -43,8 +43,10 @@ measurements that rank them.
 
 **"Zero" always needs the diagram it is zero against** (§4). A labelling is a power diagram with
 respect to one set of centres and weights. Rebuild the diagram from that labelling and a handful
-of zips fall outside again — 16 of 3,704, measured 2026-09-06. So the requirement is met, but no
-figure currently drawn can show it: they all recentroid first.
+of zips fall outside again — 16 of 3,704 at the own-masses targets and 15 at the equal-split
+ones, both measured 2026-09-06. So the requirement is met, and since 2026-09-06 there is a figure
+that shows it: `--regions-fixed` holds the centres and weights instead of recentroiding (§4a).
+Every other rendering still recentroids, so a zero read off one of those is not this zero.
 
 **Three sources of drift.** `improve()` moves zips after the LP to repair the balance that
 integral rounding cost. The LP's basic solution splits at most `k − 1` zips, each rounded to one
@@ -64,10 +66,18 @@ leaving 3,704 with total M 8,468.3.
 
 | labelling | zips outside their own cell | spread | Σ log M | gap to ceiling |
 |---|---|---|---|---|
-| committed draw | 258 (6.97% of zips, **1.66% of M**) | 1.2902% | 110.766686 | **0.000082** |
+| committed draw, targets = its own masses | 258 (6.97% of zips, **1.66% of M**) | 1.2902% | 110.766686 | **0.000082** |
+| committed draw, targets = exactly-equal split | 266 (7.18% of zips) | — | — | — |
 | snapped, targets = draw's own masses | 0 by construction | 7.6346% | 110.764808 | 0.001959 |
 | snapped, targets = exactly-equal split | 0 by construction | **4.0041%** | 110.766044 | **0.000724** |
 | snapped, equal split, best of 20 snap → recentroid iterates | 0 by construction | **2.1051%** | 110.766485 | **0.000283** |
+
+The first row's 258 is the number quoted throughout this file and in `STATE.md`, and the second
+row is the same count asked of the diagram the snap is actually built on. Added 2026-09-06 when
+the fixed-diagram figure (§4a) measured it; the row above it used to carry no target label at
+all, which is how the two came to be treated as one number. The spread, `Σ log M` and gap columns
+are properties of the labelling rather than of the diagram it is scored against, so the
+committed draw's are unchanged and are left on the first row only.
 
 Ceiling is `k·log(M_total/k) = 110.766768` on the 3,704 plotted zips. Diagram health at the
 committed draw: 17 split zips (exactly the `k − 1` bound, so it is at the maximum) and max dual
@@ -78,7 +88,7 @@ property of the draw rather than solver noise.
 spread 1.2902% → 2.1051%, at iteration 15 of Route A (§4). The single-shot snap's
 0.000724 / 4.0041% is what one step costs, not what the route costs.
 
-Five readings that a later session should not have to re-derive:
+Six readings that a later session should not have to re-derive:
 
 1. **Equal-split targets dominate own-masses targets** for *producing* a zero-mismatch draw —
    about half the spread and a third of the gap. Own-masses remains the right choice for
@@ -123,6 +133,10 @@ masses, and the snapped `draw.csv` the §3 map measurement consumes). All are jo
 durable — fold them into `tools/` if this route is adopted. The split-zip masses need
 `centers.power_weights`' `fractional` return, added 2026-09-06 on this branch and surfaced as
 `power_diagram_of_draw`'s `split_zips`.
+
+The snap itself is durable now and needs none of those scripts:
+`us_maps.figures_fixed_diagram` computes it and `--regions-fixed` renders it (§4a). What is
+still job-temp is the iteration, which is item 6 of §9.
 
 ---
 
@@ -313,11 +327,12 @@ centroids from whatever draw it is handed and so takes a recentroid step before 
 draw**, and the split-zip count falls from 17 to 10. The 16 are the same non-self-consistency
 that leaves the iteration below without a fixed point.
 
-The practical consequence is a reporting one. Every power-diagram figure recomputes the diagram
-from its input, so **no existing figure can display the zero**; it always reports the next
+The practical consequence was a reporting one. Every power-diagram figure recomputes the diagram
+from its input, so **no existing figure could display the zero**; it always reported the next
 iterate's mismatch. A figure that shows the guarantee has to hold centres and weights fixed and
-colour the dots by the labelling those weights produced. That figure does not exist yet, and
-until it does, "zero mismatched dots" must be quoted with the diagram it is zero against.
+colour the dots by the labelling those weights produced. **That figure was built on 2026-09-06
+and is described in §4a below**; "zero mismatched dots" still has to be quoted with the diagram
+it is zero against, and the figure's own subtitle now does that.
 
 **Two variants, and they differ.**
 
@@ -400,6 +415,62 @@ room left is small.
 
 ---
 
+## 4a. The fixed-diagram figure · **DONE 2026-09-06**
+
+**What it is.** `tools/us_maps.py --regions-fixed <draw.csv>` builds the power diagram **once**,
+from the committed draw's M-weighted centroids and one transportation LP, and then draws two
+panels on that single diagram rather than rebuilding it for each. The centres, the weights, the
+cells, the hues and the legend are identical between the panels, and the only thing that changes
+between them is which labelling colours the dots. Both files live under `figures/`:
+
+| panel | dots coloured by | zips outside their own cell |
+|---|---|---|
+| `district_regions_fixed_committed.png` | the committed draw | **266 of 3,704 (7.2%)** |
+| `district_regions_fixed_snapped.png` | `cell_of`, the labelling the held weights produce | **0 of 3,704** |
+
+That zero is the thing no previous rendering could show, and it is now on a page a sponsor can
+be handed. The two panels also make the before-and-after legible without any extra encoding:
+in the committed panel a few hundred dots sit on a neighbour's ground, and in the snapped panel
+none do, on ground that has not moved between the two.
+
+**Targets, stated because they change the numbers.** Both panels are at the **exactly-equal
+split**, which is what §4's snap measurements use and what `power_diagram_of_draw`'s new
+`targets="equal"` selects. `power_diagram_of_draw` still defaults to the draw's own district
+masses, which is the right question for auditing and the wrong one here.
+
+**A correction to §1 that this measurement forced.** The committed draw's drift is **266 of
+3,704 (7.2%) at the equal-split targets** and 258 (7.0%) at the own-masses targets. §1's table
+records only the 258, under a row that does not name its targets, so the two have been quoted as
+if they were one number. They are not: the diagram is different, because the targets are. The
+266 is consistent with the rest of the record — §4's iteration table already reports 266 zips
+moved on the first snap step, and that step is exactly this relabelling.
+
+**How the split zips are rendered, since they have no single cell.** The LP splits exactly
+`k − 1` = 17 zips and the argmin that produces `cell_of` picks one side of the bisector for
+each, arbitrarily. Rather than let that pick read as a settled assignment, all 17 are **ringed
+in the border colour in both panels** and listed on the report line: `07042`, `07670`, `08618`,
+`20814`, `28104`, `30066`, `32837`, `60462`, `60914`, `70364`, `73072`, `77845`, `85254`,
+`90731`, `91786`, `93401`, `94104`.
+
+**The qualification is measured, not quoted.** The figure runs one further transportation LP on
+the snapped labels so the caveat in the subtitle carries a number it computed rather than one
+copied from this file. Rebuilt at the equal-split targets the centres move and **15 of 3,704
+(0.4%) fall outside again, with the split count staying at 17**. §4 above reports 16 and a split
+count falling to 10 for the same rebuild at the **own-masses** targets, so the two are different
+measurements of the same non-self-consistency rather than a contradiction. Either way the
+conclusion is unchanged: the zero belongs to one diagram.
+
+**Sliver cells, and a count this file had wrong.** `SLIVER_SHARE` stroking is kept and does the
+work it exists for. At the equal-split targets **six** cells fall under 1% of the map — D14
+0.04%, D01 0.06%, D12 0.13%, D10 0.86%, D07 0.87%, D18 0.98% — not the three that `STATE.md` and
+`figure_power_regions`' own docstring describe. Three is the k = 13 v1 count; at k = 18 it is
+six, and without the strokes six districts would be invisible on their own territory map.
+
+**Verdict.** Closed. The guarantee is now displayable, and it is displayed with the diagram it
+is relative to.
+
+---
+
 ## 5. Option 3 — Constrain the polish · **fallback if Route B is too invasive**
 
 **Idea.** Keep `improve()` but restrict its swaps to moves that leave each district a power
@@ -476,7 +547,7 @@ new.
 
 ## 9. Recommended order
 
-Items 1 to 3 were done on 2026-09-06 and are struck through. What remains, in order:
+Items 1 to 5 were done on 2026-09-06 and are struck through. What remains, in order:
 
 1. ~~Option 1 — `--regions-voronoi` on the power-cell draw.~~ Done, §3, on the committed draw
    and on the snapped one.
@@ -484,9 +555,8 @@ Items 1 to 3 were done on 2026-09-06 and are struck through. What remains, in or
    spread 2.1051%, gap 0.000283.
 3. ~~Measure the 17 split zips' masses.~~ Done, §4. 17.03% of a mean district at equal-split
    targets.
-4. **Build the fixed-diagram figure.** Hold centres and weights fixed and colour the dots by the
-   labelling those weights produced, so the zero-mismatch guarantee can actually be shown. Today
-   every rendering recentroids and reports 16 instead. This is the figure a sponsor review needs.
+4. ~~Build the fixed-diagram figure.~~ Done, §4a. `--regions-fixed` holds one diagram and draws
+   the committed labelling (266 of 3,704 outside) and the snapped one (**0 of 3,704**) on it.
 5. ~~Explain D01.~~ Done, §3a. It is not fragmented: 148 of its 149 ZIPs and 99.86% of its M are
    one piece, and the second "part" is the single rural ZIP `18337`, whose catchment is 44.56% of
    D01's area and 0.14% of its opportunity. The 55% is an area-denominator artefact. What this

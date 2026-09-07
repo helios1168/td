@@ -16,8 +16,16 @@ the map the business is shown.  The fill is the **power (Laguerre) diagram** of 
 centers, weighted by the transportation LP's mass-balance duals -- `k` convex regions with
 exact straight borders, which is the territory a center-based balanced assignment actually
 produces.  `--regions-voronoi` writes the superseded rendering (`district_regions_voronoi.png`,
-each zip's Voronoi catchment dissolved by district) for comparison.  The four originals are
-unaffected by any flag.
+each zip's Voronoi catchment dissolved by district) for comparison.  And
+
+    --regions-fixed battery/results/<run-id>/draw.csv
+
+writes the fixed-diagram pair, `district_regions_fixed_committed.png` and
+`..._snapped.png`: **one** power diagram, built once from the committed draw, with the
+committed labelling on it and then the labelling its own weights produce.  Every other
+rendering recentroids from whatever draw it is handed, so none of them can show that the
+snapped labelling has zero zips outside their own cell; this one holds the centres and the
+weights fixed and can.  The four originals are unaffected by any flag.
 
 What the maps are for
 ---------------------
@@ -1060,6 +1068,11 @@ def power_diagram_of_draw(districts, values, xy, targets=None) -> dict:
     district, and the only thing that differs is which zips.  Asking at the exactly-equal split
     instead would mix in a balance difference the draw never claimed to have (its max-deviation
     is 0.4% of target, not zero), and the fill would be answering a question the dots are not.
+
+    Pass `targets="equal"` for the exactly-equal split, which is the right question when the
+    diagram is being used to *produce* a labelling rather than to audit one: the snap
+    measurements in `docs/OPTIONS_power-cell-contiguity.md` §4 are all at equal-split targets,
+    and they reach about half the spread and a third of the gap of the own-masses snap.
     """
     from td.solvers import centers as _centers
 
@@ -1075,6 +1088,10 @@ def power_diagram_of_draw(districts, values, xy, targets=None) -> dict:
     C = _centers._centroids(pts, M, lab, len(ids))
     if targets is None:
         targets = np.bincount(lab, weights=M, minlength=len(ids))
+    elif isinstance(targets, str):
+        if targets != "equal":
+            raise ValueError(f"targets: expected an array, None, or 'equal', got {targets!r}")
+        targets = np.full(len(ids), float(M.sum()) / len(ids))
     res = _centers.power_weights(pts, M, C, targets=targets)
     cell = np.asarray(res["labels"], int)
     return dict(
@@ -1092,7 +1109,8 @@ def power_diagram_of_draw(districts, values, xy, targets=None) -> dict:
 
 def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALPHA,
                          footer=FOOTER, title=None, subtitle=None, n_near=4, palette=QUAL,
-                         label=True, pad=0.05, targets=None, report=None, dots=True):
+                         label=True, pad=0.05, targets=None, report=None, dots=True,
+                         diagram=None, palette_of=None, mark=None):
     """The draw as **power-diagram territory**: `k` convex cells, weights from the LP duals.
 
     This replaces the Voronoi-catchment fill as the territory map, because it is the shape the
@@ -1115,16 +1133,33 @@ def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALP
 
     Colours come from `draw_palette`, the call `figure_districts` also makes, so all three
     district figures agree hue-for-hue.  `report` is an optional callable taking one string.
+
+    **The fixed-diagram mode.**  By default the diagram is rebuilt from `districts`, which is
+    right for auditing a draw and wrong for exhibiting a labelling that *came from* a diagram:
+    rebuilding recentroids first, so a snapped labelling is scored against the next iterate
+    rather than against the weights that produced it, and the zero it is entitled to cannot
+    appear (`docs/OPTIONS_power-cell-contiguity.md` §4).  Pass `diagram=` a dict from
+    `power_diagram_of_draw` to hold the centres and weights fixed instead; the fill, the
+    centres and the labels then come from that diagram and only the dots come from
+    `districts`.  `palette_of` takes the labelling the hues are derived from, so a before/after
+    pair on one diagram keeps D07 the same colour in both panels.  `mark` is an iterable of
+    zips to ring in the border colour -- the LP's split zips, which have no single cell and
+    whose rendered colour is the argmin's arbitrary choice between the two they straddle.
     """
     from matplotlib.collections import LineCollection
     from matplotlib.patches import PathPatch
 
     say = report or (lambda _s: None)
     keys = [z for z in sorted(districts, key=str) if z in xy]
-    order, centroids, colors = draw_palette(districts, values, xy, n_near=n_near,
+    order, centroids, colors = draw_palette(palette_of or districts, values, xy, n_near=n_near,
                                             palette=palette)
-    pd = power_diagram_of_draw(districts, values, xy, targets=targets)
-    n_out = len(pd["outside"])
+    pd = (power_diagram_of_draw(districts, values, xy, targets=targets) if diagram is None
+          else diagram)
+    # against the diagram actually drawn, which is `pd["outside"]` in the default case and the
+    # whole point of the figure when a fixed diagram was handed in
+    cell_of = pd["cell_of"]
+    outside = [z for z in keys if z in cell_of and cell_of[z] != districts[z]]
+    n_out = len(outside)
     say(f"power: weights from the transportation duals, max dual violation "
         f"{pd['max_dual_violation_rel']:.1e} relative, {pd['n_fractional']} split zip(s); "
         f"{n_out} of {pd['n_zips']} zips ({n_out / max(pd['n_zips'], 1):.1%}) lie outside "
@@ -1184,7 +1219,16 @@ def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALP
         py = np.array([xy[z][1] for z in keys], float)
         ax.scatter(px, py, s=DOT_MARKER, c=[colors[districts[z]] for z in keys],
                    linewidths=DOT_EDGE_W, edgecolors="white", zorder=4)
-    if states is not None:                                     # 5. states, on top but light
+        # a split zip sits on a bisector and belongs to no single cell; the argmin picked one
+        # for it, so it is ringed rather than left to read as a settled assignment
+        ringed = [z for z in (mark or ()) if z in xy]
+        if ringed:
+            ax.scatter([xy[z][0] for z in ringed], [xy[z][1] for z in ringed],
+                       s=4.0 * DOT_MARKER, facecolor="none", edgecolors=BORDER,
+                       linewidths=0.7, zorder=4.5)
+            say(f"power: {len(ringed)} split zip(s) ringed: "
+                + ", ".join(sorted(ringed, key=str)))
+    if states is not None:                                   # 5. states, on top but light
         states.boundary.plot(ax=ax, color=OUTLINE, linewidth=STATE_W_REGIONS, zorder=5)
 
     # 6. a marker at every centre.  The centre is the one point of a district that always
@@ -1219,6 +1263,86 @@ def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALP
     ax.set_xlim(x0 - mx, x1 + mx)
     ax.set_ylim(y0 - my, y1 + my)
     return _save(fig, out)
+
+
+FIXED_COMMITTED = "district_regions_fixed_committed.png"
+FIXED_SNAPPED = "district_regions_fixed_snapped.png"
+
+
+def figures_fixed_diagram(districts, values, xy, states, outdir, *, targets="equal",
+                          report=None, rebuild=True, **kw) -> list:
+    """The before/after pair that shows the zero-mismatch guarantee: **one** diagram, two
+    labellings.
+
+    Every other power-diagram figure recomputes centres from the labelling it is handed, so
+    rendering a snapped draw builds a *new* diagram from the snapped labels and scores the
+    labelling against that one -- 16 of 3,704 outside rather than the zero the snap is entitled
+    to (`docs/OPTIONS_power-cell-contiguity.md` §4).  Here the diagram is built once, from the
+    committed draw, and both panels are drawn on it:
+
+    * `district_regions_fixed_committed.png` -- the committed labelling on its own diagram, the
+      drift this route exists to remove (266 of 3,704 at the equal-split targets used here; the
+      register's 258 is the same count at the own-masses targets, and the two are not the same
+      question);
+    * `district_regions_fixed_snapped.png` -- the same centres, the same weights, the same
+      hues, with the dots recoloured by the labelling those weights produced.  Zero outside,
+      and the subtitle says what the zero is relative to.
+
+    `targets="equal"` by default, matching the snap measurements in §4 rather than the
+    own-masses audit `power_diagram_of_draw` defaults to; the two are not interchangeable.  The
+    LP's `k - 1` split zips straddle a bisector and are ringed in both panels, since the cell
+    each one is drawn in is the argmin's arbitrary pick between the two it sits between.
+
+    `rebuild=True` costs a second transportation LP and buys the qualification the zero needs:
+    the count the *next* iterate reports, i.e. what happens when the diagram is rebuilt from
+    the snapped labels.  It goes in the snapped panel's subtitle measured rather than quoted,
+    so the figure cannot be read as claiming the snapped labelling is its own fixed point.
+    """
+    say = report or (lambda _s: None)
+    pd = power_diagram_of_draw(districts, values, xy, targets=targets)
+    snapped = dict(pd["cell_of"])
+    split = sorted(pd["split_zips"], key=str)
+    n_committed = sum(1 for z, d in snapped.items() if districts[z] != d)
+    n_snapped = sum(1 for z, d in snapped.items() if snapped[z] != d)
+    n = pd["n_zips"]
+    tname = "exactly-equal split" if targets == "equal" else "the draw's own district masses"
+    say(f"fixed diagram: centres and weights held at the committed draw's, targets = {tname}; "
+        f"committed labelling {n_committed} of {n} outside ({n_committed / max(n, 1):.1%}), "
+        f"snapped labelling {n_snapped} of {n} ({n_snapped / max(n, 1):.1%}); "
+        f"{len(split)} split zip(s)")
+
+    # the subtitle is set in one column of the frame, so each line has to stay near 120
+    # characters; past that it runs under the legend and the qualification is what gets lost
+    caveat = "the zero is relative to this diagram, and is not a fixed-point claim"
+    if rebuild:
+        again = power_diagram_of_draw(snapped, values, xy, targets=targets)
+        say(f"fixed diagram: rebuilt from the snapped labels the centres move and "
+            f"{len(again['outside'])} of {again['n_zips']} fall outside again, on "
+            f"{again['n_fractional']} split zip(s) — which is why no recentroiding figure can "
+            f"show the zero")
+        caveat += (f": rebuilt from these labels the centres move, and "
+                   f"{len(again['outside'])} of {again['n_zips']:,} fall outside again")
+
+    common = dict(diagram=pd, palette_of=districts, mark=split, report=report, **kw)
+    held = ("fill, centres and weights held fixed at the diagram the committed draw implies, "
+            f"solved at the {tname}")
+    return [
+        figure_power_regions(
+            districts, values, xy, states, os.path.join(outdir, FIXED_COMMITTED),
+            title=f"Committed draw on its own power diagram — {n_committed} of {n:,} outside",
+            subtitle=(f"{held}\ndots = the committed labelling; a dot whose colour differs "
+                      "from the ground under it was assigned against compactness\n"
+                      f"the {len(split)} ringed zips are the LP's split zips — they straddle "
+                      "a bisector and belong to no single cell"),
+            **common),
+        figure_power_regions(
+            snapped, values, xy, states, os.path.join(outdir, FIXED_SNAPPED),
+            title=f"Snapped to that same diagram — {n_snapped} of {n:,} outside",
+            subtitle=(f"{held}\nthe same cells as the panel before, not rebuilt; dots = the "
+                      "labelling those weights produced, so every dot is on its own ground\n"
+                      f"{caveat}"),
+            **common),
+    ]
 
 
 def read_draw(path) -> dict:
@@ -1269,6 +1393,10 @@ def main(argv=None):
     ap.add_argument("--regions-voronoi", default=None, metavar="DRAW_CSV",
                     help="the superseded zip-catchment rendering, as "
                          "district_regions_voronoi.png")
+    ap.add_argument("--regions-fixed", default=None, metavar="DRAW_CSV",
+                    help="the same draw.csv; adds the fixed-diagram pair "
+                         "(district_regions_fixed_committed.png / _snapped.png): one diagram, "
+                         "the committed labelling and the labelling its weights produced")
     args = ap.parse_args(argv)
 
     from td import instance as descaled
@@ -1318,7 +1446,8 @@ def main(argv=None):
 
     for flag, name in (("districts", "districts.png"),
                        ("regions", "district_regions.png"),
-                       ("regions_voronoi", "district_regions_voronoi.png")):
+                       ("regions_voronoi", "district_regions_voronoi.png"),
+                       ("regions_fixed", "district_regions_fixed_*.png")):
         path = getattr(args, flag)
         if not path:
             continue
@@ -1334,6 +1463,9 @@ def main(argv=None):
         print(f"{name:<20} {len(draw):>5,} zips in {len(ids)} districts; "
               f"{n_off} unplottable ({share:.2%} of their M); "
               f"{len(unplaced)} instance zip(s) not in the draw")
+        if flag == "regions_fixed":                # one diagram, two panels, so not a builder
+            written.extend(figures_fixed_diagram(draw, M, xy, states, args.out, report=print))
+            continue
         dest = os.path.join(args.out, name)
         builder = {"districts": figure_districts,
                    "regions": figure_power_regions,

@@ -590,3 +590,48 @@ def test_figure_power_regions_writes_png_without_a_basemap():
         assert os.path.getsize(p) > 10_000, os.path.getsize(p)
     assert any("outside their own district's cell" in s for s in lines), lines
     assert any("cell area shares run" in s for s in lines), lines
+
+
+def test_a_held_diagram_reports_zero_outside_on_the_labelling_it_produced():
+    """The claim no recentroiding figure can make: hold the centres and weights, and the
+    labelling those weights produced has nobody outside their own cell.
+
+    `figure_power_regions` normally rebuilds the diagram from the labelling it is handed, which
+    takes a recentroid step first and so scores a snapped labelling against the *next* iterate.
+    Passing `diagram=` holds it, and the count the figure reports then has to be exactly zero --
+    it is `cell_of` compared against itself.  The committed labelling on the same held diagram
+    is asserted to be nonzero, so the zero is evidence rather than a vacuous default.
+    """
+    um = _us_maps()
+    zips, xy, M = _equal_mass_clusters()
+    labels = _draw_labels(zips, xy, M)
+    a = next(z for z in zips if labels[z] == "D01")             # a drift to have an opinion on
+    b = next(z for z in zips if labels[z] == "D02")
+    labels[a], labels[b] = labels[b], labels[a]
+    pd = um.power_diagram_of_draw(labels, M, xy, targets="equal")
+    snapped = pd["cell_of"]
+    assert sum(1 for z, d in snapped.items() if labels[z] != d) > 0
+
+    with tempfile.TemporaryDirectory() as tmp:
+        for who, lab in (("committed", labels), ("snapped", snapped)):
+            lines = []
+            um.figure_power_regions(lab, M, xy, None, os.path.join(tmp, f"{who}.png"),
+                                    diagram=pd, palette_of=labels, mark=pd["split_zips"],
+                                    report=lines.append)
+            got = next(s for s in lines if "outside their own district's cell" in s)
+            n = int(got.split(" zips ")[0].split()[-3])       # "...; <n_out> of <n_zips>"
+            assert (n == 0) == (who == "snapped"), (who, got)
+
+
+def test_the_fixed_diagram_pair_writes_both_panels_and_qualifies_its_zero():
+    """The CLI's `--regions-fixed`: two files, and the rebuild that qualifies the zero."""
+    um = _us_maps()
+    _, xy, M, labels = _clustered()
+    lines = []
+    with tempfile.TemporaryDirectory() as tmp:
+        paths = um.figures_fixed_diagram(labels, M, xy, None, tmp, report=lines.append)
+        assert [os.path.basename(p) for p in paths] == [um.FIXED_COMMITTED, um.FIXED_SNAPPED]
+        for p in paths:
+            assert os.path.getsize(p) > 10_000, (p, os.path.getsize(p))
+    assert any("snapped labelling 0 of" in s for s in lines), lines
+    assert any("rebuilt from the snapped labels" in s for s in lines), lines
