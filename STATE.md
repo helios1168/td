@@ -13,7 +13,10 @@ helper), `4bf74c7` (Track 2 driver, anchoring, own-owner reading, verification r
 Run directory `battery/results/borders_k18_v2_20260907/` (hub, gitignored), every cell with
 `draw.csv`, dot and Voronoi maps. All maps published as artifact
 `ca561d23-fa10-49cd-80c0-4d69625d2857` ("Borders on State Lines", compare slider against the
-committed map, tables, instance maps).
+committed map, tables, instance maps; re-rendered 2026-09-07 with a Voronoi diagram per state
+and bold state lines, `3c8a6e8`). The recommended cell alone, with its composition tables and
+the full model in the channel note's notation, is artifact
+`322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a` ("The Five Percent Map"), the sponsor's analysis page.
 
 **What the run says** (`docs/BORDERS_RESULTS.md`). At δ = 5% a map exists with every state
 whole except CA (five districts), NY (three), TX and FL (two): Track 2, 8 splits, certified
