@@ -46,7 +46,7 @@ The programme's original problem was bilateral. Two sales forces merge; a nation
 intersects the two legacy representative maps and decomposes the country into contested
 components, each with one A-rep and one B-rep; inside a component the zips are divided between
 them by maximum Nash welfare subject to hard contiguity. Everything downstream — one binary per
-zip, a scalar exchange rate `u_a(z)/u_b(z)`, the separator cut with its "a branch" and its
+zip, a scalar exchange rate $u_a(z)/u_b(z)$, the separator cut with its "a branch" and its
 "b branch" — inherits that two-sidedness.
 
 The new problem is not a merger. A *national channel* is being created by carving the two
@@ -69,11 +69,11 @@ is the main structural result of this note.
 | distinct representatives | 114 |
 | node classes | 718 contested / 1,447 uncontested / 16 vacant / 1,567 untapped |
 | untapped share of opportunity | 15.7% |
-| aggregate saturation `ΣT/ΣM` | 29.588% |
+| aggregate saturation $\sum T/\sum M$ | 29.588% |
 | mapped opportunity | 8,468.3 descaled units over the 3,704 plotted zips |
 | footprint | **national** (v2 regional shares not measured) |
 | sold-zip Rook adjacency | 862 components, 516 singletons; largest 13.5% of M; 47.6% of M in components under 1% each |
-| territory target | ~$1B ⇒ **k = 18** |
+| territory target | ~\$1B ⇒ **k = 18** |
 | firms | A = `F0`, 53 reps, 41.1% of book; B = `F1`, 61 reps, 58.9%; both hold book in 671 zips carrying 48.8% of mapped opportunity |
 
 The instance is the descaled real export. `STATE.md` `## Facts` carries the v1-to-v2 comparison
@@ -124,62 +124,74 @@ reading is wrong, stage 2's framing needs revisiting.
 
 ### 2.1 Definition
 
-Fix a zip `z`. Let `S_i(z) ≥ 0` be representative `i`'s booked production at `z`, let
+Fix a zip $z$. Let $S_i(z) \ge 0$ be representative $i$'s booked production at $z$, let
 
-$$T_z = \sum_j S_j(z) \tag{Tz}$$
+```math
+T_z = \sum_j S_j(z) \tag{Tz}
+```
 
-be all production booked to a named representative there, let `S_free(z) ≥ 0` be production
-booked at `z` under no named representative (§2.3), and let `M_z > 0` be the market opportunity.
+be all production booked to a named representative there, let $S_{\mathrm{free}}(z) \ge 0$ be production
+booked at $z$ under no named representative (§2.3), and let $M_z > 0$ be the market opportunity.
 
-Two parameters translate these into value: the **transfer capture** `θ ∈ [0,1]`, the fraction of
+Two parameters translate these into value: the **transfer capture** $\theta \in [0,1]$, the fraction of
 another representative's book an inheriting representative retains, and the **headroom credit**
-`λ ∈ [0,1]`, the rate at which untapped opportunity counts against booked production. With the
-net headroom convention `c₁ = 1 − λ`, `c₂ = θ(1 − λ)`:
+$\lambda \in [0,1]$, the rate at which untapped opportunity counts against booked production. With the
+net headroom convention $c_1 = 1 - \lambda$, $c_2 = \theta (1 - \lambda )$:
 
-$$u_i(z) = c_1 S_i(z) + c_2\bigl(T_z - S_i(z)\bigr) + c_{\mathrm{free}} S_{\mathrm{free}}(z) + \lambda M_z \tag{util}$$
+```math
+u_i(z) = c_1 S_i(z) + c_2\bigl(T_z - S_i(z)\bigr) + c_{\mathrm{free}} S_{\mathrm{free}}(z) + \lambda M_z \tag{util}
+```
 
-The inheriting representative keeps `c₁` of their own book, captures `c₂` of everyone else's,
-capitalises unowned book at a rate `c_free` decided separately, and is credited `λ` of the whole
-opportunity. Note that `T_z` in (Tz) runs over named representatives only; `S_free` enters
+The inheriting representative keeps $c_1$ of their own book, captures $c_2$ of everyone else's,
+capitalises unowned book at a rate $c_{\mathrm{free}}$ decided separately, and is credited $\lambda$ of the whole
+opportunity. Note that $T_z$ in (Tz) runs over named representatives only; $S_{\mathrm{free}}$ enters
 (util) through its own term.
 
 > The implementation follows this exactly (`model.utilities`). Its headroom validator
-> `model.headroom_violations` is deliberately *more* conservative: it folds `S_free` into `T_z`
+> `model.headroom_violations` is deliberately *more* conservative: it folds $S_{\mathrm{free}}$ into $T_z$
 > and treats the filler as a possible holder, so a zip whose orphaned book alone exceeds its
 > opportunity is still flagged.
 
 Headroom generalises verbatim: the model requires
 
-$$M_z \ge \max_i \bigl(S_i(z) + \theta (T_z - S_i(z))\bigr) \tag{headroom}$$
+```math
+M_z \ge \max_i \bigl(S_i(z) + \theta (T_z - S_i(z))\bigr) \tag{headroom}
+```
 
-An **allocation** is a map `own: Z → R` from zips to representatives, and each representative's
+An **allocation** is a map $\mathrm{own}: Z \to R$ from zips to representatives, and each representative's
 **gain** at disagreement point `d = 0` is the bundle utility
 
-$$g_i = \sum_{z\,:\,\mathrm{own}(z)=i} u_i(z) \tag{gain}$$
+```math
+g_i = \sum_{z\,:\,\mathrm{own}(z)=i} u_i(z) \tag{gain}
+```
 
 The criterion is maximum Nash welfare (MNW), the Nash bargaining solution (Nash 1950) at
 `d = 0`, equivalently the Eisenberg–Gale objective (Eisenberg & Gale 1959):
 
-$$\max_{\mathrm{own}} \sum_i \log g_i \qquad \text{subject to the geometric constraint.} \tag{mnw}$$
+```math
+\max_{\mathrm{own}} \sum_i \log g_i \qquad \text{subject to the geometric constraint.} \tag{mnw}
+```
 
 Nothing in the outer-approximation argument that makes (mnw) exactly solvable was ever
-two-player: `log` is concave and `g_i` is linear in the assignment, so this remains a convex
+two-player: `log` is concave and $g_i$ is linear in the assignment, so this remains a convex
 MINLP with a genuine optimality certificate (Duran & Grossmann 1986; Fletcher & Leyffer 1994).
 The fairness guarantee survives the move for the same reason — Caragiannis et al. (2019) state
 Pareto efficiency and envy-freeness up to one good for n agents, not two.
 
 ### 2.2 The model reduces to the two-player one
 
-**Proposition 1 (two-representative reduction).** Let `n = 2` with `R = {a,b}`, `S_a(z) = A_z`,
-`S_b(z) = B_z` and `S_free ≡ 0`. Then (util) is identically the two-player model,
+**Proposition 1 (two-representative reduction).** Let `n = 2` with `R = {a,b}`, $S_a(z) = A_z$,
+$S_b(z) = B_z$ and $S_{\mathrm{free}} \equiv 0$. Then (util) is identically the two-player model,
 
-$$u_a(z) = c_1 A_z + c_2 B_z + \lambda M_z, \qquad u_b(z) = c_2 A_z + c_1 B_z + \lambda M_z,$$
+```math
+u_a(z) = c_1 A_z + c_2 B_z + \lambda M_z, \qquad u_b(z) = c_2 A_z + c_1 B_z + \lambda M_z,
+```
 
-and (headroom) is identically `M_z ≥ max(A_z + θB_z, B_z + θA_z)`.
+and (headroom) is identically $M_z \ge \max(A_z + \theta B_z, B_z + \theta A_z)$.
 
-*Proof.* `T_z = A_z + B_z`, so `T_z − S_a(z) = B_z` and `T_z − S_b(z) = A_z`; substituting into
-(util) with `c_free·S_free = 0` gives the two displayed expressions. For (headroom), the maximum
-runs over `i ∈ {a,b}` and gives `max(A_z + θB_z, B_z + θA_z)`. ∎
+*Proof.* $T_z = A_z + B_z$, so $T_z - S_a(z) = B_z$ and $T_z - S_b(z) = A_z$; substituting into
+(util) with $c_{\mathrm{free}}\cdot S_{\mathrm{free}} = 0$ gives the two displayed expressions. For (headroom), the maximum
+runs over $i \in \{a,b\}$ and gives $\max(A_z + \theta B_z, B_z + \theta A_z)$. ∎
 
 This is not a formality. It is what keeps the entire committed corpus of two-player results —
 the paper's worked 50-zip instance, the C1–C9 battery, every certified harness row —
@@ -193,16 +205,16 @@ Some territories currently have no assigned representative, and their production
 a **filler key**: a representative-shaped sentinel that carries real sales, real opportunity and
 a real manufacturer, but is not a person. It must never become a candidate owner. A filler key
 with an objective term would have the solver bargaining on behalf of an empty chair, and because
-`Σ_i log g_i` is unbounded below as any `g_i → 0`, it would trade real representatives' welfare
+$\sum _i \log g_i$ is unbounded below as any $g_i \to 0$, it would trade real representatives' welfare
 away to feed it.
 
-The schema separates the two roles, which is what makes the exclusion cheap: `T_z` is computed
+The schema separates the two roles, which is what makes the exclusion cheap: $T_z$ is computed
 from *all* books, but the assignment ranges over *candidates* only, and candidacy is
-`cand(z) = {i : S_i(z) > 0}` with filler keys removed. Orphaned production therefore arrives as
-its own attribute `S_free` and is capitalised by whoever inherits the zip. Four node classes
+$\mathrm{cand}(z) = \{i : S_i(z) > 0\}$ with filler keys removed. Orphaned production therefore arrives as
+its own attribute $S_{\mathrm{free}}$ and is capitalised by whoever inherits the zip. Four node classes
 result, with the export's counts:
 
-| class | \|cand(z)\| | book | count |
+| class | $\lvert\mathrm{cand}(z)\rvert$ | book | count |
 |---|---|---|---|
 | contested | ≥ 2 | real | 718 |
 | uncontested | 1 | real | 1,447 |
@@ -212,24 +224,24 @@ result, with the export's counts:
 Contested zips are the decision problem; an uncontested zip's owner is forced under a legacy rule
 but it still carries utility; a vacant zip has real book and no incumbent, so nobody can claim it
 by legacy; an untapped zip is opportunity with no book at all. Under the two-stage scheme none of
-the four is dropped — stage 1 partitions on `M_z` alone, so every zip lands in a district by
+the four is dropped — stage 1 partitions on $M_z$ alone, so every zip lands in a district by
 construction, and candidacy re-enters only at stage 2.
 
 **The untapped class is now the large one.** 1,567 of 3,748 zips are untapped, carrying 15.7% of
-opportunity. `cand(z) = ∅` there, so no representative can take such a zip under the candidacy
+opportunity. $\mathrm{cand}(z) = \emptyset$ there, so no representative can take such a zip under the candidacy
 rule, yet it carries opportunity and holds the graph together. What owns an untapped zip is an
 open decision (`docs/MODEL.md` §6): leave unallocated, assign by adjacency to a neighbour's
 owner, or admit a wider candidate set for these zips only.
 
-**Choosing `c_free`.** Three coefficients are defensible, and they give materially different
+**Choosing $c_{\mathrm{free}}$.** Three coefficients are defensible, and they give materially different
 maps, so the implementation takes the mode explicitly (`filler_capture`) rather than defaulting
 quietly.
 
-- `theta` (`c_free = c₂`) discounts orphaned book exactly like a live representative's;
+- `theta` ($c_{\mathrm{free}} = c_2$) discounts orphaned book exactly like a live representative's;
   conservative, and it assumes vacant business is as person-sticky as anyone else's.
-- `opportunity` (`c_free = λ`) treats it as untapped market; defensible if the sales in vacant
+- `opportunity` ($c_{\mathrm{free}} = \lambda$) treats it as untapped market; defensible if the sales in vacant
   territories are house or inbound business with no relationship content.
-- `full` (`c_free = c₁`) is **the recommended choice**: the reason `θ < 1` exists at all is that
+- `full` ($c_{\mathrm{free}} = c_1$) is **the recommended choice**: the reason $\theta < 1$ exists at all is that
   a *departing* representative pulls relationships away with them, and a vacancy has nobody left
   to pull — whatever book has survived an already-departed representative has, by definition,
   survived the departure, so discounting it again double-counts an attrition that has already
@@ -249,35 +261,37 @@ This is the centrepiece. In the two-player problem the objective and the balance
 territories were different things; the Nash criterion was chosen for its axioms and its
 efficiency, and balance was a by-product. On a **common measure** they coincide exactly.
 
-Let `Z` be the footprint with `M_z > 0`, and let `A = (A₁,…,A_k)` be a partition of `Z` into k
-districts, with masses `M_j = Σ_{z ∈ A_j} M_z`.
+Let `Z` be the footprint with $M_z > 0$, and let $A = (A_1,\dots,A_k)$ be a partition of `Z` into k
+districts, with masses $M_j = \sum _{z \in A_j} M_z$.
 
 **Proposition 2 (MNW on a common measure equalises).** For every partition of `Z` into k parts,
-`Σ_j M_j = M(Z) := Σ_{z ∈ Z} M_z` — the total is *partition-invariant*. Consequently
+$\sum _j M_j = M(Z) := \sum _{z \in Z} M_z$ — the total is *partition-invariant*. Consequently
 
-$$\sum_{j=1}^{k} \log M_j \;\le\; k \log\frac{M(Z)}{k} \tag{ceilbasic}$$
+```math
+\sum_{j=1}^{k} \log M_j \;\le\; k \log\frac{M(Z)}{k} \tag{ceilbasic}
+```
 
-with equality if and only if `M₁ = … = M_k = M(Z)/k`. Hence a partition attaining equal masses,
+with equality if and only if $M_1 = \dots = M_k = M(Z)/k$. Hence a partition attaining equal masses,
 when one exists, is a maximiser of the Nash objective, and every maximiser is as close to equal
 as the feasible set permits.
 
-*Proof.* Partition-invariance is immediate: each `z` lies in exactly one part, so
-`Σ_j M_j = Σ_j Σ_{z ∈ A_j} M_z = Σ_{z ∈ Z} M_z`.
+*Proof.* Partition-invariance is immediate: each $z$ lies in exactly one part, so
+$\sum _j M_j = \sum _j \sum _{z \in A_j} M_z = \sum _{z \in Z} M_z$.
 
-For the inequality, relax to `m ∈ ℝ^k_{>0}` with `Σ_j m_j = M(Z)` and maximise `Σ_j log m_j`. The
+For the inequality, relax to $m \in \mathbb{R}^k_{>0}$ with $\sum _j m_j = M(Z)$ and maximise $\sum _j \log m_j$. The
 objective is strictly concave and the constraint set is compact and convex, so the maximiser is
-unique. The Lagrangian `L(m,μ) = Σ_j log m_j − μ(Σ_j m_j − M(Z))` is stationary when `1/m_j = μ`
-for every j, so `m_j = 1/μ` for all j, and the constraint forces `m_j = M(Z)/k`. Substituting
+unique. The Lagrangian $L(m,\mu ) = \sum _j \log m_j - \mu (\sum _j m_j - M(Z))$ is stationary when $1/m_j = \mu$
+for every j, so $m_j = 1/\mu$ for all j, and the constraint forces $m_j = M(Z)/k$. Substituting
 gives (ceilbasic).
 
 Equivalently and without calculus, AM–GM gives `(Π_j m_j)^{1/k} ≤ (1/k) Σ_j m_j = M(Z)/k` with
-equality iff all `m_j` are equal; take logarithms and multiply by k. Since every partition's mass
+equality iff all $m_j$ are equal; take logarithms and multiply by k. Since every partition's mass
 vector is feasible for the relaxation, the bound applies to it, and the equality case identifies
 exactly the equal partitions. ∎
 
 So the Nash objective **is** the balance objective on a common measure. It is not an
 approximation of it, and it is not a proxy: the argmax is the same. That is the whole
-justification for treating $1B as an emergent target rather than a hard band — set
+justification for treating \$1B as an emergent target rather than a hard band — set
 `k = ⌈total opportunity / $1B⌉ = 18` and balance falls out of the criterion the project already
 uses for fairness.
 
@@ -285,17 +299,19 @@ Two refinements make the statement useful when perfect equality is unattainable,
 instance it always is.
 
 **Corollary 3 (strict Schur-concavity: the objective always prefers the flatter vector).**
-`Φ(m) = Σ_j log m_j` is strictly Schur-concave on `ℝ^k_{>0}`. Hence if the mass vector `m` of one
-partition *majorises* the mass vector `m′` of another — `m` is the less even of the two, in the
-standard partial order — then `Φ(m) ≤ Φ(m′)`, strictly unless `m` is a permutation of `m′`.
+$\Phi (m) = \sum _j \log m_j$ is strictly Schur-concave on $\mathbb{R}^k_{>0}$. Hence if the mass vector $m$ of one
+partition *majorises* the mass vector `m′` of another — $m$ is the less even of the two, in the
+standard partial order — then $\Phi (m) \le \Phi (m')$, strictly unless $m$ is a permutation of `m′`.
 
-*Proof.* `Φ` is symmetric and strictly concave, being a sum of a strictly concave function
-applied coordinatewise. A symmetric concave function is Schur-concave: for `i ≠ j` the
+*Proof.* $\Phi$ is symmetric and strictly concave, being a sum of a strictly concave function
+applied coordinatewise. A symmetric concave function is Schur-concave: for $i \ne j$ the
 Schur–Ostrowski condition
 
-$$(m_i - m_j)(\partial_i\Phi - \partial_j\Phi) = (m_i - m_j)(1/m_i - 1/m_j) = -\,(m_i-m_j)^2/(m_i m_j) \le 0$$
+```math
+(m_i - m_j)(\partial_i\Phi - \partial_j\Phi) = (m_i - m_j)(1/m_i - 1/m_j) = -\,(m_i-m_j)^2/(m_i m_j) \le 0
+```
 
-holds, with equality only at `m_i = m_j`; strictness of the inequality off the diagonal gives
+holds, with equality only at $m_i = m_j$; strictness of the inequality off the diagonal gives
 strict Schur-concavity. ∎
 
 Corollary 3 is what makes (mnw) a usable objective on a constrained feasible set: among
@@ -306,7 +322,7 @@ attainable.
 **Observation (verified by enumeration).** `test_channel.py`'s
 `test_nash_welfare_is_equal_size_districting` brute-forces every way of cutting a 12-vertex path
 with uniform opportunity per zip into three *contiguous* blocks and checks that the argmax of
-`Σ_j log M_j` is the balanced cut `(4,8)`, with reported relative spread exactly zero. It is a
+$\sum _j \log M_j$ is the balanced cut `(4,8)`, with reported relative spread exactly zero. It is a
 small check, but it is the one that would fail first if the identity were ever broken by a change
 to the objective.
 
@@ -333,39 +349,45 @@ that matters.
 
 **Proposition 4 (welfare decomposition).** For any allocation `own` of all of `Z`,
 
-$$\sum_i g_i = \underbrace{\sum_{z \in Z}\bigl[\lambda M_z + c_2 T_z + c_{\mathrm{free}} S_{\mathrm{free}}(z)\bigr]}_{W_0,\ \text{partition-invariant}} \;+\; \underbrace{(c_1 - c_2)\sum_{z \in Z} S_{\mathrm{own}(z)}(z)}_{\text{incumbency premium}} \tag{decomp}$$
+```math
+\sum_i g_i = \underbrace{\sum_{z \in Z}\bigl[\lambda M_z + c_2 T_z + c_{\mathrm{free}} S_{\mathrm{free}}(z)\bigr]}_{W_0,\ \text{partition-invariant}} \;+\; \underbrace{(c_1 - c_2)\sum_{z \in Z} S_{\mathrm{own}(z)}(z)}_{\text{incumbency premium}} \tag{decomp}
+```
 
 The first term does not depend on `own` at all. The second, since
-`c₁ − c₂ = (1 − θ)(1 − λ) ≥ 0`, is maximised by giving every zip to the candidate holding the
+$c_1 - c_2 = (1 - \theta )(1 - \lambda ) \ge 0$, is maximised by giving every zip to the candidate holding the
 most book there.
 
-*Proof.* By (gain), `Σ_i g_i = Σ_i Σ_{z: own(z)=i} u_i(z) = Σ_{z ∈ Z} u_{own(z)}(z)`, since each
-`z` contributes to exactly one representative. Expanding (util) at `i = own(z)` and regrouping,
+*Proof.* By (gain), $\sum _i g_i = \sum _i \sum _{z: \mathrm{own}(z)=i} u_i(z) = \sum _{z \in Z} u_{own(z)}(z)$, since each
+$z$ contributes to exactly one representative. Expanding (util) at `i = own(z)` and regrouping,
 
-$$u_{\mathrm{own}(z)}(z) = c_2 T_z + c_{\mathrm{free}} S_{\mathrm{free}}(z) + \lambda M_z + (c_1 - c_2) S_{\mathrm{own}(z)}(z),$$
+```math
+u_{\mathrm{own}(z)}(z) = c_2 T_z + c_{\mathrm{free}} S_{\mathrm{free}}(z) + \lambda M_z + (c_1 - c_2) S_{\mathrm{own}(z)}(z),
+```
 
-in which only the last term mentions `own`. Summing over `z` gives (decomp). For the
-maximisation, `c₁ − c₂ = (1 − λ) − θ(1 − λ) = (1 − θ)(1 − λ) ≥ 0`, so the sum is maximised
-termwise by `own(z) ∈ argmax_i S_i(z)` over the candidates. ∎
+in which only the last term mentions `own`. Summing over $z$ gives (decomp). For the
+maximisation, $c_1 - c_2 = (1 - \lambda ) - \theta (1 - \lambda ) = (1 - \theta )(1 - \lambda ) \ge 0$, so the sum is maximised
+termwise by $\mathrm{own}(z) \in \operatorname{argmax}_i S_i(z)$ over the candidates. ∎
 
 Read plainly: **the objective is "balance the territories", plus "where there is slack, leave
 business with the representative who already has it".** That is a reassuringly operational
 reading of a Nash bargaining criterion, and it is exact.
 
-The partition-invariant term is measured: `W₀ = B_tot = 3268.4069219934404`
+The partition-invariant term is measured: $W_0 = B_{\mathrm{tot}} = 3268.4069219934404$
 (`premium.py::measure()`).
 
 ### 4.1 Sizing the two terms
 
 The relative weight of the two halves of (decomp) decides how much the legacy books can move the
-map at all, and it is set by **saturation** `t_z = T_z / M_z`. At the reference parameters
-`θ = 0.40`, `λ = 0.30` — so `c₁ = 0.70`, `c₂ = 0.28`, `c₁ − c₂ = 0.42` — and the measured
+map at all, and it is set by **saturation** $t_z = T_z / M_z$. At the reference parameters
+$\theta = 0.40$, $\lambda = 0.30$ — so $c_1 = 0.70$, $c_2 = 0.28$, $c_1 - c_2 = 0.42$ — and the measured
 aggregate saturation of 29.588%, a zip whose whole book sits with one incumbent is worth
 
-$$u_{\text{incumbent}} = 0.507\,M_z, \qquad u_{\text{other candidate}} = 0.383\,M_z.$$
+```math
+u_{\text{incumbent}} = 0.507\,M_z, \qquad u_{\text{other candidate}} = 0.383\,M_z.
+```
 
-Of the incumbent's utility, 59.1% is the pure opportunity term `λM_z` and only 24.5% is the
-incumbency premium `(c₁ − c₂)S_i(z)`; the utility swing between holding the book and not holding
+Of the incumbent's utility, 59.1% is the pure opportunity term $\lambda M_z$ and only 24.5% is the
+incumbency premium $(c_1 - c_2)S_i(z)$; the utility swing between holding the book and not holding
 it is 32.5%.
 
 > `chOppShare` prints 59.1 or 59.2 depending on whether `ceiling.py:75` stores `SATURATION` at
@@ -374,9 +396,11 @@ it is 32.5%.
 The consequence for the algorithm is decisive. Combining Propositions 2 and 4 through the AM–GM
 inequality of (ceilbasic),
 
-$$\sum_i \log g_i = n\log\!\Bigl(\frac{W_0 + (c_1-c_2)\sum_z S_{\mathrm{own}(z)}(z)}{n}\Bigr) - \underbrace{\Bigl[n\log \bar g - \sum_i \log g_i\Bigr]}_{D(g)\ \ge\ 0} \tag{split}$$
+```math
+\sum_i \log g_i = n\log\!\Bigl(\frac{W_0 + (c_1-c_2)\sum_z S_{\mathrm{own}(z)}(z)}{n}\Bigr) - \underbrace{\Bigl[n\log \bar g - \sum_i \log g_i\Bigr]}_{D(g)\ \ge\ 0} \tag{split}
+```
 
-where `ḡ` is the arithmetic mean of the gains and `D(g) ≥ 0`, the log of the
+where `ḡ` is the arithmetic mean of the gains and $D(g) \ge 0$, the log of the
 arithmetic-to-geometric mean ratio, vanishes exactly at perfect balance.
 
 The first term is bounded within a 24.5%-scale window by the incumbency premium, and **on the
@@ -388,7 +412,7 @@ nats exact**. The 0.912 first-order sum differs from it by 0.022, which is 4.5×
 so the two must not be quoted interchangeably. On the same draw `D(g) = 0.148` nats.
 
 The 10⁻⁴–10⁻² range one might expect belongs to the *mass* imbalance `D(M)`, which is 1.5×10⁻⁴
-nats at a mass spread of 1.37%; (split) is written on `g`, not on `M`, and the realised *gain*
+nats at a mass spread of 1.37%; (split) is written on $g$, not on `M`, and the realised *gain*
 spread on this draw is 60.17%. On the region the programme actually operates in the ordering
 therefore **inverts** — by a factor of 6.0, not by orders of magnitude: incumbency, not balance,
 is the larger term.
@@ -403,7 +427,7 @@ saturation alone does not settle the question either way. What settles it is the
 premium window above — 0.890 nats against `D(g) = 0.148` — which says incumbency book carries real
 weight in the objective whatever side of the 30% line the instance happens to fall on. The
 incumbency premium itself measures **0.72–0.78 nats and is not soft**: on the D1′ screen it sits
-at 146–155× the 5×10⁻³ tier-2 floor, with no `δ*` at which it vanishes.
+at 146–155× the 5×10⁻³ tier-2 floor, with no $\delta *$ at which it vanishes.
 
 ---
 
@@ -418,27 +442,29 @@ at 146–155× the 5×10⁻³ tier-2 floor, with no `δ*` at which it vanishes.
 
 ### 5.1 Stage 2 is a linear assignment problem on logs
 
-Given a drawn map `A₁,…,A_k`, let
+Given a drawn map $A_1,\dots,A_k$, let
 
-$$g_{ij} = \sum_{z \in A_j} u_i(z) \tag{gij}$$
+```math
+g_{ij} = \sum_{z \in A_j} u_i(z) \tag{gij}
+```
 
-be what district `j` is worth to representative `i` — evaluated for *every* representative on
+be what district $j$ is worth to representative $i$ — evaluated for *every* representative on
 *every* district, unrestricted by legacy candidacy, which is the entire point of drawing the map
 before staffing it.
 
-**Proposition 5 (Nash-optimal staffing is a linear assignment problem).** Suppose `g_ij > 0` for
-all `i,j`. Maximising `Σ_i log g_{i σ(i)}` over injections `σ` from representatives to districts
-is a maximum-weight bipartite matching with weights `w_ij = log g_ij`, and is therefore solved
-exactly in `O(max(m,k)³)` by the Hungarian algorithm, where `m` is the number of representatives.
-When `m > k` the matching is rectangular, and the unmatched representatives are exactly those not
+**Proposition 5 (Nash-optimal staffing is a linear assignment problem).** Suppose $g_{ij} > 0$ for
+all `i,j`. Maximising $\sum _i \log g_{i \sigma (i)}$ over injections $\sigma$ from representatives to districts
+is a maximum-weight bipartite matching with weights $w_{ij} = \log g_{ij}$, and is therefore solved
+exactly in $O(\max(m,k)^3)$ by the Hungarian algorithm, where $m$ is the number of representatives.
+When $m > k$ the matching is rectangular, and the unmatched representatives are exactly those not
 staffing the channel.
 
-*Proof.* The objective is additively separable over the pairs `(i, σ(i))` that `σ` selects, the
-coefficient of `(i,j)` being `log g_ij`, independent of the rest of `σ`. The injections `σ` are
-exactly the matchings of the complete bipartite graph `K_{m,k}` saturating its smaller side.
-Hence this is the linear assignment problem with weight matrix `(log g_ij)`, which the Hungarian
+*Proof.* The objective is additively separable over the pairs $(i, \sigma (i))$ that $\sigma$ selects, the
+coefficient of `(i,j)` being $\log g_{ij}$, independent of the rest of $\sigma$. The injections $\sigma$ are
+exactly the matchings of the complete bipartite graph $K_{m,k}$ saturating its smaller side.
+Hence this is the linear assignment problem with weight matrix $(\log g_{ij})$, which the Hungarian
 algorithm solves to optimality in cubic time; the rectangular case is the standard padding
-reduction. Positivity of `g_ij` is needed for `log g_ij` to be finite, and is checked rather than
+reduction. Positivity of $g_{ij}$ is needed for $\log g_{ij}$ to be finite, and is checked rather than
 assumed. ∎
 
 On the live instance the rectangular case is the operative one: 114 representatives against 18
@@ -479,7 +505,7 @@ in the portfolio diagnoses how much the split is costing.
 > stage-1 gap: pinning CALIFORNIA alone costs 2.04 nats at stage 2, and the atom cut plan forces
 > California into five pieces.
 
-A pleasant side effect: stage 1 needs almost none of the confidential data — only `(z, M_z)` and
+A pleasant side effect: stage 1 needs almost none of the confidential data — only $(z, M_z)$ and
 public coordinates, with opportunity plausibly third-party market sizing — while stage 2 needs
 the books but not the geometry, and can therefore run entirely on the work machine given only the
 returned district map.
@@ -499,11 +525,11 @@ Ríos-Mercado & Fernández 2009; Duque et al. 2011).
 
 ### 6.1 The programme
 
-Let `x_z ∈ ℝ²` be zip `z`'s internal point in an equal-area planar projection, so that squared
+Let $x_z \in \mathbb{R}^2$ be zip $z$'s internal point in an equal-area planar projection, so that squared
 Euclidean distance is a real area-weighted moment and not a lat/lon approximation. With k centers
-`c₁,…,c_k ∈ ℝ²` and binaries `y_zj = 1` iff zip `z` joins district `j`:
+$c_1,\dots,c_k \in \mathbb{R}^2$ and binaries $y_{zj} = 1$ iff zip $z$ joins district $j$:
 
-$$
+```math
 \begin{aligned}
 \min_{y}\;\; & \sum_{z \in Z}\sum_{j=1}^{k} M_z \lVert x_z - c_j \rVert^2 y_{zj}\\
 \text{s.t.}\;\; & \sum_{j=1}^{k} y_{zj} = 1 && \forall z \in Z,\\
@@ -511,18 +537,18 @@ $$
 & y_{zj} \in \{0,1\}.
 \end{aligned}
 \tag{centers}
-$$
+```
 
 The mass equalities are **hard**, so any feasible point is exactly balanced and the objective only
 chooses among balanced maps; in the band form used in practice they are relaxed to
-`|Σ_z M_z y_zj − M(Z)/k| ≤ δ`. By Proposition 2 this is the right division of labour: balance
+$|\sum _z M_z y_{zj} - M(Z)/k| \le \delta$. By Proposition 2 this is the right division of labour: balance
 *is* the Nash objective on a common measure, and compactness is the tie-break among its optima —
 exactly the ordering (split) derives. Centers are then updated Lloyd-style, each to the
 `M`-weighted centroid of its district, and (centers) re-solved; the loop stops when the labels
 repeat.
 
-Two things are bought by the reformulation. The `k!` label symmetry that would cripple
-branch-and-bound on an anonymous-district model is gone — district `j` is the one at `c_j`, so
+Two things are bought by the reformulation. The $k!$ label symmetry that would cripple
+branch-and-bound on an anonymous-district model is gone — district $j$ is the one at $c_j$, so
 the labels are pinned by geography, which is why Hess's formulation is the standard remedy for
 it. And the constraint matrix of the relaxation is a network matrix, which is the content of the
 next lemma.
@@ -530,47 +556,47 @@ next lemma.
 ### 6.2 The transportation-relaxation lemma
 
 **Lemma 6 (fixed centers: the relaxation is a transportation problem).** Fix the centers and
-relax `y_zj ∈ {0,1}` to `y_zj ≥ 0` in (centers). Then:
+relax $y_{zj} \in \{0,1\}$ to $y_{zj} \ge 0$ in (centers). Then:
 
-1. the substitution `η_zj = M_z y_zj` turns the constraints into a Hitchcock transportation
-   problem with supplies `M_z`, demands `M(Z)/k` and no upper bounds — the bounds `y_zj ≤ 1` are
+1. the substitution $\eta _{zj} = M_z y_{zj}$ turns the constraints into a Hitchcock transportation
+   problem with supplies $M_z$, demands `M(Z)/k` and no upper bounds — the bounds $y_{zj} \le 1$ are
    implied;
 2. the relaxation is feasible, and every basic solution has acyclic support, hence at most
-   `n + k − 1` positive entries, where `n = |Z|`;
-3. consequently at most `k − 1` zips are **split**, i.e. have `y_zj > 0` for two or more `j`.
+   `n + k − 1` positive entries, where $n = |Z|$;
+3. consequently at most $k - 1$ zips are **split**, i.e. have $y_{zj} > 0$ for two or more $j$.
    Every other zip is assigned integrally by the relaxation itself.
 
-*Proof.* (1) Substituting `η_zj = M_z y_zj` (`M_z > 0`) sends `Σ_j y_zj = 1` to
-`Σ_j η_zj = M_z` and `Σ_z M_z y_zj = M(Z)/k` to `Σ_z η_zj = M(Z)/k`; supplies and demands both
-total `M(Z)`, so the problem is a balanced transportation problem, and `η_zj ≥ 0` with
-`Σ_j η_zj = M_z` forces `η_zj ≤ M_z`, i.e. `y_zj ≤ 1`.
+*Proof.* (1) Substituting $\eta _{zj} = M_z y_{zj}$ ($M_z > 0$) sends $\sum _j y_{zj} = 1$ to
+$\sum _j \eta _{zj} = M_z$ and $\sum _z M_z y_{zj} = M(Z)/k$ to $\sum _z \eta _{zj} = M(Z)/k$; supplies and demands both
+total `M(Z)`, so the problem is a balanced transportation problem, and $\eta _{zj} \ge 0$ with
+$\sum _j \eta _{zj} = M_z$ forces $\eta _{zj} \le M_z$, i.e. $y_{zj} \le 1$.
 
-(2) `η_zj = M_z/k` is feasible, so the feasible set is nonempty; it is bounded, so a basic optimal
+(2) $\eta _{zj} = M_z/k$ is feasible, so the feasible set is nonempty; it is bounded, so a basic optimal
 solution exists. The constraint matrix is the node–arc incidence matrix of the complete bipartite
-network on the `n` supply nodes and `k` demand nodes, and a set of its columns is linearly
+network on the $n$ supply nodes and $k$ demand nodes, and a set of its columns is linearly
 independent iff the corresponding edge set contains no cycle; hence the support of a basic
 solution is a forest on `n + k` nodes and has at most `n + k − 1` edges.
 
 (3) Let `F` be the number of split zips. Every zip node has degree at least one in the support,
-since `M_z > 0` must be shipped somewhere, and a split zip has degree at least two. Counting
-edges, `n + F ≤ #edges ≤ n + k − 1`, so `F ≤ k − 1`. ∎
+since $M_z > 0$ must be shipped somewhere, and a split zip has degree at least two. Counting
+edges, `n + F ≤ #edges ≤ n + k − 1`, so $F \le k - 1$. ∎
 
-**Corollary 7 (rounding damage is confined to `k − 1` zips).** Rounding a basic optimum by giving
-each split zip to the district holding its largest share changes at most `k − 1` of the `n`
+**Corollary 7 (rounding damage is confined to $k - 1$ zips).** Rounding a basic optimum by giving
+each split zip to the district holding its largest share changes at most $k - 1$ of the $n$
 assignments; every other zip keeps the district the exactly balanced relaxation gave it, and no
-district's mass moves by more than the total mass of the split zips, at most `(k−1) max_z M_z`.
+district's mass moves by more than the total mass of the split zips, at most $(k-1) \max_z M_z$.
 
 *Proof.* Immediate from Lemma 6(3): the rounded solution differs from the basic optimum only on
 split zips, and the basic optimum's masses are exactly `M(Z)/k`, so each district's mass changes
-by at most the mass it gains or loses from those `F ≤ k − 1` zips. ∎
+by at most the mass it gains or loses from those $F \le k - 1$ zips. ∎
 
-The crude bound `(k−1) max_z M_z` is not the operative fact. What matters is the **count**, and
+The crude bound $(k-1) \max_z M_z$ is not the operative fact. What matters is the **count**, and
 the live run hits the bound exactly: at k = 18 over the 3,704 plotted zips, **17 = k − 1 zips
 split**, at both target choices. Those 17 carry 17.03% of one mean district at equal-split
 targets (largest, `20814`, 3.699% of a mean district) and 22.08% at own-masses targets. A greedy
 repair pass then recovers what the rounding cost. That is why a heuristic can land 0.000082 nats
 below a bound that holds for every partition (§7.4): the only unbalanced part of the answer is
-`k − 1` zips wide.
+$k - 1$ zips wide.
 
 ### 6.3 The rest of the pipeline
 
@@ -578,8 +604,8 @@ Three components surround (centers), and each is a heuristic that §7 then measu
 trusts.
 
 **Seeding.** `M`-weighted k-means++: the first center is a zip drawn with probability
-proportional to `M_z`, each further center with probability proportional to
-`M_z d²(z, nearest chosen center)`. Weighting by `M` rather than by zip count is the right prior
+proportional to $M_z$, each further center with probability proportional to
+$M_z d^2(z, nearest chosen center)$. Weighting by `M` rather than by zip count is the right prior
 when districts are equal in *mass*: a dense but light region should not attract centers the way
 its zip count would suggest.
 
@@ -587,11 +613,11 @@ its zip count would suggest.
 centroid, repeat. Unlike plain k-means there is no drift to a lopsided fixed point, because every
 round's assignment is exactly balanced before rounding; the rounds buy compactness only.
 
-**The polish.** A greedy pass over single-zip moves that strictly increase `Σ_j log M_j`,
+**The polish.** A greedy pass over single-zip moves that strictly increase $\sum _j \log M_j$,
 restricted to destinations among the 3 nearest centers — the compactness guard, without which a
 Nash-greedy move would send a California zip to a Florida district for an epsilon of balance.
 Ties in the objective are broken by the more compact destination, and a district is never emptied
-(that would send the objective to `−∞`).
+(that would send the objective to $-\infty$).
 
 **Zips with no coordinates.** 44 of the 3,748 zips are absent from the geometry: 41 carry no
 gazetteer internal point (retired or non-ZCTA codes) and 3 sit outside the lower 48. They are
@@ -605,7 +631,7 @@ smallest total mass, one zip at a time with counts and masses updated after each
 
 *(`channel_note.tex` §8, `sec:certs`)*
 
-Nothing in §6 proves anything: the seeding is random, the rounding of the `k − 1` split zips is
+Nothing in §6 proves anything: the seeding is random, the rounding of the $k - 1$ split zips is
 arbitrary, and the polish is a local search. Three post-hoc certificates say how far from optimal
 a drawn map actually is — and, as importantly, which questions they leave open. They are
 implemented in `td/solvers/cert_draw.py` and exercised against brute force at small k in
@@ -613,39 +639,41 @@ implemented in `td/solvers/cert_draw.py` and exercised against brute force at sm
 
 > A fourth certificate, `cert_power_diagram`, was added after the source note was written. It
 > asks the geometric question of certificate (iii) using the transportation LP's **duals**
-> instead of a MILP: dual feasibility reads `α_z + M_z β_j ≤ M_z d²(z,c_j)`, so an optimal
-> assignment puts each zip in the district minimising `d²(z,c_j) − β_j` — the **power (Laguerre)
-> diagram** of the centers with weights `β`. That yields a lower bound whose verification is
+> instead of a MILP: dual feasibility reads $\alpha _z + M_z \beta _j \le M_z d^2(z,c_j)$, so an optimal
+> assignment puts each zip in the district minimising $d^2(z,c_j) - \beta _j$ — the **power (Laguerre)
+> diagram** of the centers with weights $\beta$. That yields a lower bound whose verification is
 > `O(nk)` arithmetic with no solver in the trusted path, and the territory map exactly, as k
 > convex cells. `power_weights` also returns the split zips' row indices, surfaced as
 > `power_diagram_of_draw`'s `split_zips`. See `docs/OPTIONS_power-cell-contiguity.md`.
 
 ### 7.1 (i) The balance ceiling: analytic, and valid for every partition
 
-**Proposition 8 (balance ceiling at fixed k).** Let `Z` be any finite set with `M_z > 0` and let
-`A₁,…,A_k` be any partition of it into k parts of positive mass. Then
+**Proposition 8 (balance ceiling at fixed k).** Let `Z` be any finite set with $M_z > 0$ and let
+$A_1,\dots,A_k$ be any partition of it into k parts of positive mass. Then
 
-$$\sum_{j=1}^k \log M_j \le k\log\frac{M(Z)}{k},$$
+```math
+\sum_{j=1}^k \log M_j \le k\log\frac{M(Z)}{k},
+```
 
-with equality iff every `M_j = M(Z)/k`. The gap `Δ = k log(M(Z)/k) − Σ_j log M_j ≥ 0` is
-invariant under a global rescaling `M ↦ κM`, and `1 − e^{−Δ}` is the equivalent proportional
+with equality iff every $M_j = M(Z)/k$. The gap $\Delta = k \log(M(Z)/k) - \sum _j \log M_j \ge 0$ is
+invariant under a global rescaling $M \mapsto \kappa M$, and $1 - e^{-\Delta }$ is the equivalent proportional
 shortfall in the Nash *product*.
 
 *Proof.* The inequality is Proposition 2 with no structural constraint imposed, i.e. the case
 `C = 1` of the component bound of the source note's §9: the total `M(Z)` is partition-invariant,
-and `Σ_j log m_j` is maximised over `{m > 0 : Σ_j m_j = M(Z)}` uniquely at `m_j = M(Z)/k`. For
-invariance, rescaling sends `Σ_j log M_j` to `Σ_j log M_j + k log κ` and `k log(M(Z)/k)` to
-`k log(M(Z)/k) + k log κ`, so `Δ` is unchanged; the last claim is the definition of `Δ` as a
+and $\sum _j \log m_j$ is maximised over $\{m > 0 : \sum _j m_j = M(Z)\}$ uniquely at $m_j = M(Z)/k$. For
+invariance, rescaling sends $\sum _j \log M_j$ to $\sum _j \log M_j + k \log \kappa$ and `k log(M(Z)/k)` to
+$k \log(M(Z)/k) + k \log \kappa$, so $\Delta$ is unchanged; the last claim is the definition of $\Delta$ as a
 log-ratio of products. ∎
 
-This is a free dual bound: it needs `M(Z)` and `k` and nothing else — no geometry, no contiguity,
+This is a free dual bound: it needs `M(Z)` and $k$ and nothing else — no geometry, no contiguity,
 no solver — and it holds for *every* partition of these zips into k districts, so a draw's gap to
 it is an unconditional statement about how much balance was left on the table. What it does not
 say is whether the ceiling is reachable. Zips are indivisible, so in general it is not, which is
 the next certificate's subject.
 
 **Two ceilings are in circulation, on different bases.** The power-cell route's ceiling is
-`k·log(M/k) = 110.766768` over the 3,704 plotted zips; the state-atom route's is
+$k\cdot \log(M/k) = 110.766768$ over the 3,704 plotted zips; the state-atom route's is
 `cert_draw.cert_balance_ceiling = 110.883247` over the whole instance. They are two orders of
 magnitude apart in the gaps they induce, so the route ranking is unlikely to turn on the
 difference, but it is **not certified** — recompute on one base before any comparison leaves the
@@ -659,10 +687,10 @@ draw", understating the true 0.0937 gap by about fourfold.
 
 ### 7.2 (ii) The integer balance floor: an honest bound pair
 
-Write `τ = M(Z)/k` for the target. The best balance indivisible zips permit, with geometry
+Write $\tau = M(Z)/k$ for the target. The best balance indivisible zips permit, with geometry
 ignored entirely, is the optimum `t*` of
 
-$$
+```math
 \begin{aligned}
 \min_{x,t}\;\; & t\\
 \text{s.t.}\;\; & \sum_j x_{zj} = 1 && \forall z \in Z,\\
@@ -670,7 +698,7 @@ $$
 & x_{zj} \in \{0,1\},\quad t \ge 0.
 \end{aligned}
 \tag{floor}
-$$
+```
 
 Every real draw's max-deviation is at least `t*`, so `t*` separates the heuristic's loss from the
 arithmetic's: it says how much of the gap to Proposition 8's ceiling was ever available. The
@@ -678,14 +706,14 @@ trouble is that (floor) is a multiway-number-partitioning problem, and its relax
 worthless.
 
 **Proposition 9 (the relaxation of (floor) is vacuous).** The linear relaxation of (floor),
-replacing `x_zj ∈ {0,1}` by `x_zj ≥ 0`, has optimal value 0 for every instance and every `k ≥ 1`.
+replacing $x_{zj} \in \{0,1\}$ by $x_{zj} \ge 0$, has optimal value 0 for every instance and every $k \ge 1$.
 
-*Proof.* Take `x_zj = 1/k` for all `z,j`. The placement rows hold, and
-`Σ_z M_z x_zj = M(Z)/k = τ` for every `j`, so `t = 0` is feasible; `t ≥ 0` is imposed, so 0 is
+*Proof.* Take $x_{zj} = 1/k$ for all `z,j`. The placement rows hold, and
+$\sum _z M_z x_{zj} = M(Z)/k = \tau$ for every $j$, so `t = 0` is feasible; $t \ge 0$ is imposed, so 0 is
 optimal. ∎
 
 The root bound therefore carries no information, and every nat of the dual side must be earned in
-the tree — against the full `k!` label symmetry, which is what branch-and-bound cannot prune. Two
+the tree — against the full $k!$ label symmetry, which is what branch-and-bound cannot prune. Two
 valid symmetry breaks help and do not fix it: fix the heaviest zip into district 0 (a
 relabelling, so it costs nothing), and force districts `1,…,k−1` to non-increasing mass (valid
 because after fixing that one zip those labels remain freely permutable).
@@ -707,8 +735,8 @@ it is what says whether the draw's imbalance is arithmetic or geometry.
 ### 7.3 (iii) The pinned-centers assignment MILP
 
 The third certificate asks the geometric question with the draw's own centers held fixed:
-minimise `Σ_{z,j} M_z ‖x_z − c_j‖² y_zj` subject to `Σ_j y_zj = 1`,
-`|Σ_z M_z y_zj − τ| ≤ δ` and `y` binary, with `δ` defaulting to the draw's own max-deviation so
+minimise $\sum _{z,j} M_z \lVert x_z - c_j \rVert ^2 y_{zj}$ subject to $\sum _j y_{zj} = 1$,
+$|\sum _z M_z y_{zj} - \tau | \le \delta$ and $y$ binary, with $\delta$ defaulting to the draw's own max-deviation so
 that the draw is feasible for its own test. Pinning the centers removes the label symmetry
 entirely, and what remains is the transportation problem of Lemma 6 with two side rows per
 district — so the relaxation is nearly integral, the root bound is tight, and a real certificate
@@ -718,7 +746,7 @@ district — so the relaxation is nearly integral, the root bound is tight, and 
 proves the *assignment* is optimal *given* them, in exactly the sense a k-means assignment step is
 optimal given its centroids; it says nothing about whether those k points are the right ones, and
 the joint problem over centers *and* assignment is untouched by anything here. Nor does it certify
-the stage-1 objective: the constraint is a max-deviation band, not `Σ_j log M_j`, so a strictly
+the stage-1 objective: the constraint is a max-deviation band, not $\sum _j \log M_j$, so a strictly
 more compact assignment inside the band may have slightly *lower* Nash value. Both values are
 returned so the trade is visible rather than implied.
 
@@ -730,8 +758,8 @@ Numbers below are the power-cell draw `battery/results/draw_k18_v2_20260904/k18`
 over the 3,704 plotted zips carrying total mass 8,468.3 in descaled units. Every quoted spread,
 ratio and nat is scale-free by the scale-invariance proposition of the source note's §3.
 
-**The ceiling certificate.** Against `k·log(M/k) = 110.766768`, the committed draw scores
-`Σ log M = 110.766686` — a gap of **0.000082 nats** at a mass spread of 1.2902%. *Proved:* no
+**The ceiling certificate.** Against $k\cdot \log(M/k) = 110.766768$, the committed draw scores
+$\sum \log M = 110.766686$ — a gap of **0.000082 nats** at a mass spread of 1.2902%. *Proved:* no
 partition of these zips into 18 districts scores above the ceiling, whatever its geometry. *Not
 proved:* that the ceiling is reachable.
 
@@ -757,7 +785,7 @@ the snapped labels and 15 to 16 of 3,704 fall outside again, with the split coun
 17 to 10.
 
 **The state-atom route, for comparison.** 56 atoms, 126 edges, one component under the cut plan
-CA 5 / TX 2 / NY+NJ 3 / FL 2; `Σ log M = 110.789532` against the whole-instance ceiling
+CA 5 / TX 2 / NY+NJ 3 / FL 2; $\sum \log M = 110.789532$ against the whole-instance ceiling
 110.883247, a gap of **0.093715 nats** at a spread of **30.484%**. Quote that spread beside the
 gap: `log` is flat near the optimum, so a small Nash gap can sit alongside a large operational
 spread, and the power-cell route's spread is 1.37%. Quoting the gap alone reads as "contiguity is
@@ -788,19 +816,19 @@ districting models* (Operations Research, 2021, DOI 10.1287/opre.2021.2141), and
 Buchanan, *Political districting to minimize cut edges* (Mathematical Programming Computation,
 2022, DOI 10.1007/s12532-022-00221-5). Their setup:
 
-- **Decision variables.** The Hess (1965) centre-based assignment model: `x_ij = 1` iff unit `i`
-  is assigned to the district *centred at* unit `j`, with `x_jj = 1` marking `j` as a centre. The
+- **Decision variables.** The Hess (1965) centre-based assignment model: $x_{ij} = 1$ iff unit $i$
+  is assigned to the district *centred at* unit $j$, with $x_{jj} = 1$ marking $j$ as a centre. The
   centres are chosen **by the solver**, from among the units.
 - **Objective.** Linear, and a compactness surrogate: minimise cut edges, or a moment-of-inertia
-  sum `Σ_ij w_i d²_ij x_ij`. Belotti, Buchanan & Ezazipour (2025) extend the line to a
+  sum $\sum _{ij} w_i d^2_{ij} x_{ij}$. Belotti, Buchanan & Ezazipour (2025) extend the line to a
   Polsby-Popper perimeter-ratio objective, which makes it an MISOCP.
-- **Balance.** A **hard constraint**, not the objective: population within `± ε` of the ideal
-  district size, `ε` typically 1% for congressional plans.
+- **Balance.** A **hard constraint**, not the objective: population within $\pm \varepsilon$ of the ideal
+  district size, $\varepsilon$ typically 1% for congressional plans.
 - **Contiguity.** Lazily separated cuts. Their comparison of the families (`lcut` / `scf` /
   `mcf` / Shirabe flow) is the paper's main contribution, and the a–b separator cut with its two
   branches is the same object the programme's own `scip_tree` separates.
 - **Symmetry.** Broken by construction: districts are named by their centre unit, so there is no
-  `k!` permutation group left to prune against.
+  $k!$ permutation group left to prune against.
 - **Their headline.** *Districting does not get harder when contiguity is imposed.* On their
   instances the contiguity constraints often help, by cutting off fractional solutions the
   balance rows alone admit.
@@ -817,7 +845,7 @@ field's.
 ### 8.2 The five differences
 
 **1. Objective: linear versus log.** VBL minimise a linear (or SOC) compactness functional with
-balance as a constraint. We maximise `Σ_j log M_j`, and Proposition 2 says that objective *is*
+balance as a constraint. We maximise $\sum _j \log M_j$, and Proposition 2 says that objective *is*
 balance. So the two setups swap which of balance and compactness is the objective and which is
 the tie-break. The consequence is computational: their formulation stays a MILP with a strong LP
 relaxation; ours is a convex MINLP needing outer-approximation tangents or a solver with native
@@ -857,7 +885,7 @@ stage-2 Nash matching are ours; none has a counterpart in the VBL line.
 
 The two setups are closer than the differences suggest. Programme (centers) in §6.1 is **the Hess
 model with integrality dropped and the centres fixed**. Both removals are what turn a MILP into
-an LP, and Lemma 6 says the first removal is nearly free: at most `k − 1` zips split, measured as
+an LP, and Lemma 6 says the first removal is nearly free: at most $k - 1$ zips split, measured as
 exactly 17 on the live draw. The second removal is not free, and it is the one §7.3's remark
 refuses to certify.
 
@@ -867,17 +895,17 @@ graph where their cut machinery has something to bite on.
 ### 8.4 Options
 
 **Option A — Hess MILP with the log objective, on a restored graph.** Put the centres back into
-the program as `x_jj` binaries, keep `Σ_j log M_j` via SCIP's native `log` (the `scip_tree`
+the program as $x_{jj}$ binaries, keep $\sum _j \log M_j$ via SCIP's native `log` (the `scip_tree`
 machinery already does this for two players), and separate VBL's contiguity cuts on a
 **full-ZCTA** graph rather than the sold-zip graph. This is reframing R-C4 in
 `docs/RESEARCH_FINDINGS.md`, and it is the only option that closes the joint centres-and-
 assignment question.
 
-*Buys:* a genuine dual bound on stage 1, and the `k!` symmetry break we currently get only by
+*Buys:* a genuine dual bound on stage 1, and the $k!$ symmetry break we currently get only by
 accident. *Costs:* districting an object the channel does not sell in (§1's objection, which is a
 business objection and not a technical one), plus the k-way extension of a solver currently
 written for two players. *Risk:* the log objective plus lazy cuts is the trap-14 configuration —
-SCIP needs `misc/allow{strong,weak}dualreds` off for any lazily separated model, `ga ≤ Σu·x` not
+SCIP needs `misc/allow{strong,weak}dualreds` off for any lazily separated model, $ga \le \sum u\cdot x$ not
 `==`, and a gain lower bound from the incumbent.
 
 **Option B — cuts on the atom graph only.** The state-atom route already builds a graph where
@@ -933,21 +961,21 @@ One notation throughout, so the programs can be read against each other.
 
 | symbol | meaning |
 |---|---|
-| `Z`, `n = \|Z\|` | units (zips, or atoms, or coarsened units) |
-| `M_z ≥ 0` | opportunity at unit `z`; `M(Z) = Σ_z M_z`; `τ = M(Z)/k` |
-| `q_z ∈ ℝ²` | unit `z`'s internal point, equal-area planar projection |
-| `k` | district count (18 on the live instance) |
-| `x_zj ∈ {0,1}` | unit `z` is assigned to district `j` |
-| `x_jj = 1` | unit `j` is a **centre** (Hess naming; districts indexed by their centre) |
-| `c_j ∈ ℝ²` | free centre location (used only where centres are continuous) |
-| `g_j = Σ_z M_z x_zj` | district `j`'s mass |
-| `G = (Z, E)` | adjacency graph; `S ⊆ Z` is an *(i,j)-separator* if deleting `S` disconnects `i` from `j` in `G` |
+| $Z$, $n = \lvert Z\rvert$ | units (zips, or atoms, or coarsened units) |
+| $M_z \ge 0$ | opportunity at unit $z$; $M(Z) = \sum _z M_z$; $\tau = M(Z)/k$ |
+| $q_z \in \mathbb{R}^2$ | unit $z$'s internal point, equal-area planar projection |
+| $k$ | district count (18 on the live instance) |
+| $x_{zj} \in \{0,1\}$ | unit $z$ is assigned to district $j$ |
+| $x_{jj} = 1$ | unit $j$ is a **centre** (Hess naming; districts indexed by their centre) |
+| $c_j \in \mathbb{R}^2$ | free centre location (used only where centres are continuous) |
+| $g_j = \sum _z M_z x_{zj}$ | district $j$'s mass |
+| `G = (Z, E)` | adjacency graph; $S \subseteq Z$ is an *(i,j)-separator* if deleting `S` disconnects $i$ from $j$ in `G` |
 | `d(u,v)` | metric distance, defined whether or not `G` is connected |
 
-Two modelling conventions recur and are load-bearing. `g_j ≤ Σ_z M_z x_zj` is written as an
-inequality, never an equality: the objective increases in `g_j`, so it is tight at every optimum,
-but an equality lets presolve aggregate `g_j` out and every in-callback `trySol` then dies
-(trap 14). And `log` enters through an epigraph variable `w_j ≤ log g_j`, which a solver either
+Two modelling conventions recur and are load-bearing. $g_j \le \sum _z M_z x_{zj}$ is written as an
+inequality, never an equality: the objective increases in $g_j$, so it is tight at every optimum,
+but an equality lets presolve aggregate $g_j$ out and every in-callback `trySol` then dies
+(trap 14). And `log` enters through an epigraph variable $w_j \le \log g_j$, which a solver either
 recognises as convex (SCIP does) or approximates by the outer-approximation tangent family
 `w_j ≤ log ĝ + (g_j − ĝ)/ĝ` at incumbents `ĝ`, generated lazily.
 
@@ -955,15 +983,17 @@ recognises as convex (SCIP does) or approximates by the outer-approximation tang
 
 **P0 — the true stage-1 problem.** What everything below is an approximation of.
 
-```
-max_x    Σ_{j=1..k} log( Σ_z M_z x_zj )
-s.t.     Σ_j x_zj = 1                          ∀ z ∈ Z          (every unit placed)
-         Σ_z x_zj ≥ 1                          ∀ j              (no empty district)
-         x_zj ∈ {0,1}
-         + a geometric constraint on each district
+```math
+\begin{array}{llll}
+\max_x & \sum_{j=1}^{k} \log\Big(\sum_z M_z x_{zj}\Big) \\
+\text{s.t.} & \sum_j x_{zj} = 1 & \forall z \in Z & \text{(every unit placed)}\\
+ & \sum_z x_{zj} \ge 1 & \forall j & \text{(no empty district)}\\
+ & x_{zj} \in \{0,1\} \\
+ & \text{+ a geometric constraint on each district}
+\end{array}
 ```
 
-Unconstrained geometrically, its optimum is the Jensen ceiling `k·log(M(Z)/k)`
+Unconstrained geometrically, its optimum is the Jensen ceiling $k\cdot \log(M(Z)/k)$
 (Proposition 2). The whole design question is which geometric constraint to write on the last
 line, and every option below is one answer to it.
 
@@ -973,40 +1003,43 @@ line, and every option below is one answer to it.
 the power-cell route. It is a fixed-point scheme whose inner step is an LP, and the outer step is
 a centroid update with no optimality claim attached.
 
-```
-inner, centres c fixed:
-  min_y    Σ_z Σ_j M_z ‖q_z − c_j‖² y_zj
-  s.t.     Σ_j y_zj = 1                        ∀ z              (every unit placed)
-           Σ_z M_z y_zj = τ                    ∀ j              (equal mass, HARD)
-           y_zj ≥ 0                                             (integrality DROPPED)
-
-outer:     c_j ← ( Σ_z M_z q_z y_zj ) / ( Σ_z M_z y_zj )        (Lloyd, M-weighted centroid)
-
-stop:      labels repeat
+```math
+\begin{array}{llll}
+\textbf{inner,} & \text{centres } c \text{ fixed:} \\
+\min_y & \sum_z \sum_j M_z \lVert q_z - c_j \rVert^2 y_{zj} \\
+\text{s.t.} & \sum_j y_{zj} = 1 & \forall z & \text{(every unit placed)}\\
+ & \sum_z M_z y_{zj} = \tau & \forall j & \textbf{(equal mass, HARD)}\\
+ & y_{zj} \ge 0 & & \textbf{(integrality DROPPED)}\\[4pt]
+\textbf{outer:} & c_j \leftarrow \dfrac{\sum_z M_z q_z y_{zj}}{\sum_z M_z y_{zj}}
+   & & \text{(Lloyd, } M\text{-weighted centroid)}\\[4pt]
+\textbf{stop:} & \text{labels repeat}
+\end{array}
 ```
 
 The inner LP is a Hitchcock transportation problem (Lemma 6), so a basic optimum splits at most
-`k − 1` units; its duals `(α, β)` satisfy `α_z + M_z β_j ≤ M_z ‖q_z − c_j‖²`, which makes the
-optimal cells the power diagram `argmin_j ( ‖q_z − c_j‖² − β_j )`. **There is no fixed point** on
+$k - 1$ units; its duals $(\alpha , \beta )$ satisfy $\alpha _z + M_z \beta _j \le M_z \lVert q_z - c_j \rVert ^2$, which makes the
+optimal cells the power diagram $\operatorname{argmin}_j ( \lVert q_z - c_j \rVert ^2 - \beta _j )$. **There is no fixed point** on
 the live instance: 20 iterations, no exact repeat, non-monotone.
 
 Note what the two programs disagree about. The inner LP minimises compactness at exactly equal
-mass; P0 maximises `Σ log g_j`. They coincide only because the mass rows are hard, which is what
+mass; P0 maximises $\sum \log g_j$. They coincide only because the mass rows are hard, which is what
 makes compactness the tie-break rather than a competing objective.
 
 ---
 
-**P2 — stage 2, exact.** `m` representatives, `k` districts, `g_ij = Σ_{z ∈ A_j} u_i(z)`.
+**P2 — stage 2, exact.** $m$ representatives, $k$ districts, $g_{ij} = \sum _{z \in A_j} u_i(z)$.
 
-```
-max_σ    Σ_i Σ_j ( log g_ij ) σ_ij
-s.t.     Σ_j σ_ij ≤ 1                          ∀ i              (each rep staffs ≤ 1 district)
-         Σ_i σ_ij = 1                          ∀ j              (each district staffed)
-         σ_ij ≥ 0
+```math
+\begin{array}{llll}
+\max_\sigma & \sum_i \sum_j \big(\log g_{ij}\big)\, \sigma_{ij} \\
+\text{s.t.} & \sum_j \sigma_{ij} \le 1 & \forall i & \text{(each rep staffs at most one district)}\\
+ & \sum_i \sigma_{ij} = 1 & \forall j & \text{(each district staffed)}\\
+ & \sigma_{ij} \ge 0
+\end{array}
 ```
 
 The constraint matrix is a bipartite incidence matrix, hence totally unimodular, so the LP
-relaxation is integral and the Hungarian algorithm solves it in `O(max(m,k)³)`. With `m > k` the
+relaxation is integral and the Hungarian algorithm solves it in $O(\max(m,k)^3)$. With $m > k$ the
 unmatched representatives are the ones not staffing the channel: at 114 against 18, the matching
 *is* the retention decision.
 
@@ -1015,59 +1048,69 @@ unmatched representatives are the ones not staffing the channel: at 114 against 
 **P3 — VBL, `lcut` form.** Hess variables, linear objective, balance as a hard band, contiguity
 as lazily separated separator inequalities.
 
-```
-min_x    Σ_{(u,v) ∈ E} e_uv                                     (cut edges; or Σ M_z d²_zj x_zj)
-s.t.     Σ_j x_zj = 1                          ∀ z              (every unit placed)
-         x_zj ≤ x_jj                           ∀ z, j           (assign only to a chosen centre)
-         Σ_j x_jj = k                                           (exactly k centres)
-         (1−ε) τ ≤ Σ_z M_z x_zj ≤ (1+ε) τ      ∀ j              (balance, HARD, ε ≈ 1%)
-         e_uv ≥ x_uj − x_vj                    ∀ (u,v) ∈ E, j   (cut-edge linearisation)
-         x_zj ≤ Σ_{s ∈ S} x_sj                 ∀ z, j, ∀ (z,j)-separator S     (LAZY)
-         x ∈ {0,1}
+```math
+\begin{array}{llll}
+\min_x & \sum_{(u,v) \in E} e_{uv} & & \text{(cut edges; or } \sum M_z d^2_{zj} x_{zj}\text{)}\\
+\text{s.t.} & \sum_j x_{zj} = 1 & \forall z & \text{(every unit placed)}\\
+ & x_{zj} \le x_{jj} & \forall z, j & \text{(assign only to a chosen centre)}\\
+ & \sum_j x_{jj} = k & & \text{(exactly } k \text{ centres)}\\
+ & (1-\varepsilon)\tau \le \sum_z M_z x_{zj} \le (1+\varepsilon)\tau & \forall j
+   & \textbf{(balance, HARD, } \varepsilon \approx 1\%)\\
+ & e_{uv} \ge x_{uj} - x_{vj} & \forall (u,v) \in E,\ j & \text{(cut-edge linearisation)}\\
+ & x_{zj} \le \sum_{s \in S} x_{sj} & \forall z, j,\ \forall (z,j)\text{-separator } S
+   & \textbf{(LAZY)}\\
+ & x \in \{0,1\}
+\end{array}
 ```
 
-Read the separator row: if `z` joins the district centred at `j`, then every `z`–`j` separator
-must contribute at least one unit to that same district — otherwise `z` is cut off from its own
-centre. Symmetry is broken by the `x_jj` naming, so there is no `k!` group left. Compare against
+Read the separator row: if $z$ joins the district centred at $j$, then every $z$–$j$ separator
+must contribute at least one unit to that same district — otherwise $z$ is cut off from its own
+centre. Symmetry is broken by the $x_{jj}$ naming, so there is no $k!$ group left. Compare against
 P1: same centre-based skeleton, but the centres are decided *inside* the program, integrality is
 kept, and balance and compactness have swapped roles.
 
 ---
 
 **Option A — Hess + log objective + cuts, on a restored graph.** `Ẑ ⊇ Z` is the full ZCTA set,
-`Ĝ` its adjacency graph; `M_z = 0` for unsold units.
+`Ĝ` its adjacency graph; $M_z = 0$ for unsold units.
 
-```
-max_{x,w,g}  Σ_j w_j
-s.t.     w_j ≤ log g_j                         ∀ j              (concave; SCIP-native or OA tangents)
-         g_j ≤ Σ_{z ∈ Ẑ} M_z x_zj             ∀ j              (≤, never =, trap 14)
-         g_j ≥ g_min                           ∀ j              (from the incumbent, trap 14)
-         Σ_j x_zj = 1                          ∀ z ∈ Ẑ
-         x_zj ≤ x_jj                           ∀ z, j
-         Σ_j x_jj = k
-         x_zj ≤ Σ_{s ∈ S} x_sj                 ∀ z, j, ∀ (z,j)-separator S in Ĝ   (LAZY, per component)
-         x ∈ {0,1}
+```math
+\begin{array}{llll}
+\max_{x,w,g} & \sum_j w_j \\
+\text{s.t.} & w_j \le \log g_j & \forall j & \text{(concave; SCIP-native or OA tangents)}\\
+ & g_j \le \sum_{z \in \hat{Z}} M_z x_{zj} & \forall j & \textbf{(} \le \textbf{, never } = \textbf{, trap 14)}\\
+ & g_j \ge g_{\min} & \forall j & \text{(from the incumbent, trap 14)}\\
+ & \sum_j x_{zj} = 1 & \forall z \in \hat{Z} \\
+ & x_{zj} \le x_{jj} & \forall z, j \\
+ & \sum_j x_{jj} = k \\
+ & x_{zj} \le \sum_{s \in S} x_{sj} & \forall z, j,\ \forall (z,j)\text{-separator } S \text{ in } \hat{G}
+   & \textbf{(LAZY, per component)}\\
+ & x \in \{0,1\}
+\end{array}
 ```
 
 This is P0 with the geometric constraint instantiated as VBL contiguity, and it is the only
 formulation here that decides centres and assignment jointly. Buys a genuine dual bound; costs
-districting ~30,000 ZCTAs the channel does not sell in. The `g_min` row is not cosmetic: without
+districting ~30,000 ZCTAs the channel does not sell in. The $g_{\min}$ row is not cosmetic: without
 it the log's gradient at the lower bound is ~1e9 and SCIP's LPs go unstable.
 
 ---
 
 **Option B — the same program, on the atom graph.** `A` the 56 state atoms, `G_A` their rook
-graph (126 edges, one component), `M_a` each atom's mass.
+graph (126 edges, one component), $M_a$ each atom's mass.
 
-```
-max_{x,w,g}  Σ_j w_j
-s.t.     w_j ≤ log g_j                         ∀ j
-         g_j ≤ Σ_{a ∈ A} M_a x_aj              ∀ j
-         Σ_j x_aj = 1                          ∀ a ∈ A
-         x_aj ≤ x_jj                           ∀ a, j
-         Σ_j x_jj = k
-         x_aj ≤ Σ_{s ∈ S} x_sj                 ∀ a, j, ∀ (a,j)-separator S in G_A   (LAZY)
-         x ∈ {0,1}
+```math
+\begin{array}{llll}
+\max_{x,w,g} & \sum_j w_j \\
+\text{s.t.} & w_j \le \log g_j & \forall j \\
+ & g_j \le \sum_{a \in A} M_a x_{aj} & \forall j \\
+ & \sum_j x_{aj} = 1 & \forall a \in A \\
+ & x_{aj} \le x_{jj} & \forall a, j \\
+ & \sum_j x_{jj} = k \\
+ & x_{aj} \le \sum_{s \in S} x_{sj} & \forall a, j,\ \forall (a,j)\text{-separator } S \text{ in } G_A
+   & \textbf{(LAZY)}\\
+ & x \in \{0,1\}
+\end{array}
 ```
 
 Identical to A except for the ground set. At 56 nodes and 126 edges the separation is trivial and
@@ -1076,21 +1119,24 @@ the whole model is small, which is why this is the cheap option — it replaces
 
 ---
 
-**Option C — pre-aggregate, then A.** A contraction `φ: Z → U` (Swamy multilevel matching)
-supplies the ground set; `M_u = Σ_{z: φ(z)=u} M_z` and `G_U` is the contracted graph.
+**Option C — pre-aggregate, then A.** A contraction $\varphi : Z \to U$ (Swamy multilevel matching)
+supplies the ground set; $M_u = \sum _{z: \varphi (z)=u} M_z$ and `G_U` is the contracted graph.
 
-```
-max_{x,w,g}  Σ_j w_j
-s.t.     w_j ≤ log g_j                         ∀ j
-         g_j ≤ Σ_{u ∈ U} M_u x_uj              ∀ j
-         Σ_j x_uj = 1                          ∀ u ∈ U
-         x_uj ≤ x_jj,  Σ_j x_jj = k
-         x_uj ≤ Σ_{s ∈ S} x_sj                 ∀ u, j, ∀ (u,j)-separator S in G_U   (LAZY)
-         x ∈ {0,1}
-                                               then uncoarsen: A_j = φ⁻¹({u : x_uj = 1})
+```math
+\begin{array}{llll}
+\max_{x,w,g} & \sum_j w_j \\
+\text{s.t.} & w_j \le \log g_j & \forall j \\
+ & g_j \le \sum_{u \in U} M_u x_{uj} & \forall j \\
+ & \sum_j x_{uj} = 1 & \forall u \in U \\
+ & x_{uj} \le x_{jj}, \quad \sum_j x_{jj} = k \\
+ & x_{uj} \le \sum_{s \in S} x_{sj} & \forall u, j,\ \forall (u,j)\text{-separator } S \text{ in } G_U
+   & \textbf{(LAZY)}\\
+ & x \in \{0,1\} \\[4pt]
+\text{then} & \text{uncoarsen: } A_j = \varphi^{-1}\big(\{u : x_{uj} = 1\}\big)
+\end{array}
 ```
 
-The mathematics is A's; the content is entirely in `φ`. Note that the uncoarsening line is where
+The mathematics is A's; the content is entirely in $\varphi$. Note that the uncoarsening line is where
 the objection bites — a contraction that does not preserve connectivity on refinement returns a
 disconnected district from a certified-contiguous solution.
 
@@ -1099,13 +1145,16 @@ disconnected district from a certified-contiguous solution.
 **Option D — low-diameter compactness, no adjacency needed.** The one VBL-line constraint that
 is defined on a disconnected graph, since `d(u,v)` is metric rather than path distance.
 
-```
-max_{x,w,g}  Σ_j w_j
-s.t.     w_j ≤ log g_j                         ∀ j
-         g_j ≤ Σ_z M_z x_zj                    ∀ j
-         Σ_j x_zj = 1                          ∀ z ∈ Z
-         x_uj + x_vj ≤ 1                       ∀ j, ∀ (u,v) with d(u,v) > D     (LAZY)
-         x ∈ {0,1}
+```math
+\begin{array}{llll}
+\max_{x,w,g} & \sum_j w_j \\
+\text{s.t.} & w_j \le \log g_j & \forall j \\
+ & g_j \le \sum_z M_z x_{zj} & \forall j \\
+ & \sum_j x_{zj} = 1 & \forall z \in Z \\
+ & x_{uj} + x_{vj} \le 1 & \forall j,\ \forall (u,v) \text{ with } d(u,v) > D
+   & \textbf{(LAZY)}\\
+ & x \in \{0,1\}
+\end{array}
 ```
 
 The conflict row says two units further apart than `D` never share a district, which bounds each
@@ -1118,25 +1167,44 @@ compactness-versus-balance frontier that P1's Lloyd loop cannot express.
 **Option E — status quo, stated as programs.** No new model; P1 plus the certificates that
 measure it after the fact.
 
+**(i) Ceiling** — closed form, no solver, valid for *every* partition:
+
+```math
+\sum_j \log M_j \;\le\; k \cdot \log\!\Big(\frac{M(Z)}{k}\Big)
 ```
-(i)   ceiling, closed form, no solver:
-        Σ_j log M_j ≤ k · log( M(Z)/k )                        for EVERY partition
 
-(ii)  integer balance floor:
-        min_{x,t}  t
-        s.t.  Σ_j x_zj = 1              ∀ z
-              | Σ_z M_z x_zj − τ | ≤ t  ∀ j
-              x ∈ {0,1},  t ≥ 0                                (LP relaxation ≡ 0, Proposition 9)
+**(ii) Integer balance floor** — geometry ignored:
 
-(iii) pinned-centres assignment, centres c from the draw:
-        min_y  Σ_z Σ_j M_z ‖q_z − c_j‖² y_zj
-        s.t.   Σ_j y_zj = 1             ∀ z
-               | Σ_z M_z y_zj − τ | ≤ δ ∀ j
-               y ∈ {0,1}                                       (δ = the draw's own max-deviation)
+```math
+\begin{array}{llll}
+\min_{x,t} & t \\
+\text{s.t.} & \sum_j x_{zj} = 1 & \forall z \\
+ & \big\lvert \sum_z M_z x_{zj} - \tau \big\rvert \le t & \forall j \\
+ & x \in \{0,1\},\ t \ge 0 & & \text{(LP relaxation } \equiv 0 \text{, Proposition 9)}
+\end{array}
+```
 
-(iv)  power-diagram dual, no solver in the trusted path:
-        find α, β with  α_z + M_z β_j ≤ M_z ‖q_z − c_j‖²       ∀ z, j
-        ⇒ optimal cell of z is  argmin_j ( ‖q_z − c_j‖² − β_j )
+**(iii) Pinned-centres assignment** — centres $c$ taken from the draw:
+
+```math
+\begin{array}{llll}
+\min_y & \sum_z \sum_j M_z \lVert q_z - c_j \rVert^2 y_{zj} \\
+\text{s.t.} & \sum_j y_{zj} = 1 & \forall z \\
+ & \big\lvert \sum_z M_z y_{zj} - \tau \big\rvert \le \delta & \forall j \\
+ & y \in \{0,1\} & & (\delta = \text{the draw's own max-deviation})
+\end{array}
+```
+
+**(iv) Power-diagram dual** — no solver in the trusted path:
+
+```math
+\text{find } \alpha, \beta \text{ with } \quad
+\alpha_z + M_z \beta_j \;\le\; M_z \lVert q_z - c_j \rVert^2 \quad \forall z, j
+```
+
+```math
+\Longrightarrow \quad \text{the optimal cell of } z \text{ is } \quad
+\operatorname{argmin}_j \big( \lVert q_z - c_j \rVert^2 - \beta_j \big)
 ```
 
 Certificate (iii) is P1's inner program with integrality restored and the equality row widened to
@@ -1146,7 +1214,7 @@ down: the gap between (iii) and Option A is exactly the centres.
 ---
 
 **What the group shows at a glance.** Every option differs from P0 in one line only — the
-geometric constraint — and from P1 in two: integrality, and whether `c` is data or a decision.
+geometric constraint — and from P1 in two: integrality, and whether $c$ is data or a decision.
 
 | | geometric constraint | centres | integrality | balance |
 |---|---|---|---|---|
