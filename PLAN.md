@@ -1,103 +1,84 @@
 # PLAN — branch `worktree-headline`
 
-Branch-local handoff. Written 2026-09-07 before context compaction; the next step is plan mode
-for the interactive pipeline. Nothing below is implemented.
+Branch-local record. Updated 2026-09-07 after the override work landed.
 
-## Goal
+## Status
 
-A Streamlit app that runs the headline pipeline end to end, interactively, on one case only:
-the Track 2 anchored δ = 5% map (`docs/HEADLINE.md` is the write-up; read it first). Business
-users apply overrides at named steps and rerun from that step with the headline map as the
-base reference. Worked example: restrict California to 3 districts, rerun, see how the rest of
-the map turns out.
+Built and committed. Not merged to the hub.
 
-## What already exists
+| commit | what |
+|---|---|
+| `d7493f8` | the per-state cap in the solver, the driver flags, and the Streamlit Headline tab |
+| `0455cb2` | figure galleries with descriptions, and the California-capped override |
+| `89b44e9` | leader lines for small districts, 18 per-district close-ups |
+| `83a9db0` | district shares to two decimals on both overview maps |
+| `9f761a2` | `docs/HEADLINE.md`, the end-to-end write-up |
 
-- **The app.** `app/` (618 lines: `config.py`, `scenario.py`, `engines.py`, `runner.py`,
-  `runs.py`, `main.py`), `tools/app.sh`, own venv `.venv-app` from `app/requirements.txt`,
-  `docs/APP.md` (§4 architecture). It never imports `td`; it launches drivers by subprocess
-  (detached, log in the run dir, UI polls), reads `draw.csv` + `metrics.json`, renders maps by
-  calling `tools/us_maps.py` (about 40 s per render, static PNG). Runs land in
-  `battery/results/app/<scenario>_<timestamp>/`. Engine registry has `power-cells` and
-  `state-atoms`; the borders pipeline is not in the app. Tabs: Define-and-run, Results, Review.
-- **The pipeline, as code.** Driver `tools/state_splits.py::main` (`run_cell`, lines 208–265)
-  is the whole headline pipeline in ~60 lines and is the thing to decompose into steps:
-  1. `borders_report.load_committed(instance, draw, geo_cache)` → `Ctx` (zips, xy, M, state_idx,
-     labels0, k, home, owners, states_by_zip, M_by_zip, missing).
-  2. `_state_masses_and_moments(ctx, geo_cache)` → `M_s`, `D` (49 × 18), `edges` (rook, 107),
-     `tau` (470.459), `C` (committed centres). `ss.eps_lexicographic(M_s, D)`.
-  3. `ss.build_milp(M_s, D, edges, tau, delta, eps, eta=0.01, anchors=[(home_s, j)])` →
-     `SplitProblem` (matrix form; `rows` maps block name → row range; variable blocks z, y, r,
-     f). `ss.solve(problem, time_limit, strict=False)` → `z`, `y`, `splits`, `status`,
-     `mip_gap`, `spread_rel`, `split_states`. 168 s at δ = 5% anchored; 600 s limit.
-  4. `ss.balance_pass(problem, z)` → `y`, `spread_rel`, `max_dev_rel`. Sub-second.
-  5. `ss.realise(xy_k, M_k, state_idx_k, z, y, C, rounds=5, tiebreak=None)` → `labels`,
-     `centers`, `n_fractional`, `rounds_used`, `states[s]["iterates"]`. Seconds.
-  6. `channel.place_by_state(...)` for AK/HI/unknown; `run_draw.complete(...)` for the 41
-     coordinate-less zips; `borders_report.cell_row` / `write_cell` / `write_grid`;
-     `splits.json`; `render_cell_maps` (about 2 min).
-- **The headline cell on disk** (copied into this worktree):
-  `battery/results/borders_k18_v2_20260907/track2_anchored/d0.05/d0.05/` (`draw.csv`,
-  `splits.json` with full `z`, `y`, `y_shares`, `state_list`; `figures/`), `params.json` and
-  `grid.csv` one level up. Committed draw: `battery/results/draw_k18_v2_20260904/k18/`.
-  Instance: `instance_descaled_v2.json.gz` (worktree root). `data/geo`, `data/tiger` are
-  symlinks to the hub.
-- **Tests.** `.venv/bin/python3 tests/run_all.py` (306 pass). `tests/test_state_splits.py`
-  has the six-state path toy. The worktree has no `.venv`; use the hub's
-  `/Users/ntlee/projects/td/.venv/bin/python3`.
+313 tests pass. Re-running the headline through the new code with no caps reproduces it exactly:
+objective 57.00483235477814, 8 splits, CA/FL/NY/TX, gap 0, byte-identical `draw.csv`.
 
-## Override points, and what each needs
+## What the override does
 
-| step | override | mechanism | exists? |
-|---|---|---|---|
-| level 1 | at most $m_s$ districts in state $s$ | new row $\sum_j z_{sj} \le m_s$ in `build_milp` | no; one new keyword, one row block |
-| level 1 | state $s$ whole in district $j$ | `anchors` + $m_s = 1$ | anchors yes, cap no |
-| level 1 | district $j$ must / must not touch $s$ | fix $z_{sj}$ via `var_lb`/`var_ub` | trivial once exposed |
-| level 1 | band δ, floor η | already arguments | yes |
-| level 1 | fixed shares $y_{sj}$ | bounds on `y` block | trivial once exposed |
-| level 2 | rounds, incumbency tiebreak | already arguments | yes |
-| any | "keep the headline where I did not touch it" | see below | no |
+`--cap ST=N` on `tools/state_splits.py` holds a state to at most N districts, through a new
+`"cap"` row block in `build_milp`. `--unanchor ST` releases anchors, and releases only the
+surplus a cap forces, keeping the cap-many anchors that hold the most of that state's committed
+opportunity. `--dump-state-shares PATH` writes each state's $M_s/\tau$ ratio and anchored count
+and exits before solving; it writes ratios only, never $\tau$ and never a mass, because the app
+reads it.
 
-**Feasibility must be checked before solving.** A state of mass $M_s$ needs at least
-$\lceil M_s / ((1+\delta)\tau) \rceil$ districts. CA is 4.126τ, so under δ = 5% it needs 4, and
-"CA in 3" is infeasible for any arrangement of the other states: three districts would have to
-carry 4.13τ, so one holds at least 1.376τ against a cap of 1.05τ. The app must compute this
-floor per state from `M_s`, refuse or explain, and offer the δ that would admit it (δ ≥ 37.6%
-for CA in 3). Same floor for TX (2.02τ → 2), NY (1.79τ → 2), FL (1.40τ → 2). This is the mass
-bound of `docs/BORDERS_RESULTS.md`, closed form.
+The app's Headline tab refuses a cap below the arithmetic floor, warns without blocking when a
+cap releases anchors, and diffs the rerun against the headline. `app/` still never imports `td`.
 
-**"Headline as base reference" is a modelling choice to make in plan mode.** Options: (a)
-warm-start only (HiGHS through `scipy.optimize.milp` has no warm-start interface; would need
-`highspy`); (b) fix every $z_{sj}$ of the headline that the override does not touch (rigid,
-fast, may be infeasible); (c) penalise changes to the headline's $z$ in the objective, bounded
-like ε so it never buys a split (a second lexicographic level); (d) rerun free under the
-override and report the diff against the headline. (c) or (d) are the honest ones.
+## Findings, and corrections to earlier numbers
 
-## Constraints to keep
+**The CA ratio is 4.1529, not the 4.126 this file used to record.** The floor is still 4. The
+band that would admit California in 3 is about 38.4%, not the 37.5% quoted earlier.
 
-- The app never imports `td`; keep the subprocess seam (`docs/APP.md` §4). A step-wise driver
-  means either a new driver that can start from a saved step's outputs, or the app calling
-  `tools/state_splits.py` with new flags per step. Decide in plan mode.
-- MILP runs are minutes; the app's runner is already asynchronous. Level 2 and the balance
-  pass are seconds and can run inline.
-- Maps are static PNGs by decision (2026-09-06); the compare slider exists only in artifacts.
-- Never write under `battery/figures/`; app renders go to `battery/results/app/figures/`.
-- Memory: delegate implementation to an Opus subagent after the plan; ask before merging to the
-  hub. Serena resolves relative paths against the hub: pass absolute worktree paths.
-- Bash git is aliased through a launcher the isolation hook rejects: use `\git`.
-  `enforce-file-tools.sh` blocks heredocs, `cat`, `grep` on files: use Write/Read/Edit.
+**The mass floor is necessary, not sufficient.** $\lceil M_s/((1+\delta)\tau)\rceil$ rules a cap
+out; it does not promise one is reachable. California in 4 is legal at δ = 5% and sits exactly
+on the floor: four districts at the cap hold 4.200τ against California's 4.153τ, leaving 0.047τ
+of slack for every other state across those four and a window 4.7% of a district wide. HiGHS
+found no feasible integer point in 10 minutes, nor in 20.
 
-## Artifacts touched this session (already published, in place)
+**Per-state caps have almost no legal move on this map at δ = 5%.** Only four states are split.
+TX and FL are already at their floor of 2, so a cap there is a no-op. NY at 2 is *proven*
+infeasible in seconds: two districts are anchored in New York and need at least 1.90τ, but the
+state supplies only 1.805τ, and Pennsylvania and New Jersey are anchored elsewhere. CA at 4 is
+the knife-edge above. The map is not merely optimal, it is tight.
 
-- "The Five Percent Map" `322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a`: level 0 section added, Track 1 removed.
-- "Districting from Duality" `d87b53b0-f394-417e-aab5-0fba8d3c6cb0`: committed-draw section added, Track 1 removed.
+**The band is the lever, not the cap.** California capped at 4 at δ = 10% solves: 7 splits, CA in
+4, NY falls 3 to 2 on its own, NJ splits for the first time, spread 16.70% against 8.98%, stage 2
+95.7458. Time-limited incumbent, 1.79% gap. Written up in `figures/overrides/ca4_d10/`.
 
-## Open facts recorded this session
+**The shipped map's measured max deviation is 5.25%, outside its own nominal 5% band.** The
+4.68% figure that satisfies the band is `pass_max_dev`, a state-level quantity computed on
+continuous shares before `realise` makes whole ZIP codes of them and before AK, HI and the
+coordinate-less ZIPs are placed. `grid.csv` carries three different measurement objects side by
+side with nothing marking which is authoritative. Anywhere the map is called "within 5%", this
+distinction belongs in the sentence.
 
-- Seed 2 was chosen by stage-2 value among ten seeds (`metrics.json`); `CHANNEL_NOTE.md` §5.2
-  says otherwise and is out of date.
-- The four split states' district sets are pairwise disjoint, so `realise`'s alphabetical
-  order is inert on the headline cell.
-- Opportunity is not double counted: the exporter keeps one M per zip and raises on conflict;
-  the instance shows no 1/n saturation signature. Unverifiable from here: whether the
-  work-machine input was pre-summed upstream.
+**Opportunity capture reproduces exactly.** Recomputed independently from the instance and the
+shipped draw: stage 2 95.78785, spread 0.089824, Nash 110.873686, 776 ZIPs changed, every ZIP
+assigned once, mass conserved to floating precision.
+
+## Open
+
+- The hour-long California-at-4, δ = 5% run may still be in flight; if it found nothing, that
+  cap is out of reach at the tighter band and the app should say so rather than appear to hang.
+- Per-state figures for CA, NY, TX and FL, showing each state carved by district plus the states
+  connected to it through a shared district.
+- `docs/APP.md` has no section for the Headline tab yet.
+- Nothing downstream of a real `runner.launch` has been exercised: Streamlit cannot be driven
+  headlessly, so the tab's run, cancel and render flow is unverified by test.
+- The per-district close-ups reuse the landscape overview canvas, so a portrait state wastes
+  width.
+- `STATE.md` and `docs/CODE_MAP.md` do not point at `docs/HEADLINE.md` yet. That belongs with
+  `/state` at merge time.
+
+## Constraints that still bind
+
+`app/` never imports `td` and never receives a raw mass. Never write under `battery/figures/`.
+Use `\git`; the hook blocks heredocs and `cat`/`grep` on files. Serena resolves relative paths
+against the hub, so pass absolute worktree paths. Run tests and drivers with the hub interpreter
+`/Users/ntlee/projects/td/.venv/bin/python3`; this worktree has no `.venv`, and its `.venv-app`
+was built by hand. Ask before merging to the hub.
