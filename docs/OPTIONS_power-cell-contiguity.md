@@ -98,6 +98,12 @@ Five readings that a later session should not have to re-derive:
    forced, so no zero-mismatch route should be expected near the committed draw's 1.2902%.
 5. **On map contiguity the snapped labelling is dramatically better than the committed one**, and
    better than the atom route: one district at 55% and the other seventeen at 96–100% (§3).
+6. **The largest-contiguous-piece fraction has an area denominator, and that denominator
+   misreports dense metro districts.** D01's 55% is one rural ZIP's catchment, not a split
+   territory (§3a, measured 2026-09-06). Measured on opportunity instead of area the snapped
+   labelling's worst district is D17 at 92.72% and D01 sits at 99.86%, which reverses the
+   ranking the area column gives. Quote both denominators, or the table says the opposite of
+   what it means.
 
 **Cross-route comparison, stated with its caveat.** The state-atom route sits at gap 0.093715
 nats and 30.484% spread. A zero-mismatch power-cell draw at 0.000283 nats and 2.1051% spread is
@@ -183,8 +189,8 @@ order is: snapped power-cell (one district at 55%, the rest 96–100%), then the
 the gap and spread ordering rather than contradicting it, which the committed-draw numbers alone
 would have suggested.
 
-**D01 is the open item.** At 55% it is the only district the snap does not repair, and nothing
-here explains why. It should be looked at before this table is shown to anyone.
+**D01 is explained in §3a**, and the explanation is that the 55% is an artefact of the area
+denominator rather than a fragmented district.
 
 **Read all of this with the rendering in mind, because the two routes ship different maps.** The
 zip-catchment rendering is the only one that applies to both, which is what makes it
@@ -202,8 +208,91 @@ zero-mismatch requirement means the snapped labelling is what ships, the honest 
 the power-cell route leads on every axis measured so far — welfare, balance, convex territory,
 and catchment fragmentation — with D01 the one blemish.
 
-**Verdict.** Closed, on both the committed and the snapped labelling. The one thing left in this
-option is D01.
+**Verdict.** Closed, on both the committed and the snapped labelling, and D01 is now closed too
+(§3a).
+
+---
+
+## 3a. Why D01 reads 55% · **DONE 2026-09-06**
+
+**The answer: D01 is not fragmented. Its second "part" is a single rural ZIP.** Under the
+snapped labelling D01 dissolves into exactly **two** parts, and they divide as follows.
+
+| part | share of D01's area | ZIPs | M | share of D01's M |
+|---|---|---|---|---|
+| 0 — the NY/NJ core | **55.44%** | 148 (107 NY, 41 NJ) | 471.88 | **99.86%** |
+| 1 — ZIP `18337` | **44.56%** | 1 (PA) | 0.68 | **0.14%** |
+
+`18337` is Milford, Pike County, Pennsylvania, in the Poconos, about 85 km north-west of the
+core's centroid. It is rural, so its Voronoi catchment is enormous: **1,555,699,398 map units,
+which is 0.0199% of the whole clip polygon, the 80.5th percentile of all 3,704 catchments, and
+204× the median catchment of D01's other 148 ZIPs (7,636,382).** D01's entire dissolved
+territory is 3,491,143,536 units, so that one catchment is 44.56% of it by arithmetic alone. The
+"largest piece is 55%" is the ratio of a 148-ZIP metropolitan core to one empty rural cell, and
+nothing about it says the territory is in pieces.
+
+**Measured on opportunity rather than area the picture inverts.** Charging each ZIP to the part
+its own catchment overlaps most, the largest part's share of each district's M under the snap is:
+
+| | | | | |
+|---|---|---|---|---|
+| D17 92.72% | D10 95.45% | D14 99.74% | **D01 99.86%** | D08 99.90% |
+| the other thirteen districts 100.00% | | | | |
+
+D01 is fourth from the top on this denominator, and the two genuinely split districts are D17 and
+D10 — which the area column records at 100% and 98%. The two measures do not merely differ in
+degree; they disagree about which districts are the problem. On zip count the same reading holds:
+D01 99.3%, worst D10 97.5%.
+
+**The mechanism, in one sentence.** D01's power cell is a thin convex wedge that runs from the
+New York City core out into rural north-west New Jersey and Pike County; the snap puts the one
+ZIP at the far end of the wedge into D01 while its geographic neighbours go elsewhere
+(`18428` at 22.1 km to D05, `07860` at 30.7 km and `07871` at 37.3 km to D12, `10990` at 42.4 km
+to D04), so the dissolve leaves it an island. Every district with a small dense core is exposed
+to this; D01 is the one where it happened.
+
+**Ruled out, each by measurement.**
+
+- **The 44 excluded ZIPs are not involved.** Two of them (`33394`, `60670`) do sit in D01 on the
+  committed labelling, but they are dropped before the Voronoi diagram is built, so they
+  contribute no ground and cannot produce a part. D01 has 149 plotted ZIPs under the snap.
+- **Sliver size is not the cause, and the refutation is stronger than §3 knew.** D01's dissolved
+  territory (3,491,143,536) is *larger* than D14's (2,894,136,494), and D14 reads 97%. Small area
+  is a necessary condition for the artefact, not a sufficient one; what matters is the ratio of
+  the outlying catchment to the district total.
+- **The three-centre hypothesis is real geometry but the wrong cause.** D01's core is indeed
+  carved by two neighbours — 22 adjacent D04 catchments and 17 D12 — and the `18337` island is
+  ringed by D04 (3), D12 (2) and D05 (1). But D12 is a single piece at 100% and 148 of D01's 149
+  ZIPs are a single piece, so the three-way carve of the NY/NJ agglomeration explains why D01's
+  cell is thin, not why the measure reports 55%.
+- **Rendering, not labelling.** D01's power cell is **one connected convex polygon** carrying
+  0.0579% of the power diagram's area. The territory the business would be shown (`--regions`)
+  has no fragment at all. The 55% is a property of the zip-catchment dissolve only.
+- **No iterate needed.** The mechanism is one ZIP at the far end of one cell, visible in the
+  single-shot snap, so iteration 15's labelling did not have to be regenerated to answer this.
+  Register item 6 stands on its own merits, not on D01's.
+
+**The committed labelling makes the denominator problem worse, and corrects §3's table.** On the
+committed draw D01 has 12 parts and §3 records "64%". That 64% is *also* a single rural ZIP —
+one part, one ZIP, **0.00%** of D01's M — while D01's actual 137-ZIP core carrying 99.35% of its
+opportunity is only **16.90%** of the area. So the committed figure quoted in §3 is not measuring
+the core at all. On mass the committed D01 is 99.35%, and the committed draw's worst district on
+that denominator is D09 at 90.03%, not D14 (98.20%) or D12 (95.34%) as the area column suggests.
+
+**What would fix the 55%, and what it costs.** Moving `18337` alone out of D01 does it, and the
+measured cost is close to nothing: to **D05** or to **D12**, D01 becomes **1 part at 100%** and
+the recipient stays 1 part at 100%. The mass spread is unchanged at 4.0041% to four decimals, and
+`Σ log M` moves 110.766044 → 110.766035, so the gap to the 110.766768 ceiling widens
+0.000724 → 0.000733, by **9e-6 nats**. The real price is the one that matters to the stakeholder
+requirement: it puts **one ZIP of 3,704 outside its own power cell**, which is a departure from
+zero. Given that the shipped `--regions` map draws D01 as a single convex polygon either way,
+paying a mismatched dot to improve a number that is measuring the wrong thing is a bad trade. The
+recommendation is to **report the mass denominator beside the area one and leave the draw alone**.
+
+**Reproduce.** `tools/measure/district_pieces.py <draw.csv> <instance> --detail D01` gives the
+three-denominator table and D01's parts for any labelling; `tests/test_district_pieces.py` covers
+the statistic. The snapped labelling reproduces §1's spread 4.0041% and `Σ log M` 110.766044
+exactly, which is the cross-check that this measurement and §1's are on the same object.
 
 ---
 
@@ -398,9 +487,11 @@ Items 1 to 3 were done on 2026-09-06 and are struck through. What remains, in or
 4. **Build the fixed-diagram figure.** Hold centres and weights fixed and colour the dots by the
    labelling those weights produced, so the zero-mismatch guarantee can actually be shown. Today
    every rendering recentroids and reports 16 instead. This is the figure a sponsor review needs.
-5. **Explain D01.** It is the one district the snap leaves fragmented, at 55%, while the other
-   seventeen sit at 96–100%. Cheap to look at, and it is the single thing a sponsor would seize
-   on in the §3 table.
+5. ~~Explain D01.~~ Done, §3a. It is not fragmented: 148 of its 149 ZIPs and 99.86% of its M are
+   one piece, and the second "part" is the single rural ZIP `18337`, whose catchment is 44.56% of
+   D01's area and 0.14% of its opportunity. The 55% is an area-denominator artefact. What this
+   opens instead: **the §3 table should carry the mass denominator beside the area one**, since
+   on mass the snapped worst case is D17 at 92.72%, not D01.
 6. **Iterate Route A properly and keep the best iterate as an artifact.** The 2026-09-06 run
    wrote no per-iteration draw, so iteration 15's labelling was not saved and its map contiguity
    is unmeasured. Re-run writing a `draw.csv` per iterate, then run `--regions-voronoi` on the
@@ -420,8 +511,15 @@ Items 1 to 3 were done on 2026-09-06 and are struck through. What remains, in or
    floor, and whether a longer run beats iteration 15's 2.1051%.
 2. ~~The mass of the 17 split zips.~~ Measured, §4: 17.03% of a mean district at equal-split
    targets, largest single zip 3.699%. The floor is not small.
-3. **Why D01 stays fragmented at 55% under the snap** when the other seventeen districts reach
-   96–100%.
+3. ~~Why D01 stays fragmented at 55% under the snap.~~ Settled 2026-09-06, §3a: it does not stay
+   fragmented. The question was mis-posed because the statistic it rests on has an area
+   denominator, and D01 is a dense metro core plus one rural ZIP whose empty catchment is 44.56%
+   of the district's area and 0.14% of its opportunity. What replaces it: **whether
+   `--regions-voronoi` should report the mass-weighted largest piece instead of, or beside, the
+   area one.** The two disagree about which districts are fragmented on both labellings — snapped,
+   area says D01 55% while mass says D17 92.72%; committed, area's "D01 64%" is a part carrying
+   0.00% of D01's M. `tools/measure/district_pieces.py` computes all three denominators; wiring
+   it into `us_maps.py`'s `report` line is a small change nobody has made.
 4. Whether the 44 dropped zips (41 gazetteer-absent, placed by state; 3 non-CONUS) should be in
    the objective at all. They are 0.65% of M and currently sit outside every measurement above.
 5. Whether zero mismatch should be enforced at every seed in the portfolio, or only at the
