@@ -927,7 +927,238 @@ underperforms Hess once value and balance constraints are added — exactly our 
 Shirabe one-shot flow formulation, kept only as a small-instance cross-check oracle since it
 shares no cut-generation code.
 
-### 8.5 Recommended order
+### 8.5 Every setup and option as one program
+
+One notation throughout, so the programs can be read against each other.
+
+| symbol | meaning |
+|---|---|
+| `Z`, `n = \|Z\|` | units (zips, or atoms, or coarsened units) |
+| `M_z ≥ 0` | opportunity at unit `z`; `M(Z) = Σ_z M_z`; `τ = M(Z)/k` |
+| `q_z ∈ ℝ²` | unit `z`'s internal point, equal-area planar projection |
+| `k` | district count (18 on the live instance) |
+| `x_zj ∈ {0,1}` | unit `z` is assigned to district `j` |
+| `x_jj = 1` | unit `j` is a **centre** (Hess naming; districts indexed by their centre) |
+| `c_j ∈ ℝ²` | free centre location (used only where centres are continuous) |
+| `g_j = Σ_z M_z x_zj` | district `j`'s mass |
+| `G = (Z, E)` | adjacency graph; `S ⊆ Z` is an *(i,j)-separator* if deleting `S` disconnects `i` from `j` in `G` |
+| `d(u,v)` | metric distance, defined whether or not `G` is connected |
+
+Two modelling conventions recur and are load-bearing. `g_j ≤ Σ_z M_z x_zj` is written as an
+inequality, never an equality: the objective increases in `g_j`, so it is tight at every optimum,
+but an equality lets presolve aggregate `g_j` out and every in-callback `trySol` then dies
+(trap 14). And `log` enters through an epigraph variable `w_j ≤ log g_j`, which a solver either
+recognises as convex (SCIP does) or approximates by the outer-approximation tangent family
+`w_j ≤ log ĝ + (g_j − ĝ)/ĝ` at incumbents `ĝ`, generated lazily.
+
+---
+
+**P0 — the true stage-1 problem.** What everything below is an approximation of.
+
+```
+max_x    Σ_{j=1..k} log( Σ_z M_z x_zj )
+s.t.     Σ_j x_zj = 1                          ∀ z ∈ Z          (every unit placed)
+         Σ_z x_zj ≥ 1                          ∀ j              (no empty district)
+         x_zj ∈ {0,1}
+         + a geometric constraint on each district
+```
+
+Unconstrained geometrically, its optimum is the Jensen ceiling `k·log(M(Z)/k)`
+(Proposition 2). The whole design question is which geometric constraint to write on the last
+line, and every option below is one answer to it.
+
+---
+
+**P1 — ours as implemented: alternating, not a single program.** This is the honest statement of
+the power-cell route. It is a fixed-point scheme whose inner step is an LP, and the outer step is
+a centroid update with no optimality claim attached.
+
+```
+inner, centres c fixed:
+  min_y    Σ_z Σ_j M_z ‖q_z − c_j‖² y_zj
+  s.t.     Σ_j y_zj = 1                        ∀ z              (every unit placed)
+           Σ_z M_z y_zj = τ                    ∀ j              (equal mass, HARD)
+           y_zj ≥ 0                                             (integrality DROPPED)
+
+outer:     c_j ← ( Σ_z M_z q_z y_zj ) / ( Σ_z M_z y_zj )        (Lloyd, M-weighted centroid)
+
+stop:      labels repeat
+```
+
+The inner LP is a Hitchcock transportation problem (Lemma 6), so a basic optimum splits at most
+`k − 1` units; its duals `(α, β)` satisfy `α_z + M_z β_j ≤ M_z ‖q_z − c_j‖²`, which makes the
+optimal cells the power diagram `argmin_j ( ‖q_z − c_j‖² − β_j )`. **There is no fixed point** on
+the live instance: 20 iterations, no exact repeat, non-monotone.
+
+Note what the two programs disagree about. The inner LP minimises compactness at exactly equal
+mass; P0 maximises `Σ log g_j`. They coincide only because the mass rows are hard, which is what
+makes compactness the tie-break rather than a competing objective.
+
+---
+
+**P2 — stage 2, exact.** `m` representatives, `k` districts, `g_ij = Σ_{z ∈ A_j} u_i(z)`.
+
+```
+max_σ    Σ_i Σ_j ( log g_ij ) σ_ij
+s.t.     Σ_j σ_ij ≤ 1                          ∀ i              (each rep staffs ≤ 1 district)
+         Σ_i σ_ij = 1                          ∀ j              (each district staffed)
+         σ_ij ≥ 0
+```
+
+The constraint matrix is a bipartite incidence matrix, hence totally unimodular, so the LP
+relaxation is integral and the Hungarian algorithm solves it in `O(max(m,k)³)`. With `m > k` the
+unmatched representatives are the ones not staffing the channel: at 114 against 18, the matching
+*is* the retention decision.
+
+---
+
+**P3 — VBL, `lcut` form.** Hess variables, linear objective, balance as a hard band, contiguity
+as lazily separated separator inequalities.
+
+```
+min_x    Σ_{(u,v) ∈ E} e_uv                                     (cut edges; or Σ M_z d²_zj x_zj)
+s.t.     Σ_j x_zj = 1                          ∀ z              (every unit placed)
+         x_zj ≤ x_jj                           ∀ z, j           (assign only to a chosen centre)
+         Σ_j x_jj = k                                           (exactly k centres)
+         (1−ε) τ ≤ Σ_z M_z x_zj ≤ (1+ε) τ      ∀ j              (balance, HARD, ε ≈ 1%)
+         e_uv ≥ x_uj − x_vj                    ∀ (u,v) ∈ E, j   (cut-edge linearisation)
+         x_zj ≤ Σ_{s ∈ S} x_sj                 ∀ z, j, ∀ (z,j)-separator S     (LAZY)
+         x ∈ {0,1}
+```
+
+Read the separator row: if `z` joins the district centred at `j`, then every `z`–`j` separator
+must contribute at least one unit to that same district — otherwise `z` is cut off from its own
+centre. Symmetry is broken by the `x_jj` naming, so there is no `k!` group left. Compare against
+P1: same centre-based skeleton, but the centres are decided *inside* the program, integrality is
+kept, and balance and compactness have swapped roles.
+
+---
+
+**Option A — Hess + log objective + cuts, on a restored graph.** `Ẑ ⊇ Z` is the full ZCTA set,
+`Ĝ` its adjacency graph; `M_z = 0` for unsold units.
+
+```
+max_{x,w,g}  Σ_j w_j
+s.t.     w_j ≤ log g_j                         ∀ j              (concave; SCIP-native or OA tangents)
+         g_j ≤ Σ_{z ∈ Ẑ} M_z x_zj             ∀ j              (≤, never =, trap 14)
+         g_j ≥ g_min                           ∀ j              (from the incumbent, trap 14)
+         Σ_j x_zj = 1                          ∀ z ∈ Ẑ
+         x_zj ≤ x_jj                           ∀ z, j
+         Σ_j x_jj = k
+         x_zj ≤ Σ_{s ∈ S} x_sj                 ∀ z, j, ∀ (z,j)-separator S in Ĝ   (LAZY, per component)
+         x ∈ {0,1}
+```
+
+This is P0 with the geometric constraint instantiated as VBL contiguity, and it is the only
+formulation here that decides centres and assignment jointly. Buys a genuine dual bound; costs
+districting ~30,000 ZCTAs the channel does not sell in. The `g_min` row is not cosmetic: without
+it the log's gradient at the lower bound is ~1e9 and SCIP's LPs go unstable.
+
+---
+
+**Option B — the same program, on the atom graph.** `A` the 56 state atoms, `G_A` their rook
+graph (126 edges, one component), `M_a` each atom's mass.
+
+```
+max_{x,w,g}  Σ_j w_j
+s.t.     w_j ≤ log g_j                         ∀ j
+         g_j ≤ Σ_{a ∈ A} M_a x_aj              ∀ j
+         Σ_j x_aj = 1                          ∀ a ∈ A
+         x_aj ≤ x_jj                           ∀ a, j
+         Σ_j x_jj = k
+         x_aj ≤ Σ_{s ∈ S} x_sj                 ∀ a, j, ∀ (a,j)-separator S in G_A   (LAZY)
+         x ∈ {0,1}
+```
+
+Identical to A except for the ground set. At 56 nodes and 126 edges the separation is trivial and
+the whole model is small, which is why this is the cheap option — it replaces
+`atom_draw.py`'s local search plus `check_contiguous` post-check with a certificate.
+
+---
+
+**Option C — pre-aggregate, then A.** A contraction `φ: Z → U` (Swamy multilevel matching)
+supplies the ground set; `M_u = Σ_{z: φ(z)=u} M_z` and `G_U` is the contracted graph.
+
+```
+max_{x,w,g}  Σ_j w_j
+s.t.     w_j ≤ log g_j                         ∀ j
+         g_j ≤ Σ_{u ∈ U} M_u x_uj              ∀ j
+         Σ_j x_uj = 1                          ∀ u ∈ U
+         x_uj ≤ x_jj,  Σ_j x_jj = k
+         x_uj ≤ Σ_{s ∈ S} x_sj                 ∀ u, j, ∀ (u,j)-separator S in G_U   (LAZY)
+         x ∈ {0,1}
+                                               then uncoarsen: A_j = φ⁻¹({u : x_uj = 1})
+```
+
+The mathematics is A's; the content is entirely in `φ`. Note that the uncoarsening line is where
+the objection bites — a contraction that does not preserve connectivity on refinement returns a
+disconnected district from a certified-contiguous solution.
+
+---
+
+**Option D — low-diameter compactness, no adjacency needed.** The one VBL-line constraint that
+is defined on a disconnected graph, since `d(u,v)` is metric rather than path distance.
+
+```
+max_{x,w,g}  Σ_j w_j
+s.t.     w_j ≤ log g_j                         ∀ j
+         g_j ≤ Σ_z M_z x_zj                    ∀ j
+         Σ_j x_zj = 1                          ∀ z ∈ Z
+         x_uj + x_vj ≤ 1                       ∀ j, ∀ (u,v) with d(u,v) > D     (LAZY)
+         x ∈ {0,1}
+```
+
+The conflict row says two units further apart than `D` never share a district, which bounds each
+district's diameter at `D` without ever mentioning adjacency. Sparse: only the pairs violating
+`D` generate a row, and they separate lazily. `D` is a policy dial, and sweeping it traces a
+compactness-versus-balance frontier that P1's Lloyd loop cannot express.
+
+---
+
+**Option E — status quo, stated as programs.** No new model; P1 plus the certificates that
+measure it after the fact.
+
+```
+(i)   ceiling, closed form, no solver:
+        Σ_j log M_j ≤ k · log( M(Z)/k )                        for EVERY partition
+
+(ii)  integer balance floor:
+        min_{x,t}  t
+        s.t.  Σ_j x_zj = 1              ∀ z
+              | Σ_z M_z x_zj − τ | ≤ t  ∀ j
+              x ∈ {0,1},  t ≥ 0                                (LP relaxation ≡ 0, Proposition 9)
+
+(iii) pinned-centres assignment, centres c from the draw:
+        min_y  Σ_z Σ_j M_z ‖q_z − c_j‖² y_zj
+        s.t.   Σ_j y_zj = 1             ∀ z
+               | Σ_z M_z y_zj − τ | ≤ δ ∀ j
+               y ∈ {0,1}                                       (δ = the draw's own max-deviation)
+
+(iv)  power-diagram dual, no solver in the trusted path:
+        find α, β with  α_z + M_z β_j ≤ M_z ‖q_z − c_j‖²       ∀ z, j
+        ⇒ optimal cell of z is  argmin_j ( ‖q_z − c_j‖² − β_j )
+```
+
+Certificate (iii) is P1's inner program with integrality restored and the equality row widened to
+a band. That is the precise sense in which our LP is a relaxation of a model we can already write
+down: the gap between (iii) and Option A is exactly the centres.
+
+---
+
+**What the group shows at a glance.** Every option differs from P0 in one line only — the
+geometric constraint — and from P1 in two: integrality, and whether `c` is data or a decision.
+
+| | geometric constraint | centres | integrality | balance |
+|---|---|---|---|---|
+| P1 (ours) | none; convexity of the power cells is a by-product | fixed by Lloyd | dropped | hard equality |
+| P3 (VBL) | separator cuts on `G` | decided in-model | kept | hard band |
+| A | separator cuts on `Ĝ` | decided in-model | kept | objective |
+| B | separator cuts on `G_A` | decided in-model | kept | objective |
+| C | separator cuts on `G_U` | decided in-model | kept | objective |
+| D | diameter conflicts, no graph | decided in-model | kept | objective |
+| E | none | fixed by Lloyd | dropped | hard equality |
+
+### 8.6 Recommended order
 
 1. **Option B**, because it is small, the graph already exists, and it converts the atom route's
    headline number from "local search against a relaxation" into a certificate. Reconcile the two
