@@ -816,7 +816,8 @@ districting models* (Operations Research, 2021, DOI 10.1287/opre.2021.2141), and
 Buchanan, *Political districting to minimize cut edges* (Mathematical Programming Computation,
 2022, DOI 10.1007/s12532-022-00221-5). Their setup:
 
-- **Decision variables.** The Hess (1965) centre-based assignment model: $x_{ij} = 1$ iff unit $i$
+- **Decision variables.** The Hess et al. (1965) centre-based assignment model (the political
+  paper; §6's Hess & Samuels 1971 is its sales-districting descendant): $x_{ij} = 1$ iff unit $i$
   is assigned to the district *centred at* unit $j$, with $x_{jj} = 1$ marking $j$ as a centre. The
   centres are chosen **by the solver**, from among the units.
 - **Objective.** Linear, and a compactness surrogate: minimise cut edges, or a moment-of-inertia
@@ -837,24 +838,30 @@ Buchanan, *Political districting to minimize cut edges* (Mathematical Programmin
 `docs/RESEARCH_FINDINGS.md` §5 records the correction: the group now reports provably optimal
 plans for *all* US congressional and legislative instances (whole-counties objective,
 combinatorial Benders; Shahmizad & Buchanan, MPC in revision), and experiments at **175,000
-vertices** with inexact contiguity (Jolly & Buchanan 2026). Our 3,748 zips is not near any
-frontier. The binding difficulty here is the log objective and the shattered graph, not the unit
-count — so §1's scale reading is a statement about *our* solver's certified size, not about the
-field's.
+vertices** with inexact contiguity (Jolly & Buchanan 2026). Our 3,748 sold zips are not near any
+frontier; the restored full-ZCTA graph of Option A, at roughly 33,000 units, is a different
+statement (§8.4). The binding difficulty here is the log objective and the shattered graph, not
+the unit count — so §1's scale reading is a statement about *our* solver's certified size, not
+about the field's.
 
 ### 8.2 The five differences
 
-**1. Objective: linear versus log.** VBL minimise a linear (or SOC) compactness functional with
-balance as a constraint. We maximise $\sum _j \log M_j$, and Proposition 2 says that objective *is*
-balance. So the two setups swap which of balance and compactness is the objective and which is
-the tie-break. The consequence is computational: their formulation stays a MILP with a strong LP
-relaxation; ours is a convex MINLP needing outer-approximation tangents or a solver with native
-`log` recognition (`scip_tree` uses SCIP's).
+**1. Objective: linear versus log, at the level of the stated problem.** VBL minimise a linear
+(or SOC) compactness functional with balance as a constraint. The stated problem P0 maximises
+$\sum _j \log M_j$, and Proposition 2 says that objective *is* balance. So the two setups swap which
+of balance and compactness is the objective and which is the tie-break. The consequence is
+computational: their formulation stays a MILP; P0 is a convex MINLP needing outer-approximation
+tangents or a solver with native `log` recognition (`scip_tree` uses SCIP's). But this is a
+difference between P0 and P3, not between the running code and P3: the implemented stage 1 (P1,
+§6.1) minimises the same moment-of-inertia functional VBL use, and the log enters only in the
+polish and in the certificates.
 
 **2. Centres: chosen versus fixed.** VBL's Hess model chooses the centres inside the same
 program. Ours fixes them by Lloyd iteration and then solves only the assignment. That single
 difference is the entire certified/uncertified boundary in this project: §7.3's remark states it
-plainly, and the joint problem over centres and assignment is untouched by anything in §7.
+plainly, and the joint problem over centres and assignment is untouched by anything in §7. That
+joint problem is a compactness question. On the Nash objective Proposition 8 already closes it
+at 8.2e-5 nats for every partition, centres included.
 
 **3. Contiguity: cuts versus convex cells.** VBL pay for contiguity with lazily separated
 separator cuts on a connected unit graph. We cannot: the sold-zip graph has 862 components, so
@@ -865,15 +872,23 @@ measured in §7.4: the labelling is not the diagram (266 of 3,704 outside), the 
 you recentroid (no fixed point in 20 iterations), and a convex cell of scattered points is not a
 single served blob (D02 at 48% of its territory).
 
-**4. Balance: hard band versus objective.** Their `± 1%` is a feasibility question; a plan either
-satisfies it or does not exist. Our balance is graded, and §3's closing paragraph explains why we
-refuse the band: a hard band re-imports the equalisation pathology as an infeasibility risk, and
-trap 2 says equalisation can destroy value.
+**4. Balance: hard band versus objective, with the same caveat as difference 1.** Their `± 1%`
+is a feasibility question; a plan either satisfies it or does not exist. In P0 balance is graded.
+In P1 it is not: the mass rows are a hard equality, relaxed in practice to the band
+$|\sum _z M_z y_{zj} - \tau | \le \delta$ (§6.1), so the running code and VBL agree here. §3's closing
+paragraph refuses the band on a different ground. Trap 2 is a two-player fact about
+representatives with *different* utilities, where the equalising allocation can be
+Pareto-dominated. On a common measure Proposition 2 makes the band at the achievable level
+exactly the near-optimal set of the Nash objective, so a tight band is sound for stage 1, and it
+is what P1 uses. The refusal stands for stage 2, where the utilities differ.
 
 **5. The instance graph.** Theirs are county and tract graphs: connected, planar, ~100 to ~10,000
 units. Ours is the sold-zip graph: 862 components, 516 singletons, 47.6% of mass in components
 under 1% each. Contracted to states our instance graph gives only 10 edges over 42 components,
 which is why a state model must import the TIGER state rook graph (49 nodes, 107 edges).
+
+Read against the running code rather than against P0, differences 1 and 4 fall away and three
+remain: centres, integrality, and contiguity.
 
 There is also a difference in the other direction, worth stating because it is the project's
 claim to novelty: `docs/RESEARCH_FINDINGS.md` §8 records two verified absences — no districting
@@ -887,26 +902,49 @@ The two setups are closer than the differences suggest. Programme (centers) in �
 model with integrality dropped and the centres fixed**. Both removals are what turn a MILP into
 an LP, and Lemma 6 says the first removal is nearly free: at most $k - 1$ zips split, measured as
 exactly 17 on the live draw. The second removal is not free, and it is the one §7.3's remark
-refuses to certify.
+refuses to certify. Note also that Lemma 6's near-integrality is a property of the fixed-centre
+problem only. Once the centres are decision variables the constraint matrix is no longer a
+transportation matrix and the Hess LP relaxation is weak (VBL's fixing and symmetry work exists
+because of it), so restoring the centres also forfeits the first removal's free integrality.
 
 So a merge is not a rewrite. It is the restoration of one or both of the things we removed, on a
 graph where their cut machinery has something to bite on.
 
 ### 8.4 Options
 
-**Option A — Hess MILP with the log objective, on a restored graph.** Put the centres back into
-the program as $x_{jj}$ binaries, keep $\sum _j \log M_j$ via SCIP's native `log` (the `scip_tree`
-machinery already does this for two players), and separate VBL's contiguity cuts on a
-**full-ZCTA** graph rather than the sold-zip graph. This is reframing R-C4 in
-`docs/RESEARCH_FINDINGS.md`, and it is the only option that closes the joint centres-and-
-assignment question.
+**Option A — exact contiguity on a restored graph.** Separate VBL's contiguity cuts on a graph
+that includes the unsold glue, so that "contiguous" means what a sales manager means: one region
+of the country, not one component of the sold-zip graph. This is reframing R-C4 in
+`docs/RESEARCH_FINDINGS.md`. The first draft of this option (earlier on 2026-09-06) was a Hess
+MILP with the log objective on the full-ZCTA graph; three corrections change what A is.
 
-*Buys:* a genuine dual bound on stage 1, and the $k!$ symmetry break we currently get only by
-accident. *Costs:* districting an object the channel does not sell in (§1's objection, which is a
-business objection and not a technical one), plus the k-way extension of a solver currently
-written for two players. *Risk:* the log objective plus lazy cuts is the trap-14 configuration —
-SCIP needs `misc/allow{strong,weak}dualreds` off for any lazily separated model, $ga \le \sum u\cdot x$ not
-`==`, and a gain lower bound from the incumbent.
+- *Size.* The full ZCTA set is about 33,000 units. Hess naming squares it (~1e9 binaries), and
+  restricting candidate centres to the 3,748 sold zips still gives 1.2e8. A must be a labelling
+  model, $j \in \{1,\dots,k\}$, at 33,000 × 18 ≈ 600,000 binaries with the $k!$ symmetry broken as
+  in §7.2; or a mixed-granularity graph, sold zips as units and unsold ZCTAs contracted to
+  counties as glue, roughly 7,000 units and 126,000 binaries. §8.1's "not near any frontier" is
+  a statement about 3,748 units, not about $\hat{Z}$.
+- *Objective.* The log objective is flat. The live draw sits 8.2e-5 nats under a ceiling that
+  holds for every partition, and astronomically many contiguous partitions sit in that band. A
+  solver with only the log objective returns an arbitrary one of them, tendrils included, which
+  is why VBL minimise cut edges. A needs compactness as the objective and balance as a band at
+  the draw's own $\delta$. That is P3's own form, and by difference 4 it is also P1's.
+- *What it certifies.* Not the stage-1 Nash value. Proposition 8 already certifies that at
+  8.2e-5 nats, 60× under `EPS_CERT`, and a log-objective A would have a root LP equal to the
+  ceiling by the argument of Proposition 9 ($x_{zj} = 1/k$ balances exactly), so every nat below
+  the ceiling would have to be earned in the tree. What A certifies is the price of exact
+  region-contiguity against the power-diagram surrogate: how much compactness or balance the
+  diagram's 7% labelling leak (§7.4) is costing.
+
+*Buys:* a certified contiguous map at zip granularity, optimal for cut edges (labelling model) or
+for the moment of inertia (Hess naming, mixed granularity only) inside the band; the second of
+these is the joint centres-and-assignment optimum §7.3 leaves open. *Costs:* districting an
+object the channel does not sell in (§1's objection, which is a business objection and not a
+technical one), a labelling solver at 1e5 to 1e6 binaries, and the k-way extension of a solver
+currently written for two players. *Risk:* lazy cuts are the trap-14 configuration: SCIP needs
+`misc/allow{strong,weak}dualreds` off for any lazily separated model; and if the log is kept
+anywhere in the model, $g_j \le \sum _z M_z x_{zj}$ rather than `==`, plus the perspective and
+$g_{\min}$ rows of §8.5.
 
 **Option B — cuts on the atom graph only.** The state-atom route already builds a graph where
 contiguity is meaningful: 56 atoms, 126 edges, one component. VBL separator cuts apply there
@@ -914,9 +952,13 @@ directly and at trivial scale. `td/solvers/atom_draw.py` currently does local se
 `check_contiguous` post-check; replacing that with an exact model over 56 nodes is small.
 
 *Buys:* a certified contiguous draw on the coarsened instance, closing the "draws are local
-search against a relaxation, not certified optimal" caveat. *Costs:* small. *Risk:* the answer is
-certified for the atom instance, not for the zip instance, and the two ceilings sit on different
-bases (§7.1). Recompute on one base in the same pass.
+search against a relaxation, not certified optimal" caveat. Concretely it says whether the atom
+route's 0.0937-nat gap and 30.5% spread (§7.4) are the price of contiguity at atom granularity
+or the local search failing. *Costs:* small. The model must carry the perspective rows of §8.5:
+a log objective under Hess naming is $-\infty$ without them. No compactness term is needed at
+three atoms per district, and the number certified is the atom route's own $\sum \log M$. *Risk:*
+the answer is certified for the atom instance, not for the zip instance, and the two ceilings
+sit on different bases (§7.1). Recompute on one base in the same pass.
 
 **Option C — pre-aggregate, then solve exactly.** Swamy, King & Jacobson (2023, DOI
 10.1287/opre.2022.2311) give a multilevel matching-based contraction that shrinks the unit count
@@ -935,18 +977,24 @@ Validi, Smith, Buchanan & Hicks, *Partitioning a graph into low-diameter cluster
 Metric diameter is defined on a disconnected graph, so this is the one piece of their machinery
 that applies to our instance unmodified.
 
-*Buys:* a certified compactness constraint to sit beside the power-diagram bound, and a defensible
-answer to "how compact is compact enough" that is not a Lloyd artefact. *Costs:* a new constraint
-family. *Risk:* it constrains diameter, not the Nash objective, so it can only tighten the
-feasible set — the interaction with balance needs measuring, not assuming.
+*Buys:* a certified diameter cap to sit beside the power-diagram bound, and a
+compactness-versus-balance frontier in `D`. It does not answer "how compact is compact enough";
+it parametrises the question. *Costs:* a new constraint family. *Risk:* it constrains diameter,
+not the Nash objective, so it can only tighten the feasible set — the interaction with balance
+needs measuring, not assuming. As first written in §8.5 the districts are anonymous, so the $k!$
+symmetry P3 avoids by naming returns, and the LP relaxation is vacuous ($x_{zj} = 1/k$ satisfies
+every conflict row for $k \ge 2$), so as with (floor) every nat of the bound is earned in the
+tree. The radius form under Hess naming, $x_{zj} = 0$ whenever $d(z,j) > D/2$, removes both
+defects as a fixing rather than a row, at the price of a stronger constraint than diameter.
 
 **Option E — leave the two lines apart, and say so.** Keep the power-cell route, cite VBL for the
 cut families we already share, and record the divergence as deliberate, resting on the §8.2
 absences.
 
 *Buys:* nothing new, costs nothing, and is honest. *Risk:* the joint centres-and-assignment
-question stays open indefinitely, and any sponsor claim of the form "this map is optimal" stays
-unsupportable.
+question for compactness stays open indefinitely. Note what E does *not* lose: the claim "this
+map is balance-optimal" is supportable today, at 8.2e-5 nats against a ceiling valid for every
+partition (§7.4). Only "optimally compact" and "contiguous" stay unsupported.
 
 Two candidates from the same literature are already assessed and rejected
 (`docs/OPTIONS_power-cell-contiguity.md` §8): the Zhang–Validi–Buchanan–Hicks linear-size planar
@@ -978,6 +1026,29 @@ but an equality lets presolve aggregate $g_j$ out and every in-callback `trySol`
 (trap 14). And `log` enters through an epigraph variable $w_j \le \log g_j$, which a solver either
 recognises as convex (SCIP does) or approximates by the outer-approximation tangent family
 $w_j \le \log \hat{g} + (g_j - \hat{g})/\hat{g}$ at incumbents $\hat{g}$, generated lazily.
+
+Two more conventions are forced by combining the log with Hess naming, which VBL never had to
+do, because a linear objective gives an inactive centre a zero contribution for free. Under Hess
+naming $j$ ranges over units, so for the $n - k$ units with $x_{jj} = 0$ the mass $g_j$ is 0 and
+$w_j \le \log 0 = -\infty$: the objective $\sum _j w_j$ is $-\infty$ for every $n > k$, and a row
+$g_j \ge g_{\min}$ for all $j$ is infeasible. The fix is the perspective pair
+
+```math
+w_j \;\le\; \log\big(g_j + \tau\,(1 - x_{jj})\big), \qquad g_j \;\ge\; g_{\min}\, x_{jj},
+```
+
+concave in an affine argument, under which an inactive centre contributes exactly $\log \tau$;
+there are exactly $n - k$ of them by $\sum _j x_{jj} = k$, so the offset is a constant. And
+$g_{\min}$ is derived from the incumbent value $V$ rather than guessed. Any solution worth at
+least $V$ has $\log g_j \ge V - \max \sum _{i \ne j} \log g_i \ge V - (k-1)\log \frac{M(Z)}{k-1}$, so
+
+```math
+g_{\min} \;=\; \exp\Big(V - (k-1)\log\frac{M(Z)}{k-1}\Big)
+\;\approx\; \tau\Big(\frac{k-1}{k}\Big)^{k-1} \;\approx\; 0.378\,\tau
+\qquad (k = 18,\ V \approx \text{ceiling}),
+```
+
+which caps the log's gradient at $1/(0.378\,\tau)$.
 
 ---
 
@@ -1071,39 +1142,44 @@ kept, and balance and compactness have swapped roles.
 
 ---
 
-**Option A — Hess + log objective + cuts, on a restored graph.** `Ẑ ⊇ Z` is the full ZCTA set,
-`Ĝ` its adjacency graph; $M_z = 0$ for unsold units.
+**Option A — exact contiguity on a restored graph, labelling form.** `Ẑ ⊇ Z` is the full ZCTA
+set (or sold zips plus unsold counties), `Ĝ = (Ẑ, Ê)` its adjacency graph; $M_z = 0$ for unsold
+units; $z_0$ the heaviest unit.
 
 ```math
 \begin{array}{llll}
-\max_{x,w,g} & \sum_j w_j \\
-\text{s.t.} & w_j \le \log g_j & \forall j & \text{(concave; SCIP-native or OA tangents)}\\
- & g_j \le \sum_{z \in \hat{Z}} M_z x_{zj} & \forall j & \textbf{(} \le \textbf{, never } = \textbf{, trap 14)}\\
- & g_j \ge g_{\min} & \forall j & \text{(from the incumbent, trap 14)}\\
- & \sum_j x_{zj} = 1 & \forall z \in \hat{Z} \\
- & x_{zj} \le x_{jj} & \forall z, j \\
- & \sum_j x_{jj} = k \\
- & x_{zj} \le \sum_{s \in S} x_{sj} & \forall z, j,\ \forall (z,j)\text{-separator } S \text{ in } \hat{G}
+\min_{x,e} & \sum_{(u,v) \in \hat{E}} e_{uv} & & \text{(cut edges)}\\
+\text{s.t.} & \sum_{j=1}^{k} x_{zj} = 1 & \forall z \in \hat{Z} \\
+ & \big\lvert \sum_{z \in \hat{Z}} M_z x_{zj} - \tau \big\rvert \le \delta & \forall j
+   & \textbf{(balance, HARD, } \delta = \text{the draw's own)}\\
+ & e_{uv} \ge x_{uj} - x_{vj} & \forall (u,v) \in \hat{E},\ j & \text{(cut-edge linearisation)}\\
+ & x_{aj} + x_{bj} - 1 \le \sum_{s \in S} x_{sj} & \forall j,\ \forall a, b,\ \forall (a,b)\text{-separator } S \text{ in } \hat{G}
    & \textbf{(LAZY, per component)}\\
+ & x_{z_0 1} = 1;\quad \sum_z M_z x_{z2} \ge \dots \ge \sum_z M_z x_{zk} & & \text{(symmetry, as §7.2)}\\
  & x \in \{0,1\}
 \end{array}
 ```
 
-This is P0 with the geometric constraint instantiated as VBL contiguity, and it is the only
-formulation here that decides centres and assignment jointly. Buys a genuine dual bound; costs
-districting ~30,000 ZCTAs the channel does not sell in. The $g_{\min}$ row is not cosmetic: without
-it the log's gradient at the lower bound is ~1e9 and SCIP's LPs go unstable.
+This is P3 in labelling form on $\hat{G}$: compactness as the objective, balance as the draw's
+own band, contiguity as lazy separator inequalities, which in the labelling model bind two units
+of the same district rather than a unit and its centre. It is what §8.4's three corrections leave
+of the first draft. The log appears nowhere in it: the band already fixes the Nash value to
+within the draw's own spread, and Proposition 8 certifies that value after the fact. The Hess
+form with the moment-of-inertia objective is the same program with $j$ over units, the rows
+$x_{zj} \le x_{jj}$ and $\sum _j x_{jj} = k$, and no symmetry rows; it is affordable only on the
+mixed-granularity ground set.
 
 ---
 
-**Option B — the same program, on the atom graph.** `A` the 56 state atoms, $G_A$ their rook
-graph (126 edges, one component), $M_a$ each atom's mass.
+**Option B — Hess + log objective + cuts, on the atom graph.** `A` the 56 state atoms, $G_A$
+their rook graph (126 edges, one component), $M_a$ each atom's mass; $j$ ranges over atoms.
 
 ```math
 \begin{array}{llll}
 \max_{x,w,g} & \sum_j w_j \\
-\text{s.t.} & w_j \le \log g_j & \forall j \\
- & g_j \le \sum_{a \in A} M_a x_{aj} & \forall j \\
+\text{s.t.} & w_j \le \log\big(g_j + \tau\,(1 - x_{jj})\big) & \forall j & \text{(perspective; concave, SCIP-native or OA tangents)}\\
+ & g_j \le \sum_{a \in A} M_a x_{aj} & \forall j & \textbf{(} \le \textbf{, never } = \textbf{, trap 14)}\\
+ & g_j \ge g_{\min}\, x_{jj} & \forall j & \text{(from the incumbent, formula above)}\\
  & \sum_j x_{aj} = 1 & \forall a \in A \\
  & x_{aj} \le x_{jj} & \forall a, j \\
  & \sum_j x_{jj} = k \\
@@ -1113,20 +1189,26 @@ graph (126 edges, one component), $M_a$ each atom's mass.
 \end{array}
 ```
 
-Identical to A except for the ground set. At 56 nodes and 126 edges the separation is trivial and
-the whole model is small, which is why this is the cheap option — it replaces
-`atom_draw.py`'s local search plus `check_contiguous` post-check with a certificate.
+This is P0 with the geometric constraint instantiated as VBL contiguity, on the one ground set
+where that constraint is both meaningful and small. Unlike A it keeps the log as the objective:
+at three atoms per district there is no tendril for a compactness term to guard against, and the
+number it certifies is the atom route's own $\sum \log M$. At 56 nodes and 126 edges the
+separation is trivial and the whole model is small, which is why this is the cheap option — it
+replaces `atom_draw.py`'s local search plus `check_contiguous` post-check with a certificate.
+The $g_{\min}$ row is not cosmetic: without it the log's gradient at the lower bound is ~1e9 and
+SCIP's LPs go unstable.
 
 ---
 
-**Option C — pre-aggregate, then A.** A contraction $\varphi : Z \to U$ (Swamy multilevel matching)
+**Option C — pre-aggregate, then B.** A contraction $\varphi : Z \to U$ (Swamy multilevel matching)
 supplies the ground set; $M_u = \sum _{z: \varphi (z)=u} M_z$ and $G_U$ is the contracted graph.
 
 ```math
 \begin{array}{llll}
 \max_{x,w,g} & \sum_j w_j \\
-\text{s.t.} & w_j \le \log g_j & \forall j \\
+\text{s.t.} & w_j \le \log\big(g_j + \tau\,(1 - x_{jj})\big) & \forall j \\
  & g_j \le \sum_{u \in U} M_u x_{uj} & \forall j \\
+ & g_j \ge g_{\min}\, x_{jj} & \forall j \\
  & \sum_j x_{uj} = 1 & \forall u \in U \\
  & x_{uj} \le x_{jj}, \quad \sum_j x_{jj} = k \\
  & x_{uj} \le \sum_{s \in S} x_{sj} & \forall u, j,\ \forall (u,j)\text{-separator } S \text{ in } G_U
@@ -1136,7 +1218,8 @@ supplies the ground set; $M_u = \sum _{z: \varphi (z)=u} M_z$ and $G_U$ is the c
 \end{array}
 ```
 
-The mathematics is A's; the content is entirely in $\varphi$. Note that the uncoarsening line is where
+The mathematics is B's on a contracted ground set; the content is entirely in $\varphi$. At a few
+hundred units a compactness tie-break becomes worth adding, for the reason given under A. Note that the uncoarsening line is where
 the objection bites — a contraction that does not preserve connectivity on refinement returns a
 disconnected district from a certified-contiguous solution.
 
@@ -1161,6 +1244,14 @@ The conflict row says two units further apart than `D` never share a district, w
 district's diameter at `D` without ever mentioning adjacency. Sparse: only the pairs violating
 `D` generate a row, and they separate lazily. `D` is a policy dial, and sweeping it traces a
 compactness-versus-balance frontier that P1's Lloyd loop cannot express.
+
+Two defects, as written. The districts are anonymous ($j \in \{1,\dots,k\}$, no $x_{jj}$ rows), so
+the $k!$ symmetry P3 avoids by naming returns; the summary table below records D's centres
+accordingly. And the LP relaxation is vacuous: $x_{zj} = 1/k$ satisfies every conflict row for
+$k \ge 2$, so as with (floor) every nat of the bound is earned in the tree. The radius form under
+Hess naming, $x_{zj} = 0$ whenever $d(z,j) > D/2$, removes both as a fixing rather than a row; it
+certifies diameter $\le D$ through radius $D/2$, which is a stronger constraint than the diameter
+cap itself.
 
 ---
 
@@ -1198,7 +1289,8 @@ measure it after the fact.
 **(iv) Power-diagram dual** — no solver in the trusted path:
 
 ```math
-\text{find } \alpha, \beta \text{ with } \quad
+\max_{\alpha,\beta} \;\; \sum_z \alpha_z + \tau \sum_j \beta_j
+\quad \text{s.t.} \quad
 \alpha_z + M_z \beta_j \;\le\; M_z \lVert q_z - c_j \rVert^2 \quad \forall z, j
 ```
 
@@ -1207,38 +1299,48 @@ measure it after the fact.
 \mathrm{argmin}_j \big( \lVert q_z - c_j \rVert^2 - \beta_j \big)
 ```
 
+The objective row is what makes this a certificate. Any feasible $(\alpha , \beta )$ is a lower bound
+on P1's inner LP by weak duality; feasibility alone certifies nothing, since $\alpha = \beta = 0$ is
+feasible. The `O(nk)` check is dual feasibility plus equality of the two objectives.
+
 Certificate (iii) is P1's inner program with integrality restored and the equality row widened to
 a band. That is the precise sense in which our LP is a relaxation of a model we can already write
 down: the gap between (iii) and Option A is exactly the centres.
 
 ---
 
-**What the group shows at a glance.** Every option differs from P0 in one line only — the
-geometric constraint — and from P1 in two: integrality, and whether $c$ is data or a decision.
+**What the group shows at a glance.** The column the first draft of this table lacked is
+compactness. Without it B, C and D read as if the log objective alone picks a map; it does not,
+because the log is flat inside the band, and only P1, P3 and A carry a compactness objective.
 
-| | geometric constraint | centres | integrality | balance |
-|---|---|---|---|---|
-| P1 (ours) | none; convexity of the power cells is a by-product | fixed by Lloyd | dropped | hard equality |
-| P3 (VBL) | separator cuts on `G` | decided in-model | kept | hard band |
-| A | separator cuts on `Ĝ` | decided in-model | kept | objective |
-| B | separator cuts on $G_A$ | decided in-model | kept | objective |
-| C | separator cuts on $G_U$ | decided in-model | kept | objective |
-| D | diameter conflicts, no graph | decided in-model | kept | objective |
-| E | none | fixed by Lloyd | dropped | hard equality |
+| | geometric constraint | compactness | centres | integrality | balance |
+|---|---|---|---|---|---|
+| P1 (ours) | none; convexity of the power cells is a by-product | objective (moment) | fixed by Lloyd | dropped | hard equality (band $\delta$ in practice) |
+| P3 (VBL) | separator cuts on `G` | objective (cut edges or moment) | decided in-model | kept | hard band |
+| A | separator cuts on `Ĝ` | objective (cut edges) | anonymous, labelling | kept | hard band, the draw's own $\delta$ |
+| B | separator cuts on $G_A$ | none | decided in-model | kept | objective (log) |
+| C | separator cuts on $G_U$ | none, or a tie-break | decided in-model | kept | objective (log) |
+| D | diameter conflicts, no graph | the cap `D` only | anonymous as written | kept | objective (log) |
+| E | none | objective (moment) | fixed by Lloyd | dropped | hard equality (band $\delta$ in practice) |
 
 ### 8.6 Recommended order
 
 1. **Option B**, because it is small, the graph already exists, and it converts the atom route's
    headline number from "local search against a relaxation" into a certificate. Reconcile the two
-   ceiling bases in the same pass.
-2. **Option D**, because it is the only piece of the VBL toolkit that applies to the zip instance
-   as it stands.
-3. **Option A**, gated on the R-C4 experiment. Run the full-ZCTA-graph test first and find out
-   whether the connectivity obstruction is an artefact of restricting to sold zips. If it is, the
-   whole exact line reopens and (centers) becomes its relaxation rather than its replacement. If
-   it is not, A is dead and E is the honest record.
-4. **Option C** only if A survives R-C4 and 3,748 units then proves too large — which, on the
-   corrected frontier of §8.1, it probably will not.
+   ceiling bases in the same pass. Carry the perspective rows.
+2. **Option A**, re-specified as in §8.4 and §8.5, and gated on a sponsor question rather than
+   on an experiment: run it only if region-contiguity must be *certified* rather than shown on a
+   map, since the power cells already give convex regions at 0.0003 to 0.0007 nats (§7.4). The
+   R-C4 full-ZCTA test decides the ground set, all ZCTAs or sold zips plus unsold counties, not
+   whether A exists.
+3. **Option D** only if a diameter cap becomes a stated business rule. It parametrises "compact
+   enough" rather than answering it, and its relaxation is vacuous.
+4. **Option C** only if A is commissioned and its ground set then proves too large — which, on
+   the corrected frontier of §8.1, it probably will not.
+
+E is the record for the zip instance until 2 is commissioned, and its balance claim is already
+certified. The decision that picks between 1 and 2 is the sponsor's, not mathematical: which
+claim beyond balance must be certified, compactness or region-contiguity. Balance is done.
 
 ---
 
