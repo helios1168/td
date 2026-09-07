@@ -1,0 +1,299 @@
+<title>Borders in Motion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #F2F4F6; --surface: #FFFFFF; --ink: #1B222B; --muted: #5E6B78;
+  --line: #D3DAE1; --accent: #2C6E8C; --accent-ink: #FFFFFF; --accent-soft: #DDEAF1;
+  --mark: #A8541E; --mark-soft: #F3E4DA; --map-bg: #FBFBFC; --state-line: #4A5560;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12171D; --surface: #1A2129; --ink: #E4E9ED; --muted: #96A2AD;
+    --line: #2B343E; --accent: #7DB6D3; --accent-ink: #0F1A21; --accent-soft: #1F3541;
+    --mark: #E0935F; --mark-soft: #3A2A1E; --map-bg: #161C23; --state-line: #B6C0C9;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12171D; --surface: #1A2129; --ink: #E4E9ED; --muted: #96A2AD;
+  --line: #2B343E; --accent: #7DB6D3; --accent-ink: #0F1A21; --accent-soft: #1F3541;
+  --mark: #E0935F; --mark-soft: #3A2A1E; --map-bg: #161C23; --state-line: #B6C0C9;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16.5px; line-height: 1.5; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 24px 24px 56px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 18px; font-weight: 600; }
+.eyebrow { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+header { display: grid; gap: 8px; margin-bottom: 16px; }
+header p { margin: 0; max-width: 80ch; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.tabs button { font-family: var(--display); font-size: 13.5px; background: var(--surface); color: var(--ink); border: 0; padding: 7px 14px; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.layout { display: grid; grid-template-columns: 1fr 360px; gap: 18px; }
+.mapbox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+svg.map { width: 100%; height: auto; display: block; background: var(--map-bg); border-radius: 4px; }
+.state { fill: none; stroke: var(--state-line); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.state.filled { fill-opacity: 0.42; }
+.state.dim { stroke-opacity: 0.35; }
+.state.hot { stroke: var(--mark); stroke-width: 4; }
+.edge { stroke: var(--muted); stroke-opacity: 0.35; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.zip { stroke: none; }
+.zip.faded { fill-opacity: 0.12; }
+.centre { fill: none; stroke: var(--ink); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.centre-old { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.slabel { font-family: var(--mono); font-size: 46px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--map-bg); stroke-width: 10; }
+.dlabel { font-family: var(--display); font-weight: 700; font-size: 52px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--map-bg); stroke-width: 12; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: grid; align-content: start; gap: 10px; }
+.panel .step { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.panel p { margin: 0; font-size: 15.5px; }
+.panel .math { font-family: var(--mono); font-size: 13.5px; background: var(--ground); padding: 8px 10px; border-radius: 4px; overflow-x: auto; }
+.panel .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 4px; }
+.panel .facts .k { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.panel .facts .v { font-family: var(--display); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bars { display: grid; gap: 3px; margin-top: 6px; font-family: var(--mono); font-size: 11px; }
+.bars .row { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 6px; }
+.bars .track { position: relative; height: 12px; background: var(--ground); border-radius: 2px; }
+.bars .before, .bars .after { position: absolute; top: 0; height: 100%; width: 2px; }
+.bars .before { background: var(--muted); } .bars .after { background: var(--accent); }
+.bars .band { position: absolute; top: 0; height: 100%; background: var(--accent-soft); }
+.bars .legend { color: var(--muted); }
+.costs { display: flex; gap: 10px; align-items: flex-end; height: 70px; margin-top: 6px; }
+.costs div { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; position: relative; }
+.costs div.cur { background: var(--mark); }
+.costs div span { position: absolute; top: -18px; left: 0; right: 0; text-align: center; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+
+.rail { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; display: grid; gap: 8px; }
+.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.controls button { font-family: var(--display); font-size: 13.5px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.controls button:hover { border-color: var(--accent); }
+.controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.controls input[type=range] { flex: 1; min-width: 200px; accent-color: var(--accent); }
+.controls label { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.ticks { display: flex; gap: 4px; flex-wrap: wrap; }
+.ticks button { font-family: var(--mono); font-size: 11px; background: var(--ground); color: var(--muted); border: 1px solid transparent; border-radius: 3px; padding: 3px 7px; cursor: pointer; }
+.ticks button[aria-current="step"] { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+.ticks button.group { color: var(--ink); font-family: var(--display); font-size: 11.5px; background: none; cursor: default; padding-left: 0; }
+footer { margin-top: 28px; font-size: 14px; color: var(--muted); }
+@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">National channel · k = 18 · the state-border build, replayed step by step</div>
+  <h1>Borders in Motion</h1>
+  <p>Every stage of the optimisation that turned the committed map into the δ = 5% map, drawn on the map as it happens. Step through with the buttons, the slider or the arrow keys. Dot size is a quintile of each zip's opportunity; masses appear only as state totals in units of τ, the equal share.</p>
+  <div class="tabs" role="group" aria-label="which run">
+    <button type="button" data-mode="t2" aria-pressed="true">Track 2, anchored, δ = 5%</button>
+    <button type="button" data-mode="t1" aria-pressed="false">Track 1, δ = 5%, λ = 100</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="mapbox"><svg class="map" id="map" role="img" aria-label="the map at the current step"></svg></div>
+  <aside class="panel" id="panel"></aside>
+</div>
+<div class="rail">
+  <div class="controls">
+    <button type="button" id="prev">◀ Back</button>
+    <button type="button" id="next">Next ▶</button>
+    <input type="range" id="scrub" min="0" max="0" value="0" aria-label="step">
+    <label><input type="checkbox" id="cmpChk"> show committed labels</label>
+  </div>
+  <div class="ticks" id="ticks"></div>
+</div>
+<footer>Colours are nominal and assigned here, not the palette of the rendered figures. Run <code>battery/results/borders_k18_v2_20260907/track2_anchored/d0.05</code>, replayed from the same program on 2026-09-07; branch <code>worktree-vbl</code>. The companion pages: "Borders on State Lines" (every cell) and "The Five Percent Map" (this cell with the full model).</footer>
+</div>
+
+<script>
+const D = __DATA__;
+const K = D.k, S = D.state_list.length;
+const PAL = ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f","#edc948","#b07aa1","#ff9da7","#9c755f","#bab0ac","#1f77b4","#d62728","#2ca02c","#9467bd","#8c564b","#e377c2","#7f7f7f","#17becf"];
+const col = j => (j >= 0 ? PAL[j % PAL.length] : "#999");
+const dname = j => "D" + String(j + 1).padStart(2, "0");
+const pct = (x, nd = 1) => (100 * x).toFixed(nd) + "%";
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}) => { const e = document.createElementNS(NS, t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
+
+// ---- geometry
+const svg = document.getElementById("map");
+let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+for (const parts of Object.values(D.polys)) for (const ring of parts) for (const [x, y] of ring) {
+  xmin = Math.min(xmin, x); xmax = Math.max(xmax, x); ymin = Math.min(ymin, y); ymax = Math.max(ymax, y);
+}
+const pad = 40;
+svg.setAttribute("viewBox", `${xmin - pad} ${-(ymax + pad)} ${xmax - xmin + 2 * pad} ${ymax - ymin + 2 * pad}`);
+const gStates = el("g"), gEdges = el("g"), gZips = el("g"), gCentres = el("g"), gLabels = el("g");
+svg.append(gStates, gEdges, gZips, gCentres, gLabels);
+const statePath = {}, stateCentroid = {};
+for (const [code, parts] of Object.entries(D.polys)) {
+  const d = parts.map(r => "M" + r.map(([x, y]) => `${x},${-y}`).join("L") + "Z").join("");
+  const p = el("path", { d, class: "state" }); gStates.appendChild(p); statePath[code] = p;
+  const big = parts.reduce((a, b) => (a.length > b.length ? a : b), parts[0] || [[0, 0]]);
+  let cx = 0, cy = 0; for (const [x, y] of big) { cx += x; cy += y; } stateCentroid[code] = [cx / big.length, cy / big.length];
+}
+const zipEls = D.zips.x.map((x, i) => {
+  const c = el("circle", { cx: x, cy: -D.zips.y[i], r: [7, 10, 14, 19, 27][D.zips.c[i]], class: "zip" });
+  gZips.appendChild(c); return c;
+});
+const idxOf = code => D.state_list.indexOf(code);
+const edgeEls = D.edges.map(([a, b]) => {
+  const A = stateCentroid[D.state_list[a]], B = stateCentroid[D.state_list[b]];
+  const l = el("line", { x1: A[0], y1: -A[1], x2: B[0], y2: -B[1], class: "edge" }); l.style.display = "none"; gEdges.appendChild(l); return l;
+});
+
+// ---- drawing primitives
+function setZips(labels, opts = {}) {
+  const { faded = null, hide = false } = opts;
+  zipEls.forEach((c, i) => {
+    const j = labels ? labels[i] : -1;
+    c.style.display = hide ? "none" : "";
+    c.setAttribute("fill", col(j));
+    c.classList.toggle("faded", faded ? !faded(i) : false);
+  });
+}
+function setStates(fillOf, opts = {}) {
+  const { hot = [], dim = false } = opts;
+  for (const [code, p] of Object.entries(statePath)) {
+    const j = fillOf ? fillOf(code) : -1;
+    p.classList.toggle("filled", j >= 0);
+    p.setAttribute("fill", j >= 0 ? col(j) : "none");
+    p.classList.toggle("hot", hot.includes(code));
+    p.classList.toggle("dim", dim);
+  }
+}
+function setEdges(on) { edgeEls.forEach(l => (l.style.display = on ? "" : "none")); }
+function setCentres(list, old) {
+  gCentres.replaceChildren();
+  if (old) for (const [x, y] of old) gCentres.appendChild(el("circle", { cx: x, cy: -y, r: 22, class: "centre-old" }));
+  if (list) for (const [x, y] of list) { gCentres.appendChild(el("circle", { cx: x, cy: -y, r: 22, class: "centre" }));
+    gCentres.appendChild(el("path", { d: `M${x - 30},${-y}H${x + 30}M${x},${-y - 30}V${-y + 30}`, class: "centre" })); }
+}
+function setLabels(items) {
+  gLabels.replaceChildren();
+  for (const { code, text, cls } of items) {
+    const [x, y] = stateCentroid[code];
+    const t = el("text", { x, y: -y + 16, class: cls || "slabel" }); t.textContent = text; gLabels.appendChild(t);
+  }
+}
+const stateOf = i => D.state_list[D.zips.s[i]];
+
+// ---- steps: Track 2
+const splitShares = (yrow, zrow) => zrow.map((z, j) => (z ? [j, yrow[j]] : null)).filter(Boolean).sort((a, b) => b[1] - a[1]);
+const massBound = D.state_list.map((c, s) => [c, D.M_s_tau[s], Math.ceil(D.M_s_tau[s] / 1.05 - 1e-9)]).filter(x => x[2] >= 2);
+const forced = massBound.reduce((a, x) => a + x[2] - 1, 0);
+const T2 = [];
+T2.push({ group: "Start", title: "The committed map", render() { setStates(null); setEdges(false); setZips(D.labels0); setCentres(null); setLabels([]); },
+  html: `<p>The k = 18 seed-2 draw as it stands: 3,748 zips in 18 districts, balanced to a 1.37% spread by the transportation LP run to a fixed point (channel note §6). Its borders run near state lines without lying on them; 9.15% of mass sits in a district that another state's owner set claims.</p>
+  <div class="facts"><div><div class="k">spread</div><div class="v">${pct(D.committed.spread, 2)}</div></div><div><div class="k">nash gap, nats</div><div class="v">${D.committed.gap.toFixed(4)}</div></div></div>` });
+T2.push({ group: "Level 1", title: "Aggregate to 49 units", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)]); setEdges(true); setCentres(null);
+    setLabels(D.state_list.filter(c => statePath[c]).map(c => ({ code: c, text: D.M_s_tau[idxOf(c)].toFixed(2) + "τ" }))); },
+  html: `<p>Level 1 does not see zips. Each of the lower 48 states and DC becomes one unit with mass M<sub>s</sub>, shown in units of τ, and the units are joined by the rook graph: two states are adjacent when their shared boundary has positive length (107 edges; the Four Corners point contact is not one). States are coloured here by the district holding the plurality of their mass in the committed map.</p>
+  <p>AK, HI and the 32 zips of unknown state, 0.09τ together, sit outside this ground set and are placed at the end.</p>` });
+T2.push({ group: "Level 1", title: "What mass alone forces", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)], { hot: massBound.map(x => x[0]) }); setEdges(false); setCentres(null);
+    setLabels(massBound.map(([c, m, n]) => ({ code: c, text: `${m.toFixed(2)}τ → ${n}` }))); },
+  html: `<p>Before any solver runs, arithmetic sets a floor. A district may hold at most (1 + δ)τ = 1.05τ, so a state of mass M<sub>s</sub> needs at least ⌈M<sub>s</sub> / 1.05τ⌉ districts and is split at least that many times minus one.</p>
+  <div class="math">${massBound.map(([c, m, n]) => `${c}: ⌈${m.toFixed(2)} / 1.05⌉ = ${n} districts, ${n - 1} split${n - 1 > 1 ? "s" : ""}`).join("<br>")}<br>forced splits ≥ ${forced}</div>
+  <p>Every other state fits inside one district. Whether it can be given one, with contiguity and balance, is what the program decides.</p>` });
+T2.push({ group: "Level 1", title: "Anchors: name the districts", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)]); setEdges(false); setCentres(null);
+    const items = []; D.home.forEach((s, j) => { if (s >= 0) items.push({ code: D.state_list[s], text: (items.filter(i => i.code === D.state_list[s]).length ? " " : "") + dname(j), cls: "dlabel" }); });
+    const byCode = {}; D.home.forEach((s, j) => { if (s >= 0) (byCode[D.state_list[s]] ||= []).push(dname(j)); });
+    setLabels(Object.entries(byCode).map(([code, ds]) => ({ code, text: ds.join(" "), cls: "dlabel" }))); },
+  html: `<p>With anonymous districts the program has the full 18! relabelling symmetry, and the compactness tie-break is too small to break it: HiGHS held a one-split gap open for 600 s. Fixing z<sub>home(j), j</sub> = 1, so district j keeps the state that held the plurality of its committed mass, names the districts by geography. It is also the sponsor's decision (4): the result reads as the same map with its borders moved.</p>
+  <p>Anchoring is a restriction, so its optimum is an upper bound on the free minimum. Here free and anchored both find 8; the free dual bound stops at 6.</p>` });
+T2.push({ group: "Level 1", title: "The MILP's answer", render() { setZips(null, { hide: true }); setEdges(false); setCentres(null);
+    setStates(c => { const s = idxOf(c); const sh = splitShares(D.milp.y[s], D.milp.z[s]); return sh.length ? sh[0][0] : -1; }, { hot: D.state_list.filter((c, s) => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2) });
+    setLabels(D.state_list.filter((c, s) => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2).map(c => { const s = idxOf(c); return { code: c, text: splitShares(D.milp.y[s], D.milp.z[s]).map(([j, v]) => `${dname(j)} ${Math.round(100 * v)}`).join(" · ") }; })); },
+  html: `<p>The minimum-splits program: minimise Σ<sub>s</sub>(Σ<sub>j</sub> z<sub>sj</sub> − 1) subject to every state placed, the band (1 ± δ)τ on every district, η z ≤ y ≤ z so a touched state carries at least 1% of its mass, the anchors, and single-commodity-flow contiguity of each district's state set on the rook graph. A compactness moment, weighted so the whole term is worth under half a split, breaks ties among equal split counts.</p>
+  <div class="facts"><div><div class="k">splits</div><div class="v">${D.milp.splits}</div></div><div><div class="k">closed in</div><div class="v">${D.milp.solve_s} s</div></div></div>
+  <p>Each split state is filled by its largest holder and labelled with all its shares in percent. Every other state is whole. The split count equals the mass floor plus two: NY takes a third district and CA a fifth, the price of the band and the anchors together.</p>` });
+T2.push({ group: "Level 1", title: "The balance pass", render() { setZips(null, { hide: true }); setEdges(false); setCentres(null);
+    setStates(c => { const s = idxOf(c); const sh = splitShares(D.balance.y[s], D.milp.z[s]); return sh.length ? sh[0][0] : -1; });
+    setLabels(D.state_list.filter((c, s) => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2).map(c => { const s = idxOf(c); return { code: c, text: splitShares(D.balance.y[s], D.milp.z[s]).map(([j, v]) => `${dname(j)} ${Math.round(100 * v)}`).join(" · ") }; })); },
+  html: `<p>The MILP spends the whole band wherever that saves a split, so some district sits at 1.05τ or 0.95τ even when the chosen splits allow better. With the split pattern z fixed, the shares y are re-solved by two LPs: first minimise the maximum deviation from τ, then, holding that, minimise the spread. Only the shares inside the four split states can move.</p>
+  <div class="bars"><div class="legend">district mass / τ · grey = MILP, blue = after the pass · shaded = the band</div>${D.milp.masses.map((m, j) => { const a = D.balance.masses[j]; const pos = v => ((v - 0.9) / 0.2 * 100).toFixed(1) + "%"; return `<div class="row"><span>${dname(j)}</span><div class="track"><div class="band" style="left:${pos(0.95)};width:${(0.10 / 0.2 * 100).toFixed(1)}%"></div><div class="before" style="left:${pos(m)}"></div><div class="after" style="left:${pos(a)}"></div></div></div>`; }).join("")}</div>
+  <div class="facts"><div><div class="k">spread, MILP → pass</div><div class="v">${pct(Math.max(...D.milp.masses) - Math.min(...D.milp.masses))} → ${pct(D.balance.spread)}</div></div><div><div class="k">max deviation</div><div class="v">${pct(D.balance.max_dev)}</div></div></div>` });
+// level 2: per split state, per iterate
+function level2Labels(upto) {
+  // labels: whole states final; split states up to the given (stateIndex, iterate)
+  const lab = D.labels_final.slice();
+  D.level2.forEach((st, si) => {
+    const it = si < upto.si ? st.iterates.length - 1 : si === upto.si ? upto.it : 0;
+    if (si > upto.si) { st.zips.forEach((z, n) => (lab[z] = st.iterates[0].labels[n])); }
+    else st.zips.forEach((z, n) => (lab[z] = st.iterates[it].labels[n]));
+  });
+  return lab;
+}
+D.level2.forEach((st, si) => {
+  st.iterates.forEach((itr, it) => {
+    const inState = new Set(st.zips);
+    T2.push({ group: `Level 2 · ${st.state}`, title: it === 0 ? `${st.state}: the transportation cut` : `${st.state}: Lloyd round ${it}`,
+      render() { setEdges(false); setStates(c => (c === st.state ? -1 : (() => { const s = idxOf(c); const sh = splitShares(D.balance.y[s], D.milp.z[s]); return sh.length && !D.level2.some(o => o.state === c) ? sh[0][0] : -1; })()), { hot: [st.state], dim: true });
+        setZips(level2Labels({ si, it }), { faded: i => inState.has(i) });
+        setCentres(itr.centers, it > 0 ? st.iterates[it - 1].centers : null); setLabels([]); },
+      html: it === 0
+        ? `<p>Inside ${st.state}, the zips are assigned by the transportation LP of the channel note's §6 with per-district targets y<sub>sj</sub>M<sub>s</sub> in place of the equal split: minimise Σ M<sub>z</sub>‖q<sub>z</sub> − c<sub>j</sub>‖² subject to every zip placed and each touching district receiving exactly its target. The cut is a power diagram of the committed centres ${st.districts.map(dname).join(", ")}, marked with crosses. A basic optimum splits at most ${st.districts.length - 1} zips; they are rounded to their larger share.</p>
+           <p>The committed centres were placed for the old shares, so they can sit in the wrong place for the piece each district now owns. The rounds that follow fix that.</p>
+           <div class="facts"><div><div class="k">state cost ΣM d²</div><div class="v">${(st.cost[0] / st.cost[0]).toFixed(2)}×</div></div><div><div class="k">rounds kept</div><div class="v">${st.iterates.length - 1}</div></div></div>`
+        : `<p>Round ${it}: every district touching ${st.state} is re-centred at the M-weighted centroid of its full membership, whole states included (dashed circles are the previous centres), and the state's LP is solved again. A round is kept only if the state's compactness cost does not rise; the loop stops when the labels repeat or a round is rejected.</p>
+           <div class="costs">${st.cost.map((c, r) => `<div style="height:${(100 * c / st.cost[0]).toFixed(0)}%" class="${r === it ? "cur" : ""}"><span>${(c / st.cost[0]).toFixed(2)}×</span></div>`).join("")}</div>
+           <p style="font-family:var(--mono);font-size:12px;color:var(--muted)">state cost per round, relative to the LP cut</p>` });
+  });
+});
+T2.push({ group: "Finish", title: "Completion", render() { setEdges(false); setStates(null); setZips(D.labels_final); setCentres(null); setLabels([]); },
+  html: `<p>The ${D.n_placed} zips outside the level-1 ground set or without a gazetteer coordinate are placed last by the rule the committed draw uses: to the district holding most of their state, else the nearest. They do not appear on this map. Every whole state has gone to its single district; the four split states carry the cuts just made.</p>` });
+T2.push({ group: "Finish", title: "The δ = 5% map", render() { setEdges(false); setStates(null); setZips(D.labels_final); setCentres(null); setLabels([]); },
+  html: `<p>Measured on the whole instance. Tick "show committed labels" to flip between the two.</p>
+  <div class="facts"><div><div class="k">spread</div><div class="v">${pct(D.final.spread, 2)}</div></div><div><div class="k">max deviation</div><div class="v">${pct(D.final.max_dev, 2)}</div></div><div><div class="k">zips moved</div><div class="v">${D.final.zips_changed}</div></div><div><div class="k">split zips</div><div class="v">${D.final.n_fractional}</div></div><div><div class="k">stage 2</div><div class="v">${D.final.stage2.toFixed(3)}</div></div><div><div class="k">nash gap, nats</div><div class="v">${D.final.gap.toFixed(4)}</div></div></div>
+  <p>The 5.25% maximum deviation exceeds the 5% band because level 1 balanced on the lower-48-plus-DC mass and the 0.6% placed at completion lands unevenly, with the split-zip rounding on top.</p>` });
+
+// ---- steps: Track 1
+const T1 = D.track1.iterates.map((lab, r) => {
+  const prev = r ? D.track1.iterates[r - 1] : D.labels0;
+  const moved = lab.reduce((a, v, i) => a + (v !== prev[i] && v >= 0 ? 1 : 0), 0);
+  return { group: "Track 1", title: r === 0 ? "Round 0: the first penalised LP" : `Round ${r}`, render() { setEdges(false); setStates(null); setZips(lab); setCentres(null); setLabels([]); },
+    html: (r === 0 ? `<p>Track 1 never leaves the zip level. The committed map's owner sets (each state's home districts, else its single largest holder) define a per-zip crossing penalty λ = 100 times the mean d², and the transportation LP runs with a ±5% band in place of the equality. The map is then re-centred and the LP re-run, ten rounds at most, stopping when a labelling repeats.</p>` : `<p>Round ${r}: centres moved to the M-weighted centroids of the previous labelling, owner sets recomputed from it, LP re-solved.</p>`)
+      + `<div class="facts"><div><div class="k">zips changed this round</div><div class="v">${moved}</div></div>${r === D.track1.iterates.length - 1 ? `<div><div class="k">final spread</div><div class="v">${pct(D.track1.spread, 2)}</div></div><div><div class="k">outside owner sets</div><div class="v">${pct(D.track1.outside, 2)}</div></div><div><div class="k">small states still split</div><div class="v">${D.track1.split_states.split(",").length}</div></div>` : ""}</div>`
+      + (r === D.track1.iterates.length - 1 ? `<p>Still split: ${D.track1.split_states.replace(/,/g, ", ")}. The inherited owner sets force crossings (PA+MD+DE runs 18% light, D06 without AZ 32% light), so the loop cannot close every border; that is why Track 2 exists.</p>` : "") };
+});
+
+// ---- driver
+let mode = "t2", step = 0;
+const steps = () => (mode === "t2" ? T2 : T1);
+const panel = document.getElementById("panel"), scrub = document.getElementById("scrub"), ticks = document.getElementById("ticks"), cmpChk = document.getElementById("cmpChk");
+function buildTicks() {
+  ticks.replaceChildren(); let lastGroup = null;
+  steps().forEach((s, i) => {
+    if (s.group !== lastGroup) { const g = document.createElement("button"); g.type = "button"; g.className = "group"; g.textContent = s.group; g.tabIndex = -1; ticks.appendChild(g); lastGroup = s.group; }
+    const b = document.createElement("button"); b.type = "button"; b.textContent = i + 1; b.dataset.i = i; b.title = s.title; b.addEventListener("click", () => go(i)); ticks.appendChild(b);
+  });
+  scrub.max = steps().length - 1;
+}
+function go(i) {
+  step = Math.max(0, Math.min(steps().length - 1, i));
+  const s = steps()[step];
+  s.render();
+  if (cmpChk.checked) setZips(D.labels0);
+  panel.innerHTML = `<div class="step">${s.group} · step ${step + 1} of ${steps().length}</div><h2>${s.title}</h2>${s.html}`;
+  scrub.value = step;
+  for (const b of ticks.querySelectorAll("button[data-i]")) {
+    if (Number(b.dataset.i) === step) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+  }
+}
+document.getElementById("prev").addEventListener("click", () => go(step - 1));
+document.getElementById("next").addEventListener("click", () => go(step + 1));
+scrub.addEventListener("input", () => go(Number(scrub.value)));
+cmpChk.addEventListener("change", () => go(step));
+document.addEventListener("keydown", e => { if (e.key === "ArrowRight") go(step + 1); if (e.key === "ArrowLeft") go(step - 1); });
+for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => {
+  mode = b.dataset.mode; for (const o of document.querySelectorAll(".tabs button")) o.setAttribute("aria-pressed", String(o === b));
+  buildTicks(); go(0);
+});
+buildTicks(); go(0);
+</script>

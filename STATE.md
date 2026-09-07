@@ -22,6 +22,12 @@ Two more on 2026-09-07: `3e983b90-8f87-4dfd-aa28-4e1cd6eee497` ("Borders in Moti
 optimisation step replayed on the map, both tracks) and
 `d87b53b0-f394-417e-aab5-0fba8d3c6cb0` ("Districting from Duality", the study guide and
 reading list). `realise` now records per-round iterates per split state for the replay.
+"Borders in Motion" crashed on first publish (DC's polygon fell to the islet filter and an empty
+`reduce` killed the script); fixed and republished, but not yet looked at in a browser. Its
+builder is `tools/motion_page/`, and **`docs/MOTION_PLAN.md` is the overnight plan** to
+verify it with headless Chrome screenshots per step and improve it (deep links, the figure
+palette, striped split states, the power-cell cut per Lloyd round, transitions, hover, the
+Track 1 owner-set overlay, optionally the MILP's incumbent trajectory through `highspy`).
 
 **What the run says** (`docs/BORDERS_RESULTS.md`). At δ = 5% a map exists with every state
 whole except CA (five districts), NY (three), TX and FL (two): Track 2, 8 splits, certified
@@ -52,6 +58,9 @@ is wanted, and whether the West's rearrangement is acceptable to the sponsor.
 
 ## Next
 
+- [ ] **Overnight: `docs/MOTION_PLAN.md`.** Build, verify in headless Chrome, and improve the
+      "Borders in Motion" page in the order the plan gives; update the artifact in place by URL;
+      ask before merging.
 - [ ] **Morning decision: which map ships.** Gated on the sponsor reading
       `docs/BORDERS_RESULTS.md` and the four maps it lists. The recommendation is Track 2
       anchored δ = 5% (8 splits, certified; CA, TX, NY, FL the only split states). The
