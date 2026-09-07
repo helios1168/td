@@ -6,6 +6,49 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-06 23:30 · worktree-vbl b38c9ce — the atom route retired, the borders plan written, nothing built
+
+**The atom route is abandoned, and the next build moves the committed map's borders onto
+state lines.** Session of 2026-09-06 (evening), worktree `.claude/worktrees/vbl`, branch
+`worktree-vbl`. Sponsor decisions: (1) the state-atom route is dropped outright; (2) the
+borders of the committed k=18 power-cell draw (`draw_k18_v2_20260904/k18`, seed 2) are to be
+moved onto state lines, sacrificing balance up to a **10% spread cap**; (3) visual map
+contiguity is the bar, exact graph contiguity is not required; (4) warm start from seed 2 only,
+so the result reads as the same map with its borders moved; (5) a district's home state is the
+plurality of its mass.
+
+**The plan is `docs/BORDERS_PLAN.md`, and nothing in it is built.** Owner set per state (its
+home districts, else the single plurality holder); the transportation LP of `centers.assign`
+with a per-zip crossing penalty `λ` and a balance band `δ` in place of the equality, which keeps
+it a transportation problem (duals, at most k−1 split zips); Lloyd alternation from the
+committed centres with no Nash polish; a pure-snap baseline with no LP; a δ ∈ {0, 1, 2, 5, 10%}
+× λ grid overnight, one `draw.csv` and dot + Voronoi maps per cell. Measured tonight: the
+committed draw already keeps **90.54% of mass inside owner sets**; a 10% cap leaves a border
+inside NY/NJ against PA (NY+NJ+New England 3.19τ for three districts, PA+MD+DE 0.82τ) and AZ
+split (D06 without AZ is 0.68τ). Those residual splits are the sponsor's call, not the model's.
+**Track 2, added later the same evening:** the one VBL piece that fits the reframed problem,
+the whole-unit minimum-splits objective (Shahmizad & Buchanan) at the *state* level, 50 units
+and 18 districts with `scf` contiguity on the rook graph, solved exactly by `scipy.optimize.milp`
+per δ, then realised inside each split state by the same transportation LP. It certifies the
+minimum number of split states at each δ and which they are; Track 1 snaps the map you have.
+Three later amendments, all in the plan: a lexicographic balance pass after the MILP (fix the
+splits, minimise the maximum deviation, so δ is a cap and not a target); five Lloyd rounds
+inside each split state so the CA/TX/NY cuts are compact for the shares chosen; and stage 2
+measured per cell with an incumbency tie-break at level 2 behind a flag, off by default. Stage
+1 stays opportunity-only by design.
+
+**Also this session:** `docs/CHANNEL_NOTE.md` §8 (the VBL comparison and options) reviewed and
+corrected, `7745ad9` and `82ef8b7`, both merged to `main` and pushed. Hess naming with the log
+objective was infeasible without perspective rows; Options A–D carried no compactness term;
+differences 1 and 4 compared P0 with VBL rather than the running code; "A buys a genuine dual
+bound" withdrawn, since Proposition 8 already certifies the draw at 8.2e-5 nats; Option A
+mis-sized at ~33,000 ZCTAs; Option D anonymous with a vacuous relaxation; certificate (iv)
+lacked its dual objective. Options A–D are parked; Option B belonged to the atom route.
+
+*What's next, and the decision it needs.* Build `td/solvers/state_borders.py` and
+`tools/state_borders.py` per the plan, smoke one cell, run the grid, report the table and the
+maps. The morning decision is which δ to ship, given the residual split states at each.
+
 ## 2026-09-06 20:56 · main 4e19c2b — The zero is showable, and the piece statistic had the wrong denominator
 
 **The zero-mismatch guarantee is now showable, and the contiguity statistic that ranked the
