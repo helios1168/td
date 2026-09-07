@@ -1,8 +1,8 @@
 # The N-way model — 3+ candidate reps per zip
 
 **Opened:** 2026-08-31 · **Split out of `NWAY.md` on 2026-08-31.** Companion files:
-`docs/PROBLEM.md` (the business problem), `docs/DATA.md` (the export route), `STATE.md`
-`## Facts` (every measured number), `docs/CODE_MAP.md` (how to run anything).
+`docs/PROBLEM.md` (the business problem), `STATE.md` `## Facts` (every measured number),
+`docs/CODE_MAP.md` (how to run anything, incl. the export route).
 
 This file owns the settled facts about the **model**: the utilities, the propositions and their
 proofs, the two stages as programs, the certificates, and the routes that were assessed with a

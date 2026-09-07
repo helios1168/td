@@ -456,6 +456,10 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
 
     states: dict[int, dict] = {}
     n_fractional = 0
+    # TODO(2026-09-07): realise is order-dependent -- it moves the shared centre array `C`
+    # as it cuts split states in turn. Deterministic, undocumented, unjudged. Fix is to
+    # recentroid from a copy per state or process states in a fixed named order; judge on
+    # the CA cut of the shipped cell. (STATE.md ## Next, dropped 2026-09-07 step 4)
     for s in split_states:
         idx = members[s]
         touching = np.flatnonzero(z[s])

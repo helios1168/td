@@ -3,131 +3,51 @@
 **Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `b7d6e0c` · **Tests:** 306 pass,
 0 fail (2026-09-07)
 
+Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
+
 ## Now
 
-**The borders plan is built, verified and run; the morning decision is which track and δ
-ships.** Session of 2026-09-06 night into 2026-09-07, worktree `.claude/worktrees/vbl`, branch
-`worktree-vbl`, commits `a3846b2` (Track 1 solver and driver, Track 2 solver, shared report
-helper), `4bf74c7` (Track 2 driver, anchoring, own-owner reading, verification reports),
-`c892548` (`docs/BORDERS_RESULTS.md`), merged to `main` as `b7d6e0c` on 2026-09-07 at the
-sponsor's request and pushed. 306 tests, 0 fail.
-Run directory `battery/results/borders_k18_v2_20260907/` (hub, gitignored), every cell with
-`draw.csv`, dot and Voronoi maps. All maps published as artifact
-`ca561d23-fa10-49cd-80c0-4d69625d2857` ("Borders on State Lines", compare slider against the
-committed map, tables, instance maps; re-rendered 2026-09-07 with a Voronoi diagram per state
-and bold state lines, `3c8a6e8`). The recommended cell alone, with its composition tables and
-the full model in the channel note's notation, is artifact
-`322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a` ("The Five Percent Map"), the sponsor's analysis page.
-Two more on 2026-09-07: `3e983b90-8f87-4dfd-aa28-4e1cd6eee497` ("Borders in Motion", every
-optimisation step replayed on the map, both tracks) and
-`d87b53b0-f394-417e-aab5-0fba8d3c6cb0` ("Districting from Duality", the study guide and
-reading list). `realise` now records per-round iterates per split state for the replay.
-"Borders in Motion" crashed on first publish (DC's polygon fell to the islet filter and an empty
-`reduce` killed the script); fixed and republished, but not yet looked at in a browser. Its
-builder is `tools/motion_page/`, and **`docs/MOTION_PLAN.md` is the overnight plan** to
-verify it with headless Chrome screenshots per step and improve it (deep links, the figure
-palette, striped split states, the power-cell cut per Lloyd round, transitions, hover, the
-Track 1 owner-set overlay, optionally the MILP's incumbent trajectory through `highspy`).
+Borders plan (Track 1 + Track 2 solvers, drivers, verification) merged to `main` as `b7d6e0c`
+on 2026-09-07; 306 tests, 0 fail. Recommendation: **Track 2 anchored δ = 5%** (8 splits,
+certified, only CA/TX/NY/FL split) over free δ = 5%, anchored δ = 10%, or Track 1 δ = 5%; the
+West is rearranged in both Track 2 forms, only Track 1 keeps the committed shapes
+(`docs/BORDERS_RESULTS.md`). Verifiers refuted three parts of the Track 2 formulation before the
+build and corrected several plan facts in place. Four artifacts published; the newest, "Borders
+in Motion" (every optimisation step replayed), crashed on first publish, was fixed and
+republished, not yet checked in a browser — `docs/MOTION_PLAN.md` is the verify-and-improve plan.
 
-**What the run says** (`docs/BORDERS_RESULTS.md`). At δ = 5% a map exists with every state
-whole except CA (five districts), NY (three), TX and FL (two): Track 2, 8 splits, certified
-minimal when each district keeps its committed home state (`--anchor-homes`, closed in 168 s),
-and within two of the mass bound of 6 without that restriction. Realised spread 9.0% anchored,
-7.2% free; stage 2 unchanged (95.79 vs 95.755, 96 unmatched reps in every cell). At δ = 10% one
-CA cut goes away (7 splits, certified anchored) for double the spread. Track 1, which only moves
-the committed map's borders, keeps five to eight small states split at every δ because the
-inherited owner sets force crossings (PA+MD+DE 18% light, D06 without AZ 32% light); it cuts
-the outside-owner share from 9.15% to about 3% and border segments from 1,591 to about 700.
-Recommendation: Track 2 at δ = 5%, anchored. Caveat: anchoring keeps district numbers and home
-states, but the West is rearranged in both Track 2 forms; only Track 1 keeps the committed
-shapes.
-
-**What the verifiers changed.** `docs/VERIFY_state_splits.md` refuted three parts of the Track 2
-formulation before the build (ε now bounded over every feasible `y`; `y ≥ 0.01·z` so a bridge
-state carries mass; a two-LP balance pass, max deviation then spread), and refuted the plan's
-"seconds": HiGHS does not close the free MILP at any δ in 600 s, and the reported gap is over an
-objective carrying the constant S = 49, so a 1.8% gap is one split. `docs/CODEVERIFY_*.md`:
-Track 1 eight mappings verified, none refuted, `assign(penalty=None, band=0)` array-identical
-to `b38c9ce`; Track 2 five mappings verified, row count 11,317 as built. Plan facts corrected
-in place: outside-owner share is 9.15% (not 9.46%), NJ has one owner district, S = 49, and the
-committed map's own state composition is not contiguous on the rook graph.
-
-*Next decision.* Which map ships: Track 2 anchored δ = 5% (recommended), free δ = 5%, anchored
-δ = 10%, or Track 1 δ = 5%. Then whether the `--incumbency-tiebreak` rerun on the chosen cell
-is wanted, and whether the West's rearrangement is acceptable to the sponsor.
+Next decision: which map ships, gated on the sponsor reading `docs/BORDERS_RESULTS.md`. Then
+whether to rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's
+rearrangement is acceptable.
 
 ## Next
 
-- [ ] **Overnight: `docs/MOTION_PLAN.md`.** Build, verify in headless Chrome, and improve the
-      "Borders in Motion" page in the order the plan gives; update the artifact in place by URL;
-      ask before merging.
-- [ ] **Morning decision: which map ships.** Gated on the sponsor reading
-      `docs/BORDERS_RESULTS.md` and the four maps it lists. The recommendation is Track 2
-      anchored δ = 5% (8 splits, certified; CA, TX, NY, FL the only split states). The
-      residual decisions after that are inside those four states only.
-- [ ] **Rerun the chosen cell with `--incumbency-tiebreak`** and report the stage-2 and map
-      difference. Built and off; not run tonight.
-- [ ] **The free MILP does not close at δ ≤ 2%** (incumbents 9, 12, 17; bounds 8, 9, 9). Only
-      matters if a free-form certificate at a tight δ is wanted. Tightening: pair-form arc
-      capacity and a per-district state-count bound in place of N − 1
-      (`docs/CODEVERIFY_state_splits.md` 6a).
-- [ ] **`realise` is order-dependent**: it moves the shared centre array as it cuts split
-      states in turn. Deterministic, undocumented, unjudged. Fix is to recentroid from a copy
-      per state or process states in a fixed named order; judge on the CA cut of the shipped
-      cell.
-- [ ] **The δ = 10% free question**: the bound admits 6 splits, which would need NJ alone as
-      a district. Unresolved in 600 s; only matters if 10% is chosen.
-- [ ] **`--regions` must not be drawn for a penalised labelling.** Dots and `--regions-voronoi`
-      only; `--clip-states` (off by default) clips catchments to state polygons and takes the
-      Track 1 δ = 5% segment count from 700 to 389. Per-state power diagram is daytime work.
-- [ ] **Atom-route leftovers, retired 2026-09-06.** `worktree-ca5-map` (unmerged, locked),
-      `battery/results/atoms_k18_v2_20260906`, the engine in `td/atoms.py` /
-      `td/solvers/atom_draw.py` / `tools/run_atoms.py`, artifact
-      `7902dfb3-afc6-431e-ac2c-ceb109662780`. Do not merge or extend. Remove the worktree when
-      convenient; the code stays until a cleanup is asked for.
-- [ ] **Decide whether `--regions-voronoi` reports the mass denominator beside the area one.**
-      §3a settled that the area denominator misreports dense metro districts, and
-      `tools/measure/district_pieces.py` already computes area, mass and ZIP-count shares, so
-      this is a reporting choice with no measurement left in it. Gated on nothing but the call.
-- [ ] **The sponsor review is a Streamlit tab now, and rendering it takes about ten minutes.**
-      `app/main.py`'s Review tab carries the `--regions-fixed` pair only (merged 2026-09-06,
-      `e0c7d6e`). Pre-render before a meeting or set `rebuild=False`. The borders cells are not
-      in the app.
-- [ ] **Option 2 Route B is the remaining build** — remove `improve()` from `centers.draw`,
-      close balance with weights. Judge it against iteration 15's 2.1051% / 0.000283, **not**
-      against the 4.0041% single shot. Superseded in practice if a Track 2 map ships.
-- [ ] **Sponsor's call: which states, if any, are hand-drawn** (A12). `docs/RUNS.md`'s region
-      table is the price list. Separate session; the borders result changes the question.
+- [ ] **Which map ships.** Track 2 anchored δ = 5% (recommended), free δ = 5%, anchored δ = 10%,
+      or Track 1 δ = 5% — gated on the sponsor reading `docs/BORDERS_RESULTS.md`. Then whether to
+      rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's rearrangement is
+      acceptable.
 - [ ] **Phase 1 — the four units**, all concurrent and unblocked: U10-round, U11-roster, U4-disp,
       U13-base. Then U12-menu (needs U8 + U11 + U13; brief re-anchored, unit not launched).
       Branch from `main`.
-- [ ] **★8 has no cited basis and that is now the record.** Grounding it needs a `lit-search`;
-      deliberately deferred.
-- [ ] **U11's v2 Nash-tie margin was never measured.** U13's TX share (11.5 %) is likewise
-      v1-only. Both are flagged in the briefs rather than filled with invented numbers.
-- [ ] **Serena binds to the hub, not the worktree.** Relative paths resolve against
-      `/Users/ntlee/projects/td`. Use absolute worktree paths, or `Read`.
+- [ ] **Sponsor's call: which states, if any, are hand-drawn** (A12). Region pin-cost table now
+      in `STATE.md` `## Facts`. Separate session; the borders result changes the question.
 - [ ] **Something injects shell-IO instructions that contradict `CLAUDE.md` §7.** Every agent
       of 2026-09-07 (nine of them) reported the same mid-session text and declined it;
       `hooks/enforce-file-tools.sh` caught the main session's own slips (a `grep` on a file, a
       heredoc, a redirect). An agent that complied would bypass the hook.
-- [ ] **`D04`/`SOUTHWEST` share a colour and look adjacent** in `SOUTHWEST_anchor`. Reported
-      only.
-- [ ] `chOppShare` prints 59.1 or 59.2 depending on whether `ceiling.py:75` stores `SATURATION`
-      at 3 s.f. — a rounding-order artefact, not a wrong measurement.
+- [ ] **Decide whether `--regions-voronoi` reports the mass denominator beside the area one.**
+      §3a settled that the area denominator misreports dense metro districts, and
+      `tools/measure/district_pieces.py` already computes area, mass and ZIP-count shares, so
+      this is a reporting choice with no measurement left in it. Gated on nothing but the call.
+- [ ] **★8 has no cited basis and that is now the record.** Grounding it needs a `lit-search`;
+      deliberately deferred.
 - [ ] **★9** the sponsor's `δ` as U12's menu with **★4** `ε` · **★10** tie-break policy on U11's
       evidence · carried ★1 ★2 ★3 ★5 ★7. (★8 and ★11 landed; U3-inv retired.)
-- [ ] **Bibliography gap:** `kawase2026balanced`, `borgwardt2019`, `fotakis2014` all resolve but
-      live only in the per-domain `.bib` files — none is in
-      `docs/math_note/territory_bibliography.bib` (78 entries), and there is no `.md`/`.csv`
-      sibling, so the three-format sync is unsatisfied.
-- [ ] Deferred: HiGHS root cause (scipy 1.18.1 option merging) only if it recurs; `ceiling.py`'s
-      remaining v1 content beyond `SATURATION`; `DOMAIN_optimization` §2.14/§3's `C(111,13)` pool.
 
 ## Facts
 
 |                                             | v1 `instance_descaled.json.gz` (regression only) | **v2 `instance_descaled_v2.json.gz` (live)**                    |
-|---------------------------------------------|--------------------------------------------------|-----------------------------------------------------------------|
+|---------------------------------------------|--------------------------------------------------|-------------------------------------------------------------------|
 | zips                                        | 1,229                                            | 3,748 (strict superset; raw had 3,749, `BLANK` dropped)         |
 | reps                                        | 111                                              | 114 (all 111 retained)                                          |
 | contested / uncontested / vacant / untapped | 675 / 477 / 2 / 75                               | 718 / 1,447 / 16 / 1,567                                        |
@@ -145,6 +65,25 @@ The roster is worth **0.249 nats** (v1 0.043). Match gap 0, map gap 0.663. Pinni
 costs **0.008 (CAROLINAS) to 2.04 (CALIFORNIA) nats** — CALIFORNIA ≈ 3× the whole premium;
 FLORIDA `fix` / CAROLINAS `anchor` out-staff the baseline at stage 2 (+0.029 / +0.012).
 Premium ladder v2: `P₀` 41.53 %, `P_S` 54.42 %, `P₁₈` 59.27 %, `P_free` 84.17 % of book.
+
+**Region pin-cost catalogue, recomputed 2026-09-04** (`tools/run_draw.py --k 14-22 --seeds 0-9`,
+15 runs; total M 8,523.2, target at k=18 is 473.5; Δ columns against the unpinned baseline at
+k=18, nash `110.88310108262327` / stage2 `95.75519165924106`, in nats — exact at fixed k since
+every scenario partitions the same total into the same number of districts). `fix` is a closed
+district (never touched by the solver, k reduced by one); `anchor` is open (locked in, solver
+fills the rest by water-fill). `nash Δ` is identical between `fix` and `anchor` for every region,
+since both pin the same mass to the same district; `stage-2 Δ` diverges and isn't always
+negative.
+
+| region | pinned M | vs target (k=18) | natural k | fix: nash Δ | fix: stage-2 Δ | anchor: nash Δ | anchor: stage-2 Δ |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| CALIFORNIA | 1,953.8 | +312.6% | 4.36 | −2.037 | −2.126 | −2.037 | −2.217 |
+| TEXAS | 972.1 | +105.3% | 8.77 | −0.368 | −0.430 | −0.368 | −0.412 |
+| MIDWEST | 876.5 | +85.1% | 9.72 | −0.257 | −0.224 | −0.257 | −0.223 |
+| NEWYORK | 849.6 | +79.4% | 10.03 | −0.229 | −0.409 | −0.229 | −0.413 |
+| FLORIDA | 661.9 | +39.8% | 12.88 | −0.068 | **+0.029** | −0.068 | −0.019 |
+| SOUTHWEST | 606.8 | +28.1% | 14.05 | −0.036 | −0.089 | −0.036 | −0.013 |
+| CAROLINAS | 535.2 | +13.0% | 15.92 | −0.008 | −0.013 | −0.008 | +0.012 |
 
 **Measured in Phase 0 (2026-09-05), all through a verifier.** `B_tot = 3268.4069219934404`
 (`premium.py::measure()`, eq. `decomp`'s `W₀`). (★) screen: `96.554063` at `P_S`, `96.793010` at
@@ -230,7 +169,7 @@ against an assumed 5 % saturation, and were wrong: the Gromov review R1
 `Σ(T+S_free)/ΣM` at **41.9 %** on 2026-09-01 (median per-zip `t_z` 46.8 %, p90 110 %; 48.0 % of
 opportunity in zips above 30 %), giving an opportunity share of ≈59 % and a swing of ≈42 %. Note
 the two definitions differ: this row's `Σ(T+S_free)/ΣM` reads **29.8107 %** on v2 where `ΣT/ΣM`
-reads 29.588 % (`docs/VERIFY_P0C-screen.md`). R1's downstream premium arithmetic is v1 and stale.
+reads 29.588 % (`docs/units/P0C-screen.md`). R1's downstream premium arithmetic is v1 and stale.
 
 **Power-cell detail, measured 2026-09-06.** The 17 split zips at equal-split targets are
 `07042`, `07670`, `08618`, `20814`, `28104`, `30066`, `32837`, `60462`, `60914`, `70364`,
@@ -260,58 +199,3 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
 (`frontier.py` block-buffers). **Serena resolves relative paths against the hub
 `/Users/ntlee/projects/td`, not the active worktree** — pass absolute worktree paths, or use
 `Read`; three agents were misled by this on 2026-09-05, one nearly writing to the user's checkout.
-
-## Where
-
-- `docs/PROBLEM.md` — the problem, the two stages, sizing, the zero-mismatch requirement ·
-  `docs/MODEL.md` — the N-way model and open decisions (§6),
-  the propositions (§7), the two stages as programs (§8, §9), the certificates (§10), the
-  power-cell routes (§11), the VBL comparison (§12), the verified absences (§13) ·
-  `docs/foundations/FRAME.md` — problem statement (§6 measured rows, §9 settled/open)
-- `docs/foundations/APPROACHES.md` — §0 what every track inherits, charters A0–A5 · `docs/foundations/BRIEF.md` +
-  `docs/units/` — A1's plan, units U0–U13 · `docs/foundations/LENS_*.md`, `docs/foundations/DOMAIN_*.md`, `docs/foundations/LIT_*` —
-  A1's (promoted) lenses, domain plans, literature
-- `docs/RUNS.md` (+ `RUNS_PLAN.md`) — the pin-cost catalogue · `docs/MODEL_U8-band.md`,
-  `CODEVERIFY_U8-band.md`, `MODEL_U9-bandthm.md`, `VERIFY_U9-bandthm.md` — wave 1 ·
-  `MODEL_U7-meas.md`, `MODEL_U1-cert.md` (+ verifies) — the measurements · `docs/DATA.md` — the
-  data route
-- `docs/WAVE2_PLAN.md` — the wave-2 execution plan: 9 tracks, 3 phases, per-track files, model
-  assignments, merge order, and the four corrections to this file's record
-- **The power-cell contiguity register:** `docs/MODEL.md` §11 — every route to zero mismatched
-  dots, with its verdict; the requirement itself is `docs/PROBLEM.md` §8 and every measurement is
-  in `## Facts` above. (Folded 2026-09-07 from `docs/OPTIONS_power-cell-contiguity.md`, deleted.)
-  `td/solvers/centers.py::power_weights` now returns `fractional` (the split zips' row indices),
-  surfaced as `power_diagram_of_draw`'s `split_zips`.
-- **Showing the zero, and measuring pieces honestly:** `us_maps.py --regions-fixed <draw.csv>`
-  (`figures_fixed_diagram`) renders `figures/district_regions_fixed_committed.png` and
-  `district_regions_fixed_snapped.png` — one held diagram, both labellings, 266 outside against
-  0 · `tools/measure/district_pieces.py` gives each district's largest piece by area, by mass and
-  by ZIP count, which is what §3a needed to refute the 55%.
-- **The next build:** `docs/BORDERS_PLAN.md` — state-border snapping of the committed draw:
-  model, grid, files, the run command, verification · `docs/MODEL.md` §12 — the VBL comparison
-  and Options A–E, parked (folded 2026-09-07 from the markdown channel note, since deleted; the
-  LaTeX note `docs/channel_note/channel_note.tex` is unaffected and stays the typeset source).
-- **The state-atom engine (retired 2026-09-06):** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
-  `td/solvers/atom_draw.py` (the search, `free_search`, `check_contiguous`) ·
-  `tools/run_atoms.py` (the driver) · `td/geo.py::state_rook` (the TIGER rook graph) ·
-  `tests/test_atoms.py`, `tests/test_atom_draw.py`, `tests/test_run_atoms.py`.
-  `tools/state_atoms/` is now exploratory leftovers plus the artifact generator — `district4.py`
-  was deleted when the engine landed; see that directory's README.
-- Recipes and file map: `docs/CODE_MAP.md` · Memory:
-  `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md` · History:
-  `docs/STATE_LOG.md` · Archive: `docs/foundations/archive/README.md`
-- **The scenario app:** `app/` + `tools/app.sh`, its own venv `.venv-app`, whole story in
-  `docs/APP.md`. Define a scenario, run either stage-1 engine, see the map, save it. Scenario
-  questions go here now, not into a new Claude artifact — the artifacts below stay as the fixed
-  record they already are.
-- Artifacts: **power-cell contiguity review `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`** (the four
-  maps: power diagram committed vs snapped, catchment committed vs snapped vs atoms, the
-  per-district bars) · **state atoms at k=18 `7902dfb3-afc6-431e-ac2c-ceb109662780`** (the exploration:
-  inventory, firm-territory map, the four contiguous draws) · pin-cost catalogue
-  `f903ee01-eefc-40cf-bd32-8f5536b6e65f` · map diff `68eecbb9-3ce2-45d9-8161-5db7fe212957` ·
-  k-sweep (v1) `c007d61d-c753-4151-9026-2288b9d5eb38` · atlas (v1)
-  `1f2cddd9-b98b-4213-83ea-784566147c6a`
-- Starting a track: `git worktree add .claude/worktrees/<ID> -b wt/<ID> main`; hand-copy the
-  gitignored inputs (`docs/CODE_MAP.md` lists them); start `claude` there and activate Serena
-  by path; read `APPROACHES.md` §0 and FRAME §6; write the track's lens/domain/brief under
-  `docs/tracks/<ID>/`; commit on `wt/<ID>`; ask before merging.

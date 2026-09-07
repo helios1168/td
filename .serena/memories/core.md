@@ -5,7 +5,7 @@ a per-rep utility model, two stages (draw k balanced compact districts; match re
 on log gains). Live instance `instance_descaled_v2.json.gz`, k = 18.
 
 Where things are — do not duplicate them here:
-- State (what landed, what's next): `STATE.md` `## Now`, `## Next`. Never `docs/STATE_LOG.md`.
+- State (what landed, what's next): `STATE.md` `## Now`, `## Next`.
 - Environment, tests, traps, conventions: `CLAUDE.md` (root; project conventions:
   `from __future__ import annotations`, full type hints, narrative module docstrings that cite
   `tests/test_X.py::test_Y` and `docs/*.md`, `--` not em-dash in prose, match existing style).
@@ -15,4 +15,4 @@ Where things are — do not duplicate them here:
 
 Markdown is indexed (marksman): headings are symbols, so fetch one section with
 `find_symbol("<heading>", relative_path="<file>.md", include_body=True)` instead of reading
-the file. `docs/foundations/archive/**`, `docs/STATE_LOG.md` and `figures/**` are ignored.
+the file. `docs/foundations/archive/**` and `figures/**` are ignored.

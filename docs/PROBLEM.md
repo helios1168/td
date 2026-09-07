@@ -106,7 +106,7 @@ coordinates. Opportunity is plausibly third-party market sizing.
 map plus internal books.
 
 The descaled-export route stays correct and is still the right channel for anything that does
-need to travel (`docs/DATA.md`), but the national-channel problem needs a fraction of it.
+need to travel (`docs/CODE_MAP.md`), but the national-channel problem needs a fraction of it.
 
 ## 5. Adjacency contiguity is not available on this footprint
 

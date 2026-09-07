@@ -121,7 +121,7 @@ question stop mattering?
   dichotomy), Move 9 (why the governance answer must be structural: the misreporting generator is
   a self-interested optimiser, so "bound the stupidity" points the wrong way)
 - `docs/foundations/FRAME.md` §4 policy row, §8 A7, §10 Q5, §9 (the blocking item as currently written)
-- `docs/DATA.md` (what the exporter actually emits — shares, `m_rel`; this constrains what a
+- `docs/CODE_MAP.md` (what the exporter actually emits — shares, `m_rel`; this constrains what a
   message space *can* be)
 - `docs/MODEL.md` §9 (the books-enter-at-stage-2-only invariant this unit may propose rewriting,
   and the ★8 record of why it has no cited basis) — **read only, do not edit**

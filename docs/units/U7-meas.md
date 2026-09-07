@@ -49,7 +49,7 @@ then the noise floor (U6, if a domain plan exists for it). N1–N3 do not depend
 ## Inputs to read (paths and sections only)
 
 `docs/foundations/DOMAIN_optimization.md` §5 · `docs/foundations/DOMAIN_economic-theory.md` §5 · `docs/foundations/LENS_GROMOV.md`
-Move 4 and the U-ledger · `docs/foundations/FRAME.md` §5 (data defects), §6 · `docs/DATA.md` ·
+Move 4 and the U-ledger · `docs/foundations/FRAME.md` §5 (data defects), §6 · `docs/CODE_MAP.md` ·
 `docs/foundations/archive/TEST_PLAN.md` · `td/instance.py`, `td/channel.py`, `td/solvers/centers.py`,
 `td/solvers/cert_draw.py`
 

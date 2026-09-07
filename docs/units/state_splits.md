@@ -54,6 +54,10 @@ count as an upper bound); the CLI `tools/state_splits.py --incumbency-tiebreak` 
 (`realise`'s `tiebreak=` is the hook it would use); the border-segment count for cleanness
 reporting has no counterpart at the CLI level.
 
+**Known bug, not yet fixed (2026-09-07):** `realise` is order-dependent — it moves the shared
+centre array as it cuts split states in turn, deterministic but unjudged; see the `TODO` at
+`td/solvers/state_splits.py::realise`.
+
 **Artifacts**, moved out of the deleted flat verify-scripts directory to
 `tools/verify/state_splits/`: `state_splits_checks.py`, `state_splits_c3_band.py` (the
 `math-verify` artifacts); `codeverify_state_splits.py`, `codeverify_state_splits_edge.py`,

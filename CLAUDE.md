@@ -1,19 +1,19 @@
 # National channel territory design — Claude Code setup
 
-**State:** `STATE.md` — read `## Now`, then `## Next`. History is `docs/STATE_LOG.md`; read it
-only when a question needs it. This file carries invariants only and is never stamped.
+**State:** `STATE.md` — read `## Now`, then `## Next`. History: `git log --grep '^State:' -p --
+STATE.md`. This file carries invariants only and is never stamped.
 
 ## Start-up protocol
 
 1. `STATE.md` `## Now` and `## Next` (Serena `find_symbol`, or one Read). Nothing else is
    required to resume.
-2. `docs/CODE_MAP.md` when you need a file or a recipe; `docs/PROBLEM.md` / `docs/MODEL.md` for
-   the problem and the model; `STATE.md` `## Where` for the rest.
+2. `docs/CODE_MAP.md` for files and recipes; `docs/PROBLEM.md` / `docs/MODEL.md` for the problem
+   and the model.
 2a. If the task is "what does this scenario do" — pin a region, change k, swap the engine — run
    it in the Streamlit app (`tools/app.sh`, `docs/APP.md`) instead of building a Claude
    artifact. Artifacts are for fixed, reviewed deliverables; a scenario question needs an
    engine behind it, and the app has one.
-3. Never read `docs/STATE_LOG.md`, `docs/foundations/archive/`, or a whole `docs/*.md` unprompted — take the
+3. Never read `docs/foundations/archive/`, or a whole `docs/*.md` unprompted — take the
    section you need via Serena (headings are symbols).
 
 ## Environment
