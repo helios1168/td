@@ -16,7 +16,9 @@ from pathlib import Path
 
 REPO = Path(os.environ.get("TD_REPO", "/Users/ntlee/projects/td"))
 
-SOLVER_PYTHON = REPO / ".venv" / "bin" / "python3"
+# Overridable independently of TD_REPO: a worktree has no `.venv` of its own (CLAUDE.md,
+# "Environment"), so a run against a worktree needs the hub's interpreter under a different var.
+SOLVER_PYTHON = Path(os.environ.get("TD_SOLVER_PYTHON", REPO / ".venv" / "bin" / "python3"))
 INSTANCE = REPO / "instance_descaled_v2.json.gz"
 
 RESULTS = REPO / "battery" / "results"
@@ -26,3 +28,10 @@ SCENARIOS = REPO / "battery" / "scenarios"
 # Under `battery/results/` on purpose: `figures/` is tracked, because a committed map is a
 # primary artifact, and app renderings are neither reviewed nor committed.
 FIGURES = APP_RESULTS / "figures"
+
+# The Headline tab's one hard-wired case: the committed k=18 draw the headline cell was solved
+# against, and the shipped Track 2 anchored delta=5% cell it is compared to.
+COMMITTED_DRAW = RESULTS / "draw_k18_v2_20260904" / "k18" / "draw.csv"
+HEADLINE_CELL = RESULTS / "borders_k18_v2_20260907" / "track2_anchored" / "d0.05" / "d0.05"
+GEO_CACHE = REPO / "data" / "geo"
+STATE_SHARES = APP_RESULTS / "state_shares.json"

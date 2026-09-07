@@ -66,12 +66,81 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--anchor-homes", action="store_true", default=False,
                     help="force z=1 for each district in its committed home state; names the "
                          "districts so HiGHS can close the MILP (off by default)")
+    ap.add_argument("--cap", action="append", default=[], metavar="ST=N",
+                    help="cap state ST's district count at N (repeatable)")
+    ap.add_argument("--unanchor", action="append", default=[], metavar="ST",
+                    help="drop --anchor-homes anchors in state ST before the solve (repeatable)")
+    ap.add_argument("--dump-state-shares", metavar="PATH", default=None,
+                    help="write per-state mass ratios and anchored counts to PATH and exit, "
+                         "before the delta loop and before any solve")
     ap.add_argument("--out", required=True, help="output directory")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--maps", dest="maps", action="store_true", default=True,
                     help="render districts/regions-voronoi maps per cell (default on)")
     ap.add_argument("--no-maps", dest="maps", action="store_false")
     return ap
+
+
+def _state_index(code: str, state_list: list[str], flag: str) -> int:
+    """Validate one state code against `state_list`, exiting with a clear message.  AK and HI
+    are not in the 49-state list (`td/geo.py` excludes them) and are named explicitly rather
+    than falling into the generic "unknown code" path."""
+    code = code.strip().upper()
+    if code in ("AK", "HI"):
+        sys.exit(f"{flag}: {code} is not in the 49-state list (AK and HI are excluded)")
+    idx_of = {s: i for i, s in enumerate(state_list)}
+    if code not in idx_of:
+        sys.exit(f"{flag}: unknown state code {code!r}")
+    return idx_of[code]
+
+
+def _parse_caps(tokens: list[str], state_list: list[str]) -> dict[int, int]:
+    """`["CA=4", "TX=2"]` -> `{state_index: N}`, validated against `state_list`."""
+    caps: dict[int, int] = {}
+    for tok in tokens:
+        code, sep, n = tok.partition("=")
+        if not sep:
+            sys.exit(f"--cap {tok}: expected ST=N")
+        s = _state_index(code, state_list, "--cap")
+        try:
+            caps[s] = int(n)
+        except ValueError:
+            sys.exit(f"--cap {tok}: {n!r} is not an integer")
+    return caps
+
+
+def _release_anchors(anchors: list[tuple[int, int]], caps: dict[int, int],
+                     unanchor_states: list[int], ctx) -> tuple[list, dict]:
+    """`--unanchor ST` releases only as many of ST's anchors as its `--cap` forces.
+
+    Dropping every anchor in a state reopens the k! relabelling symmetry the anchors exist to
+    break (docs: HiGHS already struggled to close a one-split gap without any anchors), so a
+    capped state keeps `min(cap, anchored)` of its anchors -- the districts holding the most
+    of that state's committed mass, ties broken by ascending district index -- and releases
+    only the surplus.  An uncapped state releases all of its anchors, as `--unanchor` always
+    has.  Returns the filtered anchor list and `{state: (kept_districts, released_districts)}`
+    for every named state that held an anchor, for logging and `params.json`."""
+    info: dict[int, tuple[list[int], list[int]]] = {}
+    kept_anchors = list(anchors)
+    for s in unanchor_states:
+        held = [j for s0, j in kept_anchors if s0 == s]
+        if not held:
+            continue
+        n_keep = caps.get(s)
+        if n_keep is None:
+            keep_js, drop_js = [], held
+        elif n_keep >= len(held):
+            keep_js, drop_js = held, []
+        else:
+            sel = ctx.state_idx == s
+            mass = np.bincount(ctx.labels0[sel], weights=ctx.M[sel], minlength=ctx.k)
+            ranked = sorted(held, key=lambda j: (-mass[j], j))
+            keep_js, drop_js = sorted(ranked[:n_keep]), sorted(ranked[n_keep:])
+        info[s] = (keep_js, drop_js)
+        if drop_js:
+            drop_set = set(drop_js)
+            kept_anchors = [(s0, j) for s0, j in kept_anchors if not (s0 == s and j in drop_set)]
+    return kept_anchors, info
 
 
 def _dlabel(name: str) -> int:
@@ -165,16 +234,38 @@ def main(argv=None) -> int:
     n_state = M_s.shape[0]
     print(f"states: {n_state} (lower 48 + DC), edges={len(edges)}, "
           f"tau={tau:.6g}, total_state_mass={M_s.sum():.6g}", flush=True)
+
+    if args.dump_state_shares:
+        # ratios only, per the confidentiality rule: never write tau or a raw mass.
+        anchored = np.bincount(ctx.home[ctx.home >= 0], minlength=n_state)
+        states = {ctx.state_list[s]: {"ratio": float(M_s[s] / tau), "anchored": int(anchored[s])}
+                 for s in range(n_state)}
+        with open(args.dump_state_shares, "w", encoding="utf-8") as fh:
+            json.dump({"k": ctx.k, "states": states}, fh, indent=2)
+            fh.write("\n")
+        print(f"wrote {args.dump_state_shares}", flush=True)
+        return 0
+
     _sanity_row(ctx, M_s, edges, tau, COMMITTED_SPREAD)
 
     eps = ss.eps_lexicographic(M_s, D)
 
+    caps = _parse_caps(args.cap, ctx.state_list)
+    unanchor_states = [_state_index(code, ctx.state_list, "--unanchor") for code in args.unanchor]
+
     anchors = None
+    released_by_state: dict[int, tuple[list[int], list[int]]] = {}
     if args.anchor_homes:
         anchors = [(int(ctx.home[j]), j) for j in range(ctx.k) if ctx.home[j] >= 0]
+        if unanchor_states:
+            anchors, released_by_state = _release_anchors(anchors, caps, unanchor_states, ctx)
         print(f"anchors: {len(anchors)} districts held in their committed home states "
               f"({', '.join(run_draw.district_id(j) + '=' + ctx.state_list[s] for s, j in anchors)})",
               flush=True)
+        for s, (keep_js, drop_js) in released_by_state.items():
+            print(f"unanchor {ctx.state_list[s]}: kept "
+                  f"[{', '.join(run_draw.district_id(j) for j in keep_js)}], released "
+                  f"[{', '.join(run_draw.district_id(j) for j in drop_js)}]", flush=True)
 
     known = ctx.state_idx >= 0
     zips_known = [z for z, kk in zip(ctx.zips, known) if kk]
@@ -195,6 +286,9 @@ def main(argv=None) -> int:
         instance=os.path.abspath(args.instance), draw=os.path.abspath(args.draw), k=args.k,
         delta=args.delta, time_limit=args.time_limit, rounds=args.rounds, eta=args.eta,
         incumbency_tiebreak=args.incumbency_tiebreak, anchor_homes=args.anchor_homes,
+        cap=args.cap, unanchor=args.unanchor,
+        unanchor_released={ctx.state_list[s]: [run_draw.district_id(j) for j in drop_js]
+                           for s, (_, drop_js) in released_by_state.items()},
         out=os.path.abspath(args.out),
         geo_cache=os.path.abspath(args.geo_cache), maps=args.maps, eps=eps, tau=tau,
         n_state=n_state, n_edges=len(edges),
@@ -208,7 +302,8 @@ def main(argv=None) -> int:
     def run_cell(delta: float) -> dict:
         name = f"d{delta:g}"
         t0 = time.time()
-        problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta, anchors=anchors)
+        problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta, anchors=anchors,
+                                caps=caps or None)
         result = ss.solve(problem, time_limit=args.time_limit, strict=False)
         solve_s = time.time() - t0
         split_codes = ",".join(sorted(ctx.state_list[s] for s in result["split_states"]))

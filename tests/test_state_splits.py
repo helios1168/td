@@ -155,6 +155,65 @@ def test_eta_forbids_a_zero_share_bridge_state():
         assert state_splits.connected(res["y"][:, j] > 0, edges)   # the *realised* district
 
 
+# ----------------------------------------------------------------------- the per-state cap
+def test_a_cap_at_the_ceiling_changes_nothing():
+    """A cap of 2 on every state, k=2: no state can exceed 2 anyway, so the cap block is slack
+    and the solution matches the uncapped one."""
+    _, prob = build(ODD, 0.005)
+    res = state_splits.solve(prob)
+    prob_cap = state_splits.build_milp(prob.M_s, prob.D, EDGES, prob.tau, 0.005, prob.eps,
+                                       caps={s: 2 for s in range(6)})
+    res_cap = state_splits.solve(prob_cap)
+    assert res_cap["splits"] == res["splits"]
+    assert abs(res_cap["objective"] - res["objective"]) < 1e-9
+
+
+def test_a_cap_of_one_forbids_the_split_the_band_forces():
+    """ODD needs one state to split; capping every state at 1 (no state may touch two
+    districts) makes the MILP infeasible."""
+    _, prob = build(ODD, 0.005)
+    prob = state_splits.build_milp(prob.M_s, prob.D, EDGES, prob.tau, 0.005, prob.eps,
+                                   caps={s: 1 for s in range(6)})
+    try:
+        state_splits.solve(prob)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("a cap of 1 on every state must forbid the forced split")
+
+
+def test_a_cap_outside_one_to_k_is_rejected():
+    """k=2: caps={0: 0} and caps={0: 3} are outside [1, k]; caps={99: 1} is out of range."""
+    _, prob = build(ODD, 0.005)
+    for bad in ({0: 0}, {0: 3}, {99: 1}):
+        try:
+            state_splits.build_milp(prob.M_s, prob.D, EDGES, prob.tau, 0.005, prob.eps,
+                                    caps=bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"cap {bad} must be rejected")
+
+
+def test_a_cap_binds_only_the_state_it_names():
+    """COMB at a 10% band: find a state whole in the uncapped optimum and cap it at 1.  The
+    objective and split count are unchanged (the cap does not bind the optimum), and that state
+    still holds exactly one district.  `z` itself is not asserted: ties mean the solver may
+    return a different optimal vertex at the same objective."""
+    toy, prob = build(COMB, 0.10)
+    res = state_splits.solve(prob)
+    whole = [s for s in range(6) if s not in res["split_states"]]
+    assert whole
+    s0 = whole[0]
+
+    prob_cap = state_splits.build_milp(prob.M_s, prob.D, EDGES, prob.tau, 0.10, prob.eps,
+                                       caps={s0: 1})
+    res_cap = state_splits.solve(prob_cap)
+    assert abs(res_cap["objective"] - res["objective"]) < 1e-9
+    assert res_cap["splits"] == res["splits"]
+    assert int(res_cap["z"][s0].sum()) == 1
+
+
 # ----------------------------------------------------------------------- the balance pass
 def test_balance_pass_keeps_z_and_never_widens_the_spread():
     """A wide band lets the MILP imbalance the districts; fixing z and minimising first the

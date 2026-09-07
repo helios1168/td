@@ -55,11 +55,19 @@ def _alive(pid: int) -> bool:
 
 
 def status(out: Path) -> str:
-    """`running`, `done`, or `failed`, from the launch record and what is on disk."""
+    """`running`, `done`, or `failed`, from the launch record and what is on disk.
+
+    "Done" is engine-specific (`k*/metrics.json` for the power-cell and state-atom drivers,
+    `d*/splits.json` for the headline one); the engine key comes from `launch.json`, falling
+    back to the power-cell literal when the file or the key is missing.
+    """
     if not (out / LAUNCH).exists():
         return "unknown"
-    done = any(out.glob("k*/metrics.json"))
-    if _alive(json.loads((out / LAUNCH).read_text())["pid"]):
+    record = json.loads((out / LAUNCH).read_text())
+    engine = engines.REGISTRY.get(record.get("engine"))
+    done_glob = engine.done_glob if engine else "k*/metrics.json"
+    done = any(out.glob(done_glob))
+    if _alive(record["pid"]):
         return "running"
     return "done" if done else "failed"
 
@@ -91,11 +99,11 @@ def figure_dir(run: Path, k: int) -> Path:
     return config.FIGURES / str(label).replace("/", "_") / f"k{k}"
 
 
-def render_maps(run: Path, k: int, engine_key: str) -> Path:
-    """Draw the maps for one k with `tools/us_maps.py`, the same renderer the notes use.
+def render_draw(draw: Path, out: Path, *, regions: bool = False) -> Path:
+    """Draw one `draw.csv` with `tools/us_maps.py`, the same renderer the notes use.
 
     `--regions` (the power diagram) is only meaningful for a center-based draw, so it is asked
-    for only when the engine produced one; `--regions-voronoi` applies to any draw.
+    for only when `regions` is set; `--regions-voronoi` applies to any draw.
 
     `--regions-fixed` rides along with `--regions` for the same reason, and it is the only
     rendering that can show the zero-mismatch guarantee: it holds one diagram's centres and
@@ -104,13 +112,18 @@ def render_maps(run: Path, k: int, engine_key: str) -> Path:
     (`docs/OPTIONS_power-cell-contiguity.md` §4). It costs a further transportation LP or two,
     which is most of why rendering a power-cell run takes minutes rather than seconds.
     """
-    draw = run / f"k{k}" / "draw.csv"
-    out = figure_dir(run, k)
     out.mkdir(parents=True, exist_ok=True)
     argv = [str(config.SOLVER_PYTHON), str(config.REPO / "tools/us_maps.py"),
             str(config.INSTANCE), "--out", str(out),
             "--districts", str(draw), "--regions-voronoi", str(draw)]
-    if engine_key == "power-cells":
+    if regions:
         argv += ["--regions", str(draw), "--regions-fixed", str(draw)]
     subprocess.run(argv, cwd=config.REPO, check=True, capture_output=True, text=True)
     return out
+
+
+def render_maps(run: Path, k: int, engine_key: str) -> Path:
+    """Draw the maps for one k of a discovered run. See `render_draw` for the renderer itself."""
+    draw = run / f"k{k}" / "draw.csv"
+    out = figure_dir(run, k)
+    return render_draw(draw, out, regions=engine_key == "power-cells")

@@ -43,6 +43,8 @@ class Scenario:
     fix: dict[str, list[str]] = field(default_factory=dict)
     anchor: dict[str, list[str]] = field(default_factory=dict)
     cuts: dict[str, int] = field(default_factory=dict)
+    caps: dict[str, int] = field(default_factory=dict)
+    delta: float = 0.05
     notes: str = ""
     saved: str = ""
 
@@ -90,6 +92,14 @@ def validate(sc: Scenario) -> list[str]:
         problems.append(f"District(s) {', '.join(sorted(both))} are both fixed and anchored.")
     if len(sc.fix) + len(sc.anchor) > sc.k:
         problems.append(f"{len(sc.fix) + len(sc.anchor)} hand-drawn districts do not fit in k = {sc.k}.")
+
+    # Structural only: whether a cap is even sayable. Whether it is *satisfiable* needs the
+    # state mass shares, which this function has no access to (`app/headline.py::problems`).
+    for st, cap in sc.caps.items():
+        if st not in STATES:
+            problems.append(f"{st!r} is not a state code.")
+        elif not isinstance(cap, int) or not (1 <= cap <= sc.k):
+            problems.append(f"cap {cap} for {st} is outside [1, {sc.k}].")
     return problems
 
 

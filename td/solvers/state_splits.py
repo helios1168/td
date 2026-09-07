@@ -104,7 +104,8 @@ def _block(rows: np.ndarray, cols: np.ndarray, vals: np.ndarray,
 
 def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
                tau: float, delta: float, eps: float, *, eta: float = 0.01,
-               anchors: list[tuple[int, int]] | None = None) -> SplitProblem:
+               anchors: list[tuple[int, int]] | None = None,
+               caps: dict[int, int] | None = None) -> SplitProblem:
     """Assemble the minimum-splits MILP.  `M_s` is `(S,)`, `D` is `(S, k)`, `edges` the rook
     graph over state indices (undirected, given once per pair).  `eta` is the minimum share a
     state must send to a district it is flagged as touching (see the module docstring).
@@ -112,7 +113,12 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     `anchors` is a list of `(s, j)` pairs forced to `z_sj = 1`: district `j` keeps state `s`.
     Anchoring every district to its committed home state names the districts and so removes
     the `k!` relabelling symmetry, which the `eps` tie-break alone does not break at S = 49,
-    k = 18 (HiGHS left a one-split gap open after 600 s without anchors)."""
+    k = 18 (HiGHS left a one-split gap open after 600 s without anchors).
+
+    `caps` maps a state index to the maximum number of districts it may touch
+    (`sum_j z_sj <= caps[s]`).  When falsy, no new row block is added and `rows` gains no new
+    key, so an uncapped call reproduces bit for bit.  When given, a row is appended for each
+    capped state, after `net`, in `sorted(caps)` order, under the name `"cap"`."""
     M_s = np.asarray(M_s, float)
     D = np.asarray(D, float)
     if M_s.ndim != 1 or D.ndim != 2 or D.shape[0] != M_s.shape[0]:
@@ -126,6 +132,11 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     tau = float(tau)
     if tau <= 0:
         raise ValueError("tau must be positive")
+    for s, m in (caps or {}).items():
+        if not (0 <= s < S):
+            raise ValueError(f"cap state {s} out of range")
+        if not (1 <= m <= k):
+            raise ValueError(f"cap {m} for state {s} outside [1, {k}]")
 
     off_z, off_y, off_r = 0, S * k, 2 * S * k
     off_f = 3 * S * k
@@ -192,6 +203,13 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
                                       -np.ones(n_arc * k), np.ones(n_arc * k)]),
                       S * k, n_var),
         np.full(S * k, -np.inf), np.zeros(S * k))
+
+    if caps:
+        idx = np.array(sorted(caps), int)
+        r_cap = np.repeat(np.arange(len(idx)), k)
+        c_cap = (off_z + idx[:, None] * k + np.arange(k)).ravel()
+        add("cap", _block(r_cap, c_cap, np.ones(len(idx) * k), len(idx), n_var),
+            np.full(len(idx), -np.inf), np.array([caps[s] for s in idx], float))
 
     var_lb = np.zeros(n_var)
     var_ub = np.ones(n_var)

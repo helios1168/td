@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 from app import config, engines, runner, runs, scenario as sc_mod
+from app import headline as hl
 from app.scenario import Scenario
 
 st.set_page_config(page_title="Territory scenarios", layout="wide")
@@ -70,7 +72,7 @@ with st.sidebar:
 
 current: Scenario = st.session_state.get("editing", Scenario(name=""))
 
-define, results, review = st.tabs(["Define and run", "Results", "Review"])
+define, results, review, headline = st.tabs(["Define and run", "Results", "Review", "Headline"])
 
 # ------------------------------------------------------------------ define and run
 with define:
@@ -80,7 +82,7 @@ with define:
         notes = st.text_area("Notes", current.notes, height=80,
                              placeholder="Why this scenario exists, and what to compare it to.")
     with right:
-        keys = list(engines.REGISTRY)
+        keys = [k for k, e in engines.REGISTRY.items() if e.listed]
         engine_key = st.selectbox(
             "Engine", keys,
             index=keys.index(current.engine) if current.engine in keys else keys.index(engines.DEFAULT),
@@ -236,3 +238,147 @@ with review:
             "again — the panel's own subtitle carries the measured count. Ringed zips are the "
             "ones the LP splits between two cells, where the assignment is a rounding rather "
             "than a decision.")
+
+# ------------------------------------------------------------------ headline
+# One hard-wired case, the shipped Track 2 anchored delta=5% cut: cap a state's district count,
+# rerun the same MILP (free rerun plus diff, no warm start, no penalty term), and see what moved
+# against the shipped map. `runs.discover()` never finds these runs (they write `d*/splits.json`,
+# not `k*/metrics.json`), so they are filtered here by the engine key in their own `launch.json`.
+
+
+def _headline_runs() -> list[Path]:
+    out = []
+    for p in runner.launched_runs():
+        lf = p / runner.LAUNCH
+        if lf.exists() and json.loads(lf.read_text()).get("engine") == "borders-headline":
+            out.append(p)
+    return out
+
+
+with headline:
+    ref = hl.reference()
+    ref_splits, ref_grid = ref["splits"], ref["grid"]
+
+    st.subheader("The shipped map")
+    st.write(
+        f"Track 2 anchored delta=5%: **{ref_splits['splits']} splits** "
+        f"({ref_splits['split_states']}), spread {ref_grid['spread_rel']:.2%}, "
+        f"max deviation {ref_grid['max_dev_rel']:.2%}. This is the map in `docs/HEADLINE.md`.")
+
+    st.subheader("Override")
+    st_shares = hl.shares()
+    if not st_shares:
+        st.warning(f"State shares have not been computed yet ({config.STATE_SHARES}).")
+        if st.button("Compute state shares"):
+            hl.compute_shares()
+            st.rerun()
+        st.stop()
+
+    delta = st.number_input("delta (band half-width)", min_value=0.0, max_value=0.5,
+                            value=0.05, step=0.01, format="%.3f")
+
+    ref_counts = {code: sum(z) for code, z in zip(ref_splits["state_list"], ref_splits["z"])}
+    override_rows = pd.DataFrame([
+        {"state": code, "headline": ref_counts.get(code, 1),
+         "floor": hl.floor(info["ratio"], delta), "cap": float("nan")}
+        for code, info in sorted(st_shares["states"].items())
+    ])
+    edited = st.data_editor(
+        override_rows, hide_index=True, width="stretch",
+        disabled=["state", "headline", "floor"],
+        column_config={"cap": st.column_config.NumberColumn(min_value=1, max_value=18, step=1)},
+        key=f"hl-override-{delta:g}")
+    caps = {row["state"]: int(row["cap"]) for row in edited.to_dict("records")
+           if pd.notna(row.get("cap"))}
+
+    st.subheader("Pre-flight")
+    probs = hl.problems(caps, delta, st_shares)
+    warns = hl.consequences(caps, st_shares)
+    for p in probs:
+        st.error(p)
+    for w in warns:
+        st.warning(w)
+    if not probs and not warns:
+        st.caption("No problems or consequences for this override.")
+
+    name = "headline " + " ".join(f"{s}={n}" for s, n in sorted(caps.items())) + f" d{delta:g}"
+    if st.button("Run", type="primary", disabled=bool(probs)):
+        draft = Scenario(name=name, engine="borders-headline", caps=caps, delta=delta)
+        draft_problems = sc_mod.validate(draft)
+        for p in draft_problems:
+            st.error(p)
+        if not draft_problems:
+            out = runner.launch(draft)
+            st.session_state["hl-watching"] = str(out)
+            st.success(f"Running in {out}. The MILP takes a few minutes; the rest of the "
+                      f"pipeline takes seconds.")
+
+    hl_runs = _headline_runs()
+    st.subheader("In flight")
+    active = [p for p in hl_runs if runner.status(p) != "done"]
+    if not active:
+        st.caption("No headline run in flight.")
+    for path in active:
+        state = runner.status(path)
+        row, stop = st.columns([5, 1])
+        row.write(f"**{path.name}** — {state}")
+        if state == "running" and stop.button("Cancel", key=f"hl-cancel-{path.name}"):
+            runner.cancel(path)
+            st.rerun()
+        with st.expander(f"Log — {path.name}", expanded=state == "failed"):
+            if state == "failed":
+                st.error("No map satisfies these overrides, or the run failed before writing "
+                        "a result. The log below has the driver's own message.")
+            st.code(runner.log_tail(path) or "(no output yet)")
+
+    st.subheader("Result")
+    finished = [p for p in hl_runs if runner.status(p) == "done"]
+    if not finished:
+        st.caption("No finished headline run yet.")
+        st.stop()
+
+    watching = st.session_state.get("hl-watching")
+    default = next((i for i, p in enumerate(finished) if str(p) == watching), 0)
+    run_path = st.selectbox("Run", finished, index=default, format_func=lambda p: p.name,
+                            key="hl-run-pick")
+
+    new_cell = hl.cell(run_path)
+    new = {
+        "splits": json.loads((new_cell / "splits.json").read_text()),
+        "grid": pd.read_csv(run_path / "grid.csv").iloc[0].to_dict(),
+        "draw": new_cell / "draw.csv",
+    }
+
+    if new["splits"]["status"] == "time_limit":
+        st.warning(
+            "This run hit the 600s solve limit. It returns an **incumbent**, a feasible map, "
+            "not a certified minimum-splits map.")
+
+    state_table, district_table, zips_relabelled = hl.diff(ref, new, st_shares)
+    st.write(f"Zips relabelled against the headline: **{zips_relabelled}**")
+    st.write("States split, headline vs. new district count:")
+    st.dataframe(state_table, width="stretch", hide_index=True)
+    st.write("Districts, target share from the balance pass, not a measurement:")
+    st.dataframe(district_table, width="stretch", hide_index=True)
+    st.caption(
+        f"Headline: target spread {ref_grid['pass_spread']:.2%}, realised spread "
+        f"{ref_grid['spread_rel']:.2%}. New: target spread {new['grid']['pass_spread']:.2%}, "
+        f"realised spread {new['grid']['spread_rel']:.2%}. The two are not the same number.")
+
+    if st.button("Render maps", key="hl-render"):
+        ref_out = config.FIGURES / "headline_reference"
+        new_out = config.FIGURES / "headline" / run_path.name
+        with st.spinner("Drawing"):
+            runner.render_draw(ref["draw"], ref_out)
+            runner.render_draw(new["draw"], new_out)
+        st.session_state["hl-rendered"] = str(run_path)
+        st.rerun()
+
+    if st.session_state.get("hl-rendered") == str(run_path):
+        ref_png = config.FIGURES / "headline_reference" / "districts.png"
+        new_png = config.FIGURES / "headline" / run_path.name / "districts.png"
+        left, right = st.columns(2)
+        if ref_png.exists():
+            left.image(str(ref_png), caption="Headline")
+        if new_png.exists():
+            right.image(str(new_png), caption="New")
