@@ -60,6 +60,6 @@ copy. **How to apply:** check these before restating the `EG^bal` price/frontier
 - The optimal face is `{x feasible : g(x) = g*}` (`g*` unique by strict concavity) — maximise
   random linear objectives over it to enumerate vertices.
 
-Reusable: `docs/artifacts/U9-bandthm/bandthm.py` (108 s, `FAILURES: none`) — OA master, the
+Reusable: `tools/verify/U9-bandthm/bandthm.py` (108 s, `FAILURES: none`) — OA master, the
 independent KKT dual LP, gauge intervals, optimal-face vertex enumeration, exhaustive integral
 P1 checks. See [[u1-cert-eg-dual]].

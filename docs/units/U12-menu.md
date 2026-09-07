@@ -1,5 +1,7 @@
 # Unit U12-menu — the sponsor menu: `(δ, V, book share, μ, fairness verdicts)`, the a-priori softness bound, and the tie-break text
 
+Status: open
+
 `DOMAIN_economic-theory` §2.3, §2.8–§2.10, §4 steps 2–3 and 7; `LENS_GROMOV` M11.2–M11.3;
 absorbs [pred]'s U5-crit. Gated on U8-band (the curve and duals) and U11-roster (the intervals);
 U13-base supplies the baseline point when it exists.
@@ -19,7 +21,7 @@ U13-base supplies the baseline point when it exists.
 ## Files owned
 
 `docs/MODEL_U12-menu.md` (the menu, its derivation and the sponsor-facing page as an appendix) ·
-`docs/VERIFY_U12-menu.md` · `docs/artifacts/U12-menu/**` (the arithmetic that fills the table,
+`docs/VERIFY_U12-menu.md` · `tools/verify/U12-menu/**` (the arithmetic that fills the table,
 reading U8/U11/U13 outputs; no solves of its own).
 
 ## Files forbidden
@@ -89,3 +91,15 @@ near-optimal set is large, lead with that and report the rows as intervals; do n
 them to points.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

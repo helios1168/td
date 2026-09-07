@@ -1,5 +1,7 @@
 # Unit U3-inv — may the drawing read books? The invariant message space, against the Nested Range Condition
 
+Status: open
+
 **Status 2026-09-03 (A1 track, `wt/A1`): carried, sharpened.** Books now enter the draw only through the objective of one concave program per roster (`EG^bal_S`, `DOMAIN_optimization` §2.10); ask the `G`-invariance question of that program's map *and* its duals (P-G1–P-G3, `DOMAIN_economic-theory` §2.7), add N10 (the `c2·T_z` coupling), and take D6 / ★8 (the `fotakis2014` scope correction) as an input, not a conclusion. ★6 is lifted: the instance is readable. Branch `wt/A1`. See `docs/foundations/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/foundations/DOMAIN_economic-theory.md`:§2.7(b))
@@ -37,7 +39,7 @@ And the correction the literature already returned, verbatim from `docs/foundati
 
 - `docs/MODEL_U3-inv.md`
 - `docs/VERIFY_U3-inv.md` (written by `math-verify`)
-- `docs/artifacts/U3-inv/**`
+- `tools/verify/U3-inv/**`
 
 ## Files forbidden
 
@@ -151,3 +153,15 @@ If NRC turns out to be undecidable without knowing whether the audited measure e
 that and hand it to ★2 rather than assuming an answer.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

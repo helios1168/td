@@ -1,5 +1,7 @@
 # Unit U10-round — band-aware rounding of the `EG^bal` vertex, `γ(δ)`, and whether any integer programming is built
 
+Status: open
+
 `DOMAIN_optimization` §2.13, §4 Stage 3, §5 row 3; `LENS_GROMOV` ledger U18; decides **D2′**.
 Gated on U8-band (its vertex and value at the chosen `δ`) — **gate satisfied**: `MODEL_U8-band` §10
 is the live `k = 18` v2 run, artifacts under `battery/results/u8_band_v2_20260904/`.
@@ -177,3 +179,15 @@ enlarge `F` to force feasibility. If `|F| > 2k − 1 = 35`, report the count as 
 P3-split and continue with the measured `F`.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

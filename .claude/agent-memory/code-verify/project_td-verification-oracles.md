@@ -62,7 +62,7 @@ which matters because `metrics.json` records an instance path in a *different* w
   `rtk`/`caveman`-wrapped git); `grep`/`cat`/heredocs over files are blocked by
   `enforce-file-tools.sh`, so put helper scripts under `/tmp` with the **Write** tool and run
   them with the venv python. `battery/` is a **symlink** into the shared checkout, so Write
-  refuses to create files there — use `docs/artifacts/<id>/` for durable artifacts.
+  refuses to create files there — use `tools/verify/<id>/` for durable artifacts.
 - Type check: `uvx pyright --pythonpath /Users/ntlee/projects/td/.venv/bin/python3 <files>`
   (1.1.411 clean on the U7 files).
 - `battery/results/` and `instance_descaled.json.gz` are gitignored; never write under

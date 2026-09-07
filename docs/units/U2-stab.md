@@ -1,5 +1,7 @@
 # Unit U2-stab — is the delivered roster stable, and does the question have an answer before it is computed?
 
+Status: done
+
 **Status 2026-09-03 (A1 track, `wt/A1`): landed** (hub, `VERIFY_U2-stab` 13/13). Its blocking test is now 169 comparisons and moves into U6-sel. See `docs/foundations/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/foundations/LIT_economic-theory.md`:§0.4 and §3)
@@ -25,7 +27,7 @@ ledger, row A5:
 
 - `docs/MODEL_U2-stab.md`
 - `docs/VERIFY_U2-stab.md` (written by `math-verify`)
-- `docs/artifacts/U2-stab/**`
+- `tools/verify/U2-stab/**`
 
 ## Files forbidden
 
@@ -83,7 +85,7 @@ against `td/`). For each, state the threshold that would flip the conclusion:
 | N2 | whether `ρ = 0` in the delivered artifact | whether exact alignment holds, hence whether SPC or only NCC applies |
 
 Numbers this unit **may** compute: everything in P2, on its own toy instances (3–4 agents is
-enough), under `docs/artifacts/U2-stab/`.
+enough), under `tools/verify/U2-stab/`.
 
 ## Inputs to read (paths and sections only)
 
@@ -131,3 +133,101 @@ override welfare — `DOMAIN_economic-theory.md` §2.4 explicitly says that trad
 call.
 
 **stop and report rather than improvise**
+
+## Model
+
+From `docs/MODEL_U2-stab.md` (2026-09-02). Answer in one line: the question is live, it is
+*cheaper* than DOMAIN §3 item 4 thinks (169 comparisons, not 1,443), and its expected answer is
+**not** the one `LIT_economic-theory.md` §0.4 predicts: at the actual 111-of-13 shape the
+max-weight roster coincides with the unique stable roster far more often than the square-market
+intuition behind "generically unstable" suggests.
+
+**Propositions, grouped under the four acceptance items.**
+
+- **P1 — the induced market is aligned, and what follows.** P1.1: the pair value is
+  `g_{ij} = B_j + w·b_{ij}`, `w = (1−λ)(1−θ) > 0`, `ρ` does not appear. `[proved]` P1.2: the
+  greedy top-pair matching `σ^G` is stable. `[proved]` P1.3: under H1+H2+H3 the stable matching is
+  unique and equals `σ^G` (`eeckhout2000`'s SPC, `consuegra2013` for the boundary, `clark2006`'s
+  NCC held in reserve). `[proved]` P1.4: H2, not distinctness, is the hypothesis to check;
+  distinctness is false by construction. `[proved]`
+- **P2 — the counterexample (absence A5, closed by derivation).** P2.1: the smallest shape on
+  which greedy can differ from max-weight is `n = k = 2`. `[proved]` P2.2/P2.3: minimal witnesses,
+  exhaustively (max entry 4 for the log form, 5 for the strict raw form). `[proved by computation]`
+  P2.4: the derivation A5 asked for in two lines — the stable set depends only on ordinal data,
+  the max-weight objective is cardinal. `[proved]` P2.5: on `2×2`, the log audit subsumes the raw
+  one. `[proved]`, checked on 2,433,600 integer matrices, 0 violations. P2.6: P2.5 is a `2×2`
+  artefact; it fails at `n ≥ 3`. `[proved by counterexample]`
+- **P3 — the decisive prediction for N3.** P3.1: zero blocking pairs iff `σ^H = σ^G`. `[proved]`
+  P3.2: if they differ, the first-deviation greedy pair blocks. `[proved]` P3.3: none of the 98
+  unselected reps can ever block — the `13 × 111` sweep is really `13 × 13`. `[proved]` P3.4: the
+  prediction and a correction to `LIT_economic-theory.md` §0.4 — the frequency of greedy
+  coinciding with Hungarian-on-logs rises with `n`; on the structured toy the coincidence rate is
+  0.80. `[conjectured for the real instance]` P3.5: what a count of zero means — not a null
+  result, it says `σ^H = σ^G`. `[proved]`
+- **P4 — across the selection boundary: envy-free matching.** P4.1: EFM is decidable from the
+  same sweep, plus `d` (the outside-option vector), which does not exist. `[proved, given the
+  instantiation]` P4.2: EFM is strictly stronger than the stability condition it resembles, and
+  gets nothing free from N3. `[proved]` P4.3: on this instance EFM and full staffing are probably
+  incompatible. `[proved, conditional on H1]` P4.4: the caveat the literature carries — EFM
+  carries no Nash-welfare guarantee. `[cited: aignerhorev2022, gan2019]`
+
+**Numbers computed** (§4; `tools/verify/U2-stab/stab.py`, seed 20260902, ≈31 s, exact integer
+arithmetic).
+
+| # | quantity | value |
+|---|---|---|
+| 1–3 | minimal max entries separating greedy/log-Hungarian, greedy/raw-Hungarian, raw-stable-but-log-unstable | `4`, `5`, `5` |
+| 6 | exhaustive test of P3.3 on 3×2 matrices | 46,656 matrices; 0 unmatched-rep blocking pairs |
+| 7–8 | structured 111×13 toy: ties, H2, blocking | 56,872 tied cell-pairs; H2 holds 13/13 rounds; 1 blocking pair |
+| 9 | 200-replicate toy | greedy = log-Hungarian in 160/200 (80.0 %) |
+| 10–11 | iid genericity / slack sweep at `k=13` | agreement `0.011 → 0.700` as `n: 13 → 111`; mean blocking pairs `4.63 → 0.35` |
+| 12–13 | `w` at reference parameters / hold-vs-not swing | `0.42` / `0.4217` (FRAME §6's `≈42 %`, `|Δ| = 0.0017`) |
+| 14 | cells the N3 sweep can skip a priori | 1,274 of 1,443; decisive sub-matrix `13×13 = 169` |
+
+**Not computed, and deliberately:** N2 and N3 themselves — `instance_descaled.json.gz` was absent
+from the worktree; everything about the real roster in §2 is a prediction, labelled as such.
+
+**Open.** ★3 (should stability be a hard requirement?) is not answered, by instruction; N2 and N3
+remain predictions until measured on the instance; Roth 1982's two-sided strategy-proofness
+obstruction under uniqueness is not settled; P3.4's transfer to the real `g` depends on the real
+`b_{ij}` sparsity; `d`, the outside-option vector, does not exist, so P4 stays conditional.
+
+Full report: `git show 8b14eee:docs/MODEL_U2-stab.md`.
+
+## Verify
+
+From `docs/VERIFY_U2-stab.md` (2026-09-02, `math-verify`). **No row is REFUTED.** Two
+documentation caveats are raised (rows 4 and 9); both are under-specification of auxiliary
+numbers, not errors in the propositions they support.
+
+| # | proposition | verdict |
+|---|---|---|
+| 1 | P1.1 `g_ij = B_j + w·b_ij`, `w=(1−λ)(1−θ)`, `ρ` absent | **VERIFIED** |
+| 2 | P1.2 greedy is stable | **VERIFIED** |
+| 3 | P1.3 under H1+H2+H3 stable set = `{σ^G}` | **VERIFIED** |
+| 4 | P3.3 no unmatched rep blocks a max-weight roster | **VERIFIED (with caveat)** — the auxiliary counts 2,187/3,672 are tie-break dependent; P3.3's own content (0/0) is tie-break invariant |
+| 5 | P2.4 stability ordinal, max-weight cardinal | **VERIFIED** |
+| 6 | P3.1/P3.2 zero blocking iff `σ^H=σ^G`; first-deviation pair blocks | **VERIFIED** |
+| 7 | P2.5 the 2×2 lemma | **VERIFIED** |
+| 8 | P2.6 P2.5 fails at `n ≥ 3` | **VERIFIED** |
+| 9 | P2.2/P2.3 minimality (max entry 4, 5, 5) | **VERIFIED (with caveat)** — P2.2's raw threshold of 5 depends on the distinctness hypothesis; without it, 4 suffices |
+| 10 | P4.2/P4.3 EFM strictly stronger; EFM ∧ full staffing infeasible | **VERIFIED** |
+| 11 | P1.4 tie identity, H2 vs distinctness on the toy | **VERIFIED** |
+| 12 | P3.4 the ensemble frequencies | **VERIFIED (ensembles only)** — the transfer to the real `g` stays `[conjectured]` (blocked on the instance) |
+| 13 | row 13 — `w·τ/(c2·τ+λ)` vs FRAME §6's 0.42 | **VERIFIED** |
+
+No literature was fetched or checked — every `[cited: …]` attribution is outside this
+verification; only mathematical content was checked. N2 and N3 themselves were not computed
+(instance absent from the worktree).
+
+**Artifacts**, moved out of the deleted per-unit artifacts directory to `tools/verify/U2-stab/`:
+`verify_core.py`, `verify_row1_P11.py`, `verify_row23_P12_P13.py`,
+`verify_row45_P33_P24.py`, `verify_row4_tiebreak_bracket.py`, `verify_row6_P31_P32.py`,
+`verify_row7_P25.py`, `verify_row8_13.py`, `verify_row9_P22_P23.py`, `verify_row10_P42_P43.py`,
+`verify_row11_P14.py`, `verify_row12_P34.py`.
+
+Full report: `git show 8b14eee:docs/VERIFY_U2-stab.md`.
+
+## Code verify
+
+none yet

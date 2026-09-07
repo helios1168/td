@@ -38,8 +38,8 @@ in the graph (`docs/MODEL.md` §6 on who may own them).
 | `tools/measure/frontier.py` | the D1′ driver: utility-convention gate (`EG_S ≥ V`), the `δ` frontier, `δ*`, first movers, N8/N9, the plot. Background it with `python3 -u` |
 | `tools/measure/instance_diff.py` | v1↔v2 comparison: recovers the descaling divisor from the unchanged zips; run on any new export before trusting a sizing figure |
 | `tools/instance_export/export_instance.py` | work-machine exporter — stdlib only, single file, **read it before running it** (`tools/instance_export/README.md`) |
-| `docs/artifacts/runs/` | the catalogue driver (`run_all.sh`), maps (`make_maps.sh`), generator (`build_artifact.py`), 14 scenario specs |
-| `docs/artifacts/U*/` | runnable artifacts behind each MODEL/VERIFY document |
+| `tools/verify/runs/` | the catalogue driver (`run_all.sh`), maps (`make_maps.sh`), generator (`build_artifact.py`), 14 scenario specs |
+| `tools/verify/U*/` | runnable artifacts behind each unit's Model / Verify / Code verify sections in `docs/units/<id>.md` |
 | `docs/channel_note/`, `docs/math_note/` | the LaTeX notes (channel model; the original two-player formulation). `math_note/toy_*.py` import the deleted `code/gfx` and are broken |
 | `tests/run_all.py` | 269 fast tests; `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True` |
 | `app/` + `tools/app.sh` | the Streamlit scenario app: define a scenario, run an engine, see the map, save it. Runs in its own venv `.venv-app` and never imports `td` — it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/engines.py` is the registry; `docs/APP.md` is the whole story |
@@ -53,7 +53,7 @@ tools/measure/premium.py instance_descaled_v2.json.gz battery/results/draw_k18_v
 python3 -u tools/measure/frontier.py instance_descaled_v2.json.gz battery/results/draw_k18_v2_20260904 --out battery/results/u8_band_v2_20260904 --figure figures/u8_band_v2/frontier.png
 tools/measure/instance_diff.py <old> <new> [--json out.json]
 tools/us_maps.py <instance> --out figures/<dir>/ --districts <draw.csv> --regions <draw.csv>
-bash docs/artifacts/runs/run_all.sh   # 15 runs, ~14 min; then make_maps.sh and build_artifact.py --date <date>
+bash tools/verify/runs/run_all.sh   # 15 runs, ~14 min; then make_maps.sh and build_artifact.py --date <date>
 tools/app.sh                          # the scenario app on 127.0.0.1:8501 (docs/APP.md)
 ```
 
@@ -67,7 +67,7 @@ nothing about the numbers or the figures changes; what changes is that the spons
 knobs without a session, and every scenario is saved to `battery/scenarios/<slug>.json` in the
 format `run_draw.py --scenario` already accepts.
 
-Build a Claude artifact (`docs/artifacts/runs/build_artifact.py`) only for a **fixed deliverable**
+Build a Claude artifact (`tools/verify/runs/build_artifact.py`) only for a **fixed deliverable**
 — a catalogue that is finished, reviewed, and meant to be cited, like the pin-cost catalogue. An
 artifact is a snapshot with no engine behind it, so it cannot answer the next question; the app
 can. New exploratory work should not add one.

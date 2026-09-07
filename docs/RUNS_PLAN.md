@@ -249,20 +249,20 @@ question). Pricing that limit explicitly is why it stays in.
 Any state present in one instance and not the other is called out before the run; `_check_states`
 rejects an unknown state outright.
 
-## 4. Scenario specs — `docs/artifacts/runs/scenarios/*.json`
+## 4. Scenario specs — `tools/verify/runs/scenarios/*.json`
 
 One JSON per run in `load_scenario`'s format, named `<region>_fix.json` / `<region>_anchor.json` —
 14 files. Committed specs, not shell history. Names are uppercase and must not match
 `_SOLVER_NAME_RE` (`D07`-style); all seven are safe. `load_scenario` also rejects a name defined
 twice and a state pinned to two districts.
 
-## 5. Run the catalogue — `docs/artifacts/runs/run_all.sh`
+## 5. Run the catalogue — `tools/verify/runs/run_all.sh`
 
 The unpinned baseline plus each spec:
 
 ```bash
 /Users/ntlee/projects/td/.venv/bin/python3 tools/run_draw.py instance_descaled_v2.json.gz \
-  --scenario docs/artifacts/runs/scenarios/<s>.json \
+  --scenario tools/verify/runs/scenarios/<s>.json \
   --k 14-22 --seeds 0-9 --workers 8 --out battery/results/runs_<date>/<s>
 ```
 
@@ -300,7 +300,7 @@ Both district figures share `draw_palette`, so the two renderings cannot drift.
 **Never write under `battery/figures/`** — primary artifacts of the superseded battery, and not
 carried into these worktrees.
 
-## 7. Generator — `docs/artifacts/runs/build_artifact.py`
+## 7. Generator — `tools/verify/runs/build_artifact.py`
 
 Reads every `metrics.json` and `sweep.json`, embeds each map as **lossless WebP**, writes one
 self-contained HTML file. Nothing typed by hand.
@@ -364,9 +364,9 @@ stable across redeploys.
 | `tools/us_maps.py` | **unchanged** — `--regions` per scenario; `draw_palette` / `color_districts` own the colouring |
 | `td/instance.py` | **unchanged** — `load_descaled` / `check_descaled` gate the new file |
 | `td/solvers/centers.py` | **changed in `d7c4503`, with the user's sign-off** — `assign()`'s LP pinned to `method="highs-ds"` + an explicit `options` dict after the HiGHS hang (`docs/RUNS.md`); `draw(locked=)`, `residual_targets`, `seed_centers(initial=)`, `improve(movable=)` are what make pins work |
-| `docs/artifacts/runs/scenarios/*.json` | new — 14 specs |
-| `docs/artifacts/runs/run_all.sh` | new — the driver |
-| `docs/artifacts/runs/build_artifact.py` | new — the generator |
+| `tools/verify/runs/scenarios/*.json` | new — 14 specs |
+| `tools/verify/runs/run_all.sh` | new — the driver |
+| `tools/verify/runs/build_artifact.py` | new — the generator |
 | `docs/RUNS.md`, `docs/RUNS_PLAN.md` | new — the catalogue, and this plan |
 | `figures/runs_<date>/**` | new, tracked — 15 power diagrams + the instance's opportunity map |
 

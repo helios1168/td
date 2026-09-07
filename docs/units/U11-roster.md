@@ -1,5 +1,7 @@
 # Unit U11-roster — roster enumeration under the (★) screen, the Nash-tie margin, and tie-aware intervals
 
+Status: open
+
 `DOMAIN_optimization` §2.14–§2.15, §4 Stage 4, §5 rows 0c and 5; `DOMAIN_economic-theory` §2.10,
 N11; `LENS_GROMOV` ledger U16, U17, U19; decides the report format ★10 (D7). Gated on U8-band
 for the `EG^bal` solver; the margin and the enumeration order need only the gain matrix.
@@ -98,3 +100,15 @@ must lead with that (`DOMAIN_economic-theory` §2.10 failure mode). If (★) at 
 best `EG^bal` found (it cannot be, by validity), report the contradiction rather than the number.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

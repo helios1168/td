@@ -1,5 +1,7 @@
 # Unit U13-base — the hand-drawn state-grouped baseline (A3) as a point on the `(δ, V)` plane
 
+Status: open
+
 `APPROACHES` §A3 (its construction, taken verbatim); `LENS_GROMOV` M11.3 and ledger U10;
 `DOMAIN_optimization` §5 row 6; FRAME §3's "the headline claim is unevidenced without it".
 Construction is independent; placing the point on the frontier needs U8-band.
@@ -90,3 +92,15 @@ If no split rule at zip3 grain lands every bucket inside ±10%, report the best 
 and the offending states; do not move individual zips to force it — that would make it A0.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

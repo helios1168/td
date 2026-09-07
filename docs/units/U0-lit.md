@@ -1,5 +1,7 @@
 # Unit U0-lit — run the optimization literature brief
 
+Status: done
+
 **Status 2026-09-03 (A1 track, `wt/A1`): landed in A1 form** — `docs/foundations/LIT_optimization.md` + `LIT_optimization.bib` (46 entries) answer `DOMAIN_optimization.md` §6 as re-cut for the A1 charter; the split-count citation this unit was waiting for is `lenstra1990`. See `docs/foundations/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md`:§6)
@@ -94,3 +96,15 @@ absence claim with its search record and stop: a well-documented absence on Q7 i
 cancels U4-disp, and is worth more than a speculative near-miss.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

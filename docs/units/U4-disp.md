@@ -1,5 +1,7 @@
 # Unit U4-disp — displacement as a certificate *(wave 2; the U0-lit gate has reported — launchable)*
 
+Status: open
+
 **Status 2026-09-05.** Re-anchored to v2 / `k = 18` (`WAVE2_PLAN` §0c). The unit's **primary**
 question is unchanged and still open: does a modulus `objective-gap ≥ φ(mass moved)` exist? Its
 **secondary input is withdrawn** — see the premise box. Gates that used to hold it are gone: ★6 is
@@ -105,7 +107,7 @@ highest-leverage unknown for FRAME §3.5"*: everything about acceptance in busin
 
 ## Files owned
 
-`docs/MODEL_U4-disp.md` · `docs/VERIFY_U4-disp.md` · `docs/artifacts/U4-disp/**`
+`docs/MODEL_U4-disp.md` · `docs/VERIFY_U4-disp.md` · `tools/verify/U4-disp/**`
 
 ## Files forbidden
 
@@ -224,3 +226,15 @@ to get a modulus is to condition on one dual optimum, **report that as the findi
 first-mover set to make the unit look complete.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

@@ -104,7 +104,7 @@ Layers, app venv on the left, solver venv on the right:
 
 **Scenario format.** Do not invent one. `run_draw.py` already accepts
 `--scenario file.json` with exactly `{"fix": {NAME: [ST, ...]}, "anchor": {...}}` and rejects
-unknown keys, and fourteen such files live in `docs/artifacts/runs/scenarios/`. The app's saved
+unknown keys, and fourteen such files live in `tools/verify/runs/scenarios/`. The app's saved
 record is that object plus the run parameters it needs (engine, k, seeds, instance) and the
 business metadata (name, notes, author, saved-at), stored at
 `battery/scenarios/<name>.json`. At launch time `app/runner.py` writes the stripped

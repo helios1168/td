@@ -1,5 +1,7 @@
 # Unit U5-crit — the welfare criterion as one Atkinson scalar *(wave 2, gated on U2-stab — not launched)*
 
+Status: dropped — retired as a unit 2026-09-03, folded into `docs/units/U12-menu.md`.
+
 **Status 2026-09-03 (A1 track, `wt/A1`): retired as a unit — folded into `docs/units/U12-menu.md`.** The criterion is two knobs `(δ, ε)` on one sponsor menu (`DOMAIN_economic-theory` §2.3, §2.9, D2); the Atkinson-ε content survives as U12's second knob. See `docs/foundations/BRIEF.md` §4.
 
 ## Spec (verbatim from `docs/foundations/LIT_economic-theory.md`:§0.5)
@@ -22,7 +24,7 @@ Paired with, verbatim from `docs/foundations/DOMAIN_economic-theory.md`:§2.3:
 
 ## Files owned
 
-`docs/MODEL_U5-crit.md` · `docs/VERIFY_U5-crit.md` · `docs/artifacts/U5-crit/**`
+`docs/MODEL_U5-crit.md` · `docs/VERIFY_U5-crit.md` · `tools/verify/U5-crit/**`
 
 ## Files forbidden
 
@@ -81,3 +83,15 @@ Do not re-derive Atkinson. If the identity does not match the programme's `D(g)`
 the discrepancy rather than adjusting either side.
 
 **stop and report rather than improvise**
+
+## Model
+
+none yet
+
+## Verify
+
+none yet
+
+## Code verify
+
+none yet

@@ -28,7 +28,7 @@ Four discoveries during planning reshape the work into phases rather than a flat
    end to a **prerequisite**.
 4. **The (★) roster-free screen has no implementation.** It was arithmetic in a docs-only commit
    (`795ea8e`); `60.8025` survives only as a display literal at
-   `docs/artifacts/U9-bandthm/bandthm.py:957`, and §2.14 itself warns "recompute it before quoting;
+   `tools/verify/U9-bandthm/bandthm.py:957`, and §2.14 itself warns "recompute it before quoting;
    this plan ran no code." Its missing primitive `B_tot` is emitted by no tool. **U11's stop rule
    depends on it.**
 

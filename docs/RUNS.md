@@ -12,8 +12,8 @@ along the way. `docs/RUNS_PLAN.md` is the plan; this file is the result.
 15 runs of `tools/run_draw.py instance_descaled_v2.json.gz --k 14-22 --seeds 0-9` — the unpinned
 baseline plus each of 7 regions × {`fix`, `anchor`}. Every run: 0 unstaffed districts, district
 masses sum to the instance total (3,748 zips, total M 8,523.2). Scenario specs are committed at
-`docs/artifacts/runs/scenarios/*.json`; the driver is `docs/artifacts/runs/run_all.sh`; maps via
-`docs/artifacts/runs/make_maps.sh`; the artifact generator is `docs/artifacts/runs/build_artifact.py`.
+`tools/verify/runs/scenarios/*.json`; the driver is `tools/verify/runs/run_all.sh`; maps via
+`tools/verify/runs/make_maps.sh`; the artifact generator is `tools/verify/runs/build_artifact.py`.
 
 `fix` is a closed district (exactly those states, never touched by the solver, k reduced by
 one); `anchor` is open (those states locked in, the solver fills the rest toward the common
@@ -95,7 +95,7 @@ scale-invariance argument). Add a row's Δ to the baseline figure above to recov
 ```bash
 .venv/bin/python3 tools/run_draw.py instance_descaled_v2.json.gz --k 14-22 --seeds 0-9 \
   --workers 8 --out battery/results/runs_<date>/baseline
-bash docs/artifacts/runs/run_all.sh      # all 15 runs
-bash docs/artifacts/runs/make_maps.sh    # 15 power-diagram maps at k=18
-.venv/bin/python3 docs/artifacts/runs/build_artifact.py --date <date>
+bash tools/verify/runs/run_all.sh      # all 15 runs
+bash tools/verify/runs/make_maps.sh    # 15 power-diagram maps at k=18
+.venv/bin/python3 tools/verify/runs/build_artifact.py --date <date>
 ```

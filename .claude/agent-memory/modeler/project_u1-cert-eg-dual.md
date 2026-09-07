@@ -62,7 +62,7 @@ not re-derive, and hit three traps.
 - Two `u` conventions coexist: `model.utilities` masks non-candidates to 0, `channel.gain_matrix`
   does not. Everything comparing against `stage2` must use the unmasked one.
 
-Reusable: `docs/artifacts/U1-cert/eg.py` — proportional response + the Lagrangian dual
+Reusable: `tools/verify/U1-cert/eg.py` — proportional response + the Lagrangian dual
 `D(p) = sum p_z - k + sum_i log max_z(u_iz/p_z)`, which bounds EG for **any** `p > 0`, so the
 reported number never trusts the solver. 60k iterations close 1229x13 to 1e-13 in ~1 s.
 See [[u2-stab-traps]].
