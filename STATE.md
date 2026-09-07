@@ -28,21 +28,28 @@ beats the single shot (4.0041% / 0.000724) on both axes. **Option 3:** the LP sp
 holds only against the diagram that *produced* the snap. Rebuild the diagram from the snapped
 labels and 16 of 3,704 (0.4%) fall outside again, against 258 (7.0%) committed — the same
 non-self-consistency as the missing fixed point. Consequence: **every power-diagram figure
-recentroids, so none of them can display the zero.**
+recentroids** — which `--regions-fixed` fixed later the same day.
 
-*What's next.* Build the fixed-diagram figure (hold centres and weights, colour dots by the
-labelling those weights produced) — a sponsor review needs it and it does not exist. Then
-explain D01. **Merged into `main` on 2026-09-06** at the user's instruction (fast-forward, so
-`main` and `worktree-power-cell-contiguity` are the same commit). Review artifact:
-`893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
+*Both follow-ups landed 2026-09-06.* The fixed-diagram figure holds one diagram and shows the
+committed labelling at 266 of 3,704 outside against the snapped one at 0 (register §4a). D01's
+55% turned out not to be fragmentation at all, but a single rural ZIP's empty catchment under an
+area denominator (§3a). Branches `worktree-fixed-diagram` (`feaa1bc`) and `worktree-d01`
+(`49b706a`) are **merged into `main`** at the user's instruction, resolving one §9 conflict;
+`main` also carries the earlier `worktree-power-cell-contiguity` merge. Tests 275 pass. Review
+artifact: `893379d7-2f28-4d0f-9a5d-edb3b8f076b0` — **it predates both, so its panels still
+recentroid**.
 
 ## Next
 
-- [ ] **No figure can show the zero-mismatch guarantee — build the fixed-diagram one.** Every
-      power-diagram rendering recomputes centroids from the draw it is given, so it reports the
-      *next* iterate's mismatch (16 of 3,704) rather than the snap's own zero. Hold centres and
-      weights fixed, colour dots by the labelling those weights produced. Item 4 of the
-      register's recommended order, ahead of D01, because a sponsor review needs it.
+- [ ] **The fixed-diagram figure exists** (register §4a, 2026-09-06, worktree `fixed-diagram`).
+      `us_maps.py --regions-fixed <draw.csv>` builds one power diagram at exactly-equal-split
+      targets and draws both labellings on it: the committed draw at **266 of 3,704 outside**,
+      the snapped one at **0 of 3,704**. The subtitle qualifies the zero with a measured rebuild
+      (15 of 3,704 at equal-split targets, 16 at own-masses), and the 17 split zips are ringed.
+      Two corrections it forced: the committed drift is **258 at own-masses targets and 266 at
+      equal-split**, quoted as one number until now; and **six cells are under 1% of the map at
+      k=18**, not the three the k=13 v1 draw had. What is left: the app wiring is committed but
+      unexercised, because `.venv-app` did not exist in that worktree.
 - [ ] **D01's 55% is explained and is not fragmentation** (register §3a, 2026-09-06, worktree
       `d01`). 148 of its 149 ZIPs and **99.86% of its M** are one piece; the second part is the
       single rural ZIP `18337` (Milford PA), whose catchment is **44.56% of D01's area and 0.14%
@@ -101,8 +108,10 @@ explain D01. **Merged into `main` on 2026-09-06** at the user's instruction (fas
 - [ ] **Serena binds to the hub, not the worktree.** Relative paths resolve against
       `/Users/ntlee/projects/td`. Three agents were misled on 2026-09-05; one nearly wrote to the
       user's checkout. Use absolute worktree paths, or `Read`.
-- [ ] **Something injects shell-IO instructions that contradict `CLAUDE.md` §7.** Third
-      occurrence, 2026-09-06: mid-session text told the agent to read and write files with
+- [ ] **Something injects shell-IO instructions that contradict `CLAUDE.md` §7.** Fourth and
+      fifth occurrences, 2026-09-06: both the `fixed-diagram` and the `d01` agent hit it
+      mid-session, independently, and each declined. Earlier occurrences, same shape:
+      mid-session text told the agent to read and write files with
       `cat`/`sed`/heredocs. Declined each time, and `hooks/enforce-file-tools.sh` caught the
       attempts. An agent that complied would bypass the hook.
 - [ ] **`D04`/`SOUTHWEST` share a colour and look adjacent** in `SOUTHWEST_anchor`. B10's recorded

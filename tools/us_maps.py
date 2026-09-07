@@ -1123,7 +1123,8 @@ def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALP
     * the shape of the trade, in the legend.  Every cell holds the same share of M and between
       0.06% and 28% of the ground, so the two columns say the thing the map is for: a district
       is an equal slice of *opportunity*, and opportunity is not spread evenly over the country.
-      The three metro slivers are the extreme of that, not a rendering failure -- which is why
+      The metro slivers are the extreme of that, not a rendering failure -- six of them at
+      k=18, not the three the k=13 v1 draw had -- which is why
       every centre gets a marker and a leader line, so a district too small to see is still
       locatable;
     * and the discrepancy on the same page.  The zips are drawn as dots in their **committed**
@@ -1198,8 +1199,9 @@ def figure_power_regions(districts, values, xy, states, out, *, alpha=REGION_ALP
         for path in _poly_paths(g):
             ax.add_patch(PathPatch(path, facecolor=colors[d], edgecolor="none",
                                    alpha=alpha, zorder=1))
-    # 2. a sliver cell is real territory that no fill can show -- D09's is 0.06% of the map, a
-    # hairline over Los Angeles -- so anything under `SLIVER_SHARE` is additionally stroked in
+    # 2. a sliver cell is real territory that no fill can show -- at k=18 D14's is 0.04% of the
+    # map, a hairline over Los Angeles, and D01's 0.06% over New York; six cells are under
+    # `SLIVER_SHARE` -- so anything under `SLIVER_SHARE` is additionally stroked in
     # its own colour.  The stroke is the only mark that survives at that size; without it the
     # district simply is not on the map.
     tiny = [d for d, g in cells.items() if g.area / area_total < SLIVER_SHARE]
