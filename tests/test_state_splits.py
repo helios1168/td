@@ -57,6 +57,26 @@ def build(masses, delta, eps=None, centres=CENTRES):
 
 
 # ----------------------------------------------------------------------- the split count
+def test_an_anchor_holds_its_district_in_that_state():
+    """EVEN at delta=0 has two zero-split optima, {0,1,2}|{3,4,5} with either labelling.
+    Anchoring district 1 to state 0 picks the one where district 1 holds the left block."""
+    toy = path_toy(EVEN)
+    eps = state_splits.eps_lexicographic(toy["M_s"], toy["D"])
+    prob = state_splits.build_milp(toy["M_s"], toy["D"], EDGES, toy["tau"], 0.0, eps,
+                                   anchors=[(0, 1)])
+    res = state_splits.solve(prob)
+    assert res["splits"] == 0
+    assert res["z"][0, 1] and res["z"][1, 1] and res["z"][2, 1]
+    assert not res["z"][0, 0]
+    try:
+        state_splits.build_milp(toy["M_s"], toy["D"], EDGES, toy["tau"], 0.0, eps,
+                                anchors=[(9, 0)])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("an out-of-range anchor must be refused")
+
+
 def test_no_split_when_the_band_admits_a_whole_state_partition():
     """Equal states, k=2: {0,1,2} | {3,4,5} is exact, so the minimum is 0 splits."""
     _, prob = build(EVEN, 0.001)

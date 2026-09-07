@@ -117,10 +117,30 @@ s.t.  Σ_j y_sj = 1                       ∀ s                (all of s placed)
   centres in the tie-break break the k! symmetry in practice at this size.
 - **Size**: S = 49 (lower 48 plus DC): 882 binaries `z`, 882 binary `r` (a continuous root
   admits disconnected sets with components under N/2, so `r` stays integral), 882 continuous
-  `y`, 2 × 107 × 18 flow variables; 6,583 rows. `scipy.optimize.milp` on HiGHS with
-  `mip_rel_gap = 0.0` (trap 12). Seconds.
-- **Warm start / sanity**: the committed map's composition `y⁰` is feasible at δ = 1.3% and
-  gives an upper bound on the split count at every δ ≥ that.
+  `y`, 2 × 107 × 18 flow variables; 11,317 rows as built (the `η` block adds 882, and the
+  arc capacity is written per directed arc against each endpoint, 3,852 rows per end, which
+  is the weaker of the two scf forms; `docs/CODEVERIFY_state_splits.md` 6a).
+  `scipy.optimize.milp` on HiGHS with `mip_rel_gap = 0.0` (trap 12).
+- **It does not close.** "Seconds" was wrong. On the real instance at δ = 10% HiGHS finds
+  17 splits at 1.5 s, 8 at 60 s, 7 at 600 s, and the dual bound sits at 6 from 120 s on;
+  the reported `mip_gap` is over an objective that carries the constant S = 49, so a 1.8%
+  gap is one whole split. The certified statement per δ is therefore an interval, "between
+  ⌈bound⌉ and the incumbent", not a number. `solve(strict=False)` returns the incumbent with
+  `status = "time_limit"` for this reason. Anchoring each district to its committed home
+  state (`--anchor-homes`, `build_milp(anchors=)`) names the districts and removes the k!
+  symmetry, matching sponsor decision (4), but did not close the gap either at 120 s (8
+  splits, 1.75%); the weak part is the flow relaxation, not the symmetry. The grid runs both
+  forms, free and anchored, at 600 s per δ, five δ in parallel. Tightening (pair-form arc
+  capacity, a per-district state-count bound in place of N − 1) is daytime work.
+- **The committed map is not a feasible warm start.** Its state composition passes the band
+  at δ = 1.3% (max deviation 1.16%) but fails contiguity: D09 holds crumbs in ND, NY and TN
+  below 1% that no path of its own states reaches, and D18's CA piece is cut off from ID
+  and MT; 28 state–district contacts sit under η. The sanity row prints this and does not
+  solve for it. The upper bound on the split count at δ ≥ 1.3% that the plan expected from
+  `y⁰` does not exist.
+- **Warm start / sanity**: the committed map's composition `y⁰` was expected to be feasible
+  at δ = 1.3%; it is not (contiguity fails, see "The committed map is not a feasible warm
+  start" below). The sanity row reports the band and connectivity checks directly.
 - **Balance pass, lexicographic.** The MILP uses the whole band wherever that saves a split,
   so at δ = 10% it returns a 10% imbalance somewhere even when the chosen splits permit 3%.
   After the MILP, fix `z` and re-solve for `y` in two LPs: first minimise the maximum
@@ -139,7 +159,9 @@ s.t.  Σ_j y_sj = 1                       ∀ s                (all of s placed)
   committed centres were placed for the old shares (D02 is 57% CA plus AZ and NV, D17 61% CA
   plus the Northwest) and can sit in the wrong place for the piece they now own; the rounds
   make the CA/TX/NY cuts compact for the shares actually chosen. Then completion and metrics
-  as Track 1.
+  as Track 1. As built, `realise` moves the shared centre array as it goes, so a later split
+  state is cut against centres an earlier one already moved: deterministic, order-dependent,
+  and not what the plan said (`CODEVERIFY_state_splits.md`, non-verdict findings).
 - **Cleanness per split state**, reported: districts touching it, split-zip count (at most
   one fewer than the districts touching), and border-segment count from `us_maps` (the
   committed map has 1,591, the snapped labelling 636). Named cut lines (Manhattan whole, the

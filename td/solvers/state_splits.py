@@ -103,10 +103,16 @@ def _block(rows: np.ndarray, cols: np.ndarray, vals: np.ndarray,
 
 
 def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
-               tau: float, delta: float, eps: float, *, eta: float = 0.01) -> SplitProblem:
+               tau: float, delta: float, eps: float, *, eta: float = 0.01,
+               anchors: list[tuple[int, int]] | None = None) -> SplitProblem:
     """Assemble the minimum-splits MILP.  `M_s` is `(S,)`, `D` is `(S, k)`, `edges` the rook
     graph over state indices (undirected, given once per pair).  `eta` is the minimum share a
-    state must send to a district it is flagged as touching (see the module docstring)."""
+    state must send to a district it is flagged as touching (see the module docstring).
+
+    `anchors` is a list of `(s, j)` pairs forced to `z_sj = 1`: district `j` keeps state `s`.
+    Anchoring every district to its committed home state names the districts and so removes
+    the `k!` relabelling symmetry, which the `eps` tie-break alone does not break at S = 49,
+    k = 18 (HiGHS left a one-split gap open after 600 s without anchors)."""
     M_s = np.asarray(M_s, float)
     D = np.asarray(D, float)
     if M_s.ndim != 1 or D.ndim != 2 or D.shape[0] != M_s.shape[0]:
@@ -190,6 +196,10 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     var_lb = np.zeros(n_var)
     var_ub = np.ones(n_var)
     var_ub[off_f:] = max(N - 1.0, 0.0)
+    for s, j in anchors or ():
+        if not (0 <= s < S and 0 <= j < k):
+            raise ValueError(f"anchor ({s}, {j}) out of range")
+        var_lb[off_z + s * k + j] = 1.0
     integrality = np.zeros(n_var)
     integrality[off_z:off_z + S * k] = 1
     integrality[off_r:off_r + S * k] = 1
@@ -204,12 +214,17 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     )
 
 
-def solve(problem: SplitProblem, *, time_limit: float | None = None) -> dict:
+def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: bool = True) -> dict:
     """Solve to proven optimality (`mip_rel_gap = 0.0`, trap 12) and read `z`, `y` back.
 
     Raises unless HiGHS reports optimality: a time-limited or infeasible run is not a split
     count.  `y` is zeroed where `z` is 0 (the LP can leave 1e-12 there) and each state's row is
     renormalised to sum to 1, so `realise`'s targets are exact.
+
+    `strict=False` softens only the time-limit case: if HiGHS stops at `time_limit` with an
+    incumbent in hand (`res.status == 1`, `res.x is not None`), that incumbent is returned with
+    `status="time_limit"` and its own `mip_gap` instead of raising.  Infeasible, unbounded or
+    incumbent-less runs still raise regardless of `strict`.
     """
     options = {"mip_rel_gap": 0.0}
     if time_limit is not None:
@@ -219,7 +234,8 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None) -> dict:
                integrality=problem.integrality,
                bounds=Bounds(problem.var_lb, problem.var_ub),
                options=options)
-    if res.status != 0 or res.x is None:
+    timed_out = (not strict) and res.status == 1 and res.x is not None
+    if not timed_out and (res.status != 0 or res.x is None):
         raise RuntimeError(f"minimum-splits MILP did not solve to optimality: {res.message}")
 
     S, k = problem.n_state, problem.k
@@ -236,7 +252,7 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None) -> dict:
         spread_rel=float((masses.max() - masses.min()) / masses.mean()),
         max_dev_rel=float(np.abs(masses - problem.tau).max() / problem.tau),
         objective=float(res.fun),
-        status=int(res.status),
+        status="time_limit" if timed_out else int(res.status),
         mip_gap=float(res.mip_gap),
     )
 

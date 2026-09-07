@@ -220,6 +220,21 @@ def _owner_metrics(ctx: Ctx, completed: dict) -> tuple:
         per[lab] = per.get(lab, 0.0) + m
 
     outside_share = mass_outside / total_M
+
+    # The same share against the labelling's OWN owner sets (plurality home per district,
+    # else the single top holder), since `refine` drifts its owner sets each round and the
+    # two readings differ at large delta (`docs/CODEVERIFY_state_borders.md` F2).
+    dist_state = np.zeros((ctx.k, len(ctx.state_list)), float)
+    for s, per in state_district_mass.items():
+        for lab, m in per.items():
+            dist_state[lab, s] = m
+    home_own = np.where(dist_state.sum(axis=1) > 0, dist_state.argmax(axis=1), -1)
+    owners_own = np.zeros((len(ctx.state_list), ctx.k), bool)
+    for s in state_district_mass:
+        js = np.flatnonzero(home_own == s)
+        owners_own[s, js if js.size else [int(dist_state[:, s].argmax())]] = True
+    outside_share_own = float((dist_state.T * ~owners_own).sum()) / total_M
+
     n_home_1pct = int(np.sum((district_mass > 0)
                              & (district_mass_outside_home / np.maximum(district_mass, 1e-12)
                                 > 0.01)))
@@ -234,7 +249,8 @@ def _owner_metrics(ctx: Ctx, completed: dict) -> tuple:
             n_states_split += 1
             split_codes.append(ctx.state_list[s])
 
-    return outside_share, n_home_1pct, n_states_split, ",".join(sorted(split_codes))
+    return (outside_share, outside_share_own, n_home_1pct, n_states_split,
+            ",".join(sorted(split_codes)))
 
 
 # --------------------------------------------------------------------------------- the row
@@ -258,7 +274,8 @@ def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict) -> dict:
 
     compactness = centers.metrics(ctx.M, labels, ctx.xy)["compactness"]
     zips_changed = sum(1 for z, dist in completed.items() if dist != ctx.committed_full.get(z))
-    outside_share, n_home_1pct, n_states_split, states_split = _owner_metrics(ctx, completed)
+    (outside_share, outside_share_own, n_home_1pct, n_states_split,
+     states_split) = _owner_metrics(ctx, completed)
 
     stage2 = channel.stage2(ctx.d.G, completed, theta=THETA, lam=LAM,
                             filler_capture=FILLER_CAPTURE)
@@ -270,6 +287,7 @@ def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict) -> dict:
         nash=report["log_sum"],
         gap=gap,
         outside_owner_share=outside_share,
+        outside_owner_share_own=outside_share_own,
         n_districts_outside_home_1pct=n_home_1pct,
         n_states_split=n_states_split,
         states_split=states_split,
