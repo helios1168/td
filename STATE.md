@@ -1,30 +1,33 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `833dd31` · **Tests:** 312 pass,
+**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `1a2546a` · **Tests:** 321 pass,
 0 fail (2026-09-07)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Workflow redesign merged to `main` as `833dd31` (fast-forward) on 2026-09-07; its worktree is
-removed and the branch deleted; 312 tests, 0 fail. Every doc now has one owner
-(`.claude/doc-owners.txt`); a unit's whole record is `docs/units/<id>.md` with a `Status:` line;
-verifier artifacts live in `tools/verify/<id>/`; `CHANNEL.md` became `docs/PROBLEM.md`; stage 1-4
-docs are frozen read-only under `docs/foundations/`; `STATE_LOG` is gone. A track's running plan
-is its worktree `PLAN.md`, deleted in the last commit before merge. Four hooks print the resume
-context and enforce the allowlist and the `## Now` cap.
+Two tracks landed on 2026-09-07: the workflow redesign as `833dd31` (one owner per doc,
+`docs/units/<id>.md` as a unit's whole record, `tools/verify/<id>/` artifacts,
+`docs/foundations/` frozen, `PLAN.md` per worktree, four hooks), then the headline track as
+`1a2546a`. Both worktrees are removed. 321 tests, 0 fail.
 
-The borders result is unchanged and still the live question: **Track 2 anchored δ = 5%**
-(8 splits, certified) is the recommendation over free δ = 5%, anchored δ = 10% or Track 1 δ = 5%.
-Next decision: which map ships, gated on the sponsor reading the grid tables below.
+The headline track ships `docs/HEADLINE.md`, the map end to end, plus per-state caps
+(`--cap`/`--unanchor`) and the app's Headline tab. It found that the shipped map's **realised max
+deviation is 5.25%, outside its own 5% band** (4.68% is a pre-realisation quantity), that **NY at
+2 is refuted** while **CA at 4 is only unsearched**, and that the band, not the cap, is the lever.
+
+Next decision: which map ships, still **Track 2 anchored δ = 5%** recommended, gated on the
+sponsor reading the grid tables below.
 
 ## Next
 
 - [ ] **Which map ships.** Track 2 anchored δ = 5% (recommended), free δ = 5%, anchored δ = 10%,
       or Track 1 δ = 5% — gated on the sponsor reading the grid tables in `## Facts` below. Then
       whether to rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's
-      rearrangement is acceptable.
+      rearrangement is acceptable. Say "5.25% realised", not "within 5%". If CA in four matters
+      to the sponsor, the open question is whether it is reachable at δ = 5%: an hour of HiGHS
+      returned no incumbent, which refutes nothing.
 - [ ] **Phase 1 — the four units**, all concurrent and unblocked: U10-round, U11-roster, U4-disp,
       U13-base. Then U12-menu (needs U8 + U11 + U13; brief re-anchored, unit not launched).
       Branch from `main`.
