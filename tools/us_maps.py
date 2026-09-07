@@ -143,7 +143,7 @@ def _fmt(v) -> str:
 
 
 # ------------------------------------------------------------------ canvas
-def _canvas(states, title, subtitle, footer=FOOTER):
+def _canvas(states, title, subtitle, footer=FOOTER, *, state_w=0.5, state_color=OUTLINE):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -152,7 +152,7 @@ def _canvas(states, title, subtitle, footer=FOOTER):
     ax = fig.add_axes([0.015, 0.055, 0.845, 0.845])
     ax.set_facecolor(BG)
     if states is not None:
-        states.boundary.plot(ax=ax, color=OUTLINE, linewidth=0.5)
+        states.boundary.plot(ax=ax, color=state_color, linewidth=state_w)
     ax.set_aspect("equal")
     ax.set_axis_off()
     # "bold", not "semibold": DejaVu Sans (matplotlib's default) has no semibold face and
@@ -490,8 +490,11 @@ def draw_palette(districts, values, xy, *, n_near=4, palette=QUAL):
 
 def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKER,
                      alpha=ALPHA, footer=FOOTER, title=None, subtitle=None, n_near=4,
-                     palette=QUAL, label=True):
+                     palette=QUAL, label=True, state_w=0.5, state_color=OUTLINE):
     """The drawn districts: area ∝ M as on `opportunity.png`, colour = district identity.
+
+    `state_w` / `state_color` are the state outline (`--bold-states` sets them heavy and dark
+    for a map whose point is where the borders sit against state lines).
 
     `districts` is `{zip: district_id}` -- exactly the mapping stage 2 consumes, so the figure
     is drawn from the same object the staffing was computed on and cannot drift from it.
@@ -521,7 +524,7 @@ def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKE
     title = title or f"Drawn districts — {len(order)} territories on equal opportunity"
     subtitle = subtitle or ("bubble area ∝ M_z  ·  colour = district (nominal; adjacent "
                             "districts never share a hue)  ·  labels at M-weighted centroids")
-    fig, ax = _canvas(states, title, subtitle, footer)
+    fig, ax = _canvas(states, title, subtitle, footer, state_w=state_w, state_color=state_color)
     if v.size == 0:
         return _save(fig, out)
 
@@ -646,14 +649,41 @@ def voronoi_cells(keys, xy, clip, *, zip_state=None, state_polys=None) -> dict:
     Those keys are dropped from the result (their ground is covered by the neighbouring cells
     regardless) and the caller reports the count.
 
-    `zip_state`/`state_polys`, given together (`--clip-states`), additionally clip each key's
-    cell to its own state's polygon; a key with no known state or one absent from
-    `state_polys` keeps the land-clipped cell.
+    `zip_state`/`state_polys`, given together (`--clip-states`), make it a Voronoi diagram
+    **per state**: each state's polygon is tiled by that state's own zips, so every point in a
+    state is coloured by its nearest in-state zip and no cell crosses a state line.  (Clipping
+    the national diagram to state polygons instead leaves holes wherever ground is nearer to an
+    out-of-state zip.)  Keys with no known state, or a state absent from `state_polys`, keep
+    the land-clipped national cell.
     """
+    import shapely
+
+    keys = list(keys)
+    if zip_state is None or state_polys is None:
+        return _voronoi_clipped(keys, xy, clip)
+    by_state: dict = {}
+    loose = []
+    for k in keys:
+        s = zip_state.get(k)
+        (by_state.setdefault(s, []) if s in state_polys else loose).append(k)
+    out = _voronoi_clipped(loose, xy, clip)
+    for s, ks in by_state.items():
+        sclip = _valid(shapely.intersection(clip, _valid(state_polys[s])))
+        if sclip.is_empty:
+            continue
+        if len(ks) == 1:                              # one zip owns the whole state
+            out[ks[0]] = sclip
+            continue
+        out.update(_voronoi_clipped(ks, xy, sclip))
+    return out
+
+
+def _voronoi_clipped(keys, xy, clip) -> dict:
+    """`voronoi_cells` for one clip polygon, no state logic: the national diagram of `keys`
+    trimmed to `clip`, with the ordering and bijection checks described there."""
     import shapely
     from shapely import MultiPoint, Point
 
-    keys = list(keys)
     coords = [tuple(xy[k]) for k in keys]
     if len(coords) < 2:
         return {}
@@ -670,12 +700,6 @@ def voronoi_cells(keys, xy, clip, *, zip_state=None, state_polys=None) -> dict:
     out = {}
     for k, cell in zip(keys, cells):
         g = _valid(shapely.intersection(_valid(cell), clip))
-        if zip_state is not None and state_polys is not None:
-            sp = state_polys.get(zip_state.get(k))
-            if sp is not None:
-                g_state = _valid(shapely.intersection(g, _valid(sp)))
-                if not g_state.is_empty and g_state.area > 0:
-                    g = g_state
         if not g.is_empty and g.area > 0:
             out[k] = g
     return out
@@ -851,7 +875,8 @@ def label_points(order, polys, centroids, min_sep=0.0, min_part=0.15) -> dict:
 def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_ALPHA,
                             footer=FOOTER, title=None, subtitle=None, n_near=4,
                             palette=QUAL, label=True, pad=0.05, report=None,
-                            zip_state=None, state_polys=None):
+                            zip_state=None, state_polys=None,
+                            state_w=STATE_W_REGIONS, state_color=OUTLINE):
     """The draw as **filled territory**: each zip's Voronoi catchment, dissolved by district.
 
     **Superseded by `figure_power_regions`** as the business territory map, and kept because the
@@ -869,7 +894,9 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
     line at all.
 
     `report` is an optional callable taking one string; the CLI passes `print`.  `zip_state`/
-    `state_polys`, passed through to `voronoi_cells`, are `--clip-states`'s plumbing.
+    `state_polys`, passed through to `voronoi_cells`, are `--clip-states`'s plumbing;
+    `state_w` / `state_color` are `--bold-states`'s (the state outline, heavy and dark when the
+    map's point is where the borders sit against state lines).
     """
     from matplotlib.collections import LineCollection
     from matplotlib.patches import PathPatch
@@ -882,7 +909,9 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
     subtitle = subtitle or (
         "fill = the Voronoi catchment of each ZIP: every point is coloured by its nearest "
         "ZIP's district  ·  boundaries between\nadjacent ZIPs of different districts are "
-        "exact  ·  clipped to the US landmass  ·  colours match districts.png")
+        "exact  ·  " + ("each cell clipped to its own state" if state_polys is not None
+                        else "clipped to the US landmass")
+        + "  ·  colours match districts.png")
     fig, ax = _canvas(None, title, subtitle, footer)          # states drawn last, on top
     if len(keys) < 2:
         return _save(fig, out)
@@ -929,7 +958,7 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
     say(f"regions: {len(cells):,} cells, {len(polys)} districts, "
         f"{len(borders):,} shared border segments")
     if states is not None:                                     # 4. states, on top but light
-        states.boundary.plot(ax=ax, color=OUTLINE, linewidth=STATE_W_REGIONS, zorder=4)
+        states.boundary.plot(ax=ax, color=state_color, linewidth=state_w, zorder=4)
 
     if label:                                                  # 5. labels
         for d, (lx, ly) in label_points(order, polys, centroids,
@@ -1410,6 +1439,9 @@ def main(argv=None):
     ap.add_argument("--clip-states", action="store_true",
                     help="with --regions-voronoi, intersect each zip's cell with its own "
                          "state's polygon; off by default, off path unchanged")
+    ap.add_argument("--bold-states", action="store_true",
+                    help="draw state boundaries heavy and dark on --districts and "
+                         "--regions-voronoi (1.6 pt, #555555); off by default")
     ap.add_argument("--regions-fixed", default=None, metavar="DRAW_CSV",
                     help="the same draw.csv; adds the fixed-diagram pair "
                          "(district_regions_fixed_committed.png / _snapped.png): one diagram, "
@@ -1494,6 +1526,8 @@ def main(argv=None):
                 kw["state_polys"] = dict(zip(states["STUSPS"], states.geometry))
             else:
                 print("WARNING: --clip-states has no effect with --no-basemap")
+        if flag in ("districts", "regions_voronoi") and args.bold_states:
+            kw.update(state_w=1.6, state_color="#555555")
         written.append(builder(draw, M, xy, states, dest, **kw))
 
     for p in written:

@@ -356,15 +356,19 @@ def write_grid(out_dir: str, rows: list) -> None:
 
 # -------------------------------------------------------------------------------------- maps
 def render_cell_maps(instance_path: str, cell_dir: str,
-                     geo_cache: str = geo.DEFAULT_DEST) -> Path:
+                     geo_cache: str = geo.DEFAULT_DEST, *, state_lines: bool = False) -> Path:
     """`tools/us_maps.py --districts --regions-voronoi` on `cell_dir/draw.csv`, into
     `cell_dir/figures/`.  Never `--regions`: the unpenalised power diagram no longer matches a
-    penalised labelling (`docs/BORDERS_PLAN.md`)."""
+    penalised labelling (`docs/BORDERS_PLAN.md`).  `state_lines=True` adds `--clip-states
+    --bold-states`, so each catchment stops at its state polygon and the state outline is
+    heavy: the rendering for a map whose point is where borders sit against state lines."""
     draw_csv = os.path.join(cell_dir, "draw.csv")
     fig_dir = Path(cell_dir) / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
     argv = [SOLVER_PYTHON, os.path.join(ROOT, "tools", "us_maps.py"), str(instance_path),
            "--out", str(fig_dir), "--geo-cache", str(geo_cache),
            "--districts", draw_csv, "--regions-voronoi", draw_csv]
+    if state_lines:
+        argv += ["--clip-states", "--bold-states"]
     subprocess.run(argv, cwd=ROOT, check=True)
     return fig_dir
