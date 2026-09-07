@@ -1,6 +1,6 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `3979a6b` · **Tests:** 275 pass,
+**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `4e19c2b` · **Tests:** 275 pass,
 0 fail (2026-09-06)
 
 ## Now
@@ -33,11 +33,16 @@ targets and 266 at equal-split** — one number quoted for two measurements unti
 cells sit under 1% of the map at k=18** (D14 0.04%, D01 0.06%, D12 0.13%, D10 0.86%, D07 0.87%,
 D18 0.98%), not the three the k=13 v1 draw had.
 
+**The review moved into the app** (`e0c7d6e`, merged 2026-09-06). `app/main.py` has a Review tab
+carrying the fixed pair, verified by serving it and by `streamlit.testing`'s `AppTest`. That was
+a decision, not a default: the sponsor review is a Streamlit view now, and the published
+artifacts stay as the fixed record they already are. Review artifact
+`893379d7-2f28-4d0f-9a5d-edb3b8f076b0` **predates all of this, so its panels still recentroid and
+its D01 row still reads 55%**.
+
 *What's next, and the decision it needs.* Whether `--regions-voronoi` should report the mass
 denominator beside the area one — `tools/measure/district_pieces.py` computes all three, so this
-is a reporting choice, not a measurement. Then the app wiring for `--regions-fixed` is committed
-but has never run in a browser. Review artifact `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`
-**predates both changes, so its panels still recentroid and its D01 row still reads 55%**.
+is a reporting choice, not a measurement.
 
 ## Next
 
@@ -47,12 +52,17 @@ but has never run in a browser. Review artifact `893379d7-2f28-4d0f-9a5d-edb3b8f
       this is a reporting choice with no measurement left in it. Gated on nothing but the call.
       Until it is made, §3's table and the review artifact both say D01 is the worst district
       when on opportunity it is fourth best.
-- [ ] **The `--regions-fixed` app wiring has never run in a browser.** `app/runner.py` passes the
-      flag for centre-based engines and `app/main.py` shows both panels, but `.venv-app` did not
-      exist in the worktree, so no Streamlit process has exercised it. Rebuild the app venv and
-      click Render maps once. Note the render is **6 min 55 s**, not the 3 s the button's old help
-      text claimed — if that is too slow in front of a sponsor, `rebuild=False` drops the second
-      LP at the cost of the subtitle asserting its zero instead of measuring it.
+- [ ] **The sponsor review is a Streamlit tab now, and rendering it takes about ten minutes.**
+      `app/main.py`'s Review tab carries the `--regions-fixed` pair only and opens on a run whose
+      pair is already drawn (merged 2026-09-06, `e0c7d6e`). Verified with `streamlit.testing`'s
+      `AppTest` and by serving it: no exception, the pair displayed, default run
+      `draw_k18_v2_20260904` at k=18. Panels for that run are pre-rendered under
+      `battery/results/app/figures/draw_k18_v2_20260904/k18/`, which is gitignored, so a fresh
+      checkout shows the render button instead. What is left: the render is **≈10 minutes** for
+      the full set (6 min 55 s for the fixed pair alone), because `render_maps` is one subprocess
+      call and the Results tab wants every panel. If that is too slow in front of a sponsor,
+      either pre-render before the meeting or set `rebuild=False`, which drops the second LP at
+      the cost of the subtitle asserting its zero instead of measuring it.
 - [ ] **Iteration 15's labelling was never saved.** The 2026-09-06 run wrote no per-iteration
       draw, so the best iterate's map contiguity is unmeasured and the snapped panels everywhere
       are the single-shot labelling. Re-run writing a `draw.csv` per iterate, then
