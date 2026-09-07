@@ -43,8 +43,28 @@ step. Stop and report before merging; the merge to `main` needs the user's appro
 
 ## Decisions needed
 
-None open. All fourteen items below were decided by the user on 2026-09-07; they are settled
-inputs, not questions.
+None open for the migration. All fourteen items below were decided by the user on 2026-09-07;
+they are settled inputs, not questions.
+
+Surfaced by the step 2 fold, for the user after the merge (not migration work): open questions
+that the deleted findings files carried and that `STATE.md ## Next` does not hold. Recoverable
+in full with `git show 81bd59f:docs/<file>`.
+
+- C1 quadratic-objective test: re-draw maximising `-sum M_j^2` and diff the partition; near
+  identical would license dropping the outer-approximation machinery from stage 1.
+- C2 envy-freeability test: Hungarian on `g` versus on `log g`.
+- C4 compactness-measure robustness, C5 binarised-books test, C6 alpha self-reliance, C7 stage-1
+  certificate via the k-means SDP ladder (iguchi2017, piccialli2022, croella2026).
+- REVIEW_GROMOV R4: seven textual fixes against `docs/channel_note/channel_note.tex`; unknown how
+  many are still outstanding.
+- OPTIONS §9 item 6: iterate Route A writing a `draw.csv` per iterate, keep iteration 15 as a
+  committed artifact; its map contiguity is unmeasured.
+- OPTIONS §9 item 8: recompute the atom and power-cell gaps on one common base before any sponsor
+  comparison.
+- OPTIONS §10 Q4: whether the 44 dropped zips (0.65% of M) belong in the objective at all.
+- OPTIONS §10 Q5: zero mismatch enforced at every portfolio seed or only at the winner.
+- RESEARCH_FINDINGS §9-G: separate retention from reported books using audited system-of-record
+  revenue (related to ★8).
 
 1. Tracks: derived at session start by hook from `git worktree list` plus each worktree's
    `PLAN.md ## Next step` first line. No static `## Tracks` table in STATE. STATE keeps one line
