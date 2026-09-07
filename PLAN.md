@@ -13,12 +13,14 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Step 2 (the fold) is done. Migration step 3 is next, on a Sonnet 5 session: collapse `MODEL_*`,
-`VERIFY_*` and `CODEVERIFY_*` into `docs/units/<id>.md` sections, add the `Status:` lines,
-`git mv docs/artifacts/<id>/` and `docs/verify/*` to `tools/verify/<id>/`, and repoint every
-artifact path in the unit files. Then steps 4 to 6, also Sonnet (decision 14). One commit per
-step. Stop and report before merging; the merge to `main` needs the user's approval (see memory
-`ask-before-merging-to-hub`).
+Step 3 (the verifier-reports collapse) is done. Migration step 4 is next, on a Sonnet 5 session:
+delete `docs/STATE_LOG.md`; rewrite `/state`, `/unit`, and the three agents (`modeler`,
+`math-verify`, `code-verify`) to write into unit-file sections and `tools/verify/<id>/` rather
+than a new `docs/*_<id>.md` and a scratch directory; reshape `STATE.md` into the new shape (drop
+`## Where`, cap `## Now` and `## Next`, move each bug row of `## Next` to an `xfail` test or a
+`TODO` at the site); fold `RUNS.md` and `DATA.md` into `CODE_MAP.md`. Then steps 5 and 6, also
+Sonnet (decision 14). One commit per step. Stop and report before merging; the merge to `main`
+needs the user's approval (see memory `ask-before-merging-to-hub`).
 
 ## Done
 
@@ -40,6 +42,15 @@ step. Stop and report before merging; the merge to `main` needs the user's appro
   310-line resume narrative dropped); four files deleted for 3,218 lines; MODEL gains §7–§13 and
   grows 223 → 895 lines; `STATE.md ## Facts` gains two blocks; 39 H2 sections disposed of in the
   commit body; 17 files repointed across 24 changed files, +988 / −3,737.
+- 2026-09-07 step 3 done, 3d7c261: fifteen `MODEL_*`/`VERIFY_*`/`CODEVERIFY_*` reports (7,353
+  lines) deleted; their propositions, verdict tables and open items folded into `## Model`,
+  `## Verify`, `## Code verify` sections across 14 edited plus 3 newly created unit files
+  (`P0C-screen`, `state_splits`, `state_borders`), each also gaining a `Status:` line (7 done,
+  9 open, 1 dropped); 69 runnable artifacts moved by `git mv` from `docs/artifacts/<id>/` and
+  `docs/verify/` into `tools/verify/<id>/`, sorting eleven previously flat `docs/verify/*.py`
+  scripts by docstring; 8 other tracked markdown files repointed; `docs/artifacts/` and
+  `docs/verify/` no longer exist; `tests/run_all.py` unchanged at 306 passed, 0 failed;
+  107 files changed, +873 / −7,386.
 
 ## Decisions needed
 
