@@ -21,8 +21,21 @@ Sponsor decisions, 2026-09-06:
   its borders moved; no fresh seeds.
 - Home state of a district = the state holding the plurality of its mass.
 
-The VBL options in `docs/CHANNEL_NOTE.md` §8 (reviewed and corrected the same day) are not
-part of this; Option B was for the atom route and is retired with it.
+Two tracks, run side by side overnight, answering different questions:
+
+- **Track 1, the penalised LP**: snap the committed map's borders zip by zip, owner sets
+  inherited from the map. Cheap, uncertified, keeps the map recognisable.
+- **Track 2, the state-level minimum-splits MILP**: for each δ, the certified minimum number
+  of states that must be split, and which, with visual contiguity by construction at the state
+  level; then the zip-level realisation inside each split state by the same transportation LP.
+  This is the one piece of the VBL line that fits the problem as now framed: the whole-unit
+  (minimum county splits) objective of Shahmizad & Buchanan, at a size (52 states, 18
+  districts, the 49-node rook graph) where all of their machinery is trivial. Added 2026-09-06
+  evening after the question "is VBL still viable"; Options A–D of `docs/CHANNEL_NOTE.md` §8
+  stay parked, and Option B went with the atom route.
+
+The two share the band δ, the committed centres, the completion step and the metrics, so the
+morning table shows both per δ.
 
 ## What the numbers say a 10% cap buys
 
@@ -45,7 +58,7 @@ border stays inside NY or NJ against PA; D06 without AZ and its TX sliver is 0.6
 AZ stays split. With 52 states and 18 districts a few states must be split; the LP picks the
 fewest at the cheapest place, and the table lists them per δ.
 
-## Model
+## Track 1 — the penalised, banded transportation LP
 
 Keep the transportation LP of `td/solvers/centers.py` and change two things in it. Both keep
 it a transportation problem: duals, and at most k−1 split zips (Lemma 6 of the channel note).
@@ -71,7 +84,51 @@ it a transportation problem: duals, and at most k−1 split zips (Lemma 6 of the
   owner set moves to the nearest owner district by d² to centre. Zero parameters; shows what
   snapping alone costs in spread.
 
+## Track 2 — the state-level minimum-splits MILP
+
+Level 1 decides, per δ, which states split and how their mass is shared; level 2 realises it
+at zip level. `s` ranges over the 49 lower-48 states plus DC (AK, HI and the 32 `??` zips,
+0.09τ together, are excluded from the MILP and placed afterwards by `channel.place_by_state`);
+`M_s` is the state's mass; `c_j` the committed draw's 18 centres, fixed; `D_sj = Σ_{z∈s} M_z
+d²(z, c_j) / M_s` the exact moment of state s about centre j, precomputed.
+
+```
+min   Σ_s (Σ_j z_sj − 1)  +  ε Σ_s Σ_j M_s D_sj y_sj        (split count; compactness tie-break)
+s.t.  Σ_j y_sj = 1                       ∀ s                (all of s placed)
+      0 ≤ y_sj ≤ z_sj,  z_sj ∈ {0,1}     ∀ s, j             (z marks contact)
+      τ(1−δ) ≤ Σ_s M_s y_sj ≤ τ(1+δ)     ∀ j                (the band)
+      {s : z_sj = 1} connected in the state rook graph  ∀ j (contiguity)
+```
+
+- **ε** is lexicographic: `ε = 0.5 / (Σ_s Σ_j M_s D_sj y⁰_sj)` at the committed map's own
+  `y⁰`, so the whole compactness term is worth under half a split and never buys one.
+- **Contiguity** by VBL's single-commodity flow (`scf`), compact, no lazy callbacks and so
+  none of the trap-14 SCIP configuration: per district a variable root `r_sj ≤ z_sj`,
+  `Σ_s r_sj = 1`, flow on each rook edge bounded by `(N−1)·z_uj` and `(N−1)·z_vj`, and net
+  inflow at s at least `z_sj − N·r_sj` (N = 50). Districts are anonymous; the fixed distinct
+  centres in the tie-break break the k! symmetry in practice at this size.
+- **Size**: 50 × 18 = 900 binaries `z`, 900 more `r`, 900 continuous `y`, 2 × 107 × 18 flow
+  variables. `scipy.optimize.milp` on HiGHS with `mip_rel_gap = 0.0` (trap 12). Seconds.
+- **Warm start / sanity**: the committed map's composition `y⁰` is feasible at δ = 1.3% and
+  gives an upper bound on the split count at every δ ≥ that.
+- **Level 2**: for every split state s, one `centers.assign(xy_s, M_s, c, targets = y_sj M_s)`
+  over that state's zips (the `targets=` argument already exists; a 0 target means "nothing
+  from this state", which `assign` already honours) — convex power cells inside the state.
+  Every unsplit state goes whole to its district. Then completion and metrics as Track 1.
+- **Output per δ**: split count, the split states with their `y` shares, the `z` composition,
+  `draw.csv`, and the same metric row as Track 1 (spread will sit at ≤ δ plus the split-zip
+  rounding).
+
+New `td/solvers/state_splits.py` (`build_milp`, `solve`, `realise`) and a CLI
+`tools/state_splits.py` with the same instance / draw / geo-cache / out arguments as Track 1's
+driver; tests on a hand-built 6-state, 2-district toy (min splits = 1 when the band forces it,
+0 when it does not; contiguity refuses a disconnected grouping).
+
 ## Grid (overnight, seed 2 only)
+
+Track 2: δ ∈ {0, 1%, 2%, 5%, 10%}, one MILP each.
+
+Track 1:
 
 - δ ∈ {0, 1%, 2%, 5%, 10%} at λ = 100.
 - λ ∈ {1, 10} at δ = 2%, to show the soft regime.
@@ -156,14 +213,20 @@ sub-second; maps are ~2 min per cell × 9 cells.
    the new tests, 0 fail. The bit-for-bit test guards the committed draw's reproducibility.
 2. Smoke cell: outside-owner share falls and spread rises to at most δ plus the split-zip
    rounding, versus the committed row.
-3. Full grid: `grid.md` has 9 rows; the δ = 0, λ = 100 row has outside share ≤ committed; the
-   δ = 10% row lists the residual split states (expected: NY or NJ against PA, AZ, perhaps one
-   more). Maps present per cell.
-4. Morning report: the table, the residual-split-state list per δ, and the three maps the
-   sponsor picks between (baseline, δ = 5%, δ = 10%).
+3. Full grid: `grid.md` has 9 Track-1 rows; the δ = 0, λ = 100 row has outside share ≤
+   committed; the δ = 10% row lists the residual split states (expected: NY or NJ against PA,
+   AZ, perhaps one more). Maps present per cell.
+4. Track 2: the MILP at δ = 1.3% reports a split count ≤ the committed map's (its own
+   composition is feasible there); the count is non-increasing in δ; every district's `z`
+   set is connected on the rook graph; level-2 spreads sit within δ plus the rounding.
+5. Morning report: one table with both tracks per δ, the split-state list per δ from Track 2
+   beside Track 1's residuals, and the maps the sponsor picks between (Track 1 baseline,
+   Track 1 and Track 2 at δ = 5% and 10%).
 
 ## Out of scope
 
 Per-state power-cell fill (new clipping geometry in `us_maps.py`); other seeds; Route B;
-Options A–D of the channel note; the atom route in any form. Commit on `worktree-vbl`; merge
-to `main` only when asked.
+Options A–D of the channel note; the atom route in any form (Track 2 is not it: the solver
+chooses which states split, the band caps spread by construction, and the realisation inside
+a split state is the committed map's own power-cell LP). Commit on `worktree-vbl`; merge to
+`main` only when asked.

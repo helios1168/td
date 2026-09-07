@@ -23,6 +23,11 @@ committed centres with no Nash polish; a pure-snap baseline with no LP; a δ ∈
 committed draw already keeps **90.54% of mass inside owner sets**; a 10% cap leaves a border
 inside NY/NJ against PA (NY+NJ+New England 3.19τ for three districts, PA+MD+DE 0.82τ) and AZ
 split (D06 without AZ is 0.68τ). Those residual splits are the sponsor's call, not the model's.
+**Track 2, added later the same evening:** the one VBL piece that fits the reframed problem,
+the whole-unit minimum-splits objective (Shahmizad & Buchanan) at the *state* level, 50 units
+and 18 districts with `scf` contiguity on the rook graph, solved exactly by `scipy.optimize.milp`
+per δ, then realised inside each split state by the same transportation LP. It certifies the
+minimum number of split states at each δ and which they are; Track 1 snaps the map you have.
 
 **Also this session:** `docs/CHANNEL_NOTE.md` §8 (the VBL comparison and options) reviewed and
 corrected, `7745ad9` and `82ef8b7`, both merged to `main` and pushed. Hess naming with the log
@@ -41,8 +46,11 @@ maps. The morning decision is which δ to ship, given the residual split states 
 - [ ] **Build and run `docs/BORDERS_PLAN.md`.** New `td/solvers/state_borders.py` (owner sets,
       penalty matrix, pure snap, `refine`), `penalty=` and `band=` on `centers.assign` /
       `power_labels` / `power_weights` with the default path bit-for-bit unchanged, the CLI
-      `tools/state_borders.py`, tests. Run from the worktree's code against hub data with
-      absolute paths (the command is in the plan). Smoke one cell before the grid.
+      `tools/state_borders.py`, tests. Track 2: `td/solvers/state_splits.py` (the state-level
+      minimum-splits MILP with `scf` contiguity, `mip_rel_gap = 0`) and `tools/state_splits.py`,
+      realised per split state through `centers.assign(targets=)`. Run from the worktree's code
+      against hub data with absolute paths (the command is in the plan). Smoke one cell of each
+      track before the grid.
 - [ ] **Morning decision: which δ ships.** Gated on the grid. The 10% cap does not close every
       border: NY/NJ against PA and AZ stay split at 10%, and the sponsor decides those.
 - [ ] **`--regions` must not be drawn for a penalised labelling.** The penalised cells are a
