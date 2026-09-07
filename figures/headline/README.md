@@ -59,8 +59,12 @@ can therefore show as a thin colour on the map without being named, though that 
 for these four.
 
 Where a district's territory inside the frame is too small to sit under its own label, the label
-moves to open ground and keeps a thin line back to the district. D14 in California and D01 in
-New York are the two that need it.
+moves to open ground and keeps a thin line back to the district. On these close-ups a label has
+to leave room around the district: a district keeps its label on top only if its territory in
+frame is at least four times the label box, so the label hides at most a quarter of it. D14 and
+D18 in California and D01 in New York are the three that need the leader line. The overview maps
+use the looser test, since there the alternative to a covered district is a label with nowhere
+to go.
 
 | state | share of national opportunity | districts | reaches into |
 |---|---|---|---|

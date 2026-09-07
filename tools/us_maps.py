@@ -573,7 +573,7 @@ def _leader_spot(anchor, w, h, placed, radii, *, avoid_polys=None, land=None, n_
 
 
 def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys=None,
-                  land=None) -> None:
+                  land=None, min_ratio=1.0) -> None:
     """Direct-labels every district in `order` at `anchors[d]`, white-haloed exactly as the two
     district figures always have, unless `footprint[d]` is too small to hold the label box,
     in which case the label moves to nearby open ground and a thin leader line ties it back to
@@ -584,6 +584,13 @@ def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys
     compared to `footprint[d]`, the district's largest polygon part on the territory maps, the
     bounding box of its own plotted points on the bubble map, where there is no polygon at all.
     The two callers build `footprint` differently; this function does not care which.
+
+    `min_ratio` is how many times the label box a footprint must be to keep its label on top.
+    At the default of 1.0 the test is only whether the label fits at all, which is the right
+    question on a national map, where the alternative to a covered district is a label with
+    nowhere to go.  A caller that has zoomed in should ask for more: a label that fits inside a
+    region can still hide most of it, and on a state close-up the district is the subject rather
+    than one of eighteen.  `_figure_state_detail` passes `STATE_LABEL_ROOM` for that reason.
 
     Districts are served largest-footprint-first, so the ones with room keep their preferred
     spot and the small interleaved ones are the ones that move, matching `label_points`'s
@@ -602,7 +609,7 @@ def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys
     placed, reach = [], 0.0
     for d in ranked:
         anchor = anchors[d]
-        if footprint.get(d, 0.0) >= label_area:
+        if footprint.get(d, 0.0) >= min_ratio * label_area:
             lx, ly = anchor
         else:
             others = {e: p for e, p in avoid_polys.items() if e != d} if avoid_polys else None
@@ -1674,6 +1681,11 @@ STATE_HOLD_ETA = 0.01     # a district "holds" a state at >=1% of that state's o
 STATE_FIG_AREA = FIGSIZE[0] * FIGSIZE[1]   # same pixel budget as the landscape overview canvas
 STATE_FIG_MIN_SIDE = 6.0
 STATE_FIG_MAX_SIDE = 16.0
+STATE_LABEL_ROOM = 4.0    # a district keeps its label on top only if its territory in frame is at
+                          # least this many times the label box, so the label covers at most a
+                          # quarter of it; below that the label moves off and takes a leader line.
+                          # Measured on the four split states, every district is either under 2x
+                          # or over 36x, so the exact value inside that gap changes nothing
 
 
 def state_holdings(districts, values, zip_state, eta=STATE_HOLD_ETA) -> dict:
@@ -1758,7 +1770,9 @@ def _figure_state_detail(code, conn, districts, values, xy, states, zip_state, c
     into one grey blob, so a district that reaches beyond `conn` (D17 out of California into
     Idaho, say) is coloured only where it is actually inside `conn` and grey everywhere else in
     the frame.  Labels reuse `_place_labels`, since several of these regions are as small as the
-    smallest district close-up's.  Only `code`'s own zips are drawn as dots, matching the
+    smallest district close-up's, but at `STATE_LABEL_ROOM` rather than the default threshold:
+    here the district is the subject of the figure, so a label that merely fits on top of it is
+    still hiding the thing the reader opened the page to see.  Only `code`'s own zips are drawn as dots, matching the
     district close-up's convention of drawing only the subject's own zips.
     """
     from matplotlib.collections import LineCollection
@@ -1839,7 +1853,8 @@ def _figure_state_detail(code, conn, districts, values, xy, states, zip_state, c
     order_local = sorted(colored_polys, key=str)               # 6. labels, leader lines if small
     anchors = label_points(order_local, colored_polys, local_centroids, LABEL_SEP * (x1 - x0))
     footprint = {dd: _largest_part(g).area for dd, g in colored_polys.items()}
-    _place_labels(fig, ax, order_local, anchors, footprint, avoid_polys=colored_polys, land=clip)
+    _place_labels(fig, ax, order_local, anchors, footprint, avoid_polys=colored_polys, land=clip,
+                  min_ratio=STATE_LABEL_ROOM)
     return _save(fig, out)
 
 

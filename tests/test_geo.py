@@ -635,3 +635,40 @@ def test_the_fixed_diagram_pair_writes_both_panels_and_qualifies_its_zero():
             assert os.path.getsize(p) > 10_000, (p, os.path.getsize(p))
     assert any("snapped labelling 0 of" in s for s in lines), lines
     assert any("rebuilt from the snapped labels" in s for s in lines), lines
+
+
+def _one_label(um, footprint_ratio, min_ratio):
+    """Place a single label whose footprint is `footprint_ratio` times the measured label box,
+    and report how many leader lines were drawn."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.0, 1.0)
+    w, h = um._label_box_wh(fig, ax, "D18")
+    before = len(ax.lines)
+    um._place_labels(fig, ax, ["D18"], {"D18": (0.5, 0.5)},
+                     {"D18": footprint_ratio * w * h}, min_ratio=min_ratio)
+    drawn = len(ax.lines) - before
+    plt.close(fig)
+    return drawn
+
+
+def test_a_label_that_merely_fits_still_moves_off_when_the_caller_asks_for_room():
+    """`min_ratio` is what separates "fits at all" from "does not hide the district".
+
+    A footprint of 1.7 label boxes is the real D18-in-California case: big enough to hold the
+    label, small enough that the label covers most of it.  The national default leaves it in
+    place; the state figures ask for four times the label box and it takes a leader line.
+    """
+    um = _us_maps()
+    assert _one_label(um, 1.7, 1.0) == 0
+    assert _one_label(um, 1.7, um.STATE_LABEL_ROOM) == 1
+
+
+def test_the_room_threshold_still_leaves_a_roomy_district_alone():
+    """D10 sits at 36 label boxes in the same figure, so it must not acquire a leader line."""
+    um = _us_maps()
+    assert _one_label(um, 36.0, um.STATE_LABEL_ROOM) == 0
