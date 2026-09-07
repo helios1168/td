@@ -28,30 +28,35 @@ report before merging; the merge to `main` needs the user's approval (see memory
 
 ## Decisions needed
 
-Numbered as presented to the user on 2026-09-07. Each carries the recommendation; the user said
-silence adopts the recommendation. Update this list from the user's reply before executing.
+None open. All fourteen items below were decided by the user on 2026-09-07; they are settled
+inputs, not questions.
 
-1. Tracks: derive at session start by hook from `git worktree list` plus each worktree's
+1. Tracks: derived at session start by hook from `git worktree list` plus each worktree's
    `PLAN.md ## Next step` first line. No static `## Tracks` table in STATE. STATE keeps one line
    per track only for status the hook cannot see (for example "blocked on sponsor").
-2. Drop `STATE.md ## Where`; `docs/CODE_MAP.md` owns "where".
+2. `STATE.md ## Where` is dropped; `docs/CODE_MAP.md` owns "where".
 3. Unit files get a `Status:` header line with values `open`, `done`, `dropped`. Dropped units
    keep the file with a one-line reason.
-4. Keep both `PLAN.md` (running log of one worktree) and `docs/units/<id>.md` (permanent
-   record). For a unit track, PLAN `## Goal` is one line pointing at the unit file.
+4. Both `PLAN.md` (running log of one worktree) and `docs/units/<id>.md` (permanent record) are
+   kept. For a unit track, PLAN `## Goal` is one line pointing at the unit file.
 5. PLAN template sections: `## Goal`, `## Next step`, `## Done`, `## Decisions needed`,
    `## Files owned / forbidden`. The last section moves over from `/unit`.
-6. The last commit on a track deletes `PLAN.md` and writes the unit sections. Merge style stays
-   the user's choice.
-7. Verifier artifacts live at `tests/verify_<id>.py`; slow numeric checks carry a `SLOW` marker.
+6. The last commit on a track deletes `PLAN.md` and writes the unit sections. Merge is
+   fast-forward when possible.
+7. Verifier artifacts live at `tools/verify/<id>/` as runnable scripts, committed, never in a
+   scratch directory. They are not discovered by `tests/run_all.py` and never gate the suite.
+   Rationale recorded: the runner discovers only `tests/test_*.py`; existing artifacts sit in
+   `docs/artifacts/<id>/` (five units), `docs/verify/` (three sets) and, for U8-band, in a
+   vanished `/tmp` directory; both agent specs said "scratch scripts, never in the repo tree",
+   which is what lost them.
 8. Owner allowlist lives in `.claude/doc-owners.txt`, read by a PreToolUse hook (Write/Edit) and by
    `tests/test_docs_owners.py`. The hook also rejects any edit under `docs/foundations/`.
 9. `literature/territory_bibliography.{md,csv,bib}` is allowlisted; the three-format gap is a
    separate task.
-10. `/state` and the three agents are global (`~/.claude/commands`, `~/.claude/agents`). Other
-    projects keep their frozen `STATE_LOG.md` / `MODEL_<id>.md` files and adopt the new shape on
-    next use. Confirm no other project depends on STATE_LOG demotion.
-11. `docs/CHANNEL_NOTE.md` becomes `docs/PROBLEM_NOTE.md` if it is still the live note source.
+10. `/state`, `/unit` and the three agents are global and change globally. No other project
+    depends on STATE_LOG demotion or `MODEL_<id>.md` outputs.
+11. `docs/CHANNEL_NOTE.md` is dead: settled facts fold into `docs/PROBLEM.md`, then the file is
+    deleted.
 12. Memory `ask-before-merging-to-hub` is updated: hub branch is `main`, and `docs/tracks/<ID>/`
     (now empty) is replaced by the PLAN rule.
 13. Branch triage: `git branch --merged main` over the 19 `wt/*` and 5 orphan `worktree-*`
@@ -76,12 +81,15 @@ One topic, one file. A session that cannot name the owner in one breath has foun
 | `docs/units/<id>.md` | brief, `## Model`, `## Verify`, `## Code verify`, `Status:` line | verifier sections hold verdict, artifact path, refutations only |
 | `docs/foundations/` | FRAME, APPROACHES, LENS_*, DOMAIN_*, LIT_*, BRIEF, former `archive/` | read-only, never edited |
 | `<worktree>/PLAN.md` | the one active plan of that track | committed on the branch; deleted at merge |
+| `tools/verify/<id>/` | runnable verifier artifacts for unit `<id>` (scripts, oracles) | not test-discovered; cited from the unit file |
 | `literature/territory_bibliography.{md,csv,bib}` | citations (bibliography skill) | none |
 | `CLAUDE.md` | invariants, traps, environment | never stamped |
 
 Deleted after folding: `docs/STATE_LOG.md`, all `MODEL_*`, `VERIFY_*`, `CODEVERIFY_*`,
-`RESEARCH_FINDINGS.md`, `OPTIONS_*.md`, `REVIEW_GROMOV.md`, every `*_PLAN.md` and
-`*_RESULTS.md`, `RUNS.md`, `DATA.md`, `.serena/memories/core.md`.
+`RESEARCH_FINDINGS.md`, `OPTIONS_*.md`, `REVIEW_GROMOV.md`, `CHANNEL_NOTE.md`, every
+`*_PLAN.md` and `*_RESULTS.md`, `RUNS.md`, `DATA.md`, `.serena/memories/core.md`. Moved, not
+deleted: `docs/artifacts/<id>/` and `docs/verify/` to `tools/verify/<id>/`, so `docs/` holds
+markdown only.
 
 Bugs and small todos live in code: an `xfail` test or a `TODO` comment at the site, found by
 `pytest -rx` and `grep TODO`. `## Next` holds decisions plus the next unit only.
@@ -133,8 +141,10 @@ Memory hygiene: entries that become `CLAUDE.md` invariants are deleted from memo
 - `/unit` (`~/.claude/commands/unit.md`): scaffold `docs/units/<id>.md` with `Status: open` and
   the three empty verifier sections, plus a `PLAN.md` from the template in decision 5.
 - `modeler`, `math-verify`, `code-verify` (`~/.claude/agents/`): write into the unit file's
-  section, not a new `docs/*_<id>.md`. Full reasoning goes into the runnable artifact
-  (`tests/verify_<id>.py`) and git.
+  section, not a new `docs/*_<id>.md`. The runnable artifact is committed under
+  `tools/verify/<id>/`; the current "scratch scripts, never in the repo tree" instruction in
+  both verifier specs is replaced, since it is what lost the U8-band evidence. Full reasoning
+  goes into the artifact and git.
 - Stages 1 to 4 (`/frame` … `/research-plan`) are unchanged and unused on td.
 - Subagents for noisy work (inventory, grep sweeps, verifier runs) become a `CLAUDE.md` rule;
   only the verdict returns to the main context.
@@ -161,14 +171,16 @@ has no `.venv`).
    in this worktree can run `git worktree add`, Write, Edit and `mcp__serena__*` without a prompt.
 1. `git mv` FRAME, APPROACHES, LENS_*, DOMAIN_*, LIT_*, BRIEF and `docs/archive/` into
    `docs/foundations/`; fix citations in `docs/units/*.md`. Check: `grep -rn 'docs/\(FRAME\|APPROACHES\|LENS_\|DOMAIN_\|LIT_\|BRIEF\|archive\)' --include=*.md` returns only `foundations/` paths.
-2. Rename `docs/CHANNEL.md` to `docs/PROBLEM.md` (and `CHANNEL_NOTE.md` per decision 11). Fold
-   RESEARCH_FINDINGS, OPTIONS_*, REVIEW_GROMOV into PROBLEM, MODEL and `## Facts`; delete them.
-   Fix references in CLAUDE.md, CODE_MAP, APP. Check: no remaining `CHANNEL.md` reference; the
-   three deleted files' section headings each appear in PROBLEM or MODEL or are listed in the
-   commit body as dropped.
+2. Rename `docs/CHANNEL.md` to `docs/PROBLEM.md`. Fold RESEARCH_FINDINGS, OPTIONS_*,
+   REVIEW_GROMOV and CHANNEL_NOTE into PROBLEM, MODEL and `## Facts`; delete them. Fix
+   references in CLAUDE.md, CODE_MAP, APP. Check: no remaining `CHANNEL` reference; the four
+   deleted files' section headings each appear in PROBLEM or MODEL or are listed in the commit
+   body as dropped.
 3. Collapse `MODEL_*`, `VERIFY_*`, `CODEVERIFY_*` into `docs/units/<id>.md` sections; add
-   `Status:` lines; move runnable artifacts to `tests/verify_<id>.py`. Delete the sources. Check:
-   every former file's verdict line appears in its unit file; tests pass.
+   `Status:` lines; `git mv docs/artifacts/<id>/` and `docs/verify/*` to `tools/verify/<id>/`
+   and repoint every artifact path in the unit files. For U8-band, the unit file states that
+   the `/tmp` artifacts are unrecoverable. Delete the source reports. Check: every former
+   report's verdict line appears in its unit file; every cited artifact path exists; tests pass.
 4. Delete `docs/STATE_LOG.md`. Rewrite `/state`, `/unit`, and the three agents. Rewrite `STATE.md`
    into the new shape; move each bug row of `## Next` to an `xfail` test or a `TODO` at the site.
    Fold `RUNS.md` and `DATA.md` into CODE_MAP. Check: `## Now` under 1 KB; `## Next` at most 7
@@ -254,9 +266,9 @@ also unblocks unattended jobs.
 ## Files owned / forbidden
 
 Owned by this track: everything under `docs/`, `STATE.md`, `CLAUDE.md`, `.claude/settings.json`,
-`.claude/doc-owners.txt`, `tests/test_docs_owners.py`, `tests/verify_*.py`,
+`.claude/doc-owners.txt`, `tests/test_docs_owners.py`, `tools/verify/`,
 `~/.claude/commands/{state,unit}.md`, `~/.claude/agents/{modeler,math-verify,code-verify}.md`,
-`~/.claude/hooks/*`, the auto-memory directory.
+`~/.claude/hooks/*`, `~/.claude/CLAUDE.md` (rule 9 amendment only), the auto-memory directory.
 
-Forbidden: `td/`, `app/`, `tools/`, `battery/`, `figures/`, `data/`, any `instance_descaled*`,
-any other worktree's files, force-push, merge to `main`.
+Forbidden: `td/`, `app/`, `tools/` except `tools/verify/`, `battery/`, `figures/`, `data/`, any
+`instance_descaled*`, any other worktree's files, push, force-push, merge to `main`.
