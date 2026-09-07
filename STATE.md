@@ -1,7 +1,7 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `worktree-power-cell-contiguity` · **Head:** `9f7b929` ·
-**Tests:** 269 pass, 0 fail (2026-09-06)
+**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `cbb65cb` · **Tests:** 269 pass,
+0 fail (2026-09-06)
 
 ## Now
 
@@ -32,8 +32,9 @@ recentroids, so none of them can display the zero.**
 
 *What's next.* Build the fixed-diagram figure (hold centres and weights, colour dots by the
 labelling those weights produced) — a sponsor review needs it and it does not exist. Then
-explain D01. Branch is pushed to `origin/worktree-power-cell-contiguity` and **unmerged** — ask
-before merging. Review artifact: `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
+explain D01. **Merged into `main` on 2026-09-06** at the user's instruction (fast-forward, so
+`main` and `worktree-power-cell-contiguity` are the same commit). Review artifact:
+`893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
 
 ## Next
 
@@ -54,10 +55,9 @@ before merging. Review artifact: `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
       close balance with weights. Judge it against iteration 15's 2.1051% / 0.000283, **not**
       against the 4.0041% single shot, or it will look better than it is. The split-zip floor
       says the room left is small.
-- [ ] **Merge decision on `worktree-power-cell-contiguity`** (`a0d96fd`, `2142be8`, `1f6d956`,
-      `4c1c2d2`). Pushed to `origin`, **unmerged**. `main`'s `STATE.md` still carries the CA5
-      entry, so a session started on `main` will not see any of the above — resume in the
-      worktree `.claude/worktrees/power-cell-contiguity`, or merge this branch first.
+- [ ] **`worktree-ca5-map` is still unmerged** (`ce1ef67` the map figures, `9363c14` the
+      boundary map). The power-cell branch merged on 2026-09-06; the CA5 one did not, and its
+      figures are the source of the atom-route fractions quoted throughout.
 - [ ] **The two routes' gaps sit on different bases.** The atom gap 0.093715 is against the
       component-wise ceiling 110.883247 over the whole instance; the power-cell gaps are against
       `k·log(M/k)` = 110.766768 over the 3,704 plotted zips. Two orders of magnitude make the
