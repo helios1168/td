@@ -293,8 +293,6 @@ def figure_contestability(a_values, b_values, xy, states, out, *, firm_a="A", fi
 # plus two of tab20b's, with the two near-duplicate greys and the second olive dropped.  Hues
 # only need to be *locally* distinguishable -- see `color_districts` -- so 12 is ample for
 # k = 13 and the palette is chosen for separation at bubble size, not for a global ordering.
-# TODO(2026-09-07): D04 and SOUTHWEST share a colour and look adjacent in `SOUTHWEST_anchor`
-# (reported only, from the former STATE.md ## Next); `color_districts` should keep them apart.
 QUAL = [
     "#1f77b4",   # blue
     "#ff7f0e",   # orange
@@ -438,6 +436,10 @@ def _district_legend(fig, districts, values, colors, order, second=None, second_
     category error; and the one number a reader wants per district is its share of the whole,
     which is the balance the draw exists to deliver.
 
+    Two decimals, not one.  At k = 18 an equal share is 5.56%, and a whole 5% band spans only
+    5.29% to 5.83%, so one decimal collapses five distinct districts onto "5.8%" and hides which
+    one actually sits outside the band.
+
     `second` adds one more numeric column, `{district: share in [0, 1]}` under the header
     `second_label`.  The territory map uses it for each district's share of the *map area*,
     which is where the power diagram's whole point lands: the shares of M are all 7.7% by
@@ -466,7 +468,7 @@ def _district_legend(fig, districts, values, colors, order, second=None, second_
                                         facecolor=colors[d], edgecolor="white",
                                         linewidth=0.4, alpha=0.9))
         ax.text(0.2, y, str(d), color=TEXT, fontsize=8, va="center")
-        ax.text(x_first, y, f"{100.0 * per.get(d, 0.0) / total:.1f}%", color=TEXT, fontsize=8,
+        ax.text(x_first, y, f"{100.0 * per.get(d, 0.0) / total:.2f}%", color=TEXT, fontsize=8,
                 va="center", ha="right")
         if wide:
             v = float(second.get(d, 0.0))
@@ -535,13 +537,14 @@ def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKE
                linewidths=EDGE_W, edgecolors="white")
 
     if label:
-        spread = district_spread(districts, values, xy, centroids)
-        ranked = sorted((d for d in order if d in centroids),
-                        key=lambda e: (-spread.get(e, 0.0), str(e)))
-        (bx0, bx1), (by0, by1) = ax.get_xlim(), ax.get_ylim()
-        leader_labels(ax, centroids, ranked, (bx0, by0, bx1, by1), zorder=5,
-                      # a district whose bubbles are tighter than the label box is *under* it
-                      needs_leader=lambda d, hw, hh: spread.get(d, 0.0) < hw)
+        for d in order:
+            if d not in centroids:
+                continue
+            cx, cy = centroids[d]
+            ax.text(cx, cy, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
+                    ha="center", va="center", zorder=5,
+                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
+                              edgecolor="none", alpha=0.82))
     _district_legend(fig, districts, values, colors, order)
     _size_legend(ax, v, float(v.max()), "M (descaled)", max_marker)
     return _save(fig, out)
@@ -561,12 +564,6 @@ BORDER = "#444444"             # district vs district: the one line a reader is 
 BORDER_W = 1.4
 STATE_W_REGIONS = 0.6          # heavier than the bubble maps: it is competing with a fill now
 LABEL_SEP = 0.035              # minimum label separation, as a fraction of the frame width
-LEADER = "#666666"             # the callout line: visible, never competing with a border
-LEADER_W = 0.6
-LEADER_PAD = 0.008             # clearance around a label box, as a fraction of the frame width
-LEADER_RADII = (0.045, 0.075, 0.110, 0.150)     # ring radii a pushed label is tried at
-LEADER_DOT = 5.0               # pt^2 marker left on the ground the leader line comes from
-LEADER_SMALL = 6.0             # a region under this many label boxes is called out, not sat on
 _LAND_CACHE: dict = {}         # id(states) -> (states, unioned geometry); see `land_union`
 
 
@@ -879,119 +876,6 @@ def label_points(order, polys, centroids, min_sep=0.0, min_part=0.15) -> dict:
     return out
 
 
-def district_spread(districts, values, xy, centroids) -> dict:
-    """`{district: r}` -- the M-weighted RMS distance of a district's zips from its own centroid.
-
-    This is the placement order `leader_labels` wants, and value is the wrong measure for it:
-    at k = 18 every district holds about the same M, so ranking by M says nothing about which
-    label is in trouble.  The labels that collide are the tight metro districts, and spread is
-    exactly what separates them -- a district covering half the west keeps its centroid, and
-    the one that fits inside Los Angeles is the one that moves.
-    """
-    out = {}
-    for d, c in centroids.items():
-        num = den = 0.0
-        for z, dd in districts.items():
-            if dd != d or z not in xy:
-                continue
-            w = max(float(values.get(z, 0.0)), 0.0)
-            num += w * ((xy[z][0] - c[0]) ** 2 + (xy[z][1] - c[1]) ** 2)
-            den += w
-        out[d] = float(np.sqrt(num / den)) if den > 0 else 0.0
-    return out
-
-
-def _label_halfsize(ax, sample="D00", fontsize=8) -> tuple:
-    """Half-width and half-height of a label box in data units, measured rather than guessed.
-
-    A guessed box size is wrong the first time the figure size or the DPI changes, and the
-    failure is silent: labels either overlap again or scatter further than they need to.  One
-    probe text through the real renderer costs a draw and is exact.
-    """
-    t = ax.text(0, 0, sample, fontsize=fontsize, fontweight="bold", ha="center", va="center")
-    ax.figure.canvas.draw()
-    bb = t.get_window_extent(renderer=ax.figure.canvas.get_renderer())
-    bb = bb.transformed(ax.transData.inverted())
-    t.remove()
-    return bb.width / 2.0, bb.height / 2.0
-
-
-def leader_labels(ax, anchors, ranked, bounds, *, needs_leader=None, fontsize=8,
-                  zorder=6) -> dict:
-    """Direct labels, with a leader line for any label that cannot sit on its own ground.
-
-    A label is drawn at its anchor whenever the box is clear of every box already placed.
-    Where districts pile into one metro -- five of the eighteen at k = 18 are in southern
-    California, four more around New York -- the later ones are pushed outward along rings of
-    increasing radius until a slot is free, and a line is drawn back to the anchor with a dot
-    on it.  Sitting on top of each other is what the labels did before: `D14` and `D02` printed
-    as one smear over Los Angeles, and the reader could not tell which small district was which.
-
-    A label that has moved is unreadable without the line, and a label that has not moved gains
-    nothing from one, so the decoration is drawn only in the first case.
-
-    Collision is not the only reason to move.  A district smaller than its own label is hidden
-    by it -- the label prints over the ground it names and the reader sees a white box where
-    the territory should be.  `needs_leader(district, half_width, half_height)` is asked about
-    every district before the anchor is offered, and a `True` sends the label off the ground
-    with a line back to it, whether or not the anchor was free.  The box size is measured, not
-    assumed, so the caller can only answer that question once the figure is being drawn --
-    which is why this is a callback and not a set.
-
-    `ranked` is the placement order and carries the whole policy: earlier districts keep their
-    anchor, so pass the large or spread-out ones first (`district_spread` for the bubble map,
-    largest-part area for the filled one).  `bounds` is `(x0, y0, x1, y1)` of the frame; no box
-    is placed outside it.  Returns `{district: (x, y)}` of the boxes actually drawn.
-    """
-    x0, y0, x1, y1 = bounds
-    span = x1 - x0
-    hw, hh = _label_halfsize(ax, fontsize=fontsize)
-    pad = LEADER_PAD * span
-    cx, cy = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
-    box = dict(boxstyle="round,pad=0.22", facecolor="white", edgecolor="none", alpha=0.82)
-
-    def rect(p):
-        return (p[0] - hw - pad, p[1] - hh - pad, p[0] + hw + pad, p[1] + hh + pad)
-
-    def free(r, placed):
-        if r[0] < x0 or r[2] > x1 or r[1] < y0 or r[3] > y1:
-            return False
-        return all(r[0] > q[2] or r[2] < q[0] or r[1] > q[3] or r[3] < q[1] for q in placed)
-
-    placed, out = [], {}
-    for d in ranked:
-        a = anchors.get(d)
-        if a is None:
-            continue
-        base = float(np.arctan2(a[1] - cy, a[0] - cx))     # outward, away from the map's middle
-        must = bool(needs_leader(d, hw, hh)) if needs_leader is not None else False
-        cands = [] if must else [a]
-        for r in LEADER_RADII:
-            for i in range(12):                            # ±30° steps either side of outward
-                th = base + (1 if i % 2 else -1) * ((i + 1) // 2) * (np.pi / 6.0)
-                cands.append((a[0] + r * span * float(np.cos(th)),
-                              a[1] + r * span * float(np.sin(th))))
-        pick = next((i for i, p in enumerate(cands) if free(rect(p), placed)), None)
-        if pick is None:                                   # nothing is free: take the roomiest
-            pick = max(range(len(cands)),
-                       key=lambda i: min((max(abs(cands[i][0] - 0.5 * (q[0] + q[2])),
-                                              abs(cands[i][1] - 0.5 * (q[1] + q[3])))
-                                          for q in placed), default=float("inf")))
-        p = cands[pick]
-        if not must and pick == 0:
-            ax.text(p[0], p[1], str(d), color=LABEL_TEXT, fontsize=fontsize, fontweight="bold",
-                    ha="center", va="center", zorder=zorder, bbox=box)
-        else:
-            ax.annotate(str(d), xy=a, xytext=p, color=LABEL_TEXT, fontsize=fontsize,
-                        fontweight="bold", ha="center", va="center", zorder=zorder, bbox=box,
-                        arrowprops=dict(arrowstyle="-", color=LEADER, linewidth=LEADER_W,
-                                        shrinkA=0.0, shrinkB=1.0))
-            ax.scatter([a[0]], [a[1]], s=LEADER_DOT, c=LEADER, linewidths=0, zorder=zorder)
-        placed.append(rect(p))
-        out[d] = (float(p[0]), float(p[1]))
-    return out
-
-
 def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_ALPHA,
                             footer=FOOTER, title=None, subtitle=None, n_near=4,
                             palette=QUAL, label=True, pad=0.05, report=None,
@@ -1081,15 +965,12 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
         states.boundary.plot(ax=ax, color=state_color, linewidth=state_w, zorder=4)
 
     if label:                                                  # 5. labels
-        anchors = label_points(order, polys, centroids, LABEL_SEP * (x1 - x0))
-        ranked = sorted(anchors, key=lambda d: (-_largest_part(polys[d]).area, str(d)))
-        # A region only a few label-boxes in size is covered by its own label -- New Jersey and
-        # the Bay Area sliver disappear under the word naming them.  Tested against the largest
-        # part rather than the anchor's surroundings: a big district whose label lands near its
-        # own border is legible where it is and needs no callout.
-        leader_labels(ax, anchors, ranked, (x0, y0, x1, y1),
-                      needs_leader=lambda d, hw, hh:
-                          _largest_part(polys[d]).area < LEADER_SMALL * (4.0 * hw * hh))
+        for d, (lx, ly) in label_points(order, polys, centroids,
+                                        LABEL_SEP * (x1 - x0)).items():
+            ax.text(lx, ly, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
+                    ha="center", va="center", zorder=6,
+                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
+                              edgecolor="none", alpha=0.82))
     _district_legend(fig, districts, values, colors, order)
     mx, my = 0.02 * (x1 - x0), 0.02 * (y1 - y0)
     ax.set_xlim(x0 - mx, x1 + mx)
