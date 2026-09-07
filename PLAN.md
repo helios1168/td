@@ -13,10 +13,14 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Migration step 0 (permissions and rule 9 amendment), then step 1, on Sonnet 5. Hand over to an
-Opus 5 session for step 2, then back to Sonnet for steps 3 to 6 (decision 14). One commit per
-step. Stop and report before merging; the merge to `main` needs the user's approval (see
-memory `ask-before-merging-to-hub`).
+Migration step 1 (foundations move), then hand over to an Opus 5 session for step 2, then
+Sonnet for steps 3 to 6 (decision 14). One commit per step. Stop and report before merging; the
+merge to `main` needs the user's approval (see memory `ask-before-merging-to-hub`).
+
+Open from step 0: P1 (`defaultMode: bypassPermissions` plus the deny floor) could not be written
+by Claude, the auto-mode classifier blocks that edit. The finished file sits at
+`~/.claude/jobs/b313fd3c/tmp/settings.json`; the user copies it over `~/.claude/settings.json`
+and it takes effect at the next session start.
 
 ## Done
 
@@ -26,6 +30,11 @@ memory `ask-before-merging-to-hub`).
   style is the skill verbatim at level full with normal prose for persisted text; the skill's
   override paragraph removed; anti-slop rules moved to `~/.claude/CLAUDE.md` §10; the eleven
   `caveman-proxy native-hook` entries removed from `settings.json`. Not part of step 0.
+- 2026-09-07 step 0, in part. P4: `git` added to `[hooks] exclude_commands` in rtk's
+  `config.toml` (`~/Library/Application Support/rtk/`); plain `git` runs again in a
+  worktree-isolated job with no prompt. P2: rule 9 of `~/.claude/CLAUDE.md` amended, Claude
+  creates worktrees with plain git plus lock and enters by path. P1 pending the user (see
+  `## Next step`). Deny rules hold in every mode including bypass, so the floor is safe to add.
 
 ## Decisions needed
 
