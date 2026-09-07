@@ -398,7 +398,9 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
     when the state's labels repeat.  The committed centres were placed for the old shares and
     can sit wrong for the piece a district now owns.  A round is accepted only if it does not
     raise the state's compactness, so `cost_rounds` is non-increasing by construction and
-    `realise` can only improve on the plain assignment.
+    `realise` can only improve on the plain assignment.  Per split state, `iterates` holds
+    `(labels of that state's zips, centres of the districts touching it)` for the LP cut and
+    every kept round, so the loop can be replayed.
 
     `tiebreak` is an `(n, k)` bonus **subtracted** from `d^2` (it goes to `centers.assign` as
     `penalty=-tiebreak`), so a large entry attracts zip `z` to district `j`.  The CLI builds it
@@ -465,6 +467,7 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
         labels[idx] = cur
         cost = _state_cost(xy[idx], M[idx], cur, C)
         cost_rounds, used = [cost], 0
+        iterates = [(cur.copy(), C[touching].copy())]     # the LP cut, then each kept round
         for _ in range(rounds):
             C_new = C.copy()
             C_new[touching] = _centers._centroids(xy, M, labels, k, prev=C)[touching]
@@ -476,12 +479,13 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
             cur, cur_frac, C, cost = loc, frac, C_new, new_cost
             labels[idx] = cur
             cost_rounds.append(new_cost)
+            iterates.append((cur.copy(), C[touching].copy()))
             used += 1
             if repeat:
                 break
         n_fractional += cur_frac
         states[s] = dict(districts=[int(j) for j in touching], n_fractional=cur_frac,
-                         rounds_used=used, cost_rounds=cost_rounds)
+                         rounds_used=used, cost_rounds=cost_rounds, iterates=iterates)
 
     return dict(labels=labels, centers=C, n_fractional=int(n_fractional),
                 split_states=split_states,

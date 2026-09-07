@@ -151,7 +151,17 @@ as the artifact "Borders on State Lines",
 the map with the compare slider, the split-state, district and every-state composition tables,
 and the full two-level model in the channel note's notation (the (splits) program with anchors
 and single-commodity-flow contiguity, the two balance-pass LPs, the (targets) transportation LP,
-the three claims, and what is and is not certified). On disk, under
+the three claims, and what is and is not certified). Two more pages, published 2026-09-07:
+"Borders in Motion", `https://claude.ai/code/artifact/3e983b90-8f87-4dfd-aa28-4e1cd6eee497`,
+steps through the whole optimisation on the map (aggregation, the mass bound, anchors, the
+MILP, the balance pass, each kept Lloyd round inside CA, FL, NY and TX, completion, the
+result; and Track 1's seven Lloyd iterates as a second tab), built from a replay of the
+anchored δ = 5% program with `realise`'s per-round iterates; per-zip content on that page is
+coordinates, labels and a size quintile only. "Districting from Duality",
+`https://claude.ai/code/artifact/d87b53b0-f394-417e-aab5-0fba8d3c6cb0`, is the study guide:
+the bridge from Kantorovich duality, seven techniques with repo pointers, the reading list in
+order, exercises against the verification scripts, and three registers of explanation. On
+disk, under
 `battery/results/borders_k18_v2_20260907/`, each cell has
 `figures/districts.png` (dots) and `figures/district_regions_voronoi.png` (fill).
 

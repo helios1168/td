@@ -18,6 +18,10 @@ committed map, tables, instance maps; re-rendered 2026-09-07 with a Voronoi diag
 and bold state lines, `3c8a6e8`). The recommended cell alone, with its composition tables and
 the full model in the channel note's notation, is artifact
 `322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a` ("The Five Percent Map"), the sponsor's analysis page.
+Two more on 2026-09-07: `3e983b90-8f87-4dfd-aa28-4e1cd6eee497` ("Borders in Motion", every
+optimisation step replayed on the map, both tracks) and
+`d87b53b0-f394-417e-aab5-0fba8d3c6cb0` ("Districting from Duality", the study guide and
+reading list). `realise` now records per-round iterates per split state for the replay.
 
 **What the run says** (`docs/BORDERS_RESULTS.md`). At δ = 5% a map exists with every state
 whole except CA (five districts), NY (three), TX and FL (two): Track 2, 8 splits, certified
