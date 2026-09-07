@@ -23,7 +23,8 @@ Descaled units throughout, no currency scale. A "nat" is a unit of $\sum_j \log 
 
 ## 0. The instance
 
-`instance_descaled_v2.json.gz`, the descaled export of the real channel (`docs/DATA.md`).
+`instance_descaled_v2.json.gz`, the descaled export of the real channel
+(`docs/CODE_MAP.md` `## Data route`).
 3,748 zips, 114 representatives, total opportunity 8,523.2. Node classes by candidacy
 $\mathrm{cand}(z) = \{i : S_i(z) > 0\}$: 718 contested, 1,447 uncontested, 16 vacant (filler book
 only), 1,567 untapped (no book; 15.7% of opportunity). Stage 1 sees only $(z, M_z, q_z)$; the
@@ -218,9 +219,11 @@ state over $\tau$, is 1.043). `STATE.md` `## Facts` quotes CA 4.126, TX 2.020, N
 and NJ 1.037 in its state-atom block, and those are a different base: the atom route keeps every
 zip, including the ones with no gazetteer point, so it divides by the whole-instance
 $\tau = 473.513$. Rescaling the level-1 masses to that $\tau$ reproduces CA 4.126, NY 1.794 and
-NJ 1.037 exactly, and falls short at TX 2.013 and FL 1.383 — the gap is the mass of the
-coordinate-less zips in those two states, which level 1 drops and the atom route keeps. Neither
-number is wrong; they must not be compared. The floor
+NJ 1.037 exactly and falls short at TX 2.013 and FL 1.383. The gap is the mass of the
+coordinate-less zips, measured 2026-09-07 over the 41 zips with no gazetteer point: TX 3.23 and
+FL 7.14, against 0.25 for NY and 0.00 for CA and NJ. Level 1 drops those zips and places them at
+completion; the atom route keeps them, since a zip with no point still has a state. Neither
+number is wrong, and they must not be compared. The floor
 $\lceil M_s / ((1+\delta)\tau) \rceil$ is 4, 2, 2, 2 on either base.
 
 Size and solve: 6,498 variables, 1,764 of them binary, 11,317 rows. HiGHS through

@@ -178,11 +178,11 @@ splits, gap 0, byte-identical `draw.csv` on a rerun through the override code wi
 
 **Per-state caps, measured 2026-09-07.** **NY at 2 is refuted** (HiGHS Status 8 in seconds: two
 anchored districts need 1.90τ, the state supplies 1.805τ). **CA at 4 is not refuted and not
-found** — legal at δ = 5%, exactly on the floor (4.200τ of band against 4.153τ, a window 4.7% of
+found**: legal at δ = 5%, exactly on the floor (4.200τ of band against 4.153τ, a window 4.7% of
 a district), and an hour of branch and bound ended with no incumbent at all (Status 13,
 `primal_status is None`). Refused by the floor, refuted by the solver, and searched without
 success are three different answers. TX and FL are already at their floor of 2, so the map is
-tight, and the band is the lever: **CA capped at 4 at δ = 10% solves** — 7 splits, CA in 4, NY
+tight, and the band is the lever: **CA capped at 4 at δ = 10% solves**, giving 7 splits, CA in 4, NY
 falls to 2, NJ splits, spread 16.70%, stage 2 95.7458, time-limited incumbent at a 1.79% gap
 (`figures/overrides/ca4_d10/`).
 

@@ -153,7 +153,7 @@ state's anchored count releases that state's anchors, keeping the cap-many that 
 its committed opportunity; the tab warns and lets it run, because the anchors are what hold a
 state above its floor, not the floor itself. The floor is necessary and not sufficient:
 California at 4 is legal at δ = 5% and HiGHS found no feasible point in an hour.
-`docs/HEADLINE.md` §6 carries what that does and does not prove.
+`docs/HEADLINE.md` §7 carries what that does and does not prove.
 
 ## 5. Assumptions on the record
 
