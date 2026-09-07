@@ -147,7 +147,8 @@ def seed_centers(xy: np.ndarray, M: np.ndarray, k: int, rng=0,
 
 # --------------------------------------------------------------- balanced assignment
 def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
-           targets: np.ndarray | None = None):
+           targets: np.ndarray | None = None, *,
+           penalty: np.ndarray | None = None, band: float = 0.0):
     """Balanced assignment to fixed centers by the transportation LP.  `(labels, n_fractional)`.
 
     Solves the LP in the module docstring with `scipy.optimize.linprog(method="highs-ds")` on the
@@ -159,6 +160,16 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
     (must sum to the total mass carried by `xy`/`M`, to 1e-6 relative); a target of 0 is
     allowed and means the district is meant to take nothing from these zips -- `assign` neither
     requires nor repairs a zip into it.
+
+    `penalty` is an `(n, k)` array added to the squared distances, so the objective becomes
+    `sum_zj M_z (d^2(z, c_j) + penalty_zj) x_zj`; a large entry keeps zip `z` out of district
+    `j` unless the mass rows force it there.  It enters before the objective is descaled and
+    is what `_repair_empty` sees too, so a repair also respects it.
+
+    `band` replaces each mass equality by the pair `(1-band) t_j <= sum_z M_z x_zj <=
+    (1+band) t_j`, descaled exactly as the equality was; the per-zip rows are unchanged, and
+    with a band the targets need only sum to the total mass within the band, since the
+    two-sided rows absorb the difference.  `penalty=None, band=0.0` is the LP unmodified.
 
     Conditioning: both the objective coefficients and the mass column are descaled (distances
     by their mean, masses by their mean) before solving.  HiGHS' feasibility tolerances are
@@ -183,12 +194,15 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
         t = np.full(k, w.sum() / k)
     else:
         t = np.asarray(targets, float) / M.mean()
-        if t.shape != (k,) or (t < 0).any() or abs(t.sum() - w.sum()) > 1e-6 * w.sum():
+        tol = max(band, 1e-6) * w.sum()                  # the band rows absorb the difference
+        if t.shape != (k,) or (t < 0).any() or abs(t.sum() - w.sum()) > tol:
             raise ValueError(f"targets must be {k} nonnegative values summing to the total mass")
     if n < int((t > 0).sum()):
         raise ValueError(f"cannot fill {int((t > 0).sum())} nonempty districts with {n} zips")
 
     d2 = _dist2(xy, centers)
+    if penalty is not None:
+        d2 = d2 + np.asarray(penalty, float)
     c = (w[:, None] * d2).ravel()
     scale = c.mean()
     if scale > 0:
@@ -199,8 +213,15 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
     rows_j = np.tile(np.arange(k), n)
     A_place = sparse.coo_matrix((np.ones(n * k), (rows_z, cols)), shape=(n, n * k))
     A_mass = sparse.coo_matrix((np.repeat(w, k), (rows_j, cols)), shape=(k, n * k))
-    A_eq = sparse.vstack([A_place, A_mass]).tocsc()
-    b_eq = np.concatenate([np.ones(n), t])
+    if band > 0:
+        A_eq = A_place.tocsc()
+        b_eq = np.ones(n)
+        A_ub = sparse.vstack([A_mass, -A_mass]).tocsc()  # upper band, then the lower one negated
+        b_ub = np.concatenate([(1.0 + band) * t, -(1.0 - band) * t])
+    else:
+        A_eq = sparse.vstack([A_place, A_mass]).tocsc()
+        b_eq = np.concatenate([np.ones(n), t])
+        A_ub = b_ub = None
 
     # method="highs-ds" with an explicit `options` dict: scipy 1.18.1's HiGHS wrapper hangs
     # indefinitely on some instances when called with *no* options at all (confirmed via
@@ -209,8 +230,8 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
     # well under a second on a 3,707-zip instance where the no-options call never returned.
     # method="highs" (auto-select) has the same failure mode; highs-ds keeps the
     # near-vertex fractional-count behavior the rest of this function assumes.
-    res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, 1.0), method="highs-ds",
-                  options={"time_limit": 60.0})
+    res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, 1.0),
+                  method="highs-ds", options={"time_limit": 60.0})
     if not res.success:
         raise RuntimeError(f"transportation LP failed: {res.message}")
 
@@ -288,7 +309,7 @@ def residual_targets(total: float, locked: np.ndarray, k: int) -> np.ndarray:
 
 
 # ---------------------------------------------------- the duals, and the power diagram
-def power_labels(xy, centers, weights) -> np.ndarray:
+def power_labels(xy, centers, weights, penalty=None) -> np.ndarray:
     """`argmin_j ||x - c_j||^2 - w_j` -- the **power** (Laguerre) cell each point falls in.
 
     At `weights = 0` this is the nearest-center rule, i.e. the ordinary Voronoi diagram; a
@@ -298,14 +319,21 @@ def power_labels(xy, centers, weights) -> np.ndarray:
     intersection of half-planes and therefore a convex polygon -- a district is one connected
     region with flat borders, not a ragged union.  And the diagram is invariant under a common
     shift of every weight, which is why `power_weights` returns them shifted to `min = 0`.
+
+    `penalty`, an `(n, k)` array, is added to the squared distances inside the argmin, so the
+    rule becomes `argmin_j d^2(z, c_j) + penalty_zj - w_j`.  A per-point penalty is not a
+    weight shift, so the cells are then a power diagram *per penalty pattern*, not one globally.
     """
     xy = np.asarray(xy, float)
     centers = np.asarray(centers, float)
     w = np.asarray(weights, float)
-    return (_dist2(xy, centers) - w[None, :]).argmin(axis=1).astype(int)
+    d2 = _dist2(xy, centers)
+    if penalty is not None:
+        d2 = d2 + np.asarray(penalty, float)
+    return (d2 - w[None, :]).argmin(axis=1).astype(int)
 
 
-def power_weights(xy, M, centers, targets=None) -> dict:
+def power_weights(xy, M, centers, targets=None, penalty=None) -> dict:
     """The transportation LP of `assign`, solved for its **duals**: the power-diagram weights.
 
     The balanced assignment at fixed centers is the transportation problem
@@ -335,6 +363,11 @@ def power_weights(xy, M, centers, targets=None) -> dict:
     `sum(M)/k`.  Pass the draw's own realised masses to ask the compactness question at the
     draw's balance rather than at perfect balance.
 
+    `penalty`, an `(n, k)` array, is added to the squared distances as in `assign`, so every
+    quantity here -- duals, bound, labels -- belongs to the *penalised* problem; the returned
+    `labels` come from `power_labels` under the same penalty.  There is no band here: the mass
+    rows stay equalities, which is what makes the duals a power diagram.
+
     Conditioning follows `assign`: masses by their mean, objective by its mean.  The **bounds
     are `[0, inf)`, not `[0, 1]`** -- the two feasible sets are identical, since
     `sum_j x_zj = 1` with `x >= 0` already forces `x_zj <= 1`, but an explicit upper bound lets
@@ -363,6 +396,8 @@ def power_weights(xy, M, centers, targets=None) -> dict:
         raise ValueError("every zip needs positive M: the dual argument divides by M_z")
 
     d2 = _dist2(xy, C)
+    if penalty is not None:
+        d2 = d2 + np.asarray(penalty, float)
     mscale = float(M.mean())
     w = M / mscale
     cost = w[:, None] * d2
@@ -410,7 +445,7 @@ def power_weights(xy, M, centers, targets=None) -> dict:
         centers=C,
         targets=tgt,
         alpha=alpha, beta=beta,
-        labels=power_labels(xy, C, omega),
+        labels=power_labels(xy, C, omega, penalty),
         lp_labels=lp_labels,
         fractional=fractional,
         n_fractional=int(fractional.size),

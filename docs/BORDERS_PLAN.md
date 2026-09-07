@@ -8,8 +8,10 @@ working tree (locked, hand-made).*
 
 The committed k=18 map (`battery/results/draw_k18_v2_20260904/k18`, seed 2) is balanced to
 1.29% spread and certified at 8.2e-5 nats against the every-partition ceiling. Its district
-borders often run close to state lines without lying on them; 9.46% of mass sits in a district
-whose owner set (defined below) belongs to another state.
+borders often run close to state lines without lying on them; 9.15% of mass sits in a district
+whose owner set (defined below) belongs to another state (measured by
+`tools/borders_report.py` on 2026-09-07 with the owner-set rule as coded; the 9.46% quoted on
+2026-09-06 came from a hand count and is superseded).
 
 Sponsor decisions, 2026-09-06:
 
@@ -100,22 +102,34 @@ s.t.  Σ_j y_sj = 1                       ∀ s                (all of s placed)
       {s : z_sj = 1} connected in the state rook graph  ∀ j (contiguity)
 ```
 
-- **ε** is lexicographic: `ε = 0.5 / (Σ_s Σ_j M_s D_sj y⁰_sj)` at the committed map's own
-  `y⁰`, so the whole compactness term is worth under half a split and never buys one.
+- **ε** is lexicographic: `ε = 0.5 / Σ_s M_s · max_j D_sj`, so the whole compactness term is
+  worth under half a split at every feasible `y` and never buys one. (The first draft scaled by
+  the committed map's own `y⁰`; `docs/VERIFY_state_splits.md` refuted that with a four-state
+  path where it returns two splits when zero is optimal. The bound must hold over every `y`,
+  not only at `y⁰`.)
+- **Contact means mass.** `y_sj ≥ η · z_sj` with `η = 0.01`, the same 1% threshold the split
+  report uses. Without it `z_sj = 1, y_sj = 0` buys a bridge state for one split while the
+  district it "connects" is disconnected in fact (`VERIFY_state_splits.md`, claim 1b).
 - **Contiguity** by VBL's single-commodity flow (`scf`), compact, no lazy callbacks and so
   none of the trap-14 SCIP configuration: per district a variable root `r_sj ≤ z_sj`,
   `Σ_s r_sj = 1`, flow on each rook edge bounded by `(N−1)·z_uj` and `(N−1)·z_vj`, and net
   inflow at s at least `z_sj − N·r_sj` (N = 50). Districts are anonymous; the fixed distinct
   centres in the tie-break break the k! symmetry in practice at this size.
-- **Size**: 50 × 18 = 900 binaries `z`, 900 more `r`, 900 continuous `y`, 2 × 107 × 18 flow
-  variables. `scipy.optimize.milp` on HiGHS with `mip_rel_gap = 0.0` (trap 12). Seconds.
+- **Size**: S = 49 (lower 48 plus DC): 882 binaries `z`, 882 binary `r` (a continuous root
+  admits disconnected sets with components under N/2, so `r` stays integral), 882 continuous
+  `y`, 2 × 107 × 18 flow variables; 6,583 rows. `scipy.optimize.milp` on HiGHS with
+  `mip_rel_gap = 0.0` (trap 12). Seconds.
 - **Warm start / sanity**: the committed map's composition `y⁰` is feasible at δ = 1.3% and
   gives an upper bound on the split count at every δ ≥ that.
 - **Balance pass, lexicographic.** The MILP uses the whole band wherever that saves a split,
   so at δ = 10% it returns a 10% imbalance somewhere even when the chosen splits permit 3%.
-  After the MILP, fix `z` and re-solve for `y` minimising the maximum deviation
-  `t ≥ |Σ_s M_s y_sj − τ|` (an LP, `y` is continuous). δ is then a cap, and the shares are the
-  tightest balance those splits allow. Report both the MILP's spread and the pass's.
+  After the MILP, fix `z` and re-solve for `y` in two LPs: first minimise the maximum
+  deviation `t ≥ |Σ_s M_s y_sj − τ|`, then, with `t` held at its optimum, minimise the spread
+  `u − l` where `u ≥ Σ_s M_s y_sj ≥ l` for every `j`. The second LP is needed: max deviation
+  and spread are different numbers (`maxdev ≤ spread ≤ 2·maxdev`, since deviations sum to
+  zero), and a single LP can return a wider spread at equal max deviation
+  (`VERIFY_state_splits.md`, claim 3b). δ is then a cap, and the shares are the tightest
+  balance those splits allow. Report the MILP's spread and the pass's.
 - **Level 2**: for every split state s, one `centers.assign(xy_s, M_s, c, targets = y_sj M_s)`
   over that state's zips (the `targets=` argument already exists; a 0 target means "nothing
   from this state", which `assign` already honours) — convex power cells inside the state.
@@ -173,7 +187,8 @@ Per cell, on the completed instance (coordinate-less zips placed by
 `channel.place_by_state`): `spread_rel`, `max_dev_rel`, nash and gap to `k·log(M/k)` on the
 whole-instance base, mass share outside owner sets, number of districts with >1% of their mass
 outside their home state, the states split across ≥2 districts with ≥1% of the state's mass
-each (excluding states whose own owner set has ≥2 districts: CA, TX, NY, FL, NJ), zips changed
+each (excluding states whose own owner set has ≥2 districts: CA with 5, TX, NY and FL with 2
+each; NJ has one owner district, D12, so it is not excluded), zips changed
 vs the committed map, compactness `ΣM d²`, `n_fractional`, stage-2 value (`channel.stage2`).
 Output `grid.csv` and `grid.md`, one `draw.csv` per cell, one `iterates/` directory per cell.
 

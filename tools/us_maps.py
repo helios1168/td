@@ -632,7 +632,7 @@ def match_cells_to_points(cells, coords) -> list:
     return idx
 
 
-def voronoi_cells(keys, xy, clip) -> dict:
+def voronoi_cells(keys, xy, clip, *, zip_state=None, state_polys=None) -> dict:
     """`{key: cell}` -- the Voronoi cell of each point, clipped to `clip`.
 
     Two things are easy to get wrong and both are checked rather than assumed.  First, the
@@ -645,6 +645,10 @@ def voronoi_cells(keys, xy, clip) -> dict:
     Clipping can empty a cell whose point falls in the sea on the generalised 1:20m coastline.
     Those keys are dropped from the result (their ground is covered by the neighbouring cells
     regardless) and the caller reports the count.
+
+    `zip_state`/`state_polys`, given together (`--clip-states`), additionally clip each key's
+    cell to its own state's polygon; a key with no known state or one absent from
+    `state_polys` keeps the land-clipped cell.
     """
     import shapely
     from shapely import MultiPoint, Point
@@ -666,6 +670,12 @@ def voronoi_cells(keys, xy, clip) -> dict:
     out = {}
     for k, cell in zip(keys, cells):
         g = _valid(shapely.intersection(_valid(cell), clip))
+        if zip_state is not None and state_polys is not None:
+            sp = state_polys.get(zip_state.get(k))
+            if sp is not None:
+                g_state = _valid(shapely.intersection(g, _valid(sp)))
+                if not g_state.is_empty and g_state.area > 0:
+                    g = g_state
         if not g.is_empty and g.area > 0:
             out[k] = g
     return out
@@ -840,7 +850,8 @@ def label_points(order, polys, centroids, min_sep=0.0, min_part=0.15) -> dict:
 
 def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_ALPHA,
                             footer=FOOTER, title=None, subtitle=None, n_near=4,
-                            palette=QUAL, label=True, pad=0.05, report=None):
+                            palette=QUAL, label=True, pad=0.05, report=None,
+                            zip_state=None, state_polys=None):
     """The draw as **filled territory**: each zip's Voronoi catchment, dissolved by district.
 
     **Superseded by `figure_power_regions`** as the business territory map, and kept because the
@@ -857,7 +868,8 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
     borders on purpose, since a state line that fights a territory line is worse than no state
     line at all.
 
-    `report` is an optional callable taking one string; the CLI passes `print`.
+    `report` is an optional callable taking one string; the CLI passes `print`.  `zip_state`/
+    `state_polys`, passed through to `voronoi_cells`, are `--clip-states`'s plumbing.
     """
     from matplotlib.collections import LineCollection
     from matplotlib.patches import PathPatch
@@ -876,7 +888,7 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
         return _save(fig, out)
 
     clip = clip_region([xy[z] for z in keys], states, pad)
-    cells = voronoi_cells(keys, xy, clip)
+    cells = voronoi_cells(keys, xy, clip, zip_state=zip_state, state_polys=state_polys)
     if len(cells) < len(keys):
         say(f"regions: {len(keys) - len(cells)} zip(s) fell outside the clip polygon "
             f"(generalised coastline); their ground goes to the neighbouring cells")
@@ -1395,6 +1407,9 @@ def main(argv=None):
     ap.add_argument("--regions-voronoi", default=None, metavar="DRAW_CSV",
                     help="the superseded zip-catchment rendering, as "
                          "district_regions_voronoi.png")
+    ap.add_argument("--clip-states", action="store_true",
+                    help="with --regions-voronoi, intersect each zip's cell with its own "
+                         "state's polygon; off by default, off path unchanged")
     ap.add_argument("--regions-fixed", default=None, metavar="DRAW_CSV",
                     help="the same draw.csv; adds the fixed-diagram pair "
                          "(district_regions_fixed_committed.png / _snapped.png): one diagram, "
@@ -1473,6 +1488,12 @@ def main(argv=None):
                    "regions": figure_power_regions,
                    "regions_voronoi": figure_district_regions}[flag]
         kw = {} if flag == "districts" else dict(report=print)
+        if flag == "regions_voronoi" and args.clip_states:
+            if states is not None:
+                kw["zip_state"] = {z: d.G.nodes[z].get("state") for z in draw}
+                kw["state_polys"] = dict(zip(states["STUSPS"], states.geometry))
+            else:
+                print("WARNING: --clip-states has no effect with --no-basemap")
         written.append(builder(draw, M, xy, states, dest, **kw))
 
     for p in written:
