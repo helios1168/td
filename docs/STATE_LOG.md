@@ -2,7 +2,7 @@
 
 Append-only history of `STATE.md` `## Now`, newest first. Each entry is the state narrative
 as it stood when it was demoted; nothing here is edited after the fact. Entries up to
-2026-09-04 were moved verbatim from `docs/FRAME.md` §0 on 2026-09-05 (the split commit);
+2026-09-04 were moved verbatim from `docs/foundations/FRAME.md` §0 on 2026-09-05 (the split commit);
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
@@ -327,7 +327,7 @@ merged solver is byte-identical to A1's `draw_k18_v2_20260904/k18/draw.csv`.
 *Later on 2026-09-05 — the tree was restructured for a cheap start-up (this commit):* state
 consolidated into this file (CLAUDE.md carries invariants only, `HANDOFF.md` deleted, FRAME §0
 back to framing revisions, history in `docs/STATE_LOG.md`); A1's lens / domain plans / brief /
-units promoted to the hub paths (neutral copies in `docs/archive/hub-2026-09-02/`, user
+units promoted to the hub paths (neutral copies in `docs/foundations/archive/hub-2026-09-02/`, user
 decision); `TEST_PLAN`, `RESULTS`, `RESEARCH_GUIDE` archived; `docs/CODE_MAP.md` holds the
 file map and run recipes; Serena indexes markdown (marksman) and its memories collapsed to
 one; `/state` rewritten around this file; headroom removed, `rtk` installed; pycache-only
@@ -760,7 +760,7 @@ and it is one concave solve per roster (U8-band), not a MINLP. A0's soft kill fi
 fast-forwarded to `wt/A1` at `8546de6` on 2026-09-03 with the user's approval and pushed;**
 the two branches share a head and `wt/A1`'s worktree continues from it. *Reorganised the same
 day:* A1's lens, domain plans, brief and units U8–U13 moved to `docs/tracks/A1/`; the hub's
-`docs/LENS_GROMOV.md`, `DOMAIN_*.md`, `BRIEF.md` restored to their neutral `a4eb488` versions
+`docs/foundations/LENS_GROMOV.md`, `DOMAIN_*.md`, `BRIEF.md` restored to their neutral `a4eb488` versions
 with a header; `APPROACHES.md` §0 gained the "what every track inherits" block and each
 charter's kill line was updated; `HANDOFF.md` gained the track-start checklist. (2) Launch **U8-band** from a session
 started in `.claude/worktrees/A1` (Serena binds to the launch directory) — its D1′ certificate
@@ -774,7 +774,7 @@ approved plan (lens, domains, literature, research plan) and launched nothing.
 ## 2026-09-03 · wt/A1 (from a4eb488) — A1 track opened; ★6 lifted; U7-meas and U1-cert launched and landed
 
 **Earlier on 2026-09-03 (branch `wt/A1`, worktree `.claude/worktrees/A1`, branched from
-`national-channel` at `a4eb488`): the A1 track (`docs/APPROACHES.md` §A1, joint coverage
+`national-channel` at `a4eb488`): the A1 track (`docs/foundations/APPROACHES.md` §A1, joint coverage
 optimisation) is open. ★6 is lifted in full — units may run code against
 `instance_descaled.json.gz` for any purpose (user decision, 2026-09-03). The instance, the
 gazetteer cache and the two k=13 draws (`draw_k13_20260901` seed 3, `sweep_20260902_s10/k13`

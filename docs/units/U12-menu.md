@@ -4,7 +4,7 @@
 absorbs [pred]'s U5-crit. Gated on U8-band (the curve and duals) and U11-roster (the intervals);
 U13-base supplies the baseline point when it exists.
 
-## Spec (verbatim from `docs/DOMAIN_economic-theory.md` §2.9)
+## Spec (verbatim from `docs/foundations/DOMAIN_economic-theory.md` §2.9)
 
 > **How to put it to the sponsor.** As a **menu, not an elicitation**. Compute
 > `EG^bal_{S₁₃}(δ)` on the grid … plot `(δ, V)` with the delivered MNW point marked … and hand
@@ -24,8 +24,8 @@ reading U8/U11/U13 outputs; no solves of its own).
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/APPROACHES.md` ·
-`docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` ·
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/APPROACHES.md` ·
+`docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` ·
 all of `td/`, `tests/`, `tools/` (read-only).
 
 **Tooling.** `cat`/`head`/`tail`/`sed`/`awk`/`grep` on a file are blocked by the
@@ -65,10 +65,10 @@ point), and computes `e^{Δ/k} − 1` and the `breugem2022` bound from FRAME §6
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_economic-theory.md` §2.3, §2.8–§2.10, §4 steps 2, 3, 7, §5 N4, N7–N9, N11 · the
-2026-09-03 section of `docs/LIT_economic-theory.md` (`echenique2021constrained`,
+`docs/foundations/DOMAIN_economic-theory.md` §2.3, §2.8–§2.10, §4 steps 2, 3, 7, §5 N4, N7–N9, N11 · the
+2026-09-03 section of `docs/foundations/LIT_economic-theory.md` (`echenique2021constrained`,
 `kawase2026balanced`, `breugem2022vertical`, `haimes1979tradeoffs`, `acland2023weighting`) ·
-`docs/LENS_GROMOV.md` M11–M13 · `docs/FRAME.md` §3 (Tolerance), §6, §8 A1/A5/A6 ·
+`docs/foundations/LENS_GROMOV.md` M11–M13 · `docs/foundations/FRAME.md` §3 (Tolerance), §6, §8 A1/A5/A6 ·
 `docs/units/U5-crit.md` (what it absorbs) · `docs/MODEL_U8-band.md`, `docs/MODEL_U11-roster.md`
 and their `battery/results/` outputs · `docs/MODEL_U13-base.md` if present.
 

@@ -5,7 +5,7 @@ U13/U14/U7; `DOMAIN_optimization` §2.10–§2.12, §4 Stages 1–2, §5 rows 1,
 `DOMAIN_economic-theory` N7–N9). Stage 0 is done: `B_tot = 1145.81`, (★) at `P₁₃` = 60.8025,
 `δ₀` = 0.39% (seed 3) / 0.62% (seed 9) — FRAME §6.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md` §2.10, §2.11)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md` §2.10, §2.11)
 
 > ```
 > EG^bal_S(δ) = max_X  Σ_{i∈S} log g_i(X),        g_i(X) = Σ_z u_i(z) x_{zi}
@@ -42,8 +42,8 @@ U13/U14/U7; `DOMAIN_optimization` §2.10–§2.12, §4 Stages 1–2, §5 rows 1,
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/APPROACHES.md` ·
-`docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` ·
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/APPROACHES.md` ·
+`docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` ·
 existing `td/` modules (`channel.py`, `model.py`, `instance.py`, `solvers/*`) except by import ·
 `tools/measure/premium.py` · `battery/figures/`.
 
@@ -83,10 +83,10 @@ from a session started in `.claude/worktrees/A1` and confirm the active project 
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_optimization.md` §2.10–§2.12, §3, §4 · `docs/DOMAIN_economic-theory.md` §2.8–§2.9,
-N7–N9 · `docs/LENS_GROMOV.md` M8, M11, M12 · `docs/MODEL_U1-cert.md` §1, §3 P1, §4.1, §5 ·
+`docs/foundations/DOMAIN_optimization.md` §2.10–§2.12, §3, §4 · `docs/foundations/DOMAIN_economic-theory.md` §2.8–§2.9,
+N7–N9 · `docs/foundations/LENS_GROMOV.md` M8, M11, M12 · `docs/MODEL_U1-cert.md` §1, §3 P1, §4.1, §5 ·
 `docs/artifacts/U1-cert/instance_numbers.py` (the unconstrained EG solve and its dual check — the
-value to reproduce at `δ = 0.33`) · `docs/MODEL_U7-meas.md` §1, §6 · `docs/LIT_optimization.md`
+value to reproduce at `δ = 0.33`) · `docs/MODEL_U7-meas.md` §1, §6 · `docs/foundations/LIT_optimization.md`
 §0, §1, §6 (`jalota2023` caveat; `lundell2022` SHOT; `chaudhury2024eg` Frank–Wolfe) ·
 `td/channel.py::gain_matrix`, `td/solvers/centers.py::power_weights` (the existing dual-check
 pattern) · `battery/results/draw_k13_20260901/`, `battery/results/meas_20260903/`.

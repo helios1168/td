@@ -1,18 +1,18 @@
 # Model — unit U9-bandthm — the four claims `EG^bal_S(δ)` rests on
 
-**Date:** 2026-09-04 · **Framework:** 0.1-dev · **Track:** A1 (`docs/APPROACHES.md` §A1), run on
+**Date:** 2026-09-04 · **Framework:** 0.1-dev · **Track:** A1 (`docs/foundations/APPROACHES.md` §A1), run on
 `wt/A1` · **Unit:** `docs/units/U9-bandthm.md` ·
-**Reads:** `docs/DOMAIN_optimization.md` §2.10–§2.13, §3 · `docs/DOMAIN_economic-theory.md`
+**Reads:** `docs/foundations/DOMAIN_optimization.md` §2.10–§2.13, §3 · `docs/foundations/DOMAIN_economic-theory.md`
 §2.8–§2.9 · `docs/MODEL_U1-cert.md` §1–§3 · `docs/VERIFY_U1-cert.md` §2, §4–§7 ·
-`docs/MODEL_U7-meas.md` §4 · `docs/LIT_optimization.md` §0, §1, §2, §8 ·
-`docs/LIT_economic-theory.md` 2026-09-03 §0, A1-Q1 · `docs/LENS_GROTHENDIECK.md` "The general
-case, stated" · `docs/LENS_GROMOV.md` M8, M11, M12 · read-only `td/channel.py`,
+`docs/MODEL_U7-meas.md` §4 · `docs/foundations/LIT_optimization.md` §0, §1, §2, §8 ·
+`docs/foundations/LIT_economic-theory.md` 2026-09-03 §0, A1-Q1 · `docs/foundations/LENS_GROTHENDIECK.md` "The general
+case, stated" · `docs/foundations/LENS_GROMOV.md` M8, M11, M12 · read-only `td/channel.py`,
 `td/model.py` ·
 **Owns:** this file, `docs/artifacts/U9-bandthm/**` · **Does not own / did not touch:**
-`docs/MODEL_U8-band.md`, `td/`, `tests/`, `tools/`, `docs/FRAME.md`, `docs/BRIEF.md`,
-`docs/LENS_*`, `docs/DOMAIN_*`, `docs/LIT_*`.
+`docs/MODEL_U8-band.md`, `td/`, `tests/`, `tools/`, `docs/foundations/FRAME.md`, `docs/foundations/BRIEF.md`,
+`docs/foundations/LENS_*`, `docs/foundations/DOMAIN_*`, `docs/foundations/LIT_*`.
 
-> **Path note.** The brief's `docs/DOMAIN_*.md` and `docs/LENS_GROMOV.md` are stale: the hub
+> **Path note.** The brief's `docs/foundations/DOMAIN_*.md` and `docs/foundations/LENS_GROMOV.md` are stale: the hub
 > copies are the neutral versions and carry none of §2.8–§2.15 or Move 8. A1's copies are under
 > `docs/`. Everything else the brief names is at the hub path.
 
@@ -876,7 +876,7 @@ Which FRAME §5 gaps and §6 bounds break these results, and how each degrades.
     internally consistent on the inflated input. Not reduced by anything proved here.
 
 11. **`echenique2021constrained` and `kawase2026balanced` were read through
-    `docs/LIT_economic-theory.md`'s annotations, not the papers.** P2.7 is a `[cited]` claim whose
+    `docs/foundations/LIT_economic-theory.md`'s annotations, not the papers.** P2.7 is a `[cited]` claim whose
     strength is the annotation's. `math-verify` should treat P2.7 as citation-checkable, not
     proof-checkable.
 

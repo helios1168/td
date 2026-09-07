@@ -5,7 +5,7 @@ constraint ("nothing that touches `td/` code yet") and by the instance's absence
 lifted — the user answered ★6 in full on 2026-09-03 and the instance is at this worktree's
 root. It runs as the A1 track's kill experiment; the spec is `docs/MODEL_U7-meas.md`.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md`:§4, Stage 0)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md`:§4, Stage 0)
 
 > **Stage 0 — measure before formulating (no solver, hours).** Run §5 in full. Both lenses
 > converge on this and it is the only step with no dependency on any open decision. Two of its
@@ -22,8 +22,8 @@ root. It runs as the A1 track's kill experiment; the spec is `docs/MODEL_U7-meas
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · **`battery/figures/`** (primary
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · **`battery/figures/`** (primary
 artifacts, `CLAUDE.md`) · existing `td/` modules except by explicit extension agreed at launch.
 
 ## Agent → verifier
@@ -46,9 +46,9 @@ then the noise floor (U6, if a domain plan exists for it). N1–N3 do not depend
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_optimization.md` §5 · `docs/DOMAIN_economic-theory.md` §5 · `docs/LENS_GROMOV.md`
-Move 4 and the U-ledger · `docs/FRAME.md` §5 (data defects), §6 · `docs/DATA.md` ·
-`docs/archive/TEST_PLAN.md` · `td/instance.py`, `td/channel.py`, `td/solvers/centers.py`,
+`docs/foundations/DOMAIN_optimization.md` §5 · `docs/foundations/DOMAIN_economic-theory.md` §5 · `docs/foundations/LENS_GROMOV.md`
+Move 4 and the U-ledger · `docs/foundations/FRAME.md` §5 (data defects), §6 · `docs/DATA.md` ·
+`docs/foundations/archive/TEST_PLAN.md` · `td/instance.py`, `td/channel.py`, `td/solvers/centers.py`,
 `td/solvers/cert_draw.py`
 
 ## Open questions for ★0

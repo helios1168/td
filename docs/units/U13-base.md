@@ -4,7 +4,7 @@
 `DOMAIN_optimization` §5 row 6; FRAME §3's "the headline claim is unevidenced without it".
 Construction is independent; placing the point on the frontier needs U8-band.
 
-## Spec (verbatim from `docs/APPROACHES.md` §A3 and `docs/LENS_GROMOV.md` M11.3)
+## Spec (verbatim from `docs/foundations/APPROACHES.md` §A3 and `docs/foundations/LENS_GROMOV.md` M11.3)
 
 > **The map** at state grain: contiguous groups of states accumulated to ≈ 1/18 of `M`, by a
 > stated greedy rule (largest remaining neighbour first) so the construction is reproducible
@@ -27,8 +27,8 @@ carries) · `docs/CODEVERIFY_U13-base.md` · `battery/results/u13_base_<date>/` 
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/APPROACHES.md` ·
-`docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/LIT_*` · `CLAUDE.md` · existing `td/` modules
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/APPROACHES.md` ·
+`docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_*` · `CLAUDE.md` · existing `td/` modules
 (`channel.stage2`, `channel.balance_report`, `tools/measure/premium.measure` by import only) ·
 `battery/figures/`.
 
@@ -71,8 +71,8 @@ at both rosters · `P_base` share · `D(g)_base`.
 
 ## Inputs to read (paths and sections only)
 
-`docs/APPROACHES.md` §A3, §A0 "Kill experiment" · `docs/LENS_GROMOV.md` M11.3, ledger U10 ·
-`docs/FRAME.md` §3, §6 (footprint concentration row) · `docs/MODEL_U7-meas.md` §1, §5 ·
+`docs/foundations/APPROACHES.md` §A3, §A0 "Kill experiment" · `docs/foundations/LENS_GROMOV.md` M11.3, ledger U10 ·
+`docs/foundations/FRAME.md` §3, §6 (footprint concentration row) · `docs/MODEL_U7-meas.md` §1, §5 ·
 `td/channel.py::place_by_state`, `stage2`, `balance_report` · `td/geo.py` · `td/instance.py`
 (the `state` node attribute) · `tools/measure/premium.py`.
 

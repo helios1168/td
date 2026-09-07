@@ -4,13 +4,13 @@
 question is unchanged and still open: does a modulus `objective-gap ≥ φ(mass moved)` exist? Its
 **secondary input is withdrawn** — see the premise box. Gates that used to hold it are gone: ★6 is
 lifted in full (`BRIEF.md` §4 — units may read `instance_descaled.json.gz` and run code), and
-U0-lit landed as `docs/LIT_optimization.md`, whose §9 (Q9) answers the gate: **no instance-specific
+U0-lit landed as `docs/foundations/LIT_optimization.md`, whose §9 (Q9) answers the gate: **no instance-specific
 modulus exists in the literature**, so this stays a *proof* unit (size L), not the
 citation-and-instantiation unit (size S) that ★6 held open. What the literature does supply is the
 modulus's **name** — a Hölderian error bound / growth condition, `f − f* ≥ c·dist(·)^α`
 (`bolte2017`), with `hoffman1952` the reason to expect the polyhedral exponent `α = 1` rather than
 a generic `α = 2` (`drusvyatskiy2018`), and absence ledger row D recording the gap. Branch: from
-`main`. See `docs/BRIEF.md` §4.
+`main`. See `docs/foundations/BRIEF.md` §4.
 
 ## ⚠ Premise change — the first-mover list this brief consumed no longer exists
 
@@ -76,7 +76,7 @@ Producing a defensible version of that would require the §10.A dual-optimal-fac
 run (`MODEL_U8-band` §9.7 finding 6). **That is a separate unit and it is not this one.** Recorded
 here as a named follow-on so the gap is visible rather than absorbed.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md` §2.4)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md` §2.4)
 
 *Re-synced 2026-09-05 — the source was rewritten and the block this brief previously quoted (an
 "**Assumptions.** That a *lower* bound on displacement-to-any-better-coverage can be read from the
@@ -109,8 +109,8 @@ highest-leverage unknown for FRAME §3.5"*: everything about acceptance in busin
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/`,
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/`,
 `figures/`, `battery/`.
 
 ## Agent → verifier
@@ -184,16 +184,16 @@ dots-versus-cells decision and does not compute it.**
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_optimization.md` §2.4, **§2.11's "shape facts" bullet** (corrected 2026-09-05: "a"
+`docs/foundations/DOMAIN_optimization.md` §2.4, **§2.11's "shape facts" bullet** (corrected 2026-09-05: "a"
 supergradient for any optimal dual, minimised and gauge-reduced, and a loose minimisation is
 *invalid* — this is the governing statement for anything this unit does with `s_min` or `ν`),
 §2.12 (both the "which zips move first" bullet and its assumptions bullet — the second contradicts
 the first under degeneracy), §8 Q3, §4 D4 ·
 **`docs/MODEL_U8-band.md` §9.7 findings 5 and 6, §10.2, §10.4, §10.6, §10.7 finding 3 — the live
 v2 evidence for the premise box** · `docs/CODEVERIFY_U8-band.md` F1, F2 (the invariance list, and
-how fragile the reported vertex is) · **`docs/LIT_optimization.md` §9 (Q9) and absence ledger row D
+how fragile the reported vertex is) · **`docs/foundations/LIT_optimization.md` §9 (Q9) and absence ledger row D
 — the gate, and it has reported**; §7 (Q7, stability radius) for the second candidate framing ·
-`docs/LENS_GROTHENDIECK.md` §5a, descent 4 and 7 · `docs/FRAME.md` §3 (acceptance criterion 5),
+`docs/foundations/LENS_GROTHENDIECK.md` §5a, descent 4 and 7 · `docs/foundations/FRAME.md` §3 (acceptance criterion 5),
 §6 (the tier floors), §10 Q4 and Q7 · `docs/REVIEW_GROMOV.md` R2 ·
 `~/resources/optimization/FOUNDATIONS.md` (`Hitchcock1941`, `Schrijver1986`, `Chvatal1983`,
 `GaleKuhnTucker1951`)

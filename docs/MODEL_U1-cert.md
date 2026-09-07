@@ -1,16 +1,16 @@
 # Model — unit U1-cert — does the Eisenberg–Gale dual subsume the four existing certificates?
 
-**Date:** 2026-09-03 · **Framework:** 0.1-dev · **Track:** A1 (`docs/APPROACHES.md` §A1), run on
+**Date:** 2026-09-03 · **Framework:** 0.1-dev · **Track:** A1 (`docs/foundations/APPROACHES.md` §A1), run on
 `wt/A1` · **Unit:** `docs/units/U1-cert.md` ·
-**Reads:** `docs/DOMAIN_optimization.md` §2.2, §3, §5, §8 Q4; `docs/DOMAIN_economic-theory.md`
-§2.1, §2.2; `docs/LENS_GROTHENDIECK.md` §2, §4, "The general case, stated", descent 1–3;
-`docs/LENS_GROMOV.md` Move 3; `docs/MODEL.md`; `docs/FRAME.md` §5, §6, §9, §10 Q3;
-`docs/REVIEW_GROMOV.md` R3; `docs/LIT_economic-theory.md` §0.5, §1, §2; read-only
+**Reads:** `docs/foundations/DOMAIN_optimization.md` §2.2, §3, §5, §8 Q4; `docs/foundations/DOMAIN_economic-theory.md`
+§2.1, §2.2; `docs/foundations/LENS_GROTHENDIECK.md` §2, §4, "The general case, stated", descent 1–3;
+`docs/foundations/LENS_GROMOV.md` Move 3; `docs/MODEL.md`; `docs/foundations/FRAME.md` §5, §6, §9, §10 Q3;
+`docs/REVIEW_GROMOV.md` R3; `docs/foundations/LIT_economic-theory.md` §0.5, §1, §2; read-only
 `td/solvers/cert_draw.py`, `td/solvers/centers.py::power_weights`, `td/channel.py`,
 `td/model.py`, `td/instance.py`; `instance_descaled.json.gz`;
 `battery/results/draw_k13_20260901/` ·
 **Owns:** this file, `docs/artifacts/U1-cert/**` ·
-**Not read (does not exist):** `docs/LIT_optimization.md` — U0-lit has not run. The split-unit
+**Not read (does not exist):** `docs/foundations/LIT_optimization.md` — U0-lit has not run. The split-unit
 count is proved here, but *not* as a new result: `VERIFY_U1-cert` §5 shows it is the standard
 `≤ k − 1` already cited in the lens as `brieden2017 Lem. 4`.
 

@@ -3,7 +3,7 @@
 The theory U8-band consumes. Each is a `[claim]` in `DOMAIN_optimization` §2.10–§2.11 or
 `DOMAIN_economic-theory` §2.8–§2.9; two are now citations per `LIT_optimization` §0.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md` §2.10, §2.11 and `docs/DOMAIN_economic-theory.md` §2.9)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md` §2.10, §2.11 and `docs/foundations/DOMAIN_economic-theory.md` §2.9)
 
 > **`EG^bal_S(δ)` upper-bounds every integral coverage with roster `S` whose districts respect
 > the band at `δ`.** `[claim — P1's proof with one extra feasibility check; math-verify]`
@@ -28,8 +28,8 @@ The theory U8-band consumes. Each is a `[claim]` in `DOMAIN_optimization` §2.10
 ## Files forbidden
 
 Every other unit's owned files (`docs/MODEL_U8-band.md`, `td/solvers/eg_band.py`, …) ·
-`docs/FRAME.md` · `docs/BRIEF.md` · `docs/APPROACHES.md` · `docs/LENS_*.md` · `docs/DOMAIN_*.md` ·
-`docs/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/` (read-only;
+`docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/APPROACHES.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` ·
+`docs/foundations/LIT_*` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/` (read-only;
 toy scripts live under the artifacts directory).
 
 ## Agent → verifier
@@ -71,11 +71,11 @@ against U8's returned vertex once U8 exists, but must not wait for U8.
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_optimization.md` §2.10–§2.13 · `docs/DOMAIN_economic-theory.md` §2.8–§2.9 ·
+`docs/foundations/DOMAIN_optimization.md` §2.10–§2.13 · `docs/foundations/DOMAIN_economic-theory.md` §2.8–§2.9 ·
 `docs/MODEL_U1-cert.md` §1–§3 (P1's proof, P3a's MBB-face argument as corrected) ·
-`docs/VERIFY_U1-cert.md` §2, §5 · `docs/LIT_optimization.md` §0, §1, §2, §4 · the 2026-09-03
-section of `docs/LIT_economic-theory.md` (`echenique2021constrained`, `kawase2026balanced`) ·
-`docs/LENS_GROTHENDIECK.md` "The general case, stated".
+`docs/VERIFY_U1-cert.md` §2, §5 · `docs/foundations/LIT_optimization.md` §0, §1, §2, §4 · the 2026-09-03
+section of `docs/foundations/LIT_economic-theory.md` (`echenique2021constrained`, `kawase2026balanced`) ·
+`docs/foundations/LENS_GROTHENDIECK.md` "The general case, stated".
 
 ## Open questions for ★0
 

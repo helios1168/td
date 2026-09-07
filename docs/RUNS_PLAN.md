@@ -391,7 +391,7 @@ code, not a licence to edit the solver on this branch.
 
 ## Reference — where to read more
 
-- `docs/FRAME.md` §0 — the resume point and the state narrative. §6 carries measured rows.
+- `docs/foundations/FRAME.md` §0 — the resume point and the state narrative. §6 carries measured rows.
 - `STATE.md` (was `HANDOFF.md` until 2026-09-05) — orientation, the "Starting a track" checklist, published artifact IDs.
 - `CLAUDE.md` (worktree) — the model on one page, the two stages, the trap list, code inventory.
 - `docs/CHANNEL.md`, `docs/MODEL.md` — the problem and the N-way model.

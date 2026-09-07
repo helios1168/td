@@ -13,7 +13,7 @@ only when a question needs it. This file carries invariants only and is never st
    it in the Streamlit app (`tools/app.sh`, `docs/APP.md`) instead of building a Claude
    artifact. Artifacts are for fixed, reviewed deliverables; a scenario question needs an
    engine behind it, and the app has one.
-3. Never read `docs/STATE_LOG.md`, `docs/archive/`, or a whole `docs/*.md` unprompted — take the
+3. Never read `docs/STATE_LOG.md`, `docs/foundations/archive/`, or a whole `docs/*.md` unprompted — take the
    section you need via Serena (headings are symbols).
 
 ## Environment

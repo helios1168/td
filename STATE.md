@@ -238,9 +238,9 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
 ## Where
 
 - `docs/CHANNEL.md` — the problem, the two stages, sizing · `docs/MODEL.md` — the N-way model
-  and open decisions (§6) · `docs/FRAME.md` — problem statement (§6 measured rows, §9 settled/open)
-- `docs/APPROACHES.md` — §0 what every track inherits, charters A0–A5 · `docs/BRIEF.md` +
-  `docs/units/` — A1's plan, units U0–U13 · `docs/LENS_*.md`, `docs/DOMAIN_*.md`, `docs/LIT_*` —
+  and open decisions (§6) · `docs/foundations/FRAME.md` — problem statement (§6 measured rows, §9 settled/open)
+- `docs/foundations/APPROACHES.md` — §0 what every track inherits, charters A0–A5 · `docs/foundations/BRIEF.md` +
+  `docs/units/` — A1's plan, units U0–U13 · `docs/foundations/LENS_*.md`, `docs/foundations/DOMAIN_*.md`, `docs/foundations/LIT_*` —
   A1's (promoted) lenses, domain plans, literature
 - `docs/RUNS.md` (+ `RUNS_PLAN.md`) — the pin-cost catalogue · `docs/MODEL_U8-band.md`,
   `CODEVERIFY_U8-band.md`, `MODEL_U9-bandthm.md`, `VERIFY_U9-bandthm.md` — wave 1 ·
@@ -270,7 +270,7 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   was deleted when the engine landed; see that directory's README.
 - Recipes and file map: `docs/CODE_MAP.md` · Memory:
   `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md` · History:
-  `docs/STATE_LOG.md` · Archive: `docs/archive/README.md`
+  `docs/STATE_LOG.md` · Archive: `docs/foundations/archive/README.md`
 - **The scenario app:** `app/` + `tools/app.sh`, its own venv `.venv-app`, whole story in
   `docs/APP.md`. Define a scenario, run either stage-1 engine, see the map, save it. Scenario
   questions go here now, not into a new Claude artifact — the artifacts below stay as the fixed

@@ -1,8 +1,8 @@
 # MODEL U7-meas — the premium ladder and the other numbers measured before formulating
 
-**Date:** 2026-09-03 · **Unit:** `docs/units/U7-meas.md` · **Track:** A1 (`docs/APPROACHES.md`
-§A1), run on `wt/A1` · **Reads:** `docs/DOMAIN_optimization.md` §2.3, §5; `docs/LENS_GROMOV.md`
-Move 4 and the U-ledger (U1–U4, U8); `docs/MODEL_U2-stab.md` §"decomposition"; `docs/FRAME.md`
+**Date:** 2026-09-03 · **Unit:** `docs/units/U7-meas.md` · **Track:** A1 (`docs/foundations/APPROACHES.md`
+§A1), run on `wt/A1` · **Reads:** `docs/foundations/DOMAIN_optimization.md` §2.3, §5; `docs/foundations/LENS_GROMOV.md`
+Move 4 and the U-ledger (U1–U4, U8); `docs/MODEL_U2-stab.md` §"decomposition"; `docs/foundations/FRAME.md`
 §6; `td/channel.py`, `td/model.py`, `td/instance.py` · **Implements:** `tools/measure/premium.py`
 (written by `python-typed`, checked by `code-verify` → `docs/CODEVERIFY_U7-meas.md`)
 

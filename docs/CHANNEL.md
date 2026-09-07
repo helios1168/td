@@ -9,7 +9,7 @@ Read this first. `MODEL.md` has the N-way maths this rests on; `DATA.md` has the
 ## 0. Resume — read this first in a fresh session
 
 > **Pointer (2026-09-02, merged from `wt/workflow-dryrun` on `national-channel`): the resume point for
-> this branch is `docs/FRAME.md` §0, not this section.** The framework 0.1 dry run reached
+> this branch is `docs/foundations/FRAME.md` §0, not this section.** The framework 0.1 dry run reached
 > stage 5 there (FRAME → two lenses → two domain plans → `LIT_economic-theory` → `BRIEF` + 8
 > unit briefs → `MODEL_U2-stab` → `VERIFY_U2-stab`, 13/13 VERIFIED). `FRAME.md`'s header
 > supersedes **§6** (the 72-rep / $6.2B / k≈6 sizing) and **§7**'s illustrative ceiling table
@@ -157,7 +157,7 @@ one page, or resolve the 132 first.
 unoccupied, and stage 1 turns out to be a published method.** Head `98f3c0e` (docs-only
 since `b289f3a`; 131 tests as recorded at `f45bf89`, no code touched).
 
-*What landed.* `acb34f9` — the research brief (`docs/archive/RESEARCH_GUIDE.md`). `98f3c0e` — the
+*What landed.* `acb34f9` — the research brief (`docs/foundations/archive/RESEARCH_GUIDE.md`). `98f3c0e` — the
 results of the overnight run (seven parallel verification-required sweeps, every citation
 checked against a fetched source): `docs/RESEARCH_FINDINGS.md` (~130 entries organised by
 guide §§1–7; headline findings §0; absence-claim ledger with search provenance §8;
@@ -305,7 +305,7 @@ reading stage 2's "unmatched" output assumes.
 Earlier — the two-player merger programme (harness, method wave, S0/S1/S2, W6b/W6c/W6d,
 `scip_tree` certifying every pair ≤ 135 zips with 124/135 proved exact global optima) is on
 branch `contiguity-harness`; its resume point was `research/contiguity/PLAN.md` §0 and its
-record is `docs/archive/RESULTS.md`.
+record is `docs/foundations/archive/RESULTS.md`.
 
 ---
 

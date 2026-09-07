@@ -9,7 +9,7 @@ instance's, the quoted spec included — `DOMAIN_optimization` §2.13 was re-cut
 and the quote was re-synced against it. The only `k = 13` figures left are the ones §2.13 itself
 labels *Historical*.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md` §2.13)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md` §2.13)
 
 > **The problem P3b does not solve.** `MODEL_U1-cert` P3b rounds each split unit to any buyer and
 > bounds the loss by `−Σ_i log(1 − L_i/g*_i)`. Under a band that is **not enough**: rounding moves
@@ -84,8 +84,8 @@ above is the current text, so the sizing re-anchor this section used to carry is
 
 ## Files forbidden
 
-Every other unit's owned files (`td/solvers/eg_band.py` by import only) · `docs/FRAME.md` ·
-`docs/BRIEF.md` · `docs/APPROACHES.md` · `docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/LIT_*` ·
+Every other unit's owned files (`td/solvers/eg_band.py` by import only) · `docs/foundations/FRAME.md` ·
+`docs/foundations/BRIEF.md` · `docs/foundations/APPROACHES.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_*` ·
 `CLAUDE.md` · existing `td/` modules · `battery/figures/`.
 
 ## Agent → verifier
@@ -146,11 +146,11 @@ value) · `γ(δ)` at the five `δ` · the rounded map's `P` (premium share) bes
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_optimization.md` §2.13 (re-cut to v2; quoted in full above), §4 Stage 3 — whose
+`docs/foundations/DOMAIN_optimization.md` §2.13 (re-cut to v2; quoted in full above), §4 Stage 3 — whose
 "`γ(δ) ≤ 5e-3` at **both** vertices" is the clause superseded by point 2 above · **`docs/MODEL_U8-band.md` §10 — the live v2 run** (§10.0 `δ₀` and the gate,
 §10.1 the frontier, split counts and the SCIP cross-check), and §5.2 for why SCIP is a cross-check
 only · `docs/CODEVERIFY_U8-band.md` F1, F2, F7 · `docs/MODEL_U1-cert.md` §3 P3b, §4.3, §5.9 ·
-`docs/VERIFY_U1-cert.md` §5 (P3c's vertex-dependence finding) · `docs/LIT_optimization.md` §0, §4
+`docs/VERIFY_U1-cert.md` §5 (P3c's vertex-dependence finding) · `docs/foundations/LIT_optimization.md` §0, §4
 (`budish2013` — why no rounding theorem applies; `akbarpour2020`, `gandhi2006` fallbacks) ·
 `td/solvers/cert_draw.py::cert_integer_balance_floor` · U8's v2 outputs under
 **`battery/results/u8_band_v2_20260904/`** (`draw_k18_v2_20260904.json`; gitignored, reached

@@ -1,8 +1,8 @@
 # Unit U5-crit — the welfare criterion as one Atkinson scalar *(wave 2, gated on U2-stab — not launched)*
 
-**Status 2026-09-03 (A1 track, `wt/A1`): retired as a unit — folded into `docs/units/U12-menu.md`.** The criterion is two knobs `(δ, ε)` on one sponsor menu (`DOMAIN_economic-theory` §2.3, §2.9, D2); the Atkinson-ε content survives as U12's second knob. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): retired as a unit — folded into `docs/units/U12-menu.md`.** The criterion is two knobs `(δ, ε)` on one sponsor menu (`DOMAIN_economic-theory` §2.3, §2.9, D2); the Atkinson-ε content survives as U12's second knob. See `docs/foundations/BRIEF.md` §4.
 
-## Spec (verbatim from `docs/LIT_economic-theory.md`:§0.5)
+## Spec (verbatim from `docs/foundations/LIT_economic-theory.md`:§0.5)
 
 > **The fibration `Σ log g = n log ḡ − D(g)` is a re-derivation of a 1970 result and should be
 > cited, not proved.** `D(g)` is the **mean logarithmic deviation** = Theil-L = the Atkinson index
@@ -12,7 +12,7 @@
 > vocabulary the sponsor already owns ("how much inequality aversion?" rather than "what exchange
 > rate?").
 
-Paired with, verbatim from `docs/DOMAIN_economic-theory.md`:§2.3:
+Paired with, verbatim from `docs/foundations/DOMAIN_economic-theory.md`:§2.3:
 
 > Economic theory's claim is that this is *not a parameter to elicit* — it is a **choice of
 > criterion**, and there are exactly three defensible ones on the table: utilitarian […],
@@ -26,8 +26,8 @@ Paired with, verbatim from `docs/DOMAIN_economic-theory.md`:§2.3:
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/`,
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/`,
 `figures/`, `battery/`.
 
 ## Agent → verifier
@@ -59,9 +59,9 @@ U12 closes for free; state the threshold.
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_economic-theory.md` §2.3, §4 step 2 (D2), §5 N4, §8 Q2 · `docs/LIT_economic-theory.md`
-§0.5, §1 in full, §3 (`echenique2024`) · `docs/LENS_GROMOV.md` Move 3 (the fibration as written) ·
-`docs/FRAME.md` §3 (the tolerance), §9 (the empty-bundle open item) · `docs/VERIFY_U2-stab.md`
+`docs/foundations/DOMAIN_economic-theory.md` §2.3, §4 step 2 (D2), §5 N4, §8 Q2 · `docs/foundations/LIT_economic-theory.md`
+§0.5, §1 in full, §3 (`echenique2024`) · `docs/foundations/LENS_GROMOV.md` Move 3 (the fibration as written) ·
+`docs/foundations/FRAME.md` §3 (the tolerance), §9 (the empty-bundle open item) · `docs/VERIFY_U2-stab.md`
 and `docs/MODEL_U2-stab.md` (read-only — the gate) · `~/resources/economic-theory/FOUNDATIONS.md`
 (`Kalai 1977`, `Thomson 1994`, `Thomson 2011`, `Moulin 2019`, `Nash 1950`, `Schmeidler 1969`)
 

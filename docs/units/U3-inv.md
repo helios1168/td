@@ -1,8 +1,8 @@
 # Unit U3-inv — may the drawing read books? The invariant message space, against the Nested Range Condition
 
-**Status 2026-09-03 (A1 track, `wt/A1`): carried, sharpened.** Books now enter the draw only through the objective of one concave program per roster (`EG^bal_S`, `DOMAIN_optimization` §2.10); ask the `G`-invariance question of that program's map *and* its duals (P-G1–P-G3, `DOMAIN_economic-theory` §2.7), add N10 (the `c2·T_z` coupling), and take D6 / ★8 (the `fotakis2014` scope correction) as an input, not a conclusion. ★6 is lifted: the instance is readable. Branch `wt/A1`. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): carried, sharpened.** Books now enter the draw only through the objective of one concave program per roster (`EG^bal_S`, `DOMAIN_optimization` §2.10); ask the `G`-invariance question of that program's map *and* its duals (P-G1–P-G3, `DOMAIN_economic-theory` §2.7), add N10 (the `c2·T_z` coupling), and take D6 / ★8 (the `fotakis2014` scope correction) as an input, not a conclusion. ★6 is lifted: the instance is readable. Branch `wt/A1`. See `docs/foundations/BRIEF.md` §4.
 
-## Spec (verbatim from `docs/DOMAIN_economic-theory.md`:§2.7(b))
+## Spec (verbatim from `docs/foundations/DOMAIN_economic-theory.md`:§2.7(b))
 
 > **Restricting the message space** to `G`-invariants (normalised per-rep profiles, GROTH §5b)
 > plus audited magnitudes yields a drawing rule that is strategy-proof against uniform inflation
@@ -10,7 +10,7 @@
 > efficiency, and that price is measurable — re-run the draw on invariants only and compare
 > premium retained.
 
-The claim to be tested, verbatim from `docs/LENS_GROTHENDIECK.md`:§5b:
+The claim to be tested, verbatim from `docs/foundations/LENS_GROTHENDIECK.md`:§5b:
 
 > Let `G = (ℝ_{>0})^R` act by rep-uniform inflation of reported books, `S_{i,·} ↦ γ_i·S_{i,·}` —
 > the natural model of the incentive the 98 unselected reps have. Its invariants include `M_z`,
@@ -23,7 +23,7 @@ The claim to be tested, verbatim from `docs/LENS_GROTHENDIECK.md`:§5b:
 > That is a direct, checkable answer to FRAME §10.5 that needs no mechanism-design theorem […]
 > It does not cover selective (per-zip) inflation, and it discards book magnitude.
 
-And the correction the literature already returned, verbatim from `docs/LIT_economic-theory.md`:§4
+And the correction the literature already returned, verbatim from `docs/foundations/LIT_economic-theory.md`:§4
 (`green1986`):
 
 > **Bears on: §2.7(b) and D5, and it replaces Hurwicz as the load-bearing citation.** DOMAIN §2.7
@@ -41,10 +41,10 @@ And the correction the literature already returned, verbatim from `docs/LIT_econ
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/MODEL.md` (read-only — **do not write the design rule into it**;
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/MODEL.md` (read-only — **do not write the design rule into it**;
 `LENS_GROTHENDIECK.md` descent 5 proposes that and it is the main session's call after this unit
-reports) · `docs/LIT_economic-theory.{md,bib}` (read-only) · `docs/RESEARCH_FINDINGS.md` ·
+reports) · `docs/foundations/LIT_economic-theory.{md,bib}` (read-only) · `docs/RESEARCH_FINDINGS.md` ·
 `docs/RESEARCH_ADDITIONS.bib` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`.
 
@@ -107,18 +107,18 @@ question stop mattering?
 
 ## Inputs to read (paths and sections only)
 
-- `docs/DOMAIN_economic-theory.md` §2.7 in full, §4 step 5 (D5), §8 Q3 and Q7
-- `docs/LIT_economic-theory.md` §0.3 and §4 in full (`green1986`, `milgrom1981`, `bull2007`,
+- `docs/foundations/DOMAIN_economic-theory.md` §2.7 in full, §4 step 5 (D5), §8 Q3 and Q7
+- `docs/foundations/LIT_economic-theory.md` §0.3 and §4 in full (`green1986`, `milgrom1981`, `bull2007`,
   `deneckere2008`, `benporath2012`, `kartik2012`, `benporath2014`, `mylovanov2017`,
   `benporath2019`, `caragiannis2012`), and absence row A6
-- `docs/LIT_economic-theory.bib` (read-only — the keys)
+- `docs/foundations/LIT_economic-theory.bib` (read-only — the keys)
 - `~/resources/economic-theory/FOUNDATIONS.md` — `Hurwicz 1972`, `Gibbard 1973`,
   `Satterthwaite 1975`, `Myerson 1979`, `Maskin 1999`, `Crawford & Varian 1979`
-- `docs/LENS_GROTHENDIECK.md` §5b (the group and its invariants), descent 5
-- `docs/LENS_GROMOV.md` Move 13.1 (reported vs audited — the word split that dissolves the
+- `docs/foundations/LENS_GROTHENDIECK.md` §5b (the group and its invariants), descent 5
+- `docs/foundations/LENS_GROMOV.md` Move 13.1 (reported vs audited — the word split that dissolves the
   dichotomy), Move 9 (why the governance answer must be structural: the misreporting generator is
   a self-interested optimiser, so "bound the stupidity" points the wrong way)
-- `docs/FRAME.md` §4 policy row, §8 A7, §10 Q5, §9 (the blocking item as currently written)
+- `docs/foundations/FRAME.md` §4 policy row, §8 A7, §10 Q5, §9 (the blocking item as currently written)
 - `docs/DATA.md` (what the exporter actually emits — shares, `m_rel`; this constrains what a
   message space *can* be)
 - `docs/RESEARCH_FINDINGS.md` §9-G (the books-enter-at-stage-2-only invariant this unit may

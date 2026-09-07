@@ -4,7 +4,7 @@
 N11; `LENS_GROMOV` ledger U16, U17, U19; decides the report format ★10 (D7). Gated on U8-band
 for the `EG^bal` solver; the margin and the enumeration order need only the gain matrix.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md` §2.14, §2.15)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md` §2.14, §2.15)
 
 > ```
 > EG^bal_S(δ)  ≤  EG_S  ≤  k · log( (B_tot + w·P_S) / k ).                    (★)
@@ -25,8 +25,8 @@ first) · `docs/CODEVERIFY_U11-roster.md` · `battery/results/u11_roster_<date>/
 ## Files forbidden
 
 Every other unit's owned files (`td/solvers/eg_band.py`, `tools/measure/premium.py` by import
-only) · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/APPROACHES.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/LIT_*` · `CLAUDE.md` · existing `td/` modules · `battery/figures/`.
+only) · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/APPROACHES.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_*` · `CLAUDE.md` · existing `td/` modules · `battery/figures/`.
 
 ## Agent → verifier
 
@@ -72,9 +72,9 @@ count of rosters actually solved.
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_optimization.md` §2.14–§2.15 · `docs/DOMAIN_economic-theory.md` §2.10, N11, §4
+`docs/foundations/DOMAIN_optimization.md` §2.14–§2.15 · `docs/foundations/DOMAIN_economic-theory.md` §2.10, N11, §4
 step 7 · `docs/MODEL_U7-meas.md` §1, §3.1, §6 · `docs/CODEVERIFY_U7-meas.md` (the tie finding,
-row 4 caveats) · `docs/LIT_optimization.md` §5 (absence A: no submodularity for `S ↦ EG_S`), §7
+row 4 caveats) · `docs/foundations/LIT_optimization.md` §5 (absence A: no submodularity for `S ↦ EG_S`), §7
 (stability radius / `k`-best assignments) · `tools/measure/premium.py` (`book_matrix`,
 `best_roster`, `coverage_premium`, the `P₁₈` MILP — the code keys `P13` / `P13_solve` are kept
 unchanged, a naming fossil, `premium.py` still emits them at k=18; don't chase it) ·

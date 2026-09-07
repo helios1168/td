@@ -1,10 +1,10 @@
 # Model — unit U2-stab — is the delivered roster stable, and does the question have an answer before it is computed?
 
 **Date:** 2026-09-02 · **Framework:** 0.1-dev ·
-**Reads:** `docs/units/U2-stab.md`, `docs/DOMAIN_economic-theory.md` §2.4/§3/§5/§8,
-`docs/LIT_economic-theory.md` §0.4/§2/§3/absence ledger A3+A5, `docs/LIT_economic-theory.bib`,
+**Reads:** `docs/units/U2-stab.md`, `docs/foundations/DOMAIN_economic-theory.md` §2.4/§3/§5/§8,
+`docs/foundations/LIT_economic-theory.md` §0.4/§2/§3/absence ledger A3+A5, `docs/foundations/LIT_economic-theory.bib`,
 `~/resources/economic-theory/FOUNDATIONS.md` (Gale & Shapley 1962, Roth 1982, Roth 1984,
-Roth & Sotomayor 1990), `docs/MODEL.md` §1, `docs/CHANNEL.md` §3, `docs/FRAME.md` §2/§3/§5/§6,
+Roth & Sotomayor 1990), `docs/MODEL.md` §1, `docs/CHANNEL.md` §3, `docs/foundations/FRAME.md` §2/§3/§5/§6,
 `td/channel.py` (read-only) ·
 **Unit:** `docs/units/U2-stab.md` · **Artifacts:** `docs/artifacts/U2-stab/`
 
@@ -19,7 +19,7 @@ behind "generically unstable" suggests.
 ## 1. Setup (symbol table)
 
 Every symbol is defined here once. Values marked *(FRAME §6)* are reference values from
-`docs/FRAME.md` §6; values marked *(code)* are read from `td/channel.py`.
+`docs/foundations/FRAME.md` §6; values marked *(code)* are read from `td/channel.py`.
 
 | symbol | meaning | units | reference value |
 |---|---|---|---|
@@ -347,7 +347,7 @@ prediction, labelled as such.
 **Stop-rule compliance.** `echenique2024`'s EC record is a conference abstract and the full text
 (arXiv:2402.13378) was **not** fetched or read for this unit. No proposition here rests on it;
 it is cited once, in §5 row 8, for framing only, and its content is reported no further than
-`docs/LIT_economic-theory.md` §3 records.
+`docs/foundations/LIT_economic-theory.md` §3 records.
 
 ---
 

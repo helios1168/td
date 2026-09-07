@@ -1,8 +1,8 @@
 # Unit U2-stab — is the delivered roster stable, and does the question have an answer before it is computed?
 
-**Status 2026-09-03 (A1 track, `wt/A1`): landed** (hub, `VERIFY_U2-stab` 13/13). Its blocking test is now 169 comparisons and moves into U6-sel. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): landed** (hub, `VERIFY_U2-stab` 13/13). Its blocking test is now 169 comparisons and moves into U6-sel. See `docs/foundations/BRIEF.md` §4.
 
-## Spec (verbatim from `docs/LIT_economic-theory.md`:§0.4 and §3)
+## Spec (verbatim from `docs/foundations/LIT_economic-theory.md`:§0.4 and §3)
 
 > **Q3 is not vacuous, and the answer sharpens N3.** Under aligned preferences (both sides rank
 > by the same `u_i(A_j)`) the stable matching is **unique** and is the *greedy* top-pair matching
@@ -11,7 +11,7 @@
 > pairs — N3 is decisive, not vacuous, and **echenique2024** shows why: stability and efficiency
 > are *different members* of one optimal-transport family indexed by an inequality parameter.
 
-And the absence this unit is asked to close, verbatim from `docs/LIT_economic-theory.md`:§Absence
+And the absence this unit is asked to close, verbatim from `docs/foundations/LIT_economic-theory.md`:§Absence
 ledger, row A5:
 
 > **A5.** No published statement, with counterexample, that a max-weight matching under aligned
@@ -29,8 +29,8 @@ ledger, row A5:
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/LIT_economic-theory.{md,bib}` (read-only; **do not append citations** —
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_economic-theory.{md,bib}` (read-only; **do not append citations** —
 that is U0-lit's and the bibliography skill's job) · `docs/RESEARCH_FINDINGS.md` ·
 `docs/RESEARCH_ADDITIONS.bib` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`.
@@ -87,16 +87,16 @@ enough), under `docs/artifacts/U2-stab/`.
 
 ## Inputs to read (paths and sections only)
 
-- `docs/DOMAIN_economic-theory.md` §2.4 (the method and the induced-preference construction), §3
+- `docs/foundations/DOMAIN_economic-theory.md` §2.4 (the method and the induced-preference construction), §3
   item 4, §5 N3, §8 Q4
-- `docs/LIT_economic-theory.md` §0.4, §3 in full (`echenique2024`, `eeckhout2000`, `clark2006`,
+- `docs/foundations/LIT_economic-theory.md` §0.4, §3 in full (`echenique2024`, `eeckhout2000`, `clark2006`,
   `consuegra2013`, `niederle2009`), §2 (`aignerhorev2022`, `gan2019`), absence ledger rows A3 and
   A5
-- `docs/LIT_economic-theory.bib` (read-only — the keys to cite)
+- `docs/foundations/LIT_economic-theory.bib` (read-only — the keys to cite)
 - `~/resources/economic-theory/FOUNDATIONS.md` — `Gale & Shapley 1962`, `Roth & Sotomayor 1990`,
   `Roth 1982`, `Roth 1984`
 - `docs/MODEL.md` (what `u_i(A_j)` is), `docs/CHANNEL.md` §3 (stage 2 as Hungarian on logs)
-- `docs/FRAME.md` §2 (the reversibility row — why an unstable roster matters), §3 (the acceptance
+- `docs/foundations/FRAME.md` §2 (the reversibility row — why an unstable roster matters), §3 (the acceptance
   test, which currently has **no** stability criterion)
 - Read-only: `td/channel.py` around the rectangular Hungarian match (`:288`) — to confirm what is
   actually maximised. **Read only.**

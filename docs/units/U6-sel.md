@@ -1,8 +1,8 @@
 # Unit U6-sel — is "the 13" defensible? *(wave 2, gated on ★5 — not launched)*
 
-**Status 2026-09-03 (A1 track, `wt/A1`): carried, re-scoped, now a `python-typed` → `code-verify` unit** (★6 lifted). Scope: the 13 × 13 audits on the delivered artifact — EF1 / FEFx-w.r.t.-band / proportionality (N1, N9), the 169-pair blocking test with each block's gain (N3, from U2-stab), closed-form Shapley of all 111 via `littlechild1973` + additivity and the least core via `deng1999` / `kern2003` (N5, N6) — per `DOMAIN_economic-theory.md` §2.1, §2.4–§2.6, §4 step 1. Files owned become `tools/measure/audits.py`, `tests/test_audits.py`, `docs/MODEL_U6-sel.md`, `docs/CODEVERIFY_U6-sel.md`. ★5 gates N5 only. Branch `wt/A1`. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): carried, re-scoped, now a `python-typed` → `code-verify` unit** (★6 lifted). Scope: the 13 × 13 audits on the delivered artifact — EF1 / FEFx-w.r.t.-band / proportionality (N1, N9), the 169-pair blocking test with each block's gain (N3, from U2-stab), closed-form Shapley of all 111 via `littlechild1973` + additivity and the least core via `deng1999` / `kern2003` (N5, N6) — per `DOMAIN_economic-theory.md` §2.1, §2.4–§2.6, §4 step 1. Files owned become `tools/measure/audits.py`, `tests/test_audits.py`, `docs/MODEL_U6-sel.md`, `docs/CODEVERIFY_U6-sel.md`. ★5 gates N5 only. Branch `wt/A1`. See `docs/foundations/BRIEF.md` §4.
 
-## Spec (verbatim from `docs/LIT_economic-theory.md`:§0.1 and §0.2)
+## Spec (verbatim from `docs/foundations/LIT_economic-theory.md`:§0.1 and §0.2)
 
 > **The Shapley value of the roster game has a closed form; the §2.5 Monte-Carlo hand-off to
 > statistics is unnecessary.** `f(S) = Σ_z max_{i∈S} S_i(z)` is a *sum over zips of airport
@@ -24,8 +24,8 @@
 
 ## Files forbidden
 
-Every other unit's owned files · `docs/FRAME.md` · `docs/BRIEF.md` · `docs/LENS_*.md` ·
-`docs/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/`,
+Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
+`docs/foundations/DOMAIN_*.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`, `tools/`,
 `figures/`, `battery/`.
 
 ## Agent → verifier
@@ -60,9 +60,9 @@ has to be told which one they are signing.
 
 ## Inputs to read (paths and sections only)
 
-`docs/DOMAIN_economic-theory.md` §2.5, §2.6, §4 step 4 (D4), §5 N5–N6, §7, §8 Q5 ·
-`docs/LIT_economic-theory.md` §0.1, §0.2, §5 in full, absence row A7 · `docs/LENS_GROMOV.md`
-Move 4 (the ladder — `f` is the same function read as a bound) · `docs/FRAME.md` §2 (defensible
+`docs/foundations/DOMAIN_economic-theory.md` §2.5, §2.6, §4 step 4 (D4), §5 N5–N6, §7, §8 Q5 ·
+`docs/foundations/LIT_economic-theory.md` §0.1, §0.2, §5 in full, absence row A7 · `docs/foundations/LENS_GROMOV.md`
+Move 4 (the ladder — `f` is the same function read as a bound) · `docs/foundations/FRAME.md` §2 (defensible
 line by line), §3 (roster criterion) · `~/resources/economic-theory/FOUNDATIONS.md`
 (`Gillies 1959`, `Shapley 1967`, `Shapley 1971`, `Shapley 1953`, `Young 1985`, `Schmeidler 1969`,
 `Aumann & Maschler 1985`)

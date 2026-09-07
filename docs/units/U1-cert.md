@@ -1,6 +1,6 @@
 # Unit U1-cert — does the Eisenberg–Gale dual subsume the four existing certificates?
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md`:§3 and §2.2)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md`:§3 and §2.2)
 
 > **Verification handed to `math-verify`:**
 > […]
@@ -10,7 +10,7 @@
 >   descent) — **this is the "five collapse into one" claim and it is the load-bearing one**;
 > - the `≤ k−1` split-zip descent, if §6 does not return a citation.
 
-Supporting statement of the object, verbatim from `docs/LENS_GROTHENDIECK.md`:§"The general case,
+Supporting statement of the object, verbatim from `docs/foundations/LENS_GROTHENDIECK.md`:§"The general case,
 stated":
 
 > **Fibre.** For a staff set `S`, the relaxation over fractional assignments `X` supported on `S`
@@ -32,8 +32,8 @@ stated":
 ## Files forbidden
 
 Every other unit's owned files (`docs/MODEL_U2-stab.md`, `docs/MODEL_U3-inv.md`,
-`docs/LIT_optimization.md`, `docs/RESEARCH_ADDITIONS.bib`, …) · `docs/FRAME.md` ·
-`docs/BRIEF.md` · `docs/LENS_*.md` · `docs/DOMAIN_*.md` · `docs/RESEARCH_FINDINGS.md` ·
+`docs/foundations/LIT_optimization.md`, `docs/RESEARCH_ADDITIONS.bib`, …) · `docs/foundations/FRAME.md` ·
+`docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` · `docs/RESEARCH_FINDINGS.md` ·
 `docs/REVIEW_GROMOV.md` · `docs/channel_note/**` · `CLAUDE.md` · **all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`** (read-only at most; this unit writes no project code) ·
 `instance_descaled.json.gz` is **present** at this worktree's root and ★6 is lifted in full
@@ -88,17 +88,17 @@ get checked and how a refutation gets its counterexample.
 
 ## Inputs to read (paths and sections only)
 
-- `docs/DOMAIN_optimization.md` §2.2, §3, §8 Q4 (the load-bearing framing)
-- `docs/LENS_GROTHENDIECK.md` §2 (the τ-deformation and step 2), §4 (relativisation, the sandwich),
+- `docs/foundations/DOMAIN_optimization.md` §2.2, §3, §8 Q4 (the load-bearing framing)
+- `docs/foundations/LENS_GROTHENDIECK.md` §2 (the τ-deformation and step 2), §4 (relativisation, the sandwich),
   "The general case, stated", descent 3
-- `docs/LENS_GROMOV.md` Move 3 (the fibration; what the certificates certify)
+- `docs/foundations/LENS_GROMOV.md` Move 3 (the fibration; what the certificates certify)
 - `docs/MODEL.md` (the N-way model — `u_i(z)`, `c1`, `c2`, `λ`, `θ`, the headroom condition)
-- `docs/FRAME.md` §6 (the four certificate numbers; the 1.07% largest zip), §10 Q3
+- `docs/foundations/FRAME.md` §6 (the four certificate numbers; the 1.07% largest zip), §10 Q3
 - `docs/REVIEW_GROMOV.md` R3 (the EG bound as "certificate 5" — this unit's claim is that it is
   not a fifth but *the* one)
-- `docs/LIT_economic-theory.md` §1 and §2 (`atkinson1970` for the fibration identity — **cite, do
+- `docs/foundations/LIT_economic-theory.md` §1 and §2 (`atkinson1970` for the fibration identity — **cite, do
   not re-derive**; `budish2011` for the honest approximate-CEEI form of the equal-budget claim)
-- `docs/LIT_optimization.md` §Q1/§Q5 **if U0-lit has landed** — otherwise proceed and mark the
+- `docs/foundations/LIT_optimization.md` §Q1/§Q5 **if U0-lit has landed** — otherwise proceed and mark the
   `≤ k−1` descent as proved-here-pending-citation
 - Read-only, for the four certificates' actual contracts: `td/solvers/cert_draw.py`,
   `td/channel.py::allocate_districts`. **Read only. No edits.**

@@ -1,8 +1,8 @@
 # Unit U0-lit — run the optimization literature brief
 
-**Status 2026-09-03 (A1 track, `wt/A1`): landed in A1 form** — `docs/LIT_optimization.md` + `LIT_optimization.bib` (46 entries) answer `DOMAIN_optimization.md` §6 as re-cut for the A1 charter; the split-count citation this unit was waiting for is `lenstra1990`. See `docs/BRIEF.md` §4.
+**Status 2026-09-03 (A1 track, `wt/A1`): landed in A1 form** — `docs/foundations/LIT_optimization.md` + `LIT_optimization.bib` (46 entries) answer `DOMAIN_optimization.md` §6 as re-cut for the A1 charter; the split-count citation this unit was waiting for is `lenstra1990`. See `docs/foundations/BRIEF.md` §4.
 
-## Spec (verbatim from `docs/DOMAIN_optimization.md`:§6)
+## Spec (verbatim from `docs/foundations/DOMAIN_optimization.md`:§6)
 
 > **What FOUNDATIONS does not cover that this problem needs.** FOUNDATIONS is strong on
 > MILP/MINLP machinery, flows, and districting-with-contiguity, and *silent* on: market-equilibrium
@@ -15,7 +15,7 @@
 > contradicts-or-sharpens, tool-we-lack}`. Plus a **five-paper shortlist** — the five that would
 > change what gets built. Every absence claim must state where it looked (venue, keyword, years),
 > because the programme's own recon (`RESEARCH_FINDINGS` §0.5) already went stale once. Write
-> `docs/LIT_optimization.md` and append to `docs/RESEARCH_ADDITIONS.bib`.
+> `docs/foundations/LIT_optimization.md` and append to `docs/RESEARCH_ADDITIONS.bib`.
 
 Work `DOMAIN_optimization.md` §6's nine numbered questions in the order given. **Q5 and Q7 are
 the two that gate other units** and must be answered even if the time-box bites: Q5 (power
@@ -25,13 +25,13 @@ citation-vs-proof decision, and Q7 (stability radius, inverse optimization, "obj
 
 ## Files owned
 
-- `docs/LIT_optimization.md` (create)
+- `docs/foundations/LIT_optimization.md` (create)
 - `docs/RESEARCH_ADDITIONS.bib` (**append only** — never rewrite or reorder existing entries)
 
 ## Files forbidden
 
-`docs/BRIEF.md` · `docs/FRAME.md` · `docs/LENS_*.md` · `docs/DOMAIN_*.md` ·
-`docs/LIT_economic-theory.{md,bib}` · `docs/MODEL_*.md` and every other unit's owned files ·
+`docs/foundations/BRIEF.md` · `docs/foundations/FRAME.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` ·
+`docs/foundations/LIT_economic-theory.{md,bib}` · `docs/MODEL_*.md` and every other unit's owned files ·
 `docs/RESEARCH_FINDINGS.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`.
 
@@ -49,7 +49,7 @@ in a note.
 2. Every DOI resolved against Crossref, with the resolved/attempted counts stated. Any DOI that
    does not resolve is dropped, not guessed.
 3. Deduplicated against `docs/RESEARCH_FINDINGS.md`, `docs/RESEARCH_ADDITIONS.bib`,
-   `docs/LIT_economic-theory.bib`, `docs/channel_note/references.bib` and
+   `docs/foundations/LIT_economic-theory.bib`, `docs/channel_note/references.bib` and
    `~/resources/optimization/FOUNDATIONS.md` — state that the check was run.
 4. A five-paper shortlist, each with one sentence on **what it changes in `DOMAIN_optimization.md`
    §2 or §4**.
@@ -66,12 +66,12 @@ resolved / attempted, entries added, duplicates rejected).
 
 ## Inputs to read (paths and sections only)
 
-- `docs/DOMAIN_optimization.md` §6 (the brief), §2 (what each method needs a citation for), §8
+- `docs/foundations/DOMAIN_optimization.md` §6 (the brief), §2 (what each method needs a citation for), §8
 - `~/resources/optimization/FOUNDATIONS.md` (the 113 seeded entries — what is already held)
-- `docs/LIT_economic-theory.md` §0 and its absence ledger (**the model for this file's shape**,
+- `docs/foundations/LIT_economic-theory.md` §0 and its absence ledger (**the model for this file's shape**,
   and the dedup target — Q1/Q4 overlap its Q1/Q5; do not re-do that work, cite across)
 - `docs/RESEARCH_FINDINGS.md` §0.5 (the stale-frontier warning) — do not edit
-- `docs/FRAME.md` §6 (instance size: `n = 1,229`, `k = 13`, `|R| = 111` — the scale at which
+- `docs/foundations/FRAME.md` §6 (instance size: `n = 1,229`, `k = 13`, `|R| = 111` — the scale at which
   approximation guarantees are or are not worth having)
 
 ## Open questions for ★0
