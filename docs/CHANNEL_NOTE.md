@@ -284,7 +284,7 @@ unique. The Lagrangian $L(m,\mu ) = \sum _j \log m_j - \mu (\sum _j m_j - M(Z))$
 for every j, so $m_j = 1/\mu$ for all j, and the constraint forces $m_j = M(Z)/k$. Substituting
 gives (ceilbasic).
 
-Equivalently and without calculus, AM–GM gives `(Π_j m_j)^{1/k} ≤ (1/k) Σ_j m_j = M(Z)/k` with
+Equivalently and without calculus, AM–GM gives $\big(\prod_j m_j\big)^{1/k} \le \frac{1}{k}\sum_j m_j = M(Z)/k$ with
 equality iff all $m_j$ are equal; take logarithms and multiply by k. Since every partition's mass
 vector is feasible for the relaxation, the bound applies to it, and the equality case identifies
 exactly the equal partitions. ∎
@@ -335,7 +335,7 @@ Kalai–Smorodinsky gap of 5.2×10⁻⁸ at 98.1% of attainable welfare with gai
 is **Pareto-dominated** by Nash's (7.3715, 7.2318) — both parties strictly prefer the Nash
 allocation to the "perfectly fair" one. Proposition 2 gives the balance without the pathology,
 because a strictly concave increasing objective stays on the Pareto frontier by construction. A
-hard band `$1B ± ε` would import the pathology back as an infeasibility risk.
+hard band of \$1B $\pm\,\varepsilon$ would import the pathology back as an infeasibility risk.
 
 ---
 
@@ -366,7 +366,7 @@ u_{\mathrm{own}(z)}(z) = c_2 T_z + c_{\mathrm{free}} S_{\mathrm{free}}(z) + \lam
 
 in which only the last term mentions `own`. Summing over $z$ gives (decomp). For the
 maximisation, $c_1 - c_2 = (1 - \lambda ) - \theta (1 - \lambda ) = (1 - \theta )(1 - \lambda ) \ge 0$, so the sum is maximised
-termwise by $\mathrm{own}(z) \in \operatorname{argmax}_i S_i(z)$ over the candidates. ∎
+termwise by $\mathrm{own}(z) \in \mathrm{argmax}_i S_i(z)$ over the candidates. ∎
 
 Read plainly: **the objective is "balance the territories", plus "where there is slack, leave
 business with the representative who already has it".** That is a reassuringly operational
@@ -575,11 +575,11 @@ $\sum _j \eta _{zj} = M_z$ forces $\eta _{zj} \le M_z$, i.e. $y_{zj} \le 1$.
 solution exists. The constraint matrix is the node–arc incidence matrix of the complete bipartite
 network on the $n$ supply nodes and $k$ demand nodes, and a set of its columns is linearly
 independent iff the corresponding edge set contains no cycle; hence the support of a basic
-solution is a forest on `n + k` nodes and has at most `n + k − 1` edges.
+solution is a forest on $n + k$ nodes and has at most $n + k - 1$ edges.
 
 (3) Let `F` be the number of split zips. Every zip node has degree at least one in the support,
 since $M_z > 0$ must be shipped somewhere, and a split zip has degree at least two. Counting
-edges, `n + F ≤ #edges ≤ n + k − 1`, so $F \le k - 1$. ∎
+edges, $n + F \le \#\text{edges} \le n + k - 1$, so $F \le k - 1$. ∎
 
 **Corollary 7 (rounding damage is confined to $k - 1$ zips).** Rounding a basic optimum by giving
 each split zip to the district holding its largest share changes at most $k - 1$ of the $n$
@@ -977,7 +977,7 @@ inequality, never an equality: the objective increases in $g_j$, so it is tight 
 but an equality lets presolve aggregate $g_j$ out and every in-callback `trySol` then dies
 (trap 14). And `log` enters through an epigraph variable $w_j \le \log g_j$, which a solver either
 recognises as convex (SCIP does) or approximates by the outer-approximation tangent family
-`w_j ≤ log ĝ + (g_j − ĝ)/ĝ` at incumbents `ĝ`, generated lazily.
+$w_j \le \log \hat{g} + (g_j - \hat{g})/\hat{g}$ at incumbents $\hat{g}$, generated lazily.
 
 ---
 
@@ -1018,7 +1018,7 @@ a centroid update with no optimality claim attached.
 
 The inner LP is a Hitchcock transportation problem (Lemma 6), so a basic optimum splits at most
 $k - 1$ units; its duals $(\alpha , \beta )$ satisfy $\alpha _z + M_z \beta _j \le M_z \lVert q_z - c_j \rVert ^2$, which makes the
-optimal cells the power diagram $\operatorname{argmin}_j ( \lVert q_z - c_j \rVert ^2 - \beta _j )$. **There is no fixed point** on
+optimal cells the power diagram $\mathrm{argmin}_j ( \lVert q_z - c_j \rVert ^2 - \beta _j )$. **There is no fixed point** on
 the live instance: 20 iterations, no exact repeat, non-monotone.
 
 Note what the two programs disagree about. The inner LP minimises compactness at exactly equal
@@ -1096,7 +1096,7 @@ it the log's gradient at the lower bound is ~1e9 and SCIP's LPs go unstable.
 
 ---
 
-**Option B — the same program, on the atom graph.** `A` the 56 state atoms, `G_A` their rook
+**Option B — the same program, on the atom graph.** `A` the 56 state atoms, $G_A$ their rook
 graph (126 edges, one component), $M_a$ each atom's mass.
 
 ```math
@@ -1120,7 +1120,7 @@ the whole model is small, which is why this is the cheap option — it replaces
 ---
 
 **Option C — pre-aggregate, then A.** A contraction $\varphi : Z \to U$ (Swamy multilevel matching)
-supplies the ground set; $M_u = \sum _{z: \varphi (z)=u} M_z$ and `G_U` is the contracted graph.
+supplies the ground set; $M_u = \sum _{z: \varphi (z)=u} M_z$ and $G_U$ is the contracted graph.
 
 ```math
 \begin{array}{llll}
@@ -1204,7 +1204,7 @@ measure it after the fact.
 
 ```math
 \Longrightarrow \quad \text{the optimal cell of } z \text{ is } \quad
-\operatorname{argmin}_j \big( \lVert q_z - c_j \rVert^2 - \beta_j \big)
+\mathrm{argmin}_j \big( \lVert q_z - c_j \rVert^2 - \beta_j \big)
 ```
 
 Certificate (iii) is P1's inner program with integrality restored and the equality row widened to
@@ -1221,8 +1221,8 @@ geometric constraint — and from P1 in two: integrality, and whether $c$ is dat
 | P1 (ours) | none; convexity of the power cells is a by-product | fixed by Lloyd | dropped | hard equality |
 | P3 (VBL) | separator cuts on `G` | decided in-model | kept | hard band |
 | A | separator cuts on `Ĝ` | decided in-model | kept | objective |
-| B | separator cuts on `G_A` | decided in-model | kept | objective |
-| C | separator cuts on `G_U` | decided in-model | kept | objective |
+| B | separator cuts on $G_A$ | decided in-model | kept | objective |
+| C | separator cuts on $G_U$ | decided in-model | kept | objective |
 | D | diameter conflicts, no graph | decided in-model | kept | objective |
 | E | none | fixed by Lloyd | dropped | hard equality |
 
