@@ -293,6 +293,8 @@ def figure_contestability(a_values, b_values, xy, states, out, *, firm_a="A", fi
 # plus two of tab20b's, with the two near-duplicate greys and the second olive dropped.  Hues
 # only need to be *locally* distinguishable -- see `color_districts` -- so 12 is ample for
 # k = 13 and the palette is chosen for separation at bubble size, not for a global ordering.
+# TODO(2026-09-07): D04 and SOUTHWEST share a colour and look adjacent in `SOUTHWEST_anchor`
+# (reported only, from the former STATE.md ## Next); `color_districts` should keep them apart.
 QUAL = [
     "#1f77b4",   # blue
     "#ff7f0e",   # orange

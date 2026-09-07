@@ -318,6 +318,17 @@ Fix: configure rtk to leave `git` alone (rtk `filters.toml` or the hook's exclus
 `permissions.allow` matches again. Check: a background job in a worktree can run `git add`
 and `git commit` without a prompt. Pushing stays with the user per the autoMode environment note.
 
+**P5. The `caveman shrink-hook` PreToolUse hook does the same for some git commands.** Found
+during step 4 on 2026-09-07: `git branch --merged main`, `git for-each-ref`, `git show-ref`,
+`git rev-parse --symbolic --branches` and `git rm` come back wrapped in `caveman`, and the
+isolation guard refuses them with "runs caveman with a git command among its operands".
+`git status`, `git log`, `git add`, `git commit`, `git mv`, `git grep` and `git merge-base` pass.
+caveman has no per-command exclusion (`think.shrink = false` does not stop the hook), and its own
+stats show 122 tokens saved over its lifetime. Fix applied: the shrink-hook entry was removed
+from `~/.claude/settings.json` PreToolUse (takes effect at the next session start). Memory
+`caveman-proxy-disabled` is updated in step 6. The `mcp__caveman__*` tools and the `/caveman`
+skill stay.
+
 **Hook facts confirmed** (https://code.claude.com/docs/en/hooks.md): `SessionStart` matchers are
 `startup`, `resume`, `clear`, `compact`, `fork`; stdout on exit 0 is injected into context.
 `PreCompact` matchers are `manual`, `auto`. `PreToolUse` can return
