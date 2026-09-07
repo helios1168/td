@@ -13,13 +13,11 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Step 5 (worktree and branch triage; the five hub plan files folded and deleted) is done. Step 6
-is next, on a Sonnet 5 session: `.claude/doc-owners.txt`, the four hooks (D5), and
-`tests/test_docs_owners.py`; refresh `CLAUDE.md` invariants (traps from memory, subagent rule,
-rule 9 amendment) and `docs/CODE_MAP.md`; retire `.serena/memories/core.md`; update memory per
-D3 and decision 12. One commit per step. Stop and report before merging; the merge to `main`
-needs the user's approval (see memory `ask-before-merging-to-hub`); the user runs `TRIAGE.sh` by
-hand first (nine refused status checks, two staged `PLAN.md` copies).
+Migration complete. Report to the user; the user runs `TRIAGE.sh` by hand, reviews, then
+approves the merge (memory `ask-before-merging-to-hub`). The merge commit sequence is: last
+track commit deletes `PLAN.md` and `TRIAGE.sh`; `git merge --ff-only worktree-workflow` on the
+hub; then unlock and remove this worktree and delete the branch. Memory updates per D3 are done
+by the orchestrating session.
 
 ## Done
 
@@ -73,6 +71,16 @@ hand first (nine refused status checks, two staged `PLAN.md` copies).
   a concurrent session updated `worktree-headline`'s own `PLAN.md` mid-triage so that one was
   left alone); tests 306 passed, 0 failed, unchanged. `TRIAGE.sh` holds 11 commands the guard
   refused, for the user.
+- 2026-09-07 step 6 done, `1cb3990`: `.claude/doc-owners.txt` (5 lines, zero orphans over 21
+  tracked docs/**/*.md outside foundations/), `.claude/settings.json` (the four td-*.sh hooks),
+  `tests/test_docs_owners.py` (6 tests); CLAUDE.md gains Docs discipline / Worktrees / Subagents
+  sections and traps 16-17; CODE_MAP.md gains 11 rows; docs/RESEARCH_ADDITIONS.bib moved to
+  literature/; `.serena/memories/core.md` retired; agent memory repointed (15 stale citations
+  across 8 files) and trimmed toward the 60-line cap (2 of 5 over-cap files brought under it;
+  3 left over with no safe cut identified); 7 open units' "Files owned" sections corrected off
+  the pre-fold MODEL_/VERIFY_ filenames; TRIAGE.sh gained follow-up commands for its 6 merged
+  worktrees. Tests 312 passed, 0 failed (306 baseline + 6 new). Second commit `Plan: step 6 done`
+  closes the migration.
 
 ## Decisions needed
 
