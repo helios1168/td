@@ -1,6 +1,6 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-07 · **Branch:** `worktree-vbl` · **Head:** `c892548` · **Tests:** 306 pass,
+**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `b7d6e0c` · **Tests:** 306 pass,
 0 fail (2026-09-07)
 
 ## Now
@@ -9,7 +9,8 @@
 ships.** Session of 2026-09-06 night into 2026-09-07, worktree `.claude/worktrees/vbl`, branch
 `worktree-vbl`, commits `a3846b2` (Track 1 solver and driver, Track 2 solver, shared report
 helper), `4bf74c7` (Track 2 driver, anchoring, own-owner reading, verification reports),
-`c892548` (`docs/BORDERS_RESULTS.md`). Unmerged; ask before merging to `main`. 306 tests, 0 fail.
+`c892548` (`docs/BORDERS_RESULTS.md`), merged to `main` as `b7d6e0c` on 2026-09-07 at the
+sponsor's request and pushed. 306 tests, 0 fail.
 Run directory `battery/results/borders_k18_v2_20260907/` (hub, gitignored), every cell with
 `draw.csv`, dot and Voronoi maps. All maps published as artifact
 `ca561d23-fa10-49cd-80c0-4d69625d2857` ("Borders on State Lines", compare slider against the
@@ -51,8 +52,6 @@ is wanted, and whether the West's rearrangement is acceptable to the sponsor.
       `docs/BORDERS_RESULTS.md` and the four maps it lists. The recommendation is Track 2
       anchored δ = 5% (8 splits, certified; CA, TX, NY, FL the only split states). The
       residual decisions after that are inside those four states only.
-- [ ] **Merge `worktree-vbl` into `main`** once the decision is taken; ask first. Three
-      commits (`a3846b2`, `4bf74c7`, `c892548`) plus the state commit.
 - [ ] **Rerun the chosen cell with `--incumbency-tiebreak`** and report the stage-2 and map
       difference. Built and off; not run tonight.
 - [ ] **The free MILP does not close at δ ≤ 2%** (incumbents 9, 12, 17; bounds 8, 9, 9). Only
