@@ -47,6 +47,45 @@ D09 the largest at 305, which shows how far ZIP count and opportunity come apart
 Hawaii appears under D18 because it has no place in the state adjacency graph and is assigned
 after the fact, alongside Alaska and the ZIP codes with no gazetteer coordinate.
 
+## The four split states
+
+One figure per state that more than one district holds. Each shows the state carved by district
+colour, together with every state those districts also reach into, since that is the other half
+of the story: a district that takes a slice of California has to get the rest of its opportunity
+somewhere.
+
+A district is named in a subtitle when it holds at least 1% of that state's opportunity, the same
+1% threshold the model itself uses to decide that a state is present in a district. A district
+can therefore show as a thin colour on the map without being named, though that does not happen
+for these four.
+
+| state | share of national opportunity | districts | reaches into |
+|---|---|---|---|
+| California | 22.92% | D02 20.1%, D10 23.1%, D14 23.4%, D17 10.8%, D18 22.6% | AK, HI, ID, MT, NV, OR, UT, WA |
+| Texas | 11.22% | D03 51.4%, D16 48.6% | KS, OK |
+| New York | 9.97% | D01 52.8%, D04 37.6%, D05 9.5% | CT, DC, DE, MA, MD, ME, NH, PA, RI, VT |
+| Florida | 7.77% | D07 71.6%, D15 28.4% | GA, SC |
+
+The percentages after each district are shares of that state's own opportunity, not of the
+nation. They sum to 100% per state.
+
+California and New York are the two states whose districts spill furthest. California's five
+districts collectively cover eight other states, which is why holding it to fewer districts
+reorganises the whole west. Texas and Florida are nearly self-contained, reaching only into two
+neighbours each, which is why capping them changes little.
+
+### California, in five districts
+![California](state_CA.png)
+
+### Texas, in two districts
+![Texas](state_TX.png)
+
+### New York, in three districts
+![New York](state_NY.png)
+
+### Florida, in two districts
+![Florida](state_FL.png)
+
 ## The districts
 
 ### D01 — 5.38%, New York

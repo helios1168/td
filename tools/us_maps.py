@@ -143,13 +143,18 @@ def _fmt(v) -> str:
 
 
 # ------------------------------------------------------------------ canvas
-def _canvas(states, title, subtitle, footer=FOOTER, *, state_w=0.5, state_color=OUTLINE):
+def _canvas(states, title, subtitle, footer=FOOTER, *, state_w=0.5, state_color=OUTLINE,
+           figsize=FIGSIZE, rect=(0.015, 0.055, 0.845, 0.845)):
+    """`figsize`/`rect` default to the landscape overview canvas and its axes box (room held
+    on the right for `_district_legend`); the state close-ups are the only caller that
+    overrides either, since a portrait subject on that box wastes half the width.
+    """
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig = plt.figure(figsize=FIGSIZE, dpi=DPI, facecolor=BG)
-    ax = fig.add_axes([0.015, 0.055, 0.845, 0.845])
+    fig = plt.figure(figsize=figsize, dpi=DPI, facecolor=BG)
+    ax = fig.add_axes(rect)
     ax.set_facecolor(BG)
     if states is not None:
         states.boundary.plot(ax=ax, color=state_color, linewidth=state_w)
@@ -1539,6 +1544,14 @@ CONTEXT_ALPHA = 0.9            # solid, not translucent: at REGION_ALPHA it read
 DETAIL_PAD = 0.08              # zoom padding, as a fraction of the district's own larger side
 
 
+def _pad_bounds(bounds, pad) -> tuple:
+    """`(x0, y0, x1, y1)` padded by `pad` of its own larger dimension. Shared by the district
+    and the state close-ups, so the two zoom the same way."""
+    x0, y0, x1, y1 = bounds
+    m = pad * max(x1 - x0, y1 - y0)
+    return x0 - m, y0 - m, x1 + m, y1 + m
+
+
 def _district_window(polys, d, pad=DETAIL_PAD) -> tuple:
     """`(x0, y0, x1, y1)` -- the zoom window for one district's close-up: its own territory's
     bounds, padded by `pad` of its own larger dimension so a slice of its neighbours shows too.
@@ -1546,9 +1559,7 @@ def _district_window(polys, d, pad=DETAIL_PAD) -> tuple:
     g = polys.get(d)
     if g is None or g.is_empty:
         raise ValueError(f"district {d}: no territory to zoom to")
-    x0, y0, x1, y1 = g.bounds
-    m = pad * max(x1 - x0, y1 - y0)
-    return x0 - m, y0 - m, x1 + m, y1 + m
+    return _pad_bounds(g.bounds, pad)
 
 
 def _figure_district_detail(d, districts, values, xy, states, zip_state, polys, colors,
@@ -1651,6 +1662,241 @@ def figures_district_detail(districts, values, xy, states, outdir, *, zip_state=
     return written
 
 
+# ------------------------------------------------------------------ per-state close-ups
+# A district close-up names one district and mutes the rest.  A state close-up asks the other
+# question, not "what does D06 look like" but "what does California look like", where the
+# answer is several districts at once, and the point of the figure is to show every one of them
+# in its own hue inside the state, plus whatever other states those same districts also carry.
+STATE_HOLD_ETA = 0.01     # a district "holds" a state at >=1% of that state's own M, the same
+                          # threshold td.solvers.state_splits.build_milp uses for "state s is in
+                          # district j" (its eta, default 0.01), reused here so a state figure's
+                          # notion of "carves up" and "reaches into" matches the model's own
+STATE_FIG_AREA = FIGSIZE[0] * FIGSIZE[1]   # same pixel budget as the landscape overview canvas
+STATE_FIG_MIN_SIDE = 6.0
+STATE_FIG_MAX_SIDE = 16.0
+
+
+def state_holdings(districts, values, zip_state, eta=STATE_HOLD_ETA) -> dict:
+    """`{state: {district: share}}`: for every state with a zip in `districts`, the districts
+    holding at least `eta` of that state's own M, and the exact share each holds.
+
+    A district below `eta` in a state is a boundary zip or two, not a real presence there, so it
+    is dropped from both questions this feeds: which districts carve up a state, and which
+    other states those same districts reach into.  `eta` matches
+    `td.solvers.state_splits.build_milp`'s own state-anchoring threshold (see that module's
+    docstring); it is not a value chosen for this file.
+    """
+    totals, per = {}, {}
+    for z, dd in districts.items():
+        s = zip_state.get(z)
+        if s is None:
+            continue
+        v = float(values.get(z, 0.0))
+        totals[s] = totals.get(s, 0.0) + v
+        by_d = per.setdefault(s, {})
+        by_d[dd] = by_d.get(dd, 0.0) + v
+    out = {}
+    for s, by_d in per.items():
+        tot = totals.get(s, 0.0) or 1.0
+        out[s] = {dd: m / tot for dd, m in by_d.items() if m / tot >= eta}
+    return out
+
+
+def connected_states(state, holdings) -> set:
+    """Every state reachable from `state` by one shared district: the districts holding
+    `state` (per `holdings`), then every other state those same districts hold.  Always
+    includes `state` itself."""
+    via = set(holdings.get(state, {}))
+    return {s for s, by_d in holdings.items() if via & set(by_d)}
+
+
+def split_states(holdings) -> list:
+    """States held by two or more districts, sorted: the default `--state-figures` subject
+    list when none is named on the command line."""
+    return sorted(s for s, by_d in holdings.items() if len(by_d) >= 2)
+
+
+def _fit_figsize(window, area=STATE_FIG_AREA, min_side=STATE_FIG_MIN_SIDE,
+                 max_side=STATE_FIG_MAX_SIDE) -> tuple:
+    """`(w, h)` inches for a canvas whose aspect ratio matches `window`'s `(x0, y0, x1, y1)`, at
+    roughly the landscape overview canvas's own pixel budget.  A portrait subject like
+    California gets a portrait page instead of losing half a landscape one to blank margin, and
+    a very elongated chain of connected states is clamped to a sane width or height rather than
+    growing without bound.
+    """
+    x0, y0, x1, y1 = window
+    aspect = (x1 - x0) / (y1 - y0) if y1 > y0 else 1.0
+    w = (area * aspect) ** 0.5
+    h = area / w
+    if w < min_side:
+        w, h = min_side, area / min_side
+    elif w > max_side:
+        w, h = max_side, area / max_side
+    return round(w, 2), round(h, 2)
+
+
+def _states_window(state_polys, codes, pad=DETAIL_PAD) -> tuple:
+    """`(x0, y0, x1, y1)`: the zoom window for a set of states, the union of their own
+    polygons' bounds, padded exactly as `_district_window` pads a district's."""
+    import shapely
+    geoms = [state_polys[c] for c in codes if c in state_polys]
+    if not geoms:
+        raise ValueError(f"no known polygon for any of {sorted(codes)}")
+    return _pad_bounds(shapely.union_all(geoms).bounds, pad)
+
+
+def _figure_state_detail(code, conn, districts, values, xy, states, zip_state, cells, lattice,
+                         colors, state_polys, state_names, clip, holdings, state_totals, grand,
+                         out, *, vmax, max_marker=MAX_MARKER, pad=DETAIL_PAD, footer=FOOTER):
+    """One state's own close-up: every district active in `code` or one of its connected
+    states (`conn`) in its own hue, everything else the muted context grey, the same fill rule
+    a district close-up uses except keyed by state membership rather than by one subject
+    district.
+
+    Colouring is done at the zip-cell level, not the whole-district level: `cells` restricted to
+    `conn` are dissolved by district for the coloured fill, and every other cell is dissolved
+    into one grey blob, so a district that reaches beyond `conn` (D17 out of California into
+    Idaho, say) is coloured only where it is actually inside `conn` and grey everywhere else in
+    the frame.  Labels reuse `_place_labels`, since several of these regions are as small as the
+    smallest district close-up's.  Only `code`'s own zips are drawn as dots, matching the
+    district close-up's convention of drawing only the subject's own zips.
+    """
+    from matplotlib.collections import LineCollection
+    from matplotlib.patches import PathPatch
+
+    window = _states_window(state_polys, conn, pad)
+    x0, y0, x1, y1 = window
+    figsize = _fit_figsize(window)
+
+    def hits(b):                       # does a bbox `(x0, y0, x1, y1)` meet the zoom window
+        return not (b[2] < x0 or x1 < b[0] or b[3] < y0 or y1 < b[1])
+
+    target_cells = {z: g for z, g in cells.items() if zip_state.get(z) in conn}
+    colored_polys = dissolve(target_cells, districts)
+    context_parts = [g for z, g in cells.items()
+                     if zip_state.get(z) not in conn and hits(g.bounds)]
+    local_districts = {z: districts[z] for z in target_cells}
+    local_centroids = district_centroids(local_districts, values, xy)
+
+    by_d = holdings.get(code, {})
+    share_state = 100.0 * state_totals.get(code, 0.0) / grand
+    dist_bits = ", ".join(f"{dd} {100.0 * s:.1f}%"
+                          for dd, s in sorted(by_d.items(), key=lambda kv: str(kv[0])))
+    others = sorted(conn - {code})
+    n = len(by_d)
+    title = f"{state_names.get(code, code)} — split across {n} district{'s' if n != 1 else ''}"
+    # one clause per line rather than one long run: a portrait canvas is narrower in inches than
+    # the landscape overview, at the same fontsize, and a long "reaches into" list (New York
+    # reaches into ten states) would otherwise run off the right edge unread
+    import textwrap
+    chars = max(20, round(120 * figsize[0] / FIGSIZE[0]))
+    subtitle = "\n".join(textwrap.fill(line, chars) for line in (
+        f"{share_state:.2f}% of national opportunity",
+        f"{dist_bits or 'no district holds at least 1% of it'} of {code}'s own opportunity",
+        f"reaches into {', '.join(others) if others else 'no other state'}"))
+    fig, ax = _canvas(None, title, subtitle, footer, figsize=figsize,
+                      rect=(0.02, 0.065, 0.96, 0.80))
+
+    if context_parts:                                          # 1a. context, one grey blob
+        import shapely
+        context_geom = _valid(shapely.union_all(context_parts))
+        for path in _poly_paths(context_geom):
+            ax.add_patch(PathPatch(path, facecolor=CONTEXT_FILL, edgecolor="none",
+                                   alpha=CONTEXT_ALPHA, zorder=0))
+    for dd, g in colored_polys.items():                        # 1b. fills, coloured by district
+        if g is None or g.is_empty:
+            continue
+        for path in _poly_paths(g):
+            ax.add_patch(PathPatch(path, facecolor=colors[dd], edgecolor="none",
+                                   alpha=REGION_ALPHA, zorder=1))
+
+    def seg_hits(segs):
+        return [s for s in segs
+               if hits((s[:, 0].min(), s[:, 1].min(), s[:, 0].max(), s[:, 1].max()))]
+
+    ax.add_collection(LineCollection(seg_hits(lattice), colors=CELL_EDGE, linewidths=CELL_EDGE_W,
+                                     alpha=CELL_EDGE_ALPHA, zorder=2))        # 2. the zip lattice
+    eps = 1e-4 * float(np.hypot(x1 - x0, y1 - y0))
+    borders = district_borders(colored_polys, eps)
+    ax.add_collection(LineCollection(borders, colors=BORDER, linewidths=BORDER_W,
+                                     capstyle="round", joinstyle="round", zorder=3))  # 3. borders
+    if states is not None:                                     # 4. states, on top but light
+        states.boundary.plot(ax=ax, color=OUTLINE, linewidth=STATE_W_REGIONS, zorder=4)
+
+    keep = sorted(((z, float(values.get(z, 0.0))) for z in districts
+                  if zip_state.get(z) == code and z in xy and values.get(z, 0.0) > 0),
+                 key=lambda kv: kv[1])
+    if keep:                                                   # 5. code's own zips
+        px = np.array([xy[z][0] for z, _ in keep], float)
+        py = np.array([xy[z][1] for z, _ in keep], float)
+        pv = np.array([v for _, v in keep], float)
+        c = [colors[districts[z]] for z, _ in keep]
+        ax.scatter(px, py, s=_sizes(pv, vmax, max_marker), c=c, alpha=ALPHA,
+                  linewidths=EDGE_W, edgecolors="white", zorder=5)
+
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y0, y1)
+    order_local = sorted(colored_polys, key=str)               # 6. labels, leader lines if small
+    anchors = label_points(order_local, colored_polys, local_centroids, LABEL_SEP * (x1 - x0))
+    footprint = {dd: _largest_part(g).area for dd, g in colored_polys.items()}
+    _place_labels(fig, ax, order_local, anchors, footprint, avoid_polys=colored_polys, land=clip)
+    return _save(fig, out)
+
+
+def figures_state_detail(districts, values, xy, states, outdir, *, zip_state, codes=None,
+                         n_near=4, palette=QUAL, pad=DETAIL_PAD, max_marker=MAX_MARKER,
+                         eta=STATE_HOLD_ETA, report=None) -> list:
+    """One `state_<code>.png` per split state: `codes` defaults to `split_states`, every state
+    two or more districts hold at `eta`.
+
+    The Voronoi diagram is always built per state (`--clip-states`'s own clipping, regardless of
+    whether that flag was passed for the other figures), since a state close-up is making a
+    claim about exactly where a state line falls, and a cell that bleeds across it under the
+    national diagram would draw that claim wrong.
+    """
+    say = report or (lambda _s: None)
+    holdings = state_holdings(districts, values, zip_state, eta)
+    codes = list(codes) if codes else split_states(holdings)
+    if not codes:
+        say("state figures: no state is held by two or more districts at this eta")
+        return []
+
+    keys = [z for z in sorted(districts, key=str) if z in xy]
+    _, _, colors = draw_palette(districts, values, xy, n_near=n_near, palette=palette)
+    state_polys = dict(zip(states["STUSPS"], states.geometry))
+    state_names = dict(zip(states["STUSPS"], states["NAME"]))
+    clip = clip_region([xy[z] for z in keys], states, 0.05)
+    cells = voronoi_cells(keys, xy, clip, zip_state=zip_state, state_polys=state_polys)
+    lattice = [seg for g in cells.values() for seg in _lines_of(g.boundary)]
+
+    per = {}
+    for z, dd in districts.items():
+        per[dd] = per.get(dd, 0.0) + float(values.get(z, 0.0))
+    grand = sum(per.values()) or 1.0
+    state_totals = {}
+    for z, s in zip_state.items():
+        if s is None or z not in districts:
+            continue
+        state_totals[s] = state_totals.get(s, 0.0) + float(values.get(z, 0.0))
+    vmax = max((float(values.get(z, 0.0)) for z in districts
+               if float(values.get(z, 0.0)) > 0), default=1.0)
+
+    os.makedirs(outdir, exist_ok=True)
+    written = []
+    for code in codes:
+        conn = connected_states(code, holdings)
+        path = _figure_state_detail(code, conn, districts, values, xy, states, zip_state, cells,
+                                    lattice, colors, state_polys, state_names, clip, holdings,
+                                    state_totals, grand,
+                                    os.path.join(outdir, f"state_{code}.png"),
+                                    vmax=vmax, max_marker=max_marker, pad=pad)
+        written.append(path)
+        say(f"{os.path.basename(path):<16} connects to "
+            f"{', '.join(sorted(conn - {code})) or 'no other state'} "
+            f"({os.path.getsize(path) / 1024:.0f} KB)")
+    return written
+
+
 def read_draw(path) -> dict:
     """`{zip: district}` from a `draw.csv` written by `tools/run_draw.py` (`zip,district`)."""
     import csv as _csv
@@ -1712,6 +1958,12 @@ def main(argv=None):
     ap.add_argument("--district-figures", default=None, metavar="DRAW_CSV",
                     help="the same draw.csv; adds one district_<id>.png per district, a "
                          "close-up on that district's own territory (honours --clip-states)")
+    ap.add_argument("--state-figures", nargs="+", default=None,
+                    metavar=("DRAW_CSV", "STATES"),
+                    help="the same draw.csv, optionally followed by a comma list of state "
+                         "codes (default: every state two or more districts hold); adds one "
+                         "state_<code>.png per state, always clipped per state regardless of "
+                         "--clip-states")
     args = ap.parse_args(argv)
 
     from td import instance as descaled
@@ -1805,6 +2057,25 @@ def main(argv=None):
         if flag in ("districts", "regions_voronoi") and args.bold_states:
             kw.update(state_w=1.6, state_color="#555555")
         written.append(builder(draw, M, xy, states, dest, **kw))
+
+    if args.state_figures:                     # its own block: DRAW_CSV plus an optional
+                                                 # comma list of states, not a plain path
+        sf_path = args.state_figures[0]
+        sf_codes = [c.strip().upper() for c in ",".join(args.state_figures[1:]).split(",")
+                   if c.strip()] or None
+        draw = read_draw(sf_path)
+        stray = [z for z in draw if z not in M]
+        if stray:
+            print(f"WARNING: {len(stray)} zip(s) in the draw are not in the instance, "
+                  f"ignored e.g. {stray[:5]}")
+            draw = {z: dd for z, dd in draw.items() if z in M}
+        if states is None:
+            print("WARNING: --state-figures has no effect with --no-basemap")
+        else:
+            zip_state = {z: d.G.nodes[z].get("state") for z in draw}
+            written.extend(figures_state_detail(draw, M, xy, states, args.out,
+                                                zip_state=zip_state, codes=sf_codes,
+                                                report=print))
 
     for p in written:
         print(f"wrote {p}  ({os.path.getsize(p) / 1024:.0f} KB)")
