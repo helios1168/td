@@ -111,22 +111,57 @@ s.t.  Σ_j y_sj = 1                       ∀ s                (all of s placed)
   variables. `scipy.optimize.milp` on HiGHS with `mip_rel_gap = 0.0` (trap 12). Seconds.
 - **Warm start / sanity**: the committed map's composition `y⁰` is feasible at δ = 1.3% and
   gives an upper bound on the split count at every δ ≥ that.
+- **Balance pass, lexicographic.** The MILP uses the whole band wherever that saves a split,
+  so at δ = 10% it returns a 10% imbalance somewhere even when the chosen splits permit 3%.
+  After the MILP, fix `z` and re-solve for `y` minimising the maximum deviation
+  `t ≥ |Σ_s M_s y_sj − τ|` (an LP, `y` is continuous). δ is then a cap, and the shares are the
+  tightest balance those splits allow. Report both the MILP's spread and the pass's.
 - **Level 2**: for every split state s, one `centers.assign(xy_s, M_s, c, targets = y_sj M_s)`
   over that state's zips (the `targets=` argument already exists; a 0 target means "nothing
   from this state", which `assign` already honours) — convex power cells inside the state.
-  Every unsplit state goes whole to its district. Then completion and metrics as Track 1.
+  Every unsplit state goes whole to its district. Then **five Lloyd rounds inside each split
+  state**: recentroid every district touching the state from its full membership (whole
+  states included), re-solve the state's LP, stop when the state's labels repeat. The
+  committed centres were placed for the old shares (D02 is 57% CA plus AZ and NV, D17 61% CA
+  plus the Northwest) and can sit in the wrong place for the piece they now own; the rounds
+  make the CA/TX/NY cuts compact for the shares actually chosen. Then completion and metrics
+  as Track 1.
+- **Cleanness per split state**, reported: districts touching it, split-zip count (at most
+  one fewer than the districts touching), and border-segment count from `us_maps` (the
+  committed map has 1,591, the snapped labelling 636). Named cut lines (Manhattan whole, the
+  Hudson as the NY/NJ line, county boundaries inside CA) are not in this plan; they need a
+  zip-to-region pinning layer at level 2 or county-aggregated units, and the morning maps
+  decide whether either is needed.
 - **Output per δ**: split count, the split states with their `y` shares, the `z` composition,
   `draw.csv`, and the same metric row as Track 1 (spread will sit at ≤ δ plus the split-zip
   rounding).
 
-New `td/solvers/state_splits.py` (`build_milp`, `solve`, `realise`) and a CLI
+New `td/solvers/state_splits.py` (`build_milp`, `solve`, `balance_pass`, `realise`) and a CLI
 `tools/state_splits.py` with the same instance / draw / geo-cache / out arguments as Track 1's
-driver; tests on a hand-built 6-state, 2-district toy (min splits = 1 when the band forces it,
-0 when it does not; contiguity refuses a disconnected grouping).
+driver plus `--incumbency-tiebreak`; tests on a hand-built 6-state, 2-district toy (min splits
+= 1 when the band forces it, 0 when it does not; contiguity refuses a disconnected grouping;
+the balance pass never changes `z` and never widens the spread).
+
+## Stage 2 (the assignment problem) in this plan
+
+Stage 1 is purely opportunity, by design: Proposition 2 of the channel note makes Nash on a
+common measure equal to balance, and the rep-to-district matching is stage 2. Neither track
+optimises for staffing. Both **measure** it: every cell runs `channel.stage2` and the table
+carries the stage-2 value, the assignment and the unmatched reps beside the committed map's,
+so the staffing cost of each δ is visible. The incumbency premium is 0.72 to 0.78 nats and not
+soft (`STATE.md` `## Facts`), and moving borders onto state lines moves book across them too.
+
+One optional lever, behind a flag and **off by default**: an incumbency tie-break at level 2.
+With the committed map's stage-2 assignment `rep(j)` known from `metrics.json`, add to the
+cost of zip `z` in district `j` the term `−μ · S_{rep(j)}(z)`, `S` the rep's book at `z`
+(`model.books`), with `μ` scaled so the whole term is under 1% of the compactness cost, so it
+only decides near-indifferent zips. Run the grid with it off; run the two shipped δ cells again
+with it on and report the difference in stage-2 value and in the maps. A book-aware objective
+at stage 1 (the joint problem, §5.2 of the note) is out of scope and undecided.
 
 ## Grid (overnight, seed 2 only)
 
-Track 2: δ ∈ {0, 1%, 2%, 5%, 10%}, one MILP each.
+Track 2: δ ∈ {0, 1%, 2%, 5%, 10%}, one MILP each, then the balance pass and level 2.
 
 Track 1:
 
@@ -218,7 +253,9 @@ sub-second; maps are ~2 min per cell × 9 cells.
    AZ, perhaps one more). Maps present per cell.
 4. Track 2: the MILP at δ = 1.3% reports a split count ≤ the committed map's (its own
    composition is feasible there); the count is non-increasing in δ; every district's `z`
-   set is connected on the rook graph; level-2 spreads sit within δ plus the rounding.
+   set is connected on the rook graph; the balance pass leaves `z` unchanged and its spread is
+   ≤ the MILP's; level-2 spreads sit within the pass's plus the rounding; the Lloyd rounds
+   inside a split state never raise its compactness cost.
 5. Morning report: one table with both tracks per δ, the split-state list per δ from Track 2
    beside Track 1's residuals, and the maps the sponsor picks between (Track 1 baseline,
    Track 1 and Track 2 at δ = 5% and 10%).

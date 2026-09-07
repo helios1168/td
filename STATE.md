@@ -28,6 +28,11 @@ the whole-unit minimum-splits objective (Shahmizad & Buchanan) at the *state* le
 and 18 districts with `scf` contiguity on the rook graph, solved exactly by `scipy.optimize.milp`
 per δ, then realised inside each split state by the same transportation LP. It certifies the
 minimum number of split states at each δ and which they are; Track 1 snaps the map you have.
+Three later amendments, all in the plan: a lexicographic balance pass after the MILP (fix the
+splits, minimise the maximum deviation, so δ is a cap and not a target); five Lloyd rounds
+inside each split state so the CA/TX/NY cuts are compact for the shares chosen; and stage 2
+measured per cell with an incumbency tie-break at level 2 behind a flag, off by default. Stage
+1 stays opportunity-only by design.
 
 **Also this session:** `docs/CHANNEL_NOTE.md` §8 (the VBL comparison and options) reviewed and
 corrected, `7745ad9` and `82ef8b7`, both merged to `main` and pushed. Hess naming with the log
