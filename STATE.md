@@ -11,7 +11,9 @@ ships.** Session of 2026-09-06 night into 2026-09-07, worktree `.claude/worktree
 helper), `4bf74c7` (Track 2 driver, anchoring, own-owner reading, verification reports),
 `c892548` (`docs/BORDERS_RESULTS.md`). Unmerged; ask before merging to `main`. 306 tests, 0 fail.
 Run directory `battery/results/borders_k18_v2_20260907/` (hub, gitignored), every cell with
-`draw.csv`, dot and Voronoi maps.
+`draw.csv`, dot and Voronoi maps. All maps published as artifact
+`ca561d23-fa10-49cd-80c0-4d69625d2857` ("Borders on State Lines", compare slider against the
+committed map, tables, instance maps).
 
 **What the run says** (`docs/BORDERS_RESULTS.md`). At δ = 5% a map exists with every state
 whole except CA (five districts), NY (three), TX and FL (two): Track 2, 8 splits, certified

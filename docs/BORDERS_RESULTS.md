@@ -143,7 +143,10 @@ was not run tonight.
 
 ## Maps to look at
 
-Under `battery/results/borders_k18_v2_20260907/`, each cell has
+All 19 cells, both map styles, with a compare slider against the committed map, are published
+as the artifact "Borders on State Lines",
+`https://claude.ai/code/artifact/ca561d23-fa10-49cd-80c0-4d69625d2857` (private, version
+"Overnight run 2026-09-07"). On disk, under `battery/results/borders_k18_v2_20260907/`, each cell has
 `figures/districts.png` (dots) and `figures/district_regions_voronoi.png` (fill).
 
 - `committed/` — the map as it stands.
