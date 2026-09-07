@@ -10,7 +10,7 @@ Where things are — do not duplicate them here:
   `from __future__ import annotations`, full type hints, narrative module docstrings that cite
   `tests/test_X.py::test_Y` and `docs/*.md`, `--` not em-dash in prose, match existing style).
 - File map and run recipes: `docs/CODE_MAP.md`.
-- Problem / model: `docs/CHANNEL.md`, `docs/MODEL.md`; problem statement `docs/foundations/FRAME.md`.
+- Problem / model: `docs/PROBLEM.md`, `docs/MODEL.md`; problem statement `docs/foundations/FRAME.md`.
 - Superseded documents: `docs/foundations/archive/README.md` says what replaced what.
 
 Markdown is indexed (marksman): headings are symbols, so fetch one section with

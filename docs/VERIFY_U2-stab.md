@@ -405,7 +405,8 @@ BASIS:    c1 = 7/10, c2 = 7/25, w = 21/50 = 0.42 (= (1−λ)(1−θ), checked sy
           |0.4216907… − 0.42| = 0.00169078… = 0.0017 to 4 dp. Both reported figures stand.
 ARTIFACT: docs/artifacts/U2-stab/verify_row8_13.py
 CAVEATS:  FRAME §6's "≈ 42%" is itself a measured/rounded figure sourced to
-          REVIEW_GROMOV R1; agreement to 0.0017 is agreement with a 2-significant-figure
+          the 2026-09-01 Gromov review R1 (folded into docs/PROBLEM.md §2, file deleted
+          2026-09-07); agreement to 0.0017 is agreement with a 2-significant-figure
           number, which is consistency, not confirmation. The doc says exactly this
           ("a consistency check, not a new measurement") and is right to.
           τ = 0.419 is taken as given from FRAME §6; it was not re-measured (★6).

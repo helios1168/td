@@ -219,8 +219,34 @@ certified optimal** — exact set-partition was tried and abandoned (>250k colum
 feasible cover in 180 s at 177k). **`PYTHONHASHSEED=0` is required**, by decision: the search
 tie-breaks on set iteration over atom names, and without it results move ~0.015 nats.
 
-**v2 zip adjacency, corrected.** `docs/CHANNEL.md` and `centers.py` quote v1's 547 components
-over 1,229 zips. On v2 it is **862 components over 3,748 zips, 516 singletons**, largest 13.5 %
+**Reference parameters and the per-zip sizing** (`channel_note.tex` §5.1, re-measured on v2
+2026-09-04). At `θ = 0.40`, `λ = 0.30` — so `c1 = 0.70`, `c2 = 0.28`, `c1 − c2 = 0.42` — and
+aggregate saturation 29.588 %, a zip whose whole book sits with one incumbent is worth
+`u_incumbent = 0.507·M_z` against `u_other = 0.383·M_z`. Of the incumbent's utility **59.1 % is
+the pure opportunity term** `λ·M_z` and **24.5 % the incumbency premium** `(c1−c2)·S_i(z)`; the
+hold-vs-not swing is **32.5 %**. The v1 figures for the same quantities were 89.6 % / 6.7 %
+against an assumed 5 % saturation, and were wrong: the Gromov review R1
+(`git show 81bd59f:docs/REVIEW_GROMOV.md`) measured v1 aggregate
+`Σ(T+S_free)/ΣM` at **41.9 %** on 2026-09-01 (median per-zip `t_z` 46.8 %, p90 110 %; 48.0 % of
+opportunity in zips above 30 %), giving an opportunity share of ≈59 % and a swing of ≈42 %. Note
+the two definitions differ: this row's `Σ(T+S_free)/ΣM` reads **29.8107 %** on v2 where `ΣT/ΣM`
+reads 29.588 % (`docs/VERIFY_P0C-screen.md`). R1's downstream premium arithmetic is v1 and stale.
+
+**Power-cell detail, measured 2026-09-06.** The 17 split zips at equal-split targets are
+`07042`, `07670`, `08618`, `20814`, `28104`, `30066`, `32837`, `60462`, `60914`, `70364`,
+`73072`, `77845`, `85254`, `90731`, `91786`, `93401`, `94104`; after `20814` (3.699 % of a mean
+district) come `60462` 2.067 %, `85254` 1.620 %, `94104` 1.494 %, `91786` 1.351 %. At own-masses
+targets the count is again exactly 17 for 22.08 % of a mean district, largest `19067` at
+4.108 %. Worst per-district mass change under the own-masses snap: D12 +4.25 % of mean, D05
+−3.33 %. **D01's 55 %-by-area second part is the single rural ZIP `18337`** (Milford, Pike
+County PA, ~85 km from the core), whose catchment is 44.56 % of D01's area and 0.14 % of its
+opportunity while the 148-ZIP NY/NJ core is 55.44 % of the area and 99.86 % of the mass. Moving
+`18337` to D05 or D12 makes D01 one piece at 100 % and costs 9e-6 nats, but puts one zip of
+3,704 outside its own power cell — a departure from zero for a number that measures the wrong
+thing, so the draw is left alone and both denominators are reported.
+
+**v2 zip adjacency, corrected.** `centers.py` still quotes v1's 547 components
+over 1,229 zips (`docs/PROBLEM.md` §5 is corrected). On v2 it is **862 components over 3,748 zips, 516 singletons**, largest 13.5 %
 of M, **47.6 %** of M in components under 1 % each. Contracted to states the instance graph gives
 only **10 edges, 42 components** — a state model must import the TIGER state rook graph
 (49 nodes, 107 edges), which `td/geo.py::state_rook` now builds.
@@ -237,21 +263,23 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
 
 ## Where
 
-- `docs/CHANNEL.md` — the problem, the two stages, sizing · `docs/MODEL.md` — the N-way model
-  and open decisions (§6) · `docs/foundations/FRAME.md` — problem statement (§6 measured rows, §9 settled/open)
+- `docs/PROBLEM.md` — the problem, the two stages, sizing, the zero-mismatch requirement ·
+  `docs/MODEL.md` — the N-way model and open decisions (§6),
+  the propositions (§7), the two stages as programs (§8, §9), the certificates (§10), the
+  power-cell routes (§11), the VBL comparison (§12), the verified absences (§13) ·
+  `docs/foundations/FRAME.md` — problem statement (§6 measured rows, §9 settled/open)
 - `docs/foundations/APPROACHES.md` — §0 what every track inherits, charters A0–A5 · `docs/foundations/BRIEF.md` +
   `docs/units/` — A1's plan, units U0–U13 · `docs/foundations/LENS_*.md`, `docs/foundations/DOMAIN_*.md`, `docs/foundations/LIT_*` —
   A1's (promoted) lenses, domain plans, literature
 - `docs/RUNS.md` (+ `RUNS_PLAN.md`) — the pin-cost catalogue · `docs/MODEL_U8-band.md`,
   `CODEVERIFY_U8-band.md`, `MODEL_U9-bandthm.md`, `VERIFY_U9-bandthm.md` — wave 1 ·
-  `MODEL_U7-meas.md`, `MODEL_U1-cert.md` (+ verifies) — the measurements · `docs/DATA.md`,
-  `docs/RESEARCH_FINDINGS.md`, `docs/REVIEW_GROMOV.md` — data route, literature map, R1–R4
+  `MODEL_U7-meas.md`, `MODEL_U1-cert.md` (+ verifies) — the measurements · `docs/DATA.md` — the
+  data route
 - `docs/WAVE2_PLAN.md` — the wave-2 execution plan: 9 tracks, 3 phases, per-track files, model
   assignments, merge order, and the four corrections to this file's record
-- **The power-cell contiguity register:** `docs/OPTIONS_power-cell-contiguity.md` — every route
-  to zero mismatched dots, with its evidence and verdict; §1 is the measurement record, §9 the
-  recommended order, §3a why D01 reads 55%, §4a the fixed-diagram figure. This file is the
-  durable one; `STATE.md` only names which option is live.
+- **The power-cell contiguity register:** `docs/MODEL.md` §11 — every route to zero mismatched
+  dots, with its verdict; the requirement itself is `docs/PROBLEM.md` §8 and every measurement is
+  in `## Facts` above. (Folded 2026-09-07 from `docs/OPTIONS_power-cell-contiguity.md`, deleted.)
   `td/solvers/centers.py::power_weights` now returns `fractional` (the split zips' row indices),
   surfaced as `power_diagram_of_draw`'s `split_zips`.
 - **Showing the zero, and measuring pieces honestly:** `us_maps.py --regions-fixed <draw.csv>`
@@ -260,8 +288,9 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   0 · `tools/measure/district_pieces.py` gives each district's largest piece by area, by mass and
   by ZIP count, which is what §3a needed to refute the 55%.
 - **The next build:** `docs/BORDERS_PLAN.md` — state-border snapping of the committed draw:
-  model, grid, files, the run command, verification · `docs/CHANNEL_NOTE.md` — the markdown
-  channel note; §8 the VBL comparison and options, corrected 2026-09-06 (Options A–D parked).
+  model, grid, files, the run command, verification · `docs/MODEL.md` §12 — the VBL comparison
+  and Options A–E, parked (folded 2026-09-07 from the markdown channel note, since deleted; the
+  LaTeX note `docs/channel_note/channel_note.tex` is unaffected and stays the typeset source).
 - **The state-atom engine (retired 2026-09-06):** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
   `td/solvers/atom_draw.py` (the search, `free_search`, `check_contiguous`) ·
   `tools/run_atoms.py` (the driver) · `td/geo.py::state_rook` (the TIGER rook graph) ·

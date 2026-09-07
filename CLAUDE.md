@@ -7,7 +7,7 @@ only when a question needs it. This file carries invariants only and is never st
 
 1. `STATE.md` `## Now` and `## Next` (Serena `find_symbol`, or one Read). Nothing else is
    required to resume.
-2. `docs/CODE_MAP.md` when you need a file or a recipe; `docs/CHANNEL.md` / `docs/MODEL.md` for
+2. `docs/CODE_MAP.md` when you need a file or a recipe; `docs/PROBLEM.md` / `docs/MODEL.md` for
    the problem and the model; `STATE.md` `## Where` for the rest.
 2a. If the task is "what does this scenario do" — pin a region, change k, swap the engine — run
    it in the Streamlit app (`tools/app.sh`, `docs/APP.md`) instead of building a Claude
@@ -41,7 +41,7 @@ smoke test.
 ## Traps that still apply
 
 2. **Equalisation can destroy value.** Never replace the Nash objective with an explicit
-   balance minimisation — Nash-as-balance is the point (`docs/CHANNEL.md`).
+   balance minimisation — Nash-as-balance is the point (`docs/PROBLEM.md` §1).
 4. **Fairness alone is degenerate** — every rep with no book at `z` values `z` identically.
 12. `scipy.optimize.milp` defaults `mip_rel_gap` to 1e-4; pass `mip_rel_gap=0.0` for a certificate.
 13. **Separator cuts must be component-wise** — one root per district per component, or the

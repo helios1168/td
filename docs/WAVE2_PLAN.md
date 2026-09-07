@@ -119,9 +119,11 @@ Six sites over-read `fotakis2014` as the reason for "books enter at stage 2 only
 > site, no replacement basis asserted, the invariant recorded as a prudential design choice with an
 > open citation gap, and the misreporting exposure explicitly preserved.
 
-Sites: `RESEARCH_FINDINGS.md:548,1087`,
-`REVIEW_GROMOV.md:41`, `CHANNEL.md:99`, `APPROACHES.md:221`, `DOMAIN_optimization.md:845`,
-`LENS_GROMOV.md:307`. Guard rail (`LIT_economic-theory.md:1154`): must not read as "the incentive
+Sites, as they stood at `81bd59f` on 2026-09-05: `RESEARCH_FINDINGS.md:548,1087`,
+`REVIEW_GROMOV.md:41`, the problem file at line 99, `APPROACHES.md:221`,
+`DOMAIN_optimization.md:845`, `LENS_GROMOV.md:307`. The first three of those files were folded
+away on 2026-09-07 — the ★8 statement now lives in `docs/MODEL.md` §9; recover the originals with
+`git show 81bd59f:docs/<file>`. Guard rail (`LIT_economic-theory.md:1154`): must not read as "the incentive
 concern goes away". ★8 lost its owning unit when U3-inv was retired, which is why it lands here.
 
 ### 0c. Brief re-anchor to v2 / k=18 `[opus]`
@@ -207,7 +209,8 @@ unit contends for them. **One track, not two**: `channel_note.tex` eq. `decomp` 
    (`chSat`, `chUown`, `chUother`, `chOppShare`, `chPremShare`, `chUswing` →
    `ceiling_numbers.tex:56-61`); blast radius is exactly `channel_note.pdf`. Nothing in `td/`,
    `tools/` or `tests/` reads it.
-4. **Redo `channel_note.tex` §5.1** (`:492-522`) against 29.6 %. `REVIEW_GROMOV` R1 is the
+4. **Redo `channel_note.tex` §5.1** (`:492-522`) against 29.6 %. The 2026-09-01 Gromov review's
+   R1 (`docs/REVIEW_GROMOV.md`, deleted 2026-09-07; `git show 81bd59f:docs/REVIEW_GROMOV.md`) is the
    refutation; note R1's own figure is the **v1** 41.9 %, so the redo targets 29.6 %. R1 also
    reports that eq. (split)'s ordering **inverts** on the real instance (incumbency ≈3.7 nats vs
    `D(g)` at 1e-4–1e-2), so the "derived rather than assumed" claim at `:517-519` fails — recompute

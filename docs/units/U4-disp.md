@@ -129,7 +129,7 @@ are symbols. `RUNS_PLAN.md` §"Working rules" has the full table. Bash is for ru
 VERIFIED or REFUTED on: a modulus `objective-gap ≥ φ(mass moved)` for the coverage problem, with
 `φ` explicit and its hypotheses stated — **or** a clean impossibility/absence statement, in which
 case acceptance stays in nats and FRAME §3.5 is answered instead by translating a branch-and-bound
-gap through the near-equality rung `Δ ≈ ½Σδ_j²` (`REVIEW_GROMOV` R2). A REFUTED verdict here is a
+gap through the near-equality rung `Δ ≈ ½Σδ_j²` (the 2026-09-01 Gromov review R2). A REFUTED verdict here is a
 real deliverable: it closes D4. Per `LIT_optimization` §9, the attack to try first is a **KŁ
 exponent / Hölderian error bound** for `Σ log g_i` on the assignment polytope (`bolte2017`,
 `drusvyatskiy2018`), with `hoffman1952` as the prior for `α = 1`; the honest expected range is
@@ -169,14 +169,14 @@ than published.
 converts the `4.66e-5`-nat non-decision into a first-order quantity", marked "**Blocked on ★6**".
 Three things are now wrong with it. (a) **The ★6 block is lifted**, so the label is stale.
 (b) **`4.66e-5` is a v1 number and has no v2 counterpart.** It was measured on the `k = 13` seed-3
-draw (`docs/CHANNEL.md`, 2026-09-01: the pinned-centers MILP proved an `8.53 %` more compact
+draw (recorded 2026-09-01 in what is now `docs/PROBLEM.md`: the pinned-centers MILP proved an `8.53 %` more compact
 assignment in the same band, 152 relabels, `−4.66e-5` nats); no v2 pinned-centers or power-diagram
 run exists under `battery/results/`, and `WAVE2_PLAN` declines to widen `ceiling.py`'s v1 content.
 Carrying the number into a v2 unit would import a retired instance's arithmetic. (c) **Displacement
 is not the deciding number anyway.** FRAME's decision ledger still carries "the 132 dots: adopt the
 power cells or keep the drawn map" as **open**, with "the deciding number is the staffing value of
-the cells map, not yet computed" (`REVIEW_GROMOV` sharpens it to the *stage-2* staffing value;
-`CHANNEL.md` gives the ordering
+the cells map, not yet computed" (the Gromov review sharpens it to the *stage-2* staffing value;
+the 2026-09-01 record gave the ordering
 "C4 → stage-2 rescore of the cells → adopt unless staffing drops by more than the portfolio
 spread") — not a displacement. `DOMAIN_optimization` §5 row 8 still lists it as "predecessor row 8,
 unchanged"; that row is stale and is another track's to fix, not this unit's. **U4 does not own the
@@ -194,7 +194,8 @@ v2 evidence for the premise box** · `docs/CODEVERIFY_U8-band.md` F1, F2 (the in
 how fragile the reported vertex is) · **`docs/foundations/LIT_optimization.md` §9 (Q9) and absence ledger row D
 — the gate, and it has reported**; §7 (Q7, stability radius) for the second candidate framing ·
 `docs/foundations/LENS_GROTHENDIECK.md` §5a, descent 4 and 7 · `docs/foundations/FRAME.md` §3 (acceptance criterion 5),
-§6 (the tier floors), §10 Q4 and Q7 · `docs/REVIEW_GROMOV.md` R2 ·
+§6 (the tier floors), §10 Q4 and Q7 · the 2026-09-01 Gromov review R2
+(`git show 81bd59f:docs/REVIEW_GROMOV.md`) ·
 `~/resources/optimization/FOUNDATIONS.md` (`Hitchcock1941`, `Schrijver1986`, `Chvatal1983`,
 `GaleKuhnTucker1951`)
 

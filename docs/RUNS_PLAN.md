@@ -394,6 +394,6 @@ code, not a licence to edit the solver on this branch.
 - `docs/foundations/FRAME.md` §0 — the resume point and the state narrative. §6 carries measured rows.
 - `STATE.md` (was `HANDOFF.md` until 2026-09-05) — orientation, the "Starting a track" checklist, published artifact IDs.
 - `CLAUDE.md` (worktree) — the model on one page, the two stages, the trap list, code inventory.
-- `docs/CHANNEL.md`, `docs/MODEL.md` — the problem and the N-way model.
+- `docs/PROBLEM.md`, `docs/MODEL.md` — the problem and the N-way model.
 - k-Sweep artifact `c007d61d-c753-4151-9026-2288b9d5eb38` — the design to match.
 - Atlas artifact `1f2cddd9-b98b-4213-83ea-784566147c6a` — the certified k=13 draw.

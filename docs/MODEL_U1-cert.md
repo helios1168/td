@@ -5,7 +5,8 @@
 **Reads:** `docs/foundations/DOMAIN_optimization.md` §2.2, §3, §5, §8 Q4; `docs/foundations/DOMAIN_economic-theory.md`
 §2.1, §2.2; `docs/foundations/LENS_GROTHENDIECK.md` §2, §4, "The general case, stated", descent 1–3;
 `docs/foundations/LENS_GROMOV.md` Move 3; `docs/MODEL.md`; `docs/foundations/FRAME.md` §5, §6, §9, §10 Q3;
-`docs/REVIEW_GROMOV.md` R3; `docs/foundations/LIT_economic-theory.md` §0.5, §1, §2; read-only
+the 2026-09-01 Gromov review's R3 (`docs/REVIEW_GROMOV.md`, folded and deleted 2026-09-07;
+recover with `git show 81bd59f:docs/REVIEW_GROMOV.md`); `docs/foundations/LIT_economic-theory.md` §0.5, §1, §2; read-only
 `td/solvers/cert_draw.py`, `td/solvers/centers.py::power_weights`, `td/channel.py`,
 `td/model.py`, `td/instance.py`; `instance_descaled.json.gz`;
 `battery/results/draw_k13_20260901/` ·
@@ -596,7 +597,7 @@ wrong vector, exactly as `LENS_GROMOV` Move 3 consequence 1 says. But the *cost*
 (`≥ 50 %` spread at the EG optimum, on two independent solves). The two-stage split is not costless
 and it is not the main term; both readings are now numbers rather than positions.
 
-**`REVIEW_GROMOV` R3 is settled.** The EG bound is not a fifth certificate. It is *the* dual, and
+**The Gromov review's R3 is settled.** The EG bound is not a fifth certificate. It is *the* dual, and
 it is **`12.70×`** tighter than the ceiling on this instance (`0.760` vs `9.649` nats).
 
 **What was retracted (2026-09-03, per `VERIFY_U1-cert`).** This unit briefly claimed that the

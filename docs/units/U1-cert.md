@@ -33,8 +33,8 @@ stated":
 
 Every other unit's owned files (`docs/MODEL_U2-stab.md`, `docs/MODEL_U3-inv.md`,
 `docs/foundations/LIT_optimization.md`, `docs/RESEARCH_ADDITIONS.bib`, …) · `docs/foundations/FRAME.md` ·
-`docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` · `docs/RESEARCH_FINDINGS.md` ·
-`docs/REVIEW_GROMOV.md` · `docs/channel_note/**` · `CLAUDE.md` · **all of `td/`, `tests/`,
+`docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` ·
+`docs/channel_note/**` · `CLAUDE.md` · **all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`** (read-only at most; this unit writes no project code) ·
 `instance_descaled.json.gz` is **present** at this worktree's root and ★6 is lifted in full
 (2026-09-03), so the numbers under "Numbers to compute first" are computable here — read it
@@ -94,8 +94,9 @@ get checked and how a refutation gets its counterexample.
 - `docs/foundations/LENS_GROMOV.md` Move 3 (the fibration; what the certificates certify)
 - `docs/MODEL.md` (the N-way model — `u_i(z)`, `c1`, `c2`, `λ`, `θ`, the headroom condition)
 - `docs/foundations/FRAME.md` §6 (the four certificate numbers; the 1.07% largest zip), §10 Q3
-- `docs/REVIEW_GROMOV.md` R3 (the EG bound as "certificate 5" — this unit's claim is that it is
-  not a fifth but *the* one)
+- The 2026-09-01 Gromov review R3, which proposed the EG bound as "certificate 5" — this unit's
+  claim is that it is not a fifth but *the* one. (`docs/REVIEW_GROMOV.md` was deleted 2026-09-07;
+  recover with `git show 81bd59f:docs/REVIEW_GROMOV.md`.)
 - `docs/foundations/LIT_economic-theory.md` §1 and §2 (`atkinson1970` for the fibration identity — **cite, do
   not re-derive**; `budish2011` for the honest approximate-CEEI form of the equal-budget claim)
 - `docs/foundations/LIT_optimization.md` §Q1/§Q5 **if U0-lit has landed** — otherwise proceed and mark the

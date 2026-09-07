@@ -44,7 +44,7 @@ And the correction the literature already returned, verbatim from `docs/foundati
 Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
 `docs/foundations/DOMAIN_*.md` · `docs/MODEL.md` (read-only — **do not write the design rule into it**;
 `LENS_GROTHENDIECK.md` descent 5 proposes that and it is the main session's call after this unit
-reports) · `docs/foundations/LIT_economic-theory.{md,bib}` (read-only) · `docs/RESEARCH_FINDINGS.md` ·
+reports) · `docs/foundations/LIT_economic-theory.{md,bib}` (read-only) ·
 `docs/RESEARCH_ADDITIONS.bib` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`.
 
@@ -121,8 +121,8 @@ question stop mattering?
 - `docs/foundations/FRAME.md` §4 policy row, §8 A7, §10 Q5, §9 (the blocking item as currently written)
 - `docs/DATA.md` (what the exporter actually emits — shares, `m_rel`; this constrains what a
   message space *can* be)
-- `docs/RESEARCH_FINDINGS.md` §9-G (the books-enter-at-stage-2-only invariant this unit may
-  propose rewriting) — **read only, do not edit**
+- `docs/MODEL.md` §9 (the books-enter-at-stage-2-only invariant this unit may propose rewriting,
+  and the ★8 record of why it has no cited basis) — **read only, do not edit**
 
 ## Open questions for ★0
 
@@ -131,9 +131,10 @@ question stop mattering?
   live, and both lenses agree it is the smaller, answerable form of FRAME §9's blocking decision.
   **Do not wait on it** — write both branches (audited available / not available) and mark which
   results hold in which.
-- If NRC holds, the deliverable is a rewrite of `RESEARCH_FINDINGS` §9-G's invariant to *"reported
-  books enter at stage 2 only; audited revenue may enter anywhere"* (`LENS_GROMOV.md` 13.1).
-  **Propose the wording in `MODEL_U3-inv.md`; do not apply it** — §9-G is not this unit's file.
+- If NRC holds, the deliverable is a rewrite of the invariant to *"reported books enter at stage 2
+  only; audited revenue may enter anywhere"* (`LENS_GROMOV.md` 13.1).
+  **Propose the wording in `MODEL_U3-inv.md`; do not apply it** — `docs/MODEL.md` §9 is not this
+  unit's file.
 
 ## Branch
 

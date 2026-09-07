@@ -33,7 +33,7 @@ Two tracks, run side by side overnight, answering different questions:
   This is the one piece of the VBL line that fits the problem as now framed: the whole-unit
   (minimum county splits) objective of Shahmizad & Buchanan, at a size (52 states, 18
   districts, the 49-node rook graph) where all of their machinery is trivial. Added 2026-09-06
-  evening after the question "is VBL still viable"; Options A–D of `docs/CHANNEL_NOTE.md` §8
+  evening after the question "is VBL still viable"; Options A–D of `docs/MODEL.md` §12
   stay parked, and Option B went with the atom route.
 
 The two share the band δ, the committed centres, the completion step and the metrics, so the

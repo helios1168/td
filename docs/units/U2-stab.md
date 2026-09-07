@@ -31,7 +31,7 @@ ledger, row A5:
 
 Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundations/BRIEF.md` · `docs/foundations/LENS_*.md` ·
 `docs/foundations/DOMAIN_*.md` · `docs/foundations/LIT_economic-theory.{md,bib}` (read-only; **do not append citations** —
-that is U0-lit's and the bibliography skill's job) · `docs/RESEARCH_FINDINGS.md` ·
+that is U0-lit's and the bibliography skill's job) ·
 `docs/RESEARCH_ADDITIONS.bib` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`.
 
@@ -95,7 +95,7 @@ enough), under `docs/artifacts/U2-stab/`.
 - `docs/foundations/LIT_economic-theory.bib` (read-only — the keys to cite)
 - `~/resources/economic-theory/FOUNDATIONS.md` — `Gale & Shapley 1962`, `Roth & Sotomayor 1990`,
   `Roth 1982`, `Roth 1984`
-- `docs/MODEL.md` (what `u_i(A_j)` is), `docs/CHANNEL.md` §3 (stage 2 as Hungarian on logs)
+- `docs/MODEL.md` (what `u_i(A_j)` is), `docs/PROBLEM.md` §3 (stage 2 as Hungarian on logs)
 - `docs/foundations/FRAME.md` §2 (the reversibility row — why an unstable roster matters), §3 (the acceptance
   test, which currently has **no** stability criterion)
 - Read-only: `td/channel.py` around the rectangular Hungarian match (`:288`) — to confirm what is

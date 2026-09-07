@@ -14,7 +14,8 @@
 > §2 method or §4 decision point it bears on · tag ∈ {foundation, frontier,
 > contradicts-or-sharpens, tool-we-lack}`. Plus a **five-paper shortlist** — the five that would
 > change what gets built. Every absence claim must state where it looked (venue, keyword, years),
-> because the programme's own recon (`RESEARCH_FINDINGS` §0.5) already went stale once. Write
+> because the programme's own recon (the stale-frontier warning, now `docs/PROBLEM.md` §5)
+> already went stale once. Write
 > `docs/foundations/LIT_optimization.md` and append to `docs/RESEARCH_ADDITIONS.bib`.
 
 Work `DOMAIN_optimization.md` §6's nine numbered questions in the order given. **Q5 and Q7 are
@@ -32,7 +33,7 @@ citation-vs-proof decision, and Q7 (stability radius, inverse optimization, "obj
 
 `docs/foundations/BRIEF.md` · `docs/foundations/FRAME.md` · `docs/foundations/LENS_*.md` · `docs/foundations/DOMAIN_*.md` ·
 `docs/foundations/LIT_economic-theory.{md,bib}` · `docs/MODEL_*.md` and every other unit's owned files ·
-`docs/RESEARCH_FINDINGS.md` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
+`docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`.
 
 ## Agent → verifier
@@ -48,7 +49,7 @@ in a note.
    may not be the ones dropped**.
 2. Every DOI resolved against Crossref, with the resolved/attempted counts stated. Any DOI that
    does not resolve is dropped, not guessed.
-3. Deduplicated against `docs/RESEARCH_FINDINGS.md`, `docs/RESEARCH_ADDITIONS.bib`,
+3. Deduplicated against `docs/RESEARCH_ADDITIONS.bib`,
    `docs/foundations/LIT_economic-theory.bib`, `docs/channel_note/references.bib` and
    `~/resources/optimization/FOUNDATIONS.md` — state that the check was run.
 4. A five-paper shortlist, each with one sentence on **what it changes in `DOMAIN_optimization.md`
@@ -70,7 +71,7 @@ resolved / attempted, entries added, duplicates rejected).
 - `~/resources/optimization/FOUNDATIONS.md` (the 113 seeded entries — what is already held)
 - `docs/foundations/LIT_economic-theory.md` §0 and its absence ledger (**the model for this file's shape**,
   and the dedup target — Q1/Q4 overlap its Q1/Q5; do not re-do that work, cite across)
-- `docs/RESEARCH_FINDINGS.md` §0.5 (the stale-frontier warning) — do not edit
+- `docs/PROBLEM.md` §5 (the stale-frontier warning, corrected 2026-09-01) — do not edit
 - `docs/foundations/FRAME.md` §6 (instance size: `n = 1,229`, `k = 13`, `|R| = 111` — the scale at which
   approximation guarantees are or are not worth having)
 

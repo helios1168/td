@@ -1,6 +1,6 @@
 # Data route — the descaled real instance
 
-**Opened:** 2026-08-31 · **Split out of `NWAY.md` on 2026-08-31.** Companion files: `CHANNEL.md` (the problem), `MODEL.md` (the model), `DATA.md` (the export route).
+**Opened:** 2026-08-31 · **Split out of `NWAY.md` on 2026-08-31.** Companion files: `docs/PROBLEM.md` (the problem), `docs/MODEL.md` (the model).
 
 
 **The synthetic twin is superseded for this problem.** With PII and firm masked upstream, and

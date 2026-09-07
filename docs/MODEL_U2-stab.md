@@ -4,7 +4,7 @@
 **Reads:** `docs/units/U2-stab.md`, `docs/foundations/DOMAIN_economic-theory.md` §2.4/§3/§5/§8,
 `docs/foundations/LIT_economic-theory.md` §0.4/§2/§3/absence ledger A3+A5, `docs/foundations/LIT_economic-theory.bib`,
 `~/resources/economic-theory/FOUNDATIONS.md` (Gale & Shapley 1962, Roth 1982, Roth 1984,
-Roth & Sotomayor 1990), `docs/MODEL.md` §1, `docs/CHANNEL.md` §3, `docs/foundations/FRAME.md` §2/§3/§5/§6,
+Roth & Sotomayor 1990), `docs/MODEL.md` §1, `docs/PROBLEM.md` §3, `docs/foundations/FRAME.md` §2/§3/§5/§6,
 `td/channel.py` (read-only) ·
 **Unit:** `docs/units/U2-stab.md` · **Artifacts:** `docs/artifacts/U2-stab/`
 

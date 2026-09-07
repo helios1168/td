@@ -1,7 +1,7 @@
 # Code map and run recipes
 
 What is built, where, and how to run it. State lives in `STATE.md`; the problem and the model
-are `docs/CHANNEL.md` and `docs/MODEL.md`. Keep this file to facts about the tree.
+are `docs/PROBLEM.md` and `docs/MODEL.md`. Keep this file to facts about the tree.
 
 ## Two stages
 

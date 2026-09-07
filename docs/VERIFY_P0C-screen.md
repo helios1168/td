@@ -8,6 +8,10 @@ Re-run: `/Users/ntlee/projects/td/.venv/bin/python3
 docs/artifacts/VERIFY_P0C-screen/verify_p0c.py`.
 python 3.13.15 · numpy 2.5.2 · scipy 1.18.1 · sympy 1.14.0. No RNG used.
 
+**Note added 2026-09-07.** `docs/REVIEW_GROMOV.md`, cited below by section and line, was folded
+into `docs/PROBLEM.md` §2 and `docs/MODEL.md` and then deleted. Recover it with
+`git show 81bd59f:docs/REVIEW_GROMOV.md`; the line references below are against that revision.
+
 **Inputs (pinned).** `instance_descaled_v2.json.gz` (`sha256 c89f1820…`),
 `battery/results/draw_k18_v2_20260904/k18` (`draw_sha256 9e091c68…`),
 `battery/results/meas_v2_btot_20260905/draw_k18_v2_20260904.json`.
