@@ -37,8 +37,8 @@ And the correction the literature already returned, verbatim from `docs/foundati
 
 ## Files owned
 
-- `docs/MODEL_U3-inv.md`
-- `docs/VERIFY_U3-inv.md` (written by `math-verify`)
+- this file's `## Model`
+- this file's `## Verify` (written by `math-verify`)
 - `tools/verify/U3-inv/**`
 
 ## Files forbidden
@@ -47,7 +47,7 @@ Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundatio
 `docs/foundations/DOMAIN_*.md` · `docs/MODEL.md` (read-only — **do not write the design rule into it**;
 `LENS_GROTHENDIECK.md` descent 5 proposes that and it is the main session's call after this unit
 reports) · `docs/foundations/LIT_economic-theory.{md,bib}` (read-only) ·
-`docs/RESEARCH_ADDITIONS.bib` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
+`literature/RESEARCH_ADDITIONS.bib` · `docs/channel_note/**` · `CLAUDE.md` · all of `td/`, `tests/`,
 `tools/`, `figures/`, `battery/`.
 
 ## Agent → verifier

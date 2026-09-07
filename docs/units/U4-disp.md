@@ -107,7 +107,7 @@ highest-leverage unknown for FRAME §3.5"*: everything about acceptance in busin
 
 ## Files owned
 
-`docs/MODEL_U4-disp.md` · `docs/VERIFY_U4-disp.md` · `tools/verify/U4-disp/**`
+This file's `## Model` · `## Verify` · `tools/verify/U4-disp/**`
 
 ## Files forbidden
 

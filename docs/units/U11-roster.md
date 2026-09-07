@@ -21,8 +21,8 @@ for the `EG^bal` solver; the margin and the enumeration order need only the gain
 
 ## Files owned
 
-`td/solvers/roster_enum.py` · `tests/test_roster_enum.py` · `docs/MODEL_U11-roster.md` (spec,
-first) · `docs/CODEVERIFY_U11-roster.md` · `battery/results/u11_roster_<date>/`.
+`td/solvers/roster_enum.py` · `tests/test_roster_enum.py` · this file's `## Model` (spec,
+first) · `## Code verify` · `battery/results/u11_roster_<date>/`.
 
 ## Files forbidden
 

@@ -10,7 +10,7 @@ PYTHON=/Users/ntlee/projects/td/.venv/bin/python3
 INSTANCE=instance_descaled_v2.json.gz
 DATE=$(date +%Y%m%d)
 OUT_ROOT="battery/results/runs_${DATE}"
-SCEN_DIR="docs/artifacts/runs/scenarios"
+SCEN_DIR="tools/verify/runs/scenarios"
 K_RANGE="14-22"
 SEEDS="0-9"
 

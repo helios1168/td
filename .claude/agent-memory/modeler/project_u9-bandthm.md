@@ -8,7 +8,7 @@ metadata:
 Unit U9-bandthm (2026-09-04, worktree `.claude/worktrees/A1`) proved the five claims U8-band
 consumes and returned three corrections to A1's own plan documents.
 
-**Why:** each contradicts a `docs/DOMAIN_*.md` premise that later units will otherwise
+**Why:** each contradicts a `docs/foundations/DOMAIN_*.md` premise that later units will otherwise
 copy. **How to apply:** check these before restating the `EG^bal` price/frontier story.
 
 1. **`DOMAIN_optimization` §2.12's good-side MBB rule is FALSE as written.**
@@ -48,7 +48,7 @@ copy. **How to apply:** check these before restating the `EG^bal` price/frontier
    grid from 0.0039, because M12's prediction is about the left end.
 
 **Traps hit while building the harness.**
-- The `MODEL_U7-meas` §4 shared fixture has **symmetric `M`**, so its EG optimum is already exactly
+- The `docs/units/U7-meas.md` `## Model` §4 shared fixture has **symmetric `M`**, so its EG optimum is already exactly
   balanced: the band NEVER binds, `nu = 0`, the frontier is flat. Useless for P2/P3/P4 — build a
   skewed-`M` toy (one heavy zip) as well, and keep the fixture only for the convention pin.
 - Writing the dual over `(mu^+, mu^-)` makes the LP **unbounded** at `delta = 0`. Parametrise by

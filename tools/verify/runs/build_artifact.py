@@ -341,11 +341,11 @@ region's natural k = total / region M.</p>
 <p>The metric is exact at fixed k: every scenario partitions the same total M into the same
 number of districts, so &Sigma; log M differences against baseline are a pure additive cost in
 nats (the scale-invariance argument in <code>CLAUDE.md</code>).</p>
-<pre>python3 tools/run_draw.py instance_descaled_v2.json.gz --scenario docs/artifacts/runs/scenarios/&lt;region&gt;_&lt;mode&gt;.json \\
+<pre>python3 tools/run_draw.py instance_descaled_v2.json.gz --scenario tools/verify/runs/scenarios/&lt;region&gt;_&lt;mode&gt;.json \\
   --k 14-22 --seeds 0-9 --workers 8 --out battery/results/runs_{date}/&lt;region&gt;_&lt;mode&gt;
 python3 tools/us_maps.py instance_descaled_v2.json.gz --out figures/runs_{date}/&lt;region&gt;_&lt;mode&gt;/ \\
   --regions battery/results/runs_{date}/&lt;region&gt;_&lt;mode&gt;/k18/draw.csv
-python3 docs/artifacts/runs/build_artifact.py --date {date}</pre>
+python3 tools/verify/runs/build_artifact.py --date {date}</pre>
 <p class="foot">instance_descaled_v2.json.gz &middot; generated {date}</p>
 </main>"""
     with open(out_path, "w", encoding="utf-8") as fh:

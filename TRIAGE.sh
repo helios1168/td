@@ -9,14 +9,20 @@ set -e
 # removed. Run each; a clean status on a merged one clears it for
 # `git worktree unlock <path> && git worktree remove <path> && git branch -d <branch>`.
 git -C /Users/ntlee/projects/td/.claude/worktrees/app-review status --short          # branch worktree-app-review, merged
+# if clean: git worktree unlock /Users/ntlee/projects/td/.claude/worktrees/app-review && git worktree remove /Users/ntlee/projects/td/.claude/worktrees/app-review && git branch -d worktree-app-review
 git -C /Users/ntlee/projects/td/.claude/worktrees/ca5-map status --short             # branch worktree-ca5-map, UNMERGED (2 ahead) -- never remove
 git -C /Users/ntlee/projects/td/.claude/worktrees/channel-note-md status --short     # branch worktree-channel-note-md, merged
+# if clean: git worktree unlock /Users/ntlee/projects/td/.claude/worktrees/channel-note-md && git worktree remove /Users/ntlee/projects/td/.claude/worktrees/channel-note-md && git branch -d worktree-channel-note-md
 git -C /Users/ntlee/projects/td/.claude/worktrees/headline status --short            # branch worktree-headline, UNMERGED (4 ahead) -- never remove
 git -C /Users/ntlee/projects/td/.claude/worktrees/motion status --short              # branch worktree-motion, merged
+# if clean: git worktree unlock /Users/ntlee/projects/td/.claude/worktrees/motion && git worktree remove /Users/ntlee/projects/td/.claude/worktrees/motion && git branch -d worktree-motion
 git -C /Users/ntlee/projects/td/.claude/worktrees/power-cell-contiguity status --short  # branch worktree-power-cell-contiguity, merged
+# if clean: git worktree unlock /Users/ntlee/projects/td/.claude/worktrees/power-cell-contiguity && git worktree remove /Users/ntlee/projects/td/.claude/worktrees/power-cell-contiguity && git branch -d worktree-power-cell-contiguity
 git -C /Users/ntlee/projects/td/.claude/worktrees/state-atoms status --short         # branch worktree-state-atoms, merged
+# if clean: git worktree unlock /Users/ntlee/projects/td/.claude/worktrees/state-atoms && git worktree remove /Users/ntlee/projects/td/.claude/worktrees/state-atoms && git branch -d worktree-state-atoms
 git -C /Users/ntlee/projects/td/.claude/worktrees/state-table-align status --short   # branch worktree-state-table-align, UNMERGED (1 ahead) -- never remove
 git -C /Users/ntlee/projects/td/.claude/worktrees/vbl status --short                 # branch worktree-vbl, merged
+# if clean: git worktree unlock /Users/ntlee/projects/td/.claude/worktrees/vbl && git worktree remove /Users/ntlee/projects/td/.claude/worktrees/vbl && git branch -d worktree-vbl
 
 # Group 2: PLAN.md writes into sibling worktrees, refused (Write/Edit outside this worktree).
 # The finished files were written to the fallback path below instead; copy each into place.

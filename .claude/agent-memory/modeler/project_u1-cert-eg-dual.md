@@ -16,7 +16,7 @@ not re-derive, and hit three traps.
    fractionally), so it carries no dual at all; it is the *primal/achievability* half of the
    same sandwich, not a degeneration of the EG dual. The honest organisation is "one duality
    gap with two sides", not "five certificates" and not "one".
-2. **RETRACTED 2026-09-03 by `docs/VERIFY_U1-cert.md` §5 — do not repeat.** I claimed the
+2. **RETRACTED 2026-09-03 by `docs/units/U1-cert.md` `## Verify` §5 — do not repeat.** I claimed the
    lens's `[standard] <= |S| - 1` split-unit bound was a tau = 0 privilege and that the honest
    heterogeneous bound is `<= k`. **False.** `<= k - 1` holds heterogeneously: a vertex of the
    optimal face is a Fisher equilibrium, so it lies in the MBB-restricted face `P'` whose supply
@@ -32,13 +32,8 @@ not re-derive, and hit three traps.
    mass `249.39` vs EG `g_min = 103.62`, ratio `2.41`, so the a-priori value bound is `+inf`.
    Realised `M(F) = 66.17` (10 splits) gives `1.018` nats; per-agent `0.245`; actual gap
    `5.1e-4`.
-4. **Headline numbers (real instance, delivered k=13 seed-3 draw, theta=0.40 lam=0.30):**
-   `EG_{S13} = 60.697416` certified to `1.3e-13` by its own Lagrangian dual;
-   `V(delivered) = 59.937470` (bracket 7.1e-15 by fsum on a good iterate; the width is a
-   property of the iterate, not the instance); gap **`0.760` nats** vs the analytic ceiling's `9.649`
-   (12.70x tighter). Realised `g`-spread `60.65%` vs published `M`-spread `0.781%` (77.6x).
-   The EG optimum's map has a **54.2% M-spread** — the 0.76 nats is bought by abandoning
-   balance, so quote it with the spread beside it.
+4. **Headline numbers (EG_{S13}, V(delivered), the 0.760-nat gap, g-spread vs M-spread) are
+   recorded in `docs/units/U1-cert.md` `## Model` / `## Verify` — read them there, not here.**
 5. **`u_i(z) <= M_z` (headroom) holds only under `filler_capture="theta"`** (max ratio
    `1.00000042`, the 6-sig-fig export rounding). At `"full"` — `MODEL.md` §6.7's own
    recommendation — it is `1.2949`. The correction to the ceiling is `sum_{i in S} log nu_i`

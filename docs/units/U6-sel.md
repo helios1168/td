@@ -22,7 +22,7 @@ Status: open
 
 ## Files owned
 
-`docs/MODEL_U6-sel.md` · `docs/VERIFY_U6-sel.md` · `tools/verify/U6-sel/**`
+This file's `## Model` · `## Verify` · `tools/verify/U6-sel/**`
 
 ## Files forbidden
 

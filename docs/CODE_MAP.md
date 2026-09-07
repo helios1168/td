@@ -56,6 +56,17 @@ way.
 | `docs/channel_note/`, `docs/math_note/` | the LaTeX notes (channel model; the original two-player formulation). `math_note/toy_*.py` import the deleted `code/gfx` and are broken |
 | `tests/run_all.py` | 269 fast tests; `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True` |
 | `app/` + `tools/app.sh` | the Streamlit scenario app: define a scenario, run an engine, see the map, save it. Runs in its own venv `.venv-app` and never imports `td` — it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/engines.py` is the registry; `docs/APP.md` is the whole story |
+| `docs/PROBLEM.md` | owner of the settled business-problem facts |
+| `docs/MODEL.md` | owner of the settled model facts |
+| `docs/CODE_MAP.md` | this file: what is built, where, how to run it |
+| `docs/APP.md` | owner of the Streamlit app's story |
+| `docs/units/<id>.md` | one unit's brief plus `## Model`, `## Verify`, `## Code verify` and a `Status: open\|done\|dropped` line |
+| `docs/foundations/` | frozen FRAME, APPROACHES, LENS_*, DOMAIN_*, LIT_*, BRIEF and the former `archive/`; read-only, never edited |
+| `<worktree>/PLAN.md` | one track's running log (`## Goal`, `## Next step`, `## Done`, `## Decisions needed`, `## Files owned / forbidden`); committed on the branch, deleted at merge |
+| `tools/verify/<id>/` | runnable verifier artifacts for unit `<id>`, cited from that unit's `## Verify` / `## Code verify`; not test-discovered |
+| `literature/territory_bibliography.{md,csv,bib}`, `literature/RESEARCH_ADDITIONS.bib` | citations (bibliography skill) |
+| `.claude/doc-owners.txt` | the docs ownership allowlist, read by the `td-doc-owners.sh` PreToolUse hook and `tests/test_docs_owners.py` |
+| `.claude/settings.json` | wires the four `~/.claude/hooks/td-*.sh` hooks: SessionStart, PreCompact, PreToolUse, Stop |
 
 ## Recipes (v2 forms — the live ones)
 
@@ -69,6 +80,8 @@ tools/us_maps.py <instance> --out figures/<dir>/ --districts <draw.csv> --region
 .venv/bin/python3 tools/run_draw.py instance_descaled_v2.json.gz --k 14-22 --seeds 0-9 --workers 8 --out battery/results/runs_<date>/baseline
 bash tools/verify/runs/run_all.sh   # 15 runs, ~14 min; then make_maps.sh and build_artifact.py --date <date>
 tools/app.sh                          # the scenario app on 127.0.0.1:8501 (docs/APP.md)
+.venv/bin/python3 tests/run_all.py    # 312 fast tests; -k <name> filters
+~/.claude/hooks/test-td-hooks.sh      # SessionStart / PreCompact / PreToolUse / Stop hook tests
 ```
 
 ## Scenario exploration goes through the app, not a new artifact

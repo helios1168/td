@@ -10,7 +10,7 @@ independent oracle, what serves as an anchor, and what bites in this environment
 
 **Why:** the project's numbers are all derived from one confidential descaled instance, so the
 only honest oracles are *second implementations* over the same file, plus second solvers.
-**How to apply:** reach for these first on any `docs/MODEL_*.md` ↔ code verification here.
+**How to apply:** reach for these first on any `docs/units/<id>.md` `## Model` ↔ code verification here.
 
 **Oracles that worked (U7-meas, all reproduced the code to ≤1e-14):**
 - Re-read `instance_descaled.json.gz` with plain `gzip`+`json` and rebuild `S_i(z) =

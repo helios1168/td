@@ -852,7 +852,7 @@ which claim beyond balance must be certified, compactness or region-contiguity. 
 Folded from `docs/RESEARCH_FINDINGS.md` §7 and §8 on 2026-09-07. The full 130-entry annotated
 bibliography from the 2026-09-01 overnight reconnaissance is recoverable at
 `git show 81bd59f:docs/RESEARCH_FINDINGS.md`; its BibTeX survives as
-`docs/RESEARCH_ADDITIONS.bib`; the curated per-domain literature is
+`literature/RESEARCH_ADDITIONS.bib`; the curated per-domain literature is
 `docs/foundations/LIT_optimization.md` and `docs/foundations/LIT_economic-theory.md`, which are
 frozen and read-only.
 

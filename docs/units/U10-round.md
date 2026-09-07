@@ -80,8 +80,8 @@ above is the current text, so the sizing re-anchor this section used to carry is
 
 ## Files owned
 
-`td/solvers/eg_round.py` · `tests/test_eg_round.py` · `docs/MODEL_U10-round.md` (spec, first) ·
-`docs/CODEVERIFY_U10-round.md` (by `code-verify`) · `battery/results/u10_round_<date>/` ·
+`td/solvers/eg_round.py` · `tests/test_eg_round.py` · this file's `## Model` (spec, first) ·
+`## Code verify` (by `code-verify`) · `battery/results/u10_round_<date>/` ·
 `figures/u10_round/` (the rounded map, dots and cells, per `CLAUDE.md`).
 
 ## Files forbidden

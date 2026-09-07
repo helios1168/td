@@ -5,8 +5,9 @@ STATE.md`. This file carries invariants only and is never stamped.
 
 ## Start-up protocol
 
-1. `STATE.md` `## Now` and `## Next` (Serena `find_symbol`, or one Read). Nothing else is
-   required to resume.
+1. `STATE.md` `## Now` then `## Next` is the resume point. The SessionStart hook
+   (`~/.claude/hooks/td-session-start.sh`) prints them plus the derived track list and the local
+   `PLAN.md ## Next step` on every session start; nothing else is required to resume.
 2. `docs/CODE_MAP.md` for files and recipes; `docs/PROBLEM.md` / `docs/MODEL.md` for the problem
    and the model.
 2a. If the task is "what does this scenario do" — pin a region, change k, swap the engine — run
@@ -34,9 +35,34 @@ STATE.md`. This file carries invariants only and is never stamped.
 
 ## Tests
 
-`.venv/bin/python3 tests/run_all.py` — 269 fast tests, 0 fail (2026-09-06). `TD_SLOW=1` adds
+`.venv/bin/python3 tests/run_all.py` — 312 fast tests, 0 fail (2026-09-07). `TD_SLOW=1` adds
 nothing: no module sets `SLOW = True`. `tests/test_engines.py` is the self-contained two-player
 smoke test.
+
+## Docs discipline
+
+One owner per file, listed in `.claude/doc-owners.txt`; `docs/foundations/` is read-only and
+never edited. A track's running log is its worktree `PLAN.md` (`## Goal`, `## Next step`,
+`## Done`, `## Decisions needed`, `## Files owned / forbidden`), committed on the branch and
+deleted in the last commit before merge. The permanent record of a unit is `docs/units/<id>.md`,
+carrying a `Status:` line and `## Model`, `## Verify`, `## Code verify` sections. Verifier
+artifacts are committed under `tools/verify/<id>/`; they are never test-discovered. Bugs and
+small todos live in code as a `TODO` at the site (the runner has no `xfail`), never in `## Next`.
+History: `git log --grep '^State:' -p -- STATE.md`.
+
+## Worktrees
+
+Create with `git worktree add .claude/worktrees/<name> -b worktree-<name>` then
+`git worktree lock --reason "keep" .claude/worktrees/<name>`, never `EnterWorktree(name)`; enter
+an existing one by path. A worktree has no `.venv`; use the hub's. Serena must be given absolute
+worktree paths (relative paths resolve against the hub and can write to the user's checkout,
+trap 16 below). Merges into `main` are fast-forward and asked for first; after merge, unlock,
+remove, and delete the branch.
+
+## Subagents
+
+Noisy work (inventories, grep sweeps, verifier runs) goes to a subagent; only the verdict returns
+to the main context.
 
 ## Traps that still apply
 
@@ -52,6 +78,11 @@ smoke test.
     `highs-ds` with an explicit `options` dict.
 15. Key solver retries on the engine's stop reason (`extra["retryable"]`), never the
     harness-facing status.
+16. Serena resolves relative paths against the hub, not the active worktree; pass absolute
+    paths, or use Read/Edit.
+17. ★8, "books enter at stage 2 only", has no cited basis since 2026-09-05: `fotakis2014` and
+    Gibbard–Satterthwaite were both withdrawn, deliberately with no replacement. Never re-derive
+    a basis from memory, and never let the misreporting exposure read as resolved.
 
 **Two-tier acceptance:** tier 1 `CERT_TOL = 1e-8`; tier 2 `base.EPS_CERT = 5e-3` nats, grounded
 on a measured data-noise floor (re-measure on the real instance). The full trap list is in git

@@ -20,11 +20,11 @@ Construction is independent; placing the point on the frontier needs U8-band.
 
 ## Files owned
 
-`tools/baseline/state_grouped.py` · `tests/test_state_grouped.py` · `docs/MODEL_U13-base.md`
+`tools/baseline/state_grouped.py` · `tests/test_state_grouped.py` · this file's `## Model`
 (the construction rule written down *before* the code, including the split rule for TX — v1
 measured TX at 11.5% of `M` on the 1,229-zip instance; that number must be **re-measured on the
 live 3,748-zip instance**, do not assume it carries over — zip3 is the only grain the instance
-carries) · `docs/CODEVERIFY_U13-base.md` · `battery/results/u13_base_<date>/` ·
+carries) · `## Code verify` · `battery/results/u13_base_<date>/` ·
 `figures/u13_base/` (the baseline map, tracked).
 
 ## Files forbidden

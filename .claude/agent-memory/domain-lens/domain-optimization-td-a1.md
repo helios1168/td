@@ -13,7 +13,7 @@ re-propose retired methods or re-derive settled bounds.
 A re-run that plans from the method menu rather than from FRAME §6's measured rows will
 reproduce the same wrong centrepiece.
 
-**How to apply:** read `docs/FRAME.md` §6's dated rows *before* `docs/DOMAIN_optimization.md`;
+**How to apply:** read `docs/foundations/FRAME.md` §6's dated rows *before* `docs/foundations/DOMAIN_optimization.md`;
 the §6 rows dated later than the DOMAIN file's header are what changed.
 
 ## Rejected, with the reason (2026-09-03)
@@ -32,13 +32,11 @@ the §6 rows dated later than the DOMAIN file's header are what changed.
 - **Proportional response as the EG solver** — cannot take side constraints, so it cannot compute
   the band-constrained fibre. Any new run must use OA/LP or SCIP-native `log`.
 
-## Numbers that drove it (FRAME §6, 2026-09-03)
+## What drove it (FRAME §6, 2026-09-03)
 
-`EG_{S₁₃} = 60.6974` vs `V = 59.9375` (gap 0.760 nats, bracket 7e-15); the EG vertex has
-`M`-spread ≥ 50%, so that gap is over a feasible set the sponsor rejects. Premium ladder: match
-gap 0, map gap 0.640 nats, roster gap 0.043. `g`-spread 60.65% vs `M`-spread 0.781%. 83 contested
-zips among the 13 (6.12% of `M`). `corr(T_z,M_z) = 0.650`. Tier-2 floor 5e-3 nats; the Nash-tie
-margin on seed 9 is 8.1e-3, only 1.6× the floor.
+Numbers are in `docs/units/U1-cert.md`. The EG−V gap's vertex has `M`-spread ≥ 50%, so that gap
+is over a feasible set the sponsor rejects; the Nash-tie margin on seed 9 is only 1.6× the
+tier-2 floor.
 
 ## FOUNDATIONS entries that turned out to matter
 
@@ -58,8 +56,8 @@ enumerate near-optimal rosters). Dormant and staying dormant: all of FOUNDATIONS
    M8 writes the sandwich's left endpoint as 0.0078 using the spread; that inequality may be
    false. Recompute `δ_0 = max_j |m_j − T/k|/(T/k)` first.
 2. Never quote a single-vertex `M(F)` or rounding gap — the EG optimal face has many vertices and
-   two independent solves returned different split sets of the same size (`MODEL_U1-cert` failure
-   mode 9).
+   two independent solves returned different split sets of the same size (`docs/units/U1-cert.md`
+   `## Model` failure mode 9).
 3. Trap 2 (`CLAUDE.md`): any frontier rendering must mark the MNW point, or balance minimisation
    has entered by the back door.
 

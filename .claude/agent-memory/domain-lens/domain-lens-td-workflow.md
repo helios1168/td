@@ -6,18 +6,18 @@ metadata:
 ---
 
 Workflow notes for the `domain-lens` agent on td (national channel territory design).
-Written 2026-09-03 after the A1-track rewrite of `docs/DOMAIN_economic-theory.md`.
+Written 2026-09-03 after the A1-track rewrite of `docs/foundations/DOMAIN_economic-theory.md`.
 
 **Why:** td runs the six-stage research framework with per-track worktrees (`wt/A0`…`wt/A5`),
-so the same `docs/DOMAIN_*.md` filename means different things on different branches. A run
+so the same `docs/foundations/DOMAIN_*.md` filename means different things on different branches. A run
 that reads the hub's version and plans from it will supersede the wrong document.
 **How to apply:** at the start of every run, establish which track charter is live before
 reading anything else.
 
 - **Read order that works:** `~/.claude/commands/domain.md` → `~/resources/<domain>/FOUNDATIONS.md`
-  in full → `docs/APPROACHES.md` §<track> (the charter is the problem statement, verbatim) →
-  `docs/FRAME.md` (§0 resume, §3, §5–§6, §8–§10) → every `docs/LENS_*.md` on the branch → the
-  measurement models (`MODEL_U*.md` §6, `VERIFY_U*.md` §0) → the predecessor `DOMAIN_*.md` →
+  in full → `docs/foundations/APPROACHES.md` §<track> (the charter is the problem statement, verbatim) →
+  `docs/foundations/FRAME.md` (§0 resume, §3, §5–§6, §8–§10) → every `docs/foundations/LENS_*.md` on the branch → the
+  measurement models (`docs/units/<id>.md` `## Model` / `## Verify`) → the predecessor `DOMAIN_*.md` →
   the sibling `DOMAIN_*.md` for non-duplication → `LIT_*.md` in full.
 - **`FRAME.md` §0 is the only reliable state pointer.** `CLAUDE.md` lags it by a day or more.
 - **The two `/domain` runs are parallel and must not overlap.** economic-theory takes the

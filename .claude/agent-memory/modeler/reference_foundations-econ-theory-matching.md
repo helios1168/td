@@ -13,7 +13,7 @@ For stability/matching work on the territory project, the citations that did rea
   reference) were load-bearing. **Gale & Shapley 1962** is background only here.
   **Roth 1982** is *not* usable for "does uniqueness weaken the strategy-proofness
   obstruction" — that question is unsettled by anything in FOUNDATIONS.
-- `docs/LIT_economic-theory.bib` — **eeckhout2000** (SPC ⇒ unique stable = greedy top-pair),
+- `docs/foundations/LIT_economic-theory.bib` — **eeckhout2000** (SPC ⇒ unique stable = greedy top-pair),
   **consuegra2013** (SPC is sufficient only; never write "unique iff"), **clark2006** (No
   Crossing Condition, the fallback only if alignment is *broken*, e.g. by a rep-specific
   travel-cost term), **niederle2009** (aligned preferences ⇒ parties renegotiate an unstable
@@ -24,5 +24,5 @@ For stability/matching work on the territory project, the citations that did rea
   unless the arXiv text is actually pulled.
 
 `eeckhout2000`'s theorem is stated for balanced one-to-one markets; the 111-vs-13 unbalanced
-version with an outside option has to be proved directly (it is, in `docs/MODEL_U2-stab.md`
-§3). See [[u2-stab-traps]].
+version with an outside option has to be proved directly (it is, in `docs/units/U2-stab.md`
+`## Model` §3). See [[u2-stab-traps]].

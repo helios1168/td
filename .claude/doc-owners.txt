@@ -1,0 +1,12 @@
+# Allowlist of docs/*.md files this repo owns. One glob per line, relative to the repo root.
+# Read by ~/.claude/hooks/td-doc-owners.sh (PreToolUse, denies a Write/Edit to any docs/*.md
+# not covered here) and by tests/test_docs_owners.py (asserts every docs/**/*.md outside
+# docs/foundations/ matches a line, and every line resolves to at least one real file).
+# docs/foundations/ is read-only and is never listed here; the hook denies any edit under it
+# unconditionally. Adding a new docs/*.md needs a line here AND an owner row in
+# docs/CODE_MAP.md ## Files.
+docs/PROBLEM.md
+docs/MODEL.md
+docs/CODE_MAP.md
+docs/APP.md
+docs/units/*.md

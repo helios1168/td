@@ -20,8 +20,8 @@ U13-base supplies the baseline point when it exists.
 
 ## Files owned
 
-`docs/MODEL_U12-menu.md` (the menu, its derivation and the sponsor-facing page as an appendix) ·
-`docs/VERIFY_U12-menu.md` · `tools/verify/U12-menu/**` (the arithmetic that fills the table,
+This file's `## Model` (the menu, its derivation and the sponsor-facing page as an appendix) ·
+`## Verify` · `tools/verify/U12-menu/**` (the arithmetic that fills the table,
 reading U8/U11/U13 outputs; no solves of its own).
 
 ## Files forbidden
