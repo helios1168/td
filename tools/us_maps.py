@@ -492,6 +492,131 @@ def draw_palette(districts, values, xy, *, n_near=4, palette=QUAL):
     return order, centroids, color_districts(adj, palette)
 
 
+# ------------------------------------------------------------------ small-district labels
+# Direct labelling breaks when a district's own ground is smaller than the label that would sit
+# on it: the white box then covers the very territory it names.  It happens on both district
+# figures: a sliver Voronoi cell in `figure_district_regions`, a tight cluster of small bubbles
+# in `figure_districts`.  The fix is written once here and called from both, which is what keeps
+# a district crossing the same threshold and getting the same leader-line treatment on either map.
+LEADER_W = 0.7
+LEADER_ALPHA = 0.8
+
+
+def _label_box_wh(fig, ax, text, fontsize=8, pad=0.22) -> tuple:
+    """`(w, h)` of one rendered label box, in the axes' current DATA units.
+
+    Not approximated from the fontsize: 'D1' and 'D18' are not the same width in a bold face,
+    and the threshold this feeds is a real area comparison, not a guess.  A throwaway text
+    artist, in the same style every label is actually drawn in, is added at the axes centre,
+    the figure is forced to draw so Agg computes its metrics, and the *patch's* pixel extent
+    (the box, not just the glyphs) is read back and converted through the axes' data<->pixel
+    transform.  Requires the axes' final data limits to already be set, since that transform is
+    exactly what they fix, and is meant to be called once per figure, not once per label:
+    every label here is the same fontsize and near enough the same width.
+    """
+    cx = 0.5 * sum(ax.get_xlim())
+    cy = 0.5 * sum(ax.get_ylim())
+    art = ax.text(cx, cy, text, fontsize=fontsize, fontweight="bold", ha="center", va="center",
+                 bbox=dict(boxstyle=f"round,pad={pad}", facecolor="white", edgecolor="none"))
+    fig.canvas.draw()
+    bbox = art.get_bbox_patch().get_window_extent(fig.canvas.get_renderer())
+    art.remove()
+    (x0, y0), (x1, y1) = ax.transData.inverted().transform([[bbox.x0, bbox.y0],
+                                                            [bbox.x1, bbox.y1]])
+    return abs(x1 - x0), abs(y1 - y0)
+
+
+def _box_overlap(a, b) -> float:
+    """Overlap area of two `(x0, y0, x1, y1)` boxes; 0 when they do not intersect."""
+    ox = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+    oy = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    return ox * oy
+
+
+def _leader_spot(anchor, w, h, placed, radii, *, avoid_polys=None, land=None, n_dir=12) -> tuple:
+    """Best label-centre near `anchor` for a label that will not fit under it.
+
+    Tried on a compass ring of `n_dir` directions at each radius in `radii` (absolute, data
+    units), and scored: overlap with an already-placed label's box dominates (a colliding tag
+    is a worse failure than an ugly leader line), then, where given, a point on a *different*
+    district's ground (`avoid_polys`, its own district already excluded by the caller) is
+    penalised and a point off the landmass (`land`) is rewarded: open water is exactly where
+    a tag belongs, since it reads as "nowhere" rather than "someone else's territory."  Neither
+    is available on the bubble map, which has no territory polygons; the search still runs, it
+    just no longer prefers water over a crowded label cluster.  Always returns a spot, the
+    least-bad candidate when every one collides, because a misplaced label is still a smaller
+    error than the one this function exists to fix.
+    """
+    from shapely import Point
+    ax0, ay0 = anchor
+    best, best_score = None, None
+    for r in radii:
+        for i in range(n_dir):
+            ang = 2.0 * np.pi * i / n_dir
+            x, y = ax0 + r * np.cos(ang), ay0 + r * np.sin(ang)
+            box = (x - 0.5 * w, y - 0.5 * h, x + 0.5 * w, y + 0.5 * h)
+            score = 100.0 * sum(_box_overlap(box, pb) for pb in placed)
+            if land is not None or avoid_polys is not None:
+                p = Point(x, y)
+                if land is not None and not land.covers(p):
+                    score -= 1.0
+                elif avoid_polys is not None:
+                    score += sum(1.0 for poly in avoid_polys.values() if poly.covers(p))
+            if best_score is None or score < best_score:
+                best, best_score = (x, y, box), score
+    return best
+
+
+def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys=None,
+                  land=None) -> None:
+    """Direct-labels every district in `order` at `anchors[d]`, white-haloed exactly as the two
+    district figures always have, unless `footprint[d]` is too small to hold the label box,
+    in which case the label moves to nearby open ground and a thin leader line ties it back to
+    `anchors[d]`, which both callers already guarantee is a point inside (or representative of)
+    the district.
+
+    'Too small' is a real area comparison: the label box is measured once (`_label_box_wh`) and
+    compared to `footprint[d]`, the district's largest polygon part on the territory maps, the
+    bounding box of its own plotted points on the bubble map, where there is no polygon at all.
+    The two callers build `footprint` differently; this function does not care which.
+
+    Districts are served largest-footprint-first, so the ones with room keep their preferred
+    spot and the small interleaved ones are the ones that move, matching `label_points`'s
+    ordering, for the same reason.  Requires the axes' final data limits to already be set, and
+    may expand them afterwards if a leader label would otherwise be clipped.
+    """
+    ranked = sorted((d for d in order if d in anchors),
+                    key=lambda e: (-footprint.get(e, 0.0), str(e)))
+    if not ranked:
+        return
+    w, h = _label_box_wh(fig, ax, max((str(d) for d in ranked), key=len), fontsize)
+    label_area = w * h
+    x0, x1 = ax.get_xlim()
+    y0, y1 = ax.get_ylim()
+    radii = (0.05 * (x1 - x0), 0.09 * (x1 - x0))
+    placed, reach = [], 0.0
+    for d in ranked:
+        anchor = anchors[d]
+        if footprint.get(d, 0.0) >= label_area:
+            lx, ly = anchor
+        else:
+            others = {e: p for e, p in avoid_polys.items() if e != d} if avoid_polys else None
+            lx, ly, _ = _leader_spot(anchor, w, h, placed, radii, avoid_polys=others, land=land)
+            ax.plot([anchor[0], lx], [anchor[1], ly], color=BORDER, linewidth=LEADER_W,
+                   alpha=LEADER_ALPHA, zorder=4.5, solid_capstyle="round")
+        box = (lx - 0.5 * w, ly - 0.5 * h, lx + 0.5 * w, ly + 0.5 * h)
+        placed.append(box)
+        reach = max(reach, x0 - box[0], box[2] - x1, y0 - box[1], box[3] - y1, 0.0)
+        ax.text(lx, ly, str(d), color=LABEL_TEXT, fontsize=fontsize, fontweight="bold",
+               ha="center", va="center", zorder=5,
+               bbox=dict(boxstyle="round,pad=0.22", facecolor="white", edgecolor="none",
+                         alpha=0.82))
+    if reach > 0:
+        pad = reach + 0.01 * (x1 - x0)
+        ax.set_xlim(x0 - pad, x1 + pad)
+        ax.set_ylim(y0 - pad, y1 + pad)
+
+
 def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKER,
                      alpha=ALPHA, footer=FOOTER, title=None, subtitle=None, n_near=4,
                      palette=QUAL, label=True, state_w=0.5, state_color=OUTLINE):
@@ -537,14 +662,25 @@ def figure_districts(districts, values, xy, states, out, *, max_marker=MAX_MARKE
                linewidths=EDGE_W, edgecolors="white")
 
     if label:
-        for d in order:
-            if d not in centroids:
-                continue
-            cx, cy = centroids[d]
-            ax.text(cx, cy, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
-                    ha="center", va="center", zorder=5,
-                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
-                              edgecolor="none", alpha=0.82))
+        # freeze the view before measuring anything in data units: a scatter autoscales lazily,
+        # and a leader line drawn afterward must not nudge the limits and invalidate the scale
+        # `_place_labels` just measured against.
+        ax.autoscale_view()
+        ax.set_xlim(*ax.get_xlim())
+        ax.set_ylim(*ax.get_ylim())
+        # there is no territory polygon on this map, so a district's footprint is approximated
+        # as the bounding box of its own plotted bubbles, which is what a reader's eye actually
+        # has to find the label under.
+        by_district = {}
+        for z, _ in keep:
+            by_district.setdefault(districts[z], []).append(xy[z])
+        footprint = {}
+        for d, pts in by_district.items():
+            xs = [p[0] for p in pts]
+            ys = [p[1] for p in pts]
+            footprint[d] = (max(xs) - min(xs)) * (max(ys) - min(ys))
+        land = land_union(states) if states is not None else None
+        _place_labels(fig, ax, order, centroids, footprint, land=land)
     _district_legend(fig, districts, values, colors, order)
     _size_legend(ax, v, float(v.max()), "M (descaled)", max_marker)
     return _save(fig, out)
@@ -964,17 +1100,18 @@ def figure_district_regions(districts, values, xy, states, out, *, alpha=REGION_
     if states is not None:                                     # 4. states, on top but light
         states.boundary.plot(ax=ax, color=state_color, linewidth=state_w, zorder=4)
 
-    if label:                                                  # 5. labels
-        for d, (lx, ly) in label_points(order, polys, centroids,
-                                        LABEL_SEP * (x1 - x0)).items():
-            ax.text(lx, ly, str(d), color=LABEL_TEXT, fontsize=8, fontweight="bold",
-                    ha="center", va="center", zorder=6,
-                    bbox=dict(boxstyle="round,pad=0.22", facecolor="white",
-                              edgecolor="none", alpha=0.82))
-    _district_legend(fig, districts, values, colors, order)
+    # fixed here, before labelling, rather than after: `_place_labels` measures a label box in
+    # data units, which needs the axes' final scale, and a leader label pushed out to open water
+    # must still land inside the frame this sets.
     mx, my = 0.02 * (x1 - x0), 0.02 * (y1 - y0)
     ax.set_xlim(x0 - mx, x1 + mx)
     ax.set_ylim(y0 - my, y1 + my)
+
+    if label:                                                  # 5. labels
+        anchors = label_points(order, polys, centroids, LABEL_SEP * (x1 - x0))
+        footprint = {d: _largest_part(g).area for d, g in polys.items()}
+        _place_labels(fig, ax, order, anchors, footprint, avoid_polys=polys, land=clip)
+    _district_legend(fig, districts, values, colors, order)
     return _save(fig, out)
 
 
@@ -1392,6 +1529,128 @@ def figures_fixed_diagram(districts, values, xy, states, outdir, *, targets="equ
     ]
 
 
+# ------------------------------------------------------------------ per-district close-ups
+# Business users want to inspect one territory at a time.  Everything a close-up needs, the
+# tessellation, the borders, the palette, is the same for all eighteen of them, so it is built
+# **once**, here, and every `district_<id>.png` is a different window and a different subject
+# onto the identical `cells`/`polys`.
+CONTEXT_FILL = "#d6d6d6"       # every district but the one this figure names: present, mute
+CONTEXT_ALPHA = 0.9            # solid, not translucent: at REGION_ALPHA it reads as background
+DETAIL_PAD = 0.08              # zoom padding, as a fraction of the district's own larger side
+
+
+def _district_window(polys, d, pad=DETAIL_PAD) -> tuple:
+    """`(x0, y0, x1, y1)` -- the zoom window for one district's close-up: its own territory's
+    bounds, padded by `pad` of its own larger dimension so a slice of its neighbours shows too.
+    """
+    g = polys.get(d)
+    if g is None or g.is_empty:
+        raise ValueError(f"district {d}: no territory to zoom to")
+    x0, y0, x1, y1 = g.bounds
+    m = pad * max(x1 - x0, y1 - y0)
+    return x0 - m, y0 - m, x1 + m, y1 + m
+
+
+def _figure_district_detail(d, districts, values, xy, states, zip_state, polys, colors,
+                            lattice, borders, per, total, out, *, vmax, max_marker=MAX_MARKER,
+                            alpha=REGION_ALPHA, pad=DETAIL_PAD, footer=FOOTER):
+    """One district's own close-up, drawn from a tessellation the caller built once.
+
+    The subject district keeps its `draw_palette` hue; every other district is the same muted
+    grey, so the borders around it read as context rather than as districts a reader has to
+    tell apart.  The zip lattice and the district borders are exactly `figure_district_regions`'s,
+    passed in rather than rebuilt, so a reader who has seen the overview map recognises this one.
+    Zips are drawn as dots sized by M exactly as `figure_districts` sizes them (`vmax` is that
+    map's own maximum, so a dot the same size here and there really is the same M).
+    """
+    from matplotlib.collections import LineCollection
+    from matplotlib.patches import PathPatch
+
+    x0, y0, x1, y1 = _district_window(polys, d, pad)
+
+    def hits(b):                       # does a bbox `(x0, y0, x1, y1)` meet the zoom window
+        return not (b[2] < x0 or x1 < b[0] or b[3] < y0 or y1 < b[1])
+
+    share = 100.0 * per.get(d, 0.0) / total
+    equal = 100.0 / max(len(per), 1)
+    zips = sorted(z for z, dd in districts.items() if dd == d)
+    zip_states = sorted({zip_state.get(z) for z in zips if zip_state.get(z)})
+
+    title = f"District {d} — close-up"
+    subtitle = (f"{share:.2f}% of national opportunity ({share - equal:+.2f} pp vs. the "
+               f"{equal:.2f}% equal share)  ·  "
+               f"{', '.join(zip_states) if zip_states else 'state unknown'}  ·  "
+               f"{len(zips):,} zips")
+    fig, ax = _canvas(None, title, subtitle, footer)
+
+    for e, g in polys.items():                                 # 1. fills: subject vs. context
+        if g is None or g.is_empty or not hits(g.bounds):
+            continue
+        fc, fa, z = (colors[d], alpha, 1) if e == d else (CONTEXT_FILL, CONTEXT_ALPHA, 0)
+        for path in _poly_paths(g):
+            ax.add_patch(PathPatch(path, facecolor=fc, edgecolor="none", alpha=fa, zorder=z))
+    def seg_hits(segs):
+        return [s for s in segs
+               if hits((s[:, 0].min(), s[:, 1].min(), s[:, 0].max(), s[:, 1].max()))]
+
+    ax.add_collection(LineCollection(seg_hits(lattice), colors=CELL_EDGE, linewidths=CELL_EDGE_W,
+                                     alpha=CELL_EDGE_ALPHA, zorder=2))        # 2. the zip lattice
+    ax.add_collection(LineCollection(seg_hits(borders), colors=BORDER, linewidths=BORDER_W,
+                                     capstyle="round", joinstyle="round", zorder=3))  # 3. borders
+    if states is not None:                                     # 4. states, on top but light
+        states.boundary.plot(ax=ax, color=OUTLINE, linewidth=STATE_W_REGIONS, zorder=4)
+
+    keep = sorted(((z, float(values.get(z, 0.0))) for z in zips
+                  if z in xy and values.get(z, 0.0) > 0), key=lambda kv: kv[1])
+    if keep:                                                   # 5. the district's own zips
+        px = np.array([xy[z][0] for z, _ in keep], float)
+        py = np.array([xy[z][1] for z, _ in keep], float)
+        pv = np.array([v for _, v in keep], float)
+        ax.scatter(px, py, s=_sizes(pv, vmax, max_marker), c=colors[d], alpha=ALPHA,
+                  linewidths=EDGE_W, edgecolors="white", zorder=5)
+
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y0, y1)
+    return _save(fig, out)
+
+
+def figures_district_detail(districts, values, xy, states, outdir, *, zip_state=None,
+                            state_polys=None, n_near=4, palette=QUAL, pad=DETAIL_PAD,
+                            max_marker=MAX_MARKER, report=None) -> list:
+    """One `district_<id>.png` per district: a close-up on its own territory, its context
+    muted, its zips sized by M, built from a **single** Voronoi tessellation, computed once
+    here and reused for all of them, since the tessellation does not depend on which district
+    is being zoomed to.
+    """
+    say = report or (lambda _s: None)
+    keys = [z for z in sorted(districts, key=str) if z in xy]
+    order, _, colors = draw_palette(districts, values, xy, n_near=n_near, palette=palette)
+    clip = clip_region([xy[z] for z in keys], states, 0.05)
+    cells = voronoi_cells(keys, xy, clip, zip_state=zip_state, state_polys=state_polys)
+    polys = dissolve(cells, districts)
+    eps = 1e-4 * float(np.hypot(clip.bounds[2] - clip.bounds[0], clip.bounds[3] - clip.bounds[1]))
+    lattice = [seg for g in cells.values() for seg in _lines_of(g.boundary)]
+    borders = district_borders(polys, eps)
+
+    per = {}
+    for z, dd in districts.items():
+        per[dd] = per.get(dd, 0.0) + float(values.get(z, 0.0))
+    total = sum(per.values()) or 1.0
+    vmax = max((float(values.get(z, 0.0)) for z in districts
+               if float(values.get(z, 0.0)) > 0), default=1.0)
+
+    os.makedirs(outdir, exist_ok=True)
+    written = []
+    for d in order:
+        out = os.path.join(outdir, f"district_{d}.png")
+        path = _figure_district_detail(d, districts, values, xy, states, zip_state or {}, polys,
+                                       colors, lattice, borders, per, total, out,
+                                       vmax=vmax, max_marker=max_marker, pad=pad)
+        written.append(path)
+        say(f"{os.path.basename(path):<20} ({os.path.getsize(path) / 1024:.0f} KB)")
+    return written
+
+
 def read_draw(path) -> dict:
     """`{zip: district}` from a `draw.csv` written by `tools/run_draw.py` (`zip,district`)."""
     import csv as _csv
@@ -1450,6 +1709,9 @@ def main(argv=None):
                     help="the same draw.csv; adds the fixed-diagram pair "
                          "(district_regions_fixed_committed.png / _snapped.png): one diagram, "
                          "the committed labelling and the labelling its weights produced")
+    ap.add_argument("--district-figures", default=None, metavar="DRAW_CSV",
+                    help="the same draw.csv; adds one district_<id>.png per district, a "
+                         "close-up on that district's own territory (honours --clip-states)")
     args = ap.parse_args(argv)
 
     from td import instance as descaled
@@ -1500,7 +1762,8 @@ def main(argv=None):
     for flag, name in (("districts", "districts.png"),
                        ("regions", "district_regions.png"),
                        ("regions_voronoi", "district_regions_voronoi.png"),
-                       ("regions_fixed", "district_regions_fixed_*.png")):
+                       ("regions_fixed", "district_regions_fixed_*.png"),
+                       ("district_figures", "district_<id>.png")):
         path = getattr(args, flag)
         if not path:
             continue
@@ -1518,6 +1781,15 @@ def main(argv=None):
               f"{len(unplaced)} instance zip(s) not in the draw")
         if flag == "regions_fixed":                # one diagram, two panels, so not a builder
             written.extend(figures_fixed_diagram(draw, M, xy, states, args.out, report=print))
+            continue
+        if flag == "district_figures":             # one tessellation, 18 close-ups
+            dfkw = {}
+            if args.clip_states and states is not None:
+                dfkw["state_polys"] = dict(zip(states["STUSPS"], states.geometry))
+            if states is not None:
+                dfkw["zip_state"] = {z: d.G.nodes[z].get("state") for z in draw}
+            written.extend(figures_district_detail(draw, M, xy, states, args.out,
+                                                   report=print, **dfkw))
             continue
         dest = os.path.join(args.out, name)
         builder = {"districts": figure_districts,
