@@ -39,7 +39,18 @@ band that would admit California in 3 is about 38.4%, not the 37.5% quoted earli
 out; it does not promise one is reachable. California in 4 is legal at δ = 5% and sits exactly
 on the floor: four districts at the cap hold 4.200τ against California's 4.153τ, leaving 0.047τ
 of slack for every other state across those four and a window 4.7% of a district wide. HiGHS
-found no feasible integer point in 10 minutes, nor in 20.
+found no feasible integer point in 10 minutes, nor in 20, nor in 60: the hour run ended
+`model_status is Time limit reached; primal_status is None`, so it never held an incumbent at
+all.
+
+**That is a search failure, and it is not the same as infeasibility.** New York at 2 returns
+HiGHS Status 8, Infeasible, in seconds, which is a proof. California at 4 returns Status 13 with
+no primal solution, which says only that an hour of branch and bound did not reach a feasible
+point. A map may exist. Three outcomes therefore have to be told apart wherever this is
+reported: refused by the mass floor, refuted by the solver, and searched without success. The
+Headline tab currently collapses the last two into "No map satisfies these overrides, or the run
+failed before writing a result", which reads as a claim about the map when it is a claim about
+the search.
 
 **Per-state caps have almost no legal move on this map at δ = 5%.** Only four states are split.
 TX and FL are already at their floor of 2, so a cap there is a no-op. NY at 2 is *proven*
@@ -64,8 +75,10 @@ assigned once, mass conserved to floating precision.
 
 ## Open
 
-- The hour-long California-at-4, δ = 5% run may still be in flight; if it found nothing, that
-  cap is out of reach at the tighter band and the app should say so rather than appear to hang.
+- The Headline tab's failure message claims no map satisfies the overrides when the solver may
+  simply have run out of time. It should read the driver's log and separate HiGHS Status 8
+  (refuted) from Status 13 with no primal solution (searched without success), and say how long
+  the search ran. `app/main.py:330`.
 - `docs/APP.md` has no section for the Headline tab yet.
 - Nothing downstream of a real `runner.launch` has been exercised: Streamlit cannot be driven
   headlessly, so the tab's run, cancel and render flow is unverified by test.
