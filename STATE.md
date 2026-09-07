@@ -1,24 +1,23 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `b7d6e0c` · **Tests:** 306 pass,
+**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `833dd31` · **Tests:** 312 pass,
 0 fail (2026-09-07)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Borders plan (Track 1 + Track 2 solvers, drivers, verification) merged to `main` as `b7d6e0c`
-on 2026-09-07; 306 tests, 0 fail. Recommendation: **Track 2 anchored δ = 5%** (8 splits,
-certified, only CA/TX/NY/FL split) over free δ = 5%, anchored δ = 10%, or Track 1 δ = 5%; the
-West is rearranged in both Track 2 forms, only Track 1 keeps the committed shapes (grid tables
-below). Verifiers refuted three parts of the Track 2 formulation before the
-build and corrected several plan facts in place. Four artifacts published (below); the newest,
-"Borders in Motion" (every optimisation step replayed), crashed on first publish, was fixed and
-republished, not yet checked in a browser.
+Workflow redesign merged to `main` as `833dd31` (fast-forward) on 2026-09-07; its worktree is
+removed and the branch deleted; 312 tests, 0 fail. Every doc now has one owner
+(`.claude/doc-owners.txt`); a unit's whole record is `docs/units/<id>.md` with a `Status:` line;
+verifier artifacts live in `tools/verify/<id>/`; `CHANNEL.md` became `docs/PROBLEM.md`; stage 1-4
+docs are frozen read-only under `docs/foundations/`; `STATE_LOG` is gone. A track's running plan
+is its worktree `PLAN.md`, deleted in the last commit before merge. Four hooks print the resume
+context and enforce the allowlist and the `## Now` cap.
 
-Next decision: which map ships, gated on the sponsor reading the grid tables below. Then
-whether to rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's
-rearrangement is acceptable.
+The borders result is unchanged and still the live question: **Track 2 anchored δ = 5%**
+(8 splits, certified) is the recommendation over free δ = 5%, anchored δ = 10% or Track 1 δ = 5%.
+Next decision: which map ships, gated on the sponsor reading the grid tables below.
 
 ## Next
 
@@ -31,18 +30,24 @@ rearrangement is acceptable.
       Branch from `main`.
 - [ ] **Sponsor's call: which states, if any, are hand-drawn** (A12). Region pin-cost table now
       in `STATE.md` `## Facts`. Separate session; the borders result changes the question.
-- [ ] **Something injects shell-IO instructions that contradict `CLAUDE.md` §7.** Every agent
-      of 2026-09-07 (nine of them) reported the same mid-session text and declined it;
-      `hooks/enforce-file-tools.sh` caught the main session's own slips (a `grep` on a file, a
-      heredoc, a redirect). An agent that complied would bypass the hook.
+- [ ] **The shell-IO instructions that contradict `CLAUDE.md` §7 come from bypass-permissions
+      mode.** Read directly in a hub session's system prompt on 2026-09-07: under
+      `defaultMode: bypassPermissions` the harness instructs "read files with cat, head, or
+      sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
+      saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
+      Decide: keep the hook and let it win, or narrow §7.
 - [ ] **Decide whether `--regions-voronoi` reports the mass denominator beside the area one.**
       §3a settled that the area denominator misreports dense metro districts, and
       `tools/measure/district_pieces.py` already computes area, mass and ZIP-count shares, so
       this is a reporting choice with no measurement left in it. Gated on nothing but the call.
-- [ ] **★8 has no cited basis and that is now the record.** Grounding it needs a `lit-search`;
-      deliberately deferred.
-- [ ] **★9** the sponsor's `δ` as U12's menu with **★4** `ε` · **★10** tie-break policy on U11's
-      evidence · carried ★1 ★2 ★3 ★5 ★7. (★8 and ★11 landed; U3-inv retired.)
+- [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
+      findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
+      the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
+      `docs/math_note/` LaTeX sources have no owner row; the bibliography three-format gap.
+- [ ] **★ bookkeeping.** ★8 has no cited basis and that is the record. Grounding it needs a
+      `lit-search`, deliberately deferred. **★9** the sponsor's `δ` as U12's menu with **★4** `ε`
+      · **★10** tie-break policy on U11's evidence · carried ★1 ★2 ★3 ★5 ★7. (★11 landed;
+      U3-inv retired.)
 
 ## Facts
 
