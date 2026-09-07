@@ -9,4 +9,5 @@ docs/PROBLEM.md
 docs/MODEL.md
 docs/CODE_MAP.md
 docs/APP.md
+docs/HEADLINE.md
 docs/units/*.md

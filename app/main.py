@@ -327,6 +327,12 @@ with headline:
             st.rerun()
         with st.expander(f"Log — {path.name}", expanded=state == "failed"):
             if state == "failed":
+                # TODO: this collapses two different outcomes into one sentence that reads as a
+                # claim about the map. HiGHS Status 8 (Infeasible) is a proof that no map
+                # satisfies the overrides; Status 13 (Time limit reached) with no primal
+                # solution says only that the search did not reach a feasible point -- CA at 4,
+                # delta = 5% returns the latter after an hour. Read the driver's log, tell the
+                # two apart, and say how long the search ran.
                 st.error("No map satisfies these overrides, or the run failed before writing "
                         "a result. The log below has the driver's own message.")
             st.code(runner.log_tail(path) or "(no output yet)")

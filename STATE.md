@@ -160,6 +160,29 @@ incumbent. One open question, low priority (only matters if δ = 10% is chosen):
 at δ = 10% says 6 splits might be possible (NJ alone plus PA+MD+DE+WV); HiGHS neither found nor
 refuted it in 600s.
 
+**The shipped map, measured 2026-09-07** (`docs/HEADLINE.md` is the end-to-end write-up). The
+level-1 ground set is 49 units, mass 8,468.3, **τ = 470.459**, and the states over τ are
+**CA 4.153, TX 2.026, NY 1.805, FL 1.392, NJ 1.043** (`--dump-state-shares`). Do not compare
+these with the state-atom block's ratios below: that base keeps the coordinate-less zips and
+divides by τ = 473.513. **The realised maximum deviation is 5.25%, outside the nominal 5% band**;
+the 4.68% that satisfies the band is `pass_max_dev`, a state-level quantity on continuous shares,
+before `realise` makes whole zips of them and before AK, HI and the coordinate-less zips are
+placed. `grid.csv` carries all three side by side with nothing marking which is authoritative, so
+"within 5%" needs the distinction in the sentence. Recomputed independently from the instance and
+the shipped draw: stage 2 95.78785, spread 0.089824, Nash 110.873686, 776 zips changed, every zip
+assigned once, mass conserved to floating precision. Level-1 objective 57.00483235477814, 8
+splits, gap 0, byte-identical `draw.csv` on a rerun through the override code with no caps.
+
+**Per-state caps, measured 2026-09-07.** **NY at 2 is refuted** (HiGHS Status 8 in seconds: two
+anchored districts need 1.90τ, the state supplies 1.805τ). **CA at 4 is not refuted and not
+found** — legal at δ = 5%, exactly on the floor (4.200τ of band against 4.153τ, a window 4.7% of
+a district), and an hour of branch and bound ended with no incumbent at all (Status 13,
+`primal_status is None`). Refused by the floor, refuted by the solver, and searched without
+success are three different answers. TX and FL are already at their floor of 2, so the map is
+tight, and the band is the lever: **CA capped at 4 at δ = 10% solves** — 7 splits, CA in 4, NY
+falls to 2, NJ splits, spread 16.70%, stage 2 95.7458, time-limited incumbent at a 1.79% gap
+(`figures/overrides/ca4_d10/`).
+
 **Artifacts published 2026-09-07** (private): "Borders on State Lines" (all 19 cells, compare
 slider), `https://claude.ai/code/artifact/ca561d23-fa10-49cd-80c0-4d69625d2857`; "The Five
 Percent Map" (the recommended cell, full model), `https://claude.ai/code/artifact/322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a`;
@@ -174,7 +197,9 @@ NY+NJ 3 / FL 2**: 56 atoms, 126 edges, **one component**. Pieces CA1 0.838×, CA
 0.825–0.826×, TX1 1.013×, TX2 1.007×, NYNJ1–3 0.943–0.944×, FL1 0.706×, FL2 0.691×.
 `Σ log M` **110.789532**, ceiling **110.883247**, gap **0.093715** nats, spread **30.484 %**
 (max 1.130×, min 0.826×), all 18 districts connected. Of 52 state codes only 5 exceed target:
-CA 4.126×, TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037×; largest atom needing no cut is IL 0.677×.
+CA 4.126×, TX 2.020×, NY 1.794×, FL 1.398×, NJ 1.037× (whole-instance τ = 473.5, every zip kept;
+the level-1 ground set drops the coordinate-less ones and reads higher, block above);
+largest atom needing no cut is IL 0.677×.
 NY+NJ together 2.831×, +CT 3.014×.
 
 **Map contiguity, measured 2026-09-06** (`tools/us_maps.py --regions-voronoi`, worktree

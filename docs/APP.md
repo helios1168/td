@@ -100,7 +100,8 @@ Layers, app venv on the left, solver venv on the right:
 | `app/engines.py` | one entry per solver: driver, argv builder, required env, which scenario fields it honours |
 | `app/runner.py` | launch an engine detached, poll its status, cancel it, render its maps |
 | `app/runs.py` | discover run directories, read `metrics.json` / `draw.csv` |
-| `app/main.py` | the UI: a Define-and-run tab and a Results tab |
+| `app/headline.py` | the Headline tab's own logic: the shipped cell's numbers, the cap floor, and the diff against the headline |
+| `app/main.py` | the UI: a Define-and-run tab, a Results tab and a Headline tab |
 
 **Scenario format.** Do not invent one. `run_draw.py` already accepts
 `--scenario file.json` with exactly `{"fix": {NAME: [ST, ...]}, "anchor": {...}}` and rejects
@@ -139,6 +140,21 @@ the engine produced a center-based draw; `--regions-voronoi` applies to any draw
 Renderings land in `battery/results/app/figures/<run>/k<kk>/`, not in `figures/`. The tracked
 `figures/` directory holds committed, reviewed artifacts, and app output is neither.
 
+**The Headline tab, added 2026-09-07.** One hard-wired case rather than a free scenario: the
+`borders-headline` engine entry reruns the shipped Track 2 anchored cell with exactly the
+committed run parameters (`--draw` the committed k = 18 draw, `--anchor-homes`, `--eta 0.01`,
+`--rounds 5`, `--time-limit 600`), so only `δ` and the per-state caps vary and a diff against the
+result is a diff against the headline rather than against a different experiment. The entry is
+`listed: False`, so it does not appear in the Define-and-run engine picker.
+
+A cap is refused before launch when it falls below the state's arithmetic floor
+`⌈M_s / ((1+δ)τ)⌉`, read from `--dump-state-shares`. A cap at or above the floor but below the
+state's anchored count releases that state's anchors, keeping the cap-many that hold the most of
+its committed opportunity; the tab warns and lets it run, because the anchors are what hold a
+state above its floor, not the floor itself. The floor is necessary and not sufficient:
+California at 4 is legal at δ = 5% and HiGHS found no feasible point in an hour.
+`docs/HEADLINE.md` §6 carries what that does and does not prove.
+
 ## 5. Assumptions on the record
 
 1. Business users define scenarios and launch runs from the browser; the app is not a read-only
@@ -149,3 +165,7 @@ Renderings land in `battery/results/app/figures/<run>/k<kk>/`, not in `figures/`
    been launched through `app/runner.py` yet.
 4. The live instance is `instance_descaled_v2.json.gz` at k = 18, and it is confidential. It
    never leaves the Mac Studio; the app displays derived numbers only.
+5. Nothing downstream of a real `runner.launch` is covered by a test. Streamlit cannot be driven
+   headlessly, so the Headline tab's run, cancel and render flow has been exercised by hand and
+   by nothing else. The cap floor and the anchor-release rule are unit-tested
+   (`tests/test_state_splits_cli.py`); the UI around them is not.

@@ -2,10 +2,11 @@
 
 The shipped path only: from the v2 instance to the committed k = 18 draw, and from that draw to
 the Track 2 anchored δ = 5% map in `figures/borders_track2_anchored_d05_voronoi.png`. Every
-program is written in the notation of `docs/CHANNEL_NOTE.md` §8.5, every number carries its
+program is written in the notation of `docs/MODEL.md` §7, every number carries its
 base, and every step names its code, its verification and its run directory. Alternatives that
 were built and not shipped (Track 1, the state-atom engine, the free MILP) are not described
-here; `docs/BORDERS_RESULTS.md` and `docs/CHANNEL_NOTE.md` §8 hold them.
+here; `STATE.md` `## Facts` holds their grids and `docs/units/state_borders.md` the model behind
+them.
 
 | symbol | meaning | on this run |
 |---|---|---|
@@ -34,7 +35,8 @@ is what stage 1 solves on. The level-1 ground set (49 units, mass 8,468.3, $\tau
 the lower 48 plus DC; the 3 zips in AK and HI and the 32 zips of unknown state (0.07τ together)
 sit outside it and are placed at completion.
 
-The utility model behind stage 2 (`docs/CHANNEL_NOTE.md` §2): for representative $i$ at zip $z$,
+The utility model behind stage 2 (`docs/PROBLEM.md` §2, the welfare decomposition): for
+representative $i$ at zip $z$,
 
 $$u_i(z) = c_1 S_i(z) + c_2\big(T_z - S_i(z)\big) + c_{\mathrm{free}} S_{\mathrm{free}}(z) + \lambda M_z,
 \qquad c_1 = 1 - \lambda,\ c_2 = \theta(1 - \lambda),$$
@@ -60,7 +62,7 @@ components over 3,748 zips (516 singletons), so a contiguity constraint on zips 
 ### 1.2 The program
 
 Centre-based balanced assignment, Hess's formulation, solved as an alternating scheme whose inner
-step is a linear program (`docs/CHANNEL_NOTE.md` §6.1, §8.5 P1):
+step is a linear program (`docs/MODEL.md` §8, and §8.2 for the transportation-relaxation lemma):
 
 $$\begin{array}{llll}
 \textbf{inner, } c \text{ fixed:} & \displaystyle\min_{x} \sum_{z}\sum_{j} M_z \lVert q_z - c_j \rVert^2 x_{zj} \\[6pt]
@@ -106,9 +108,11 @@ Ten seeds (0 to 9) were drawn. Each draw was completed and then staffed by stage
 draw with the best staffing value was committed: seed 2 at 95.755, against 95.689 for the worst
 seed and 95.749 for the runner-up (seed 7). This is `channel.score_draws`, the portfolio
 mitigation of the note's §5.2: a lower bound on the joint optimum over maps and staffings, not the
-joint optimum. (`docs/CHANNEL_NOTE.md` §5.2 says the committed draw "is not on record as having
-been selected by stage 2"; `metrics.json` in the run directory records exactly that selection, so
-the note's sentence is out of date on v2.)
+joint optimum. (The channel note's §5.2 says the committed draw "is not on record as having been
+selected by stage 2"; `metrics.json` in the run directory records exactly that selection, so the
+note's sentence is out of date on v2. The note's markdown was folded into `docs/PROBLEM.md` and
+`docs/MODEL.md` on 2026-09-07; its text is `git show 81bd59f:docs/CHANNEL_NOTE.md` and its LaTeX
+source is `docs/channel_note/channel_note.tex`.)
 
 ### 1.5 What the committed draw certifies, and what it does not
 
@@ -117,7 +121,7 @@ geometry. Over the 3,704 plotted zips (mass 8,468.3) it is $k \log(M/k) = 110.76
 draw scores 110.766686: a gap of **0.000082 nats** at a mass spread of 1.29% (1.37% on the whole
 instance after completion, max deviation 1.00%). Not certified: that the 18 centres are the right
 ones (the joint problem over centres and assignment is untouched); the integer balance floor and
-the pinned-centres MILP of the note's §7.2 and §7.3, never run on v2; and the labelling as a
+the pinned-centres MILP of `docs/MODEL.md` §10, never run on v2; and the labelling as a
 power diagram, since after the polish 258 zips (7.0% of count, 1.66% of mass) sit outside their
 own cell at own-masses targets.
 
@@ -146,8 +150,9 @@ have no home district.
 Run: `battery/results/draw_k18_v2_20260904/k18/` (`draw.csv`, `metrics.json` with all ten seeds
 and the winner). Code: `td/solvers/centers.py` (`draw`, `assign`, `improve`, `power_weights`),
 `td/channel.py` (`score_draws`, `place_by_state`), `td/solvers/cert_draw.py`. Verification:
-`docs/MODEL_U1-cert.md`, `docs/VERIFY_U1-cert.md`, `docs/MODEL_U7-meas.md`,
-`docs/CODEVERIFY_U7-meas.md`; `tests/test_cert_draw.py` against brute force at small $k$.
+`docs/units/U1-cert.md` and `docs/units/U7-meas.md` (`## Model`, `## Verify`, `## Code verify`),
+with their runnable artifacts under `tools/verify/U1-cert/` and `tools/verify/U7-meas/`;
+`tests/test_cert_draw.py` against brute force at small $k$.
 
 ## 2. Level 1: which states split, and how their mass is shared
 
@@ -203,9 +208,20 @@ returned two splits where zero was optimal; the bound must hold over every feasi
 program carries the full $k!$ relabelling symmetry; HiGHS held a one-split gap open for 600 s.
 Fixing $z_{\mathrm{home}(j), j} = 1$ names district $j$ by its committed home state. It is a
 restriction, so the anchored optimum is an upper bound on the free minimum. Six of the eight
-splits are forced by mass alone: CA at 4.13τ needs four districts under a 5% band (three cuts), and
-TX (2.02τ), NY (1.79τ) and FL (1.40τ) each need two (one cut each). The two anchored cuts beyond
-that are NY's third district and CA's fifth.
+splits are forced by mass alone: CA at 4.153τ needs four districts under a 5% band (three cuts),
+and TX (2.026τ), NY (1.805τ) and FL (1.392τ) each need two (one cut each). The two anchored cuts
+beyond that are NY's third district and CA's fifth.
+
+These four ratios are $M_s/\tau$ on the **level-1 ground set**, $\tau = 470.459$, as
+`--dump-state-shares` writes them straight from the arrays `build_milp` is handed (NJ, the fifth
+state over $\tau$, is 1.043). `STATE.md` `## Facts` quotes CA 4.126, TX 2.020, NY 1.794, FL 1.398
+and NJ 1.037 in its state-atom block, and those are a different base: the atom route keeps every
+zip, including the ones with no gazetteer point, so it divides by the whole-instance
+$\tau = 473.513$. Rescaling the level-1 masses to that $\tau$ reproduces CA 4.126, NY 1.794 and
+NJ 1.037 exactly, and falls short at TX 2.013 and FL 1.383 — the gap is the mass of the
+coordinate-less zips in those two states, which level 1 drops and the atom route keeps. Neither
+number is wrong; they must not be compared. The floor
+$\lceil M_s / ((1+\delta)\tau) \rceil$ is 4, 2, 2, 2 on either base.
 
 Size and solve: 6,498 variables, 1,764 of them binary, 11,317 rows. HiGHS through
 `scipy.optimize.milp` with `mip_rel_gap = 0` closed it in 168 s. Objective $57.0048 = 49 + 8 +
@@ -229,18 +245,19 @@ single pass can return a wider spread at equal maximum deviation. On this run th
 spread 10.00%; the pass returned 9.30% with maximum deviation 4.68%. The level-1 shares after the
 pass:
 
-| state | mass | shares $y^\star$ |
+| state | mass (level-1 τ) | shares $y^\star$ |
 |---|---|---|
-| CA | 4.13τ | D02 18.8%, D10 25.3%, D14 24.9%, D17 8.2%, D18 22.9% |
-| FL | 1.40τ | D07 71.8%, D15 28.2% |
-| NY | 1.79τ | D01 58.2%, D04 37.0%, D05 4.9% |
-| TX | 2.02τ | D03 51.4%, D16 48.6% |
+| CA | 4.153τ | D02 18.8%, D10 25.3%, D14 24.9%, D17 8.2%, D18 22.9% |
+| FL | 1.392τ | D07 71.8%, D15 28.2% |
+| NY | 1.805τ | D01 58.2%, D04 37.0%, D05 4.9% |
+| TX | 2.026τ | D03 51.4%, D16 48.6% |
 
 Code: `td/solvers/state_splits.py` (`build_milp`, `solve`, `eps_lexicographic`, `balance_pass`,
-`connected`). Verification: `docs/VERIFY_state_splits.md` refuted three parts of the first
-formulation before the build ($\varepsilon$ bounded over every feasible $y$; $y \ge \eta z$ so a
-bridge state carries mass; the two-LP pass) and refuted the plan's "seconds" for the free program;
-`docs/CODEVERIFY_state_splits.md` verified five model-to-code mappings and the row count 11,317.
+`connected`). Verification: `docs/units/state_splits.md` `## Verify` refuted three parts of the
+first formulation before the build ($\varepsilon$ bounded over every feasible $y$; $y \ge \eta z$
+so a bridge state carries mass; the two-LP pass) and refuted the plan's "seconds" for the free
+program; its `## Code verify` verified five model-to-code mappings and the row count 11,317.
+Artifacts: `tools/verify/state_splits/`.
 
 ## 3. Level 2: realising the shares at zip level
 
@@ -365,12 +382,12 @@ D06, D18, D15 and D10.
 
 ### 5.2 The four split states, level-1 shares against realised
 
-| state | mass | level-1 $y^\star$ | realised (share of state mass) |
+| state | mass (level-1 τ) | level-1 $y^\star$ | realised (share of state mass) |
 |---|---|---|---|
-| CA | 4.13τ | D02 18.8, D10 25.3, D14 24.9, D17 8.2, D18 22.9 | D14 23.4, D10 23.1, D18 22.6, D02 20.1, D17 10.8 |
-| FL | 1.40τ | D07 71.8, D15 28.2 | D07 71.6, D15 28.4 |
-| NY | 1.79τ | D01 58.2, D04 37.0, D05 4.9 | D01 52.8, D04 37.6, D05 9.5 |
-| TX | 2.02τ | D03 51.4, D16 48.6 | D03 51.4, D16 48.6 |
+| CA | 4.153τ | D02 18.8, D10 25.3, D14 24.9, D17 8.2, D18 22.9 | D14 23.4, D10 23.1, D18 22.6, D02 20.1, D17 10.8 |
+| FL | 1.392τ | D07 71.8, D15 28.2 | D07 71.6, D15 28.4 |
+| NY | 1.805τ | D01 58.2, D04 37.0, D05 4.9 | D01 52.8, D04 37.6, D05 9.5 |
+| TX | 2.026τ | D03 51.4, D16 48.6 | D03 51.4, D16 48.6 |
 
 The Lloyd rounds keep the targets fixed, so the drift between the two columns comes from rounding
 the split zips (eight on this run) and from completion. NY's is the largest: its zips are large
@@ -390,9 +407,42 @@ several points.
 
 Not certified, and open: the free minimum without the anchor row lies between 6 and 8 (HiGHS
 left it open at 600 s); the committed draw's centres as the right ones; the integer balance floor
-and pinned-centres MILP on v2.
+and pinned-centres MILP on v2; and whether California can be held to four districts at δ = 5%
+(§7).
 
-## 7. Reproducing it
+## 7. Per-state caps, and what an hour of search proves
+
+`--cap ST=N` adds a row holding state `ST` to at most `N` districts; `--unanchor ST` drops that
+state's home anchors, and the app releases only the surplus a cap forces, keeping the cap-many
+anchors that hold the most of the state's committed opportunity. The Headline tab drives both.
+
+**The mass floor is necessary and not sufficient.** $\lceil M_s/((1+\delta)\tau) \rceil$ rules a
+cap out; it never promises one is reachable. California at 4 is legal at δ = 5% and sits exactly
+on the floor: four districts at the top of the band hold 4.200τ against California's 4.153τ,
+leaving 0.047τ of slack to cover every other state that reaches into those four, a window 4.7% of
+a district wide. HiGHS found no feasible integer point in 10 minutes, nor 20, nor 60; the hour
+run ended `model_status is Time limit reached; primal_status is None`, so it never held an
+incumbent at all.
+
+**A search failure is not a refutation.** New York at 2 returns HiGHS Status 8, Infeasible, in
+seconds: two districts are anchored in New York and need at least 1.90τ while the state supplies
+1.805τ, and Pennsylvania and New Jersey are anchored elsewhere. That is a proof. California at 4
+returns Status 13 with no primal solution, which says only that branch and bound did not reach a
+feasible point in the time given. A map may exist. Three outcomes have to be told apart wherever
+this is reported: refused by the mass floor, refuted by the solver, and searched without success.
+The Headline tab still collapses the last two into one sentence; there is a `TODO` at
+`app/main.py` where it does.
+
+**Caps have almost no legal move at δ = 5%.** Only four states are split, TX and FL are already at
+their floor of 2 so a cap there is a no-op, NY at 2 is refuted, and CA at 4 is the knife-edge
+above. The map is not merely optimal on this feasible set, it is tight.
+
+**The band is the lever, not the cap.** California capped at 4 at δ = 10% solves: 7 splits, CA in
+4, NY falling to 2 on its own, NJ splitting for the first time, spread 16.70% against 8.98%,
+stage 2 95.7458, a time-limited incumbent at a 1.79% gap. Gallery and numbers:
+`figures/overrides/ca4_d10/`.
+
+## 8. Reproducing it
 
 From the repo root, with the hub's `.venv` and the gitignored inputs in place
 (`docs/CODE_MAP.md`):
@@ -412,13 +462,18 @@ The second command's parameters are recorded in the cell's `params.json`; the le
 `grid.csv`. Stage 1 is seeded, so the first command reproduces the committed draw only with the
 same seeds; the second is deterministic given the draw.
 
-## 8. Sources
+## 9. Sources
 
-- Model and proofs: `docs/CHANNEL_NOTE.md` §2 (utility), §3 (Proposition 2), §5 (the two
-  stages, P2), §6 (stage 1, Lemma 6), §7 (certificates), §8.5 (the notation, P1, P2).
-- The border build: `docs/BORDERS_PLAN.md` (Track 2 section), `docs/BORDERS_RESULTS.md`
-  (the anchored table, "What was verified", "Known gaps"), `docs/VERIFY_state_splits.md`,
-  `docs/CODEVERIFY_state_splits.md`.
+- Model and proofs: `docs/PROBLEM.md` §2 (the welfare decomposition, the utility model) and §3
+  (the two stages); `docs/MODEL.md` §7 (the two propositions and the notation), §8 (stage 1 as
+  centre-based balanced assignment, §8.2 the transportation-relaxation lemma), §9 (stage 2),
+  §10 (certificates). These absorbed `docs/CHANNEL_NOTE.md` on 2026-09-07; its text is
+  `git show 81bd59f:docs/CHANNEL_NOTE.md`, its LaTeX source `docs/channel_note/channel_note.tex`.
+- The border build: `docs/units/state_borders.md` and `docs/units/state_splits.md` (brief,
+  `## Model`, `## Verify`, `## Code verify`), the Track 1 and Track 2 grids in `STATE.md`
+  `## Facts`, and the artifacts under `tools/verify/state_splits/`. The plan and results files
+  they replaced are `git show ae2b18d:docs/BORDERS_PLAN.md` and
+  `git show ae2b18d:docs/BORDERS_RESULTS.md`.
 - Runs: `battery/results/draw_k18_v2_20260904/k18/` and
   `battery/results/borders_k18_v2_20260907/track2_anchored/d0.05/d0.05/` (hub, gitignored).
 - Artifacts: "The Five Percent Map" `322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a` (this map, its tables,
