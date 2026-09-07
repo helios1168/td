@@ -844,7 +844,10 @@ statement (§8.4). The binding difficulty here is the log objective and the shat
 the unit count — so §1's scale reading is a statement about *our* solver's certified size, not
 about the field's.
 
-### 8.2 The five differences
+### 8.2 The three differences
+
+Five are listed, because the first draft counted five. Two of them (1 and 4) separate P0 from
+VBL but not the running code from VBL, and the closing paragraph discounts them.
 
 **1. Objective: linear versus log, at the level of the stated problem.** VBL minimise a linear
 (or SOC) compactness functional with balance as a constraint. The stated problem P0 maximises
