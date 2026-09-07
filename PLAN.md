@@ -13,16 +13,12 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Step 1 (foundations move) is done. Migration step 2 is next, on an Opus 5 session: rename
-`docs/CHANNEL.md` to `docs/PROBLEM.md` and fold RESEARCH_FINDINGS, OPTIONS_*, REVIEW_GROMOV and
-CHANNEL_NOTE into PROBLEM, MODEL and `## Facts`. Then Sonnet for steps 3 to 6 (decision 14). One
-commit per step. Stop and report before merging; the merge to `main` needs the user's approval
-(see memory `ask-before-merging-to-hub`).
-
-Open from step 0: P1 (`defaultMode: bypassPermissions` plus the deny floor) could not be written
-by Claude, the auto-mode classifier blocks that edit. The finished file sits at
-`~/.claude/jobs/b313fd3c/tmp/settings.json`; the user copies it over `~/.claude/settings.json`
-and it takes effect at the next session start.
+Step 2 (the fold) is done. Migration step 3 is next, on a Sonnet 5 session: collapse `MODEL_*`,
+`VERIFY_*` and `CODEVERIFY_*` into `docs/units/<id>.md` sections, add the `Status:` lines,
+`git mv docs/artifacts/<id>/` and `docs/verify/*` to `tools/verify/<id>/`, and repoint every
+artifact path in the unit files. Then steps 4 to 6, also Sonnet (decision 14). One commit per
+step. Stop and report before merging; the merge to `main` needs the user's approval (see memory
+`ask-before-merging-to-hub`).
 
 ## Done
 
@@ -38,6 +34,12 @@ and it takes effect at the next session start.
   creates worktrees with plain git plus lock and enters by path. P1 pending the user (see
   `## Next step`). Deny rules hold in every mode including bypass, so the floor is safe to add.
 - 2026-09-07 step 1 done, 357c23b: 20 files moved, 232 references repointed.
+- 2026-09-07 P1 applied by the user: `~/.claude/settings.json` now has
+  `defaultMode: bypassPermissions`, a 12-rule deny floor and `Bash(git *)` allowed.
+- 2026-09-07 step 2 done, a3185f4: `CHANNEL.md` → `PROBLEM.md` (224 lines, nine H2 sections, the
+  310-line resume narrative dropped); four files deleted for 3,218 lines; MODEL gains §7–§13 and
+  grows 223 → 895 lines; `STATE.md ## Facts` gains two blocks; 39 H2 sections disposed of in the
+  commit body; 17 files repointed across 24 changed files, +988 / −3,737.
 
 ## Decisions needed
 
