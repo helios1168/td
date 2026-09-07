@@ -2,7 +2,7 @@
 
 Status: open
 
-**Status 2026-09-05.** Re-anchored to v2 / `k = 18` (`WAVE2_PLAN` §0c). The unit's **primary**
+**Status 2026-09-05.** Re-anchored to v2 / `k = 18` (`git show ae2b18d:docs/WAVE2_PLAN.md` §0c). The unit's **primary**
 question is unchanged and still open: does a modulus `objective-gap ≥ φ(mass moved)` exist? Its
 **secondary input is withdrawn** — see the premise box. Gates that used to hold it are gone: ★6 is
 lifted in full (`BRIEF.md` §4 — units may read `instance_descaled.json.gz` and run code), and
@@ -124,7 +124,7 @@ Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundatio
 `~/.claude/hooks/enforce-file-tools.sh` blocks `cat` / `head` / `tail` / `sed` / `awk` / `grep`
 with a file operand from Bash. Use Read and the Serena symbol tools instead
 (`get_symbols_overview`, `find_symbol(include_body=True)`, `replace_content`); markdown headings
-are symbols. `RUNS_PLAN.md` §"Working rules" has the full table. Bash is for running things.
+are symbols. `git show ae2b18d:docs/RUNS_PLAN.md` §"Working rules" has the full table. Bash is for running things.
 
 ## Acceptance
 
@@ -173,7 +173,8 @@ Three things are now wrong with it. (a) **The ★6 block is lifted**, so the lab
 (b) **`4.66e-5` is a v1 number and has no v2 counterpart.** It was measured on the `k = 13` seed-3
 draw (recorded 2026-09-01 in what is now `docs/PROBLEM.md`: the pinned-centers MILP proved an `8.53 %` more compact
 assignment in the same band, 152 relabels, `−4.66e-5` nats); no v2 pinned-centers or power-diagram
-run exists under `battery/results/`, and `WAVE2_PLAN` declines to widen `ceiling.py`'s v1 content.
+run exists under `battery/results/`, and the 2026-09-05 wave-2 plan
+(`git show ae2b18d:docs/WAVE2_PLAN.md`) declines to widen `ceiling.py`'s v1 content.
 Carrying the number into a v2 unit would import a retired instance's arithmetic. (c) **Displacement
 is not the deciding number anyway.** FRAME's decision ledger still carries "the 132 dots: adopt the
 power cells or keep the drawn map" as **open**, with "the deciding number is the staffing value of

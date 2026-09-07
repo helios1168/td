@@ -6,7 +6,8 @@ Adversarial verification (`math-verify`, 2026-09-05) of track P0-C's uncommitted
 `.claude/worktrees/w2-phase0` (`tools/measure/premium.py`, `docs/channel_note/`): `B_tot`, the
 (★) roster-free bound at `P_S` and `P₁₈`, the screen's slack against `EG_{S₁₈}`, saturation, and
 `channel_note.tex` §5.1's claims about `D(g)` and the 30% continuity threshold. There is no
-`MODEL_*.md` for this unit; `docs/BORDERS_PLAN.md` and `channel_note.tex` are the model.
+`MODEL_*.md` for this unit; `git show ae2b18d:docs/BORDERS_PLAN.md` and `channel_note.tex` are
+the model.
 
 ## Model
 
@@ -33,7 +34,7 @@ own output); the sole exception is `P₁₈` (an MILP, checked for optimality bu
 
 **Required before the PDF is rebuilt** (blocking, not yet applied as of this report):
 `channel_note.tex:520-521`'s `D(g)` range, `:526-529`'s 30% sentence, `:519`'s "≈0.91 nats", and
-`WAVE2_PLAN.md:195`/`:320`'s stale slack comparison and oracle claim.
+`git show ae2b18d:docs/WAVE2_PLAN.md:195`/`:320`'s stale slack comparison and oracle claim.
 
 Full report: `git show 8b14eee:docs/VERIFY_P0C-screen.md`.
 

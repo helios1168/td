@@ -335,7 +335,7 @@ def test_certify_carries_the_power_certificate_and_its_caveat():
 # ============================================================ ANCHORED DRAWS  (B9)
 # `centers.draw(locked=)` pins some zips to districts.  All four certificates were written for
 # the unanchored draw and each is unsound, vacuous or simply answering a different question when
-# handed a pinned scenario -- which is what `docs/RUNS.md`'s pin-cost catalogue is built on.
+# handed a pinned scenario -- which is what the pin-cost catalogue (`docs/CODE_MAP.md`) is built on.
 # Every test below first EXHIBITS the wrong answer the un-anchored call gives, then asserts the
 # anchored one.  The oracle throughout is lock-respecting brute force.
 

@@ -88,8 +88,8 @@ Traps observed
 
 Anchored draws
 --------------
-`centers.draw(locked=)` pins some zips to districts, and the pin-cost catalogue in
-`docs/RUNS.md` is built on such draws.  Every certificate here takes the same optional `locked`
+`centers.draw(locked=)` pins some zips to districts, and the pin-cost catalogue (recipe in
+`docs/CODE_MAP.md`) is built on such draws.  Every certificate here takes the same optional `locked`
 (`-1` for a free zip, else its district); `None`, or an array with no entry `>= 0`, reproduces
 the un-anchored answer bit-for-bit.  Passing it is not cosmetic -- each certificate is wrong,
 vacuous, or answering a different question without it, and each failure was exhibited before it

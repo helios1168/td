@@ -4,13 +4,34 @@ Status: done
 
 Code verification (`code-verify`, 2026-09-06, against branch `worktree-vbl`) of the penalised
 banded transportation LP, state-owner-set logic and the label/owner/LP/recentroid refinement loop
-(`docs/BORDERS_PLAN.md` lines 60-86, 200-228): `td/solvers/centers.py` (`assign`, `power_labels`,
+(model folded into `## Model` below; full text `git show ae2b18d:docs/BORDERS_PLAN.md` lines
+60-86, 200-228): `td/solvers/centers.py` (`assign`, `power_labels`,
 `power_weights`, penalty and band keywords) and `td/solvers/state_borders.py` (`owner_sets`,
-`penalty_matrix`, `refine`, `pure_snap`). There is no `MODEL_*.md`; the plan is the model.
+`penalty_matrix`, `refine`, `pure_snap`). There is no `MODEL_*.md`; the model is `## Model` below.
 
 ## Model
 
-none yet
+The penalised, banded transportation LP, on top of `td/solvers/centers.py`'s transportation LP.
+Folded from `docs/BORDERS_PLAN.md` (deleted 2026-09-07; full text
+`git show ae2b18d:docs/BORDERS_PLAN.md`).
+
+- **Owner set per state.** `home(j)` = the state holding the plurality of district `j`'s mass;
+  `O(s) = {j : home(j) = s}`, or the single district holding the most of state `s`'s mass if
+  `O(s)` would be empty. A state with its own districts is split only among them; a state
+  without one lies wholly inside one district. Zips with unknown state have no owner and pay no
+  penalty.
+- **Penalised cost.** `cost_zj = M_z · (d²(z, c_j) + λ · 1[j ∉ O(state(z))])`, `λ` a multiple of
+  the committed draw's mass-weighted mean `d²` (scale-free); `λ = 100` is effectively hard.
+- **Band.** `τ(1−δ) ≤ Σ_z M_z x_zj ≤ τ(1+δ)`, `δ` the balance sacrifice.
+- **Alternation.** labels → owner sets → banded, penalised LP → recentroid, up to 10 rounds,
+  stop on repeat; no Nash polish at `λ > 0` (it would pull zips back across borders). Every
+  iterate saved; the last (or the repeat) is the cell's answer.
+- **Baseline.** Pure snap: every zip outside its state's owner set moves to the nearest owner
+  district by `d²` to centre; zero parameters.
+
+Grid results (Track 1 never reaches zero residual splits: owner sets inherited from the
+committed map force 5-8 small-state crossings at every δ) are in `STATE.md ## Facts`,
+dated 2026-09-07.
 
 ## Verify
 

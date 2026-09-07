@@ -6,7 +6,7 @@ Status: open
 Gated on U8-band (its vertex and value at the chosen `δ`) — **gate satisfied**: `MODEL_U8-band` §10
 is the live `k = 18` v2 run, artifacts under `battery/results/u8_band_v2_20260904/`.
 
-**Re-anchored to v2 / `k = 18` on 2026-09-05** (`WAVE2_PLAN` §0c). Every number below is the live
+**Re-anchored to v2 / `k = 18` on 2026-09-05** (`git show ae2b18d:docs/WAVE2_PLAN.md` §0c). Every number below is the live
 instance's, the quoted spec included — `DOMAIN_optimization` §2.13 was re-cut to v2 the same day
 and the quote was re-synced against it. The only `k = 13` figures left are the ones §2.13 itself
 labels *Historical*.
@@ -99,8 +99,8 @@ Every other unit's owned files (`td/solvers/eg_band.py` by import only) · `docs
 `~/.claude/hooks/enforce-file-tools.sh` blocks `cat` / `head` / `tail` / `sed` / `awk` / `grep`
 with a file operand from Bash. Use Read and the Serena symbol tools instead
 (`get_symbols_overview`, `find_symbol(include_body=True)`, `replace_content`,
-`replace_symbol_body`); markdown headings are symbols. `RUNS_PLAN.md` §"Working rules" has the
-full table. Bash is for running things — solves, tests, git.
+`replace_symbol_body`); markdown headings are symbols. `git show ae2b18d:docs/RUNS_PLAN.md`
+§"Working rules" has the full table. Bash is for running things — solves, tests, git.
 
 ## Acceptance
 

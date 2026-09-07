@@ -10,22 +10,22 @@ Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 Borders plan (Track 1 + Track 2 solvers, drivers, verification) merged to `main` as `b7d6e0c`
 on 2026-09-07; 306 tests, 0 fail. Recommendation: **Track 2 anchored δ = 5%** (8 splits,
 certified, only CA/TX/NY/FL split) over free δ = 5%, anchored δ = 10%, or Track 1 δ = 5%; the
-West is rearranged in both Track 2 forms, only Track 1 keeps the committed shapes
-(`docs/BORDERS_RESULTS.md`). Verifiers refuted three parts of the Track 2 formulation before the
-build and corrected several plan facts in place. Four artifacts published; the newest, "Borders
-in Motion" (every optimisation step replayed), crashed on first publish, was fixed and
-republished, not yet checked in a browser — `docs/MOTION_PLAN.md` is the verify-and-improve plan.
+West is rearranged in both Track 2 forms, only Track 1 keeps the committed shapes (grid tables
+below). Verifiers refuted three parts of the Track 2 formulation before the
+build and corrected several plan facts in place. Four artifacts published (below); the newest,
+"Borders in Motion" (every optimisation step replayed), crashed on first publish, was fixed and
+republished, not yet checked in a browser.
 
-Next decision: which map ships, gated on the sponsor reading `docs/BORDERS_RESULTS.md`. Then
+Next decision: which map ships, gated on the sponsor reading the grid tables below. Then
 whether to rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's
 rearrangement is acceptable.
 
 ## Next
 
 - [ ] **Which map ships.** Track 2 anchored δ = 5% (recommended), free δ = 5%, anchored δ = 10%,
-      or Track 1 δ = 5% — gated on the sponsor reading `docs/BORDERS_RESULTS.md`. Then whether to
-      rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's rearrangement is
-      acceptable.
+      or Track 1 δ = 5% — gated on the sponsor reading the grid tables in `## Facts` below. Then
+      whether to rerun the chosen cell with `--incumbency-tiebreak`, and whether the West's
+      rearrangement is acceptable.
 - [ ] **Phase 1 — the four units**, all concurrent and unblocked: U10-round, U11-roster, U4-disp,
       U13-base. Then U12-menu (needs U8 + U11 + U13; brief re-anchored, unit not launched).
       Branch from `main`.
@@ -96,13 +96,71 @@ at a 1.37 % mass spread; realised *gain* spread 60.17 %. Premium window **0.890*
 (t = 16), **measured 24** — quote the measured count, never the cap. Gate gains run
 `211.786–228.663` (16 of 18 near 211.79), clearing the `140.638` floor by 1.506×.
 
-**Owner sets on the committed k=18 draw, measured 2026-09-06** (`draw_k18_v2_20260904/k18`,
-seed 2; τ = 473.513; 52 state codes including `??` at 0.070τ). Home state by plurality of mass:
-NY (D01, D04), CA (D02, D10, D14, D17, D18), TX (D03, D16), PA (D05), CO (D06), FL (D07, D15),
-NC (D08), MI (D09), IL (D11), NJ (D12), MO (D13); 41 states have no home district. Mass outside
-the owner sets **9.46%** (90.54% inside). Blocks that a 10% band cannot close: NY+NJ+CT+MA+NH+RI+
+**Owner sets on the committed k=18 draw, measured 2026-09-06, corrected 2026-09-07**
+(`draw_k18_v2_20260904/k18`, seed 2; τ = 473.513; 52 state codes including `??` at 0.070τ). Home
+state by plurality of mass: NY (D01, D04), CA (D02, D10, D14, D17, D18), TX (D03, D16), PA (D05),
+CO (D06), FL (D07, D15), NC (D08), MI (D09), IL (D11), NJ (D12), MO (D13); 41 states have no
+home district. Mass outside the owner sets **9.15%** (90.85% inside) — the 9.46% first quoted on
+2026-09-06 was a hand count, superseded by `tools/borders_report.py`'s measurement on
+2026-09-07. Blocks that a 10% band cannot close: NY+NJ+CT+MA+NH+RI+
 VT+ME = 3.19τ for three districts against PA+MD+DE = 0.82τ; D06 without its AZ and TX slivers
-is 0.68τ. Full composition table in `docs/BORDERS_PLAN.md`.
+is 0.68τ. Full composition table: `git show ae2b18d:docs/BORDERS_PLAN.md`.
+
+**State-border snapping, overnight run 2026-09-07** (`battery/results/borders_k18_v2_20260907/`;
+full build and narrative `git show ae2b18d:docs/BORDERS_PLAN.md`,
+`git show ae2b18d:docs/BORDERS_RESULTS.md`). At δ = 5% every state can lie whole in one district
+except CA, TX, NY and FL (Track 2 anchored: 8 splits, certified minimal; realised spread 9.0%,
+free form 7.2%). At δ = 10% one more CA cut goes away (7 splits, certified anchored; bound 6
+free) and spread doubles to 17% — not worth it. Track 1 (border-snapping the committed map only)
+never reaches zero residual splits: it inherits the committed owner sets, which force 5-8 small
+states to stay split at every δ (PA+MD+DE is 18% light of a full district, D06 without AZ is
+32% light); it does cut the outside-owner share from 9.15% to about 3% and border segments from
+1,591 to about 700. Stage-2 value stays in 95.70-95.93 across every cell (committed 95.755), so
+moving borders onto state lines costs nothing measurable at staffing.
+
+*Track 1 grid* (owner sets from the committed map; band δ two-sided; ten Lloyd rounds, no Nash
+polish; "split states" excludes CA/TX/NY/FL, whose own owner sets span several districts):
+
+| cell | spread | max dev | outside (committed owners) | outside (own owners) | split states | zips changed | border segs | stage 2 |
+|---|---|---|---|---|---|---|---|---|
+| committed | 1.37% | 1.00% | 9.15% | 9.15% | 24 | 0 | 1591 | 95.755 |
+| snap | 51.01% | 29.10% | 0.00% | 2.15% | 0 | 519 | 938 | 95.656 |
+| δ 0, λ 100 | 1.75% | 1.30% | 3.72% | 5.83% | 6 | 500 | 720 | 95.813 |
+| δ 1%, λ 100 | 2.50% | 1.48% | 3.24% | 3.21% | 8 | 510 | 706 | 95.830 |
+| δ 2%, λ 100 | 3.59% | 1.83% | 3.09% | 3.06% | 8 | 523 | 718 | 95.826 |
+| δ 5%, λ 100 | 10.33% | 5.50% | 2.34% | 1.92% | 5 | 602 | 700 | 95.797 |
+| δ 10%, λ 100 | 19.75% | 10.16% | 1.84% | 3.76% | 8 | 786 | 662 | 95.707 |
+
+(λ ∈ {1, 10} at δ = 2%, showing the soft regime: spread 4.78%/3.77%, outside 5.42%/3.11%, split
+states 15/8.)
+
+*Track 2 grid* (state-level minimum-splits MILP, `mip_rel_gap = 0`, 600s per δ; "certified ≥" is
+the dual bound less the tie-break's half-split allowance; **bold** = closed to optimality):
+
+| form | δ | splits | certified ≥ | pass spread | realised spread | zips changed | stage 2 |
+|---|---|---|---|---|---|---|---|
+| free | 0 | 17 | 9 | 0.00% | 1.66% | 648 | 95.932 |
+| free | 1% | 12 | 9 | 1.36% | 1.75% | 594 | 95.816 |
+| free | 2% | 9 | 8 | 3.28% | 3.61% | 783 | 95.765 |
+| free | 5% | 8 | 6 | 8.89% | 7.21% | 932 | 95.803 |
+| free | 10% | 7 | 6 | 17.27% | 17.08% | 1011 | 95.701 |
+| anchored | 0 | 18 | 9 | 0.00% | 1.42% | 932 | 95.810 |
+| anchored | 1% | 24 | 9 | 1.51% | 2.76% | 843 | 95.736 |
+| anchored | 2% | 9 | 8 | 3.01% | 3.34% | 784 | 95.780 |
+| anchored | **5%** | **8** | **8** | 9.30% | 8.98% | 776 | 95.788 |
+| anchored | **10%** | **7** | **7** | 18.01% | 16.81% | 978 | 95.880 |
+
+Only anchored δ = 5% and δ = 10% closed (168s, 386s); every other cell reports a time-limited
+incumbent. One open question, low priority (only matters if δ = 10% is chosen): the free bound
+at δ = 10% says 6 splits might be possible (NJ alone plus PA+MD+DE+WV); HiGHS neither found nor
+refuted it in 600s.
+
+**Artifacts published 2026-09-07** (private): "Borders on State Lines" (all 19 cells, compare
+slider), `https://claude.ai/code/artifact/ca561d23-fa10-49cd-80c0-4d69625d2857`; "The Five
+Percent Map" (the recommended cell, full model), `https://claude.ai/code/artifact/322e6a55-a576-4adf-8dc5-8fd2f4ca6c5a`;
+"Borders in Motion" (the optimisation replayed step by step),
+`https://claude.ai/code/artifact/3e983b90-8f87-4dfd-aa28-4e1cd6eee497`; "Districting from
+Duality" (the study guide), `https://claude.ai/code/artifact/d87b53b0-f394-417e-aab5-0fba8d3c6cb0`.
 
 **State atoms — the engine, measured 2026-09-06; route retired the same day, numbers kept for
 the record** (`ff63511`, stage 1 only; run

@@ -220,5 +220,14 @@ The routes to zero, their costs and their verdicts are `docs/MODEL.md` §11; the
 
 **Decided 2026-09-06:** districts snap to state lines where they can, under a mass-deviation cap
 of 10 %, because visual contiguity on state boundaries is what the sponsor reads as a coherent
-territory. The build, the results and the recommended cell are in `docs/BORDERS_PLAN.md` and
-`docs/BORDERS_RESULTS.md`.
+territory.
+
+Two routes were built and measured 2026-09-07 (full build and grid: `git show
+ae2b18d:docs/BORDERS_PLAN.md`, `git show ae2b18d:docs/BORDERS_RESULTS.md`; results in `STATE.md`
+`## Facts`). **Track 1** snaps the committed map's borders by a penalised, banded transportation
+LP; it inherits the committed map's state-owner sets, which structurally force 5-8 small states
+to stay split at every δ in [0, 10%] (`docs/units/state_borders.md`). **Track 2** instead solves,
+per δ, the certified minimum number of states that must split, with visual contiguity by
+construction at the state level (`docs/units/state_splits.md`); the mass bound is CA, TX, NY and
+FL, so at δ = 5% every other state can lie whole in one district (8 splits total). Which cell
+ships is a pending sponsor decision (`STATE.md` `## Now`/`## Next`).

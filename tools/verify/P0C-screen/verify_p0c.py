@@ -38,7 +38,7 @@ MEAS = os.path.join(REPO, "battery", "results", "meas_v2_btot_20260905",
 
 THETA, LAM = 0.40, 0.30
 FILLER = "theta"
-EG_S18 = 96.53215175                 # the v2 gate (WAVE2_PLAN "Live v2 anchors")
+EG_S18 = 96.53215175                 # the v2 gate (git show ae2b18d:docs/WAVE2_PLAN.md "Live v2 anchors")
 CERT_TOL = 1e-8                      # tier 1
 EPS_CERT = 5e-3                      # tier 2, nats
 

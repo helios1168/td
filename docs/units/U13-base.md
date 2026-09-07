@@ -36,7 +36,7 @@ Every other unit's owned files · `docs/foundations/FRAME.md` · `docs/foundatio
 
 **Tooling.** `cat`/`head`/`tail`/`sed`/`awk`/`grep` on a file are blocked by the
 `enforce-file-tools.sh` hook — use `Read`/`Edit` and the Serena symbol tools instead
-(`RUNS_PLAN.md:83-89`).
+(`git show ae2b18d:docs/RUNS_PLAN.md:83-89`).
 
 ## Agent → verifier
 
