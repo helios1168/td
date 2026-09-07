@@ -6,6 +6,47 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-06 20:56 · main 4e19c2b — The zero is showable, and the piece statistic had the wrong denominator
+
+**The zero-mismatch guarantee is now showable, and the contiguity statistic that ranked the
+districts was measuring the wrong denominator.** Two parallel worktrees, both merged into `main`
+on 2026-09-06 at the user's instruction: `worktree-fixed-diagram` (`feaa1bc`) and
+`worktree-d01` (`49b706a`), merged as `13a75c1` and `05dab7b`, followed by `3979a6b` which
+corrected the records the merges left stale. Tests 275 pass, 0 fail.
+
+**The fixed-diagram figure** (register §4a). `us_maps.py --regions-fixed <draw.csv>` builds one
+power diagram — the committed draw's M-weighted centroids, one transportation LP at
+exactly-equal-split targets — and draws both labellings on that single held diagram: the
+committed draw at **266 of 3,704 outside**, the snapped labelling at **0 of 3,704**. Verified
+end to end on merged `main`, not only by test: max dual violation 1.8e-18, the 17 split zips
+ringed and named, six sliver cells stroked. The subtitle qualifies the zero with a *measured*
+rebuild rather than a quoted one (15 of 3,704 at equal-split targets, 16 at own-masses), so the
+figure cannot be read as a fixed-point claim. It costs **6 min 55 s** to render, because the
+rebuild LP is on by default; `rebuild=False` is the switch.
+
+**D01 is not fragmented** (register §3a). Under the snap it has two parts: a 148-ZIP NY/NJ core
+holding **99.86% of its M**, and the single rural ZIP `18337` (Milford PA) at 0.14%, whose empty
+catchment is **44.56% of D01's area**. The largest-piece statistic has an **area** denominator,
+and area is not what stage 1 balances. On mass the snapped worst district is **D17 at 92.72%**,
+not D01; on the committed draw the worst is D09 at 90.03%, not D14. The two denominators
+disagree about *which* districts are the problem, on both labellings.
+
+**Two corrections to the register, both now in it.** The committed drift is **258 at own-masses
+targets and 266 at equal-split** — one number quoted for two measurements until now. And **six
+cells sit under 1% of the map at k=18** (D14 0.04%, D01 0.06%, D12 0.13%, D10 0.86%, D07 0.87%,
+D18 0.98%), not the three the k=13 v1 draw had.
+
+**The review moved into the app** (`e0c7d6e`, merged 2026-09-06). `app/main.py` has a Review tab
+carrying the fixed pair, verified by serving it and by `streamlit.testing`'s `AppTest`. That was
+a decision, not a default: the sponsor review is a Streamlit view now, and the published
+artifacts stay as the fixed record they already are. Review artifact
+`893379d7-2f28-4d0f-9a5d-edb3b8f076b0` **predates all of this, so its panels still recentroid and
+its D01 row still reads 55%**.
+
+*What's next, and the decision it needs.* Whether `--regions-voronoi` should report the mass
+denominator beside the area one — `tools/measure/district_pieces.py` computes all three, so this
+is a reporting choice, not a measurement.
+
 ## 2026-09-06 20:13 · main 8ba1525 — The power-cell route wins on contiguity too, and the zero needs a figure
 
 **The power-cell route now beats the state atoms on contiguity too, once you measure the

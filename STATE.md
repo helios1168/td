@@ -1,51 +1,59 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `4e19c2b` · **Tests:** 275 pass,
+**Updated:** 2026-09-06 · **Branch:** `worktree-vbl` · **Head:** `82ef8b7` · **Tests:** 275 pass,
 0 fail (2026-09-06)
 
 ## Now
 
-**The zero-mismatch guarantee is now showable, and the contiguity statistic that ranked the
-districts was measuring the wrong denominator.** Two parallel worktrees, both merged into `main`
-on 2026-09-06 at the user's instruction: `worktree-fixed-diagram` (`feaa1bc`) and
-`worktree-d01` (`49b706a`), merged as `13a75c1` and `05dab7b`, followed by `3979a6b` which
-corrected the records the merges left stale. Tests 275 pass, 0 fail.
+**The atom route is abandoned, and the next build moves the committed map's borders onto
+state lines.** Session of 2026-09-06 (evening), worktree `.claude/worktrees/vbl`, branch
+`worktree-vbl`. Sponsor decisions: (1) the state-atom route is dropped outright; (2) the
+borders of the committed k=18 power-cell draw (`draw_k18_v2_20260904/k18`, seed 2) are to be
+moved onto state lines, sacrificing balance up to a **10% spread cap**; (3) visual map
+contiguity is the bar, exact graph contiguity is not required; (4) warm start from seed 2 only,
+so the result reads as the same map with its borders moved; (5) a district's home state is the
+plurality of its mass.
 
-**The fixed-diagram figure** (register §4a). `us_maps.py --regions-fixed <draw.csv>` builds one
-power diagram — the committed draw's M-weighted centroids, one transportation LP at
-exactly-equal-split targets — and draws both labellings on that single held diagram: the
-committed draw at **266 of 3,704 outside**, the snapped labelling at **0 of 3,704**. Verified
-end to end on merged `main`, not only by test: max dual violation 1.8e-18, the 17 split zips
-ringed and named, six sliver cells stroked. The subtitle qualifies the zero with a *measured*
-rebuild rather than a quoted one (15 of 3,704 at equal-split targets, 16 at own-masses), so the
-figure cannot be read as a fixed-point claim. It costs **6 min 55 s** to render, because the
-rebuild LP is on by default; `rebuild=False` is the switch.
+**The plan is `docs/BORDERS_PLAN.md`, and nothing in it is built.** Owner set per state (its
+home districts, else the single plurality holder); the transportation LP of `centers.assign`
+with a per-zip crossing penalty `λ` and a balance band `δ` in place of the equality, which keeps
+it a transportation problem (duals, at most k−1 split zips); Lloyd alternation from the
+committed centres with no Nash polish; a pure-snap baseline with no LP; a δ ∈ {0, 1, 2, 5, 10%}
+× λ grid overnight, one `draw.csv` and dot + Voronoi maps per cell. Measured tonight: the
+committed draw already keeps **90.54% of mass inside owner sets**; a 10% cap leaves a border
+inside NY/NJ against PA (NY+NJ+New England 3.19τ for three districts, PA+MD+DE 0.82τ) and AZ
+split (D06 without AZ is 0.68τ). Those residual splits are the sponsor's call, not the model's.
 
-**D01 is not fragmented** (register §3a). Under the snap it has two parts: a 148-ZIP NY/NJ core
-holding **99.86% of its M**, and the single rural ZIP `18337` (Milford PA) at 0.14%, whose empty
-catchment is **44.56% of D01's area**. The largest-piece statistic has an **area** denominator,
-and area is not what stage 1 balances. On mass the snapped worst district is **D17 at 92.72%**,
-not D01; on the committed draw the worst is D09 at 90.03%, not D14. The two denominators
-disagree about *which* districts are the problem, on both labellings.
+**Also this session:** `docs/CHANNEL_NOTE.md` §8 (the VBL comparison and options) reviewed and
+corrected, `7745ad9` and `82ef8b7`, both merged to `main` and pushed. Hess naming with the log
+objective was infeasible without perspective rows; Options A–D carried no compactness term;
+differences 1 and 4 compared P0 with VBL rather than the running code; "A buys a genuine dual
+bound" withdrawn, since Proposition 8 already certifies the draw at 8.2e-5 nats; Option A
+mis-sized at ~33,000 ZCTAs; Option D anonymous with a vacuous relaxation; certificate (iv)
+lacked its dual objective. Options A–D are parked; Option B belonged to the atom route.
 
-**Two corrections to the register, both now in it.** The committed drift is **258 at own-masses
-targets and 266 at equal-split** — one number quoted for two measurements until now. And **six
-cells sit under 1% of the map at k=18** (D14 0.04%, D01 0.06%, D12 0.13%, D10 0.86%, D07 0.87%,
-D18 0.98%), not the three the k=13 v1 draw had.
-
-**The review moved into the app** (`e0c7d6e`, merged 2026-09-06). `app/main.py` has a Review tab
-carrying the fixed pair, verified by serving it and by `streamlit.testing`'s `AppTest`. That was
-a decision, not a default: the sponsor review is a Streamlit view now, and the published
-artifacts stay as the fixed record they already are. Review artifact
-`893379d7-2f28-4d0f-9a5d-edb3b8f076b0` **predates all of this, so its panels still recentroid and
-its D01 row still reads 55%**.
-
-*What's next, and the decision it needs.* Whether `--regions-voronoi` should report the mass
-denominator beside the area one — `tools/measure/district_pieces.py` computes all three, so this
-is a reporting choice, not a measurement.
+*What's next, and the decision it needs.* Build `td/solvers/state_borders.py` and
+`tools/state_borders.py` per the plan, smoke one cell, run the grid, report the table and the
+maps. The morning decision is which δ to ship, given the residual split states at each.
 
 ## Next
 
+- [ ] **Build and run `docs/BORDERS_PLAN.md`.** New `td/solvers/state_borders.py` (owner sets,
+      penalty matrix, pure snap, `refine`), `penalty=` and `band=` on `centers.assign` /
+      `power_labels` / `power_weights` with the default path bit-for-bit unchanged, the CLI
+      `tools/state_borders.py`, tests. Run from the worktree's code against hub data with
+      absolute paths (the command is in the plan). Smoke one cell before the grid.
+- [ ] **Morning decision: which δ ships.** Gated on the grid. The 10% cap does not close every
+      border: NY/NJ against PA and AZ stay split at 10%, and the sponsor decides those.
+- [ ] **`--regions` must not be drawn for a penalised labelling.** The penalised cells are a
+      power diagram per state; the existing fill is the unpenalised one and would disagree with
+      the labelling. Per-state clipping in `us_maps.py` is daytime work; until then dots and
+      `--regions-voronoi` only. Cheap interim: clip each catchment to its own state polygon.
+- [ ] **Atom-route leftovers, retired 2026-09-06.** `worktree-ca5-map` (unmerged, locked),
+      `battery/results/atoms_k18_v2_20260906`, the engine in `td/atoms.py` /
+      `td/solvers/atom_draw.py` / `tools/run_atoms.py`, artifact
+      `7902dfb3-afc6-431e-ac2c-ceb109662780`. Do not merge or extend. Remove the worktree when
+      convenient; the code stays until a cleanup is asked for.
 - [ ] **Decide whether `--regions-voronoi` reports the mass denominator beside the area one.**
       §3a settled that the area denominator misreports dense metro districts, and
       `tools/measure/district_pieces.py` already computes area, mass and ZIP-count shares, so
@@ -65,40 +73,12 @@ is a reporting choice, not a measurement.
       the cost of the subtitle asserting its zero instead of measuring it.
 - [ ] **Iteration 15's labelling was never saved.** The 2026-09-06 run wrote no per-iteration
       draw, so the best iterate's map contiguity is unmeasured and the snapped panels everywhere
-      are the single-shot labelling. Re-run writing a `draw.csv` per iterate, then
-      `--regions-voronoi` the best one. One transportation LP per iteration, a few minutes each.
+      are the single-shot labelling. Superseded if the borders build ships, since that loop
+      saves every iterate and skips the polish that caused the leak.
 - [ ] **Option 2 Route B is the remaining build** — remove `improve()` from `centers.draw`,
       close balance with weights. Judge it against iteration 15's 2.1051% / 0.000283, **not**
       against the 4.0041% single shot, or it will look better than it is. The split-zip floor
       says the room left is small.
-- [ ] **`worktree-ca5-map` is still unmerged** (`ce1ef67` the map figures, `9363c14` the
-      boundary map). The power-cell branch merged on 2026-09-06; the CA5 one did not, and its
-      figures are the source of the atom-route fractions quoted throughout.
-- [ ] **The two routes' gaps sit on different bases.** The atom gap 0.093715 is against the
-      component-wise ceiling 110.883247 over the whole instance; the power-cell gaps are against
-      `k·log(M/k)` = 110.766768 over the 3,704 plotted zips. Two orders of magnitude make the
-      ranking unlikely to turn on it, but it is not certified — recompute on one base before any
-      sponsor comparison.
-- [ ] **The stage-2 cost of the atom map is unmeasured, and could exceed the 0.094.** Pinning
-      CALIFORNIA costs **2.04 nats at stage 2** and this model forces CA into five pieces. Do
-      not claim "the state-atom model costs 0.094 nats" until
-      `battery/results/atoms_k18_v2_20260906/k18/draw.csv` has been through
-      `channel.score_draws` — that needs no new code.
-- [ ] **Quote the 30.5 % spread beside the 0.094 nats.** `log` is flat near the optimum, so a
-      small Nash gap sits alongside a large operational spread; the power-cell route gets
-      1.37 %. Quoting the gap alone reads as "contiguity is nearly free".
-- [ ] **Map contiguity is measured, and D02/D11/D17/D06 fail it.** `--regions-voronoi` on the
-      reproduced draw: largest contiguous piece 48% / 53% / 55% / 73% of territory respectively
-      (14 other districts 98-100%). Decide: tolerable as delivered, or does `BORDER_TOL = 40 km`
-      / the NY+NJ / CA cut need to change? `worktree-ca5-map`, commits `ce1ef67`, `9363c14`.
-- [ ] **Only the CA5 scenario is re-measured.** The 2026-09-05 ladder (0.864 / 0.456 / 0.123 /
-      0.094) came from the prototype. The ranking is unaffected — the four differ by far more
-      than the 0.015-nat hash-order jitter — but the other three numbers are not the engine's.
-- [ ] **Open from the state-atom work:** whether NY+NJ should absorb CT (3.014×, a near-exact
-      three-district block); the **stateless-zip rule** (32 zips, 33.4 M, 0.4 %) and the
-      **AK→WA / HI→CA1 merges**, all three shipped as documented placeholders, none decided;
-      and whether other straddling metros are grouped (Philadelphia PA/NJ/DE, Chicago IL/IN/WI,
-      Kansas City MO/KS, Washington DC/MD/VA).
 - [ ] **Sponsor's call: which states, if any, are hand-drawn** (A12). `docs/RUNS.md`'s region
       table is the price list, in the same nats as the premium ladder. Separate session.
 - [ ] **Phase 1 — the four units**, all concurrent and unblocked: U10-round, U11-roster, U4-disp,
@@ -169,7 +149,16 @@ at a 1.37 % mass spread; realised *gain* spread 60.17 %. Premium window **0.890*
 (t = 16), **measured 24** — quote the measured count, never the cap. Gate gains run
 `211.786–228.663` (16 of 18 near 211.79), clearing the `140.638` floor by 1.506×.
 
-**State atoms — the engine, measured 2026-09-06** (`ff63511`, stage 1 only; run
+**Owner sets on the committed k=18 draw, measured 2026-09-06** (`draw_k18_v2_20260904/k18`,
+seed 2; τ = 473.513; 52 state codes including `??` at 0.070τ). Home state by plurality of mass:
+NY (D01, D04), CA (D02, D10, D14, D17, D18), TX (D03, D16), PA (D05), CO (D06), FL (D07, D15),
+NC (D08), MI (D09), IL (D11), NJ (D12), MO (D13); 41 states have no home district. Mass outside
+the owner sets **9.46%** (90.54% inside). Blocks that a 10% band cannot close: NY+NJ+CT+MA+NH+RI+
+VT+ME = 3.19τ for three districts against PA+MD+DE = 0.82τ; D06 without its AZ and TX slivers
+is 0.68τ. Full composition table in `docs/BORDERS_PLAN.md`.
+
+**State atoms — the engine, measured 2026-09-06; route retired the same day, numbers kept for
+the record** (`ff63511`, stage 1 only; run
 `battery/results/atoms_k18_v2_20260906`). Target 473.5 at k=18. Cut plan **CA 5 / TX 2 /
 NY+NJ 3 / FL 2**: 56 atoms, 126 edges, **one component**. Pieces CA1 0.838×, CA2–CA5
 0.825–0.826×, TX1 1.013×, TX2 1.007×, NYNJ1–3 0.943–0.944×, FL1 0.706×, FL2 0.691×.
@@ -262,7 +251,10 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   `district_regions_fixed_snapped.png` — one held diagram, both labellings, 266 outside against
   0 · `tools/measure/district_pieces.py` gives each district's largest piece by area, by mass and
   by ZIP count, which is what §3a needed to refute the 55%.
-- **The state-atom engine:** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
+- **The next build:** `docs/BORDERS_PLAN.md` — state-border snapping of the committed draw:
+  model, grid, files, the run command, verification · `docs/CHANNEL_NOTE.md` — the markdown
+  channel note; §8 the VBL comparison and options, corrected 2026-09-06 (Options A–D parked).
+- **The state-atom engine (retired 2026-09-06):** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
   `td/solvers/atom_draw.py` (the search, `free_search`, `check_contiguous`) ·
   `tools/run_atoms.py` (the driver) · `td/geo.py::state_rook` (the TIGER rook graph) ·
   `tests/test_atoms.py`, `tests/test_atom_draw.py`, `tests/test_run_atoms.py`.
