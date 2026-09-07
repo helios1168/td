@@ -13,9 +13,10 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Migration step 0 (permissions and rule 9 amendment), then step 1. One commit per step. Stop and
-report before merging; the merge to `main` needs the user's approval (see memory
-`ask-before-merging-to-hub`).
+Migration step 0 (permissions and rule 9 amendment), then step 1, on Sonnet 5. Hand over to an
+Opus 5 session for step 2, then back to Sonnet for steps 3 to 6 (decision 14). One commit per
+step. Stop and report before merging; the merge to `main` needs the user's approval (see
+memory `ask-before-merging-to-hub`).
 
 ## Done
 
@@ -62,8 +63,13 @@ inputs, not questions.
 13. Branch triage: `git branch --merged main` over the 19 `wt/*` and 5 orphan `worktree-*`
     branches. Merged ones are deleted in step 5. Unmerged ones are listed for the user; never
     deleted by the executing session.
-14. Executor: one background job inside this worktree. Doc surgery, not code, so no Opus
-    delegation. Merge asks first.
+14. Executor: background jobs inside this worktree, run sequentially, one commit per step.
+    Model split decided 2026-09-07: Sonnet 5 (effort xhigh) runs steps 0, 1, 3, 4, 5 and 6;
+    Opus 5 runs step 2 alone, because folding RESEARCH_FINDINGS, OPTIONS_*, REVIEW_GROMOV and
+    CHANNEL_NOTE into PROBLEM and MODEL is the only step that needs judgment about what is
+    settled versus superseded. Order: Sonnet steps 0 and 1, then Opus step 2, then Sonnet
+    steps 3 to 6. Each session starts by reading this file and `## Next step`, and ends by
+    updating `## Next step` and `## Done`. Merge asks first.
 
 ## Design
 
@@ -171,11 +177,12 @@ has no `.venv`).
    in this worktree can run `git worktree add`, Write, Edit and `mcp__serena__*` without a prompt.
 1. `git mv` FRAME, APPROACHES, LENS_*, DOMAIN_*, LIT_*, BRIEF and `docs/archive/` into
    `docs/foundations/`; fix citations in `docs/units/*.md`. Check: `grep -rn 'docs/\(FRAME\|APPROACHES\|LENS_\|DOMAIN_\|LIT_\|BRIEF\|archive\)' --include=*.md` returns only `foundations/` paths.
-2. Rename `docs/CHANNEL.md` to `docs/PROBLEM.md`. Fold RESEARCH_FINDINGS, OPTIONS_*,
-   REVIEW_GROMOV and CHANNEL_NOTE into PROBLEM, MODEL and `## Facts`; delete them. Fix
-   references in CLAUDE.md, CODE_MAP, APP. Check: no remaining `CHANNEL` reference; the four
-   deleted files' section headings each appear in PROBLEM or MODEL or are listed in the commit
-   body as dropped.
+2. (Opus 5 session.) Rename `docs/CHANNEL.md` to `docs/PROBLEM.md`. Fold RESEARCH_FINDINGS,
+   OPTIONS_*, REVIEW_GROMOV and CHANNEL_NOTE into PROBLEM, MODEL and `## Facts`; delete them.
+   Fix references in CLAUDE.md, CODE_MAP, APP. The commit body carries a disposition table:
+   every H2 of the four source files, with "kept in PROBLEM §x", "kept in MODEL §y",
+   "number moved to Facts", or "dropped: <reason>". Check: no remaining `CHANNEL` reference;
+   every H2 of the four deleted files appears in the disposition table.
 3. Collapse `MODEL_*`, `VERIFY_*`, `CODEVERIFY_*` into `docs/units/<id>.md` sections; add
    `Status:` lines; `git mv docs/artifacts/<id>/` and `docs/verify/*` to `tools/verify/<id>/`
    and repoint every artifact path in the unit files. For U8-band, the unit file states that
