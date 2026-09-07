@@ -13,9 +13,11 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Migration step 1 (foundations move), then hand over to an Opus 5 session for step 2, then
-Sonnet for steps 3 to 6 (decision 14). One commit per step. Stop and report before merging; the
-merge to `main` needs the user's approval (see memory `ask-before-merging-to-hub`).
+Step 1 (foundations move) is done. Migration step 2 is next, on an Opus 5 session: rename
+`docs/CHANNEL.md` to `docs/PROBLEM.md` and fold RESEARCH_FINDINGS, OPTIONS_*, REVIEW_GROMOV and
+CHANNEL_NOTE into PROBLEM, MODEL and `## Facts`. Then Sonnet for steps 3 to 6 (decision 14). One
+commit per step. Stop and report before merging; the merge to `main` needs the user's approval
+(see memory `ask-before-merging-to-hub`).
 
 Open from step 0: P1 (`defaultMode: bypassPermissions` plus the deny floor) could not be written
 by Claude, the auto-mode classifier blocks that edit. The finished file sits at
@@ -35,6 +37,7 @@ and it takes effect at the next session start.
   worktree-isolated job with no prompt. P2: rule 9 of `~/.claude/CLAUDE.md` amended, Claude
   creates worktrees with plain git plus lock and enters by path. P1 pending the user (see
   `## Next step`). Deny rules hold in every mode including bypass, so the floor is safe to add.
+- 2026-09-07 step 1 done, 357c23b: 20 files moved, 232 references repointed.
 
 ## Decisions needed
 
