@@ -43,10 +43,14 @@ explain D01. **Merged into `main` on 2026-09-06** at the user's instruction (fas
       *next* iterate's mismatch (16 of 3,704) rather than the snap's own zero. Hold centres and
       weights fixed, colour dots by the labelling those weights produced. Item 4 of the
       register's recommended order, ahead of D01, because a sponsor review needs it.
-- [ ] **D01 stays fragmented at 55% under the snap** while the other seventeen reach 96–100%,
-      and nothing measured explains why. Its power cell is a 0.06%-of-map sliver, but D14
-      (0.04%) and D12 (0.14%) are smaller and come out 97% / 100%, so sliver size alone is not
-      the explanation. Cheap to look at; it is what a sponsor would seize on.
+- [ ] **D01's 55% is explained and is not fragmentation** (register §3a, 2026-09-06, worktree
+      `d01`). 148 of its 149 ZIPs and **99.86% of its M** are one piece; the second part is the
+      single rural ZIP `18337` (Milford PA), whose catchment is **44.56% of D01's area and 0.14%
+      of its opportunity**. The largest-piece statistic has an **area** denominator, and on mass
+      the snapped worst case is **D17 at 92.72%**, not D01 — the two measures disagree about
+      which districts are the problem, on both labellings. What is left: decide whether
+      `--regions-voronoi` reports the mass denominator beside the area one.
+      `tools/measure/district_pieces.py` computes all three.
 - [ ] **Iteration 15's labelling was never saved.** The 2026-09-06 run wrote no per-iteration
       draw, so the best iterate's map contiguity is unmeasured and the snapped panels everywhere
       are the single-shot labelling. Re-run writing a `draw.csv` per iterate, then
