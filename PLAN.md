@@ -13,13 +13,13 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Step 4 (STATE_LOG dropped, STATE.md reshaped, RUNS and DATA fold into CODE_MAP) is done. Step 5
-is next, on a Sonnet 5 session: worktree and branch triage — unlock and remove merged or dead
-worktrees, delete merged branches, list unmerged branches for the user; each live worktree gets
-a `PLAN.md`; the five `docs/*_PLAN.md` and `docs/BORDERS_RESULTS.md` files fold into the live
-worktrees' `PLAN.md` files or into Facts, then are deleted. Then step 6, also Sonnet
-(decision 14). One commit per step. Stop and report before merging; the merge to `main`
-needs the user's approval (see memory `ask-before-merging-to-hub`).
+Step 5 (worktree and branch triage; the five hub plan files folded and deleted) is done. Step 6
+is next, on a Sonnet 5 session: `.claude/doc-owners.txt`, the four hooks (D5), and
+`tests/test_docs_owners.py`; refresh `CLAUDE.md` invariants (traps from memory, subagent rule,
+rule 9 amendment) and `docs/CODE_MAP.md`; retire `.serena/memories/core.md`; update memory per
+D3 and decision 12. One commit per step. Stop and report before merging; the merge to `main`
+needs the user's approval (see memory `ask-before-merging-to-hub`); the user runs `TRIAGE.sh` by
+hand first (nine refused status checks, two staged `PLAN.md` copies).
 
 ## Done
 
@@ -61,6 +61,18 @@ needs the user's approval (see memory `ask-before-merging-to-hub`).
   `## Code verify`; two bug rows (D04/SOUTHWEST colour, `chOppShare` rounding) had no site
   inside this track's file ownership and were dropped; 14 files changed, +82 / −1,327; tests
   306 passed, 0 failed, unchanged.
+- 2026-09-07 step 5 done, `5dda7e7`: 37 branches triaged, 25 deleted (merged, no worktree: `list`,
+  4 orphan `worktree-*`, 20 `wt/*`), 2 kept as historical hub branches, 4 kept unmerged, 6 worktrees
+  kept because `git -C <path> status` was refused (unmerged branch or unknown status is never
+  grounds for removal; no worktree unlocked or removed this session); `docs/BORDERS_PLAN.md`,
+  `docs/BORDERS_RESULTS.md`, `docs/MOTION_PLAN.md`, `docs/RUNS_PLAN.md`, `docs/WAVE2_PLAN.md`
+  (five files, 1,370 lines) folded and deleted — models into `docs/units/state_borders.md` and
+  `state_splits.md`, grid tables and artifact URLs into `STATE.md ## Facts`, the Track 1/Track 2
+  comparison into `docs/PROBLEM.md` §9, the rest dropped as done-and-recorded or operational;
+  worktrees `ca5-map` and `state-table-align` got new `PLAN.md` files (staged via `TRIAGE.sh`,
+  a concurrent session updated `worktree-headline`'s own `PLAN.md` mid-triage so that one was
+  left alone); tests 306 passed, 0 failed, unchanged. `TRIAGE.sh` holds 11 commands the guard
+  refused, for the user.
 
 ## Decisions needed
 
