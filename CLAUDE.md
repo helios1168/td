@@ -9,6 +9,10 @@ only when a question needs it. This file carries invariants only and is never st
    required to resume.
 2. `docs/CODE_MAP.md` when you need a file or a recipe; `docs/CHANNEL.md` / `docs/MODEL.md` for
    the problem and the model; `STATE.md` `## Where` for the rest.
+2a. If the task is "what does this scenario do" — pin a region, change k, swap the engine — run
+   it in the Streamlit app (`tools/app.sh`, `docs/APP.md`) instead of building a Claude
+   artifact. Artifacts are for fixed, reviewed deliverables; a scenario question needs an
+   engine behind it, and the app has one.
 3. Never read `docs/STATE_LOG.md`, `docs/archive/`, or a whole `docs/*.md` unprompted — take the
    section you need via Serena (headings are symbols).
 
@@ -16,6 +20,9 @@ only when a question needs it. This file carries invariants only and is never st
 
 - `.venv/bin/python3` from the repo root `/Users/ntlee/projects/td` — the system python has no
   numpy/scipy/networkx. A `wt/*` worktree has no `.venv`; use the repo root's.
+- The Streamlit scenario app has its own venv, `.venv-app`, built from `app/requirements.txt`.
+  Never install into `.venv` for the app: those pins are frozen and the zip50 anchor depends on
+  them. The app never imports `td`; it drives the drivers by subprocess (`docs/APP.md`).
 - MacTeX at `/Library/TeX/texbin`, **not** on `PATH` in non-interactive shells: prefix
   `export PATH=/Library/TeX/texbin:$PATH` when building a note.
 - Never write under `battery/figures/`. `figures/` **is tracked** (a map is a primary artifact):

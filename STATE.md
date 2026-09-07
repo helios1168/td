@@ -189,6 +189,10 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
 - Recipes and file map: `docs/CODE_MAP.md` · Memory:
   `~/.claude/projects/-Users-ntlee-projects-td/memory/td-contiguity-programme.md` · History:
   `docs/STATE_LOG.md` · Archive: `docs/archive/README.md`
+- **The scenario app:** `app/` + `tools/app.sh`, its own venv `.venv-app`, whole story in
+  `docs/APP.md`. Define a scenario, run either stage-1 engine, see the map, save it. Scenario
+  questions go here now, not into a new Claude artifact — the artifacts below stay as the fixed
+  record they already are.
 - Artifacts: **state atoms at k=18 `7902dfb3-afc6-431e-ac2c-ceb109662780`** (the exploration:
   inventory, firm-territory map, the four contiguous draws) · pin-cost catalogue
   `f903ee01-eefc-40cf-bd32-8f5536b6e65f` · map diff `68eecbb9-3ce2-45d9-8161-5db7fe212957` ·

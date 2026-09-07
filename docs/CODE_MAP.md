@@ -42,6 +42,7 @@ in the graph (`docs/MODEL.md` §6 on who may own them).
 | `docs/artifacts/U*/` | runnable artifacts behind each MODEL/VERIFY document |
 | `docs/channel_note/`, `docs/math_note/` | the LaTeX notes (channel model; the original two-player formulation). `math_note/toy_*.py` import the deleted `code/gfx` and are broken |
 | `tests/run_all.py` | 269 fast tests; `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True` |
+| `app/` + `tools/app.sh` | the Streamlit scenario app: define a scenario, run an engine, see the map, save it. Runs in its own venv `.venv-app` and never imports `td` — it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/engines.py` is the registry; `docs/APP.md` is the whole story |
 
 ## Recipes (v2 forms — the live ones)
 
@@ -53,7 +54,23 @@ python3 -u tools/measure/frontier.py instance_descaled_v2.json.gz battery/result
 tools/measure/instance_diff.py <old> <new> [--json out.json]
 tools/us_maps.py <instance> --out figures/<dir>/ --districts <draw.csv> --regions <draw.csv>
 bash docs/artifacts/runs/run_all.sh   # 15 runs, ~14 min; then make_maps.sh and build_artifact.py --date <date>
+tools/app.sh                          # the scenario app on 127.0.0.1:8501 (docs/APP.md)
 ```
+
+## Scenario exploration goes through the app, not a new artifact
+
+When the question is "what does this scenario do" — pin a region, change k, try a different
+engine — define it in the Streamlit app and run it there. The app writes the same
+`k<kk>/draw.csv` + `metrics.json` that the drivers do, into
+`battery/results/app/<scenario>_<timestamp>/`, and renders the maps with `tools/us_maps.py`, so
+nothing about the numbers or the figures changes; what changes is that the sponsor can turn the
+knobs without a session, and every scenario is saved to `battery/scenarios/<slug>.json` in the
+format `run_draw.py --scenario` already accepts.
+
+Build a Claude artifact (`docs/artifacts/runs/build_artifact.py`) only for a **fixed deliverable**
+— a catalogue that is finished, reviewed, and meant to be cited, like the pin-cost catalogue. An
+artifact is a snapshot with no engine behind it, so it cannot answer the next question; the app
+can. New exploratory work should not add one.
 
 `run_atoms.py` **requires** `PYTHONHASHSEED=0` and refuses to start without it: its search
 tie-breaks on set iteration over atom names, so the answer moves by about 0.015 nats under a
@@ -66,6 +83,12 @@ output directory by `date +%Y%m%d`, so a re-run lands in `runs_<today>`. `us_map
 the four base figures into `--out`; ~3 s per k with the gazetteer cached.
 
 ## Gitignored inputs (repo root; hand-copy into a `wt/*` worktree)
+
+`.venv-app` is per-worktree and is rebuilt, not copied:
+`uv venv --python 3.13 .venv-app && uv pip install --python .venv-app/bin/python3 -r app/requirements.txt`.
+The app reads its data from the hub checkout (`TD_REPO`), so the gitignored inputs below do not
+need copying for it.
+
 
 `instance_descaled_v2.json.gz` (**live**, cleaned) · `instance_descaled_v2.raw.json.gz`
 (uncleaned, provenance) · `instance_descaled.json.gz` (v1, regression only) · `data/geo/` (the
