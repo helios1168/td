@@ -24,6 +24,10 @@ MAPS = {
     "district_regions_voronoi.png": "Territory — zip catchments",
 }
 
+# The review pair, in the order a sponsor reads them. Both panels carry their own numbers in the
+# rendered subtitle, so nothing here restates a count that could drift away from the figure.
+FIXED = ("district_regions_fixed_committed.png", "district_regions_fixed_snapped.png")
+
 
 def pins_table(sc: Scenario) -> pd.DataFrame:
     rows = [{"district": d, "mode": mode, "states": ",".join(states)}
@@ -66,7 +70,7 @@ with st.sidebar:
 
 current: Scenario = st.session_state.get("editing", Scenario(name=""))
 
-define, results = st.tabs(["Define and run", "Results"])
+define, results, review = st.tabs(["Define and run", "Results", "Review"])
 
 # ------------------------------------------------------------------ define and run
 with define:
@@ -184,3 +188,51 @@ with results:
         st.image(str(path), caption=MAPS[name])
     if not drawn:
         st.caption("No figures for this run and k yet.")
+
+# ------------------------------------------------------------------ review
+# The sponsor-facing view: one held power diagram, the committed labelling and the snapped one
+# drawn on it. Every other rendering recomputes the centroids from whatever labels it is handed,
+# so it scores the *next* iterate and cannot show the zero
+# (`docs/OPTIONS_power-cell-contiguity.md` §4a). This tab exists because that figure is the one
+# a review needs and no other panel can stand in for it.
+with review:
+    st.subheader("Does the shipped map agree with its own geometry?")
+    st.write(
+        "A district is defined by a centre and a weight, and a zip belongs to whichever cell is "
+        "nearest once the weights correct for how much opportunity each district has to cover. "
+        "A dot in the wrong colour is a zip the draw assigned against that geometry. Both panels "
+        "below hold the **same** centres and weights, so the only thing that changes between "
+        "them is which district each zip is labelled with.")
+
+    # `finished` is non-empty here: the Results tab above stops the script when it is not.
+    # Open on a run whose pair is already drawn, so the tab shows the figure rather than the
+    # render button. Newest-first order is preserved among those, and falls back to newest.
+    default = next((i for i, r in enumerate(finished)
+                    if all((runner.figure_dir(r.path, r.ks[-1]) / n).exists() for n in FIXED)), 0)
+    pick, k_pick = st.columns([3, 1])
+    run = pick.selectbox("Run", finished, index=default, format_func=lambda r: r.label,
+                         key="review-run")
+    k = k_pick.selectbox("k", run.ks, index=len(run.ks) - 1, key="review-k")
+
+    figures = runner.figure_dir(run.path, k)
+    missing = [n for n in FIXED if not (figures / n).exists()]
+    if missing:
+        st.warning("This pair has not been rendered for this run and k yet.")
+        st.caption("Rendering solves a transportation LP per diagram and takes minutes, not "
+                   "seconds. It runs in the foreground, so leave the tab open.")
+        launch_file = run.path / runner.LAUNCH
+        engine_key = (json.loads(launch_file.read_text())["engine"]
+                      if launch_file.exists() else engines.DEFAULT)
+        if st.button("Render the pair", type="primary"):
+            with st.spinner("Drawing"):
+                runner.render_maps(run.path, k, engine_key)
+            st.rerun()
+    else:
+        for name in FIXED:
+            st.image(str(figures / name), caption=MAPS[name])
+        st.caption(
+            "The zero on the second panel is relative to the diagram drawn there. Rebuild a "
+            "diagram from those labels and the centres move, so a handful of zips fall outside "
+            "again — the panel's own subtitle carries the measured count. Ringed zips are the "
+            "ones the LP splits between two cells, where the assignment is a rounding rather "
+            "than a decision.")
