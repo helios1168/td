@@ -1,13 +1,12 @@
-# The headline map, district by district
+# The headline map, up close
 
 The shipped map: Track 2, anchored, δ = 5%. Eight state splits, certified minimal under the
 anchors. California is cut into five districts, New York three, Texas two, Florida two, and
 every other state sits whole inside one district.
 
-One close-up per district, zoomed to its own territory. The subject district carries its colour
-from the overview maps, every other district is muted grey, and the dots are ZIP codes sized by
-opportunity. Full write-up in [`docs/HEADLINE.md`](../../docs/HEADLINE.md); the two overview
-renderings are [`borders_track2_anchored_d05_voronoi.png`](../borders_track2_anchored_d05_voronoi.png)
+One close-up per split state, plus the share and coverage table for all 18 districts. Full
+write-up in [`docs/HEADLINE.md`](../../docs/HEADLINE.md); the two overview renderings are
+[`borders_track2_anchored_d05_voronoi.png`](../borders_track2_anchored_d05_voronoi.png)
 and [`borders_track2_anchored_d05_districts.png`](../borders_track2_anchored_d05_districts.png).
 
 ## How to read the numbers
@@ -52,12 +51,16 @@ after the fact, alongside Alaska and the ZIP codes with no gazetteer coordinate.
 One figure per state that more than one district holds. Each shows the state carved by district
 colour, together with every state those districts also reach into, since that is the other half
 of the story: a district that takes a slice of California has to get the rest of its opportunity
-somewhere.
+somewhere. States outside that set are drawn in the muted context grey.
 
 A district is named in a subtitle when it holds at least 1% of that state's opportunity, the same
 1% threshold the model itself uses to decide that a state is present in a district. A district
 can therefore show as a thin colour on the map without being named, though that does not happen
 for these four.
+
+Where a district's territory inside the frame is too small to sit under its own label, the label
+moves to open ground and keeps a thin line back to the district. D14 in California and D01 in
+New York are the two that need it.
 
 | state | share of national opportunity | districts | reaches into |
 |---|---|---|---|
@@ -86,58 +89,13 @@ neighbours each, which is why capping them changes little.
 ### Florida, in two districts
 ![Florida](state_FL.png)
 
-## The districts
+## Regenerating these
 
-### D01 — 5.38%, New York
-![D01](district_D01.png)
+```
+tools/us_maps.py <instance> --state-figures <draw.csv> --out <dir>
+```
 
-### D02 — 5.54%, California and Nevada
-![D02](district_D02.png)
-
-### D03 — 5.77%, Texas
-![D03](district_D03.png)
-
-### D04 — 5.77%, New York and New England
-![D04](district_D04.png)
-
-### D05 — 5.71%, Pennsylvania, Maryland, New York, DC, Delaware
-![D05](district_D05.png)
-
-### D06 — 5.36%, Arizona, Colorado, New Mexico, South Dakota
-![D06](district_D06.png)
-
-### D07 — 5.56%, Florida
-![D07](district_D07.png)
-
-### D08 — 5.54%, North Carolina, Virginia, West Virginia
-![D08](district_D08.png)
-
-### D09 — 5.53%, Michigan, Ohio, Wisconsin
-![D09](district_D09.png)
-
-### D10 — 5.35%, California
-![D10](district_D10.png)
-
-### D11 — 5.65%, Illinois, Minnesota, Iowa, Nebraska, North Dakota
-![D11](district_D11.png)
-
-### D12 — 5.76%, New Jersey
-![D12](district_D12.png)
-
-### D13 — 5.35%, the mid-South
-![D13](district_D13.png)
-
-### D14 — 5.35%, California
-![D14](district_D14.png)
-
-### D15 — 5.36%, Florida, Georgia, South Carolina
-![D15](district_D15.png)
-
-### D16 — 5.81%, Texas, Oklahoma, Kansas
-![D16](district_D16.png)
-
-### D17 — 5.85%, California and the Northwest
-![D17](district_D17.png)
-
-### D18 — 5.36%, California and Hawaii
-![D18](district_D18.png)
+`--state-figures` defaults to whichever states the draw splits. The companion flag
+`--district-figures` renders one close-up per district in the same style; those were reviewed
+and are not kept here, since the state figures and the table above carry the same information
+in four pages instead of eighteen.

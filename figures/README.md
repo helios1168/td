@@ -14,7 +14,8 @@ anchors, with California in five districts, New York three, Texas two and Florid
   shows where the districts meet the state borders.
 - [`borders_track2_anchored_d05_districts.png`](borders_track2_anchored_d05_districts.png) — the
   same draw as dots, with bubble area proportional to opportunity.
-- [`headline/`](headline/) — one close-up per district, with a share and coverage table.
+- [`headline/`](headline/) — one close-up per split state, with a share and coverage table for
+  all 18 districts.
 
 Both overview maps carry each district's share of national opportunity to two decimals. An equal
 share is 5.56%; the map runs from 5.35% to 5.85%. Districts too small to sit under their own

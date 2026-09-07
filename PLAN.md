@@ -10,7 +10,8 @@ Built and committed. Not merged to the hub.
 |---|---|
 | `d7493f8` | the per-state cap in the solver, the driver flags, and the Streamlit Headline tab |
 | `0455cb2` | figure galleries with descriptions, and the California-capped override |
-| `89b44e9` | leader lines for small districts, 18 per-district close-ups |
+| `3dc3036` | a close-up per split state, sized to its own aspect |
+| `89b44e9` | leader lines for small districts, and per-district close-ups (since dropped) |
 | `83a9db0` | district shares to two decimals on both overview maps |
 | `9f761a2` | `docs/HEADLINE.md`, the end-to-end write-up |
 
@@ -65,13 +66,9 @@ assigned once, mass conserved to floating precision.
 
 - The hour-long California-at-4, δ = 5% run may still be in flight; if it found nothing, that
   cap is out of reach at the tighter band and the app should say so rather than appear to hang.
-- Per-state figures for CA, NY, TX and FL, showing each state carved by district plus the states
-  connected to it through a shared district.
 - `docs/APP.md` has no section for the Headline tab yet.
 - Nothing downstream of a real `runner.launch` has been exercised: Streamlit cannot be driven
   headlessly, so the tab's run, cancel and render flow is unverified by test.
-- The per-district close-ups reuse the landscape overview canvas, so a portrait state wastes
-  width.
 - `STATE.md` and `docs/CODE_MAP.md` do not point at `docs/HEADLINE.md` yet. That belongs with
   `/state` at merge time.
 
