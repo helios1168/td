@@ -1,36 +1,68 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `3632b83` · **Tests:** 269 pass,
+**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `cbb65cb` · **Tests:** 269 pass,
 0 fail (2026-09-06)
 
 ## Now
 
-**Map contiguity for the CA5 state-atom draw is now measured, not assumed, and it fails for
-four districts.** Reran `tools/run_atoms.py` (`PYTHONHASHSEED=0`, instance v2, k=18) in worktree
-`ca5-map`; `draw.csv` reproduced bit-identical to the 2026-09-06 measurement (`Σ log M`
-110.789532, ceiling 110.883247, gap 0.093715, spread 30.484%, one atom-graph component).
-`tools/us_maps.py --regions-voronoi <draw.csv>` — each zip's Voronoi catchment dissolved by its
-committed district, no LP/centers/weights, so it applies to a contiguity-search draw the same as
-a center-based one (`--regions`, the power diagram, still does not) — gives the number this file
-has wanted since the engine landed: **D02's largest contiguous piece holds 48% of its territory,
-D11 53%, D17 55%, D06 73%**; D01/D03/D08/D09/D10/D13/D14/D16 (plus near-solid D07/D15/D18) come
-out 98–100% one piece. The atom graph's single connected component certifies reachability
-through `BORDER_TOL`-proximity links, not that every district is one polygon — these four are
-where that gap actually bites.
+**The power-cell route now beats the state atoms on contiguity too, once you measure the
+labelling it would actually ship.** Worktree `power-cell-contiguity`, branch
+`worktree-power-cell-contiguity`, three commits: `a0d96fd` opened
+`docs/OPTIONS_power-cell-contiguity.md` (the durable option register), `2142be8` closed its
+options 1, 2-Route-A and 3, `1f6d956` qualified the zero-mismatch guarantee. Tests 269 pass.
 
-*What it means.* Not a new draw and not a new cost — the 0.093715-nat gap stands. It is the
-first hard evidence for the "atom-graph contiguity is not verified map contiguity" worry this
-file has carried since 2026-09-06: roughly a fifth of the districts are visibly fragmented on
-the ground.
+**Option 1, largest contiguous piece per district** (`us_maps.py --regions-voronoi`). The
+*committed* draw is badly fragmented — nine districts under 80% (min D14 51%), only seven at
+≥95% — which is *worse* than CA5's four under 80%. The *snapped* labelling reverses it: twelve
+are a single piece, seventeen of eighteen are ≥96%, and only **D01 at 55%** lags. Shared border
+segments fall 1,591 → 636. Which labelling you measure decides which route wins.
 
-*What's next.* Decide whether D02/D11/D17/D06's fragmentation is tolerable as delivered, or
-forces a change to the cut/merge rules (tighter `BORDER_TOL`, a different NY+NJ/CA cut, or a
-rule against a district straddling a proximity link at all). Work is on branch
-`worktree-ca5-map` (`ce1ef67` the map figures, `9363c14` the boundary map), not merged into
-`main` — ask before merging.
+**Option 2 Route A: there is no fixed point of snap → recentroid.** 20 iterations, no exact
+repeat, non-monotone; it wanders spread 2.1–5.6%, gap 0.00028–0.00128. But every iterate *is* a
+power diagram, so best-of-N is legitimate: **iteration 15, spread 2.1051%, gap 0.000283**, which
+beats the single shot (4.0041% / 0.000724) on both axes. **Option 3:** the LP splits exactly
+`k−1` = 17 zips at both target choices, carrying 17.03% of a mean district (largest `20814`,
+3.699%), so the spread floor is real and nothing returns to the committed draw's 1.2902%.
+
+**The correction that came out of review** (`1f6d956`). "Zero mismatched zips by construction"
+holds only against the diagram that *produced* the snap. Rebuild the diagram from the snapped
+labels and 16 of 3,704 (0.4%) fall outside again, against 258 (7.0%) committed — the same
+non-self-consistency as the missing fixed point. Consequence: **every power-diagram figure
+recentroids, so none of them can display the zero.**
+
+*What's next.* Build the fixed-diagram figure (hold centres and weights, colour dots by the
+labelling those weights produced) — a sponsor review needs it and it does not exist. Then
+explain D01. **Merged into `main` on 2026-09-06** at the user's instruction (fast-forward, so
+`main` and `worktree-power-cell-contiguity` are the same commit). Review artifact:
+`893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
 
 ## Next
 
+- [ ] **No figure can show the zero-mismatch guarantee — build the fixed-diagram one.** Every
+      power-diagram rendering recomputes centroids from the draw it is given, so it reports the
+      *next* iterate's mismatch (16 of 3,704) rather than the snap's own zero. Hold centres and
+      weights fixed, colour dots by the labelling those weights produced. Item 4 of the
+      register's recommended order, ahead of D01, because a sponsor review needs it.
+- [ ] **D01 stays fragmented at 55% under the snap** while the other seventeen reach 96–100%,
+      and nothing measured explains why. Its power cell is a 0.06%-of-map sliver, but D14
+      (0.04%) and D12 (0.14%) are smaller and come out 97% / 100%, so sliver size alone is not
+      the explanation. Cheap to look at; it is what a sponsor would seize on.
+- [ ] **Iteration 15's labelling was never saved.** The 2026-09-06 run wrote no per-iteration
+      draw, so the best iterate's map contiguity is unmeasured and the snapped panels everywhere
+      are the single-shot labelling. Re-run writing a `draw.csv` per iterate, then
+      `--regions-voronoi` the best one. One transportation LP per iteration, a few minutes each.
+- [ ] **Option 2 Route B is the remaining build** — remove `improve()` from `centers.draw`,
+      close balance with weights. Judge it against iteration 15's 2.1051% / 0.000283, **not**
+      against the 4.0041% single shot, or it will look better than it is. The split-zip floor
+      says the room left is small.
+- [ ] **`worktree-ca5-map` is still unmerged** (`ce1ef67` the map figures, `9363c14` the
+      boundary map). The power-cell branch merged on 2026-09-06; the CA5 one did not, and its
+      figures are the source of the atom-route fractions quoted throughout.
+- [ ] **The two routes' gaps sit on different bases.** The atom gap 0.093715 is against the
+      component-wise ceiling 110.883247 over the whole instance; the power-cell gaps are against
+      `k·log(M/k)` = 110.766768 over the 3,704 plotted zips. Two orders of magnitude make the
+      ranking unlikely to turn on it, but it is not certified — recompute on one base before any
+      sponsor comparison.
 - [ ] **The stage-2 cost of the atom map is unmeasured, and could exceed the 0.094.** Pinning
       CALIFORNIA costs **2.04 nats at stage 2** and this model forces CA into five pieces. Do
       not claim "the state-atom model costs 0.094 nats" until
@@ -134,6 +166,21 @@ piece is 48% of its territory, D11 53%, D17 55%, D06 73%**; D01/D03/D08/D09/D10/
 (plus near-solid D07/D15/D18) are 98-100% one piece. The atom graph's one component certifies
 `BORDER_TOL`-proximity reachability, not that every district is a single polygon.
 
+**Power-cell contiguity, measured 2026-09-06** (draw `draw_k18_v2_20260904/k18`, 3,704 plotted
+zips, total M 8,468.3, ceiling `k·log(M/k)` = **110.766768** — a different base from the atom
+ceiling). Committed draw: **258 zips (7.0%, 1.66% of M) outside their own power cell**, spread
+1.2902%, `Σ log M` 110.766686, gap **0.000082**. Snapped at equal-split targets: 0 outside by
+construction, spread 4.0041%, gap 0.000724. Best of 20 snap → recentroid iterates (**iteration
+15**): spread **2.1051%**, `Σ log M` 110.766485, gap **0.000283**. There is **no fixed point** —
+20 iterations, no exact repeat, non-monotone, band spread 2.1–5.6% / gap 0.00028–0.00128.
+Split zips **17 = `k−1` at both target choices**, carrying 17.03% of a mean district at
+equal-split (largest `20814`, 3.699%) and 22.08% at own-masses. Largest contiguous piece,
+snapped: **D01 55%**, D09 96%, D14 97%, D10/D13 98%, D07/D08 99%, twelve districts 100%;
+committed: nine districts under 80% (min D14 51%). Border segments 1,591 committed → 636
+snapped. **The zero is relative to one diagram:** rebuilt from the snapped labels, 16 of 3,704
+(0.4%) fall outside and the split count drops 17 → 10, so no recentroiding figure can display
+the guarantee.
+
 **The bound, corrected.** The valid upper bound is the Jensen ceiling
 `cert_draw.cert_balance_ceiling` = **110.883247**. The contiguity-dropped local search is
 **not** a bound — it returns a feasible relaxed value below the relaxed optimum, which orders it
@@ -180,6 +227,11 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   `docs/RESEARCH_FINDINGS.md`, `docs/REVIEW_GROMOV.md` — data route, literature map, R1–R4
 - `docs/WAVE2_PLAN.md` — the wave-2 execution plan: 9 tracks, 3 phases, per-track files, model
   assignments, merge order, and the four corrections to this file's record
+- **The power-cell contiguity register:** `docs/OPTIONS_power-cell-contiguity.md` — every route
+  to zero mismatched dots, with its evidence and verdict; §1 is the measurement record, §9 the
+  recommended order. This file is the durable one; `STATE.md` only names which option is live.
+  `td/solvers/centers.py::power_weights` now returns `fractional` (the split zips' row indices),
+  surfaced as `power_diagram_of_draw`'s `split_zips`.
 - **The state-atom engine:** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
   `td/solvers/atom_draw.py` (the search, `free_search`, `check_contiguous`) ·
   `tools/run_atoms.py` (the driver) · `td/geo.py::state_rook` (the TIGER rook graph) ·
@@ -193,7 +245,9 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   `docs/APP.md`. Define a scenario, run either stage-1 engine, see the map, save it. Scenario
   questions go here now, not into a new Claude artifact — the artifacts below stay as the fixed
   record they already are.
-- Artifacts: **state atoms at k=18 `7902dfb3-afc6-431e-ac2c-ceb109662780`** (the exploration:
+- Artifacts: **power-cell contiguity review `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`** (the four
+  maps: power diagram committed vs snapped, catchment committed vs snapped vs atoms, the
+  per-district bars) · **state atoms at k=18 `7902dfb3-afc6-431e-ac2c-ceb109662780`** (the exploration:
   inventory, firm-territory map, the four contiguous draws) · pin-cost catalogue
   `f903ee01-eefc-40cf-bd32-8f5536b6e65f` · map diff `68eecbb9-3ce2-45d9-8161-5db7fe212957` ·
   k-sweep (v1) `c007d61d-c753-4151-9026-2288b9d5eb38` · atlas (v1)
