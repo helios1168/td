@@ -11,6 +11,9 @@ Fixtures are synthetic and small (<= 200 points, k <= 3); no instance file, no n
 from __future__ import annotations
 
 import math
+import os
+import subprocess
+import types
 
 import numpy as np
 
@@ -362,3 +365,122 @@ def test_seed_centers_initial_first():
         assert np.linalg.norm(c[2] - pt) > 1e-9
     # the free seed is still a real zip's coordinate
     assert np.isclose(xy, c[2]).all(axis=1).any()
+
+
+# ------------------------------------------------- state borders: the penalty and the band
+_PRE_PENALTY_COMMIT = "b38c9ce"  # last commit before `penalty=` / `band=` entered `assign`
+
+
+def _head_centers():
+    """`td/solvers/centers.py` as of the last pre-penalty commit, exec'd into a throwaway module.
+
+    The guard below compares against that committed file itself rather than a snapshot of its
+    output, so it stays a real comparison under a numpy/HiGHS upgrade: both sides then move
+    together, and only a change to *this* file's default path can break it. Pinned to a commit,
+    not HEAD, so the guard survives the commit that introduces the keywords.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ref = f"{_PRE_PENALTY_COMMIT}:td/solvers/centers.py"
+    src = subprocess.run(["git", "show", ref], cwd=root,
+                         capture_output=True, text=True, check=True).stdout
+    mod = types.ModuleType("centers_head")
+    exec(compile(src, ref, "exec"), mod.__dict__)
+    return mod
+
+
+def crosscut_states(seed=3, per=40):
+    """Two clusters whose *state* membership cuts across them: zip `z` belongs to state `z%2`.
+
+    Geometry and the state lines disagree completely, so the unpenalised LP splits by cluster
+    and only a penalty can make it split by state.  Returns `(xy, M, owner)`, `owner` being the
+    one district each zip's state owns.
+    """
+    rng = np.random.default_rng(seed)
+    mids = np.array([[0.0, 0.0], [10.0, 0.0]])
+    xy = np.vstack([m + 0.5 * rng.normal(size=(per, 2)) for m in mids])
+    M = np.full(2 * per, 1.0)
+    return xy, M, (np.arange(2 * per) % 2)
+
+
+def lopsided_states(per=(55, 45)):
+    """Two tight clusters, one state each, of unequal mass: 55 against 45 for a target of 50."""
+    rng = np.random.default_rng(5)
+    xy = np.vstack([np.array([0.0, 0.0]) + 0.3 * rng.normal(size=(per[0], 2)),
+                    np.array([20.0, 0.0]) + 0.3 * rng.normal(size=(per[1], 2))])
+    M = np.ones(sum(per))
+    owner = np.concatenate([np.zeros(per[0], int), np.ones(per[1], int)])
+    return xy, M, owner
+
+
+def penalty_for(owner, k, lam=1e4):
+    """`lam` everywhere except each zip's owner district."""
+    return np.where(owner[:, None] == np.arange(k)[None, :], 0.0, lam)
+
+
+def test_assign_default_path_matches_git_head():
+    """`penalty=None, band=0` is the old LP bit for bit -- the committed draw must not move."""
+    old = _head_centers()
+    rng = np.random.default_rng(11)
+    xy = rng.normal(size=(120, 2)) * 4.0
+    M = rng.uniform(1.0, 5.0, size=120)
+    c = centers.seed_centers(xy, M, 4, 0)
+    total = M.sum()
+    for targets in (None, [0.4 * total, 0.3 * total, 0.2 * total, 0.1 * total]):
+        got, n_got = centers.assign(xy, M, c, targets, penalty=None, band=0.0)
+        want, n_want = old.assign(xy, M, c, targets)
+        assert np.array_equal(got, want), (targets, np.flatnonzero(got != want))
+        assert n_got == n_want, (targets, n_got, n_want)
+
+
+def test_a_large_penalty_keeps_every_zip_in_its_owner_district():
+    """The states cut across the clusters: with the penalty every zip lands in its own state."""
+    xy, M, owner = crosscut_states()
+    c = centers.seed_centers(xy, M, 2, 0)
+    plain, _ = centers.assign(xy, M, c)
+    assert (plain != owner).sum() > 10, plain          # geometry alone ignores the states
+    labels, _ = centers.assign(xy, M, c, penalty=penalty_for(owner, 2))
+    assert np.array_equal(labels, owner), np.flatnonzero(labels != owner)
+
+
+def test_the_band_is_what_buys_the_state_line():
+    """55/45 against a target of 50: at band=0 a zip must cross, at band=0.1 none does."""
+    xy, M, owner = lopsided_states()
+    c = centers.seed_centers(xy, M, 2, 0)
+    pen = penalty_for(owner, 2)
+
+    hard, n_frac = centers.assign(xy, M, c, penalty=pen)
+    assert n_frac == 0, n_frac                          # no split zip: the masses are exact
+    assert (hard != owner).sum() == 5, (hard != owner).sum()
+
+    banded, n_frac = centers.assign(xy, M, c, penalty=pen, band=0.1)
+    assert n_frac == 0, n_frac
+    assert np.array_equal(banded, owner), np.flatnonzero(banded != owner)
+    mass = np.bincount(banded, weights=M, minlength=2)
+    assert (mass >= 0.9 * 50.0 - 1e-9).all() and (mass <= 1.1 * 50.0 + 1e-9).all(), mass
+
+
+def test_targets_off_the_total_need_a_band():
+    """Targets that do not sum to the total mass are infeasible at band=0 and fine inside one."""
+    xy, M, owner = lopsided_states()
+    c = centers.seed_centers(xy, M, 2, 0)
+    targets = [45.0, 45.0]                              # 90 against a total mass of 100
+    try:
+        centers.assign(xy, M, c, targets)
+    except ValueError as e:
+        assert "targets" in str(e)
+    else:
+        raise AssertionError("expected ValueError on targets summing below the total mass")
+
+    labels, n_frac = centers.assign(xy, M, c, targets, band=0.15)
+    assert n_frac <= 1, n_frac                          # at most k-1 split zips, mass 1 each
+    mass = np.bincount(labels, weights=M, minlength=2)
+    assert (mass >= 0.85 * 45.0 - 1.0).all() and (mass <= 1.15 * 45.0 + 1.0).all(), mass
+
+
+def test_a_penalty_flips_a_near_tie_in_power_labels():
+    """One zip a hair inside cell 0; a penalty smaller than nothing else moves it to cell 1."""
+    xy = np.array([[4.99, 0.0]])
+    c = np.array([[0.0, 0.0], [10.0, 0.0]])
+    w = np.zeros(2)
+    assert centers.power_labels(xy, c, w)[0] == 0
+    assert centers.power_labels(xy, c, w, np.array([[0.5, 0.0]]))[0] == 1

@@ -1,0 +1,489 @@
+"""state_splits.py -- Track 2: the state-level minimum-splits MILP.
+
+Level 1 decides, per band width `delta`, **which states split** and how each split state's mass
+is shared between districts; level 2 (`realise`) turns that decision into zip labels.  The
+committed draw's `k` centres are fixed data here: a state's cost of joining district `j` is its
+exact moment about that centre, `D_sj = sum_{z in s} M_z d^2(z, c_j) / M_s`, precomputed by the
+caller.  States enter as an index over `0..S-1` and the rook graph as an edge list over those
+indices; this module never touches `td.geo` -- the CLI fetches the graph and passes it in::
+
+    min   sum_s (sum_j z_sj - 1)  +  eps * sum_s sum_j M_s D_sj y_sj
+    s.t.  sum_j y_sj = 1                        for every s      (all of s placed)
+          eta z_sj <= y_sj <= z_sj,  z_sj in {0,1}               (z marks *real* contact)
+          tau(1-delta) <= sum_s M_s y_sj <= tau(1+delta)  per j  (the band)
+          {s : z_sj = 1} connected in the rook graph      per j  (contiguity)
+
+`eps` is lexicographic (`eps_lexicographic`): the whole compactness term is worth under half a
+split at every feasible `y`, so it only ranks solutions of equal split count and never buys one.
+
+`eta` (default 1%, the plan's own reporting threshold for "state s is in district j") is not
+cosmetic.  Contiguity binds the **z**-set, and `y_sj <= z_sj` alone lets `z_sj = 1` with
+`y_sj = 0`: a state can be bought as a bridge for one split while the district actually realised
+at level 2 -- which owns only the states with `y_sj > 0` -- is disconnected (path A-B-C, masses
+1, 2, 1, tau = 2, delta = 0; docs/VERIFY_state_splits.md section 1b).  `y_sj >= eta z_sj` makes
+a z-flag imply real mass, so contiguity of `z` is contiguity of the district.
+
+Contiguity is VBL's single-commodity flow (`scf`), compact and solved in one shot -- no lazy
+separation, and so none of trap 14's SCIP configuration.  Per district there is a variable root
+`r_sj <= z_sj` with `sum_s r_sj = 1`, a directed flow variable on each rook edge in each
+direction bounded by `(N-1) z_uj` and `(N-1) z_vj`, and net inflow at `s` of at least
+`z_sj - N r_sj` (N = S).  Districts are anonymous; the distinct fixed centres in the tie-break
+break the k! symmetry in practice at this size.
+
+Conditioning: the mass rows are divided by `tau`, so the band reads `[1-delta, 1+delta]` and
+the coefficients are state shares of a district rather than dollars -- HiGHS' feasibility
+tolerances are absolute and the real `M` is in dollars.  The optimum is unchanged (scaling a
+row and its right-hand side together leaves the feasible set identical).
+
+The MILP uses the whole band wherever that saves a split, so at a wide `delta` it returns an
+imbalance the chosen splits did not require.  `balance_pass` fixes `z` and re-solves for `y`,
+lexicographically: first the maximum deviation from `tau`, then the spread at that deviation.
+`delta` becomes a cap and the shares become the tightest balance those splits allow.
+
+Pure functions on arrays; the only dependency inside `td/` is `centers` (`realise` calls
+`centers.assign` per split state, and its Lloyd rounds `centers._centroids`).
+"""
+from __future__ import annotations
+
+import inspect
+from dataclasses import dataclass, field
+
+import numpy as np
+from scipy import sparse
+from scipy.optimize import Bounds, LinearConstraint, linprog, milp
+
+from td.solvers import centers as _centers
+
+COST_TOL = 1e-12         # a Lloyd round is accepted only if the state's cost rises by no more
+
+
+@dataclass
+class SplitProblem:
+    """The MILP in matrix form plus the index layout `solve` reads the solution back with.
+
+    Variables are four contiguous blocks, each in row-major `(s, j)` / `(arc, j)` order::
+
+        z at off_z + s*k + j     binary, state s touches district j
+        y at off_y + s*k + j     continuous in [0, 1], s's share going to j
+        r at off_r + s*k + j     binary, s is district j's flow root
+        f at off_f + a*k + j     continuous in [0, N-1], flow on directed arc a for district j
+
+    Directed arc `2*e` is `edges[e][0] -> edges[e][1]` and arc `2*e+1` is its reverse.  `rows`
+    maps a constraint block name to its `(start, stop)` row range in `A`.
+    """
+
+    c: np.ndarray
+    A: sparse.csc_matrix
+    lb: np.ndarray
+    ub: np.ndarray
+    integrality: np.ndarray
+    var_lb: np.ndarray
+    var_ub: np.ndarray
+    M_s: np.ndarray
+    D: np.ndarray
+    edges: list[tuple[int, int]]
+    tau: float
+    delta: float
+    eps: float
+    eta: float
+    n_state: int
+    k: int
+    off_z: int
+    off_y: int
+    off_r: int
+    off_f: int
+    n_var: int
+    rows: dict[str, tuple[int, int]] = field(default_factory=dict)
+
+
+def _block(rows: np.ndarray, cols: np.ndarray, vals: np.ndarray,
+           n_row: int, n_var: int) -> sparse.coo_matrix:
+    """A constraint block as a COO matrix; duplicate `(row, col)` entries are summed."""
+    return sparse.coo_matrix((vals, (rows, cols)), shape=(n_row, n_var))
+
+
+def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
+               tau: float, delta: float, eps: float, *, eta: float = 0.01,
+               anchors: list[tuple[int, int]] | None = None) -> SplitProblem:
+    """Assemble the minimum-splits MILP.  `M_s` is `(S,)`, `D` is `(S, k)`, `edges` the rook
+    graph over state indices (undirected, given once per pair).  `eta` is the minimum share a
+    state must send to a district it is flagged as touching (see the module docstring).
+
+    `anchors` is a list of `(s, j)` pairs forced to `z_sj = 1`: district `j` keeps state `s`.
+    Anchoring every district to its committed home state names the districts and so removes
+    the `k!` relabelling symmetry, which the `eps` tie-break alone does not break at S = 49,
+    k = 18 (HiGHS left a one-split gap open after 600 s without anchors)."""
+    M_s = np.asarray(M_s, float)
+    D = np.asarray(D, float)
+    if M_s.ndim != 1 or D.ndim != 2 or D.shape[0] != M_s.shape[0]:
+        raise ValueError(f"M_s {M_s.shape} and D {D.shape} disagree")
+    S, k = D.shape
+    N = S
+    E = [(int(u), int(v)) for u, v in edges]
+    if any(u == v or not (0 <= u < S) or not (0 <= v < S) for u, v in E):
+        raise ValueError("edges must be distinct state indices in range")
+    n_arc = 2 * len(E)
+    tau = float(tau)
+    if tau <= 0:
+        raise ValueError("tau must be positive")
+
+    off_z, off_y, off_r = 0, S * k, 2 * S * k
+    off_f = 3 * S * k
+    n_var = off_f + n_arc * k
+
+    c = np.zeros(n_var)
+    c[off_z:off_z + S * k] = 1.0
+    c[off_y:off_y + S * k] = float(eps) * (M_s[:, None] * D).ravel()
+
+    sk = np.arange(S * k)
+    j_of = np.tile(np.arange(k), S)                      # district of flat (s, j)
+    s_of = np.repeat(np.arange(S), k)
+
+    blocks, lb, ub, rows = [], [], [], {}
+
+    def add(name, mat, lo, hi):
+        start = sum(b.shape[0] for b in blocks)
+        blocks.append(mat)
+        lb.append(np.asarray(lo, float))
+        ub.append(np.asarray(hi, float))
+        rows[name] = (start, start + mat.shape[0])
+
+    # sum_j y_sj = 1
+    add("place", _block(s_of, off_y + sk, np.ones(S * k), S, n_var), np.ones(S), np.ones(S))
+    # y_sj - z_sj <= 0
+    add("yz", _block(np.concatenate([sk, sk]),
+                     np.concatenate([off_y + sk, off_z + sk]),
+                     np.concatenate([np.ones(S * k), -np.ones(S * k)]), S * k, n_var),
+        np.full(S * k, -np.inf), np.zeros(S * k))
+    # eta z_sj - y_sj <= 0
+    add("yz_lo", _block(np.concatenate([sk, sk]),
+                        np.concatenate([off_z + sk, off_y + sk]),
+                        np.concatenate([np.full(S * k, float(eta)), -np.ones(S * k)]),
+                        S * k, n_var),
+        np.full(S * k, -np.inf), np.zeros(S * k))
+    # (1-delta) <= sum_s (M_s/tau) y_sj <= (1+delta)
+    add("band", _block(j_of, off_y + sk, np.repeat(M_s / tau, k), k, n_var),
+        np.full(k, 1.0 - delta), np.full(k, 1.0 + delta))
+    # sum_s r_sj = 1
+    add("root", _block(j_of, off_r + sk, np.ones(S * k), k, n_var), np.ones(k), np.ones(k))
+    # r_sj - z_sj <= 0
+    add("rz", _block(np.concatenate([sk, sk]),
+                     np.concatenate([off_r + sk, off_z + sk]),
+                     np.concatenate([np.ones(S * k), -np.ones(S * k)]), S * k, n_var),
+        np.full(S * k, -np.inf), np.zeros(S * k))
+
+    tails = np.array([e[i] for e in E for i in (0, 1)], int) if E else np.zeros(0, int)
+    heads = np.array([e[1 - i] for e in E for i in (0, 1)], int) if E else np.zeros(0, int)
+    arc_flat = np.arange(n_arc * k)
+    arc_of = np.repeat(np.arange(n_arc), k)
+    j_arc = np.tile(np.arange(k), n_arc)
+    for name, ends in (("flow_tail", tails), ("flow_head", heads)):
+        # f_aj - (N-1) z_{end(a), j} <= 0
+        add(name, _block(np.concatenate([arc_flat, arc_flat]),
+                         np.concatenate([off_f + arc_flat, off_z + ends[arc_of] * k + j_arc]),
+                         np.concatenate([np.ones(n_arc * k), np.full(n_arc * k, -(N - 1.0))]),
+                         n_arc * k, n_var),
+            np.full(n_arc * k, -np.inf), np.zeros(n_arc * k))
+    # z_sj - N r_sj - (inflow - outflow)_sj <= 0
+    add("net", _block(np.concatenate([sk, sk, heads[arc_of] * k + j_arc, tails[arc_of] * k + j_arc]),
+                      np.concatenate([off_z + sk, off_r + sk,
+                                      off_f + arc_flat, off_f + arc_flat]),
+                      np.concatenate([np.ones(S * k), np.full(S * k, -float(N)),
+                                      -np.ones(n_arc * k), np.ones(n_arc * k)]),
+                      S * k, n_var),
+        np.full(S * k, -np.inf), np.zeros(S * k))
+
+    var_lb = np.zeros(n_var)
+    var_ub = np.ones(n_var)
+    var_ub[off_f:] = max(N - 1.0, 0.0)
+    for s, j in anchors or ():
+        if not (0 <= s < S and 0 <= j < k):
+            raise ValueError(f"anchor ({s}, {j}) out of range")
+        var_lb[off_z + s * k + j] = 1.0
+    integrality = np.zeros(n_var)
+    integrality[off_z:off_z + S * k] = 1
+    integrality[off_r:off_r + S * k] = 1
+
+    return SplitProblem(
+        c=c, A=sparse.csc_matrix(sparse.vstack(blocks)),
+        lb=np.concatenate(lb), ub=np.concatenate(ub),
+        integrality=integrality, var_lb=var_lb, var_ub=var_ub,
+        M_s=M_s, D=D, edges=E, tau=tau, delta=float(delta), eps=float(eps), eta=float(eta),
+        n_state=S, k=k, off_z=off_z, off_y=off_y, off_r=off_r, off_f=off_f,
+        n_var=n_var, rows=rows,
+    )
+
+
+def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: bool = True) -> dict:
+    """Solve to proven optimality (`mip_rel_gap = 0.0`, trap 12) and read `z`, `y` back.
+
+    Raises unless HiGHS reports optimality: a time-limited or infeasible run is not a split
+    count.  `y` is zeroed where `z` is 0 (the LP can leave 1e-12 there) and each state's row is
+    renormalised to sum to 1, so `realise`'s targets are exact.
+
+    `strict=False` softens only the time-limit case: if HiGHS stops at `time_limit` with an
+    incumbent in hand (`res.status == 1`, `res.x is not None`), that incumbent is returned with
+    `status="time_limit"` and its own `mip_gap` instead of raising.  Infeasible, unbounded or
+    incumbent-less runs still raise regardless of `strict`.
+    """
+    options = {"mip_rel_gap": 0.0}
+    if time_limit is not None:
+        options["time_limit"] = float(time_limit)
+    res = milp(c=problem.c,
+               constraints=LinearConstraint(problem.A, problem.lb, problem.ub),
+               integrality=problem.integrality,
+               bounds=Bounds(problem.var_lb, problem.var_ub),
+               options=options)
+    timed_out = (not strict) and res.status == 1 and res.x is not None
+    if not timed_out and (res.status != 0 or res.x is None):
+        raise RuntimeError(f"minimum-splits MILP did not solve to optimality: {res.message}")
+
+    S, k = problem.n_state, problem.k
+    x = np.asarray(res.x, float)
+    z = x[problem.off_z:problem.off_z + S * k].reshape(S, k) > 0.5
+    y = np.clip(x[problem.off_y:problem.off_y + S * k].reshape(S, k), 0.0, 1.0)
+    y = np.where(z, y, 0.0)
+    y = y / y.sum(axis=1, keepdims=True)
+    masses = problem.M_s @ y
+    return dict(
+        z=z, y=y, masses=masses,
+        splits=int(z.sum() - S),
+        split_states=[s for s in range(S) if int(z[s].sum()) >= 2],
+        spread_rel=float((masses.max() - masses.min()) / masses.mean()),
+        max_dev_rel=float(np.abs(masses - problem.tau).max() / problem.tau),
+        objective=float(res.fun),
+        status="time_limit" if timed_out else int(res.status),
+        mip_gap=float(res.mip_gap),
+    )
+
+
+def eps_lexicographic(M_s: np.ndarray, D: np.ndarray) -> float:
+    """`0.5 / sum_s M_s max_j D_sj` -- the tie-break is worth under half a split at **every**
+    feasible `y`, so it ranks equal-split solutions and can never buy one.
+
+    The plan's `0.5 / sum_s sum_j M_s D_sj y0_sj` calibrates at the committed map's own
+    composition only, and fails exactly when the MILP beats the committed map: on a 4-state path
+    with `D = [[1,100],[100,1],[1,100],[100,1]]` it returns 2 splits where 0 is optimal
+    (docs/VERIFY_state_splits.md section 2).  The bound here is over the polytope: the only
+    per-state row is `sum_j y_sj = 1`, so the term is at most `sum_s M_s max_j D_sj`.
+    """
+    M_s = np.asarray(M_s, float)
+    total = float((M_s * np.asarray(D, float).max(axis=1)).sum())
+    if total <= 0:
+        raise ValueError("the state moments must be positive")
+    return 0.5 / total
+
+
+def balance_pass(problem: SplitProblem, z: np.ndarray) -> dict:
+    """Fix `z` and re-solve for `y`, lexicographically: minimise the maximum deviation
+    `t >= |mass_j - tau|`, then minimise the spread `u - l` at that `t`.
+
+    Two LPs (`y` is continuous, `z` only sets its bounds), so the splits are exactly those the
+    MILP chose and the shares are the tightest balance they allow.  The second LP is not
+    decoration: `sum_j (mass_j - tau) = 0` gives only `t <= spread <= 2t`, so minimising `t`
+    pins the spread within a factor 2 and the simplex breaks the remaining ties arbitrarily --
+    at delta = 10% that has been seen to *widen* the spread by 18% at an unchanged `t`
+    (docs/VERIFY_state_splits.md section 3).
+
+    No band rows are carried over: the MILP's own `y` is feasible here, so `t* <= delta*tau`
+    automatically.  `eta z <= y <= z` is carried over, since dropping the lower bound would let
+    the pass empty a district's bridge state and disconnect it again.  Deviations are relative
+    (the mass rows are scaled by `tau` as in `build_milp`).
+    """
+    S, k = problem.n_state, problem.k
+    z = np.asarray(z, bool)
+    if z.shape != (S, k):
+        raise ValueError(f"z must be {(S, k)}, got {z.shape}")
+    n_y = S * k
+    sk = np.arange(n_y)
+    j_of = np.tile(np.arange(k), S)
+
+    def eq_rows(n_var):
+        return sparse.coo_matrix((np.ones(n_y), (np.repeat(np.arange(S), k), sk)),
+                                 shape=(S, n_var)).tocsc()
+
+    def mass_rows(n_var):
+        return sparse.coo_matrix((np.repeat(problem.M_s / problem.tau, k), (j_of, sk)),
+                                 shape=(k, n_var)).tocsc()
+
+    def col(n_var, at, val):
+        """`k` rows carrying `val` in variable `at` and nothing else."""
+        return sparse.coo_matrix((np.full(k, val), (np.arange(k), np.full(k, at))),
+                                 shape=(k, n_var)).tocsc()
+
+    def bounds(extra):
+        lo = np.concatenate([(problem.eta * z).ravel(), [b[0] for b in extra]])
+        hi = np.concatenate([z.ravel().astype(float), [b[1] for b in extra]])
+        return np.stack([lo, hi], axis=1)
+
+    def run(c, A_ub, b_ub, extra):
+        res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=eq_rows(c.shape[0]), b_eq=np.ones(S),
+                      bounds=bounds(extra), method="highs-ds", options={"time_limit": 60.0})
+        if not res.success:
+            raise RuntimeError(f"balance LP failed: {res.message}")
+        return res
+
+    # LP 1: min t,  |mass_j/tau - 1| <= t
+    n_var = n_y + 1
+    mass, t_col = mass_rows(n_var), col(n_var, n_y, -1.0)
+    c = np.zeros(n_var)
+    c[n_y] = 1.0
+    res1 = run(c, sparse.vstack([mass + t_col, -mass + t_col]).tocsc(),
+               np.concatenate([np.ones(k), -np.ones(k)]), [(0.0, np.inf)])
+    t_star = float(res1.x[n_y]) * (1.0 + 1e-9) + 1e-12
+
+    # LP 2: min u - l,  l <= mass_j/tau <= u,  |mass_j/tau - 1| <= t*
+    n_var = n_y + 2
+    mass = mass_rows(n_var)
+    c = np.zeros(n_var)
+    c[n_y], c[n_y + 1] = 1.0, -1.0                       # u at n_y, l at n_y + 1
+    A_ub = sparse.vstack([mass + col(n_var, n_y, -1.0),          # mass - u <= 0
+                          -mass + col(n_var, n_y + 1, 1.0),      # l - mass <= 0
+                          mass, -mass]).tocsc()
+    b_ub = np.concatenate([np.zeros(2 * k),
+                           np.full(k, 1.0 + t_star), np.full(k, -(1.0 - t_star))])
+    res2 = run(c, A_ub, b_ub, [(0.0, np.inf), (0.0, np.inf)])
+
+    y = np.clip(np.asarray(res2.x, float)[:n_y].reshape(S, k), 0.0, 1.0)
+    y = np.where(z, y, 0.0)
+    y = y / y.sum(axis=1, keepdims=True)
+    masses = problem.M_s @ y
+    return dict(
+        y=y, masses=masses,
+        spread_rel=float((masses.max() - masses.min()) / masses.mean()),
+        max_dev_rel=float(np.abs(masses - problem.tau).max() / problem.tau),
+    )
+
+
+def connected(z_col: np.ndarray, edges: list[tuple[int, int]]) -> bool:
+    """Is `{s : z_col[s]}` connected in the rook graph?  The empty set counts as connected."""
+    sel = np.asarray(z_col, bool)
+    nodes = set(int(s) for s in np.flatnonzero(sel))
+    if not nodes:
+        return True
+    adj: dict[int, list[int]] = {s: [] for s in nodes}
+    for u, v in edges:
+        if u in nodes and v in nodes:
+            adj[int(u)].append(int(v))
+            adj[int(v)].append(int(u))
+    seen = {next(iter(nodes))}
+    stack = list(seen)
+    while stack:
+        s = stack.pop()
+        for t in adj[s]:
+            if t not in seen:
+                seen.add(t)
+                stack.append(t)
+    return seen == nodes
+
+
+def _state_cost(xy: np.ndarray, M: np.ndarray, labels: np.ndarray, C: np.ndarray) -> float:
+    """`sum_z M_z d^2(z, c_label(z))` over the zips passed -- the state's compactness."""
+    d2 = ((xy - C[labels]) ** 2).sum(axis=1)
+    return float((M * d2).sum())
+
+
+def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
+            y: np.ndarray, centers: np.ndarray, *, rounds: int = 5,
+            tiebreak: np.ndarray | None = None) -> dict:
+    """Level 2: turn the level-1 decision into zip labels.
+
+    Every unsplit state goes whole to its single district.  Each split state gets one
+    `centers.assign` over its own zips against the full centre set with `targets = y_sj * M_s`
+    (a district with `z_sj = 0` gets target 0, which `assign` honours), so the cut inside the
+    state is a power diagram of the centres it touches.
+
+    Then up to `rounds` Lloyd rounds per split state: recentroid every district touching the
+    state from its **full** membership (whole states included), re-solve that state's LP, stop
+    when the state's labels repeat.  The committed centres were placed for the old shares and
+    can sit wrong for the piece a district now owns.  A round is accepted only if it does not
+    raise the state's compactness, so `cost_rounds` is non-increasing by construction and
+    `realise` can only improve on the plain assignment.
+
+    `tiebreak` is an `(n, k)` bonus **subtracted** from `d^2` (it goes to `centers.assign` as
+    `penalty=-tiebreak`), so a large entry attracts zip `z` to district `j`.  The CLI builds it
+    from books; this module knows nothing about books.  It needs `centers.assign(...,
+    penalty=...)`; where that keyword is absent, a non-None `tiebreak` raises
+    `NotImplementedError`.
+    """
+    has_penalty = "penalty" in inspect.signature(_centers.assign).parameters
+    if tiebreak is not None and not has_penalty:
+        raise NotImplementedError(
+            "tiebreak needs centers.assign(..., penalty=...), which this centers.py lacks")
+
+    xy = np.asarray(xy, float)
+    M = np.asarray(M, float)
+    state_idx = np.asarray(state_idx, int)
+    z = np.asarray(z, bool)
+    y = np.asarray(y, float)
+    C = np.array(centers, float)
+    S, k = z.shape
+    if state_idx.shape[0] != xy.shape[0] or M.shape[0] != xy.shape[0]:
+        raise ValueError("xy, M and state_idx must agree on the zip count")
+    if state_idx.size and (state_idx.min() < 0 or state_idx.max() >= S):
+        raise ValueError(f"state_idx must index 0..{S - 1}")
+
+    members = [np.flatnonzero(state_idx == s) for s in range(S)]
+    labels = np.full(xy.shape[0], -1, int)
+    split_states = [s for s in range(S) if int(z[s].sum()) >= 2]
+
+    def assign_state(s: int, C_now: np.ndarray) -> tuple[np.ndarray, int]:
+        idx = members[s]
+        total = float(M[idx].sum())
+        t = np.where(z[s], y[s], 0.0) * total
+        t = t * (total / t.sum())
+        if tiebreak is None:
+            loc, n_frac = _centers.assign(xy[idx], M[idx], C_now, targets=t)
+        else:
+            loc, n_frac = _centers.assign(xy[idx], M[idx], C_now, targets=t,
+                                          penalty=-np.asarray(tiebreak, float)[idx])
+        return np.asarray(loc, int), int(n_frac)
+
+    for s in range(S):
+        idx = members[s]
+        js = np.flatnonzero(z[s])
+        if js.size == 0:
+            raise ValueError(f"state {s} touches no district")
+        if idx.size == 0:
+            continue
+        if js.size == 1:
+            labels[idx] = int(js[0])
+    for s in split_states:
+        if members[s].size:
+            labels[members[s]] = assign_state(s, C)[0]
+
+    states: dict[int, dict] = {}
+    n_fractional = 0
+    for s in split_states:
+        idx = members[s]
+        touching = np.flatnonzero(z[s])
+        if idx.size == 0:
+            states[s] = dict(districts=[int(j) for j in touching], n_fractional=0,
+                             rounds_used=0, cost_rounds=[])
+            continue
+        cur, cur_frac = assign_state(s, C)
+        labels[idx] = cur
+        cost = _state_cost(xy[idx], M[idx], cur, C)
+        cost_rounds, used = [cost], 0
+        for _ in range(rounds):
+            C_new = C.copy()
+            C_new[touching] = _centers._centroids(xy, M, labels, k, prev=C)[touching]
+            loc, frac = assign_state(s, C_new)
+            new_cost = _state_cost(xy[idx], M[idx], loc, C_new)
+            if new_cost > cost + COST_TOL:
+                break                                    # a round never raises the cost
+            repeat = np.array_equal(loc, cur)
+            cur, cur_frac, C, cost = loc, frac, C_new, new_cost
+            labels[idx] = cur
+            cost_rounds.append(new_cost)
+            used += 1
+            if repeat:
+                break
+        n_fractional += cur_frac
+        states[s] = dict(districts=[int(j) for j in touching], n_fractional=cur_frac,
+                         rounds_used=used, cost_rounds=cost_rounds)
+
+    return dict(labels=labels, centers=C, n_fractional=int(n_fractional),
+                split_states=split_states,
+                rounds_used={s: states[s]["rounds_used"] for s in split_states},
+                states=states)

@@ -1,6 +1,6 @@
 ---
 name: td-verification-oracles
-description: Oracles, anchors and environment traps for verifying td (national channel) research code — established verifying U7-meas 2026-09-03, U8-band 2026-09-04, U8-band v2 §10 2026-09-05
+description: Oracles, anchors and environment traps for verifying td (national channel) research code — established verifying U7-meas 2026-09-03, U8-band 2026-09-04, U8-band v2 §10 2026-09-05, Track 1 state-border snapping 2026-09-06, Track 2 state-splits MILP 2026-09-07
 metadata:
   type: project
 ---
@@ -110,6 +110,56 @@ depending on the field. State the field.
 sol.upper - reference` (`frontier.py:246, 250`) — both degenerate when `--gate-reference` is
 omitted, as on v2. Quoting `matches_reference = true` as a passed check, or reading a null
 `delta_upper` as anything about the model, is a live failure mode in generated results sections.
+
+**Oracles that worked (Track 1 state-border snapping, 2026-09-06 — LP + labelling code):**
+- **Intercept `linprog` to make the solver call observable.** `centers.linprog = spy` (module
+  attribute, restore in `finally`) records `(c, A_eq, b_eq, A_ub, b_ub, bounds, method,
+  options)` and `res.x`. That turns "does `assign` build the model's LP" into two array
+  comparisons, and it is the *only* way to check a "bit-for-bit / same matrices" claim — the
+  repo's own git-head test only compares returned labels, which can agree by luck.
+- **Two-directional LP comparison.** Rebuild the LP from scratch in RAW units with hand-built
+  dense matrices, then check (a) the implementation's `x` is feasible for MY constraints and
+  attains MY optimum, and (b) MY `x*` is feasible for the implementation's matrices. (a) alone
+  misses over-constraining; (b) alone misses under-constraining. Caught nothing here but is
+  cheap (n=40, k=3 solves instantly).
+- **Score the rival hypothesis, not just the claim.** For "the penalty enters before the
+  `/c.mean()` descale", compute both orderings and print both residuals: `0.0` vs `1.99`. A
+  single residual of 0 does not show the alternative was distinguishable.
+- **Ask a metric which reference it used by computing it both ways over every recorded cell.**
+  `_owner_metrics` could score against the committed owner sets or the cell's own; recomputing
+  both from the written `draw.csv` + instance gave `0.0e+00` vs committed for all 9 cells and
+  up to `2.1e-02` vs own — so the reading is pinned, and the divergence itself is the finding.
+- **Brute-force enumeration still fits.** Every balanced integer assignment of 12 zips into 3
+  districts of 4 (34,650) certifies `power_weights`'s `lp_bound`; `itertools.combinations`.
+- **Degenerate-input sweep is where the bugs are.** `refine` raises `ValueError: attempt to get
+  argmax of an empty sequence` when every `state_idx` is `-1` (`n_states=0` ⇒ `(0,k)` argmax);
+  `pure_snap` guards the same case. Unreachable on the real instance, but the sweep is 5 lines.
+
+**Anchor note:** `battery/results/borders_k18_v2_20260907/params.json` records `"maps": false`
+while every cell has a populated `figures/` — the maps came from a separate invocation, so that
+`params.json` is not provenance for the directory. No byte-identity anchor exists for that run.
+
+**Oracles that worked (Track 2 state-splits MILP, 2026-09-07 — a combinatorial MILP):**
+- **Enumerate the integer part, LP the continuous part.** For a min-splits MILP with binary `z`
+  and continuous shares `y`, brute force over all `2^(S·k)` z-patterns (S=6, k=2 → 4 096),
+  reject with a hand-written BFS, and price each survivor with a *dense hand-built* share LP.
+  Objective and split count then match `solve()` to <1e-7 on five settings in seconds.
+- **Symbolic row read-back.** Densify `problem.A`, rebuild every named block from the model's
+  algebra, and assert equality block by block, plus "the named blocks account for all rows" —
+  that catches an *extra* undocumented row, which a feasibility oracle never does.
+- **Strip the constraint blocks you want to test.** Keeping only root/rz/flow/net rows and
+  pinning `z` by bounds turns a contiguity claim into 2^S HiGHS feasibility calls vs BFS.
+- **Run a Lloyd/round-capped routine at every cap 0..n.** Once `rounds_used` saturates below the
+  cap, labels must be byte-identical across caps — that is how you check "a rejected round is a
+  no-op" without reaching inside the loop.
+- **Row counts in a plan go stale before the code does.** Here the plan said 6 583 rows; the code
+  builds 11 317 = 6 583 + 882 (an `η z ≤ y` block added by a later amendment) + 3 852 (capacity
+  per *directed arc* instead of per arc pair). Always reconcile the gap *exactly* — an exact
+  decomposition distinguishes a stale number from a construction bug.
+- **Time the real-shape build even when it is not a listed claim.** A plan's "Seconds" for scf
+  contiguity at k=18 did not hold on two synthetic 49-node/107-edge instances: 300 s time limit,
+  10.9 % gap on the planar one. scf relaxations are weak; runtime is the risk, not row count.
+  And note `solve()` *raises* on a time limit, so slowness is a hard failure downstream.
 
 **Recurring spec-vs-code pattern here:** `scipy.optimize.milp` accepts no warm start
 (options are only disp/presolve/time_limit/node_limit/mip_rel_gap), so any model text saying a
