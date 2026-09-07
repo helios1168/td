@@ -13,13 +13,12 @@ SessionStart hook prints the resume context so no session reads more than two se
 
 ## Next step
 
-Step 3 (the verifier-reports collapse) is done. Migration step 4 is next, on a Sonnet 5 session:
-delete `docs/STATE_LOG.md`; rewrite `/state`, `/unit`, and the three agents (`modeler`,
-`math-verify`, `code-verify`) to write into unit-file sections and `tools/verify/<id>/` rather
-than a new `docs/*_<id>.md` and a scratch directory; reshape `STATE.md` into the new shape (drop
-`## Where`, cap `## Now` and `## Next`, move each bug row of `## Next` to an `xfail` test or a
-`TODO` at the site); fold `RUNS.md` and `DATA.md` into `CODE_MAP.md`. Then steps 5 and 6, also
-Sonnet (decision 14). One commit per step. Stop and report before merging; the merge to `main`
+Step 4 (STATE_LOG dropped, STATE.md reshaped, RUNS and DATA fold into CODE_MAP) is done. Step 5
+is next, on a Sonnet 5 session: worktree and branch triage — unlock and remove merged or dead
+worktrees, delete merged branches, list unmerged branches for the user; each live worktree gets
+a `PLAN.md`; the five `docs/*_PLAN.md` and `docs/BORDERS_RESULTS.md` files fold into the live
+worktrees' `PLAN.md` files or into Facts, then are deleted. Then step 6, also Sonnet
+(decision 14). One commit per step. Stop and report before merging; the merge to `main`
 needs the user's approval (see memory `ask-before-merging-to-hub`).
 
 ## Done
@@ -51,6 +50,17 @@ needs the user's approval (see memory `ask-before-merging-to-hub`).
   scripts by docstring; 8 other tracked markdown files repointed; `docs/artifacts/` and
   `docs/verify/` no longer exist; `tests/run_all.py` unchanged at 306 passed, 0 failed;
   107 files changed, +873 / −7,386.
+- 2026-09-07 step 4a done (global, not committed): `/state`, `/unit`, `modeler`, `math-verify`,
+  `code-verify` rewritten under `~/.claude` per D4.
+- 2026-09-07 step 4 done, `984126a`: `docs/STATE_LOG.md` deleted (980 lines); `STATE.md`
+  `## Now` 4,121 → 951 bytes, `## Next` 22 → 7 rows, `## Where` deleted; `docs/RUNS.md`
+  (101 lines) and `docs/DATA.md` (69 lines) deleted, folded into `docs/CODE_MAP.md` (new
+  `## Data route`, `## Recipes` +1 line, `## Files` +2 rows) and `STATE.md` `## Facts` (+1
+  region table); one bug row got a `TODO` at `td/solvers/state_splits.py::realise`
+  (`tests/run_all.py` has no `xfail` marker) plus a line in `docs/units/state_splits.md`
+  `## Code verify`; two bug rows (D04/SOUTHWEST colour, `chOppShare` rounding) had no site
+  inside this track's file ownership and were dropped; 14 files changed, +82 / −1,327; tests
+  306 passed, 0 failed, unchanged.
 
 ## Decisions needed
 
