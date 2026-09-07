@@ -14,6 +14,13 @@ st.set_page_config(page_title="Territory scenarios", layout="wide")
 MAPS = {
     "districts.png": "Districts — bubble area is opportunity",
     "district_regions.png": "Territory — power diagram",
+    "district_regions_fixed_committed.png":
+        "One held diagram, before — the committed labelling on the power diagram it implies; "
+        "every mismatched dot was assigned against compactness",
+    "district_regions_fixed_snapped.png":
+        "One held diagram, after — the same centres and weights, dots recoloured by the "
+        "labelling those weights produce. Zero outside, relative to this diagram; rebuilding "
+        "it from these labels moves the centres and some fall outside again",
     "district_regions_voronoi.png": "Territory — zip catchments",
 }
 
@@ -167,7 +174,9 @@ with results:
                   if launch_file.exists() else engines.DEFAULT)
     figures = runner.figure_dir(run.path, k)
     drawn = [(n, figures / n) for n in MAPS if (figures / n).exists()]
-    if st.button("Render maps", help="Runs tools/us_maps.py. About 3 seconds plus the gazetteer load."):
+    if st.button("Render maps", help="Runs tools/us_maps.py. Seconds for a catchment map; "
+                                     "minutes for a power-cell run, which solves a "
+                                     "transportation LP per diagram."):
         with st.spinner("Drawing"):
             runner.render_maps(run.path, k, engine_key)
         st.rerun()

@@ -96,6 +96,13 @@ def render_maps(run: Path, k: int, engine_key: str) -> Path:
 
     `--regions` (the power diagram) is only meaningful for a center-based draw, so it is asked
     for only when the engine produced one; `--regions-voronoi` applies to any draw.
+
+    `--regions-fixed` rides along with `--regions` for the same reason, and it is the only
+    rendering that can show the zero-mismatch guarantee: it holds one diagram's centres and
+    weights and draws the committed labelling and the snapped one on it, rather than
+    recentroiding from whatever draw it is handed
+    (`docs/OPTIONS_power-cell-contiguity.md` §4). It costs a further transportation LP or two,
+    which is most of why rendering a power-cell run takes minutes rather than seconds.
     """
     draw = run / f"k{k}" / "draw.csv"
     out = figure_dir(run, k)
@@ -104,6 +111,6 @@ def render_maps(run: Path, k: int, engine_key: str) -> Path:
             str(config.INSTANCE), "--out", str(out),
             "--districts", str(draw), "--regions-voronoi", str(draw)]
     if engine_key == "power-cells":
-        argv += ["--regions", str(draw)]
+        argv += ["--regions", str(draw), "--regions-fixed", str(draw)]
     subprocess.run(argv, cwd=config.REPO, check=True, capture_output=True, text=True)
     return out
