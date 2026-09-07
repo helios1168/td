@@ -6,6 +6,39 @@ as it stood when it was demoted; nothing here is edited after the fact. Entries 
 the two 2026-09-05 entries that stood above them were folded into `STATE.md`. Serena
 ignores this file; read it only when a question needs the history.
 
+## 2026-09-06 20:13 · main 8ba1525 — The power-cell route wins on contiguity too, and the zero needs a figure
+
+**The power-cell route now beats the state atoms on contiguity too, once you measure the
+labelling it would actually ship.** Worktree `power-cell-contiguity`, branch
+`worktree-power-cell-contiguity`, three commits: `a0d96fd` opened
+`docs/OPTIONS_power-cell-contiguity.md` (the durable option register), `2142be8` closed its
+options 1, 2-Route-A and 3, `1f6d956` qualified the zero-mismatch guarantee. Tests 269 pass.
+
+**Option 1, largest contiguous piece per district** (`us_maps.py --regions-voronoi`). The
+*committed* draw is badly fragmented — nine districts under 80% (min D14 51%), only seven at
+≥95% — which is *worse* than CA5's four under 80%. The *snapped* labelling reverses it: twelve
+are a single piece, seventeen of eighteen are ≥96%, and only **D01 at 55%** lags. Shared border
+segments fall 1,591 → 636. Which labelling you measure decides which route wins.
+
+**Option 2 Route A: there is no fixed point of snap → recentroid.** 20 iterations, no exact
+repeat, non-monotone; it wanders spread 2.1–5.6%, gap 0.00028–0.00128. But every iterate *is* a
+power diagram, so best-of-N is legitimate: **iteration 15, spread 2.1051%, gap 0.000283**, which
+beats the single shot (4.0041% / 0.000724) on both axes. **Option 3:** the LP splits exactly
+`k−1` = 17 zips at both target choices, carrying 17.03% of a mean district (largest `20814`,
+3.699%), so the spread floor is real and nothing returns to the committed draw's 1.2902%.
+
+**The correction that came out of review** (`1f6d956`). "Zero mismatched zips by construction"
+holds only against the diagram that *produced* the snap. Rebuild the diagram from the snapped
+labels and 16 of 3,704 (0.4%) fall outside again, against 258 (7.0%) committed — the same
+non-self-consistency as the missing fixed point. Consequence: **every power-diagram figure
+recentroids, so none of them can display the zero.**
+
+*What's next.* Build the fixed-diagram figure (hold centres and weights, colour dots by the
+labelling those weights produced) — a sponsor review needs it and it does not exist. Then
+explain D01. **Merged into `main` on 2026-09-06** at the user's instruction (fast-forward, so
+`main` and `worktree-power-cell-contiguity` are the same commit). Review artifact:
+`893379d7-2f28-4d0f-9a5d-edb3b8f076b0`.
+
 ## 2026-09-06 18:44 · main e29e328 — CA5 map contiguity is measured, and four districts fail it
 
 **Map contiguity for the CA5 state-atom draw is now measured, not assumed, and it fails for

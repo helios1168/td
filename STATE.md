@@ -1,63 +1,58 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `cbb65cb` · **Tests:** 269 pass,
+**Updated:** 2026-09-06 · **Branch:** `main` · **Head:** `3979a6b` · **Tests:** 275 pass,
 0 fail (2026-09-06)
 
 ## Now
 
-**The power-cell route now beats the state atoms on contiguity too, once you measure the
-labelling it would actually ship.** Worktree `power-cell-contiguity`, branch
-`worktree-power-cell-contiguity`, three commits: `a0d96fd` opened
-`docs/OPTIONS_power-cell-contiguity.md` (the durable option register), `2142be8` closed its
-options 1, 2-Route-A and 3, `1f6d956` qualified the zero-mismatch guarantee. Tests 269 pass.
+**The zero-mismatch guarantee is now showable, and the contiguity statistic that ranked the
+districts was measuring the wrong denominator.** Two parallel worktrees, both merged into `main`
+on 2026-09-06 at the user's instruction: `worktree-fixed-diagram` (`feaa1bc`) and
+`worktree-d01` (`49b706a`), merged as `13a75c1` and `05dab7b`, followed by `3979a6b` which
+corrected the records the merges left stale. Tests 275 pass, 0 fail.
 
-**Option 1, largest contiguous piece per district** (`us_maps.py --regions-voronoi`). The
-*committed* draw is badly fragmented — nine districts under 80% (min D14 51%), only seven at
-≥95% — which is *worse* than CA5's four under 80%. The *snapped* labelling reverses it: twelve
-are a single piece, seventeen of eighteen are ≥96%, and only **D01 at 55%** lags. Shared border
-segments fall 1,591 → 636. Which labelling you measure decides which route wins.
+**The fixed-diagram figure** (register §4a). `us_maps.py --regions-fixed <draw.csv>` builds one
+power diagram — the committed draw's M-weighted centroids, one transportation LP at
+exactly-equal-split targets — and draws both labellings on that single held diagram: the
+committed draw at **266 of 3,704 outside**, the snapped labelling at **0 of 3,704**. Verified
+end to end on merged `main`, not only by test: max dual violation 1.8e-18, the 17 split zips
+ringed and named, six sliver cells stroked. The subtitle qualifies the zero with a *measured*
+rebuild rather than a quoted one (15 of 3,704 at equal-split targets, 16 at own-masses), so the
+figure cannot be read as a fixed-point claim. It costs **6 min 55 s** to render, because the
+rebuild LP is on by default; `rebuild=False` is the switch.
 
-**Option 2 Route A: there is no fixed point of snap → recentroid.** 20 iterations, no exact
-repeat, non-monotone; it wanders spread 2.1–5.6%, gap 0.00028–0.00128. But every iterate *is* a
-power diagram, so best-of-N is legitimate: **iteration 15, spread 2.1051%, gap 0.000283**, which
-beats the single shot (4.0041% / 0.000724) on both axes. **Option 3:** the LP splits exactly
-`k−1` = 17 zips at both target choices, carrying 17.03% of a mean district (largest `20814`,
-3.699%), so the spread floor is real and nothing returns to the committed draw's 1.2902%.
+**D01 is not fragmented** (register §3a). Under the snap it has two parts: a 148-ZIP NY/NJ core
+holding **99.86% of its M**, and the single rural ZIP `18337` (Milford PA) at 0.14%, whose empty
+catchment is **44.56% of D01's area**. The largest-piece statistic has an **area** denominator,
+and area is not what stage 1 balances. On mass the snapped worst district is **D17 at 92.72%**,
+not D01; on the committed draw the worst is D09 at 90.03%, not D14. The two denominators
+disagree about *which* districts are the problem, on both labellings.
 
-**The correction that came out of review** (`1f6d956`). "Zero mismatched zips by construction"
-holds only against the diagram that *produced* the snap. Rebuild the diagram from the snapped
-labels and 16 of 3,704 (0.4%) fall outside again, against 258 (7.0%) committed — the same
-non-self-consistency as the missing fixed point. Consequence: **every power-diagram figure
-recentroids** — which `--regions-fixed` fixed later the same day.
+**Two corrections to the register, both now in it.** The committed drift is **258 at own-masses
+targets and 266 at equal-split** — one number quoted for two measurements until now. And **six
+cells sit under 1% of the map at k=18** (D14 0.04%, D01 0.06%, D12 0.13%, D10 0.86%, D07 0.87%,
+D18 0.98%), not the three the k=13 v1 draw had.
 
-*Both follow-ups landed 2026-09-06.* The fixed-diagram figure holds one diagram and shows the
-committed labelling at 266 of 3,704 outside against the snapped one at 0 (register §4a). D01's
-55% turned out not to be fragmentation at all, but a single rural ZIP's empty catchment under an
-area denominator (§3a). Branches `worktree-fixed-diagram` (`feaa1bc`) and `worktree-d01`
-(`49b706a`) are **merged into `main`** at the user's instruction, resolving one §9 conflict;
-`main` also carries the earlier `worktree-power-cell-contiguity` merge. Tests 275 pass. Review
-artifact: `893379d7-2f28-4d0f-9a5d-edb3b8f076b0` — **it predates both, so its panels still
-recentroid**.
+*What's next, and the decision it needs.* Whether `--regions-voronoi` should report the mass
+denominator beside the area one — `tools/measure/district_pieces.py` computes all three, so this
+is a reporting choice, not a measurement. Then the app wiring for `--regions-fixed` is committed
+but has never run in a browser. Review artifact `893379d7-2f28-4d0f-9a5d-edb3b8f076b0`
+**predates both changes, so its panels still recentroid and its D01 row still reads 55%**.
 
 ## Next
 
-- [ ] **The fixed-diagram figure exists** (register §4a, 2026-09-06, worktree `fixed-diagram`).
-      `us_maps.py --regions-fixed <draw.csv>` builds one power diagram at exactly-equal-split
-      targets and draws both labellings on it: the committed draw at **266 of 3,704 outside**,
-      the snapped one at **0 of 3,704**. The subtitle qualifies the zero with a measured rebuild
-      (15 of 3,704 at equal-split targets, 16 at own-masses), and the 17 split zips are ringed.
-      Two corrections it forced: the committed drift is **258 at own-masses targets and 266 at
-      equal-split**, quoted as one number until now; and **six cells are under 1% of the map at
-      k=18**, not the three the k=13 v1 draw had. What is left: the app wiring is committed but
-      unexercised, because `.venv-app` did not exist in that worktree.
-- [ ] **D01's 55% is explained and is not fragmentation** (register §3a, 2026-09-06, worktree
-      `d01`). 148 of its 149 ZIPs and **99.86% of its M** are one piece; the second part is the
-      single rural ZIP `18337` (Milford PA), whose catchment is **44.56% of D01's area and 0.14%
-      of its opportunity**. The largest-piece statistic has an **area** denominator, and on mass
-      the snapped worst case is **D17 at 92.72%**, not D01 — the two measures disagree about
-      which districts are the problem, on both labellings. What is left: decide whether
-      `--regions-voronoi` reports the mass denominator beside the area one.
-      `tools/measure/district_pieces.py` computes all three.
+- [ ] **Decide whether `--regions-voronoi` reports the mass denominator beside the area one.**
+      §3a settled that the area denominator misreports dense metro districts, and
+      `tools/measure/district_pieces.py` already computes area, mass and ZIP-count shares, so
+      this is a reporting choice with no measurement left in it. Gated on nothing but the call.
+      Until it is made, §3's table and the review artifact both say D01 is the worst district
+      when on opportunity it is fourth best.
+- [ ] **The `--regions-fixed` app wiring has never run in a browser.** `app/runner.py` passes the
+      flag for centre-based engines and `app/main.py` shows both panels, but `.venv-app` did not
+      exist in the worktree, so no Streamlit process has exercised it. Rebuild the app venv and
+      click Render maps once. Note the render is **6 min 55 s**, not the 3 s the button's old help
+      text claimed — if that is too slow in front of a sponsor, `rebuild=False` drops the second
+      LP at the cost of the subtitle asserting its zero instead of measuring it.
 - [ ] **Iteration 15's labelling was never saved.** The 2026-09-06 run wrote no per-iteration
       draw, so the best iterate's map contiguity is unmeasured and the snapped panels everywhere
       are the single-shot labelling. Re-run writing a `draw.csv` per iterate, then
@@ -181,18 +176,24 @@ piece is 48% of its territory, D11 53%, D17 55%, D06 73%**; D01/D03/D08/D09/D10/
 
 **Power-cell contiguity, measured 2026-09-06** (draw `draw_k18_v2_20260904/k18`, 3,704 plotted
 zips, total M 8,468.3, ceiling `k·log(M/k)` = **110.766768** — a different base from the atom
-ceiling). Committed draw: **258 zips (7.0%, 1.66% of M) outside their own power cell**, spread
-1.2902%, `Σ log M` 110.766686, gap **0.000082**. Snapped at equal-split targets: 0 outside by
-construction, spread 4.0041%, gap 0.000724. Best of 20 snap → recentroid iterates (**iteration
-15**): spread **2.1051%**, `Σ log M` 110.766485, gap **0.000283**. There is **no fixed point** —
-20 iterations, no exact repeat, non-monotone, band spread 2.1–5.6% / gap 0.00028–0.00128.
-Split zips **17 = `k−1` at both target choices**, carrying 17.03% of a mean district at
-equal-split (largest `20814`, 3.699%) and 22.08% at own-masses. Largest contiguous piece,
+ceiling). Committed draw: **258 zips (7.0%, 1.66% of M) outside their own power cell at
+own-masses targets and 266 (7.2%) at exactly-equal-split targets** — two measurements, quoted as
+one number until 2026-09-06 — spread 1.2902%, `Σ log M` 110.766686, gap **0.000082**. Snapped at
+equal-split targets: 0 outside by construction, spread 4.0041%, gap 0.000724. Best of 20
+snap → recentroid iterates (**iteration 15**): spread **2.1051%**, `Σ log M` 110.766485, gap
+**0.000283**. There is **no fixed point** — 20 iterations, no exact repeat, non-monotone, band
+spread 2.1–5.6% / gap 0.00028–0.00128. Split zips **17 = `k−1` at both target choices**, carrying
+17.03% of a mean district at equal-split (largest `20814`, 3.699%) and 22.08% at own-masses.
+**Six cells are under 1% of the map** (D14 0.04%, D01 0.06%, D12 0.13%, D10 0.86%, D07 0.87%,
+D18 0.98%); "three metro slivers" was the k=13 v1 count. Largest contiguous piece by **area**,
 snapped: **D01 55%**, D09 96%, D14 97%, D10/D13 98%, D07/D08 99%, twelve districts 100%;
-committed: nine districts under 80% (min D14 51%). Border segments 1,591 committed → 636
-snapped. **The zero is relative to one diagram:** rebuilt from the snapped labels, 16 of 3,704
-(0.4%) fall outside and the split count drops 17 → 10, so no recentroiding figure can display
-the guarantee.
+committed: nine districts under 80% (min D14 51%). **That denominator misreports dense metros**
+— by **mass** the snapped worst is D17 92.72% and D01 is 99.86%, and the committed worst is D09
+90.03%, so the two orderings disagree (§3a). Border segments 1,591 committed → 636 snapped.
+**The zero is relative to one diagram:** rebuilt from the snapped labels, 16 of 3,704 (0.4%) fall
+outside at own-masses targets and 15 at equal-split, and the split count drops 17 → 10. Since
+2026-09-06 one figure does display the guarantee — `--regions-fixed` holds the centres and
+weights instead of recentroiding — and every other rendering still recentroids.
 
 **The bound, corrected.** The valid upper bound is the Jensen ceiling
 `cert_draw.cert_balance_ceiling` = **110.883247**. The contiguity-dropped local search is
@@ -242,9 +243,15 @@ Solver: `assign()` pins `method="highs-ds"` with `options={"time_limit": 60.0}` 
   assignments, merge order, and the four corrections to this file's record
 - **The power-cell contiguity register:** `docs/OPTIONS_power-cell-contiguity.md` — every route
   to zero mismatched dots, with its evidence and verdict; §1 is the measurement record, §9 the
-  recommended order. This file is the durable one; `STATE.md` only names which option is live.
+  recommended order, §3a why D01 reads 55%, §4a the fixed-diagram figure. This file is the
+  durable one; `STATE.md` only names which option is live.
   `td/solvers/centers.py::power_weights` now returns `fractional` (the split zips' row indices),
   surfaced as `power_diagram_of_draw`'s `split_zips`.
+- **Showing the zero, and measuring pieces honestly:** `us_maps.py --regions-fixed <draw.csv>`
+  (`figures_fixed_diagram`) renders `figures/district_regions_fixed_committed.png` and
+  `district_regions_fixed_snapped.png` — one held diagram, both labellings, 266 outside against
+  0 · `tools/measure/district_pieces.py` gives each district's largest piece by area, by mass and
+  by ZIP count, which is what §3a needed to refute the 55%.
 - **The state-atom engine:** `td/atoms.py` (the atoms, the cut plan, the placeholder rules) ·
   `td/solvers/atom_draw.py` (the search, `free_search`, `check_contiguous`) ·
   `tools/run_atoms.py` (the driver) · `td/geo.py::state_rook` (the TIGER rook graph) ·
