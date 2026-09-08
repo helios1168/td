@@ -370,11 +370,16 @@ def resolve_draw_dir(path: str) -> tuple[str, str]:
 
 
 def read_draw(path: str) -> dict[Zip, District]:
-    """`zip,district` -- the CSV `tools/run_draw.py` writes."""
+    """`zip` and `district` -- the two columns of the zip table `tools/run_draw.py` writes.
+
+    Read by name, not by position: the same file also carries state, coordinates and opportunity
+    between them (`td/ziptable.py`), and older draws carry only these two.
+    """
     with open(path, newline="", encoding="utf-8") as fh:
         rows = csv.DictReader(fh)
-        if rows.fieldnames != ["zip", "district"]:
-            raise ValueError(f"{path}: header {rows.fieldnames}, expected ['zip', 'district']")
+        missing = [c for c in ("zip", "district") if c not in (rows.fieldnames or [])]
+        if missing:
+            raise ValueError(f"{path}: header {rows.fieldnames} is missing {missing}")
         return {r["zip"]: r["district"] for r in rows}
 
 

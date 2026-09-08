@@ -74,19 +74,32 @@ def test_label_of_is_district_id_inverse():
 
 
 # ------------------------------------------------------------------------------ writing
-def test_write_cell_and_grid_round_trip():
-    """`write_cell`/`write_grid` write the files `tools/us_maps.py` and the grid table need,
-    on a tiny synthetic instance with no gazetteer or network involved."""
+def _toy_ctx():
+    """The smallest `Ctx` `write_cell` reads: three zips, two states, two districts."""
+    import networkx as nx
+    from td import instance as descaled
+
     zips = ["00001", "00002", "00003"]
     states_by_zip = {"00001": "NY", "00002": "NY", "00003": "CA"}
     M_by_zip = {"00001": 1.0, "00002": 2.0, "00003": 3.0}
-    ctx = br.Ctx(d=None, zips=zips, xy=np.zeros((3, 2)), M=np.array([1.0, 2.0, 3.0]),
-                state_idx=np.array([0, 0, 1]), labels0=np.array([0, 0, 1]), k=2,
-                state_list=["CA", "NY"], states_by_zip=states_by_zip, M_by_zip=M_by_zip,
-                missing=[], committed_full={z: "D01" for z in zips[:2]} | {zips[2]: "D02"},
-                home=np.array([1, 0]), owners=np.array([[False, True], [True, False]]),
-                committed_rep_of=None)
+    G = nx.Graph()
+    for z in zips:
+        G.add_node(z, cand=(), S={}, M=M_by_zip[z], S_free=0.0, state=states_by_zip[z])
+    return br.Ctx(d=descaled.Descaled(G=G), zips=zips, xy=np.zeros((3, 2)),
+                 M=np.array([1.0, 2.0, 3.0]),
+                 state_idx=np.array([0, 0, 1]), labels0=np.array([0, 0, 1]), k=2,
+                 state_list=["CA", "NY"], states_by_zip=states_by_zip, M_by_zip=M_by_zip,
+                 missing=[], committed_full={z: "D01" for z in zips[:2]} | {zips[2]: "D02"},
+                 home=np.array([1, 0]), owners=np.array([[False, True], [True, False]]),
+                 committed_rep_of=None)
 
+
+def test_write_cell_and_grid_round_trip():
+    """`write_cell`/`write_grid` write the files `tools/us_maps.py` and the grid table need,
+    on a tiny synthetic instance with no gazetteer or network involved."""
+    from td import ziptable
+
+    ctx = _toy_ctx()
     labels = np.array([0, 0, 1])
     completed = run_draw.complete(labels, ctx.zips, ctx.states_by_zip, ctx.missing,
                                   ctx.M_by_zip)
@@ -97,13 +110,10 @@ def test_write_cell_and_grid_round_trip():
                                  iterates=[iterate0])
         draw_csv = os.path.join(cell_dir, "draw.csv")
         assert os.path.exists(draw_csv)
-        rows = {}
-        with open(draw_csv, encoding="utf-8") as fh:
-            next(fh)
-            for line in fh:
-                z, d = line.strip().split(",")
-                rows[z] = d
-        assert rows == completed
+        table = ziptable.read(draw_csv)
+        assert ziptable.labels(table) == completed
+        assert ziptable.masses(table) == ctx.M_by_zip
+        assert [r["state"] for r in table] == ["NY", "NY", "CA"]
 
         it_csv = os.path.join(cell_dir, "iterates", "00.csv")
         assert os.path.exists(it_csv)
@@ -114,6 +124,28 @@ def test_write_cell_and_grid_round_trip():
         with open(os.path.join(tmp, "grid.md"), encoding="utf-8") as fh:
             md = fh.read()
         assert "committed" in md and "nash" in md
+
+
+def test_write_cell_steps_are_numbered_and_end_on_the_committed_labelling():
+    """`steps=` writes one zip table per named step, `NN_completed.csv` last and equal to the
+    cell's own `draw.csv` -- the contract `--maps-steps` and the motion page read."""
+    from td import ziptable
+
+    ctx = _toy_ctx()
+    labels = np.array([0, 0, 1])
+    completed = run_draw.complete(labels, ctx.zips, ctx.states_by_zip, ctx.missing,
+                                  ctx.M_by_zip)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        cell_dir = br.write_cell(tmp, "d0.05", ctx, labels, completed,
+                                 steps=[("realise_CA_r0", np.array([0, 1, 1])),
+                                        ("realise_CA_r1", np.array([0, 0, 1]))])
+        names = sorted(os.listdir(os.path.join(cell_dir, "steps")))
+        assert names == ["01_realise_CA_r0.csv", "02_realise_CA_r1.csv", "03_completed.csv"]
+        last = ziptable.read(os.path.join(cell_dir, "steps", "03_completed.csv"))
+        assert last == ziptable.read(os.path.join(cell_dir, "draw.csv"))
+        first = ziptable.read(os.path.join(cell_dir, "steps", "01_realise_CA_r0.csv"))
+        assert ziptable.labels(first)["00002"] == "D02"
 
 
 # ------------------------------------------------------------------------------ the smoke test

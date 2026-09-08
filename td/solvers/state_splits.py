@@ -418,7 +418,9 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
     raise the state's compactness, so `cost_rounds` is non-increasing by construction and
     `realise` can only improve on the plain assignment.  Per split state, `iterates` holds
     `(labels of that state's zips, centres of the districts touching it)` for the LP cut and
-    every kept round, so the loop can be replayed.
+    every kept round, so the loop can be replayed.  `trajectory` says the same thing whole
+    rather than per state: `(state, round, labels of every zip at that moment)`, with the other
+    states as they stand, which is what a driver writes out as one zip table per step.
 
     `tiebreak` is an `(n, k)` bonus **subtracted** from `d^2` (it goes to `centers.assign` as
     `penalty=-tiebreak`), so a large entry attracts zip `z` to district `j`.  The CLI builds it
@@ -473,6 +475,7 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
             labels[members[s]] = assign_state(s, C)[0]
 
     states: dict[int, dict] = {}
+    trajectory: list[tuple[int, int, np.ndarray]] = []
     n_fractional = 0
     # TODO(2026-09-07): realise is order-dependent -- it moves the shared centre array `C`
     # as it cuts split states in turn. Deterministic, undocumented, unjudged. Fix is to
@@ -490,6 +493,7 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
         cost = _state_cost(xy[idx], M[idx], cur, C)
         cost_rounds, used = [cost], 0
         iterates = [(cur.copy(), C[touching].copy())]     # the LP cut, then each kept round
+        trajectory.append((s, 0, labels.copy()))
         for _ in range(rounds):
             C_new = C.copy()
             C_new[touching] = _centers._centroids(xy, M, labels, k, prev=C)[touching]
@@ -503,6 +507,7 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
             cost_rounds.append(new_cost)
             iterates.append((cur.copy(), C[touching].copy()))
             used += 1
+            trajectory.append((s, used, labels.copy()))
             if repeat:
                 break
         n_fractional += cur_frac
@@ -512,4 +517,4 @@ def realise(xy: np.ndarray, M: np.ndarray, state_idx: np.ndarray, z: np.ndarray,
     return dict(labels=labels, centers=C, n_fractional=int(n_fractional),
                 split_states=split_states,
                 rounds_used={s: states[s]["rounds_used"] for s in split_states},
-                states=states)
+                states=states, trajectory=trajectory)

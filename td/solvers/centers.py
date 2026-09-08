@@ -592,6 +592,11 @@ def draw(xy: np.ndarray, M: np.ndarray, k: int, seed=0, rounds: int = 10,
     Every round's assignment is exactly balanced *before* rounding, so unlike plain k-means
     there is no drift to a lopsided fixed point -- the rounds only buy compactness.
 
+    `iterates` is the trajectory as `(name, labels)` pairs: `lloyd_00`, `lloyd_01`, ... one per
+    round of the loop, then `rounded` (the labelling the loop ends on) and `polished` (after
+    `improve`).  `tools/run_draw.py` writes them out as zip tables so the draw can be replayed
+    and drawn step by step; nothing in the loop reads them.
+
     `locked` pins some zips to districts before any of this runs: `-1` for a free zip, else a
     district index `0..a-1` (the anchor districts occupy the first `a` labels). Locked zips
     never enter the LP; their mass is subtracted from each anchor's target via
@@ -632,25 +637,30 @@ def draw(xy: np.ndarray, M: np.ndarray, k: int, seed=0, rounds: int = 10,
 
     labels = locked_arr.copy()
     prev, converged, n_frac, used = None, False, 0, 0
+    iterates: list[tuple[str, np.ndarray]] = []
     for r in range(max(int(rounds), 1)):
         if free.any():
             new_free, n_frac = assign(xy[free], M[free], centers,
                                       targets=lp_targets if a else None)
             labels = locked_arr.copy()
             labels[free] = new_free
+        iterates.append((f"lloyd_{r:02d}", labels.copy()))
         used = r + 1
         if prev is not None and np.array_equal(labels, prev):
             converged = True
             break
         prev = labels
         centers = _centroids(xy, M, labels, k, prev=centers)
+    iterates.append(("rounded", labels.copy()))
 
     polished = improve(xy, M, labels, iters=improve_iters, n_near=n_near,
                        movable=free if a else None)
+    iterates.append(("polished", polished.copy()))
     centers = _centroids(xy, M, polished, k, prev=centers)
     out = dict(labels=polished, centers=centers, seed=seed, rounds_used=used,
                converged=bool(converged), n_fractional=int(n_frac),
                n_moved=int((polished != labels).sum()),
+               iterates=iterates,
                locked_mass=[float(v) for v in locked_mass],
                targets=[float(v) for v in (locked_mass + lp_targets)])
     out.update(metrics(M, polished, xy, centers))

@@ -101,7 +101,7 @@ def main(argv=None) -> int:
         borders_report.write_grid(args.out, rows)
         solve_s = time.time() - t0
         if args.maps:
-            borders_report.render_cell_maps(args.instance, cell_dir, args.geo_cache)
+            borders_report.render_cell_maps(cell_dir, args.geo_cache, report=print)
         total_s = time.time() - t0
         print(f"{name}: spread_rel={row['spread_rel']:.5f} "
               f"outside_owner_share={row['outside_owner_share']:.4f} "
