@@ -62,7 +62,8 @@ def test_build_write_read_round_trip():
     rows = ziptable.build(d, xy, labels)
 
     assert [r["zip"] for r in rows] == ["00501", "02139", "10001", "90210"]   # sorted, zero kept
-    assert list(rows[0]) == list(ziptable.COLUMNS)
+    assert list(rows[0]) == list(ziptable.COLUMNS) + [ziptable.REP]
+    assert all(r["rep"] == "" for r in rows)                                  # no reps given
     by_zip = {r["zip"]: r for r in rows}
     assert by_zip["00501"]["x"] is None and by_zip["00501"]["y"] is None      # no gazetteer point
     assert by_zip["00501"]["state"] == ""                                     # unknown state
@@ -76,8 +77,27 @@ def test_build_write_read_round_trip():
         with open(path, encoding="utf-8") as fh:
             header = fh.readline().strip()
             first = fh.readline().strip()
-        assert header == "zip,state,x,y,opportunity,district"
+        assert header == "zip,state,x,y,opportunity,district"   # no rep: six columns
         assert first == "00501,,,,7.0,D01"                    # empties, not zeros
+
+
+def test_rep_column_round_trips_and_is_optional():
+    """`rep` is written only when some row carries one, and reads back as "" when absent."""
+    d, xy, labels = _toy()
+    rows = ziptable.build(d, xy, labels, reps={"90210": "R7", "00501": "R7"})
+    with tempfile.TemporaryDirectory() as tmp:
+        path = ziptable.write(os.path.join(tmp, "draw.csv"), rows)
+        with open(path, encoding="utf-8") as fh:
+            assert fh.readline().strip() == "zip,state,x,y,opportunity,district,rep"
+        back = ziptable.read(path)
+        assert back == rows
+        assert {r["zip"]: r["rep"] for r in back} == {"00501": "R7", "02139": "",
+                                                       "10001": "", "90210": "R7"}
+
+        six = os.path.join(tmp, "six.csv")
+        with open(six, "w", encoding="utf-8") as fh:
+            fh.write("zip,state,x,y,opportunity,district\n01103,MA,1.0,2.0,3.0,D01\n")
+        assert ziptable.read(six)[0]["rep"] == ""
 
 
 def test_read_rejects_a_file_missing_a_column():

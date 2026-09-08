@@ -8,9 +8,8 @@ becomes a zombie, `os.kill(pid, 0)` keeps succeeding, and a run that finished mi
 still shown in flight.  These tests run a real child and never wait on it, which is exactly the
 shape that failed.
 
-No Streamlit import: `app.runner` reaches only `app.config`, `app.engines` and `app.scenario`,
-none of which import streamlit or pandas, so this runs under the solver venv with the rest of
-the suite.
+No Streamlit import: `app.runner` imports nothing that pulls in streamlit or pandas, so this
+runs under the solver venv with the rest of the suite.
 """
 from __future__ import annotations
 

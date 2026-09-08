@@ -2,12 +2,15 @@
 
 One row per instance zip, columns exactly::
 
-    zip,state,x,y,opportunity,district
+    zip,state,x,y,opportunity,district[,rep]
 
 sorted by zip, the zip a 5-character string so `01103` keeps its leading zero, `x`/`y` the
 LAEA projection of the gazetteer's internal point (empty when the gazetteer has no point for
 that zip), `state` the instance's own state code (empty when unknown), `opportunity` the
-instance's `M_z`, and `district` the label the table is carrying.
+instance's `M_z`, and `district` the label the table is carrying.  `rep` is optional: the
+rep staffing the zip's district (`tools/staff.py`) or, inside a split district, the rep owning
+the zip (`tools/split_district.py`); `read` returns it as `""` when the column is absent, and
+`write` emits the column only when some row carries a rep, so a plain map stays six columns.
 
 The table lives in `draw.csv` itself: the two columns every reader already knows are the first
 and the last, and the four in between are what a map needed the instance and the gazetteer for.
@@ -30,6 +33,7 @@ import os
 import sys
 
 COLUMNS: tuple[str, ...] = ("zip", "state", "x", "y", "opportunity", "district")
+REP = "rep"                        # the optional seventh column
 
 # `--bold-states`' own settings, applied unconditionally: see the module docstring.
 STATE_W = 1.6
@@ -49,12 +53,13 @@ def _zip5(z) -> str:
 
 
 # ------------------------------------------------------------------------------ build / io
-def build(d, xy: dict, labels: dict) -> list[dict]:
+def build(d, xy: dict, labels: dict, reps: dict | None = None) -> list[dict]:
     """One row per zip of the loaded instance `d`, from `{zip: (x, y)}` and `{zip: district}`.
 
     A zip absent from `xy` gets an empty `x`/`y` and is still a row: it carries opportunity and
     a district, it is simply not drawable.  A zip absent from `labels` gets an empty district,
-    which is what an unfinished labelling looks like.
+    which is what an unfinished labelling looks like.  `reps` is `{zip: rep}` for the optional
+    `rep` column; absent, every row carries `""`.
     """
     rows = []
     for z in d.G:
@@ -67,6 +72,7 @@ def build(d, xy: dict, labels: dict) -> list[dict]:
             y=None if p is None else float(p[1]),
             opportunity=float(node["M"]),
             district=str(labels.get(z, "")),
+            rep=str((reps or {}).get(z, "")),
         ))
     rows.sort(key=lambda r: r["zip"])
     return rows
@@ -76,13 +82,15 @@ def write(path: str, rows: list[dict]) -> str:
     """Write `rows` to `path` as the zip table, creating the directory if it is absent.
 
     `None` becomes an empty field; floats are written by `str`, which round-trips exactly.
+    The `rep` column is written only when some row carries a rep.
     """
+    cols = list(COLUMNS) + ([REP] if any(r.get(REP) for r in rows) else [])
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(COLUMNS))
+        w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()
         for r in rows:
-            w.writerow({c: ("" if r.get(c) is None else r[c]) for c in COLUMNS})
+            w.writerow({c: ("" if r.get(c) is None else r[c]) for c in cols})
     return path
 
 
@@ -104,6 +112,7 @@ def read(path: str) -> list[dict]:
                 y=float(y) if y else None,
                 opportunity=float((r["opportunity"] or "").strip() or 0.0),
                 district=(r["district"] or "").strip(),
+                rep=(r.get(REP) or "").strip(),
             ))
     return rows
 

@@ -42,6 +42,21 @@ LAEA = "+proj=laea +lat_0=45 +lon_0=-100 +ellps=sphere"
 NON_CONUS = frozenset({"AK", "HI", "PR", "VI", "GU", "MP", "AS"})
 
 
+def assert_conus(d) -> None:
+    """Raise unless every zip of the loaded instance `d` carries a lower-48-or-DC state.
+
+    The modelled ground set is CONUS plus DC (`docs/PROBLEM.md` §6): a blank-state, AK or HI
+    zip enters no step of the pipeline, so every driver calls this right after loading and
+    exits nonzero on the whole instance rather than placing those zips somewhere quietly.
+    """
+    bad = sorted(z for z in d.G
+                 if not d.G.nodes[z].get("state") or d.G.nodes[z]["state"] in NON_CONUS)
+    if bad:
+        shown = ", ".join(f"{z} ({d.G.nodes[z].get('state') or 'no state'})" for z in bad[:8])
+        raise ValueError(f"{len(bad)} zip(s) outside CONUS+DC in the instance: {shown}"
+                         f"{', ...' if len(bad) > 8 else ''}; use the _conus instance")
+
+
 # ------------------------------------------------------------------ cache-if-absent fetch
 def _fetch_zip(url, dest):
     """Download `url` into memory and return the ZipFile.  One printed line per fetch."""

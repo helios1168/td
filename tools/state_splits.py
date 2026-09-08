@@ -14,9 +14,8 @@ connected at delta = 1.3%, checked directly, not solved for -- then for every `-
     1. `td.solvers.state_splits.build_milp` / `solve` (time-limited, `strict=False`: an
        unclosed run reports its incumbent and gap instead of raising);
     2. `balance_pass`, fixing `z` and tightening `y`;
-    3. `realise`, turning `(z, y)` into zip labels over the known-state zips, then
-       `channel.place_by_state` for AK, HI and the unknown-state zips -- excluded from the MILP
-       by design, placed the same way `run_draw.complete` places the gazetteer-missing ones;
+    3. `realise`, turning `(z, y)` into zip labels over the geometric zips (the instance must
+       be CONUS+DC, `geo.assert_conus`: no AK, HI or blank-state zip enters the pipeline);
     4. `borders_report.cell_row` / `write_cell` (and maps, if `--maps`), plus a per-delta
        `splits.json` with the full `z`/`y` and the MILP's own objective, status and gap.
 
@@ -48,7 +47,7 @@ for _p in (ROOT, HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from td import channel, geo, model                                          # noqa: E402
+from td import geo, model                                                   # noqa: E402
 from td.solvers import centers                                              # noqa: E402
 from td.solvers import state_splits as ss                                   # noqa: E402
 import borders_report                                                       # noqa: E402
@@ -153,11 +152,6 @@ def _release_anchors(anchors: list[tuple[int, int]], caps: dict[int, int],
             drop_set = set(drop_js)
             kept_anchors = [(s0, j) for s0, j in kept_anchors if not (s0 == s and j in drop_set)]
     return kept_anchors, info
-
-
-def _dlabel(name: str) -> int:
-    """`"D07"` -> `6` -- the inverse of `run_draw.district_id`."""
-    return int(name[1:]) - 1
 
 
 def write_state_shares(path: str, state_list: list[str], z: np.ndarray, y: np.ndarray,
@@ -276,6 +270,7 @@ def main(argv=None) -> int:
 
     print(f"loading instance and committed draw ({args.draw})...", flush=True)
     ctx = borders_report.load_committed(args.instance, args.draw, args.geo_cache)
+    geo.assert_conus(ctx.d)
     if ctx.k != args.k:
         raise ValueError(f"--k {args.k} does not match the committed draw's k={ctx.k}")
     print(f"loaded: {len(ctx.zips)} geometric zips, k={ctx.k}", flush=True)
@@ -318,9 +313,11 @@ def main(argv=None) -> int:
                   f"[{', '.join(run_draw.district_id(j) for j in drop_js)}]", flush=True)
 
     known = ctx.state_idx >= 0
-    zips_known = [z for z, kk in zip(ctx.zips, known) if kk]
-    zips_unknown = [z for z, kk in zip(ctx.zips, known) if not kk]
-    xy_k, M_k, state_idx_k = ctx.xy[known], ctx.M[known], ctx.state_idx[known]
+    if not known.all():                    # assert_conus passed, so this is a state-list bug
+        raise ValueError(f"{int((~known).sum())} geometric zip(s) carry a state outside the "
+                         f"49-state list")
+    zips_known = list(ctx.zips)
+    xy_k, M_k, state_idx_k = ctx.xy, ctx.M, ctx.state_idx
 
     tiebreak = None
     if args.incumbency_tiebreak:
@@ -385,12 +382,8 @@ def main(argv=None) -> int:
                               rounds=args.rounds, tiebreak=tiebreak)
 
         def full_labels(labels_known) -> np.ndarray:
-            """Known-state labels -> a label per `ctx.zips`, AK/HI/unknown placed by state."""
-            to_known = {z: run_draw.district_id(int(lab))
-                        for z, lab in zip(zips_known, labels_known)}
-            placed = channel.place_by_state(ctx.states_by_zip, to_known, zips_unknown,
-                                            ctx.M_by_zip)
-            return np.array([_dlabel(placed[z]) for z in ctx.zips], int)
+            """Level-2 labels -> an int label per `ctx.zips` (every geometric zip has a state)."""
+            return np.array([int(lab) for lab in labels_known], int)
 
         labels_full = full_labels(realised["labels"])
         steps = [(f"realise_{ctx.state_list[s]}_r{r}", full_labels(lab))
