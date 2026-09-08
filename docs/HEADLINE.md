@@ -358,14 +358,22 @@ Code: `td/channel.py`, `td/model.py` (`utilities`). Weights $\theta = 0.4$, $\la
 
 ## 5. The map
 
-`tools/us_maps.py` renders each cell twice from its `draw.csv`: `districts.png` (one dot per
-zip, area proportional to $M_z$, colour by district) and `district_regions_voronoi.png` (each
-zip's Voronoi catchment clipped to its own state and coloured by district, so a state that lies
+Every step that changes a label writes the zip table, `draw.csv` with columns
+`zip,state,x,y,opportunity,district`, one row per instance zip (`td/ziptable.py`; stage 1
+writes its Lloyd iterates, rounding, polish and completion under `k18/steps/`, level 2 each
+accepted round per split state and completion under `d0.05/steps/`, level 1 its shares in
+`state_shares.csv`). Every figure is rendered from a table by `ziptable.render`, never from a
+join of the draw, the instance and the gazetteer: `districts.png` (one dot per zip, area
+proportional to $M_z$, colour by district) and `district_regions_voronoi.png` (each zip's
+Voronoi catchment clipped to its own state and coloured by district, so a state that lies
 whole in one district shows as one whole state, and inside a split state the line between two
-zips of different districts is their perpendicular bisector). The committed figures
+zips of different districts is their perpendicular bisector). Clipping is always on: before
+2026-09-07 the driver rendered unclipped catchments, which spill across a state line wherever
+the state is sparse, and the shipped figure came from a separate hand render with
+`--clip-states --bold-states`. The committed figures
 `figures/borders_track2_anchored_d05_districts.png` and
-`figures/borders_track2_anchored_d05_voronoi.png` are byte-identical copies of the cell's two
-renderings.
+`figures/borders_track2_anchored_d05_voronoi.png` are that hand render, and a re-render from
+the cell's table reproduces them up to the palette.
 
 ### 5.1 Composition of the headline map, whole instance
 
@@ -471,9 +479,12 @@ From the repo root, with the hub's `.venv` and the gitignored inputs in place
 ```
 
 The second command's parameters are recorded in the cell's `params.json`; the level-1 solution
-($z$, $y$, shares, status, gap) in `splits.json`; the map in `draw.csv`; the grid row in
-`grid.csv`. Stage 1 is seeded, so the first command reproduces the committed draw only with the
-same seeds; the second is deterministic given the draw.
+($z$, $y$, shares, status, gap) in `splits.json` and `state_shares.csv`; the map in `draw.csv`
+(the zip table); every intermediate labelling under `steps/`; the grid row in `grid.csv`.
+`--maps` renders the final table clipped per state; `--maps-steps` renders every table under
+`steps/figures/`. A hand render of any table: `tools/us_maps.py --table <csv> --out <dir>`.
+Stage 1 is seeded, so the first command reproduces the committed draw only with the same
+seeds; the second is deterministic given the draw.
 
 ## 9. Sources
 
