@@ -1,33 +1,24 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `73c9046` · **Tests:** 321 pass,
+**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `2a027e9` · **Tests:** 331 pass,
 0 fail (2026-09-07)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Two tracks landed 2026-09-07, the workflow redesign as `833dd31` and the headline track as
-`1a2546a`; both worktrees are removed. 321 tests, 0 fail.
+Merged 2026-09-07 evening, all worktrees removed: the CONUS ground set (`docs/PROBLEM.md` §6,
+the 32 blank-state, 2 AK and 1 HI zips out of every model), the CONUS Track 2 anchored grid at
+δ = 5/7/10 % (Facts, figures `figures/borders_conus_*`), and the zip table (`td/ziptable.py`:
+every step writes `draw.csv` as `zip,state,x,y,opportunity,district`, every figure renders from
+a table, per-state clipping always on). 331 tests, 0 fail.
 
-The headline track ships `docs/HEADLINE.md`, the map end to end, plus per-state caps
-(`--cap`/`--unanchor`) and the app's Headline tab. It found that the shipped map's **realised max
-deviation is 5.25%, outside its own 5% band** (4.68% is a pre-realisation quantity), that **NY at
-2 is refuted** while **CA at 4 is only unsearched**, and that the band, not the cap, is the lever.
+The shipped map re-measured on CONUS sits at 6.26 % max deviation; the CONUS δ = 5 % re-run
+keeps its borders on 17 districts and lands at the same 6.26 %. Every band is overshot after
+level-2 rounding, so the band level 1 certifies is not the band the map has. The first CONUS
+maps went out unclipped and read as unsnapped; the labels were snapped throughout.
 
-`fceb127` then fixed the New York close-up: D01 held `QUAL`'s grey slot and disappeared into the
-close-ups' context grey, so slot 12 is plum. CA, TX and FL re-render byte-identical.
-
-Next decision: which map ships, still **Track 2 anchored δ = 5%** recommended, gated on the
-sponsor reading the grid tables below.
-
-Evening 2026-09-07, four branches wait on a merge decision, in this order: `worktree-conus-scope`
-(this file, the CONUS ground-set decision in `docs/PROBLEM.md` §6, the CONUS grid in Facts),
-`worktree-conus-d05/-d07/-d10` (the CONUS maps, clipped renders), and `worktree-ziptable`
-(`86fe76a`, `9b39407`: the zip table `zip,state,x,y,opportunity,district` is what every step
-writes as `draw.csv` and under `steps/`, and every figure is rendered from it with per-state
-clipping always on; 331 tests, labels byte-identical on the CONUS regression). The first
-CONUS maps were published unclipped and read as unsnapped; the labels were snapped throughout.
+Next decision: which map ships, and whether level 2 should round inside the band.
 
 ## Next
 
