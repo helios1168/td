@@ -168,8 +168,11 @@ def diff(ref: dict, new: dict, shares: dict) -> tuple[pd.DataFrame, pd.DataFrame
          "new band": f"{1 - new_delta:.3f}-{1 + new_delta:.3f}"}
         for j in range(k)])
 
-    ref_draw = pd.read_csv(ref["draw"]).rename(columns={"district": "headline_district"})
-    new_draw = pd.read_csv(new["draw"]).rename(columns={"district": "new_district"})
+    # only the two columns the join needs: a draw.csv is a zip table now and carries state,
+    # coordinates and opportunity as well, and the app must hold no per-zip mass.
+    cols = ["zip", "district"]
+    ref_draw = pd.read_csv(ref["draw"])[cols].rename(columns={"district": "headline_district"})
+    new_draw = pd.read_csv(new["draw"])[cols].rename(columns={"district": "new_district"})
     joined = ref_draw.merge(new_draw, on="zip", how="outer")
     zips_relabelled = int((joined["headline_district"] != joined["new_district"]).sum())
 

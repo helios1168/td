@@ -25,7 +25,14 @@ writes the fixed-diagram pair, `district_regions_fixed_committed.png` and
 committed labelling on it and then the labelling its own weights produce.  Every other
 rendering recentroids from whatever draw it is handed, so none of them can show that the
 snapped labelling has zero zips outside their own cell; this one holds the centres and the
-weights fixed and can.  The four originals are unaffected by any flag.
+weights fixed and can.  The four originals are unaffected by any flag.  And
+
+    --table battery/results/<run-id>/k18/draw.csv
+
+writes `districts.png` and `district_regions_voronoi.png` from a **zip table** alone
+(`td/ziptable.py`): the table carries each zip's state, coordinates and opportunity, so that
+path reads no instance and no gazetteer, and it clips every catchment to its own state.  Every
+other flag keeps working on a plain two-column draw.
 
 What the maps are for
 ---------------------
@@ -1959,6 +1966,11 @@ def main(argv=None):
     ap.add_argument("--out", default="figures", help="output directory (created if absent)")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--no-basemap", action="store_true", help="skip the state outlines")
+    ap.add_argument("--table", default=None, metavar="ZIP_TABLE",
+                    help="a zip table (td/ziptable.py: zip,state,x,y,opportunity,district) -- "
+                         "writes districts.png and district_regions_voronoi.png from it alone, "
+                         "clipped per state, with no instance and no gazetteer read; every "
+                         "other flag here is ignored")
     ap.add_argument("--districts", default=None, metavar="DRAW_CSV",
                     help="a draw.csv from tools/run_draw.py; adds districts.png")
     ap.add_argument("--regions", default=None, metavar="DRAW_CSV",
@@ -1987,6 +1999,17 @@ def main(argv=None):
                          "state_<code>.png per state, always clipped per state regardless of "
                          "--clip-states")
     args = ap.parse_args(argv)
+
+    if args.table:
+        # a zip table carries its own geometry, states and masses, so this path reads no
+        # instance and no gazetteer.  Register this module under the name `td.ziptable` looks
+        # for, so running the script does not load a second copy of it.
+        sys.modules.setdefault("us_maps", sys.modules[__name__])
+        from td import ziptable
+        states = None if args.no_basemap else geo.states_outline(args.geo_cache)
+        for p in ziptable.render(ziptable.read(args.table), args.out, states, report=print):
+            print(f"wrote {p}  ({os.path.getsize(p) / 1024:.0f} KB)")
+        return 0
 
     from td import instance as descaled
     d = descaled.load_descaled(args.instance)

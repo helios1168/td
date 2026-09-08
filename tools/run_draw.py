@@ -31,13 +31,18 @@ per draw in `metrics.json` so the cost of that choice is visible rather than ass
 
 Written into `--out`:
 
-    k<kk>/draw.csv       zip,district for k's winning draw -- every instance zip, including
-                         the ones placed by state or pinned by a hand-drawn district.  This is
-                         what tools/us_maps.py --districts reads (per k; `--regions`, the power
-                         diagram, is only meaningful for solver/anchor districts, not fixed ones).
+    k<kk>/draw.csv       the zip table (td/ziptable.py) for k's winning draw -- every instance
+                         zip, including the ones placed by state or pinned by a hand-drawn
+                         district, with its state, coordinates, opportunity and district.  Its
+                         zip and district columns are what tools/us_maps.py --districts reads
+                         (per k; `--regions`, the power diagram, is only meaningful for
+                         solver/anchor districts, not fixed ones).
+    k<kk>/steps/         one zip table per step of the winning draw: `NN_lloyd_rr.csv` per Lloyd
+                         round, then `NN_rounded.csv`, `NN_polished.csv` and `NN_completed.csv`,
+                         the last identical to draw.csv.  `--maps-steps` draws each of them.
     k<kk>/metrics.json   k's per-draw stage-1 metrics, the stage-2 value and assignment, the
                          winner's balance report, the resolved scenario and its per-district
-                         hand-drawn statistics, and the realised stage-1 targets.
+                         hand-drawn statistics, the realised stage-1 targets, and `steps`.
     sweep.csv/.json      one row per k: balance statistics, Nash and stage-2 value, the
                          winning seed, and whether every district staffed.
 
@@ -66,9 +71,23 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                 "..")))
 
-from td import channel, geo                                                # noqa: E402
+from td import channel, geo, ziptable                                      # noqa: E402
 from td import instance as descaled                                        # noqa: E402
 from td.solvers import centers                                             # noqa: E402
+
+
+def write_steps(steps_dir: str, steps: list[tuple[str, list[dict]]]) -> list[str]:
+    """`<steps_dir>/NN_<name>.csv`, one zip table per step, numbered from 1 in the order given.
+
+    A step file is a `draw.csv` in every respect, so `tools/us_maps.py --table` draws it with no
+    instance and no gazetteer at hand.  Returns the file names for `metrics.json`'s `steps` list.
+    """
+    names = []
+    for i, (name, rows) in enumerate(steps, start=1):
+        fname = f"{i:02d}_{name}.csv"
+        ziptable.write(os.path.join(steps_dir, fname), rows)
+        names.append(fname)
+    return names
 
 
 def district_id(label) -> str:
@@ -318,7 +337,7 @@ def complete(labels, placed_zips, states, missing, M, *, pinned=None, anchor_nam
 
 def _stage1_metrics(res, M_by_zip, placed_zips, completed) -> dict:
     """Stage-1 metrics as drawn, and again after the coordinate-less/hand-drawn zips are placed."""
-    before = {k: v for k, v in res.items() if k not in ("labels", "centers")}
+    before = {k: v for k, v in res.items() if k not in ("labels", "centers", "iterates")}
     per = {}
     for z, d in completed.items():
         per[d] = per.get(d, 0.0) + float(M_by_zip[z])
@@ -478,6 +497,11 @@ def main(argv=None):
     ap.add_argument("--theta", type=float, default=0.40, help="stage-2 theta")
     ap.add_argument("--lam", type=float, default=0.30, help="stage-2 lambda")
     ap.add_argument("--filler-capture", default="theta", help="stage-2 filler-capture mode")
+    ap.add_argument("--maps", dest="maps", action="store_true", default=False,
+                    help="render the winning draw's maps into k<kk>/figures/ (default off)")
+    ap.add_argument("--no-maps", dest="maps", action="store_false")
+    ap.add_argument("--maps-steps", action="store_true", default=False,
+                    help="also render every k<kk>/steps/ table into steps/figures/<NN_name>/")
     args = ap.parse_args(argv)
 
     ks = parse_k(args.k)
@@ -568,11 +592,30 @@ def main(argv=None):
 
         k_dir = os.path.join(out_dir, f"k{k:02d}")
         os.makedirs(k_dir, exist_ok=True)
+
+        # The winning draw's own trajectory, one zip table per step; the last of them is the
+        # committed labelling, so `draw.csv` and `NN_completed.csv` are the same table.
+        step_tables = [(name, ziptable.build(
+            d, xy, complete(lab, open_zips, states, missing_free, M_by_zip,
+                            pinned=pinned, anchor_names=anchor_names)))
+            for name, lab in ranked1[best["draw"]]["iterates"]]
+        winner_rows = ziptable.build(d, xy, winner)
+        step_tables.append(("completed", winner_rows))
+        step_names = write_steps(os.path.join(k_dir, "steps"), step_tables)
+
         draw_csv = os.path.join(k_dir, "draw.csv")
-        with open(draw_csv, "w", encoding="utf-8") as fh:
-            fh.write("zip,district\n")
-            for z in sorted(winner):
-                fh.write(f"{z},{winner[z]}\n")
+        ziptable.write(draw_csv, winner_rows)
+
+        if args.maps or args.maps_steps:
+            basemap = geo.states_outline(args.geo_cache)
+            if args.maps:
+                ziptable.render(winner_rows, os.path.join(k_dir, "figures"), basemap,
+                                report=print)
+            if args.maps_steps:
+                fig_root = os.path.join(k_dir, "steps", "figures")
+                for fname, (_name, table) in zip(step_names, step_tables):
+                    ziptable.render(table, os.path.join(fig_root, fname[:-4]), basemap)
+            print(f"wrote maps under {k_dir}")
 
         stage1_targets_list = wm["before"]["targets"]
         name_order = anchor_names + [district_id(j)
@@ -601,6 +644,7 @@ def main(argv=None):
             k_solver=ks_solver,
             hand_drawn=[r for r in rows if r["mode"] != "solver"],
             stage1_targets=stage1_targets,
+            steps=step_names,
         )
         with open(os.path.join(k_dir, "metrics.json"), "w", encoding="utf-8") as fh:
             json.dump(metrics_out, fh, indent=2, sort_keys=False, default=float)

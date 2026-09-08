@@ -20,11 +20,17 @@ connected at delta = 1.3%, checked directly, not solved for -- then for every `-
     4. `borders_report.cell_row` / `write_cell` (and maps, if `--maps`), plus a per-delta
        `splits.json` with the full `z`/`y` and the MILP's own objective, status and gap.
 
+Per cell that writes `draw.csv` as a zip table (`td/ziptable.py`), `state_shares.csv` (level 1's
+whole decision: `state,district,share,target_mass` from the balance pass), and `steps/` -- one
+zip table per accepted level-2 round, the whole instance's labelling at that moment, with
+`NN_completed.csv` last.  `--maps-steps` draws every one of them.
+
 `grid.csv` / `grid.md` are rewritten after every cell, so a killed run keeps whatever finished.
 """
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import sys
@@ -78,6 +84,8 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--maps", dest="maps", action="store_true", default=True,
                     help="render districts/regions-voronoi maps per cell (default on)")
     ap.add_argument("--no-maps", dest="maps", action="store_false")
+    ap.add_argument("--maps-steps", action="store_true", default=False,
+                    help="also render every d<delta>/steps/ table into steps/figures/<NN_name>/")
     return ap
 
 
@@ -146,6 +154,24 @@ def _release_anchors(anchors: list[tuple[int, int]], caps: dict[int, int],
 def _dlabel(name: str) -> int:
     """`"D07"` -> `6` -- the inverse of `run_draw.district_id`."""
     return int(name[1:]) - 1
+
+
+def write_state_shares(path: str, state_list: list[str], z: np.ndarray, y: np.ndarray,
+                       M_s: np.ndarray) -> str:
+    """`state,district,share,target_mass` for every state-district pair level 1 opened.
+
+    `share` is the balance pass's own `y_sj`, the fraction of state `s`'s mass district `j` is
+    asked for, and `target_mass` is `M_s * y_sj`, the mass that fraction stands for.  Level 1
+    moves no zip, so this is the whole of what it decided; level 2 is what turns it into labels.
+    """
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["state", "district", "share", "target_mass"])
+        for s in range(len(state_list)):
+            for j in np.flatnonzero(z[s]):
+                w.writerow([state_list[s], run_draw.district_id(int(j)),
+                            float(y[s, j]), float(M_s[s] * y[s, j])])
+    return path
 
 
 # ------------------------------------------------------------------------------ level-1 data
@@ -290,7 +316,8 @@ def main(argv=None) -> int:
         unanchor_released={ctx.state_list[s]: [run_draw.district_id(j) for j in drop_js]
                            for s, (_, drop_js) in released_by_state.items()},
         out=os.path.abspath(args.out),
-        geo_cache=os.path.abspath(args.geo_cache), maps=args.maps, eps=eps, tau=tau,
+        geo_cache=os.path.abspath(args.geo_cache), maps=args.maps,
+        maps_steps=args.maps_steps, eps=eps, tau=tau,
         n_state=n_state, n_edges=len(edges),
     )
     with open(os.path.join(args.out, "params.json"), "w", encoding="utf-8") as fh:
@@ -298,6 +325,14 @@ def main(argv=None) -> int:
         fh.write("\n")
 
     rows: list[dict] = []
+    basemap_gdf = None
+
+    def basemap():
+        """The state polygons, read from the shapefile once per run rather than once per cell."""
+        nonlocal basemap_gdf
+        if basemap_gdf is None:
+            basemap_gdf = geo.states_outline(args.geo_cache)
+        return basemap_gdf
 
     def run_cell(delta: float) -> dict:
         name = f"d{delta:g}"
@@ -320,11 +355,18 @@ def main(argv=None) -> int:
 
         realised = ss.realise(xy_k, M_k, state_idx_k, result["z"], pas["y"], C,
                               rounds=args.rounds, tiebreak=tiebreak)
-        to_district_known = {z: run_draw.district_id(int(lab))
-                             for z, lab in zip(zips_known, realised["labels"])}
-        placed = channel.place_by_state(ctx.states_by_zip, to_district_known, zips_unknown,
-                                        ctx.M_by_zip)
-        labels_full = np.array([_dlabel(placed[z]) for z in ctx.zips], int)
+
+        def full_labels(labels_known) -> np.ndarray:
+            """Known-state labels -> a label per `ctx.zips`, AK/HI/unknown placed by state."""
+            to_known = {z: run_draw.district_id(int(lab))
+                        for z, lab in zip(zips_known, labels_known)}
+            placed = channel.place_by_state(ctx.states_by_zip, to_known, zips_unknown,
+                                            ctx.M_by_zip)
+            return np.array([_dlabel(placed[z]) for z in ctx.zips], int)
+
+        labels_full = full_labels(realised["labels"])
+        steps = [(f"realise_{ctx.state_list[s]}_r{r}", full_labels(lab))
+                 for s, r, lab in realised["trajectory"]]
 
         rounds_vals = list(realised["rounds_used"].values())
         params_row = dict(
@@ -337,7 +379,10 @@ def main(argv=None) -> int:
         row = borders_report.cell_row(ctx, labels_full, name, params_row)
         completed = run_draw.complete(labels_full, ctx.zips, ctx.states_by_zip, ctx.missing,
                                       ctx.M_by_zip)
-        cell_dir = borders_report.write_cell(args.out, name, ctx, labels_full, completed)
+        cell_dir = borders_report.write_cell(args.out, name, ctx, labels_full, completed,
+                                             steps=steps)
+        write_state_shares(os.path.join(cell_dir, "state_shares.csv"), ctx.state_list,
+                           result["z"], pas["y"], M_s)
         rows.append(row)
         borders_report.write_grid(args.out, rows)
 
@@ -351,8 +396,9 @@ def main(argv=None) -> int:
             ), fh, indent=2)
             fh.write("\n")
 
-        if args.maps:
-            borders_report.render_cell_maps(args.instance, cell_dir, args.geo_cache)
+        if args.maps or args.maps_steps:
+            borders_report.render_cell_maps(cell_dir, args.geo_cache, states=basemap(),
+                                            steps=args.maps_steps, report=print)
         total_s = time.time() - t0
         print(f"{name}: spread_rel={row['spread_rel']:.5f} "
               f"outside_owner_share={row['outside_owner_share']:.4f} "

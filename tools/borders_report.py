@@ -6,8 +6,9 @@ A "cell" is one labelling of the committed k=18 draw -- the committed map itself
 state-border snap, or a penalised-and-banded refinement (`td.solvers.state_borders.refine`) --
 and this module turns one such labelling into the row `docs/BORDERS_PLAN.md`'s grid wants:
 stage-1/stage-2 metrics on the *completed* instance (coordinate-less zips placed back in), how
-much mass sits outside its state's owner set, a `draw.csv` `tools/us_maps.py` and the app can
-read unchanged, and the maps themselves::
+much mass sits outside its state's owner set, a `draw.csv` zip table (`td/ziptable.py`) whose
+first and last columns are the `zip,district` `tools/us_maps.py` and the app already read, and
+the maps themselves::
 
     ctx = load_committed(instance_path, draw_path, geo_cache)     # once per run
     row = cell_row(ctx, ctx.labels0, "committed", {"n_fractional": 0})
@@ -15,7 +16,7 @@ read unchanged, and the maps themselves::
                                   ctx.M_by_zip)
     write_cell(out_dir, "committed", ctx, ctx.labels0, completed)
     write_grid(out_dir, [row, ...])                                # committed row first
-    render_cell_maps(instance_path, os.path.join(out_dir, "committed"), geo_cache)
+    render_cell_maps(os.path.join(out_dir, "committed"), geo_cache)
 
 `load_committed` reads the instance and the committed draw once and owns everything downstream
 needs: the geometric arrays `centers.py`/`state_borders.py` take (`xy`, `M`, `state_idx`,
@@ -28,11 +29,11 @@ handful of its zips.
 from __future__ import annotations
 
 import csv
+import glob
 import json
 import math
 import os
 import re
-import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,7 +46,7 @@ for _p in (ROOT, HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from td import channel, geo                                                # noqa: E402
+from td import channel, geo, ziptable                                      # noqa: E402
 from td import instance as descaled                                        # noqa: E402
 from td.solvers import centers                                             # noqa: E402
 import run_draw                                                            # noqa: E402
@@ -57,9 +58,6 @@ import us_maps                                                             # noq
 THETA = 0.40
 LAM = 0.30
 FILLER_CAPTURE = "theta"
-
-# the hub's venv -- a worktree has none of its own (CLAUDE.md, "Environment").
-SOLVER_PYTHON = "/Users/ntlee/projects/td/.venv/bin/python3"
 
 # lower 48 + DC (td.geo.NON_CONUS's complement, DC added back): a zip in AK, HI, or with an
 # unknown/"??" state gets state_idx -1 -- no owner set, never snapped, still placed at
@@ -302,31 +300,42 @@ def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict) -> dict:
 
 
 # ------------------------------------------------------------------------------------ writing
-def _write_draw_csv(path: str, completed: dict) -> None:
-    """`draw.csv`, in the exact format `tools/run_draw.py` writes: a header, then `zip,district`
-    sorted by zip -- what `tools/us_maps.py` and the app read."""
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as fh:
-        fh.write("zip,district\n")
-        for z in sorted(completed):
-            fh.write(f"{z},{completed[z]}\n")
+def zip_rows(ctx: Ctx, completed: dict) -> list[dict]:
+    """The cell's zip table (`td.ziptable`), from the context's instance and its geometry."""
+    xy = {z: (float(p[0]), float(p[1])) for z, p in zip(ctx.zips, ctx.xy)}
+    return ziptable.build(ctx.d, xy, completed)
+
+
+def _write_draw_csv(path: str, ctx: Ctx, completed: dict) -> None:
+    """`draw.csv`, the zip table for `completed` -- `zip,state,x,y,opportunity,district` sorted
+    by zip.  `tools/us_maps.py` and the app read the two columns they always read; the four in
+    between are what a map used to need the instance and the gazetteer for."""
+    ziptable.write(path, zip_rows(ctx, completed))
 
 
 def write_cell(out_dir: str, name: str, ctx: Ctx, labels: np.ndarray, completed: dict,
-              iterates: list | None = None) -> str:
-    """`<out_dir>/<name>/draw.csv`, and `iterates/NN.csv` per round when `iterates` is given.
+              iterates: list | None = None, steps: list | None = None) -> str:
+    """`<out_dir>/<name>/draw.csv`, plus the per-round files `iterates` or `steps` asks for.
 
-    `iterates` are raw geometric label arrays in `ctx`'s own zip order (one per Lloyd round,
-    e.g. `state_borders.refine`'s own `iterates`); each is completed the same way as `labels`
-    before being written, so every iterate file is a `draw.csv` `tools/us_maps.py` can read too.
+    Both take raw geometric label arrays in `ctx`'s own zip order and complete each the same way
+    as `labels`, so every file written here is a zip table drawable on its own.  They differ
+    only in naming: `iterates` is a bare list, written as `iterates/NN.csv` (Track 1's Lloyd
+    rounds, `state_borders.refine`); `steps` is a list of `(step name, labels)` pairs, written
+    as `steps/NN_<step name>.csv` with a final `NN_completed.csv` for `labels` itself.
     """
     cell_dir = os.path.join(out_dir, name)
-    _write_draw_csv(os.path.join(cell_dir, "draw.csv"), completed)
+    _write_draw_csv(os.path.join(cell_dir, "draw.csv"), ctx, completed)
     if iterates:
         for i, lab in enumerate(iterates):
             comp_i = run_draw.complete(lab, ctx.zips, ctx.states_by_zip, ctx.missing,
                                        ctx.M_by_zip)
-            _write_draw_csv(os.path.join(cell_dir, "iterates", f"{i:02d}.csv"), comp_i)
+            _write_draw_csv(os.path.join(cell_dir, "iterates", f"{i:02d}.csv"), ctx, comp_i)
+    if steps:
+        for i, (step_name, lab) in enumerate(list(steps) + [("completed", labels)], start=1):
+            comp_i = run_draw.complete(lab, ctx.zips, ctx.states_by_zip, ctx.missing,
+                                       ctx.M_by_zip)
+            _write_draw_csv(os.path.join(cell_dir, "steps", f"{i:02d}_{step_name}.csv"),
+                            ctx, comp_i)
     return cell_dir
 
 
@@ -355,20 +364,25 @@ def write_grid(out_dir: str, rows: list) -> None:
 
 
 # -------------------------------------------------------------------------------------- maps
-def render_cell_maps(instance_path: str, cell_dir: str,
-                     geo_cache: str = geo.DEFAULT_DEST, *, state_lines: bool = False) -> Path:
-    """`tools/us_maps.py --districts --regions-voronoi` on `cell_dir/draw.csv`, into
-    `cell_dir/figures/`.  Never `--regions`: the unpenalised power diagram no longer matches a
-    penalised labelling (`docs/BORDERS_PLAN.md`).  `state_lines=True` adds `--clip-states
-    --bold-states`, so each catchment stops at its state polygon and the state outline is
-    heavy: the rendering for a map whose point is where borders sit against state lines."""
-    draw_csv = os.path.join(cell_dir, "draw.csv")
+def render_cell_maps(cell_dir: str, geo_cache: str = geo.DEFAULT_DEST, *,
+                     states=None, steps: bool = False, report=None) -> Path:
+    """`districts.png` and `district_regions_voronoi.png` from `cell_dir/draw.csv`, in-process.
+
+    The cell's `draw.csv` is a zip table, so the maps come from `td.ziptable.render` with no
+    instance, no gazetteer join and no subprocess.  Never the power diagram: the unpenalised one
+    no longer matches a penalised labelling (`docs/BORDERS_PLAN.md`).  Per-state clipping and
+    heavy state lines are `ziptable.render`'s own defaults, so a cell map always shows where the
+    borders sit against state lines.  `steps=True` draws every `cell_dir/steps/*.csv` too, one
+    directory per step.  `states` is the basemap; it is loaded here only if the caller has none
+    to hand, since reading the shapefile per cell is the slowest thing in the loop.
+    """
+    if states is None:
+        states = geo.states_outline(geo_cache)
     fig_dir = Path(cell_dir) / "figures"
-    fig_dir.mkdir(parents=True, exist_ok=True)
-    argv = [SOLVER_PYTHON, os.path.join(ROOT, "tools", "us_maps.py"), str(instance_path),
-           "--out", str(fig_dir), "--geo-cache", str(geo_cache),
-           "--districts", draw_csv, "--regions-voronoi", draw_csv]
-    if state_lines:
-        argv += ["--clip-states", "--bold-states"]
-    subprocess.run(argv, cwd=ROOT, check=True)
+    ziptable.render(ziptable.read(os.path.join(cell_dir, "draw.csv")), str(fig_dir), states,
+                    report=report)
+    if steps:
+        for path in sorted(glob.glob(os.path.join(cell_dir, "steps", "*.csv"))):
+            out = Path(cell_dir) / "steps" / "figures" / Path(path).stem
+            ziptable.render(ziptable.read(path), str(out), states)
     return fig_dir
