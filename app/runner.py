@@ -47,6 +47,26 @@ def launch(sc: Scenario) -> Path:
 
 
 def _alive(pid: int) -> bool:
+    """Is the launched driver still running?
+
+    `os.kill(pid, 0)` alone is not enough and gets this exactly backwards for a finished run.
+    The driver is a child of the Streamlit server, `launch` never waits on it, and nothing else
+    does either, so on exit it stays a zombie: `os.kill` keeps succeeding, `status` keeps
+    reporting `running`, and a run that finished minutes ago never shows its result.  Reaping it
+    here with `WNOHANG` is what turns that into `done`.
+
+    `waitpid` speaks only for our own children.  A run launched before the server restarted is
+    not one, and raises `ChildProcessError`; it cannot be a zombie either, since its parent is
+    gone and init has already reaped it, so `os.kill` answers correctly for that case.
+    """
+    try:
+        reaped, _ = os.waitpid(pid, os.WNOHANG)
+        if reaped == pid:
+            return False
+    except ChildProcessError:
+        pass
+    except OSError:
+        return False
     try:
         os.kill(pid, 0)
     except (ProcessLookupError, PermissionError):

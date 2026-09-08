@@ -130,6 +130,13 @@ driver detached, writes its stdout to a log inside the run directory, and the UI
 output files. Runs land in `battery/results/app/<scenario>_<timestamp>/`, which is already
 gitignored.
 
+Polling has one sharp edge, fixed 2026-09-07. The driver is a child of the Streamlit server and
+nothing ever waits on it, so it exits into a zombie, and `os.kill(pid, 0)` succeeds on a zombie.
+`runner._alive` therefore reaps with `waitpid(WNOHANG)` before falling back to `os.kill`, which
+is the only reason a finished run turns from `running` into `done`; a run started before a
+server restart is not our child, raises `ChildProcessError`, and cannot be a zombie either,
+since init has reaped it.
+
 **Maps: static PNGs, decided 2026-09-06.** `app/runner.render_maps` calls `tools/us_maps.py`
 through the same subprocess boundary and the UI displays the PNGs it writes (`districts.png`,
 `district_regions.png`, `district_regions_voronoi.png`). One implementation of the map, and the
@@ -184,4 +191,6 @@ realised one is what the map delivers.
 5. Nothing downstream of a real `runner.launch` is covered by a test. Streamlit cannot be driven
    headlessly, so the Headline tab's run, cancel and render flow has been exercised by hand and
    by nothing else. The cap floor, the anchor-release rule and the failure record the tab reads
-   are unit-tested (`tests/test_state_splits_cli.py`); the UI around them is not.
+   are unit-tested (`tests/test_state_splits_cli.py`), and `runner._alive` is
+   (`tests/test_app_runner.py`, reachable from the solver venv because nothing `app/runner.py`
+   imports pulls in streamlit or pandas); the UI around them is not.

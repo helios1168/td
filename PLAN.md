@@ -43,6 +43,23 @@ the sponsor's word. After a merge, `/state` records that the tab now separates t
   wrote `failure.json` and re-raised, and `app/headline.py` read both back under the app venv and
   printed the matching sentence.
 
+## Done, second commit
+
+A finished run read as `running` forever, so the Headline tab never showed a result. The driver
+is a child of the Streamlit server and nothing waits on it, so it exits into a zombie;
+`_alive`'s `os.kill(pid, 0)` succeeds on a zombie, measured directly (`ps` STAT `ZN` with
+`os.kill` returning cleanly). `_alive` now reaps with `waitpid(WNOHANG)` and falls back to
+`os.kill` for a pid that is not our child, which is what a run launched before a server restart
+is. `tests/test_app_runner.py` covers all three cases with real children and no `wait`, the
+shape that failed; `app/runner.py` is reachable from the solver venv, since nothing it imports
+pulls in streamlit or pandas.
+
+Found on a real run: `headline-d0-1_20260907_203635`, delta = 10%, no caps, closed to optimality
+in 326.2s with 7 splits over CA, FL, NY, TX, and it sat unshown in the tab for twelve minutes.
+After the fix `runner.status` reads `done` and the Result section renders: 760 zips relabelled,
+NY 3 to 2, and the band table reads headline 5.25% realised against a 5% band, new 8.43%
+realised against 10%.
+
 ## Decisions needed
 
 None. The time limit stays hard-wired at 600s; a knob for it is listed in the report, not built.
