@@ -1,21 +1,22 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `1a2546a` · **Tests:** 321 pass,
+**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `73c9046` · **Tests:** 321 pass,
 0 fail (2026-09-07)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Two tracks landed on 2026-09-07: the workflow redesign as `833dd31` (one owner per doc,
-`docs/units/<id>.md` as a unit's whole record, `tools/verify/<id>/` artifacts,
-`docs/foundations/` frozen, `PLAN.md` per worktree, four hooks), then the headline track as
-`1a2546a`. Both worktrees are removed. 321 tests, 0 fail.
+Two tracks landed 2026-09-07, the workflow redesign as `833dd31` and the headline track as
+`1a2546a`; both worktrees are removed. 321 tests, 0 fail.
 
 The headline track ships `docs/HEADLINE.md`, the map end to end, plus per-state caps
 (`--cap`/`--unanchor`) and the app's Headline tab. It found that the shipped map's **realised max
 deviation is 5.25%, outside its own 5% band** (4.68% is a pre-realisation quantity), that **NY at
 2 is refuted** while **CA at 4 is only unsearched**, and that the band, not the cap, is the lever.
+
+`fceb127` then fixed the New York close-up: D01 held `QUAL`'s grey slot and disappeared into the
+close-ups' context grey, so slot 12 is plum. CA, TX and FL re-render byte-identical.
 
 Next decision: which map ships, still **Track 2 anchored δ = 5%** recommended, gated on the
 sponsor reading the grid tables below.
