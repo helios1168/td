@@ -155,6 +155,22 @@ state above its floor, not the floor itself. The floor is necessary and not suff
 California at 4 is legal at δ = 5% and HiGHS found no feasible point in an hour.
 `docs/HEADLINE.md` §7 carries what that does and does not prove.
 
+**Three answers, not one, added 2026-09-07.** Refused by the floor, refuted by the solver, and
+searched without success are different claims, and the tab says which it got. A cell whose MILP
+returns nothing writes `<run>/failure.json` with a `reason`
+(`td.solvers.state_splits.failure_reason` off scipy's status): `infeasible` is HiGHS Status 8, a
+proof that no map meets the overrides at that band; `no_incumbent` is Status 13, the
+`--time-limit` arriving before any feasible point, which refutes nothing. The driver re-raises
+after writing, so the run still exits nonzero and `runner.status` still reads `failed`; a run
+with no `failure.json` died outside the solve and the tab says only that. `app/headline.py`
+holds the reader and the three sentences.
+
+The same distinction governs the balance numbers the tab prints. `grid.csv` carries
+`pass_max_dev` (the balance pass, on continuous state shares) beside `max_dev_rel` (the realised
+map, after whole zips are placed) with nothing marking which is authoritative, and for the
+shipped cell they read 4.68% and 5.25% against a 5% band. The tab labels both and says the
+realised one is what the map delivers.
+
 ## 5. Assumptions on the record
 
 1. Business users define scenarios and launch runs from the browser; the app is not a read-only
@@ -167,5 +183,5 @@ California at 4 is legal at δ = 5% and HiGHS found no feasible point in an hour
    never leaves the Mac Studio; the app displays derived numbers only.
 5. Nothing downstream of a real `runner.launch` is covered by a test. Streamlit cannot be driven
    headlessly, so the Headline tab's run, cancel and render flow has been exercised by hand and
-   by nothing else. The cap floor and the anchor-release rule are unit-tested
-   (`tests/test_state_splits_cli.py`); the UI around them is not.
+   by nothing else. The cap floor, the anchor-release rule and the failure record the tab reads
+   are unit-tested (`tests/test_state_splits_cli.py`); the UI around them is not.

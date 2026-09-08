@@ -10,6 +10,11 @@ Two lower bounds hold a state above 1 district, and only one of them is a fact a
 the mass floor (`floor`, `problems`) cannot be argued with, while an anchor (`consequences`) is
 a modelling choice about a district's committed home state and can be released. `problems`
 blocks the run; `consequences` only warns.
+
+A run that clears both can still come back with no map, in two ways that are not one claim, and
+`failure` / `FAILURE_TEXT` keep them apart: HiGHS proving the overrides infeasible, and HiGHS
+reaching its time limit without a feasible point. Refused by the floor, refuted by the solver,
+and searched without success are three different answers.
 """
 from __future__ import annotations
 
@@ -89,6 +94,32 @@ def consequences(caps: dict[str, int], shares: dict) -> list[str]:
             out.append(f"{st} holds {anchored} district homes; "
                        f"capping it at {cap} releases {released} {noun}.")
     return out
+
+
+def failure(run: Path) -> dict | None:
+    """The driver's `failure.json` for a run that produced no map, or `None` when it wrote none.
+
+    Absent means the run died before or after the solve (a bad argument, a killed process), not
+    that the MILP answered; the caller must keep a fallback for that case.
+    """
+    path = run / "failure.json"
+    return json.loads(path.read_text()) if path.exists() else None
+
+
+FAILURE_TEXT = {
+    "infeasible": (
+        "**No map satisfies these overrides.** HiGHS proved it: the constraints admit no "
+        "assignment at all, so widening the search would change nothing. Only a wider band or a "
+        "different override can help."),
+    "no_incumbent": (
+        "**The search ended without a map, which is not the same as proving there is none.** "
+        "HiGHS reached the time limit having never found a feasible point. A longer limit, or a "
+        "wider band, may still find one. California capped at 4 at delta = 5% answered this way "
+        "after a full hour of search (`docs/HEADLINE.md` section 7)."),
+    "other": (
+        "**The solver stopped without a map and without a reason of either kind.** The log "
+        "below has its own message."),
+}
 
 
 def reference() -> dict:

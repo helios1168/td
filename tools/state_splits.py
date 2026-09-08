@@ -26,6 +26,10 @@ zip table per accepted level-2 round, the whole instance's labelling at that mom
 `NN_completed.csv` last.  `--maps-steps` draws every one of them.
 
 `grid.csv` / `grid.md` are rewritten after every cell, so a killed run keeps whatever finished.
+A cell whose MILP returns nothing usable writes `<out>/failure.json` (reason, scipy status,
+HiGHS message, seconds spent) and re-raises, so the run still exits nonzero and the reason
+survives the traceback.  `reason` is `infeasible` (HiGHS proved no such map exists) or
+`no_incumbent` (the time limit arrived before a feasible point), which are different answers.
 """
 from __future__ import annotations
 
@@ -226,6 +230,26 @@ def _sanity_row(ctx, M_s: np.ndarray, edges: list, tau: float, delta: float) -> 
           flush=True)
 
 
+def _write_failure(out: str, name: str, delta: float, exc, solve_s: float) -> str:
+    """Record what a failed cell established, in a file a reader can act on.
+
+    A failed run writes no `<cell>/splits.json`, so without this the only trace is a traceback in
+    the log and every failure reads alike.  `reason` separates the two that matter: `infeasible`
+    is a proof that no map meets the overrides at this band, `no_incumbent` is a search that hit
+    `--time-limit` without reaching a feasible point (docs/HEADLINE.md section 7).
+    """
+    path = os.path.join(out, "failure.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(dict(cell=name, delta=delta, reason=getattr(exc, "reason", "other"),
+                       status=getattr(exc, "status", None),
+                       message=getattr(exc, "solver_message", str(exc)),
+                       solve_seconds=round(solve_s, 1)), fh, indent=2)
+        fh.write("\n")
+    print(f"{name}: no solution, reason={getattr(exc, 'reason', 'other')} "
+          f"({solve_s:.1f}s solve); wrote {path}", flush=True)
+    return path
+
+
 # ------------------------------------------------------------------------- incumbency tiebreak
 def _raw_tiebreak(ctx, zips_known: list) -> np.ndarray:
     """`(len(zips_known), k)` book of district `j`'s committed rep at each known-state zip,
@@ -339,7 +363,11 @@ def main(argv=None) -> int:
         t0 = time.time()
         problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta, anchors=anchors,
                                 caps=caps or None)
-        result = ss.solve(problem, time_limit=args.time_limit, strict=False)
+        try:
+            result = ss.solve(problem, time_limit=args.time_limit, strict=False)
+        except ss.SolveFailure as exc:
+            _write_failure(args.out, name, delta, exc, time.time() - t0)
+            raise
         solve_s = time.time() - t0
         split_codes = ",".join(sorted(ctx.state_list[s] for s in result["split_states"]))
         y_shares = {ctx.state_list[s]: {run_draw.district_id(j): round(float(result["y"][s, j]), 4)

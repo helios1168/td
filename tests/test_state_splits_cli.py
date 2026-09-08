@@ -1,14 +1,20 @@
-"""test_state_splits_cli.py -- tools/state_splits.py: the driver's `--unanchor` release rule.
+"""test_state_splits_cli.py -- tools/state_splits.py: the `--unanchor` release rule, and the
+failure record a cell writes when its MILP returns no map.
 
-Pure-function test on synthetic state/district/mass arrays; no instance file, no solve.  The
+Pure-function tests on synthetic state/district/mass arrays; no instance file, no solve.  The
 six-state path toy in test_state_splits.py has no anchors-per-state notion worth exercising here
 (k=2, at most one anchor per state), so this builds the smallest `ctx`-shaped stand-in that
 `_release_anchors` actually reads: `state_idx`, `labels0`, `M`, `k`.
+
+`_write_failure`'s key names are a contract with `app/headline.py::failure`, which is the only
+reader, so they are asserted here rather than left to the Streamlit tab nothing tests.
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
+import tempfile
 
 import numpy as np
 
@@ -62,3 +68,24 @@ def test_unanchor_never_releases_more_than_the_cap_forces():
 
     assert kept == [(0, 2), (0, 4)]
     assert info[0] == ([2, 4], [])
+
+
+def test_a_failed_cell_records_which_answer_the_solver_gave():
+    """The two failures a headline rerun can hit write the same file with a different `reason`,
+    and the reader in `app/headline.py` keys off that field and the seconds beside it."""
+    infeasible = cli.ss.SolveFailure(
+        2, "The problem is infeasible. (HiGHS Status 8: model_status is Infeasible)")
+    empty = cli.ss.SolveFailure(
+        1, "Time limit reached. (HiGHS Status 13: primal_status is None)")
+
+    with tempfile.TemporaryDirectory() as out:
+        cli._write_failure(out, "d0.05", 0.05, infeasible, 3.26)
+        with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
+            rec = json.load(fh)
+        assert rec == {"cell": "d0.05", "delta": 0.05, "reason": "infeasible", "status": 2,
+                       "message": infeasible.solver_message, "solve_seconds": 3.3}
+
+        cli._write_failure(out, "d0.05", 0.05, empty, 3600.4)
+        with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
+            rec = json.load(fh)
+        assert rec["reason"] == "no_incumbent" and rec["solve_seconds"] == 3600.4

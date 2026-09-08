@@ -170,16 +170,34 @@ def test_a_cap_at_the_ceiling_changes_nothing():
 
 def test_a_cap_of_one_forbids_the_split_the_band_forces():
     """ODD needs one state to split; capping every state at 1 (no state may touch two
-    districts) makes the MILP infeasible."""
+    districts) makes the MILP infeasible.  The failure names itself `infeasible`, a refutation,
+    and it is still a `RuntimeError` for every caller that predates `SolveFailure`."""
     _, prob = build(ODD, 0.005)
     prob = state_splits.build_milp(prob.M_s, prob.D, EDGES, prob.tau, 0.005, prob.eps,
                                    caps={s: 1 for s in range(6)})
     try:
         state_splits.solve(prob)
-    except RuntimeError:
-        pass
+    except RuntimeError as exc:
+        assert isinstance(exc, state_splits.SolveFailure)
+        assert exc.reason == "infeasible" and exc.status == 2
     else:
         raise AssertionError("a cap of 1 on every state must forbid the forced split")
+
+
+def test_failure_reason_separates_a_refutation_from_a_search_that_ran_out():
+    """The mapping itself, tested apart from HiGHS: scipy's `status` is the only thing that
+    tells a proof of infeasibility (2, HiGHS Status 8) from a time limit reached with no
+    incumbent (1, HiGHS Status 13).  Under `strict=False`, the way every time-limited caller
+    runs, `solve` returns an incumbent rather than raising, so a `1` reaching the raise is
+    empty-handed; `failure_reason`'s docstring carries what `strict=True` does instead.  A real
+    tiny-time-limit solve is not tested: presolve can close this toy before the clock is read,
+    which would make the assertion depend on the machine."""
+    assert state_splits.failure_reason(2) == "infeasible"
+    assert state_splits.failure_reason(1) == "no_incumbent"
+    for other in (0, 3, 4):
+        assert state_splits.failure_reason(other) == "other"
+    assert state_splits.SolveFailure(1, "Time limit reached.").reason == "no_incumbent"
+    assert "Time limit reached." in str(state_splits.SolveFailure(1, "Time limit reached."))
 
 
 def test_a_cap_outside_one_to_k_is_rejected():

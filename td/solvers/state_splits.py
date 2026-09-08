@@ -57,6 +57,36 @@ from td.solvers import centers as _centers
 COST_TOL = 1e-12         # a Lloyd round is accepted only if the state's cost rises by no more
 
 
+def failure_reason(status: int) -> str:
+    """Name what a failed `milp` call actually established, from scipy's status code.
+
+    `2` is HiGHS Status 8, a proof that no assignment satisfies the constraints.  `1` is HiGHS
+    Status 13, the time limit: the search did not find a feasible point, which is not the same
+    claim and must never be reported as one (docs/HEADLINE.md section 7).  Anything else is
+    neither, and says so.
+
+    The `1` label is exact under `solve(..., strict=False)`, which is how every caller that
+    passes a `time_limit` runs: `strict=False` returns a time-limited incumbent rather than
+    raising, so a `1` that reaches here has none.  Under `strict=True` a time limit raises
+    whether or not it holds an incumbent, and only the first of those is `no_incumbent`.
+    """
+    return {1: "no_incumbent", 2: "infeasible"}.get(int(status), "other")
+
+
+class SolveFailure(RuntimeError):
+    """A minimum-splits MILP that returned nothing usable, with `reason` kept beside the text.
+
+    A `RuntimeError` subclass on purpose: `solve` raised a bare one before this existed, and
+    every caller that catches `RuntimeError` still catches this.
+    """
+
+    def __init__(self, status: int, message: str) -> None:
+        super().__init__(f"minimum-splits MILP did not solve to optimality: {message}")
+        self.status = int(status)
+        self.reason = failure_reason(status)
+        self.solver_message = message
+
+
 @dataclass
 class SplitProblem:
     """The MILP in matrix form plus the index layout `solve` reads the solution back with.
@@ -242,7 +272,8 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
     `strict=False` softens only the time-limit case: if HiGHS stops at `time_limit` with an
     incumbent in hand (`res.status == 1`, `res.x is not None`), that incumbent is returned with
     `status="time_limit"` and its own `mip_gap` instead of raising.  Infeasible, unbounded or
-    incumbent-less runs still raise regardless of `strict`.
+    incumbent-less runs still raise regardless of `strict`, as `SolveFailure`, whose `reason`
+    separates a refutation from a search that ran out of time.
     """
     options = {"mip_rel_gap": 0.0}
     if time_limit is not None:
@@ -254,7 +285,7 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
                options=options)
     timed_out = (not strict) and res.status == 1 and res.x is not None
     if not timed_out and (res.status != 0 or res.x is None):
-        raise RuntimeError(f"minimum-splits MILP did not solve to optimality: {res.message}")
+        raise SolveFailure(res.status, res.message)
 
     S, k = problem.n_state, problem.k
     x = np.asarray(res.x, float)

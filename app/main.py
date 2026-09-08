@@ -260,10 +260,19 @@ with headline:
     ref_splits, ref_grid = ref["splits"], ref["grid"]
 
     st.subheader("The shipped map")
+    # Two max deviations sit in `grid.csv` and they are not interchangeable: `pass_max_dev` is a
+    # state-level quantity on continuous shares, `max_dev_rel` is what the realised map does once
+    # whole zips are placed. The shipped cell reads 4.68% and 5.25%, so which one is quoted
+    # decides whether the map is inside its own band (`docs/HEADLINE.md` section 4.2).
+    outside = ref_grid["max_dev_rel"] > ref_splits["delta"]
     st.write(
-        f"Track 2 anchored delta=5%: **{ref_splits['splits']} splits** "
-        f"({ref_splits['split_states']}), spread {ref_grid['spread_rel']:.2%}, "
-        f"max deviation {ref_grid['max_dev_rel']:.2%}. This is the map in `docs/HEADLINE.md`.")
+        f"Track 2 anchored delta=5%: {ref_splits['splits']} splits "
+        f"({ref_splits['split_states']}), realised spread {ref_grid['spread_rel']:.2%}, "
+        f"**realised max deviation {ref_grid['max_dev_rel']:.2%}**, "
+        f"{'outside' if outside else 'inside'} its own "
+        f"{ref_splits['delta']:.0%} band. The balance pass met the band at "
+        f"{ref_grid['pass_max_dev']:.2%}, before whole zips were placed; the realised number is "
+        f"the one the map delivers. This is the map in `docs/HEADLINE.md`.")
 
     st.subheader("Override")
     st_shares = hl.shares()
@@ -327,14 +336,14 @@ with headline:
             st.rerun()
         with st.expander(f"Log — {path.name}", expanded=state == "failed"):
             if state == "failed":
-                # TODO: this collapses two different outcomes into one sentence that reads as a
-                # claim about the map. HiGHS Status 8 (Infeasible) is a proof that no map
-                # satisfies the overrides; Status 13 (Time limit reached) with no primal
-                # solution says only that the search did not reach a feasible point -- CA at 4,
-                # delta = 5% returns the latter after an hour. Read the driver's log, tell the
-                # two apart, and say how long the search ran.
-                st.error("No map satisfies these overrides, or the run failed before writing "
-                        "a result. The log below has the driver's own message.")
+                fail = hl.failure(path)
+                if fail is None:
+                    st.error("The run stopped before the solver answered, so there is no claim "
+                             "about the map here at all. The log below has its own message.")
+                else:
+                    st.error(hl.FAILURE_TEXT[fail["reason"]]
+                             + f"\n\nSearched for {fail['solve_seconds']:.0f}s at "
+                               f"delta = {fail['delta']:.0%}. Solver: {fail['message']}")
             st.code(runner.log_tail(path) or "(no output yet)")
 
     st.subheader("Result")
@@ -366,10 +375,21 @@ with headline:
     st.dataframe(state_table, width="stretch", hide_index=True)
     st.write("Districts, target share from the balance pass, not a measurement:")
     st.dataframe(district_table, width="stretch", hide_index=True)
+    st.write("Balance, target against realised:")
+    st.dataframe(pd.DataFrame([
+        {"map": label, "band": f"{s['delta']:.0%}",
+         "target spread": f"{g['pass_spread']:.2%}",
+         "realised spread": f"{g['spread_rel']:.2%}",
+         "target max deviation": f"{g['pass_max_dev']:.2%}",
+         "realised max deviation": f"{g['max_dev_rel']:.2%}"}
+        for label, g, s in (("headline", ref_grid, ref_splits),
+                            ("new", new["grid"], new["splits"]))]),
+        width="stretch", hide_index=True)
     st.caption(
-        f"Headline: target spread {ref_grid['pass_spread']:.2%}, realised spread "
-        f"{ref_grid['spread_rel']:.2%}. New: target spread {new['grid']['pass_spread']:.2%}, "
-        f"realised spread {new['grid']['spread_rel']:.2%}. The two are not the same number.")
+        "The target columns are the balance pass on continuous state shares. The realised "
+        "columns are the map itself, after whole zips are placed and after AK, HI and the "
+        "coordinate-less zips are added. Only the realised max deviation says whether a map "
+        "keeps its band, and the headline's does not.")
 
     if st.button("Render maps", key="hl-render"):
         ref_out = config.FIGURES / "headline_reference"
