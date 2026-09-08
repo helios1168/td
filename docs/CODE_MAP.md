@@ -58,6 +58,10 @@ way.
 | `docs/channel_note/`, `docs/math_note/` | the LaTeX notes (channel model; the original two-player formulation). `math_note/toy_*.py` import the deleted `code/gfx` and are broken |
 | `tests/run_all.py` | 321 fast tests; `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True` |
 | `app/` + `tools/app.sh` | the Streamlit scenario app: define a scenario, run an engine, see the map, save it. Runs in its own venv `.venv-app` and never imports `td` — it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/engines.py` is the registry; `docs/APP.md` is the whole story |
+| `tools/geom_export.py` | a zip table's polygons as `geom.json`, no solver needed downstream: per-state clipped Voronoi catchments of each zip dissolved by district (`us_maps.clip_region`, `voronoi_cells`, `dissolve`), coloured off the polygons' own adjacency so neighbours never share a hue. `docs/APP.md` §4 |
+| `tools/staff.py` | stage 2 plus released reps and restricted candidacy: `model.release_reps` folds a departing rep's book into `S_free`; a rep may be assigned only a district it already holds book in; writes `staffing.json` and a `draw.csv` with `rep` filled per staffed district. `docs/APP.md` §6 |
+| `tools/override.py` | the map-override driver: mode A relabels a zip table by hand, no rerun; mode B translates the same edits into its parent's own flags and reruns that driver. Both report balance, contiguity and a diff. `docs/APP.md` §4, §6 |
+| `tools/split_district.py` + `td/solvers/district_split.py` | divides one district's zips among the reps who staff it by the same Nash objective one level down, no adjacency constraint (the sold-zip graph is shattered): a greedy pass by default, a `pyscipopt` MINLP warm-started from it under `--exact`. `docs/APP.md` §6 |
 | `docs/PROBLEM.md` | owner of the settled business-problem facts |
 | `docs/MODEL.md` | owner of the settled model facts |
 | `docs/CODE_MAP.md` | this file: what is built, where, how to run it |
@@ -83,6 +87,10 @@ tools/us_maps.py <instance> --out figures/<dir>/ --districts <draw.csv> --region
 .venv/bin/python3 tools/run_draw.py instance_descaled_v2.json.gz --k 14-22 --seeds 0-9 --workers 8 --out battery/results/runs_<date>/baseline
 bash tools/verify/runs/run_all.sh   # 15 runs, ~14 min; then make_maps.sh and build_artifact.py --date <date>
 tools/app.sh                          # the scenario app on 127.0.0.1:8501 (docs/APP.md)
+tools/geom_export.py --table <run>/draw.csv --out <run>
+tools/staff.py instance_descaled_v2_conus.json.gz --table <run>/draw.csv --release R12,R31 --out battery/results/app/staff_<name>
+tools/override.py instance_descaled_v2_conus.json.gz --table <run>/draw.csv --edits edits.json --mode A --out battery/results/app/override_<name>
+tools/split_district.py instance_descaled_v2_conus.json.gz --table <run>/draw.csv --district D05 --reps R1,R2 --exact --time-limit 60 --out battery/results/app/split_<name>
 .venv/bin/python3 tests/run_all.py    # 312 fast tests; -k <name> filters
 ~/.claude/hooks/test-td-hooks.sh      # SessionStart / PreCompact / PreToolUse / Stop hook tests
 ```
