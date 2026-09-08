@@ -8,8 +8,6 @@ A-B-C-D (edges A-B, B-C, C-D only), so a district that owns {A, C} without B is 
 """
 from __future__ import annotations
 
-import contextlib
-import io
 import os
 import sys
 import tempfile
@@ -168,11 +166,3 @@ def test_mode_a_ignores_hold():
     rows, metrics = override.mode_a(parent, edits, ROOK, 0.01)
     assert _by_zip(rows)["00001"]["district"] == "D02"             # A moved despite the hold
     assert metrics["diff"]["zips_relabelled"] == 2
-
-
-def test_mode_b_stub_exits_with_code_2():
-    out = io.StringIO()
-    with contextlib.redirect_stdout(out):
-        code = override.mode_b()
-    assert code == 2
-    assert "wave 2" in out.getvalue()

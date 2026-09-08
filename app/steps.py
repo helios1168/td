@@ -60,10 +60,13 @@ def staff_argv(python, repo, instance, run, *, table, keep=None, release=None, t
     return argv
 
 
-def override_argv(python, repo, instance, run, *, table, edits: Path, mode) -> list[str]:
-    return [str(python), str(Path(repo) / "tools" / "override.py"), str(instance),
-           "--table", str(table), "--edits", str(edits), "--mode", str(mode),
-           "--out", str(run)]
+def override_argv(python, repo, instance, run, *, table, edits: Path, mode,
+                 parent: Path | None = None) -> list[str]:
+    argv = [str(python), str(Path(repo) / "tools" / "override.py"), str(instance),
+           "--table", str(table), "--edits", str(edits), "--mode", str(mode)]
+    if parent is not None:
+        argv += ["--parent", str(parent)]
+    return argv + ["--out", str(run)]
 
 
 def split_argv(python, repo, instance, run, *, table, district, reps: list[str], exact=False,
