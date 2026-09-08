@@ -616,6 +616,11 @@ def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys
         else:
             others = {e: p for e, p in avoid_polys.items() if e != d} if avoid_polys else None
             lx, ly, _ = _leader_spot(anchor, w, h, placed, radii, avoid_polys=others, land=land)
+            # TODO the leader line sits at zorder 4.5, under the bubbles at 5 and under the
+            # label's own box, so on a close-up whose label lands next to the dot cluster it is
+            # invisible: D01 in state_NY.png has no visible line even though the READMEs promise
+            # one.  Raising it above the bubbles moves D14 and D18 in state_CA.png too, so the
+            # change needs its own re-render and review.
             ax.plot([anchor[0], lx], [anchor[1], ly], color=BORDER, linewidth=LEADER_W,
                    alpha=LEADER_ALPHA, zorder=4.5, solid_capstyle="round")
         box = (lx - 0.5 * w, ly - 0.5 * h, lx + 0.5 * w, ly + 0.5 * h)
