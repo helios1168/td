@@ -12,9 +12,11 @@ every step; the delivered map is the clipped one.
 
 ## Next step
 
-Ask the user to review the app on the tailnet (`tools/app.sh --server.address=100.69.120.67`)
-against the grid runs under `battery/results/app/`, then fast-forward merge into `main`, run
-`/state`, unlock and remove this worktree, delete the branch.
+The user is reviewing the app locally (`tools/app.sh --server.port 8503` from this worktree,
+`http://127.0.0.1:8503`) against the runs under `battery/results/app/`; the track stays on this
+branch until they ask for the merge (2026-09-08). At merge: fast-forward into `main`, run
+`/state` there, delete `PLAN.md` in the last commit, unlock and remove the worktree, delete the
+branch.
 
 ## Done
 
@@ -30,6 +32,10 @@ against the grid runs under `battery/results/app/`, then fast-forward merge into
   under 2 %); override A and B (i) on VT against the k = 18 clip (B closed the MILP, 7 splits,
   edit honoured); staff with everyone (18/18) and with ten released (18/18); exact split of D05
   among three candidates (SCIP optimal in 0.2 s). App healthz 200.
+- 2026-09-08 (`4c8d530`): run directories are `<kind>_k<kk>_<YYYYmmdd_HHMMSS>` and every
+  picker shows `store.label` (`k18 · clip · 2026-09-08 14:42:39`) built from the ledger; the
+  free-text grid name is gone. 409 tests, 0 fail. The user reviewed the app locally and
+  called it good.
 
 ## Decisions needed
 
@@ -39,6 +45,11 @@ against the grid runs under `battery/results/app/`, then fast-forward merge into
   open question already in `STATE.md`; the app shows the realised number, not the band.
 - Under `filler_capture=full` the Nash value rises when reps are released, so `value` is not
   comparable across released sets; the Reps tab shows it per run only.
+- theta and lambda enter only the rep utility (stage 2, staff, split), never the draw or the
+  clip geometry. The clip's `grid.csv` stage-2 value uses the constants in
+  `tools/borders_report.py:58-60` (0.40, 0.30, `filler_capture="theta"`), not the run's
+  parameters and not the app's `full` default; the app does not display that number. Align
+  them or leave as is.
 
 ## Files owned / forbidden
 
