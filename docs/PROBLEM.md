@@ -164,6 +164,16 @@ indivisibility problem is under a fifth of one district wide, and near-perfect b
 geometrically reachable. `docs/MODEL.md` §8 turns that into a certificate rather than leaving
 it as an intuition.
 
+**The modeled ground set is the lower 48 plus DC** (decided by the user 2026-09-07). Zips with
+no state code (32), in Alaska (2) and in Hawaii (1) are handled separately and enter no
+modeling, optimization or districting work: not stage 1, not the level-1 or level-2 border
+programs, not stage 2, not the headline map. Together they carry 0.49 % of opportunity. The
+CONUS instance is `instance_descaled_v2_conus.json.gz` (3,713 zips, 113 reps, total 8,481.8,
+τ = 471.21 at k = 18; `meta.conus_filter` lists the dropped zips). Results measured on the
+whole instance before that date, including the shipped headline map, placed those 35 zips at
+completion into the lightest districts, which flattered its balance: re-measured without them
+the shipped map's spread is 12.02 % and its maximum deviation 6.26 %.
+
 ## 7. Balance has a geometric ceiling — compute it first
 
 `channel.allocate_districts(component_M, k)` maximises `Σ_c k_c·log(M_c/k_c)` over integer

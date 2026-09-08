@@ -36,6 +36,16 @@ is what stage 1 solves on. The level-1 ground set (49 units, mass 8,468.3, $\tau
 the lower 48 plus DC; the 3 zips in AK and HI and the 32 zips of unknown state (0.07τ together)
 sit outside it and are placed at completion.
 
+**Scope decision 2026-09-07, after this map was built:** those 35 zips are handled separately
+and enter no modeling, optimization or districting work (`docs/PROBLEM.md` §6). Every number in
+this file is on the whole instance and predates that decision. On the CONUS set (3,713 zips,
+mass 8,481.8, $\tau = 471.21$) the shipped map re-measures at spread 12.02% and maximum
+deviation 6.26%, with D16 (+5.18%), D17 (+5.76%) and D18 (−6.26%) outside the 5% band: the
+completion step had sent the 32 unknown-state zips to the lightest districts. The CONUS
+re-runs at δ = 5%, 7% and 10% are in `battery/results/borders_k18_v2conus_20260907/` from the
+CONUS draw `battery/results/draw_k18_v2conus_20260907/k18/`; their result tables are in
+`STATE.md` `## Facts`.
+
 The utility model behind stage 2 (`docs/PROBLEM.md` §2, the welfare decomposition): for
 representative $i$ at zip $z$,
 

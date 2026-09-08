@@ -119,7 +119,9 @@ The app reads its data from the hub checkout (`TD_REPO`), so the gitignored inpu
 need copying for it.
 
 
-`instance_descaled_v2.json.gz` (**live**, cleaned) · `instance_descaled_v2.raw.json.gz`
+`instance_descaled_v2_conus.json.gz` (**live since 2026-09-07**, v2 minus the 32 blank-state,
+2 AK and 1 HI zips; `docs/PROBLEM.md` §6) · `battery/results/draw_k18_v2conus_20260907` (its
+k = 18 draw) · `instance_descaled_v2.json.gz` (v2, whole instance) · `instance_descaled_v2.raw.json.gz`
 (uncleaned, provenance) · `instance_descaled.json.gz` (v1, regression only) · `data/geo/` (the
 gazetteer cache) · `battery/results/`: **v2** `draw_k18_v2_20260904`, `u8_band_v2_20260904`,
 `meas_v2_20260904`, `runs_20260904/` (the 15 catalogue runs); **v1** `draw_k13_20260901`,

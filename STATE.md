@@ -67,6 +67,15 @@ sponsor reading the grid tables below.
 
 v2's growth is untapped market: ×1.6333 over worked zips, contested only 675 → 718.
 
+**CONUS ground set, decided 2026-09-07** (`docs/PROBLEM.md` §6): the 32 blank-state, 2 AK and
+1 HI zips (0.49 % of M) are handled separately and enter no modeling, optimization or districting
+work. Live instance for all of it: `instance_descaled_v2_conus.json.gz`, 3,713 zips, 113 reps,
+M 8,481.81, τ = 471.21 at k = 18. The whole-instance figures below (3,748 zips, τ = 473.51)
+predate the decision; do not mix the two bases. The shipped headline map re-measured on the
+CONUS set: spread 12.02 %, max deviation 6.26 % (D18 −6.26 %, D17 +5.76 %, D16 +5.18 %), against
+8.98 % / 5.25 % on the whole instance. CONUS draw `draw_k18_v2conus_20260907/k18`: seed 3
+committed by stage 2 (95.7312), spread 1.585 % completed, nash 110.7954.
+
 **One nats scale, one instance, one draw (k=18 seed 2, `δ₀ = 0.009970`, `V = 95.755192`,
 `EG_{S₁₈} = 96.532152`).** Balance is free (widening the band 33-fold buys 0.051 nats). The
 incumbency premium is **0.72–0.78 nats and NOT SOFT** (D1′: 146–155× the 5e-3 floor, no `δ*`).
