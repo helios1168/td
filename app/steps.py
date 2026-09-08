@@ -79,7 +79,7 @@ def split_argv(python, repo, instance, run, *, table, district, reps: list[str],
     return argv
 
 
-def grid(root: Path, *, name: str, ks: list[int], delta, seeds, workers, theta, lam,
+def grid(root: Path, *, ks: list[int], delta, seeds, workers, theta, lam,
         filler_capture, time_limit, pins: dict | None, python, repo, instance,
         geo_cache) -> list[list[tuple[Path, list[str]]]]:
     """One draw-clip-geom chain per k: a draw process at this delta and this scenario, its
@@ -91,9 +91,8 @@ def grid(root: Path, *, name: str, ks: list[int], delta, seeds, workers, theta, 
     chains: list[list[tuple[Path, list[str]]]] = []
     for k in ks:
         kk = f"k{k:02d}"
-        slug = f"{name}-{kk}"
 
-        draw_dir = store.new_run_dir(root, "draw", slug)
+        draw_dir = store.new_run_dir(root, "draw", k)
         scenario = None
         if pins:
             scenario = draw_dir / "scenario.json"
@@ -110,7 +109,7 @@ def grid(root: Path, *, name: str, ks: list[int], delta, seeds, workers, theta, 
             outputs={"table": f"{kk}/draw.csv", "metrics": f"{kk}/metrics.json"})
         draw_table = draw_dir / draw_step["outputs"]["table"]
 
-        clip_dir = store.new_run_dir(root, "clip", slug)
+        clip_dir = store.new_run_dir(root, "clip", k)
         c_argv = clip_argv(python, repo, instance, clip_dir, draw=draw_table, k=k, delta=delta,
                           time_limit=time_limit, geo_cache=geo_cache)
         clip_step = store.write_step(

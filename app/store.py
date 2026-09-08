@@ -20,21 +20,16 @@ from . import runner
 STEP = "step.json"
 FAILURE = "failure.json"
 
-_SLUG_RE = re.compile(r"[^a-z0-9]+")
+STAMP = "%Y%m%d_%H%M%S"
 
 
-def _slugify(text: str) -> str:
-    """Lowercase, `[a-z0-9-]` only, collapsed: the run-directory-safe form of a scenario name."""
-    slug = _SLUG_RE.sub("-", text.lower()).strip("-")
-    return slug or "run"
-
-
-def new_run_dir(root: Path, kind: str, slug: str) -> Path:
-    """Create and return `<root>/<kind>_<slug>_<timestamp>`, made unique with a `-2`, `-3`,
-    ... suffix when two runs land in the same second."""
+def new_run_dir(root: Path, kind: str, k: int) -> Path:
+    """Create and return `<root>/<kind>_k<kk>_<YYYYmmdd_HHMMSS>`, made unique with a `-2`,
+    `-3`, ... suffix when two runs of the same kind and k land in the same second. The name
+    carries only what tells runs apart at a glance: the kind, the district count and when."""
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
-    base = f"{kind}_{_slugify(slug)}_{datetime.now():%Y%m%d_%H%M%S}"
+    base = f"{kind}_k{int(k):02d}_{datetime.now():{STAMP}}"
     name, n = base, 2
     while (root / name).exists():
         name = f"{base}-{n}"
@@ -85,6 +80,30 @@ def _stamp(name: str) -> str:
     """The `YYYYmmdd_HHMMSS` a run directory name ends in, uniqueness suffix dropped."""
     parts = name.split("_")
     return "_".join(parts[-2:]).split("-")[0] if len(parts) >= 3 else name
+
+
+def k_of(run: Path, root: Path) -> int | None:
+    """The district count a run was made for: its own `params.k`, else the nearest ancestor's,
+    else the `k<kk>` in its name. `None` for a hand-imported table that says nothing."""
+    for step_run in reversed(lineage(run, root)):
+        k = read_step(step_run).get("params", {}).get("k")
+        if k is not None:
+            return int(k)
+    match = re.search(r"_k(\d+)_", Path(run).name)
+    return int(match.group(1)) if match else None
+
+
+def label(run: Path, root: Path) -> str:
+    """What a picker shows for a run: `k18 · clip · 2026-09-08 14:42:39`. Read from the ledger
+    rather than the directory name, so runs made under an older naming read the same way."""
+    step = read_step(run)
+    k = k_of(run, root)
+    when = step.get("started") or _stamp(Path(run).name)
+    try:
+        when = datetime.strptime(when, STAMP).isoformat(sep=" ", timespec="seconds")
+    except ValueError:
+        when = when.replace("T", " ")
+    return f"{'k' + str(k) if k is not None else 'k?'} · {step.get('kind', '?')} · {when}"
 
 
 def _output_path(run: Path, key: str) -> Path | None:

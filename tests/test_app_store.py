@@ -37,19 +37,34 @@ def _mkstep(run: Path, **outputs) -> dict:
 def test_new_run_dir_names_are_unique_even_back_to_back():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        paths = [store.new_run_dir(root, "draw", "collide") for _ in range(4)]
+        paths = [store.new_run_dir(root, "draw", 18) for _ in range(4)]
         assert len(set(paths)) == 4
         for p in paths:
             assert p.is_dir()
-            assert p.name.startswith("draw_collide_")
+            assert p.name.startswith("draw_k18_")
 
 
-def test_new_run_dir_slugifies():
+def test_new_run_dir_carries_kind_k_and_stamp_only():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        p = store.new_run_dir(root, "clip", "Grid Run #7 (VT)")
-        assert "grid-run-7-vt" in p.name
-        assert p.name.startswith("clip_")
+        p = store.new_run_dir(root, "clip", 8)
+        kind, kk, date, time = p.name.split("_")[:4]
+        assert (kind, kk) == ("clip", "k08")
+        assert len(date) == 8 and len(time.split("-")[0]) == 6
+
+
+def test_label_reads_k_kind_and_time_off_the_ledger_even_for_old_names():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        old = root / "clip_grid-k18_20260908_144239"
+        _mkstep(old)
+        store.update_step(old, kind="clip", params={"k": 18}, started="2026-09-08T14:42:39")
+        assert store.label(old, root) == "k18 · clip · 2026-09-08 14:42:39"
+        child = root / "staff_k18_20260908_145341"
+        _mkstep(child)
+        store.update_step(child, kind="staff", parent=old.name, params={})
+        assert store.k_of(child, root) == 18                    # inherited from the parent
+        assert store.label(child, root) == "k18 · staff · 2026-09-08 14:53:41"
 
 
 # ------------------------------------------------------------------------------ step.json I/O
@@ -149,7 +164,7 @@ def test_grid_builds_six_chains_with_the_right_dirs_and_argv():
         root = Path(tmp)
         ks = [10, 12, 14, 16, 18, 20]
         chains = steps.grid(
-            root, name="review", ks=ks, delta=0.10, seeds="0-4", workers=2, theta=0.4, lam=0.3,
+            root, ks=ks, delta=0.10, seeds="0-4", workers=2, theta=0.4, lam=0.3,
             filler_capture="full", time_limit=600, pins=None, python="/py/python3",
             repo="/repo", instance="/repo/instance_descaled_v2_conus.json.gz",
             geo_cache="/repo/data/geo")
@@ -161,6 +176,8 @@ def test_grid_builds_six_chains_with_the_right_dirs_and_argv():
             assert clip_dir2 == clip_dir
             kk = f"k{k:02d}"
 
+            assert draw_dir.name.startswith(f"draw_{kk}_")
+            assert clip_dir.name.startswith(f"clip_{kk}_")
             draw_step = store.read_step(draw_dir)
             assert draw_step["kind"] == "draw" and draw_step["parent"] is None
             assert draw_step["outputs"] == {"table": f"{kk}/draw.csv",
@@ -193,7 +210,7 @@ def test_grid_writes_scenario_json_and_passes_the_flag_when_pins_are_given():
         root = Path(tmp)
         pins = {"fix": {"NORTH": ["ME", "NH"]}, "anchor": {}}
         [chain] = steps.grid(
-            root, name="pinned", ks=[18], delta=0.10, seeds="0-4", workers=2, theta=0.4,
+            root, ks=[18], delta=0.10, seeds="0-4", workers=2, theta=0.4,
             lam=0.3, filler_capture="full", time_limit=600, pins=pins, python="/py/python3",
             repo="/repo", instance="/repo/instance.json.gz", geo_cache="/repo/data/geo")
         (draw_dir, d_argv), _clip, _geom = chain

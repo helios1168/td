@@ -110,9 +110,13 @@ def runs_frame(paths: list[Path]) -> pd.DataFrame:
     rows = []
     for run in paths:
         step = store.read_step(run)
-        rows.append({"run": run.name, "kind": step.get("kind", ""),
-                     "parent": step.get("parent") or "", "status": store.status(run),
-                     "failure": (store.failure(run) or {}).get("reason", "")})
+        parent = step.get("parent")
+        rows.append({"run": store.label(run, config.APP_RESULTS),
+                     "parent": store.label(config.APP_RESULTS / parent, config.APP_RESULTS)
+                     if parent and (config.APP_RESULTS / parent / store.STEP).exists() else "",
+                     "status": store.status(run),
+                     "failure": (store.failure(run) or {}).get("reason", ""),
+                     "directory": run.name})
     return pd.DataFrame(rows)
 
 
@@ -146,7 +150,18 @@ def map_runs() -> list[Path]:
 
 
 def label_run(run: Path) -> str:
-    return f"{run.name} · {store.read_step(run).get('kind', '')}"
+    return store.label(run, config.APP_RESULTS)
+
+
+def k_for(run: Path) -> int:
+    """The district count a child run is filed under: the parent's k, or, for a table that
+    carries none in its lineage, the number of districts the table has."""
+    k = store.k_of(run, config.APP_RESULTS)
+    if k is not None:
+        return k
+    table = store.table_path(run)
+    rows = _rows(*_stamp(table)) if table else []
+    return len({row["district"] for row in rows if row.get("district")})
 
 
 def pick_map(label: str, key: str) -> Path | None:
@@ -167,12 +182,6 @@ def open_on_map(run: Path) -> None:
     widget exists, and the Map tab's selectbox is built earlier in the same script pass.
     """
     st.session_state["map-run"] = run
-
-
-def slug_of(run: Path) -> str:
-    """`clip_grid-k18_20260908_144239` -> `grid-k18`, so a child's name stays readable."""
-    parts = run.name.split("_")
-    return parts[1] if len(parts) >= 3 else run.name
 
 
 def instance_of(run: Path) -> Path:
@@ -213,7 +222,6 @@ def render_scenarios() -> None:
     left, right = st.columns([2, 1])
     with left:
         instance = st.selectbox("Instance", config.INSTANCES, format_func=lambda p: p.name)
-        name = st.text_input("Grid name", "grid", help="Goes into every run directory name.")
         ks_text = st.text_input("Districts (k)", ",".join(str(k) for k in config.KS))
         ks, ks_problems = parse_ks(ks_text)
         seeds = st.text_input("Seeds", config.SEEDS,
@@ -243,21 +251,21 @@ def render_scenarios() -> None:
 
     if st.button("Launch grid", type="primary", disabled=bool(problems)):
         chains = steps.grid(
-            config.APP_RESULTS, name=name or "grid", ks=ks, delta=float(delta), seeds=seeds,
+            config.APP_RESULTS, ks=ks, delta=float(delta), seeds=seeds,
             workers=int(workers), theta=float(theta), lam=float(lam), filler_capture=filler,
             time_limit=int(time_limit),
             pins={"fix": fix, "anchor": anchor} if (fix or anchor) else None,
             python=config.SOLVER_PYTHON, repo=config.CODE, instance=instance,
             geo_cache=config.GEO_CACHE)
         env = {**os.environ, "PYTHONHASHSEED": "0"}
-        launched: list[str] = []
+        launched: list[Path] = []
         for chain in chains:
             runner.launch_chain(chain, cwd=config.CODE, env=env)
             # A chain names its clip directory twice, once for the clip and once for the
             # geometry export that follows it in the same directory.
-            launched += [run.name for run, _ in chain if run.name not in launched]
+            launched += [run for run, _ in chain if run not in launched]
         st.success(f"{len(chains)} chains in flight:\n\n"
-                   + "\n".join(f"- `{n}`" for n in launched))
+                   + "\n".join(f"- {label_run(run)}" for run in launched))
 
     in_flight()
 
@@ -282,8 +290,7 @@ def in_flight() -> None:
         step = store.read_step(run)
         state = store.status(run)
         row, stop = st.columns([5, 1])
-        row.write(f"**{run.name}** · {step.get('kind', '')} · {state} · "
-                  f"started {step.get('started', '')}")
+        row.write(f"**{label_run(run)}** · {state}")
         pid = step.get("pid")
         if pid and state == "running" and stop.button("Cancel", key=f"cancel-{run.name}"):
             runner.cancel(int(pid))
@@ -308,9 +315,10 @@ def render_map() -> None:
         st.info("No clipped map yet. Turn on intermediates to see the draws.")
         return
 
-    run = st.selectbox("Run", shown, format_func=lambda p: f"{p.name} · {store.status(p)}",
+    run = st.selectbox("Run", shown, format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
                        key="map-run")
-    st.caption(" > ".join(p.name for p in store.lineage(run, config.APP_RESULTS)))
+    st.caption(" > ".join(label_run(p) for p in store.lineage(run, config.APP_RESULTS))
+               + f"  (`{run.name}`)")
 
     table = store.table_path(run)
     if table is None or not table.exists():
@@ -435,7 +443,7 @@ def render_keep_release(run: Path, rows: list[dict], staffing: dict | None) -> N
     filler = cols[2].selectbox("Filler capture", FILLERS, index=FILLERS.index(config.FILLER),
                                key="staff-filler")
     if st.button("Staff" if universe else "Staff with everyone", type="primary", key="staff-go"):
-        child = store.new_run_dir(config.APP_RESULTS, "staff", slug_of(run))
+        child = store.new_run_dir(config.APP_RESULTS, "staff", k_for(run))
         # An empty `--release` is what "nobody leaves" looks like to `tools/staff.py`: it splits
         # on the names it is given, so the empty list keeps the whole roster.
         argv = steps.staff_argv(config.SOLVER_PYTHON, config.CODE, instance_of(run), child,
@@ -515,7 +523,7 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
     limit = cols[0].number_input("Time limit (s)", 5, 3600, 60, step=5,
                                  key=f"split-limit-{district}")
     if cols[2].button("Split", key=f"split-go-{district}", disabled=len(reps) < 2):
-        child = store.new_run_dir(config.APP_RESULTS, "split", f"{slug_of(staff_run)}-{district}")
+        child = store.new_run_dir(config.APP_RESULTS, "split", k_for(staff_run))
         argv = steps.split_argv(config.SOLVER_PYTHON, config.CODE, instance_of(staff_run), child,
                                 table=store.table_path(staff_run), district=district, reps=reps,
                                 exact=bool(exact), time_limit=int(limit))
@@ -630,7 +638,7 @@ def render_overrides() -> None:
                    "under a draw parent the free districts are re-seeded and renamed.")
 
     if st.button("Run override", type="primary", disabled=not edits, key="over-go"):
-        child = store.new_run_dir(config.APP_RESULTS, "override", slug_of(run))
+        child = store.new_run_dir(config.APP_RESULTS, "override", k_for(run))
         payload = {"moves": list(edits), "hold": {"states": hold_states, "zips": hold_zips}}
         (child / "edits.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         argv = steps.override_argv(config.SOLVER_PYTHON, config.CODE, instance_of(run), child,

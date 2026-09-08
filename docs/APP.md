@@ -98,8 +98,11 @@ draw standing in for it.
 
 ## 4. Architecture
 
-**Run directory:** `battery/results/app/<kind>_<slug>_<YYYYmmdd_HHMMSS>[-n]/step.json`, the `-n`
-suffix added on a same-second name collision (`store.new_run_dir`). `step.json`:
+**Run directory:** `battery/results/app/<kind>_k<kk>_<YYYYmmdd_HHMMSS>[-n]/step.json`, the `-n`
+suffix added on a same-second name collision (`store.new_run_dir`). The name carries the kind,
+the district count and the time and nothing else; every picker shows `store.label`, built
+from the ledger (`k18 · clip · 2026-09-08 14:42:39`), so runs made under an older naming read
+the same way. `step.json`:
 
 ```
 {kind, parent: "<run name>"|null, params, argv, pid, started,
