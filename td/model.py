@@ -93,6 +93,33 @@ def reps(G, nodes) -> list:
     return out
 
 
+def release_reps(G, released: Iterable[str]):
+    """Copy of `G` with every rep in `released` gone and their book folded into `S_free`.
+
+    A released rep leaves the channel, so their book is production with no incumbent -- the
+    same thing `S_free` already means.  At every zip the rep's `S_i` moves into `S_free` and
+    the rep drops out of `S` and `cand`, so it appears nowhere afterwards and `T_z` for the
+    reps who stay shrinks by exactly that much.  A kept rep therefore values a released book
+    at `c_free` (`utilities`' `filler_capture`) rather than at `c2`, which is the whole point:
+    with `filler_capture="full"` a vacated book is worth `c1`, because nobody is left to pull
+    it away.
+
+    `G` is not mutated; the returned graph's node attributes are fresh objects.
+    """
+    rel = set(released)
+    H = G.copy()
+    if not rel:
+        return H
+    for z in H.nodes:
+        S = books(G, z)
+        moved = sum(float(S.pop(i)) for i in [i for i in S if i in rel])
+        d = H.nodes[z]
+        d[BOOK] = S
+        d[CAND] = tuple(i for i in candidates(G, z) if i not in rel)
+        d[FREE] = free_book(G, z) + moved
+    return H
+
+
 # ------------------------------------------------------------------- utilities
 def utilities(G, nodes, reps_order=None, theta: float = 0.40, lam: float = 0.30,
               filler_capture: str = "theta"):

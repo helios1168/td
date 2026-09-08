@@ -1,13 +1,18 @@
-"""Paths and environment for the scenario app.
+"""Paths and defaults for the scenario app.
 
 The app runs in its own virtualenv (`.venv-app`) and never imports `td`.  The solver stack is
 version-frozen (`requirements.txt` header: "the zip50 anchor depends on these exact versions"),
 so the app drives it by subprocess through `SOLVER_PYTHON`.  Everything here is therefore a
-path, not an import.
+path or a default, not an import.
 
-`TD_REPO` overrides the repository the app reads from; it defaults to the hub checkout, because
-the gitignored inputs (`instance_descaled_v2.json.gz`, `data/geo/`, `battery/results/`) live
-there and are not copied into a worktree.
+Two roots, and they are not the same one.  `REPO` is the hub checkout, because the gitignored
+inputs (the instances, `data/geo/`, `battery/results/`) live there and are never copied into a
+worktree.  `CODE` is this checkout, because the drivers a run launches are the ones sitting
+beside this file, which on a track branch are not the hub's.
+
+Only CONUS instances are offered.  Blank-state, Alaska and Hawaii zips enter no step (the
+ground-set invariant), and every driver asserts it at load, so an instance that carries them
+would only fail later and more confusingly.
 """
 from __future__ import annotations
 
@@ -15,23 +20,26 @@ import os
 from pathlib import Path
 
 REPO = Path(os.environ.get("TD_REPO", "/Users/ntlee/projects/td"))
+CODE = Path(__file__).resolve().parents[1]
 
 # Overridable independently of TD_REPO: a worktree has no `.venv` of its own (CLAUDE.md,
 # "Environment"), so a run against a worktree needs the hub's interpreter under a different var.
 SOLVER_PYTHON = Path(os.environ.get("TD_SOLVER_PYTHON", REPO / ".venv" / "bin" / "python3"))
-INSTANCE = REPO / "instance_descaled_v2.json.gz"
+
+INSTANCES = sorted(REPO.glob("instance_descaled_*_conus.json.gz"))
+INSTANCE = REPO / "instance_descaled_v2_conus.json.gz"
 
 RESULTS = REPO / "battery" / "results"
 APP_RESULTS = RESULTS / "app"
-SCENARIOS = REPO / "battery" / "scenarios"
-
-# Under `battery/results/` on purpose: `figures/` is tracked, because a committed map is a
-# primary artifact, and app renderings are neither reviewed nor committed.
-FIGURES = APP_RESULTS / "figures"
-
-# The Headline tab's one hard-wired case: the committed k=18 draw the headline cell was solved
-# against, and the shipped Track 2 anchored delta=5% cell it is compared to.
-COMMITTED_DRAW = RESULTS / "draw_k18_v2_20260904" / "k18" / "draw.csv"
-HEADLINE_CELL = RESULTS / "borders_k18_v2_20260907" / "track2_anchored" / "d0.05" / "d0.05"
 GEO_CACHE = REPO / "data" / "geo"
-STATE_SHARES = APP_RESULTS / "state_shares.json"
+
+# Grid defaults. k runs 10 to 20 by 2 because that is the review's range; delta is fixed at 10%
+# by the same decision, and is an input here only so a one-off can move it.
+KS = [10, 12, 14, 16, 18, 20]
+DELTA = 0.10
+SEEDS = "0-4"
+WORKERS = 2
+THETA = 0.40
+LAM = 0.30
+FILLER = "full"
+TIME_LIMIT = 600

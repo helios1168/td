@@ -132,10 +132,32 @@ def _block(rows: np.ndarray, cols: np.ndarray, vals: np.ndarray,
     return sparse.coo_matrix((vals, (rows, cols)), shape=(n_row, n_var))
 
 
+def bound_z(problem: SplitProblem, s: int, j: int, lo: float, hi: float) -> None:
+    """Bound `z_sj` in place: `lo <= z_sj <= hi` at `off_z + s*k + j`.
+
+    `(1, 1)` forces state `s` to touch district `j` and `(0, 0)` forbids it; that pair is the
+    whole of what an override can say at level 1, since `y` follows `z` through
+    `eta z <= y <= z`.  Nothing else about the model moves, so a bound is safe to apply to an
+    already-assembled `SplitProblem`.
+
+    An anchor (`build_milp(anchors=...)`) sets the same lower bound, so a bound applied after
+    the anchors silently overrides one; the CLI drops a contradicted anchor explicitly instead,
+    so the release is visible in the log and in `params.json`.
+    """
+    if not (0 <= s < problem.n_state and 0 <= j < problem.k):
+        raise ValueError(f"bound ({s}, {j}) out of range")
+    if not (0.0 <= float(lo) <= float(hi) <= 1.0):
+        raise ValueError(f"bound ({s}, {j}) needs 0 <= lo <= hi <= 1, got ({lo}, {hi})")
+    at = problem.off_z + s * problem.k + j
+    problem.var_lb[at] = float(lo)
+    problem.var_ub[at] = float(hi)
+
+
 def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
                tau: float, delta: float, eps: float, *, eta: float = 0.01,
                anchors: list[tuple[int, int]] | None = None,
-               caps: dict[int, int] | None = None) -> SplitProblem:
+               caps: dict[int, int] | None = None,
+               bounds: list[tuple[int, int, float, float]] | None = None) -> SplitProblem:
     """Assemble the minimum-splits MILP.  `M_s` is `(S,)`, `D` is `(S, k)`, `edges` the rook
     graph over state indices (undirected, given once per pair).  `eta` is the minimum share a
     state must send to a district it is flagged as touching (see the module docstring).
@@ -148,7 +170,11 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     `caps` maps a state index to the maximum number of districts it may touch
     (`sum_j z_sj <= caps[s]`).  When falsy, no new row block is added and `rows` gains no new
     key, so an uncapped call reproduces bit for bit.  When given, a row is appended for each
-    capped state, after `net`, in `sorted(caps)` order, under the name `"cap"`."""
+    capped state, after `net`, in `sorted(caps)` order, under the name `"cap"`.
+
+    `bounds` is a list of `(s, j, lo, hi)` applied through `bound_z` **after** the anchors and
+    the caps, so an override wins over an anchor on the same `(s, j)`.  Bounds add no row, so
+    the matrix is the same whether or not they are given."""
     M_s = np.asarray(M_s, float)
     D = np.asarray(D, float)
     if M_s.ndim != 1 or D.ndim != 2 or D.shape[0] != M_s.shape[0]:
@@ -252,7 +278,7 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     integrality[off_z:off_z + S * k] = 1
     integrality[off_r:off_r + S * k] = 1
 
-    return SplitProblem(
+    problem = SplitProblem(
         c=c, A=sparse.csc_matrix(sparse.vstack(blocks)),
         lb=np.concatenate(lb), ub=np.concatenate(ub),
         integrality=integrality, var_lb=var_lb, var_ub=var_ub,
@@ -260,6 +286,9 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
         n_state=S, k=k, off_z=off_z, off_y=off_y, off_r=off_r, off_f=off_f,
         n_var=n_var, rows=rows,
     )
+    for bs, bj, lo, hi in bounds or ():
+        bound_z(problem, int(bs), int(bj), float(lo), float(hi))
+    return problem
 
 
 def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: bool = True) -> dict:

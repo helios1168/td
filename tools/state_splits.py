@@ -29,6 +29,11 @@ A cell whose MILP returns nothing usable writes `<out>/failure.json` (reason, sc
 HiGHS message, seconds spent) and re-raises, so the run still exits nonzero and the reason
 survives the traceback.  `reason` is `infeasible` (HiGHS proved no such map exists) or
 `no_incumbent` (the time limit arrived before a feasible point), which are different answers.
+
+`--bounds PATH` carries user overrides into both levels (`parse_bounds` for the schema): level-1
+bounds on `z` through `state_splits.bound_z`, level-2 freezes and pulls around `realise`.  Each
+cell's `splits.json` then also carries `bounds` (the document as given) and `bounds_honoured`,
+since a pull is only a preference and a forced `z` can still be refused by the band.
 """
 from __future__ import annotations
 
@@ -79,6 +84,9 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="cap state ST's district count at N (repeatable)")
     ap.add_argument("--unanchor", action="append", default=[], metavar="ST",
                     help="drop --anchor-homes anchors in state ST before the solve (repeatable)")
+    ap.add_argument("--bounds", metavar="PATH", default=None,
+                    help="JSON overrides: force/forbid/fix on the level-1 z, freeze/pull on the "
+                         "level-2 labels (see load_bounds)")
     ap.add_argument("--dump-state-shares", metavar="PATH", default=None,
                     help="write per-state mass ratios and anchored counts to PATH and exit, "
                          "before the delta loop and before any solve")
@@ -152,6 +160,183 @@ def _release_anchors(anchors: list[tuple[int, int]], caps: dict[int, int],
             drop_set = set(drop_js)
             kept_anchors = [(s0, j) for s0, j in kept_anchors if not (s0 == s and j in drop_set)]
     return kept_anchors, info
+
+
+# ------------------------------------------------------------------------------- --bounds
+BOUND_KEYS = ("force", "forbid", "fix", "freeze", "pull")
+
+
+def _district_index(name, k: int, flag: str) -> int:
+    """One `D01`-style district name (`run_draw.district_id`) -> its 0-based index."""
+    ids = {run_draw.district_id(j): j for j in range(k)}
+    key = str(name).strip().upper()
+    if key not in ids:
+        sys.exit(f"{flag}: unknown district {name!r} "
+                 f"(expected D01..{run_draw.district_id(k - 1)})")
+    return ids[key]
+
+
+def _zip_index(code, zip_pos: dict, flag: str) -> int:
+    """One zip code -> its position in `ctx.zips`, the order every level-2 array is in."""
+    key = str(code).strip()
+    if key not in zip_pos:
+        sys.exit(f"{flag}: unknown zip {code!r}")
+    return zip_pos[key]
+
+
+def parse_bounds(spec, state_list: list[str], k: int, zips: list) -> dict:
+    """Translate a `--bounds` document into solver indices, or exit before anything is solved.
+
+    The document names states, districts and zips the way the rest of the pipeline does
+    (`TX`, `D05`, `75201`); everything downstream of here is indices::
+
+        {"force":  [["TX", "D05"], ...]     z_sj >= 1, state s must touch district j
+         "forbid": [["TX", "D03"], ...]     z_sj <= 0, state s must not touch j
+         "fix":    {"VT": ["D02"], ...}     z_sj = 1 for the listed j, 0 for every other
+         "freeze": {"05401": "D02", ...}    that zip takes that label after level 2
+         "pull":   {"75201": "D05", ...}}   a level-2 preference toward that district
+
+    `force`, `forbid` and `fix` are bounds and are honoured exactly or the MILP is infeasible;
+    `freeze` is applied after `realise` and so always holds; `pull` is only a tie-break and may
+    not (`bounds_honoured` in `splits.json` reports which of each did).  A pair that both forces
+    and forbids the same `(s, j)`, or a `fix` that contradicts a `force`, is a contradiction in
+    the document rather than an infeasible map, and exits nonzero here.
+    """
+    if not isinstance(spec, dict):
+        sys.exit("--bounds: the document must be a JSON object")
+    unknown = sorted(set(spec) - set(BOUND_KEYS))
+    if unknown:
+        sys.exit(f"--bounds: unknown key(s) {unknown}; expected {list(BOUND_KEYS)}")
+    zip_pos = {str(z): i for i, z in enumerate(zips)}
+
+    lohi: dict[tuple[int, int], list[float]] = {}
+
+    def clamp(s: int, j: int, lo: float, hi: float, what: str) -> None:
+        cur = lohi.setdefault((s, j), [0.0, 1.0])
+        cur[0], cur[1] = max(cur[0], lo), min(cur[1], hi)
+        if cur[0] > cur[1]:
+            sys.exit(f"--bounds {what}: {state_list[s]} and {run_draw.district_id(j)} are both "
+                     f"required and refused")
+
+    def pairs(key: str) -> list[tuple[int, int]]:
+        out = []
+        for item in spec.get(key, []) or []:
+            if not (isinstance(item, (list, tuple)) and len(item) == 2):
+                sys.exit(f"--bounds {key}: expected [state, district] pairs, got {item!r}")
+            s = _state_index(str(item[0]), state_list, f"--bounds {key}")
+            out.append((s, _district_index(item[1], k, f"--bounds {key}")))
+        return out
+
+    force, forbid = pairs("force"), pairs("forbid")
+    for s, j in force:
+        clamp(s, j, 1.0, 1.0, "force")
+    for s, j in forbid:
+        clamp(s, j, 0.0, 0.0, "forbid")
+
+    fix: dict[int, list[int]] = {}
+    for code, names in (spec.get("fix") or {}).items():
+        s = _state_index(str(code), state_list, "--bounds fix")
+        if isinstance(names, str) or not isinstance(names, (list, tuple)) or not names:
+            sys.exit(f"--bounds fix {code}: expected a non-empty list of district names")
+        js = sorted({_district_index(n, k, "--bounds fix") for n in names})
+        fix[s] = js
+        for j in range(k):
+            clamp(s, j, *((1.0, 1.0) if j in js else (0.0, 0.0)), "fix")
+
+    def labelled(key: str) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for code, name in (spec.get(key) or {}).items():
+            _zip_index(code, zip_pos, f"--bounds {key}")
+            out[str(code).strip()] = _district_index(name, k, f"--bounds {key}")
+        return out
+
+    triples = [(s, j, lo, hi) for (s, j), (lo, hi) in sorted(lohi.items())]
+    return dict(raw=spec, triples=triples, force=force, forbid=forbid, fix=fix,
+                freeze=labelled("freeze"), pull=labelled("pull"))
+
+
+def load_bounds(path: str, state_list: list[str], k: int, zips: list) -> dict:
+    """`parse_bounds` on the JSON at `path`; a malformed file exits before any solve."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            spec = json.load(fh)
+    except OSError as exc:
+        sys.exit(f"--bounds {path}: {exc}")
+    except json.JSONDecodeError as exc:
+        sys.exit(f"--bounds {path}: {exc}")
+    return parse_bounds(spec, state_list, k, zips)
+
+
+def _release_bound_anchors(anchors: list[tuple[int, int]],
+                           triples: list[tuple[int, int, float, float]]) -> tuple[list, list]:
+    """Drop every `--anchor-homes` anchor a `forbid` or a `fix` refuses, the way `--unanchor`
+    drops one.  Without this the bound would silently overwrite the anchor's own lower bound
+    inside `bound_z`, and the log would still claim the district was held in that state."""
+    refused = {(s, j) for s, j, _lo, hi in triples if hi < 0.5}
+    kept = [(s, j) for s, j in anchors if (s, j) not in refused]
+    dropped = [(s, j) for s, j in anchors if (s, j) in refused]
+    return kept, dropped
+
+
+def _pull_tiebreak(pull: dict, zips: list, xy: np.ndarray, state_idx: np.ndarray,
+                   C: np.ndarray, base: np.ndarray | None = None) -> np.ndarray:
+    """`(n, k)` level-2 bonus that makes each pulled district the cheapest one for its zip.
+
+    `realise` hands the bonus to `centers.assign` as `penalty=-tiebreak`, and `assign` adds the
+    penalty to `d^2` before the mass column multiplies it, so the scale to beat is a squared
+    distance and not a mass moment: ten times the largest `d^2` over the zips of that zip's own
+    state dominates every distance difference the state can offer.  It is still only a
+    preference -- `assign`'s target masses can, and at a tight target will, put the zip
+    elsewhere.  `base` (the incumbency tiebreak, when both are asked for) is added to, not
+    replaced.
+    """
+    n, k = xy.shape[0], C.shape[0]
+    tb = np.zeros((n, k)) if base is None else np.array(base, float)
+    pos = {str(z): i for i, z in enumerate(zips)}
+    bonus_of: dict[int, float] = {}
+    for code, j in pull.items():
+        i = pos[str(code)]
+        s = int(state_idx[i])
+        if s not in bonus_of:
+            sel = state_idx == s
+            d2 = ((xy[sel][:, None, :] - C[None, :, :]) ** 2).sum(axis=2)
+            top = float(d2.max()) if d2.size else 0.0
+            bonus_of[s] = 10.0 * top if top > 0 else 1.0
+        tb[i, j] += bonus_of[s]
+    return tb
+
+
+def _apply_freeze(labels: np.ndarray, zips: list, freeze: dict) -> int:
+    """Overwrite the frozen zips' labels in place; returns how many actually moved.
+
+    Level 2 cuts a split state by a balanced LP, so a frozen zip cannot be expressed as a
+    bound there -- it is imposed afterwards, which is why `freeze` is honoured by construction
+    and can push a district a zip's worth of mass outside the band."""
+    pos = {str(z): i for i, z in enumerate(zips)}
+    moved = 0
+    for code, j in freeze.items():
+        i = pos[str(code)]
+        if int(labels[i]) != int(j):
+            moved += 1
+        labels[i] = int(j)
+    return moved
+
+
+def _bounds_honoured(parsed: dict, z: np.ndarray, labels: np.ndarray, zips: list,
+                     state_list: list[str]) -> dict:
+    """Did each override hold?  `force`/`forbid`/`fix` read the solved `z`, `pull` the final
+    labels; `freeze` is true by construction and is listed so a reader need not know that."""
+    pos = {str(c): i for i, c in enumerate(zips)}
+    return dict(
+        force=[[state_list[s], run_draw.district_id(j), bool(z[s, j])]
+               for s, j in parsed["force"]],
+        forbid=[[state_list[s], run_draw.district_id(j), bool(not z[s, j])]
+                for s, j in parsed["forbid"]],
+        fix={state_list[s]: [int(x) for x in np.flatnonzero(z[s])] == list(js)
+             for s, js in parsed["fix"].items()},
+        freeze={str(c): True for c in parsed["freeze"]},
+        pull={str(c): bool(int(labels[pos[str(c)]]) == j) for c, j in parsed["pull"].items()},
+    )
 
 
 def write_state_shares(path: str, state_list: list[str], z: np.ndarray, y: np.ndarray,
@@ -298,12 +483,25 @@ def main(argv=None) -> int:
     caps = _parse_caps(args.cap, ctx.state_list)
     unanchor_states = [_state_index(code, ctx.state_list, "--unanchor") for code in args.unanchor]
 
+    bounds = load_bounds(args.bounds, ctx.state_list, ctx.k, ctx.zips) if args.bounds else None
+    if bounds is not None:
+        print(f"bounds: {len(bounds['triples'])} z bound(s) from {args.bounds} "
+              f"(force={len(bounds['force'])} forbid={len(bounds['forbid'])} "
+              f"fix={len(bounds['fix'])} freeze={len(bounds['freeze'])} "
+              f"pull={len(bounds['pull'])})", flush=True)
+
     anchors = None
     released_by_state: dict[int, tuple[list[int], list[int]]] = {}
+    bound_released: list[tuple[int, int]] = []
     if args.anchor_homes:
         anchors = [(int(ctx.home[j]), j) for j in range(ctx.k) if ctx.home[j] >= 0]
         if unanchor_states:
             anchors, released_by_state = _release_anchors(anchors, caps, unanchor_states, ctx)
+        if bounds is not None:
+            anchors, bound_released = _release_bound_anchors(anchors, bounds["triples"])
+            for s, j in bound_released:
+                print(f"bounds release: {run_draw.district_id(j)} unanchored from "
+                      f"{ctx.state_list[s]} (a forbid or fix refuses it)", flush=True)
         print(f"anchors: {len(anchors)} districts held in their committed home states "
               f"({', '.join(run_draw.district_id(j) + '=' + ctx.state_list[s] for s, j in anchors)})",
               flush=True)
@@ -329,6 +527,11 @@ def main(argv=None) -> int:
         print(f"incumbency tiebreak: mu={mu:.6g} (bound={bound:.6g}, "
               f"committed compactness={compactness0:.6g})", flush=True)
 
+    if bounds is not None and bounds["pull"]:
+        tiebreak = _pull_tiebreak(bounds["pull"], zips_known, xy_k, state_idx_k, C,
+                                  base=tiebreak)
+        print(f"pull tiebreak: {len(bounds['pull'])} zip(s) pulled", flush=True)
+
     params = dict(
         instance=os.path.abspath(args.instance), draw=os.path.abspath(args.draw), k=args.k,
         delta=args.delta, time_limit=args.time_limit, rounds=args.rounds, eta=args.eta,
@@ -336,6 +539,9 @@ def main(argv=None) -> int:
         cap=args.cap, unanchor=args.unanchor,
         unanchor_released={ctx.state_list[s]: [run_draw.district_id(j) for j in drop_js]
                            for s, (_, drop_js) in released_by_state.items()},
+        bounds=os.path.abspath(args.bounds) if args.bounds else None,
+        bounds_released=[[ctx.state_list[s], run_draw.district_id(j)]
+                         for s, j in bound_released],
         out=os.path.abspath(args.out),
         geo_cache=os.path.abspath(args.geo_cache), maps=args.maps,
         maps_steps=args.maps_steps, eps=eps, tau=tau,
@@ -359,7 +565,8 @@ def main(argv=None) -> int:
         name = f"d{delta:g}"
         t0 = time.time()
         problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta, anchors=anchors,
-                                caps=caps or None)
+                                caps=caps or None,
+                                bounds=bounds["triples"] if bounds else None)
         try:
             result = ss.solve(problem, time_limit=args.time_limit, strict=False)
         except ss.SolveFailure as exc:
@@ -388,6 +595,10 @@ def main(argv=None) -> int:
         labels_full = full_labels(realised["labels"])
         steps = [(f"realise_{ctx.state_list[s]}_r{r}", full_labels(lab))
                  for s, r, lab in realised["trajectory"]]
+        if bounds is not None and bounds["freeze"]:
+            moved = _apply_freeze(labels_full, ctx.zips, bounds["freeze"])
+            print(f"{name}: froze {len(bounds['freeze'])} zip(s), {moved} relabelled",
+                  flush=True)
 
         rounds_vals = list(realised["rounds_used"].values())
         params_row = dict(
@@ -407,14 +618,19 @@ def main(argv=None) -> int:
         rows.append(row)
         borders_report.write_grid(args.out, rows)
 
+        record = dict(
+            delta=delta, status=result["status"], mip_gap=result["mip_gap"],
+            objective=result["objective"], splits=result["splits"],
+            split_states=split_codes, y_shares=y_shares,
+            z=result["z"].astype(bool).tolist(), y=pas["y"].tolist(),
+            state_list=ctx.state_list,
+        )
+        if bounds is not None:
+            record["bounds"] = bounds["raw"]
+            record["bounds_honoured"] = _bounds_honoured(bounds, result["z"], labels_full,
+                                                         ctx.zips, ctx.state_list)
         with open(os.path.join(cell_dir, "splits.json"), "w", encoding="utf-8") as fh:
-            json.dump(dict(
-                delta=delta, status=result["status"], mip_gap=result["mip_gap"],
-                objective=result["objective"], splits=result["splits"],
-                split_states=split_codes, y_shares=y_shares,
-                z=result["z"].astype(bool).tolist(), y=pas["y"].tolist(),
-                state_list=ctx.state_list,
-            ), fh, indent=2)
+            json.dump(record, fh, indent=2)
             fh.write("\n")
 
         if args.maps or args.maps_steps:

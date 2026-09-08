@@ -256,6 +256,14 @@ def load_scenario(path: str | None, fix: list[str], anchor: list[str]) -> Scenar
     return Scenario(fix=fix_d, anchor=anchor_d)
 
 
+def load_locks(path: str) -> dict[str, str]:
+    """`--lock-zips` file `{zip: district name}` -> the same, zip keys normalised the way the
+    zip table is (`ziptable._zip5`: 5 characters, zero-padded)."""
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    return {ziptable._zip5(z): str(name) for z, name in data.items()}
+
+
 def expand_states(sc: Scenario, states: dict[str, str]) -> dict[str, str]:
     """`{zip: district name}` for every instance zip whose state is pinned by `sc`.
 
@@ -272,12 +280,16 @@ def expand_states(sc: Scenario, states: dict[str, str]) -> dict[str, str]:
     return out
 
 
-def solver_k(k: int, sc: Scenario) -> int:
-    """`k` minus the fixed districts; raises if what is left cannot even fit the anchors."""
+def solver_k(k: int, sc: Scenario, n_locks: int = 0) -> int:
+    """`k` minus the fixed districts; raises if what is left cannot even fit the anchors plus
+    `n_locks` lock-only district names (locks do not reduce k -- they are open districts, like
+    anchors -- but a brand-new lock name still counts among the k open ones)."""
     ks = k - len(sc.fix)
-    if ks < max(1, len(sc.anchor)):
+    needed = max(1, len(sc.anchor) + n_locks)
+    if ks < needed:
         raise ValueError(f"k={k}: {len(sc.fix)} fixed districts leave {ks} for the solver, "
-                         f"but {len(sc.anchor)} anchored districts need at least that many")
+                         f"but {len(sc.anchor)} anchored and {n_locks} locked district(s) "
+                         f"need at least that many")
     return ks
 
 
@@ -488,6 +500,9 @@ def main(argv=None):
                     help="NAME=ST,ST -- an open hand-drawn district (repeatable)")
     ap.add_argument("--scenario", default=None,
                     help="JSON file with top-level fix/anchor keys, merged with the flags")
+    ap.add_argument("--lock-zips", default=None,
+                    help="JSON file {zip: district name}: lock each zip into that district "
+                         "before the solve, exactly like an anchor district's own zips")
     ap.add_argument("--workers", type=int, default=8,
                     help="process pool size for the (k, seed) sweep (default 8; 1 = serial)")
     ap.add_argument("--out", default=None,
@@ -507,8 +522,19 @@ def main(argv=None):
     ks = parse_k(args.k)
     seeds = parse_seeds(args.seeds)
     sc = load_scenario(args.scenario, args.fix, args.anchor)
+    locks = load_locks(args.lock_zips) if args.lock_zips else {}
+    bad_locks = sorted({name for name in locks.values() if name in sc.fix})
+    if bad_locks:
+        raise ValueError(f"lock district(s) {bad_locks} are also --fix districts: "
+                         f"fixed districts never reach the solver")
+    lock_only_names: list[str] = []                  # first-seen lock names not already an anchor
+    seen_names = set(sc.anchor)
+    for name in locks.values():
+        if name not in seen_names:
+            lock_only_names.append(name)
+            seen_names.add(name)
     for k in ks:
-        solver_k(k, sc)                      # validate every k before any work
+        solver_k(k, sc, len(lock_only_names))     # validate every k before any work
 
     out_dir = args.out or os.path.join(
         "battery", "results",
@@ -526,7 +552,8 @@ def main(argv=None):
           f"{len(missing)} placed by state" + (f" {missing}" if missing else ""))
 
     hand = expand_states(sc, states)
-    anchor_names = list(sc.anchor)
+    hand.update(locks)
+    anchor_names = list(sc.anchor) + lock_only_names
     open_zips = [z for z in zips if z in xy and hand.get(z) not in sc.fix]
     XY = np.array([xy[z] for z in open_zips], float)
     M = np.array([M_by_zip[z] for z in open_zips], float)
@@ -551,17 +578,19 @@ def main(argv=None):
           f"{len(sc.anchor)} anchored district(s) ({n_anchor_zips} zips), "
           f"{len(open_zips)} solver zips, {n_pinned_coordless} pinned coordinate-less")
 
-    modes: dict[str, str] = {n: "fix" for n in sc.fix} | {n: "anchor" for n in sc.anchor}
+    modes: dict[str, str] = ({n: "fix" for n in sc.fix} | {n: "anchor" for n in sc.anchor}
+                             | {n: "lock" for n in lock_only_names})
 
     t0 = _dt.datetime.now()
-    by_k = run_sweep([solver_k(k, sc) for k in ks], seeds, XY, M, locked, args.workers)
+    by_k = run_sweep([solver_k(k, sc, len(lock_only_names)) for k in ks], seeds, XY, M, locked,
+                     args.workers)
     elapsed = (_dt.datetime.now() - t0).total_seconds()
     print(f"stage 1: {len(ks)} k value(s) x {len(seeds)} seed(s) in {elapsed:.1f}s")
 
     sweep_rows = []
     any_unstaffed = False
     for k in ks:
-        ks_solver = solver_k(k, sc)
+        ks_solver = solver_k(k, sc, len(lock_only_names))
         ranked1 = by_k[ks_solver]
         draws, per_draw = [], []
         for res in ranked1:
@@ -641,6 +670,7 @@ def main(argv=None):
             summary=rows,
             scenario={"fix": {n: list(s) for n, s in sc.fix.items()},
                      "anchor": {n: list(s) for n, s in sc.anchor.items()}},
+            locks=dict(locks),
             k_solver=ks_solver,
             hand_drawn=[r for r in rows if r["mode"] != "solver"],
             stage1_targets=stage1_targets,
