@@ -310,7 +310,9 @@ QUAL = [
     "#bcbd22",   # olive
     "#393b79",   # indigo
     "#8c6d31",   # bronze
-    "#7f7f7f",   # grey  (last on purpose: it reads as "other" and is the least wanted hue)
+    "#7b4173",   # plum  (last on purpose: the least wanted hue, but never grey -- the close-ups
+                 # fill every district outside their subject with CONTEXT_FILL, so a grey
+                 # district is indistinguishable from the context it is drawn against)
 ]
 LABEL_TEXT = "#2b2b2b"         # district labels: dark grey, never the district's own colour
 
