@@ -21,6 +21,14 @@ close-ups' context grey, so slot 12 is plum. CA, TX and FL re-render byte-identi
 Next decision: which map ships, still **Track 2 anchored δ = 5%** recommended, gated on the
 sponsor reading the grid tables below.
 
+Evening 2026-09-07, four branches wait on a merge decision, in this order: `worktree-conus-scope`
+(this file, the CONUS ground-set decision in `docs/PROBLEM.md` §6, the CONUS grid in Facts),
+`worktree-conus-d05/-d07/-d10` (the CONUS maps, clipped renders), and `worktree-ziptable`
+(`86fe76a`, `9b39407`: the zip table `zip,state,x,y,opportunity,district` is what every step
+writes as `draw.csv` and under `steps/`, and every figure is rendered from it with per-state
+clipping always on; 331 tests, labels byte-identical on the CONUS regression). The first
+CONUS maps were published unclipped and read as unsnapped; the labels were snapped throughout.
+
 ## Next
 
 - [ ] **Which map ships.** Track 2 anchored δ = 5% (recommended), free δ = 5%, anchored δ = 10%,
