@@ -32,11 +32,12 @@ def draw_argv(python, repo, instance, run, *, k, seeds, workers, theta, lam, fil
     return argv
 
 
-def clip_argv(python, repo, instance, run, *, draw: Path, k, delta, time_limit, geo_cache,
-             rounds=5, eta=0.01, anchor_homes=True) -> list[str]:
+def clip_argv(python, repo, instance, run, *, draw: Path, k, delta, time_limit, theta, lam,
+             filler_capture, geo_cache, rounds=5, eta=0.01, anchor_homes=True) -> list[str]:
     argv = [str(python), str(Path(repo) / "tools" / "state_splits.py"), str(instance),
            "--draw", str(draw), "--k", str(k), "--delta", str(delta),
-           "--time-limit", str(time_limit), "--rounds", str(rounds), "--eta", str(eta)]
+           "--time-limit", str(time_limit), "--theta", str(theta), "--lam", str(lam),
+           "--filler-capture", str(filler_capture), "--rounds", str(rounds), "--eta", str(eta)]
     if anchor_homes:
         argv.append("--anchor-homes")
     argv += ["--no-maps", "--geo-cache", str(geo_cache), "--out", str(run)]
@@ -69,10 +70,11 @@ def override_argv(python, repo, instance, run, *, table, edits: Path, mode,
     return argv + ["--out", str(run)]
 
 
-def split_argv(python, repo, instance, run, *, table, district, reps: list[str], exact=False,
-              time_limit=60) -> list[str]:
+def split_argv(python, repo, instance, run, *, table, district, reps: list[str], theta, lam,
+              filler_capture, exact=False, time_limit=60) -> list[str]:
     argv = [str(python), str(Path(repo) / "tools" / "split_district.py"), str(instance),
-           "--table", str(table), "--district", str(district), "--reps", _csv(reps)]
+           "--table", str(table), "--district", str(district), "--reps", _csv(reps),
+           "--theta", str(theta), "--lam", str(lam), "--filler-capture", str(filler_capture)]
     if exact:
         argv.append("--exact")
     argv += ["--time-limit", str(time_limit), "--out", str(run)]
@@ -111,10 +113,12 @@ def grid(root: Path, *, ks: list[int], delta, seeds, workers, theta, lam,
 
         clip_dir = store.new_run_dir(root, "clip", k)
         c_argv = clip_argv(python, repo, instance, clip_dir, draw=draw_table, k=k, delta=delta,
-                          time_limit=time_limit, geo_cache=geo_cache)
+                          time_limit=time_limit, theta=theta, lam=lam,
+                          filler_capture=filler_capture, geo_cache=geo_cache)
         clip_step = store.write_step(
             clip_dir, kind="clip", parent=draw_dir.name,
-            params=dict(k=k, delta=delta, time_limit=time_limit, rounds=5, eta=0.01,
+            params=dict(k=k, delta=delta, time_limit=time_limit, theta=theta, lam=lam,
+                       filler_capture=filler_capture, rounds=5, eta=0.01,
                        anchor_homes=True, geo_cache=str(geo_cache), instance=str(instance)),
             argv=c_argv,
             outputs={"table": f"{dname}/draw.csv", "metrics": f"{dname}/splits.json",

@@ -75,6 +75,16 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="max Lloyd rounds per split state at level 2")
     ap.add_argument("--eta", type=float, default=0.01,
                     help="minimum share a state flagged z_sj=1 must actually send")
+    ap.add_argument("--theta", type=float, default=borders_report.THETA,
+                    help="stage-2 rep utility weight; weights the stage-2 rep utility only, "
+                         "changes no geometry")
+    ap.add_argument("--lam", type=float, default=borders_report.LAM,
+                    help="stage-2 rep utility weight; weights the stage-2 rep utility only, "
+                         "changes no geometry")
+    ap.add_argument("--filler-capture", choices=list(model.FILLER_CAPTURE),
+                    default=borders_report.FILLER_CAPTURE,
+                    help="stage-2 filler capture rule; weights the stage-2 rep utility only, "
+                         "changes no geometry")
     ap.add_argument("--incumbency-tiebreak", action="store_true", default=False,
                     help="level-2 bonus toward the committed map's rep(j) book (off by default)")
     ap.add_argument("--anchor-homes", action="store_true", default=False,
@@ -608,7 +618,8 @@ def main(argv=None) -> int:
             n_fractional=realised["n_fractional"],
             rounds_used=max(rounds_vals) if rounds_vals else 0,
         )
-        row = borders_report.cell_row(ctx, labels_full, name, params_row)
+        row = borders_report.cell_row(ctx, labels_full, name, params_row, theta=args.theta,
+                                      lam=args.lam, filler_capture=args.filler_capture)
         completed = run_draw.complete(labels_full, ctx.zips, ctx.states_by_zip, ctx.missing,
                                       ctx.M_by_zip)
         cell_dir = borders_report.write_cell(args.out, name, ctx, labels_full, completed,
@@ -624,6 +635,8 @@ def main(argv=None) -> int:
             split_states=split_codes, y_shares=y_shares,
             z=result["z"].astype(bool).tolist(), y=pas["y"].tolist(),
             state_list=ctx.state_list,
+            stage2_value=row["stage2_value"], stage2_theta=row["stage2_theta"],
+            stage2_lam=row["stage2_lam"], stage2_filler=row["stage2_filler"],
         )
         if bounds is not None:
             record["bounds"] = bounds["raw"]

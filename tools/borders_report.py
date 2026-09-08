@@ -53,8 +53,10 @@ import run_draw                                                            # noq
 import us_maps                                                             # noqa: E402
 
 # run_draw.py's --theta/--lam/--filler-capture defaults -- the weights the committed map's own
-# stage-2 value was computed under (battery/results/draw_k18_v2_20260904/k18/metrics.json).  A
-# cell's stage-2 value is only comparable to the committed one under the same weights.
+# stage-2 value was computed under (battery/results/draw_k18_v2_20260904/k18/metrics.json), and
+# `cell_row`'s own defaults.  A caller may override them (e.g. `tools/state_splits.py`'s
+# --theta/--lam/--filler-capture), in which case the resulting stage-2 value is scored under
+# different weights and is not comparable to the committed map's own number.
 THETA = 0.40
 LAM = 0.30
 FILLER_CAPTURE = "theta"
@@ -252,15 +254,18 @@ def _owner_metrics(ctx: Ctx, completed: dict) -> tuple:
 
 
 # --------------------------------------------------------------------------------- the row
-def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict) -> dict:
+def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict, *,
+            theta: float = THETA, lam: float = LAM,
+            filler_capture: str = FILLER_CAPTURE) -> dict:
     """One grid row: complete `labels`, then measure it on the completed instance.
 
     Returns a flat dict: `name`, `spread_rel`, `max_dev_rel`, `nash` (`sum_j log M_j`), `gap`
     (`k*log(M/k) - nash`, the whole-instance Nash ceiling), `outside_owner_share`,
     `n_districts_outside_home_1pct`, `n_states_split`, `states_split` (comma-joined codes),
     `zips_changed` (vs the committed draw), `compactness` (`sum M*d^2` to `labels`'s own
-    centroids, geometric zips only), `n_fractional` (from `params`), `stage2_value`, and
-    `n_unmatched_reps`, then every key of `params` (the cell's own settings and loop
+    centroids, geometric zips only), `n_fractional` (from `params`), `stage2_value`,
+    `n_unmatched_reps`, `stage2_theta`, `stage2_lam`, `stage2_filler` (the weights `stage2_value`
+    was actually computed under), then every key of `params` (the cell's own settings and loop
     outcome, e.g. `delta`, `lam_rel`, `rounds_used`, `converged`), so the grid carries them.
     """
     completed = run_draw.complete(labels, ctx.zips, ctx.states_by_zip, ctx.missing,
@@ -275,8 +280,8 @@ def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict) -> dict:
     (outside_share, outside_share_own, n_home_1pct, n_states_split,
      states_split) = _owner_metrics(ctx, completed)
 
-    stage2 = channel.stage2(ctx.d.G, completed, theta=THETA, lam=LAM,
-                            filler_capture=FILLER_CAPTURE)
+    stage2 = channel.stage2(ctx.d.G, completed, theta=theta, lam=lam,
+                            filler_capture=filler_capture)
 
     row = dict(
         name=name,
@@ -294,6 +299,9 @@ def cell_row(ctx: Ctx, labels: np.ndarray, name: str, params: dict) -> dict:
         n_fractional=int(params.get("n_fractional", 0)),
         stage2_value=stage2["value"],
         n_unmatched_reps=len(stage2["unmatched_reps"]),
+        stage2_theta=theta,
+        stage2_lam=lam,
+        stage2_filler=filler_capture,
     )
     row.update({k: v for k, v in params.items() if k not in row})
     return row

@@ -89,3 +89,37 @@ def test_a_failed_cell_records_which_answer_the_solver_gave():
         with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
             rec = json.load(fh)
         assert rec["reason"] == "no_incumbent" and rec["solve_seconds"] == 3600.4
+
+
+# ------------------------------------------------------------------------------ stage-2 weights
+def test_stage2_weight_flags_default_to_borders_report_s_own_constants():
+    """`--theta`/`--lam`/`--filler-capture` exist so a cell can be scored under different
+    stage-2 weights than the committed map's own; unset, they must reproduce
+    `tools/borders_report.py`'s constants exactly, since that module's docstring promises a
+    cell's `stage2_value` is only comparable to the committed one under the same weights."""
+    args = cli.build_argparser().parse_args(
+        ["instance.json.gz", "--draw", "draw.csv", "--out", "out"])
+    assert args.theta == cli.borders_report.THETA
+    assert args.lam == cli.borders_report.LAM
+    assert args.filler_capture == cli.borders_report.FILLER_CAPTURE
+
+
+def test_stage2_weight_flags_parse():
+    args = cli.build_argparser().parse_args(
+        ["instance.json.gz", "--draw", "draw.csv", "--out", "out",
+         "--theta", "0.5", "--lam", "0.1", "--filler-capture", "full"])
+    assert args.theta == 0.5
+    assert args.lam == 0.1
+    assert args.filler_capture == "full"
+
+
+def test_filler_capture_rejects_a_value_outside_td_model_s_choices():
+    """`choices=list(model.FILLER_CAPTURE)` refuses anything not in that tuple."""
+    try:
+        cli.build_argparser().parse_args(
+            ["instance.json.gz", "--draw", "draw.csv", "--out", "out",
+             "--filler-capture", "bogus"])
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("expected SystemExit for an unknown --filler-capture value")

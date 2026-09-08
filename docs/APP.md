@@ -137,12 +137,22 @@ Drivers:
 | driver | CLI | reads | writes |
 |---|---|---|---|
 | draw | `run_draw.py <instance> --k K --seeds S --workers W --theta T --lam L --filler-capture F --geo-cache DIR --out RUN [--scenario FILE] [--lock-zips FILE]` | instance; optional `scenario.json` (fix/anchor pins); optional `locks.json` | `k<kk>/draw.csv`, `k<kk>/metrics.json` |
-| clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --rounds 5 --eta 0.01 --anchor-homes --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
+| clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
 | geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--simplify M] [--no-basemap]` | a zip table | `geom.json`, in the run directory `--out` names |
 | staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
 | override, mode A | `override.py <instance> --table TABLE --edits FILE --mode A [--eta E] --out RUN` | instance (CONUS assert only); a zip table; `edits.json` | `draw.csv` (relabelled), `metrics.json` |
 | override, mode B | `override.py <instance> --table TABLE --edits FILE --mode B --parent PARENT_RUN --out RUN` | `edits.json`; `PARENT_RUN`'s lineage, walked up to its nearest `draw`/`clip` ancestor for that step's own recorded `argv` | `locks.json` or `bounds.json`, `engine/` (the rerun engine's own output tree), `draw.csv`, `metrics.json` |
-| split_district | `split_district.py <instance> --table TABLE --district D --reps R,R [--exact] [--time-limit T] [--n-near N] --out RUN` | instance; a zip table | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
+| split_district | `split_district.py <instance> --table TABLE --district D --reps R,R --theta T --lam L --filler-capture F [--exact] [--time-limit T] [--n-near N] --out RUN` | instance; a zip table | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
+
+theta, lambda and the filler-capture rule weight the stage-2 rep utility and nothing else: no
+geometry moves when they change. Every step of a chain is given the same three, so the values a
+chain reports are comparable within it. The draw and the split take them from the tab that
+launched the run, the clip takes them from the draw it clips, and a split takes them from the
+staffing run it descends from. `d<delta>/splits.json` records `stage2_value` next to
+`stage2_theta`, `stage2_lam` and `stage2_filler`, and the Map tab shows the value with those
+weights beneath it, since a stage-2 value read without its weights means nothing. The drivers'
+own defaults are unchanged and still `theta`, so a run made without the flags stays comparable to
+the committed map.
 
 Frozen JSON contracts.
 

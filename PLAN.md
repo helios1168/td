@@ -14,7 +14,11 @@ every step; the delivered map is the clipped one.
 
 The user is reviewing the app locally (`tools/app.sh --server.port 8503` from this worktree,
 `http://127.0.0.1:8503`) against the runs under `battery/results/app/`; the track stays on this
-branch until they ask for the merge (2026-09-08). At merge: fast-forward into `main`, run
+branch until they ask for the merge (2026-09-08). The stage-2 weight alignment below wants one
+look in the browser that no test covers: a clip's Map tab must show the value with the weights
+under it, and a split launched from the Reps tab must inherit its staffing run's theta. Runs
+made before 2026-09-08 carry none of the new keys and must render exactly as they did. At merge:
+fast-forward into `main`, run
 `/state` there, delete `PLAN.md` in the last commit, unlock and remove the worktree, delete the
 branch.
 
@@ -36,6 +40,17 @@ branch.
   picker shows `store.label` (`k18 · clip · 2026-09-08 14:42:39`) built from the ledger; the
   free-text grid name is gone. 409 tests, 0 fail. The user reviewed the app locally and
   called it good.
+- 2026-09-08: the stage-2 weights are one set per chain. `borders_report.cell_row` takes
+  `theta`, `lam` and `filler_capture` as keyword-only parameters defaulting to its own
+  constants, and its row echoes them as `stage2_theta`, `stage2_lam` and `stage2_filler`;
+  `tools/state_splits.py` exposes the three flags and records the value and the weights in
+  `d<delta>/splits.json`; the app passes them to the clip, and a split takes them from the
+  staffing run it descends from; the Map tab shows the value with the weights beneath it. The
+  app default stays `filler_capture="full"`. Driver defaults did not move: a no-flag clip of
+  the k = 10 draw reproduces `stage2_value = 58.79368001770277` exactly, and the same clip under
+  `--filler-capture full` gives 58.81832626294138 with identical geometry (`spread_rel`,
+  `zips_changed`, `splits` unchanged), which is the point: the weights score reps, not maps.
+  417 tests, 0 fail.
 
 ## Decisions needed
 
@@ -45,11 +60,6 @@ branch.
   open question already in `STATE.md`; the app shows the realised number, not the band.
 - Under `filler_capture=full` the Nash value rises when reps are released, so `value` is not
   comparable across released sets; the Reps tab shows it per run only.
-- theta and lambda enter only the rep utility (stage 2, staff, split), never the draw or the
-  clip geometry. The clip's `grid.csv` stage-2 value uses the constants in
-  `tools/borders_report.py:58-60` (0.40, 0.30, `filler_capture="theta"`), not the run's
-  parameters and not the app's `full` default; the app does not display that number. Align
-  them or leave as is.
 
 ## Files owned / forbidden
 

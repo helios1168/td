@@ -176,3 +176,41 @@ def test_smoke_committed_map():
     assert abs(row["stage2_value"] - committed_stage2) <= 1e-6 * abs(committed_stage2)
     assert row["zips_changed"] == 0
     assert 0.07 <= row["outside_owner_share"] <= 0.11
+
+
+# ------------------------------------------------------------------------------ stage-2 weights
+def test_cell_row_filler_capture_changes_stage2_value():
+    """`filler_capture` scores fillers differently under `"full"` than under the default
+    `"theta"` rule (`td.channel.stage2`), so the same labelling's `stage2_value` must move when
+    it changes -- these keyword-only weights are not dead parameters."""
+    if not os.path.exists(INSTANCE_PATH):
+        return
+
+    ctx = br.load_committed(INSTANCE_PATH, DRAW_PATH, GEO_CACHE)
+    row_theta = br.cell_row(ctx, ctx.labels0, "committed", {"n_fractional": 0})
+    row_full = br.cell_row(ctx, ctx.labels0, "committed", {"n_fractional": 0},
+                           filler_capture="full")
+
+    assert row_full["stage2_value"] != row_theta["stage2_value"]
+
+
+def test_cell_row_echoes_the_weights_it_was_scored_under():
+    """The row's `stage2_theta`/`stage2_lam`/`stage2_filler` are whatever was passed to
+    `cell_row`, and fall back to the module's own `THETA`/`LAM`/`FILLER_CAPTURE` constants when
+    nothing was passed -- the same constants `test_smoke_committed_map`'s regression number was
+    computed under."""
+    if not os.path.exists(INSTANCE_PATH):
+        return
+
+    ctx = br.load_committed(INSTANCE_PATH, DRAW_PATH, GEO_CACHE)
+
+    row_default = br.cell_row(ctx, ctx.labels0, "committed", {"n_fractional": 0})
+    assert row_default["stage2_theta"] == br.THETA
+    assert row_default["stage2_lam"] == br.LAM
+    assert row_default["stage2_filler"] == br.FILLER_CAPTURE
+
+    row_custom = br.cell_row(ctx, ctx.labels0, "committed", {"n_fractional": 0},
+                             theta=0.5, lam=0.2, filler_capture="opportunity")
+    assert row_custom["stage2_theta"] == 0.5
+    assert row_custom["stage2_lam"] == 0.2
+    assert row_custom["stage2_filler"] == "opportunity"

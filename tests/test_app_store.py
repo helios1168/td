@@ -221,6 +221,44 @@ def test_grid_writes_scenario_json_and_passes_the_flag_when_pins_are_given():
         assert d_argv[d_argv.index("--scenario") + 1] == str(scenario_path)
 
 
+# ------------------------------------------------------------------------------ stage-2 weights
+def test_clip_argv_carries_the_stage2_weights():
+    argv = steps.clip_argv("/py/python3", "/repo", "/repo/instance.json.gz", Path("/out"),
+                           draw=Path("/draw/k18/draw.csv"), k=18, delta=0.1, time_limit=600,
+                           theta=0.4, lam=0.3, filler_capture="full", geo_cache="/geo")
+    assert "--theta" in argv and argv[argv.index("--theta") + 1] == "0.4"
+    assert "--lam" in argv and argv[argv.index("--lam") + 1] == "0.3"
+    assert "--filler-capture" in argv and argv[argv.index("--filler-capture") + 1] == "full"
+
+
+def test_split_argv_carries_the_stage2_weights():
+    argv = steps.split_argv("/py/python3", "/repo", "/repo/instance.json.gz", Path("/out"),
+                            table=Path("/table/draw.csv"), district="D01", reps=["A", "B"],
+                            theta=0.4, lam=0.3, filler_capture="opportunity")
+    assert "--theta" in argv and argv[argv.index("--theta") + 1] == "0.4"
+    assert "--lam" in argv and argv[argv.index("--lam") + 1] == "0.3"
+    assert ("--filler-capture" in argv
+           and argv[argv.index("--filler-capture") + 1] == "opportunity")
+
+
+def test_grid_records_the_stage2_weights_in_the_clip_step_too():
+    """`grid` already records `theta`/`lam`/`filler_capture` in the draw run's `step.json`
+    params; the clip run's own params must carry the same three, since the clip is scored on
+    them too now."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        [chain] = steps.grid(
+            root, ks=[18], delta=0.10, seeds="0-4", workers=2, theta=0.4, lam=0.3,
+            filler_capture="full", time_limit=600, pins=None, python="/py/python3",
+            repo="/repo", instance="/repo/instance_descaled_v2_conus.json.gz",
+            geo_cache="/repo/data/geo")
+        (draw_dir, _d_argv), (clip_dir, _c_argv), _geom = chain
+        clip_step = store.read_step(clip_dir)
+        assert clip_step["params"]["theta"] == 0.4
+        assert clip_step["params"]["lam"] == 0.3
+        assert clip_step["params"]["filler_capture"] == "full"
+
+
 # ------------------------------------------------------------------------------ launch_chain
 def test_launch_chain_runs_in_order_writes_both_logs_and_terminates():
     with tempfile.TemporaryDirectory() as tmp:

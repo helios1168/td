@@ -363,13 +363,25 @@ def render_side(run: Path, geom: dict | None) -> None:
             st.write(f"MIP gap {float(gap):.3%}")
         split_states = data.get("split_states") or []
         st.write("split: " + (", ".join(split_states) if split_states else "no state"))
+        stage2_value = data.get("stage2_value")
+        if stage2_value is not None:
+            st.metric("Stage-2 value", f"{stage2_value:.4g}")
+            st.caption(f"theta {data.get('stage2_theta')}, lambda {data.get('stage2_lam')}, "
+                       f"filler capture {data.get('stage2_filler')}")
     else:
-        report = (json.loads(metrics.read_text()).get("winner") or {}).get("balance_report")
+        winner = json.loads(metrics.read_text()).get("winner") or {}
+        report = winner.get("balance_report")
         if report:
             st.write("Balance")
             st.json(report, expanded=False)
         else:
             st.caption("This step's metrics carry no balance report.")
+        stage2_value = winner.get("stage2_value")
+        if stage2_value is not None:
+            params = store.read_step(run).get("params", {})
+            st.metric("Stage-2 value", f"{stage2_value:.4g}")
+            st.caption(f"theta {params.get('theta')}, lambda {params.get('lam')}, "
+                       f"filler capture {params.get('filler_capture')}")
     show_failure(run)
 
 
@@ -523,13 +535,19 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
     limit = cols[0].number_input("Time limit (s)", 5, 3600, 60, step=5,
                                  key=f"split-limit-{district}")
     if cols[2].button("Split", key=f"split-go-{district}", disabled=len(reps) < 2):
+        parent_params = store.read_step(staff_run).get("params", {})
+        theta = parent_params.get("theta", config.THETA)
+        lam = parent_params.get("lam", config.LAM)
+        filler = parent_params.get("filler_capture", config.FILLER)
         child = store.new_run_dir(config.APP_RESULTS, "split", k_for(staff_run))
         argv = steps.split_argv(config.SOLVER_PYTHON, config.CODE, instance_of(staff_run), child,
                                 table=store.table_path(staff_run), district=district, reps=reps,
+                                theta=theta, lam=lam, filler_capture=filler,
                                 exact=bool(exact), time_limit=int(limit))
         launch_child(child, kind="split", parent=staff_run,
                      params=dict(district=district, reps=reps, exact=bool(exact),
-                                 time_limit=int(limit), instance=str(instance_of(staff_run))),
+                                 time_limit=int(limit), instance=str(instance_of(staff_run)),
+                                 theta=theta, lam=lam, filler_capture=filler),
                      argv=argv, outputs={"table": "draw.csv", "metrics": "split.json"})
         st.success(f"`{child.name}` in flight.")
 
