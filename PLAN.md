@@ -7,9 +7,18 @@ rep maps fill zip cells by rep colour instead of drawing dots. On the way, a sco
 never hands an in-scope district to a rep the table already places outside the scope. Second,
 later piece on the same branch: one sidebar instance (member) picker drives Map and Reps
 instead of each tab's own flat run picker, and the Reps tab collapses to one named-view pane
-instead of three map panes and two before/after tables.
+instead of three map panes and two before/after tables. Third piece, added 2026-09-09: the Map
+board encodes opportunity at the zip rather than the dot, the Reps tab has one staffing form
+instead of separate staffing and split areas, and the zip shapes on every map are real census
+ZCTA polygons instead of a Voronoi tessellation of zip centroids.
 
 ## Next step
+
+Finish the real-ZCTA geometry change (uncommitted, in flight: `td/geo.py`,
+`tools/geom_export.py`, `tests/test_geom_export.py`, `docs/APP.md`), then rebuild `geom.json`
+for the runs the app actually opens (36 runs under `battery/results/app/` still carry
+Voronoi-based cells and no `cells_source`; at minimum the round3 k10 clip and staff runs), then
+the on-screen check below, then merge on request.
 
 On-screen check of the branch app (tmux `tdapp-cell`, `100.69.120.67:8503`), the live checks
 `~/.claude/plans/lets-simplify-certain-aspect-cached-origami.md` §5.3 calls for:
@@ -78,23 +87,69 @@ Then merge on request.
   extended to cover split districts. `docs/APP.md` and this file's Owned/Forbidden and `## Done`
   updated to match. Real `staffing.json` deltas from the plan's own spec text, read off
   `tools/staff_and_split.py`/`tests/test_staff_and_split.py` directly: `requested_multi[d]` can
-  carry an `"error"` string when that district's split raised (it then falls through to
-  `unstaffed_districts`, its would-be roster freed); a roster is capped at the district's own
-  zip count, one more reason `resolved_n` can read below `requested_n`; a `--multi` run whose
-  geom has no `"cells"` is a hard `failure.json`, not a silent unguarded solve. 522 passed, 0
-  failed under `.venv`.
+  carry an `"error"` string when that district's split raised; a roster is capped at the
+  district's own zip count, one more reason `resolved_n` can read below `requested_n`; a
+  `--multi` run whose geom has no `"cells"` is a hard `failure.json`, not a silent unguarded
+  solve. Committed as `7fd78e0`. 522 passed, 0 failed under `.venv`; the AppTest smoke and the
+  19 mapfig tests verified under `.venv-app`, with streamlit and plotly 7.0.0 genuinely loaded.
+  Implemented by Sonnet subagents, each reviewed by an Opus agent reading the real files; the
+  reviews found 13 behaviour defects, all fixed before the commit. Three worth carrying: a
+  stale `st.data_editor` re-applies its `edited_rows` by ROW POSITION to whatever frame is
+  passed next, with no identity or bounds check, so a scope change replayed an edited rep count
+  onto a district the user never touched (the widget key now folds in a hash of the resolved
+  scope); a pre-cells `geom.json` reached `district_split.split(adjacency=None)` and silently
+  produced a non-contiguous split (now a hard failure); and the split phase originally ran
+  after the Hungarian match, so a raised split stranded its district unstaffed with its reps
+  still excluded from that match. The split phase now runs BEFORE assign: a district whose
+  split raises falls through and is staffed as an ordinary single-rep district, its roster reps
+  free for anyone else, with the error recorded in `requested_multi`.
+  `tests/test_app_smoke.py`'s sidebar assertion was a live regression from `bcb3f00` (the
+  Instance picker makes two selectboxes, the test allowed at most one) and is fixed here.
+- 2026-09-09, in flight, uncommitted (`td/geo.py`, `tools/geom_export.py`,
+  `tests/test_geom_export.py`, `docs/APP.md`): the zip shapes on the maps were never real ZIP
+  boundaries. `geom.json["cells"]` was a Voronoi tessellation of ZCTA centroid points from the
+  2020 Gazetteer (`tools/us_maps.py:858`), clipped to the state outline, so every "zip" was a
+  synthetic catchment tiling the whole state; real ZCTA polygons were never loaded for drawing.
+  Replaced with `data/tiger/2025/tl_2025_us_zcta520.shp` at 250 m simplify: 100% coverage of
+  the 3,704 placed zips, `geom.json` 0.91 MB to 3.59 MB, export 0.3 s to 13.9 s, and a new
+  `cells_source` key so a stale geom is identifiable. `cell_edges` stays the Voronoi rook
+  adjacency, byte-identical at 10,483 edges, so `td/solvers/district_split.py`'s contiguity
+  guard and every existing split result are unchanged. Vintage caveat: ZCTAs are re-delineated
+  only each decennial, so the 2025 TIGER release carries the same 33,791 ZCTA5 codes as the
+  2020 one, but 865 of 2,000 sampled polygons have refined geometry. Opus review found 9
+  defects, being fixed; the load-bearing one is that `tools/split_district.py:73` builds its
+  contiguity graph as `{z for z in zips if z in geom["cells"]}`, an inference that held only
+  while `cells` meant "has a Voronoi cell" — a zip whose Voronoi cell clips away to nothing on
+  the coastline would now enter the graph as an isolated vertex and make the guard infeasible
+  (latent: 0 such zips on this instance).
 
 ## Decisions needed
 
 - Hover on cell vertices with `hoverdistance` 40 px: confirm on screen, raise if cells show a
-  dead centre at district zoom.
+  dead centre at district zoom. Now applies to the main Map board too, not just the rep maps,
+  and real ZCTA cells share boundary vertices with their neighbours, so a click near a border
+  can resolve to the neighbouring zip.
+- Zip `x`/`y` vintage. The table's coordinates are the 2020 Gazetteer internal points exactly
+  (max deviation 0.0 m, measured). A 2025 Gazetteer exists and agrees with the 2025 TIGER
+  polygons to 0.1 m, while the 2020 Gazetteer disagrees with TIGER's own internal points for
+  the same ~468 zips in both releases. Switching moves the live instance's zips by median 33 m,
+  p95 2.4 km, max 72.6 km, 12.6% over 1 km; a nearest-centre proxy flips 1 zip of 3,704
+  (0.03%), so the districting is very unlikely to move materially, but only a stage-1 re-run
+  proves it. It buys coordinate/polygon consistency and fixes the 36 zips (1%) whose current
+  point falls OUTSIDE its own 2025 ZCTA polygon (median 554 m out, worst 93001 Ventura at
+  53 km, a coastal point sitting in the water). Cost: re-derives the instance and invalidates
+  existing run artifacts. User asked for the numbers on 2026-09-09; not yet decided. Deliberately
+  kept out of the map change.
+- `geom.json` payload is now 3.59 MB per run and reloads on every rerun. Chosen deliberately
+  (250 m from a measured 250 m/500 m/1 km menu); revisit if the browser drags.
 - `tests/run_all.py` under `.venv-app`: filter by file name before importing, or guard the
   networkx import in `tests/test_atom_draw.py`. Outside this track's files.
 
 ## Files owned / forbidden
 
-Owned: `td/solvers/district_split.py`, `tools/split_district.py`, `tools/geom_export.py`,
-`tools/staff.py`, `tools/staff_and_split.py`, `app/mapfig.py`, `app/tab_map.py`,
+Owned: `td/solvers/district_split.py`, `td/geo.py`, `tools/split_district.py`,
+`tools/geom_export.py`, `tools/staff.py`, `tools/staff_and_split.py`, `app/mapfig.py`,
+`app/tab_map.py`,
 `app/tab_reps.py`, `app/steps.py`, `app/store.py`, `app/common.py`, `app/main.py`,
 `app/tab_overrides.py`, `docs/APP.md`, their tests.
 Forbidden: `tools/rep_export.py`, `docs/foundations/`, `battery/figures/`.
