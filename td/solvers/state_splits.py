@@ -519,7 +519,11 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> d
             rem = left()
             if rem is not None and rem <= 0:
                 return s_star, current_best, False, True
-            budget = 20.0 if rem is None else min(20.0, rem)
+            # A real certificate is an LP-infeasibility proof and returns in well under a
+            # second on the k=20 instance; a cutoff that is not yet infeasible is as hard as
+            # the whole problem, so spending more than a few seconds on it only delays the
+            # queue (the members keep searching meanwhile).
+            budget = 5.0 if rem is None else min(5.0, rem)
             tc = time.time()
             try:
                 res_c = _me.solve_problem(_me.with_cutoff(problem, s_star), "highs",
