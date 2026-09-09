@@ -13,27 +13,31 @@ from app import config, mapfig, repdata, runner, steps, store
 from app.common import MAP_KINDS, _geom, _rows, _stamp, instance_of, label_run, show_failure
 
 
-def render_map() -> None:
+def render_map(base_run: Path | None) -> None:
+    scenario = st.session_state.get("scenario")
     discovered = store.discover(config.APP_RESULTS)
-    if not discovered:
+    scoped = [r for r in discovered if store.scenario_of(r, config.APP_RESULTS) == scenario]
+
+    with st.expander("Advanced: pick a specific run", expanded=False):
+        seed_intermediates = base_run is not None and store.read_step(base_run).get("kind") == "draw"
+        intermediates = st.toggle("Show intermediates", value=seed_intermediates,
+                                  key="map-intermediates",
+                                  help="Adds the draw tables. A draw is what the clip "
+                                       "starts from, not the map.")
+        kinds = (*MAP_KINDS, "draw") if intermediates else MAP_KINDS
+        shown = [r for r in scoped if store.read_step(r).get("kind") in kinds]
+        if shown:
+            index = shown.index(base_run) if base_run in shown else 0
+            run = st.selectbox("Instance", shown,
+                               format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
+                               index=index, key="map-run")
+        else:
+            run = base_run
+            st.caption("No clipped map yet. Turn on intermediates to see the draws.")
+
+    if run is None:
         st.info(f"No runs under {config.APP_RESULTS} yet. Launch a grid first.")
         return
-
-    scenario = st.session_state.get("scenario")
-    scoped = [run for run in discovered
-             if store.scenario_of(run, config.APP_RESULTS) == scenario]
-
-    intermediates = st.toggle(
-        "Show intermediates", value=False,
-        help="Adds the draw tables. A draw is what the clip starts from, not the map.")
-    kinds = (*MAP_KINDS, "draw") if intermediates else MAP_KINDS
-    shown = [run for run in scoped if store.read_step(run).get("kind") in kinds]
-    if not shown:
-        st.info("No clipped map yet. Turn on intermediates to see the draws.")
-        return
-
-    run = st.selectbox("Instance", shown, format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
-                       key="map-run")
     st.caption(" > ".join(label_run(p) for p in store.lineage(run, config.APP_RESULTS))
                + f"  (`{run.name}`)")
 
