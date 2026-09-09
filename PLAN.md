@@ -18,6 +18,14 @@ pass (bench table, portfolio, traps 18 and 19), report and ask about the merge.
 
 ## Done
 
+- 2026-09-09 wave 3d (`9645be1`, `7b022b7`): portfolio strategy. Real k=20 cell alone: 70 s,
+  proven (SCIP finds 10 splits at 47 s, proof 0.2 s, tie-break 11 s), from 600 s at the cap.
+  Grid `round2` (k = 10 to 20, delta 0.10, six chains at once, launched through the app by
+  AppTest): wall 316 s from 614 s; clip solves k10 20 s, k12 19 s, k14 1.5 s, k18 39 s,
+  k20 75 s all certified; k16 hit the 300 s cap uncertified (7 splits, gap 1.8 %) under
+  six-way CPU contention. Two defects found: the geom export overwrote the clip's
+  `timings.json` (same directory), and the grid gave every chain the whole machine. Both
+  being fixed. Naming (`round2_k10_d10_clip_<stamp>`) and the sidebar jump verified.
 - 2026-09-09 wave 3b (`b503c9e`): HiGHS with fixed roots and the descent strategy is the clip
   default; real k=20 cell proven optimal (10 splits, gap 0) in 293 s: 30 s primal gives 11
   splits, the first cutoff solve needs 255 s to find a 10-split map, the 9-split proof 0.14 s,

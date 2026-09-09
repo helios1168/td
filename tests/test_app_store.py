@@ -324,6 +324,58 @@ def test_grid_writes_scenario_json_and_passes_the_flag_when_pins_are_given():
         assert d_argv[d_argv.index("--scenario") + 1] == str(scenario_path)
 
 
+# ------------------------------------------------------------------------------ grid threads
+def test_grid_threads_default_splits_the_machine_across_the_chains():
+    """With no `threads` given, `grid` divides the machine's cores across the chains it is
+    launching at once, so six concurrent chains do not each size a portfolio for all 12."""
+    old = os.cpu_count
+    os.cpu_count = lambda: 12
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ks = [10, 12, 14, 16, 18, 20]
+            chains = steps.grid(
+                root, name="Custom", ks=ks, delta=0.10, seeds="0-4", workers=2, theta=0.4,
+                lam=0.3, filler_capture="full", time_limit=600, pins=None, python="/py/python3",
+                repo="/repo", instance="/repo/instance_descaled_v2_conus.json.gz",
+                geo_cache="/repo/data/geo")
+            for (_draw_dir, _d_argv), (clip_dir, c_argv), _geom in chains:
+                assert "--threads" in c_argv and c_argv[c_argv.index("--threads") + 1] == "2"
+                assert store.read_step(clip_dir)["params"]["threads"] == 2
+    finally:
+        os.cpu_count = old
+
+
+def test_grid_threads_default_with_one_k_uses_the_whole_machine():
+    old = os.cpu_count
+    os.cpu_count = lambda: 12
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            [chain] = steps.grid(
+                root, ks=[18], delta=0.10, seeds="0-4", workers=2, theta=0.4, lam=0.3,
+                filler_capture="full", time_limit=600, pins=None, python="/py/python3",
+                repo="/repo", instance="/repo/instance.json.gz", geo_cache="/repo/data/geo")
+            (_draw_dir, _d_argv), (clip_dir, c_argv), _geom = chain
+            assert "--threads" in c_argv and c_argv[c_argv.index("--threads") + 1] == "12"
+            assert store.read_step(clip_dir)["params"]["threads"] == 12
+    finally:
+        os.cpu_count = old
+
+
+def test_grid_threads_explicit_wins_over_the_default():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        [chain] = steps.grid(
+            root, ks=[18], delta=0.10, seeds="0-4", workers=2, theta=0.4, lam=0.3,
+            filler_capture="full", time_limit=600, pins=None, python="/py/python3",
+            repo="/repo", instance="/repo/instance.json.gz", geo_cache="/repo/data/geo",
+            threads=4)
+        _draw, (clip_dir, c_argv), _geom = chain
+        assert "--threads" in c_argv and c_argv[c_argv.index("--threads") + 1] == "4"
+        assert store.read_step(clip_dir)["params"]["threads"] == 4
+
+
 # ------------------------------------------------------------------------------ stage-2 weights
 def test_clip_argv_carries_the_stage2_weights():
     argv = steps.clip_argv("/py/python3", "/repo", "/repo/instance.json.gz", Path("/out"),

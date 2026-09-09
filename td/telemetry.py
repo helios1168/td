@@ -147,7 +147,12 @@ class Timings:
 
     def write(self, out_dir: str) -> str:
         """`<out_dir>/timings.json`, and, under `TD_PROFILE=1`, `<out_dir>/profile.prof` from
-        the profiler `maybe_profile` started.  Deactivates this `Timings` (see `close`)."""
+        the profiler `maybe_profile` started.  A directory can hold more than one driver's
+        output (a clip run's own directory, followed by the geom export chained after it): if
+        `timings.json` is already there and belongs to a different driver, this writes
+        `timings.<driver>.json` instead, leaving the first file alone; the same driver writing
+        twice (a rerun) still overwrites its own file.  `profile.prof` follows the same rule as
+        `profile.<driver>.prof`.  Deactivates this `Timings` (see `close`)."""
         payload = dict(
             driver=self.driver, argv=self.argv,
             started=self._started_iso, finished=_now_iso(),
@@ -157,12 +162,20 @@ class Timings:
             phases=self.phases, ticks=self.ticks,
         )
         os.makedirs(out_dir, exist_ok=True)
-        path = os.path.join(out_dir, "timings.json")
+        name = "timings.json"
+        existing = os.path.join(out_dir, name)
+        if os.path.exists(existing):
+            with open(existing, encoding="utf-8") as fh:
+                other_driver = json.load(fh).get("driver")
+            if other_driver != self.driver:
+                name = f"timings.{self.driver}.json"
+        path = os.path.join(out_dir, name)
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, indent=2)
             fh.write("\n")
         if os.environ.get("TD_PROFILE") == "1" and self._profiler is not None:
-            self._profiler.dump_stats(os.path.join(out_dir, "profile.prof"))
+            prof_name = "profile.prof" if name == "timings.json" else f"profile.{self.driver}.prof"
+            self._profiler.dump_stats(os.path.join(out_dir, prof_name))
         self._pop()
         return path
 

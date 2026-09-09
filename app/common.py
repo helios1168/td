@@ -103,13 +103,12 @@ def _stamp(path: Path | None) -> tuple[str, float] | None:
     return (str(path), path.stat().st_mtime) if path and path.exists() else None
 
 
-def _timings_path(run: Path) -> Path | None:
-    """Where a run's `timings.json` sits, if the step recorded one and it was actually written."""
-    rel = store.read_step(run).get("outputs", {}).get("timings")
-    if not rel:
-        return None
-    path = (Path(run) / rel).resolve()
-    return path if path.exists() else None
+def _timings_paths(run: Path) -> list[Path]:
+    """Every timings file a run's directory holds: its own plus any sibling
+    `timings.<driver>.json` a chained driver (most often geom_export) left behind rather than
+    overwrite it (`td/telemetry.py Timings.write`)."""
+    run = Path(run)
+    return list(run.glob("timings.json")) + list(run.glob("timings.*.json"))
 
 
 @st.cache_data(show_spinner=False)
@@ -117,12 +116,20 @@ def _wall(path: str, mtime: float) -> float | None:
     return json.loads(Path(path).read_text()).get("wall")
 
 
+def _total_wall(run: Path) -> float | None:
+    """The run's total wall time: every timings file it holds, summed."""
+    paths = _timings_paths(run)
+    walls = [_wall(*_stamp(p)) for p in paths]
+    walls = [w for w in walls if w is not None]
+    return sum(walls) if walls else None
+
+
 def runs_frame(paths: list[Path]) -> pd.DataFrame:
     rows = []
     for run in paths:
         step = store.read_step(run)
         parent = step.get("parent")
-        timings = _timings_path(run)
+        wall = _total_wall(run)
         rows.append({"run": store.label(run, config.APP_RESULTS),
                      "scenario": store.scenario_of(run, config.APP_RESULTS) or "",
                      "instance": store.member_of(run, config.APP_RESULTS) or "",
@@ -130,7 +137,7 @@ def runs_frame(paths: list[Path]) -> pd.DataFrame:
                      if parent and (config.APP_RESULTS / parent / store.STEP).exists() else "",
                      "status": store.status(run),
                      "failure": (store.failure(run) or {}).get("reason", ""),
-                     "wall (s)": round(_wall(*_stamp(timings)), 1) if timings else None,
+                     "wall (s)": round(wall, 1) if wall is not None else None,
                      "directory": run.name})
     return pd.DataFrame(rows)
 

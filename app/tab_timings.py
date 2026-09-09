@@ -41,17 +41,17 @@ def _timings(path: str, mtime: float) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def _timings_path(run: Path) -> Path | None:
-    rel = store.read_step(run).get("outputs", {}).get("timings")
-    if not rel:
-        return None
-    path = (Path(run) / rel).resolve()
-    return path if path.exists() else None
+def _timings_paths(run: Path) -> list[Path]:
+    """Every timings file a run's directory holds: `timings.json` plus any sibling
+    `timings.<driver>.json` a chained driver (most often geom_export) left behind rather than
+    overwrite it (`td/telemetry.py Timings.write`), own file first."""
+    run = Path(run)
+    paths = list(run.glob("timings.json")) + list(run.glob("timings.*.json"))
+    return sorted(paths, key=lambda p: p.name != "timings.json")
 
 
-def _load(run: Path) -> dict | None:
-    path = _timings_path(run)
-    return _timings(str(path), path.stat().st_mtime) if path is not None else None
+def _load(run: Path) -> list[tuple[Path, dict]]:
+    return [(path, _timings(str(path), path.stat().st_mtime)) for path in _timings_paths(run)]
 
 
 def _parse_started(value: str | None) -> datetime | None:
@@ -142,10 +142,10 @@ def _scenario_summary(entries: list[dict], root: Path) -> dict | None:
     span_by_member: dict[str, tuple[datetime, datetime, str, float]] = {}
     for e in entries:
         member = store.member_of(e["run"], root) or store.label(e["run"], root)
-        timings = e["timings"]
-        if timings is not None:
-            end = e["started"] + timedelta(seconds=timings["wall"])
-            total_cpu += timings.get("cpu", 0.0)
+        files = e["timings"]
+        if files:
+            end = e["started"] + timedelta(seconds=sum(p["wall"] for _path, p in files))
+            total_cpu += sum(p.get("cpu", 0.0) for _path, p in files)
         elif store.status(e["run"]) == "running":
             end = now
         else:
@@ -191,24 +191,30 @@ def render_timings() -> None:
     rows = []
     for e in entries:
         member = store.member_of(e["run"], root) or store.label(e["run"], root)
-        start = (e["started"] - epoch).total_seconds()
-        timings = e["timings"]
-        if timings is not None:
-            rows.append(dict(member=member, kind=_kind_bucket(e["kind"]),
-                             label=store.label(e["run"], root), start=start,
-                             end=start + timings["wall"], state="done",
-                             phases=[(p["name"], p["wall"]) for p in timings.get("phases", [])
-                                    if p.get("depth") == 0],
-                             wall=timings["wall"]))
+        label = store.label(e["run"], root)
+        files = e["timings"]
+        if files:
+            # One bar per file, back to back from the run's own start: a clip run's
+            # timings.json is followed by its chained geom_export's timings.geom.json.
+            t = e["started"]
+            for _path, payload in files:
+                start = (t - epoch).total_seconds()
+                wall = payload["wall"]
+                rows.append(dict(member=member, kind=_kind_bucket(payload["driver"]),
+                                 label=label, start=start, end=start + wall, state="done",
+                                 phases=[(p["name"], p["wall"]) for p in payload.get("phases", [])
+                                        if p.get("depth") == 0],
+                                 wall=wall))
+                t = t + timedelta(seconds=wall)
         elif store.status(e["run"]) == "running":
-            rows.append(dict(member=member, kind=_kind_bucket(e["kind"]),
-                             label=store.label(e["run"], root), start=start,
-                             end=(now - epoch).total_seconds(), state="running",
+            start = (e["started"] - epoch).total_seconds()
+            rows.append(dict(member=member, kind=_kind_bucket(e["kind"]), label=label,
+                             start=start, end=(now - epoch).total_seconds(), state="running",
                              phases=[], wall=None))
         else:
-            rows.append(dict(member=member, kind=_kind_bucket(e["kind"]),
-                             label=store.label(e["run"], root), start=start, end=start,
-                             state="no_timings", phases=[], wall=None))
+            start = (e["started"] - epoch).total_seconds()
+            rows.append(dict(member=member, kind=_kind_bucket(e["kind"]), label=label,
+                             start=start, end=start, state="no_timings", phases=[], wall=None))
 
     summary = _scenario_summary(entries, root)
     if summary:
@@ -224,19 +230,20 @@ def render_timings() -> None:
 
 
 def render_detail(entries: list[dict], root: Path) -> None:
-    with_timings = [e for e in entries if e["timings"] is not None]
-    if not with_timings:
+    files = [(e["run"], path, payload) for e in entries for path, payload in e["timings"]]
+    if not files:
         st.caption("No run in this scenario has written timings.json yet.")
         return
 
-    with_timings.sort(key=lambda e: e["timings"]["wall"], reverse=True)
-    options = [e["run"] for e in with_timings]
-    run = st.selectbox("Run", options, index=0, format_func=lambda r: store.label(r, root),
+    files.sort(key=lambda f: f[2]["wall"], reverse=True)
+    labels = [f"{store.label(run, root)} · {payload['driver']}" for run, _path, payload in files]
+    idx = st.selectbox("Run", range(len(files)), index=0, format_func=lambda i: labels[i],
                        key="timings-detail-run")
-    timings = next(e["timings"] for e in with_timings if e["run"] == run)
+    run, path, timings = files[idx]
 
     if timings.get("phases"):
-        st.plotly_chart(phases_figure(timings), width="stretch", key=f"timings-phases-{run.name}")
+        st.plotly_chart(phases_figure(timings), width="stretch",
+                        key=f"timings-phases-{run.name}-{timings['driver']}")
     else:
         st.caption("This run's timings.json carries no phases.")
 
@@ -260,9 +267,9 @@ def render_detail(entries: list[dict], root: Path) -> None:
              "mean (s)": round(t["wall"] / t["n"], 4) if t["n"] else 0.0}
             for name, t in sorted(ticks.items())]), hide_index=True, width="stretch")
 
-    path = _timings_path(run)
-    profile = path.parent / "profile.prof" if path is not None else None
-    if profile is not None and profile.exists():
+    profile = path.parent / ("profile.prof" if path.name == "timings.json"
+                             else f"profile.{timings['driver']}.prof")
+    if profile.exists():
         with st.expander("Profile: top 25 by cumulative time"):
             buf = io.StringIO()
             pstats.Stats(str(profile), stream=buf).sort_stats("cumulative").print_stats(25)

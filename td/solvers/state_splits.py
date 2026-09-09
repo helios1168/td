@@ -478,7 +478,9 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> d
     own process with the whole `time_limit`.  Cores = `threads` or the machine's `os.cpu_count()`;
     the `highs` member gets `cores - 3` threads (never fewer than 1) and `mip_heuristic_effort
     =0.5`, `scip` gets one thread (its own search is single-threaded; `threads` only sizes its
-    LP).  Every incumbent either member finds is certified in the parent by a fast `with_cutoff`
+    LP) -- at `threads=2` (a grid chain sharing the machine with others) that floor puts `highs`
+    at exactly 1, the intended split against the parent's own `threads=2` certificate calls.
+    Every incumbent either member finds is certified in the parent by a fast `with_cutoff`
     feasibility solve -- an infeasible answer certifies the split count, sets `stop` and ends
     the race; a solution instead means a better map turned up while proving, which becomes the
     new incumbent and is certified again.  Phase C then closes the compactness tie-break at the

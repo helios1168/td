@@ -126,7 +126,10 @@ reads, as `k18 · clip · 2026-09-08 14:42:39`. `step.json`:
 (`store.slugify`: lowercased, everything outside `[a-z0-9-]` collapsed to one hyphen, empty
 input falling back to `grid-<YYYYmmdd>-<HHMM>`); `member` is that slug plus the chain's own k
 and delta. `steps.grid(name=...)` writes both into the draw and clip steps of every chain it
-launches; a child (`staff`, `override`, `split`) never sets them itself, and
+launches; with no `threads` given it also splits the machine's cores evenly across those chains
+(`max(2, cpu_count // len(ks))` per clip), so a six-k grid's chains do not each size a
+`highs`/`scip` portfolio for the whole machine. A child (`staff`, `override`, `split`) never sets
+them itself, and
 `store.scenario_of`/`store.member_of` walk a run's lineage to find them the way `store.k_of`
 already does, so the child still reads its parent chain's scenario. `store.scenarios(root)`
 groups every discovered run by scenario, newest scenario first by its own newest run, with runs
@@ -198,6 +201,10 @@ export) from `td/telemetry.py`'s `Timings`:
              "cpu": s, "note": {...}}, ...],
  "ticks":  {"lp.assign": {"n": 42, "wall": s}}}
 ```
+A run directory that already holds another driver's `timings.json` (a clip run's own directory,
+then a chained `geom_export`) keeps it and gives the second driver `timings.<driver>.json`
+instead (`Timings.write`), so only a same-driver rerun overwrites its own file.
+
 A phase nests (`depth` counts how many phases are already open when it starts) and can carry a
 `note` (arbitrary key/values, `ph.note(...)`); a tick accumulates many small calls under one
 name (`Timings.tick`) rather than opening a phase for each. `TD_PROFILE=1` in the environment

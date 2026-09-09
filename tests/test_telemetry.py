@@ -104,6 +104,40 @@ def test_write_round_trips_the_documented_shape():
     assert telemetry.current() is None                # write() deactivated it
 
 
+def test_write_gives_a_second_driver_its_own_sibling_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        clip = telemetry.Timings("clip")
+        with clip.phase("solve") as ph:
+            ph.note(status=0)
+        clip_path = clip.write(tmp)
+        assert clip_path == os.path.join(tmp, "timings.json")
+
+        geom = telemetry.Timings("geom")
+        geom_path = geom.write(tmp)
+        assert geom_path == os.path.join(tmp, "timings.geom.json")
+
+        with open(clip_path, encoding="utf-8") as fh:
+            assert json.load(fh)["driver"] == "clip"           # untouched by the geom write
+        with open(geom_path, encoding="utf-8") as fh:
+            assert json.load(fh)["driver"] == "geom"
+
+
+def test_write_twice_with_the_same_driver_overwrites():
+    with tempfile.TemporaryDirectory() as tmp:
+        first = telemetry.Timings("clip")
+        first.tick("lp.assign", 0.1)
+        first_path = first.write(tmp)
+
+        second = telemetry.Timings("clip")
+        second.tick("lp.assign", 0.2)
+        second_path = second.write(tmp)
+
+        assert second_path == first_path == os.path.join(tmp, "timings.json")
+        with open(second_path, encoding="utf-8") as fh:
+            payload = json.load(fh)
+        assert payload["ticks"] == {"lp.assign": {"n": 1, "wall": 0.2}}
+
+
 def test_maybe_profile_writes_profile_prof_only_under_td_profile():
     def _main():
         T = telemetry.Timings("geom")

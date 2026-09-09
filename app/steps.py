@@ -13,6 +13,7 @@ unavoidable collision in the one English word both ideas want.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from . import store
@@ -97,8 +98,8 @@ def split_argv(python, repo, instance, run, *, table, district, reps: list[str],
 
 def grid(root: Path, *, name: str = "", ks: list[int], delta, seeds, workers, theta, lam,
         filler_capture, time_limit, pins: dict | None, python, repo, instance,
-        geo_cache, engine: str | None = None,
-        strategy: str | None = None) -> list[list[tuple[Path, list[str]]]]:
+        geo_cache, engine: str | None = None, strategy: str | None = None,
+        threads: int | None = None) -> list[list[tuple[Path, list[str]]]]:
     """One draw-clip-geom chain per k, all sharing one scenario: `name` is the user's typed
     text, slugified (`store.slugify`) into the scenario slug that ties every chain's runs
     together for `store.scenarios` and the other tabs' pickers. Each chain's own member name is
@@ -108,10 +109,17 @@ def grid(root: Path, *, name: str = "", ks: list[int], delta, seeds, workers, th
     working, if anonymous, scenario. A draw process at this delta and this scenario, its
     state-split clip, and the geometry export that turns the clip's winning table into the map
     the UI actually shows (invariant 3: the clip's table is the result, the draw is only how it
-    got there). Six k values make six chains, each its own `run_draw.py` process."""
+    got there). Six k values make six chains, each its own `run_draw.py` process.
+
+    `threads`, left `None`, is split evenly across the chains this call launches at once:
+    `max(2, cpu_count // len(ks))` per clip, so six concurrent chains do not each size their own
+    portfolio for the whole machine. A caller passing `threads` explicitly gets that value on
+    every clip instead."""
     root = Path(root)
     slug = store.slugify(name)
     dname = f"d{delta:g}"
+    chain_threads = (threads if threads is not None
+                    else max(2, (os.cpu_count() or 2) // max(1, len(ks))))
     chains: list[list[tuple[Path, list[str]]]] = []
     for k in ks:
         kk = f"k{k:02d}"
@@ -139,13 +147,14 @@ def grid(root: Path, *, name: str = "", ks: list[int], delta, seeds, workers, th
         c_argv = clip_argv(python, repo, instance, clip_dir, draw=draw_table, k=k, delta=delta,
                           time_limit=time_limit, theta=theta, lam=lam,
                           filler_capture=filler_capture, geo_cache=geo_cache, engine=engine,
-                          strategy=strategy)
+                          strategy=strategy, threads=chain_threads)
         clip_step = store.write_step(
             clip_dir, kind="clip", parent=draw_dir.name,
             params=dict(k=k, delta=delta, time_limit=time_limit, theta=theta, lam=lam,
                        filler_capture=filler_capture, rounds=5, eta=0.01,
                        anchor_homes=True, geo_cache=str(geo_cache), instance=str(instance),
-                       scenario_name=name, engine=engine, strategy=strategy),
+                       scenario_name=name, engine=engine, strategy=strategy,
+                       threads=chain_threads),
             argv=c_argv, scenario=slug, member=member,
             outputs={"table": f"{dname}/draw.csv", "metrics": f"{dname}/splits.json",
                     "geom": "geom.json", "timings": "timings.json"})
