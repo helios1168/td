@@ -170,7 +170,7 @@ Drivers:
 | driver | CLI | reads | writes |
 |---|---|---|---|
 | draw | `run_draw.py <instance> --k K --seeds S --workers W --theta T --lam L --filler-capture F --geo-cache DIR --out RUN [--scenario FILE] [--lock-zips FILE]` | instance; optional `scenario.json` (fix/anchor pins); optional `locks.json` | `k<kk>/draw.csv`, `k<kk>/metrics.json` |
-| clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
+| clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --engine {highs,scip,scipy} --strategy {portfolio,descent,direct} --primal-seconds S --threads N --no-fix-roots --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
 | geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--simplify M] [--no-basemap]` | a zip table | `geom.json`, in the run directory `--out` names |
 | staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
 | rep_export | `rep_export.py <instance> --out DIR [--geo-cache DIR] [--simplify M] [--no-basemap]` | instance | `reps.json` |
@@ -367,6 +367,24 @@ in milliseconds with no certificate. `tools/bench/milp_bench.py` drives every va
 real instance and records which route reaches proven optimality fastest; `tools/bench/README.md`
 has the usage, the variant table and the acceptance rule.
 
+**Strategies.** `tools/state_splits.py --strategy` picks how `state_splits.solve` reaches its
+answer: `direct` (one solve to `--time-limit`, the old path; the `scipy` engine reproduces the
+committed map bit for bit), `descent` (a quick primal incumbent within `--primal-seconds`,
+default 30 s, then repeated cutoff solves proving no smaller split count exists, then a
+warm-started tie-break close; on the real k=20 cell this took 293 s, 255 s of it the 10-split
+search under the cutoff), and `portfolio` (the default: HiGHS on cores-3 threads at heuristic
+effort 0.5 and SCIP on one thread, spawned as members streaming incumbents to the parent; the
+parent quick-certifies each new split count with a 5 s cutoff solve on 2 threads, skips
+incumbents above 2k splits, restarts the members on the cutoff problem after 5 s of quiet when
+the quick certificate cannot close it, takes a member's own infeasible verdict as the
+certificate, then closes the compactness tie-break for up to 30 s, warm-started). `splits.json`'s
+`certified_splits` is true whenever the split count itself is proven, even when `status` reads
+`time_limit` because only the tie-break ran out of time. Real standalone cells: k=20 closes
+fully in 70 s (SCIP finds 10 splits at 47 s, the proof takes 0.2 s, the tie-break 11 s); k=16
+certifies 7 splits in 82.7 s (the certificate "no 6-split map" is not LP-infeasible outright, so
+SCIP proves it in 24 s during a cutoff round against HiGHS's 74 s), tie-break left open at the
+30 s cap.
+
 ## 5. The map
 
 `app/mapfig.py` builds one plotly figure from a zip table plus `geom.json`. Coordinates are the
@@ -556,4 +574,10 @@ share before, after and the change.
    `.venv`), then `py-spy record -o out.svg --pid <pid>` against the driver's own process.
 6. The MILP engine bench (`tools/bench/milp_bench.py`, §4, `tools/bench/README.md`) writes
    `battery/results/bench/milp_<stamp>.json`, one row per `(k, variant)`; it is not
-   test-covered beyond `test_milp_engines.py`'s unit-level checks on the engines it calls.
+   test-covered beyond `test_milp_engines.py`'s unit-level checks on the engines it calls. Its
+   own numbers are recorded once, in `docs/CODE_MAP.md`'s runtime tables, not repeated here.
+7. The k = 10 to 20 grid, six chains at once through the app, each clip's portfolio sized by
+   `steps.grid`'s per-chain `--threads 2`: wall clock 163.5 s, down from 614 s before the
+   portfolio strategy, every clip cell certified, k=20 alone the long pole at 150 s. A
+   k-weighted thread split, giving the k=20 chain more threads than k=10, is the next lever and
+   is not done.

@@ -47,7 +47,7 @@ way.
 | `td/geo.py` + `tools/us_maps.py` | ZCTA points, LAEA projection, state basemap, `state_rook` (the TIGER state rook graph, 49 nodes / 107 edges — the instance cannot supply it, contracted to states its zip graph has 10 edges over 42 components); six figures incl. `figure_power_regions` (the territory map) and `figure_district_regions` (superseded catchment fill, `--regions-voronoi`), plus the close-ups `figures_district_detail` (`--district-figures`) and `figures_state_detail` (`--state-figures`); every label goes through `_place_labels`, which pushes a label off its anchor and draws a leader line when the box would hide the district |
 | `tools/run_draw.py` | the reproducible pipeline: instance → (k, seed) draws on a process pool → stage 2 → `battery/results/<run-id>/k<kk>/` + `sweep.csv`; `--fix`/`--anchor NAME=ST,ST` or `--scenario file.json` for hand-drawn districts; `--k 14-22` is the v2 sweep, `--k 8-16` the v1 regression (pinned to `sweep_20260902_s10`) |
 | `tools/run_atoms.py` | the state-atom stage-1 driver: instance → atoms → contiguous draw → `k<kk>/draw.csv` + `metrics.json`, the same shapes `run_draw.py` writes. A separate script rather than a `run_draw.py` flag because the atom route has no coordinate-less gap — a zip with no gazetteer point still has a state, so it still has an atom, and routing it through `place_by_state` would change the draw's value |
-| `td/solvers/state_splits.py` + `tools/state_splits.py` | Track 2: the state-level minimum-splits MILP (`build_milp`) and its level-2 realisation (`realise`), driven per `δ`. `--anchor-homes` names each district's committed home state so HiGHS can close the model; `--cap ST=N` holds a state to N districts and `--unanchor ST` releases only the anchors a cap forces; `--dump-state-shares PATH` writes each state's `M_s/τ` and anchored count and exits before solving, which is what the app's Headline tab reads. A cell whose MILP returns no map writes `failure.json` and re-raises, so `infeasible` (a proof) and `no_incumbent` (the time limit) stay apart. `docs/HEADLINE.md` is the write-up |
+| `td/solvers/state_splits.py` + `tools/state_splits.py` | Track 2: the state-level minimum-splits MILP (`build_milp`) and its level-2 realisation (`realise`), driven per `δ`. `--anchor-homes` names each district's committed home state so HiGHS can close the model; `--cap ST=N` holds a state to N districts and `--unanchor ST` releases only the anchors a cap forces; `--dump-state-shares PATH` writes each state's `M_s/τ` and anchored count and exits before solving, which is what the app's Headline tab reads. `--strategy` (`direct`, `descent`, `portfolio`, the default) picks how `solve` reaches its answer; `splits.json`'s `certified_splits` says the split count is proven even when `status` is `time_limit` on the compactness tie-break (`docs/APP.md` §4). A cell whose MILP returns no map writes `failure.json` and re-raises, so `infeasible` (a proof) and `no_incumbent` (the time limit) stay apart. `docs/HEADLINE.md` is the write-up |
 | `tools/measure/premium.py` | the premium ladder, U1/U4/U8, verdict conversions |
 | `tools/measure/district_pieces.py` | each district's largest contiguous piece by area, by mass and by ZIP count |
 | `tools/measure/frontier.py` | the D1′ driver: utility-convention gate (`EG_S ≥ V`), the `δ` frontier, `δ*`, first movers, N8/N9, the plot. Background it with `python3 -u` |
@@ -56,7 +56,7 @@ way.
 | `tools/verify/runs/` | the catalogue driver (`run_all.sh`), maps (`make_maps.sh`), generator (`build_artifact.py`), 14 scenario specs |
 | `tools/verify/U*/` | runnable artifacts behind each unit's Model / Verify / Code verify sections in `docs/units/<id>.md` |
 | `docs/channel_note/`, `docs/math_note/` | the LaTeX notes (channel model; the original two-player formulation). `math_note/toy_*.py` import the deleted `code/gfx` and are broken |
-| `tests/run_all.py` | 466 fast tests (solver venv, 2026-09-08); `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True`. `tests/test_app_smoke.py` and `tests/test_mapfig.py` need the app venv instead (`docs/APP.md` §7) |
+| `tests/run_all.py` | 480 fast tests (solver venv, 2026-09-09); `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True`. `tests/test_app_smoke.py` and `tests/test_mapfig.py` need the app venv instead (`docs/APP.md` §7) |
 | `app/` + `tools/app.sh` | the Streamlit scenario app: launch a scenario grid, see the map and the incumbent reps' territories, staff and split, override, compare, watch the timings. Runs in its own venv `.venv-app` and never imports `td`, it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/main.py` wires six tabs (Scenarios, Map, Reps, Overrides, Compare, Timings), each its own `tab_*.py` module; `app/common.py` holds what they share (cached reads, run pickers, `launch_child`); `app/store.py`/`app/steps.py` are the run ledger and argv builders; `app/mapfig.py` builds every plotly figure (the zip map, the rep and staffed maps); `app/repdata.py` loads or builds `reps.json`; `app/staffdiff.py` is the before/after arithmetic. `docs/APP.md` is the whole story |
 | `tools/rep_export.py` | writes `reps.json`: per-zip rep shares and weights, dominant-rep territories, footprints, the contested union, all ratios and polygons, no mass. `docs/APP.md` §4 |
 | `td/telemetry.py` | `Timings`: nested phases, accumulated ticks, wall/CPU/RSS, written as `timings.json` next to a driver's other outputs; `TD_PROFILE=1` also dumps a `cProfile` run. Stdlib only, so library code (`td/solvers/centers.py`'s `assign`) can call the module-level `telemetry.tick`/`telemetry.phase` hooks and stay import-clean. `docs/APP.md` §4 |
@@ -116,6 +116,51 @@ the MILP engine bench picked a winner (`docs/APP.md` §1, §4):
 The six chains run in parallel, so the grid's wall clock is the slowest MILP plus about 15 s:
 10 min 14 s, set by the 600 s time limit at k = 16 to 20. The MILP bench's own numbers
 (`tools/bench/README.md`) will be recorded beside this table once it has run.
+
+### Runtime after round 2 (2026-09-09)
+
+The same k = 10 to 20 grid, delta 0.10, run again once the portfolio strategy (HiGHS and SCIP
+racing as separate processes, `docs/APP.md` §4) replaced the plain HiGHS solve as the clip
+default, each chain's clip sized by `steps.grid`'s per-chain `--threads 2` (Apple M2 Max, 12
+cores):
+
+| step | k=10 | k=12 | k=14 | k=16 | k=18 | k=20 |
+|---|---|---|---|---|---|---|
+| clip: level-1 MILP | 18 s, certified | 14 s, certified | 1.4 s, certified | 84 s, certified | 49 s, certified | 150 s, certified |
+| draw | 8 to 12 s | 8 to 12 s | 8 to 12 s | 8 to 12 s | 8 to 12 s | 8 to 12 s |
+| geom export | < 1 s | < 1 s | < 1 s | < 1 s | < 1 s | < 1 s |
+
+Wall clock: 163.5 s, down from 614 s before the portfolio strategy; k=20 alone is the long pole
+at 150 s.
+
+Two standalone cells, run with no other chain competing for the machine: k=20 closes fully in
+70 s (SCIP finds 10 splits at 47 s, the proof takes 0.2 s, the tie-break 11 s); k=16 certifies
+7 splits in 82.7 s (the certificate "no 6-split map" is not LP-infeasible outright, so SCIP
+proves it in 24 s during a cutoff round against HiGHS's 74 s), tie-break left open at the 30 s
+cap.
+
+MILP engine bench (`tools/bench/milp_bench.py`, `tools/bench/README.md`), real instance, delta
+0.10, cap 180 s, same machine (`battery/results/bench/milp_20260909_015338.json` k=20,
+`milp_20260909_020619.json` k=18):
+
+| variant | k=20 | k=18 |
+|---|---|---|
+| scipy (the old engine) | 12 splits, gap 5.2 %, cap | 7 splits, gap 1e-5, cap |
+| highs, 12 threads | 10 splits at 142 s, gap 1.7 %, cap | 8 splits, gap 1.8 %, cap |
+| highs, roots fixed | 11 at 6.5 s, 10 at 130 s, gap 0.85 %, cap | 7 proven, 27.8 s |
+| scip, roots fixed | 10 at 44 s, gap 1.6 %, cap | 7 proven, 47.5 s |
+| lp-heur | 93 splits (useless) | 65 splits (useless) |
+| cpsat (`.venv-opt`) | 10 at 79 s, own proof 170 s | 7 proven 124 s |
+| highs-root + cutoff Σz ≤ S + s* − 1 | infeasible in 0.1 s: 10 is optimal | infeasible 0.1 s |
+| highs-root, warm from a 10-split map | proven 19.1 s | proven 5.9 s |
+
+The root fix lifts the k=20 LP relaxation bound from 58.005 to 58.50, so the 9-split cutoff is
+LP-infeasible. HiGHS `mip_heuristic_effort=0.5` finds 10 splits at 78 s plain (130 s default)
+and 96 s under the cutoff (255 s). A zero-objective feasibility solve finds nothing in 120 s
+(CLAUDE.md trap 19).
+
+The next lever is a k-weighted thread split across the grid's six chains, so k=20 gets more
+threads than k=10; not done.
 
 ## Scenario exploration goes through the app, not a new artifact
 

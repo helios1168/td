@@ -11,13 +11,27 @@ for a fast-forward merge into `main`.
 
 ## Next step
 
-W3d (portfolio strategy: HiGHS and SCIP members streaming incumbents, the parent certifying
-each new count with the 0.1 s cutoff proof) is being implemented. Then: rerun the real k=20
-cell, relaunch the k = 10 to 20 grid through the app and read the Timings tab, final docs
-pass (bench table, portfolio, traps 18 and 19), report and ask about the merge.
+The track is complete and offered for a fast-forward merge into `main` (user's call). After
+the merge: unlock and remove the worktree, delete the branch, run `/state`, restart the hub
+app (`tools/app.sh`, tmux `tdapp`, port 8502) so it picks up the new tabs. Open lever, not
+done: a k-weighted thread split in `steps.grid` (k=20 took 150 s on two threads against 70 s
+alone; the grid's long pole).
 
 ## Done
 
+- 2026-09-09 close: final grid `round3` through the app, six chains at once on `--threads 2`
+  each: wall 163.5 s from 614 s; every split count certified (k10 18 s, k12 14 s, k14 1.4 s,
+  k16 84 s, k18 49 s, k20 150 s). Timings tab reads clip and geom files side by side and
+  names the k=20 clip as the long pole. Docs: APP.md strategies and flags, CODE_MAP runtime
+  and bench tables, CLAUDE.md test count 480.
+
+- 2026-09-09 wave 3e (`d05b50a`, `431d0d1`, `59212b0`): timings sibling-file rule, per-chain
+  thread budget in the grid, portfolio rounds (members restart on the cutoff problem when the
+  quick certificate times out and the queue goes quiet), opening incumbents with more than
+  2k splits skip the quick certificate, tie-break capped at 30 s. Standalone k=16: the
+  certificate problem "no 6-split map" closes in 24 s under SCIP and 74 s under HiGHS where the
+  plain search never closes the one-split gap in 300 s; the cell now certifies 7 splits in
+  82.7 s (from 600 s at the cap), tie-break left open. Standalone k=20: 70 s, fully closed.
 - 2026-09-09 wave 3d (`9645be1`, `7b022b7`): portfolio strategy. Real k=20 cell alone: 70 s,
   proven (SCIP finds 10 splits at 47 s, proof 0.2 s, tie-break 11 s), from 600 s at the cap.
   Grid `round2` (k = 10 to 20, delta 0.10, six chains at once, launched through the app by

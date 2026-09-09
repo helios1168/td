@@ -35,7 +35,7 @@ STATE.md`. This file carries invariants only and is never stamped.
 
 ## Tests
 
-`.venv/bin/python3 tests/run_all.py` — 331 fast tests, 0 fail (2026-09-07). `TD_SLOW=1` adds
+`.venv/bin/python3 tests/run_all.py` — 480 fast tests, 0 fail (2026-09-09). `TD_SLOW=1` adds
 nothing: no module sets `SLOW = True`. `tests/test_engines.py` is the self-contained two-player
 smoke test.
 
