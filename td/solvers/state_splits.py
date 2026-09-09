@@ -482,7 +482,7 @@ def _portfolio_member(name: str, kwargs: dict, problem: SplitProblem, time_limit
 
 
 def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
-                     quick_certify_seconds: float = 5.0) -> dict:
+                     quick_certify_seconds: float = 5.0, tiebreak_seconds: float = 30.0) -> dict:
     """`strategy="portfolio"`: rounds of `highs` and `scip` searching together, each in its own
     process.  Cores = `threads` or the machine's `os.cpu_count()`; the `highs` member gets
     `cores - 3` threads (never fewer than 1) and `mip_heuristic_effort=0.5`, `scip` gets one
@@ -513,8 +513,13 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
     both members in a round are done with no verdict, the loop ends uncertified, which by then
     means time is up.
 
+    An incumbent with more than two splits per district is never quick-checked: it is the
+    solver's opening feasible point, and certifying it would be the whole problem again.
+
     Phase C then closes the compactness tie-break at the certified (or best known) count exactly
-    as `_solve_descent`'s own phase C does.  The parent's own HiGHS calls -- every quick check
+    as `_solve_descent`'s own phase C does, capped at `tiebreak_seconds` (default 30 s): the
+    tie-break changes no split count, and the improved incumbent is kept whether or not the
+    close finishes.  The parent's own HiGHS calls -- every quick check
     and phase C -- always use `threads=2`, one thread count for the whole process (the pool
     hazard in the module docstring).  No incumbent from anyone within `time_limit` falls back to
     `_solve_direct`, as `_solve_descent` does."""
@@ -638,6 +643,13 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
             best = dict(_me._decode_zy(problem, z, y), objective=float(objective),
                        status="time_limit", mip_gap=float("nan"), nodes=0,
                        dual_bound=float("nan"), trajectory=[])
+            if splits > 2 * problem.k:
+                # A first incumbent with hundreds of splits is the solver's opening feasible
+                # point, not a candidate optimum; certifying it would be the whole problem
+                # again.  Wait for one with at most two splits per district (the real maps
+                # sit near one per two districts).
+                s_star = splits
+                continue
             s_star, best, cert_ok, gave_up = certify(splits, best)
             if cert_ok:
                 certified = True
@@ -671,11 +683,16 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
     if rem is not None and rem <= 0:
         pass                                                   # no time left; keep the incumbent
     else:
+        # The tie-break ranks equal-split maps by the epsilon compactness term and changes no
+        # split count, so it gets a capped budget: on the real k=16 it ran 238 s without
+        # closing after the count was certified at 57 s, and the incumbent it improves along
+        # the way is kept either way.
+        budget_c = tiebreak_seconds if rem is None else min(tiebreak_seconds, rem)
         tc = time.time()
         warm = dict(z=best["z"], y=best["y"])
         try:
             res_c = _me.solve_problem(_me.with_cutoff(problem, s_star + 1), "highs",
-                                      time_limit=rem, threads=2, warm=warm)
+                                      time_limit=budget_c, threads=2, warm=warm)
             phases.append(dict(phase="tiebreak", seconds=time.time() - tc,
                                status=res_c["status"], splits=res_c["splits"]))
             result, closed = res_c, res_c["status"] == 0
