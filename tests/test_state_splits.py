@@ -447,6 +447,48 @@ print(json.dumps(dict(splits=res["splits"], certified_splits=res["certified_spli
 """
 
 
+_PORTFOLIO_CUTOFF_SCRIPT = """
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from tests.test_state_splits import build
+from td.solvers import state_splits
+
+masses, delta, time_limit = json.loads(sys.argv[2])
+_, prob = build(masses, delta)
+res = state_splits.solve(prob, strategy="portfolio", time_limit=time_limit,
+                         portfolio_quick_seconds=0.0)
+print(json.dumps(dict(splits=res["splits"], certified_splits=res["certified_splits"],
+                      status=res["status"], strategy=res["strategy"], engine=res["engine"],
+                      phases=res["phases"])))
+"""
+
+
+def test_portfolio_certifies_from_a_cutoff_round_when_the_quick_certificate_cannot():
+    """`portfolio_quick_seconds=0.0` makes every quick certificate time out at once, so
+    `s_star` can only be certified by a cutoff round: the parent waits out the quiet window,
+    starts the members on `with_cutoff(problem, s_star)` itself, and one of them proves it
+    infeasible.  Same split count as `direct`, a `round` phase naming the cutoff problem, and a
+    `certify` phase naming the member that closed it."""
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    masses, delta = ODD, 0.005
+    _, direct_prob = build(masses, delta)
+    direct = state_splits.solve(direct_prob, engine="scipy", strategy="direct")
+
+    payload = json.dumps([masses, delta, 60.0])
+    proc = subprocess.run([sys.executable, "-c", _PORTFOLIO_CUTOFF_SCRIPT, root, payload],
+                          capture_output=True, text=True, timeout=90)
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout.strip().splitlines()[-1])
+
+    assert out["splits"] == direct["splits"], out
+    assert out["certified_splits"] is True
+    assert out["strategy"] == "portfolio" and out["engine"] == "highs"
+    phases = out["phases"]
+    assert any(p["phase"] == "round" and str(p.get("problem", "")).startswith("cutoff<")
+              for p in phases), phases
+    assert any(p["phase"] == "certify" and "member" in p for p in phases), phases
+
+
 def test_portfolio_matches_direct_and_certifies():
     """`strategy="portfolio"` lands on the same split count `strategy="direct"` does and
     certifies it, on a toy with a split (ODD) and one with none (EVEN).  Run as a subprocess

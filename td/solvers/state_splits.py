@@ -312,7 +312,7 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
 
 def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: bool = True,
          engine: str = "scipy", strategy: str = "direct", primal_seconds: float = 30.0,
-         threads: int | None = None) -> dict:
+         threads: int | None = None, portfolio_quick_seconds: float = 5.0) -> dict:
     """Solve `problem` and read `z`, `y` back.  `engine="scipy", strategy="direct"` is this
     function's original body, unchanged: `scipy.optimize.milp`, no threads, no callbacks, the
     only path every caller used before `milp_engines` existed.
@@ -328,12 +328,19 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
     return; `status` reports phase three's outcome (`0` closed, `"time_limit"` otherwise), so a
     map's split count can be certified even when its exact tie-break is not.
 
-    `strategy="portfolio"` (`_solve_portfolio`) replaces phase A with two solves racing in their
-    own processes (`highs` and `scip`), each given the whole `time_limit`; every incumbent
-    either one finds is certified in the parent by a fast `with_cutoff` feasibility check, and
-    phase C then closes the tie-break exactly as `_solve_descent`'s own phase C does.  `engine`
-    is ignored (the members are fixed); `threads` is read as the machine's core count, used to
-    size the members, not the parent's own solves.
+    `strategy="portfolio"` (`_solve_portfolio`) replaces phase A with rounds of `highs` and
+    `scip` racing in their own processes.  Round 0 races them on the plain problem; every
+    incumbent either one finds is checked in the parent by a fast `with_cutoff` feasibility
+    solve (`portfolio_quick_seconds`, default 5 s).  An infeasible answer certifies the split
+    count at once.  When that quick check only times out, the parent does not give up: it waits
+    a further 5 s for a strictly better incumbent from the members, and only then stops them and
+    starts the next round, where both members solve `with_cutoff(problem, s_star)` itself for
+    the remaining time -- the cutoff row can turn a search that never converges into one that
+    closes in seconds.  A member that proves a cutoff round's problem infeasible certifies
+    `s_star` directly; one that instead solves it hands the smaller split count through the same
+    quick-check-then-round cycle.  Phase C then closes the tie-break exactly as `_solve_descent`'s
+    own phase C does.  `engine` is ignored (the members are fixed); `threads` is read as the
+    machine's core count, used to size the members, not the parent's own solves.
 
     Raises `SolveFailure` when nothing usable comes back, same reasons either strategy: a
     `strict=True` (the default) time limit with no incumbent, or a proven infeasibility.
@@ -345,7 +352,8 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
         result = _solve_descent(problem, time_limit=time_limit, strict=strict, engine=engine,
                                 primal_seconds=primal_seconds, threads=threads)
     elif strategy == "portfolio":
-        result = _solve_portfolio(problem, time_limit=time_limit, strict=strict, threads=threads)
+        result = _solve_portfolio(problem, time_limit=time_limit, strict=strict, threads=threads,
+                                  quick_certify_seconds=portfolio_quick_seconds)
     else:
         raise ValueError(f"unknown strategy {strategy!r}; "
                          "expected 'direct', 'descent' or 'portfolio'")
@@ -473,45 +481,60 @@ def _portfolio_member(name: str, kwargs: dict, problem: SplitProblem, time_limit
     queue.put((name, "done", status))
 
 
-def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> dict:
-    """`strategy="portfolio"`: `highs` and `scip` search the plain problem at once, each in its
-    own process with the whole `time_limit`.  Cores = `threads` or the machine's `os.cpu_count()`;
-    the `highs` member gets `cores - 3` threads (never fewer than 1) and `mip_heuristic_effort
-    =0.5`, `scip` gets one thread (its own search is single-threaded; `threads` only sizes its
-    LP) -- at `threads=2` (a grid chain sharing the machine with others) that floor puts `highs`
-    at exactly 1, the intended split against the parent's own `threads=2` certificate calls.
-    Every incumbent either member finds is certified in the parent by a fast `with_cutoff`
-    feasibility solve -- an infeasible answer certifies the split count, sets `stop` and ends
-    the race; a solution instead means a better map turned up while proving, which becomes the
-    new incumbent and is certified again.  Phase C then closes the compactness tie-break at the
-    certified count exactly as `_solve_descent`'s own phase C does.  The parent's own HiGHS
-    calls -- the certificate and phase C -- always use `threads=2`, one thread count for the
-    whole process (the pool hazard in the module docstring).  No incumbent from anyone within
-    `time_limit` falls back to `_solve_direct`, as `_solve_descent` does."""
+def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
+                     quick_certify_seconds: float = 5.0) -> dict:
+    """`strategy="portfolio"`: rounds of `highs` and `scip` searching together, each in its own
+    process.  Cores = `threads` or the machine's `os.cpu_count()`; the `highs` member gets
+    `cores - 3` threads (never fewer than 1) and `mip_heuristic_effort=0.5`, `scip` gets one
+    thread (its own search is single-threaded; `threads` only sizes its LP) -- at `threads=2`
+    (a grid chain sharing the machine with others) that floor puts `highs` at exactly 1, the
+    intended split against the parent's own `threads=2` certificate calls.
+
+    Round 0 runs the members on the plain problem.  Every incumbent either one finds is checked
+    in the parent by a fast `with_cutoff` feasibility solve, `quick_certify_seconds` long
+    (default 5 s, plumbed through `solve(..., portfolio_quick_seconds=...)`): infeasible
+    certifies the split count at once and ends the race, a better incumbent tightens the check
+    and asks again, and a bare time limit on that one check is not itself a reason to give up --
+    a real certificate is usually well under a second, but "one fewer split" can need branch and
+    bound the members are still running in the background.  So when the quick check only times
+    out, the parent waits `quiet_seconds` (5 s) on the same round for a strictly better
+    incumbent; if none arrives, it stops the round's members, joins them, and starts the next
+    round with both members solving `with_cutoff(problem, s_star)` itself for whatever time is
+    left -- the same problem the quick check could not close, now searched with the members' own
+    full time and threads instead of a 5 s stab.  Each round gets a fresh queue and stop event,
+    so a message from a member the parent has already stopped can never be read as belonging to
+    the next round.  A member that finishes a cutoff round with reason `infeasible` certifies
+    `s_star` directly, no further quick check needed: the parent records a `certify` phase
+    naming that member and stops the other one.  A member that instead finds a solution in a
+    cutoff round reports it through the same incumbent channel -- it has fewer splits than
+    `s_star` by construction -- and the parent runs the quick check on it exactly as in round 0,
+    opening another cutoff round at the new `s_star` if that check cannot resolve it either.  A
+    member that finishes a cutoff round with `time_limit` or `no_incumbent` is simply done; once
+    both members in a round are done with no verdict, the loop ends uncertified, which by then
+    means time is up.
+
+    Phase C then closes the compactness tie-break at the certified (or best known) count exactly
+    as `_solve_descent`'s own phase C does.  The parent's own HiGHS calls -- every quick check
+    and phase C -- always use `threads=2`, one thread count for the whole process (the pool
+    hazard in the module docstring).  No incumbent from anyone within `time_limit` falls back to
+    `_solve_direct`, as `_solve_descent` does."""
     from td.solvers import milp_engines as _me
 
     cores = threads if threads else (os.cpu_count() or 1)
     t0 = time.time()
+    quiet_seconds = 5.0
 
     def left():
         return None if time_limit is None else max(0.0, time_limit - (time.time() - t0))
 
     ctx = mp.get_context("spawn")
-    q = ctx.Queue()
-    stop = ctx.Event()
     member_specs = [
         ("highs", dict(threads=max(1, cores - 3), heuristic_effort=0.5)),
         ("scip", dict(threads=1)),
     ]
-    procs = [ctx.Process(target=_portfolio_member,
-                        args=(name, kwargs, problem, time_limit, q, stop))
-            for name, kwargs in member_specs]
-    for p in procs:
-        p.start()
 
     phases: list[dict] = []
     best: dict | None = None
-    done: set[str] = set()
     certified = False
 
     def certify(s_star: int, current_best: dict) -> tuple[int, dict, bool, bool]:
@@ -525,7 +548,7 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> d
             # second on the k=20 instance; a cutoff that is not yet infeasible is as hard as
             # the whole problem, so spending more than a few seconds on it only delays the
             # queue (the members keep searching meanwhile).
-            budget = 5.0 if rem is None else min(5.0, rem)
+            budget = quick_certify_seconds if rem is None else min(quick_certify_seconds, rem)
             tc = time.time()
             try:
                 res_c = _me.solve_problem(_me.with_cutoff(problem, s_star), "highs",
@@ -538,19 +561,72 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> d
                                status=res_c["status"]))
             s_star, current_best = res_c["splits"], res_c
 
+    def start_round(round_problem: SplitProblem):
+        q = ctx.Queue()
+        stop = ctx.Event()
+        procs = [ctx.Process(target=_portfolio_member,
+                            args=(name, kwargs, round_problem, left(), q, stop))
+                for name, kwargs in member_specs]
+        for p in procs:
+            p.start()
+        return q, stop, procs
+
+    def stop_round(stop, procs) -> None:
+        stop.set()
+        for p in procs:
+            p.join(timeout=5.0)
+        for p in procs:
+            if p.is_alive():
+                p.terminate()
+                p.join(timeout=5.0)
+
+    round_num = 0
+    s_star: int | None = None
+    q, stop, procs = start_round(problem)
+    phases.append(dict(phase="round", round=round_num, problem="plain",
+                       seconds=time.time() - t0))
+    done: set[str] = set()
+    pending_deadline: float | None = None
+
     try:
-        while len(done) < len(procs):
+        while True:
             rem = left()
             if rem is not None and rem <= 0:
                 break
+            if pending_deadline is not None and time.time() >= pending_deadline:
+                stop_round(stop, procs)
+                round_num += 1
+                q, stop, procs = start_round(_me.with_cutoff(problem, s_star))
+                done = set()
+                pending_deadline = None
+                phases.append(dict(phase="round", round=round_num,
+                                   problem=f"cutoff<{s_star}>", seconds=time.time() - t0))
+                continue
+            heartbeat = 1.0 if rem is None else min(1.0, rem)
+            wait = heartbeat if pending_deadline is None else min(
+                heartbeat, max(0.0, pending_deadline - time.time()))
             try:
-                msg = q.get(timeout=1.0 if rem is None else min(1.0, rem))
+                msg = q.get(timeout=wait)
             except Empty:
                 continue
+
             member = msg[0]
             if msg[1] == "done":
                 done.add(member)
+                status = msg[2]
+                if round_num > 0 and status == "infeasible":
+                    phases.append(dict(phase="certify", member=member,
+                                       seconds=time.time() - t0, status="infeasible"))
+                    certified = True
+                    stop_round(stop, procs)
+                    break
+                if len(done) >= len(procs):
+                    if pending_deadline is not None:
+                        pending_deadline = time.time()      # nothing more will arrive; go now
+                    else:
+                        break                                # no verdict this round; time is up
                 continue
+
             _, splits, z, y, objective, seconds = msg
             phases.append(dict(phase="incumbent", member=member, seconds=seconds,
                                splits=splits))
@@ -562,10 +638,17 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> d
             best = dict(_me._decode_zy(problem, z, y), objective=float(objective),
                        status="time_limit", mip_gap=float("nan"), nodes=0,
                        dual_bound=float("nan"), trajectory=[])
-            _, best, certified, gave_up = certify(splits, best)
-            if certified:
-                stop.set()
+            s_star, best, cert_ok, gave_up = certify(splits, best)
+            if cert_ok:
+                certified = True
+                stop_round(stop, procs)
                 break
+            if gave_up:
+                stop_round(stop, procs)
+                break
+            rem2 = left()
+            quiet = quiet_seconds if rem2 is None else min(quiet_seconds, rem2)
+            pending_deadline = time.time() + quiet
     finally:
         stop.set()
         for p in procs:
