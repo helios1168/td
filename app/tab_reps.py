@@ -1,4 +1,6 @@
-"""Reps staffs a map and contests its districts."""
+"""Reps opens on the map with the proposed districts drawn over the incumbent rep layout,
+then staffs one district or the whole map, contests a district, and shows before-and-after.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,31 +8,95 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from app import config, steps, store
-from app.common import (FILLERS, _figure, _json, _rows, _stamp, instance_of, k_for, launch_child,
-                        newest_child, open_on_map, pick_map, show_failure)
+from app import config, mapfig, repdata, staffdiff, steps, store
+from app.common import (FILLERS, _figure, _geom, _json, _rows, _stamp, instance_of, launch_child,
+                        open_on_map, pick_map, show_failure)
+
+
+# ------------------------------------------------------------------ cached figures
+@st.cache_data(show_spinner=False, max_entries=8)
+def _rep_fig(reps_stamp, rows_stamp, geom_stamp, colour_by, focus_rep, show_contested,
+            district_lines, bbox):
+    reps = repdata.load(*reps_stamp)
+    rows = _rows(*rows_stamp) if rows_stamp else None
+    geom = _geom(*geom_stamp) if geom_stamp else None
+    return mapfig.rep_figure(reps, rows, geom, colour_by=colour_by, focus_rep=focus_rep,
+                             show_contested=show_contested, district_lines=district_lines,
+                             bbox=bbox)
+
+
+@st.cache_data(show_spinner=False, max_entries=8)
+def _staffed_fig(rows_stamp, geom_stamp, reps_stamp, staffing_stamp, bbox):
+    reps = repdata.load(*reps_stamp)
+    colours = mapfig.rep_colours(reps)
+    geom = _geom(*geom_stamp) if geom_stamp else None
+    staffing = _json(Path(staffing_stamp[0]))
+    return mapfig.staffed_figure(_rows(*rows_stamp), geom, colours, staffing=staffing, bbox=bbox)
 
 
 def render_reps() -> None:
-    run = pick_map("Map", "reps-run")
+    run = pick_map("Instance", "reps-run")
     if run is None:
         return
     rows = _rows(*_stamp(store.table_path(run)))
+    instance = instance_of(run)
+    reps = repdata.ensure(instance)
+
+    if reps is not None:
+        render_rep_map(run, reps)
+
     kind = store.read_step(run).get("kind")
-    staff_run = run if kind == "staff" else newest_child(run, "staff")
+    if kind == "staff":
+        staff_run = run
+    else:
+        staff_children = [c for c in store.children(run, config.APP_RESULTS)
+                          if store.read_step(c).get("kind") == "staff"]
+        staff_run = (st.selectbox(
+            "Staffing", staff_children, index=0,
+            format_func=lambda c: f"{store.label(c, config.APP_RESULTS)} · {_scope_label(c)}",
+            key=f"staff-pick-{run.name}") if staff_children else None)
     staffing = _json(store.metrics_path(staff_run)) if staff_run else None
     if staff_run is not None and staffing is None:
         st.caption(f"Staffing `{staff_run.name}` is {store.status(staff_run)}.")
 
-    render_keep_release(run, rows, staffing)
+    released, has_universe = render_keep_release(run, rows, staffing)
+    render_scope(run, rows, released, has_universe)
+
     if staffing:
         st.divider()
-        render_contest(run, staff_run, rows, staffing)
+        render_contest(run, staff_run, rows, staffing, reps)
         st.divider()
-        render_assignment(staffing)
+        render_assignment(staffing, staff_run)
+
+    if reps is not None and staffing:
+        st.divider()
+        render_global_before_after(run, reps, staff_run, staffing)
 
 
-def render_keep_release(run: Path, rows: list[dict], staffing: dict | None) -> None:
+def _scope_label(run: Path) -> str:
+    districts = store.read_step(run).get("params", {}).get("districts") or []
+    return "whole map" if not districts else ", ".join(districts)
+
+
+def render_rep_map(run: Path, reps: dict) -> None:
+    st.subheader("Proposed districts over the rep layout")
+    reps_stamp = _stamp(repdata.reps_path(instance_of(run)))
+    if reps_stamp is None:
+        return
+    cols = st.columns([2, 2, 1])
+    colour_by = cols[0].radio(
+        "Colour by", ["rep", "n"], horizontal=True,
+        format_func=lambda v: "reps with book" if v == "n" else "rep",
+        key=f"reps-colourby-{run.name}")
+    focus = cols[1].selectbox("Focus rep", [""] + reps.get("reps", []),
+                              key=f"reps-focus-{run.name}")
+    hatch = cols[2].toggle("Hatch contested", value=True, key=f"reps-hatch-{run.name}")
+    fig = _rep_fig(reps_stamp, _stamp(store.table_path(run)), _stamp(store.geom_path(run)),
+                  colour_by, focus, hatch, True, None)
+    st.plotly_chart(fig, width="stretch", key=f"reps-map-top-{run.name}")
+
+
+def render_keep_release(run: Path, rows: list[dict], staffing: dict | None) -> tuple[list[str], bool]:
     st.subheader("Kept and released")
     known = staffing or {}
     universe = sorted(set(known.get("kept", [])) | set(known.get("released", [])))
@@ -51,27 +117,49 @@ def render_keep_release(run: Path, rows: list[dict], staffing: dict | None) -> N
         typed = st.text_area("Release these reps by hand", "", key=f"staff-typed-{run.name}",
                              help="Comma separated ids. Leave it empty to keep everyone.")
         released = [t.strip() for t in typed.replace("\n", ",").split(",") if t.strip()]
+    return released, bool(universe)
+
+
+def render_scope(run: Path, rows: list[dict], released: list[str], has_universe: bool) -> None:
+    st.subheader("Scope")
+    districts = sorted({row["district"] for row in rows if row.get("district")})
+    picked = st.session_state.get("selected_zip")
+    home = next((r["district"] for r in rows if r["zip"] == picked), None)
+    mode = st.radio("Staff", ["the whole map", "these districts"], horizontal=True,
+                    key=f"scope-mode-{run.name}")
+    scope_districts: list[str] = []
+    if mode == "these districts":
+        scope_districts = st.multiselect(
+            "Districts", districts, default=[home] if home in districts else [],
+            key=f"scope-districts-{run.name}")
 
     cols = st.columns(3)
     theta = cols[0].number_input("theta", 0.0, 1.0, config.THETA, step=0.05, key="staff-theta")
     lam = cols[1].number_input("lambda", 0.0, 1.0, config.LAM, step=0.05, key="staff-lam")
     filler = cols[2].selectbox("Filler capture", FILLERS, index=FILLERS.index(config.FILLER),
                                key="staff-filler")
-    if st.button("Staff" if universe else "Staff with everyone", type="primary", key="staff-go"):
-        child = store.new_run_dir(config.APP_RESULTS, "staff", k_for(run))
+    label = "Staff" if has_universe else "Staff with everyone"
+    if st.button(label, type="primary", key="staff-go"):
+        instance = instance_of(run)
+        table = store.table_path(run)
+        scope = scope_districts or None
         # An empty `--release` is what "nobody leaves" looks like to `tools/staff.py`: it splits
-        # on the names it is given, so the empty list keeps the whole roster.
-        argv = steps.staff_argv(config.SOLVER_PYTHON, config.CODE, instance_of(run), child,
-                                table=store.table_path(run), keep=None, release=released,
-                                theta=float(theta), lam=float(lam), filler_capture=filler)
-        launch_child(child, kind="staff", parent=run,
-                     params=dict(released=released, theta=float(theta), lam=float(lam),
-                                 filler_capture=filler, instance=str(instance_of(run))),
-                     argv=argv, outputs={"table": "draw.csv", "metrics": "staffing.json"})
+        # on the names it is given, so the empty list keeps the whole roster. Likewise an empty
+        # `--districts` (no scope flag at all) staffs every district.
+        child = launch_child(
+            run, "staff",
+            dict(released=released, theta=float(theta), lam=float(lam), filler_capture=filler,
+                instance=str(instance), districts=scope_districts),
+            lambda child: steps.staff_argv(
+                config.SOLVER_PYTHON, config.CODE, instance, child, table=table, keep=None,
+                release=released, theta=float(theta), lam=float(lam), filler_capture=filler,
+                districts=scope),
+            {"table": "draw.csv", "metrics": "staffing.json"})
         st.success(f"`{child.name}` in flight. It shows up here when it is done.")
 
 
-def render_contest(run: Path, staff_run: Path, rows: list[dict], staffing: dict) -> None:
+def render_contest(run: Path, staff_run: Path, rows: list[dict], staffing: dict,
+                   reps: dict | None) -> None:
     st.subheader("Contestability")
     contest = staffing.get("contest") or {}
     districts = sorted(contest)
@@ -100,11 +188,85 @@ def render_contest(run: Path, staff_run: Path, rows: list[dict], staffing: dict)
                                     st.column_config.NumberColumn(format="%.3f"),
                                     "g": st.column_config.NumberColumn(format="%.4g")})
         st.caption(f"Free book {entry.get('free_share', 0.0):.1%} of this district's total.")
-    render_footprint(run, rows, district, cands)
+
+    if reps is not None:
+        render_district_before_after(run, rows, reps, staff_run, staffing, district)
+
+    render_footprint(run, rows, district, cands, reps)
     render_split(staff_run, district, cands)
 
 
-def render_footprint(run: Path, rows: list[dict], district: str, cands: list[str]) -> None:
+def _district_bbox(rows: list[dict], district: str) -> tuple[float, float, float, float] | None:
+    pts = [(r["x"], r["y"]) for r in rows
+          if r.get("district") == district and r.get("x") is not None]
+    if not pts:
+        return None
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    x0, x1 = min(xs), max(xs)
+    y0, y1 = min(ys), max(ys)
+    px, py = (x1 - x0) * 0.05 or 1.0, (y1 - y0) * 0.05 or 1.0
+    return (x0 - px, y0 - py, x1 + px, y1 + py)
+
+
+def _rows_after_for_district(staff_run: Path, district: str) -> tuple[tuple[str, float] | None, bool]:
+    """The newest split child's table for this district when one has a table (`True`), else the
+    staffing run's own table (`False`)."""
+    for child in store.children(staff_run, config.APP_RESULTS):
+        step = store.read_step(child)
+        if step.get("kind") == "split" and step.get("params", {}).get("district") == district:
+            table = store.table_path(child)
+            if table is not None:
+                return _stamp(table), True
+            break
+    return _stamp(store.table_path(staff_run)), False
+
+
+def _diff_table(view: dict) -> pd.DataFrame:
+    reps_here = (set(view["before"]) - {"contested", "untapped"}) | set(view["after"])
+    rows_ = []
+    for rep in sorted(reps_here):
+        b, a = view["before"].get(rep, 0.0), view["after"].get(rep, 0.0)
+        rows_.append({"rep": rep, "before": b, "after": a, "change": a - b})
+    for extra in ("contested", "untapped"):
+        b = view["before"].get(extra, 0.0)
+        rows_.append({"rep": extra, "before": b, "after": 0.0, "change": -b})
+    return pd.DataFrame(rows_)
+
+
+_PCT_COLUMNS = {name: st.column_config.NumberColumn(format="percent")
+               for name in ("before", "after", "change")}
+
+
+def render_district_before_after(run: Path, rows: list[dict], reps: dict, staff_run: Path,
+                                 staffing: dict, district: str) -> None:
+    bbox = _district_bbox(rows, district)
+    if bbox is None:
+        return
+    reps_stamp = _stamp(repdata.reps_path(instance_of(run)))
+    geom_stamp = _stamp(store.geom_path(run))
+    rows_after_stamp, is_split = _rows_after_for_district(staff_run, district)
+    staffing_stamp = _stamp(store.metrics_path(staff_run))
+    if reps_stamp is None or rows_after_stamp is None or staffing_stamp is None:
+        return
+
+    left, right = st.columns(2)
+    with left:
+        fig = _rep_fig(reps_stamp, _stamp(store.table_path(run)), geom_stamp,
+                       "rep", "", True, True, bbox)
+        st.plotly_chart(fig, width="stretch", key=f"reps-dist-before-{staff_run.name}-{district}")
+        st.caption("As sold today.")
+    with right:
+        fig2 = _staffed_fig(rows_after_stamp, geom_stamp, reps_stamp, staffing_stamp, bbox)
+        st.plotly_chart(fig2, width="stretch", key=f"reps-dist-after-{staff_run.name}-{district}")
+        st.caption("After split." if is_split else "After staffing.")
+
+    view = staffdiff.district_view(reps, _rows(*rows_after_stamp), staffing, district)
+    st.dataframe(_diff_table(view), width="stretch", hide_index=True, column_config=_PCT_COLUMNS)
+
+
+def render_footprint(run: Path, rows: list[dict], district: str, cands: list[str],
+                     reps: dict | None) -> None:
     here = [r for r in rows if r["district"] == district]
     reps_here = sorted({r["rep"] for r in here if r["rep"]})
     choices = ["the district"] + [r for r in cands if r in reps_here]
@@ -114,6 +276,11 @@ def render_footprint(run: Path, rows: list[dict], district: str, cands: list[str
     if pick == "the district":
         marked = {r["zip"] for r in here}
         note = f"Highlighted: every zip of {district}."
+    elif reps is not None:
+        zips = reps.get("zips", {})
+        marked = {r["zip"] for r in here
+                 if zips.get(r["zip"], {}).get("shares", {}).get(pick, 0) > 0}
+        note = f"Highlighted: {pick}'s sales footprint from the instance, inside {district}."
     else:
         marked = {r["zip"] for r in here if r["rep"] == pick}
         note = (f"Highlighted: the zips of {district} this table already labels {pick}. That is "
@@ -142,16 +309,17 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
         theta = parent_params.get("theta", config.THETA)
         lam = parent_params.get("lam", config.LAM)
         filler = parent_params.get("filler_capture", config.FILLER)
-        child = store.new_run_dir(config.APP_RESULTS, "split", k_for(staff_run))
-        argv = steps.split_argv(config.SOLVER_PYTHON, config.CODE, instance_of(staff_run), child,
-                                table=store.table_path(staff_run), district=district, reps=reps,
-                                theta=theta, lam=lam, filler_capture=filler,
-                                exact=bool(exact), time_limit=int(limit))
-        launch_child(child, kind="split", parent=staff_run,
-                     params=dict(district=district, reps=reps, exact=bool(exact),
-                                 time_limit=int(limit), instance=str(instance_of(staff_run)),
-                                 theta=theta, lam=lam, filler_capture=filler),
-                     argv=argv, outputs={"table": "draw.csv", "metrics": "split.json"})
+        instance = instance_of(staff_run)
+        table = store.table_path(staff_run)
+        child = launch_child(
+            staff_run, "split",
+            dict(district=district, reps=reps, exact=bool(exact), time_limit=int(limit),
+                instance=str(instance), theta=theta, lam=lam, filler_capture=filler),
+            lambda child: steps.split_argv(
+                config.SOLVER_PYTHON, config.CODE, instance, child, table=table,
+                district=district, reps=reps, theta=theta, lam=lam, filler_capture=filler,
+                exact=bool(exact), time_limit=int(limit)),
+            {"table": "draw.csv", "metrics": "split.json"})
         st.success(f"`{child.name}` in flight.")
 
     for child in store.children(staff_run, config.APP_RESULTS):
@@ -177,8 +345,9 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
         return
 
 
-def render_assignment(staffing: dict) -> None:
+def render_assignment(staffing: dict, staff_run: Path) -> None:
     st.subheader("Assignment")
+    st.caption(f"Scope: {_scope_label(staff_run)}.")
     assignment = staffing.get("assignment") or {}
     gains = staffing.get("gains") or {}
     total = sum(gains.values())
@@ -199,3 +368,46 @@ def render_assignment(staffing: dict) -> None:
         st.warning("Unstaffed: " + ", ".join(unstaffed) + ". No kept rep sells there.")
     with st.expander(f"The {len(unmatched)} reps with no district"):
         st.write(", ".join(unmatched) or "none")
+
+
+def render_global_before_after(run: Path, reps: dict, staff_run: Path, staffing: dict) -> None:
+    st.subheader("Before and after the staffing")
+    reps_stamp = _stamp(repdata.reps_path(instance_of(run)))
+    staff_table = store.table_path(staff_run)
+    staffing_stamp = _stamp(store.metrics_path(staff_run))
+    if reps_stamp is None or staff_table is None or staffing_stamp is None:
+        return
+    geom_stamp = _stamp(store.geom_path(run))
+
+    left, right = st.columns(2)
+    with left:
+        fig = _rep_fig(reps_stamp, _stamp(store.table_path(run)), geom_stamp,
+                       "rep", "", True, True, None)
+        st.plotly_chart(fig, width="stretch", key=f"reps-global-before-{staff_run.name}")
+    with right:
+        fig2 = _staffed_fig(_stamp(staff_table), geom_stamp, reps_stamp, staffing_stamp, None)
+        st.plotly_chart(fig2, width="stretch", key=f"reps-global-after-{staff_run.name}")
+
+    rows_after = _rows(*_stamp(staff_table))
+    summary = staffdiff.summary(reps, rows_after, staffing)
+    cols = st.columns(3)
+    cols[0].metric("Reps with territory", summary["reps_with_territory_after"],
+                   delta=(summary["reps_with_territory_after"]
+                         - summary["reps_with_territory_before"]))
+    # Less contested book is the good direction, so the delta colour is inverted.
+    cols[1].metric("Contested book", f"{summary['contested_weight_after']:.1%}",
+                   delta=f"{summary['contested_weight_after'] - summary['contested_weight_before']:+.1%}",
+                   delta_color="inverse")
+    cols[2].metric("Free (before) / unstaffed (after) book",
+                   f"{summary['unstaffed_weight_after']:.1%}",
+                   delta=f"{summary['unstaffed_weight_after'] - summary['free_weight_before']:+.1%}")
+
+    per_rep_rows = sorted(staffdiff.per_rep(reps, rows_after, staffing), key=lambda r: r["change"])
+    only_changed = st.toggle("Only reps whose territory changed by more than 1 pt", value=True,
+                             key=f"reps-changed-{staff_run.name}")
+    if only_changed:
+        per_rep_rows = [r for r in per_rep_rows if abs(r["change"]) > 0.01]
+    frame = pd.DataFrame([{"rep": r["rep"], "before": r["before"], "after": r["after"],
+                           "change": r["change"], "districts": ", ".join(r["districts"])}
+                          for r in per_rep_rows])
+    st.dataframe(frame, width="stretch", hide_index=True, column_config=_PCT_COLUMNS)

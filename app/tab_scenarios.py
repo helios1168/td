@@ -17,7 +17,10 @@ def render_scenarios() -> None:
 
     left, right = st.columns([2, 1])
     with left:
-        instance = st.selectbox("Instance", config.INSTANCES, format_func=lambda p: p.name)
+        instance = st.selectbox("Instance file", config.INSTANCES, format_func=lambda p: p.name)
+        name = st.text_input("Scenario name", placeholder="custom",
+                             help="Slugified into the scenario's id; every k below shares it "
+                                  "and the sidebar picker will offer it once launched.")
         ks_text = st.text_input("Districts (k)", ",".join(str(k) for k in config.KS))
         ks, ks_problems = parse_ks(ks_text)
         seeds = st.text_input("Seeds", config.SEEDS,
@@ -47,7 +50,7 @@ def render_scenarios() -> None:
 
     if st.button("Launch grid", type="primary", disabled=bool(problems)):
         chains = steps.grid(
-            config.APP_RESULTS, ks=ks, delta=float(delta), seeds=seeds,
+            config.APP_RESULTS, name=name, ks=ks, delta=float(delta), seeds=seeds,
             workers=int(workers), theta=float(theta), lam=float(lam), filler_capture=filler,
             time_limit=int(time_limit),
             pins={"fix": fix, "anchor": anchor} if (fix or anchor) else None,
@@ -62,13 +65,23 @@ def render_scenarios() -> None:
             launched += [run for run, _ in chain if run not in launched]
         st.success(f"{len(chains)} chains in flight:\n\n"
                    + "\n".join(f"- {label_run(run)}" for run in launched))
+        # Hands the new scenario's slug to the sidebar picker: its key cannot be written once
+        # the widget exists, so this is read and applied on the rerun this triggers.
+        st.session_state["scenario-pending"] = store.slugify(name)
+        st.rerun()
 
     in_flight()
 
     st.subheader("Runs")
     discovered = store.discover(config.APP_RESULTS)
-    if discovered:
-        st.dataframe(runs_frame(discovered[:30]), width="stretch", hide_index=True)
+    show_all = st.toggle("Show every scenario", value=False, key="scenarios-show-all")
+    current = st.session_state.get("scenario")
+    shown = discovered if show_all else [
+        r for r in discovered if store.scenario_of(r, config.APP_RESULTS) == current]
+    if shown:
+        st.dataframe(runs_frame(shown[:30]), width="stretch", hide_index=True)
+    elif discovered:
+        st.caption("No runs in this scenario yet.")
     else:
         st.caption(f"No runs under {config.APP_RESULTS} yet.")
 

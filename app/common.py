@@ -103,16 +103,34 @@ def _stamp(path: Path | None) -> tuple[str, float] | None:
     return (str(path), path.stat().st_mtime) if path and path.exists() else None
 
 
+def _timings_path(run: Path) -> Path | None:
+    """Where a run's `timings.json` sits, if the step recorded one and it was actually written."""
+    rel = store.read_step(run).get("outputs", {}).get("timings")
+    if not rel:
+        return None
+    path = (Path(run) / rel).resolve()
+    return path if path.exists() else None
+
+
+@st.cache_data(show_spinner=False)
+def _wall(path: str, mtime: float) -> float | None:
+    return json.loads(Path(path).read_text()).get("wall")
+
+
 def runs_frame(paths: list[Path]) -> pd.DataFrame:
     rows = []
     for run in paths:
         step = store.read_step(run)
         parent = step.get("parent")
+        timings = _timings_path(run)
         rows.append({"run": store.label(run, config.APP_RESULTS),
+                     "scenario": store.scenario_of(run, config.APP_RESULTS) or "",
+                     "instance": store.member_of(run, config.APP_RESULTS) or "",
                      "parent": store.label(config.APP_RESULTS / parent, config.APP_RESULTS)
                      if parent and (config.APP_RESULTS / parent / store.STEP).exists() else "",
                      "status": store.status(run),
                      "failure": (store.failure(run) or {}).get("reason", ""),
+                     "wall (s)": round(_wall(*_stamp(timings)), 1) if timings else None,
                      "directory": run.name})
     return pd.DataFrame(rows)
 
@@ -139,11 +157,38 @@ def _figure(stamp, geom_stamp, marked: tuple[str, ...], label: str):
     return mapfig.figure(_rows(*stamp), geom, highlight_zips=set(marked), highlight_label=label)
 
 
-def map_runs() -> list[Path]:
+_UNSET = object()
+
+
+def current_scenario() -> str | None:
+    """The sidebar's scenario picker: newest scenario first, sticky in
+    `st.session_state["scenario"]` across reruns. The Scenarios tab hands over a freshly
+    launched scenario by setting `scenario-pending` and calling `st.rerun()`; that has to be
+    read and written into the widget's own key before the widget is built, since a widget's key
+    cannot be written once the widget exists. The legacy group (`None`) reads as "older runs".
+    Renders nothing and returns `None` when the store holds no runs at all."""
+    groups = store.scenarios(config.APP_RESULTS)
+    if not groups:
+        return None
+    pending = st.session_state.pop("scenario-pending", None)
+    if pending is not None:
+        st.session_state["scenario"] = pending
+    options = [slug for slug, _ in groups]
+    return st.sidebar.selectbox(
+        "Scenario", options, index=0, key="scenario",
+        format_func=lambda slug: slug if slug is not None else "older runs")
+
+
+def map_runs(scenario=_UNSET) -> list[Path]:
     """Every discovered run with a table on disk, newest first. A draw is included: staffing or
-    an override on the intermediate is a fair thing to ask for, only never the default."""
-    return [run for run in store.discover(config.APP_RESULTS)
+    an override on the intermediate is a fair thing to ask for, only never the default. With no
+    argument, every run in the store; passing a scenario slug (or `None` for the legacy group)
+    keeps only that scenario's runs."""
+    runs = [run for run in store.discover(config.APP_RESULTS)
             if store.table_path(run) is not None]
+    if scenario is _UNSET:
+        return runs
+    return [run for run in runs if store.scenario_of(run, config.APP_RESULTS) == scenario]
 
 
 def label_run(run: Path) -> str:
@@ -162,8 +207,10 @@ def k_for(run: Path) -> int:
 
 
 def pick_map(label: str, key: str) -> Path | None:
-    """The picker every child tab opens with, defaulting to whatever the Map tab is showing."""
-    runs = map_runs()
+    """The picker every child tab opens with, defaulting to whatever the Map tab is showing,
+    filtered to the sidebar's current scenario (`current_scenario`'s widget, read back off its
+    own key rather than built a second time)."""
+    runs = map_runs(st.session_state.get("scenario"))
     if not runs:
         st.info(f"No finished run under {config.APP_RESULTS} yet. Launch a grid first.")
         return None
@@ -198,16 +245,27 @@ def newest_child(run: Path, kind: str) -> Path | None:
     return None
 
 
-def launch_child(run: Path, *, kind: str, parent: Path, params: dict, argv: list[str],
-                 outputs: dict) -> None:
-    """Register a child run and launch its driver with the geometry export chained behind it,
-    so the map it writes arrives with polygons rather than as bare points."""
+def launch_child(parent: Path, kind: str, params: dict, argv, outputs: dict) -> Path:
+    """Create the child run directory, named from the parent's scenario member (or a bare `k`
+    for a parent outside any scenario), register it and launch its driver with the geometry
+    export chained behind it, so the map it writes arrives with polygons rather than as bare
+    points. Returns the child directory.
+
+    `argv` is a one-argument callable given the child directory once it exists and returning
+    the driver's argv: every driver's argv embeds its own `--out` path, which does not exist
+    until this function creates it, and a caller may need to write into the child directory
+    (an edits file, say) before that path is final."""
+    member = store.member_of(parent, config.APP_RESULTS) or f"k{k_for(parent)}"
+    run = store.new_run_dir(config.APP_RESULTS, kind, member)
+    built = argv(run)
     geom = steps.geom_argv(config.SOLVER_PYTHON, config.CODE, run / outputs["table"], run,
                            geo_cache=config.GEO_CACHE)
-    store.write_step(run, kind=kind, parent=Path(parent).name, params=params, argv=argv,
-                     outputs={**outputs, "geom": "geom.json"})
-    runner.launch_chain([(run, argv), (run, geom)], cwd=config.CODE,
+    store.write_step(run, kind=kind, parent=Path(parent).name, params=params, argv=built,
+                     outputs={**outputs, "geom": "geom.json", "timings": "timings.json"},
+                     scenario=store.scenario_of(parent, config.APP_RESULTS), member=member)
+    runner.launch_chain([(run, built), (run, geom)], cwd=config.CODE,
                         env={**os.environ, "PYTHONHASHSEED": "0"})
+    return run
 
 
 # ------------------------------------------------------------------ compare helpers

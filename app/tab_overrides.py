@@ -8,12 +8,12 @@ import pandas as pd
 import streamlit as st
 
 from app import config, runner, steps, store
-from app.common import (MODES, _json, _rows, _stamp, instance_of, k_for, launch_child,
+from app.common import (MODES, _json, _rows, _stamp, instance_of, launch_child,
                         newest_child, open_on_map, pick_map, show_failure)
 
 
 def render_overrides() -> None:
-    run = pick_map("Map to override", "over-run")
+    run = pick_map("Instance to override", "over-run")
     if run is None:
         return
     rows = _rows(*_stamp(store.table_path(run)))
@@ -60,15 +60,19 @@ def render_overrides() -> None:
                    "under a draw parent the free districts are re-seeded and renamed.")
 
     if st.button("Run override", type="primary", disabled=not edits, key="over-go"):
-        child = store.new_run_dir(config.APP_RESULTS, "override", k_for(run))
         payload = {"moves": list(edits), "hold": {"states": hold_states, "zips": hold_zips}}
-        (child / "edits.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        argv = steps.override_argv(config.SOLVER_PYTHON, config.CODE, instance_of(run), child,
-                                   table=store.table_path(run), edits=child / "edits.json",
-                                   mode=mode, parent=run)
-        launch_child(child, kind="override", parent=run,
-                     params=dict(mode=mode, label=label, instance=str(instance_of(run)), **payload),
-                     argv=argv, outputs={"table": "draw.csv", "metrics": "metrics.json"})
+
+        def build_argv(child: Path) -> list[str]:
+            (child / "edits.json").write_text(json.dumps(payload, indent=2) + "\n",
+                                              encoding="utf-8")
+            return steps.override_argv(config.SOLVER_PYTHON, config.CODE, instance_of(run), child,
+                                       table=store.table_path(run), edits=child / "edits.json",
+                                       mode=mode, parent=run)
+
+        child = launch_child(
+            run, kind="override",
+            params=dict(mode=mode, label=label, instance=str(instance_of(run)), **payload),
+            argv=build_argv, outputs={"table": "draw.csv", "metrics": "metrics.json"})
         st.success(f"`{child.name}` in flight.")
 
     st.divider()

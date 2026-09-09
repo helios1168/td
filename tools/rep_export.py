@@ -39,7 +39,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                 "..")))
 
-from td import geo, model                                                   # noqa: E402
+from td import geo, model, telemetry                                        # noqa: E402
 from td import instance as descaled                                         # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -120,7 +120,8 @@ def export(d, xy: dict, states, simplify: float) -> dict:
     ge = _geom_export()
     um = ge._us_maps()
 
-    reps_order, zips, book_share, free_share = shares(d)
+    with telemetry.phase("shares"):
+        reps_order, zips, book_share, free_share = shares(d)
     zip_state = {z: str(d.G.nodes[z].get("state") or "") for z in d.G}
 
     keys = sorted(xy)
@@ -128,26 +129,29 @@ def export(d, xy: dict, states, simplify: float) -> dict:
         raise ValueError(f"{len(keys)} zip(s) with coordinates: a Voronoi diagram needs 2")
     state_polys = (None if states is None
                    else dict(zip(states["STUSPS"].astype(str), states.geometry)))
-    clip = um.clip_region([xy[z] for z in keys], states)
-    cells = um.voronoi_cells(keys, xy, clip,
-                             zip_state=None if state_polys is None else zip_state,
-                             state_polys=state_polys)
+    with telemetry.phase("voronoi"):
+        clip = um.clip_region([xy[z] for z in keys], states)
+        cells = um.voronoi_cells(keys, xy, clip,
+                                 zip_state=None if state_polys is None else zip_state,
+                                 state_polys=state_polys)
 
-    top_of = {z: zips[z]["top"] for z in cells if zips[z]["top"]}
-    territory_polys = um.dissolve(cells, top_of)
-    colors = um.color_districts(ge._adjacency(territory_polys), ge.palette())
-    territories = {r: dict(rings=ge._rings(territory_polys[r], simplify), color=colors[r])
-                   for r in territory_polys}
+    with telemetry.phase("dissolve"):
+        top_of = {z: zips[z]["top"] for z in cells if zips[z]["top"]}
+        territory_polys = um.dissolve(cells, top_of)
+        colors = um.color_districts(ge._adjacency(territory_polys), ge.palette())
+        territories = {r: dict(rings=ge._rings(territory_polys[r], simplify), color=colors[r])
+                       for r in territory_polys}
 
-    footprints = {}
-    for r in reps_order:
-        marked = {z: r for z in cells if zips[z]["shares"].get(r, 0.0) > 0}
-        polys = um.dissolve(cells, marked)
-        footprints[r] = dict(rings=ge._rings(polys.get(r), simplify))
+    with telemetry.phase("footprints"):
+        footprints = {}
+        for r in reps_order:
+            marked = {z: r for z in cells if zips[z]["shares"].get(r, 0.0) > 0}
+            polys = um.dissolve(cells, marked)
+            footprints[r] = dict(rings=ge._rings(polys.get(r), simplify))
 
-    contest_marked = {z: "x" for z in cells if zips[z]["n"] >= 2}
-    contest_polys = um.dissolve(cells, contest_marked)
-    contested = dict(rings=ge._rings(contest_polys.get("x"), simplify))
+        contest_marked = {z: "x" for z in cells if zips[z]["n"] >= 2}
+        contest_polys = um.dissolve(cells, contest_marked)
+        contested = dict(rings=ge._rings(contest_polys.get("x"), simplify))
 
     states_out = {}
     if states is not None:
@@ -178,15 +182,19 @@ def main(argv=None) -> int:
                     help="skip the shapefile: clip to the padded hull of the points, no states")
     a = ap.parse_args(argv)
 
-    d = descaled.load_descaled(a.instance)
-    geo.assert_conus(d)
+    T = telemetry.Timings("reps")
+    with T.phase("load"):
+        d = descaled.load_descaled(a.instance)
+        geo.assert_conus(d)
 
-    xy = _coordinates(sorted(d.G), a.geo_cache)
-    states = None if a.no_basemap else geo.states_outline(a.geo_cache)
+        xy = _coordinates(sorted(d.G), a.geo_cache)
+        states = None if a.no_basemap else geo.states_outline(a.geo_cache)
 
-    g = export(d, xy, states, a.simplify)
+    g = export(d, xy, states, a.simplify)    # shares/voronoi/dissolve/footprints phases inside
     g["instance"] = os.path.basename(a.instance)
-    path = ge.write(os.path.join(a.out, "reps.json"), g)
+    with T.phase("write"):
+        path = ge.write(os.path.join(a.out, "reps.json"), g)
+    T.write(a.out)
 
     n_top = sum(1 for z in g["zips"].values() if z["top"])
     print(f"reps: {len(g['reps'])} rep(s), {len(g['zips'])} zip(s), {n_top} with a top rep, "
@@ -196,4 +204,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(telemetry.maybe_profile(main)())

@@ -1,9 +1,10 @@
 """The scenario app: launch a grid of maps, then read one on the map.
 
-Five tabs.  Scenarios launches one chain per k (draw, then clip, then polygons) and watches
+Six tabs.  Scenarios launches one chain per k (draw, then clip, then polygons) and watches
 them; Map opens any run the store discovered and draws its zip table; Reps staffs a map and
 contests its districts; Overrides edits one by hand or reruns it under the edit as a
-constraint; Compare diffs two maps on the zips they share.
+constraint; Compare diffs two maps on the zips they share; Timings shows how long each step
+took. A sidebar picker, common to every tab, scopes them all to one launched scenario.
 
 Nothing here imports `td`.  Every step is a driver in the solver virtualenv, launched detached
 by `runner` and read back off disk by `store`, so a solve that takes ten minutes never blocks a
@@ -17,13 +18,15 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app import tab_compare, tab_map, tab_overrides, tab_reps, tab_scenarios
+from app import common, tab_compare, tab_map, tab_overrides, tab_reps, tab_scenarios, tab_timings
 
 st.set_page_config(page_title="Territory scenarios", layout="wide")
 st.title("Territory scenarios")
 
-scenarios, map_tab, reps, overrides, compare = st.tabs(
-    ["Scenarios", "Map", "Reps", "Overrides", "Compare"])
+common.current_scenario()
+
+scenarios, map_tab, reps, overrides, compare, timings = st.tabs(
+    ["Scenarios", "Map", "Reps", "Overrides", "Compare", "Timings"])
 
 with scenarios:
     tab_scenarios.render_scenarios()
@@ -39,3 +42,6 @@ with overrides:
 
 with compare:
     tab_compare.render_compare()
+
+with timings:
+    tab_timings.render_timings()

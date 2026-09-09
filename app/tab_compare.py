@@ -8,7 +8,7 @@ from app.common import _figure, _rows, _stamp, diff_frames, label_run, map_runs
 
 
 def render_compare() -> None:
-    runs = map_runs()
+    runs = map_runs(st.session_state.get("scenario"))
     if len(runs) < 2:
         st.info("Two finished maps are needed for a comparison.")
         return

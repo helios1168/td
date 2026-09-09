@@ -178,6 +178,7 @@ def test_the_contest_table_reports_candidates_and_shares_that_sum_to_one():
 def test_the_run_writes_a_table_whose_rep_column_is_the_assignment():
     with tempfile.TemporaryDirectory() as tmp:
         rec, rows = _run(tmp, "out", "--release", "R3", "--filler-capture", "full")
+        assert os.path.exists(os.path.join(tmp, "out", "timings.json"))
 
     assert len(rows) == len(TOY)
     for r in rows:

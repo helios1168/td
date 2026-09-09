@@ -9,8 +9,8 @@ from pathlib import Path
 
 import streamlit as st
 
-from app import config, mapfig, runner, steps, store
-from app.common import MAP_KINDS, _geom, _rows, _stamp, label_run, show_failure
+from app import config, mapfig, repdata, runner, steps, store
+from app.common import MAP_KINDS, _geom, _rows, _stamp, instance_of, label_run, show_failure
 
 
 def render_map() -> None:
@@ -19,16 +19,20 @@ def render_map() -> None:
         st.info(f"No runs under {config.APP_RESULTS} yet. Launch a grid first.")
         return
 
+    scenario = st.session_state.get("scenario")
+    scoped = [run for run in discovered
+             if store.scenario_of(run, config.APP_RESULTS) == scenario]
+
     intermediates = st.toggle(
         "Show intermediates", value=False,
         help="Adds the draw tables. A draw is what the clip starts from, not the map.")
     kinds = (*MAP_KINDS, "draw") if intermediates else MAP_KINDS
-    shown = [run for run in discovered if store.read_step(run).get("kind") in kinds]
+    shown = [run for run in scoped if store.read_step(run).get("kind") in kinds]
     if not shown:
         st.info("No clipped map yet. Turn on intermediates to see the draws.")
         return
 
-    run = st.selectbox("Run", shown, format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
+    run = st.selectbox("Instance", shown, format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
                        key="map-run")
     st.caption(" > ".join(label_run(p) for p in store.lineage(run, config.APP_RESULTS))
                + f"  (`{run.name}`)")
@@ -49,6 +53,12 @@ def render_map() -> None:
         render_side(run, geom)
     with board:
         render_board(run, rows, geom)
+
+    st.subheader("Rep territories, as sold today")
+    reps = repdata.ensure(instance_of(run))
+    if reps is None:
+        return
+    render_rep_section(run, reps, rows, geom_stamp)
 
 
 def render_side(run: Path, geom: dict | None) -> None:
@@ -118,3 +128,37 @@ def render_board(run: Path, rows: list[dict], geom: dict | None) -> None:
                    "The Reps and Overrides tabs read this.")
     else:
         st.caption("Click a zip or a state handle to select it.")
+
+
+def render_rep_section(run: Path, reps: dict, rows: list[dict], geom_stamp) -> None:
+    c1, c2, c3, c4 = st.columns(4)
+    colour_label = c1.radio("Colour by", ["rep", "reps with book"], key=f"rep-colour-{run.name}")
+    colour_by = "rep" if colour_label == "rep" else "n"
+    focus_rep = c2.selectbox("Focus rep", [""] + reps["reps"],
+                             format_func=lambda r: r or "none", key=f"rep-focus-{run.name}")
+    show_contested = c3.toggle("Hatch contested", value=True, key=f"rep-contested-{run.name}")
+    overlay = c4.toggle("Overlay this instance's districts", value=False,
+                        key=f"rep-overlay-{run.name}")
+
+    reps_stamp = _stamp(repdata.reps_path(instance_of(run)))
+    fig = _rep_fig(reps_stamp, geom_stamp if overlay else None, colour_by, focus_rep,
+                  show_contested, rows)
+    st.plotly_chart(fig, width="stretch", key=f"rep-map-{run.name}")
+
+    counts = {0: 0, 1: 0, 2: 0, 3: 0}
+    for info in reps.get("zips", {}).values():
+        counts[min(info.get("n", 0), 3)] += 1
+    st.caption(f"Zips by rep count: 0 → {counts[0]}, 1 → {counts[1]}, 2 → {counts[2]}, "
+               f"3+ → {counts[3]}.")
+    st.caption("Hatch marks a cell where two or more reps hold book there. Colour separates "
+               "neighbouring territories only; a rep's identity is in the hover and the focus "
+               "selector, not the colour.")
+
+
+@st.cache_data(show_spinner=False, max_entries=8)
+def _rep_fig(reps_stamp, geom_stamp, colour_by: str, focus_rep: str, show_contested: bool,
+            _rows_data: list[dict]):
+    reps = repdata.load(*reps_stamp)
+    geom = _geom(*geom_stamp) if geom_stamp else None
+    return mapfig.rep_figure(reps, _rows_data, geom, colour_by=colour_by, focus_rep=focus_rep,
+                             show_contested=show_contested, district_lines=geom is not None)

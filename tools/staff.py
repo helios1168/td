@@ -45,7 +45,7 @@ for _p in (ROOT, HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from td import channel, geo, model, ziptable                                 # noqa: E402
+from td import channel, geo, model, telemetry, ziptable                      # noqa: E402
 from td import instance as descaled                                          # noqa: E402
 
 
@@ -133,88 +133,106 @@ def main(argv=None) -> int:
     args = build_argparser().parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
 
-    d = descaled.load_descaled(args.instance)
-    geo.assert_conus(d)
+    # A validation `sys.exit` inside `load` writes no output, so it takes the `finally` below
+    # (a bare `close`, not `write`) rather than leaving this `Timings` stuck on the module
+    # stack for whatever else runs in this interpreter next (`tests/test_staff.py` calls
+    # `main` in-process, one process for every test).
+    T = telemetry.Timings("staff")
+    try:
+        with T.phase("load"):
+            d = descaled.load_descaled(args.instance)
+            geo.assert_conus(d)
 
-    rows = ziptable.read(args.table)
-    to_district = {r["zip"]: r["district"] for r in rows if r["district"]}
-    if not to_district:
-        sys.exit(f"{args.table}: no labelled row, so there is nothing to staff")
-    missing = sorted(z for z in to_district if z not in d.G)
-    if missing:
-        sys.exit(f"{len(missing)} zip(s) of the table are not in the instance "
-                 f"(e.g. {missing[:5]})")
-    k = len({r["district"] for r in rows if r["district"]})
+            rows = ziptable.read(args.table)
+            to_district = {r["zip"]: r["district"] for r in rows if r["district"]}
+            if not to_district:
+                sys.exit(f"{args.table}: no labelled row, so there is nothing to staff")
+            missing = sorted(z for z in to_district if z not in d.G)
+            if missing:
+                sys.exit(f"{len(missing)} zip(s) of the table are not in the instance "
+                         f"(e.g. {missing[:5]})")
+            k = len({r["district"] for r in rows if r["district"]})
 
-    scope = _names(args.districts)
-    if scope:
-        unknown = sorted(set(scope) - set(to_district.values()))
-        if unknown:
-            sys.exit(f"unknown district(s) {unknown}; the table has "
-                     f"{sorted(set(to_district.values()))}")
-        to_district = {z: dist for z, dist in to_district.items() if dist in scope}
-    else:
-        scope = sorted(set(to_district.values()))
+            scope = _names(args.districts)
+            if scope:
+                unknown = sorted(set(scope) - set(to_district.values()))
+                if unknown:
+                    sys.exit(f"unknown district(s) {unknown}; the table has "
+                             f"{sorted(set(to_district.values()))}")
+                to_district = {z: dist for z, dist in to_district.items() if dist in scope}
+            else:
+                scope = sorted(set(to_district.values()))
 
-    all_reps = sorted(model.reps(d.G, sorted(d.G)))
-    kept, released = split_reps(all_reps, _names(args.keep), _names(args.release))
-    if not kept:
-        sys.exit("every rep is released; there is nobody left to staff the map")
+            all_reps = sorted(model.reps(d.G, sorted(d.G)))
+            kept, released = split_reps(all_reps, _names(args.keep), _names(args.release))
+            if not kept:
+                sys.exit("every rep is released; there is nobody left to staff the map")
 
-    G = model.release_reps(d.G, released)
-    book, free = district_books(G, to_district, kept)
+            G = model.release_reps(d.G, released)
 
-    g, R, D = channel.gain_matrix(G, to_district, reps_order=kept, theta=args.theta,
-                                  lam=args.lam, filler_capture=args.filler_capture)
-    cands = {dist: [r for r in kept if book.get(dist, {}).get(r, 0.0) > 0] for dist in D}
-    staffable = [dist for dist in D if cands[dist]]
-    jd = {dist: j for j, dist in enumerate(D)}
+        with T.phase("books"):
+            book, free = district_books(G, to_district, kept)
 
-    ir = {r: i for i, r in enumerate(R)}
-    sub = g[:, [jd[dist] for dist in staffable]] if staffable else np.zeros((len(R), 0))
-    ok = np.zeros(sub.shape, bool)
-    for j, dist in enumerate(staffable):
-        for r in cands[dist]:
-            ok[ir[r], j] = sub[ir[r], j] > 0
-    pairs = assign(sub, ok)
+        with T.phase("gain_matrix"):
+            g, R, D = channel.gain_matrix(G, to_district, reps_order=kept, theta=args.theta,
+                                          lam=args.lam, filler_capture=args.filler_capture)
 
-    assignment = {staffable[j]: R[i] for i, j in pairs}
-    gains = {staffable[j]: float(sub[i, j]) for i, j in pairs}
-    value = float(sum(math.log(v) for v in gains.values()))
-    taken = set(assignment.values())
+        with T.phase("assign"):
+            cands = {dist: [r for r in kept if book.get(dist, {}).get(r, 0.0) > 0] for dist in D}
+            staffable = [dist for dist in D if cands[dist]]
+            jd = {dist: j for j, dist in enumerate(D)}
 
-    contest = {}
-    for dist in D:
-        total = sum(book.get(dist, {}).values()) + free.get(dist, 0.0)
-        contest[dist] = dict(
-            candidates=cands[dist],
-            share={r: (book[dist][r] / total if total > 0 else 0.0) for r in cands[dist]},
-            free_share=(free.get(dist, 0.0) / total if total > 0 else 0.0),
-            g={r: float(g[ir[r], jd[dist]]) for r in cands[dist]},
-        )
+            ir = {r: i for i, r in enumerate(R)}
+            sub = g[:, [jd[dist] for dist in staffable]] if staffable else np.zeros((len(R), 0))
+            ok = np.zeros(sub.shape, bool)
+            for j, dist in enumerate(staffable):
+                for r in cands[dist]:
+                    ok[ir[r], j] = sub[ir[r], j] > 0
+            pairs = assign(sub, ok)
 
-    out = dict(
-        kept=kept, released=released, k=k, districts=scope,
-        assignment=assignment, gains=gains, value=value,
-        unmatched_reps=[r for r in R if r not in taken],
-        unstaffed_districts=[dist for dist in D if dist not in assignment],
-        balance=ziptable.balance(rows, k),
-        contest=contest,
-    )
-    with open(os.path.join(args.out, "staffing.json"), "w", encoding="utf-8") as fh:
-        json.dump(out, fh, indent=2, default=float)
-        fh.write("\n")
+            assignment = {staffable[j]: R[i] for i, j in pairs}
+            gains = {staffable[j]: float(sub[i, j]) for i, j in pairs}
+            value = float(sum(math.log(v) for v in gains.values()))
+            taken = set(assignment.values())
 
-    staffed = [dict(r, rep=(assignment.get(r["district"], "") if r["district"] in scope
-                            else r["rep"]))
-               for r in rows]
-    ziptable.write(os.path.join(args.out, "draw.csv"), staffed)
+        with T.phase("write"):
+            contest = {}
+            for dist in D:
+                total = sum(book.get(dist, {}).values()) + free.get(dist, 0.0)
+                contest[dist] = dict(
+                    candidates=cands[dist],
+                    share={r: (book[dist][r] / total if total > 0 else 0.0)
+                          for r in cands[dist]},
+                    free_share=(free.get(dist, 0.0) / total if total > 0 else 0.0),
+                    g={r: float(g[ir[r], jd[dist]]) for r in cands[dist]},
+                )
 
-    print(f"k={k} kept={len(kept)} released={len(released)} "
-          f"staffed={len(assignment)} unstaffed={len(out['unstaffed_districts'])} "
-          f"value={value:.6f}", flush=True)
-    return 0
+            out = dict(
+                kept=kept, released=released, k=k, districts=scope,
+                assignment=assignment, gains=gains, value=value,
+                unmatched_reps=[r for r in R if r not in taken],
+                unstaffed_districts=[dist for dist in D if dist not in assignment],
+                balance=ziptable.balance(rows, k),
+                contest=contest,
+            )
+            with open(os.path.join(args.out, "staffing.json"), "w", encoding="utf-8") as fh:
+                json.dump(out, fh, indent=2, default=float)
+                fh.write("\n")
+
+            staffed = [dict(r, rep=(assignment.get(r["district"], "") if r["district"] in scope
+                                    else r["rep"]))
+                       for r in rows]
+            ziptable.write(os.path.join(args.out, "draw.csv"), staffed)
+
+        T.write(args.out)
+
+        print(f"k={k} kept={len(kept)} released={len(released)} "
+              f"staffed={len(assignment)} unstaffed={len(out['unstaffed_districts'])} "
+              f"value={value:.6f}", flush=True)
+        return 0
+    finally:
+        T.close()
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(telemetry.maybe_profile(main)())

@@ -114,6 +114,7 @@ def _keys(obj):
 def test_cli_writes_reps_json_for_the_instance_at_hand():
     with tempfile.TemporaryDirectory() as tmp:
         g = _run(tmp)
+        assert os.path.exists(os.path.join(tmp, "out", "timings.json"))
     assert g["crs"] == "laea"
     assert g["instance"] == "instance_descaled.json.gz"
     assert g["reps"] == ["R2", "R3", "R1"]              # first-appearance order, model.reps
