@@ -56,8 +56,13 @@ way.
 | `tools/verify/runs/` | the catalogue driver (`run_all.sh`), maps (`make_maps.sh`), generator (`build_artifact.py`), 14 scenario specs |
 | `tools/verify/U*/` | runnable artifacts behind each unit's Model / Verify / Code verify sections in `docs/units/<id>.md` |
 | `docs/channel_note/`, `docs/math_note/` | the LaTeX notes (channel model; the original two-player formulation). `math_note/toy_*.py` import the deleted `code/gfx` and are broken |
-| `tests/run_all.py` | 321 fast tests; `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True` |
-| `app/` + `tools/app.sh` | the Streamlit scenario app: define a scenario, run an engine, see the map, save it. Runs in its own venv `.venv-app` and never imports `td` — it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/engines.py` is the registry; `docs/APP.md` is the whole story |
+| `tests/run_all.py` | 466 fast tests (solver venv, 2026-09-08); `-k <name>` filters. `TD_SLOW=1` currently adds nothing — no module sets `SLOW = True`. `tests/test_app_smoke.py` and `tests/test_mapfig.py` need the app venv instead (`docs/APP.md` §7) |
+| `app/` + `tools/app.sh` | the Streamlit scenario app: launch a scenario grid, see the map and the incumbent reps' territories, staff and split, override, compare, watch the timings. Runs in its own venv `.venv-app` and never imports `td`, it drives the drivers by subprocess, which is both the version boundary and the solver-swap seam. `app/main.py` wires six tabs (Scenarios, Map, Reps, Overrides, Compare, Timings), each its own `tab_*.py` module; `app/common.py` holds what they share (cached reads, run pickers, `launch_child`); `app/store.py`/`app/steps.py` are the run ledger and argv builders; `app/mapfig.py` builds every plotly figure (the zip map, the rep and staffed maps); `app/repdata.py` loads or builds `reps.json`; `app/staffdiff.py` is the before/after arithmetic. `docs/APP.md` is the whole story |
+| `tools/rep_export.py` | writes `reps.json`: per-zip rep shares and weights, dominant-rep territories, footprints, the contested union, all ratios and polygons, no mass. `docs/APP.md` §4 |
+| `td/telemetry.py` | `Timings`: nested phases, accumulated ticks, wall/CPU/RSS, written as `timings.json` next to a driver's other outputs; `TD_PROFILE=1` also dumps a `cProfile` run. Stdlib only, so library code (`td/solvers/centers.py`'s `assign`) can call the module-level `telemetry.tick`/`telemetry.phase` hooks and stay import-clean. `docs/APP.md` §4 |
+| `td/solvers/milp_engines.py` + `td/solvers/milp_worker.py` | alternative solvers for the level-1 minimum-splits MILP behind one seam, `solve_problem`: `scipy` (the baseline), `highs` and `scip` in process, `cpsat` out of process in `.venv-opt` through `milp_worker.py`. `fix_roots`, `with_cutoff` and `lp_heuristic` build variant problems. `docs/APP.md` §1, §4 |
+| `tools/bench/` | `milp_bench.py` compares the engines above on the real instance at a given k, writing `battery/results/bench/milp_<stamp>.json`; `requirements-opt.txt` pins `.venv-opt`; `README.md` has the build steps, the variant table and the acceptance rule |
+| `tools/verify/milp_root_fix/` | the root-fix claim (fixing an anchored district's flow root loses no optimum) VERIFIED by `math-verify`, `check_root_fix.py` the runnable artifact, `REPORT.md` the write-up |
 | `tools/geom_export.py` | a zip table's polygons as `geom.json`, no solver needed downstream: per-state clipped Voronoi catchments of each zip dissolved by district (`us_maps.clip_region`, `voronoi_cells`, `dissolve`), coloured off the polygons' own adjacency so neighbours never share a hue. `docs/APP.md` §4 |
 | `tools/staff.py` | stage 2 plus released reps and restricted candidacy: `model.release_reps` folds a departing rep's book into `S_free`; a rep may be assigned only a district it already holds book in; writes `staffing.json` and a `draw.csv` with `rep` filled per staffed district. `docs/APP.md` §6 |
 | `tools/override.py` | the map-override driver: mode A relabels a zip table by hand, no rerun; mode B translates the same edits into its parent's own flags and reruns that driver. Both report balance, contiguity and a diff. `docs/APP.md` §4, §6 |
@@ -94,6 +99,23 @@ tools/split_district.py instance_descaled_v2_conus.json.gz --table <run>/draw.cs
 .venv/bin/python3 tests/run_all.py    # 312 fast tests; -k <name> filters
 ~/.claude/hooks/test-td-hooks.sh      # SessionStart / PreCompact / PreToolUse / Stop hook tests
 ```
+
+### Runtime baseline (2026-09-08)
+
+The app grid of 2026-09-08 14:42 (k = 10 to 20, delta 0.10, 5 seeds, 2 workers per draw), before
+the MILP engine bench picked a winner (`docs/APP.md` §1, §4):
+
+| step | k=10 | k=12 | k=14 | k=16 | k=18 | k=20 |
+|---|---|---|---|---|---|---|
+| draw (stage 1 + stage 2, per chain) | 9 s | 9 s | 11 s | 12 s | 11 s | 10 s |
+| clip: level-1 MILP (`state_splits.solve`) | 16.5 s | ~150 s | ~3 s | 600 s cap | 600 s cap | 600 s cap |
+| clip: balance pass + level-2 realise + stage 2 + tables | < 1 s | < 1 s | < 1 s | < 1 s | < 1 s | < 1 s |
+| geom export | ~2 s | ~2 s | ~2 s | ~2 s | ~2 s | ~2 s |
+| chain end to end | 27 s | 2.5 min | 14 s | 10.2 min | 10.2 min | 10.2 min |
+
+The six chains run in parallel, so the grid's wall clock is the slowest MILP plus about 15 s:
+10 min 14 s, set by the 600 s time limit at k = 16 to 20. The MILP bench's own numbers
+(`tools/bench/README.md`) will be recorded beside this table once it has run.
 
 ## Scenario exploration goes through the app, not a new artifact
 

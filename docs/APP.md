@@ -7,17 +7,27 @@ in `.claude/worktrees/app`. Three invariants govern every driver: the ground set
 DC, the zip table is the unit every step reads and writes, and the delivered map is the clipped
 one, never the draw (section 3 below).
 
-## 1. Two virtualenvs, on purpose
+## 1. Three virtualenvs, on purpose
 
 | venv | who owns it | what is in it |
 |---|---|---|
 | `.venv` (repo root) | the solvers | the frozen pins in `requirements.txt`: numpy 2.5.2, scipy 1.18.1, geopandas, shapely, pyproj, SCIP/HiGHS |
 | `.venv-app` (per worktree) | the app | streamlit 1.63.0, pandas 3.0.5, plotly 7.0.0 (`app/requirements.txt`) |
+| `.venv-opt` (repo root) | the MILP bench | `ortools` 9.15.6755, `numpy` 2.5.3, pinned in `tools/bench/requirements-opt.txt` |
 
 The solver pins are frozen because the zip50 anchor depends on those exact versions, so
 Streamlit's dependency tree must never be allowed to resolve them upward. The app therefore
 never imports `td`; it drives every solver step by subprocess. That process boundary is also
 the version boundary.
+
+`.venv-opt` exists for the same reason, one level down. The MILP engine bench
+(`tools/bench/milp_bench.py`, §4 and §7) compares solvers on the level-1 split problem, and one
+of them, OR-Tools CP-SAT, would otherwise pull its own `numpy` into `.venv` and risk moving the
+frozen pins. `td/solvers/milp_engines.py`'s `cpsat` engine therefore runs out of process, under
+`.venv-opt`, through `td/solvers/milp_worker.py`; the `scipy`, `highs` (`highspy`) and `scip`
+(`pyscipopt`) engines run in process, in the ordinary `.venv`, where both packages already
+live. Build it once from the hub root: `uv venv --python 3.13 .venv-opt && uv pip install
+--python .venv-opt/bin/python3 -r tools/bench/requirements-opt.txt` (`tools/bench/README.md`).
 
 Rebuild the app venv from scratch, in every new worktree (it is not copied):
 
@@ -98,16 +108,36 @@ draw standing in for it.
 
 ## 4. Architecture
 
-**Run directory:** `battery/results/app/<kind>_k<kk>_<YYYYmmdd_HHMMSS>[-n]/step.json`, the `-n`
-suffix added on a same-second name collision (`store.new_run_dir`). The name carries the kind,
-the district count and the time and nothing else; every picker shows `store.label`, built
-from the ledger (`k18 · clip · 2026-09-08 14:42:39`), so runs made under an older naming read
-the same way. `step.json`:
+**Run directory:** `battery/results/app/<member>_<kind>_<YYYYmmdd_HHMMSS>[-n]/step.json`, the
+`-n` suffix added on a same-second name collision (`store.new_run_dir`). `member` is a
+scenario member's name (`store.member_name`): the scenario slug plus its district count and
+delta, unpadded (`custom_k10_d5`, `custom_k10_d7.5`); a run outside any scenario falls back to
+a bare `k<kk>`. Every picker shows `store.label`, built from the ledger (`custom_k10_d5 ·
+clip · 2026-09-08 14:42:39`), so a run made under the older `<kind>_k<kk>_<stamp>` naming still
+reads, as `k18 · clip · 2026-09-08 14:42:39`. `step.json`:
 
 ```
 {kind, parent: "<run name>"|null, params, argv, pid, started,
- outputs: {table: "k18/draw.csv", metrics: "..." , geom: "geom.json"}}
+ outputs: {table: "k18/draw.csv", metrics: "..." , geom: "geom.json"},
+ scenario: "custom"|null, member: "custom_k10_d5"|null}
 ```
+
+**Scenarios.** `scenario` is the slug a grid launch's typed name reduces to
+(`store.slugify`: lowercased, everything outside `[a-z0-9-]` collapsed to one hyphen, empty
+input falling back to `grid-<YYYYmmdd>-<HHMM>`); `member` is that slug plus the chain's own k
+and delta. `steps.grid(name=...)` writes both into the draw and clip steps of every chain it
+launches; a child (`staff`, `override`, `split`) never sets them itself, and
+`store.scenario_of`/`store.member_of` walk a run's lineage to find them the way `store.k_of`
+already does, so the child still reads its parent chain's scenario. `store.scenarios(root)`
+groups every discovered run by scenario, newest scenario first by its own newest run, with runs
+carrying neither anywhere in their lineage (made before this ledger, or hand-imported) grouped
+last under the slug `None`. The sidebar's scenario picker (`app.common.current_scenario`, the
+`None` group shown as "older runs") drives every child tab's picker
+(`app.common.map_runs`/`pick_map`), which filters to whichever scenario is selected; the
+Scenarios tab's own runs table adds `scenario` and `instance` (the member name; "Instance" is
+the UI label there, since the user's "instance" collides with the code's own word for the data
+file, labelled "Instance file") columns, defaults to the current scenario, and carries a "show
+every scenario" toggle.
 
 paths under `outputs` are relative to the run directory, so a run can be moved or copied whole.
 `store.discover(root)` returns every directory carrying a `step.json`, newest first by the
@@ -139,7 +169,8 @@ Drivers:
 | draw | `run_draw.py <instance> --k K --seeds S --workers W --theta T --lam L --filler-capture F --geo-cache DIR --out RUN [--scenario FILE] [--lock-zips FILE]` | instance; optional `scenario.json` (fix/anchor pins); optional `locks.json` | `k<kk>/draw.csv`, `k<kk>/metrics.json` |
 | clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
 | geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--simplify M] [--no-basemap]` | a zip table | `geom.json`, in the run directory `--out` names |
-| staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
+| staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
+| rep_export | `rep_export.py <instance> --out DIR [--geo-cache DIR] [--simplify M] [--no-basemap]` | instance | `reps.json` |
 | override, mode A | `override.py <instance> --table TABLE --edits FILE --mode A [--eta E] --out RUN` | instance (CONUS assert only); a zip table; `edits.json` | `draw.csv` (relabelled), `metrics.json` |
 | override, mode B | `override.py <instance> --table TABLE --edits FILE --mode B --parent PARENT_RUN --out RUN` | `edits.json`; `PARENT_RUN`'s lineage, walked up to its nearest `draw`/`clip` ancestor for that step's own recorded `argv` | `locks.json` or `bounds.json`, `engine/` (the rerun engine's own output tree), `draw.csv`, `metrics.json` |
 | split_district | `split_district.py <instance> --table TABLE --district D --reps R,R --theta T --lam L --filler-capture F [--exact] [--time-limit T] [--n-near N] --out RUN` | instance; a zip table | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
@@ -156,6 +187,41 @@ the committed map.
 
 Frozen JSON contracts.
 
+`timings.json`, written by every driver next to its other outputs
+(`step.json.outputs["timings"]`, set by `steps.grid` for draw and clip, by
+`app.common.launch_child` for every tab-launched child, and by `app.repdata.ensure` for the rep
+export) from `td/telemetry.py`'s `Timings`:
+```
+{"driver": "clip", "argv": [...], "started": iso, "finished": iso, "wall": s,
+ "cpu": s (this process plus its reaped children), "rss_peak_mb": float,
+ "phases": [{"name": "solve", "depth": 0, "start": s-from-driver-start, "wall": s,
+             "cpu": s, "note": {...}}, ...],
+ "ticks":  {"lp.assign": {"n": 42, "wall": s}}}
+```
+A phase nests (`depth` counts how many phases are already open when it starts) and can carry a
+`note` (arbitrary key/values, `ph.note(...)`); a tick accumulates many small calls under one
+name (`Timings.tick`) rather than opening a phase for each. `TD_PROFILE=1` in the environment
+also dumps a `cProfile` run of the whole driver to `<out_dir>/profile.prof`
+(`telemetry.maybe_profile`, wrapping every driver's own `main`); §7 has the recipe.
+
+Phase names are fixed across drivers so the Timings tab can line chains up, but two of them are
+an approximation rather than a full breakdown. The draw's `stage1` phase covers the whole
+per-`(k, seed)` sweep and folds in each pool job's own `lp.assign` ticks (one per
+`centers.assign` call); `centers.improve`, the polish step that runs after the Lloyd loop,
+records no tick of its own, so its cost sits inside `stage1`'s wall time rather than named
+apart from it. `split_district.py` bills its one call into `td.solvers.district_split.split`
+to whichever engine actually ran, a phase named `"greedy"` or `"scip"` rather than two, since
+`--exact` escalates from one to the other inside a single call this workstream does not own.
+
+| driver | phases (depth 0) |
+|---|---|
+| draw | `load`, `coordinates`, `stage1` (note `jobs`, `workers`; ticks `lp.assign`), `stage2`, `write` |
+| clip | `load`, `build_milp`, `solve` (note `status`, `nodes`, `gap`, `dual_bound`, `objective`, `time_limit`, `engine`), `balance_pass`, `realise`, `stage2`, `write` |
+| geom_export | `load`, `voronoi`, `dissolve`, `colour`, `write` |
+| staff | `load`, `books`, `gain_matrix`, `assign`, `write` |
+| split_district | `load`, `greedy` or `scip`, `write` |
+| rep_export | `load`, `shares`, `voronoi`, `dissolve`, `footprints`, `write` |
+
 `geom.json`:
 ```
 {"crs": "laea",
@@ -168,15 +234,52 @@ palette (25 hues at two lightness levels, laid out on a stride coprime with 25 s
 entries sit about 130 degrees apart), assigned over the adjacency read off the polygons
 themselves, so two districts sharing a border never share a hue.
 
+`reps.json` (written by `tools/rep_export.py`, read by `app/repdata.py` and `app/mapfig.py`):
+```
+{"crs": "laea", "instance": "instance_descaled_v2_conus.json.gz",
+ "reps": ["R0022", ...],                                   # model.reps order
+ "book_share": {"R0022": 0.0123, ...},                     # rep's share of the whole channel
+                                                            # book, sums to 1 - free_share
+ "free_share": 0.004,
+ "zips": {"01001": {"top": "R0022" | "", "shares": {"R0022": 0.61, "R0068": 0.39},
+                    "free": 0.0, "n": 2, "weight": 0.00031}, ...},
+                                                            # shares: of the zip's own book,
+                                                            # sum(shares)+free == 1 (or all 0)
+                                                            # weight: the zip's share of the
+                                                            # whole channel book, sums to 1
+ "territories": {"R0022": {"rings": [[[x,y],...],...], "color": "#rrggbb"}, ...},
+                                                            # cells dissolved by `top`
+ "footprints":  {"R0022": {"rings": [...]}, ...},          # cells of every zip with book>0
+ "contested":   {"rings": [...]},                          # union of cells with n >= 2
+ "states": {... same shape as geom.json ...}}
+```
+Ratios and identifiers only: `weight` and `book_share` are shares of one unknown total that
+never itself appears in the file (invariant 4, §7). Coordinates
+are the table's own LAEA metres, exterior rings only, simplified 2000 m, exactly
+`geom_export._rings`. Colours come from `geom_export.palette()` assigned over the territories'
+own adjacency, so two touching territories never share a hue, the same promise `geom.json`
+makes. Voronoi cells are built over every zip with coordinates, untapped zips included, so no
+territory swallows ground nobody claims; an untapped cell dissolves into nothing and stays
+unfilled. Location: `config.REP_CACHE / <instance stem> / reps.json`
+(`REP_CACHE = RESULTS / "app_reps"`), outside `APP_RESULTS` so `store.discover` never lists it;
+the directory carries a minimal `step.json` (`kind: "reps"`, `parent: None`, `outputs:
+{"reps": "reps.json", "timings": "timings.json"}`) so `runner.launch`, `store.status` and the
+log tail work unchanged. `app/repdata.py`'s `ensure(instance)` builds it on demand, behind a
+"Build rep territories" button, keyed by the instance's own name rather than by when it ran, so
+one export per instance is reused rather than rebuilt.
+
 `staffing.json`:
 ```
-{"kept": [...], "released": [...], "k": int,
+{"kept": [...], "released": [...], "k": int, "districts": [...],
  "assignment": {district: rep}, "gains": {district: g}, "value": float,
  "unmatched_reps": [...], "unstaffed_districts": [...],
  "balance": {...ziptable.balance...},
  "contest": {district: {"candidates": [...], "share": {rep: frac},
                         "free_share": float, "g": {rep: g_ij}}}}
 ```
+`districts` is the scope `--districts` restricted this run to, or every district of the table
+when the flag was absent; a row outside the scope is left exactly as the input table had it, so
+`kept`, `released`, `k` and `balance` stay whole-table regardless of scope.
 
 `edits.json` (`override.py`'s own input, both modes):
 ```
@@ -243,6 +346,20 @@ under the override's run directory), the translated document under `"locks"` or 
 depending on `engine`, and, when `engine` is `"clip"`, a passthrough `"bounds_honoured"` copied
 from that engine's own `splits.json`.
 
+**The MILP engine seam.** `td/solvers/milp_engines.py`'s `solve_problem(problem, engine, ...)`
+runs the level-1 minimum-splits MILP (`td.solvers.state_splits.SplitProblem`) through one of
+four engines behind one return shape: `scipy` (today's `state_splits.solve`, the baseline),
+`highs` and `scip` in process (`highspy`, `pyscipopt`, already in `.venv`), and `cpsat` out of
+process under `.venv-opt` through `td/solvers/milp_worker.py`. Three pure functions build
+variant problems rather than solving anything: `fix_roots` roots an anchored district's flow
+at its home state (no optimum is lost, since a connected set can be rooted anywhere;
+`tools/verify/milp_root_fix/REPORT.md` is the verified claim); `with_cutoff` asks "does a
+smaller map exist", so an infeasible answer certifies the current count optimal without
+closing a gap; `lp_heuristic` is a reweighted-L1 relaxation that reaches a feasible split count
+in milliseconds with no certificate. `tools/bench/milp_bench.py` drives every variant on the
+real instance and records which route reaches proven optimality fastest; `tools/bench/README.md`
+has the usage, the variant table and the acceptance rule.
+
 ## 5. The map
 
 `app/mapfig.py` builds one plotly figure from a zip table plus `geom.json`. Coordinates are the
@@ -275,6 +392,31 @@ rewriting a file under the same name busts the cache; `mapfig.py` itself imports
 streamlit nor pandas and stays importable from plain Python. `in_flight()` is an
 `st.fragment(run_every=5)` block, so the five-second poll of in-progress runs reruns only that
 fragment.
+
+`app.mapfig.rep_figure` draws the incumbent layout, in trace order: state outlines; one filled
+trace per territory (`REP_FILLS`, opacity 0.45); the hatched `CONTESTED` union (cells where two
+or more reps hold book); the focused rep's territory or footprint on top (`FOCUS`);
+`DISTRICT_LINES` from another run's `geom.json`, when asked to overlay one; the per-zip hover
+layer (`REP_ZIPS`); state label handles. `colour_by="n"` swaps `REP_FILLS` for thin grey
+outlines and recolours `REP_ZIPS` off `mapfig.N_RAMP`, the four-step sequential ramp for
+0/1/2/3+ reps holding book at a zip, with its own legend entries (`N_LABELS`), since a
+sequential ramp is not otherwise legend-worthy. `app.mapfig.staffed_figure` draws the "after"
+map the same way: state outlines; one fill per district in its assigned rep's colour
+(`STAFFED_FILLS`); the hatched `UNSTAFFED` union; `SPLIT_ZIPS`, the zips whose table `rep`
+disagrees with their district's assignment (present only once a within-district split has
+run); the same hover layer and state handles. `app.mapfig.rep_colours(reps)` builds the one
+`{rep: hex}` map both figures draw from, so a rep keeps its hue on both sides of a before/after
+pair: a rep with a territory keeps `reps.json`'s own colour, assigned so neighbouring
+territories never share a hue; a rep with none takes the next palette entry not already spoken
+for. Both figures take the same `bbox` keyword `figure` does, for zooming to one district, with
+`uirevision` set to the bbox so pan and zoom persist across reruns and reset when the bbox
+changes.
+
+The Timings tab (`app/tab_timings.py`) draws a Gantt of one bar per run in the current
+scenario, coloured by step kind (draw, clip, geom, staff, everything else bucketed as "other")
+off a fixed palette, so hue always means the same kind across scenarios; a run still running
+draws hollow, and one with no `timings.json` yet draws a zero-width "no timings" marker rather
+than being skipped.
 
 ## 6. The three uses, as recipes through the tabs
 
@@ -344,25 +486,67 @@ read off the reran table, and a clip-parent rerun also copies `bounds_honoured` 
 own `splits.json`. When the engine rerun fails, the override run copies the engine's own
 `failure.json` if it wrote one, else writes a generic `reason: "engine_failed"`.
 
+Reading the incumbent layout, staffing one district, and reading the before and after. The Map
+tab's "Rep territories, as sold today" section (`repdata.ensure`, building `reps.json` on first
+use) shows whose book covers which zips today, coloured by rep or by how many reps hold book
+there, with the contested cells hatched. The Reps tab opens on that same layout with the picked
+run's own districts drawn over it (`district_lines=True`), then lets a scope be chosen: "the
+whole map", or one or more districts (`st.multiselect`, defaulting to the district of the zip
+last clicked on the Map tab) behind `st.radio("Staff", ...)`. Naming which reps are released
+and clicking "Staff" runs `staff.py --districts D01,D05 ...` scoped to that selection; a row
+outside the scope keeps the `rep` it arrived with, and `staffing.json["districts"]` records the
+scope. Picking the district in Contestability shows, side by side and zoomed to it, the rep
+layout as sold today (`mapfig.rep_figure(..., bbox=...)`) and the staffed result
+(`mapfig.staffed_figure(..., bbox=...)`, or the newest split's own table when one exists for
+that district), with a small table underneath (`app.staffdiff.district_view`) giving each rep's,
+plus "contested"'s and "untapped"'s, share of the district's book before and after. The same
+pair, unzoomed and over the whole map, sits under Assignment ("Before and after the staffing"),
+together with `app.staffdiff.summary`'s whole-map counts (reps with territory, contested book,
+free versus unstaffed book) and `app.staffdiff.per_rep`'s sortable table of every rep's book
+share before, after and the change.
+
 ## 7. Assumptions and what is not tested
 
-1. The Streamlit UI (five tabs in `app/main.py`) has no automated test. Streamlit cannot be
-   driven headlessly in this repo, no `AppTest`-based test exists, so it is exercised by hand
-   only, through `tools/app.sh`.
+1. `tests/test_app_smoke.py` drives every tab of the Streamlit UI headlessly, through
+   `streamlit.testing.v1.AppTest`, which only the app venv has installed: run it by hand as
+   `PYTHONPATH=$PWD .venv-app/bin/python3 tests/run_all.py -k app_smoke`. Under the solver
+   venv (`tests/run_all.py`'s own run) the import fails and the test returns at once, an early
+   return rather than a skip the runner counts. `tests/test_mapfig.py` is the same shape for
+   the same reason, gated on `plotly` rather than `streamlit`: it too is exercised for real
+   only under the app venv, `PYTHONPATH=$PWD .venv-app/bin/python3 tests/run_all.py -k mapfig`.
 2. Every driver has a solver-venv test that runs it end to end on a synthetic instance, no
    network and no real instance file: `tests/test_run_draw.py` and `test_run_draw_locks.py`
    (`run_draw.py`, including `--lock-zips`); `tests/test_state_splits.py`,
    `test_state_splits_cli.py` and `test_state_splits_bounds.py` (`state_splits.py`, including
    `--bounds` at the MILP level, `bound_z`, and at the CLI's own translation and realise-time
-   freeze/pull); `tests/test_geom_export.py`; `tests/test_staff.py`; `tests/test_override_a.py`
-   and `tests/test_override_b.py` (mode B's translation, engine rerun and `edits_honoured`);
-   `tests/test_district_split.py` (an 8-zip/3-rep brute-force oracle bounding the greedy answer
-   and, when `pyscipopt` is importable, matching the exact one); `tests/test_ziptable.py` (the
-   optional `rep` column); `tests/test_geo.py` (`assert_conus`).
+   freeze/pull); `tests/test_geom_export.py`; `tests/test_staff.py`, including `--districts`;
+   `tests/test_rep_export.py` (`tools/rep_export.py`, on the toy instance, `--no-basemap`);
+   `tests/test_override_a.py` and `tests/test_override_b.py` (mode B's translation, engine
+   rerun and `edits_honoured`); `tests/test_district_split.py` (an 8-zip/3-rep brute-force
+   oracle bounding the greedy answer and, when `pyscipopt` is importable, matching the exact
+   one); `tests/test_ziptable.py` (the optional `rep` column); `tests/test_geo.py`
+   (`assert_conus`). `app/staffdiff.py` (`tests/test_staffdiff.py`, an inline fixture, pure
+   Python) and `td/telemetry.py` (`tests/test_telemetry.py`: nesting depth, tick accumulation,
+   the write round trip, `maybe_profile` under `TD_PROFILE=1`, the module-level hook as a
+   no-op with nothing active) are covered the same way, needing neither streamlit nor plotly.
+   `td/solvers/milp_engines.py` is `tests/test_milp_engines.py`, also solver-venv: every exact
+   engine returns the same split count as `scipy` on the toy problems, `fix_roots` changes
+   nothing, `with_cutoff` behaves as a certificate should, and the `cpsat` cases return early
+   when `.venv-opt` is absent.
 3. `app/store.py` and `app/steps.py` import neither `streamlit` nor `pandas`, so
    `tests/test_app_store.py` runs from the solver venv on fake run directories (discover,
-   lineage, status, the grid's chain expansion); `runner._alive`'s zombie reap is
-   `tests/test_app_runner.py`.
-4. `geom.json`, `staffing.json` and `split.json` hold ratios, geography and identifiers only,
-   never a raw mass or a dollar figure; per-zip opportunity travels only inside `draw.csv`, under
-   the gitignored `battery/results/`.
+   lineage, status, the grid's chain expansion, the scenario ledger); `runner._alive`'s zombie
+   reap is `tests/test_app_runner.py`.
+4. `geom.json`, `reps.json`, `staffing.json` and `split.json` hold ratios, geography and
+   identifiers only, never a raw mass or a dollar figure: `reps.json`'s `weight` (a zip's share
+   of the whole channel's book) and `book_share` (a rep's share of it) are shares of one
+   unknown total that never itself appears in the file. Per-zip opportunity travels only inside
+   `draw.csv`, under the gitignored `battery/results/`.
+5. Profiling a driver: `TD_PROFILE=1` in the environment (any driver, e.g. `TD_PROFILE=1
+   .venv/bin/python3 tools/geom_export.py --table TABLE --out RUN`) dumps a `cProfile` run to
+   `<out_dir>/profile.prof`, which the Timings tab's per-run detail shows as a `pstats` top-25
+   by cumulative time. Sampling a running solve instead: `uv tool install py-spy` (never into
+   `.venv`), then `py-spy record -o out.svg --pid <pid>` against the driver's own process.
+6. The MILP engine bench (`tools/bench/milp_bench.py`, §4, `tools/bench/README.md`) writes
+   `battery/results/bench/milp_<stamp>.json`, one row per `(k, variant)`; it is not
+   test-covered beyond `test_milp_engines.py`'s unit-level checks on the engines it calls.

@@ -11,10 +11,21 @@ for a fast-forward merge into `main`.
 
 ## Next step
 
-Wave 1: seven Sonnet subagents in parallel (W0, W1a to W1f), then the wave gate.
+Wave 3: W3 docs agent running; the MILP bench (k=20 then k=18, cap 180 s) running in the
+background; W3b adoption starts when the bench JSON is read. Then the scenario-launch check
+(verification item 4) once the bench has released the CPU.
 
 ## Done
 
+- 2026-09-08 wave 2 (`dc5e583`): sidebar scenario picker and filtering, rep territories on
+  the Map tab, Reps tab map-first with scoped staffing and both before/after views, Timings
+  tab, staff and rep_export instrumented, AppTest smoke test, root-fix claim VERIFIED
+  (`tools/verify/milp_root_fix/`, guard: root only anchors that survive release). Bench
+  interim at k=20, 180 s: scipy 12 splits gap 5.2 %; highs (12 threads) 10 splits gap 1.7 %;
+  highs-root 10 splits gap 0.85 %.
+- 2026-09-08 wave 1 (`a042e11`): main.py split, scenario ledger, rep_export.py, staff
+  --districts, rep/staffed figures, repdata, staffdiff, telemetry, milp_engines and bench,
+  `.venv-opt` (ortools 9.15.6755). Real rep export: 107 territories, 0.82 MB, under a minute.
 - 2026-09-08: plan approved; worktree created and locked; palettes validated with the
   `dataviz` script. Five-kind Gantt palette `#2563eb #d97706 #059669 #7c3aed #dc2626` passes
   (CVD warn 7.9 on green/orange, covered by the bars' direct kind labels). The four-step
