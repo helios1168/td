@@ -23,6 +23,7 @@ from . import runner
 STEP = "step.json"
 FAILURE = "failure.json"
 
+VIEW = "view.json"
 STAMP = "%Y%m%d_%H%M%S"
 
 
@@ -139,6 +140,16 @@ def member_of(run: Path, root: Path) -> str | None:
     return None
 
 
+def staffing_run(run: Path, root: Path) -> Path | None:
+    """Nearest run at or above `run` in its own lineage whose kind is `staff`: the source
+    of the whole-map assignment/unstaffed_districts picture a split only ever narrows one
+    district of, never replaces. None when the lineage carries no staff run."""
+    for step_run in reversed(lineage(run, root)):
+        if read_step(step_run).get("kind") == "staff":
+            return step_run
+    return None
+
+
 def label(run: Path, root: Path) -> str:
     """What a picker shows for a run: `custom_k10_d5 · clip · 2026-09-08 14:42:39`. Read from
     the ledger rather than the directory name, so runs made under an older naming read the
@@ -230,3 +241,68 @@ def scenarios(root: Path) -> list[tuple[str | None, list[Path]]]:
         groups[slug].append(run)
     order = [slug for slug in order if slug is not None] + ([None] if None in groups else [])
     return [(slug, groups[slug]) for slug in order]
+
+
+def read_view(run: Path) -> dict:
+    """The view.json beside run's step.json, or {} if this run has never been named."""
+    path = Path(run) / VIEW
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+def _write_view(run: Path, view: dict) -> None:
+    (Path(run) / VIEW).write_text(json.dumps(view, indent=2) + "\n", encoding="utf-8")
+
+def write_view(run: Path, root: Path, *, name: str, default_for: str | None = None) -> dict:
+    """Name `run` (or rename it) and, when default_for is given, flag it default for that
+    member. At most one run holds default_for == <member> at a time: every other run of
+    that member currently holding the flag is cleared first. Additive only, alongside
+    step.json, never touching it. Single-user local Streamlit process: no lock."""
+    run = Path(run)
+    if default_for:
+        for other in named_runs(root, default_for):
+            if other == run:
+                continue
+            v = read_view(other)
+            if v.get("default_for") == default_for:
+                v["default_for"] = None
+                _write_view(other, v)
+    view = dict(read_view(run), name=name, default_for=default_for)
+    _write_view(run, view)
+    return view
+
+def named_runs(root: Path, member: str) -> list[Path]:
+    """Every run of `member` that carries a view.json, newest first."""
+    return [r for r in discover(root)
+            if member_of(r, root) == member and (r / VIEW).exists()]
+
+def default_for(root: Path, member: str) -> Path | None:
+    """The run currently flagged default for `member`, or None."""
+    return next((r for r in named_runs(root, member)
+                if read_view(r).get("default_for") == member), None)
+
+def members(root: Path, scenario: str | None) -> list[tuple[str, list[Path]]]:
+    """Every member the given scenario holds a run for, as (member, runs) pairs: newest
+    first by each member's newest run, its own runs newest first too - scenarios()'s own
+    shape, one level down. A run outside any member (legacy) is not grouped here."""
+    groups: dict[str, list[Path]] = {}
+    order: list[str] = []
+    for run in discover(root):
+        if scenario_of(run, root) != scenario:
+            continue
+        member = member_of(run, root)
+        if member is None:
+            continue
+        if member not in groups:
+            groups[member] = []
+            order.append(member)
+        groups[member].append(run)
+    return [(m, groups[m]) for m in order]
+
+_MEMBER_RE = re.compile(r"_k(\d+)_d([\d.]+)$")
+
+def member_label(member: str) -> str:
+    """"k10 · d10" for the sidebar picker and the "make default" checkbox text. Reuses the
+    delta *string* straight from the member name rather than round-tripping it through
+    float() - member_name's own formatting doesn't round-trip cleanly (e.g. 7.5 ->
+    7.500000000000001), and there is no reason to pay that here."""
+    match = _MEMBER_RE.search(member)
+    return f"k{match.group(1)} · d{match.group(2)}" if match else member
