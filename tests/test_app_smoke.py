@@ -30,4 +30,4 @@ def test_every_tab_renders_without_an_exception():
     at = AppTest.from_file(os.path.join(ROOT, "app", "main.py"), default_timeout=180).run()
     assert not at.exception, [str(e.value) for e in at.exception]
     assert [t.label for t in at.tabs] == TABS
-    assert [s.label for s in at.sidebar.selectbox] in ([], ["Scenario"])
+    assert [s.label for s in at.sidebar.selectbox] in ([], ["Scenario"], ["Scenario", "Instance"])

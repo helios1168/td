@@ -178,6 +178,7 @@ Drivers:
 | clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --engine {highs,scip,scipy} --strategy {portfolio,descent,direct} --primal-seconds S --threads N --no-fix-roots --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
 | geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--simplify M] [--no-basemap]` | a zip table | `geom.json`, in the run directory `--out` names |
 | staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
+| staff_and_split | `staff_and_split.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] [--multi D02:3,D07:4] [--exact] --time-limit N [--geom GEOM_JSON] --out RUN` | instance; a zip table; the run's `geom.json` when `--multi` is non-empty (its `cell_edges` make every split contiguous) | `staffing.json` (`staff.py`'s schema plus `split_districts`/`requested_multi`), `draw.csv` (rep filled per staffed district, per zip inside a split one) -- the composed driver `app/tab_reps.py`'s Reps tab actually launches, one call for every N=1 and N>1 district in scope |
 | rep_export | `rep_export.py <instance> --out DIR [--geo-cache DIR] [--simplify M] [--no-basemap]` | instance | `reps.json` |
 | override, mode A | `override.py <instance> --table TABLE --edits FILE --mode A [--eta E] --out RUN` | instance (CONUS assert only); a zip table; `edits.json` | `draw.csv` (relabelled), `metrics.json` |
 | override, mode B | `override.py <instance> --table TABLE --edits FILE --mode B --parent PARENT_RUN --out RUN` | `edits.json`; `PARENT_RUN`'s lineage, walked up to its nearest `draw`/`clip` ancestor for that step's own recorded `argv` | `locks.json` or `bounds.json`, `engine/` (the rerun engine's own output tree), `draw.csv`, `metrics.json` |
@@ -289,18 +290,39 @@ log tail work unchanged. `app/repdata.py`'s `ensure(instance)` builds it on dema
 "Build rep territories" button, keyed by the instance's own name rather than by when it ran, so
 one export per instance is reused rather than rebuilt.
 
-`staffing.json`:
+`staffing.json`, written by `tools/staff_and_split.py` (the app's only staffing call site;
+`tools/staff.py` writes the same document minus `split_districts`/`requested_multi`, for a
+plain single-rep-per-district run):
 ```
 {"kept": [...], "released": [...], "k": int, "districts": [...],
  "assignment": {district: rep}, "gains": {district: g}, "value": float,
  "unmatched_reps": [...], "unstaffed_districts": [...],
  "balance": {...ziptable.balance...},
  "contest": {district: {"candidates": [...], "share": {rep: frac},
-                        "free_share": float, "g": {rep: g_ij}}}}
+                        "free_share": float, "g": {rep: g_ij}}},
+ "split_districts": {district: {"reps": [...], "gains": {rep: g}, "shares": {rep: frac},
+                                "objective": float, "method": "greedy"|"scip",
+                                "gap": float|null, "status": str, "n_zips": int,
+                                "dropped_reps": [...], "pieces": {rep: int}|null,
+                                "contiguous": bool|null}},
+ "requested_multi": {district: {"requested_n": int, "resolved_n": int, "error": str}}}
 ```
 `districts` is the scope `--districts` restricted this run to, or every district of the table
 when the flag was absent; a row outside the scope is left exactly as the input table had it, so
-`kept`, `released`, `k` and `balance` stay whole-table regardless of scope.
+`kept`, `released`, `k` and `balance` stay whole-table regardless of scope. `assignment` /
+`split_districts` / `unstaffed_districts` partition `districts` three ways, mutually exclusive
+and jointly exhaustive: every `--multi` district that resolves to 2+ reps lands in
+`split_districts`, one entry per district in the shape `tools/split_district.py`'s own
+`split.json` already used; every other district goes through the ordinary Hungarian match into
+`assignment`, or, lacking a candidate, into `unstaffed_districts`. `requested_multi` carries
+one entry per district named in `--multi`, however it resolved: `resolved_n < requested_n`
+means a shortfall (too few positive-gain candidates, or a roster capped at the district's own
+zip count), reported rather than blocking. The split phase runs *before* the ordinary Hungarian
+match for exactly this reason: the `"error"` key is present when that district's own split call
+raised, and in that case its roster never claims anything -- the district falls through to the
+match below like any other single-rep district (staffed there if it has a candidate, unstaffed
+only if it does not), with the error recorded here rather than the district being forced
+unstaffed by the failure.
 
 `edits.json` (`override.py`'s own input, both modes):
 ```
@@ -426,15 +448,33 @@ map.
 
 Trace order is a contract with `app/main.py`, which reads a selection event back by matching
 `curve_number` against the trace names: state outlines (one line trace, rings joined by `None`,
-hover skipped); district polygons (one filled trace per district, opacity 0.35, hover skipped);
-zips (one `go.Scattergl`, marker size proportional to `sqrt(opportunity)`, hover shows zip,
-state, district, rep and opportunity, plus the top three reps by book share when a
-`staffing.json` is loaded); state label handles (one text trace, hover shows the state code).
-Optional overlays: a set of highlighted zips (open circle markers), and a dashed `outline` ring
-copied from another map's own `geom.json`, so a child map can be read against its parent's
-district boundary; no tab passes one yet, though `render_footprint` (Reps) uses the highlight
-overlay to show a district or one rep's own zips within it. Outlines and polygons skip hover so
-a click always lands on a zip or a state handle, never the fill under them.
+hover skipped); district identity, now a thin outline only, no fill (one line trace per
+district, width 1.2, hover skipped, no legend entry -- opportunity bins take the legend
+instead); zips, drawn from `geom.json["cells"]` when the map has one -- one filled cell trace
+per opportunity bin (`_quantile_bins`, up to 8, `OPPORTUNITY_RAMP`'s Tailwind-indigo light-to-
+dark steps -- `_bin_colour` spreads the ramp's 8 steps evenly across however many bins
+`_quantile_bins` actually returned, rather than indexing it 1:1, so the top bin always lands on
+the ramp's darkest step even when fewer than 8 bins came back; every cell bordered `N_OUTLINE`
+at 0.4px so a light-bin cell still reads as its own shape against its neighbours), all named
+`ZIPS` and carrying the same 6-field customdata (zip, state, district, rep, opportunity, contest
+line) the old dot trace carried, so `render_board`'s click contract holds; then one
+invisible-marker legend swatch per bin that actually drew a fill, labelled with its opportunity
+range; then a residual `go.Scattergl` dot trace, also named `ZIPS`, for any drawn zip with no
+cell (an older geom, or a row a geom.json does not cover). The district-outline loop above runs
+for any geom at all, cells or not; only the zip trace itself branches. A map with no `geom.json`
+falls back to the unchanged dot board with no district lines at all; a `geom.json` from before
+cells were exported (no `"cells"` key) still draws the outline-only district loop, but the zip
+trace itself falls back to the one `go.Scattergl` dot trace, marker size proportional to
+`sqrt(opportunity)`, coloured by district, no border -- the district fill and its 0.35 opacity
+underlay this fallback used to draw are gone in both cases, not preserved. Either way, hover
+shows zip, state, district, rep and opportunity, plus the top three reps by book share when a
+`staffing.json` is loaded; state label handles (one text trace, hover shows the state code)
+come last. Optional
+overlays: a set of highlighted zips (open circle markers), and a dashed `outline` ring copied
+from another map's own `geom.json`, so a child map can be read against its parent's district
+boundary; no tab passes one yet, though `render_footprint` (Reps) uses the highlight overlay to
+show a district or one rep's own zips within it. Outlines and the district lines skip hover so
+a click always lands on a zip, a cell or a state handle, never a line under them.
 
 Selection: `st.plotly_chart(fig, on_select="rerun", selection_mode=("points",))`. `render_board`
 reads back `event["selection"]["points"]`, resolves each point's trace by `curve_number`, and on
@@ -557,24 +597,45 @@ many reps hold book there, with the contested cells hatched. The Reps tab's `Vie
 opens on "Clip (base)", the sidebar instance's own resolved run, plus one entry per named run
 of that instance (`store.named_runs`; "(default)" marks whichever one carries `default_for`).
 One pane (`render_pane`) shows either the base layout with its districts drawn over it
-(`district_lines=True`) or, for a staffed or split view, the staffed result
-(`mapfig.staffed_figure`, fed the nearest `staff`-kind ancestor's own `staffing.json`, found by
-walking the view's lineage: `store.staffing_run`), with one collapsed table underneath
-(`app.staffdiff.per_rep`, after and change only, no before column since "Clip (base)" already
-carries it) for every rep whose territory moved. Below the pane, "Kept and released" and
-"Scope" still choose which reps leave and whether "Staff" covers the whole map or a
-`st.multiselect` of districts (defaulting to the district of the zip last clicked on the Map
-tab); Contestability, once the open view carries staffing anywhere in its own lineage, still
-shows the candidates/share/gain table for one picked district (`staffing.json["contest"]`),
-its footprint, and a "Split this district among its candidates" action; Assignment still lists
-the per-district assignment and gain totals with any unmatched reps. A "Staff" or "Split"
-launch previews its result in the pane immediately (`st.session_state["reps-preview"]`); naming
-it there (`render_save`, `store.write_view`) is what makes it a `View` dropdown entry,
-optionally also the instance's default, opened automatically next time; leaving without naming
-it only drops the preview, the run itself stays on disk either way. A split launched from
-Contestability chains off whichever view is open, not always the staff run directly, so
-splitting a second district after the first compounds on top of it instead of starting over
-from the unstaffed table.
+(`district_lines=True`) or, for a staffed view, the staffed result (`mapfig.staffed_figure`,
+fed the nearest `staff`-kind ancestor's own `staffing.json`, found by walking the view's
+lineage: `store.staffing_run`), with one collapsed table underneath (`app.staffdiff.per_rep`,
+after and change only, no before column since "Clip (base)" already carries it) for every rep
+whose territory moved.
+
+Below the pane, one form (`render_staffing_form`) is the whole staffing action, no separate
+staffing and split areas: "Kept and released" (unchanged), then theta/lambda/filler-capture
+plus two new global controls, Exact and time limit, applied uniformly to every district this
+action resolves to 2+ reps (replacing the old per-district Exact/limit toggles); then "Scope"
+(unchanged, whole map or a `st.multiselect` of districts, defaulting to the district of the
+zip last clicked on the Map tab); then one `st.data_editor`, a row per district in the resolved
+scope with its current reps (`today`, read-only) and an editable rep count (`reps`, default 1).
+A district left at 1 goes through the existing single-rep staffing logic (the Hungarian match);
+a district raised to 2 or more is a `--multi` entry, resolved by the contiguous Nash bargaining
+split (`tools/staff_and_split.py`, `docs/APP.md` §4's `staffing.json` schema); the backend
+attempts every `--multi` split *before* the Hungarian match runs, so a district whose split
+raises falls through and is staffed as an ordinary single-rep district instead, never left
+unstaffed by the failure alone. The data editor's own key folds in a hash of the resolved
+scope, so switching "Scope" always hands the editor a fresh table rather than replaying stale
+`{row position: value}` edits onto whatever district now sits at that position. One "Staff"
+button launches `steps.staff_and_split_argv`, disabled when some row asks for 2+ reps and the
+view's `geom.json` either does not exist yet or predates cell export (no `"cells"` key, which
+the backend refuses outright for a `--multi` run) -- either way a split needs the cell
+adjacency and the caption says which of the two is true. "Contest detail", once the open view
+carries staffing anywhere in its own lineage, is read-only: the candidates/share/gain table for
+one picked district (`staffing.json["contest"]`), that district's split detail when it is one
+(`split_districts[d]`'s shares/method/gap/pieces/contiguous), and, for any district named in
+`requested_multi`, its own outcome -- a recorded `"error"` always shown regardless of whether
+the roster came back short, and otherwise a caption distinguishing a genuine shortfall (0
+candidates, unstaffed), a roster that resolved to 1 (staffed by the ordinary match, not split),
+and a roster capped at the district's own zip count -- plus the district's
+footprint; there is no split action here any more; Assignment lists the per-district assignment
+and gain totals, plus one row per split district (its reps comma-joined) with any unmatched
+reps, "Districts staffed" now counting both. A "Staff" launch previews its result in the pane
+immediately (`st.session_state["reps-preview"]`); naming it there (`render_save`,
+`store.write_view`) is what makes it a `View` dropdown entry, optionally also the instance's
+default, opened automatically next time; leaving without naming it only drops the preview, the
+run itself stays on disk either way.
 
 ## 7. Assumptions and what is not tested
 

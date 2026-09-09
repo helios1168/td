@@ -43,6 +43,13 @@ N_RAMP = ["#f1f5f9", "#a5b4fc", "#6366f1", "#312e81"]
 N_LABELS = ["0 reps", "1 rep", "2 reps", "3+ reps"]
 N_OUTLINE = "#94a3b8"
 
+# Eight-step sequential ramp for the district map's opportunity fill, one continuous step past
+# N_RAMP's own light and dark ends in both directions. Validated with the `dataviz` skill's
+# palette checker in --ordinal mode; visibility is carried by the border (N_OUTLINE), not fill
+# contrast, per request.
+OPPORTUNITY_RAMP = ["#e0e7ff", "#c7d2fe", "#a5b4fc", "#818cf8",
+                    "#6366f1", "#4f46e5", "#3730a3", "#1e1b4b"]
+
 # Fallback only, for a table whose polygons have not been built yet.  Once `geom.json` exists
 # its own colours win, because they are the ones assigned so that neighbours differ.
 PALETTE = [
@@ -123,16 +130,25 @@ def _joined_many(infos) -> tuple[list, list]:
 
 
 def _cell_trace(cells: dict, zips, texts: dict, *, name: str, colour: str, opacity: float,
-                legendgroup: str | None = None, showlegend: bool = False) -> go.Scatter | None:
+                legendgroup: str | None = None, showlegend: bool = False,
+                border_colour: str = N_OUTLINE, border_width: float = 0.4,
+                customdata: dict | None = None, hovertemplate: str | None = None) -> go.Scatter | None:
     """One filled trace covering every listed zip's cell, hovering on its vertices.
 
     `zips` is an iterable of zip ids and `texts` a `{zip: str}` of hover text; a zip absent
     from `cells` is skipped. `None` when no listed zip has a cell, so the caller can skip
     adding an empty trace.
+
+    `border_colour`/`border_width` draw a light stroke around every cell, distinct from the
+    fill so a cell reads as its own shape against its neighbours; every caller gets this by
+    default (previously the border was the same colour as the fill and read as invisible).
+    `customdata`, when given, is a `{zip: list}` paired with `hovertemplate`, for a caller
+    (`figure()`) whose click handling reads structured fields off a point.
     """
     xs: list = []
     ys: list = []
     text: list = []
+    custom: list = []
     for z in zips:
         info = cells.get(z)
         if not info:
@@ -141,13 +157,18 @@ def _cell_trace(cells: dict, zips, texts: dict, *, name: str, colour: str, opaci
         xs += sx
         ys += sy
         text += [texts.get(z, "") if v is not None else "" for v in sx]
+        if customdata is not None:
+            custom += [customdata.get(z, []) if v is not None else None for v in sx]
     if not xs:
         return None
-    return go.Scatter(
+    kwargs = dict(
         x=xs, y=ys, mode="lines", fill="toself", fillcolor=colour,
-        line=dict(color=colour, width=0.3), opacity=opacity,
-        hoveron="points", hovertemplate="%{text}<extra></extra>", text=text,
+        line=dict(color=border_colour, width=border_width), opacity=opacity,
+        hoveron="points", hovertemplate=hovertemplate or "%{text}<extra></extra>", text=text,
         name=name, legendgroup=legendgroup, showlegend=showlegend)
+    if customdata is not None:
+        kwargs["customdata"] = custom
+    return go.Scatter(**kwargs)
 
 
 def _layout(fig: go.Figure, bbox, revision, *, legend: bool = True) -> None:
@@ -208,6 +229,36 @@ def _contest_line(staffing: dict | None, district: str) -> str:
     return "top reps " + ", ".join(f"{rep} {frac:.0%}" for rep, frac in top)
 
 
+def _quantile_bins(rows: list[dict], n: int) -> list[list[dict]]:
+    """`rows` grouped into up to `n` roughly equal-count bins, ascending by opportunity (a row
+    with none sorts first). Equal opportunity values never split across bins: each count-based
+    boundary is pushed forward past any run of rows tied with the last one already placed, so a
+    plateau in the data collapses into fewer, wider bins rather than the count target. Fewer
+    distinct values, or a big plateau, yields fewer, wider bins rather than empty ones -- a
+    caller iterates the result, never assumes exactly `n`."""
+    ordered = sorted(rows, key=lambda r: r["opportunity"] or 0.0)
+    total = len(ordered)
+    bins: list[list[dict]] = []
+    start = 0
+    for i in range(n):
+        end = max((i + 1) * total // n, start)
+        while end < total and (ordered[end]["opportunity"] or 0.0) == \
+                (ordered[end - 1]["opportunity"] or 0.0):
+            end += 1
+        if end > start:
+            bins.append(ordered[start:end])
+        start = end
+    return bins
+
+
+def _bin_colour(i: int, n_bins: int) -> str:
+    """`OPPORTUNITY_RAMP` spread across `n_bins` bins so the last bin always gets the ramp's
+    darkest colour, even when `_quantile_bins` returns fewer bins than the ramp has steps (a
+    plain `OPPORTUNITY_RAMP[i]` would leave the top bin under-saturated whenever that happens)."""
+    span = max(n_bins - 1, 1)
+    return OPPORTUNITY_RAMP[i * (len(OPPORTUNITY_RAMP) - 1) // span]
+
+
 def figure(
     rows: list[dict],
     geom: dict | None,
@@ -242,31 +293,69 @@ def figure(
                 x=xs, y=ys, mode="lines", name=OUTLINES, hoverinfo="skip", showlegend=False,
                 line=dict(color="#b0b0b0", width=0.8)))
 
+        # District identity is now a thin outline only -- no fill, no legend entry (opportunity
+        # bins take the legend instead).
         for district, info in sorted(geom.get("districts", {}).items()):
             dx, dy = _joined(info.get("rings", []))
             if not dx:
                 continue
             fig.add_trace(go.Scatter(
-                x=dx, y=dy, mode="lines", fill="toself", name=district, hoverinfo="skip",
-                opacity=0.35, fillcolor=colours.get(district, info.get("color", "#cccccc")),
-                line=dict(color=info.get("color", "#888888"), width=0.5)))
+                x=dx, y=dy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
+                line=dict(color=colours.get(district, info.get("color", "#888888")), width=1.2)))
 
     drawn = [row for row in rows if row["x"] is not None and row["y"] is not None]
     staff_lines = {d: _contest_line(staffing, d) for d in {r["district"] for r in drawn}}
-    fig.add_trace(go.Scattergl(
-        x=[row["x"] for row in drawn],
-        y=[row["y"] for row in drawn],
-        mode="markers", name=ZIPS, showlegend=False,
-        marker=dict(size=_sizes(drawn),
-                    color=[colours.get(row["district"], "#888888") for row in drawn],
-                    line=dict(width=0)),
-        customdata=[[row["zip"], row["state"], row["district"], row["rep"] or "unassigned",
-                     _sig3(row["opportunity"]), staff_lines.get(row["district"], "")]
-                    for row in drawn],
-        hovertemplate=("<b>%{customdata[0]}</b> · %{customdata[1]}<br>"
-                       "district %{customdata[2]} · rep %{customdata[3]}<br>"
-                       "opportunity %{customdata[4]}<br>"
-                       "%{customdata[5]}<extra></extra>")))
+
+    def _custom(row: dict) -> list:
+        return [row["zip"], row["state"], row["district"], row["rep"] or "unassigned",
+               _sig3(row["opportunity"]), staff_lines.get(row["district"], "")]
+
+    HOVER = ("<b>%{customdata[0]}</b> · %{customdata[1]}<br>district %{customdata[2]} · "
+             "rep %{customdata[3]}<br>opportunity %{customdata[4]}<br>"
+             "%{customdata[5]}<extra></extra>")
+
+    cells = (geom or {}).get("cells") or {}
+    if cells:
+        bins = _quantile_bins([r for r in drawn if r["zip"] in cells], len(OPPORTUNITY_RAMP))
+        drawn_bins = []               # (colour, bin_rows) for bins that actually produced a fill
+        for i, bin_rows in enumerate(bins):
+            colour = _bin_colour(i, len(bins))
+            trace = _cell_trace(cells, [r["zip"] for r in bin_rows], {}, name=ZIPS,
+                                colour=colour, opacity=0.85, showlegend=False,
+                                customdata={r["zip"]: _custom(r) for r in bin_rows},
+                                hovertemplate=HOVER)
+            if trace:
+                fig.add_trace(trace)
+                drawn_bins.append((colour, bin_rows))
+        for colour, bin_rows in drawn_bins:        # legend swatches, invisible marks
+            lo = bin_rows[0]["opportunity"] or 0.0
+            hi = bin_rows[-1]["opportunity"] or 0.0
+            fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers",
+                                     name=f"opportunity {lo:.2g}-{hi:.2g}",
+                                     marker=dict(size=9, symbol="square", color=colour)))
+        # A placed zip with no cell (geom_export only emits one for a row with a district, or an
+        # older/parent geom that does not cover this table) still needs to render and stay
+        # clickable -- the same dot fallback as the no-cells branch, just for the leftover rows.
+        residual = [r for r in drawn if r["zip"] not in cells]
+        if residual:
+            fig.add_trace(go.Scattergl(
+                x=[row["x"] for row in residual], y=[row["y"] for row in residual],
+                mode="markers", name=ZIPS, showlegend=False,
+                marker=dict(size=_sizes(residual),
+                            color=[colours.get(row["district"], "#888888") for row in residual],
+                            line=dict(width=0)),
+                customdata=[_custom(row) for row in residual], hovertemplate=HOVER))
+    else:
+        # Unchanged fallback: no geom (a fresh clip/draw with no "Build polygons" run yet), or a
+        # geom.json from before cells were exported. Dots, sized by sqrt(opportunity), coloured
+        # by district -- exactly today's behaviour.
+        fig.add_trace(go.Scattergl(
+            x=[row["x"] for row in drawn], y=[row["y"] for row in drawn],
+            mode="markers", name=ZIPS, showlegend=False,
+            marker=dict(size=_sizes(drawn),
+                        color=[colours.get(row["district"], "#888888") for row in drawn],
+                        line=dict(width=0)),
+            customdata=[_custom(row) for row in drawn], hovertemplate=HOVER))
 
     if geom:
         labelled = [(code, info["label"]) for code, info in sorted(geom.get("states", {}).items())

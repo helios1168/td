@@ -26,11 +26,13 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+for _p in (ROOT, os.path.join(ROOT, "tools")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from td import instance as descaled, ziptable                               # noqa: E402
 from td.solvers import district_split as ds                                 # noqa: E402
+from split_district import build_adjacency                                  # noqa: E402
 
 
 def _have_scip() -> bool:
@@ -248,6 +250,18 @@ def test_unrestricted_utilities_match_the_gain_matrix_coefficients():
     g, R, D = channel.gain_matrix(G, {z: "D01" for z in zips}, reps_order=["R1", "R2"],
                                   districts=["D01"], theta=0.4, lam=0.3, filler_capture="full")
     assert np.allclose(u.sum(axis=1), g[:, 0])             # same coefficients, same total
+
+
+def test_build_adjacency_indexes_edges_by_column_and_drops_out_of_scope_pairs():
+    zips = ["z0", "z1", "z2"]
+    geom = dict(cells={"z0": {}, "z1": {}, "z2": {}},
+               cell_edges=[["z0", "z1"], ["z1", "z2"], ["z2", "z9"], ["z9", "z8"]])
+    adj = build_adjacency(geom, zips)
+    assert adj == {0: {1}, 1: {0, 2}, 2: {1}}                # z9/z8 are outside `zips`
+
+
+def test_build_adjacency_returns_none_without_a_cells_key():
+    assert build_adjacency({"districts": {}}, ["z0", "z1"]) is None
 
 
 def test_book_matrix_is_the_footprint():

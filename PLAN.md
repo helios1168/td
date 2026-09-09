@@ -11,18 +11,21 @@ instead of three map panes and two before/after tables.
 
 ## Next step
 
-On-screen check of the branch app (tmux `tdapp-cell`, `100.69.120.67:8503`; recreated
-2026-09-09 with a persistent shell in the pane after a restart took the whole session down,
-see Done): the district/global before-after panes this used to name are gone (collapsed into
-the one-pane redesign below), so check the current UI instead. Sidebar shows Scenario then
-Instance; switching Instance moves Map and Reps together. Map tab: the Advanced expander
-reproduces the old flat picker, cell fills in both colour modes, hover on cell vertices. Reps
-tab: run Staff, confirm the pane previews immediately with a Save form; save it named with
-"make default" checked, confirm it reads "(default)" in the View dropdown; run a D05 split off
-that named view (pieces column present) and save it too — this exercises a split chaining off
-the currently open view rather than always the staff run, the one bug caught in review (see
-Done); switch between "Clip (base)" and both named views; reload and confirm the default view
-opens automatically. Then merge on request.
+On-screen check of the branch app (tmux `tdapp-cell`, `100.69.120.67:8503`), the live checks
+`~/.claude/plans/lets-simplify-certain-aspect-cached-origami.md` §5.3 calls for:
+
+- A district set to 1 rep in the new staffing form: identical result to the old plain Staff.
+- A district set to 3+ reps: roster resolved, Nash split runs, "contiguous: true" on that
+  district's Contest detail.
+- Two districts whose candidate pools overlap: confirm the second-processed district's roster
+  actually skips the rep the first one claimed.
+- A district requesting more reps than it has positive-gain candidates: confirm the shortfall
+  caption on Contest detail, not a block on Staff.
+- Map tab: a run with `geom.json` shows opportunity-hue filled cells with a visible light
+  border and a legend of up to 8 opportunity ranges; a run without `geom.json` (or an old one
+  with no cells) falls back cleanly to the unchanged dot board.
+
+Then merge on request.
 
 ## Done
 
@@ -58,6 +61,28 @@ opens automatically. Then merge on request.
   since that pane ran the streamlit command directly with no persistent shell under it, so
   Ctrl-C killed the pane. Recreated `tdapp-cell` with a real shell this time and relaunched;
   clean startup, `HTTP 200`, no traceback.
+- 2026-09-09: cell-fill opportunity maps plus one merged staffing/split interface (plan
+  `~/.claude/plans/lets-simplify-certain-aspect-cached-origami.md`), wave 1 (backend, this
+  session's own uncommitted work: `app/mapfig.py`'s `figure()` rewritten onto opportunity-hue
+  cell fills with a district-outline-only underlay and a legend of up to 8 bins, dot fallback
+  unchanged; `tools/staff_and_split.py` new, one `channel.gain_matrix` call over N=1 and N>1
+  districts alike, `resolve_rosters()` claiming a multi-rep roster's reps before the Hungarian
+  match runs, `tools/split_district.py::build_adjacency` extracted for both call sites) plus
+  wave 2 (frontend, this pass): `app/tab_reps.py`'s `render_keep_release`+`render_scope` merged
+  into `render_staffing_form` (released reps, theta/lam/filler plus new global `staff-exact`/
+  `staff-limit`, scope radio, one `st.data_editor` of district/today/reps replacing the old
+  district-picker-then-Split flow), `render_contest` renamed `render_contest_detail` and its
+  split action deleted (now read-only: contest table, a multi-rep district's `split_districts`
+  detail, a `requested_multi` shortfall caption with any recorded error), `render_split` and
+  its five session keys deleted, `render_assignment`'s "Districts staffed" metric and table
+  extended to cover split districts. `docs/APP.md` and this file's Owned/Forbidden and `## Done`
+  updated to match. Real `staffing.json` deltas from the plan's own spec text, read off
+  `tools/staff_and_split.py`/`tests/test_staff_and_split.py` directly: `requested_multi[d]` can
+  carry an `"error"` string when that district's split raised (it then falls through to
+  `unstaffed_districts`, its would-be roster freed); a roster is capped at the district's own
+  zip count, one more reason `resolved_n` can read below `requested_n`; a `--multi` run whose
+  geom has no `"cells"` is a hard `failure.json`, not a silent unguarded solve. 522 passed, 0
+  failed under `.venv`.
 
 ## Decisions needed
 
@@ -69,8 +94,7 @@ opens automatically. Then merge on request.
 ## Files owned / forbidden
 
 Owned: `td/solvers/district_split.py`, `tools/split_district.py`, `tools/geom_export.py`,
-`tools/staff.py`, `app/mapfig.py`, `app/tab_map.py`, `app/tab_reps.py`, `app/steps.py`,
-`app/store.py`, `app/common.py`, `app/main.py`, `app/tab_overrides.py`, `docs/APP.md`, their
-tests.
-Forbidden: `tools/rep_export.py`, `app/mapfig.figure` (the district map keeps its markers),
-`docs/foundations/`, `battery/figures/`.
+`tools/staff.py`, `tools/staff_and_split.py`, `app/mapfig.py`, `app/tab_map.py`,
+`app/tab_reps.py`, `app/steps.py`, `app/store.py`, `app/common.py`, `app/main.py`,
+`app/tab_overrides.py`, `docs/APP.md`, their tests.
+Forbidden: `tools/rep_export.py`, `docs/foundations/`, `battery/figures/`.

@@ -62,6 +62,22 @@ def build_argparser() -> argparse.ArgumentParser:
     return ap
 
 
+def build_adjacency(geom: dict, zips: list[str]) -> dict | None:
+    """The Voronoi cell graph over `zips`, `{column index: {neighbour column index, ...}}`,
+    built from `geom["cell_edges"]` restricted to pairs both present in `geom["cells"]` and both
+    in `zips`.  `None` when `geom` carries no `"cells"` key (a geom.json from before cells were
+    exported)."""
+    if "cells" not in geom:
+        return None
+    col = {z: j for j, z in enumerate(zips)}
+    adjacency = {col[z]: set() for z in zips if z in geom["cells"]}
+    for a, b in geom["cell_edges"]:
+        if a in col and b in col and col[a] in adjacency and col[b] in adjacency:
+            adjacency[col[a]].add(col[b])
+            adjacency[col[b]].add(col[a])
+    return adjacency
+
+
 def _fail(out: str, reason: str) -> int:
     """Driver convention: `failure.json` with a reason, and a nonzero exit."""
     os.makedirs(out, exist_ok=True)
@@ -114,16 +130,11 @@ def main(argv=None) -> int:
             if args.geom:
                 with open(args.geom, encoding="utf-8") as fh:
                     geom = json.load(fh)
-                if "cells" not in geom:
+                adjacency = build_adjacency(geom, zips)
+                if adjacency is None:
                     return _fail(args.out,
                                  f"{args.geom} has no cells (a geom.json from before cells "
                                  f"were exported)")
-                col = {z: j for j, z in enumerate(zips)}
-                adjacency = {col[z]: set() for z in zips if z in geom["cells"]}
-                for a, b in geom["cell_edges"]:
-                    if a in col and b in col and col[a] in adjacency and col[b] in adjacency:
-                        adjacency[col[a]].add(col[b])
-                        adjacency[col[b]].add(col[a])
 
         # `district_split.split` runs greedy always and, under --exact, escalates to a SCIP
         # MINLP warm-started from it; the two engines are opaque from here (td/solvers is not

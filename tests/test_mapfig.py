@@ -132,6 +132,132 @@ def test_staffed_figure_without_cells_falls_back_to_district_fills():
     assert names == [mapfig.OUTLINES, "D1", mapfig.HANDLES]
 
 
+def test_figure_geom_branch_names_every_cell_trace_zips_with_customdata():
+    if plotly is None:
+        return
+    fig = mapfig.figure(_rows(), _geom())
+    fill_traces = [t for t in fig.data if t.name == mapfig.ZIPS]
+    assert fill_traces
+    for t in fill_traces:
+        assert t.customdata
+        for entry in t.customdata:
+            if entry is not None:
+                assert len(entry) == 6
+
+
+def test_figure_falls_back_to_dots_without_geom():
+    if plotly is None:
+        return
+    fig = mapfig.figure(_rows(), None)
+    zip_traces = [t for t in fig.data if t.name == mapfig.ZIPS]
+    assert len(zip_traces) == 1
+    trace = zip_traces[0]
+    assert trace.mode == "markers"
+    assert trace.marker.line.width == 0
+    assert len(trace.customdata) == 2
+    assert len(trace.customdata[0]) == 6
+
+
+def test_figure_falls_back_to_dots_without_cells():
+    if plotly is None:
+        return
+    geom = dict(
+        states={"S1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]], "label": [1.0, 0.5]}},
+        districts={"D1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]],
+                         "color": "#4269d0"}})
+    fig = mapfig.figure(_rows(), geom)
+    zip_traces = [t for t in fig.data if t.name == mapfig.ZIPS]
+    assert len(zip_traces) == 1
+    trace = zip_traces[0]
+    assert trace.mode == "markers"
+    assert trace.marker.line.width == 0
+
+
+def test_quantile_bins_even_split():
+    if plotly is None:
+        return
+    rows = [dict(opportunity=float(i)) for i in range(8)]
+    bins = mapfig._quantile_bins(rows, 4)
+    assert len(bins) == 4
+    assert all(len(b) == 2 for b in bins)
+    assert [r["opportunity"] for r in bins[0]] == [0.0, 1.0]
+
+
+def test_quantile_bins_tie_heavy_collapses_to_fewer_bins():
+    if plotly is None:
+        return
+    # 24 rows, all tied at the same opportunity, into 8 bins: a straight count-based split
+    # (3 per bin) would still produce 8 bins here since 24 >= 8, so this only passes if ties
+    # are actually merged across the count boundaries.
+    rows = [dict(opportunity=1.0)] * 24
+    bins = mapfig._quantile_bins(rows, 8)
+    assert len(bins) == 1
+    assert sum(len(b) for b in bins) == 24
+
+
+def test_quantile_bins_empty_input():
+    if plotly is None:
+        return
+    assert mapfig._quantile_bins([], 8) == []
+
+
+def test_cell_trace_border_defaults_to_visible_not_same_as_fill():
+    if plotly is None:
+        return
+    trace = mapfig._cell_trace(_geom()["cells"], ["z1"], {}, name="t", colour="#123456",
+                               opacity=0.5)
+    assert trace.line.color != "#123456"
+    assert trace.line.color == mapfig.N_OUTLINE
+
+
+def test_figure_residual_dot_trace_for_zips_without_cells():
+    if plotly is None:
+        return
+    # z3 has no cell in _geom() -- geom_export only emits one for a row with a district, or an
+    # older/parent geom may not cover this table's zips at all. It must still render, clickable,
+    # in a trace named ZIPS with well-formed customdata.
+    rows = _rows() + [dict(zip="z3", state="S1", x=1.8, y=0.2, opportunity=0.5,
+                           district="D1", rep="")]
+    fig = mapfig.figure(rows, _geom())
+    found = False
+    for t in fig.data:
+        if t.name != mapfig.ZIPS or not t.customdata:
+            continue
+        for entry in t.customdata:
+            if entry and entry[0] == "z3":
+                found = True
+                assert len(entry) == 6
+    assert found
+
+
+def test_bin_colour_last_bin_always_darkest():
+    if plotly is None:
+        return
+    for n_bins in (2, 3, 8):
+        assert mapfig._bin_colour(n_bins - 1, n_bins) == mapfig.OPPORTUNITY_RAMP[-1]
+
+
+def test_legend_swatch_omitted_for_bin_with_no_drawable_trace():
+    if plotly is None:
+        return
+    rows = [dict(zip="z1", state="S1", x=0.5, y=0.5, opportunity=1.0, district="D1", rep="R1")]
+    geom = dict(states={}, districts={}, cells={"z1": {"rings": []}})
+    fig = mapfig.figure(rows, geom)
+    legend_traces = [t for t in fig.data
+                     if isinstance(t.name, str) and t.name.startswith("opportunity ")]
+    assert legend_traces == []
+
+
+def test_district_trace_is_outline_only_no_fill():
+    if plotly is None:
+        return
+    fig = mapfig.figure(_rows(), _geom())
+    district_trace = next(t for t in fig.data if t.name == "D1")
+    assert district_trace.fill is None
+    assert district_trace.fillcolor is None
+    assert district_trace.showlegend is False
+
+
 def test_staffed_figure_bbox_sets_axis_ranges():
     if plotly is None:
         return
