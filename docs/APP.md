@@ -176,7 +176,7 @@ Drivers:
 | rep_export | `rep_export.py <instance> --out DIR [--geo-cache DIR] [--simplify M] [--no-basemap]` | instance | `reps.json` |
 | override, mode A | `override.py <instance> --table TABLE --edits FILE --mode A [--eta E] --out RUN` | instance (CONUS assert only); a zip table; `edits.json` | `draw.csv` (relabelled), `metrics.json` |
 | override, mode B | `override.py <instance> --table TABLE --edits FILE --mode B --parent PARENT_RUN --out RUN` | `edits.json`; `PARENT_RUN`'s lineage, walked up to its nearest `draw`/`clip` ancestor for that step's own recorded `argv` | `locks.json` or `bounds.json`, `engine/` (the rerun engine's own output tree), `draw.csv`, `metrics.json` |
-| split_district | `split_district.py <instance> --table TABLE --district D --reps R,R --theta T --lam L --filler-capture F [--exact] [--time-limit T] [--n-near N] --out RUN` | instance; a zip table | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
+| split_district | `split_district.py <instance> --table TABLE --district D --reps R,R --theta T --lam L --filler-capture F [--exact] [--time-limit T] [--n-near N] [--geom GEOM] --out RUN` | instance; a zip table; optionally the run's `geom.json`, whose `cell_edges` make the greedy split contiguous on the cell graph | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
 
 theta, lambda and the filler-capture rule weight the stage-2 rep utility and nothing else: no
 geometry moves when they change. Every step of a chain is given the same three, so the values a
@@ -224,7 +224,7 @@ to whichever engine actually ran, a phase named `"greedy"` or `"scip"` rather th
 |---|---|
 | draw | `load`, `coordinates`, `stage1` (note `jobs`, `workers`; ticks `lp.assign`), `stage2`, `write` |
 | clip | `load`, `build_milp`, `solve` (note `status`, `nodes`, `gap`, `dual_bound`, `objective`, `time_limit`, `engine`), `balance_pass`, `realise`, `stage2`, `write` |
-| geom_export | `load`, `voronoi`, `dissolve`, `colour`, `write` |
+| geom_export | `load`, `voronoi`, `dissolve`, `colour`, `cells`, `write` |
 | staff | `load`, `books`, `gain_matrix`, `assign`, `write` |
 | split_district | `load`, `greedy` or `scip`, `write` |
 | rep_export | `load`, `shares`, `voronoi`, `dissolve`, `footprints`, `write` |
@@ -233,13 +233,22 @@ to whichever engine actually ran, a phase named `"greedy"` or `"scip"` rather th
 ```
 {"crs": "laea",
  "districts": {"D01": {"rings": [[[x,y],...],...], "color": "#rrggbb"}, ...},
- "states": {"TX": {"rings": [[[x,y],...],...], "label": [x,y]}, ...}}
+ "states": {"TX": {"rings": [[[x,y],...],...], "label": [x,y]}, ...},
+ "cells": {"75201": {"rings": [[[x,y],...],...]}, ...},   # one Voronoi cell per placed zip
+ "cell_edges": [["75201", "75202"], ...]}                  # rook adjacency of the cells
 ```
 Coordinates are the table's own LAEA metres, rounded to a decimetre; rings are exterior only
 (holes dropped), simplified at 2000 m by default. Colours come from a generated 50-entry
 palette (25 hues at two lightness levels, laid out on a stride coprime with 25 so consecutive
 entries sit about 130 degrees apart), assigned over the adjacency read off the polygons
-themselves, so two districts sharing a border never share a hue.
+themselves, so two districts sharing a border never share a hue. `cells` are the same Voronoi
+cells the districts dissolve from, so the rep maps can fill zips one by one; `cell_edges` is
+read off the unsimplified cells (a shared boundary of positive length, corner touches excluded)
+and stored rather than derived from the rings, because simplification treats each polygon
+alone and neighbours' simplified rings no longer coincide. Cells depend only on the zips'
+coordinates and states, never on the district labels, so every run of one instance carries
+the same cells. On the CONUS k=10 run the two keys take the file from about 120 KB to about
+880 KB and cost 0.3 s.
 
 `reps.json` (written by `tools/rep_export.py`, read by `app/repdata.py` and `app/mapfig.py`):
 ```
@@ -331,8 +340,15 @@ lock is recorded on `k<kk>/metrics.json` under `locks` plus a `mode: "lock"` row
 ```
 {"district": "D05", "reps": [...], "objective": float, "gains": {rep: g},
  "shares": {rep: frac}, "method": "greedy"|"scip", "gap": float|null, "status": str,
- "n_zips": int, "dropped_reps": [...], "seconds": float}
+ "n_zips": int, "dropped_reps": [...], "seconds": float,
+ "pieces": {rep: int}|null, "contiguous": bool|null}
 ```
+`pieces` counts each rep's connected pieces on the district's Voronoi cell graph, one per
+component of that graph at most when `contiguous` is true; both are `null` when the run had no
+`--geom`. The greedy engine keeps every rep in one piece by construction (a contiguous seed,
+then moves only of a zip that is not an articulation point of its rep, only to a rep owning a
+neighbouring cell); the exact engine is unconstrained and only reports its pieces, so an
+`--exact` answer can read `contiguous: false`.
 
 `metrics.json` of an override, both modes computing the same five fields through a shared
 `report()` helper:
@@ -419,17 +435,21 @@ streamlit nor pandas and stays importable from plain Python. `in_flight()` is an
 fragment.
 
 `app.mapfig.rep_figure` draws the incumbent layout, in trace order: state outlines; one filled
-trace per territory (`REP_FILLS`, opacity 0.45); the hatched `CONTESTED` union (cells where two
-or more reps hold book); the focused rep's territory or footprint on top (`FOCUS`);
-`DISTRICT_LINES` from another run's `geom.json`, when asked to overlay one; the per-zip hover
-layer (`REP_ZIPS`); state label handles. `colour_by="n"` swaps `REP_FILLS` for thin grey
-outlines and recolours `REP_ZIPS` off `mapfig.N_RAMP`, the four-step sequential ramp for
-0/1/2/3+ reps holding book at a zip, with its own legend entries (`N_LABELS`), since a
-sequential ramp is not otherwise legend-worthy. `app.mapfig.staffed_figure` draws the "after"
-map the same way: state outlines; one fill per district in its assigned rep's colour
-(`STAFFED_FILLS`); the hatched `UNSTAFFED` union; `SPLIT_ZIPS`, the zips whose table `rep`
-disagrees with their district's assignment (present only once a within-district split has
-run); the same hover layer and state handles. `app.mapfig.rep_colours(reps)` builds the one
+trace per rep over the cells of the zips whose `top` is that rep (`REP_FILLS`, opacity 0.45,
+rings joined by `None`); the hatched `CONTESTED` union (cells where two or more reps hold
+book); the focused rep's territory or footprint on top (`FOCUS`); `DISTRICT_LINES` from the
+run's `geom.json`, when asked to overlay them; state label handles. `colour_by="n"` swaps the
+rep fills for four fills off `mapfig.N_RAMP`, the sequential ramp for 0/1/2/3+ reps holding
+book at a zip, one per step in `N_LABELS` order with the legend on the fills themselves.
+`app.mapfig.staffed_figure` draws the "after" map the same way: state outlines; one fill per
+rep over the cells whose table `rep` is that rep (`STAFFED_FILLS`, opacity 0.55), so a
+within-district split shows as cells changing colour inside the district; the hatched
+`UNSTAFFED` union; state handles. Neither figure draws zip markers any more; hover sits on the
+cell vertices (`hoveron="points"`, the cell's text repeated on every vertex, `hoverdistance`
+40 px), since plotly shows only the trace name when hovering a fill. A `geom.json` written
+before cells were exported has no `cells` key, and both figures then fall back to the
+dissolved fills (territories from `reps.json`, districts from `geom.json`) with no hover; rerun
+`geom_export.py` on that run to get the cells. `app.mapfig.rep_colours(reps)` builds the one
 `{rep: hex}` map both figures draw from, so a rep keeps its hue on both sides of a before/after
 pair: a rep with a territory keeps `reps.json`'s own colour, assigned so neighbouring
 territories never share a hue; a rep with none takes the next palette entry not already spoken
@@ -478,7 +498,11 @@ district's zips among them by the same Nash objective one level down: greedy sin
 first (`td.solvers.district_split.greedy`, deterministic, milliseconds), then, only with
 `--exact`, a `pyscipopt` MINLP warm-started from the greedy labelling. The result is reported
 `method: "scip"` only when SCIP's answer is at least as good as greedy's; `status` and `gap` say
-whether the gap actually closed rather than the incumbent merely improving.
+whether the gap actually closed rather than the incumbent merely improving. The tab passes the
+staffing run's `geom.json` as `--geom`, so the greedy answer is contiguous on the cell graph;
+the result table shows each rep's `pieces`, and a warning names any rep in more than one piece
+(only an `--exact` answer can be). A staffing scoped with `--districts` never hands an in-scope
+district to a rep the table already places outside the scope, so no rep holds two districts.
 
 Overrides. The Overrides tab builds one `edits.json` from clicks on the Map tab or typed ids
 ("Add move" appends `{"unit", "id", "to"}` to a list held in `st.session_state`) and a choice of

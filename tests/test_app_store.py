@@ -394,6 +394,15 @@ def test_split_argv_carries_the_stage2_weights():
     assert "--lam" in argv and argv[argv.index("--lam") + 1] == "0.3"
     assert ("--filler-capture" in argv
            and argv[argv.index("--filler-capture") + 1] == "opportunity")
+    assert "--geom" not in argv
+
+
+def test_split_argv_appends_geom_only_when_given():
+    argv = steps.split_argv("/py/python3", "/repo", "/repo/instance.json.gz", Path("/out"),
+                            table=Path("/table/draw.csv"), district="D01", reps=["A", "B"],
+                            theta=0.4, lam=0.3, filler_capture="full",
+                            geom=Path("/run/geom.json"))
+    assert "--geom" in argv and argv[argv.index("--geom") + 1] == "/run/geom.json"
 
 
 def test_staff_argv_appends_districts_only_when_given():

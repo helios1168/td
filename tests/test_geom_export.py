@@ -142,6 +142,31 @@ def test_simplify_never_grows_the_export():
     assert sorted(coarse["districts"]) == sorted(fine["districts"])
 
 
+def test_cells_tile_the_states_and_edges_are_rook():
+    """The pre-dissolve Voronoi cells and their rook adjacency.  The twelve points are a regular
+    4-column x 3-row lattice (100k x 50k spacing) split into the two squares by per-state
+    clipping, so the rook graph is 7 edges within AA, 7 within BB (3 horizontal + 4 vertical
+    each), and 3 more where the two squares meet at x = SIDE -- 17 in all, no diagonals."""
+    gx = _geom_export()
+    rows = _table()
+    g = gx.export(rows, _basemap(), simplify=0.0)
+
+    assert set(g["cells"]) == {r["zip"] for r in rows}
+
+    total = sum(_ring_area(c["rings"]) for c in g["cells"].values())
+    assert abs(total / (2 * SIDE * SIDE) - 1.0) < 1e-6
+
+    edges = g["cell_edges"]
+    assert len(edges) == 17
+    assert edges == sorted(edges)
+    assert all(a < b for a, b in edges)
+
+    assert ["10000", "10101"] not in edges          # (x=50k,y=25k)-(x=150k,y=75k): diagonal
+    assert ["10000", "10100"] in edges               # same row, adjacent columns
+    assert ["10000", "10001"] in edges               # same column, adjacent rows
+    assert ["10100", "10200"] in edges               # across the state line, x = SIDE
+
+
 # ---------------------------------------------------------------------------------------- cli
 def test_cli_writes_geom_json_without_a_basemap():
     """`--no-basemap` clips to the padded hull of the points, the branch that needs no

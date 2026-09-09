@@ -141,8 +141,7 @@ def render_rep_section(run: Path, reps: dict, rows: list[dict], geom_stamp) -> N
                         key=f"rep-overlay-{run.name}")
 
     reps_stamp = _stamp(repdata.reps_path(instance_of(run)))
-    fig = _rep_fig(reps_stamp, geom_stamp if overlay else None, colour_by, focus_rep,
-                  show_contested, rows)
+    fig = _rep_fig(reps_stamp, geom_stamp, colour_by, focus_rep, show_contested, overlay, rows)
     st.plotly_chart(fig, width="stretch", key=f"rep-map-{run.name}")
 
     counts = {0: 0, 1: 0, 2: 0, 3: 0}
@@ -157,8 +156,8 @@ def render_rep_section(run: Path, reps: dict, rows: list[dict], geom_stamp) -> N
 
 @st.cache_data(show_spinner=False, max_entries=8)
 def _rep_fig(reps_stamp, geom_stamp, colour_by: str, focus_rep: str, show_contested: bool,
-            _rows_data: list[dict]):
+            overlay: bool, _rows_data: list[dict]):
     reps = repdata.load(*reps_stamp)
     geom = _geom(*geom_stamp) if geom_stamp else None
     return mapfig.rep_figure(reps, _rows_data, geom, colour_by=colour_by, focus_rep=focus_rep,
-                             show_contested=show_contested, district_lines=geom is not None)
+                             show_contested=show_contested, district_lines=overlay)

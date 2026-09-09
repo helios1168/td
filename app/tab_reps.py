@@ -304,7 +304,10 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
                                 "incumbent. Exact only when it closes the gap.")
     limit = cols[0].number_input("Time limit (s)", 5, 3600, 60, step=5,
                                  key=f"split-limit-{district}")
-    if cols[2].button("Split", key=f"split-go-{district}", disabled=len(reps) < 2):
+    geom = store.geom_path(staff_run)
+    if geom is None:
+        st.caption("Geometry for this staffing is still being built; the split waits for it.")
+    if cols[2].button("Split", key=f"split-go-{district}", disabled=len(reps) < 2 or geom is None):
         parent_params = store.read_step(staff_run).get("params", {})
         theta = parent_params.get("theta", config.THETA)
         lam = parent_params.get("lam", config.LAM)
@@ -314,11 +317,12 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
         child = launch_child(
             staff_run, "split",
             dict(district=district, reps=reps, exact=bool(exact), time_limit=int(limit),
-                instance=str(instance), theta=theta, lam=lam, filler_capture=filler),
+                instance=str(instance), theta=theta, lam=lam, filler_capture=filler,
+                geom=str(geom)),
             lambda child: steps.split_argv(
                 config.SOLVER_PYTHON, config.CODE, instance, child, table=table,
                 district=district, reps=reps, theta=theta, lam=lam, filler_capture=filler,
-                exact=bool(exact), time_limit=int(limit)),
+                exact=bool(exact), time_limit=int(limit), geom=geom),
             {"table": "draw.csv", "metrics": "split.json"})
         st.success(f"`{child.name}` in flight.")
 
@@ -332,10 +336,18 @@ def render_split(staff_run: Path, district: str, cands: list[str]) -> None:
             show_failure(child)
             return
         gap = report.get("gap")
+        contiguous = report.get("contiguous")
+        contig_note = {True: ", contiguous", False: ", not contiguous"}.get(contiguous, "")
         st.caption(f"`{child.name}`: {report.get('method', '')} / {report.get('status', '')}"
                    + (f", gap {gap:.2%}" if gap is not None else "")
-                   + f", {report.get('n_zips', 0)} zips.")
-        st.dataframe(pd.DataFrame([{"rep": rep, "share of the district's gain": share}
+                   + f", {report.get('n_zips', 0)} zips" + contig_note + ".")
+        pieces = report.get("pieces") or {}
+        if contiguous is False:
+            st.warning("Not contiguous on the cell graph: "
+                       + ", ".join(f"{r} in {n} pieces" for r, n in sorted(pieces.items())
+                                  if n > 1))
+        st.dataframe(pd.DataFrame([{"rep": rep, "share of the district's gain": share,
+                                    "pieces": pieces.get(rep, "")}
                                    for rep, share in sorted((report.get("shares") or {}).items())]),
                      width="stretch", hide_index=True,
                      column_config={"share of the district's gain":

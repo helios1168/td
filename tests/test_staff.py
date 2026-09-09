@@ -242,6 +242,19 @@ def test_out_of_scope_rows_keep_the_rep_they_arrived_with():
     assert {r["rep"] for r in rows if r["district"] == "D01"} == {rec["assignment"]["D01"]}
 
 
+def test_a_rep_holding_an_out_of_scope_district_is_not_a_candidate_in_scope():
+    """R1 already holds D02 (out of scope); the unrestricted scoped match wants R1 for D01
+    too (see the D01 assignment in the free match above), but a rep can't hold both."""
+    preset = {z: "R1" for z in TOY if TOY[z][1] == "D02"}
+    with tempfile.TemporaryDirectory() as tmp:
+        rec, rows = _run(tmp, "out", "--release", "R3", "--districts", "D01", reps=preset)
+
+    assert rec["assignment"] == {"D01": "R2"}
+    assert rec["contest"]["D01"]["candidates"] == ["R2"]
+    assert "R1" not in rec["unmatched_reps"]
+    assert {r["rep"] for r in rows if r["district"] == "D02"} == {"R1"}
+
+
 def test_an_unknown_district_name_is_refused():
     with tempfile.TemporaryDirectory() as tmp:
         try:

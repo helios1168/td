@@ -9,8 +9,10 @@ draws when handed `zip_state` and `state_polys`, the per-state clipped Voronoi c
 zip dissolved by district, and hands it over as plain coordinate lists:
 
     {"crs": "laea",
-     "districts": {"D01": {"rings": [[[x, y], ...], ...], "color": "#rrggbb"}, ...},
-     "states":    {"TX":  {"rings": [[[x, y], ...], ...], "label": [x, y]}, ...}}
+     "districts":  {"D01": {"rings": [[[x, y], ...], ...], "color": "#rrggbb"}, ...},
+     "states":     {"TX":  {"rings": [[[x, y], ...], ...], "label": [x, y]}, ...},
+     "cells":      {"75001": {"rings": [[[x, y], ...], ...]}, ...},
+     "cell_edges": [["75001", "75002"], ...]}
 
 Coordinates are the table's own LAEA metres (`td.geo.LAEA`).  Nothing is reprojected: the app
 plots them on cartesian axes with a 1:1 aspect, which for an equal-area projection is the map.
@@ -19,8 +21,14 @@ plots them on cartesian axes with a 1:1 aspect, which for an equal-area projecti
 multi-part (stage 1 is centre-based, so another district's zips can split it).  Holes are
 dropped: at 0.35 fill opacity a hole and its surroundings are indistinguishable, and keeping
 them would double the vertex count for nothing.  Rings are simplified in metres, which is what
-keeps the file small enough to ship to a browser on every rerun -- at the 2 km default a k = 18
-CONUS map is a few hundred KB rather than several MB.
+keeps the file small enough to ship to a browser on every rerun.
+
+`cells` and `cell_edges` are the underlying Voronoi cells and their rook adjacency, taken
+before the district dissolve: the rep maps fill zips cell by cell, and `split_district.py`
+keeps every rep connected on the cell graph, and neither the cell boundaries nor which cells
+touch survives the dissolve.  They cost real weight: measured on a CONUS k = 10 run at the 2 km
+default, `geom.json` grows from about 120 KB to about 880 KB (cells 577 KB, edges 184 KB),
+computed in about 0.3 s extra.
 
 Colours come from a generated 50-entry palette (two lightness rotations of 25 evenly spaced
 hues, enough for the k = 50 other channels reach) assigned by `us_maps.color_districts` over an
@@ -89,6 +97,27 @@ def palette(n_hues: int = N_HUES, lightness=LIGHTNESS, saturation: float = SATUR
             r, g, b = colorsys.hls_to_rgb(h, light, saturation)
             out.append("#%02x%02x%02x" % tuple(round(255 * v) for v in (r, g, b)))
     return out
+
+
+def _cell_edges(cells: dict) -> list:
+    """`[[z1, z2], ...]`, sorted: the rook adjacency of the Voronoi cells, `z1 < z2`.
+
+    Same STRtree pattern as `_adjacency`, but on the cells themselves rather than the dissolved
+    districts, and before `_rings` simplifies them: `preserve_topology` simplifies each polygon
+    on its own, so two neighbours' simplified rings no longer coincide and a shared boundary can
+    no longer be measured.  A shared boundary of positive length is a rook edge; a corner touch
+    or a point of tangency has zero length and is dropped.
+    """
+    import numpy as np
+    import shapely
+    ids = sorted(cells)
+    geoms = [cells[z] for z in ids]
+    ia, ib = shapely.STRtree(geoms).query(geoms, predicate="intersects")
+    keep = ia < ib
+    ia, ib = ia[keep], ib[keep]
+    lengths = shapely.length(shapely.intersection(np.asarray(geoms)[ia], np.asarray(geoms)[ib]))
+    touching = lengths > 0
+    return sorted([ids[i], ids[j]] for i, j in zip(ia[touching], ib[touching]))
 
 
 def _adjacency(polys: dict) -> dict:
@@ -169,7 +198,7 @@ def export(rows: list, states_gdf, simplify: float = SIMPLIFY) -> dict:
     with telemetry.phase("colour"):
         colors = um.color_districts(_adjacency(polys), palette())
 
-    out = {"crs": CRS, "districts": {}, "states": {}}
+    out = {"crs": CRS, "districts": {}, "states": {}, "cells": {}, "cell_edges": []}
     for d in sorted(polys, key=str):
         out["districts"][str(d)] = {"rings": _rings(polys[d], simplify), "color": colors[d]}
     if states_gdf is not None:
@@ -180,6 +209,9 @@ def export(rows: list, states_gdf, simplify: float = SIMPLIFY) -> dict:
             p = _parts(geom)[0].representative_point()          # inside the largest part
             out["states"][str(code)] = {"rings": rings,
                                         "label": [round(p.x, NDIGITS), round(p.y, NDIGITS)]}
+    with telemetry.phase("cells"):
+        out["cells"] = {str(z): {"rings": _rings(cells[z], simplify)} for z in sorted(cells)}
+        out["cell_edges"] = _cell_edges(cells)
     return out
 
 
@@ -210,7 +242,7 @@ def main(argv=None) -> int:
     with T.phase("write"):
         path = write(os.path.join(a.out, "geom.json"), g)
     print(f"geom: {len(g['districts'])} district(s), {len(g['states'])} state(s), "
-          f"{os.path.getsize(path) / 1e6:.2f} MB -> {path}")
+          f"{len(g['cells'])} cell(s), {os.path.getsize(path) / 1e6:.2f} MB -> {path}")
     T.write(a.out)
     return 0
 

@@ -52,7 +52,11 @@ def _geom() -> dict:
     return dict(
         states={"S1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]], "label": [1.0, 0.5]}},
         districts={"D1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]],
-                         "color": "#4269d0"}})
+                         "color": "#4269d0"}},
+        cells={
+            "z1": {"rings": [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]},
+            "z2": {"rings": [[[1, 0], [2, 0], [2, 1], [1, 1], [1, 0]]]},
+        })
 
 
 def test_rep_colours_shared_across_figures():
@@ -69,8 +73,7 @@ def test_rep_figure_trace_order_without_geom():
         return
     fig = mapfig.rep_figure(_reps(), _rows(), None)
     names = [t.name for t in fig.data]
-    assert names == [mapfig.OUTLINES, "R1", "R2", mapfig.CONTESTED, mapfig.REP_ZIPS,
-                     mapfig.HANDLES]
+    assert names == [mapfig.OUTLINES, "R1", "R2", mapfig.CONTESTED, mapfig.HANDLES]
 
 
 def test_rep_figure_trace_order_with_geom_and_focus():
@@ -79,16 +82,19 @@ def test_rep_figure_trace_order_with_geom_and_focus():
     fig = mapfig.rep_figure(_reps(), _rows(), _geom(), focus_rep="R1")
     names = [t.name for t in fig.data]
     assert names == [mapfig.OUTLINES, "R1", "R2", mapfig.CONTESTED, mapfig.FOCUS,
-                     mapfig.DISTRICT_LINES, mapfig.REP_ZIPS, mapfig.HANDLES]
+                     mapfig.DISTRICT_LINES, mapfig.HANDLES]
+    assert fig.data[1].hoveron == "points"
+    assert "z1" in fig.data[1].text[0]
 
 
 def test_rep_figure_colour_by_n_adds_legend():
     if plotly is None:
         return
-    fig = mapfig.rep_figure(_reps(), _rows(), None, colour_by="n")
+    fig = mapfig.rep_figure(_reps(), _rows(), _geom(), colour_by="n")
     names = [t.name for t in fig.data]
-    assert names == [mapfig.OUTLINES, "R1", "R2", mapfig.CONTESTED, mapfig.REP_ZIPS,
-                     *mapfig.N_LABELS, mapfig.HANDLES]
+    assert names == [mapfig.OUTLINES, *mapfig.N_LABELS, mapfig.CONTESTED,
+                     mapfig.DISTRICT_LINES, mapfig.HANDLES]
+    assert fig.data[1].x == (None,)  # "0 reps": z3 has no cell, so nothing qualifies
 
 
 def test_staffed_figure_unstaffed_district():
@@ -98,17 +104,32 @@ def test_staffed_figure_unstaffed_district():
     staffing = dict(assignment={}, unstaffed_districts=["D1"])
     fig = mapfig.staffed_figure(_rows(), _geom(), colours, staffing=staffing)
     names = [t.name for t in fig.data]
-    assert names == [mapfig.OUTLINES, mapfig.UNSTAFFED, mapfig.REP_ZIPS, mapfig.HANDLES]
+    assert names == [mapfig.OUTLINES, mapfig.UNSTAFFED, mapfig.HANDLES]
 
 
-def test_staffed_figure_split_zips_present():
+def test_staffed_figure_fills_cells_by_the_table_rep():
     if plotly is None:
         return
     colours = mapfig.rep_colours(_reps())
     staffing = dict(assignment={"D1": "R1"}, unstaffed_districts=[])
     fig = mapfig.staffed_figure(_rows(), _geom(), colours, staffing=staffing)
     names = [t.name for t in fig.data]
-    assert names == [mapfig.OUTLINES, "D1", mapfig.SPLIT_ZIPS, mapfig.REP_ZIPS, mapfig.HANDLES]
+    assert names == [mapfig.OUTLINES, "R1", "R2", mapfig.HANDLES]
+    assert fig.data[2].fillcolor == colours["R2"]
+
+
+def test_staffed_figure_without_cells_falls_back_to_district_fills():
+    if plotly is None:
+        return
+    colours = mapfig.rep_colours(_reps())
+    staffing = dict(assignment={"D1": "R1"}, unstaffed_districts=[])
+    geom = dict(
+        states={"S1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]], "label": [1.0, 0.5]}},
+        districts={"D1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]],
+                         "color": "#4269d0"}})
+    fig = mapfig.staffed_figure(_rows(), geom, colours, staffing=staffing)
+    names = [t.name for t in fig.data]
+    assert names == [mapfig.OUTLINES, "D1", mapfig.HANDLES]
 
 
 def test_staffed_figure_bbox_sets_axis_ranges():
@@ -121,3 +142,4 @@ def test_staffed_figure_bbox_sets_axis_ranges():
     assert list(fig.layout.xaxis.range) == [bbox[0], bbox[2]]
     assert list(fig.layout.yaxis.range) == [bbox[1], bbox[3]]
     assert fig.layout.uirevision == bbox
+    assert fig.layout.hoverdistance == 40

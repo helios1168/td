@@ -86,12 +86,14 @@ def override_argv(python, repo, instance, run, *, table, edits: Path, mode,
 
 
 def split_argv(python, repo, instance, run, *, table, district, reps: list[str], theta, lam,
-              filler_capture, exact=False, time_limit=60) -> list[str]:
+              filler_capture, exact=False, time_limit=60, geom: Path | None = None) -> list[str]:
     argv = [str(python), str(Path(repo) / "tools" / "split_district.py"), str(instance),
            "--table", str(table), "--district", str(district), "--reps", _csv(reps),
            "--theta", str(theta), "--lam", str(lam), "--filler-capture", str(filler_capture)]
     if exact:
         argv.append("--exact")
+    if geom is not None:
+        argv += ["--geom", str(geom)]
     argv += ["--time-limit", str(time_limit), "--out", str(run)]
     return argv
 

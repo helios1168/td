@@ -6,8 +6,10 @@ tiled basemap would need geographic coordinates, and the inverse projection does
 this repo.  Equal aspect on the two axes is what makes the shapes read as a US map.
 
 The trace order is a contract with `main.py`, which reads a selection event back by matching
-`curve_number` against the trace names below.  Outlines and polygons skip hover so a click
-always lands on a zip or a state handle, never on the fill under them.
+`curve_number` against the trace names below.  On the district map, outlines and polygons skip
+hover so a click always lands on a zip or a state handle, never on the fill under them.  The rep
+and staffed maps hover on their cell vertices instead, since plotly shows only a fill's trace
+name on hover.
 
 The figure is not cached here.  Caching is `st.cache_data` in `main.py`, keyed on path and
 mtime, because this module knows nothing about streamlit and stays importable from a plain
@@ -31,10 +33,8 @@ REP_FILLS = "rep territories"
 CONTESTED = "contested"
 FOCUS = "focus"
 DISTRICT_LINES = "district lines"
-REP_ZIPS = "reps"
 STAFFED_FILLS = "staffed districts"
 UNSTAFFED = "unstaffed"
-SPLIT_ZIPS = "split"
 
 # Four-step sequential ramp for "reps with book" (0, 1, 2, 3+), one hue light to dark, plus the
 # outline that keeps a class-0 marker visible against the white surface. Validated with the
@@ -120,6 +120,50 @@ def _joined_many(infos) -> tuple[list, list]:
         xs += sx
         ys += sy
     return xs, ys
+
+
+def _cell_trace(cells: dict, zips, texts: dict, *, name: str, colour: str, opacity: float,
+                legendgroup: str | None = None, showlegend: bool = False) -> go.Scatter | None:
+    """One filled trace covering every listed zip's cell, hovering on its vertices.
+
+    `zips` is an iterable of zip ids and `texts` a `{zip: str}` of hover text; a zip absent
+    from `cells` is skipped. `None` when no listed zip has a cell, so the caller can skip
+    adding an empty trace.
+    """
+    xs: list = []
+    ys: list = []
+    text: list = []
+    for z in zips:
+        info = cells.get(z)
+        if not info:
+            continue
+        sx, sy = _joined(info.get("rings", []))
+        xs += sx
+        ys += sy
+        text += [texts.get(z, "") if v is not None else "" for v in sx]
+    if not xs:
+        return None
+    return go.Scatter(
+        x=xs, y=ys, mode="lines", fill="toself", fillcolor=colour,
+        line=dict(color=colour, width=0.3), opacity=opacity,
+        hoveron="points", hovertemplate="%{text}<extra></extra>", text=text,
+        name=name, legendgroup=legendgroup, showlegend=showlegend)
+
+
+def _layout(fig: go.Figure, bbox, revision, *, legend: bool = True) -> None:
+    """The axis, margin and revision settings shared by all three figures."""
+    axis = dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
+    xaxis = dict(axis, range=[bbox[0], bbox[2]]) if bbox else dict(axis)
+    yaxis = dict(axis, scaleanchor="x", scaleratio=1, range=[bbox[1], bbox[3]]) if bbox \
+        else dict(axis, scaleanchor="x", scaleratio=1)
+    kwargs = dict(
+        height=700, margin=dict(l=0, r=0, t=10, b=0), dragmode="pan",
+        xaxis=xaxis, yaxis=yaxis, plot_bgcolor="white",
+        uirevision=(bbox if bbox else revision), clickmode="event+select",
+        hoverdistance=40)
+    if legend:
+        kwargs["legend"] = dict(yanchor="top", y=1.0, xanchor="left", x=1.01)
+    fig.update_layout(**kwargs)
 
 
 def rep_colours(reps: dict) -> dict[str, str]:
@@ -251,15 +295,7 @@ def figure(
             x=ox, y=oy, mode="lines", name=outline.get("label", "outline"), hoverinfo="skip",
             line=dict(color=outline.get("color", "#111111"), width=1.6, dash="dash")))
 
-    axis = dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
-    xaxis = dict(axis, range=[bbox[0], bbox[2]]) if bbox else dict(axis)
-    yaxis = dict(axis, scaleanchor="x", scaleratio=1, range=[bbox[1], bbox[3]]) if bbox \
-        else dict(axis, scaleanchor="x", scaleratio=1)
-    fig.update_layout(
-        height=700, margin=dict(l=0, r=0, t=10, b=0), dragmode="pan",
-        xaxis=xaxis, yaxis=yaxis,
-        legend=dict(yanchor="top", y=1.0, xanchor="left", x=1.01),
-        plot_bgcolor="white", uirevision=(bbox if bbox else "map"), clickmode="event+select")
+    _layout(fig, bbox, "map")
     return fig
 
 
@@ -276,13 +312,18 @@ def rep_figure(
 ) -> go.Figure:
     """The rep-territory map: whose book covers which zips, as sold today.
 
-    `reps` is a loaded `reps.json`. `rows` (`load_rows`'s output, or `None`) supplies the zip
-    coordinates for the hover layer; `reps.json` alone carries no `x, y`, so without `rows`
-    `REP_ZIPS` is skipped. `geom` is another run's district geometry, drawn as an overlay when
-    `district_lines` is set. `colour_by="n"` drops the territory fills to outlines and instead
-    colours every zip by how many reps hold book there, off the four-step `N_RAMP`.
+    `reps` is a loaded `reps.json`. `rows` (`load_rows`'s output, or `None`) supplies each
+    zip's state, district and opportunity for the hover text; without a row the hover falls
+    back to state and district "?". `geom` is another run's district geometry: `district_lines`
+    draws its outlines as an overlay, and `geom["cells"]`, when present, is what the rep fills
+    are drawn from, one per zip, hovering on its vertices. Without cells the fills fall back to
+    the dissolved territory polygons, unhovered. `colour_by="n"` colours every zip cell by how
+    many reps hold book there, off the four-step `N_RAMP`, instead of by rep.
     """
     colours = rep_colours(reps)
+    cells = (geom or {}).get("cells") or {}
+    by_zip = {row["zip"]: row for row in rows or []}
+    zips = reps.get("zips", {})
     fig = go.Figure()
 
     xs, ys = _joined_many(reps.get("states", {}).values())
@@ -291,16 +332,39 @@ def rep_figure(
             x=xs, y=ys, mode="lines", name=OUTLINES, hoverinfo="skip", showlegend=False,
             line=dict(color="#b0b0b0", width=0.8)))
 
-    for rep, info in sorted(reps.get("territories", {}).items()):
-        tx, ty = _joined(info.get("rings", []))
-        if not tx:
-            continue
-        colour = colours.get(rep, "#cccccc")
-        if colour_by == "n":
-            fig.add_trace(go.Scatter(
-                x=tx, y=ty, mode="lines", name=rep, legendgroup=REP_FILLS, showlegend=False,
-                hoverinfo="skip", line=dict(color="#cbd5e1", width=0.6)))
+    if colour_by == "n":
+        if cells:
+            for c, (label, colour) in enumerate(zip(N_LABELS, N_RAMP)):
+                zs = [z for z, info in zips.items() if min(info.get("n", 0), 3) == c and z in cells]
+                texts = {z: _rep_hover_text(_rep_hover(by_zip.get(z), zips[z], z)) for z in zs}
+                trace = _cell_trace(cells, zs, texts, name=label, colour=colour, opacity=0.6,
+                                    showlegend=True)
+                fig.add_trace(trace or go.Scatter(
+                    x=[None], y=[None], mode="lines", name=label, showlegend=True))
         else:
+            for rep, info in sorted(reps.get("territories", {}).items()):
+                tx, ty = _joined(info.get("rings", []))
+                if not tx:
+                    continue
+                fig.add_trace(go.Scatter(
+                    x=tx, y=ty, mode="lines", name=rep, legendgroup=REP_FILLS, showlegend=False,
+                    hoverinfo="skip", line=dict(color="#cbd5e1", width=0.6)))
+    elif cells:
+        all_reps = sorted(set(reps.get("territories", {})) |
+                          {info["top"] for info in zips.values() if info.get("top")})
+        for rep in all_reps:
+            rep_zips = [z for z, info in zips.items() if info.get("top") == rep and z in cells]
+            texts = {z: _rep_hover_text(_rep_hover(by_zip.get(z), zips[z], z)) for z in rep_zips}
+            trace = _cell_trace(cells, rep_zips, texts, name=rep, colour=colours.get(rep, "#cccccc"),
+                                opacity=0.45, legendgroup=REP_FILLS)
+            if trace:
+                fig.add_trace(trace)
+    else:
+        for rep, info in sorted(reps.get("territories", {}).items()):
+            tx, ty = _joined(info.get("rings", []))
+            if not tx:
+                continue
+            colour = colours.get(rep, "#cccccc")
             fig.add_trace(go.Scatter(
                 x=tx, y=ty, mode="lines", fill="toself", name=rep, legendgroup=REP_FILLS,
                 showlegend=False, hoverinfo="skip", opacity=0.45,
@@ -333,27 +397,7 @@ def rep_figure(
                 x=dx, y=dy, mode="lines", name=DISTRICT_LINES, hoverinfo="skip",
                 showlegend=False, line=dict(color="#111111", width=1.8)))
 
-    if rows:
-        zips = reps.get("zips", {})
-        drawn = [row for row in rows if row.get("x") is not None and row.get("y") is not None
-                and row.get("zip") in zips]
-        if drawn:
-            if colour_by == "n":
-                classes = [min(zips[row["zip"]].get("n", 0), 3) for row in drawn]
-                marker = dict(
-                    size=6, color=[N_RAMP[c] for c in classes],
-                    line=dict(width=[1 if c == 0 else 0 for c in classes], color=N_OUTLINE))
-            else:
-                marker = dict(size=4, color="#333333", line=dict(width=0))
-            fig.add_trace(go.Scattergl(
-                x=[row["x"] for row in drawn], y=[row["y"] for row in drawn],
-                mode="markers", name=REP_ZIPS, showlegend=False, opacity=0.6, marker=marker,
-                customdata=[_rep_hover(row, zips[row["zip"]]) for row in drawn],
-                hovertemplate=("<b>%{customdata[0]}</b> · %{customdata[1]}<br>"
-                               "district %{customdata[2]}<br>"
-                               "%{customdata[3]} · free %{customdata[4]}<extra></extra>")))
-
-    if colour_by == "n":
+    if colour_by == "n" and not cells:
         for label, colour in zip(N_LABELS, N_RAMP):
             outline = dict(width=1, color=N_OUTLINE) if colour == N_RAMP[0] else None
             fig.add_trace(go.Scatter(
@@ -371,24 +415,29 @@ def rep_figure(
             customdata=[[code] for code, _ in labelled],
             hovertemplate="state %{customdata[0]}<extra></extra>"))
 
-    axis = dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
-    xaxis = dict(axis, range=[bbox[0], bbox[2]]) if bbox else dict(axis)
-    yaxis = dict(axis, scaleanchor="x", scaleratio=1, range=[bbox[1], bbox[3]]) if bbox \
-        else dict(axis, scaleanchor="x", scaleratio=1)
-    fig.update_layout(
-        height=700, margin=dict(l=0, r=0, t=10, b=0), dragmode="pan",
-        xaxis=xaxis, yaxis=yaxis,
-        legend=dict(yanchor="top", y=1.0, xanchor="left", x=1.01),
-        plot_bgcolor="white", uirevision=(bbox if bbox else "rep-map"),
-        clickmode="event+select")
+    _layout(fig, bbox, "rep-map")
     return fig
 
 
-def _rep_hover(row: dict, zip_info: dict) -> list:
+def _rep_hover(row: dict | None, zip_info: dict, zip_id: str = "") -> list:
+    """The zip id, state, district, top shares and free share, as hover fields.
+
+    `row` is the zip table row when there is one; without it (a zip with a cell but no book
+    row) the zip id comes from `zip_id` and state and district read "?".
+    """
     shares = sorted((zip_info.get("shares") or {}).items(), key=lambda kv: kv[1], reverse=True)
     line = ", ".join(f"{rep} {frac:.0%}" for rep, frac in shares) if shares else "none"
     free = zip_info.get("free") or 0.0
-    return [row["zip"], row["state"], row.get("district") or "?", line, f"{free:.0%}"]
+    zid = row["zip"] if row else zip_id
+    state = row["state"] if row else "?"
+    district = (row.get("district") if row else None) or "?"
+    return [zid, state, district, line, f"{free:.0%}"]
+
+
+def _rep_hover_text(fields: list) -> str:
+    """`_rep_hover`'s fields, formatted as the hover text for one cell vertex."""
+    zid, state, district, line, free = fields
+    return f"<b>{zid}</b> · {state}<br>district {district}<br>{line} · free {free}"
 
 
 def staffed_figure(
@@ -402,12 +451,15 @@ def staffed_figure(
     """The staffed ("after") map: one fill per district in its assigned rep's colour.
 
     `rep_colours` is the shared `{rep: hex}` map from `mapfig.rep_colours`, so a rep keeps the
-    same hue here as on the incumbent map. `staffing` is a loaded `staffing.json`:
-    `assignment` gives each district's rep, `unstaffed_districts` the ones with none. `rows`
-    carries the table's own `rep` column, which a split can set differently per zip inside one
-    district; a zip whose `rep` disagrees with its district's assignment draws in `SPLIT_ZIPS`.
+    same hue here as on the incumbent map. `staffing` is a loaded `staffing.json`: `assignment`
+    gives each district's rep, `unstaffed_districts` the ones with none. With `geom["cells"]`,
+    each zip's cell is filled by its own table `rep` rather than its district's assignment, so
+    a split shows as one zip in a different colour than its neighbours, hovering on its
+    vertices; a row with a district but no rep (outside a scoped staffing) fills grey. Without
+    cells the fallback fills whole districts by `assignment`, unhovered.
     """
     geom = geom or {}
+    cells = geom.get("cells") or {}
     assignment = staffing.get("assignment", {})
     unstaffed = set(staffing.get("unstaffed_districts", []))
     districts = geom.get("districts", {})
@@ -419,17 +471,36 @@ def staffed_figure(
             x=xs, y=ys, mode="lines", name=OUTLINES, hoverinfo="skip", showlegend=False,
             line=dict(color="#b0b0b0", width=0.8)))
 
-    for district, info in sorted(districts.items()):
-        if district in unstaffed:
-            continue
-        dx, dy = _joined(info.get("rings", []))
-        if not dx:
-            continue
-        colour = rep_colours.get(assignment.get(district, ""), "#cccccc")
-        fig.add_trace(go.Scatter(
-            x=dx, y=dy, mode="lines", fill="toself", name=district, legendgroup=STAFFED_FILLS,
-            showlegend=False, hoverinfo="skip", opacity=0.55,
-            fillcolor=colour, line=dict(color=colour, width=0.5)))
+    if cells:
+        by_rep: dict[str, list[dict]] = {}
+        for row in rows:
+            rep, district, z = row.get("rep") or "", row.get("district"), row.get("zip")
+            if not district or district in unstaffed or z not in cells:
+                continue
+            by_rep.setdefault(rep, []).append(row)
+        for rep in sorted(by_rep):          # "" first: rows with a district but no rep, grey
+            rep_rows = by_rep[rep]
+            texts = {row["zip"]: f"<b>{row['zip']}</b> · {row['state']}<br>"
+                                 f"district {row['district']} · rep {rep or 'unassigned'}"
+                     for row in rep_rows}
+            trace = _cell_trace(cells, [row["zip"] for row in rep_rows], texts,
+                                name=rep or "unassigned",
+                                colour=rep_colours.get(rep, "#cccccc"), opacity=0.55,
+                                legendgroup=STAFFED_FILLS)
+            if trace:
+                fig.add_trace(trace)
+    else:
+        for district, info in sorted(districts.items()):
+            if district in unstaffed:
+                continue
+            dx, dy = _joined(info.get("rings", []))
+            if not dx:
+                continue
+            colour = rep_colours.get(assignment.get(district, ""), "#cccccc")
+            fig.add_trace(go.Scatter(
+                x=dx, y=dy, mode="lines", fill="toself", name=district, legendgroup=STAFFED_FILLS,
+                showlegend=False, hoverinfo="skip", opacity=0.55,
+                fillcolor=colour, line=dict(color=colour, width=0.5)))
 
     ux, uy = _joined_many(info for d, info in sorted(districts.items()) if d in unstaffed)
     if ux:
@@ -438,31 +509,6 @@ def staffed_figure(
             opacity=0.5, fillcolor="rgba(0,0,0,0)",
             fillpattern=dict(shape="/", fgcolor="#444444", solidity=0.35),
             line=dict(color="#cccccc", width=0.5)))
-
-    drawn = [row for row in rows if row.get("x") is not None and row.get("y") is not None]
-    split = [row for row in drawn if row.get("district") and row.get("rep")
-            and row["district"] not in unstaffed
-            and row["rep"] != assignment.get(row["district"], "")]
-    if split:
-        fig.add_trace(go.Scattergl(
-            x=[row["x"] for row in split], y=[row["y"] for row in split],
-            mode="markers", name=SPLIT_ZIPS, showlegend=False,
-            marker=dict(size=6, color=[rep_colours.get(row["rep"], "#333333") for row in split],
-                       line=dict(width=0)),
-            customdata=[[row["zip"], row["state"], row["district"], row["rep"]]
-                       for row in split],
-            hovertemplate=("<b>%{customdata[0]}</b> · %{customdata[1]}<br>"
-                           "district %{customdata[2]} · rep %{customdata[3]}<extra></extra>")))
-
-    if drawn:
-        fig.add_trace(go.Scattergl(
-            x=[row["x"] for row in drawn], y=[row["y"] for row in drawn],
-            mode="markers", name=REP_ZIPS, showlegend=False,
-            marker=dict(size=4, color="#333333", line=dict(width=0)), opacity=0.6,
-            customdata=[[row["zip"], row["state"], row.get("district") or "?",
-                        row.get("rep") or "unassigned"] for row in drawn],
-            hovertemplate=("<b>%{customdata[0]}</b> · %{customdata[1]}<br>"
-                           "district %{customdata[2]} · rep %{customdata[3]}<extra></extra>")))
 
     labelled = [(code, info["label"]) for code, info in sorted(geom.get("states", {}).items())
                if info.get("label")]
@@ -475,13 +521,5 @@ def staffed_figure(
             customdata=[[code] for code, _ in labelled],
             hovertemplate="state %{customdata[0]}<extra></extra>"))
 
-    axis = dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
-    xaxis = dict(axis, range=[bbox[0], bbox[2]]) if bbox else dict(axis)
-    yaxis = dict(axis, scaleanchor="x", scaleratio=1, range=[bbox[1], bbox[3]]) if bbox \
-        else dict(axis, scaleanchor="x", scaleratio=1)
-    fig.update_layout(
-        height=700, margin=dict(l=0, r=0, t=10, b=0), dragmode="pan",
-        xaxis=xaxis, yaxis=yaxis,
-        plot_bgcolor="white", uirevision=(bbox if bbox else "staffed-map"),
-        clickmode="event+select")
+    _layout(fig, bbox, "staffed-map", legend=False)
     return fig

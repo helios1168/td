@@ -10,15 +10,23 @@ with `u_i(z)` the N-way utility of `td.model`, evaluated with candidacy *unrestr
 `channel.gain_matrix` does: a rep staffing a district serves all of it, so its utility on a zip
 where it holds no book is still real (`docs/PROBLEM.md`, and the plan's staffing decision).
 
-Why there is no contiguity constraint here, and what replaces it
----------------------------------------------------------------
+Contiguity, and what replaces it when there is no cell graph
+--------------------------------------------------------------
 The sold-zip adjacency of the real instance is shattered (547 components over ~1,229 zips), so
-an adjacency constraint on a 75-to-250 zip district is either vacuous or infeasible.  This
-module takes `centers.improve`'s route instead: compactness is a *guard on the moves*, not a
-constraint on the answer.  A zip may only move to one of the `n_near` rep centres nearest to
-it, and ties in the Nash gain are broken toward the smaller `M_z d^2`.  Without that guard a
-Nash-greedy move would hand a rep a zip on the far side of the district for an epsilon of
-balance.
+a constraint on that graph is either vacuous or infeasible.  The Voronoi cell graph of a
+district (one node per zip, an edge for every shared cell border) is connected instead, and
+when it is supplied (`adjacency`) the greedy keeps every rep connected on it: `seed_labels`
+repairs a shattered argmax by keeping each rep's largest piece per component and growing the
+rest back on, and `greedy` then lets a zip leave only when it is not an articulation point of
+its own rep's subgraph on that graph, and only to a rep that owns a neighbouring cell.  Without
+`adjacency` there is no such guard, and `exact` never sees one either; `split` reports the
+pieces the resulting labelling makes (`pieces`, `contiguous`) rather than constraining them.
+
+Compactness is a separate concern and still a *guard on the moves*, not a constraint on the
+answer, which is `centers.improve`'s route.  A zip may only move to one of the `n_near`
+rep centres nearest to it, and ties in the Nash gain are broken toward the smaller `M_z d^2`.
+Without that guard a Nash-greedy move would hand a rep a zip on the far side of the district for
+an epsilon of balance.
 
 Rep centres
 -----------
@@ -44,6 +52,7 @@ from __future__ import annotations
 
 import math
 
+import networkx as nx
 import numpy as np
 
 from .. import model
@@ -157,13 +166,64 @@ def _label_centers(u: np.ndarray, xy: np.ndarray, labels: np.ndarray,
 
 
 # ------------------------------------------------------------------ the greedy engine
-def seed_labels(u: np.ndarray) -> np.ndarray:
+def _cell_graph(adjacency: dict) -> nx.Graph:
+    """The Voronoi cell graph: one node per zip with a cell, an edge per shared cell border."""
+    G = nx.Graph()
+    G.add_nodes_from(adjacency)
+    for j, nbrs in adjacency.items():
+        for k in nbrs:
+            G.add_edge(j, k)
+    return G
+
+
+def _reconnect(u: np.ndarray, labels: np.ndarray, adjacency: dict) -> None:
+    """Repair a shattered argmax on the cell graph, in place.
+
+    Within each connected component of the cell graph, a rep whose zips there split into
+    several pieces keeps only the piece with the largest `u[i, piece].sum()` (ties go to the
+    piece with the lower minimum index); the rest are freed.  Freed zips are then grown back
+    on: repeatedly, the freed zip `j` and owned neighbour `k` maximising
+    `(u[labels[k], j], -labels[k], -j)` is assigned `labels[j] = labels[k]`, until none remain.
+    Every component keeps at least one owned piece per rep present in it, so growth always
+    terminates and no rep loses all of its zips.
+    """
+    G = _cell_graph(adjacency)
+    freed = set()
+    for K in nx.connected_components(G):
+        by_rep: dict = {}
+        for z in K:
+            by_rep.setdefault(int(labels[z]), []).append(z)
+        for i, zs in by_rep.items():
+            sub_pieces = list(nx.connected_components(G.subgraph(zs)))
+            if len(sub_pieces) <= 1:
+                continue
+            best = max(sub_pieces, key=lambda p: (float(u[i, list(p)].sum()), -min(p)))
+            for p in sub_pieces:
+                if p is not best:
+                    freed.update(p)
+    while freed:
+        best = None                     # (u[labels[k], j], -labels[k], -j, j, k)
+        for j in freed:
+            for k in adjacency.get(j, ()):
+                if k in freed:
+                    continue
+                key = (float(u[int(labels[k]), j]), -int(labels[k]), -j)
+                if best is None or key > best[0]:
+                    best = (key, j, k)
+        _, j, k = best
+        labels[j] = labels[k]
+        freed.discard(j)
+
+
+def seed_labels(u: np.ndarray, adjacency: dict | None = None) -> np.ndarray:
     """`argmax_i u[i, z]`, then one best zip handed to each rep the argmax left empty.
 
     Ties go to the lowest rep index, so the seed is deterministic.  Utilities differ across
     reps only through `(c1 - c2) * S_i(z)`, so this is "each zip to the rep with the most book
     on it", and every zip nobody sells lands on one rep -- which is exactly what the balancing
-    passes then spread out.
+    passes then spread out.  With `adjacency` (the Voronoi cell graph over the columns of `u`),
+    `_reconnect` then repairs any rep this argmax split across a component (see the module
+    docstring).  A zip absent from `adjacency` keeps its argmax label.
     """
     n_reps, n = u.shape
     if n < n_reps:
@@ -180,11 +240,14 @@ def seed_labels(u: np.ndarray) -> np.ndarray:
         counts[labels[z]] -= 1
         labels[z] = i
         counts[i] += 1
+    if adjacency:
+        _reconnect(u, labels, adjacency)
     return labels
 
 
 def greedy(u: np.ndarray, M: np.ndarray, xy: np.ndarray, n_near: int = 3,
-           centers0: np.ndarray | None = None, max_passes: int | None = None) -> np.ndarray:
+           centers0: np.ndarray | None = None, max_passes: int | None = None,
+           adjacency: dict | None = None) -> np.ndarray:
     """Best-improvement single-zip moves that raise `sum_i log g_i`.  Returns new labels.
 
     One move per pass, centres recomputed at the head of every pass, so the centres a move is
@@ -193,12 +256,18 @@ def greedy(u: np.ndarray, M: np.ndarray, xy: np.ndarray, n_near: int = 3,
     with no coordinates); it is taken only when the Nash gain exceeds `GAIN_TOL` and `a` keeps
     at least one zip and a positive gain.  Ties in the gain (relative 1e-12) go to the smaller
     `M_z d^2(z, c_b)`, then to the lower zip and rep index.  Deterministic throughout.
+
+    With `adjacency` (the Voronoi cell graph over the columns of `u`), a zip `z` that is a key
+    of `adjacency` may only leave if it is not an articulation point of its rep's subgraph of
+    that graph, and only to a rep already owning one of `z`'s neighbouring cells; articulation
+    points are recomputed once per rep at the head of each pass, not per candidate move.  A zip
+    absent from `adjacency` is unconstrained, as without `adjacency` at all.
     """
     u = np.asarray(u, float)
     M = np.asarray(M, float)
     xy = np.asarray(xy, float)
     n_reps, n = u.shape
-    labels = seed_labels(u)
+    labels = seed_labels(u, adjacency)
     if n_reps < 2:
         return labels
     ok = _positioned(xy)
@@ -206,6 +275,7 @@ def greedy(u: np.ndarray, M: np.ndarray, xy: np.ndarray, n_near: int = 3,
         centers0 = np.repeat(_district_center(xy, M)[None, :], n_reps, axis=0)
     fallback = centers0
     all_reps = np.arange(n_reps)
+    G = _cell_graph(adjacency) if adjacency else None
     for _ in range(int(max_passes if max_passes is not None else 20 * n)):
         c = _label_centers(u, xy, labels, fallback)
         diff = xy[:, None, :] - c[None, :, :]
@@ -216,6 +286,11 @@ def greedy(u: np.ndarray, M: np.ndarray, xy: np.ndarray, n_near: int = 3,
             near_of[int(z)] = near[pos]
         g = gains(u, labels)
         counts = np.bincount(labels, minlength=n_reps)
+        art = {}
+        if G is not None:
+            for i in range(n_reps):
+                nodes_i = [j for j in adjacency if labels[j] == i]
+                art[i] = set(nx.articulation_points(G.subgraph(nodes_i)))
         best = None                     # (delta, cost, z, b)
         for z in range(n):
             a = int(labels[z])
@@ -224,9 +299,16 @@ def greedy(u: np.ndarray, M: np.ndarray, xy: np.ndarray, n_near: int = 3,
             ga = g[a] - u[a, z]
             if ga <= 0:
                 continue
+            allowed = None
+            if adjacency is not None and z in adjacency:
+                if z in art[a]:
+                    continue
+                allowed = {int(labels[k]) for k in adjacency[z]} - {a}
             for b in (near_of[z] if z in near_of else all_reps):
                 b = int(b)
                 if b == a:
+                    continue
+                if allowed is not None and b not in allowed:
                     continue
                 gb = g[b] + u[b, z]
                 if gb <= 0:
@@ -305,7 +387,8 @@ def exact(u: np.ndarray, warm_labels: np.ndarray, time_limit: float = 60.0):
 # ------------------------------------------------------------------ the whole answer
 def split(u: np.ndarray, M: np.ndarray, xy: np.ndarray, reps, *,
           book: np.ndarray | None = None, n_near: int = 3,
-          use_exact: bool = False, time_limit: float = 60.0) -> dict:
+          use_exact: bool = False, time_limit: float = 60.0,
+          adjacency: dict | None = None) -> dict:
     """Split the zips among `reps` and report the answer, the method and how sure it is.
 
     `labels` comes back as one rep name per zip, in the order the columns of `u` were given.
@@ -313,6 +396,12 @@ def split(u: np.ndarray, M: np.ndarray, xy: np.ndarray, reps, *,
     is dropped from the run and named in `dropped_reps` rather than making the objective
     `-inf`.  With `use_exact`, SCIP runs warm-started from the greedy labelling and its answer
     is kept only when it is at least as good; `status` and `gap` say whether it closed.
+
+    With `adjacency` (the Voronoi cell graph, over the same zip columns as `u`), the greedy is
+    contiguity-guarded (see the module docstring) and the result carries `pieces`, one count
+    per kept rep, and `contiguous`, true iff every rep holds one connected piece per component
+    it appears in; SCIP is unconstrained regardless, and both come back `None` without
+    `adjacency`.
     """
     u = np.asarray(u, float)
     reps = list(reps)
@@ -330,8 +419,8 @@ def split(u: np.ndarray, M: np.ndarray, xy: np.ndarray, reps, *,
     M = np.asarray(M, float)
     xy = np.asarray(xy, float)
     centers0 = rep_centers(uk, xy, book, M) if book is not None else None
-    labels = greedy(uk, M, xy, n_near=n_near, centers0=centers0)
-    seed = seed_labels(uk)
+    labels = greedy(uk, M, xy, n_near=n_near, centers0=centers0, adjacency=adjacency)
+    seed = seed_labels(uk, adjacency)
     value = objective(uk, labels)
     method, gap, status = "greedy", None, "heuristic"
 
@@ -340,6 +429,14 @@ def split(u: np.ndarray, M: np.ndarray, xy: np.ndarray, reps, *,
         gap, status = xgap, xstatus
         if xv >= value:
             labels, value, method = xl, xv, "scip"
+
+    if adjacency:
+        G = _cell_graph(adjacency)
+        rep = model.pieces(G, list(G), {j: int(labels[j]) for j in G})
+        pieces_out = {kept[i]: rep["pieces_per_rep"].get(i, 0) for i in range(len(kept))}
+        contiguous = rep["excess_pieces"] == 0
+    else:
+        pieces_out, contiguous = None, None
 
     g = gains(uk, labels)
     return dict(
@@ -352,4 +449,6 @@ def split(u: np.ndarray, M: np.ndarray, xy: np.ndarray, reps, *,
         status=status,
         moves=int((labels != seed).sum()),
         dropped_reps=dropped,
+        pieces=pieces_out,
+        contiguous=contiguous,
     )

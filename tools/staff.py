@@ -16,6 +16,8 @@ drawn first, so legacy candidacy does not restrict staffing).  The business rule
 narrower: a rep may only be given a district they already sell in, i.e. `S_i(z) > 0` for some
 zip `z` of it, books read *after* the fold.  A district no kept rep sells in is left unstaffed
 rather than handed to the highest bidder, and the matching is Nash on the candidate pairs only.
+A rep the table already places in a district outside a `--districts` scope is not a candidate
+inside it, so no rep holds two districts.
 
 The matching is the Hungarian algorithm on `-log g` (`channel.match`'s criterion), run here
 directly because a non-candidate pair has to be excluded rather than scored.  Non-candidate
@@ -178,7 +180,10 @@ def main(argv=None) -> int:
                                           lam=args.lam, filler_capture=args.filler_capture)
 
         with T.phase("assign"):
-            cands = {dist: [r for r in kept if book.get(dist, {}).get(r, 0.0) > 0] for dist in D}
+            held = {r["rep"] for r in rows if r["district"] and r["district"] not in scope
+                    and r["rep"]}
+            cands = {dist: [r for r in kept if r not in held
+                            and book.get(dist, {}).get(r, 0.0) > 0] for dist in D}
             staffable = [dist for dist in D if cands[dist]]
             jd = {dist: j for j, dist in enumerate(D)}
 
@@ -193,7 +198,7 @@ def main(argv=None) -> int:
             assignment = {staffable[j]: R[i] for i, j in pairs}
             gains = {staffable[j]: float(sub[i, j]) for i, j in pairs}
             value = float(sum(math.log(v) for v in gains.values()))
-            taken = set(assignment.values())
+            taken = set(assignment.values()) | held
 
         with T.phase("write"):
             contest = {}
