@@ -256,6 +256,7 @@ def test_driver_end_to_end():
              "--table", table, "--district", "D01", "--reps", "R1,R2", "--out", out],
             capture_output=True, text=True)
         assert rc.returncode == 0, rc.stdout + rc.stderr
+        assert os.path.exists(os.path.join(out, "timings.json"))
 
         rows = ziptable.read(os.path.join(out, "draw.csv"))
         assert len(rows) == len(labels)

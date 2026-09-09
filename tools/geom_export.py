@@ -43,7 +43,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                 "..")))
 
-from td import geo, ziptable                                                # noqa: E402
+from td import geo, telemetry, ziptable                                     # noqa: E402
 
 CRS = "laea"
 SIMPLIFY = 2000.0              # metres; the coastline is 1:20m generalised already
@@ -160,11 +160,14 @@ def export(rows: list, states_gdf, simplify: float = SIMPLIFY) -> dict:
                    else dict(zip(states_gdf["STUSPS"].astype(str), states_gdf.geometry)))
 
     clip = um.clip_region([xy[z] for z in keys], states_gdf)
-    cells = um.voronoi_cells(keys, xy, clip,
-                             zip_state=None if state_polys is None else zip_state,
-                             state_polys=state_polys)
-    polys = um.dissolve(cells, districts)
-    colors = um.color_districts(_adjacency(polys), palette())
+    with telemetry.phase("voronoi"):
+        cells = um.voronoi_cells(keys, xy, clip,
+                                 zip_state=None if state_polys is None else zip_state,
+                                 state_polys=state_polys)
+    with telemetry.phase("dissolve"):
+        polys = um.dissolve(cells, districts)
+    with telemetry.phase("colour"):
+        colors = um.color_districts(_adjacency(polys), palette())
 
     out = {"crs": CRS, "districts": {}, "states": {}}
     for d in sorted(polys, key=str):
@@ -199,14 +202,18 @@ def main(argv=None) -> int:
                     help="skip the shapefile: clip to the padded hull of the points, no states")
     a = ap.parse_args(argv)
 
-    rows = ziptable.read(a.table)
-    states = None if a.no_basemap else geo.states_outline(a.geo_cache)
-    g = export(rows, states, a.simplify)
-    path = write(os.path.join(a.out, "geom.json"), g)
+    T = telemetry.Timings("geom")
+    with T.phase("load"):
+        rows = ziptable.read(a.table)
+        states = None if a.no_basemap else geo.states_outline(a.geo_cache)
+    g = export(rows, states, a.simplify)             # voronoi/dissolve/colour phases inside
+    with T.phase("write"):
+        path = write(os.path.join(a.out, "geom.json"), g)
     print(f"geom: {len(g['districts'])} district(s), {len(g['states'])} state(s), "
           f"{os.path.getsize(path) / 1e6:.2f} MB -> {path}")
+    T.write(a.out)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(telemetry.maybe_profile(main)())

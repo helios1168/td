@@ -2,11 +2,14 @@
 `override`, `split` and `import` runs apart, finds their parents and children, and reads back
 what a driver has written so far.
 
-A run directory holds one `step.json` (kind, parent, params, argv, pid, started, outputs) and
-whatever a driver writes under it; the outputs never carry an absolute path, only one relative
-to the run directory, so a run directory can be moved or copied along with its tree. This
-module never runs a driver itself (`app.runner` does that) and never imports streamlit or
-pandas, so the whole thing is testable from the solver venv.
+A run directory holds one `step.json` (kind, parent, params, argv, pid, started, outputs,
+scenario, member) and whatever a driver writes under it; the outputs never carry an absolute
+path, only one relative to the run directory, so a run directory can be moved or copied along
+with its tree. `scenario` (a slug) and `member` (the slug plus its k and delta) tie a grid
+launch's chains together; `scenarios()` groups runs by scenario for the app's pickers, and a
+run made before this ledger existed carries neither and reads as legacy. This module never
+runs a driver itself (`app.runner` does that) and never imports streamlit or pandas, so the
+whole thing is testable from the solver venv.
 """
 from __future__ import annotations
 
@@ -23,13 +26,34 @@ FAILURE = "failure.json"
 STAMP = "%Y%m%d_%H%M%S"
 
 
-def new_run_dir(root: Path, kind: str, k: int) -> Path:
-    """Create and return `<root>/<kind>_k<kk>_<YYYYmmdd_HHMMSS>`, made unique with a `-2`,
-    `-3`, ... suffix when two runs of the same kind and k land in the same second. The name
-    carries only what tells runs apart at a glance: the kind, the district count and when."""
+def slugify(text: str) -> str:
+    """A user-typed scenario name reduced to `[a-z0-9-]`: lowercased, every run of anything
+    else (spaces, punctuation, underscores) turned into one hyphen, leading and trailing
+    hyphens stripped. Underscores become hyphens so `_k(\\d+)_` and `_stamp` still parse a
+    member name out of a directory name. Empty input, or input that is all punctuation, falls
+    back to `grid-<YYYYmmdd>-<HHMM>`, so a scenario always has a name to key its runs on."""
+    slug = re.sub(r"[^a-z0-9-]+", "-", text.lower())
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug or f"grid-{datetime.now():%Y%m%d-%H%M}"
+
+
+def member_name(slug: str, k: int, delta: float) -> str:
+    """The name of one scenario member: the slug, the district count unpadded, and the delta
+    as a bare percent (`custom_k8_d5`, `custom_k10_d7.5`)."""
+    dpct = round(delta * 100, 4)
+    return f"{slug}_k{int(k)}_d{dpct:g}"
+
+
+def new_run_dir(root: Path, kind: str, member: str | int) -> Path:
+    """Create and return `<root>/<member>_<kind>_<YYYYmmdd_HHMMSS>`, made unique with a `-2`,
+    `-3`, ... suffix when two runs of the same member and kind land in the same second.
+    `member` is normally a scenario member name (`custom_k10_d5`, built by `member_name`); a
+    caller with no scenario at all (a legacy child) may still pass a bare int `k`, in which
+    case the member part of the name is `f"k{k}"`."""
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
-    base = f"{kind}_k{int(k):02d}_{datetime.now():{STAMP}}"
+    member = f"k{int(member)}" if isinstance(member, int) else member
+    base = f"{member}_{kind}_{datetime.now():{STAMP}}"
     name, n = base, 2
     while (root / name).exists():
         name = f"{base}-{n}"
@@ -40,11 +64,13 @@ def new_run_dir(root: Path, kind: str, k: int) -> Path:
 
 
 def write_step(run: Path, *, kind: str, parent: str | None, params: dict, argv: list[str],
-               outputs: dict) -> dict:
+               outputs: dict, scenario: str | None = None, member: str | None = None) -> dict:
     """Write `step.json` for a run just created: no process has been launched yet, so `pid`
-    and `started` are both `None` until `app.runner.launch`/`launch_chain` fills them in."""
+    and `started` are both `None` until `app.runner.launch`/`launch_chain` fills them in.
+    `scenario` and `member` tie the run to a scenario ledger entry (`scenario_of`, `member_of`
+    walk the lineage to find them); a run outside a scenario leaves both `None`."""
     step = dict(kind=kind, parent=parent, params=params, argv=argv, pid=None, started=None,
-               outputs=outputs)
+               outputs=outputs, scenario=scenario, member=member)
     _write(run, step)
     return step
 
@@ -93,17 +119,42 @@ def k_of(run: Path, root: Path) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def scenario_of(run: Path, root: Path) -> str | None:
+    """The scenario slug a run belongs to: its own `step.json["scenario"]`, else the nearest
+    ancestor's. `None` for a run with no scenario anywhere in its lineage (a legacy run)."""
+    for step_run in reversed(lineage(run, root)):
+        scenario = read_step(step_run).get("scenario")
+        if scenario is not None:
+            return scenario
+    return None
+
+
+def member_of(run: Path, root: Path) -> str | None:
+    """The scenario member name a run belongs to, the same way `scenario_of` walks the
+    lineage for the scenario slug. `None` for a run with no member anywhere in its lineage."""
+    for step_run in reversed(lineage(run, root)):
+        member = read_step(step_run).get("member")
+        if member is not None:
+            return member
+    return None
+
+
 def label(run: Path, root: Path) -> str:
-    """What a picker shows for a run: `k18 · clip · 2026-09-08 14:42:39`. Read from the ledger
-    rather than the directory name, so runs made under an older naming read the same way."""
+    """What a picker shows for a run: `custom_k10_d5 · clip · 2026-09-08 14:42:39`. Read from
+    the ledger rather than the directory name, so runs made under an older naming read the
+    same way. A run with no member anywhere in its lineage (a legacy run) falls back to
+    `k18 · clip · 2026-09-08 14:42:39`."""
     step = read_step(run)
-    k = k_of(run, root)
     when = step.get("started") or _stamp(Path(run).name)
     try:
         when = datetime.strptime(when, STAMP).isoformat(sep=" ", timespec="seconds")
     except ValueError:
         when = when.replace("T", " ")
-    return f"{'k' + str(k) if k is not None else 'k?'} · {step.get('kind', '?')} · {when}"
+    member = member_of(run, root)
+    if member is None:
+        k = k_of(run, root)
+        member = f"k{k}" if k is not None else "k?"
+    return f"{member} · {step.get('kind', '?')} · {when}"
 
 
 def _output_path(run: Path, key: str) -> Path | None:
@@ -163,3 +214,19 @@ def children(run: Path, root: Path) -> list[Path]:
     """Every run directly parented on `run`, newest first."""
     name = Path(run).name
     return [d for d in discover(root) if read_step(d).get("parent") == name]
+
+
+def scenarios(root: Path) -> list[tuple[str | None, list[Path]]]:
+    """Every scenario under `root`, as `(slug, runs)` pairs: newest-first by the newest run
+    each scenario holds, its own runs newest first too. Runs with no scenario (made before this
+    ledger, or hand-imported) are grouped last under the slug `None`."""
+    groups: dict[str | None, list[Path]] = {}
+    order: list[str | None] = []
+    for run in discover(root):
+        slug = scenario_of(run, root)
+        if slug not in groups:
+            groups[slug] = []
+            order.append(slug)
+        groups[slug].append(run)
+    order = [slug for slug in order if slug is not None] + ([None] if None in groups else [])
+    return [(slug, groups[slug]) for slug in order]

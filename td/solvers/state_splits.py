@@ -332,6 +332,8 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
         objective=float(res.fun),
         status="time_limit" if timed_out else int(res.status),
         mip_gap=float(res.mip_gap),
+        nodes=int(res.mip_node_count),
+        dual_bound=float(res.mip_dual_bound),
     )
 
 

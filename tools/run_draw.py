@@ -71,7 +71,7 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                 "..")))
 
-from td import channel, geo, ziptable                                      # noqa: E402
+from td import channel, geo, telemetry, ziptable                           # noqa: E402
 from td import instance as descaled                                        # noqa: E402
 from td.solvers import centers                                             # noqa: E402
 
@@ -298,8 +298,18 @@ def draw_job(XY: np.ndarray, M: np.ndarray, k: int, seed: int,
             locked: np.ndarray | None) -> dict:
     """One `centers.draw` call -- the process-pool target, so it must stay module-level (macOS
     `spawn` pickles a target by its qualified name; the `__main__` guard below keeps a spawned
-    child from re-running `main`)."""
-    return centers.draw(XY, M, k, seed=seed, locked=locked)
+    child from re-running `main`).
+
+    A pool worker is a fresh interpreter with no `Timings` of the parent's to hand `lp.assign`
+    ticks to, so this makes its own scratch one, reads back what `centers.draw`'s calls to
+    `centers.assign` caught in it, and returns the totals under `ticks` for `main` to fold into
+    its own `Timings` (`run_sweep`/`main`, the `"stage1"` phase)."""
+    T = telemetry.Timings("draw_job")
+    res = centers.draw(XY, M, k, seed=seed, locked=locked)
+    ticks = dict(T.ticks)
+    T.close()
+    res["ticks"] = ticks
+    return res
 
 
 def run_sweep(ks: list[int], seeds: list[int], XY, M, locked,
@@ -349,7 +359,7 @@ def complete(labels, placed_zips, states, missing, M, *, pinned=None, anchor_nam
 
 def _stage1_metrics(res, M_by_zip, placed_zips, completed) -> dict:
     """Stage-1 metrics as drawn, and again after the coordinate-less/hand-drawn zips are placed."""
-    before = {k: v for k, v in res.items() if k not in ("labels", "centers", "iterates")}
+    before = {k: v for k, v in res.items() if k not in ("labels", "centers", "iterates", "ticks")}
     per = {}
     for z, d in completed.items():
         per[d] = per.get(d, 0.0) + float(M_by_zip[z])
@@ -541,49 +551,59 @@ def main(argv=None):
         default_run_id(ks[0]) if len(ks) == 1 else f"sweep_{_dt.date.today():%Y%m%d}")
     os.makedirs(out_dir, exist_ok=True)
 
-    d = descaled.load_descaled(args.instance)
-    print(f"instance: {d.summary()}")
-    zips = sorted(d.G)
-    M_by_zip = {z: float(d.G.nodes[z]["M"]) for z in zips}
-    states = {z: d.G.nodes[z].get("state") or "" for z in zips}
+    T = telemetry.Timings("draw")
+    with T.phase("load"):
+        d = descaled.load_descaled(args.instance)
+        print(f"instance: {d.summary()}")
+        zips = sorted(d.G)
+        M_by_zip = {z: float(d.G.nodes[z]["M"]) for z in zips}
+        states = {z: d.G.nodes[z].get("state") or "" for z in zips}
 
-    xy, missing = coordinates(zips, args.geo_cache)
-    print(f"geometry: {len(xy):,} of {len(zips):,} zips have gazetteer coordinates; "
-          f"{len(missing)} placed by state" + (f" {missing}" if missing else ""))
+    with T.phase("coordinates"):
+        xy, missing = coordinates(zips, args.geo_cache)
+        print(f"geometry: {len(xy):,} of {len(zips):,} zips have gazetteer coordinates; "
+              f"{len(missing)} placed by state" + (f" {missing}" if missing else ""))
 
-    hand = expand_states(sc, states)
-    hand.update(locks)
-    anchor_names = list(sc.anchor) + lock_only_names
-    open_zips = [z for z in zips if z in xy and hand.get(z) not in sc.fix]
-    XY = np.array([xy[z] for z in open_zips], float)
-    M = np.array([M_by_zip[z] for z in open_zips], float)
+        hand = expand_states(sc, states)
+        hand.update(locks)
+        anchor_names = list(sc.anchor) + lock_only_names
+        open_zips = [z for z in zips if z in xy and hand.get(z) not in sc.fix]
+        XY = np.array([xy[z] for z in open_zips], float)
+        M = np.array([M_by_zip[z] for z in open_zips], float)
 
-    if anchor_names:
-        locked = np.array([anchor_names.index(hand[z]) if z in hand else -1
-                           for z in open_zips], int)
-        present = set(locked.tolist())
-        absent = [name for i, name in enumerate(anchor_names) if i not in present]
-        if absent:
-            raise ValueError(f"anchor district(s) {absent} have no zip with coordinates")
-    else:
-        locked = None
+        if anchor_names:
+            locked = np.array([anchor_names.index(hand[z]) if z in hand else -1
+                               for z in open_zips], int)
+            present = set(locked.tolist())
+            absent = [name for i, name in enumerate(anchor_names) if i not in present]
+            if absent:
+                raise ValueError(f"anchor district(s) {absent} have no zip with coordinates")
+        else:
+            locked = None
 
-    pinned = {z: hand[z] for z in zips if z in hand and z not in open_zips}
-    missing_free = [z for z in missing if z not in hand]
+        pinned = {z: hand[z] for z in zips if z in hand and z not in open_zips}
+        missing_free = [z for z in missing if z not in hand]
 
-    n_fixed_zips = sum(1 for z in zips if hand.get(z) in sc.fix)
-    n_anchor_zips = int((locked >= 0).sum()) if locked is not None else 0
-    n_pinned_coordless = sum(1 for z in pinned if z not in xy)
-    print(f"scenario: {len(sc.fix)} fixed district(s) ({n_fixed_zips} zips), "
-          f"{len(sc.anchor)} anchored district(s) ({n_anchor_zips} zips), "
-          f"{len(open_zips)} solver zips, {n_pinned_coordless} pinned coordinate-less")
+        n_fixed_zips = sum(1 for z in zips if hand.get(z) in sc.fix)
+        n_anchor_zips = int((locked >= 0).sum()) if locked is not None else 0
+        n_pinned_coordless = sum(1 for z in pinned if z not in xy)
+        print(f"scenario: {len(sc.fix)} fixed district(s) ({n_fixed_zips} zips), "
+              f"{len(sc.anchor)} anchored district(s) ({n_anchor_zips} zips), "
+              f"{len(open_zips)} solver zips, {n_pinned_coordless} pinned coordinate-less")
 
-    modes: dict[str, str] = ({n: "fix" for n in sc.fix} | {n: "anchor" for n in sc.anchor}
-                             | {n: "lock" for n in lock_only_names})
+        modes: dict[str, str] = ({n: "fix" for n in sc.fix} | {n: "anchor" for n in sc.anchor}
+                                 | {n: "lock" for n in lock_only_names})
 
     t0 = _dt.datetime.now()
-    by_k = run_sweep([solver_k(k, sc, len(lock_only_names)) for k in ks], seeds, XY, M, locked,
-                     args.workers)
+    with T.phase("stage1") as ph:
+        by_k = run_sweep([solver_k(k, sc, len(lock_only_names)) for k in ks], seeds, XY, M,
+                         locked, args.workers)
+        ph.note(jobs=len(ks) * len(seeds), workers=args.workers)
+    for rs in by_k.values():
+        for res in rs:
+            job_ticks = res.pop("ticks", {})
+            for name, rec in job_ticks.items():
+                telemetry.tick(name, rec["wall"], n=rec["n"])
     elapsed = (_dt.datetime.now() - t0).total_seconds()
     print(f"stage 1: {len(ks)} k value(s) x {len(seeds)} seed(s) in {elapsed:.1f}s")
 
@@ -592,94 +612,97 @@ def main(argv=None):
     for k in ks:
         ks_solver = solver_k(k, sc, len(lock_only_names))
         ranked1 = by_k[ks_solver]
-        draws, per_draw = [], []
-        for res in ranked1:
-            completed = complete(res["labels"], open_zips, states, missing_free, M_by_zip,
-                                 pinned=pinned, anchor_names=anchor_names)
-            draws.append(completed)
-            per_draw.append(_stage1_metrics(res, M_by_zip, open_zips, completed))
-            m = per_draw[-1]
-            print(f"  k={k} seed {m['seed']}: spread {m['before']['spread_rel']:.3%} drawn -> "
-                  f"{m['after']['spread_rel']:.3%} completed, nash {m['after']['nash']:.6f}")
+        with T.phase("stage2"):
+            draws, per_draw = [], []
+            for res in ranked1:
+                completed = complete(res["labels"], open_zips, states, missing_free, M_by_zip,
+                                     pinned=pinned, anchor_names=anchor_names)
+                draws.append(completed)
+                per_draw.append(_stage1_metrics(res, M_by_zip, open_zips, completed))
+                m = per_draw[-1]
+                print(f"  k={k} seed {m['seed']}: spread {m['before']['spread_rel']:.3%} "
+                      f"drawn -> {m['after']['spread_rel']:.3%} completed, "
+                      f"nash {m['after']['nash']:.6f}")
 
-        print(f"stage 2 (k={k}): Hungarian on log gains")
-        ranked2 = channel.score_draws(d.G, draws, theta=args.theta, lam=args.lam,
-                                      filler_capture=args.filler_capture)
-        for r in ranked2:
-            per_draw[r["draw"]]["stage2_value"] = float(r["value"])
-            per_draw[r["draw"]]["stage2_unstaffed"] = list(r["unstaffed_districts"])
-        best = ranked2[0]
-        winner, wm = draws[best["draw"]], per_draw[best["draw"]]
-        print(f"  best: seed {wm['seed']} (draw {best['draw']}), value {best['value']:.6f}; "
-              f"stage-1-best seed was {per_draw[0]['seed']}")
+            print(f"stage 2 (k={k}): Hungarian on log gains")
+            ranked2 = channel.score_draws(d.G, draws, theta=args.theta, lam=args.lam,
+                                          filler_capture=args.filler_capture)
+            for r in ranked2:
+                per_draw[r["draw"]]["stage2_value"] = float(r["value"])
+                per_draw[r["draw"]]["stage2_unstaffed"] = list(r["unstaffed_districts"])
+            best = ranked2[0]
+            winner, wm = draws[best["draw"]], per_draw[best["draw"]]
+            print(f"  best: seed {wm['seed']} (draw {best['draw']}), value {best['value']:.6f}; "
+                  f"stage-1-best seed was {per_draw[0]['seed']}")
 
-        target = sum(M_by_zip.values()) / k
-        rows = summary_rows(winner, M_by_zip, states, best["assignment"],
-                            modes=modes, gains=best["gains"], target=target)
-        print(f"\n== k={k} ==")
-        print_summary(rows)
+        with T.phase("write"):
+            target = sum(M_by_zip.values()) / k
+            rows = summary_rows(winner, M_by_zip, states, best["assignment"],
+                                modes=modes, gains=best["gains"], target=target)
+            print(f"\n== k={k} ==")
+            print_summary(rows)
 
-        k_dir = os.path.join(out_dir, f"k{k:02d}")
-        os.makedirs(k_dir, exist_ok=True)
+            k_dir = os.path.join(out_dir, f"k{k:02d}")
+            os.makedirs(k_dir, exist_ok=True)
 
-        # The winning draw's own trajectory, one zip table per step; the last of them is the
-        # committed labelling, so `draw.csv` and `NN_completed.csv` are the same table.
-        step_tables = [(name, ziptable.build(
-            d, xy, complete(lab, open_zips, states, missing_free, M_by_zip,
-                            pinned=pinned, anchor_names=anchor_names)))
-            for name, lab in ranked1[best["draw"]]["iterates"]]
-        winner_rows = ziptable.build(d, xy, winner)
-        step_tables.append(("completed", winner_rows))
-        step_names = write_steps(os.path.join(k_dir, "steps"), step_tables)
+            # The winning draw's own trajectory, one zip table per step; the last of them is
+            # the committed labelling, so `draw.csv` and `NN_completed.csv` are the same table.
+            step_tables = [(name, ziptable.build(
+                d, xy, complete(lab, open_zips, states, missing_free, M_by_zip,
+                                pinned=pinned, anchor_names=anchor_names)))
+                for name, lab in ranked1[best["draw"]]["iterates"]]
+            winner_rows = ziptable.build(d, xy, winner)
+            step_tables.append(("completed", winner_rows))
+            step_names = write_steps(os.path.join(k_dir, "steps"), step_tables)
 
-        draw_csv = os.path.join(k_dir, "draw.csv")
-        ziptable.write(draw_csv, winner_rows)
+            draw_csv = os.path.join(k_dir, "draw.csv")
+            ziptable.write(draw_csv, winner_rows)
 
-        if args.maps or args.maps_steps:
-            basemap = geo.states_outline(args.geo_cache)
-            if args.maps:
-                ziptable.render(winner_rows, os.path.join(k_dir, "figures"), basemap,
-                                report=print)
-            if args.maps_steps:
-                fig_root = os.path.join(k_dir, "steps", "figures")
-                for fname, (_name, table) in zip(step_names, step_tables):
-                    ziptable.render(table, os.path.join(fig_root, fname[:-4]), basemap)
-            print(f"wrote maps under {k_dir}")
+            if args.maps or args.maps_steps:
+                basemap = geo.states_outline(args.geo_cache)
+                if args.maps:
+                    ziptable.render(winner_rows, os.path.join(k_dir, "figures"), basemap,
+                                    report=print)
+                if args.maps_steps:
+                    fig_root = os.path.join(k_dir, "steps", "figures")
+                    for fname, (_name, table) in zip(step_names, step_tables):
+                        ziptable.render(table, os.path.join(fig_root, fname[:-4]), basemap)
+                print(f"wrote maps under {k_dir}")
 
-        stage1_targets_list = wm["before"]["targets"]
-        name_order = anchor_names + [district_id(j)
-                                     for j in range(len(stage1_targets_list) - len(anchor_names))]
-        stage1_targets = {name: float(t) for name, t in zip(name_order, stage1_targets_list)}
+            stage1_targets_list = wm["before"]["targets"]
+            name_order = anchor_names + [
+                district_id(j) for j in range(len(stage1_targets_list) - len(anchor_names))]
+            stage1_targets = {name: float(t) for name, t in zip(name_order, stage1_targets_list)}
 
-        metrics_out = dict(
-            run_id=os.path.basename(os.path.normpath(k_dir)),
-            written=_dt.datetime.now().isoformat(timespec="seconds"),
-            instance=os.path.abspath(args.instance),
-            k=k, seeds=list(seeds),
-            theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
-            n_zips=len(zips), n_with_coordinates=len(xy), n_solver_zips=len(open_zips),
-            placed_by_state={z: winner[z] for z in missing_free},
-            winner=dict(draw=int(best["draw"]), seed=int(wm["seed"]),
-                       stage2_value=float(best["value"]),
-                       assignment={n: str(v) for n, v in best["assignment"].items()},
-                       unmatched_reps=[str(r) for r in best["unmatched_reps"]],
-                       unstaffed_districts=list(best["unstaffed_districts"]),
-                       balance_report=best["balance"],
-                       gains=best["gains"]),
-            draws=per_draw,
-            summary=rows,
-            scenario={"fix": {n: list(s) for n, s in sc.fix.items()},
-                     "anchor": {n: list(s) for n, s in sc.anchor.items()}},
-            locks=dict(locks),
-            k_solver=ks_solver,
-            hand_drawn=[r for r in rows if r["mode"] != "solver"],
-            stage1_targets=stage1_targets,
-            steps=step_names,
-        )
-        with open(os.path.join(k_dir, "metrics.json"), "w", encoding="utf-8") as fh:
-            json.dump(metrics_out, fh, indent=2, sort_keys=False, default=float)
-            fh.write("\n")
-        print(f"wrote {draw_csv} and {os.path.join(k_dir, 'metrics.json')}")
+            metrics_out = dict(
+                run_id=os.path.basename(os.path.normpath(k_dir)),
+                written=_dt.datetime.now().isoformat(timespec="seconds"),
+                instance=os.path.abspath(args.instance),
+                k=k, seeds=list(seeds),
+                theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
+                n_zips=len(zips), n_with_coordinates=len(xy), n_solver_zips=len(open_zips),
+                placed_by_state={z: winner[z] for z in missing_free},
+                winner=dict(draw=int(best["draw"]), seed=int(wm["seed"]),
+                           stage2_value=float(best["value"]),
+                           assignment={n: str(v) for n, v in best["assignment"].items()},
+                           unmatched_reps=[str(r) for r in best["unmatched_reps"]],
+                           unstaffed_districts=list(best["unstaffed_districts"]),
+                           balance_report=best["balance"],
+                           gains=best["gains"]),
+                draws=per_draw,
+                summary=rows,
+                scenario={"fix": {n: list(s) for n, s in sc.fix.items()},
+                         "anchor": {n: list(s) for n, s in sc.anchor.items()}},
+                locks=dict(locks),
+                k_solver=ks_solver,
+                hand_drawn=[r for r in rows if r["mode"] != "solver"],
+                stage1_targets=stage1_targets,
+                steps=step_names,
+            )
+            with open(os.path.join(k_dir, "metrics.json"), "w", encoding="utf-8") as fh:
+                json.dump(metrics_out, fh, indent=2, sort_keys=False, default=float)
+                fh.write("\n")
+            print(f"wrote {draw_csv} and {os.path.join(k_dir, 'metrics.json')}")
 
         sweep_rows.append(sweep_row(k, rows, ranked1, best, sc))
         if best["unstaffed_districts"]:
@@ -695,16 +718,18 @@ def main(argv=None):
               f"{r['spread_rel']:>9.2%}{r['cv']:>8.3f}{r['n_within_10pct']:>10}"
               f"{r['nash']:>12.4f}{r['stage2_value']:>10.4f}{r['n_unstaffed']:>11}")
 
-    write_sweep(out_dir, sweep_rows, sc,
-               meta=dict(run_id=os.path.basename(os.path.normpath(out_dir)),
-                         written=_dt.datetime.now().isoformat(timespec="seconds"),
-                         instance=os.path.abspath(args.instance), ks=ks, seeds=seeds,
-                         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
-                         workers=args.workers, elapsed_s=elapsed))
+    with T.phase("write"):
+        write_sweep(out_dir, sweep_rows, sc,
+                   meta=dict(run_id=os.path.basename(os.path.normpath(out_dir)),
+                             written=_dt.datetime.now().isoformat(timespec="seconds"),
+                             instance=os.path.abspath(args.instance), ks=ks, seeds=seeds,
+                             theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
+                             workers=args.workers, elapsed_s=elapsed))
     print(f"\nwrote {out_dir}")
 
+    T.write(out_dir)
     return 1 if any_unstaffed else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(telemetry.maybe_profile(main)())

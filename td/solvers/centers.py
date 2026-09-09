@@ -62,10 +62,13 @@ one call.
 from __future__ import annotations
 
 import math
+import time
 
 import numpy as np
 from scipy import sparse
 from scipy.optimize import linprog
+
+from td import telemetry
 
 FRAC_TOL = 1e-6          # a zip is "fractional" when its largest share is below 1 - this
 GAIN_TOL = 1e-12         # a move must raise sum_j log M_j by more than this to be taken
@@ -230,8 +233,10 @@ def assign(xy: np.ndarray, M: np.ndarray, centers: np.ndarray,
     # well under a second on a 3,707-zip instance where the no-options call never returned.
     # method="highs" (auto-select) has the same failure mode; highs-ds keeps the
     # near-vertex fractional-count behavior the rest of this function assumes.
+    t0 = time.perf_counter()
     res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(0.0, 1.0),
                   method="highs-ds", options={"time_limit": 60.0})
+    telemetry.tick("lp.assign", time.perf_counter() - t0)
     if not res.success:
         raise RuntimeError(f"transportation LP failed: {res.message}")
 

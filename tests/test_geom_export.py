@@ -152,6 +152,8 @@ def test_cli_writes_geom_json_without_a_basemap():
         out = os.path.join(tmp, "run")
         assert gx.main(["--table", table, "--out", out, "--no-basemap"]) == 0
 
+        assert os.path.exists(os.path.join(out, "timings.json"))
+
         with open(os.path.join(out, "geom.json"), encoding="utf-8") as fh:
             g = json.load(fh)
         assert g["crs"] == "laea" and g["states"] == {}

@@ -3,9 +3,12 @@ into six draw-then-clip-then-geom chains.
 
 Every builder returns a plain `list[str]`, ready for `app.runner.launch` or `launch_chain`;
 nothing here runs a process. `grid` is the one function that does I/O, and it does it only
-through `app.store`: it creates the draw and clip run directories, writes their `step.json`,
-and, when the scenario carries pins, writes `scenario.json` into the draw directory, since that
-file is `run_draw.py`'s own input and has nowhere else to come from.
+through `app.store`: it creates the draw and clip run directories, writes their `step.json`
+(carrying the scenario slug and this chain's member name), and, when the scenario carries pins,
+writes `scenario.json` into the draw directory, since that file is `run_draw.py`'s own input
+and has nowhere else to come from. That `scenario.json` is the fixed/anchored districts a user
+pinned; it has nothing to do with the scenario slug in `step.json`, an unfortunate but
+unavoidable collision in the one English word both ideas want.
 """
 from __future__ import annotations
 
@@ -50,14 +53,16 @@ def geom_argv(python, repo, table, run, *, geo_cache) -> list[str]:
 
 
 def staff_argv(python, repo, instance, run, *, table, keep=None, release=None, theta, lam,
-              filler_capture) -> list[str]:
+              filler_capture, districts=None) -> list[str]:
     if (keep is None) == (release is None):
         raise ValueError("staff_argv needs exactly one of keep or release")
     argv = [str(python), str(Path(repo) / "tools" / "staff.py"), str(instance),
            "--table", str(table)]
     argv += ["--keep", _csv(keep)] if keep is not None else ["--release", _csv(release)]
-    argv += ["--theta", str(theta), "--lam", str(lam), "--filler-capture", str(filler_capture),
-            "--out", str(run)]
+    argv += ["--theta", str(theta), "--lam", str(lam), "--filler-capture", str(filler_capture)]
+    if districts is not None:
+        argv += ["--districts", _csv(districts)]
+    argv += ["--out", str(run)]
     return argv
 
 
@@ -81,20 +86,28 @@ def split_argv(python, repo, instance, run, *, table, district, reps: list[str],
     return argv
 
 
-def grid(root: Path, *, ks: list[int], delta, seeds, workers, theta, lam,
+def grid(root: Path, *, name: str = "", ks: list[int], delta, seeds, workers, theta, lam,
         filler_capture, time_limit, pins: dict | None, python, repo, instance,
         geo_cache) -> list[list[tuple[Path, list[str]]]]:
-    """One draw-clip-geom chain per k: a draw process at this delta and this scenario, its
+    """One draw-clip-geom chain per k, all sharing one scenario: `name` is the user's typed
+    text, slugified (`store.slugify`) into the scenario slug that ties every chain's runs
+    together for `store.scenarios` and the other tabs' pickers. Each chain's own member name is
+    the slug plus its k and delta (`store.member_name`); the run directories are named from
+    that member, and both the draw and clip steps record `scenario` and `member`, plus the raw
+    `name` in their own `params["scenario_name"]`, so a legacy caller (`name=""`) still gets a
+    working, if anonymous, scenario. A draw process at this delta and this scenario, its
     state-split clip, and the geometry export that turns the clip's winning table into the map
     the UI actually shows (invariant 3: the clip's table is the result, the draw is only how it
     got there). Six k values make six chains, each its own `run_draw.py` process."""
     root = Path(root)
+    slug = store.slugify(name)
     dname = f"d{delta:g}"
     chains: list[list[tuple[Path, list[str]]]] = []
     for k in ks:
         kk = f"k{k:02d}"
+        member = store.member_name(slug, k, delta)
 
-        draw_dir = store.new_run_dir(root, "draw", k)
+        draw_dir = store.new_run_dir(root, "draw", member)
         scenario = None
         if pins:
             scenario = draw_dir / "scenario.json"
@@ -106,12 +119,13 @@ def grid(root: Path, *, ks: list[int], delta, seeds, workers, theta, lam,
             draw_dir, kind="draw", parent=None,
             params=dict(k=k, seeds=str(seeds), workers=workers, theta=theta, lam=lam,
                        filler_capture=filler_capture, geo_cache=str(geo_cache),
-                       instance=str(instance), pins=pins),
-            argv=d_argv,
-            outputs={"table": f"{kk}/draw.csv", "metrics": f"{kk}/metrics.json"})
+                       instance=str(instance), pins=pins, scenario_name=name),
+            argv=d_argv, scenario=slug, member=member,
+            outputs={"table": f"{kk}/draw.csv", "metrics": f"{kk}/metrics.json",
+                    "timings": "timings.json"})
         draw_table = draw_dir / draw_step["outputs"]["table"]
 
-        clip_dir = store.new_run_dir(root, "clip", k)
+        clip_dir = store.new_run_dir(root, "clip", member)
         c_argv = clip_argv(python, repo, instance, clip_dir, draw=draw_table, k=k, delta=delta,
                           time_limit=time_limit, theta=theta, lam=lam,
                           filler_capture=filler_capture, geo_cache=geo_cache)
@@ -119,10 +133,11 @@ def grid(root: Path, *, ks: list[int], delta, seeds, workers, theta, lam,
             clip_dir, kind="clip", parent=draw_dir.name,
             params=dict(k=k, delta=delta, time_limit=time_limit, theta=theta, lam=lam,
                        filler_capture=filler_capture, rounds=5, eta=0.01,
-                       anchor_homes=True, geo_cache=str(geo_cache), instance=str(instance)),
-            argv=c_argv,
+                       anchor_homes=True, geo_cache=str(geo_cache), instance=str(instance),
+                       scenario_name=name),
+            argv=c_argv, scenario=slug, member=member,
             outputs={"table": f"{dname}/draw.csv", "metrics": f"{dname}/splits.json",
-                    "geom": "geom.json"})
+                    "geom": "geom.json", "timings": "timings.json"})
         clip_table = clip_dir / clip_step["outputs"]["table"]
 
         g_argv = geom_argv(python, repo, clip_table, clip_dir, geo_cache=geo_cache)

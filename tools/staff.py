@@ -63,6 +63,9 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--filler-capture", default="full", choices=list(model.FILLER_CAPTURE),
                     help="how a kept rep capitalises unowned book, released book included "
                          "(default full: a vacancy has nobody left to pull business away)")
+    ap.add_argument("--districts", default=None, metavar="D01,D05,...",
+                    help="restrict staffing to these districts; the rest keep the rep they "
+                         "arrived with (default: every district of the table)")
     ap.add_argument("--out", required=True, help="output directory")
     return ap
 
@@ -143,6 +146,16 @@ def main(argv=None) -> int:
                  f"(e.g. {missing[:5]})")
     k = len({r["district"] for r in rows if r["district"]})
 
+    scope = _names(args.districts)
+    if scope:
+        unknown = sorted(set(scope) - set(to_district.values()))
+        if unknown:
+            sys.exit(f"unknown district(s) {unknown}; the table has "
+                     f"{sorted(set(to_district.values()))}")
+        to_district = {z: dist for z, dist in to_district.items() if dist in scope}
+    else:
+        scope = sorted(set(to_district.values()))
+
     all_reps = sorted(model.reps(d.G, sorted(d.G)))
     kept, released = split_reps(all_reps, _names(args.keep), _names(args.release))
     if not kept:
@@ -181,7 +194,7 @@ def main(argv=None) -> int:
         )
 
     out = dict(
-        kept=kept, released=released, k=k,
+        kept=kept, released=released, k=k, districts=scope,
         assignment=assignment, gains=gains, value=value,
         unmatched_reps=[r for r in R if r not in taken],
         unstaffed_districts=[dist for dist in D if dist not in assignment],
@@ -192,7 +205,9 @@ def main(argv=None) -> int:
         json.dump(out, fh, indent=2, default=float)
         fh.write("\n")
 
-    staffed = [dict(r, rep=assignment.get(r["district"], "")) for r in rows]
+    staffed = [dict(r, rep=(assignment.get(r["district"], "") if r["district"] in scope
+                            else r["rep"]))
+               for r in rows]
     ziptable.write(os.path.join(args.out, "draw.csv"), staffed)
 
     print(f"k={k} kept={len(kept)} released={len(released)} "

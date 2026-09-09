@@ -52,7 +52,7 @@ for _p in (ROOT, HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from td import geo, model                                                   # noqa: E402
+from td import geo, model, telemetry                                        # noqa: E402
 from td.solvers import centers                                              # noqa: E402
 from td.solvers import state_splits as ss                                   # noqa: E402
 import borders_report                                                       # noqa: E402
@@ -463,17 +463,26 @@ def main(argv=None) -> int:
     args = build_argparser().parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
 
-    print(f"loading instance and committed draw ({args.draw})...", flush=True)
-    ctx = borders_report.load_committed(args.instance, args.draw, args.geo_cache)
-    geo.assert_conus(ctx.d)
-    if ctx.k != args.k:
-        raise ValueError(f"--k {args.k} does not match the committed draw's k={ctx.k}")
-    print(f"loaded: {len(ctx.zips)} geometric zips, k={ctx.k}", flush=True)
+    T = telemetry.Timings("clip")
+    try:
+        return _main(args, T)
+    finally:
+        T.write(args.out)
 
-    M_s, D, edges, tau, C = _state_masses_and_moments(ctx, args.geo_cache)
-    n_state = M_s.shape[0]
-    print(f"states: {n_state} (lower 48 + DC), edges={len(edges)}, "
-          f"tau={tau:.6g}, total_state_mass={M_s.sum():.6g}", flush=True)
+
+def _main(args, T: telemetry.Timings) -> int:
+    with T.phase("load"):
+        print(f"loading instance and committed draw ({args.draw})...", flush=True)
+        ctx = borders_report.load_committed(args.instance, args.draw, args.geo_cache)
+        geo.assert_conus(ctx.d)
+        if ctx.k != args.k:
+            raise ValueError(f"--k {args.k} does not match the committed draw's k={ctx.k}")
+        print(f"loaded: {len(ctx.zips)} geometric zips, k={ctx.k}", flush=True)
+
+        M_s, D, edges, tau, C = _state_masses_and_moments(ctx, args.geo_cache)
+        n_state = M_s.shape[0]
+        print(f"states: {n_state} (lower 48 + DC), edges={len(edges)}, "
+              f"tau={tau:.6g}, total_state_mass={M_s.sum():.6g}", flush=True)
 
     if args.dump_state_shares:
         # ratios only, per the confidentiality rule: never write tau or a raw mass.
@@ -574,11 +583,16 @@ def main(argv=None) -> int:
     def run_cell(delta: float) -> dict:
         name = f"d{delta:g}"
         t0 = time.time()
-        problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta, anchors=anchors,
-                                caps=caps or None,
-                                bounds=bounds["triples"] if bounds else None)
+        with T.phase("build_milp"):
+            problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta,
+                                    anchors=anchors, caps=caps or None,
+                                    bounds=bounds["triples"] if bounds else None)
         try:
-            result = ss.solve(problem, time_limit=args.time_limit, strict=False)
+            with T.phase("solve") as ph:
+                result = ss.solve(problem, time_limit=args.time_limit, strict=False)
+                ph.note(status=result["status"], nodes=result["nodes"], gap=result["mip_gap"],
+                        dual_bound=result["dual_bound"], objective=result["objective"],
+                        time_limit=args.time_limit, engine="scipy")
         except ss.SolveFailure as exc:
             _write_failure(args.out, name, delta, exc, time.time() - t0)
             raise
@@ -591,12 +605,14 @@ def main(argv=None) -> int:
               f"split_states=[{split_codes}] milp_spread_rel={result['spread_rel']:.5f} "
               f"mip_gap={result['mip_gap']:.4g} ({solve_s:.1f}s solve)", flush=True)
 
-        pas = ss.balance_pass(problem, result["z"])
+        with T.phase("balance_pass"):
+            pas = ss.balance_pass(problem, result["z"])
         print(f"{name}: balance pass spread_rel={pas['spread_rel']:.5f} "
               f"max_dev_rel={pas['max_dev_rel']:.5f}", flush=True)
 
-        realised = ss.realise(xy_k, M_k, state_idx_k, result["z"], pas["y"], C,
-                              rounds=args.rounds, tiebreak=tiebreak)
+        with T.phase("realise"):
+            realised = ss.realise(xy_k, M_k, state_idx_k, result["z"], pas["y"], C,
+                                  rounds=args.rounds, tiebreak=tiebreak)
 
         def full_labels(labels_known) -> np.ndarray:
             """Level-2 labels -> an int label per `ctx.zips` (every geometric zip has a state)."""
@@ -618,37 +634,40 @@ def main(argv=None) -> int:
             n_fractional=realised["n_fractional"],
             rounds_used=max(rounds_vals) if rounds_vals else 0,
         )
-        row = borders_report.cell_row(ctx, labels_full, name, params_row, theta=args.theta,
-                                      lam=args.lam, filler_capture=args.filler_capture)
-        completed = run_draw.complete(labels_full, ctx.zips, ctx.states_by_zip, ctx.missing,
-                                      ctx.M_by_zip)
-        cell_dir = borders_report.write_cell(args.out, name, ctx, labels_full, completed,
-                                             steps=steps)
-        write_state_shares(os.path.join(cell_dir, "state_shares.csv"), ctx.state_list,
-                           result["z"], pas["y"], M_s)
-        rows.append(row)
-        borders_report.write_grid(args.out, rows)
+        with T.phase("stage2"):
+            row = borders_report.cell_row(ctx, labels_full, name, params_row, theta=args.theta,
+                                          lam=args.lam, filler_capture=args.filler_capture)
+            completed = run_draw.complete(labels_full, ctx.zips, ctx.states_by_zip, ctx.missing,
+                                          ctx.M_by_zip)
 
-        record = dict(
-            delta=delta, status=result["status"], mip_gap=result["mip_gap"],
-            objective=result["objective"], splits=result["splits"],
-            split_states=split_codes, y_shares=y_shares,
-            z=result["z"].astype(bool).tolist(), y=pas["y"].tolist(),
-            state_list=ctx.state_list,
-            stage2_value=row["stage2_value"], stage2_theta=row["stage2_theta"],
-            stage2_lam=row["stage2_lam"], stage2_filler=row["stage2_filler"],
-        )
-        if bounds is not None:
-            record["bounds"] = bounds["raw"]
-            record["bounds_honoured"] = _bounds_honoured(bounds, result["z"], labels_full,
-                                                         ctx.zips, ctx.state_list)
-        with open(os.path.join(cell_dir, "splits.json"), "w", encoding="utf-8") as fh:
-            json.dump(record, fh, indent=2)
-            fh.write("\n")
+        with T.phase("write"):
+            cell_dir = borders_report.write_cell(args.out, name, ctx, labels_full, completed,
+                                                 steps=steps)
+            write_state_shares(os.path.join(cell_dir, "state_shares.csv"), ctx.state_list,
+                               result["z"], pas["y"], M_s)
+            rows.append(row)
+            borders_report.write_grid(args.out, rows)
 
-        if args.maps or args.maps_steps:
-            borders_report.render_cell_maps(cell_dir, args.geo_cache, states=basemap(),
-                                            steps=args.maps_steps, report=print)
+            record = dict(
+                delta=delta, status=result["status"], mip_gap=result["mip_gap"],
+                objective=result["objective"], splits=result["splits"],
+                split_states=split_codes, y_shares=y_shares,
+                z=result["z"].astype(bool).tolist(), y=pas["y"].tolist(),
+                state_list=ctx.state_list,
+                stage2_value=row["stage2_value"], stage2_theta=row["stage2_theta"],
+                stage2_lam=row["stage2_lam"], stage2_filler=row["stage2_filler"],
+            )
+            if bounds is not None:
+                record["bounds"] = bounds["raw"]
+                record["bounds_honoured"] = _bounds_honoured(bounds, result["z"], labels_full,
+                                                             ctx.zips, ctx.state_list)
+            with open(os.path.join(cell_dir, "splits.json"), "w", encoding="utf-8") as fh:
+                json.dump(record, fh, indent=2)
+                fh.write("\n")
+
+            if args.maps or args.maps_steps:
+                borders_report.render_cell_maps(cell_dir, args.geo_cache, states=basemap(),
+                                                steps=args.maps_steps, report=print)
         total_s = time.time() - t0
         print(f"{name}: spread_rel={row['spread_rel']:.5f} "
               f"outside_owner_share={row['outside_owner_share']:.4f} "
@@ -665,4 +684,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(telemetry.maybe_profile(main)())

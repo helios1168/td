@@ -25,6 +25,7 @@ CODE = Path(__file__).resolve().parents[1]
 # Overridable independently of TD_REPO: a worktree has no `.venv` of its own (CLAUDE.md,
 # "Environment"), so a run against a worktree needs the hub's interpreter under a different var.
 SOLVER_PYTHON = Path(os.environ.get("TD_SOLVER_PYTHON", REPO / ".venv" / "bin" / "python3"))
+OPT_PYTHON = Path(os.environ.get("TD_OPT_PYTHON", REPO / ".venv-opt" / "bin" / "python3"))
 
 INSTANCES = sorted(REPO.glob("instance_descaled_*_conus.json.gz"))
 INSTANCE = REPO / "instance_descaled_v2_conus.json.gz"
@@ -32,6 +33,7 @@ INSTANCE = REPO / "instance_descaled_v2_conus.json.gz"
 RESULTS = REPO / "battery" / "results"
 APP_RESULTS = RESULTS / "app"
 GEO_CACHE = REPO / "data" / "geo"
+REP_CACHE = RESULTS / "app_reps"
 
 # Grid defaults. k runs 10 to 20 by 2 because that is the review's range; delta is fixed at 10%
 # by the same decision, and is an input here only so a one-off can move it.

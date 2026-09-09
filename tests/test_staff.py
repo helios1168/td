@@ -69,11 +69,15 @@ def _write_instance(path: str) -> str:
     return path
 
 
-def _run(tmp: str, out: str, *flags) -> tuple[dict, list[dict]]:
-    """A whole driver run in `tmp`; returns `(staffing.json, the written table's rows)`."""
+def _run(tmp: str, out: str, *flags, reps: dict | None = None) -> tuple[dict, list[dict]]:
+    """A whole driver run in `tmp`; returns `(staffing.json, the written table's rows)`.
+
+    `reps` seeds the input table's `rep` column (`{zip: rep}`), the input a scoped run leaves
+    untouched outside its scope.
+    """
     inst = _write_instance(os.path.join(tmp, "instance_descaled.json.gz"))
     d = descaled.load_descaled(inst)
-    table = ziptable.write(os.path.join(tmp, "draw.csv"), ziptable.build(d, {}, LABELS))
+    table = ziptable.write(os.path.join(tmp, "draw.csv"), ziptable.build(d, {}, LABELS, reps))
     out_dir = os.path.join(tmp, out)
     assert staff.main([inst, "--table", table, "--out", out_dir, *flags]) == 0
     with open(os.path.join(out_dir, "staffing.json"), encoding="utf-8") as fh:
@@ -212,3 +216,43 @@ def test_an_unknown_rep_name_is_refused():
             assert "R9" in str(e)
         else:
             raise AssertionError("expected SystemExit for a rep the instance does not have")
+
+
+# ------------------------------------------------------------------------------ --districts
+def test_scoping_to_one_district_staffs_only_that_district():
+    with tempfile.TemporaryDirectory() as tmp:
+        rec, rows = _run(tmp, "out", "--release", "R3", "--filler-capture", "full",
+                         "--districts", "D01")
+
+    assert rec["districts"] == ["D01"]
+    assert set(rec["assignment"]) == {"D01"}                # D02 never entered the matching
+    assert rec["contest"].keys() == {"D01"}
+    assert {r["rep"] for r in rows if r["district"] == "D01"} == {rec["assignment"]["D01"]}
+
+
+def test_out_of_scope_rows_keep_the_rep_they_arrived_with():
+    preset = {z: "R9" for z in TOY if TOY[z][1] == "D02"}
+    with tempfile.TemporaryDirectory() as tmp:
+        rec, rows = _run(tmp, "out", "--release", "R3", "--filler-capture", "full",
+                         "--districts", "D01", reps=preset)
+
+    assert rec["districts"] == ["D01"]
+    assert {r["rep"] for r in rows if r["district"] == "D02"} == {"R9"}
+    assert {r["rep"] for r in rows if r["district"] == "D01"} == {rec["assignment"]["D01"]}
+
+
+def test_an_unknown_district_name_is_refused():
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run(tmp, "out", "--districts", "D99")
+        except SystemExit as e:
+            assert "D99" in str(e)
+        else:
+            raise AssertionError("expected SystemExit for a district the table does not have")
+
+
+def test_no_districts_flag_gives_every_district_of_the_table():
+    with tempfile.TemporaryDirectory() as tmp:
+        rec, _rows = _run(tmp, "out", "--release", "R3", "--filler-capture", "full")
+
+    assert rec["districts"] == ["D01", "D02"]

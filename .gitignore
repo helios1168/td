@@ -16,6 +16,7 @@ __pycache__/
 # Local environments
 .venv/
 .venv-app/
+.venv-opt/
 venv/
 
 # Claude Code worktrees (nested checkouts, never commit)

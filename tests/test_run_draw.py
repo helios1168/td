@@ -9,6 +9,7 @@ small (k in {2, 3}, two seeds) since macOS `spawn` forks a fresh interpreter per
 from __future__ import annotations
 
 import contextlib
+import gzip
 import io
 import json
 import os
@@ -24,6 +25,8 @@ if HERE not in sys.path:
 if os.path.join(ROOT, "tools") not in sys.path:
     sys.path.insert(0, os.path.join(ROOT, "tools"))
 
+from td import geo                           # noqa: E402
+from td.instance import FORMAT               # noqa: E402
 import run_draw                              # noqa: E402
 from test_centers import heavy_cluster       # noqa: E402
 
@@ -256,3 +259,46 @@ def test_run_sweep_serial_matches_pooled():
         for group in (serial[k], pooled[k]):
             nashes = [r["nash"] for r in group]
             assert nashes == sorted(nashes, reverse=True), (k, nashes)
+
+
+# --------------------------------------------------------------------------------- end to end
+def _write_small_instance(path) -> list:
+    """Six zips, two states, two reps -- just enough for `main` to draw, stage-2 score, and
+    write its outputs (the `test_run_draw_locks.py` pattern, minus the locks)."""
+    zips = [f"{10000 + i}" for i in range(6)]
+    states = {z: ("TX" if i < 3 else "NY") for i, z in enumerate(zips)}
+    share = {z: {"repA": 0.3, "repB": 0.2} for z in zips}
+    obj = dict(
+        format=FORMAT,
+        nodes=dict(z=zips, m_rel=[10.0] * 6, share=[share[z] for z in zips],
+                  state=[states[z] for z in zips]),
+        edges=dict(u=[], v=[]),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+    return zips
+
+
+def _write_small_geo_cache(dest, zips) -> None:
+    os.makedirs(dest, exist_ok=True)
+    lines = ["GEOID\tALAND\tAWATER\tALAND_SQMI\tAWATER_SQMI\tINTPTLAT\tINTPTLONG  \n"]
+    for i, z in enumerate(zips):
+        lines.append(f"{z}\t0\t0\t0.0\t0.0\t{32.0 + i * 0.7:.4f}\t{-100.0 + i * 0.6:.4f}\n")
+    with open(os.path.join(dest, geo.GAZ_TXT), "w", encoding="latin-1") as fh:
+        fh.writelines(lines)
+
+
+def test_main_writes_timings_json_next_to_sweep_json():
+    """`run_draw.main` is the "draw" driver (td/telemetry.py); every instrumented driver
+    writes `timings.json` next to its usual outputs."""
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "instance_descaled.json.gz")
+        cache = os.path.join(tmp, "geo")
+        out_dir = os.path.join(tmp, "out")
+        zips = _write_small_instance(inst)
+        _write_small_geo_cache(cache, zips)
+
+        rc = run_draw.main([inst, "--k", "2", "--seeds", "0", "--workers", "1",
+                            "--geo-cache", cache, "--out", out_dir])
+        assert rc == 0, rc
+        assert os.path.exists(os.path.join(out_dir, "timings.json"))

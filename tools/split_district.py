@@ -32,7 +32,7 @@ for _p in (ROOT, HERE):
 
 import numpy as np                                                          # noqa: E402
 
-from td import geo, instance, model, ziptable                               # noqa: E402
+from td import geo, instance, model, telemetry, ziptable                    # noqa: E402
 from td.solvers import district_split                                       # noqa: E402
 
 
@@ -68,72 +68,88 @@ def main(argv=None) -> int:
     args = build_argparser().parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
 
-    d = instance.load_descaled(args.instance)
-    geo.assert_conus(d)
-
-    rows = ziptable.read(args.table)
-    inside = [r for r in rows if r["district"] == args.district]
-    if not inside:
-        return _fail(args.out, f"no row of {args.table} carries district {args.district!r}")
-    zips = [r["zip"] for r in inside]
-    missing = [z for z in zips if z not in d.G]
-    if missing:
-        return _fail(args.out, f"{len(missing)} zip(s) of {args.district} are absent from the "
-                               f"instance (e.g. {missing[:3]})")
-
-    reps = [r.strip() for r in args.reps.split(",") if r.strip()]
-    if len(reps) < 2:
-        return _fail(args.out, f"a split needs two or more reps; got {reps}")
-    if len(zips) < len(reps):
-        return _fail(args.out, f"{len(zips)} zip(s) cannot be split among {len(reps)} reps")
-
-    masses = {r["zip"]: float(r["opportunity"]) for r in inside}
-    u = district_split.unrestricted_utilities(
-        d.G, zips, reps, masses, theta=args.theta, lam=args.lam,
-        filler_capture=args.filler_capture)
-    book = district_split.book_matrix(d.G, zips, reps)
-    M = np.array([masses[z] for z in zips], float)
-    xy = np.array([[np.nan if r["x"] is None else r["x"],
-                    np.nan if r["y"] is None else r["y"]] for r in inside], float)
-
-    t0 = time.time()
+    T = telemetry.Timings("split")
     try:
-        res = district_split.split(u, M, xy, reps, book=book, n_near=args.n_near,
-                                   use_exact=args.exact, time_limit=args.time_limit)
-    except (ValueError, ImportError) as exc:
-        return _fail(args.out, str(exc))
-    seconds = time.time() - t0
+        with T.phase("load"):
+            d = instance.load_descaled(args.instance)
+            geo.assert_conus(d)
 
-    by_zip = dict(zip(zips, res["labels"]))
-    out_rows = [dict(r, rep=by_zip.get(r["zip"], r["rep"])) for r in rows]
-    ziptable.write(os.path.join(args.out, "draw.csv"), out_rows)
+            rows = ziptable.read(args.table)
+            inside = [r for r in rows if r["district"] == args.district]
+            if not inside:
+                return _fail(args.out,
+                             f"no row of {args.table} carries district {args.district!r}")
+            zips = [r["zip"] for r in inside]
+            missing = [z for z in zips if z not in d.G]
+            if missing:
+                return _fail(args.out,
+                             f"{len(missing)} zip(s) of {args.district} are absent from the "
+                             f"instance (e.g. {missing[:3]})")
 
-    total = sum(res["gains"].values())
-    report = dict(
-        district=args.district,
-        reps=res["reps"],
-        objective=res["objective"],
-        gains=res["gains"],
-        shares={r: (g / total if total > 0 else 0.0) for r, g in res["gains"].items()},
-        method=res["method"],
-        gap=(None if res["gap"] is None or not math.isfinite(res["gap"]) else res["gap"]),
-        status=res["status"],
-        n_zips=len(zips),
-        dropped_reps=res["dropped_reps"],
-        seconds=seconds,
-    )
-    with open(os.path.join(args.out, "split.json"), "w", encoding="utf-8") as fh:
-        json.dump(report, fh, indent=2, default=float)
-        fh.write("\n")
+            reps = [r.strip() for r in args.reps.split(",") if r.strip()]
+            if len(reps) < 2:
+                return _fail(args.out, f"a split needs two or more reps; got {reps}")
+            if len(zips) < len(reps):
+                return _fail(args.out,
+                             f"{len(zips)} zip(s) cannot be split among {len(reps)} reps")
 
-    shares = " ".join(f"{r}={report['shares'][r]:.3f}" for r in res["reps"])
-    print(f"split {args.district}: {len(zips)} zips over {len(res['reps'])} reps, "
-          f"method={res['method']} status={res['status']} "
-          f"gap={'-' if report['gap'] is None else format(report['gap'], '.2e')} "
-          f"objective={res['objective']:.6f} moves={res['moves']} shares[{shares}] "
-          f"dropped={res['dropped_reps'] or '-'} ({seconds:.1f}s) -> {args.out}", flush=True)
-    return 0
+            masses = {r["zip"]: float(r["opportunity"]) for r in inside}
+            u = district_split.unrestricted_utilities(
+                d.G, zips, reps, masses, theta=args.theta, lam=args.lam,
+                filler_capture=args.filler_capture)
+            book = district_split.book_matrix(d.G, zips, reps)
+            M = np.array([masses[z] for z in zips], float)
+            xy = np.array([[np.nan if r["x"] is None else r["x"],
+                            np.nan if r["y"] is None else r["y"]] for r in inside], float)
+
+        # `district_split.split` runs greedy always and, under --exact, escalates to a SCIP
+        # MINLP warm-started from it; the two engines are opaque from here (td/solvers is not
+        # ours to instrument this workstream), so the whole call is billed to whichever one
+        # dominates the wall clock -- "scip" when --exact asked for it, "greedy" otherwise.
+        t0 = time.time()
+        try:
+            with T.phase("scip" if args.exact else "greedy") as ph:
+                res = district_split.split(u, M, xy, reps, book=book, n_near=args.n_near,
+                                           use_exact=args.exact, time_limit=args.time_limit)
+                ph.note(method=res["method"], status=res["status"], gap=res["gap"])
+        except (ValueError, ImportError) as exc:
+            return _fail(args.out, str(exc))
+        seconds = time.time() - t0
+
+        with T.phase("write"):
+            by_zip = dict(zip(zips, res["labels"]))
+            out_rows = [dict(r, rep=by_zip.get(r["zip"], r["rep"])) for r in rows]
+            ziptable.write(os.path.join(args.out, "draw.csv"), out_rows)
+
+            total = sum(res["gains"].values())
+            report = dict(
+                district=args.district,
+                reps=res["reps"],
+                objective=res["objective"],
+                gains=res["gains"],
+                shares={r: (g / total if total > 0 else 0.0) for r, g in res["gains"].items()},
+                method=res["method"],
+                gap=(None if res["gap"] is None or not math.isfinite(res["gap"])
+                     else res["gap"]),
+                status=res["status"],
+                n_zips=len(zips),
+                dropped_reps=res["dropped_reps"],
+                seconds=seconds,
+            )
+            with open(os.path.join(args.out, "split.json"), "w", encoding="utf-8") as fh:
+                json.dump(report, fh, indent=2, default=float)
+                fh.write("\n")
+
+        shares = " ".join(f"{r}={report['shares'][r]:.3f}" for r in res["reps"])
+        print(f"split {args.district}: {len(zips)} zips over {len(res['reps'])} reps, "
+              f"method={res['method']} status={res['status']} "
+              f"gap={'-' if report['gap'] is None else format(report['gap'], '.2e')} "
+              f"objective={res['objective']:.6f} moves={res['moves']} shares[{shares}] "
+              f"dropped={res['dropped_reps'] or '-'} ({seconds:.1f}s) -> {args.out}", flush=True)
+        return 0
+    finally:
+        T.write(args.out)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(telemetry.maybe_profile(main)())
