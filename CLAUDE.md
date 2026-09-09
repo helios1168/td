@@ -83,6 +83,13 @@ to the main context.
 17. ★8, "books enter at stage 2 only", has no cited basis since 2026-09-05: `fotakis2014` and
     Gibbard–Satterthwaite were both withdrawn, deliberately with no replacement. Never re-derive
     a basis from memory, and never let the misreporting exposure read as resolved.
+18. **HiGHS's thread pool is process-global** and sized by the first `threads` value a process
+    uses; a later solve at a different count in the same process returns status "Not Set"
+    instead of solving (highspy 1.15, found 2026-09-09). One thread count per process: the
+    portfolio parent uses 2, its members their own, `tests/run_all.py` never mixes.
+19. **A zero-objective feasibility solve is slower, not faster**, on the level-1 MILP: HiGHS
+    found no 10-split map in 120 s with the objective dropped, 96 s with it kept. The objective
+    guides the search; never strip it to "just find a feasible point".
 
 **Two-tier acceptance:** tier 1 `CERT_TOL = 1e-8`; tier 2 `base.EPS_CERT = 5e-3` nats, grounded
 on a measured data-noise floor (re-measure on the real instance). The full trap list is in git

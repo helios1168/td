@@ -8,6 +8,8 @@ round trip needs `.venv-opt`, and returns early when it has not been built.
 """
 from __future__ import annotations
 
+import threading
+
 import numpy as np
 
 from td.solvers import milp_engines as me
@@ -79,6 +81,38 @@ def test_lp_heuristic_returns_a_feasible_upper_bound():
         assert out["z"][s].any()                        # every state touches a district
     assert np.allclose(out["y"].sum(axis=1), 1.0)
     assert out["seconds"] < 10.0
+
+
+def test_on_incumbent_fires_for_highs_and_scip():
+    """`on_incumbent` is called from inside each engine's own improving-solution hook.  COMB at
+    a 10% band needs a real search (a split to place, not just a whole-state partition), so at
+    least one incumbent fires on each engine, and the last one recorded is the proven answer."""
+    _, prob = build(COMB, 0.10)
+    for engine in ("highs", "scip"):
+        seen = []
+        res = me.solve_problem(prob, engine, time_limit=30.0, on_incumbent=seen.append)
+        assert seen, engine
+        info = seen[-1]
+        assert set(info) == {"splits", "z", "y", "objective", "seconds"}
+        assert info["z"].shape == (prob.n_state, prob.k)
+        assert info["y"].shape == (prob.n_state, prob.k)
+        assert info["splits"] == res["splits"]
+
+
+def test_stop_interrupts_a_highs_or_scip_solve_or_is_set_without_error():
+    """`stop` is polled from each engine's own logging/node hook.  Tripped before the solve
+    starts, it either interrupts at once (raising the usual `SolveFailure`, same reasons as a
+    time limit) or the toy solves before any hook fires -- either way, setting the field must
+    not itself raise (trap: a tiny toy can close before HiGHS ever logs, or before SCIP solves a
+    node)."""
+    _, prob = build(COMB, 0.10)
+    stop = threading.Event()
+    stop.set()
+    for engine in ("highs", "scip"):
+        try:
+            me.solve_problem(prob, engine, time_limit=30.0, stop=stop)
+        except ss.SolveFailure as exc:
+            assert exc.reason in ("infeasible", "no_incumbent")
 
 
 def test_the_cpsat_worker_round_trips():

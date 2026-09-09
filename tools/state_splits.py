@@ -65,6 +65,11 @@ COMMITTED_SPREAD = 0.013
 # the fallback everything else was checked against, never the default any more.
 DEFAULT_ENGINE = "highs"
 
+# the portfolio races highs and scip against each other rather than betting the whole time
+# budget on one engine's first incumbent (measured facts in the W3d plan: today's descent spends
+# its whole 293s finding the 10-split incumbent; scip alone finds it at 44s).
+DEFAULT_STRATEGY = "portfolio"
+
 
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -96,9 +101,12 @@ def build_argparser() -> argparse.ArgumentParser:
                          "districts so HiGHS can close the MILP (off by default)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
-    ap.add_argument("--strategy", choices=("direct", "descent"), default="descent",
+    ap.add_argument("--strategy", choices=("direct", "descent", "portfolio"),
+                    default=DEFAULT_STRATEGY,
                     help="direct: one solve to --time-limit. descent: a quick incumbent, then "
-                         "cutoff proofs of the split count and the tie-break (default descent)")
+                         "cutoff proofs of the split count and the tie-break. portfolio: highs "
+                         "and scip race for the incumbent, then descent's own proof and "
+                         f"tie-break (default {DEFAULT_STRATEGY})")
     ap.add_argument("--primal-seconds", type=float, default=30.0,
                     help="descent strategy: time budget for the first incumbent (default 30)")
     ap.add_argument("--threads", type=int, default=os.cpu_count(),

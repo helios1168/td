@@ -11,11 +11,19 @@ for a fast-forward merge into `main`.
 
 ## Next step
 
-Wave 3: W3 docs agent running; the MILP bench (k=20 then k=18, cap 180 s) running in the
-background; W3b adoption starts when the bench JSON is read. Then the scenario-launch check
-(verification item 4) once the bench has released the CPU.
+W3d (portfolio strategy: HiGHS and SCIP members streaming incumbents, the parent certifying
+each new count with the 0.1 s cutoff proof) is being implemented. Then: rerun the real k=20
+cell, relaunch the k = 10 to 20 grid through the app and read the Timings tab, final docs
+pass (bench table, portfolio, traps 18 and 19), report and ask about the merge.
 
 ## Done
+
+- 2026-09-09 wave 3b (`b503c9e`): HiGHS with fixed roots and the descent strategy is the clip
+  default; real k=20 cell proven optimal (10 splits, gap 0) in 293 s: 30 s primal gives 11
+  splits, the first cutoff solve needs 255 s to find a 10-split map, the 9-split proof 0.14 s,
+  the tie-break 7.8 s. Probe: `mip_heuristic_effort=0.5` finds 10 splits at 78 s plain and
+  96 s under the cutoff; a zero-objective feasibility solve finds nothing in 120 s. Hence
+  W3d. CLAUDE.md traps 18 (HiGHS thread pool) and 19 (never drop the objective) added.
 
 - 2026-09-09 wave 3a (`ae00e2d`): APP.md and CODE_MAP updated. Bench finished
   (`battery/results/bench/milp_20260909_015338.json` k=20, `milp_20260909_020619.json` k=18,

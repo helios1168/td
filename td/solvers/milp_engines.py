@@ -37,6 +37,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 from scipy import sparse
@@ -59,7 +60,9 @@ ENGINES = ("scipy", "highs", "scip", "cpsat")
 # --------------------------------------------------------------------------------- the seam
 def solve_problem(problem: SplitProblem, engine: str, *, time_limit: float | None,
                   cutoff: float | None = None, warm: dict | None = None,
-                  threads: int | None = None) -> dict:
+                  threads: int | None = None, heuristic_effort: float | None = None,
+                  on_incumbent: Callable[[dict], None] | None = None,
+                  stop: object | None = None) -> dict:
     """Solve `problem` with `engine`, returning `state_splits.solve`'s shape plus `nodes`,
     `dual_bound`, `trajectory` and `engine`.
 
@@ -69,6 +72,16 @@ def solve_problem(problem: SplitProblem, engine: str, *, time_limit: float | Non
     rather than a fresh search.  `warm` is `{"z": (S, k) bool, "y": (S, k) float}` (what
     `lp_heuristic` and the `cpsat` worker return), given to the solver as a partial MIP start;
     the `r` and flow blocks are left for the solver's own repair heuristic to complete.
+
+    `heuristic_effort` is HiGHS's `mip_heuristic_effort` (0..1, more primal search for less
+    proof); `scip`, `scipy` and `cpsat` ignore it.  `on_incumbent`, when given, is called from
+    inside `highs`'s and `scip`'s own improving-solution hook with `{"splits", "z", "y",
+    "objective", "seconds"}` for every incumbent the solver finds; `scipy` and `cpsat` ignore it
+    too (`scipy.optimize.milp` has no such hook, and the `cpsat` worker runs out of process).
+    `stop` is a `multiprocessing.Event` (or anything with `.is_set()`, or a plain callable
+    returning bool), polled from the same hook so a caller in another process can interrupt a
+    running `highs`/`scip` solve; ignored by `scipy` and `cpsat` for the same reason as
+    `on_incumbent`.
 
     `scipy` and `cpsat` accept neither `cutoff` nor `warm` (scipy has no such hooks through
     `scipy.optimize.milp`; the bench's variant table never asks CP-SAT for either).
@@ -85,15 +98,22 @@ def solve_problem(problem: SplitProblem, engine: str, *, time_limit: float | Non
         return res
     if engine == "highs":
         return _highs_solve(problem, time_limit=time_limit, cutoff=cutoff, warm=warm,
-                            threads=threads)
+                            threads=threads, heuristic_effort=heuristic_effort,
+                            on_incumbent=on_incumbent, stop=stop)
     if engine == "scip":
         return _scip_solve(problem, time_limit=time_limit, cutoff=cutoff, warm=warm,
-                           threads=threads)
+                           threads=threads, on_incumbent=on_incumbent, stop=stop)
     if engine == "cpsat":
         if cutoff is not None or warm is not None:
             raise NotImplementedError("the cpsat engine takes neither cutoff nor warm")
         return _cpsat_solve(problem, time_limit=time_limit, threads=threads)
     raise ValueError(f"unknown engine {engine!r}; expected one of {ENGINES}")
+
+
+def _stopped(stop: object) -> bool:
+    """True if `stop` says the parent wants this solve interrupted: a `multiprocessing.Event`
+    (or anything else with `.is_set()`), or a plain callable returning bool."""
+    return stop.is_set() if hasattr(stop, "is_set") else bool(stop())
 
 
 def _decode_zy(problem: SplitProblem, z: np.ndarray, y: np.ndarray) -> dict:
@@ -359,7 +379,7 @@ def _highs_lp(problem: SplitProblem):
 
 
 def _highs_solve(problem: SplitProblem, *, time_limit, cutoff=None, warm=None,
-                 threads=None) -> dict:
+                 threads=None, heuristic_effort=None, on_incumbent=None, stop=None) -> dict:
     import highspy
 
     h = highspy.Highs()
@@ -372,19 +392,43 @@ def _highs_solve(problem: SplitProblem, *, time_limit, cutoff=None, warm=None,
         h.setOptionValue("time_limit", float(time_limit))
     if threads is not None:
         h.setOptionValue("threads", int(threads))
+    if heuristic_effort is not None:
+        h.setOptionValue("mip_heuristic_effort", float(heuristic_effort))
     if cutoff is not None:
         h.setOptionValue("objective_bound", float(cutoff))
     if warm is not None:
         _highs_warm_start(h, problem, warm)
 
     trajectory: list[list[float]] = []
+    t0 = time.time()
 
     def _record(event) -> None:
         d = event.data_out
         trajectory.append([d.running_time, d.objective_function_value, d.mip_dual_bound])
 
-    h.cbMipImprovingSolution.subscribe(_record)
-    h.cbMipLogging.subscribe(_record)
+    def _on_improving(event) -> None:
+        _record(event)
+        if on_incumbent is None:
+            return
+        # `mip_solution` is populated on kCallbackMipImprovingSolution (checked against
+        # highspy 1.15); fall back to getSolution() for a build where it comes back empty.
+        x = np.asarray(event.data_out.mip_solution, float)
+        if x.size == 0:
+            x = np.asarray(h.getSolution().col_value, float)
+        if x.size == 0:
+            return
+        info = _decode_x(problem, x)
+        on_incumbent(dict(splits=info["splits"], z=info["z"], y=info["y"],
+                          objective=float(event.data_out.objective_function_value),
+                          seconds=time.time() - t0))
+
+    def _on_logging(event) -> None:
+        _record(event)
+        if stop is not None and _stopped(stop) and event.data_in is not None:
+            event.data_in.user_interrupt = True
+
+    h.cbMipImprovingSolution.subscribe(_on_improving)
+    h.cbMipLogging.subscribe(_on_logging)
     h.startCallback(highspy.cb.HighsCallbackType.kCallbackMipImprovingSolution)
     h.startCallback(highspy.cb.HighsCallbackType.kCallbackMipLogging)
     h.run()
@@ -422,9 +466,10 @@ def _highs_warm_start(h, problem: SplitProblem, warm: dict) -> None:
 
 # --------------------------------------------------------------------------------- SCIP direct
 def _scip_solve(problem: SplitProblem, *, time_limit, cutoff=None, warm=None,
-               threads=None) -> dict:
+               threads=None, on_incumbent=None, stop=None) -> dict:
     import pyscipopt
 
+    S, k = problem.n_state, problem.k
     m = pyscipopt.Model()
     m.hideOutput()
     m.setMinimize()
@@ -466,13 +511,25 @@ def _scip_solve(problem: SplitProblem, *, time_limit, cutoff=None, warm=None,
 
     def _on_event(model, event) -> None:
         now = time.time() - t0
-        if event.getType() == pyscipopt.SCIP_EVENTTYPE.BESTSOLFOUND:
+        etype = event.getType()
+        if etype == pyscipopt.SCIP_EVENTTYPE.BESTSOLFOUND:
             sol = model.getBestSol()
-            trajectory.append([now, model.getSolObjVal(sol), model.getDualbound()])
+            obj = model.getSolObjVal(sol)
+            trajectory.append([now, obj, model.getDualbound()])
             last[0] = now
+            if on_incumbent is not None:
+                z = np.array([model.getSolVal(sol, xs[problem.off_z + i])
+                             for i in range(S * k)])
+                y = np.array([model.getSolVal(sol, xs[problem.off_y + i])
+                             for i in range(S * k)])
+                info = _decode_zy(problem, z > 0.5, y)
+                on_incumbent(dict(splits=info["splits"], z=info["z"], y=info["y"],
+                                  objective=float(obj), seconds=now))
         elif now - last[0] >= 1.0:
             trajectory.append([now, model.getPrimalbound(), model.getDualbound()])
             last[0] = now
+        if etype == pyscipopt.SCIP_EVENTTYPE.NODESOLVED and stop is not None and _stopped(stop):
+            model.interruptSolve()
 
     m.attachEventHandlerCallback(_on_event, [pyscipopt.SCIP_EVENTTYPE.BESTSOLFOUND,
                                              pyscipopt.SCIP_EVENTTYPE.NODESOLVED])

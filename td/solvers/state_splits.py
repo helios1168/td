@@ -46,8 +46,11 @@ Pure functions on arrays; the only dependency inside `td/` is `centers` (`realis
 from __future__ import annotations
 
 import inspect
+import multiprocessing as mp
+import os
 import time
 from dataclasses import dataclass, field
+from queue import Empty
 
 import numpy as np
 from scipy import sparse
@@ -325,6 +328,13 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
     return; `status` reports phase three's outcome (`0` closed, `"time_limit"` otherwise), so a
     map's split count can be certified even when its exact tie-break is not.
 
+    `strategy="portfolio"` (`_solve_portfolio`) replaces phase A with two solves racing in their
+    own processes (`highs` and `scip`), each given the whole `time_limit`; every incumbent
+    either one finds is certified in the parent by a fast `with_cutoff` feasibility check, and
+    phase C then closes the tie-break exactly as `_solve_descent`'s own phase C does.  `engine`
+    is ignored (the members are fixed); `threads` is read as the machine's core count, used to
+    size the members, not the parent's own solves.
+
     Raises `SolveFailure` when nothing usable comes back, same reasons either strategy: a
     `strict=True` (the default) time limit with no incumbent, or a proven infeasibility.
     """
@@ -334,8 +344,11 @@ def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: boo
     elif strategy == "descent":
         result = _solve_descent(problem, time_limit=time_limit, strict=strict, engine=engine,
                                 primal_seconds=primal_seconds, threads=threads)
+    elif strategy == "portfolio":
+        result = _solve_portfolio(problem, time_limit=time_limit, strict=strict, threads=threads)
     else:
-        raise ValueError(f"unknown strategy {strategy!r}; expected 'direct' or 'descent'")
+        raise ValueError(f"unknown strategy {strategy!r}; "
+                         "expected 'direct', 'descent' or 'portfolio'")
     result.setdefault("engine", engine)
     result.setdefault("strategy", strategy)
     result.setdefault("certified_splits", result.get("status") == 0)
@@ -370,7 +383,8 @@ def _solve_descent(problem: SplitProblem, *, time_limit, strict, engine, primal_
     ta = time.time()
     best, a_status = None, None
     try:
-        best = _me.solve_problem(problem, engine, time_limit=budget, threads=threads)
+        best = _me.solve_problem(problem, engine, time_limit=budget, threads=threads,
+                                 heuristic_effort=0.5)
         a_status = best["status"]
     except SolveFailure as exc:
         if exc.reason == "infeasible":
@@ -399,7 +413,7 @@ def _solve_descent(problem: SplitProblem, *, time_limit, strict, engine, primal_
         tb = time.time()
         try:
             res_b = _me.solve_problem(_me.with_cutoff(problem, s_star), engine, time_limit=rem,
-                                      threads=threads)
+                                      threads=threads, heuristic_effort=0.5)
         except SolveFailure as exc:
             phases.append(dict(phase="descent", seconds=time.time() - tb, status=exc.reason,
                                splits=None))
@@ -421,7 +435,8 @@ def _solve_descent(problem: SplitProblem, *, time_limit, strict, engine, primal_
         warm = None if engine == "scipy" else dict(z=best["z"], y=best["y"])
         try:
             res_c = _me.solve_problem(_me.with_cutoff(problem, s_star + 1), engine,
-                                      time_limit=rem, threads=threads, warm=warm)
+                                      time_limit=rem, threads=threads, warm=warm,
+                                      heuristic_effort=0.5)
             phases.append(dict(phase="tiebreak", seconds=time.time() - tc,
                                status=res_c["status"], splits=res_c["splits"]))
             result, closed = res_c, res_c["status"] == 0
@@ -434,6 +449,154 @@ def _solve_descent(problem: SplitProblem, *, time_limit, strict, engine, primal_
     result = dict(result)
     result.update(engine=engine, strategy="descent", certified_splits=certified, phases=phases,
                  status=(0 if closed else "time_limit"))
+    return result
+
+
+def _portfolio_member(name: str, kwargs: dict, problem: SplitProblem, time_limit,
+                      queue: mp.Queue, stop) -> None:
+    """One `strategy="portfolio"` member's whole run, in its own process: solve `problem` on
+    engine `name`, streaming every incumbent through `queue` as `(member, splits, z, y,
+    objective, seconds)`, then a final `(member, "done", status)`.  `milp_engines` is imported
+    lazily, the same reason every other cross-module call in this file is."""
+    from td.solvers import milp_engines as _me
+
+    def on_incumbent(info: dict) -> None:
+        queue.put((name, info["splits"], info["z"], info["y"], info["objective"],
+                  info["seconds"]))
+
+    try:
+        res = _me.solve_problem(problem, name, time_limit=time_limit,
+                                on_incumbent=on_incumbent, stop=stop, **kwargs)
+        status = res["status"]
+    except SolveFailure as exc:
+        status = exc.reason
+    queue.put((name, "done", status))
+
+
+def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads) -> dict:
+    """`strategy="portfolio"`: `highs` and `scip` search the plain problem at once, each in its
+    own process with the whole `time_limit`.  Cores = `threads` or the machine's `os.cpu_count()`;
+    the `highs` member gets `cores - 3` threads (never fewer than 1) and `mip_heuristic_effort
+    =0.5`, `scip` gets one thread (its own search is single-threaded; `threads` only sizes its
+    LP).  Every incumbent either member finds is certified in the parent by a fast `with_cutoff`
+    feasibility solve -- an infeasible answer certifies the split count, sets `stop` and ends
+    the race; a solution instead means a better map turned up while proving, which becomes the
+    new incumbent and is certified again.  Phase C then closes the compactness tie-break at the
+    certified count exactly as `_solve_descent`'s own phase C does.  The parent's own HiGHS
+    calls -- the certificate and phase C -- always use `threads=2`, one thread count for the
+    whole process (the pool hazard in the module docstring).  No incumbent from anyone within
+    `time_limit` falls back to `_solve_direct`, as `_solve_descent` does."""
+    from td.solvers import milp_engines as _me
+
+    cores = threads if threads else (os.cpu_count() or 1)
+    t0 = time.time()
+
+    def left():
+        return None if time_limit is None else max(0.0, time_limit - (time.time() - t0))
+
+    ctx = mp.get_context("spawn")
+    q = ctx.Queue()
+    stop = ctx.Event()
+    member_specs = [
+        ("highs", dict(threads=max(1, cores - 3), heuristic_effort=0.5)),
+        ("scip", dict(threads=1)),
+    ]
+    procs = [ctx.Process(target=_portfolio_member,
+                        args=(name, kwargs, problem, time_limit, q, stop))
+            for name, kwargs in member_specs]
+    for p in procs:
+        p.start()
+
+    phases: list[dict] = []
+    best: dict | None = None
+    done: set[str] = set()
+    certified = False
+
+    def certify(s_star: int, current_best: dict) -> tuple[int, dict, bool, bool]:
+        """Tighten `s_star` with fast cutoff solves as long as a strictly better map keeps
+        turning up.  Returns `(s_star, best, certified, gave_up_on_time)`."""
+        while True:
+            rem = left()
+            if rem is not None and rem <= 0:
+                return s_star, current_best, False, True
+            budget = 20.0 if rem is None else min(20.0, rem)
+            tc = time.time()
+            try:
+                res_c = _me.solve_problem(_me.with_cutoff(problem, s_star), "highs",
+                                          time_limit=budget, threads=2)
+            except SolveFailure as exc:
+                phases.append(dict(phase="certify", seconds=time.time() - tc,
+                                   status=exc.reason))
+                return s_star, current_best, exc.reason == "infeasible", False
+            phases.append(dict(phase="certify", seconds=time.time() - tc,
+                               status=res_c["status"]))
+            s_star, current_best = res_c["splits"], res_c
+
+    try:
+        while len(done) < len(procs):
+            rem = left()
+            if rem is not None and rem <= 0:
+                break
+            try:
+                msg = q.get(timeout=1.0 if rem is None else min(1.0, rem))
+            except Empty:
+                continue
+            member = msg[0]
+            if msg[1] == "done":
+                done.add(member)
+                continue
+            _, splits, z, y, objective, seconds = msg
+            phases.append(dict(phase="incumbent", member=member, seconds=seconds,
+                               splits=splits))
+            if best is not None and splits >= best["splits"]:
+                continue
+            # a member's incumbent carries only {splits, z, y, objective}; fill it out to the
+            # same shape every engine's own decode returns (split_states, spread_rel, ...) so a
+            # caller sees the full result even if phase C below never gets to replace it.
+            best = dict(_me._decode_zy(problem, z, y), objective=float(objective),
+                       status="time_limit", mip_gap=float("nan"), nodes=0,
+                       dual_bound=float("nan"), trajectory=[])
+            _, best, certified, gave_up = certify(splits, best)
+            if certified:
+                stop.set()
+                break
+    finally:
+        stop.set()
+        for p in procs:
+            p.join(timeout=5.0)
+        for p in procs:
+            if p.is_alive():
+                p.terminate()
+                p.join(timeout=5.0)
+
+    if best is None:
+        result = _solve_direct(problem, time_limit=left(), strict=strict, engine="highs",
+                               threads=2)
+        result.update(engine="highs", strategy="portfolio", certified_splits=False,
+                     phases=phases)
+        return result
+
+    s_star = best["splits"]
+    rem = left()
+    result, closed = dict(best), False
+    if rem is not None and rem <= 0:
+        pass                                                   # no time left; keep the incumbent
+    else:
+        tc = time.time()
+        warm = dict(z=best["z"], y=best["y"])
+        try:
+            res_c = _me.solve_problem(_me.with_cutoff(problem, s_star + 1), "highs",
+                                      time_limit=rem, threads=2, warm=warm)
+            phases.append(dict(phase="tiebreak", seconds=time.time() - tc,
+                               status=res_c["status"], splits=res_c["splits"]))
+            result, closed = res_c, res_c["status"] == 0
+        except SolveFailure as exc:
+            phases.append(dict(phase="tiebreak", seconds=time.time() - tc, status=exc.reason,
+                               splits=None))
+
+    result = dict(result)
+    result.update(engine="highs", strategy="portfolio", certified_splits=certified,
+                 phases=phases, status=(0 if closed else "time_limit"))
     return result
 
 

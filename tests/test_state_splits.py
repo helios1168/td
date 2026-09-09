@@ -17,6 +17,10 @@ No instance file, no network, no `td.geo`: the rook graph enters as an edge list
 from __future__ import annotations
 
 import itertools
+import json
+import os
+import subprocess
+import sys
 
 import numpy as np
 
@@ -415,3 +419,50 @@ def test_descent_certifies_a_zero_split_optimum_at_once():
         assert res["status"] == 0
         phase_names = [p["phase"] for p in res["phases"]]
         assert "incumbent" in phase_names and "descent" in phase_names
+
+
+# ----------------------------------------------------------------------- strategy="portfolio"
+# `strategy="portfolio"`'s parent-side HiGHS calls fix `threads=2` (the pool-sizing hazard in
+# milp_engines.py's module docstring), one value for the whole process; every other HiGHS call
+# in this test process uses `threads=None`.  A plain `multiprocessing.Process` around the whole
+# `solve()` call would need to pickle a reference to a module-level function by
+# `(__module__, __qualname__)`, and `tests/run_all.py` loads a test file twice under the same
+# module name (once directly, once again when another test file imports from it) -- the two
+# loads are different module objects, so pickle's identity check on the callback rejects the
+# second one ("it's not the same object as tests.test_state_splits._run_portfolio").  A real
+# subprocess sidesteps that: it imports `tests.test_state_splits` once, the ordinary way.
+_PORTFOLIO_SCRIPT = """
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from tests.test_state_splits import build
+from td.solvers import state_splits
+
+masses, delta, time_limit = json.loads(sys.argv[2])
+_, prob = build(masses, delta)
+res = state_splits.solve(prob, strategy="portfolio", time_limit=time_limit)
+members = sorted(set(p["member"] for p in res["phases"] if p["phase"] == "incumbent"))
+print(json.dumps(dict(splits=res["splits"], certified_splits=res["certified_splits"],
+                      status=res["status"], strategy=res["strategy"], engine=res["engine"],
+                      members=members)))
+"""
+
+
+def test_portfolio_matches_direct_and_certifies():
+    """`strategy="portfolio"` lands on the same split count `strategy="direct"` does and
+    certifies it, on a toy with a split (ODD) and one with none (EVEN).  Run as a subprocess
+    (see `_PORTFOLIO_SCRIPT`'s comment for why not a bare `multiprocessing.Process`)."""
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    for masses, delta in ((ODD, 0.005), (EVEN, 0.001)):
+        _, direct_prob = build(masses, delta)
+        direct = state_splits.solve(direct_prob, engine="scipy", strategy="direct")
+
+        payload = json.dumps([masses, delta, 30.0])
+        proc = subprocess.run([sys.executable, "-c", _PORTFOLIO_SCRIPT, root, payload],
+                              capture_output=True, text=True, timeout=60)
+        assert proc.returncode == 0, proc.stderr
+        out = json.loads(proc.stdout.strip().splitlines()[-1])
+
+        assert out["splits"] == direct["splits"], (masses, out)
+        assert out["certified_splits"] is True
+        assert out["strategy"] == "portfolio" and out["engine"] == "highs"
+        assert out["members"]                           # at least one member reported in

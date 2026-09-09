@@ -35,8 +35,11 @@ def render_scenarios() -> None:
         filler = st.selectbox("Filler capture", FILLERS, index=FILLERS.index(config.FILLER))
         engine = st.selectbox("MILP engine", ("highs", "scip", "scipy"),
                               index=("highs", "scip", "scipy").index(config.ENGINE))
-        strategy = st.selectbox("Strategy", ("descent", "direct"),
-                                index=("descent", "direct").index(config.STRATEGY))
+        strategies = ("portfolio", "descent", "direct")
+        strategy = st.selectbox("Strategy", strategies, index=strategies.index(config.STRATEGY),
+                                help="portfolio races HiGHS and SCIP and certifies each new "
+                                     "split count at once; descent is one HiGHS chain; "
+                                     "direct is a plain solve.")
 
     st.subheader("Hand-drawn districts")
     st.caption("`fix` is closed, exactly those states. `anchor` is open, those states plus "
