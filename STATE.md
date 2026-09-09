@@ -1,23 +1,25 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-08 · **Branch:** `main` · **Head:** `cdc2583` · **Tests:** 417 pass,
-0 fail (2026-09-08)
+**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `e59cc3d` · **Tests:** 480 pass,
+0 fail (2026-09-09)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Merged 2026-09-08 (`cdc2583`, pushed): the rebuilt scenario app (`app/`, `docs/APP.md`),
-its drivers (`tools/override.py`, `tools/staff.py`, `tools/split_district.py`,
-`tools/geom_export.py`, `td/solvers/district_split.py`) and 86 new tests. 417 tests, 0 fail.
-The app runs from the hub in tmux session `tdapp` on port 8502 (`tools/app.sh`); worktrees
-`app` and `app-review` removed, branches deleted locally and on origin. Four locked worktrees
-remain: `ca5-map`, `motion`, `simplified`, `state-table-align`.
+Merged 2026-09-09 (`e59cc3d`, fast-forward, not yet pushed): scenario app round 2. Scenarios
+are the unit (`<name>_k<k>_d<pct>` members, sidebar picker, every tab filtered); the Map tab
+shows the incumbent rep territories from `tools/rep_export.py` (dominant-rep fill, hatched
+contested cells); the Reps tab opens on that map with the districts over it, staffs a chosen
+subset (`staff.py --districts`) and shows before/after at district and map level; a Timings
+tab reads `timings.json` from every driver. The level-1 MILP runs on HiGHS with flow roots
+fixed to the anchor states (verified, `tools/verify/milp_root_fix/`) under a `portfolio`
+strategy that certifies each split count by a cutoff proof: the k = 10 to 20 grid at δ = 10 %
+now takes 163 s with every count proven, from 614 s at the cap. 480 tests, 0 fail. App running
+in tmux `tdapp` at `100.69.120.67:8502`.
 
-The CONUS findings of 2026-09-07 stand: shipped map at 6.26 % max deviation on CONUS, every
-band overshot after level-2 rounding, so the band level 1 certifies is not the band the map has.
-
-Next decision: which map ships, and whether level 2 should round inside the band.
+The CONUS findings of 2026-09-07 stand. Next decision: which map ships, and whether level 2
+should round inside the band.
 
 ## Next
 
@@ -185,7 +187,15 @@ the dual bound less the tie-break's half-split allowance; **bold** = closed to o
 | anchored | **10%** | **7** | **7** | 18.01% | 16.81% | 978 | 95.880 |
 
 Only anchored δ = 5% and δ = 10% closed (168s, 386s); every other cell reports a time-limited
-incumbent. One open question, low priority (only matters if δ = 10% is chosen): the free bound
+incumbent.
+
+**Level-1 engine after 2026-09-09** (`docs/CODE_MAP.md` "Runtime after round 2"): HiGHS with
+flow roots fixed to the anchor states, `portfolio` strategy, certificate by cutoff. Certified
+minimum splits at δ = 10 % on the CONUS instance, anchored, one grid of six concurrent chains
+on two threads each: k=10 **4**, k=12 **4**, k=14 **5**, k=16 **7**, k=18 **7**, k=20 **10**
+(solves 18 s, 14 s, 1.4 s, 84 s, 49 s, 150 s; grid wall 163 s). Alone on the machine k=20 closes
+in 70 s and k=16 certifies in 83 s. Under scipy's HiGHS the same k=20 cell stopped at the 600 s
+cap with a one-split gap. One open question, low priority (only matters if δ = 10% is chosen): the free bound
 at δ = 10% says 6 splits might be possible (NJ alone plus PA+MD+DE+WV); HiGHS neither found nor
 refuted it in 600s.
 
