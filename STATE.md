@@ -1,22 +1,21 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-07 · **Branch:** `main` · **Head:** `2a027e9` · **Tests:** 331 pass,
-0 fail (2026-09-07)
+**Updated:** 2026-09-08 · **Branch:** `main` · **Head:** `cdc2583` · **Tests:** 417 pass,
+0 fail (2026-09-08)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Merged 2026-09-07 evening, all worktrees removed: the CONUS ground set (`docs/PROBLEM.md` §6,
-the 32 blank-state, 2 AK and 1 HI zips out of every model), the CONUS Track 2 anchored grid at
-δ = 5/7/10 % (Facts, figures `figures/borders_conus_*`), and the zip table (`td/ziptable.py`:
-every step writes `draw.csv` as `zip,state,x,y,opportunity,district`, every figure renders from
-a table, per-state clipping always on). 331 tests, 0 fail.
+Merged 2026-09-08 (`cdc2583`, pushed): the rebuilt scenario app (`app/`, `docs/APP.md`),
+its drivers (`tools/override.py`, `tools/staff.py`, `tools/split_district.py`,
+`tools/geom_export.py`, `td/solvers/district_split.py`) and 86 new tests. 417 tests, 0 fail.
+The app runs from the hub in tmux session `tdapp` on port 8502 (`tools/app.sh`); worktrees
+`app` and `app-review` removed, branches deleted locally and on origin. Four locked worktrees
+remain: `ca5-map`, `motion`, `simplified`, `state-table-align`.
 
-The shipped map re-measured on CONUS sits at 6.26 % max deviation; the CONUS δ = 5 % re-run
-keeps its borders on 17 districts and lands at the same 6.26 %. Every band is overshot after
-level-2 rounding, so the band level 1 certifies is not the band the map has. The first CONUS
-maps went out unclipped and read as unsnapped; the labels were snapped throughout.
+The CONUS findings of 2026-09-07 stand: shipped map at 6.26 % max deviation on CONUS, every
+band overshot after level-2 rounding, so the band level 1 certifies is not the band the map has.
 
 Next decision: which map ships, and whether level 2 should round inside the band.
 
