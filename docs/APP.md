@@ -135,8 +135,13 @@ already does, so the child still reads its parent chain's scenario. `store.scena
 groups every discovered run by scenario, newest scenario first by its own newest run, with runs
 carrying neither anywhere in their lineage (made before this ledger, or hand-imported) grouped
 last under the slug `None`. The sidebar's scenario picker (`app.common.current_scenario`, the
-`None` group shown as "older runs") drives every child tab's picker
-(`app.common.map_runs`/`pick_map`), which filters to whichever scenario is selected; the
+`None` group shown as "older runs") sits above a second, sticky picker for the member within
+it (`app.common.current_instance`, backed by `store.members(root, scenario)`,
+`store.scenarios`'s own grouping one level down). Map and Reps open on
+`app.common.resolve_instance`'s pick for that member (its `default_for`-flagged run, else
+newest clip, else newest run of a map kind, else newest draw) instead of a picker of their
+own; Overrides' picker (`app.common.pick_map`) narrows to that same member, and Compare's does
+not, since it diffs two arbitrary runs by design. The
 Scenarios tab's own runs table adds `scenario` and `instance` (the member name; "Instance" is
 the UI label there, since the user's "instance" collides with the code's own word for the data
 file, labelled "Instance file") columns, defaults to the current scenario, and carries a "show
@@ -369,6 +374,16 @@ under the override's run directory), the translated document under `"locks"` or 
 depending on `engine`, and, when `engine` is `"clip"`, a passthrough `"bounds_honoured"` copied
 from that engine's own `splits.json`.
 
+`view.json` (`store.write_view`, additive next to `step.json`, never edited into it): a run
+carries one only once a user names it from the Reps tab's Save form.
+```
+{"name": str, "default_for": "<member>"|null}
+```
+`default_for` is at most one run's own member at a time: naming a second run default for the
+same member clears the first's. A run with no `view.json` is unnamed and does not appear in
+the Reps tab's `View` dropdown; the app never deletes the file, so removing it by hand reverts
+the run to unnamed rather than touching the run itself.
+
 **The MILP engine seam.** `td/solvers/milp_engines.py`'s `solve_problem(problem, engine, ...)`
 runs the level-1 minimum-splits MILP (`td.solvers.state_splits.SplitProblem`) through one of
 four engines behind one return shape: `scipy` (today's `state_splits.solve`, the baseline),
@@ -535,24 +550,31 @@ read off the reran table, and a clip-parent rerun also copies `bounds_honoured` 
 own `splits.json`. When the engine rerun fails, the override run copies the engine's own
 `failure.json` if it wrote one, else writes a generic `reason: "engine_failed"`.
 
-Reading the incumbent layout, staffing one district, and reading the before and after. The Map
-tab's "Rep territories, as sold today" section (`repdata.ensure`, building `reps.json` on first
-use) shows whose book covers which zips today, coloured by rep or by how many reps hold book
-there, with the contested cells hatched. The Reps tab opens on that same layout with the picked
-run's own districts drawn over it (`district_lines=True`), then lets a scope be chosen: "the
-whole map", or one or more districts (`st.multiselect`, defaulting to the district of the zip
-last clicked on the Map tab) behind `st.radio("Staff", ...)`. Naming which reps are released
-and clicking "Staff" runs `staff.py --districts D01,D05 ...` scoped to that selection; a row
-outside the scope keeps the `rep` it arrived with, and `staffing.json["districts"]` records the
-scope. Picking the district in Contestability shows, side by side and zoomed to it, the rep
-layout as sold today (`mapfig.rep_figure(..., bbox=...)`) and the staffed result
-(`mapfig.staffed_figure(..., bbox=...)`, or the newest split's own table when one exists for
-that district), with a small table underneath (`app.staffdiff.district_view`) giving each rep's,
-plus "contested"'s and "untapped"'s, share of the district's book before and after. The same
-pair, unzoomed and over the whole map, sits under Assignment ("Before and after the staffing"),
-together with `app.staffdiff.summary`'s whole-map counts (reps with territory, contested book,
-free versus unstaffed book) and `app.staffdiff.per_rep`'s sortable table of every rep's book
-share before, after and the change.
+Reading the incumbent layout, staffing one district or the whole map, and naming what comes
+out of it. The Map tab's "Rep territories, as sold today" section (`repdata.ensure`, building
+`reps.json` on first use) shows whose book covers which zips today, coloured by rep or by how
+many reps hold book there, with the contested cells hatched. The Reps tab's `View` dropdown
+opens on "Clip (base)", the sidebar instance's own resolved run, plus one entry per named run
+of that instance (`store.named_runs`; "(default)" marks whichever one carries `default_for`).
+One pane (`render_pane`) shows either the base layout with its districts drawn over it
+(`district_lines=True`) or, for a staffed or split view, the staffed result
+(`mapfig.staffed_figure`, fed the nearest `staff`-kind ancestor's own `staffing.json`, found by
+walking the view's lineage: `store.staffing_run`), with one collapsed table underneath
+(`app.staffdiff.per_rep`, after and change only, no before column since "Clip (base)" already
+carries it) for every rep whose territory moved. Below the pane, "Kept and released" and
+"Scope" still choose which reps leave and whether "Staff" covers the whole map or a
+`st.multiselect` of districts (defaulting to the district of the zip last clicked on the Map
+tab); Contestability, once the open view carries staffing anywhere in its own lineage, still
+shows the candidates/share/gain table for one picked district (`staffing.json["contest"]`),
+its footprint, and a "Split this district among its candidates" action; Assignment still lists
+the per-district assignment and gain totals with any unmatched reps. A "Staff" or "Split"
+launch previews its result in the pane immediately (`st.session_state["reps-preview"]`); naming
+it there (`render_save`, `store.write_view`) is what makes it a `View` dropdown entry,
+optionally also the instance's default, opened automatically next time; leaving without naming
+it only drops the preview, the run itself stays on disk either way. A split launched from
+Contestability chains off whichever view is open, not always the staff run directly, so
+splitting a second district after the first compounds on top of it instead of starting over
+from the unstaffed table.
 
 ## 7. Assumptions and what is not tested
 
