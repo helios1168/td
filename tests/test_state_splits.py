@@ -329,3 +329,89 @@ def test_realise_tiebreak_needs_the_penalty_keyword():
             pass
         else:
             raise AssertionError("tiebreak was accepted without centers.assign(penalty=)")
+
+
+# ----------------------------------------------------------------------- build_milp(fix_roots=)
+def test_fix_roots_with_a_released_anchor_stays_feasible_and_matches_the_plain_optimum():
+    """One anchor, (state 0, district 0), then a `bounds` forbid on that same pair releases it
+    (`bound_z` runs after the anchor and silently overrides it, per `build_milp`'s own
+    docstring).  `fix_roots=True` must not root a released anchor -- REPORT.md's guard, "the
+    root-fixed model is infeasible" when it does, since `r <= z` and the released anchor's
+    `z` is pinned to 0.  Rooted correctly (i.e. not rooted at all here, nothing survives), the
+    two models are the same MILP off the `r`/`f` blocks and so must agree exactly."""
+    toy = path_toy(EVEN)
+    eps = state_splits.eps_lexicographic(toy["M_s"], toy["D"])
+    anchors = [(0, 0)]
+    bounds = [(0, 0, 0.0, 0.0)]                     # forbid: releases the only anchor
+
+    plain = state_splits.build_milp(toy["M_s"], toy["D"], EDGES, toy["tau"], 0.0, eps,
+                                    anchors=anchors, bounds=bounds)
+    res_plain = state_splits.solve(plain)
+
+    fixed = state_splits.build_milp(toy["M_s"], toy["D"], EDGES, toy["tau"], 0.0, eps,
+                                    anchors=anchors, bounds=bounds, fix_roots=True)
+    res_fixed = state_splits.solve(fixed)
+
+    assert res_fixed["splits"] == res_plain["splits"] == 0
+    assert abs(res_fixed["objective"] - res_plain["objective"]) < 1e-9
+    assert not res_fixed["z"][0, 0]                 # the forbid held
+    at = fixed.off_r + 0 * fixed.k + 0
+    assert fixed.var_lb[at] == 0.0 and fixed.var_ub[at] == 1.0   # not rooted: the anchor was released
+
+
+def test_fix_roots_keeps_a_surviving_anchor_rooted():
+    """Two anchors; only one is released.  The surviving one is still rooted at its home
+    state, and the result matches the plain (no `fix_roots`) model, per the root-fix claim."""
+    toy = path_toy(EVEN)
+    eps = state_splits.eps_lexicographic(toy["M_s"], toy["D"])
+    anchors = [(0, 0), (3, 1)]
+
+    plain = state_splits.build_milp(toy["M_s"], toy["D"], EDGES, toy["tau"], 0.0, eps,
+                                    anchors=anchors)
+    res_plain = state_splits.solve(plain)
+
+    fixed = state_splits.build_milp(toy["M_s"], toy["D"], EDGES, toy["tau"], 0.0, eps,
+                                    anchors=anchors, fix_roots=True)
+    res_fixed = state_splits.solve(fixed)
+
+    assert res_fixed["splits"] == res_plain["splits"]
+    assert abs(res_fixed["objective"] - res_plain["objective"]) < 1e-9
+    at = fixed.off_r + 3 * fixed.k + 1
+    assert fixed.var_lb[at] == 1.0 and fixed.var_ub[at] == 1.0
+    for s in range(fixed.n_state):
+        if s != 3:
+            assert fixed.var_ub[fixed.off_r + s * fixed.k + 1] == 0.0
+
+
+# ----------------------------------------------------------------------- strategy="descent"
+def test_descent_matches_direct_and_certifies_on_both_engines():
+    """`strategy="descent"` lands on the same split count `strategy="direct"` does, certifies
+    it (phase B's cutoff proof), and logs its phases -- on `scipy` and on `highs`, the two
+    engines the app offers today."""
+    for engine in ("scipy", "highs"):
+        for masses, delta in ((ODD, 0.005), (COMB, 0.03)):
+            _, prob = build(masses, delta)
+            direct = state_splits.solve(prob, engine=engine, strategy="direct", time_limit=30.0)
+            descent = state_splits.solve(prob, engine=engine, strategy="descent",
+                                         time_limit=30.0, primal_seconds=5.0)
+            assert descent["splits"] == direct["splits"], (engine, masses)
+            assert descent["certified_splits"] is True
+            assert descent["engine"] == engine and descent["strategy"] == "descent"
+            assert descent["phases"]
+            for j in range(prob.k):
+                assert state_splits.connected(descent["z"][:, j], EDGES)
+
+
+def test_descent_certifies_a_zero_split_optimum_at_once():
+    """EVEN at delta=0.001: phase A already finds the 0-split optimum; phase B's cutoff
+    (`sum z <= n_state - 1`, i.e. -1 splits) is infeasible at once, so it is proven, not
+    guessed, and phase C closes the (trivial) tie-break in the same breath."""
+    for engine in ("scipy", "highs"):
+        _, prob = build(EVEN, 0.001)
+        res = state_splits.solve(prob, engine=engine, strategy="descent", time_limit=30.0,
+                                 primal_seconds=5.0)
+        assert res["splits"] == 0
+        assert res["certified_splits"] is True
+        assert res["status"] == 0
+        phase_names = [p["phase"] for p in res["phases"]]
+        assert "incumbent" in phase_names and "descent" in phase_names

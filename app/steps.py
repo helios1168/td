@@ -36,13 +36,22 @@ def draw_argv(python, repo, instance, run, *, k, seeds, workers, theta, lam, fil
 
 
 def clip_argv(python, repo, instance, run, *, draw: Path, k, delta, time_limit, theta, lam,
-             filler_capture, geo_cache, rounds=5, eta=0.01, anchor_homes=True) -> list[str]:
+             filler_capture, geo_cache, rounds=5, eta=0.01, anchor_homes=True, engine=None,
+             strategy=None, primal_seconds=None, threads=None) -> list[str]:
     argv = [str(python), str(Path(repo) / "tools" / "state_splits.py"), str(instance),
            "--draw", str(draw), "--k", str(k), "--delta", str(delta),
            "--time-limit", str(time_limit), "--theta", str(theta), "--lam", str(lam),
            "--filler-capture", str(filler_capture), "--rounds", str(rounds), "--eta", str(eta)]
     if anchor_homes:
         argv.append("--anchor-homes")
+    if engine is not None:
+        argv += ["--engine", str(engine)]
+    if strategy is not None:
+        argv += ["--strategy", str(strategy)]
+    if primal_seconds is not None:
+        argv += ["--primal-seconds", str(primal_seconds)]
+    if threads is not None:
+        argv += ["--threads", str(threads)]
     argv += ["--no-maps", "--geo-cache", str(geo_cache), "--out", str(run)]
     return argv
 
@@ -88,7 +97,8 @@ def split_argv(python, repo, instance, run, *, table, district, reps: list[str],
 
 def grid(root: Path, *, name: str = "", ks: list[int], delta, seeds, workers, theta, lam,
         filler_capture, time_limit, pins: dict | None, python, repo, instance,
-        geo_cache) -> list[list[tuple[Path, list[str]]]]:
+        geo_cache, engine: str | None = None,
+        strategy: str | None = None) -> list[list[tuple[Path, list[str]]]]:
     """One draw-clip-geom chain per k, all sharing one scenario: `name` is the user's typed
     text, slugified (`store.slugify`) into the scenario slug that ties every chain's runs
     together for `store.scenarios` and the other tabs' pickers. Each chain's own member name is
@@ -128,13 +138,14 @@ def grid(root: Path, *, name: str = "", ks: list[int], delta, seeds, workers, th
         clip_dir = store.new_run_dir(root, "clip", member)
         c_argv = clip_argv(python, repo, instance, clip_dir, draw=draw_table, k=k, delta=delta,
                           time_limit=time_limit, theta=theta, lam=lam,
-                          filler_capture=filler_capture, geo_cache=geo_cache)
+                          filler_capture=filler_capture, geo_cache=geo_cache, engine=engine,
+                          strategy=strategy)
         clip_step = store.write_step(
             clip_dir, kind="clip", parent=draw_dir.name,
             params=dict(k=k, delta=delta, time_limit=time_limit, theta=theta, lam=lam,
                        filler_capture=filler_capture, rounds=5, eta=0.01,
                        anchor_homes=True, geo_cache=str(geo_cache), instance=str(instance),
-                       scenario_name=name),
+                       scenario_name=name, engine=engine, strategy=strategy),
             argv=c_argv, scenario=slug, member=member,
             outputs={"table": f"{dname}/draw.csv", "metrics": f"{dname}/splits.json",
                     "geom": "geom.json", "timings": "timings.json"})

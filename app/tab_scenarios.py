@@ -33,6 +33,10 @@ def render_scenarios() -> None:
         theta = st.number_input("theta", 0.0, 1.0, config.THETA, step=0.05)
         lam = st.number_input("lambda", 0.0, 1.0, config.LAM, step=0.05)
         filler = st.selectbox("Filler capture", FILLERS, index=FILLERS.index(config.FILLER))
+        engine = st.selectbox("MILP engine", ("highs", "scip", "scipy"),
+                              index=("highs", "scip", "scipy").index(config.ENGINE))
+        strategy = st.selectbox("Strategy", ("descent", "direct"),
+                                index=("descent", "direct").index(config.STRATEGY))
 
     st.subheader("Hand-drawn districts")
     st.caption("`fix` is closed, exactly those states. `anchor` is open, those states plus "
@@ -55,7 +59,7 @@ def render_scenarios() -> None:
             time_limit=int(time_limit),
             pins={"fix": fix, "anchor": anchor} if (fix or anchor) else None,
             python=config.SOLVER_PYTHON, repo=config.CODE, instance=instance,
-            geo_cache=config.GEO_CACHE)
+            geo_cache=config.GEO_CACHE, engine=engine, strategy=strategy)
         env = {**os.environ, "PYTHONHASHSEED": "0"}
         launched: list[Path] = []
         for chain in chains:

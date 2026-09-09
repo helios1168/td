@@ -154,7 +154,14 @@ def test_main_writes_timings_json_end_to_end():
     so the run needs neither, on the six-state, k=2, zero-split `EVEN` toy from
     `test_state_splits.py` wired into a real `Descaled` instance (so `borders_report.cell_row`'s
     Nash and stage-2 measurements have a graph to read).  Confirms `main()` writes
-    `timings.json` next to its usual `params.json`/`grid.csv`."""
+    `timings.json` next to its usual `params.json`/`grid.csv`.
+
+    Pinned to `--engine scipy --strategy direct` (this test predates `--engine` and always ran
+    scipy): HiGHS's thread pool is process-global and sized once at whatever thread count is
+    first requested, so a later solve at a different count comes back "Not Set" rather than
+    solving -- a real hazard in `tests/run_all.py`'s one long-lived process, not in the CLI's
+    own (one solve, one thread count, one process) use.  `--engine`/`--strategy` themselves are
+    covered by `test_engine_and_strategy_flags_reach_solve_and_splits_json` below."""
     toy = path_toy(EVEN, centres=CENTRES)
     state_list = [f"S{i}" for i in range(6)]
     zips = [f"{10000 + s * 10 + i:05d}" for s in range(6) for i in range(4)]
@@ -194,9 +201,65 @@ def test_main_writes_timings_json_end_to_end():
             out = os.path.join(tmp, "out")
             rc = cli.main([inst_path, "--draw", "unused.csv", "--k", "2",
                           "--delta", "0.001", "--time-limit", "10", "--no-maps",
-                          "--out", out])
+                          "--engine", "scipy", "--strategy", "direct", "--out", out])
             assert rc == 0, rc
         finally:
             borders_report.load_committed, td_geo.state_rook = orig_load, orig_rook
 
         assert os.path.exists(os.path.join(out, "timings.json"))
+
+
+def test_engine_and_strategy_flags_reach_solve_and_splits_json():
+    """`--strategy direct --engine scipy` must reproduce today's output exactly (the same route
+    `ss.solve` always took before `--engine`/`--strategy` existed), and `splits.json` must carry
+    the new keys `solve` now always returns, regardless of engine or strategy."""
+    toy = path_toy(EVEN, centres=CENTRES)
+    state_list = [f"S{i}" for i in range(6)]
+    zips = [f"{10000 + s * 10 + i:05d}" for s in range(6) for i in range(4)]
+    states_by_zip = {z: state_list[int(s)] for z, s in zip(zips, toy["state_idx"])}
+    M_by_zip = {z: float(m) for z, m in zip(zips, toy["M"])}
+    labels0 = np.repeat([0, 0, 0, 1, 1, 1], 4)
+    committed_full = {z: ("D01" if lab == 0 else "D02") for z, lab in zip(zips, labels0)}
+    reps = ["rep0", "rep1", "rep2", "rep3"]
+
+    home, owners = borders_report._home_and_owners(labels0, toy["state_idx"], toy["M"], 2,
+                                                    len(state_list))
+    adj = {}
+    for i in range(6):
+        nbrs = []
+        if i > 0:
+            nbrs.append(f"S{i - 1}")
+        if i < 5:
+            nbrs.append(f"S{i + 1}")
+        adj[f"S{i}"] = tuple(nbrs)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        inst_path = os.path.join(tmp, "inst.json.gz")
+        _write_gz_instance(inst_path, zips, states_by_zip, M_by_zip, reps)
+        d = td_instance.load_descaled(inst_path)
+
+        ctx = borders_report.Ctx(
+            d=d, zips=zips, xy=toy["xy"], M=toy["M"], state_idx=toy["state_idx"],
+            labels0=labels0, k=2, state_list=state_list, states_by_zip=states_by_zip,
+            M_by_zip=M_by_zip, missing=[], committed_full=committed_full, home=home,
+            owners=owners, committed_rep_of=None)
+
+        orig_load, orig_rook = borders_report.load_committed, td_geo.state_rook
+        borders_report.load_committed = lambda *a, **kw: ctx
+        td_geo.state_rook = lambda *a, **kw: (adj, {})
+        try:
+            out = os.path.join(tmp, "out")
+            rc = cli.main([inst_path, "--draw", "unused.csv", "--k", "2",
+                          "--delta", "0.001", "--time-limit", "10", "--no-maps",
+                          "--engine", "scipy", "--strategy", "direct", "--out", out])
+            assert rc == 0, rc
+        finally:
+            borders_report.load_committed, td_geo.state_rook = orig_load, orig_rook
+
+        with open(os.path.join(out, "d0.001", "splits.json"), encoding="utf-8") as fh:
+            record = json.load(fh)
+        assert record["engine"] == "scipy" and record["strategy"] == "direct"
+        assert record["certified_splits"] is True         # status 0: fully proven
+        assert record["phases"] == []                      # direct: no phase log
+        assert record["splits"] == 0
+        assert record["status"] == 0

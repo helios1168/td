@@ -46,6 +46,7 @@ Pure functions on arrays; the only dependency inside `td/` is `centers` (`realis
 from __future__ import annotations
 
 import inspect
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -157,7 +158,8 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
                tau: float, delta: float, eps: float, *, eta: float = 0.01,
                anchors: list[tuple[int, int]] | None = None,
                caps: dict[int, int] | None = None,
-               bounds: list[tuple[int, int, float, float]] | None = None) -> SplitProblem:
+               bounds: list[tuple[int, int, float, float]] | None = None,
+               fix_roots: bool = False) -> SplitProblem:
     """Assemble the minimum-splits MILP.  `M_s` is `(S,)`, `D` is `(S, k)`, `edges` the rook
     graph over state indices (undirected, given once per pair).  `eta` is the minimum share a
     state must send to a district it is flagged as touching (see the module docstring).
@@ -174,7 +176,14 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
 
     `bounds` is a list of `(s, j, lo, hi)` applied through `bound_z` **after** the anchors and
     the caps, so an override wins over an anchor on the same `(s, j)`.  Bounds add no row, so
-    the matrix is the same whether or not they are given."""
+    the matrix is the same whether or not they are given.
+
+    `fix_roots`, when true, roots every anchor that is still standing once `bounds` has been
+    applied at its home state (`milp_engines.fix_roots`'s own tightening, run here on whatever
+    anchors survive).  An anchor a `bounds` entry has forbidden or refused no longer has
+    `z_sj`'s lower bound at 1, so it is left out; rooting a released anchor would make the MILP
+    infeasible or worse (`tools/verify/milp_root_fix/REPORT.md`, "the gap the adoption step must
+    guard")."""
     M_s = np.asarray(M_s, float)
     D = np.asarray(D, float)
     if M_s.ndim != 1 or D.ndim != 2 or D.shape[0] != M_s.shape[0]:
@@ -288,10 +297,148 @@ def build_milp(M_s: np.ndarray, D: np.ndarray, edges: list[tuple[int, int]],
     )
     for bs, bj, lo, hi in bounds or ():
         bound_z(problem, int(bs), int(bj), float(lo), float(hi))
+
+    if fix_roots:
+        survivors = [(s, j) for s, j in (anchors or ())
+                    if problem.var_lb[problem.off_z + s * k + j] >= 1.0 - 1e-9]
+        if survivors:
+            from td.solvers import milp_engines as _me      # lazy: that module imports this one
+            problem = _me.fix_roots(problem, survivors)
     return problem
 
 
-def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: bool = True) -> dict:
+def solve(problem: SplitProblem, *, time_limit: float | None = None, strict: bool = True,
+         engine: str = "scipy", strategy: str = "direct", primal_seconds: float = 30.0,
+         threads: int | None = None) -> dict:
+    """Solve `problem` and read `z`, `y` back.  `engine="scipy", strategy="direct"` is this
+    function's original body, unchanged: `scipy.optimize.milp`, no threads, no callbacks, the
+    only path every caller used before `milp_engines` existed.
+
+    `engine` picks the solver (`"scipy"`, `"highs"`, `"scip"`; anything else goes to
+    `milp_engines.solve_problem`, imported lazily since that module imports this one).
+
+    `strategy="direct"` is one solve to `time_limit`.  `strategy="descent"` (`_solve_descent`)
+    is three phases instead: a quick incumbent, then repeated `milp_engines.with_cutoff` calls
+    proving no smaller split count exists, then one more `with_cutoff` closing the compactness
+    tie-break at that count, warm-started from the best incumbent.  It adds `certified_splits`
+    (phase two's outcome) and `phases` (a log of `{phase, seconds, status, splits}`) to the
+    return; `status` reports phase three's outcome (`0` closed, `"time_limit"` otherwise), so a
+    map's split count can be certified even when its exact tie-break is not.
+
+    Raises `SolveFailure` when nothing usable comes back, same reasons either strategy: a
+    `strict=True` (the default) time limit with no incumbent, or a proven infeasibility.
+    """
+    if strategy == "direct":
+        result = _solve_direct(problem, time_limit=time_limit, strict=strict, engine=engine,
+                               threads=threads)
+    elif strategy == "descent":
+        result = _solve_descent(problem, time_limit=time_limit, strict=strict, engine=engine,
+                                primal_seconds=primal_seconds, threads=threads)
+    else:
+        raise ValueError(f"unknown strategy {strategy!r}; expected 'direct' or 'descent'")
+    result.setdefault("engine", engine)
+    result.setdefault("strategy", strategy)
+    result.setdefault("certified_splits", result.get("status") == 0)
+    result.setdefault("phases", [])
+    return result
+
+
+def _solve_direct(problem: SplitProblem, *, time_limit, strict, engine, threads) -> dict:
+    """`strategy="direct"`: one solve to `time_limit`, on `engine`."""
+    if engine == "scipy":
+        return _solve_scipy(problem, time_limit=time_limit, strict=strict)
+    from td.solvers import milp_engines as _me               # lazy: it imports this module
+    return _me.solve_problem(problem, engine, time_limit=time_limit, threads=threads)
+
+
+def _solve_descent(problem: SplitProblem, *, time_limit, strict, engine, primal_seconds,
+                   threads) -> dict:
+    """`strategy="descent"`, see `solve`'s docstring for the three phases.  `time_limit` bounds
+    the whole call; each phase spends only what the previous ones left (`time_limit=None` still
+    caps phase A at `primal_seconds`, but phases B and C then run until they resolve)."""
+    from td.solvers import milp_engines as _me                # lazy: it imports this module
+
+    t0 = time.time()
+
+    def left():
+        return None if time_limit is None else max(0.0, time_limit - (time.time() - t0))
+
+    phases: list[dict] = []
+
+    # Phase A: a quick incumbent, never more than primal_seconds.
+    budget = primal_seconds if time_limit is None else min(primal_seconds, left())
+    ta = time.time()
+    best, a_status = None, None
+    try:
+        best = _me.solve_problem(problem, engine, time_limit=budget, threads=threads)
+        a_status = best["status"]
+    except SolveFailure as exc:
+        if exc.reason == "infeasible":
+            raise
+        a_status = exc.reason                                 # "no_incumbent"
+    phases.append(dict(phase="incumbent", seconds=time.time() - ta, status=a_status,
+                       splits=(best["splits"] if best else None)))
+
+    if best is None:
+        tf = time.time()
+        result = _solve_direct(problem, time_limit=left(), strict=strict, engine=engine,
+                               threads=threads)
+        phases.append(dict(phase="direct", seconds=time.time() - tf,
+                           status=result.get("status"), splits=result.get("splits")))
+        result.update(engine=engine, strategy="descent", certified_splits=False, phases=phases)
+        return result
+
+    # Phase B: does a map with fewer splits exist?  Infeasible certifies s_star; a better
+    # incumbent lowers s_star and the question is asked again; a bare time limit gives up.
+    s_star = best["splits"]
+    certified = False
+    while True:
+        rem = left()
+        if rem is not None and rem <= 0:
+            break
+        tb = time.time()
+        try:
+            res_b = _me.solve_problem(_me.with_cutoff(problem, s_star), engine, time_limit=rem,
+                                      threads=threads)
+        except SolveFailure as exc:
+            phases.append(dict(phase="descent", seconds=time.time() - tb, status=exc.reason,
+                               splits=None))
+            certified = exc.reason == "infeasible"
+            break
+        phases.append(dict(phase="descent", seconds=time.time() - tb, status=res_b["status"],
+                           splits=res_b["splits"]))
+        s_star, best = res_b["splits"], res_b
+
+    # Phase C: close the compactness tie-break at s_star, warm-started from the incumbent.
+    # scipy has no warm-start hook (milp_engines.solve_problem raises on warm= for it), so it
+    # gets none; every other engine gets the incumbent's own z, y.
+    rem = left()
+    result, closed = dict(best), False
+    if rem is not None and rem <= 0:
+        pass                                                   # no time left; keep the incumbent
+    else:
+        tc = time.time()
+        warm = None if engine == "scipy" else dict(z=best["z"], y=best["y"])
+        try:
+            res_c = _me.solve_problem(_me.with_cutoff(problem, s_star + 1), engine,
+                                      time_limit=rem, threads=threads, warm=warm)
+            phases.append(dict(phase="tiebreak", seconds=time.time() - tc,
+                               status=res_c["status"], splits=res_c["splits"]))
+            result, closed = res_c, res_c["status"] == 0
+        except SolveFailure as exc:
+            # the incumbent itself satisfies this cutoff, so infeasible should not happen; any
+            # failure here just means the clock ran out before an improvement was found.
+            phases.append(dict(phase="tiebreak", seconds=time.time() - tc, status=exc.reason,
+                               splits=None))
+
+    result = dict(result)
+    result.update(engine=engine, strategy="descent", certified_splits=certified, phases=phases,
+                 status=(0 if closed else "time_limit"))
+    return result
+
+
+def _solve_scipy(problem: SplitProblem, *, time_limit: float | None = None,
+                 strict: bool = True) -> dict:
     """Solve to proven optimality (`mip_rel_gap = 0.0`, trap 12) and read `z`, `y` back.
 
     Raises unless HiGHS reports optimality: a time-limited or infeasible run is not a split

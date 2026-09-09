@@ -61,6 +61,10 @@ import run_draw                                                             # no
 # the sanity-row delta: the committed k=18 draw's own spread_rel (docs/BORDERS_PLAN.md)
 COMMITTED_SPREAD = 0.013
 
+# the bench's winner (tools/verify/milp_root_fix/REPORT.md, battery/results/bench/); scipy is
+# the fallback everything else was checked against, never the default any more.
+DEFAULT_ENGINE = "highs"
+
 
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -90,6 +94,19 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--anchor-homes", action="store_true", default=False,
                     help="force z=1 for each district in its committed home state; names the "
                          "districts so HiGHS can close the MILP (off by default)")
+    ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
+                    help=f"MILP engine (default {DEFAULT_ENGINE})")
+    ap.add_argument("--strategy", choices=("direct", "descent"), default="descent",
+                    help="direct: one solve to --time-limit. descent: a quick incumbent, then "
+                         "cutoff proofs of the split count and the tie-break (default descent)")
+    ap.add_argument("--primal-seconds", type=float, default=30.0,
+                    help="descent strategy: time budget for the first incumbent (default 30)")
+    ap.add_argument("--threads", type=int, default=os.cpu_count(),
+                    help="solver threads (highs/scip only; default the machine's cpu_count)")
+    ap.add_argument("--no-fix-roots", action="store_true", default=False,
+                    help="skip the root-fix tightening (default: on when --anchor-homes is "
+                         "given and --engine is not scipy; scipy keeps today's matrix so the "
+                         "committed map reproduces bit for bit)")
     ap.add_argument("--cap", action="append", default=[], metavar="ST=N",
                     help="cap state ST's district count at N (repeatable)")
     ap.add_argument("--unanchor", action="append", default=[], metavar="ST",
@@ -551,10 +568,14 @@ def _main(args, T: telemetry.Timings) -> int:
                                   base=tiebreak)
         print(f"pull tiebreak: {len(bounds['pull'])} zip(s) pulled", flush=True)
 
+    fix_roots = args.anchor_homes and args.engine != "scipy" and not args.no_fix_roots
+
     params = dict(
         instance=os.path.abspath(args.instance), draw=os.path.abspath(args.draw), k=args.k,
         delta=args.delta, time_limit=args.time_limit, rounds=args.rounds, eta=args.eta,
         incumbency_tiebreak=args.incumbency_tiebreak, anchor_homes=args.anchor_homes,
+        engine=args.engine, strategy=args.strategy, primal_seconds=args.primal_seconds,
+        threads=args.threads, fix_roots=fix_roots,
         cap=args.cap, unanchor=args.unanchor,
         unanchor_released={ctx.state_list[s]: [run_draw.district_id(j) for j in drop_js]
                            for s, (_, drop_js) in released_by_state.items()},
@@ -586,13 +607,18 @@ def _main(args, T: telemetry.Timings) -> int:
         with T.phase("build_milp"):
             problem = ss.build_milp(M_s, D, edges, tau, delta, eps, eta=args.eta,
                                     anchors=anchors, caps=caps or None,
-                                    bounds=bounds["triples"] if bounds else None)
+                                    bounds=bounds["triples"] if bounds else None,
+                                    fix_roots=fix_roots)
         try:
             with T.phase("solve") as ph:
-                result = ss.solve(problem, time_limit=args.time_limit, strict=False)
+                result = ss.solve(problem, time_limit=args.time_limit, strict=False,
+                                  engine=args.engine, strategy=args.strategy,
+                                  primal_seconds=args.primal_seconds, threads=args.threads)
                 ph.note(status=result["status"], nodes=result["nodes"], gap=result["mip_gap"],
                         dual_bound=result["dual_bound"], objective=result["objective"],
-                        time_limit=args.time_limit, engine="scipy")
+                        time_limit=args.time_limit, engine=result["engine"],
+                        strategy=result["strategy"], certified_splits=result["certified_splits"],
+                        phases=result["phases"])
         except ss.SolveFailure as exc:
             _write_failure(args.out, name, delta, exc, time.time() - t0)
             raise
@@ -603,7 +629,9 @@ def _main(args, T: telemetry.Timings) -> int:
                    for s in result["split_states"]}
         print(f"{name}: status={result['status']} splits={result['splits']} "
               f"split_states=[{split_codes}] milp_spread_rel={result['spread_rel']:.5f} "
-              f"mip_gap={result['mip_gap']:.4g} ({solve_s:.1f}s solve)", flush=True)
+              f"mip_gap={result['mip_gap']:.4g} engine={result['engine']} "
+              f"strategy={result['strategy']} certified={result['certified_splits']} "
+              f"({solve_s:.1f}s solve)", flush=True)
 
         with T.phase("balance_pass"):
             pas = ss.balance_pass(problem, result["z"])
@@ -654,6 +682,8 @@ def _main(args, T: telemetry.Timings) -> int:
                 split_states=split_codes, y_shares=y_shares,
                 z=result["z"].astype(bool).tolist(), y=pas["y"].tolist(),
                 state_list=ctx.state_list,
+                engine=result["engine"], strategy=result["strategy"],
+                certified_splits=result["certified_splits"], phases=result["phases"],
                 stage2_value=row["stage2_value"], stage2_theta=row["stage2_theta"],
                 stage2_lam=row["stage2_lam"], stage2_filler=row["stage2_filler"],
             )

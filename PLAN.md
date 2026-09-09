@@ -17,6 +17,25 @@ background; W3b adoption starts when the bench JSON is read. Then the scenario-l
 
 ## Done
 
+- 2026-09-09 wave 3a (`ae00e2d`): APP.md and CODE_MAP updated. Bench finished
+  (`battery/results/bench/milp_20260909_015338.json` k=20, `milp_20260909_020619.json` k=18,
+  cap 180 s, 12 threads):
+
+  | variant | k=20 | k=18 |
+  |---|---|---|
+  | scipy (today) | 12 splits, gap 5.2 %, cap | 7 splits, gap 1e-5, cap |
+  | highs, 12 threads | 10 splits at 142 s, gap 1.7 %, cap | 8 splits, gap 1.8 %, cap |
+  | highs-root | 11 at 6.5 s, 10 at 130 s, gap 0.85 %, cap | 7 proven, 27.8 s |
+  | scip-root | 10 at 44 s, gap 1.6 %, cap | 7 proven, 47.5 s |
+  | lp-heur | 93 splits, useless | 65 splits, useless |
+  | cpsat (.venv-opt) | 10 at 79 s, own proof 170 s | 7 proven 124 s |
+  | highs-root-cutoff (Σz ≤ S + s* − 1) | infeasible 0.1 s: 10 is optimal | infeasible 0.1 s |
+  | highs-root-warm (full objective from a 10-split incumbent) | proven, 19.1 s | proven, 5.9 s |
+
+  The root fix lifts the k=20 LP bound from 58.005 to 58.50, so the 9-split cutoff is
+  LP-infeasible. Winner: HiGHS with fixed roots and the descent strategy (short primal
+  budget, cutoff descent, warm close), being adopted as W3b. W4 (cut formulation) not
+  needed.
 - 2026-09-08 wave 2 (`dc5e583`): sidebar scenario picker and filtering, rep territories on
   the Map tab, Reps tab map-first with scoped staffing and both before/after views, Timings
   tab, staff and rep_export instrumented, AppTest smoke test, root-fix claim VERIFIED

@@ -44,4 +44,9 @@ WORKERS = 2
 THETA = 0.40
 LAM = 0.30
 FILLER = "full"
-TIME_LIMIT = 600
+ENGINE = "highs"
+STRATEGY = "descent"
+# The bench (battery/results/bench/milp_20260909_015338.json): highs-root's descent proves
+# k=20 optimal in under 20s once warm-started, well inside 300s even with margin for a harder
+# instance; scipy's old 600s cap is no longer what the winning engine needs.
+TIME_LIMIT = 300
