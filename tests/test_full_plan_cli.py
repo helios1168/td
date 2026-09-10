@@ -40,6 +40,13 @@ STATES = [f"S{i}" for i in range(6)]
 # the six-state path, the same shape as tests/test_state_splits.py's `path_toy`
 PATH_ADJ = {f"S{i}": tuple(f"S{j}" for j in (i - 1, i + 1) if 0 <= j < 6) for i in range(6)}
 
+# `geo.state_rook`'s second return, the state polygons `_state_xy` takes centroids from.  Most
+# tests stub it empty, which is what makes `--dist-max`, `--radius-max` and `--centers seeds`
+# refuse and the plan's hull metrics null; these put the six states on a line 100 km apart
+# (the centroid is in metres, `_state_xy` divides by 1000).
+PATH_POLYS = {c: types.SimpleNamespace(centroid=types.SimpleNamespace(x=i * 100_000.0, y=0.0))
+              for i, c in enumerate(STATES)}
+
 
 # --------------------------------------------------------------------------- argparse defaults
 def test_stage2_weight_flags_default_to_borders_report_s_own_constants():
@@ -61,7 +68,9 @@ def test_band_and_k_defaults_are_the_settled_business_numbers():
     assert args.catch_all is False
     assert args.priority == "N,WH,FI"
     assert args.bundles is None                 # resolved from td.channels.DEFAULT_BUNDLES
-    assert args.n_max is None and args.dist_max is None
+    assert args.n_max is None and args.dist_max is None and args.radius_max is None
+    # unset, no slot is centred on anything and no compactness pass runs
+    assert args.centers is None and args.incumbency is None
     # the exact pin: unset, every cover pass holds its value and the plan is what it was
     assert args.cover_slack == 0.0
     # a real run is 49 states at about two MILPs each; the budget is what keeps `--driver reps`
@@ -191,12 +200,12 @@ def _write_v1(path: str) -> list[str]:
     return zips
 
 
-def _run(tmp: str, route: str, extra=()) -> str:
+def _run(tmp: str, route: str, extra=(), polys=None) -> str:
     out = os.path.join(tmp, f"out_{route}")
     inst = os.path.join(tmp, "inst.json.gz")
     _write_v1(inst)
     orig = td_geo.state_rook
-    td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+    td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, polys or {})
     try:
         rc = cli.main([inst, "--synthesize", "--route", route, "--driver", "geo",
                        "--engine", "scipy", "--strategy", "direct", "--k", "2",
@@ -214,7 +223,8 @@ def _check_plan(out: str) -> dict:
                          "anchors"}
     assert plan["state_list"] == STATES
     for rec in plan["slots"]:
-        assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y"}
+        assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y",
+                            "center", "extent_km", "radius_km"}
     ids = [rec["id"] for rec in plan["slots"]]
     assert len(ids) == len(set(ids)), "slot ids must be unique across stages"
 
@@ -346,6 +356,97 @@ def test_anchor_greedy_roots_every_used_slot_at_its_greedy_seed():
         raise AssertionError("--anchor greedy must be refused under --driver reps")
     except ValueError as exc:
         assert "--anchor greedy" in str(exc)
+
+
+def test_centers_seeds_gives_every_used_slot_a_centre_and_a_compactness_pass():
+    """`--centers seeds` measures the tie-break about each slot's own greedy seed, so the pass
+    runs for WH and FI and not only for the N slots a committed draw names.  The seeds are
+    built whatever `--warm` and `--anchor` say, or the flag would be silently inert.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "joint", ["--centers", "seeds", "--warm", "none"], polys=PATH_POLYS)
+        plan = _check_plan(out)
+        assert [p["name"] for p in plan["passes"]].count("compactness") == 1
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["centers"] == "seeds", "the literal is recorded, not a path"
+        assert params["radius_max"] is None
+        used = [rec for rec in plan["slots"] if rec["used"] and rec["y"]]
+        assert used and all(rec["center"] in STATES for rec in used)
+        bundles = {rec["bundle"] for rec in used}
+        assert len(bundles) > 1, "the toy must use more than the N bundle or this proves little"
+
+
+def test_the_hull_metrics_are_the_slot_s_own_extent_and_radius():
+    """`extent_km` is the widest centroid distance between two states a slot contacts and
+    `radius_km` the widest from its centre; both are reported, neither is constrained.  On the
+    100 km line they are recomputable from the slot's own shares."""
+    idx = {c: i for i, c in enumerate(STATES)}
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint", ["--centers", "seeds"], polys=PATH_POLYS))
+        used = [rec for rec in plan["slots"] if rec["used"] and rec["y"]]
+        assert used
+        for rec in used:
+            pos = [idx[st] * 100.0 for st in rec["y"]]
+            assert abs(rec["extent_km"] - (max(pos) - min(pos))) < 1e-6, rec
+            home = idx[rec["center"]] * 100.0
+            assert abs(rec["radius_km"] - max(abs(p - home) for p in pos)) < 1e-6, rec
+        for rec in plan["slots"]:
+            if not rec["contacts"]:
+                assert rec["extent_km"] is None and rec["radius_km"] is None
+
+        # no polygons in the cache, no geometry to measure in: the keys are still there
+        plan = _check_plan(_run(tmp, "sequential"))
+        assert all(rec["extent_km"] is None and rec["radius_km"] is None
+                   for rec in plan["slots"])
+
+
+def test_a_slot_record_without_a_known_centre_says_so_rather_than_guessing():
+    """`_slot_records(roots=None)`, which is how `_rep_moves` calls it: a move re-solves the
+    contacts, so the stage's seed may no longer be one of them and naming it as the centre
+    would be a claim the record cannot support.  `extent_km` needs no centre and is still
+    measured."""
+    problem = types.SimpleNamespace(k=2, bundle_of=("N", "N"))
+    result = dict(z=np.array([[1, 0], [1, 0], [0, 1], [0, 0], [0, 0], [0, 0]], bool),
+                  y=np.array([[1.0, 0.0], [0.5, 0.0], [0.0, 1.0], [0.0, 0.0],
+                              [0.0, 0.0], [0.0, 0.0]]),
+                  u=np.array([True, True]), masses=np.array([1.5, 1.0]))
+    xy = np.array([[i * 100.0, 0.0] for i in range(6)])
+
+    blind = cli._slot_records(problem, result, STATES, 1, state_xy=xy)
+    assert [r["center"] for r in blind] == [None, None]
+    assert [r["radius_km"] for r in blind] == [None, None]
+    assert blind[0]["extent_km"] == 100.0 and blind[1]["extent_km"] == 0.0
+
+    known = cli._slot_records(problem, result, STATES, 1, state_xy=xy, roots={0: 1, 1: 2})
+    assert [r["center"] for r in known] == ["S1", "S2"]
+    assert known[0]["radius_km"] == 100.0 and known[1]["radius_km"] == 0.0
+    # no geometry at all: the keys stay, the numbers do not appear
+    bare = cli._slot_records(problem, result, STATES, 1, roots={0: 1})
+    assert bare[0]["extent_km"] is None and bare[0]["radius_km"] is None
+    assert bare[0]["center"] == "S1"
+
+
+def test_radius_max_caps_how_far_a_slot_reaches_from_its_root():
+    """`--radius-max` with `--anchor greedy`: every used slot is rooted at its seed, so the cap
+    is a bound on `z` and the plan's own `radius_km` has to respect it."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "joint", ["--anchor", "greedy", "--radius-max", "250",
+                                  "--centers", "seeds"], polys=PATH_POLYS)
+        plan = _check_plan(out)
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["radius_max"] == 250.0
+        used = [rec for rec in plan["slots"] if rec["used"] and rec["y"]]
+        assert used
+        for rec in used:
+            assert rec["radius_km"] <= 250.0 + 1e-6, rec
+    # without the state polygons the cap has nothing to measure in, and says so
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run(tmp, "joint", ["--radius-max", "250"])
+            raise AssertionError("--radius-max without state polygons must be refused")
+        except ValueError as exc:
+            assert "--radius-max" in str(exc)
 
 
 def test_k_fixed_pins_the_first_slots_and_reaches_params():
@@ -973,6 +1074,60 @@ def test_incumbency_and_centers_reach_an_end_to_end_run():
         assert len(n_slots) >= 2
         assert "S0" in n_slots[0]["y"], n_slots[0]
         assert "S3" in n_slots[1]["y"], n_slots[1]
+
+
+def test_centers_seeds_leaves_the_committed_draw_the_n_slots_it_named():
+    """`--centers seeds --incumbency draw.csv`: the N slots the committed draw drew keep their
+    own centres, and every other used slot takes its greedy seed.  The draw knows where its
+    districts sit better than a seed does; the bundles it never drew had no tie-break at all
+    before this.  The model handed to `solve_passes` is captured to read `D`.
+    """
+    from td.solvers import level0
+
+    zips = [f"{10000 + s * 10 + i:05d}" for s in range(6) for i in range(4)]
+    seen = []
+    orig_solve = level0.solve_passes
+
+    def capture(problem, passes, **kw):
+        seen.append(problem)
+        return orig_solve(problem, passes, **kw)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ctx = _toy_ctx(tmp, zips)
+        draw = os.path.join(tmp, "draw.csv")
+        inst = os.path.join(tmp, "inst.json.gz")
+        out = os.path.join(tmp, "out")
+        orig_load, orig_rook = borders_report.load_committed, td_geo.state_rook
+        borders_report.load_committed = lambda *a, **kw: ctx
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, PATH_POLYS)
+        level0.solve_passes = capture
+        try:
+            rc = cli.main([inst, "--synthesize", "--route", "joint", "--driver", "geo",
+                           "--incumbency", draw, "--centers", "seeds",
+                           "--engine", "scipy", "--strategy", "direct", "--k", "2",
+                           "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            borders_report.load_committed, td_geo.state_rook = orig_load, orig_rook
+            level0.solve_passes = orig_solve
+
+        plan = _check_plan(out)
+        assert len(seen) == 1, "route joint is one model, and one build after the greedy"
+        problem = seen[0]
+        start, stop = problem.slots["N"]
+        drawn = cli._moments_from_draw(ctx, STATES, len(STATES), problem.k, start, stop)
+        assert np.allclose(problem.D[:, start:start + ctx.k], drawn[:, start:start + ctx.k])
+        assert np.any(drawn[:, start:start + ctx.k] > 0.0)
+        # every other used slot is centred on a state, so its column is zero exactly there
+        seeded = [j for j in range(problem.k) if j >= start + ctx.k and problem.D[:, j].any()]
+        assert seeded, "the bundles the draw never drew must take their seeds"
+        idx = {c: i for i, c in enumerate(STATES)}
+        for j in seeded:
+            centre = plan["slots"][j]["center"]
+            assert centre is not None and problem.D[idx[centre], j] == 0.0
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["centers"] == "seeds" and params["incumbency"] == os.path.abspath(draw)
 
 
 def test_synthesize_writes_the_v2_instance_it_solved():

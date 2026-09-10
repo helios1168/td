@@ -21,7 +21,8 @@ Two readings of the priority order, both over the same model:
 and two drivers over the result:
 
     --driver geo         an extent cap on every slot (`--n-max` states, `--dist-max` km
-                         between state centroids), linear and centre-free
+                         between state centroids, `--radius-max` km from the slot's own
+                         root), linear and centre-free
     --driver reps        after the solve, the per-state moves {keep, merge WH+FI, drop N},
                          each re-solved with `z` fixed away from the state and its rook
                          neighbours and scored by the state-level stage-2 Nash value, over
@@ -30,8 +31,9 @@ and two drivers over the result:
 `--catch-all` adds a last model over whatever the plan left uncovered, with one bundle
 carrying all four channels; "four channels" then means that pass used at least one slot.
 
-Writes `params.json` (every argument), `plan.json` (the slots, the per-state shares and the
-residual, the pass log, the move log, the anchors), `staffing.json` (`td.stage2_state.state_stage2` on the
+Writes `params.json` (every argument), `plan.json` (the slots with their centre state and
+hull metrics, the per-state shares and the residual, the pass log, the move log, the anchors),
+`staffing.json` (`td.stage2_state.state_stage2` on the
 final plan), `timings.json`, and one `projections/<bundle>/` per used bundle holding a format-1
 instance for that bundle and the `state_shares.csv` level 2 reads.  A solve that returns
 nothing usable writes `failure.json` in the shape `tools/state_splits.py` writes it and
@@ -154,11 +156,18 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--dist-max", type=float, default=None, metavar="KM",
                     help="driver geo: two states more than KM apart by centroid may not share "
                          "a slot (needs the state polygons from --geo-cache)")
+    ap.add_argument("--radius-max", type=float, default=None, metavar="KM",
+                    help="driver geo: a slot reaches at most KM from its own root by state "
+                         "centroid, as a bound on z; a slot whose root is free takes the "
+                         "pairwise diameter bound 2*KM instead (needs --geo-cache polygons)")
     ap.add_argument("--prior", default=None, metavar="PLAN.json",
                     help="a previous plan.json whose coverage is held as already served")
-    ap.add_argument("--centers", default=None, metavar="DRAW.csv",
-                    help="a committed draw whose centres give the compactness tie-break's "
-                         "moments on the N slots; without it no compactness pass runs")
+    ap.add_argument("--centers", default=None, metavar="DRAW.csv|seeds",
+                    help="where the compactness tie-break's moments come from: a committed "
+                         "draw whose centres give them on the N slots, or `seeds`, every used "
+                         "slot's own greedy seed (both together with --incumbency: the draw "
+                         "keeps the N slots, the seeds carry the rest). Without it no "
+                         "compactness pass runs")
     ap.add_argument("--incumbency", default=None, metavar="DRAW.csv",
                     help="a committed draw whose district home states anchor the N slots")
     ap.add_argument("--committed-instance", default=None, metavar="INSTANCE",
@@ -230,12 +239,20 @@ def _state_edges(state_list: list[str], geo_cache: str) -> list[tuple[int, int]]
                    for b in nbrs if b in idx})
 
 
-def _state_xy(state_list: list[str], geo_cache: str) -> np.ndarray:
-    """State centroids in km, the coordinates `--dist-max` measures between."""
+def _state_xy(state_list: list[str], geo_cache: str, *, required: bool = True):
+    """State centroids in km: what `--dist-max`, `--radius-max` and `--centers seeds` measure
+    between, and what the plan's `extent_km` and `radius_km` are reported in.
+
+    `required=False` returns None when the cache has no polygon for some state, so a run that
+    only wants the hull metrics does not die for want of geometry it can do without.
+    """
     _, polys = geo.state_rook(geo_cache)
     missing = sorted(c for c in state_list if c not in polys)
     if missing:
-        raise ValueError(f"--dist-max needs a polygon for every state; missing {missing}")
+        if not required:
+            return None
+        raise ValueError(f"--dist-max, --radius-max and --centers seeds need a polygon for "
+                         f"every state; missing {missing}")
     return np.array([[polys[c].centroid.x / 1000.0, polys[c].centroid.y / 1000.0]
                      for c in state_list], float)
 
@@ -250,8 +267,11 @@ def _rook_neighbours(edges: list[tuple[int, int]], n_state: int) -> list[set[int
 
 # ------------------------------------------------------------------- the committed draw, if any
 def _committed(args, cache: dict):
-    """`borders_report.load_committed` for `--centers`/`--incumbency`, loaded at most once."""
-    path = args.centers or args.incumbency
+    """`borders_report.load_committed` for `--centers`/`--incumbency`, loaded at most once.
+
+    `--centers seeds` names no draw, so it is the `--incumbency` path that carries one there.
+    """
+    path = (args.centers if args.centers not in (None, "seeds") else None) or args.incumbency
     if path is None:
         return None
     if "ctx" not in cache:
@@ -341,19 +361,42 @@ def _coverage(y: np.ndarray, bundle_of, channel_idx: dict[str, int]) -> np.ndarr
     return cov
 
 
-def _slot_records(problem, result, state_list: list[str], next_id: int) -> list[dict]:
-    """One record per slot of this solve, with a plan-wide id."""
+def _slot_records(problem, result, state_list: list[str], next_id: int, *,
+                  state_xy=None, roots=None) -> list[dict]:
+    """One record per slot of this solve, with a plan-wide id.
+
+    `center` is the state the slot is rooted or seeded at (`roots`, slot -> state index),
+    `extent_km` the widest centroid distance between two states it contacts and `radius_km` the
+    widest from that centre.  All three are reported and none is constrained: the grid's Plans
+    tab ranks shapes off them without re-reading the geometry.  `extent_km` and `radius_km` are
+    null without `state_xy` (a geo cache with no state polygons), and `center` and `radius_km`
+    are null for a slot with no known centre -- under `--driver reps` a move re-solves the
+    contacts and the stage's seed may no longer be one of them.
+    """
     z = np.asarray(result["z"])
     y = np.asarray(result["y"], float)
     u = np.asarray(result["u"])
     masses = np.asarray(result["masses"], float)
+    xy = None if state_xy is None else np.asarray(state_xy, float)
+    roots = roots or {}
     out = []
     for j in range(problem.k):
         shares = {state_list[s]: round(float(y[s, j]), 6)
                   for s in np.flatnonzero(z[:, j]) if y[s, j] > 0.0}
+        touched = np.flatnonzero(z[:, j])
+        root = roots.get(j)
+        extent = radius = None
+        if xy is not None and len(touched):
+            pts = xy[touched]
+            extent = round(float(np.sqrt(((pts[:, None, :] - pts[None, :, :]) ** 2)
+                                         .sum(axis=2)).max()), 3)
+            if root is not None:
+                radius = round(float(np.sqrt(((pts - xy[root]) ** 2).sum(axis=1)).max()), 3)
         out.append(dict(id=f"P{next_id + j:03d}", bundle=_bundle_name(problem.bundle_of[j]),
                         used=bool(u[j]), mass=float(masses[j]),
-                        contacts=int(z[:, j].sum()), y=shares))
+                        contacts=int(z[:, j].sum()), y=shares,
+                        center=None if root is None else state_list[root],
+                        extent_km=extent, radius_km=radius))
     return out
 
 
@@ -475,8 +518,9 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
     the mass ordering inside a bundle is only valid while its slots are interchangeable.
-    `--n-max` and `--dist-max` are honoured under both drivers; `params.json` records them
-    either way, so dropping them under `reps` would make that record untrue.  `--k-fixed`
+    `--n-max`, `--dist-max` and `--radius-max` are honoured under both drivers; `params.json`
+    records them either way, so dropping them under `reps` would make that record untrue.
+    `--k-fixed`
     applies to the bundles this model carries; a named bundle in another stage's model is
     that stage's business.
     """
@@ -486,7 +530,7 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     return level0.build_level0(
         cells, {b: _bundle_channels(b) for b in bundle_names},
         edges=edges, L=L, U=U, eta=args.eta,
-        n_max=args.n_max, dist_max=args.dist_max,
+        n_max=args.n_max, dist_max=args.dist_max, radius_max=args.radius_max,
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
         order_mass=False if args.driver == "reps" else None,
         fixed_used=fixed or None)
@@ -544,7 +588,7 @@ def _z_fix_away(problem, z: np.ndarray, keep: set[int]) -> None:
 
 
 def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, next_id,
-               T) -> tuple[list[dict], dict]:
+               T, state_xy=None) -> tuple[list[dict], dict]:
     """The per-state moves {keep, merge WH+FI, drop N}, scored by state-level stage 2.
 
     A move only re-solves the last model, but the score is the whole plan's: the rep
@@ -633,7 +677,8 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
                                               engine=args.engine, strategy="direct",
                                               time_limit=args.time_limit,
                                               threads=args.threads)
-                trial_slots = _slot_records(trial, out, state_list, next_id)
+                trial_slots = _slot_records(trial, out, state_list, next_id,
+                                            state_xy=state_xy)
                 value = score(trial_slots)
             except (ss.SolveFailure, ValueError) as exc:
                 # no map under the forbid, or a slot the move leaves unstaffable.  A pin
@@ -657,7 +702,7 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
         if accepted:
             applied.extend((s, b) for b in forbidden)
             result = out
-            base_slots = _slot_records(trial, out, state_list, next_id)
+            base_slots = _slot_records(trial, out, state_list, next_id, state_xy=state_xy)
             best_value = value
 
     return log, dict(problem=problem, result=result, slots=base_slots)
@@ -783,17 +828,22 @@ def _main(args, T: telemetry.Timings) -> int:
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
-    state_xy = _state_xy(state_list, args.geo_cache) if args.dist_max is not None else None
+    # a cap or the seed moments make the geometry compulsory; without one it is still read
+    # when the cache has it, since the plan's hull metrics are measured in it
+    need_xy = (args.dist_max is not None or args.radius_max is not None
+               or args.centers == "seeds")
+    state_xy = _state_xy(state_list, args.geo_cache, required=need_xy)
     ctx_cache: dict = {}
 
     params = dict(
         instance=os.path.abspath(args.instance), route=args.route, driver=args.driver,
         catch_all=args.catch_all, k=args.k, band_lo=args.band_lo, band_hi=args.band_hi,
         bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
-        dist_max=args.dist_max, move_budget=args.move_budget,
+        dist_max=args.dist_max, radius_max=args.radius_max, move_budget=args.move_budget,
         cover_slack=args.cover_slack,
         prior=os.path.abspath(args.prior) if args.prior else None,
-        centers=os.path.abspath(args.centers) if args.centers else None,
+        centers=(args.centers if args.centers in (None, "seeds")
+                 else os.path.abspath(args.centers)),
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed,
@@ -832,13 +882,16 @@ def _main(args, T: telemetry.Timings) -> int:
             problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
         anchors, D = None, None
-        if "N" in problem.slots and (args.incumbency or args.centers):
+        seed_centres = args.centers == "seeds"
+        if "N" in problem.slots and (args.incumbency or (args.centers and not seed_centres)):
             ctx = _committed(args, ctx_cache)
             start, stop = problem.slots["N"]
             if args.incumbency:
                 anchors = _anchors_from_draw(ctx, state_list, start, stop)
                 print(f"{stage}: {len(anchors)} anchor(s) from {args.incumbency}", flush=True)
             if args.centers:
+                # under `--centers seeds` too: the N slots are the committed draw's own
+                # districts, and their centres are known better than a greedy seed
                 D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
             with T.phase("build"):
                 problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
@@ -848,10 +901,12 @@ def _main(args, T: telemetry.Timings) -> int:
                                slot=j, source="incumbency") for s, j in (anchors or ()))
 
         # The greedy point: the first pass's warm start (--warm greedy) and, under --anchor
-        # greedy, the seeds every used slot is anchored and rooted at.  A build that fails is
-        # recorded and the stage solves cold: a multi-hour run must not die on its start.
+        # greedy, the seeds every used slot is anchored and rooted at.  `--centers seeds` needs
+        # the seeds too, whatever the other two flags say, or it would silently run no
+        # compactness pass.  A build that fails is recorded and the stage solves cold: a
+        # multi-hour run must not die on its start.
         warm, warm_s, seeds = None, 0.0, None
-        if "greedy" in (args.warm, args.anchor):
+        if "greedy" in (args.warm, args.anchor) or seed_centres:
             t0 = time.time()
             try:
                 # the cover groups' order, less the bundles this model has no slots for
@@ -865,29 +920,48 @@ def _main(args, T: telemetry.Timings) -> int:
                                    status="warm_start_failed", seconds=time.time() - t0,
                                    stage=stage, message=str(exc)))
             warm_s = time.time() - t0
+        # One rebuild carries both things the greedy settles: the anchors `--anchor greedy`
+        # fixes, and the seed moments `--centers seeds` measures the tie-break about.  The
+        # greedy point stays feasible for both -- neither changes a row it has to satisfy --
+        # and one rebuild keeps the model `solve_passes` sees to a single build per stage.
+        extra: list[tuple[int, int]] = []
         if seeds is not None and args.anchor == "greedy":
-            # `z` fixed at the seed and the root fixed there (`fix_roots`); the greedy point
-            # stays feasible for both, and the incumbency's own N anchors keep their slots
+            # `z` fixed at the seed and the root fixed there (`fix_roots`); the incumbency's
+            # own N anchors keep their slots
             taken = {j for _, j in (anchors or ())}
             extra = [(s, j) for lst in seeds.values() for s, j in lst if j not in taken]
+        if seeds is not None and seed_centres:
+            seed_D = level0.moments_from_seeds(problem, seeds, state_xy)
+            if D is not None:
+                keep = np.abs(D).max(axis=0) > 0.0       # a committed centre wins its slot
+                seed_D[:, keep] = D[:, keep]
+            D = seed_D
+        if extra or (seeds is not None and seed_centres):
             anchors = list(anchors or ()) + extra
             with T.phase("build"):
-                problem = me.fix_roots(
-                    _build(cells, bundle_names, args, L=L, U=U, edges=edges,
-                           prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy),
-                    extra)
+                problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+                                 prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
+                if extra:
+                    problem = me.fix_roots(problem, extra)
             anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j],
                                    state=state_list[s], slot=j, source="greedy")
                               for s, j in extra)
-            print(f"{stage}: {len(extra)} anchor(s) from the greedy plan", flush=True)
+            if extra:
+                print(f"{stage}: {len(extra)} anchor(s) from the greedy plan", flush=True)
         if args.warm != "greedy":
             warm = None
+        # what each slot is centred on: its anchor where it has one, else its greedy seed
+        centre_of = {int(j): int(s) for s, j in (anchors or ())}
+        for lst in (seeds or {}).values():
+            for s, j in lst:
+                centre_of.setdefault(int(j), int(s))
 
         unpinned = problem                            # before any pass pinned its value
         result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T,
                              warm=warm, warm_seconds=warm_s)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
-        recs = _slot_records(problem, result, state_list, len(slots) + 1)
+        recs = _slot_records(problem, result, state_list, len(slots) + 1,
+                             state_xy=state_xy, roots=centre_of)
         slots.extend(recs)
         passes.extend(result["passes"])
         # `covered` is this solve's own coverage; `residual` is `(1 - prior) - covered`, so
@@ -912,7 +986,8 @@ def _main(args, T: telemetry.Timings) -> int:
         head = len(slots) - len(last["slots"])
         with T.phase("moves"):
             moves, last = _rep_moves(last["problem"], last["result"], cells, state_list, edges,
-                                     args, slots[:head], last["slots"], head + 1, T)
+                                     args, slots[:head], last["slots"], head + 1, T,
+                                     state_xy=state_xy)
         slots = slots[:head] + last["slots"]
 
     if args.catch_all:

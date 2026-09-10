@@ -24,6 +24,7 @@ CHANNELS = ("A", "B")
 BUNDLES = {"A": ("A",), "B": ("B",)}
 BAND = dict(L=0.8, U=1.2, eta=0.05)
 CONTIG = [0.5, 0.1, 0.5, 0.1, 0.5, 0.1]     # whole-state in-band partitions all disconnected
+XY6 = np.array([[float(s), 0.0] for s in range(6)])     # the six states on a line, 1 apart
 
 
 def cells(a, b=None):
@@ -300,6 +301,56 @@ def test_n_max_and_dist_max_caps_bind():
         "the far pair must still be kept out of any single slot"
 
 
+def test_radius_max_bounds_an_anchored_slot_to_its_root():
+    """Six states of 0.2 at x = 0..5, anchored on state 0.  A 2 km radius takes states 3, 4
+    and 5 out of that slot as a bound on `z`, not a row, and the anchor makes the slot used, so
+    the 0.6 it can still reach is below `L` and the model has no plan at all.  Without the
+    radius the same six states cover 1.2 in one slot."""
+    masses = [0.2] * 6
+    free = build0(masses)
+    assert abs(run(free, [level0.cover_pass(free, ["A"])])["passes"][0]["value"] - 1.2) < 1e-6
+
+    prob = build0(masses, anchors=[(0, 0)], radius_max=2.0, state_xy=XY6)
+    assert prob.radius_max == 2.0 and prob.slot_root == (0, -1)
+    K = prob.k
+    for s in (3, 4, 5):
+        assert prob.var_ub[prob.off_z + s * K + 0] == 0.0
+        assert prob.var_ub[prob.off_y + s * K + 0] == 0.0
+    for s in (0, 1, 2):
+        assert prob.var_ub[prob.off_z + s * K + 0] == 1.0
+    assert prob.var_ub[prob.off_z + 5 * K + 1] == 1.0, "slot 1 has no root and no z bound"
+    try:
+        run(prob, [level0.cover_pass(prob, ["A"])])
+    except ss.SolveFailure as exc:
+        assert exc.reason == "infeasible"
+    else:
+        raise AssertionError("an anchored slot capped to 0.6 of mass cannot reach L")
+
+    bad = np.zeros(prob.n_var)
+    bad[prob.off_z + 0 * K + 0] = 1.0                 # the anchor, so it is not what is named
+    bad[prob.off_z + 5 * K + 0] = 1.0
+    try:
+        level0.check_point(prob, bad)
+        raise AssertionError("a contact outside the radius must fail the check")
+    except ValueError as exc:
+        assert "beyond radius_max" in str(exc) and "slot 0's root 0" in str(exc)
+
+
+def test_a_slot_with_no_root_takes_the_diameter_bound_instead():
+    """A free root allows a diameter, not a radius: a rootless slot gets the `cap_dist` pair
+    rows at `2 radius_max` and no `z` bound.  On the line at 1 km spacing only (0, 5) is more
+    than 4 km apart, so it is one row per rootless slot."""
+    both = build0([0.2] * 6, radius_max=2.0, state_xy=XY6)
+    assert both.slot_root == (-1, -1) and both.k == 2
+    lo, hi = both.rows["cap_dist"]
+    assert hi - lo == 2, "one far pair on each of the two rootless slots"
+    assert both.var_ub[both.off_z:both.off_z + 6 * both.k].all()
+
+    one = build0([0.2] * 6, anchors=[(0, 0)], radius_max=2.0, state_xy=XY6)
+    lo, hi = one.rows["cap_dist"]
+    assert hi - lo == 1, "the rooted slot carries bounds, only slot 1 carries the pair row"
+
+
 # ---------------------------------------------------------------------------- warm start
 def _greedy(prob, **kw):
     """`greedy_plan` plus the row check and the decoded `z`, `y`, slot masses."""
@@ -406,6 +457,43 @@ def test_greedy_plan_respects_the_caps():
     assert abs(m[0] - 0.8) < 1e-9 and int(z[:, 0].sum()) == 4 and not z[:, 1].any()
 
 
+def test_greedy_plan_respects_the_radius():
+    """The model only carries a diameter bound on a rootless slot, so the greedy is what keeps
+    the warm start inside the radius itself.
+
+    Six states of 0.5 at 1 km spacing.  At `radius_max = 0.5` no slot reaches past its own
+    seed, and 0.5 is below `L`, so the point is empty -- while the pair rows at 2 x 0.5 = 1 km
+    would still have allowed the neighbouring pair the greedy would otherwise have taken.
+    Anchored at state 2 with a 1 km radius the slot may hold states 1, 2 and 3 and no others.
+    """
+    tight = build0([0.5] * 6, radius_max=0.5, state_xy=XY6)
+    assert (1, 2) not in {(a, b) for a, b, _ in _far_pairs(tight)}, "the pair rows allow it"
+    x, seeds, z, y, m = _greedy(tight)
+    assert not x.any() and seeds == {"A": [], "B": []}
+
+    anch = build0([0.5] * 6, anchors=[(2, 0)], radius_max=1.0, state_xy=XY6)
+    x, seeds, z, y, m = _greedy(anch)
+    assert seeds["A"][0] == (2, 0)
+    assert set(np.flatnonzero(z[:, 0]).tolist()) <= {1, 2, 3}
+    assert m[0] >= anch.L - 1e-9
+
+
+def _far_pairs(prob):
+    """The `(s, s', slot)` triples the `cap_dist` rows carry, read back the way the greedy
+    reads them."""
+    out = []
+    if "cap_dist" not in prob.rows:
+        return out
+    a, b = prob.rows["cap_dist"]
+    cap = prob.A.tocsr()[a:b]
+    K = prob.k
+    for i in range(b - a):
+        cols = cap.indices[cap.indptr[i]:cap.indptr[i + 1]]
+        pair = sorted({(c - prob.off_z) // K for c in cols})
+        out.append((pair[0], pair[-1], int((cols[0] - prob.off_z) % K)))
+    return out
+
+
 def test_greedy_plan_splits_a_state_between_consecutive_slots():
     """Four states of 0.7: state 0 plus 3/7 of state 1 lands slot A on `tau = 1.0`; the next
     slot seeds from state 1's remaining 4/7 and takes state 2 whole.  Both slots contact
@@ -506,6 +594,52 @@ def test_a_pass_slack_widens_its_pin_and_zero_slack_leaves_it_exact():
     assert slacked["problem"].ub[lo] > exact["problem"].ub[lo]
     # the slack is what a later pass may spend, not a discount on this pass's own optimum
     assert abs(slacked["passes"][0]["value"] - exact["passes"][0]["value"]) < 1e-9
+
+
+def test_moments_from_seeds_measure_from_the_seed_state():
+    """`D[s, j]` is the squared centroid distance from `s` to the state slot `j` is seeded at,
+    so the seed's own row is zero and a slot the greedy never used keeps a zero column."""
+    prob = build0([0.5] * 6)
+    x, seeds, z, y, masses = _greedy(prob)
+    assert seeds == {"A": [(0, 0), (2, 1), (4, 2)], "B": []}
+    D = level0.moments_from_seeds(prob, seeds, XY6)
+    assert D.shape == (6, prob.k)
+    for j, seed in ((0, 0), (1, 2), (2, 4)):
+        assert np.allclose(D[:, j], [(s - seed) ** 2.0 for s in range(6)])
+        assert D[seed, j] == 0.0
+    assert not D[:, 3].any(), "slot 3 is unused, so it has no seed and no tie-break"
+    assert level0.build_level0(cells([0.5] * 6), BUNDLES, edges=EDGES, D=D,
+                               **BAND).eps == ss.eps_lexicographic(prob.M_s, D)
+
+
+def test_compactness_with_seed_moments_pulls_a_slot_towards_its_seed():
+    """Three states of 0.5 at x = 0, 1, 2: one slot of 1.2 is the whole plan (two would need
+    1.6 of the 1.5 there is), it must touch all three states to reach 1.2, and which state
+    gives up 0.6 of itself is free at equal coverage and equal contacts.  The seed moments are
+    what settles it: seeded at state 0 the far state carries the fraction, seeded at state 2
+    the near one does, and the coverage and contact values are the same either way."""
+    three = SimpleNamespace(M=np.full((3, 1), 0.5), channels=("A",),
+                            state_list=[f"S{s}" for s in range(3)])
+    xy = np.array([[float(s), 0.0] for s in range(3)])
+    edges = [(0, 1), (1, 2)]
+    shares = {}
+    for seed in (0, 2):
+        base = level0.build_level0(three, {"A": ("A",)}, edges=edges, **BAND)
+        D = level0.moments_from_seeds(base, {"A": [(seed, 0)]}, xy)
+        assert np.allclose(D[:, 0], [(s - seed) ** 2.0 for s in range(3)]) and not D[:, 1].any()
+        prob = level0.build_level0(three, {"A": ("A",)}, edges=edges, D=D, **BAND)
+        assert prob.eps > 0.0
+        out = run(prob, [level0.cover_pass(prob, ["A"]), level0.contacts_pass(prob),
+                         level0.compactness_pass(prob)])
+        cov, con, comp = out["passes"]
+        assert all(p["certified"] for p in out["passes"]), out["passes"]
+        assert abs(cov["value"] - 1.2) < 1e-6 and con["value"] == 3
+        assert int(out["u"].sum()) == 1
+        shares[seed] = out["y"][:, 0]
+    # the tie-break ranks equal-contact solutions and buys none: both runs pin the same
+    # coverage and the same three contacts, and only the shares move
+    assert np.allclose(shares[0], [1.0, 1.0, 0.4], atol=1e-6), shares
+    assert np.allclose(shares[2], [0.4, 1.0, 1.0], atol=1e-6), shares
 
 
 def test_compactness_pass_equals_contacts_without_centres():

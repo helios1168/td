@@ -12,6 +12,8 @@ the bundle could hold, so the bundle of a slot is fixed and there are no bundle 
     band:    (L/tau) u_j <= sum_s (W_sj/tau) y_sj <= (U/tau) u_j          for every j
     flow:    single-commodity flow per slot as level 1, root  sum_s r_sj = u_j
     caps:    sum_s z_sj <= n_max;  z_sj + z_s'j <= 1 when |xy_s - xy_s'| > dist_max
+    radius:  z_sj = 0 when |xy_s - xy_root(j)| > radius_max, or the pair rows at 2 radius_max
+             on a slot whose root is not known
     order:   u_j >= u_{j+1}  and  mass_j >= mass_{j+1}  inside each J_B  (symmetry)
 
 The residual per cell, `cover_ub - sum_j y_sj`, is what `decode_zy` reports as "other".
@@ -53,6 +55,11 @@ class Level0Problem(SplitProblem):
     `slots[B] = (start, stop)` is its slot range, `slot_has[j, ci]` says whether slot `j`'s
     bundle contains channel `ci`, `cover_ub = 1 - prior` is `(S, C)`.  The inherited `M_s` is
     each state's mass summed over every channel and `D` is `(S, K)` (zeros without centres).
+
+    `state_xy (S, 2)` is the geometry the distance caps measure in (empty without one),
+    `slot_root[j]` the state slot `j` is rooted at (`-1` when no single anchor names one) and
+    `radius_max` the cap that geometry carries, so `greedy_plan` and `check_point` can read
+    back what the bounds mean rather than re-deriving it.
     """
 
     off_u: int = 0
@@ -66,6 +73,9 @@ class Level0Problem(SplitProblem):
     prior: np.ndarray = field(default_factory=lambda: np.zeros((0, 0)))
     channels: tuple[str, ...] = ()
     bundles: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    state_xy: np.ndarray = field(default_factory=lambda: np.zeros((0, 0)))
+    slot_root: tuple[int, ...] = ()
+    radius_max: float | None = None
 
     def decode_zy(self, z: np.ndarray, y: np.ndarray) -> dict:
         """`z`, `y` -> masses per slot `(W * y).sum(0)`, `used` (a used slot has a contact,
@@ -146,7 +156,8 @@ def slot_counts(cells, bundles: dict, *, L: float, prior=None) -> dict[str, int]
 
 def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float, U: float | None,
                  eta: float, tau: float | None = None, n_max: int | None = None,
-                 dist_max: float | None = None, state_xy=None, prior=None, anchors=None,
+                 dist_max: float | None = None, radius_max: float | None = None,
+                 state_xy=None, prior=None, anchors=None,
                  D=None, eps: float | None = None,
                  order_mass: bool | None = None,
                  fixed_used: dict[str, int] | None = None) -> Level0Problem:
@@ -167,8 +178,18 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     heavier than a lower-indexed one makes the row infeasible (the route-S regression carries
     committed homes), and a `D` that differs across a bundle's slots names them too.  So
     `order_mass` defaults to on only when neither `anchors` nor `D` is given; any later
-    per-slot fix (`bound_z`, `fix_roots`, a neighbourhood z-fix) needs it off as well.
+    per-slot fix (`bound_z`, `fix_roots`, a neighbourhood z-fix) needs it off as well.  A
+    `radius_max` bound is per-slot too, and it only ever appears with an anchor, so it is off
+    by the same rule.
     `forbid_bundle` is uniform across a bundle's slots and is compatible with both orderings.
+
+    `radius_max` caps how far a slot reaches from its own root, in `state_xy`'s units.  A slot
+    named by exactly one anchor is rooted there, and every state farther than `radius_max` from
+    that root gets `z_sj` (and `y_sj`) bounded to zero: a bound, not a row, so presolve drops
+    the variable outright.  A slot with no anchor, or with several, has no known root, and a
+    free root allows a diameter rather than a radius: those slots take the `cap_dist` pair rows
+    at `2 radius_max` instead.  `dist_max` still applies to every slot, so a slot's pair
+    threshold is the tighter of the two.
 
     `fixed_used` maps a bundle name to a count: the first `count` slots of that bundle get
     `u_j` fixed at 1, so the passes must use them (a count above the bundle's slot count is
@@ -231,6 +252,21 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         raise ValueError(f"n_max must be at least 1, got {n_max}")
     if dist_max is not None and state_xy is None:
         raise ValueError("dist_max needs state_xy")
+    if radius_max is not None and state_xy is None:
+        raise ValueError("radius_max needs state_xy")
+    pairs_a = list(anchors.items()) if isinstance(anchors, dict) else list(anchors or ())
+    for s, j in pairs_a:
+        if not (0 <= s < S and 0 <= j < K):
+            raise ValueError(f"anchor ({s}, {j}) out of range")
+    # a slot named by exactly one anchor is rooted there; several anchors name a contact set,
+    # not a root, so that slot is treated as rootless
+    anchored_on: dict[int, list[int]] = {}
+    for s, j in pairs_a:
+        anchored_on.setdefault(int(j), []).append(int(s))
+    root_of = np.full(K, -1, int)
+    for j, states in anchored_on.items():
+        if len(states) == 1:
+            root_of[j] = states[0]
     fixed_slots: list[int] = []
     for name, count in (fixed_used or {}).items():
         if name not in slots:
@@ -328,20 +364,29 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         # sum_s z_sj <= n_max
         add("cap_n", _block(j_of, off_z + sk, np.ones(S * K), K, n_var),
             np.full(K, -np.inf), np.full(K, float(n_max)))
-    if dist_max is not None:
+    xy = dist = None
+    if dist_max is not None or radius_max is not None:
         xy = np.asarray(state_xy, float).reshape(S, -1)
         dist = np.sqrt(((xy[:, None, :] - xy[None, :, :]) ** 2).sum(axis=2))
-        a, b = np.nonzero(np.triu(dist > float(dist_max), k=1))
-        P = len(a)
-        # z_sj + z_s'j <= 1 for every far pair (s, s') and every slot j.  One row per
-        # (pair, slot): a pair index here would let `_block` sum the slots into a single row
+        # the pair threshold per slot: `dist_max` everywhere, and `2 radius_max` on a slot
+        # whose root is free, since a free root allows a diameter and not a radius
+        thresh = np.full(K, np.inf)
+        if radius_max is not None:
+            thresh[root_of < 0] = 2.0 * float(radius_max)
+        if dist_max is not None:
+            thresh = np.minimum(thresh, float(dist_max))
+        ai, bi = np.triu_indices(S, k=1)
+        pi, ji = np.nonzero(dist[ai, bi][:, None] > thresh[None, :])
+        P = len(pi)
+        # z_sj + z_s'j <= 1 for every far pair (s, s') and every slot j it is far on.  One row
+        # per (pair, slot): a pair index here would let `_block` sum the slots into a single row
         # and forbid the two states from being contacted anywhere on the map.
-        pk = np.arange(P * K)
+        pk = np.arange(P)
         add("cap_dist", _block(np.concatenate([pk, pk]),
-                               np.concatenate([off_z + np.repeat(a, K) * K + np.tile(jk, P),
-                                               off_z + np.repeat(b, K) * K + np.tile(jk, P)]),
-                               np.ones(2 * P * K), P * K, n_var),
-            np.full(P * K, -np.inf), np.ones(P * K))
+                               np.concatenate([off_z + ai[pi] * K + ji,
+                                               off_z + bi[pi] * K + ji]),
+                               np.ones(2 * P), P, n_var),
+            np.full(P, -np.inf), np.ones(P))
 
     pairs = np.array([(j, j + 1) for lo_j, hi_j in slots.values() for j in range(lo_j, hi_j - 1)],
                      int).reshape(-1, 2)
@@ -370,10 +415,12 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     var_lb = np.zeros(n_var)
     var_ub = np.ones(n_var)
     var_ub[off_f:off_u] = max(N - 1.0, 0.0)
-    pairs_a = anchors.items() if isinstance(anchors, dict) else (anchors or ())
+    if radius_max is not None:
+        for j in np.flatnonzero(root_of >= 0):
+            beyond = np.flatnonzero(dist[:, root_of[j]] > float(radius_max))
+            for off in (off_z, off_y):
+                var_ub[off + beyond * K + j] = 0.0
     for s, j in pairs_a:
-        if not (0 <= s < S and 0 <= j < K):
-            raise ValueError(f"anchor ({s}, {j}) out of range")
         var_lb[off_z + s * K + j] = 1.0
     for j in fixed_slots:
         var_lb[off_u + j] = 1.0
@@ -392,7 +439,32 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         off_u=off_u, W=W, bundle_of=bundle_of, slots=slots, slot_has=slot_has, L=L, U=U,
         cover_ub=cover_ub, prior=prior_arr, channels=channels,
         bundles={name: tuple(chans) for name, chans in bundles.items()},
+        state_xy=np.zeros((0, 0)) if xy is None else xy,
+        slot_root=tuple(int(v) for v in root_of),
+        radius_max=None if radius_max is None else float(radius_max),
     )
+
+
+def moments_from_seeds(problem: Level0Problem, seeds, state_xy) -> np.ndarray:
+    """`D (S, K)`: `D[s, j]` is the squared centroid distance from state `s` to the state slot
+    `j` is seeded at, in whatever units `state_xy` carries (km after the driver's conversion).
+    A slot with no seed keeps a zero column, which is what "contacts only" means for it.
+
+    `seeds` is `greedy_plan`'s own second return, `{bundle: [(state, slot), ...]}`, so every
+    slot the greedy used gets a centre and not just the ones a committed draw names.  Level 1's
+    `D` is a state's second moment about a district centre; this is centroid to centroid, so
+    the state a slot is seeded at scores exactly zero and a state's own internal spread never
+    enters.  `eps_lexicographic` bounds the tie-break over the polytope either way.
+    """
+    S, K = problem.n_state, problem.k
+    xy = np.asarray(state_xy, float).reshape(S, -1)
+    D = np.zeros((S, K))
+    for lst in seeds.values():
+        for s, j in lst:
+            if not (0 <= s < S and 0 <= j < K):
+                raise ValueError(f"seed ({s}, {j}) out of range")
+            D[:, j] = ((xy - xy[s]) ** 2).sum(axis=1)
+    return D
 
 
 def forbid_bundle(problem: Level0Problem, s: int, bundle: str) -> Level0Problem:
@@ -441,20 +513,17 @@ def _var_name(problem: Level0Problem, i: int) -> str:
 
 
 def check_point(problem: Level0Problem, x: np.ndarray, *, tol: float = 1e-6) -> None:
-    """Raise `ValueError` naming the first row, bound or integrality `x` violates; return
-    quietly when `lb - tol <= A x <= ub + tol` on every row and `x` sits inside its bounds
-    with the integer blocks integral."""
+    """Raise `ValueError` naming the first bound, row or integrality `x` violates; return
+    quietly when `x` sits inside its bounds, `lb - tol <= A x <= ub + tol` on every row, and
+    the integer blocks are integral.
+
+    Bounds are read first: an anchor, a `forbid_bundle` and a radius cap are all bounds, and
+    each says exactly which state and slot went wrong, where the row a broken bound also breaks
+    (`yz_lo`, `net`) says only that some row does not hold.
+    """
     x = np.asarray(x, float)
     if x.shape != (problem.n_var,):
         raise ValueError(f"x must have {problem.n_var} entries, got {x.shape}")
-    Ax = problem.A @ x
-    bad = np.flatnonzero((Ax < problem.lb - tol) | (Ax > problem.ub + tol))
-    if bad.size:
-        i = int(bad[0])
-        name = next((f"{n}[{i - a}]" for n, (a, b) in problem.rows.items() if a <= i < b),
-                    f"row {i}")
-        raise ValueError(f"infeasible point: row {name} needs {problem.lb[i]:.6g} <= "
-                         f"{Ax[i]:.6g} <= {problem.ub[i]:.6g}")
     bad = np.flatnonzero((x < problem.var_lb - tol) | (x > problem.var_ub + tol))
     if bad.size:
         i = int(bad[0])
@@ -463,8 +532,25 @@ def check_point(problem: Level0Problem, x: np.ndarray, *, tol: float = 1e-6) -> 
             raise ValueError(f"infeasible point: anchored contact {_var_name(problem, i)} "
                              f"(state {(i - problem.off_z) // K}, slot "
                              f"{(i - problem.off_z) % K}) is not placed")
+        if (problem.off_z <= i < problem.off_z + S * K and problem.radius_max is not None
+                and problem.var_ub[i] <= 1e-9):
+            s, j = (i - problem.off_z) // K, (i - problem.off_z) % K
+            root = problem.slot_root[j] if j < len(problem.slot_root) else -1
+            if root >= 0:
+                km = float(np.sqrt(((problem.state_xy[s] - problem.state_xy[root]) ** 2).sum()))
+                raise ValueError(f"infeasible point: {_var_name(problem, i)} puts state {s} "
+                                 f"{km:.6g} from slot {j}'s root {root}, beyond radius_max "
+                                 f"{problem.radius_max:.6g}")
         raise ValueError(f"infeasible point: {_var_name(problem, i)} = {x[i]:.6g} outside "
                          f"[{problem.var_lb[i]:.6g}, {problem.var_ub[i]:.6g}]")
+    Ax = problem.A @ x
+    bad = np.flatnonzero((Ax < problem.lb - tol) | (Ax > problem.ub + tol))
+    if bad.size:
+        i = int(bad[0])
+        name = next((f"{n}[{i - a}]" for n, (a, b) in problem.rows.items() if a <= i < b),
+                    f"row {i}")
+        raise ValueError(f"infeasible point: row {name} needs {problem.lb[i]:.6g} <= "
+                         f"{Ax[i]:.6g} <= {problem.ub[i]:.6g}")
     ints = np.flatnonzero(problem.integrality)
     frac = ints[np.abs(x[ints] - np.round(x[ints])) > tol]
     if frac.size:
@@ -494,7 +580,11 @@ def greedy_plan(problem: Level0Problem, *, priority=None
 
     Honoured along the way: `cap_n` and `cap_dist`, read back from the rows, and every `z`,
     `y` and `r` bound (anchors, `forbid_bundle`, `fix_roots`, `bound_z`; a `z` with
-    `var_ub = 0` is never entered).  Anchors (`var_lb = 1` on `z`) are pre-committed
+    `var_ub = 0` is never entered).  `radius_max` is honoured from the slot's root, or from the
+    seed when the slot has none: the model only carries a diameter bound there, so the greedy
+    is the stricter of the two and its point stays feasible.  A state outside the radius is not
+    a bridge either -- it cannot be in the slot at all, so the BFS stops rather than passing
+    through it.  Anchors (`var_lb = 1` on `z`) are pre-committed
     contacts: a bundle's anchored slots go first, each seeded at an anchored state with the
     others forced in during growth, and a state anchored on `m` slots gives each of them
     `avail / (slots of its still pending)`, so a state the committed map splits (FL on two
@@ -540,7 +630,9 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     pending = (z_lb >= one).sum(axis=1)          # anchored slots of s not yet processed
     n_max = (int(round(problem.ub[problem.rows["cap_n"][0]])) if "cap_n" in problem.rows
              else None)
-    far: set[tuple[int, int]] = set()
+    # (state, state, slot): a cap_dist row now names the slot it applies to, since a radius
+    # cap puts the pair rows on the rootless slots only
+    far: set[tuple[int, int, int]] = set()
     if "cap_dist" in problem.rows:
         a, b = problem.rows["cap_dist"]
         cap = problem.A.tocsr()[a:b]
@@ -548,7 +640,9 @@ def greedy_plan(problem: Level0Problem, *, priority=None
             cols = cap.indices[cap.indptr[i]:cap.indptr[i + 1]]
             pair = tuple(sorted(set(((cols - off_z) // K).tolist())))
             if len(pair) == 2:
-                far.add(pair)
+                far.add((*pair, int((cols[0] - off_z) % K)))
+    radius = problem.radius_max
+    xy = np.asarray(problem.state_xy, float).reshape(S, -1) if radius is not None else None
 
     rem = problem.cover_ub.copy()
     has = problem.slot_has
@@ -566,6 +660,11 @@ def greedy_plan(problem: Level0Problem, *, priority=None
         must = {int(s) for s in np.flatnonzero(z_lb[:, j] >= one)}
         chosen: dict[int, float] = {}
         mass, split = 0.0, None
+        beyond = None
+        if radius is not None:
+            centre = problem.slot_root[j] if j < len(problem.slot_root) else -1
+            centre = seed if centre < 0 else int(centre)
+            beyond = ((xy - xy[centre]) ** 2).sum(axis=1) > float(radius) ** 2 + 1e-9
         queue, seen = deque([seed]), {seed}
         while queue:
             if mass >= stop - 1e-9 and must <= chosen.keys():
@@ -573,7 +672,9 @@ def greedy_plan(problem: Level0Problem, *, priority=None
             if n_max is not None and len(chosen) >= n_max:
                 break
             s = queue.popleft()
-            if any((min(s, t), max(s, t)) in far for t in chosen):
+            if beyond is not None and beyond[s]:
+                continue                     # outside the slot's radius, and no bridge either
+            if any((min(s, t), max(s, t), j) in far for t in chosen):
                 continue
             a = avail(s, j)
             if s in must:
