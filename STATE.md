@@ -1,22 +1,23 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `7325737` · **Tests:** 546 pass,
-0 fail (2026-09-10; `tests/test_mapfig.py` 27/27 under `.venv-app` on 2026-09-09)
+**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `07839ed` · **Tests:** 546 pass,
+0 fail (2026-09-10; `worktree-full-problem` at `c63cb1f` 743 pass, 0 fail, same day)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Hub unchanged at `7325737`. This entry records the full-problem track, opened 2026-09-10 on
-`worktree-full-problem` (head `3c3af6c`, 31 commits, kept unmerged on 2026-09-10 by decision):
-the three-channel problem, `docs/FULL_PROBLEM.md` (bundles, joint problem F, decomposition
-VERIFIED), unit `docs/units/U14-fullprob.md`, level 0 MILP `td/solvers/level0.py`, drivers
-`tools/full_plan.py` to `tools/plan_to_app.py`. The track's source of truth is the v3 export
-`instance_descaled_v3_conus.json.gz` (6,459 zips, 114 reps); `main` still runs v2 CONUS. Route S
-with warm start certifies cover of all three channels in under two minutes, 51 districts, 20
-splits; route J leaves 3% uncovered (`tools/verify/U14-fullprob/TIMINGS.md`). S chosen, R
-dropped for the night. Next: the 97-cell grid of 2026-09-10 night, `REVIEW.md`, top plans in
-the app, all per the track's `PLAN.md` `## Next step`.
+Hub unchanged at `07839ed`. The full-problem track ran its overnight grid 2026-09-10/11 on
+`worktree-full-problem` (head `c63cb1f`, unmerged): 97 cells, 96 ok; the joint reference is
+proven infeasible in 6 s under the 900 km / 6-state cap, since no channel can hold WA, MT or WY
+at a full book, so "every state served" needs all-channel "other" districts at half a book
+(`--other-first`, `--other-floor 0.5`). Ranked in the worktree's
+`battery/results/full_problem/grid_20260910/REVIEW.md`: 1 `X_n16w11f20_d100_d900n6_of` (48
+districts, cap held everywhere, every state in a grouping, every business pass certified), 2
+`X_n18w11f19_d100_d900n6_of` (49, 10 of 10 certified). Nine scenarios in the app store, the
+worktree app on port 8503; 743 tests pass. Open: the level-2 cross-bundle overlap (AZ merged on
+the WH map, pure FI on the FI map of rank 1); interim fix chosen, merged bundle wins, ranks 1 and
+2 re-realised.
 
 ## Next
 
@@ -37,13 +38,14 @@ the app, all per the track's `PLAN.md` `## Next step`.
       sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
-- [ ] **Merge `worktree-full-problem`.** Gated on the 2026-09-11 morning review of the
-      overnight grid (`REVIEW.md` under the worktree's `battery/results/full_problem/grid_20260910/`)
-      and the user pushing the branch; then rebase onto `main`, fast-forward, `/state`. The Map
-      board check (district hue fills, the Reps tab's colouring) rides on the scenarios that grid
-      registers through `tools/plan_to_app.py`; the store was cleared 2026-09-09 and the old runs
-      sit in `battery/results/trash_20260909/`. Open on the track: ★C, the rep pool against the
-      district count; `centers.assign` parking zero-mass zips of a split state; no DC–VA cell edge.
+- [ ] **Merge `worktree-full-problem`.** Gated on the stakeholder review of 2026-09-11 (the
+      track's `PLAN.md` `## Next step` lists the five plans in order), the interim overlap fix
+      landing, and the user pushing the branch; then rebase onto `main`, fast-forward, `/state`.
+      Decisions for the user there: the "other" floor (0.5 of a book or another figure); whether
+      ND SD NE on FI alone is acceptable; the cap (900 km / 6 states or none); the counts
+      (16/11/20 or 18/11/19). Queued on the track: the proper two-stage cut of a shared state's
+      zips by the level-0 shares; ★C, the rep pool against the district count; `centers.assign`
+      parking zero-mass zips; no DC–VA cell edge. The Map board check rides on these scenarios.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
