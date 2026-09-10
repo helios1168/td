@@ -56,7 +56,9 @@ stakeholders, each with a zip and wholesaler table and maps.
   (the n18 anchors likewise), so the joint cell and `--other-first` carry that rule.
 - Morning deliverables: `REVIEW.md` ranked, `grid.md`, the top plans in the app on 8503 (the
   labelled worktree app; 8502 is the hub's), `assignment.csv` / `districts.csv` /
-  `wholesalers.csv` per top cell, and `tools/verify/U14-fullprob/TIMINGS.md` updated.## Done
+  `wholesalers.csv` per top cell, and `tools/verify/U14-fullprob/TIMINGS.md` updated.
+
+## Done
 
 - 2026-09-10: worktree created and locked, branch `worktree-full-problem` from `main` `7325737`.
   Design settled (decisions log below). This file written.
@@ -71,9 +73,21 @@ stakeholders, each with a zip and wholesaler table and maps.
   composer `3c0d091`, per-bundle band with `--delta`, `--band-mode`, `--catch-all-bundle`
   `5352a09`, summary map `55c520e`. Then, from the smoke and probe cells (3 s per pass,
   `battery/results/full_problem/probe*_20260910/`): `--k-mode cap`, `--serve-all-states`,
-  the greedy's second fill `abe5d46`; `--other-floor` `4796208`; `--other-first` `863c5d3`.
-  Suite 743 pass, 0 fail. Grid `grid_20260910` launched at 12:00 UTC, 97 cells, concurrency
-  5, 180 s per pass, cross cells first; the hub State commit is `07839ed` (unmerged).## Decisions needed
+  the greedy's second fill `abe5d46`; `--other-floor` `4796208`; `--other-first` `863c5d3`,
+  its cover pass after contacts `0133173`; a parked zero-mass zip claims no cell outside its
+  district's states `359e076`, `30d758e`. Suite 743 pass, 0 fail. Grid `grid_20260910`
+  launched at 12:00 UTC, 97 cells, concurrency 5, 180 s per pass, cross cells first; the hub
+  State commit is `07839ed` (unmerged).
+- 2026-09-11 early: the twelve cross cells reviewed in `grid_20260910/REVIEW.md` (four
+  acceptable, one nice, the 5% cells rejected); the follow-up wave `grid_20260910_of/`
+  (`--other-first MT,WA,WY --other-floor 0.5`) gives the two plans to show first:
+  `X_n16w11f20_d100_d900n6_of` (48 districts, max extent 894 km, every state in a grouping)
+  and `X_n18w11f19_d100_d900n6_of` (49). Registered in the app store as
+  `x-n16w11f20-d10-cap900-allstates`, `x-n18w11f19-d10-cap900-allstates`,
+  `x-n16w11f20-d10-cap900`, `x-n18w11f19-d10-cap900`, `x-n16w11f20-d10-nocap`,
+  `x-n18w11f19-d10-nocap` (three members each, one per business channel).
+
+## Decisions needed
 
 Level-2 cross-bundle overlap (found by `plan_realise`, 2026-09-10): level 0's cover row is
 `≤ 1` per (state, channel) over all slots, so two bundles sharing a channel (WH and WH⁺, N and
