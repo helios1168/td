@@ -1,12 +1,17 @@
-"""geo.py -- ZCTA coordinates and a state basemap, cached under `data/geo/`.
+"""geo.py -- ZCTA coordinates, ZCTA polygons, and a state basemap.
 
-Two public Census files, fetched once and never re-fetched while the cache is present::
+Two public Census files, fetched once and never re-fetched while the cache under `data/geo/`
+is present::
 
     2020_Gaz_zcta_national.zip   ~1 MB    ZCTA5 -> internal point (lon, lat)
     cb_2020_us_state_20m.zip     ~700 KB  state boundaries, 1:20m generalised
 
-Both are public geography.  Nothing confidential goes into `data/geo/`, and nothing there is
-committed -- the directory is gitignored, and the download is the recipe.
+and one local-only file, never fetched (`zcta_polygons`, 822 MB, `docs/CODE_MAP.md`)::
+
+    tl_2025_us_zcta520.shp       ~822 MB  ZCTA5 -> real ZIP Code Tabulation Area polygon
+
+Both fetched files are public geography.  Nothing confidential goes into `data/geo/`, and
+nothing there is committed -- the directory is gitignored, and the download is the recipe.
 
 Projection is the same Lambert azimuthal equal-area the adjacency build used (data/README.md,
 EPSG:2163's parameters written out): `lat_0=45 lon_0=-100` on a sphere.  Equal-area matters
@@ -34,6 +39,20 @@ GAZ_TXT = "2020_Gaz_zcta_national.txt"
 
 STATES_URL = "https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_state_20m.zip"
 STATES_DIR = "cb_2020_us_state_20m"
+
+# 2025 TIGER/Line ZCTA520, local only -- 822 MB, not something to cache-fetch like the two
+# files above.  A module constant so a caller can point it at another vintage.  ZCTA5 codes are
+# re-delineated only once a decade, but the geometry is refined between releases (865/2,000
+# sampled 2025 polygons differ from 2020), so the vintage matters even though the codes don't.
+#
+# `data/` is gitignored and a worktree carries none (`CLAUDE.md`), so the repo-relative path
+# resolves only in a checkout that has the bundle; `TD_ZCTA_SHP` overrides, and the hub is the
+# fallback a worktree session lands on.  Absolute machine paths do not belong in the source, so
+# the fallback is the last resort rather than the default.
+ZCTA_REL = os.path.join("data", "tiger", "2025", "tl_2025_us_zcta520.shp")
+ZCTA_HUB = os.path.join(os.path.expanduser("~"), "projects", "td", ZCTA_REL)
+ZCTA_SHP = (os.environ.get("TD_ZCTA_SHP")
+            or (ZCTA_REL if os.path.exists(ZCTA_REL) else ZCTA_HUB))
 
 # EPSG:2163 written out; `+ellps=sphere` keeps it identical to the adjacency build's grid
 LAEA = "+proj=laea +lat_0=45 +lon_0=-100 +ellps=sphere"
@@ -142,6 +161,49 @@ def states_outline(dest: str = DEFAULT_DEST):
     shp = _cached_shapefile(dest, STATES_DIR, STATES_URL)
     gdf = gpd.read_file(shp)
     gdf = gdf[~gdf["STUSPS"].isin(NON_CONUS)]
+    return gdf.to_crs(LAEA)
+
+
+def zcta_polygons(zips, path: str = ZCTA_SHP) -> dict:
+    """`{zcta5: polygon}` in `LAEA`, from the local 2025 TIGER/Line ZCTA520 shapefile, restricted
+    to `zips`.
+
+    Subsets by `ZCTA5CE20` **before** reprojecting: reprojecting all 33,791 polygons costs about
+    3 s, subsetting first to the few thousand a table actually places costs a fraction of that.
+    Cached on `(path, zips)` (`_transformer`'s `functools.lru_cache` idiom, above), so a second
+    call in the same process with the same zip set costs nothing.
+
+    Unlike `zcta_points` and `states_outline`, the shapefile itself is never fetched: the bundle
+    is 822 MB, and it already lives locally (`docs/CODE_MAP.md`).  Raises `FileNotFoundError`
+    naming the expected path if it is absent, rather than silently falling back to anything else.
+
+    Keyed by the 5-character `ZCTA5CE20` code, zero-padded like `zcta_points` -- harmless on this
+    shapefile (`ZCTA5CE20` already ships zero-padded), but a `path` pointed at another vintage
+    could carry a numeric-typed code column, which would otherwise turn `01001` into `1001` and
+    fail every New England zip's lookup silently downstream instead of here.
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"ZCTA shapefile not found at {path!r} -- expected the 2025 TIGER/Line "
+            f"tl_2025_us_zcta520.shp bundle (ZCTA5CE20 column).  This file is local only, not "
+            f"cache-fetched like the gazetteer or the state shapefile.")
+    wanted = tuple(sorted({str(z).strip().zfill(5) for z in zips}))
+    gdf = _zcta_gdf(path, wanted)
+    return dict(zip(gdf["ZCTA5CE20"], gdf.geometry))
+
+
+@functools.lru_cache(maxsize=8)
+def _zcta_gdf(path: str, zips: tuple):
+    """The `ZCTA5CE20`/geometry rows of `path` whose code is in `zips`, reprojected to `LAEA`.
+
+    Split out from `zcta_polygons` only so `functools.lru_cache` can key on the exact `(path,
+    zips)` request -- `zcta_polygons` does the zero-padding and the `FileNotFoundError` first,
+    so the cache never holds a request that would have raised.
+    """
+    import geopandas as gpd
+    gdf = gpd.read_file(path, columns=["ZCTA5CE20"], engine="pyogrio")
+    gdf["ZCTA5CE20"] = gdf["ZCTA5CE20"].astype(str).str.strip().str.zfill(5)
+    gdf = gdf[gdf["ZCTA5CE20"].isin(zips)]
     return gdf.to_crs(LAEA)
 
 

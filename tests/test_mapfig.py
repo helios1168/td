@@ -258,6 +258,40 @@ def test_district_trace_is_outline_only_no_fill():
     assert district_trace.showlegend is False
 
 
+def test_figure_strokes_a_districts_hole_ring():
+    """A district's real gap (`geom["districts"]["D1"]["holes"]`, decision 1) must be drawn --
+    stroked in a second "D1" trace, never folded into the outline trace's own rings -- and that
+    trace must never become a click target (`app/tab_map.py` matches selections by trace name
+    against `mapfig.ZIPS`) or gain a fill (`staffed_figure`'s two fill sites are a different
+    function and untouched, but the hole trace itself must not fill either)."""
+    if plotly is None:
+        return
+    geom = _geom()
+    geom["districts"]["D1"] = dict(geom["districts"]["D1"],
+                                   holes=[[[0.5, 0.3], [1.0, 0.3], [1.0, 0.7], [0.5, 0.7],
+                                          [0.5, 0.3]]])
+    fig = mapfig.figure(_rows(), geom)
+    d1_traces = [t for t in fig.data if t.name == "D1"]
+    assert len(d1_traces) == 2, "expected one outline trace and one hole trace, both named D1"
+    hole_trace = d1_traces[1]
+
+    assert hole_trace.name != mapfig.ZIPS
+    assert hole_trace.mode == "lines"
+    assert hole_trace.fill is None
+    assert hole_trace.fillcolor is None
+    assert hole_trace.hoverinfo == "skip"
+    assert hole_trace.showlegend is False
+    assert 0.5 in hole_trace.x and 1.0 in hole_trace.x
+
+
+def test_figure_district_with_no_holes_gets_a_single_trace():
+    if plotly is None:
+        return
+    fig = mapfig.figure(_rows(), _geom())          # D1 has no "holes" key
+    d1_traces = [t for t in fig.data if t.name == "D1"]
+    assert len(d1_traces) == 1
+
+
 def test_staffed_figure_bbox_sets_axis_ranges():
     if plotly is None:
         return

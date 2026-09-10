@@ -294,14 +294,21 @@ def figure(
                 line=dict(color="#b0b0b0", width=0.8)))
 
         # District identity is now a thin outline only -- no fill, no legend entry (opportunity
-        # bins take the legend instead).
+        # bins take the legend instead).  A district's real gaps (`"holes"`, decision 1) are
+        # stroked the same way, never filled: `staffed_figure` fills district rings elsewhere,
+        # and a hole folded into those rings would render as a solid blob instead of a gap.
         for district, info in sorted(geom.get("districts", {}).items()):
+            colour = colours.get(district, info.get("color", "#888888"))
             dx, dy = _joined(info.get("rings", []))
-            if not dx:
-                continue
-            fig.add_trace(go.Scatter(
-                x=dx, y=dy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
-                line=dict(color=colours.get(district, info.get("color", "#888888")), width=1.2)))
+            if dx:
+                fig.add_trace(go.Scatter(
+                    x=dx, y=dy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
+                    line=dict(color=colour, width=1.2)))
+            hx, hy = _joined(info.get("holes", []))
+            if hx:
+                fig.add_trace(go.Scatter(
+                    x=hx, y=hy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
+                    line=dict(color=colour, width=1.2)))
 
     drawn = [row for row in rows if row["x"] is not None and row["y"] is not None]
     staff_lines = {d: _contest_line(staffing, d) for d in {r["district"] for r in drawn}}

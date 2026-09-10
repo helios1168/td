@@ -176,7 +176,7 @@ Drivers:
 |---|---|---|---|
 | draw | `run_draw.py <instance> --k K --seeds S --workers W --theta T --lam L --filler-capture F --geo-cache DIR --out RUN [--scenario FILE] [--lock-zips FILE]` | instance; optional `scenario.json` (fix/anchor pins); optional `locks.json` | `k<kk>/draw.csv`, `k<kk>/metrics.json` |
 | clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --engine {highs,scip,scipy} --strategy {portfolio,descent,direct} --primal-seconds S --threads N --no-fix-roots --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
-| geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--simplify M] [--no-basemap]` | a zip table | `geom.json`, in the run directory `--out` names |
+| geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--zcta-shp PATH] [--simplify M] [--no-basemap]` | a zip table; the local 2025 TIGER/Line ZCTA520 shapefile (`td.geo.ZCTA_SHP`, not fetched) | `geom.json`, in the run directory `--out` names |
 | staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
 | staff_and_split | `staff_and_split.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] [--multi D02:3,D07:4] [--exact] --time-limit N [--geom GEOM_JSON] --out RUN` | instance; a zip table; the run's `geom.json` when `--multi` is non-empty (its `cell_edges` make every split contiguous) | `staffing.json` (`staff.py`'s schema plus `split_districts`/`requested_multi`), `draw.csv` (rep filled per staffed district, per zip inside a split one) -- the composed driver `app/tab_reps.py`'s Reps tab actually launches, one call for every N=1 and N>1 district in scope |
 | rep_export | `rep_export.py <instance> --out DIR [--geo-cache DIR] [--simplify M] [--no-basemap]` | instance | `reps.json` |
@@ -238,23 +238,66 @@ to whichever engine actually ran, a phase named `"greedy"` or `"scip"` rather th
 `geom.json`:
 ```
 {"crs": "laea",
- "districts": {"D01": {"rings": [[[x,y],...],...], "color": "#rrggbb"}, ...},
+ "districts": {"D01": {"rings": [[[x,y],...],...], "color": "#rrggbb",
+                       "holes": [[[x,y],...],...]}, ...},
  "states": {"TX": {"rings": [[[x,y],...],...], "label": [x,y]}, ...},
- "cells": {"75201": {"rings": [[[x,y],...],...]}, ...},   # one Voronoi cell per placed zip
- "cell_edges": [["75201", "75202"], ...]}                  # rook adjacency of the cells
+ "cells": {"75201": {"rings": [[[x,y],...],...]}, ...},   # one real ZCTA polygon per placed zip
+ "cell_edges": [["75201", "75202"], ...],                  # rook adjacency of the Voronoi cells
+ "cell_graph_zips": ["75201", "75202", ...],                # the vertex set cell_edges is over
+ "cells_source": "tl_2025_us_zcta520.shp simplify=250m"}
 ```
-Coordinates are the table's own LAEA metres, rounded to a decimetre; rings are exterior only
-(holes dropped), simplified at 2000 m by default. Colours come from a generated 50-entry
-palette (25 hues at two lightness levels, laid out on a stride coprime with 25 so consecutive
-entries sit about 130 degrees apart), assigned over the adjacency read off the polygons
-themselves, so two districts sharing a border never share a hue. `cells` are the same Voronoi
-cells the districts dissolve from, so the rep maps can fill zips one by one; `cell_edges` is
-read off the unsimplified cells (a shared boundary of positive length, corner touches excluded)
-and stored rather than derived from the rings, because simplification treats each polygon
-alone and neighbours' simplified rings no longer coincide. Cells depend only on the zips'
-coordinates and states, never on the district labels, so every run of one instance carries
-the same cells. On the CONUS k=10 run the two keys take the file from about 120 KB to about
-880 KB and cost 0.3 s.
+Coordinates are the table's own LAEA metres, rounded to a decimetre; rings are simplified at
+2000 m by default for `districts`/`states`. Colours come from a generated 50-entry palette (25
+hues at two lightness levels, laid out on a stride coprime with 25 so consecutive entries sit
+about 130 degrees apart), assigned over the adjacency of the **Voronoi** dissolve, not the
+real-ZCTA one `districts` exports -- only the Voronoi dissolve tiles the land exactly, so only
+there does "intersects" reliably mean "shares a border" for every pair; on the live k=10
+instance the Voronoi dissolve gives 15 district-adjacent pairs and the ZCTA dissolve only 7, so
+colouring off the latter would let a touching pair share a hue. This keeps "two districts
+sharing a border never share a hue" true of what the map actually draws.
+
+`cells` are the real 2025 TIGER/Line ZCTA polygons (`td.geo.zcta_polygons`), simplified at a
+tighter 250 m; `districts` are the dissolve of those same real polygons, so a district's shape
+is the real union of its zips' ZCTAs -- unpopulated land, water and any gap between zips shows
+as a real gap, not tiled over to fill it. `cells_source` names the shapefile and the simplify
+tolerance actually used, so a stale `geom.json` is identifiable.
+
+**A district's `"holes"` are its real gaps, and they are deliberately not the same treatment as
+a donut ZCTA's own hole.** `districts[d]["rings"]` carries exterior rings only, one per polygon
+part (a district is legitimately multi-part: stage 1 is centre-based, so another district's
+zips can split it); a genuine interior gap in that district's own dissolve goes into a separate
+`"holes"` key instead, same simplify tolerance and rounding as `rings`, present only when the
+district has at least one (a hole-free district carries no `"holes"` key, not an empty list).
+This is deliberately **not** folded into `rings`: `app/mapfig.py`'s `staffed_figure` fills
+`districts[d]["rings"]` with `fill="toself"` at two call sites, and an interior ring mixed into
+`rings` there would render as a solid blob rather than a see-through gap. `app/mapfig.py`'s
+`figure()` is the one consumer that draws `"holes"` -- a second, outline-only trace per district
+with holes, same colour and width as that district's own outline trace, `hoverinfo="skip"` and
+`showlegend=False` so it can never become a click target (`app/tab_map.py` matches a selection
+by trace name against `mapfig.ZIPS`) -- which is what actually makes a real gap visible on the
+board. `cells` stays exterior-only regardless: a donut ZCTA's own hole is still not cut from its
+`cells` entry, because at 0.35 fill opacity a hole there is indistinguishable from its
+surroundings and cutting it would double `cells`' vertex count for nothing visible.
+
+**`cells` no longer means "this zip has a Voronoi cell".** `cell_edges` is a different graph:
+the rook adjacency of the **Voronoi** cells of the zips' centroids (a shared boundary of
+positive length, corner touches excluded), computed and exported exactly as before real ZCTA
+polygons replaced the Voronoi rings in `cells` -- `split_district.py`'s and
+`staff_and_split.py`'s contiguity guards are keyed to this graph, not to real ZCTA adjacency, so
+it cannot move when `cells` does. A consumer must build that graph's vertex set from
+`cell_graph_zips`, not by testing membership in `cells`: a zip whose point clips away to nothing
+on the 1:20m coastline has no Voronoi cell (so it is absent from `cell_graph_zips`) but can
+still have a real ZCTA (so it is present in `cells`), and a graph built off `cells` would admit
+it as an isolated, edge-less vertex -- which can make a downstream contiguity guard infeasible
+for no visible reason. The Voronoi cells that produce `cell_edges`/`cell_graph_zips` are never
+exported as rings. Cells depend only on the zips' coordinates, states and the ZCTA source, never
+on the district labels, so every run of one instance carries the same cells.
+
+Measured on the CONUS k=10 live run, after `td.geo.zcta_polygons` was made to subset by zip
+before reprojecting: `geom_export.export()` takes about 9.2 s, 5.8 s of it the `dissolve` phase
+now that it unions real ZCTA polygons instead of Voronoi ones; the `load` phase (`ziptable.read`,
+`geo.states_outline`, `geo.zcta_polygons`) takes about 1.3 s; 10.7 s wall for the whole driver.
+`geom.json` grows from about 0.91 MB to about 3.6 MB.
 
 `reps.json` (written by `tools/rep_export.py`, read by `app/repdata.py` and `app/mapfig.py`):
 ```
