@@ -38,6 +38,13 @@ Filler book arrives as the node attribute `S_free` and is *never* a candidate: a
 term for a vacancy would have the solver bargaining on behalf of an empty chair.  It is
 still real production, so it stays in the instance and every candidate capitalises it at a
 rate set by `nway.utilities(filler_capture=...)` -- see NWAY.md 6.7.
+
+Format 2 (`td_instance_descaled/2`) is the same file with the node table long by
+(zip, channel): one row per cell, with a `channel` column beside `m_rel`, `share` and
+`share_free`, which mean per cell exactly what they mean per zip in format 1.  The loader
+sums a zip's cells, so `M`, `S`, `S_free` and `cand` are what format 1 would carry for the
+summed row, and adds `M_c`, `S_c`, `S_free_c` for the split.  `Descaled.channels` names the
+channels in file order, and is empty on format 1.
 """
 from __future__ import annotations
 
@@ -48,6 +55,7 @@ from dataclasses import dataclass, field
 import networkx as nx
 
 FORMAT = "td_instance_descaled/1"
+FORMAT_V2 = "td_instance_descaled/2"
 
 
 @dataclass
@@ -59,6 +67,7 @@ class Descaled:
     untapped: list = field(default_factory=list)     # no sales at all
     firm: dict = field(default_factory=dict)         # rep -> firm label
     meta: dict = field(default_factory=dict)
+    channels: tuple[str, ...] = ()                   # format 2 only; () on format 1
 
     @property
     def reps(self) -> list:
@@ -77,6 +86,44 @@ class Descaled:
         return sorted(self.vacant + self.untapped)
 
 
+def _zip_rows(zips, m_rel, shares, states, free):
+    """Format 1: one row per zip, put into model units (`S_i = s_i * m_rel`)."""
+    for z, m, sh, st, fr in zip(zips, m_rel, shares, states, free):
+        m = float(m)
+        yield z, m, {rep: float(s) * m for rep, s in sh.items()}, float(fr or 0.0) * m, st, {}
+
+
+def _fold_cells(path, zips, chan, m_rel, shares, states, free):
+    """Format 2: sum each zip's (zip, channel) cells, keeping the per-channel split.
+
+    Every quantity the model reads is additive over cells, so a zip's totals are exactly
+    what format 1 carries for the summed row.  The breakdown rides along as the node
+    attributes `M_c`, `S_c` and `S_free_c`, each keyed by the channels that zip has.
+    """
+    M, S, S_free, state = {}, {}, {}, {}
+    M_c, S_c, S_free_c = {}, {}, {}
+    for z, c, m, sh, st, fr in zip(zips, chan, m_rel, shares, states, free):
+        m = float(m)
+        f = float(fr or 0.0) * m
+        if z not in M:
+            M[z], S[z], S_free[z], state[z] = 0.0, {}, 0.0, ""
+            M_c[z], S_c[z], S_free_c[z] = {}, {}, {}
+        if c in M_c[z]:
+            raise ValueError(f"{path}: zip {z} carries channel {c!r} twice")
+        M[z] += m
+        S_free[z] += f
+        if st and not state[z]:
+            state[z] = st
+        M_c[z][c], S_free_c[z][c] = m, f
+        for rep, s in sh.items():
+            v = float(s) * m
+            S[z][rep] = S[z].get(rep, 0.0) + v
+            S_c[z].setdefault(rep, {})[c] = v
+    for z in M:
+        yield (z, M[z], S[z], S_free[z], state[z],
+               dict(M_c=M_c[z], S_c=S_c[z], S_free_c=S_free_c[z]))
+
+
 def load_descaled(path, keep_untapped: bool = True) -> Descaled:
     """Read `instance_descaled.json.gz` into the N-way graph schema (`cand`, `S`, `M`)."""
     opener = gzip.open if str(path).endswith(".gz") else open
@@ -84,8 +131,8 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
         obj = json.load(fh)
 
     fmt = obj.get("format")
-    if fmt != FORMAT:
-        raise ValueError(f"{path}: format {fmt!r}, expected {FORMAT!r}")
+    if fmt not in (FORMAT, FORMAT_V2):
+        raise ValueError(f"{path}: format {fmt!r}, expected {FORMAT!r} or {FORMAT_V2!r}")
 
     n = obj["nodes"]
     zips, m_rel, shares = n["z"], n["m_rel"], n["share"]
@@ -94,21 +141,30 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
     if not (len(zips) == len(m_rel) == len(shares) == len(states) == len(free)):
         raise ValueError(f"{path}: node columns have mismatched lengths")
 
+    if fmt == FORMAT_V2:
+        chan = n["channel"]
+        if len(chan) != len(zips):
+            raise ValueError(f"{path}: node columns have mismatched lengths")
+        channels = tuple(dict.fromkeys(chan))
+        rows = _fold_cells(path, zips, chan, m_rel, shares, states, free)
+    else:
+        channels = ()
+        rows = _zip_rows(zips, m_rel, shares, states, free)
+
     G = nx.Graph()
     contested, uncontested, vacant, untapped = [], {}, [], []
-    for z, m, sh, st, fr in zip(zips, m_rel, shares, states, free):
-        m = float(m)
-        S = {rep: float(s) * m for rep, s in sh.items()}       # S_i = s_i * m_rel
+    for z, m, S, s_free, st, extra in rows:
         cand = tuple(sorted(S))
-        attrs = dict(cand=cand, S=S, M=m, S_free=float(fr or 0.0) * m)
+        attrs = dict(cand=cand, S=S, M=m, S_free=s_free)
         if st:
             attrs["state"] = st
+        attrs.update(extra)
         G.add_node(z, **attrs)
         if len(cand) >= 2:
             contested.append(z)
         elif len(cand) == 1:
             uncontested[z] = cand[0]
-        elif attrs["S_free"] > 0:
+        elif s_free > 0:
             vacant.append(z)
         else:
             untapped.append(z)
@@ -124,7 +180,8 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
     return Descaled(G=G, contested=sorted(contested),
                     uncontested=dict(sorted(uncontested.items())),
                     vacant=sorted(vacant), untapped=sorted(untapped),
-                    firm=dict(obj.get("firm") or {}), meta=dict(obj.get("meta") or {}))
+                    firm=dict(obj.get("firm") or {}), meta=dict(obj.get("meta") or {}),
+                    channels=channels)
 
 
 def check_descaled(d: Descaled, theta: float = 0.40) -> list:
