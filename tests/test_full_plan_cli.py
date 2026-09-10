@@ -224,9 +224,10 @@ def _check_plan(out: str) -> dict:
     assert plan["state_list"] == STATES
     for rec in plan["slots"]:
         assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y", "L", "U",
-                            "center", "extent_km", "radius_km"}
+                            "band_hi", "center", "extent_km", "radius_km"}
+        assert rec["band_hi"] >= rec["U"] - 1e-6, rec
         if rec["used"]:
-            assert rec["L"] - 1e-6 <= rec["mass"] <= rec["U"] + 1e-6, rec
+            assert rec["L"] - 1e-6 <= rec["mass"] <= rec["band_hi"] + 1e-6, rec
     ids = [rec["id"] for rec in plan["slots"]]
     assert len(ids) == len(set(ids)), "slot ids must be unique across stages"
 
@@ -1381,9 +1382,10 @@ def _shares(row: dict) -> dict:
 
 def test_max_splits_caps_a_state_s_slots_per_stage():
     """Without the cap, S3 (mass 2) splits between two of route joint's one stage's slots;
-    with `--max-splits S3=1` it holds at most one, params.json records the cap, and the
-    greedy warm start, which knows nothing about `--max-splits`, is free to fail and fall
-    back to a cold solve (a `warm_start_failed` pass-log entry, not a test failure)."""
+    with `--max-splits S3=1` it holds at most one, params.json records the cap.  The greedy
+    warm start now reads `max_splits` back from the row itself, so it keeps S3 to the cap on
+    its own rather than failing `check_point` and falling back to a cold solve, at the cost of
+    leaving 0.8 of S3's mass unfilled (what `--band-break` is for)."""
     with tempfile.TemporaryDirectory() as tmp:
         plain = _run_4state(tmp)
         with open(os.path.join(plain, "plan.json"), encoding="utf-8") as fh:
@@ -1400,10 +1402,40 @@ def test_max_splits_caps_a_state_s_slots_per_stage():
             n_slots = len(_shares(plan["per_state"][st]))
             cap = 1 if st == "S3" else len(plan["slots"])
             assert n_slots <= cap, (st, n_slots)
-        assert any(p["name"] == "greedy" and p["status"] == "warm_start_failed"
-                   for p in plan["passes"]), plan["passes"]
+        greedy = next(p for p in plan["passes"] if p["name"] == "greedy")
+        assert greedy["status"] == "warm_start", "the greedy itself now honours the cap"
+        assert sum(_shares(plan["per_state"]["S3"]).values()) < 1.0 - 1e-6, \
+            "S3's excess mass is left unfilled without --band-break"
 
     # unset, params.json carries an empty dict rather than null
     with tempfile.TemporaryDirectory() as tmp:
         with open(os.path.join(_run_4state(tmp), "params.json"), encoding="utf-8") as fh:
             assert json.load(fh)["max_splits"] == {}
+
+
+def test_band_break_needs_max_splits_and_reaches_params_and_plan():
+    """`--band-break` for a state not also named in `--max-splits` is refused, since the
+    allowance is derived from that state's own cap.  With both flags, S3's allowance
+    (`W_S3 / cap - tau_B = 2/1 - 1.0 = 1.0`) lets its one capped slot take the whole 2 units
+    instead of stopping at U, filling the 0.8 `--max-splits` alone left unfilled; params.json
+    records the allowance, and every used slot in plan.json carries `band_hi`."""
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run_4state(tmp, ["--band-break", "s3"])
+            raise AssertionError("expected a ValueError: S3 is not in --max-splits")
+        except ValueError:
+            pass
+
+        out = _run_4state(tmp, ["--max-splits", "s3=1", "--band-break", "s3"])
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["band_break"] == {"states": ["S3"], "allowance": {"joint": {"S3": 1.0}}}
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        used = [rec for rec in plan["slots"] if rec["used"]]
+        assert used and all(rec["band_hi"] >= rec["U"] - 1e-6 for rec in used)
+        assert any(rec["band_hi"] > rec["U"] + 1e-6 for rec in used), \
+            "the slot touching S3 should have its band_hi raised past U"
+        # S3's whole mass now fits in its one allowed slot, not the 0.6 the cap alone left
+        assert abs(sum(_shares(plan["per_state"]["S3"]).values()) - 1.0) < 1e-6

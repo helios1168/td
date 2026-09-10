@@ -641,6 +641,39 @@ def max_splits(problem: Level0Problem, caps: dict[str, int]) -> Level0Problem:
         ub=np.concatenate([problem.ub, ub]), rows=names)
 
 
+def band_break(problem: Level0Problem, allowance: dict[str, float]) -> Level0Problem:
+    """A copy of `problem` where, for each state `s` named in `allowance` and present in
+    `problem.state_list` with a positive allowance `a_s`, the upper band row (`band_hi`)
+    gains the term `- a_s z_sj` on every slot `j`: with `z_sj = 1` the row reads
+    `sum_s W_sj y_sj <= U_j + a_s`, so a slot in contact with `s` may carry `a_s` past `U_j`
+    (and `a_s + a_t` when it also contacts a second such state; the two allowances simply add).
+    `band_lo` is untouched. A non-positive allowance, or a state `problem.state_list` does not
+    carry, is ignored, the same rule `max_splits` uses.
+
+    `band_hi` already exists as its own row block (`build_level0` bands each slot with a
+    `band_lo` and a `band_hi` row rather than one ranged row), so this edits that block's data
+    in place rather than adding a row; every row name in `problem.rows` is unchanged.  The
+    edit only relaxes the bound a feasible point already satisfies (`z_sj` can only add
+    non-positive terms to the row's value at `z_sj = 1` and none at `z_sj = 0`), so a point
+    that passes `check_point` against `problem` still passes it against the result.
+    """
+    idx = {code: i for i, code in enumerate(problem.state_list)}
+    states = [(idx[code], float(a)) for code, a in allowance.items()
+             if code in idx and float(a) > 0.0]
+    if not states:
+        return problem
+    lo, hi = problem.rows["band_hi"]
+    K = problem.k
+    if hi - lo != K:
+        raise ValueError(f"band_hi has {hi - lo} rows, expected {K}")
+    rows = np.concatenate([np.arange(K) for _ in states])
+    cols = np.concatenate([problem.off_z + s * K + np.arange(K) for s, _ in states])
+    data = np.concatenate([np.full(K, -a / problem.tau) for _, a in states])
+    delta = sparse.coo_matrix((data, (lo + rows, cols)),
+                              shape=problem.A.shape).tocsc()
+    return dataclasses.replace(problem, A=(problem.A + delta).tocsc())
+
+
 def _var_name(problem: Level0Problem, i: int) -> str:
     S, K = problem.n_state, problem.k
     for name, off in (("z", problem.off_z), ("y", problem.off_y), ("r", problem.off_r)):
@@ -727,9 +760,15 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     that reaches its target from no seed stays unused, and so does the rest of its bundle
     (the `u` ordering).
 
-    Honoured along the way: `cap_n` and `cap_dist`, read back from the rows, and every `z`,
-    `y` and `r` bound (anchors, `forbid_bundle`, `fix_roots`, `bound_z`; a `z` with
-    `var_ub = 0` is never entered).  `radius_max` is honoured from the slot's root, or from the
+    Honoured along the way: `cap_n`, `cap_dist` and `max_splits`, read back from the rows, and
+    every `z`, `y` and `r` bound (anchors, `forbid_bundle`, `fix_roots`, `bound_z`; a `z` with
+    `var_ub = 0` is never entered).  A state named in `max_splits` may not enter a slot once
+    it already touches its cap's worth of committed slots (only slots already in `plan`
+    count; growing that same slot further is never a new entry, so the count only rises when
+    the slot itself is finished).  The same rule applies in the `serve` pass below.  The
+    greedy leaves a capped state's excess mass unfilled: `max_splits`'s own row still holds it
+    in the MILP, and a relaxed band (`band_break`) is what gives that excess somewhere to go.
+    `radius_max` is honoured from the slot's root, or from the
     seed when the slot has none: the model only carries a diameter bound there, so the greedy
     is the stricter of the two and its point stays feasible.  A state outside the radius is not
     a bridge either -- it cannot be in the slot at all, so the BFS stops rather than passing
@@ -794,15 +833,34 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     radius = problem.radius_max
     xy = np.asarray(problem.state_xy, float).reshape(S, -1) if radius is not None else None
 
+    # `max_splits`: one row per capped state, its non-zero columns that state's own `z`
+    # column over every slot (`max_splits`'s own layout).  Read the state index and its cap
+    # back the way `cap_n` and `cap_dist` are, above.
+    splits_cap: dict[int, int] = {}
+    if "max_splits" in problem.rows:
+        lo_m, hi_m = problem.rows["max_splits"]
+        cap_rows = problem.A.tocsr()[lo_m:hi_m]
+        for i in range(hi_m - lo_m):
+            cols = cap_rows.indices[cap_rows.indptr[i]:cap_rows.indptr[i + 1]]
+            splits_cap[int((cols[0] - off_z) // K)] = int(round(problem.ub[lo_m + i]))
+
     rem = problem.cover_ub.copy()
     has = problem.slot_has
 
     def avail(s, j):
         return float(min(rem[s, has[j]].min(), y_ub[s, j]))
 
+    def touches(s):
+        """How many slots already committed to `plan` contact state `s`; a slot still being
+        grown for a trial is not yet in `plan`, so re-entering it is never counted as new."""
+        return sum(1 for chosen, _, _ in plan.values() if s in chosen)
+
     def allowed(s, j):
-        return z_ub[s, j] >= one and (not anchored[s] or z_lb[s, j] >= one
-                                      or pending[s] == 0)
+        if not (z_ub[s, j] >= one and (not anchored[s] or z_lb[s, j] >= one
+                                       or pending[s] == 0)):
+            return False
+        cap = splits_cap.get(s)
+        return cap is None or touches(s) < cap
 
     def grow(j, seed, stop, land, cap):
         """BFS from `seed`: `(ok, {s: y}, mass, split state or None)`.  Whole shares until

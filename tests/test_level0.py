@@ -559,6 +559,16 @@ def test_greedy_plan_splits_a_state_between_consecutive_slots():
     assert_bands_and_contiguity(prob, dict(u=x[prob.off_u:] > 0.5, masses=masses, z=z))
 
 
+def test_greedy_plan_honours_max_splits():
+    """The fixture above has the greedy split state 1 between two slots on its own; capping
+    state 1 at one slot must change the greedy's own choice, not leave `check_point` (called
+    inside `greedy_plan` itself) to catch an infeasible point."""
+    prob = build0([0.7, 0.7, 0.7, 0.7, 0.0, 0.0])
+    capped = level0.max_splits(prob, {"S1": 1})
+    x, seeds, z, y, masses = _greedy(capped)        # raises if greedy_plan's own point fails
+    assert int(z[1].sum()) <= 1
+
+
 def test_fixed_used_slots_are_used_in_every_pass_or_the_pass_is_infeasible():
     """`fixed_used={"A": 2}` pins `u_0 = u_1 = 1`: both slots are used after every pass, the
     cover is at least `2L`, and the `u` ordering row between slot 0 and slot 1 is gone.  A
@@ -653,6 +663,35 @@ def test_max_splits_caps_how_many_slots_a_state_may_touch():
             raise AssertionError(f"expected a ValueError for {bad}")
         except ValueError:
             pass
+
+
+def test_band_break_lets_a_slot_touching_the_capped_state_exceed_u():
+    """State 0 alone carries 1.4, more than `U = 1.2`; state 5's 1.0 sits three zero-mass
+    states away and never shares a slot with it.  Capping state 0 at one slot blocks the
+    second slot that would otherwise finish covering it, so 0.2 of its mass goes uncovered;
+    `band_break` lets the one allowed slot reach `U + 0.2` instead, at no cost to state 5's
+    own slot, which a state 0 allowance never touches."""
+    prob = build0([1.4, 0.0, 0.0, 0.0, 0.0, 1.0])
+    capped = level0.max_splits(prob, {"S0": 1})
+    out = run(capped, [level0.cover_pass(capped, ["A"])])
+    covered_s0 = float(out["y"][0].sum())
+    assert covered_s0 < 1.0 - 1e-6              # state 0's mass cannot all fit in one slot
+
+    loosened = level0.band_break(capped, {"S0": 0.2})
+    assert set(loosened.rows) == set(capped.rows)          # no row added or renamed
+    out2 = run(loosened, [level0.cover_pass(loosened, ["A"])])
+    covered_s0_2 = float(out2["y"][0].sum())
+    assert abs(covered_s0_2 - 1.0) < 1e-6 and covered_s0_2 > covered_s0 + 1e-6
+
+    j0 = int(np.flatnonzero(out2["z"][0])[0])
+    j5 = int(np.flatnonzero(out2["z"][5])[0])
+    assert j5 != j0
+    assert out2["masses"][j0] > prob.U + 1e-6, "the allowed slot actually exceeded U"
+    assert out2["masses"][j5] <= prob.U + 1e-6, "a slot with no contact with S0 stays at U"
+
+    # a non-positive allowance and a state the problem does not carry are both ignored
+    assert level0.band_break(capped, {"S0": 0.0}) is capped
+    assert level0.band_break(capped, {"ZZ": 5.0}) is capped
 
 
 def test_a_pass_that_returns_nothing_carries_the_log_out_on_the_exception():

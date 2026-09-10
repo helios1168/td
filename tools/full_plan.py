@@ -266,6 +266,11 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="cap how many districts a state may be cut into, per business stage "
                          "(e.g. CA=3,TX=2,NY=3); a state not named is uncapped, and a state "
                          "a stage does not carry is ignored there (default none)")
+    ap.add_argument("--band-break", type=_parse_states, default=None, metavar="ST,ST,...",
+                    help="let a district touching one of these states exceed U rather than "
+                         "leave the cap's excess mass unserved: the allowance is derived from "
+                         "the state's own --max-splits cap, so every state named here must "
+                         "also be named there (default none)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
     ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
@@ -437,7 +442,7 @@ def _coverage(y: np.ndarray, bundle_of, channel_idx: dict[str, int]) -> np.ndarr
 
 
 def _slot_records(problem, result, state_list: list[str], next_id: int, *,
-                  state_xy=None, roots=None) -> list[dict]:
+                  state_xy=None, roots=None, allowance=None) -> list[dict]:
     """One record per slot of this solve, with a plan-wide id.
 
     `L` and `U` are the band this slot was actually held to, its bundle's own under
@@ -449,6 +454,10 @@ def _slot_records(problem, result, state_list: list[str], next_id: int, *,
     null without `state_xy` (a geo cache with no state polygons), and `center` and `radius_km`
     are null for a slot with no known centre -- under `--driver reps` a move re-solves the
     contacts and the stage's seed may no longer be one of them.
+
+    `band_hi` is the upper bound the slot was actually held to: `U` plus the `--band-break`
+    allowance of every state in `allowance` the slot contacts (`allowance` empty or `None`
+    leaves `band_hi == U`).
     """
     z = np.asarray(result["z"])
     y = np.asarray(result["y"], float)
@@ -456,6 +465,7 @@ def _slot_records(problem, result, state_list: list[str], next_id: int, *,
     masses = np.asarray(result["masses"], float)
     xy = None if state_xy is None else np.asarray(state_xy, float)
     roots = roots or {}
+    idx = {code: i for i, code in enumerate(state_list)}
     out = []
     for j in range(problem.k):
         shares = {state_list[s]: round(float(y[s, j]), 6)
@@ -469,10 +479,12 @@ def _slot_records(problem, result, state_list: list[str], next_id: int, *,
                                          .sum(axis=2)).max()), 3)
             if root is not None:
                 radius = round(float(np.sqrt(((pts - xy[root]) ** 2).sum(axis=1)).max()), 3)
+        band_hi = float(problem.U_j[j]) + sum(a for st, a in (allowance or {}).items()
+                                              if idx.get(st) is not None and z[idx[st], j])
         out.append(dict(id=f"P{next_id + j:03d}", bundle=_bundle_name(problem.bundle_of[j]),
                         used=bool(u[j]), mass=float(masses[j]),
                         contacts=int(z[:, j].sum()), y=shares,
-                        L=float(problem.L_j[j]), U=float(problem.U_j[j]),
+                        L=float(problem.L_j[j]), U=float(problem.U_j[j]), band_hi=band_hi,
                         center=None if root is None else state_list[root],
                         extent_km=extent, radius_km=radius))
     return out
@@ -626,8 +638,37 @@ def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mod
     return {b: (rec["L"], rec["U"]) for b, rec in record.items()}, record
 
 
+def _band_break_allowance(cells, bundle_names, bands, L, U, states, caps, cidx):
+    """`--band-break`'s per-state allowance for one stage: `({state: a_s}, U_B)`, `U_B` the
+    band the allowance was read off, for the caller's log line.  The allowance dict covers the
+    states in `states` (assumed a subset of `caps`'s keys, checked once in `_main`) that this
+    stage's `cells.state_list` carries and whose `a_s > 0`.
+
+    `a_s = max(0, W_s / caps[s] - tau_B)`: `tau_B` the midpoint of `[L_B, U_B]`, the band of
+    the bundle with the largest `U_B` this stage carries (`bands` is `None` under the global
+    band, so every bundle shares `(L, U)` and any one of them will do); `W_s` state `s`'s own
+    total mass over that bundle's channels, `cells.M`'s own raw totals, since the cap this
+    allowance answers to counts districts, a fixed number that does not shrink as `prior`
+    fills in.
+    """
+    bname = max(bundle_names, key=lambda b: (bands or {}).get(b, (L, U))[1])
+    L_B, U_B = (bands or {}).get(bname, (L, U))
+    tau_B = (L_B + U_B) / 2.0
+    chan_idx = [cidx[c] for c in _bundle_channels(bname)]
+    idx = {code: i for i, code in enumerate(cells.state_list)}
+    M = np.asarray(cells.M, float)
+    allowance = {}
+    for st in states:
+        if st not in idx:
+            continue
+        a_s = max(0.0, float(M[idx[st], chan_idx].sum()) / caps[st] - tau_B)
+        if a_s > 0.0:
+            allowance[st] = a_s
+    return allowance, U_B
+
+
 def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None,
-           serve=None, max_used=None):
+           serve=None, max_used=None, allowance=None):
     """`build_level0` with the driver's own switches applied.
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
@@ -638,6 +679,10 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     applies to the bundles this model carries; a named bundle in another stage's model is
     that stage's business.  `--max-splits` is applied last, over every slot this model
     carries, so the cap holds per business stage rather than across the whole plan.
+    `allowance` is `--band-break`'s per-state allowance for this stage (`_band_break_allowance`
+    in the caller, computed once per stage since it does not depend on which of a stage's
+    several builds this is); applied last of all, after `max_splits`, so the relaxed band
+    matches the caps that actually bind here.
     """
     from td.solvers import level0
 
@@ -656,7 +701,10 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     # `--max-splits`: caps how many of this stage's own slots a state may sit in.  Applied to
     # every stage's own model, so the cap holds per business stage rather than across the plan.
     caps = getattr(args, "max_splits", None)
-    return level0.max_splits(problem, caps) if caps else problem
+    problem = level0.max_splits(problem, caps) if caps else problem
+    # `--band-break`: lets a slot touching one of the capped states named there carry that
+    # state's allowance past U, so the cap's excess mass has somewhere to go.
+    return level0.band_break(problem, allowance) if allowance else problem
 
 
 def _print_slots(problem, stage: str) -> None:
@@ -713,7 +761,7 @@ def _z_fix_away(problem, z: np.ndarray, keep: set[int]) -> None:
 
 
 def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, next_id,
-               T, state_xy=None) -> tuple[list[dict], dict]:
+               T, state_xy=None, allowance=None) -> tuple[list[dict], dict]:
     """The per-state moves {keep, merge WH+FI, drop N}, scored by state-level stage 2.
 
     A move only re-solves the last model, but the score is the whole plan's: the rep
@@ -723,6 +771,10 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
     Kept deliberately simple: one neighbourhood re-solve of the contacts pass per move, the
     best move applied to the running problem, states visited in descending total mass and cut
     at `--move-budget`.  Wave 3 tunes the order and the neighbourhood.
+
+    `allowance` is the last stage's own `--band-break` allowance (`run_stage` stashes it on
+    `last`), passed through to every `_slot_records` call here so a slot a move keeps or
+    re-solves still reports the `band_hi` it was actually built to, not a bare `U`.
     """
     from td import stage2_state
     from td.solvers import level0
@@ -803,7 +855,7 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
                                               time_limit=args.time_limit,
                                               threads=args.threads)
                 trial_slots = _slot_records(trial, out, state_list, next_id,
-                                            state_xy=state_xy)
+                                            state_xy=state_xy, allowance=allowance)
                 value = score(trial_slots)
             except (ss.SolveFailure, ValueError) as exc:
                 # no map under the forbid, or a slot the move leaves unstaffable.  A pin
@@ -827,7 +879,8 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
         if accepted:
             applied.extend((s, b) for b in forbidden)
             result = out
-            base_slots = _slot_records(trial, out, state_list, next_id, state_xy=state_xy)
+            base_slots = _slot_records(trial, out, state_list, next_id, state_xy=state_xy,
+                                       allowance=allowance)
             best_value = value
 
     return log, dict(problem=problem, result=result, slots=base_slots)
@@ -968,6 +1021,12 @@ def _main(args, T: telemetry.Timings) -> int:
     if args.max_splits:
         print("max splits: " + ", ".join(f"{st} {n}" for st, n in args.max_splits.items()),
               flush=True)
+    if args.band_break:
+        bad = [st for st in args.band_break if st not in (args.max_splits or {})]
+        if bad:
+            raise ValueError(f"--band-break names state(s) {bad} not in --max-splits: the "
+                             f"allowance is derived from the state's own cap")
+        print(f"band break: {', '.join(args.band_break)}", flush=True)
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
@@ -992,7 +1051,7 @@ def _main(args, T: telemetry.Timings) -> int:
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
-        other_first=args.other_first, max_splits=args.max_splits or {},
+        other_first=args.other_first, max_splits=args.max_splits or {}, band_break={},
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -1008,6 +1067,7 @@ def _main(args, T: telemetry.Timings) -> int:
     moves: list[dict] = []
     anchor_log: list[dict] = []
     band_records: dict[str, dict] = {}
+    band_break_records: dict[str, dict] = {}
     last = None
 
     def run_stage(stage: str, bundle_names, cover_groups) -> None:
@@ -1067,9 +1127,22 @@ def _main(args, T: telemetry.Timings) -> int:
                                status="skipped", seconds=0.0, stage=stage, slots=0))
             last = None            # no model to move on, and no slots to report
             return
+        # `--band-break`: one allowance per named state, read off this stage's own bundles and
+        # its own `--max-splits` cap, since neither changes between this stage's rebuilds below
+        allowance = {}
+        if args.band_break:
+            allowance, bb_U = _band_break_allowance(
+                cells, bundle_names, bands, L, U, args.band_break, args.max_splits, cidx)
+            if allowance:
+                print(f"{stage}: band break "
+                      + ", ".join(f"{st} +{a:.6g} (U {bb_U:.6g} -> {bb_U + a:.6g})"
+                                  for st, a in allowance.items()), flush=True)
+                band_break_records[stage] = {st: round(float(a), 6)
+                                             for st, a in allowance.items()}
         with T.phase("build"):
             problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
-                             prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
+                             prior=prior.copy(), anchors=None, D=None, state_xy=state_xy,
+                             allowance=allowance)
         anchors, D = None, None
         seed_centres = args.centers == "seeds"
         if "N" in problem.slots and (args.incumbency or (args.centers and not seed_centres)):
@@ -1084,7 +1157,8 @@ def _main(args, T: telemetry.Timings) -> int:
                 D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
             with T.phase("build"):
                 problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
-                                 prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
+                                 prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy,
+                                 allowance=allowance)
         _print_slots(problem, stage)
         anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j], state=state_list[s],
                                slot=j, source="incumbency") for s, j in (anchors or ()))
@@ -1093,10 +1167,12 @@ def _main(args, T: telemetry.Timings) -> int:
         # greedy, the seeds every used slot is anchored and rooted at.  `--centers seeds` needs
         # the seeds too, whatever the other two flags say, or it would silently run no
         # compactness pass.  A build that fails is recorded and the stage solves cold: a
-        # multi-hour run must not die on its start.  `greedy_plan` does not know about
-        # `--max-splits`, so a greedy point that would split a capped state past its cap fails
-        # `check_point`'s own row check and is caught here like any other greedy failure; the
-        # stage then solves cold, and the MILP itself holds the cap from the `max_splits` row.
+        # multi-hour run must not die on its start.  `greedy_plan` reads `--max-splits` back
+        # from the `max_splits` row itself now, so a capped state's excess mass is simply left
+        # unfilled rather than failing `check_point`; a build can still fail here for an
+        # unrelated reason (an anchor the greedy cannot connect, say), and the stage then
+        # solves cold as before.  The greedy never tries to fill a capped state's excess mass;
+        # `--band-break` is what gives the MILP somewhere to put it.
         warm, warm_s, seeds = None, 0.0, None
         if stage not in ("other_first", "all_last") and ("greedy" in (args.warm, args.anchor)
                                                           or seed_centres):
@@ -1133,7 +1209,8 @@ def _main(args, T: telemetry.Timings) -> int:
             anchors = list(anchors or ()) + extra
             with T.phase("build"):
                 problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
-                                 prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
+                                 prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy,
+                                 allowance=allowance)
                 if extra:
                     problem = me.fix_roots(problem, extra)
             anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j],
@@ -1156,7 +1233,7 @@ def _main(args, T: telemetry.Timings) -> int:
                              args, stage, T, warm=warm, warm_seconds=warm_s)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1,
-                             state_xy=state_xy, roots=centre_of)
+                             state_xy=state_xy, roots=centre_of, allowance=allowance)
         slots.extend(recs)
         passes.extend(result["passes"])
         # `covered` is this solve's own coverage; `residual` is `(1 - prior) - covered`, so
@@ -1166,7 +1243,8 @@ def _main(args, T: telemetry.Timings) -> int:
                if cov is not None and np.shape(cov) == (n_state, len(channel_list))
                else _coverage(np.asarray(result["y"], float), problem.bundle_of, cidx))
         prior = np.clip(prior + cov, 0.0, 1.0)
-        last = dict(problem=problem, unpinned=unpinned, result=result, slots=recs)
+        last = dict(problem=problem, unpinned=unpinned, result=result, slots=recs,
+                   allowance=allowance)
 
     groups = [g for g in priority if any(b in enabled for b in STAGE_BUNDLES[g])]
     # the last stage that can still serve a state: the joint model, else the last channel
@@ -1192,7 +1270,7 @@ def _main(args, T: telemetry.Timings) -> int:
         with T.phase("moves"):
             moves, last = _rep_moves(last["problem"], last["result"], cells, state_list, edges,
                                      args, slots[:head], last["slots"], head + 1, T,
-                                     state_xy=state_xy)
+                                     state_xy=state_xy, allowance=last.get("allowance"))
         slots = slots[:head] + last["slots"]
 
     if args.catch_all:
@@ -1244,6 +1322,9 @@ def _main(args, T: telemetry.Timings) -> int:
     # the per-bundle bands are only known once each stage has read the mass left to it, so the
     # record is completed here
     params["bands"] = band_records
+    if args.band_break:
+        params["band_break"] = {"states": sorted(args.band_break),
+                                "allowance": band_break_records}
     with open(os.path.join(args.out, "params.json"), "w", encoding="utf-8") as fh:
         json.dump(params, fh, indent=2, default=float)
         fh.write("\n")
