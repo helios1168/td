@@ -44,6 +44,29 @@ stakeholders, each with a zip and wholesaler table and maps.
   Pushing is denied to the session; the user pushes `worktree-full-problem` in the morning.
 - If the runner dies: relaunch with `--resume`. If a cell fails, its `step_*.log` says why;
   fix once, `--resume`.
+- State at the 2026-09-10 late checkpoint (head `04074a9` plus this): committed and green
+  are the loader, exporter, channels, stage 2 at state grain, level 0 with greedy warm start,
+  fixed counts, anchors, seed compactness and radius cap, the driver with `cover_merged`,
+  cover slack on route R moves, `--committed-instance`, the portfolio fix, `plan_realise`
+  with cell-graph contiguity repair, `plan_to_app`, `merge_candidates`. The grid cells file
+  is written: `battery/results/full_problem/grid_20260910/cells.json`, 97 cells (84 stage
+  cells one channel each at k and δ, 12 cross-channel with six bundles and the all-channel
+  catch-all, 1 joint reference), η 0.05, `centers seeds`, `band_mode per-bundle`.
+  Agents still running when this was written, each to be committed on its report:
+  (1) level0/full_plan: per-bundle band, `--delta`, `--band-mode`, `--catch-all-bundle`;
+  (2) app: channel token in member names, Map tab caption, plus and merged hatched, members
+  per business channel, re-registration of the three scenarios, the app on port 8503;
+  (3) `tools/full_grid.py` and `tools/plan_maps.py` (panels per business channel, hatch);
+  (4) `tools/plan_summary.py` (structure map plus three channel panels);
+  (5) `tools/plan_compose.py` (assemble a plan from stage runs, joint staffing).
+  Then: one smoke cell at 120 s per pass through the chain; launch
+  `tools/full_grid.py cells.json --out grid_20260910 --concurrency 5` detached with
+  `nohup python3 -u`; a persistent Monitor on `grid.csv`; review each cell's `maps/all.png`
+  and `maps/summary.png` into `REVIEW.md`; compose the best stage cells per (δ, cap) into
+  complete plans with about 50 districts; register the top ones in the app.
+  Known open items: `centers.assign` parks zero-mass zips of a split state on the first
+  district (TODO in `plan_realise.off_plan`); the DC–VA border has no cell edge; the
+  contiguity repair does no bridging moves; the merge-candidate rule leaves WY as `other`.
 - Morning deliverables: `REVIEW.md` ranked, `grid.md`, the top three to five registered in the
   app with `tools/plan_to_app.py` (after contiguity repair; note the rep-cache collision, do not
   click "Build rep territories" on them), `assignment.csv`/`districts.csv`/`wholesalers.csv`
