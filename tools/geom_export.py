@@ -372,9 +372,12 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
         polys = um.dissolve(zcta_cells, districts)
         reach_polys = um.dissolve(prox, districts)      # outline only, see `district_reach`
     with telemetry.phase("colour"):
-        # Adjacency off the real ZCTA territory, which is the ground the reader sees: two
-        # districts share a hue only if no published boundary puts them side by side.
-        adj = _adjacency(polys)
+        # Adjacency off the reach, the tiling the reader sees as territory (`district_reach`
+        # is filled and stroked on every map).  The real-ZCTA unions were used before, and
+        # with 3,713 of 33,300 ZCTAs in the instance two districts' unions rarely touch at
+        # all, so most map neighbours were never neighbours to the colouring and shared hues
+        # (the user, 2026-09-11).
+        adj = _adjacency(reach_polys)
         colors = color_distinct(adj, palette())
 
     out = {"crs": CRS, "districts": {}, "district_reach": {}, "states": {}, "cells": {},
