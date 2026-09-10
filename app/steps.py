@@ -76,6 +76,29 @@ def staff_argv(python, repo, instance, run, *, table, keep=None, release=None, t
     return argv
 
 
+def staff_and_split_argv(python, repo, instance, run, *, table, keep=None, release=None,
+                         theta, lam, filler_capture, districts=None,
+                         multi: dict[str, int] | None = None,
+                         exact=False, time_limit=60, geom: Path | None = None) -> list[str]:
+    if (keep is None) == (release is None):
+        raise ValueError("staff_and_split_argv needs exactly one of keep or release")
+    argv = [str(python), str(Path(repo) / "tools" / "staff_and_split.py"), str(instance),
+           "--table", str(table)]
+    argv += ["--keep", _csv(keep)] if keep is not None else ["--release", _csv(release)]
+    argv += ["--theta", str(theta), "--lam", str(lam), "--filler-capture", str(filler_capture)]
+    if districts is not None:
+        argv += ["--districts", _csv(districts)]
+    if multi:
+        argv += ["--multi", ",".join(f"{d}:{n}" for d, n in multi.items())]
+        if exact:
+            argv.append("--exact")
+        argv += ["--time-limit", str(time_limit)]
+        if geom is not None:
+            argv += ["--geom", str(geom)]
+    argv += ["--out", str(run)]
+    return argv
+
+
 def override_argv(python, repo, instance, run, *, table, edits: Path, mode,
                  parent: Path | None = None) -> list[str]:
     argv = [str(python), str(Path(repo) / "tools" / "override.py"), str(instance),
@@ -86,12 +109,14 @@ def override_argv(python, repo, instance, run, *, table, edits: Path, mode,
 
 
 def split_argv(python, repo, instance, run, *, table, district, reps: list[str], theta, lam,
-              filler_capture, exact=False, time_limit=60) -> list[str]:
+              filler_capture, exact=False, time_limit=60, geom: Path | None = None) -> list[str]:
     argv = [str(python), str(Path(repo) / "tools" / "split_district.py"), str(instance),
            "--table", str(table), "--district", str(district), "--reps", _csv(reps),
            "--theta", str(theta), "--lam", str(lam), "--filler-capture", str(filler_capture)]
     if exact:
         argv.append("--exact")
+    if geom is not None:
+        argv += ["--geom", str(geom)]
     argv += ["--time-limit", str(time_limit), "--out", str(run)]
     return argv
 

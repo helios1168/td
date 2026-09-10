@@ -394,6 +394,15 @@ def test_split_argv_carries_the_stage2_weights():
     assert "--lam" in argv and argv[argv.index("--lam") + 1] == "0.3"
     assert ("--filler-capture" in argv
            and argv[argv.index("--filler-capture") + 1] == "opportunity")
+    assert "--geom" not in argv
+
+
+def test_split_argv_appends_geom_only_when_given():
+    argv = steps.split_argv("/py/python3", "/repo", "/repo/instance.json.gz", Path("/out"),
+                            table=Path("/table/draw.csv"), district="D01", reps=["A", "B"],
+                            theta=0.4, lam=0.3, filler_capture="full",
+                            geom=Path("/run/geom.json"))
+    assert "--geom" in argv and argv[argv.index("--geom") + 1] == "/run/geom.json"
 
 
 def test_staff_argv_appends_districts_only_when_given():
@@ -407,6 +416,72 @@ def test_staff_argv_appends_districts_only_when_given():
                               filler_capture="full", districts=["D01", "D05"])
     assert "--districts" in scoped
     assert scoped[scoped.index("--districts") + 1] == "D01,D05"
+
+
+def test_staff_and_split_argv_needs_exactly_one_of_keep_or_release():
+    try:
+        steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                   Path("/out"), table=Path("/table/draw.csv"),
+                                   theta=0.4, lam=0.3, filler_capture="full")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("expected ValueError with neither keep nor release")
+
+    try:
+        steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                   Path("/out"), table=Path("/table/draw.csv"),
+                                   keep="R1", release="R2", theta=0.4, lam=0.3,
+                                   filler_capture="full")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("expected ValueError with both keep and release")
+
+
+def test_staff_and_split_argv_keep_and_release_name_the_flag():
+    kept = steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                      Path("/out"), table=Path("/table/draw.csv"),
+                                      keep="R1,R2", theta=0.4, lam=0.3, filler_capture="full")
+    assert "--keep" in kept and kept[kept.index("--keep") + 1] == "R1,R2"
+    assert "--release" not in kept
+
+    released = steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                          Path("/out"), table=Path("/table/draw.csv"),
+                                          release="R3", theta=0.4, lam=0.3,
+                                          filler_capture="full")
+    assert "--release" in released and released[released.index("--release") + 1] == "R3"
+    assert "--keep" not in released
+
+
+def test_staff_and_split_argv_omits_multi_geom_exact_when_no_multi_district_is_given():
+    argv = steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                      Path("/out"), table=Path("/table/draw.csv"),
+                                      keep="R1,R2", theta=0.4, lam=0.3, filler_capture="full",
+                                      exact=True, geom=Path("/run/geom.json"))
+    assert "--multi" not in argv and "--exact" not in argv and "--geom" not in argv
+
+
+def test_staff_and_split_argv_carries_multi_geom_and_exact_when_a_multi_district_is_given():
+    argv = steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                      Path("/out"), table=Path("/table/draw.csv"),
+                                      keep="R1,R2", theta=0.4, lam=0.3, filler_capture="full",
+                                      districts=["D01", "D02"], multi={"D02": 3},
+                                      exact=True, time_limit=90, geom=Path("/run/geom.json"))
+    assert "--districts" in argv and argv[argv.index("--districts") + 1] == "D01,D02"
+    assert "--multi" in argv and argv[argv.index("--multi") + 1] == "D02:3"
+    assert "--exact" in argv
+    assert "--time-limit" in argv and argv[argv.index("--time-limit") + 1] == "90"
+    assert "--geom" in argv and argv[argv.index("--geom") + 1] == "/run/geom.json"
+
+
+def test_staff_and_split_argv_multi_without_exact_omits_the_flag():
+    argv = steps.staff_and_split_argv("/py/python3", "/repo", "/repo/instance.json.gz",
+                                      Path("/out"), table=Path("/table/draw.csv"),
+                                      keep="R1,R2", theta=0.4, lam=0.3, filler_capture="full",
+                                      multi={"D02": 3})
+    assert "--multi" in argv and "--exact" not in argv
+    assert "--time-limit" in argv and argv[argv.index("--time-limit") + 1] == "60"
 
 
 def test_grid_records_the_stage2_weights_in_the_clip_step_too():

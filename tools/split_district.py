@@ -14,6 +14,12 @@ plus `split.json` with the gains, the shares and how the answer was reached.
 Mass comes from the table's `opportunity` column and books come from the instance: the table
 is the unit, and the instance is opened only for `S`, `cand` and `S_free` (the plan's second
 invariant).  `split.json` carries ratios and log-gains only, never a raw mass.
+
+`--geom` gives the run's `geom.json`; its `cell_edges` build the Voronoi cell graph over the
+district's zips, and the split is then contiguity-guarded on that graph
+(`td.solvers.district_split`).  `split.json` gains `pieces` (one connected-piece count per rep)
+and `contiguous` (true iff every rep holds one piece per component it appears in); without
+`--geom` both are `null`.
 """
 from __future__ import annotations
 
@@ -50,8 +56,26 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--filler-capture", default="full", choices=list(model.FILLER_CAPTURE))
     ap.add_argument("--n-near", type=int, default=3,
                     help="a zip may only move to one of its n nearest rep centres")
+    ap.add_argument("--geom", help="the run's geom.json; its cell_edges make the split "
+                    "contiguous on the Voronoi cell graph")
     ap.add_argument("--out", required=True, help="output directory")
     return ap
+
+
+def build_adjacency(geom: dict, zips: list[str]) -> dict | None:
+    """The Voronoi cell graph over `zips`, `{column index: {neighbour column index, ...}}`,
+    built from `geom["cell_edges"]` restricted to pairs both present in `geom["cells"]` and both
+    in `zips`.  `None` when `geom` carries no `"cells"` key (a geom.json from before cells were
+    exported)."""
+    if "cells" not in geom:
+        return None
+    col = {z: j for j, z in enumerate(zips)}
+    adjacency = {col[z]: set() for z in zips if z in geom["cells"]}
+    for a, b in geom["cell_edges"]:
+        if a in col and b in col and col[a] in adjacency and col[b] in adjacency:
+            adjacency[col[a]].add(col[b])
+            adjacency[col[b]].add(col[a])
+    return adjacency
 
 
 def _fail(out: str, reason: str) -> int:
@@ -102,6 +126,16 @@ def main(argv=None) -> int:
             xy = np.array([[np.nan if r["x"] is None else r["x"],
                             np.nan if r["y"] is None else r["y"]] for r in inside], float)
 
+            adjacency = None
+            if args.geom:
+                with open(args.geom, encoding="utf-8") as fh:
+                    geom = json.load(fh)
+                adjacency = build_adjacency(geom, zips)
+                if adjacency is None:
+                    return _fail(args.out,
+                                 f"{args.geom} has no cells (a geom.json from before cells "
+                                 f"were exported)")
+
         # `district_split.split` runs greedy always and, under --exact, escalates to a SCIP
         # MINLP warm-started from it; the two engines are opaque from here (td/solvers is not
         # ours to instrument this workstream), so the whole call is billed to whichever one
@@ -110,7 +144,8 @@ def main(argv=None) -> int:
         try:
             with T.phase("scip" if args.exact else "greedy") as ph:
                 res = district_split.split(u, M, xy, reps, book=book, n_near=args.n_near,
-                                           use_exact=args.exact, time_limit=args.time_limit)
+                                           use_exact=args.exact, time_limit=args.time_limit,
+                                           adjacency=adjacency)
                 ph.note(method=res["method"], status=res["status"], gap=res["gap"])
         except (ValueError, ImportError) as exc:
             return _fail(args.out, str(exc))
@@ -134,6 +169,8 @@ def main(argv=None) -> int:
                 status=res["status"],
                 n_zips=len(zips),
                 dropped_reps=res["dropped_reps"],
+                pieces=res["pieces"],
+                contiguous=res["contiguous"],
                 seconds=seconds,
             )
             with open(os.path.join(args.out, "split.json"), "w", encoding="utf-8") as fh:
@@ -141,10 +178,13 @@ def main(argv=None) -> int:
                 fh.write("\n")
 
         shares = " ".join(f"{r}={report['shares'][r]:.3f}" for r in res["reps"])
+        pieces = ("-" if res["pieces"] is None
+                  else " ".join(f"{r}={n}" for r, n in res["pieces"].items()))
         print(f"split {args.district}: {len(zips)} zips over {len(res['reps'])} reps, "
               f"method={res['method']} status={res['status']} "
               f"gap={'-' if report['gap'] is None else format(report['gap'], '.2e')} "
               f"objective={res['objective']:.6f} moves={res['moves']} shares[{shares}] "
+              f"pieces[{pieces}] "
               f"dropped={res['dropped_reps'] or '-'} ({seconds:.1f}s) -> {args.out}", flush=True)
         return 0
     finally:

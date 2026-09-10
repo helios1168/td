@@ -13,27 +13,31 @@ from app import config, mapfig, repdata, runner, steps, store
 from app.common import MAP_KINDS, _geom, _rows, _stamp, instance_of, label_run, show_failure
 
 
-def render_map() -> None:
+def render_map(base_run: Path | None) -> None:
+    scenario = st.session_state.get("scenario")
     discovered = store.discover(config.APP_RESULTS)
-    if not discovered:
+    scoped = [r for r in discovered if store.scenario_of(r, config.APP_RESULTS) == scenario]
+
+    with st.expander("Advanced: pick a specific run", expanded=False):
+        seed_intermediates = base_run is not None and store.read_step(base_run).get("kind") == "draw"
+        intermediates = st.toggle("Show intermediates", value=seed_intermediates,
+                                  key="map-intermediates",
+                                  help="Adds the draw tables. A draw is what the clip "
+                                       "starts from, not the map.")
+        kinds = (*MAP_KINDS, "draw") if intermediates else MAP_KINDS
+        shown = [r for r in scoped if store.read_step(r).get("kind") in kinds]
+        if shown:
+            index = shown.index(base_run) if base_run in shown else 0
+            run = st.selectbox("Instance", shown,
+                               format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
+                               index=index, key="map-run")
+        else:
+            run = base_run
+            st.caption("No clipped map yet. Turn on intermediates to see the draws.")
+
+    if run is None:
         st.info(f"No runs under {config.APP_RESULTS} yet. Launch a grid first.")
         return
-
-    scenario = st.session_state.get("scenario")
-    scoped = [run for run in discovered
-             if store.scenario_of(run, config.APP_RESULTS) == scenario]
-
-    intermediates = st.toggle(
-        "Show intermediates", value=False,
-        help="Adds the draw tables. A draw is what the clip starts from, not the map.")
-    kinds = (*MAP_KINDS, "draw") if intermediates else MAP_KINDS
-    shown = [run for run in scoped if store.read_step(run).get("kind") in kinds]
-    if not shown:
-        st.info("No clipped map yet. Turn on intermediates to see the draws.")
-        return
-
-    run = st.selectbox("Instance", shown, format_func=lambda p: f"{label_run(p)} · {store.status(p)}",
-                       key="map-run")
     st.caption(" > ".join(label_run(p) for p in store.lineage(run, config.APP_RESULTS))
                + f"  (`{run.name}`)")
 
@@ -141,8 +145,7 @@ def render_rep_section(run: Path, reps: dict, rows: list[dict], geom_stamp) -> N
                         key=f"rep-overlay-{run.name}")
 
     reps_stamp = _stamp(repdata.reps_path(instance_of(run)))
-    fig = _rep_fig(reps_stamp, geom_stamp if overlay else None, colour_by, focus_rep,
-                  show_contested, rows)
+    fig = _rep_fig(reps_stamp, geom_stamp, colour_by, focus_rep, show_contested, overlay, rows)
     st.plotly_chart(fig, width="stretch", key=f"rep-map-{run.name}")
 
     counts = {0: 0, 1: 0, 2: 0, 3: 0}
@@ -157,8 +160,8 @@ def render_rep_section(run: Path, reps: dict, rows: list[dict], geom_stamp) -> N
 
 @st.cache_data(show_spinner=False, max_entries=8)
 def _rep_fig(reps_stamp, geom_stamp, colour_by: str, focus_rep: str, show_contested: bool,
-            _rows_data: list[dict]):
+            overlay: bool, _rows_data: list[dict]):
     reps = repdata.load(*reps_stamp)
     geom = _geom(*geom_stamp) if geom_stamp else None
     return mapfig.rep_figure(reps, _rows_data, geom, colour_by=colour_by, focus_rep=focus_rep,
-                             show_contested=show_contested, district_lines=geom is not None)
+                             show_contested=show_contested, district_lines=overlay)

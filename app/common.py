@@ -213,11 +213,61 @@ def k_for(run: Path) -> int:
     return len({row["district"] for row in rows if row.get("district")})
 
 
-def pick_map(label: str, key: str) -> Path | None:
+def current_instance() -> tuple[str | None, list[Path]]:
+    """Sidebar's instance (member) picker, directly under the Scenario picker. Returns
+    (member, runs) - runs being that member's own runs, newest first, so callers needing
+    them do not re-scan discover(). member is None, with a caption instead of a widget,
+    when the current scenario holds no member yet. Sticky in st.session_state["instance"],
+    same pattern as current_scenario."""
+    scenario = st.session_state.get("scenario")
+    groups = store.members(config.APP_RESULTS, scenario)
+    if not groups:
+        st.sidebar.caption("No instance yet in this scenario.")
+        return None, []
+    options = [m for m, _ in groups]
+    current = st.session_state.get("instance")
+    index = options.index(current) if current in options else 0
+    member = st.sidebar.selectbox("Instance", options, index=index, key="instance",
+                                  format_func=store.member_label)
+    return member, next(runs for m, runs in groups if m == member)
+
+
+def reset_on_instance_change(*keys: str) -> None:
+    """Clears each of `keys` when (scenario, instance) has changed since the last script
+    run, so a picker or preview from a different instance never lingers into a fresh one.
+    Call once in main.py, right after current_scenario/current_instance and before
+    st.tabs, so every tab sees it cleared before it builds any widget."""
+    current = (st.session_state.get("scenario"), st.session_state.get("instance"))
+    if st.session_state.get("_instance_seen") != current:
+        for key in keys:
+            st.session_state.pop(key, None)
+        st.session_state["_instance_seen"] = current
+
+
+def resolve_instance(runs: list[Path], member: str | None) -> Path | None:
+    """The one canonical run to open for `member`: its default_for-flagged run, else
+    newest clip, else newest run of any MAP_KINDS kind, else newest draw, else the
+    first available run (any kind). None only when `runs` itself is empty."""
+    if not runs:
+        return None
+    default = next((r for r in runs if store.read_view(r).get("default_for") == member), None)
+    if default is not None:
+        return default
+    for kinds in (("clip",), MAP_KINDS, ("draw",)):
+        hit = next((r for r in runs if store.read_step(r).get("kind") in kinds), None)
+        if hit is not None:
+            return hit
+    return runs[0]
+
+
+def pick_map(label: str, key: str, *, member: str | None = None) -> Path | None:
     """The picker every child tab opens with, defaulting to whatever the Map tab is showing,
     filtered to the sidebar's current scenario (`current_scenario`'s widget, read back off its
-    own key rather than built a second time)."""
+    own key rather than built a second time). When `member` is given, the candidate list is
+    further narrowed to that member's own runs."""
     runs = map_runs(st.session_state.get("scenario"))
+    if member is not None:
+        runs = [r for r in runs if store.member_of(r, config.APP_RESULTS) == member]
     if not runs:
         st.info(f"No finished run under {config.APP_RESULTS} yet. Launch a grid first.")
         return None

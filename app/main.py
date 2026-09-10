@@ -18,12 +18,17 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app import common, tab_compare, tab_map, tab_overrides, tab_reps, tab_scenarios, tab_timings
+from app import common, store, tab_compare, tab_map, tab_overrides, tab_reps, tab_scenarios, tab_timings
 
 st.set_page_config(page_title="Territory scenarios", layout="wide")
 st.title("Territory scenarios")
 
 common.current_scenario()
+member, runs = common.current_instance()
+common.reset_on_instance_change("map-run", "map-intermediates", "reps-view", "reps-preview")
+base_run = common.resolve_instance(runs, member)
+named = [r for r in runs if store.read_view(r)]
+default_run = next((r for r in named if store.read_view(r).get("default_for") == member), None)
 
 scenarios, map_tab, reps, overrides, compare, timings = st.tabs(
     ["Scenarios", "Map", "Reps", "Overrides", "Compare", "Timings"])
@@ -32,10 +37,10 @@ with scenarios:
     tab_scenarios.render_scenarios()
 
 with map_tab:
-    tab_map.render_map()
+    tab_map.render_map(base_run)
 
 with reps:
-    tab_reps.render_reps()
+    tab_reps.render_reps(base_run, named, default_run)
 
 with overrides:
     tab_overrides.render_overrides()

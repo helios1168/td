@@ -35,9 +35,12 @@ STATE.md`. This file carries invariants only and is never stamped.
 
 ## Tests
 
-`.venv/bin/python3 tests/run_all.py` — 480 fast tests, 0 fail (2026-09-09). `TD_SLOW=1` adds
+`.venv/bin/python3 tests/run_all.py` — 534 fast tests, 0 fail (2026-09-09). `TD_SLOW=1` adds
 nothing: no module sets `SLOW = True`. `tests/test_engines.py` is the self-contained two-player
-smoke test.
+smoke test. `tests/test_app_smoke.py` and `tests/test_mapfig.py` need `.venv-app` to run for
+real; under `.venv` they skip, and `run_all.py -k` cannot select them there because discovery
+imports every `test_*.py` before filtering and `.venv-app` has no networkx — run the module
+directly instead.
 
 ## Docs discipline
 
@@ -90,6 +93,17 @@ to the main context.
 19. **A zero-objective feasibility solve is slower, not faster**, on the level-1 MILP: HiGHS
     found no 10-split map in 120 s with the objective dropped, 96 s with it kept. The objective
     guides the search; never strip it to "just find a feasible point".
+20. **Unavailable is not released.** A rep who cannot take a district (out of scope, or claimed
+    by a multi-rep district) must be excluded from *candidacy*, never passed to
+    `model.release_reps`: releasing folds their book into `S_free`, which `gain_matrix` prices at
+    `c1` under `filler_capture="full"`, the same rate a rep values its own book, inflating every
+    other candidate's valuation of those zips and distorting the match for every neighbouring
+    district. `tools/staff.py`'s `held` set is the mechanism; `--release` cannot express it.
+21. **`geom.json["cells"]` no longer means "this zip has a Voronoi cell"** (2026-09-09): cells
+    are real ZCTA polygons, and the contiguity graph's vertex set ships separately as
+    `cell_graph_zips`. A zip whose Voronoi cell clips away to nothing on the coastline has a
+    ZCTA but no cell, so inferring the graph from `cells` admits it as an isolated vertex and
+    makes the split's contiguity guard infeasible. Never re-derive that vertex set by inference.
 
 **Two-tier acceptance:** tier 1 `CERT_TOL = 1e-8`; tier 2 `base.EPS_CERT = 5e-3` nats, grounded
 on a measured data-noise floor (re-measure on the real instance). The full trap list is in git

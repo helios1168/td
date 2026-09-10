@@ -26,11 +26,13 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+for _p in (ROOT, os.path.join(ROOT, "tools")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from td import instance as descaled, ziptable                               # noqa: E402
 from td.solvers import district_split as ds                                 # noqa: E402
+from split_district import build_adjacency                                  # noqa: E402
 
 
 def _have_scip() -> bool:
@@ -122,6 +124,64 @@ def test_two_reps_with_separated_books_split_geographically():
     assert labels.tolist() == [0] * 6 + [1] * 6, labels.tolist()
 
 
+def test_contiguous_seed_reconnects_a_shattered_argmax():
+    """Path 0-1-2-3-4-5, argmax [0,1,0,0,1,1]: rep 0's larger piece is {2,3}, rep 1's is {4,5}."""
+    adj = {0: {1}, 1: {0, 2}, 2: {1, 3}, 3: {2, 4}, 4: {3, 5}, 5: {4}}
+    u = np.array([[5.0, 1.0, 5.0, 5.0, 1.0, 1.0],
+                  [1.0, 5.0, 1.0, 1.0, 5.0, 5.0]])
+    assert ds.seed_labels(u).tolist() == [0, 1, 0, 0, 1, 1]        # the shattered argmax
+    labels = ds.seed_labels(u, adj)
+    assert labels.tolist() == [0, 0, 0, 0, 1, 1]
+
+
+def test_move_guard_never_disconnects_a_rep():
+    """2x3 grid, rook adjacency: the only Nash-improving move is rep 0's articulation point."""
+    adj = {0: {1, 3}, 1: {0, 2, 4}, 2: {1, 5}, 3: {0, 4}, 4: {1, 3, 5}, 5: {2, 4}}
+    xy = np.array([[0., 0.], [1., 0.], [2., 0.], [0., 1.], [1., 1.], [2., 1.]])
+    M = np.ones(6)
+    u = np.array([[1.0, 1.5, 1.0, .1, .1, .1],
+                  [.1, 1.4, .1, .3, .3, .3]])
+    seed = ds.seed_labels(u)
+    assert seed.tolist() == [0, 0, 0, 1, 1, 1]                     # rows intact already
+
+    guarded = ds.greedy(u, M, xy, n_near=2, adjacency=adj)
+    assert guarded.tolist() == [0, 0, 0, 1, 1, 1]                  # the guard blocks the move
+    G = ds._cell_graph(adj)
+    for i in (0, 1):
+        owned = [j for j in adj if guarded[j] == i]
+        assert nx.is_connected(G.subgraph(owned))
+
+    free = ds.greedy(u, M, xy, n_near=2)
+    assert free.tolist() == [0, 1, 0, 1, 1, 1]                     # the move is taken
+    owned0 = [j for j in adj if free[j] == 0]
+    assert not nx.is_connected(G.subgraph(owned0))                 # rep 0 is now in two pieces
+
+
+def test_split_reports_pieces_on_the_cell_graph():
+    n = 12
+    xy = np.array([[float(j), 0.0] for j in range(n)], float)
+    M = np.ones(n)
+    u = np.full((2, n), 1.0)
+    u[0, :4] += 0.5
+    u[1, 8:] += 0.5
+    adj = {j: set(k for k in (j - 1, j + 1) if 0 <= k < n) for j in range(n)}
+
+    res = ds.split(u, M, xy, ["R1", "R2"], adjacency=adj)
+    assert res["pieces"] == {"R1": 1, "R2": 1}
+    assert res["contiguous"] is True
+
+    res_none = ds.split(u, M, xy, ["R1", "R2"])
+    assert res_none["pieces"] is None and res_none["contiguous"] is None
+
+    # two components; R1 holds one zip in each
+    adj2 = {0: {1}, 1: {0}, 2: {3}, 3: {2}}
+    u2 = np.array([[5.0, 1.0, 5.0, 1.0],
+                   [1.0, 5.0, 1.0, 5.0]])
+    res2 = ds.split(u2, np.ones(4), np.zeros((4, 2)), ["R1", "R2"], adjacency=adj2)
+    assert res2["pieces"]["R1"] == 2
+    assert res2["contiguous"] is True
+
+
 def test_unpositioned_zips_are_assigned_by_utility_only():
     """A zip with no coordinates still moves for a Nash gain; it just carries no distance."""
     u = _toy_u(5)
@@ -190,6 +250,18 @@ def test_unrestricted_utilities_match_the_gain_matrix_coefficients():
     g, R, D = channel.gain_matrix(G, {z: "D01" for z in zips}, reps_order=["R1", "R2"],
                                   districts=["D01"], theta=0.4, lam=0.3, filler_capture="full")
     assert np.allclose(u.sum(axis=1), g[:, 0])             # same coefficients, same total
+
+
+def test_build_adjacency_indexes_edges_by_column_and_drops_out_of_scope_pairs():
+    zips = ["z0", "z1", "z2"]
+    geom = dict(cells={"z0": {}, "z1": {}, "z2": {}},
+               cell_edges=[["z0", "z1"], ["z1", "z2"], ["z2", "z9"], ["z9", "z8"]])
+    adj = build_adjacency(geom, zips)
+    assert adj == {0: {1}, 1: {0, 2}, 2: {1}}                # z9/z8 are outside `zips`
+
+
+def test_build_adjacency_returns_none_without_a_cells_key():
+    assert build_adjacency({"districts": {}}, ["z0", "z1"]) is None
 
 
 def test_book_matrix_is_the_footprint():
@@ -272,6 +344,7 @@ def test_driver_end_to_end():
         assert rep["district"] == "D01" and rep["reps"] == ["R1", "R2"]
         assert rep["n_zips"] == sum(1 for v in labels.values() if v == "D01")
         assert rep["method"] == "greedy" and rep["dropped_reps"] == []
+        assert rep["pieces"] is None and rep["contiguous"] is None      # no --geom given
         assert abs(sum(rep["shares"].values()) - 1.0) < 1e-9
         assert all(g > 0 for g in rep["gains"].values())
         assert abs(rep["objective"] - sum(math.log(g) for g in rep["gains"].values())) < 1e-9
@@ -293,3 +366,52 @@ def test_driver_fails_on_an_unknown_district():
         assert rc.returncode != 0
         with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
             assert "D99" in json.load(fh)["reason"]
+
+
+def test_driver_with_geom_is_contiguous_on_the_cell_graph():
+    with tempfile.TemporaryDirectory() as tmp:
+        inst, table, labels = _driver_case(tmp)
+        d01_zips = sorted(z for z, dist in labels.items() if dist == "D01")
+        geom = dict(cells={z: {"rings": []} for z in d01_zips},
+                    cell_edges=[[d01_zips[j], d01_zips[j + 1]]
+                                for j in range(len(d01_zips) - 1)])
+        geom_path = os.path.join(tmp, "geom.json")
+        with open(geom_path, "w", encoding="utf-8") as fh:
+            json.dump(geom, fh)
+
+        out = os.path.join(tmp, "out")
+        rc = subprocess.run(
+            [sys.executable, os.path.join(ROOT, "tools", "split_district.py"), inst,
+             "--table", table, "--district", "D01", "--reps", "R1,R2",
+             "--geom", geom_path, "--out", out],
+            capture_output=True, text=True)
+        assert rc.returncode == 0, rc.stdout + rc.stderr
+
+        with open(os.path.join(out, "split.json"), encoding="utf-8") as fh:
+            rep = json.load(fh)
+        assert rep["pieces"] == {"R1": 1, "R2": 1}
+        assert rep["contiguous"] is True
+
+        rows = ziptable.read(os.path.join(out, "draw.csv"))
+        by_zip = {r["zip"]: r["rep"] for r in rows if r["district"] == "D01"}
+        seq = [by_zip[z] for z in d01_zips]
+        switches = sum(1 for a, b in zip(seq, seq[1:]) if a != b)
+        assert switches == 1, seq                       # two contiguous intervals along the path
+
+
+def test_driver_fails_on_a_geom_without_cells():
+    with tempfile.TemporaryDirectory() as tmp:
+        inst, table, _ = _driver_case(tmp)
+        geom_path = os.path.join(tmp, "geom.json")
+        with open(geom_path, "w", encoding="utf-8") as fh:
+            json.dump({"districts": {}}, fh)
+
+        out = os.path.join(tmp, "out")
+        rc = subprocess.run(
+            [sys.executable, os.path.join(ROOT, "tools", "split_district.py"), inst,
+             "--table", table, "--district", "D01", "--reps", "R1,R2",
+             "--geom", geom_path, "--out", out],
+            capture_output=True, text=True)
+        assert rc.returncode != 0
+        with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
+            assert "cells" in json.load(fh)["reason"]

@@ -13,7 +13,7 @@ from app.common import (MODES, _json, _rows, _stamp, instance_of, launch_child,
 
 
 def render_overrides() -> None:
-    run = pick_map("Instance to override", "over-run")
+    run = pick_map("Instance to override", "over-run", member=st.session_state.get("instance"))
     if run is None:
         return
     rows = _rows(*_stamp(store.table_path(run)))

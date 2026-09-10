@@ -1,25 +1,25 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `46a2540` · **Tests:** 480 pass,
+**Updated:** 2026-09-09 · **Branch:** `worktree-cell-split` · **Head:** `f176171` · **Tests:** 489 pass,
 0 fail (2026-09-09)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Merged 2026-09-09 (`e59cc3d`, fast-forward; `main` pushed at `46a2540`): scenario app round 2. Scenarios
-are the unit (`<name>_k<k>_d<pct>` members, sidebar picker, every tab filtered); the Map tab
-shows the incumbent rep territories from `tools/rep_export.py` (dominant-rep fill, hatched
-contested cells); the Reps tab opens on that map with the districts over it, staffs a chosen
-subset (`staff.py --districts`) and shows before/after at district and map level; a Timings
-tab reads `timings.json` from every driver. The level-1 MILP runs on HiGHS with flow roots
-fixed to the anchor states (verified, `tools/verify/milp_root_fix/`) under a `portfolio`
-strategy that certifies each split count by a cutoff proof: the k = 10 to 20 grid at δ = 10 %
-now takes 163 s with every count proven, from 614 s at the cap. 480 tests, 0 fail. App running
-in tmux `tdapp` at `100.69.120.67:8502`.
+Track `worktree-cell-split`, `f176171` on top of `e59cc3d` (main, app round 2), unmerged,
+unpushed. A within-district split is now contiguous on the Voronoi cell graph: `geom.json`
+carries per-zip cells and rook `cell_edges`, `split_district.py --geom` seeds contiguously and
+guards moves by articulation point, `split.json` reports `pieces`/`contiguous` (SCIP path
+reports only). Round3 k10 D05 over two reps: one piece each in 0.2 s, against 5 and 11 pieces
+unguarded, 0.003 nats dearer. Scoped staffing no longer gives an in-scope district to a rep
+placed outside the scope. Rep maps fill zip cells by rep in both colour modes, staffed map by
+table rep, zip markers dropped, hover on cell vertices. 489 tests, 0 fail. Branch app in tmux
+`tdapp-cell` at `100.69.120.67:8503`; hub app on 8502 runs main.
 
-The CONUS findings of 2026-09-07 stand. Next decision: which map ships, and whether level 2
-should round inside the band.
+Next: on-screen hover check, then merge on request; then a new plan for the Reps tab and its
+figures (instruction pending). The CONUS findings of 2026-09-07 and the which-map-ships
+decision stand.
 
 ## Next
 
@@ -40,10 +40,10 @@ should round inside the band.
       sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
-- [ ] **Decide whether `--regions-voronoi` reports the mass denominator beside the area one.**
-      §3a settled that the area denominator misreports dense metro districts, and
-      `tools/measure/district_pieces.py` already computes area, mass and ZIP-count shares, so
-      this is a reporting choice with no measurement left in it. Gated on nothing but the call.
+- [ ] **Cell-split track: hover and merge.** Confirm on `100.69.120.67:8503` that cell hover
+      at district zoom has no dead centre (`hoverdistance` 40 px in `mapfig._layout`), then
+      fast-forward `worktree-cell-split` into `main`, unlock, remove, delete. Next plan after
+      that: the Reps tab and its figures, scope to be given.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
