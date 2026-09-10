@@ -31,3 +31,12 @@ def test_every_tab_renders_without_an_exception():
     assert not at.exception, [str(e.value) for e in at.exception]
     assert [t.label for t in at.tabs] == TABS
     assert [s.label for s in at.sidebar.selectbox] in ([], ["Scenario"], ["Scenario", "Instance"])
+
+
+def test_the_instance_picker_labels_a_plan_member_channel_first():
+    """`format_func=store.member_label` on the sidebar's Instance picker: a plan-derived member
+    reads channel first, a member with no channel token reads as it always did."""
+    from app import store
+
+    assert store.member_label("v3-seq-warm_fi_k19_d20") == "FI · k19 · d20"
+    assert store.member_label("custom_k10_d5") == "k10 · d5"

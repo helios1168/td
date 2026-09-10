@@ -2,7 +2,9 @@
 
 Six zips over three states and two bundles: `N` with two used slots, `WH` with one that covers
 only half of C, so one zip is uncovered and reads `other` in `assignment.csv` -- the case the
-zip table has to turn back into an empty district.  The gazetteer is monkeypatched away the way
+zip table has to turn back into an empty district.  Three members come out, one per business
+channel: national (the `N` bundle's two districts), wh (one), and fi, which no slot serves and
+which is therefore a map of zips in no district.  The gazetteer is monkeypatched away the way
 `tests/test_plan_realise.py` does it, and `launch_geom` is stubbed, so the test needs no cache,
 no shapefile and no ZCTA polygons.
 """
@@ -63,7 +65,7 @@ def _build_run(run_dir: str) -> None:
     _base_instance(base)
     fine = channels.fine_split(channels.synthesize_channels(
         td_instance.load_descaled(base), seed=0))
-    for bundle in ("N", "WH"):
+    for bundle in ("N", "WH", "FI"):
         cell = os.path.join(run_dir, "projections", bundle)
         os.makedirs(cell, exist_ok=True)
         channels.write_v1(channels.project(fine, bundle, states=["A", "B", "C"]),
@@ -128,9 +130,10 @@ def _rows(path) -> list[dict]:
         return list(csv.DictReader(fh))
 
 
-def test_one_clip_run_per_bundle_under_one_scenario():
-    """Two used bundles, two runs, both `clip` (the kind the Map tab treats as the result) and
-    both under the one slugified scenario, one member each."""
+def test_one_clip_run_per_channel_under_one_scenario():
+    """Three channels, three runs, all `clip` (the kind the Map tab treats as the result) and
+    all under the one slugified scenario, one member each. The member name carries the channel
+    and the district count that channel's own map has."""
     with tempfile.TemporaryDirectory() as tmp:
         run_dir, out = os.path.join(tmp, "run"), os.path.join(tmp, "app")
         os.makedirs(run_dir)
@@ -138,12 +141,14 @@ def test_one_clip_run_per_bundle_under_one_scenario():
         _run(run_dir, out)
 
         runs = store.discover(out)
-        assert len(runs) == 2
+        assert len(runs) == 3
         assert {store.read_step(r)["kind"] for r in runs} == {"clip"}
         assert {store.scenario_of(r, out) for r in runs} == {"toy-plan"}
         members = dict(store.members(out, "toy-plan"))
-        assert sorted(members) == ["toy-plan_k1_d20", "toy-plan_k2_d20"]
+        assert sorted(members) == ["toy-plan_fi_k0_d20", "toy-plan_national_k2_d20",
+                                   "toy-plan_wh_k1_d20"]
         assert all(len(v) == 1 for v in members.values())
+        assert store.member_label("toy-plan_national_k2_d20") == "national · k2 · d20"
 
 
 def test_the_table_carries_every_zip_with_its_label_and_rep():
@@ -156,7 +161,7 @@ def test_the_table_carries_every_zip_with_its_label_and_rep():
         _run(run_dir, out)
 
         by_member = {m: runs[0] for m, runs in store.members(out, "toy-plan")}
-        for member, bundle in (("toy-plan_k2_d20", "N"), ("toy-plan_k1_d20", "WH")):
+        for member, bundle in (("toy-plan_national_k2_d20", "N"), ("toy-plan_wh_k1_d20", "WH")):
             rows = _rows(store.table_path(by_member[member]))
             assert [r["zip"] for r in rows] == ZIPS
             assert [r["district"] for r in rows] == LABELS[bundle]
@@ -173,12 +178,13 @@ def test_the_step_carries_what_the_app_reads_back():
         _build_run(run_dir)
         _run(run_dir, out)
 
-        run = dict(store.members(out, "toy-plan"))["toy-plan_k2_d20"][0]
+        run = dict(store.members(out, "toy-plan"))["toy-plan_national_k2_d20"][0]
         params = store.read_step(run)["params"]
-        assert params["bundle"] == "N" and params["k"] == 2 and params["plan_run"] == run_dir
+        assert params["channel"] == "national" and params["bundles"] == ["N"]
+        assert params["k"] == 2 and params["plan_run"] == run_dir
         assert os.path.exists(params["instance"])
         assert store.k_of(run, out) == 2
-        assert store.read_view(run)["default_for"] == "toy-plan_k2_d20"
+        assert store.read_view(run)["default_for"] == "toy-plan_national_k2_d20"
         assert (run / "timings.json").exists()
 
         with open(store.metrics_path(run), encoding="utf-8") as fh:
@@ -189,13 +195,13 @@ def test_the_step_carries_what_the_app_reads_back():
         assert metrics["stage2_theta"] == 0.4 and metrics["stage2_filler"] == "theta"
 
 
-def test_bundles_selects_a_subset():
+def test_channels_selects_a_subset():
     with tempfile.TemporaryDirectory() as tmp:
         run_dir, out = os.path.join(tmp, "run"), os.path.join(tmp, "app")
         os.makedirs(run_dir)
         _build_run(run_dir)
-        _run(run_dir, out, "--bundles", "WH")
+        _run(run_dir, out, "--channels", "wh")
 
         runs = store.discover(out)
         assert len(runs) == 1
-        assert store.read_step(runs[0])["params"]["bundle"] == "WH"
+        assert store.read_step(runs[0])["params"]["channel"] == "wh"

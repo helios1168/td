@@ -147,6 +147,22 @@ the UI label there, since the user's "instance" collides with the code's own wor
 file, labelled "Instance file") columns, defaults to the current scenario, and carries a "show
 every scenario" toggle.
 
+**Plan-derived members carry their channel.** `tools/plan_to_app.py` registers a finished
+`full_plan` + `plan_realise` run as one scenario with one member per business channel:
+national, wh, fi. The channel sits in the member name as a token before the k
+(`v3-seq-warm_fi_k19_d20`, from `store.member_name(slug, k, delta, channel)`), and every picker
+renders it channel first (`FI · k19 · d20`, `store.member_label`); a member with no channel
+token is named and rendered exactly as it always was. The step's `params` carry `channel`,
+`bundles` (the bundles drawn on that map) and `plan_run` (the plan run directory), which the Map
+tab turns into the caption above the figure (`Channel: FI · 18 districts (15 pure, 3 FI⁺
+carrying national) · plan run v3_seq_d600_free`). `k` is the number of districts on that
+channel's map, not one bundle's k: a bundle serving two channels is drawn on both their maps,
+the district id names its own bundle (`N_03`, `FI_PLUS_01`, `WHFI_02`), and `mapfig` hatches the
+districts of a plus bundle (diagonal, it carries national too) and of a merged one (cross, WH
+and FI together), leaving a pure district solid and a zip the channel does not serve light grey.
+`splits.json` is aggregated over the bundles on the map, so a plus bundle's stage-2 value is
+counted once on each of the two channel maps it serves.
+
 paths under `outputs` are relative to the run directory, so a run can be moved or copied whole.
 `store.discover(root)` returns every directory carrying a `step.json`, newest first by the
 timestamp in its name. `store.status(run)`: a table already on disk reads `done` outright

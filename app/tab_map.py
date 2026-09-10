@@ -5,6 +5,7 @@ map its clip would have produced.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 
 import streamlit as st
@@ -51,6 +52,10 @@ def render_map(base_run: Path | None) -> None:
     rows = _rows(*_stamp(table))
     geom_stamp = _stamp(store.geom_path(run))
     geom = _geom(*geom_stamp) if geom_stamp else None
+
+    caption = plan_caption(run, rows)
+    if caption:
+        st.caption(caption)
 
     board, side = st.columns([3, 1])
     with side:
@@ -112,8 +117,34 @@ def render_side(run: Path, geom: dict | None) -> None:
     show_failure(run)
 
 
+PHRASE = {"plus": "carrying national", "merged": "merged"}
+
+
+def plan_caption(run: Path, rows: list[dict]) -> str:
+    """`Channel: FI · 18 districts (15 pure, 3 FI⁺ carrying national) · plan run v3_seq_d600_free`
+    for a map `tools/plan_to_app.py` wrote, empty for every other run. The bundle counts come
+    from the district ids, which name their own bundle."""
+    params = store.read_step(run).get("params", {})
+    channel = params.get("channel")
+    if not channel:
+        return ""
+    districts = sorted({row["district"] for row in rows if row["district"]})
+    counts = Counter(mapfig.bundle_of(d) for d in districts)
+    pure = sum(n for b, n in counts.items() if b not in mapfig.BUNDLE_KIND)
+    parts = [f"{pure} pure"] + [
+        f"{n} {store.channel_label(b)} {PHRASE[mapfig.BUNDLE_KIND[b]]}"
+        for b, n in sorted(counts.items()) if b in mapfig.BUNDLE_KIND]
+    bits = [f"Channel: {store.channel_label(channel)}",
+            f"{len(districts)} districts ({', '.join(parts)})"]
+    plan_run = params.get("plan_run")
+    if plan_run:
+        bits.append(f"plan run {Path(plan_run).name}")
+    return " · ".join(bits)
+
+
 def render_board(run: Path, rows: list[dict], geom: dict | None) -> None:
-    fig = mapfig.figure(rows, geom)
+    channel = store.read_step(run).get("params", {}).get("channel") or ""
+    fig = mapfig.figure(rows, geom, channel=store.channel_label(channel) if channel else "")
     event = st.plotly_chart(fig, width="stretch", on_select="rerun",
                             selection_mode=("points",), key=f"map-{run.name}")
     for point in (event.get("selection") or {}).get("points", []):

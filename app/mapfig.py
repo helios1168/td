@@ -71,6 +71,26 @@ PALETTE = [
 
 MIN_PX, MAX_PX = 3.0, 14.0
 
+# A plan-derived map is one channel's map, and a district on it is served by a bundle its slot
+# id names (`N_03`, `FI_PLUS_01`, `WHFI_02`). The bundle is the visual differentiator: a plus
+# bundle carries the national channel alongside its own, a merged bundle serves WH and FI
+# together, and both are hatched over the district's own hue so the channel still reads first.
+BUNDLE_KIND = {"WH_PLUS": "plus", "FI_PLUS": "plus", "WHFI": "merged", "WHFI_PLUS": "merged"}
+HATCH = {"plus": "/", "merged": "x"}
+HATCH_COLOUR = "rgba(30,30,30,0.55)"
+UNSERVED = "#d9d9d9"
+
+
+def bundle_of(district: str) -> str:
+    """The bundle a slot id names: `FI_PLUS_01` -> `FI_PLUS`. A district label that is not a
+    slot id (a grid map's `01`, a split's `03a`) returns itself and reads as a pure district."""
+    return district.rsplit("_", 1)[0] if "_" in district else district
+
+
+def bundle_kind(district: str) -> str:
+    """`pure`, `plus` or `merged` for one district label."""
+    return BUNDLE_KIND.get(bundle_of(district), "pure")
+
 
 def load_rows(path: Path) -> list[dict]:
     """The zip table as plain dicts. x, y and opportunity are floats, or None when blank."""
@@ -339,6 +359,47 @@ def shade(hex_colour: str, i: int, n_bins: int) -> str:
     return "#%02x%02x%02x" % tuple(round(255 * v) for v in (r, g, b))
 
 
+def _bundle_hatch(fig: go.Figure, geom: dict | None, rows: list[dict], channel: str) -> None:
+    """The bundle overlay on one channel's map, plus the legend that reads it.
+
+    The hatch goes on last, over the cells: the cells are drawn at opacity 0.95, so a pattern on
+    the reach fill underneath them would not show. It covers the district's reach, the one
+    region per district (`_reach_lines`), not the cell union. With no polygons at all there is
+    nothing to hatch and the legend alone says what the ids mean.
+    """
+    districts = sorted({row["district"] for row in rows if row.get("district")})
+    kinds = {d: bundle_kind(d) for d in districts}
+    reach = (geom or {}).get("district_reach", {})
+    for district in districts:
+        kind, info = kinds[district], reach.get(district)
+        if kind == "pure" or not info:
+            continue
+        hx, hy = _joined(info.get("rings", []))
+        if not hx:
+            continue
+        fig.add_trace(go.Scatter(
+            x=hx, y=hy, mode="lines", fill="toself", fillcolor="rgba(0,0,0,0)",
+            fillpattern=dict(shape=HATCH[kind], fgcolor=HATCH_COLOUR, bgcolor="rgba(0,0,0,0)",
+                             size=8, solidity=0.25),
+            line=dict(width=0), name=f"{district} bundle", hoverinfo="skip", showlegend=False))
+
+    entries = [("pure", f"solid: pure {channel} district")]
+    if any(kind == "plus" for kind in kinds.values()):
+        entries.append(("plus", "diagonal hatch: carries national (WH⁺ or FI⁺)"))
+    if any(kind == "merged" for kind in kinds.values()):
+        entries.append(("merged", "cross hatch: WH and FI merged"))
+    for kind, text in entries:
+        pattern = None if kind == "pure" else dict(
+            shape=HATCH[kind], fgcolor=HATCH_COLOUR, bgcolor="#c7d2fe", size=8, solidity=0.25)
+        fig.add_trace(go.Scatter(x=[None], y=[None], mode="lines", fill="toself",
+                                 fillcolor="#c7d2fe", fillpattern=pattern,
+                                 line=dict(width=0), name=text, hoverinfo="skip"))
+    if any(not row.get("district") for row in rows):
+        fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="unserved",
+                                 hoverinfo="skip",
+                                 marker=dict(size=9, symbol="square", color=UNSERVED)))
+
+
 def figure(
     rows: list[dict],
     geom: dict | None,
@@ -348,6 +409,7 @@ def figure(
     outline: dict | None = None,
     staffing: dict | None = None,
     bbox: tuple[float, float, float, float] | None = None,
+    channel: str = "",
 ) -> go.Figure:
     """The map for one zip table.
 
@@ -357,8 +419,15 @@ def figure(
     `bbox` is `(x0, y0, x1, y1)`, LAEA metres: it sets the axis ranges, for zooming to one
     district, and `uirevision` becomes the bbox itself so pan and zoom persist across reruns
     with the same bbox and reset when it changes.
+
+    `channel` names the business channel a plan-derived map draws (`national`, `WH`, `FI`); it
+    turns on the bundle hatch and its legend, and reads a zip in no district as unserved ground
+    rather than as a district colour. A map that is not one channel's passes nothing and is
+    drawn exactly as before.
     """
     colours = _colours(rows, geom)
+    if channel:
+        colours[""] = UNSERVED
     fig = go.Figure()
 
     if geom:
@@ -459,6 +528,8 @@ def figure(
 
     _district_lines(fig, geom, colours)
     _reach_lines(fig, geom, colours)
+    if channel:
+        _bundle_hatch(fig, geom, rows, channel)
 
     if geom:
         labelled = [(code, info["label"]) for code, info in sorted(geom.get("states", {}).items())

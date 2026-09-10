@@ -38,11 +38,21 @@ def slugify(text: str) -> str:
     return slug or f"grid-{datetime.now():%Y%m%d-%H%M}"
 
 
-def member_name(slug: str, k: int, delta: float) -> str:
-    """The name of one scenario member: the slug, the district count unpadded, and the delta
-    as a bare percent (`custom_k8_d5`, `custom_k10_d7.5`)."""
+def member_name(slug: str, k: int, delta: float, channel: str | None = None) -> str:
+    """The name of one scenario member: the slug, an optional channel token, the district count
+    unpadded, and the delta as a bare percent (`custom_k8_d5`, `custom_k10_d7.5`,
+    `v3-seq-warm_fi_k19_d20`). A member with no channel is named exactly as it always was."""
     dpct = round(delta * 100, 4)
-    return f"{slug}_k{int(k)}_d{dpct:g}"
+    token = f"_{channel_token(channel)}" if channel else ""
+    return f"{slug}{token}_k{int(k)}_d{dpct:g}"
+
+
+def channel_token(channel: str) -> str:
+    """A channel or bundle name as one lower-case `[a-z0-9]` token, so it can sit inside a
+    member name and a run directory name: `_PLUS` and `+` spell `plus`, every other separator
+    drops (`national` -> `national`, `WH_PLUS` -> `whplus`, `WHFI` -> `whfi`)."""
+    text = channel.lower().replace("_plus", "plus").replace("+", "plus")
+    return re.sub(r"[^a-z0-9]", "", text)
 
 
 def new_run_dir(root: Path, kind: str, member: str | int) -> Path:
@@ -297,12 +307,28 @@ def members(root: Path, scenario: str | None) -> list[tuple[str, list[Path]]]:
         groups[member].append(run)
     return [(m, groups[m]) for m in order]
 
-_MEMBER_RE = re.compile(r"_k(\d+)_d([\d.]+)$")
+_MEMBER_RE = re.compile(r"(?:_([a-z0-9]+))?_k(\d+)_d([\d.]+)$")
+
+# what a channel token reads as in the pickers; a token this does not name shows uppercased
+CHANNEL_LABELS = {"national": "national", "wh": "WH", "fi": "FI", "whplus": "WH⁺",
+                  "fiplus": "FI⁺", "whfi": "WH+FI", "whfiplus": "WH+FI⁺"}
 
 def member_label(member: str) -> str:
-    """"k10 · d10" for the sidebar picker and the "make default" checkbox text. Reuses the
-    delta *string* straight from the member name rather than round-tripping it through
-    float() - member_name's own formatting doesn't round-trip cleanly (e.g. 7.5 ->
-    7.500000000000001), and there is no reason to pay that here."""
+    """"k10 · d10", or "FI · k19 · d20" for a member carrying a channel token, for the sidebar
+    picker and the "make default" checkbox text. Reuses the delta *string* straight from the
+    member name rather than round-tripping it through float() - member_name's own formatting
+    doesn't round-trip cleanly (e.g. 7.5 -> 7.500000000000001), and there is no reason to pay
+    that here."""
     match = _MEMBER_RE.search(member)
-    return f"k{match.group(1)} · d{match.group(2)}" if match else member
+    if match is None:
+        return member
+    parts = [f"k{match.group(2)}", f"d{match.group(3)}"]
+    if match.group(1):
+        parts.insert(0, channel_label(match.group(1)))
+    return " · ".join(parts)
+
+
+def channel_label(channel: str) -> str:
+    """The display name of a channel or bundle, from either the raw name or its token."""
+    token = channel_token(channel)
+    return CHANNEL_LABELS.get(token, token.upper())
