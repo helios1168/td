@@ -1,13 +1,13 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `e59cc3d` · **Tests:** 480 pass,
+**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `46a2540` · **Tests:** 480 pass,
 0 fail (2026-09-09)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Merged 2026-09-09 (`e59cc3d`, fast-forward, not yet pushed): scenario app round 2. Scenarios
+Merged 2026-09-09 (`e59cc3d`, fast-forward; `main` pushed at `46a2540`): scenario app round 2. Scenarios
 are the unit (`<name>_k<k>_d<pct>` members, sidebar picker, every tab filtered); the Map tab
 shows the incumbent rep territories from `tools/rep_export.py` (dominant-rep fill, hatched
 contested cells); the Reps tab opens on that map with the districts over it, staffs a chosen
