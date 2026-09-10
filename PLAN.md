@@ -62,6 +62,17 @@ Morning of 2026-09-11: the stakeholder review. Everything below is under the wor
   `battery/results/trash_20260910_bundlemembers/`). The proper fix stays queued: a first cut of
   a shared state's zips into bundle groups by the level-0 shares, then each bundle cuts its
   group (`## Decisions needed`).
+- 2026-09-11 morning, done: the user's second rule, no state ends outside every channel, is
+  the driver's under `--serve-all-states` (`6268ed8`): a last all-channel stage allocates
+  what the stages and the catch-all left, one WHFI_PLUS district per state at most, whatever
+  its mass. Probe on the real instance (`probe8_20260911/`, rank 1's flags without
+  `--other-first`): MT WY become one all-channel district of 30 units and WA one of 288, 49
+  districts, no state left. `--other-first` stays the deliberate way to plan those districts
+  before the channels take their neighbours. The hub State commit is `7dbe576` (unmerged).
+  Still in flight when this was written: the subagent doing the AZ interim fix (bullet above);
+  commit its files (`tools/plan_realise.py`, `tests/test_plan_realise.py`) on its report,
+  run the suite, and check `grid_20260910_of/X_n16w11f20_d100_d900n6_of/maps/all.png` reads
+  AZ the same on the WH and FI panels.
 - Relaunch anything with the job's scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:
   `launch_grid.sh CELLS OUT CONC [--resume]`, `make_followup.py`, `make_cert.py`,
   `compose.sh`, `rerealise.sh`, `summaries.sh`, `register.sh`.
