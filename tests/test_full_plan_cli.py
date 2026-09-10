@@ -1322,3 +1322,88 @@ def test_synthesize_writes_the_v2_instance_it_solved():
         assert os.path.exists(v2)
         d = td_instance.load_descaled(v2)
         assert d.channels
+
+
+# --------------------------------------------------------------------------- --max-splits
+def test_parse_caps_upper_cases_and_refuses_a_bad_token():
+    assert cli._parse_caps("ca=3, tx=2,ny=3") == {"CA": 3, "TX": 2, "NY": 3}
+    for bad in ("", "CA", "CA=", "=3", "CA=x"):
+        try:
+            cli._parse_caps(bad)
+        except cli.argparse.ArgumentTypeError:
+            pass
+        else:
+            raise AssertionError(f"expected an ArgumentTypeError for {bad!r}")
+
+
+STATES4 = [f"S{i}" for i in range(4)]
+PATH_ADJ4 = {f"S{i}": tuple(f"S{j}" for j in (i - 1, i + 1) if 0 <= j < 4) for i in range(4)}
+
+
+def _write_v1_4state(path: str) -> None:
+    """A four-state path, one zip each, national mass `[1, 1, 1, 2]`: the fine-split ratio
+    proxy preserves each zip's total mass exactly, so bundle N's state masses are these
+    numbers unchanged.  At `--k 5` (tau = 5 / 5 = 1, the default band [0.8, 1.2]) the
+    contacts-minimising full cover splits S3, the heavy state, between two slots (0.5 + 0.5);
+    `--max-splits S3=1` is what this fixture exists to bind on."""
+    zips = [f"Z{s}" for s in range(4)]
+    m_rel = [1.0, 1.0, 1.0, 2.0]
+    reps = [f"rep{i}" for i in range(4)]
+    share = [{reps[i]: 0.3, reps[(i + 1) % 4]: 0.2} for i in range(4)]
+    obj = dict(
+        format=td_instance.FORMAT,
+        nodes=dict(z=zips, m_rel=m_rel, share=share, share_free=[0.1] * 4, state=STATES4),
+        edges=dict(u=zips[:-1], v=zips[1:]),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def _run_4state(tmp: str, extra=()) -> str:
+    out = os.path.join(tmp, "out")
+    inst = os.path.join(tmp, "inst.json.gz")
+    _write_v1_4state(inst)
+    orig = td_geo.state_rook
+    td_geo.state_rook = lambda *a, **kw: (PATH_ADJ4, {})
+    try:
+        rc = cli.main([inst, "--synthesize", "--route", "joint", "--driver", "geo",
+                       "--bundles", "N", "--engine", "scipy", "--strategy", "direct",
+                       "--k", "5", "--time-limit", "30", "--out", out, *extra])
+        assert rc == 0, rc
+    finally:
+        td_geo.state_rook = orig
+    return out
+
+
+def _shares(row: dict) -> dict:
+    return {k: v for k, v in row.items() if k != "residual_by_channel"}
+
+
+def test_max_splits_caps_a_state_s_slots_per_stage():
+    """Without the cap, S3 (mass 2) splits between two of route joint's one stage's slots;
+    with `--max-splits S3=1` it holds at most one, params.json records the cap, and the
+    greedy warm start, which knows nothing about `--max-splits`, is free to fail and fall
+    back to a cold solve (a `warm_start_failed` pass-log entry, not a test failure)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plain = _run_4state(tmp)
+        with open(os.path.join(plain, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        assert len(_shares(plan["per_state"]["S3"])) == 2, "the uncapped optimum splits S3"
+
+        capped = _run_4state(tmp, ["--max-splits", "s3=1"])
+        with open(os.path.join(capped, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["max_splits"] == {"S3": 1}
+        with open(os.path.join(capped, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        for st in STATES4:
+            n_slots = len(_shares(plan["per_state"][st]))
+            cap = 1 if st == "S3" else len(plan["slots"])
+            assert n_slots <= cap, (st, n_slots)
+        assert any(p["name"] == "greedy" and p["status"] == "warm_start_failed"
+                   for p in plan["passes"]), plan["passes"]
+
+    # unset, params.json carries an empty dict rather than null
+    with tempfile.TemporaryDirectory() as tmp:
+        with open(os.path.join(_run_4state(tmp), "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["max_splits"] == {}

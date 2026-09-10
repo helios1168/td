@@ -625,6 +625,36 @@ def test_serve_states_forces_a_state_into_some_district():
     assert level0.serve_states(plain, []) is plain
 
 
+def test_max_splits_caps_how_many_slots_a_state_may_touch():
+    """Full cover of `CONTIG` needs 7 contacts, and state 2 is the one split between the two
+    slots (states 0..2 in one, 2..5 in the other, sharing state 2).  Capping state 2 at one
+    slot removes the bridge: the best cover without it is 1.2 (states 1..4 alone), four
+    contacts, and no state touches more than its cap."""
+    prob = build0(CONTIG)
+    out = run(prob, [level0.cover_pass(prob, ["A"]), level0.contacts_pass(prob)])
+    assert abs(out["passes"][0]["value"] - 1.8) < 1e-6 and out["contacts"] == 7
+    assert int(out["z"][2].sum()) == 2, "state 2 is the one the uncapped optimum splits"
+
+    capped = level0.max_splits(prob, {"S2": 1})
+    lo, hi = capped.rows["max_splits"]
+    assert hi - lo == 1 and capped.lb[lo] == -np.inf and capped.ub[lo] == 1.0
+    out = run(capped, [level0.cover_pass(capped, ["A"]), level0.contacts_pass(capped)])
+    assert abs(out["passes"][0]["value"] - 1.2) < 1e-6, "the bridge through state 2 is gone"
+    assert out["contacts"] == 4
+    assert (out["z"].sum(axis=1) <= 1).all()
+    assert_bands_and_contiguity(capped, out)
+
+    # a state not in the problem is ignored, and the problem is returned unchanged
+    assert level0.max_splits(prob, {"ZZ": 1}) is prob
+    # a cap below 1 is refused, even for a state the model does not carry
+    for bad in ({"S2": 0}, {"ZZ": -1}):
+        try:
+            level0.max_splits(prob, bad)
+            raise AssertionError(f"expected a ValueError for {bad}")
+        except ValueError:
+            pass
+
+
 def test_a_pass_that_returns_nothing_carries_the_log_out_on_the_exception():
     """A pass can come back with nothing usable: infeasible, or a time limit with no incumbent.
 

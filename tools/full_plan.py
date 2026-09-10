@@ -142,6 +142,24 @@ def _parse_states(text: str) -> list[str]:
     return out
 
 
+def _parse_caps(text: str) -> dict[str, int]:
+    """`"CA=3,TX=2"` -> `{"CA": 3, "TX": 2}`, state codes upper-cased; membership against a
+    stage's own states is `level0.max_splits`'s business, which ignores a code it does not
+    carry."""
+    out = {}
+    for item in text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        name, _, count = item.partition("=")
+        if not name.strip() or not count.strip().isdigit():
+            raise argparse.ArgumentTypeError(f"expected STATE=COUNT, got {item!r}")
+        out[name.strip().upper()] = int(count)
+    if not out:
+        raise argparse.ArgumentTypeError("expected at least one STATE=COUNT")
+    return out
+
+
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("instance", help="the descaled instance (.json.gz), format 1 or 2")
@@ -244,6 +262,10 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="the catch-all stage's band floor as a fraction of L: an 'other' "
                          "district, one person over every channel of a sparse region, may "
                          "hold F of a full book (default 1.0)")
+    ap.add_argument("--max-splits", type=_parse_caps, default=None, metavar="ST=N,ST=N,...",
+                    help="cap how many districts a state may be cut into, per business stage "
+                         "(e.g. CA=3,TX=2,NY=3); a state not named is uncapped, and a state "
+                         "a stage does not carry is ignored there (default none)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
     ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
@@ -614,7 +636,8 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     records them either way, so dropping them under `reps` would make that record untrue.
     `--k-fixed`
     applies to the bundles this model carries; a named bundle in another stage's model is
-    that stage's business.
+    that stage's business.  `--max-splits` is applied last, over every slot this model
+    carries, so the cap holds per business stage rather than across the whole plan.
     """
     from td.solvers import level0
 
@@ -629,7 +652,11 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
         fixed_used=None if cap else (fixed or None),
         max_used=max_used or (fixed if cap and fixed else None))
     # `serve` names the states this stage must put into some district (`--serve-all-states`)
-    return level0.serve_states(problem, serve) if serve else problem
+    problem = level0.serve_states(problem, serve) if serve else problem
+    # `--max-splits`: caps how many of this stage's own slots a state may sit in.  Applied to
+    # every stage's own model, so the cap holds per business stage rather than across the plan.
+    caps = getattr(args, "max_splits", None)
+    return level0.max_splits(problem, caps) if caps else problem
 
 
 def _print_slots(problem, stage: str) -> None:
@@ -938,6 +965,9 @@ def _main(args, T: telemetry.Timings) -> int:
     band_mode = args.band_mode or ("per-bundle" if args.k_fixed else "global")
     print(f"band: mode={band_mode} lo={band_lo:.6g} hi={band_hi:.6g} "
           f"(delta={args.delta})", flush=True)
+    if args.max_splits:
+        print("max splits: " + ", ".join(f"{st} {n}" for st, n in args.max_splits.items()),
+              flush=True)
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
@@ -962,7 +992,7 @@ def _main(args, T: telemetry.Timings) -> int:
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
-        other_first=args.other_first,
+        other_first=args.other_first, max_splits=args.max_splits or {},
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -1063,7 +1093,10 @@ def _main(args, T: telemetry.Timings) -> int:
         # greedy, the seeds every used slot is anchored and rooted at.  `--centers seeds` needs
         # the seeds too, whatever the other two flags say, or it would silently run no
         # compactness pass.  A build that fails is recorded and the stage solves cold: a
-        # multi-hour run must not die on its start.
+        # multi-hour run must not die on its start.  `greedy_plan` does not know about
+        # `--max-splits`, so a greedy point that would split a capped state past its cap fails
+        # `check_point`'s own row check and is caught here like any other greedy failure; the
+        # stage then solves cold, and the MILP itself holds the cap from the `max_splits` row.
         warm, warm_s, seeds = None, 0.0, None
         if stage not in ("other_first", "all_last") and ("greedy" in (args.warm, args.anchor)
                                                           or seed_centres):

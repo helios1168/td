@@ -64,6 +64,9 @@ class Level0Problem(SplitProblem):
     `slot_root[j]` the state slot `j` is rooted at (`-1` when no single anchor names one) and
     `radius_max` the cap that geometry carries, so `greedy_plan` and `check_point` can read
     back what the bounds mean rather than re-deriving it.
+
+    `state_list` is `cells.state_list`, in the same order as every state index here: what
+    `max_splits` resolves a state code against.
     """
 
     off_u: int = 0
@@ -82,6 +85,7 @@ class Level0Problem(SplitProblem):
     state_xy: np.ndarray = field(default_factory=lambda: np.zeros((0, 0)))
     slot_root: tuple[int, ...] = ()
     radius_max: float | None = None
+    state_list: tuple[str, ...] = ()
 
     def decode_zy(self, z: np.ndarray, y: np.ndarray) -> dict:
         """`z`, `y` -> masses per slot `(W * y).sum(0)`, `used` (a used slot has a contact,
@@ -514,6 +518,7 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         state_xy=np.zeros((0, 0)) if xy is None else xy,
         slot_root=tuple(int(v) for v in root_of),
         radius_max=None if radius_max is None else float(radius_max),
+        state_list=tuple(cells.state_list),
     )
 
 
@@ -598,6 +603,42 @@ def serve_states(problem: Level0Problem, states) -> Level0Problem:
         problem, A=sparse.vstack([problem.A, block]).tocsc(),
         lb=np.concatenate([problem.lb, np.ones(len(states))]),
         ub=np.concatenate([problem.ub, np.full(len(states), np.inf)]), rows=names)
+
+
+def max_splits(problem: Level0Problem, caps: dict[str, int]) -> Level0Problem:
+    """A copy of `problem` with one row per state named in `caps` and present in the
+    problem's `state_list`, `sum_j z_sj <= caps[state]` over every slot of the model: the
+    state may be cut between at most `caps[state]` districts of this stage (route S) or of
+    the whole model (route J).  The level-2 cut can still leave fragments the realiser's
+    repair mends, so this caps the plan's own splits, not the drawn map's pieces.
+
+    A cap below 1 is refused, for every entry of `caps` regardless of presence (the same
+    dict is applied to every stage, and a typo should not wait for the one stage that
+    happens to carry the state).  A state named in `caps` but not in `problem.state_list` (a
+    stage that does not carry it) is ignored.  Rows are named `max_splits` (one block,
+    `serve_states`'s pattern).
+    """
+    for code, cap in caps.items():
+        if int(cap) < 1:
+            raise ValueError(f"max_splits[{code!r}] = {cap} must be at least 1")
+    idx = {code: i for i, code in enumerate(problem.state_list)}
+    states = sorted(idx[code] for code in caps if code in idx)
+    if not states:
+        return problem
+    code_of = {i: code for code, i in idx.items()}
+    K = problem.k
+    rows = np.repeat(np.arange(len(states)), K)
+    cols = np.concatenate([problem.off_z + s * K + np.arange(K) for s in states])
+    block = sparse.coo_matrix((np.ones(len(cols)), (rows, cols)),
+                              shape=(len(states), problem.n_var)).tocsc()
+    start = problem.A.shape[0]
+    names = dict(problem.rows)
+    names["max_splits"] = (start, start + len(states))
+    ub = np.array([float(caps[code_of[s]]) for s in states])
+    return dataclasses.replace(
+        problem, A=sparse.vstack([problem.A, block]).tocsc(),
+        lb=np.concatenate([problem.lb, np.full(len(states), -np.inf)]),
+        ub=np.concatenate([problem.ub, ub]), rows=names)
 
 
 def _var_name(problem: Level0Problem, i: int) -> str:
