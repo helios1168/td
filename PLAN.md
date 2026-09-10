@@ -14,11 +14,11 @@ ZCTA polygons instead of a Voronoi tessellation of zip centroids.
 
 ## Next step
 
-Finish the real-ZCTA geometry change (uncommitted, in flight: `td/geo.py`,
-`tools/geom_export.py`, `tests/test_geom_export.py`, `docs/APP.md`), then rebuild `geom.json`
-for the runs the app actually opens (36 runs under `battery/results/app/` still carry
-Voronoi-based cells and no `cells_source`; at minimum the round3 k10 clip and staff runs), then
-the on-screen check below, then merge on request.
+On-screen check of the branch app, now serving real ZCTA geometry (`4428ef1`; the 15 runs
+under `battery/results/app/` that carry polygons were rebuilt in place, 0.14/0.91 MB to
+3.68 MB each, `cells_source` = `tl_2025_us_zcta520.shp simplify=250m`). Check the zip shapes
+against a real US ZIP map, that district gaps read as gaps rather than as missing data, and
+whether the 3.68 MB payload drags the browser. Then merge on request.
 
 On-screen check of the branch app (tmux `tdapp-cell`, `100.69.120.67:8503`), the live checks
 `~/.claude/plans/lets-simplify-certain-aspect-cached-origami.md` §5.3 calls for:
@@ -105,8 +105,9 @@ Then merge on request.
   free for anyone else, with the error recorded in `requested_multi`.
   `tests/test_app_smoke.py`'s sidebar assertion was a live regression from `bcb3f00` (the
   Instance picker makes two selectboxes, the test allowed at most one) and is fixed here.
-- 2026-09-09, in flight, uncommitted (`td/geo.py`, `tools/geom_export.py`,
-  `tests/test_geom_export.py`, `docs/APP.md`): the zip shapes on the maps were never real ZIP
+- 2026-09-09, committed as `4428ef1` (`td/geo.py`, `tools/geom_export.py`, `app/mapfig.py`,
+  `tests/test_geom_export.py`, `tests/test_mapfig.py`, `docs/APP.md`), 534 passed, 0 failed,
+  app smoke green under `.venv-app`: the zip shapes on the maps were never real ZIP
   boundaries. `geom.json["cells"]` was a Voronoi tessellation of ZCTA centroid points from the
   2020 Gazetteer (`tools/us_maps.py:858`), clipped to the state outline, so every "zip" was a
   synthetic catchment tiling the whole state; real ZCTA polygons were never loaded for drawing.
@@ -117,11 +118,18 @@ Then merge on request.
   guard and every existing split result are unchanged. Vintage caveat: ZCTAs are re-delineated
   only each decennial, so the 2025 TIGER release carries the same 33,791 ZCTA5 codes as the
   2020 one, but 865 of 2,000 sampled polygons have refined geometry. Opus review found 9
-  defects, being fixed; the load-bearing one is that `tools/split_district.py:73` builds its
-  contiguity graph as `{z for z in zips if z in geom["cells"]}`, an inference that held only
-  while `cells` meant "has a Voronoi cell" — a zip whose Voronoi cell clips away to nothing on
-  the coastline would now enter the graph as an isolated vertex and make the guard infeasible
-  (latent: 0 such zips on this instance).
+  defects, all fixed before the commit; the load-bearing one is that
+  `tools/split_district.py:73` builds its contiguity graph as
+  `{z for z in zips if z in geom["cells"]}`, an inference that held only while `cells` meant
+  "has a Voronoi cell" — a zip whose Voronoi cell clips away to nothing on the coastline would
+  now enter the graph as an isolated vertex and make the guard infeasible (latent: 0 such zips
+  on this instance). That vertex set now ships explicitly as `cell_graph_zips`. A district's
+  interior gaps ride in a separate `"holes"` key, strokes-only, because `staffed_figure` fills
+  `rings` in two places and a hole folded into `rings` would render as a solid blob; all 10
+  districts on the live run have holes, 605 in total. District colouring reads its adjacency
+  off the Voronoi dissolve, which tiles, not the ZCTA dissolve, which does not (15 adjacent
+  pairs against 7), so "neighbours never share a hue" still holds. `geo.ZCTA_SHP` resolves
+  repo-relative, then `TD_ZCTA_SHP`, then the hub, so no machine path is baked into the source.
 
 ## Decisions needed
 
