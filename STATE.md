@@ -7,8 +7,8 @@ Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-`21adfa3` on `main` (`origin/main` is at `20b68e6`; this and the state commit are unpushed, the
-board work before them is pushed): the Map and Reps tabs
+`21adfa3` on `main`, pushed 2026-09-09 with this entry (`origin/main` at `77e5cea`): the Map and
+Reps tabs
 both call `repdata.ensure`, so with no `reps.json` each drew the same keyless button and
 Streamlit raised `StreamlitDuplicateElementId`. `ensure` now takes the calling tab's name and
 keys on it; `streamlit.testing` AppTest raises before the fix, 0 exceptions after. The app runs
