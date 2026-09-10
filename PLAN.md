@@ -17,6 +17,37 @@ follows once solve times are known.
 
 ## Next step
 
+2026-09-11, four subagents in flight (files disjoint; the main session commits on each report):
+
+- `tools/plan_summary.py`: the figure reworked to the structure map (plus the count of
+  wholesalers under each state code) and one map per bundle present (National only, WH only,
+  FI only, WH + FI merged, WIFI = all three, National + WH, National + FI), `WHFI_PLUS_nn`
+  displayed as `WIFI_nn`, each map a reproduction of the app's render. Then the main session
+  swaps the panel drawing for the app's own render: `tools/plan_render_app.py` (`57ee6ba`,
+  runs under `.venv-app`, kaleido 1.4.0 approved by the user 2026-09-11) exports
+  `app/mapfig.figure` to PNG per bundle, and the summary tiles the PNGs; the matplotlib
+  reproduction stays as the fallback on a machine without `.venv-app` (the suite runs there).
+- `tools/plan_realise.py::repair`: the bridging move the user approved 2026-09-11. A detached
+  piece whose neighbour refuses on the band moves anyway, then the neighbour hands zips next
+  to the source's main piece back until it is no worse; the pair of moves stands only if the
+  two districts' total band excess did not rise and both stay connected. Cause on rank 1: N_02
+  at 570 and N_07 at 545 against U 553 (national τ 502.5, ±10 %), so no single move could
+  reunite N_02's three south-Texas pieces (16 zips, mass 24). After it lands: re-realise the
+  ranked runs (`rerealise.sh`), redraw maps, re-register the app scenarios.
+- The national sub-channels (the user, 2026-09-11): the v3 file's `national` is the sum of
+  National (Chase), Wells (WH) and Wells (FI); a merge folds Chase and Wells (FI) into FI and
+  Wells (WH) into WH. The next export carries the three as `national_chase`,
+  `national_wells_wh`, `national_wells_fi` (matched case-insensitively) in place of
+  `national`, meta `channel_groups`. Exporter agent: `tools/instance_export/` accepts them,
+  kappa on the per-zip aggregate. Channels agent: `td/channels.py` `fine_split` exact
+  (`N_WH` = Wells WH, `N_FI` = Chase + Wells FI) when the sub-channels are present, the ratio
+  proxy kept for v3 files and named in `meta["fine_split"]`; `synthesize_channels(...,
+  sub_channels=True)`. Then the main session: `docs/FULL_PROBLEM.md` §2 loses the proxy
+  sentence, `docs/CODE_MAP.md` exporter row, unit file line; the exporter goes to the user for
+  the work machine; the ranked cells re-run on the new instance when it lands (pure and WIFI
+  districts should reproduce, the plus-bundle options move). Assumption recorded: the rep
+  sales rows carry the sub-channel too.
+
 Morning of 2026-09-11: the stakeholder review. Everything below is under the worktree's
 `battery/results/full_problem/` (gitignored) unless said otherwise.
 
