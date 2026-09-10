@@ -11,4 +11,5 @@ docs/CODE_MAP.md
 docs/APP.md
 docs/HEADLINE.md
 docs/FULL_PROBLEM.md
+docs/MODEL_FULL.md
 docs/units/*.md
