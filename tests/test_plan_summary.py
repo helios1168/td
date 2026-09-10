@@ -1,13 +1,14 @@
 """test_plan_summary.py: tools/plan_summary.py on a toy run directory.
 
-No network, no gazetteer and no shapefile: the tessellation is stubbed with one unit square per
-zip (touching squares, so a district dissolves to a single polygon and the "one polygon per
-district" assertion has an arithmetic answer), and `states_outline` returns a three-row
-GeoDataFrame of boxes over those squares.
+No network, no gazetteer and no real shapefile: `geo.states_outline`, `geo.zcta_polygons` and
+`run_draw.coordinates` are stubbed so `geom_export.export` runs for real on a hand-built toy:
+`geo.zcta_polygons`'s stand-in returns the same touching unit squares `geo.states_outline`'s
+boxes tile, so a district's real-ZCTA dissolve has an arithmetic answer (`tests/test_geom_export
+.py` uses the same pattern with its own fixture).
 
-Six zips, three states, two bundles: `N` holds every zip in two districts, `WH` holds the first
-three and drops the rest, and no district carries `FI` at all, which is the empty-channel branch
-the figure has to survive.
+Six zips, three states, two bundles with a district: `N` holds every zip in two districts, `WH`
+holds the first three and drops the rest, and no district carries `FI` at all, the toy's
+"a bundle with no district gets no map" case.
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ if os.path.join(ROOT, "tools") not in sys.path:
 
 from td import geo as td_geo                       # noqa: E402
 import plan_summary as cli                         # noqa: E402
+import run_draw                                    # noqa: E402
 
 ZIPS = [f"{10000 + i:05d}" for i in range(6)]
 STATES = ["S0", "S0", "S1", "S1", "S2", "S2"]
@@ -33,8 +35,8 @@ N_DISTRICT = ["N_01", "N_01", "N_01", "N_02", "N_02", "N_02"]
 WH_DISTRICT = ["WH_01", "WH_01", "WH_01", "", "", ""]
 WHOLESALERS = {"N_01": "R0001", "N_02": "R0002", "WH_01": "R0003"}
 
-# one unit square per zip, side by side: squares of the same district share an edge, so the
-# dissolve of any run of them is a single polygon
+# one unit square per zip, side by side: squares of the same district (or the same state) share
+# an edge, so the real-ZCTA dissolve of any run of them is a single polygon
 SIDE = 1000.0
 
 
@@ -53,6 +55,18 @@ def _states_gdf():
            "S2": shapely.box(4 * SIDE, 0.0, 6 * SIDE, SIDE)}
     return gpd.GeoDataFrame({"STUSPS": list(box)}, geometry=list(box.values()),
                             crs=td_geo.LAEA)
+
+
+def _zcta_polygons_stub(zips, *a, **kw):
+    squares = _squares()
+    return {z: squares[z] for z in zips if z in squares}
+
+
+def _coordinates_stub(zips, *a, **kw):
+    centres = {z: ((i + 0.5) * SIDE, SIDE / 2.0) for i, z in enumerate(ZIPS)}
+    have = [z for z in zips if z in centres]
+    missing = [z for z in zips if z not in centres]
+    return {z: centres[z] for z in have}, missing
 
 
 def _write_run(run_dir: str) -> None:
@@ -96,13 +110,14 @@ def _write_run(run_dir: str) -> None:
 
 
 def _run(run_dir: str) -> list:
-    orig = (td_geo.states_outline, cli.zip_cells)
+    orig = (td_geo.states_outline, td_geo.zcta_polygons, run_draw.coordinates)
     td_geo.states_outline = lambda *a, **kw: _states_gdf()
-    cli.zip_cells = lambda *a, **kw: _squares()
+    td_geo.zcta_polygons = _zcta_polygons_stub
+    run_draw.coordinates = _coordinates_stub
     try:
         return cli.summary(run_dir, "unused", dpi=60, simplify=0.0)
     finally:
-        td_geo.states_outline, cli.zip_cells = orig
+        td_geo.states_outline, td_geo.zcta_polygons, run_draw.coordinates = orig
 
 
 def test_a_toy_run_writes_the_png_and_the_svg():
@@ -116,30 +131,9 @@ def test_a_toy_run_writes_the_png_and_the_svg():
         for path in written:
             assert os.path.exists(path), path
             assert os.path.getsize(path) > 5000, (path, os.path.getsize(path))
-        # one pickle per bundle and one per channel with unheld ground; no `cells.pkl`, since
-        # the tessellation itself is stubbed here rather than built
+        # one geom cache pickle per bundle with a district: N and WH, never the empty FI
         cache = os.path.join(run_dir, "maps", "cache")
-        assert sorted(os.listdir(cache)) == ["N_districts.pkl", "WH_districts.pkl",
-                                             "unheld_FI.pkl", "unheld_WH.pkl"]
-
-
-def test_each_district_dissolves_to_one_polygon():
-    """Three squares in a row share edges, so the union is a `Polygon`, never a `MultiPolygon`;
-    a district in pieces would come out multi-part and the map would show it."""
-    with tempfile.TemporaryDirectory() as tmp:
-        mapping = dict(zip(ZIPS, N_DISTRICT))
-        polys = cli.dissolve_groups("N_districts", mapping, _squares, tmp)
-        assert sorted(polys) == ["N_01", "N_02"]
-        for name, geom in polys.items():
-            assert geom.geom_type == "Polygon", (name, geom.geom_type)
-            assert abs(geom.area - 3 * SIDE * SIDE) < 1e-6, name
-        # second call is served from the pickle, same answer
-        again = cli.dissolve_groups("N_districts", mapping, _no_cells, tmp)
-        assert sorted(again) == ["N_01", "N_02"]
-
-
-def _no_cells():
-    raise AssertionError("the cache should have answered without the tessellation")
+        assert sorted(os.listdir(cache)) == ["N_geom.pkl", "WH_geom.pkl"]
 
 
 def test_the_state_pattern_classifier_on_the_five_hand_cases():
@@ -173,9 +167,23 @@ def test_the_pattern_per_state_reads_the_used_slots_only():
                                         "S3": "unserved"}
 
 
-def test_a_split_state_is_counted_per_business_channel():
+def test_wholesaler_counts_reads_used_slots_with_a_positive_share():
+    """The count is over slots, not bundles: two used slots of the same bundle count twice."""
+    plan = dict(
+        slots=[dict(id="P001", bundle="N", used=True), dict(id="P002", bundle="N", used=True),
+               dict(id="P003", bundle="WH", used=True),
+               dict(id="P004", bundle="FI", used=False)],
+        per_state={"S0": {"P001": 1.0, "P003": 1.0}, "S1": {"P001": 0.0},
+                  "S2": {"P002": 1.0, "P004": 1.0}},
+    )
+    assert cli.wholesaler_counts(plan) == {"S0": 2, "S1": 0, "S2": 1}
+    assert cli.wholesaler_counts({"per_state": {"S9": {}}}) == {"S9": 0}
+
+
+def test_a_split_state_is_counted_per_business_channel_and_mass_sums_the_bundles_own_rows():
     """S1's zips go to two national districts and one WH district, so it hatches on the
-    structure panel and counts as split for National only."""
+    structure panel and counts as split for National only.  `mass_by_bundle["N"]` sums both
+    halves of the national book for one zip; `mass_by_bundle["WH"]` is the WH row alone."""
     with tempfile.TemporaryDirectory() as tmp:
         run_dir = os.path.join(tmp, "run")
         os.makedirs(run_dir)
@@ -194,18 +202,22 @@ def test_a_split_state_is_counted_per_business_channel():
         assert run["residual"]["National"] == 0.0
         assert run["zips_by_bundle"]["N"] == dict(zip(ZIPS, N_DISTRICT))
         assert run["zips_by_bundle"]["WH"] == dict(zip(ZIPS[:3], WH_DISTRICT[:3]))
+        assert run["mass_by_bundle"]["N"][ZIPS[0]] == 4.0         # N_WH 2.0 + N_FI 2.0
+        assert run["mass_by_bundle"]["WH"][ZIPS[0]] == 3.0
+        assert ZIPS[3] not in run["mass_by_bundle"]["WH"]         # dropped, not zero
 
 
-def test_a_bundle_reads_its_business_channels_from_the_districts_table():
-    meta = {"N_01": {"bundle": "N", "channels": "N_WH N_FI"},
-            "F_01": {"bundle": "FI_PLUS", "channels": "FI N_FI"},
-            "M_01": {"bundle": "WHFI", "channels": "WH FI"}}
-    assert cli.business_of("N", meta) == ("National",)
-    assert cli.business_of("FI_PLUS", meta) == ("National", "FI")
-    assert cli.business_of("WHFI", meta) == ("WH", "FI")
-    # no row for the bundle: the name is the fallback
-    assert cli.business_of("WH", meta) == ("WH",)
-    assert cli.business_of("WH_PLUS", {}) == ("National", "WH")
+def test_bundle_split_states_counts_per_bundle_not_per_business_channel():
+    """S1 holds two `N` districts (split) but only one `WH` district (not split)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        run_dir = os.path.join(tmp, "run")
+        os.makedirs(run_dir)
+        _write_run(run_dir)
+        run = cli.load_assignment(os.path.join(run_dir, "assignment.csv"))
+
+        assert cli.bundle_split_states("N", run) == {"S1"}
+        assert cli.bundle_split_states("WH", run) == set()
+        assert cli.bundle_split_states("FI", run) == set()
 
 
 def test_the_district_label_puts_the_wholesaler_under_the_id():
@@ -213,6 +225,33 @@ def test_the_district_label_puts_the_wholesaler_under_the_id():
     assert cli._label("N_01", meta) == "N_01\nR0001"
     assert cli._label("N_02", meta) == "N_02"
     assert cli._label("N_03", {}) == "N_03"
+    assert cli._label("WHFI_PLUS_07", {"WHFI_PLUS_07": {"wholesaler": "R0009"}}) == \
+        "WIFI_07\nR0009"
+
+
+def test_display_id_shows_whfi_plus_as_wifi():
+    assert cli.display_id("WHFI_PLUS_07") == "WIFI_07"
+    assert cli.display_id("WHFI_01") == "WHFI_01"           # WHFI, not WHFI_PLUS: unchanged
+    assert cli.display_id("N_03") == "N_03"
+    assert cli.display_id("WH_PLUS_02") == "WH_PLUS_02"
+
+
+def test_bundle_title_is_the_fixed_reading_or_the_bundle_name():
+    assert cli.bundle_title("N") == "National only"
+    assert cli.bundle_title("WHFI_PLUS") == "WIFI: national + WH + FI, one wholesaler"
+    assert cli.bundle_title("SOMETHING_NEW") == "SOMETHING_NEW"
+
+
+def test_ordered_bundles_is_the_fixed_reading_order_then_unknowns_by_name():
+    assert cli.ordered_bundles({"FI", "N", "WHFI_PLUS"}) == ["N", "FI", "WHFI_PLUS"]
+    assert cli.ordered_bundles({"ZZZ", "N", "AAA"}) == ["N", "AAA", "ZZZ"]
+
+
+def test_wholesaler_count_counts_distinct_non_empty_wholesalers():
+    meta = {"N_01": {"wholesaler": "R0001"}, "N_02": {"wholesaler": "R0002"},
+            "WH_01": {"wholesaler": "R0001"}, "FI_01": {"wholesaler": ""}}
+    assert cli.wholesaler_count(meta) == 2
+    assert cli.wholesaler_count({}) == 0
 
 
 def test_the_states_column_reads_as_whole_states_and_shares():
@@ -220,27 +259,6 @@ def test_the_states_column_reads_as_whole_states_and_shares():
     assert cli.states_of(row) == [("AZ", 0.775496), ("CO", 1.0), ("NM", 1.0)]
     assert cli.states_text(row) == "AZ 78 %, CO, NM"
     assert cli.states_text({}) == ""
-
-
-def test_district_colours_differ_between_neighbours_and_hold_across_panels():
-    """Two districts touching on a panel never share a colour; a district on two panels has
-    one colour; a district touching nothing may take any."""
-    import shapely
-
-    a, b, c = (shapely.box(0, 0, 1, 1), shapely.box(1, 0, 2, 1), shapely.box(2, 0, 3, 1))
-    polys = {"N": {"N_01": a, "N_02": b}, "WHFI": {"WHFI_01": c}, "FI": {"FI_01": a}}
-    meta = {"N_01": {"bundle": "N", "channels": "N_WH N_FI"},
-            "N_02": {"bundle": "N", "channels": "N_WH N_FI"},
-            "WHFI_01": {"bundle": "WHFI", "channels": "WH FI"},
-            "FI_01": {"bundle": "FI", "channels": "FI"}}
-    colors = cli.district_colors(polys, meta)
-    assert set(colors) == {"N_01", "N_02", "WHFI_01", "FI_01"}
-    assert colors["N_01"] != colors["N_02"]                     # touch on National
-    # FI_01 (box a) and WHFI_01 (box c) do not touch, so both take the palette's least-used
-    # entries: on the FI panel, coloured first with two districts, they still differ
-    assert colors["FI_01"] != colors["WHFI_01"]
-    adj = cli.panel_adjacency({"x": a, "y": b, "z": c})
-    assert adj == {"x": {"y"}, "y": {"x", "z"}, "z": {"y"}}
 
 
 def test_no_kappa_means_the_masses_stay_descaled():

@@ -7,33 +7,28 @@
 This answers the question above it: what does the whole plan do to the country.  One
 `maps/summary.png` (and `.svg`) carrying
 
-  * a CONUS map of the **channel structure by state**, saying which of the three business
-    channels a state actually gets and whether one rep carries several of them there,
-  * a map of the **merged districts** (`WHFI`, one rep for WH and FI; `WHFI_PLUS`, one rep for
-    all three channels), each labelled with the states it holds, and
-  * one panel per **business channel** (National, WH, FI), every district that carries that
-    channel filled and labelled with its id and wholesaler.
+  * a CONUS map of the **channel structure by state**: which plan pattern each state falls
+    into (`structure_panel`, unchanged), with the number of wholesalers serving that state
+    (distinct used slots with a positive share of it, `plan.json`'s own `per_state`) printed
+    under its code, and
+  * **one map per bundle** present in the run (`N`, `WH`, `FI`, `WHFI`, `WHFI_PLUS`, `WH_PLUS`,
+    `FI_PLUS`, or any other bundle name the run carries), drawn as the app's own **reach**
+    layer only (by the user's request of 2026-09-11, dropping the earlier zip-level rendering):
+    state outlines, each district's reach filled solid in its own hue and outlined, state codes,
+    and the id labelled with its wholesaler.  No zip geometry is drawn: no ZCTA cell fills, no
+    opportunity shading, no district ZCTA-union outline.  `app/mapfig.py` needs plotly, which
+    the hub venv lacks, so the layering is reproduced here in matplotlib rather than imported.
 
-The figure speaks in business channels, not bundles.  A bundle is how the plan was solved
-(`N`, `WH`, `FI`, `WH_PLUS`, `FI_PLUS`, `WHFI`); a channel is what a customer sees.  A merged
-`WHFI` district appears on both the WH and the FI panel, same colour, same id, cross-hatched; a
-`FI_PLUS` district appears on the FI panel and on the National panel, diagonally hatched, because
-it is the district that folded the national book in.  Zips of a channel that no district holds
-are light grey, and their mass is the residual in the footer.
+A district id is displayed through `display_id`: `WHFI_PLUS_07` reads as `WIFI_07` on every
+label and strip; the underlying id is never rewritten, so `assignment.csv`/`districts.csv` and
+this figure agree on what a district is called, only not on how it is printed.
 
-Colours: one pastel palette (`PALETTE`, twelve hues at two lightnesses, the app's look),
-assigned per panel so that no two districts touching on a panel share a colour and, as far as
-the palette reaches, no two districts on one panel share one at all (`district_colors`).  A
-district keeps its colour on every panel it is drawn on, so a merged district reads the same on
-WH, FI and the merged map.
-
-Geometry is the state-clipped Voronoi tessellation of the zip points, dissolved by district.
-That is the layer `tools/geom_export.py` exports as `district_reach`; the real ZCTA polygons it
-exports as `districts` are not used here.  `zip_cells` says why: at national scale the ZCTA
-dissolve is confetti.
-The tessellation and each bundle's dissolved districts are pickled under `maps/cache/`, keyed by
-a hash of the zip-to-district mapping, so a rerun after an edit to the figure costs seconds and
-a rerun after a new realise recomputes only what changed.
+Geometry still comes from `tools/geom_export.py::export`, one payload per bundle; it needs the
+real ZCTA polygons of a bundle's own zips to build `district_reach` at all, even though the map
+draws only that one layer.  Each bundle's payload is pickled under `maps/cache/<bundle>_geom.pkl`,
+keyed by that bundle's own zip-to-district mapping (and the gazetteer vintage), so a rerun after
+an edit to the figure costs seconds and a rerun after a new realise recomputes only the bundles
+that changed.
 """
 from __future__ import annotations
 
@@ -45,6 +40,8 @@ import os
 import pickle
 import sys
 
+import numpy as np
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 for _p in (ROOT, HERE):
@@ -53,17 +50,18 @@ for _p in (ROOT, HERE):
 
 from td import geo                                                        # noqa: E402
 import geom_export                                                        # noqa: E402
+import run_draw                                                           # noqa: E402
 import us_maps                                                            # noqa: E402
 
 OTHER = "other"                 # `tools/plan_realise.py::OTHER`, the no-district pseudo-label
 
 # The three channels the business runs.  `N_WH` and `N_FI` are the two halves of the national
 # book (the wholesale side and the field side); a stakeholder reads them as one channel, so the
-# figure folds them together and the National panel shows every district holding either half.
+# footer's residual line folds them together.
 BUSINESS = ("National", "WH", "FI")
 CHANNEL_BUSINESS = {"N_WH": "National", "N_FI": "National", "WH": "WH", "FI": "FI"}
 
-PLUS = "⁺"                 # superscript plus: "FI+", the bundle that carries national too
+PLUS = "⁺"                 # superscript plus, `bundle_label`'s own "FI+" reading
 
 # What a state's plan pattern is, in the order the classifier tests them.  "all merged" is a
 # state some `WHFI_PLUS` district holds a share of: one rep for national, WH and FI there, the
@@ -87,40 +85,39 @@ PATTERN_TEXT = {
     "unserved":         "no channel",
 }
 
-HATCH = {"pure": "", "plus": "///", "merged": "xxx"}
-HATCH_COLOR = (0.16, 0.16, 0.18, 0.55)
-
-# District fills, the app's look (`app/mapfig.py::shade`, pastel, the hue carrying identity):
-# twelve hues 30 degrees apart, each at a medium and a pale lightness, 24 entries.  The hues are
-# emitted on a stride of 5 (coprime with 12), so consecutive entries sit 150 degrees apart and a
-# panel of a few districts never draws two neighbouring hues.  The medium set comes first, so a
-# panel of up to twelve districts uses one lightness; past twelve the pale set joins and
-# `district_colors` keeps a hue off two districts that touch.
-N_HUES = 12
-HUE_STRIDE = 5
-FILL_LEVELS = ((0.66, 0.60), (0.80, 0.50))     # (lightness, saturation)
-
-
-def _palette() -> list:
-    import colorsys
-    out = []
-    for light, sat in FILL_LEVELS:
-        for j in range(N_HUES):
-            r, g, b = colorsys.hls_to_rgb(((j * HUE_STRIDE) % N_HUES) / N_HUES, light, sat)
-            out.append("#%02x%02x%02x" % tuple(round(255 * v) for v in (r, g, b)))
-    return out
-
-
-PALETTE = _palette()
-
-GROUND = "#f6f6f6"              # a state with no zip of this channel at all
-UNSERVED = "#d8d8d8"            # a zip of this channel that no district holds
-STATE_LINE = "#9d9d9d"
 SPLIT_HATCH = "#8a8a8a"
 STATE_CODE_MIN_AREA = 2.0e10    # m^2: a state under 20,000 km^2 (RI DE CT) gets no code
 
-FIGSIZE = (22.0, 13.2)
+# The bundle map's own reading order and titles.  A bundle not on this list (a future bundle
+# name) is titled by its own name and sorted after the seven known ones.
+BUNDLE_ORDER = ["N", "WH", "FI", "WHFI", "WHFI_PLUS", "WH_PLUS", "FI_PLUS"]
+BUNDLE_TITLE = {
+    "N":          "National only",
+    "WH":         "WH only",
+    "FI":         "FI only",
+    "WHFI":       "WH + FI merged, one wholesaler (national separate)",
+    "WHFI_PLUS":  "WIFI: national + WH + FI, one wholesaler",
+    "WH_PLUS":    "National + WH, one wholesaler",
+    "FI_PLUS":    "National + FI, one wholesaler",
+}
+
+# A bundle panel's own house style: the app's colours and line weights, scaled down for a panel
+# that is a fraction of the page rather than the app's own full-width map.
+STATE_OUTLINE_COLOR = "#b0b0b0"
+STATE_OUTLINE_W = 0.4           # the app's 0.8, halved for a panel
+REACH_FILL_ALPHA = 0.6          # solid: with no zip geometry drawn on top, the reach is the
+                                 # district's whole reading, not a pale ground under it
+REACH_OUTLINE_W = 1.1
+
 DPI = 110
+FIG_WIDTH = 22.0
+ROW_HEIGHT_IN = 6.8             # one row of panels, the maps' own aspect at this width
+TITLE_IN = 0.7                  # figure inches reserved above the grid for the suptitle
+FOOTER_IN = 1.3                 # figure inches below the grid: the last row's own strip, then
+                                 # the footer: more than one line, since the last row has no
+                                 # following row's hspace gap to draw its strip into
+GRID_HSPACE = 0.12              # fraction of one row's own height; `hspace` is not a fixed
+                                 # inch offset, so this has to shrink with `ROW_HEIGHT_IN`
 
 
 def build_argparser() -> argparse.ArgumentParser:
@@ -129,8 +126,9 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--dpi", type=int, default=DPI)
     ap.add_argument("--simplify", type=float, default=geom_export.SIMPLIFY,
-                    help="district ring tolerance in metres (default: geom_export's own)")
-    ap.add_argument("--no-cache", action="store_true", help="dissolve again, ignoring maps/cache")
+                    help="district/state ring tolerance in metres (default: geom_export's own)")
+    ap.add_argument("--no-cache", action="store_true",
+                    help="export bundle geometry again, ignoring maps/cache")
     ap.add_argument("--kappa", type=float, default=None,
                     help="descaled mass -> currency; the descaled instances carry none")
     return ap
@@ -159,14 +157,32 @@ def bundle_label(bundle: str) -> str:
     return bundle
 
 
+def bundle_title(bundle: str) -> str:
+    """The bundle map's title: the fixed reading for the seven named bundles, else its name."""
+    return BUNDLE_TITLE.get(bundle, bundle)
+
+
+def display_id(district: str) -> str:
+    """The drawn id: `WHFI_PLUS_07` -> `WIFI_07`; every other id unchanged.
+
+    Display only: labels and strips read through this, `assignment.csv` and `districts.csv`
+    keep their own ids exactly as the realiser wrote them.
+    """
+    prefix = "WHFI_PLUS_"
+    return f"WIFI_{district[len(prefix):]}" if district.startswith(prefix) else district
+
+
 def load_assignment(path: str) -> dict:
     """One pass over `assignment.csv`: who holds what, per bundle and per business channel.
 
     A district's zip set does not depend on the channel row it was read from, so the per-bundle
     mapping dedupes; the per-channel sets do not, because a zip can be held on one half of the
-    national book and dropped on the other.
+    national book and dropped on the other.  `mass_by_bundle` sums `M_cell` per (bundle, zip)
+    for exactly that reason too: the national book's two channel rows for one zip both carry
+    bundle `N`, so a bundle map's opportunity shading has to add them rather than pick one.
     """
     zips_by_bundle: dict[str, dict] = {}
+    mass_by_bundle: dict[str, dict] = {}
     unheld = {c: set() for c in BUSINESS}
     residual = {c: 0.0 for c in BUSINESS}
     districts = {c: set() for c in BUSINESS}
@@ -183,13 +199,16 @@ def load_assignment(path: str) -> dict:
                 unheld[chan].add(row["zip"])
                 residual[chan] += float(row["M_cell"] or 0.0)
                 continue
-            zips_by_bundle.setdefault(row["bundle"], {})[row["zip"]] = name
+            bundle = row["bundle"]
+            zips_by_bundle.setdefault(bundle, {})[row["zip"]] = name
+            cell = mass_by_bundle.setdefault(bundle, {})
+            cell[row["zip"]] = cell.get(row["zip"], 0.0) + float(row["M_cell"] or 0.0)
             districts[chan].add(name)
             held_states.setdefault((chan, row["state"]), set()).add(name)
     splits = {c: {s for (ch, s), ds in held_states.items() if ch == c and len(ds) > 1}
               for c in BUSINESS}
-    return dict(zips_by_bundle=zips_by_bundle, unheld=unheld, residual=residual,
-                districts=districts, splits=splits, zip_state=zip_state)
+    return dict(zips_by_bundle=zips_by_bundle, mass_by_bundle=mass_by_bundle, unheld=unheld,
+                residual=residual, districts=districts, splits=splits, zip_state=zip_state)
 
 
 def district_meta(path: str) -> dict:
@@ -198,24 +217,6 @@ def district_meta(path: str) -> dict:
         return {}
     with open(path, encoding="utf-8", newline="") as fh:
         return {row["district"]: row for row in csv.DictReader(fh)}
-
-
-def business_of(bundle: str, meta: dict) -> tuple:
-    """The business channels a bundle serves, from `districts.csv`'s own `channels` column.
-
-    The column is the realiser's word on it; the bundle name is only the fallback, for a bundle
-    that drew no district or a run written before the column existed.
-    """
-    for row in meta.values():
-        if row.get("bundle") == bundle and row.get("channels"):
-            seen = [CHANNEL_BUSINESS[c] for c in row["channels"].split()
-                    if c in CHANNEL_BUSINESS]
-            return tuple(c for c in BUSINESS if c in seen)
-    name = bundle[:-5] if bundle.endswith("_PLUS") else bundle
-    parts = ["WH", "FI"] if name.startswith("WHFI") else ([name] if name in BUSINESS else [])
-    if name == "N" or bundle.endswith("_PLUS"):
-        parts.append("National")
-    return tuple(c for c in BUSINESS if c in parts)
 
 
 def classify_state(present: set) -> str:
@@ -242,6 +243,15 @@ def state_patterns(plan: dict) -> dict:
                    if k in bundle_of and float(v) > 0.0}
         out[state] = classify_state(present)
     return out
+
+
+def wholesaler_counts(plan: dict) -> dict:
+    """`{state: n}`, the number of used slots (any bundle) with a positive share of that state
+    in `plan.json`'s `per_state`, the same reading `state_patterns` takes of the same table,
+    counting slots rather than collapsing them to a pattern."""
+    used = {s["id"] for s in plan.get("slots", []) if s.get("used")}
+    return {state: sum(1 for k, v in entry.items() if k in used and float(v) > 0.0)
+            for state, entry in plan.get("per_state", {}).items()}
 
 
 def kappa_of(params: dict, given: float | None) -> float | None:
@@ -273,8 +283,8 @@ def _cache_key(mapping: dict) -> str:
     """A pickle's key: what it was built from, the gazetteer vintage included.
 
     The vintage belongs in every key, not only the tessellation's (trap 22): the points move
-    between vintages, so a dissolved district built on the 2025 points is not the same shape as
-    one built on 2020's, and a key that omitted it would serve the stale pickle.
+    between vintages, so geometry built on the 2025 points is not the same shape as one built on
+    2020's, and a key that omitted it would serve the stale pickle.
     """
     h = hashlib.sha1()
     for z in sorted(mapping):
@@ -300,124 +310,63 @@ def _write_cache(path: str, key: str, polys: dict) -> None:
         pickle.dump({"key": key, "polys": polys}, fh, protocol=4)
 
 
-def zip_cells(zips, zip_state: dict, states_gdf, geo_cache: str, cache_dir: str,
-              use_cache: bool = True, report=None) -> dict:
-    """`{zip: cell}`, each state tiled by its own zips: the app's `district_reach` ground.
-
-    **Not** the real ZCTA polygons `tools/geom_export.py` dissolves into `geom.json`'s
-    `districts`.  Both were tried; at national scale the ZCTA dissolve is confetti, because the
-    instance holds a few thousand scattered zips and a ZCTA covers only its own populated
-    ground, so a district that owns eight whole states draws as a spray of dots inside them.
-    This is the same state-clipped Voronoi tessellation `geom_export` dissolves into
-    `district_reach`, and it answers the question a plan-level map is asked: which ground does
-    this district cover.  A district holding every zip of a state comes out as exactly that
-    state's polygon, so whole-state districts need no special case.  Trap 23 applies to reading
-    it: this is the contiguity model's own tessellation, not the published ZCTA boundaries.
-    """
-    say = report or (lambda _s: None)
-    keys = sorted(zips)
-    path = os.path.join(cache_dir, "cells.pkl")
-    key = _cache_key({z: zip_state.get(z, "") for z in keys})
-    hit = _read_cache(path, key) if use_cache else None
-    if hit is not None:
-        return hit
-    import run_draw
-
-    xy, missing = run_draw.coordinates(keys, geo_cache)
-    if missing:
-        say(f"summary: {len(missing)} zip(s) with no gazetteer point, drawn nowhere: "
-            f"{', '.join(missing[:8])}")
-    placed = [z for z in keys if z in xy]
-    state_polys = dict(zip(states_gdf["STUSPS"].astype(str), states_gdf.geometry))
-    clip = us_maps.clip_region([xy[z] for z in placed], states_gdf)
-    cells = us_maps.voronoi_cells(placed, xy, clip, zip_state=zip_state,
-                                  state_polys=state_polys)
-    say(f"summary: {len(cells):,} cells over {len(placed):,} placed zip(s)")
-    _write_cache(path, key, cells)
-    return cells
+def ordered_bundles(present) -> list:
+    """The bundles present, in the fixed reading order; an unknown bundle sorts last by name."""
+    known = [b for b in BUNDLE_ORDER if b in present]
+    other = sorted(b for b in present if b not in BUNDLE_ORDER)
+    return known + other
 
 
-def dissolve_groups(name: str, mapping: dict, cells, cache_dir: str,
-                    use_cache: bool = True) -> dict:
-    """`{group: (multi)polygon}` for `{zip: group}`, pickled under `cache_dir/<name>.pkl`.
+def bundle_rows(bundle: str, run: dict, xy: dict) -> list:
+    """Geometry rows for one bundle: one per zip a district of it holds, `opportunity` the sum
+    of `M_cell` over that zip's rows of this bundle (`mass_by_bundle`)."""
+    mapping = run["zips_by_bundle"].get(bundle, {})
+    mass = run["mass_by_bundle"].get(bundle, {})
+    out = []
+    for z, d in sorted(mapping.items()):
+        pt = xy.get(z)
+        x, y = pt if pt else (None, None)
+        out.append(dict(zip=z, state=run["zip_state"].get(z, ""), district=d, x=x, y=y,
+                        opportunity=mass.get(z, 0.0)))
+    return out
 
-    `cells` is a zero-argument callable returning `{zip: cell}`, a callable rather than the
-    dict itself so a fully cached rerun never builds the tessellation at all.
 
-    Cached unsimplified, and simplified only at draw time (`simplify_polys`), because
-    `us_maps.district_borders` finds a shared border by intersecting two boundaries exactly:
-    two districts simplified independently no longer share their vertices, and two thirds of
-    the internal borders on the structure panel disappear.
-    """
-    path = os.path.join(cache_dir, f"{name}.pkl")
+def bundle_geom(bundle: str, rows: list, states_gdf, zcta_polys: dict, cells_source: str,
+               cache_dir: str, use_cache: bool = True,
+               simplify: float = geom_export.SIMPLIFY) -> dict:
+    """One bundle's `geom_export` payload, pickled under `cache_dir/<bundle>_geom.pkl`, keyed
+    on that bundle's own zip-to-district mapping."""
+    mapping = {r["zip"]: r["district"] for r in rows}
+    path = os.path.join(cache_dir, f"{bundle}_geom.pkl")
     key = _cache_key(mapping)
     hit = _read_cache(path, key) if use_cache else None
     if hit is not None:
         return hit
-    ground = cells()
-    held = {z: d for z, d in mapping.items() if z in ground}
-    polys = us_maps.dissolve({z: ground[z] for z in held}, held)
-    _write_cache(path, key, polys)
-    return polys
+    payload = geom_export.export(rows, states_gdf, zcta_polys, cells_source, simplify)
+    _write_cache(path, key, payload)
+    return payload
 
 
-def simplify_polys(polys: dict, tolerance: float) -> dict:
-    """Fill geometry for the channel panels; at 2 km the boundary moves under one pixel."""
-    if not tolerance:
-        return polys
-    return {d: us_maps._valid(g.simplify(tolerance, preserve_topology=True))
-            for d, g in polys.items()}
+def bundle_split_states(bundle: str, run: dict) -> set:
+    """States where more than one district of `bundle` holds a zip."""
+    held: dict[str, set] = {}
+    for z, d in run["zips_by_bundle"].get(bundle, {}).items():
+        held.setdefault(run["zip_state"].get(z, ""), set()).add(d)
+    return {s for s, ds in held.items() if len(ds) > 1}
 
 
-def panel_adjacency(group: dict) -> dict:
-    """`{district: {neighbours}}` over one panel's polygons: two districts are neighbours when
-    their dissolved polygons touch anywhere."""
-    from shapely.strtree import STRtree
-
-    names = sorted(group, key=str)
-    geoms = [group[d] for d in names]
-    adj = {d: set() for d in names}
-    if not geoms:
-        return adj
-    tree = STRtree(geoms)
-    for i, g in enumerate(geoms):
-        for j in tree.query(g, predicate="intersects"):
-            if int(j) != i:
-                adj[names[i]].add(names[int(j)])
-    return adj
-
-
-def district_colors(polys: dict, meta: dict) -> dict:
-    """A fill per district: distinct from every neighbour on each panel it is drawn on, unique
-    on the panel while `PALETTE` lasts, and the same on every panel.
-
-    Panels are coloured largest first.  A district already coloured on an earlier panel keeps
-    its colour (a merged district on FI, then WH; a plus district on its channel, then
-    National); every other one takes the least-used palette entry no neighbour on this panel
-    holds, `us_maps.color_districts`'s rule, preferring an entry whose hue no neighbour holds
-    either (the palette carries each hue at two lightnesses), so a colour repeats on a panel
-    only past 24 districts and then on two districts that touch nowhere.
-    """
-    groups = {c: channel_group(c, polys, {}, meta) for c in BUSINESS}
-    rank = {c: i for i, c in enumerate(PALETTE)}
-    hue = {c: i % N_HUES for i, c in enumerate(PALETTE)}
-    out: dict[str, str] = {}
-    for channel in sorted(BUSINESS, key=lambda c: (-len(groups[c]), BUSINESS.index(c))):
-        adj = panel_adjacency(groups[channel])
-        used = {c: 0 for c in PALETTE}
-        for d in adj:
-            if d in out:
-                used[out[d]] += 1
-        for d in sorted(adj, key=lambda d: (-len(adj[d]), str(d))):
-            if d in out:
-                continue
-            taken = {out[e] for e in adj[d] if e in out}
-            hues = {hue[c] for c in taken}
-            free = [c for c in PALETTE if c not in taken] or list(PALETTE)
-            c = min(free, key=lambda c: (hue[c] in hues, used[c], rank[c]))
-            out[d] = c
-            used[c] += 1
-    return out
+def bundle_strip(bundle: str, run: dict, meta: dict, kappa) -> str:
+    """The strip under a bundle map: how many districts, how big, how split, how staffed."""
+    districts = sorted(set(run["zips_by_bundle"].get(bundle, {}).values()))
+    n_split = len(bundle_split_states(bundle, run))
+    masses = [float(meta[d]["mass"]) for d in districts if d in meta and meta[d].get("mass")]
+    unit = "" if kappa is None else "$"
+    scale = 1.0 if kappa is None else kappa
+    span = (f"mass {unit}{min(masses) * scale:,.0f} to {unit}{max(masses) * scale:,.0f}"
+            if masses else "mass n/a")
+    staffed = sum(1 for d in districts if (meta.get(d) or {}).get("staffed") == "1")
+    return (f"{len(districts)} districts  ·  {span}  ·  {n_split} split states  ·  "
+            f"{staffed} staffed")
 
 
 def states_of(row: dict) -> list:
@@ -455,16 +404,21 @@ def _outline(ax, geom, *, zorder=3.0, **style):
     return lc
 
 
-def _state_codes(ax, states: dict, *, fontsize: float, zorder: float = 2.6) -> None:
+def _state_codes(ax, states: dict, *, fontsize: float, zorder: float = 2.6,
+                 second: dict | None = None) -> None:
     """Two-letter codes on every state big enough to hold one, at its largest part's
-    representative point, in the dark label grey with no box so the fill shows through."""
+    representative point, in the dark label grey with no box so the fill shows through.
+
+    `second`, when given, is a `{code: value}` printed as a second line under the code, same
+    size (the structure map's wholesaler count; "0" for a state absent from it)."""
     for code, geom in states.items():
         part = us_maps._largest_part(geom)
         if part.area < STATE_CODE_MIN_AREA:
             continue
         p = part.representative_point()
-        ax.text(p.x, p.y, code, fontsize=fontsize, color=us_maps.LABEL_TEXT, ha="center",
-                va="center", zorder=zorder, alpha=0.85)
+        text = code if second is None else f"{code}\n{second.get(code, 0)}"
+        ax.text(p.x, p.y, text, fontsize=fontsize, color=us_maps.LABEL_TEXT, ha="center",
+                va="center", zorder=zorder, alpha=0.85, linespacing=1.0)
 
 
 def _frame(ax, bounds, pad=0.015) -> None:
@@ -477,42 +431,112 @@ def _frame(ax, bounds, pad=0.015) -> None:
 
 
 def _label(district: str, meta: dict) -> str:
-    """The drawn label: the district id, the wholesaler under it when one is known."""
+    """The drawn label: the district id (`display_id`), the wholesaler under it when known."""
     wh = (meta.get(district) or {}).get("wholesaler") or ""
-    return f"{district}\n{wh}" if wh else district
+    shown = display_id(district)
+    return f"{shown}\n{wh}" if wh else shown
 
 
-def draw_rank(bundle: str) -> tuple:
-    """Heaviest line first, so the thinner channels stay visible where two follow one border."""
-    kind = bundle_kind(bundle)
-    if kind == "pure":
-        return (0, {"N": 0, "WH": 1, "FI": 2}.get(bundle, 3), bundle)
-    return (1 if kind == "plus" else 2, 0, bundle)
+# ------------------------------------------------------------------ a bundle map, the app's own look
+def _ring_path(ring: list):
+    from matplotlib.path import Path
+    codes = [Path.MOVETO] + [Path.LINETO] * (len(ring) - 1)
+    return Path(ring, codes)
 
 
-def channel_group(channel: str, polys: dict, unheld: dict, meta: dict) -> dict:
-    """`{district: polygon}` for one business channel, the unheld ground included.
-
-    The unheld ground is in the group so that where a channel simply stops, at a state no
-    district of it reaches, the panel draws that edge as a border of the channel, which is the
-    whole point of a plan map that allows dropped channels.
-    """
-    group = {}
-    for bundle, ps in polys.items():
-        if channel in business_of(bundle, meta):
-            group.update(ps)
-    if unheld.get(channel):
-        group.update(unheld[channel])
-    return group
+def _compound_path(rings: list):
+    """One `matplotlib.path.Path` over several rings (a multi-part polygon, or holes folded in
+    alongside exteriors), or `None` when there is nothing to draw."""
+    from matplotlib.path import Path
+    paths = [_ring_path(r) for r in rings if len(r) >= 3]
+    return Path.make_compound_path(*paths) if paths else None
 
 
-def structure_panel(ax, run: dict, states: dict) -> None:
-    """The structure map: a fill per state pattern, the state's code on it, a hatch where the
-    state is split between districts of some channel.
+def _fill_rings(ax, rings: list, **kw) -> None:
+    from matplotlib.patches import PathPatch
+    path = _compound_path(rings)
+    if path is not None:
+        ax.add_patch(PathPatch(path, **kw))
+
+
+def _stroke_rings(ax, rings: list, *, color, linewidth, zorder=3.0) -> None:
+    from matplotlib.collections import LineCollection
+    segs = [np.asarray(r, dtype=float) for r in rings if len(r) >= 2]
+    if not segs:
+        return
+    ax.add_collection(LineCollection(segs, colors=color, linewidths=linewidth,
+                                     capstyle="round", joinstyle="round", zorder=zorder))
+
+
+def _payload_state_labels(ax, states: dict, *, fontsize=7, zorder=3.0) -> None:
+    """State codes at the app's own label points (`payload["states"][code]["label"]`), exactly
+    as `app/mapfig.py::figure` draws its state handles."""
+    for code, info in states.items():
+        point = info.get("label")
+        if not point:
+            continue
+        ax.text(point[0], point[1], code, fontsize=fontsize, color=us_maps.TEXT, ha="center",
+                va="center", zorder=zorder, alpha=0.85)
+
+
+def _reach_polygon(info: dict):
+    """A shapely (Multi)Polygon from a `district_reach` entry's rings, for label placement
+    only; the reach layer never carries holes (`geom_export`'s own docstring)."""
+    import shapely
+    parts = [shapely.Polygon(r) for r in info.get("rings", []) if len(r) >= 4]
+    if not parts:
+        return None
+    return parts[0] if len(parts) == 1 else shapely.MultiPolygon(parts)
+
+
+def draw_bundle_map(fig, ax, bundle: str, payload: dict, meta: dict, run: dict, kappa,
+                    land=None) -> str:
+    """One bundle's map: the app's reach layer only (2026-09-11), state outlines, each
+    district's reach filled solid in its own hue and outlined, state codes, and a label per
+    district.  No zip geometry: no ZCTA cells, no opportunity shading, no district ZCTA-union
+    outline.  Sets the panel's title and returns the strip drawn under it."""
+    states = payload.get("states", {})
+    districts = payload.get("districts", {})
+    reach = payload.get("district_reach", {})
+    colour_of = {d: info.get("color", "#888888") for d, info in districts.items()}
+
+    for info in states.values():                                       # 1. state outlines
+        _stroke_rings(ax, info["rings"], color=STATE_OUTLINE_COLOR, linewidth=STATE_OUTLINE_W,
+                     zorder=1.0)
+
+    for d, info in sorted(reach.items()):                               # 2. district reach fill
+        colour = colour_of.get(d, info.get("color", "#888888"))
+        _fill_rings(ax, info["rings"], facecolor=colour, edgecolor=colour, linewidth=0.3,
+                   alpha=REACH_FILL_ALPHA, zorder=1.5)
+
+    for d, info in sorted(reach.items()):                               # 3. reach outline
+        colour = colour_of.get(d, info.get("color", "#888888"))
+        _stroke_rings(ax, info["rings"], color=colour, linewidth=REACH_OUTLINE_W, zorder=2.8)
+
+    _payload_state_labels(ax, states)                                   # 4. state codes
+
+    polys = {d: p for d, info in reach.items() for p in [_reach_polygon(info)] if p is not None}
+    if polys:                                                           # 5. district labels
+        labels = {_label(d, meta): p for d, p in polys.items()}
+        anchors = {name: (us_maps._largest_part(g).representative_point().x,
+                          us_maps._largest_part(g).representative_point().y)
+                  for name, g in labels.items()}
+        footprint = {name: us_maps._largest_part(g).area for name, g in labels.items()}
+        us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.2,
+                              avoid_polys=labels, land=land, min_ratio=2.5)
+
+    ax.set_title(bundle_title(bundle), color=us_maps.TEXT, fontsize=13, fontweight="bold", pad=6)
+    return bundle_strip(bundle, run, meta, kappa)
+
+
+# ------------------------------------------------------------------ the structure map
+def structure_panel(ax, run: dict, states: dict, wholesalers: dict | None = None) -> None:
+    """The structure map: a fill per state pattern, the state's code and wholesaler count on
+    it, a hatch where the state is split between districts of some channel.
 
     No district borders here: an earlier version drew each channel's cuts over this map in its
     own line style, and where three channels share a state line, which is most of them, the
-    three lines read as one smear.  The channel panels carry the borders.
+    three lines read as one smear.  The bundle maps carry the borders.
     """
     from matplotlib.patches import Patch
     import matplotlib
@@ -529,7 +553,7 @@ def structure_panel(ax, run: dict, states: dict) -> None:
                   linewidth=0.0, zorder=1.4)
     for geom in states.values():
         _outline(ax, geom, color="#6f6f6f", linewidth=0.7, zorder=2.0)
-    _state_codes(ax, states, fontsize=8.5)
+    _state_codes(ax, states, fontsize=8.5, second=wholesalers)
 
     handles = [Patch(facecolor=PATTERN_FILL[p], edgecolor="#8a8a8a",
                      label=f"{PATTERN_TEXT[p]}  ({counts.get(p, 0)})")
@@ -540,105 +564,6 @@ def structure_panel(ax, run: dict, states: dict) -> None:
                        frameon=False, fontsize=9.5, handlelength=1.9, title="State pattern",
                        title_fontproperties=dict(weight="bold", size=10))
     legend._legend_box.align = "left"
-
-
-def merged_panel(ax, fig, polys: dict, states: dict, colors: dict, meta: dict,
-                 land=None) -> str:
-    """The merged map: every district one rep holds on more than one channel (`WHFI`, WH and
-    FI; `WHFI_PLUS`, all three), on a grey country, labelled with the states it holds.
-    Returns the strip under it: one line per merged district."""
-    for geom in states.values():
-        _fill(ax, geom, facecolor=GROUND, edgecolor="none", zorder=0.5)
-    drawn, lines = {}, []
-    for bundle in sorted(polys, key=draw_rank):
-        if bundle_kind(bundle) != "merged":
-            continue
-        for name, geom in sorted(polys[bundle].items()):
-            _fill(ax, geom, facecolor=colors[name], edgecolor="none", zorder=1.5)
-            _fill(ax, geom, facecolor="none", edgecolor=HATCH_COLOR, hatch=HATCH["merged"],
-                  linewidth=0.0, zorder=1.7)
-            _outline(ax, geom, color="#3a3a3a", linewidth=1.0, zorder=2.5)
-            drawn[name] = geom
-            row = meta.get(name) or {}
-            what = "all three channels" if bundle.endswith("_PLUS") else "WH + FI"
-            held = states_text(row) or "?"
-            mass = f"  ·  mass {float(row['mass']):,.0f}" if row.get("mass") else ""
-            rep = f"  ·  {row['wholesaler']}" if row.get("wholesaler") else ""
-            lines.append(f"{name} ({what}){rep}  ·  {held}{mass}")
-    for geom in states.values():
-        _outline(ax, geom, color=STATE_LINE, linewidth=0.5, zorder=2.2)
-    _state_codes(ax, states, fontsize=7.5)
-
-    labels = {f"{_label(d, meta)}\n{states_text(meta.get(d) or {})}": g
-              for d, g in drawn.items()}
-    anchors = {k: (us_maps._largest_part(g).representative_point().x,
-                   us_maps._largest_part(g).representative_point().y)
-               for k, g in labels.items()}
-    footprint = {k: us_maps._largest_part(g).area for k, g in labels.items()}
-    us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.5,
-                          avoid_polys=labels, land=land, min_ratio=1.5)
-    ax.set_title("Merged districts and their states", color=us_maps.TEXT, fontsize=13,
-                 fontweight="bold", pad=6)
-    if not lines:
-        return "no merged district: every district carries one channel"
-    return "\n".join(lines)
-
-
-def channel_panel(ax, fig, channel: str, run: dict, polys: dict, states: dict, colors: dict,
-                  meta: dict, unheld, kappa, land=None) -> str:
-    """One business channel: every district that carries it, filled, hatched by type."""
-    for geom in states.values():
-        _fill(ax, geom, facecolor=GROUND, edgecolor="none", zorder=0.5)
-    if unheld is not None:
-        for geom in unheld.values():
-            _fill(ax, geom, facecolor=UNSERVED, edgecolor="none", zorder=1.0)
-
-    drawn, kinds = {}, {}
-    for bundle in sorted(polys, key=draw_rank):
-        if channel not in business_of(bundle, meta):
-            continue
-        kind = bundle_kind(bundle)
-        for name, geom in polys[bundle].items():
-            _fill(ax, geom, facecolor=colors[name], edgecolor="none", zorder=1.5)
-            if HATCH[kind]:
-                _fill(ax, geom, facecolor="none", edgecolor=HATCH_COLOR, hatch=HATCH[kind],
-                      linewidth=0.0, zorder=1.7)
-            _outline(ax, geom, color="#4a4a4a", linewidth=0.7, zorder=2.5)
-            drawn[name] = geom
-            kinds[name] = bundle
-    for geom in states.values():
-        _outline(ax, geom, color=STATE_LINE, linewidth=0.4, zorder=2.2)
-
-    labels = {_label(d, meta): g for d, g in drawn.items()}
-    anchors = {k: (us_maps._largest_part(g).representative_point().x,
-                   us_maps._largest_part(g).representative_point().y)
-               for k, g in labels.items()}
-    footprint = {k: us_maps._largest_part(g).area for k, g in labels.items()}
-    # `min_ratio` above 1: a label only stays on its district if the district is several times
-    # the label box.  At 1.0 two small neighbours both keep their spot and print on top of each
-    # other (WHFI_01 over FI_03 on the d600_free FI panel); above it the smaller one takes a
-    # leader line instead, and `_place_labels` does check leader labels for collisions.
-    us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.2,
-                          avoid_polys=labels, land=land, min_ratio=2.5)
-    ax.set_title(channel, color=us_maps.TEXT, fontsize=13, fontweight="bold", pad=6)
-    return stats_line(channel, drawn, kinds, run, meta, kappa)
-
-
-def stats_line(channel: str, drawn: dict, kinds: dict, run: dict, meta: dict, kappa) -> str:
-    """The strip under a channel panel: how many districts, of what kind, how big, how staffed."""
-    by_kind: dict[str, int] = {}
-    for name, bundle in kinds.items():
-        key = "pure" if bundle_kind(bundle) == "pure" else bundle_label(bundle).split(" (")[0]
-        by_kind[key] = by_kind.get(key, 0) + 1
-    mix = ", ".join(f"{n} {k}" for k, n in sorted(by_kind.items(), key=lambda kv: -kv[1]))
-    masses = [float(meta[d]["mass"]) for d in drawn if d in meta and meta[d].get("mass")]
-    unit = "" if kappa is None else "$"
-    scale = 1.0 if kappa is None else kappa
-    span = (f"mass {unit}{min(masses) * scale:,.0f} to {unit}{max(masses) * scale:,.0f}"
-            if masses else "mass n/a")
-    staffed = sum(1 for d in drawn if (meta.get(d) or {}).get("staffed") == "1")
-    return (f"{len(drawn)} districts: {mix}\n{span}  ·  "
-            f"{len(run['splits'][channel])} split states  ·  {staffed} staffed")
 
 
 def footer_line(run: dict, staffing: dict, kappa) -> str:
@@ -652,13 +577,19 @@ def footer_line(run: dict, staffing: dict, kappa) -> str:
             f"unheld mass by channel:  {residual}")
 
 
-def title_line(tag: str, params: dict) -> str:
+def wholesaler_count(meta: dict) -> int:
+    """The number of distinct wholesalers staffing the plan: the non-empty `wholesaler` values
+    `districts.csv` itself carries, one row per district."""
+    return len({row["wholesaler"] for row in meta.values() if row.get("wholesaler")})
+
+
+def title_line(tag: str, params: dict, n_wholesalers: int) -> str:
     def cap(key):
         v = params.get(key)
         return "none" if v is None else (f"{v:g}" if isinstance(v, (int, float)) else str(v))
     return (f"{tag}  ·  {params.get('route', '?')} route  ·  band "
             f"{params.get('band_lo', 0):.2f}-{params.get('band_hi', 0):.2f}  ·  dist_max "
-            f"{cap('dist_max')}  ·  n_max {cap('n_max')}")
+            f"{cap('dist_max')}  ·  n_max {cap('n_max')}  ·  {n_wholesalers} wholesalers")
 
 
 # ------------------------------------------------------------------ the figure
@@ -669,7 +600,6 @@ def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Patch
 
     say = report or (lambda _s: None)
     run = load_assignment(os.path.join(run_dir, "assignment.csv"))
@@ -683,6 +613,7 @@ def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
         with open(os.path.join(run_dir, "staffing.json"), encoding="utf-8") as fh:
             staffing = json.load(fh)
     run["patterns"] = state_patterns(plan)
+    wholesalers = wholesaler_counts(plan)
     kappa = kappa_of(params, kappa)
 
     gdf = geo.states_outline(geo_cache)
@@ -691,78 +622,66 @@ def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
               min(g.bounds[1] for g in states.values()),
               max(g.bounds[2] for g in states.values()),
               max(g.bounds[3] for g in states.values()))
-
-    cache_dir = os.path.join(run_dir, "maps", "cache")
-    every = sorted({z for m in run["zips_by_bundle"].values() for z in m}
-                   | {z for s in run["unheld"].values() for z in s})
-    ground: dict = {}
-
-    def cells():
-        if not ground:
-            ground.update(zip_cells(every, run["zip_state"], gdf, geo_cache, cache_dir,
-                                    use_cache, say))
-        return ground
-
-    polys = {b: dissolve_groups(f"{b}_districts", m, cells, cache_dir, use_cache)
-             for b, m in sorted(run["zips_by_bundle"].items())}
-    unheld = {c: dissolve_groups(f"unheld_{c}", {z: OTHER for z in sorted(run["unheld"][c])},
-                                 cells, cache_dir, use_cache)
-              for c in BUSINESS if run["unheld"][c]}
-    drawn = {b: simplify_polys(p, simplify) for b, p in polys.items()}
-    shown = {c: simplify_polys(p, simplify) for c, p in unheld.items()}
-    colors = district_colors(polys, meta)
     land = us_maps.land_union(gdf)
 
-    fig = plt.figure(figsize=FIGSIZE, dpi=dpi, facecolor=us_maps.BG)
-    left, right, low, mid = 0.015, 0.985, 0.10, 0.40
-    # two rows: the structure map and the merged map above, the three channel panels below;
-    # the row heights are the maps' own at this width (CONUS is 1.75 wide to 1 high), so the
-    # `aspect="equal"` centring leaves no dead band.  Strips of text sit under each map in
-    # figure coordinates, not the axes': `_place_labels` may widen a panel's limits for a
-    # leader label, which moves that axes' box and would leave the strips of one row at
-    # different heights
-    top = fig.add_gridspec(1, 2, left=left, right=right, top=0.935, bottom=0.50, wspace=0.02)
-    ax_map = fig.add_subplot(top[0, 0])
-    _frame(ax_map, bounds)
-    ax_map.set_title("Channel structure by state", color=us_maps.TEXT, fontsize=13,
-                     fontweight="bold", pad=6)
-    structure_panel(ax_map, run, states)
-    ax_merged = fig.add_subplot(top[0, 1])
-    _frame(ax_merged, bounds)
-    strip = merged_panel(ax_merged, fig, drawn, states, colors, meta, land=land)
-    fig.text(left + 0.75 * (right - left), 0.49, strip, transform=fig.transFigure,
-             ha="center", va="top", fontsize=8.6, color=us_maps.TEXT, linespacing=1.5)
+    cache_dir = os.path.join(run_dir, "maps", "cache")
+    every = sorted({z for m in run["zips_by_bundle"].values() for z in m})
+    xy, missing = run_draw.coordinates(every, geo_cache)
+    if missing:
+        say(f"summary: {len(missing)} zip(s) with no gazetteer point, drawn nowhere: "
+            f"{', '.join(missing[:8])}")
+    zcta_polys = geo.zcta_polygons(every)
+    missing_zcta = {z for z in every if z not in zcta_polys}
+    if missing_zcta:
+        say(f"summary: {len(missing_zcta)} zip(s) with no ZCTA polygon, dropped from the "
+            f"geometry: {', '.join(sorted(missing_zcta)[:8])}")
+    cells_source = f"{os.path.basename(geo.ZCTA_SHP)} simplify={geom_export.CELLS_SIMPLIFY:g}m"
 
-    bottom = fig.add_gridspec(1, len(BUSINESS), left=left, right=right, top=mid, bottom=low,
-                              wspace=0.02)
-    for i, channel in enumerate(BUSINESS):
-        ax = fig.add_subplot(bottom[0, i])
+    bundles, payloads = [], {}
+    for b in ordered_bundles([bd for bd, m in run["zips_by_bundle"].items() if m]):
+        rows = [r for r in bundle_rows(b, run, xy) if r["zip"] not in missing_zcta]
+        if len(rows) < 2:
+            say(f"summary: bundle {b} has fewer than 2 placed zip(s), skipped")
+            continue
+        bundles.append(b)
+        payloads[b] = bundle_geom(b, rows, gdf, zcta_polys, cells_source, cache_dir, use_cache,
+                                  simplify)
+        say(f"summary: {b} geometry ready ({len(payloads[b].get('districts', {}))} district(s))")
+
+    n_panels = 1 + len(bundles)
+    n_rows = -(-n_panels // 2)                        # ceil
+    height = TITLE_IN + FOOTER_IN + n_rows * ROW_HEIGHT_IN
+    fig = plt.figure(figsize=(FIG_WIDTH, height), dpi=dpi, facecolor=us_maps.BG)
+    left, right = 0.015, 0.985
+    grid = fig.add_gridspec(n_rows, 2, left=left, right=right,
+                            top=1 - TITLE_IN / height, bottom=FOOTER_IN / height,
+                            hspace=GRID_HSPACE, wspace=0.03)
+
+    panels = [None] + bundles
+    for idx, bundle in enumerate(panels):
+        r, c = divmod(idx, 2)
+        cell = grid[r, c]
+        ax = fig.add_subplot(cell)
         _frame(ax, bounds)
-        strip = channel_panel(ax, fig, channel, run, drawn, states, colors, meta,
-                              shown.get(channel), kappa, land=land)
-        fig.text(left + (i + 0.5) * (right - left) / len(BUSINESS), low - 0.008, strip,
+        if bundle is None:
+            ax.set_title("Channel structure by state", color=us_maps.TEXT, fontsize=13,
+                         fontweight="bold", pad=6)
+            structure_panel(ax, run, states, wholesalers)
+            continue
+        strip = draw_bundle_map(fig, ax, bundle, payloads[bundle], meta, run, kappa, land=land)
+        box = cell.get_position(fig)
+        fig.text((box.x0 + box.x1) / 2, box.y0 - 0.12 / height, strip,
                  transform=fig.transFigure, ha="center", va="top", fontsize=8.6,
                  color=us_maps.TEXT, linespacing=1.5)
 
-    kinds = {bundle_kind(b) for b in drawn}
-    keys = [Patch(facecolor="#e3e3e3", edgecolor="#4a4a4a", linewidth=0.7,
-                  label="one district, one channel")]
-    if "plus" in kinds:
-        keys.append(Patch(facecolor="#e3e3e3", edgecolor=HATCH_COLOR, hatch="///",
-                          label=f"{PLUS} district: carries the national book too"))
-    if "merged" in kinds:
-        keys.append(Patch(facecolor="#e3e3e3", edgecolor=HATCH_COLOR, hatch="xxx",
-                          label="merged district: one rep for WH and FI (WHFI) or for all "
-                                "three channels (WHFI_PLUS)"))
-    if shown:
-        keys.append(Patch(facecolor=UNSERVED, edgecolor="none", label="held by no district"))
-    fig.legend(handles=keys, loc="lower center", bbox_to_anchor=(0.5, 0.036), ncol=len(keys),
-               frameon=False, fontsize=10, handlelength=1.8)
-
-    fig.suptitle(title_line(os.path.basename(os.path.abspath(run_dir)), params),
-                 color=us_maps.TEXT, fontsize=15, fontweight="bold", y=0.992)
-    fig.text(0.5, 0.012, footer_line(run, staffing, kappa), ha="center", va="bottom",
-             fontsize=10.5, color=us_maps.TEXT)
+    fig.suptitle(title_line(os.path.basename(os.path.abspath(run_dir)), params,
+                            wholesaler_count(meta)),
+                 color=us_maps.TEXT, fontsize=15, fontweight="bold",
+                 y=1 - 0.25 * TITLE_IN / height)
+    # the footer sits at the very bottom of the reserved band, below the last row's own strip
+    # (drawn just under the grid, `box.y0 - 0.12 / height`), never sharing its line
+    fig.text(0.5, 0.15 / height, footer_line(run, staffing, kappa), ha="center",
+             va="bottom", fontsize=10.5, color=us_maps.TEXT)
 
     out_dir = os.path.join(run_dir, "maps")
     os.makedirs(out_dir, exist_ok=True)
