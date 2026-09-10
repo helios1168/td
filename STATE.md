@@ -1,26 +1,22 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `21adfa3` · **Tests:** 546 pass,
-0 fail (2026-09-09; `tests/test_mapfig.py` also 27/27 under `.venv-app`)
+**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `7325737` · **Tests:** 546 pass,
+0 fail (2026-09-10; `tests/test_mapfig.py` 27/27 under `.venv-app` on 2026-09-09)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-`21adfa3` on `main`, pushed 2026-09-09 with this entry (`origin/main` at `77e5cea`): the Map and
-Reps tabs
-both call `repdata.ensure`, so with no `reps.json` each drew the same keyless button and
-Streamlit raised `StreamlitDuplicateElementId`. `ensure` now takes the calling tab's name and
-keys on it; `streamlit.testing` AppTest raises before the fix, 0 exceptions after. The app runs
-from the hub on `100.69.120.67:8502` at this head.
-
-Every app run and scenario was cleared first, on request: 82 runs, 373 MB, moved to
-`battery/results/trash_20260909/`, not deleted. The rep cache was put back, being derived per
-instance. That empties the `district_reach` backfill question with it: no board exists to read
-until a fresh grid is launched, which is the next step.
-
-Measured, not changed: over 16 past sweeps seeds move stage-2 value 0.05-0.33% (median seed
-0.01-0.12%) and never balance or staffing, so they pick which map wins, not a better number.
+Hub unchanged at `7325737`. This entry records the full-problem track, opened 2026-09-10 on
+`worktree-full-problem` (head `3c3af6c`, 31 commits, kept unmerged on 2026-09-10 by decision):
+the three-channel problem, `docs/FULL_PROBLEM.md` (bundles, joint problem F, decomposition
+VERIFIED), unit `docs/units/U14-fullprob.md`, level 0 MILP `td/solvers/level0.py`, drivers
+`tools/full_plan.py` to `tools/plan_to_app.py`. The track's source of truth is the v3 export
+`instance_descaled_v3_conus.json.gz` (6,459 zips, 114 reps); `main` still runs v2 CONUS. Route S
+with warm start certifies cover of all three channels in under two minutes, 51 districts, 20
+splits; route J leaves 3% uncovered (`tools/verify/U14-fullprob/TIMINGS.md`). S chosen, R
+dropped for the night. Next: the 97-cell grid of 2026-09-10 night, `REVIEW.md`, top plans in
+the app, all per the track's `PLAN.md` `## Next step`.
 
 ## Next
 
@@ -41,12 +37,13 @@ Measured, not changed: over 16 past sweeps seeds move stage-2 value 0.05-0.33% (
       sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
-- [ ] **The Map board, on screen, from a fresh grid.** Nothing is launched: the store was
-      cleared 2026-09-09 and the old runs sit in `battery/results/trash_20260909/`. Launch a
-      grid from the Scenarios tab, so the runs carry a `step.json` and the sidebar offers them
-      (the `gaz2025` runs had to be registered by hand, having been made by calling the drivers
-      directly). Then confirm the district hue fills read, and check the Reps tab, whose
-      colouring has not been looked at since the hue scheme landed.
+- [ ] **Merge `worktree-full-problem`.** Gated on the 2026-09-11 morning review of the
+      overnight grid (`REVIEW.md` under the worktree's `battery/results/full_problem/grid_20260910/`)
+      and the user pushing the branch; then rebase onto `main`, fast-forward, `/state`. The Map
+      board check (district hue fills, the Reps tab's colouring) rides on the scenarios that grid
+      registers through `tools/plan_to_app.py`; the store was cleared 2026-09-09 and the old runs
+      sit in `battery/results/trash_20260909/`. Open on the track: ★C, the rep pool against the
+      district count; `centers.assign` parking zero-mass zips of a split state; no DC–VA cell edge.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
