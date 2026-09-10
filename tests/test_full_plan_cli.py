@@ -492,20 +492,31 @@ def test_k_mode_cap_opens_at_most_the_count_and_keeps_the_band():
 
 def test_serve_all_states_puts_every_state_with_mass_in_a_district():
     """`--serve-all-states`: on the joint model every state that carries mass (a positive
-    residual share or a slot share) holds a share in some slot, and params.json records the
-    flag."""
-    with tempfile.TemporaryDirectory() as tmp:
-        plan = _check_plan(_run(tmp, "joint", ["--serve-all-states"]))
-        left_out = []
+    residual share or a slot share) holds a share in some slot; on route S with a cap that
+    leaves states out, the last all-channel stage allocates them (a WHFI_PLUS slot, whatever
+    its mass), and params.json records the flag."""
+    def left_out(plan):
+        out = []
         for st, row in plan["per_state"].items():
             shares = {k: v for k, v in row.items() if k != "residual_by_channel"}
             residual = row.get("residual_by_channel", {})
             has_mass = bool(shares) or any(float(v) > 0 for v in residual.values())
             if has_mass and not shares:
-                left_out.append(st)
-        assert not left_out, left_out
+                out.append(st)
+        return out
+
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint", ["--serve-all-states"]))
+        assert not left_out(plan), left_out(plan)
         with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
             assert json.load(fh)["serve_all_states"] is True
+    with tempfile.TemporaryDirectory() as tmp:
+        # one state per district and a tight band leave states out of the channel stages
+        plan = _check_plan(_run(tmp, "sequential", ["--serve-all-states", "--n-max", "1",
+                                                     "--k-mode", "cap", "--k-fixed", "N=1"]))
+        assert not left_out(plan), left_out(plan)
+        stages = [p["stage"] for p in plan["passes"]]
+        assert "all_last" in stages or all(st not in left_out(plan) for st in plan["per_state"])
 
 
 def test_other_first_opens_an_all_channel_district_on_the_named_state_before_the_stages():

@@ -75,6 +75,11 @@ import run_draw                                                             # no
 DEFAULT_ENGINE = "highs"
 DEFAULT_STRATEGY = "portfolio"
 
+# The band floor, as a fraction of L, of the last all-channel stage under --serve-all-states:
+# a state outside every channel at the end is allocated whatever its mass, so the floor only
+# keeps the slot count finite.
+ALL_LAST_FLOOR = 1e-3
+
 # The priority groups of `--priority`: which bundles a group's stage opens slots for.  N is
 # alone; WH takes the pure and the national-carrying WH bundles; FI takes its own two plus the
 # merged bundles, which are the last thing the priority order reaches.
@@ -225,10 +230,10 @@ def build_argparser() -> argparse.ArgumentParser:
                          "band a bundle on its own mean M_B / N under --band-mode per-bundle "
                          "(default fixed)")
     ap.add_argument("--serve-all-states", action="store_true",
-                    help="every state with mass must be in at least one district of some "
-                         "bundle: rows sum_j z_sj >= 1 on the joint model, or on the last "
-                         "sequential stage for the states no earlier stage served "
-                         "(default off)")
+                    help="no state with mass ends outside every channel: rows sum_j z_sj >= 1 "
+                         "on the joint model; on route S a last all-channel stage allocates "
+                         "whatever the stages and the catch-all left, one district per state "
+                         "at most, whatever its mass (default off)")
     ap.add_argument("--other-first", type=_parse_states, default=None, metavar="ST,ST,...",
                     help="before the channel stages, open all-channel (WHFI_PLUS) districts "
                          "that serve these states, as few contacts as the band allows, at "
@@ -982,22 +987,22 @@ def _main(args, T: telemetry.Timings) -> int:
         # mean divides, so it is read here, off the prior the earlier stages folded in
         bands, band_rec = _stage_bands(cells, bundle_names, args, band_lo=band_lo,
                                        band_hi=band_hi, tau=tau, prior=prior, mode=band_mode)
-        if stage in ("catch_all", "other_first") and args.other_floor != 1.0:
+        floor = (args.other_floor if stage in ("catch_all", "other_first")
+                 else ALL_LAST_FLOOR if stage == "all_last" else 1.0)
+        if floor != 1.0:
             # an "other" district is one person covering every channel of a sparse region,
             # and may hold less than a full book: its floor is `--other-floor` of L.  MT and
             # WY with every neighbour inside 900 km and six states reach 260 of a 424 floor.
-            bands = {b: (rec["L"] * args.other_floor, rec["U"]) for b, rec in band_rec.items()}
+            # The last all-channel stage has no floor to speak of: what is left is allocated
+            # whatever its size, which is the rule "no state ends outside every channel".
+            bands = {b: (rec["L"] * floor, rec["U"]) for b, rec in band_rec.items()}
             for rec in band_rec.values():
-                rec["L"] *= args.other_floor
+                rec["L"] *= floor
         band_records.update({b: dict(rec, stage=stage) for b, rec in band_rec.items()})
-        # A stage whose bundles have no mass left gets zero slots, and a zero-slot model has
-        # no objective to build.  `--catch-all` after a sequential run that served everything
-        # is exactly that case, so it is skipped and said so rather than raising.
-        counts = level0.slot_counts(cells, {b: _bundle_channels(b) for b in bundle_names},
-                                    L=L, prior=prior, band=bands)
-        # `--serve-all-states`: in the last stage that can still serve a state, every state
-        # with mass that no earlier stage touched must enter some district of this model
+        # `--serve-all-states`: on the joint model every state with mass must enter some
+        # district; on route S the states no stage served get the last all-channel stage
         serve, cap_used = None, None
+        M_s = np.asarray(cells.M, float).sum(axis=1)
         if stage == "other_first":
             # `--other-first`: the named states, at most one all-channel district each, the
             # fewest contacts the band allows; no greedy, no anchors, so the seeds are not
@@ -1006,11 +1011,22 @@ def _main(args, T: telemetry.Timings) -> int:
             cap_used = {"WHFI_PLUS": len(serve)}
             print(f"{stage}: {len(serve)} state(s) get an all-channel district: "
                   f"{' '.join(args.other_first)}", flush=True)
+        elif stage == "all_last":
+            serve = [s for s in range(n_state) if prior[s].max() <= 0.0 and M_s[s] > 0.0]
+            cap_used = {"WHFI_PLUS": len(serve)}
+            print(f"{stage}: {len(serve)} state(s) outside every channel get an all-channel "
+                  f"district: {' '.join(state_list[s] for s in serve)}", flush=True)
         elif args.serve_all_states and stage == serve_stage:
-            M_s = np.asarray(cells.M, float).sum(axis=1)
             serve = [s for s in range(n_state) if prior[s].max() <= 0.0 and M_s[s] > 0.0]
             print(f"{stage}: {len(serve)} state(s) must be served here: "
                   f"{' '.join(state_list[s] for s in serve)}", flush=True)
+        # A stage whose bundles have no mass left gets zero slots, and a zero-slot model has
+        # no objective to build.  `--catch-all` after a sequential run that served everything
+        # is exactly that case, so it is skipped and said so rather than raising.
+        counts = level0.slot_counts(cells, {b: _bundle_channels(b) for b in bundle_names},
+                                    L=L, prior=prior, band=bands)
+        for b, n in (cap_used or {}).items():
+            counts[b] = min(counts.get(b, 0), n)
         if not sum(counts.values()):
             if serve:
                 raise ValueError(f"{stage}: {len(serve)} state(s) must be served here and "
@@ -1049,7 +1065,8 @@ def _main(args, T: telemetry.Timings) -> int:
         # compactness pass.  A build that fails is recorded and the stage solves cold: a
         # multi-hour run must not die on its start.
         warm, warm_s, seeds = None, 0.0, None
-        if stage != "other_first" and ("greedy" in (args.warm, args.anchor) or seed_centres):
+        if stage not in ("other_first", "all_last") and ("greedy" in (args.warm, args.anchor)
+                                                          or seed_centres):
             t0 = time.time()
             try:
                 # the cover groups' order, less the bundles this model has no slots for
@@ -1101,7 +1118,8 @@ def _main(args, T: telemetry.Timings) -> int:
 
         unpinned = problem                            # before any pass pinned its value
         result = _run_passes(problem, _pass_list(problem, cover_groups,
-                                                 cover_last=stage == "other_first"),
+                                                 cover_last=stage in ("other_first",
+                                                                      "all_last")),
                              args, stage, T, warm=warm, warm_seconds=warm_s)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1,
@@ -1123,7 +1141,7 @@ def _main(args, T: telemetry.Timings) -> int:
     # could neither join a district nor reach the band on its own; in the FI stage it can
     # still join an FI, FI+ or merged district next door, or an all-channel WHFI_PLUS one
     # when that bundle is enabled.
-    serve_stage = "joint" if args.route == "joint" else (f"seq_{groups[-1]}" if groups else "")
+    serve_stage = "joint" if args.route == "joint" else ""
     if args.other_first:
         bad = [st for st in args.other_first if st not in state_list]
         if bad:
@@ -1172,17 +1190,22 @@ def _main(args, T: telemetry.Timings) -> int:
             used = sum(1 for r in (last or {}).get("slots", []) if r["used"])
             print(f"catch-all: {used} slot(s) used", flush=True)
         else:
-            if args.serve_all_states:
-                unserved = [state_list[s] for s in range(n_state)
-                            if prior[s].max() <= 0.0 and M[s].sum() > 0.0]
-                if unserved:
-                    raise ValueError(f"catch-all: {len(unserved)} state(s) unserved and the "
-                                     f"residual is below the floor: {' '.join(unserved)}")
             # decision 1 reads "a fourth channel exists iff the catch-all used a slot", so the
             # stage is recorded even when there was nothing left for it to serve
             passes.append(dict(name="cover_other", value=0.0, certified=True,
                                status="skipped", seconds=0.0, stage="catch_all", slots=0))
             print("catch-all: 0 slot(s) used", flush=True)
+
+    # No state ends outside every channel (the user's rule, 2026-09-11): on route S whatever
+    # the stages and the catch-all left is allocated to all-channel districts, one per state
+    # at most, the fewest contacts the caps allow, with no floor to speak of.  The joint model
+    # carries the same rule as its `serve` rows.
+    if args.serve_all_states and args.route != "joint":
+        left = [s for s in range(n_state) if prior[s].max() <= 0.0 and M[s].sum() > 0.0]
+        if left:
+            run_stage("all_last", ["WHFI_PLUS"], [("cover_all_last", ["WHFI_PLUS"])])
+        else:
+            print("all-last: every state is in a channel already", flush=True)
 
     # params.json is written before the first solve so a run that dies still has its arguments;
     # the per-bundle bands are only known once each stage has read the mass left to it, so the

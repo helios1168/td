@@ -270,6 +270,12 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     idx = _channel_index(channels, bundles)
     pairs_b = _band_of(bundles, L, U, band)
     counts = slot_counts(cells, bundles, L=L, prior=prior, band=pairs_b)
+    # a ceiling below the count trims the bundle's slots at build time rather than closing
+    # them afterwards, so a tiny floor (the all-channel stage over what is left) does not
+    # build thousands of slots it can never use
+    for name, count in (max_used or {}).items():
+        if name in counts and int(count) >= 0:
+            counts[name] = min(counts[name], int(count))
 
     # slots: contiguous ranges per bundle, in the order `bundles` lists them
     slots, bundle_of, start = {}, [], 0
