@@ -129,6 +129,27 @@ class SplitProblem:
     n_var: int
     rows: dict[str, tuple[int, int]] = field(default_factory=dict)
 
+    def decode_zy(self, z: np.ndarray, y: np.ndarray) -> dict:
+        """`z`, `y` -> the reporting fields `solve` returns, shared by every engine so
+        `scipy`, `highs`, `scip` and `cpsat` read back identically regardless of how each one
+        represents its own variables.  `y` is zeroed where `z` is 0 (the LP can leave 1e-12
+        there) and each state's row is renormalised to sum to 1, so `realise`'s targets are
+        exact.  A subclass with another variable layout overrides this (`level0`)."""
+        S, k = self.n_state, self.k
+        z = np.asarray(z, bool).reshape(S, k)
+        y = np.clip(np.asarray(y, float).reshape(S, k), 0.0, 1.0)
+        y = np.where(z, y, 0.0)
+        row = y.sum(axis=1, keepdims=True)
+        y = y / np.where(row > 0, row, 1.0)
+        masses = self.M_s @ y
+        return dict(
+            z=z, y=y, masses=masses,
+            splits=int(z.sum() - S),
+            split_states=[s for s in range(S) if int(z[s].sum()) >= 2],
+            spread_rel=float((masses.max() - masses.min()) / masses.mean()),
+            max_dev_rel=float(np.abs(masses - self.tau).max() / self.tau),
+        )
+
 
 def _block(rows: np.ndarray, cols: np.ndarray, vals: np.ndarray,
            n_row: int, n_var: int) -> sparse.coo_matrix:
@@ -735,16 +756,9 @@ def _solve_scipy(problem: SplitProblem, *, time_limit: float | None = None,
     S, k = problem.n_state, problem.k
     x = np.asarray(res.x, float)
     z = x[problem.off_z:problem.off_z + S * k].reshape(S, k) > 0.5
-    y = np.clip(x[problem.off_y:problem.off_y + S * k].reshape(S, k), 0.0, 1.0)
-    y = np.where(z, y, 0.0)
-    y = y / y.sum(axis=1, keepdims=True)
-    masses = problem.M_s @ y
+    y = x[problem.off_y:problem.off_y + S * k].reshape(S, k)
     return dict(
-        z=z, y=y, masses=masses,
-        splits=int(z.sum() - S),
-        split_states=[s for s in range(S) if int(z[s].sum()) >= 2],
-        spread_rel=float((masses.max() - masses.min()) / masses.mean()),
-        max_dev_rel=float(np.abs(masses - problem.tau).max() / problem.tau),
+        problem.decode_zy(z, y),
         objective=float(res.fun),
         status="time_limit" if timed_out else int(res.status),
         mip_gap=float(res.mip_gap),

@@ -117,23 +117,9 @@ def _stopped(stop: object) -> bool:
 
 
 def _decode_zy(problem: SplitProblem, z: np.ndarray, y: np.ndarray) -> dict:
-    """`z`, `y` -> the reporting fields `state_splits.solve` computes, shared by every engine
-    so `scipy`, `highs`, `scip` and `cpsat` read back identically regardless of how each one
-    represents its own variables."""
-    S, k = problem.n_state, problem.k
-    z = np.asarray(z, bool).reshape(S, k)
-    y = np.clip(np.asarray(y, float).reshape(S, k), 0.0, 1.0)
-    y = np.where(z, y, 0.0)
-    row = y.sum(axis=1, keepdims=True)
-    y = y / np.where(row > 0, row, 1.0)
-    masses = problem.M_s @ y
-    return dict(
-        z=z, y=y, masses=masses,
-        splits=int(z.sum() - S),
-        split_states=[s for s in range(S) if int(z[s].sum()) >= 2],
-        spread_rel=float((masses.max() - masses.min()) / masses.mean()),
-        max_dev_rel=float(np.abs(masses - problem.tau).max() / problem.tau),
-    )
+    """`z`, `y` -> the reporting fields `state_splits.solve` computes; the body lives on the
+    problem (`SplitProblem.decode_zy`) so a subclass with another layout decodes itself."""
+    return problem.decode_zy(z, y)
 
 
 def _decode_x(problem: SplitProblem, x: np.ndarray) -> dict:
