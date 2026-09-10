@@ -1,24 +1,25 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `f24e755` · **Tests:** 546 pass,
+**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `21adfa3` · **Tests:** 546 pass,
 0 fail (2026-09-09; `tests/test_mapfig.py` also 27/27 under `.venv-app`)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Merged 2026-09-09, unpushed: `f46f3f5` (cell-split: ZCTA cells, cell-graph split contiguity,
-one-pane Reps tab), then `e15ddcd` `187a7e4` `2901c51` `376ea3b` `f24e755`. The gazetteer is now
-the **2025** vintage (`TD_GAZ_VINTAGE=2020` for old results): it covers all 3,713 CONUS zips
-where 2020 missed 9, and every point falls inside its own ZCTA. Level-1 splits held at k=10-18, k=20 went 10 to 11.
-Everything drawn is real ZCTA: rep territories, district colouring, `district_pieces`. The Voronoi graph survives only as reachability,
-renamed `proximity_edges`/`proximity_zips` — real adjacency gives 817 components, 474 singletons.
-`geom.json` gained `district_reach` (46 rings vs the union's 1,038); the board fills it at 0.35
-in the district hue and shades each cell by opportunity quantile.
+`21adfa3` on `main` (fast-forward, unpushed with the rest of 2026-09-09): the Map and Reps tabs
+both call `repdata.ensure`, so with no `reps.json` each drew the same keyless button and
+Streamlit raised `StreamlitDuplicateElementId`. `ensure` now takes the calling tab's name and
+keys on it; `streamlit.testing` AppTest raises before the fix, 0 exceptions after. The app runs
+from the hub on `100.69.120.67:8502` at this head.
 
-**Open bug:** the board still shows zips on white on any run without `district_reach` — only
-6 of 45 had it; a backfill of the other 39 was running at handover, unverified. Re-check the
-app, then decide which map ships.
+Every app run and scenario was cleared first, on request: 82 runs, 373 MB, moved to
+`battery/results/trash_20260909/`, not deleted. The rep cache was put back, being derived per
+instance. That empties the `district_reach` backfill question with it: no board exists to read
+until a fresh grid is launched, which is the next step.
+
+Measured, not changed: over 16 past sweeps seeds move stage-2 value 0.05-0.33% (median seed
+0.01-0.12%) and never balance or staffing, so they pick which map wins, not a better number.
 
 ## Next
 
@@ -39,12 +40,12 @@ app, then decide which map ships.
       sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
-- [ ] **The Map board, on screen.** Open `gaz2025` in the sidebar picker (registered by hand
-      2026-09-09: the runs were made by calling the drivers directly, so they had no
-      `step.json` and `store.scenario_of` returned `None`; the app never offered them). Confirm
-      the district hue fills read, then check the Reps tab, whose colouring has not been looked
-      at since the hue scheme landed. A backfill of `district_reach` over the other 39 runs was
-      running at handover: verify it finished before trusting `main`/`round2`/`round3` boards.
+- [ ] **The Map board, on screen, from a fresh grid.** Nothing is launched: the store was
+      cleared 2026-09-09 and the old runs sit in `battery/results/trash_20260909/`. Launch a
+      grid from the Scenarios tab, so the runs carry a `step.json` and the sidebar offers them
+      (the `gaz2025` runs had to be registered by hand, having been made by calling the drivers
+      directly). Then confirm the district hue fills read, and check the Reps tab, whose
+      colouring has not been looked at since the hue scheme landed.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
