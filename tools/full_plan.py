@@ -15,7 +15,8 @@ Two readings of the priority order, both over the same model:
     --route sequential   one level-0 model per priority group (N, then WH, then FI), each
                          one's coverage fixed as the next one's `prior`
     --route joint        one model over every bundle, lexicographic passes cover_N, cover_WH,
-                         cover_FI, contacts, compactness in the `balance_pass` pattern
+                         cover_FI, cover_merged, contacts, compactness in the `balance_pass`
+                         pattern
 
 and two drivers over the result:
 
@@ -73,14 +74,19 @@ STAGE_BUNDLES = {
     "FI": ("FI", "FI_PLUS", "WHFI", "WHFI_PLUS"),
 }
 
-# Route joint's coverage passes.  cover_N counts pure national slots only (decision 8).
-# TODO: cover_WH and cover_FI count only the pure and the plus bundles, so a WHFI slot enters
-# no coverage objective and route joint will not open a merged district.  Route sequential
-# does reach WHFI (STAGE_BUNDLES["FI"]).  Settle in wave 3 with the route choice.
+# The merged bundles: a slot of one serves a state's WH and its FI together.  They carry their
+# own coverage pass in both routes, after the pure ones, so a merged slot is opened for what
+# the pure channels could not serve and never in place of a pure district that fits.
+MERGED_BUNDLES = ("WHFI", "WHFI_PLUS")
+
+# Route joint's coverage passes.  cover_N counts pure national slots only (decision 8);
+# cover_merged is what makes a WHFI slot worth opening, and without it route joint never
+# merged anything (code verify R3, row 2b).
 JOINT_COVER = (
     ("cover_N", ("N",)),
     ("cover_WH", ("WH", "WH_PLUS")),
     ("cover_FI", ("FI", "FI_PLUS")),
+    ("cover_merged", MERGED_BUNDLES),
 )
 
 # The per-state moves of `--driver reps`: which bundles the move forbids the state from.
@@ -124,6 +130,10 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--move-budget", type=int, default=20, metavar="N",
                     help="driver reps: visit at most N states, heaviest first (default 20). "
                          "Each state costs one MILP per move, so 49 states is about 98 solves")
+    ap.add_argument("--cover-slack", type=float, default=0.0, metavar="EPS",
+                    help="every coverage pass is pinned at v*(1-EPS) rather than at v, so a "
+                         "later pass or a driver reps move may give up that fraction of the "
+                         "mass it covered (default 0.0, the exact pin)")
     ap.add_argument("--n-max", type=int, default=None,
                     help="driver geo: at most this many states per slot")
     ap.add_argument("--dist-max", type=float, default=None, metavar="KM",
@@ -360,12 +370,31 @@ def _write_failure(out: str, stage: str, exc, solve_s: float) -> str:
 
 
 # ---------------------------------------------------------------------------------- the passes
-def _pass_list(problem, cover_groups) -> list:
+def _stage_cover(group: str, bundle_names) -> list:
+    """Route sequential's cover groups for one priority stage: the pure bundles, then the
+    merged ones.  Only the FI stage carries merged bundles (`STAGE_BUNDLES`), and splitting
+    them off is what stops a WHFI slot standing in for a pure FI district that fits.
+    """
+    pure = [b for b in bundle_names if b not in MERGED_BUNDLES]
+    merged = [b for b in bundle_names if b in MERGED_BUNDLES]
+    groups = []
+    if pure:
+        groups.append((f"cover_{group}", pure))
+    if merged:
+        groups.append(("cover_merged", merged))
+    return groups
+
+
+def _pass_list(problem, cover_groups, cover_slack: float = 0.0) -> list:
     """The lexicographic passes of one model: coverage, then contacts, then compactness.
 
     A cover group naming bundles this model has no slots for is dropped, so the catch-all
-    model runs its own single cover pass and not route joint's three.  `solve_passes` is what
+    model runs its own single cover pass and not route joint's four.  `solve_passes` is what
     applies `--strategy` to the contacts pass alone, so every pass goes in one call.
+
+    `cover_slack` is carried by the coverage passes only: it is the fraction of its own value
+    each may give up later, which is what leaves a route-R move room to move mass out of a
+    pinned cover objective (`--cover-slack`).
     """
     from td.solvers import level0
 
@@ -373,7 +402,8 @@ def _pass_list(problem, cover_groups) -> list:
     for name, bundles in cover_groups:
         bs = [b for b in bundles if b in problem.slots]
         if bs:
-            passes.append(level0.cover_pass(problem, bs, name=name))
+            passes.append(dataclasses.replace(level0.cover_pass(problem, bs, name=name),
+                                              slack=cover_slack))
     passes.append(level0.contacts_pass(problem))
     # no centres, no moments, no tie-break: the plan is contacts only (section 6, route J).
     D = getattr(problem, "D", None)
@@ -481,7 +511,9 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
     from td.solvers import level0
 
     # a merge changes the contact count, so `pin_contacts` (and the compactness pin behind it)
-    # would refuse every non-keep move; the coverage pins stay, or the empty plan wins
+    # would refuse every non-keep move; the coverage pins stay, or the empty plan wins.  Under
+    # `--cover-slack EPS` those are the slacked pins, and the slack is the only room a merge
+    # has: a merged slot's coverage counts in cover_merged, never in cover_WH or cover_FI.
     problem = _relax_pins(problem, [n for n in problem.rows
                                     if n.startswith("pin_") and not n.startswith("pin_cover")])
     nbr = _rook_neighbours(edges, problem.n_state)
@@ -693,6 +725,7 @@ def _main(args, T: telemetry.Timings) -> int:
         catch_all=args.catch_all, k=args.k, band_lo=args.band_lo, band_hi=args.band_hi,
         bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
         dist_max=args.dist_max, move_budget=args.move_budget,
+        cover_slack=args.cover_slack,
         prior=os.path.abspath(args.prior) if args.prior else None,
         centers=os.path.abspath(args.centers) if args.centers else None,
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
@@ -745,7 +778,8 @@ def _main(args, T: telemetry.Timings) -> int:
         _print_slots(problem, stage)
 
         unpinned = problem                            # before any pass pinned its value
-        result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T)
+        result = _run_passes(problem, _pass_list(problem, cover_groups, args.cover_slack),
+                             args, stage, T)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1)
         slots.extend(recs)
@@ -766,7 +800,7 @@ def _main(args, T: telemetry.Timings) -> int:
             bundle_names = [b for b in STAGE_BUNDLES[group] if b in enabled]
             if not bundle_names:
                 continue
-            run_stage(f"seq_{group}", bundle_names, [(f"cover_{group}", bundle_names)])
+            run_stage(f"seq_{group}", bundle_names, _stage_cover(group, bundle_names))
 
     if args.driver == "reps" and last is not None:
         head = len(slots) - len(last["slots"])

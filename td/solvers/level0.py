@@ -94,11 +94,17 @@ class Level0Problem(SplitProblem):
 
 @dataclass
 class Pass:
-    """One objective: `c` over `n_var`, `sense` `"min"` or `"max"`."""
+    """One objective: `c` over `n_var`, `sense` `"min"` or `"max"`.
+
+    `slack` widens the pin `solve_passes` writes after the pass by `|v| * slack`, so a later
+    pass may give up that fraction of this one's value.  On a maximisation, whose minimised
+    value is `-value`, that is exactly `v (1 - slack)`.  The default 0.0 pins the value.
+    """
 
     name: str
     c: np.ndarray
     sense: str = "min"
+    slack: float = 0.0
 
 
 def _cover_ub(shape: tuple[int, int], prior) -> np.ndarray:
@@ -453,8 +459,10 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
     """Solve `passes` lexicographically.  For each pass `problem.c` is set (negated for a
     `"max"` pass, every engine minimises), solved through `milp_engines.solve_problem`, and
     its value pinned by one appended row before the next pass.  The pinned bound is
-    `v + |v| 1e-9 + 1e-12` on the minimised objective: `balance_pass`'s `v (1 + 1e-9)` widens
-    only for `v >= 0`, and a maximisation's minimised value is negative.
+    `v + |v| slack + |v| 1e-9 + 1e-12` on the minimised objective: `balance_pass`'s
+    `v (1 + 1e-9)` widens only for `v >= 0`, and a maximisation's minimised value is negative.
+    `Pass.slack` is what lets a later pass give up a fraction of this one's value; at the
+    default 0.0 the bound is the exact pin.
 
     A pass that times out pins its incumbent and records `certified = False`.  A pass that
     returns nothing at all raises `SolveFailure` carrying `passes`, the log up to and
@@ -523,7 +531,7 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
         v = max(float(res["objective"]), v_dec)
         cols = np.flatnonzero(c)
         problem = append_row(problem, "pin_" + p.name, cols, c[cols], -np.inf,
-                             v + abs(v) * 1e-9 + 1e-12)
+                             v + abs(v) * p.slack + abs(v) * 1e-9 + 1e-12)
         warm = dict(z=res["z"], y=res["y"])
         last = res
         log.append(dict(name=p.name, value=(v_dec if p.sense == "min" else -v_dec + 0.0),

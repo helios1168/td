@@ -335,6 +335,32 @@ def test_a_zero_objective_pass_is_recorded_not_solved():
     assert abs(out["passes"][1]["value"] - 3.0) < 1e-6
 
 
+def test_a_pass_slack_widens_its_pin_and_zero_slack_leaves_it_exact():
+    """`Pass.slack` is the fraction of its own value a pass lets a later one give up.
+
+    The pin is one appended row `c x <= v + |v| slack + |v| 1e-9 + 1e-12` on the minimised
+    objective, and a maximisation's minimised value is negative, so the bound is `v (1 - slack)`
+    there: the coverage may fall by that fraction.  At the default 0.0 the row is the exact pin
+    every pass has always written.
+    """
+    prob = build0([0.5] * 6)
+    cover = level0.cover_pass(prob, ["A"])
+
+    exact = run(prob, [cover])
+    v = -exact["passes"][0]["value"]                 # the minimised frame, so v <= 0
+    lo, hi = exact["problem"].rows["pin_cover_A"]
+    assert hi - lo == 1
+    # `v + |v| * 0.0` is `v` bit for bit, so the default pin is the exact one it always was
+    assert exact["problem"].ub[lo] == v + abs(v) * 1e-9 + 1e-12
+
+    slacked = run(prob, [dataclasses.replace(cover, slack=0.1)])
+    lo, hi = slacked["problem"].rows["pin_cover_A"]
+    assert abs(slacked["problem"].ub[lo] - (v * 0.9 + abs(v) * 1e-9 + 1e-12)) < 1e-12
+    assert slacked["problem"].ub[lo] > exact["problem"].ub[lo]
+    # the slack is what a later pass may spend, not a discount on this pass's own optimum
+    assert abs(slacked["passes"][0]["value"] - exact["passes"][0]["value"]) < 1e-9
+
+
 def test_compactness_pass_equals_contacts_without_centres():
     prob = build0(CONTIG)
     assert prob.eps == 0.0 and not prob.D.any()

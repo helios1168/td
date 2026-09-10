@@ -62,6 +62,8 @@ def test_band_and_k_defaults_are_the_settled_business_numbers():
     assert args.priority == "N,WH,FI"
     assert args.bundles is None                 # resolved from td.channels.DEFAULT_BUNDLES
     assert args.n_max is None and args.dist_max is None
+    # the exact pin: unset, every cover pass holds its value and the plan is what it was
+    assert args.cover_slack == 0.0
     # a real run is 49 states at about two MILPs each; the budget is what keeps `--driver reps`
     # from spending hours nobody asked for
     assert args.move_budget == 20
@@ -474,6 +476,189 @@ def test_catch_all_opens_a_slot_on_a_channel_the_stages_left():
         for c in ("WH", "FI", "N_WH", "N_FI"):
             assert abs(row[c]) <= 1e-6, (c, row[c])
         assert any(p.get("stage") == "catch_all" for p in plan["passes"])
+
+
+MERGED_ADJ = {"S0": (), "S1": ("S2",), "S2": ("S1",)}
+
+
+def _write_v2_merged(path: str) -> None:
+    """The shape code verify R3 probed at row 2b, plus a state pure WH can serve.
+
+    Three states, `--k 2` over a national mass of 2.0, so tau = 1.0, L = 0.8, U = 1.2.  S0
+    carries WH 0.5 and FI 0.5: each below L on its own, 1.0 together and inside the band, and
+    S0 is isolated in the rook graph, so no pure slot can reach it by way of a neighbour.  S2
+    carries WH 1.2, which one pure WH slot serves on its own.  S1 carries the national mass.
+    """
+    rows = [
+        ("z0", "S0", {"N_WH": (0.0, {}), "N_FI": (0.0, {}),
+                      "WH": (0.5, {"rep0": 0.3}), "FI": (0.5, {"rep1": 0.3})}),
+        ("z1", "S1", {"N_WH": (1.0, {"rep2": 0.3}), "N_FI": (1.0, {"rep3": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+        ("z2", "S2", {"N_WH": (0.0, {}), "N_FI": (0.0, {}),
+                      "WH": (1.2, {"rep4": 0.3}), "FI": (0.0, {})}),
+    ]
+    z, chan, m_rel, share, share_free, state = [], [], [], [], [], []
+    for zid, st, cells in rows:
+        for c in channels.CHANNELS:
+            m, sh = cells[c]
+            z.append(zid); chan.append(c); m_rel.append(m)
+            share.append(dict(sh)); share_free.append(0.0); state.append(st)
+    obj = dict(
+        format=td_instance.FORMAT_V2,
+        nodes=dict(z=z, channel=chan, m_rel=m_rel, share=share, share_free=share_free,
+                   state=state),
+        edges=dict(u=["z0", "z1"], v=["z1", "z2"]),
+        meta=dict(channels=list(channels.CHANNELS)),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def _passes_by_stage(plan: dict) -> dict:
+    by_stage: dict[str, list[str]] = {}
+    for rec in plan["passes"]:
+        by_stage.setdefault(rec["stage"], []).append(rec["name"])
+    return by_stage
+
+
+def test_both_routes_open_a_merged_slot_for_what_the_pure_channels_cannot_serve():
+    """`cover_merged`, the fourth coverage pass.  A WHFI slot used to enter no coverage
+    objective, so route joint never opened a merged district (code verify R3, row 2b) and route
+    sequential credited a merged slot in the same pass as a pure FI one.
+
+    Both routes must now serve S0 with one WHFI slot, and the lexicographic order must hold:
+    the pass runs after the pure ones, so S2, which a pure WH slot serves on its own, stays
+    pure.
+    """
+    for route in ("joint", "sequential"):
+        with tempfile.TemporaryDirectory() as tmp:
+            inst = os.path.join(tmp, "inst.json.gz")
+            _write_v2_merged(inst)
+            out = os.path.join(tmp, f"out_{route}")
+            orig = td_geo.state_rook
+            td_geo.state_rook = lambda *a, **kw: (MERGED_ADJ, {})
+            try:
+                rc = cli.main([inst, "--route", route, "--driver", "geo",
+                               "--bundles", "N,WH,FI,WHFI", "--engine", "scipy",
+                               "--strategy", "direct", "--k", "2", "--time-limit", "30",
+                               "--out", out])
+                assert rc == 0, rc
+            finally:
+                td_geo.state_rook = orig
+
+            with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+                plan = json.load(fh)
+            used = [rec for rec in plan["slots"] if rec["used"] and rec["y"]]
+            merged = [rec for rec in used if rec["bundle"] == "WHFI"]
+            assert len(merged) == 1, (route, used)
+            assert set(merged[0]["y"]) == {"S0"}, (route, merged)
+            assert abs(merged[0]["y"]["S0"] - 1.0) <= 1e-6, merged
+            pure = [rec for rec in used if rec["bundle"] == "WH"]
+            assert pure and all(set(rec["y"]) == {"S2"} for rec in pure), (route, pure)
+            row = plan["per_state"]["S0"]["residual_by_channel"]
+            assert abs(row["WH"]) <= 1e-6 and abs(row["FI"]) <= 1e-6, row
+
+            # pure first, merged next, then the catch-all objective: within the stage that
+            # carries the merged bundles, `cover_merged` sits after every other cover pass and
+            # before contacts
+            stage = [s for s, names in _passes_by_stage(plan).items()
+                     if "cover_merged" in names]
+            assert len(stage) == 1, plan["passes"]
+            names = _passes_by_stage(plan)[stage[0]]
+            i = names.index("cover_merged")
+            assert all(names.index(n) < i for n in names if n.startswith("cover_")
+                       and n != "cover_merged"), names
+            assert i < names.index("contacts"), names
+
+
+MOVE_ADJ = {"S0": ("S1", "S2"), "S1": ("S0",), "S2": ("S0", "S3"), "S3": ("S2",)}
+
+
+def _write_v2_marginal(path: str) -> None:
+    """Four states on the path S1 - S0 - S2 - S3, for `--cover-slack`.
+
+    S3 carries the national mass 2.0, so at `--k 2` tau = 1.0, L = 0.8 and U = 1.2.  S1 carries
+    WH 1.15 and S2 carries FI 1.15; S0 carries WH 0.05 and FI 0.05, which is what fills each of
+    the two pure slots to U.  So S0 is 0.05 of the 1.2 a pure WH slot covers and 0.05 of the
+    1.2 a pure FI slot covers, 4.2% of each: taking S0 out of both fits inside a 5% slack, and
+    taking S1 or S2 out of theirs (95.8%) does not.
+    """
+    rows = [
+        ("z0", "S0", {"N_WH": (0.0, {}), "N_FI": (0.0, {}),
+                      "WH": (0.05, {"rep5": 0.5}), "FI": (0.05, {"rep6": 0.5})}),
+        ("z1", "S1", {"N_WH": (0.0, {}), "N_FI": (0.0, {}),
+                      "WH": (1.15, {"rep0": 0.4}), "FI": (0.0, {})}),
+        ("z2", "S2", {"N_WH": (0.0, {}), "N_FI": (0.0, {}),
+                      "WH": (0.0, {}), "FI": (1.15, {"rep1": 0.4})}),
+        ("z3", "S3", {"N_WH": (1.0, {"rep2": 0.4}), "N_FI": (1.0, {"rep3": 0.4}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+    ]
+    z, chan, m_rel, share, share_free, state = [], [], [], [], [], []
+    for zid, st, cells in rows:
+        for c in channels.CHANNELS:
+            m, sh = cells[c]
+            z.append(zid); chan.append(c); m_rel.append(m)
+            share.append(dict(sh)); share_free.append(0.05); state.append(st)
+    obj = dict(
+        format=td_instance.FORMAT_V2,
+        nodes=dict(z=z, channel=chan, m_rel=m_rel, share=share, share_free=share_free,
+                   state=state),
+        edges=dict(u=["z1", "z0", "z2"], v=["z0", "z2", "z3"]),
+        meta=dict(channels=list(channels.CHANNELS)),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def _moves_of(tmp: str, cover_slack: float) -> tuple[list[dict], dict]:
+    inst = os.path.join(tmp, "inst.json.gz")
+    _write_v2_marginal(inst)
+    out = os.path.join(tmp, f"out_{cover_slack}")
+    orig = td_geo.state_rook
+    td_geo.state_rook = lambda *a, **kw: (MOVE_ADJ, {})
+    try:
+        rc = cli.main([inst, "--route", "joint", "--driver", "reps",
+                       "--bundles", "N,WH,FI,WHFI", "--cover-slack", str(cover_slack),
+                       "--move-budget", "4", "--engine", "scipy", "--strategy", "direct",
+                       "--k", "2", "--time-limit", "30", "--out", out])
+        assert rc == 0, rc
+    finally:
+        td_geo.state_rook = orig
+    with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+        moves = json.load(fh)["moves"]
+    with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+        params = json.load(fh)
+    return moves, params
+
+
+def test_cover_slack_is_what_lets_a_route_r_move_leave_a_pinned_cover_objective():
+    """`--cover-slack EPS` pins every cover pass at `v (1 - EPS)` instead of at `v`.
+
+    Route R's moves keep the cover pins -- without them minimising contacts closes every slot
+    and the empty plan wins -- so at the exact pin any `merge_whfi` that takes a state's mass
+    out of `cover_WH` or `cover_FI` is infeasible and route R is inert (code verify R3, row 4b).
+    A merged slot's coverage counts in `cover_merged`, never in the pure objectives, so the
+    slack a merge needs is the whole of that state's share of them: S0 is 4.2% of each here, so
+    its merge is feasible and scored at 5%, while S1 and S2 carry 95.8% of theirs and are still
+    refused.  Whether a scored merge is then accepted is a stage-2 question, not this flag's.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        pinned, params = _moves_of(tmp, 0.0)
+        assert params["cover_slack"] == 0.0
+        exact = [m for m in pinned if m["state"] == "S0" and m["move"] == "merge_whfi"]
+        assert len(exact) == 1 and exact[0]["value"] is None, exact
+        assert exact[0]["status"] == "infeasible", exact
+
+        slacked, params = _moves_of(tmp, 0.05)
+        assert params["cover_slack"] == 0.05
+        merged = [m for m in slacked if m["state"] == "S0" and m["move"] == "merge_whfi"]
+        assert len(merged) == 1 and merged[0]["value"] is not None, merged
+
+        # the slack is a budget, not a blanket relaxation: the two states that carry 95.8% of
+        # a pure cover objective still cannot leave it
+        for st in ("S1", "S2"):
+            heavy = [m for m in slacked if m["state"] == st and m["move"] == "merge_whfi"]
+            assert heavy and all(m["value"] is None for m in heavy), (st, heavy)
 
 
 def _write_v1_uneven(path: str) -> list[float]:
