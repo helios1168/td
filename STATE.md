@@ -1,25 +1,24 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-09 · **Branch:** `worktree-cell-split` · **Head:** `f176171` · **Tests:** 489 pass,
-0 fail (2026-09-09)
+**Updated:** 2026-09-09 · **Branch:** `main` · **Head:** `f24e755` · **Tests:** 546 pass,
+0 fail (2026-09-09; `tests/test_mapfig.py` also 27/27 under `.venv-app`)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Track `worktree-cell-split`, `f176171` on top of `e59cc3d` (main, app round 2), unmerged,
-unpushed. A within-district split is now contiguous on the Voronoi cell graph: `geom.json`
-carries per-zip cells and rook `cell_edges`, `split_district.py --geom` seeds contiguously and
-guards moves by articulation point, `split.json` reports `pieces`/`contiguous` (SCIP path
-reports only). Round3 k10 D05 over two reps: one piece each in 0.2 s, against 5 and 11 pieces
-unguarded, 0.003 nats dearer. Scoped staffing no longer gives an in-scope district to a rep
-placed outside the scope. Rep maps fill zip cells by rep in both colour modes, staffed map by
-table rep, zip markers dropped, hover on cell vertices. 489 tests, 0 fail. Branch app in tmux
-`tdapp-cell` at `100.69.120.67:8503`; hub app on 8502 runs main.
+Merged 2026-09-09, unpushed: `f46f3f5` (cell-split: ZCTA cells, cell-graph split contiguity,
+one-pane Reps tab), then `e15ddcd` `187a7e4` `2901c51` `376ea3b` `f24e755`. The gazetteer is now
+the **2025** vintage (`TD_GAZ_VINTAGE=2020` for old results): it covers all 3,713 CONUS zips
+where 2020 missed 9, and every point falls inside its own ZCTA. Level-1 splits held at k=10-18, k=20 went 10 to 11.
+Everything drawn is real ZCTA: rep territories, district colouring, `district_pieces`. The Voronoi graph survives only as reachability,
+renamed `proximity_edges`/`proximity_zips` — real adjacency gives 817 components, 474 singletons.
+`geom.json` gained `district_reach` (46 rings vs the union's 1,038); the board fills it at 0.35
+in the district hue and shades each cell by opportunity quantile.
 
-Next: on-screen hover check, then merge on request; then a new plan for the Reps tab and its
-figures (instruction pending). The CONUS findings of 2026-09-07 and the which-map-ships
-decision stand.
+**Open bug:** the board still shows zips on white on any run without `district_reach` — only
+6 of 45 had it; a backfill of the other 39 was running at handover, unverified. Re-check the
+app, then decide which map ships.
 
 ## Next
 
@@ -40,10 +39,12 @@ decision stand.
       sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
-- [ ] **Cell-split track: hover and merge.** Confirm on `100.69.120.67:8503` that cell hover
-      at district zoom has no dead centre (`hoverdistance` 40 px in `mapfig._layout`), then
-      fast-forward `worktree-cell-split` into `main`, unlock, remove, delete. Next plan after
-      that: the Reps tab and its figures, scope to be given.
+- [ ] **The Map board, on screen.** Open `gaz2025` in the sidebar picker (registered by hand
+      2026-09-09: the runs were made by calling the drivers directly, so they had no
+      `step.json` and `store.scenario_of` returned `None`; the app never offered them). Confirm
+      the district hue fills read, then check the Reps tab, whose colouring has not been looked
+      at since the hue scheme landed. A backfill of `district_reach` over the other 39 runs was
+      running at handover: verify it finished before trusting `main`/`round2`/`round3` boards.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
@@ -193,7 +194,10 @@ incumbent.
 flow roots fixed to the anchor states, `portfolio` strategy, certificate by cutoff. Certified
 minimum splits at δ = 10 % on the CONUS instance, anchored, one grid of six concurrent chains
 on two threads each: k=10 **4**, k=12 **4**, k=14 **5**, k=16 **7**, k=18 **7**, k=20 **10**
-(solves 18 s, 14 s, 1.4 s, 84 s, 49 s, 150 s; grid wall 163 s). Alone on the machine k=20 closes
+(solves 18 s, 14 s, 1.4 s, 84 s, 49 s, 150 s; grid wall 163 s). Those are 2020-gazetteer
+coordinates. Re-run on the 2025 vintage 2026-09-09 (`battery/results/app/gaz2025_*`): identical
+at k=10/12/14/16/18, **k=20 goes 10 to 11**, and k=16's cut moves MD to VA; k=16 is time-limited
+on both (gap 1.785 %). Alone on the machine k=20 closes
 in 70 s and k=16 certifies in 83 s. Under scipy's HiGHS the same k=20 cell stopped at the 600 s
 cap with a one-split gap. One open question, low priority (only matters if δ = 10% is chosen): the free bound
 at δ = 10% says 6 splits might be possible (NJ alone plus PA+MD+DE+WV); HiGHS neither found nor
