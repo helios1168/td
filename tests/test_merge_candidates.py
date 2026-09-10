@@ -1,12 +1,17 @@
 """test_merge_candidates.py: tools/merge_candidates.py, the pre-screen of the three options.
 
-A six-state toy carries one state per verdict and one per rule, so every branch of the rule in
-the tool's docstring is exercised on numbers small enough to check by hand.  The states sit on
-a line, `td.geo.state_rook` is monkeypatched to that path the way
-`tests/test_full_plan_cli.py` patches it, and the spacing is chosen so the smallest radius
-leaves every state alone, the middle one reaches a neighbour, and the largest reaches two
-hops.  S4 and S5 are parked far away, so no radius reaches them and their verdicts are
-properties of their own cells.
+A six-state toy carries one state per rule, so the branches of the rule in the tool's
+docstring are exercised on numbers small enough to check by hand.  The states sit on a line,
+`td.geo.state_rook` is monkeypatched to that path the way `tests/test_full_plan_cli.py`
+patches it, and the spacing is chosen so the smallest radius leaves every state alone, the
+middle one reaches a neighbour, and the largest reaches two hops.  S0, S1 and S2 are the
+cluster; S3, S4 and S5 are parked far apart, so no radius reaches them and their verdicts are
+properties of their own cells alone, which is what a bundle that never reaches L needs.
+
+Every bundle is read at its own R*, so a state whose WH is short of L on its own but reaches
+over a neighbour is not a merge candidate: S1 is that state, and the two degenerate branches
+no toy state carries (`national_unreachable` and `national_unreachable_no_fallback`) are
+checked against `verdict` itself, which is a pure function of the R* map and the books.
 
 The stage-2 values are checked against an independent Hungarian: the utility is rewritten from
 `docs/FULL_PROBLEM.md` section 3 and the best assignment found by brute force over the
@@ -41,22 +46,22 @@ import merge_candidates as mc                   # noqa: E402
 STATES = [f"S{i}" for i in range(6)]
 REPS = [f"r{i}" for i in range(5)]
 
-# the path S0 - S1 - ... - S5; S4 and S5 are in the graph but out of every radius
+# the path S0 - S1 - ... - S5; S3, S4 and S5 are in the graph but out of every radius
 PATH_ADJ = {f"S{i}": tuple(f"S{j}" for j in (i - 1, i + 1) if 0 <= j < 6) for i in range(6)}
 
-# centroids in km along a line: 300 apart for the first four, then 2,100 and 3,000 away
-KM = [0.0, 300.0, 600.0, 900.0, 3000.0, 6000.0]
+# centroids in km along a line: the cluster 300 apart, then 2,400, 3,000 and 3,000 away
+KM = [0.0, 300.0, 600.0, 3000.0, 6000.0, 9000.0]
 RADII = [200.0, 400.0, 700.0]
 L = 10.0
 
 # (N_WH, N_FI, WH, FI) per state, in the fine-label order of `channels.CHANNELS`
 MASS = {
     "S0": (6.0, 6.0, 11.0, 11.0),        # every pure channel fits on its own
-    "S1": (6.0, 6.0, 6.0, 6.0),          # WH and FI each short, together in band
+    "S1": (6.0, 6.0, 6.0, 6.0),          # WH and FI short alone, reached over S0 and S2
     "S2": (6.0, 6.0, 11.0, 11.0),        # like S0; its books are what differ
-    "S3": (6.0, 6.0, 11.0, 11.0),        # like S0; its books are what differ
-    "S4": (2.0, 2.0, 9.0, 9.0),          # national never reaches L, WH+ and FI+ do
-    "S5": (0.5, 0.5, 0.5, 0.5),          # nothing reaches L anywhere
+    "S3": (6.0, 6.0, 6.0, 6.0),          # alone: WH and FI each short, the pair in band
+    "S4": (1.0, 1.0, 6.0, 6.0),          # alone: national, WH+ and FI+ all short, WHFI fits
+    "S5": (0.5, 0.5, 0.5, 0.5),          # alone: nothing reaches L
 }
 
 # {state: {rep: {channel: book}}}; every entry stays under the state's own mass
@@ -64,12 +69,12 @@ BOOKS = {
     "S0": {"r0": {"WH": 5.0}, "r1": {"FI": 5.0},
            "r2": {"WH": 1.0, "FI": 1.0, "N_WH": 1.0},
            "r3": {"N_WH": 4.0, "N_FI": 4.0}},
-    "S1": {"r0": {"WH": 3.0}, "r1": {"FI": 3.0}, "r3": {"N_WH": 3.0, "N_FI": 3.0}},
-    "S2": {"r0": {"WH": 5.0, "N_WH": 4.0}, "r1": {"FI": 5.0},
-           "r2": {"WH": 1.0, "FI": 1.0}, "r3": {"N_FI": 2.0}},
-    "S3": {"r0": {"WH": 5.0, "FI": 5.0}, "r1": {"WH": 2.0},
+    "S1": {"r0": {"WH": 3.0, "FI": 3.0}, "r1": {"WH": 1.0},
            "r3": {"N_WH": 3.0, "N_FI": 3.0}},
-    "S4": {"r0": {"WH": 3.0}, "r1": {"FI": 3.0}, "r3": {"N_WH": 1.0, "N_FI": 1.0}},
+    "S2": {"r0": {"WH": 5.0, "N_WH": 4.0}, "r1": {"FI": 5.0},
+           "r2": {"WH": 1.0, "FI": 1.0}, "r3": {"N_FI": 0.5}},
+    "S3": {"r0": {"WH": 3.0}, "r1": {"FI": 3.0}, "r3": {"N_WH": 3.0, "N_FI": 3.0}},
+    "S4": {"r0": {"WH": 3.0}, "r1": {"FI": 3.0}, "r3": {"N_WH": 0.5, "N_FI": 0.5}},
     "S5": {"r0": {"WH": 0.2}},
 }
 
@@ -120,13 +125,14 @@ def test_reach_is_the_bfs_over_the_states_inside_the_radius():
     at400 = mc.reach(cells, PATH_ADJ, _xy(), 400.0)
     assert at400[0, j["WH"]] == MASS["S0"][2] + MASS["S1"][2]          # S0 reaches S1
     assert at400[1, j["WH"]] == sum(MASS[s][2] for s in ("S0", "S1", "S2"))
-    assert at400[4, j["WH"]] == MASS["S4"][2], "S4 is 2,100 km from its rook neighbour"
+    assert at400[3, j["WH"]] == MASS["S3"][2], "S3 is 2,400 km from its rook neighbour"
     assert at400[5, j["WH"]] == MASS["S5"][2]
 
     at700 = mc.reach(cells, PATH_ADJ, _xy(), 700.0)
     assert at700[0, j["FI"]] == sum(MASS[s][3] for s in ("S0", "S1", "S2"))
-    assert at700[1, j["FI"]] == sum(MASS[s][3] for s in ("S0", "S1", "S2", "S3"))
-    assert at700[4, j["FI"]] == MASS["S4"][3]
+    assert at700[2, j["FI"]] == sum(MASS[s][3] for s in ("S0", "S1", "S2"))
+    for far in (3, 4, 5):
+        assert at700[far, j["FI"]] == MASS[STATES[far]][3], "no radius reaches the far states"
 
     # the bundle forms are sums of the fine channels, nothing more
     r = mc.bundle_reach(cells, at200, 0)
@@ -162,20 +168,24 @@ def test_rep_overlap_counts_the_books_a_merge_and_a_drop_turn_on():
     assert s0["book_n"] == 9.0
     assert abs(s0["absorb_share"] - 1.0 / 9.0) < 1e-12
     assert s0["reps_only_n"] == 1 and s0["book_only_n"] == 8.0  # r3
+    # what a drop costs: r3 holds 8 of the 9 national book and nothing else there
+    assert abs(s0["only_n_share"] - 8.0 / 9.0) < 1e-12
+    assert abs(s0["only_n_share"] + s0["absorb_share"] - 1.0) < 1e-12
+
+    s1 = mc.rep_overlap(cells, STATES.index("S1"))
+    assert s1["reps_both"] == 1 and s1["book_both"] == 6.0      # r0 holds WH 3 and FI 3
+    assert abs(s1["overlap_share"] - 6.0 / 7.0) < 1e-12
 
     s2 = mc.rep_overlap(cells, STATES.index("S2"))
     assert s2["reps_absorb"] == 1 and s2["book_absorb"] == 4.0  # r0 holds WH and national
-    assert abs(s2["absorb_share"] - 4.0 / 6.0) < 1e-12
     assert abs(s2["overlap_share"] - 2.0 / 12.0) < 1e-12
-    assert s2["reps_only_n"] == 1 and s2["book_only_n"] == 2.0
-
-    s3 = mc.rep_overlap(cells, STATES.index("S3"))
-    assert s3["reps_both"] == 1 and s3["book_both"] == 10.0     # r0 holds both, and most
-    assert abs(s3["overlap_share"] - 10.0 / 12.0) < 1e-12
-    assert s3["reps_absorb"] == 0 and s3["absorb_share"] == 0.0
+    assert s2["reps_only_n"] == 1 and s2["book_only_n"] == 0.5
+    assert abs(s2["only_n_share"] - 0.5 / 4.5) < 1e-12
+    assert s2["only_n_share"] < mc.ONLY_N_MAX, "S2 is the state a drop costs almost nothing"
 
     s5 = mc.rep_overlap(cells, STATES.index("S5"))
     assert s5["book_n"] == 0.0 and s5["absorb_share"] == 0.0, "no book is a zero share"
+    assert s5["only_n_share"] == 0.0
 
 
 # --------------------------------------------------------------------------- stage 2 values
@@ -240,50 +250,63 @@ def test_an_option_whose_slot_has_nothing_to_staff_scores_none():
 
 # ----------------------------------------------------------------------------- the verdicts
 def test_every_branch_of_the_rule_fires_on_the_toy():
-    """One state per verdict, and the rule column names which branch it was."""
+    """One state per rule, and the rule column names which branch it was."""
     rows = _rows()
     got = {r["state"]: (r["verdict"], r["rule"]) for r in rows}
     assert got["S0"] == ("keep", "pure_channels_reach")
-    assert got["S1"] == ("merge", "pure_pair_unreachable")
+    assert got["S1"] == ("merge", "books_overlap")
     assert got["S2"] == ("drop_n", "national_book_absorbed")
-    assert got["S3"] == ("merge", "books_overlap")
-    assert got["S4"] == ("drop_n", "national_unreachable")
+    assert got["S3"] == ("merge", "pure_pair_unreachable")
+    assert got["S4"] == ("merge", "national_unreachable_whfi_reaches")
     assert got["S5"] == ("other", "nothing_reaches")
 
-    # R* is the smallest radius at which pure national reaches L, and S4's national never does
-    assert _row(rows, "S0")["r_star"] == 200.0
-    assert _row(rows, "S4")["r_star"] is None
-    # S1 merges on geography: WH and FI each short at R*, the pair in band
+
+def test_each_bundle_is_read_at_its_own_smallest_radius():
+    """S1's WH is short of L on its own and reaches over S0 and S2, so its R* is 400 while its
+    national's is 200.  Reading WH at national's radius made a merge candidate of it."""
+    rows = _rows()
     r1 = _row(rows, "S1")
-    assert r1["can_wh_200"] == 0 and r1["can_fi_200"] == 0 and r1["can_whfi_200"] == 1
-    # S2 and S3 could hold every pure channel; the books are what move them
-    for state in ("S2", "S3"):
-        r = _row(rows, state)
-        assert r["can_n_200"] == r["can_wh_200"] == r["can_fi_200"] == 1
+    assert r1["r_star_n"] == 200.0, "S1's own national mass is 12, above L"
+    assert r1["r_star_wh"] == 400.0 and r1["r_star_fi"] == 400.0
+    assert r1["r_star_whfi"] == 200.0, "the pair fits on S1 alone"
+    assert r1["verdict"] == "merge" and r1["rule"] == "books_overlap", \
+        "S1 merges on its books, not because a pure channel cannot reach"
+
+    # the far states never reach past themselves, so a short bundle is short at every radius
+    r3 = _row(rows, "S3")
+    assert r3["r_star_n"] == 200.0 and r3["r_star_whfi"] == 200.0
+    assert r3["r_star_wh"] is None and r3["r_star_fi"] is None
+    r4 = _row(rows, "S4")
+    assert r4["r_star_n"] is None and r4["r_star_whfi"] == 200.0
+    assert r4["r_star_wh_plus"] is None and r4["r_star_fi_plus"] is None
+    assert all(_row(rows, "S5")[f"r_star_{b.lower()}"] is None for b in mc.FORMS)
 
 
 def test_feasibility_is_read_before_the_books_and_the_books_before_keep():
-    """The branch order of the docstring, checked on the pieces rather than through a state:
-    a pure pair that cannot reach merges whatever the books say, and a state whose channels
-    all reach still leaves `keep` when a book argues otherwise."""
-    reach_all = {R: dict(N=True, WH=True, FI=True, WHFI=True, WH_PLUS=True, FI_PLUS=True)
-                 for R in RADII}
-    quiet = dict(overlap_share=0.0, absorb_share=0.0)
-    assert mc.verdict(reach_all, 200.0, 700.0, quiet) == ("keep", "pure_channels_reach")
-    assert mc.verdict(reach_all, 200.0, 700.0,
-                      dict(overlap_share=mc.MOST, absorb_share=0.0))[0] == "merge"
-    assert mc.verdict(reach_all, 200.0, 700.0,
-                      dict(overlap_share=0.0, absorb_share=mc.MOST))[0] == "drop_n"
+    """The branch order of the docstring, on the R* map directly: a pure pair that cannot
+    reach merges whatever the books say, a state whose channels all reach still leaves `keep`
+    when a book argues otherwise, and the two branches no toy state carries."""
+    everywhere = {b: 200.0 for b in mc.FORMS}
+    quiet = dict(overlap_share=0.0, only_n_share=1.0)
+    assert mc.verdict(everywhere, quiet) == ("keep", "pure_channels_reach")
+    assert mc.verdict(everywhere, dict(overlap_share=mc.MOST, only_n_share=1.0))[0] == "merge"
+    assert mc.verdict(everywhere, dict(overlap_share=0.0, only_n_share=0.0))[0] == "drop_n"
+    # the threshold is strict: a state whose national-only book is exactly the cap keeps it
+    assert mc.verdict(everywhere,
+                      dict(overlap_share=0.0, only_n_share=mc.ONLY_N_MAX))[0] == "keep"
 
-    short = {R: dict(reach_all[R], WH=False, FI=False) for R in RADII}
-    assert mc.verdict(short, 200.0, 700.0,
-                      dict(overlap_share=0.9, absorb_share=0.9)) == \
+    short = dict(everywhere, WH=None, FI=None)
+    assert mc.verdict(short, dict(overlap_share=0.9, only_n_share=0.0)) == \
         ("merge", "pure_pair_unreachable")
 
-    dead = {R: {b: False for b in reach_all[R]} for R in RADII}
-    assert mc.verdict(dead, None, 700.0, quiet) == ("other", "nothing_reaches")
-    no_nat = {R: dict(dead[R], WH_PLUS=True) for R in RADII}
-    assert mc.verdict(no_nat, None, 700.0, quiet) == \
+    dead = {b: None for b in mc.FORMS}
+    assert mc.verdict(dead, quiet) == ("other", "nothing_reaches")
+    # national never reaches: the plus bundles first, then the merged one, then nothing
+    plus = dict(dead, WH_PLUS=700.0, FI_PLUS=700.0, WHFI=700.0)
+    assert mc.verdict(plus, quiet) == ("drop_n", "national_unreachable")
+    assert mc.verdict(dict(dead, WHFI=700.0), quiet) == \
+        ("merge", "national_unreachable_whfi_reaches")
+    assert mc.verdict(dict(dead, WH_PLUS=700.0), quiet) == \
         ("other", "national_unreachable_no_fallback")
 
 
@@ -348,7 +371,11 @@ def test_the_cli_writes_the_csv_the_markdown_and_the_params():
         assert len(rows) == len(STATES)
         assert {r["state"]: r["verdict"] for r in rows} == {
             "S0": "keep", "S1": "merge", "S2": "drop_n", "S3": "merge",
-            "S4": "drop_n", "S5": "other"}
+            "S4": "merge", "S5": "other"}
+        # the per-bundle R* columns survive the round trip, empty where a bundle never reaches
+        s3 = next(r for r in rows if r["state"] == "S3")
+        assert s3["r_star_n"] == "200.0" and s3["r_star_whfi"] == "200.0"
+        assert s3["r_star_wh"] == "" and s3["r_star_fi"] == ""
         with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
             params = json.load(fh)
         assert abs(params["L"] - L) < 1e-9, "tau = national / k = 1, so L is band_lo"

@@ -33,12 +33,27 @@ certificate: the BFS crosses a state whatever its mass in c, while decision 6 sa
 with no c cannot bridge two c districts, and reach ignores the band's upper end, every other
 state's claim on the same mass, and contiguity at zip level.
 
+Every bundle is read at its own radius.  `R*_b` is the smallest radius at which bundle b
+reaches L, and it is reported per bundle: `r_star_n`, `r_star_wh`, `r_star_fi`,
+`r_star_whfi`, `r_star_wh_plus`, `r_star_fi_plus`.  A larger radius admits a superset of
+states, so reach is nondecreasing in R and "b reaches" means "at some radius asked for", with
+`R*_b` the cheapest one.  Reading every bundle at national's radius was the first version's
+worst distortion: WH mass is thinner than national's, so a WH district legitimately spans
+further, and Texas read as unable to hold a pure WH district because at 400 km, the radius
+its own national mass needs, its neighbourhood is Texas alone.
+
 **Rep books.**  From `CellTable.S`: the reps holding book in both WH and FI at s (a merged
 district hands one rep what two hold today), the reps holding national and either WH or FI
 at s (they can absorb a dropped national), and the reps holding national alone there (they
 are the ones who lose under a drop).  `overlap_share` is the WH-and-FI reps' share of the
 state's whole WH plus FI book; `absorb_share` is the WH-or-FI reps' share of its national
-book.
+book; `only_n_share` is the national-only reps' share of it, which is what a drop actually
+costs.  `only_n_share` is the test the verdict uses.  `absorb_share` is its complement over
+the reps with any book at all and is reported as evidence, but it drove the first version's
+verdict and read 0.5 or more in 36 of the 49 states: national is the two largest firms, so
+their reps hold WH or FI nearly everywhere and the test carried almost no information.  A
+state with no national book at all scores 0.0 on both, as `channel.match` scores an empty
+book: nobody there loses under a drop.
 
 **Stage 2, at this state alone.**  The Nash value of staffing s's own cells under each
 option: (a) three pure slots N, WH, FI; (b) N plus a merged WHFI slot; (c) WH+ plus FI+.
@@ -53,18 +68,19 @@ the dropped national.  A slot whose bundle carries no mass, no book and no fille
 be staffed and its option scores `None` (every other entry of a column is strictly positive,
 since `c1 > c2`).
 
-**The verdict.**  `R*` is the smallest radius at which pure national reaches L; `R_max` is
-the largest radius asked for.  The branches are tried in this order and the one that fires is
+**The verdict.**  Each bundle is read at its own `R*_b`, so "reaches" below means "reaches L
+at some radius asked for".  The branches are tried in this order and the one that fires is
 named in the `rule` column:
 
-    1. nothing reaches L at R_max                          -> other   nothing_reaches
-    2. R* does not exist (national never reaches L):
-         WH+ and FI+ both reach at R_max                   -> drop_n  national_unreachable
+    1. no bundle reaches                                   -> other   nothing_reaches
+    2. national never reaches:
+         WH+ and FI+ both reach                            -> drop_n  national_unreachable
+         WHFI reaches                                      -> merge   national_unreachable_whfi_reaches
          otherwise                                         -> other   national_unreachable_no_fallback
-    3. at R = R*:
-         WH and FI each below L, WH + FI at or above L     -> merge   pure_pair_unreachable
+    3. national reaches at R*_N:
+         WH and FI each never reach, WHFI does             -> merge   pure_pair_unreachable
          overlap_share >= 0.5                              -> merge   books_overlap
-         absorb_share >= 0.5 and WH+ and FI+ both reach    -> drop_n  national_book_absorbed
+         only_n_share < 0.15 and WH+ and FI+ both reach    -> drop_n  national_book_absorbed
          WH and FI both reach                              -> keep    pure_channels_reach
          otherwise                                         -> other   no_option_reaches
 
@@ -106,6 +122,13 @@ TAU_USD = 1.0e9
 
 # "most of the book": the share at which the rep evidence decides the verdict on its own.
 MOST = 0.5
+
+# "hardly anyone loses": the share of a state's national book held by reps with no WH and no
+# FI book there, below which a drop costs the rep pool almost nothing.
+ONLY_N_MAX = 0.15
+
+# The bundle forms the screen reads, each at its own R*.
+FORMS = ("N", "WH", "FI", "WHFI", "WH_PLUS", "FI_PLUS")
 
 # The three options of section 1, as the bundles a slot at this state would carry.
 OPTIONS = {
@@ -253,6 +276,7 @@ def rep_overlap(cells, s: int) -> dict:
         reps_absorb=int(absorb.sum()), book_absorb=float(nat[absorb].sum()),
         absorb_share=float(nat[absorb].sum() / book_nat) if book_nat > 0 else 0.0,
         reps_only_n=int(only_n.sum()), book_only_n=float(nat[only_n].sum()),
+        only_n_share=float(nat[only_n].sum() / book_nat) if book_nat > 0 else 0.0,
         book_whfi=book_whfi, book_n=book_nat,
     )
 
@@ -285,26 +309,28 @@ def option_value(cells, state: str, bundles, *, theta: float, lam: float,
 
 
 # ---------------------------------------------------------------------------- the verdict
-def verdict(flags_at: dict, r_star, r_max: float, overlap: dict) -> tuple[str, str]:
-    """`(verdict, rule)` from the reach flags per radius and the rep books.
+def verdict(r_star: dict, overlap: dict) -> tuple[str, str]:
+    """`(verdict, rule)` from each bundle's own R* and the rep books.
 
-    `flags_at` maps a radius to `reachable(...)`'s dict; `r_star` is the smallest radius at
-    which pure N reaches, or None.  The branch order is the docstring's.
+    `r_star` maps a bundle form to the smallest radius at which it reaches L, or None when it
+    never does; reach is nondecreasing in the radius, so a bundle with an R* is one a district
+    could be built from at that radius.  The branch order is the docstring's.
     """
-    top = flags_at[r_max]
-    if not any(top.values()):
+    at = {b: r_star.get(b) is not None for b in FORMS}
+    if not any(at.values()):
         return "other", "nothing_reaches"
-    if r_star is None:
-        if top["WH_PLUS"] and top["FI_PLUS"]:
+    if not at["N"]:
+        if at["WH_PLUS"] and at["FI_PLUS"]:
             return "drop_n", "national_unreachable"
+        if at["WHFI"]:
+            return "merge", "national_unreachable_whfi_reaches"
         return "other", "national_unreachable_no_fallback"
 
-    at = flags_at[r_star]
     if not at["WH"] and not at["FI"] and at["WHFI"]:
         return "merge", "pure_pair_unreachable"
     if overlap["overlap_share"] >= MOST:
         return "merge", "books_overlap"
-    if overlap["absorb_share"] >= MOST and at["WH_PLUS"] and at["FI_PLUS"]:
+    if overlap["only_n_share"] < ONLY_N_MAX and at["WH_PLUS"] and at["FI_PLUS"]:
         return "drop_n", "national_book_absorbed"
     if at["WH"] and at["FI"]:
         return "keep", "pure_channels_reach"
@@ -317,7 +343,6 @@ def screen(cells, adj: dict, xy: np.ndarray, *, L: float, radii, usd_per_unit: f
     """One row per state, ranked by the mass at stake.  No solver runs here."""
     radii = list(radii)
     reaches = {R: reach(cells, adj, xy, R) for R in radii}
-    r_max = radii[-1]
     M = np.asarray(cells.M, float)
     j = {c: k for k, c in enumerate(cells.channels)}
     grand = float(M.sum())
@@ -328,12 +353,12 @@ def screen(cells, adj: dict, xy: np.ndarray, *, L: float, radii, usd_per_unit: f
                  WH=float(M[s, j["WH"]]), FI=float(M[s, j["FI"]]))
         total = m["N"] + m["WH"] + m["FI"]
         flags_at = {R: reachable(cells, reaches[R], s, L) for R in radii}
-        r_star = next((R for R in radii if flags_at[R]["N"]), None)
+        r_star = {b: next((R for R in radii if flags_at[R][b]), None) for b in FORMS}
         overlap = rep_overlap(cells, s)
         values = {name: option_value(cells, state, bundles, theta=theta, lam=lam,
                                      filler_capture=filler_capture)
                   for name, bundles in OPTIONS.items()}
-        call, rule = verdict(flags_at, r_star, r_max, overlap)
+        call, rule = verdict(r_star, overlap)
 
         row = dict(state=state, verdict=call, rule=rule,
                    mass_total=total, mass_n=m["N"], mass_wh=m["WH"], mass_fi=m["FI"],
@@ -341,8 +366,8 @@ def screen(cells, adj: dict, xy: np.ndarray, *, L: float, radii, usd_per_unit: f
                    usd_mm_n=m["N"] * usd_per_unit / 1e6,
                    usd_mm_wh=m["WH"] * usd_per_unit / 1e6,
                    usd_mm_fi=m["FI"] * usd_per_unit / 1e6,
-                   share_of_total=total / grand if grand > 0 else 0.0,
-                   r_star=r_star)
+                   share_of_total=total / grand if grand > 0 else 0.0)
+        row.update({f"r_star_{b.lower()}": r_star[b] for b in FORMS})
         for R in radii:
             tag = f"{R:g}"
             r = bundle_reach(cells, reaches[R], s)
@@ -390,39 +415,42 @@ def _fmt(v, nd=1):
 def write_md(rows: list[dict], path: str, *, L: float, radii, usd_per_unit: float,
              top: int = 15) -> None:
     shown = rows[:top] + [r for r in rows[top:] if r["state"] == "AZ"]
-    r_hi = f"{radii[-1]:g}"
     lines = [
         "# Merge candidates: the three per-state options before any MILP",
         "",
         f"Ranked by the mass at stake.  L = {L:.6g} descaled "
         f"(${L * usd_per_unit / 1e6:.0f}MM), radii {', '.join(f'{R:g}' for R in radii)} km.  "
         f"Dollars are inferred from tau = $1B at k = {SCALE_K}, not read from the file.  "
-        "`can_*` is read at the radius the verdict was read at: R*, the smallest radius at "
-        f"which pure national reaches L, or the largest asked for ({r_hi} km) when national "
-        "never reaches it.",
+        "Every R* column is that bundle's own: the smallest radius in km at which it reaches "
+        "L, and `-` when it never does at any radius asked for.",
         "",
-        "| # | state | $MM | N | WH | FI | R* | pure N/WH/FI | WHFI | WH+/FI+ | overlap | "
-        "absorb | v keep | v merge | v drop | merge-drop | verdict | rule |",
+        "| # | state | $MM | N | WH | FI | R* N/WH/FI | R* WHFI | R* WH+/FI+ | overlap | "
+        "only-N | absorb | v keep | v merge | v drop | merge-drop | verdict | rule |",
         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
+
+    def star(*forms):
+        return "/".join("-" if r[f"r_star_{b}"] is None else f"{r[f'r_star_{b}']:g}"
+                        for b in forms)
+
     for r in shown:
-        tag = f"{r['r_star']:g}" if r["r_star"] is not None else r_hi
-        pure = "/".join(str(r[f"can_{b}_{tag}"]) for b in ("n", "wh", "fi"))
-        plus = "/".join(str(r[f"can_{b}_{tag}"]) for b in ("wh_plus", "fi_plus"))
         lines.append(
             f"| {r['rank']} | {r['state']} | {r['usd_mm_total']:.0f} | "
             f"{r['usd_mm_n']:.0f} | {r['usd_mm_wh']:.0f} | {r['usd_mm_fi']:.0f} | "
-            f"{tag if r['r_star'] is not None else '-'} | {pure} | "
-            f"{r[f'can_whfi_{tag}']} | {plus} | "
-            f"{r['overlap_share']:.2f} | {r['absorb_share']:.2f} | "
+            f"{star('n', 'wh', 'fi')} | {star('whfi')} | {star('wh_plus', 'fi_plus')} | "
+            f"{r['overlap_share']:.2f} | {r['only_n_share']:.2f} | "
+            f"{r['absorb_share']:.2f} | "
             f"{_fmt(r['v_keep'], 2)} | {_fmt(r['v_merge'], 2)} | {_fmt(r['v_drop_n'], 2)} | "
             f"{_fmt(r['d_merge_vs_drop_n'], 3)} | `{r['verdict']}` | {r['rule']} |")
-    lines += ["", "Columns: `pure N/WH/FI` and `WH+/FI+` are 1 when that bundle both reaches "
-                  "L and has mass of its own at the state; `overlap` is the share of the "
-                  "state's WH plus FI book held by reps who hold both; `absorb` is the share "
-                  "of its national book held by reps who also hold WH or FI there.  The "
-                  "stage-2 values are the state's own cells only, and `v keep` has three "
-                  "slots against two, so the columns order options, they do not price them.",
+    lines += ["", "Columns: an R* is the cheapest radius at which that bundle both reaches L "
+                  "and has mass of its own at the state; `overlap` is the share of the "
+                  "state's WH plus FI book held by reps who hold both; `only-N` is the share "
+                  "of its national book held by reps with no WH and no FI book there, the "
+                  "share a drop would actually cost, and the test the verdict uses; `absorb` "
+                  "is its counterpart over the reps who do hold WH or FI, reported as "
+                  "evidence only.  The stage-2 values are the state's own cells only, and "
+                  "`v keep` has three slots against two, so the columns order options, they "
+                  "do not price them; `merge-drop` is the one difference that reads straight.",
               ""]
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
@@ -477,7 +505,8 @@ def _main(args) -> int:
 
     params = dict(instance=os.path.abspath(args.instance), k=args.k, band_lo=args.band_lo,
                   radius=radii, theta=args.theta, lam=args.lam,
-                  filler_capture=args.filler_capture, most=MOST, scale_k=SCALE_K,
+                  filler_capture=args.filler_capture, most=MOST,
+                  only_n_max=ONLY_N_MAX, scale_k=SCALE_K,
                   tau=tau, L=L, usd_per_unit=usd_per_unit, n_state=len(state_list),
                   geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out))
     with open(os.path.join(args.out, "params.json"), "w", encoding="utf-8") as fh:
