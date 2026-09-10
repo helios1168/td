@@ -251,6 +251,13 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         except (TypeError, ValueError):
             continue                        # blank/absent M: the cell stays out of M here
         cell = cell_of(z, c)
+        if channelled:
+            # The channelled extract carries a cell's opportunity once across its rows (one
+            # row holds it and the duplicate rows hold 0, or several rows hold parts of it),
+            # so a cell's M is the sum of its rows. Only the channel-less extract repeats
+            # the same M on every row of a zip, which is the rule below.
+            M[cell] = M.get(cell, 0.0) + v
+            continue
         if cell in M and M[cell] > 0 and v > 0 and abs(v - M[cell]) > 1e-6 * max(v, M[cell]):
             raise InputError(
                 f"cell {cell_label(cell)} carries two different opportunity values "

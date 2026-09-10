@@ -348,6 +348,33 @@ def test_a_blank_channel_value_is_refused():
     assert "empty" in txt
 
 
+def test_channelled_opportunity_sums_across_the_rows_of_a_cell():
+    """The three-channel extract carries a cell's M once across its rows (parts, or one row
+    with M and duplicates at 0); the cell's M is the sum. The channel-less extract keeps the
+    repeat rule, where two different positive values in one zip are a bad merge."""
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        sp, _ = _v2_inputs(tmp)
+        orows = [("30001", "national", 60.0), ("30001", "national", 40.0),
+                 ("30002", "national", 200.0), ("30002", "national", 0.0),
+                 ("30003", "national", 300.0)]
+        orows += [(z, c, m) for z, c, m in OTHER_OPP] + [("30001", "wh", 0.0)]
+        op = _csv(tmp, "opp_split.csv", ["zip_code", "current_channel", "M"], orows)
+        rc, payload, txt, _ = _export(mod, tmp, sp, op)
+        assert rc == 0, txt
+        cells = _cells(payload)
+        assert abs(cells[("30001", "national")]["m_rel"] - 100.0 / KAPPA) < 1e-9
+        assert abs(cells[("30002", "national")]["m_rel"] - 200.0 / KAPPA) < 1e-9
+        assert abs(cells[("30001", "wh")]["m_rel"] - 40.0 / KAPPA) < 1e-9
+
+        s1, _ = _v1_inputs(tmp)
+        op1 = _csv(tmp, "opp1_split.csv", ["zip_code", "M"],
+                   [("30001", 60.0), ("30001", 40.0), ("30002", 200.0), ("30003", 300.0)])
+        rc, payload, txt, _ = _export(mod, tmp, s1, op1, out="out1")
+    assert rc == 4 and payload is None
+    assert "two different opportunity values" in txt
+
+
 def test_no_national_rows_is_refused_because_kappa_is_pinned_to_them():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
@@ -363,10 +390,7 @@ def test_no_national_rows_is_refused_because_kappa_is_pinned_to_them():
 
 # ------------------------------------------------------------------- the loader
 def test_v2_round_trips_through_the_loader():
-    """Skips until A1's format-2 loader lands."""
     from td import instance as descaled
-    if not hasattr(descaled, "FORMAT_V2"):
-        return
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
         rc, payload, _, path = _export(mod, tmp, *_v2_inputs(tmp))

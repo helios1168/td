@@ -147,6 +147,16 @@ a zip's mass over all its channels. So the `k` column is the ceiling for distric
 whole opportunity at once, not the ceiling for any one channel. Read a per-channel ceiling
 off a per-channel export, or off the projection tool on the repo side.
 
+### Opportunity is summed per cell in the channelled extract
+
+The single-channel extract repeats a zip's M on every one of its rows, and the exporter takes
+it once (two different positive values in one zip are refused as a bad merge). The
+three-channel extract carries a cell's opportunity once across its rows: one row holds it and
+the duplicate rows hold 0, or several rows hold parts of it. With a channel column present the
+exporter therefore sums the opportunity column within each (zip, channel) cell and never
+compares rows. Summing the column over national rows gives the national total and over all
+rows the whole opportunity, with no double counting.
+
 ### The command to run on the three-channel extract
 
 These flags are the ones the last export used, and this run needs the same set or the national
@@ -169,11 +179,16 @@ python3 export_instance.py export \
     --states states.csv \
     --filler-key '<the same sentinel as last time>' \
     --impute-missing-m --repair-headroom \
-    --rep-ids ./out-previous/instance_descaled.json.gz \
     --out ./out
 ```
 
-Drop `--rep-ids` if the previous export is no longer on the machine; everything else stands.
+The three-channel extract is the source of truth from 2026-09-10 on and the single-channel
+instance is retired, so its national opportunity values may differ from the old ones. Do not
+pass `--rep-ids ./out-previous/instance_descaled.json.gz`: that flag checks the national share
+vectors against the previous export and refuses to write when any moved, which is the right
+check only when the national rows are meant to be identical. Rep surrogate ids are still
+assigned to national reps first, by total sales, so they coincide with the old ids wherever the
+national sales are unchanged.
 `--theta 0.40` and `--lam 0.30` are the defaults and were what the last run used, so they are
 not repeated here. The join rate was 1.0 last time, so `--join-floor` is not needed; if the
 report shows it has fallen, read the failure message before touching that flag.

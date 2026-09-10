@@ -17,12 +17,23 @@ follows once solve times are known.
 
 ## Next step
 
-Wave 1 below: bookkeeping commit, then eight agents in one message.
+Wave 2 in flight: integration agent closing seams; code-verify R1 (level0), R2 (channels,
+stage2_state), R3 (full_plan) writing under `tools/verify/U14-fullprob/`; two solves running
+detached (joint route with the geo driver on the synthetic instance; route-S regression
+expecting 8 splits, output `battery/results/full_problem/seq_regression`). Then: commit I's
+seams, place the three code-verify verdicts in `docs/units/U14-fullprob.md`, read the timing
+table, decide route S versus J (the user's call), wave 3.
 
 ## Done
 
 - 2026-09-10: worktree created and locked, branch `worktree-full-problem` from `main` `7325737`.
-  Design settled (decisions log below). This file written. Nothing committed on the branch yet.
+  Design settled (decisions log below). This file written.
+- 2026-09-10: wave 1 landed, one commit per agent: bookkeeping `313380c`, loader `713cc63`,
+  doc `82164cb`, channels `0373964`, stage 2 at state grain `260dc70`, exporter `fdbafa6`,
+  math-verify VERIFIED `a59ba26`, level 0 `ea665cd`, driver `9956e9d`. Synthetic instance at
+  `battery/results/full_problem/synthetic_v2.json.gz` (national 8481.8, wh 2953.6, fi 2962.4).
+  Level-0 joint model on it: 95 slots, 34,390 variables, 64,689 rows. Exporter handed to the
+  user for the work machine (README has the command; `--rep-ids` checks the national shares).
 
 ## Decisions needed
 
@@ -112,6 +123,13 @@ wholesalers with sales in Arizona across channels and on every other state's dec
     exporter must be updated (below).
 11. Execution optimised for wall-clock; tokens unconstrained; Opus or Fable executors where
     first-shot success saves time.
+12. (later the same day) The three-channel extract is the new source of truth and the v2
+    single-channel instance is discarded: national opportunity values may differ from v2, so
+    κ, τ and the committed k = 18 map are recomputed on the new file, and the exporter's
+    `--rep-ids` check against the previous export is not used. The extract is one combined
+    sales plus opportunity file; a cell's opportunity is carried once across its rows
+    (duplicates at 0), so the exporter sums opportunity within a (zip, channel) cell.
+    Reported totals: national $17.6B, all three channels $48B.
 
 ## What the codebase has (facts from the explore agents, with anchors)
 
