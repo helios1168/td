@@ -509,24 +509,30 @@ def _stage_cover(group: str, bundle_names) -> list:
     return groups
 
 
-def _pass_list(problem, cover_groups) -> list:
+def _pass_list(problem, cover_groups, *, cover_last: bool = False) -> list:
     """The lexicographic passes of one model: coverage, then contacts, then compactness.
 
     A cover group naming bundles this model has no slots for is dropped, so the catch-all
     model runs its own single cover pass and not route joint's four.  `solve_passes` is what
     applies `--strategy` to the contacts pass alone, so every pass goes in one call.
 
+    `cover_last` puts the cover passes after the contacts pass: the `other_first` stage wants
+    the fewest states that serve the named ones, and only then as much of their mass as the
+    band holds, so a named state is not left 74% in its all-channel district and 26% in the
+    next stage's.
+
     Every pass is pinned exactly (`Pass.slack` stays 0): `--cover-slack` is spent by a route-R
     move and by nothing else, so the plan a given instance produces does not depend on it.
     """
     from td.solvers import level0
 
-    passes = []
+    cover = []
     for name, bundles in cover_groups:
         bs = [b for b in bundles if b in problem.slots]
         if bs:
-            passes.append(level0.cover_pass(problem, bs, name=name))
-    passes.append(level0.contacts_pass(problem))
+            cover.append(level0.cover_pass(problem, bs, name=name))
+    contacts = [level0.contacts_pass(problem)]
+    passes = contacts + cover if cover_last else cover + contacts
     # no centres, no moments, no tie-break: the plan is contacts only (section 6, route J).
     D = getattr(problem, "D", None)
     if D is not None and np.size(D) and float(np.abs(D).max()) > 0.0:
@@ -1094,8 +1100,9 @@ def _main(args, T: telemetry.Timings) -> int:
                 centre_of.setdefault(int(j), int(s))
 
         unpinned = problem                            # before any pass pinned its value
-        result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T,
-                             warm=warm, warm_seconds=warm_s)
+        result = _run_passes(problem, _pass_list(problem, cover_groups,
+                                                 cover_last=stage == "other_first"),
+                             args, stage, T, warm=warm, warm_seconds=warm_s)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1,
                              state_xy=state_xy, roots=centre_of)
@@ -1121,7 +1128,7 @@ def _main(args, T: telemetry.Timings) -> int:
         bad = [st for st in args.other_first if st not in state_list]
         if bad:
             raise ValueError(f"--other-first names states not in the instance: {bad}")
-        run_stage("other_first", ["WHFI_PLUS"], [])
+        run_stage("other_first", ["WHFI_PLUS"], [("cover_other_first", ["WHFI_PLUS"])])
     if args.route == "joint":
         run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
     else:
