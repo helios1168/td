@@ -103,6 +103,13 @@ Morning of 2026-09-11: the stakeholder review. Everything below is under the wor
   `x-n16w11f20-d10-cap900-allstates`, `x-n18w11f19-d10-cap900-allstates`,
   `x-n16w11f20-d10-cap900`, `x-n18w11f19-d10-cap900`, `x-n16w11f20-d10-nocap`,
   `x-n18w11f19-d10-nocap` (three members each, one per business channel).
+- 2026-09-11 morning: the AZ overlap interim fix `1371e0d` (the bundle with more file channels
+  wins a cross-bundle overlap). `summary.png` redrawn: two rows, the structure map (pattern
+  fills with state codes, no border lines) beside a new map of the merged districts and the
+  states each holds, the three channel panels below at a larger size, a pastel palette of
+  twelve hues at two lightnesses coloured per panel so neighbours differ and a district keeps
+  its colour across panels, an "all three channels, one rep" state pattern for `WHFI_PLUS`.
+  Redrawn for the nine ranked runs.
 
 ## Decisions needed
 

@@ -149,6 +149,9 @@ def test_the_state_pattern_classifier_on_the_five_hand_cases():
     assert cli.classify_state({"FI"}) == "partial"
     assert cli.classify_state({"N", "WHFI"}) == "WH+FI merged"
     assert cli.classify_state({"WHFI"}) == "WH+FI merged"
+    # one rep for all three channels, the "all" district, outranks a WH+FI merge beside it
+    assert cli.classify_state({"WHFI_PLUS"}) == "all merged"
+    assert cli.classify_state({"WHFI", "WHFI_PLUS", "N"}) == "all merged"
     assert cli.classify_state({"FI_PLUS", "WH"}) == "national dropped"
     assert cli.classify_state({"WH_PLUS", "FI_PLUS"}) == "national dropped"
     # a plus bundle beside a national one is not a dropped national
@@ -210,6 +213,34 @@ def test_the_district_label_puts_the_wholesaler_under_the_id():
     assert cli._label("N_01", meta) == "N_01\nR0001"
     assert cli._label("N_02", meta) == "N_02"
     assert cli._label("N_03", {}) == "N_03"
+
+
+def test_the_states_column_reads_as_whole_states_and_shares():
+    row = {"states": "AZ:0.775496,CO:1,NM:1"}
+    assert cli.states_of(row) == [("AZ", 0.775496), ("CO", 1.0), ("NM", 1.0)]
+    assert cli.states_text(row) == "AZ 78 %, CO, NM"
+    assert cli.states_text({}) == ""
+
+
+def test_district_colours_differ_between_neighbours_and_hold_across_panels():
+    """Two districts touching on a panel never share a colour; a district on two panels has
+    one colour; a district touching nothing may take any."""
+    import shapely
+
+    a, b, c = (shapely.box(0, 0, 1, 1), shapely.box(1, 0, 2, 1), shapely.box(2, 0, 3, 1))
+    polys = {"N": {"N_01": a, "N_02": b}, "WHFI": {"WHFI_01": c}, "FI": {"FI_01": a}}
+    meta = {"N_01": {"bundle": "N", "channels": "N_WH N_FI"},
+            "N_02": {"bundle": "N", "channels": "N_WH N_FI"},
+            "WHFI_01": {"bundle": "WHFI", "channels": "WH FI"},
+            "FI_01": {"bundle": "FI", "channels": "FI"}}
+    colors = cli.district_colors(polys, meta)
+    assert set(colors) == {"N_01", "N_02", "WHFI_01", "FI_01"}
+    assert colors["N_01"] != colors["N_02"]                     # touch on National
+    # FI_01 (box a) and WHFI_01 (box c) do not touch, so both take the palette's least-used
+    # entries: on the FI panel, coloured first with two districts, they still differ
+    assert colors["FI_01"] != colors["WHFI_01"]
+    adj = cli.panel_adjacency({"x": a, "y": b, "z": c})
+    assert adj == {"x": {"y"}, "y": {"x", "z"}, "z": {"y"}}
 
 
 def test_no_kappa_means_the_masses_stay_descaled():

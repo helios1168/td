@@ -8,7 +8,9 @@ This answers the question above it: what does the whole plan do to the country. 
 `maps/summary.png` (and `.svg`) carrying
 
   * a CONUS map of the **channel structure by state**, saying which of the three business
-    channels a state actually gets and by how many districts, the district borders over it, and
+    channels a state actually gets and whether one rep carries several of them there,
+  * a map of the **merged districts** (`WHFI`, one rep for WH and FI; `WHFI_PLUS`, one rep for
+    all three channels), each labelled with the states it holds, and
   * one panel per **business channel** (National, WH, FI), every district that carries that
     channel filled and labelled with its id and wholesaler.
 
@@ -18,6 +20,12 @@ The figure speaks in business channels, not bundles.  A bundle is how the plan w
 `FI_PLUS` district appears on the FI panel and on the National panel, diagonally hatched, because
 it is the district that folded the national book in.  Zips of a channel that no district holds
 are light grey, and their mass is the residual in the footer.
+
+Colours: one pastel palette (`PALETTE`, twelve hues at two lightnesses, the app's look),
+assigned per panel so that no two districts touching on a panel share a colour and, as far as
+the palette reaches, no two districts on one panel share one at all (`district_colors`).  A
+district keeps its colour on every panel it is drawn on, so a merged district reads the same on
+WH, FI and the merged map.
 
 Geometry is the state-clipped Voronoi tessellation of the zip points, dissolved by district.
 That is the layer `tools/geom_export.py` exports as `district_reach`; the real ZCTA polygons it
@@ -57,44 +65,61 @@ CHANNEL_BUSINESS = {"N_WH": "National", "N_FI": "National", "WH": "WH", "FI": "F
 
 PLUS = "⁺"                 # superscript plus: "FI+", the bundle that carries national too
 
-# What a state's plan pattern is, in the order the classifier tests them.
-PATTERNS = ("three channels", "WH+FI merged", "national dropped", "partial", "unserved")
+# What a state's plan pattern is, in the order the classifier tests them.  "all merged" is a
+# state some `WHFI_PLUS` district holds a share of: one rep for national, WH and FI there, the
+# "all" district the plan opens where no single channel can reach a book.
+PATTERNS = ("three channels", "WH+FI merged", "all merged", "national dropped", "partial",
+            "unserved")
 PATTERN_FILL = {
-    "three channels":   "#cfe0ee",
-    "WH+FI merged":     "#ded2ea",
-    "national dropped": "#f4dac6",
-    "partial":          "#eae5c9",
-    "unserved":         "#ededed",
+    "three channels":   "#a6cee3",
+    "WH+FI merged":     "#b2a0d6",
+    "all merged":       "#f4a3b5",
+    "national dropped": "#fdbf6f",
+    "partial":          "#f3e79b",
+    "unserved":         "#e2e2e2",
 }
-
-# Outline styles on the structure panel, one per business channel.  A plus bundle keeps its own
-# channel's colour and takes the national line weight, rather than being drawn twice (once dark
-# for national, once in colour for its channel), which at this scale reads as one thick smear.
-#
-# `offset` is in points, and it is what makes the panel readable at all: most district borders
-# are state borders, so all three channels want the same line, and whichever is drawn last hides
-# the other two.  Offset by a couple of points each and a shared border reads as three parallel
-# lines.  The offsets are deliberately not diagonal-symmetric, since a (1, 1) shift vanishes on
-# a border that itself runs at 45 degrees.
-LINE = {
-    "National": dict(color="#1b1d22", linewidth=1.9, linestyle="-", offset=(0.0, 0.0)),
-    "WH":       dict(color="#1f5fa8", linewidth=1.1, linestyle="-", offset=(2.0, 1.1)),
-    "FI":       dict(color="#c0392b", linewidth=1.1, linestyle=(0, (3.5, 2.5)),
-                     offset=(-2.0, -1.1)),
-    "merged":   dict(color="#6f3d9e", linewidth=1.4, linestyle=(0, (1.0, 1.6)),
-                     offset=(-2.0, 1.1)),
+PATTERN_TEXT = {
+    "three channels":   "three channels, three reps",
+    "WH+FI merged":     "WH + FI merged, one rep",
+    "all merged":       "all three channels, one rep",
+    "national dropped": "national folded into WH and FI",
+    "partial":          "one or two channels",
+    "unserved":         "no channel",
 }
-STYLE_KEYS = ("color", "linewidth", "linestyle", "offset")
 
 HATCH = {"pure": "", "plus": "///", "merged": "xxx"}
 HATCH_COLOR = (0.16, 0.16, 0.18, 0.55)
 
+# District fills, the app's look (`app/mapfig.py::shade`, pastel, the hue carrying identity):
+# twelve hues 30 degrees apart, each at a medium and a pale lightness, 24 entries.  The hues are
+# emitted on a stride of 5 (coprime with 12), so consecutive entries sit 150 degrees apart and a
+# panel of a few districts never draws two neighbouring hues.  The medium set comes first, so a
+# panel of up to twelve districts uses one lightness; past twelve the pale set joins and
+# `district_colors` keeps a hue off two districts that touch.
+N_HUES = 12
+HUE_STRIDE = 5
+FILL_LEVELS = ((0.66, 0.60), (0.80, 0.50))     # (lightness, saturation)
+
+
+def _palette() -> list:
+    import colorsys
+    out = []
+    for light, sat in FILL_LEVELS:
+        for j in range(N_HUES):
+            r, g, b = colorsys.hls_to_rgb(((j * HUE_STRIDE) % N_HUES) / N_HUES, light, sat)
+            out.append("#%02x%02x%02x" % tuple(round(255 * v) for v in (r, g, b)))
+    return out
+
+
+PALETTE = _palette()
+
 GROUND = "#f6f6f6"              # a state with no zip of this channel at all
 UNSERVED = "#d8d8d8"            # a zip of this channel that no district holds
 STATE_LINE = "#9d9d9d"
-SPLIT_HATCH = "#a6a6a6"
+SPLIT_HATCH = "#8a8a8a"
+STATE_CODE_MIN_AREA = 2.0e10    # m^2: a state under 20,000 km^2 (RI DE CT) gets no code
 
-FIGSIZE = (16.0, 14.0)
+FIGSIZE = (22.0, 13.2)
 DPI = 110
 
 
@@ -197,6 +222,8 @@ def classify_state(present: set) -> str:
     """The state's plan pattern from the bundles holding a positive share of it."""
     if not present:
         return "unserved"
+    if any(b.startswith("WHFI") and b.endswith("_PLUS") for b in present):
+        return "all merged"
     if any(b.startswith("WHFI") for b in present):
         return "WH+FI merged"
     if any(b.endswith("_PLUS") for b in present) and "N" not in present:
@@ -342,23 +369,71 @@ def simplify_polys(polys: dict, tolerance: float) -> dict:
             for d, g in polys.items()}
 
 
-def _lighten(color: str, t: float) -> tuple:
-    from matplotlib.colors import to_rgb
-    r, g, b = to_rgb(color)
-    return (r + (1.0 - r) * t, g + (1.0 - g) * t, b + (1.0 - b) * t)
+def panel_adjacency(group: dict) -> dict:
+    """`{district: {neighbours}}` over one panel's polygons: two districts are neighbours when
+    their dissolved polygons touch anywhere."""
+    from shapely.strtree import STRtree
+
+    names = sorted(group, key=str)
+    geoms = [group[d] for d in names]
+    adj = {d: set() for d in names}
+    if not geoms:
+        return adj
+    tree = STRtree(geoms)
+    for i, g in enumerate(geoms):
+        for j in tree.query(g, predicate="intersects"):
+            if int(j) != i:
+                adj[names[i]].add(names[int(j)])
+    return adj
 
 
-def district_colors(names) -> dict:
-    """A fill per district, stable across panels so a merged district looks the same on both.
+def district_colors(polys: dict, meta: dict) -> dict:
+    """A fill per district: distinct from every neighbour on each panel it is drawn on, unique
+    on the panel while `PALETTE` lasts, and the same on every panel.
 
-    `geom_export.palette` strides the hue circle, so consecutively numbered districts land far
-    apart; past its 50 entries the lightness steps instead of the hue repeating exactly.
+    Panels are coloured largest first.  A district already coloured on an earlier panel keeps
+    its colour (a merged district on FI, then WH; a plus district on its channel, then
+    National); every other one takes the least-used palette entry no neighbour on this panel
+    holds, `us_maps.color_districts`'s rule, preferring an entry whose hue no neighbour holds
+    either (the palette carries each hue at two lightnesses), so a colour repeats on a panel
+    only past 24 districts and then on two districts that touch nowhere.
     """
-    pal = geom_export.palette()
-    out = {}
-    for i, d in enumerate(sorted(names, key=str)):
-        out[d] = _lighten(pal[i % len(pal)], 0.42 + 0.16 * ((i // len(pal)) % 3))
+    groups = {c: channel_group(c, polys, {}, meta) for c in BUSINESS}
+    rank = {c: i for i, c in enumerate(PALETTE)}
+    hue = {c: i % N_HUES for i, c in enumerate(PALETTE)}
+    out: dict[str, str] = {}
+    for channel in sorted(BUSINESS, key=lambda c: (-len(groups[c]), BUSINESS.index(c))):
+        adj = panel_adjacency(groups[channel])
+        used = {c: 0 for c in PALETTE}
+        for d in adj:
+            if d in out:
+                used[out[d]] += 1
+        for d in sorted(adj, key=lambda d: (-len(adj[d]), str(d))):
+            if d in out:
+                continue
+            taken = {out[e] for e in adj[d] if e in out}
+            hues = {hue[c] for c in taken}
+            free = [c for c in PALETTE if c not in taken] or list(PALETTE)
+            c = min(free, key=lambda c: (hue[c] in hues, used[c], rank[c]))
+            out[d] = c
+            used[c] += 1
     return out
+
+
+def states_of(row: dict) -> list:
+    """`[(state, share)]` from a `districts.csv` row's `states` column, `AZ:0.78,CO:1`."""
+    out = []
+    for part in (row.get("states") or "").split(","):
+        if ":" not in part:
+            continue
+        st, share = part.split(":", 1)
+        out.append((st.strip(), float(share)))
+    return out
+
+
+def states_text(row: dict) -> str:
+    """The states a district holds, in the reader's words: `AZ 78 %, CO, NM`."""
+    return ", ".join(st if sh >= 0.995 else f"{st} {100 * sh:.0f} %" for st, sh in states_of(row))
 
 
 # ------------------------------------------------------------------ drawing
@@ -368,24 +443,28 @@ def _fill(ax, geom, **kw) -> None:
         ax.add_patch(PathPatch(path, **kw))
 
 
-def _outline(ax, geom, *, halo=0.0, zorder=3.0, offset=None, **style):
+def _outline(ax, geom, *, zorder=3.0, **style):
     from matplotlib.collections import LineCollection
-    from matplotlib.transforms import offset_copy
-    import matplotlib.patheffects as pe
     segs = us_maps._lines_of(geom.boundary)
     if not segs:
         return None
     lc = LineCollection(segs, zorder=zorder, capstyle="round", joinstyle="round",
                         colors=style.get("color"), linewidths=style.get("linewidth", 1.0),
                         linestyles=style.get("linestyle", "-"))
-    if offset and any(offset):
-        lc.set_transform(offset_copy(ax.transData, fig=ax.figure, x=offset[0], y=offset[1],
-                                     units="points"))
-    if halo:
-        lc.set_path_effects([pe.withStroke(linewidth=style.get("linewidth", 1.0) + halo,
-                                           foreground="white")])
     ax.add_collection(lc)
     return lc
+
+
+def _state_codes(ax, states: dict, *, fontsize: float, zorder: float = 2.6) -> None:
+    """Two-letter codes on every state big enough to hold one, at its largest part's
+    representative point, in the dark label grey with no box so the fill shows through."""
+    for code, geom in states.items():
+        part = us_maps._largest_part(geom)
+        if part.area < STATE_CODE_MIN_AREA:
+            continue
+        p = part.representative_point()
+        ax.text(p.x, p.y, code, fontsize=fontsize, color=us_maps.LABEL_TEXT, ha="center",
+                va="center", zorder=zorder, alpha=0.85)
 
 
 def _frame(ax, bounds, pad=0.015) -> None:
@@ -427,23 +506,18 @@ def channel_group(channel: str, polys: dict, unheld: dict, meta: dict) -> dict:
     return group
 
 
-def structure_panel(ax, run: dict, polys: dict, unheld: dict, meta: dict, states: dict,
-                    legend_ax) -> None:
-    """The top map: a fill per state pattern, the cut lines of each business channel over it.
+def structure_panel(ax, run: dict, states: dict) -> None:
+    """The structure map: a fill per state pattern, the state's code on it, a hatch where the
+    state is split between districts of some channel.
 
-    Only district-vs-district borders are drawn (`us_maps.district_borders`), never a whole
-    district boundary: the coastline is not a decision, and drawn three times over it swamps
-    the lines that are.  A district that carries two channels therefore has its border drawn
-    twice, once in each channel's colour and at that channel's offset, which is the honest
-    reading: that border is both the WH cut and the national cut.  A merged district is the
-    exception the eye needs help with, so its own outline goes on once in purple.
+    No district borders here: an earlier version drew each channel's cuts over this map in its
+    own line style, and where three channels share a state line, which is most of them, the
+    three lines read as one smear.  The channel panels carry the borders.
     """
-    from matplotlib.collections import LineCollection
-    from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
     import matplotlib
 
-    matplotlib.rcParams["hatch.linewidth"] = 0.45
+    matplotlib.rcParams["hatch.linewidth"] = 0.5
     counts = {p: 0 for p in PATTERNS}
     split_any = set().union(*run["splits"].values()) if run["splits"] else set()
     for code, geom in states.items():
@@ -454,49 +528,60 @@ def structure_panel(ax, run: dict, polys: dict, unheld: dict, meta: dict, states
             _fill(ax, geom, facecolor="none", edgecolor=SPLIT_HATCH, hatch="///",
                   linewidth=0.0, zorder=1.4)
     for geom in states.values():
-        _outline(ax, geom, color=STATE_LINE, linewidth=0.55, zorder=2.0)
+        _outline(ax, geom, color="#6f6f6f", linewidth=0.7, zorder=2.0)
+    _state_codes(ax, states, fontsize=8.5)
 
-    x0, y0, x1, y1 = ax.get_xlim()[0], ax.get_ylim()[0], ax.get_xlim()[1], ax.get_ylim()[1]
-    eps = 1e-4 * float(((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5)
-    rows = []
-    from matplotlib.transforms import offset_copy
-    for i, channel in enumerate(BUSINESS):
-        group = channel_group(channel, polys, unheld, meta)
-        segs = us_maps.district_borders(group, eps)
-        style = LINE[channel]
-        lc = LineCollection(segs, colors=style["color"], linewidths=style["linewidth"],
-                            linestyles=style["linestyle"], zorder=3.0 + 0.1 * i,
-                            capstyle="round", joinstyle="round")
-        lc.set_transform(offset_copy(ax.transData, fig=ax.figure, x=style["offset"][0],
-                                     y=style["offset"][1], units="points"))
-        ax.add_collection(lc)
-        rows.append(dict(style, label=channel, n=len(run["districts"][channel])))
-    merged = {d: g for b, ps in polys.items() if bundle_kind(b) == "merged"
-              for d, g in ps.items()}
-    for geom in merged.values():
-        _outline(ax, geom, halo=0.9, zorder=3.4, **{k: LINE["merged"][k] for k in STYLE_KEYS})
-    if merged:
-        rows.append(dict(LINE["merged"], label="WH+FI merged", n=len(merged)))
-
-    legend_ax.set_axis_off()
-    handles = [Patch(facecolor=PATTERN_FILL[p], edgecolor="#b6b6b6",
-                     label=f"{p}  ({counts.get(p, 0)})") for p in PATTERNS]
+    handles = [Patch(facecolor=PATTERN_FILL[p], edgecolor="#8a8a8a",
+                     label=f"{PATTERN_TEXT[p]}  ({counts.get(p, 0)})")
+               for p in PATTERNS if counts.get(p, 0)]
     handles.append(Patch(facecolor="white", edgecolor=SPLIT_HATCH, hatch="///",
                          label=f"split between districts  ({len(split_any)})"))
-    first = legend_ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1.0),
-                             frameon=False, fontsize=9, handlelength=1.9,
-                             title="State pattern", title_fontproperties=dict(weight="bold",
-                                                                              size=9.5))
-    first._legend_box.align = "left"
-    legend_ax.add_artist(first)
-    lines = [Line2D([0], [0], color=r["color"], linewidth=r["linewidth"],
-                    linestyle=r["linestyle"], label=f"{r['label']}  ({r['n']})")
-             for r in rows]
-    second = legend_ax.legend(handles=lines, loc="upper left", bbox_to_anchor=(0.0, 0.66),
-                              frameon=False, fontsize=9, handlelength=2.6,
-                              title="District borders, by channel", title_fontproperties=dict(
-                                  weight="bold", size=9.5))
-    second._legend_box.align = "left"
+    legend = ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.0, 0.0),
+                       frameon=False, fontsize=9.5, handlelength=1.9, title="State pattern",
+                       title_fontproperties=dict(weight="bold", size=10))
+    legend._legend_box.align = "left"
+
+
+def merged_panel(ax, fig, polys: dict, states: dict, colors: dict, meta: dict,
+                 land=None) -> str:
+    """The merged map: every district one rep holds on more than one channel (`WHFI`, WH and
+    FI; `WHFI_PLUS`, all three), on a grey country, labelled with the states it holds.
+    Returns the strip under it: one line per merged district."""
+    for geom in states.values():
+        _fill(ax, geom, facecolor=GROUND, edgecolor="none", zorder=0.5)
+    drawn, lines = {}, []
+    for bundle in sorted(polys, key=draw_rank):
+        if bundle_kind(bundle) != "merged":
+            continue
+        for name, geom in sorted(polys[bundle].items()):
+            _fill(ax, geom, facecolor=colors[name], edgecolor="none", zorder=1.5)
+            _fill(ax, geom, facecolor="none", edgecolor=HATCH_COLOR, hatch=HATCH["merged"],
+                  linewidth=0.0, zorder=1.7)
+            _outline(ax, geom, color="#3a3a3a", linewidth=1.0, zorder=2.5)
+            drawn[name] = geom
+            row = meta.get(name) or {}
+            what = "all three channels" if bundle.endswith("_PLUS") else "WH + FI"
+            held = states_text(row) or "?"
+            mass = f"  ·  mass {float(row['mass']):,.0f}" if row.get("mass") else ""
+            rep = f"  ·  {row['wholesaler']}" if row.get("wholesaler") else ""
+            lines.append(f"{name} ({what}){rep}  ·  {held}{mass}")
+    for geom in states.values():
+        _outline(ax, geom, color=STATE_LINE, linewidth=0.5, zorder=2.2)
+    _state_codes(ax, states, fontsize=7.5)
+
+    labels = {f"{_label(d, meta)}\n{states_text(meta.get(d) or {})}": g
+              for d, g in drawn.items()}
+    anchors = {k: (us_maps._largest_part(g).representative_point().x,
+                   us_maps._largest_part(g).representative_point().y)
+               for k, g in labels.items()}
+    footprint = {k: us_maps._largest_part(g).area for k, g in labels.items()}
+    us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.5,
+                          avoid_polys=labels, land=land, min_ratio=1.5)
+    ax.set_title("Merged districts and their states", color=us_maps.TEXT, fontsize=13,
+                 fontweight="bold", pad=6)
+    if not lines:
+        return "no merged district: every district carries one channel"
+    return "\n".join(lines)
 
 
 def channel_panel(ax, fig, channel: str, run: dict, polys: dict, states: dict, colors: dict,
@@ -533,7 +618,7 @@ def channel_panel(ax, fig, channel: str, run: dict, polys: dict, states: dict, c
     # the label box.  At 1.0 two small neighbours both keep their spot and print on top of each
     # other (WHFI_01 over FI_03 on the d600_free FI panel); above it the smaller one takes a
     # leader line instead, and `_place_labels` does check leader labels for collisions.
-    us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=5.6,
+    us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.2,
                           avoid_polys=labels, land=land, min_ratio=2.5)
     ax.set_title(channel, color=us_maps.TEXT, fontsize=13, fontweight="bold", pad=6)
     return stats_line(channel, drawn, kinds, run, meta, kappa)
@@ -625,32 +710,39 @@ def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
               for c in BUSINESS if run["unheld"][c]}
     drawn = {b: simplify_polys(p, simplify) for b, p in polys.items()}
     shown = {c: simplify_polys(p, simplify) for c, p in unheld.items()}
-    colors = district_colors({d for m in polys.values() for d in m})
+    colors = district_colors(polys, meta)
+    land = us_maps.land_union(gdf)
 
     fig = plt.figure(figsize=FIGSIZE, dpi=dpi, facecolor=us_maps.BG)
-    left, right, low = 0.015, 0.985, 0.105
-    grid = fig.add_gridspec(2, 1, height_ratios=[2.4, 1.0], left=left, right=right,
-                            top=0.945, bottom=low, hspace=0.05)
-    top = grid[0].subgridspec(1, 2, width_ratios=[4.4, 1.0], wspace=0.0)
+    left, right, low, mid = 0.015, 0.985, 0.10, 0.40
+    # two rows: the structure map and the merged map above, the three channel panels below;
+    # the row heights are the maps' own at this width (CONUS is 1.75 wide to 1 high), so the
+    # `aspect="equal"` centring leaves no dead band.  Strips of text sit under each map in
+    # figure coordinates, not the axes': `_place_labels` may widen a panel's limits for a
+    # leader label, which moves that axes' box and would leave the strips of one row at
+    # different heights
+    top = fig.add_gridspec(1, 2, left=left, right=right, top=0.935, bottom=0.50, wspace=0.02)
     ax_map = fig.add_subplot(top[0, 0])
-    ax_key = fig.add_subplot(top[0, 1])
     _frame(ax_map, bounds)
-    ax_map.set_title("Channel structure by state", color=us_maps.TEXT, fontsize=14,
-                     fontweight="bold", pad=8)
-    structure_panel(ax_map, run, polys, unheld, meta, states, ax_key)
+    ax_map.set_title("Channel structure by state", color=us_maps.TEXT, fontsize=13,
+                     fontweight="bold", pad=6)
+    structure_panel(ax_map, run, states)
+    ax_merged = fig.add_subplot(top[0, 1])
+    _frame(ax_merged, bounds)
+    strip = merged_panel(ax_merged, fig, drawn, states, colors, meta, land=land)
+    fig.text(left + 0.75 * (right - left), 0.49, strip, transform=fig.transFigure,
+             ha="center", va="top", fontsize=8.6, color=us_maps.TEXT, linespacing=1.5)
 
-    bottom = grid[1].subgridspec(1, len(BUSINESS), wspace=0.02)
+    bottom = fig.add_gridspec(1, len(BUSINESS), left=left, right=right, top=mid, bottom=low,
+                              wspace=0.02)
     for i, channel in enumerate(BUSINESS):
         ax = fig.add_subplot(bottom[0, i])
         _frame(ax, bounds)
         strip = channel_panel(ax, fig, channel, run, drawn, states, colors, meta,
-                              shown.get(channel), kappa, land=us_maps.land_union(gdf))
-        # in figure coordinates, not the axes': `_place_labels` may widen a panel's limits for
-        # a leader label, which under `aspect="equal"` moves that axes' box and would leave the
-        # three strips at three heights
-        ax.text(left + (i + 0.5) * (right - left) / len(BUSINESS), low - 0.008, strip,
-                transform=fig.transFigure, ha="center", va="top", fontsize=8.2,
-                color=us_maps.TEXT, linespacing=1.5)
+                              shown.get(channel), kappa, land=land)
+        fig.text(left + (i + 0.5) * (right - left) / len(BUSINESS), low - 0.008, strip,
+                 transform=fig.transFigure, ha="center", va="top", fontsize=8.6,
+                 color=us_maps.TEXT, linespacing=1.5)
 
     kinds = {bundle_kind(b) for b in drawn}
     keys = [Patch(facecolor="#e3e3e3", edgecolor="#4a4a4a", linewidth=0.7,
@@ -660,16 +752,17 @@ def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
                           label=f"{PLUS} district: carries the national book too"))
     if "merged" in kinds:
         keys.append(Patch(facecolor="#e3e3e3", edgecolor=HATCH_COLOR, hatch="xxx",
-                          label="merged district: one rep for WH and FI"))
+                          label="merged district: one rep for WH and FI (WHFI) or for all "
+                                "three channels (WHFI_PLUS)"))
     if shown:
         keys.append(Patch(facecolor=UNSERVED, edgecolor="none", label="held by no district"))
     fig.legend(handles=keys, loc="lower center", bbox_to_anchor=(0.5, 0.036), ncol=len(keys),
-               frameon=False, fontsize=9.5, handlelength=1.8)
+               frameon=False, fontsize=10, handlelength=1.8)
 
     fig.suptitle(title_line(os.path.basename(os.path.abspath(run_dir)), params),
-                 color=us_maps.TEXT, fontsize=15, fontweight="bold", y=0.986)
+                 color=us_maps.TEXT, fontsize=15, fontweight="bold", y=0.992)
     fig.text(0.5, 0.012, footer_line(run, staffing, kappa), ha="center", va="bottom",
-             fontsize=10, color=us_maps.TEXT)
+             fontsize=10.5, color=us_maps.TEXT)
 
     out_dir = os.path.join(run_dir, "maps")
     os.makedirs(out_dir, exist_ok=True)
