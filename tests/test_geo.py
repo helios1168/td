@@ -71,6 +71,38 @@ def test_zcta_points_survives_the_trailing_space_header():
     assert all(-180 < lon < 0 for lon, _ in pts.values())      # all US: western hemisphere
 
 
+# The 2025 file is pipe-delimited with clean header names; the 2020 file is tab-delimited with
+# trailing blanks.  Both are read through the same parser, which sniffs the delimiter.
+FAKE_GAZ_2025 = (
+    "GEOID|GEOIDFQ|ALAND|AWATER|ALAND_SQMI|AWATER_SQMI|INTPTLAT|INTPTLONG\n"
+    "01103|860Z200US01103|1000|0|0.386|0.000|42.104418|-72.590080\n"
+    "11249|860Z200US11249|2000|0|0.772|0.000|40.719898|-73.958481\n"
+)
+
+
+def test_zcta_points_reads_the_pipe_delimited_2025_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        with open(os.path.join(tmp, geo.GAZ_TXT), "w", encoding="latin-1") as fh:
+            fh.write(FAKE_GAZ_2025)
+        pts = geo.zcta_points(tmp)
+    assert set(pts) == {"01103", "11249"}, pts
+    lon, lat = pts["11249"]                 # absent from the 2020 vintage entirely
+    assert abs(lon - (-73.958481)) < 1e-9 and abs(lat - 40.719898) < 1e-9
+
+
+def test_gaz_delimiter_picks_pipe_only_when_the_header_uses_it():
+    assert geo._gaz_delimiter("GEOID|ALAND|INTPTLAT|INTPTLONG\n") == "|"
+    assert geo._gaz_delimiter("GEOID\tALAND\tINTPTLAT\tINTPTLONG  \n") == "\t"
+
+
+def test_known_gazetteer_vintages_carry_a_url_and_a_file_name():
+    assert set(geo.GAZ_VINTAGES) == {"2020", "2025"}
+    for vintage, (url, name) in geo.GAZ_VINTAGES.items():
+        assert url.endswith(f"{vintage}_Gaz_zcta_national.zip"), url
+        assert name == f"{vintage}_Gaz_zcta_national.txt", name
+    assert (geo.GAZ_URL, geo.GAZ_TXT) == geo.GAZ_VINTAGES[geo.GAZ_VINTAGE]
+
+
 # ------------------------------------------------------------------ projection
 def test_project_is_finite_and_orders_east_west():
     lons = [-122.4, -100.0, -74.0]         # same latitude: only longitude may move x

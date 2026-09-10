@@ -23,6 +23,7 @@ for _p in (ROOT, os.path.join(ROOT, "tools")):
 
 import borders_report as br                 # noqa: E402
 import run_draw                              # noqa: E402
+from td import geo                           # noqa: E402
 
 INSTANCE_PATH = "/Users/ntlee/projects/td/instance_descaled_v2.json.gz"
 DRAW_PATH = "/Users/ntlee/projects/td/battery/results/draw_k18_v2_20260904/k18/draw.csv"
@@ -149,6 +150,20 @@ def test_write_cell_steps_are_numbered_and_end_on_the_committed_labelling():
 
 
 # ------------------------------------------------------------------------------ the smoke test
+def _committed_on(vintage):
+    """`br.load_committed` with the gazetteer pinned to one vintage `(url, file name)` pair.
+
+    `zcta_points` reads the module constants at call time, so swapping them around the call is
+    enough; they are restored whatever happens.
+    """
+    saved = (geo.GAZ_URL, geo.GAZ_TXT)
+    geo.GAZ_URL, geo.GAZ_TXT = vintage
+    try:
+        return br.load_committed(INSTANCE_PATH, DRAW_PATH, GEO_CACHE)
+    finally:
+        geo.GAZ_URL, geo.GAZ_TXT = saved
+
+
 def test_smoke_committed_map():
     """`load_committed` + `cell_row` on the committed k=18 draw's own labelling must reproduce
     `metrics.json`'s numbers exactly (it is the same completed instance) and change no zip.
@@ -164,7 +179,10 @@ def test_smoke_committed_map():
     if not os.path.exists(INSTANCE_PATH):
         return
 
-    ctx = br.load_committed(INSTANCE_PATH, DRAW_PATH, GEO_CACHE)
+    # The committed draw was solved on the 2020 gazetteer, so its numbers only reproduce against
+    # that vintage.  Under the 2025 default the nine zips it has no coordinate for gain one and
+    # stop being utility-assigned, which moves 31 zips and takes spread from 1.3684% to 1.2268%.
+    ctx = _committed_on(geo.GAZ_VINTAGES["2020"])
     row = br.cell_row(ctx, ctx.labels0, "committed", {"n_fractional": 0})
 
     committed_nash = 110.88310108262327

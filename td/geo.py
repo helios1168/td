@@ -33,9 +33,30 @@ import zipfile
 
 DEFAULT_DEST = os.path.join("data", "geo")
 
-GAZ_URL = ("https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2020_Gazetteer/"
-           "2020_Gaz_zcta_national.zip")
-GAZ_TXT = "2020_Gaz_zcta_national.txt"
+# The ZCTA gazetteer, by vintage.  2025 is the default because it is the only one that covers
+# the live instance: the 2020 file is missing 9 of its 3,713 zips (0.16 % of M), and 36 of the
+# points it does carry fall outside their own 2025 ZCTA.  Every 2025 point falls inside its own
+# polygon, and the file's points equal the TIGER `INTPTLAT20`/`INTPTLONG20` values to the
+# decimetre, so this is the 822 MB bundle's coordinate content in a 1 MB cache-fetch.
+#
+# 2020 stays selectable through `TD_GAZ_VINTAGE` because every draw committed before 2026-09-09
+# was measured on it.  The two vintages are not interchangeable: 468 zips move more than 1 km
+# between them (70 more than 5 km, max 72.6 km), which moves stage 1 and therefore the draw.
+#
+# The files do not share a format.  2020 is tab-delimited with trailing whitespace on the column
+# names; 2025 is pipe-delimited and clean.  Both name the columns `GEOID`, `INTPTLAT` and
+# `INTPTLONG`, so only the delimiter differs and `zcta_points` sniffs it from the header.
+GAZ_VINTAGES = {
+    "2020": ("https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2020_Gazetteer/"
+             "2020_Gaz_zcta_national.zip", "2020_Gaz_zcta_national.txt"),
+    "2025": ("https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/"
+             "2025_Gaz_zcta_national.zip", "2025_Gaz_zcta_national.txt"),
+}
+GAZ_VINTAGE = os.environ.get("TD_GAZ_VINTAGE", "2025")
+if GAZ_VINTAGE not in GAZ_VINTAGES:
+    raise ValueError(f"TD_GAZ_VINTAGE={GAZ_VINTAGE!r}; known vintages: "
+                     f"{', '.join(sorted(GAZ_VINTAGES))}")
+GAZ_URL, GAZ_TXT = GAZ_VINTAGES[GAZ_VINTAGE]
 
 STATES_URL = "https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_state_20m.zip"
 STATES_DIR = "cb_2020_us_state_20m"
@@ -113,16 +134,28 @@ def _cached_shapefile(dest, subdir, url):
 
 
 # ------------------------------------------------------------------ points
-def zcta_points(dest: str = DEFAULT_DEST) -> dict:
-    """`{zcta5: (lon, lat)}` from the 2020 Census gazetteer internal points.
+def _gaz_delimiter(header: str) -> str:
+    """The delimiter of a gazetteer header line: `|` for 2025, tab for 2020.
 
-    Keys are the 5-character GEOID as written, so they join straight against the instance's
-    zip codes without any int round-trip (which would eat the leading zero of `01103`).
+    Sniffed rather than tied to the vintage constant so a cache seeded with one vintage's file
+    under another vintage's name still parses, which is what the tests do.
+    """
+    return "|" if header.count("|") > header.count("\t") else "\t"
+
+
+def zcta_points(dest: str = DEFAULT_DEST) -> dict:
+    """`{zcta5: (lon, lat)}` from the Census gazetteer's ZCTA internal points.
+
+    The vintage is `GAZ_VINTAGE` (2025 by default, `TD_GAZ_VINTAGE` to override).  Keys are the
+    5-character GEOID as written, so they join straight against the instance's zip codes without
+    any int round-trip (which would eat the leading zero of `01103`).
     """
     path = _cached_member(dest, GAZ_TXT, GAZ_URL)
     out = {}
     with open(path, newline="", encoding="latin-1") as fh:
-        rdr = csv.DictReader(fh, delimiter="\t")
+        delimiter = _gaz_delimiter(fh.readline())
+        fh.seek(0)
+        rdr = csv.DictReader(fh, delimiter=delimiter)
         rdr.fieldnames = [f.strip() for f in (rdr.fieldnames or [])]   # the header quirk
         for row in rdr:
             z = (row.get("GEOID") or "").strip()
