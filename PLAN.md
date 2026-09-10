@@ -17,46 +17,43 @@ follows once solve times are known.
 
 ## Next step
 
-Overnight protocol (2026-09-10 night, the user asleep, the session autonomous). The goal for the
-morning: nice-looking, feasible, defensible territory scenarios the user can review with
-stakeholders, each with a zip and wholesaler table and maps.
+Morning of 2026-09-11: the stakeholder review. Everything below is under the worktree's
+`battery/results/full_problem/` (gitignored) unless said otherwise.
 
-- Grid running: `tools/full_grid.py` over `battery/results/full_problem/grid_20260910/cells.json`
-  (written by the job's `make_cells.py`), output in the same dir (gitignored), concurrency 5,
-  `--threads 2`, 180 s per pass, route S, geo driver, warm greedy, greedy anchors, `centers
-  seeds`, η 0.05, `band_mode per-bundle`, `k_mode cap`. 12 cross cells first (`X_<counts>_d<δ>_<cap>`:
-  seven bundles, all-channel catch-all, counts (18,11,19), (16,11,20), (14,10,18), δ 0.05 and
-  0.10, caps none and 900 km / 6 states; the n18 ones take `--centers DRAW.csv` and no
-  incumbency anchors, which the per-bundle band under a cap made infeasible), then 84 stage
-  cells (`S_<ch>_k<k>_d<δ>_<cap>`, one channel each, national 10-18, WH 9-12, FI 16-20, δ 0.05,
-  0.075, 0.10), then `J_ref_n18w11f19_d100_d900n6` (joint, `--serve-all-states`, 1200 s).
-  A Monitor (`watch_grid.py`) reports each finished cell. If the runner dies: relaunch
-  `launch_grid.sh <cells.json> <out> 5 --resume` from `/Users/ntlee/.claude/jobs/610589f0/tmp`.
-- Follow-up wave, once the X cells are in: `make_followup.py grid_20260910 cells_followup.json`
-  reruns every X cell that left states unserved with `--other-first <those states>
-  --other-floor 0.5` (tag suffix `_of`), the route-S answer to "every state in at least one
-  grouping" (the user's rule, 2026-09-10 night). Under 900 km / 6 states MT and WY reach 260
-  of a 424 floor with every neighbour in reach, so the floor is the lever; WA alone needs OR
-  and ID (445). Run it with `--out grid_20260910` so `grid.csv` ranks both.
-- Review: on each finished cell, Read `maps/all.png` and `maps/summary.png`, one row in
-  `battery/results/full_problem/grid_20260910/REVIEW.md`: tag, verdict (nice / acceptable /
-  reject), reason, best channel. Criteria at the top of REVIEW.md: every district one piece on
-  the cell graph; extent inside the cap; no chain across the map; a single person could
-  plausibly drive it; mass inside the band; splits not arbitrary; every state served.
-- Compose: `tools/plan_compose.py` over the best stage cells per (δ, cap) into plans of about
-  50 districts (`--realise --maps`); register the top three to five in the app with
-  `tools/plan_to_app.py` (do not click "Build rep territories" on them: the rep cache collides).
-- Checkpoint: this section and `## Done` committed after every five reviewed cells. Pushing
-  is denied to the session; the user pushes `worktree-full-problem` in the morning.
+- Start from `grid_20260910/REVIEW.md` (every cell's verdict and the ranking), then `grid.md`.
+  The plans to show, in order: `grid_20260910_of/X_n16w11f20_d100_d900n6_of` (48 districts,
+  900 km / 6-state cap held everywhere, every state in a grouping, certified on every business
+  pass), `grid_20260910_of/X_n18w11f19_d100_d900n6_of` (49, same rule, fully certified),
+  `grid_20260910/X_n16w11f20_d100_nocap` (47, no cap, everything served, wide west),
+  `composed_20260910/C_n16w11f19_d100_d900n6` (45, three pure channels, no merges, the
+  comparison point), `grid_20260910_of/X_n14w10f18_d100_d900n6_of` (43, lean). Each has
+  `assignment.csv`, `districts.csv`, `wholesalers.csv`, `maps/all.png`, `maps/summary.png`.
+- The app on `100.69.120.67:8503` (this worktree's code) shows them as scenarios
+  `x-n16w11f20-d10-cap900-allstates`, `x-n18w11f19-d10-cap900-allstates`,
+  `x-n16w11f20-d10-nocap`, `x-n18w11f19-d10-nocap`, `x-n16w11f20-d10-cap900`,
+  `x-n18w11f19-d10-cap900`, `x-n14w10f18-d10-cap900-allstates`, `c-n16w11f19-d10-cap900-pure`,
+  `c-n16w11f19-d10-nocap-pure`, three members each (one per business channel; plus and merged
+  bundles hatched). Do not click "Build rep territories" on them (rep cache collision).
+- What to say about the structure: under 900 km and six states no channel can hold WA, MT or
+  WY at a full book (the joint model proves it in 6 s), so "every state in a grouping" needs
+  all-channel "other" districts planned first (`--other-first`), WA alone at 288 units and
+  MT WY with a neighbour at half a book (`--other-floor 0.5`). The 5% band loses to 10% in
+  every pair. Counts are ceilings (`--k-mode cap`), which is what lets a cap drop districts.
+- Decisions to take with the user: the "other" floor (0.5 of a book, or another figure); whether
+  ND SD NE on FI alone is acceptable or they too get an "other" district; the cap itself (900
+  km / 6 states versus none); which of the two counts (16/11/20 or 18/11/19).
+- Then: the user pushes `worktree-full-problem`; `/state` on the hub via the orchestrator; the
+  merge is asked for, never done unasked. Route R (rep-book moves) stays parked.
 - Known open items: `centers.assign` parks zero-mass zips of a split state on the first
-  district (TODO in `plan_realise.off_plan`); the DC–VA border has no cell edge; the contiguity
-  repair does no bridging moves; a plan with more districts than zips in a split state makes
-  `plan_realise` raise (seen only on 3 s probe cells); the greedy's serve attach reaches one
-  state deep only; `--serve-all-states` on route S is infeasible under a cap at the FI stage
-  (the n18 anchors likewise), so the joint cell and `--other-first` carry that rule.
-- Morning deliverables: `REVIEW.md` ranked, `grid.md`, the top plans in the app on 8503 (the
-  labelled worktree app; 8502 is the hub's), `assignment.csv` / `districts.csv` /
-  `wholesalers.csv` per top cell, and `tools/verify/U14-fullprob/TIMINGS.md` updated.
+  district (TODO in `plan_realise.off_plan`; `plan_realise` now refuses the claim outside the
+  district's states); the DC–VA border has no cell edge; the contiguity repair does no bridging
+  moves; a plan with more districts than zips in a split state makes `plan_realise` raise (3 s
+  probe cells only); the greedy's serve attach reaches one state deep; `full_grid`'s
+  `states_other` column counts more than the unserved states (read `maps/summary.png` for the
+  count); `plan_summary` is not called by `full_grid` (the job's `summaries.sh` does it).
+- Relaunch anything with the job's scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:
+  `launch_grid.sh CELLS OUT CONC [--resume]`, `make_followup.py`, `make_cert.py`,
+  `compose.sh`, `rerealise.sh`, `summaries.sh`, `register.sh`.
 
 ## Done
 
