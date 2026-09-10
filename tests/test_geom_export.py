@@ -184,6 +184,22 @@ def test_touching_districts_never_share_a_colour():
     assert got["D02"]["color"] == colors["D02"]
 
 
+def test_neighbours_sit_a_quarter_turn_apart_in_hue_when_the_palette_allows():
+    """A path of four districts over the 50-entry palette: every neighbouring pair differs in
+    hue by at least HUE_APART, so no two touching districts read as shades of one colour."""
+    gx = _geom_export()
+    adj = {"A": {"B"}, "B": {"A", "C"}, "C": {"B", "D"}, "D": {"C"}}
+    colors = gx.color_distinct(adj, gx.palette())
+    assert len(set(colors.values())) == 4
+    for a, b in (("A", "B"), ("B", "C"), ("C", "D")):
+        d = abs(gx._hue(colors[a]) - gx._hue(colors[b])) % 1.0
+        assert min(d, 1.0 - d) >= gx.HUE_APART - 1e-9, (a, b, colors[a], colors[b])
+    # a two-entry palette on a triangle: the third vertex must repeat, never raise
+    tri = {"A": {"B", "C"}, "B": {"A", "C"}, "C": {"A", "B"}}
+    two = gx.color_distinct(tri, gx.palette()[:2])
+    assert len(set(two.values())) == 2
+
+
 def test_a_districts_real_gap_lands_in_holes_not_in_rings():
     """A district whose own zips' real ZCTA union has a genuine interior gap (decision 1) must
     export that gap under `"holes"`, never folded into `"rings"` -- `rings` keeps meaning

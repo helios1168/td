@@ -160,6 +160,52 @@ def palette(n_hues: int = N_HUES, lightness=LIGHTNESS, saturation: float = SATUR
     return out
 
 
+HUE_APART = 0.25               # a quarter turn of the wheel: neighbours at least this far apart
+
+
+def _hue(hex_colour: str) -> float:
+    r, g, b = (int(hex_colour.lstrip("#")[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+    return colorsys.rgb_to_hls(r, g, b)[0]
+
+
+def color_distinct(adj: dict, palette: list, apart: float = HUE_APART) -> dict:
+    """Greedy graph colouring with hue distance: `{district: colour}` where two neighbours never
+    share a colour and, as far as the palette allows, sit at least `apart` of the wheel from
+    each other in hue.
+
+    `us_maps.color_districts` forbids only the identical entry, and a palette of 25 hues then
+    hands two neighbours hues 14 degrees apart, or one hue at two lightnesses, which a reader
+    cannot tell apart on a map (the user, 2026-09-11).  Vertices are taken in Welsh-Powell order
+    (highest degree first, id as tie-break).  Each takes, among the entries no neighbour holds,
+    the one whose smallest hue distance to any coloured neighbour is largest, capped at `apart`
+    so that every entry far enough away ties and the least-used of them wins (then the palette
+    order), keeping the map's colours varied.  With no free entry at all the vertex takes the
+    least-used colour, a duplicate rather than an exception.
+    """
+    hue = {c: _hue(c) for c in palette}
+    rank = {c: i for i, c in enumerate(palette)}
+    ids = sorted(adj, key=lambda d: (-len(adj[d]), str(d)))
+    used, out = {c: 0 for c in palette}, {}
+
+    def distance(a: float, b: float) -> float:
+        d = abs(a - b) % 1.0
+        return min(d, 1.0 - d)
+
+    for d in ids:
+        taken = {out[e] for e in adj[d] if e in out}
+        free = [c for c in palette if c not in taken] or list(palette)
+        hues = [hue[c] for c in taken]
+
+        def score(c):
+            gap = min((distance(hue[c], h) for h in hues), default=1.0)
+            return (-min(gap, apart), used[c], rank[c])
+
+        c = min(free, key=score)
+        out[d] = c
+        used[c] += 1
+    return out
+
+
 def _proximity_edges(cells: dict) -> list:
     """`[[z1, z2], ...]`, sorted: the rook adjacency of the proximity tessellation, `z1 < z2`.
 
@@ -329,7 +375,7 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
         # Adjacency off the real ZCTA territory, which is the ground the reader sees: two
         # districts share a hue only if no published boundary puts them side by side.
         adj = _adjacency(polys)
-        colors = um.color_districts(adj, palette())
+        colors = color_distinct(adj, palette())
 
     out = {"crs": CRS, "districts": {}, "district_reach": {}, "states": {}, "cells": {},
           "proximity_edges": [], "proximity_zips": [], "cells_source": cells_source}
