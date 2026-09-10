@@ -33,7 +33,7 @@ carried into the composed run.
 Overlaps.  Level 0's cover row is per (state, channel) within one run, so nothing stops a WH
 run's `WH_PLUS` slot and a national run's `N` slot from both taking a share of one state's
 `N_WH`.  Composing them is a plan the projections cannot express (`tools/plan_realise.py` awards
-such a cell to the first bundle in sorted order), so the compose refuses unless `--allow-overlap`
+such a cell to the bundle with more file channels), so the compose refuses unless `--allow-overlap`
 says the caller means it.
 
 Deviation from the composed-plan sketch, deliberate: `passes`, `moves` and `anchors` are flat

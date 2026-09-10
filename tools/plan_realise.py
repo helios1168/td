@@ -41,7 +41,10 @@ adjacent, which no zip-level move can mend.
 
 Level 0's cover row is per (state, channel) over all slots, so two bundles sharing a channel can
 each take a share of one state; the projections then overlap at zip level.  Such cells are
-counted in `realise.json` as `overlaps` and awarded to the first bundle in sorted order.
+counted in `realise.json` as `overlaps` and awarded to the bundle carrying more file channels
+(WHFI_PLUS over WHFI, WH_PLUS and FI_PLUS, those over WH, FI and N; ties by name), so a merged
+district reads the same on every channel it carries.  A district's mass, `n_zips` and book count
+only the cells it keeps after that rule.
 """
 from __future__ import annotations
 
@@ -631,6 +634,13 @@ def _overlaps(by_bundle: dict, chans_of: dict) -> list:
             for (st, c), bs in sorted(seen.items()) if len(bs) > 1]
 
 
+def _n_file_channels(bundle: str) -> int:
+    """How many of the three file channels a bundle carries: WHFI_PLUS 3; WHFI, WH_PLUS and
+    FI_PLUS 2; WH, FI and N 1.  N's two fine labels are one file channel, so it does not
+    outrank a pure bundle."""
+    return len({FILE_OF[c] for c in channels.BUNDLES.get(bundle, ())})
+
+
 def _main(args) -> int:
     run_dir = os.path.abspath(args.run_dir)
     out = os.path.abspath(args.out or run_dir)
@@ -654,7 +664,10 @@ def _main(args) -> int:
     district_rows: list[dict] = []
     book: dict[str, float] = {}
 
-    for bundle in sorted(by_bundle):
+    # bundles with more file channels claim their cells first, so where two projections cut the
+    # same (zip, channel) the merged district keeps it.  A catch-all bundle `td.channels` does
+    # not name counts 0 and goes last.
+    for bundle in sorted(by_bundle, key=lambda b: (-_n_file_channels(b), b)):
         t0 = time.time()
         recs = by_bundle[bundle]
         cell = os.path.join(run_dir, "projections", bundle)
@@ -702,14 +715,19 @@ def _main(args) -> int:
                 a = d.G.nodes[zp]
                 M_c = dict(a.get("M_c") or {})
                 S_c = dict(a.get("S_c") or {})
+                # a cell a bundle with more file channels already claimed stays with it (the
+                # loop order above); only the cells kept count towards this district
+                kept = [c for c in chans if (zp, c) not in cell_of]
+                if not kept:
+                    continue
                 held += 1
-                for c in chans:
+                for c in kept:
                     mass += float(M_c.get(c, 0.0))
-                    cell_of.setdefault((zp, c), (name, bundle, rep))   # first bundle wins
+                    cell_of[(zp, c)] = (name, bundle, rep)
                 if rep:
                     per = dict(S_c.get(rep) or {})
                     book[name] = book.get(name, 0.0) + sum(float(per.get(c, 0.0))
-                                                           for c in chans)
+                                                           for c in kept)
             district_rows.append(dict(
                 district=name, slot=rec["id"], bundle=bundle, channels=chans,
                 states=",".join(f"{st}:{sh:g}" for st, sh in sorted(rec["y"].items())),
@@ -759,7 +777,7 @@ def _main(args) -> int:
     overlaps = _overlaps(by_bundle, chans_of)
     if overlaps:
         print(f"warning: {len(overlaps)} (state, channel) cell(s) served by two bundles; the "
-              f"first bundle in sorted order wins", flush=True)
+              f"bundle with more file channels wins", flush=True)
 
     assigned, residual = _write_assignment(os.path.join(out, "assignment.csv"), d, cell_of)
     _write_districts(os.path.join(out, "districts.csv"), district_rows)

@@ -60,13 +60,15 @@ def _base_instance(path: str) -> None:
         json.dump(obj, fh)
 
 
-def _write_cell_graph(run_dir: str) -> None:
+def _write_cell_graph(run_dir: str, bundle: str = "N", zips: list = ZIPS) -> None:
     """The path graph as `plan_realise.cell_graph`'s own cache, so the run needs no geometry."""
-    with open(os.path.join(run_dir, "projections", "N", "cell_graph.json"), "w",
+    borders = [[a, b] for a, b in (["A", "B"], ["B", "C"])
+               if {a, b} <= {STATES[ZIPS.index(z)] for z in zips}]
+    with open(os.path.join(run_dir, "projections", bundle, "cell_graph.json"), "w",
               encoding="utf-8") as fh:
-        json.dump(dict(graph=cli.GRAPH, keys=ZIPS, zips=ZIPS,
-                       edges=[[ZIPS[i], ZIPS[i + 1]] for i in range(5)],
-                       state_borders=[["A", "B"], ["B", "C"]]), fh)
+        json.dump(dict(graph=cli.GRAPH, keys=zips, zips=zips,
+                       edges=[[zips[i], zips[i + 1]] for i in range(len(zips) - 1)],
+                       state_borders=borders), fh)
 
 
 def _build_run(run_dir: str):
@@ -267,6 +269,69 @@ def test_bundle_channels_reads_a_named_bundle_and_a_catch_all_channel_list():
 def test_district_name_is_the_bundle_and_the_slot_position():
     assert cli.district_name("WH", 2) == "WH_03"
     assert cli.wholesaler_of({"assignment": {"0": "r", "13": "s"}}) == {0: "r", 13: "s"}
+
+
+def _build_overlap_run(run_dir: str) -> None:
+    """Two bundles cutting the same state: the pure bundle FI takes A and B whole, the merged
+    bundle WHFI takes A whole, so both projections cut A's FI cells."""
+    base = os.path.join(run_dir, "base.json.gz")
+    _base_instance(base)
+    d = channels.synthesize_channels(td_instance.load_descaled(base), seed=0)
+    channels.write_v2(d, os.path.join(run_dir, "instance_v2.json.gz"))
+    fine = channels.fine_split(d)
+    for bundle, states in (("FI", ["A", "B"]), ("WHFI", ["A"])):
+        cell = os.path.join(run_dir, "projections", bundle)
+        os.makedirs(cell, exist_ok=True)
+        channels.write_v1(channels.project(fine, bundle, states=states),
+                          os.path.join(cell, "instance_descaled.json.gz"))
+        with open(os.path.join(cell, "state_shares.csv"), "w", encoding="utf-8",
+                  newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["state", "district", "share", "target_mass"])
+            for st in states:
+                w.writerow([st, "D01", 1.0, 2.0])
+        _write_cell_graph(run_dir, bundle, [z for z, s in zip(ZIPS, STATES) if s in states])
+    slots = [dict(id="P001", bundle="FI", used=True, mass=4.0, contacts=1,
+                  y={"A": 1.0, "B": 1.0}),
+             dict(id="P002", bundle="WHFI", used=True, mass=2.0, contacts=1, y={"A": 1.0})]
+    with open(os.path.join(run_dir, "plan.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(state_list=["A", "B", "C"], bundles=["FI", "WHFI"], slots=slots,
+                       per_state={}, passes=[], moves=[]), fh)
+    with open(os.path.join(run_dir, "staffing.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(assignment={"0": "rep0", "1": "rep1"}, gains={}, value=0.0,
+                       criterion="nash", reps=REPS, districts=[0, 1],
+                       unmatched_reps=["rep2"], unstaffed_districts=[], balance={}), fh)
+    with open(os.path.join(run_dir, "params.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(instance=base), fh)
+
+
+def test_the_merged_bundle_keeps_a_cell_two_bundles_cut():
+    """FI and WHFI both cut A's FI cells.  The merged district holds them, so A reads the same
+    on WH and on FI, and the pure district keeps only B's cells: its mass and `n_zips` exclude
+    the cells it lost, and `assignment.csv` still sums to `districts.csv`."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_overlap_run(run_dir)
+        _run(run_dir)
+        rows, districts, _, rec = _tables(run_dir)
+        fine = cli.cell_instance(run_dir, {})
+
+        at = {(r["zip"], r["channel"]): r["district"] for r in rows}
+        for z in ZIPS[:2]:
+            assert at[(z, "WH")] == at[(z, "FI")] == "WHFI_01"
+        for z in ZIPS[2:4]:
+            assert at[(z, "FI")] == "FI_01" and at[(z, "WH")] == "other"
+        assert all(at[(z, c)] == "other" for z in ZIPS[4:] for c in channels.CHANNELS)
+
+        by_id = {r["district"]: r for r in districts}
+        m = lambda z, c: float(fine.G.nodes[z]["M_c"].get(c, 0.0))   # noqa: E731
+        assert abs(float(by_id["FI_01"]["mass"]) - sum(m(z, "FI") for z in ZIPS[2:4])) < 1e-9
+        assert abs(float(by_id["WHFI_01"]["mass"])
+                   - sum(m(z, c) for z in ZIPS[:2] for c in ("WH", "FI"))) < 1e-9
+        assert by_id["FI_01"]["n_zips"] == by_id["WHFI_01"]["n_zips"] == "2"
+        for name in ("FI_01", "WHFI_01"):
+            cells = sum(float(r["M_cell"]) for r in rows if r["district"] == name)
+            assert abs(cells - float(by_id[name]["mass"])) < 1e-9
+        assert rec["overlaps"] == [dict(state="A", channel="FI", bundles=["FI", "WHFI"])]
 
 
 # ---------------------------------------------------------------- repair, on hand-built graphs

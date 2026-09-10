@@ -51,17 +51,19 @@ Morning of 2026-09-11: the stakeholder review. Everything below is under the wor
   probe cells only); the greedy's serve attach reaches one state deep; `full_grid`'s
   `states_other` column counts more than the unserved states (read `maps/summary.png` for the
   count); `plan_summary` is not called by `full_grid` (the job's `summaries.sh` does it).
-- 2026-09-11 morning, in flight: the user saw AZ merged on the WH map and pure FI on the FI map
+- 2026-09-11 morning, done: the user saw AZ merged on the WH map and pure FI on the FI map
   of rank 1. Cause: level 0 puts 77.5 % of AZ's WH and FI in WHFI_01 and 22.5 % of its FI in
-  FI_08, but each bundle cuts AZ's zips on its own projection and "first bundle wins" the
-  overlap (FI sorts before WHFI), so FI_08 took 71 of 122 zips. Decision: the interim fix, the
-  merged bundle wins the overlap (a subagent edits `plan_realise.py`'s bundle order or claim
-  rule, re-realises `grid_20260910_of/X_n16w11f20_d100_d900n6_of` and `_n18w11f19_`, redraws
-  their maps, re-registers `x-n16w11f20-d10-cap900-allstates` and `x-n18w11f19-d10-cap900-allstates`
-  with the job's `rerealise.sh` and `register.sh`, moves the old member dirs to
-  `battery/results/trash_20260910_bundlemembers/`). The proper fix stays queued: a first cut of
-  a shared state's zips into bundle groups by the level-0 shares, then each bundle cuts its
-  group (`## Decisions needed`).
+  FI_08, but each bundle cuts AZ's zips on its own projection and the first bundle in sorted
+  order won the overlap (FI before WHFI), so FI_08 took 71 of 122 zips. The interim fix is in
+  `plan_realise.py`: bundles are realised in descending file-channel count (WHFI_PLUS, then
+  WHFI and the plus bundles, then WH, FI, N), a zip keeps only the cells no earlier bundle
+  claimed, and mass, `n_zips` and the book count the kept cells. Rank 1 after the fix: WHFI_01
+  holds the same 39 AZ zips on WH and FI, FI_08 62 (was 71), nothing else moved; rank 2 has no
+  overlap in AZ. Both re-realised, maps redrawn, `x-n16w11f20-d10-cap900-allstates` and
+  `x-n18w11f19-d10-cap900-allstates` re-registered (members `..._131901` and `..._131925`), the
+  old member dirs in `battery/results/trash_20260910_bundlemembers/`. The proper fix stays
+  queued: a first cut of a shared state's zips into bundle groups by the level-0 shares, then
+  each bundle cuts its group (`## Decisions needed`).
 - 2026-09-11 morning, done: the user's second rule, no state ends outside every channel, is
   the driver's under `--serve-all-states` (`6268ed8`): a last all-channel stage allocates
   what the stages and the catch-all left, one WHFI_PLUS district per state at most, whatever
@@ -69,10 +71,6 @@ Morning of 2026-09-11: the stakeholder review. Everything below is under the wor
   `--other-first`): MT WY become one all-channel district of 30 units and WA one of 288, 49
   districts, no state left. `--other-first` stays the deliberate way to plan those districts
   before the channels take their neighbours. The hub State commit is `7dbe576` (unmerged).
-  Still in flight when this was written: the subagent doing the AZ interim fix (bullet above);
-  commit its files (`tools/plan_realise.py`, `tests/test_plan_realise.py`) on its report,
-  run the suite, and check `grid_20260910_of/X_n16w11f20_d100_d900n6_of/maps/all.png` reads
-  AZ the same on the WH and FI panels.
 - Relaunch anything with the job's scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:
   `launch_grid.sh CELLS OUT CONC [--resume]`, `make_followup.py`, `make_cert.py`,
   `compose.sh`, `rerealise.sh`, `summaries.sh`, `register.sh`.
@@ -114,8 +112,9 @@ WH⁺) can each hold a share of one state, and their zip-level projections then 
 decomposition assumes π fixed per zip; level 0 fixes it per state and share. Realisation
 therefore needs a first cut of each such state's zips into bundle groups by the y shares
 (product form: a zip in a WH⁺ group carries WH and N_WH together) before the per-bundle cut
-into slots. Today `plan_realise` detects overlaps, warns, and awards the cell to the first
-bundle; the two-stage cut is the next modelling item. The contiguity check in `realise.json`
+into slots. Today `plan_realise` detects overlaps, warns, and awards the cell to the bundle
+with more file channels (the interim fix of 2026-09-11, so a merged district reads the same
+on every channel it carries); the two-stage cut is the next modelling item. The contiguity check in `realise.json`
 reads the instance graph, not `geom.json`'s proximity edges (traps 21, 23), so `contiguous`
 is not yet meaningful.
 
