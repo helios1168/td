@@ -161,6 +161,10 @@ def build_argparser() -> argparse.ArgumentParser:
                          "moments on the N slots; without it no compactness pass runs")
     ap.add_argument("--incumbency", default=None, metavar="DRAW.csv",
                     help="a committed draw whose district home states anchor the N slots")
+    ap.add_argument("--committed-instance", default=None, metavar="INSTANCE",
+                    help="the instance --centers/--incumbency were drawn on, when it is not "
+                         "the one being planned (the committed k=18 draw is on the v2 CONUS "
+                         "file; the v3 file carries zips it never labelled)")
     ap.add_argument("--theta", type=float, default=borders_report.THETA,
                     help="stage-2 rep utility weight; scores the plan, changes no geometry")
     ap.add_argument("--lam", type=float, default=borders_report.LAM,
@@ -251,7 +255,8 @@ def _committed(args, cache: dict):
     if path is None:
         return None
     if "ctx" not in cache:
-        cache["ctx"] = borders_report.load_committed(args.instance, path, args.geo_cache)
+        inst = args.committed_instance or args.instance
+        cache["ctx"] = borders_report.load_committed(inst, path, args.geo_cache)
     return cache["ctx"]
 
 
