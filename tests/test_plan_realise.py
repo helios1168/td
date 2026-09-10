@@ -109,10 +109,10 @@ def _build_run(run_dir: str):
     return fine
 
 
-def _run(run_dir: str) -> None:
+def _run(run_dir: str, xy: dict = XY) -> None:
     orig = run_draw.coordinates
-    run_draw.coordinates = lambda zips, cache=None: ({z: XY[z] for z in zips if z in XY},
-                                                     [z for z in zips if z not in XY])
+    run_draw.coordinates = lambda zips, cache=None: ({z: xy[z] for z in zips if z in xy},
+                                                     [z for z in zips if z not in xy])
     try:
         assert cli.main([run_dir, "--geo-cache", "unused"]) == 0
     finally:
@@ -194,6 +194,7 @@ def test_district_masses_match_the_plan_and_the_residual_is_not_folded_in():
         assert n["pieces_before"] == n["pieces_after"] == {"N_01": 1, "N_02": 1}
         assert n["moved"] == 0 and n["off_plan"]["zips"] == 0 and n["unrepaired"] == []
         assert n["state_borders"] == 2 and n["state_borders_missing"] == []
+        assert n["handed_off"] == {} and n["handed_to"] == {}
 
 
 def test_wholesaler_books_are_the_cell_books_of_the_district_they_hold():
@@ -332,6 +333,126 @@ def test_the_merged_bundle_keeps_a_cell_two_bundles_cut():
             cells = sum(float(r["M_cell"]) for r in rows if r["district"] == name)
             assert abs(cells - float(by_id[name]["mass"])) < 1e-9
         assert rec["overlaps"] == [dict(state="A", channel="FI", bundles=["FI", "WHFI"])]
+
+
+# ------------------------------------------------------------------------------- hand-off
+
+HOZIPS = [f"{30000 + i:05d}" for i in range(4)]     # s1a, s1b, s2a, s2b
+HOSTATES = ["S1", "S1", "S2", "S2"]
+HOXY = {z: (float(i), 0.0) for i, z in enumerate(HOZIPS)}
+
+
+def _build_handoff_run(run_dir: str, whfi_states: list) -> None:
+    """`WHFI` (rank 0, WH+FI) wins whatever states it names in `whfi_states`; `FI` (rank 1, FI
+    only) covers S1 and S2 as one district, but its own cell graph never joins the two states,
+    so it comes back in two pieces: S2 (mass 10, two zips of mass 5) the heaviest, S1 (mass 2)
+    the detached one.  `whfi_states=["S1"]` makes only the detached piece an overlap state;
+    `["S1", "S2"]` makes the heaviest one too, which is the case that tells piece-scoping apart
+    from state-scoping."""
+    base = os.path.join(run_dir, "base.json.gz")
+    obj = dict(
+        format=td_instance.FORMAT,
+        nodes=dict(z=HOZIPS, m_rel=[1.0, 1.0, 5.0, 5.0], share=[{} for _ in HOZIPS],
+                   state=HOSTATES, share_free=[0.1] * 4),
+        edges=dict(u=HOZIPS[:-1], v=HOZIPS[1:]),
+    )
+    with gzip.open(base, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+    d = channels.synthesize_channels(td_instance.load_descaled(base), seed=0)
+    channels.write_v2(d, os.path.join(run_dir, "instance_v2.json.gz"))
+    fine = channels.fine_split(d)
+
+    bundle_states = {"WHFI": whfi_states, "FI": ["S1", "S2"]}
+    for bundle, sts in bundle_states.items():
+        cell = os.path.join(run_dir, "projections", bundle)
+        os.makedirs(cell, exist_ok=True)
+        channels.write_v1(channels.project(fine, bundle, states=sts),
+                          os.path.join(cell, "instance_descaled.json.gz"))
+        with open(os.path.join(cell, "state_shares.csv"), "w", encoding="utf-8",
+                  newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["state", "district", "share", "target_mass"])
+            for st in sts:
+                w.writerow([st, "D01", 1.0, 2.0])
+
+    whfi_keys = [z for z, s in zip(HOZIPS, HOSTATES) if s in whfi_states]
+    with open(os.path.join(run_dir, "projections", "WHFI", "cell_graph.json"), "w",
+              encoding="utf-8") as fh:
+        json.dump(dict(graph=cli.GRAPH, keys=whfi_keys, zips=whfi_keys,
+                       edges=[[whfi_keys[i], whfi_keys[i + 1]]
+                              for i in range(len(whfi_keys) - 1)],
+                       state_borders=[["S1", "S2"]]), fh)
+    # FI's own graph over all four zips, with no edge joining S1 to S2: the plan gave one
+    # district both states, but the tessellation never joins them, so it comes back split
+    with open(os.path.join(run_dir, "projections", "FI", "cell_graph.json"), "w",
+              encoding="utf-8") as fh:
+        json.dump(dict(graph=cli.GRAPH, keys=HOZIPS, zips=HOZIPS,
+                       edges=[[HOZIPS[0], HOZIPS[1]], [HOZIPS[2], HOZIPS[3]]],
+                       state_borders=[["S1", "S2"]]), fh)
+
+    slots = [dict(id="P001", bundle="WHFI", used=True, mass=2.0, contacts=1,
+                  y={st: 1.0 for st in whfi_states}),
+             dict(id="P002", bundle="FI", used=True, mass=12.0, contacts=1,
+                  y={"S1": 1.0, "S2": 1.0})]
+    with open(os.path.join(run_dir, "plan.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(state_list=["S1", "S2"], bundles=["WHFI", "FI"], slots=slots,
+                       per_state={}, passes=[], moves=[]), fh)
+    with open(os.path.join(run_dir, "staffing.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(assignment={"0": "rep0", "1": "rep1"}, gains={}, value=0.0,
+                       criterion="nash", reps=REPS, districts=[0, 1],
+                       unmatched_reps=["rep2"], unstaffed_districts=[], balance={}), fh)
+    with open(os.path.join(run_dir, "params.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(instance=base), fh)
+
+
+def test_a_detached_piece_in_an_overlap_state_is_handed_to_the_winner():
+    """WHFI wins S1 only.  FI's S1 piece is detached and S1 is an overlap state, so it moves to
+    WHFI_01; FI's S2 body is untouched and FI reads one piece afterwards."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_handoff_run(run_dir, ["S1"])
+        _run(run_dir, HOXY)
+        rows, districts, _, rec = _tables(run_dir)
+        fine = cli.cell_instance(run_dir, {})
+
+        at = {(r["zip"], r["channel"]): r["district"] for r in rows}
+        for z in HOZIPS[:2]:
+            assert at[(z, "FI")] == at[(z, "WH")] == "WHFI_01"
+        for z in HOZIPS[2:]:
+            assert at[(z, "FI")] == "FI_01" and at[(z, "WH")] == "other"
+
+        by_id = {r["district"]: r for r in districts}
+        assert by_id["FI_01"]["n_zips"] == "2" and by_id["FI_01"]["pieces"] == "1"
+        assert by_id["FI_01"]["contiguous"] == "1"
+        m = lambda z, c: float(fine.G.nodes[z]["M_c"].get(c, 0.0))   # noqa: E731
+        assert abs(float(by_id["FI_01"]["mass"]) - sum(m(z, "FI") for z in HOZIPS[2:])) < 1e-9
+        assert abs(float(by_id["WHFI_01"]["mass"])
+                   - sum(m(z, c) for z in HOZIPS[:2] for c in ("WH", "FI"))) < 1e-9
+        assert by_id["WHFI_01"]["n_zips"] == "2"
+        for name in ("FI_01", "WHFI_01"):
+            cells = sum(float(r["M_cell"]) for r in rows if r["district"] == name)
+            assert abs(cells - float(by_id[name]["mass"])) < 1e-9
+
+        fi = rec["bundles"]["FI"]
+        assert fi["pieces_before"]["FI_01"] == 2 and fi["pieces_after"]["FI_01"] == 1
+        assert fi["handed_off"] == {"FI_01": 2} and fi["handed_to"] == {"WHFI_01": 2}
+        assert rec["bundles"]["WHFI"]["handed_off"] == {} and \
+            rec["bundles"]["WHFI"]["handed_to"] == {}
+
+
+def test_the_heaviest_piece_is_never_handed_off_even_in_an_overlap_state():
+    """WHFI wins both S1 and S2, so FI's heaviest piece (S2) sits in an overlap state too, the
+    same as its detached S1 piece.  Piece-scoping, not state-scoping, is what has to keep it
+    put: only 2 zips move (S1's), never the 4 a state-scoped rule would take."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_handoff_run(run_dir, ["S1", "S2"])
+        _run(run_dir, HOXY)
+        _, districts, _, rec = _tables(run_dir)
+        by_id = {r["district"]: r for r in districts}
+
+        fi = rec["bundles"]["FI"]
+        assert fi["pieces_before"]["FI_01"] == 2 and fi["pieces_after"]["FI_01"] == 1
+        assert fi["handed_off"] == {"FI_01": 2} and fi["handed_to"] == {"WHFI_01": 2}
+        assert by_id["FI_01"]["pieces"] == "1" and by_id["FI_01"]["contiguous"] == "1"
 
 
 # ---------------------------------------------------------------- repair, on hand-built graphs

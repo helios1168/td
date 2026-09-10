@@ -47,7 +47,14 @@ each take a share of one state; the projections then overlap at zip level.  Such
 counted in `realise.json` as `overlaps` and awarded to the bundle carrying more file channels
 (WHFI_PLUS over WHFI, WH_PLUS and FI_PLUS, those over WH, FI and N; ties by name), so a merged
 district reads the same on every channel it carries.  A district's mass, `n_zips` and book count
-only the cells it keeps after that rule.
+only the cells it keeps after that rule.  Before `repair` runs, every zip of a losing bundle's
+non-heaviest piece whose state is one it lost the overlap on is handed to the winning bundle's
+own district for that state (the one already holding the most zips there), taking whatever of
+the loser's channels the winner also carries and had not yet claimed; only a detached piece
+moves this way, never a district's main body, even where that body sits in an overlap state.
+`realise.json` records the move per bundle as `handed_off` and `handed_to`; the winner's
+`pieces`/`contiguous` columns in `districts.csv` are left as they were when its own bundle ran,
+since its cell graph never contained the handed zips.
 """
 from __future__ import annotations
 
@@ -813,6 +820,97 @@ def _n_file_channels(bundle: str) -> int:
     return len({FILE_OF[c] for c in channels.BUNDLES.get(bundle, ())})
 
 
+def _claim_cells(d, cell_of: dict, book: dict, name: str, bundle: str, rep: str, zp: str,
+                 chans) -> tuple:
+    """Claim `zp`'s cells on `chans` not already in `cell_of`, crediting `name`'s mass and, when
+    `rep` holds book there, `book[name]`.  Returns `(mass_added, claimed)`; `claimed` is
+    `False` when every channel in `chans` was already claimed, so the caller counts no zip.
+
+    The one place a cell actually changes hands, shared by the per-district accounting loop in
+    `_main` and `_handoff_overlap_pieces`.
+    """
+    kept = [c for c in chans if (zp, c) not in cell_of]
+    if not kept:
+        return 0.0, False
+    a = d.G.nodes[zp]
+    M_c = dict(a.get("M_c") or {})
+    mass = sum(float(M_c.get(c, 0.0)) for c in kept)
+    for c in kept:
+        cell_of[(zp, c)] = (name, bundle, rep)
+    if rep:
+        per = dict((a.get("S_c") or {}).get(rep) or {})
+        book[name] = book.get(name, 0.0) + sum(float(per.get(c, 0.0)) for c in kept)
+    return mass, True
+
+
+def _handoff_overlap_pieces(bundle: str, pieces: dict, to_district: dict, res: dict,
+                            rank: dict, chans_of: dict, overlap_idx: dict, state_counts: dict,
+                            rows_by_name: dict, d, cell_of: dict, book: dict) -> dict:
+    """Before `repair` runs: move every zip of a non-heaviest piece of `bundle` whose state it
+    lost the overlap on to the winning bundle's own district, so the repair never tries to grow
+    this bundle back into territory the plan handed to someone else.
+
+    A piece's state `s` is lost when some bundle processed earlier than `bundle` (`rank`) also
+    carries one of `bundle`'s own channels there (`overlap_idx`, from `_overlaps`) and actually
+    holds zips of `s` (`state_counts`, `{district: {state: n_zips}}`, updated here too, so a
+    third bundle handed off after this one sees the up-to-date count).  Among all such earlier
+    bundles' districts, the winner is the one holding the most zips of `s` (ties by name); the
+    handed zip's cells move on whichever of `bundle`'s channels the winner also carries and had
+    not yet claimed (`_claim_cells`).  `rows_by_name` is `{district: its districts.csv row}`,
+    the winner's row already appended by its own earlier turn through this loop and mutated in
+    place here rather than waiting for an accounting pass that has already run.
+
+    A district's heaviest piece is never a candidate, however deep into an overlap state it
+    sits: only a detached piece is a hand-off's to give away.
+    """
+    handed_off: dict[str, int] = {}
+    handed_to: dict[str, int] = {}
+    my_rank = rank[bundle]
+    chans_b = chans_of[bundle]
+    for name, parts in pieces.items():
+        if name == OTHER or len(parts) <= 1:
+            continue
+        heaviest = max(parts, key=lambda p: sum(float(res["M_by_zip"].get(z, 0.0)) for z in p))
+        for p in parts:
+            if p is heaviest:
+                continue
+            for zp in p:
+                st = res["states_by_zip"].get(zp, "")
+                winners = {w for c in chans_b for w in overlap_idx.get((st, c), ())
+                          if w != bundle and rank.get(w, my_rank) < my_rank}
+                if not winners:
+                    continue
+                best_n, best_name = -1, None
+                for wname, counts in state_counts.items():
+                    if rows_by_name[wname]["bundle"] not in winners:
+                        continue
+                    n = counts.get(st, 0)
+                    if n > 0 and (n > best_n or (n == best_n and wname < best_name)):
+                        best_n, best_name = n, wname
+                if best_name is None:
+                    continue
+                # the winner's own realise may already own every one of `zp`'s cells here (the
+                # pre-existing `cell_of` rule already resolved the overlap in its favour before
+                # this bundle's turn), in which case nothing new is claimed and its mass/n_zips/
+                # book, already counted on its own turn, must not be counted twice, but the
+                # zip still has to leave `to_district`, or it keeps inflating this bundle's own
+                # piece count with a piece that holds no cell at all
+                win_row = rows_by_name[best_name]
+                win_bundle, win_rep = win_row["bundle"], win_row["wholesaler"]
+                handoff_chans = [c for c in chans_b if c in chans_of[win_bundle]]
+                added, claimed = _claim_cells(d, cell_of, book, best_name, win_bundle, win_rep,
+                                              zp, handoff_chans)
+                if claimed:
+                    win_row["mass"] += added
+                    win_row["n_zips"] += 1
+                    counts = state_counts.setdefault(best_name, {})
+                    counts[st] = counts.get(st, 0) + 1
+                handed_off[name] = handed_off.get(name, 0) + 1
+                handed_to[best_name] = handed_to.get(best_name, 0) + 1
+                del to_district[zp]
+    return dict(handed_off=handed_off, handed_to=handed_to)
+
+
 def _main(args) -> int:
     run_dir = os.path.abspath(args.run_dir)
     out = os.path.abspath(args.out or run_dir)
@@ -831,19 +929,31 @@ def _main(args) -> int:
           f"band {'[%g, %g]' % band if band else 'unset'}", flush=True)
 
     record: dict[str, dict] = {}
-    chans_of: dict[str, tuple] = {}
     cell_of: dict[tuple, tuple] = {}
     district_rows: list[dict] = []
+    rows_by_name: dict[str, dict] = {}
     book: dict[str, float] = {}
+    state_counts: dict[str, dict] = {}          # {district: {state: n_zips}}, post-repair
 
     # bundles with more file channels claim their cells first, so where two projections cut the
     # same (zip, channel) the merged district keeps it.  A catch-all bundle `td.channels` does
-    # not name counts 0 and goes last.
-    for bundle in sorted(by_bundle, key=lambda b: (-_n_file_channels(b), b)):
+    # not name counts 0 and goes last.  Channels are known for every bundle before any of them
+    # runs, so a losing bundle can already tell which of the earlier bundles it overlaps with.
+    order = sorted(by_bundle, key=lambda b: (-_n_file_channels(b), b))
+    rank = {b: i for i, b in enumerate(order)}
+    projs = {b: descaled.load_descaled(os.path.join(run_dir, "projections", b,
+                                                    "instance_descaled.json.gz"))
+             for b in order}
+    chans_of = {b: bundle_channels(projs[b], b) for b in order}
+    overlaps = _overlaps(by_bundle, chans_of)
+    overlap_idx: dict[tuple, list] = {(o["state"], o["channel"]): o["bundles"] for o in overlaps}
+
+    for bundle in order:
         t0 = time.time()
         recs = by_bundle[bundle]
         cell = os.path.join(run_dir, "projections", bundle)
-        proj = descaled.load_descaled(os.path.join(cell, "instance_descaled.json.gz"))
+        proj = projs[bundle]
+        chans = chans_of[bundle]
         shares = read_shares(os.path.join(cell, "state_shares.csv"))
         res = realise_bundle(bundle, recs, proj, shares, args.geo_cache, args.rounds)
         to_district = res["to_district"]
@@ -851,6 +961,9 @@ def _main(args) -> int:
         G, borders, gpath = cell_graph(run_dir, bundle, res["placed"], res["xy"],
                                        res["states_by_zip"], args.geo_cache)
         before = district_pieces(G, to_district)
+        handoff = _handoff_overlap_pieces(bundle, before, to_district, res, rank, chans_of,
+                                          overlap_idx, state_counts, rows_by_name, d, cell_of,
+                                          book)
         band_b = band_of(params, bundle, band)
         slack_b = args.band_slack * 0.5 * (band_b[0] + band_b[1]) if band_b else 0.0
         fix = repair(G, to_district, res["M_by_zip"], res["states_by_zip"],
@@ -865,10 +978,16 @@ def _main(args) -> int:
         still = unrepaired(after, plan_states(res["admissible"]), sadj, fix["stuck"], gaps)
         pieces_of = {name: len(parts) for name, parts in after.items()}
 
-        chans = chans_of[bundle] = bundle_channels(proj, bundle)
         members: dict[str, list] = {}
         for zp, name in to_district.items():
             members.setdefault(name, []).append(zp)
+        for name, zips_ in members.items():
+            if name == OTHER:
+                continue
+            counts = state_counts.setdefault(name, {})
+            for zp in zips_:
+                st = res["states_by_zip"].get(zp, "")
+                counts[st] = counts.get(st, 0) + 1
 
         for j, (idx, rec) in enumerate(recs):
             name = district_name(bundle, j)
@@ -886,28 +1005,21 @@ def _main(args) -> int:
                         name not in res["admissible"].get(res["states_by_zip"].get(zp, ""),
                                                           set()):
                     continue
-                a = d.G.nodes[zp]
-                M_c = dict(a.get("M_c") or {})
-                S_c = dict(a.get("S_c") or {})
                 # a cell a bundle with more file channels already claimed stays with it (the
                 # loop order above); only the cells kept count towards this district
-                kept = [c for c in chans if (zp, c) not in cell_of]
-                if not kept:
+                added, claimed = _claim_cells(d, cell_of, book, name, bundle, rep, zp, chans)
+                if not claimed:
                     continue
                 held += 1
-                for c in kept:
-                    mass += float(M_c.get(c, 0.0))
-                    cell_of[(zp, c)] = (name, bundle, rep)
-                if rep:
-                    per = dict(S_c.get(rep) or {})
-                    book[name] = book.get(name, 0.0) + sum(float(per.get(c, 0.0))
-                                                           for c in kept)
-            district_rows.append(dict(
+                mass += added
+            row = dict(
                 district=name, slot=rec["id"], bundle=bundle, channels=chans,
                 states=",".join(f"{st}:{sh:g}" for st, sh in sorted(rec["y"].items())),
                 n_zips=held, mass=mass, wholesaler=rep, staffed=bool(rep),
                 pieces=pieces_of.get(name, 0),
-                contiguous=pieces_of.get(name, 0) == 1))
+                contiguous=pieces_of.get(name, 0) == 1)
+            district_rows.append(row)
+            rows_by_name[name] = row
 
         resid_mass = 0.0
         for zp in members.get(OTHER, ()):
@@ -937,6 +1049,7 @@ def _main(args) -> int:
             band_violations=[dict(district=n, mass=fix["mass"].get(n, 0.0))
                              for n in names if _excess(fix["mass"].get(n, 0.0), band_b) > 0],
             unrepaired=still,
+            handed_off=handoff["handed_off"], handed_to=handoff["handed_to"],
             seconds=time.time() - t0)
         rec_b = record[bundle]
         print(f"{bundle}: {len(recs)} district(s), {len(res['split_states'])} split state(s), "
@@ -947,10 +1060,10 @@ def _main(args) -> int:
               f"{sum(rec_b['pieces_after'].values())}, {fix['moved']} zip(s) moved, "
               f"{fix['bridged']} bridge(s) ({fix['swapped']} zip(s) swapped), "
               f"{fix['off_plan']['zips']} off-plan (mass {fix['off_plan']['mass']:g}), "
+              f"{sum(handoff['handed_off'].values())} handed off, "
               f"{len(still)} district(s) still split "
               f"({rec_b['seconds']:.1f}s)", flush=True)
 
-    overlaps = _overlaps(by_bundle, chans_of)
     if overlaps:
         print(f"warning: {len(overlaps)} (state, channel) cell(s) served by two bundles; the "
               f"bundle with more file channels wins", flush=True)
