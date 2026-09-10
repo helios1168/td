@@ -17,115 +17,80 @@ follows once solve times are known.
 
 ## Next step
 
-Checkpoint 2026-09-11 afternoon (head `b6b88ae` plus this file; the user pushes; no merge
-into main unasked). Landed today, one commit each:
+Checkpoint 2026-09-11 evening (the user pushes; no merge into main unasked). Commits since
+the afternoon checkpoint `6c9589a`:
 
-- `1371e0d` the AZ overlap interim fix (the bundle with more file channels wins a cell).
-- `5e3bd25` summary figure redesign, then superseded by the rework below.
-- `57ee6ba` `tools/plan_render_app.py`: the app's own map to PNG under `.venv-app` (kaleido
-  1.4.0 in `app/requirements.txt`, approved by the user). Standalone, tested; the summary
-  does not call it yet, since the user then asked for the maps without zip geometry, which
-  the matplotlib reproduction draws directly. Wire it or drop it later.
-- `4788759` exporter, `1a1fee4` channels, `2e707aa` docs: the national sub-channels
-  (National (Chase), Wells (WH), Wells (FI); a merge folds Chase and Wells FI into FI and
-  Wells WH into WH; names matched in any letter case; `fine_split` exact when the file
-  carries them, the ratio proxy kept for v3 files). The exporter is ready for the work
-  machine: copy `tools/instance_export/`, the README command is unchanged. Assumption: the
-  rep sales rows carry the sub-channel too. When the v4 file lands, re-run the ranked cells
-  on it (pure and WIFI districts should reproduce, the plus-bundle options move).
-- `803d8c1` realiser: the bridging move (a detached piece moves to its neighbour, the
-  neighbour hands zips next to the source's main piece back until neither is worse, the pair
-  kept only if their total band excess did not rise), the repair guard on the plan's own
-  per-bundle band (it read the file-level band before), a 2 % band slack (`--band-slack`).
-  The nine ranked runs re-realised in place; rank 1's N_02 (Texas) is one piece; 8 to 12
-  districts per run stay in pieces for reasons the repair cannot mend (the AZ overlap cut,
-  the DC-VA tessellation gap, NY and MA shares, no swap partner).
-- `bfc5d2c`, `d410610` colouring: neighbouring districts a quarter turn apart in hue, and
-  the neighbour graph read off the reach tiling instead of the sparse ZCTA unions. The nine
-  app scenarios re-registered with it; superseded member dirs moved to
-  `battery/results/trash_20260910_bundlemembers/`.
-- `b6b88ae` level 0 `--max-splits ST=N,...` (the user: CA 3, TX 2, NY 3), applied at every
-  stage. Running detached when this was written: `battery/results/full_problem/
-  grid_20260911_splits/` (`splits_cells.json` in the job tmp dir: rank 1's and rank 2's flags
-  plus the caps, 180 s per pass, concurrency 2). When done: realise (`rerealise_only.sh`),
-  summary, register as `x-n16w11f20-d10-cap900-allstates-splits` and `x-n18w11f19-...-splits`,
-  review against rank 1.
+- `26142e0` summary figure: one map per bundle in the app's reach style (no zip geometry),
+  WIFI labels, wholesaler counts per state and in the title, distinct neighbour hues. The nine
+  ranked runs redrawn. Tagged `stakeholder-best-1`.
+- `48ddf46` level 0 `--band-break ST,...`: districts touching a split-capped state may exceed
+  U by `max(0, W_s / cap_s - tau_B)`; `greedy_plan` honours `max_splits`, so the warm start
+  holds and the capped stages certify in seconds. Known wart: the allowance is also computed
+  for the `other_first` stage (inert there); the sweep agent was told to restrict it to the
+  channel stages.
+- `d322951` realiser: a losing bundle's detached pieces in an overlap state go to the winning
+  bundle's district there (`handed_off` / `handed_to` in `realise.json`). Rank 1 re-realised:
+  FI_08 one piece, AZ off the FI map.
+- the model doc `docs/MODEL_FULL.md` (every row and pass of level 0, the level-2 LP and
+  repair, the stage-2 assignment, what was left out), with its owners line and CODE_MAP row.
 
-Still in flight: the figure subagent on `tools/plan_summary.py` and `tests/test_plan_summary.py`
-(uncommitted in the tree). Its spec: the structure map as is plus the count of wholesalers
-under each state code; one map per bundle present (National only, WH only, FI only, WH + FI
-merged, WIFI = all three, National + WH, National + FI), `WHFI_PLUS_nn` displayed as
-`WIFI_nn`, drawn from `geom_export`'s payload with the reach fill and outline, state codes and
-labels only (no zip geometry, by the user); the total number of distinct wholesalers in the
-suptitle. On its report: check its prose for double hyphens, run `-k plan_summary` and the
-suite, commit the two files, redraw the nine ranked runs with `--no-cache` (the cached
-payloads carry the old colours), read rank 1's `maps/summary.png`. If the agent is gone, the
-tree's version of the file is its last state; finish from there.
+Results, all under `battery/results/full_problem/` (gitignored):
 
-User decisions still open: the "other" floor (0.5 of a book), ND SD NE on FI alone, the cap
-(900 km / 6 states) versus none, 16/11/20 versus 18/11/19, the proper two-stage cut for the
-cross-bundle overlap, route R. Untracked `unused/` in the worktree root is a downloaded
-shapefile, safe to delete.
+- `hot/` holds `rank1.png` to `rank5.png`, symlinks to the ranked runs' live
+  `maps/summary.png`, and a README naming the runs and the candidates. `best/` is the frozen
+  rank 1 figure for the first stakeholder share: `best_summary.png`, the run's inputs under
+  `run/`, `PROVENANCE.md` (instance sha256, tag, solver), `reproduce.sh` (realise or solve).
+- `grid_20260911_splits_bb/`: CA 3 TX 2 NY 3 with the band broken for CA and TX. The n16 cell
+  uses 14 national districts and loses AZ NV OR ID national (unheld 460); the n18 cell is the
+  cleaner national map (16 districts, CO covered, unheld 54) but FI_08 is CA alone and NV OR
+  ID lose FI (276), FI_01 in 9 pieces. Neither replaces rank 1 before the sweep lands.
+  `grid_20260911_splits/` (CA 3, no band break: cold solve, rejected), `_splits_ca4/` (CA 4:
+  rank 1's shape without the sliver, 296 national unheld), `_splits_t600/` (stopped).
+- Running when this was written: `grid_20260911_lowk/` (national at 10 and 12, WH 11, FI 20,
+  the band-break rules; `lowk_cells.json`) and `grid_20260911_wifi/` (WHFI_PLUS only at 50 and
+  53 districts, 600 s per pass; `wifi_cells.json`). When done: realise (`rerealise_only.sh`),
+  `plan_summary.py`, open each figure for the user and describe the run in words (the user
+  asked for that), note them in `hot/README.md`.
 
-Morning of 2026-09-11: the stakeholder review. Everything below is under the worktree's
-`battery/results/full_problem/` (gitignored) unless said otherwise.
+Agents in flight (their files are uncommitted in the tree; if an agent is gone, finish from
+the tree's state and its tests):
 
-- Start from `grid_20260910/REVIEW.md` (every cell's verdict and the ranking), then `grid.md`.
-  The plans to show, in order: `grid_20260910_of/X_n16w11f20_d100_d900n6_of` (48 districts,
-  900 km / 6-state cap held everywhere, every state in a grouping, certified on every business
-  pass), `grid_20260910_of/X_n18w11f19_d100_d900n6_of` (49, same rule, fully certified),
-  `grid_20260910/X_n16w11f20_d100_nocap` (47, no cap, everything served, wide west),
-  `composed_20260910/C_n16w11f19_d100_d900n6` (45, three pure channels, no merges, the
-  comparison point), `grid_20260910_of/X_n14w10f18_d100_d900n6_of` (43, lean). Each has
-  `assignment.csv`, `districts.csv`, `wholesalers.csv`, `maps/all.png`, `maps/summary.png`.
-- The app on `100.69.120.67:8503` (this worktree's code) shows them as scenarios
-  `x-n16w11f20-d10-cap900-allstates`, `x-n18w11f19-d10-cap900-allstates`,
-  `x-n16w11f20-d10-nocap`, `x-n18w11f19-d10-nocap`, `x-n16w11f20-d10-cap900`,
-  `x-n18w11f19-d10-cap900`, `x-n14w10f18-d10-cap900-allstates`, `c-n16w11f19-d10-cap900-pure`,
-  `c-n16w11f19-d10-nocap-pure`, three members each (one per business channel; plus and merged
-  bundles hatched). Do not click "Build rep territories" on them (rep cache collision).
-- What to say about the structure: under 900 km and six states no channel can hold WA, MT or
-  WY at a full book (the joint model proves it in 6 s), so "every state in a grouping" needs
-  all-channel "other" districts planned first (`--other-first`), WA alone at 288 units and
-  MT WY with a neighbour at half a book (`--other-floor 0.5`). The 5% band loses to 10% in
-  every pair. Counts are ceilings (`--k-mode cap`), which is what lets a cap drop districts.
-- Decisions to take with the user: the "other" floor (0.5 of a book, or another figure); whether
-  ND SD NE on FI alone is acceptable or they too get an "other" district; the cap itself (900
-  km / 6 states versus none); which of the two counts (16/11/20 or 18/11/19).
-- Then: the user pushes `worktree-full-problem`; `/state` on the hub via the orchestrator; the
-  merge is asked for, never done unasked. Route R (rep-book moves) stays parked.
-- Known open items: `centers.assign` parks zero-mass zips of a split state on the first
-  district (TODO in `plan_realise.off_plan`; `plan_realise` now refuses the claim outside the
-  district's states); the DC–VA border has no cell edge; the contiguity repair does no bridging
-  moves; a plan with more districts than zips in a split state makes `plan_realise` raise (3 s
-  probe cells only); the greedy's serve attach reaches one state deep; `full_grid`'s
-  `states_other` column counts more than the unserved states (read `maps/summary.png` for the
-  count); `plan_summary` is not called by `full_grid` (the job's `summaries.sh` does it).
-- 2026-09-11 morning, done: the user saw AZ merged on the WH map and pure FI on the FI map
-  of rank 1. Cause: level 0 puts 77.5 % of AZ's WH and FI in WHFI_01 and 22.5 % of its FI in
-  FI_08, but each bundle cuts AZ's zips on its own projection and the first bundle in sorted
-  order won the overlap (FI before WHFI), so FI_08 took 71 of 122 zips. The interim fix is in
-  `plan_realise.py`: bundles are realised in descending file-channel count (WHFI_PLUS, then
-  WHFI and the plus bundles, then WH, FI, N), a zip keeps only the cells no earlier bundle
-  claimed, and mass, `n_zips` and the book count the kept cells. Rank 1 after the fix: WHFI_01
-  holds the same 39 AZ zips on WH and FI, FI_08 62 (was 71), nothing else moved; rank 2 has no
-  overlap in AZ. Both re-realised, maps redrawn, `x-n16w11f20-d10-cap900-allstates` and
-  `x-n18w11f19-d10-cap900-allstates` re-registered (members `..._131901` and `..._131925`), the
-  old member dirs in `battery/results/trash_20260910_bundlemembers/`. The proper fix stays
-  queued: a first cut of a shared state's zips into bundle groups by the level-0 shares, then
-  each bundle cuts its group (`## Decisions needed`).
-- 2026-09-11 morning, done: the user's second rule, no state ends outside every channel, is
-  the driver's under `--serve-all-states` (`6268ed8`): a last all-channel stage allocates
-  what the stages and the catch-all left, one WHFI_PLUS district per state at most, whatever
-  its mass. Probe on the real instance (`probe8_20260911/`, rank 1's flags without
-  `--other-first`): MT WY become one all-channel district of 30 units and WA one of 288, 49
-  districts, no state left. `--other-first` stays the deliberate way to plan those districts
-  before the channels take their neighbours. The hub State commit is `7dbe576` (unmerged).
-- Relaunch anything with the job's scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:
-  `launch_grid.sh CELLS OUT CONC [--resume]`, `make_followup.py`, `make_cert.py`,
-  `compose.sh`, `rerealise.sh`, `summaries.sh`, `register.sh`.
+- Sweep and plus pairing, files `td/solvers/level0.py`, `tools/full_plan.py`,
+  `tests/test_level0.py`, `tests/test_full_plan_cli.py`. `--sweep`: after the catch-all,
+  every residual (state, channel group) joins an adjacent used slot whose bundle carries
+  exactly those channels, least over U, caps broken only when no candidate keeps them,
+  recorded in `plan.json` `sweep` / `unswept`. `--plus-pair`: per state the WH_PLUS share
+  equals the FI_PLUS share (route S: the FI stage takes the WH stage's fold as a target, one
+  retry with WH_PLUS forbidden if infeasible). Also asked: no band-break allowance on
+  `other_first`.
+- Zip sweep, files `tools/plan_realise.py`, `tests/test_plan_realise.py`. `--sweep-zips`:
+  every unclaimed (zip, channel) cell joins a district serving that channel in the state,
+  adjacent on its cell graph, else the largest holder; `realise.json` `swept` / `sweep_zips`.
+- Contiguous cut and land-clip graphs, in the sibling worktree
+  `/Users/ntlee/projects/td/.claude/worktrees/contig-cut` (branch `worktree-contig-cut`,
+  locked, off `d322951`): `--split-cut contiguous` (grow each district's share of a split
+  state from its body on the cell graph) and `--graph land_bridge | land_island`; five
+  copies of rank 1 realised under that worktree's
+  `battery/results/full_problem/contig_20260911/` with a README table, for the user's manual
+  review. Commit on that branch by path when it reports; never merge it into the track
+  unasked.
 
-## Done
+On each report: scan the diff for double hyphens in prose, run the module's tests and the
+suite, commit by path. Then rerun the n16 and n18 cells with every rule (`--max-splits
+CA=3,TX=2,NY=3 --band-break CA,TX --sweep --plus-pair`, realise with `--sweep-zips`), compare
+against `best/`, re-point `hot/rank*.png`, update `hot/README.md` and this file.
+
+User decisions taken today: sweep for full coverage (no partial patterns; the four legal
+state patterns are N + WH + FI, N + WHFI, WH_PLUS + FI_PLUS at equal shares, WHFI_PLUS); CA 3
+and TX 2 with the band broken; the FI_08 blob fixed by the hand-off; both contiguity tests in
+a separate worktree; the two grins cells. Still open: the "other" floor, ND SD NE on FI alone,
+the cap versus none, 16/11/20 versus 18/11/19, route R. The v4 instance (national broken into
+its three sub-channels) is the user's to export with `tools/instance_export/` (on origin);
+when it lands at `/Users/ntlee/projects/td/instance_descaled_v4.json.gz`, derive CONUS and
+rerun the ranked cells. Untracked `unused/` in the worktree root is a downloaded shapefile,
+safe to delete. Job scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`: `launch_grid.sh
+CELLS OUT CONC`, `rerealise_only.sh DIR...`, `register.sh`, `inspect_pieces.py RUN BUNDLE
+DISTRICT`, the cell files named above.## Done
 
 - 2026-09-10: worktree created and locked, branch `worktree-full-problem` from `main` `7325737`.
   Design settled (decisions log below). This file written.
