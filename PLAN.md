@@ -50,10 +50,12 @@ Results, under `battery/results/full_problem/` (gitignored):
   western districts at 1.3 to 1.5 books. The candidates to replace rank 1 once reviewed.
 - `grid_20260911_wifi_sweep/`: all channels merged at 50 and 53 with the sweep: MT joins the
   adjacent WIFI district at 467 against U 500 (the answer to "does the sweep cover MT").
-- Running when this was written: `rerealise_sweep.sh` over rank 1, the two full-rules cells
-  and the two WIFI sweep cells (realise with `--sweep-zips --split-cut contiguous`, maps,
-  summary). When done: open each figure from `hot/` for the user, describe it, update
-  `hot/README.md`, and decide with the user whether a full-rules cell replaces rank 1.
+- Re-realised with every adopted rule (`rerealise_sweep.sh`: `--sweep-zips --split-cut
+  contiguous`, maps, summary) on the night of 2026-09-11: rank 1, the two full-rules cells
+  and the two WIFI sweep cells. WH_10 is one piece in each (NY share 308 against 311); WH_03
+  keeps a 113-zip piece at its CT end; the full-rules and WIFI sweep runs hold unheld mass 0.
+  Figures described to the user from `hot/`. Open: whether a full-rules cell replaces rank 1
+  for stakeholders.
 - Exploratory, described to the user: `grid_20260911_lowk/` (national at 10 and 12) and
   `grid_20260911_wifi/` (merged, no sweep).
 
