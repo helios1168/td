@@ -1,0 +1,750 @@
+"""full_plan.py: the level-0 channel-plan driver (docs/FULL_PROBLEM.md sections 5 and 6).
+
+    .venv/bin/python3 tools/full_plan.py instance_descaled_v2_conus.json.gz \\
+        --route joint --driver geo --geo-cache data/geo \\
+        --out battery/results/full_plan_joint
+
+Reads the instance (format 1 or 2), splits the file's channels into the fine four
+(`td.channels.fine_split`), aggregates them to the state-by-channel cells
+(`td.channels.aggregate`), then solves the level-0 plan: which slot of which bundle takes
+which share of which state's channel mass.  A format-1 file carries one channel and needs
+`--synthesize`, which expands it with `td.channels.synthesize_channels` first.
+
+Two readings of the priority order, both over the same model:
+
+    --route sequential   one level-0 model per priority group (N, then WH, then FI), each
+                         one's coverage fixed as the next one's `prior`
+    --route joint        one model over every bundle, lexicographic passes cover_N, cover_WH,
+                         cover_FI, contacts, compactness in the `balance_pass` pattern
+
+and two drivers over the result:
+
+    --driver geo         an extent cap on every slot (`--n-max` states, `--dist-max` km
+                         between state centroids), linear and centre-free
+    --driver reps        after the solve, the per-state moves {keep, merge WH+FI, drop N},
+                         each re-solved with `z` fixed away from the state and its rook
+                         neighbours and scored by the state-level stage-2 Nash value
+
+`--catch-all` adds a last model over whatever the plan left uncovered, with one bundle
+carrying all four channels; "four channels" then means that pass used at least one slot.
+
+Writes `params.json` (every argument), `plan.json` (the slots, the per-state shares and the
+residual, the pass log, the move log), `staffing.json` (`td.stage2_state.state_stage2` on the
+final plan), `timings.json`, and one `projections/<bundle>/` per used bundle holding a format-1
+instance for that bundle and the `state_shares.csv` level 2 reads.  A solve that returns
+nothing usable writes `failure.json` in the shape `tools/state_splits.py` writes it and
+re-raises, so the run exits nonzero and the reason survives the traceback.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import os
+import sys
+import time
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, ".."))
+for _p in (ROOT, HERE):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from td import geo, model, telemetry                                        # noqa: E402
+from td.solvers import state_splits as ss                                   # noqa: E402
+import borders_report                                                       # noqa: E402
+import run_draw                                                             # noqa: E402
+
+# tools/state_splits.py's own defaults, for the same reasons (the bench winner, and the
+# portfolio rather than one engine's whole time budget).
+DEFAULT_ENGINE = "highs"
+DEFAULT_STRATEGY = "portfolio"
+
+# The priority groups of `--priority`: which bundles a group's stage opens slots for.  N is
+# alone; WH takes the pure and the national-carrying WH bundles; FI takes its own two plus the
+# merged bundles, which are the last thing the priority order reaches.
+STAGE_BUNDLES = {
+    "N": ("N",),
+    "WH": ("WH", "WH_PLUS"),
+    "FI": ("FI", "FI_PLUS", "WHFI", "WHFI_PLUS"),
+}
+
+# Route joint's coverage passes.  cover_N counts pure national slots only (decision 8).
+# TODO: cover_WH and cover_FI count only the pure and the plus bundles, so a WHFI slot enters
+# no coverage objective and route joint will not open a merged district.  Route sequential
+# does reach WHFI (STAGE_BUNDLES["FI"]).  Settle in wave 3 with the route choice.
+JOINT_COVER = (
+    ("cover_N", ("N",)),
+    ("cover_WH", ("WH", "WH_PLUS")),
+    ("cover_FI", ("FI", "FI_PLUS")),
+)
+
+# The per-state moves of `--driver reps`: which bundles the move forbids the state from.
+MOVES = {
+    "keep": (),
+    "merge_whfi": ("WH", "FI", "WH_PLUS", "FI_PLUS"),
+    "drop_n": ("N",),
+}
+
+# The bundle the catch-all pass runs, the one carrying all four channels.
+CATCH_ALL_BUNDLE = "WHFI_PLUS"
+
+
+def build_argparser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("instance", help="the descaled instance (.json.gz), format 1 or 2")
+    ap.add_argument("--route", choices=("sequential", "joint"), default="sequential",
+                    help="how the priority order is read (default sequential)")
+    ap.add_argument("--driver", choices=("reps", "geo"), default="geo",
+                    help="what merges bundles: an extent cap (geo) or the per-state moves "
+                         "scored by state-level stage 2 (reps); default geo")
+    ap.add_argument("--catch-all", action="store_true", default=False,
+                    help="a last model over the residual with one bundle of all four channels")
+    ap.add_argument("--k", type=int, default=18,
+                    help="tau = national mass / k (default 18, today's committed k)")
+    ap.add_argument("--band-lo", type=float, default=0.8,
+                    help="L = band_lo * tau (default 0.8, the $800MM floor)")
+    ap.add_argument("--band-hi", type=float, default=1.2,
+                    help="U = band_hi * tau (default 1.2, the $1.2B cap)")
+    ap.add_argument("--bundles", default=None, metavar="B,B,...",
+                    help="the bundles slots may carry (default td.channels.DEFAULT_BUNDLES)")
+    ap.add_argument("--priority", default="N,WH,FI", metavar="G,G,...",
+                    help="priority groups, in order (default N,WH,FI)")
+    ap.add_argument("--eta", type=float, default=0.01,
+                    help="minimum share a state flagged z_sj=1 must actually send")
+    ap.add_argument("--n-max", type=int, default=None,
+                    help="driver geo: at most this many states per slot")
+    ap.add_argument("--dist-max", type=float, default=None, metavar="KM",
+                    help="driver geo: two states more than KM apart by centroid may not share "
+                         "a slot (needs the state polygons from --geo-cache)")
+    ap.add_argument("--prior", default=None, metavar="PLAN.json",
+                    help="a previous plan.json whose coverage is held as already served")
+    ap.add_argument("--centers", default=None, metavar="DRAW.csv",
+                    help="a committed draw whose centres give the compactness tie-break's "
+                         "moments on the N slots; without it no compactness pass runs")
+    ap.add_argument("--incumbency", default=None, metavar="DRAW.csv",
+                    help="a committed draw whose district home states anchor the N slots")
+    ap.add_argument("--theta", type=float, default=borders_report.THETA,
+                    help="stage-2 rep utility weight; scores the plan, changes no geometry")
+    ap.add_argument("--lam", type=float, default=borders_report.LAM,
+                    help="stage-2 rep utility weight; scores the plan, changes no geometry")
+    ap.add_argument("--filler-capture", choices=list(model.FILLER_CAPTURE),
+                    default=borders_report.FILLER_CAPTURE,
+                    help="stage-2 filler capture rule; scores the plan, changes no geometry")
+    ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
+                    help=f"MILP engine (default {DEFAULT_ENGINE})")
+    ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
+                    help="strategy for the contacts pass, whose objective is unit cost on z; "
+                         "the coverage and compactness passes always run direct (default "
+                         f"{DEFAULT_STRATEGY})")
+    ap.add_argument("--threads", type=int, default=None,
+                    help="solver threads (highs/scip only; the portfolio parent solves with 2 "
+                         "and HiGHS sizes its pool once per process, trap 18, so leave this "
+                         "unset with --strategy portfolio)")
+    ap.add_argument("--time-limit", type=float, default=300.0,
+                    help="seconds per pass; an unclosed pass pins its incumbent and records "
+                         "certified=false")
+    ap.add_argument("--synthesize", action="store_true", default=False,
+                    help="expand a one-channel instance with td.channels.synthesize_channels")
+    ap.add_argument("--seed", type=int, default=0, help="--synthesize seed (default 0)")
+    ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
+    ap.add_argument("--out", required=True, help="output directory")
+    return ap
+
+
+# ------------------------------------------------------------------------------- state geometry
+def _state_list(d) -> list[str]:
+    """The state codes the instance actually carries, sorted.
+
+    Taken from the instance rather than `borders_report._STATE_LIST` so a toy runs: the real
+    CONUS instance's states are that list, and `_state_edges` refuses any code the rook graph
+    does not know.
+    """
+    codes = sorted({str(d.G.nodes[z].get("state") or "") for z in d.G})
+    codes = [c for c in codes if c]
+    if not codes:
+        raise ValueError("the instance carries no state codes; level 0 has nothing to cut")
+    return codes
+
+
+def _state_edges(state_list: list[str], geo_cache: str) -> list[tuple[int, int]]:
+    """The state rook graph (`td.geo.state_rook`) on `state_list`'s indices."""
+    adj, _ = geo.state_rook(geo_cache)
+    idx = {c: i for i, c in enumerate(state_list)}
+    stray = sorted(set(state_list) - set(adj))
+    if stray:
+        raise ValueError(f"states not in the rook graph: {stray}")
+    return sorted({(min(idx[a], idx[b]), max(idx[a], idx[b]))
+                   for a, nbrs in adj.items() if a in idx
+                   for b in nbrs if b in idx})
+
+
+def _state_xy(state_list: list[str], geo_cache: str) -> np.ndarray:
+    """State centroids in km, the coordinates `--dist-max` measures between."""
+    _, polys = geo.state_rook(geo_cache)
+    missing = sorted(c for c in state_list if c not in polys)
+    if missing:
+        raise ValueError(f"--dist-max needs a polygon for every state; missing {missing}")
+    return np.array([[polys[c].centroid.x / 1000.0, polys[c].centroid.y / 1000.0]
+                     for c in state_list], float)
+
+
+def _rook_neighbours(edges: list[tuple[int, int]], n_state: int) -> list[set[int]]:
+    nbr: list[set[int]] = [set() for _ in range(n_state)]
+    for a, b in edges:
+        nbr[a].add(b)
+        nbr[b].add(a)
+    return nbr
+
+
+# ------------------------------------------------------------------- the committed draw, if any
+def _committed(args, cache: dict):
+    """`borders_report.load_committed` for `--centers`/`--incumbency`, loaded at most once."""
+    path = args.centers or args.incumbency
+    if path is None:
+        return None
+    if "ctx" not in cache:
+        cache["ctx"] = borders_report.load_committed(args.instance, path, args.geo_cache)
+    return cache["ctx"]
+
+
+def _anchors_from_draw(ctx, state_list: list[str], start: int, stop: int):
+    """`[(state index, slot)]` holding district j of the committed draw in its home state.
+
+    Slot `start + j` of the N bundle is district `j`, so this is `tools/state_splits.py`'s
+    `--anchor-homes` moved onto the level-0 slot numbering.
+    """
+    idx = {c: i for i, c in enumerate(state_list)}
+    anchors = []
+    for j in range(ctx.k):
+        s = int(ctx.home[j])
+        if s < 0 or start + j >= stop:
+            continue
+        code = ctx.state_list[s]
+        if code in idx:
+            anchors.append((idx[code], start + j))
+    return anchors
+
+
+def _moments_from_draw(ctx, state_list: list[str], n_state: int, n_slot: int,
+                       start: int, stop: int) -> np.ndarray:
+    """`D[s, j]`, state `s`'s exact moment about the committed centre of slot `j`.
+
+    Only the N slots get a centre (they are the committed draw's own districts); every other
+    slot's column is zero, which is what "contacts only" means for that bundle.
+    """
+    from td.solvers import centers
+
+    C = centers._centroids(ctx.xy, ctx.M, ctx.labels0, ctx.k)
+    known = ctx.state_idx >= 0
+    d2 = ((ctx.xy[:, None, :] - C[None, :, :]) ** 2).sum(axis=2)
+    num = np.zeros((len(ctx.state_list), ctx.k), float)
+    np.add.at(num, ctx.state_idx[known], ctx.M[known, None] * d2[known])
+    M_s = np.bincount(ctx.state_idx[known], weights=ctx.M[known],
+                      minlength=len(ctx.state_list)).astype(float)
+    D_ctx = np.divide(num, M_s[:, None], out=np.zeros_like(num), where=M_s[:, None] > 0)
+
+    idx = {c: i for i, c in enumerate(state_list)}
+    D = np.zeros((n_state, n_slot), float)
+    for s_ctx, code in enumerate(ctx.state_list):
+        if code not in idx:
+            continue
+        for j in range(min(ctx.k, stop - start)):
+            D[idx[code], start + j] = D_ctx[s_ctx, j]
+    return D
+
+
+# --------------------------------------------------------------------------------- plan records
+def _bundle_name(b) -> str:
+    """A slot's bundle as a name.  `Level0Problem.bundle_of` may hold either."""
+    from td import channels
+
+    if isinstance(b, str):
+        return b
+    want = tuple(b)
+    for name, chans in channels.BUNDLES.items():
+        if tuple(chans) == want:
+            return name
+    raise ValueError(f"bundle {b!r} is not one of {sorted(channels.BUNDLES)}")
+
+
+def _bundle_channels(b) -> tuple:
+    from td import channels
+
+    return tuple(channels.BUNDLES[b]) if isinstance(b, str) else tuple(b)
+
+
+def _coverage(y: np.ndarray, bundle_of, channel_idx: dict[str, int]) -> np.ndarray:
+    """`(S, C)`: how much of each state-channel cell the slots of this solve cover."""
+    S, K = y.shape
+    cov = np.zeros((S, len(channel_idx)), float)
+    for j in range(K):
+        for c in _bundle_channels(bundle_of[j]):
+            cov[:, channel_idx[c]] += y[:, j]
+    return cov
+
+
+def _slot_records(problem, result, state_list: list[str], next_id: int) -> list[dict]:
+    """One record per slot of this solve, with a plan-wide id."""
+    z = np.asarray(result["z"])
+    y = np.asarray(result["y"], float)
+    u = np.asarray(result["u"])
+    masses = np.asarray(result["masses"], float)
+    out = []
+    for j in range(problem.k):
+        shares = {state_list[s]: round(float(y[s, j]), 6)
+                  for s in np.flatnonzero(z[:, j]) if y[s, j] > 0.0}
+        out.append(dict(id=f"P{next_id + j:03d}", bundle=_bundle_name(problem.bundle_of[j]),
+                        used=bool(u[j]), mass=float(masses[j]),
+                        contacts=int(z[:, j].sum()), y=shares))
+    return out
+
+
+def _plan_object(slots: list[dict], state_list: list[str]):
+    """The `td.stage2_state.Plan` the state-level stage 2 scores.
+
+    `Slot.bundle` is the channel tuple, not the name, so the utility sums the right cells.
+    """
+    from td import stage2_state
+
+    return stage2_state.Plan(
+        slots=[stage2_state.Slot(bundle=_bundle_channels(r["bundle"]), y=dict(r["y"]),
+                                 used=r["used"])
+               for r in slots],
+        state_list=list(state_list))
+
+
+# ------------------------------------------------------------------------------------- failures
+def _write_failure(out: str, stage: str, exc, solve_s: float) -> str:
+    """The record `tools/state_splits.py::_write_failure` writes, for the same reader.
+
+    `app/headline.py::failure` keys off `reason` (`infeasible` is a proof, `no_incumbent` is a
+    search that ran out of time) and the seconds beside it, so the keys are the same here.
+    `delta` is None: level 0 has a band, not a single delta.
+    """
+    path = os.path.join(out, "failure.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(dict(cell=stage, delta=None, reason=getattr(exc, "reason", "other"),
+                       status=getattr(exc, "status", None),
+                       message=getattr(exc, "solver_message", str(exc)),
+                       solve_seconds=round(solve_s, 1)), fh, indent=2)
+        fh.write("\n")
+    print(f"{stage}: no solution, reason={getattr(exc, 'reason', 'other')} "
+          f"({solve_s:.1f}s solve); wrote {path}", flush=True)
+    return path
+
+
+# ---------------------------------------------------------------------------------- the passes
+def _pass_list(problem, cover_groups) -> list:
+    """The lexicographic passes of one model: coverage, then contacts, then compactness.
+
+    A cover group naming bundles this model has no slots for is dropped, so the catch-all
+    model runs its own single cover pass and not route joint's three.  `solve_passes` is what
+    applies `--strategy` to the contacts pass alone, so every pass goes in one call.
+    """
+    from td.solvers import level0
+
+    passes = []
+    for name, bundles in cover_groups:
+        bs = [b for b in bundles if b in problem.slots]
+        if bs:
+            passes.append(level0.cover_pass(problem, bs, name=name))
+    passes.append(level0.contacts_pass(problem))
+    # no centres, no moments, no tie-break: the plan is contacts only (section 6, route J).
+    D = getattr(problem, "D", None)
+    if D is not None and np.size(D) and float(np.abs(D).max()) > 0.0:
+        passes.append(level0.compactness_pass(problem))
+    return passes
+
+
+def _run_passes(problem, passes, args, stage: str, T) -> dict:
+    """One `solve_passes` call; each pass pins its own value before the next."""
+    from td.solvers import level0
+
+    t0 = time.time()
+    with T.phase("solve") as ph:
+        try:
+            result = level0.solve_passes(problem, passes, engine=args.engine,
+                                         strategy=args.strategy, time_limit=args.time_limit,
+                                         threads=args.threads)
+        except ss.SolveFailure as exc:
+            _write_failure(args.out, stage, exc, time.time() - t0)
+            raise
+        ph.note(stage=stage, strategy=args.strategy,
+                passes=[p["name"] for p in result["passes"]])
+    for rec in result["passes"]:
+        print(f"{stage}/{rec['name']}: value={rec['value']:.6g} "
+              f"certified={rec['certified']} status={rec['status']} "
+              f"({rec['seconds']:.1f}s)", flush=True)
+    result = dict(result)
+    result["passes"] = [dict(rec, stage=stage) for rec in result["passes"]]
+    return result
+
+
+def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy):
+    """`build_level0` with the driver's own switches applied.
+
+    `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
+    the mass ordering inside a bundle is only valid while its slots are interchangeable.
+    """
+    from td import channels
+    from td.solvers import level0
+
+    return level0.build_level0(
+        cells, {b: channels.BUNDLES[b] for b in bundle_names},
+        edges=edges, L=L, U=U, eta=args.eta,
+        n_max=args.n_max if args.driver == "geo" else None,
+        dist_max=args.dist_max if args.driver == "geo" else None,
+        state_xy=state_xy, prior=prior, anchors=anchors, D=D,
+        order_mass=False if args.driver == "reps" else None)
+
+
+def _print_slots(problem, stage: str) -> None:
+    total = 0
+    for name, (start, stop) in sorted(problem.slots.items()):
+        print(f"{stage}: slots[{name}] = {stop - start}", flush=True)
+        total += stop - start
+    print(f"{stage}: {total} slots total, {problem.n_state} states", flush=True)
+
+
+# ------------------------------------------------------------------------------- driver reps
+def _z_fix_away(problem, z: np.ndarray, keep: set[int]) -> None:
+    """Fix `z` on every slot touching neither the moved state nor its rook neighbours.
+
+    A move changes contacts, so the re-solve cannot fix `z` everywhere; fixing it away from the
+    state's own neighbourhood is what makes the move a small MILP instead of the whole model
+    again (docs/FULL_PROBLEM.md section 6, route R).
+    """
+    for j in range(problem.k):
+        if any(z[s, j] for s in keep):
+            continue
+        for s in range(problem.n_state):
+            v = float(z[s, j])
+            ss.bound_z(problem, s, j, v, v)
+
+
+def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, next_id,
+               T) -> tuple[list[dict], dict]:
+    """The per-state moves {keep, merge WH+FI, drop N}, scored by state-level stage 2.
+
+    A move only re-solves the last model, but the score is the whole plan's: the rep
+    constraint is the one thing that couples the bundles, so stage 2 runs over `prefix`, the
+    slots the earlier stages fixed, plus the moved model's own.
+
+    Kept deliberately simple: one neighbourhood re-solve of the contacts pass per move, the
+    best move applied to the running problem, states visited in descending total mass.  Wave 3
+    tunes the order and the neighbourhood.
+    """
+    from td import stage2_state
+    from td.solvers import level0
+
+    nbr = _rook_neighbours(edges, problem.n_state)
+    # TODO: the moves reach the last model only, so under --route sequential the N slots are
+    # in an earlier model and "drop N" is never evaluated; route joint has all bundles in one
+    # model and does evaluate it.  Wave 3 decides whether route R needs a joint re-solve.
+    enabled = set(problem.slots)
+    order = sorted(range(problem.n_state), key=lambda s: (-float(cells.M[s].sum()),
+                                                          state_list[s]))
+    log: list[dict] = []
+    base_slots = slots
+
+    def score(stage_slots) -> float:
+        out = stage2_state.state_stage2(cells, _plan_object(prefix + stage_slots, state_list),
+                                        theta=args.theta, lam=args.lam,
+                                        filler_capture=args.filler_capture,
+                                        criterion="nash", candidacy=False)
+        return float(out["value"])
+
+    try:
+        base = stage2_state.state_stage2(cells, _plan_object(prefix + base_slots, state_list),
+                                         theta=args.theta, lam=args.lam,
+                                         filler_capture=args.filler_capture,
+                                         criterion="nash", candidacy=False)
+    except ValueError as exc:
+        print(f"moves: the level-0 plan does not score at state grain ({exc}); no move run",
+              flush=True)
+        return log, dict(problem=problem, result=result, slots=base_slots)
+    best_value = float(base["value"])
+
+    for s in order:
+        keep = {s} | nbr[s]
+        candidates = []
+        for move, forbidden in MOVES.items():
+            forbidden = [b for b in forbidden if b in enabled]
+            if move != "keep" and not forbidden:
+                continue
+            if move == "keep":
+                candidates.append((move, best_value, None, None))
+                continue
+            trial = problem
+            for b in forbidden:
+                trial = level0.forbid_bundle(trial, s, b)   # copies var_lb/var_ub
+            _z_fix_away(trial, np.asarray(result["z"]), keep)
+            try:
+                with T.phase("move_solve"):
+                    out = level0.solve_passes(trial, [level0.contacts_pass(trial)],
+                                              engine=args.engine, strategy="direct",
+                                              time_limit=args.time_limit,
+                                              threads=args.threads)
+                trial_slots = _slot_records(trial, out, state_list, next_id)
+                value = score(trial_slots)
+            except (ss.SolveFailure, ValueError) as exc:
+                # no map under the forbid, or a slot the move leaves unstaffable
+                log.append(dict(state=state_list[s], move=move, value=None,
+                                reason=getattr(exc, "reason", type(exc).__name__),
+                                accepted=False))
+                continue
+            candidates.append((move, value, trial, out))
+
+        move, value, trial, out = max(candidates, key=lambda c: c[1])
+        accepted = move != "keep" and value > best_value
+        for name, val, *_ in candidates:
+            log.append(dict(state=state_list[s], move=name, value=val,
+                            accepted=bool(accepted and name == move)))
+        print(f"move {state_list[s]}: best={move} value={value:.6g} "
+              f"accepted={accepted}", flush=True)
+        if accepted:
+            problem, result = trial, out
+            base_slots = _slot_records(problem, result, state_list, next_id)
+            best_value = value
+
+    return log, dict(problem=problem, result=result, slots=base_slots)
+
+
+# ------------------------------------------------------------------------------- the projections
+def _write_projections(out: str, d, cells, slots: list[dict], state_list: list[str],
+                       T) -> list[str]:
+    """One format-1 instance and one `state_shares.csv` per bundle the plan actually used.
+
+    `target_mass` is `M^B_s * y_sj`, the state's own mass in that bundle times the share the
+    slot asks for, which is what `tools/state_splits.py::write_state_shares` means by the
+    column and what level 2 turns into zip labels.  Summed over a bundle's rows it is that
+    bundle's total slot mass.
+    """
+    from td import channels
+
+    cidx = {c: i for i, c in enumerate(cells.channels)}
+    M = np.asarray(cells.M, float)
+    s_idx = {code: s for s, code in enumerate(state_list)}
+
+    written = []
+    by_bundle: dict[str, list[dict]] = {}
+    for rec in slots:
+        if rec["used"] and rec["y"]:
+            by_bundle.setdefault(rec["bundle"], []).append(rec)
+    for bundle, recs in sorted(by_bundle.items()):
+        states = sorted({st for rec in recs for st in rec["y"]})
+        M_B = M[:, [cidx[c] for c in channels.BUNDLES[bundle]]].sum(axis=1)
+        cell = os.path.join(out, "projections", bundle)
+        os.makedirs(cell, exist_ok=True)
+        with T.phase("project"):
+            proj = channels.project(d, bundle, states=states)
+            channels.write_v1(proj, os.path.join(cell, "instance_descaled.json.gz"))
+        with open(os.path.join(cell, "state_shares.csv"), "w", encoding="utf-8",
+                  newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["state", "district", "share", "target_mass"])
+            for j, rec in enumerate(recs):
+                for st, share in sorted(rec["y"].items()):
+                    w.writerow([st, run_draw.district_id(j), float(share),
+                                float(M_B[s_idx[st]]) * float(share)])
+        written.append(cell)
+        print(f"projection {bundle}: {len(recs)} district(s), {len(states)} state(s) "
+              f"-> {cell}", flush=True)
+    return written
+
+
+# ------------------------------------------------------------------------------------- the run
+def _prior_from_plan(path: str, state_list: list[str], channel_list) -> np.ndarray:
+    """`(S, C)` already-served shares read off a previous run's `plan.json`."""
+    with open(path, encoding="utf-8") as fh:
+        obj = json.load(fh)
+    from td import channels
+
+    idx = {c: i for i, c in enumerate(state_list)}
+    cidx = {c: i for i, c in enumerate(channel_list)}
+    prior = np.zeros((len(state_list), len(channel_list)), float)
+    bundle_of = {rec["id"]: rec["bundle"] for rec in obj["slots"]}
+    for st, row in obj["per_state"].items():
+        if st not in idx:
+            continue
+        for slot_id, share in row.items():
+            if slot_id == "residual_by_channel":
+                continue
+            for c in channels.BUNDLES[bundle_of[slot_id]]:
+                prior[idx[st], cidx[c]] += float(share)
+    return np.clip(prior, 0.0, 1.0)
+
+
+def _main(args, T: telemetry.Timings) -> int:
+    from td import channels
+    from td import instance as descaled
+    from td import stage2_state
+
+    with T.phase("load"):
+        print(f"loading {args.instance}...", flush=True)
+        d = descaled.load_descaled(args.instance)
+        if args.synthesize:
+            d = channels.synthesize_channels(d, seed=args.seed)
+            channels.write_v2(d, os.path.join(args.out, "instance_v2.json.gz"))
+            print(f"synthesized channels {d.channels} (seed {args.seed})", flush=True)
+        if not d.channels:
+            raise ValueError(f"{args.instance} carries one channel; pass --synthesize or "
+                             f"give a format-2 file")
+        if tuple(d.channels) != tuple(channels.CHANNELS):
+            d = channels.fine_split(d)
+        state_list = _state_list(d)
+        cells = channels.aggregate(d, state_list)
+        edges = _state_edges(state_list, args.geo_cache)
+        channel_list = list(cells.channels)      # `covered`'s column order, so `cidx` aligns
+        cidx = {c: i for i, c in enumerate(channel_list)}
+        n_state = len(state_list)
+
+    M = np.asarray(cells.M, float)
+    national = float(M[:, [cidx["N_WH"], cidx["N_FI"]]].sum())
+    tau = national / args.k
+    L, U = args.band_lo * tau, args.band_hi * tau
+    print(f"states={n_state} edges={len(edges)} channels={channel_list} "
+          f"national_mass={national:.6g} tau={tau:.6g} L={L:.6g} U={U:.6g}", flush=True)
+
+    enabled = (tuple(b.strip() for b in args.bundles.split(",") if b.strip()) if args.bundles
+               else tuple(channels.DEFAULT_BUNDLES))
+    unknown = [b for b in enabled if b not in channels.BUNDLES]
+    if unknown:
+        raise ValueError(f"--bundles: unknown bundle(s) {unknown}")
+    priority = [g.strip() for g in args.priority.split(",") if g.strip()]
+    unknown = [g for g in priority if g not in STAGE_BUNDLES]
+    if unknown:
+        raise ValueError(f"--priority: unknown group(s) {unknown}")
+
+    prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
+             else np.zeros((n_state, len(channel_list)), float))
+    state_xy = _state_xy(state_list, args.geo_cache) if args.dist_max is not None else None
+    ctx_cache: dict = {}
+
+    params = dict(
+        instance=os.path.abspath(args.instance), route=args.route, driver=args.driver,
+        catch_all=args.catch_all, k=args.k, band_lo=args.band_lo, band_hi=args.band_hi,
+        bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
+        dist_max=args.dist_max,
+        prior=os.path.abspath(args.prior) if args.prior else None,
+        centers=os.path.abspath(args.centers) if args.centers else None,
+        incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
+        theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
+        engine=args.engine, strategy=args.strategy, threads=args.threads,
+        time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
+        geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
+        tau=tau, L=L, U=U, n_state=n_state, n_edges=len(edges),
+        state_list=state_list, channels=channel_list,
+    )
+    with open(os.path.join(args.out, "params.json"), "w", encoding="utf-8") as fh:
+        json.dump(params, fh, indent=2, default=float)
+        fh.write("\n")
+
+    slots: list[dict] = []
+    passes: list[dict] = []
+    moves: list[dict] = []
+    last = None
+
+    def run_stage(stage: str, bundle_names, cover_groups) -> None:
+        """Build one level-0 model, solve its passes, and fold its coverage into `prior`."""
+        nonlocal prior, last
+        with T.phase("build"):
+            problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+                             prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
+        anchors, D = None, None
+        if "N" in problem.slots and (args.incumbency or args.centers):
+            ctx = _committed(args, ctx_cache)
+            start, stop = problem.slots["N"]
+            if args.incumbency:
+                anchors = _anchors_from_draw(ctx, state_list, start, stop)
+                print(f"{stage}: {len(anchors)} anchor(s) from {args.incumbency}", flush=True)
+            if args.centers:
+                D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
+            with T.phase("build"):
+                problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+                                 prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
+        _print_slots(problem, stage)
+
+        result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T)
+        problem = result.get("problem", problem)      # the pinned problem, route R starts there
+        recs = _slot_records(problem, result, state_list, len(slots) + 1)
+        slots.extend(recs)
+        passes.extend(result["passes"])
+        # `covered` is this solve's own coverage; `residual` is `(1 - prior) - covered`, so
+        # folding `1 - residual` back into `prior` would count the prior twice.
+        cov = result.get("covered")
+        cov = (np.asarray(cov, float)
+               if cov is not None and np.shape(cov) == (n_state, len(channel_list))
+               else _coverage(np.asarray(result["y"], float), problem.bundle_of, cidx))
+        prior = np.clip(prior + cov, 0.0, 1.0)
+        last = dict(problem=problem, result=result, slots=recs)
+
+    if args.route == "joint":
+        run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
+    else:
+        for group in priority:
+            bundle_names = [b for b in STAGE_BUNDLES[group] if b in enabled]
+            if not bundle_names:
+                continue
+            run_stage(f"seq_{group}", bundle_names, [(f"cover_{group}", bundle_names)])
+
+    if args.driver == "reps" and last is not None:
+        head = len(slots) - len(last["slots"])
+        with T.phase("moves"):
+            moves, last = _rep_moves(last["problem"], last["result"], cells, state_list, edges,
+                                     args, slots[:head], last["slots"], head + 1, T)
+        slots = slots[:head] + last["slots"]
+
+    if args.catch_all:
+        if CATCH_ALL_BUNDLE not in channels.BUNDLES:
+            raise ValueError(f"--catch-all needs the bundle {CATCH_ALL_BUNDLE}")
+        run_stage("catch_all", [CATCH_ALL_BUNDLE], [("cover_other", [CATCH_ALL_BUNDLE])])
+        print(f"catch-all: {sum(1 for r in last['slots'] if r['used'])} slot(s) used", flush=True)
+
+    per_state: dict[str, dict] = {}
+    for s, code in enumerate(state_list):
+        row = {rec["id"]: rec["y"][code] for rec in slots if code in rec["y"]}
+        row["residual_by_channel"] = {c: round(float(1.0 - prior[s, i]), 6)
+                                      for c, i in cidx.items()}
+        per_state[code] = row
+
+    plan = dict(state_list=state_list, bundles=list(enabled), slots=slots,
+                per_state=per_state, passes=passes, moves=moves)
+    with open(os.path.join(args.out, "plan.json"), "w", encoding="utf-8") as fh:
+        json.dump(plan, fh, indent=2, default=float)
+        fh.write("\n")
+
+    # projections first: they are the hand-off to level 2 and must survive a stage 2 that
+    # refuses the plan (a used slot no rep can staff raises rather than scoring).
+    _write_projections(args.out, d, cells, slots, state_list, T)
+
+    with T.phase("stage2"):
+        staffing = stage2_state.state_stage2(cells, _plan_object(slots, state_list),
+                                             theta=args.theta, lam=args.lam,
+                                             filler_capture=args.filler_capture,
+                                             criterion="nash", candidacy=False)
+    with open(os.path.join(args.out, "staffing.json"), "w", encoding="utf-8") as fh:
+        json.dump(staffing, fh, indent=2, default=float)
+        fh.write("\n")
+    print(f"stage 2: value={staffing['value']:.6g} "
+          f"unstaffed={len(staffing['unstaffed_districts'])}", flush=True)
+    print(f"wrote {args.out}", flush=True)
+    return 0
+
+
+def main(argv=None) -> int:
+    args = build_argparser().parse_args(argv)
+    os.makedirs(args.out, exist_ok=True)
+
+    T = telemetry.Timings("full_plan")
+    try:
+        return _main(args, T)
+    finally:
+        T.write(args.out)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
