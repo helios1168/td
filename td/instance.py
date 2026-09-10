@@ -146,6 +146,12 @@ def load_descaled(path, keep_untapped: bool = True) -> Descaled:
         if len(chan) != len(zips):
             raise ValueError(f"{path}: node columns have mismatched lengths")
         channels = tuple(dict.fromkeys(chan))
+        # A sparse export emits no row for a cell a zip lacks, so first appearance over the
+        # rows need not be the writer's own channel order.  `meta["channels"]` is that order;
+        # honour it when it names the same set, and fall back to first appearance otherwise.
+        declared = tuple(obj.get("meta", {}).get("channels") or ())
+        if declared and set(declared) == set(channels):
+            channels = declared
         rows = _fold_cells(path, zips, chan, m_rel, shares, states, free)
     else:
         channels = ()

@@ -23,7 +23,8 @@ and two drivers over the result:
                          between state centroids), linear and centre-free
     --driver reps        after the solve, the per-state moves {keep, merge WH+FI, drop N},
                          each re-solved with `z` fixed away from the state and its rook
-                         neighbours and scored by the state-level stage-2 Nash value
+                         neighbours and scored by the state-level stage-2 Nash value, over
+                         the heaviest `--move-budget` states
 
 `--catch-all` adds a last model over whatever the plan left uncovered, with one bundle
 carrying all four channels; "four channels" then means that pass used at least one slot.
@@ -39,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import dataclasses
 import json
 import os
 import sys
@@ -88,8 +90,13 @@ MOVES = {
     "drop_n": ("N",),
 }
 
-# The bundle the catch-all pass runs, the one carrying all four channels.
-CATCH_ALL_BUNDLE = "WHFI_PLUS"
+# The bundles the catch-all pass runs: one per fine channel, over whatever the earlier stages
+# left.  A product bundle cannot do this job.  A slot of `WHFI_PLUS` sits in all four cover
+# rows, so its share is bounded by `min_c cover_ub[s, c]`; once any channel of a state is
+# served the catch-all can never open a slot there, and decision 1 ("a fourth channel exists
+# iff the catch-all used a slot") would always answer no for the wrong reason.
+CATCH_ALL_BUNDLES = {"OTHER_N_WH": ("N_WH",), "OTHER_N_FI": ("N_FI",),
+                     "OTHER_WH": ("WH",), "OTHER_FI": ("FI",)}
 
 
 def build_argparser() -> argparse.ArgumentParser:
@@ -114,6 +121,9 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="priority groups, in order (default N,WH,FI)")
     ap.add_argument("--eta", type=float, default=0.01,
                     help="minimum share a state flagged z_sj=1 must actually send")
+    ap.add_argument("--move-budget", type=int, default=20, metavar="N",
+                    help="driver reps: visit at most N states, heaviest first (default 20). "
+                         "Each state costs one MILP per move, so 49 states is about 98 solves")
     ap.add_argument("--n-max", type=int, default=None,
                     help="driver geo: at most this many states per slot")
     ap.add_argument("--dist-max", type=float, default=None, metavar="KM",
@@ -270,10 +280,15 @@ def _bundle_name(b) -> str:
     raise ValueError(f"bundle {b!r} is not one of {sorted(channels.BUNDLES)}")
 
 
-def _bundle_channels(b) -> tuple:
+def _bundle_table() -> dict:
+    """`td.channels.BUNDLES` plus this driver's own catch-all bundles."""
     from td import channels
 
-    return tuple(channels.BUNDLES[b]) if isinstance(b, str) else tuple(b)
+    return {**channels.BUNDLES, **CATCH_ALL_BUNDLES}
+
+
+def _bundle_channels(b) -> tuple:
+    return tuple(_bundle_table()[b]) if isinstance(b, str) else tuple(b)
 
 
 def _coverage(y: np.ndarray, bundle_of, channel_idx: dict[str, int]) -> np.ndarray:
@@ -323,13 +338,21 @@ def _write_failure(out: str, stage: str, exc, solve_s: float) -> str:
     `app/headline.py::failure` keys off `reason` (`infeasible` is a proof, `no_incumbent` is a
     search that ran out of time) and the seconds beside it, so the keys are the same here.
     `delta` is None: level 0 has a band, not a single delta.
+
+    `td.solvers.level0.solve_passes` attaches `passes`, the log up to the pass that died, when
+    it has one; the key is only written then, so a failure from anywhere else keeps exactly
+    the record `tools/state_splits.py` writes.
     """
     path = os.path.join(out, "failure.json")
+    rec = dict(cell=stage, delta=None, reason=getattr(exc, "reason", "other"),
+               status=getattr(exc, "status", None),
+               message=getattr(exc, "solver_message", str(exc)),
+               solve_seconds=round(solve_s, 1))
+    passes = getattr(exc, "passes", None)
+    if passes:
+        rec["passes"] = [dict(p, stage=stage) for p in passes]
     with open(path, "w", encoding="utf-8") as fh:
-        json.dump(dict(cell=stage, delta=None, reason=getattr(exc, "reason", "other"),
-                       status=getattr(exc, "status", None),
-                       message=getattr(exc, "solver_message", str(exc)),
-                       solve_seconds=round(solve_s, 1)), fh, indent=2)
+        json.dump(rec, fh, indent=2, default=float)
         fh.write("\n")
     print(f"{stage}: no solution, reason={getattr(exc, 'reason', 'other')} "
           f"({solve_s:.1f}s solve); wrote {path}", flush=True)
@@ -388,15 +411,15 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
     the mass ordering inside a bundle is only valid while its slots are interchangeable.
+    `--n-max` and `--dist-max` are honoured under both drivers; `params.json` records them
+    either way, so dropping them under `reps` would make that record untrue.
     """
-    from td import channels
     from td.solvers import level0
 
     return level0.build_level0(
-        cells, {b: channels.BUNDLES[b] for b in bundle_names},
+        cells, {b: _bundle_channels(b) for b in bundle_names},
         edges=edges, L=L, U=U, eta=args.eta,
-        n_max=args.n_max if args.driver == "geo" else None,
-        dist_max=args.dist_max if args.driver == "geo" else None,
+        n_max=args.n_max, dist_max=args.dist_max,
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
         order_mass=False if args.driver == "reps" else None)
 
@@ -410,6 +433,23 @@ def _print_slots(problem, stage: str) -> None:
 
 
 # ------------------------------------------------------------------------------- driver reps
+def _relax_pins(problem, names):
+    """A copy of `problem` with the named pin rows' upper bounds opened to +inf.
+
+    `solve_passes` pins every pass's value with an appended row.  A move must keep the
+    coverage pins -- they are what says the plan still serves what it served, and without them
+    minimising contacts closes every slot and the "best" move is the empty plan -- but it must
+    drop `pin_contacts`, which says "no more contacts than the unmerged plan used" and is what
+    makes every merge infeasible.  Relaxing rather than deleting keeps the matrix shape, so
+    every offset and every later `append_row` still lines up.
+    """
+    ub = np.array(problem.ub, float)
+    for name in names:
+        lo, hi = problem.rows[name]
+        ub[lo:hi] = np.inf
+    return dataclasses.replace(problem, ub=ub)
+
+
 def _z_fix_away(problem, z: np.ndarray, keep: set[int]) -> None:
     """Fix `z` on every slot touching neither the moved state nor its rook neighbours.
 
@@ -434,19 +474,28 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
     slots the earlier stages fixed, plus the moved model's own.
 
     Kept deliberately simple: one neighbourhood re-solve of the contacts pass per move, the
-    best move applied to the running problem, states visited in descending total mass.  Wave 3
-    tunes the order and the neighbourhood.
+    best move applied to the running problem, states visited in descending total mass and cut
+    at `--move-budget`.  Wave 3 tunes the order and the neighbourhood.
     """
     from td import stage2_state
     from td.solvers import level0
 
+    # a merge changes the contact count, so `pin_contacts` (and the compactness pin behind it)
+    # would refuse every non-keep move; the coverage pins stay, or the empty plan wins
+    problem = _relax_pins(problem, [n for n in problem.rows
+                                    if n.startswith("pin_") and not n.startswith("pin_cover")])
     nbr = _rook_neighbours(edges, problem.n_state)
-    # TODO: the moves reach the last model only, so under --route sequential the N slots are
-    # in an earlier model and "drop N" is never evaluated; route joint has all bundles in one
-    # model and does evaluate it.  Wave 3 decides whether route R needs a joint re-solve.
+    # The moves reach the last model only, so under --route sequential the N slots are in an
+    # earlier model and "drop N" cannot be expressed; it is logged as not evaluable rather
+    # than dropped.  Route joint has every bundle in one model and does evaluate it.
     enabled = set(problem.slots)
     order = sorted(range(problem.n_state), key=lambda s: (-float(cells.M[s].sum()),
                                                           state_list[s]))
+    budget = max(int(args.move_budget), 0)
+    if len(order) > budget:
+        print(f"moves: {len(order)} states, visiting the {budget} heaviest "
+              f"(--move-budget)", flush=True)
+        order = order[:budget]
     log: list[dict] = []
     base_slots = slots
 
@@ -468,19 +517,28 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
         return log, dict(problem=problem, result=result, slots=base_slots)
     best_value = float(base["value"])
 
+    # every accepted forbid, replayed onto the unpinned base for each new trial: `bound_z`
+    # writes into the problem it is handed, so a trial must never be built on a previous
+    # trial or the earlier state's z-fixes would still be binding
+    applied: list[tuple[int, str]] = []
+
     for s in order:
         keep = {s} | nbr[s]
         candidates = []
         for move, forbidden in MOVES.items():
             forbidden = [b for b in forbidden if b in enabled]
             if move != "keep" and not forbidden:
+                # under route sequential the N slots belong to an earlier model, so "drop N"
+                # is not expressible here; say so rather than leaving it out of the log
+                log.append(dict(state=state_list[s], move=move, value=None,
+                                status="not_evaluable_under_sequential", accepted=False))
                 continue
             if move == "keep":
-                candidates.append((move, best_value, None, None))
+                candidates.append((move, best_value, None, None, ()))
                 continue
             trial = problem
-            for b in forbidden:
-                trial = level0.forbid_bundle(trial, s, b)   # copies var_lb/var_ub
+            for s_i, b in [*applied, *((s, b) for b in forbidden)]:
+                trial = level0.forbid_bundle(trial, s_i, b)   # copies var_lb/var_ub
             _z_fix_away(trial, np.asarray(result["z"]), keep)
             try:
                 with T.phase("move_solve"):
@@ -491,14 +549,15 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
                 trial_slots = _slot_records(trial, out, state_list, next_id)
                 value = score(trial_slots)
             except (ss.SolveFailure, ValueError) as exc:
-                # no map under the forbid, or a slot the move leaves unstaffable
+                # no map under the forbid, or a slot the move leaves unstaffable.  A pin
+                # collision cannot happen any more: the trial is built on the unpinned model.
                 log.append(dict(state=state_list[s], move=move, value=None,
-                                reason=getattr(exc, "reason", type(exc).__name__),
+                                status=getattr(exc, "reason", type(exc).__name__),
                                 accepted=False))
                 continue
-            candidates.append((move, value, trial, out))
+            candidates.append((move, value, trial, out, tuple(forbidden)))
 
-        move, value, trial, out = max(candidates, key=lambda c: c[1])
+        move, value, trial, out, forbidden = max(candidates, key=lambda c: c[1])
         accepted = move != "keep" and value > best_value
         for name, val, *_ in candidates:
             log.append(dict(state=state_list[s], move=name, value=val,
@@ -506,8 +565,9 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
         print(f"move {state_list[s]}: best={move} value={value:.6g} "
               f"accepted={accepted}", flush=True)
         if accepted:
-            problem, result = trial, out
-            base_slots = _slot_records(problem, result, state_list, next_id)
+            applied.extend((s, b) for b in forbidden)
+            result = out
+            base_slots = _slot_records(trial, out, state_list, next_id)
             best_value = value
 
     return log, dict(problem=problem, result=result, slots=base_slots)
@@ -536,11 +596,14 @@ def _write_projections(out: str, d, cells, slots: list[dict], state_list: list[s
             by_bundle.setdefault(rec["bundle"], []).append(rec)
     for bundle, recs in sorted(by_bundle.items()):
         states = sorted({st for rec in recs for st in rec["y"]})
-        M_B = M[:, [cidx[c] for c in channels.BUNDLES[bundle]]].sum(axis=1)
+        chans = _bundle_channels(bundle)
+        M_B = M[:, [cidx[c] for c in chans]].sum(axis=1)
         cell = os.path.join(out, "projections", bundle)
         os.makedirs(cell, exist_ok=True)
         with T.phase("project"):
-            proj = channels.project(d, bundle, states=states)
+            # a catch-all bundle has no name in `td.channels`, so it projects by its channels
+            proj = channels.project(d, bundle if bundle in channels.BUNDLES else chans,
+                                    states=states)
             channels.write_v1(proj, os.path.join(cell, "instance_descaled.json.gz"))
         with open(os.path.join(cell, "state_shares.csv"), "w", encoding="utf-8",
                   newline="") as fh:
@@ -573,7 +636,7 @@ def _prior_from_plan(path: str, state_list: list[str], channel_list) -> np.ndarr
         for slot_id, share in row.items():
             if slot_id == "residual_by_channel":
                 continue
-            for c in channels.BUNDLES[bundle_of[slot_id]]:
+            for c in _bundle_channels(bundle_of[slot_id]):
                 prior[idx[st], cidx[c]] += float(share)
     return np.clip(prior, 0.0, 1.0)
 
@@ -582,6 +645,7 @@ def _main(args, T: telemetry.Timings) -> int:
     from td import channels
     from td import instance as descaled
     from td import stage2_state
+    from td.solvers import level0
 
     with T.phase("load"):
         print(f"loading {args.instance}...", flush=True)
@@ -628,7 +692,7 @@ def _main(args, T: telemetry.Timings) -> int:
         instance=os.path.abspath(args.instance), route=args.route, driver=args.driver,
         catch_all=args.catch_all, k=args.k, band_lo=args.band_lo, band_hi=args.band_hi,
         bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
-        dist_max=args.dist_max,
+        dist_max=args.dist_max, move_budget=args.move_budget,
         prior=os.path.abspath(args.prior) if args.prior else None,
         centers=os.path.abspath(args.centers) if args.centers else None,
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
@@ -651,6 +715,18 @@ def _main(args, T: telemetry.Timings) -> int:
     def run_stage(stage: str, bundle_names, cover_groups) -> None:
         """Build one level-0 model, solve its passes, and fold its coverage into `prior`."""
         nonlocal prior, last
+        # A stage whose bundles have no mass left gets zero slots, and a zero-slot model has
+        # no objective to build.  `--catch-all` after a sequential run that served everything
+        # is exactly that case, so it is skipped and said so rather than raising.
+        counts = level0.slot_counts(cells, {b: _bundle_channels(b) for b in bundle_names},
+                                    L=L, prior=prior)
+        if not sum(counts.values()):
+            print(f"{stage}: 0 slots ({', '.join(sorted(bundle_names))} have no residual "
+                  f"mass above L); skipped", flush=True)
+            passes.append(dict(name=f"cover_{stage}", value=0.0, certified=True,
+                               status="skipped", seconds=0.0, stage=stage, slots=0))
+            last = None            # no model to move on, and no slots to report
+            return
         with T.phase("build"):
             problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
@@ -668,8 +744,9 @@ def _main(args, T: telemetry.Timings) -> int:
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
         _print_slots(problem, stage)
 
+        unpinned = problem                            # before any pass pinned its value
         result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T)
-        problem = result.get("problem", problem)      # the pinned problem, route R starts there
+        problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1)
         slots.extend(recs)
         passes.extend(result["passes"])
@@ -680,7 +757,7 @@ def _main(args, T: telemetry.Timings) -> int:
                if cov is not None and np.shape(cov) == (n_state, len(channel_list))
                else _coverage(np.asarray(result["y"], float), problem.bundle_of, cidx))
         prior = np.clip(prior + cov, 0.0, 1.0)
-        last = dict(problem=problem, result=result, slots=recs)
+        last = dict(problem=problem, unpinned=unpinned, result=result, slots=recs)
 
     if args.route == "joint":
         run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
@@ -699,10 +776,25 @@ def _main(args, T: telemetry.Timings) -> int:
         slots = slots[:head] + last["slots"]
 
     if args.catch_all:
-        if CATCH_ALL_BUNDLE not in channels.BUNDLES:
-            raise ValueError(f"--catch-all needs the bundle {CATCH_ALL_BUNDLE}")
-        run_stage("catch_all", [CATCH_ALL_BUNDLE], [("cover_other", [CATCH_ALL_BUNDLE])])
-        print(f"catch-all: {sum(1 for r in last['slots'] if r['used'])} slot(s) used", flush=True)
+        # one single-channel bundle per fine channel that still has residual mass, over the
+        # prior every earlier stage folded in.  Single-channel so the cover row of one channel
+        # cannot bound a slot serving another (the WHFI_PLUS trap above).
+        # residual mass below L can never fill a slot (`band_lo`), and rounding leaves a
+        # served channel at ~1e-7 rather than 0, so the test is against L, not against zero
+        live = [name for name, chans in CATCH_ALL_BUNDLES.items()
+                if float((M[:, [cidx[c] for c in chans]]
+                          * (1.0 - prior[:, [cidx[c] for c in chans]])).sum()) >= L]
+        print(f"catch-all: bundles with residual mass {live or '(none)'}", flush=True)
+        if live:
+            run_stage("catch_all", live, [("cover_other", live)])
+            used = sum(1 for r in (last or {}).get("slots", []) if r["used"])
+            print(f"catch-all: {used} slot(s) used", flush=True)
+        else:
+            # decision 1 reads "a fourth channel exists iff the catch-all used a slot", so the
+            # stage is recorded even when there was nothing left for it to serve
+            passes.append(dict(name="cover_other", value=0.0, certified=True,
+                               status="skipped", seconds=0.0, stage="catch_all", slots=0))
+            print("catch-all: 0 slot(s) used", flush=True)
 
     per_state: dict[str, dict] = {}
     for s, code in enumerate(state_list):

@@ -5,8 +5,7 @@ The load-bearing test is `test_state_gain_matches_channel_gain_matrix`: on an in
 whole-state plan the aggregated gain equals `channel.gain_matrix` on the projected instance,
 exactly, because the utility is linear in the cell.  That identity is what lets a level-0
 channel-plan move be scored without re-drawing the map, so it is asserted rather than
-asserted-about.  It returns early only if `td.channels` is unimportable, which it is not once
-agent B1 has landed; the integration agent removes the guard.
+asserted-about.
 
 `CellTable` is duck-typed here: `stage2_state` reads six attributes and never imports
 `td.channels`, so a `SimpleNamespace` is a complete stand-in.
@@ -20,7 +19,8 @@ import types
 import networkx as nx
 import numpy as np
 
-from td import channel, model, stage2_state as s2s
+from td import channel, channels as ch, model, stage2_state as s2s
+from td.instance import Descaled
 
 THETA, LAM = 0.40, 0.30
 STATES = ["AZ", "CA", "NV"]
@@ -203,6 +203,61 @@ def test_candidacy_masks_the_rep_with_no_book():
     assert held["value"] <= free["value"] + 1e-12       # a restriction cannot help
 
 
+def test_candidacy_changes_which_pairs_win_not_the_gains():
+    """A case where the masked optimum is not the free one, so the mask is load bearing.
+
+    `test_candidacy_masks_the_rep_with_no_book` has only one legal assignment left after
+    masking, so it stays green even if the penalty in `_match_masked` is too small to beat a
+    swap.  Here R0 is the free optimum on slot 1 and is not a candidate there, so the mask has
+    to move the match rather than merely confirm it.
+    """
+    # One state, a big WH cell and an equal FI cell.  R1 owns nearly all the WH book and a
+    # sliver of the FI book; R0 owns a sliver of WH; R2 books nothing.  R1 is the best rep on
+    # the WH slot by a wide margin, so the free match puts it there -- but it is the only
+    # candidate on the FI slot, so candidacy has to move it and give WH to R0.
+    M = np.array([[0.0, 0.0, 20.0, 20.0]])
+    S = np.zeros((3, 1, 4), float)
+    S[0, 0, 2] = 0.1                                # R0's sliver of WH
+    S[1, 0, 2] = 10.0                               # R1 owns WH
+    S[1, 0, 3] = 0.1                                # and the only FI book
+    cells = types.SimpleNamespace(state_list=["X"], channels=CHANNELS, reps=list(REPS),
+                                  M=M, S=S, S_free=np.zeros((1, 4), float))
+    plan = s2s.Plan([s2s.Slot(("WH",), {"X": 1.0}, True),
+                     s2s.Slot(("FI",), {"X": 1.0}, True)], ["X"])
+    g, R, slot_ids = s2s.state_gain_matrix(cells, plan, theta=THETA, lam=LAM)
+
+    free = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM)
+    held = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, candidacy=True)
+    assert free["assignment"][0] == "R1", "the free optimum puts R1 on the WH slot"
+    assert held["assignment"] == {0: "R0", 1: "R1"}
+    assert free["assignment"] != held["assignment"], \
+        "the fixture must have the mask actually move the match"
+    # the gains are read off the same matrix either way
+    for slot, rep in held["assignment"].items():
+        assert math.isclose(held["gains"][slot], g[R.index(rep), slot_ids.index(slot)],
+                            rel_tol=0, abs_tol=1e-12)
+    assert held["value"] < free["value"], "a real restriction, not a relabelling"
+
+
+def test_candidacy_raises_when_two_slots_share_their_only_candidate():
+    """Hall's condition, which a per-column staffability check cannot see.
+
+    Both slots sit on AZ's WH and FI cells, where R1 is the only rep with book, so each column
+    has a candidate and `_check_staffable` passes -- but one rep cannot hold two slots.
+    """
+    cells = cell_table()
+    plan = s2s.Plan([s2s.Slot(("WH", "FI"), {"AZ": 1.0}, True),
+                     s2s.Slot(("WH", "FI"), {"AZ": 0.5}, True)], list(STATES))
+    s2s.state_stage2(cells, plan, theta=THETA, lam=LAM)          # fine without candidacy
+    try:
+        s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, candidacy=True)
+    except ValueError as e:
+        assert "distinct representatives" in str(e)
+        assert "1" in str(e), "the unstaffed slot must be named"
+    else:
+        raise AssertionError("two slots sharing their only candidate must raise")
+
+
 def test_candidacy_does_not_change_the_utilities():
     """The masked run reads the same gain matrix; releasing would inflate S_free."""
     cells, plan = cell_table(), two_slot_plan()
@@ -279,19 +334,9 @@ def v2_graph():
 
 
 def test_state_gain_matches_channel_gain_matrix():
-    """Exact by linearity: aggregating cells then matching equals projecting then matching.
-
-    Guarded on `td.channels` (agent B1, concurrent).  The integration agent drops the guard.
-    """
-    try:
-        from td import channels as ch
-        from td.instance import Descaled
-    except Exception:
-        return
-
+    """Exact by linearity: aggregating cells then matching equals projecting then matching."""
     G = v2_graph()
-    d = Descaled(G=G, contested=sorted(G), firm={r: "F" for r in REPS})
-    d.channels = CHANNELS
+    d = Descaled(G=G, contested=sorted(G), firm={r: "F" for r in REPS}, channels=CHANNELS)
     state_list = ["AZ", "CA"]
     cells = ch.aggregate(d, state_list)
 

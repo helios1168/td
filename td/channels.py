@@ -88,15 +88,6 @@ def channels_of(d: Descaled) -> tuple:
     return tuple(getattr(d, "channels", ()) or ())
 
 
-def set_channels(d: Descaled, chans) -> Descaled:
-    """Set `d.channels` whether or not the dataclass declares the field."""
-    try:
-        d.channels = tuple(chans)
-    except Exception:                       # frozen or slotted dataclass
-        object.__setattr__(d, "channels", tuple(chans))
-    return d
-
-
 # ---------------------------------------------------------------------- synthetic channels
 def _alpha_beta(seed: int, z: str) -> tuple:
     """Two deterministic draws in [0.15, 0.55] from sha256(f"{seed}:{z}").
@@ -141,10 +132,9 @@ def synthesize_channels(d: Descaled, *, seed: int = 0) -> Descaled:
 
     meta = dict(d.meta)
     meta["synthetic"] = {"seed": seed, "alpha": list(ALPHA), "beta": list(BETA)}
-    out = Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
-                   vacant=list(d.vacant), untapped=list(d.untapped),
-                   firm=dict(d.firm), meta=meta)
-    return set_channels(out, FILE_CHANNELS)
+    return Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
+                    vacant=list(d.vacant), untapped=list(d.untapped),
+                    firm=dict(d.firm), meta=meta, channels=FILE_CHANNELS)
 
 
 # ------------------------------------------------------------------------------ fine split
@@ -162,6 +152,12 @@ def fine_split(d: Descaled) -> Descaled:
     unknown = [c for c in have if c not in FILE_CHANNELS]
     if unknown:
         raise ValueError(f"fine_split needs the file channels {FILE_CHANNELS}, got {have}")
+    # A channel-less instance has no `M_c` to read, so every cell would split to zero and the
+    # result would look like a four-channel instance carrying no mass at all.  `national` is
+    # what the fine labels are split out of, and the exporter refuses a file without it.
+    if "national" not in have:
+        raise ValueError(f"fine_split needs a 'national' channel to split, got {have}; "
+                         f"call synthesize_channels on a format-1 instance first")
 
     st_wh, st_fi = {}, {}                       # state -> mass, for the first fallback
     for z, a in d.G.nodes(data=True):
@@ -203,10 +199,9 @@ def fine_split(d: Descaled) -> Descaled:
     meta = dict(d.meta)
     meta["fine_split_fallback"] = dict(sorted(fallback.items()))
     meta["channels"] = list(CHANNELS)
-    out = Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
-                   vacant=list(d.vacant), untapped=list(d.untapped),
-                   firm=dict(d.firm), meta=meta)
-    return set_channels(out, CHANNELS)
+    return Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
+                    vacant=list(d.vacant), untapped=list(d.untapped),
+                    firm=dict(d.firm), meta=meta, channels=CHANNELS)
 
 
 # ------------------------------------------------------------------------ state x channel
@@ -326,11 +321,10 @@ def project(d: Descaled, bundle, *, states=None) -> Descaled:
     meta = dict(d.meta)
     meta.pop("channels", None)
     meta["bundle"] = bundle if isinstance(bundle, str) else list(chans)
-    out = Descaled(G=G, contested=sorted(contested),
-                   uncontested=dict(sorted(uncontested.items())),
-                   vacant=sorted(vacant), untapped=sorted(untapped),
-                   firm=dict(d.firm), meta=meta)
-    return set_channels(out, ())
+    return Descaled(G=G, contested=sorted(contested),
+                    uncontested=dict(sorted(uncontested.items())),
+                    vacant=sorted(vacant), untapped=sorted(untapped),
+                    firm=dict(d.firm), meta=meta, channels=())
 
 
 # --------------------------------------------------------------------------------- writers

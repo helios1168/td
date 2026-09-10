@@ -207,6 +207,9 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     if D.shape != (S, K):
         raise ValueError(f"D must be {(S, K)}, got {D.shape}")
     M_tot = M.sum(axis=1)
+    if K == 0:
+        raise ValueError("no slots: every bundle's available mass is below L, so there is "
+                         "nothing to plan; skip the stage rather than building it")
     if eps is None:
         eps = ss.eps_lexicographic(M_tot, D) if (M_tot * D.max(axis=1)).sum() > 0 else 0.0
     if order_mass is None:
@@ -308,8 +311,10 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         dist = np.sqrt(((xy[:, None, :] - xy[None, :, :]) ** 2).sum(axis=2))
         a, b = np.nonzero(np.triu(dist > float(dist_max), k=1))
         P = len(a)
-        # z_sj + z_s'j <= 1 for every far pair (s, s') and every slot j
-        pk = np.repeat(np.arange(P), K)
+        # z_sj + z_s'j <= 1 for every far pair (s, s') and every slot j.  One row per
+        # (pair, slot): a pair index here would let `_block` sum the slots into a single row
+        # and forbid the two states from being contacted anywhere on the map.
+        pk = np.arange(P * K)
         add("cap_dist", _block(np.concatenate([pk, pk]),
                                np.concatenate([off_z + np.repeat(a, K) * K + np.tile(jk, P),
                                                off_z + np.repeat(b, K) * K + np.tile(jk, P)]),
@@ -451,7 +456,10 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
     `v + |v| 1e-9 + 1e-12` on the minimised objective: `balance_pass`'s `v (1 + 1e-9)` widens
     only for `v >= 0`, and a maximisation's minimised value is negative.
 
-    A pass that times out pins its incumbent and records `certified = False`.  A pass whose
+    A pass that times out pins its incumbent and records `certified = False`.  A pass that
+    returns nothing at all raises `SolveFailure` carrying `passes`, the log up to and
+    including that pass, whose record is `value = None` and `status` the failure reason.
+    A pass whose
     objective is identically zero (a cover pass over bundles with no slots) is recorded at
     `value = 0` and not solved (trap 19: a zero objective is not a feasibility shortcut).
 
@@ -488,14 +496,26 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
             continue
         current = dataclasses.replace(problem, c=c)
         t0 = time.time()
-        if strategy == "portfolio" and p.name == "contacts":
-            res = ss.solve(current, time_limit=time_limit, strict=False, strategy="portfolio",
-                           threads=2)
-            certified = bool(res["certified_splits"])
-        else:
-            kw = dict(warm=warm) if (warm is not None and engine in ("highs", "scip")) else {}
-            res = _me.solve_problem(current, engine, time_limit=time_limit, threads=threads, **kw)
-            certified = res["status"] == 0
+        try:
+            if strategy == "portfolio" and p.name == "contacts":
+                res = ss.solve(current, time_limit=time_limit, strict=False,
+                               strategy="portfolio", threads=2)
+                certified = bool(res["certified_splits"])
+            else:
+                kw = (dict(warm=warm) if (warm is not None and engine in ("highs", "scip"))
+                      else {})
+                res = _me.solve_problem(current, engine, time_limit=time_limit,
+                                        threads=threads, **kw)
+                certified = res["status"] == 0
+        except ss.SolveFailure as exc:
+            # A pass that returns nothing usable -- infeasible, or a time limit with no
+            # incumbent -- would otherwise take the whole pass log with it.  Record it and
+            # hand the log to the caller on the exception, so `failure.json` can name the
+            # pass that died and the passes already pinned before it.
+            log.append(dict(name=p.name, value=None, certified=False, status=exc.reason,
+                            seconds=time.time() - t0))
+            exc.passes = log
+            raise
         # The pinned bound is the looser of the solver's own objective and the objective of
         # the decoded solution (exact on the contacts pass, where a portfolio member reports
         # 6.99999998 for 7); `value` is what the decoded plan realises.

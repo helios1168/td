@@ -208,6 +208,16 @@ def state_stage2(cells, plan, *, reps=None, theta: float = 0.40, lam: float = 0.
     _check_staffable(g, ok, plan, slot_ids)
     pairs, value = (_match_masked(g, ok, criterion) if candidacy
                     else channel.match(g, criterion))
+    if candidacy and len(pairs) < len(slot_ids):
+        # `_check_staffable` is per column, so it passes when two slots share their only
+        # candidate: the shortfall is Hall's condition, not an empty column, and only the
+        # matching can see it.  A rep can hold one slot, so the plan is not staffable.
+        short = [slot_ids[j] for j in range(len(slot_ids))
+                 if j not in {j_ for _, j_ in pairs}]
+        raise ValueError(
+            f"slot(s) {short} cannot be staffed under candidacy: the candidate sets of the "
+            f"used slots have no system of distinct representatives; drop a slot or widen "
+            f"candidacy")
     assign = {slot_ids[j]: R[i] for i, j in pairs}
     gains = {slot_ids[j]: float(g[i, j]) for i, j in pairs}
     matched = {R[i] for i, _ in pairs}

@@ -59,4 +59,26 @@ order on every `gain_matrix` call, and candidacy restrictions through the penalt
 
 ## Code verify
 
-none yet
+2026-09-10, three reports under `tools/verify/U14-fullprob/`, each with a runnable artifact.
+
+- `CODEVERIFY_level0.md` (`verify_level0.py`, 45 checks): fifteen mapping rows of §5 confirmed
+  row by row; one defect, the centroid-distance cap indexed per pair instead of per (pair,
+  slot); the no-incumbent timeout path unchecked. Fixed in the integration commit.
+- `CODEVERIFY_channels.md` (`verify_channels.py`, 107 checks): `channels.py` and
+  `stage2_state.py` implement §2 to §4 as written; the projected gain equals the state-level
+  gain at 1e-9 and the sum over bundles equals the cell-level gain for every `filler_capture`.
+  Three small defects (a channel-less instance silently zeroed by `fine_split`, Hall's
+  condition missed by the candidacy guard, channel order taken from the node column instead
+  of `meta`). Fixed in the integration commit.
+- `CODEVERIFY_full_plan.md` (`full_plan_probes/`): seventeen claims confirmed, three defects
+  (a zero-slot stage crashes, the catch-all runs on a product bundle and never fires where
+  national is served, route R's moves run on the pinned problem so no merge is accepted).
+  Fixed in the integration commit. `--incumbency` and `--centers` are exercised only by the
+  regression run, which reproduced today's 8 splits.
+
+Regression (route S, national only, band 1 ± 0.05, K = 18 used of 19, committed anchors and
+centres, synthetic instance): 8 splits, CA 5, NY 3, TX 2, FL 2, the committed map's count.
+Cover pass certified in 15 s; the contacts pass hit the 600 s limit at incumbent 85 and the
+compactness pass brought it to 57 contacts, uncertified. Level 1 certifies the same count in
+49 s, so the level-0 form of the same problem is slower; see the timing table in
+`tools/verify/U14-fullprob/TIMINGS.md`.

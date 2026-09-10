@@ -282,6 +282,49 @@ def test_n_max_and_dist_max_caps_bind():
     assert far.rows["cap_dist"][1] - far.rows["cap_dist"][0] == 6 * far.k   # 6 far pairs
     assert abs(run(far, [level0.cover_pass(far, ["A"])])["passes"][0]["value"]) < 1e-9
 
+    # The cap is per (far pair, slot), not per far pair.  Three states at x = 0, 1, 2, each
+    # 1.0 and so in band alone: only (0, 2) is farther than 1.5, and one slot each covers
+    # everything.  Summing the slots into one row per pair instead would read "states 0 and 2
+    # may not be contacted anywhere on the map" and leave one of them out, at cover 2.0.
+    three = SimpleNamespace(M=np.ones((3, 1)), channels=("A",),
+                            state_list=[f"S{s}" for s in range(3)])
+    near = level0.build_level0(three, {"A": ("A",)}, edges=[(0, 1), (1, 2)], **BAND)
+    assert abs(run(near, [level0.cover_pass(near, ["A"])])["passes"][0]["value"] - 3.0) < 1e-6
+    split = level0.build_level0(three, {"A": ("A",)}, edges=[(0, 1), (1, 2)],
+                                dist_max=1.5,
+                                state_xy=np.array([[float(s), 0.0] for s in range(3)]), **BAND)
+    assert split.rows["cap_dist"][1] - split.rows["cap_dist"][0] == split.k  # 1 far pair
+    out = run(split, [level0.cover_pass(split, ["A"])])
+    assert abs(out["passes"][0]["value"] - 3.0) < 1e-6, "every state is in band on its own"
+    assert not any(out["z"][0, j] and out["z"][2, j] for j in range(split.k)), \
+        "the far pair must still be kept out of any single slot"
+
+
+def test_a_pass_that_returns_nothing_carries_the_log_out_on_the_exception():
+    """A pass can come back with nothing usable: infeasible, or a time limit with no incumbent.
+
+    `solve_passes` raises, and without the log attached the run could not say which pass died
+    or what had already been pinned.  The log is the same list `solve_passes` appends to in
+    order, so the passes that had already closed are in it too.  Made deterministic with an
+    infeasible model -- `no_incumbent` is the same code path, and no time limit reproduces it.
+    """
+    prob = build0([0.5] * 6)
+    passes = [level0.cover_pass(prob, ["A"]), level0.cover_pass(prob, ["B"])]
+
+    # u_0 cannot be both binary and in [2, 3]: the first pass has nothing to return
+    infeasible = level0.append_row(prob, "impossible", [prob.off_u], [1.0], 2.0, 3.0)
+    try:
+        run(infeasible, passes)
+        raise AssertionError("expected a SolveFailure")
+    except ss.SolveFailure as exc:
+        log = getattr(exc, "passes", None)
+        assert log, "the pass log must ride out on the exception"
+        assert len(log) == 1, "the passes after the failure never ran"
+        assert log[0]["name"] == "cover_A"
+        assert log[0]["value"] is None and log[0]["certified"] is False
+        assert log[0]["status"] == exc.reason == "infeasible"
+        assert log[0]["seconds"] >= 0.0
+
 
 def test_a_zero_objective_pass_is_recorded_not_solved():
     prob = build0([0.5] * 6)

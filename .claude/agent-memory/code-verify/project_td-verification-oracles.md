@@ -1,6 +1,6 @@
 ---
 name: td-verification-oracles
-description: Oracles, anchors and environment traps for verifying td (national channel) research code — established verifying U7-meas 2026-09-03, U8-band 2026-09-04, U8-band v2 §10 2026-09-05, Track 1 state-border snapping 2026-09-06, Track 2 state-splits MILP 2026-09-07
+description: Oracles, anchors and environment traps for verifying td (national channel) research code — established verifying U7-meas 2026-09-03, U8-band 2026-09-04, U8-band v2 §10 2026-09-05, Track 1 state-border snapping 2026-09-06, Track 2 state-splits MILP 2026-09-07, U14-fullprob level 0 and channels/stage2-state 2026-09-10
 metadata:
   type: project
 ---
@@ -160,6 +160,95 @@ while every cell has a populated `figures/` — the maps came from a separate in
   contiguity at k=18 did not hold on two synthetic 49-node/107-edge instances: 300 s time limit,
   10.9 % gap on the planar one. scf relaxations are weak; runtime is the risk, not row count.
   And note `solve()` *raises* on a time limit, so slowness is a hard failure downstream.
+
+**Oracles that worked (U14-fullprob level 0, 2026-09-10 — a MILP subclass with a new block):**
+- **Symbolic row read-back again found the one defect.** Reading each named block back as
+  `{column: coefficient}` per row and comparing with rows written by hand from the spec caught a
+  `_block` row-index bug (`np.repeat(np.arange(P), K)` where `np.arange(P*K)` was meant): `_block`
+  **sums duplicate (row, col) entries**, so a wrong row index silently collapses `P*K` rows into
+  `P` far stronger ones and leaves the rest empty. A row-count assertion cannot see it, and
+  neither can a feasibility probe whose fixture is infeasible under both readings. Always pair
+  the read-back with a hand instance whose *known answer differs* between the two readings.
+- **Compare a subclass's inherited blocks with the parent builder byte for byte.** `A[rows[name],
+  :off_new_block]` densified and `np.array_equal`'d against `build_milp`'s own block at `k = K`
+  proves "the flow rows are level 1's" in four lines; say which blocks differ by design.
+- **Slot-count sufficiency is arithmetic, not a solve.** `K = ceil(X/L)` with a per-slot band
+  `[L, U]` is enough because any cover of mass `T ≤ X` uses at most `floor(T/L)` slots. Confirm
+  by solving the same model with three extra slots and showing the objective does not move.
+- **Lexicographic-epsilon claims transfer only if the polytope still bounds the term.** At level 0
+  a state's `Σ_j y_sj` can exceed 1 (several bundles), but the `W` weighting keeps
+  `Σ_j W_sj y_sj ≤ M_tot_s`, so `eps_lexicographic` still holds. Check numerically by maximising
+  the tie-break term over the LP relaxation with `linprog`, not by re-reading the formula.
+- Environment: this worktree also has **no `Grep` tool** and `grep`/`cat` on a file are blocked;
+  use `Read`, and `wc`/`git diff`/`git log` are fine from Bash. Scripts under `tools/verify/<id>/`
+  need `PYTHONPATH=.` (the venv has no editable install of `td` for a worktree path).
+  `uvx pyright` on `td/solvers/` is **not clean on `main` either** (7 errors in
+  `state_splits.py`), so treat it as a comparison, never a gate.
+
+**Oracles that worked (U14-fullprob `td/channels.py` + `td/stage2_state.py`, 2026-09-10 — a data
+format, a projection and a masked Hungarian):**
+- **In-process mutation testing answers "does this test pass for the wrong reason".** Read the
+  module source, apply one textual mutation, `spec_from_file_location` it under the real dotted
+  name, put it in `sys.modules` *and* `setattr(td, name, mod)`, then import the shipped test
+  module fresh and call every `test_*`. Five mutations took 30 lines and found the one claim the
+  suite does not defend (a candidacy penalty shrunk to `hi + 1e-9` passes
+  `tests/test_stage2_state.py` in full, because the fixture's assignment is forced). Restore both
+  the module and the package attribute in a `finally`.
+- **Brute force over masked injections is the oracle for `tools/staff.py`-style penalty
+  assignment.** Enumerate every partial injection, rank by (cardinality, Σ log g), compare with
+  the implementation on a few hundred random masks with gains on both sides of 1. The penalty
+  `hi + (min(shape)+1)*(hi−lo+1)` is sound; the *guard around it* was the defect (a per-column
+  "someone can staff this slot" check does not imply Hall's condition, so the plan silently comes
+  back with an unstaffed slot and a value summed over fewer slots).
+- **Reuse the math-verify artifact as the oracle, swapping the code under test into it.**
+  `verify_decomposition.py` builds a cell-level graph with its own private projector; substituting
+  `channels.project` for it re-proves clause (a) *through the shipped code path* at 4e-16 over the
+  three business plans × 12 (filler_capture, θ, λ) settings.
+- **Round-trip comparisons must be per cell, not per total.** The shipped v2 round-trip test
+  compared zip totals, which a permutation of channel labels inside a zip would survive.
+- **The confidential hub instance is usable as a full-size oracle** if the probe prints only
+  counts and relative deviations: resynthesizing from it at the seed recorded in the shipped
+  synthetic file proved "the national cell is the input, bit for bit" over all 3,713 zips.
+- **`model.reps` returns node order, not sorted order.** `aggregate`'s reps are sorted, so a
+  per-bundle `channel.gain_matrix` left on its default does not stack onto `state_gain_matrix`'s
+  rows even when the rep *set* matches. Any "one global rep order" requirement has to be checked
+  as order, not membership.
+- **Environment trap, new and sharp: a sibling agent edits the same files mid-verification.**
+  `td/channels.py` lost a function between my Read and my probe run. Pin with
+  `git archive HEAD | tar -x -C <job tmp>/pin` and drive the probe with a `TD_VERIFY_ROOT` env
+  var; keep data paths (gitignored `battery/results/...`) absolute to the worktree. A pinned
+  snapshot fails exactly one test, `test_centers.py::test_assign_default_path_matches_git_head`,
+  because it shells out to `git show` — that is the snapshot, not the code. Check
+  `git status --porcelain` before and after the run and say which state each verdict is for.
+- Suite at `9956e9d` (worktree dirty): **636 passed, 0 failed**; the pinned snapshot 633 + the
+  git-dependent test. `uvx pyright --pythonpath …/.venv/bin/python3 td/channels.py
+  td/stage2_state.py` is **0 errors** (1.1.413), unlike `td/solvers/`.
+
+**Oracles that worked (U14-fullprob `tools/full_plan.py`, 2026-09-10, a multi-stage driver):**
+- **A hand-written format-2 toy instance is the cheapest lever on a level-0 driver.** Write the
+  gzip JSON directly (`nodes` long by `(z, channel)`), one state per band argument, and every
+  slot mass is checkable by hand. Monkeypatch `td.geo.state_rook` to `(adj, polys)`; passing real
+  `shapely.box` polygons at known LAEA metre offsets is what finally executed `--dist-max` (the
+  shipped tests pass `{}` and had never run `_state_xy`).
+- **Discriminating pairs beat single runs on "does this pass ever fire".** Two runs identical
+  except for one state's national mass showed the catch-all covering 1.0 in one and 0.0 in the
+  other: a four-channel product bundle is blocked by its own cover row wherever the earlier
+  passes already served that state's national mass.
+- **Wrap `build_level0` / `solve_passes` as module attributes to record arguments across stages.**
+  The driver imports them inside the function, so the module attribute is what it calls; that
+  turns "does `prior` accumulate `covered`" into an exact `np.allclose(rtol=0, atol=0)`.
+- **For a "re-solve under a modified bound" loop, always solve the same modification twice:
+  once on the problem the code hands the move, once on the unpinned problem.** That is what
+  separates "infeasible because of the change" from "infeasible because of the lexicographic pin
+  rows the previous passes appended". Here every route-R merge was the second.
+- **Trap 18 is reproducible in one process in seconds:** HiGHS at threads 2, then unset (fine),
+  then 4 → `SolveFailure ... HiGHS stopped (Not Set) with no incumbent`. An unset `threads` does
+  not re-size the pool; only a different integer does.
+- **Zero-size blocks are the level-0 degenerate input.** A stage whose bundles have no available
+  mass builds `K = 0` and `build_level0` dies at `D.max(axis=1)`; reachable from the driver on
+  `--catch-all` with no residual, which is the configuration the decisions mandate.
+- Suite at this point (worktree dirty, integration edits in): **639 passed, 0 failed, 0 skipped**.
+  `uvx pyright --pythonpath …/.venv/bin/python3 tools/full_plan.py` → 2 optional-narrowing errors.
 
 **Recurring spec-vs-code pattern here:** `scipy.optimize.milp` accepts no warm start
 (options are only disp/presolve/time_limit/node_limit/mip_rel_gap), so any model text saying a

@@ -66,9 +66,10 @@ def cells_fixture() -> instance.Descaled:
                    M=sum(M_c.values()), S=S, S_free=sum(F_c.values()),
                    cand=tuple(sorted(S)))
     G.add_edges_from([("zA", "zB"), ("zB", "zC")])
-    d = instance.Descaled(G=G, contested=[], uncontested={"zA": "R0", "zB": "R1", "zC": "R2"},
-                          vacant=[], untapped=[], firm={}, meta={})
-    return channels.set_channels(d, channels.FILE_CHANNELS)
+    return instance.Descaled(G=G, contested=[],
+                             uncontested={"zA": "R0", "zB": "R1", "zC": "R2"},
+                             vacant=[], untapped=[], firm={}, meta={},
+                             channels=channels.FILE_CHANNELS)
 
 
 # ------------------------------------------------------------------- synthesize_channels
@@ -161,6 +162,32 @@ def test_fine_split_conserves_totals():
         for i, per in b["S_c"].items():
             assert abs(sum(per.values()) - a["S"][i]) < 1e-12
         assert abs(sum(b["S_free_c"].values()) - a["S_free"]) < 1e-12
+
+
+def test_fine_split_refuses_an_instance_with_no_national_channel():
+    """A channel-less instance has no `M_c`, so every cell would split to zero and the result
+    would read as a four-channel instance carrying no mass.  It must raise instead."""
+    try:
+        channels.fine_split(v1_fixture())            # channels == ()
+    except ValueError as e:
+        assert "national" in str(e)
+    else:
+        raise AssertionError("fine_split accepted a channel-less instance")
+
+    # and a file that carries wh/fi but no national row: there is nothing to split
+    d = cells_fixture()
+    for z in d.G:
+        for key in ("M_c", "S_free_c"):
+            d.G.nodes[z][key].pop("national", None)
+        for per in d.G.nodes[z]["S_c"].values():
+            per.pop("national", None)
+    d.channels = ("wh", "fi")
+    try:
+        channels.fine_split(d)
+    except ValueError as e:
+        assert "national" in str(e)
+    else:
+        raise AssertionError("fine_split accepted an instance with no national channel")
 
 
 def test_fine_split_on_a_synthetic_instance_needs_no_fallback():
@@ -309,9 +336,6 @@ def test_write_v2_payload():
 
 
 def test_write_v2_round_trip():
-    """Guarded: A1 adds `FORMAT_V2` to td.instance concurrently, and the runner has no skip."""
-    if not hasattr(instance, "FORMAT_V2"):
-        return
     s = channels.synthesize_channels(v1_fixture(), seed=0)
     with tempfile.TemporaryDirectory() as tmp:
         path = channels.write_v2(s, os.path.join(tmp, "cells.json.gz"))
@@ -325,6 +349,31 @@ def test_write_v2_round_trip():
         for i, v in a["S"].items():
             assert abs(b["S"][i] - v) <= 1e-5 * max(v, 1e-9)
         assert abs(b["S_free"] - a["S_free"]) <= 1e-5 * max(a["S_free"], 1e-9)
+
+
+def test_write_v2_round_trips_into_the_same_cells():
+    """The seam the three writers share: `write_v2` -> `load_descaled` -> `aggregate`.
+
+    Two states, the fine labels, every cell totalled by state and channel.  The bound is the
+    file's own 6-significant-figure rounding on `m_rel` and on `share`, which `S = share*m_rel`
+    carries twice; the channel order survives because `write_v2` declares it in
+    `meta["channels"]` and emits every (zip, channel) pair.
+    """
+    f = channels.fine_split(channels.synthesize_channels(v1_fixture(), seed=0))
+    want = channels.aggregate(f, ["MA", "NY"])
+    with tempfile.TemporaryDirectory() as tmp:
+        path = channels.write_v2(f, os.path.join(tmp, "cells.json.gz"))
+        back = instance.load_descaled(path)
+    assert back.channels == channels.CHANNELS
+    got = channels.aggregate(back, ["MA", "NY"])
+    assert got.channels == want.channels and got.reps == want.reps
+    assert got.state_list == want.state_list
+    for name in ("M", "S", "S_free"):
+        a, b = getattr(want, name), getattr(got, name)
+        assert a.shape == b.shape, name
+        assert np.allclose(b, a, rtol=1e-5, atol=1e-9), name
+    # and the national total is still the input instance's, cell by cell
+    assert abs(got.M.sum() - sum(f.G.nodes[z]["M"] for z in f.G)) <= 1e-5 * got.M.sum()
 
 
 def test_write_v1_of_a_projection_loads_back():

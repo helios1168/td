@@ -137,6 +137,39 @@ def test_v2_channel_order_comes_from_the_file():
         assert d.G.nodes["10001"]["M"] == 4.0          # folding is order-independent
 
 
+def test_v2_channel_order_prefers_the_declared_meta():
+    """A sparse export's first-appearance order is not the exporter's own channel order.
+
+    `tools/instance_export` writes `meta["channels"]` from the opportunity file and emits no
+    row for a cell a zip does not have, so the first zip can miss a channel a later one
+    carries.  `td.channels.write_v2` emits every pair and the two rules agree there.  The
+    loader honours the declared order when it names the same set, so a fine-labelled file
+    round-trips in `CHANNELS` order and `tools/full_plan.py`'s `d.channels != CHANNELS` test
+    does not re-split labels that are already fine.
+    """
+    sparse = {
+        "z":          ["10001", "10001", "10002", "10002", "10002"],
+        "channel":    ["national", "fi", "national", "wh", "fi"],
+        "m_rel":      [2.0, 1.0, 2.0, 1.0, 1.0],
+        "share":      [{"R1": 0.5}, {}, {"R2": 0.5}, {}, {}],
+        "share_free": [0.0, 0.0, 0.0, 0.0, 0.0],
+        "state":      ["NY"] * 5,
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        # first appearance over the rows is national, fi, wh; the exporter declares its own
+        declared = descaled.load_descaled(
+            _write(tmp, descaled.FORMAT_V2, sparse, channels=["national", "wh", "fi"]))
+        assert declared.channels == ("national", "wh", "fi")
+        # no meta, or one naming a different set, falls back to first appearance
+        bare = descaled.load_descaled(_write(tmp, descaled.FORMAT_V2, sparse))
+        assert bare.channels == ("national", "fi", "wh")
+        partial = descaled.load_descaled(
+            _write(tmp, descaled.FORMAT_V2, sparse, channels=["national", "wh"]))
+        assert partial.channels == ("national", "fi", "wh")
+        # the fold itself is order-independent either way
+        assert declared.G.nodes["10002"]["M"] == bare.G.nodes["10002"]["M"] == 4.0
+
+
 def test_v2_matches_v1_on_the_summed_instance():
     """Same numbers either way: the totals are all the model reads."""
     with tempfile.TemporaryDirectory() as tmp:

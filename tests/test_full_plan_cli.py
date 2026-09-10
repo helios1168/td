@@ -6,11 +6,6 @@ The defaults are a contract with `tools/borders_report.py` for the same reason
 weights is not comparable to the committed map's own number.  `failure.json`'s keys are a
 contract with `app/headline.py::failure`, so they are checked against
 `tools/state_splits.py::_write_failure`'s own record rather than restated by hand.
-
-The end-to-end tests need `td.channels`, `td.stage2_state` and `td.solvers.level0`, which land
-alongside this file; `tests/run_all.py` imports every test module before it filters, so the
-import is guarded here and the tests skip while a module is missing.  The integration agent
-removes the guard.
 """
 from __future__ import annotations
 
@@ -28,18 +23,17 @@ if HERE not in sys.path:
 if os.path.join(ROOT, "tools") not in sys.path:
     sys.path.insert(0, os.path.join(ROOT, "tools"))
 
+import types                                   # noqa: E402
+
+import numpy as np                             # noqa: E402
+
+from td import channels                        # noqa: E402
 from td import geo as td_geo                   # noqa: E402
 from td import instance as td_instance         # noqa: E402
+import borders_report                          # noqa: E402
 import full_plan as cli                        # noqa: E402
 import state_splits as ss_cli                  # noqa: E402
-
-try:                                            # written concurrently; see the docstring
-    from td import channels as _channels        # noqa: F401
-    from td import stage2_state as _stage2      # noqa: F401
-    from td.solvers import level0 as _level0    # noqa: F401
-    HAVE_LEVEL0 = True
-except Exception:                               # pragma: no cover - the wave-1 window only
-    HAVE_LEVEL0 = False
+import us_maps                                 # noqa: E402
 
 STATES = [f"S{i}" for i in range(6)]
 
@@ -68,6 +62,9 @@ def test_band_and_k_defaults_are_the_settled_business_numbers():
     assert args.priority == "N,WH,FI"
     assert args.bundles is None                 # resolved from td.channels.DEFAULT_BUNDLES
     assert args.n_max is None and args.dist_max is None
+    # a real run is 49 states at about two MILPs each; the budget is what keeps `--driver reps`
+    # from spending hours nobody asked for
+    assert args.move_budget == 20
 
 
 def test_engine_and_strategy_defaults_match_the_state_splits_driver():
@@ -118,6 +115,27 @@ def test_a_failed_pass_writes_the_same_record_state_splits_writes():
         with open(os.path.join(mine, "failure.json"), encoding="utf-8") as fh:
             rec = json.load(fh)
         assert rec["reason"] == "no_incumbent" and rec["solve_seconds"] == 3600.4
+
+
+def test_failure_json_carries_the_pass_log_when_the_solver_attached_one():
+    """`td.solvers.level0.solve_passes` hangs the pass log on the `SolveFailure` it raises.
+
+    The key is written only when it is there, so a failure from anywhere else still writes
+    exactly the record `tools/state_splits.py` writes and `app/headline.py::failure` reads.
+    """
+    exc = ss_cli.ss.SolveFailure(
+        1, "Time limit reached. (HiGHS Status 13: primal_status is None)")
+    exc.passes = [dict(name="cover_N", value=24.0, certified=True, status=0, seconds=1.5),
+                  dict(name="contacts", value=None, certified=False,
+                       status="no_incumbent", seconds=600.0)]
+    with tempfile.TemporaryDirectory() as out:
+        cli._write_failure(out, "joint", exc, 601.5)
+        with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
+            rec = json.load(fh)
+    assert rec["reason"] == "no_incumbent"
+    assert [p["name"] for p in rec["passes"]] == ["cover_N", "contacts"]
+    assert rec["passes"][1]["value"] is None
+    assert {p["stage"] for p in rec["passes"]} == {"joint"}
 
 
 # ------------------------------------------------------------------------------- state geometry
@@ -198,15 +216,13 @@ def _check_plan(out: str) -> dict:
     assert len(ids) == len(set(ids)), "slot ids must be unique across stages"
 
     bundle_of = {rec["id"]: rec["bundle"] for rec in plan["slots"]}
-    from td import channels
-
     for st, row in plan["per_state"].items():
         assert st in STATES
         covered = {c: 0.0 for c in channels.CHANNELS}
         for slot_id, share in row.items():
             if slot_id == "residual_by_channel":
                 continue
-            for c in channels.BUNDLES[bundle_of[slot_id]]:
+            for c in cli._bundle_channels(bundle_of[slot_id]):
                 covered[c] += float(share)
         for c, v in covered.items():
             assert v <= 1.0 + 1e-6, (st, c, v)
@@ -227,8 +243,6 @@ def test_end_to_end_sequential_writes_a_plan_and_projections():
     by the first thread count a process asks for (trap 18), and `tests/run_all.py` is one long
     lived process.
     """
-    if not HAVE_LEVEL0:
-        return
     with tempfile.TemporaryDirectory() as tmp:
         out = _run(tmp, "sequential")
         plan = _check_plan(out)
@@ -250,8 +264,6 @@ def test_end_to_end_sequential_writes_a_plan_and_projections():
 def test_end_to_end_joint_runs_the_lexicographic_passes():
     """Route joint over one model: the pass log must name the coverage passes and contacts,
     in that order, and the plan must satisfy the same per-channel coverage bound."""
-    if not HAVE_LEVEL0:
-        return
     with tempfile.TemporaryDirectory() as tmp:
         out = _run(tmp, "joint")
         plan = _check_plan(out)
@@ -272,8 +284,6 @@ def test_driver_reps_logs_every_move_and_the_catch_all_pass_runs():
     Only the moves the last model can express are offered: under route sequential the N slots
     belong to an earlier model, so "drop N" does not appear (the TODO in `_rep_moves`).
     """
-    if not HAVE_LEVEL0:
-        return
     with tempfile.TemporaryDirectory() as tmp:
         inst = os.path.join(tmp, "inst.json.gz")
         _write_v1(inst)
@@ -298,11 +308,382 @@ def test_driver_reps_logs_every_move_and_the_catch_all_pass_runs():
         assert "catch_all" in stages
 
 
+def test_a_stage_with_no_slots_is_skipped_and_recorded():
+    """A stage whose bundles have no residual mass above L gets zero slots, and a zero-slot
+    model has no objective to build (`build_level0` raises rather than returning one).  That is
+    exactly `--catch-all` after the sequential stages served everything, so the driver checks
+    the slot count first and records the stage as skipped."""
+    from td.solvers import level0
+
+    cells = types.SimpleNamespace(M=np.zeros((6, 1)), channels=("A",),
+                                  state_list=[f"S{i}" for i in range(6)])
+    assert level0.slot_counts(cells, {"A": ("A",)}, L=0.8) == {"A": 0}
+    try:
+        level0.build_level0(cells, {"A": ("A",)}, edges=[(0, 1)], L=0.8, U=1.2, eta=0.05)
+    except ValueError as e:
+        assert "no slots" in str(e)
+    else:
+        raise AssertionError("a zero-slot model must be refused, not built")
+
+    # end to end: the even toy's stages serve every channel, so the catch-all has nothing left
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v1(inst)
+        out = os.path.join(tmp, "out_skip")
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+        try:
+            rc = cli.main([inst, "--synthesize", "--route", "sequential", "--driver", "geo",
+                           "--catch-all", "--engine", "scipy", "--strategy", "direct",
+                           "--k", "2", "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        catch = [p for p in plan["passes"] if p.get("stage") == "catch_all"]
+        assert catch, "decision 1 reads off the catch-all, so it is recorded either way"
+        assert all(p["status"] == "skipped" and p["slots"] == 0 for p in catch)
+        assert not [r for r in plan["slots"] if r["bundle"] in cli.CATCH_ALL_BUNDLES]
+
+
+def test_relax_pins_opens_the_contacts_pin_and_keeps_the_cover_pins():
+    """`solve_passes` pins every pass with an appended row.  A move re-solves for contacts, so
+    `pin_contacts` -- "no more contacts than the unmerged plan used" -- can only over-constrain
+    it; the cover pins must stay, or minimising contacts closes every slot and the best move is
+    always the empty plan."""
+    from td.solvers import level0
+
+    cells = types.SimpleNamespace(M=np.full((6, 1), 0.5), channels=("A",),
+                                  state_list=[f"S{i}" for i in range(6)])
+    prob = level0.build_level0(cells, {"A": ("A",)},
+                               edges=[(i, i + 1) for i in range(5)], L=0.8, U=1.2, eta=0.05)
+    pinned = level0.append_row(prob, "pin_cover_A", [prob.off_u], [1.0], -np.inf, 1.0)
+    pinned = level0.append_row(pinned, "pin_contacts", [pinned.off_u], [1.0], -np.inf, 2.0)
+
+    relaxed = cli._relax_pins(pinned, ["pin_contacts"])
+    lo, hi = relaxed.rows["pin_contacts"]
+    assert np.isinf(relaxed.ub[lo:hi]).all()
+    lo, hi = relaxed.rows["pin_cover_A"]
+    assert np.allclose(relaxed.ub[lo:hi], 1.0), "a coverage pin must survive"
+    # the matrix is untouched, so every offset and any later append_row still lines up
+    assert relaxed.A.shape == pinned.A.shape and relaxed.n_var == pinned.n_var
+    assert np.allclose(pinned.ub[pinned.rows["pin_contacts"][0]], 2.0), "the input is not mutated"
+
+
+def test_reps_driver_scores_a_merge_and_names_the_move_it_cannot_evaluate():
+    """Two things the move log has to say.
+
+    `merge_whfi` must come back with a real score rather than a solver failure: the moves are
+    re-solved with the contacts pin relaxed, so a merge is no longer refused for having a
+    different contact count than the plan it is being compared with.  `drop_n` is not
+    expressible under route sequential -- the N slots belong to an earlier model -- and is
+    recorded as such instead of being silently absent.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v1(inst)
+        out = os.path.join(tmp, "out_moves")
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+        try:
+            rc = cli.main([inst, "--synthesize", "--route", "sequential", "--driver", "reps",
+                           "--move-budget", "2", "--engine", "scipy", "--strategy", "direct",
+                           "--k", "2", "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            moves = json.load(fh)["moves"]
+        merges = [m for m in moves if m["move"] == "merge_whfi"]
+        assert merges, "the merge move must be offered"
+        assert all(m["value"] is not None for m in merges), \
+            "a merge must be scored, not refused by a pin"
+        drops = [m for m in moves if m["move"] == "drop_n"]
+        assert drops and all(m["status"] == "not_evaluable_under_sequential" for m in drops)
+        assert all(m["value"] is None for m in drops)
+
+
+def _write_v2_fine(path: str) -> None:
+    """A format-2 toy already carrying the four fine labels, so no `--synthesize` is needed.
+
+    Two states.  The national mass is 1.0 in total, so at `--k 1` the band is [0.8, 1.2]; S0's
+    WH and FI cells are 0.9 each, in band on their own, and S1 has neither.  Run with
+    `--bundles N`, the sequential stages serve the national channels and leave WH and FI
+    entirely to the catch-all.
+    """
+    rows = [
+        ("z0", "S0", {"N_WH": (0.25, {"rep0": 0.2}), "N_FI": (0.25, {"rep1": 0.2}),
+                      "WH": (0.9, {"rep0": 0.3}), "FI": (0.9, {"rep2": 0.3})}),
+        ("z1", "S1", {"N_WH": (0.25, {"rep1": 0.2}), "N_FI": (0.25, {"rep2": 0.2}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+    ]
+    z, chan, m_rel, share, share_free, state = [], [], [], [], [], []
+    for zid, st, cells in rows:
+        for c in channels.CHANNELS:
+            m, sh = cells[c]
+            z.append(zid); chan.append(c); m_rel.append(m)
+            share.append(dict(sh)); share_free.append(0.0); state.append(st)
+    obj = dict(
+        format=td_instance.FORMAT_V2,
+        nodes=dict(z=z, channel=chan, m_rel=m_rel, share=share, share_free=share_free,
+                   state=state),
+        edges=dict(u=["z0"], v=["z1"]),
+        meta=dict(channels=list(channels.CHANNELS)),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def test_catch_all_opens_a_slot_on_a_channel_the_stages_left():
+    """The catch-all runs one single-channel bundle per fine channel with residual mass.
+
+    A product bundle cannot: a `WHFI_PLUS` slot sits in all four cover rows, so its share is
+    bounded by `min_c cover_ub[s, c]`, and once the national channels are served (they are,
+    by `seq_N`) no catch-all slot can open anywhere.  Decision 1 reads "a fourth channel
+    exists iff the catch-all used a slot", so that bundle made the answer always no.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v2_fine(inst)
+        out = os.path.join(tmp, "out_catch")
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+        try:
+            rc = cli.main([inst, "--route", "sequential", "--driver", "geo",
+                           "--bundles", "N", "--catch-all", "--engine", "scipy",
+                           "--strategy", "direct", "--k", "1", "--time-limit", "30",
+                           "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        catch = [rec for rec in plan["slots"]
+                 if rec["bundle"] in cli.CATCH_ALL_BUNDLES and rec["used"] and rec["y"]]
+        assert catch, "the catch-all must open a slot on the channels the stages left"
+        assert {rec["bundle"] for rec in catch} == {"OTHER_WH", "OTHER_FI"}
+        # each catch-all bundle carries exactly one fine channel
+        for rec in catch:
+            assert len(cli._bundle_channels(rec["bundle"])) == 1
+        # S0's WH and FI are now fully served, and the national channels stay served
+        row = plan["per_state"]["S0"]["residual_by_channel"]
+        for c in ("WH", "FI", "N_WH", "N_FI"):
+            assert abs(row[c]) <= 1e-6, (c, row[c])
+        assert any(p.get("stage") == "catch_all" for p in plan["passes"])
+
+
+def _write_v1_uneven(path: str) -> list[float]:
+    """One zip per state, masses `[4.5, 0.3 x 5]`, so a stage cannot cover everything.
+
+    At `--k 2` this is tau = 3, L = 2.4, U = 3.6.  With `--n-max 1` only the heavy state can
+    fill a slot at all, and only to `U / 4.5 = 0.8` of itself, so the first stage leaves a
+    prior strictly inside (0, 1) -- which is what a double-counted prior needs in order to
+    show.  On the even toy every stage covers its channels completely and the bug is invisible.
+    """
+    masses = [4.5, 0.3, 0.3, 0.3, 0.3, 0.3]
+    zips = [f"{10000 + s * 10:05d}" for s in range(6)]
+    reps = [f"rep{i}" for i in range(6)]
+    obj = dict(
+        format=td_instance.FORMAT,
+        nodes=dict(z=zips, m_rel=list(masses),
+                   share=[{reps[i]: 0.3, reps[(i + 1) % 6]: 0.2} for i in range(6)],
+                   share_free=[0.1] * 6, state=list(STATES)),
+        edges=dict(u=zips[:-1], v=zips[1:]),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+    return masses
+
+
+def test_the_residual_is_one_minus_the_shares_actually_covered():
+    """`run_stage` folds this solve's own `covered` into `prior`, never `1 - residual`.
+
+    `Level0Problem.decode_zy` returns `residual = (1 - prior) - covered`, so folding
+    `1 - residual` back would add `prior` a second time at every stage after the first.  The
+    plan's `residual_by_channel` must equal one minus the shares the slots actually ask for,
+    per state and per channel.  The toy is deliberately uncoverable (`_write_v1_uneven`): the
+    even six-state toy has stage `seq_N` cover its channels completely, and a doubled prior
+    clips to the same 1.0 there.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v1_uneven(inst)
+        out = os.path.join(tmp, "out_residual")
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+        try:
+            rc = cli.main([inst, "--synthesize", "--route", "sequential", "--driver", "geo",
+                           "--n-max", "1", "--engine", "scipy", "--strategy", "direct",
+                           "--k", "2", "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        bundle_of = {rec["id"]: rec["bundle"] for rec in plan["slots"]}
+
+        partial = 0
+        for st, row in plan["per_state"].items():
+            covered = {c: 0.0 for c in channels.CHANNELS}
+            for slot_id, share in row.items():
+                if slot_id == "residual_by_channel":
+                    continue
+                for c in channels.BUNDLES[bundle_of[slot_id]]:
+                    covered[c] += float(share)
+            for c, got in row["residual_by_channel"].items():
+                assert abs(got - (1.0 - covered[c])) <= 1e-6, (st, c, got, covered[c])
+                if 1e-6 < covered[c] < 1.0 - 1e-6:
+                    partial += 1
+        assert partial, "the toy must leave a prior strictly inside (0, 1) or it proves nothing"
+
+
+def test_move_budget_caps_the_states_the_reps_driver_visits():
+    """Every state costs a MILP per move, so an uncapped `--driver reps` is about 98 solves on
+    the real 49.  The budget takes the heaviest states first and stops."""
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v1(inst)
+        out = os.path.join(tmp, "out_budget")
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+        try:
+            rc = cli.main([inst, "--synthesize", "--route", "sequential", "--driver", "reps",
+                           "--move-budget", "2", "--engine", "scipy", "--strategy", "direct",
+                           "--k", "2", "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        visited = {m["state"] for m in plan["moves"]}
+        assert len(visited) == 2, visited
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["move_budget"] == 2
+
+
+# ------------------------------------------------------------------------- the committed draw
+# `--incumbency` and `--centers` read a committed `draw.csv` through
+# `borders_report.load_committed`, which needs the confidential instance and the gazetteer.  The
+# `Ctx` is built here by hand from a toy `draw.csv`, the way
+# `tests/test_state_splits_cli.py::test_main_writes_timings_json_end_to_end` builds one, so the
+# two helpers that read it are covered without either.
+def _draw_csv(tmp: str, zips: list[str]) -> str:
+    """`zip,district` over the toy: states S0..S2 are D01, S3..S5 are D02."""
+    path = os.path.join(tmp, "draw.csv")
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["zip", "district"])
+        for i, z in enumerate(zips):
+            w.writerow([z, "D01" if i // 4 < 3 else "D02"])
+    return path
+
+
+def _toy_ctx(tmp: str, zips: list[str]):
+    """A `borders_report.Ctx` over the six-state toy, labelled by a real `draw.csv`."""
+    committed_full = us_maps.read_draw(_draw_csv(tmp, zips))
+    labels0 = np.array([borders_report._label_of(committed_full[z]) for z in zips], int)
+    state_idx = np.array([i // 4 for i in range(len(zips))], int)
+    # one point per state, 100 km apart along a line, so the moments are not degenerate
+    xy = np.array([[float(s) * 100.0, 0.0] for s in state_idx], float)
+    M = np.ones(len(zips), float)
+    k = int(labels0.max()) + 1
+    home, owners = borders_report._owner_sets(labels0, state_idx, M, k, len(STATES))
+    inst = os.path.join(tmp, "inst.json.gz")
+    _write_v1(inst)
+    return borders_report.Ctx(
+        d=td_instance.load_descaled(inst), zips=zips, xy=xy, M=M, state_idx=state_idx,
+        labels0=labels0, k=k, state_list=list(STATES),
+        states_by_zip={z: STATES[i // 4] for i, z in enumerate(zips)},
+        M_by_zip={z: 1.0 for z in zips}, missing=[], committed_full=committed_full,
+        home=home, owners=owners, committed_rep_of=None)
+
+
+def test_anchors_from_draw_put_committed_district_j_on_n_slot_start_plus_j():
+    """`--incumbency`: district j of the committed draw is anchored in its home state, on the
+    N bundle's slot `start + j`.  D01's mass is in S0..S2 and D02's in S3..S5, so the plurality
+    home of district 0 is S0 and of district 1 is S3."""
+    zips = [f"{10000 + s * 10 + i:05d}" for s in range(6) for i in range(4)]
+    with tempfile.TemporaryDirectory() as tmp:
+        ctx = _toy_ctx(tmp, zips)
+        assert ctx.k == 2 and list(ctx.home) == [0, 3]
+
+        assert cli._anchors_from_draw(ctx, STATES, 0, 5) == [(0, 0), (3, 1)]
+        # the slot numbering is an offset, not a relabelling
+        assert cli._anchors_from_draw(ctx, STATES, 3, 8) == [(0, 3), (3, 4)]
+        # a bundle with room for one slot only anchors the district that fits
+        assert cli._anchors_from_draw(ctx, STATES, 0, 1) == [(0, 0)]
+        # a state the plan does not carry is dropped rather than mis-indexed
+        assert cli._anchors_from_draw(ctx, ["S0", "S1"], 0, 5) == [(0, 0)]
+
+
+def test_moments_from_draw_fill_only_the_n_slots():
+    """`--centers`: only the N slots are the committed draw's own districts, so every other
+    slot's column stays zero and carries no compactness tie-break."""
+    zips = [f"{10000 + s * 10 + i:05d}" for s in range(6) for i in range(4)]
+    with tempfile.TemporaryDirectory() as tmp:
+        ctx = _toy_ctx(tmp, zips)
+        D = cli._moments_from_draw(ctx, STATES, len(STATES), 5, 0, 2)
+
+        assert D.shape == (len(STATES), 5)
+        assert np.any(D[:, :2] > 0.0), "the two N slots must carry moments"
+        assert not np.any(D[:, 2:]), "a non-N slot has no committed centre"
+        # a state's moment is about the centre of the district it was drawn into, so every
+        # state has a positive moment on one of the two columns
+        assert np.all(D[:, :2].max(axis=1) > 0.0)
+        # the same moments land on an offset N range and nowhere else
+        shifted = cli._moments_from_draw(ctx, STATES, len(STATES), 5, 2, 4)
+        assert np.allclose(shifted[:, 2:4], D[:, :2])
+        assert not np.any(shifted[:, :2]) and not np.any(shifted[:, 4:])
+
+
+def test_incumbency_and_centers_reach_an_end_to_end_run():
+    """Both flags through `main`, with `load_committed` monkeypatched the way
+    `tests/test_state_splits_cli.py` patches it.  `--centers` is what makes a compactness pass
+    run at all (`_pass_list` adds it only for a nonzero D)."""
+    zips = [f"{10000 + s * 10 + i:05d}" for s in range(6) for i in range(4)]
+    with tempfile.TemporaryDirectory() as tmp:
+        ctx = _toy_ctx(tmp, zips)
+        draw = os.path.join(tmp, "draw.csv")
+        inst = os.path.join(tmp, "inst.json.gz")
+        out = os.path.join(tmp, "out")
+
+        orig_load, orig_rook = borders_report.load_committed, td_geo.state_rook
+        borders_report.load_committed = lambda *a, **kw: ctx
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+        try:
+            rc = cli.main([inst, "--synthesize", "--route", "sequential", "--driver", "geo",
+                           "--incumbency", draw, "--centers", draw,
+                           "--engine", "scipy", "--strategy", "direct", "--k", "2",
+                           "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            borders_report.load_committed, td_geo.state_rook = orig_load, orig_rook
+
+        plan = _check_plan(out)
+        assert any("compactness" in p["name"] for p in plan["passes"]), \
+            "--centers must add a compactness pass"
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["incumbency"] == os.path.abspath(draw)
+        assert params["centers"] == os.path.abspath(draw)
+        # the anchors are `var_lb[z_sj] = 1`, so district 0's home state must be on N slot 0
+        # and district 1's on N slot 1 -- not merely somewhere in the plan, which holds on
+        # this toy anyway because cover_N is full
+        n_slots = [rec for rec in plan["slots"] if rec["bundle"] == "N"]
+        assert len(n_slots) >= 2
+        assert "S0" in n_slots[0]["y"], n_slots[0]
+        assert "S3" in n_slots[1]["y"], n_slots[1]
+
+
 def test_synthesize_writes_the_v2_instance_it_solved():
     """A synthetic run is only reproducible if the instance it invented is on disk beside the
     plan (trap 22's rule for a gazetteer vintage applies to a synthesized split too)."""
-    if not HAVE_LEVEL0:
-        return
     with tempfile.TemporaryDirectory() as tmp:
         out = _run(tmp, "sequential")
         v2 = os.path.join(out, "instance_v2.json.gz")
