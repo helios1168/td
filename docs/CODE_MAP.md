@@ -73,6 +73,7 @@ way.
 | `docs/CODE_MAP.md` | this file: what is built, where, how to run it |
 | `docs/APP.md` | owner of the Streamlit app's story |
 | `docs/HEADLINE.md` | owner of the shipped headline map end to end: the committed draw, the level-1 split MILP, level-2 realisation, what is certified, and how to reproduce it |
+| `docs/FULL_PROBLEM.md` | owner of the multi-channel formulation (track `full-problem`): cells by (zip, channel), bundles, the joint problem F, the decomposition by bundle, level 0 at state × channel grain, routes S/J and merge drivers R/G |
 | `docs/units/<id>.md` | one unit's brief plus `## Model`, `## Verify`, `## Code verify` and a `Status: open\|done\|dropped` line |
 | `docs/foundations/` | frozen FRAME, APPROACHES, LENS_*, DOMAIN_*, LIT_*, BRIEF and the former `archive/`; read-only, never edited |
 | `<worktree>/PLAN.md` | one track's running log (`## Goal`, `## Next step`, `## Done`, `## Decisions needed`, `## Files owned / forbidden`); committed on the branch, deleted at merge |
