@@ -8,7 +8,13 @@ uncovered).  The uncovered half is what the residual pseudo-district `other` exi
 Every zip carries the same national mass, so the slot masses are exact rather than a tolerance,
 and the gazetteer is monkeypatched away (`run_draw.coordinates`) the way
 `tests/test_state_splits_cli.py` monkeypatches `borders_report.load_committed`: the run then
-needs no cache, no shapefile and no network.
+needs no cache, no shapefile and no network.  The contiguity graph is written straight into the
+`projections/N/cell_graph.json` cache for the same reason -- the driver reads the cache when its
+key set matches, so no test here builds a Voronoi diagram.
+
+`repair` is exercised on hand-built graphs rather than through the driver: the four cases that
+decide whether it is right (a detached piece one move fixes, no admissible move, the band, an
+off-plan zip) are three-node graphs, and a CLI run would bury them.
 """
 from __future__ import annotations
 
@@ -24,6 +30,8 @@ ROOT = os.path.abspath(os.path.join(HERE, ".."))
 for _p in (HERE, os.path.join(ROOT, "tools"), ROOT):
     if _p not in sys.path:
         sys.path.insert(0, _p)
+
+import networkx as nx                               # noqa: E402
 
 from td import channels                             # noqa: E402
 from td import instance as td_instance              # noqa: E402
@@ -50,6 +58,15 @@ def _base_instance(path: str) -> None:
     )
     with gzip.open(path, "wt", encoding="utf-8") as fh:
         json.dump(obj, fh)
+
+
+def _write_cell_graph(run_dir: str) -> None:
+    """The path graph as `plan_realise.cell_graph`'s own cache, so the run needs no geometry."""
+    with open(os.path.join(run_dir, "projections", "N", "cell_graph.json"), "w",
+              encoding="utf-8") as fh:
+        json.dump(dict(graph=cli.GRAPH, keys=ZIPS, zips=ZIPS,
+                       edges=[[ZIPS[i], ZIPS[i + 1]] for i in range(5)],
+                       state_borders=[["A", "B"], ["B", "C"]]), fh)
 
 
 def _build_run(run_dir: str):
@@ -86,6 +103,7 @@ def _build_run(run_dir: str):
         json.dump(staffing, fh)
     with open(os.path.join(run_dir, "params.json"), "w", encoding="utf-8") as fh:
         json.dump(dict(instance=base), fh)
+    _write_cell_graph(run_dir)
     return fine
 
 
@@ -155,6 +173,7 @@ def test_district_masses_match_the_plan_and_the_residual_is_not_folded_in():
         assert float(by_id["N_02"]["mass"]) == 2.0
         assert [r["n_zips"] for r in districts] == ["3", "2"]
         assert all(r["contiguous"] == "1" and r["staffed"] == "1" for r in districts)
+        assert all(r["pieces"] == "1" for r in districts)
         assert by_id["N_01"]["states"] == "A:1,B:0.5"
 
         # the district mass column is the assignment table's own sum, per district
@@ -166,6 +185,13 @@ def test_district_masses_match_the_plan_and_the_residual_is_not_folded_in():
         assert n["pseudo_column"] is True and n["residual_zips"] == 1
         assert abs(n["residual_mass"] - 1.0) < 1e-9
         assert n["split_states"] == ["B", "C"] and n["status"] == "ok"
+
+        # the graph is the cell rook graph read off the cache, not the instance's own edges
+        assert n["graph"] == cli.GRAPH and n["graph_zips"] == 6 and n["graph_edges"] == 5
+        assert n["components"] == 1 and n["no_cell_zips"] == 0
+        assert n["pieces_before"] == n["pieces_after"] == {"N_01": 1, "N_02": 1}
+        assert n["moved"] == 0 and n["off_plan"]["zips"] == 0 and n["unrepaired"] == []
+        assert n["state_borders"] == 2 and n["state_borders_missing"] == []
 
 
 def test_wholesaler_books_are_the_cell_books_of_the_district_they_hold():
@@ -241,3 +267,103 @@ def test_bundle_channels_reads_a_named_bundle_and_a_catch_all_channel_list():
 def test_district_name_is_the_bundle_and_the_slot_position():
     assert cli.district_name("WH", 2) == "WH_03"
     assert cli.wholesaler_of({"assignment": {"0": "r", "13": "s"}}) == {0: "r", 13: "s"}
+
+
+# ---------------------------------------------------------------- repair, on hand-built graphs
+
+PATH = ["p0", "p1", "p2", "p3"]
+
+
+def _path_graph(n=4):
+    G = nx.Graph()
+    G.add_nodes_from(PATH[:n])
+    G.add_edges_from((PATH[i], PATH[i + 1]) for i in range(n - 1))
+    return G
+
+
+def test_a_detached_piece_that_one_move_fixes_is_moved():
+    """`p0 - p1 - p2`, all of split state B: the power diagram left D1 holding p0 and p2 with
+    D2's p1 between them.  p2 is the lighter piece, its only settled neighbour is p1, and D2
+    holds a share of B, so p2 joins D2 and both districts come back in one piece."""
+    G = _path_graph(3)
+    labels = {"p0": "D1", "p1": "D2", "p2": "D1"}
+    M = {"p0": 2.0, "p1": 1.0, "p2": 1.0}
+    states = {z: "B" for z in labels}
+    out = cli.repair(G, labels, M, states, {"B": {"D1", "D2"}}, None)
+
+    assert out["labels"] == {"p0": "D1", "p1": "D2", "p2": "D2"}
+    assert out["moved"] == 1 and out["stuck"] == {}
+    assert all(len(v) == 1 for v in cli.district_pieces(G, out["labels"]).values())
+
+
+def test_a_piece_with_no_admissible_neighbour_stays_and_is_reported():
+    """Same shape, but p2 sits in state C and the plan gives C only to D1.  Moving it would
+    hand D2 territory level 0 never gave it, so it stays put and the report says why."""
+    G = _path_graph(3)
+    labels = {"p0": "D1", "p1": "D2", "p2": "D1"}
+    M = {"p0": 2.0, "p1": 1.0, "p2": 1.0}
+    states = {"p0": "B", "p1": "B", "p2": "C"}
+    out = cli.repair(G, labels, M, states, {"B": {"D1", "D2"}, "C": {"D1"}}, None)
+
+    assert out["labels"] == labels and out["moved"] == 0
+    assert out["stuck"]["D1"]["zips"] == 1
+    assert out["stuck"]["D1"]["reasons"] == ["neighbours hold no share of 'C'"]
+
+    after = cli.district_pieces(G, out["labels"])
+    still = cli.unrepaired(after, {"D1": {"B", "C"}, "D2": {"B"}},
+                           cli.state_adjacency(G, states), out["stuck"], [])
+    assert [r["district"] for r in still] == ["D1"]
+    assert still[0]["pieces"] == 2 and "no share of 'C'" in still[0]["reason"]
+
+
+def test_a_move_that_would_push_a_district_out_of_the_band_is_refused():
+    """The same detached p2, but D2 is already at the top of the band: taking p2 would put it
+    over U, so the piece stays and the masses keep the band the plan set."""
+    G = _path_graph(3)
+    labels = {"p0": "D1", "p1": "D2", "p2": "D1"}
+    M = {"p0": 9.0, "p1": 10.0, "p2": 1.0}
+    states = {z: "B" for z in labels}
+    band = (8.0, 10.0)
+    out = cli.repair(G, labels, M, states, {"B": {"D1", "D2"}}, band)
+
+    assert out["labels"] == labels and out["moved"] == 0
+    assert out["stuck"]["D1"]["reasons"] == [
+        "the band: every admissible neighbour would rise above U"]
+    assert all(cli._excess(m, band) == 0.0 for m in out["mass"].values())
+
+
+def test_a_whole_state_district_is_never_opened_by_the_repair():
+    """State A is unsplit, so `admissible` names one district there and no zip of A can move --
+    level 0 decided that state and the repair does not reopen it.  D2's stray p3 in B does move,
+    which is what makes the assertion about A worth something."""
+    G = _path_graph(4)
+    labels = {"p0": "D1", "p1": "D1", "p2": "D2", "p3": "D1"}
+    M = {z: 1.0 for z in PATH}
+    states = {"p0": "A", "p1": "A", "p2": "B", "p3": "B"}
+    out = cli.repair(G, labels, M, states, {"A": {"D1"}, "B": {"D1", "D2"}}, None)
+
+    assert out["labels"]["p0"] == out["labels"]["p1"] == "D1"
+    assert out["labels"]["p3"] == "D2" and out["moved"] == 1
+
+
+def test_an_off_plan_zip_is_moved_to_a_district_the_plan_admits():
+    """`centers.assign` leaves a zero-mass zip unconstrained and parks it in the first column,
+    so a district can come back holding a zip in a state the plan gave it no share of.  The
+    repair frees those and grows them back; the zip carries no mass, so no band moves."""
+    G = _path_graph(3)
+    labels = {"p0": "D1", "p1": "D1", "p2": "D2"}
+    M = {"p0": 1.0, "p1": 0.0, "p2": 1.0}
+    states = {"p0": "A", "p1": "B", "p2": "B"}
+    out = cli.repair(G, labels, M, states, {"A": {"D1"}, "B": {"D2"}}, None)
+
+    assert out["labels"]["p1"] == "D2" and out["moved"] == 1
+    assert out["off_plan"] == dict(zips=1, mass=0.0, by_district={"D1": 1})
+    assert out["stuck"] == {}
+
+
+def test_a_district_holding_nothing_but_off_plan_zips_keeps_them():
+    """Freeing every zip a district holds would leave the plan with an empty district, which is
+    worse than an off-plan one, so `off_plan` skips it."""
+    G = _path_graph(2)
+    labels = {"p0": "D1", "p1": "D2"}
+    assert cli.off_plan(G, labels, {"p0": "A", "p1": "A"}, {"A": {"D2"}}) == {}

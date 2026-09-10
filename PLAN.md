@@ -171,6 +171,13 @@ wholesalers with sales in Arizona across channels and on every other state's dec
     v(1 − ε) with `--cover-slack ε`; the overnight grid runs ε = 0.02 (user, 2026-09-10).
     The driver output includes zip-level and district-level assignment tables (zip, state,
     channel, district, wholesaler) from `tools/plan_realise.py`.
+14. (2026-09-10 night) Grid counts: national 10 to 18 districts, WH 9 to 12, FI 16 to 20, band
+    ±5% to ±10% around each channel's own mean (τ_B = M_B / k_B), merged, folded and
+    all-channel ("other", one person covering every channel) districts where feasible. The
+    composed plan has about 50 districts (wholesalers) across all channels, as the first v3
+    plan produced (51). Maps are one per business channel with the bundle type as the visual
+    differentiator (plus hatched, merged cross-hatched), never one per bundle. Route R dropped
+    for the night; staffing stays a report column.
 
 ## What the codebase has (facts from the explore agents, with anchors)
 
