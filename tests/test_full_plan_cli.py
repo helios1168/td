@@ -508,6 +508,25 @@ def test_serve_all_states_puts_every_state_with_mass_in_a_district():
             assert json.load(fh)["serve_all_states"] is True
 
 
+def test_other_first_opens_an_all_channel_district_on_the_named_state_before_the_stages():
+    """`--other-first S0`: a stage `other_first` runs before the channel stages and opens at
+    most one WHFI_PLUS district, which holds S0; the channel stages then serve the rest, and
+    params.json records the list.  An unknown state code is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "sequential", ["--other-first", "s0"]))
+        other = [rec for rec in plan["slots"] if rec["bundle"] == "WHFI_PLUS" and rec["used"]]
+        assert len(other) == 1 and "S0" in other[0]["y"], other
+        assert plan["passes"][0]["stage"] == "other_first"
+        with open(os.path.join(tmp, "out_sequential", "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["other_first"] == ["S0"]
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            _run(tmp, "sequential", ["--other-first", "ZZ"])
+        raise AssertionError("an unknown state must be refused")
+    except ValueError:
+        pass
+
+
 def test_delta_and_k_fixed_band_a_bundle_on_its_own_mean():
     """`--delta 0.05 --k-fixed N=2`: the N bundle is banded on its own mean, tau_N = M^max_N /
     2, at 1 +/- 0.05, and every bundle with no count takes the mass-weighted mean of the fixed

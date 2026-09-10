@@ -129,6 +129,14 @@ def _parse_k_fixed(text: str) -> dict[str, int]:
     return out
 
 
+def _parse_states(text: str) -> list[str]:
+    """`"MT, WA,WY"` -> `["MT", "WA", "WY"]`, upper-cased; membership is checked in `_main`."""
+    out = [item.strip().upper() for item in text.split(",") if item.strip()]
+    if not out:
+        raise argparse.ArgumentTypeError("expected at least one state code")
+    return out
+
+
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("instance", help="the descaled instance (.json.gz), format 1 or 2")
@@ -221,6 +229,12 @@ def build_argparser() -> argparse.ArgumentParser:
                          "bundle: rows sum_j z_sj >= 1 on the joint model, or on the last "
                          "sequential stage for the states no earlier stage served "
                          "(default off)")
+    ap.add_argument("--other-first", type=_parse_states, default=None, metavar="ST,ST,...",
+                    help="before the channel stages, open all-channel (WHFI_PLUS) districts "
+                         "that serve these states, as few contacts as the band allows, at "
+                         "most one district per state named; the channel stages then run on "
+                         "what is left. The route-S answer to a state no channel can serve "
+                         "on its own under a cap (default none)")
     ap.add_argument("--other-floor", type=float, default=1.0, metavar="F",
                     help="the catch-all stage's band floor as a fraction of L: an 'other' "
                          "district, one person over every channel of a sparse region, may "
@@ -580,7 +594,7 @@ def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mod
 
 
 def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None,
-           serve=None):
+           serve=None, max_used=None):
     """`build_level0` with the driver's own switches applied.
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
@@ -602,7 +616,7 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
         order_mass=False if args.driver == "reps" else None,
         fixed_used=None if cap else (fixed or None),
-        max_used=fixed if cap and fixed else None)
+        max_used=max_used or (fixed if cap and fixed else None))
     # `serve` names the states this stage must put into some district (`--serve-all-states`)
     return level0.serve_states(problem, serve) if serve else problem
 
@@ -937,6 +951,7 @@ def _main(args, T: telemetry.Timings) -> int:
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
+        other_first=args.other_first,
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -961,9 +976,10 @@ def _main(args, T: telemetry.Timings) -> int:
         # mean divides, so it is read here, off the prior the earlier stages folded in
         bands, band_rec = _stage_bands(cells, bundle_names, args, band_lo=band_lo,
                                        band_hi=band_hi, tau=tau, prior=prior, mode=band_mode)
-        if stage == "catch_all" and args.other_floor != 1.0:
+        if stage in ("catch_all", "other_first") and args.other_floor != 1.0:
             # an "other" district is one person covering every channel of a sparse region,
-            # and may hold less than a full book: its floor is `--other-floor` of L
+            # and may hold less than a full book: its floor is `--other-floor` of L.  MT and
+            # WY with every neighbour inside 900 km and six states reach 260 of a 424 floor.
             bands = {b: (rec["L"] * args.other_floor, rec["U"]) for b, rec in band_rec.items()}
             for rec in band_rec.values():
                 rec["L"] *= args.other_floor
@@ -975,8 +991,16 @@ def _main(args, T: telemetry.Timings) -> int:
                                     L=L, prior=prior, band=bands)
         # `--serve-all-states`: in the last stage that can still serve a state, every state
         # with mass that no earlier stage touched must enter some district of this model
-        serve = None
-        if args.serve_all_states and stage == serve_stage:
+        serve, cap_used = None, None
+        if stage == "other_first":
+            # `--other-first`: the named states, at most one all-channel district each, the
+            # fewest contacts the band allows; no greedy, no anchors, so the seeds are not
+            # the heaviest states of the country
+            serve = [state_list.index(st) for st in args.other_first]
+            cap_used = {"WHFI_PLUS": len(serve)}
+            print(f"{stage}: {len(serve)} state(s) get an all-channel district: "
+                  f"{' '.join(args.other_first)}", flush=True)
+        elif args.serve_all_states and stage == serve_stage:
             M_s = np.asarray(cells.M, float).sum(axis=1)
             serve = [s for s in range(n_state) if prior[s].max() <= 0.0 and M_s[s] > 0.0]
             print(f"{stage}: {len(serve)} state(s) must be served here: "
@@ -992,7 +1016,7 @@ def _main(args, T: telemetry.Timings) -> int:
             last = None            # no model to move on, and no slots to report
             return
         with T.phase("build"):
-            problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve,
+            problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
         anchors, D = None, None
         seed_centres = args.centers == "seeds"
@@ -1007,7 +1031,7 @@ def _main(args, T: telemetry.Timings) -> int:
                 # districts, and their centres are known better than a greedy seed
                 D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve,
+                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
         _print_slots(problem, stage)
         anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j], state=state_list[s],
@@ -1019,7 +1043,7 @@ def _main(args, T: telemetry.Timings) -> int:
         # compactness pass.  A build that fails is recorded and the stage solves cold: a
         # multi-hour run must not die on its start.
         warm, warm_s, seeds = None, 0.0, None
-        if "greedy" in (args.warm, args.anchor) or seed_centres:
+        if stage != "other_first" and ("greedy" in (args.warm, args.anchor) or seed_centres):
             t0 = time.time()
             try:
                 # the cover groups' order, less the bundles this model has no slots for
@@ -1052,7 +1076,7 @@ def _main(args, T: telemetry.Timings) -> int:
         if extra or (seeds is not None and seed_centres):
             anchors = list(anchors or ()) + extra
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve,
+                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
                 if extra:
                     problem = me.fix_roots(problem, extra)
@@ -1093,6 +1117,11 @@ def _main(args, T: telemetry.Timings) -> int:
     # still join an FI, FI+ or merged district next door, or an all-channel WHFI_PLUS one
     # when that bundle is enabled.
     serve_stage = "joint" if args.route == "joint" else (f"seq_{groups[-1]}" if groups else "")
+    if args.other_first:
+        bad = [st for st in args.other_first if st not in state_list]
+        if bad:
+            raise ValueError(f"--other-first names states not in the instance: {bad}")
+        run_stage("other_first", ["WHFI_PLUS"], [])
     if args.route == "joint":
         run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
     else:
