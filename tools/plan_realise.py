@@ -687,11 +687,18 @@ def _main(args) -> int:
             name = district_name(bundle, j)
             zips_j = sorted(members.get(name, ()))
             rep = rep_of.get(idx, "")
-            mass = 0.0
+            mass, held = 0.0, 0
             for zp in zips_j:
+                # a zip the projection gives no mass holds nothing in this bundle: an earlier
+                # stage took its channels, and `centers.assign` parked it here (the TODO in
+                # `off_plan`).  It claims no cell and adds no mass, so the bundle that does
+                # hold it is the one `assignment.csv` names.
+                if zp not in proj.G or float(proj.G.nodes[zp].get("M", 0.0)) <= 0.0:
+                    continue
                 a = d.G.nodes[zp]
                 M_c = dict(a.get("M_c") or {})
                 S_c = dict(a.get("S_c") or {})
+                held += 1
                 for c in chans:
                     mass += float(M_c.get(c, 0.0))
                     cell_of.setdefault((zp, c), (name, bundle, rep))   # first bundle wins
@@ -702,7 +709,7 @@ def _main(args) -> int:
             district_rows.append(dict(
                 district=name, slot=rec["id"], bundle=bundle, channels=chans,
                 states=",".join(f"{st}:{sh:g}" for st, sh in sorted(rec["y"].items())),
-                n_zips=len(zips_j), mass=mass, wholesaler=rep, staffed=bool(rep),
+                n_zips=held, mass=mass, wholesaler=rep, staffed=bool(rep),
                 pieces=pieces_of.get(name, 0),
                 contiguous=pieces_of.get(name, 0) == 1))
 
