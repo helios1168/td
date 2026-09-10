@@ -72,6 +72,57 @@ def cells_fixture() -> instance.Descaled:
                              channels=channels.FILE_CHANNELS)
 
 
+def sub_cells_fixture() -> instance.Descaled:
+    """A hand-built sub-channel instance, mixed-case spellings on purpose so the fine_split
+    exact rule is checked together with `canonical_channel`."""
+    rows = [
+        ("zA", "MA",
+         {"National_Chase": 20.0, "Wells (WH)": 50.0, "wells_fi": 10.0, "wh": 30.0, "FI": 5.0},
+         {"R0": {"National_Chase": 2.0, "Wells (WH)": 5.0, "wells_fi": 1.0, "wh": 3.0,
+                 "FI": 0.5}},
+         {"National_Chase": 1.0, "Wells (WH)": 0.0, "wells_fi": 0.0, "wh": 0.0, "FI": 0.0}),
+        ("zB", "NY",
+         {"national_chase": 8.0, "national_wells_wh": 0.0, "national_wells_fi": 2.0,
+          "wh": 0.0, "fi": 0.0},
+         {"R1": {"national_chase": 8.0, "national_wells_wh": 0.0, "national_wells_fi": 2.0,
+                 "wh": 0.0, "fi": 0.0}},
+         {"national_chase": 0.0, "national_wells_wh": 0.0, "national_wells_fi": 0.0,
+          "wh": 0.0, "fi": 0.0}),
+    ]
+    G = nx.Graph()
+    for z, st, M_c, S_c, F_c in rows:
+        S = {i: sum(per.values()) for i, per in S_c.items()}
+        G.add_node(z, state=st, M_c=M_c, S_c=S_c, S_free_c=F_c,
+                   M=sum(M_c.values()), S=S, S_free=sum(F_c.values()),
+                   cand=tuple(sorted(S)))
+    G.add_edges_from([("zA", "zB")])
+    return instance.Descaled(G=G, contested=[], uncontested={"zA": "R0", "zB": "R1"},
+                             vacant=[], untapped=[], firm={}, meta={},
+                             channels=("National_Chase", "Wells (WH)", "wells_fi", "wh", "FI"))
+
+
+# --------------------------------------------------------------------- canonical_channel
+def test_canonical_channel_mixed_case_and_aliases():
+    assert channels.canonical_channel("National") == "national"
+    assert channels.canonical_channel(" WH ") == "wh"
+    assert channels.canonical_channel("Fi") == "fi"
+    assert channels.canonical_channel("Chase") == "national_chase"
+    assert channels.canonical_channel("National_Chase") == "national_chase"
+    assert channels.canonical_channel("National-Chase") == "national_chase"
+    assert channels.canonical_channel("Wells (WH)") == "national_wells_wh"
+    assert channels.canonical_channel("wells-fi") == "national_wells_fi"
+    assert channels.canonical_channel("National.Wells.FI") == "national_wells_fi"
+
+
+def test_canonical_channel_rejects_unknown():
+    try:
+        channels.canonical_channel("bogus")
+    except ValueError as e:
+        assert "bogus" in str(e)
+    else:
+        raise AssertionError("canonical_channel accepted an unknown spelling")
+
+
 # ------------------------------------------------------------------- synthesize_channels
 def test_synthesize_keeps_the_national_cell():
     d = v1_fixture()
@@ -129,10 +180,40 @@ def test_synthesize_is_deterministic_and_seed_dependent():
     assert a.meta["synthetic"] == {"seed": 0, "alpha": [0.15, 0.55], "beta": [0.15, 0.55]}
 
 
+def test_synthesize_sub_channels_sums_to_plain_national():
+    d = v1_fixture()
+    plain = channels.synthesize_channels(d, seed=0)
+    subs = channels.synthesize_channels(d, seed=0, sub_channels=True)
+    assert channels.channels_of(subs) == channels.SUB_CHANNELS + ("wh", "fi")
+    assert subs.meta["channel_groups"] == {"national": list(channels.SUB_CHANNELS)}
+    for z in ZIPS:
+        a, p = subs.G.nodes[z], plain.G.nodes[z]
+        total = sum(a["M_c"][c] for c in channels.SUB_CHANNELS)
+        assert abs(total - p["M_c"]["national"]) < 1e-9
+        assert a["M_c"]["wh"] == p["M_c"]["wh"] and a["M_c"]["fi"] == p["M_c"]["fi"]
+        for i, per in a["S_c"].items():
+            assert abs(sum(per[c] for c in channels.SUB_CHANNELS) - p["S_c"][i]["national"]) \
+                < 1e-9
+
+
+def test_synthesize_sub_channels_fine_split_matches_exact_rule():
+    subs = channels.synthesize_channels(v1_fixture(), seed=0, sub_channels=True)
+    f = channels.fine_split(subs)
+    assert f.meta["fine_split"] == "sub-channels"
+    for z in ZIPS:
+        a, b = subs.G.nodes[z], f.G.nodes[z]
+        assert abs(b["M_c"]["N_WH"] - a["M_c"]["national_wells_wh"]) < 1e-9
+        assert abs(b["M_c"]["N_FI"]
+                   - (a["M_c"]["national_chase"] + a["M_c"]["national_wells_fi"])) < 1e-9
+        assert abs(b["M_c"]["WH"] - a["M_c"]["wh"]) < 1e-9
+        assert abs(b["M_c"]["FI"] - a["M_c"]["fi"]) < 1e-9
+
+
 # --------------------------------------------------------------------------- fine_split
 def test_fine_split_uses_the_zips_own_ratio():
     f = channels.fine_split(cells_fixture())
     assert channels.channels_of(f) == channels.CHANNELS
+    assert f.meta["fine_split"] == "ratio proxy"
     a = f.G.nodes["zA"]
     assert a["M_c"] == {"N_WH": 75.0, "N_FI": 25.0, "WH": 30.0, "FI": 10.0}
     assert a["S_c"]["R0"] == {"N_WH": 6.0, "N_FI": 2.0, "WH": 3.0, "FI": 1.0}
@@ -194,6 +275,40 @@ def test_fine_split_on_a_synthetic_instance_needs_no_fallback():
     """wh and fi are positive multiples of national, so every zip has its own ratio."""
     f = channels.fine_split(channels.synthesize_channels(v1_fixture(), seed=0))
     assert f.meta["fine_split_fallback"] == {}
+    assert f.meta["fine_split"] == "ratio proxy"
+
+
+def test_fine_split_exact_on_sub_channels():
+    d = sub_cells_fixture()
+    f = channels.fine_split(d)
+    assert channels.channels_of(f) == channels.CHANNELS
+    assert f.meta["fine_split"] == "sub-channels"
+    assert f.meta["fine_split_fallback"] == {}
+    a = f.G.nodes["zA"]
+    assert a["M_c"] == {"N_WH": 50.0, "N_FI": 30.0, "WH": 30.0, "FI": 5.0}
+    assert a["S_c"]["R0"] == {"N_WH": 5.0, "N_FI": 3.0, "WH": 3.0, "FI": 0.5}
+    assert a["S_free_c"] == {"N_WH": 0.0, "N_FI": 1.0, "WH": 0.0, "FI": 0.0}
+    b = f.G.nodes["zB"]
+    assert b["M_c"] == {"N_WH": 0.0, "N_FI": 10.0, "WH": 0.0, "FI": 0.0}
+    for z in d.G:
+        da, db = d.G.nodes[z], f.G.nodes[z]
+        assert db["M"] == da["M"] and db["S"] == da["S"] and db["S_free"] == da["S_free"]
+        assert abs(sum(db["M_c"].values()) - da["M"]) < 1e-9
+        for i, per in db["S_c"].items():
+            assert abs(sum(per.values()) - da["S"][i]) < 1e-9
+        assert abs(sum(db["S_free_c"].values()) - da["S_free"]) < 1e-9
+
+
+def test_fine_split_raises_when_national_and_sub_channel_both_present():
+    d = cells_fixture()
+    d.G.nodes["zA"]["M_c"]["national_chase"] = 1.0
+    d.channels = channels.FILE_CHANNELS + ("national_chase",)
+    try:
+        channels.fine_split(d)
+    except ValueError as e:
+        assert "ambiguous" in str(e)
+    else:
+        raise AssertionError("fine_split accepted national plus a sub-channel")
 
 
 # ---------------------------------------------------------------------------- aggregate
@@ -374,6 +489,20 @@ def test_write_v2_round_trips_into_the_same_cells():
         assert np.allclose(b, a, rtol=1e-5, atol=1e-9), name
     # and the national total is still the input instance's, cell by cell
     assert abs(got.M.sum() - sum(f.G.nodes[z]["M"] for z in f.G)) <= 1e-5 * got.M.sum()
+
+
+def test_write_v2_round_trips_sub_channels():
+    s = channels.synthesize_channels(v1_fixture(), seed=0, sub_channels=True)
+    want = channels.SUB_CHANNELS + ("wh", "fi")
+    with tempfile.TemporaryDirectory() as tmp:
+        path = channels.write_v2(s, os.path.join(tmp, "cells.json.gz"))
+        got = instance.load_descaled(path)
+    assert channels.channels_of(got) == want
+    for z in ZIPS:
+        a, b = s.G.nodes[z], got.G.nodes[z]
+        assert abs(b["M"] - a["M"]) <= 1e-5 * max(a["M"], 1e-9)
+        for c in want:
+            assert abs(b["M_c"][c] - a["M_c"][c]) <= 1e-5 * max(a["M_c"][c], 1e-9) + 1e-9
 
 
 def test_write_v1_of_a_projection_loads_back():

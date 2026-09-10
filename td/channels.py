@@ -1,9 +1,15 @@
 """channels.py -- cells, bundles and projections for the multi-channel instance.
 
-A cell is a (zip, channel) pair.  The file carries three channels, `national`, `wh` and `fi`;
-the model reads four fine labels, `N_WH`, `N_FI`, `WH`, `FI`, which exist only so a national
-district can be merged into a WH or an FI one.  `fine_split` moves an instance from the file
-channels to the fine labels by splitting national mass in the zip's own WH:FI ratio.
+A cell is a (zip, channel) pair.  The file carries the three business channels every report
+speaks in, `national`, `wh` and `fi` (`FILE_CHANNELS`); a newer file may carry `national` split
+into its three sub-channels instead, `national_chase`, `national_wells_wh`, `national_wells_fi`
+(`SUB_CHANNELS`), with `meta["channel_groups"] = {"national": [the three]}` and `BUSINESS_OF`
+mapping each back to `national` for reporting.  Channel spellings are read case-insensitively
+through `canonical_channel`.  The model reads four fine labels, `N_WH`, `N_FI`, `WH`, `FI`,
+which exist only so a national district can be merged into a WH or an FI one.  `fine_split`
+moves an instance from the file channels to the fine labels: exactly, from the sub-channels
+(`national_wells_wh` to `N_WH`, `national_chase` and `national_wells_fi` to `N_FI`), or by a
+ratio proxy on the zip's own WH:FI mass ratio when only plain `national` is present.
 
 Per-channel node attributes on a v2 `Descaled` (the loader contract):
 
@@ -28,6 +34,7 @@ import gzip
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass
 
 import networkx as nx
@@ -44,6 +51,18 @@ FILE_CHANNELS = ("national", "wh", "fi")
 # accounting labels: national is split by the zip's WH:FI ratio so that a national district
 # can be merged into a WH or an FI one without moving mass between channels
 CHANNELS = ("N_WH", "N_FI", "WH", "FI")
+
+# a newer file may carry these three in place of "national"; national_chase and
+# national_wells_fi land on N_FI when merged, national_wells_wh lands on N_WH
+SUB_CHANNELS = ("national_chase", "national_wells_wh", "national_wells_fi")
+
+# which fine label a file channel's mass lands on once a merge folds it in
+FINE_OF_SUB = {"national_chase": "N_FI", "national_wells_fi": "N_FI",
+               "national_wells_wh": "N_WH", "wh": "WH", "fi": "FI"}
+
+# the business channel a file channel reports under; every report still speaks in FILE_CHANNELS
+BUSINESS_OF = {c: "national" for c in SUB_CHANNELS}
+BUSINESS_OF.update({"national": "national", "wh": "wh", "fi": "fi"})
 
 BUNDLES = {
     "N": ("N_WH", "N_FI"),
@@ -82,6 +101,37 @@ def _rsig(x, sig: int = SIG):
     return round(float(x), -int(math.floor(math.log10(abs(float(x))))) + (sig - 1))
 
 
+# --------------------------------------------------------------- channel name canonicalization
+_CHANNEL_ALIASES = {
+    "national": "national",
+    "wh": "wh",
+    "fi": "fi",
+    "chase": "national_chase",
+    "national_chase": "national_chase",
+    "wells_wh": "national_wells_wh",
+    "national_wells_wh": "national_wells_wh",
+    "wells_fi": "national_wells_fi",
+    "national_wells_fi": "national_wells_fi",
+}
+
+
+def canonical_channel(name: str) -> str:
+    """A file channel spelling, any case, to its canonical name.
+
+    Strips, lowercases, folds any run of spaces, hyphens, slashes, parentheses or dots to one
+    underscore, and trims leading and trailing underscores; the result is looked up in a short
+    alias table: "chase" and "national_chase" both give "national_chase"; "wells_wh" and
+    "national_wells_wh" both give "national_wells_wh"; "wells_fi" and "national_wells_fi" both
+    give "national_wells_fi"; "wh", "fi" and "national" map to themselves.  A spelling outside
+    this table raises `ValueError` naming the accepted ones.
+    """
+    s = re.sub(r"[ \-/().]+", "_", name.strip().lower()).strip("_")
+    if s not in _CHANNEL_ALIASES:
+        raise ValueError(f"unknown channel {name!r}; accepted spellings: "
+                         f"{sorted(_CHANNEL_ALIASES)}")
+    return _CHANNEL_ALIASES[s]
+
+
 # ------------------------------------------------------------------ the channels attribute
 def channels_of(d: Descaled) -> tuple:
     """`d.channels`, tolerating a `Descaled` built before the field existed."""
@@ -102,7 +152,19 @@ def _alpha_beta(seed: int, z: str) -> tuple:
             BETA[0] + b * (BETA[1] - BETA[0]))
 
 
-def synthesize_channels(d: Descaled, *, seed: int = 0) -> Descaled:
+def _sub_shares(seed: int, z: str) -> tuple:
+    """Three deterministic shares in (0, 1) summing to 1, from sha256(f"{seed}:sub:{z}").
+
+    Order is (chase, wells_wh, wells_fi).  Three uniform draws normalised by their sum, so the
+    shares are exact (float rounding aside) and never zero.
+    """
+    h = hashlib.sha256(f"{seed}:sub:{z}".encode()).digest()
+    draws = [int.from_bytes(h[i:i + 8], "big") / 2.0 ** 64 + 1e-9 for i in (0, 8, 16)]
+    total = sum(draws)
+    return tuple(x / total for x in draws)
+
+
+def synthesize_channels(d: Descaled, *, seed: int = 0, sub_channels: bool = False) -> Descaled:
     """A deterministic stand-in for the real multi-channel data.
 
     The real file keeps the national rows exactly as today and adds WH and FI rows, so the
@@ -110,6 +172,12 @@ def synthesize_channels(d: Descaled, *, seed: int = 0) -> Descaled:
     `alpha_z` and `beta_z` times it.  The same multiplier hits `M`, every `S_i` and `S_free`
     at that zip, so per-cell headroom holds exactly wherever it held on the input.  Totals
     are `(1 + alpha_z + beta_z)` times the input, summed over the cells.
+
+    With `sub_channels=True`, the national cell is further split into `national_chase`,
+    `national_wells_wh` and `national_wells_fi` by three deterministic shares that sum to one
+    (`_sub_shares`), so the three still sum to exactly the national cell above; the instance
+    then carries five channels and `meta["channel_groups"] = {"national": [the three]}`, the
+    shape the real exporter is expected to write.
     """
     G = nx.Graph()
     for z, a in d.G.nodes(data=True):
@@ -117,9 +185,19 @@ def synthesize_channels(d: Descaled, *, seed: int = 0) -> Descaled:
         M0 = float(a["M"])
         S0 = {i: float(v) for i, v in dict(a.get("S") or {}).items()}
         F0 = float(a.get("S_free", 0.0))
-        M_c = {"national": M0, "wh": al * M0, "fi": be * M0}
-        S_c = {i: {"national": v, "wh": al * v, "fi": be * v} for i, v in S0.items()}
-        F_c = {"national": F0, "wh": al * F0, "fi": be * F0}
+        if sub_channels:
+            cs, ws, fs = _sub_shares(seed, z)
+            M_c = {"national_chase": cs * M0, "national_wells_wh": ws * M0,
+                   "national_wells_fi": fs * M0, "wh": al * M0, "fi": be * M0}
+            S_c = {i: {"national_chase": cs * v, "national_wells_wh": ws * v,
+                       "national_wells_fi": fs * v, "wh": al * v, "fi": be * v}
+                   for i, v in S0.items()}
+            F_c = {"national_chase": cs * F0, "national_wells_wh": ws * F0,
+                   "national_wells_fi": fs * F0, "wh": al * F0, "fi": be * F0}
+        else:
+            M_c = {"national": M0, "wh": al * M0, "fi": be * M0}
+            S_c = {i: {"national": v, "wh": al * v, "fi": be * v} for i, v in S0.items()}
+            F_c = {"national": F0, "wh": al * F0, "fi": be * F0}
         attrs = dict(a)
         # totals are the float sum of the cells, which is what a v2 load recomputes; that is
         # not bit-identical to M0*(1 + alpha + beta)
@@ -130,48 +208,98 @@ def synthesize_channels(d: Descaled, *, seed: int = 0) -> Descaled:
         G.add_node(z, **attrs)
     G.add_edges_from(d.G.edges())
 
+    channels = (SUB_CHANNELS + ("wh", "fi")) if sub_channels else FILE_CHANNELS
     meta = dict(d.meta)
     meta["synthetic"] = {"seed": seed, "alpha": list(ALPHA), "beta": list(BETA)}
+    if sub_channels:
+        meta["channel_groups"] = {"national": list(SUB_CHANNELS)}
     return Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
                     vacant=list(d.vacant), untapped=list(d.untapped),
-                    firm=dict(d.firm), meta=meta, channels=FILE_CHANNELS)
+                    firm=dict(d.firm), meta=meta, channels=channels)
+
+
+def _canon_dict(per) -> dict:
+    """A file-channel dict (`M_c`, one rep's `S_c` row, or `S_free_c`), keys canonicalised."""
+    return {canonical_channel(k): float(v) for k, v in dict(per or {}).items()}
 
 
 # ------------------------------------------------------------------------------ fine split
 def fine_split(d: Descaled) -> Descaled:
-    """File channels -> the fine labels: national splits in the zip's own WH:FI mass ratio.
+    """File channels -> the fine labels, by one of two rules.
+
+    If the instance carries the sub-channels (`SUB_CHANNELS`), the split is exact, on `M_c`,
+    every `S_c[rep]` and `S_free_c`:
+
+        N_WH = national_wells_wh
+        N_FI = national_chase + national_wells_fi
+        WH   = wh
+        FI   = fi
+
+    (`FINE_OF_SUB` is the source of this mapping.)  A missing sub-channel counts as zero, and
+    `meta["fine_split"] = "sub-channels"` with `meta["fine_split_fallback"] = {}`.  An instance
+    carrying both `national` and a sub-channel is ambiguous and raises.
+
+    Otherwise, if the instance carries `national`, the split is the ratio proxy:
 
         N_WH(z) = national(z) * wh(z) / (wh(z) + fi(z)),      N_FI(z) likewise
 
-    applied to `M_c`, every `S_c[rep]` and `S_free_c`.  `wh` and `fi` pass through as `WH` and
-    `FI`, and the totals `M`, `S`, `S_free`, `cand` are untouched.  A zip with national mass
-    and no WH or FI mass falls back to its state's WH:FI ratio, then to 50/50; the fallback
-    zips are listed in `meta["fine_split_fallback"]` as zip -> which rule fired.
+    `wh` and `fi` pass through as `WH` and `FI`.  A zip with national mass and no WH or FI mass
+    falls back to its state's WH:FI ratio, then to 50/50; the fallback zips are listed in
+    `meta["fine_split_fallback"]` as zip -> which rule fired, and `meta["fine_split"] =
+    "ratio proxy"`.
+
+    Either way the totals `M`, `S`, `S_free`, `cand` are untouched, and channel names are read
+    case-insensitively through `canonical_channel`.
     """
-    have = channels_of(d)
-    unknown = [c for c in have if c not in FILE_CHANNELS]
-    if unknown:
-        raise ValueError(f"fine_split needs the file channels {FILE_CHANNELS}, got {have}")
-    # A channel-less instance has no `M_c` to read, so every cell would split to zero and the
-    # result would look like a four-channel instance carrying no mass at all.  `national` is
-    # what the fine labels are split out of, and the exporter refuses a file without it.
-    if "national" not in have:
-        raise ValueError(f"fine_split needs a 'national' channel to split, got {have}; "
-                         f"call synthesize_channels on a format-1 instance first")
+    have = tuple(canonical_channel(c) for c in channels_of(d))
+    has_national = "national" in have
+    has_sub = any(c in SUB_CHANNELS for c in have)
+    if has_national and has_sub:
+        raise ValueError(f"fine_split is ambiguous: instance carries both 'national' and a "
+                         f"sub-channel, got {have}")
+    if not has_national and not has_sub:
+        raise ValueError(f"fine_split needs a 'national' channel or the sub-channels "
+                         f"{SUB_CHANNELS} to split, got {have}; call synthesize_channels on "
+                         f"a format-1 instance first")
+
+    if has_sub:
+        def split_exact(per):
+            per = _canon_dict(per)
+            out = {"N_WH": 0.0, "N_FI": 0.0, "WH": 0.0, "FI": 0.0}
+            for c, fine in FINE_OF_SUB.items():
+                out[fine] += per.get(c, 0.0)
+            return out
+
+        G = nx.Graph()
+        for z, a in d.G.nodes(data=True):
+            attrs = dict(a)
+            attrs["M_c"] = split_exact(a.get("M_c"))
+            attrs["S_c"] = {i: split_exact(per) for i, per in dict(a.get("S_c") or {}).items()}
+            attrs["S_free_c"] = split_exact(a.get("S_free_c"))
+            G.add_node(z, **attrs)
+        G.add_edges_from(d.G.edges())
+
+        meta = dict(d.meta)
+        meta["fine_split"] = "sub-channels"
+        meta["fine_split_fallback"] = {}
+        meta["channels"] = list(CHANNELS)
+        return Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
+                        vacant=list(d.vacant), untapped=list(d.untapped),
+                        firm=dict(d.firm), meta=meta, channels=CHANNELS)
 
     st_wh, st_fi = {}, {}                       # state -> mass, for the first fallback
     for z, a in d.G.nodes(data=True):
-        M_c = dict(a.get("M_c") or {})
+        M_c = _canon_dict(a.get("M_c"))
         st = a.get("state", "")
-        st_wh[st] = st_wh.get(st, 0.0) + float(M_c.get("wh", 0.0))
-        st_fi[st] = st_fi.get(st, 0.0) + float(M_c.get("fi", 0.0))
+        st_wh[st] = st_wh.get(st, 0.0) + M_c.get("wh", 0.0)
+        st_fi[st] = st_fi.get(st, 0.0) + M_c.get("fi", 0.0)
 
     fallback = {}
     G = nx.Graph()
     for z, a in d.G.nodes(data=True):
-        M_c = dict(a.get("M_c") or {})
-        w, f = float(M_c.get("wh", 0.0)), float(M_c.get("fi", 0.0))
-        nat = float(M_c.get("national", 0.0))
+        M_c = _canon_dict(a.get("M_c"))
+        w, f = M_c.get("wh", 0.0), M_c.get("fi", 0.0)
+        nat = M_c.get("national", 0.0)
         if w + f > 0:
             r = w / (w + f)
         else:
@@ -185,18 +313,20 @@ def fine_split(d: Descaled) -> Descaled:
                 fallback[z] = rule
 
         def split(per):
-            v = float(per.get("national", 0.0))
+            per = _canon_dict(per)
+            v = per.get("national", 0.0)
             return {"N_WH": r * v, "N_FI": (1.0 - r) * v,
-                    "WH": float(per.get("wh", 0.0)), "FI": float(per.get("fi", 0.0))}
+                    "WH": per.get("wh", 0.0), "FI": per.get("fi", 0.0)}
 
         attrs = dict(a)
-        attrs["M_c"] = split(M_c)
-        attrs["S_c"] = {i: split(dict(per)) for i, per in dict(a.get("S_c") or {}).items()}
-        attrs["S_free_c"] = split(dict(a.get("S_free_c") or {}))
+        attrs["M_c"] = split(a.get("M_c"))
+        attrs["S_c"] = {i: split(per) for i, per in dict(a.get("S_c") or {}).items()}
+        attrs["S_free_c"] = split(a.get("S_free_c"))
         G.add_node(z, **attrs)
     G.add_edges_from(d.G.edges())
 
     meta = dict(d.meta)
+    meta["fine_split"] = "ratio proxy"
     meta["fine_split_fallback"] = dict(sorted(fallback.items()))
     meta["channels"] = list(CHANNELS)
     return Descaled(G=G, contested=list(d.contested), uncontested=dict(d.uncontested),
