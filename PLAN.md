@@ -51,6 +51,17 @@ Morning of 2026-09-11: the stakeholder review. Everything below is under the wor
   probe cells only); the greedy's serve attach reaches one state deep; `full_grid`'s
   `states_other` column counts more than the unserved states (read `maps/summary.png` for the
   count); `plan_summary` is not called by `full_grid` (the job's `summaries.sh` does it).
+- 2026-09-11 morning, in flight: the user saw AZ merged on the WH map and pure FI on the FI map
+  of rank 1. Cause: level 0 puts 77.5 % of AZ's WH and FI in WHFI_01 and 22.5 % of its FI in
+  FI_08, but each bundle cuts AZ's zips on its own projection and "first bundle wins" the
+  overlap (FI sorts before WHFI), so FI_08 took 71 of 122 zips. Decision: the interim fix, the
+  merged bundle wins the overlap (a subagent edits `plan_realise.py`'s bundle order or claim
+  rule, re-realises `grid_20260910_of/X_n16w11f20_d100_d900n6_of` and `_n18w11f19_`, redraws
+  their maps, re-registers `x-n16w11f20-d10-cap900-allstates` and `x-n18w11f19-d10-cap900-allstates`
+  with the job's `rerealise.sh` and `register.sh`, moves the old member dirs to
+  `battery/results/trash_20260910_bundlemembers/`). The proper fix stays queued: a first cut of
+  a shared state's zips into bundle groups by the level-0 shares, then each bundle cuts its
+  group (`## Decisions needed`).
 - Relaunch anything with the job's scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:
   `launch_grid.sh CELLS OUT CONC [--resume]`, `make_followup.py`, `make_cert.py`,
   `compose.sh`, `rerealise.sh`, `summaries.sh`, `register.sh`.
