@@ -34,10 +34,13 @@ would read disconnected on it however it was cut.
 After the cut, `repair` frees every non-largest piece of every district and grows it back onto a
 neighbouring district that is admissible in the freed zip's own state -- which leaves an unsplit
 state's boundary alone, since only one district is admissible there -- never worsening either
-district's distance outside the plan's mass band `[L, U]`.  What it cannot fix it names:
-`realise.json` carries `pieces_before`, `pieces_after`, `moved` and an `unrepaired` list with a
-reason per district, the commonest being that level 0 gave the district states that are not
-adjacent, which no zip-level move can mend.
+district's distance outside the plan's mass band `[L, U]`.  Once that grow loop has nothing left
+to move, a bridging phase hands a whole detached piece to one neighbour outright, paying for the
+mass by taking back a zip next to the piece's own district, and accepts the pair only when their
+combined distance outside the band does not rise and the neighbour stays connected.  What neither
+phase can fix it names: `realise.json` carries `pieces_before`, `pieces_after`, `moved`, `bridged`,
+`swapped` and an `unrepaired` list with a reason per district, the commonest being that level 0
+gave the district states that are not adjacent, which no zip-level move can mend.
 
 Level 0's cover row is per (state, channel) over all slots, so two bundles sharing a channel can
 each take a share of one state; the projections then overlap at zip level.  Such cells are
@@ -80,6 +83,11 @@ OTHER = "other"
 # this; the level-2 cut already leaves districts a little outside the band, so the guard is
 # "never worse", not "inside"
 BAND_TOL = 1e-9
+# how far outside the plan's band, as a fraction of the bundle's tau, the repair may push a
+# district to make it one piece: a fragment of a few units against a book of ~500 is noise
+# next to a visibly detached district, and the strict guard left rank 1's N_10 (at L) and
+# N_07 (near U) unable to take or give a single zip.  `realise.json` records the slack used.
+BAND_SLACK = 0.02
 
 # the fine label -> the channel the file carries it under
 FILE_OF = {"N_WH": "national", "N_FI": "national", "WH": "wh", "FI": "fi"}
@@ -98,6 +106,10 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="max Lloyd rounds per split state at level 2")
     ap.add_argument("--repair-rounds", type=int, default=10,
                     help="max contiguity repair rounds per bundle; 0 measures and does not move")
+    ap.add_argument("--band-slack", type=float, default=BAND_SLACK,
+                    help="the repair may push a district this fraction of its bundle's tau "
+                         f"outside the plan's band to reunite pieces (default {BAND_SLACK}; "
+                         "0 keeps the strict guard)")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--out", default=None, help="where to write (default: RUN_DIR)")
     return ap
@@ -388,8 +400,13 @@ def off_plan(G, labels: dict, states_by_zip: dict, admissible: dict) -> dict:
 
 
 def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible: dict,
-           band, rounds: int = 10) -> dict:
+           band, rounds: int = 10, slack: float = 0.0) -> dict:
     """Free what must move and grow it back onto a neighbour the plan admits.
+
+    `slack` widens the band the guards below read to `[L - slack, U + slack]`: a district
+    inside the widened band has no excess, so a fragment of a few units may cross into a
+    district sitting near U, or leave one sitting near L, without a refusal.  The caller sets
+    it as a fraction of the bundle's tau (`--band-slack`); zero is the strict guard.
 
     `td.solvers.district_split._reconnect`'s pattern, with the plan's constraints on top.  Per
     round, two sets are freed: every zip a district holds off-plan (`off_plan`), and, on the
@@ -406,8 +423,24 @@ def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible
 
     Grown-back zips join the district's largest piece by construction, so no move disconnects
     the district that receives it.  A freed zip with no such neighbour keeps the label it had
-    and is reported, never dropped.  Returns the new labels and what happened.
+    and is reported, never dropped.
+
+    Once the round loop above stops moving anything, a bridging phase takes each district still
+    left in several pieces and, for every piece but its heaviest, looks for a neighbouring
+    district `t` with a cell edge into the piece and a share of every state the piece's zips sit
+    in.  It relabels the whole piece to `t`, then hands `t` zips back to the piece's own district
+    to pay down whatever mass the piece pushed `t` over the band, drawing only zips next to the
+    district's heaviest piece (so it gains no piece of its own), whose own state admits the
+    district, and whose removal leaves `t` connected.  The compound move is kept only if the
+    pair's combined distance outside the band did not rise and `t` is still connected; otherwise
+    it is undone and the next candidate `t` is tried.  A piece every candidate failed on is
+    reported with its own reason, next to the round loop's.
+
+    Returns the new labels and what happened, including `bridged` (accepted bridges) and
+    `swapped` (zips handed back to pay for one).
     """
+    if band is not None and slack > 0.0:
+        band = (float(band[0]) - float(slack), float(band[1]) + float(slack))
     labels = dict(to_district)
     mass: dict[str, float] = {}
     for z, d in labels.items():
@@ -468,10 +501,41 @@ def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible
         if moved == n_before:
             break
 
+    bridged, swapped = 0, 0
+    for src in sorted({d for d in labels.values() if d != OTHER}):
+        while True:
+            parts = district_pieces(G, labels).get(src, [])
+            if len(parts) <= 1:
+                break
+            heaviest = max(parts, key=lambda p: sum(float(M_by_zip.get(z, 0.0)) for z in p))
+            progressed = False
+            for p in parts:
+                if p is heaviest:
+                    continue
+                ok, n_swapped, attempted = _bridge_piece(
+                    G, labels, mass, M_by_zip, states_by_zip, admissible, band, src, p, heaviest)
+                if ok:
+                    bridged += 1
+                    swapped += n_swapped
+                    progressed = True
+                    break
+                if attempted:
+                    stuck.setdefault(src, dict(zips=0, reasons=set()))
+                    stuck[src]["zips"] += len(p)
+                    stuck[src]["reasons"].add(
+                        "bridging to every neighbour would raise the pair's band excess")
+            if not progressed:
+                break
+            # a bridge just resolved this district to one piece: the round loop's stale reason
+            # no longer describes it
+            if len(district_pieces(G, labels).get(src, [])) <= 1:
+                stuck.pop(src, None)
+
     by_district: dict[str, int] = {}
     for d in started_off.values():
         by_district[d] = by_district.get(d, 0) + 1
-    return dict(labels=labels, moved=moved, rounds_used=used, mass=mass,
+    return dict(labels=labels, moved=moved, rounds_used=used, mass=mass, bridged=bridged,
+                swapped=swapped,
                 off_plan=dict(zips=len(started_off),
                               mass=sum(float(M_by_zip.get(z, 0.0)) for z in started_off),
                               by_district=dict(sorted(by_district.items()))),
@@ -500,6 +564,103 @@ def _why_stuck(G, labels: dict, freed: dict, j: str, src: str, states_by_zip: di
     if _excess(mass[src] - mj, band) > _excess(mass[src], band) + BAND_TOL:
         return "the band: the piece's district would drop below L"
     return "the band: every admissible neighbour would rise above U"
+
+
+def _bridge_piece(G, labels: dict, mass: dict, M_by_zip: dict, states_by_zip: dict,
+                  admissible: dict, band, src: str, p, heaviest) -> tuple:
+    """Try to hand one detached piece `p` of `src` to a neighbour outright, paying for the mass
+    with zips the neighbour hands back.  Mutates `labels` and `mass` in place on success.
+
+    Candidate targets are real districts other than `src` with a cell edge into `p` and a share
+    of every state `p`'s zips sit in, tried in order of most edges into `p`, then lightest mass,
+    then name.  Each is tried on copies: the whole piece moves to the target, then the target
+    hands back, one at a time, the heaviest zip under the remaining surplus (else the lightest
+    available) that sits next to `src`'s heaviest piece, whose own state admits `src`, and whose
+    removal leaves the target connected, until neither district's distance outside the band is
+    worse than before the piece moved (the target may have risen over U, or the source, one
+    sitting at L, may have dropped under it).  The pair is accepted only if its combined distance
+    outside the band did not rise and the target is still connected; otherwise the next candidate
+    is tried.
+
+    Returns `(accepted, n_swapped, attempted)`; `attempted` is `False` only when there was no
+    candidate target to try at all, so the caller can tell "nothing to bridge to" apart from
+    "every bridge failed the pair test".
+    """
+    zips_p = set(p)
+    allowed_targets = None
+    for z in zips_p:
+        allowed = admissible.get(states_by_zip.get(z, ""), set())
+        allowed_targets = set(allowed) if allowed_targets is None else allowed_targets & allowed
+    allowed_targets = (allowed_targets or set()) - {src}
+
+    edges: dict[str, int] = {}
+    for z in zips_p:
+        for k in G[z]:
+            if k in zips_p:
+                continue
+            t = labels.get(k)
+            if t and t != OTHER and t != src:
+                edges[t] = edges.get(t, 0) + 1
+    cand = sorted((t for t in edges if t in allowed_targets),
+                 key=lambda t: (-edges[t], mass.get(t, 0.0), t))
+    if not cand:
+        return False, 0, False
+
+    heaviest_set = set(heaviest)
+    piece_mass = sum(float(M_by_zip.get(z, 0.0)) for z in zips_p)
+    before_src = _excess(mass[src], band)
+    mass_src_before = mass[src]
+
+    for t in cand:
+        before_t = _excess(mass[t], band)
+        mass_t_before = mass[t]
+        sim_labels = dict(labels)
+        for z in zips_p:
+            sim_labels[z] = t
+        sim_mass = dict(mass)
+        sim_mass[src] -= piece_mass
+        sim_mass[t] += piece_mass
+        t_zips = {z for z, d in sim_labels.items() if d == t and z in G}
+        n_swapped = 0
+        # pay the piece back from either side: the target may have risen over U, or the source
+        # (a district sitting at L, rank 1's N_10) may have dropped below it; either way the
+        # target hands zips next to the source's heaviest piece back until neither is worse
+        while (_excess(sim_mass[t], band) > before_t + BAND_TOL
+               or _excess(sim_mass[src], band) > before_src + BAND_TOL):
+            surplus = max(sim_mass[t] - mass_t_before, mass_src_before - sim_mass[src])
+            cands_k = []
+            for k in sorted(t_zips):
+                if k in zips_p or not any(n in heaviest_set for n in G[k]):
+                    continue
+                if src not in admissible.get(states_by_zip.get(k, ""), set()):
+                    continue
+                remaining = t_zips - {k}
+                if not remaining or nx.number_connected_components(G.subgraph(remaining)) != 1:
+                    continue
+                cands_k.append(k)
+            if not cands_k:
+                break
+            under = [k for k in cands_k if float(M_by_zip.get(k, 0.0)) <= surplus]
+            # `cands_k` is built off `sorted(t_zips)`, so a mass tie keeps the lower zip, the
+            # grow loop's own tie-break: `max`/`min` return the first maximal/minimal item found
+            k_sel = (max(under, key=lambda k: float(M_by_zip.get(k, 0.0))) if under
+                    else min(cands_k, key=lambda k: float(M_by_zip.get(k, 0.0))))
+            mk = float(M_by_zip.get(k_sel, 0.0))
+            sim_labels[k_sel] = src
+            sim_mass[t] -= mk
+            sim_mass[src] += mk
+            t_zips.discard(k_sel)
+            n_swapped += 1
+
+        after = _excess(sim_mass[src], band) + _excess(sim_mass[t], band)
+        t_connected = (not t_zips) or nx.number_connected_components(G.subgraph(t_zips)) == 1
+        if after <= before_src + before_t + BAND_TOL and t_connected:
+            labels.clear()
+            labels.update(sim_labels)
+            mass.clear()
+            mass.update(sim_mass)
+            return True, n_swapped, True
+    return False, 0, True
 
 
 def _state_groups(sadj: dict, states: set) -> list:
@@ -634,6 +795,17 @@ def _overlaps(by_bundle: dict, chans_of: dict) -> list:
             for (st, c), bs in sorted(seen.items()) if len(bs) > 1]
 
 
+def band_of(params: dict, bundle: str, default):
+    """The band the plan held this bundle's districts to.  Under `--band-mode per-bundle` the
+    driver records one band per bundle (`params["bands"][bundle]`, tau_B = M_B / k_B), and that
+    is the band the repair must guard; `default` (the file-level `L`, `U`) is the band of a run
+    without per-bundle bands."""
+    rec = (params.get("bands") or {}).get(bundle) or {}
+    if rec.get("L") is not None and rec.get("U") is not None:
+        return (float(rec["L"]), float(rec["U"]))
+    return default
+
+
 def _n_file_channels(bundle: str) -> int:
     """How many of the three file channels a bundle carries: WHFI_PLUS 3; WHFI, WH_PLUS and
     FI_PLUS 2; WH, FI and N 1.  N's two fine labels are one file channel, so it does not
@@ -679,8 +851,10 @@ def _main(args) -> int:
         G, borders, gpath = cell_graph(run_dir, bundle, res["placed"], res["xy"],
                                        res["states_by_zip"], args.geo_cache)
         before = district_pieces(G, to_district)
+        band_b = band_of(params, bundle, band)
+        slack_b = args.band_slack * 0.5 * (band_b[0] + band_b[1]) if band_b else 0.0
         fix = repair(G, to_district, res["M_by_zip"], res["states_by_zip"],
-                     res["admissible"], band, rounds=args.repair_rounds)
+                     res["admissible"], band_b, rounds=args.repair_rounds, slack=slack_b)
         to_district = fix["labels"]
         after = district_pieces(G, to_district)
         sadj = state_adjacency(G, res["states_by_zip"])
@@ -754,13 +928,14 @@ def _main(args) -> int:
             no_cell_zips=len([z for z in res["placed"] if z not in G]),
             state_borders=len(borders), state_borders_on_graph=len(on_graph),
             state_borders_missing=gaps,
-            band=list(band) if band else None,
+            band=list(band_b) if band_b else None, band_slack=slack_b,
             pieces_before={n: len(before.get(n, ())) for n in names},
             pieces_after={n: len(after.get(n, ())) for n in names},
-            moved=fix["moved"], repair_rounds=fix["rounds_used"],
+            moved=fix["moved"], bridged=fix["bridged"], swapped=fix["swapped"],
+            repair_rounds=fix["rounds_used"],
             off_plan=fix["off_plan"],
             band_violations=[dict(district=n, mass=fix["mass"].get(n, 0.0))
-                             for n in names if _excess(fix["mass"].get(n, 0.0), band) > 0],
+                             for n in names if _excess(fix["mass"].get(n, 0.0), band_b) > 0],
             unrepaired=still,
             seconds=time.time() - t0)
         rec_b = record[bundle]
@@ -770,6 +945,7 @@ def _main(args) -> int:
               f"{rec_b['components']} component(s), {rec_b['cross_state_edges']} cross-state; "
               f"pieces {sum(rec_b['pieces_before'].values())} -> "
               f"{sum(rec_b['pieces_after'].values())}, {fix['moved']} zip(s) moved, "
+              f"{fix['bridged']} bridge(s) ({fix['swapped']} zip(s) swapped), "
               f"{fix['off_plan']['zips']} off-plan (mass {fix['off_plan']['mass']:g}), "
               f"{len(still)} district(s) still split "
               f"({rec_b['seconds']:.1f}s)", flush=True)

@@ -381,6 +381,18 @@ def test_a_piece_with_no_admissible_neighbour_stays_and_is_reported():
     assert still[0]["pieces"] == 2 and "no share of 'C'" in still[0]["reason"]
 
 
+def test_the_repair_guards_each_bundle_with_the_plans_own_band():
+    """Under the per-bundle band mode the driver records one band per bundle; the file-level
+    L, U is the band of a run without them, and a bundle the record does not name."""
+    params = {"L": 424.0, "U": 518.2,
+              "bands": {"N": {"tau": 515.7, "L": 464.1, "U": 567.2},
+                        "WH": {"tau": 400.0}}}
+    assert cli.band_of(params, "N", (424.0, 518.2)) == (464.1, 567.2)
+    assert cli.band_of(params, "WH", (424.0, 518.2)) == (424.0, 518.2)
+    assert cli.band_of(params, "FI", (424.0, 518.2)) == (424.0, 518.2)
+    assert cli.band_of({}, "N", None) is None
+
+
 def test_a_move_that_would_push_a_district_out_of_the_band_is_refused():
     """The same detached p2, but D2 is already at the top of the band: taking p2 would put it
     over U, so the piece stays and the masses keep the band the plan set."""
@@ -391,10 +403,24 @@ def test_a_move_that_would_push_a_district_out_of_the_band_is_refused():
     band = (8.0, 10.0)
     out = cli.repair(G, labels, M, states, {"B": {"D1", "D2"}}, band)
 
-    assert out["labels"] == labels and out["moved"] == 0
+    assert out["labels"] == labels and out["moved"] == 0 and out["bridged"] == 0
     assert out["stuck"]["D1"]["reasons"] == [
+        "bridging to every neighbour would raise the pair's band excess",
         "the band: every admissible neighbour would rise above U"]
     assert all(cli._excess(m, band) == 0.0 for m in out["mass"].values())
+
+
+def test_the_band_slack_lets_a_small_piece_cross_into_a_district_at_the_top():
+    """The refused move above, with a slack of one unit: the widened band [7, 11] takes D2 to
+    11 without excess, so p2 joins it and D1 is one piece."""
+    G = _path_graph(3)
+    labels = {"p0": "D1", "p1": "D2", "p2": "D1"}
+    M = {"p0": 9.0, "p1": 10.0, "p2": 1.0}
+    states = {z: "B" for z in labels}
+    out = cli.repair(G, labels, M, states, {"B": {"D1", "D2"}}, (8.0, 10.0), slack=1.0)
+
+    assert out["labels"] == {"p0": "D1", "p1": "D2", "p2": "D2"} and out["moved"] == 1
+    assert out["mass"] == {"D1": 9.0, "D2": 11.0}
 
 
 def test_a_whole_state_district_is_never_opened_by_the_repair():
@@ -424,6 +450,46 @@ def test_an_off_plan_zip_is_moved_to_a_district_the_plan_admits():
     assert out["labels"]["p1"] == "D2" and out["moved"] == 1
     assert out["off_plan"] == dict(zips=1, mass=0.0, by_district={"D1": 1})
     assert out["stuck"] == {}
+
+
+def test_a_detached_piece_bridges_to_its_only_neighbour_with_a_swap_back():
+    """A's stray p3 cannot simply join B: B is already at U and the old guard refuses.  Handing
+    the whole piece to B and taking back p1 (next to A's main piece, admitted in A's own state,
+    leaving {p2, p3} connected) pays for the mass without raising the pair's total band excess,
+    and both districts come back in one piece."""
+    G = _path_graph(4)
+    labels = {"p0": "A", "p1": "B", "p2": "B", "p3": "A"}
+    M = {"p0": 10.0, "p1": 1.0, "p2": 9.0, "p3": 2.0}
+    states = {z: "B" for z in labels}
+    band = (8.0, 10.0)
+    before = cli._excess(12.0, band) + cli._excess(10.0, band)
+
+    out = cli.repair(G, labels, M, states, {"B": {"A", "B"}}, band)
+
+    assert out["labels"] == {"p0": "A", "p1": "A", "p2": "B", "p3": "B"}
+    assert out["bridged"] == 1 and out["swapped"] >= 1
+    after = cli._excess(out["mass"]["A"], band) + cli._excess(out["mass"]["B"], band)
+    assert after <= before + cli.BAND_TOL
+    pieces = cli.district_pieces(G, out["labels"])
+    assert all(len(v) == 1 for v in pieces.values())
+
+
+def test_a_bridge_that_would_raise_the_pair_total_is_refused():
+    """p2's only neighbour p1 sits in a state that admits nothing back to A, so there is no zip
+    to swap for the mass the piece would push onto B: the pair's total band excess would rise,
+    the bridge is refused, and the piece stays put."""
+    G = _path_graph(3)
+    labels = {"p0": "A", "p1": "B", "p2": "A"}
+    M = {"p0": 9.5, "p1": 10.0, "p2": 1.0}
+    states = {"p0": "B", "p1": "C", "p2": "B"}
+    admissible = {"B": {"A", "B"}, "C": {"B"}}
+    band = (8.0, 10.0)
+
+    out = cli.repair(G, labels, M, states, admissible, band)
+
+    assert out["labels"] == labels and out["bridged"] == 0 and out["swapped"] == 0
+    assert "bridging to every neighbour would raise the pair's band excess" in \
+        out["stuck"]["A"]["reasons"]
 
 
 def test_a_district_holding_nothing_but_off_plan_zips_keeps_them():
