@@ -689,11 +689,15 @@ def _main(args) -> int:
             rep = rep_of.get(idx, "")
             mass, held = 0.0, 0
             for zp in zips_j:
-                # a zip the projection gives no mass holds nothing in this bundle: an earlier
-                # stage took its channels, and `centers.assign` parked it here (the TODO in
-                # `off_plan`).  It claims no cell and adds no mass, so the bundle that does
-                # hold it is the one `assignment.csv` names.
-                if zp not in proj.G or float(proj.G.nodes[zp].get("M", 0.0)) <= 0.0:
+                # a zip of a state the plan gives this district no share of, holding no mass
+                # in this projection, is one `centers.assign` parked here (the TODO in
+                # `off_plan`) after an earlier stage took the state's channels.  It claims no
+                # cell and adds no mass, so the bundle that does hold it is the one
+                # `assignment.csv` names.  A zero-mass zip inside the district's own states
+                # stays: a territory is an area, not only its sold zips.
+                if (zp not in proj.G or float(proj.G.nodes[zp].get("M", 0.0)) <= 0.0) and \
+                        name not in res["admissible"].get(res["states_by_zip"].get(zp, ""),
+                                                          set()):
                     continue
                 a = d.G.nodes[zp]
                 M_c = dict(a.get("M_c") or {})
