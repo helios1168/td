@@ -130,6 +130,11 @@ wholesalers with sales in Arizona across channels and on every other state's dec
     sales plus opportunity file; a cell's opportunity is carried once across its rows
     (duplicates at 0), so the exporter sums opportunity within a (zip, channel) cell.
     Reported totals: national $17.6B, all three channels $48B.
+13. Merged districts count in a `cover_merged` pass after `cover_FI` (pure channels first,
+    merged for what pure cannot serve, then the catch-all). Route R pins each cover pass at
+    v(1 − ε) with `--cover-slack ε`; the overnight grid runs ε = 0.02 (user, 2026-09-10).
+    The driver output includes zip-level and district-level assignment tables (zip, state,
+    channel, district, wholesaler) from `tools/plan_realise.py`.
 
 ## What the codebase has (facts from the explore agents, with anchors)
 
