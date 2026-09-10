@@ -52,20 +52,31 @@ Results, all under `battery/results/full_problem/` (gitignored):
   `plan_summary.py`, open each figure for the user and describe the run in words (the user
   asked for that), note them in `hot/README.md`.
 
+Landed after the evening checkpoint: `dceae92` realiser `--sweep-zips` (every unclaimed
+(zip, channel) cell joins a district serving that channel in the state, adjacent on its cell
+graph, else the largest holder; rank 1: FI residual 16 to 0, WH 183 to 150); `9e0732c` level
+0 `--sweep` (every residual (state, channel group) joins an adjacent used slot whose bundle
+carries exactly those channels, least over U, caps broken only when no candidate keeps them;
+`plan.json` `sweep` / `unswept`) and `--plus-pair` (per state the WH_PLUS share equals the
+FI_PLUS share; route S passes the WH fold to the FI stage, one retry with WH_PLUS forbidden
+if infeasible; the band-break allowance confined to the channel stages). Suite 785.
+
+Running when this was written: `grid_20260911_full/` (`full_rules_cells.json`: rank 1's and
+rank 2's counts with `--max-splits CA=3,TX=2,NY=3 --band-break CA,TX --sweep --plus-pair`);
+when done, `rerealise_sweep.sh DIR...` (realise with `--sweep-zips`, maps, summary), then a
+plain-English link in `hot/` and a description for the user. `grid_20260911_wifi/` (all
+channels merged at 50 and 53, 600 s per pass) the same way. The `hot/` folder now names every
+figure in plain English (the user asked; the README maps names to run dirs).
+
 Agents in flight (their files are uncommitted in the tree; if an agent is gone, finish from
 the tree's state and its tests):
 
-- Sweep and plus pairing, files `td/solvers/level0.py`, `tools/full_plan.py`,
-  `tests/test_level0.py`, `tests/test_full_plan_cli.py`. `--sweep`: after the catch-all,
-  every residual (state, channel group) joins an adjacent used slot whose bundle carries
-  exactly those channels, least over U, caps broken only when no candidate keeps them,
-  recorded in `plan.json` `sweep` / `unswept`. `--plus-pair`: per state the WH_PLUS share
-  equals the FI_PLUS share (route S: the FI stage takes the WH stage's fold as a target, one
-  retry with WH_PLUS forbidden if infeasible). Also asked: no band-break allowance on
-  `other_first`.
-- Zip sweep, files `tools/plan_realise.py`, `tests/test_plan_realise.py`. `--sweep-zips`:
-  every unclaimed (zip, channel) cell joins a district serving that channel in the state,
-  adjacent on its cell graph, else the largest holder; `realise.json` `swept` / `sweep_zips`.
+- v4 readiness: `tools/instance_conus.py` (the CONUS derivation, from the job's
+  `conus_v3.py`), `tools/instance_split_national.py` (a synthetic v4 from v3 by fixed
+  sub-channel shares, for testing), fixes wherever a tool assumes the file channels are
+  exactly national, wh, fi (`plan_realise` `FILE_OF`, `plan_to_app`, `plan_maps`,
+  `merge_candidates`, the app's labels), tests, and a "When v4 lands" runbook in
+  `docs/FULL_PROBLEM.md`. The v4 file goes to `/Users/ntlee/projects/td/instance_descaled_v4.json.gz`.
 - Contiguous cut and land-clip graphs, in the sibling worktree
   `/Users/ntlee/projects/td/.claude/worktrees/contig-cut` (branch `worktree-contig-cut`,
   locked, off `d322951`): `--split-cut contiguous` (grow each district's share of a split
