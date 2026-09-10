@@ -45,13 +45,17 @@ opportunity falls back into WH and FI).
 Target: the decomposition proposition of `docs/FULL_PROBLEM.md` §4. For a fixed channel plan π,
 the joint problem F separates by bundle into copies of the single-channel problem on the projected
 instance (Z_B, M^B, S^B), with the rep constraint the only coupling, resolved by one Hungarian over
-the union of districts. Statement and proof in the doc; this section records the verdict.
-
-none yet
+the union of districts. Statement and proof in the doc.
 
 ## Verify
 
-none yet
+VERIFIED 2026-09-10, all four clauses (a) additivity of u over cells, (b) separability of stage 1
+by bundle at fixed π and k_B, (c) injectivity as the only coupling with one assignment over the
+union, (d) per-channel floors break Lemma 6. 60 checks, 0 failures, sympy identities plus
+numeric oracles. Artifact `tools/verify/U14-fullprob/verify_decomposition.py`, write-up
+`tools/verify/U14-fullprob/REPORT.md`. Two requirements it leaves for the code: one global rep
+order on every `gain_matrix` call, and candidacy restrictions through the penalty assignment of
+`tools/staff.py`, never `channel.match`.
 
 ## Code verify
 

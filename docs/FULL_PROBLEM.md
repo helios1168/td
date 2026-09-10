@@ -131,7 +131,7 @@ business constraint stays: the draw sees masses only, reps enter at stage 2
 
 ## 4. Decomposition
 
-**Proposition (verified: pending math-verify, tools/verify/U14-fullprob/).** Fix a channel plan
+**Proposition (VERIFIED 2026-09-10 by math-verify, `tools/verify/U14-fullprob/REPORT.md`).** Fix a channel plan
 π and, for each bundle `B` in use, a district count `k_B`. Write, for `z ∈ Z_B` (with
 `M^B_z > 0`, the hypothesis of Lemma 6),
 
