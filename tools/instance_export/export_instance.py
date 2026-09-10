@@ -38,6 +38,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import sys
 from collections import Counter, defaultdict
 
@@ -50,6 +51,40 @@ FORMAT_V1 = "td_instance_descaled/1"      # nodes long by zip
 FORMAT_V2 = "td_instance_descaled/2"      # nodes long by (zip, channel)
 KAPPA_CHANNEL = "national"        # the channel the descaling divisor is pinned to
 CHANNEL_NAMES = ("current_channel", "channel")   # header spellings, see `pick`
+
+# national's three sub-channels (2026-09-10): a channelled extract may carry these instead
+# of one `national` column, never both.  Their sum plays the role `national` used to.
+SUBCHANNELS = ("national_chase", "national_wells_wh", "national_wells_fi")
+CHANNEL_ALIASES = {
+    "chase": "national_chase",
+    "national_chase": "national_chase",
+    "wells_wh": "national_wells_wh",
+    "national_wells_wh": "national_wells_wh",
+    "wells_fi": "national_wells_fi",
+    "national_wells_fi": "national_wells_fi",
+    "wh": "wh",
+    "fi": "fi",
+    "national": "national",
+}
+_CHANNEL_SEP = re.compile(r"[ \-/().]+")
+
+
+def canonical_channel(name, label=""):
+    """Normalise a channel value, case-insensitively, and map it to one of the five
+    canonical sub-channel names plus legacy `wh`, `fi` and `national`.
+
+    Normalisation: strip, lower-case, then any run of spaces, hyphens, slashes,
+    parentheses or dots becomes one underscore, and leading/trailing underscores are
+    stripped.  So "National (Chase)", "NATIONAL_CHASE" and "chase" all resolve to
+    national_chase; "Wells (WH)" and "wells wh" resolve to national_wells_wh.
+    """
+    norm = _CHANNEL_SEP.sub("_", str(name).strip().lower()).strip("_")
+    canon = CHANNEL_ALIASES.get(norm)
+    if canon is None:
+        where = f" in {label}" if label else ""
+        accepted = ", ".join(sorted(set(CHANNEL_ALIASES)))
+        raise InputError(f"unknown channel {name!r}{where}; accepted spellings are {accepted}")
+    return canon
 
 
 class InputError(Exception):
@@ -167,6 +202,7 @@ class Instance(object):
         self.state = {}                    # zip -> state (optional)
         self.channels = ()                 # () when the extract carries no channel column
         self.kappa_channel = ""            # the channel the divisor was taken from
+        self.channel_groups = {}           # kappa_channel -> its sub-channels, when aggregated
         self.edges = []
         self.report = {}
 
@@ -232,11 +268,11 @@ def build(sales_path, opp_path, graph_path, states_path=None,
 
     def chan(row, col, label):
         v = row.get(col)
-        v = "" if v is None else str(v).strip().lower()
+        v = "" if v is None else str(v).strip()
         if not v:
             raise InputError(f"{label}: a row has an empty {col!r}. Every row must name its "
                              f"channel; a blank one would silently join to the wrong cell.")
-        return v
+        return canonical_channel(v, label)
 
     # --- opportunity -----------------------------------------------------------
     M, channels, seen = {}, [], set()
@@ -265,15 +301,34 @@ def build(sales_path, opp_path, graph_path, states_path=None,
                 f"identical on every row of a cell -- this looks like a bad merge.")
         M[cell] = max(v, M.get(cell, v))     # a positive value wins over a stray 0
 
-    # kappa is pinned to one channel so that channel's m_rel, and every number derived from
-    # it, is unchanged by the arrival of the others.
+    # kappa is pinned to national, or, once the extract carries national's three
+    # sub-channels instead, to their per-zip sum, so that national's m_rel, and every
+    # number derived from it, is unchanged by the arrival of the others.
     kappa_channel = KAPPA_CHANNEL if channelled else ""
-    if channelled and kappa_channel not in seen:
+    subs_present = set(SUBCHANNELS) & seen
+    channel_groups = {}
+    if channelled and subs_present and kappa_channel in seen:
+        raise InputError(
+            f"the opportunity table carries both {kappa_channel!r} and sub-channel(s) "
+            f"{sorted(subs_present)}. The extract is ambiguous: national is either its own "
+            f"channel or the sum of {', '.join(SUBCHANNELS)}, never both.")
+    if channelled and not subs_present and kappa_channel not in seen:
         raise InputError(
             f"no {kappa_channel!r} rows in the opportunity table. The descaling divisor is "
             f"pinned to that channel so the existing single-channel instance's m_rel, tau "
             f"and k carry over unchanged; channels are {sorted(seen)}.")
-    pos = sorted(v for cell, v in M.items() if v > 0 and cell_chan(cell) == kappa_channel)
+    if channelled and subs_present:
+        # national is now the sum of its three sub-channels: aggregate each zip's sub-channel
+        # opportunity first, then take the median over zips with a positive aggregate, so a
+        # file that used to carry one `national` channel gets the same kappa back.
+        channel_groups = {kappa_channel: list(SUBCHANNELS)}
+        agg = defaultdict(float)
+        for cell, v in M.items():
+            if cell_chan(cell) in SUBCHANNELS:
+                agg[cell_zip(cell)] += v
+        pos = sorted(v for v in agg.values() if v > 0)
+    else:
+        pos = sorted(v for cell, v in M.items() if v > 0 and cell_chan(cell) == kappa_channel)
     if not pos:
         raise InputError("no positive opportunity values")
     kappa = pos[len(pos) // 2] if len(pos) % 2 else 0.5 * (pos[len(pos) // 2 - 1] +
@@ -395,6 +450,7 @@ def build(sales_path, opp_path, graph_path, states_path=None,
 
     inst.channels = tuple(channels) if channelled else ()
     inst.kappa_channel = kappa_channel
+    inst.channel_groups = channel_groups
 
     # --- states ----------------------------------------------------------------
     if states_path:
@@ -443,6 +499,8 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         inst.report["channels"] = list(inst.channels)
         inst.report["kappa_channel"] = kappa_channel
         inst.report["n_cells"] = len(inst.m_rel)
+        if channel_groups:
+            inst.report["channel_groups"] = channel_groups
     if keep_scale:                          # never used by the runbook; here so the flag is honest
         inst.report["kappa"] = kappa
     return inst
@@ -497,11 +555,15 @@ def mask_reps(inst):
     silently break every comparison against the existing instance.  Firm labels are numbered
     the same way, for the same reason.
     """
+    # with national aggregated over its three sub-channels, the kappa channel's own cells
+    # carry no `national` label any more; ranking must sum a rep's book across the group
+    # instead, which is exactly the aggregate the rest of the file is pinned to.
+    ref_channels = set(inst.channel_groups.get(inst.kappa_channel, [inst.kappa_channel]))
     total, ref = defaultdict(float), defaultdict(float)
     for cell, d in inst.share.items():  # noqa: PLC0206
         for rep, s in d.items():
             total[rep] += s * inst.m_rel[cell]
-            if cell_chan(cell) == inst.kappa_channel:
+            if cell_chan(cell) in ref_channels:
                 ref[rep] += s * inst.m_rel[cell]
 
     def key(r):
@@ -551,13 +613,38 @@ def check_rep_ids(inst, path):
         for rep, s in row.items():
             old_vec[rep][z] = s
     zips = set(nodes.get("z", []))
+    ref_channels = inst.channel_groups.get(inst.kappa_channel, [inst.kappa_channel])
     new_vec = defaultdict(dict)
-    for cell, d in inst.share.items():
-        z = cell_zip(cell)
-        if cell_chan(cell) != inst.kappa_channel or z not in zips:
-            continue
-        for rep, s in d.items():
-            new_vec[rep][z] = rsig(s)
+    if len(ref_channels) == 1:
+        chan = ref_channels[0]
+        for cell, d in inst.share.items():
+            z = cell_zip(cell)
+            if cell_chan(cell) != chan or z not in zips:
+                continue
+            for rep, s in d.items():
+                new_vec[rep][z] = rsig(s)
+    else:
+        # national is now the sum of its sub-channels: compare the aggregate share, S summed
+        # over the group divided by M summed over the group, which is what the earlier
+        # single-channel file's `national` share meant.
+        ref_set = set(ref_channels)
+        agg_m = defaultdict(float)
+        for cell, m in inst.m_rel.items():
+            z = cell_zip(cell)
+            if cell_chan(cell) in ref_set and z in zips:
+                agg_m[z] += m
+        agg_s = defaultdict(lambda: defaultdict(float))
+        for cell, d in inst.share.items():
+            z = cell_zip(cell)
+            if cell_chan(cell) not in ref_set or z not in zips:
+                continue
+            m = inst.m_rel[cell]
+            for rep, s in d.items():
+                agg_s[rep][z] += s * m
+        for rep, zmap in agg_s.items():
+            for z, sm in zmap.items():
+                if agg_m[z] > 0:
+                    new_vec[rep][z] = rsig(sm / agg_m[z])
 
     bad = [rep for rep, vec in sorted(old_vec.items()) if new_vec.get(rep) != vec]
     if bad:
@@ -699,14 +786,25 @@ def guard(payload):
     The median is taken over the kappa channel's rows only, the ones whose median is 1.0 by
     construction.  Over every row it would be a different statistic: a channel that is a
     third of national has m_rel around a third, and a file that is mostly such rows would
-    fail a test it was never meant to be judged by.
+    fail a test it was never meant to be judged by.  When national is the sum of its three
+    sub-channels (`channel_groups` in meta) the rows are summed per zip first, since it is
+    that per-zip sum kappa was actually taken the median of.
     """
     ms = payload["nodes"]["m_rel"]
     if not ms:
         raise GuardError("no nodes to write")
+    zs = payload["nodes"]["z"]
     chans = payload["nodes"].get("channel")
     ref = payload.get("meta", {}).get("kappa_channel", "")
-    ref_ms = [m for m, c in zip(ms, chans) if c == ref] if chans else ms
+    ref_channels = set(payload.get("meta", {}).get("channel_groups", {}).get(ref, [ref]))
+    if chans:
+        agg = defaultdict(float)
+        for z, c, m in zip(zs, chans, ms):
+            if c in ref_channels:
+                agg[z] += m
+        ref_ms = list(agg.values())
+    else:
+        ref_ms = ms
     if not ref_ms:
         raise GuardError(f"no {ref!r} rows to check the descaling against")
     med = sorted(ref_ms)[len(ref_ms) // 2]
@@ -765,8 +863,13 @@ def write(inst, out_dir, theta, lam, verbose=True, filler_keys=()):
         nodes["channel"] = [cell_chan(cell) for cell in cells]
     scale = "descaled: M/median(positive M); shares dimensionless"
     if inst.channels:
-        scale = (f"descaled: M/median(positive M over {inst.kappa_channel} rows); "
-                 f"shares dimensionless")
+        if inst.channel_groups.get(inst.kappa_channel):
+            grp = ", ".join(inst.channel_groups[inst.kappa_channel])
+            scale = (f"descaled: M/median(positive per-zip sum of {grp}); "
+                     f"shares dimensionless")
+        else:
+            scale = (f"descaled: M/median(positive M over {inst.kappa_channel} rows); "
+                     f"shares dimensionless")
     payload = dict(
         format=FORMAT_V2 if inst.channels else FORMAT_V1,
         nodes=nodes,

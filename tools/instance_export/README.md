@@ -90,11 +90,13 @@ Step 2 prints the same report and asks for confirmation before writing (`--yes` 
 ## More than one channel
 
 The business runs national, WH and FI over the same map, and the extract that carries all
-three has one more column, `current_channel`, with values `national`, `wh` and `fi`. Both
-tables must carry it, or neither: a channelled sales table joined to a per-zip opportunity
-table would price every channel against the whole zip's opportunity. The header may be
-spelled `current_channel`, `current channel` or `channel`, in any case; the values are
-stripped and lower-cased.
+three has one more column, `current_channel`, with values `national`, `wh` and `fi` (or,
+see "National sub-channels" below, national's three sub-channels instead of `national`).
+Both tables must carry it, or neither: a channelled sales table joined to a per-zip
+opportunity table would price every channel against the whole zip's opportunity. The header
+may be spelled `current_channel`, `current channel` or `channel`, in any case. Every value
+is normalised and checked against a fixed set of names; "National sub-channels" below lists
+exactly what is accepted, and anything else is refused.
 
 | flag | columns |
 |---|---|
@@ -111,7 +113,8 @@ cell instead of by zip:
 - `share[cell][rep]` is that rep's book as a fraction of **that cell's** opportunity, not of
   the zip's, and `share_free` likewise.
 - `meta` gains `channels` (in the order the opportunity file first mentions them) and
-  `kappa_channel`, plus `n_cells`.
+  `kappa_channel`, plus `n_cells`, and, only when national's sub-channels are present,
+  `channel_groups` (see "National sub-channels" below).
 - Edges, `state`, `firm`, `graph_hash`, the rounding and every other `meta` key are what
   they were. The graph is over zips, unchanged: contiguity does not know about channels.
 
@@ -136,6 +139,47 @@ byte for byte the rows the last export used, say so before anyone builds on the 
 by zip, over the national channel, and stops the export if any of them moved. Only the zips
 that file kept are compared, so a filtered copy of it works too. Skip the flag if you no longer
 have the file.
+
+### National sub-channels
+
+"National" is really three sub-channels: National (Chase), Wells (WH) and Wells (FI). A
+future extract may carry those three instead of one `national` column, on both tables --
+never both at once, since that would leave no way to tell whether national is one channel
+or the sum of three.
+
+Every channel value is normalised before it is compared to anything: stripped, lower-cased,
+then any run of spaces, hyphens, slashes, parentheses or dots becomes one underscore, and a
+leading or trailing underscore is dropped. So `National (Chase)`, `NATIONAL_CHASE`,
+`national-chase` and `chase` all mean the same thing. The accepted spellings, after
+normalising, are:
+
+| accepted (normalised) | canonical name |
+|---|---|
+| `chase`, `national_chase` | `national_chase` |
+| `wells_wh`, `national_wells_wh` | `national_wells_wh` |
+| `wells_fi`, `national_wells_fi` | `national_wells_fi` |
+| `wh` | `wh` |
+| `fi` | `fi` |
+| `national` | `national` |
+
+Anything else is refused, naming the value, the table it came from and the list above.
+Only canonical, lower-case names are ever written to the file.
+
+When any of the three sub-channels is present, kappa (the descaling divisor, still pinned
+to national) is the median of the **positive per-zip sums of the three sub-channels'
+opportunity**: aggregate each zip's chase, WH and FI opportunity first, then take the
+median over the zips whose aggregate is positive. That is the same statistic a single
+`national` column would have produced if it already held that sum, so a national `m_rel`,
+tau and k computed from the split extract carry over unchanged from one computed on a file
+that still had one `national` column. The surrogate-id ranking (`mask_reps`) and the
+`--rep-ids` check both follow: a rep's "national" book is its book summed across the three
+sub-channels, and that is what ranks it and what `--rep-ids` compares against an earlier
+single-channel export.
+
+`meta` then carries `"channel_groups": {"national": ["national_chase", "national_wells_wh",
+"national_wells_fi"]}` alongside `kappa_channel: "national"`, so a reader can tell which
+channels national was built from. A plain `national` column, with no sub-channels, writes no
+`channel_groups` key at all; the meta and the run are exactly as they were before this.
 
 One thing to read differently: with channels present, the candidate structure in the report
 counts cells rather than zips. A zip is contested in national and untapped in FI, and it is
@@ -293,9 +337,10 @@ Checked before anything is written; any failure writes nothing.
 | `kappa` present in `meta` | 2 — the divisor must not leave |
 | a surrogate id's national book moved, under `--rep-ids` | 2 — the ids no longer mean what they meant |
 
-Every share guard runs per cell. The median is taken over the `national` cells alone: a
-channel a third the size of national has `m_rel` around a third, and over every cell the
-median would be measuring the channel mix rather than the descaling.
+Every share guard runs per cell. The median is taken over the `national` cells alone (or,
+with sub-channels present, their per-zip sum): a channel a third the size of national has
+`m_rel` around a third, and over every cell the median would be measuring the channel mix
+rather than the descaling.
 
 Exit codes: `0` ok · `2` guard fired · `3` validation failed · `4` unreadable input.
 
