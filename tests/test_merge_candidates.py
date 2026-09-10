@@ -387,6 +387,75 @@ def test_the_cli_writes_the_csv_the_markdown_and_the_params():
             assert r["rule"] in md or int(r["rank"]) > 15
 
 
+# fine label -> (its sub-channel stand-in, the MASS/BOOKS tuple index); `national_wells_fi`
+# has no stand-in and carries zero mass everywhere
+SUB_MAP = [("national_wells_wh", "N_WH"), ("national_chase", "N_FI"),
+           ("national_wells_fi", None), ("wh", "WH"), ("fi", "FI")]
+
+
+def _write_v2_sub_channels(path: str) -> None:
+    """The same toy as `_write_v2`, expressed with the three national sub-channels instead of
+    the fine labels directly: `national_wells_wh` carries what `N_WH` did and `national_chase`
+    what `N_FI` did (`national_wells_fi` stays empty), so `fine_split`'s exact rule
+    reconstructs exactly the (N_WH, N_FI, WH, FI) matrix `_write_v2` writes by hand; the v4
+    shape, national arriving as three sub-channels rather than one `national` row."""
+    ci_of = {"N_WH": 0, "N_FI": 1, "WH": 2, "FI": 3}
+    z, chan, m_rel, share, share_free, state = [], [], [], [], [], []
+    for si, st in enumerate(STATES):
+        for sub, fine in SUB_MAP:
+            m = MASS[st][ci_of[fine]] if fine else 0.0
+            z.append(f"{10000 + si:05d}")
+            chan.append(sub)
+            m_rel.append(m)
+            if m > 0:
+                share.append({rep: per[fine] / m for rep, per in BOOKS[st].items()
+                             if per.get(fine)})
+                share_free.append(FILLER / m)
+            else:
+                share.append({})
+                share_free.append(0.0)
+            state.append(st)
+    obj = dict(
+        format=td_instance.FORMAT_V2,
+        nodes=dict(z=z, channel=chan, m_rel=m_rel, share=share, share_free=share_free,
+                   state=state),
+        edges=dict(u=[f"{10000 + i:05d}" for i in range(len(STATES) - 1)],
+                   v=[f"{10001 + i:05d}" for i in range(len(STATES) - 1)]),
+        meta=dict(channels=[sub for sub, _ in SUB_MAP],
+                  channel_groups={"national": ["national_chase", "national_wells_wh",
+                                               "national_wells_fi"]}),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def test_the_cli_reproduces_the_same_verdicts_on_a_sub_channel_instance():
+    """The v4 shape: national arrives as its three sub-channels rather than one `national`
+    row.  `merge_candidates.py`'s own `fine_split` call must take the exact rule and land on
+    the same verdicts as the plain fine-label toy, since `national_wells_wh` and
+    `national_chase` carry exactly what `N_WH` and `N_FI` did there."""
+    national = sum(MASS[s][0] + MASS[s][1] for s in STATES)
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst_sub.json.gz")
+        out = os.path.join(tmp, "out_sub")
+        _write_v2_sub_channels(inst)
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, _polys())
+        try:
+            rc = mc.main([inst, "--k", str(int(national)), "--band-lo", str(L),
+                          "--radius", "200,400,700", "--geo-cache", "unused", "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        import csv
+        with open(os.path.join(out, "candidates.csv"), encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert {r["state"]: r["verdict"] for r in rows} == {
+            "S0": "keep", "S1": "merge", "S2": "drop_n", "S3": "merge",
+            "S4": "merge", "S5": "other"}
+
+
 def test_stage2_weight_flags_default_to_borders_report_s_own_constants():
     """A screen scored under other weights is not comparable with the committed map's number,
     the reason `tests/test_full_plan_cli.py` pins the same three."""

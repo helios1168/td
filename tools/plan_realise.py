@@ -106,7 +106,10 @@ BAND_TOL = 1e-9
 # N_07 (near U) unable to take or give a single zip.  `realise.json` records the slack used.
 BAND_SLACK = 0.02
 
-# the fine label -> the channel the file carries it under
+# the fine label -> the business channel it reports under.  This is `td.channels.BUSINESS_OF`
+# composed with the fine split: N_WH and N_FI both fold to "national" whether the underlying
+# file carried plain `national` (the ratio proxy) or the three sub-channels (the exact split),
+# so this map, and everything keyed by it, is unaffected by which one the run's instance had.
 FILE_OF = {"N_WH": "national", "N_FI": "national", "WH": "wh", "FI": "fi"}
 
 GRAPH = "cell_rook"
@@ -743,7 +746,12 @@ def unrepaired(after: dict, states_of: dict, sadj: dict, stuck: dict, gaps: list
 
 def _write_assignment(path: str, d, cell_of: dict) -> tuple[dict, dict]:
     """`assignment.csv`, one row per (zip, fine channel).  Returns the per-channel zip counts
-    and the residual mass per channel, which is what the summary prints."""
+    and the residual mass per channel, which is what the summary prints.
+
+    `file_channel` names the business channel (`national`, `wh`, `fi`, `FILE_OF`), never the
+    file's own column names: a run on an instance carrying the three national sub-channels
+    still writes `national` here, so a downstream reader (`plan_maps.py`, `plan_summary.py`,
+    `plan_to_app.py`) needs no change when the file's channels change underneath it."""
     assigned = {c: 0 for c in channels.CHANNELS}
     residual = {c: 0.0 for c in channels.CHANNELS}
     with open(path, "w", encoding="utf-8", newline="") as fh:

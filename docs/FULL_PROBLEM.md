@@ -109,6 +109,36 @@ split of the v2 CONUS instance stands in: fractions from a hash of `seed:zip` vi
 `hash()`, the same fractions applied to `M`, every `S_i` and `S_free` at a zip so per-cell
 headroom holds exactly.
 
+**When v4 lands.** The exporter drops `instance_descaled_v4.json.gz` at the hub root, national
+already split into the three sub-channels (`meta["channel_groups"]`). Two commands:
+
+    .venv/bin/python3 tools/instance_conus.py \
+        instance_descaled_v4.json.gz instance_descaled_v4_conus.json.gz
+
+    .venv/bin/python3 tools/full_plan.py instance_descaled_v4_conus.json.gz ... --out RUN
+    .venv/bin/python3 tools/plan_realise.py RUN --geo-cache data/geo --sweep-zips
+    .venv/bin/python3 tools/plan_maps.py RUN --geo-cache data/geo
+    .venv/bin/python3 tools/plan_summary.py RUN --geo-cache data/geo --no-cache
+
+the second block with rank 1's own flags (`battery/results/full_problem/`, the grid's own
+`params.json`), `instance` pointed at the new CONUS file. Nothing else changes: `fine_split`
+already takes the exact sub-channel rule the moment the file carries them
+(`td/channels.py::fine_split`), and every downstream tool reads the fine labels or the business
+channel name `assignment.csv` writes, never the file's own channel columns.
+
+What to check: `instance_conus.py`'s printed per-channel mass, tau(k=18) and per-bundle slot
+counts against the same run on `instance_descaled_v3_conus.json.gz` (they should match to
+rounding, since v4's national is the same book split three ways); `meta["fine_split"] ==
+"sub-channels"` and a fallback count of 0 (`instance_conus.py`'s own report line); and, on the
+realised run, that the pure `N`, `WH`, `FI` and merged `WHFI`/`WHFI_PLUS` ("WIFI") districts
+reproduce v3's district-by-state masses, while the `_PLUS` bundles move: `WH_PLUS` and
+`FI_PLUS` fold `N_WH`/`N_FI` by the zip's own WH:FI ratio today (the proxy) and by the real
+sub-channel split once v4 lands (exact), so those two bundles' masses are the ones expected to
+change. Verified against a synthetic stand-in (`tools/instance_split_national.py`,
+`instance_descaled_v4synth_conus.json.gz`) 2026-09-10: national mass matched v3 to 49 states
+within 1.3e-4 (float rounding), pure/WHFI bundle masses were exact, and `WH_PLUS`/`FI_PLUS`
+moved as expected (7,868.6/14,872.5 against v3's 8,532.6/14,208.5).
+
 ## 3. Districts, bundles, plans, and the joint problem F
 
 A served channel is a bundle, a set `B ⊆ C`. The allowed family `𝔅`, each member on a switch:

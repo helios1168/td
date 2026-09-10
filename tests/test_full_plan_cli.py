@@ -280,6 +280,45 @@ def test_end_to_end_sequential_writes_a_plan_and_projections():
             assert abs(got - want) <= 1e-6 * max(1.0, want), (bundle, got, want)
 
 
+def _write_v2_sub_channels(path: str, tmp: str) -> None:
+    """The six-state path toy, expanded with `synthesize_channels(..., sub_channels=True)`
+    instead of plain `national`: the v4 shape, national already split into its three
+    sub-channels before `full_plan.py` ever loads the file (no `--synthesize`, which only
+    expands a one-channel instance)."""
+    v1 = os.path.join(tmp, "v1_for_sub.json.gz")
+    _write_v1(v1)
+    d = channels.synthesize_channels(td_instance.load_descaled(v1), seed=0,
+                                     sub_channels=True)
+    channels.write_v2(d, path)
+
+
+def _run_sub_channels(tmp: str, route: str) -> str:
+    out = os.path.join(tmp, f"out_{route}_sub")
+    inst = os.path.join(tmp, "inst_sub.json.gz")
+    _write_v2_sub_channels(inst, tmp)
+    orig = td_geo.state_rook
+    td_geo.state_rook = lambda *a, **kw: (PATH_ADJ, {})
+    try:
+        rc = cli.main([inst, "--route", route, "--driver", "geo", "--engine", "scipy",
+                       "--strategy", "direct", "--k", "2", "--time-limit", "30", "--out", out])
+        assert rc == 0, rc
+    finally:
+        td_geo.state_rook = orig
+    return out
+
+
+def test_end_to_end_runs_on_a_sub_channel_instance():
+    """The v4 shape: the loaded instance already carries the three national sub-channels
+    instead of plain `national`.  `_main`'s own `fine_split` call must take the exact rule
+    (not the ratio proxy `--synthesize` exercises elsewhere in this module), and the plan must
+    come out the same shape `_check_plan` checks for the plain-national toy."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run_sub_channels(tmp, "sequential")
+        plan = _check_plan(out)
+        used = {rec["bundle"] for rec in plan["slots"] if rec["used"] and rec["y"]}
+        assert used
+
+
 def test_end_to_end_joint_runs_the_lexicographic_passes():
     """Route joint over one model: the pass log must name the coverage passes and contacts,
     in that order, and the plan must satisfy the same per-channel coverage bound."""

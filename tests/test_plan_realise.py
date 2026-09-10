@@ -128,6 +128,73 @@ def _tables(run_dir: str):
     return read("assignment.csv"), read("districts.csv"), read("wholesalers.csv"), rec
 
 
+def _build_run_sub_channels(run_dir: str):
+    """Like `_build_run`, but `instance_v2.json.gz` carries the three national sub-channels
+    instead of plain `national` (the v4 shape): `cell_instance`'s `fine_split` call must take
+    the exact rule, not the ratio proxy, and the run must come out identical to `_build_run`'s
+    since the same total national mass is only split differently under the hood."""
+    os.makedirs(os.path.join(run_dir, "projections", "N"), exist_ok=True)
+    base = os.path.join(run_dir, "base.json.gz")
+    _base_instance(base)
+    d = channels.synthesize_channels(td_instance.load_descaled(base), seed=0,
+                                     sub_channels=True)
+    channels.write_v2(d, os.path.join(run_dir, "instance_v2.json.gz"))
+
+    fine = channels.fine_split(d)
+    proj = channels.project(fine, "N", states=["A", "B", "C"])
+    channels.write_v1(proj, os.path.join(run_dir, "projections", "N",
+                                         "instance_descaled.json.gz"))
+    with open(os.path.join(run_dir, "projections", "N", "state_shares.csv"), "w",
+              encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["state", "district", "share", "target_mass"])
+        for st, did, sh in SHARES:
+            w.writerow([st, did, sh, 2.0 * sh])
+
+    slots = [dict(id="P001", bundle="N", used=True, mass=3.0, contacts=2,
+                  y={"A": 1.0, "B": 0.5}),
+             dict(id="P002", bundle="N", used=True, mass=2.0, contacts=2,
+                  y={"B": 0.5, "C": 0.5})]
+    plan = dict(state_list=["A", "B", "C"], bundles=["N"], slots=slots,
+                per_state={}, passes=[], moves=[])
+    with open(os.path.join(run_dir, "plan.json"), "w", encoding="utf-8") as fh:
+        json.dump(plan, fh)
+    staffing = dict(assignment={"0": "rep0", "1": "rep1"}, gains={}, value=0.0,
+                    criterion="nash", reps=REPS, districts=[0, 1], unmatched_reps=["rep2"],
+                    unstaffed_districts=[], balance={})
+    with open(os.path.join(run_dir, "staffing.json"), "w", encoding="utf-8") as fh:
+        json.dump(staffing, fh)
+    with open(os.path.join(run_dir, "params.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(instance=base), fh)
+    _write_cell_graph(run_dir)
+    return fine
+
+
+def test_runs_correctly_on_a_sub_channel_instance():
+    """The v4 shape: `cell_instance` must take `fine_split`'s exact sub-channel rule, and the
+    realised tables must come out exactly as `_build_run`'s do, since both fixtures carry the
+    same total national mass, split three ways under the hood versus not split at all."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_run_sub_channels(run_dir)
+        with open(os.path.join(run_dir, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        d = cli.cell_instance(run_dir, params)
+        assert tuple(d.channels) == channels.CHANNELS
+        assert d.meta["fine_split"] == "sub-channels"
+        assert d.meta["fine_split_fallback"] == {}
+
+        _run(run_dir)
+        rows, districts, _, _ = _tables(run_dir)
+        nat = {r["zip"]: r for r in rows if r["channel"] == "N_WH"}
+        assert nat[ZIPS[0]]["district"] == nat[ZIPS[1]]["district"] == "N_01"
+        assert sorted(nat[z]["district"] for z in ZIPS[2:4]) == ["N_01", "N_02"]
+        by_id = {r["district"]: r for r in districts}
+        # write_v2's 6-significant-figure rounding lands on each of the three sub-channel
+        # shares separately, so the summed mass is 3.0 up to that rounding, not bit-exact
+        assert abs(float(by_id["N_01"]["mass"]) - 3.0) < 1e-4
+        assert abs(float(by_id["N_02"]["mass"]) - 2.0) < 1e-4
+
+
 def test_every_cell_is_assigned_exactly_once():
     """One row per (zip, fine channel), no cell twice and none missing: `assignment.csv` is a
     partition of the instance's cells, which is what makes its mass column sum to the plan's."""
