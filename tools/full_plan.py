@@ -221,6 +221,10 @@ def build_argparser() -> argparse.ArgumentParser:
                          "bundle: rows sum_j z_sj >= 1 on the joint model, or on the last "
                          "sequential stage for the states no earlier stage served "
                          "(default off)")
+    ap.add_argument("--other-floor", type=float, default=1.0, metavar="F",
+                    help="the catch-all stage's band floor as a fraction of L: an 'other' "
+                         "district, one person over every channel of a sparse region, may "
+                         "hold F of a full book (default 1.0)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
     ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
@@ -932,7 +936,7 @@ def _main(args, T: telemetry.Timings) -> int:
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
-        serve_all_states=args.serve_all_states,
+        serve_all_states=args.serve_all_states, other_floor=args.other_floor,
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -957,6 +961,12 @@ def _main(args, T: telemetry.Timings) -> int:
         # mean divides, so it is read here, off the prior the earlier stages folded in
         bands, band_rec = _stage_bands(cells, bundle_names, args, band_lo=band_lo,
                                        band_hi=band_hi, tau=tau, prior=prior, mode=band_mode)
+        if stage == "catch_all" and args.other_floor != 1.0:
+            # an "other" district is one person covering every channel of a sparse region,
+            # and may hold less than a full book: its floor is `--other-floor` of L
+            bands = {b: (rec["L"] * args.other_floor, rec["U"]) for b, rec in band_rec.items()}
+            for rec in band_rec.values():
+                rec["L"] *= args.other_floor
         band_records.update({b: dict(rec, stage=stage) for b, rec in band_rec.items()})
         # A stage whose bundles have no mass left gets zero slots, and a zero-slot model has
         # no objective to build.  `--catch-all` after a sequential run that served everything
@@ -1077,6 +1087,11 @@ def _main(args, T: telemetry.Timings) -> int:
         last = dict(problem=problem, unpinned=unpinned, result=result, slots=recs)
 
     groups = [g for g in priority if any(b in enabled for b in STAGE_BUNDLES[g])]
+    # the last stage that can still serve a state: the joint model, else the last channel
+    # stage.  Never the catch-all: by then every neighbour is committed, so a small state
+    # could neither join a district nor reach the band on its own; in the FI stage it can
+    # still join an FI, FI+ or merged district next door, or an all-channel WHFI_PLUS one
+    # when that bundle is enabled.
     serve_stage = "joint" if args.route == "joint" else (f"seq_{groups[-1]}" if groups else "")
     if args.route == "joint":
         run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
@@ -1102,8 +1117,9 @@ def _main(args, T: telemetry.Timings) -> int:
             # `each`.  The residual it is measured against is that same minimum.
             share = np.min(np.clip(1.0 - prior, 0.0, 1.0), axis=1)
             residual = float((M.sum(axis=1) * share).sum())
-            live = ["WHFI_PLUS"] if residual >= L else []
-            print(f"catch-all: all-channel residual {residual:.6g} against L={L:.6g}",
+            floor = L * args.other_floor
+            live = ["WHFI_PLUS"] if residual >= floor else []
+            print(f"catch-all: all-channel residual {residual:.6g} against L={floor:.6g}",
                   flush=True)
         else:
             # one single-channel bundle per fine channel that still has residual mass, over the
@@ -1120,6 +1136,12 @@ def _main(args, T: telemetry.Timings) -> int:
             used = sum(1 for r in (last or {}).get("slots", []) if r["used"])
             print(f"catch-all: {used} slot(s) used", flush=True)
         else:
+            if args.serve_all_states:
+                unserved = [state_list[s] for s in range(n_state)
+                            if prior[s].max() <= 0.0 and M[s].sum() > 0.0]
+                if unserved:
+                    raise ValueError(f"catch-all: {len(unserved)} state(s) unserved and the "
+                                     f"residual is below the floor: {' '.join(unserved)}")
             # decision 1 reads "a fourth channel exists iff the catch-all used a slot", so the
             # stage is recorded even when there was nothing left for it to serve
             passes.append(dict(name="cover_other", value=0.0, certified=True,
