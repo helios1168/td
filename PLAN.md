@@ -21,58 +21,42 @@ Overnight protocol (2026-09-10 night, the user asleep, the session autonomous). 
 morning: nice-looking, feasible, defensible territory scenarios the user can review with
 stakeholders, each with a zip and wholesaler table and maps.
 
-- Grid: `tools/full_grid.py` over `battery/results/full_problem/grid_20260910/cells.json`,
-  output `battery/results/full_problem/grid_20260910/` (gitignored), concurrency 5, `--threads 2`
-  per cell, 240 s per pass. Route S, geo driver, catch-all, warm greedy, greedy anchors. Blocks:
-  A continuity baseline (k-fixed N=18 with incumbency and committed centres, pure bundles, caps
-  none / 1100 / 900 km); B the same at band 0.9/1.1; C free counts, pure bundles, dist {900, 700}
-  × n_max {5, 7} × band; D as C with the default six bundles; E radius cap {450, 600} × band ×
-  bundles once the radius agent lands; F one joint reference cell at 1200 s per pass, last.
-  Then the top two by review at 1800 s per pass for certification. No route R cells tonight
-  (★C open: Σ log g over staffed districts is not comparable across district counts; every run
-  shows the shape is decided by caps). Staffing stays as a report column.
-- Gate before the batch: contiguity repair landed in `plan_realise`; one smoke cell at 120 s per
-  pass through the whole chain (`full_plan` → `plan_realise` → `plan_maps` → `grid.csv` row);
-  `tests/run_all.py` at 0 fail after each pending agent's commit.
-- On each finished cell (a persistent Monitor on `grid.csv` wakes the session): Read
-  `maps/all.png`, write one row to `battery/results/full_problem/grid_20260910/REVIEW.md`: tag,
-  verdict (nice / acceptable / reject), reason, best bundle. Criteria at the top of REVIEW.md:
-  every district one piece on the cell graph; extent inside the cap; no chain across the map; a
-  single person could plausibly drive it; mass inside the band; splits not arbitrary.
-- Checkpoint: this section and `## Done` updated and committed after every five cells;
-  `STATE.md` is the hub's file and `/state` runs at merge only, so PLAN.md is the checkpoint.
-  Pushing is denied to the session; the user pushes `worktree-full-problem` in the morning.
-- If the runner dies: relaunch with `--resume`. If a cell fails, its `step_*.log` says why;
-  fix once, `--resume`.
-- State at the 2026-09-10 late checkpoint (head `04074a9` plus this): committed and green
-  are the loader, exporter, channels, stage 2 at state grain, level 0 with greedy warm start,
-  fixed counts, anchors, seed compactness and radius cap, the driver with `cover_merged`,
-  cover slack on route R moves, `--committed-instance`, the portfolio fix, `plan_realise`
-  with cell-graph contiguity repair, `plan_to_app`, `merge_candidates`. The grid cells file
-  is written: `battery/results/full_problem/grid_20260910/cells.json`, 97 cells (84 stage
-  cells one channel each at k and δ, 12 cross-channel with six bundles and the all-channel
-  catch-all, 1 joint reference), η 0.05, `centers seeds`, `band_mode per-bundle`.
-  Agents still running when this was written, each to be committed on its report:
-  (1) level0/full_plan: per-bundle band, `--delta`, `--band-mode`, `--catch-all-bundle`;
-  (2) app: channel token in member names, Map tab caption, plus and merged hatched, members
-  per business channel, re-registration of the three scenarios, the app on port 8503;
-  (3) `tools/full_grid.py` and `tools/plan_maps.py` (panels per business channel, hatch);
-  (4) `tools/plan_summary.py` (structure map plus three channel panels);
-  (5) `tools/plan_compose.py` (assemble a plan from stage runs, joint staffing).
-  Then: one smoke cell at 120 s per pass through the chain; launch
-  `tools/full_grid.py cells.json --out grid_20260910 --concurrency 5` detached with
-  `nohup python3 -u`; a persistent Monitor on `grid.csv`; review each cell's `maps/all.png`
-  and `maps/summary.png` into `REVIEW.md`; compose the best stage cells per (δ, cap) into
-  complete plans with about 50 districts; register the top ones in the app.
-  Known open items: `centers.assign` parks zero-mass zips of a split state on the first
-  district (TODO in `plan_realise.off_plan`); the DC–VA border has no cell edge; the
-  contiguity repair does no bridging moves; the merge-candidate rule leaves WY as `other`.
-- Morning deliverables: `REVIEW.md` ranked, `grid.md`, the top three to five registered in the
-  app with `tools/plan_to_app.py` (after contiguity repair; note the rep-cache collision, do not
-  click "Build rep territories" on them), `assignment.csv`/`districts.csv`/`wholesalers.csv`
-  per top cell, and the timing table updated.
-
-## Done
+- Grid running: `tools/full_grid.py` over `battery/results/full_problem/grid_20260910/cells.json`
+  (written by the job's `make_cells.py`), output in the same dir (gitignored), concurrency 5,
+  `--threads 2`, 180 s per pass, route S, geo driver, warm greedy, greedy anchors, `centers
+  seeds`, η 0.05, `band_mode per-bundle`, `k_mode cap`. 12 cross cells first (`X_<counts>_d<δ>_<cap>`:
+  seven bundles, all-channel catch-all, counts (18,11,19), (16,11,20), (14,10,18), δ 0.05 and
+  0.10, caps none and 900 km / 6 states; the n18 ones take `--centers DRAW.csv` and no
+  incumbency anchors, which the per-bundle band under a cap made infeasible), then 84 stage
+  cells (`S_<ch>_k<k>_d<δ>_<cap>`, one channel each, national 10-18, WH 9-12, FI 16-20, δ 0.05,
+  0.075, 0.10), then `J_ref_n18w11f19_d100_d900n6` (joint, `--serve-all-states`, 1200 s).
+  A Monitor (`watch_grid.py`) reports each finished cell. If the runner dies: relaunch
+  `launch_grid.sh <cells.json> <out> 5 --resume` from `/Users/ntlee/.claude/jobs/610589f0/tmp`.
+- Follow-up wave, once the X cells are in: `make_followup.py grid_20260910 cells_followup.json`
+  reruns every X cell that left states unserved with `--other-first <those states>
+  --other-floor 0.5` (tag suffix `_of`), the route-S answer to "every state in at least one
+  grouping" (the user's rule, 2026-09-10 night). Under 900 km / 6 states MT and WY reach 260
+  of a 424 floor with every neighbour in reach, so the floor is the lever; WA alone needs OR
+  and ID (445). Run it with `--out grid_20260910` so `grid.csv` ranks both.
+- Review: on each finished cell, Read `maps/all.png` and `maps/summary.png`, one row in
+  `battery/results/full_problem/grid_20260910/REVIEW.md`: tag, verdict (nice / acceptable /
+  reject), reason, best channel. Criteria at the top of REVIEW.md: every district one piece on
+  the cell graph; extent inside the cap; no chain across the map; a single person could
+  plausibly drive it; mass inside the band; splits not arbitrary; every state served.
+- Compose: `tools/plan_compose.py` over the best stage cells per (δ, cap) into plans of about
+  50 districts (`--realise --maps`); register the top three to five in the app with
+  `tools/plan_to_app.py` (do not click "Build rep territories" on them: the rep cache collides).
+- Checkpoint: this section and `## Done` committed after every five reviewed cells. Pushing
+  is denied to the session; the user pushes `worktree-full-problem` in the morning.
+- Known open items: `centers.assign` parks zero-mass zips of a split state on the first
+  district (TODO in `plan_realise.off_plan`); the DC–VA border has no cell edge; the contiguity
+  repair does no bridging moves; a plan with more districts than zips in a split state makes
+  `plan_realise` raise (seen only on 3 s probe cells); the greedy's serve attach reaches one
+  state deep only; `--serve-all-states` on route S is infeasible under a cap at the FI stage
+  (the n18 anchors likewise), so the joint cell and `--other-first` carry that rule.
+- Morning deliverables: `REVIEW.md` ranked, `grid.md`, the top plans in the app on 8503 (the
+  labelled worktree app; 8502 is the hub's), `assignment.csv` / `districts.csv` /
+  `wholesalers.csv` per top cell, and `tools/verify/U14-fullprob/TIMINGS.md` updated.## Done
 
 - 2026-09-10: worktree created and locked, branch `worktree-full-problem` from `main` `7325737`.
   Design settled (decisions log below). This file written.
@@ -82,8 +66,14 @@ stakeholders, each with a zip and wholesaler table and maps.
   `battery/results/full_problem/synthetic_v2.json.gz` (national 8481.8, wh 2953.6, fi 2962.4).
   Level-0 joint model on it: 95 slots, 34,390 variables, 64,689 rows. Exporter handed to the
   user for the work machine (README has the command; `--rep-ids` checks the national shares).
-
-## Decisions needed
+- 2026-09-10 night: the overnight wave landed, one commit per agent: grid runner and
+  per-channel maps `d017623`, app members per business channel with hatch `7dfae3b`,
+  composer `3c0d091`, per-bundle band with `--delta`, `--band-mode`, `--catch-all-bundle`
+  `5352a09`, summary map `55c520e`. Then, from the smoke and probe cells (3 s per pass,
+  `battery/results/full_problem/probe*_20260910/`): `--k-mode cap`, `--serve-all-states`,
+  the greedy's second fill `abe5d46`; `--other-floor` `4796208`; `--other-first` `863c5d3`.
+  Suite 743 pass, 0 fail. Grid `grid_20260910` launched at 12:00 UTC, 97 cells, concurrency
+  5, 180 s per pass, cross cells first; the hub State commit is `07839ed` (unmerged).## Decisions needed
 
 Level-2 cross-bundle overlap (found by `plan_realise`, 2026-09-10): level 0's cover row is
 `≤ 1` per (state, channel) over all slots, so two bundles sharing a channel (WH and WH⁺, N and
