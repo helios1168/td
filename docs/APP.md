@@ -12,7 +12,7 @@ one, never the draw (section 3 below).
 | venv | who owns it | what is in it |
 |---|---|---|
 | `.venv` (repo root) | the solvers | the frozen pins in `requirements.txt`: numpy 2.5.2, scipy 1.18.1, geopandas, shapely, pyproj, SCIP/HiGHS |
-| `.venv-app` (per worktree) | the app | streamlit 1.63.0, pandas 3.0.5, plotly 7.0.0 (`app/requirements.txt`) |
+| `.venv-app` (per worktree) | the app | streamlit 1.63.0, pandas 3.0.5, plotly 7.0.0, kaleido 1.4.0 (`app/requirements.txt`) |
 | `.venv-opt` (repo root) | the MILP bench | `ortools` 9.15.6755, `numpy` 2.5.3, pinned in `tools/bench/requirements-opt.txt` |
 
 The solver pins are frozen because the zip50 anchor depends on those exact versions, so
