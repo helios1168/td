@@ -260,7 +260,10 @@ sharing a border never share a hue" true of what the map actually draws.
 tighter 250 m; `districts` are the dissolve of those same real polygons, so a district's shape
 is the real union of its zips' ZCTAs -- unpopulated land, water and any gap between zips shows
 as a real gap, not tiled over to fill it. `cells_source` names the shapefile and the simplify
-tolerance actually used, so a stale `geom.json` is identifiable.
+tolerance actually used, so a stale `geom.json` is identifiable. The shapefile itself is local
+only, 822 MB, never fetched the way the gazetteer and the state basemap are: `geo.ZCTA_SHP`
+takes the repo-relative `data/tiger/2025/tl_2025_us_zcta520.shp` when the checkout has it, else
+`TD_ZCTA_SHP`, else the hub's copy — which is what a worktree, carrying no `data/`, lands on.
 
 **A district's `"holes"` are its real gaps, and they are deliberately not the same treatment as
 a donut ZCTA's own hole.** `districts[d]["rings"]` carries exterior rings only, one per polygon
