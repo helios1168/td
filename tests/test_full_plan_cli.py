@@ -191,7 +191,7 @@ def _write_v1(path: str) -> list[str]:
     return zips
 
 
-def _run(tmp: str, route: str) -> str:
+def _run(tmp: str, route: str, extra=()) -> str:
     out = os.path.join(tmp, f"out_{route}")
     inst = os.path.join(tmp, "inst.json.gz")
     _write_v1(inst)
@@ -200,7 +200,7 @@ def _run(tmp: str, route: str) -> str:
     try:
         rc = cli.main([inst, "--synthesize", "--route", route, "--driver", "geo",
                        "--engine", "scipy", "--strategy", "direct", "--k", "2",
-                       "--time-limit", "30", "--out", out])
+                       "--time-limit", "30", "--out", out, *extra])
         assert rc == 0, rc
     finally:
         td_geo.state_rook = orig
@@ -210,7 +210,8 @@ def _run(tmp: str, route: str) -> str:
 def _check_plan(out: str) -> dict:
     with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
         plan = json.load(fh)
-    assert set(plan) == {"state_list", "bundles", "slots", "per_state", "passes", "moves"}
+    assert set(plan) == {"state_list", "bundles", "slots", "per_state", "passes", "moves",
+                         "anchors"}
     assert plan["state_list"] == STATES
     for rec in plan["slots"]:
         assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y"}
@@ -277,6 +278,94 @@ def test_end_to_end_joint_runs_the_lexicographic_passes():
         assert max(cover) < min(contacts), names       # coverage is lexicographically first
         for rec in plan["passes"]:
             assert {"name", "value", "certified", "status", "seconds"} <= set(rec)
+
+
+def test_warm_greedy_records_the_pseudo_pass_and_warm_none_does_not():
+    """`--warm greedy` (the default) opens the stage's pass log with the greedy pseudo-entry,
+    status `warm_start` (a failed build would read `warm_start_failed`); `--warm none` leaves
+    the log as it was.  Both are recorded in `params.json`."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint"))
+        greedy = [p for p in plan["passes"] if p["name"] == "greedy"]
+        assert len(greedy) == 1, plan["passes"]
+        rec = greedy[0]
+        assert rec["status"] == "warm_start" and rec["certified"] is False
+        assert set(rec["value"]) == set(plan["bundles"]) and rec["seconds"] >= 0.0
+        assert plan["passes"].index(rec) == 0, "the pseudo-entry leads the stage's log"
+        with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["warm"] == "greedy"
+
+        plan = _check_plan(_run(tmp, "sequential", ["--warm", "none"]))
+        assert not [p for p in plan["passes"] if p["name"] == "greedy"]
+        with open(os.path.join(tmp, "out_sequential", "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["warm"] == "none"
+    assert cli.build_argparser().parse_args(["i", "--out", "o"]).warm == "greedy"
+    assert cli.build_argparser().parse_args(["i", "--out", "o"]).anchor == "none"
+
+
+def test_anchor_greedy_roots_every_used_slot_at_its_greedy_seed():
+    """`--anchor greedy` rebuilds the model with `z` anchored and the root fixed
+    (`fix_roots`) at every greedy seed, one per used slot, and records them in `plan.json`.
+    The model handed to `solve_passes` is captured to read the `r` bounds."""
+    from td.solvers import level0
+
+    seen = []
+    orig = level0.solve_passes
+
+    def capture(problem, passes, **kw):
+        seen.append((problem, kw.get("warm_start")))
+        return orig(problem, passes, **kw)
+
+    level0.solve_passes = capture
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            plan = _check_plan(_run(tmp, "joint", ["--anchor", "greedy"]))
+    finally:
+        level0.solve_passes = orig
+    anchors = [a for a in plan["anchors"] if a["source"] == "greedy"]
+    assert anchors and {a["stage"] for a in anchors} == {"joint"}
+    (problem, warm), = seen
+    K, idx = problem.k, {c: i for i, c in enumerate(plan["state_list"])}
+    for a in anchors:
+        s, j = idx[a["state"]], a["slot"]
+        assert problem.var_lb[problem.off_z + s * K + j] == 1.0
+        assert problem.var_lb[problem.off_r + s * K + j] == 1.0
+        assert all(problem.var_ub[problem.off_r + t * K + j] == 0.0
+                   for t in range(problem.n_state) if t != s)
+        assert plan["slots"][j]["used"] and a["bundle"] == plan["slots"][j]["bundle"]
+    assert warm is not None and len({a["slot"] for a in anchors}) == len(anchors)
+    # every slot the greedy used is anchored: the warm point's u block says which
+    assert sorted(a["slot"] for a in anchors) == \
+        [j for j in range(K) if warm[problem.off_u + j] > 0.5]
+
+    try:
+        cli.build_argparser().parse_args(["i", "--out", "o", "--anchor", "greedy",
+                                          "--driver", "reps"])
+        with tempfile.TemporaryDirectory() as tmp:
+            _run(tmp, "joint", ["--anchor", "greedy", "--driver", "reps"])
+        raise AssertionError("--anchor greedy must be refused under --driver reps")
+    except ValueError as exc:
+        assert "--anchor greedy" in str(exc)
+
+
+def test_k_fixed_pins_the_first_slots_and_reaches_params():
+    """`--k-fixed N=1` fixes the N bundle's first slot as used, is recorded as a dict in
+    `params.json`, and is refused for a bundle outside `--bundles` or a count above the
+    bundle's slots."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint", ["--k-fixed", "N=1"]))
+        first_n = next(rec for rec in plan["slots"] if rec["bundle"] == "N")
+        assert first_n["used"]
+        with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["k_fixed"] == {"N": 1}
+    assert cli._parse_k_fixed("N=18, WH=11,FI=19") == {"N": 18, "WH": 11, "FI": 19}
+    for bad in (["--k-fixed", "ZZ=1"], ["--k-fixed", "N=99"]):
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                _run(tmp, "joint", bad)
+            raise AssertionError(f"{bad} must be refused")
+        except ValueError:
+            pass
 
 
 def test_driver_reps_logs_every_move_and_the_catch_all_pass_runs():

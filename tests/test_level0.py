@@ -300,6 +300,114 @@ def test_n_max_and_dist_max_caps_bind():
         "the far pair must still be kept out of any single slot"
 
 
+# ---------------------------------------------------------------------------- warm start
+def _greedy(prob, **kw):
+    """`greedy_plan` plus the row check and the decoded `z`, `y`, slot masses."""
+    x, seeds = level0.greedy_plan(prob, **kw)
+    level0.check_point(prob, x)
+    Ax = prob.A @ x
+    assert np.all(Ax >= prob.lb - 1e-6) and np.all(Ax <= prob.ub + 1e-6)
+    assert np.all(x >= prob.var_lb - 1e-9) and np.all(x <= prob.var_ub + 1e-9)
+    S, K = prob.n_state, prob.k
+    z = x[prob.off_z:prob.off_z + S * K].reshape(S, K) > 0.5
+    y = x[prob.off_y:prob.off_y + S * K].reshape(S, K)
+    return x, seeds, z, y, (prob.W * y).sum(axis=0)
+
+
+def test_greedy_plan_is_feasible_and_the_solver_does_at_least_as_well():
+    """The greedy point passes every row, and a scipy solve of the cover pass is never below
+    its coverage: equal on the even toy (three whole pairs), strictly above on `CONTIG`, where
+    the greedy fills one slot of 1.1 and the MILP buys a split to cover 1.8."""
+    prob = build0([0.5] * 6)
+    x, seeds, z, y, masses = _greedy(prob)
+    assert abs(masses.sum() - 3.0) < 1e-9 and seeds == {"A": [(0, 0), (2, 1), (4, 2)], "B": []}
+    out = run(prob, [level0.cover_pass(prob, ["A"])], warm_start=x, warm_seconds=0.25)
+    head, cover = out["passes"]
+    assert head == dict(name="greedy", value={"A": 3.0, "B": 0.0}, certified=False,
+                        status="warm_start", seconds=0.25)
+    assert cover["value"] >= 3.0 - 1e-9
+    for j in range(prob.k):
+        assert ss.connected(z[:, j], EDGES) if z[:, j].any() else True
+
+    prob = build0(CONTIG)
+    x, seeds, z, y, masses = _greedy(prob)
+    assert abs(masses.sum() - 1.1) < 1e-9
+    out = run(prob, [level0.cover_pass(prob, ["A"])], warm_start=x)
+    assert out["passes"][1]["value"] >= 1.1 + 0.5      # 1.8 at the optimum
+
+    # an anchored state enters only its own slot, and seeds it
+    prob = build0([0.5] * 6, anchors=[(5, 0)])
+    x, seeds, z, y, masses = _greedy(prob)
+    assert z[5, 0] and z[4, 0] and seeds["A"][0] == (5, 0) and not z[5, 1:].any()
+    assert abs(masses.sum() - 3.0) < 1e-9
+
+
+def test_greedy_plan_leaves_a_slot_it_cannot_fill_unused():
+    """Total 1.4 on states 0..2: one slot of 1.0, and the 0.4 left cannot reach 0.8 from any
+    seed, so slot 1 is all zero (`u = 0`) rather than a below-band slot."""
+    prob = build0([0.5, 0.5, 0.4, 0.0, 0.0, 0.0])
+    x, seeds, z, y, masses = _greedy(prob)
+    assert prob.k == 2 and abs(masses[0] - 1.0) < 1e-9 and masses[1] == 0.0
+    assert not z[:, 1].any() and x[prob.off_u + 1] == 0.0 and x[prob.off_u] == 1.0
+    assert seeds == {"A": [(0, 0)], "B": []}
+
+
+def test_greedy_plan_respects_the_caps():
+    """Six states of 0.2: at most three per slot, or far pairs kept apart, and no slot reaches
+    0.8, so the plan is empty (what the MILP finds too); at four per slot one slot of exactly
+    four states covers 0.8 and the `cap_n` row holds."""
+    masses = [0.2] * 6
+    for capped in (build0(masses, n_max=3),
+                   build0(masses, dist_max=2.5,
+                          state_xy=np.array([[float(s), 0.0] for s in range(6)]))):
+        x, seeds, z, y, m = _greedy(capped)
+        assert not x.any() and seeds == {"A": [], "B": []}
+    four = build0(masses, n_max=4)
+    x, seeds, z, y, m = _greedy(four)
+    assert abs(m[0] - 0.8) < 1e-9 and int(z[:, 0].sum()) == 4 and not z[:, 1].any()
+
+
+def test_greedy_plan_splits_a_state_between_consecutive_slots():
+    """Four states of 0.7: state 0 plus 3/7 of state 1 lands slot A on `tau = 1.0`; the next
+    slot seeds from state 1's remaining 4/7 and takes state 2 whole.  Both slots contact
+    state 1 and its shares add to one; the last 0.7 has no partner and stays uncovered."""
+    prob = build0([0.7, 0.7, 0.7, 0.7, 0.0, 0.0])
+    x, seeds, z, y, masses = _greedy(prob)
+    both = [j for j in range(prob.k) if z[1, j]]
+    assert len(both) == 2 and abs(y[1].sum() - 1.0) < 1e-9
+    assert set(np.round(masses[both], 9)) == {1.0, 1.1}
+    assert abs(masses.sum() - 2.1) < 1e-9 and int(x[prob.off_u:].sum()) == 2
+    assert_bands_and_contiguity(prob, dict(u=x[prob.off_u:] > 0.5, masses=masses, z=z))
+
+
+def test_fixed_used_slots_are_used_in_every_pass_or_the_pass_is_infeasible():
+    """`fixed_used={"A": 2}` pins `u_0 = u_1 = 1`: both slots are used after every pass, the
+    cover is at least `2L`, and the `u` ordering row between slot 0 and slot 1 is gone.  A
+    count the mass cannot fill makes the pass infeasible, never a silent empty plan."""
+    prob = build0([0.5] * 6, fixed_used={"A": 2})
+    assert prob.var_lb[prob.off_u] == 1.0 and prob.var_lb[prob.off_u + 1] == 1.0
+    assert prob.var_lb[prob.off_u + 2] == 0.0
+    lo, hi = prob.rows["order_u"]
+    assert hi - lo == 1                     # (2, 3) only: (0, 1) and (1, 2) say nothing
+    out = run(prob, [level0.cover_pass(prob, ["A"]), level0.contacts_pass(prob)])
+    assert out["u"][0] and out["u"][1]
+    assert out["passes"][0]["value"] >= 2 * prob.L - 1e-9
+    x, seeds, z, y, masses = _greedy(prob)
+    assert x[prob.off_u] == 1.0 and x[prob.off_u + 1] == 1.0
+
+    short = build0([0.5, 0.5, 0.4, 0.0, 0.0, 0.0], fixed_used={"A": 2})
+    try:
+        run(short, [level0.cover_pass(short, ["A"])])
+        raise AssertionError("two used slots need 1.6 of mass; 1.4 cannot be feasible")
+    except ss.SolveFailure as exc:
+        assert exc.passes[-1]["status"] == "infeasible"
+    try:
+        build0([0.5] * 6, fixed_used={"A": 5})
+        raise AssertionError("expected a ValueError for a count above the slot count")
+    except ValueError:
+        pass
+
+
 def test_a_pass_that_returns_nothing_carries_the_log_out_on_the_exception():
     """A pass can come back with nothing usable: infeasible, or a time limit with no incumbent.
 

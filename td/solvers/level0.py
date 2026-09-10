@@ -35,6 +35,7 @@ from __future__ import annotations
 import dataclasses
 import math
 import time
+from collections import deque
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -147,7 +148,8 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
                  eta: float, tau: float | None = None, n_max: int | None = None,
                  dist_max: float | None = None, state_xy=None, prior=None, anchors=None,
                  D=None, eps: float | None = None,
-                 order_mass: bool | None = None) -> Level0Problem:
+                 order_mass: bool | None = None,
+                 fixed_used: dict[str, int] | None = None) -> Level0Problem:
     """Assemble the level-0 MILP.  `cells` carries `M (S, C)`, `channels` and `state_list`
     (`td.channels.CellTable`, duck-typed); `bundles` maps a name to a tuple of channels;
     `edges` is the state rook graph over indices `0..S-1`, undirected, once per pair.
@@ -167,6 +169,11 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     `order_mass` defaults to on only when neither `anchors` nor `D` is given; any later
     per-slot fix (`bound_z`, `fix_roots`, a neighbourhood z-fix) needs it off as well.
     `forbid_bundle` is uniform across a bundle's slots and is compatible with both orderings.
+
+    `fixed_used` maps a bundle name to a count: the first `count` slots of that bundle get
+    `u_j` fixed at 1, so the passes must use them (a count above the bundle's slot count is
+    refused).  The `u` ordering row between a fixed slot and the next is dropped, since
+    `u_{j+1} <= 1` says nothing; a bundle not named stays free.
     """
     if U is None:
         raise ValueError("build_level0 needs an upper band U: without one the coverage passes "
@@ -224,6 +231,15 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         raise ValueError(f"n_max must be at least 1, got {n_max}")
     if dist_max is not None and state_xy is None:
         raise ValueError("dist_max needs state_xy")
+    fixed_slots: list[int] = []
+    for name, count in (fixed_used or {}).items():
+        if name not in slots:
+            raise ValueError(f"fixed_used names bundle {name!r} not in {list(slots)}")
+        lo_j, hi_j = slots[name]
+        if not (0 <= int(count) <= hi_j - lo_j):
+            raise ValueError(f"fixed_used[{name!r}] = {count} exceeds the bundle's "
+                             f"{hi_j - lo_j} slot(s)")
+        fixed_slots.extend(range(lo_j, lo_j + int(count)))
 
     off_z, off_y, off_r = 0, S * K, 2 * S * K
     off_f = 3 * S * K
@@ -330,13 +346,15 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     pairs = np.array([(j, j + 1) for lo_j, hi_j in slots.values() for j in range(lo_j, hi_j - 1)],
                      int).reshape(-1, 2)
     Q = len(pairs)
-    if Q:
-        q = np.arange(Q)
+    free = pairs[~np.isin(pairs[:, 0], fixed_slots)] if Q else pairs   # u_j = 1 says nothing
+    if len(free):
+        q = np.arange(len(free))
         # u_{j+1} - u_j <= 0
         add("order_u", _block(np.concatenate([q, q]),
-                              np.concatenate([off_u + pairs[:, 1], off_u + pairs[:, 0]]),
-                              np.concatenate([np.ones(Q), -np.ones(Q)]), Q, n_var),
-            np.full(Q, -np.inf), np.zeros(Q))
+                              np.concatenate([off_u + free[:, 1], off_u + free[:, 0]]),
+                              np.concatenate([np.ones(len(free)), -np.ones(len(free))]),
+                              len(free), n_var),
+            np.full(len(free), -np.inf), np.zeros(len(free)))
     if Q and order_mass:
         # sum_s (W_{s,j+1}/tau) y_{s,j+1} - sum_s (W_sj/tau) y_sj <= 0
         qs = np.repeat(np.arange(Q), S)
@@ -357,6 +375,8 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         if not (0 <= s < S and 0 <= j < K):
             raise ValueError(f"anchor ({s}, {j}) out of range")
         var_lb[off_z + s * K + j] = 1.0
+    for j in fixed_slots:
+        var_lb[off_u + j] = 1.0
     integrality = np.zeros(n_var)
     integrality[off_z:off_z + S * K] = 1
     integrality[off_r:off_r + S * K] = 1
@@ -410,6 +430,227 @@ def append_row(problem: SplitProblem, name: str, cols, vals, lo: float, hi: floa
         ub=np.concatenate([problem.ub, [float(hi)]]), rows=rows)
 
 
+def _var_name(problem: Level0Problem, i: int) -> str:
+    S, K = problem.n_state, problem.k
+    for name, off in (("z", problem.off_z), ("y", problem.off_y), ("r", problem.off_r)):
+        if off <= i < off + S * K:
+            return f"{name}[{(i - off) // K}, {(i - off) % K}]"
+    if problem.off_f <= i < problem.off_u:
+        return f"f[arc {(i - problem.off_f) // K}, {(i - problem.off_f) % K}]"
+    return f"u[{i - problem.off_u}]" if i >= problem.off_u else f"x[{i}]"
+
+
+def check_point(problem: Level0Problem, x: np.ndarray, *, tol: float = 1e-6) -> None:
+    """Raise `ValueError` naming the first row, bound or integrality `x` violates; return
+    quietly when `lb - tol <= A x <= ub + tol` on every row and `x` sits inside its bounds
+    with the integer blocks integral."""
+    x = np.asarray(x, float)
+    if x.shape != (problem.n_var,):
+        raise ValueError(f"x must have {problem.n_var} entries, got {x.shape}")
+    Ax = problem.A @ x
+    bad = np.flatnonzero((Ax < problem.lb - tol) | (Ax > problem.ub + tol))
+    if bad.size:
+        i = int(bad[0])
+        name = next((f"{n}[{i - a}]" for n, (a, b) in problem.rows.items() if a <= i < b),
+                    f"row {i}")
+        raise ValueError(f"infeasible point: row {name} needs {problem.lb[i]:.6g} <= "
+                         f"{Ax[i]:.6g} <= {problem.ub[i]:.6g}")
+    bad = np.flatnonzero((x < problem.var_lb - tol) | (x > problem.var_ub + tol))
+    if bad.size:
+        i = int(bad[0])
+        raise ValueError(f"infeasible point: {_var_name(problem, i)} = {x[i]:.6g} outside "
+                         f"[{problem.var_lb[i]:.6g}, {problem.var_ub[i]:.6g}]")
+    ints = np.flatnonzero(problem.integrality)
+    frac = ints[np.abs(x[ints] - np.round(x[ints])) > tol]
+    if frac.size:
+        i = int(frac[0])
+        raise ValueError(f"infeasible point: {_var_name(problem, i)} = {x[i]:.6g} is not integral")
+
+
+def greedy_plan(problem: Level0Problem, *, priority=None
+                ) -> tuple[np.ndarray, dict[str, list[tuple[int, int]]]]:
+    """A feasible point of `problem` for the warm start, and the seeds its slots are rooted at
+    (`{bundle: [(state, slot), ...]}`, one per used slot).
+
+    Bundles go in `priority` order (default: `problem.slots`'s order, unnamed bundles after
+    the named ones), slots in index order.  A slot seeds at the state with the most remaining
+    mass `W_sj * avail_s`, `avail_s` the smallest remaining `cover_ub` over the bundle's
+    channels after the earlier slots, and grows breadth-first on the rook graph over states
+    with `avail >= eta`, taking whole shares until the mass reaches the slot's target.  When
+    the next whole state would pass `U` it takes the fraction that lands the slot on the band
+    midpoint `tau` (never below `eta`) and leaves the rest of that state to the next slot of
+    the bundle, which seeds from it so the two stay contiguous.  The target is `L`; for a
+    bundle with `n` slots fixed used (`build_level0(fixed_used=...)`) it is
+    `clip(available mass / n, L, U)` and the fraction lands there, so the fixed count is
+    reachable.  A slot that reaches its target from no seed stays unused, and so does the rest
+    of its bundle (the `u` ordering).
+
+    Honoured along the way: `cap_n` and `cap_dist`, read back from the rows; every `z`, `y`
+    and `r` bound (anchors, `forbid_bundle`, `fix_roots`, `bound_z`); and one rule for anchors,
+    that a state anchored anywhere enters only the slots it is anchored to, or a neighbouring
+    slot would drain it before its own slots arrive.  When `order_mass` rows exist a bundle's
+    slots are relabelled by mass, descending, which those rows allow.
+
+    `r` sits at the seed (or at a fixed root) and `f` carries each subtree's size down a BFS
+    tree from it, so every `net` row holds with `inflow - outflow = 1` at each non-root
+    contact.  The point is checked against every row, bound and integrality (`check_point`)
+    before it is returned: a silently infeasible warm start is worse than none.
+    """
+    S, K = problem.n_state, problem.k
+    W, L, U, tau, eta = problem.W, problem.L, problem.U, problem.tau, problem.eta
+    off_z, off_y, off_r, off_f, off_u = (problem.off_z, problem.off_y, problem.off_r,
+                                         problem.off_f, problem.off_u)
+    order = list(priority or ())
+    unknown = [b for b in order if b not in problem.slots]
+    if unknown:
+        raise ValueError(f"unknown bundle(s) {unknown}; expected some of {list(problem.slots)}")
+    order += [b for b in problem.slots if b not in order]
+
+    adj: list[list[int]] = [[] for _ in range(S)]
+    arc: dict[tuple[int, int], int] = {}
+    for e, (a, b) in enumerate(problem.edges):
+        adj[a].append(b)
+        adj[b].append(a)
+        arc[(a, b)] = 2 * e
+        arc[(b, a)] = 2 * e + 1
+
+    def block(off):
+        return (problem.var_lb[off:off + S * K].reshape(S, K),
+                problem.var_ub[off:off + S * K].reshape(S, K))
+
+    one = 1.0 - 1e-9
+    z_lb, z_ub = block(off_z)
+    _, y_ub = block(off_y)
+    r_lb, r_ub = block(off_r)
+    u_lb = problem.var_lb[off_u:off_u + K]
+    anchored = (z_lb >= one).any(axis=1)
+    n_max = (int(round(problem.ub[problem.rows["cap_n"][0]])) if "cap_n" in problem.rows
+             else None)
+    far: set[tuple[int, int]] = set()
+    if "cap_dist" in problem.rows:
+        a, b = problem.rows["cap_dist"]
+        cap = problem.A.tocsr()[a:b]
+        for i in range(b - a):
+            cols = cap.indices[cap.indptr[i]:cap.indptr[i + 1]]
+            pair = tuple(sorted(set(((cols - off_z) // K).tolist())))
+            if len(pair) == 2:
+                far.add(pair)
+
+    rem = problem.cover_ub.copy()
+    has = problem.slot_has
+
+    def avail(s, j):
+        return float(min(rem[s, has[j]].min(), y_ub[s, j]))
+
+    def allowed(s, j):
+        return z_ub[s, j] >= one and (not anchored[s] or z_lb[s, j] >= one)
+
+    def grow(j, seed, stop, land):
+        """BFS from `seed`: `(ok, {s: y}, mass, split state or None)`."""
+        must = {int(s) for s in np.flatnonzero(z_lb[:, j] >= one)}
+        chosen: dict[int, float] = {}
+        mass, split = 0.0, None
+        queue, seen = deque([seed]), {seed}
+        while queue:
+            if mass >= stop - 1e-9 and must <= chosen.keys():
+                break
+            if n_max is not None and len(chosen) >= n_max:
+                break
+            s = queue.popleft()
+            if any((min(s, t), max(s, t)) in far for t in chosen):
+                continue
+            a = avail(s, j)
+            if a < eta - 1e-12:
+                continue
+            w = W[s, j]
+            if mass + w * a > U + 1e-9:
+                y = min(a, max(eta, (land - mass) / w))
+                if mass + w * y > U + 1e-9:
+                    continue
+                if y < a - 1e-12:
+                    split = s
+            else:
+                y = a
+            chosen[s] = y
+            mass += w * y
+            nb = [t for t in adj[s] if t not in seen and allowed(t, j)]
+            nb.sort(key=lambda t: (t not in must, -W[t, j] * avail(t, j), t))
+            seen.update(nb)
+            queue.extend(nb)
+        return mass >= stop - 1e-9 and must <= chosen.keys(), chosen, mass, split
+
+    plan: dict[int, tuple[dict[int, float], float, int]] = {}
+    for bname in order:
+        lo, hi = problem.slots[bname]
+        n_fixed = int((u_lb[lo:hi] >= one).sum())
+        stop, land = L, tau
+        if n_fixed:
+            total = sum(W[s, lo] * avail(s, lo) for s in range(S) if allowed(s, lo))
+            stop = land = float(np.clip(total / n_fixed, L, U))
+        hint = None
+        for j in range(lo, hi):
+            must = [int(s) for s in np.flatnonzero(z_lb[:, j] >= one)]
+            if must:
+                seeds = sorted(must, key=lambda s: (-W[s, j] * avail(s, j), s))
+            else:
+                seeds = sorted((s for s in range(S)
+                                if allowed(s, j) and avail(s, j) >= eta and W[s, j] > 0),
+                               key=lambda s: (-W[s, j] * avail(s, j), s))
+                if hint in seeds:
+                    seeds.remove(hint)
+                    seeds.insert(0, hint)
+            found = None
+            for seed in seeds:
+                ok, chosen, mass, split = grow(j, seed, stop, land)
+                if ok:
+                    found = (chosen, mass, seed, split)
+                    break
+            if found is None:
+                break                       # the rest of the bundle stays unused (order_u)
+            chosen, mass, seed, split = found
+            for s, y in chosen.items():
+                rem[s, has[j]] -= y
+            plan[j] = (chosen, mass, seed)
+            hint = split
+
+    if "order_mass" in problem.rows:
+        relabelled = {}
+        for lo, hi in problem.slots.values():
+            used = sorted((j for j in range(lo, hi) if j in plan), key=lambda j: -plan[j][1])
+            relabelled.update(zip(range(lo, lo + len(used)), (plan[j] for j in used)))
+        plan = relabelled
+
+    x = np.zeros(problem.n_var)
+    seeds_out: dict[str, list[tuple[int, int]]] = {b: [] for b in problem.slots}
+    for j, (chosen, mass, seed) in plan.items():
+        x[off_u + j] = 1.0
+        for s, y in chosen.items():
+            x[off_z + s * K + j] = 1.0
+            x[off_y + s * K + j] = y
+        fixed = [s for s in chosen if r_lb[s, j] >= one]
+        root = (fixed[0] if fixed else seed if r_ub[seed, j] >= one
+                else next((s for s in chosen if r_ub[s, j] >= one), seed))
+        x[off_r + root * K + j] = 1.0
+        seeds_out[problem.bundle_of[j]].append((int(root), int(j)))
+        parent: dict[int, int | None] = {root: None}
+        walk, queue = [root], deque([root])
+        while queue:
+            s = queue.popleft()
+            for t in adj[s]:
+                if t in chosen and t not in parent:
+                    parent[t] = s
+                    walk.append(t)
+                    queue.append(t)
+        size = dict.fromkeys(chosen, 1)
+        for t in reversed(walk):
+            if parent[t] is not None:
+                size[parent[t]] += size[t]
+        for t in walk[1:]:
+            x[off_f + arc[(parent[t], t)] * K + j] = float(size[t])
+    check_point(problem, x)
+    return x, seeds_out
+
+
 def cover_pass(problem: Level0Problem, bundle_names, name: str | None = None) -> Pass:
     """Maximise `sum_{j in those bundles} sum_s W_sj y_sj`, the mass those slots cover.  Route
     J's `cover_N` names `["N"]` only (pure national slots), `cover_WH` names `WH` and
@@ -455,7 +696,8 @@ def _objective(problem: Level0Problem, c: np.ndarray, res: dict) -> float:
 
 def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "scipy",
                  strategy: str = "direct", time_limit: float | None = None,
-                 threads: int | None = None) -> dict:
+                 threads: int | None = None, warm_start=None,
+                 warm_seconds: float = 0.0) -> dict:
     """Solve `passes` lexicographically.  For each pass `problem.c` is set (negated for a
     `"max"` pass, every engine minimises), solved through `milp_engines.solve_problem`, and
     its value pinned by one appended row before the next pass.  The pinned bound is
@@ -479,6 +721,13 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
     are warm-started from the previous pass; `scipy` has no such hook.  `cpsat` is refused: its
     worker rebuilds a level-1 model from `M_s` and `delta`.
 
+    `warm_start`, a feasible point over `n_var` (`greedy_plan`), is handed to the first solved
+    pass the same way, as its `z` and `y`; `warm_seconds` is the time the caller spent
+    building it.  The pass log then opens with a pseudo-entry `{name: "greedy", value: {bundle:
+    covered mass}, certified: False, status: "warm_start", seconds: warm_seconds}` so the run
+    record shows what the solver started from.  A first pass routed through the portfolio
+    (`strategy="portfolio"` with a contacts pass first) does not receive it.
+
     Returns `passes` (`[{name, value, certified, status, seconds}]`), the last solved pass's
     `z (S, K)`, `y`, `u`, `residual (S, C)`, `covered`, `masses (K,)`, `contacts`, and
     `problem`, the pinned problem after every pass (route R's neighbourhood moves start there).
@@ -497,6 +746,18 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
     log: list[dict] = []
     warm: dict | None = None
     last: dict | None = None
+    if warm_start is not None:
+        S, K = problem.n_state, problem.k
+        x0 = np.asarray(warm_start, float)
+        if x0.shape != (problem.n_var,):
+            raise ValueError(f"warm_start must have {problem.n_var} entries, got {x0.shape}")
+        z0 = x0[problem.off_z:problem.off_z + S * K].reshape(S, K) > 0.5
+        y0 = x0[problem.off_y:problem.off_y + S * K].reshape(S, K)
+        warm = dict(z=z0, y=y0)
+        cov = {b: float((problem.W[:, lo:hi] * y0[:, lo:hi]).sum())
+               for b, (lo, hi) in problem.slots.items()}
+        log.append(dict(name="greedy", value=cov, certified=False, status="warm_start",
+                        seconds=float(warm_seconds)))
     for p in passes:
         c = np.asarray(p.c, float) if p.sense == "min" else -np.asarray(p.c, float)
         if not np.any(c):

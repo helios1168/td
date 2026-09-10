@@ -31,7 +31,7 @@ and two drivers over the result:
 carrying all four channels; "four channels" then means that pass used at least one slot.
 
 Writes `params.json` (every argument), `plan.json` (the slots, the per-state shares and the
-residual, the pass log, the move log), `staffing.json` (`td.stage2_state.state_stage2` on the
+residual, the pass log, the move log, the anchors), `staffing.json` (`td.stage2_state.state_stage2` on the
 final plan), `timings.json`, and one `projections/<bundle>/` per used bundle holding a format-1
 instance for that bundle and the `state_shares.csv` level 2 reads.  A solve that returns
 nothing usable writes `failure.json` in the shape `tools/state_splits.py` writes it and
@@ -105,6 +105,20 @@ CATCH_ALL_BUNDLES = {"OTHER_N_WH": ("N_WH",), "OTHER_N_FI": ("N_FI",),
                      "OTHER_WH": ("WH",), "OTHER_FI": ("FI",)}
 
 
+def _parse_k_fixed(text: str) -> dict[str, int]:
+    """`"N=18,WH=11"` -> `{"N": 18, "WH": 11}`; the bundle names are checked in `_main`."""
+    out = {}
+    for item in text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        name, _, count = item.partition("=")
+        if not count.strip().isdigit():
+            raise argparse.ArgumentTypeError(f"expected BUNDLE=COUNT, got {item!r}")
+        out[name.strip()] = int(count)
+    return out
+
+
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("instance", help="the descaled instance (.json.gz), format 1 or 2")
@@ -154,6 +168,16 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--filler-capture", choices=list(model.FILLER_CAPTURE),
                     default=borders_report.FILLER_CAPTURE,
                     help="stage-2 filler capture rule; scores the plan, changes no geometry")
+    ap.add_argument("--warm", choices=("greedy", "none"), default="greedy",
+                    help="start every model's first pass from level0.greedy_plan's feasible "
+                         "point (default greedy); the plan.json pass log opens with it")
+    ap.add_argument("--anchor", choices=("greedy", "none"), default="none",
+                    help="anchor every used slot at its greedy seed (z fixed there, root "
+                         "fixed there); --incumbency keeps precedence on the N slots. "
+                         "Refused with --driver reps (default none)")
+    ap.add_argument("--k-fixed", type=_parse_k_fixed, default=None, metavar="B=N,B=N,...",
+                    help="fix the first N slots of bundle B as used, e.g. N=18,WH=11,FI=19; "
+                         "a bundle not named stays free (default none)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
     ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
@@ -411,8 +435,10 @@ def _pass_list(problem, cover_groups) -> list:
     return passes
 
 
-def _run_passes(problem, passes, args, stage: str, T) -> dict:
-    """One `solve_passes` call; each pass pins its own value before the next."""
+def _run_passes(problem, passes, args, stage: str, T, *, warm=None,
+                warm_seconds: float = 0.0) -> dict:
+    """One `solve_passes` call; each pass pins its own value before the next.  `warm` is the
+    greedy point the first pass starts from (`--warm greedy`), `warm_seconds` its build time."""
     from td.solvers import level0
 
     t0 = time.time()
@@ -420,14 +446,18 @@ def _run_passes(problem, passes, args, stage: str, T) -> dict:
         try:
             result = level0.solve_passes(problem, passes, engine=args.engine,
                                          strategy=args.strategy, time_limit=args.time_limit,
-                                         threads=args.threads)
+                                         threads=args.threads, warm_start=warm,
+                                         warm_seconds=warm_seconds)
         except ss.SolveFailure as exc:
             _write_failure(args.out, stage, exc, time.time() - t0)
             raise
         ph.note(stage=stage, strategy=args.strategy,
                 passes=[p["name"] for p in result["passes"]])
     for rec in result["passes"]:
-        print(f"{stage}/{rec['name']}: value={rec['value']:.6g} "
+        v = rec["value"]
+        shown = (", ".join(f"{b}={m:.6g}" for b, m in v.items()) if isinstance(v, dict)
+                 else f"{v:.6g}")
+        print(f"{stage}/{rec['name']}: value={shown} "
               f"certified={rec['certified']} status={rec['status']} "
               f"({rec['seconds']:.1f}s)", flush=True)
     result = dict(result)
@@ -441,16 +471,20 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
     the mass ordering inside a bundle is only valid while its slots are interchangeable.
     `--n-max` and `--dist-max` are honoured under both drivers; `params.json` records them
-    either way, so dropping them under `reps` would make that record untrue.
+    either way, so dropping them under `reps` would make that record untrue.  `--k-fixed`
+    applies to the bundles this model carries; a named bundle in another stage's model is
+    that stage's business.
     """
     from td.solvers import level0
 
+    fixed = {b: n for b, n in (args.k_fixed or {}).items() if b in bundle_names}
     return level0.build_level0(
         cells, {b: _bundle_channels(b) for b in bundle_names},
         edges=edges, L=L, U=U, eta=args.eta,
         n_max=args.n_max, dist_max=args.dist_max,
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
-        order_mass=False if args.driver == "reps" else None)
+        order_mass=False if args.driver == "reps" else None,
+        fixed_used=fixed or None)
 
 
 def _print_slots(problem, stage: str) -> None:
@@ -697,7 +731,12 @@ def _main(args, T: telemetry.Timings) -> int:
     from td import instance as descaled
     from td import stage2_state
     from td.solvers import level0
+    from td.solvers import milp_engines as me
 
+    if args.anchor == "greedy" and args.driver == "reps":
+        raise ValueError("--anchor greedy fixes each slot's root at its greedy seed, and a "
+                         "route-R move that forbids that state from the bundle would leave "
+                         "the root on a released contact; use --driver geo")
     with T.phase("load"):
         print(f"loading {args.instance}...", flush=True)
         d = descaled.load_descaled(args.instance)
@@ -733,6 +772,9 @@ def _main(args, T: telemetry.Timings) -> int:
     unknown = [g for g in priority if g not in STAGE_BUNDLES]
     if unknown:
         raise ValueError(f"--priority: unknown group(s) {unknown}")
+    unknown = [b for b in (args.k_fixed or {}) if b not in enabled]
+    if unknown:
+        raise ValueError(f"--k-fixed: bundle(s) {unknown} not among {list(enabled)}")
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
@@ -749,6 +791,7 @@ def _main(args, T: telemetry.Timings) -> int:
         centers=os.path.abspath(args.centers) if args.centers else None,
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
+        warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed,
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -762,6 +805,7 @@ def _main(args, T: telemetry.Timings) -> int:
     slots: list[dict] = []
     passes: list[dict] = []
     moves: list[dict] = []
+    anchor_log: list[dict] = []
     last = None
 
     def run_stage(stage: str, bundle_names, cover_groups) -> None:
@@ -795,9 +839,48 @@ def _main(args, T: telemetry.Timings) -> int:
                 problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
         _print_slots(problem, stage)
+        anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j], state=state_list[s],
+                               slot=j, source="incumbency") for s, j in (anchors or ()))
+
+        # The greedy point: the first pass's warm start (--warm greedy) and, under --anchor
+        # greedy, the seeds every used slot is anchored and rooted at.  A build that fails is
+        # recorded and the stage solves cold: a multi-hour run must not die on its start.
+        warm, warm_s, seeds = None, 0.0, None
+        if "greedy" in (args.warm, args.anchor):
+            t0 = time.time()
+            try:
+                # the cover groups' order, less the bundles this model has no slots for
+                # (`_pass_list` drops those too)
+                warm, seeds = level0.greedy_plan(
+                    problem, priority=[b for _, bs in cover_groups for b in bs
+                                       if b in problem.slots])
+            except ValueError as exc:
+                print(f"{stage}: greedy plan failed ({exc}); solving cold", flush=True)
+                passes.append(dict(name="greedy", value=None, certified=False,
+                                   status="warm_start_failed", seconds=time.time() - t0,
+                                   stage=stage, message=str(exc)))
+            warm_s = time.time() - t0
+        if seeds is not None and args.anchor == "greedy":
+            # `z` fixed at the seed and the root fixed there (`fix_roots`); the greedy point
+            # stays feasible for both, and the incumbency's own N anchors keep their slots
+            taken = {j for _, j in (anchors or ())}
+            extra = [(s, j) for lst in seeds.values() for s, j in lst if j not in taken]
+            anchors = list(anchors or ()) + extra
+            with T.phase("build"):
+                problem = me.fix_roots(
+                    _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+                           prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy),
+                    extra)
+            anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j],
+                                   state=state_list[s], slot=j, source="greedy")
+                              for s, j in extra)
+            print(f"{stage}: {len(extra)} anchor(s) from the greedy plan", flush=True)
+        if args.warm != "greedy":
+            warm = None
 
         unpinned = problem                            # before any pass pinned its value
-        result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T)
+        result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T,
+                             warm=warm, warm_seconds=warm_s)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1)
         slots.extend(recs)
@@ -856,7 +939,7 @@ def _main(args, T: telemetry.Timings) -> int:
         per_state[code] = row
 
     plan = dict(state_list=state_list, bundles=list(enabled), slots=slots,
-                per_state=per_state, passes=passes, moves=moves)
+                per_state=per_state, passes=passes, moves=moves, anchors=anchor_log)
     with open(os.path.join(args.out, "plan.json"), "w", encoding="utf-8") as fh:
         json.dump(plan, fh, indent=2, default=float)
         fh.write("\n")
