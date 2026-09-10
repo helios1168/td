@@ -826,3 +826,117 @@ def test_a_district_holding_nothing_but_off_plan_zips_keeps_them():
     G = _path_graph(2)
     labels = {"p0": "D1", "p1": "D2"}
     assert cli.off_plan(G, labels, {"p0": "A", "p1": "A"}, {"A": {"D2"}}) == {}
+
+
+# ------------------------------------------------------------------ --split-cut contiguous
+
+def test_split_cut_contiguous_recuts_named_bundles_on_the_cell_graph():
+    """`--split-cut contiguous --split-cut-bundles N` re-cuts B and C on the path graph instead
+    of the power diagram; both are split states (B has two real slots, C a slot plus the
+    residual), so both carry a `cut_deviation` entry whose targets sum to the state's own mass,
+    and every district still comes back in one piece on this trivial path graph."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_run(run_dir)
+        orig = run_draw.coordinates
+        run_draw.coordinates = lambda zips, cache=None: ({z: XY[z] for z in zips if z in XY},
+                                                          [z for z in zips if z not in XY])
+        try:
+            assert cli.main([run_dir, "--geo-cache", "unused", "--split-cut", "contiguous",
+                             "--split-cut-bundles", "N"]) == 0
+        finally:
+            run_draw.coordinates = orig
+        rows, districts, _, rec = _tables(run_dir)
+
+        n = rec["bundles"]["N"]
+        assert n["split_cut"] == "contiguous"
+        assert set(n["cut_deviation"]) == {"B", "C"}
+        for state, total in (("B", 2.0), ("C", 2.0)):
+            targets = [v["target"] for v in n["cut_deviation"][state].values()]
+            assert abs(sum(targets) - total) < 1e-9
+
+        assert all(r["contiguous"] == "1" for r in districts)
+        cells = [(r["zip"], r["channel"]) for r in rows]
+        assert len(cells) == len(ZIPS) * len(channels.CHANNELS) == 24
+        assert rec["split_cut"] == "contiguous" and rec["split_cut_bundles"] == ["N"]
+
+
+def test_split_cut_contiguous_defaults_to_the_wh_bundle_and_leaves_others_on_power():
+    """With no `--split-cut-bundles`, the default is `WH`: a bundle named `N` keeps the power
+    cut even under `--split-cut contiguous`, so its `cut_deviation` stays empty, and the top
+    level records the default bundle list."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_run(run_dir)
+        orig = run_draw.coordinates
+        run_draw.coordinates = lambda zips, cache=None: ({z: XY[z] for z in zips if z in XY},
+                                                          [z for z in zips if z not in XY])
+        try:
+            assert cli.main([run_dir, "--geo-cache", "unused",
+                             "--split-cut", "contiguous"]) == 0
+        finally:
+            run_draw.coordinates = orig
+        _, _, _, rec = _tables(run_dir)
+
+        n = rec["bundles"]["N"]
+        assert n["split_cut"] == "power" and n["cut_deviation"] == {}
+        assert rec["split_cut"] == "contiguous" and rec["split_cut_bundles"] == ["WH"]
+
+
+# --------------------------------------------------------------- contiguous_cut, on toy graphs
+
+def test_contiguous_cut_reunites_a_detached_zip_and_seeds_a_wholly_inside_district_at_its_centre():
+    """A five-zip path b0-b1-b2-b3-b4 in split state B, plus o1 outside B joined to b0 (D1's
+    body).  The power diagram gave D1 the detached b0, b3, b4 and D2 the middle b1, b2, an
+    arrangement `ss.realise`'s LP can produce and the power cut never repairs.  D1 seeds at b0
+    (its only zip of B touching its own body); D2 touches no state but B, so it has no body and
+    seeds at the zip of B nearest its given centre (b4).  Growing both from those seeds at once
+    reaches exactly their targets, one piece each."""
+    G = nx.Graph()
+    G.add_edges_from([("o1", "b0"), ("b0", "b1"), ("b1", "b2"), ("b2", "b3"), ("b3", "b4")])
+    zips_s = ["b0", "b1", "b2", "b3", "b4"]
+    power_label = {"b0": "D1", "b1": "D2", "b2": "D2", "b3": "D1", "b4": "D1"}
+    M_by_zip = {z: 1.0 for z in zips_s}
+    targets = {"D1": 3.0, "D2": 2.0}
+    bodies = {"D1": {"o1"}, "D2": set()}
+    xy = {"o1": (-1.0, 0.0), "b0": (0.0, 0.0), "b1": (1.0, 0.0), "b2": (2.0, 0.0),
+          "b3": (3.0, 0.0), "b4": (4.0, 0.0)}
+    centres = {"D1": (0.0, 0.0), "D2": (4.0, 0.0)}
+
+    labels, dev = cli.contiguous_cut(G, zips_s, power_label, M_by_zip, targets, bodies, centres,
+                                     xy)
+
+    assert labels == {"b0": "D1", "b1": "D1", "b2": "D1", "b3": "D2", "b4": "D2"}
+    assert dev["D1"] == (3.0, 3.0) and dev["D2"] == (2.0, 2.0)
+    Gs_labels = {z: labels[z] for z in zips_s}
+    pieces = cli.district_pieces(G, Gs_labels)
+    assert all(len(v) == 1 for v in pieces.values())
+
+
+def test_contiguous_cut_seeds_other_farthest_from_every_real_seed_and_leaves_unreached_zips_alone():
+    """A four-zip path with one real district D1, seeded at p0 (its body zip o1's neighbour),
+    and the residual pseudo-district, seeded at p9, the farthest zip from D1's seed by point
+    distance even though it carries no edge to anything: with `other`'s frontier then empty
+    forever, D1 is the only district still growing and keeps absorbing the path past its own
+    target.  p8, a second disconnected zip that is not the farthest one, is never anybody's
+    seed and never anybody's frontier either, so it keeps the power label it started with."""
+    G = nx.Graph()
+    G.add_edges_from([("o1", "p0"), ("p0", "p1"), ("p1", "p2"), ("p2", "p3")])
+    G.add_node("p8")
+    G.add_node("p9")
+    zips_s = ["p0", "p1", "p2", "p3", "p8", "p9"]
+    power_label = {z: "other" for z in zips_s}
+    power_label["p0"] = "D1"
+    power_label["p8"] = "D1"                             # preset; growth never reaches it
+    M_by_zip = {z: 1.0 for z in zips_s}
+    targets = {"D1": 2.0, "other": 2.0}
+    bodies = {"D1": {"o1"}}
+    xy = {"o1": (-1.0, 0.0), "p0": (0.0, 0.0), "p1": (1.0, 0.0), "p2": (2.0, 0.0),
+          "p3": (3.0, 0.0), "p8": (5.0, 5.0), "p9": (9.0, 9.0)}
+    centres = {"D1": (0.0, 0.0)}
+
+    labels, dev = cli.contiguous_cut(G, zips_s, power_label, M_by_zip, targets, bodies, centres,
+                                     xy, other="other")
+
+    assert labels["p0"] == labels["p1"] == labels["p2"] == labels["p3"] == "D1"
+    assert labels["p9"] == "other"                            # the farthest zip, other's seed
+    assert labels["p8"] == "D1"                     # its own power label, growth never reached it
+    assert dev["D1"] == (4.0, 2.0) and dev["other"] == (1.0, 2.0)

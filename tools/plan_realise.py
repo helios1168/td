@@ -56,6 +56,14 @@ moves this way, never a district's main body, even where that body sits in an ov
 `pieces`/`contiguous` columns in `districts.csv` are left as they were when its own bundle ran,
 since its cell graph never contained the handed zips.
 
+`--split-cut contiguous` recuts each split state of the bundles named by `--split-cut-bundles`
+(default `WH`) on the bundle's own cell graph instead of the power diagram: it grows every
+district from a seed at once, along the state's own graph edges, toward its target mass, so a
+district only takes ground the graph actually joins to what it already has.  Every bundle not
+named keeps the power cut regardless of `--split-cut`.  `realise.json` records the mass each
+district reached against its target per split state, under `cut_deviation`, and the cut each
+bundle actually got, under `split_cut`.
+
 `--sweep-zips` covers what the bundle loop above still leaves unclaimed for a reason that is
 not level 0's cover row falling short: two bundles' independent cuts of a shared state
 disagreeing on which zips each takes, so a cell neither claimed.  After every bundle has been
@@ -130,6 +138,13 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="the repair may push a district this fraction of its bundle's tau "
                          f"outside the plan's band to reunite pieces (default {BAND_SLACK}; "
                          "0 keeps the strict guard)")
+    ap.add_argument("--split-cut", choices=["power", "contiguous"], default="power",
+                    help="cut a split state by the power diagram of the district centres "
+                         "(default), or grow every district from a seed along the bundle's own "
+                         "cell graph toward its target mass")
+    ap.add_argument("--split-cut-bundles", default="WH",
+                    help="comma-separated bundle names --split-cut contiguous applies to; "
+                         "every other bundle keeps the power cut regardless (default WH)")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--sweep-zips", action="store_true",
                     help="after every bundle is realised and repaired, claim every remaining "
@@ -228,9 +243,14 @@ def initial_centers(state_C: np.ndarray, z: np.ndarray, y: np.ndarray,
     return C
 
 
-def realise_bundle(bundle: str, recs: list, proj, shares: dict, geo_cache: str,
-                   rounds: int) -> dict:
-    """Level 2 for one bundle: `{zip: district name}` plus what the run should record."""
+def realise_prepare(bundle: str, recs: list, proj, shares: dict, geo_cache: str) -> dict:
+    """The part of level 2 that has to run before the bundle's cell graph can be built: zip
+    placement, per-state masses, and the plan's shares turned into `y` and `z`.
+
+    Returns a dict `cell_graph` reads (`placed`, `xy_dict`, `states_by_zip`) and
+    `realise_finish` reads for everything else, including the initial centres `ss.realise`
+    starts its Lloyd rounds from.
+    """
     zips_all = sorted(proj.G)
     xy_dict, missing = run_draw.coordinates(zips_all, geo_cache)
     placed = [z for z in zips_all if z in xy_dict]
@@ -266,32 +286,194 @@ def realise_bundle(bundle: str, recs: list, proj, shares: dict, geo_cache: str,
 
     state_C = _state_centroids(xy, M, state_idx, len(state_list))
     C = initial_centers(state_C, z, y, M_s)
+
+    return dict(placed=placed, missing=missing, states_by_zip=states_by_zip, M_by_zip=M_by_zip,
+                state_list=state_list, xy_dict=xy_dict, xy=xy, M=M, state_idx=state_idx,
+                M_s=M_s, k=k, y=y, z=z, keep=keep, folded=folded, C=C)
+
+
+def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: dict,
+                   bodies: dict, centres: dict, xy: dict, other: str | None = None) -> tuple:
+    """Cut one split state's zips into `targets` on `G`'s own edges, in place of the power
+    diagram.
+
+    `power_label` is the state's current cut, the power diagram on the first split state a
+    bundle recuts, an earlier split state's own contiguous cut by the time a later one runs; it
+    is read only to seed a district, never to decide the final label. `bodies` is
+    `{district: set(zip)}`, that district's zips already fixed outside this state at the moment
+    this call runs. `centres` is `{district: (x, y)}`, `ss.realise`'s own final centre for the
+    column, used as the seed when a district has no body zip an edge of the state reaches.
+    `other`, when given, is the pseudo-district's key: it has no centre and seeds at the zip of
+    the state farthest from every real seed.
+
+    A real district seeds at every zip of the state the power cut gave it that has a `G` edge
+    into its own body outside the state. With none, either because the district touches no
+    other state at all or because none of its zips in this state happen to sit next to its own
+    body, it seeds at the single zip of the state nearest its centre instead. Seeding claims
+    zips in a fixed order, real districts by name then `other` last, so two districts never
+    claim the same zip.
+
+    Growth then runs one loop for both the ordinary case and the leftover one it turns into: at
+    each step, among the districts that still have an unclaimed zip on the state's own graph
+    next to their own region, the one with the largest remaining deficit as a fraction of its
+    own target (so a small district gets its turn against a large one instead of being crowded
+    out of the corridor between them) takes the zip on its frontier nearest its seed's centroid.
+    Once every district's frontier is used up, or no zip of the state ever reaches a seed at
+    all, growth stops. The same rule that grows a short district toward its target is what then
+    keeps sending a contested zip to whichever neighbour is least far over, once nothing is
+    short anymore, without a second pass. A zip growth never reaches, including one with no
+    vertex on `G`, keeps its `power_label`.
+
+    Returns `({zip: district}, {district: (mass, target)})`.
+    """
+    zips_s = list(zips_s)
+    districts = sorted(targets)
+    present = [zp for zp in zips_s if zp in G]
+    Gs = G.subgraph(present)
+
+    def nearest(pool, point):
+        return min(sorted(pool),
+                  key=lambda zp: (xy[zp][0] - point[0]) ** 2 + (xy[zp][1] - point[1]) ** 2)
+
+    def farthest(pool, points):
+        if not points:
+            return sorted(pool)[0]
+        return max(sorted(pool),
+                  key=lambda zp: min((xy[zp][0] - p[0]) ** 2 + (xy[zp][1] - p[1]) ** 2
+                                    for p in points))
+
+    claimed: set = set()
+    seeds: dict[str, set] = {}
+    real = [dd for dd in districts if dd != other]
+    for dd in sorted(real):
+        touch = sorted(zp for zp in present if power_label.get(zp) == dd and zp not in claimed
+                       and any(nb in bodies.get(dd, ()) for nb in G[zp]))
+        if touch:
+            seeds[dd] = set(touch)
+        else:
+            pool = [zp for zp in present if zp not in claimed]
+            seeds[dd] = {nearest(pool, centres[dd])} if pool else set()
+        claimed |= seeds[dd]
+
+    if other is not None and other in districts:
+        pool = [zp for zp in present if zp not in claimed]
+        seed_points = [xy[zp] for dd in real for zp in seeds.get(dd, ())]
+        seeds[other] = {farthest(pool, seed_points)} if pool else set()
+        claimed |= seeds[other]
+
+    region = {dd: set(seeds.get(dd, ())) for dd in districts}
+    mass = {dd: sum(M_by_zip.get(zp, 0.0) for zp in region[dd]) for dd in districts}
+    assigned = {zp: dd for dd, zs in region.items() for zp in zs}
+    centroid = {}
+    for dd in districts:
+        if seeds.get(dd):
+            xs = [xy[zp][0] for zp in seeds[dd]]
+            ys = [xy[zp][1] for zp in seeds[dd]]
+            centroid[dd] = (sum(xs) / len(xs), sum(ys) / len(ys))
+
+    frontier: dict[str, set] = {dd: set() for dd in districts}
+    for dd in districts:
+        for zp in region[dd]:
+            for nb in Gs[zp]:
+                if nb not in assigned:
+                    frontier[dd].add(nb)
+
+    def _relative_deficit(dd):
+        t = targets.get(dd, 0.0)
+        return (t - mass.get(dd, 0.0)) / t if t > 0.0 else float("-inf")
+
+    while True:
+        cands = sorted(dd for dd in districts if frontier[dd])
+        if not cands:
+            break
+        d_star = max(cands, key=_relative_deficit)
+        cx, cy = centroid[d_star]
+        z_star = min(sorted(frontier[d_star]),
+                    key=lambda zp: (xy[zp][0] - cx) ** 2 + (xy[zp][1] - cy) ** 2)
+        region[d_star].add(z_star)
+        mass[d_star] = mass.get(d_star, 0.0) + M_by_zip.get(z_star, 0.0)
+        assigned[z_star] = d_star
+        for dd in districts:
+            frontier[dd].discard(z_star)
+        for nb in Gs[z_star]:
+            if nb not in assigned:
+                frontier[d_star].add(nb)
+
+    labels = {zp: assigned.get(zp, power_label.get(zp, other)) for zp in zips_s}
+    deviation = {dd: (mass.get(dd, 0.0), targets.get(dd, 0.0)) for dd in districts}
+    return labels, deviation
+
+
+def realise_finish(bundle: str, recs: list, prep: dict, rounds: int, *, G,
+                   split_cut: str = "power") -> dict:
+    """Level 2 for one bundle, given `realise_prepare`'s output and the bundle's cell graph:
+    `ss.realise`'s power cut, then, under `split_cut == "contiguous"`, a recut of every split
+    state on `G` in its place. Returns the same shape the old `realise_bundle` did, plus
+    `split_cut` and `cut_deviation` (`{state: {district: {mass, target}}}`, empty under
+    `"power"`).
+    """
+    xy, M, state_idx = prep["xy"], prep["M"], prep["state_idx"]
+    y, z, C = prep["y"], prep["z"], prep["C"]
     out = ss.realise(xy, M, state_idx, z, y, C, rounds=rounds)
 
+    k = prep["k"]
     names = [district_name(bundle, j) for j in range(k)] + [OTHER]
-    to_district = {z_: names[int(lab)] for z_, lab in zip(placed, out["labels"])}
-    to_district = channel.place_by_state(states_by_zip, to_district, missing, M_by_zip)
+    placed = prep["placed"]
+    label_names = {zp: names[int(lab)] for zp, lab in zip(placed, out["labels"])}
+
+    cut_deviation: dict[str, dict] = {}
+    if split_cut == "contiguous":
+        state_list = prep["state_list"]
+        M_by_zip = prep["M_by_zip"]
+        states_by_zip = prep["states_by_zip"]
+        xy_dict = prep["xy_dict"]
+        centers = out["centers"]
+        # split states in a fixed order: a district's body in a not-yet-recut split state is
+        # still the power label, the same order-dependence ss.realise itself carries
+        for s in sorted(out["split_states"], key=lambda s: state_list[s]):
+            code = state_list[s]
+            zips_s = [zp for zp in placed if states_by_zip[zp] == code]
+            touching = [j for j in range(k) if z[s, j]]
+            has_other = prep["keep"] > k and bool(z[s, k])
+            targets = {names[j]: float(y[s, j]) * float(prep["M_s"][s]) for j in touching}
+            other_key = None
+            if has_other:
+                other_key = OTHER
+                targets[OTHER] = float(y[s, k]) * float(prep["M_s"][s])
+            bodies = {names[j]: {zp for zp, lab in label_names.items()
+                                 if lab == names[j] and zp not in zips_s}
+                     for j in touching}
+            centres = {names[j]: (float(centers[j][0]), float(centers[j][1])) for j in touching}
+            new_labels, dev = contiguous_cut(G, zips_s, label_names, M_by_zip, targets, bodies,
+                                             centres, xy_dict, other=other_key)
+            label_names.update(new_labels)
+            cut_deviation[code] = {dd: dict(mass=m, target=t) for dd, (m, t) in dev.items()}
+
+    to_district = channel.place_by_state(prep["states_by_zip"], label_names, prep["missing"],
+                                         prep["M_by_zip"])
 
     # which real districts the plan lets a zip of each state belong to.  `z` is the level-1
     # decision after the residual fold, so an unsplit state names exactly one district and the
     # repair cannot move a zip out of it -- level 0 decided that state, not this driver.
     admissible = {code: {names[j] for j in range(k) if z[s, j]}
-                  for s, code in enumerate(state_list)}
+                  for s, code in enumerate(prep["state_list"])}
 
     rounds_used = out["rounds_used"]
     return dict(
         to_district=to_district,
-        split_states=[state_list[s] for s in out["split_states"]],
+        split_states=[prep["state_list"][s] for s in out["split_states"]],
         rounds_used=max(rounds_used.values()) if rounds_used else 0,
         n_fractional=int(out["n_fractional"]),
-        folded_states=folded,
-        pseudo_column=bool(keep > k),
-        n_missing=len(missing),
+        folded_states=prep["folded"],
+        pseudo_column=bool(prep["keep"] > k),
+        n_missing=len(prep["missing"]),
         placed=placed,
-        xy=xy_dict,
-        states_by_zip=states_by_zip,
-        M_by_zip=M_by_zip,
+        xy=prep["xy_dict"],
+        states_by_zip=prep["states_by_zip"],
+        M_by_zip=prep["M_by_zip"],
         admissible=admissible,
+        split_cut=split_cut,
+        cut_deviation=cut_deviation,
     )
 
 
@@ -1035,6 +1217,7 @@ def _main(args) -> int:
     # gets no band guard, and `realise.json` says so.
     band = ((float(params["L"]), float(params["U"]))
             if params.get("L") is not None and params.get("U") is not None else None)
+    split_cut_bundles = {s.strip() for s in args.split_cut_bundles.split(",") if s.strip()}
     print(f"plan: {sum(len(v) for v in by_bundle.values())} used slot(s) over "
           f"{len(by_bundle)} bundle(s) {sorted(by_bundle)}, {len(rep_of)} staffed, "
           f"band {'[%g, %g]' % band if band else 'unset'}", flush=True)
@@ -1067,11 +1250,13 @@ def _main(args) -> int:
         proj = projs[bundle]
         chans = chans_of[bundle]
         shares = read_shares(os.path.join(cell, "state_shares.csv"))
-        res = realise_bundle(bundle, recs, proj, shares, args.geo_cache, args.rounds)
+        prep = realise_prepare(bundle, recs, proj, shares, args.geo_cache)
+        G, borders, gpath = cell_graph(run_dir, bundle, prep["placed"], prep["xy_dict"],
+                                       prep["states_by_zip"], args.geo_cache)
+        cut = args.split_cut if bundle in split_cut_bundles else "power"
+        res = realise_finish(bundle, recs, prep, args.rounds, G=G, split_cut=cut)
         to_district = res["to_district"]
 
-        G, borders, gpath = cell_graph(run_dir, bundle, res["placed"], res["xy"],
-                                       res["states_by_zip"], args.geo_cache)
         before = district_pieces(G, to_district)
         handoff = _handoff_overlap_pieces(bundle, before, to_district, res, rank, chans_of,
                                           overlap_idx, state_counts, rows_by_name, d, cell_of,
@@ -1163,6 +1348,7 @@ def _main(args) -> int:
                              for n in names if _excess(fix["mass"].get(n, 0.0), band_b) > 0],
             unrepaired=still,
             handed_off=handoff["handed_off"], handed_to=handoff["handed_to"],
+            split_cut=res["split_cut"], cut_deviation=res["cut_deviation"],
             seconds=time.time() - t0)
         rec_b = record[bundle]
         print(f"{bundle}: {len(recs)} district(s), {len(res['split_states'])} split state(s), "
@@ -1213,6 +1399,7 @@ def _main(args) -> int:
     with open(os.path.join(out, "realise.json"), "w", encoding="utf-8") as fh:
         json.dump(dict(run_dir=run_dir, rounds=args.rounds,
                        repair_rounds=args.repair_rounds, graph=GRAPH,
+                       split_cut=args.split_cut, split_cut_bundles=sorted(split_cut_bundles),
                        band=list(band) if band else None, bundles=record,
                        overlaps=overlaps,
                        swept=sweep["swept"] if sweep else [],
