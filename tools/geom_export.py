@@ -9,6 +9,7 @@ solver side.  This driver is that seam.  It hands the app plain coordinate lists
     {"crs": "laea",
      "districts":       {"D01": {"rings": [[[x, y], ...], ...], "color": "#rrggbb",
                                  "holes": [[[x, y], ...], ...]}, ...},
+     "district_reach":  {"D01": {"rings": [[[x, y], ...], ...], "color": "#rrggbb"}, ...},
      "states":          {"TX":  {"rings": [[[x, y], ...], ...], "label": [x, y]}, ...},
      "cells":           {"75001": {"rings": [[[x, y], ...], ...]}, ...},
      "proximity_edges": [["75001", "75002"], ...],
@@ -47,6 +48,17 @@ union of its own zips' real ZCTAs, so unpopulated land, water and any unassigned
 zips shows as a real gap (`rings` loses the ground, `holes` draws its outline) rather than being
 tiled over.  `cells_source` records the shapefile basename and the simplify tolerance actually
 used, so a stale `geom.json` is identifiable.
+
+`district_reach` is the one drawn layer that is not a published boundary, and it exists because
+the union of a district's real ZCTAs has no single outline to read a map by.  The instance
+carries 3,713 of the 33,300 CONUS ZCTAs, so a district's real territory is a scatter: on the
+k = 18 live run `districts` holds 1,038 rings over 596 holes, a median of 62 parts per district,
+and closing gaps under 80 km still leaves a median of 8.  So this layer dissolves the **same
+proximity tessellation** `proximity_edges` is built from, state-clipped, and gives one clean
+region per district -- the district's *reach*, the ground it is nearest to, not the ground it
+holds.  It carries exterior rings only and is meant to be **stroked, never filled**: a fill
+would claim territory between the district's zips that the district does not own.  `districts`
+remains the honest union, and is what the fills draw.
 
 `proximity_edges` is a **reachability model, not a border graph**, and the name says so: it is
 the rook adjacency of the Voronoi tessellation of the zip points, which is the one thing here
@@ -312,20 +324,25 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
                                 state_polys=state_polys)
     with telemetry.phase("dissolve"):
         polys = um.dissolve(zcta_cells, districts)
+        reach_polys = um.dissolve(prox, districts)      # outline only, see `district_reach`
     with telemetry.phase("colour"):
         # Adjacency off the real ZCTA territory, which is the ground the reader sees: two
         # districts share a hue only if no published boundary puts them side by side.
         adj = _adjacency(polys)
         colors = um.color_districts(adj, palette())
 
-    out = {"crs": CRS, "districts": {}, "states": {}, "cells": {}, "proximity_edges": [],
-          "proximity_zips": [], "cells_source": cells_source}
+    out = {"crs": CRS, "districts": {}, "district_reach": {}, "states": {}, "cells": {},
+          "proximity_edges": [], "proximity_zips": [], "cells_source": cells_source}
     for d in sorted(polys, key=str):
         rings, holes = _rings_and_holes(polys[d], simplify)
         entry = {"rings": rings, "color": colors[d]}
         if holes:
             entry["holes"] = holes        # omitted, not `[]`, for a hole-free district
         out["districts"][str(d)] = entry
+    for d in sorted(reach_polys, key=str):
+        rings = _rings(reach_polys[d], simplify)      # exteriors only: this layer is a stroke
+        if rings:
+            out["district_reach"][str(d)] = {"rings": rings, "color": colors.get(d, "#111111")}
     if states_gdf is not None:
         for code, geom in zip(states_gdf["STUSPS"].astype(str), states_gdf.geometry):
             rings = _rings(geom, simplify)

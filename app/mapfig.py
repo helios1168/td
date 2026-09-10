@@ -33,6 +33,7 @@ REP_FILLS = "rep territories"
 CONTESTED = "contested"
 FOCUS = "focus"
 DISTRICT_LINES = "district lines"
+REACH = "district reach"
 STAFFED_FILLS = "staffed districts"
 UNSTAFFED = "unstaffed"
 
@@ -211,6 +212,55 @@ def rep_colours(reps: dict) -> dict[str, str]:
     return colours
 
 
+def _district_lines(fig, geom: dict | None, colours: dict[str, str]) -> None:
+    """Stroke each district's real territory, and its real gaps, over the cell fills.
+
+    This is the honest outline: the boundary of the union of the district's own ZCTAs, whose
+    interior gaps (`"holes"`, decision 1) are unpopulated land, water or unassigned area and are
+    stroked in a second trace of the same name rather than folded into `rings` -- a hole folded
+    into a `fill="toself"` ring elsewhere renders as a solid blob instead of a gap.
+
+    Thin, because on the live instance this is around a thousand rings per map: it says where
+    the ground actually is, while `_reach_lines` gives the reader one boundary to navigate by.
+    Drawn after the fills, which are 0.85 opacity and would otherwise bury it.
+    """
+    for district, info in sorted((geom or {}).get("districts", {}).items()):
+        colour = colours.get(district, info.get("color", "#888888"))
+        dx, dy = _joined(info.get("rings", []))
+        if dx:
+            fig.add_trace(go.Scatter(
+                x=dx, y=dy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
+                line=dict(color=colour, width=0.8)))
+        hx, hy = _joined(info.get("holes", []))
+        if hx:
+            fig.add_trace(go.Scatter(
+                x=hx, y=hy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
+                line=dict(color=colour, width=0.8)))
+
+
+def _reach_lines(fig, geom: dict | None, colours: dict[str, str]) -> None:
+    """Stroke each district's reach boundary on top of whatever is already drawn.
+
+    The reach is `geom["district_reach"]`, the dissolve of the proximity tessellation: one clean
+    state-clipped region per district, which the union of a district's real ZCTAs is not (on the
+    k = 18 live run that union is 1,038 rings over a median of 62 parts, unreadable as an
+    outline).  It is stroked and never filled -- a fill would claim the ground between a
+    district's zips, which the district does not hold.
+
+    Drawn last on purpose: the cell fills are 0.85 opacity and would bury it.  A geom.json
+    without the key (any run exported before it existed) simply gets no boundary, the way it
+    already got an unreadable one.
+    """
+    for district, info in sorted((geom or {}).get("district_reach", {}).items()):
+        rx, ry = _joined(info.get("rings", []))
+        if not rx:
+            continue
+        fig.add_trace(go.Scatter(
+            x=rx, y=ry, mode="lines", name=REACH, hoverinfo="skip", showlegend=False,
+            legendgroup=REACH,
+            line=dict(color=colours.get(district, info.get("color", "#333333")), width=1.8)))
+
+
 def _sig3(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.3g}"
 
@@ -293,23 +343,6 @@ def figure(
                 x=xs, y=ys, mode="lines", name=OUTLINES, hoverinfo="skip", showlegend=False,
                 line=dict(color="#b0b0b0", width=0.8)))
 
-        # District identity is now a thin outline only -- no fill, no legend entry (opportunity
-        # bins take the legend instead).  A district's real gaps (`"holes"`, decision 1) are
-        # stroked the same way, never filled: `staffed_figure` fills district rings elsewhere,
-        # and a hole folded into those rings would render as a solid blob instead of a gap.
-        for district, info in sorted(geom.get("districts", {}).items()):
-            colour = colours.get(district, info.get("color", "#888888"))
-            dx, dy = _joined(info.get("rings", []))
-            if dx:
-                fig.add_trace(go.Scatter(
-                    x=dx, y=dy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
-                    line=dict(color=colour, width=1.2)))
-            hx, hy = _joined(info.get("holes", []))
-            if hx:
-                fig.add_trace(go.Scatter(
-                    x=hx, y=hy, mode="lines", name=district, hoverinfo="skip", showlegend=False,
-                    line=dict(color=colour, width=1.2)))
-
     drawn = [row for row in rows if row["x"] is not None and row["y"] is not None]
     staff_lines = {d: _contest_line(staffing, d) for d in {r["district"] for r in drawn}}
 
@@ -363,6 +396,9 @@ def figure(
                         color=[colours.get(row["district"], "#888888") for row in drawn],
                         line=dict(width=0)),
             customdata=[_custom(row) for row in drawn], hovertemplate=HOVER))
+
+    _district_lines(fig, geom, colours)
+    _reach_lines(fig, geom, colours)
 
     if geom:
         labelled = [(code, info["label"]) for code, info in sorted(geom.get("states", {}).items())
@@ -487,7 +523,10 @@ def rep_figure(
                     line=dict(color="#111111", width=1.5)))
 
     if district_lines and geom:
-        dx, dy = _joined_many(geom.get("districts", {}).values())
+        # The reach boundary, not the ZCTA union: this is an overlay on someone else's fills,
+        # and a thousand-ring union reads as noise over them (`_reach_lines`).
+        overlay = geom.get("district_reach") or geom.get("districts", {})
+        dx, dy = _joined_many(overlay.values())
         if dx:
             fig.add_trace(go.Scatter(
                 x=dx, y=dy, mode="lines", name=DISTRICT_LINES, hoverinfo="skip",
@@ -605,6 +644,14 @@ def staffed_figure(
             opacity=0.5, fillcolor="rgba(0,0,0,0)",
             fillpattern=dict(shape="/", fgcolor="#444444", solidity=0.35),
             line=dict(color="#cccccc", width=0.5)))
+
+    # One dark reach boundary per district over the rep-coloured fills: on this map the fills
+    # say who staffs the ground, so the district line has to be neutral rather than per-district.
+    rx, ry = _joined_many((geom.get("district_reach") or {}).values())
+    if rx:
+        fig.add_trace(go.Scatter(
+            x=rx, y=ry, mode="lines", name=DISTRICT_LINES, hoverinfo="skip", showlegend=False,
+            line=dict(color="#111111", width=1.4)))
 
     labelled = [(code, info["label"]) for code, info in sorted(geom.get("states", {}).items())
                if info.get("label")]

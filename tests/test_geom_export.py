@@ -292,6 +292,32 @@ def test_cells_use_cells_simplify_independently_of_the_district_tolerance():
     assert len(zigzag_part) <= 6, len(zigzag_part)     # 2000 m: zigzag collapses to a plain box
 
 
+def test_district_reach_is_the_tessellation_dissolve_and_covers_the_zcta_union():
+    """`district_reach` is the readable boundary: one region per district from the proximity
+    tessellation, so it must be strictly larger than the union of that district's ZCTAs (which
+    is a scatter of separate squares in this fixture) and made of fewer parts."""
+    gx = _geom_export()
+    rows = _table()
+    g = gx.export(rows, _basemap(), _zcta_polys(rows), "test-fixture", simplify=0.0)
+
+    assert set(g["district_reach"]) <= set(g["districts"])
+    for d, reach in g["district_reach"].items():
+        held = g["districts"][d]["rings"]
+        assert _ring_area(reach["rings"]) > _ring_area(held), d      # reach covers the gaps too
+        assert len(reach["rings"]) <= len(held), d                   # and in fewer parts
+        assert reach["color"] == g["districts"][d]["color"], d       # one hue per district
+
+
+def test_district_reach_carries_no_holes_because_it_is_stroked_not_filled():
+    """A fill would claim ground the district does not hold, so this layer is exteriors only:
+    it must never grow a `holes` key, whatever `districts` does."""
+    gx = _geom_export()
+    rows = _table()
+    g = gx.export(rows, _basemap(), _zcta_polys(rows), "test-fixture", simplify=0.0)
+
+    assert all("holes" not in info for info in g["district_reach"].values())
+
+
 def test_proximity_edges_are_still_the_voronoi_rook_graph():
     """Decision 2: `proximity_edges` is unaffected by `cells` now coming from real ZCTA polygons --
     it is still the rook adjacency of the Voronoi cells of the same lattice as before this

@@ -145,6 +145,37 @@ def test_figure_geom_branch_names_every_cell_trace_zips_with_customdata():
                 assert len(entry) == 6
 
 
+def test_reach_boundary_is_drawn_after_the_cell_fills():
+    """The fills are 0.85 opacity, so a boundary drawn before them is invisible -- which is
+    exactly what happened when the district outline sat above the cells in the trace order."""
+    if plotly is None:
+        return
+    geom = _geom()
+    geom["district_reach"] = {"D1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]],
+                                     "color": "#4269d0"}}
+    fig = mapfig.figure(_rows(), geom)
+    names = [t.name for t in fig.data]
+    last_fill = max(i for i, n in enumerate(names) if n == mapfig.ZIPS)
+    assert names.index(mapfig.REACH) > last_fill, names
+    assert names.index("D1") > last_fill, names          # the honest outline too
+
+    reach = fig.data[names.index(mapfig.REACH)]
+    assert reach.mode == "lines"
+    assert reach.fill is None                 # stroked, never filled: it is not held ground
+    assert reach.line.width > fig.data[names.index("D1")].line.width
+
+
+def test_figure_without_a_reach_layer_draws_only_the_real_outline():
+    """A geom.json exported before the layer existed keeps the honest ZCTA outline and simply
+    gets no reach boundary."""
+    if plotly is None:
+        return
+    fig = mapfig.figure(_rows(), _geom())     # `_geom()` carries no `district_reach`
+    names = [t.name for t in fig.data]
+    assert mapfig.REACH not in names
+    assert "D1" in names
+
+
 def test_figure_falls_back_to_dots_without_geom():
     if plotly is None:
         return
