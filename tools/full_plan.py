@@ -211,6 +211,16 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--k-fixed", type=_parse_k_fixed, default=None, metavar="B=N,B=N,...",
                     help="fix the first N slots of bundle B as used, e.g. N=18,WH=11,FI=19; "
                          "a bundle not named stays free (default none)")
+    ap.add_argument("--k-mode", choices=("fixed", "cap"), default="fixed",
+                    help="how --k-fixed binds: 'fixed' uses exactly N slots; 'cap' opens at "
+                         "most N and lets a pass drop districts a cap makes infeasible. Both "
+                         "band a bundle on its own mean M_B / N under --band-mode per-bundle "
+                         "(default fixed)")
+    ap.add_argument("--serve-all-states", action="store_true",
+                    help="every state with mass must be in at least one district of some "
+                         "bundle: rows sum_j z_sj >= 1 on the joint model, or on the last "
+                         "sequential stage for the states no earlier stage served "
+                         "(default off)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
     ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
@@ -565,7 +575,8 @@ def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mod
     return {b: (rec["L"], rec["U"]) for b, rec in record.items()}, record
 
 
-def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None):
+def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None,
+           serve=None):
     """`build_level0` with the driver's own switches applied.
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
@@ -579,13 +590,17 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     from td.solvers import level0
 
     fixed = {b: n for b, n in (args.k_fixed or {}).items() if b in bundle_names}
-    return level0.build_level0(
+    cap = getattr(args, "k_mode", "fixed") == "cap"
+    problem = level0.build_level0(
         cells, {b: _bundle_channels(b) for b in bundle_names},
         edges=edges, L=L, U=U, band=band, eta=args.eta,
         n_max=args.n_max, dist_max=args.dist_max, radius_max=args.radius_max,
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
         order_mass=False if args.driver == "reps" else None,
-        fixed_used=fixed or None)
+        fixed_used=None if cap else (fixed or None),
+        max_used=fixed if cap and fixed else None)
+    # `serve` names the states this stage must put into some district (`--serve-all-states`)
+    return level0.serve_states(problem, serve) if serve else problem
 
 
 def _print_slots(problem, stage: str) -> None:
@@ -916,7 +931,8 @@ def _main(args, T: telemetry.Timings) -> int:
                  else os.path.abspath(args.centers)),
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
-        warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed,
+        warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
+        serve_all_states=args.serve_all_states,
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -947,7 +963,18 @@ def _main(args, T: telemetry.Timings) -> int:
         # is exactly that case, so it is skipped and said so rather than raising.
         counts = level0.slot_counts(cells, {b: _bundle_channels(b) for b in bundle_names},
                                     L=L, prior=prior, band=bands)
+        # `--serve-all-states`: in the last stage that can still serve a state, every state
+        # with mass that no earlier stage touched must enter some district of this model
+        serve = None
+        if args.serve_all_states and stage == serve_stage:
+            M_s = np.asarray(cells.M, float).sum(axis=1)
+            serve = [s for s in range(n_state) if prior[s].max() <= 0.0 and M_s[s] > 0.0]
+            print(f"{stage}: {len(serve)} state(s) must be served here: "
+                  f"{' '.join(state_list[s] for s in serve)}", flush=True)
         if not sum(counts.values()):
+            if serve:
+                raise ValueError(f"{stage}: {len(serve)} state(s) must be served here and "
+                                 f"the stage has no slots")
             print(f"{stage}: 0 slots ({', '.join(sorted(bundle_names))} have no residual "
                   f"mass above L); skipped", flush=True)
             passes.append(dict(name=f"cover_{stage}", value=0.0, certified=True,
@@ -955,7 +982,7 @@ def _main(args, T: telemetry.Timings) -> int:
             last = None            # no model to move on, and no slots to report
             return
         with T.phase("build"):
-            problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges,
+            problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
         anchors, D = None, None
         seed_centres = args.centers == "seeds"
@@ -970,7 +997,7 @@ def _main(args, T: telemetry.Timings) -> int:
                 # districts, and their centres are known better than a greedy seed
                 D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges,
+                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
         _print_slots(problem, stage)
         anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j], state=state_list[s],
@@ -1015,7 +1042,7 @@ def _main(args, T: telemetry.Timings) -> int:
         if extra or (seeds is not None and seed_centres):
             anchors = list(anchors or ()) + extra
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges,
+                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
                 if extra:
                     problem = me.fix_roots(problem, extra)
@@ -1049,13 +1076,13 @@ def _main(args, T: telemetry.Timings) -> int:
         prior = np.clip(prior + cov, 0.0, 1.0)
         last = dict(problem=problem, unpinned=unpinned, result=result, slots=recs)
 
+    groups = [g for g in priority if any(b in enabled for b in STAGE_BUNDLES[g])]
+    serve_stage = "joint" if args.route == "joint" else (f"seq_{groups[-1]}" if groups else "")
     if args.route == "joint":
         run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
     else:
-        for group in priority:
+        for group in groups:
             bundle_names = [b for b in STAGE_BUNDLES[group] if b in enabled]
-            if not bundle_names:
-                continue
             run_stage(f"seq_{group}", bundle_names, _stage_cover(group, bundle_names))
 
     if args.driver == "reps" and last is not None:

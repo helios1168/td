@@ -194,7 +194,8 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
                  state_xy=None, prior=None, anchors=None,
                  D=None, eps: float | None = None,
                  order_mass: bool | None = None,
-                 fixed_used: dict[str, int] | None = None) -> Level0Problem:
+                 fixed_used: dict[str, int] | None = None,
+                 max_used: dict[str, int] | None = None) -> Level0Problem:
     """Assemble the level-0 MILP.  `cells` carries `M (S, C)`, `channels` and `state_list`
     (`td.channels.CellTable`, duck-typed); `bundles` maps a name to a tuple of channels;
     `edges` is the state rook graph over indices `0..S-1`, undirected, once per pair.
@@ -238,7 +239,10 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     `fixed_used` maps a bundle name to a count: the first `count` slots of that bundle get
     `u_j` fixed at 1, so the passes must use them (a count above the bundle's slot count is
     refused).  The `u` ordering row between a fixed slot and the next is dropped, since
-    `u_{j+1} <= 1` says nothing; a bundle not named stays free.
+    `u_{j+1} <= 1` says nothing; a bundle not named stays free.  `max_used` maps a bundle
+    name to a ceiling: every slot of that bundle past the first `count` gets `u_j` bounded to
+    zero, so the passes use at most `count` of them and drop districts where a cap binds
+    rather than fail; a bundle may carry both a floor and a ceiling.
     """
     if U is None:
         raise ValueError("build_level0 needs an upper band U: without one the coverage passes "
@@ -323,6 +327,16 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
             raise ValueError(f"fixed_used[{name!r}] = {count} exceeds the bundle's "
                              f"{hi_j - lo_j} slot(s)")
         fixed_slots.extend(range(lo_j, lo_j + int(count)))
+    closed_slots: list[int] = []
+    for name, count in (max_used or {}).items():
+        if name not in slots:
+            raise ValueError(f"max_used names bundle {name!r} not in {list(slots)}")
+        lo_j, hi_j = slots[name]
+        if int(count) < 0:
+            raise ValueError(f"max_used[{name!r}] = {count} is negative")
+        closed_slots.extend(range(lo_j + int(count), hi_j))
+    if set(closed_slots) & set(fixed_slots):
+        raise ValueError("a slot is both fixed used and closed: max_used below fixed_used")
 
     off_z, off_y, off_r = 0, S * K, 2 * S * K
     off_f = 3 * S * K
@@ -471,6 +485,10 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         var_lb[off_z + s * K + j] = 1.0
     for j in fixed_slots:
         var_lb[off_u + j] = 1.0
+    for j in closed_slots:
+        var_ub[off_u + j] = 0.0
+        var_ub[off_z + np.arange(S) * K + j] = 0.0
+        var_ub[off_y + np.arange(S) * K + j] = 0.0
     integrality = np.zeros(n_var)
     integrality[off_z:off_z + S * K] = 1
     integrality[off_r:off_r + S * K] = 1
@@ -548,6 +566,32 @@ def append_row(problem: SplitProblem, name: str, cols, vals, lo: float, hi: floa
         problem, A=sparse.vstack([problem.A, row]).tocsc(),
         lb=np.concatenate([problem.lb, [float(lo)]]),
         ub=np.concatenate([problem.ub, [float(hi)]]), rows=rows)
+
+
+def serve_states(problem: Level0Problem, states) -> Level0Problem:
+    """A copy of `problem` with one row per state in `states`, `sum_j z_sj >= 1` over every
+    slot of the model: the state must be in at least one district of some bundle.  The
+    business rule that no state is left out of every channel grouping; the driver applies it
+    to the states no earlier stage served, in the last stage that can serve them.  Rows are
+    named `serve` (one block)."""
+    states = sorted({int(s) for s in states})
+    if not states:
+        return problem
+    for s in states:
+        if not (0 <= s < problem.n_state):
+            raise ValueError(f"state {s} out of range")
+    K = problem.k
+    rows = np.repeat(np.arange(len(states)), K)
+    cols = np.concatenate([problem.off_z + s * K + np.arange(K) for s in states])
+    block = sparse.coo_matrix((np.ones(len(cols)), (rows, cols)),
+                              shape=(len(states), problem.n_var)).tocsc()
+    start = problem.A.shape[0]
+    names = dict(problem.rows)
+    names["serve"] = (start, start + len(states))
+    return dataclasses.replace(
+        problem, A=sparse.vstack([problem.A, block]).tocsc(),
+        lb=np.concatenate([problem.lb, np.ones(len(states))]),
+        ub=np.concatenate([problem.ub, np.full(len(states), np.inf)]), rows=names)
 
 
 def _var_name(problem: Level0Problem, i: int) -> str:
@@ -631,7 +675,8 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     bundle with `n` slots fixed used (`build_level0(fixed_used=...)`) the target is
     `clip(0.98 available mass / n, L_B, U_B)` and every slot is filled to exactly that, the state
     that would pass it cut to land there: whole states overshooting a target spend the mass
-    budget before the count is reached (the 2% is for pockets the BFS cannot reach).  A slot
+    budget before the count is reached (the 2% is for pockets the BFS cannot reach).  When no
+    target fills every fixed slot, the slots the fullest fill left take the free rule.  A slot
     that reaches its target from no seed stays unused, and so does the rest of its bundle
     (the `u` ordering).
 
@@ -765,6 +810,8 @@ def greedy_plan(problem: Level0Problem, *, priority=None
         # anchored slots first: their contacts are committed, and an unanchored slot that
         # grew first could take what an anchored one needs
         for j in sorted(range(lo, hi), key=lambda j: (not (z_lb[:, j] >= one).any(), j)):
+            if j in plan:
+                continue                    # filled by an earlier try
             must = [int(s) for s in np.flatnonzero(z_lb[:, j] >= one)]
             if must:
                 seeds = sorted(must, key=lambda s: (-W[s, j] * avail(s, j), s))
@@ -819,17 +866,70 @@ def greedy_plan(problem: Level0Problem, *, priority=None
         total = sum(W[s, lo] * avail(s, lo) for s in range(S) if allowed(s, lo))
         targets = sorted({float(np.clip(f * total / n_fixed, L_b, U_b))
                           for f in np.arange(1.0, 0.0, -0.03)}, reverse=True)
+        best = None                          # the fullest partial fill, for `strict=False`
         for target in targets:
             snap = (rem.copy(), pending.copy(), dict(plan))
             n_used, err = fill(bname, target, target, target)
             if err is None and n_used >= n_fixed:
                 break
+            if err is None and (best is None or n_used > best[0]):
+                best = (n_used, rem.copy(), pending.copy(), dict(plan))
             rem[:], pending[:] = snap[0], snap[1]
             plan.clear()
             plan.update(snap[2])
         else:
+            # No target fills every slot exactly.  Second try from the fullest partial fill:
+            # the slots it left take the free rule (reach L_B, land on the midpoint, cap at
+            # U_B), which tolerates the uneven pockets an exact target cannot.
+            if best is not None:
+                rem[:], pending[:] = best[1], best[2]
+                plan.clear()
+                plan.update(best[3])
+                n_more, err2 = fill(bname, L_b, tau_b, U_b)
+                if err2 is None and best[0] + n_more >= n_fixed:
+                    continue
+                err = err or err2
             raise ValueError(err or f"bundle {bname!r}: {n_used} of {n_fixed} fixed slots "
-                             f"filled at every target in [{L:.6g}, {U:.6g}]")
+                             f"filled at every target in [{L_b:.6g}, {U_b:.6g}]")
+
+    if "serve" in problem.rows:
+        # `serve_states` rows: each named state joins a used slot next to it that has room
+        # for a share of at least `eta` under its band and caps, the slot with the most room
+        # first.  Read back from the rows, as the caps are.
+        lo_r, hi_r = problem.rows["serve"]
+        A_csr = problem.A.tocsr()
+        need = sorted({int((A_csr[r].indices[0] - off_z) // K) for r in range(lo_r, hi_r)})
+        served = {s for chosen, _, _ in plan.values() for s in chosen}
+        for s in need:
+            if s in served:
+                continue
+            options = []
+            for j, (chosen, mass, seed) in plan.items():
+                if not any(t in chosen for t in adj[s]) or not allowed(s, j):
+                    continue
+                if n_max is not None and len(chosen) >= n_max:
+                    continue
+                if any((min(s, t), max(s, t), j) in far for t in chosen):
+                    continue
+                if radius is not None:
+                    centre = problem.slot_root[j] if j < len(problem.slot_root) else -1
+                    centre = seed if centre < 0 else int(centre)
+                    if ((xy[s] - xy[centre]) ** 2).sum() > float(radius) ** 2 + 1e-9:
+                        continue
+                room = U_j[j] - mass
+                y = min(avail(s, j), room / W[s, j]) if W[s, j] > 0 else avail(s, j)
+                if y < eta - 1e-12:
+                    continue
+                options.append((-room, j, y))
+            if not options:
+                raise ValueError(f"state {s} must be served and no used slot next to it "
+                                 f"has room for it")
+            _, j, y = min(options)
+            chosen, mass, seed = plan[j]
+            chosen[s] = y
+            plan[j] = (chosen, mass + W[s, j] * y, seed)
+            rem[s, has[j]] -= y
+            served.add(s)
 
     if "order_mass" in problem.rows:
         relabelled = {}

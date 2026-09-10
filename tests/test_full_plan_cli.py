@@ -475,6 +475,39 @@ def test_k_fixed_pins_the_first_slots_and_reaches_params():
             pass
 
 
+def test_k_mode_cap_opens_at_most_the_count_and_keeps_the_band():
+    """`--k-fixed N=1 --k-mode cap`: the N bundle opens at most one slot (the rest are closed,
+    never pinned), the band is still N's own mean over the count, and params.json records the
+    mode."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint", ["--k-fixed", "N=1", "--k-mode", "cap",
+                                               "--delta", "0.1"]))
+        n_slots = [rec for rec in plan["slots"] if rec["bundle"] == "N"]
+        assert sum(rec["used"] for rec in n_slots) <= 1
+        with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["k_mode"] == "cap" and params["k_fixed"] == {"N": 1}
+        assert abs(params["bands"]["N"]["tau"] - 24.0) < 1e-6, "M^max_N / 1 on the toy"
+
+
+def test_serve_all_states_puts_every_state_with_mass_in_a_district():
+    """`--serve-all-states`: on the joint model every state that carries mass (a positive
+    residual share or a slot share) holds a share in some slot, and params.json records the
+    flag."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint", ["--serve-all-states"]))
+        left_out = []
+        for st, row in plan["per_state"].items():
+            shares = {k: v for k, v in row.items() if k != "residual_by_channel"}
+            residual = row.get("residual_by_channel", {})
+            has_mass = bool(shares) or any(float(v) > 0 for v in residual.values())
+            if has_mass and not shares:
+                left_out.append(st)
+        assert not left_out, left_out
+        with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["serve_all_states"] is True
+
+
 def test_delta_and_k_fixed_band_a_bundle_on_its_own_mean():
     """`--delta 0.05 --k-fixed N=2`: the N bundle is banded on its own mean, tau_N = M^max_N /
     2, at 1 +/- 0.05, and every bundle with no count takes the mass-weighted mean of the fixed

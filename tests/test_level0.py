@@ -587,6 +587,44 @@ def test_fixed_used_slots_are_used_in_every_pass_or_the_pass_is_infeasible():
         pass
 
 
+def test_max_used_closes_the_slots_past_the_ceiling():
+    """`max_used={"A": 1}` bounds `u_1, u_2, ...` (and their `z`, `y`) to zero: the cover pass
+    opens one district where the mass would fill three, the greedy stops at one slot too, and
+    a ceiling under a floor is refused."""
+    prob = build0([0.5] * 6, max_used={"A": 1})
+    assert prob.var_ub[prob.off_u] == 1.0
+    assert (prob.var_ub[prob.off_u + 1:prob.off_u + prob.k] == 0.0).all()
+    out = run(prob, [level0.cover_pass(prob, ["A"]), level0.contacts_pass(prob)])
+    assert int(sum(out["u"])) == 1
+    assert prob.L - 1e-9 <= out["passes"][0]["value"] <= prob.U + 1e-9
+    x, seeds, z, y, masses = _greedy(prob)
+    assert int(x[prob.off_u:].sum()) == 1 and len(seeds["A"]) == 1
+    try:
+        build0([0.5] * 6, fixed_used={"A": 2}, max_used={"A": 1})
+        raise AssertionError("expected a ValueError for a ceiling under the floor")
+    except ValueError:
+        pass
+
+
+def test_serve_states_forces_a_state_into_some_district():
+    """`serve_states(problem, [1])` adds `sum_j z_1j >= 1`.  Under the contacts objective alone
+    the empty plan (no slot used, 0 contacts) is optimal; with the row, state 1 must sit in a
+    district, which needs state 0's mass too, so the optimum is 2 contacts.  The greedy
+    attaches the state to the used slot next to it with room under `U`."""
+    masses = [1.0, 0.1, 0.0, 0.0, 0.0, 0.0]
+    plain = build0(masses)
+    assert int(sum(run(plain, [level0.contacts_pass(plain)])["u"])) == 0
+    prob = level0.serve_states(plain, [1])
+    lo, hi = prob.rows["serve"]
+    assert hi - lo == 1 and prob.lb[lo] == 1.0 and prob.ub[lo] == np.inf
+    out = run(prob, [level0.contacts_pass(prob)])
+    assert out["z"][1].any() and out["z"][0].any() and out["contacts"] == 2
+    assert_bands_and_contiguity(prob, out)
+    x, seeds, z, y, m = _greedy(prob)
+    assert z[1].any() and abs(m.sum() - 1.1) < 1e-9
+    assert level0.serve_states(plain, []) is plain
+
+
 def test_a_pass_that_returns_nothing_carries_the_log_out_on_the_exception():
     """A pass can come back with nothing usable: infeasible, or a time limit with no incumbent.
 
