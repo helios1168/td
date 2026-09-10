@@ -17,6 +17,7 @@ python.
 """
 from __future__ import annotations
 
+import colorsys
 import csv
 import json
 import math
@@ -50,6 +51,15 @@ N_OUTLINE = "#94a3b8"
 # contrast, per request.
 OPPORTUNITY_RAMP = ["#e0e7ff", "#c7d2fe", "#a5b4fc", "#818cf8",
                     "#6366f1", "#4f46e5", "#3730a3", "#1e1b4b"]
+
+# The board carries two readings at once: which district a zip belongs to, and how much
+# opportunity it holds.  Hue answers the first, lightness the second, so a district stays one
+# recognisable colour instead of dissolving into a single national ramp.  A zip's cell takes its
+# district's hue at a lightness set by its opportunity quantile, between these two ends.  The
+# light end stops well short of white so the lightest cell still reads as its district's colour
+# against the page, and the dark end stops short of black for the same reason at the top.
+SHADE_LIGHT, SHADE_DARK = 0.78, 0.28
+N_SHADES = 6
 
 # Fallback only, for a table whose polygons have not been built yet.  Once `geom.json` exists
 # its own colours win, because they are the ones assigned so that neighbours differ.
@@ -309,6 +319,26 @@ def _bin_colour(i: int, n_bins: int) -> str:
     return OPPORTUNITY_RAMP[i * (len(OPPORTUNITY_RAMP) - 1) // span]
 
 
+def shade(hex_colour: str, i: int, n_bins: int) -> str:
+    """`hex_colour` at the lightness bin `i` of `n_bins`, light for low bins and dark for high.
+
+    The hue and saturation are the district's own, so every cell of a district reads as that
+    district; only lightness moves, carrying the opportunity quantile.  Bin 0 sits at
+    `SHADE_LIGHT` and the top bin at `SHADE_DARK` whatever `n_bins` is, so the two ends of the
+    scale mean the same thing on a map whose bins collapsed (`_quantile_bins`) as on one whose
+    did not.
+    """
+    hex_colour = (hex_colour or "#888888").lstrip("#")
+    r, g, b = (int(hex_colour[j:j + 2], 16) / 255 for j in (0, 2, 4))
+    h, _, s = colorsys.rgb_to_hls(r, g, b)
+    span = max(n_bins - 1, 1)
+    light = SHADE_LIGHT + (SHADE_DARK - SHADE_LIGHT) * (i / span)
+    # Floor the saturation so a pale district hue still reads at the light end, but leave a grey
+    # grey: `hls_to_rgb` has no notion of "no hue", so saturating one turns it red (hue 0).
+    r, g, b = colorsys.hls_to_rgb(h, light, s if s < 0.05 else max(s, 0.35))
+    return "#%02x%02x%02x" % tuple(round(255 * v) for v in (r, g, b))
+
+
 def figure(
     rows: list[dict],
     geom: dict | None,
@@ -343,6 +373,22 @@ def figure(
                 x=xs, y=ys, mode="lines", name=OUTLINES, hoverinfo="skip", showlegend=False,
                 line=dict(color="#b0b0b0", width=0.8)))
 
+        # The block of colour, under everything: a district's reach filled in its own hue, so
+        # the board reads as districts rather than as zip shapes on a white page.  The reach,
+        # not the ZCTA union, because only the reach is one region per district (`_reach_lines`)
+        # -- filling the union would leave the ground between a district's zips uncoloured,
+        # which is exactly the white background this replaces.  Kept pale so the cells drawn on
+        # top of it carry the reading; the gaps between them show the district hue through.
+        for district, info in sorted(geom.get("district_reach", {}).items()):
+            rx, ry = _joined(info.get("rings", []))
+            if not rx:
+                continue
+            colour = colours.get(district, info.get("color", "#cccccc"))
+            fig.add_trace(go.Scatter(
+                x=rx, y=ry, mode="lines", fill="toself", name=district, hoverinfo="skip",
+                showlegend=False, opacity=0.35, fillcolor=colour,
+                line=dict(color=colour, width=0.5)))
+
     drawn = [row for row in rows if row["x"] is not None and row["y"] is not None]
     staff_lines = {d: _contest_line(staffing, d) for d in {r["district"] for r in drawn}}
 
@@ -356,23 +402,37 @@ def figure(
 
     cells = (geom or {}).get("cells") or {}
     if cells:
-        bins = _quantile_bins([r for r in drawn if r["zip"] in cells], len(OPPORTUNITY_RAMP))
-        drawn_bins = []               # (colour, bin_rows) for bins that actually produced a fill
+        # Two readings on one board: hue is the district, lightness is the opportunity quantile.
+        # The bins are cut once over the whole map, not per district, so a shade means the same
+        # opportunity everywhere; each district then renders its own share of each bin in its own
+        # hue.  Legend swatches are neutral greys, since the shade is what they explain.
+        binned = [r for r in drawn if r["zip"] in cells]
+        bins = _quantile_bins(binned, N_SHADES)
+        drawn_bins = []               # (bin index, bin_rows) for bins that produced a fill
         for i, bin_rows in enumerate(bins):
-            colour = _bin_colour(i, len(bins))
-            trace = _cell_trace(cells, [r["zip"] for r in bin_rows], {}, name=ZIPS,
-                                colour=colour, opacity=0.85, showlegend=False,
-                                customdata={r["zip"]: _custom(r) for r in bin_rows},
-                                hovertemplate=HOVER)
-            if trace:
-                fig.add_trace(trace)
-                drawn_bins.append((colour, bin_rows))
-        for colour, bin_rows in drawn_bins:        # legend swatches, invisible marks
+            by_district: dict[str, list[dict]] = {}
+            for row in bin_rows:
+                by_district.setdefault(row["district"] or "", []).append(row)
+            any_drawn = False
+            for district, rows_here in sorted(by_district.items()):
+                trace = _cell_trace(
+                    cells, [r["zip"] for r in rows_here], {}, name=ZIPS,
+                    colour=shade(colours.get(district, "#888888"), i, len(bins)),
+                    opacity=0.95, showlegend=False,
+                    customdata={r["zip"]: _custom(r) for r in rows_here},
+                    hovertemplate=HOVER)
+                if trace:
+                    fig.add_trace(trace)
+                    any_drawn = True
+            if any_drawn:
+                drawn_bins.append((i, bin_rows))
+        for i, bin_rows in drawn_bins:             # legend swatches, invisible marks
             lo = bin_rows[0]["opportunity"] or 0.0
             hi = bin_rows[-1]["opportunity"] or 0.0
             fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers",
                                      name=f"opportunity {lo:.2g}-{hi:.2g}",
-                                     marker=dict(size=9, symbol="square", color=colour)))
+                                     marker=dict(size=9, symbol="square",
+                                                 color=shade("#8a8a8a", i, len(bins)))))
         # A placed zip with no cell (geom_export only emits one for a row with a district, or an
         # older/parent geom that does not cover this table) still needs to render and stay
         # clickable -- the same dot fallback as the no-cells branch, just for the leftover rows.

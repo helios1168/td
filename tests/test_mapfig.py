@@ -145,6 +145,71 @@ def test_figure_geom_branch_names_every_cell_trace_zips_with_customdata():
                 assert len(entry) == 6
 
 
+def test_shade_keeps_the_hue_and_only_moves_lightness():
+    """District identity is the hue, so it must survive every shade step; only lightness carries
+    the opportunity quantile, darkening monotonically."""
+    if plotly is None:                      # `mapfig` itself imports plotly at module level
+        return
+    import colorsys
+
+    base = "#4269d0"
+    def hls(c):
+        c = c.lstrip("#")
+        return colorsys.rgb_to_hls(*(int(c[j:j + 2], 16) / 255 for j in (0, 2, 4)))
+
+    hue = hls(base)[0]
+    lights = []
+    for i in range(6):
+        h, light, _ = hls(mapfig.shade(base, i, 6))
+        assert abs(h - hue) < 2e-3, (i, h, hue)     # 8-bit hex rounding, not a hue shift
+        lights.append(light)
+    assert lights == sorted(lights, reverse=True), lights          # low bin light, high bin dark
+    assert abs(lights[0] - mapfig.SHADE_LIGHT) < 3e-3, lights[0]   # 8-bit hex rounding again
+    assert abs(lights[-1] - mapfig.SHADE_DARK) < 3e-3, lights[-1]
+
+
+def test_shade_leaves_a_grey_grey():
+    """`hls_to_rgb` has no "no hue", so a saturation floor applied blindly turns the legend's
+    greys red."""
+    if plotly is None:
+        return
+    for i in range(6):
+        c = mapfig.shade("#8a8a8a", i, 6).lstrip("#")
+        r, g, b = (int(c[j:j + 2], 16) for j in (0, 2, 4))
+        assert r == g == b, (i, c)
+
+
+def test_board_fills_each_district_reach_in_its_own_hue():
+    """The block of colour the board reads as districts by: the reach filled under everything,
+    not the ZCTA union, which would leave the ground between a district's zips white."""
+    if plotly is None:
+        return
+    geom = _geom()
+    geom["district_reach"] = {"D1": {"rings": [[[0, 0], [2, 0], [2, 1], [0, 1], [0, 0]]],
+                                     "color": "#4269d0"}}
+    fig = mapfig.figure(_rows(), geom)
+    fills = [t for t in fig.data if t.name == "D1" and t.fill == "toself"]
+    assert len(fills) == 1
+    assert fills[0].fillcolor == "#4269d0"
+    names = [t.name for t in fig.data]
+    assert names.index("D1") < min(i for i, n in enumerate(names) if n == mapfig.ZIPS)
+
+
+def test_cells_take_their_district_hue_not_one_national_ramp():
+    """Two districts at the same opportunity level must not come back the same colour."""
+    if plotly is None:
+        return
+    geom = _geom()
+    geom["districts"]["D2"] = {"rings": [[[2, 0], [3, 0], [3, 1], [2, 1], [2, 0]]],
+                               "color": "#efb118"}
+    geom["cells"]["z3"] = {"rings": [[[2, 0], [3, 0], [3, 1], [2, 1], [2, 0]]]}
+    rows = _rows() + [dict(zip="z3", state="S1", x=2.5, y=0.5, opportunity=1.0,
+                          district="D2", rep="R1")]
+    fig = mapfig.figure(rows, geom)
+    fills = {t.fillcolor for t in fig.data if t.name == mapfig.ZIPS and t.fillcolor}
+    assert len(fills) >= 2, fills
+
+
 def test_reach_boundary_is_drawn_after_the_cell_fills():
     """The fills are 0.85 opacity, so a boundary drawn before them is invisible -- which is
     exactly what happened when the district outline sat above the cells in the trace order."""
@@ -157,12 +222,14 @@ def test_reach_boundary_is_drawn_after_the_cell_fills():
     names = [t.name for t in fig.data]
     last_fill = max(i for i, n in enumerate(names) if n == mapfig.ZIPS)
     assert names.index(mapfig.REACH) > last_fill, names
-    assert names.index("D1") > last_fill, names          # the honest outline too
+    # "D1" appears twice now: the reach fill under the cells, and the honest outline over them.
+    outline_i = max(i for i, n in enumerate(names) if n == "D1")
+    assert outline_i > last_fill, names
 
     reach = fig.data[names.index(mapfig.REACH)]
     assert reach.mode == "lines"
     assert reach.fill is None                 # stroked, never filled: it is not held ground
-    assert reach.line.width > fig.data[names.index("D1")].line.width
+    assert reach.line.width > fig.data[outline_i].line.width
 
 
 def test_figure_without_a_reach_layer_draws_only_the_real_outline():
