@@ -33,9 +33,12 @@ def load(path: str, mtime: float) -> dict:
     return json.loads(Path(path).read_text())
 
 
-def ensure(instance: Path) -> dict | None:
+def ensure(instance: Path, *, key: str) -> dict | None:
     """The loaded `reps.json` for `instance`, or, when it has not been built yet, a "Build rep
-    territories" button that launches the export and returns `None` while it runs."""
+    territories" button that launches the export and returns `None` while it runs.
+
+    `key` names the calling tab: the Map and Reps tabs both call this on the same rerun, and
+    two buttons with the same label and no key are a `StreamlitDuplicateElementId`."""
     path = reps_path(instance)
     if path:
         return load(str(path), path.stat().st_mtime)
@@ -47,7 +50,7 @@ def ensure(instance: Path) -> dict | None:
             st.code(runner.log_tail(out) or "(no output yet)")
         return None
 
-    if st.button("Build rep territories"):
+    if st.button("Build rep territories", key=f"build-reps-{key}"):
         out.mkdir(parents=True, exist_ok=True)
         argv = [str(config.SOLVER_PYTHON), str(config.CODE / "tools" / "rep_export.py"),
                str(instance), "--out", str(out), "--geo-cache", str(config.GEO_CACHE)]

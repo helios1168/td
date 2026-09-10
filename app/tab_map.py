@@ -59,7 +59,7 @@ def render_map(base_run: Path | None) -> None:
         render_board(run, rows, geom)
 
     st.subheader("Rep territories, as sold today")
-    reps = repdata.ensure(instance_of(run))
+    reps = repdata.ensure(instance_of(run), key="map")
     if reps is None:
         return
     render_rep_section(run, reps, rows, geom_stamp)

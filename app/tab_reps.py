@@ -71,7 +71,7 @@ def render_reps(base_run: Path | None, named: list[Path], default_run: Path | No
         st.code(runner.log_tail(view_run) or "(no output yet)")
         return
 
-    reps = repdata.ensure(instance_of(view_run))
+    reps = repdata.ensure(instance_of(view_run), key="reps")
     rows = _rows(*_stamp(store.table_path(view_run)))
 
     render_pane(view_run, is_base, reps, rows)
