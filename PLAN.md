@@ -17,36 +17,55 @@ follows once solve times are known.
 
 ## Next step
 
-2026-09-11, four subagents in flight (files disjoint; the main session commits on each report):
+Checkpoint 2026-09-11 afternoon (head `b6b88ae` plus this file; the user pushes; no merge
+into main unasked). Landed today, one commit each:
 
-- `tools/plan_summary.py`: the figure reworked to the structure map (plus the count of
-  wholesalers under each state code) and one map per bundle present (National only, WH only,
-  FI only, WH + FI merged, WIFI = all three, National + WH, National + FI), `WHFI_PLUS_nn`
-  displayed as `WIFI_nn`, each map a reproduction of the app's render. Then the main session
-  swaps the panel drawing for the app's own render: `tools/plan_render_app.py` (`57ee6ba`,
-  runs under `.venv-app`, kaleido 1.4.0 approved by the user 2026-09-11) exports
-  `app/mapfig.figure` to PNG per bundle, and the summary tiles the PNGs; the matplotlib
-  reproduction stays as the fallback on a machine without `.venv-app` (the suite runs there).
-- `tools/plan_realise.py::repair`: the bridging move the user approved 2026-09-11. A detached
-  piece whose neighbour refuses on the band moves anyway, then the neighbour hands zips next
-  to the source's main piece back until it is no worse; the pair of moves stands only if the
-  two districts' total band excess did not rise and both stay connected. Cause on rank 1: N_02
-  at 570 and N_07 at 545 against U 553 (national τ 502.5, ±10 %), so no single move could
-  reunite N_02's three south-Texas pieces (16 zips, mass 24). After it lands: re-realise the
-  ranked runs (`rerealise.sh`), redraw maps, re-register the app scenarios.
-- The national sub-channels (the user, 2026-09-11): the v3 file's `national` is the sum of
-  National (Chase), Wells (WH) and Wells (FI); a merge folds Chase and Wells (FI) into FI and
-  Wells (WH) into WH. The next export carries the three as `national_chase`,
-  `national_wells_wh`, `national_wells_fi` (matched case-insensitively) in place of
-  `national`, meta `channel_groups`. Exporter agent: `tools/instance_export/` accepts them,
-  kappa on the per-zip aggregate. Channels agent: `td/channels.py` `fine_split` exact
-  (`N_WH` = Wells WH, `N_FI` = Chase + Wells FI) when the sub-channels are present, the ratio
-  proxy kept for v3 files and named in `meta["fine_split"]`; `synthesize_channels(...,
-  sub_channels=True)`. Then the main session: `docs/FULL_PROBLEM.md` §2 loses the proxy
-  sentence, `docs/CODE_MAP.md` exporter row, unit file line; the exporter goes to the user for
-  the work machine; the ranked cells re-run on the new instance when it lands (pure and WIFI
-  districts should reproduce, the plus-bundle options move). Assumption recorded: the rep
-  sales rows carry the sub-channel too.
+- `1371e0d` the AZ overlap interim fix (the bundle with more file channels wins a cell).
+- `5e3bd25` summary figure redesign, then superseded by the rework below.
+- `57ee6ba` `tools/plan_render_app.py`: the app's own map to PNG under `.venv-app` (kaleido
+  1.4.0 in `app/requirements.txt`, approved by the user). Standalone, tested; the summary
+  does not call it yet, since the user then asked for the maps without zip geometry, which
+  the matplotlib reproduction draws directly. Wire it or drop it later.
+- `4788759` exporter, `1a1fee4` channels, `2e707aa` docs: the national sub-channels
+  (National (Chase), Wells (WH), Wells (FI); a merge folds Chase and Wells FI into FI and
+  Wells WH into WH; names matched in any letter case; `fine_split` exact when the file
+  carries them, the ratio proxy kept for v3 files). The exporter is ready for the work
+  machine: copy `tools/instance_export/`, the README command is unchanged. Assumption: the
+  rep sales rows carry the sub-channel too. When the v4 file lands, re-run the ranked cells
+  on it (pure and WIFI districts should reproduce, the plus-bundle options move).
+- `803d8c1` realiser: the bridging move (a detached piece moves to its neighbour, the
+  neighbour hands zips next to the source's main piece back until neither is worse, the pair
+  kept only if their total band excess did not rise), the repair guard on the plan's own
+  per-bundle band (it read the file-level band before), a 2 % band slack (`--band-slack`).
+  The nine ranked runs re-realised in place; rank 1's N_02 (Texas) is one piece; 8 to 12
+  districts per run stay in pieces for reasons the repair cannot mend (the AZ overlap cut,
+  the DC-VA tessellation gap, NY and MA shares, no swap partner).
+- `bfc5d2c`, `d410610` colouring: neighbouring districts a quarter turn apart in hue, and
+  the neighbour graph read off the reach tiling instead of the sparse ZCTA unions. The nine
+  app scenarios re-registered with it; superseded member dirs moved to
+  `battery/results/trash_20260910_bundlemembers/`.
+- `b6b88ae` level 0 `--max-splits ST=N,...` (the user: CA 3, TX 2, NY 3), applied at every
+  stage. Running detached when this was written: `battery/results/full_problem/
+  grid_20260911_splits/` (`splits_cells.json` in the job tmp dir: rank 1's and rank 2's flags
+  plus the caps, 180 s per pass, concurrency 2). When done: realise (`rerealise_only.sh`),
+  summary, register as `x-n16w11f20-d10-cap900-allstates-splits` and `x-n18w11f19-...-splits`,
+  review against rank 1.
+
+Still in flight: the figure subagent on `tools/plan_summary.py` and `tests/test_plan_summary.py`
+(uncommitted in the tree). Its spec: the structure map as is plus the count of wholesalers
+under each state code; one map per bundle present (National only, WH only, FI only, WH + FI
+merged, WIFI = all three, National + WH, National + FI), `WHFI_PLUS_nn` displayed as
+`WIFI_nn`, drawn from `geom_export`'s payload with the reach fill and outline, state codes and
+labels only (no zip geometry, by the user); the total number of distinct wholesalers in the
+suptitle. On its report: check its prose for double hyphens, run `-k plan_summary` and the
+suite, commit the two files, redraw the nine ranked runs with `--no-cache` (the cached
+payloads carry the old colours), read rank 1's `maps/summary.png`. If the agent is gone, the
+tree's version of the file is its last state; finish from there.
+
+User decisions still open: the "other" floor (0.5 of a book), ND SD NE on FI alone, the cap
+(900 km / 6 states) versus none, 16/11/20 versus 18/11/19, the proper two-stage cut for the
+cross-bundle overlap, route R. Untracked `unused/` in the worktree root is a downloaded
+shapefile, safe to delete.
 
 Morning of 2026-09-11: the stakeholder review. Everything below is under the worktree's
 `battery/results/full_problem/` (gitignored) unless said otherwise.
