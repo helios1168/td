@@ -109,6 +109,12 @@ REACH_FILL_ALPHA = 0.6          # solid: with no zip geometry drawn on top, the 
                                  # district's whole reading, not a pale ground under it
 REACH_OUTLINE_W = 1.1
 
+# The small northeast states and a split CA's Bay Area / LA districts are smaller than a label
+# box at the default min_ratio=1.0, so their fill stays hidden under the label; a wider search
+# radius gives the moved label somewhere clear to land instead of overlapping its neighbour.
+LABEL_ROOM = 4.0
+LEADER_RADII = (0.09, 0.16)
+
 DPI = 110
 FIG_WIDTH = 22.0
 ROW_HEIGHT_IN = 6.8             # one row of panels, the maps' own aspect at this width
@@ -523,7 +529,8 @@ def draw_bundle_map(fig, ax, bundle: str, payload: dict, meta: dict, run: dict, 
                   for name, g in labels.items()}
         footprint = {name: us_maps._largest_part(g).area for name, g in labels.items()}
         us_maps._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.2,
-                              avoid_polys=labels, land=land, min_ratio=2.5)
+                              avoid_polys=labels, land=land, min_ratio=LABEL_ROOM,
+                              leader_radii=LEADER_RADII)
 
     ax.set_title(bundle_title(bundle), color=us_maps.TEXT, fontsize=13, fontweight="bold", pad=6)
     return bundle_strip(bundle, run, meta, kappa)

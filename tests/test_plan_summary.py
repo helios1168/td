@@ -268,3 +268,64 @@ def test_no_kappa_means_the_masses_stay_descaled():
     assert cli.kappa_of({"instance": "/nowhere/instance.json.gz"}, None) is None
     assert cli.kappa_of({"kappa": 1234.0}, None) == 1234.0
     assert cli.kappa_of({"kappa": 1234.0}, 7.0) == 7.0
+
+
+def test_draw_bundle_map_passes_label_room_and_leader_radii_to_place_labels():
+    """The small northeast states and a split CA need more label room and a longer leader
+    search than `us_maps._place_labels`'s own defaults; `draw_bundle_map` must hand its two
+    module constants through rather than falling back to the library defaults."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    try:
+        payload = {
+            "states": {},
+            "districts": {"D1": {"color": "#336699"}},
+            "district_reach": {"D1": {"rings": [[[0.0, 0.0], [0.0, 10.0], [10.0, 10.0],
+                                                 [10.0, 0.0], [0.0, 0.0]]],
+                                     "color": "#336699"}},
+        }
+        meta = {"D1": {"wholesaler": "R0001", "mass": "5", "staffed": "1"}}
+        run = {"zips_by_bundle": {"N": {"90001": "D1"}}, "zip_state": {"90001": "S0"}}
+
+        captured = {}
+        orig = cli.us_maps._place_labels
+
+        def fake_place_labels(fig_, ax_, order, anchors, footprint, **kw):
+            captured.update(kw)
+
+        cli.us_maps._place_labels = fake_place_labels
+        try:
+            cli.draw_bundle_map(fig, ax, "N", payload, meta, run, None)
+        finally:
+            cli.us_maps._place_labels = orig
+
+        assert captured["min_ratio"] == cli.LABEL_ROOM
+        assert captured["leader_radii"] == cli.LEADER_RADII
+    finally:
+        plt.close(fig)
+
+
+def test_place_labels_with_a_wider_leader_radii_moves_a_too_small_label_away_from_its_anchor():
+    """A footprint of zero always fails `min_ratio`, so the label must move; with
+    `leader_radii=(0.2, 0.3)` on a 0-100 axes the moved label should land at least 20 units
+    (the inner radius) from its anchor, not at the old hard-coded 5-9 unit distance."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    try:
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, 100)
+        anchors = {"D1": (50.0, 50.0)}
+        footprint = {"D1": 0.0}
+        cli.us_maps._place_labels(fig, ax, ["D1"], anchors, footprint, fontsize=8,
+                                  leader_radii=(0.2, 0.3))
+        lx, ly = ax.texts[0].get_position()
+        dist = ((lx - 50.0) ** 2 + (ly - 50.0) ** 2) ** 0.5
+        assert dist >= 0.2 * 100 - 1e-6
+    finally:
+        plt.close(fig)

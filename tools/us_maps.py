@@ -582,7 +582,8 @@ def _leader_spot(anchor, w, h, placed, radii, *, avoid_polys=None, land=None, n_
 
 
 def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys=None,
-                  land=None, min_ratio=1.0) -> None:
+                  land=None, min_ratio=1.0, leader_radii=(0.05, 0.09),
+                  leader_zorder=4.5) -> None:
     """Direct-labels every district in `order` at `anchors[d]`, white-haloed exactly as the two
     district figures always have, unless `footprint[d]` is too small to hold the label box,
     in which case the label moves to nearby open ground and a thin leader line ties it back to
@@ -601,6 +602,15 @@ def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys
     region can still hide most of it, and on a state close-up the district is the subject rather
     than one of eighteen.  `_figure_state_detail` passes `STATE_LABEL_ROOM` for that reason.
 
+    `leader_radii` are the two `_leader_spot` search radii, as fractions of the axes' x-range;
+    the default `(0.05, 0.09)` reproduces the old hard-coded absolute radii byte-for-byte. A
+    caller whose small districts sit close together (a cluster of small states, a split city)
+    should widen this so the moved labels clear each other and the ground they land on.
+
+    `leader_zorder` is where the leader line itself draws; the default 4.5 is already above a
+    plain fill/outline pair like this file's district regions map, but under the bubble maps'
+    own markers at zorder 5, which is the open case the TODO below describes.
+
     Districts are served largest-footprint-first, so the ones with room keep their preferred
     spot and the small interleaved ones are the ones that move, matching `label_points`'s
     ordering, for the same reason.  Requires the axes' final data limits to already be set, and
@@ -614,7 +624,7 @@ def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys
     label_area = w * h
     x0, x1 = ax.get_xlim()
     y0, y1 = ax.get_ylim()
-    radii = (0.05 * (x1 - x0), 0.09 * (x1 - x0))
+    radii = tuple(f * (x1 - x0) for f in leader_radii)
     placed, reach = [], 0.0
     for d in ranked:
         anchor = anchors[d]
@@ -629,7 +639,7 @@ def _place_labels(fig, ax, order, anchors, footprint, *, fontsize=8, avoid_polys
             # one.  Raising it above the bubbles moves D14 and D18 in state_CA.png too, so the
             # change needs its own re-render and review.
             ax.plot([anchor[0], lx], [anchor[1], ly], color=BORDER, linewidth=LEADER_W,
-                   alpha=LEADER_ALPHA, zorder=4.5, solid_capstyle="round")
+                   alpha=LEADER_ALPHA, zorder=leader_zorder, solid_capstyle="round")
         box = (lx - 0.5 * w, ly - 0.5 * h, lx + 0.5 * w, ly + 0.5 * h)
         placed.append(box)
         reach = max(reach, x0 - box[0], box[2] - x1, y0 - box[1], box[3] - y1, 0.0)
