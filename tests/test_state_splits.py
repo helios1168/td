@@ -508,3 +508,50 @@ def test_portfolio_matches_direct_and_certifies():
         assert out["certified_splits"] is True
         assert out["strategy"] == "portfolio" and out["engine"] == "highs"
         assert out["members"]                           # at least one member reported in
+
+
+# Both members are given an engine name `milp_engines.solve_problem` refuses, so each child
+# raises `ValueError`, not `SolveFailure`, the moment it starts.  Before the fix that
+# exception killed the process with no `"done"` on the queue, and the parent, which learns a
+# member is finished only from that message, polled an empty queue for the whole `time_limit`
+# at 0% CPU and then fell back to `_solve_direct` with no time left (the 95-slot level-0
+# contacts pass).  `_solve_portfolio` is called directly: `member_specs` is its test seam.
+_PORTFOLIO_DEAD_MEMBER_SCRIPT = """
+import json, sys, time
+sys.path.insert(0, sys.argv[1])
+from tests.test_state_splits import build
+from td.solvers import state_splits
+
+masses, delta, time_limit = json.loads(sys.argv[2])
+_, prob = build(masses, delta)
+t0 = time.time()
+res = state_splits._solve_portfolio(prob, time_limit=time_limit, strict=False, threads=2,
+                                    member_specs=[("bogus_a", {}), ("bogus_b", {})])
+print(json.dumps(dict(splits=res["splits"], seconds=time.time() - t0,
+                      status=res["status"], phases=res["phases"])))
+"""
+
+
+def test_portfolio_a_member_that_dies_ends_the_round_instead_of_waiting_it_out():
+    """A member that raises anything other than `SolveFailure` must be accounted for at once.
+    Both members here die on an unknown engine name, so the round ends within seconds and the
+    unspent `time_limit` goes to the `_solve_direct` fallback, which returns `direct`'s split
+    count.  A regression puts this at the full 30 s and then raises `SolveFailure`, the fallback
+    having no time left."""
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    masses, delta, time_limit = ODD, 0.005, 30.0
+    _, direct_prob = build(masses, delta)
+    direct = state_splits.solve(direct_prob, engine="scipy", strategy="direct")
+
+    payload = json.dumps([masses, delta, time_limit])
+    proc = subprocess.run([sys.executable, "-c", _PORTFOLIO_DEAD_MEMBER_SCRIPT, root, payload],
+                          capture_output=True, text=True, timeout=90)
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout.strip().splitlines()[-1])
+
+    assert out["seconds"] < time_limit / 2, out["seconds"]
+    assert out["splits"] == direct["splits"], out
+    failed = sorted(p["member"] for p in out["phases"] if p["phase"] == "member_failed")
+    assert failed == ["bogus_a", "bogus_b"], out["phases"]
+    assert all("unknown engine" in (p["detail"] or "") for p in out["phases"]
+               if p["phase"] == "member_failed"), out["phases"]

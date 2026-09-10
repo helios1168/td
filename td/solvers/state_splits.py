@@ -49,6 +49,7 @@ import inspect
 import multiprocessing as mp
 import os
 import time
+import traceback
 from dataclasses import dataclass, field
 from queue import Empty
 
@@ -485,25 +486,38 @@ def _portfolio_member(name: str, kwargs: dict, problem: SplitProblem, time_limit
                       queue: mp.Queue, stop) -> None:
     """One `strategy="portfolio"` member's whole run, in its own process: solve `problem` on
     engine `name`, streaming every incumbent through `queue` as `(member, splits, z, y,
-    objective, seconds)`, then a final `(member, "done", status)`.  `milp_engines` is imported
-    lazily, the same reason every other cross-module call in this file is."""
+    objective, seconds)`, then a final `(member, "done", status, detail)`.  `milp_engines` is
+    imported lazily, the same reason every other cross-module call in this file is.
+
+    Every exception is caught, not just `SolveFailure`.  A member that raises anything else (a
+    `RuntimeError` from a model an engine refuses, a decode error inside the incumbent
+    callback, `MemoryError` on a large `problem`) used to die with no `"done"` on the queue,
+    and the parent, which learns a member is finished only from that message, then polled an
+    empty queue until the whole `time_limit` ran out at 0% CPU.  The traceback goes to the
+    member's stderr (inherited from the parent) and `detail` carries `repr(exc)` back, so the
+    death is visible in `phases` rather than read as a slow search."""
     from td.solvers import milp_engines as _me
 
     def on_incumbent(info: dict) -> None:
         queue.put((name, info["splits"], info["z"], info["y"], info["objective"],
                   info["seconds"]))
 
+    detail = None
     try:
         res = _me.solve_problem(problem, name, time_limit=time_limit,
                                 on_incumbent=on_incumbent, stop=stop, **kwargs)
         status = res["status"]
     except SolveFailure as exc:
         status = exc.reason
-    queue.put((name, "done", status))
+    except Exception as exc:                    # noqa: BLE001, see the docstring
+        traceback.print_exc()
+        status, detail = "error", repr(exc)
+    queue.put((name, "done", status, detail))
 
 
 def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
-                     quick_certify_seconds: float = 5.0, tiebreak_seconds: float = 30.0) -> dict:
+                     quick_certify_seconds: float = 5.0, tiebreak_seconds: float = 30.0,
+                     member_specs: list | None = None) -> dict:
     """`strategy="portfolio"`: rounds of `highs` and `scip` searching together, each in its own
     process.  Cores = `threads` or the machine's `os.cpu_count()`; the `highs` member gets
     `cores - 3` threads (never fewer than 1) and `mip_heuristic_effort=0.5`, `scip` gets one
@@ -543,7 +557,20 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
     close finishes.  The parent's own HiGHS calls -- every quick check
     and phase C -- always use `threads=2`, one thread count for the whole process (the pool
     hazard in the module docstring).  No incumbent from anyone within `time_limit` falls back to
-    `_solve_direct`, as `_solve_descent` does."""
+    `_solve_direct`, as `_solve_descent` does.
+
+    A member that dies is a finished member, never a slow one.  `_portfolio_member` reports its
+    own exceptions as `status="error"`, and every heartbeat that finds the queue empty also
+    reaps by exit code, the only signal a hard death (a signal, a native crash) leaves.  Either
+    way the member joins `done`, so the round ends as soon as both are accounted for and the
+    remaining time goes to the `_solve_direct` fallback instead of to polling an empty queue.
+    That poll was the failure on the 95-slot level-0 model, where the parent sat at 0% CPU for
+    the rest of `time_limit` with both members already gone.  Reaping only on an empty queue is
+    what makes it safe: a member flushes its queue writes before its process exits, so anything
+    it sent is readable before `q.get` can report `Empty`.
+
+    `member_specs` overrides the two `(engine, kwargs)` members; it exists so a test can force a
+    member to die, and production leaves it `None`."""
     from td.solvers import milp_engines as _me
 
     cores = threads if threads else (os.cpu_count() or 1)
@@ -554,10 +581,11 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
         return None if time_limit is None else max(0.0, time_limit - (time.time() - t0))
 
     ctx = mp.get_context("spawn")
-    member_specs = [
-        ("highs", dict(threads=max(1, cores - 3), heuristic_effort=0.5)),
-        ("scip", dict(threads=1)),
-    ]
+    if member_specs is None:
+        member_specs = [
+            ("highs", dict(threads=max(1, cores - 3), heuristic_effort=0.5)),
+            ("scip", dict(threads=1)),
+        ]
 
     phases: list[dict] = []
     best: dict | None = None
@@ -614,6 +642,26 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
     done: set[str] = set()
     pending_deadline: float | None = None
 
+    def reap() -> None:
+        """Account for a member that exited without queueing a verdict.  Called only when the
+        queue is empty, so a `"done"` still in flight cannot be overtaken."""
+        for (nm, _), p in zip(member_specs, procs):
+            if nm not in done and not p.is_alive():
+                done.add(nm)
+                phases.append(dict(phase="member_died", member=nm, exitcode=p.exitcode,
+                                   seconds=time.time() - t0))
+
+    def round_exhausted() -> bool:
+        """True when both members are accounted for and there is nothing left to wait for, so
+        the loop should end; a pending cutoff round starts now instead."""
+        nonlocal pending_deadline
+        if len(done) < len(procs):
+            return False
+        if pending_deadline is not None:
+            pending_deadline = time.time()          # nothing more will arrive; go now
+            return False
+        return True                                  # no verdict this round
+
     try:
         while True:
             rem = left()
@@ -634,23 +682,27 @@ def _solve_portfolio(problem: SplitProblem, *, time_limit, strict, threads,
             try:
                 msg = q.get(timeout=wait)
             except Empty:
+                reap()
+                if round_exhausted():
+                    break
                 continue
 
             member = msg[0]
             if msg[1] == "done":
                 done.add(member)
                 status = msg[2]
-                if round_num > 0 and status == "infeasible":
+                if status == "error":
+                    phases.append(dict(phase="member_failed", member=member,
+                                       seconds=time.time() - t0,
+                                       detail=(msg[3] if len(msg) > 3 else None)))
+                elif round_num > 0 and status == "infeasible":
                     phases.append(dict(phase="certify", member=member,
                                        seconds=time.time() - t0, status="infeasible"))
                     certified = True
                     stop_round(stop, procs)
                     break
-                if len(done) >= len(procs):
-                    if pending_deadline is not None:
-                        pending_deadline = time.time()      # nothing more will arrive; go now
-                    else:
-                        break                                # no verdict this round; time is up
+                if round_exhausted():
+                    break                                # no verdict this round
                 continue
 
             _, splits, z, y, objective, seconds = msg
