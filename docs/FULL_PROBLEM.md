@@ -19,6 +19,8 @@ Settled (the eleven decisions of 2026-09-10, all the user's):
    one WH and one FI. At most three served channels per state, never four.
 3. Fallback ratio is the zip's own WH:FI mass ratio (the data carries national as one row). A zip
    with national mass and no WH or FI mass takes the state ratio, then 50/50, and is reported.
+   Superseded on 2026-09-11 by decision 12 wherever the file carries the sub-channels; the ratio
+   stays the rule for a file that carries national as one row.
 4. Merge drivers: rep books (route R) and a geographic extent cap (route G), explored in
    parallel. The extent cap is max states per district and max centroid distance.
 5. Priority reading: sequential (route S) and lexicographic joint (route J) in parallel, chosen
@@ -31,6 +33,11 @@ Settled (the eleven decisions of 2026-09-10, all the user's):
 10. Data arrives in the v2 format, long by (zip, channel), `current_channel ∈ {national, wh,
     fi}`; the national rows are exactly today's data; the exporter is updated.
 11. Execution optimised for wall-clock, tokens unconstrained.
+12. (2026-09-11) National is the sum of three sub-channels, National (Chase), Wells (WH) and
+    Wells (FI). Folding national into a merge sends Chase and Wells (FI) to FI and Wells (WH) to
+    WH. The next export carries the three as `national_chase`, `national_wells_wh`,
+    `national_wells_fi` (any letter case) in place of `national`; national is re-aggregated
+    from them, and the fine split is exact (§2).
 
 Open (★ items, §8): ★B WHFI⁺ bundle on or off; ★C rep pool size against 48 to 60 districts and
 whether reps carry a channel tag; ★D η and the centre-free tie-break; ★E whether a state may
@@ -70,13 +77,19 @@ Zips `Z` (CONUS, 3,713), state `s(z)`, the proximity graph on `Z` (`proximity_ed
 graph of the Voronoi cells, CLAUDE.md trap 23), and the state rook graph `G_S` (49 nodes, 107
 edges, `td/geo.state_rook`, `td/geo.py:243-267`).
 
-Channels in the file: `{national, wh, fi}`. The fine labels `C = {N_WH, N_FI, WH, FI}` are
-accounting only. With `N(z)`, `WH(z)`, `FI(z)` the three masses at a zip,
+Channels in the file: `{national, wh, fi}`, where national is itself the sum of three
+sub-channels the business runs, National (Chase), Wells (WH) and Wells (FI) (the user,
+2026-09-11). The fine labels `C = {N_WH, N_FI, WH, FI}` are accounting only, and they are exact
+when the file carries the sub-channels (`national_chase`, `national_wells_wh`,
+`national_wells_fi`, matched in any letter case, `meta["channel_groups"]`):
 
-    N_WH(z) = N(z) · WH(z) / (WH(z) + FI(z)),    N_FI(z) = N(z) − N_WH(z)
+    N_WH(z) = Wells WH(z),    N_FI(z) = Chase(z) + Wells FI(z),    N(z) = N_WH(z) + N_FI(z)
 
-applied alike to mass, every rep book and the filler; the fallback when `WH(z) + FI(z) = 0` is
-decision 3. The split lets "drop national" mean "give N_WH to WH and N_FI to FI" with no loss.
+applied alike to mass, every rep book and the filler (`td/channels.py::fine_split`). A file that
+carries national as one row keeps the proxy `N_WH(z) = N(z) · WH(z) / (WH(z) + FI(z))` with the
+fallback of decision 3, and `params.json` says which rule fired (`meta["fine_split"]`). The
+split lets "drop national" mean "give N_WH to WH and N_FI to FI" with no loss: only Wells (WH)
+folds into WH; Chase and Wells (FI) fold into FI.
 
 A cell is a pair `(z, c)`. It carries mass `M_{z,c}`, a book `S_i(z,c)` per rep `i`, filler
 `S_free(z,c)`, and `T_{z,c} = Σ_i S_i(z,c)`. Every quantity the utility reads is additive over
@@ -307,8 +320,9 @@ it keys on a channel today (`app/store.py:41-45`).
 ## 8. Assumptions and ★ decisions
 
 Settled: `U = 1.2τ`; route G is an extent cap (states per district, centroid distance); cover_N
-counts pure national slots only; catch-all on; the fallback ratio per decision 3; the fine split
-`N_WH : N_FI = WH : FI` at the zip; product form (a district carries every channel of its bundle
+counts pure national slots only; catch-all on; the fine split exact from the three national
+sub-channels (decision 12), the ratio `N_WH : N_FI = WH : FI` at the zip only for a file without
+them (decision 3); product form (a district carries every channel of its bundle
 on every zip); the draw sees masses only and reps enter at stage 2; a merged district is balanced
 on bundle mass alone (§4 (d)).
 

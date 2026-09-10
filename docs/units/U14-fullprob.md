@@ -30,7 +30,10 @@ opportunity falls back into WH and FI).
 ## Acceptance
 
 1. Loader and exporter handle `td_instance_descaled/2` (nodes long by zip and channel); format 1
-   loads unchanged as the one channel `national`.
+   loads unchanged as the one channel `national`. Since 2026-09-11 the exporter also accepts the
+   three national sub-channels (Chase, Wells WH, Wells FI, any letter case) in place of
+   `national`, kappa on their per-zip sum, and `fine_split` is then exact (N_WH = Wells WH,
+   N_FI = Chase + Wells FI); `docs/FULL_PROBLEM.md` §2.
 2. `td/channels.py` projects a bundle to a format-1 instance on which every existing driver runs
    unchanged; conservation of M, S and S_free per zip under the synthetic split and under
    `fine_split`.
