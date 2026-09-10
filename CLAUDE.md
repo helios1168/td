@@ -104,6 +104,18 @@ to the main context.
     `cell_graph_zips`. A zip whose Voronoi cell clips away to nothing on the coastline has a
     ZCTA but no cell, so inferring the graph from `cells` admits it as an isolated vertex and
     makes the split's contiguity guard infeasible. Never re-derive that vertex set by inference.
+22. **The gazetteer vintage is part of a result** (2026-09-09). `geo.zcta_points` defaults to
+    2025; `TD_GAZ_VINTAGE=2020` selects the old file. The two are not interchangeable: 468 zips
+    move more than 1 km between them, 70 more than 5 km, and the 2020 file has no point at all
+    for 9 of the live instance's 3,713 zips, which then reach stage 1 unplaced and are assigned
+    by utility. On the committed k=18 map the switch alone moves 31 zips. Never compare a number
+    across vintages, and pin 2020 when reproducing anything drawn before this date.
+23. **The drawn map and the contiguity model are different tessellations** (2026-09-09). `cells`
+    in `geom.json` are real ZCTA polygons; `cell_edges` is the rook graph of the *Voronoi* cells
+    of the zip points. Over the instance's 3,704 placed zips the two graphs share 4,462 edges of
+    10,483 and 4,843 (Jaccard 0.411), and real ZCTA adjacency alone gives 816 components with
+    474 singletons, which is why the Voronoi graph is the model. A district that reads as
+    scattered on screen is not evidence of a contiguity failure.
 
 **Two-tier acceptance:** tier 1 `CERT_TOL = 1e-8`; tier 2 `base.EPS_CERT = 5e-3` nats, grounded
 on a measured data-noise floor (re-measure on the real instance). The full trap list is in git
