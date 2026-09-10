@@ -37,6 +37,17 @@ table, decide route S versus J (the user's call), wave 3.
 
 ## Decisions needed
 
+Level-2 cross-bundle overlap (found by `plan_realise`, 2026-09-10): level 0's cover row is
+`≤ 1` per (state, channel) over all slots, so two bundles sharing a channel (WH and WH⁺, N and
+WH⁺) can each hold a share of one state, and their zip-level projections then overlap. The
+decomposition assumes π fixed per zip; level 0 fixes it per state and share. Realisation
+therefore needs a first cut of each such state's zips into bundle groups by the y shares
+(product form: a zip in a WH⁺ group carries WH and N_WH together) before the per-bundle cut
+into slots. Today `plan_realise` detects overlaps, warns, and awards the cell to the first
+bundle; the two-stage cut is the next modelling item. The contiguity check in `realise.json`
+reads the instance graph, not `geom.json`'s proximity edges (traps 21, 23), so `contiguous`
+is not yet meaningful.
+
 Open ★ items in §8 of the formulation: WHFI⁺ bundle on or off; rep pool size versus 48 to 60
 districts and whether reps carry a channel tag; η and the centre-free tie-break; whether a state
 may split geographically across plans. Route S versus J is decided from the timing table after wave 2.

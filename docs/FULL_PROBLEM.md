@@ -246,7 +246,7 @@ Priority reading.
   districts, NY 3, TX 2, FL 2).
 - J, lexicographic joint: one model, passes in the `balance_pass` pattern (solve, pin the value
   with a row at `v(1+1e-9)+1e-12`, next objective): cover_N (pure national slots only, decision
-  8), cover_WH (WH and WH⁺ slots), cover_FI (FI and FI⁺), contacts (minimum splits, `c = 1` on
+  8), cover_WH (WH and WH⁺ slots), cover_FI (FI and FI⁺), cover_merged (WHFI, and WHFI⁺ when enabled: pure channels first, merged for what pure cannot serve), contacts (minimum splits, `c = 1` on
   z), then a compactness tie-break `ε·W·D` with `D` from a projected stage-1 draw when there is
   one, else contacts only. A timed-out pass pins its incumbent and records `certified = false`.
   The portfolio strategy of `tools/state_splits.py` (484-706) is reusable only for the contacts

@@ -610,7 +610,7 @@ def _write_v2_marginal(path: str) -> None:
         json.dump(obj, fh)
 
 
-def _moves_of(tmp: str, cover_slack: float) -> tuple[list[dict], dict]:
+def _run_marginal(tmp: str, cover_slack: float) -> dict:
     inst = os.path.join(tmp, "inst.json.gz")
     _write_v2_marginal(inst)
     out = os.path.join(tmp, f"out_{cover_slack}")
@@ -625,14 +625,14 @@ def _moves_of(tmp: str, cover_slack: float) -> tuple[list[dict], dict]:
     finally:
         td_geo.state_rook = orig
     with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
-        moves = json.load(fh)["moves"]
+        plan = json.load(fh)
     with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
-        params = json.load(fh)
-    return moves, params
+        plan["params"] = json.load(fh)
+    return plan
 
 
 def test_cover_slack_is_what_lets_a_route_r_move_leave_a_pinned_cover_objective():
-    """`--cover-slack EPS` pins every cover pass at `v (1 - EPS)` instead of at `v`.
+    """`--cover-slack EPS` widens each `pin_cover_*` row by `|v| EPS` for a move's re-solve.
 
     Route R's moves keep the cover pins -- without them minimising contacts closes every slot
     and the empty plan wins -- so at the exact pin any `merge_whfi` that takes a state's mass
@@ -641,24 +641,44 @@ def test_cover_slack_is_what_lets_a_route_r_move_leave_a_pinned_cover_objective(
     slack a merge needs is the whole of that state's share of them: S0 is 4.2% of each here, so
     its merge is feasible and scored at 5%, while S1 and S2 carry 95.8% of theirs and are still
     refused.  Whether a scored merge is then accepted is a stage-2 question, not this flag's.
+
+    The passes themselves are pinned exactly whatever EPS is, so the plan the coverage and
+    contacts passes produce does not move: a run's slots are a property of the instance, and
+    only the moves the driver may consider depend on the flag.
     """
     with tempfile.TemporaryDirectory() as tmp:
-        pinned, params = _moves_of(tmp, 0.0)
-        assert params["cover_slack"] == 0.0
-        exact = [m for m in pinned if m["state"] == "S0" and m["move"] == "merge_whfi"]
+        pinned = _run_marginal(tmp, 0.0)
+        assert pinned["params"]["cover_slack"] == 0.0
+        exact = [m for m in pinned["moves"] if m["state"] == "S0" and m["move"] == "merge_whfi"]
         assert len(exact) == 1 and exact[0]["value"] is None, exact
         assert exact[0]["status"] == "infeasible", exact
 
-        slacked, params = _moves_of(tmp, 0.05)
-        assert params["cover_slack"] == 0.05
-        merged = [m for m in slacked if m["state"] == "S0" and m["move"] == "merge_whfi"]
+        slacked = _run_marginal(tmp, 0.05)
+        assert slacked["params"]["cover_slack"] == 0.05
+        merged = [m for m in slacked["moves"]
+                  if m["state"] == "S0" and m["move"] == "merge_whfi"]
         assert len(merged) == 1 and merged[0]["value"] is not None, merged
+
+        # the base plan is the same at both, so a plan is comparable across EPS
+        assert pinned["slots"] == slacked["slots"], "the passes are pinned exactly either way"
 
         # the slack is a budget, not a blanket relaxation: the two states that carry 95.8% of
         # a pure cover objective still cannot leave it
         for st in ("S1", "S2"):
-            heavy = [m for m in slacked if m["state"] == st and m["move"] == "merge_whfi"]
+            heavy = [m for m in slacked["moves"]
+                     if m["state"] == st and m["move"] == "merge_whfi"]
             assert heavy and all(m["value"] is None for m in heavy), (st, heavy)
+
+        # S3 carries national mass only, so at the exact pin `merge_whfi` forbids it nothing
+        # and re-solves to the incumbent's own optimum.  The solver reports that a few ulps
+        # above the incumbent, and an acceptance on a tie is a solver artefact, not the move.
+        noop = [m for m in pinned["moves"] if m["state"] == "S3" and m["move"] == "merge_whfi"]
+        keep = [m for m in pinned["moves"] if m["state"] == "S3" and m["move"] == "keep"]
+        assert noop and keep and noop[0]["value"] is not None
+        assert 0.0 < noop[0]["value"] - keep[0]["value"] < 1e-6, (noop, keep)
+        assert not noop[0]["accepted"], noop
+        assert not [m for m in slacked["moves"]
+                    if m["state"] == "S3" and m["move"] == "merge_whfi" and m["accepted"]]
 
 
 def _write_v1_uneven(path: str) -> list[float]:

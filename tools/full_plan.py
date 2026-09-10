@@ -131,9 +131,10 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="driver reps: visit at most N states, heaviest first (default 20). "
                          "Each state costs one MILP per move, so 49 states is about 98 solves")
     ap.add_argument("--cover-slack", type=float, default=0.0, metavar="EPS",
-                    help="every coverage pass is pinned at v*(1-EPS) rather than at v, so a "
-                         "later pass or a driver reps move may give up that fraction of the "
-                         "mass it covered (default 0.0, the exact pin)")
+                    help="driver reps: a move may give up this fraction of each coverage "
+                         "pass's value, its pin widened to v*(1-EPS) for the move's re-solve "
+                         "only. The plan the passes produce is the same at every EPS "
+                         "(default 0.0, no room and no merge)")
     ap.add_argument("--n-max", type=int, default=None,
                     help="driver geo: at most this many states per slot")
     ap.add_argument("--dist-max", type=float, default=None, metavar="KM",
@@ -385,16 +386,15 @@ def _stage_cover(group: str, bundle_names) -> list:
     return groups
 
 
-def _pass_list(problem, cover_groups, cover_slack: float = 0.0) -> list:
+def _pass_list(problem, cover_groups) -> list:
     """The lexicographic passes of one model: coverage, then contacts, then compactness.
 
     A cover group naming bundles this model has no slots for is dropped, so the catch-all
     model runs its own single cover pass and not route joint's four.  `solve_passes` is what
     applies `--strategy` to the contacts pass alone, so every pass goes in one call.
 
-    `cover_slack` is carried by the coverage passes only: it is the fraction of its own value
-    each may give up later, which is what leaves a route-R move room to move mass out of a
-    pinned cover objective (`--cover-slack`).
+    Every pass is pinned exactly (`Pass.slack` stays 0): `--cover-slack` is spent by a route-R
+    move and by nothing else, so the plan a given instance produces does not depend on it.
     """
     from td.solvers import level0
 
@@ -402,8 +402,7 @@ def _pass_list(problem, cover_groups, cover_slack: float = 0.0) -> list:
     for name, bundles in cover_groups:
         bs = [b for b in bundles if b in problem.slots]
         if bs:
-            passes.append(dataclasses.replace(level0.cover_pass(problem, bs, name=name),
-                                              slack=cover_slack))
+            passes.append(level0.cover_pass(problem, bs, name=name))
     passes.append(level0.contacts_pass(problem))
     # no centres, no moments, no tie-break: the plan is contacts only (section 6, route J).
     D = getattr(problem, "D", None)
@@ -463,8 +462,9 @@ def _print_slots(problem, stage: str) -> None:
 
 
 # ------------------------------------------------------------------------------- driver reps
-def _relax_pins(problem, names):
-    """A copy of `problem` with the named pin rows' upper bounds opened to +inf.
+def _relax_pins(problem, names, widen=(), slack: float = 0.0):
+    """A copy of `problem` with the `names` pin rows opened to +inf and the `widen` ones
+    moved out by `|bound| * slack`.
 
     `solve_passes` pins every pass's value with an appended row.  A move must keep the
     coverage pins -- they are what says the plan still serves what it served, and without them
@@ -472,11 +472,20 @@ def _relax_pins(problem, names):
     drop `pin_contacts`, which says "no more contacts than the unmerged plan used" and is what
     makes every merge infeasible.  Relaxing rather than deleting keeps the matrix shape, so
     every offset and every later `append_row` still lines up.
+
+    `slack` is `--cover-slack`, applied here and not when the pin is written: the base plan is
+    then the same at every EPS, and the coverage a move may give up is the only thing the flag
+    changes.  The bound is the minimised value plus a margin of `|v| 1e-9 + 1e-12`, so
+    `|bound| * slack` is `|v| * slack` to that margin.
     """
     ub = np.array(problem.ub, float)
     for name in names:
         lo, hi = problem.rows[name]
         ub[lo:hi] = np.inf
+    if slack:
+        for name in widen:
+            lo, hi = problem.rows[name]
+            ub[lo:hi] += np.abs(ub[lo:hi]) * float(slack)
     return dataclasses.replace(problem, ub=ub)
 
 
@@ -511,11 +520,18 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
     from td.solvers import level0
 
     # a merge changes the contact count, so `pin_contacts` (and the compactness pin behind it)
-    # would refuse every non-keep move; the coverage pins stay, or the empty plan wins.  Under
-    # `--cover-slack EPS` those are the slacked pins, and the slack is the only room a merge
-    # has: a merged slot's coverage counts in cover_merged, never in cover_WH or cover_FI.
-    problem = _relax_pins(problem, [n for n in problem.rows
-                                    if n.startswith("pin_") and not n.startswith("pin_cover")])
+    # would refuse every non-keep move; the coverage pins stay, or the empty plan wins.
+    # `--cover-slack EPS` widens those coverage pins by |v| EPS, and that is the only room a
+    # merge has: a merged slot's coverage counts in cover_merged, never in cover_WH or cover_FI,
+    # so a merge gives up the whole of that state's share of the pure objectives.
+    # TODO: comparing two plans with different district counts by the Nash sum is ★C territory.
+    # A merge closes a district and frees a rep, and `sum log g` over the staffed districts has
+    # one term fewer, so the two numbers are not like for like.  The move log's `value` is
+    # comparable across moves that keep the district count and not across moves that change it.
+    pins = [n for n in problem.rows if n.startswith("pin_")]
+    problem = _relax_pins(problem, [n for n in pins if not n.startswith("pin_cover")],
+                          widen=[n for n in pins if n.startswith("pin_cover")],
+                          slack=args.cover_slack)
     nbr = _rook_neighbours(edges, problem.n_state)
     # The moves reach the last model only, so under --route sequential the N slots are in an
     # earlier model and "drop N" cannot be expressed; it is logged as not evaluable rather
@@ -590,7 +606,10 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
             candidates.append((move, value, trial, out, tuple(forbidden)))
 
         move, value, trial, out, forbidden = max(candidates, key=lambda c: c[1])
-        accepted = move != "keep" and value > best_value
+        # a no-op move (nothing of the state's mass is in a forbidden bundle) re-solves to the
+        # incumbent's own optimum, and the solver can report it a few ulps apart; without a
+        # tolerance that tie is recorded as an acceptance the move did not earn
+        accepted = move != "keep" and value > best_value + 1e-9 * max(1.0, abs(best_value))
         for name, val, *_ in candidates:
             log.append(dict(state=state_list[s], move=name, value=val,
                             accepted=bool(accepted and name == move)))
@@ -778,8 +797,7 @@ def _main(args, T: telemetry.Timings) -> int:
         _print_slots(problem, stage)
 
         unpinned = problem                            # before any pass pinned its value
-        result = _run_passes(problem, _pass_list(problem, cover_groups, args.cover_slack),
-                             args, stage, T)
+        result = _run_passes(problem, _pass_list(problem, cover_groups), args, stage, T)
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1)
         slots.extend(recs)
