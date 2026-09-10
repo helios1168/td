@@ -337,7 +337,8 @@ Variable layout stays four blocks plus `u`; `_decode_x` slices by `off_z, off_y,
   `S_free_c: dict[str, float]` over the file's channels, totals `M`, `S`, `S_free`, `cand` as
   today; `Descaled.channels: tuple[str, ...]` (`()` on v1). v2 nodes are long by (zip, channel):
   columns `z, channel, m_rel, share, share_free, state`; `share` is the fraction of that cell's
-  `m_rel`.
+  `m_rel`. Channel order comes from `meta["channels"]` when it names the same set as the node
+  column (amended at integration: a sparse export's first-appearance order is not its own).
 - `td/channels.py` (B1): `CHANNELS = ("N_WH","N_FI","WH","FI")`, `BUNDLES` as §3;
   `fine_split(d) -> Descaled` (decision 3); `CellTable(state_list, channels, reps, M (S,C),
   S (R,S,C), S_free (S,C))`; `aggregate(d, state_list) -> CellTable`;
