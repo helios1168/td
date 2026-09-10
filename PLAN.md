@@ -17,12 +17,37 @@ follows once solve times are known.
 
 ## Next step
 
-Wave 2 in flight: integration agent closing seams; code-verify R1 (level0), R2 (channels,
-stage2_state), R3 (full_plan) writing under `tools/verify/U14-fullprob/`; two solves running
-detached (joint route with the geo driver on the synthetic instance; route-S regression
-expecting 8 splits, output `battery/results/full_problem/seq_regression`). Then: commit I's
-seams, place the three code-verify verdicts in `docs/units/U14-fullprob.md`, read the timing
-table, decide route S versus J (the user's call), wave 3.
+Overnight protocol (2026-09-10 night, the user asleep, the session autonomous). The goal for the
+morning: nice-looking, feasible, defensible territory scenarios the user can review with
+stakeholders, each with a zip and wholesaler table and maps.
+
+- Grid: `tools/full_grid.py` over `battery/results/full_problem/grid_20260910/cells.json`,
+  output `battery/results/full_problem/grid_20260910/` (gitignored), concurrency 5, `--threads 2`
+  per cell, 240 s per pass. Route S, geo driver, catch-all, warm greedy, greedy anchors. Blocks:
+  A continuity baseline (k-fixed N=18 with incumbency and committed centres, pure bundles, caps
+  none / 1100 / 900 km); B the same at band 0.9/1.1; C free counts, pure bundles, dist {900, 700}
+  × n_max {5, 7} × band; D as C with the default six bundles; E radius cap {450, 600} × band ×
+  bundles once the radius agent lands; F one joint reference cell at 1200 s per pass, last.
+  Then the top two by review at 1800 s per pass for certification. No route R cells tonight
+  (★C open: Σ log g over staffed districts is not comparable across district counts; every run
+  shows the shape is decided by caps). Staffing stays as a report column.
+- Gate before the batch: contiguity repair landed in `plan_realise`; one smoke cell at 120 s per
+  pass through the whole chain (`full_plan` → `plan_realise` → `plan_maps` → `grid.csv` row);
+  `tests/run_all.py` at 0 fail after each pending agent's commit.
+- On each finished cell (a persistent Monitor on `grid.csv` wakes the session): Read
+  `maps/all.png`, write one row to `battery/results/full_problem/grid_20260910/REVIEW.md`: tag,
+  verdict (nice / acceptable / reject), reason, best bundle. Criteria at the top of REVIEW.md:
+  every district one piece on the cell graph; extent inside the cap; no chain across the map; a
+  single person could plausibly drive it; mass inside the band; splits not arbitrary.
+- Checkpoint: this section and `## Done` updated and committed after every five cells;
+  `STATE.md` is the hub's file and `/state` runs at merge only, so PLAN.md is the checkpoint.
+  Pushing is denied to the session; the user pushes `worktree-full-problem` in the morning.
+- If the runner dies: relaunch with `--resume`. If a cell fails, its `step_*.log` says why;
+  fix once, `--resume`.
+- Morning deliverables: `REVIEW.md` ranked, `grid.md`, the top three to five registered in the
+  app with `tools/plan_to_app.py` (after contiguity repair; note the rep-cache collision, do not
+  click "Build rep territories" on them), `assignment.csv`/`districts.csv`/`wholesalers.csv`
+  per top cell, and the timing table updated.
 
 ## Done
 
