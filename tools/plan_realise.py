@@ -55,6 +55,16 @@ moves this way, never a district's main body, even where that body sits in an ov
 `realise.json` records the move per bundle as `handed_off` and `handed_to`; the winner's
 `pieces`/`contiguous` columns in `districts.csv` are left as they were when its own bundle ran,
 since its cell graph never contained the handed zips.
+
+`--sweep-zips` covers what the bundle loop above still leaves unclaimed for a reason that is
+not level 0's cover row falling short: two bundles' independent cuts of a shared state
+disagreeing on which zips each takes, so a cell neither claimed.  After every bundle has been
+realised, repaired and had its overlap pieces handed off, `_sweep_zips` claims every remaining
+(zip, fine channel) cell of positive mass onto a district that already holds a cell of that
+channel in that state, preferring one reachable from the zip on its own bundle's final cell
+graph.  A cell no district serves in the state at all stays unclaimed and is named in
+`realise.json`'s `sweep_zips.unswept`, since no zip-level rule can invent coverage level 0 never
+planned.  Without the flag nothing here runs and `realise.json` carries `sweep_zips: null`.
 """
 from __future__ import annotations
 
@@ -118,6 +128,10 @@ def build_argparser() -> argparse.ArgumentParser:
                          f"outside the plan's band to reunite pieces (default {BAND_SLACK}; "
                          "0 keeps the strict guard)")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
+    ap.add_argument("--sweep-zips", action="store_true",
+                    help="after every bundle is realised and repaired, claim every remaining "
+                         "unclaimed (zip, channel) cell onto a district that already serves "
+                         "that channel in the zip's state")
     ap.add_argument("--out", default=None, help="where to write (default: RUN_DIR)")
     return ap
 
@@ -911,6 +925,95 @@ def _handoff_overlap_pieces(bundle: str, pieces: dict, to_district: dict, res: d
     return dict(handed_off=handed_off, handed_to=handed_to)
 
 
+def _sweep_target(zp: str, cands: dict, dist_bundle: dict, bundle_graphs: dict) -> tuple:
+    """`(district, adjacent)` for one unclaimed cell of `zp`, choosing among `cands`
+    (`{district: n_cells}`, all already serving this (state, channel)).
+
+    Adjacent: the candidate with a cell-graph edge from `zp` on its own bundle's final
+    `to_district` labelling, most such edges then name.  With no adjacent candidate, the one
+    already holding the most cells of this (state, channel), ties by name.
+    """
+    adj = []
+    for name in cands:
+        G, to_district = bundle_graphs.get(dist_bundle[name], (None, None))
+        if G is None or zp not in G:
+            continue
+        n = sum(1 for nb in G[zp] if to_district.get(nb) == name)
+        if n > 0:
+            adj.append((n, name))
+    if adj:
+        top = max(n for n, _ in adj)
+        return min(name for n, name in adj if n == top), True
+    top = max(cands.values())
+    return min(name for name, n in cands.items() if n == top), False
+
+
+def _sweep_zips(d, cell_of: dict, book: dict, rows_by_name: dict, bundle_graphs: dict) -> dict:
+    """Claim every (zip, fine channel) cell of positive mass no bundle claimed, onto a district
+    that already holds a cell of that channel in the zip's own state.
+
+    The candidate index (`{(state, channel): {district: n_cells}}`) and each district's bundle
+    and rep are read off `cell_of` once, before any sweep claim, so a cell this sweep claims
+    does not itself become a candidate for the next: "already serves this channel" means before
+    the sweep ran, not mid-sweep.  A (state, channel) no district serves at all is recorded in
+    the returned `unswept`, one row per (state, channel), never per zip.
+
+    Mutates `cell_of`, `book` and the `mass`/`n_zips` of the receiving rows in `rows_by_name` in
+    place, the same accounting `_claim_cells` and the per-district loop in `_main` already do.
+    `pieces`/`contiguous` are left untouched: the receiver's graph measure was taken before the
+    sweep, off its own bundle's cut, and a swept zip does not change what that cut looked like.
+    """
+    serve: dict[tuple, dict[str, int]] = {}
+    dist_bundle: dict[str, str] = {}
+    dist_rep: dict[str, str] = {}
+    held_zips: dict[str, set] = {}
+    for (zp, c), (name, bundle, rep) in cell_of.items():
+        st = d.G.nodes[zp].get("state", "") if zp in d.G else ""
+        s = serve.setdefault((st, c), {})
+        s[name] = s.get(name, 0) + 1
+        dist_bundle.setdefault(name, bundle)
+        dist_rep.setdefault(name, rep)
+        held_zips.setdefault(name, set()).add(zp)
+
+    swept: list = []
+    unswept_idx: dict[tuple, dict] = {}
+    for zp in sorted(d.G):
+        a = d.G.nodes[zp]
+        st = a.get("state", "")
+        M_c = dict(a.get("M_c") or {})
+        for c in channels.CHANNELS:
+            m = float(M_c.get(c, 0.0))
+            if m <= 0.0 or (zp, c) in cell_of:
+                continue
+            cands = serve.get((st, c), {})
+            if not cands:
+                rec = unswept_idx.setdefault((st, c), dict(state=st, channel=c, cells=0,
+                                                           mass=0.0))
+                rec["cells"] += 1
+                rec["mass"] += m
+                continue
+            name, adjacent = _sweep_target(zp, cands, dist_bundle, bundle_graphs)
+            bundle, rep = dist_bundle[name], dist_rep[name]
+            added, _ = _claim_cells(d, cell_of, book, name, bundle, rep, zp, [c])
+            row = rows_by_name[name]
+            row["mass"] += added
+            if zp not in held_zips.setdefault(name, set()):
+                row["n_zips"] += 1
+                held_zips[name].add(zp)
+            swept.append(dict(zip=zp, state=st, channel=c, district=name, bundle=bundle,
+                              mass=added, adjacent=adjacent))
+
+    unswept = [dict(v, reason="no district serves this channel in the state")
+              for v in sorted(unswept_idx.values(), key=lambda r: (r["state"], r["channel"]))]
+    by_district: dict[str, int] = {}
+    for row in swept:
+        by_district[row["district"]] = by_district.get(row["district"], 0) + 1
+    return dict(
+        swept=swept,
+        sweep_zips=dict(cells=len(swept), mass=sum(r["mass"] for r in swept),
+                        by_district=dict(sorted(by_district.items())), unswept=unswept))
+
+
 def _main(args) -> int:
     run_dir = os.path.abspath(args.run_dir)
     out = os.path.abspath(args.out or run_dir)
@@ -934,6 +1037,7 @@ def _main(args) -> int:
     rows_by_name: dict[str, dict] = {}
     book: dict[str, float] = {}
     state_counts: dict[str, dict] = {}          # {district: {state: n_zips}}, post-repair
+    bundle_graphs: dict[str, tuple] = {}        # {bundle: (G, final to_district)}, for --sweep-zips
 
     # bundles with more file channels claim their cells first, so where two projections cut the
     # same (zip, channel) the merged district keeps it.  A catch-all bundle `td.channels` does
@@ -969,6 +1073,7 @@ def _main(args) -> int:
         fix = repair(G, to_district, res["M_by_zip"], res["states_by_zip"],
                      res["admissible"], band_b, rounds=args.repair_rounds, slack=slack_b)
         to_district = fix["labels"]
+        bundle_graphs[bundle] = (G, to_district)
         after = district_pieces(G, to_district)
         sadj = state_adjacency(G, res["states_by_zip"])
         # a state pair that shares a real border but no cell edge: the tessellation opened a
@@ -1068,6 +1173,16 @@ def _main(args) -> int:
         print(f"warning: {len(overlaps)} (state, channel) cell(s) served by two bundles; the "
               f"bundle with more file channels wins", flush=True)
 
+    sweep = None
+    if args.sweep_zips:
+        sweep = _sweep_zips(d, cell_of, book, rows_by_name, bundle_graphs)
+        sz = sweep["sweep_zips"]
+        n_adjacent = sum(1 for r in sweep["swept"] if r["adjacent"])
+        unswept_mass = sum(u["mass"] for u in sz["unswept"])
+        print(f"sweep: {sz['cells']} cell(s) swept (mass {sz['mass']:g}, {n_adjacent} adjacent) "
+              f"across {len(sz['by_district'])} district(s); {len(sz['unswept'])} (state, "
+              f"channel) group(s) left unswept (mass {unswept_mass:g})", flush=True)
+
     assigned, residual = _write_assignment(os.path.join(out, "assignment.csv"), d, cell_of)
     _write_districts(os.path.join(out, "districts.csv"), district_rows)
 
@@ -1092,6 +1207,8 @@ def _main(args) -> int:
                        repair_rounds=args.repair_rounds, graph=GRAPH,
                        band=list(band) if band else None, bundles=record,
                        overlaps=overlaps,
+                       swept=sweep["swept"] if sweep else [],
+                       sweep_zips=sweep["sweep_zips"] if sweep else None,
                        districts=[dict(district=r["district"], slot=r["slot"],
                                        bundle=r["bundle"], wholesaler=r["wholesaler"])
                                   for r in district_rows]),

@@ -196,6 +196,9 @@ def test_district_masses_match_the_plan_and_the_residual_is_not_folded_in():
         assert n["state_borders"] == 2 and n["state_borders_missing"] == []
         assert n["handed_off"] == {} and n["handed_to"] == {}
 
+        # --sweep-zips was not passed: the sweep never ran
+        assert rec["swept"] == [] and rec["sweep_zips"] is None
+
 
 def test_wholesaler_books_are_the_cell_books_of_the_district_they_hold():
     """`book_in_district` is `S_c` summed over the district's own cells and `book_total` over
@@ -453,6 +456,143 @@ def test_the_heaviest_piece_is_never_handed_off_even_in_an_overlap_state():
         assert fi["pieces_before"]["FI_01"] == 2 and fi["pieces_after"]["FI_01"] == 1
         assert fi["handed_off"] == {"FI_01": 2} and fi["handed_to"] == {"WHFI_01": 2}
         assert by_id["FI_01"]["pieces"] == "1" and by_id["FI_01"]["contiguous"] == "1"
+
+
+# ------------------------------------------------------------------------------ sweep-zips
+
+GAPZIPS = ["50000", "50001"]
+GAPSTATES = ["X", "X"]
+GAPXY = {z: (float(i), 0.0) for i, z in enumerate(GAPZIPS)}
+
+
+def _build_gap_run(run_dir: str, adjacent: bool) -> None:
+    """Two zips of one state X.  FI_PLUS and FI both cover X at share 0.5 for the fine channel
+    `FI` (an overlap `_overlaps` flags), each with `ss.realise` monkeypatched (`_fake_realise`)
+    to put zip 0 in its own real district and zip 1 in `other`, the same split for both
+    bundles, so zip 0's FI cell is an ordinary overlap (the winner keeps it) but zip 1's is
+    claimed by neither: the disagreement `--sweep-zips` exists to cover.  Neither bundle carries
+    WH or N_WH at all, so every zip's cell on those stays unclaimed by design, not disagreement.
+
+    `adjacent` controls whether the cell graph joins zip 1 to zip 0, so the same fixture drives
+    both the adjacent-candidate and the fallback test.
+    """
+    base = os.path.join(run_dir, "base.json.gz")
+    obj = dict(
+        format=td_instance.FORMAT,
+        nodes=dict(z=GAPZIPS, m_rel=[1.0, 1.0], share=[{}, {}], state=GAPSTATES,
+                   share_free=[0.1, 0.1]),
+        edges=dict(u=[GAPZIPS[0]], v=[GAPZIPS[1]]),
+    )
+    with gzip.open(base, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+    d = channels.synthesize_channels(td_instance.load_descaled(base), seed=0)
+    channels.write_v2(d, os.path.join(run_dir, "instance_v2.json.gz"))
+    fine = channels.fine_split(d)
+
+    for bundle in ("FI_PLUS", "FI"):
+        cell = os.path.join(run_dir, "projections", bundle)
+        os.makedirs(cell, exist_ok=True)
+        channels.write_v1(channels.project(fine, bundle, states=["X"]),
+                          os.path.join(cell, "instance_descaled.json.gz"))
+        with open(os.path.join(cell, "state_shares.csv"), "w", encoding="utf-8",
+                  newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["state", "district", "share", "target_mass"])
+            w.writerow(["X", "D01", 0.5, 1.0])
+        edges = [[GAPZIPS[0], GAPZIPS[1]]] if adjacent else []
+        with open(os.path.join(cell, "cell_graph.json"), "w", encoding="utf-8") as fh:
+            json.dump(dict(graph=cli.GRAPH, keys=GAPZIPS, zips=GAPZIPS, edges=edges,
+                           state_borders=[]), fh)
+
+    slots = [dict(id="P001", bundle="FI_PLUS", used=True, mass=1.0, contacts=1, y={"X": 0.5}),
+             dict(id="P002", bundle="FI", used=True, mass=1.0, contacts=1, y={"X": 0.5})]
+    with open(os.path.join(run_dir, "plan.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(state_list=["X"], bundles=["FI_PLUS", "FI"], slots=slots,
+                       per_state={}, passes=[], moves=[]), fh)
+    with open(os.path.join(run_dir, "staffing.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(assignment={"0": "repA", "1": "repB"}, gains={}, value=0.0,
+                       criterion="nash", reps=["repA", "repB"], districts=[0, 1],
+                       unmatched_reps=[], unstaffed_districts=[], balance={}), fh)
+    with open(os.path.join(run_dir, "params.json"), "w", encoding="utf-8") as fh:
+        json.dump(dict(instance=base), fh)
+
+
+def _fake_realise(xy, M, state_idx, z, y, C, rounds=5):
+    """Zip 0 to the real district, zip 1 to `other`, the same split regardless of which
+    bundle asked, since both bundles' state X looks identical to this fixture."""
+    return dict(labels=[0, 1], rounds_used={0: 1}, n_fractional=0, split_states=[0])
+
+
+def _run_gap(run_dir: str, sweep: bool) -> None:
+    orig_xy, orig_realise = run_draw.coordinates, cli.ss.realise
+    run_draw.coordinates = lambda zips, cache=None: (
+        {z: GAPXY[z] for z in zips if z in GAPXY}, [z for z in zips if z not in GAPXY])
+    cli.ss.realise = _fake_realise
+    try:
+        args = [run_dir, "--geo-cache", "unused"] + (["--sweep-zips"] if sweep else [])
+        assert cli.main(args) == 0
+    finally:
+        run_draw.coordinates = orig_xy
+        cli.ss.realise = orig_realise
+
+
+def test_a_gap_zip_is_swept_to_the_adjacent_district():
+    """Zip 1's FI cell is unclaimed by both bundles' cuts of state X.  The cell graph joins it
+    to zip 0, so the sweep lands it in FI_PLUS_01 (the winner of zip 0's own overlap), the
+    channel's residual drops to zero, and the district's mass grows to include it.  WH and
+    N_WH, which neither bundle carries at all, stay unclaimed and are named in `unswept`."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_gap_run(run_dir, adjacent=True)
+        _run_gap(run_dir, sweep=True)
+        rows, districts, _, rec = _tables(run_dir)
+        fine = cli.cell_instance(run_dir, {})
+
+        at = {(r["zip"], r["channel"]): r["district"] for r in rows}
+        assert at[(GAPZIPS[1], "FI")] == "FI_PLUS_01"
+        resid_fi = sum(float(r["M_cell"]) for r in rows
+                       if r["channel"] == "FI" and r["district"] == "other")
+        assert resid_fi == 0.0
+
+        by_id = {r["district"]: r for r in districts}
+        cells = sum(float(r["M_cell"]) for r in rows if r["district"] == "FI_PLUS_01")
+        assert abs(cells - float(by_id["FI_PLUS_01"]["mass"])) < 1e-9
+        expected_mass = sum(float(fine.G.nodes[z]["M_c"][c])
+                            for z in GAPZIPS for c in ("FI", "N_FI"))
+        assert abs(float(by_id["FI_PLUS_01"]["mass"]) - expected_mass) < 1e-9
+
+        m1 = float(fine.G.nodes[GAPZIPS[1]]["M_c"]["FI"])
+        swept = [s for s in rec["swept"] if s["zip"] == GAPZIPS[1] and s["channel"] == "FI"]
+        assert swept == [dict(zip=GAPZIPS[1], state="X", channel="FI", district="FI_PLUS_01",
+                              bundle="FI_PLUS", mass=m1, adjacent=True)]
+        assert rec["sweep_zips"]["by_district"]["FI_PLUS_01"] == rec["sweep_zips"]["cells"]
+
+        for z in GAPZIPS:
+            for c in ("WH", "N_WH"):
+                assert at[(z, c)] == "other"
+        unswept = {u["channel"]: u for u in rec["sweep_zips"]["unswept"]}
+        assert set(unswept) == {"WH", "N_WH"}
+        for c in ("WH", "N_WH"):
+            assert unswept[c]["state"] == "X" and unswept[c]["cells"] == 2
+            assert unswept[c]["reason"] == "no district serves this channel in the state"
+            expected = sum(float(fine.G.nodes[z]["M_c"][c]) for z in GAPZIPS)
+            assert abs(unswept[c]["mass"] - expected) < 1e-9
+
+
+def test_a_gap_zip_with_no_adjacent_candidate_falls_back_to_the_largest_holder():
+    """Same disagreement, but the cell graph never joins zip 1 to zip 0 (a clipped-away cell,
+    CLAUDE.md trap 21): no candidate is adjacent, so the sweep falls back to the district
+    already holding the most cells of the channel in the state."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_gap_run(run_dir, adjacent=False)
+        _run_gap(run_dir, sweep=True)
+        rows, _, _, rec = _tables(run_dir)
+
+        at = {(r["zip"], r["channel"]): r["district"] for r in rows}
+        assert at[(GAPZIPS[1], "FI")] == "FI_PLUS_01"
+
+        swept = [s for s in rec["swept"] if s["zip"] == GAPZIPS[1] and s["channel"] == "FI"]
+        assert len(swept) == 1
+        assert swept[0]["district"] == "FI_PLUS_01" and swept[0]["adjacent"] is False
 
 
 # ---------------------------------------------------------------- repair, on hand-built graphs
