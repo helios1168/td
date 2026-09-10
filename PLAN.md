@@ -28,8 +28,7 @@ Wave 1 below: bookkeeping commit, then eight agents in one message.
 
 Open ★ items in §8 of the formulation: WHFI⁺ bundle on or off; rep pool size versus 48 to 60
 districts and whether reps carry a channel tag; η and the centre-free tie-break; whether a state
-may split geographically across plans; the fallback for a zip with national mass and no WH or FI
-mass. Route S versus J is decided from the timing table after wave 2.
+may split geographically across plans. Route S versus J is decided from the timing table after wave 2.
 
 ## Files owned / forbidden
 
