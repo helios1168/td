@@ -292,19 +292,19 @@ def test_cells_use_cells_simplify_independently_of_the_district_tolerance():
     assert len(zigzag_part) <= 6, len(zigzag_part)     # 2000 m: zigzag collapses to a plain box
 
 
-def test_cell_edges_are_still_the_voronoi_rook_graph():
-    """Decision 2: `cell_edges` is unaffected by `cells` now coming from real ZCTA polygons --
+def test_proximity_edges_are_still_the_voronoi_rook_graph():
+    """Decision 2: `proximity_edges` is unaffected by `cells` now coming from real ZCTA polygons --
     it is still the rook adjacency of the Voronoi cells of the same lattice as before this
     change (`docs/CODE_MAP.md`'s contiguity guard reads this graph, not real ZCTA adjacency).
     The twelve points are a regular 4-column x 3-row lattice (100k x 50k spacing) split into the
     two squares by per-state clipping, so the rook graph is 7 edges within AA, 7 within BB
     (3 horizontal + 4 vertical each), and 3 more where the two squares meet at x = SIDE -- 17 in
-    all, no diagonals, exactly as it was when `cells` and `cell_edges` shared a source."""
+    all, no diagonals, exactly as it was when `cells` and `proximity_edges` shared a source."""
     gx = _geom_export()
     rows = _table()
     g = gx.export(rows, _basemap(), _zcta_polys(rows), "test-fixture", simplify=0.0)
 
-    edges = g["cell_edges"]
+    edges = g["proximity_edges"]
     assert len(edges) == 17
     assert edges == sorted(edges)
     assert all(a < b for a, b in edges)
@@ -315,13 +315,13 @@ def test_cell_edges_are_still_the_voronoi_rook_graph():
     assert ["10100", "10200"] in edges               # across the state line, x = SIDE
 
 
-def test_cell_graph_zips_excludes_a_zip_whose_voronoi_cell_clips_to_nothing():
+def test_proximity_zips_excludes_a_zip_whose_voronoi_cell_clips_to_nothing():
     """The latent solver bug this guards against: `tools/split_district.py` builds its
     contiguity graph's vertex set from zips that have a Voronoi cell, not from `cells` (which is
     real-ZCTA coverage now, a different set).  A zip whose point falls far outside every known
     state's land -- an outlier with an unrecognised state, the same as a coastline-clipped point
     -- still gets a real ZCTA `cells` entry (its zcta polygon does not depend on the Voronoi
-    diagram at all) but must be **absent** from `cell_graph_zips`, exactly as it would have been
+    diagram at all) but must be **absent** from `proximity_zips`, exactly as it would have been
     silently absent from `cells` itself before this file used real ZCTA polygons."""
     gx = _geom_export()
     rows = _table()
@@ -332,9 +332,9 @@ def test_cell_graph_zips_excludes_a_zip_whose_voronoi_cell_clips_to_nothing():
     g = gx.export(rows, _basemap(), zctas, "test-fixture", simplify=0.0)
 
     assert "99999" in g["cells"]
-    assert "99999" not in g["cell_graph_zips"]
-    assert set(g["cell_graph_zips"]) == {r["zip"] for r in rows if r["zip"] != "99999"}
-    assert set(z for e in g["cell_edges"] for z in e) <= set(g["cell_graph_zips"])
+    assert "99999" not in g["proximity_zips"]
+    assert set(g["proximity_zips"]) == {r["zip"] for r in rows if r["zip"] != "99999"}
+    assert set(z for e in g["proximity_edges"] for z in e) <= set(g["proximity_zips"])
 
 
 def test_export_raises_when_a_placed_zip_has_no_zcta_polygon():

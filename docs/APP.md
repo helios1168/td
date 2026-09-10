@@ -178,11 +178,11 @@ Drivers:
 | clip | `state_splits.py <instance> --draw TABLE --k K --delta D --time-limit T --theta T --lam L --filler-capture F --rounds 5 --eta 0.01 --anchor-homes --engine {highs,scip,scipy} --strategy {portfolio,descent,direct} --primal-seconds S --threads N --no-fix-roots --no-maps --geo-cache DIR --out RUN [--bounds FILE]` | instance; a draw table; optional `bounds.json` | `d<delta>/draw.csv`, `d<delta>/splits.json`, `state_shares.csv`, `steps/` |
 | geom_export | `geom_export.py --table TABLE --out RUN [--geo-cache DIR] [--zcta-shp PATH] [--simplify M] [--no-basemap]` | a zip table; the local 2025 TIGER/Line ZCTA520 shapefile (`td.geo.ZCTA_SHP`, not fetched) | `geom.json`, in the run directory `--out` names |
 | staff | `staff.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] --out RUN` | instance; a zip table | `staffing.json`, `draw.csv` (rep filled per staffed district) |
-| staff_and_split | `staff_and_split.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] [--multi D02:3,D07:4] [--exact] --time-limit N [--geom GEOM_JSON] --out RUN` | instance; a zip table; the run's `geom.json` when `--multi` is non-empty (its `cell_edges` make every split contiguous) | `staffing.json` (`staff.py`'s schema plus `split_districts`/`requested_multi`), `draw.csv` (rep filled per staffed district, per zip inside a split one) -- the composed driver `app/tab_reps.py`'s Reps tab actually launches, one call for every N=1 and N>1 district in scope |
+| staff_and_split | `staff_and_split.py <instance> --table TABLE [--keep R,.. \| --release R,..] --theta T --lam L --filler-capture F [--districts D01,D05,...] [--multi D02:3,D07:4] [--exact] --time-limit N [--geom GEOM_JSON] --out RUN` | instance; a zip table; the run's `geom.json` when `--multi` is non-empty (its `proximity_edges` make every split contiguous) | `staffing.json` (`staff.py`'s schema plus `split_districts`/`requested_multi`), `draw.csv` (rep filled per staffed district, per zip inside a split one) -- the composed driver `app/tab_reps.py`'s Reps tab actually launches, one call for every N=1 and N>1 district in scope |
 | rep_export | `rep_export.py <instance> --out DIR [--geo-cache DIR] [--simplify M] [--no-basemap]` | instance | `reps.json` |
 | override, mode A | `override.py <instance> --table TABLE --edits FILE --mode A [--eta E] --out RUN` | instance (CONUS assert only); a zip table; `edits.json` | `draw.csv` (relabelled), `metrics.json` |
 | override, mode B | `override.py <instance> --table TABLE --edits FILE --mode B --parent PARENT_RUN --out RUN` | `edits.json`; `PARENT_RUN`'s lineage, walked up to its nearest `draw`/`clip` ancestor for that step's own recorded `argv` | `locks.json` or `bounds.json`, `engine/` (the rerun engine's own output tree), `draw.csv`, `metrics.json` |
-| split_district | `split_district.py <instance> --table TABLE --district D --reps R,R --theta T --lam L --filler-capture F [--exact] [--time-limit T] [--n-near N] [--geom GEOM] --out RUN` | instance; a zip table; optionally the run's `geom.json`, whose `cell_edges` make the greedy split contiguous on the cell graph | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
+| split_district | `split_district.py <instance> --table TABLE --district D --reps R,R --theta T --lam L --filler-capture F [--exact] [--time-limit T] [--n-near N] [--geom GEOM] --out RUN` | instance; a zip table; optionally the run's `geom.json`, whose `proximity_edges` make the greedy split contiguous on the cell graph | `draw.csv` (rep filled inside the district, `district` unchanged), `split.json` |
 
 theta, lambda and the filler-capture rule weight the stage-2 rep utility and nothing else: no
 geometry moves when they change. Every step of a chain is given the same three, so the values a
@@ -242,8 +242,8 @@ to whichever engine actually ran, a phase named `"greedy"` or `"scip"` rather th
                        "holes": [[[x,y],...],...]}, ...},
  "states": {"TX": {"rings": [[[x,y],...],...], "label": [x,y]}, ...},
  "cells": {"75201": {"rings": [[[x,y],...],...]}, ...},   # one real ZCTA polygon per placed zip
- "cell_edges": [["75201", "75202"], ...],                  # rook adjacency of the Voronoi cells
- "cell_graph_zips": ["75201", "75202", ...],                # the vertex set cell_edges is over
+ "proximity_edges": [["75201", "75202"], ...],                  # rook adjacency of the Voronoi cells
+ "proximity_zips": ["75201", "75202", ...],                # the vertex set proximity_edges is over
  "cells_source": "tl_2025_us_zcta520.shp simplify=250m"}
 ```
 Coordinates are the table's own LAEA metres, rounded to a decimetre; rings are simplified at
@@ -282,17 +282,17 @@ board. `cells` stays exterior-only regardless: a donut ZCTA's own hole is still 
 `cells` entry, because at 0.35 fill opacity a hole there is indistinguishable from its
 surroundings and cutting it would double `cells`' vertex count for nothing visible.
 
-**`cells` no longer means "this zip has a Voronoi cell".** `cell_edges` is a different graph:
+**`cells` no longer means "this zip has a Voronoi cell".** `proximity_edges` is a different graph:
 the rook adjacency of the **Voronoi** cells of the zips' centroids (a shared boundary of
 positive length, corner touches excluded), computed and exported exactly as before real ZCTA
 polygons replaced the Voronoi rings in `cells` -- `split_district.py`'s and
 `staff_and_split.py`'s contiguity guards are keyed to this graph, not to real ZCTA adjacency, so
 it cannot move when `cells` does. A consumer must build that graph's vertex set from
-`cell_graph_zips`, not by testing membership in `cells`: a zip whose point clips away to nothing
-on the 1:20m coastline has no Voronoi cell (so it is absent from `cell_graph_zips`) but can
+`proximity_zips`, not by testing membership in `cells`: a zip whose point clips away to nothing
+on the 1:20m coastline has no Voronoi cell (so it is absent from `proximity_zips`) but can
 still have a real ZCTA (so it is present in `cells`), and a graph built off `cells` would admit
 it as an isolated, edge-less vertex -- which can make a downstream contiguity guard infeasible
-for no visible reason. The Voronoi cells that produce `cell_edges`/`cell_graph_zips` are never
+for no visible reason. The Voronoi cells that produce `proximity_edges`/`proximity_zips` are never
 exported as rings. Cells depend only on the zips' coordinates, states and the ZCTA source, never
 on the district labels, so every run of one instance carries the same cells.
 

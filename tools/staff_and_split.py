@@ -76,7 +76,7 @@ def build_argparser() -> argparse.ArgumentParser:
                          "district's split")
     ap.add_argument("--geom", default=None,
                     help="the run's geom.json; required when --multi is non-empty, its "
-                         "cell_edges make every split contiguous on the Voronoi cell graph")
+                         "proximity_edges make every split contiguous on the proximity graph")
     ap.add_argument("--out", required=True, help="output directory")
     return ap
 
@@ -187,8 +187,8 @@ def main(argv=None) -> int:
                     geom = json.load(fh)
                 if multi and build_adjacency(geom, []) is None:
                     return _fail(args.out,
-                                f"{args.geom} has no cells (a geom.json from before cells "
-                                f"were exported)")
+                                f"{args.geom} has no proximity_edges (a geom.json from "
+                                f"before the graph was exported)")
 
             all_reps = sorted(model.reps(d.G, sorted(d.G)))
             kept, released = staff.split_reps(all_reps, staff._names(args.keep),

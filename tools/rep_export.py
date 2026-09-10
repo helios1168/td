@@ -15,14 +15,15 @@ the same promise `tools/staff.py`'s `staffing.json` already makes for a rep's Na
 
 A zip's `top` rep is the argmax of its own shares, "" when nobody there holds a positive share
 (a vacancy, or genuinely no sales).  `n` counts the zip's candidates with a positive share -- 0,
-1 or 2+, the split the rep map colours by.  Voronoi cells are built over every zip that has
-coordinates, untapped zips included, so no territory swallows ground nobody claims; a zip with
-no coordinates still gets an entry in `zips`, it is simply not drawable.
+1 or 2+, the split the rep map colours by.  Cells are the real 2025 TIGER/Line ZCTA polygons
+(`td.geo.zcta_polygons`), one per zip the instance carries, untapped zips included, so no
+territory swallows ground nobody claims; a zip with no ZCTA still gets an entry in `zips`, it is
+simply not drawable.  Nothing here tessellates: the cells are the published boundaries, the same
+ground `geom.json`'s `cells` draw, so the rep map and the district map agree by construction.
 
 Polygons reuse `tools/geom_export.py` outright: `_rings`, `_adjacency`, `_parts`, `palette` and
-`write` are the same functions a `geom.json` district export calls, and `us_maps.clip_region`,
-`voronoi_cells`, `dissolve`, `color_districts` are the same builders, used the same per-state
-clipped way `geom_export.export` builds a district map.  `territories` dissolves the cells by
+`write` are the same functions a `geom.json` district export calls, and `us_maps.dissolve` and
+`color_districts` are the same builders.  `territories` dissolves the cells by
 `top` (an unclaimed cell dissolves into nothing); `footprints[rep]` is the union of every zip's
 cell where `rep` holds a positive share, so a contested zip's cell sits in more than one rep's
 footprint; `contested` is the union of cells with `n >= 2`.  Colours come from the same 50-entry
@@ -56,15 +57,6 @@ def _geom_export():
         sys.modules["geom_export"] = mod
         spec.loader.exec_module(mod)
     return mod
-
-
-def _coordinates(zips, cache) -> dict:
-    """`{zip: (x, y)}` LAEA metres for the zips the gazetteer carries; the rest are unplaced.
-    The same route `tools/run_draw.py`'s `coordinates` takes to get `x, y` for a zip table."""
-    points = geo.zcta_points(cache)
-    have = [z for z in zips if z in points]
-    x, y = geo.project([points[z][0] for z in have], [points[z][1] for z in have])
-    return {z: (float(a), float(b)) for z, a, b in zip(have, x, y)}
 
 
 # ------------------------------------------------------------------------------- the shares
@@ -109,31 +101,27 @@ def shares(d) -> tuple:
 
 
 # --------------------------------------------------------------------------- the polygon half
-def export(d, xy: dict, states, simplify: float) -> dict:
+def export(d, zcta_polys: dict, states, simplify: float) -> dict:
     """The `reps.json` payload for one loaded instance.
 
-    `xy` is `{zip: (x, y)}` for the zips the gazetteer places (`_coordinates`); a zip missing
-    from it still gets a `zips` entry, it is simply not drawn.  `states` is
-    `td.geo.states_outline`'s GeoDataFrame, or `None` for no basemap -- the branch
-    `geom_export.export` also takes, so the tests need neither shapefile nor network.
+    `zcta_polys` is `td.geo.zcta_polygons`'s `{zcta5: polygon}` in `LAEA`.  A zip with no ZCTA
+    still gets a `zips` entry, it is simply not drawn.  `states` is `td.geo.states_outline`'s
+    GeoDataFrame, or `None` for no basemap -- the branch `geom_export.export` also takes, so the
+    tests need neither shapefile nor network.
+
+    Territories, footprints and the contested hatch are all dissolved from the real ZCTA
+    polygons, the same source `geom.json`'s `cells` come from, so the rep map and the district
+    map draw the same ground.  Nothing here builds a Voronoi tessellation.
     """
     ge = _geom_export()
     um = ge._us_maps()
 
     with telemetry.phase("shares"):
         reps_order, zips, book_share, free_share = shares(d)
-    zip_state = {z: str(d.G.nodes[z].get("state") or "") for z in d.G}
 
-    keys = sorted(xy)
-    if len(keys) < 2:
-        raise ValueError(f"{len(keys)} zip(s) with coordinates: a Voronoi diagram needs 2")
-    state_polys = (None if states is None
-                   else dict(zip(states["STUSPS"].astype(str), states.geometry)))
-    with telemetry.phase("voronoi"):
-        clip = um.clip_region([xy[z] for z in keys], states)
-        cells = um.voronoi_cells(keys, xy, clip,
-                                 zip_state=None if state_polys is None else zip_state,
-                                 state_polys=state_polys)
+    cells = {z: zcta_polys[z] for z in sorted(zips) if z in zcta_polys}
+    if len(cells) < 2:
+        raise ValueError(f"{len(cells)} zip(s) with a ZCTA polygon: a map needs 2")
 
     with telemetry.phase("dissolve"):
         top_of = {z: zips[z]["top"] for z in cells if zips[z]["top"]}
@@ -176,6 +164,8 @@ def main(argv=None) -> int:
     ap.add_argument("--out", required=True, help="directory reps.json is written into")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST,
                     help="gazetteer and state shapefile cache")
+    ap.add_argument("--zcta-shp", default=geo.ZCTA_SHP,
+                    help="the TIGER/Line ZCTA520 shapefile the cells come from")
     ap.add_argument("--simplify", type=float, default=ge.SIMPLIFY,
                     help="ring tolerance in metres; 0 keeps every vertex")
     ap.add_argument("--no-basemap", action="store_true",
@@ -187,10 +177,10 @@ def main(argv=None) -> int:
         d = descaled.load_descaled(a.instance)
         geo.assert_conus(d)
 
-        xy = _coordinates(sorted(d.G), a.geo_cache)
+        zcta_polys = geo.zcta_polygons(sorted(d.G), a.zcta_shp)
         states = None if a.no_basemap else geo.states_outline(a.geo_cache)
 
-    g = export(d, xy, states, a.simplify)    # shares/voronoi/dissolve/footprints phases inside
+    g = export(d, zcta_polys, states, a.simplify)   # shares/dissolve/footprints phases inside
     g["instance"] = os.path.basename(a.instance)
     with T.phase("write"):
         path = ge.write(os.path.join(a.out, "reps.json"), g)

@@ -255,13 +255,23 @@ def test_unrestricted_utilities_match_the_gain_matrix_coefficients():
 def test_build_adjacency_indexes_edges_by_column_and_drops_out_of_scope_pairs():
     zips = ["z0", "z1", "z2"]
     geom = dict(cells={"z0": {}, "z1": {}, "z2": {}},
-               cell_edges=[["z0", "z1"], ["z1", "z2"], ["z2", "z9"], ["z9", "z8"]])
+               proximity_zips=["z0", "z1", "z2", "z8", "z9"],
+               proximity_edges=[["z0", "z1"], ["z1", "z2"], ["z2", "z9"], ["z9", "z8"]])
     adj = build_adjacency(geom, zips)
     assert adj == {0: {1}, 1: {0, 2}, 2: {1}}                # z9/z8 are outside `zips`
 
 
-def test_build_adjacency_returns_none_without_a_cells_key():
+def test_build_adjacency_returns_none_without_a_proximity_edges_key():
     assert build_adjacency({"districts": {}}, ["z0", "z1"]) is None
+
+
+def test_build_adjacency_vertex_set_is_proximity_zips_not_cells():
+    """A zip with a real ZCTA but no proximity cell must not enter as an isolated vertex, which
+    would make the contiguity guard infeasible (`CLAUDE.md` trap 21)."""
+    geom = dict(cells={"z0": {}, "z1": {}, "z2": {}},        # z2 has a ZCTA
+               proximity_zips=["z0", "z1"],                  # but no proximity cell
+               proximity_edges=[["z0", "z1"]])
+    assert build_adjacency(geom, ["z0", "z1", "z2"]) == {0: {1}, 1: {0}}
 
 
 def test_book_matrix_is_the_footprint():
@@ -368,12 +378,13 @@ def test_driver_fails_on_an_unknown_district():
             assert "D99" in json.load(fh)["reason"]
 
 
-def test_driver_with_geom_is_contiguous_on_the_cell_graph():
+def test_driver_with_geom_is_contiguous_on_the_proximity_graph():
     with tempfile.TemporaryDirectory() as tmp:
         inst, table, labels = _driver_case(tmp)
         d01_zips = sorted(z for z, dist in labels.items() if dist == "D01")
         geom = dict(cells={z: {"rings": []} for z in d01_zips},
-                    cell_edges=[[d01_zips[j], d01_zips[j + 1]]
+                    proximity_zips=list(d01_zips),
+                    proximity_edges=[[d01_zips[j], d01_zips[j + 1]]
                                 for j in range(len(d01_zips) - 1)])
         geom_path = os.path.join(tmp, "geom.json")
         with open(geom_path, "w", encoding="utf-8") as fh:
@@ -399,7 +410,7 @@ def test_driver_with_geom_is_contiguous_on_the_cell_graph():
         assert switches == 1, seq                       # two contiguous intervals along the path
 
 
-def test_driver_fails_on_a_geom_without_cells():
+def test_driver_fails_on_a_geom_without_a_proximity_graph():
     with tempfile.TemporaryDirectory() as tmp:
         inst, table, _ = _driver_case(tmp)
         geom_path = os.path.join(tmp, "geom.json")
@@ -414,4 +425,4 @@ def test_driver_fails_on_a_geom_without_cells():
             capture_output=True, text=True)
         assert rc.returncode != 0
         with open(os.path.join(out, "failure.json"), encoding="utf-8") as fh:
-            assert "cells" in json.load(fh)["reason"]
+            assert "proximity_edges" in json.load(fh)["reason"]

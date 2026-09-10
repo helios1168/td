@@ -101,7 +101,7 @@ to the main context.
     district. `tools/staff.py`'s `held` set is the mechanism; `--release` cannot express it.
 21. **`geom.json["cells"]` no longer means "this zip has a Voronoi cell"** (2026-09-09): cells
     are real ZCTA polygons, and the contiguity graph's vertex set ships separately as
-    `cell_graph_zips`. A zip whose Voronoi cell clips away to nothing on the coastline has a
+    `proximity_zips`. A zip whose Voronoi cell clips away to nothing on the coastline has a
     ZCTA but no cell, so inferring the graph from `cells` admits it as an isolated vertex and
     makes the split's contiguity guard infeasible. Never re-derive that vertex set by inference.
 22. **The gazetteer vintage is part of a result** (2026-09-09). `geo.zcta_points` defaults to
@@ -111,7 +111,7 @@ to the main context.
     by utility. On the committed k=18 map the switch alone moves 31 zips. Never compare a number
     across vintages, and pin 2020 when reproducing anything drawn before this date.
 23. **The drawn map and the contiguity model are different tessellations** (2026-09-09). `cells`
-    in `geom.json` are real ZCTA polygons; `cell_edges` is the rook graph of the *Voronoi* cells
+    in `geom.json` are real ZCTA polygons; `proximity_edges` is the rook graph of the *Voronoi* cells
     of the zip points. Over the instance's 3,704 placed zips the two graphs share 4,462 edges of
     10,483 and 4,843 (Jaccard 0.411), and real ZCTA adjacency alone gives 816 components with
     474 singletons, which is why the Voronoi graph is the model. A district that reads as

@@ -11,8 +11,8 @@ solver side.  This driver is that seam.  It hands the app plain coordinate lists
                                  "holes": [[[x, y], ...], ...]}, ...},
      "states":          {"TX":  {"rings": [[[x, y], ...], ...], "label": [x, y]}, ...},
      "cells":           {"75001": {"rings": [[[x, y], ...], ...]}, ...},
-     "cell_edges":      [["75001", "75002"], ...],
-     "cell_graph_zips": ["75001", "75002", ...],
+     "proximity_edges": [["75001", "75002"], ...],
+     "proximity_zips":  ["75001", "75002", ...],
      "cells_source":    "tl_2025_us_zcta520.shp simplify=250m"}
 
 Coordinates are the table's own LAEA metres (`td.geo.LAEA`).  Nothing is reprojected: the app
@@ -48,20 +48,27 @@ zips shows as a real gap (`rings` loses the ground, `holes` draws its outline) r
 tiled over.  `cells_source` records the shapefile basename and the simplify tolerance actually
 used, so a stale `geom.json` is identifiable.
 
-`cell_edges` is still the rook adjacency of the **Voronoi** cells of the zip centroids, computed
-exactly as before this change: `td/solvers/district_split.py`'s contiguity guard and every
-existing split result are keyed to that graph, not to real ZCTA adjacency, so it must not move
-when `cells` does.  `cell_graph_zips` is that same Voronoi cell dict's own key set, exported
-explicitly rather than left for a consumer to infer from `cells` -- `cells` no longer means
-"this zip has a Voronoi cell" (it means "this zip has a real ZCTA polygon"), and a zip whose
-point clips away to nothing on the 1:20m coastline has no Voronoi cell but can still have a
-ZCTA, so a consumer that built the contiguity graph's vertex set as "every zip in `cells`" would
-now silently admit that zip as an isolated, edge-less vertex.  The Voronoi cells themselves are
-computed and then discarded (only their key set and their rook adjacency are exported) -- the
-rep maps fill zips cell by cell and `split_district.py` keeps every rep connected on this graph,
-so the edges have to be here even though the cell rings that produced them no longer are.
+`proximity_edges` is a **reachability model, not a border graph**, and the name says so: it is
+the rook adjacency of the Voronoi tessellation of the zip points, which is the one thing here
+still built that way.  It has to be.  The instance carries 3,713 of the 33,300 CONUS ZCTAs, so
+real shared boundaries alone leave the zips in 817 components with 474 isolated singletons,
+which no districting can use; the tessellation gives every point of the map to its nearest zip
+and closes those gaps.  Measured on the k = 18 live run, the two graphs share 4,462 edges of the
+tessellation's 10,528 and real adjacency's 4,843, a Jaccard of 0.411.  So two zips joined by a
+`proximity_edges` entry are near each other; they are not necessarily neighbours on any
+published map, and a district that reads as scattered on screen is not a contiguity failure.
+
+`proximity_zips` is that tessellation's own key set, exported explicitly rather than left for a
+consumer to infer from `cells` -- a zip whose point clips away to nothing on the 1:20m coastline
+has no proximity cell but can still have a ZCTA, so a consumer that built the graph's vertex set
+as "every zip in `cells`" would silently admit it as an isolated, edge-less vertex and make the
+split's contiguity guard infeasible.  The tessellation's cells are computed and then discarded:
+only their key set and their rook adjacency are exported, never a ring.  Everything the map
+draws -- `cells`, `districts`, and the rep territories in `reps.json` -- comes from the real
+ZCTA polygons instead, and the district colouring is assigned over their adjacency too.
+
 Measured on the CONUS k = 10 live run at the 2 km/250 m defaults, after `td.geo.zcta_polygons`
-was made to subset by zip before reprojecting: `export()` (`voronoi`/`dissolve`/`colour`/`cells`
+was made to subset by zip before reprojecting: `export()` (`proximity`/`dissolve`/`colour`/`cells`
 plus the uninstrumented ring-building loop after them) takes about 9.2 s, 5.8 s of it the
 `dissolve` phase alone, real ZCTA unions costing far more than the old Voronoi ones did; the
 `load` phase (`ziptable.read`, `geo.states_outline`, `geo.zcta_polygons`) takes about 1.3 s;
@@ -69,13 +76,12 @@ plus the uninstrumented ring-building loop after them) takes about 9.2 s, 5.8 s 
 
 Colours come from a generated 50-entry palette (two lightness rotations of 25 evenly spaced
 hues, enough for the k = 50 other channels reach) assigned by `us_maps.color_districts` over the
-adjacency of the **Voronoi** dissolve, not the real-ZCTA one `districts` actually exports: only
-the Voronoi dissolve tiles the land exactly, so only there does "intersects" reliably mean
-"shares a border" for every pair (measured on the live k = 10 instance, the Voronoi dissolve
-gives 15 district-adjacent pairs, the ZCTA dissolve only 7 -- using the latter would let two
-touching districts share a hue, or two non-touching ones fight over one).  See `_adjacency`.
-The palette is fixed and the assignment is greedy in a sorted order, so the same table always
-produces the same colours.
+adjacency of the real-ZCTA dissolve, the same geometry `districts` exports, so the hues separate
+the ground the reader sees.  That territory does not tile the plane, so adjacency is taken within
+`ADJ_TOLERANCE` metres rather than by plain `intersects`, which would miss a pair separated by a
+sliver of unassigned land: on the k = 18 live run `intersects` gives 13 adjacent pairs and 1 km
+gives 15.  See `_adjacency`.  The palette is fixed and the assignment is greedy in a sorted
+order, so the same table always produces the same colours.
 
 Confidentiality: `geom.json` holds geography and identifiers only.  No opportunity, no book, no
 rep.  Those travel in `draw.csv`, which stays under `battery/results/`.
@@ -97,6 +103,7 @@ from td import geo, telemetry, ziptable                                     # no
 CRS = "laea"
 SIMPLIFY = 2000.0              # metres; the coastline is 1:20m generalised already
 CELLS_SIMPLIFY = 250.0         # metres; real ZCTA rings, the tolerance the user chose for these
+ADJ_TOLERANCE = 1000.0         # metres; two districts this close read as neighbours, `_adjacency`
 NDIGITS = 1                    # decimetres: far below any simplify tolerance, and 2 bytes cheaper
 
 N_HUES = 25                    # 25 hues x 2 lightnesses = 50, the largest k any channel asks for
@@ -141,8 +148,14 @@ def palette(n_hues: int = N_HUES, lightness=LIGHTNESS, saturation: float = SATUR
     return out
 
 
-def _cell_edges(cells: dict) -> list:
-    """`[[z1, z2], ...]`, sorted: the rook adjacency of the Voronoi cells, `z1 < z2`.
+def _proximity_edges(cells: dict) -> list:
+    """`[[z1, z2], ...]`, sorted: the rook adjacency of the proximity tessellation, `z1 < z2`.
+
+    This is a reachability model, not a border graph.  The instance carries 3,713 of the 33,300
+    CONUS ZCTAs, so real shared boundaries alone leave 817 components and 474 isolated zips;
+    the tessellation closes those gaps by giving every point of the map to its nearest zip.
+    Measured against real ZCTA adjacency it shares 4,462 edges of its 10,528 and their 4,843.
+    Two zips joined here are near each other, not necessarily neighbours on any published map.
 
     Same STRtree pattern as `_adjacency`, but on the cells themselves rather than the dissolved
     districts, and before `_rings` simplifies them: `preserve_topology` simplifies each polygon
@@ -162,27 +175,31 @@ def _cell_edges(cells: dict) -> list:
     return sorted([ids[i], ids[j]] for i, j in zip(ia[touching], ib[touching]))
 
 
-def _adjacency(polys: dict) -> dict:
-    """`{district: set(district)}` over districts whose territory touches in `polys`.
+def _adjacency(polys: dict, tolerance: float = ADJ_TOLERANCE) -> dict:
+    """`{district: set(district)}` over districts whose territory lies within `tolerance`
+    metres of each other in `polys`.
 
-    Read off dissolved polygons rather than off the zips: two districts intersect precisely
-    when they share a border in whatever geometry `polys` holds, which is the relation the
+    Read off dissolved polygons rather than off the zips: two districts are neighbours exactly
+    when their territory meets in the geometry `polys` holds, which is the relation the
     colouring has to respect.  This is available here and is not in `us_maps`' own colouring,
     which runs before any polygon exists and has to approximate it with nearest neighbours.
 
-    The caller must pass the **Voronoi** dissolve, not the real-ZCTA one: only the Voronoi
-    cells tile the land exactly, so only there does "intersects" mean "shares a border" for
-    every pair.  The real ZCTA dissolve legitimately has gaps between districts (decision 1),
-    so two districts an eyeful apart on the map can still come back `intersects` there (or two
-    that do touch can come back not, across a gap), which would silently break "two districts
-    that share a border never share a hue" -- measured on the k = 10 live instance, the Voronoi
-    dissolve gives 15 district-adjacent pairs and the ZCTA dissolve only 7.
+    `polys` is the real-ZCTA dissolve, the same geometry `districts` exports, so the hues are
+    assigned over the ground the reader actually sees.  That territory does not tile the plane
+    (decision 1: unpopulated land, water and unassigned areas are real gaps), so plain
+    `intersects` would miss a pair separated by a sliver and let two districts that read as
+    neighbours share a hue.  The tolerance closes that: measured on the k = 18 live run,
+    `intersects` finds 13 adjacent pairs, 1 km finds 15, 5 km 16 and 50 km 23.  1 km is the
+    knee, and it also absorbs `CELLS_SIMPLIFY`, since a simplified ring can pull back by up to
+    its own tolerance and open a gap that is not in the source data.
     """
     import shapely
     ids = sorted(polys, key=str)
     geoms = [polys[d] for d in ids]
     adj = {d: set() for d in ids}
-    ia, ib = shapely.STRtree(geoms).query(geoms, predicate="intersects")
+    tree = shapely.STRtree(geoms)
+    ia, ib = (tree.query(geoms, predicate="intersects") if tolerance <= 0
+              else tree.query(geoms, predicate="dwithin", distance=tolerance))
     for i, j in zip(ia, ib):
         if i < j:
             adj[ids[i]].add(ids[j])
@@ -259,8 +276,8 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
 
     `cells` no longer means "this zip has a Voronoi cell" -- it means "this zip has a real ZCTA
     polygon", and coverage of the two need not match (a zip whose point clips away to nothing on
-    the 1:20m coastline has no Voronoi cell but can still have a ZCTA).  `cell_graph_zips` is the
-    Voronoi cell dict's own key set, exported explicitly rather than left for a `cell_edges`
+    the 1:20m coastline has no Voronoi cell but can still have a ZCTA).  `proximity_zips` is the
+    Voronoi cell dict's own key set, exported explicitly rather than left for a `proximity_edges`
     consumer to infer from `cells`: a graph built as `{z for z in zips if z in geom["cells"]}`
     would silently admit an isolated, edge-less vertex for a zip that has a ZCTA but no Voronoi
     cell, which can make a contiguity guard downstream infeasible for no visible reason.
@@ -286,24 +303,23 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
     zcta_cells = {z: zcta_polys[z] for z in keys}
 
     clip = um.clip_region([xy[z] for z in keys], states_gdf)
-    with telemetry.phase("voronoi"):
-        # Voronoi cells only: kept for `cell_edges`, the contiguity graph, never exported as
-        # rings -- see the module docstring, decision 2.
-        cells = um.voronoi_cells(keys, xy, clip,
-                                 zip_state=None if state_polys is None else zip_state,
-                                 state_polys=state_polys)
+    with telemetry.phase("proximity"):
+        # The proximity tessellation.  It is never drawn and never dissolved into anything the
+        # map shows: its only product is `proximity_edges`, the reachability graph -- see the
+        # module docstring, decision 2.
+        prox = um.voronoi_cells(keys, xy, clip,
+                                zip_state=None if state_polys is None else zip_state,
+                                state_polys=state_polys)
     with telemetry.phase("dissolve"):
         polys = um.dissolve(zcta_cells, districts)
-        voronoi_polys = um.dissolve(cells, districts)          # colouring only, see `_adjacency`
     with telemetry.phase("colour"):
-        adj = _adjacency(voronoi_polys)
-        for d in polys:
-            adj.setdefault(d, set())        # a district missing from the (lossier) Voronoi
-                                            # dissolve still needs a colour of its own
+        # Adjacency off the real ZCTA territory, which is the ground the reader sees: two
+        # districts share a hue only if no published boundary puts them side by side.
+        adj = _adjacency(polys)
         colors = um.color_districts(adj, palette())
 
-    out = {"crs": CRS, "districts": {}, "states": {}, "cells": {}, "cell_edges": [],
-          "cell_graph_zips": [], "cells_source": cells_source}
+    out = {"crs": CRS, "districts": {}, "states": {}, "cells": {}, "proximity_edges": [],
+          "proximity_zips": [], "cells_source": cells_source}
     for d in sorted(polys, key=str):
         rings, holes = _rings_and_holes(polys[d], simplify)
         entry = {"rings": rings, "color": colors[d]}
@@ -321,8 +337,8 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
     with telemetry.phase("cells"):
         out["cells"] = {str(z): {"rings": _rings(zcta_cells[z], CELLS_SIMPLIFY)}
                         for z in sorted(zcta_cells)}
-        out["cell_edges"] = _cell_edges(cells)
-        out["cell_graph_zips"] = sorted(cells)          # the vertex set `cell_edges` is over
+        out["proximity_edges"] = _proximity_edges(prox)
+        out["proximity_zips"] = sorted(prox)      # the vertex set `proximity_edges` is over
     return out
 
 

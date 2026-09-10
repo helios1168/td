@@ -15,8 +15,9 @@ Mass comes from the table's `opportunity` column and books come from the instanc
 is the unit, and the instance is opened only for `S`, `cand` and `S_free` (the plan's second
 invariant).  `split.json` carries ratios and log-gains only, never a raw mass.
 
-`--geom` gives the run's `geom.json`; its `cell_edges` build the Voronoi cell graph over the
-district's zips, and the split is then contiguity-guarded on that graph
+`--geom` gives the run's `geom.json`; its `proximity_edges` build the proximity graph over the
+district's zips, and the split is then contiguity-guarded on that graph.  That graph is a
+reachability model, not real shared borders (`geom_export.py`, `proximity_edges`)
 (`td.solvers.district_split`).  `split.json` gains `pieces` (one connected-piece count per rep)
 and `contiguous` (true iff every rep holds one piece per component it appears in); without
 `--geom` both are `null`.
@@ -56,22 +57,28 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--filler-capture", default="full", choices=list(model.FILLER_CAPTURE))
     ap.add_argument("--n-near", type=int, default=3,
                     help="a zip may only move to one of its n nearest rep centres")
-    ap.add_argument("--geom", help="the run's geom.json; its cell_edges make the split "
-                    "contiguous on the Voronoi cell graph")
+    ap.add_argument("--geom", help="the run's geom.json; its proximity_edges make the split "
+                    "contiguous on the proximity graph")
     ap.add_argument("--out", required=True, help="output directory")
     return ap
 
 
 def build_adjacency(geom: dict, zips: list[str]) -> dict | None:
-    """The Voronoi cell graph over `zips`, `{column index: {neighbour column index, ...}}`,
-    built from `geom["cell_edges"]` restricted to pairs both present in `geom["cells"]` and both
-    in `zips`.  `None` when `geom` carries no `"cells"` key (a geom.json from before cells were
-    exported)."""
-    if "cells" not in geom:
+    """The proximity graph over `zips`, `{column index: {neighbour column index, ...}}`, built
+    from `geom["proximity_edges"]` restricted to pairs both in `geom["proximity_zips"]` and both
+    in `zips`.  `None` when `geom` carries no `"proximity_edges"` key (a geom.json from before
+    the graph was exported).
+
+    The vertex set is `proximity_zips`, never `cells`: `cells` are real ZCTA polygons and a zip
+    can have one without having a proximity cell, which would enter here as an isolated vertex
+    and make the contiguity guard infeasible (`CLAUDE.md` trap 21).
+    """
+    if "proximity_edges" not in geom:
         return None
+    vertices = set(geom.get("proximity_zips") or [])
     col = {z: j for j, z in enumerate(zips)}
-    adjacency = {col[z]: set() for z in zips if z in geom["cells"]}
-    for a, b in geom["cell_edges"]:
+    adjacency = {col[z]: set() for z in zips if z in vertices}
+    for a, b in geom["proximity_edges"]:
         if a in col and b in col and col[a] in adjacency and col[b] in adjacency:
             adjacency[col[a]].add(col[b])
             adjacency[col[b]].add(col[a])
@@ -133,8 +140,8 @@ def main(argv=None) -> int:
                 adjacency = build_adjacency(geom, zips)
                 if adjacency is None:
                     return _fail(args.out,
-                                 f"{args.geom} has no cells (a geom.json from before cells "
-                                 f"were exported)")
+                                 f"{args.geom} has no proximity_edges (a geom.json from "
+                                 f"before the graph was exported)")
 
         # `district_split.split` runs greedy always and, under --exact, escalates to a SCIP
         # MINLP warm-started from it; the two engines are opaque from here (td/solvers is not

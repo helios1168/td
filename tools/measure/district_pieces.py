@@ -1,26 +1,23 @@
 """District fragmentation measured three ways: by area, by opportunity, by zip count.
 
-`tools/us_maps.py --regions-voronoi` reports one number per district -- the largest
-connected part of its dissolved zip catchments, as a share of that district's **area**.
-That number is what put D01 at 55% in `docs/OPTIONS_power-cell-contiguity.md` §3, and on
-its own it is misleading, because the denominator is area and area is not what the draw
-balances.  A district whose territory is small in area (a dense metro core) can be put at
-55% by a single rural zip whose Voronoi catchment happens to be as large as the whole
-core, while carrying 0.14% of the district's opportunity.  That is exactly what D01 is.
+Territory here is the union of a district's zips' **real 2025 ZCTA polygons**, the same ground
+`geom.json`'s `cells` draw, so a part is a genuinely connected run of published boundaries and a
+gap between two of a district's zips counts as a gap.  Nothing is tessellated.
 
-So this module reports the same largest-part statistic on three denominators:
+The largest-part statistic is reported on three denominators, because the first one alone
+misleads:
 
-    area   -- the share of the district's territory area, i.e. what `--regions-voronoi` says
+    area   -- the share of the district's territory area
     mass   -- the share of the district's M, the quantity stage 1 actually equalises
     zips   -- the share of the district's zip count, the unweighted structural reading
 
-A district is genuinely in pieces when all three are low.  When `area` is low and `mass`
-is high the district is one core plus an outlying zip with a big empty catchment, which is
-a rendering fact about the catchment fill and not a fact about the territory: the power
-diagram the route ships (`--regions`) draws that district as one convex polygon regardless.
+A district is genuinely in pieces when all three are low.  When `area` is low and `mass` is
+high, the district is one core plus an outlying rural zip whose ZCTA is physically large and
+nearly empty -- `docs/OPTIONS_power-cell-contiguity.md` §3's D01 at 55%, whose second part
+carries 0.14% of the district's opportunity.  Area is not what the draw balances.
 
-Each zip is charged to the part its own catchment overlaps most, which is well defined
-because the parts are disjoint and the catchments tile the clip polygon.
+Each zip is charged to the part its own polygon overlaps most.  Unlike a tessellation these
+polygons do not tile the plane, so a zip that meets no part at all is simply not charged.
 """
 from __future__ import annotations
 
@@ -38,9 +35,9 @@ def _parts(geom) -> list:
 def piece_fractions(cells: dict, districts: dict, values: dict) -> dict:
     """`{district: {...}}` -- the largest-part share on each of the three denominators.
 
-    `cells` is `{zip: catchment polygon}` as `us_maps.voronoi_cells` returns it, `districts`
-    is the `{zip: district}` labelling to dissolve by, and `values` is `{zip: M}`.  Zips
-    absent from `cells` are ignored, since they have no ground to contribute.
+    `cells` is `{zip: polygon}`, the real ZCTA boundaries from `td.geo.zcta_polygons`,
+    `districts` is the `{zip: district}` labelling to dissolve by, and `values` is `{zip: M}`.
+    Zips absent from `cells` are ignored, since they have no ground to contribute.
 
     Returned per district: `n_parts`, `area`, `mass`, `zips` (the three largest-part shares),
     `n_zips`, `m_total`, `area_total`, and `parts` -- a list of `(area share, mass share,
@@ -97,6 +94,8 @@ def main(argv=None) -> int:
     ap.add_argument("draw", help="a draw.csv from tools/run_draw.py")
     ap.add_argument("instance", nargs="?", default="instance_descaled_v2.json.gz")
     ap.add_argument("--geo-cache", default=None)
+    ap.add_argument("--zcta-shp", default=None,
+                    help="the TIGER/Line ZCTA520 shapefile the polygons come from")
     ap.add_argument("--detail", default=None, metavar="DISTRICT",
                     help="also list every part of this district")
     args = ap.parse_args(argv)
@@ -111,13 +110,13 @@ def main(argv=None) -> int:
 
     cache = args.geo_cache or geo.DEFAULT_DEST
     d = descaled.load_descaled(args.instance)
-    points = geo.zcta_points(cache)
-    xy, _missing, _off = U.conus_xy(sorted(d.G), points)
     M = {z: float(d.G.nodes[z]["M"]) for z in d.G}
     draw = {z: v for z, v in U.read_draw(args.draw).items() if z in M}
-    keys = sorted((z for z in draw if z in xy), key=str)
-    clip = U.clip_region([xy[z] for z in keys], geo.states_outline(cache), 0.05)
-    cells = U.voronoi_cells(keys, xy, clip)
+    # Real ZCTA polygons, the same ground `geom.json`'s `cells` draw.  A district's parts are
+    # then the parts of the union of its own zips' published boundaries, so a gap between two
+    # of its zips counts as a gap rather than being tiled over by a catchment.
+    polys = geo.zcta_polygons(sorted(draw), args.zcta_shp or geo.ZCTA_SHP)
+    cells = {z: polys[z] for z in sorted(draw) if z in polys}
 
     fr = piece_fractions(cells, draw, M)
     report(fr)

@@ -113,7 +113,8 @@ def _geom(zips: list[str]) -> dict:
     """A chain: `zips[0]`-`zips[1]`-...-`zips[-1]`, the shape `test_district_split.py`'s own
     geographic-split fixture uses."""
     return dict(cells={z: {"rings": []} for z in zips},
-               cell_edges=[[zips[j], zips[j + 1]] for j in range(len(zips) - 1)])
+               proximity_zips=list(zips),
+               proximity_edges=[[zips[j], zips[j + 1]] for j in range(len(zips) - 1)])
 
 
 def _run(tmp: str, *flags):
@@ -211,14 +212,14 @@ def test_multi_names_a_district_outside_scope():
             raise AssertionError("expected SystemExit: --multi district outside --districts")
 
 
-def test_multi_with_a_pre_cells_geom_is_a_hard_failure():
-    """A geom.json from before cells were exported would silently run the unguarded greedy --
+def test_multi_with_a_geom_that_has_no_proximity_graph_is_a_hard_failure():
+    """A geom.json from before the graph was exported would silently run the unguarded greedy --
     contiguity is the whole point of `--multi`, so this must fail loudly instead, the same way
     `tools/split_district.py` fails on the same input."""
     with tempfile.TemporaryDirectory() as tmp:
         geom_path = os.path.join(tmp, "geom.json")
         with open(geom_path, "w", encoding="utf-8") as fh:
-            json.dump({"districts": {}}, fh)             # no "cells" key
+            json.dump({"districts": {}}, fh)             # no "proximity_edges" key
 
         inst = _write_instance(os.path.join(tmp, "instance_descaled.json.gz"))
         d = descaled.load_descaled(inst)
@@ -232,7 +233,7 @@ def test_multi_with_a_pre_cells_geom_is_a_hard_failure():
         assert not os.path.exists(os.path.join(out_dir, "staffing.json"))
         with open(os.path.join(out_dir, "failure.json"), encoding="utf-8") as fh:
             failure = json.load(fh)
-        assert "cells" in failure["reason"]
+        assert "proximity_edges" in failure["reason"]
 
 
 def test_a_roster_larger_than_its_district_s_zip_count_is_capped_not_crashed():
