@@ -223,8 +223,10 @@ def _check_plan(out: str) -> dict:
                          "anchors"}
     assert plan["state_list"] == STATES
     for rec in plan["slots"]:
-        assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y",
+        assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y", "L", "U",
                             "center", "extent_km", "radius_km"}
+        if rec["used"]:
+            assert rec["L"] - 1e-6 <= rec["mass"] <= rec["U"] + 1e-6, rec
     ids = [rec["id"] for rec in plan["slots"]]
     assert len(ids) == len(set(ids)), "slot ids must be unique across stages"
 
@@ -406,7 +408,8 @@ def test_a_slot_record_without_a_known_centre_says_so_rather_than_guessing():
     contacts, so the stage's seed may no longer be one of them and naming it as the centre
     would be a claim the record cannot support.  `extent_km` needs no centre and is still
     measured."""
-    problem = types.SimpleNamespace(k=2, bundle_of=("N", "N"))
+    problem = types.SimpleNamespace(k=2, bundle_of=("N", "N"),
+                                    L_j=np.array([0.8, 0.8]), U_j=np.array([1.2, 1.2]))
     result = dict(z=np.array([[1, 0], [1, 0], [0, 1], [0, 0], [0, 0], [0, 0]], bool),
                   y=np.array([[1.0, 0.0], [0.5, 0.0], [0.0, 1.0], [0.0, 0.0],
                               [0.0, 0.0], [0.0, 0.0]]),
@@ -460,13 +463,130 @@ def test_k_fixed_pins_the_first_slots_and_reaches_params():
         with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
             assert json.load(fh)["k_fixed"] == {"N": 1}
     assert cli._parse_k_fixed("N=18, WH=11,FI=19") == {"N": 18, "WH": 11, "FI": 19}
-    for bad in (["--k-fixed", "ZZ=1"], ["--k-fixed", "N=99"]):
+    # a count above the bundle's slots is refused against a fixed band: under --band-mode
+    # per-bundle the count is what sets the band, so no count is ever too large for it
+    for bad in (["--k-fixed", "ZZ=1"],
+                ["--k-fixed", "N=99", "--band-mode", "global"]):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 _run(tmp, "joint", bad)
             raise AssertionError(f"{bad} must be refused")
         except ValueError:
             pass
+
+
+def test_delta_and_k_fixed_band_a_bundle_on_its_own_mean():
+    """`--delta 0.05 --k-fixed N=2`: the N bundle is banded on its own mean, tau_N = M^max_N /
+    2, at 1 +/- 0.05, and every bundle with no count takes the mass-weighted mean of the fixed
+    ones.  The toy's national mass is 24 over `--k 2`, so the national tau is 12 and the N band
+    is [11.4, 12.6] -- inside the global [9.6, 14.4] the same run would have used, which is the
+    whole point of the mode.  params.json records tau_B, L_B and U_B per bundle.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "joint", ["--delta", "0.05", "--k-fixed", "N=2"]))
+        with open(os.path.join(tmp, "out_joint", "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["delta"] == 0.05 and params["band_mode"] == "per-bundle"
+        assert params["band_lo"] == 0.95 and params["band_hi"] == 1.05
+        n = params["bands"]["N"]
+        assert abs(n["tau"] - 12.0) < 1e-6, "M^max_N / 2 over the toy's 24 of national mass"
+        assert abs(n["L"] - 11.4) < 1e-6 and abs(n["U"] - 12.6) < 1e-6
+        # a bundle with no count takes the mass-weighted mean of the fixed ones, here N alone
+        assert abs(params["bands"]["WH"]["tau"] - n["tau"]) < 1e-6
+        n_slots = [rec for rec in plan["slots"] if rec["bundle"] == "N"]
+        assert n_slots and all(abs(rec["L"] - 11.4) < 1e-6 and abs(rec["U"] - 12.6) < 1e-6
+                               for rec in n_slots)
+        assert sum(rec["used"] for rec in n_slots) >= 2, "--k-fixed N=2 pins two used slots"
+
+        # unset, the band is the global one and every bundle shares it
+        plan = _check_plan(_run(tmp, "sequential", ["--delta", "0.05"]))
+        with open(os.path.join(tmp, "out_sequential", "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["band_mode"] == "global"
+        assert {round(b["tau"], 6) for b in params["bands"].values()} == {12.0}
+        assert all(abs(rec["L"] - 11.4) < 1e-6 for rec in plan["slots"])
+
+        # asking for it with no count would band every bundle on the national tau and record
+        # a per-bundle run that was global; it is refused instead
+        try:
+            _run(tmp, "joint", ["--band-mode", "per-bundle"])
+            raise AssertionError("--band-mode per-bundle without --k-fixed must be refused")
+        except ValueError as exc:
+            assert "--k-fixed" in str(exc)
+
+
+def _write_v2_all_residual(path: str) -> None:
+    """Three states, S0 isolated in the rook graph (`MERGED_ADJ`), for `--catch-all-bundle all`.
+
+    S0 carries 0.1 of each national channel and 0.4 of each of WH and FI, 1.0 in all; S1 and S2
+    carry 0.9 of national mass each and nothing else.  The national mass is 2.0, so at `--k 2`
+    tau = 1.0 and the band is [0.8, 1.2]: the N stage districts S1 and S2 at 0.9 apiece and
+    cannot reach S0, whose 0.2 of national mass is below L and has no neighbour to join.  With
+    `--bundles N` nothing serves S0's WH or FI either, so every one of its four channels is
+    still residual and its 1.0 of mass is exactly what one all-channel slot holds.
+    """
+    rows = [
+        ("z0", "S0", {"N_WH": (0.1, {"rep0": 0.3}), "N_FI": (0.1, {"rep1": 0.3}),
+                      "WH": (0.4, {"rep0": 0.3}), "FI": (0.4, {"rep1": 0.3})}),
+        ("z1", "S1", {"N_WH": (0.45, {"rep2": 0.3}), "N_FI": (0.45, {"rep3": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+        ("z2", "S2", {"N_WH": (0.45, {"rep4": 0.3}), "N_FI": (0.45, {"rep5": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+    ]
+    z, chan, m_rel, share, share_free, state = [], [], [], [], [], []
+    for zid, st, cells in rows:
+        for c in channels.CHANNELS:
+            m, sh = cells[c]
+            z.append(zid); chan.append(c); m_rel.append(m)
+            share.append(dict(sh)); share_free.append(0.05); state.append(st)
+    obj = dict(
+        format=td_instance.FORMAT_V2,
+        nodes=dict(z=z, channel=chan, m_rel=m_rel, share=share, share_free=share_free,
+                   state=state),
+        edges=dict(u=["z0", "z1"], v=["z1", "z2"]),
+        meta=dict(channels=list(channels.CHANNELS)),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def test_catch_all_bundle_all_opens_one_slot_over_every_channel():
+    """`--catch-all-bundle all` runs the catch-all as one `WHFI_PLUS` bundle: one rep covering
+    every channel of a state.  A `WHFI_PLUS` slot is bounded by `min_c cover_ub[s, c]`, so it
+    opens only where every channel is still residual -- which is what this mode means and why
+    the default (`each`) cannot use that bundle.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v2_all_residual(inst)
+        out = os.path.join(tmp, "out_all")
+        orig = td_geo.state_rook
+        td_geo.state_rook = lambda *a, **kw: (MERGED_ADJ, {})
+        try:
+            rc = cli.main([inst, "--route", "sequential", "--driver", "geo",
+                           "--bundles", "N", "--catch-all", "--catch-all-bundle", "all",
+                           "--engine", "scipy", "--strategy", "direct", "--k", "2",
+                           "--time-limit", "30", "--out", out])
+            assert rc == 0, rc
+        finally:
+            td_geo.state_rook = orig
+
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        catch = [rec for rec in plan["slots"]
+                 if rec["bundle"] == "WHFI_PLUS" and rec["used"] and rec["y"]]
+        assert len(catch) == 1, plan["slots"]
+        assert set(catch[0]["y"]) == {"S0"}, "S0 is the state with every channel residual"
+        assert abs(catch[0]["mass"] - 1.0) < 1e-6, catch
+        # every channel of S0 is served by that one slot, and only by it
+        row = plan["per_state"]["S0"]["residual_by_channel"]
+        assert all(abs(v) <= 1e-6 for v in row.values()), row
+        assert len(cli._bundle_channels("WHFI_PLUS")) == 4
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["catch_all_bundle"] == "all"
+        # the mode is a choice, not a widening: `each` on the same toy opens the two
+        # single-channel bundles instead, and never the four-channel one
+        assert cli.build_argparser().parse_args(["i", "--out", "o"]).catch_all_bundle == "each"
 
 
 def test_driver_reps_logs_every_move_and_the_catch_all_pass_runs():

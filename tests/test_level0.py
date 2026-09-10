@@ -111,6 +111,58 @@ def test_prior_reduces_coverage_and_isolates_a_state():
     assert_bands_and_contiguity(prob, out)
 
 
+def test_a_bundle_is_banded_on_its_own_mean_not_the_global_one():
+    """Two bundles of the same mass and different counts: 3.0 of channel A over 3 districts
+    and 3.0 of channel B over 1, so A's mean is 1.0 and B's is 3.0 and one band around either
+    mean is wrong for the other.  `band` gives each its own: the slot counts, the band rows,
+    the greedy point and the solved plan all read the slot's own pair, while `L` and `U` stay
+    the global pair the caller passed.
+    """
+    band = {"A": (0.8, 1.2), "B": (2.4, 3.6)}
+    prob = build0([0.5] * 6, [0.5] * 6, band=band, L=0.8, U=1.2)
+    assert (prob.L, prob.U) == (0.8, 1.2), "the global pair is what the caller passed"
+    assert prob.slots == {"A": (0, 4), "B": (4, 6)}, "K_B = ceil(M^max_B / L_B)"
+    lo, hi = prob.slots["B"]
+    assert np.allclose(prob.L_j[:lo], 0.8) and np.allclose(prob.U_j[:lo], 1.2)
+    assert np.allclose(prob.L_j[lo:hi], 2.4) and np.allclose(prob.U_j[lo:hi], 3.6)
+
+    x, seeds, z, y, masses = _greedy(prob)
+    assert len(seeds["A"]) == 3 and len(seeds["B"]) == 1
+    # the greedy fills to the slot's own target `L_B` and never past its own `U_B`
+    assert all(prob.L_j[j] - 1e-9 <= masses[j] <= prob.U_j[j] + 1e-9
+               for j in range(prob.k) if masses[j] > 0), masses
+    assert masses[lo] >= 2.4, "B's one district takes the path until it reaches its own L"
+    out = run(prob, [level0.cover_pass(prob, ["A", "B"]), level0.contacts_pass(prob)])
+    assert abs(out["passes"][0]["value"] - 6.0) < 1e-6, "both bundles cover in full"
+    for j in range(prob.k):
+        if out["u"][j]:
+            assert prob.L_j[j] - 1e-6 <= out["masses"][j] <= prob.U_j[j] + 1e-6, (j, out["masses"])
+            assert ss.connected(out["z"][:, j], EDGES)
+    # the same six states, three districts on one channel and one on the other: the global
+    # band would have refused B's district at 3.0 and A's at 1.0 could not have been in B's
+    assert abs(out["masses"][lo] - 3.0) < 1e-6 and int(out["u"][lo:hi].sum()) == 1
+    assert int(out["u"][:lo].sum()) == 3
+
+    # the check names the slot's own band, not the global one
+    bad = np.zeros(prob.n_var)
+    bad[prob.off_u + lo] = 1.0
+    try:
+        level0.check_point(prob, bad)
+        raise AssertionError("a used slot holding nothing must fail its band")
+    except ValueError as exc:
+        assert "outside its band [2.4, 3.6]" in str(exc), exc
+
+
+def test_a_band_pair_and_an_unknown_bundle_are_refused():
+    assert build0([0.5] * 6, band=(0.8, 1.2)).slots == build0([0.5] * 6).slots
+    for band in ({"ZZ": (0.8, 1.2)}, {"A": (1.2, 0.8)}, {"A": (0.0, 1.2)}):
+        try:
+            build0([0.5] * 6, band=band)
+            raise AssertionError(f"expected a ValueError for band={band}")
+        except ValueError:
+            pass
+
+
 def test_u_none_raises():
     try:
         build0([0.5] * 6, U=None)

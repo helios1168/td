@@ -9,7 +9,8 @@ the bundle could hold, so the bundle of a slot is fixed and there are no bundle 
     z_sj in {0, 1}    contact,  eta z_sj <= y_sj <= z_sj <= u_j
     u_j  in {0, 1}    slot used
     cover:   sum_{j : c in B_j} y_sj <= cover_ub_sc = 1 - prior_sc        for every (s, c)
-    band:    (L/tau) u_j <= sum_s (W_sj/tau) y_sj <= (U/tau) u_j          for every j
+    band:    (L_j/tau) u_j <= sum_s (W_sj/tau) y_sj <= (U_j/tau) u_j      for every j,
+             `L_j`, `U_j` the slot's own bundle's band (`build_level0(band=...)`)
     flow:    single-commodity flow per slot as level 1, root  sum_s r_sj = u_j
     caps:    sum_s z_sj <= n_max;  z_sj + z_s'j <= 1 when |xy_s - xy_s'| > dist_max
     radius:  z_sj = 0 when |xy_s - xy_root(j)| > radius_max, or the pair rows at 2 radius_max
@@ -56,6 +57,9 @@ class Level0Problem(SplitProblem):
     bundle contains channel `ci`, `cover_ub = 1 - prior` is `(S, C)`.  The inherited `M_s` is
     each state's mass summed over every channel and `D` is `(S, K)` (zeros without centres).
 
+    `L` and `U` are the global band and `L_j`, `U_j` `(K,)` the band each slot is actually
+    held to, which differs from it once a bundle is banded on its own mean.
+
     `state_xy (S, 2)` is the geometry the distance caps measure in (empty without one),
     `slot_root[j]` the state slot `j` is rooted at (`-1` when no single anchor names one) and
     `radius_max` the cap that geometry carries, so `greedy_plan` and `check_point` can read
@@ -69,6 +73,8 @@ class Level0Problem(SplitProblem):
     slot_has: np.ndarray = field(default_factory=lambda: np.zeros((0, 0), bool))
     L: float = 0.0
     U: float = 0.0
+    L_j: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    U_j: np.ndarray = field(default_factory=lambda: np.zeros(0))
     cover_ub: np.ndarray = field(default_factory=lambda: np.zeros((0, 0)))
     prior: np.ndarray = field(default_factory=lambda: np.zeros((0, 0)))
     channels: tuple[str, ...] = ()
@@ -139,23 +145,51 @@ def _channel_index(channels: tuple[str, ...], bundles: dict) -> dict[str, list[i
     return out
 
 
-def slot_counts(cells, bundles: dict, *, L: float, prior=None) -> dict[str, int]:
-    """`K_B = ceil(M^max_B / L)` per bundle, `M^max_B = sum_s sum_{c in B} M_sc cover_ub_sc`,
-    all the mass the bundle could ever hold once `prior` is committed.  Zero when there is
-    none.  The driver prints these before building: the slot count is the size lever."""
+def available_mass(cells, bundles: dict, *, prior=None) -> dict[str, float]:
+    """`M^max_B = sum_s sum_{c in B} M_sc cover_ub_sc` per bundle: all the mass the bundle
+    could ever hold once `prior` is committed.  The driver divides it by a fixed slot count to
+    get that bundle's own band centre."""
     M = np.asarray(cells.M, float)
-    channels = tuple(cells.channels)
     cover_ub = _cover_ub(M.shape, prior)
-    idx = _channel_index(channels, bundles)
+    idx = _channel_index(tuple(cells.channels), bundles)
+    return {name: float((M[:, cols] * cover_ub[:, cols]).sum()) for name, cols in idx.items()}
+
+
+def _band_of(bundles: dict, L: float, U: float, band) -> dict[str, tuple[float, float]]:
+    """`{bundle: (L_B, U_B)}`: the global pair everywhere, then whatever `band` overrides.
+
+    `band` is None, a `(L, U)` pair (the same thing as the `L` and `U` arguments), or a dict
+    naming some or all of the bundles; a bundle it does not name keeps the global pair.
+    """
+    out = {name: (float(L), float(U)) for name in bundles}
+    if band is not None and not isinstance(band, dict):
+        lo, hi = band
+        out = {name: (float(lo), float(hi)) for name in bundles}
+    elif band:
+        unknown = [b for b in band if b not in out]
+        if unknown:
+            raise ValueError(f"band names bundle(s) {unknown} not in {list(bundles)}")
+        out.update({name: (float(lo), float(hi)) for name, (lo, hi) in band.items()})
+    for name, (lo, hi) in out.items():
+        if not (0.0 < lo <= hi):
+            raise ValueError(f"bundle {name!r} needs 0 < L <= U, got L={lo}, U={hi}")
+    return out
+
+
+def slot_counts(cells, bundles: dict, *, L: float, prior=None, band=None) -> dict[str, int]:
+    """`K_B = ceil(M^max_B / L_B)` per bundle, `M^max_B` the mass it could hold once `prior` is
+    committed (`available_mass`).  Zero when there is none.  `band` gives a bundle its own
+    `(L_B, U_B)`; without one every bundle divides by the global `L`.  The driver prints these
+    before building: the slot count is the size lever."""
+    pairs = _band_of(bundles, L, float("inf"), band)      # no upper bound counts slots
     counts = {}
-    for name, cols in idx.items():
-        avail = float((M[:, cols] * cover_ub[:, cols]).sum())
-        counts[name] = int(math.ceil(avail / float(L) - 1e-9)) if avail > 0 else 0
+    for name, avail in available_mass(cells, bundles, prior=prior).items():
+        counts[name] = (int(math.ceil(avail / pairs[name][0] - 1e-9)) if avail > 0 else 0)
     return counts
 
 
 def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float, U: float | None,
-                 eta: float, tau: float | None = None, n_max: int | None = None,
+                 eta: float, band=None, tau: float | None = None, n_max: int | None = None,
                  dist_max: float | None = None, radius_max: float | None = None,
                  state_xy=None, prior=None, anchors=None,
                  D=None, eps: float | None = None,
@@ -166,7 +200,17 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     `edges` is the state rook graph over indices `0..S-1`, undirected, once per pair.
 
     `U` is required: without an upper band the coverage passes build one giant district per
-    bundle and balance is undefined.  `tau` defaults to `(L + U) / 2`.  `prior (S, C)` is the
+    bundle and balance is undefined.  `tau` defaults to `(L + U) / 2`.
+
+    `band` gives a bundle its own band: `None` (every bundle takes `(L, U)`), a `(L, U)` pair,
+    or a dict `bundle -> (L_B, U_B)` for some or all of them.  The band rows are per slot
+    already, so each slot takes its bundle's pair, and `L_j`, `U_j` `(K,)` carry them; `L` and
+    `U` stay the global pair.  A bundle's mean district is its own mass over its own count once
+    the counts differ across bundles (national 10-18, WH 9-12, FI 16-20), and one global `tau`
+    would band them all at the national mean.  `tau` itself stays global: it scales the band
+    rows and nothing else.
+
+    `prior (S, C)` is the
     share already committed by an earlier solve; `cover_ub = 1 - prior`.  `anchors` is a list
     of `(s, j)` pairs (or a dict `s -> j`) forced to `z_sj = 1`, as `build_milp`.  `D (S, K)`
     are per-slot moments; `eps` defaults to `eps_lexicographic` on the state totals and `D`.
@@ -220,7 +264,8 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     cover_ub = _cover_ub((S, C), prior)
     prior_arr = np.zeros((S, C)) if prior is None else np.asarray(prior, float)
     idx = _channel_index(channels, bundles)
-    counts = slot_counts(cells, bundles, L=L, prior=prior)
+    pairs_b = _band_of(bundles, L, U, band)
+    counts = slot_counts(cells, bundles, L=L, prior=prior, band=pairs_b)
 
     # slots: contiguous ranges per bundle, in the order `bundles` lists them
     slots, bundle_of, start = {}, [], 0
@@ -230,6 +275,8 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         start += counts[name]
     K = start
     bundle_of = tuple(bundle_of)
+    L_j = np.array([pairs_b[name][0] for name in bundle_of], float)
+    U_j = np.array([pairs_b[name][1] for name in bundle_of], float)
     slot_has = np.zeros((K, C), bool)
     for j, name in enumerate(bundle_of):
         slot_has[j, idx[name]] = True
@@ -321,11 +368,11 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
                      np.concatenate([off_z + sk, off_u + j_of]),
                      np.concatenate([np.ones(S * K), -np.ones(S * K)]), S * K, n_var),
         np.full(S * K, -np.inf), np.zeros(S * K))
-    # sum_s (W_sj/tau) y_sj - (L/tau) u_j >= 0   and   ... - (U/tau) u_j <= 0
-    for name, bound, lo, hi in (("band_lo", L, 0.0, np.inf), ("band_hi", U, -np.inf, 0.0)):
+    # sum_s (W_sj/tau) y_sj - (L_j/tau) u_j >= 0   and   ... - (U_j/tau) u_j <= 0
+    for name, bound, lo, hi in (("band_lo", L_j, 0.0, np.inf), ("band_hi", U_j, -np.inf, 0.0)):
         add(name, _block(np.concatenate([j_of, jk]),
                          np.concatenate([off_y + sk, off_u + jk]),
-                         np.concatenate([W.ravel() / tau, np.full(K, -bound / tau)]),
+                         np.concatenate([W.ravel() / tau, -bound / tau]),
                          K, n_var),
             np.full(K, lo), np.full(K, hi))
     # sum_s r_sj - u_j = 0
@@ -437,6 +484,7 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         eta=float(eta), n_state=S, k=K, off_z=off_z, off_y=off_y, off_r=off_r, off_f=off_f,
         n_var=n_var, rows=rows,
         off_u=off_u, W=W, bundle_of=bundle_of, slots=slots, slot_has=slot_has, L=L, U=U,
+        L_j=L_j, U_j=U_j,
         cover_ub=cover_ub, prior=prior_arr, channels=channels,
         bundles={name: tuple(chans) for name, chans in bundles.items()},
         state_xy=np.zeros((0, 0)) if xy is None else xy,
@@ -524,10 +572,10 @@ def check_point(problem: Level0Problem, x: np.ndarray, *, tol: float = 1e-6) -> 
     x = np.asarray(x, float)
     if x.shape != (problem.n_var,):
         raise ValueError(f"x must have {problem.n_var} entries, got {x.shape}")
+    S, K = problem.n_state, problem.k
     bad = np.flatnonzero((x < problem.var_lb - tol) | (x > problem.var_ub + tol))
     if bad.size:
         i = int(bad[0])
-        S, K = problem.n_state, problem.k
         if problem.off_z <= i < problem.off_z + S * K and problem.var_lb[i] >= 1.0 - 1e-9:
             raise ValueError(f"infeasible point: anchored contact {_var_name(problem, i)} "
                              f"(state {(i - problem.off_z) // K}, slot "
@@ -547,8 +595,15 @@ def check_point(problem: Level0Problem, x: np.ndarray, *, tol: float = 1e-6) -> 
     bad = np.flatnonzero((Ax < problem.lb - tol) | (Ax > problem.ub + tol))
     if bad.size:
         i = int(bad[0])
-        name = next((f"{n}[{i - a}]" for n, (a, b) in problem.rows.items() if a <= i < b),
-                    f"row {i}")
+        block_of = next(((n, a) for n, (a, b) in problem.rows.items() if a <= i < b), None)
+        name = f"{block_of[0]}[{i - block_of[1]}]" if block_of else f"row {i}"
+        if block_of and block_of[0] in ("band_lo", "band_hi"):
+            # the band bound lives in the matrix, not in `lb`/`ub`, and it is the slot's own
+            j = i - block_of[1]
+            y_j = x[problem.off_y + np.arange(S) * K + j]
+            raise ValueError(f"infeasible point: slot {j} ({problem.bundle_of[j]}) holds "
+                             f"{float(problem.W[:, j] @ y_j):.6g}, outside its band "
+                             f"[{problem.L_j[j]:.6g}, {problem.U_j[j]:.6g}]")
         raise ValueError(f"infeasible point: row {name} needs {problem.lb[i]:.6g} <= "
                          f"{Ax[i]:.6g} <= {problem.ub[i]:.6g}")
     ints = np.flatnonzero(problem.integrality)
@@ -568,11 +623,13 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     mass `W_sj * avail_s`, `avail_s` the smallest remaining `cover_ub` over the bundle's
     channels after the earlier slots, and grows breadth-first on the rook graph over states
     with `avail >= eta`, taking whole shares until the mass reaches the slot's target.  When
-    the next whole state would pass `U` it takes the fraction that lands the slot on the band
-    midpoint `tau` (never below `eta`) and leaves the rest of that state to the next slot of
-    the bundle, which seeds from it so the two stay contiguous.  The target is `L`.  For a
+    the next whole state would pass `U_B` it takes the fraction that lands the slot on the band
+    midpoint `(L_B + U_B) / 2` (never below `eta`) and leaves the rest of that state to the next
+    slot of the bundle, which seeds from it so the two stay contiguous.  The target is `L_B`.
+    Every bound here is the bundle's own (`L_j`, `U_j`), which is the global band only while
+    every bundle shares it.  For a
     bundle with `n` slots fixed used (`build_level0(fixed_used=...)`) the target is
-    `clip(0.98 available mass / n, L, U)` and every slot is filled to exactly that, the state
+    `clip(0.98 available mass / n, L_B, U_B)` and every slot is filled to exactly that, the state
     that would pass it cut to land there: whole states overshooting a target spend the mass
     budget before the count is reached (the 2% is for pockets the BFS cannot reach).  A slot
     that reaches its target from no seed stays unused, and so does the rest of its bundle
@@ -600,7 +657,8 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     before it is returned: a silently infeasible warm start is worse than none.
     """
     S, K = problem.n_state, problem.k
-    W, L, U, tau, eta = problem.W, problem.L, problem.U, problem.tau, problem.eta
+    W, eta = problem.W, problem.eta
+    L_j, U_j = problem.L_j, problem.U_j              # each slot is held to its bundle's band
     off_z, off_y, off_r, off_f, off_u = (problem.off_z, problem.off_y, problem.off_r,
                                          problem.off_f, problem.off_u)
     order = list(priority or ())
@@ -684,7 +742,7 @@ def greedy_plan(problem: Level0Problem, *, priority=None
             w = W[s, j]
             if mass + w * a > cap + 1e-9:
                 y = min(a, max(eta, (land - mass) / w))
-                if mass + w * y > U + 1e-9:
+                if mass + w * y > U_j[j] + 1e-9:
                     continue
                 if y < a - 1e-12:
                     split = s
@@ -744,9 +802,13 @@ def greedy_plan(problem: Level0Problem, *, priority=None
 
     for bname in order:
         lo, hi = problem.slots[bname]
+        if hi <= lo:
+            continue                                 # a bundle with no slots has no band
+        L_b, U_b = float(L_j[lo]), float(U_j[lo])
+        tau_b = (L_b + U_b) / 2.0
         n_fixed = int((u_lb[lo:hi] >= one).sum())
         if not n_fixed:
-            _, err = fill(bname, L, tau, U)
+            _, err = fill(bname, L_b, tau_b, U_b)
             if err:
                 raise ValueError(err)
             continue
@@ -755,7 +817,7 @@ def greedy_plan(problem: Level0Problem, *, priority=None
         # Whole states overshooting a target spend the budget before the count is reached,
         # and pockets the BFS cannot reach are lost, so no single margin is right.
         total = sum(W[s, lo] * avail(s, lo) for s in range(S) if allowed(s, lo))
-        targets = sorted({float(np.clip(f * total / n_fixed, L, U))
+        targets = sorted({float(np.clip(f * total / n_fixed, L_b, U_b))
                           for f in np.arange(1.0, 0.0, -0.03)}, reverse=True)
         for target in targets:
             snap = (rem.copy(), pending.copy(), dict(plan))

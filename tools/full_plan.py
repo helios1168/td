@@ -28,8 +28,16 @@ and two drivers over the result:
                          neighbours and scored by the state-level stage-2 Nash value, over
                          the heaviest `--move-budget` states
 
-`--catch-all` adds a last model over whatever the plan left uncovered, with one bundle
-carrying all four channels; "four channels" then means that pass used at least one slot.
+`--catch-all` adds a last model over whatever the plan left uncovered: one single-channel
+bundle per residual channel (`--catch-all-bundle each`), or one bundle over all four
+(`--catch-all-bundle all`), a rep covering every channel in the states where every channel is
+residual.  "Four channels" then means that pass used at least one slot.
+
+The band is `1 -/+ --delta` around a mean.  Which mean is `--band-mode`: one national `tau =
+national mass / k` (global), or each bundle's own `tau_B = M^max_B / k_B` from `--k-fixed`
+(per-bundle, the default as soon as a count is given).  The counts differ by bundle -- the grid
+runs national 10-18, WH 9-12, FI 16-20 -- and one band around the national mean would hold a
+WH district to a national district's size.
 
 Writes `params.json` (every argument), `plan.json` (the slots with their centre state and
 hull metrics, the per-state shares and the residual, the pass log, the move log, the anchors),
@@ -131,12 +139,24 @@ def build_argparser() -> argparse.ArgumentParser:
                          "scored by state-level stage 2 (reps); default geo")
     ap.add_argument("--catch-all", action="store_true", default=False,
                     help="a last model over the residual with one bundle of all four channels")
+    ap.add_argument("--catch-all-bundle", choices=("each", "all"), default="each",
+                    help="what the catch-all districts: one single-channel bundle per residual "
+                         "fine channel (each, the default), or one bundle over all four "
+                         "(all, WHFI_PLUS), one rep covering every channel in the states where "
+                         "every channel is still residual")
     ap.add_argument("--k", type=int, default=18,
                     help="tau = national mass / k (default 18, today's committed k)")
     ap.add_argument("--band-lo", type=float, default=0.8,
                     help="L = band_lo * tau (default 0.8, the $800MM floor)")
     ap.add_argument("--band-hi", type=float, default=1.2,
                     help="U = band_hi * tau (default 1.2, the $1.2B cap)")
+    ap.add_argument("--delta", type=float, default=None, metavar="D",
+                    help="band half-width: band_lo = 1 - D, band_hi = 1 + D. Overrides "
+                         "--band-lo/--band-hi when given (the grid runs 0.05 to 0.10)")
+    ap.add_argument("--band-mode", choices=("global", "per-bundle"), default=None,
+                    help="one band over the national tau (global), or each bundle banded on "
+                         "its own mean, tau_B = M^max_B / k_B from --k-fixed (per-bundle). "
+                         "Default per-bundle when --k-fixed names a count, global otherwise")
     ap.add_argument("--bundles", default=None, metavar="B,B,...",
                     help="the bundles slots may carry (default td.channels.DEFAULT_BUNDLES)")
     ap.add_argument("--priority", default="N,WH,FI", metavar="G,G,...",
@@ -365,7 +385,9 @@ def _slot_records(problem, result, state_list: list[str], next_id: int, *,
                   state_xy=None, roots=None) -> list[dict]:
     """One record per slot of this solve, with a plan-wide id.
 
-    `center` is the state the slot is rooted or seeded at (`roots`, slot -> state index),
+    `L` and `U` are the band this slot was actually held to, its bundle's own under
+    `--band-mode per-bundle` and the national one otherwise.  `center` is the state the slot is
+    rooted or seeded at (`roots`, slot -> state index),
     `extent_km` the widest centroid distance between two states it contacts and `radius_km` the
     widest from that centre.  All three are reported and none is constrained: the grid's Plans
     tab ranks shapes off them without re-reading the geometry.  `extent_km` and `radius_km` are
@@ -395,6 +417,7 @@ def _slot_records(problem, result, state_list: list[str], next_id: int, *,
         out.append(dict(id=f"P{next_id + j:03d}", bundle=_bundle_name(problem.bundle_of[j]),
                         used=bool(u[j]), mass=float(masses[j]),
                         contacts=int(z[:, j].sum()), y=shares,
+                        L=float(problem.L_j[j]), U=float(problem.U_j[j]),
                         center=None if root is None else state_list[root],
                         extent_km=extent, radius_km=radius))
     return out
@@ -513,7 +536,36 @@ def _run_passes(problem, passes, args, stage: str, T, *, warm=None,
     return result
 
 
-def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy):
+def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mode):
+    """`({bundle: (L_B, U_B)} or None, {bundle: {tau, L, U}})` for one stage.
+
+    Under `global` every bundle takes the national band, and the band dict is None so the model
+    is built exactly as it was before there were any others.  Under `per-bundle` a bundle
+    `--k-fixed` names a count for takes its own mean, `tau_B = M^max_B / k_B` over the mass it
+    could still hold under `prior`; a bundle with no count (WH+, FI+, WHFI, the catch-all
+    bundles) takes the mass-weighted mean of the fixed bundles' `tau_B` in this stage, and the
+    national `tau` when the stage fixes none.  The band is `(band_lo, band_hi) * tau_B`, so
+    `--delta` is what sets its width in both modes.
+    """
+    from td.solvers import level0
+
+    avail = level0.available_mass(cells, {b: _bundle_channels(b) for b in bundle_names},
+                                  prior=prior)
+    fixed = args.k_fixed or {}
+    taus = {b: avail[b] / int(fixed[b]) for b in bundle_names
+            if mode == "per-bundle" and int(fixed.get(b, 0)) > 0 and avail[b] > 0}
+    weight = sum(avail[b] for b in taus)
+    shared = (sum(avail[b] * taus[b] for b in taus) / weight) if weight > 0 else float(tau)
+    record = {}
+    for b in bundle_names:
+        t = taus.get(b, shared) if mode == "per-bundle" else float(tau)
+        record[b] = dict(tau=t, L=band_lo * t, U=band_hi * t)
+    if mode != "per-bundle":
+        return None, record
+    return {b: (rec["L"], rec["U"]) for b, rec in record.items()}, record
+
+
+def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None):
     """`build_level0` with the driver's own switches applied.
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
@@ -529,7 +581,7 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     fixed = {b: n for b, n in (args.k_fixed or {}).items() if b in bundle_names}
     return level0.build_level0(
         cells, {b: _bundle_channels(b) for b in bundle_names},
-        edges=edges, L=L, U=U, eta=args.eta,
+        edges=edges, L=L, U=U, band=band, eta=args.eta,
         n_max=args.n_max, dist_max=args.dist_max, radius_max=args.radius_max,
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
         order_mass=False if args.driver == "reps" else None,
@@ -539,7 +591,9 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
 def _print_slots(problem, stage: str) -> None:
     total = 0
     for name, (start, stop) in sorted(problem.slots.items()):
-        print(f"{stage}: slots[{name}] = {stop - start}", flush=True)
+        band = (f" band=[{problem.L_j[start]:.6g}, {problem.U_j[start]:.6g}]"
+                if stop > start else "")
+        print(f"{stage}: slots[{name}] = {stop - start}{band}", flush=True)
         total += stop - start
     print(f"{stage}: {total} slots total, {problem.n_state} states", flush=True)
 
@@ -809,7 +863,13 @@ def _main(args, T: telemetry.Timings) -> int:
     M = np.asarray(cells.M, float)
     national = float(M[:, [cidx["N_WH"], cidx["N_FI"]]].sum())
     tau = national / args.k
-    L, U = args.band_lo * tau, args.band_hi * tau
+    # --delta is the band's half-width, and it is what the grid varies; it says the same thing
+    # as the two multipliers and overrides them when both are given
+    band_lo = 1.0 - args.delta if args.delta is not None else args.band_lo
+    band_hi = 1.0 + args.delta if args.delta is not None else args.band_hi
+    if not (0.0 < band_lo <= band_hi):
+        raise ValueError(f"need 0 < band_lo <= band_hi, got {band_lo} and {band_hi}")
+    L, U = band_lo * tau, band_hi * tau
     print(f"states={n_state} edges={len(edges)} channels={channel_list} "
           f"national_mass={national:.6g} tau={tau:.6g} L={L:.6g} U={U:.6g}", flush=True)
 
@@ -825,6 +885,15 @@ def _main(args, T: telemetry.Timings) -> int:
     unknown = [b for b in (args.k_fixed or {}) if b not in enabled]
     if unknown:
         raise ValueError(f"--k-fixed: bundle(s) {unknown} not among {list(enabled)}")
+    # a per-bundle band needs a count to divide by, so it is the default exactly when there is
+    # one.  Asked for without any it would leave every bundle on the national tau and record
+    # `band_mode: per-bundle` over a run that is global, which a grid reader cannot see through
+    if args.band_mode == "per-bundle" and not args.k_fixed:
+        raise ValueError("--band-mode per-bundle needs --k-fixed: a bundle's own mean is its "
+                         "own mass over its own count, and there is no count to divide by")
+    band_mode = args.band_mode or ("per-bundle" if args.k_fixed else "global")
+    print(f"band: mode={band_mode} lo={band_lo:.6g} hi={band_hi:.6g} "
+          f"(delta={args.delta})", flush=True)
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
@@ -837,7 +906,8 @@ def _main(args, T: telemetry.Timings) -> int:
 
     params = dict(
         instance=os.path.abspath(args.instance), route=args.route, driver=args.driver,
-        catch_all=args.catch_all, k=args.k, band_lo=args.band_lo, band_hi=args.band_hi,
+        catch_all=args.catch_all, catch_all_bundle=args.catch_all_bundle, k=args.k,
+        band_lo=band_lo, band_hi=band_hi, delta=args.delta, band_mode=band_mode, bands={},
         bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
         dist_max=args.dist_max, radius_max=args.radius_max, move_budget=args.move_budget,
         cover_slack=args.cover_slack,
@@ -861,16 +931,22 @@ def _main(args, T: telemetry.Timings) -> int:
     passes: list[dict] = []
     moves: list[dict] = []
     anchor_log: list[dict] = []
+    band_records: dict[str, dict] = {}
     last = None
 
     def run_stage(stage: str, bundle_names, cover_groups) -> None:
         """Build one level-0 model, solve its passes, and fold its coverage into `prior`."""
         nonlocal prior, last
+        # the band this stage holds each of its bundles to: the mass left is what a per-bundle
+        # mean divides, so it is read here, off the prior the earlier stages folded in
+        bands, band_rec = _stage_bands(cells, bundle_names, args, band_lo=band_lo,
+                                       band_hi=band_hi, tau=tau, prior=prior, mode=band_mode)
+        band_records.update({b: dict(rec, stage=stage) for b, rec in band_rec.items()})
         # A stage whose bundles have no mass left gets zero slots, and a zero-slot model has
         # no objective to build.  `--catch-all` after a sequential run that served everything
         # is exactly that case, so it is skipped and said so rather than raising.
         counts = level0.slot_counts(cells, {b: _bundle_channels(b) for b in bundle_names},
-                                    L=L, prior=prior)
+                                    L=L, prior=prior, band=bands)
         if not sum(counts.values()):
             print(f"{stage}: 0 slots ({', '.join(sorted(bundle_names))} have no residual "
                   f"mass above L); skipped", flush=True)
@@ -879,7 +955,7 @@ def _main(args, T: telemetry.Timings) -> int:
             last = None            # no model to move on, and no slots to report
             return
         with T.phase("build"):
-            problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+            problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy)
         anchors, D = None, None
         seed_centres = args.centers == "seeds"
@@ -894,7 +970,7 @@ def _main(args, T: telemetry.Timings) -> int:
                 # districts, and their centres are known better than a greedy seed
                 D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
         _print_slots(problem, stage)
         anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j], state=state_list[s],
@@ -939,7 +1015,7 @@ def _main(args, T: telemetry.Timings) -> int:
         if extra or (seeds is not None and seed_centres):
             anchors = list(anchors or ()) + extra
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, edges=edges,
+                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy)
                 if extra:
                     problem = me.fix_roots(problem, extra)
@@ -991,15 +1067,27 @@ def _main(args, T: telemetry.Timings) -> int:
         slots = slots[:head] + last["slots"]
 
     if args.catch_all:
-        # one single-channel bundle per fine channel that still has residual mass, over the
-        # prior every earlier stage folded in.  Single-channel so the cover row of one channel
-        # cannot bound a slot serving another (the WHFI_PLUS trap above).
-        # residual mass below L can never fill a slot (`band_lo`), and rounding leaves a
-        # served channel at ~1e-7 rather than 0, so the test is against L, not against zero
-        live = [name for name, chans in CATCH_ALL_BUNDLES.items()
-                if float((M[:, [cidx[c] for c in chans]]
-                          * (1.0 - prior[:, [cidx[c] for c in chans]])).sum()) >= L]
-        print(f"catch-all: bundles with residual mass {live or '(none)'}", flush=True)
+        if args.catch_all_bundle == "all":
+            # one bundle over all four fine channels: one rep covering every channel of a
+            # state.  A WHFI_PLUS slot sits in all four cover rows, so its share of a state is
+            # bounded by `min_c cover_ub[s, c]` and it opens only where every channel is still
+            # residual -- which is what this mode asks for, and why it is the wrong bundle for
+            # `each`.  The residual it is measured against is that same minimum.
+            share = np.min(np.clip(1.0 - prior, 0.0, 1.0), axis=1)
+            residual = float((M.sum(axis=1) * share).sum())
+            live = ["WHFI_PLUS"] if residual >= L else []
+            print(f"catch-all: all-channel residual {residual:.6g} against L={L:.6g}",
+                  flush=True)
+        else:
+            # one single-channel bundle per fine channel that still has residual mass, over the
+            # prior every earlier stage folded in.  Single-channel so the cover row of one
+            # channel cannot bound a slot serving another (the WHFI_PLUS trap above).
+            # residual mass below L can never fill a slot (`band_lo`), and rounding leaves a
+            # served channel at ~1e-7 rather than 0, so the test is against L, not against zero
+            live = [name for name, chans in CATCH_ALL_BUNDLES.items()
+                    if float((M[:, [cidx[c] for c in chans]]
+                              * (1.0 - prior[:, [cidx[c] for c in chans]])).sum()) >= L]
+            print(f"catch-all: bundles with residual mass {live or '(none)'}", flush=True)
         if live:
             run_stage("catch_all", live, [("cover_other", live)])
             used = sum(1 for r in (last or {}).get("slots", []) if r["used"])
@@ -1010,6 +1098,14 @@ def _main(args, T: telemetry.Timings) -> int:
             passes.append(dict(name="cover_other", value=0.0, certified=True,
                                status="skipped", seconds=0.0, stage="catch_all", slots=0))
             print("catch-all: 0 slot(s) used", flush=True)
+
+    # params.json is written before the first solve so a run that dies still has its arguments;
+    # the per-bundle bands are only known once each stage has read the mass left to it, so the
+    # record is completed here
+    params["bands"] = band_records
+    with open(os.path.join(args.out, "params.json"), "w", encoding="utf-8") as fh:
+        json.dump(params, fh, indent=2, default=float)
+        fh.write("\n")
 
     per_state: dict[str, dict] = {}
     for s, code in enumerate(state_list):
