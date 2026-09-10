@@ -265,10 +265,7 @@ def gain_matrix(G, to_district, reps_order=None, districts=None, *,
         return np.zeros((len(R), len(D)), float), R, D
 
     # utilities of every rep on every node, ignoring candidacy: staffing is unconstrained
-    c1, c2 = 1.0 - lam, theta * (1.0 - lam)
-    if filler_capture not in model.FILLER_CAPTURE:
-        raise ValueError(f"filler_capture {filler_capture!r} not in {model.FILLER_CAPTURE}")
-    c_free = {"theta": c2, "full": c1, "opportunity": lam}[filler_capture]
+    c1, c2, c_free = model.coefficients(theta, lam, filler_capture)
     jd = {d: j for j, d in enumerate(D)}
     ir = {r: i for i, r in enumerate(R)}
     g = np.zeros((len(R), len(D)), float)

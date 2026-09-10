@@ -121,6 +121,19 @@ def release_reps(G, released: Iterable[str]):
 
 
 # ------------------------------------------------------------------- utilities
+def coefficients(theta: float, lam: float, filler_capture: str) -> tuple[float, float, float]:
+    """`(c1, c2, c_free)` of the utility below.  One definition, several call sites.
+
+    `c1 = 1 - lam` is what an inheriting rep keeps of its own book, `c2 = theta*(1 - lam)`
+    what it captures of another rep's, and `c_free` what it makes of unowned book, per
+    `filler_capture`.
+    """
+    c1, c2 = 1.0 - lam, theta * (1.0 - lam)
+    if filler_capture not in FILLER_CAPTURE:
+        raise ValueError(f"filler_capture {filler_capture!r} not in {FILLER_CAPTURE}")
+    return c1, c2, {"theta": c2, "full": c1, "opportunity": lam}[filler_capture]
+
+
 def utilities(G, nodes, reps_order=None, theta: float = 0.40, lam: float = 0.30,
               filler_capture: str = "theta"):
     """(U, reps) with `U[k, j]` = u of rep `reps[k]` for `nodes[j]`, 0 where not a candidate.
@@ -143,10 +156,7 @@ def utilities(G, nodes, reps_order=None, theta: float = 0.40, lam: float = 0.30,
     nodes = list(nodes)
     R = list(reps_order) if reps_order is not None else reps(G, nodes)
     idx = {i: k for k, i in enumerate(R)}
-    c1, c2 = 1.0 - lam, theta * (1.0 - lam)
-    if filler_capture not in FILLER_CAPTURE:
-        raise ValueError(f"filler_capture {filler_capture!r} not in {FILLER_CAPTURE}")
-    c_free = {"theta": c2, "full": c1, "opportunity": lam}[filler_capture]
+    c1, c2, c_free = coefficients(theta, lam, filler_capture)
     U = np.zeros((len(R), len(nodes)), float)
     for j, z in enumerate(nodes):
         S = books(G, z)
