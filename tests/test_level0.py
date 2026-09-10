@@ -342,6 +342,45 @@ def test_greedy_plan_is_feasible_and_the_solver_does_at_least_as_well():
     assert abs(masses.sum() - 3.0) < 1e-9
 
 
+def test_greedy_plan_places_every_anchor_and_never_a_forbidden_contact():
+    """Anchors `{2: 0, 5: 1}` (the dict form): slot 0 is seeded at state 2 and slot 1 at
+    state 5, whatever a free seed would have chosen.  A contact with `var_ub = 0` (`bound_z`)
+    is never entered.  A state anchored on two slots is shared between them, half each, and
+    an anchored slot that cannot fill raises rather than returning an unplaced anchor."""
+    prob = build0([0.5] * 6, anchors={2: 0, 5: 1})
+    x, seeds, z, y, masses = _greedy(prob)
+    assert z[2, 0] and z[5, 1] and seeds["A"][:2] == [(2, 0), (5, 1)]
+    assert abs(masses.sum() - 2.0) < 1e-9        # {1, 2} and {4, 5}; 0 and 3 are stranded
+    out = run(prob, [level0.cover_pass(prob, ["A"])], warm_start=x)
+    assert out["passes"][1]["value"] >= 2.0 - 1e-9
+
+    forbidden = build0([0.5] * 6, anchors={2: 0})
+    ss.bound_z(forbidden, 3, 0, 0.0, 0.0)
+    x, seeds, z, y, masses = _greedy(forbidden)
+    assert z[2, 0] and not z[3, 0] and z[1, 0]
+
+    shared = build0([2.0, 0.5, 0.5, 0.5, 0.0, 0.0], anchors=[(0, 0), (0, 1)])
+    x, seeds, z, y, masses = _greedy(shared)
+    assert z[0, 0] and z[0, 1] and abs(y[0, 0] - 0.5) < 1e-9 and abs(y[0, 1] - 0.5) < 1e-9
+    assert abs(masses[0] - 1.0) < 1e-9 and abs(masses[1] - 1.0) < 1e-9
+
+    # state 5 alone is 0.3 and its only neighbour is committed: the anchor cannot be met
+    prior = np.zeros((6, 2))
+    prior[4, 0] = 1.0
+    stuck = build0([0.5, 0.5, 0.5, 0.5, 0.0, 0.3], prior=prior, anchors={5: 0})
+    try:
+        level0.greedy_plan(stuck)
+        raise AssertionError("an anchored slot that cannot fill must raise")
+    except ValueError as exc:
+        assert "anchored slot 0" in str(exc)
+    bad = np.zeros(stuck.n_var)
+    try:
+        level0.check_point(stuck, bad)
+        raise AssertionError("an unplaced anchor must fail the check")
+    except ValueError as exc:
+        assert "anchored contact z[5, 0]" in str(exc)
+
+
 def test_greedy_plan_leaves_a_slot_it_cannot_fill_unused():
     """Total 1.4 on states 0..2: one slot of 1.0, and the 0.4 left cannot reach 0.8 from any
     seed, so slot 1 is all zero (`u = 0`) rather than a below-band slot."""

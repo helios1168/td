@@ -458,6 +458,11 @@ def check_point(problem: Level0Problem, x: np.ndarray, *, tol: float = 1e-6) -> 
     bad = np.flatnonzero((x < problem.var_lb - tol) | (x > problem.var_ub + tol))
     if bad.size:
         i = int(bad[0])
+        S, K = problem.n_state, problem.k
+        if problem.off_z <= i < problem.off_z + S * K and problem.var_lb[i] >= 1.0 - 1e-9:
+            raise ValueError(f"infeasible point: anchored contact {_var_name(problem, i)} "
+                             f"(state {(i - problem.off_z) // K}, slot "
+                             f"{(i - problem.off_z) % K}) is not placed")
         raise ValueError(f"infeasible point: {_var_name(problem, i)} = {x[i]:.6g} outside "
                          f"[{problem.var_lb[i]:.6g}, {problem.var_ub[i]:.6g}]")
     ints = np.flatnonzero(problem.integrality)
@@ -479,17 +484,25 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     with `avail >= eta`, taking whole shares until the mass reaches the slot's target.  When
     the next whole state would pass `U` it takes the fraction that lands the slot on the band
     midpoint `tau` (never below `eta`) and leaves the rest of that state to the next slot of
-    the bundle, which seeds from it so the two stay contiguous.  The target is `L`; for a
-    bundle with `n` slots fixed used (`build_level0(fixed_used=...)`) it is
-    `clip(available mass / n, L, U)` and the fraction lands there, so the fixed count is
-    reachable.  A slot that reaches its target from no seed stays unused, and so does the rest
-    of its bundle (the `u` ordering).
+    the bundle, which seeds from it so the two stay contiguous.  The target is `L`.  For a
+    bundle with `n` slots fixed used (`build_level0(fixed_used=...)`) the target is
+    `clip(0.98 available mass / n, L, U)` and every slot is filled to exactly that, the state
+    that would pass it cut to land there: whole states overshooting a target spend the mass
+    budget before the count is reached (the 2% is for pockets the BFS cannot reach).  A slot
+    that reaches its target from no seed stays unused, and so does the rest of its bundle
+    (the `u` ordering).
 
-    Honoured along the way: `cap_n` and `cap_dist`, read back from the rows; every `z`, `y`
-    and `r` bound (anchors, `forbid_bundle`, `fix_roots`, `bound_z`); and one rule for anchors,
-    that a state anchored anywhere enters only the slots it is anchored to, or a neighbouring
-    slot would drain it before its own slots arrive.  When `order_mass` rows exist a bundle's
-    slots are relabelled by mass, descending, which those rows allow.
+    Honoured along the way: `cap_n` and `cap_dist`, read back from the rows, and every `z`,
+    `y` and `r` bound (anchors, `forbid_bundle`, `fix_roots`, `bound_z`; a `z` with
+    `var_ub = 0` is never entered).  Anchors (`var_lb = 1` on `z`) are pre-committed
+    contacts: a bundle's anchored slots go first, each seeded at an anchored state with the
+    others forced in during growth, and a state anchored on `m` slots gives each of them
+    `avail / (slots of its still pending)`, so a state the committed map splits (FL on two
+    N slots, CA on five) is shared rather than eaten by the first.  Until its own slots have
+    taken it an anchored state enters no other slot; what they leave is free afterwards.  An
+    anchored slot that cannot reach its target, or connect its anchored states, raises.
+    When `order_mass` rows exist a bundle's slots are relabelled by mass, descending, which
+    those rows allow.
 
     `r` sits at the seed (or at a fixed root) and `f` carries each subtree's size down a BFS
     tree from it, so every `net` row holds with `inflow - outflow = 1` at each non-root
@@ -524,6 +537,7 @@ def greedy_plan(problem: Level0Problem, *, priority=None
     r_lb, r_ub = block(off_r)
     u_lb = problem.var_lb[off_u:off_u + K]
     anchored = (z_lb >= one).any(axis=1)
+    pending = (z_lb >= one).sum(axis=1)          # anchored slots of s not yet processed
     n_max = (int(round(problem.ub[problem.rows["cap_n"][0]])) if "cap_n" in problem.rows
              else None)
     far: set[tuple[int, int]] = set()
@@ -543,10 +557,12 @@ def greedy_plan(problem: Level0Problem, *, priority=None
         return float(min(rem[s, has[j]].min(), y_ub[s, j]))
 
     def allowed(s, j):
-        return z_ub[s, j] >= one and (not anchored[s] or z_lb[s, j] >= one)
+        return z_ub[s, j] >= one and (not anchored[s] or z_lb[s, j] >= one
+                                      or pending[s] == 0)
 
-    def grow(j, seed, stop, land):
-        """BFS from `seed`: `(ok, {s: y}, mass, split state or None)`."""
+    def grow(j, seed, stop, land, cap):
+        """BFS from `seed`: `(ok, {s: y}, mass, split state or None)`.  Whole shares until
+        `stop`; a state that would pass `cap` is cut to land on `land`."""
         must = {int(s) for s in np.flatnonzero(z_lb[:, j] >= one)}
         chosen: dict[int, float] = {}
         mass, split = 0.0, None
@@ -560,10 +576,12 @@ def greedy_plan(problem: Level0Problem, *, priority=None
             if any((min(s, t), max(s, t)) in far for t in chosen):
                 continue
             a = avail(s, j)
+            if s in must:
+                a /= pending[s]              # an equal share for each of its pending slots
             if a < eta - 1e-12:
                 continue
             w = W[s, j]
-            if mass + w * a > U + 1e-9:
+            if mass + w * a > cap + 1e-9:
                 y = min(a, max(eta, (land - mass) / w))
                 if mass + w * y > U + 1e-9:
                     continue
@@ -580,15 +598,14 @@ def greedy_plan(problem: Level0Problem, *, priority=None
         return mass >= stop - 1e-9 and must <= chosen.keys(), chosen, mass, split
 
     plan: dict[int, tuple[dict[int, float], float, int]] = {}
-    for bname in order:
+
+    def fill(bname, stop, land, cap):
+        """Fill `bname`'s slots into `plan`: `(slots used, anchored-slot error or None)`."""
         lo, hi = problem.slots[bname]
-        n_fixed = int((u_lb[lo:hi] >= one).sum())
-        stop, land = L, tau
-        if n_fixed:
-            total = sum(W[s, lo] * avail(s, lo) for s in range(S) if allowed(s, lo))
-            stop = land = float(np.clip(total / n_fixed, L, U))
-        hint = None
-        for j in range(lo, hi):
+        hint, n_used = None, 0
+        # anchored slots first: their contacts are committed, and an unanchored slot that
+        # grew first could take what an anchored one needs
+        for j in sorted(range(lo, hi), key=lambda j: (not (z_lb[:, j] >= one).any(), j)):
             must = [int(s) for s in np.flatnonzero(z_lb[:, j] >= one)]
             if must:
                 seeds = sorted(must, key=lambda s: (-W[s, j] * avail(s, j), s))
@@ -601,17 +618,55 @@ def greedy_plan(problem: Level0Problem, *, priority=None
                     seeds.insert(0, hint)
             found = None
             for seed in seeds:
-                ok, chosen, mass, split = grow(j, seed, stop, land)
+                ok, chosen, mass, split = grow(j, seed, stop, land, cap)
                 if ok:
                     found = (chosen, mass, seed, split)
                     break
+            if found is None and must:
+                missing = sorted(set(must) - set(chosen))
+                return n_used, (
+                    f"anchored slot {j} ({bname}) cannot connect its anchored states "
+                    f"{missing} from {seed}" if missing else
+                    f"anchored slot {j} ({bname}) reaches {mass:.6g} of its target "
+                    f"{stop:.6g} from anchored state(s) {must} with the contacts left")
             if found is None:
                 break                       # the rest of the bundle stays unused (order_u)
             chosen, mass, seed, split = found
             for s, y in chosen.items():
                 rem[s, has[j]] -= y
+            for s in must:
+                pending[s] -= 1
             plan[j] = (chosen, mass, seed)
             hint = split
+            n_used += 1
+        return n_used, None
+
+    for bname in order:
+        lo, hi = problem.slots[bname]
+        n_fixed = int((u_lb[lo:hi] >= one).sum())
+        if not n_fixed:
+            _, err = fill(bname, L, tau, U)
+            if err:
+                raise ValueError(err)
+            continue
+        # A fixed count: the largest target in [L, U] at which the fill reaches it, tried
+        # from `total / n` down in 3% steps to L, every slot filled to exactly the target.
+        # Whole states overshooting a target spend the budget before the count is reached,
+        # and pockets the BFS cannot reach are lost, so no single margin is right.
+        total = sum(W[s, lo] * avail(s, lo) for s in range(S) if allowed(s, lo))
+        targets = sorted({float(np.clip(f * total / n_fixed, L, U))
+                          for f in np.arange(1.0, 0.0, -0.03)}, reverse=True)
+        for target in targets:
+            snap = (rem.copy(), pending.copy(), dict(plan))
+            n_used, err = fill(bname, target, target, target)
+            if err is None and n_used >= n_fixed:
+                break
+            rem[:], pending[:] = snap[0], snap[1]
+            plan.clear()
+            plan.update(snap[2])
+        else:
+            raise ValueError(err or f"bundle {bname!r}: {n_used} of {n_fixed} fixed slots "
+                             f"filled at every target in [{L:.6g}, {U:.6g}]")
 
     if "order_mass" in problem.rows:
         relabelled = {}
