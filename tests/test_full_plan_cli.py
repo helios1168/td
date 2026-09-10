@@ -220,13 +220,16 @@ def _check_plan(out: str) -> dict:
     with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
         plan = json.load(fh)
     assert set(plan) == {"state_list", "bundles", "slots", "per_state", "passes", "moves",
-                         "anchors"}
+                         "anchors", "sweep", "unswept"}
     assert plan["state_list"] == STATES
+    # a swept slot may carry mass past its own band_hi (the sweep's whole point: a residual
+    # cell with nowhere else to go is folded in over the cap rather than left unserved)
+    swept_ids = {rec["slot"] for rec in plan["sweep"]}
     for rec in plan["slots"]:
         assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y", "L", "U",
                             "band_hi", "center", "extent_km", "radius_km"}
         assert rec["band_hi"] >= rec["U"] - 1e-6, rec
-        if rec["used"]:
+        if rec["used"] and rec["id"] not in swept_ids:
             assert rec["L"] - 1e-6 <= rec["mass"] <= rec["band_hi"] + 1e-6, rec
     ids = [rec["id"] for rec in plan["slots"]]
     assert len(ids) == len(set(ids)), "slot ids must be unique across stages"
@@ -1439,3 +1442,218 @@ def test_band_break_needs_max_splits_and_reaches_params_and_plan():
             "the slot touching S3 should have its band_hi raised past U"
         # S3's whole mass now fits in its one allowed slot, not the 0.6 the cap alone left
         assert abs(sum(_shares(plan["per_state"]["S3"]).values()) - 1.0) < 1e-6
+
+
+def test_band_break_never_applies_outside_the_channel_stages():
+    """`--band-break` only ever runs for seq_N/seq_WH/seq_FI/joint (`run_stage`'s own guard).
+
+    `other_first`, `catch_all` and `all_last` measure a state's mass over every channel of an
+    all-or-nothing bundle against a single business stage's own `--max-splits` cap, so an
+    allowance computed there is wrong even where it never binds (found on the real CONUS run:
+    it inflated CA and TX's `other_first` band by hundreds of units for no effect).  `S0` here
+    is named in `--other-first`, not in `--max-splits`/`--band-break` (that is S3), so this
+    only checks that the `other_first` stage never gets a `band_break` entry at all.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run_4state(tmp, ["--max-splits", "s3=1", "--band-break", "s3",
+                                "--other-first", "s0"])
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert "other_first" not in params["band_break"]["allowance"]
+
+
+# --------------------------------------------------------------------------------- --sweep
+SWEEP_ADJ = {"S0": ("S1",), "S1": ("S0", "S2"), "S2": ("S1",), "S3": ()}
+
+
+def _write_v2_sweep(path: str) -> None:
+    """Four states, `--bundles N` at `--k 2` (tau = 100, L = 80, U = 120).
+
+    S0, S1, S2 are the path S0-S1-S2 (S3 is isolated in `SWEEP_ADJ`), national mass 50, 50, 40:
+    the same ratio as `tests/test_level0.py`'s `CONTIG`-adjacent gap fixture scaled by 100, so
+    the plain solve's optimal single N slot covers 120 of the 140 there and leaves one state
+    (S0 on this graph) topped up at a partial share, the sweep's "already has a share" case.
+    S3 (mass 60, isolated) is fully residual and adjacent to nothing used: `unswept`.
+    """
+    rows = [
+        ("z0", "S0", {"N_WH": (25.0, {"rep0": 0.3}), "N_FI": (25.0, {"rep1": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+        ("z1", "S1", {"N_WH": (25.0, {"rep2": 0.3}), "N_FI": (25.0, {"rep3": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+        ("z2", "S2", {"N_WH": (20.0, {"rep4": 0.3}), "N_FI": (20.0, {"rep5": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+        ("z3", "S3", {"N_WH": (30.0, {"rep6": 0.3}), "N_FI": (30.0, {"rep7": 0.3}),
+                      "WH": (0.0, {}), "FI": (0.0, {})}),
+    ]
+    z, chan, m_rel, share, share_free, state = [], [], [], [], [], []
+    for zid, st, cells in rows:
+        for c in channels.CHANNELS:
+            m, sh = cells[c]
+            z.append(zid); chan.append(c); m_rel.append(m)
+            share.append(dict(sh)); share_free.append(0.02); state.append(st)
+    obj = dict(
+        format=td_instance.FORMAT_V2,
+        nodes=dict(z=z, channel=chan, m_rel=m_rel, share=share, share_free=share_free,
+                   state=state),
+        edges=dict(u=["z0", "z1"], v=["z1", "z2"]),
+        meta=dict(channels=list(channels.CHANNELS)),
+    )
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def _run_sweep_toy(tmp: str, extra=()) -> str:
+    inst = os.path.join(tmp, "inst.json.gz")
+    _write_v2_sweep(inst)
+    out = os.path.join(tmp, f"out_{len(extra)}_{'sweep' in extra}")
+    orig = td_geo.state_rook
+    td_geo.state_rook = lambda *a, **kw: (SWEEP_ADJ, {})
+    try:
+        rc = cli.main([inst, "--route", "sequential", "--driver", "geo", "--bundles", "N",
+                       "--engine", "scipy", "--strategy", "direct", "--k", "2",
+                       "--time-limit", "30", "--out", out, *extra])
+        assert rc == 0, rc
+    finally:
+        td_geo.state_rook = orig
+    return out
+
+
+def test_sweep_folds_a_topped_up_state_and_leaves_an_isolated_one_unswept():
+    """`--sweep` absent: the plain solve tops S0 up at a partial share (0.4 residual) and
+    leaves S3 fully residual, and `plan.json` carries empty `sweep`/`unswept` lists: nothing
+    a sweep would have logged is invented just because there is a residual to report.
+
+    `--sweep` present: S0's remaining 0.4 share folds into its slot (`over_u` is exactly the
+    mass that pushes it past `band_hi`), `per_state` shows S0 fully covered, and the N
+    projection's `state_shares.csv` carries S0's full share and its full `target_mass`.  S3 has
+    no adjacent used slot at all and lands in `unswept` with its residual mass.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        plain = _run_sweep_toy(tmp)
+        with open(os.path.join(plain, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        assert plan["sweep"] == [] and plan["unswept"] == []
+        assert abs(plan["per_state"]["S0"]["residual_by_channel"]["N_WH"] - 0.4) < 1e-6
+        with open(os.path.join(plain, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["sweep"] is False
+
+        swept = _run_sweep_toy(tmp, ["--sweep"])
+        with open(os.path.join(swept, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        with open(os.path.join(swept, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["sweep"] is True
+
+        sweep_recs = plan["sweep"]
+        assert len(sweep_recs) == 1, sweep_recs
+        rec = sweep_recs[0]
+        assert rec["state"] == "S0" and set(rec["channels"]) == {"N_WH", "N_FI"}
+        assert rec["bundle"] == "N" and abs(rec["share"] - 0.4) < 1e-6
+        assert abs(rec["mass_added"] - 20.0) < 1e-6
+        assert abs(rec["mass_after"] - 140.0) < 1e-6 and abs(rec["band_hi"] - 120.0) < 1e-6
+        assert abs(rec["over_u"] - 20.0) < 1e-6
+        assert rec["caps_broken"] is False
+
+        for c in ("N_WH", "N_FI"):
+            assert abs(plan["per_state"]["S0"]["residual_by_channel"][c]) < 1e-6
+
+        unswept = plan["unswept"]
+        assert len(unswept) == 1 and unswept[0]["state"] == "S3"
+        assert set(unswept[0]["channels"]) == {"N_WH", "N_FI", "WH", "FI"}
+        assert abs(unswept[0]["mass"] - 60.0) < 1e-6
+        assert unswept[0]["reason"]
+
+        with open(os.path.join(swept, "projections", "N", "state_shares.csv"),
+                  encoding="utf-8") as fh:
+            rows = {r["state"]: r for r in csv.DictReader(fh)}
+        assert abs(float(rows["S0"]["share"]) - 1.0) < 1e-6
+        assert abs(float(rows["S0"]["target_mass"]) - 50.0) < 1e-6
+
+
+def _slot_rec(id_, bundle, y, mass, band_hi, center=None, contacts=None):
+    return dict(id=id_, bundle=bundle, used=True, mass=mass, contacts=(contacts if contacts
+                is not None else len(y)), y=dict(y), L=0.0, U=band_hi, band_hi=band_hi,
+                center=center, extent_km=None, radius_km=None)
+
+
+def test_sweep_prefers_the_cap_preserving_candidate_over_a_better_scoring_one_that_breaks_n_max():
+    """A direct `cli._sweep` call: state S3 is adjacent to two used N slots, P1 (one contact,
+    S0) and P2 (already at `n_max = 2` contacts, S1 and S2).  P2 is the better fit by the
+    "least over band_hi" score alone (-150 against P1's -10) but joining it would put three
+    states on a slot capped at two, so P1, worse-scoring but cap-preserving, must win, with
+    `caps_broken` false because a safe candidate existed.
+    """
+    state_list = ["S0", "S1", "S2", "S3"]
+    cells = types.SimpleNamespace(
+        M=np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [25.0, 25.0]]),
+        channels=("N_WH", "N_FI"), state_list=state_list)
+    slots = [_slot_rec("P1", "N", {"S0": 1.0}, mass=0.0, band_hi=60.0, center="S0"),
+            _slot_rec("P2", "N", {"S1": 1.0, "S2": 1.0}, mass=0.0, band_hi=200.0, center="S1")]
+    prior = np.zeros((4, 2), float)
+    edges = [(0, 3), (1, 3)]                        # S0-S3 and S1-S3, so both slots are adjacent
+    cidx = {"N_WH": 0, "N_FI": 1}
+
+    sweep_log, unswept_log, prior2 = cli._sweep(slots, prior, cells, state_list, edges, cidx,
+                                                n_max=2)
+    assert unswept_log == []
+    assert len(sweep_log) == 1
+    rec = sweep_log[0]
+    assert rec["slot"] == "P1" and rec["caps_broken"] is False
+    assert abs(rec["mass_added"] - 50.0) < 1e-6
+    assert "S3" in slots[0]["y"] and "S3" not in slots[1]["y"]
+    assert slots[0]["contacts"] == 2
+    assert np.allclose(prior2[3], 1.0)
+
+
+def test_sweep_breaks_the_cap_when_no_candidate_can_keep_it():
+    """The only adjacent slot is already at `n_max`: the sweep still folds the residual in
+    (nothing else can take it) but flags `caps_broken`."""
+    state_list = ["S0", "S1"]
+    cells = types.SimpleNamespace(M=np.array([[0.0, 0.0], [10.0, 10.0]]),
+                                  channels=("N_WH", "N_FI"), state_list=state_list)
+    slots = [_slot_rec("P1", "N", {"S0": 1.0}, mass=0.0, band_hi=50.0, center="S0")]
+    prior = np.zeros((2, 2), float)
+    sweep_log, unswept_log, prior2 = cli._sweep(
+        slots, prior, cells, state_list, [(0, 1)], {"N_WH": 0, "N_FI": 1}, n_max=1)
+    assert unswept_log == []
+    assert len(sweep_log) == 1 and sweep_log[0]["caps_broken"] is True
+    assert slots[0]["y"]["S1"] == 1.0
+
+
+# ------------------------------------------------------------------------------- --plus-pair
+def test_plus_pair_reaches_params_on_both_routes():
+    """`--plus-pair` is recorded either way; the default toy carries `WH_PLUS` and `FI_PLUS`
+    (`td.channels.DEFAULT_BUNDLES`), so both routes solve with the flag on."""
+    with tempfile.TemporaryDirectory() as tmp:
+        for route in ("sequential", "joint"):
+            out = _run(tmp, route, ["--plus-pair"])
+            _check_plan(out)
+            with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+                params = json.load(fh)
+            assert params["plus_pair"] is True
+            assert "plus_pair_retry" not in params
+        out = _run(tmp, "sequential")
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["plus_pair"] is False
+
+
+def test_plus_pair_sequential_passes_the_wh_fold_as_the_fi_target():
+    """Route sequential, `--plus-pair`: the FI stage's `FI_PLUS` share must equal what the WH
+    stage folded into `WH_PLUS`, state for state.  `--k-fixed WH_PLUS` is not a thing; instead
+    this reads the two stages' own slot records off the six-state path toy, which carries both
+    bundles by default and gives every state some WH and FI mass (`_write_v1`, `--synthesize`)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "sequential", ["--plus-pair"])
+        with open(os.path.join(out, "plan.json"), encoding="utf-8") as fh:
+            plan = json.load(fh)
+        bundle_of = {rec["id"]: rec["bundle"] for rec in plan["slots"]}
+
+        def fold(bundle):
+            out = {}
+            for st, row in plan["per_state"].items():
+                out[st] = sum(float(v) for k, v in row.items()
+                              if k != "residual_by_channel" and bundle_of.get(k) == bundle)
+            return out
+
+        wh_fold, fi_fold = fold("WH_PLUS"), fold("FI_PLUS")
+        for st in STATES:
+            assert abs(wh_fold[st] - fi_fold[st]) < 1e-6, (st, wh_fold[st], fi_fold[st])

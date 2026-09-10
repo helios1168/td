@@ -694,6 +694,54 @@ def test_band_break_lets_a_slot_touching_the_capped_state_exceed_u():
     assert level0.band_break(capped, {"ZZ": 5.0}) is capped
 
 
+# ------------------------------------------------------------------------------- plus pairing
+def test_plus_pair_rows_bind_when_both_bundles_are_present():
+    """One state, `WH_PLUS` mass 1.0 and `FI_PLUS` mass 1.5: unpaired, `WH_PLUS` covers fully
+    at y=1.0 (mass 1.0, in band) and `FI_PLUS` caps at y=0.8 (mass 1.2 = U; a second, lighter
+    slot would fall below L, so 0.8 is `FI_PLUS`'s own maximum), unequal.  `plus_pair` adds
+    one equality row per state and the same cover pass then holds both to the tighter cap,
+    0.8, exactly."""
+    both = SimpleNamespace(M=np.array([[1.0, 1.5]]), channels=("A", "B"), state_list=["S0"])
+    prob = level0.build_level0(both, {"WH_PLUS": ("A",), "FI_PLUS": ("B",)}, edges=[],
+                               L=0.8, U=1.2, eta=0.05)
+    cover = [level0.cover_pass(prob, ["WH_PLUS", "FI_PLUS"])]
+    unpaired = run(prob, cover)["y"]
+    assert abs(unpaired[0, 0] - 1.0) < 1e-6 and abs(unpaired[0, 2] - 0.8) < 1e-6
+
+    paired = level0.plus_pair(prob)
+    assert paired.rows["plus_pair"][1] - paired.rows["plus_pair"][0] == 1
+    out = run(paired, cover)
+    y = out["y"]
+    assert abs(y[0, 0] - 0.8) < 1e-6 and abs(y[0, 2] - 0.8) < 1e-6
+    assert abs(out["passes"][0]["value"] - 2.0) < 1e-6, "0.8*(1.0+1.5), down from the unpaired 2.2"
+
+    # neither bundle present, or WH_PLUS alone with no target: unchanged
+    ab_only = build0([0.5] * 6)
+    assert level0.plus_pair(ab_only) is ab_only
+    wh_only = level0.build_level0(both, {"WH_PLUS": ("A",)}, edges=[], L=0.8, U=1.2, eta=0.05)
+    assert level0.plus_pair(wh_only) is wh_only
+
+
+def test_plus_pair_target_pins_fi_plus_when_wh_plus_is_absent():
+    """`FI_PLUS` alone: `target` pins a named state's total `FI_PLUS` share exactly, 0 for a
+    state with no positive target (so the FI stage cannot serve it there instead), and a state
+    absent from `target` gets no row and is free.  S0 (mass 2.0) is pinned to 0.4, exactly L
+    alone, since its only neighbour S1 is pinned to 0 and cannot bridge it to anything else;
+    S2..S5 (mass 0.5 each, absent from `target`) cover fully."""
+    prob = build0([0.0] * 6, [2.0, 0.5, 0.5, 0.5, 0.5, 0.5], bundles={"FI_PLUS": ("B",)})
+    target = {"S0": 0.4, "S1": 0.0}
+    pinned = level0.plus_pair(prob, target=target)
+    lo, hi = pinned.rows["plus_pair"]
+    assert hi - lo == 2
+    out = run(pinned, [level0.cover_pass(pinned, ["FI_PLUS"])])
+    y = out["y"].sum(axis=1)
+    assert abs(y[0] - 0.4) < 1e-6 and y[1] == 0.0
+    assert np.allclose(y[2:], 1.0)
+
+    # a state absent from target names no row at all
+    assert level0.plus_pair(prob, target={}) is prob
+
+
 def test_a_pass_that_returns_nothing_carries_the_log_out_on_the_exception():
     """A pass can come back with nothing usable: infeasible, or a time limit with no incumbent.
 

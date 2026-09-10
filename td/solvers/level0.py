@@ -674,6 +674,67 @@ def band_break(problem: Level0Problem, allowance: dict[str, float]) -> Level0Pro
     return dataclasses.replace(problem, A=(problem.A + delta).tocsc())
 
 
+def plus_pair(problem: Level0Problem, target: dict[str, float] | None = None) -> Level0Problem:
+    """A state's `WH_PLUS` share must equal its `FI_PLUS` share (docs/FULL_PROBLEM.md, the
+    2026-09-11 decision): `WH_PLUS` folds only national's Wells WH half (`N_WH`) and `FI_PLUS`
+    only Chase and Wells FI (`N_FI`), so a state on one without an equal share of the other
+    leaves that other national half unserved, and no bundle can pick it up alone.
+
+    With both bundles among `problem.slots`, one equality row per state:
+    `sum_{j in WH_PLUS} y_sj - sum_{j in FI_PLUS} y_sj = 0`.  With `FI_PLUS` alone and a
+    `target` (a dict `state -> share`, typically the `WH_PLUS` fold an earlier stage already
+    solved), one row per state named in `target`: `sum_{j in FI_PLUS} y_sj = max(0, target[s])`
+    (0 for a state with no positive target, still pinned there so the FI stage cannot serve
+    it some other way instead.  With `WH_PLUS` alone and no `target`, or with neither bundle
+    present, `problem` is returned unchanged: the WH stage is free and the FI stage inherits.
+    Rows are named `plus_pair` (one block).
+    """
+    have_wh = "WH_PLUS" in problem.slots
+    have_fi = "FI_PLUS" in problem.slots
+    K = problem.k
+
+    if have_wh and have_fi:
+        wh_lo, wh_hi = problem.slots["WH_PLUS"]
+        fi_lo, fi_hi = problem.slots["FI_PLUS"]
+        n = problem.n_state
+        wh_cols = np.arange(wh_lo, wh_hi)
+        fi_cols = np.arange(fi_lo, fi_hi)
+        per_state = np.concatenate([wh_cols, fi_cols])
+        rows = np.repeat(np.arange(n), len(per_state))
+        cols = np.concatenate([problem.off_y + s * K + per_state for s in range(n)])
+        data = np.tile(np.concatenate([np.ones(len(wh_cols)), -np.ones(len(fi_cols))]), n)
+        block = sparse.coo_matrix((data, (rows, cols)), shape=(n, problem.n_var)).tocsc()
+        start = problem.A.shape[0]
+        names = dict(problem.rows)
+        names["plus_pair"] = (start, start + n)
+        return dataclasses.replace(
+            problem, A=sparse.vstack([problem.A, block]).tocsc(),
+            lb=np.concatenate([problem.lb, np.zeros(n)]),
+            ub=np.concatenate([problem.ub, np.zeros(n)]), rows=names)
+
+    if have_fi and target is not None:
+        idx = {code: i for i, code in enumerate(problem.state_list)}
+        states = sorted((s for s in target if s in idx), key=lambda s: idx[s])
+        if not states:
+            return problem
+        fi_lo, fi_hi = problem.slots["FI_PLUS"]
+        cols_per = np.arange(fi_lo, fi_hi)
+        rows = np.repeat(np.arange(len(states)), len(cols_per))
+        cols = np.concatenate([problem.off_y + idx[st] * K + cols_per for st in states])
+        block = sparse.coo_matrix((np.ones(len(cols)), (rows, cols)),
+                                  shape=(len(states), problem.n_var)).tocsc()
+        vals = np.array([max(0.0, float(target[st])) for st in states])
+        start = problem.A.shape[0]
+        names = dict(problem.rows)
+        names["plus_pair"] = (start, start + len(states))
+        return dataclasses.replace(
+            problem, A=sparse.vstack([problem.A, block]).tocsc(),
+            lb=np.concatenate([problem.lb, vals]),
+            ub=np.concatenate([problem.ub, vals]), rows=names)
+
+    return problem
+
+
 def _var_name(problem: Level0Problem, i: int) -> str:
     S, K = problem.n_state, problem.k
     for name, off in (("z", problem.off_z), ("y", problem.off_y), ("r", problem.off_r)):

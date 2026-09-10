@@ -33,6 +33,15 @@ bundle per residual channel (`--catch-all-bundle each`), or one bundle over all 
 (`--catch-all-bundle all`), a rep covering every channel in the states where every channel is
 residual.  "Four channels" then means that pass used at least one slot.
 
+`--sweep`, after the catch-all pass and before the projections and staffing, folds every
+remaining residual (state, channel) cell into an adjacent used slot whose bundle can still
+carry it, so no opportunity is left uncovered for want of a neighbour; `plan.json` gains
+`sweep` and `unswept` logs.  `--plus-pair` holds a state's `WH_PLUS` share equal to its
+`FI_PLUS` share (one equality row when both are in the model, or route sequential's WH-stage
+fold passed as the FI stage's `FI_PLUS` target, retried once with `WH_PLUS` forbidden if that
+target is infeasible there); otherwise a state on one without the other leaves half of
+national unserved with no bundle able to pick it up.
+
 The band is `1 -/+ --delta` around a mean.  Which mean is `--band-mode`: one national `tau =
 national mass / k` (global), or each bundle's own `tau_B = M^max_B / k_B` from `--k-fixed`
 (per-bundle, the default as soon as a count is given).  The counts differ by bundle -- the grid
@@ -271,6 +280,15 @@ def build_argparser() -> argparse.ArgumentParser:
                          "leave the cap's excess mass unserved: the allowance is derived from "
                          "the state's own --max-splits cap, so every state named here must "
                          "also be named there (default none)")
+    ap.add_argument("--sweep", action="store_true", default=False,
+                    help="after the catch-all pass, fold every residual (state, channel) cell "
+                         "into an adjacent used slot whose bundle can still carry it, so no "
+                         "opportunity is left uncovered for want of a neighbour (default off)")
+    ap.add_argument("--plus-pair", action="store_true", default=False,
+                    help="a state's WH_PLUS share must equal its FI_PLUS share: one equality "
+                         "row when both bundles are in the model, or route sequential's WH "
+                         "stage fold passed as the FI stage's FI_PLUS target, retried once "
+                         "with WH_PLUS forbidden if the fold is infeasible there (default off)")
     ap.add_argument("--engine", choices=("scipy", "highs", "scip"), default=DEFAULT_ENGINE,
                     help=f"MILP engine (default {DEFAULT_ENGINE})")
     ap.add_argument("--strategy", choices=("direct", "portfolio"), default=DEFAULT_STRATEGY,
@@ -490,6 +508,17 @@ def _slot_records(problem, result, state_list: list[str], next_id: int, *,
     return out
 
 
+def _plus_share(problem, y, bundle: str, state_list: list[str]) -> dict[str, float]:
+    """Per-state total share of `bundle`'s slots in the decoded `y` (S, K): route sequential's
+    `--plus-pair`, the WH stage's `WH_PLUS` fold passed as the FI stage's `FI_PLUS` target.
+    `{}` when `problem` carries no slots of `bundle` at all (the stage never opened it)."""
+    if bundle not in problem.slots:
+        return {}
+    lo, hi = problem.slots[bundle]
+    y = np.asarray(y, float)
+    return {state_list[s]: float(y[s, lo:hi].sum()) for s in range(problem.n_state)}
+
+
 def _plan_object(slots: list[dict], state_list: list[str]):
     """The `td.stage2_state.Plan` the state-level stage 2 scores.
 
@@ -668,7 +697,7 @@ def _band_break_allowance(cells, bundle_names, bands, L, U, states, caps, cidx):
 
 
 def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None,
-           serve=None, max_used=None, allowance=None):
+           serve=None, max_used=None, allowance=None, plus_pair_target=None, forbid=None):
     """`build_level0` with the driver's own switches applied.
 
     `order_mass` is off under `--driver reps`: a move's neighbourhood fixes `z` per slot, and
@@ -682,7 +711,12 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     `allowance` is `--band-break`'s per-state allowance for this stage (`_band_break_allowance`
     in the caller, computed once per stage since it does not depend on which of a stage's
     several builds this is); applied last of all, after `max_splits`, so the relaxed band
-    matches the caps that actually bind here.
+    matches the caps that actually bind here.  `forbid` is `[(state index, bundle name), ...]`,
+    applied via `level0.forbid_bundle` before `--plus-pair`: route R's per-state moves use their
+    own copy of that call, this one is the plus-pair retry's (`_main`), forbidding `WH_PLUS` on
+    the states the WH stage's fold made infeasible for the FI stage.  `--plus-pair` runs last of
+    all: it is a no-op unless this model carries `WH_PLUS` and/or `FI_PLUS` (`level0.plus_pair`),
+    so applying it to every stage's build is safe.
     """
     from td.solvers import level0
 
@@ -704,7 +738,11 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     problem = level0.max_splits(problem, caps) if caps else problem
     # `--band-break`: lets a slot touching one of the capped states named there carry that
     # state's allowance past U, so the cap's excess mass has somewhere to go.
-    return level0.band_break(problem, allowance) if allowance else problem
+    problem = level0.band_break(problem, allowance) if allowance else problem
+    for s, b in (forbid or ()):
+        if b in problem.slots:
+            problem = level0.forbid_bundle(problem, s, b)
+    return level0.plus_pair(problem, target=plus_pair_target) if args.plus_pair else problem
 
 
 def _print_slots(problem, stage: str) -> None:
@@ -932,6 +970,147 @@ def _write_projections(out: str, d, cells, slots: list[dict], state_list: list[s
     return written
 
 
+# ------------------------------------------------------------------------------------- the sweep
+def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], edges, cidx,
+          *, n_max=None, dist_max=None, radius_max=None, state_xy=None):
+    """`--sweep`: every residual (state, channel) cell folded into an adjacent used slot whose
+    bundle can still carry it (docs/FULL_PROBLEM.md, the 2026-09-11 decision).
+
+    Residual: for state `s` and channel `c`, `r_sc = 1 - prior[s, c]`, clipped at 0 and ignored
+    at or below 1e-4 (`prior` is the plan's own running coverage, so this is exactly
+    `per_state`'s `residual_by_channel`).  A candidate for `s` is a used slot whose bundle's
+    channels are all still residual in `s` (so adding a share raises no channel's cover past 1)
+    and which is adjacent: `s` already holds a share of it, or a rook neighbour of `s` does.
+    The share added is the smallest residual across the bundle's channels.
+
+    Among the candidates that keep `n_max`, `dist_max` and `radius_max` (read back against the
+    slot's own contacts, `rec["y"]`'s keys, and its recorded `center`), the one landing least
+    over its own `band_hi` wins, ties by slot id; with none, the best candidate anyway, flagged
+    `caps_broken`.  No adjacent candidate at all: the residual is left and logged under
+    `unswept`.  States are swept in descending residual-mass order, live (a sweep can make a
+    later state's residual adjacent), and the whole pass repeats until nothing changes, which
+    is also why an earlier state's `unswept` reason is not fixed until the pass converges.
+
+    Mutates `slots`' `y` and `mass` in place (so `per_state`, `_write_projections` and stage 2,
+    all read afterwards, see the swept shares) and returns `(sweep_log, unswept_log, prior)`,
+    `prior` a new array with the swept shares folded in.
+    """
+    M = np.asarray(cells.M, float)
+    n_state = len(state_list)
+    idx = {code: i for i, code in enumerate(state_list)}
+    nbr = _rook_neighbours(edges, n_state)
+    xy = None if state_xy is None else np.asarray(state_xy, float)
+    prior = np.array(prior, float, copy=True)
+    used = [rec for rec in slots if rec["used"]]
+
+    def residual_of() -> np.ndarray:
+        r = np.clip(1.0 - prior, 0.0, None)
+        r[r <= 1e-4] = 0.0
+        return r
+
+    def caps_ok(rec, code: str, contacted: set) -> bool:
+        if n_max is not None and code not in contacted and len(contacted) + 1 > n_max:
+            return False
+        if xy is not None and dist_max is not None:
+            for other in contacted:
+                d = float(np.sqrt(((xy[idx[code]] - xy[idx[other]]) ** 2).sum()))
+                if d > dist_max + 1e-6:
+                    return False
+        if xy is not None and radius_max is not None:
+            centre = rec["center"]
+            if centre is not None:
+                d = float(np.sqrt(((xy[idx[code]] - xy[idx[centre]]) ** 2).sum()))
+                if d > radius_max + 1e-6:
+                    return False
+            else:
+                pts = xy[[idx[st] for st in (contacted | {code})]]
+                span = float(np.sqrt(((pts[:, None, :] - pts[None, :, :]) ** 2)
+                                     .sum(axis=2)).max())
+                if span > 2.0 * radius_max + 1e-6:
+                    return False
+        return True
+
+    def added_mass(chans, share: float, s: int) -> float:
+        return share * float(M[s, [cidx[c] for c in chans]].sum())
+
+    sweep_log: list[dict] = []
+    unswept_log: list[dict] = []
+    mass_before = float((M * residual_of()).sum())
+
+    while True:
+        residual = residual_of()
+        resid_mass = (M * residual).sum(axis=1)
+        order = [s for s in np.argsort(-resid_mass) if resid_mass[s] > 1e-6]
+        moved = False
+        for s in order:
+            code = state_list[s]
+            r_s = {c: residual[s, ci] for c, ci in cidx.items() if residual[s, ci] > 1e-4}
+            if not r_s:
+                continue
+            candidates = []
+            for rec in used:
+                chans = tuple(_bundle_channels(rec["bundle"]))
+                if not set(chans) <= set(r_s):
+                    continue
+                contacted = set(rec["y"])
+                if not (rec["y"].get(code, 0.0) > 0.0
+                        or (contacted & {state_list[t] for t in nbr[s]})):
+                    continue
+                share = min(r_s[c] for c in chans)
+                if share <= 1e-4:
+                    continue
+                candidates.append((rec, share, chans, contacted))
+            if not candidates:
+                continue
+            safe = [c for c in candidates if caps_ok(c[0], code, c[3])]
+            pool = safe or candidates
+            caps_broken = not safe
+            rec, share, chans, contacted = min(
+                pool, key=lambda c: (c[0]["mass"] + added_mass(c[2], c[1], s) - c[0]["band_hi"],
+                                     c[0]["id"]))
+            added = added_mass(chans, share, s)
+            is_new = code not in rec["y"]
+            rec["y"][code] = round(rec["y"].get(code, 0.0) + share, 6)
+            rec["mass"] = round(rec["mass"] + added, 6)
+            if is_new:
+                rec["contacts"] = int(rec["contacts"]) + 1
+            if xy is not None:
+                pts = xy[[idx[st] for st in rec["y"]]]
+                rec["extent_km"] = round(float(np.sqrt(((pts[:, None, :] - pts[None, :, :]) ** 2)
+                                                       .sum(axis=2)).max()), 3)
+                if rec["center"] is not None:
+                    home = xy[idx[rec["center"]]]
+                    rec["radius_km"] = round(float(np.sqrt(((pts - home) ** 2)
+                                                           .sum(axis=1)).max()), 3)
+            for c in chans:
+                prior[s, cidx[c]] = min(1.0, prior[s, cidx[c]] + share)
+            sweep_log.append(dict(state=code, channels=list(chans), slot=rec["id"],
+                                  bundle=rec["bundle"], share=round(share, 6),
+                                  mass_added=round(added, 6), mass_after=rec["mass"],
+                                  band_hi=rec["band_hi"],
+                                  over_u=round(rec["mass"] - rec["band_hi"], 6),
+                                  caps_broken=caps_broken))
+            print(f"sweep: {code} {','.join(chans)} -> {rec['id']} ({rec['bundle']}) "
+                  f"+{added:.1f}, mass {rec['mass']:.1f} (U {rec['band_hi']:.1f})", flush=True)
+            moved = True
+        if not moved:
+            break
+
+    residual = residual_of()
+    for s in range(n_state):
+        r_s = sorted(c for c, ci in cidx.items() if residual[s, ci] > 1e-4)
+        if not r_s:
+            continue
+        mass = float((M[s] * residual[s]).sum())
+        if mass <= 1e-6:
+            continue
+        unswept_log.append(dict(state=state_list[s], channels=r_s, mass=round(mass, 6),
+                                reason="no adjacent slot"))
+    mass_after = float((M * residual).sum())
+    print(f"sweep: residual mass {mass_before:.6g} -> {mass_after:.6g}", flush=True)
+    return sweep_log, unswept_log, prior
+
+
 # ------------------------------------------------------------------------------------- the run
 def _prior_from_plan(path: str, state_list: list[str], channel_list) -> np.ndarray:
     """`(S, C)` already-served shares read off a previous run's `plan.json`."""
@@ -1039,7 +1218,8 @@ def _main(args, T: telemetry.Timings) -> int:
 
     params = dict(
         instance=os.path.abspath(args.instance), route=args.route, driver=args.driver,
-        catch_all=args.catch_all, catch_all_bundle=args.catch_all_bundle, k=args.k,
+        catch_all=args.catch_all, catch_all_bundle=args.catch_all_bundle,
+        sweep=args.sweep, plus_pair=args.plus_pair, k=args.k,
         band_lo=band_lo, band_hi=band_hi, delta=args.delta, band_mode=band_mode, bands={},
         bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
         dist_max=args.dist_max, radius_max=args.radius_max, move_budget=args.move_budget,
@@ -1070,8 +1250,15 @@ def _main(args, T: telemetry.Timings) -> int:
     band_break_records: dict[str, dict] = {}
     last = None
 
-    def run_stage(stage: str, bundle_names, cover_groups) -> None:
-        """Build one level-0 model, solve its passes, and fold its coverage into `prior`."""
+    def run_stage(stage: str, bundle_names, cover_groups, *, plus_pair_target=None,
+                 forbid=None) -> None:
+        """Build one level-0 model, solve its passes, and fold its coverage into `prior`.
+
+        `plus_pair_target` and `forbid` are `--plus-pair`'s: the FI stage's `FI_PLUS` target
+        (route sequential's WH fold) and, on the plus-pair retry, the `(state index, bundle
+        name)` pairs the retried WH stage forbids.  Threaded into every rebuild below so a
+        greedy or anchor rebuild does not silently drop them.
+        """
         nonlocal prior, last
         # the band this stage holds each of its bundles to: the mass left is what a per-bundle
         # mean divides, so it is read here, off the prior the earlier stages folded in
@@ -1128,9 +1315,14 @@ def _main(args, T: telemetry.Timings) -> int:
             last = None            # no model to move on, and no slots to report
             return
         # `--band-break`: one allowance per named state, read off this stage's own bundles and
-        # its own `--max-splits` cap, since neither changes between this stage's rebuilds below
+        # its own `--max-splits` cap, since neither changes between this stage's rebuilds below.
+        # Channel stages only (seq_N, seq_WH, seq_FI, joint): `other_first`, `catch_all` and
+        # `all_last` measure a state's mass over every channel of an all-or-nothing bundle
+        # against a single business stage's own --max-splits cap, so the allowance those stages
+        # would compute is wrong even where it never binds (found on the real CONUS run, where
+        # it inflated CA and TX's other_first band by hundreds of units for no effect).
         allowance = {}
-        if args.band_break:
+        if args.band_break and (stage == "joint" or stage.startswith("seq_")):
             allowance, bb_U = _band_break_allowance(
                 cells, bundle_names, bands, L, U, args.band_break, args.max_splits, cidx)
             if allowance:
@@ -1142,7 +1334,8 @@ def _main(args, T: telemetry.Timings) -> int:
         with T.phase("build"):
             problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy,
-                             allowance=allowance)
+                             allowance=allowance, plus_pair_target=plus_pair_target,
+                             forbid=forbid)
         anchors, D = None, None
         seed_centres = args.centers == "seeds"
         if "N" in problem.slots and (args.incumbency or (args.centers and not seed_centres)):
@@ -1158,7 +1351,8 @@ def _main(args, T: telemetry.Timings) -> int:
             with T.phase("build"):
                 problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy,
-                                 allowance=allowance)
+                                 allowance=allowance, plus_pair_target=plus_pair_target,
+                                 forbid=forbid)
         _print_slots(problem, stage)
         anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j], state=state_list[s],
                                slot=j, source="incumbency") for s, j in (anchors or ()))
@@ -1210,7 +1404,8 @@ def _main(args, T: telemetry.Timings) -> int:
             with T.phase("build"):
                 problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy,
-                                 allowance=allowance)
+                                 allowance=allowance, plus_pair_target=plus_pair_target,
+                                 forbid=forbid)
                 if extra:
                     problem = me.fix_roots(problem, extra)
             anchor_log.extend(dict(stage=stage, bundle=problem.bundle_of[j],
@@ -1258,12 +1453,58 @@ def _main(args, T: telemetry.Timings) -> int:
         if bad:
             raise ValueError(f"--other-first names states not in the instance: {bad}")
         run_stage("other_first", ["WHFI_PLUS"], [("cover_other_first", ["WHFI_PLUS"])])
+    plus_pair_retry: list[str] = []
     if args.route == "joint":
+        # both WH_PLUS and FI_PLUS sit in this one model when enabled, so `_build`'s own
+        # `--plus-pair` call (always tried, a no-op unless both are there) is the joint
+        # equality row; no target-passing needed.
         run_stage("joint", list(enabled), [(name, list(bs)) for name, bs in JOINT_COVER])
     else:
+        wh_plus_target = None
         for group in groups:
             bundle_names = [b for b in STAGE_BUNDLES[group] if b in enabled]
-            run_stage(f"seq_{group}", bundle_names, _stage_cover(group, bundle_names))
+            cover_groups = _stage_cover(group, bundle_names)
+            if group == "WH" and args.plus_pair:
+                wh_head, wh_bundle_names, wh_prior_before = len(slots), bundle_names, prior.copy()
+                wh_passes_head, wh_anchor_head = len(passes), len(anchor_log)
+            if group == "FI" and args.plus_pair and wh_plus_target is not None:
+                try:
+                    run_stage(f"seq_{group}", bundle_names, cover_groups,
+                             plus_pair_target=wh_plus_target)
+                except ss.SolveFailure as exc:
+                    # only an infeasible FI stage is the WH fold's fault; a time limit with no
+                    # incumbent (no_incumbent) is not evidence the target is unreachable, and
+                    # forbidding WH_PLUS on it would be the wrong response
+                    if getattr(exc, "reason", None) != "infeasible":
+                        raise
+                    # the WH fold's target is infeasible for the FI stage (route 6, plus
+                    # pairing): forbid WH_PLUS on every state it folded, re-solve WH fresh
+                    # (dropping its old slot, pass and anchor records and prior fold), and
+                    # retry FI once against the new (mostly zero) target.
+                    del slots[wh_head:]
+                    del passes[wh_passes_head:]
+                    del anchor_log[wh_anchor_head:]
+                    prior = wh_prior_before
+                    retry_states = sorted(st for st, v in wh_plus_target.items() if v > 1e-9)
+                    print(f"plus-pair: the FI stage cannot hit the WH fold's target; "
+                          f"re-solving WH with WH_PLUS forbidden on "
+                          f"{', '.join(retry_states)}", flush=True)
+                    run_stage("seq_WH", wh_bundle_names, _stage_cover("WH", wh_bundle_names),
+                             forbid=[(state_list.index(st), "WH_PLUS") for st in retry_states])
+                    wh_plus_target = (_plus_share(last["problem"], last["result"]["y"],
+                                                  "WH_PLUS", state_list) if last is not None
+                                      else {})
+                    plus_pair_retry = retry_states
+                    run_stage(f"seq_{group}", bundle_names, cover_groups,
+                             plus_pair_target=wh_plus_target)
+                    fail_path = os.path.join(args.out, "failure.json")
+                    if os.path.exists(fail_path):
+                        os.remove(fail_path)
+                continue
+            run_stage(f"seq_{group}", bundle_names, cover_groups)
+            if group == "WH" and args.plus_pair:
+                wh_plus_target = (_plus_share(last["problem"], last["result"]["y"], "WH_PLUS",
+                                              state_list) if last is not None else None)
 
     if args.driver == "reps" and last is not None:
         head = len(slots) - len(last["slots"])
@@ -1325,9 +1566,21 @@ def _main(args, T: telemetry.Timings) -> int:
     if args.band_break:
         params["band_break"] = {"states": sorted(args.band_break),
                                 "allowance": band_break_records}
+    if plus_pair_retry:
+        params["plus_pair_retry"] = plus_pair_retry
     with open(os.path.join(args.out, "params.json"), "w", encoding="utf-8") as fh:
         json.dump(params, fh, indent=2, default=float)
         fh.write("\n")
+
+    # `--sweep`: after the catch-all pass and before the projections and stage 2, so both read
+    # the swept shares.  Mutates `slots`' `y` and `mass` in place and returns `prior` updated.
+    sweep_log, unswept_log = [], []
+    if args.sweep:
+        with T.phase("sweep"):
+            sweep_log, unswept_log, prior = _sweep(
+                slots, prior, cells, state_list, edges, cidx,
+                n_max=args.n_max, dist_max=args.dist_max, radius_max=args.radius_max,
+                state_xy=state_xy)
 
     per_state: dict[str, dict] = {}
     for s, code in enumerate(state_list):
@@ -1337,7 +1590,8 @@ def _main(args, T: telemetry.Timings) -> int:
         per_state[code] = row
 
     plan = dict(state_list=state_list, bundles=list(enabled), slots=slots,
-                per_state=per_state, passes=passes, moves=moves, anchors=anchor_log)
+                per_state=per_state, passes=passes, moves=moves, anchors=anchor_log,
+                sweep=sweep_log, unswept=unswept_log)
     with open(os.path.join(args.out, "plan.json"), "w", encoding="utf-8") as fh:
         json.dump(plan, fh, indent=2, default=float)
         fh.write("\n")
