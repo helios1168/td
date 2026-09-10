@@ -1,23 +1,22 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `07839ed` · **Tests:** 546 pass,
-0 fail (2026-09-10; `worktree-full-problem` at `c63cb1f` 743 pass, 0 fail, same day)
+**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `7dbe576` · **Tests:** 546 pass,
+0 fail (2026-09-10; `worktree-full-problem` at `6c9589a` 770 pass, 0 fail, same day)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Hub unchanged at `07839ed`. The full-problem track ran its overnight grid 2026-09-10/11 on
-`worktree-full-problem` (head `c63cb1f`, unmerged): 97 cells, 96 ok; the joint reference is
-proven infeasible in 6 s under the 900 km / 6-state cap, since no channel can hold WA, MT or WY
-at a full book, so "every state served" needs all-channel "other" districts at half a book
-(`--other-first`, `--other-floor 0.5`). Ranked in the worktree's
-`battery/results/full_problem/grid_20260910/REVIEW.md`: 1 `X_n16w11f20_d100_d900n6_of` (48
-districts, cap held everywhere, every state in a grouping, every business pass certified), 2
-`X_n18w11f19_d100_d900n6_of` (49, 10 of 10 certified). Nine scenarios in the app store, the
-worktree app on port 8503; 743 tests pass. Open: the level-2 cross-bundle overlap (AZ merged on
-the WH map, pure FI on the FI map of rank 1); interim fix chosen, merged bundle wins, ranks 1 and
-2 re-realised.
+Hub unchanged at `7dbe576`. The full-problem track, `worktree-full-problem` at `6c9589a`,
+unmerged, moved on 2026-09-10/11: the AZ cross-bundle overlap has its interim fix, the bundle
+with more file channels wins a cell (`1371e0d`); the realiser gained a bridging move, the plan's
+own per-bundle band and a 2 % slack (`803d8c1`), the nine ranked runs re-realised in place, rank
+1's Texas district one piece; the national sub-channels decision (National = Chase + Wells WH +
+Wells FI; a merge folds Chase and Wells FI into FI, Wells WH into WH) is in the exporter,
+`td/channels.py` and decision 12 (`2e707aa`), the exporter ready for the work machine; districts
+coloured off the reach adjacency (`d410610`); level 0 `--max-splits` with CA 3, TX 2, NY 3
+(`b6b88ae`), two capped cells solving in `grid_20260911_splits/`. Suite 770 pass. The open
+decisions are unchanged, in `## Next`; ranks 1 and 2 stand as recorded in the previous entry.
 
 ## Next
 
@@ -38,14 +37,15 @@ the WH map, pure FI on the FI map of rank 1); interim fix chosen, merged bundle 
       sed -n … make file changes with sed, heredocs". That is why every agent of 2026-09-07
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
-- [ ] **Merge `worktree-full-problem`.** Gated on the stakeholder review of 2026-09-11 (the
-      track's `PLAN.md` `## Next step` lists the five plans in order), the interim overlap fix
-      landing, and the user pushing the branch; then rebase onto `main`, fast-forward, `/state`.
-      Decisions for the user there: the "other" floor (0.5 of a book or another figure); whether
-      ND SD NE on FI alone is acceptable; the cap (900 km / 6 states or none); the counts
-      (16/11/20 or 18/11/19). Queued on the track: the proper two-stage cut of a shared state's
-      zips by the level-0 shares; ★C, the rep pool against the district count; `centers.assign`
-      parking zero-mass zips; no DC–VA cell edge. The Map board check rides on these scenarios.
+- [ ] **Merge `worktree-full-problem`.** Gated on the stakeholder review (the track's
+      `PLAN.md` `## Next step` lists the five plans in order), the `--max-splits` cells reviewed
+      against rank 1, and the user pushing the branch; then rebase onto `main`, fast-forward,
+      `/state`. Decisions for the user there: the "other" floor (0.5 of a book or another
+      figure); whether ND SD NE on FI alone is acceptable; the cap (900 km / 6 states or none);
+      the counts (16/11/20 or 18/11/19); route R, parked. Queued on the track: the proper
+      two-stage cut of a shared state's zips by the level-0 shares; ★C, the rep pool against the
+      district count; the v4 export with sub-channels, then the ranked cells re-run on it; no
+      DC–VA cell edge. The Map board check rides on these scenarios.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
