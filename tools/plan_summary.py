@@ -137,7 +137,29 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="export bundle geometry again, ignoring maps/cache")
     ap.add_argument("--kappa", type=float, default=None,
                     help="descaled mass -> currency; the descaled instances carry none")
+    ap.add_argument("--groups", type=_parse_groups, default=None, metavar="NAME=ST,ST;...",
+                    help="state groups to mark on the structure map, e.g. "
+                         "'G1=TX,NY;G2=WA,UT': each group's states get a heavy outline and a "
+                         "coloured code in the group's colour, and a legend line; a state in "
+                         "two groups takes the first (default none)")
     return ap
+
+
+GROUP_COLORS = ("#1b1b1b", "#c0392b", "#1f5fa8")
+
+
+def _parse_groups(text: str) -> list:
+    """`'G1=TX,NY;G2=WA'` -> `[('G1', ['TX', 'NY']), ('G2', ['WA'])]`, codes upper-cased."""
+    out = []
+    for part in text.split(";"):
+        name, _, codes = part.partition("=")
+        states = [c.strip().upper() for c in codes.split(",") if c.strip()]
+        if not name.strip() or not states:
+            raise argparse.ArgumentTypeError(f"bad group {part!r}; expected NAME=ST,ST")
+        out.append((name.strip(), states))
+    if len(out) > len(GROUP_COLORS):
+        raise argparse.ArgumentTypeError(f"at most {len(GROUP_COLORS)} groups")
+    return out
 
 
 # ------------------------------------------------------------------ what the run says
@@ -411,20 +433,23 @@ def _outline(ax, geom, *, zorder=3.0, **style):
 
 
 def _state_codes(ax, states: dict, *, fontsize: float, zorder: float = 2.6,
-                 second: dict | None = None) -> None:
+                 second: dict | None = None, colors: dict | None = None) -> None:
     """Two-letter codes on every state big enough to hold one, at its largest part's
     representative point, in the dark label grey with no box so the fill shows through.
 
     `second`, when given, is a `{code: value}` printed as a second line under the code, same
-    size (the structure map's wholesaler count; "0" for a state absent from it)."""
+    size (the structure map's wholesaler count; "0" for a state absent from it).  `colors`,
+    when given, is a `{code: colour}` for states drawn bold in that colour instead."""
     for code, geom in states.items():
         part = us_maps._largest_part(geom)
         if part.area < STATE_CODE_MIN_AREA:
             continue
         p = part.representative_point()
         text = code if second is None else f"{code}\n{second.get(code, 0)}"
-        ax.text(p.x, p.y, text, fontsize=fontsize, color=us_maps.LABEL_TEXT, ha="center",
-                va="center", zorder=zorder, alpha=0.85, linespacing=1.0)
+        color = (colors or {}).get(code)
+        ax.text(p.x, p.y, text, fontsize=fontsize, color=color or us_maps.LABEL_TEXT,
+                ha="center", va="center", zorder=zorder, alpha=1.0 if color else 0.85,
+                linespacing=1.0, fontweight="bold" if color else "normal")
 
 
 def _frame(ax, bounds, pad=0.015) -> None:
@@ -537,14 +562,18 @@ def draw_bundle_map(fig, ax, bundle: str, payload: dict, meta: dict, run: dict, 
 
 
 # ------------------------------------------------------------------ the structure map
-def structure_panel(ax, run: dict, states: dict, wholesalers: dict | None = None) -> None:
+def structure_panel(ax, run: dict, states: dict, wholesalers: dict | None = None,
+                    groups: list | None = None) -> None:
     """The structure map: a fill per state pattern, the state's code and wholesaler count on
     it, a hatch where the state is split between districts of some channel.
 
     No district borders here: an earlier version drew each channel's cuts over this map in its
     own line style, and where three channels share a state line, which is most of them, the
-    three lines read as one smear.  The bundle maps carry the borders.
+    three lines read as one smear.  The bundle maps carry the borders.  `groups`
+    (`--groups`) are the one exception: a named state group's outline, heavy and in the
+    group's colour, with the state's code in the same colour.
     """
+    from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
     import matplotlib
 
@@ -560,13 +589,25 @@ def structure_panel(ax, run: dict, states: dict, wholesalers: dict | None = None
                   linewidth=0.0, zorder=1.4)
     for geom in states.values():
         _outline(ax, geom, color="#6f6f6f", linewidth=0.7, zorder=2.0)
-    _state_codes(ax, states, fontsize=8.5, second=wholesalers)
+    group_of = {}
+    for i, (_, codes) in enumerate(groups or ()):
+        for code in codes:
+            group_of.setdefault(code, i)
+    for code, i in group_of.items():
+        if code in states:
+            _outline(ax, states[code], color=GROUP_COLORS[i], linewidth=2.2, zorder=2.4)
+    _state_codes(ax, states, fontsize=8.5, second=wholesalers,
+                 colors={code: GROUP_COLORS[i] for code, i in group_of.items()})
 
     handles = [Patch(facecolor=PATTERN_FILL[p], edgecolor="#8a8a8a",
                      label=f"{PATTERN_TEXT[p]}  ({counts.get(p, 0)})")
                for p in PATTERNS if counts.get(p, 0)]
     handles.append(Patch(facecolor="white", edgecolor=SPLIT_HATCH, hatch="///",
                          label=f"split between districts  ({len(split_any)})"))
+    for i, (name, _) in enumerate(groups or ()):
+        mine = sorted(code for code, j in group_of.items() if j == i and code in states)
+        handles.append(Line2D([], [], color=GROUP_COLORS[i], linewidth=2.2,
+                              label=f"{name}: {' '.join(mine)}  ({len(mine)})"))
     legend = ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.0, 0.0),
                        frameon=False, fontsize=9.5, handlelength=1.9, title="State pattern",
                        title_fontproperties=dict(weight="bold", size=10))
@@ -602,7 +643,7 @@ def title_line(tag: str, params: dict, n_wholesalers: int) -> str:
 # ------------------------------------------------------------------ the figure
 def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
             simplify: float = geom_export.SIMPLIFY, use_cache: bool = True,
-            kappa: float | None = None, report=None) -> list:
+            kappa: float | None = None, report=None, groups: list | None = None) -> list:
     """Write `<run_dir>/maps/summary.png` and `.svg`; return the paths written."""
     import matplotlib
     matplotlib.use("Agg")
@@ -673,7 +714,7 @@ def summary(run_dir: str, geo_cache: str, *, dpi: int = DPI,
         if bundle is None:
             ax.set_title("Channel structure by state", color=us_maps.TEXT, fontsize=13,
                          fontweight="bold", pad=6)
-            structure_panel(ax, run, states, wholesalers)
+            structure_panel(ax, run, states, wholesalers, groups=groups)
             continue
         strip = draw_bundle_map(fig, ax, bundle, payloads[bundle], meta, run, kappa, land=land)
         box = cell.get_position(fig)
@@ -705,7 +746,8 @@ def _main(args) -> int:
     run_dir = os.path.abspath(args.run_dir)
     written = summary(run_dir, args.geo_cache, dpi=args.dpi,
                       simplify=args.simplify, use_cache=not args.no_cache,
-                      kappa=args.kappa, report=lambda s: print(s, flush=True))
+                      kappa=args.kappa, report=lambda s: print(s, flush=True),
+                      groups=args.groups)
     for path in written:
         print(f"wrote {path} ({os.path.getsize(path) / 1e6:.2f} MB)", flush=True)
     return 0

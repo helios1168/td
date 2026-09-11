@@ -136,6 +136,28 @@ def test_a_toy_run_writes_the_png_and_the_svg():
         assert sorted(os.listdir(cache)) == ["N_geom.pkl", "WH_geom.pkl"]
 
 
+def test_groups_parse_and_reach_the_structure_panel_legend():
+    assert cli._parse_groups("G1=tx, ny;G2 adds=WA") == [("G1", ["TX", "NY"]), ("G2 adds", ["WA"])]
+    for bad in ("G1", "=TX", "A=X;B=Y;C=Z;D=W"):
+        try:
+            cli._parse_groups(bad)
+        except Exception:
+            pass
+        else:
+            raise AssertionError(f"{bad!r} must be refused")
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from shapely.geometry import box
+    fig, ax = plt.subplots()
+    states = {"TX": box(0, 0, 1, 1), "NY": box(2, 0, 3, 1), "WA": box(4, 0, 5, 1)}
+    run = {"patterns": {s: "three channels" for s in states}, "splits": {}}
+    cli.structure_panel(ax, run, states, groups=[("G1", ["TX", "NY"]), ("G2 adds", ["NY", "WA"])])
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    plt.close(fig)
+    assert "G1: NY TX  (2)" in labels and "G2 adds: WA  (1)" in labels
+
+
 def test_the_state_pattern_classifier_on_the_five_hand_cases():
     assert cli.classify_state(set()) == "unserved"
     assert cli.classify_state({"N", "WH", "FI"}) == "three channels"
