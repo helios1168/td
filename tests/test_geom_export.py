@@ -357,6 +357,61 @@ def test_proximity_edges_are_still_the_voronoi_rook_graph():
     assert ["10100", "10200"] in edges               # across the state line, x = SIDE
 
 
+def test_dc_va_edge_uses_points_and_only_existing_cell_vertices():
+    from shapely import box
+    gx = _geom_export()
+    cells = {z: box(10 * i, 0, 10 * i + 1, 1)
+             for i, z in enumerate(("dc1", "dc2", "va", "md"))}
+    xy = {"dc1": (0, 0), "dc2": (9, 0), "va": (10, 0),
+          "md": (10, 0), "clipped": (10, 0)}
+    states = {"dc1": "DC", "dc2": "DC", "va": "VA", "md": "MD", "clipped": "DC"}
+    assert gx._proximity_edges(cells, xy, states) == [["dc2", "va"]]
+    assert gx._proximity_edges({z: p for z, p in cells.items() if z != "va"},
+                               xy, states) == []
+    # A pair already joined by a rook edge is emitted only once.
+    cells["va"] = box(11, 0, 12, 1)
+    assert gx._proximity_edges(cells, xy, states) == [["dc2", "va"]]
+
+
+def test_real_conus_dc_va_edge_preserves_vertices_and_matches_realiser():
+    from unittest.mock import patch
+    from td import instance
+    import plan_realise
+    import run_draw
+
+    hub = "/Users/Shared/sv-ntlee/repos/td"
+    path = os.path.join(hub, "instance_descaled_v4_conus.json.gz")
+    if not os.path.exists(path):
+        print(f"SKIP  test_real_conus_dc_va_edge_preserves_vertices_and_matches_realiser"
+              f"  ({path} absent)")
+        return
+    cache = os.path.join(hub, "data", "geo")
+    d = instance.load_descaled(path)
+    states = {z: a["state"] for z, a in d.G.nodes(data=True)}
+    url, txt = geo.GAZ_VINTAGES["2025"]
+    with patch.multiple(geo, GAZ_VINTAGE="2025", GAZ_URL=url, GAZ_TXT=txt):
+        xy, _ = run_draw.coordinates(sorted(states), cache)
+    gx = _geom_export()
+    um = gx._us_maps()
+    gdf = geo.states_outline(cache)
+    polys = dict(zip(gdf.STUSPS, gdf.geometry))
+    keys = sorted(xy)
+    prox = um.voronoi_cells(keys, xy, um.clip_region(list(xy.values()), gdf),
+                            zip_state=states, state_polys=polys)
+    before = {tuple(e) for e in gx._proximity_edges(prox)}
+    rows = [dict(zip=z, state=states[z], x=xy[z][0], y=xy[z][1], district=states[z])
+            for z in keys]
+    # Stand-in drawn polygons: this regression exercises the reachability graph only.
+    exported = gx.export(rows, gdf, prox, "test-proximity-fixture")
+    with tempfile.TemporaryDirectory() as tmp:
+        G, _, _ = plan_realise.cell_graph(tmp, "N", keys, xy, states, cache)
+    after = {tuple(e) for e in exported["proximity_edges"]}
+    assert set(G) == set(exported["proximity_zips"]) == set(prox)
+    assert {tuple(sorted(e)) for e in G.edges} == after
+    assert after - before == {("20037", "22209")}
+    assert not before - after
+
+
 def test_proximity_zips_excludes_a_zip_whose_voronoi_cell_clips_to_nothing():
     """The latent solver bug this guards against: `tools/split_district.py` builds its
     contiguity graph's vertex set from zips that have a Voronoi cell, not from `cells` (which is

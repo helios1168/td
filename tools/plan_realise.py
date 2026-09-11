@@ -520,7 +520,11 @@ def _proximity(keys: list, xy: dict, states_by_zip: dict, geo_cache: str) -> tup
     clip = um.clip_region([xy[z] for z in keys], states_gdf)
     prox = um.voronoi_cells(keys, xy, clip, zip_state=states_by_zip, state_polys=state_polys)
     codes = sorted({states_by_zip.get(z, "") for z in keys} & set(state_polys))
-    return sorted(prox), geom_export._proximity_edges(prox), _state_borders(state_polys, codes)
+    return (sorted(prox), geom_export._proximity_edges(prox, xy, states_by_zip),
+            _state_borders(state_polys, codes))
+
+
+CELL_GRAPH_VERSION = 1                          # nearest DC-VA cell vertices joined
 
 
 def cell_graph(run_dir: str, bundle: str, keys: list, xy: dict, states_by_zip: dict,
@@ -529,7 +533,8 @@ def cell_graph(run_dir: str, bundle: str, keys: list, xy: dict, states_by_zip: d
     projection.
 
     The cache records the key set it was built from, so a rerun over a different projection
-    rebuilds rather than silently reusing another run's tessellation.
+    rebuilds rather than silently reusing another run's tessellation.  The version rejects
+    edge lists built before the DC-VA connection was added.
     """
     path = os.path.join(run_dir, "projections", bundle, "cell_graph.json")
     keys = list(keys)
@@ -537,15 +542,18 @@ def cell_graph(run_dir: str, bundle: str, keys: list, xy: dict, states_by_zip: d
     if os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
             got = json.load(fh)
-        if got.get("keys") == keys and got.get("state_borders") is not None:
+        if (got.get("version") == CELL_GRAPH_VERSION and got.get("keys") == keys
+                and got.get("state_borders") is not None):
             rec = (got["zips"], got["edges"], got["state_borders"])
     if rec is None:
-        cached = _PROX_CACHE.get(tuple(keys))
+        cache_key = (CELL_GRAPH_VERSION, tuple(keys))
+        cached = _PROX_CACHE.get(cache_key)
         rec = cached if cached is not None else _proximity(keys, xy, states_by_zip, geo_cache)
-        _PROX_CACHE[tuple(keys)] = rec
+        _PROX_CACHE[cache_key] = rec
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as fh:
-            json.dump(dict(graph=GRAPH, keys=keys, zips=rec[0], edges=rec[1],
+            json.dump(dict(graph=GRAPH, version=CELL_GRAPH_VERSION,
+                           keys=keys, zips=rec[0], edges=rec[1],
                            state_borders=rec[2]), fh)
             fh.write("\n")
     G = nx.Graph()

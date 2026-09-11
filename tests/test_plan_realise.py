@@ -66,9 +66,35 @@ def _write_cell_graph(run_dir: str, bundle: str = "N", zips: list = ZIPS) -> Non
                if {a, b} <= {STATES[ZIPS.index(z)] for z in zips}]
     with open(os.path.join(run_dir, "projections", bundle, "cell_graph.json"), "w",
               encoding="utf-8") as fh:
-        json.dump(dict(graph=cli.GRAPH, keys=zips, zips=zips,
+        json.dump(dict(graph=cli.GRAPH, version=cli.CELL_GRAPH_VERSION, keys=zips, zips=zips,
                        edges=[[zips[i], zips[i + 1]] for i in range(len(zips) - 1)],
                        state_borders=borders), fh)
+
+
+def test_cell_graph_rebuilds_unversioned_edges_and_reuses_current_cache():
+    from unittest.mock import patch
+    keys = ["20037", "22209", "clipped"]
+    vertices = keys[:2]
+    edges = [vertices]
+    borders = [["DC", "VA"]]
+    with tempfile.TemporaryDirectory() as tmp:
+        dest = os.path.join(tmp, "projections", "N")
+        os.makedirs(dest)
+        path = os.path.join(dest, "cell_graph.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(dict(graph=cli.GRAPH, keys=keys, zips=vertices, edges=[],
+                           state_borders=borders), fh)
+        with patch.object(cli, "_PROX_CACHE", {}), \
+                patch.object(cli, "_proximity", return_value=(vertices, edges, borders)) as build:
+            G, _, _ = cli.cell_graph(tmp, "N", keys, {}, {}, "unused")
+            assert set(G) == set(vertices) and G.has_edge(*vertices)
+            build.assert_called_once()
+        with open(path, encoding="utf-8") as fh:
+            assert json.load(fh)["version"] == cli.CELL_GRAPH_VERSION
+        with patch.object(cli, "_PROX_CACHE", {}), \
+                patch.object(cli, "_proximity", side_effect=AssertionError("cache missed")):
+            G, _, _ = cli.cell_graph(tmp, "N", keys, {}, {}, "unused")
+            assert set(G) == set(vertices) and G.has_edge(*vertices)
 
 
 def _build_run(run_dir: str):
@@ -448,7 +474,7 @@ def _build_handoff_run(run_dir: str, whfi_states: list) -> None:
     whfi_keys = [z for z, s in zip(HOZIPS, HOSTATES) if s in whfi_states]
     with open(os.path.join(run_dir, "projections", "WHFI", "cell_graph.json"), "w",
               encoding="utf-8") as fh:
-        json.dump(dict(graph=cli.GRAPH, keys=whfi_keys, zips=whfi_keys,
+        json.dump(dict(graph=cli.GRAPH, version=cli.CELL_GRAPH_VERSION, keys=whfi_keys, zips=whfi_keys,
                        edges=[[whfi_keys[i], whfi_keys[i + 1]]
                               for i in range(len(whfi_keys) - 1)],
                        state_borders=[["S1", "S2"]]), fh)
@@ -456,7 +482,7 @@ def _build_handoff_run(run_dir: str, whfi_states: list) -> None:
     # district both states, but the tessellation never joins them, so it comes back split
     with open(os.path.join(run_dir, "projections", "FI", "cell_graph.json"), "w",
               encoding="utf-8") as fh:
-        json.dump(dict(graph=cli.GRAPH, keys=HOZIPS, zips=HOZIPS,
+        json.dump(dict(graph=cli.GRAPH, version=cli.CELL_GRAPH_VERSION, keys=HOZIPS, zips=HOZIPS,
                        edges=[[HOZIPS[0], HOZIPS[1]], [HOZIPS[2], HOZIPS[3]]],
                        state_borders=[["S1", "S2"]]), fh)
 
@@ -568,7 +594,7 @@ def _build_gap_run(run_dir: str, adjacent: bool) -> None:
             w.writerow(["X", "D01", 0.5, 1.0])
         edges = [[GAPZIPS[0], GAPZIPS[1]]] if adjacent else []
         with open(os.path.join(cell, "cell_graph.json"), "w", encoding="utf-8") as fh:
-            json.dump(dict(graph=cli.GRAPH, keys=GAPZIPS, zips=GAPZIPS, edges=edges,
+            json.dump(dict(graph=cli.GRAPH, version=cli.CELL_GRAPH_VERSION, keys=GAPZIPS, zips=GAPZIPS, edges=edges,
                            state_borders=[]), fh)
 
     slots = [dict(id="P001", bundle="FI_PLUS", used=True, mass=1.0, contacts=1, y={"X": 0.5}),

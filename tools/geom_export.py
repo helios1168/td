@@ -104,6 +104,7 @@ import argparse
 import colorsys
 import importlib.util
 import json
+import math
 import os
 import sys
 
@@ -206,7 +207,8 @@ def color_distinct(adj: dict, palette: list, apart: float = HUE_APART) -> dict:
     return out
 
 
-def _proximity_edges(cells: dict) -> list:
+def _proximity_edges(cells: dict, xy: dict | None = None,
+                     zip_state: dict | None = None) -> list:
     """`[[z1, z2], ...]`, sorted: the rook adjacency of the proximity tessellation, `z1 < z2`.
 
     This is a reachability model, not a border graph.  The instance carries 3,713 of the 33,300
@@ -220,6 +222,9 @@ def _proximity_edges(cells: dict) -> list:
     on its own, so two neighbours' simplified rings no longer coincide and a shared boundary can
     no longer be measured.  A shared boundary of positive length is a rook edge; a corner touch
     or a point of tangency has zero length and is dropped.
+
+    DC-VA loses its shared boundary in cell clipping.  Join its nearest gazetteer points
+    among existing cell vertices, without widening the rook rule for any other state pair.
     """
     import numpy as np
     import shapely
@@ -230,7 +235,14 @@ def _proximity_edges(cells: dict) -> list:
     ia, ib = ia[keep], ib[keep]
     lengths = shapely.length(shapely.intersection(np.asarray(geoms)[ia], np.asarray(geoms)[ib]))
     touching = lengths > 0
-    return sorted([ids[i], ids[j]] for i, j in zip(ia[touching], ib[touching]))
+    edges = {(ids[i], ids[j]) for i, j in zip(ia[touching], ib[touching])}
+    if xy is not None and zip_state is not None:
+        dc = [z for z in ids if zip_state.get(z) == "DC"]
+        va = [z for z in ids if zip_state.get(z) == "VA"]
+        if dc and va:
+            _, a, b = min((math.dist(xy[a], xy[b]), a, b) for a in dc for b in va)
+            edges.add(tuple(sorted((a, b))))
+    return [list(e) for e in sorted(edges)]
 
 
 def _adjacency(polys: dict, tolerance: float = ADJ_TOLERANCE) -> dict:
@@ -403,7 +415,7 @@ def export(rows: list, states_gdf, zcta_polys: dict, cells_source: str,
     with telemetry.phase("cells"):
         out["cells"] = {str(z): {"rings": _rings(zcta_cells[z], CELLS_SIMPLIFY)}
                         for z in sorted(zcta_cells)}
-        out["proximity_edges"] = _proximity_edges(prox)
+        out["proximity_edges"] = _proximity_edges(prox, xy, zip_state)
         out["proximity_zips"] = sorted(prox)      # the vertex set `proximity_edges` is over
     return out
 
