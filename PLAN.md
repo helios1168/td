@@ -17,6 +17,48 @@ follows once solve times are known.
 
 ## Next step
 
+FI 21 run, 2026-09-11 late night (sandvault session; beads `td-9ek.20.*`). National k 10 to 16,
+WH 11, FI 21 on v4 CONUS, full rules with caps CA 3 TX 2 NY 2 FL 2 and band break CA TX NY FL.
+Results under `battery/results/full_problem/grid_20260911_fi21_*` (a `_newcut` twin of each grid
+holds the same cells re-realised with the border-aware cut and the DC-VA edge); the full table is
+in `HANDOFF.md`. Commits on the branch, in order:
+
+- `6ef5626` level 0 `--cover-national` (Codex), with `slots[].stage` stamped in `plan.json`.
+- `da0e5d6` `cells.py --rule cover --caps --band-break`, `force_check.py` checks the cover rule.
+- `9439874` (earlier) realiser: border-aware seed for a split state's share (B).
+- `d341461` DC-VA cell-graph edge 20037 to 22209 (C, `td-9ek.16`).
+- `a87b86c` level 0: a zero plus-pair target also bounds FI_PLUS to 0. Without it every FI 21
+  cell's FI stage timed out on the empty plan and the cell came back "ok" with no FI district
+  (`grid_20260911_fi21_U_emptyFI`, kept as evidence).
+- `cec2617` a cover pass stopped by the time limit on the empty plan now fails as no_incumbent.
+- `9e2e555` bridge seed in the contiguous cut (E), reverted in `8e7b027`: pieces 15 to 2 but a
+  bridge carried 14 times its share and starved neighbouring shares (cut deviation to 1,371%).
+
+Findings:
+
+1. The cover rule as placed (N_WH finishes in seq_WH) is infeasible in all 14 C cells, each
+   proved in seconds: seq_N leaves crumbs (TX 4 to 13%, all of CO, all of LA; AZ partly at k 12
+   and up) and a WH_PLUS slot can only take a state's WH up to its national residual, so it
+   never reaches L. Route joint found no incumbent in 180 or 600 s (168 slots, the greedy
+   fails the cover row). The user then chose "finish in seq_N plus other-first".
+2. That rule (grid `_S`, the forced study with CO, and in G2 WA and LA, in the other-first
+   district and named in `--cover-national`) solves every cell once TX has one N district.
+   TX=2 is infeasible at k 10 to 13 for G1 and 10 to 14 for G2 (the last k of each proven at
+   600 s) and solves above that. `force_check.py` OK on all 14 solved cells.
+3. Unforced (`_U2`) solves at every k; the plan opens fewer N districts than the ceiling (10 at
+   k 10 and 11, 11 at 12 and 13, 13 to 14 at 14 to 16), 20 FI of 21, 10 WH of 11.
+4. B and C take districts in pieces from 25 to 15 over the 8 unforced cells, 78 to 70 over
+   the 14 S cells. WH_03's 113-zip CT end stays in every cell: WH_03 is CT, NJ and 5% of NY,
+   and NY's share is too small to join NJ to CT. That needs a level-0 answer (`td-9ek.20.6`,
+   `td-9ek.9`).
+
+Unheld mass is 0 on every channel of every solved cell. Suite 823 pass at `9b74c3f` (with
+`TD_ZCTA_SHP` set; the sandbox's home path has no ZCTA shapefile).
+
+Open for the user: which S cell (or U cell) to take forward; whether TX in one N district is
+acceptable under forcing; the WH_03 CT piece; `td-9ek.2` and `td-9ek.3` (v4 export and re-run)
+can close.
+
 Handed off 2026-09-11 to a new multi-agent setup: start at `HANDOFF.md` (setup, the forced
 study's results, the next run, open decisions). The study's scripts are tracked in
 `tools/full_problem_runs/`.

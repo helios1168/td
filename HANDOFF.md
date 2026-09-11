@@ -103,37 +103,74 @@ tools/full_problem_runs/rerealise.sh`, realiser only, no re-solve) districts in 
 from 8 to 4 on the unforced 16-11-20 (band violations 15 to 19), 10 to 6 on G2 k 15, 15 to 14
 on G1 k 14. What remains, from `unrepaired.py`:
 
-1. The split-state cut is not border-aware: a district's share of a shared state can land away
-   from its other states, and the stray piece then sits where no neighbouring same-bundle
-   district is admissible (N AL,FL,MS,TN's 249 zips; WH_03's 113-zip CT end, in every run). Fix:
-   seed each district's share at its border with its other states, in `tools/plan_realise.py`.
+1. The split-state cut was not border-aware. Fixed in `9439874` (a share now seeds at the
+   district's border); the N AL,FL,MS,TN stray is gone. WH_03's 113-zip CT end remains: its NY
+   share must join NJ to CT and is too small to (see the FI 21 section).
 2. Band-locked repair in forced cells: the sweep pushes some districts far over U, so no
-   neighbour can take a piece.
-3. No cell-graph edge across DC-VA: any N district holding DC and VA but not MD reads two
-   pieces. A one-edge fix to the graph clears it.
+   neighbour can take a piece. Still the main source of pieces in the S cells.
+3. No cell-graph edge across DC-VA. Fixed in `d341461` (edge 20037 to 22209).
 
 Contiguity is measured on the Voronoi cell graph of the zip points; the maps draw real ZCTA
 polygons, so a district can look scattered on screen and still be connected (CLAUDE.md trap 23).
 
-## Next run (user-specified, not launched)
+## The FI 21 run (2026-09-11 late night, done)
 
-National k 10, 11, 12, 13, 14, 15, 16 with WH k 11 and FI k 21 (FI target about $900MM), on
-full rules. Which forcing is still open (the user was asked and wanted to clarify first). Once
-decided:
+National k 10 to 16, WH 11, FI 21, full rules with caps CA 3 TX 2 NY 2 FL 2 and band break CA
+TX NY FL, run in the sandvault clone (`/Users/Shared/sv-ntlee/repos/td`, results under this
+worktree's `battery/results/full_problem/grid_20260911_fi21_*`). Each grid has a `_newcut` twin:
+the same cells re-realised with the border-aware cut and the DC-VA edge. `PLAN.md ## Next step`
+has the commits and findings; in short:
 
-    TD_ROOT=/path/to/root python3 tools/full_problem_runs/cells.py --n 10-16 --wh 11 --fi 21 \
-        --group G1 --out cells_fi21_G1.json          # or --group none / G2
-    TD_ROOT=/path/to/root zsh tools/full_problem_runs/run_grid.sh cells_fi21_G1.json \
-        battery/results/full_problem/grid_<date>_fi21_G1 3
+- The new `--cover-national` rule with N_WH finishing in seq_WH is infeasible at every k
+  (`_C`, 14 cells): the national crumbs seq_N leaves cannot fill a WH_PLUS slot. Route joint
+  found no incumbent at 600 s.
+- The user's fallback, grid `_S`: G1 (G2) forced into pure N except CO (WA, CO, LA), which sit
+  in the other-first all-channel district, with the new caps. It needs TX in one N district up
+  to k 13 (G1) and 14 (G2); the `_tx1` cells are in `_S_retry1`, `_S_retry2`.
+- `_U2` is unforced plus the v4 reference n16w11f20 with the old caps.
 
-`cells.py` carries the rules above; G2 there uses TX=1 at every k, untested at k 14 to 16 (pass
-`--tx 2` to repeat what solved at FI 20). Compare each solved cell with the reference using
-`compare.py`, then add `hot/` links and README rows.
+| cell | districts | N/WH/FI | states in 3 channels | max extent km | staffing value | in pieces (before, B+C) |
+|---|---|---|---|---|---|---|
+| REF_n16w11f20_oldcaps | 46 | 14/10/19 | 34 | 1360 | 239.70 | 4, 2 |
+| U_n10 | 43 | 10/10/20 | 35 | 1360 | 225.27 | 2, 2 |
+| U_n11 | 43 | 10/10/20 | 35 | 1655 | 225.23 | 2, 2 |
+| U_n12 | 44 | 11/10/20 | 31 | 1770 | 229.95 | 2, 2 |
+| U_n13 | 44 | 11/10/20 | 32 | 1429 | 229.99 | 2, 2 |
+| U_n14 | 46 | 13/10/20 | 31 | 1360 | 239.21 | 5, 1 |
+| U_n15 | 47 | 14/10/20 | 32 | 1360 | 243.84 | 3, 1 |
+| U_n16 | 47 | 14/10/20 | 32 | 1360 | 243.76 | 5, 3 |
+| S1_n10 tx1 | 43 | 10/10/20 | 33 | 1383 | 225.43 | 5, 5 |
+| S1_n11 tx1 | 43 | 10/10/20 | 33 | 1383 | 225.45 | 4, 4 |
+| S1_n12 tx1 | 44 | 11/10/20 | 31 | 1383 | 230.18 | 7, 6 |
+| S1_n13 tx1 | 44 | 11/10/20 | 29 | 1383 | 230.21 | 5, 5 |
+| S1_n14 | 46 | 13/10/20 | 23 | 1443 | 239.44 | 6, 6 |
+| S1_n15 | 47 | 13/10/21 | 28 | 1655 | 243.38 | 4, 4 |
+| S1_n16 | 46 | 13/10/20 | 28 | 1443 | 239.46 | 8, 7 |
+| S2_n10 tx1 | 43 | 10/10/20 | 29 | 1423 | 225.78 | 5, 4 |
+| S2_n11 tx1 | 43 | 10/10/20 | 27 | 1491 | 225.79 | 5, 6 |
+| S2_n12 tx1 | 44 | 11/10/20 | 31 | 1778 | 230.48 | 5, 5 |
+| S2_n13 tx1 | 44 | 11/10/20 | 30 | 1778 | 230.45 | 4, 4 |
+| S2_n14 tx1 | 45 | 12/10/20 | 30 | 1778 | 235.04 | 5, 4 |
+| S2_n15 | 46 | 13/10/20 | 30 | 1443 | 239.63 | 9, 5 |
+| S2_n16 | 47 | 14/10/20 | 27 | 1443 | 244.02 | 6, 5 |
+
+Unheld mass is 0 on every channel of every cell; `force_check.py` is OK on every S cell. The
+plan opens fewer N districts than the ceiling at every k. WH_03's (WH_04's in G2) CT end, 113
+zips, stays in pieces in every cell but S1 n14 and n15: its NY share is too small to join NJ to
+CT, and a bridge in the cut (tried, reverted) wrecks the band.
+
+Environment notes for the sandbox: set `TD_ZCTA_SHP` to the hub's
+`data/tiger/2025/tl_2025_us_zcta520.shp` (the default path is under the home directory), and
+run `full_grid.py` from a code snapshot (`git archive <commit>`) so edits cannot reach a running
+grid. The cell files are `cells_input.json` in each grid directory.
 
 ## Open decisions (the user's)
 
-1. The forcing for the FI 21 run, and the in-session defaults listed above.
-2. Adopt the contiguous cut for every bundle.
+1. Which FI 21 cell goes forward (table above), and whether TX in one N district is acceptable
+   under forcing (TX=2 is infeasible at low k with either group).
+2. Adopt the contiguous cut for every bundle (all FI 21 cells used it), and what to do about
+   WH_03's CT end: a level-0 floor on a split share that must join two of its district's states,
+   or accept the piece (`td-9ek.20.6`, `td-9ek.9`).
 3. From `PLAN.md`: which v4 cell replaces the frozen v3 rank 1 for stakeholders; the "other"
    floor; ND SD NE on FI alone; the extent cap versus none; 16-11-20 versus 18-11-19; route R;
    whether WH_03's CT piece needs a repair extension; the merge itself.
