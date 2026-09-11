@@ -47,10 +47,24 @@ from td.solvers import state_splits as ss
 from td.solvers.state_splits import SolveFailure, SplitProblem
 
 HERE = Path(__file__).resolve().parent
-# Hardcoded, not derived from __file__: a worktree checkout has no `.venv-opt` of its own
-# (CLAUDE.md "Environment"), so this must resolve to the hub regardless of which checkout this
-# module was imported from (app/config.py's REPO is the same pattern for the same reason).
-REPO = Path(os.environ.get("TD_REPO", "/Users/ntlee/projects/td"))
+# `.venv-opt` lives at the main checkout's root and a linked worktree has none of its own
+# (CLAUDE.md "Environment"), so REPO is the main checkout of the repository this file belongs
+# to, read from git's own files (`app/config.py::main_checkout` carries the same lines, since
+# the app never imports `td`); `TD_REPO` overrides it. A checkout with no `.venv-opt` (a
+# sandbox clone) makes `OPT_PYTHON.exists()` below report false rather than raise.
+def _main_checkout(code: Path) -> Path:
+    dot = code / ".git"
+    if dot.is_file():
+        line = dot.read_text(encoding="utf-8").strip()
+        if line.startswith("gitdir:"):
+            gitdir = Path(line.split(":", 1)[1].strip())
+            if not gitdir.is_absolute():
+                gitdir = (code / gitdir).resolve()
+            return gitdir.parents[2]
+    return code
+
+
+REPO = Path(os.environ.get("TD_REPO", str(_main_checkout(Path(__file__).resolve().parents[2]))))
 OPT_PYTHON = Path(os.environ.get("TD_OPT_PYTHON", str(REPO / ".venv-opt" / "bin" / "python3")))
 WORKER = HERE / "milp_worker.py"           # the worker beside *this* checkout of the module
 

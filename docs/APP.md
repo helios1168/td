@@ -36,8 +36,8 @@ uv venv --python 3.13 .venv-app
 uv pip install --python .venv-app/bin/python3 -r app/requirements.txt
 ```
 
-`app/config.py` keeps two roots apart. `REPO` (default `/Users/ntlee/projects/td`, override
-`TD_REPO`) is the hub checkout, because the gitignored inputs (the CONUS instances, `data/geo/`,
+`app/config.py` keeps two roots apart. `REPO` (default the main checkout, read from `.git`,
+override `TD_REPO`) is the hub checkout, because the gitignored inputs (the CONUS instances, `data/geo/`,
 `battery/results/`) are never copied into a worktree. `CODE` is this checkout, because the
 drivers a run launches sit beside `app/config.py`, which on a track branch are not the hub's.
 `SOLVER_PYTHON` (default `REPO/.venv/bin/python3`, override `TD_SOLVER_PYTHON`) is separate from

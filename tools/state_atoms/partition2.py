@@ -11,20 +11,28 @@ state-atom draw of that kind could reach.
 """
 import csv
 import math
+import os
 import random
 import sys
 from collections import defaultdict
+from pathlib import Path
 
-sys.path.insert(0, "/Users/ntlee/projects/td")
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+# the descaled instance and battery/results are gitignored and hub-only (CLAUDE.md); a
+# worktree carries neither, so TD_DATA_ROOT points a run there at the hub's copy.
+DATA_ROOT = Path(os.environ.get("TD_DATA_ROOT", REPO))
+
+sys.path.insert(0, str(REPO))
 from td import instance
 
 K = 18
 GROUPS = {"CA": ("CA",), "NYNJ": ("NY", "NJ"), "TX": ("TX",), "FL": ("FL",)}
 
-d = instance.load_descaled("/Users/ntlee/projects/td/instance_descaled_v2.json.gz")
+d = instance.load_descaled(str(DATA_ROOT / "instance_descaled_v2.json.gz"))
 G = d.G
 draw = {}
-with open("/Users/ntlee/projects/td/battery/results/draw_k18_v2_20260904/k18/draw.csv") as fh:
+with open(DATA_ROOT / "battery/results/draw_k18_v2_20260904/k18/draw.csv") as fh:
     for row in csv.DictReader(fh):
         draw[row["zip"]] = row["district"]
 

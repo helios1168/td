@@ -19,8 +19,26 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-REPO = Path(os.environ.get("TD_REPO", Path.home() / "projects" / "td"))
+def main_checkout(code: Path) -> Path:
+    """The main checkout of the repository `code` belongs to, read from git's own files:
+    `code` itself in a plain clone (its `.git` is a directory, or absent in an export), and the
+    checkout owning the shared `.git` in a linked worktree (its `.git` is a file,
+    `gitdir: <main>/.git/worktrees/<name>`).  No git call and no user's home, so the answer
+    is the same on the hub, in a track worktree and in a clone at any path.
+    `td/solvers/milp_engines.py` carries the same lines, since the app never imports `td`."""
+    dot = code / ".git"
+    if dot.is_file():
+        line = dot.read_text(encoding="utf-8").strip()
+        if line.startswith("gitdir:"):
+            gitdir = Path(line.split(":", 1)[1].strip())
+            if not gitdir.is_absolute():
+                gitdir = (code / gitdir).resolve()
+            return gitdir.parents[2]
+    return code
+
+
 CODE = Path(__file__).resolve().parents[1]
+REPO = Path(os.environ.get("TD_REPO", main_checkout(CODE)))
 
 # Overridable independently of TD_REPO: a worktree has no `.venv` of its own (CLAUDE.md,
 # "Environment"), so a run against a worktree needs the hub's interpreter under a different var.

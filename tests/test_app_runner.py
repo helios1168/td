@@ -63,7 +63,15 @@ def test_a_running_child_is_alive_until_it_is_stopped():
 
 
 def test_a_pid_that_was_never_ours_is_answered_by_kill_not_waitpid():
-    """`os.getppid()` is this process's parent and never its child, so `waitpid` raises
-    `ChildProcessError` and the `os.kill` fallback carries the answer.  That is the path a run
-    launched before a Streamlit restart takes."""
-    assert runner._alive(os.getppid())
+    """This process's own pid is never its child, so `waitpid` raises `ChildProcessError` and
+    the `os.kill` fallback carries the answer.  That is the path a run launched before a
+    Streamlit restart takes.
+
+    Probes `os.getpid()` rather than `os.getppid()`: a real driver's parent is always the same
+    user that ran the app, but a test's parent is whatever launched the test process, which in a
+    sandboxed harness can be a more privileged account (root's sudo wrapper) that this process
+    cannot signal. `os.kill(ppid, 0)` then raises `PermissionError`, which `_alive` (correctly,
+    for a foreign pid it cannot signal) reads as not alive. `os.getpid()` keeps the same
+    not-a-child property this test is after while guaranteeing the pid is always ours to signal.
+    """
+    assert runner._alive(os.getpid())

@@ -25,9 +25,13 @@ import borders_report as br                 # noqa: E402
 import run_draw                              # noqa: E402
 from td import geo                           # noqa: E402
 
-INSTANCE_PATH = "/Users/ntlee/projects/td/instance_descaled_v2.json.gz"
-DRAW_PATH = "/Users/ntlee/projects/td/battery/results/draw_k18_v2_20260904/k18/draw.csv"
-GEO_CACHE = "/Users/ntlee/projects/td/data/geo"
+# the descaled instance, the draw and the geo cache are gitignored and hub-only (CLAUDE.md); a
+# worktree or a fresh clone carries none of them, so TD_DATA_ROOT points a run there at the
+# hub's copy, and every test below skips on os.path.exists(INSTANCE_PATH) when there is none.
+DATA_ROOT = os.environ.get("TD_DATA_ROOT", ROOT)
+INSTANCE_PATH = os.path.join(DATA_ROOT, "instance_descaled_v2.json.gz")
+DRAW_PATH = os.path.join(DATA_ROOT, "battery/results/draw_k18_v2_20260904/k18/draw.csv")
+GEO_CACHE = os.path.join(DATA_ROOT, "data/geo")
 
 
 # ------------------------------------------------------------------------------ owner sets
