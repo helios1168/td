@@ -206,6 +206,27 @@ split count; never report "OA converged"; run the P1c check first.
 
 Full report: `git show 8b14eee:docs/VERIFY_U9-bandthm.md`.
 
+### Re-check 2026-09-11 (td-tgm)
+
+**7 VERIFIED / 4 REFUTED / 0 INCONCLUSIVE**.
+
+| Claim | Verdict |
+|---|---|
+| P0: every feasible gain vector is positive for all `delta >= 0` | REFUTED: at `delta=1`, a feasible assignment gives one agent zero gain. |
+| P0 feasibility, Slater and attainment; P0b gain uniqueness | VERIFIED |
+| P1-band, including its band-feasibility qualification | VERIFIED |
+| P2.1-P2.6 and P2b: KKT, budgets, corrected selection and gauge | VERIFIED |
+| P3-split at an optimal-face vertex | VERIFIED |
+| P4.1-P4.4 and P4.6-P4.7: concavity, slopes and envelopes | VERIFIED |
+| P4.5: obligatory kink at `delta_c` | REFUTED: an exact positive-utility example has `delta_c=1/6` and both one-sided derivatives zero. |
+| P4.8: minimum of the strict softness-threshold set | REFUTED: the threshold set can be `(alpha,infinity)`; only its infimum exists. |
+| P5.1-P5.4 and P5.6: tangent-master safety | VERIFIED |
+| P5.5: epsilon termination on the unrestricted setup domain | REFUTED: at `delta=1`, positive initial cuts produce a zero gain and an undefined next tangent; the proof requires `delta<1`. |
+| P6: direct utility-space certificate | VERIFIED |
+
+Artifacts: `tools/verify/U9-bandthm/recheck_20260911.py` and
+`tools/verify/U9-bandthm/REPORT_20260911.md`.
+
 ## Code verify
 
 none yet
