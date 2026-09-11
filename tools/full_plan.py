@@ -708,6 +708,16 @@ def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mod
 
     avail = level0.available_mass(cells, {b: _bundle_channels(b) for b in bundle_names},
                                   prior=prior)
+    allowed = getattr(args, "national_states", None)
+    if allowed and "N" in bundle_names:
+        # `--national-states`: N can only ever hold the named states, so its count divides
+        # their national alone, not every state's
+        shut = np.array(prior, float, copy=True)
+        cidx = {c: i for i, c in enumerate(cells.channels)}
+        for s, st in enumerate(cells.state_list):
+            if st not in allowed:
+                shut[s, [cidx[c] for c in _bundle_channels("N") if c in cidx]] = 1.0
+        avail["N"] = level0.available_mass(cells, {"N": _bundle_channels("N")}, prior=shut)["N"]
     fixed = args.k_fixed or {}
     taus = {b: avail[b] / int(fixed[b]) for b in bundle_names
             if mode == "per-bundle" and int(fixed.get(b, 0)) > 0 and avail[b] > 0}
