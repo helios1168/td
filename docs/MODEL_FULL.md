@@ -97,6 +97,16 @@ z_{s,j} = y_{s,j} = 0          a state farther than the radius cap from a rooted
 u_j = 1  /  u_j = 0            fixed_used: the first K_B^fixed slots of a bundle must be used; max_used: the rest may not be
 ```
 
+`--force-national ST,...` forbids non-N bundles carrying national on the named states and
+raises their national cover lower bounds to the remaining share in the N model, keeping
+their national in pure N districts. `--cover-national ST,...` raises those bounds without
+forbidding any bundle: N_WH must finish in seq_WH when WH_PLUS is enabled, else seq_FI when
+WHFI_PLUS is enabled, else seq_N; N_FI must finish in seq_FI when FI_PLUS or WHFI_PLUS is
+enabled, else seq_N. Both finish in the joint stage on route J. Earlier stages stay free,
+and other-first coverage counts; catch-all and sweep come after the requirement. Both
+switches skip channels with zero mass or at most 1e-4 share left. A state cannot be named
+by both switches.
+
 ### 3.3 Objectives, solved lexicographically
 
 Each pass optimises one linear objective, then pins its value with one appended row

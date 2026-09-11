@@ -299,6 +299,11 @@ def build_argparser() -> argparse.ArgumentParser:
                          "it in any stage, and the model carrying N must cover all of it. "
                          "Their WH and FI stay free. A state may not also be in --other-first "
                          "(default none)")
+    ap.add_argument("--cover-national", type=_parse_states, default=None, metavar="ST,ST,...",
+                    help="these states' national (N_WH and N_FI) must be fully covered by "
+                         "the planned stages, before catch-all and sweep; any bundle "
+                         "carrying national counts, including --other-first. A state may "
+                         "not also be in --force-national (default none)")
     ap.add_argument("--other-floor", type=float, default=1.0, metavar="F",
                     help="the catch-all stage's band floor as a fraction of L: an 'other' "
                          "district, one person over every channel of a sparse region, may "
@@ -781,7 +786,21 @@ def _forced_below_floor(problem, cells, cidx, args, state_xy) -> list[dict]:
     return out
 
 
-def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None,
+def _cover_national_channels(args, stage):
+    """National channels this stage must finish under `--cover-national`."""
+    from td import channels
+
+    if args.route == "joint":
+        return ["N_WH", "N_FI"] if stage == "joint" else []
+    enabled = (set(b.strip() for b in args.bundles.split(",") if b.strip()) if args.bundles
+               else set(channels.DEFAULT_BUNDLES))
+    wh = ("seq_WH" if "WH_PLUS" in enabled else
+          "seq_FI" if "WHFI_PLUS" in enabled else "seq_N")
+    fi = "seq_FI" if enabled & {"FI_PLUS", "WHFI_PLUS"} else "seq_N"
+    return [c for c, finish in (("N_WH", wh), ("N_FI", fi)) if stage == finish]
+
+
+def _build(cells, bundle_names, args, *, stage, L, U, edges, prior, anchors, D, state_xy, band=None,
            serve=None, max_used=None, allowance=None, plus_pair_target=None, forbid=None):
     """`build_level0` with the driver's own switches applied.
 
@@ -805,8 +824,10 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     names, and a model carrying `N` must then cover all of the state's remaining national
     (`level0.require_cover`), a channel with no mass or at most 1e-4 left excepted, the
     threshold `--sweep` ignores a residual at.  Since every stage's build goes through here,
-    the rule holds on both routes and in every stage.  `--plus-pair` runs last of
-    all: it is a no-op unless this model carries `WH_PLUS` and/or `FI_PLUS` (`level0.plus_pair`),
+    the rule holds on both routes and in every stage.  `--cover-national` requires the same
+    remaining cover only in each channel's finishing stage, with the same threshold, and
+    forbids no bundle; earlier stages, including other-first, stay free.  `--plus-pair` runs
+    last of all: it is a no-op unless this model carries `WH_PLUS` and/or `FI_PLUS` (`level0.plus_pair`),
     so applying it to every stage's build is safe.
     """
     from td.solvers import level0
@@ -845,6 +866,14 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
         M = np.asarray(cells.M, float)
         ci = {c: problem.channels.index(c) for c in national if c in problem.channels}
         for s in forced:
+            problem = level0.require_cover(problem, s, [
+                c for c, i in ci.items() if M[s, i] > 0.0 and problem.cover_ub[s, i] > 1e-4])
+    if getattr(args, "cover_national", None):
+        M = np.asarray(cells.M, float)
+        ci = {c: problem.channels.index(c) for c in _cover_national_channels(args, stage)
+              if c in problem.channels}
+        for st in args.cover_national:
+            s = state_list.index(st)
             problem = level0.require_cover(problem, s, [
                 c for c, i in ci.items() if M[s, i] > 0.0 and problem.cover_ub[s, i] > 1e-4])
     return level0.plus_pair(problem, target=plus_pair_target) if args.plus_pair else problem
@@ -1263,6 +1292,9 @@ def _main(args, T: telemetry.Timings) -> int:
                          f"--force-national keeps for pure N districts")
     if args.dist_max_state and args.dist_max is None:
         raise ValueError("--dist-max-state relaxes --dist-max per state and needs it")
+    both = sorted(set(args.force_national or ()) & set(args.cover_national or ()))
+    if both:
+        raise ValueError(f"--force-national and --cover-national both name {both}")
     with T.phase("load"):
         print(f"loading {args.instance}...", flush=True)
         d = descaled.load_descaled(args.instance)
@@ -1326,12 +1358,15 @@ def _main(args, T: telemetry.Timings) -> int:
                              f"allowance is derived from the state's own cap")
         print(f"band break: {', '.join(args.band_break)}", flush=True)
     for flag, named in (("--force-national", args.force_national),
+                        ("--cover-national", args.cover_national),
                         ("--dist-max-state", args.dist_max_state)):
         bad = [st for st in (named or ()) if st not in state_list]
         if bad:
             raise ValueError(f"{flag} names states not in the instance: {bad}")
     if args.force_national:
         print(f"force national: {', '.join(args.force_national)}", flush=True)
+    if args.cover_national:
+        print(f"cover national: {', '.join(args.cover_national)}", flush=True)
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
@@ -1359,6 +1394,7 @@ def _main(args, T: telemetry.Timings) -> int:
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
         other_first=args.other_first, force_national=args.force_national,
+        cover_national=args.cover_national,
         max_splits=args.max_splits or {}, band_break={},
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
@@ -1433,6 +1469,15 @@ def _main(args, T: telemetry.Timings) -> int:
         for b, n in (cap_used or {}).items():
             counts[b] = min(counts.get(b, 0), n)
         if not sum(counts.values()):
+            required = _cover_national_channels(args, stage) if args.cover_national else []
+            pending = [st for st in (args.cover_national or ())
+                       if any(cells.M[state_list.index(st), cidx[c]] > 0.0
+                              and 1.0 - prior[state_list.index(st), cidx[c]] > 1e-4
+                              for c in required)]
+            if pending:
+                exc = ss.SolveFailure(2, f"--cover-national: {stage} has no slots to cover {pending}")
+                _write_failure(args.out, stage, exc, 0.0)
+                raise exc
             if serve:
                 raise ValueError(f"{stage}: {len(serve)} state(s) must be served here and "
                                  f"the stage has no slots")
@@ -1460,7 +1505,7 @@ def _main(args, T: telemetry.Timings) -> int:
                 band_break_records[stage] = {st: round(float(a), 6)
                                              for st, a in allowance.items()}
         with T.phase("build"):
-            problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
+            problem = _build(cells, bundle_names, args, stage=stage, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                              prior=prior.copy(), anchors=None, D=None, state_xy=state_xy,
                              allowance=allowance, plus_pair_target=plus_pair_target,
                              forbid=forbid)
@@ -1477,7 +1522,7 @@ def _main(args, T: telemetry.Timings) -> int:
                 # districts, and their centres are known better than a greedy seed
                 D = _moments_from_draw(ctx, state_list, n_state, problem.k, start, stop)
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
+                problem = _build(cells, bundle_names, args, stage=stage, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy,
                                  allowance=allowance, plus_pair_target=plus_pair_target,
                                  forbid=forbid)
@@ -1530,7 +1575,7 @@ def _main(args, T: telemetry.Timings) -> int:
         if extra or (seeds is not None and seed_centres):
             anchors = list(anchors or ()) + extra
             with T.phase("build"):
-                problem = _build(cells, bundle_names, args, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
+                problem = _build(cells, bundle_names, args, stage=stage, L=L, U=U, band=bands, edges=edges, serve=serve, max_used=cap_used,
                                  prior=prior.copy(), anchors=anchors, D=D, state_xy=state_xy,
                                  allowance=allowance, plus_pair_target=plus_pair_target,
                                  forbid=forbid)
@@ -1563,6 +1608,8 @@ def _main(args, T: telemetry.Timings) -> int:
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1,
                              state_xy=state_xy, roots=centre_of, allowance=allowance)
+        for rec in recs:
+            rec["stage"] = stage                      # `force_check.py` reads the planned stages
         slots.extend(recs)
         passes.extend(result["passes"])
         # `covered` is this solve's own coverage; `residual` is `(1 - prior) - covered`, so
@@ -1573,7 +1620,7 @@ def _main(args, T: telemetry.Timings) -> int:
                else _coverage(np.asarray(result["y"], float), problem.bundle_of, cidx))
         prior = np.clip(prior + cov, 0.0, 1.0)
         last = dict(problem=problem, unpinned=unpinned, result=result, slots=recs,
-                   allowance=allowance)
+                   allowance=allowance, stage=stage)
 
     groups = [g for g in priority if any(b in enabled for b in STAGE_BUNDLES[g])]
     # the last stage that can still serve a state: the joint model, else the last channel
@@ -1640,12 +1687,25 @@ def _main(args, T: telemetry.Timings) -> int:
                 wh_plus_target = (_plus_share(last["problem"], last["result"]["y"], "WH_PLUS",
                                               state_list) if last is not None else None)
 
+    # A finishing stage may be absent from --bundles or --priority altogether.
+    pending = [st for st in (args.cover_national or ())
+               if any(M[state_list.index(st), cidx[c]] > 0.0
+                      and 1.0 - prior[state_list.index(st), cidx[c]] > 1e-4
+                      for c in ("N_WH", "N_FI"))]
+    if pending:
+        exc = ss.SolveFailure(2, f"--cover-national: planned stages left national in {pending}")
+        _write_failure(args.out, "planned", exc, 0.0)
+        raise exc
+
     if args.driver == "reps" and last is not None:
         head = len(slots) - len(last["slots"])
+        last_stage = last["stage"]
         with T.phase("moves"):
             moves, last = _rep_moves(last["problem"], last["result"], cells, state_list, edges,
                                      args, slots[:head], last["slots"], head + 1, T,
                                      state_xy=state_xy, allowance=last.get("allowance"))
+        for rec in last["slots"]:
+            rec["stage"] = last_stage
         slots = slots[:head] + last["slots"]
 
     if args.catch_all:

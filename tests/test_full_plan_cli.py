@@ -227,7 +227,7 @@ def _check_plan(out: str) -> dict:
     swept_ids = {rec["slot"] for rec in plan["sweep"]}
     for rec in plan["slots"]:
         assert set(rec) == {"id", "bundle", "used", "mass", "contacts", "y", "L", "U",
-                            "band_hi", "center", "extent_km", "radius_km"}
+                            "band_hi", "center", "extent_km", "radius_km", "stage"}
         assert rec["band_hi"] >= rec["U"] - 1e-6, rec
         if rec["used"] and rec["id"] not in swept_ids:
             assert rec["L"] - 1e-6 <= rec["mass"] <= rec["band_hi"] + 1e-6, rec
@@ -1382,6 +1382,116 @@ def test_parse_caps_upper_cases_and_refuses_a_bad_token():
 def test_force_national_and_dist_max_state_default_to_none():
     args = cli.build_argparser().parse_args(["instance.json.gz", "--out", "out"])
     assert args.force_national is None and args.dist_max_state is None
+    assert args.cover_national is None
+
+
+def test_cover_national_finishes_each_channel_only_in_its_required_stage():
+    args = cli.build_argparser().parse_args(["instance.json.gz", "--out", "out"])
+    for bundles, wh, fi in (("N,WH_PLUS,FI_PLUS,WHFI_PLUS", "seq_WH", "seq_FI"),
+                            ("N,WHFI_PLUS", "seq_FI", "seq_FI"),
+                            ("N,WH_PLUS", "seq_WH", "seq_N"),
+                            ("N,FI_PLUS", "seq_N", "seq_FI"),
+                            ("N,WH,FI", "seq_N", "seq_N")):
+        args.bundles = bundles
+        for stage in ("other_first", "seq_N", "seq_WH", "seq_FI", "catch_all", "all_last"):
+            assert cli._cover_national_channels(args, stage) == [
+                c for c, finish in (("N_WH", wh), ("N_FI", fi)) if stage == finish]
+    args.route = "joint"
+    assert cli._cover_national_channels(args, "joint") == ["N_WH", "N_FI"]
+    for stage in ("other_first", "seq_N", "seq_WH", "seq_FI", "catch_all", "all_last"):
+        assert cli._cover_national_channels(args, stage) == []
+
+
+def test_cover_national_rows_keep_earlier_stages_free_and_skip_empty_channels():
+    cells = types.SimpleNamespace(M=np.array([[2.0, 2.0, 4.0, 4.0],
+                                             [0.0, 2.0, 4.0, 4.0]]),
+                                  channels=("N_WH", "N_FI", "WH", "FI"),
+                                  state_list=["S0", "S1"])
+    args = cli.build_argparser().parse_args([
+        "instance.json.gz", "--out", "out", "--cover-national", "s0,S1"])
+    prior = np.zeros((2, 4))
+    prior[0, 0] = 0.25
+    prior[1, 1] = 1.0 - 1e-5
+    for stage, bundles in (("other_first", ["WHFI_PLUS"]), ("seq_N", ["N"]),
+                           ("seq_WH", ["WH", "WH_PLUS"]),
+                           ("seq_FI", ["FI", "FI_PLUS", "WHFI_PLUS"])):
+        problem = cli._build(cells, bundles, args, stage=stage, L=1.0, U=20.0,
+                             edges=[(0, 1)], prior=prior, anchors=None, D=None, state_xy=None)
+        lo, hi = problem.rows["cover"]
+        bounds = problem.lb[lo:hi].reshape(2, 4)
+        for s in range(2):
+            for i, c in enumerate(cells.channels):
+                required = s == 0 and ((stage == "seq_WH" and c == "N_WH")
+                                       or (stage == "seq_FI" and c == "N_FI"))
+                if required:
+                    assert bounds[s, i] == problem.cover_ub[s, i]
+                else:
+                    assert bounds[s, i] <= 0.0
+        assert np.all(problem.var_ub[problem.off_y:problem.off_y + 2 * problem.k] > 0.0)
+
+
+def test_cover_national_refuses_overlap_and_unknown_states():
+    for extra, word in ((["--cover-national", "s0", "--force-national", "S0"],
+                         "--cover-national"), (["--cover-national", "ZZ"], "ZZ")):
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                _run(tmp, "sequential", extra)
+            except ValueError as exc:
+                assert word in str(exc), (extra, exc)
+            else:
+                raise AssertionError(f"{extra} must be refused")
+
+
+def test_cover_national_uses_merged_districts_when_pure_n_cannot_fill():
+    extra = ["--dist-max", "50", "--bundles", "N,WHFI_PLUS", "--band-lo", "0.5"]
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run(tmp, "sequential", [*extra, "--force-national", "S1"], polys=PATH_POLYS)
+        except ss_cli.ss.SolveFailure as exc:
+            assert exc.reason == "infeasible"
+        else:
+            raise AssertionError("S1 cannot fill a pure N district")
+    for route, other in (("sequential", []), ("joint", []),
+                         ("sequential", ["--other-first", "S1"])):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = _run(tmp, route, [*extra, "--cover-national", "s1", *other],
+                       polys=PATH_POLYS)
+            plan = _check_plan(out)
+            with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+                params = json.load(fh)
+            assert params["cover_national"] == ["S1"]
+            assert not params["catch_all"] and not params["sweep"]
+        assert any(rec["bundle"] == "WHFI_PLUS" and rec["y"].get("S1", 0) > 0
+                   for rec in plan["slots"])
+        assert {rec["stage"] for rec in plan["slots"]} <= {
+            "other_first", "seq_N", "seq_WH", "seq_FI", "joint", "catch_all", "all_last"}
+        for c in ("N_WH", "N_FI"):
+            assert abs(plan["per_state"]["S1"]["residual_by_channel"][c]) < 1e-6
+
+
+def test_cover_national_cannot_skip_a_required_stage_with_no_slots():
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run(tmp, "sequential", ["--cover-national", "S1", "--bundles", "N,WH,FI",
+                                     "--band-lo", "1e12", "--band-hi", "1.2e12"])
+        except ss_cli.ss.SolveFailure as exc:
+            assert exc.reason == "infeasible"
+        else:
+            raise AssertionError("a required stage with no slots cannot leave national uncovered")
+        with open(os.path.join(tmp, "out_sequential", "failure.json"), encoding="utf-8") as fh:
+            rec = json.load(fh)
+        assert rec["cell"] == "seq_N" and "S1" in rec["message"]
+        assert "forced_below_floor" not in rec
+
+
+def test_cover_national_cannot_omit_the_required_stage():
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run(tmp, "sequential", ["--cover-national", "S1", "--bundles", "WH,FI"])
+        except ss_cli.ss.SolveFailure as exc:
+            assert exc.reason == "infeasible" and "S1" in exc.solver_message
+        else:
+            raise AssertionError("omitting N cannot leave required national uncovered")
 
 
 def test_parse_dist_caps_takes_positive_km_and_refuses_a_bad_token():
