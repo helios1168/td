@@ -59,10 +59,23 @@ Results, under `battery/results/full_problem/` (gitignored):
 - Exploratory, described to the user: `grid_20260911_lowk/` (national at 10 and 12) and
   `grid_20260911_wifi/` (merged, no sweep).
 
-Next work: the v4 file at `/Users/ntlee/projects/td/instance_descaled_v4.json.gz` (the user
-exports it with `tools/instance_export/`, on origin); then `tools/instance_conus.py`, then the
-cell files in the job tmp dir with `instance` pointed at the v4 CONUS file. Open user
-decisions: the "other" floor, ND SD NE on FI alone, the cap versus none, 16/11/20 versus
+v4 landed 2026-09-11 01:13 (`instance_descaled_v4.json.gz`, sha256 `d1640be5...a1aa2a`; CONUS
+cut `instance_descaled_v4_conus.json.gz`, 6,478 zips, national split into its three
+sub-channels, `fine_split` exact with 0 fallbacks). It is v3 plus additions, nothing lower: κ
+unchanged, 19 new zips, national +1.58% (8,613.5 against 8,479.8), WH +0.31%, FI +0.35%, and 131
+reps against 114. Real Wells (WH) is 24.8% of national against the proxy's 38%, so `WH_PLUS`
+falls to 7,475.2 and `FI_PLUS` rises to 15,447.2. Rank 1 and the four full-rules and WIFI sweep
+cells re-ran on it with every adopted rule under `battery/results/full_problem/grid_20260911_v4/`
+(`hot/` names them `v4 ...`); the rehearsal on the synthetic v4 is `grid_20260911_v4synth/`.
+Rank 1 keeps its structure (48 districts, 16/10/19, the same splits and state patterns, 893.9
+km); both full-rules cells hold unheld mass 0 on every channel; 18-11-19 keeps every count;
+16-11-20 has 19 FI districts against 20 (46 in all), which the synthetic rehearsal shows comes
+from the real WH/FI split of national, not the data growth. Scripts in
+`/Users/ntlee/.claude/jobs/c83f90d2/tmp/`: `v4_run.sh SRC OUT`, `v4_cells.py`, `v4_compare.py
+V3_CELL V4_CELL ...`, `rerealise_v4.sh PYTHON DIR...`, and `venv313/`, the frozen pins on
+CPython 3.13.15: the hub `.venv` was rebuilt by a `uv` sync at 01:37 to 3.12 with numpy 2.5.3
+and no pyproj, matplotlib or highspy (the user was told; not repaired from this track). Open user
+decisions: which v4 cell goes to stakeholders in place of the frozen v3 rank 1, the "other" floor, ND SD NE on FI alone, the cap versus none, 16/11/20 versus
 18/11/19, route R, whether WH_03's CT-end piece (the one the contiguous cut leaves) needs a
 repair extension, and the merge itself. Untracked `unused/` in the worktree root is a
 downloaded shapefile, safe to delete. Job scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:

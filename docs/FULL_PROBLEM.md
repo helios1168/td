@@ -139,6 +139,14 @@ change. Verified against a synthetic stand-in (`tools/instance_split_national.py
 within 1.3e-4 (float rounding), pure/WHFI bundle masses were exact, and `WH_PLUS`/`FI_PLUS`
 moved as expected (7,868.6/14,872.5 against v3's 8,532.6/14,208.5).
 
+The real v4 (2026-09-11) passed the sub-channel checks (`fine_split` exact, 0 fallbacks) but not
+the equality with v3: it is v3 plus additions, nothing lower. κ is unchanged (the median
+per-zip national ratio is exactly 1), 3,503 of the 3,713 national zips carry the same mass, 210
+carry more, 19 zips are new, and the rep pool is 131 against 114. National mass is 8,613.5
+against 8,479.8 (+1.58%, τ(k=18) 478.53 against 471.1), WH +0.31%, FI +0.35%. So the pure and
+WIFI district masses move with the data, and the real sub-channel split puts Wells (WH) at 24.8%
+of national where the proxy put about 38%: `WH_PLUS`/`FI_PLUS` are 7,475.2/15,447.2.
+
 ## 3. Districts, bundles, plans, and the joint problem F
 
 A served channel is a bundle, a set `B ⊆ C`. The allowed family `𝔅`, each member on a switch:
