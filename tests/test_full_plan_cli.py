@@ -1495,6 +1495,10 @@ def test_national_states_keep_every_other_state_out_of_n_slots_and_the_sweep():
         for rec in plan["slots"]:
             if rec["bundle"] == "N":
                 assert set(rec["y"]) <= {"S0", "S1", "S2"}, (route, rec)
+            # a state left with all its national may not sit in a bundle without national
+            if (route == "sequential" and rec["bundle"] in ("WH", "FI", "WHFI")
+                    and rec.get("stage") in ("seq_WH", "seq_FI")):
+                assert not set(rec["y"]) & {"S3", "S4", "S5"}, rec
         assert any(rec["bundle"] == "N" and rec["used"] for rec in plan["slots"]), route
 
 

@@ -889,6 +889,17 @@ def _build(cells, bundle_names, args, *, stage, L, U, edges, prior, anchors, D, 
     allowed = getattr(args, "national_states", None)
     if allowed:
         forbid += [(s, "N") for s, st in enumerate(state_list) if st not in allowed]
+        # a state whose national is still wholly uncovered may not take a bundle that leaves
+        # its national behind: pure WH, FI and WHFI slots are closed to it, so its WH and FI go
+        # to WH_PLUS / FI_PLUS (plus paired) or WHFI_PLUS and carry the national with them
+        if prior is not None and "N" not in bundle_names:
+            nat_i = [i for i, c in enumerate(cells.channels) if c in national]
+            M_all = np.asarray(cells.M, float)
+            whole = [s for s in range(len(state_list))
+                     if M_all[s, nat_i].sum() > 0.0
+                     and all(1.0 - prior[s, i] >= 0.999 for i in nat_i)]
+            forbid += [(s, b) for s in whole for b in bundle_names
+                       if not set(national) & set(_bundle_channels(b))]
     for s, b in forbid:
         if b in problem.slots:
             problem = level0.forbid_bundle(problem, s, b)
