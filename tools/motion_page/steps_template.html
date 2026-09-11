@@ -38,17 +38,30 @@ header p { margin: 0; max-width: 80ch; }
 .layout { display: grid; grid-template-columns: 1fr 360px; gap: 18px; }
 .mapbox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
 svg.map { width: 100%; height: auto; display: block; background: var(--map-bg); border-radius: 4px; }
-.state { fill: none; stroke: var(--state-line); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.state.filled { fill-opacity: 0.42; }
+.state { stroke: var(--state-line); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .state.dim { stroke-opacity: 0.35; }
 .state.hot { stroke: var(--mark); stroke-width: 4; }
 .edge { stroke: var(--muted); stroke-opacity: 0.35; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 .zip { stroke: none; }
-.zip.faded { fill-opacity: 0.12; }
+.zip.faded { fill-opacity: 0.1; }
 .centre { fill: none; stroke: var(--ink); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .centre-old { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
-.slabel { font-family: var(--mono); font-size: 46px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--map-bg); stroke-width: 10; }
-.dlabel { font-family: var(--display); font-weight: 700; font-size: 52px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--map-bg); stroke-width: 12; }
+.cut { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-dasharray: 12 7; vector-effect: non-scaling-stroke; }
+.cut-halo { fill: none; stroke: var(--map-bg); stroke-width: 6; stroke-opacity: 0.85; vector-effect: non-scaling-stroke; }
+.leader { stroke: var(--muted); stroke-width: 1; stroke-opacity: 0.75; vector-effect: non-scaling-stroke; }
+.slabel { font-family: var(--mono); font-size: 42px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--map-bg); stroke-width: 9; stroke-linejoin: round; }
+.dlabel { font-family: var(--display); font-weight: 700; font-size: 48px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--map-bg); stroke-width: 11; stroke-linejoin: round; }
+@media (prefers-reduced-motion: no-preference) {
+  .zip { transition: fill 150ms linear, fill-opacity 150ms linear; }
+  .state { transition: fill 200ms linear; }
+}
+.mapbox { position: relative; }
+#tip { position: absolute; pointer-events: none; z-index: 5; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; font-family: var(--mono); font-size: 11.5px;
+  line-height: 1.45; box-shadow: 0 2px 10px rgba(0,0,0,0.14); max-width: 220px; }
+#tip[hidden] { display: none; }
+#tip b { font-family: var(--display); font-size: 12.5px; }
+#tip .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: baseline; margin-right: 4px; }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: grid; align-content: start; gap: 10px; }
 .panel .step { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -96,15 +109,17 @@ footer { margin-top: 28px; font-size: 14px; color: var(--muted); }
 </header>
 
 <div class="layout">
-  <div class="mapbox"><svg class="map" id="map" role="img" aria-label="the map at the current step"></svg></div>
+  <div class="mapbox"><svg class="map" id="map" role="img" aria-label="the map at the current step"></svg><div id="tip" hidden></div></div>
   <aside class="panel" id="panel"></aside>
 </div>
 <div class="rail">
   <div class="controls">
     <button type="button" id="prev">◀ Back</button>
     <button type="button" id="next">Next ▶</button>
+    <button type="button" id="play">▶ Play</button>
     <input type="range" id="scrub" min="0" max="0" value="0" aria-label="step">
     <label><input type="checkbox" id="cmpChk"> show committed labels</label>
+    <label id="ownLbl" hidden><input type="checkbox" id="ownChk" checked> owner sets</label>
   </div>
   <div class="ticks" id="ticks"></div>
 </div>
@@ -114,8 +129,11 @@ footer { margin-top: 28px; font-size: 14px; color: var(--muted); }
 <script>
 const D = __DATA__;
 const K = D.k, S = D.state_list.length;
-const PAL = ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f","#edc948","#b07aa1","#ff9da7","#9c755f","#bab0ac","#1f77b4","#d62728","#2ca02c","#9467bd","#8c564b","#e377c2","#7f7f7f","#17becf"];
-const col = j => (j >= 0 ? PAL[j % PAL.length] : "#999");
+// The hues are the figures' own: tools/us_maps.py::draw_palette, exported by steps_data.py, so
+// this page and "The Five Percent Map" agree district by district. Two labellings, two palettes.
+const PAL_F = D.palette, PAL_C = D.palette_committed;
+let PAL = PAL_F;
+const col = j => (j >= 0 && PAL[j] ? PAL[j] : "#8a8a8a");
 const dname = j => "D" + String(j + 1).padStart(2, "0");
 const pct = (x, nd = 1) => (100 * x).toFixed(nd) + "%";
 const NS = "http://www.w3.org/2000/svg";
@@ -129,18 +147,22 @@ for (const parts of Object.values(D.polys)) for (const ring of parts) for (const
 }
 const pad = 40;
 svg.setAttribute("viewBox", `${xmin - pad} ${-(ymax + pad)} ${xmax - xmin + 2 * pad} ${ymax - ymin + 2 * pad}`);
-const gStates = el("g"), gEdges = el("g"), gZips = el("g"), gCentres = el("g"), gLabels = el("g");
-svg.append(gStates, gEdges, gZips, gCentres, gLabels);
-const statePath = {}, stateCentroid = {};
+const cx0 = (xmin + xmax) / 2, cy0 = (ymin + ymax) / 2;
+const gDefs = el("defs"), gStates = el("g"), gEdges = el("g"), gZips = el("g"), gCuts = el("g"),
+      gCentres = el("g"), gLeaders = el("g"), gLabels = el("g");
+svg.append(gDefs, gStates, gEdges, gZips, gCuts, gCentres, gLeaders, gLabels);
+const statePath = {}, stateCentroid = {}, stateArea = {};
 for (const [code, parts] of Object.entries(D.polys)) {
   const d = parts.map(r => "M" + r.map(([x, y]) => `${x},${-y}`).join("L") + "Z").join("");
   const p = el("path", { d, class: "state" }); gStates.appendChild(p); statePath[code] = p;
   const big = parts.reduce((a, b) => (a.length > b.length ? a : b), parts[0] || [[0, 0]]);
-  let cx = 0, cy = 0; for (const [x, y] of big) { cx += x; cy += y; } stateCentroid[code] = [cx / big.length, cy / big.length];
+  let sx = 0, sy = 0; for (const [x, y] of big) { sx += x; sy += y; } stateCentroid[code] = [sx / big.length, sy / big.length];
+  let a2 = 0; for (let i = 0; i < big.length; i++) { const [x1, y1] = big[i], [x2, y2] = big[(i + 1) % big.length]; a2 += x1 * y2 - x2 * y1; }
+  stateArea[code] = Math.abs(a2) / 2;    // km², the big part only: the label-priority order
 }
 const zipEls = D.zips.x.map((x, i) => {
   const c = el("circle", { cx: x, cy: -D.zips.y[i], r: [7, 10, 14, 19, 27][D.zips.c[i]], class: "zip" });
-  gZips.appendChild(c); return c;
+  c.__i = i; gZips.appendChild(c); return c;
 });
 const idxOf = code => D.state_list.indexOf(code);
 const edgeEls = D.edges.map(([a, b]) => {
@@ -149,8 +171,10 @@ const edgeEls = D.edges.map(([a, b]) => {
 });
 
 // ---- drawing primitives
+let CURLAB = null;                 // what the dots mean right now; the tooltip reads it
 function setZips(labels, opts = {}) {
   const { faded = null, hide = false } = opts;
+  CURLAB = hide ? null : labels;
   zipEls.forEach((c, i) => {
     const j = labels ? labels[i] : -1;
     c.style.display = hide ? "none" : "";
@@ -158,30 +182,91 @@ function setZips(labels, opts = {}) {
     c.classList.toggle("faded", faded ? !faded(i) : false);
   });
 }
+// A split state is not one district's, so it is not one colour: stripe it in the touching
+// districts' hues, each band's width its share of the state's mass.
+const patterns = new Set();
+function stripeFill(key, shares) {
+  const id = "st-" + key + "-" + shares.map(([j, v]) => j + "x" + Math.round(1000 * v)).join("-");
+  if (!patterns.has(id)) {
+    const W = 150, tot = shares.reduce((a, b) => a + b[1], 0) || 1;
+    const pat = el("pattern", { id, width: W, height: W, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    let x = 0;
+    for (const [j, v] of shares) {
+      const w = Math.max(3, (v / tot) * W);
+      pat.appendChild(el("rect", { x, y: 0, width: w + 0.4, height: W, fill: col(j), "fill-opacity": 0.5 }));
+      x += w;
+    }
+    gDefs.appendChild(pat); patterns.add(id);
+  }
+  return `url(#${id})`;
+}
+// `fillOf(code)` returns -1 for no fill, a district index for a flat fill, or an array of
+// [district, share] pairs for a striped one. The fill goes on `style`, not as an attribute:
+// the `.state` rule would otherwise win and every state would come out empty (it did).
 function setStates(fillOf, opts = {}) {
   const { hot = [], dim = false } = opts;
   for (const [code, p] of Object.entries(statePath)) {
-    const j = fillOf ? fillOf(code) : -1;
-    p.classList.toggle("filled", j >= 0);
-    p.setAttribute("fill", j >= 0 ? col(j) : "none");
+    const f = fillOf ? fillOf(code) : -1;
+    if (Array.isArray(f) && f.length > 1) { p.style.fill = stripeFill(code, f); p.style.fillOpacity = 1; }
+    else {
+      const j = Array.isArray(f) ? (f.length ? f[0][0] : -1) : f;
+      p.style.fill = j >= 0 ? col(j) : "none";
+      p.style.fillOpacity = j >= 0 ? 0.42 : 1;
+    }
     p.classList.toggle("hot", hot.includes(code));
     p.classList.toggle("dim", dim);
   }
 }
 function setEdges(on) { edgeEls.forEach(l => (l.style.display = on ? "" : "none")); }
+// The power-diagram boundaries inside a split state: the cut the level-2 LP actually made.
+function setCuts(lines) {
+  gCuts.replaceChildren();
+  for (const ln of lines || []) {
+    const d = "M" + ln.map(([x, y]) => `${x},${-y}`).join("L");
+    gCuts.appendChild(el("path", { d, class: "cut-halo" }));
+    gCuts.appendChild(el("path", { d, class: "cut" }));
+  }
+}
 function setCentres(list, old) {
   gCentres.replaceChildren();
   if (old) for (const [x, y] of old) gCentres.appendChild(el("circle", { cx: x, cy: -y, r: 22, class: "centre-old" }));
   if (list) for (const [x, y] of list) { gCentres.appendChild(el("circle", { cx: x, cy: -y, r: 22, class: "centre" }));
     gCentres.appendChild(el("path", { d: `M${x - 30},${-y}H${x + 30}M${x},${-y - 30}V${-y + 30}`, class: "centre" })); }
 }
+// Labels: big states keep the centroid, the crowded small ones are pushed outward along the
+// ray from the map's centre until their box is clear, with a leader back to the state. Without
+// this the Northeast is a pile of overlapping text and CA's share list runs off the frame.
 function setLabels(items) {
-  gLabels.replaceChildren();
-  for (const { code, text, cls } of items) {
-    const [x, y] = stateCentroid[code];
-    const t = el("text", { x, y: -y + 16, class: cls || "slabel" }); t.textContent = text; gLabels.appendChild(t);
+  gLabels.replaceChildren(); gLeaders.replaceChildren();
+  const placed = [];
+  const hit = (a, b) => !(a.x1 < b.x0 || b.x1 < a.x0 || a.y1 < b.y0 || b.y1 < a.y0);
+  const order = items.filter(it => stateCentroid[it.code])
+                     .sort((a, b) => (stateArea[b.code] || 0) - (stateArea[a.code] || 0));
+  for (const it of order) {
+    const lines = Array.isArray(it.text) ? it.text : [it.text];
+    const fs = it.cls === "dlabel" ? 48 : 42;
+    const w = Math.max(...lines.map(s => String(s).length)) * fs * 0.56;
+    const h = lines.length * fs * 1.1;
+    const [ax, ay] = stateCentroid[it.code];
+    const len = Math.hypot(ax - cx0, ay - cy0) || 1;
+    const ux = (ax - cx0) / len, uy = (ay - cy0) / len;
+    let x = ax, y = ay, moved = 0;
+    for (let t = 0; t <= 26; t++) {
+      x = Math.min(xmax - w / 2, Math.max(xmin + w / 2, ax + ux * t * 62));
+      y = Math.min(ymax - h / 2, Math.max(ymin + h / 2, ay + uy * t * 62));
+      moved = Math.hypot(x - ax, y - ay);
+      const box = { x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 };
+      if (!placed.some(b => hit(b, box))) { placed.push(box); break; }
+      if (t === 26) placed.push(box);
+    }
+    if (moved > 40) gLeaders.appendChild(el("line", { x1: ax, y1: -ay, x2: x, y2: -y, class: "leader" }));
+    const t = el("text", { x, y: -(y + h / 2) + fs, class: it.cls || "slabel" });
+    if (lines.length === 1) t.textContent = lines[0];
+    else lines.forEach((s, n) => { const sp = el("tspan", { x, dy: n === 0 ? 0 : fs * 1.1 }); sp.textContent = s; t.appendChild(sp); });
+    gLabels.appendChild(t);
   }
 }
+const shareLines = sh => sh.map(([j, v]) => `${dname(j)} ${Math.round(100 * v)}%`);
 const stateOf = i => D.state_list[D.zips.s[i]];
 
 // ---- steps: Track 2
@@ -189,33 +274,33 @@ const splitShares = (yrow, zrow) => zrow.map((z, j) => (z ? [j, yrow[j]] : null)
 const massBound = D.state_list.map((c, s) => [c, D.M_s_tau[s], Math.ceil(D.M_s_tau[s] / 1.05 - 1e-9)]).filter(x => x[2] >= 2);
 const forced = massBound.reduce((a, x) => a + x[2] - 1, 0);
 const T2 = [];
-T2.push({ group: "Start", title: "The committed map", render() { setStates(null); setEdges(false); setZips(D.labels0); setCentres(null); setLabels([]); },
+T2.push({ group: "Start", title: "The committed map", pal: "c", render() { setStates(null); setEdges(false); setZips(D.labels0); setCentres(null); setLabels([]); setCuts([]); },
   html: `<p>The k = 18 seed-2 draw as it stands: 3,748 zips in 18 districts, balanced to a 1.37% spread by the transportation LP run to a fixed point (channel note §6). Its borders run near state lines without lying on them; 9.15% of mass sits in a district that another state's owner set claims.</p>
   <div class="facts"><div><div class="k">spread</div><div class="v">${pct(D.committed.spread, 2)}</div></div><div><div class="k">nash gap, nats</div><div class="v">${D.committed.gap.toFixed(4)}</div></div></div>` });
-T2.push({ group: "Level 1", title: "Aggregate to 49 units", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)]); setEdges(true); setCentres(null);
+T2.push({ group: "Level 1", title: "Aggregate to 49 units", pal: "c", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)]); setEdges(true); setCentres(null); setCuts([]);
     setLabels(D.state_list.filter(c => statePath[c]).map(c => ({ code: c, text: D.M_s_tau[idxOf(c)].toFixed(2) + "τ" }))); },
   html: `<p>Level 1 does not see zips. Each of the lower 48 states and DC becomes one unit with mass M<sub>s</sub>, shown in units of τ, and the units are joined by the rook graph: two states are adjacent when their shared boundary has positive length (107 edges; the Four Corners point contact is not one). States are coloured here by the district holding the plurality of their mass in the committed map.</p>
   <p>AK, HI and the 32 zips of unknown state, 0.09τ together, sit outside this ground set and are placed at the end.</p>` });
-T2.push({ group: "Level 1", title: "What mass alone forces", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)], { hot: massBound.map(x => x[0]) }); setEdges(false); setCentres(null);
+T2.push({ group: "Level 1", title: "What mass alone forces", pal: "c", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)], { hot: massBound.map(x => x[0]) }); setEdges(false); setCentres(null); setCuts([]);
     setLabels(massBound.map(([c, m, n]) => ({ code: c, text: `${m.toFixed(2)}τ → ${n}` }))); },
   html: `<p>Before any solver runs, arithmetic sets a floor. A district may hold at most (1 + δ)τ = 1.05τ, so a state of mass M<sub>s</sub> needs at least ⌈M<sub>s</sub> / 1.05τ⌉ districts and is split at least that many times minus one.</p>
   <div class="math">${massBound.map(([c, m, n]) => `${c}: ⌈${m.toFixed(2)} / 1.05⌉ = ${n} districts, ${n - 1} split${n - 1 > 1 ? "s" : ""}`).join("<br>")}<br>forced splits ≥ ${forced}</div>
   <p>Every other state fits inside one district. Whether it can be given one, with contiguity and balance, is what the program decides.</p>` });
-T2.push({ group: "Level 1", title: "Anchors: name the districts", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)]); setEdges(false); setCentres(null);
-    const items = []; D.home.forEach((s, j) => { if (s >= 0) items.push({ code: D.state_list[s], text: (items.filter(i => i.code === D.state_list[s]).length ? " " : "") + dname(j), cls: "dlabel" }); });
+T2.push({ group: "Level 1", title: "Anchors: name the districts", pal: "c", render() { setZips(D.labels0, { faded: () => false }); setStates(c => D.plurality[idxOf(c)]); setEdges(false); setCentres(null); setCuts([]);
     const byCode = {}; D.home.forEach((s, j) => { if (s >= 0) (byCode[D.state_list[s]] ||= []).push(dname(j)); });
-    setLabels(Object.entries(byCode).map(([code, ds]) => ({ code, text: ds.join(" "), cls: "dlabel" }))); },
+    setLabels(Object.entries(byCode).map(([code, ds]) => ({ code, text: ds, cls: "dlabel" }))); },
   html: `<p>With anonymous districts the program has the full 18! relabelling symmetry, and the compactness tie-break is too small to break it: HiGHS held a one-split gap open for 600 s. Fixing z<sub>home(j), j</sub> = 1, so district j keeps the state that held the plurality of its committed mass, names the districts by geography. It is also the sponsor's decision (4): the result reads as the same map with its borders moved.</p>
   <p>Anchoring is a restriction, so its optimum is an upper bound on the free minimum. Here free and anchored both find 8; the free dual bound stops at 6.</p>` });
-T2.push({ group: "Level 1", title: "The MILP's answer", render() { setZips(null, { hide: true }); setEdges(false); setCentres(null);
-    setStates(c => { const s = idxOf(c); const sh = splitShares(D.milp.y[s], D.milp.z[s]); return sh.length ? sh[0][0] : -1; }, { hot: D.state_list.filter((c, s) => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2) });
-    setLabels(D.state_list.filter((c, s) => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2).map(c => { const s = idxOf(c); return { code: c, text: splitShares(D.milp.y[s], D.milp.z[s]).map(([j, v]) => `${dname(j)} ${Math.round(100 * v)}`).join(" · ") }; })); },
+const isSplit = s => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2;
+T2.push({ group: "Level 1", title: "The MILP's answer", render() { setZips(null, { hide: true }); setEdges(false); setCentres(null); setCuts([]);
+    setStates(c => splitShares(D.milp.y[idxOf(c)], D.milp.z[idxOf(c)]), { hot: D.state_list.filter((c, s) => isSplit(s)) });
+    setLabels(D.state_list.filter((c, s) => isSplit(s)).map(c => ({ code: c, text: shareLines(splitShares(D.milp.y[idxOf(c)], D.milp.z[idxOf(c)])) }))); },
   html: `<p>The minimum-splits program: minimise Σ<sub>s</sub>(Σ<sub>j</sub> z<sub>sj</sub> − 1) subject to every state placed, the band (1 ± δ)τ on every district, η z ≤ y ≤ z so a touched state carries at least 1% of its mass, the anchors, and single-commodity-flow contiguity of each district's state set on the rook graph. A compactness moment, weighted so the whole term is worth under half a split, breaks ties among equal split counts.</p>
   <div class="facts"><div><div class="k">splits</div><div class="v">${D.milp.splits}</div></div><div><div class="k">closed in</div><div class="v">${D.milp.solve_s} s</div></div></div>
-  <p>Each split state is filled by its largest holder and labelled with all its shares in percent. Every other state is whole. The split count equals the mass floor plus two: NY takes a third district and CA a fifth, the price of the band and the anchors together.</p>` });
-T2.push({ group: "Level 1", title: "The balance pass", render() { setZips(null, { hide: true }); setEdges(false); setCentres(null);
-    setStates(c => { const s = idxOf(c); const sh = splitShares(D.balance.y[s], D.milp.z[s]); return sh.length ? sh[0][0] : -1; });
-    setLabels(D.state_list.filter((c, s) => D.milp.z[s].reduce((a, b) => a + b, 0) >= 2).map(c => { const s = idxOf(c); return { code: c, text: splitShares(D.balance.y[s], D.milp.z[s]).map(([j, v]) => `${dname(j)} ${Math.round(100 * v)}`).join(" · ") }; })); },
+  <p>A split state is striped in the colours of the districts that touch it, each band's width its share of the state's mass, and labelled with those shares. Every other state is whole and takes its district's colour. The split count equals the mass floor plus two: NY takes a third district and CA a fifth, the price of the band and the anchors together.</p>` });
+T2.push({ group: "Level 1", title: "The balance pass", render() { setZips(null, { hide: true }); setEdges(false); setCentres(null); setCuts([]);
+    setStates(c => splitShares(D.balance.y[idxOf(c)], D.milp.z[idxOf(c)]), { hot: D.state_list.filter((c, s) => isSplit(s)) });
+    setLabels(D.state_list.filter((c, s) => isSplit(s)).map(c => ({ code: c, text: shareLines(splitShares(D.balance.y[idxOf(c)], D.milp.z[idxOf(c)])) }))); },
   html: `<p>The MILP spends the whole band wherever that saves a split, so some district sits at 1.05τ or 0.95τ even when the chosen splits allow better. With the split pattern z fixed, the shares y are re-solved by two LPs: first minimise the maximum deviation from τ, then, holding that, minimise the spread. Only the shares inside the four split states can move.</p>
   <div class="bars"><div class="legend">district mass / τ · grey = MILP, blue = after the pass · shaded = the band</div>${D.milp.masses.map((m, j) => { const a = D.balance.masses[j]; const pos = v => ((v - 0.9) / 0.2 * 100).toFixed(1) + "%"; return `<div class="row"><span>${dname(j)}</span><div class="track"><div class="band" style="left:${pos(0.95)};width:${(0.10 / 0.2 * 100).toFixed(1)}%"></div><div class="before" style="left:${pos(m)}"></div><div class="after" style="left:${pos(a)}"></div></div></div>`; }).join("")}</div>
   <div class="facts"><div><div class="k">spread, MILP → pass</div><div class="v">${pct(Math.max(...D.milp.masses) - Math.min(...D.milp.masses))} → ${pct(D.balance.spread)}</div></div><div><div class="k">max deviation</div><div class="v">${pct(D.balance.max_dev)}</div></div></div>` });
@@ -263,6 +348,19 @@ const T1 = D.track1.iterates.map((lab, r) => {
       + (r === D.track1.iterates.length - 1 ? `<p>Still split: ${D.track1.split_states.replace(/,/g, ", ")}. The inherited owner sets force crossings (PA+MD+DE runs 18% light, D06 without AZ 32% light), so the loop cannot close every border; that is why Track 2 exists.</p>` : "") };
 });
 
+// ---- deep links: ?step=N&mode=t1|t2 (1-based N), mirrored into the hash as the user steps
+const LOC = typeof location === "object" && location ? location : null;
+function readLink() {
+  if (!LOC) return { mode: "t2", step: 0 };
+  const p = new URLSearchParams(((LOC.search || "") + "&" + (LOC.hash || "")).replace(/[?#]/g, "&"));
+  const n = parseInt(p.get("step"), 10);
+  return { mode: p.get("mode") === "t1" ? "t1" : "t2", step: Number.isFinite(n) ? n - 1 : 0 };
+}
+function writeLink() {
+  if (!LOC || typeof history !== "object" || !history || !history.replaceState) return;
+  try { history.replaceState(null, "", `#step=${step + 1}&mode=${mode}`); } catch (e) { /* file:// can refuse */ }
+}
+
 // ---- driver
 let mode = "t2", step = 0;
 const steps = () => (mode === "t2" ? T2 : T1);
@@ -285,15 +383,19 @@ function go(i) {
   for (const b of ticks.querySelectorAll("button[data-i]")) {
     if (Number(b.dataset.i) === step) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
   }
+  writeLink();
 }
 document.getElementById("prev").addEventListener("click", () => go(step - 1));
 document.getElementById("next").addEventListener("click", () => go(step + 1));
 scrub.addEventListener("input", () => go(Number(scrub.value)));
 cmpChk.addEventListener("change", () => go(step));
 document.addEventListener("keydown", e => { if (e.key === "ArrowRight") go(step + 1); if (e.key === "ArrowLeft") go(step - 1); });
-for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => {
-  mode = b.dataset.mode; for (const o of document.querySelectorAll(".tabs button")) o.setAttribute("aria-pressed", String(o === b));
-  buildTicks(); go(0);
-});
-buildTicks(); go(0);
+function setMode(m) {
+  mode = m === "t1" ? "t1" : "t2";
+  for (const o of document.querySelectorAll(".tabs button")) o.setAttribute("aria-pressed", String(o.dataset.mode === mode));
+  buildTicks();
+}
+for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { setMode(b.dataset.mode); go(0); });
+const link = readLink();
+setMode(link.mode); go(link.step);
 </script>

@@ -11,8 +11,9 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, "/Users/ntlee/projects/td/.claude/worktrees/vbl/tools")
-sys.path.insert(0, "/Users/ntlee/projects/td/.claude/worktrees/vbl")
+_REPO = Path(__file__).resolve().parents[2]     # the checkout this script lives in
+sys.path.insert(0, str(_REPO / "tools"))
+sys.path.insert(0, str(_REPO))
 import borders_report  # noqa: E402
 import state_splits as drv  # noqa: E402
 from td import geo  # noqa: E402
@@ -33,8 +34,10 @@ known = ctx.state_idx >= 0
 # ---- geometry: state polygons in LAEA, simplified; zips with coordinates
 gdf = geo.states_outline(GEO)
 polys = {}
+geom = {}
 for code, g in zip(gdf["STUSPS"], gdf.geometry):
     g = g.simplify(3000, preserve_topology=True)   # metres in LAEA
+    geom[code] = g                                 # kept for the power-cell clip below
     parts = list(g.geoms) if g.geom_type == "MultiPolygon" else [g]
     largest = max(parts, key=lambda p: p.area)
     keep = [p for p in parts if p.area > 2e8 or p is largest]   # islets under 200 km^2 go, the
@@ -90,6 +93,97 @@ for s in real["split_states"]:
 labels_final = np.full(len(ctx.zips), -1, int)
 labels_final[known] = real["labels"]
 
+# ---- the cut inside each split state: the power diagram of that round's centres, clipped
+# to the state.  The LP's duals beta make the boundary between i and j the line
+# ||q - c_i||^2 - b_i = ||q - c_j||^2 - b_j, so the viewer sees the cut move as the centres do.
+from shapely.geometry import Polygon                                          # noqa: E402
+
+BIG = 8e6   # metres: larger than the LAEA extent of the lower 48
+
+
+def _half_plane(a, b, near):
+    """Polygon covering {q : a·q <= b} around `near`, big enough to clip any state.
+
+    The box is built at the point of the line nearest `near`, not at the point nearest the
+    origin: in LAEA metres `b/|a|` runs to 1e7 and a box hung there misses the state entirely.
+    """
+    n = float(np.hypot(*a))
+    ah = np.asarray(a, float) / n
+    d = np.array([-ah[1], ah[0]])
+    p0 = ah * (b / n)
+    p0 = p0 + float((np.asarray(near, float) - p0) @ d) * d      # slide along the line
+    return Polygon([p0 + BIG * d, p0 - BIG * d, p0 - BIG * d - BIG * ah, p0 + BIG * d - BIG * ah])
+
+
+def _cut_lines(code, cen, beta):
+    """Boundaries between the power cells of `cen` (metres) inside state `code`, in km."""
+    poly = geom.get(code)
+    if poly is None or len(cen) < 2:
+        return []
+    near = np.array([poly.centroid.x, poly.centroid.y], float)
+    cells = []
+    for i, ci in enumerate(cen):
+        cell = poly
+        for j, cj in enumerate(cen):
+            if i == j:
+                continue
+            # ||q-ci||^2 - bi <= ||q-cj||^2 - bj  <=>  2(cj-ci)·q <= |cj|^2 - |ci|^2 - bj + bi
+            a = 2.0 * (np.asarray(cj) - np.asarray(ci))
+            b = float(cj @ cj - ci @ ci - beta[j] + beta[i])
+            cell = cell.intersection(_half_plane(a, b, near))
+            if cell.is_empty:
+                break
+        cells.append(cell)
+    out = []
+    for i in range(len(cells)):
+        for j in range(i + 1, len(cells)):
+            if cells[i].is_empty or cells[j].is_empty:
+                continue
+            seg = cells[i].boundary.intersection(cells[j].boundary)
+            if seg.is_empty:
+                continue
+            geoms = list(seg.geoms) if hasattr(seg, "geoms") else [seg]
+            for gg in geoms:
+                if gg.geom_type != "LineString" or gg.length < 1000:
+                    continue
+                out.append([[round(x / 1000, 1), round(y / 1000, 1)] for x, y in gg.coords])
+    return out
+
+
+for si, s in enumerate(real["split_states"]):
+    st = real["states"][s]
+    code = ctx.state_list[s]
+    members = known_idx[st_k == s]
+    xy_st, M_st = ctx.xy[members], ctx.M[members]
+    js = list(st["districts"])
+    tgt = np.array([pas["y"][s, j] for j in js], float)
+    tgt = tgt / tgt.sum() * M_st.sum()
+    for it, (lab, cen) in enumerate(st["iterates"]):
+        cen = np.asarray(cen, float)
+        try:
+            beta = centers.power_weights(xy_st, M_st, cen, targets=tgt)["weights"]
+        except Exception as exc:                     # a degenerate round must not lose the page
+            print(f"  power_weights failed for {code} round {it}: {exc}", flush=True)
+            level2[si]["iterates"][it]["cut"] = []
+            continue
+        level2[si]["iterates"][it]["cut"] = _cut_lines(code, cen, np.asarray(beta, float))
+print("cut segments per state/round:",
+      [(d["state"], [len(i["cut"]) for i in d["iterates"]]) for d in level2], flush=True)
+
+# ---- the figures' palette, so the page and "The Five Percent Map" agree hue for hue
+import us_maps                                                                # noqa: E402
+XY_D = {z: (float(ctx.xy[i, 0]), float(ctx.xy[i, 1])) for i, z in enumerate(ctx.zips)}
+VAL_D = {z: float(ctx.M[i]) for i, z in enumerate(ctx.zips)}
+
+
+def _palette(lab):
+    d = {z: f"D{lab[i] + 1:02d}" for i, z in enumerate(ctx.zips) if lab[i] >= 0}
+    _, _, colors = us_maps.draw_palette(d, VAL_D, XY_D)
+    return [colors.get(f"D{j + 1:02d}", "#8a8a8a") for j in range(k)]
+
+
+palette_final, palette_committed = _palette(labels_final), _palette(labels0)
+
 # ---- Track 1 iterates at delta 5%, lambda 100
 t1 = []
 zip_index = {z: i for i, z in enumerate(ctx.zips)}
@@ -100,6 +194,14 @@ for p in sorted((ROOT / "d0.05_lam100" / "iterates").glob("*.csv")):
         if i is not None:
             lab[i] = int(r["district"][1:]) - 1
     t1.append([int(v) for v in lab])
+
+# owner sets per Track 1 iterate: which districts own each state at that round (item 3g)
+from td.solvers import state_borders as sb                                    # noqa: E402
+t1_owners = []
+for lab in t1:
+    la = np.array(lab)
+    _, own = sb.owner_sets(la[known], ctx.state_idx[known], ctx.M[known], k, S)
+    t1_owners.append([[int(j) for j in np.flatnonzero(own[s])] for s in range(S)])
 
 # ---- metrics from the grids
 row = list(csv.DictReader(open(ROOT / "track2_anchored/d0.05/grid.csv")))[-1]
@@ -124,7 +226,8 @@ data = dict(
                stage2=float(row["stage2_value"]), zips_changed=int(row["zips_changed"]), n_fractional=int(row["n_fractional"])),
     committed=dict(spread=float(row1["committed"]["spread_rel"]), gap=float(row1["committed"]["gap"]),
                    stage2=float(row1["committed"]["stage2_value"])),
-    track1=dict(iterates=t1, spread=float(row1["d0.05_lam100"]["spread_rel"]),
+    palette=palette_final, palette_committed=palette_committed,
+    track1=dict(iterates=t1, owners=t1_owners, spread=float(row1["d0.05_lam100"]["spread_rel"]),
                 outside=float(row1["d0.05_lam100"]["outside_owner_share"]),
                 split_states=row1["d0.05_lam100"]["states_split"]),
 )
