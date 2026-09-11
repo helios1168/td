@@ -17,6 +17,17 @@ follows once solve times are known.
 
 ## Next step
 
+**Dollar-target study (2026-09-11, this worktree, bead `td-9ek.20.10`).** Branch
+`worktree-full-problem-usd` from `worktree-full-problem` at `dbd7fbc`; `6d72c6b` adds
+`--band-target BUNDLE=MASS` (band = band_lo, band_hi times the target, count free). Grid
+`battery/results/full_problem/grid_20260911_usd`: `U1_usd` (G1 pool) and `U2_usd` (G2 pool),
+targets N WH WH_PLUS WHFI WHFI_PLUS 481.81 and FI FI_PLUS 433.63 units ($1B and $900MM), delta
+0.1, the national-only rules otherwise. Both ok, unheld 0. Figures and the answer:
+`battery/results/full_problem/usd_summaries/README.md`. Finding: the state answer is unchanged
+(AZ now only 24% national-only); districts sit at the top of the band because the count is free
+and the contacts pass prefers fewer districts, and the capped states carry the band break.
+Nothing here is merged into `worktree-full-problem` or `main`.
+
 **National-only study, done (2026-09-11, bead `td-9ek.20.8`).** The user's correction: the FI
 21 run exists to find which states must get a national-only (N) district. Setup: N districts
 may hold only a pool (`--national-states`, `b6d7deb`), the N band divides the pool's national

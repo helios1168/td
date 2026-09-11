@@ -113,6 +113,13 @@ on G1 k 14. What remains, from `unrepaired.py`:
 Contiguity is measured on the Voronoi cell graph of the zip points; the maps draw real ZCTA
 polygons, so a district can look scattered on screen and still be connected (CLAUDE.md trap 23).
 
+## The dollar-target study (2026-09-11, this worktree)
+
+Bands pinned to $1B national and WH, $900MM FI, counts free (`--band-target`, `6d72c6b`).
+Two cells, G1 and G2 pools. The state answer is unchanged; districts land at the top of the
+band and the capped states carry the band break. Tables and reasons in
+`battery/results/full_problem/usd_summaries/README.md`; setup in `PLAN.md ## Next step`.
+
 ## The national-only study (2026-09-11, done)
 
 The user's correction after the FI 21 run: its point is to find which states must get a
