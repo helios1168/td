@@ -18,6 +18,13 @@ forced only at k 15 and above (the user's rule) and LA only at k 14 and above: a
 TX and LA together overfill the TX district and LA reaches no floor elsewhere.  G2 at k 14 to 16
 solved under TX=2 at FI 20; TX=1 there is untested.
 
+`--rule pure` is the default above.  `--rule cover` covers both national channels in the
+planned stages through any national-carrying bundle, for all of G1 or G2 at every k.  It keeps
+the other-first district and default caps, with no WA distance override or `--tx` option.
+Its tags are C1_n{k}w{wh}f{fi} and C2_n{k}w{wh}f{fi}; group none is not allowed.
+`--caps ST=N,...` replaces the split caps (taking precedence over `--tx`), and
+`--band-break ST,...` replaces the band-break states, under either rule.
+
 Every cell reads `$TD_ROOT/instance_descaled_v4_conus.json.gz` and `$TD_ROOT/data/geo`,
 `TD_ROOT` defaulting to the repo root.
 """
@@ -52,8 +59,11 @@ def parse_ks(spec: str) -> list[int]:
     return [int(k) for k in spec.split(",")]
 
 
-def cell(group: str, k: int, wh: int, fi: int, tx: int) -> dict:
+def cell(group: str, k: int, wh: int, fi: int, tx: int, rule: str = "pure") -> dict:
     flags = {"k_fixed": f"N={k},WH={wh},FI={fi}"}
+    if rule == "cover":
+        flags["cover_national"] = ",".join({"G1": G1, "G2": G2}[group])
+        return {"tag": f"C{group[1]}_n{k}w{wh}f{fi}", "flags": flags}
     tag = {"none": "U", "G1": "F1", "G2": "F2"}[group] + f"_n{k}w{wh}f{fi}"
     if tx != 2:
         flags["max_splits"] = f"CA=3,TX={tx},NY=3"
@@ -76,14 +86,28 @@ def main() -> None:
     ap.add_argument("--wh", type=int, required=True)
     ap.add_argument("--fi", type=int, required=True)
     ap.add_argument("--group", choices=["none", "G1", "G2"], required=True)
+    ap.add_argument("--rule", choices=["pure", "cover"], default="pure")
+    ap.add_argument("--caps", help="split caps ST=N,..., replacing the defaults and --tx")
+    ap.add_argument("--band-break", help="band-break states ST,..., replacing the defaults")
     ap.add_argument("--tx", type=int, default=None,
                     help="TX's N split cap (default 2 for none, 1 for G1 and G2)")
     ap.add_argument("--time-limit", type=int, default=None, help="seconds per pass (default 180)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
+    if args.rule == "cover" and args.group == "none":
+        ap.error("--rule cover requires --group G1 or G2")
+    if args.rule == "cover" and args.tx is not None:
+        ap.error("--rule cover uses --caps, not --tx")
     tx = args.tx if args.tx is not None else (2 if args.group == "none" else 1)
     spec = {"defaults": defaults(os.environ.get("TD_ROOT", ROOT)),
-            "cells": [cell(args.group, k, args.wh, args.fi, tx) for k in parse_ks(args.n)]}
+            "cells": [cell(args.group, k, args.wh, args.fi, tx, args.rule)
+                      for k in parse_ks(args.n)]}
+    if args.caps is not None:
+        spec["defaults"]["max_splits"] = args.caps
+        for rec in spec["cells"]:
+            rec["flags"].pop("max_splits", None)
+    if args.band_break is not None:
+        spec["defaults"]["band_break"] = args.band_break
     if args.time_limit:
         spec["defaults"]["time_limit"] = args.time_limit
     with open(args.out, "w", encoding="utf-8") as fh:
