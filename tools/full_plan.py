@@ -1233,8 +1233,15 @@ def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], e
                 chans = tuple(_bundle_channels(rec["bundle"]))
                 if not set(chans) <= set(r_s):
                     continue
-                if national_states and rec["bundle"] == "N" and code not in national_states:
-                    continue                  # `--national-states`: no N slot for this state
+                if national_states and code not in national_states:
+                    if rec["bundle"] == "N":
+                        continue              # `--national-states`: no N slot for this state
+                    # its national rides only with its own WH and FI: taking WH (FI) into a
+                    # slot without N_WH (N_FI) while that national is residual strands it, as
+                    # every other bundle carrying N_WH (N_FI) also carries WH (FI)
+                    if any(own in chans and nat in r_s and nat not in chans
+                           for own, nat in (("WH", "N_WH"), ("FI", "N_FI"))):
+                        continue
 
                 contacted = set(rec["y"])
                 if not (rec["y"].get(code, 0.0) > 0.0

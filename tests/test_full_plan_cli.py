@@ -1943,6 +1943,35 @@ def test_sweep_breaks_the_cap_when_no_candidate_can_keep_it():
     assert slots[0]["y"]["S1"] == 1.0
 
 
+def test_sweep_never_strands_the_national_of_a_state_outside_the_national_pool():
+    """`--national-states`: S1 is outside the pool and all four of its channels are residual.
+    The pure WH slot P1 scores best (-480 against P2's 40), but taking S1's WH there would
+    leave its N_WH with no slot that could ever carry it (every bundle carrying N_WH but N also
+    carries WH, and N is closed to S1).  The sweep must take the WHFI_PLUS slot P2 instead;
+    with P2 absent it leaves S1 unswept.  A pool state keeps the old rule."""
+    state_list = ["S0", "S1"]
+    cells = types.SimpleNamespace(M=np.array([[0.0] * 4, [5.0, 5.0, 20.0, 20.0]]),
+                                  channels=("N_WH", "N_FI", "WH", "FI"), state_list=state_list)
+    cidx = {"N_WH": 0, "N_FI": 1, "WH": 2, "FI": 3}
+
+    def slots():
+        return [_slot_rec("P1", "WH", {"S0": 1.0}, mass=0.0, band_hi=500.0, center="S0"),
+                _slot_rec("P2", "WHFI_PLUS", {"S0": 1.0}, mass=0.0, band_hi=10.0, center="S0")]
+
+    log, _, prior2 = cli._sweep(slots(), np.zeros((2, 4)), cells, state_list, [(0, 1)], cidx,
+                                national_states=("S0",))
+    assert [r["slot"] for r in log] == ["P2"]
+    assert np.allclose(prior2[1], 1.0)
+    only_wh = slots()[:1]
+    log, _, prior2 = cli._sweep(only_wh, np.zeros((2, 4)), cells, state_list, [(0, 1)], cidx,
+                                national_states=("S0",))
+    assert log == [] and "S1" not in only_wh[0]["y"]
+    assert np.allclose(prior2[1], 0.0)
+    log, _, _ = cli._sweep(slots()[:1], np.zeros((2, 4)), cells, state_list, [(0, 1)], cidx,
+                           national_states=("S0", "S1"))
+    assert [r["slot"] for r in log] == ["P1"]
+
+
 # ------------------------------------------------------------------------------- --plus-pair
 def test_plus_pair_reaches_params_on_both_routes():
     """`--plus-pair` is recorded either way; the default toy carries `WH_PLUS` and `FI_PLUS`
