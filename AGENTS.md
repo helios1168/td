@@ -36,8 +36,10 @@ never stamped.
 
 ## Tests
 
-`rtk test "$TD_PY" tests/run_all.py` from the repo or worktree root: 534 fast tests, 0 fail
-(2026-09-09). `TD_SLOW=1` adds nothing: no module sets `SLOW = True`. `tests/test_engines.py` is
+`"$TD_PY" tests/run_all.py 2>&1 | rg -v '^\s*PASS '` from the repo or worktree root prints only
+the failures and the summary line: 545 fast tests, 0 fail (2026-09-11, sandbox). Do not wrap this
+runner in `rtk test`: rtk cannot parse its output and keeps only the last 5 lines, which can hide
+a FAIL. `TD_SLOW=1` adds nothing: no module sets `SLOW = True`. `tests/test_engines.py` is
 the self-contained two-player smoke test. `tests/test_app_smoke.py` and `tests/test_mapfig.py`
 need `.venv-app` to run for real; under `.venv` they skip, and `run_all.py -k` cannot select them
 there because discovery imports every `test_*.py` before filtering and `.venv-app` has no
