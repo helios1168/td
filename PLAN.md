@@ -17,6 +17,10 @@ follows once solve times are known.
 
 ## Next step
 
+Handed off 2026-09-11 to a new multi-agent setup: start at `HANDOFF.md` (setup, the forced
+study's results, the next run, open decisions). The study's scripts are tracked in
+`tools/full_problem_runs/`.
+
 Checkpoint 2026-09-11 night (head `3e9d002` plus this file; the user pushes; no merge into
 main unasked; the user pushed the branch at `26142e0` earlier today). Commits since the
 afternoon checkpoint `6c9589a`, in order:
@@ -149,7 +153,7 @@ may split geographically across plans. Route S versus J is decided from the timi
 
 ## Files owned / forbidden
 
-Owned: `PLAN.md`, `docs/FULL_PROBLEM.md`, `docs/units/U14-fullprob.md`, `td/channels.py`,
+Owned: `PLAN.md`, `HANDOFF.md`, `tools/full_problem_runs/`, `docs/FULL_PROBLEM.md`, `docs/units/U14-fullprob.md`, `td/channels.py`,
 `td/stage2_state.py`, `td/solvers/level0.py`, `tools/full_plan.py`, `tools/verify/U14-fullprob/`,
 `tests/test_instance_v2.py`, `tests/test_instance_export_v2.py`, `tests/test_channels.py`,
 `tests/test_stage2_state.py`, `tests/test_level0.py`, `tests/test_full_plan_cli.py`; small
