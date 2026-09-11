@@ -110,7 +110,8 @@ def main(argv=None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 1
     with open(args.out, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=COLUMNS)
+        # "\n" endings: a reader that breaks on "\r" as well shows a blank row after each line
+        w = csv.DictWriter(fh, fieldnames=COLUMNS, lineterminator="\n")
         w.writeheader()
         w.writerows(table)
     print(f"wrote {args.out}: {len(table)} rows, {len(names)} scenario(s)", flush=True)

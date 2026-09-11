@@ -1029,7 +1029,7 @@ def main(argv=None):
         # the map `mask_reps` keeps local, written only on request and only next to a
         # successful export: the one file that ties a surrogate back to a person
         with open(a.rep_map, "w", encoding="utf-8", newline="") as fh:
-            w = csv.writer(fh)
+            w = csv.writer(fh, lineterminator="\n")
             w.writerow(["rep_surrogate", "rep_id", "firm_surrogate", "firm"])
             for rep, sur in sorted(rep_map.items(), key=lambda kv: kv[1]):
                 firm = raw_firm.get(rep, "")
