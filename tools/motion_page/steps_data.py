@@ -5,26 +5,38 @@ masses leave only as state aggregates in tau units.
 """
 import csv
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, "/Users/ntlee/projects/td/.claude/worktrees/vbl/tools")
-sys.path.insert(0, "/Users/ntlee/projects/td/.claude/worktrees/vbl")
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+# battery/results, data/geo and the descaled instance are gitignored and hub-only
+# (CLAUDE.md); a worktree carries none, so TD_DATA_ROOT points a run there at the hub's copy.
+DATA_ROOT = Path(os.environ.get("TD_DATA_ROOT", REPO))
+# borders_report and this state_splits driver, at the time this script was written, existed
+# only on the vbl worktree; TD_VBL_ROOT overrides if that worktree moves or is recreated
+# elsewhere. The default assumes the hub sits at TD_REPO (or ~/projects/td) with vbl beside it.
+HUB = Path(os.environ.get("TD_REPO", Path.home() / "projects" / "td"))
+VBL = Path(os.environ.get("TD_VBL_ROOT", HUB / ".claude" / "worktrees" / "vbl"))
+
+sys.path.insert(0, str(VBL / "tools"))
+sys.path.insert(0, str(VBL))
 import borders_report  # noqa: E402
 import state_splits as drv  # noqa: E402
 from td import geo  # noqa: E402
 from td.solvers import centers, state_splits as ss  # noqa: E402
 
-ROOT = Path("/Users/ntlee/projects/td/battery/results/borders_k18_v2_20260907")
-OUT = Path("/Users/ntlee/projects/td/battery/results/motion_page/steps.json")   # hub, gitignored
+ROOT = DATA_ROOT / "battery" / "results" / "borders_k18_v2_20260907"
+OUT = DATA_ROOT / "battery" / "results" / "motion_page" / "steps.json"   # hub, gitignored
 OUT.parent.mkdir(parents=True, exist_ok=True)
-GEO = "/Users/ntlee/projects/td/data/geo"
+GEO = str(DATA_ROOT / "data" / "geo")
 DELTA, ETA = 0.05, 0.01
 
-ctx = borders_report.load_committed("/Users/ntlee/projects/td/instance_descaled_v2.json.gz",
+ctx = borders_report.load_committed(str(DATA_ROOT / "instance_descaled_v2.json.gz"),
                                     str(ROOT.parent / "draw_k18_v2_20260904/k18/draw.csv"), GEO)
 M_s, D, edges, tau, C0 = drv._state_masses_and_moments(ctx, GEO)
 S, k = D.shape

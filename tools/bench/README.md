@@ -11,8 +11,8 @@ The `cpsat` engine runs out of process in a third virtualenv, so `ortools` never
 `.venv` pins the app and the zip50 anchor are frozen against.  Build it from the hub root:
 
 ```
-uv venv --python 3.13 /Users/ntlee/projects/td/.venv-opt
-uv pip install --python /Users/ntlee/projects/td/.venv-opt/bin/python3 \
+uv venv --python 3.13 "$(git rev-parse --show-toplevel)/.venv-opt"
+uv pip install --python "$(git rev-parse --show-toplevel)/.venv-opt/bin/python3" \
     -r tools/bench/requirements-opt.txt
 ```
 

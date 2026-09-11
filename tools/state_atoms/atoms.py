@@ -1,15 +1,22 @@
 """Read-only: v2 state-atom facts for the problem-statement artifact."""
 import csv
 import json
+import os
 import sys
 from collections import defaultdict
+from pathlib import Path
 
-sys.path.insert(0, "/Users/ntlee/projects/td")
+REPO = Path(__file__).resolve().parents[2]
+# battery/results and the descaled instance are gitignored and hub-only (CLAUDE.md); a
+# worktree carries neither, so TD_DATA_ROOT points a run there at the hub's copy.
+DATA_ROOT = Path(os.environ.get("TD_DATA_ROOT", REPO))
+
+sys.path.insert(0, str(REPO))
 import networkx as nx
 
 from td import instance
 
-d = instance.load_descaled("/Users/ntlee/projects/td/instance_descaled_v2.json.gz")
+d = instance.load_descaled(str(DATA_ROOT / "instance_descaled_v2.json.gz"))
 G = d.G
 K = 18
 
@@ -59,7 +66,7 @@ out["state_graph"] = {
 
 # how the delivered draw fragments states
 draw = {}
-with open("/Users/ntlee/projects/td/battery/results/draw_k18_v2_20260904/k18/draw.csv") as fh:
+with open(DATA_ROOT / "battery/results/draw_k18_v2_20260904/k18/draw.csv") as fh:
     for row in csv.DictReader(fh):
         draw[row["zip"]] = row["district"]
 per_state = defaultdict(set)

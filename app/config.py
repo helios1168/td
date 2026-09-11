@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-REPO = Path(os.environ.get("TD_REPO", "/Users/ntlee/projects/td"))
+REPO = Path(os.environ.get("TD_REPO", Path.home() / "projects" / "td"))
 CODE = Path(__file__).resolve().parents[1]
 
 # Overridable independently of TD_REPO: a worktree has no `.venv` of its own (CLAUDE.md,

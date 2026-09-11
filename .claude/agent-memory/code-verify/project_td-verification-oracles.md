@@ -52,8 +52,9 @@ proves the instance file, map, roster and (θ, λ, filler) are the ones that pro
 which matters because `metrics.json` records an instance path in a *different* worktree.
 
 **Environment traps:**
-- A `wt/*` worktree has **no `.venv`** — use `/Users/ntlee/projects/td/.venv/bin/python3`
-  (three levels up from the worktree, not two).
+- A `wt/*` worktree has **no `.venv`** — use the hub's:
+  `$(dirname "$(git rev-parse --git-common-dir)")/.venv/bin/python3` (`--show-toplevel` gives
+  the worktree itself, not the hub; three levels up from the worktree, not two).
 - Tests: `.venv/bin/python3 tests/run_all.py`, a custom runner (not pytest); 184 fast tests at
   `74eff38`, **237 at `9cfcc2c`** (2026-09-05). `tools/` is not a package: tests load scripts via
   `importlib.util.spec_from_file_location` and must register the module in `sys.modules` for
@@ -63,7 +64,7 @@ which matters because `metrics.json` records an instance path in a *different* w
   `enforce-file-tools.sh`, so put helper scripts under `/tmp` with the **Write** tool and run
   them with the venv python. `battery/` is a **symlink** into the shared checkout, so Write
   refuses to create files there — use `tools/verify/<id>/` for durable artifacts.
-- Type check: `uvx pyright --pythonpath /Users/ntlee/projects/td/.venv/bin/python3 <files>`
+- Type check: `uvx pyright --pythonpath "$(dirname "$(git rev-parse --git-common-dir)")/.venv/bin/python3" <files>`
   (1.1.411 clean on the U7 files).
 - `battery/results/` and `instance_descaled.json.gz` are gitignored; never write under
   `battery/figures/`. Never use Serena from a non-launch worktree.

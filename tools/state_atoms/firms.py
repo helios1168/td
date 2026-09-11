@@ -1,11 +1,18 @@
 """Read-only: what firm labels does v2 carry, and how is book split between them?"""
+import os
 import sys
 from collections import defaultdict
+from pathlib import Path
 
-sys.path.insert(0, "/Users/ntlee/projects/td")
+REPO = Path(__file__).resolve().parents[2]
+# the descaled instance is gitignored and hub-only (CLAUDE.md); a worktree carries none, so
+# TD_DATA_ROOT points a run there at the hub's copy.
+DATA_ROOT = Path(os.environ.get("TD_DATA_ROOT", REPO))
+
+sys.path.insert(0, str(REPO))
 from td import instance
 
-d = instance.load_descaled("/Users/ntlee/projects/td/instance_descaled_v2.json.gz")
+d = instance.load_descaled(str(DATA_ROOT / "instance_descaled_v2.json.gz"))
 G = d.G
 
 print("firm dict size:", len(d.firm))

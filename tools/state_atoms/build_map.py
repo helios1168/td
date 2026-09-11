@@ -11,23 +11,33 @@ The map shows, per zip, which of the two masked firms holds book there:
 
 Bubble area is proportional to M(z), so the map reads as opportunity, not as headcount.
 """
+import os
 import sys
 from collections import defaultdict
+from pathlib import Path
 
-sys.path.insert(0, "/Users/ntlee/projects/td")
-sys.path.insert(0, "/Users/ntlee/projects/td/tools")
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+# the descaled instance is gitignored and hub-only (CLAUDE.md); a worktree carries none, so
+# TD_DATA_ROOT points a run there at the hub's copy.
+DATA_ROOT = Path(os.environ.get("TD_DATA_ROOT", REPO))
+
+sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "tools"))
 
 from td import geo, instance
 import us_maps
 
-TPL = "/Users/ntlee/.claude/jobs/0d3d17a7/tmp/state-atoms.tpl.html"
-OUT = "/Users/ntlee/.claude/jobs/0d3d17a7/tmp/state-atoms.html"
+# the template lives beside this script (state-atoms.tpl.html); the old literal pointed at a
+# now-gone Claude-session job tmp dir, which was never the tracked source.
+TPL = HERE / "state-atoms.tpl.html"
+OUT = HERE / "state-atoms.html"
 
 W, H = 1000.0, 620.0          # viewBox; the LAEA frame is fitted into this with a margin
 PAD = 14.0
 R_MAX, R_MIN = 13.0, 1.15
 
-d = instance.load_descaled("/Users/ntlee/projects/td/instance_descaled_v2.json.gz")
+d = instance.load_descaled(str(DATA_ROOT / "instance_descaled_v2.json.gz"))
 G = d.G
 
 # ---- per-zip firm book -------------------------------------------------------------------
