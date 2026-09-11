@@ -883,6 +883,45 @@ def test_split_cut_contiguous_defaults_to_the_wh_bundle_and_leaves_others_on_pow
 
 # --------------------------------------------------------------- contiguous_cut, on toy graphs
 
+def test_contiguous_cut_seeds_at_the_east_border_even_when_the_power_share_is_west():
+    """D1's centre and power share are west, but its other state is east of the split."""
+    zips = [f"b{i}" for i in range(6)]
+    G = nx.path_graph(zips + ["e0", "e1"])
+    nx.set_node_attributes(G, {zp: "B" if zp in zips else "E" for zp in G}, "state")
+    xy = {zp: (float(i), 0.0) for i, zp in enumerate(G)}
+    power = {zp: "D1" if i < 3 else "D2" for i, zp in enumerate(zips)}
+    centres = {"D1": xy["b0"], "D2": xy["b0"]}
+    targets = {"D1": 3.0, "D2": 3.0}
+    masses = {zp: 1.0 for zp in zips}
+
+    for body in ({"e0", "e1"}, {"e1"}):
+        labels, dev = cli.contiguous_cut(
+            G, zips, power, masses, targets, {"D1": body, "D2": set()}, centres, xy,
+            other_states={"D1": {"E"}, "D2": set()})
+        assert labels == {zp: "D2" if i < 3 else "D1" for i, zp in enumerate(zips)}
+        assert all(abs(m - t) < 1e-9 for m, t in dev.values())
+        assert nx.is_connected(G.subgraph([zp for zp in zips if labels[zp] == "D1"]))
+        if "e0" in body:
+            assert nx.is_connected(G.subgraph(body | {zp for zp in zips if labels[zp] == "D1"}))
+
+
+def test_contiguous_cut_without_a_border_keeps_the_centre_seed():
+    """An inside district and an outside state with no edge both keep the old cut."""
+    zips = [f"b{i}" for i in range(6)]
+    G = nx.path_graph(zips)
+    G.add_node("e0", state="E")
+    nx.set_node_attributes(G, {zp: "B" for zp in zips}, "state")
+    xy = {zp: (float(i), 0.0) for i, zp in enumerate(zips)}
+    power = {zp: "D1" if i < 3 else "D2" for i, zp in enumerate(zips)}
+    for body, states in ((set(), set()), ({"e0"}, {"E"})):
+        labels, dev = cli.contiguous_cut(
+            G, zips, power, {zp: 1.0 for zp in zips}, {"D1": 3.0, "D2": 3.0},
+            {"D1": body, "D2": set()}, {"D1": xy["b0"], "D2": xy["b5"]}, xy,
+            other_states={"D1": states})
+        assert labels == power
+        assert dev == {"D1": (3.0, 3.0), "D2": (3.0, 3.0)}
+
+
 def test_contiguous_cut_reunites_a_detached_zip_and_seeds_a_wholly_inside_district_at_its_centre():
     """A five-zip path b0-b1-b2-b3-b4 in split state B, plus o1 outside B joined to b0 (D1's
     body).  The power diagram gave D1 the detached b0, b3, b4 and D2 the middle b1, b2, an

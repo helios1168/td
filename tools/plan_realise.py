@@ -293,7 +293,8 @@ def realise_prepare(bundle: str, recs: list, proj, shares: dict, geo_cache: str)
 
 
 def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: dict,
-                   bodies: dict, centres: dict, xy: dict, other: str | None = None) -> tuple:
+                   bodies: dict, centres: dict, xy: dict, other: str | None = None,
+                   other_states: dict | None = None) -> tuple:
     """Cut one split state's zips into `targets` on `G`'s own edges, in place of the power
     diagram.
 
@@ -307,9 +308,10 @@ def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: 
     the state farthest from every real seed.
 
     A real district seeds at every zip of the state the power cut gave it that has a `G` edge
-    into its own body outside the state. With none, either because the district touches no
-    other state at all or because none of its zips in this state happen to sit next to its own
-    body, it seeds at the single zip of the state nearest its centre instead. Seeding claims
+    into its own body outside the state. With none, it seeds at the nearest zip to its centre
+    on that border, or on the border with its other planned states (`other_states`) if its
+    body does not reach this state. On the latter border it prefers its current power labels.
+    With no border it keeps the nearest-to-centre seed. Seeding claims
     zips in a fixed order, real districts by name then `other` last, so two districts never
     claim the same zip.
 
@@ -346,12 +348,18 @@ def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: 
     seeds: dict[str, set] = {}
     real = [dd for dd in districts if dd != other]
     for dd in sorted(real):
-        touch = sorted(zp for zp in present if power_label.get(zp) == dd and zp not in claimed
-                       and any(nb in bodies.get(dd, ()) for nb in G[zp]))
+        pool = [zp for zp in present if zp not in claimed]
+        border = [zp for zp in pool if any(nb in bodies.get(dd, ()) for nb in G[zp])]
+        touch = sorted(zp for zp in border if power_label.get(zp) == dd)
         if touch:
             seeds[dd] = set(touch)
         else:
-            pool = [zp for zp in present if zp not in claimed]
+            states = (other_states or {}).get(dd, ())
+            if not border:
+                border = [zp for zp in pool
+                          if any(G.nodes[nb].get("state") in states for nb in G[zp])]
+                border = [zp for zp in border if power_label.get(zp) == dd] or border
+            pool = border or pool
             seeds[dd] = {nearest(pool, centres[dd])} if pool else set()
         claimed |= seeds[dd]
 
@@ -444,8 +452,11 @@ def realise_finish(bundle: str, recs: list, prep: dict, rounds: int, *, G,
                                  if lab == names[j] and zp not in zips_s}
                      for j in touching}
             centres = {names[j]: (float(centers[j][0]), float(centers[j][1])) for j in touching}
+            other_states = {names[j]: {st for t, st in enumerate(state_list)
+                                       if t != s and z[t, j]} for j in touching}
             new_labels, dev = contiguous_cut(G, zips_s, label_names, M_by_zip, targets, bodies,
-                                             centres, xy_dict, other=other_key)
+                                             centres, xy_dict, other=other_key,
+                                             other_states=other_states)
             label_names.update(new_labels)
             cut_deviation[code] = {dd: dict(mass=m, target=t) for dd, (m, t) in dev.items()}
 
