@@ -113,6 +113,14 @@ on G1 k 14. What remains, from `unrepaired.py`:
 Contiguity is measured on the Voronoi cell graph of the zip points; the maps draw real ZCTA
 polygons, so a district can look scattered on screen and still be connected (CLAUDE.md trap 23).
 
+## The national-only study (in flight)
+
+The user's correction after the FI 21 run: its point is to find which states must get a
+national-only district, and national-only districts must not spread into non-group states. The
+setup, the grid in flight (`grid_20260911_fi21_P5`), the findings so far and the resume steps
+are in `PLAN.md ## Next step`; figures land in
+`battery/results/full_problem/fi21_national_only_summaries/`. Bead `td-9ek.20.8`.
+
 ## The FI 21 run (2026-09-11 late night, done)
 
 National k 10 to 16, WH 11, FI 21, full rules with caps CA 3 TX 2 NY 2 FL 2 and band break CA

@@ -17,6 +17,34 @@ follows once solve times are known.
 
 ## Next step
 
+**Resume here (2026-09-11, national-only study, bead `td-9ek.20.8`).** The user's correction:
+the FI 21 run exists to find which states must get a national-only (N) district. Setup: N
+districts may hold only a pool (`--national-states`, `b6d7deb`), the N band divides the pool's
+national (`8de37ed`), and a state with all its national left after seq_N may take only WH_PLUS /
+FI_PLUS / WHFI_PLUS (`cca6be9`); `e7f5bb9` fixes `cec2617`'s check firing on cover_merged.
+Grid in flight: `battery/results/full_problem/grid_20260911_fi21_P5` (14 cells, G1 and G2 pools
+plus DE DC SC CA, k 10 to 16, WH 11, FI 21, caps CA 3 TX 2 NY 2 FL 2, band break CA TX NY FL,
+other-first MT WA WY), run from `/Users/Shared/sv-ntlee/tmp/snap_ns` with the old realiser. A
+watcher (`/Users/Shared/sv-ntlee/tmp/p_watch.sh`) re-realises each ok cell with the old
+contiguous cut, draws the summary with `--groups`, and copies it to
+`battery/results/full_problem/fi21_national_only_summaries/` as `1x`/`2x ... national k`.
+
+To do on resume: check the first P5 cell passes seq_FI without the plus-pair fallback
+("plus-pair:" line in `step_full_plan.log`); when cells finish run
+`/Users/Shared/sv-ntlee/tmp/national_only_report.py <grid>` (per group state: wholly, partly or
+not in N; flags any non-pool state in N) and check unheld national in `step_plan_realise.log`;
+write the answer table into the figures folder README and `HANDOFF.md`. If P5 fails at seq_FI,
+the tested alternatives are CA cap 6 instead of CA in the pool, or plus-pair off
+(`/Users/Shared/sv-ntlee/tmp/probe_fi.py`).
+
+Found so far (G1, k 10 to 13): every G1 state wholly in N except IL (no G1 neighbour), AZ and
+CO (AZ + CO below the floor); DE, DC, SC are enclaves inside G1 and must be in the pool; CA must
+be in the pool under cap 3. Superseded grids `_P_nocover` (non-pool national unheld, 2,891
+units), `_P2` / `_P3` (hard cover rule, infeasible), `_P4` (fell back to the plus-pair retry).
+
+Also open: the border-aware seed starves a district's FL or NY share in 7 of 22 cells
+(`td-9ek.20.7`, U n16 N_11 at mass 114); the "25 to 15" pieces figure below comes with that.
+
 FI 21 run, 2026-09-11 late night (sandvault session; beads `td-9ek.20.*`). National k 10 to 16,
 WH 11, FI 21 on v4 CONUS, full rules with caps CA 3 TX 2 NY 2 FL 2 and band break CA TX NY FL.
 Results under `battery/results/full_problem/grid_20260911_fi21_*` (a `_newcut` twin of each grid
