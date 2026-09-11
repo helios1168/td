@@ -240,6 +240,27 @@ def test_surrogate_ids_of_national_reps_are_unchanged_by_the_new_channels():
     assert v2["firm"]["R0003"] == "F2"
 
 
+def test_rep_map_writes_the_surrogate_to_raw_id_map_only_when_asked():
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp), out="one")
+        assert rc == 0 and not os.path.exists(os.path.join(tmp, "rep_map.csv"))
+        path = os.path.join(tmp, "rep_map.csv")
+        rc2, payload2, txt, _ = _export(mod, tmp, *_v2_inputs(tmp), out="two",
+                                        extra=["--rep-map", path])
+        assert rc2 == 0 and "4 rep(s)" in txt
+        with open(path, newline="") as fh:
+            rows = list(csv.DictReader(fh))
+    assert [r["rep_surrogate"] for r in rows] == ["R0000", "R0001", "R0002", "R0003"]
+    assert set(r["rep_surrogate"] for r in rows) == set(payload2["firm"])
+    assert {r["rep_id"] for r in rows} == {"r_a", "r_b", "r_c", "r_d"}
+    # the firm columns say the same thing the instance says about each surrogate
+    for r in rows:
+        assert payload2["firm"][r["rep_surrogate"]] == r["firm_surrogate"]
+    raw = {r["rep_id"]: r["firm"] for r in rows}
+    assert raw == {"r_a": "FA", "r_b": "FB", "r_c": "FA", "r_d": "FC"}
+
+
 def test_rep_ids_flag_accepts_the_earlier_export_and_refuses_a_changed_book():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:

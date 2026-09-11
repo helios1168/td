@@ -41,6 +41,7 @@ It is one file. **Read it before you run it** — that is the point of it being 
 | `--states` | `zip_code, state` | optional |
 | `--filler-key KEY` | — | repeatable; a `rep_id` that marks a **vacancy**, not a person |
 | `--rep-ids PATH` | — | optional; an earlier export to check the surrogate ids against |
+| `--rep-map PATH` | — | optional; write the raw rep id to surrogate map here (`rep_surrogate, rep_id, firm_surrogate, firm`). Confidential: it stays on this machine |
 
 Both `--sales` and `--opportunity` may carry one more column, `current_channel`. See
 "More than one channel" below: with it the tables go long by (zip, channel) and the export
@@ -225,6 +226,11 @@ python3 export_instance.py export \
     --impute-missing-m --repair-headroom \
     --out ./out
 ```
+
+To tie a scenario's surrogate rep ids back to people, run the same export again with
+`--rep-map rep_map.csv`: the ids are a deterministic ranking of the same inputs, so the map
+holds for the file already in use. The map is confidential; it never enters the clone, and
+`tools/scenario_export.py --rep-map` reads it wherever it is kept.
 
 The three-channel extract is the source of truth from 2026-09-10 on and the single-channel
 instance is retired, so its national opportunity values may differ from the old ones. Do not

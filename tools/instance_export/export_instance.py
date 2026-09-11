@@ -33,6 +33,7 @@ Exit codes:  0 ok | 2 a guard fired, nothing written | 3 validation failed | 4 u
 from __future__ import annotations
 
 import argparse
+import csv
 import gzip
 import hashlib
 import json
@@ -964,6 +965,9 @@ def main(argv=None):
                         "ranked first. This "
                         "asserts they did, and stops the export if that channel's book "
                         "moved. Compares only the zips that file kept.")
+    p.add_argument("--rep-map", default=None, metavar="PATH",
+                   help="write the raw rep id to surrogate id map here (rep_surrogate, rep_id, "
+                        "firm_surrogate, firm); confidential, it stays on this machine")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     a = p.parse_args(argv)
 
@@ -992,7 +996,8 @@ def main(argv=None):
         print("\nrefusing to export while validation fails.", file=sys.stderr)
         return 3
 
-    mask_reps(inst)
+    raw_firm = dict(inst.firm)
+    rep_map, firm_map = mask_reps(inst)
     if a.rep_ids:
         try:
             c = check_rep_ids(inst, a.rep_ids)
@@ -1020,6 +1025,16 @@ def main(argv=None):
     except GuardError as e:
         print(f"GUARD: {e}\nnothing written.", file=sys.stderr)
         return 2
+    if a.rep_map:
+        # the map `mask_reps` keeps local, written only on request and only next to a
+        # successful export: the one file that ties a surrogate back to a person
+        with open(a.rep_map, "w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["rep_surrogate", "rep_id", "firm_surrogate", "firm"])
+            for rep, sur in sorted(rep_map.items(), key=lambda kv: kv[1]):
+                firm = raw_firm.get(rep, "")
+                w.writerow([sur, rep, firm_map.get(firm, "F0"), firm])
+        print(f"rep map: {len(rep_map)} rep(s) -> {a.rep_map} (confidential)")
     return 0
 
 

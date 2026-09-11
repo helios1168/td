@@ -119,6 +119,7 @@ already split into the three sub-channels (`meta["channel_groups"]`). Two comman
     .venv/bin/python3 tools/plan_realise.py RUN --geo-cache data/geo --sweep-zips
     .venv/bin/python3 tools/plan_maps.py RUN --geo-cache data/geo
     .venv/bin/python3 tools/plan_summary.py RUN --geo-cache data/geo --no-cache
+    .venv/bin/python3 tools/scenario_export.py --out scenarios.csv --scenario NAME RUN ...
 
 the second block with rank 1's own flags (`battery/results/full_problem/`, the grid's own
 `params.json`), `instance` pointed at the new CONUS file. Nothing else changes: `fine_split`
