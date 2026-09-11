@@ -143,6 +143,25 @@ def _parse_k_fixed(text: str) -> dict[str, int]:
     return out
 
 
+def _parse_band_target(text: str) -> dict[str, float]:
+    """`"N=481.8,FI=433.6"` -> `{"N": 481.8, "FI": 433.6}`, a target mass per bundle in the
+    instance's descaled units; the bundle names are checked in `_main`."""
+    out = {}
+    for item in text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        name, _, mass = item.partition("=")
+        try:
+            value = float(mass)
+        except ValueError:
+            value = 0.0
+        if value <= 0.0:
+            raise argparse.ArgumentTypeError(f"expected BUNDLE=MASS with MASS > 0, got {item!r}")
+        out[name.strip()] = value
+    return out
+
+
 def _parse_states(text: str) -> list[str]:
     """`"MT, WA,WY"` -> `["MT", "WA", "WY"]`, upper-cased; membership is checked in `_main`."""
     out = [item.strip().upper() for item in text.split(",") if item.strip()]
@@ -282,6 +301,12 @@ def build_argparser() -> argparse.ArgumentParser:
                          "most N and lets a pass drop districts a cap makes infeasible. Both "
                          "band a bundle on its own mean M_B / N under --band-mode per-bundle "
                          "(default fixed)")
+    ap.add_argument("--band-target", type=_parse_band_target, default=None,
+                    metavar="B=MASS,B=MASS,...",
+                    help="band each bundle on this target mass (descaled units) instead of its "
+                         "own mean: the band is (band_lo, band_hi) * MASS and the count is free, "
+                         "ceil(mass / L) slots of which the cover pass uses what it needs. Every "
+                         "bundle a stage solves must be named (default none)")
     ap.add_argument("--serve-all-states", action="store_true",
                     help="no state with mass ends outside every channel: rows sum_j z_sj >= 1 "
                          "on the joint model; on route S a last all-channel stage allocates "
@@ -720,6 +745,16 @@ def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mod
             if st not in allowed:
                 shut[s, [cidx[c] for c in _bundle_channels("N") if c in cidx]] = 1.0
         avail["N"] = level0.available_mass(cells, {"N": _bundle_channels("N")}, prior=shut)["N"]
+    target = getattr(args, "band_target", None)
+    if target:
+        # `--band-target`: the band is the named mass, whatever the count; every bundle the
+        # stage solves must be named, since a stage cannot mix a target with a mean
+        missing = [b for b in bundle_names if b not in target]
+        if missing:
+            raise ValueError(f"--band-target names no mass for bundle(s) {missing}")
+        record = {b: dict(tau=float(target[b]), L=band_lo * float(target[b]),
+                          U=band_hi * float(target[b]), source="target") for b in bundle_names}
+        return {b: (rec["L"], rec["U"]) for b, rec in record.items()}, record
     fixed = args.k_fixed or {}
     taus = {b: avail[b] / int(fixed[b]) for b in bundle_names
             if mode == "per-bundle" and int(fixed.get(b, 0)) > 0 and avail[b] > 0}
@@ -728,7 +763,8 @@ def _stage_bands(cells, bundle_names, args, *, band_lo, band_hi, tau, prior, mod
     record = {}
     for b in bundle_names:
         t = taus.get(b, shared) if mode == "per-bundle" else float(tau)
-        record[b] = dict(tau=t, L=band_lo * t, U=band_hi * t)
+        source = "global" if mode != "per-bundle" else ("count" if b in taus else "shared")
+        record[b] = dict(tau=t, L=band_lo * t, U=band_hi * t, source=source)
     if mode != "per-bundle":
         return None, record
     return {b: (rec["L"], rec["U"]) for b, rec in record.items()}, record
@@ -1394,12 +1430,23 @@ def _main(args, T: telemetry.Timings) -> int:
     # a per-bundle band needs a count to divide by, so it is the default exactly when there is
     # one.  Asked for without any it would leave every bundle on the national tau and record
     # `band_mode: per-bundle` over a run that is global, which a grid reader cannot see through
-    if args.band_mode == "per-bundle" and not args.k_fixed:
-        raise ValueError("--band-mode per-bundle needs --k-fixed: a bundle's own mean is its "
-                         "own mass over its own count, and there is no count to divide by")
-    band_mode = args.band_mode or ("per-bundle" if args.k_fixed else "global")
+    unknown = [b for b in (args.band_target or {}) if b not in enabled]
+    if unknown:
+        raise ValueError(f"--band-target: bundle(s) {unknown} not among {list(enabled)}")
+    if args.band_target and args.band_mode == "global":
+        raise ValueError("--band-target bands each bundle on its own target; --band-mode "
+                         "global contradicts it")
+    if args.band_mode == "per-bundle" and not (args.k_fixed or args.band_target):
+        raise ValueError("--band-mode per-bundle needs --k-fixed or --band-target: a bundle's "
+                         "own mean is its own mass over its own count, and there is no count "
+                         "to divide by")
+    band_mode = args.band_mode or ("per-bundle" if (args.k_fixed or args.band_target)
+                                   else "global")
     print(f"band: mode={band_mode} lo={band_lo:.6g} hi={band_hi:.6g} "
           f"(delta={args.delta})", flush=True)
+    if args.band_target:
+        print("band target: " + ", ".join(f"{b} {m:.6g}" for b, m in args.band_target.items()),
+              flush=True)
     if args.max_splits:
         print("max splits: " + ", ".join(f"{st} {n}" for st, n in args.max_splits.items()),
               flush=True)
@@ -1445,6 +1492,7 @@ def _main(args, T: telemetry.Timings) -> int:
         incumbency=os.path.abspath(args.incumbency) if args.incumbency else None,
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
+        band_target=args.band_target,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
         other_first=args.other_first, force_national=args.force_national,
         cover_national=args.cover_national, national_states=args.national_states,

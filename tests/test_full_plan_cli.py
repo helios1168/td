@@ -621,6 +621,42 @@ def test_delta_and_k_fixed_band_a_bundle_on_its_own_mean():
             assert "--k-fixed" in str(exc)
 
 
+def test_band_target_pins_each_bundle_s_band_and_frees_the_count():
+    """`--band-target ... --delta 0.1`: every bundle is banded on its named mass at 1 +/- 0.1,
+    no count is fixed, and the model opens ceil(M^max_B / L_B) slots of which the cover pass
+    uses what it needs.  The toy's national mass is 24, so N gets ceil(24 / 5.4) = 5 slots and
+    fills at least four of them (24 / 6.6 > 3).  Bands record `source: target`.  A stage bundle
+    without a target is refused by name, and `--band-mode global` contradicts it.
+    """
+    target = "N=6,WH=5,WH_PLUS=5,FI=4,FI_PLUS=4,WHFI=5"
+    with tempfile.TemporaryDirectory() as tmp:
+        plan = _check_plan(_run(tmp, "sequential", ["--delta", "0.1", "--band-target", target]))
+        with open(os.path.join(tmp, "out_sequential", "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["band_mode"] == "per-bundle" and params["k_fixed"] is None
+        assert params["band_target"] == {"N": 6.0, "WH": 5.0, "WH_PLUS": 5.0, "FI": 4.0,
+                                         "FI_PLUS": 4.0, "WHFI": 5.0}
+        for b, t in (("N", 6.0), ("WH", 5.0), ("FI", 4.0), ("WHFI", 5.0)):
+            rec = params["bands"][b]
+            assert rec["source"] == "target" and abs(rec["tau"] - t) < 1e-9
+            assert abs(rec["L"] - 0.9 * t) < 1e-9 and abs(rec["U"] - 1.1 * t) < 1e-9
+        n_slots = [rec for rec in plan["slots"] if rec["bundle"] == "N"]
+        assert len(n_slots) == 5, "ceil(24 / 5.4) slots opened for N"
+        assert sum(rec["used"] for rec in n_slots) >= 4
+        assert all(abs(rec["L"] - 5.4) < 1e-9 and abs(rec["U"] - 6.6) < 1e-9 for rec in n_slots)
+
+        try:
+            _run(tmp, "sequential", ["--band-target", "N=6,WH=5,FI=4,FI_PLUS=4,WHFI=5"])
+            raise AssertionError("a stage bundle without a target must be refused")
+        except ValueError as exc:
+            assert "WH_PLUS" in str(exc)
+        try:
+            _run(tmp, "sequential", ["--band-target", target, "--band-mode", "global"])
+            raise AssertionError("--band-mode global contradicts --band-target")
+        except ValueError as exc:
+            assert "--band-target" in str(exc)
+
+
 def _write_v2_all_residual(path: str) -> None:
     """Three states, S0 isolated in the rook graph (`MERGED_ADJ`), for `--catch-all-bundle all`.
 
