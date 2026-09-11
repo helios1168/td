@@ -199,7 +199,8 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
                  D=None, eps: float | None = None,
                  order_mass: bool | None = None,
                  fixed_used: dict[str, int] | None = None,
-                 max_used: dict[str, int] | None = None) -> Level0Problem:
+                 max_used: dict[str, int] | None = None,
+                 dist_max_state: dict[int, float] | None = None) -> Level0Problem:
     """Assemble the level-0 MILP.  `cells` carries `M (S, C)`, `channels` and `state_list`
     (`td.channels.CellTable`, duck-typed); `bundles` maps a name to a tuple of channels;
     `edges` is the state rook graph over indices `0..S-1`, undirected, once per pair.
@@ -239,6 +240,13 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     free root allows a diameter rather than a radius: those slots take the `cap_dist` pair rows
     at `2 radius_max` instead.  `dist_max` still applies to every slot, so a slot's pair
     threshold is the tighter of the two.
+
+    `dist_max_state` maps a state index to its own km and relaxes `dist_max` pair by pair: a
+    pair `(a, b)` may share a slot up to `max(dist_max, dist_max_state[a], dist_max_state[b])`
+    apart, so one sparse state can reach further without loosening the cap between every
+    other pair.  It never tightens `dist_max` and needs it; the radius rule above still takes
+    the tighter of the pair's threshold and `2 radius_max` on a rootless slot.  Unset, every
+    row is what it was.
 
     `fixed_used` maps a bundle name to a count: the first `count` slots of that bundle get
     `u_j` fixed at 1, so the passes must use them (a count above the bundle's slot count is
@@ -315,6 +323,11 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
         raise ValueError("dist_max needs state_xy")
     if radius_max is not None and state_xy is None:
         raise ValueError("radius_max needs state_xy")
+    if dist_max_state and dist_max is None:
+        raise ValueError("dist_max_state relaxes dist_max per state and needs it")
+    for s in (dist_max_state or {}):
+        if not 0 <= int(s) < S:
+            raise ValueError(f"dist_max_state names state {s}, out of range")
     pairs_a = list(anchors.items()) if isinstance(anchors, dict) else list(anchors or ())
     for s, j in pairs_a:
         if not (0 <= s < S and 0 <= j < K):
@@ -439,15 +452,20 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     if dist_max is not None or radius_max is not None:
         xy = np.asarray(state_xy, float).reshape(S, -1)
         dist = np.sqrt(((xy[:, None, :] - xy[None, :, :]) ** 2).sum(axis=2))
-        # the pair threshold per slot: `dist_max` everywhere, and `2 radius_max` on a slot
-        # whose root is free, since a free root allows a diameter and not a radius
+        # the threshold per (pair, slot): the pair's own `dist_max` (the larger of its two
+        # states' `dist_max_state` overrides where one is given) everywhere, and `2 radius_max`
+        # on a slot whose root is free, since a free root allows a diameter and not a radius
         thresh = np.full(K, np.inf)
         if radius_max is not None:
             thresh[root_of < 0] = 2.0 * float(radius_max)
-        if dist_max is not None:
-            thresh = np.minimum(thresh, float(dist_max))
         ai, bi = np.triu_indices(S, k=1)
-        pi, ji = np.nonzero(dist[ai, bi][:, None] > thresh[None, :])
+        pair_t = np.full(len(ai), np.inf)
+        if dist_max is not None:
+            own = np.full(S, float(dist_max))
+            for s, km in (dist_max_state or {}).items():
+                own[int(s)] = max(own[int(s)], float(km))
+            pair_t = np.maximum(own[ai], own[bi])
+        pi, ji = np.nonzero(dist[ai, bi][:, None] > np.minimum(pair_t[:, None], thresh[None, :]))
         P = len(pi)
         # z_sj + z_s'j <= 1 for every far pair (s, s') and every slot j it is far on.  One row
         # per (pair, slot): a pair index here would let `_block` sum the slots into a single row
@@ -560,6 +578,28 @@ def forbid_bundle(problem: Level0Problem, s: int, bundle: str) -> Level0Problem:
         for off in (new.off_z, new.off_y):
             new.var_lb[off + s * new.k + j] = 0.0
             new.var_ub[off + s * new.k + j] = 0.0
+    return new
+
+
+def require_cover(problem: Level0Problem, s: int, channels) -> Level0Problem:
+    """A copy of `problem` where state `s` must be served in full on `channels`: the cover
+    row of each `(s, c)` gets its lower bound raised to `cover_ub[s, c]`, the whole share the
+    earlier stages left.  A channel the model does not carry is skipped.  Paired with
+    `forbid_bundle` on every other bundle carrying the channel it says which bundle must take
+    all of it (`--force-national`: pure `N` holds the state's national).  Uniform across a
+    bundle's slots like `forbid_bundle`, so both orderings stay valid.  The bound is on a row,
+    and `greedy_plan` does not aim for it: a greedy point that falls short is refused by
+    `check_point`, and the driver then solves cold.  A copy for the same reason as
+    `forbid_bundle`."""
+    if not (0 <= s < problem.n_state):
+        raise ValueError(f"state {s} out of range")
+    new = dataclasses.replace(problem, lb=problem.lb.copy())
+    lo, _ = new.rows["cover"]
+    C = len(new.channels)
+    for c in channels:
+        if c in new.channels:
+            ci = new.channels.index(c)
+            new.lb[lo + s * C + ci] = new.cover_ub[s, ci]
     return new
 
 

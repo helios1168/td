@@ -169,6 +169,27 @@ def _parse_caps(text: str) -> dict[str, int]:
     return out
 
 
+def _parse_dist_caps(text: str) -> dict[str, float]:
+    """`"MT=1400,wy=1300"` -> `{"MT": 1400.0, "WY": 1300.0}`: `_parse_caps` with positive km
+    values; membership is checked in `_main`."""
+    out = {}
+    for item in text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        name, _, km = item.partition("=")
+        try:
+            value = float(km)
+        except ValueError:
+            value = float("nan")
+        if not name.strip() or not value > 0:
+            raise argparse.ArgumentTypeError(f"expected STATE=KM, got {item!r}")
+        out[name.strip().upper()] = value
+    if not out:
+        raise argparse.ArgumentTypeError("expected at least one STATE=KM")
+    return out
+
+
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("instance", help="the descaled instance (.json.gz), format 1 or 2")
@@ -216,6 +237,11 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--dist-max", type=float, default=None, metavar="KM",
                     help="driver geo: two states more than KM apart by centroid may not share "
                          "a slot (needs the state polygons from --geo-cache)")
+    ap.add_argument("--dist-max-state", type=_parse_dist_caps, default=None,
+                    metavar="ST=KM,ST=KM,...",
+                    help="relax --dist-max per state: a pair of states may share a slot up to "
+                         "the larger of --dist-max and either state's own KM apart (e.g. "
+                         "MT=1400,WY=1300). Needs --dist-max (default none)")
     ap.add_argument("--radius-max", type=float, default=None, metavar="KM",
                     help="driver geo: a slot reaches at most KM from its own root by state "
                          "centroid, as a bound on z; a slot whose root is free takes the "
@@ -267,6 +293,12 @@ def build_argparser() -> argparse.ArgumentParser:
                          "most one district per state named; the channel stages then run on "
                          "what is left. The route-S answer to a state no channel can serve "
                          "on its own under a cap (default none)")
+    ap.add_argument("--force-national", type=_parse_states, default=None, metavar="ST,ST,...",
+                    help="these states' national (N_WH and N_FI) is held whole by pure "
+                         "national (N) districts: no other bundle carrying national may take "
+                         "it in any stage, and the model carrying N must cover all of it. "
+                         "Their WH and FI stay free. A state may not also be in --other-first "
+                         "(default none)")
     ap.add_argument("--other-floor", type=float, default=1.0, metavar="F",
                     help="the catch-all stage's band floor as a fraction of L: an 'other' "
                          "district, one person over every channel of a sparse region, may "
@@ -534,7 +566,7 @@ def _plan_object(slots: list[dict], state_list: list[str]):
 
 
 # ------------------------------------------------------------------------------------- failures
-def _write_failure(out: str, stage: str, exc, solve_s: float) -> str:
+def _write_failure(out: str, stage: str, exc, solve_s: float, extra: dict | None = None) -> str:
     """The record `tools/state_splits.py::_write_failure` writes, for the same reader.
 
     `app/headline.py::failure` keys off `reason` (`infeasible` is a proof, `no_incumbent` is a
@@ -543,7 +575,8 @@ def _write_failure(out: str, stage: str, exc, solve_s: float) -> str:
 
     `td.solvers.level0.solve_passes` attaches `passes`, the log up to the pass that died, when
     it has one; the key is only written then, so a failure from anywhere else keeps exactly
-    the record `tools/state_splits.py` writes.
+    the record `tools/state_splits.py` writes.  `extra` is added the same way, only when a
+    caller has one (`--force-national`'s `forced_below_floor`, from `_run_passes`).
     """
     path = os.path.join(out, "failure.json")
     rec = dict(cell=stage, delta=None, reason=getattr(exc, "reason", "other"),
@@ -553,6 +586,7 @@ def _write_failure(out: str, stage: str, exc, solve_s: float) -> str:
     passes = getattr(exc, "passes", None)
     if passes:
         rec["passes"] = [dict(p, stage=stage) for p in passes]
+    rec.update(extra or {})
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=2, default=float)
         fh.write("\n")
@@ -609,9 +643,10 @@ def _pass_list(problem, cover_groups, *, cover_last: bool = False) -> list:
 
 
 def _run_passes(problem, passes, args, stage: str, T, *, warm=None,
-                warm_seconds: float = 0.0) -> dict:
+                warm_seconds: float = 0.0, diagnose=None) -> dict:
     """One `solve_passes` call; each pass pins its own value before the next.  `warm` is the
-    greedy point the first pass starts from (`--warm greedy`), `warm_seconds` its build time."""
+    greedy point the first pass starts from (`--warm greedy`), `warm_seconds` its build time.
+    `diagnose`, when given, is called on a failure and its dict joins `failure.json`."""
     from td.solvers import level0
 
     t0 = time.time()
@@ -622,7 +657,8 @@ def _run_passes(problem, passes, args, stage: str, T, *, warm=None,
                                          threads=args.threads, warm_start=warm,
                                          warm_seconds=warm_seconds)
         except ss.SolveFailure as exc:
-            _write_failure(args.out, stage, exc, time.time() - t0)
+            _write_failure(args.out, stage, exc, time.time() - t0,
+                           extra=diagnose() if diagnose else None)
             raise
         ph.note(stage=stage, strategy=args.strategy,
                 passes=[p["name"] for p in result["passes"]])
@@ -696,6 +732,55 @@ def _band_break_allowance(cells, bundle_names, bands, L, U, states, caps, cidx):
     return allowance, U_B
 
 
+def _forced_below_floor(problem, cells, cidx, args, state_xy) -> list[dict]:
+    """`--force-national` on a failed model that carries `N`: for each forced state, an upper
+    bound on the national mass one N district holding it can reach, against this stage's N
+    floor.  The district is any rook-connected set of at most `--n-max` states holding it,
+    every pair inside the pair threshold (`--dist-max` with its `--dist-max-state` overrides,
+    and `2 --radius-max`, which a rooted slot's radius implies too), each member counted at its
+    whole remaining national mass.  A state whose bound is below the floor can sit in no N
+    district, so forcing it is infeasible whatever else the model does.  Printed, and returned
+    as `[{state, bound, floor}]` for `failure.json`.  With no cap at all the sets are the whole
+    connected map and the enumeration is exponential, so it returns [] then.
+    """
+    if args.n_max is None and args.dist_max is None and args.radius_max is None:
+        return []
+    floor = float(problem.L_j[problem.slots["N"][0]])
+    nat = [cidx["N_WH"], cidx["N_FI"]]
+    mass = (np.asarray(cells.M, float)[:, nat] * problem.cover_ub[:, nat]).sum(axis=1)
+    state_list = list(cells.state_list)
+    own = {state_list.index(st): km for st, km in (args.dist_max_state or {}).items()}
+    nbr = _rook_neighbours(problem.edges, problem.n_state)
+    size = args.n_max or problem.n_state
+
+    def near(a, b) -> bool:
+        lim = np.inf
+        if args.dist_max is not None:
+            lim = max(args.dist_max, own.get(a, 0.0), own.get(b, 0.0))
+        if args.radius_max is not None:
+            lim = min(lim, 2.0 * args.radius_max)
+        return lim == np.inf or float(np.sqrt(((state_xy[a] - state_xy[b]) ** 2).sum())) <= lim + 1e-6
+
+    out = []
+    for st in args.force_national:
+        s = state_list.index(st)
+        best, seen, stack = 0.0, set(), [frozenset([s])]
+        while stack:
+            cur = stack.pop()
+            if cur in seen:
+                continue
+            seen.add(cur)
+            best = max(best, float(mass[list(cur)].sum()))
+            if len(cur) < size:
+                grow = set().union(*(nbr[u] for u in cur)) - cur
+                stack.extend(cur | {t} for t in grow if all(near(t, u) for u in cur))
+        if best < floor - 1e-9:
+            out.append(dict(state=st, bound=round(best, 6), floor=round(floor, 6)))
+            print(f"force-national: {st}: one N district holding it reaches at most "
+                  f"{best:.6g}, below the N floor {floor:.6g}", flush=True)
+    return out
+
+
 def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_xy, band=None,
            serve=None, max_used=None, allowance=None, plus_pair_target=None, forbid=None):
     """`build_level0` with the driver's own switches applied.
@@ -704,6 +789,7 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     the mass ordering inside a bundle is only valid while its slots are interchangeable.
     `--n-max`, `--dist-max` and `--radius-max` are honoured under both drivers; `params.json`
     records them either way, so dropping them under `reps` would make that record untrue.
+    `--dist-max-state` goes in with `--dist-max`, its state codes read as this model's indices.
     `--k-fixed`
     applies to the bundles this model carries; a named bundle in another stage's model is
     that stage's business.  `--max-splits` is applied last, over every slot this model
@@ -714,14 +800,22 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     matches the caps that actually bind here.  `forbid` is `[(state index, bundle name), ...]`,
     applied via `level0.forbid_bundle` before `--plus-pair`: route R's per-state moves use their
     own copy of that call, this one is the plus-pair retry's (`_main`), forbidding `WH_PLUS` on
-    the states the WH stage's fold made infeasible for the FI stage.  `--plus-pair` runs last of
+    the states the WH stage's fold made infeasible for the FI stage.  `--force-national` adds
+    to that list every bundle here other than `N` that carries national, for each state it
+    names, and a model carrying `N` must then cover all of the state's remaining national
+    (`level0.require_cover`), a channel with no mass or at most 1e-4 left excepted, the
+    threshold `--sweep` ignores a residual at.  Since every stage's build goes through here,
+    the rule holds on both routes and in every stage.  `--plus-pair` runs last of
     all: it is a no-op unless this model carries `WH_PLUS` and/or `FI_PLUS` (`level0.plus_pair`),
     so applying it to every stage's build is safe.
     """
     from td.solvers import level0
 
+    state_list = list(cells.state_list)
     fixed = {b: n for b, n in (args.k_fixed or {}).items() if b in bundle_names}
     cap = getattr(args, "k_mode", "fixed") == "cap"
+    over = {state_list.index(st): km
+            for st, km in (getattr(args, "dist_max_state", None) or {}).items()}
     problem = level0.build_level0(
         cells, {b: _bundle_channels(b) for b in bundle_names},
         edges=edges, L=L, U=U, band=band, eta=args.eta,
@@ -729,7 +823,8 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
         state_xy=state_xy, prior=prior, anchors=anchors, D=D,
         order_mass=False if args.driver == "reps" else None,
         fixed_used=None if cap else (fixed or None),
-        max_used=max_used or (fixed if cap and fixed else None))
+        max_used=max_used or (fixed if cap and fixed else None),
+        dist_max_state=over or None)
     # `serve` names the states this stage must put into some district (`--serve-all-states`)
     problem = level0.serve_states(problem, serve) if serve else problem
     # `--max-splits`: caps how many of this stage's own slots a state may sit in.  Applied to
@@ -739,9 +834,19 @@ def _build(cells, bundle_names, args, *, L, U, edges, prior, anchors, D, state_x
     # `--band-break`: lets a slot touching one of the capped states named there carry that
     # state's allowance past U, so the cap's excess mass has somewhere to go.
     problem = level0.band_break(problem, allowance) if allowance else problem
-    for s, b in (forbid or ()):
+    national = ("N_WH", "N_FI")
+    forced = [state_list.index(st) for st in (getattr(args, "force_national", None) or ())]
+    forbid = list(forbid or ()) + [(s, b) for s in forced for b in bundle_names
+                                   if b != "N" and set(national) & set(_bundle_channels(b))]
+    for s, b in forbid:
         if b in problem.slots:
             problem = level0.forbid_bundle(problem, s, b)
+    if forced and "N" in problem.slots:
+        M = np.asarray(cells.M, float)
+        ci = {c: problem.channels.index(c) for c in national if c in problem.channels}
+        for s in forced:
+            problem = level0.require_cover(problem, s, [
+                c for c, i in ci.items() if M[s, i] > 0.0 and problem.cover_ub[s, i] > 1e-4])
     return level0.plus_pair(problem, target=plus_pair_target) if args.plus_pair else problem
 
 
@@ -972,7 +1077,7 @@ def _write_projections(out: str, d, cells, slots: list[dict], state_list: list[s
 
 # ------------------------------------------------------------------------------------- the sweep
 def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], edges, cidx,
-          *, n_max=None, dist_max=None, radius_max=None, state_xy=None):
+          *, n_max=None, dist_max=None, radius_max=None, state_xy=None, dist_max_state=None):
     """`--sweep`: every residual (state, channel) cell folded into an adjacent used slot whose
     bundle can still carry it (docs/FULL_PROBLEM.md, the 2026-09-11 decision).
 
@@ -990,6 +1095,9 @@ def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], e
     `unswept`.  States are swept in descending residual-mass order, live (a sweep can make a
     later state's residual adjacent), and the whole pass repeats until nothing changes, which
     is also why an earlier state's `unswept` reason is not fixed until the pass converges.
+
+    `dist_max_state` (state code -> km) relaxes `dist_max` pair by pair, as `build_level0`
+    reads it: a pair may share the slot up to the larger of `dist_max` and either state's own.
 
     Mutates `slots`' `y` and `mass` in place (so `per_state`, `_write_projections` and stage 2,
     all read afterwards, see the swept shares) and returns `(sweep_log, unswept_log, prior)`,
@@ -1012,9 +1120,11 @@ def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], e
         if n_max is not None and code not in contacted and len(contacted) + 1 > n_max:
             return False
         if xy is not None and dist_max is not None:
+            own = dist_max_state or {}
             for other in contacted:
                 d = float(np.sqrt(((xy[idx[code]] - xy[idx[other]]) ** 2).sum()))
-                if d > dist_max + 1e-6:
+                lim = max(dist_max, own.get(code, dist_max), own.get(other, dist_max))
+                if d > lim + 1e-6:
                     return False
         if xy is not None and radius_max is not None:
             centre = rec["center"]
@@ -1144,6 +1254,15 @@ def _main(args, T: telemetry.Timings) -> int:
         raise ValueError("--anchor greedy fixes each slot's root at its greedy seed, and a "
                          "route-R move that forbids that state from the bundle would leave "
                          "the root on a released contact; use --driver geo")
+    # `--force-national` keeps a state's national for pure N districts, and an other-first
+    # district is all-channel (WHFI_PLUS), so one state cannot be named by both
+    both = sorted(set(args.force_national or ()) & set(args.other_first or ()))
+    if both:
+        raise ValueError(f"--force-national and --other-first both name {both}: an other-first "
+                         f"district is all-channel and carries the state's national, which "
+                         f"--force-national keeps for pure N districts")
+    if args.dist_max_state and args.dist_max is None:
+        raise ValueError("--dist-max-state relaxes --dist-max per state and needs it")
     with T.phase("load"):
         print(f"loading {args.instance}...", flush=True)
         d = descaled.load_descaled(args.instance)
@@ -1206,6 +1325,13 @@ def _main(args, T: telemetry.Timings) -> int:
             raise ValueError(f"--band-break names state(s) {bad} not in --max-splits: the "
                              f"allowance is derived from the state's own cap")
         print(f"band break: {', '.join(args.band_break)}", flush=True)
+    for flag, named in (("--force-national", args.force_national),
+                        ("--dist-max-state", args.dist_max_state)):
+        bad = [st for st in (named or ()) if st not in state_list]
+        if bad:
+            raise ValueError(f"{flag} names states not in the instance: {bad}")
+    if args.force_national:
+        print(f"force national: {', '.join(args.force_national)}", flush=True)
 
     prior = (_prior_from_plan(args.prior, state_list, channel_list) if args.prior
              else np.zeros((n_state, len(channel_list)), float))
@@ -1222,7 +1348,8 @@ def _main(args, T: telemetry.Timings) -> int:
         sweep=args.sweep, plus_pair=args.plus_pair, k=args.k,
         band_lo=band_lo, band_hi=band_hi, delta=args.delta, band_mode=band_mode, bands={},
         bundles=list(enabled), priority=priority, eta=args.eta, n_max=args.n_max,
-        dist_max=args.dist_max, radius_max=args.radius_max, move_budget=args.move_budget,
+        dist_max=args.dist_max, dist_max_state=args.dist_max_state,
+        radius_max=args.radius_max, move_budget=args.move_budget,
         cover_slack=args.cover_slack,
         prior=os.path.abspath(args.prior) if args.prior else None,
         centers=(args.centers if args.centers in (None, "seeds")
@@ -1231,7 +1358,8 @@ def _main(args, T: telemetry.Timings) -> int:
         theta=args.theta, lam=args.lam, filler_capture=args.filler_capture,
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
-        other_first=args.other_first, max_splits=args.max_splits or {}, band_break={},
+        other_first=args.other_first, force_national=args.force_national,
+        max_splits=args.max_splits or {}, band_break={},
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -1422,10 +1550,16 @@ def _main(args, T: telemetry.Timings) -> int:
                 centre_of.setdefault(int(j), int(s))
 
         unpinned = problem                            # before any pass pinned its value
+        def diagnose(p=problem):
+            # `--force-national`: which forced states no N district holding them can fill
+            return dict(forced_below_floor=_forced_below_floor(p, cells, cidx, args, state_xy))
+
         result = _run_passes(problem, _pass_list(problem, cover_groups,
                                                  cover_last=stage in ("other_first",
                                                                       "all_last")),
-                             args, stage, T, warm=warm, warm_seconds=warm_s)
+                             args, stage, T, warm=warm, warm_seconds=warm_s,
+                             diagnose=(diagnose if args.force_national and "N" in problem.slots
+                                       else None))
         problem = result.get("problem", problem)      # every pass's value pinned by a row
         recs = _slot_records(problem, result, state_list, len(slots) + 1,
                              state_xy=state_xy, roots=centre_of, allowance=allowance)
@@ -1580,7 +1714,7 @@ def _main(args, T: telemetry.Timings) -> int:
             sweep_log, unswept_log, prior = _sweep(
                 slots, prior, cells, state_list, edges, cidx,
                 n_max=args.n_max, dist_max=args.dist_max, radius_max=args.radius_max,
-                state_xy=state_xy)
+                state_xy=state_xy, dist_max_state=args.dist_max_state)
 
     per_state: dict[str, dict] = {}
     for s, code in enumerate(state_list):

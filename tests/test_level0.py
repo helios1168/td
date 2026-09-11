@@ -353,6 +353,70 @@ def test_n_max_and_dist_max_caps_bind():
         "the far pair must still be kept out of any single slot"
 
 
+def test_dist_max_state_relaxes_the_cap_for_its_own_pairs_only():
+    """Six states of 0.2 on a line, 1 apart, under `dist_max = 2.5`: no slot spans more than
+    three states, so none reaches 0.8 and nothing is covered.  `dist_max_state = {0: 3.5}`
+    lets state 0 share a slot with state 3, 3 apart, and {0, 1, 2, 3} reaches 0.8.  The pair
+    (1, 4), also 3 apart, keeps the plain cap, and (0, 4), (0, 5) are beyond 3.5."""
+    masses = [0.2] * 6
+    plain = build0(masses, dist_max=2.5, state_xy=XY6)
+    assert abs(run(plain, [level0.cover_pass(plain, ["A"])])["passes"][0]["value"]) < 1e-9
+
+    wide = build0(masses, dist_max=2.5, state_xy=XY6, dist_max_state={0: 3.5})
+    assert {(a, b) for a, b, _ in _far_pairs(wide)} == {(0, 4), (0, 5), (1, 4), (1, 5), (2, 5)}
+    assert wide.rows["cap_dist"][1] - wide.rows["cap_dist"][0] == 5 * wide.k
+    out = run(wide, [level0.cover_pass(wide, ["A"])])
+    assert abs(out["passes"][0]["value"] - 0.8) < 1e-6
+    used = np.flatnonzero(out["u"])
+    assert len(used) == 1 and set(np.flatnonzero(out["z"][:, used[0]])) == {0, 1, 2, 3}
+
+    try:
+        build0(masses, state_xy=XY6, dist_max_state={0: 3.5})
+    except ValueError as exc:
+        assert "dist_max" in str(exc)
+    else:
+        raise AssertionError("an override without the cap it relaxes must be refused")
+
+
+def test_unset_dist_max_state_and_an_empty_require_cover_leave_the_model_as_it_was():
+    """`dist_max_state` None, empty, or below `dist_max` (it never tightens) builds exactly
+    the model the plain cap builds, radius rows and anchors included; `require_cover` naming
+    no channel changes no row bound."""
+    bundles = {"A": ("A",), "AB": ("A", "B")}
+    kw = dict(dist_max=2.5, radius_max=1.5, state_xy=XY6, anchors=[(0, 0)])
+    base = build0([0.3] * 6, [0.2] * 6, bundles=bundles, **kw)
+    for over in (None, {}, {0: 1.0}):
+        other = build0([0.3] * 6, [0.2] * 6, bundles=bundles, dist_max_state=over, **kw)
+        assert other.A.shape == base.A.shape and (other.A != base.A).nnz == 0, over
+        for f in ("lb", "ub", "var_lb", "var_ub", "c", "integrality"):
+            assert np.array_equal(getattr(other, f), getattr(base, f)), (over, f)
+        assert other.rows == base.rows
+    same = level0.require_cover(base, 0, ())
+    assert np.array_equal(same.lb, base.lb) and np.array_equal(same.ub, base.ub)
+
+
+def test_require_cover_makes_the_named_bundle_take_the_state_s_whole_channel():
+    """Two bundles both carry channel A, as `N` and `WH_PLUS` both carry `N_WH`: `N` (A alone)
+    and `P` (A and B).  A cover pass over `P` alone puts all of state 0 in `P` slots.  With
+    `P` forbidden on state 0 and `require_cover(0, A)`, the same pass must leave state 0's A
+    to the `N` slots, all of it.  Only the forced cover row moves, to its `cover_ub`, and a
+    channel the model does not carry is skipped."""
+    prob = build0([0.5] * 6, [0.5] * 6, bundles={"N": ("A",), "P": ("A", "B")})
+    lo_n, hi_n = prob.slots["N"]
+    lo_p, hi_p = prob.slots["P"]
+    out = run(prob, [level0.cover_pass(prob, ["P"])])
+    assert abs(out["y"][0, lo_p:hi_p].sum() - 1.0) < 1e-6, "P would carry state 0 whole"
+
+    forced = level0.require_cover(level0.forbid_bundle(prob, 0, "P"), 0, ["A", "ZZ"])
+    row0 = forced.rows["cover"][0]
+    assert np.flatnonzero(forced.lb != prob.lb).tolist() == [row0]      # state 0, channel A
+    assert forced.lb[row0] == prob.cover_ub[0, 0] and np.isinf(prob.lb[row0])   # a copy
+    out = run(forced, [level0.cover_pass(forced, ["P"])])
+    assert abs(out["y"][0, lo_n:hi_n].sum() - 1.0) < 1e-6
+    assert not out["z"][0, lo_p:hi_p].any()
+    assert abs(out["covered"][0, 0] - 1.0) < 1e-6
+
+
 def test_radius_max_bounds_an_anchored_slot_to_its_root():
     """Six states of 0.2 at x = 0..5, anchored on state 0.  A 2 km radius takes states 3, 4
     and 5 out of that slot as a bound on `z`, not a row, and the anchor makes the slot used, so

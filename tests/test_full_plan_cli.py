@@ -1379,6 +1379,123 @@ def test_parse_caps_upper_cases_and_refuses_a_bad_token():
             raise AssertionError(f"expected an ArgumentTypeError for {bad!r}")
 
 
+def test_force_national_and_dist_max_state_default_to_none():
+    args = cli.build_argparser().parse_args(["instance.json.gz", "--out", "out"])
+    assert args.force_national is None and args.dist_max_state is None
+
+
+def test_parse_dist_caps_takes_positive_km_and_refuses_a_bad_token():
+    assert cli._parse_dist_caps("mt=1400, wy=1300.5") == {"MT": 1400.0, "WY": 1300.5}
+    for bad in ("", "MT", "MT=", "=900", "MT=x", "MT=0", "MT=-5", "MT=nan"):
+        try:
+            cli._parse_dist_caps(bad)
+        except cli.argparse.ArgumentTypeError:
+            pass
+        else:
+            raise AssertionError(f"expected an ArgumentTypeError for {bad!r}")
+
+
+def test_force_national_and_dist_max_state_refuse_what_they_cannot_mean():
+    """A state both forced national and opened all-channel first (an other-first district is
+    WHFI_PLUS and carries its national), a state the instance does not carry, and an override
+    with no `--dist-max` to relax are all refused before anything is solved."""
+    for extra, word in ((["--other-first", "S0", "--force-national", "s0"], "--other-first"),
+                        (["--force-national", "ZZ"], "ZZ"),
+                        (["--dist-max-state", "S0=300"], "--dist-max"),
+                        (["--dist-max", "300", "--dist-max-state", "ZZ=400"], "ZZ")):
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                _run(tmp, "sequential", extra, polys=PATH_POLYS)
+            except ValueError as exc:
+                assert word in str(exc), (extra, exc)
+            else:
+                raise AssertionError(f"{extra} must be refused")
+
+
+def test_force_national_holds_the_state_s_national_in_pure_n_slots_only():
+    """`--priority WH,N,FI` runs the WH stage first, and unforced its WH_PLUS slot takes S1's
+    national.  With `--force-national S0,S1,S2` WH_PLUS is forbidden on them and the N stage
+    must cover all of their national, which one N district of the three (12, inside the band
+    [9.6, 14.4]) does: each forced state's N_WH and N_FI are covered 1.0 by N slots and no
+    slot of another bundle carrying national holds it.  params.json records the list."""
+    def shares(plan, st):
+        bundle_of = {rec["id"]: rec["bundle"] for rec in plan["slots"]}
+        return {sid: (bundle_of[sid], v) for sid, v in plan["per_state"][st].items()
+                if sid != "residual_by_channel"}
+
+    national = {"N_WH", "N_FI"}
+    with tempfile.TemporaryDirectory() as tmp:
+        free = _check_plan(_run(tmp, "sequential", ["--priority", "WH,N,FI"]))
+    assert any(b != "N" and national & set(cli._bundle_channels(b))
+               for b, _ in shares(free, "S1").values()), shares(free, "S1")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "sequential", ["--priority", "WH,N,FI", "--force-national", "s0,S1,s2"])
+        plan = _check_plan(out)
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["force_national"] == ["S0", "S1", "S2"]
+    for st in ("S0", "S1", "S2"):
+        held = shares(plan, st)
+        assert abs(sum(v for b, v in held.values() if b == "N") - 1.0) < 1e-6, (st, held)
+        for b, _ in held.values():
+            assert b == "N" or not national & set(cli._bundle_channels(b)), (st, held)
+        for c in national:
+            assert abs(plan["per_state"][st]["residual_by_channel"][c]) < 1e-6, (st, c)
+
+
+def test_a_forced_state_no_n_district_can_fill_fails_the_stage_and_is_named():
+    """`--dist-max 50` on the line 100 km apart keeps every slot to one state, and one state's
+    national (4) is below the N floor (0.8 * 12): forcing S1 makes the N stage infeasible.  The
+    greedy point misses the forced row and the stage solves cold; `failure.json` keeps its
+    usual keys and names S1 under `forced_below_floor`, with its bound and the floor."""
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _run(tmp, "sequential", ["--dist-max", "50", "--force-national", "S1"],
+                 polys=PATH_POLYS)
+        except ss_cli.ss.SolveFailure as exc:
+            assert exc.reason == "infeasible"
+        else:
+            raise AssertionError("a forced state no N district can fill must fail the stage")
+        with open(os.path.join(tmp, "out_sequential", "failure.json"), encoding="utf-8") as fh:
+            rec = json.load(fh)
+    assert rec["cell"] == "seq_N" and rec["reason"] == "infeasible"
+    [below] = rec["forced_below_floor"]
+    assert below["state"] == "S1"
+    assert abs(below["bound"] - 4.0) < 1e-6 and abs(below["floor"] - 9.6) < 1e-6
+
+
+def test_dist_max_state_reaches_params_and_bounds_every_slot_pair():
+    """`--dist-max 150 --dist-max-state S0=250` on the line 100 km apart: S0 may share a slot
+    with S2, and no other pair more than 150 km apart shares one."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "joint", ["--dist-max", "150", "--dist-max-state", "s0=250"],
+                   polys=PATH_POLYS)
+        plan = _check_plan(out)
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["dist_max_state"] == {"S0": 250.0}
+    for rec in plan["slots"]:
+        members = sorted(STATES.index(st) for st in rec["y"])
+        for a in members:
+            for b in members:
+                cap = 250.0 if 0 in (a, b) else 150.0
+                assert abs(a - b) * 100.0 <= cap + 1e-6, (rec["id"], members)
+
+
+def test_sweep_reads_dist_max_state_as_the_pair_s_own_cap():
+    """A direct `cli._sweep` call: S1's residual can only join P1, which holds S0, 300 km
+    away.  Under `dist_max = 150` that breaks the cap and says so; `S1=350` makes it safe."""
+    state_list = ["S0", "S1"]
+    cells = types.SimpleNamespace(M=np.array([[0.0, 0.0], [25.0, 25.0]]),
+                                  channels=("N_WH", "N_FI"), state_list=state_list)
+    xy = np.array([[0.0, 0.0], [300.0, 0.0]])
+    for over, broken in ((None, True), ({"S1": 350.0}, False)):
+        slots = [_slot_rec("P1", "N", {"S0": 1.0}, mass=0.0, band_hi=60.0, center="S0")]
+        log, _, _ = cli._sweep(slots, np.zeros((2, 2)), cells, state_list, [(0, 1)],
+                               {"N_WH": 0, "N_FI": 1}, dist_max=150.0, state_xy=xy,
+                               dist_max_state=over)
+        assert len(log) == 1 and log[0]["caps_broken"] is broken, (over, log)
+
+
 STATES4 = [f"S{i}" for i in range(4)]
 PATH_ADJ4 = {f"S{i}": tuple(f"S{j}" for j in (i - 1, i + 1) if 0 <= j < 4) for i in range(4)}
 
