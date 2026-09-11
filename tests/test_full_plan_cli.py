@@ -1526,6 +1526,14 @@ def test_a_cover_pass_at_the_time_limit_on_the_empty_plan_fails_as_no_incumbent(
                 with patch.object(level0, "solve_passes", fake(value, status)):
                     out = cli._run_passes(None, [], args, "seq_FI", T)
                     assert out["passes"][0]["value"] == value
+            # only the first cover pass counts: a merged pass at 0 after it is normal
+            both = lambda *a, **k: dict(passes=[
+                dict(name="cover_FI", value=8781.0, certified=False, status="time_limit",
+                     seconds=1.0),
+                dict(name="cover_merged", value=0.0, certified=False, status="time_limit",
+                     seconds=1.0)])
+            with patch.object(level0, "solve_passes", both):
+                assert len(cli._run_passes(None, [], args, "seq_FI", T)["passes"]) == 2
         finally:
             T.close()                          # a live Timings would leak into later tests
 
