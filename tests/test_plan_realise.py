@@ -948,6 +948,49 @@ def test_contiguous_cut_without_a_border_keeps_the_centre_seed():
         assert dev == {"D1": (3.0, 3.0), "D2": (3.0, 3.0)}
 
 
+def test_contiguous_cut_bridges_two_body_components_even_above_target():
+    """A's small western share must cross S to join its two outside components."""
+    zips = [f"s{i}" for i in range(6)]
+    G = nx.path_graph(["a0"] + zips + ["a1"])
+    G.add_edge("s3", "t0")
+    zips.append("t0")
+    xy = {zp: (float(i), 0.0) for i, zp in enumerate(G)}
+    power = {zp: "A" if zp == "s0" else "B" for zp in zips}
+    masses = {zp: 1.0 for zp in zips}
+    targets = {"A": 1.0, "B": 6.0}
+    centres = {"A": xy["s0"], "B": xy["t0"]}
+
+    for body in ({"a0"}, {"a0", "a1"}):
+        labels, dev = cli.contiguous_cut(
+            G, zips, power, masses, targets, {"A": body, "B": set()}, centres, xy)
+        if len(body) == 1:
+            assert labels == power
+            assert dev["A"] == (1.0, 1.0)
+        else:
+            assert labels == {zp: "B" if zp == "t0" else "A" for zp in zips}
+            assert dev["A"] == (6.0, 1.0)
+        assert nx.is_connected(G.subgraph(body | {zp for zp in zips if labels[zp] == "A"}))
+
+
+def test_contiguous_cut_bridge_skips_unreachable_components_and_breaks_ties_by_zip():
+    """An earlier seed blocks one component; equal paths to a later one use zip order."""
+    edges = [("b0", "s0"), ("s0", "s2"), ("s2", "s3"), ("s0", "s1"),
+             ("s1", "s3"), ("s3", "b2"), ("s0", "a0"), ("a0", "s2"), ("a0", "s4"),
+             ("s4", "b1")]
+    zips = ["a0", "s0", "s1", "s2", "s3", "s4"]
+    xy = {zp: (float(i), 0.0) for i, zp in enumerate(zips)}
+    power = {zp: "B" if zp == "s0" else "A" for zp in zips}
+    for ordered_edges in (edges, list(reversed(edges))):
+        G = nx.Graph(ordered_edges)
+        labels, dev = cli.contiguous_cut(
+            G, zips, power, {zp: 1.0 for zp in zips}, {"A": 5.0, "B": 1.0},
+            {"A": set(), "B": {"b0", "b1", "b2"}},
+            {"A": xy["a0"], "B": xy["s0"]}, xy)
+        assert labels == {"a0": "A", "s0": "B", "s1": "B", "s2": "A",
+                          "s3": "B", "s4": "A"}
+        assert dev["B"] == (3.0, 1.0)
+
+
 def test_contiguous_cut_reunites_a_detached_zip_and_seeds_a_wholly_inside_district_at_its_centre():
     """A five-zip path b0-b1-b2-b3-b4 in split state B, plus o1 outside B joined to b0 (D1's
     body).  The power diagram gave D1 the detached b0, b3, b4 and D2 the middle b1, b2, an

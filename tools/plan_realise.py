@@ -311,7 +311,10 @@ def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: 
     into its own body outside the state. With none, it seeds at the nearest zip to its centre
     on that border, or on the border with its other planned states (`other_states`) if its
     body does not reach this state. On the latter border it prefers its current power labels.
-    With no border it keeps the nearest-to-centre seed. Seeding claims
+    With no border it keeps the nearest-to-centre seed. When multiple body components touch
+    unclaimed state zips, seeds also bridge their borders by shortest paths on the unclaimed
+    state graph, skipping unreachable components and taking paths even above the mass target.
+    Seeding claims
     zips in a fixed order, real districts by name then `other` last, so two districts never
     claim the same zip.
 
@@ -349,6 +352,13 @@ def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: 
     real = [dd for dd in districts if dd != other]
     for dd in sorted(real):
         pool = [zp for zp in present if zp not in claimed]
+        available = Gs.subgraph(pool)
+        borders: list[set] = []
+        for component in sorted(nx.connected_components(G.subgraph(bodies.get(dd, ()))),
+                                key=min):
+            component_border = {nb for zp in component for nb in G[zp] if nb in available}
+            if component_border:
+                borders.append(component_border)
         border = [zp for zp in pool if any(nb in bodies.get(dd, ()) for nb in G[zp])]
         touch = sorted(zp for zp in border if power_label.get(zp) == dd)
         if touch:
@@ -361,6 +371,23 @@ def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: 
                 border = [zp for zp in border if power_label.get(zp) == dd] or border
             pool = border or pool
             seeds[dd] = {nearest(pool, centres[dd])} if pool else set()
+        if len(borders) >= 2:
+            # only the path zips are seeds, not the whole first border
+            bridge: set = set()
+            for destination in borders[1:]:
+                queue = sorted(borders[0] | bridge)
+                parent: dict[str, str | None] = {zp: None for zp in queue}
+                for zp in queue:
+                    if zp in destination:
+                        while zp is not None:
+                            bridge.add(zp)
+                            zp = parent[zp]
+                        break
+                    for nb in sorted(available[zp]):
+                        if nb not in parent:
+                            parent[nb] = zp
+                            queue.append(nb)
+            seeds[dd] |= bridge
         claimed |= seeds[dd]
 
     if other is not None and other in districts:
