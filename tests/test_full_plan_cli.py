@@ -1484,6 +1484,34 @@ def test_cover_national_cannot_skip_a_required_stage_with_no_slots():
         assert "forced_below_floor" not in rec
 
 
+def test_a_cover_pass_at_the_time_limit_on_the_empty_plan_fails_as_no_incumbent():
+    from unittest.mock import patch
+    from td import telemetry
+    from td.solvers import level0
+
+    def fake(value, status):
+        return lambda *a, **k: dict(passes=[dict(name="cover_FI", value=value,
+                                                 certified=False, status=status, seconds=1.0)])
+
+    with tempfile.TemporaryDirectory() as tmp:
+        args = types.SimpleNamespace(out=tmp, engine="highs", strategy="direct",
+                                     time_limit=1, threads=1)
+        T = telemetry.Timings("test")
+        with patch.object(level0, "solve_passes", fake(0.0, "time_limit")):
+            try:
+                cli._run_passes(None, [], args, "seq_FI", T)
+            except ss_cli.ss.SolveFailure as exc:
+                assert exc.reason == "no_incumbent"
+            else:
+                raise AssertionError("an empty time-limited cover pass must fail")
+        with open(os.path.join(tmp, "failure.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["cell"] == "seq_FI"
+        # a time-limited pass with something covered, or a certified zero, goes through
+        for value, status in ((12.5, "time_limit"), (0.0, 0)):
+            with patch.object(level0, "solve_passes", fake(value, status)):
+                assert cli._run_passes(None, [], args, "seq_FI", T)["passes"][0]["value"] == value
+
+
 def test_cover_national_cannot_omit_the_required_stage():
     with tempfile.TemporaryDirectory() as tmp:
         try:

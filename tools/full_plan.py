@@ -674,6 +674,15 @@ def _run_passes(problem, passes, args, stage: str, T, *, warm=None,
         print(f"{stage}/{rec['name']}: value={shown} "
               f"certified={rec['certified']} status={rec['status']} "
               f"({rec['seconds']:.1f}s)", flush=True)
+    # A cover pass stopped by the time limit on the empty plan is a time limit with nothing to
+    # show, not a plan that covers nothing: fail it as no_incumbent so the grid retries it
+    # (on the FI 21 grid, seq_FI went on with cover 0 and the cell came back "ok").
+    for rec in result["passes"]:
+        if (rec["name"].startswith("cover") and rec["status"] == "time_limit"
+                and not isinstance(rec["value"], dict) and rec["value"] <= 1e-9):
+            exc = ss.SolveFailure(1, f"{rec['name']} stopped at the time limit on an empty plan")
+            _write_failure(args.out, stage, exc, time.time() - t0)
+            raise exc
     result = dict(result)
     result["passes"] = [dict(rec, stage=stage) for rec in result["passes"]]
     return result
