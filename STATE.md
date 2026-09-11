@@ -1,22 +1,22 @@
 # State — national channel territory design
 
-**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `7dbe576` · **Tests:** 546 pass,
-0 fail (2026-09-10; `worktree-full-problem` at `6c9589a` 770 pass, 0 fail, same day)
+**Updated:** 2026-09-10 · **Branch:** `main` · **Head:** `1ce4f5c` · **Tests:** 546 pass,
+0 fail (2026-09-10; `worktree-full-problem` at `7ed2c51` 801 pass, 0 fail, same day)
 
 Three sections. History: `git log --grep '^State:' -p -- STATE.md`.
 
 ## Now
 
-Hub unchanged at `7dbe576`. The full-problem track, `worktree-full-problem` at `6c9589a`,
-unmerged, moved on 2026-09-10/11: the AZ cross-bundle overlap has its interim fix, the bundle
-with more file channels wins a cell (`1371e0d`); the realiser gained a bridging move, the plan's
-own per-bundle band and a 2 % slack (`803d8c1`), the nine ranked runs re-realised in place, rank
-1's Texas district one piece; the national sub-channels decision (National = Chase + Wells WH +
-Wells FI; a merge folds Chase and Wells FI into FI, Wells WH into WH) is in the exporter,
-`td/channels.py` and decision 12 (`2e707aa`), the exporter ready for the work machine; districts
-coloured off the reach adjacency (`d410610`); level 0 `--max-splits` with CA 3, TX 2, NY 3
-(`b6b88ae`), two capped cells solving in `grid_20260911_splits/`. Suite 770 pass. The open
-decisions are unchanged, in `## Next`; ranks 1 and 2 stand as recorded in the previous entry.
+Hub unchanged at `1ce4f5c`. The full-problem track, `worktree-full-problem` at `7ed2c51`
+(pushed by the user, unmerged by decision), closed 2026-09-11 with every rule of the day landed:
+level 0 `--band-break`, `--sweep` and `--plus-pair` (every residual cell covered, four legal
+state patterns); the realiser's overlap hand-off, `--sweep-zips` and `--split-cut contiguous`,
+adopted for WH only (ported from `worktree-contig-cut`, locked, uncommitted); `docs/MODEL_FULL.md`,
+the model line by line; v4 readiness, `tools/instance_conus.py` and the runbook in
+`docs/FULL_PROBLEM.md` §2. Rank 1's figure is frozen under the track's
+`battery/results/full_problem/best/` for the first stakeholder share, `hot/` names every live
+figure in plain English, `grid_20260911_full/` holds the full-rules candidates to replace rank 1
+at unheld mass 0. Suite 801 pass at `3e9d002`. Next: the v4 file, then the cells re-run on it.
 
 ## Next
 
@@ -38,14 +38,15 @@ decisions are unchanged, in `## Next`; ranks 1 and 2 stand as recorded in the pr
       saw it. `hooks/enforce-file-tools.sh` still blocks it, so the two fight on every slip.
       Decide: keep the hook and let it win, or narrow §7.
 - [ ] **Merge `worktree-full-problem`.** Gated on the stakeholder review (the track's
-      `PLAN.md` `## Next step` lists the five plans in order), the `--max-splits` cells reviewed
-      against rank 1, and the user pushing the branch; then rebase onto `main`, fast-forward,
+      `PLAN.md` `## Next step`: rank 1 frozen in `best/`, or a full-rules cell from
+      `grid_20260911_full/` in its place) and the v4 file, `instance_descaled_v4.json.gz`, which
+      the user exports and the ranked cells are re-run on; then rebase onto `main`, fast-forward,
       `/state`. Decisions for the user there: the "other" floor (0.5 of a book or another
       figure); whether ND SD NE on FI alone is acceptable; the cap (900 km / 6 states or none);
-      the counts (16/11/20 or 18/11/19); route R, parked. Queued on the track: the proper
-      two-stage cut of a shared state's zips by the level-0 shares; ★C, the rep pool against the
-      district count; the v4 export with sub-channels, then the ranked cells re-run on it; no
-      DC–VA cell edge. The Map board check rides on these scenarios.
+      the counts (16/11/20 or 18/11/19); route R, parked; whether WH_03's CT-end piece needs a
+      repair extension. Queued on the track: the proper two-stage cut of a shared state's zips by
+      the level-0 shares; ★C, the rep pool against the district count; `worktree-contig-cut`'s
+      land-clipped graphs, uncommitted; no DC–VA cell edge. The Map board check rides on these.
 - [ ] **Post-merge follow-ups the workflow track left open.** Nine research questions the folded
       findings files carried (`git show a16c304:PLAN.md`, `## Decisions needed`: C1, C2, C4-C7,
       the Gromov R4 textual fixes, OPTIONS §9/§10 items); `docs/channel_note/` and
