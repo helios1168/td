@@ -81,7 +81,55 @@ repair extension, and the merge itself. Untracked `unused/` in the worktree root
 downloaded shapefile, safe to delete. Job scripts in `/Users/ntlee/.claude/jobs/610589f0/tmp/`:
 `launch_grid.sh CELLS OUT CONC`, `rerealise_sweep.sh DIR...` (every adopted rule),
 `rerealise_only.sh`, `register.sh`, `inspect_pieces.py RUN BUNDLE DISTRICT`, the cell files
-(`full_rules_cells.json` is the one with every rule).## Decisions needed
+(`full_rules_cells.json` is the one with every rule).
+
+Forced national on v4 (user, 2026-09-11 night). Switches in `e931b87` (suite 811 pass):
+`--force-national ST,...` is a hard rule, every dollar of a named state's national in pure N
+districts (every other bundle carrying national is forbidden for the state, the N stage must
+cover all its remaining national, and `failure.json` names a state whose best N district cannot
+reach the floor); `--dist-max-state ST=KM` overrides `--dist-max` for pairs touching that state.
+Group 1 is TX NY FL NJ IL AZ NC PA MI OH VA GA CO MD; group 2 adds WA UT IN LA MN CT, with WA at
+1,200 km. Only national is forced; WH and FI stay free. The sweep ran national k 10 to 16 with WH
+11 and FI 20 on full rules, under `grid_20260911_v4_force/`, `_force2/`, `_force3/`, `_force4/`
+(`hot/` names the solved cells `v4 forced national ...`). Findings:
+
+- CO: while UT sits in the other-first district, CO's best N district is CO+AZ+NM at 442,
+  below the floor at every k from 10 to 16, so group 1 runs without CO (the user had already
+  dropped CO at k 10 to 14).
+- Group 1, TX at two N districts (`--max-splits TX=2`): k 10 to 12 infeasible, TX alone blocks
+  (leave-one-out probe at k 11 and 12); k 13 proven infeasible at 600 s; k 14 to 16 solve but
+  fragment (15 to 23 districts in pieces). With TX in one N district (`--max-splits
+  CA=3,TX=1,NY=3`, the band break carrying TX's excess) every k from 10 to 16 solves; k 10 to
+  12 use 10 N districts and leave WH, WHFI and WHFI_PLUS as in the unforced 16-11-20.
+- Group 2 runs without other-first (MT+WY cannot reach its floor once WA and UT are forced). k 10
+  to 13 are infeasible with LA forced under either TX cap (at k 11, TX+LA is 1,057 against the
+  TX district's 1,040 and LA reaches no floor elsewhere); without LA and with TX=1 they solve.
+  k 14 (TX=2, CO not forced) and k 15 (TX=2, all 20 states) solve; k 16 passed the N stage and
+  found no FI incumbent in 180 s, re-run at 600 s in `_force4/` (running at this commit;
+  round 4's force check and `hot/` links still to do).
+- The defaults above (group 2 without other-first, group 1 without CO, TX=1, LA not forced at
+  k 13 and below) were chosen in session and are the user's to confirm.
+
+Contiguity: level 0 enforces it only on the state rook graph; the realiser's power cut of a split
+state never reads an edge and its repair refuses any move that worsens the band. Re-realising
+with `--split-cut contiguous --split-cut-bundles N,WH,FI,WH_PLUS,FI_PLUS,WHFI,WHFI_PLUS` (copies
+under the job's `tmp/contig_all/`) takes districts in pieces from 8 to 4 on the unforced
+16-11-20 (band violations 15 to 19), 10 to 6 on group 2 k 15 and 15 to 14 on group 1 k 14. What
+remains: the split-state cut is not border-aware (a district's share lands away from its other
+states: N AL,FL,MS,TN, the WH_03 CT end), the band-locked repair in forced cells, and no cell
+graph edge on DC-VA. Open: adopt the contiguous cut for every bundle.
+
+Next run (user, 2026-09-11; not launched): national k 10, 11, 12, 13, 14, 15, 16 with WH k 11 and
+FI k 21, for an FI target of about $900MM. On v4 at $17.6B / 8,479.8 v3 national units (about
+$2.08MM per unit) national is $17.9B, WH $11.1B and FI $18.6B, so WH 11 is $1.01B a district and
+FI 21 is $886MM (FI 20 was $931MM). To settle before launch: which forcing (unforced, group 1,
+group 2) and whether the rules found above carry over. Scripts in
+`/Users/ntlee/.claude/jobs/c83f90d2/tmp/`: `force_cells.py` to `force_cells4.py` (cell files),
+`force_run_c.sh CELLS OUT CONC` (grid, re-realise, force check), `force_check.py CELLS GRID`,
+`probe_force.py CELLS TAG OUT [--pairs]` (leave-one-out on the forced states), `unrepaired.py
+RUN...` (districts still in pieces, with reasons).
+
+## Decisions needed
 
 Level-2 cross-bundle overlap (found by `plan_realise`, 2026-09-10): level 0's cover row is
 `≤ 1` per (state, channel) over all slots, so two bundles sharing a channel (WH and WH⁺, N and
