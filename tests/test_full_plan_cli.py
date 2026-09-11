@@ -1484,6 +1484,20 @@ def test_cover_national_cannot_skip_a_required_stage_with_no_slots():
         assert "forced_below_floor" not in rec
 
 
+def test_national_states_keep_every_other_state_out_of_n_slots_and_the_sweep():
+    for route in ("sequential", "joint"):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = _run(tmp, route, ["--national-states", "s0,S1,S2", "--sweep",
+                                    "--catch-all", "--catch-all-bundle", "all"])
+            plan = _check_plan(out)
+            with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+                assert json.load(fh)["national_states"] == ["S0", "S1", "S2"]
+        for rec in plan["slots"]:
+            if rec["bundle"] == "N":
+                assert set(rec["y"]) <= {"S0", "S1", "S2"}, (route, rec)
+        assert any(rec["bundle"] == "N" and rec["used"] for rec in plan["slots"]), route
+
+
 def test_a_cover_pass_at_the_time_limit_on_the_empty_plan_fails_as_no_incumbent():
     from unittest.mock import patch
     from td import telemetry

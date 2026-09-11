@@ -304,6 +304,11 @@ def build_argparser() -> argparse.ArgumentParser:
                          "the planned stages, before catch-all and sweep; any bundle "
                          "carrying national counts, including --other-first. A state may "
                          "not also be in --force-national (default none)")
+    ap.add_argument("--national-states", type=_parse_states, default=None, metavar="ST,ST,...",
+                    help="national-only (N) districts may hold only these states: every other "
+                         "state is kept out of every N slot in every stage and the sweep never "
+                         "adds its national to one, so its national goes to WH_PLUS / FI_PLUS or "
+                         "all-channel districts (default: any state)")
     ap.add_argument("--other-floor", type=float, default=1.0, metavar="F",
                     help="the catch-all stage's band floor as a fraction of L: an 'other' "
                          "district, one person over every channel of a sparse region, may "
@@ -868,6 +873,10 @@ def _build(cells, bundle_names, args, *, stage, L, U, edges, prior, anchors, D, 
     forced = [state_list.index(st) for st in (getattr(args, "force_national", None) or ())]
     forbid = list(forbid or ()) + [(s, b) for s in forced for b in bundle_names
                                    if b != "N" and set(national) & set(_bundle_channels(b))]
+    # `--national-states`: an N slot may hold only the named states
+    allowed = getattr(args, "national_states", None)
+    if allowed:
+        forbid += [(s, "N") for s, st in enumerate(state_list) if st not in allowed]
     for s, b in forbid:
         if b in problem.slots:
             problem = level0.forbid_bundle(problem, s, b)
@@ -1115,7 +1124,8 @@ def _write_projections(out: str, d, cells, slots: list[dict], state_list: list[s
 
 # ------------------------------------------------------------------------------------- the sweep
 def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], edges, cidx,
-          *, n_max=None, dist_max=None, radius_max=None, state_xy=None, dist_max_state=None):
+          *, n_max=None, dist_max=None, radius_max=None, state_xy=None, dist_max_state=None,
+          national_states=None):
     """`--sweep`: every residual (state, channel) cell folded into an adjacent used slot whose
     bundle can still carry it (docs/FULL_PROBLEM.md, the 2026-09-11 decision).
 
@@ -1200,6 +1210,9 @@ def _sweep(slots: list[dict], prior: np.ndarray, cells, state_list: list[str], e
                 chans = tuple(_bundle_channels(rec["bundle"]))
                 if not set(chans) <= set(r_s):
                     continue
+                if national_states and rec["bundle"] == "N" and code not in national_states:
+                    continue                  # `--national-states`: no N slot for this state
+
                 contacted = set(rec["y"])
                 if not (rec["y"].get(code, 0.0) > 0.0
                         or (contacted & {state_list[t] for t in nbr[s]})):
@@ -1368,6 +1381,7 @@ def _main(args, T: telemetry.Timings) -> int:
         print(f"band break: {', '.join(args.band_break)}", flush=True)
     for flag, named in (("--force-national", args.force_national),
                         ("--cover-national", args.cover_national),
+                        ("--national-states", args.national_states),
                         ("--dist-max-state", args.dist_max_state)):
         bad = [st for st in (named or ()) if st not in state_list]
         if bad:
@@ -1403,7 +1417,7 @@ def _main(args, T: telemetry.Timings) -> int:
         warm=args.warm, anchor=args.anchor, k_fixed=args.k_fixed, k_mode=args.k_mode,
         serve_all_states=args.serve_all_states, other_floor=args.other_floor,
         other_first=args.other_first, force_national=args.force_national,
-        cover_national=args.cover_national,
+        cover_national=args.cover_national, national_states=args.national_states,
         max_splits=args.max_splits or {}, band_break={},
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
@@ -1783,7 +1797,8 @@ def _main(args, T: telemetry.Timings) -> int:
             sweep_log, unswept_log, prior = _sweep(
                 slots, prior, cells, state_list, edges, cidx,
                 n_max=args.n_max, dist_max=args.dist_max, radius_max=args.radius_max,
-                state_xy=state_xy, dist_max_state=args.dist_max_state)
+                state_xy=state_xy, dist_max_state=args.dist_max_state,
+                national_states=args.national_states)
 
     per_state: dict[str, dict] = {}
     for s, code in enumerate(state_list):
