@@ -802,6 +802,19 @@ def test_plus_pair_target_pins_fi_plus_when_wh_plus_is_absent():
     assert abs(y[0] - 0.4) < 1e-6 and y[1] == 0.0
     assert np.allclose(y[2:], 1.0)
 
+    # a zero target is also a bound, so the greedy plan never puts S1 in FI_PLUS and its
+    # point satisfies the rows
+    lo_j, hi_j = pinned.slots["FI_PLUS"]
+    for off in (pinned.off_z, pinned.off_y):
+        assert not pinned.var_ub[off + 1 * pinned.k + lo_j:off + 1 * pinned.k + hi_j].any()
+    assert pinned.var_ub[pinned.off_y + lo_j:pinned.off_y + hi_j].all()
+    greedy = level0.plus_pair(build0([0.0] * 6, [2.0, 0.5, 0.5, 0.5, 0.5, 0.5],
+                                     bundles={"FI_PLUS": ("B",)}),
+                              target={f"S{i}": 0.0 for i in range(1, 6)})
+    x, _ = level0.greedy_plan(greedy)
+    y = x[greedy.off_y:greedy.off_y + greedy.n_state * greedy.k].reshape(greedy.n_state, greedy.k)
+    assert not y[1:].any()
+
     # a state absent from target names no row at all
     assert level0.plus_pair(prob, target={}) is prob
 

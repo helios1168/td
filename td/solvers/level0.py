@@ -767,10 +767,17 @@ def plus_pair(problem: Level0Problem, target: dict[str, float] | None = None) ->
         start = problem.A.shape[0]
         names = dict(problem.rows)
         names["plus_pair"] = (start, start + len(states))
-        return dataclasses.replace(
+        new = dataclasses.replace(
             problem, A=sparse.vstack([problem.A, block]).tocsc(),
             lb=np.concatenate([problem.lb, vals]),
             ub=np.concatenate([problem.ub, vals]), rows=names)
+        # a zero target is also a variable bound, so `greedy_plan` (which reads bounds, not
+        # this row) never enters the state; otherwise its point fails the row and the FI
+        # stage solves cold, which at FI 21 ran out of time on the empty plan
+        for st, v in zip(states, vals):
+            if v <= 0.0:
+                new = forbid_bundle(new, idx[st], "FI_PLUS")
+        return new
 
     return problem
 
