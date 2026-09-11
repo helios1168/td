@@ -55,6 +55,23 @@ moves this way, never a district's main body, even where that body sits in an ov
 `realise.json` records the move per bundle as `handed_off` and `handed_to`; the winner's
 `pieces`/`contiguous` columns in `districts.csv` are left as they were when its own bundle ran,
 since its cell graph never contained the handed zips.
+
+Two flags soften the cut itself, both off by default.
+
+`--split-cut contiguous` recuts each split state on the bundle's own cell graph instead of the
+power diagram: it grows every district from a seed at once, along the state's own graph edges,
+toward its target mass, so a district only takes ground the graph actually joins to what it
+already has. `realise.json` records the mass each district reached against its target per split
+state, under `cut_deviation`.
+
+`--graph` picks the contiguity model itself. The default, `cell_rook`, is the plain rook graph
+of the Voronoi cells described above. `land_bridge` first cuts a coastal or island zip's cell
+down to the single part its own point sits in, which disconnects a true island from the
+mainland, then adds one edge per disconnected component to the mainland, at the nearest pair of
+zip points, and records the added bridges in `cell_graph.json`. `land_island` does the same
+disconnection but adds no bridges: a district's piece count is then its raw piece count minus
+one free piece per graph component it touches, since a component boundary is the geometry's
+doing, not a break the plan or the repair could have avoided.
 """
 from __future__ import annotations
 
@@ -101,8 +118,9 @@ FILE_OF = {"N_WH": "national", "N_FI": "national", "WH": "wh", "FI": "fi"}
 
 GRAPH = "cell_rook"
 
-# {tuple(keys): (zips, edges)} -- the three bundles of a plan run usually project the same zip
-# set, and one Voronoi diagram over 6,459 points is the expensive part of this driver
+# {(graph, tuple(keys)): (zips, edges, borders, bridges)}: the three bundles of a plan run
+# usually project the same zip set, and one Voronoi diagram over 6,459 points is the expensive
+# part of this driver
 _PROX_CACHE: dict = {}
 
 
@@ -117,6 +135,16 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="the repair may push a district this fraction of its bundle's tau "
                          f"outside the plan's band to reunite pieces (default {BAND_SLACK}; "
                          "0 keeps the strict guard)")
+    ap.add_argument("--split-cut", choices=["power", "contiguous"], default="power",
+                    help="cut a split state by the power diagram of the district centres "
+                         "(default), or grow every district from a seed along the bundle's own "
+                         "cell graph toward its target mass")
+    ap.add_argument("--graph", choices=["cell_rook", "land_bridge", "land_island"],
+                    default=GRAPH,
+                    help="the contiguity model: the plain rook graph of the Voronoi cells "
+                         f"(default {GRAPH!r}), the same graph with one bridge edge added per "
+                         "disconnected component, or the same graph left disconnected, with "
+                         "one free piece per graph component a district touches")
     ap.add_argument("--geo-cache", default=geo.DEFAULT_DEST)
     ap.add_argument("--out", default=None, help="where to write (default: RUN_DIR)")
     return ap
@@ -211,9 +239,14 @@ def initial_centers(state_C: np.ndarray, z: np.ndarray, y: np.ndarray,
     return C
 
 
-def realise_bundle(bundle: str, recs: list, proj, shares: dict, geo_cache: str,
-                   rounds: int) -> dict:
-    """Level 2 for one bundle: `{zip: district name}` plus what the run should record."""
+def realise_prepare(bundle: str, recs: list, proj, shares: dict, geo_cache: str) -> dict:
+    """The part of level 2 that has to run before the bundle's cell graph can be built: zip
+    placement, per-state masses, and the plan's shares turned into `y` and `z`.
+
+    Returns a dict `cell_graph` reads (`placed`, `xy_dict`, `states_by_zip`) and
+    `realise_finish` reads for everything else, including the initial centres `ss.realise`
+    starts its Lloyd rounds from.
+    """
     zips_all = sorted(proj.G)
     xy_dict, missing = run_draw.coordinates(zips_all, geo_cache)
     placed = [z for z in zips_all if z in xy_dict]
@@ -249,32 +282,189 @@ def realise_bundle(bundle: str, recs: list, proj, shares: dict, geo_cache: str,
 
     state_C = _state_centroids(xy, M, state_idx, len(state_list))
     C = initial_centers(state_C, z, y, M_s)
+
+    return dict(placed=placed, missing=missing, states_by_zip=states_by_zip, M_by_zip=M_by_zip,
+                state_list=state_list, xy_dict=xy_dict, xy=xy, M=M, state_idx=state_idx,
+                M_s=M_s, k=k, y=y, z=z, keep=keep, folded=folded, C=C)
+
+
+def contiguous_cut(G, zips_s: list, power_label: dict, M_by_zip: dict, targets: dict,
+                   bodies: dict, centres: dict, xy: dict, other: str | None = None) -> tuple:
+    """Cut one split state's zips into `targets` on `G`'s own edges, in place of the power
+    diagram.
+
+    `power_label` is the state's current cut, the power diagram on the first split state a
+    bundle recuts, an earlier split state's own contiguous cut by the time a later one runs; it
+    is read only to seed a district, never to decide the final label. `bodies` is
+    `{district: set(zip)}`, that district's zips already fixed outside this state at the moment
+    this call runs. `centres` is `{district: (x, y)}`, `ss.realise`'s own final centre for the
+    column, used as the seed when a district has no body zip an edge of the state reaches.
+    `other`, when given, is the pseudo-district's key: it has no centre and seeds at the zip of
+    the state farthest from every real seed.
+
+    A real district seeds at every zip of the state the power cut gave it that has a `G` edge
+    into its own body outside the state. With none, either because the district touches no
+    other state at all or because none of its zips in this state happen to sit next to its own
+    body, it seeds at the single zip of the state nearest its centre instead. Seeding claims
+    zips in a fixed order, real districts by name then `other` last, so two districts never
+    claim the same zip.
+
+    Growth then runs one loop for both the ordinary case and the leftover one it turns into: at
+    each step, among the districts that still have an unclaimed zip on the state's own graph
+    next to their own region, the one with the largest remaining deficit (target minus mass so
+    far, which can go negative once a district has passed its target) takes the zip on its
+    frontier nearest its seed's centroid. Once every district's frontier is used up, or no zip
+    of the state ever reaches a seed at all, growth stops. The same rule that grows a short
+    district toward its target is what then keeps sending a contested zip to whichever
+    neighbour is least far over, once nothing is short anymore, without a second pass. A zip
+    growth never reaches, including one with no vertex on `G`, keeps its `power_label`.
+
+    Returns `({zip: district}, {district: (mass, target)})`.
+    """
+    zips_s = list(zips_s)
+    districts = sorted(targets)
+    present = [zp for zp in zips_s if zp in G]
+    Gs = G.subgraph(present)
+
+    def nearest(pool, point):
+        return min(sorted(pool),
+                  key=lambda zp: (xy[zp][0] - point[0]) ** 2 + (xy[zp][1] - point[1]) ** 2)
+
+    def farthest(pool, points):
+        if not points:
+            return sorted(pool)[0]
+        return max(sorted(pool),
+                  key=lambda zp: min((xy[zp][0] - p[0]) ** 2 + (xy[zp][1] - p[1]) ** 2
+                                    for p in points))
+
+    claimed: set = set()
+    seeds: dict[str, set] = {}
+    real = [dd for dd in districts if dd != other]
+    for dd in sorted(real):
+        touch = sorted(zp for zp in present if power_label.get(zp) == dd and zp not in claimed
+                       and any(nb in bodies.get(dd, ()) for nb in G[zp]))
+        if touch:
+            seeds[dd] = set(touch)
+        else:
+            pool = [zp for zp in present if zp not in claimed]
+            seeds[dd] = {nearest(pool, centres[dd])} if pool else set()
+        claimed |= seeds[dd]
+
+    if other is not None and other in districts:
+        pool = [zp for zp in present if zp not in claimed]
+        seed_points = [xy[zp] for dd in real for zp in seeds.get(dd, ())]
+        seeds[other] = {farthest(pool, seed_points)} if pool else set()
+        claimed |= seeds[other]
+
+    region = {dd: set(seeds.get(dd, ())) for dd in districts}
+    mass = {dd: sum(M_by_zip.get(zp, 0.0) for zp in region[dd]) for dd in districts}
+    assigned = {zp: dd for dd, zs in region.items() for zp in zs}
+    centroid = {}
+    for dd in districts:
+        if seeds.get(dd):
+            xs = [xy[zp][0] for zp in seeds[dd]]
+            ys = [xy[zp][1] for zp in seeds[dd]]
+            centroid[dd] = (sum(xs) / len(xs), sum(ys) / len(ys))
+
+    frontier: dict[str, set] = {dd: set() for dd in districts}
+    for dd in districts:
+        for zp in region[dd]:
+            for nb in Gs[zp]:
+                if nb not in assigned:
+                    frontier[dd].add(nb)
+
+    while True:
+        cands = sorted(dd for dd in districts if frontier[dd])
+        if not cands:
+            break
+        d_star = max(cands, key=lambda dd: targets.get(dd, 0.0) - mass.get(dd, 0.0))
+        cx, cy = centroid[d_star]
+        z_star = min(sorted(frontier[d_star]),
+                    key=lambda zp: (xy[zp][0] - cx) ** 2 + (xy[zp][1] - cy) ** 2)
+        region[d_star].add(z_star)
+        mass[d_star] = mass.get(d_star, 0.0) + M_by_zip.get(z_star, 0.0)
+        assigned[z_star] = d_star
+        for dd in districts:
+            frontier[dd].discard(z_star)
+        for nb in Gs[z_star]:
+            if nb not in assigned:
+                frontier[d_star].add(nb)
+
+    labels = {zp: assigned.get(zp, power_label.get(zp, other)) for zp in zips_s}
+    deviation = {dd: (mass.get(dd, 0.0), targets.get(dd, 0.0)) for dd in districts}
+    return labels, deviation
+
+
+def realise_finish(bundle: str, recs: list, prep: dict, rounds: int, *, G,
+                   split_cut: str = "power") -> dict:
+    """Level 2 for one bundle, given `realise_prepare`'s output and the bundle's cell graph:
+    `ss.realise`'s power cut, then, under `split_cut == "contiguous"`, a recut of every split
+    state on `G` in its place. Returns the same shape the old `realise_bundle` did, plus
+    `split_cut` and `cut_deviation` (`{state: {district: {mass, target}}}`, empty under
+    `"power"`).
+    """
+    xy, M, state_idx = prep["xy"], prep["M"], prep["state_idx"]
+    y, z, C = prep["y"], prep["z"], prep["C"]
     out = ss.realise(xy, M, state_idx, z, y, C, rounds=rounds)
 
+    k = prep["k"]
     names = [district_name(bundle, j) for j in range(k)] + [OTHER]
-    to_district = {z_: names[int(lab)] for z_, lab in zip(placed, out["labels"])}
-    to_district = channel.place_by_state(states_by_zip, to_district, missing, M_by_zip)
+    placed = prep["placed"]
+    label_names = {zp: names[int(lab)] for zp, lab in zip(placed, out["labels"])}
+
+    cut_deviation: dict[str, dict] = {}
+    if split_cut == "contiguous":
+        state_list = prep["state_list"]
+        M_by_zip = prep["M_by_zip"]
+        states_by_zip = prep["states_by_zip"]
+        xy_dict = prep["xy_dict"]
+        centers = out["centers"]
+        # split states in a fixed order: a district's body in a not-yet-recut split state is
+        # still the power label, the same order-dependence ss.realise itself carries
+        for s in sorted(out["split_states"], key=lambda s: state_list[s]):
+            code = state_list[s]
+            zips_s = [zp for zp in placed if states_by_zip[zp] == code]
+            touching = [j for j in range(k) if z[s, j]]
+            has_other = prep["keep"] > k and bool(z[s, k])
+            targets = {names[j]: float(y[s, j]) * float(prep["M_s"][s]) for j in touching}
+            other_key = None
+            if has_other:
+                other_key = OTHER
+                targets[OTHER] = float(y[s, k]) * float(prep["M_s"][s])
+            bodies = {names[j]: {zp for zp, lab in label_names.items()
+                                 if lab == names[j] and zp not in zips_s}
+                     for j in touching}
+            centres = {names[j]: (float(centers[j][0]), float(centers[j][1])) for j in touching}
+            new_labels, dev = contiguous_cut(G, zips_s, label_names, M_by_zip, targets, bodies,
+                                             centres, xy_dict, other=other_key)
+            label_names.update(new_labels)
+            cut_deviation[code] = {dd: dict(mass=m, target=t) for dd, (m, t) in dev.items()}
+
+    to_district = channel.place_by_state(prep["states_by_zip"], label_names, prep["missing"],
+                                         prep["M_by_zip"])
 
     # which real districts the plan lets a zip of each state belong to.  `z` is the level-1
     # decision after the residual fold, so an unsplit state names exactly one district and the
     # repair cannot move a zip out of it -- level 0 decided that state, not this driver.
     admissible = {code: {names[j] for j in range(k) if z[s, j]}
-                  for s, code in enumerate(state_list)}
+                  for s, code in enumerate(prep["state_list"])}
 
     rounds_used = out["rounds_used"]
     return dict(
         to_district=to_district,
-        split_states=[state_list[s] for s in out["split_states"]],
+        split_states=[prep["state_list"][s] for s in out["split_states"]],
         rounds_used=max(rounds_used.values()) if rounds_used else 0,
         n_fractional=int(out["n_fractional"]),
-        folded_states=folded,
-        pseudo_column=bool(keep > k),
-        n_missing=len(missing),
+        folded_states=prep["folded"],
+        pseudo_column=bool(prep["keep"] > k),
+        n_missing=len(prep["missing"]),
         placed=placed,
-        xy=xy_dict,
-        states_by_zip=states_by_zip,
-        M_by_zip=M_by_zip,
+        xy=prep["xy_dict"],
+        states_by_zip=prep["states_by_zip"],
+        M_by_zip=prep["M_by_zip"],
         admissible=admissible,
+        split_cut=split_cut,
+        cut_deviation=cut_deviation,
     )
 
 
@@ -294,14 +484,74 @@ def _state_borders(state_polys: dict, codes: list) -> list:
     return sorted([codes[i], codes[j]] for i, j, L in zip(ia, ib, lengths) if L > 0)
 
 
-def _proximity(keys: list, xy: dict, states_by_zip: dict, geo_cache: str) -> tuple:
-    """`(zips, edges, state_borders)` -- `geom_export`'s proximity tessellation over `keys`.
+def _single_part_cells(cells: dict, xy: dict) -> dict:
+    """`land_bridge`/`land_island`: replace a MultiPolygon cell by the single part carrying its
+    own zip's point (the largest part when none does).
+
+    A cell can be a MultiPolygon because its Voronoi region was intersected with a multi-part
+    state polygon, and a coastal or island zip's cell can then touch the mainland through the
+    other part (CLAUDE.md trap 23). Keeping only the part the zip's own point sits in is what
+    disconnects a true island (Martha's Vineyard, Nantucket, Long Island, Manhattan and so on)
+    from the mainland on the rook graph built over the result.
+    """
+    import shapely
+    out = {}
+    for zp, geom in cells.items():
+        if geom.geom_type != "MultiPolygon":
+            out[zp] = geom
+            continue
+        pt = shapely.Point(xy[zp])
+        parts = list(geom.geoms)
+        containing = [p for p in parts if p.covers(pt)]
+        out[zp] = containing[0] if containing else max(parts, key=lambda p: p.area)
+    return out
+
+
+def _add_bridges(zips: list, edges: list, xy: dict) -> tuple:
+    """`land_bridge`: joins every connected component of `(zips, edges)` but the largest to it,
+    by the nearest zip-to-zip point pair between the two.
+
+    Returns `(edges with the bridges added, sorted; the bridges found)`. A single-component
+    graph (nothing to bridge) is returned unchanged with an empty bridge list.
+    """
+    H = nx.Graph()
+    H.add_nodes_from(zips)
+    H.add_edges_from((a, b) for a, b in edges)
+    comps = sorted(nx.connected_components(H), key=len, reverse=True)
+    if len(comps) <= 1:
+        return edges, []
+    main = comps[0]
+    bridges = []
+    for comp in comps[1:]:
+        best = None
+        for a in comp:
+            ax, ay = xy[a]
+            for b in main:
+                bx, by = xy[b]
+                d2 = (ax - bx) ** 2 + (ay - by) ** 2
+                if best is None or d2 < best[0]:
+                    best = (d2, a, b)
+        bridges.append(sorted(best[1:]))
+    return sorted(edges + bridges), sorted(bridges)
+
+
+def _proximity(keys: list, xy: dict, states_by_zip: dict, geo_cache: str,
+              graph: str = "cell_rook") -> tuple:
+    """`(zips, edges, state_borders, bridges)` -- `geom_export`'s proximity tessellation over
+    `keys`, under one of three contiguity models named by `graph`.
 
     The same three calls `geom_export.export` makes, so the graph checked here is the graph the
     map is drawn against: one Voronoi diagram per state over that state's zips, clipped to the
-    landmass, then the rook adjacency of those cells.  The vertex set is the cell dict's own
-    keys, never `keys`: a zip whose cell clips away to nothing on the coastline has no cell, and
-    admitting it as an isolated vertex would invent a district piece (CLAUDE.md trap 21).
+    landmass, then the rook adjacency of those cells (`graph="cell_rook"`, the default). The
+    vertex set is the cell dict's own keys, never `keys`: a zip whose cell clips away to nothing
+    on the coastline has no cell, and admitting it as an isolated vertex would invent a district
+    piece (CLAUDE.md trap 21).
+
+    `graph="land_bridge"` or `"land_island"` first cuts every multi-part cell down to the single
+    part holding its own zip (`_single_part_cells`), which severs a true island from the
+    mainland; `land_bridge` then reconnects every severed component to the largest one with one
+    bridge edge each (`_add_bridges`, recorded here as `bridges`), and `land_island` leaves them
+    apart, with no bridges, for the caller to price per component.
     """
     import geom_export
     um = geom_export._us_maps()
@@ -309,17 +559,26 @@ def _proximity(keys: list, xy: dict, states_by_zip: dict, geo_cache: str) -> tup
     state_polys = dict(zip(states_gdf["STUSPS"].astype(str), states_gdf.geometry))
     clip = um.clip_region([xy[z] for z in keys], states_gdf)
     prox = um.voronoi_cells(keys, xy, clip, zip_state=states_by_zip, state_polys=state_polys)
+    if graph in ("land_bridge", "land_island"):
+        prox = _single_part_cells(prox, xy)
     codes = sorted({states_by_zip.get(z, "") for z in keys} & set(state_polys))
-    return sorted(prox), geom_export._proximity_edges(prox), _state_borders(state_polys, codes)
+    zips = sorted(prox)
+    edges = geom_export._proximity_edges(prox)
+    bridges: list = []
+    if graph == "land_bridge":
+        edges, bridges = _add_bridges(zips, edges, xy)
+    return zips, edges, _state_borders(state_polys, codes), bridges
 
 
 def cell_graph(run_dir: str, bundle: str, keys: list, xy: dict, states_by_zip: dict,
-               geo_cache: str) -> tuple:
-    """`(graph, state_borders, path)` -- the cell rook graph over `keys`, cached beside the
-    projection.
+               geo_cache: str, graph: str = GRAPH) -> tuple:
+    """`(G, state_borders, path)` -- the contiguity graph named by `graph` over `keys`, cached
+    beside the projection.
 
-    The cache records the key set it was built from, so a rerun over a different projection
-    rebuilds rather than silently reusing another run's tessellation.
+    The cache records the key set and the graph name it was built from, so a rerun over a
+    different projection, or under a different `--graph`, rebuilds rather than silently reusing
+    another run's tessellation: a cached `cell_rook` graph must never be served for
+    `land_bridge`, which is a different set of edges over the same cells.
     """
     path = os.path.join(run_dir, "projections", bundle, "cell_graph.json")
     keys = list(keys)
@@ -327,16 +586,19 @@ def cell_graph(run_dir: str, bundle: str, keys: list, xy: dict, states_by_zip: d
     if os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
             got = json.load(fh)
-        if got.get("keys") == keys and got.get("state_borders") is not None:
-            rec = (got["zips"], got["edges"], got["state_borders"])
+        if (got.get("keys") == keys and got.get("state_borders") is not None
+                and got.get("graph") == graph):
+            rec = (got["zips"], got["edges"], got["state_borders"], got.get("bridges", []))
     if rec is None:
-        cached = _PROX_CACHE.get(tuple(keys))
-        rec = cached if cached is not None else _proximity(keys, xy, states_by_zip, geo_cache)
-        _PROX_CACHE[tuple(keys)] = rec
+        cache_key = (graph, tuple(keys))
+        cached = _PROX_CACHE.get(cache_key)
+        rec = cached if cached is not None else _proximity(keys, xy, states_by_zip, geo_cache,
+                                                            graph)
+        _PROX_CACHE[cache_key] = rec
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as fh:
-            json.dump(dict(graph=GRAPH, keys=keys, zips=rec[0], edges=rec[1],
-                           state_borders=rec[2]), fh)
+            json.dump(dict(graph=graph, keys=keys, zips=rec[0], edges=rec[1],
+                           state_borders=rec[2], bridges=rec[3]), fh)
             fh.write("\n")
     G = nx.Graph()
     G.add_nodes_from(rec[0])
@@ -357,6 +619,47 @@ def district_pieces(G, to_district: dict) -> dict:
     return {d: sorted(nx.connected_components(G.subgraph(part)),
                       key=lambda p: (-len(p), min(p)))
             for d, part in sorted(members.items())}
+
+
+def graph_components(G) -> dict:
+    """`{zip: component id}` over the whole graph, only meaningful when the graph is meant to be
+    disconnected (`--graph land_island`). Under `cell_rook` and `land_bridge` the graph is one
+    component (or as good as), so callers pass `{}` instead and every lookup misses, which is
+    what makes `piece_count` reduce to plain `len(parts)` for them.
+    """
+    comp_of: dict = {}
+    for i, comp in enumerate(nx.connected_components(G)):
+        for z in comp:
+            comp_of[z] = i
+    return comp_of
+
+
+def piece_count(parts: list, comp_of: dict) -> int:
+    """A district's piece count under one-free-piece-per-graph-component accounting: its raw
+    piece count minus one for every graph component it touches beyond the first.
+
+    `--graph land_island` disconnects true islands from the mainland on purpose, so a district
+    split only along that boundary is not the plan's or the repair's doing and should not read
+    as split at all; `comp_of` (from `graph_components`) says which component each piece sits
+    in. With `comp_of` empty (`cell_rook`, `land_bridge`) every piece maps to the same missing
+    key, so this is exactly `len(parts)`, unchanged.
+    """
+    if not parts:
+        return 0
+    comps = {comp_of.get(next(iter(p))) for p in parts}
+    return len(parts) - (len(comps) - 1)
+
+
+def _heaviest_per_component(parts: list, M_by_zip: dict, comp_of: dict) -> dict:
+    """`{component id: heaviest piece in it}` -- the free piece per graph component that
+    `repair` never frees. With `comp_of` empty every piece maps to the same component, so this
+    is the single heaviest piece overall, `repair`'s original rule before `--graph land_island`.
+    """
+    groups: dict = {}
+    for p in parts:
+        groups.setdefault(comp_of.get(next(iter(p))), []).append(p)
+    return {c: max(ps, key=lambda p: sum(float(M_by_zip.get(z, 0.0)) for z in p))
+            for c, ps in groups.items()}
 
 
 def state_adjacency(G, states_by_zip: dict) -> dict:
@@ -407,13 +710,21 @@ def off_plan(G, labels: dict, states_by_zip: dict, admissible: dict) -> dict:
 
 
 def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible: dict,
-           band, rounds: int = 10, slack: float = 0.0) -> dict:
+           band, rounds: int = 10, slack: float = 0.0, comp_of: dict | None = None) -> dict:
     """Free what must move and grow it back onto a neighbour the plan admits.
 
     `slack` widens the band the guards below read to `[L - slack, U + slack]`: a district
     inside the widened band has no excess, so a fragment of a few units may cross into a
     district sitting near U, or leave one sitting near L, without a refusal.  The caller sets
     it as a fraction of the bundle's tau (`--band-slack`); zero is the strict guard.
+
+    `comp_of` (`graph_components(G)`) is only non-empty under `--graph land_island`, whose
+    disconnection is deliberate: "heaviest piece" and "more than one piece" below are then read
+    per graph component (`_heaviest_per_component`, `piece_count`), so a piece that is alone in
+    its own island component is never freed just for being the only thing there, and a district
+    spanning two components is not "in several pieces" for having one piece in each. With
+    `comp_of` empty (`cell_rook`, `land_bridge`) this is exactly the original, single-component
+    rule.
 
     `td.solvers.district_split._reconnect`'s pattern, with the plan's constraints on top.  Per
     round, two sets are freed: every zip a district holds off-plan (`off_plan`), and, on the
@@ -446,6 +757,7 @@ def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible
     Returns the new labels and what happened, including `bridged` (accepted bridges) and
     `swapped` (zips handed back to pay for one).
     """
+    comp_of = comp_of or {}
     if band is not None and slack > 0.0:
         band = (float(band[0]) - float(slack), float(band[1]) + float(slack))
     labels = dict(to_district)
@@ -461,12 +773,12 @@ def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible
         freed: dict[str, str] = dict(off_plan(G, labels, states_by_zip, admissible))
         rest = G.subgraph([z for z in G if z not in freed])
         for d, parts in district_pieces(rest, labels).items():
-            if d == OTHER or len(parts) <= 1:
+            if d == OTHER or piece_count(parts, comp_of) <= 1:
                 continue
-            # `parts` is sorted by descending zip count, so `max` breaks a mass tie by size
-            heaviest = max(parts, key=lambda p: sum(float(M_by_zip.get(z, 0.0)) for z in p))
+            # heaviest per graph component (a single group when comp_of is empty), never freed
+            heaviest_by_comp = _heaviest_per_component(parts, M_by_zip, comp_of)
             for p in parts:
-                if p is not heaviest:
+                if p is not heaviest_by_comp[comp_of.get(next(iter(p)))]:
                     freed.update({z: d for z in p})
         if not freed:
             break
@@ -512,11 +824,12 @@ def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible
     for src in sorted({d for d in labels.values() if d != OTHER}):
         while True:
             parts = district_pieces(G, labels).get(src, [])
-            if len(parts) <= 1:
+            if piece_count(parts, comp_of) <= 1:
                 break
-            heaviest = max(parts, key=lambda p: sum(float(M_by_zip.get(z, 0.0)) for z in p))
+            heaviest_by_comp = _heaviest_per_component(parts, M_by_zip, comp_of)
             progressed = False
             for p in parts:
+                heaviest = heaviest_by_comp[comp_of.get(next(iter(p)))]
                 if p is heaviest:
                     continue
                 ok, n_swapped, attempted = _bridge_piece(
@@ -535,7 +848,7 @@ def repair(G, to_district: dict, M_by_zip: dict, states_by_zip: dict, admissible
                 break
             # a bridge just resolved this district to one piece: the round loop's stale reason
             # no longer describes it
-            if len(district_pieces(G, labels).get(src, [])) <= 1:
+            if piece_count(district_pieces(G, labels).get(src, []), comp_of) <= 1:
                 stuck.pop(src, None)
 
     by_district: dict[str, int] = {}
@@ -692,21 +1005,27 @@ def plan_states(admissible: dict) -> dict:
     return out
 
 
-def unrepaired(after: dict, states_of: dict, sadj: dict, stuck: dict, gaps: list) -> list:
+def unrepaired(after: dict, states_of: dict, sadj: dict, stuck: dict, gaps: list,
+              comp_of: dict | None = None) -> list:
     """One row per district still in several pieces, with why it is.
 
     The commonest reason is level 0's, not level 2's: a district the plan gave states no cell
     edge joins cannot be made contiguous by moving zips, because there is no zip between them.
     `gaps` separates that from the tessellation's own fault -- a state pair with a real border
     and no cell edge -- which reads the same on the graph and is not the plan's doing.
+
+    `comp_of` (`graph_components(G)`, non-empty only under `--graph land_island`) folds one free
+    piece per graph component into "still in several pieces" (`piece_count`), so a district
+    split only along a deliberately disconnected island boundary does not appear here at all.
     """
+    comp_of = comp_of or {}
     healed = {k: set(v) for k, v in sadj.items()}
     for a, b in gaps:
         healed.setdefault(a, set()).add(b)
         healed.setdefault(b, set()).add(a)
     rows = []
     for name, parts in after.items():
-        if name == OTHER or len(parts) <= 1:
+        if name == OTHER or piece_count(parts, comp_of) <= 1:
             continue
         states = states_of.get(name, set())
         groups = _state_groups(sadj, states)
@@ -955,11 +1274,13 @@ def _main(args) -> int:
         proj = projs[bundle]
         chans = chans_of[bundle]
         shares = read_shares(os.path.join(cell, "state_shares.csv"))
-        res = realise_bundle(bundle, recs, proj, shares, args.geo_cache, args.rounds)
+        prep = realise_prepare(bundle, recs, proj, shares, args.geo_cache)
+        G, borders, gpath = cell_graph(run_dir, bundle, prep["placed"], prep["xy_dict"],
+                                       prep["states_by_zip"], args.geo_cache, graph=args.graph)
+        comp_of = graph_components(G) if args.graph == "land_island" else {}
+        res = realise_finish(bundle, recs, prep, args.rounds, G=G, split_cut=args.split_cut)
         to_district = res["to_district"]
 
-        G, borders, gpath = cell_graph(run_dir, bundle, res["placed"], res["xy"],
-                                       res["states_by_zip"], args.geo_cache)
         before = district_pieces(G, to_district)
         handoff = _handoff_overlap_pieces(bundle, before, to_district, res, rank, chans_of,
                                           overlap_idx, state_counts, rows_by_name, d, cell_of,
@@ -967,7 +1288,8 @@ def _main(args) -> int:
         band_b = band_of(params, bundle, band)
         slack_b = args.band_slack * 0.5 * (band_b[0] + band_b[1]) if band_b else 0.0
         fix = repair(G, to_district, res["M_by_zip"], res["states_by_zip"],
-                     res["admissible"], band_b, rounds=args.repair_rounds, slack=slack_b)
+                     res["admissible"], band_b, rounds=args.repair_rounds, slack=slack_b,
+                     comp_of=comp_of)
         to_district = fix["labels"]
         after = district_pieces(G, to_district)
         sadj = state_adjacency(G, res["states_by_zip"])
@@ -975,8 +1297,9 @@ def _main(args) -> int:
         # gap, and a district straddling it cannot be repaired to contiguity here
         on_graph = {tuple(sorted((a, b))) for a in sadj for b in sadj[a]}
         gaps = [b for b in borders if tuple(sorted(b)) not in on_graph]
-        still = unrepaired(after, plan_states(res["admissible"]), sadj, fix["stuck"], gaps)
-        pieces_of = {name: len(parts) for name, parts in after.items()}
+        still = unrepaired(after, plan_states(res["admissible"]), sadj, fix["stuck"], gaps,
+                           comp_of=comp_of)
+        pieces_of = {name: piece_count(parts, comp_of) for name, parts in after.items()}
 
         members: dict[str, list] = {}
         for zp, name in to_district.items():
@@ -1032,7 +1355,7 @@ def _main(args) -> int:
             n_fractional=res["n_fractional"], pseudo_column=res["pseudo_column"],
             folded_states=res["folded_states"], n_missing=res["n_missing"],
             residual_zips=len(members.get(OTHER, ())), residual_mass=resid_mass,
-            graph=GRAPH, graph_path=os.path.relpath(gpath, run_dir),
+            graph=args.graph, graph_path=os.path.relpath(gpath, run_dir),
             graph_zips=G.number_of_nodes(), graph_edges=G.number_of_edges(),
             components=nx.number_connected_components(G),
             cross_state_edges=sum(1 for a, b in G.edges()
@@ -1041,8 +1364,8 @@ def _main(args) -> int:
             state_borders=len(borders), state_borders_on_graph=len(on_graph),
             state_borders_missing=gaps,
             band=list(band_b) if band_b else None, band_slack=slack_b,
-            pieces_before={n: len(before.get(n, ())) for n in names},
-            pieces_after={n: len(after.get(n, ())) for n in names},
+            pieces_before={n: piece_count(before.get(n, ()), comp_of) for n in names},
+            pieces_after={n: piece_count(after.get(n, ()), comp_of) for n in names},
             moved=fix["moved"], bridged=fix["bridged"], swapped=fix["swapped"],
             repair_rounds=fix["rounds_used"],
             off_plan=fix["off_plan"],
@@ -1050,10 +1373,11 @@ def _main(args) -> int:
                              for n in names if _excess(fix["mass"].get(n, 0.0), band_b) > 0],
             unrepaired=still,
             handed_off=handoff["handed_off"], handed_to=handoff["handed_to"],
+            split_cut=res["split_cut"], cut_deviation=res["cut_deviation"],
             seconds=time.time() - t0)
         rec_b = record[bundle]
         print(f"{bundle}: {len(recs)} district(s), {len(res['split_states'])} split state(s), "
-              f"{rec_b['residual_zips']} zip(s) other; graph {GRAPH} "
+              f"{rec_b['residual_zips']} zip(s) other; graph {args.graph} "
               f"{rec_b['graph_zips']} zip(s) {rec_b['graph_edges']} edge(s) "
               f"{rec_b['components']} component(s), {rec_b['cross_state_edges']} cross-state; "
               f"pieces {sum(rec_b['pieces_before'].values())} -> "
@@ -1089,7 +1413,8 @@ def _main(args) -> int:
 
     with open(os.path.join(out, "realise.json"), "w", encoding="utf-8") as fh:
         json.dump(dict(run_dir=run_dir, rounds=args.rounds,
-                       repair_rounds=args.repair_rounds, graph=GRAPH,
+                       repair_rounds=args.repair_rounds, graph=args.graph,
+                       split_cut=args.split_cut,
                        band=list(band) if band else None, bundles=record,
                        overlaps=overlaps,
                        districts=[dict(district=r["district"], slot=r["slot"],

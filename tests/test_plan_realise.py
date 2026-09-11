@@ -34,6 +34,7 @@ for _p in (HERE, os.path.join(ROOT, "tools"), ROOT):
 import networkx as nx                               # noqa: E402
 
 from td import channels                             # noqa: E402
+from td import geo                                  # noqa: E402
 from td import instance as td_instance              # noqa: E402
 import plan_realise as cli                          # noqa: E402
 import run_draw                                     # noqa: E402
@@ -619,3 +620,212 @@ def test_a_district_holding_nothing_but_off_plan_zips_keeps_them():
     G = _path_graph(2)
     labels = {"p0": "D1", "p1": "D2"}
     assert cli.off_plan(G, labels, {"p0": "A", "p1": "A"}, {"A": {"D2"}}) == {}
+
+
+# ------------------------------------------------------------------ --split-cut contiguous
+
+def test_split_cut_contiguous_recuts_split_states_on_the_cell_graph():
+    """--split-cut contiguous re-cuts B and C on the path graph instead of the power diagram;
+    both are split states (B has two real slots, C a slot plus the residual), so both carry a
+    cut_deviation entry whose targets sum to the state's own mass, and every district still
+    comes back in one piece on this trivial path graph."""
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_run(run_dir)
+        orig = run_draw.coordinates
+        run_draw.coordinates = lambda zips, cache=None: ({z: XY[z] for z in zips if z in XY},
+                                                          [z for z in zips if z not in XY])
+        try:
+            assert cli.main([run_dir, "--geo-cache", "unused",
+                             "--split-cut", "contiguous"]) == 0
+        finally:
+            run_draw.coordinates = orig
+        rows, districts, _, rec = _tables(run_dir)
+
+        n = rec["bundles"]["N"]
+        assert n["split_cut"] == "contiguous"
+        assert set(n["cut_deviation"]) == {"B", "C"}
+        for state, total in (("B", 2.0), ("C", 2.0)):
+            targets = [v["target"] for v in n["cut_deviation"][state].values()]
+            assert abs(sum(targets) - total) < 1e-9
+
+        assert all(r["contiguous"] == "1" for r in districts)
+        cells = [(r["zip"], r["channel"]) for r in rows]
+        assert len(cells) == len(ZIPS) * len(channels.CHANNELS) == 24
+
+
+# --------------------------------------------------------------- contiguous_cut, on toy graphs
+
+def test_contiguous_cut_reunites_a_detached_zip_and_seeds_a_wholly_inside_district_at_its_centre():
+    """A five-zip path b0-b1-b2-b3-b4 in split state B, plus o1 outside B joined to b0 (D1's
+    body).  The power diagram gave D1 the detached b0, b3, b4 and D2 the middle b1, b2 -- an
+    arrangement `ss.realise`'s LP can produce and the power cut never repairs.  D1 seeds at b0
+    (its only zip of B touching its own body); D2 touches no state but B, so it has no body and
+    seeds at the zip of B nearest its given centre (b4).  Growing both from those seeds at once
+    reaches exactly their targets, one piece each."""
+    G = nx.Graph()
+    G.add_edges_from([("o1", "b0"), ("b0", "b1"), ("b1", "b2"), ("b2", "b3"), ("b3", "b4")])
+    zips_s = ["b0", "b1", "b2", "b3", "b4"]
+    power_label = {"b0": "D1", "b1": "D2", "b2": "D2", "b3": "D1", "b4": "D1"}
+    M_by_zip = {z: 1.0 for z in zips_s}
+    targets = {"D1": 3.0, "D2": 2.0}
+    bodies = {"D1": {"o1"}, "D2": set()}
+    xy = {"o1": (-1.0, 0.0), "b0": (0.0, 0.0), "b1": (1.0, 0.0), "b2": (2.0, 0.0),
+          "b3": (3.0, 0.0), "b4": (4.0, 0.0)}
+    centres = {"D1": (0.0, 0.0), "D2": (4.0, 0.0)}
+
+    labels, dev = cli.contiguous_cut(G, zips_s, power_label, M_by_zip, targets, bodies, centres,
+                                     xy)
+
+    assert labels == {"b0": "D1", "b1": "D1", "b2": "D1", "b3": "D2", "b4": "D2"}
+    assert dev["D1"] == (3.0, 3.0) and dev["D2"] == (2.0, 2.0)
+    Gs_labels = {z: labels[z] for z in zips_s}
+    pieces = cli.district_pieces(G, Gs_labels)
+    assert all(len(v) == 1 for v in pieces.values())
+
+
+def test_contiguous_cut_seeds_other_farthest_from_every_real_seed_and_leaves_unreached_zips_alone():
+    """A four-zip path with one real district D1, seeded at p0 (its body zip o1's neighbour),
+    and the residual pseudo-district, seeded at p9, the farthest zip from D1's seed by point
+    distance even though it carries no edge to anything: with `other`'s frontier then empty
+    forever, D1 is the only district still growing and keeps absorbing the path past its own
+    target.  p8, a second disconnected zip that is not the farthest one, is never anybody's
+    seed and never anybody's frontier either, so it keeps the power label it started with."""
+    G = nx.Graph()
+    G.add_edges_from([("o1", "p0"), ("p0", "p1"), ("p1", "p2"), ("p2", "p3")])
+    G.add_node("p8")
+    G.add_node("p9")
+    zips_s = ["p0", "p1", "p2", "p3", "p8", "p9"]
+    power_label = {z: "other" for z in zips_s}
+    power_label["p0"] = "D1"
+    power_label["p8"] = "D1"                             # preset; growth never reaches it
+    M_by_zip = {z: 1.0 for z in zips_s}
+    targets = {"D1": 2.0, "other": 2.0}
+    bodies = {"D1": {"o1"}}
+    xy = {"o1": (-1.0, 0.0), "p0": (0.0, 0.0), "p1": (1.0, 0.0), "p2": (2.0, 0.0),
+          "p3": (3.0, 0.0), "p8": (5.0, 5.0), "p9": (9.0, 9.0)}
+    centres = {"D1": (0.0, 0.0)}
+
+    labels, dev = cli.contiguous_cut(G, zips_s, power_label, M_by_zip, targets, bodies, centres,
+                                     xy, other="other")
+
+    assert labels["p0"] == labels["p1"] == labels["p2"] == labels["p3"] == "D1"
+    assert labels["p9"] == "other"                            # the farthest zip, other's seed
+    assert labels["p8"] == "D1"                     # its own power label, growth never reached it
+    assert dev["D1"] == (4.0, 2.0) and dev["other"] == (1.0, 2.0)
+
+
+# -------------------------------------------------------------------------------- --graph
+
+def _two_part_state_gdf():
+    """One state 'AA': a mainland box [0,10]x[0,10] and an island box [10.5,12]x[0,10], a 0.5
+    unit strait apart.  Placed at (2,5) and (8,5) on the mainland and (11.25,5) on the island,
+    the island zip's raw Voronoi cell still reaches a sliver of the mainland (x in (9.625, 10]),
+    closer to it than to the mainland zip at (8,5): a MultiPolygon cell that touches the
+    mainland zip's cell on the default graph even though the island itself does not (CLAUDE.md
+    trap 23)."""
+    import geopandas as gpd
+    from shapely import MultiPolygon, box
+    mainland = box(0.0, 0.0, 10.0, 10.0)
+    island = box(10.5, 0.0, 12.0, 10.0)
+    return gpd.GeoDataFrame({"STUSPS": ["AA"]}, geometry=[MultiPolygon([mainland, island])],
+                            crs=geo.LAEA)
+
+
+PROX_XY = {"isl": (11.25, 5.0), "m1": (2.0, 5.0), "m2": (8.0, 5.0)}
+PROX_STATES = {z: "AA" for z in PROX_XY}
+
+
+def _proximity_under(graph_name):
+    orig = geo.states_outline
+    geo.states_outline = lambda cache: _two_part_state_gdf()
+    try:
+        return cli._proximity(sorted(PROX_XY), PROX_XY, PROX_STATES, "unused", graph=graph_name)
+    finally:
+        geo.states_outline = orig
+
+
+def test_the_default_graph_carries_a_phantom_edge_through_the_multi_part_cell():
+    """Before either fix: isl's cell (mainland sliver plus the island itself) shares a boundary
+    with m2's, so cell_rook joins an island zip to the mainland through geometry alone."""
+    zips, edges, borders, bridges = _proximity_under("cell_rook")
+    assert ["isl", "m2"] in edges and bridges == []
+
+
+def test_land_island_disconnects_the_island_and_land_bridge_reconnects_it_with_one_edge():
+    """land_island cuts isl's cell down to the island part alone, which drops the phantom edge
+    and leaves two components; land_bridge does the same cut, then adds back exactly one edge,
+    from isl to its nearest mainland zip by point distance (m2, not m1), and the graph is one
+    component again."""
+    zips, edges, borders, bridges = _proximity_under("land_island")
+    G = nx.Graph()
+    G.add_nodes_from(zips)
+    G.add_edges_from((a, b) for a, b in edges)
+    comps = sorted(sorted(c) for c in nx.connected_components(G))
+    assert comps == [["isl"], ["m1", "m2"]]
+    assert bridges == []
+
+    zips2, edges2, borders2, bridges2 = _proximity_under("land_bridge")
+    G2 = nx.Graph()
+    G2.add_nodes_from(zips2)
+    G2.add_edges_from((a, b) for a, b in edges2)
+    assert nx.number_connected_components(G2) == 1
+    assert bridges2 == [["isl", "m2"]]
+
+
+def test_piece_count_and_repair_treat_one_piece_per_component_as_free():
+    """A district holding one zip on each of two disconnected graph components (an island and
+    the mainland) counts one piece, not two, under `piece_count`; `repair` must not try to free
+    either as a stray fragment of the other."""
+    G = nx.Graph()
+    G.add_edges_from([("m1", "m2")])
+    G.add_node("isl")
+    comp_of = cli.graph_components(G)
+    assert comp_of["m1"] == comp_of["m2"] and comp_of["isl"] != comp_of["m1"]
+
+    labels = {"m1": "D1", "m2": "D1", "isl": "D1"}
+    parts = cli.district_pieces(G, labels)["D1"]
+    assert len(parts) == 2
+    assert cli.piece_count(parts, comp_of) == 1
+    assert cli.piece_count(parts, {}) == 2                # cell_rook/land_bridge accounting
+
+    M_by_zip = {"m1": 1.0, "m2": 1.0, "isl": 1.0}
+    states = {z: "AA" for z in labels}
+    out = cli.repair(G, labels, M_by_zip, states, {"AA": {"D1"}}, None, comp_of=comp_of)
+    assert out["labels"] == labels and out["moved"] == 0
+
+
+# --------------------------------------------------------------------------- cell_graph cache
+
+def test_a_cached_cell_rook_graph_is_rebuilt_for_a_different_graph_name():
+    """`cell_graph.json`'s cache check reads the recorded `graph` name: a run cached under
+    `cell_rook` must not be served back for `land_bridge`, which is a different edge set over
+    the same cells."""
+    calls = []
+
+    def fake_proximity(keys, xy, states_by_zip, geo_cache, graph="cell_rook"):
+        calls.append(graph)
+        edges = [[keys[0], keys[1]]] if graph == "cell_rook" else [[keys[1], keys[2]]]
+        return sorted(keys), edges, [], []
+
+    orig = cli._proximity
+    cli._proximity = fake_proximity
+    cli._PROX_CACHE.clear()
+    try:
+        with tempfile.TemporaryDirectory() as run_dir:
+            os.makedirs(os.path.join(run_dir, "projections", "N"), exist_ok=True)
+            keys = ["10000", "10001", "10002"]
+            xy = {k: (float(i), 0.0) for i, k in enumerate(keys)}
+            states = {k: "A" for k in keys}
+            G1, _, path = cli.cell_graph(run_dir, "N", keys, xy, states, "unused",
+                                         graph="cell_rook")
+            assert sorted(G1.edges()) == [("10000", "10001")]
+            G2, _, _ = cli.cell_graph(run_dir, "N", keys, xy, states, "unused",
+                                      graph="land_bridge")
+            assert sorted(G2.edges()) == [("10001", "10002")]
+            assert calls == ["cell_rook", "land_bridge"]
+            with open(path, encoding="utf-8") as fh:
+                got = json.load(fh)
+            assert got["graph"] == "land_bridge"
+    finally:
+        cli._proximity = orig
+        cli._PROX_CACHE.clear()
