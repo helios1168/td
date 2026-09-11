@@ -75,11 +75,12 @@ way.
 | `docs/HEADLINE.md` | owner of the shipped headline map end to end: the committed draw, the level-1 split MILP, level-2 realisation, what is certified, and how to reproduce it |
 | `docs/units/<id>.md` | one unit's brief plus `## Model`, `## Verify`, `## Code verify` and a `Status: open\|done\|dropped` line |
 | `docs/foundations/` | frozen FRAME, APPROACHES, LENS_*, DOMAIN_*, LIT_*, BRIEF and the former `archive/`; read-only, never edited |
-| `<worktree>/PLAN.md` | one track's running log (`## Goal`, `## Next step`, `## Done`, `## Decisions needed`, `## Files owned / forbidden`); committed on the branch, deleted at merge |
+| `.beads/issues.jsonl` | the Beads task queue (`bd`); a track is an epic bead, a unit a chain of model, verify math, implementation and verify code beads (`AGENTS.md`) |
+| `.serena/memories/` | Serena project memories, topic-named (`facts/...`, `solver/...`); `facts/` holds the measured numbers; written by Claude only |
 | `tools/verify/<id>/` | runnable verifier artifacts for unit `<id>`, cited from that unit's `## Verify` / `## Code verify`; not test-discovered |
 | `literature/territory_bibliography.{md,csv,bib}`, `literature/RESEARCH_ADDITIONS.bib` | citations (bibliography skill) |
-| `.claude/doc-owners.txt` | the docs ownership allowlist, read by the `td-doc-owners.sh` PreToolUse hook and `tests/test_docs_owners.py` |
-| `.claude/settings.json` | wires the four `~/.claude/hooks/td-*.sh` hooks: SessionStart, PreCompact, PreToolUse, Stop |
+| `.claude/doc-owners.txt` | the docs ownership allowlist, enforced by `tests/test_docs_owners.py` |
+| `.claude/settings.json` | empty (`{}`): td wires no Claude hooks |
 
 ## Recipes (v2 forms — the live ones)
 
@@ -98,7 +99,6 @@ tools/staff.py instance_descaled_v2_conus.json.gz --table <run>/draw.csv --relea
 tools/override.py instance_descaled_v2_conus.json.gz --table <run>/draw.csv --edits edits.json --mode A --out battery/results/app/override_<name>
 tools/split_district.py instance_descaled_v2_conus.json.gz --table <run>/draw.csv --district D05 --reps R1,R2 --exact --time-limit 60 --out battery/results/app/split_<name>
 .venv/bin/python3 tests/run_all.py    # 312 fast tests; -k <name> filters
-~/.claude/hooks/test-td-hooks.sh      # SessionStart / PreCompact / PreToolUse / Stop hook tests
 ```
 
 ### Runtime baseline (2026-09-08)

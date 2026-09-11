@@ -1,7 +1,7 @@
 # The N-way model — 3+ candidate reps per zip
 
 **Opened:** 2026-08-31 · **Split out of `NWAY.md` on 2026-08-31.** Companion files:
-`docs/PROBLEM.md` (the business problem), `STATE.md` `## Facts` (every measured number),
+`docs/PROBLEM.md` (the business problem), `.serena/memories/facts/` (every measured number),
 `docs/CODE_MAP.md` (how to run anything, incl. the export route).
 
 This file owns the settled facts about the **model**: the utilities, the propositions and their
@@ -332,7 +332,7 @@ D(g) = n·log ḡ − Σ_i log g_i  ≥  0,
 
 where `ḡ` is the arithmetic mean of the gains and `D(g)` vanishes exactly at perfect balance.
 The measured values on the delivered k = 18 draw, and the resulting inversion of the two terms,
-are in `docs/PROBLEM.md` §2 and `STATE.md` `## Facts`.
+are in `docs/PROBLEM.md` §2 and `.serena/memories/facts/`.
 
 `D(g)` must not be confused with `D(M)`, the *mass* imbalance: `D(M) = 1.5e-4` nats at a mass
 spread of 1.37 %, while `D(g) = 0.148` nats at a realised *gain* spread of 60.17 %. The
@@ -620,9 +620,9 @@ and takes `targets="equal"` for the other.
 ## 11. Power-cell contiguity: the routes and their verdicts
 
 Folded from `docs/OPTIONS_power-cell-contiguity.md` on 2026-09-07. The requirement itself, and
-what "zero" means, are in `docs/PROBLEM.md` §8; every measurement is in `STATE.md` `## Facts`.
+what "zero" means, are in `docs/PROBLEM.md` §8; every measurement is in `.serena/memories/facts/`.
 Options 0 and 1 (measure the drift; largest-contiguous-piece fractions) were the measurements
-that ranked the rest and are closed; their outputs are in `## Facts`.
+that ranked the rest and are closed; their outputs are in `facts/`.
 
 **Region contiguity in the plane is already a theorem, and this is the reason the route exists.**
 Complementary slackness on the balanced-assignment LP says an optimal assignment sends zip `z`

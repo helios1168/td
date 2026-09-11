@@ -3,7 +3,7 @@
 **Opened:** 2026-08-31; renamed and reorganised 2026-09-07 (see `git log --follow` for the
 history, and the commit "Step 2: …" for what was folded in from where). This file owns
 the settled facts about the *business problem*. `docs/MODEL.md` owns the settled facts about the
-model, `STATE.md` `## Facts` owns every measured number, and `docs/CODE_MAP.md` says how to run
+model, `.serena/memories/facts/` owns every measured number, and `docs/CODE_MAP.md` says how to run
 anything. Nothing here is a resume point; `STATE.md` `## Now` is.
 
 The business is standing up a **new "national" channel**, carving the two largest firms out of
@@ -64,7 +64,7 @@ shall be opportunity-balanced* — and not as a consequence derived from the obj
 still dominates asymptotically (log blows up as a territory starves), but not on the region the
 programme operates in.
 
-Every number in this section is sourced from `STATE.md` `## Facts`; the algebra is
+Every number in this section is sourced from `.serena/memories/facts/`; the algebra is
 `docs/MODEL.md` §7.
 
 ## 3. Two stages
@@ -144,11 +144,11 @@ shattered graph, not the unit count.
 
 ## 6. The instance
 
-**Every number describing the instance lives in `STATE.md` `## Facts`**, which carries the v1
+**Every number describing the instance lives in `.serena/memories/facts/`**, which carries the v1
 and v2 columns side by side. The live instance is v2, `instance_descaled_v2.json.gz`: 3,748
 zips, 114 reps, k = 18 at $1B. The v1 sizing that this file used to carry (2,232 then 1,229
 zips, 72 reps, ≈$6.2B, k ≈ 6, "four islands") is superseded on every line and is kept only in
-`## Facts` as a regression column.
+`facts/` as a regression column.
 
 Two structural readings survive the re-sizing and are worth stating separately from the numbers.
 
@@ -196,7 +196,7 @@ Three things follow, and they are the reason the ceiling is computed before any 
 3. **It is a few numbers of work**, with no solver and no confidential per-zip data.
 
 The illustrative $6.2B ceiling table this section used to carry was v1 and is superseded; see
-`docs/foundations/FRAME.md`, whose header supersedes it explicitly, and `STATE.md` `## Facts`.
+`docs/foundations/FRAME.md`, whose header supersedes it explicitly, and `.serena/memories/facts/`.
 
 A caveat that still applies: `allocate_districts` returns `ceiling_spread_rel` at the
 dual-bound budget and `min_spread_rel` at the spread floor, with `spread_optima_agree` saying
@@ -224,7 +224,7 @@ weights instead of recentroiding. Every other rendering recentroids, so a zero r
 those is not this zero.
 
 The routes to zero, their costs and their verdicts are `docs/MODEL.md` §11; the measurements are
-`STATE.md` `## Facts`.
+`.serena/memories/facts/`.
 
 ## 9. State borders
 
@@ -233,11 +233,11 @@ of 10 %, because visual contiguity on state boundaries is what the sponsor reads
 territory.
 
 Two routes were built and measured 2026-09-07 (full build and grid: `git show
-ae2b18d:docs/BORDERS_PLAN.md`, `git show ae2b18d:docs/BORDERS_RESULTS.md`; results in `STATE.md`
-`## Facts`). **Track 1** snaps the committed map's borders by a penalised, banded transportation
+ae2b18d:docs/BORDERS_PLAN.md`, `git show ae2b18d:docs/BORDERS_RESULTS.md`; results in
+`.serena/memories/facts/`). **Track 1** snaps the committed map's borders by a penalised, banded transportation
 LP; it inherits the committed map's state-owner sets, which structurally force 5-8 small states
 to stay split at every δ in [0, 10%] (`docs/units/state_borders.md`). **Track 2** instead solves,
 per δ, the certified minimum number of states that must split, with visual contiguity by
 construction at the state level (`docs/units/state_splits.md`); the mass bound is CA, TX, NY and
 FL, so at δ = 5% every other state can lie whole in one district (8 splits total). Which cell
-ships is a pending sponsor decision (`STATE.md` `## Now`/`## Next`).
+ships is a pending sponsor decision (`STATE.md` `## Now` and `bd ready`).

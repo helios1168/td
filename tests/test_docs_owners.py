@@ -1,11 +1,10 @@
 """tests/test_docs_owners.py -- the doc-ownership allowlist and the STATE.md / unit-file shape
-it depends on (`.claude/doc-owners.txt`, read by `~/.claude/hooks/td-doc-owners.sh` and here).
+it depends on (`.claude/doc-owners.txt`, enforced here).
 
 (a) every docs/**/*.md outside docs/foundations/ matches at least one allowlist line;
 (b) every non-glob line names an existing file, every glob line matches at least one file;
 (c) no allowlist line points under docs/foundations/ (read-only, never listed);
-(d) STATE.md has exactly the H2 headings ## Now, ## Next, ## Facts in that order, ## Now is at
-    most 1024 bytes, ## Next has at most 7 rows;
+(d) STATE.md has exactly one H2 heading, ## Now, of at most 1024 bytes;
 (e) every docs/units/*.md has a Status: open|done|dropped line in its first 5 lines and the
     three headings ## Model, ## Verify, ## Code verify.
 
@@ -96,22 +95,11 @@ def test_state_md_heading_order_and_now_cap():
     text = _read(STATE)
     sections = _h2_sections(text)
     headings = [h for h, _ in sections]
-    assert headings == ["Now", "Next", "Facts"], f"STATE.md H2 headings are {headings}, expected [Now, Next, Facts]"
+    assert headings == ["Now"], f"STATE.md H2 headings are {headings}, expected [Now]"
     now_lines = dict(sections)["Now"]
     now_text = ("\n".join(now_lines) + "\n") if now_lines else ""
     now_bytes = len(now_text.encode("utf-8"))
     assert now_bytes <= 1024, f"STATE.md ## Now is {now_bytes} bytes, over the 1024 byte cap"
-
-
-def test_state_md_next_row_cap():
-    text = _read(STATE)
-    next_lines = dict(_h2_sections(text))["Next"]
-    table_rows = [ln for ln in next_lines if ln.startswith("|") and not set(ln.strip("| \t")) <= set("-:")]
-    if len(table_rows) >= 2:
-        rows = table_rows[1:]  # drop the header row; the separator row was already excluded
-    else:
-        rows = [ln for ln in next_lines if ln.startswith("- ")]
-    assert len(rows) <= 7, f"STATE.md ## Next has {len(rows)} rows, over the 7 row cap"
 
 
 def test_unit_files_have_status_and_verifier_headings():
