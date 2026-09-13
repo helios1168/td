@@ -442,12 +442,16 @@ actual session ID from OpenCode output; the delegate must not invent it.
 
 ### 10.3 Start and resume OpenCode
 
-Verified locally with OpenCode 1.18.30: `run` supports `--auto`, `--pure`,
-`--model`, `--format json`, `--file`, `--title`, and `--session`.
-`--dangerously-skip-permissions` is not listed by this installation. Use the
-supported `--auto` to implement the user's requested unattended permission mode;
-it auto-approves permissions not explicitly denied. Do not weaken explicit denies.
-Recheck help on another installation rather than copying an unsupported flag.
+User-required permission mode: launch every OpenCode task and resumed session
+with `opencode run --yolo`, the user-specified short flag for dangerously skipping
+permissions. Keep this flag in review, implementation, and repair invocations.
+The task's file allowlist and read-only constraints still apply.
+
+The earlier local OpenCode 1.18.30 help listed `--auto` rather than `--yolo`.
+P0 must verify that the execution installation accepts `--yolo`. If it rejects
+the flag, report the version mismatch; do not silently substitute `--auto` or
+start a permission-prompting session. The commands below express the requested
+mode, not a claim that `--yolo` was tested during this plan update.
 
 `--pure` disables external plugins; it does not promise to disable all inherited
 configuration, agents or MCP servers. P0 must establish that the invocation uses
@@ -458,7 +462,7 @@ read or modify Helios setup to do so and do not launch a known cross-project age
 Example after Luna creates C0's prompt, report directory, and log directory:
 
 ```sh
-rtk run 'cd /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review && opencode run --pure --auto --model opencode-go/deepseek-v4-pro --format json --title agy-C0 --file agy-job/prompts/C0.md -- "Execute the attached C0 task. Write agy-job/contract.md and agy-job/reports/C0.json. Follow its read-only scope." > agy-job/logs/C0-01.jsonl 2> agy-job/logs/C0-01.stderr.log'
+rtk run 'cd /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review && opencode run --yolo --pure --model opencode-go/deepseek-v4-pro --format json --title agy-C0 --file agy-job/prompts/C0.md -- "Execute the attached C0 task. Write agy-job/contract.md and agy-job/reports/C0.json. Follow its read-only scope." > agy-job/logs/C0-01.jsonl 2> agy-job/logs/C0-01.stderr.log'
 ```
 
 Run this via Codex's command tool with a short initial yield, for example 1000 ms.
@@ -477,7 +481,7 @@ prompt using `apply_patch`, then resume the recorded conversation. Replace
 `ses_REPLACE_WITH_RECORDED_ID` below with the actual ID, never use it literally:
 
 ```sh
-rtk run 'cd /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review && opencode run --pure --auto --model opencode-go/deepseek-v4-pro --session ses_REPLACE_WITH_RECORDED_ID --format json --file agy-job/prompts/C0-repair-01.md -- "Address only the attached review findings and update the task report." > agy-job/logs/C0-02.jsonl 2> agy-job/logs/C0-02.stderr.log'
+rtk run 'cd /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review && opencode run --yolo --pure --model opencode-go/deepseek-v4-pro --session ses_REPLACE_WITH_RECORDED_ID --format json --file agy-job/prompts/C0-repair-01.md -- "Address only the attached review findings and update the task report." > agy-job/logs/C0-02.jsonl 2> agy-job/logs/C0-02.stderr.log'
 ```
 
 Use `--session` rather than `--continue`, which could select another job's latest
