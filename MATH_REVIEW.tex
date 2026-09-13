@@ -1,0 +1,254 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tabularx}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+\title{\textbf{Mathematical Review: National Channel Territory Design and Staffing}\\[0.4ex]
+\large An Analytical Assessment of the Optimization Model, Descaling Invariance, and Axiomatic Fairness Under Feasible Envy-Freeness}
+\author{\textbf{Antigravity} \\ Google DeepMind}
+\date{September 13, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This review presents an exhaustive mathematical and axiomatic appraisal of the multi-channel sales territory design and wholesaler staffing optimization model documented in \texttt{docs/MODEL\_FULL.md}. We analyze the hierarchical decomposition spanning state-level mixed-integer linear programming (Level~0), semi-discrete optimal transport with discrete graph repair heuristics (Level~2), and Nash social welfare bipartite matching (Stage~2). We establish the mathematical foundation of data descaling and prove why multiplicative opportunity normalization leaves the optimization argmax invariant. Furthermore, we investigate the fundamental tension in Nash bargaining at a zero versus non-zero disagreement point: while $d=0$ historically anchored the classical Envy-Free up to One Item (EF1) guarantee of Caragiannis et al.~(2019), that guarantee is already invalidated by hard territory capacity bands and spatial contiguity. We propose dropping symmetric anonymity in favor of \textbf{Feasible Envy-Freeness (FEFx)} under Generalized Assignment Constraints (Barman et al., 2023) paired with asymmetric claims-scaled reservation utilities, resolving the flat-curvature pathology of the logarithmic welfare function while strictly guaranteeing bargaining set feasibility and incumbent book continuity.
+\end{abstract}
+
+\section{Introduction and Problem Formulation}
+
+The national territory design problem formulated in \texttt{docs/MODEL\_FULL.md} addresses the simultaneous partitioning of commercial sales opportunity across the 48 contiguous United States and Washington, D.C. ($S=49$) into $k$ balanced sales districts of approximately \$1B opportunity each. Concurrently, it models the allocation of incumbent sales representatives across four fine channels:
+\[
+C = \{N_{\text{WH}}, N_{\text{FI}}, \text{WH}, \text{FI}\}
+\]
+admitting seven permissible channel bundles:
+\[
+\mathfrak{B} = \{N, \text{WH}, \text{FI}, \text{WH\_PLUS}, \text{FI\_PLUS}, \text{WHFI}, \text{WHFI\_PLUS}\}
+\]
+Formulated as a monolithic joint problem over 6,459 discrete ZIP codes and multiple business channels, the problem constitutes an intractable Mixed-Integer Non-Convex Non-Linear Program (MINLP). Topological contiguity constraints on planar graphs, multi-channel product-form allocations, and non-linear Nash bargaining welfare ($\max \prod g_i$) combine to preclude direct global optimization.
+
+To render the computation tractable, the architecture establishes a \textbf{three-level hierarchical decomposition}:
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Level 0 (Macro Planning):} A state-by-channel MILP solved lexicographically pass-by-pass on the state rook graph $G_S = (S, E_S)$.
+    \item \textbf{Level 2 (Micro Realization):} A transportation LP (power diagram) per split state, followed by topological repair heuristics on the ZIP-level Voronoi cell graph $G_{\text{cell}}$.
+    \item \textbf{Stage 2 (Wholesaler Staffing):} A maximum-weight bipartite matching on logarithmic gains solved via the Kuhn-Munkres (Hungarian) algorithm.
+\end{enumerate}
+
+\section{Detailed Mathematical Architecture}
+
+\subsection{Level 0: Macro-Level Channel Planning (State \texorpdfstring{$\times$}{x} Channel MILP)}
+Level~0 aggregates opportunity mass $M_{s,c}$ to the state grain. For each slot $j \in J$ belonging to bundle $B_j$, the decision space comprises:
+\begin{itemize}[leftmargin=1.5em]
+    \item $y_{s,j} \in [0, 1]$: Continuous share of state $s$ allocated to slot $j$.
+    \item $z_{s,j} \in \{0, 1\}$: Binary contact indicator ($y_{s,j} > 0$).
+    \item $u_j \in \{0, 1\}$: Binary slot utilization indicator.
+    \item $r_{s,j} \in \{0, 1\}$: Contiguity tree root indicator.
+    \item $f_{a,j} \in [0, N-1]$: Commodity flow on directed arc $a \in A_S$ where $N = |S| = 49$.
+\end{itemize}
+
+The core relations governing Level~0 are:
+\begin{align}
+    \text{Product-form Coverage:} \quad & \sum_{j : c \in B_j} y_{s,j} \le 1 - p_{s,c} && \forall s \in S, c \in C \label{eq:cover} \\
+    \text{Contact Sizing:} \quad & \eta z_{s,j} \le y_{s,j} \le z_{s,j} \le u_j && \forall s \in S, j \in J \label{eq:contact} \\
+    \text{Capacity Bands:} \quad & L_{B_j} u_j \le \sum_{s \in S} W_{s,j} y_{s,j} \le U_{B_j} u_j + \sum_{s \text{ capped}} a_s z_{s,j} && \forall j \in J \label{eq:band} \\
+    \text{Tree Contiguity:} \quad & \sum_{s \in S} r_{s,j} = u_j, \quad r_{s,j} \le z_{s,j} && \forall j \in J \label{eq:root} \\
+    & f_{a,j} \le (N-1) z_{\text{tail}(a), j}, \quad f_{a,j} \le (N-1) z_{\text{head}(a), j} && \forall a \in A_S, j \in J \label{eq:flow_cap} \\
+    & z_{s,j} - N r_{s,j} \le \sum_{a \in \delta^-(s)} f_{a,j} - \sum_{a \in \delta^+(s)} f_{a,j} && \forall s \in S, j \in J \label{eq:flow_net}
+\end{align}
+where $W_{s,j} = \sum_{c \in B_j} M_{s,c}$, $p_{s,c}$ represents prior committed coverage, and $a_s = \max(0, W_s / \text{cap}_s - \tau_B)$ provides state-specific band-break allowances under split caps $\text{cap}_s$.
+
+\subsection{Level 2: Micro-Level Realization (Optimal Transport and Graph Repair)}
+Given state shares $y_{s,j}$, unsplit states are mapped entirely to district $j$. Split states are partitioned via the semi-discrete optimal transport LP:
+\begin{align}
+    \min_{x} \quad & \sum_{z \in s} \sum_{j} M_z \left( \|p_z - c_j\|^2 + \pi_{z,j} \right) x_{z,j} \label{eq:ot_obj} \\
+    \text{s.t.} \quad & \sum_{j} x_{z,j} = 1 \quad \forall z \in s, \qquad \sum_{z \in s} M_z x_{z,j} = y_{s,j} M_s \quad \forall j \label{eq:ot_cons}
+\end{align}
+Centroids $c_j$ are iteratively shifted via up to five Lloyd updates. Resulting disconnected components are reconnected post-LP via heuristic frontier expansion and bridging on the Voronoi dual graph $G_{\text{cell}}$ with capacity slack $\sigma = 0.02 \tau_B$.
+
+\subsection{Stage 2: Centralized Nash Social Welfare Staffing}
+Let $A_j$ denote the spatial footprint of district $j$. The utility gain $g_{i,j}$ of representative $i \in R$ on district $j \in J_{\text{used}}$ is:
+\begin{equation}
+    g_{i,j} = \sum_{z \in A_j} \sum_{c \in B_j} \left[ c_1 S_i(z,c) + c_2 \big(T_{z,c} - S_i(z,c)\big) + c_{\text{free}} S_{\text{free}}(z,c) + \lambda M_{z,c} \right] \label{eq:gain}
+\end{equation}
+where $c_1 = 1 - \lambda$, $c_2 = \theta(1 - \lambda)$, and $c_{\text{free}} \in \{c_2, c_1, \lambda\}$. The matching problem:
+\begin{equation}
+    \max_{w} \sum_{i \in R} \sum_{j \in J_{\text{used}}} \log(g_{i,j}) w_{i,j} \quad \text{s.t.} \quad \sum_{i} w_{i,j} \le 1, \; \sum_{j} w_{i,j} \le 1, \; \sum_{i,j} w_{i,j} = \min(|R|, |J_{\text{used}}|)
+\end{equation}
+is solved globally via the Hungarian algorithm on costs $-\log(g_{i,j})$.
+
+\section{Data Descaling and Scale Invariance}
+
+A fundamental property of the operational pipeline is that the numerical solvers do \textbf{not} operate on raw dollar amounts. 
+
+\subsection{The Descaled Data Representation}
+As implemented in \texttt{td/instance.py}, the raw instance data undergoes a canonical descaling transformation governed by $\kappa > 0$, defined as the median positive ZIP opportunity across the footprint:
+\begin{equation}
+    m_{\text{rel}}(z) = \frac{M_z}{\kappa}, \qquad s_i(z) = \frac{S_i(z)}{M_z}
+\end{equation}
+Upon loading, the pipeline reconstructs:
+\begin{equation}
+    M(z) = m_{\text{rel}}(z) = \frac{\text{real } M_z}{\kappa}, \qquad S_i(z) = s_i(z) \cdot m_{\text{rel}}(z) = \frac{\text{real } S_i(z)}{\kappa}
+\end{equation}
+Under this transformation, the national opportunity sum across CONUS is $W_0 \approx 3,268.41$ descaled units, and district target capacity becomes $\tau \approx 180\text{--}200$ descaled units (rather than $\approx \$10^9$ raw dollars).
+
+\subsection{Proposition: Exact Scale Invariance of Nash Welfare}
+\begin{proposition}[Scale Invariance of Nash Social Welfare]\label{prop:scale}
+Let $\mathcal{I} = (G, (S_i)_{i=1}^n, S_{\text{free}}, M)$ be an instance. Scaling every currency field uniformly by $\kappa > 0$ yields instance $\kappa \mathcal{I}$. For every district assignment $w$ and any perimeter penalty weight $\rho \ge 0$:
+\begin{enumerate}[leftmargin=1.5em]
+    \item $u_i^{\kappa \mathcal{I}}(z) = \kappa u_i^{\mathcal{I}}(z)$ and $g_{i,j}^{\kappa \mathcal{I}} = \kappa g_{i,j}^{\mathcal{I}}$.
+    \item $\sum_{i=1}^n \log g_{i, \pi(i)}^{\kappa \mathcal{I}} = \sum_{i=1}^n \log g_{i, \pi(i)}^{\mathcal{I}} + n \log \kappa$.
+    \item The additive shift $n \log \kappa$ is strictly independent of the allocation $w$ and assignment $\pi$. Consequently:
+    \[
+    \arg\max_{w, \pi} \left( \sum_{i=1}^n \log g_{i, \pi(i)}^{\kappa \mathcal{I}} - \rho P(w) \right) \equiv \arg\max_{w, \pi} \left( \sum_{i=1}^n \log g_{i, \pi(i)}^{\mathcal{I}} - \rho P(w) \right)
+    \]
+    All objective differences, certificates, and optimality gaps are identical across $\mathcal{I}$ and $\kappa \mathcal{I}$.
+\end{enumerate}
+\end{proposition}
+
+\subsection{Why Multiplicative Normalization Fails to Restore Curvature}
+A natural question is whether normalizing the utility function by overall opportunity (either instance-wide $M_{\text{tot}}$ or district-level $M_j$) solves the flat-curvature issue of Nash welfare. Mathematically, it cannot:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Global Normalization ($g_{i,j} / M_{\text{tot}}$):} By Proposition~\ref{prop:scale}, dividing by a global constant simply subtracts $n \log M_{\text{tot}}$ from the objective. The argmax, gradients, and Hessian structure are completely untouched.
+    \item \textbf{District Normalization ($g_{i,j} / M_j$):} Expanding $g_{i,j}$:
+    \[
+    \frac{g_{i,j}}{M_j} = \underbrace{(c_1 - c_2) \frac{S_i(V_j)}{M_j}}_{\Delta_{i,j} / M_j} + \underbrace{\left[ c_2 \frac{T(V_j)}{M_j} + c_{\text{free}} \frac{S_{\text{free}}(V_j)}{M_j} + \lambda \right]}_{G_{0,j} / M_j}
+    \]
+    Dividing by $M_j$ scales numerator and denominator proportionally. The critical ratio:
+    \[
+    \frac{\Delta_{i,j} / M_j}{G_{0,j} / M_j} = \frac{\Delta_{i,j}}{G_{0,j}}
+    \]
+    is strictly \textbf{dimensionless}. Because $G_{0,j} \gg \Delta_{i,j}$ (ambient district opportunity and cross-selling dwarf individual book differences), the Taylor expansion remains linear:
+    \[
+    \log\left( \frac{G_{0,j}}{M_j} + \frac{\Delta_{i,j}}{M_j} \right) \approx \log\left(\frac{G_{0,j}}{M_j}\right) + \frac{\Delta_{i,j}}{G_{0,j}}
+    \]
+\end{enumerate}
+Multiplicative scaling cannot alter the dimensionless ratio $\Delta / G_0$. Only an \textbf{additive translation} ($g - d$) can shift the operating point of $\log(x)$ toward its steep curvature regime.
+
+\section{The Disagreement Point Dilemma: Classical EF1 vs. Feasible Envy-Freeness}
+
+\subsection{The Zero Threat Point and the Caragiannis Guarantee}
+In classical cooperative bargaining theory (Nash, 1950), the Nash product is maximized over gains above a disagreement point $d = (d_1, \dots, d_n)$:
+\begin{equation}
+    \max_{\pi} \prod_{i=1}^n (u_i(\pi_i) - d_i)
+\end{equation}
+In \texttt{docs/MODEL\_FULL.md} and \texttt{docs/math\_note/math\_note.tex}, the baseline is fixed at $d = \mathbf{0}$. The foundational justification rests on the landmark theorem of Caragiannis et al.~(2019):
+\begin{theorem}[Caragiannis et al., 2019]\label{thm:caragiannis}
+For unconstrained fair division of indivisible goods under additive valuations and a zero disagreement point $d = \mathbf{0}$, any allocation maximizing the Nash Social Welfare $\prod_{i=1}^n u_i(A_i)$ is simultaneously:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Pareto Optimal (PO)}, and
+    \item \textbf{Envy-Free up to One Item (EF1)}: For any pair of agents $i, k$, there exists an item $z \in A_k$ such that:
+    \[
+    u_i(A_i) \ge u_i(A_k \setminus \{z\})
+    \]
+\end{enumerate}
+\end{theorem}
+
+\subsection{Why Shifting to \texorpdfstring{$d > 0$}{d > 0} Voids Classical EF1}
+The proof of Theorem~\ref{thm:caragiannis} relies directly on local exchange ratios: if agent $i$ envies agent $k$ by more than one good, shifting item $z \in A_k$ to $A_i$ strictly increases the Nash product:
+\begin{equation}
+    \left( 1 + \frac{u_i(z)}{u_i(A_i)} \right) \left( 1 - \frac{u_k(z)}{u_k(A_k)} \right) > 1
+\end{equation}
+When an additive disagreement vector $d > \mathbf{0}$ is introduced:
+\begin{equation}
+    \left( 1 + \frac{u_i(z)}{u_i(A_i) - d_i} \right) \left( 1 - \frac{u_k(z)}{u_k(A_k) - d_k} \right)
+\end{equation}
+If rep $i$ is driven near their reservation utility ($u_i - d_i \to \epsilon$), the marginal ratio $\frac{u_i(z)}{\epsilon}$ diverges to infinity. The optimizer responds by aggressively transferring goods from unconstrained agents to agent $i$, even when agent $i$ already possesses substantial bundle value. As established in the literature ledger (\texttt{docs/foundations/LIT\_economic-theory.md}, row~A4), subtracting a constant strictly voids the Caragiannis guarantee; no deterministic indivisible EF1 analogue exists for $d > 0$.
+
+\subsection{The Reality: Capacity Bands Already Invalidate Classical EF1}
+Crucially, \texttt{docs/foundations/DOMAIN\_economic-theory.md} (§2.1, §2.8) proves that the territory design problem \textbf{already violates the hypotheses of Theorem~\ref{thm:caragiannis}}:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Quantity Capacity Bands:} Districts must satisfy $L \le M(V_j) \le U$. The optimizer cannot execute the arbitrary item transfers required by the Caragiannis exchange step without violating the capacity band.
+    \item \textbf{Topological Contiguity:} Items (ZIPs) cannot be transferred if doing so disconnects the territory graph.
+\end{enumerate}
+Empirical measurement on the CONUS footprint demonstrates a representative utility spread of over $60\%$ (\texttt{MODEL\_U8-band}). Thus, classical unconstrained EF1 is already defunct on the ground.
+
+\subsection{Transition to Feasible Envy-Freeness (FEFx)}
+Under Generalized Assignment Constraints, Barman et al.~(2023) establish the appropriate axiomatic fairness concept:
+\begin{definition}[Feasible Envy-Freeness up to Any Item (FEFx)]\label{def:fefx}
+Let $\mathcal{F}_i$ denote the set of all feasible territories for representative $i$ (satisfying drivability from home base, spatial contiguity, and capacity bands $[L, U]$). An allocation $A$ is \textbf{Feasible Envy-Free up to Any Item (FEFx)} if for every pair of agents $i, k$:
+\begin{equation}
+    A_k \in \mathcal{F}_i \implies \forall z \in A_k, \; u_i(A_i) \ge u_i(A_k \setminus \{z\})
+\end{equation}
+If territory $A_k$ is not feasible for representative $i$ ($A_k \notin \mathcal{F}_i$), agent $i$ cannot claim legitimate envy against $A_k$.
+\end{definition}
+As succinctly formulated in the economics charter: \emph{``A wholesaler cannot envy a bundle they could not work.''} Under FEFx, cross-regional comparisons (e.g., an Ohio representative envying a Florida territory) are pruned by operational feasibility.
+
+\subsection{Dropping Anonymity: Asymmetric Entitlements and Claims}
+In sales force restructuring, representatives are not anonymous participants with equal claims to unowned goods. They hold \textbf{asymmetric historical entitlements} defined by their legacy books $S_i(Z)$. 
+
+We formulate the staffing problem as an \textbf{asymmetric claims problem} (O'Neill, 1982; Thomson, 2003). The objective becomes:
+\begin{equation}
+    \max_{\pi} \sum_{i \in R} \log\left( g_{i, \pi(i)} - d_i \right)
+\end{equation}
+subject to the \textbf{Bargaining Set Non-Emptiness Guard}:
+\begin{equation}
+    d_i = \alpha_i S_i(Z) + d_{\text{floor}}
+\end{equation}
+where $d_{\text{floor}} = \gamma \min_j G_{0,j}$ ($\gamma \in [0.5, 0.8]$) ensures a common safety net, and $\alpha_i \in (0, 1)$ is determined via proportional claims bankruptcy scaling:
+\begin{equation}
+    \alpha_i = \min\left( 1.0, \; \frac{M(\text{Region})}{\sum_{k \in \text{overlap}} S_k(\text{Region})} \right) \cdot (1 - \epsilon)
+\end{equation}
+This formulation achieves three vital properties:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Guaranteed Feasibility:} $g_{i,j} - d_i > 0$ for all valid district assignments.
+    \item \textbf{Restored Curvature:} Denominators drop from $\approx 200$ to $\approx 10\text{--}20$, amplifying marginal resistance to book starvation by over $100\times$.
+    \item \textbf{FEFx Compliance:} Envy is bounded with respect to operationally feasible assignments.
+\end{enumerate}
+
+\section{Synthesis of Pipeline Assessments}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{l p{3.0cm} X X}
+\toprule
+\textbf{Component} & \textbf{Mathematical Model} & \textbf{Theoretical Strengths} & \textbf{Structural Vulnerabilities} \\
+\midrule
+\textbf{Level 0 Plan} & Multi-Commodity MILP & Strict Pareto lexicographic hierarchy; compact single-commodity flow trees. & Continuous state shares $y_{s,j}$ ignore discrete spatial clustering of accounts. \\
+\addlinespace[0.5ex]
+\textbf{Level 2 Cut} & Transportation LP & Guaranteed Euclidean compactness; solved via dual simplex. & Disconnects spatial components across non-convex state geometries. \\
+\addlinespace[0.5ex]
+\textbf{Level 2 Repair} & Discrete Graph Heuristics & Restores physical contiguity on $G_{\text{cell}}$. & Heuristic; introduces $\pm 2\%$ capacity band slack. \\
+\addlinespace[0.5ex]
+\textbf{Stage 2 Staffing} & Nash Welfare Matching & Scale-invariant; polynomial solve via Kuhn-Munkres. & At $d=0$, flat curvature treats book disruption as near-zero cost. \\
+\addlinespace[0.5ex]
+\textbf{Fairness Audit} & FEFx Matrix Audit & Evaluates envy only over feasible territories $\mathcal{F}_i$. & Replaces classical unconstrained EF1, which is voided by capacity bands. \\
+\bottomrule
+\end{tabularx}
+\caption{Comprehensive Mathematical Assessment Matrix.}
+\label{tab:matrix}
+\end{table}
+
+\section{Recommendations for the Implementation Plan}
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Asymmetric Claims-Centered Staffing (Refinement 1):} Replace the zero disagreement baseline in Stage~2 with the claims-scaled reservation floor $d_i = \alpha_i S_i + d_{\text{floor}}$, operating $\log(\tilde{g}_i)$ in its high-curvature regime.
+    \item \textbf{FEFx Fairness Audit Suite:} In \texttt{tools/measure/audits.py}, replace the unqualified $13 \times 13$ EF1 test with the three-way verdict matrix: plain EF1, FEFx with respect to capacity and contiguity bands, and proportionality $u_i(A_i) \ge u_i(Z)/k$.
+    \item \textbf{Terminal Stage 2 Re-Match Pass:} Implement a post-Level~2 matching pass on finalized ZIP sets $A_j$ to eliminate the efficiency loss caused by continuous state-share approximations.
+    \item \textbf{Contiguity-Constrained Spatial Splitting:} Promote the graph-based `--split-cut contiguous` partitioner on $G_{\text{cell}}$ to eliminate post-hoc heuristic repair slacks.
+\end{enumerate}
+
+\end{document}
