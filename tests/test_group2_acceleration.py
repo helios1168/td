@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 
@@ -157,12 +159,15 @@ def test_main_restores_full_plan_wrappers_when_runner_factory_fails():
         def fail_factory(*args, **kwargs):
             raise RuntimeError("factory failed")
 
-        saved_factory = group2_run.make_accelerated_runner
-        group2_run.make_accelerated_runner = fail_factory
-        try:
-            code = group2_run.main(["--case", "choose", "--hub", str(hub),
-                                    "--out", str(root / "out"), "--seed-time-limit", "0"])
-            assert code == 1
-        finally:
-            group2_run.make_accelerated_runner = saved_factory
+        before_env = dict(os.environ)
+        with patch.dict(os.environ, {}, clear=False):
+            saved_factory = group2_run.make_accelerated_runner
+            group2_run.make_accelerated_runner = fail_factory
+            try:
+                code = group2_run.main(["--case", "choose", "--hub", str(hub),
+                                        "--out", str(root / "out"), "--seed-time-limit", "0"])
+                assert code == 1
+            finally:
+                group2_run.make_accelerated_runner = saved_factory
+        assert dict(os.environ) == before_env
         assert (full_plan._build, full_plan._pass_list, full_plan._run_passes) == originals
