@@ -929,36 +929,37 @@ def main():
     summary_rows = []
     fieldnames = [
         'scenario_id', 'scenario_short_name', 'scenario_name',
-        'total_wholesalers', 'national_reps', 'wealth_reps', 'fi_reps', 'western_merged_reps',
+        'total_districts', 'national_districts', 'WH_districts', 'FI_districts', 'WIFI_districts',
         'national_tau', 'wealth_tau', 'fi_tau',
         'total_opportunity_mass', 'held_mass', 'unheld_mass', 'unheld_mass_pct',
-        'contiguity_status', 'map_path'
+        'contiguity_status', 'map_path', 'map_path_verbose'
     ]
 
-    scenario_map_paths = {
-        "Option 1 - National (14) + WH (11) + FI (21) + Western Merged WHFI (1)": ("option1_exact_merged", "Option 1", "figures/summary_option1.png"),
-        "Option 2 - Nationwide Multi-Channel (14 N + 11 WH + 21 FI)": ("option2_exact_multichannel", "Option 2", "figures/summary_option2.png"),
-        "Scenario A - 51 Wholesalers (N:13, WHFI:1, WH:13, FI:24)": ("scenario_A_51", "Scenario A", "figures/summary_scenario_A.png"),
-        "Scenario B - 52 Wholesalers (N:13, WHFI:1, WH:14, FI:24)": ("scenario_B_52", "Scenario B", "figures/summary_scenario_B.png"),
-        "Scenario C - 51 Wholesalers (N:12, WHFI:1, WH:13, FI:25)": ("scenario_C_51", "Scenario C", "figures/summary_scenario_C.png"),
-        "Scenario D - 53 Wholesalers (N:13, WHFI:1, WH:14, FI:25)": ("scenario_D_53", "Scenario D", "figures/summary_scenario_D.png"),
-        "Scenario E - 52 Wholesalers (N:12, WHFI:1, WH:14, FI:25)": ("scenario_E_52", "Scenario E", "figures/summary_scenario_E.png"),
-        "Scenario F - 51 Wholesalers (N:12, WHFI:2, WH:13, FI:24)": ("scenario_F_51", "Scenario F", "figures/summary_scenario_F.png"),
-        "Scenario G - 52 Wholesalers (N:12, WHFI:2, WH:13, FI:25)": ("scenario_G_52", "Scenario G", "figures/summary_scenario_G.png"),
-        "Scenario H - 52 Wholesalers (N:13, WHFI:2, WH:13, FI:24)": ("scenario_H_52", "Scenario H", "figures/summary_scenario_H.png"),
-        "Scenario I - 53 Wholesalers (N:13, WHFI:2, WH:14, FI:24)": ("scenario_I_53", "Scenario I", "figures/summary_scenario_I.png"),
-        "Scenario J - 53 Wholesalers (N:12, WHFI:2, WH:14, FI:25)": ("scenario_J_53", "Scenario J", "figures/summary_scenario_J.png"),
-        "Scenario K - 52 Wholesalers (N:14, WHFI:1, WH:13, FI:24)": ("scenario_K_52", "Scenario K", "figures/summary_scenario_K.png"),
-        "Scenario L - 53 Wholesalers (N:14, WHFI:1, WH:14, FI:24)": ("scenario_L_53", "Scenario L", "figures/summary_scenario_L.png"),
-        "Grid-W3-A - 51 Wholesalers (N:13, WH:11, FI:24, WIFI:3)": ("grid_W3_A_51", "Grid-W3-A", "figures/summary_grid_W3_A.png"),
-        "Grid-W4-A - 51 Wholesalers (N:13, WH:11, FI:23, WIFI:4)": ("grid_W4_A_51", "Grid-W4-A", "figures/summary_grid_W4_A.png"),
-        "Grid-W4-B - 52 Wholesalers (N:12, WH:11, FI:25, WIFI:4)": ("grid_W4_B_52", "Grid-W4-B", "figures/summary_grid_W4_B.png"),
-        "Grid-W5-C - 52 Wholesalers (N:12, WH:10, FI:25, WIFI:5)": ("grid_W5_C_52", "Grid-W5-C", "figures/summary_grid_W5_C.png"),
+    scenario_naming = {
+        "battery/results/option1_exact_merged": ("47_14_11_21_1", "47_districts_14_national_districts_11_WH_districts_21_FI_districts_1_WIFI_districts", 47, 14, 11, 21, 1),
+        "battery/results/option2_exact_multichannel": ("46_14_11_21_0", "46_districts_14_national_districts_11_WH_districts_21_FI_districts_0_WIFI_districts", 46, 14, 11, 21, 0),
+        "battery/results/scenario_A_51": ("51_13_13_24_1", "51_districts_13_national_districts_13_WH_districts_24_FI_districts_1_WIFI_districts", 51, 13, 13, 24, 1),
+        "battery/results/scenario_B_52": ("52_13_14_24_1", "52_districts_13_national_districts_14_WH_districts_24_FI_districts_1_WIFI_districts", 52, 13, 14, 24, 1),
+        "battery/results/scenario_C_51": ("51_12_13_25_1", "51_districts_12_national_districts_13_WH_districts_25_FI_districts_1_WIFI_districts", 51, 12, 13, 25, 1),
+        "battery/results/scenario_D_53": ("53_13_14_25_1", "53_districts_13_national_districts_14_WH_districts_25_FI_districts_1_WIFI_districts", 53, 13, 14, 25, 1),
+        "battery/results/scenario_E_52": ("52_12_14_25_1", "52_districts_12_national_districts_14_WH_districts_25_FI_districts_1_WIFI_districts", 52, 12, 14, 25, 1),
+        "battery/results/scenario_F_51": ("51_12_13_24_2", "51_districts_12_national_districts_13_WH_districts_24_FI_districts_2_WIFI_districts", 51, 12, 13, 24, 2),
+        "battery/results/scenario_G_52": ("52_12_13_25_2", "52_districts_12_national_districts_13_WH_districts_25_FI_districts_2_WIFI_districts", 52, 12, 13, 25, 2),
+        "battery/results/scenario_H_52": ("52_13_13_24_2", "52_districts_13_national_districts_13_WH_districts_24_FI_districts_2_WIFI_districts", 52, 13, 13, 24, 2),
+        "battery/results/scenario_I_53": ("53_13_14_24_2", "53_districts_13_national_districts_14_WH_districts_24_FI_districts_2_WIFI_districts", 53, 13, 14, 24, 2),
+        "battery/results/scenario_J_53": ("53_12_14_25_2", "53_districts_12_national_districts_14_WH_districts_25_FI_districts_2_WIFI_districts", 53, 12, 14, 25, 2),
+        "battery/results/scenario_K_52": ("52_14_13_24_1", "52_districts_14_national_districts_13_WH_districts_24_FI_districts_1_WIFI_districts", 52, 14, 13, 24, 1),
+        "battery/results/scenario_L_53": ("53_14_14_24_1", "53_districts_14_national_districts_14_WH_districts_24_FI_districts_1_WIFI_districts", 53, 14, 14, 24, 1),
+        "battery/results/grid_W3_A_51": ("51_13_11_24_3", "51_districts_13_national_districts_11_WH_districts_24_FI_districts_3_WIFI_districts", 51, 13, 11, 24, 3),
+        "battery/results/grid_W4_A_51": ("51_13_11_23_4", "51_districts_13_national_districts_11_WH_districts_23_FI_districts_4_WIFI_districts", 51, 13, 11, 23, 4),
+        "battery/results/grid_W4_B_52": ("52_12_11_25_4", "52_districts_12_national_districts_11_WH_districts_25_FI_districts_4_WIFI_districts", 52, 12, 11, 25, 4),
+        "battery/results/grid_W5_C_52": ("52_12_10_25_5", "52_districts_12_national_districts_10_WH_districts_25_FI_districts_5_WIFI_districts", 52, 12, 10, 25, 5),
     }
 
-    for name, run_d in all_scenarios:
+    for _, run_d in all_scenarios:
         p = Path(run_d)
-        sc_id, short_name, fig_rel = scenario_map_paths[name]
+        rel_key = str(p.relative_to(REPO_ROOT))
+        compact_id, verbose_name, tot, n, wh, fi, wifi = scenario_naming[rel_key]
         with open(p / 'plan.json') as f:
             plan = json.load(f)
         slots = plan['slots']
@@ -982,14 +983,14 @@ def main():
         fi_tau = (fi_slots[0]['L'] + fi_slots[0]['U']) / 2.0 if fi_slots else 0.0
 
         summary_rows.append({
-            'scenario_id': sc_id,
-            'scenario_short_name': short_name,
-            'scenario_name': name,
-            'total_wholesalers': len(slots),
-            'national_reps': len(n_slots),
-            'wealth_reps': len(wh_slots),
-            'fi_reps': len(fi_slots),
-            'western_merged_reps': len(whfi_slots),
+            'scenario_id': compact_id,
+            'scenario_short_name': compact_id,
+            'scenario_name': verbose_name,
+            'total_districts': tot,
+            'national_districts': n,
+            'WH_districts': wh,
+            'FI_districts': fi,
+            'WIFI_districts': wifi,
             'national_tau': f'{n_tau:.1f}',
             'wealth_tau': f'{wh_tau:.1f}',
             'fi_tau': f'{fi_tau:.1f}',
@@ -998,7 +999,8 @@ def main():
             'unheld_mass': f'{unheld_m:.2f}',
             'unheld_mass_pct': f'{(unheld_m / total_m * 100):.2f}%',
             'contiguity_status': '100% Contiguous (0 violations)',
-            'map_path': fig_rel
+            'map_path': f"figures/{compact_id}.png",
+            'map_path_verbose': f"figures/{verbose_name}.png"
         })
 
     with open(REPO_ROOT / 'summary.csv', 'w', newline='') as f:
