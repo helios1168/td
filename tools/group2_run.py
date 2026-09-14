@@ -85,7 +85,8 @@ def constrain_problem(problem: level0.Level0Problem,
         var_lb=lower, var_ub=upper, rows=rows)
 
 
-def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed") -> dict[str, Any]:
+def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed",
+               supporting_states: bool = False) -> dict[str, Any]:
     shares: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     counts: Counter[str] = Counter()
     for slot in plan["slots"]:
@@ -107,13 +108,15 @@ def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed") -> di
                 counts_satisfied=all(counts[b] == n if count_mode == "fixed" else counts[b] <= n
                                      for b, n in COUNTS.items()),
                 purity_violations=issues, national_states=national,
-                outside_group2=sorted(set(national) - set(GROUP2)),
+                outside_group2=[] if supporting_states else sorted(set(national) - set(GROUP2)),
+                supporting_national_states=sorted(set(national) - set(GROUP2)),
                 missing_required_states=sorted(set(GROUP2) - set(national)) if case == "all" else [],
                 residual_share_sum=sum(float(v) for per in plan["per_state"].values()
                                        for v in per["residual_by_channel"].values()))
 
 
-def realized_audit(path: Path, case: str, count_mode: str = "fixed") -> dict[str, Any]:
+def realized_audit(path: Path, case: str, count_mode: str = "fixed",
+                   supporting_states: bool = False) -> dict[str, Any]:
     totals: dict[tuple[str, str], float] = defaultdict(float)
     pure_mass: dict[tuple[str, str], float] = defaultdict(float)
     districts: dict[str, str] = {}
@@ -141,7 +144,9 @@ def realized_audit(path: Path, case: str, count_mode: str = "fixed") -> dict[str
                 counts_satisfied=all(counts[b] == n if count_mode == "fixed" else counts[b] <= n
                                      for b, n in COUNTS.items()),
                 purity_violations=violations, residual_mass=residual,
-                national_states=national, outside_group2=sorted(set(national)-set(GROUP2)),
+                national_states=national,
+                supporting_national_states=sorted(set(national)-set(GROUP2)),
+                outside_group2=[] if supporting_states else sorted(set(national)-set(GROUP2)),
                 missing_required_states=sorted(set(GROUP2)-set(national)) if case == "all" else [])
 
 
@@ -151,20 +156,31 @@ def valid(audit: dict[str, Any]) -> bool:
 
 
 def planner_args(hub: Path, out: Path, case: str, seconds: float,
-                 count_mode: str = "fixed") -> list[str]:
+                 count_mode: str = "fixed", supporting_states: bool = False) -> list[str]:
     argv = [str(hub / "instance_descaled_v4_conus.json.gz"), "--out", str(out),
             "--geo-cache", str(hub / "data/geo"), "--route", "sequential", "--driver", "geo",
             "--priority", "N,WH,FI", "--k-fixed", "N=14,WH=11,FI=21", "--k-mode", count_mode,
             "--band-mode", "per-bundle", "--delta", "0.1", "--eta", "0.05",
-            "--national-states", ",".join(GROUP2), "--dist-max", "900", "--dist-max-state", "WA=1200",
+            "--dist-max", "900", "--dist-max-state", "WA=1200",
             "--n-max", "6", "--max-splits", "CA=3,TX=2,NY=2,FL=2",
             "--band-break", "CA,TX,NY,FL", "--catch-all", "--catch-all-bundle", "all",
             "--other-floor", "0.5", "--plus-pair", "--warm", "none", "--anchor", "none",
             "--engine", "highs", "--strategy", "direct", "--threads", "2",
             "--time-limit", str(seconds), "--stage2-reservation", "none"]
+    if not supporting_states:
+        argv += ["--national-states", ",".join(GROUP2)]
     if case == "all":
         argv += ["--force-national", ",".join(GROUP2)]
     return argv
+
+
+def group2_priority(problem: level0.Level0Problem) -> level0.Pass:
+    """Maximize Group 2 national opportunity before nationwide N coverage."""
+    priority = level0.cover_pass(problem, ["N"], name="cover_group2")
+    for s, state in enumerate(problem.state_list):
+        if state not in GROUP2:
+            priority.c[problem.off_y + s * problem.k:problem.off_y + (s+1) * problem.k] = 0.0
+    return priority
 
 
 def write_json(path: Path, value: Any) -> None:
@@ -175,6 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", choices=["choose", "all"], required=True)
     parser.add_argument("--count-mode", choices=["fixed", "cap"], default="fixed")
+    parser.add_argument("--supporting-states", action="store_true")
     parser.add_argument("--hub", type=Path, default=Path(os.environ["TD_REPO"]))
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--time-limit", type=float, default=180.0)
@@ -184,12 +201,14 @@ def main(argv: list[str] | None = None) -> int:
     args.hub = args.hub.resolve()
     os.environ["TD_GAZ_VINTAGE"] = "2025"
     os.environ["TD_ZCTA_SHP"] = str(args.hub / "data/tiger/2025/tl_2025_us_zcta520.shp")
-    command = planner_args(args.hub, out, args.case, args.time_limit, args.count_mode)
+    command = planner_args(args.hub, out, args.case, args.time_limit, args.count_mode,
+                           args.supporting_states)
     sources = [Path(__file__), ROOT / "tools/full_plan.py", ROOT / "tools/plan_realise.py",
                ROOT / "td/solvers/level0.py", ROOT / "td/stage2_state.py"]
     write_json(out / "run_request.json", dict(
         case=args.case, count_mode=args.count_mode, requested_counts=COUNTS,
-        national_pool=GROUP2, planner_argv=command,
+        group2_states=GROUP2, supporting_states_allowed=args.supporting_states,
+        national_pool="CONUS" if args.supporting_states else GROUP2, planner_argv=command,
         input_sha256=hashlib.sha256((args.hub / "instance_descaled_v4_conus.json.gz").read_bytes()).hexdigest(),
         source_sha256={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
         additions=["conditional purity rows for N, WH and FI",
@@ -201,19 +220,29 @@ def main(argv: list[str] | None = None) -> int:
                                 status="running", phase="planning")
     write_json(out / "run_status.json", report)
     original = full_plan._build
+    original_passes = full_plan._pass_list
 
     def build(*a: Any, **kw: Any) -> level0.Level0Problem:
         return constrain_problem(original(*a, **kw), COUNTS, args.count_mode)
+
+    def passes(problem: level0.Level0Problem, *a: Any, **kw: Any) -> list[level0.Pass]:
+        result = original_passes(problem, *a, **kw)
+        if args.supporting_states and "N" in problem.slots:
+            result.insert(0, group2_priority(problem))
+        return result
 
     try:
         with (out / "step_full_plan.log").open("w") as log:
             with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
                 full_plan._build = build
+                full_plan._pass_list = passes
                 try:
                     full_plan.main(command)
                 finally:
                     full_plan._build = original
-        audit = plan_audit(json.loads((out / "plan.json").read_text()), args.case, args.count_mode)
+                    full_plan._pass_list = original_passes
+        audit = plan_audit(json.loads((out / "plan.json").read_text()), args.case, args.count_mode,
+                           args.supporting_states)
         write_json(out / "plan_purity.json", audit)
         if not valid(audit):
             raise ValueError("Plan failed exact-count or purity audit")
@@ -225,7 +254,8 @@ def main(argv: list[str] | None = None) -> int:
                "--stage2-rematch"]
         with (out / "step_plan_realise.log").open("w") as log:
             subprocess.run(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
-        audit = realized_audit(out / "assignment.csv", args.case, args.count_mode)
+        audit = realized_audit(out / "assignment.csv", args.case, args.count_mode,
+                               args.supporting_states)
         write_json(out / "realized_purity.json", audit)
         report.update(status="completed" if valid(audit) else "rejected_realized_purity",
                       realized_audit=audit)

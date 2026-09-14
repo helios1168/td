@@ -2,6 +2,8 @@
   "task_id": "agy-group2-n14w11f21",
   "status": "authorized_four_case_grid",
   "launch_requested": true,
+  "supporting_states_allowed": true,
+  "national_priority": "Maximize pure national opportunity in Group 2 first, then nationwide national coverage. Require all Group 2 states in the all-states cases.",
   "worktree": "/Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review",
   "runtime": {
     "python": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3",

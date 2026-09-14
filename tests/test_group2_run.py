@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import numpy as np
 
 from td.solvers import level0, state_splits
-from tools.group2_run import constrain_problem, plan_audit, planner_args
+from tools.group2_run import constrain_problem, group2_priority, plan_audit, planner_args
 from pathlib import Path
 
 
@@ -106,3 +106,20 @@ def test_cap_command_preserves_same_scenario_parameters():
     ceiling = planner_args(Path("/hub"), Path("/out"), "all", 180, "cap")
     exact[exact.index("--k-mode")+1] = "cap"
     assert exact == ceiling
+
+
+def test_supporting_states_allowed_without_weakening_forcing():
+    cmd = planner_args(Path("/hub"), Path("/out"), "all", 180, "fixed", True)
+    assert "--national-states" not in cmd
+    assert "--force-national" in cmd
+
+
+def test_group_priority_can_choose_smaller_group_state_over_larger_support_state():
+    cells = SimpleNamespace(M=np.array([[0.9], [1.1]]), channels=("N_WH",), state_list=["TX", "ID"])
+    problem = level0.build_level0(cells, {"N": ("N_WH",)}, edges=[(0, 1)],
+                                  L=0.8, U=1.2, eta=0.05, fixed_used={"N": 1})
+    problem = constrain_problem(problem, {"N": 1})
+    result = level0.solve_passes(problem, [group2_priority(problem), level0.cover_pass(problem, ["N"])],
+                                 engine="scipy", time_limit=10)
+    assert abs(float(result["y"][0].sum())-1) < 1e-6
+    assert abs(float(result["y"][1].sum())) < 1e-6
