@@ -13,3 +13,7 @@ scenario_I_53,Scenario I,"Scenario I - 53 Wholesalers (N:13, WHFI:2, WH:14, FI:2
 scenario_J_53,Scenario J,"Scenario J - 53 Wholesalers (N:12, WHFI:2, WH:14, FI:25)",53,12,14,25,2,696.3,369.4,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_J.png
 scenario_K_52,Scenario K,"Scenario K - 52 Wholesalers (N:14, WHFI:1, WH:13, FI:24)",52,14,13,24,1,596.8,397.8,362.8,22922.40,22491.24,431.16,1.88%,100% Contiguous (0 violations),figures/summary_scenario_K.png
 scenario_L_53,Scenario L,"Scenario L - 53 Wholesalers (N:14, WHFI:1, WH:14, FI:24)",53,14,14,24,1,596.8,369.4,362.8,22922.40,22491.24,431.16,1.88%,100% Contiguous (0 violations),figures/summary_scenario_L.png
+grid_W3_A_51,Grid-W3-A,"Grid-W3-A - 51 Wholesalers (N:13, WH:11, FI:24, WIFI:3)",51,13,11,24,3,642.7,485.6,362.8,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_grid_W3_A.png
+grid_W4_A_51,Grid-W4-A,"Grid-W4-A - 51 Wholesalers (N:13, WH:11, FI:23, WIFI:4)",51,13,11,23,4,642.7,485.6,378.5,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_grid_W4_A.png
+grid_W4_B_52,Grid-W4-B,"Grid-W4-B - 52 Wholesalers (N:12, WH:11, FI:25, WIFI:4)",52,12,11,25,4,696.3,485.6,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_grid_W4_B.png
+grid_W5_C_52,Grid-W5-C,"Grid-W5-C - 52 Wholesalers (N:12, WH:10, FI:25, WIFI:5)",52,12,10,25,5,696.3,488.6,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_grid_W5_C.png
