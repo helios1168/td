@@ -55,35 +55,45 @@ def build_and_run(group_name: str, req_states: list[str], run_dir: Path, groups_
     by_unit.update(macro.xy_km)
     state_xy = [by_unit[u] for u in cells.state_list]
 
+    dist_overrides = {}
+    if "WA" in idx:
+        dist_overrides[idx["WA"]] = 1200.0
+    if "TX" in idx:
+        dist_overrides[idx["TX"]] = 950.0
+
     problem = level0.build_level0(
         cells, {"N": ("N_WH", "N_FI")},
         edges=edges,
         L=553.724691, U=676.774623,
         eta=0.05,
-        n_max=6,
+        n_max=7,
         dist_max=900.0,
         state_xy=state_xy,
-        dist_max_state={idx["WA"]: 1200.0} if "WA" in idx else None,
+        dist_max_state=dist_overrides if dist_overrides else None,
         fixed_used={"N": 14}
     )
 
     # 2. Supports
-    print("2. Generating valid supports (n_max=6, dist_max=900, WA=1200)...", flush=True)
+    print("2. Generating valid supports (n_max=7, dist_max=900, WA=1200, TX=950)...", flush=True)
     supports = group2_support.generate_valid_supports(
-        problem, max_size=6, max_dist=900.0, max_dist_state={"WA": 1200.0}
+        problem, max_size=7, max_dist=900.0, max_dist_state={"WA": 1200.0, "TX": 950.0}
     )
 
-    # 3. Master solve with compactness penalty
+    # 3. Master solve with compactness penalty and contiguity filters
     print(f"3. Solving exact support master problem for {group_name}...", flush=True)
     sol = group2_support.solve_exact_support(
         problem, supports, count=14, band=(553.724691, 676.774623),
         required_units=req_states, macro_contact_caps={"CA1": 2, "CA2": 2},
-        compactness_weight=0.001
+        compactness_weight=0.001, enforce_geographic_realism=True
     )
     if sol is None:
         raise ValueError(f"Failed to solve exact support problem for {group_name}!")
 
-    chosen = [i for i, cnt in sol["x"].items() if cnt > 0]
+    sol_supports = sol["supports"]
+    chosen = []
+    for i, cnt in sol["x"].items():
+        for _ in range(cnt):
+            chosen.append(i)
     k = 14
     district_names = [f"N_{j+1:02d}" for j in range(k)]
     rep_names = [f"R{j+1:04d}" for j in range(k)]
@@ -98,7 +108,7 @@ def build_and_run(group_name: str, req_states: list[str], run_dir: Path, groups_
         writer = csv.writer(fh)
         writer.writerow(["state", "district", "share", "target_mass"])
         for j, sup_idx in enumerate(chosen):
-            s = supports[sup_idx]
+            s = sol_supports[sup_idx]
             did = run_draw.district_id(j) # D01..D14
             for v in s:
                 st = cells.state_list[v]
@@ -126,7 +136,7 @@ def build_and_run(group_name: str, req_states: list[str], run_dir: Path, groups_
         "band_lo": 553.72,
         "band_hi": 676.77,
         "dist_max": 900.0,
-        "n_max": 6,
+        "n_max": 7,
         "bundles": ["N"]
     }
     with open(run_dir / "params.json", "w", encoding="utf-8") as fh:
@@ -134,7 +144,7 @@ def build_and_run(group_name: str, req_states: list[str], run_dir: Path, groups_
 
     slots = []
     for j, sup_idx in enumerate(chosen):
-        s = supports[sup_idx]
+        s = sol_supports[sup_idx]
         slot_y = {}
         mass_j = 0.0
         for v in s:
@@ -228,7 +238,7 @@ def build_and_run(group_name: str, req_states: list[str], run_dir: Path, groups_
                 states_by_zip[z] = r["state"]
                 M_by_zip[z] = M_by_zip.get(z, 0.0) + float(r["M_cell"])
 
-    # Absorption loop: absorb detached boundary pieces into touching district on G
+    # Absorption loop: absorb only tiny detached boundary fragments (<= 15 zips, <= 15.0 mass)
     for _ in range(5):
         pieces = plan_realise.district_pieces(G, labels)
         moved = 0
@@ -239,6 +249,9 @@ def build_and_run(group_name: str, req_states: list[str], run_dir: Path, groups_
             for p in parts:
                 if p is heaviest:
                     continue
+                piece_mass = sum(M_by_zip.get(z, 0.0) for z in p)
+                if len(p) > 15 or piece_mass > 15.0:
+                    continue # Do NOT absorb large pieces or whole states!
                 adj = {}
                 for zp in p:
                     for nb in G[zp]:
@@ -341,7 +354,7 @@ def main():
     GROUPS_ARG = "G1=TX,NY,FL,NJ,IL,AZ,NC,PA,MI,OH,VA,GA,CO,MD;G2 adds=CT,IN,LA,MN,UT,WA"
 
     # 1. GROUP 2 RUN
-    g2_req = group2_run.GROUP2 + ["CA1", "CA2"]
+    g2_req = group2_run.GROUP2 + ["CA1", "CA2", "MS"]
     g2_dir = REPO_ROOT / "battery/results/group2_exact_national"
     build_and_run("Group 2", g2_req, g2_dir, GROUPS_ARG)
 
@@ -354,7 +367,7 @@ def main():
         print(f"Copied Group 2 summary.png -> {dest}")
 
     # 2. GROUP 1 RUN
-    g1_req = ["TX", "NY", "FL", "NJ", "IL", "AZ", "NC", "PA", "MI", "OH", "VA", "GA", "MD", "CA1", "CA2"]
+    g1_req = ["TX", "NY", "FL", "NJ", "IL", "AZ", "NC", "PA", "MI", "OH", "VA", "GA", "MD", "CA1", "CA2", "MS"]
     g1_dir = REPO_ROOT / "battery/results/group1_exact_national"
     build_and_run("Group 1", g1_req, g1_dir, GROUPS_ARG)
 

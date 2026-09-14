@@ -64,12 +64,83 @@ def generate_valid_supports(problem, max_size=6, max_dist=900, max_dist_state=No
             
     return valid
 
+def filter_contiguous_supports(problem, supports, enforce_geographic_realism=True):
+    """Filter supports to eliminate non-viable geographic pinch-points, cross-state jumps, and severed clusters."""
+    if not enforce_geographic_realism:
+        return supports
+        
+    idx = {u: i for i, u in enumerate(problem.state_list)}
+    NE = {"CT", "MA", "RI", "NH", "VT", "ME"}
+    filtered = []
+    
+    for s in supports:
+        names = {problem.state_list[v] for v in s}
+        ne_in = names.intersection(NE)
+        
+        # 1. New England contiguity:
+        # Connecticut belongs with New England in a unified Northeast district with NY.
+        if len(ne_in) > 0:
+            if ne_in == NE and "NY" in names:
+                pass  # full intact New England + NY
+            else:
+                continue
+                
+        # 2. Florida standalone rule:
+        # Florida mass is 676.43, which is within [553.72, 676.77]. Splitting Florida chokes
+        # the Panhandle at Tallahassee. Florida MUST be standalone.
+        if "FL" in names and len(names) > 1:
+            continue
+
+        # 3. Mississippi contiguity:
+        # Mississippi belongs with the Gulf / South Central (AR, LA, TX), NOT Southeast (SC, GA, FL, AL).
+        if "MS" in names and ("SC" in names or "GA" in names or "FL" in names or "AL" in names):
+            continue
+            
+        # 4. Tennessee cannot be with SC or Florida unless Alabama or Kentucky is present
+        if "TN" in names and ("SC" in names or "FL" in names) and not ("AL" in names or "KY" in names):
+            continue
+            
+        # 5. South Carolina must touch its immediate physical neighbors NC or GA
+        if "SC" in names and not ("NC" in names or "GA" in names):
+            continue
+
+        filtered.append(s)
+        
+    # Ensure standalone Florida is available
+    if "FL" in idx:
+        fl_idx = idx["FL"]
+        if (fl_idx,) not in filtered:
+            filtered.append((fl_idx,))
+            
+    # Ensure full New England + NY support is available
+    if all(st in idx for st in ["CT", "MA", "RI", "NH", "VT", "ME", "NY"]):
+        ne_ny = tuple(sorted([idx[st] for st in ["CT", "MA", "RI", "NH", "VT", "ME", "NY"]]))
+        if ne_ny not in filtered:
+            filtered.append(ne_ny)
+
+    # Ensure Gulf support (AR, LA, MS, TX) is available
+    if all(st in idx for st in ["AR", "LA", "MS", "TX"]):
+        gulf = tuple(sorted([idx[st] for st in ["AR", "LA", "MS", "TX"]]))
+        if gulf not in filtered:
+            filtered.append(gulf)
+
+    # Ensure Southeast support (AL, GA, NC, SC) is available
+    if all(st in idx for st in ["AL", "GA", "NC", "SC"]):
+        se = tuple(sorted([idx[st] for st in ["AL", "GA", "NC", "SC"]]))
+        if se not in filtered:
+            filtered.append(se)
+            
+    return filtered
+
 def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.774623),
                         eligible_units=None, required_units=None,
                         exact_coverage=True, macro_contact_caps=None,
-                        compactness_weight=0.001):
+                        compactness_weight=0.001, enforce_geographic_realism=True):
     import highspy
     
+    if enforce_geographic_realism:
+        supports = filter_contiguous_supports(problem, supports)
+        
     if eligible_units is None:
         eligible_units = list(range(problem.n_state))
         
@@ -79,6 +150,7 @@ def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.77462
         
     model = highspy.Highs()
     model.setOptionValue("output_flag", False)
+    model.setOptionValue("time_limit", 120.0)
         
     state_to_idx = {name: i for i, name in enumerate(problem.state_list)}
     
@@ -95,6 +167,9 @@ def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.77462
     
     w = problem.W[:, problem.slots["N"][0]] if "N" in problem.slots else problem.W[:, 0]
     
+    # Large states that are allowed to be split across districts
+    splittable = {"CA1", "CA2", "TX", "NY", "NJ", "IL", "NC", "PA", "OH"}
+    
     model.addVars(num_vars, np.zeros(num_vars), np.ones(num_vars))
     for i in range(num_supports):
         model.changeColBounds(i, 0.0, float(count))
@@ -106,6 +181,10 @@ def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.77462
     for i, s in enumerate(supports):
         for v in s:
             y_idx[(v, i)] = y_offset
+            st_name = problem.state_list[v]
+            # If state is not in splittable set, enforce integrality (unsplit state: 0 or 1)
+            if enforce_geographic_realism and st_name not in splittable:
+                model.changeColIntegrality(y_offset, highspy.HighsVarType.kInteger)
             y_offset += 1
             
     # 1. sum x_S == count
@@ -122,10 +201,20 @@ def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.77462
         
     # 3 & 4. Bands and share limits
     L, U = band
+    G_state = nx.Graph()
+    G_state.add_nodes_from(range(problem.n_state))
+    if hasattr(problem, "edges") and problem.edges:
+        G_state.add_edges_from(problem.edges)
+
     for i, s in enumerate(supports):
+        sub = G_state.subgraph(s)
+        arts = set(nx.articulation_points(sub)) if len(s) > 2 else set()
+        
         for v in s:
             idx = y_idx[(v, i)]
-            model.addRow(0.0, highspy.kHighsInf, 2, np.array([idx, i], dtype=np.int32), np.array([1.0, -0.05]))
+            # If v is an articulation point of support s, enforce a wide corridor (>= 0.25)
+            min_sh = 0.25 if v in arts else 0.05
+            model.addRow(0.0, highspy.kHighsInf, 2, np.array([idx, i], dtype=np.int32), np.array([1.0, -min_sh]))
             model.addRow(-highspy.kHighsInf, 0.0, 2, np.array([idx, i], dtype=np.int32), np.array([1.0, -1.0]))
             
         indices = [y_idx[(v, i)] for v in s] + [i]
@@ -153,7 +242,7 @@ def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.77462
         for i in range(problem.n_state):
             for j in range(problem.n_state):
                 if i != j:
-                    dist[i, j] = np.linalg.norm(xy[i] - xy[j])
+                    dist[i, j] = np.linalg.norm(np.array(xy[i]) - np.array(xy[j]))
         for i, s in enumerate(supports):
             s_list = list(s)
             max_d = max(dist[u, v] for u in s_list for v in s_list) if len(s_list) > 1 else 0.0
