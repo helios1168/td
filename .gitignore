@@ -46,3 +46,6 @@ battery/scenarios/
 # editor scratch
 *.swp
 instance_descaled*.json.gz
+
+# Uncompressed database export CSVs (>100 MB; use the .zip or .gz archives instead)
+exports/database/*.csv
