@@ -6,7 +6,7 @@ import tempfile
 import numpy as np
 
 from td.solvers import level0, state_splits
-from tools.group2_run import constrain_problem, group2_priority, plan_audit, planner_args, realized_audit, valid
+from tools.group2_run import GROUP2, constrain_problem, group2_priority, plan_audit, planner_args, realized_audit, valid
 from pathlib import Path
 
 
@@ -125,6 +125,28 @@ def test_group_priority_can_choose_smaller_group_state_over_larger_support_state
                                  engine="scipy", time_limit=10)
     assert abs(float(result["y"][0].sum())-1) < 1e-6
     assert abs(float(result["y"][1].sum())) < 1e-6
+
+
+def test_colorado_is_supporting_only_without_geographic_or_band_exception():
+    assert len(GROUP2) == 19 and "CO" not in GROUP2
+    cmd = planner_args(Path("/hub"), Path("/out"), "choose", 180, "fixed", True)
+    assert "--national-states" not in cmd and "--force-national" not in cmd
+    assert cmd[cmd.index("--dist-max-state")+1] == "WA=1200"
+    assert cmd[cmd.index("--dist-max")+1] == "900"
+    assert cmd[cmd.index("--delta")+1] == "0.1"
+    forced = planner_args(Path("/hub"), Path("/out"), "all", 180, "fixed", True)
+    assert "CO" not in forced[forced.index("--force-national")+1].split(",")
+    cells = SimpleNamespace(M=np.array([[0.9], [1.1]]), channels=("N_WH",), state_list=["TX", "CO"])
+    problem = level0.build_level0(cells, {"N": ("N_WH",)}, edges=[(0, 1)],
+                                  L=0.8, U=1.2, eta=0.05, fixed_used={"N": 1})
+    priority = group2_priority(problem)
+    assert priority.c[problem.off_y] != 0
+    assert priority.c[problem.off_y + problem.k] == 0
+    assert level0.cover_pass(problem, ["N"]).c[problem.off_y + problem.k] != 0
+    report = plan_audit(dict(slots=[dict(used=True, bundle="N", y={"CO": 1.0})],
+                             per_state={}), "choose", "cap", True)
+    assert report["supporting_national_states"] == ["CO"]
+    assert not report["outside_group2"] and not report["purity_violations"]
 
 
 def write_assignment(path, rows):

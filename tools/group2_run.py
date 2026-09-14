@@ -32,7 +32,8 @@ import full_plan
 from td import channels
 from td.solvers import level0
 
-GROUP2 = "TX NY FL NJ IL AZ NC PA MI OH VA GA CO MD WA UT IN LA MN CT".split()
+# Colorado remains eligible as supporting territory, not a priority or required state.
+GROUP2: list[str] = "TX NY FL NJ IL AZ NC PA MI OH VA GA MD WA UT IN LA MN CT".split()
 COUNTS = {"N": 14, "WH": 11, "FI": 21}
 PURE = {"N": ("N_WH", "N_FI"), "WH": ("WH",), "FI": ("FI",)}
 SHARE_TOL = 1e-6

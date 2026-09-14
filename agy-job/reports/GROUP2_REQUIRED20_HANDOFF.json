@@ -1,0 +1,64 @@
+{
+  "task_id": "agy-group2-required20",
+  "status": "deferred_by_user",
+  "summary": "Original required-20 national coverage runs with supporting states allowed were infeasible under both exact and ceiling counts. Saved for later; do not rerun automatically.",
+  "worktree": "/Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review",
+  "historical_report": "agy-job/reports/GROUP2_RUNS.json",
+  "historical_implementation_commit": "6262886",
+  "configuration_at_failure": {
+    "group2_states": ["TX", "NY", "FL", "NJ", "IL", "AZ", "NC", "PA", "MI", "OH", "VA", "GA", "CO", "MD", "WA", "UT", "IN", "LA", "MN", "CT"],
+    "counts": {"N": 14, "WH": 11, "FI": 21},
+    "supporting_states_allowed": true,
+    "band_mode": "per-bundle",
+    "delta": 0.1,
+    "eta": 0.05,
+    "distance_km": 900,
+    "state_distance_override": {"WA": 1200},
+    "max_states_per_district": 6,
+    "max_splits": {"CA": 3, "TX": 2, "NY": 2, "FL": 2},
+    "band_break": ["CA", "TX", "NY", "FL"],
+    "channel_purity": "Any pure N, WH or FI contact requires full state coverage in that pure channel. Multiple districts within the same pure channel are allowed.",
+    "route": "sequential",
+    "plus_pair": true,
+    "state_sweep": false,
+    "warm_start": "none",
+    "anchors": "none"
+  },
+  "results": [
+    {
+      "count_mode": "fixed",
+      "verdict": "infeasible",
+      "stage": "seq_N",
+      "elapsed_seconds": 0.877,
+      "directory": "battery/results/agy_group2_support_20260914_040012/all_fixed"
+    },
+    {
+      "count_mode": "cap",
+      "verdict": "infeasible",
+      "stage": "seq_N",
+      "elapsed_seconds": 0.823,
+      "directory": "battery/results/agy_group2_support_20260914_040012/all_cap"
+    }
+  ],
+  "reported_blocker": {
+    "state": "CO",
+    "national_mass_upper_bound": 548.754666,
+    "national_district_floor": 553.724691,
+    "units": "descaled instance opportunity",
+    "source": "Saved failure diagnostics from full_plan._forced_below_floor",
+    "interpretation": "The driver's connected-support upper bound under the current geographic limits is below the national floor. This is not an attained feasible district. Removing this obstruction does not establish feasibility of the rest of the model."
+  },
+  "latest_user_decision": {
+    "active_focus": "Planner-selected states, both fixed and cap counts, with supporting states allowed.",
+    "group2_revision": "Remove Colorado altogether from the priority and required-state list, leaving 19 states. Colorado remains eligible as supporting territory.",
+    "exceptions": "No Colorado distance exception and no opportunity-bound relaxation.",
+    "required_all_resume": "If resumed under the revised list, this becomes a new required-19 scenario, not a reproduction of the original required-20 runs. The current runner's --case all uses the revised 19-state list."
+  },
+  "resume_checks": [
+    "Read the original run_request.json files for commands, input hashes and source hashes. The historical commit alone does not reconstruct the tested source: pre-existing uncommitted implementation changes were used.",
+    "The original data is /Users/Shared/sv-ntlee/repos/td/instance_descaled_v4_conus.json.gz. Use the hub .venv/bin/python3, data/geo cache and pinned 2025 gazetteer/ZCTA geometry recorded in the requests.",
+    "Keep old outputs and use fresh directories for future runs. Do not substitute earlier restricted-pool results for the supporting-state scenario.",
+    "No full plan or ZIP realization was produced. Terminal rematching and FEFx were not reached. A later successful run still needs purity, counts, residual coverage, contiguity and staffing audits."
+  ],
+  "missing_context": []
+}

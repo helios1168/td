@@ -1,10 +1,12 @@
 {
   "task_id": "agy-group2-n14w11f21",
-  "status": "runs_complete_no_full_plan",
+  "status": "planner_selected_active_no_full_plan",
+  "deferred_required_states_handoff": "agy-job/reports/GROUP2_REQUIRED20_HANDOFF.json",
   "results": "agy-job/reports/GROUP2_RUNS.json",
   "launch_requested": true,
   "supporting_states_allowed": true,
-  "national_priority": "Maximize pure national opportunity in Group 2 first, then nationwide national coverage. Require all Group 2 states in the all-states cases.",
+  "national_priority": "Maximize pure national opportunity in the revised 19-state Group 2 first, then nationwide national coverage. The planner selects states; required-all cases are deferred.",
+  "colorado_policy": "Removed from Group 2 priority and requirements. Still eligible as supporting territory. No Colorado geographic or opportunity-bound exception.",
   "worktree": "/Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review",
   "runtime": {
     "python": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3",
@@ -18,13 +20,11 @@
   "requested_counts": {"N": 14, "WH": 11, "FI": 21},
   "cases": [
     {"national_selection": "choose_within_group2", "count_mode": "fixed"},
-    {"national_selection": "require_all_group2", "count_mode": "fixed"},
-    {"national_selection": "choose_within_group2", "count_mode": "cap"},
-    {"national_selection": "require_all_group2", "count_mode": "cap"}
+    {"national_selection": "choose_within_group2", "count_mode": "cap"}
   ],
   "group2_states": [
     "TX", "NY", "FL", "NJ", "IL", "AZ", "NC", "PA", "MI", "OH",
-    "VA", "GA", "CO", "MD", "WA", "UT", "IN", "LA", "MN", "CT"
+    "VA", "GA", "MD", "WA", "UT", "IN", "LA", "MN", "CT"
   ],
   "historical_pool_extensions": {
     "states": ["DE", "DC", "SC", "CA"],
@@ -45,7 +45,7 @@
     ]
   },
   "candidate_operational_settings": {
-    "source": "Historical FI21 P5 study; these settings are recorded for review, not launched.",
+    "source": "Supporting-state run baseline, with Colorado removed from Group 2 priority. Opportunity bounds and geography unchanged.",
     "route": "sequential",
     "driver": "geo",
     "priority": "N,WH,FI",
@@ -55,6 +55,7 @@
     "max_splits": "CA=3,TX=2,NY=2,FL=2",
     "band_break": "CA,TX,NY,FL",
     "dist_max": 900,
+    "dist_max_state": {"WA": 1200},
     "n_max": 6,
     "plus_pair": true,
     "other_floor": 0.5,
@@ -75,7 +76,7 @@
     "inspection_scope": "Aggregate plan.json shares only; realized ownership and geography provenance were not revalidated."
   },
   "execution_requirements": [
-    "Run all four cases in parallel using tools/group2_run.py.",
+    "Run only planner-selected fixed and cap cases in parallel using tools/group2_run.py. Required-all cases remain deferred until the user resumes them.",
     "Reconcile any other-first states with national requirements; do not silently remove states or weaken purity to obtain feasibility.",
     "Enforce conditional purity in the planner or provide an explicit equivalent workflow. Existing national-states, force-national and plus-pair flags do not jointly enforce the full rule for N, WH and FI.",
     "Use a fresh output directory and preserve historical results.",
