@@ -74,3 +74,25 @@ def test_corrupt_or_infeasible_checkpoint_is_ignored_and_latest_skips_it():
         good.write_text(json.dumps(raw))
         assert store.load("national", "cover_N", problem) is None
         assert store.latest("national", problem) is None
+
+
+def test_nonfinite_vectors_and_top_level_json_list_are_rejected():
+    problem = toy()
+    solved = result(problem)
+    for key in ("x", "z", "y"):
+        bad = dict(solved)
+        if key == "x":
+            bad[key] = reconstruct_vector(problem, solved)
+        bad[key] = np.asarray(bad[key], float).copy()
+        bad[key].flat[0] = np.nan
+        try:
+            reconstruct_vector(problem, bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"non-finite {key} was accepted")
+    with tempfile.TemporaryDirectory() as temp:
+        store = CheckpointStore(temp, {"instance": "toy"})
+        store.path("national", "cover_N").parent.mkdir(exist_ok=True)
+        store.path("national", "cover_N").write_text("[]")
+        assert store.load("national", "cover_N", problem) is None

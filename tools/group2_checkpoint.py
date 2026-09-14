@@ -78,15 +78,20 @@ def reconstruct_vector(problem: level0.Level0Problem, result: dict[str, Any]) ->
     """
     if "x" in result:
         x = np.asarray(result["x"], dtype=float).copy()
+        if not np.isfinite(x).all():
+            raise ValueError("checkpoint x contains a non-finite value")
         level0.check_point(problem, x)
         return x
     if "z" not in result or "y" not in result:
         raise ValueError("checkpoint result needs full x or z and y")
     S, K = problem.n_state, problem.k
-    z = np.asarray(result["z"], dtype=float).reshape(S, K) > 0.5
+    z_raw = np.asarray(result["z"], dtype=float).reshape(S, K)
     y = np.asarray(result["y"], dtype=float).reshape(S, K)
+    if not np.isfinite(z_raw).all():
+        raise ValueError("checkpoint z contains a non-finite value")
     if not np.isfinite(y).all():
         raise ValueError("checkpoint y contains a non-finite value")
+    z = z_raw > 0.5
     x = np.zeros(problem.n_var, dtype=float)
     x[problem.off_z:problem.off_z + S * K] = z.ravel()
     x[problem.off_y:problem.off_y + S * K] = y.ravel()
@@ -164,6 +169,8 @@ class CheckpointStore:
         """Atomically save a validated warm vector; never write an invalid checkpoint."""
         target = self.path(stage, pass_name)
         x = reconstruct_vector(problem, result)
+        if not np.isfinite(x).all():
+            raise ValueError("checkpoint x contains a non-finite value")
         record = dict(schema=SCHEMA, stage=stage, pass_name=pass_name,
                       saved_at=time.time(), fingerprint=model_fingerprint(problem, self.provenance),
                       provenance=self.provenance, warm_start=x.tolist(), metadata=_safe_metadata(result))
@@ -192,6 +199,8 @@ class CheckpointStore:
         """Return a validated vector, or ``None`` for absent, stale, corrupt, or bad files."""
         try:
             record = json.loads(self.path(stage, pass_name).read_text(encoding="utf-8"))
+            if not isinstance(record, dict):
+                return None
             if (record.get("schema") != SCHEMA or record.get("stage") != stage
                     or record.get("pass_name") != pass_name
                     or record.get("provenance") != self.provenance
@@ -220,4 +229,3 @@ class CheckpointStore:
             except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
                 continue
         return max(candidates, key=lambda item: item[0])[1] if candidates else None
-
