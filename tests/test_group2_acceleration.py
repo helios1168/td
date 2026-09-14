@@ -11,6 +11,7 @@ import numpy as np
 from td.solvers import level0
 from td.solvers import milp_engines
 from tools import group2_checkpoint, group2_initializer
+import tools.group2_run as group2_run
 from tools.group2_run import constrain_problem, make_accelerated_runner, planner_args
 
 
@@ -71,7 +72,7 @@ def test_accelerated_runner_validates_seed_and_restores_solver_wrapper():
             return {"passes": []}
 
         def bad_seed(*args, **kwargs):
-            return SimpleNamespace(status="seed", vector=np.zeros(problem.n_var), metadata={})
+            return SimpleNamespace(status="seed", vector=np.full(problem.n_var, np.nan), metadata={})
 
         saved_seed = group2_initializer.build_group2_warm_start
         group2_initializer.build_group2_warm_start = bad_seed
@@ -81,7 +82,7 @@ def test_accelerated_runner_validates_seed_and_restores_solver_wrapper():
                 provenance={"case": "choose"}, seed_seconds=1.0)
             args = SimpleNamespace(engine="highs", threads=2)
             assert wrapped(problem, [], args, "N", original) == {"passes": []}
-            assert seen == [None]             # invalid seed was rejected at the seam
+            assert seen == [None]             # non-finite seed was rejected at the seam
         finally:
             group2_initializer.build_group2_warm_start = saved_seed
 
@@ -108,3 +109,28 @@ def test_accelerated_runner_restores_engine_hook_when_stage_fails():
         else:
             raise AssertionError("the original stage failure must propagate")
         assert milp_engines.solve_problem is original_solve
+
+
+def test_main_restores_full_plan_wrappers_when_runner_factory_fails():
+    """The factory is optional instrumentation, never a lasting global patch."""
+    import full_plan
+
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        hub = root / "hub"
+        hub.mkdir()
+        (hub / "instance_descaled_v4_conus.json.gz").write_bytes(b"not read by this test")
+        originals = (full_plan._build, full_plan._pass_list, full_plan._run_passes)
+
+        def fail_factory(*args, **kwargs):
+            raise RuntimeError("factory failed")
+
+        saved_factory = group2_run.make_accelerated_runner
+        group2_run.make_accelerated_runner = fail_factory
+        try:
+            code = group2_run.main(["--case", "choose", "--hub", str(hub),
+                                    "--out", str(root / "out"), "--seed-time-limit", "0"])
+            assert code == 1
+        finally:
+            group2_run.make_accelerated_runner = saved_factory
+        assert (full_plan._build, full_plan._pass_list, full_plan._run_passes) == originals
