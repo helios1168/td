@@ -1,0 +1,114 @@
+{
+  "task_id": "agy-group2-n14w11f21",
+  "status": "complete",
+  "summary": "Executed the four requested cases with supporting states allowed. Both require-all cases were proved infeasible at national planning. Both choose-states cases remain inconclusive under their solve limits. No complete plan or realized map was produced.",
+  "files_changed": [
+    "tools/group2_run.py",
+    "tests/test_group2_run.py",
+    "agy-job/group2_n14w11f21_run_spec.json",
+    "agy-job/reports/GROUP2_RUNS.json"
+  ],
+  "tests": [
+    {"command": "rtk proxy /Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 tests/run_all.py -k test_group2_run.py", "result": "15 passed, 0 failed"},
+    {"command": "rtk git diff --check", "result": "passed"},
+    {"check": "Serena diagnostics", "result": "Unavailable: no active project and no activation tool exposed"}
+  ],
+  "configuration": {
+    "instance": "/Users/Shared/sv-ntlee/repos/td/instance_descaled_v4_conus.json.gz",
+    "requested_counts": {"N": 14, "WH": 11, "FI": 21},
+    "supporting_states_allowed": true,
+    "group2_states": ["TX", "NY", "FL", "NJ", "IL", "AZ", "NC", "PA", "MI", "OH", "VA", "GA", "CO", "MD", "WA", "UT", "IN", "LA", "MN", "CT"],
+    "priority": ["Group 2 national opportunity", "nationwide national opportunity", "WH", "FI"],
+    "conditional_purity": "Any pure N, WH or FI contact requires full state coverage in that pure channel; multiple districts within the same pure channel are allowed.",
+    "band_mode": "per-bundle",
+    "delta": 0.1,
+    "eta": 0.05,
+    "distance_km": 900,
+    "state_distance_override": {"WA": 1200},
+    "max_states_per_district": 6,
+    "max_splits": {"CA": 3, "TX": 2, "NY": 2, "FL": 2},
+    "band_break": ["CA", "TX", "NY", "FL"],
+    "plus_pair": true,
+    "other_first": [],
+    "state_sweep": false,
+    "greedy_anchors": false,
+    "engine": "HiGHS 1.15.1",
+    "threads_per_process": 2,
+    "gazetteer_vintage": "2025",
+    "stage2_reservation": "none",
+    "terminal_rematch_requested": true
+  },
+  "results": [
+    {
+      "national_selection": "require_all_group2",
+      "count_mode": "fixed",
+      "verdict": "infeasible",
+      "stage": "seq_N",
+      "seconds": 0.877,
+      "directory": "battery/results/agy_group2_support_20260914_040012/all_fixed"
+    },
+    {
+      "national_selection": "require_all_group2",
+      "count_mode": "cap",
+      "verdict": "infeasible",
+      "stage": "seq_N",
+      "seconds": 0.823,
+      "directory": "battery/results/agy_group2_support_20260914_040012/all_cap"
+    },
+    {
+      "national_selection": "choose_group2_with_priority",
+      "count_mode": "fixed",
+      "verdict": "inconclusive_no_incumbent",
+      "stage": "seq_N",
+      "attempts": [
+        {"limit_per_pass_seconds": 180, "seconds": 180.447, "directory": "battery/results/agy_group2_support_20260914_040012/choose_fixed"},
+        {"limit_per_pass_seconds": 600, "seconds": 600.444, "directory": "battery/results/agy_group2_support_20260914_040012/choose_fixed_retry600"}
+      ]
+    },
+    {
+      "national_selection": "choose_group2_with_priority",
+      "count_mode": "cap",
+      "verdict": "inconclusive_no_nonempty_wh_incumbent",
+      "stage": "seq_WH",
+      "seconds": 720.909,
+      "directory": "battery/results/agy_group2_support_20260914_040012/choose_cap",
+      "national_stage": {
+        "incumbent_found": true,
+        "certified_optimal": false,
+        "group2_national_mass_in_pure_N": 4107.23,
+        "nationwide_national_mass_in_pure_N": 6693.46,
+        "contacts": 42,
+        "pass_limit_seconds": 180,
+        "note": "All three national passes reached their time limits. The following WH pass stopped on an empty plan. Values are rounded as printed in the solver log."
+      }
+    }
+  ],
+  "require_all_diagnostic": {
+    "state": "CO",
+    "national_mass_upper_bound": 548.754666,
+    "national_district_floor": 553.724691,
+    "units": "descaled instance opportunity",
+    "interpretation": "Even the driver's connected-support upper bound for a national district containing Colorado is below the floor under the current distance and state-count limits. Both require-all models were independently reported infeasible by HiGHS."
+  },
+  "artifacts": [
+    "battery/results/agy_group2_support_20260914_040012/",
+    "agy-job/group2_n14w11f21_run_spec.json"
+  ],
+  "superseded_attempts": {
+    "directory": "battery/results/agy_group2_20260914_035127/",
+    "note": "These earlier attempts restricted national territory to the original 20 states. Three ended in infeasibility; choose/cap was stopped when the user authorized supporting states. Those results do not describe the final broader scenario."
+  },
+  "math_questions": [],
+  "followups": [
+    "Improve or warm-start the conditional-purity MILP before another choose-states comparison; the current timeouts do not establish infeasibility.",
+    "For the require-all scenario, revisit the Colorado floor or geographic constraints with the user before rerunning. Do not silently remove Colorado or weaken purity.",
+    "After a full plan exists, run ZIP realization, refresh the ZIP audit with --audit-only, then evaluate terminal rematching and FEFx. None was reached by these runs."
+  ],
+  "learned": [
+    "full_plan's fixed_used bounds fix the first requested slots open but do not close surplus slots. The experiment adapter pairs lower and upper slot bounds to implement exact counts.",
+    "Conditional state-channel purity can be enforced with the existing contact variables while permitting same-channel district splits.",
+    "The assignment exporter uses the literal district label other for residual opportunity; it is not an empty string.",
+    "Each run records its commands, input hash and implementation hashes. The implementation included the pre-existing uncommitted worktree changes, which were preserved."
+  ],
+  "missing_context": []
+}

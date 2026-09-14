@@ -1,6 +1,7 @@
 {
   "task_id": "agy-group2-n14w11f21",
-  "status": "authorized_four_case_grid",
+  "status": "runs_complete_no_full_plan",
+  "results": "agy-job/reports/GROUP2_RUNS.json",
   "launch_requested": true,
   "supporting_states_allowed": true,
   "national_priority": "Maximize pure national opportunity in Group 2 first, then nationwide national coverage. Require all Group 2 states in the all-states cases.",

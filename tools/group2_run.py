@@ -127,7 +127,7 @@ def realized_audit(path: Path, case: str, count_mode: str = "fixed",
             channel = "N" if row["channel"] in PURE["N"] else row["channel"]
             key = (row["state"], channel)
             totals[key] += mass
-            if row["district"]:
+            if row["district"] not in ("", "other"):
                 districts[row["district"]] = row["bundle"]
                 if row["bundle"] == channel:
                     pure_mass[key] += mass
@@ -144,6 +144,7 @@ def realized_audit(path: Path, case: str, count_mode: str = "fixed",
                 counts_satisfied=all(counts[b] == n if count_mode == "fixed" else counts[b] <= n
                                      for b, n in COUNTS.items()),
                 purity_violations=violations, residual_mass=residual,
+                coverage_complete=residual <= 1e-8,
                 national_states=national,
                 supporting_national_states=sorted(set(national)-set(GROUP2)),
                 outside_group2=[] if supporting_states else sorted(set(national)-set(GROUP2)),
@@ -192,11 +193,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--case", choices=["choose", "all"], required=True)
     parser.add_argument("--count-mode", choices=["fixed", "cap"], default="fixed")
     parser.add_argument("--supporting-states", action="store_true")
+    parser.add_argument("--audit-only", action="store_true",
+                        help="Refresh the ZIP audit of an existing completed realization")
     parser.add_argument("--hub", type=Path, default=Path(os.environ["TD_REPO"]))
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--time-limit", type=float, default=180.0)
     args = parser.parse_args(argv)
     out = args.out.resolve()
+    if args.audit_only:
+        audit = realized_audit(out / "assignment.csv", args.case, args.count_mode,
+                               args.supporting_states)
+        report = json.loads((out / "run_status.json").read_text())
+        report.update(status="completed" if valid(audit) else "rejected_realized_purity",
+                      realized_audit=audit,
+                      audit_source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+        write_json(out / "realized_purity.json", audit)
+        write_json(out / "run_status.json", report)
+        print(json.dumps(report, allow_nan=False))
+        return 0 if valid(audit) else 1
     out.mkdir(parents=True, exist_ok=False)
     args.hub = args.hub.resolve()
     os.environ["TD_GAZ_VINTAGE"] = "2025"

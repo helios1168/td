@@ -137,12 +137,14 @@ def write_assignment(path, rows):
 def test_realized_audit_rejects_pure_national_with_mixed_or_unheld_remainder():
     with tempfile.TemporaryDirectory() as temp:
         path = Path(temp) / "assignment.csv"
-        for district, bundle in (("plus", "FI_PLUS"), ("", "")):
+        for district, bundle in (("plus", "FI_PLUS"), ("", ""), ("other", "")):
             write_assignment(path, [["TX", "N_WH", "n", "N", 5],
                                     ["TX", "N_FI", district, bundle, 5]])
             audit = realized_audit(path, "choose", "cap", True)
             assert not valid(audit)
             assert audit["purity_violations"] == [dict(state="TX", channel="N", mass_outside_pure=5.0)]
+            assert audit["residual_mass"] == (0.0 if district == "plus" else 5.0)
+            assert audit["coverage_complete"] == (district == "plus")
 
 
 def test_realized_purity_allows_two_pure_districts_and_supporting_states():
