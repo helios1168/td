@@ -404,6 +404,11 @@ def render_option2():
 
 def heal_assignment_contiguity(run_dir: Path, bundle_list: list[str]):
     """Ensure all realized districts on assignment.csv are 100% rook contiguous on graph G."""
+    with open(run_dir / "assignment.csv") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        all_rows = list(reader)
+
     for b in bundle_list:
         cg_path = run_dir / f"projections/{b}/cell_graph.json"
         if not cg_path.exists():
@@ -414,20 +419,13 @@ def heal_assignment_contiguity(run_dir: Path, bundle_list: list[str]):
         G.add_nodes_from(cg["zips"])
         G.add_edges_from(cg["edges"])
         
-        # Read assignment
-        rows = []
+        # Read labels ONLY for rows belonging to bundle b
         labels = {}
-        states = {}
         masses = {}
-        with open(run_dir / "assignment.csv") as f:
-            reader = csv.DictReader(f)
-            fieldnames = reader.fieldnames
-            col = f"district_{b}" if f"district_{b}" in fieldnames else "district"
-            for r in reader:
-                rows.append(r)
+        for r in all_rows:
+            if r.get("bundle") == b:
                 z = r["zip"]
-                labels[z] = r.get(col, "other")
-                states[z] = r.get("state", "")
+                labels[z] = r.get("district", "other")
                 masses[z] = masses.get(z, 0.0) + float(r.get("M_cell", 0.0))
                 
         # Run absorption
@@ -452,16 +450,18 @@ def heal_assignment_contiguity(run_dir: Path, bundle_list: list[str]):
             if moved == 0:
                 break
                 
-        # Write back
-        with open(run_dir / "assignment.csv", "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for r in rows:
+        # Update ONLY rows belonging to bundle b
+        for r in all_rows:
+            if r.get("bundle") == b:
                 z = r["zip"]
-                col = f"district_{b}" if f"district_{b}" in fieldnames else "district"
-                if col in r:
-                    r[col] = labels.get(z, r[col])
-                writer.writerow(r)
+                if z in labels:
+                    r["district"] = labels[z]
+
+    with open(run_dir / "assignment.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in all_rows:
+            writer.writerow(r)
 
 
 if __name__ == "__main__":
