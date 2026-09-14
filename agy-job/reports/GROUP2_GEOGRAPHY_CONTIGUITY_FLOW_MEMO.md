@@ -144,6 +144,13 @@ Case `all` requires the 19 Group 2 parents in pure National, while supporting st
 `N`, the paired `WH_PLUS` and `FI_PLUS` bundles, `WHFI`, or `WHFI_PLUS`. Plan acceptance rejects
 fractional bundle shares and material residual coverage before ZIP realization.
 
+Two bounded runs exercised the revised contract. Repair from the obsolete fractional reference
+found no incumbent in the unrestricted 70-second solve or the bounded separator fallback and
+ended inconclusively after 161.706 seconds. A cold run then let the all-or-none model construct its
+own seed. The 15-second initializer and 180-second National coverage pass both returned no
+incumbent, ending after 195.274 seconds. Neither run proved infeasibility, and the cold failure
+reported no forced state below the district floor. No plan, ZIP realization, or map was produced.
+
 ## 1. Diagnosis
 
 The reported relaxed solution establishes projected business feasibility, not geographic
