@@ -1,0 +1,494 @@
+{
+  "job": "agy-math-review",
+  "plan": "IMPLEMENTATION_PLAN.md",
+  "status": "complete",
+  "current_task": null,
+  "tasks": [
+    {
+      "id": "P0",
+      "status": "accepted",
+      "dependencies": [],
+      "model": "Luna, shell only",
+      "files": [
+        "agy-job/ledger.json",
+        "agy-job/reports/P0.json"
+      ],
+      "prompt_path": null,
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "OpenCode version and run help",
+        "Python version",
+        "Target worktree branch and status"
+      ],
+      "review_verdict": "accepted: user-authorized --dangerously-skip-permissions probe succeeded",
+      "commit": null,
+      "next_action": "C0 completed; route its escalations"
+    },
+    {
+      "id": "C0",
+      "status": "accepted",
+      "dependencies": [
+        "P0"
+      ],
+      "model": "opencode-go/deepseek-v4-pro",
+      "files": [
+        "agy-job/contract.md",
+        "agy-job/reports/C0.json"
+      ],
+      "prompt_path": "agy-job/prompts/C0.md",
+      "session_id": "ses_f62d85da0ffexKZyycf327Po0C",
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [
+        "agy-job/logs/C0-01.jsonl",
+        "agy-job/logs/C0-01.stderr.log"
+      ],
+      "reported_cost": null,
+      "tests": [
+        "C0 report JSON validation",
+        "Five independent toy calculations",
+        "Scope inspection of changed paths"
+      ],
+      "review_verdict": "accepted deliverable; Antigravity accepted the corrected contract",
+      "commit": null,
+      "next_action": "A1 ready after accepted contract correction"
+    },
+    {
+      "id": "Q0",
+      "status": "accepted",
+      "dependencies": [
+        "C0"
+      ],
+      "model": "opencode-go/qwen3.8-max",
+      "files": [
+        "agy-job/prompts/Q0.md",
+        "agy-job/reports/Q0.json"
+      ],
+      "prompt_path": "agy-job/prompts/Q0.md",
+      "session_id": "ses_f62d11ae5ffezJLusYOW4uh1UW",
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [
+        "agy-job/logs/Q0-01.jsonl",
+        "agy-job/logs/Q0-01.stderr.log"
+      ],
+      "reported_cost": null,
+      "tests": [
+        "Q0 report JSON validation",
+        "Independent contract and toy-case review",
+        "Scope inspection of changed paths"
+      ],
+      "review_verdict": "accepted second opinion; no Antigravity sign-off",
+      "commit": null,
+      "next_action": "Contract corrections applied; retain Q0 as independent evidence"
+    },
+    {
+      "id": "GATE",
+      "status": "accepted",
+      "dependencies": [
+        "C0",
+        "Q0"
+      ],
+      "model": "Antigravity via local agy CLI, gemini-3.1-pro-high",
+      "files": [
+        "agy-job/contract.md",
+        "agy-job/reports/GATE.json"
+      ],
+      "prompt_path": null,
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "Read-only agy decision memo exited 0",
+        "Contract corrections applied and JSON artifacts validated"
+      ],
+      "review_verdict": "accepted mathematical gate sign-off; final V1 sign-off remains pending",
+      "commit": null,
+      "next_action": "Dispatch A1"
+    },
+    {
+      "id": "A1",
+      "status": "accepted",
+      "dependencies": [
+        "GATE"
+      ],
+      "model": "opencode-go/deepseek-v4-pro",
+      "files": [
+        "tools/measure/fefx.py",
+        "agy-job/prompts/A1.md",
+        "agy-job/reports/A1.json"
+      ],
+      "prompt_path": "agy-job/prompts/A1.md",
+      "session_id": null,
+      "process_handle": 82417,
+      "attempt": 2,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "A1 repair report JSON validation",
+        "Hub interpreter py_compile",
+        "Direct applicable-pair invocation",
+        "28 assertion focused audit check"
+      ],
+      "review_verdict": "accepted after repair; full suite 822 passed and 9 unrelated shapefile tests are environment-blocked",
+      "commit": null,
+      "next_action": "Dispatch A2 focused regression tests"
+    },
+    {
+      "id": "A2",
+      "status": "accepted",
+      "dependencies": [
+        "A1"
+      ],
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "files": [
+        "tests/test_fefx.py",
+        "agy-job/prompts/A2.md",
+        "agy-job/reports/A2.json"
+      ],
+      "prompt_path": "agy-job/prompts/A2.md",
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "A2 report JSON validation",
+        "Hub interpreter pytest acceptance attempted; blocked because pytest is absent",
+        "Repository runner: 11 passed, 0 failed, 831 skipped",
+        "Import-only discovery: 0 passed, 0 failed, 842 skipped",
+        "Hub interpreter py_compile",
+        "Scope and git diff check"
+      ],
+      "review_verdict": "accepted; 11 focused tests pass under the repository runner; literal pytest command is environment-blocked because pytest is absent",
+      "commit": null,
+      "next_action": "Prepare R1 stage2_state implementation prompt"
+    },
+    {
+      "id": "R1",
+      "status": "accepted",
+      "dependencies": [
+        "A2"
+      ],
+      "model": "opencode-go/deepseek-v4-pro",
+      "files": [
+        "td/stage2_state.py",
+        "tests/test_stage2_state.py",
+        "agy-job/prompts/R1.md",
+        "agy-job/reports/R1.json"
+      ],
+      "prompt_path": "agy-job/prompts/R1-repair-01.md",
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 2,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [
+        "agy-job/logs/R1-01.jsonl",
+        "agy-job/logs/R1-01.stderr.log",
+        "agy-job/logs/R1-repair-01.jsonl",
+        "agy-job/logs/R1-repair-01.stderr.log"
+      ],
+      "reported_cost": null,
+      "tests": [
+        "R1 repair report JSON validation",
+        "Hub interpreter focused runner: 31 passed, 0 failed, 824 skipped",
+        "Import-only discovery: 0 passed, 0 failed, 855 skipped",
+        "Hub interpreter py_compile",
+        "Independent reservation formula and brute-force matching oracle",
+        "Full suite: 846 passed, 9 unrelated missing-ZCTA-shapefile failures"
+      ],
+      "review_verdict": "accepted after repair; exact reservation floor is supported; 31 focused tests pass; full suite failures are unrelated missing shapefile environment failures",
+      "commit": null,
+      "next_action": "Prepare R2 CLI propagation prompt"
+    },
+    {
+      "id": "R2",
+      "status": "accepted",
+      "dependencies": [
+        "R1"
+      ],
+      "model": "opencode/mimo-v2.5-free",
+      "files": [
+        "tools/full_plan.py",
+        "tests/test_full_plan_cli.py",
+        "agy-job/prompts/R2.md",
+        "agy-job/reports/R2.json"
+      ],
+      "prompt_path": "agy-job/prompts/R2-repair-01.md",
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 2,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [
+        "agy-job/logs/R2-01.jsonl",
+        "agy-job/logs/R2-01.stderr.log",
+        "agy-job/logs/R2-repair-01.jsonl",
+        "agy-job/logs/R2-repair-01.stderr.log"
+      ],
+      "reported_cost": null,
+      "tests": [
+        "R2 repair report JSON validation",
+        "Hub interpreter CLI runner: 70 passed, 0 failed, 793 skipped",
+        "Hub interpreter R1 regression: 31 passed, 0 failed, 832 skipped",
+        "Import-only discovery: 0 passed, 0 failed, 863 skipped",
+        "Hub interpreter py_compile",
+        "Full suite: 853 passed, 9 unrelated missing-ZCTA-shapefile failures",
+        "CLI help exposes all three reservation flags"
+      ],
+      "review_verdict": "accepted after repair; reservation flags and exact state-grain floor propagate through final and trial stage-2 calls; valid none mode remains legacy-compatible",
+      "commit": null,
+      "next_action": "Dispatch G2 Antigravity mathematical gate"
+    },
+    {
+      "id": "G2",
+      "status": "accepted",
+      "dependencies": [
+        "R2"
+      ],
+      "model": "Antigravity via local agy CLI, gemini-3.1-pro-high",
+      "files": [
+        "agy-job/prompts/G2.md",
+        "agy-job/reports/G2.json"
+      ],
+      "prompt_path": "agy-job/prompts/G2.md",
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 2,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [
+        "agy-job/logs/G2-01.txt",
+        "agy-job/logs/G2-01.stderr.log",
+        "agy-job/logs/G2-02.txt",
+        "agy-job/logs/G2-02.stderr.log"
+      ],
+      "reported_cost": null,
+      "tests": [
+        "Antigravity read-only G2 memo: claims 1-5 approved",
+        "R1 focused regression: 31 passed, 0 failed",
+        "R2 focused regression: 70 passed, 0 failed",
+        "Full suite: 853 passed, 9 unrelated missing-ZCTA-shapefile failures"
+      ],
+      "review_verdict": "accepted Antigravity mathematical gate; R1 and R2 authorized for M1; final V1 sign-off pending",
+      "commit": null,
+      "next_action": "Prepare M1 terminal rematch implementation prompt"
+    },
+    {
+      "id": "M1",
+      "status": "accepted",
+      "dependencies": [
+        "G2"
+      ],
+      "model": "opencode-go/deepseek-v4-pro",
+      "files": [
+        "tools/plan_realise.py",
+        "tests/test_plan_realise.py",
+        "agy-job/prompts/M1.md",
+        "agy-job/reports/M1.json"
+      ],
+      "prompt_path": "agy-job/prompts/M1.md",
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": "2026-09-13T20:52:00Z",
+      "last_progress_at_utc": "2026-09-13T20:52:00Z",
+      "log_paths": [
+        "agy-job/logs/M1-01.jsonl",
+        "agy-job/logs/M1-01.stderr.log"
+      ],
+      "reported_cost": null,
+      "tests": [
+        "M1 report JSON validation",
+        "Focused plan_realise tests under the repository runner",
+        "Hub interpreter py_compile",
+        "Independent brute-force centered-rematch oracle",
+        "git diff --check"
+      ],
+      "review_verdict": "accepted by local focused tests, independent brute-force oracle, and diff review; pytest remains unavailable",
+      "commit": null,
+      "next_action": "Prepare M2 realization integration prompt"
+    },
+    {
+      "id": "M2",
+      "status": "accepted",
+      "dependencies": [
+        "M1"
+      ],
+      "model": "gpt-5.6-sol Codex subagent",
+      "files": [
+        "tools/plan_realise.py",
+        "tests/test_plan_realise.py",
+        "agy-job/prompts/M2.md",
+        "agy-job/reports/M2.json"
+      ],
+      "prompt_path": "agy-job/prompts/M2.md",
+      "session_id": "01a09daa-42f0-7332-b4bb-19e95cc79525",
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": "2026-09-13T21:03:00Z",
+      "last_progress_at_utc": "2026-09-13T21:03:00Z",
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "M2 report JSON validation",
+        "Focused plan_realise suite under the repository runner",
+        "Disabled rematch regression",
+        "Enabled rematch output propagation and fixed-geometry checks",
+        "Hub interpreter py_compile",
+        "git diff --check"
+      ],
+      "review_verdict": "accepted after local integration, forced-swap and rerun-baseline checks, realized-ZIP reservation checks, focused regression, and full runner; 9 unrelated missing-ZCTA failures remain",
+      "commit": null,
+      "next_action": "Prepare O1 comparative audit report"
+    },
+    {
+      "id": "O1",
+      "status": "accepted",
+      "dependencies": [
+        "M2"
+      ],
+      "model": "Codex local report",
+      "files": [
+        "agy-job/reports/O1.json"
+      ],
+      "prompt_path": null,
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "A1 synthetic comparative audit invocation",
+        "A1/A2 focused regression evidence",
+        "Real-data availability check"
+      ],
+      "review_verdict": "accepted synthetic comparative audit; real-data FEFx comparison is pending unavailable CONUS inputs",
+      "commit": null,
+      "next_action": "Q1 independent final review"
+    },
+    {
+      "id": "Q1",
+      "status": "accepted",
+      "dependencies": [
+        "O1"
+      ],
+      "model": "gpt-5.6-sol Codex subagent",
+      "files": [
+        "agy-job/reports/Q1.json"
+      ],
+      "prompt_path": null,
+      "session_id": "01a09dc3-ef08-7be1-a49b-4b232fe14b1d",
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": "2026-09-13T21:30:00Z",
+      "last_progress_at_utc": "2026-09-13T21:30:00Z",
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "Read-only contract and diff audit",
+        "39 plan_realise tests",
+        "Full runner and environment blocker review"
+      ],
+      "review_verdict": "accepted conditional pass; no current synthetic integration defect found; real-data validation remains pending",
+      "commit": null,
+      "next_action": "V1 Antigravity final mathematical signoff"
+    },
+    {
+      "id": "V1",
+      "status": "accepted",
+      "dependencies": [
+        "Q1"
+      ],
+      "model": "Antigravity via local agy CLI, gemini-3.1-pro-high",
+      "files": [
+        "agy-job/reports/V1.json"
+      ],
+      "prompt_path": null,
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": "2026-09-13T21:45:00Z",
+      "last_progress_at_utc": "2026-09-13T21:45:00Z",
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "Current-tree Antigravity mathematical review",
+        "39 plan_realise tests",
+        "Full runner evidence with nine missing-ZCTA failures"
+      ],
+      "review_verdict": "accepted mathematical signoff; real CONUS empirical validation is explicitly pending unavailable data",
+      "commit": null,
+      "next_action": "H1 commit and push only after explicit user authorization"
+    },
+    {
+      "id": "H1",
+      "status": "accepted",
+      "dependencies": [
+        "V1"
+      ],
+      "model": "Codex",
+      "files": [
+        "td/stage2_state.py",
+        "tests/test_stage2_state.py",
+        "tools/full_plan.py",
+        "tests/test_full_plan_cli.py",
+        "tools/measure/fefx.py",
+        "tests/test_fefx.py",
+        "tools/plan_realise.py",
+        "tests/test_plan_realise.py",
+        "agy-job"
+      ],
+      "prompt_path": null,
+      "session_id": null,
+      "process_handle": null,
+      "attempt": 1,
+      "started_at_utc": null,
+      "last_progress_at_utc": null,
+      "log_paths": [],
+      "reported_cost": null,
+      "tests": [
+        "Pinned 2025 ZCTA full runner: 926 passed, 0 failed, 0 skipped",
+        "Final scoped diff review and credential-pattern scan"
+      ],
+      "review_verdict": "accepted after explicit user authorization, final validation, and scoped commit",
+      "commit": "b6b6de2",
+      "next_action": "Push worktree-agy-math-review to origin"
+    }
+  ],
+  "observations": {
+    "worktree": "/Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review",
+    "branch": "worktree-agy-math-review",
+    "git_status": "modified implementation and test files plus untracked agy-job, FEFx module, and test artifacts",
+    "opencode_version": "1.18.30",
+    "opencode_run_help": "--auto is present; --yolo is absent",
+    "opencode_dangerous_flag_probe": "accepted; harmless prompt returned FLAG_PROBE with exit code 0",
+    "python_version": "3.13.15",
+    "pipeline_command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 tools/full_plan.py instance_descaled_v4_conus.json.gz ... --out RUN, followed by tools/plan_realise.py RUN --geo-cache data/geo --sweep-zips",
+    "instance_v4_conus": "absent from the worktree at preflight",
+    "geo_cache": "absent from the worktree at preflight",
+    "td_zcta_shp": "unset at preflight",
+    "checked_on": "2026-09-13"
+  }
+}
