@@ -1,0 +1,45 @@
+{
+  "task_id": "A1",
+  "turn": "repair-01",
+  "status": "complete",
+  "summary": "Repair of the runtime defect in tools/measure/fefx.py::compute_envy_matrix. The applicable branch of the pair loop never bound the local `reason` variable, so the trailing `reason_counts[reason] += 1` read a stale (or, on the first applicable pair, unbound) `reason` and raised KeyError(None) (or NameError) on every normal applicable pair, exactly as Luna reported. Fix: bind `reason = None` at the top of the inner per-district loop and guard the accounting increment with `if reason is not None`. This keeps every non-applicable reason count exact, keeps the PairVerdict reason contract intact (reason=None iff applicable, otherwise one of the five not-applicable reasons), and does not touch the verdict logic. Adjacent edge cases reviewed and hardened while preserving semantics: (1) reason counts remain exact, verified self=2 / applicable=2 / infeasible=0 / empty_bundle=0 on the toy; (2) a division-by-zero guard was added for an empty retained roster -- `if n == 0: continue` in the proportionality-shortfall loop and `prop_gap = g_own - uZ / n if n > 0 else prop_gap` in the legacy branch -- so valuation='gain_matrix' with an empty assignment yields n=0, prop_gap_min=NaN and all-unmatched pairs without a ZeroDivisionError or numpy warning; (3) the explicit gain_matrix/masked valuation split and the legacy fairness anchor are unchanged and re-verified.",
+  "files_changed": [
+    "tools/measure/fefx.py"
+  ],
+  "tests": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m py_compile tools/measure/fefx.py",
+      "exit_code": 0,
+      "result": "compiles cleanly"
+    },
+    {
+      "command": "adhoc verify script (importlib spec load, 28 assertions): minimal applicable-pair call, toy (a), toy (b), Q0 zero-valued zip, anchor square 3x3, anchor rect 4x3, empty retained roster, non-finite rejection",
+      "exit_code": 0,
+      "result": "28/28 pass. toy (a): applicable PairVerdict(i->k) ef1=True fefx=False reason=None applicable=True; n_self=2 n_applicable=2 n_infeasible=0 n_empty_bundle=0, no KeyError. toy (b): ef1=True fefx=False. Q0 zero-valued zip (masked): ef1=True fefx=False, n_zero_valued_bundle_pairs=2. anchor square 3x3 and rect 4x3: ef1/n_ef1_failures/envy_over_umax/prop_shortfall all match model.fairness to <1e-12, divisor n=|R|. empty retained roster (gain_matrix, assignment={}): n=0, n_retained=0, prop_gap_min=NaN, n_unmatched=4, no ZeroDivisionError. non-finite M raises ValueError 'non-finite utility values (reject)'."
+    },
+    {
+      "command": "anchor with a real EF1 failure (masked/ef1/slack=1e-12 vs model.fairness, R0 tiny own book envying R1's two-zip district)",
+      "exit_code": 0,
+      "result": "exact match: fair={ef1:False, n_ef1_failures:1, envy_over_umax:1.9763250883392225, prop_shortfall:0.9881625441696112}; out identical to <1e-12. Confirms the repair did not perturb the legacy anchor's verdicts, counts, or normalized keys under a non-zero failure."
+    }
+  ],
+  "artifacts": [
+    "tools/measure/fefx.py",
+    "agy-job/reports/A1.json"
+  ],
+  "math_questions": [],
+  "followups": [
+    "A2 should add tests/test_fefx.py pinning the section 13 toys, the Q0 zero-valued-zip/valuation-convention divergence, the fairness anchor (square and rectangular, including a case with a genuine EF1 failure), and the reason enum, loaded the way tests/test_measure.py loads tools/measure/premium.py (importlib spec, since tools/ is not a package on the path).",
+    "The masked anchor reproduces fairness exactly when |R| >= |D| (every district staffed, one rep per district). For |R| < |D| (unstaffed districts), the audit additionally treats unstaffed districts as envied bundles whereas fairness ignores unassigned nodes; this is the contract's section 5 extension, not a regression, and should be recorded in A2's anchor fixture choice.",
+    "Band-only and band-plus-book-overlap are two separate compute_envy_matrix calls with two different feasible masks; the caller (R1/M1 or a driver) builds the masks from params.json bands and S_i(A_j) > 0. This module never combines them."
+  ],
+  "learned": [
+    "The applicable branch of the pair loop never assigned the local `reason`, so `reason_counts[reason] += 1` after the if/elif/else read a stale value from the previous pair (or was unbound on the very first applicable pair). The reported KeyError(None) is the applicable case because the intended reason for an applicable pair is None; binding `reason = None` per iteration and guarding the increment with `if reason is not None` fixes all three symptoms at once and keeps every not-applicable reason count exact.",
+    "The empty-retained-roster path was already structurally safe (the retained check skips every rep before the n-division, and the retained loop for prop_gap is empty), but n=0 was a latent hazard; the explicit guards make the 'no division by zero' contract load-bearing rather than incidental.",
+    "Under the masked convention a rep envies only districts where it holds book (non-candidates are zeroed), so constructing a genuine EF1 failure for the anchor requires the envier to be a candidate on the envied district's zips; the ambient lam*M term otherwise dominates and suppresses envy. The anchor verification must therefore force a small own-book / large cross-book contrast on shared zips, not merely uneven M."
+  ],
+  "missing_context": [
+    "The confidential CONUS instance, geo cache, and ZCTA shapefile remain absent from this worktree, so all numeric verification is synthetic toy data at the descaled scale; no real-map FEFx measurement was possible.",
+    "The delivered 13-roster artifact referenced by DOMAIN_economic-theory.md N1/N3 is absent; the audit is parameterized by the actual roster passed in assignment, never hard-coded to 13."
+  ]
+}

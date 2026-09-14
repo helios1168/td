@@ -1,0 +1,68 @@
+{
+  "task_id": "C0",
+  "status": "complete",
+  "summary": "Read-only contract gate produced agy-job/contract.md. The contract settles each of the seven section-7 items and corrects several false premises in IMPLEMENTATION_PLAN.md: (1) tools/measure/audits.py does not exist and the existing EF1 anchor is td/model.py::fairness; (2) FEFx is already defined by docs/foundations/DOMAIN_economic-theory.md as envy against band-feasible bundles (capacity only), not geography; (3) proportionality is already REFUTED as a target (prop_gap_delivered min -12.0248 at k=18); (4) no rep home coordinate exists so the drivability test is unimplementable; (5) MATH_REVIEW.md 4.4 writes the EF1 (existential) quantifier under the name FEFx, conflicting with the plan's EFx (universal) reading; (6) the terminal re-match belongs in tools/plan_realise.py, not tools/full_plan.py; (7) centered and uncentered objectives can move the assignment in opposite directions. Exact APIs, axes, units, defaults, output keys, toy expected answers, and a corrected A1..V1 file/test map are recorded. Seven unresolved mathematical questions are escalated to Antigravity (E1-E7). No files outside the two job-local artifacts were changed.",
+  "files_changed": [
+    "agy-job/contract.md",
+    "agy-job/reports/C0.json"
+  ],
+  "tests": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m json.tool agy-job/reports/C0.json",
+      "exit_code": 0,
+      "result": "valid JSON"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -c \"import numpy, scipy; print(numpy.__version__, scipy.__version__)\"",
+      "exit_code": 0,
+      "result": "numpy 2.5.2, scipy 1.18.1"
+    },
+    {
+      "command": "python3 one-liner: EFx==remove-min vs EF1==remove-max closed forms over u=[5,3,2], u_i(A_i)=6",
+      "exit_code": 0,
+      "result": "EF1 residual 5 (pass), EFx residual 8 (fail)"
+    },
+    {
+      "command": "python3 one-liner: reservation claims-mode toy (S_book 40/25/5, region_M 60, region_T 70, G0_floor 55, gamma 0.60, epsilon 0.05)",
+      "exit_code": 0,
+      "result": "alpha=0.814286, d_floor=33.0, d={65.571429, 53.357143, 37.071429}"
+    },
+    {
+      "command": "python3 one-liner: centered-vs-uncentered sign mismatch g=[[58,68],[63,72]], d=[38,48]",
+      "exit_code": 0,
+      "result": "uncentered anti-diag (4284), centered diag (480); delta_uncentered=-0.025533, delta_centered=+0.064539"
+    }
+  ],
+  "artifacts": [
+    "agy-job/contract.md",
+    "agy-job/reports/C0.json"
+  ],
+  "math_questions": [
+    "E1: Is the whole-district filter A_j in F_i a faithful reduction of barman2023gac's FEF over feasible subsets?",
+    "E2: MATH_REVIEW.md 4.4 writes the EF1 existential quantifier under the name FEFx; adopt EFx universal reading?",
+    "E3: Does geographic (drivability) feasibility belong in F_i at all? Domain theory is band-only; no rep-home data exists.",
+    "E4: If claims reservation makes a slot unstaffable, is adjust-d-down acceptable or reject only?",
+    "E5: Plan task 2.4 'C_ij remains strictly convex' is a category error (fixed matrix has no convexity); restate or drop.",
+    "E6: tools/measure/audits.py and tests/test_audits.py are claimed by unit U6-sel (gated, not launched); reconcile ownership.",
+    "E7: 'uniform' reservation mode is undefined in the plan; contract proposes d_i = d_floor."
+  ],
+  "followups": [
+    "Luna routes E1-E7 to Antigravity or the user before A1/R1/M1 dispatch.",
+    "No dependent implementation starts with an unresolved contract.",
+    "Provide the confidential v4 instance, geo cache, and shapefile before any CONUS benchmark (absent at preflight).",
+    "Reconcile A1/A2 file ownership with docs/units/U6-sel.md before creating tools/measure/audits.py."
+  ],
+  "learned": [
+    "LEARNED: tools/measure/audits.py does not exist; the current plain-EF1 audit is td/model.py::fairness (310-345).",
+    "LEARNED: DOMAIN_economic-theory.md 2.8/N1/N9 already settle FEFx = envy against band-feasible bundles (capacity), and proportionality is REFUTED (prop_gap min -12.0248 at k=18).",
+    "LEARNED: barman2023gac (LIT_economic-theory.md 225-235) is FEF/FEFx over feasible subsets with a charity set; a whole-district filter is a reduction to be stated, not inherited.",
+    "LEARNED: The instance schema carries no rep home coordinate; geographic/drivability feasibility is unimplementable without new data.",
+    "LEARNED: EFx (universal removal) reduces to removing the least-valued zip (min); EF1 (existential) to the most-valued (max).",
+    "LEARNED: Centered log(g-d) and uncentered log(g) objectives can select different matchings with opposite-sign deltas (toy g=[[58,68],[63,72]], d=[38,48])."
+  ],
+  "missing_context": [
+    "barman2023gac full text (EC '23) not available in the worktree; only the LIT entry lines 225-235.",
+    "The delivered 13-roster artifact referenced by DOMAIN_economic-theory.md N1/N3 is not present; roster size must be read from the actual run, not hard-coded to 13.",
+    "Real CONUS instance, geo cache, and shapefile absent from the worktree (P0 noted); no real-data measurement was possible in C0."
+  ]
+}

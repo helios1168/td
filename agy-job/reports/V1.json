@@ -1,0 +1,28 @@
+{
+  "task": "V1",
+  "status": "complete",
+  "reviewer": "Antigravity via local agy CLI, gemini-3.1-pro-high",
+  "verdict": "VERIFIED",
+  "claims": {
+    "reservation_formula_and_validation": "verified by the accepted R1 implementation and prior independent reservation tests",
+    "strict_centered_mask_and_hall_matching": "verified; centered > 0.0 is passed to the masked matcher and shortfalls raise",
+    "centered_and_uncentered_welfare": "verified; terminal, level-0, and both deltas are separate metrics",
+    "terminal_zip_reservation_grain": "verified; S_book, region_M, region_T, and G0_floor use realized_G only",
+    "fixed_membership_and_mass": "verified; rematching mutates representative labels only",
+    "rerun_level0_baseline": "verified; level0_assignment is preserved across reruns"
+  },
+  "validation": [
+    "39 plan_realise tests passed under tests/run_all.py.",
+    "Full runner evidence: 863 passed and 9 failures, isolated to test_rep_export.py because the ZCTA shapefile is absent.",
+    "The literal pytest command remains unavailable because pytest is not installed in the frozen virtualenv."
+  ],
+  "empirical_status": "Pending: the confidential CONUS instance, geo cache, and ZCTA shapefile are absent.",
+  "command": "/Users/sandvault-ntlee/.local/bin/agy --print=<read-only current-tree review> --mode plan --model gemini-3.1-pro-high --dangerously-skip-permissions",
+  "files_changed": [],
+  "followups": [
+    "Run CA, TX, FL, and CONUS empirical validation when the required data is restored."
+  ],
+  "missing_context": [
+    "No real-data fairness or retention measurement was possible in this worktree."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "A2",
+  "turn": "01",
+  "status": "complete",
+  "summary": "Added tests/test_fefx.py, the adversarial and regression suite for the accepted A1 FEFx audit core (tools/measure/fefx.py). The module is loaded by importlib spec into sys.modules exactly as tests/test_measure.py loads tools/measure/premium.py. Eleven tests pin: the gain_matrix valuation convention (district_extrema G equals channel.gain_matrix; TOP/BOT are per-zip max/min), the contract section 13 C0 toys (a) and (b) where EF1 passes on the remove-max residual while FEFx fails on the remove-min residual, the Q0 zero-valued-ZIP divergence (masked FEFx passes on a zero minimum, gain_matrix FEFx fails on a strictly positive one; the valuation field is explicit and n_zero_valued_bundle_pairs separates the conventions), the td/model.py::fairness anchor on a square and a rectangular roster with a genuine EF1 failure (masked valuation, quantifier ef1, slack 1e-12, total-roster divisor n=|R|, legacy keys ef1/n_ef1_failures/envy_over_umax/prop_shortfall all matching to 1e-12), the PairVerdict reason enum with each non-applicable reason counted separately (self=2, empty_bundle=2, empty_own_bundle=3, unmatched_rep=3, infeasible_for_agent=1, applicable=1 over 12 pairs), separate band-only and band-plus-book-overlap feasibility masks (each single-mask call leaves the other off-diagonal pair applicable, ruling out an internal AND), non-finite M and bad parameter rejection, and the empty-retained-roster branch (n=0, all pairs unmatched_rep, prop_gap_min NaN, no ZeroDivisionError). The file deliberately does not import pytest: the frozen .venv has no pytest, and the repository runner (tests/run_all.py) imports every test_*.py directly, so a pytest import would break discovery. raises/close helpers stand in for pytest.raises/pytest.approx.",
+  "files_changed": [
+    "tests/test_fefx.py",
+    "agy-job/reports/A2.json"
+  ],
+  "tests": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m pytest -q tests/test_fefx.py",
+      "exit_code": 1,
+      "result": "environmental limitation: '.venv/bin/python3: No module named pytest'. pytest is absent from both .venv (frozen) and .venv-app and from PATH; it cannot be installed under this task's scope. The suite was instead executed with the repository's own runner, which is the documented substitute and imports the module directly."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k test_fefx",
+      "exit_code": 0,
+      "result": "11 passed, 0 failed, 831 skipped. All eleven tests in the new file pass; skips are every other test function in the suite filtered out by -k."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k __no_such_test__",
+      "exit_code": 0,
+      "result": "0 passed, 0 failed, 842 skipped. Import-only safety check: every test_*.py module, including tests/test_fefx.py, imports cleanly with no pytest dependency; discovery is not broken."
+    },
+    {
+      "command": "adhoc scratch verification (venv python) of the toy and anchor fixtures before writing the suite",
+      "exit_code": 0,
+      "result": "toy (a) pair (i,Ak) ef1=True fefx=False; toy (b) ef1=True fefx=False; Q0 masked fefx=True vs gain_matrix fefx=False with n_zero_valued_bundle_pairs 2 vs 0; square anchor fair {ef1:False, n_ef1_failures:1, envy_over_umax:1.8235294117647058, prop_shortfall:0.9117647058823529} reproduced exactly; rectangular anchor 3 reps x 2 districts reproduced exactly; empty roster n=0 prop_gap_min=NaN."
+    }
+  ],
+  "artifacts": [
+    "tests/test_fefx.py",
+    "agy-job/reports/A2.json"
+  ],
+  "math_questions": [],
+  "followups": [
+    "The cited acceptance command cannot be satisfied until pytest is installed in an environment holding numpy/networkx/scipy; the frozen .venv is intentionally closed. If a pytest run is required for the ledger, either provision a separate test env or record the repository runner as the accepted substitute.",
+    "The rectangular fullness check in test_fairness_anchor_rectangular asserts n_unmatched==0: 'unmatched' in the audit counts not-applicable rows (an unmatched envier), whereas rep C is unmatched as an envied-column absence; the fairness anchor itself is the load-bearing equality, the counters are annotations.",
+    "Band-only and band-plus-book-overlap masks are caller-built and exercised; once R1/M1 wire the real band mask and S_i(A_j)>0 overlap mask, an integration test should feed those exact masks rather than the synthetic ones here."
+  ],
+  "learned": [
+    "The venv ships no pytest, so the repository runner is the only executable acceptance path; writing the file as plain asserts with a local raises/close keeps it runnable under run_all.py and still pytest-compatible if pytest is ever added.",
+    "constructing the C0 toys through the real gain_matrix valuation needs only per-zip M with T=free=0 (u_i(z)=lam*M_z), which makes the toy utilities exactly the section 13 numbers and keeps the fixtures synthetic and deterministic.",
+    "The masked anchor reproduces model.fairness exactly when |R| >= |D| (every district staffed); a genuine EF1 failure needs a multi-zip envied district and a candidate envier with small own book and large cross book, since a single-zip envied bundle gives v-top=0 and never fails.",
+    "Q0's divergence is sharpest when the envier is a non-candidate on the envied district: masked zeroes those zips (BOT=0, FEFx passes), gain_matrix prices the ambient common term (BOT>0, FEFx fails)."
+  ],
+  "missing_context": [
+    "The confidential CONUS instance, geo cache, and ZCTA shapefile remain absent from this worktree; all fixtures are synthetic toy graphs at the descaled scale, so no real-map FEFx count is claimed.",
+    "No pytest was available to run the literal acceptance command; .venv is frozen and .venv-app has neither pytest nor networkx."
+  ]
+}

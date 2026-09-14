@@ -1,0 +1,48 @@
+{
+  "task_id": "R2",
+  "turn": "02",
+  "status": "complete",
+  "summary": "Repair: validate reservation parameters in legacy none mode. _compute_reservation_for_plan previously returned (None, 0.0) immediately for mode 'none' without exercising compute_reservation_vector, allowing invalid gamma/epsilon to pass silently. Fix: in none mode, invoke compute_reservation_vector on a zero-length synthetic book (region_M=0, region_T=0, G0_floor=0) solely to exercise its mode/range/input validation, then return (None, 0.0) as before. Added test_none_mode_rejects_invalid_gamma_and_epsilon: a focused plain-assert test confirming negative gamma, gamma>=1, negative epsilon, and epsilon>=1 all raise ValueError even when mode is none. Existing defaults, custom-mode, uniform, claims, and all end-to-end tests pass unchanged.",
+  "files_changed": [
+    "tools/full_plan.py",
+    "tests/test_full_plan_cli.py",
+    "agy-job/reports/R2.json"
+  ],
+  "tests": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m pytest -q tests/test_full_plan_cli.py",
+      "exit_code": 1,
+      "result": "environmental limitation: '.venv/bin/python3: No module named pytest'. pytest is absent from the frozen .venv and cannot be installed under this task's scope."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k test_full_plan_cli",
+      "exit_code": 0,
+      "result": "70 passed, 0 failed, 793 skipped."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k __no_such_test__",
+      "exit_code": 0,
+      "result": "0 passed, 0 failed, 863 skipped. Import-only safety check: every test_*.py module imports cleanly; discovery is not broken."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m py_compile tools/full_plan.py tests/test_full_plan_cli.py",
+      "exit_code": 0,
+      "result": "compiled cleanly, no output."
+    }
+  ],
+  "math_questions": [],
+  "followups": [
+    "The validation call in none mode passes region_M=0, region_T=0, G0_floor=0 which satisfies all nonnegativity checks. The gamma/epsilon range validation is the active guard: it rejects out-of-range values regardless of mode.",
+    "Claims mode on the small 6-rep, 2-3-slot toy causes Hall shortfall at gamma > 0 because too many reps compete for too few slots. The contract's claims mode is designed for the real 13+ rep, 18+ slot instance. The test uses gamma=0 for the toy, which gives d_floor=0 and a small alpha*S_book reservation that fits.",
+    "The score() function in _rep_moves recomputes reservation for each trial plan via _compute_reservation_for_plan, ensuring a claims reservation is computed for the plan being scored and not silently reused after a trial changes the slots."
+  ],
+  "learned": [
+    "The ambient G0_floor computation must use the same coefficient formula as state_utilities (c2*T + c_free*S_free + lam*M) to be consistent with the gain matrix that state_stage2 computes.",
+    "On the small toy (6 reps, 2-3 used slots), any non-trivial reservation (gamma > 0 in claims mode) causes Hall shortfall because 6 reps compete for 2-3 slots and some reps' centered surplus is non-positive on every slot.",
+    "Threading reservation through _rep_moves requires the score() inner function to recompute reservation per trial, because G0_floor depends on which slots the trial plan uses. The base plan's reservation is computed once before the move loop."
+  ],
+  "missing_context": [
+    "The confidential CONUS instance, geo cache, and ZCTA shapefile are absent from this worktree; all fixtures are synthetic toys, so no real-map reservation result is claimed.",
+    "pytest was not available for the literal acceptance command; the repository runner was used as the documented substitute."
+  ]
+}

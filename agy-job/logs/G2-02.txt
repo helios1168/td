@@ -1,0 +1,23 @@
+1. VERDICT: APPROVED
+Calculations/Evidence: Verified `compute_reservation_vector` logic directly in `td/stage2_state.py`. Manually calculated the claims mode for `S_book=[40, 25, 5]`, `region_M=60`, `region_T=70`, `G0_floor=55`, `gamma=0.6`, `epsilon=0.05` which yielded `d_i = [65.571429, 53.357143, 37.071429]` and a floor of 33.0 for zero claims, confirming the test suite's fixtures. The code explicitly implements all requested guards and boundary checks, rejecting negative or non-finite scalars via `_nonneg_scalar` and vectors via `_validate_reservation`.
+
+2. VERDICT: APPROVED
+Calculations/Evidence: Examined `state_stage2`. It computes the raw centered surplus `centered = g - d[:, None]`, builds a strictly positive mask `ok = ok & (centered > 0.0)` with `POSITIVITY_TOL = 0.0`, and uses the raw values in `_match_masked`. The solver path adds a bounded penalty rather than passing clipped edges. The report cleanly dictates `clipped_edges=0`, captures `nonpositive_edges`, reports exact `epsilon_floor`, sets `reservation_grain="state"`, and explicitly raises `ValueError` mapping to a Hall shortfall when unstaffed used slots remain.
+
+3. VERDICT: APPROVED
+Calculations/Evidence: Scipy's `linear_sum_assignment` natively enforces the rectangular matching requirement, matching exactly `min(|R|, |J|)` with max 1 slot per rep and exactly 1 rep per staffed slot. Handled correctly by `candidacy` where masking removes eligible matchings, correctly tracking `unmatched_reps` and `unstaffed_districts`. Zero slots (`g.size == 0`) safely returns 0.0. The "none" mode is implemented to bypass scaling completely, reverting to exact legacy behavior. 
+
+4. VERDICT: APPROVED
+Calculations/Evidence: Verified `_compute_reservation_for_plan` in `tools/full_plan.py`. It calculates `G0_floor` by reconstructing the common cell value `c2 * T + c_free * S_free + lam * M` matching `state_utilities` exactly. Recomputes accurately in `_rep_moves` via the `score(stage_slots)` inner function which extracts `r, df` independently per trial plan. "none" default bypasses effectively. 
+
+5. VERDICT: APPROVED
+Calculations/Evidence: P1 is upheld by the explicit strictly positive mask `centered > 0.0`. P2 is upheld by the Hall shortfall test which checks whether all used slots successfully matched. P3 is structurally solved by utilizing bipartite graph optimization (`linear_sum_assignment`), natively maintaining the totally unimodular assignment polytope. P4 log-conditioning avoids mathematically invalid edge values (-inf) by executing `np.log(np.where(ok, g, 1.0))` and leveraging high bounds. Strict convexity proofs were safely unassessed as instructed. 
+
+Authorization:
+R1 and R2 are authorized to proceed to M1.
+
+Required repairs:
+None.
+
+Explicit statement: 
+This is not final V1 sign-off.

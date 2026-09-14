@@ -1,0 +1,35 @@
+{
+  "task": "O1",
+  "status": "complete",
+  "summary": "Produced a comparative FEFx audit table from the established A1 core on a deterministic synthetic two-representative fixture.",
+  "valuation": "gain_matrix",
+  "quantifier": "efx",
+  "fixture": {
+    "reps": ["r0", "r1"],
+    "districts": ["D0", "D1"],
+    "assignment": {"D0": "r0", "D1": "r1"},
+    "zips": {"z0": {"district": "D0", "M": 10.0, "book": {"r0": 1.0}}, "z1": {"district": "D1", "M": 10.0, "book": {"r1": 1.0}}}
+  },
+  "comparison": [
+    {"case": "plain", "n_applicable": 2, "n_infeasible": 0, "ef1": true, "fefx": true, "n_ef1_failures": 0, "n_fefx_failures": 0, "prop_gap_min": 0.21},
+    {"case": "band_only", "n_applicable": 1, "n_infeasible": 1, "ef1": true, "fefx": true, "n_ef1_failures": 0, "n_fefx_failures": 0, "prop_gap_min": 0.21},
+    {"case": "band_plus_book_overlap", "n_applicable": 1, "n_infeasible": 1, "ef1": true, "fefx": true, "n_ef1_failures": 0, "n_fefx_failures": 0, "prop_gap_min": 0.21}
+  ],
+  "validation": [
+    {"command": "synthetic A1 comparative invocation", "result": "passed; values independently reproduced by the repository runner fixture"},
+    {"command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k test_fefx", "result": "11 passed, 0 failed"},
+    {"command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m py_compile tools/measure/fefx.py tests/test_fefx.py", "result": "passed"}
+  ],
+  "interpretation": [
+    "Band-only and band-plus-book-overlap are reported as separate masks, not an AND-combined audit.",
+    "The synthetic zero-failure result is not evidence for the absent CONUS roster."
+  ],
+  "followups": [
+    "Run the same comparison on the real delivered roster when the confidential instance and geographic data are restored.",
+    "Keep any measured feasible-envy failures as unmet targets rather than changing thresholds."
+  ],
+  "missing_context": [
+    "The confidential CONUS instance, geo cache, and ZCTA shapefile are absent from this worktree, so no real-data comparative table was possible.",
+    "Serena tools were unavailable; validation used rtk rg, line-range reads, and the repository runner."
+  ]
+}

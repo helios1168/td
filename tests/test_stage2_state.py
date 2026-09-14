@@ -153,8 +153,10 @@ def test_state_stage2_shape_matches_channel_stage2():
     cells, plan = cell_table(), two_slot_plan()
     out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM)
 
-    keys = {"assignment", "gains", "value", "criterion", "reps", "districts",
-            "unmatched_reps", "unstaffed_districts", "balance"}
+    keys = {"assignment", "gains", "value", "value_centered", "criterion", "reps", "districts",
+            "unmatched_reps", "unstaffed_districts", "balance", "reservation_mode",
+            "reservation_grain", "clipped_edges", "nonpositive_edges", "hall_shortfall",
+            "epsilon_floor"}
     assert set(out) == keys
     assert out["districts"] == [0, 1] and out["criterion"] == "nash"
     assert set(out["assignment"]) <= {0, 1} and len(out["assignment"]) == 2
@@ -350,3 +352,287 @@ def test_state_gain_matches_channel_gain_matrix():
                                               theta=THETA, lam=LAM)
         assert R_ref == reps
         assert np.allclose(g[:, 0], g_ref[:, 0], rtol=0, atol=1e-9), bundle
+
+
+# ---------------------------------------------------------------------- reservation
+def test_compute_reservation_vector_claims_formula():
+    """The contract section 13(c) toy: claims scales the book by alpha and adds the floor."""
+    S_book = np.array([40.0, 25.0, 5.0])
+    d = s2s.compute_reservation_vector(S_book, region_M=60.0, region_T=70.0, G0_floor=55.0,
+                                       mode="claims", gamma=0.60, epsilon=0.05)
+    alpha = min(1.0, 60.0 / 70.0) * (1.0 - 0.05)
+    d_floor = 0.60 * 55.0
+    assert np.allclose(d, alpha * S_book + d_floor, rtol=0, atol=1e-12)
+    assert math.isclose(d[0], 65.57142857142857, rel_tol=0, abs_tol=1e-9)
+    assert math.isclose(d[2], 37.07142857142857, rel_tol=0, abs_tol=1e-9)
+    # a zero-claim rep still gets the ambient floor
+    d0 = s2s.compute_reservation_vector(np.array([40.0, 25.0, 0.0]), region_M=60.0,
+                                        region_T=65.0, G0_floor=55.0,
+                                        mode="claims", gamma=0.60, epsilon=0.05)
+    assert math.isclose(d0[2], d_floor, rel_tol=0, abs_tol=1e-12)
+
+
+def test_compute_reservation_vector_modes_and_edge_cases():
+    S = np.array([40.0, 25.0, 5.0])
+    # none -> all zero
+    d = s2s.compute_reservation_vector(S, region_M=60.0, region_T=70.0, G0_floor=55.0,
+                                       mode="none")
+    assert np.array_equal(d, np.zeros(3))
+    # uniform -> the common floor
+    d = s2s.compute_reservation_vector(S, region_M=60.0, region_T=70.0, G0_floor=55.0,
+                                       mode="uniform", gamma=0.60)
+    assert np.allclose(d, np.full(3, 33.0), rtol=0, atol=1e-12)
+    # zero claims in claims mode -> floor only
+    d = s2s.compute_reservation_vector(np.zeros(3), region_M=60.0, region_T=0.0, G0_floor=55.0,
+                                       mode="claims", gamma=0.60)
+    assert np.allclose(d, np.full(3, 33.0), rtol=0, atol=1e-12)
+    # empty region (region_M == 0) -> alpha = 0 -> floor only
+    d = s2s.compute_reservation_vector(S, region_M=0.0, region_T=70.0, G0_floor=55.0,
+                                       mode="claims", gamma=0.60)
+    assert np.allclose(d, np.full(3, 33.0), rtol=0, atol=1e-12)
+    # region_T == 0 -> alpha = 0, no 0/0
+    d = s2s.compute_reservation_vector(np.zeros(3), region_M=60.0, region_T=0.0, G0_floor=55.0,
+                                       mode="claims", gamma=0.60)
+    assert np.allclose(d, np.full(3, 33.0), rtol=0, atol=1e-12)
+    # zero ambient floor -> floor 0, and claims still scale the book
+    d = s2s.compute_reservation_vector(S, region_M=60.0, region_T=70.0, G0_floor=0.0,
+                                       mode="uniform", gamma=0.60)
+    assert np.allclose(d, np.zeros(3), rtol=0, atol=1e-12)
+    d = s2s.compute_reservation_vector(S, region_M=60.0, region_T=70.0, G0_floor=0.0,
+                                       mode="claims", gamma=0.60)
+    alpha = min(1.0, 60.0 / 70.0) * (1.0 - 0.05)
+    assert np.allclose(d, alpha * S, rtol=0, atol=1e-12)
+
+
+def test_compute_reservation_vector_rejects_bad_input():
+    S = np.array([1.0, 2.0])
+    for bad in ("nonsense", "", "CLAIMS"):
+        try:
+            s2s.compute_reservation_vector(S, region_M=1.0, region_T=3.0, G0_floor=1.0,
+                                           mode=bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"mode {bad!r} must raise")
+    for kw in (dict(gamma=-0.1), dict(gamma=1.0), dict(epsilon=-0.1), dict(epsilon=1.0)):
+        try:
+            s2s.compute_reservation_vector(S, region_M=1.0, region_T=3.0, G0_floor=1.0,
+                                           mode="claims", **kw)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"{kw} must raise")
+    try:
+        s2s.compute_reservation_vector(np.array([1.0, -1.0]), region_M=1.0, region_T=0.0,
+                                       G0_floor=1.0, mode="claims")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("negative S_book must raise")
+    try:
+        s2s.compute_reservation_vector(np.array([1.0, np.nan]), region_M=1.0, region_T=1.0,
+                                       G0_floor=1.0, mode="claims")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("NaN S_book must raise")
+    for kw in (dict(region_M=np.inf, region_T=3.0, G0_floor=1.0),
+               dict(region_M=1.0, region_T=np.nan, G0_floor=1.0),
+               dict(region_M=1.0, region_T=3.0, G0_floor=-1.0)):
+        try:
+            s2s.compute_reservation_vector(S, mode="claims", **kw)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"{kw} must raise")
+    try:
+        s2s.compute_reservation_vector(np.ones((2, 2)), region_M=1.0, region_T=4.0, G0_floor=1.0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("2-D S_book must raise")
+
+
+def test_compute_reservation_vector_does_not_mutate_input():
+    S = np.array([40.0, 25.0, 5.0])
+    before = S.copy()
+    d = s2s.compute_reservation_vector(S, region_M=60.0, region_T=70.0, G0_floor=55.0,
+                                       mode="claims", gamma=0.60, epsilon=0.05)
+    assert np.array_equal(S, before)
+    assert d.dtype == float
+    d[0] = 999.0
+    assert S[0] == 40.0, "the returned vector must be independent of the input"
+
+
+def test_reservation_centered_nash_and_utilitarian():
+    cells, plan = cell_table(), two_slot_plan()
+    g, _, _ = s2s.state_gain_matrix(cells, plan, theta=THETA, lam=LAM)
+    d = np.array([2.0, 1.0, 0.5])
+    centered = g - d[:, None]
+    assert (centered > 0.0).all(), "the fixture reservation must keep every surplus positive"
+    # state_gain_matrix's reservation keyword returns the centered surplus directly
+    g_c, _, _ = s2s.state_gain_matrix(cells, plan, theta=THETA, lam=LAM, reservation=d)
+    assert np.allclose(g_c, centered, rtol=0, atol=1e-12)
+    out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                           reservation_mode="claims")
+    best = max(math.log(centered[i, 0]) + math.log(centered[j, 1])
+               for i, j in itertools.permutations(range(3), 2))
+    assert math.isclose(out["value"], best, rel_tol=0, abs_tol=1e-12)
+    assert math.isclose(out["value_centered"], best, rel_tol=0, abs_tol=1e-12)
+    assert math.isclose(out["value"], sum(math.log(v) for v in out["gains"].values()),
+                        rel_tol=0, abs_tol=1e-12)
+    assert all(v > 0.0 for v in out["gains"].values())
+    out_u = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                             reservation_mode="claims", criterion="utilitarian")
+    best_u = max(centered[i, 0] + centered[j, 1]
+                 for i, j in itertools.permutations(range(3), 2))
+    assert math.isclose(out_u["value"], best_u, rel_tol=0, abs_tol=1e-12)
+
+
+def _reservation_fixture():
+    """Two reps, two single-channel slots; R0's slot-0 gain is high but below its slot-1 gain."""
+    M = np.array([[10.0, 40.0]], float)
+    S = np.zeros((2, 1, 2), float)
+    S[0, 0, 0] = 5.0          # R0 books channel A
+    S[1, 0, 1] = 5.0          # R1 books channel B
+    cells = types.SimpleNamespace(state_list=["X"], channels=("A", "B"), reps=["R0", "R1"],
+                                  M=M, S=S, S_free=np.zeros((1, 2), float))
+    plan = s2s.Plan([s2s.Slot(("A",), {"X": 1.0}, True),
+                     s2s.Slot(("B",), {"X": 1.0}, True)], ["X"])
+    return cells, plan
+
+
+def test_reservation_forbidden_high_raw_gain_edge_is_not_clipped():
+    cells, plan = _reservation_fixture()
+    g, _, _ = s2s.state_gain_matrix(cells, plan, theta=THETA, lam=LAM)
+    assert g[0, 0] > g[1, 0], "R0's raw slot-0 gain must be the high edge"
+    assert g[0, 1] > g[0, 0] + 1.0, "R0 must still have an allowed slot-1 surplus"
+    # uncentered (legacy) match puts R0 on slot 0; the reservation forbids exactly that edge
+    legacy = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM)
+    assert legacy["assignment"] == {0: "R0", 1: "R1"}
+    d = np.array([g[0, 0] + 1.0, 0.0])
+    centered = g - d[:, None]
+    assert centered[0, 0] <= 0.0 and centered[0, 1] > 0.0
+    out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                           reservation_mode="claims")
+    assert out["assignment"] == {0: "R1", 1: "R0"}, \
+        "the high-raw-gain edge must not be clipped back into the assignment"
+    assert out["nonpositive_edges"] == 1
+    assert out["clipped_edges"] == 0
+    assert out["hall_shortfall"] == 0
+
+
+def test_reservation_hall_failure_two_slots_share_only_candidate():
+    M = np.array([[50.0, 50.0]], float)
+    S = np.zeros((2, 1, 2), float)
+    S[0, 0, 0] = 10.0
+    S[1, 0, 1] = 10.0
+    cells = types.SimpleNamespace(state_list=["X"], channels=("A", "B"), reps=["R0", "R1"],
+                                  M=M, S=S, S_free=np.zeros((1, 2), float))
+    plan = s2s.Plan([s2s.Slot(("A",), {"X": 1.0}, True),
+                     s2s.Slot(("B",), {"X": 1.0}, True)], ["X"])
+    # R0's floor exceeds every gain, so R1 is the only candidate for both slots
+    d = np.array([1000.0, 0.0])
+    try:
+        s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                         reservation_mode="claims")
+    except ValueError as e:
+        assert "distinct representatives" in str(e)
+    else:
+        raise AssertionError("two slots sharing their only candidate must raise")
+
+
+def test_reservation_rectangular_success_reports_zero_shortfall():
+    cells, plan = cell_table(), two_slot_plan()
+    d = np.array([1.0, 1.0, 1.0])
+    out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                           reservation_mode="uniform")
+    assert out["hall_shortfall"] == 0
+    assert out["clipped_edges"] == 0
+    assert out["reservation_mode"] == "uniform"
+    assert out["reservation_grain"] == "state"
+    assert len(out["assignment"]) == 2
+    assert out["unstaffed_districts"] == []
+    assert len(out["unmatched_reps"]) == 1
+
+
+def test_reservation_preserves_legacy_when_absent():
+    cells, plan = cell_table(), two_slot_plan()
+    g, _, _ = s2s.state_gain_matrix(cells, plan, theta=THETA, lam=LAM)
+    out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM)
+    pairs, value = channel.match(g, "nash")
+    assert math.isclose(out["value"], value, rel_tol=0, abs_tol=1e-12)
+    assert out["value_centered"] == out["value"]
+    assert out["reservation_mode"] == "none"
+    assert out["reservation_grain"] == "state"
+    assert out["clipped_edges"] == 0
+    assert out["nonpositive_edges"] == 0
+    assert out["hall_shortfall"] == 0
+    assert out["epsilon_floor"] == 1e-12
+    # gains remain the raw (uncentered) surplus
+    for slot, rep in out["assignment"].items():
+        assert math.isclose(out["gains"][slot],
+                            g[REPS.index(rep), slot], rel_tol=0, abs_tol=1e-12)
+
+
+def test_reservation_combines_with_candidacy():
+    cells, plan = cell_table(), two_slot_plan()
+    d = np.array([1.0, 1.0, 1.0])
+    held = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, candidacy=True,
+                            reservation=d, reservation_mode="uniform")
+    assert held["assignment"] == {0: "R0", 1: "R1"}
+    assert held["unmatched_reps"] == ["R2"]
+
+
+def test_reservation_epsilon_floor_zero_and_positive():
+    cells, plan = cell_table(), two_slot_plan()
+    out0 = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM,
+                            reservation=np.array([2.0, 0.0, 0.0]), reservation_mode="claims")
+    assert out0["epsilon_floor"] == 1e-12
+    out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM,
+                           reservation=np.array([1.0, 1.0, 1.0]), reservation_mode="uniform")
+    assert math.isclose(out["epsilon_floor"], max(1e-6 * 1.0, 1e-12), rel_tol=0, abs_tol=1e-15)
+    out_legacy = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM)
+    assert out_legacy["epsilon_floor"] == 1e-12
+
+
+def test_reservation_floor_overrides_min_reservation_in_claims():
+    """All-positive claims: min(d) > d_floor, so a supplied exact floor must drive
+    epsilon_floor rather than min(reservation)."""
+    cells, plan = cell_table(), two_slot_plan()
+    S_book = np.array([0.5, 0.4, 0.3])       # every rep holds positive book
+    G0_floor = 0.5
+    gamma = 0.60
+    d_floor = gamma * G0_floor               # 0.30
+    d = s2s.compute_reservation_vector(S_book, region_M=1.2, region_T=1.2,
+                                       G0_floor=G0_floor, mode="claims",
+                                       gamma=gamma, epsilon=0.05)
+    assert (d > d_floor).all(), "all-positive claims must put every d_i strictly above the floor"
+    assert (s2s.state_gain_matrix(cells, plan, theta=THETA, lam=LAM)[0] - d[:, None] > 0.0).all(), \
+        "the fixture reservation must keep every centered surplus positive"
+
+    out = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                           reservation_mode="claims", reservation_floor=d_floor)
+    assert math.isclose(out["epsilon_floor"], max(1e-6 * d_floor, 1e-12),
+                        rel_tol=0, abs_tol=1e-15)
+    assert not math.isclose(out["epsilon_floor"], max(1e-6 * d.min(), 1e-12),
+                            rel_tol=0, abs_tol=1e-15), \
+        "epsilon_floor must come from the supplied floor, not min(reservation)"
+    assert out["reservation_mode"] == "claims"
+    # the exact-floor keyword never changes the matching itself
+    same = s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                            reservation_mode="claims")
+    assert out["assignment"] == same["assignment"]
+
+
+def test_reservation_floor_rejects_bad_value():
+    cells, plan = cell_table(), two_slot_plan()
+    d = np.array([0.1, 0.1, 0.1])
+    for bad in (float("nan"), float("inf"), -1.0):
+        try:
+            s2s.state_stage2(cells, plan, theta=THETA, lam=LAM, reservation=d,
+                             reservation_mode="uniform", reservation_floor=bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"reservation_floor {bad!r} must raise")

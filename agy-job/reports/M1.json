@@ -1,0 +1,50 @@
+{
+  "task": "M1",
+  "status": "complete",
+  "summary": "Implemented the standalone ZIP-grain terminal rematch core and synthetic tests.",
+  "implementation": {
+    "function": "tools/plan_realise.py::execute_terminal_rematch",
+    "raw_valuation": "td.channel.gain_matrix over the fixed realized graph and ZIP-to-district mapping",
+    "reservation": "raw centered surplus g - d with strict positive mask and no clipping",
+    "matching": "legacy channel.match when reservation is absent; masked Hungarian with Hall cardinality check when present",
+    "rectangular": "unmatched representatives and unstaffed districts are explicit",
+    "baseline": "optional level0 assignment is rescored on the same realized matrix; absent or invalid log-domain baseline is explicit null",
+    "preservation": "graph, mapping, representative order, and reservation are copied or read-only"
+  },
+  "validation": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m py_compile tools/plan_realise.py tests/test_plan_realise.py",
+      "result": "passed"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k test_plan_realise",
+      "result": "37 passed, 0 failed, 833 skipped"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m pytest -q tests/test_plan_realise.py",
+      "result": "environment-blocked: pytest is not installed in the frozen virtualenv"
+    },
+    {
+      "command": "independent brute-force centered-rematch oracle",
+      "result": "passed; centered optimum, raw welfare, and assignment were independently checked"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "files_changed": [
+    "tools/plan_realise.py",
+    "tests/test_plan_realise.py",
+    "agy-job/reports/M1.json"
+  ],
+  "followups": [
+    "M2 must hook this core after realization, overlap handoff, repair, and optional ZIP sweep.",
+    "M2 must update staffing.json and all realization output wholesaler fields without changing district membership, mass, or geometry.",
+    "Run a real CONUS pipeline only when the instance, geo cache, and ZCTA data are available."
+  ],
+  "missing_context": [
+    "Serena tools were unavailable, so symbol inspection used rtk rg and line-range reads.",
+    "The repository's literal pytest command is unavailable because the configured virtualenv has no pytest module."
+  ]
+}

@@ -32,6 +32,7 @@ for _p in (HERE, os.path.join(ROOT, "tools"), ROOT):
         sys.path.insert(0, _p)
 
 import networkx as nx                               # noqa: E402
+import numpy as np                                  # noqa: E402
 
 from td import channels                             # noqa: E402
 from td import instance as td_instance              # noqa: E402
@@ -135,12 +136,15 @@ def _build_run(run_dir: str):
     return fine
 
 
-def _run(run_dir: str, xy: dict = XY) -> None:
+def _run(run_dir: str, xy: dict = XY, rematch: bool = False) -> None:
     orig = run_draw.coordinates
     run_draw.coordinates = lambda zips, cache=None: ({z: xy[z] for z in zips if z in xy},
                                                      [z for z in zips if z not in xy])
     try:
-        assert cli.main([run_dir, "--geo-cache", "unused"]) == 0
+        argv = [run_dir, "--geo-cache", "unused"]
+        if rematch:
+            argv.append("--stage2-rematch")
+        assert cli.main(argv) == 0
     finally:
         run_draw.coordinates = orig
 
@@ -1005,3 +1009,217 @@ def test_contiguous_cut_seeds_other_farthest_from_every_real_seed_and_leaves_unr
     assert labels["p9"] == "other"                            # the farthest zip, other's seed
     assert labels["p8"] == "D1"                     # its own power label, growth never reached it
     assert dev["D1"] == (4.0, 2.0) and dev["other"] == (1.0, 2.0)
+
+
+def _rematch_graph() -> nx.Graph:
+    """Two ZIPs with a deliberately non-aligned centered/raw optimum."""
+    G = nx.Graph()
+    G.add_node("z1", M=5.555555555555555,
+               S={"r1": 11.904761904761905, "r2": 0.0}, S_free=0.0,
+               cand=("r1", "r2"))
+    G.add_node("z2", M=3.888888888888889,
+               S={"r1": 9.761904761904763, "r2": 0.0}, S_free=0.0,
+               cand=("r1", "r2"))
+    return G
+
+
+def test_terminal_rematch_reports_centered_and_uncentered_welfare_on_fixed_zip_map():
+    G = _rematch_graph()
+    labels = {"z1": "D1", "z2": "D2"}
+    level0 = {"D1": "r2", "D2": "r1"}
+    out = cli.execute_terminal_rematch(G, labels, ["r1", "r2"], reservation=np.array([1.8, 0.4]),
+                                       level0_assignment=level0)
+
+    assert out["assignment"] == {"D1": "r1", "D2": "r2"}
+    assert out["value_centered"] == np.log(8.2) + np.log(3.5)
+    assert out["welfare_uncentered_terminal"] == np.log(10.0) + np.log(3.9)
+    assert out["welfare_uncentered_level0"] == np.log(5.0) + np.log(8.0)
+    assert out["delta_uncentered"] < 0.0
+    assert out["delta_centered"] > 0.0
+    assert out["reps_swapped"] == 2
+    assert out["reservation_grain"] == "zip"
+    assert out["clipped_edges"] == 0 and out["hall_shortfall"] == 0
+
+
+def test_terminal_rematch_without_reservation_matches_channel_match():
+    G = _rematch_graph()
+    labels = {"z1": "D1", "z2": "D2"}
+    expected_g, expected_reps, expected_districts = cli.channel.gain_matrix(
+        G, labels, ["r1", "r2"])
+    expected_pairs, expected_value = cli.channel.match(expected_g, "nash")
+    out = cli.execute_terminal_rematch(G, labels, ["r1", "r2"])
+    expected = {expected_districts[j]: expected_reps[i] for i, j in expected_pairs}
+    assert out["assignment"] == expected
+    assert out["value_centered"] == expected_value
+    assert out["reservation_mode"] == "none"
+    assert out["delta_uncentered"] is None and out["reps_swapped"] is None
+
+
+def test_terminal_rematch_masks_forbidden_edges_without_clipping():
+    G = _rematch_graph()
+    out = cli.execute_terminal_rematch(G, {"z1": "D1", "z2": "D2"}, ["r1", "r2"],
+                                       reservation=np.array([9.5, 0.4]))
+    assert out["assignment"] == {"D1": "r1", "D2": "r2"}
+    assert out["nonpositive_edges"] == 1
+    assert out["clipped_edges"] == 0
+    assert out["value_centered"] == np.log(0.5) + np.log(3.5)
+
+
+def test_terminal_rematch_rejects_hall_failure_on_positive_centered_graph():
+    G = _rematch_graph()
+    try:
+        cli.execute_terminal_rematch(G, {"z1": "D1", "z2": "D2"}, ["r1", "r2"],
+                                     reservation=np.array([0.0, 100.0]))
+    except ValueError as exc:
+        assert "Hall shortfall" in str(exc)
+    else:
+        raise AssertionError("a positive-surplus graph with no complete matching was accepted")
+
+
+def test_terminal_rematch_rectangular_reports_unmatched_reps_and_unstaffed_districts():
+    G = _rematch_graph()
+    more_reps = cli.execute_terminal_rematch(G, {"z1": "D1"}, ["r1", "r2", "r3"])
+    assert len(more_reps["assignment"]) == 1
+    assert len(more_reps["unmatched_reps"]) == 2
+    assert more_reps["unstaffed_districts"] == []
+
+    more_districts = cli.execute_terminal_rematch(
+        G, {"z1": "D1", "z2": "D2"}, ["r1"])
+    assert len(more_districts["assignment"]) == 1
+    assert more_districts["unmatched_reps"] == []
+    assert len(more_districts["unstaffed_districts"]) == 1
+
+
+def test_terminal_rematch_validates_inputs_and_preserves_geometry_and_mapping():
+    G = _rematch_graph()
+    before_nodes = {z: dict(G.nodes[z]) for z in G}
+    labels = {"z1": "D1", "z2": "D2"}
+    before_labels = dict(labels)
+    reservation = np.array([1.8, 0.4])
+    before_reservation = reservation.copy()
+    out1 = cli.execute_terminal_rematch(G, labels, ["r1", "r2"], reservation=reservation)
+    out2 = cli.execute_terminal_rematch(G, labels, ["r1", "r2"], reservation=reservation)
+    assert out1["assignment"] == out2["assignment"]
+    assert labels == before_labels and np.array_equal(reservation, before_reservation)
+    assert {z: dict(G.nodes[z]) for z in G} == before_nodes
+    for bad in (
+            lambda: cli.execute_terminal_rematch(G, {"missing": "D1"}, ["r1"]),
+            lambda: cli.execute_terminal_rematch(G, labels, ["r1", "r1"]),
+            lambda: cli.execute_terminal_rematch(G, labels, ["r1", "r2"],
+                                                 reservation=np.array([1.0])),
+            lambda: cli.execute_terminal_rematch(G, labels, ["r1", "r2"], criterion="bad"),
+            lambda: cli.execute_terminal_rematch(G, labels, ["r1", "r2"],
+                                                 level0_assignment={"D1": "r1"}),
+    ):
+        try:
+            bad()
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid terminal-rematch input was accepted")
+
+
+def test_terminal_rematch_empty_instance_has_explicit_empty_rectangular_result():
+    out = cli.execute_terminal_rematch(nx.Graph(), {}, [])
+    assert out["assignment"] == {}
+    assert out["value_centered"] == 0.0
+    assert out["unmatched_reps"] == [] and out["unstaffed_districts"] == []
+    assert out["welfare_uncentered_level0"] is None
+
+
+def test_stage2_rematch_updates_reps_but_preserves_realized_cells_and_outputs():
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_run(run_dir)
+        _run(run_dir)
+        before_rows, before_districts, _, _ = _tables(run_dir)
+        with open(os.path.join(run_dir, "staffing.json"), encoding="utf-8") as fh:
+            staffing = json.load(fh)
+        staffing["assignment"] = {"0": "rep1", "1": "rep0"}
+        with open(os.path.join(run_dir, "staffing.json"), "w", encoding="utf-8") as fh:
+            json.dump(staffing, fh)
+
+        _run(run_dir, rematch=True)
+        after_rows, after_districts, after_wholesalers, rec = _tables(run_dir)
+        with open(os.path.join(run_dir, "staffing.json"), encoding="utf-8") as fh:
+            staffing = json.load(fh)
+
+        row_geometry = [(r["zip"], r["state"], r["channel"], r["file_channel"],
+                         r["district"], r["bundle"], r["M_cell"])
+                        for r in before_rows]
+        assert row_geometry == [
+            (r["zip"], r["state"], r["channel"], r["file_channel"],
+             r["district"], r["bundle"], r["M_cell"])
+            for r in after_rows]
+        district_geometry = [(r["district"], r["bundle"], r["channels"], r["states"],
+                              r["n_zips"], r["mass"], r["pieces"], r["contiguous"])
+                             for r in before_districts]
+        assert district_geometry == [
+            (r["district"], r["bundle"], r["channels"], r["states"],
+             r["n_zips"], r["mass"], r["pieces"], r["contiguous"])
+            for r in after_districts]
+
+        terminal = rec["terminal_rematch"]
+        assert staffing["stage2_rematch"] is True
+        assert terminal["assignment"] == {"N_01": "rep0", "N_02": "rep1"}
+        assert terminal["reps_swapped"] == 2
+        assert staffing["terminal_assignment"] == terminal["assignment"]
+        assert staffing["assignment"] == terminal["assignment_by_slot"]
+        assert staffing["level0_assignment"] == {"0": "rep1", "1": "rep0"}
+        assert staffing["level0_gains"] == {}
+        assert staffing["level0_value"] == 0.0
+        assert terminal["reservation_grain"] == "zip"
+        assert terminal["clipped_edges"] == 0
+        for row in after_rows:
+            if row["district"] != "other":
+                assert row["wholesaler"] == terminal["assignment"].get(row["district"], "")
+        for row in after_districts:
+            assert row["wholesaler"] == terminal["assignment"].get(row["district"], "")
+            assert row["staffed"] == str(int(bool(row["wholesaler"])))
+        assert {row["wholesaler"] for row in after_wholesalers} >= set(terminal["reps"])
+
+        # A second enabled realization must retain the original level-0 baseline rather than
+        # treating the first terminal assignment as the new baseline.
+        _run(run_dir, rematch=True)
+        with open(os.path.join(run_dir, "staffing.json"), encoding="utf-8") as fh:
+            rerun_staffing = json.load(fh)
+        with open(os.path.join(run_dir, "realise.json"), encoding="utf-8") as fh:
+            rerun = json.load(fh)["terminal_rematch"]
+        assert rerun_staffing["level0_assignment"] == {"0": "rep1", "1": "rep0"}
+        assert rerun["assignment"] == terminal["assignment"]
+        assert rerun["reps_swapped"] == terminal["reps_swapped"] == 2
+
+
+def test_terminal_rematch_recomputes_reservation_from_realized_zip_region():
+    with tempfile.TemporaryDirectory() as run_dir:
+        _build_run(run_dir)
+        with open(os.path.join(run_dir, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        params.update(stage2_reservation="claims", reservation_gamma=0.0,
+                      reservation_epsilon=0.05)
+        staffing = dict(reservation_vector=[99.0, 99.0, 99.0],
+                        reservation_mode="claims", reservation_grain="state")
+        d = cli.cell_instance(run_dir, params)
+        cell_of = {}
+        rows = [dict(district="N_01", channels=channels.BUNDLES["N"]),
+                dict(district="N_02", channels=channels.BUNDLES["N"])]
+        for index, zp in enumerate(sorted(d.G)):
+            district = "N_01" if index < 3 else "N_02"
+            for fine in channels.BUNDLES["N"]:
+                cell_of[(zp, fine)] = (district, "N", "")
+        realized_G, realized_to_district = cli._terminal_realized_graph(
+            d, cell_of, rows, REPS)
+
+        reservation, mode, floor, reason = cli._terminal_reservation(
+            staffing, REPS, d=d, params=params, realized_G=realized_G,
+            realized_to_district=realized_to_district)
+        assert mode == "claims"
+        assert floor == 0.0
+        assert reason == "recomputed from params.json and the realized ZIP graph"
+        book = np.array([
+            sum(float((realized_G.nodes[node].get("S") or {}).get(rep, 0.0))
+                for node in realized_G)
+            for rep in REPS], float)
+        region_mass = sum(float(realized_G.nodes[node].get("M", 0.0))
+                          for node in realized_G)
+        expected = (min(1.0, region_mass / book.sum()) * 0.95) * book
+        assert np.allclose(reservation, expected)

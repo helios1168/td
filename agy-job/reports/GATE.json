@@ -1,0 +1,44 @@
+{
+  "task_id": "GATE",
+  "status": "complete",
+  "reviewer": "Antigravity via local agy CLI",
+  "model": "gemini-3.1-pro-high",
+  "summary": "Antigravity reviewed the accepted contract, C0 report, Q0 report, implementation plan, and cited mathematical authority in read-only mode. The E1-E7 mathematical gate is approved for implementation. Final V1 mathematical sign-off remains pending.",
+  "decisions": {
+    "E1": "Accept whole-district band feasibility as the delivered-map audit definition. Do not cite barman2023gac as an existence guarantee.",
+    "E2": "Use the universal EFX removal quantifier and keep gain_matrix and legacy masked valuation conventions separate.",
+    "E3": "Drop drivability because rep-home data is absent. Report band-only and band-plus-book-overlap results side by side.",
+    "E4": "Reject unstaffable reservations. Use raw centered surplus, _match_masked, and a Hall-complete matching check. Do not clip or adjust per edge.",
+    "E5": "Drop strict convexity. Verify positive matched surplus, Hall non-emptiness, total unimodularity, and conditioning.",
+    "E6": "Use tools/measure/fefx.py and tests/test_fefx.py for this job, leaving U6-sel ownership intact.",
+    "E7": "Define uniform mode as d_i = d_floor with gamma < 1 and use it as the clip-free fallback."
+  },
+  "contract_corrections": [
+    "Pin the legacy fairness regression anchor to masked valuation, total roster-size divisor, and 1e-12 slack.",
+    "Record reservation grain because R1 is state-grain and M1 is ZIP-grain.",
+    "Log the valuation convention for every audit result."
+  ],
+  "authorization": "A1, R1, and M1 may proceed after these contract corrections; task dependencies still control dispatch order.",
+  "files_changed": [],
+  "tests": [
+    {
+      "command": "agy --dangerously-skip-permissions --mode plan --model gemini-3.1-pro-high --output-format text --print=<read-only contract review>",
+      "exit_code": 0,
+      "result": "Decision memo returned successfully."
+    }
+  ],
+  "artifacts": [
+    "agy-job/contract.md",
+    "agy-job/reports/GATE.json"
+  ],
+  "math_questions": [],
+  "followups": [
+    "Final V1 Antigravity review is still required after implementation and benchmark evidence."
+  ],
+  "learned": [
+    "The local agy executable is the Antigravity interface in this environment; it was not exposed as a Codex MCP tool."
+  ],
+  "missing_context": [
+    "The confidential CONUS instance, geo cache, and shapefile remain absent from this worktree for later benchmark tasks."
+  ]
+}

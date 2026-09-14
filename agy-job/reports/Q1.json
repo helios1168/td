@@ -1,0 +1,29 @@
+{
+  "task": "Q1",
+  "status": "complete",
+  "reviewer": "Codex subagent Nash",
+  "verdict": "CONDITIONAL_PASS",
+  "summary": "Independent read-only review found the terminal rematch implementation consistent with the accepted contract on synthetic evidence.",
+  "accepted": [
+    "ZIP membership, district mass, and geometry remain fixed during rematching.",
+    "Centered and uncentered welfare metrics are distinct.",
+    "Terminal reservation recomputation uses realized ZIP aggregates and does not reuse a state-grain vector.",
+    "Reruns preserve the original level-0 assignment and output ownership is consistent."
+  ],
+  "validation": [
+    "39 plan_realise tests passed under tests/run_all.py.",
+    "11 FEFx, 31 stage2-state, and 70 full-plan focused tests passed in prior task evidence.",
+    "Full runner evidence: 863 passed and 9 failures, all missing-ZCTA export failures.",
+    "pytest is unavailable in the frozen virtualenv."
+  ],
+  "blockers": [
+    "The confidential CONUS instance, geo cache, and 2025 ZCTA shapefile are absent, so no real-data run was possible."
+  ],
+  "files_changed": [],
+  "followups": [
+    "Run the real CONUS benchmark when its data dependencies are restored."
+  ],
+  "missing_context": [
+    "Serena tools were unavailable; the audit used rtk searches and line-range reads."
+  ]
+}

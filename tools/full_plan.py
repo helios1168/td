@@ -267,6 +267,15 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--filler-capture", choices=list(model.FILLER_CAPTURE),
                     default=borders_report.FILLER_CAPTURE,
                     help="stage-2 filler capture rule; scores the plan, changes no geometry")
+    ap.add_argument("--stage2-reservation", choices=("none", "uniform", "claims"),
+                    default="none",
+                    help="stage-2 reservation mode: none (legacy d=0), uniform (common "
+                         "ambient floor), claims (per-rep book-scaled); scores the plan, "
+                         "changes no geometry (default none)")
+    ap.add_argument("--reservation-gamma", type=float, default=0.60,
+                    help="reservation floor fraction of G0_floor (default 0.60, valid [0, 1))")
+    ap.add_argument("--reservation-epsilon", type=float, default=0.05,
+                    help="reservation headroom buffer epsilon (default 0.05, valid [0, 1))")
     ap.add_argument("--warm", choices=("greedy", "none"), default="greedy",
                     help="start every model's first pass from level0.greedy_plan's feasible "
                          "point (default greedy); the plan.json pass log opens with it")
@@ -930,6 +939,50 @@ def _print_slots(problem, stage: str) -> None:
     print(f"{stage}: {total} slots total, {problem.n_state} states", flush=True)
 
 
+def _compute_reservation_for_plan(cells, plan, args):
+    """Compute the reservation vector and exact d_floor for a plan being scored.
+
+    Returns `(reservation, d_floor)` where `reservation` is the per-rep d_i vector
+    (or None for mode "none") and `d_floor` is the exact gamma * G0_floor value.
+    The ambient G0_floor is the minimum over used slots of each slot's ambient gain,
+    computed at state grain from the plan's state shares.
+    """
+    from td import stage2_state as s2s
+    from td import model
+
+    mode = args.stage2_reservation
+    if mode == "none":
+        n_reps = len(cells.reps)
+        s2s.compute_reservation_vector(
+            np.zeros(n_reps, float), region_M=0.0, region_T=0.0,
+            G0_floor=0.0, mode=mode,
+            gamma=args.reservation_gamma, epsilon=args.reservation_epsilon)
+        return None, 0.0
+    S_all = np.asarray(cells.S, float)
+    S_book = S_all.sum(axis=(1, 2))
+    region_M = float(np.asarray(cells.M, float).sum())
+    region_T = float(S_book.sum())
+    _, c2, c_free = model.coefficients(args.theta, args.lam, args.filler_capture)
+    M_arr = np.asarray(cells.M, float)
+    S_free_arr = np.asarray(cells.S_free, float)
+    ambient = c2 * S_all.sum(0) + c_free * S_free_arr + args.lam * M_arr
+    G0_min = float("inf")
+    for slot in plan.slots:
+        if not slot.used:
+            continue
+        cols = s2s._channel_cols(cells, slot.bundle)
+        y = s2s._y_vector(cells, slot.y)
+        G0_j = float(ambient[:, cols].sum(1) @ y)
+        if G0_j < G0_min:
+            G0_min = G0_j
+    G0_floor = G0_min if G0_min != float("inf") else 0.0
+    reservation = s2s.compute_reservation_vector(
+        S_book, region_M=region_M, region_T=region_T, G0_floor=G0_floor,
+        mode=mode, gamma=args.reservation_gamma, epsilon=args.reservation_epsilon)
+    d_floor = args.reservation_gamma * G0_floor
+    return reservation, d_floor
+
+
 # ------------------------------------------------------------------------------- driver reps
 def _relax_pins(problem, names, widen=(), slack: float = 0.0):
     """A copy of `problem` with the `names` pin rows opened to +inf and the `widen` ones
@@ -1021,17 +1074,28 @@ def _rep_moves(problem, result, cells, state_list, edges, args, prefix, slots, n
     base_slots = slots
 
     def score(stage_slots) -> float:
-        out = stage2_state.state_stage2(cells, _plan_object(prefix + stage_slots, state_list),
+        plan = _plan_object(prefix + stage_slots, state_list)
+        r, df = _compute_reservation_for_plan(cells, plan, args)
+        out = stage2_state.state_stage2(cells, plan,
                                         theta=args.theta, lam=args.lam,
                                         filler_capture=args.filler_capture,
-                                        criterion="nash", candidacy=False)
+                                        criterion="nash", candidacy=False,
+                                        reservation=r,
+                                        reservation_floor=df,
+                                        reservation_mode=args.stage2_reservation)
         return float(out["value"])
 
     try:
-        base = stage2_state.state_stage2(cells, _plan_object(prefix + base_slots, state_list),
+        base_plan = _plan_object(prefix + base_slots, state_list)
+        base_reservation, base_d_floor = _compute_reservation_for_plan(
+            cells, base_plan, args)
+        base = stage2_state.state_stage2(cells, base_plan,
                                          theta=args.theta, lam=args.lam,
                                          filler_capture=args.filler_capture,
-                                         criterion="nash", candidacy=False)
+                                         criterion="nash", candidacy=False,
+                                         reservation=base_reservation,
+                                         reservation_floor=base_d_floor,
+                                         reservation_mode=args.stage2_reservation)
     except ValueError as exc:
         print(f"moves: the level-0 plan does not score at state grain ({exc}); no move run",
               flush=True)
@@ -1449,6 +1513,9 @@ def _main(args, T: telemetry.Timings) -> int:
         other_first=args.other_first, force_national=args.force_national,
         cover_national=args.cover_national, national_states=args.national_states,
         max_splits=args.max_splits or {}, band_break={},
+        stage2_reservation=args.stage2_reservation,
+        reservation_gamma=args.reservation_gamma,
+        reservation_epsilon=args.reservation_epsilon,
         engine=args.engine, strategy=args.strategy, threads=args.threads,
         time_limit=args.time_limit, synthesize=args.synthesize, seed=args.seed,
         geo_cache=os.path.abspath(args.geo_cache), out=os.path.abspath(args.out),
@@ -1849,10 +1916,16 @@ def _main(args, T: telemetry.Timings) -> int:
     _write_projections(args.out, d, cells, slots, state_list, T)
 
     with T.phase("stage2"):
-        staffing = stage2_state.state_stage2(cells, _plan_object(slots, state_list),
+        final_plan = _plan_object(slots, state_list)
+        final_reservation, final_d_floor = _compute_reservation_for_plan(
+            cells, final_plan, args)
+        staffing = stage2_state.state_stage2(cells, final_plan,
                                              theta=args.theta, lam=args.lam,
                                              filler_capture=args.filler_capture,
-                                             criterion="nash", candidacy=False)
+                                             criterion="nash", candidacy=False,
+                                             reservation=final_reservation,
+                                             reservation_floor=final_d_floor,
+                                             reservation_mode=args.stage2_reservation)
     with open(os.path.join(args.out, "staffing.json"), "w", encoding="utf-8") as fh:
         json.dump(staffing, fh, indent=2, default=float)
         fh.write("\n")

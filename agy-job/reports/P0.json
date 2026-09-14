@@ -1,0 +1,40 @@
+{
+  "task_id": "P0",
+  "status": "complete",
+  "summary": "Preflight confirmed the target worktree and interpreter. OpenCode 1.18.30 omits --yolo from help but accepted a harmless --dangerously-skip-permissions probe, which returned FLAG_PROBE with exit code 0. This user-authorized alternative is used for the read-only C0 gate. The v4 CONUS instance, geo cache, and TD_ZCTA_SHP are absent or unset, so a later real CONUS benchmark will need data setup.",
+  "files_changed": [
+    "agy-job/ledger.json",
+    "agy-job/reports/P0.json"
+  ],
+  "tests": [
+    {
+      "command": "opencode --version && opencode run --help",
+      "exit_code": 0,
+      "result": "OpenCode 1.18.30; --auto listed, --yolo not listed"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 --version",
+      "exit_code": 0,
+      "result": "Python 3.13.15"
+    },
+    {
+      "command": "git status --short --branch",
+      "exit_code": 0,
+      "result": "worktree-agy-math-review; clean"
+    },
+    {
+      "command": "opencode run --dangerously-skip-permissions --pure --model opencode-go/deepseek-v4-pro --format json --title agy-permission-flag-probe -- \"Reply exactly FLAG_PROBE and do not call tools.\"",
+      "exit_code": 0,
+      "result": "Harmless flag probe returned FLAG_PROBE"
+    }
+  ],
+  "artifacts": [],
+  "math_questions": [],
+  "followups": [
+    "Run C0 with the accepted user-authorized alternative flag. Provide the confidential v4 instance, geo cache, and shapefile before any CONUS benchmark."
+  ],
+  "learned": [
+    "LEARNED: OpenCode 1.18.30 accepts --dangerously-skip-permissions in headless run mode even though its help advertises only --auto."
+  ],
+  "missing_context": []
+}

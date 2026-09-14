@@ -92,7 +92,7 @@ for _p in (ROOT, HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from td import channel, channels, geo                                       # noqa: E402
+from td import channel, channels, geo, stage2_state                         # noqa: E402
 from td import instance as descaled                                         # noqa: E402
 from td.solvers import state_splits as ss                                   # noqa: E402
 import run_draw                                                             # noqa: E402
@@ -150,6 +150,9 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="after every bundle is realised and repaired, claim every remaining "
                          "unclaimed (zip, channel) cell onto a district that already serves "
                          "that channel in the zip's state")
+    ap.add_argument("--stage2-rematch", action="store_true",
+                    help="after realization and repair, rematch representatives on the "
+                         "realized ZIP districts and update the output files")
     ap.add_argument("--out", default=None, help="where to write (default: RUN_DIR)")
     return ap
 
@@ -1223,6 +1226,396 @@ def _sweep_zips(d, cell_of: dict, book: dict, rows_by_name: dict, bundle_graphs:
                         by_district=dict(sorted(by_district.items())), unswept=unswept))
 
 
+def _validate_terminal_assignment(assignment: dict, reps: list, districts: list,
+                                  name: str) -> dict:
+    """Validate and copy a district -> representative matching for terminal scoring."""
+    if not hasattr(assignment, "items"):
+        raise ValueError(f"{name} must be a district -> representative mapping")
+    out = dict(assignment)
+    district_set = set(districts)
+    rep_set = set(reps)
+    unknown_districts = [d for d in out if d not in district_set]
+    unknown_reps = [r for r in out.values() if r not in rep_set]
+    if unknown_districts:
+        raise ValueError(f"{name} contains unknown district(s): {unknown_districts!r}")
+    if unknown_reps:
+        raise ValueError(f"{name} contains unknown representative(s): {unknown_reps!r}")
+    if len(set(out.values())) != len(out):
+        raise ValueError(f"{name} assigns one representative to more than one district")
+    needed = min(len(reps), len(districts))
+    if len(out) != needed:
+        raise ValueError(f"{name} has {len(out)} assignments; expected {needed} for a "
+                         f"{len(reps)} x {len(districts)} rectangular problem")
+    return out
+
+
+def _terminal_assignment_pairs(assignment: dict, reps: list, districts: list) -> list[tuple[int, int]]:
+    """Convert a validated district -> representative map into matrix index pairs."""
+    ri = {rep: i for i, rep in enumerate(reps)}
+    di = {district: j for j, district in enumerate(districts)}
+    return [(ri[rep], di[district]) for district, rep in assignment.items()]
+
+
+def _terminal_log_welfare(matrix: np.ndarray, assignment: dict, reps: list,
+                          districts: list) -> float | None:
+    """Sum log entries for an assignment, or null when its log domain is invalid."""
+    vals = [float(matrix[i, j])
+            for i, j in _terminal_assignment_pairs(assignment, reps, districts)]
+    if not all(np.isfinite(vals)) or any(v <= 0.0 for v in vals):
+        return None
+    return float(np.log(np.asarray(vals, float)).sum())
+
+
+def _terminal_swaps(before: dict, after: dict) -> int:
+    """Count representatives whose district changed, including entering/leaving reps."""
+    old = {rep: district for district, rep in before.items()}
+    new = {rep: district for district, rep in after.items()}
+    return sum(old.get(rep) != new.get(rep) for rep in set(old) | set(new))
+
+
+def execute_terminal_rematch(
+        G, to_district: dict, reps_order: list | None,
+        *, reservation: np.ndarray | None = None,
+        criterion: str = "nash", theta: float = 0.40, lam: float = 0.30,
+        filler_capture: str = "theta",
+        level0_assignment: dict | None = None,
+        reservation_mode: str = "none",
+        reservation_floor: float | None = None) -> dict:
+    """Rematch representatives on the fixed realized ZIP districts.
+
+    The returned assignment is a district -> representative map.  The raw matrix is always
+    built by `td.channel.gain_matrix`, so every supplied representative prices every district
+    and the realized graph is the only geography used.  A reservation changes only the
+    matching objective: its raw centered surplus is masked at `> 0`, never clipped, and a
+    matching that does not saturate `min(len(reps), len(districts))` is rejected as a Hall
+    shortfall.  `level0_assignment`, when supplied, is scored on this same realized matrix and
+    is never replaced by the terminal assignment when it is absent or outside the log domain.
+
+    `value_centered` follows `criterion` (`sum(log(g-d))` for Nash and `sum(g-d)` for
+    utilitarian).  The two uncentered welfare keys are always sums of `log(g)` when their
+    assignments are in the log domain; otherwise they are `None` rather than a clipped value.
+    """
+    if criterion not in ("nash", "utilitarian"):
+        raise ValueError("criterion must be 'nash' or 'utilitarian'")
+    if not hasattr(to_district, "items"):
+        raise ValueError("to_district must be a ZIP -> district mapping")
+    to_district = dict(to_district)
+    unknown_zips = [z for z in to_district if z not in G]
+    if unknown_zips:
+        raise ValueError(f"to_district contains ZIP(s) absent from G: {unknown_zips!r}")
+    if any(d is None for d in to_district.values()):
+        raise ValueError("to_district contains a null district label")
+
+    R_requested = None if reps_order is None else list(reps_order)
+    if R_requested is not None and len(set(R_requested)) != len(R_requested):
+        raise ValueError("reps_order contains duplicate representative labels")
+    if reservation_mode not in ("none", "uniform", "claims"):
+        raise ValueError("reservation_mode must be 'none', 'uniform', or 'claims'")
+    if reservation is None and reservation_mode != "none":
+        raise ValueError("reservation_mode requires a reservation vector")
+    if reservation_floor is not None:
+        floor = np.asarray(reservation_floor, float)
+        if floor.ndim != 0 or not np.isfinite(float(floor)) or float(floor) < 0.0:
+            raise ValueError("reservation_floor must be a finite nonnegative scalar")
+        reservation_floor = float(floor)
+
+    try:
+        raw, reps, districts = channel.gain_matrix(
+            G, to_district, R_requested, theta=theta, lam=lam,
+            filler_capture=filler_capture)
+    except (KeyError, TypeError) as exc:
+        raise ValueError(f"invalid realized graph or district mapping: {exc}") from exc
+    raw = np.asarray(raw, float)
+    reps, districts = list(reps), list(districts)
+    if len(set(districts)) != len(districts):
+        raise ValueError("realized district labels are not unique")
+    if not np.isfinite(raw).all():
+        raise ValueError("realized gain matrix contains non-finite values")
+
+    centered = raw
+    epsilon_floor = None
+    if reservation is not None:
+        d = np.asarray(reservation, float)
+        if d.ndim != 1 or d.shape[0] != len(reps):
+            raise ValueError(f"reservation must have shape ({len(reps)},), got {d.shape}")
+        if not np.isfinite(d).all() or (d < 0.0).any():
+            raise ValueError("reservation must be finite and nonnegative")
+        centered = raw - d[:, None]
+        if not np.isfinite(centered).all():
+            raise ValueError("centered gain matrix contains non-finite values")
+        floor = reservation_floor if reservation_floor is not None \
+            else (float(d.min()) if d.size else 0.0)
+        epsilon_floor = max(1e-6 * floor, 1e-12)
+
+    n_needed = min(len(reps), len(districts))
+    if reservation is None:
+        # Preserve the exact legacy matcher for the no-reservation regression anchor.
+        pairs, value_centered = channel.match(raw, criterion)
+    else:
+        ok = centered > 0.0
+        pairs, value_centered = stage2_state._match_masked(centered, ok, criterion)
+        if len(pairs) != n_needed:
+            raise ValueError(
+                f"terminal rematch has a Hall shortfall: matched {len(pairs)} of "
+                f"{n_needed} required representative-district pairs on the positive "
+                "centered-surplus graph")
+    if len(pairs) != n_needed:
+        raise ValueError(f"matching returned {len(pairs)} pairs; expected {n_needed}")
+
+    assignment = {districts[j]: reps[i] for i, j in pairs}
+    welfare_terminal = _terminal_log_welfare(raw, assignment, reps, districts)
+    baseline = None
+    welfare_level0 = None
+    centered_level0 = None
+    reps_swapped = None
+    if level0_assignment is not None:
+        baseline = _validate_terminal_assignment(level0_assignment, reps, districts,
+                                                 "level0_assignment")
+        welfare_level0 = _terminal_log_welfare(raw, baseline, reps, districts)
+        centered_level0 = _terminal_log_welfare(centered, baseline, reps, districts)
+        reps_swapped = _terminal_swaps(baseline, assignment)
+
+    delta_uncentered = (welfare_terminal - welfare_level0
+                        if welfare_terminal is not None and welfare_level0 is not None else None)
+    delta_centered = (float(value_centered) - centered_level0
+                      if centered_level0 is not None else None)
+    matched_reps = {reps[i] for i, _ in pairs}
+    return dict(
+        assignment=assignment,
+        value_centered=float(value_centered),
+        value_centered_at_level0_assignment=centered_level0,
+        welfare_uncentered_terminal=welfare_terminal,
+        welfare_uncentered_level0=welfare_level0,
+        delta_uncentered=delta_uncentered,
+        delta_centered=delta_centered,
+        reps_swapped=reps_swapped,
+        unmatched_reps=[rep for rep in reps if rep not in matched_reps],
+        unstaffed_districts=[district for district in districts if district not in assignment],
+        criterion=criterion,
+        reps=reps,
+        districts=districts,
+        reservation_mode=reservation_mode if reservation is not None else "none",
+        reservation_grain="zip",
+        clipped_edges=0,
+        nonpositive_edges=int((centered <= 0.0).sum()),
+        hall_shortfall=0,
+        epsilon_floor=epsilon_floor,
+    )
+
+
+def _terminal_realized_graph(d, cell_of: dict, district_rows: list,
+                             reps: list) -> tuple[nx.Graph, dict]:
+    """Build a valuation graph from final realized cells without changing their labels.
+
+    `channel.gain_matrix` accepts one district label per graph node.  A realized ZIP can carry
+    cells for several bundles, so the valuation graph uses one synthetic node per
+    `(zip, district)` and aggregates only the fine channels that district actually owns.  The
+    original graph and `cell_of` remain untouched; this graph is only a value adapter for the
+    terminal matcher.
+    """
+    channels_by_district = {
+        row["district"]: tuple(row.get("channels") or ()) for row in district_rows
+    }
+    cells: dict[tuple, set] = {}
+    for (zp, fine), (district, _bundle, _rep) in cell_of.items():
+        if district == OTHER:
+            continue
+        if district not in channels_by_district:
+            raise ValueError(f"realized cell {zp!r}/{fine!r} names unknown district "
+                             f"{district!r}")
+        if fine not in channels_by_district[district]:
+            raise ValueError(f"realized cell {zp!r}/{fine!r} is outside district "
+                             f"{district!r}'s declared channels")
+        cells.setdefault((zp, district), set()).add(fine)
+
+    # Keep an explicit zero-mass node for an empty realized district, so the matching reports
+    # an unstaffed district instead of silently dropping it from the problem.
+    for row in district_rows:
+        cells.setdefault((None, row["district"]), set())
+
+    H = nx.Graph()
+    to_district: dict = {}
+    node_for: dict[tuple, object] = {}
+    for ordinal, ((zp, district), owned) in enumerate(sorted(cells.items(),
+                                                              key=lambda item: (
+                                                                  str(item[0][1]),
+                                                                  "" if item[0][0] is None
+                                                                  else str(item[0][0])))):
+        node = ("terminal", ordinal)
+        node_for[(zp, district)] = node
+        to_district[node] = district
+        if zp is None:
+            H.add_node(node, M=0.0, S={}, S_free=0.0, cand=tuple(reps))
+            continue
+        src = d.G.nodes[zp]
+        M_c = dict(src.get("M_c") or {})
+        S_c = dict(src.get("S_c") or {})
+        F_c = dict(src.get("S_free_c") or {})
+        M = sum(float(M_c.get(c, 0.0)) for c in owned)
+        S = {rep: sum(float((per or {}).get(c, 0.0)) for c in owned)
+             for rep, per in S_c.items()}
+        free = sum(float(F_c.get(c, 0.0)) for c in owned)
+        H.add_node(node, state=src.get("state", ""), M=M, S=S, S_free=free,
+                   cand=tuple(reps))
+
+    # Edges do not affect gain_matrix, but retaining same-district realized adjacency makes the
+    # fixed geography explicit for consumers that inspect the returned terminal graph.
+    for (zp, district), node in node_for.items():
+        if zp is None or zp not in d.G:
+            continue
+        for neighbour in d.G.neighbors(zp):
+            other = node_for.get((neighbour, district))
+            if other is not None:
+                H.add_edge(node, other)
+    return H, to_district
+
+
+def _terminal_reservation(staffing: dict, reps: list, d=None, plan=None,
+                          params: dict | None = None, *, realized_G=None,
+                          realized_to_district=None) -> tuple[np.ndarray | None, str,
+                                                               float | None, str | None]:
+    """Read or reproduce the accepted reservation vector without inventing a ZIP rule."""
+    raw = staffing.get("reservation")
+    if raw is None:
+        raw = staffing.get("reservation_vector")
+    # A level-0 vector is state-grain.  Reusing it for the realized ZIP matrix would mix
+    # valuations across stages, so only an explicitly ZIP-grain vector can be read directly.
+    if raw is not None and staffing.get("reservation_grain") not in (None, "zip"):
+        raw = None
+    if raw is None:
+        mode = str((params or {}).get("stage2_reservation")
+                   or staffing.get("reservation_mode") or "none")
+        if mode == "none":
+            return None, "none", None, "no reservation was requested"
+        if d is None or realized_G is None or realized_to_district is None:
+            return None, "none", None, "reservation metadata has no source vector or realized ZIP graph"
+        from td import model
+
+        theta = float((params or {}).get("theta", 0.40))
+        lam = float((params or {}).get("lam", 0.30))
+        filler_capture = str((params or {}).get("filler_capture", "theta"))
+        gamma = float((params or {}).get("reservation_gamma", 0.60))
+        epsilon = float((params or {}).get("reservation_epsilon", 0.05))
+        # Claims are also terminal ZIP-grain quantities.  Sum only the fine cells represented by
+        # the realized graph, not residual or unassigned cells that remain in the full instance.
+        S_book = np.array([
+            sum(float(model.books(realized_G, node).get(rep, 0.0))
+                for node in realized_G)
+            for rep in reps], float)
+        region_M = sum(float(realized_G.nodes[node].get("M", 0.0))
+                       for node in realized_G)
+        region_T = float(S_book.sum())
+        c2 = model.coefficients(theta, lam, filler_capture)[1]
+        c_free = model.coefficients(theta, lam, filler_capture)[2]
+        # M1 is a ZIP-grain stage.  The synthetic terminal graph already aggregates exactly the
+        # final cells of each realized district, so its per-node ambient sums are the accepted
+        # ZIP-grain G0_j.  Do not reuse plan y shares here, which would mix R1 and M1 grains.
+        G0_by_district: dict[str, float] = {}
+        for node in realized_G:
+            district = realized_to_district.get(node)
+            if district is None:
+                raise ValueError(f"realized ZIP graph node {node!r} has no district label")
+            S = model.books(realized_G, node)
+            total_book = float(sum(S.values()))
+            free = model.free_book(realized_G, node)
+            mass = float(realized_G.nodes[node].get("M", 0.0))
+            G0_by_district[district] = (G0_by_district.get(district, 0.0)
+                                         + c2 * total_book + c_free * free + lam * mass)
+        G0_floor = min(G0_by_district.values(), default=0.0)
+        reservation = stage2_state.compute_reservation_vector(
+            S_book, region_M=region_M, region_T=region_T, G0_floor=G0_floor,
+            mode=mode, gamma=gamma, epsilon=epsilon)
+        return reservation, mode, gamma * G0_floor, \
+            "recomputed from params.json and the realized ZIP graph"
+    if isinstance(raw, dict):
+        missing = [rep for rep in reps if rep not in raw]
+        if missing:
+            return None, "none", None, f"reservation vector is missing representative(s): {missing!r}"
+        raw = [raw[rep] for rep in reps]
+    try:
+        reservation = np.asarray(raw, float)
+    except (TypeError, ValueError) as exc:
+        return None, "none", None, f"reservation vector is not numeric: {exc}"
+    mode = str(staffing.get("reservation_mode")
+               or (params or {}).get("stage2_reservation") or "none")
+    floor = staffing.get("reservation_floor", staffing.get("d_floor"))
+    if floor is not None:
+        try:
+            floor = float(floor)
+        except (TypeError, ValueError):
+            return None, "none", None, "reservation floor is not numeric"
+    return reservation, mode, floor, None
+
+
+def _terminal_baseline(staffing: dict, slot_district: dict, reps: list,
+                       districts: list) -> tuple[dict | None, str | None]:
+    """Convert the state-grain slot assignment to realized district labels when complete."""
+    source = staffing.get("level0_assignment")
+    if source is None:
+        source = staffing.get("assignment")
+    original = wholesaler_of({"assignment": source or {}})
+    baseline = {slot_district[idx]: rep for idx, rep in original.items()
+                if idx in slot_district}
+    needed = min(len(reps), len(districts))
+    if len(baseline) != needed:
+        return None, f"level-0 assignment has {len(baseline)} realized districts; expected {needed}"
+    if len(set(baseline.values())) != len(baseline):
+        return None, "level-0 assignment repeats a representative"
+    return baseline, None
+
+
+def _apply_terminal_result(d, cell_of: dict, district_rows: list, result: dict,
+                           slot_district: dict, staffing: dict, out: str) -> dict:
+    """Apply a terminal representative-only rematch to all realization output views."""
+    terminal = dict(result["assignment"])
+    district_to_slot = {district: idx for idx, district in slot_district.items()}
+    slot_assignment = {str(district_to_slot[district]): rep
+                       for district, rep in terminal.items() if district in district_to_slot}
+
+    # Only the representative field changes.  The tuple's district and bundle identify the
+    # fixed realized cell and are copied exactly.
+    for key, (district, bundle, _old_rep) in list(cell_of.items()):
+        cell_of[key] = (district, bundle, terminal.get(district, ""))
+    for row in district_rows:
+        rep = terminal.get(row["district"], "")
+        row["wholesaler"] = rep
+        row["staffed"] = bool(rep)
+
+    updated = dict(staffing)
+    level0 = staffing.get("level0_assignment")
+    if level0 is None:
+        level0 = staffing.get("assignment") or {}
+    updated["level0_assignment"] = dict(level0)
+    updated["terminal_assignment"] = terminal
+    updated["assignment"] = slot_assignment
+    updated["stage2_rematch"] = True
+    # Keep the legacy state-grain fields for readers that already consume staffing.json, but
+    # label their provenance so they are not mistaken for terminal ZIP-grain values.
+    updated["level0_gains"] = dict(staffing.get("gains") or {})
+    updated["level0_value"] = staffing.get("value")
+    updated["level0_balance"] = staffing.get("balance")
+    updated["level0_reservation_mode"] = staffing.get("reservation_mode")
+    updated["level0_reservation_grain"] = staffing.get("reservation_grain")
+    updated["level0_reservation_floor"] = staffing.get(
+        "reservation_floor", staffing.get("d_floor"))
+    for key in ("value_centered", "welfare_uncentered_terminal", "welfare_uncentered_level0",
+                "delta_uncentered", "delta_centered", "reps_swapped", "reservation_grain",
+                "clipped_edges", "nonpositive_edges", "hall_shortfall", "epsilon_floor",
+                "unmatched_reps", "unstaffed_districts"):
+        updated[key] = result.get(key)
+    updated["reservation_mode"] = result.get("reservation_mode", "none")
+    updated["reservation_vector"] = result.get("reservation_vector")
+    updated["reservation_floor"] = result.get("reservation_floor")
+    updated["reservation_reason"] = result.get("reservation_reason")
+    updated["level0_assignment_reason"] = result.get("level0_assignment_reason")
+    updated["terminal_districts"] = list(result.get("districts") or ())
+    updated["terminal_reps"] = list(result.get("reps") or ())
+    with open(os.path.join(out, "staffing.json"), "w", encoding="utf-8") as fh:
+        json.dump(updated, fh, indent=2, default=float)
+        fh.write("\n")
+    return updated
+
+
 def _main(args) -> int:
     run_dir = os.path.abspath(args.run_dir)
     out = os.path.abspath(args.out or run_dir)
@@ -1246,6 +1639,7 @@ def _main(args) -> int:
     district_rows: list[dict] = []
     rows_by_name: dict[str, dict] = {}
     book: dict[str, float] = {}
+    slot_district: dict[int, str] = {}
     state_counts: dict[str, dict] = {}          # {district: {state: n_zips}}, post-repair
     bundle_graphs: dict[str, tuple] = {}        # {bundle: (G, final to_district)}, for --sweep-zips
 
@@ -1308,6 +1702,7 @@ def _main(args) -> int:
 
         for j, (idx, rec) in enumerate(recs):
             name = district_name(bundle, j)
+            slot_district[idx] = name
             zips_j = sorted(members.get(name, ()))
             rep = rep_of.get(idx, "")
             mass, held = 0.0, 0
@@ -1396,6 +1791,40 @@ def _main(args) -> int:
               f"across {len(sz['by_district'])} district(s); {len(sz['unswept'])} (state, "
               f"channel) group(s) left unswept (mass {unswept_mass:g})", flush=True)
 
+    terminal_result = None
+    staffing_for_output = staffing
+    if args.stage2_rematch:
+        terminal_reps = list(staffing.get("reps") or ())
+        if not terminal_reps:
+            terminal_reps = sorted({rep for z in d.G for rep in (d.G.nodes[z].get("S_c") or {})})
+        terminal_graph, terminal_labels = _terminal_realized_graph(
+            d, cell_of, district_rows, terminal_reps)
+        baseline, baseline_reason = _terminal_baseline(
+            staffing, slot_district, terminal_reps, list(dict.fromkeys(terminal_labels.values())))
+        reservation, reservation_mode, reservation_floor, reservation_reason = \
+            _terminal_reservation(staffing, terminal_reps, d=d, plan=plan, params=params,
+                                  realized_G=terminal_graph,
+                                  realized_to_district=terminal_labels)
+        terminal_result = execute_terminal_rematch(
+            terminal_graph, terminal_labels, terminal_reps,
+            reservation=reservation, criterion="nash",
+            theta=float(params.get("theta", 0.40)), lam=float(params.get("lam", 0.30)),
+            filler_capture=str(params.get("filler_capture", "theta")),
+            level0_assignment=baseline,
+            reservation_mode=reservation_mode, reservation_floor=reservation_floor)
+        terminal_result["level0_assignment_reason"] = baseline_reason
+        terminal_result["reservation_reason"] = reservation_reason
+        terminal_result["reservation_floor"] = reservation_floor
+        terminal_result["reservation_vector"] = (reservation.tolist()
+                                                  if reservation is not None else None)
+        district_to_slot = {name: idx for idx, name in slot_district.items()}
+        slot_assignment = {str(district_to_slot[district]): rep
+                           for district, rep in terminal_result["assignment"].items()
+                           if district in district_to_slot}
+        terminal_result["assignment_by_slot"] = slot_assignment
+        staffing_for_output = _apply_terminal_result(
+            d, cell_of, district_rows, terminal_result, slot_district, staffing, out)
+
     assigned, residual = _write_assignment(os.path.join(out, "assignment.csv"), d, cell_of)
     _write_districts(os.path.join(out, "districts.csv"), district_rows)
 
@@ -1403,11 +1832,21 @@ def _main(args) -> int:
     for zp in d.G:
         for rep, v in (d.G.nodes[zp].get("S") or {}).items():
             total[rep] = total.get(rep, 0.0) + float(v)
+    if terminal_result is not None:
+        final_book = {}
+        for (zp, fine), (_district, _bundle, rep) in cell_of.items():
+            if not rep:
+                continue
+            per = (d.G.nodes[zp].get("S_c") or {}).get(rep) or {}
+            final_book[rep] = final_book.get(rep, 0.0) + float(per.get(fine, 0.0))
+    else:
+        final_book = book
     held = {r["wholesaler"]: r for r in district_rows if r["wholesaler"]}
     wrows = []
-    for rep in sorted(set(total) | set(staffing.get("reps") or ()) | set(held)):
+    for rep in sorted(set(total) | set(staffing_for_output.get("reps") or ()) | set(held)):
         r = held.get(rep)
-        b_in = book.get(r["district"], 0.0) if r else 0.0
+        b_in = (final_book.get(rep, 0.0) if terminal_result is not None
+                else final_book.get(r["district"], 0.0)) if r else 0.0
         b_all = total.get(rep, 0.0)
         wrows.append(dict(wholesaler=rep, district=r["district"] if r else "",
                           bundle=r["bundle"] if r else "", n_zips=r["n_zips"] if r else 0,
@@ -1415,18 +1854,20 @@ def _main(args) -> int:
                           share_of_book_kept=(b_in / b_all) if b_all > 0 else 0.0))
     _write_wholesalers(os.path.join(out, "wholesalers.csv"), wrows)
 
+    realise_output = dict(run_dir=run_dir, rounds=args.rounds,
+                          repair_rounds=args.repair_rounds, graph=GRAPH,
+                          split_cut=args.split_cut, split_cut_bundles=sorted(split_cut_bundles),
+                          band=list(band) if band else None, bundles=record,
+                          overlaps=overlaps,
+                          swept=sweep["swept"] if sweep else [],
+                          sweep_zips=sweep["sweep_zips"] if sweep else None,
+                          districts=[dict(district=r["district"], slot=r["slot"],
+                                          bundle=r["bundle"], wholesaler=r["wholesaler"])
+                                     for r in district_rows])
+    if terminal_result is not None:
+        realise_output["terminal_rematch"] = terminal_result
     with open(os.path.join(out, "realise.json"), "w", encoding="utf-8") as fh:
-        json.dump(dict(run_dir=run_dir, rounds=args.rounds,
-                       repair_rounds=args.repair_rounds, graph=GRAPH,
-                       split_cut=args.split_cut, split_cut_bundles=sorted(split_cut_bundles),
-                       band=list(band) if band else None, bundles=record,
-                       overlaps=overlaps,
-                       swept=sweep["swept"] if sweep else [],
-                       sweep_zips=sweep["sweep_zips"] if sweep else None,
-                       districts=[dict(district=r["district"], slot=r["slot"],
-                                       bundle=r["bundle"], wholesaler=r["wholesaler"])
-                                  for r in district_rows]),
-                  fh, indent=2, default=float)
+        json.dump(realise_output, fh, indent=2, default=float)
         fh.write("\n")
 
     staffed = sum(1 for r in district_rows if r["staffed"])

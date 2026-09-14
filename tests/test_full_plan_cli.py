@@ -2010,3 +2010,174 @@ def test_plus_pair_sequential_passes_the_wh_fold_as_the_fi_target():
         wh_fold, fi_fold = fold("WH_PLUS"), fold("FI_PLUS")
         for st in STATES:
             assert abs(wh_fold[st] - fi_fold[st]) < 1e-6, (st, wh_fold[st], fi_fold[st])
+
+
+# ---------------------------------------------------------------------------- reservation
+def test_stage2_reservation_defaults_are_none_060_005():
+    args = cli.build_argparser().parse_args(["instance.json.gz", "--out", "out"])
+    assert args.stage2_reservation == "none"
+    assert args.reservation_gamma == 0.60
+    assert args.reservation_epsilon == 0.05
+
+
+def test_stage2_reservation_custom_values_parse():
+    args = cli.build_argparser().parse_args([
+        "instance.json.gz", "--out", "out",
+        "--stage2-reservation", "claims",
+        "--reservation-gamma", "0.70",
+        "--reservation-epsilon", "0.10"])
+    assert args.stage2_reservation == "claims"
+    assert args.reservation_gamma == 0.70
+    assert args.reservation_epsilon == 0.10
+
+
+def test_stage2_reservation_invalid_mode_is_rejected_by_argparse():
+    try:
+        cli.build_argparser().parse_args([
+            "instance.json.gz", "--out", "out",
+            "--stage2-reservation", "bogus"])
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("expected SystemExit for an unknown --stage2-reservation value")
+
+
+def test_end_to_end_uniform_reservation_records_metadata():
+    """A toy run with --stage2-reservation uniform --reservation-gamma 0 completes, records
+    the three flags in params.json, and records state-grain reservation metadata in
+    staffing.json without changing the plan geometry."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "sequential",
+                   ["--stage2-reservation", "uniform", "--reservation-gamma", "0"])
+        plan = _check_plan(out)
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            params = json.load(fh)
+        assert params["stage2_reservation"] == "uniform"
+        assert params["reservation_gamma"] == 0.0
+        assert params["reservation_epsilon"] == 0.05
+
+        with open(os.path.join(out, "staffing.json"), encoding="utf-8") as fh:
+            staffing = json.load(fh)
+        assert staffing["reservation_mode"] == "uniform"
+        assert staffing["reservation_grain"] == "state"
+        assert staffing["clipped_edges"] == 0
+        assert "nonpositive_edges" in staffing
+        assert "hall_shortfall" in staffing
+        assert "epsilon_floor" in staffing
+        # gamma=0 => d_floor=0, so epsilon_floor = max(1e-6*0, 1e-12) = 1e-12
+        assert abs(staffing["epsilon_floor"] - 1e-12) < 1e-18
+        # geometry unchanged: all used slots are still used and staffed
+        assert staffing["unstaffed_districts"] == []
+
+    # default none must still work identically
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "sequential")
+        with open(os.path.join(out, "params.json"), encoding="utf-8") as fh:
+            assert json.load(fh)["stage2_reservation"] == "none"
+        with open(os.path.join(out, "staffing.json"), encoding="utf-8") as fh:
+            staffing = json.load(fh)
+        assert staffing["reservation_mode"] == "none"
+
+
+def test_reservation_vector_and_floor_reach_the_final_stage2_call():
+    """A monkeypatched state_stage2 captures the reservation and reservation_floor it receives,
+    proving the CLI flags propagate through _compute_reservation_for_plan."""
+    from td import stage2_state as s2s
+
+    captured = {}
+    orig = s2s.state_stage2
+
+    def spy(*a, **kw):
+        if kw.get("reservation") is not None:
+            captured["reservation"] = kw["reservation"]
+            captured["reservation_floor"] = kw.get("reservation_floor")
+            captured["reservation_mode"] = kw.get("reservation_mode", "none")
+        return orig(*a, **kw)
+
+    s2s.state_stage2 = spy
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = _run(tmp, "sequential",
+                       ["--stage2-reservation", "uniform", "--reservation-gamma", "0.5"])
+    finally:
+        s2s.state_stage2 = orig
+
+    assert "reservation" in captured, "state_stage2 must receive a reservation vector"
+    assert captured["reservation_mode"] == "uniform"
+    d = captured["reservation"]
+    assert d.ndim == 1 and d.shape[0] > 0
+    assert (d >= 0.0).all()
+    # uniform: every entry equals d_floor
+    assert float(np.ptp(d)) < 1e-12, "uniform reservation is constant across reps"
+    floor = captured["reservation_floor"]
+    assert floor is not None and floor >= 0.0
+
+
+def test_end_to_end_claims_reservation_completes():
+    """A toy run with --stage2-reservation claims completes and records metadata.
+    Uses gamma=0 so d_floor=0 and the reservation is alpha*S_book only, small enough
+    for the tiny 6-rep toy. Higher gamma causes Hall shortfall on 2-3 slots."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = _run(tmp, "sequential",
+                   ["--stage2-reservation", "claims",
+                    "--reservation-gamma", "0",
+                    "--reservation-epsilon", "0.05"])
+        _check_plan(out)
+        with open(os.path.join(out, "staffing.json"), encoding="utf-8") as fh:
+            staffing = json.load(fh)
+        assert staffing["reservation_mode"] == "claims"
+        assert staffing["reservation_grain"] == "state"
+
+
+def test_existing_reservation_none_tests_still_pass():
+    """Default none mode preserves the legacy assignment and gains."""
+    with tempfile.TemporaryDirectory() as tmp:
+        none_out = _run(tmp, "sequential")
+        with open(os.path.join(none_out, "staffing.json"), encoding="utf-8") as fh:
+            none_staffing = json.load(fh)
+        assert none_staffing["reservation_mode"] == "none"
+        assert none_staffing["value"] is not None
+        # gains exist and are positive (raw, uncentered)
+        for slot_id, g in none_staffing["gains"].items():
+            assert g > 0.0, (slot_id, g)
+
+
+def test_none_mode_rejects_invalid_gamma_and_epsilon():
+    """Invalid gamma/epsilon are rejected even when mode is none.
+
+    _compute_reservation_for_plan exercises compute_reservation_vector on a
+    synthetic zero book solely to validate CLI inputs, then returns (None, 0.0).
+    """
+    from td import channels as td_channels
+    from td import stage2_state as s2s
+
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = os.path.join(tmp, "inst.json.gz")
+        _write_v1(inst)
+        d = td_instance.load_descaled(inst)
+        d = td_channels.synthesize_channels(d, seed=0)
+        d = td_channels.fine_split(d)
+        cells = td_channels.aggregate(d, STATES)
+        plan = s2s.Plan(
+            slots=[s2s.Slot(bundle=("N_WH", "N_FI"),
+                            y={s: 1.0 / len(STATES) for s in STATES}, used=True)],
+            state_list=STATES)
+
+        for bad in (dict(reservation_gamma=-1.0),
+                    dict(reservation_gamma=1.0),
+                    dict(reservation_epsilon=-0.1),
+                    dict(reservation_epsilon=1.0)):
+            args = types.SimpleNamespace(
+                stage2_reservation="none",
+                reservation_gamma=bad.get("reservation_gamma", 0.60),
+                reservation_epsilon=bad.get("reservation_epsilon", 0.05),
+                theta=borders_report.THETA,
+                lam=borders_report.LAM,
+                filler_capture=borders_report.FILLER_CAPTURE)
+            try:
+                cli._compute_reservation_for_plan(cells, plan, args)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(
+                    f"expected ValueError for none mode with {bad}")

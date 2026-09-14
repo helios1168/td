@@ -1,0 +1,60 @@
+{
+  "task": "M2",
+  "status": "complete",
+  "summary": "Integrated the opt-in terminal ZIP rematch into plan realization outputs.",
+  "implementation": {
+    "flag": "tools/plan_realise.py --stage2-rematch, default false",
+    "hook": "runs after realization, overlap handoff, repair, and optional ZIP sweep",
+    "valuation": "synthetic (ZIP, district) nodes aggregate only final cell_of channels and use td.channel.gain_matrix",
+    "preservation": "district labels, ZIP membership, mass, pieces, contiguity, bands, handoff, and sweep records are unchanged",
+    "outputs": "staffing.json, assignment.csv, districts.csv, wholesalers.csv, and realise.json agree on terminal representative labels; legacy state-grain value/gains/balance are retained with level0_* provenance copies"
+  },
+  "validation": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m py_compile tools/plan_realise.py tests/test_plan_realise.py",
+      "result": "passed"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k test_plan_realise",
+      "result": "39 passed, 0 failed, 833 skipped"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k __no_such_test__",
+      "result": "0 passed, 0 failed, 872 skipped; all discovered test modules imported cleanly"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 tools/plan_realise.py --help",
+      "result": "--stage2-rematch is exposed"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py",
+      "result": "863 passed, 9 failed; all failures are test_rep_export.py missing the ZCTA shapefile"
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m pytest -q tests/test_plan_realise.py",
+      "result": "environment-blocked: pytest is not installed in the frozen virtualenv"
+    },
+    {
+      "command": "forced-swap synthetic realization test",
+      "result": "passed; terminal assignment propagated to every output while district geometry and mass fields stayed equal; rerun retained the original level-0 baseline"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "files_changed": [
+    "tools/plan_realise.py",
+    "tests/test_plan_realise.py",
+    "agy-job/reports/M2.json"
+  ],
+  "followups": [
+    "Run the enabled flag on the real CONUS instance when its confidential instance, geo cache, and ZCTA data are available.",
+    "When R2 staffing.json has no serialized vector, M2 recomputes the accepted reservation from params.json and the realized ZIP graph; a state-grain vector is never reused at ZIP grain."
+  ],
+  "missing_context": [
+    "Serena tools were unavailable, so symbol inspection used rtk rg and line-range reads.",
+    "The repository's literal pytest command is unavailable because the configured virtualenv has no pytest module.",
+    "The confidential real CONUS instance and required geographic data are absent from this worktree, so only synthetic integration evidence is available."
+  ]
+}

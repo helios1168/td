@@ -1,0 +1,59 @@
+{
+  "task_id": "R1",
+  "turn": "01",
+  "status": "complete",
+  "summary": "Repair 01: exact reservation floor metadata. The accepted contract defines the report-only log-domain floor as epsilon_floor = max(1e-6 * d_floor, 1e-12) with d_floor = gamma * G0_floor. The accepted implementation recovered d_floor as min(reservation), which is exact for uniform mode and for claims mode with at least one zero-claim rep but overstates d_floor in claims mode when every rep holds positive book. This repair adds an optional typed keyword reservation_floor: float | None = None to state_stage2 (validated finite and nonnegative via _nonneg_scalar, raising ValueError otherwise). When supplied it drives epsilon_floor directly; without it the documented min(reservation) fallback is retained for callers that pass only the raw reservation vector. The floor is report-only and never admits or clips an assignment edge. The reservation keyword on state_stage2 and state_gain_matrix gained the np.ndarray | None type annotation. Two tests were added: test_reservation_floor_overrides_min_reservation_in_claims (claims mode, all-positive book, supplied floor, asserting epsilon_floor equals max(1e-6*floor,1e-12) and differs from max(1e-6*min(d),1e-12), and that the matching is unchanged by the floor) and test_reservation_floor_rejects_bad_value (NaN/inf/negative floor raise). Existing zero-floor, uniform, and legacy epsilon_floor tests are preserved. Centered matching rule, Hall rejection, gain semantics, output key names, and the three-mode reservation formula are unchanged.",
+  "files_changed": [
+    "td/stage2_state.py",
+    "tests/test_stage2_state.py",
+    "agy-job/reports/R1.json"
+  ],
+  "tests": [
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m pytest -q tests/test_stage2_state.py",
+      "exit_code": 1,
+      "result": "environmental limitation: '.venv/bin/python3: No module named pytest'. pytest is absent from the frozen .venv and cannot be installed under this task's scope. The repository runner was used as the documented substitute."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k test_stage2_state",
+      "exit_code": 0,
+      "result": "31 passed, 0 failed, 824 skipped."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py -k __no_such_test__",
+      "exit_code": 0,
+      "result": "0 passed, 0 failed, 855 skipped. Import-only safety check: every test_*.py module imports cleanly; discovery is not broken."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -m py_compile td/stage2_state.py tests/test_stage2_state.py",
+      "exit_code": 0,
+      "result": "compiled cleanly, no output."
+    },
+    {
+      "command": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tests/run_all.py (full suite, extra regression check)",
+      "exit_code": 1,
+      "result": "846 passed, 9 failed, 0 skipped. All 9 failures are in tests/test_rep_export.py and raise FileNotFoundError for the missing ZCTA shapefile (data/tiger/2025/tl_2025_us_zcta520.shp), a confidential data file absent from this worktree. Unrelated to R1: no stage2_state or test_stage2_state test fails."
+    }
+  ],
+  "artifacts": [
+    "td/stage2_state.py",
+    "tests/test_stage2_state.py",
+    "agy-job/reports/R1.json"
+  ],
+  "math_questions": [],
+  "followups": [
+    "When reservation=None, state_stage2 records reservation_mode=\"none\" regardless of a caller-supplied non-none reservation_mode string (the string is validated against the three names but then ignored). This is the 'default compatibly' behavior; R2 will only pass a mode together with a reservation, so the lenient branch should be unreachable in practice.",
+    "reservation_floor supplied without reservation is validated but has no effect (legacy d=0 keeps epsilon_floor=1e-12). R2 will always supply the floor together with the reservation it computes, so this combination is a defensive no-op.",
+    "POSITIVITY_TOL is 0.0, matching the module's existing strict '> 0' positivity in _match_masked and channel.match. The contract's symbolic positivity_tol is otherwise undefined in the tree; if a nonzero tolerance is wanted later it is a one-line module constant change."
+  ],
+  "learned": [
+    "The frozen .venv has no pytest, so tests/test_stage2_state.py stays plain-assert (try/except for ValueError) and is run through tests/run_all.py; this keeps it both runner-compatible and pytest-compatible if pytest is ever added.",
+    "A 'forbidden high-raw-gain edge' scenario needs the rep's reservation to sit between its slot-0 gain and a higher slot-1 gain, so the raw (uncentered) match picks slot 0 while the centered mask forbids it; the two-rep fixture (M=[[10,40]], R0 books A, R1 books B) gives g=[[6.5,13.4],[4.4,15.5]] and d=[7.5,0] flips the assignment from {0:R0,1:R1} to {0:R1,1:R0}.",
+    "Adding metadata keys to state_stage2's return flows unchanged through tools/full_plan.py and tools/plan_compose.py (they dump the dict to JSON and read specific keys), so no CLI or compose test asserts the exact key set.",
+    "R2 must thread the exact d_floor = gamma * G0_floor it computes into state_stage2 via reservation_floor, since min(reservation) is only exact for uniform mode and claims mode with a zero-claim rep."
+  ],
+  "missing_context": [
+    "The confidential CONUS instance, geo cache, and ZCTA shapefile are absent from this worktree; all fixtures are synthetic toy cell tables, so no real-map reservation result is claimed.",
+    "No pytest was available for the literal acceptance command; .venv is frozen and .venv-app has neither pytest nor networkx."
+  ]
+}
