@@ -1,12 +1,15 @@
 """Small-model checks for Group 2 warm-start checkpoints."""
 from pathlib import Path
 import json
+import subprocess
+import sys
 import tempfile
 
 import numpy as np
 
 from td.solvers import level0
 from tools.group2_checkpoint import CheckpointStore, model_fingerprint, reconstruct_vector
+from tools.group2_run import constrain_problem
 
 
 def toy():
@@ -96,3 +99,45 @@ def test_nonfinite_vectors_and_top_level_json_list_are_rejected():
         store.path("national", "cover_N").parent.mkdir(exist_ok=True)
         store.path("national", "cover_N").write_text("[]")
         assert store.load("national", "cover_N", problem) is None
+
+
+def test_connected_checkpoint_round_trips_in_a_fresh_process():
+    problem = toy()
+    with tempfile.TemporaryDirectory() as temp:
+        store = CheckpointStore(temp, {"instance": "toy", "source": "v1"})
+        store.save("national", "cover_N", result(problem), problem)
+        code = f'''\
+import numpy as np
+from td.solvers import level0
+from tools.group2_checkpoint import CheckpointStore
+class Cells:
+    M = np.array([[0.5], [0.5], [1.0]])
+    channels = ("N_WH",)
+    state_list = ("AA", "BB", "CC")
+problem = level0.build_level0(Cells(), {{"N": ("N_WH",)}}, edges=[(0, 1), (1, 2)],
+                               L=0.8, U=1.2, eta=0.05, fixed_used={{"N": 2}})
+loaded = CheckpointStore({temp!r}, {{"instance": "toy", "source": "v1"}}).load(
+    "national", "cover_N", problem)
+assert loaded is not None
+level0.check_point(problem, loaded["x"])
+assert loaded["x"][problem.off_f:problem.off_u].sum() > 0
+'''
+        subprocess.run([sys.executable, "-c", code], check=True, capture_output=True, text=True)
+
+
+def test_partial_pure_state_result_is_rejected_before_checkpointing():
+    cells = type("Cells", (), dict(M=np.ones((2, 2)), channels=("N_WH", "N_FI"),
+                                    state_list=("AA", "BB")))()
+    problem = level0.build_level0(cells, {"N": ("N_WH", "N_FI")}, edges=[(0, 1)],
+                                  L=0.8, U=1.2, eta=0.05)
+    problem = constrain_problem(problem, {"N": 1})
+    z = np.zeros((problem.n_state, problem.k))
+    y = np.zeros((problem.n_state, problem.k))
+    z[0, 0] = 1.0
+    y[0, 0] = 0.5
+    try:
+        reconstruct_vector(problem, {"z": z, "y": y})
+    except ValueError as exc:
+        assert "conditional_purity" in str(exc)
+    else:
+        raise AssertionError("partial pure state result was accepted")
