@@ -1,0 +1,65 @@
+"""Small, independent checks for the bounded Group 2 warm initializer."""
+from types import SimpleNamespace
+
+import numpy as np
+
+from td.solvers import level0
+from tools.group2_initializer import build_group2_warm_start
+from tools.group2_run import constrain_problem
+
+
+def _problem(mass, *, slots=1, prior=None):
+    cells = SimpleNamespace(M=np.asarray(mass, float).reshape(-1, 1), channels=("N_WH",),
+                            state_list=[f"S{i}" for i in range(len(mass))])
+    original = level0.build_level0(cells, {"N": ("N_WH",)},
+                                   edges=[(i, i + 1) for i in range(len(mass) - 1)],
+                                   L=0.8, U=1.2, eta=0.05, fixed_used={"N": slots}, prior=prior)
+    return constrain_problem(original, {"N": slots})
+
+
+def _seed(problem, seconds=5):
+    return build_group2_warm_start(problem, [level0.cover_pass(problem, ["N"])],
+                                   time_limit=seconds)
+
+
+def test_seed_is_a_complete_original_model_point():
+    problem = _problem([1.0, 1.0], slots=2)
+    seed = _seed(problem)
+    assert seed.status == "seed"
+    assert seed.vector is not None and seed.vector.shape == (problem.n_var,)
+    level0.check_point(problem, seed.vector)
+
+
+def test_seed_can_split_one_pure_state_across_same_channel_slots():
+    problem = _problem([2.0], slots=2)
+    seed = _seed(problem)
+    assert seed.status == "seed"
+    y = seed.vector[problem.off_y:problem.off_y + problem.n_state * problem.k].reshape(problem.n_state, problem.k)
+    assert np.isclose(y.sum(), 1.0)
+    assert np.count_nonzero(y[0] > 1e-6) == 2
+
+
+def test_seed_respects_exact_used_count():
+    problem = _problem([1.0, 1.0], slots=1)
+    seed = _seed(problem)
+    used = seed.vector[problem.off_u:problem.off_u + problem.k]
+    assert seed.status == "seed" and np.isclose(used.sum(), 1.0)
+
+
+def test_invalid_prior_cleanly_returns_no_seed():
+    problem = _problem([2.0], slots=1, prior=np.array([[0.5]]))
+    seed = _seed(problem)
+    assert seed.vector is None and seed.status == "no_seed"
+
+
+def test_disabled_budget_returns_clean_no_seed():
+    seed = _seed(_problem([1.0]), seconds=0)
+    assert seed.status == "disabled" and seed.vector is None
+
+
+def test_actual_seed_solves_a_miniature_case():
+    problem = _problem([1.0, 1.0], slots=1)
+    seed = _seed(problem)
+    result = level0.solve_passes(problem, [level0.cover_pass(problem, ["N"])],
+                                 engine="scipy", time_limit=5, warm_start=seed.warm_start)
+    assert result["passes"][-1]["value"] >= 0.8
