@@ -1,7 +1,7 @@
 # Group 2 geography and contiguity design memo
 
 Date: 2026-09-14
-Status: implemented behind Group 2 runner options; no experimental long solve performed
+Status: implemented; bounded full-coverage Group 2 run independently proved infeasible
 Author: Codex
 Worktree: /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/group2-flow-memo
 Branch: worktree-group2-flow-memo
@@ -19,8 +19,9 @@ frontier model's design memo was consulted.
 ## Evidence and provenance
 
 The initial research review was read-only. The user later authorized implementation in this
-worktree. Focused solver, acceptance, runner, and mapping tests were run, but the bounded
-510-second experiment ladder and the full production solve were not launched.
+worktree. Focused solver, acceptance, runner, and mapping tests were run. A bounded Group 2
+repair run was later launched and stopped after the unrestricted National target was reported
+infeasible in 0.300 seconds. The full 510-second experiment matrix was not launched.
 
 The source review used
 /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review at the base commit above,
@@ -100,7 +101,37 @@ TD_REPO=/Users/Shared/sv-ntlee/repos/td \
 
 Implementation validation completed with 136 focused solver, Group 2, and mapping tests, followed
 by the repository runner with the pinned 2025 ZCTA shapefile: 944 passed, 0 failed, 0 skipped.
-No production output directory or `summary.png` was generated because the long solve was not run.
+No `summary.png` was generated because the bounded Group 2 attempt failed before ZIP realization.
+
+## Post-run verification
+
+The launched case used exact counts N=14, WH=11, and FI=21, all 19 Group 2 states forced to
+National, CONUS supporting states, full eligible National coverage, a six-unit district contact
+cap, the 900 km pair-distance rule with the 1,200 km Washington override, and the nominal
+National band [553.724691, 676.774623]. The radius 8, radius 24, and unrestricted repair models
+all returned infeasible. The unrestricted result is decisive for that frozen target.
+
+An independent verifier rebuilt the distance conflicts from the exported coordinates and policy,
+then exhaustively enumerated maximal cliques in the distance-compatibility graph. For each required
+unit it computed an upper bound on the total opportunity available to any distance-valid support
+of at most six units containing that unit. Seven units cannot reach the district floor even before
+connectivity, split caps, district count, and cross-district constraints are imposed:
+
+| Unit | Maximum compatible opportunity | Shortfall below 553.724691 |
+|---|---:|---:|
+| CO | 548.754666 | 4.970024 |
+| ID | 341.321233 | 212.403458 |
+| MT | 263.275277 | 290.449413 |
+| ND | 238.881152 | 314.843539 |
+| NE | 282.167471 | 271.557220 |
+| SD | 238.881152 | 314.843539 |
+| WY | 341.321233 | 212.403458 |
+
+Full coverage requires each listed unit to have positive share in at least one National district,
+which forces a contact. Every such district must reach the lower band. Any one of the seven local
+obstructions proves the complete target infeasible. Longer solves, original flow bounds, or the
+separator fallback cannot repair this contradiction. The runnable verification is in
+`tools/verify/group2_n14_distance/`.
 
 ## 1. Diagnosis
 
