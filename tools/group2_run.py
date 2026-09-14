@@ -44,6 +44,7 @@ GROUP2: list[str] = [str(state) for state in
                      "TX NY FL NJ IL AZ NC PA MI OH VA GA MD WA UT IN LA MN CT".split()]
 COUNTS = {"N": 14, "WH": 11, "FI": 21}
 PURE = {"N": ("N_WH", "N_FI"), "WH": ("WH",), "FI": ("FI",)}
+ENABLED_BUNDLES = tuple(channels.BUNDLES)
 SHARE_TOL = 1e-6
 SERIALIZED_SHARE_HALF_UNIT = 0.5e-6
 DEFAULT_MACRO_CUTS = ("CA:2",)
@@ -154,12 +155,13 @@ def constrain_problem(problem: level0.Level0Problem,
                       counts: dict[str, int], count_mode: str = "fixed",
                       unit_parent: dict[str, str] | None = None,
                       macro_national_contacts: int = 2) -> level0.Level0Problem:
-    """Require full pure share whenever any pure slot contacts a state.
+    """Require full bundle share whenever any slot contacts a state.
 
-    For each pure slot j, sum_h y[s,h] >= z[s,j], with h ranging over
-    that pure bundle. Existing channel coverage bounds give sum_h y[s,h] <= 1.
-    Multiple districts may split that full share. Prior mixed coverage makes
-    a new pure contact infeasible. Existing slot lower bounds are paired with
+    For each bundle slot j, sum_h y[s,h] >= z[s,j], with h ranging over
+    that bundle. Existing channel coverage bounds give sum_h y[s,h] <= 1.
+    Multiple districts may split that full share within one bundle, but the
+    state cannot leave a fractional bundle share. Prior mixed coverage makes
+    a new combined contact infeasible. Existing slot lower bounds are paired with
     upper bounds here: full_plan's fixed_used alone is only a count floor.
     """
     if count_mode not in ("fixed", "cap"):
@@ -196,8 +198,7 @@ def constrain_problem(problem: level0.Level0Problem,
     for s, unit in enumerate(problem.state_list):
         by_parent[_parent(unit, unit_parent)].append(s)
     purity_start = len(row_lb)
-    for bundle in PURE:
-        start, stop = problem.slots.get(bundle, (0, 0))
+    for bundle, (start, stop) in problem.slots.items():
         for members in by_parent.values():
             for trigger in members:
                 for j in range(start, stop):
@@ -233,6 +234,23 @@ def constrain_problem(problem: level0.Level0Problem,
         lb=np.concatenate([problem.lb, np.asarray(row_lb, float)]),
         ub=np.concatenate([problem.ub, np.asarray(row_ub, float)]),
         var_lb=lower, var_ub=upper, rows=rows)
+
+
+def require_case_national_coverage(
+    problem: level0.Level0Problem,
+    case: str,
+    unit_parent: dict[str, str] | None = None,
+) -> level0.Level0Problem:
+    """Require pure National coverage for the 19 Group 2 parents in case ``all``."""
+    if case not in ("choose", "all"):
+        raise ValueError(f"Unknown Group 2 case {case}")
+    if case == "choose" or "N" not in problem.slots:
+        return problem
+    changed = problem
+    for s, unit in enumerate(problem.state_list):
+        if _parent(unit, unit_parent) in GROUP2:
+            changed = level0.require_cover(changed, s, problem.bundles["N"])
+    return changed
 
 
 def drop_connectivity_for_diagnostic(problem: level0.Level0Problem) -> level0.Level0Problem:
@@ -295,7 +313,24 @@ def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed",
     all_units = list(plan.get("state_list") or plan.get("per_state") or shares)
     for unit in all_units:
         by_parent[_parent(unit, unit_parent)].append(unit)
+    fractional: list[dict[str, Any]] = []
     for parent, units in by_parent.items():
+        bundles = sorted({bundle for unit in units for bundle in shares[unit]})
+        for bundle in bundles:
+            active = any(
+                shares[unit][bundle]
+                > SHARE_TOL + SERIALIZED_SHARE_HALF_UNIT * share_terms[unit][bundle]
+                for unit in units)
+            if not active:
+                continue
+            for unit in units:
+                share = shares[unit][bundle]
+                tolerance = SHARE_TOL + SERIALIZED_SHARE_HALF_UNIT * share_terms[unit][bundle]
+                if abs(share - 1.0) > tolerance:
+                    issue = dict(state=parent, bundle=bundle, share=share)
+                    if unit != parent:
+                        issue["planning_unit"] = unit
+                    fractional.append(issue)
         for pure, fine in PURE.items():
             active = any(
                 shares[unit].get(pure, 0.0)
@@ -322,15 +357,21 @@ def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed",
     national = sorted({_parent(unit, unit_parent) for unit, per in shares.items()
                        if per.get("N", 0) > SHARE_TOL
                        + SERIALIZED_SHARE_HALF_UNIT * share_terms[unit]["N"]})
+    residual_values = [max(0.0, float(value)) for per in plan["per_state"].values()
+                       for value in per["residual_by_channel"].values()]
+    residual = sum(residual_values)
+    coverage_tolerance = SHARE_TOL + SERIALIZED_SHARE_HALF_UNIT * len(residual_values)
     return dict(counts=dict(counts), exact_counts=all(counts[b] == n for b, n in COUNTS.items()),
                 counts_satisfied=all(counts[b] == n if count_mode == "fixed" else counts[b] <= n
                                      for b, n in COUNTS.items()),
-                purity_violations=issues, national_states=national,
+                purity_violations=issues, fractional_coverage=fractional,
+                coverage_complete=residual <= coverage_tolerance,
+                national_states=national,
                 outside_group2=[] if supporting_states else sorted(set(national) - set(GROUP2)),
                 supporting_national_states=sorted(set(national) - set(GROUP2)),
                 missing_required_states=sorted(set(GROUP2) - set(national)) if case == "all" else [],
-                residual_share_sum=sum(float(v) for per in plan["per_state"].values()
-                                       for v in per["residual_by_channel"].values()))
+                residual_share_sum=residual,
+                coverage_tolerance=coverage_tolerance)
 
 
 def realized_audit(path: Path, case: str, count_mode: str = "fixed",
@@ -361,7 +402,7 @@ def realized_audit(path: Path, case: str, count_mode: str = "fixed",
     return dict(counts=dict(counts), exact_counts=all(counts[b] == n for b, n in COUNTS.items()),
                 counts_satisfied=all(counts[b] == n if count_mode == "fixed" else counts[b] <= n
                                      for b, n in COUNTS.items()),
-                purity_violations=violations, residual_mass=residual,
+                purity_violations=violations, fractional_coverage=[], residual_mass=residual,
                 coverage_complete=residual <= 1e-8,
                 national_states=national,
                 supporting_national_states=sorted(set(national)-set(GROUP2)),
@@ -372,6 +413,7 @@ def realized_audit(path: Path, case: str, count_mode: str = "fixed",
 def valid(audit: dict[str, Any]) -> bool:
     gates = ("coverage_complete", "geography_valid", "bands_valid", "graph_membership_valid")
     return (audit["counts_satisfied"] and not audit["purity_violations"]
+            and not audit.get("fractional_coverage", [])
             and not audit["outside_group2"] and not audit["missing_required_states"]
             and all(bool(audit.get(name, True)) for name in gates))
 
@@ -473,6 +515,7 @@ def planner_args(hub: Path, out: Path, case: str, seconds: float,
     capped = [(state, count) for state, count in capped if state not in split_parents]
     argv = [str(hub / "instance_descaled_v4_conus.json.gz"), "--out", str(out),
             "--geo-cache", str(hub / "data/geo"), "--route", "sequential", "--driver", "geo",
+            "--bundles", ",".join(ENABLED_BUNDLES),
             "--priority", "N,WH,FI", "--k-fixed", "N=14,WH=11,FI=21", "--k-mode", count_mode,
             "--band-mode", "per-bundle", "--delta", "0.1", "--eta", "0.05",
             "--dist-max", "900", "--dist-max-state", "WA=1200",
@@ -765,6 +808,7 @@ def main(argv: list[str] | None = None) -> int:
         case=args.case, count_mode=args.count_mode, requested_counts=COUNTS,
         group2_states=GROUP2, planning_group2_units=_expand_parents(GROUP2, macro.unit_parent),
         unit_parent=macro.unit_parent, supporting_states_allowed=args.supporting_states,
+        enabled_bundles=list(ENABLED_BUNDLES), coverage_rule="all_or_none_by_bundle",
         macro_national_contacts=args.macro_national_contacts,
         flow_bounds=args.flow_bounds,
         repair_from=str(args.repair_from.resolve()) if args.repair_from else None,
@@ -778,7 +822,8 @@ def main(argv: list[str] | None = None) -> int:
         diagnostic_drop_connectivity=args.diagnostic_drop_connectivity,
         diagnostic_drop_geography=args.diagnostic_drop_geography,
         resume_checkpoints=str(args.resume_checkpoints.resolve()) if args.resume_checkpoints else None,
-        additions=["conditional parent purity rows for N, WH and FI",
+        additions=["conditional full-share rows for every enabled bundle",
+                   "WHFI_PLUS enabled in the FI stage",
                    f"CA macro-regions with at most {args.macro_national_contacts} national "
                    "contacts per child",
                    "count lower and upper bounds" if args.count_mode == "fixed" else "count upper bounds"],
@@ -804,7 +849,7 @@ def main(argv: list[str] | None = None) -> int:
                                     macro.unit_parent, args.macro_national_contacts)
         stage = str(kw.get("stage", "unknown"))
         if args.repair_from is not None and stage == "seq_N" and "N" in problem.slots:
-            problem = group2_geography.require_full_bundle_coverage(problem, "N")
+            problem = require_case_national_coverage(problem, args.case, macro.unit_parent)
         if "N" in problem.slots:
             policies[stage] = geography_policy(
                 problem, case=args.case, count_mode=args.count_mode,
@@ -905,7 +950,7 @@ def main(argv: list[str] | None = None) -> int:
                            args.supporting_states, macro.unit_parent)
         write_json(out / "plan_purity.json", audit)
         if not valid(audit):
-            raise ValueError("Plan failed exact-count or purity audit")
+            raise ValueError("Plan failed exact-count, coverage, or purity audit")
         report["phase"] = "realization"
         write_json(out / "run_status.json", report)
         cmd = [sys.executable, "-u", str(ROOT / "tools/plan_realise.py"), str(out),

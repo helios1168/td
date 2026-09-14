@@ -6,11 +6,12 @@ import tempfile
 import networkx as nx
 import numpy as np
 
-from td import atoms
+from td import atoms, channels
 from td.instance import Descaled
 from td.solvers import level0, state_splits
-from tools.group2_run import (GROUP2, _macro_region_view, constrain_problem, group2_priority,
-                              plan_audit, planner_args, realized_audit, valid)
+from tools.group2_run import (ENABLED_BUNDLES, GROUP2, _macro_region_view, constrain_problem,
+                              group2_priority, plan_audit, planner_args,
+                              realized_audit, require_case_national_coverage, valid)
 from pathlib import Path
 
 
@@ -64,19 +65,36 @@ def test_prior_mixed_share_cannot_become_partial_pure():
         raise AssertionError("Prior mixed coverage was ignored")
 
 
-def test_all_three_pure_bundles_have_contact_implications():
+def test_all_enabled_bundles_have_full_share_contact_implications():
     cells = SimpleNamespace(M=np.ones((1, 4)), channels=("N_WH", "N_FI", "WH", "FI"),
                             state_list=["TX"])
-    problem = level0.build_level0(cells, {"N": ("N_WH", "N_FI"), "WH": ("WH",), "FI": ("FI",)},
-                                  edges=[], L=0.8, U=1.2, eta=0.05)
+    problem = level0.build_level0(
+        cells, {bundle: channels.BUNDLES[bundle] for bundle in ENABLED_BUNDLES},
+        edges=[], L=0.8, U=4.8, eta=0.05)
     changed = constrain_problem(problem, {})
     start, stop = changed.rows["conditional_purity"]
-    for b in ("N", "WH", "FI"):
+    for b in ENABLED_BUNDLES:
         first, _ = problem.slots[b]
         witness = np.zeros(problem.n_var)
         witness[problem.off_z + first] = 1
         witness[problem.off_y + first] = 0.5
         assert (changed.A[start:stop] @ witness < -0.4).any()
+
+
+def test_case_all_requires_only_group2_national_coverage():
+    cells = SimpleNamespace(M=np.ones((2, 2)), channels=("N_WH", "N_FI"),
+                            state_list=["TX", "CO"])
+    problem = level0.build_level0(
+        cells, {"N": ("N_WH", "N_FI")}, edges=[(0, 1)], L=0.8, U=4.0,
+        eta=0.05, fixed_used={"N": 1}, max_used={"N": 1})
+    target = require_case_national_coverage(problem, "all")
+    cover_lo, _ = target.rows["cover"]
+    assert target.lb[cover_lo] == 1.0
+    assert target.lb[cover_lo + 1] == 1.0
+    assert np.isneginf(target.lb[cover_lo + 2])
+    assert np.isneginf(target.lb[cover_lo + 3])
+    choose = require_case_national_coverage(problem, "choose")
+    assert np.isneginf(choose.lb[cover_lo:cover_lo + 4]).all()
 
 
 def test_macro_children_share_parent_purity_and_have_two_national_contacts_each():
@@ -129,6 +147,8 @@ def test_commands_differ_only_in_forced_national_requirement():
     assert all_states[-2] == "--force-national"
     assert choose[choose.index("--k-mode")+1] == "fixed"
     assert "--sweep" not in choose
+    assert choose[choose.index("--bundles") + 1].split(",") == list(ENABLED_BUNDLES)
+    assert "WHFI_PLUS" in ENABLED_BUNDLES
 
 
 def test_macro_planner_arguments_replace_parent_with_children_and_drop_parent_cap():
@@ -148,6 +168,20 @@ def test_plan_audit_rejects_partial_pure_wh_and_fi():
     report = plan_audit(dict(slots=slots, per_state={}), "choose")
     assert {r["channel"] for r in report["purity_violations"]} == {"WH", "FI"}
     assert not report["exact_counts"]
+
+
+def test_plan_audit_rejects_fractional_whfi_plus_coverage():
+    plan = {
+        "state_list": ["TX"],
+        "slots": [dict(used=True, bundle="WHFI_PLUS", y={"TX": 0.5})],
+        "per_state": {"TX": {"residual_by_channel": {
+            "N_WH": 0.5, "N_FI": 0.5, "WH": 0.5, "FI": 0.5,
+        }}},
+    }
+    report = plan_audit(plan, "choose")
+    assert report["fractional_coverage"] == [
+        dict(state="TX", bundle="WHFI_PLUS", share=0.5)]
+    assert not report["coverage_complete"]
 
 
 def test_plan_audit_allows_only_the_documented_six_decimal_rounding_error():

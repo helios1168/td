@@ -1,16 +1,15 @@
 # Group 2 geography and contiguity design memo
 
 Date: 2026-09-14
-Status: implemented; bounded full-coverage Group 2 run independently proved infeasible
+Status: implemented; WHFI_PLUS and all-or-none bundle coverage enabled after infeasibility review
 Author: Codex
 Worktree: /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/group2-flow-memo
 Branch: worktree-group2-flow-memo
 Base commit: 25b67ed4092935c57358097d2b7958937bf6bb28
 
-**Recommendation: first test the existing flow formulation with bounds derived from the
-six-unit cap, keeping every pair-distance constraint active.** Use the relaxed assignment to
-guide a bounded repair search, then release all repair restrictions. This is a smaller change
-than introducing column generation or a new solver.
+**Recommendation: rerun the 19-state pure-National target with WHFI_PLUS available for untouched
+states and all bundle coverage constrained to zero or one.** Keep the tightened flow formulation
+and every pair-distance constraint active.
 
 This memo records the independent design delivered in the conversation. It incorporates a
 repository-only downstream inventory and a bounded review of the flow proof. No other
@@ -61,10 +60,11 @@ fc6dc390018bb09c29db423ff9398ea1de6d048fca0d5f9a66cebd4ec3403bec  tools/plan_rea
 
 The runner now supports the recommended repair path for the active planner-selected, exact-count,
 supporting-state case. `--repair-from` accepts a compatible checkpoint, full-precision `z`/`y`
-JSON, or `plan.json`. It makes full National coverage explicit for positive-mass planning units,
-then runs contact-Hamming neighborhoods at radii 8 and 24 for 10 seconds each, followed by an
-unrestricted 70-second solve. `--separator-fallback` enables the bounded business-and-distance
-master with valid connectivity boundary cuts when repair ends without a candidate or proof.
+JSON, or `plan.json`. In case `all`, it makes pure National coverage explicit for the 19 Group 2
+states. Supporting states may instead enter another enabled bundle. Repair runs contact-Hamming
+neighborhoods at radii 8 and 24 for 10 seconds each, followed by an unrestricted 70-second solve.
+`--separator-fallback` enables the bounded business-and-distance master with valid connectivity
+boundary cuts when repair ends without a candidate or proof.
 
 The default `--flow-bounds tight` replaces the National SCF constants with 5 and 6 only after
 checking that the model contains the exact per-slot six-contact rows. `--flow-bounds original`
@@ -132,6 +132,17 @@ which forces a contact. Every such district must reach the lower band. Any one o
 obstructions proves the complete target infeasible. Longer solves, original flow bounds, or the
 separator fallback cannot repair this contradiction. The runnable verification is in
 `tools/verify/group2_n14_distance/`.
+
+## Revised channel contract
+
+The post-run decision enables `WHFI_PLUS` in the normal FI stage. Every enabled bundle now has an
+all-or-none state rule: contact with a state forces total share one across that bundle's districts.
+A large state may still split its full share across multiple districts of the same bundle.
+
+The National repair target no longer forces every positive-mass CONUS unit into pure National.
+Case `all` requires the 19 Group 2 parents in pure National, while supporting states may enter
+`N`, the paired `WH_PLUS` and `FI_PLUS` bundles, `WHFI`, or `WHFI_PLUS`. Plan acceptance rejects
+fractional bundle shares and material residual coverage before ZIP realization.
 
 ## 1. Diagnosis
 
