@@ -1,0 +1,83 @@
+{
+  "task_id": "agy-group2-n14w11f21",
+  "status": "authorized_four_case_grid",
+  "launch_requested": true,
+  "worktree": "/Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review",
+  "runtime": {
+    "python": "/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3",
+    "instance": "/Users/Shared/sv-ntlee/repos/td/instance_descaled_v4_conus.json.gz",
+    "geo_cache": "/Users/Shared/sv-ntlee/repos/td/data/geo",
+    "environment": {
+      "TD_GAZ_VINTAGE": "2025",
+      "TD_ZCTA_SHP": "/Users/Shared/sv-ntlee/repos/td/data/tiger/2025/tl_2025_us_zcta520.shp"
+    }
+  },
+  "requested_counts": {"N": 14, "WH": 11, "FI": 21},
+  "cases": [
+    {"national_selection": "choose_within_group2", "count_mode": "fixed"},
+    {"national_selection": "require_all_group2", "count_mode": "fixed"},
+    {"national_selection": "choose_within_group2", "count_mode": "cap"},
+    {"national_selection": "require_all_group2", "count_mode": "cap"}
+  ],
+  "group2_states": [
+    "TX", "NY", "FL", "NJ", "IL", "AZ", "NC", "PA", "MI", "OH",
+    "VA", "GA", "CO", "MD", "WA", "UT", "IN", "LA", "MN", "CT"
+  ],
+  "historical_pool_extensions": {
+    "states": ["DE", "DC", "SC", "CA"],
+    "automatically_adopted": false,
+    "reason": "The P5 study added these states for coverage and adjacency. They are not in the original Group 2 list."
+  },
+  "channel_purity": {
+    "scope": "Every state, for each pure channel N, WH and FI",
+    "rule": "If any opportunity of a channel in a state is assigned to a pure district of that channel, all of that state's opportunity in that channel must be assigned to pure districts of that channel.",
+    "national_channels": ["N_WH", "N_FI"],
+    "national_exception": "A state with no pure national district may allocate national opportunity through WH_PLUS, FI_PLUS or another permitted mixed bundle.",
+    "within_channel_district_splits": "Allowed subject to the state's district split cap; purity does not require one district per state.",
+    "required_checks": [
+      "Check state shares after every planning stage and after the residual sweep.",
+      "Check realized ZIP-channel ownership after repair, overlap handoff and the ZIP sweep.",
+      "Check full coverage and report residual opportunity separately; purity alone is not coverage.",
+      "Reject a purported compliant result if any selected pure channel also appears in a mixed bundle within the same state."
+    ]
+  },
+  "candidate_operational_settings": {
+    "source": "Historical FI21 P5 study; these settings are recorded for review, not launched.",
+    "route": "sequential",
+    "driver": "geo",
+    "priority": "N,WH,FI",
+    "band_mode": "per-bundle",
+    "delta": 0.1,
+    "eta": 0.05,
+    "max_splits": "CA=3,TX=2,NY=2,FL=2",
+    "band_break": "CA,TX,NY,FL",
+    "dist_max": 900,
+    "n_max": 6,
+    "plus_pair": true,
+    "other_floor": 0.5,
+    "engine": "highs",
+    "strategy": "direct",
+    "threads": 2,
+    "time_limit_per_pass_seconds": 180,
+    "theta": 0.4,
+    "lam": 0.3,
+    "filler_capture": "theta"
+  },
+  "historical_reference": {
+    "directory": "/Users/Shared/sv-ntlee/repos/td/.claude/worktrees/full-problem/battery/results/full_problem/grid_20260911_fi21_P5/P2_n14w11f21",
+    "count_mode": "cap",
+    "actual_counts": {"N": 13, "WH": 9, "FI": 14, "WH_PLUS": 1, "FI_PLUS": 2, "WHFI_PLUS": 12},
+    "state_share_purity_failures": {"N": 0, "WH": 0, "FI": 0},
+    "inspection_tolerance": 0.0001,
+    "inspection_scope": "Aggregate plan.json shares only; realized ownership and geography provenance were not revalidated."
+  },
+  "execution_requirements": [
+    "Run all four cases in parallel using tools/group2_run.py.",
+    "Reconcile any other-first states with national requirements; do not silently remove states or weaken purity to obtain feasibility.",
+    "Enforce conditional purity in the planner or provide an explicit equivalent workflow. Existing national-states, force-national and plus-pair flags do not jointly enforce the full rule for N, WH and FI.",
+    "Use a fresh output directory and preserve historical results.",
+    "For staffing comparisons, evaluate none, uniform and claims reservations on identical realized territories, with ZIP-grain reservations and separate raw and centered welfare.",
+    "Invoke the existing FEFx audit explicitly with separate band-only and band-plus-book-overlap masks.",
+    "Report staffing, Hall failures, residual mass, capacity violations and contiguity without assuming acceptance."
+  ]
+}
