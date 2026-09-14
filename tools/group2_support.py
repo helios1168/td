@@ -66,17 +66,19 @@ def generate_valid_supports(problem, max_size=6, max_dist=900, max_dist_state=No
 
 def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.774623),
                         eligible_units=None, required_units=None,
-                        macro_contact_caps=None, exact_coverage=False,
-                        relaxed_assignment=None):
+                        exact_coverage=True, macro_contact_caps=None,
+                        compactness_weight=0.001):
     import highspy
-    model = highspy.Highs()
-    model.setOptionValue("output_flag", False)
-    
-    num_supports = len(supports)
-    n = problem.n_state
     
     if eligible_units is None:
-        eligible_units = list(range(n))
+        eligible_units = list(range(problem.n_state))
+        
+    num_supports = len(supports)
+    if num_supports == 0:
+        return None
+        
+    model = highspy.Highs()
+    model.setOptionValue("output_flag", False)
         
     state_to_idx = {name: i for i, name in enumerate(problem.state_list)}
     
@@ -141,9 +143,21 @@ def solve_exact_support(problem, supports, count=14, band=(553.724691, 676.77462
                 model.addRow(0.0, float(cap), len(matching_supports),
                              np.array(matching_supports, dtype=np.int32), np.ones(len(matching_supports)))
         
-    # Objective: maximize covered opportunity by default
+    # Objective: maximize covered opportunity, with compactness penalty on support diameter
     for (v, i), col_idx in y_idx.items():
         model.changeColCost(col_idx, -float(w[v]))
+
+    if compactness_weight > 0.0 and len(problem.state_xy) > 0:
+        dist = np.zeros((problem.n_state, problem.n_state))
+        xy = problem.state_xy
+        for i in range(problem.n_state):
+            for j in range(problem.n_state):
+                if i != j:
+                    dist[i, j] = np.linalg.norm(xy[i] - xy[j])
+        for i, s in enumerate(supports):
+            s_list = list(s)
+            max_d = max(dist[u, v] for u in s_list for v in s_list) if len(s_list) > 1 else 0.0
+            model.changeColCost(i, compactness_weight * max_d)
         
     model.run()
     
