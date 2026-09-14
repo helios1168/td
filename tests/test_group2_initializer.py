@@ -57,9 +57,17 @@ def test_disabled_budget_returns_clean_no_seed():
     assert seed.status == "disabled" and seed.vector is None
 
 
+def test_invalid_budget_or_thread_count_returns_clean_no_seed():
+    problem = _problem([1.0])
+    passed = [level0.cover_pass(problem, ["N"])]
+    assert build_group2_warm_start(problem, passed, time_limit=-1).metadata["reason"] == "invalid_time_limit"
+    assert build_group2_warm_start(problem, passed, threads=0).metadata["reason"] == "invalid_threads"
+
+
 def test_actual_seed_solves_a_miniature_case():
     problem = _problem([1.0, 1.0], slots=1)
     seed = _seed(problem)
     result = level0.solve_passes(problem, [level0.cover_pass(problem, ["N"])],
                                  engine="scipy", time_limit=5, warm_start=seed.warm_start)
     assert result["passes"][-1]["value"] >= 0.8
+    assert seed.metadata["status"] == 0 and seed.metadata["auxiliary_optimal"] is True

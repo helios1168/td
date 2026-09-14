@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -103,10 +104,20 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
     optimality claim. ``threads`` is recorded for the caller's run metadata;
     scipy's bounded auxiliary MILP does not expose a thread setting.
     """
+    try:
+        seconds = float(time_limit)
+    except (TypeError, ValueError):
+        return Group2InitializerResult("no_seed", None,
+                                       dict(reason="invalid_time_limit", time_limit=repr(time_limit)))
+    if not np.isfinite(seconds) or seconds < 0.0:
+        return Group2InitializerResult("no_seed", None,
+                                       dict(reason="invalid_time_limit", time_limit=repr(time_limit)))
+    if isinstance(threads, bool) or not isinstance(threads, (int, np.integer)) or threads <= 0:
+        return Group2InitializerResult("no_seed", None,
+                                       dict(reason="invalid_threads", threads=repr(threads)))
     selected = _selected_bundles(problem, bundles)
-    base = dict(bundles=list(selected), time_limit=float(time_limit), threads=int(threads),
-                n_var=problem.n_var)
-    if time_limit <= 0.0:
+    base = dict(bundles=list(selected), time_limit=seconds, threads=int(threads), n_var=problem.n_var)
+    if seconds == 0.0:
         return Group2InitializerResult("disabled", None, base)
     if not selected:
         return Group2InitializerResult("no_seed", None, dict(base, reason="no_slots"))
@@ -118,17 +129,32 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
     except ValueError as exc:
         return Group2InitializerResult("no_seed", None, dict(base, reason=str(exc)))
     try:
-        result = milp(c, integrality=np.concatenate((problem.integrality, np.ones(len(selectors)))),
-                      bounds=Bounds(lb, ub), constraints=constraints,
-                      options={"time_limit": float(time_limit), "mip_rel_gap": 0.0})
+        # scipy forwards HiGHS options it does not own.  Some scipy releases warn
+        # about `threads` while forwarding it, others accept it directly.  Suppress
+        # only that known forwarding warning, so all other solver warnings remain
+        # visible.  The caller and production solve use the same thread count, so
+        # this does not resize HiGHS's process-global pool between solves.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning,
+                                    message=r"Unrecognized options detected: .*threads.*")
+            result = milp(c, integrality=np.concatenate((problem.integrality, np.ones(len(selectors)))),
+                          bounds=Bounds(lb, ub), constraints=constraints,
+                          options={"time_limit": seconds, "mip_rel_gap": 0.0,
+                                   "threads": int(threads)})
     except Exception as exc:  # A warm start is optional, including solver setup failures.
         return Group2InitializerResult("no_seed", None,
                                        dict(base, reason="solver_error", error=type(exc).__name__))
-    meta = dict(base, solver_status=int(result.status), solver_message=str(result.message),
+    meta = dict(base, status=int(result.status), solver_status=int(result.status),
+                solver_message=str(result.message),
                 selector_count=len(selectors))
     if result.x is None:
         return Group2InitializerResult("no_seed", None, dict(meta, reason="no_incumbent"))
     vector = np.asarray(result.x[:problem.n_var], float)
+    if not np.isfinite(vector).all():
+        return Group2InitializerResult("no_seed", None, dict(meta, reason="nonfinite_vector"))
+    integer_values = vector[np.asarray(problem.integrality, bool)]
+    if not np.all(np.abs(integer_values - np.rint(integer_values)) <= 1e-6):
+        return Group2InitializerResult("no_seed", None, dict(meta, reason="fractional_integer"))
     try:
         level0.check_point(problem, vector)
     except ValueError as exc:
@@ -138,4 +164,4 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
               for i, (s, bundle) in enumerate(selectors) if result.x[problem.n_var + i] > 0.5]
     return Group2InitializerResult("seed", vector,
                                    dict(meta, coverage=float(-c @ result.x), selected=chosen,
-                                        certified=bool(result.status == 0)))
+                                        auxiliary_optimal=bool(result.status == 0)))
