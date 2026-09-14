@@ -363,12 +363,16 @@ def test_main_restores_full_plan_wrappers_when_runner_factory_fails():
         before_env = dict(os.environ)
         with patch.dict(os.environ, {}, clear=False):
             saved_factory = group2_run.make_accelerated_runner
+            saved_prepare = group2_run.prepare_macro_regions
             group2_run.make_accelerated_runner = fail_factory
+            group2_run.prepare_macro_regions = lambda *a, **kw: SimpleNamespace(
+                data=None, unit_parent={}, graph=None, xy_km={}, record={})
             try:
                 code = group2_run.main(["--case", "choose", "--hub", str(hub),
                                         "--out", str(root / "out"), "--seed-time-limit", "0"])
                 assert code == 1
             finally:
                 group2_run.make_accelerated_runner = saved_factory
+                group2_run.prepare_macro_regions = saved_prepare
         assert dict(os.environ) == before_env
         assert (full_plan._build, full_plan._pass_list, full_plan._run_passes) == originals
