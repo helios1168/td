@@ -19,7 +19,7 @@ import subprocess
 import sys
 import time
 from collections import Counter, defaultdict
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from scipy import sparse
@@ -31,9 +31,12 @@ sys.path.insert(0, str(ROOT / "tools"))
 import full_plan
 from td import channels
 from td.solvers import level0
+from td.solvers import milp_engines
+from tools import group2_checkpoint, group2_initializer
 
 # Colorado remains eligible as supporting territory, not a priority or required state.
-GROUP2: list[str] = "TX NY FL NJ IL AZ NC PA MI OH VA GA MD WA UT IN LA MN CT".split()
+GROUP2: list[str] = [str(state) for state in
+                     "TX NY FL NJ IL AZ NC PA MI OH VA GA MD WA UT IN LA MN CT".split()]
 COUNTS = {"N": 14, "WH": 11, "FI": 21}
 PURE = {"N": ("N_WH", "N_FI"), "WH": ("WH",), "FI": ("FI",)}
 SHARE_TOL = 1e-6
@@ -77,7 +80,9 @@ def constrain_problem(problem: level0.Level0Problem,
                 vv.extend([1.0] * len(yy) + [-1.0])
                 n_rows += 1
     rows = dict(problem.rows)
-    rows["conditional_purity"] = (problem.A.shape[0], problem.A.shape[0] + n_rows)
+    matrix_shape = problem.A.shape
+    assert matrix_shape is not None
+    rows["conditional_purity"] = (matrix_shape[0], matrix_shape[0] + n_rows)
     extra = sparse.coo_matrix((vv, (rr, cc)), shape=(n_rows, problem.n_var)).tocsc()
     return dataclasses.replace(
         problem, A=sparse.vstack([problem.A, extra]).tocsc(),
@@ -189,6 +194,102 @@ def write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
 
 
+def make_accelerated_runner(
+    original_run: Callable[..., dict[str, Any]], *, checkpoint_dir: Path,
+    resume_dir: Path | None, provenance: dict[str, Any], seed_seconds: float,
+) -> Callable[..., dict[str, Any]]:
+    """Seed unchanged stage models and retain pass incumbents without skipping solves."""
+    store = group2_checkpoint.CheckpointStore(checkpoint_dir, provenance)
+    resume = (group2_checkpoint.CheckpointStore(resume_dir, provenance)
+              if resume_dir is not None else None)
+    progress: list[dict[str, Any]] = []
+
+    def flush() -> None:
+        checkpoint_dir.parent.mkdir(parents=True, exist_ok=True)
+        write_json(checkpoint_dir.parent / "stage_progress.json", progress)
+
+    def run(problem: level0.Level0Problem, passes: list[level0.Pass],
+            args: Any, stage: str, timings: Any, **kwargs: Any) -> dict[str, Any]:
+        started = time.monotonic()
+        record: dict[str, Any] = dict(stage=stage, status="starting", passes=[], seed={})
+        progress.append(record)
+        flush()
+        candidate: np.ndarray | None = None
+        if resume is not None:
+            loaded = resume.latest(stage, problem)
+            if loaded is not None:
+                candidate = np.asarray(loaded["x"], dtype=float)
+                record["seed"] = dict(source="checkpoint", status="loaded")
+        if candidate is None and kwargs.get("warm") is None and seed_seconds > 0:
+            seed = group2_initializer.build_group2_warm_start(
+                problem, passes, time_limit=seed_seconds, threads=args.threads or 2)
+            candidate = seed.vector
+            record["seed"] = dict(source="purity_initializer", **seed.metadata)
+        if candidate is not None:
+            try:
+                if not np.isfinite(candidate).all():
+                    raise ValueError("seed contains non-finite values")
+                level0.check_point(problem, candidate)
+            except ValueError as exc:
+                record["seed"].update(status="rejected", message=str(exc))
+            else:
+                kwargs["warm"] = candidate
+                kwargs["warm_seconds"] = time.monotonic() - started
+                record["seed"] = dict(record["seed"], validated=True)
+                try:
+                    path = store.save(stage, "seed", {"x": candidate}, problem)
+                    record["seed"]["checkpoint"] = str(path)
+                except (ValueError, OSError) as exc:
+                    record["seed"]["checkpoint_error"] = str(exc)
+        record["status"] = "solving"
+        flush()
+        original_solve = milp_engines.solve_problem
+        pass_index = 0
+
+        def solve(current: level0.Level0Problem, *a: Any, **kw: Any) -> dict[str, Any]:
+            nonlocal pass_index
+            pass_index += 1
+            item: dict[str, Any] = dict(index=pass_index, status="running")
+            record["passes"].append(item)
+            flush()
+            pass_started = time.monotonic()
+            try:
+                result = original_solve(current, *a, **kw)
+                item["status"] = str(result.get("status", "returned"))
+                for field in ("objective", "dual_bound", "nodes", "mip_gap"):
+                    value = result.get(field)
+                    if isinstance(value, (int, float, np.integer, np.floating)) and np.isfinite(float(value)):
+                        item[field] = float(value)
+                try:
+                    path = store.save(stage, f"pass_{pass_index:03d}", result, problem)
+                    item["checkpoint"] = str(path)
+                except (ValueError, OSError) as exc:
+                    # An unusable checkpoint must not replace or invalidate a solver result.
+                    item["checkpoint_error"] = str(exc)
+                return result
+            except Exception as exc:
+                item.update(status="failed", reason=getattr(exc, "reason", type(exc).__name__))
+                raise
+            finally:
+                item["seconds"] = round(time.monotonic() - pass_started, 3)
+                flush()
+
+        milp_engines.solve_problem = solve
+        try:
+            result = original_run(problem, passes, args, stage, timings, **kwargs)
+            record["status"] = "completed"
+            return result
+        except Exception as exc:
+            record.update(status="failed", reason=getattr(exc, "reason", type(exc).__name__))
+            raise
+        finally:
+            milp_engines.solve_problem = original_solve
+            record["seconds"] = round(time.monotonic() - started, 3)
+            flush()
+
+    return run
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", choices=["choose", "all"], required=True)
@@ -199,7 +300,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hub", type=Path, default=Path(os.environ["TD_REPO"]))
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--time-limit", type=float, default=180.0)
+    parser.add_argument("--seed-time-limit", type=float, default=15.0,
+                        help="Auxiliary purity-aware seed budget per stage; 0 disables seeding")
+    parser.add_argument("--resume-checkpoints", type=Path,
+                        help="Prior checkpoints directory; compatible points seed fresh solves")
     args = parser.parse_args(argv)
+    if not np.isfinite(args.seed_time_limit) or args.seed_time_limit < 0:
+        parser.error("--seed-time-limit must be finite and nonnegative")
     out = args.out.resolve()
     if args.audit_only:
         audit = realized_audit(out / "assignment.csv", args.case, args.count_mode,
@@ -219,23 +326,32 @@ def main(argv: list[str] | None = None) -> int:
     command = planner_args(args.hub, out, args.case, args.time_limit, args.count_mode,
                            args.supporting_states)
     sources = [Path(__file__), ROOT / "tools/full_plan.py", ROOT / "tools/plan_realise.py",
-               ROOT / "td/solvers/level0.py", ROOT / "td/stage2_state.py"]
+               ROOT / "td/solvers/level0.py", ROOT / "td/stage2_state.py",
+               ROOT / "tools/group2_checkpoint.py", ROOT / "tools/group2_initializer.py",
+               ROOT / "td/solvers/milp_engines.py"]
+    provenance = dict(
+        input_sha256=hashlib.sha256((args.hub / "instance_descaled_v4_conus.json.gz").read_bytes()).hexdigest(),
+        source_sha256={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources})
     write_json(out / "run_request.json", dict(
         case=args.case, count_mode=args.count_mode, requested_counts=COUNTS,
         group2_states=GROUP2, supporting_states_allowed=args.supporting_states,
         national_pool="CONUS" if args.supporting_states else GROUP2, planner_argv=command,
-        input_sha256=hashlib.sha256((args.hub / "instance_descaled_v4_conus.json.gz").read_bytes()).hexdigest(),
-        source_sha256={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
+        **provenance,
+        seed_time_limit=args.seed_time_limit,
+        resume_checkpoints=str(args.resume_checkpoints.resolve()) if args.resume_checkpoints else None,
         additions=["conditional purity rows for N, WH and FI",
                    "count lower and upper bounds" if args.count_mode == "fixed" else "count upper bounds"],
         state_sweep=False, other_first=[], greedy_anchors=False,
         terminal_rematch=True, stage2_reservation="none", gazetteer_vintage="2025"))
     started = time.monotonic()
     report: dict[str, Any] = dict(case=args.case, count_mode=args.count_mode,
-                                status="running", phase="planning")
+                                status="running", phase="planning",
+                                checkpoint_directory=str(out / "checkpoints"),
+                                progress_file=str(out / "stage_progress.json"))
     write_json(out / "run_status.json", report)
     original = full_plan._build
     original_passes = full_plan._pass_list
+    original_run = full_plan._run_passes
 
     def build(*a: Any, **kw: Any) -> level0.Level0Problem:
         return constrain_problem(original(*a, **kw), COUNTS, args.count_mode)
@@ -249,13 +365,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         with (out / "step_full_plan.log").open("w") as log:
             with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
-                full_plan._build = build
-                full_plan._pass_list = passes
                 try:
+                    full_plan._build = build
+                    full_plan._pass_list = passes
+                    full_plan._run_passes = make_accelerated_runner(
+                        original_run, checkpoint_dir=out / "checkpoints",
+                        resume_dir=args.resume_checkpoints, provenance=provenance,
+                        seed_seconds=args.seed_time_limit)
                     full_plan.main(command)
                 finally:
                     full_plan._build = original
                     full_plan._pass_list = original_passes
+                    full_plan._run_passes = original_run
         audit = plan_audit(json.loads((out / "plan.json").read_text()), args.case, args.count_mode,
                            args.supporting_states)
         write_json(out / "plan_purity.json", audit)

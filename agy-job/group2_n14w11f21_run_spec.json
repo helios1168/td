@@ -1,6 +1,15 @@
 {
   "task_id": "agy-group2-n14w11f21",
-  "status": "planner_selected_active_no_full_plan",
+  "status": "planner_selected_acceleration_implemented_no_full_plan",
+  "acceleration_report": "agy-job/reports/GROUP2_ACCELERATION.json",
+  "acceleration": {
+    "seed_time_limit_per_stage_seconds": 15,
+    "initializer": "Bounded auxiliary HiGHS model with explicit state-channel purity selectors; only fully validated original-model points become warm starts.",
+    "checkpoints": "Atomic JSON after validated seeds and each returned solver pass. Compatible checkpoints seed fresh optimization; they never skip passes or confer certification.",
+    "resume_option": "--resume-checkpoints PATH_TO_PRIOR_CHECKPOINTS",
+    "baseline_option": "--seed-time-limit 0",
+    "measured_speedup": "Not established. Short real-data smoke runs still timed out without a nonempty national plan."
+  },
   "deferred_required_states_handoff": "agy-job/reports/GROUP2_REQUIRED20_HANDOFF.json",
   "results": "agy-job/reports/GROUP2_RUNS.json",
   "launch_requested": true,

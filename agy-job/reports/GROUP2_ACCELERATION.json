@@ -1,0 +1,86 @@
+{
+  "task_id": "agy-group2-speed",
+  "status": "implemented_performance_inconclusive",
+  "summary": "Three Terra agents implemented and tested checkpointing and purity-aware warm initialization in parallel; root integrated them into the Group 2 runner. Short real-data smoke runs did not produce a nonempty national plan. No speedup or resolution of the original timeouts is claimed.",
+  "scope": {
+    "active_cases": ["planner-selected fixed counts", "planner-selected ceiling counts"],
+    "counts": {"N": 14, "WH": 11, "FI": 21},
+    "priority_pool": "Group 2 without Colorado, 19 states",
+    "supporting_states": "Allowed, including Colorado",
+    "purity": "Unchanged for N, WH and FI",
+    "opportunity_bounds": "Unchanged",
+    "geography": "Unchanged; only the existing WA=1200 override remains",
+    "required_state_handoff": "agy-job/reports/GROUP2_REQUIRED20_HANDOFF.json"
+  },
+  "implementation": {
+    "runner": "tools/group2_run.py",
+    "initializer": "tools/group2_initializer.py",
+    "checkpoints": "tools/group2_checkpoint.py",
+    "seed_budget_per_stage_seconds": 15,
+    "initializer_method": "Bounded auxiliary HiGHS MILP with explicit binary state-channel purity selectors and the first nonzero coverage objective. A returned point is stripped to the original variable layout and checked for finite values, integrality and every original model constraint before use.",
+    "fallback": "No valid seed means the original solver runs cold. No constraint is relaxed and no pass is skipped.",
+    "checkpoint_method": "Atomic JSON containing validated full vectors and model/input/source fingerprints. Save after a validated seed and after each returned engine pass. Root/flow variables are reconstructed and checked when the solver returns only z/y.",
+    "resume_method": "Compatible checkpoints provide warm starts for fresh optimization. They are not certificates and do not skip previous objectives or stages.",
+    "progress": "stage_progress.json records seed status, per-pass termination, objectives, available dual bounds and node counts, timing, and checkpoint locations.",
+    "isolation": "Scenario-level hooks are restored on failure. Pre-existing user changes in core planning and staffing files were not edited or committed."
+  },
+  "usage": {
+    "normal_run": "TD_REPO=/Users/Shared/sv-ntlee/repos/td /Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tools/group2_run.py --case choose --count-mode fixed --supporting-states --time-limit 180 --seed-time-limit 15 --out FRESH_OUTPUT_DIRECTORY",
+    "ceiling_case": "Use --count-mode cap with a separate fresh output directory.",
+    "reuse": "Add --resume-checkpoints PREVIOUS_OUTPUT_DIRECTORY/checkpoints. Both the model and provenance must match; changed source hashes reject reuse.",
+    "baseline": "Use --seed-time-limit 0 to disable the auxiliary initializer. Checkpointing remains enabled."
+  },
+  "tests": {
+    "group2": "37 passed, 0 failed",
+    "typecheck": "Pyright: 0 errors and 0 warnings on all three implementation modules",
+    "full_suite": "909 passed, 0 failed, 0 skipped with TD_GAZ_VINTAGE=2025, the hub 2025 TD_ZCTA_SHP, and pipefail preserving the runner exit status",
+    "coverage": [
+      "Pure-state assignment, permitted same-channel district splitting and exact counts",
+      "Auxiliary variables do not leak into the original solver model",
+      "Finite/integral/full-constraint validation, invalid priors and no-seed fallback",
+      "Corrupt/stale checkpoints and fractional pure allocations rejected",
+      "Cross-process fingerprint and connected-flow checkpoint roundtrip",
+      "Seed checkpoint survives failure before the first engine solve",
+      "Engine and planner hooks restored after failures",
+      "Test environment restored after mocked CLI failure"
+    ],
+    "serena": "Unavailable because no active project or activation tool is exposed; read-only rg/sed and Pyright used instead."
+  },
+  "real_data_smokes": {
+    "directory": "battery/results/agy_group2_acceleration_20260914_0442",
+    "run_in_parallel": true,
+    "seed_budget_seconds": 15,
+    "solver_budget_per_pass_seconds": 15,
+    "fixed": {
+      "seconds": 30.676,
+      "initializer": "No incumbent before seed timeout",
+      "main_solver": "No incumbent before first national coverage timeout",
+      "verdict": "Inconclusive, not proved infeasible"
+    },
+    "cap": {
+      "seconds": 46.145,
+      "initializer": "Validated empty seed only",
+      "main_solver": "Only empty national incumbents within the short coverage budgets; rejected as an incomplete plan",
+      "validated_pass_checkpoints_written": 3,
+      "verdict": "Inconclusive, not a successful territory plan"
+    },
+    "provenance": "Each run_request.json records loaded source/input hashes. Final type-safety changes and seed-before-first-pass checkpointing landed after smoke launch; focused tests cover those final changes."
+  },
+  "limitations": [
+    "No complete territory plan, realized ZIP assignment, staffing comparison or FEFx audit was produced.",
+    "The short smoke budgets do not establish whether the initializer improves production-budget performance.",
+    "Checkpointing preserves returned pass results and validated seeds, not every live incumbent during a running pass.",
+    "The underlying sequential planner still cannot reconsider national choices after downstream WH/FI failure; cross-channel repair or joint solving is not implemented here.",
+    "HiGHS thread count remains process-global. Production Group 2 launches use a fresh process with two threads; live-solver tests use fresh processes to avoid contamination from unrelated suite settings."
+  ],
+  "followups": [
+    "Compare seeded and cold runs at matched wall-clock budgets, then tune seed versus main-search time based on time to first nonempty incumbent.",
+    "If national allocations still leave WH/FI without usable plans, implement a separately tested cross-channel repair or seeded joint workflow rather than silently relaxing purity or opportunity bounds."
+  ],
+  "learned": [
+    "level0.check_point does not reject NaN by itself; checkpoint and seed boundaries explicitly require finite vectors.",
+    "Changing the thread count after a HiGHS pool is initialized can invalidate a solve. The auxiliary and production paths now use the same highspy thread setting.",
+    "A full-suite pipeline needs pipefail or a captured runner exit code; filter success alone is not a test pass."
+  ],
+  "missing_context": []
+}
