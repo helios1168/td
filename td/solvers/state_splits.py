@@ -811,6 +811,8 @@ def _solve_scipy(problem: SplitProblem, *, time_limit: float | None = None,
     y = x[problem.off_y:problem.off_y + S * k].reshape(S, k)
     return dict(
         problem.decode_zy(z, y),
+        _raw_z=x[problem.off_z:problem.off_z + S * k].reshape(S, k),
+        _raw_y=x[problem.off_y:problem.off_y + S * k].reshape(S, k),
         objective=float(res.fun),
         status="time_limit" if timed_out else int(res.status),
         mip_gap=float(res.mip_gap),

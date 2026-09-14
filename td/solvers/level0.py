@@ -540,6 +540,87 @@ def build_level0(cells, bundles: dict, *, edges: list[tuple[int, int]], L: float
     )
 
 
+def tighten_flow_capacity(problem: Level0Problem, contact_cap: int,
+                          bundle: str | None = None) -> Level0Problem:
+    """Tighten SCF big-M coefficients using a proved per-slot contact cap.
+
+    ``build_level0`` uses ``n_state - 1`` for arc capacities and ``n_state`` for root
+    supply. If every affected slot has ``sum_s z[s,j] <= contact_cap``, the exact constants
+    are ``contact_cap - 1`` and ``contact_cap``. This helper verifies that the existing
+    ``cap_n`` rows prove the requested bound before changing the flow rows or variable bounds.
+
+    ``bundle`` limits the change to one bundle. Passing ``None`` tightens every slot. A
+    repeated call can only tighten further; it never widens an already stronger formulation.
+    """
+    cap = int(contact_cap)
+    if cap < 1 or float(contact_cap) != float(cap):
+        raise ValueError(f"contact_cap must be a positive integer, got {contact_cap!r}")
+    if bundle is None:
+        slots = list(range(problem.k))
+    else:
+        if bundle not in problem.slots:
+            raise ValueError(f"unknown bundle {bundle!r}; expected one of {list(problem.slots)}")
+        lo_j, hi_j = problem.slots[bundle]
+        slots = list(range(lo_j, hi_j))
+    if not slots:
+        return problem
+    if "cap_n" not in problem.rows:
+        raise ValueError("flow tightening needs cap_n rows proving the contact bound")
+    cap_lo, cap_hi = problem.rows["cap_n"]
+    if cap_hi - cap_lo != problem.k:
+        raise ValueError(f"cap_n has {cap_hi - cap_lo} rows, expected {problem.k}")
+    if any(problem.ub[cap_lo + j] > cap + 1e-12 for j in slots):
+        raise ValueError(f"cap_n does not prove contact_cap={cap} for every affected slot")
+    for j in slots:
+        row = problem.A.getrow(cap_lo + j).tocoo()
+        actual = {int(col): float(value) for col, value in zip(row.col, row.data)
+                  if abs(float(value)) > 1e-12}
+        expected = {problem.off_z + s * problem.k + j: 1.0
+                    for s in range(problem.n_state)}
+        if actual != expected:
+            raise ValueError(f"cap_n row {j} is not the required sum of contact variables")
+
+    for name, expected in (("flow_tail", 2 * len(problem.edges) * problem.k),
+                           ("flow_head", 2 * len(problem.edges) * problem.k),
+                           ("net", problem.n_state * problem.k)):
+        if name not in problem.rows:
+            raise ValueError(f"flow tightening needs row block {name!r}")
+        lo, hi = problem.rows[name]
+        if hi - lo != expected:
+            raise ValueError(f"{name} has {hi - lo} rows, expected {expected}")
+
+    q = min(cap, problem.n_state)
+    arc_cap = float(max(q - 1, 0))
+    root_supply = float(q)
+    matrix = problem.A.tolil(copy=True)
+    K = problem.k
+    arcs: list[tuple[int, int]] = []
+    for a, b in problem.edges:
+        arcs.extend(((a, b), (b, a)))
+    for name, endpoint in (("flow_tail", 0), ("flow_head", 1)):
+        row_lo, _ = problem.rows[name]
+        for arc, ends in enumerate(arcs):
+            s = ends[endpoint]
+            for j in slots:
+                row = row_lo + arc * K + j
+                col = problem.off_z + s * K + j
+                current = abs(float(matrix[row, col]))
+                matrix[row, col] = -min(current, arc_cap)
+    net_lo, _ = problem.rows["net"]
+    for s in range(problem.n_state):
+        for j in slots:
+            row = net_lo + s * K + j
+            col = problem.off_r + s * K + j
+            current = abs(float(matrix[row, col]))
+            matrix[row, col] = -min(current, root_supply)
+
+    upper = problem.var_ub.copy()
+    for arc in range(len(arcs)):
+        cols = problem.off_f + arc * K + np.asarray(slots, int)
+        upper[cols] = np.minimum(upper[cols], arc_cap)
+    return dataclasses.replace(problem, A=matrix.tocsc(), var_ub=upper)
+
+
 def moments_from_seeds(problem: Level0Problem, seeds, state_xy) -> np.ndarray:
     """`D (S, K)`: `D[s, j]` is the squared centroid distance from state `s` to the state slot
     `j` is seeded at, in whatever units `state_xy` carries (km after the driver's conversion).
@@ -1332,6 +1413,8 @@ def solve_passes(problem: Level0Problem, passes: list[Pass], *, engine: str = "s
     if last is None:
         S, K, C = problem.n_state, problem.k, problem.cover_ub.shape[1]
         last = problem.decode_zy(np.zeros((S, K), bool), np.zeros((S, K)))
-    return dict(passes=log, z=last["z"], y=last["y"], u=last["used"],
+    return dict(passes=log, z=last["z"], y=last["y"],
+                _raw_z=last.get("_raw_z", last["z"]),
+                _raw_y=last.get("_raw_y", last["y"]), u=last["used"],
                 residual=last["residual"], covered=last["covered"], masses=last["masses"],
                 contacts=last["contacts"], problem=problem)

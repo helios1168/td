@@ -430,6 +430,10 @@ def _highs_solve(problem: SplitProblem, *, time_limit, cutoff=None, warm=None,
 
     x = np.asarray(h.getSolution().col_value, float)
     result = _decode_x(problem, x)
+    result["_raw_z"] = x[problem.off_z:problem.off_z + problem.n_state * problem.k].reshape(
+        problem.n_state, problem.k)
+    result["_raw_y"] = x[problem.off_y:problem.off_y + problem.n_state * problem.k].reshape(
+        problem.n_state, problem.k)
     optimal = model_status == highspy.HighsModelStatus.kOptimal
     result.update(status=(0 if optimal else "time_limit"),
                  mip_gap=float(info.mip_gap), objective=float(info.objective_function_value),
@@ -529,6 +533,10 @@ def _scip_solve(problem: SplitProblem, *, time_limit, cutoff=None, warm=None,
 
     x = np.array([m.getVal(v) for v in xs])
     result = _decode_x(problem, x)
+    result["_raw_z"] = x[problem.off_z:problem.off_z + problem.n_state * problem.k].reshape(
+        problem.n_state, problem.k)
+    result["_raw_y"] = x[problem.off_y:problem.off_y + problem.n_state * problem.k].reshape(
+        problem.n_state, problem.k)
     result.update(status=(0 if status == "optimal" else "time_limit"),
                  mip_gap=float(m.getGap()), objective=float(m.getObjVal()),
                  nodes=int(m.getNNodes()), dual_bound=float(m.getDualbound()),

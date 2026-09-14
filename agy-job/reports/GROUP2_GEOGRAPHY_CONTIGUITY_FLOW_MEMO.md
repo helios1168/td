@@ -1,7 +1,7 @@
 # Group 2 geography and contiguity design memo
 
 Date: 2026-09-14
-Status: design only; no implementation or experimental solve performed
+Status: implemented behind Group 2 runner options; no experimental long solve performed
 Author: Codex
 Worktree: /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/group2-flow-memo
 Branch: worktree-group2-flow-memo
@@ -18,14 +18,15 @@ frontier model's design memo was consulted.
 
 ## Evidence and provenance
 
-The research review was read-only. No tests or solves were run. This document is the only
-project-file addition made when transferring the memo to its own worktree.
+The initial research review was read-only. The user later authorized implementation in this
+worktree. Focused solver, acceptance, runner, and mapping tests were run, but the bounded
+510-second experiment ladder and the full production solve were not launched.
 
 The source review used
 /Users/Shared/sv-ntlee/repos/td/.claude/worktrees/agy-math-review at the base commit above,
-including its uncommitted Group 2 implementation. Those implementation changes were not copied
-into this worktree. In particular, tools/group2_run.py in the new worktree is not necessarily
-the version described below. All source line anchors refer to the inspected source worktree.
+including its uncommitted Group 2 implementation. The implementation was recreated and extended
+independently in this worktree. Historical source line anchors below refer to the inspected
+source worktree and may have shifted in the implemented files.
 
 Inspected material included the handoff, the aggregate run specification, and the relevant
 symbols in level0, the Group 2 runner, initializer, symmetry and checkpoint helpers, the MILP
@@ -54,6 +55,52 @@ d03e1893f843bff9cb3d2dd7dfc9a07f7eb8e65a407c3f1420149c951723fa1f  tools/group2_r
 a4d73d965fc6bbebf17e0d74f641285707515f9ca5f43c4b986ab284e5793bdc  tools/full_plan.py
 fc6dc390018bb09c29db423ff9398ea1de6d048fca0d5f9a66cebd4ec3403bec  tools/plan_realise.py
 ~~~
+
+## Implementation status
+
+The runner now supports the recommended repair path for the active planner-selected, exact-count,
+supporting-state case. `--repair-from` accepts a compatible checkpoint, full-precision `z`/`y`
+JSON, or `plan.json`. It makes full National coverage explicit for positive-mass planning units,
+then runs contact-Hamming neighborhoods at radii 8 and 24 for 10 seconds each, followed by an
+unrestricted 70-second solve. `--separator-fallback` enables the bounded business-and-distance
+master with valid connectivity boundary cuts when repair ends without a candidate or proof.
+
+The default `--flow-bounds tight` replaces the National SCF constants with 5 and 6 only after
+checking that the model contains the exact per-slot six-contact rows. `--flow-bounds original`
+keeps the prior constants for matched experiments. California defaults to two deterministic ZIP
+macro-regions, parent-coupled purity, and two National contacts per child.
+
+Every National candidate is checked from the solver's raw `z` and `y` values. Acceptance requires
+the independent semantic checks and reconstruction against the complete hard-constraint matrix.
+The run writes the target, relaxed reference, validation report, full-precision certificate,
+progress, model hashes, and macro partition metadata under the output directory. Restricted
+neighborhood infeasibility is never reported as target infeasibility.
+
+After successful ZIP realization and the final geography, band, coverage, purity, and graph
+membership gates, the runner invokes the existing `tools/plan_maps.py` and
+`tools/plan_summary.py --no-cache`. The latter must produce `maps/summary.png`. These three files
+are byte-identical to the mapping stack in the full-problem worktree:
+
+~~~text
+0462b01242eafe8c0375a4feddaafa1648378b3620c9b5533fb1e15528deba9b  tools/plan_maps.py
+5c27cd2289cd2e61139f24333cdb0b757930bcc5cbf160a04ddab40bef8b0075  tools/plan_summary.py
+6f50d92c9f9f0455ed15af5819470364b36f349c702bae699541c1119cae480d  tools/us_maps.py
+~~~
+
+The intended production command is:
+
+~~~bash
+TD_REPO=/Users/Shared/sv-ntlee/repos/td \
+/Users/Shared/sv-ntlee/repos/td/.venv/bin/python3 -u tools/group2_run.py \
+  --case choose --count-mode fixed --supporting-states \
+  --macro-national-contacts 2 --flow-bounds tight \
+  --repair-from RELAXED_REFERENCE.json --separator-fallback \
+  --time-limit 180 --out FRESH_OUTPUT_DIRECTORY
+~~~
+
+Implementation validation completed with 136 focused solver, Group 2, and mapping tests, followed
+by the repository runner with the pinned 2025 ZCTA shapefile: 944 passed, 0 failed, 0 skipped.
+No production output directory or `summary.png` was generated because the long solve was not run.
 
 ## 1. Diagnosis
 

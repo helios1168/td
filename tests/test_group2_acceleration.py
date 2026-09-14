@@ -15,7 +15,8 @@ import numpy as np
 
 from td.solvers import level0
 from td.solvers import milp_engines
-from tools import group2_checkpoint, group2_initializer
+from td.solvers import state_splits
+from tools import group2_checkpoint, group2_geography, group2_initializer
 from tools.group2_symmetry import canonicalize_slot_symmetry
 import tools.group2_run as group2_run
 from tools.group2_run import (constrain_problem, drop_connectivity_for_diagnostic,
@@ -171,6 +172,13 @@ def test_connectivity_diagnostic_retains_business_rows_but_allows_disconnected_c
                                  engine="scipy", time_limit=5.0)
     assert int(result["z"].sum()) == 2
     assert int(result["u"].sum()) == 1
+
+
+def test_connectivity_diagnostic_also_removes_root_canonicalization_rows():
+    symmetric = canonicalize_slot_symmetry(_problem())
+    assert "root_min_N" in symmetric.rows
+    reduced = drop_connectivity_for_diagnostic(symmetric)
+    assert not any(name.startswith("root_min_") for name in reduced.rows)
 
 
 def test_geography_diagnostic_removes_only_pair_distance_rows():
@@ -363,12 +371,103 @@ def test_main_restores_full_plan_wrappers_when_runner_factory_fails():
         before_env = dict(os.environ)
         with patch.dict(os.environ, {}, clear=False):
             saved_factory = group2_run.make_accelerated_runner
+            saved_prepare = group2_run.prepare_macro_regions
             group2_run.make_accelerated_runner = fail_factory
+            group2_run.prepare_macro_regions = lambda *a, **kw: SimpleNamespace(
+                data=None, unit_parent={}, graph=None, xy_km={}, record={})
             try:
                 code = group2_run.main(["--case", "choose", "--hub", str(hub),
                                         "--out", str(root / "out"), "--seed-time-limit", "0"])
                 assert code == 1
             finally:
                 group2_run.make_accelerated_runner = saved_factory
+                group2_run.prepare_macro_regions = saved_prepare
         assert dict(os.environ) == before_env
         assert (full_plan._build, full_plan._pass_list, full_plan._run_passes) == originals
+
+
+def test_render_figures_uses_the_full_problem_map_and_summary_scripts():
+    with tempfile.TemporaryDirectory() as temporary:
+        run_dir = Path(temporary)
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append((command, kwargs))
+            if Path(command[2]).name == "plan_summary.py":
+                (run_dir / "maps").mkdir()
+                (run_dir / "maps" / "summary.png").write_bytes(b"png")
+            return SimpleNamespace(returncode=0)
+
+        with patch.object(group2_run.subprocess, "run", fake_run):
+            result = group2_run.render_figures(run_dir, Path("/geo"))
+
+        assert [Path(command[2]).name for command, _ in calls] == [
+            "plan_maps.py", "plan_summary.py"]
+        assert calls[1][0][-1] == "--no-cache"
+        assert result["summary_png"].endswith("maps/summary.png")
+
+
+def test_repair_runner_exports_and_accepts_a_checked_toy_reference():
+    with tempfile.TemporaryDirectory() as temporary:
+        _repair_runner_exports_and_accepts_a_checked_toy_reference(Path(temporary))
+
+
+def _repair_runner_exports_and_accepts_a_checked_toy_reference(tmp_path):
+    problem = _problem()
+    solved = level0.solve_passes(
+        problem, [level0.cover_pass(problem, ["N"])], engine="scipy", time_limit=5.0)
+    reference = tmp_path / "relaxed.json"
+    reference.write_text(json.dumps({"z": solved["z"].tolist(),
+                                     "y": solved["y"].tolist()}))
+    policy = group2_geography.GeographyPolicy(expected_count=1, contact_cap=6)
+    accepted = []
+
+    def should_not_run(*args, **kwargs):
+        raise AssertionError("the ordinary pass runner must be bypassed during repair")
+
+    wrapped = make_accelerated_runner(
+        should_not_run, checkpoint_dir=tmp_path / "checkpoints", resume_dir=None,
+        provenance={"case": "choose"}, seed_seconds=0.0, repair_from=reference,
+        candidate_validator=lambda actual, witness, stage:
+            group2_geography.validate_candidate(actual, witness, policy),
+        on_accept=lambda *args: accepted.append(args))
+    result = wrapped(problem, [], SimpleNamespace(engine="scipy", threads=2),
+                     "seq_N", object())
+
+    assert result["passes"][0]["name"] == "hamming_repair"
+    assert accepted
+    assert (tmp_path / "research" / "seq_N_reference.json").is_file()
+
+
+def test_repair_runner_preserves_unrestricted_infeasibility_status():
+    with tempfile.TemporaryDirectory() as temporary:
+        _repair_runner_preserves_unrestricted_infeasibility_status(Path(temporary))
+
+
+def _repair_runner_preserves_unrestricted_infeasibility_status(tmp_path):
+    problem = _problem()
+    solved = level0.solve_passes(
+        problem, [level0.cover_pass(problem, ["N"])], engine="scipy", time_limit=5.0)
+    reference = tmp_path / "relaxed.json"
+    reference.write_text(json.dumps({"z": solved["z"].tolist(),
+                                     "y": solved["y"].tolist()}))
+    outcome = group2_geography.RepairOutcome(
+        None, (group2_geography.RepairAttempt(None, 1.0, "infeasible", 0.1),))
+    saved = group2_geography.solve_repair_ladder
+    group2_geography.solve_repair_ladder = lambda *args, **kwargs: outcome
+    try:
+        wrapped = make_accelerated_runner(
+            lambda *args, **kwargs: {}, checkpoint_dir=tmp_path / "checkpoints",
+            resume_dir=None, provenance={"case": "choose"}, seed_seconds=0.0,
+            repair_from=reference,
+            candidate_validator=lambda actual, witness, stage:
+                group2_geography.ValidationReport(True, (), {}, (), {"accepted": True}))
+        try:
+            wrapped(problem, [], SimpleNamespace(engine="scipy", threads=2),
+                    "seq_N", object())
+        except state_splits.SolveFailure as exc:
+            assert exc.status == 2 and exc.reason == "infeasible"
+        else:
+            raise AssertionError("unrestricted infeasibility must propagate as a proof")
+    finally:
+        group2_geography.solve_repair_ladder = saved

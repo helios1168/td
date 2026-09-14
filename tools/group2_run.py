@@ -21,6 +21,7 @@ import time
 from collections import Counter, defaultdict
 from typing import Any, Callable
 
+import networkx as nx
 import numpy as np
 from scipy import sparse
 
@@ -29,10 +30,14 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import full_plan
+import run_draw
+from td import atoms as atoms_mod
 from td import channels
+from td import instance as descaled
 from td.solvers import level0
 from td.solvers import milp_engines
-from tools import group2_checkpoint, group2_initializer, group2_symmetry
+from td.solvers import state_splits
+from tools import group2_checkpoint, group2_geography, group2_initializer, group2_symmetry
 
 # Colorado remains eligible as supporting territory, not a priority or required state.
 GROUP2: list[str] = [str(state) for state in
@@ -40,10 +45,115 @@ GROUP2: list[str] = [str(state) for state in
 COUNTS = {"N": 14, "WH": 11, "FI": 21}
 PURE = {"N": ("N_WH", "N_FI"), "WH": ("WH",), "FI": ("FI",)}
 SHARE_TOL = 1e-6
+SERIALIZED_SHARE_HALF_UNIT = 0.5e-6
+DEFAULT_MACRO_CUTS = ("CA:2",)
+
+
+@dataclasses.dataclass(frozen=True)
+class MacroRegions:
+    """An in-memory planning-unit view plus its reproducibility record."""
+
+    data: descaled.Descaled
+    unit_parent: dict[str, str]
+    graph: nx.Graph
+    xy_km: dict[str, tuple[float, float]]
+    record: dict[str, Any]
+
+
+def _parent(unit: str, unit_parent: dict[str, str] | None) -> str:
+    return (unit_parent or {}).get(unit, unit)
+
+
+def _expand_parents(states: list[str], unit_parent: dict[str, str] | None) -> list[str]:
+    children: dict[str, list[str]] = defaultdict(list)
+    for unit, parent in (unit_parent or {}).items():
+        children[parent].append(unit)
+    out: list[str] = []
+    for state in states:
+        out.extend(sorted(children.get(state, (state,))))
+    return out
+
+
+def _macro_region_view(d: descaled.Descaled, built: atoms_mod.Atoms,
+                       xy: dict[str, tuple[float, float]], cuts: dict,
+                       *, seed: int, missing_coordinates: int = 0) -> MacroRegions:
+    """Remap only cut-state ZIPs to planning units without mutating the source instance."""
+    parents: dict[str, str] = {}
+    for group, (states, _) in cuts.items():
+        if len(states) != 1:
+            raise ValueError(f"Group 2 macro cuts must name one parent state, got {states}")
+        for unit in built.pieces[group]:
+            parents[unit] = states[0]
+
+    graph = d.G.copy()
+    units: dict[str, dict[str, Any]] = {}
+    for unit, parent in sorted(parents.items()):
+        zips = tuple(sorted(built.zips_of[unit]))
+        for zp in zips:
+            graph.nodes[zp]["state"] = unit
+        weighted = [(zp, float(d.G.nodes[zp].get("M", 0.0)))
+                    for zp in zips if zp in xy]
+        denom = sum(max(0.0, mass) for _, mass in weighted)
+        if denom > 0.0:
+            cx = sum(float(xy[zp][0]) * max(0.0, mass) for zp, mass in weighted) / denom
+            cy = sum(float(xy[zp][1]) * max(0.0, mass) for zp, mass in weighted) / denom
+        elif weighted:
+            cx = sum(float(xy[zp][0]) for zp, _ in weighted) / len(weighted)
+            cy = sum(float(xy[zp][1]) for zp, _ in weighted) / len(weighted)
+        else:
+            raise ValueError(f"macro unit {unit} has no ZIP coordinates for its centroid")
+        channel_mass = {
+            channel: sum(float((d.G.nodes[zp].get("M_c") or {}).get(channel, 0.0))
+                         for zp in zips)
+            for channel in channels.channels_of(d)
+        }
+        units[unit] = dict(
+            parent=parent, zips=list(zips), n_zips=len(zips),
+            mass=float(sum(float(d.G.nodes[zp].get("M", 0.0)) for zp in zips)),
+            channel_opportunity=channel_mass,
+            centroid_km=[cx / 1000.0, cy / 1000.0],
+            adjacent_units=sorted(str(v) for v in built.graph.neighbors(unit)),
+        )
+
+    membership = {unit: value["zips"] for unit, value in units.items()}
+    partition_hash = hashlib.sha256(
+        json.dumps(membership, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    record = dict(
+        cuts={group: {"parent": states[0], "pieces": count}
+              for group, (states, count) in cuts.items()},
+        cut_seed=seed, missing_coordinates=missing_coordinates,
+        partition_sha256=partition_hash, unit_parent=parents, units=units,
+    )
+    return MacroRegions(
+        data=dataclasses.replace(d, G=graph), unit_parent=parents,
+        graph=built.graph.copy(),
+        xy_km={unit: tuple(value["centroid_km"]) for unit, value in units.items()},
+        record=record,
+    )
+
+
+def prepare_macro_regions(instance: Path, geo_cache: Path, specs: list[str],
+                          *, seed: int = atoms_mod.CUT_SEED) -> MacroRegions:
+    """Build deterministic ZIP macro-regions for the Group 2 planning view."""
+    d = descaled.load_descaled(instance)
+    if tuple(d.channels) != tuple(channels.CHANNELS):
+        d = channels.fine_split(d)
+    cuts = atoms_mod.parse_cuts(specs)
+    if any(len(states) != 1 for states, _ in cuts.values()):
+        raise ValueError("Group 2 macro cuts must be per-state, for example CA:2")
+    zips = list(d.G)
+    mass = {zp: float(d.G.nodes[zp].get("M", 0.0)) for zp in zips}
+    states = {zp: str(d.G.nodes[zp].get("state") or "") for zp in zips}
+    xy, missing = run_draw.coordinates(zips, str(geo_cache))
+    built = atoms_mod.build(zips, mass, states, xy, cuts, seed=seed, cache=str(geo_cache))
+    return _macro_region_view(d, built, xy, cuts, seed=seed,
+                              missing_coordinates=len(missing))
 
 
 def constrain_problem(problem: level0.Level0Problem,
-                      counts: dict[str, int], count_mode: str = "fixed") -> level0.Level0Problem:
+                      counts: dict[str, int], count_mode: str = "fixed",
+                      unit_parent: dict[str, str] | None = None,
+                      macro_national_contacts: int = 2) -> level0.Level0Problem:
     """Require full pure share whenever any pure slot contacts a state.
 
     For each pure slot j, sum_h y[s,h] >= z[s,j], with h ranging over
@@ -54,6 +164,8 @@ def constrain_problem(problem: level0.Level0Problem,
     """
     if count_mode not in ("fixed", "cap"):
         raise ValueError(f"Unknown count mode {count_mode}")
+    if macro_national_contacts < 1:
+        raise ValueError("macro_national_contacts must be at least 1")
     lower, upper = problem.var_lb.copy(), problem.var_ub.copy()
     for bundle, count in counts.items():
         if bundle not in problem.slots:
@@ -69,31 +181,64 @@ def constrain_problem(problem: level0.Level0Problem,
     rr: list[int] = []
     cc: list[int] = []
     vv: list[float] = []
-    n_rows = 0
+    row_lb: list[float] = []
+    row_ub: list[float] = []
+
+    def add(cols: list[int], vals: list[float], lo: float, hi: float) -> None:
+        row = len(row_lb)
+        rr.extend([row] * len(cols))
+        cc.extend(cols)
+        vv.extend(vals)
+        row_lb.append(lo)
+        row_ub.append(hi)
+
+    by_parent: dict[str, list[int]] = defaultdict(list)
+    for s, unit in enumerate(problem.state_list):
+        by_parent[_parent(unit, unit_parent)].append(s)
+    purity_start = len(row_lb)
     for bundle in PURE:
         start, stop = problem.slots.get(bundle, (0, 0))
-        for s in range(problem.n_state):
-            for j in range(start, stop):
-                yy = [problem.off_y + s * problem.k + h for h in range(start, stop)]
-                rr.extend([n_rows] * (len(yy) + 1))
-                cc.extend(yy + [problem.off_z + s * problem.k + j])
-                vv.extend([1.0] * len(yy) + [-1.0])
-                n_rows += 1
+        for members in by_parent.values():
+            for trigger in members:
+                for j in range(start, stop):
+                    for required in members:
+                        yy = [problem.off_y + required * problem.k + h
+                              for h in range(start, stop)]
+                        add(yy + [problem.off_z + trigger * problem.k + j],
+                            [1.0] * len(yy) + [-1.0], 0.0, np.inf)
+    purity_stop = len(row_lb)
+
+    national_start, national_stop = problem.slots.get("N", (0, 0))
+    macro_start = len(row_lb)
+    for s, unit in enumerate(problem.state_list):
+        if _parent(unit, unit_parent) == unit or national_start == national_stop:
+            continue
+        cols = [problem.off_z + s * problem.k + j
+                for j in range(national_start, national_stop)]
+        add(cols, [1.0] * len(cols), -np.inf, float(macro_national_contacts))
+    macro_stop = len(row_lb)
+
     rows = dict(problem.rows)
     matrix_shape = problem.A.shape
     assert matrix_shape is not None
-    rows["conditional_purity"] = (matrix_shape[0], matrix_shape[0] + n_rows)
-    extra = sparse.coo_matrix((vv, (rr, cc)), shape=(n_rows, problem.n_var)).tocsc()
+    rows["conditional_purity"] = (matrix_shape[0] + purity_start,
+                                  matrix_shape[0] + purity_stop)
+    if macro_stop > macro_start:
+        rows["macro_national_contact"] = (matrix_shape[0] + macro_start,
+                                           matrix_shape[0] + macro_stop)
+    extra = sparse.coo_matrix((vv, (rr, cc)),
+                              shape=(len(row_lb), problem.n_var)).tocsc()
     return dataclasses.replace(
         problem, A=sparse.vstack([problem.A, extra]).tocsc(),
-        lb=np.concatenate([problem.lb, np.zeros(n_rows)]),
-        ub=np.concatenate([problem.ub, np.full(n_rows, np.inf)]),
+        lb=np.concatenate([problem.lb, np.asarray(row_lb, float)]),
+        ub=np.concatenate([problem.ub, np.asarray(row_ub, float)]),
         var_lb=lower, var_ub=upper, rows=rows)
 
 
 def drop_connectivity_for_diagnostic(problem: level0.Level0Problem) -> level0.Level0Problem:
     """Project out only SCF connectivity for a labeled feasibility diagnostic."""
     removed = {"root", "rz", "flow_tail", "flow_head", "net"}
+    removed.update(name for name in problem.rows if name.startswith("root_min_"))
     keep = np.ones(len(problem.lb), dtype=bool)
     for name in removed:
         if name not in problem.rows:
@@ -134,24 +279,49 @@ def drop_geography_for_diagnostic(problem: level0.Level0Problem) -> level0.Level
 
 
 def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed",
-               supporting_states: bool = False) -> dict[str, Any]:
+               supporting_states: bool = False,
+               unit_parent: dict[str, str] | None = None) -> dict[str, Any]:
     shares: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    share_terms: dict[str, Counter[str]] = defaultdict(Counter)
     counts: Counter[str] = Counter()
     for slot in plan["slots"]:
         if slot["used"]:
             counts[slot["bundle"]] += 1
             for state, share in slot["y"].items():
                 shares[state][slot["bundle"]] += float(share)
+                share_terms[state][slot["bundle"]] += 1
     issues: list[dict[str, Any]] = []
-    for state, per in shares.items():
+    by_parent: dict[str, list[str]] = defaultdict(list)
+    all_units = list(plan.get("state_list") or plan.get("per_state") or shares)
+    for unit in all_units:
+        by_parent[_parent(unit, unit_parent)].append(unit)
+    for parent, units in by_parent.items():
         for pure, fine in PURE.items():
-            own = per.get(pure, 0.0)
-            mixed = sum(v for b, v in per.items()
-                        if b != pure and set(fine).intersection(full_plan._bundle_channels(b)))
-            if own > SHARE_TOL and (abs(own - 1.0) > SHARE_TOL or mixed > SHARE_TOL):
-                issues.append(dict(state=state, channel=pure, pure_share=own,
-                                   mixed_share=mixed))
-    national = sorted(s for s, per in shares.items() if per.get("N", 0) > SHARE_TOL)
+            active = any(
+                shares[unit].get(pure, 0.0)
+                > SHARE_TOL + SERIALIZED_SHARE_HALF_UNIT * share_terms[unit][pure]
+                for unit in units)
+            if not active:
+                continue
+            for unit in units:
+                per = shares[unit]
+                own = per.get(pure, 0.0)
+                mixed_bundles = [b for b in per
+                                 if b != pure
+                                 and set(fine).intersection(full_plan._bundle_channels(b))]
+                mixed = sum(per[b] for b in mixed_bundles)
+                own_tol = SHARE_TOL + SERIALIZED_SHARE_HALF_UNIT * share_terms[unit][pure]
+                mixed_tol = SHARE_TOL + SERIALIZED_SHARE_HALF_UNIT * sum(
+                    share_terms[unit][b] for b in mixed_bundles)
+                if abs(own - 1.0) > own_tol or mixed > mixed_tol:
+                    issue = dict(state=parent, channel=pure, pure_share=own,
+                                 mixed_share=mixed)
+                    if unit != parent:
+                        issue["planning_unit"] = unit
+                    issues.append(issue)
+    national = sorted({_parent(unit, unit_parent) for unit, per in shares.items()
+                       if per.get("N", 0) > SHARE_TOL
+                       + SERIALIZED_SHARE_HALF_UNIT * share_terms[unit]["N"]})
     return dict(counts=dict(counts), exact_counts=all(counts[b] == n for b, n in COUNTS.items()),
                 counts_satisfied=all(counts[b] == n if count_mode == "fixed" else counts[b] <= n
                                      for b, n in COUNTS.items()),
@@ -200,34 +370,131 @@ def realized_audit(path: Path, case: str, count_mode: str = "fixed",
 
 
 def valid(audit: dict[str, Any]) -> bool:
+    gates = ("coverage_complete", "geography_valid", "bands_valid", "graph_membership_valid")
     return (audit["counts_satisfied"] and not audit["purity_violations"]
-            and not audit["outside_group2"] and not audit["missing_required_states"])
+            and not audit["outside_group2"] and not audit["missing_required_states"]
+            and all(bool(audit.get(name, True)) for name in gates))
+
+
+def geography_policy(problem: level0.Level0Problem, *, case: str, count_mode: str,
+                     supporting_states: bool, unit_parent: dict[str, str],
+                     macro_national_contacts: int,
+                     allowance: dict[str, float] | None = None
+                     ) -> group2_geography.GeographyPolicy:
+    """Resolve the explicit National acceptance contract for one built stage model."""
+    split_parents = set(unit_parent.values())
+    split_caps = {state: count for state, count in
+                  (("CA", 3), ("TX", 2), ("NY", 2), ("FL", 2))
+                  if state not in split_parents}
+    return group2_geography.GeographyPolicy(
+        bundle="N",
+        expected_count=COUNTS["N"] if count_mode == "fixed" else None,
+        maximum_count=COUNTS["N"] if count_mode == "cap" else None,
+        contact_cap=6,
+        distance_km=900.0,
+        distance_overrides_km={"WA": 1200.0},
+        unit_parent=dict(unit_parent),
+        allowed_units=(None if supporting_states else
+                       frozenset(_expand_parents(GROUP2, unit_parent))),
+        split_caps=split_caps,
+        macro_contact_cap=macro_national_contacts,
+        band_allowance=dict(allowance or {}),
+        tolerance=SHARE_TOL,
+    )
+
+
+def realized_geography_audit(run_dir: Path) -> dict[str, Any]:
+    """Independently check final ZIP contiguity, bands, and graph membership artifacts."""
+    with (run_dir / "realise.json").open(encoding="utf-8") as fh:
+        realised = json.load(fh)
+    with (run_dir / "districts.csv").open(newline="", encoding="utf-8") as fh:
+        district_rows = list(csv.DictReader(fh))
+    disconnected = sorted(row["district"] for row in district_rows
+                          if str(row.get("contiguous", "0")) != "1")
+    band_violations = []
+    unrepaired = []
+    for bundle, record in dict(realised.get("bundles") or {}).items():
+        band_violations.extend(dict(bundle=bundle, **item)
+                               for item in record.get("band_violations", ()))
+        unrepaired.extend(dict(bundle=bundle, **item)
+                          for item in record.get("unrepaired", ()))
+
+    graph_zips: dict[str, set[str]] = {}
+    for bundle in dict(realised.get("bundles") or {}):
+        path = run_dir / "projections" / bundle / "cell_graph.json"
+        if path.exists():
+            with path.open(encoding="utf-8") as fh:
+                graph_zips[bundle] = set(json.load(fh).get("zips") or ())
+    missing_graph: list[dict[str, str]] = []
+    with (run_dir / "assignment.csv").open(newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if row.get("district") in ("", "other") or not row.get("bundle"):
+                continue
+            if row["bundle"] not in graph_zips or row["zip"] not in graph_zips[row["bundle"]]:
+                missing_graph.append({"zip": row["zip"], "bundle": row["bundle"],
+                                      "district": row["district"], "channel": row["channel"]})
+    return {
+        "geography_valid": not disconnected and not unrepaired,
+        "bands_valid": not band_violations,
+        "graph_membership_valid": not missing_graph,
+        "disconnected_districts": disconnected,
+        "unrepaired": unrepaired,
+        "band_violations": band_violations,
+        "assigned_cells_missing_from_graph": missing_graph,
+    }
+
+
+def render_figures(run_dir: Path, geo_cache: Path) -> dict[str, Any]:
+    """Run the full-problem mapping entry points and require maps/summary.png."""
+    commands = [
+        ("plan_maps", [sys.executable, "-u", str(ROOT / "tools/plan_maps.py"), str(run_dir),
+                       "--geo-cache", str(geo_cache)]),
+        ("plan_summary", [sys.executable, "-u", str(ROOT / "tools/plan_summary.py"),
+                          str(run_dir), "--geo-cache", str(geo_cache), "--no-cache"]),
+    ]
+    logs: dict[str, str] = {}
+    for name, command in commands:
+        log_path = run_dir / f"step_{name}.log"
+        with log_path.open("w") as log:
+            subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
+        logs[name] = str(log_path)
+    summary = run_dir / "maps" / "summary.png"
+    if not summary.is_file() or summary.stat().st_size == 0:
+        raise ValueError("plan_summary.py did not produce maps/summary.png")
+    return {"summary_png": str(summary), "logs": logs}
 
 
 def planner_args(hub: Path, out: Path, case: str, seconds: float,
-                 count_mode: str = "fixed", supporting_states: bool = False) -> list[str]:
+                 count_mode: str = "fixed", supporting_states: bool = False,
+                 unit_parent: dict[str, str] | None = None) -> list[str]:
+    group2_units = _expand_parents(GROUP2, unit_parent)
+    split_parents = set((unit_parent or {}).values())
+    capped = [("CA", 3), ("TX", 2), ("NY", 2), ("FL", 2)]
+    capped = [(state, count) for state, count in capped if state not in split_parents]
     argv = [str(hub / "instance_descaled_v4_conus.json.gz"), "--out", str(out),
             "--geo-cache", str(hub / "data/geo"), "--route", "sequential", "--driver", "geo",
             "--priority", "N,WH,FI", "--k-fixed", "N=14,WH=11,FI=21", "--k-mode", count_mode,
             "--band-mode", "per-bundle", "--delta", "0.1", "--eta", "0.05",
             "--dist-max", "900", "--dist-max-state", "WA=1200",
-            "--n-max", "6", "--max-splits", "CA=3,TX=2,NY=2,FL=2",
-            "--band-break", "CA,TX,NY,FL", "--catch-all", "--catch-all-bundle", "all",
+            "--n-max", "6", "--max-splits", ",".join(f"{s}={n}" for s, n in capped),
+            "--band-break", ",".join(s for s, _ in capped),
+            "--catch-all", "--catch-all-bundle", "all",
             "--other-floor", "0.5", "--plus-pair", "--warm", "none", "--anchor", "none",
             "--engine", "highs", "--strategy", "direct", "--threads", "2",
             "--time-limit", str(seconds), "--stage2-reservation", "none"]
     if not supporting_states:
-        argv += ["--national-states", ",".join(GROUP2)]
+        argv += ["--national-states", ",".join(group2_units)]
     if case == "all":
-        argv += ["--force-national", ",".join(GROUP2)]
+        argv += ["--force-national", ",".join(group2_units)]
     return argv
 
 
-def group2_priority(problem: level0.Level0Problem) -> level0.Pass:
+def group2_priority(problem: level0.Level0Problem,
+                    unit_parent: dict[str, str] | None = None) -> level0.Pass:
     """Maximize Group 2 national opportunity before nationwide N coverage."""
     priority = level0.cover_pass(problem, ["N"], name="cover_group2")
     for s, state in enumerate(problem.state_list):
-        if state not in GROUP2:
+        if _parent(state, unit_parent) not in GROUP2:
             priority.c[problem.off_y + s * problem.k:problem.off_y + (s+1) * problem.k] = 0.0
     return priority
 
@@ -240,8 +507,15 @@ def make_accelerated_runner(
     original_run: Callable[..., dict[str, Any]], *, checkpoint_dir: Path,
     resume_dir: Path | None, provenance: dict[str, Any], seed_seconds: float,
     heuristic_effort: float = 1.0,
+    repair_from: Path | None = None,
+    separator_fallback: bool = False,
+    candidate_validator: Callable[[level0.Level0Problem,
+                                   group2_geography.CandidateWitness, str],
+                                  group2_geography.ValidationReport] | None = None,
+    on_accept: Callable[[level0.Level0Problem, group2_geography.CandidateWitness, str,
+                         group2_geography.ValidationReport, dict[str, Any]], None] | None = None,
 ) -> Callable[..., dict[str, Any]]:
-    """Seed unchanged stage models and retain live incumbents without skipping solves."""
+    """Seed stages, run optional National repair, and retain only checked incumbents."""
     store = group2_checkpoint.CheckpointStore(checkpoint_dir, provenance)
     resume = (group2_checkpoint.CheckpointStore(resume_dir, provenance)
               if resume_dir is not None else None)
@@ -263,7 +537,8 @@ def make_accelerated_runner(
             if loaded is not None:
                 candidate = np.asarray(loaded["x"], dtype=float)
                 record["seed"] = dict(source="checkpoint", status="loaded")
-        if candidate is None and kwargs.get("warm") is None and seed_seconds > 0:
+        if (candidate is None and repair_from is None and kwargs.get("warm") is None
+                and seed_seconds > 0):
             seed = group2_initializer.build_group2_feasibility_start(
                 problem, passes, time_limit=seed_seconds, threads=args.threads or 2)
             candidate = seed.vector
@@ -342,7 +617,55 @@ def make_accelerated_runner(
 
         milp_engines.solve_problem = solve
         try:
-            result = original_run(problem, passes, args, stage, timings, **kwargs)
+            is_national = stage == "seq_N" and "N" in problem.slots
+            if repair_from is not None and is_national:
+                if candidate_validator is None:
+                    raise ValueError("National repair needs an independent candidate validator")
+                validator = candidate_validator
+                reference = group2_geography.load_reference(repair_from, problem)
+                reference_report = validator(problem, reference, stage)
+                reference_path = group2_geography.write_reference(
+                    checkpoint_dir.parent / "research" / f"{stage}_reference.json",
+                    problem, reference, provenance)
+                record["repair_reference"] = {
+                    "path": str(reference_path),
+                    "validation": reference_report.as_dict(),
+                }
+                repair = group2_geography.solve_repair_ladder(
+                    problem, reference,
+                    lambda witness: validator(problem, witness, stage),
+                    engine=args.engine, threads=args.threads or 2,
+                    heuristic_effort=heuristic_effort)
+                record["repair_attempts"] = [dataclasses.asdict(item) for item in repair.attempts]
+                proved_infeasible = group2_geography.proves_unrestricted_infeasible(repair)
+                if repair.result is None and separator_fallback and not proved_infeasible:
+                    master = drop_connectivity_for_diagnostic(problem)
+                    repair = group2_geography.solve_connectivity_separation(
+                        problem, master, reference,
+                        lambda witness: validator(problem, witness, stage),
+                        engine=args.engine, threads=args.threads or 2,
+                        heuristic_effort=heuristic_effort)
+                    record["separator_attempts"] = [dataclasses.asdict(item)
+                                                    for item in repair.attempts]
+                    proved_infeasible = group2_geography.proves_unrestricted_infeasible(repair)
+                if repair.result is None:
+                    raise state_splits.SolveFailure(
+                        2 if proved_infeasible else 1,
+                        ("unrestricted geography target was proved infeasible"
+                         if proved_infeasible else
+                         "bounded geography repair found no independently accepted incumbent"))
+                result = dict(repair.result)
+            else:
+                result = original_run(problem, passes, args, stage, timings, **kwargs)
+            if is_national and candidate_validator is not None:
+                witness = group2_geography.CandidateWitness.from_result(result, stage)
+                acceptance = candidate_validator(problem, witness, stage)
+                record["acceptance"] = acceptance.as_dict()
+                if not acceptance.accepted:
+                    raise ValueError("National candidate failed independent acceptance: "
+                                     + "; ".join(acceptance.issues[:5]))
+                if on_accept is not None:
+                    on_accept(problem, witness, stage, acceptance, result)
             record["status"] = "completed"
             return result
         except Exception as exc:
@@ -376,48 +699,88 @@ def main(argv: list[str] | None = None) -> int:
                         help="Diagnostic only: remove state-distance rows")
     parser.add_argument("--resume-checkpoints", type=Path,
                         help="Prior checkpoints directory; compatible points seed fresh solves")
+    parser.add_argument("--macro-cut", action="append", default=None,
+                        help="Parent-state ZIP macro cut ST:N; repeatable (default CA:2)")
+    parser.add_argument("--macro-cut-seed", type=int, default=atoms_mod.CUT_SEED)
+    parser.add_argument("--macro-national-contacts", type=int, default=2,
+                        help="Maximum pure-N districts contacted by each macro child (default 2)")
+    parser.add_argument("--flow-bounds", choices=["original", "tight"], default="tight",
+                        help="National SCF constants; tight uses the proved six-contact cap")
+    parser.add_argument("--repair-from", type=Path,
+                        help="Relaxed checkpoint, z/y JSON, or plan.json for Hamming repair")
+    parser.add_argument("--separator-fallback", action="store_true",
+                        help="After Hamming repair, separate disconnected master incumbents")
     args = parser.parse_args(argv)
     if not np.isfinite(args.seed_time_limit) or args.seed_time_limit < 0:
         parser.error("--seed-time-limit must be finite and nonnegative")
     if not np.isfinite(args.heuristic_effort) or not 0.0 <= args.heuristic_effort <= 1.0:
         parser.error("--heuristic-effort must be finite and in [0,1]")
+    if args.macro_national_contacts < 1:
+        parser.error("--macro-national-contacts must be at least 1")
+    if args.repair_from is not None and args.count_mode != "fixed":
+        parser.error("--repair-from requires --count-mode fixed")
+    if args.repair_from is not None and (args.diagnostic_drop_connectivity
+                                         or args.diagnostic_drop_geography):
+        parser.error("--repair-from cannot be combined with geography diagnostics")
+    if args.separator_fallback and args.repair_from is None:
+        parser.error("--separator-fallback needs --repair-from")
     out = args.out.resolve()
+    args.hub = args.hub.resolve()
+    os.environ["TD_GAZ_VINTAGE"] = "2025"
+    os.environ["TD_ZCTA_SHP"] = str(args.hub / "data/tiger/2025/tl_2025_us_zcta520.shp")
     if args.audit_only:
         audit = realized_audit(out / "assignment.csv", args.case, args.count_mode,
                                args.supporting_states)
+        audit.update(realized_geography_audit(out))
         report = json.loads((out / "run_status.json").read_text())
-        report.update(status="completed" if valid(audit) else "rejected_realized_purity",
+        figures = render_figures(out, args.hub / "data/geo") if valid(audit) else None
+        report.update(status="completed" if valid(audit) else "rejected_realized_acceptance",
                       realized_audit=audit,
+                      figures=figures,
                       audit_source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
         write_json(out / "realized_purity.json", audit)
         write_json(out / "run_status.json", report)
         print(json.dumps(report, allow_nan=False))
         return 0 if valid(audit) else 1
     out.mkdir(parents=True, exist_ok=False)
-    args.hub = args.hub.resolve()
-    os.environ["TD_GAZ_VINTAGE"] = "2025"
-    os.environ["TD_ZCTA_SHP"] = str(args.hub / "data/tiger/2025/tl_2025_us_zcta520.shp")
+    macro = prepare_macro_regions(
+        args.hub / "instance_descaled_v4_conus.json.gz", args.hub / "data/geo",
+        args.macro_cut or list(DEFAULT_MACRO_CUTS), seed=args.macro_cut_seed)
     command = planner_args(args.hub, out, args.case, args.time_limit, args.count_mode,
-                           args.supporting_states)
+                           args.supporting_states, macro.unit_parent)
     sources = [Path(__file__), ROOT / "tools/full_plan.py", ROOT / "tools/plan_realise.py",
                ROOT / "td/solvers/level0.py", ROOT / "td/stage2_state.py",
                ROOT / "tools/group2_checkpoint.py", ROOT / "tools/group2_initializer.py",
-               ROOT / "tools/group2_symmetry.py",
+               ROOT / "tools/group2_geography.py", ROOT / "tools/group2_symmetry.py",
+               ROOT / "tools/plan_maps.py", ROOT / "tools/plan_summary.py",
+               ROOT / "tools/us_maps.py", ROOT / "td/atoms.py",
+               ROOT / "td/solvers/state_splits.py",
                ROOT / "td/solvers/milp_engines.py"]
     provenance = dict(
         input_sha256=hashlib.sha256((args.hub / "instance_descaled_v4_conus.json.gz").read_bytes()).hexdigest(),
         source_sha256={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources})
+    macro.record["input_sha256"] = provenance["input_sha256"]
+    write_json(out / "macro_regions.json", macro.record)
     write_json(out / "run_request.json", dict(
         case=args.case, count_mode=args.count_mode, requested_counts=COUNTS,
-        group2_states=GROUP2, supporting_states_allowed=args.supporting_states,
-        national_pool="CONUS" if args.supporting_states else GROUP2, planner_argv=command,
+        group2_states=GROUP2, planning_group2_units=_expand_parents(GROUP2, macro.unit_parent),
+        unit_parent=macro.unit_parent, supporting_states_allowed=args.supporting_states,
+        macro_national_contacts=args.macro_national_contacts,
+        flow_bounds=args.flow_bounds,
+        repair_from=str(args.repair_from.resolve()) if args.repair_from else None,
+        repair_schedule=[[8, 10.0], [24, 10.0], [None, 70.0]],
+        separator_fallback=args.separator_fallback,
+        national_pool="CONUS" if args.supporting_states else _expand_parents(GROUP2, macro.unit_parent),
+        planner_argv=command,
         **provenance,
         seed_time_limit=args.seed_time_limit,
         heuristic_effort=args.heuristic_effort,
         diagnostic_drop_connectivity=args.diagnostic_drop_connectivity,
         diagnostic_drop_geography=args.diagnostic_drop_geography,
         resume_checkpoints=str(args.resume_checkpoints.resolve()) if args.resume_checkpoints else None,
-        additions=["conditional purity rows for N, WH and FI",
+        additions=["conditional parent purity rows for N, WH and FI",
+                   f"CA macro-regions with at most {args.macro_national_contacts} national "
+                   "contacts per child",
                    "count lower and upper bounds" if args.count_mode == "fixed" else "count upper bounds"],
         state_sweep=False, other_first=[], greedy_anchors=False,
         terminal_rematch=True, stage2_reservation="none", gazetteer_vintage="2025"))
@@ -430,23 +793,87 @@ def main(argv: list[str] | None = None) -> int:
     original = full_plan._build
     original_passes = full_plan._pass_list
     original_run = full_plan._run_passes
+    original_load = descaled.load_descaled
+    original_edges = full_plan._state_edges
+    original_xy = full_plan._state_xy
+    policies: dict[str, group2_geography.GeographyPolicy] = {}
+    exported: set[str] = set()
 
     def build(*a: Any, **kw: Any) -> level0.Level0Problem:
-        problem = constrain_problem(original(*a, **kw), COUNTS, args.count_mode)
+        problem = constrain_problem(original(*a, **kw), COUNTS, args.count_mode,
+                                    macro.unit_parent, args.macro_national_contacts)
+        stage = str(kw.get("stage", "unknown"))
+        if args.repair_from is not None and stage == "seq_N" and "N" in problem.slots:
+            problem = group2_geography.require_full_bundle_coverage(problem, "N")
+        if "N" in problem.slots:
+            policies[stage] = geography_policy(
+                problem, case=args.case, count_mode=args.count_mode,
+                supporting_states=args.supporting_states, unit_parent=macro.unit_parent,
+                macro_national_contacts=args.macro_national_contacts,
+                allowance=kw.get("allowance"))
         if args.diagnostic_drop_connectivity:
             problem = drop_connectivity_for_diagnostic(problem)
+            return problem
+        if args.flow_bounds == "tight" and "N" in problem.slots:
+            problem = level0.tighten_flow_capacity(problem, 6, "N")
         if args.diagnostic_drop_geography:
             problem = drop_geography_for_diagnostic(problem)
-        if args.diagnostic_drop_connectivity or args.diagnostic_drop_geography:
-            return problem
         return (group2_symmetry.canonicalize_slot_symmetry(problem, "N")
                 if "N" in problem.slots else problem)
 
     def passes(problem: level0.Level0Problem, *a: Any, **kw: Any) -> list[level0.Pass]:
         result = original_passes(problem, *a, **kw)
         if args.supporting_states and "N" in problem.slots:
-            result.insert(0, group2_priority(problem))
+            result.insert(0, group2_priority(problem, macro.unit_parent))
         return result
+
+    def load_instance(path: str) -> descaled.Descaled:
+        if Path(path).resolve() == (args.hub / "instance_descaled_v4_conus.json.gz").resolve():
+            return macro.data
+        return original_load(path)
+
+    def state_edges(state_list: list[str], geo_cache: str) -> list[tuple[int, int]]:
+        idx = {unit: i for i, unit in enumerate(state_list)}
+        missing = sorted(set(state_list) - set(macro.graph))
+        if missing:
+            raise ValueError(f"planning units not in the macro adjacency graph: {missing}")
+        return sorted((min(idx[a], idx[b]), max(idx[a], idx[b]))
+                      for a, b in macro.graph.edges if a in idx and b in idx)
+
+    def state_xy(state_list: list[str], geo_cache: str,
+                 *, required: bool = True) -> np.ndarray | None:
+        plain = [unit for unit in state_list if unit not in macro.xy_km]
+        base = original_xy(plain, geo_cache, required=required)
+        if base is None:
+            return None
+        by_unit = {unit: tuple(base[i]) for i, unit in enumerate(plain)}
+        by_unit.update(macro.xy_km)
+        return np.asarray([by_unit[unit] for unit in state_list], float)
+
+    def validate_national(problem: level0.Level0Problem,
+                          witness: group2_geography.CandidateWitness,
+                          stage: str) -> group2_geography.ValidationReport:
+        policy = policies.get(stage)
+        if policy is None:
+            raise ValueError(f"missing geography policy for {stage}")
+        if stage not in exported:
+            group2_geography.export_research_instance(
+                out / "research" / f"{stage}_instance.json", problem, policy, provenance)
+            exported.add(stage)
+        return group2_geography.validate_candidate(problem, witness, policy)
+
+    def accept_national(problem: level0.Level0Problem,
+                        witness: group2_geography.CandidateWitness,
+                        stage: str, acceptance: group2_geography.ValidationReport,
+                        result: dict[str, Any]) -> None:
+        write_json(out / "research" / f"{stage}_validation.json", acceptance.as_dict())
+        solver = {name: result.get(name) for name in
+                  ("status", "objective", "dual_bound", "nodes", "mip_gap")
+                  if result.get(name) is not None}
+        solver["passes"] = result.get("passes", [])
+        group2_geography.write_certificate(
+            out / "research" / f"{stage}_certificate.json", problem, witness,
+            acceptance, policies[stage], provenance, solver)
 
     try:
         with (out / "step_full_plan.log").open("w") as log:
@@ -458,14 +885,24 @@ def main(argv: list[str] | None = None) -> int:
                         original_run, checkpoint_dir=out / "checkpoints",
                         resume_dir=args.resume_checkpoints, provenance=provenance,
                         seed_seconds=args.seed_time_limit,
-                        heuristic_effort=args.heuristic_effort)
+                        heuristic_effort=args.heuristic_effort,
+                        repair_from=args.repair_from,
+                        separator_fallback=args.separator_fallback,
+                        candidate_validator=validate_national,
+                        on_accept=accept_national)
+                    descaled.load_descaled = load_instance
+                    full_plan._state_edges = state_edges
+                    full_plan._state_xy = state_xy
                     full_plan.main(command)
                 finally:
                     full_plan._build = original
                     full_plan._pass_list = original_passes
                     full_plan._run_passes = original_run
+                    descaled.load_descaled = original_load
+                    full_plan._state_edges = original_edges
+                    full_plan._state_xy = original_xy
         audit = plan_audit(json.loads((out / "plan.json").read_text()), args.case, args.count_mode,
-                           args.supporting_states)
+                           args.supporting_states, macro.unit_parent)
         write_json(out / "plan_purity.json", audit)
         if not valid(audit):
             raise ValueError("Plan failed exact-count or purity audit")
@@ -474,14 +911,18 @@ def main(argv: list[str] | None = None) -> int:
         cmd = [sys.executable, "-u", str(ROOT / "tools/plan_realise.py"), str(out),
                "--geo-cache", str(args.hub / "data/geo"), "--sweep-zips",
                "--split-cut", "contiguous", "--split-cut-bundles", ",".join(channels.BUNDLES),
-               "--stage2-rematch"]
+               "--stage2-rematch", "--band-slack", "0"]
         with (out / "step_plan_realise.log").open("w") as log:
             subprocess.run(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
         audit = realized_audit(out / "assignment.csv", args.case, args.count_mode,
                                args.supporting_states)
+        audit.update(realized_geography_audit(out))
         write_json(out / "realized_purity.json", audit)
-        report.update(status="completed" if valid(audit) else "rejected_realized_purity",
-                      realized_audit=audit)
+        if valid(audit):
+            report.update(status="completed", realized_audit=audit,
+                          figures=render_figures(out, args.hub / "data/geo"))
+        else:
+            report.update(status="rejected_realized_acceptance", realized_audit=audit)
     except Exception as exc:
         failure = out / "failure.json"
         report.update(status="failed", exception=type(exc).__name__, message=str(exc))

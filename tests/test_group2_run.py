@@ -3,10 +3,14 @@ from types import SimpleNamespace
 import csv
 import tempfile
 
+import networkx as nx
 import numpy as np
 
+from td import atoms
+from td.instance import Descaled
 from td.solvers import level0, state_splits
-from tools.group2_run import GROUP2, constrain_problem, group2_priority, plan_audit, planner_args, realized_audit, valid
+from tools.group2_run import (GROUP2, _macro_region_view, constrain_problem, group2_priority,
+                              plan_audit, planner_args, realized_audit, valid)
 from pathlib import Path
 
 
@@ -75,6 +79,49 @@ def test_all_three_pure_bundles_have_contact_implications():
         assert (changed.A[start:stop] @ witness < -0.4).any()
 
 
+def test_macro_children_share_parent_purity_and_have_two_national_contacts_each():
+    cells = SimpleNamespace(M=np.ones((2, 1)), channels=("N_WH",),
+                            state_list=["CA1", "CA2"])
+    problem = level0.build_level0(cells, {"N": ("N_WH",)}, edges=[(0, 1)],
+                                  L=0.4, U=1.2, eta=0.05, fixed_used={"N": 2})
+    changed = constrain_problem(problem, {"N": 2}, unit_parent={"CA1": "CA", "CA2": "CA"})
+    p0, p1 = changed.rows["conditional_purity"]
+    witness = np.zeros(problem.n_var)
+    first, _ = problem.slots["N"]
+    witness[problem.off_z + first] = 1.0
+    witness[problem.off_y + first] = 1.0
+    assert (changed.A[p0:p1] @ witness < -0.9).any()
+
+    c0, c1 = changed.rows["macro_national_contact"]
+    two_contacts = np.zeros(problem.n_var)
+    two_contacts[problem.off_z + first:problem.off_z + first + 2] = 1.0
+    assert (changed.A[c0:c1] @ two_contacts <= changed.ub[c0:c1] + 1e-9).all()
+
+
+def test_macro_region_view_records_parent_geometry_without_mutating_source():
+    graph = nx.Graph()
+    graph.add_node("a", state="CA", M=2.0, M_c={"N_WH": 2.0}, S_c={}, S_free_c={})
+    graph.add_node("b", state="CA", M=1.0, M_c={"N_WH": 1.0}, S_c={}, S_free_c={})
+    graph.add_node("c", state="NV", M=1.0, M_c={"N_WH": 1.0}, S_c={}, S_free_c={})
+    graph.add_edges_from([("a", "b"), ("b", "c")])
+    data = Descaled(G=graph, contested=[], uncontested={}, vacant=[], untapped=[], firm={},
+                    meta={"channels": ["N_WH"]}, channels=("N_WH",))
+    atom_graph = nx.Graph([("CA1", "CA2"), ("CA2", "NV")])
+    built = atoms.Atoms(mass={"CA1": 2.0, "CA2": 1.0, "NV": 1.0}, graph=atom_graph,
+                        zips_of={"CA1": ["a"], "CA2": ["b"], "NV": ["c"]},
+                        pieces={"CA": ("CA1", "CA2")})
+    view = _macro_region_view(
+        data, built, {"a": (1000.0, 2000.0), "b": (3000.0, 4000.0), "c": (0.0, 0.0)},
+        {"CA": (("CA",), 2)}, seed=2)
+
+    assert data.G.nodes["a"]["state"] == "CA"
+    assert view.data.G.nodes["a"]["state"] == "CA1"
+    assert view.unit_parent == {"CA1": "CA", "CA2": "CA"}
+    assert view.record["units"]["CA1"]["centroid_km"] == [1.0, 2.0]
+    assert view.record["units"]["CA2"]["adjacent_units"] == ["CA1", "NV"]
+    assert len(view.record["partition_sha256"]) == 64
+
+
 def test_commands_differ_only_in_forced_national_requirement():
     choose = planner_args(Path("/hub"), Path("/out"), "choose", 180)
     all_states = planner_args(Path("/hub"), Path("/out"), "all", 180)
@@ -84,11 +131,35 @@ def test_commands_differ_only_in_forced_national_requirement():
     assert "--sweep" not in choose
 
 
+def test_macro_planner_arguments_replace_parent_with_children_and_drop_parent_cap():
+    parents = {"TX1": "TX", "TX2": "TX"}
+    argv = planner_args(Path("/hub"), Path("/out"), "all", 180,
+                        unit_parent=parents)
+    national = argv[argv.index("--national-states") + 1].split(",")
+    forced = argv[argv.index("--force-national") + 1].split(",")
+    assert "TX" not in national and {"TX1", "TX2"} <= set(national)
+    assert forced == national
+    assert "TX=2" not in argv[argv.index("--max-splits") + 1]
+    assert "TX" not in argv[argv.index("--band-break") + 1].split(",")
+
+
 def test_plan_audit_rejects_partial_pure_wh_and_fi():
     slots = [dict(used=True, bundle=b, y={"TX": 0.5}) for b in ("WH", "WH_PLUS", "FI", "FI_PLUS")]
     report = plan_audit(dict(slots=slots, per_state={}), "choose")
     assert {r["channel"] for r in report["purity_violations"]} == {"WH", "FI"}
     assert not report["exact_counts"]
+
+
+def test_plan_audit_allows_only_the_documented_six_decimal_rounding_error():
+    def plan(share):
+        return {
+            "state_list": ["TX"],
+            "slots": [dict(used=True, bundle="N", y={"TX": share})],
+            "per_state": {"TX": {"residual_by_channel": {}}},
+        }
+
+    assert not plan_audit(plan(0.999999), "choose")["purity_violations"]
+    assert plan_audit(plan(0.9999), "choose")["purity_violations"]
 
 
 def test_cap_does_not_force_a_district_when_no_whole_state_fits():
@@ -179,6 +250,16 @@ def test_realized_purity_allows_two_pure_districts_and_supporting_states():
         assert audit["counts"]["N"] == 2
         assert audit["supporting_national_states"] == ["ID"]
         assert not valid(realized_audit(path, "choose", "cap", False))
+
+
+def test_acceptance_gate_requires_realized_coverage_and_geography_when_reported():
+    base = dict(counts_satisfied=True, purity_violations=[], outside_group2=[],
+                missing_required_states=[])
+    assert valid(base)
+    assert not valid(dict(base, coverage_complete=False))
+    assert not valid(dict(base, geography_valid=False))
+    assert not valid(dict(base, bands_valid=False))
+    assert not valid(dict(base, graph_membership_valid=False))
 
 
 def test_realized_no_pure_national_allows_national_split_into_plus_bundles():

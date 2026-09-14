@@ -353,6 +353,51 @@ def test_n_max_and_dist_max_caps_bind():
         "the far pair must still be kept out of any single slot"
 
 
+def test_tighten_flow_capacity_uses_the_proved_contact_cap_without_changing_coverage():
+    small = SimpleNamespace(M=np.array([[0.3], [0.3], [0.3], [0.0], [0.0], [0.0]]),
+                            channels=("A",), state_list=[f"S{s}" for s in range(6)])
+    base = level0.build_level0(
+        small, {"A": ("A",)}, edges=EDGES, L=0.8, U=1.0,
+        eta=0.05, n_max=3, fixed_used={"A": 1}, max_used={"A": 1})
+    tightened = level0.tighten_flow_capacity(base, 3, "A")
+
+    assert np.all(base.var_ub[base.off_f:base.off_u] == 5.0)
+    assert np.all(tightened.var_ub[tightened.off_f:tightened.off_u] == 2.0)
+    net_lo, _ = tightened.rows["net"]
+    for s in range(tightened.n_state):
+        assert tightened.A[net_lo + s * tightened.k,
+                           tightened.off_r + s * tightened.k] == -3.0
+
+    before = run(base, [level0.cover_pass(base, ["A"])])["passes"][0]["value"]
+    after = run(tightened, [level0.cover_pass(tightened, ["A"])])["passes"][0]["value"]
+    assert abs(before - 0.9) < 1e-8
+    assert abs(after - before) < 1e-8
+
+
+def test_tighten_flow_capacity_requires_an_existing_contact_bound():
+    base = build0([0.5] * 6, bundles={"A": ("A",)})
+    try:
+        level0.tighten_flow_capacity(base, 3)
+    except ValueError as exc:
+        assert "cap_n" in str(exc)
+    else:
+        raise AssertionError("flow constants were tightened without a proved contact bound")
+
+
+def test_tighten_flow_capacity_checks_the_contact_row_structure():
+    base = build0([0.5] * 6, n_max=3)
+    matrix = base.A.tolil(copy=True)
+    cap_lo, _ = base.rows["cap_n"]
+    matrix[cap_lo, base.off_z] = 0.0
+    malformed = dataclasses.replace(base, A=matrix.tocsc())
+    try:
+        level0.tighten_flow_capacity(malformed, 3)
+    except ValueError as exc:
+        assert "sum of contact variables" in str(exc)
+    else:
+        raise AssertionError("flow constants used a malformed contact bound")
+
+
 def test_dist_max_state_relaxes_the_cap_for_its_own_pairs_only():
     """Six states of 0.2 on a line, 1 apart, under `dist_max = 2.5`: no slot spans more than
     three states, so none reaches 0.8 and nothing is covered.  `dist_max_state = {0: 3.5}`
@@ -976,4 +1021,6 @@ def test_highs_and_scip_match_scipy_on_the_passes():
             assert p["certified"], (engine, p)
             assert abs(p["value"] - q["value"]) < 1e-6, (engine, p, q)
         assert out["contacts"] == 7
+        assert out["_raw_z"].shape == out["z"].shape
+        assert out["_raw_y"].shape == out["y"].shape
         assert_bands_and_contiguity(prob, out)
