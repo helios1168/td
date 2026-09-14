@@ -48,25 +48,60 @@ def prepare_base_macro():
 
 def render_option1():
     print("\n=======================================================")
-    print("   RENDERING OPTION 1: NATIONAL (14) + WESTERN WHFI (1)")
+    print("   RENDERING OPTION 1: N (14) + WH (11) + FI (21) + WHFI (1)")
     print("=======================================================")
     out_dir = REPO_ROOT / "battery/results/option1_exact_merged"
     out_dir.mkdir(parents=True, exist_ok=True)
     
     macro, state_list, cells = prepare_base_macro()
-    whfi_idx = (cells.channels.index("WH"), cells.channels.index("FI"))
-    w_whfi = cells.M[:, whfi_idx[0]] + cells.M[:, whfi_idx[1]]
+    wh_col = cells.channels.index("WH")
+    fi_col = cells.channels.index("FI")
+    w_wh = cells.M[:, wh_col]
+    w_fi = cells.M[:, fi_col]
+    w_whfi = w_wh + w_fi
     
-    # Load 14 National slots from group2_exact_national
+    # 1. Load 14 National slots from group2_exact_national
     with open(G2_EXACT_DIR / "plan.json") as f:
         g2_plan = json.load(f)
     n_slots = g2_plan["slots"] # 14 slots
     
-    # Create Slot 15: WHFI
+    # 2. Load WH and FI from global_multichannel
+    with open(GLOBAL_MC_FILE) as f:
+        mc_data = json.load(f)
+        
+    wh_slots = []
+    for j, d in enumerate(mc_data["WH"]):
+        wh_slots.append({
+            "id": f"P{15 + j:03d}",
+            "bundle": "WH",
+            "used": True,
+            "mass": d["mass"],
+            "contacts": len(d["shares"]),
+            "y": d["shares"],
+            "L": 436.996036,
+            "U": 534.106267,
+            "band_hi": 534.106267
+        })
+        
+    fi_slots = []
+    for j, d in enumerate(mc_data["FI"]):
+        fi_slots.append({
+            "id": f"P{26 + j:03d}",
+            "bundle": "FI",
+            "used": True,
+            "mass": d["mass"],
+            "contacts": len(d["shares"]),
+            "y": d["shares"],
+            "L": 384.336166,
+            "U": 469.744203,
+            "band_hi": 469.744203
+        })
+        
+    # 3. Create Dedicated Western Merged Slot: WHFI
     whfi_shares = {st: 1.0 for st in WESTERN_7}
     whfi_mass = sum(w_whfi[cells.state_list.index(st)] for st in WESTERN_7)
     whfi_slot = {
-        "id": "P015",
+        "id": "P047",
         "bundle": "WHFI",
         "used": True,
         "mass": whfi_mass,
@@ -77,8 +112,8 @@ def render_option1():
         "band_hi": 469.744203
     }
     
-    all_slots = n_slots + [whfi_slot]
-    k_total = len(all_slots) # 15
+    all_slots = n_slots + wh_slots + fi_slots + [whfi_slot]
+    k_total = len(all_slots) # 14 + 11 + 21 + 1 = 47
     rep_names = [f"R{j+1:04d}" for j in range(k_total)]
     
     # Write staffing.json
@@ -101,9 +136,11 @@ def render_option1():
         "band_hi": 676.77,
         "dist_max": 900.0,
         "n_max": 7,
-        "bundles": ["N", "WHFI"],
+        "bundles": ["N", "WH", "FI", "WHFI"],
         "bands": {
             "N": {"L": 553.724691, "U": 676.774623},
+            "WH": {"L": 436.996036, "U": 534.106267},
+            "FI": {"L": 384.336166, "U": 469.744203},
             "WHFI": {"L": 384.336166, "U": 469.744203}
         }
     }
@@ -111,20 +148,22 @@ def render_option1():
         json.dump(params_data, f, indent=2)
         
     # Build per_state
-    per_state = {}
     conus_states = [s for s in state_list if s not in ("CA1", "CA2")]
     if "CA" not in conus_states:
         conus_states.append("CA")
     conus_states.sort()
     
+    per_state = {}
     for st in conus_states:
         per_state[st] = {}
         for s in all_slots:
             if st == "CA":
                 sh1 = s["y"].get("CA1", 0.0)
                 sh2 = s["y"].get("CA2", 0.0)
-                m_ca1 = float(cells.M[cells.state_list.index("CA1"), 0] + cells.M[cells.state_list.index("CA1"), 1])
-                m_ca2 = float(cells.M[cells.state_list.index("CA2"), 0] + cells.M[cells.state_list.index("CA2"), 1])
+                b = s["bundle"]
+                ch_idx = 0 if b == "N" else (wh_col if b == "WH" else fi_col)
+                m_ca1 = float(cells.M[cells.state_list.index("CA1"), ch_idx])
+                m_ca2 = float(cells.M[cells.state_list.index("CA2"), ch_idx])
                 tot_ca = m_ca1 + m_ca2
                 comb = (sh1 * m_ca1 + sh2 * m_ca2) / tot_ca if tot_ca > 0 else 0.0
                 if comb > 1e-4:
@@ -134,7 +173,7 @@ def render_option1():
                 
     plan_data = {
         "state_list": conus_states,
-        "bundles": ["N", "WHFI"],
+        "bundles": ["N", "WH", "FI", "WHFI"],
         "slots": all_slots,
         "per_state": per_state
     }
@@ -150,12 +189,41 @@ def render_option1():
         if src.exists():
             shutil.copy(src, proj_n_dir / f_name)
             
-    # 2. WHFI projection
+    # 2. WH projection
+    proj_wh_dir = out_dir / "projections/WH"
+    proj_wh_dir.mkdir(parents=True, exist_ok=True)
+    proj_wh = channels.project(macro.data, "WH", states=state_list)
+    channels.write_v1(proj_wh, str(proj_wh_dir / "instance_descaled.json.gz"))
+    with open(proj_wh_dir / "state_shares.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["state", "district", "share", "target_mass"])
+        for j, slot in enumerate(wh_slots):
+            did = run_draw.district_id(j)
+            for st, sh in slot["y"].items():
+                if sh > 1e-5:
+                    m = float(w_wh[cells.state_list.index(st)]) * sh
+                    writer.writerow([st, did, f"{sh:.6f}", f"{m:.6f}"])
+                    
+    # 3. FI projection
+    proj_fi_dir = out_dir / "projections/FI"
+    proj_fi_dir.mkdir(parents=True, exist_ok=True)
+    proj_fi = channels.project(macro.data, "FI", states=state_list)
+    channels.write_v1(proj_fi, str(proj_fi_dir / "instance_descaled.json.gz"))
+    with open(proj_fi_dir / "state_shares.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["state", "district", "share", "target_mass"])
+        for j, slot in enumerate(fi_slots):
+            did = run_draw.district_id(j)
+            for st, sh in slot["y"].items():
+                if sh > 1e-5:
+                    m = float(w_fi[cells.state_list.index(st)]) * sh
+                    writer.writerow([st, did, f"{sh:.6f}", f"{m:.6f}"])
+                    
+    # 4. WHFI projection
     proj_whfi_dir = out_dir / "projections/WHFI"
     proj_whfi_dir.mkdir(parents=True, exist_ok=True)
     proj_whfi = channels.project(macro.data, "WHFI", states=state_list)
     channels.write_v1(proj_whfi, str(proj_whfi_dir / "instance_descaled.json.gz"))
-    
     with open(proj_whfi_dir / "state_shares.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["state", "district", "share", "target_mass"])
@@ -169,7 +237,7 @@ def render_option1():
         PY, str(REPO_ROOT / "tools/plan_realise.py"), str(out_dir),
         "--geo-cache", GEO_CACHE,
         "--split-cut", "contiguous",
-        "--split-cut-bundles", "N",
+        "--split-cut-bundles", "N,WH,FI",
         "--repair-rounds", "15",
         "--band-slack", "0.1"
     ]
@@ -179,8 +247,7 @@ def render_option1():
         print("Realise STDERR:\n", res.stderr)
         raise RuntimeError("plan_realise failed for Option 1")
         
-    # Contiguity guarantee on assignment.csv
-    heal_assignment_contiguity(out_dir, ["N", "WHFI"])
+    heal_assignment_contiguity(out_dir, ["N", "WH", "FI", "WHFI"])
     
     # Run plan_summary.py
     print("Running plan_summary.py for Option 1...")
