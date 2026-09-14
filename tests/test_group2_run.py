@@ -1,10 +1,12 @@
 """Independent small MILPs for the Group 2 experiment constraints."""
 from types import SimpleNamespace
+import csv
+import tempfile
 
 import numpy as np
 
 from td.solvers import level0, state_splits
-from tools.group2_run import constrain_problem, group2_priority, plan_audit, planner_args
+from tools.group2_run import constrain_problem, group2_priority, plan_audit, planner_args, realized_audit, valid
 from pathlib import Path
 
 
@@ -123,3 +125,43 @@ def test_group_priority_can_choose_smaller_group_state_over_larger_support_state
                                  engine="scipy", time_limit=10)
     assert abs(float(result["y"][0].sum())-1) < 1e-6
     assert abs(float(result["y"][1].sum())) < 1e-6
+
+
+def write_assignment(path, rows):
+    with path.open("w", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["state", "channel", "district", "bundle", "M_cell"])
+        writer.writerows(rows)
+
+
+def test_realized_audit_rejects_pure_national_with_mixed_or_unheld_remainder():
+    with tempfile.TemporaryDirectory() as temp:
+        path = Path(temp) / "assignment.csv"
+        for district, bundle in (("plus", "FI_PLUS"), ("", "")):
+            write_assignment(path, [["TX", "N_WH", "n", "N", 5],
+                                    ["TX", "N_FI", district, bundle, 5]])
+            audit = realized_audit(path, "choose", "cap", True)
+            assert not valid(audit)
+            assert audit["purity_violations"] == [dict(state="TX", channel="N", mass_outside_pure=5.0)]
+
+
+def test_realized_purity_allows_two_pure_districts_and_supporting_states():
+    with tempfile.TemporaryDirectory() as temp:
+        path = Path(temp) / "assignment.csv"
+        write_assignment(path, [["ID", "N_WH", "n1", "N", 5],
+                                ["ID", "N_FI", "n2", "N", 5]])
+        audit = realized_audit(path, "choose", "cap", True)
+        assert valid(audit)
+        assert audit["counts"]["N"] == 2
+        assert audit["supporting_national_states"] == ["ID"]
+        assert not valid(realized_audit(path, "choose", "cap", False))
+
+
+def test_realized_no_pure_national_allows_national_split_into_plus_bundles():
+    with tempfile.TemporaryDirectory() as temp:
+        path = Path(temp) / "assignment.csv"
+        write_assignment(path, [["ID", "N_WH", "w", "WH_PLUS", 5],
+                                ["ID", "N_FI", "f", "FI_PLUS", 5],
+                                ["ID", "WH", "w", "WH_PLUS", 2],
+                                ["ID", "FI", "f", "FI_PLUS", 3]])
+        assert valid(realized_audit(path, "choose", "cap", True))
