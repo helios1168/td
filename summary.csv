@@ -1,0 +1,8 @@
+scenario_id,scenario_short_name,scenario_name,total_wholesalers,national_reps,wealth_reps,fi_reps,western_merged_reps,national_tau,wealth_tau,fi_tau,total_opportunity_mass,held_mass,unheld_mass,unheld_mass_pct,contiguity_status,map_path
+option1_exact_merged,Option 1,Option 1 - National (14) + WH (11) + FI (21) + Western Merged WHFI (1),47,14,11,21,1,615.2,485.6,427.0,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_option1.png
+option2_exact_multichannel,Option 2,Option 2 - Nationwide Multi-Channel (14 N + 11 WH + 21 FI),46,14,11,21,0,615.2,485.6,427.0,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_option2.png
+scenario_A_51,Scenario A,"Scenario A - 51 Wholesalers (N:13, WHFI:1, WH:13, FI:24)",51,13,13,24,1,642.7,397.8,362.8,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_scenario_A.png
+scenario_B_52,Scenario B,"Scenario B - 52 Wholesalers (N:13, WHFI:1, WH:14, FI:24)",52,13,14,24,1,642.7,369.4,362.8,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_scenario_B.png
+scenario_C_51,Scenario C,"Scenario C - 51 Wholesalers (N:12, WHFI:1, WH:13, FI:25)",51,12,13,25,1,696.3,397.8,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_C.png
+scenario_D_53,Scenario D,"Scenario D - 53 Wholesalers (N:13, WHFI:1, WH:14, FI:25)",53,13,14,25,1,642.7,369.4,348.2,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_scenario_D.png
+scenario_E_52,Scenario E,"Scenario E - 52 Wholesalers (N:12, WHFI:1, WH:14, FI:25)",52,12,14,25,1,696.3,369.4,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_E.png
