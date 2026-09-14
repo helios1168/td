@@ -111,6 +111,38 @@ def test_accelerated_runner_restores_engine_hook_when_stage_fails():
         assert milp_engines.solve_problem is original_solve
 
 
+def test_restored_seed_is_checkpointed_before_an_immediate_stage_failure():
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        problem = _problem()
+        solved = level0.solve_passes(problem, [level0.cover_pass(problem, ["N"])],
+                                     engine="scipy", time_limit=5.0)
+        x = group2_checkpoint.reconstruct_vector(problem, solved)
+        provenance = {"case": "choose"}
+        resume = group2_checkpoint.CheckpointStore(root / "resume", provenance)
+        resume.save("N", "prior", {"x": x}, problem)
+
+        def failing(*args, **kwargs):
+            raise RuntimeError("fails before engine solve")
+
+        points = root / "points"
+        wrapped = make_accelerated_runner(
+            failing, checkpoint_dir=points, resume_dir=root / "resume",
+            provenance=provenance, seed_seconds=0.0)
+        try:
+            wrapped(problem, [], SimpleNamespace(threads=2), "N", object())
+        except RuntimeError as exc:
+            assert str(exc) == "fails before engine solve"
+        else:
+            raise AssertionError("the original stage failure must propagate")
+        stored = group2_checkpoint.CheckpointStore(points, provenance).load("N", "seed", problem)
+        assert stored is not None
+        level0.check_point(problem, stored["x"])
+        latest = group2_checkpoint.CheckpointStore(points, provenance).latest("N", problem)
+        assert latest is not None
+        level0.check_point(problem, latest["x"])
+
+
 def test_main_restores_full_plan_wrappers_when_runner_factory_fails():
     """The factory is optional instrumentation, never a lasting global patch."""
     import full_plan
