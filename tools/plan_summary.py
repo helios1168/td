@@ -95,7 +95,7 @@ BUNDLE_TITLE = {
     "N":          "National only",
     "WH":         "WH only",
     "FI":         "FI only",
-    "WHFI":       "WH + FI merged, one wholesaler (national separate)",
+    "WHFI":       "WIFI merged, one wholesaler",
     "WHFI_PLUS":  "WIFI: national + WH + FI, one wholesaler",
     "WH_PLUS":    "National + WH, one wholesaler",
     "FI_PLUS":    "National + FI, one wholesaler",
@@ -191,13 +191,16 @@ def bundle_title(bundle: str) -> str:
 
 
 def display_id(district: str) -> str:
-    """The drawn id: `WHFI_PLUS_07` -> `WIFI_07`; every other id unchanged.
+    """The drawn id: `WHFI_PLUS_07` -> `WIFI_07`; `WHFI_01` -> `WIFI_01`; every other id unchanged.
 
     Display only: labels and strips read through this, `assignment.csv` and `districts.csv`
     keep their own ids exactly as the realiser wrote them.
     """
-    prefix = "WHFI_PLUS_"
-    return f"WIFI_{district[len(prefix):]}" if district.startswith(prefix) else district
+    if district.startswith("WHFI_PLUS_"):
+        return f"WIFI_{district[10:]}"
+    if district.startswith("WHFI_"):
+        return f"WIFI_{district[5:]}"
+    return district
 
 
 def load_assignment(path: str) -> dict:

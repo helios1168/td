@@ -296,6 +296,87 @@ def heal_assignment_contiguity(run_dir: Path, bundle_list: list[str]):
             writer.writerow(r)
 
 
+def merge_national_into_wh_fi(run_dir: Path):
+    """If a state does not have a national channel, merge its national opportunity
+    into WH and FI (held by WIFI Merged wholesaler, or WH / FI wholesalers).
+    """
+    with open(run_dir / "assignment.csv") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        rows = list(reader)
+
+    wifi_map = {}
+    wh_map = {}
+    fi_map = {}
+    for row in rows:
+        z = row["zip"]
+        d = row["district"]
+        b = row["bundle"]
+        w = row["wholesaler"]
+        if d != "other":
+            if b == "WHFI":
+                wifi_map[z] = (d, b, w)
+            if row["channel"] == "WH":
+                wh_map[z] = (d, b, w)
+            if row["channel"] == "FI":
+                fi_map[z] = (d, b, w)
+
+    updated = 0
+    for row in rows:
+        if row["district"] == "other":
+            z = row["zip"]
+            ch = row["channel"]
+            if z in wifi_map:
+                row["district"], row["bundle"], row["wholesaler"] = wifi_map[z]
+                updated += 1
+            elif ch == "N_WH" and z in wh_map:
+                row["district"], row["bundle"], row["wholesaler"] = wh_map[z]
+                updated += 1
+            elif ch == "N_FI" and z in fi_map:
+                row["district"], row["bundle"], row["wholesaler"] = fi_map[z]
+                updated += 1
+            elif row["state"] == "CA" and float(row.get("M_cell", 0.0) or 0.0) == 0.0:
+                for r2 in rows:
+                    if r2["zip"] == z and r2["district"] != "other":
+                        row["district"], row["bundle"], row["wholesaler"] = r2["district"], r2["bundle"], r2["wholesaler"]
+                        updated += 1
+                        break
+
+    with open(run_dir / "assignment.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow(r)
+
+    # Update districts.csv mass and n_zips
+    dist_file = run_dir / "districts.csv"
+    if dist_file.exists():
+        with open(dist_file) as f:
+            d_reader = csv.DictReader(f)
+            d_fieldnames = d_reader.fieldnames
+            d_rows = list(d_reader)
+
+        mass_by_dist = {}
+        zips_by_dist = {}
+        for r in rows:
+            d = r["district"]
+            if d != "other":
+                mass_by_dist[d] = mass_by_dist.get(d, 0.0) + float(r.get("M_cell", 0.0) or 0.0)
+                zips_by_dist.setdefault(d, set()).add(r["zip"])
+
+        for d_row in d_rows:
+            d = d_row["district"]
+            if d in mass_by_dist:
+                d_row["mass"] = f"{mass_by_dist[d]:.8f}"
+                d_row["n_zips"] = str(len(zips_by_dist[d]))
+
+        with open(dist_file, "w", newline="") as f:
+            d_writer = csv.DictWriter(f, fieldnames=d_fieldnames)
+            d_writer.writeheader()
+            for d_row in d_rows:
+                d_writer.writerow(d_row)
+
+
 def assemble_and_realize_wifi_scenario(
     scenario_id: str,
     scenario_name: str,
@@ -525,6 +606,7 @@ def assemble_and_realize_wifi_scenario(
         raise RuntimeError(f"plan_realise failed for {scenario_id}")
 
     heal_assignment_contiguity(out_dir, ["N", "WH", "FI", "WHFI"])
+    merge_national_into_wh_fi(out_dir)
 
     # Run plan_summary.py
     print(f"[{scenario_id}] Running plan_summary.py...")
@@ -534,7 +616,9 @@ def assemble_and_realize_wifi_scenario(
         "--geo-cache", GEO_CACHE,
         "--groups", GROUPS_ARG
     ]
-    res_s = subprocess.run(cmd_summary, capture_output=True, text=True)
+    env_s = os.environ.copy()
+    env_s["TD_ZCTA_SHP"] = ZCTA_SHP
+    res_s = subprocess.run(cmd_summary, capture_output=True, text=True, env=env_s)
     if res_s.returncode != 0:
         print("STDOUT:", res_s.stdout)
         print("STDERR:", res_s.stderr)
@@ -817,6 +901,9 @@ def main():
     ]
     for sc in scenarios:
         all_scenarios.append((sc["name"], str(sc["out_dir"])))
+
+    for name, run_d in all_scenarios:
+        merge_national_into_wh_fi(Path(run_d))
 
     export_cmd = [
         PY, str(REPO_ROOT / "tools/scenario_export.py"),
