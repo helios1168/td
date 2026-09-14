@@ -6,3 +6,10 @@ scenario_B_52,Scenario B,"Scenario B - 52 Wholesalers (N:13, WHFI:1, WH:14, FI:2
 scenario_C_51,Scenario C,"Scenario C - 51 Wholesalers (N:12, WHFI:1, WH:13, FI:25)",51,12,13,25,1,696.3,397.8,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_C.png
 scenario_D_53,Scenario D,"Scenario D - 53 Wholesalers (N:13, WHFI:1, WH:14, FI:25)",53,13,14,25,1,642.7,369.4,348.2,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_scenario_D.png
 scenario_E_52,Scenario E,"Scenario E - 52 Wholesalers (N:12, WHFI:1, WH:14, FI:25)",52,12,14,25,1,696.3,369.4,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_E.png
+scenario_F_51,Scenario F,"Scenario F - 51 Wholesalers (N:12, WHFI:2, WH:13, FI:24)",51,12,13,24,2,696.3,397.8,362.8,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_F.png
+scenario_G_52,Scenario G,"Scenario G - 52 Wholesalers (N:12, WHFI:2, WH:13, FI:25)",52,12,13,25,2,696.3,397.8,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_G.png
+scenario_H_52,Scenario H,"Scenario H - 52 Wholesalers (N:13, WHFI:2, WH:13, FI:24)",52,13,13,24,2,642.7,397.8,362.8,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_scenario_H.png
+scenario_I_53,Scenario I,"Scenario I - 53 Wholesalers (N:13, WHFI:2, WH:14, FI:24)",53,13,14,24,2,642.7,369.4,362.8,22922.40,22664.65,257.76,1.12%,100% Contiguous (0 violations),figures/summary_scenario_I.png
+scenario_J_53,Scenario J,"Scenario J - 53 Wholesalers (N:12, WHFI:2, WH:14, FI:25)",53,12,14,25,2,696.3,369.4,348.2,22922.40,22686.92,235.48,1.03%,100% Contiguous (0 violations),figures/summary_scenario_J.png
+scenario_K_52,Scenario K,"Scenario K - 52 Wholesalers (N:14, WHFI:1, WH:13, FI:24)",52,14,13,24,1,596.8,397.8,362.8,22922.40,22491.24,431.16,1.88%,100% Contiguous (0 violations),figures/summary_scenario_K.png
+scenario_L_53,Scenario L,"Scenario L - 53 Wholesalers (N:14, WHFI:1, WH:14, FI:24)",53,14,14,24,1,596.8,369.4,362.8,22922.40,22491.24,431.16,1.88%,100% Contiguous (0 violations),figures/summary_scenario_L.png
