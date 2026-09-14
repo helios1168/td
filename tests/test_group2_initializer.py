@@ -70,4 +70,4 @@ def test_actual_seed_solves_a_miniature_case():
     result = level0.solve_passes(problem, [level0.cover_pass(problem, ["N"])],
                                  engine="scipy", time_limit=5, warm_start=seed.warm_start)
     assert result["passes"][-1]["value"] >= 0.8
-    assert seed.metadata["status"] == 0 and seed.metadata["auxiliary_optimal"] is True
+    assert seed.metadata["status"] == 7 and seed.metadata["auxiliary_optimal"] is True

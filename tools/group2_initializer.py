@@ -10,11 +10,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
-import warnings
 
 import numpy as np
 from scipy import sparse
-from scipy.optimize import Bounds, LinearConstraint, milp
 
 from td.solvers import level0
 
@@ -62,7 +60,8 @@ def _coverage_objective(problem: level0.Level0Problem, passes: Iterable[level0.P
 
 
 def _auxiliary(problem: level0.Level0Problem, bundles: tuple[str, ...], base_objective: np.ndarray
-               ) -> tuple[np.ndarray, np.ndarray, np.ndarray, LinearConstraint, list[tuple[int, str]]]:
+               ) -> tuple[np.ndarray, np.ndarray, np.ndarray, sparse.csc_matrix, np.ndarray,
+                          np.ndarray, list[tuple[int, str]]]:
     """Return the purity-selector extension with the stage's coverage objective."""
     selectors = [(s, bundle) for s in range(problem.n_state) for bundle in bundles]
     n_selector = len(selectors)
@@ -71,7 +70,8 @@ def _auxiliary(problem: level0.Level0Problem, bundles: tuple[str, ...], base_obj
     if not np.any(objective):
         raise ValueError("coverage pass has a zero objective")
 
-    original = sparse.hstack((problem.A, sparse.csc_matrix((problem.A.shape[0], n_selector))),
+    assert problem.A is not None
+    original = sparse.hstack((problem.A, sparse.csc_matrix((len(problem.lb), n_selector))),
                              format="csc")
     rr: list[int] = []
     cc: list[int] = []
@@ -84,12 +84,54 @@ def _auxiliary(problem: level0.Level0Problem, bundles: tuple[str, ...], base_obj
         vv.extend([1.0] * len(cols) + [-1.0])
     selector_rows = sparse.coo_matrix((vv, (rr, cc)), shape=(n_selector, n_total)).tocsc()
     matrix = sparse.vstack((original, selector_rows), format="csc")
-    lower = np.concatenate((problem.lb, np.zeros(n_selector)))
-    upper = np.concatenate((problem.ub, np.zeros(n_selector)))
+    assert isinstance(matrix, sparse.csc_matrix)
+    row_lower = np.concatenate((problem.lb, np.zeros(n_selector)))
+    row_upper = np.concatenate((problem.ub, np.zeros(n_selector)))
     var_lb = np.concatenate((problem.var_lb, np.zeros(n_selector)))
     var_ub = np.concatenate((problem.var_ub, np.ones(n_selector)))
     integrality = np.concatenate((problem.integrality, np.ones(n_selector)))
-    return objective, var_lb, var_ub, LinearConstraint(matrix, lower, upper), selectors
+    return objective, var_lb, var_ub, matrix, row_lower, row_upper, selectors
+
+
+def _solve_auxiliary(c: np.ndarray, var_lb: np.ndarray, var_ub: np.ndarray,
+                     matrix: sparse.csc_matrix, row_lb: np.ndarray, row_ub: np.ndarray,
+                     integrality: np.ndarray, *, time_limit: float, threads: int
+                     ) -> tuple[np.ndarray | None, int, str]:
+    """Solve directly with highspy, isolated from scipy's separate HiGHS pool."""
+    import highspy
+
+    lp = highspy.HighsLp()
+    lp.num_col_ = len(c)
+    lp.num_row_ = len(row_lb)
+    lp.col_cost_ = c.tolist()
+    lp.col_lower_ = var_lb.tolist()
+    lp.col_upper_ = var_ub.tolist()
+    lp.row_lower_ = row_lb.tolist()
+    lp.row_upper_ = row_ub.tolist()
+    lp.integrality_ = [highspy.HighsVarType.kInteger if integer else highspy.HighsVarType.kContinuous
+                       for integer in integrality]
+    data = matrix.tocsc()
+    coefficients = highspy.HighsSparseMatrix()
+    coefficients.format_ = highspy.MatrixFormat.kColwise
+    coefficients.start_ = data.indptr.tolist()
+    coefficients.index_ = data.indices.tolist()
+    coefficients.value_ = data.data.tolist()
+    lp.a_matrix_ = coefficients
+    lp.sense_ = highspy.ObjSense.kMinimize
+    highs = highspy.Highs()
+    highs.setOptionValue("output_flag", False)
+    highs.setOptionValue("mip_rel_gap", 0.0)
+    highs.setOptionValue("time_limit", time_limit)
+    highs.setOptionValue("threads", threads)
+    if highs.passModel(lp) == highspy.HighsStatus.kError:
+        return None, -1, "HiGHS rejected the auxiliary model"
+    highs.run()
+    model_status = highs.getModelStatus()
+    message = highs.modelStatusToString(model_status)
+    info = highs.getInfo()
+    if info.primal_solution_status != highspy.kSolutionStatusFeasible:
+        return None, int(model_status), message
+    return np.asarray(highs.getSolution().col_value, float), int(model_status), message
 
 
 def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[level0.Pass], *,
@@ -101,8 +143,9 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
     constraints.  ``passes`` supplies the first nonzero coverage objective,
     normally the Group 2 priority pass. A timeout may still yield a valid
     incumbent; only such an incumbent is returned. The result makes no
-    optimality claim. ``threads`` is recorded for the caller's run metadata;
-    scipy's bounded auxiliary MILP does not expose a thread setting.
+    optimality claim. The direct highspy auxiliary solve uses ``threads``, the
+    same count as the following production solve, so it does not ask its
+    process-global thread pool to resize between the two solves.
     """
     try:
         seconds = float(time_limit)
@@ -116,7 +159,8 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
         return Group2InitializerResult("no_seed", None,
                                        dict(reason="invalid_threads", threads=repr(threads)))
     selected = _selected_bundles(problem, bundles)
-    base = dict(bundles=list(selected), time_limit=seconds, threads=int(threads), n_var=problem.n_var)
+    base: dict[str, object] = dict(bundles=list(selected), time_limit=seconds,
+                                   threads=int(threads), n_var=problem.n_var)
     if seconds == 0.0:
         return Group2InitializerResult("disabled", None, base)
     if not selected:
@@ -125,31 +169,23 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
         objective = _coverage_objective(problem, passes)
         if objective is None:
             raise ValueError("no nonzero y-only coverage pass")
-        c, lb, ub, constraints, selectors = _auxiliary(problem, selected, objective)
+        c, lb, ub, matrix, row_lb, row_ub, selectors = _auxiliary(problem, selected, objective)
     except ValueError as exc:
         return Group2InitializerResult("no_seed", None, dict(base, reason=str(exc)))
     try:
-        # scipy forwards HiGHS options it does not own.  Some scipy releases warn
-        # about `threads` while forwarding it, others accept it directly.  Suppress
-        # only that known forwarding warning, so all other solver warnings remain
-        # visible.  The caller and production solve use the same thread count, so
-        # this does not resize HiGHS's process-global pool between solves.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning,
-                                    message=r"Unrecognized options detected: .*threads.*")
-            result = milp(c, integrality=np.concatenate((problem.integrality, np.ones(len(selectors)))),
-                          bounds=Bounds(lb, ub), constraints=constraints,
-                          options={"time_limit": seconds, "mip_rel_gap": 0.0,
-                                   "threads": int(threads)})
+        x_aux, solver_status, solver_message = _solve_auxiliary(
+            c, lb, ub, matrix, row_lb, row_ub,
+            np.concatenate((problem.integrality, np.ones(len(selectors)))),
+            time_limit=seconds, threads=int(threads))
     except Exception as exc:  # A warm start is optional, including solver setup failures.
         return Group2InitializerResult("no_seed", None,
                                        dict(base, reason="solver_error", error=type(exc).__name__))
-    meta = dict(base, status=int(result.status), solver_status=int(result.status),
-                solver_message=str(result.message),
+    meta = dict(base, status=solver_status, solver_status=solver_status,
+                solver_message=solver_message,
                 selector_count=len(selectors))
-    if result.x is None:
+    if x_aux is None:
         return Group2InitializerResult("no_seed", None, dict(meta, reason="no_incumbent"))
-    vector = np.asarray(result.x[:problem.n_var], float)
+    vector = np.asarray(x_aux[:problem.n_var], float)
     if not np.isfinite(vector).all():
         return Group2InitializerResult("no_seed", None, dict(meta, reason="nonfinite_vector"))
     integer_values = vector[np.asarray(problem.integrality, bool)]
@@ -161,7 +197,7 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
         return Group2InitializerResult("no_seed", None,
                                        dict(meta, reason="validation_failed", error=str(exc)))
     chosen = [[problem.state_list[s] if s < len(problem.state_list) else str(s), bundle]
-              for i, (s, bundle) in enumerate(selectors) if result.x[problem.n_var + i] > 0.5]
+              for i, (s, bundle) in enumerate(selectors) if x_aux[problem.n_var + i] > 0.5]
     return Group2InitializerResult("seed", vector,
-                                   dict(meta, coverage=float(-c @ result.x), selected=chosen,
-                                        auxiliary_optimal=bool(result.status == 0)))
+                                   dict(meta, coverage=float(-c @ x_aux), selected=chosen,
+                                        auxiliary_optimal=solver_status == 7))
