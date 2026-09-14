@@ -340,15 +340,16 @@ def main():
     parser = argparse.ArgumentParser(description="Grid run for 48, 49, 50 district configurations.")
     parser.add_argument("--wifi-tier", type=int, default=1, choices=[1, 2, 3], help="WIFI merged district count (default 1)")
     parser.add_argument("--k", nargs="+", type=int, default=[48, 49, 50], help="Total district counts to run (default: 48 49 50)")
+    parser.add_argument("--wh", nargs="+", type=int, default=[11], help="Wealth district counts to run (default: 11)")
     parser.add_argument("--dry-run", action="store_true", help="Print combination matrix without solving")
     args = parser.parse_args()
 
     all_configs = get_candidate_grid(wifi_tier=args.wifi_tier)
-    active_configs = [c for c in all_configs if c["K"] in args.k]
+    active_configs = [c for c in all_configs if c["K"] in args.k and c["wh"] in args.wh]
 
     print(f"\n=======================================================================")
     print(f"   GRID PIPELINE: 48, 49, 50 TOTAL DISTRICTS (WIFI = {args.wifi_tier})")
-    print(f"   WH in (10, 11), National in (12, 13, 14)")
+    print(f"   WH in {args.wh}, National in (12, 13, 14)")
     print(f"   Total Candidate Configurations: {len(active_configs)}")
     print(f"=======================================================================\n")
 
@@ -422,7 +423,7 @@ def main():
         channel_tasks["n12"] = ("N", w_n, state_list, state_xy, edges, supports_n12, 12, (tau * 0.90, tau * 1.10), N_SPLITTABLE, eligible_core, None, 45.0, 0.05)
     if 14 in needed_n_k:
         tau = tot_n_core / 14
-        channel_tasks["n14"] = ("N", w_n, state_list, state_xy, edges, supports, 14, (tau * 0.88, tau * 1.12), N_SPLITTABLE, eligible_core, None, 45.0, 0.05)
+        channel_tasks["n14"] = ("N", w_n, state_list, state_xy, edges, supports_core, 14, (tau * 0.88, tau * 1.12), N_SPLITTABLE, eligible_core, None, 45.0, 0.05)
 
     for fi_k in needed_fi_k:
         tau = tot_fi_core / fi_k
@@ -572,7 +573,65 @@ def main():
 
     print(f"summary.csv successfully updated! Total scenarios in master: {len(existing_summary)}")
 
+    # Update scenarios.csv
+    print("\nUpdating master scenarios.csv via scenario_export.py...")
+    export_cmd = [
+        PY, str(REPO_ROOT / "tools/scenario_export.py"),
+        "--out", str(REPO_ROOT / "scenarios.csv"),
+    ]
+    DIR_MAP = {
+        "47_total_14n_11wh_21fi_1wifi": "battery/results/option1_exact_merged",
+        "46_total_14n_11wh_21fi_0wifi": "battery/results/option2_exact_multichannel",
+        "51_total_13n_13wh_24fi_1wifi": "battery/results/scenario_A_51",
+        "52_total_13n_14wh_24fi_1wifi": "battery/results/scenario_B_52",
+        "51_total_12n_13wh_25fi_1wifi": "battery/results/scenario_C_51",
+        "53_total_13n_14wh_25fi_1wifi": "battery/results/scenario_D_53",
+        "52_total_12n_14wh_25fi_1wifi": "battery/results/scenario_E_52",
+        "51_total_12n_13wh_24fi_2wifi": "battery/results/scenario_F_51",
+        "52_total_12n_13wh_25fi_2wifi": "battery/results/scenario_G_52",
+        "52_total_13n_13wh_24fi_2wifi": "battery/results/scenario_H_52",
+        "53_total_13n_14wh_24fi_2wifi": "battery/results/scenario_I_53",
+        "53_total_12n_14wh_25fi_2wifi": "battery/results/scenario_J_53",
+        "52_total_14n_13wh_24fi_1wifi": "battery/results/scenario_K_52",
+        "53_total_14n_14wh_24fi_1wifi": "battery/results/scenario_L_53",
+        "51_total_13n_11wh_24fi_3wifi": "battery/results/grid_W3_A_51",
+        "51_total_13n_11wh_23fi_4wifi": "battery/results/grid_W4_A_51",
+        "52_total_12n_11wh_25fi_4wifi": "battery/results/grid_W4_B_52",
+        "52_total_12n_10wh_25fi_5wifi": "battery/results/grid_W5_C_52",
+    }
+    for r in existing_summary:
+        s_id = r["scenario_id"]
+        if s_id in DIR_MAP:
+            chosen = REPO_ROOT / DIR_MAP[s_id]
+        else:
+            chosen = REPO_ROOT / f"battery/results/{s_id}"
+        if (chosen / "assignment.csv").exists():
+            export_cmd.extend(["--scenario", s_id, str(chosen)])
+
+    res_exp = subprocess.run(export_cmd, capture_output=True, text=True)
+    if res_exp.returncode != 0:
+        print("Export STDOUT:", res_exp.stdout)
+        print("Export STDERR:", res_exp.stderr, file=sys.stderr)
+        raise RuntimeError("scenario_export failed")
+
+    with open(REPO_ROOT / "scenarios.csv") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        row_count = sum(1 for _ in reader)
+    print(f"scenarios.csv successfully written with {row_count:,} rows!")
+
+    # Copy new figures and datasets to brain artifacts directory
+    brain_dir = Path("/Users/sandvault-ntlee/.gemini/antigravity-cli/brain/09f078e7-2f55-4c40-9905-5ed9fd054e07")
+    if brain_dir.exists():
+        shutil.copy(REPO_ROOT / "summary.csv", brain_dir / "summary.csv")
+        shutil.copy(REPO_ROOT / "scenarios.csv", brain_dir / "scenarios.csv")
+        for sc in scenarios_to_run:
+            fig_src = sc["fig"]
+            if fig_src.exists():
+                shutil.copy(fig_src, brain_dir / fig_src.name)
+
 
 if __name__ == "__main__":
     main()
+
 
