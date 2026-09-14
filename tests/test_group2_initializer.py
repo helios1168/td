@@ -7,7 +7,7 @@ import sys
 import numpy as np
 
 from td.solvers import level0
-from tools.group2_initializer import build_group2_warm_start
+from tools.group2_initializer import _anchor_patterns, build_group2_warm_start
 from tools.group2_run import constrain_problem
 
 
@@ -56,6 +56,7 @@ def _seed_can_split_one_pure_state_across_same_channel_slots():
     problem = _problem([2.0], slots=2)
     seed = _seed(problem)
     assert seed.status == "seed"
+    assert seed.vector is not None
     y = seed.vector[problem.off_y:problem.off_y + problem.n_state * problem.k].reshape(problem.n_state, problem.k)
     assert np.isclose(y.sum(), 1.0)
     assert np.count_nonzero(y[0] > 1e-6) == 2
@@ -68,8 +69,23 @@ def test_seed_can_split_one_pure_state_across_same_channel_slots():
 def _seed_respects_exact_used_count():
     problem = _problem([1.0, 1.0], slots=1)
     seed = _seed(problem)
+    assert seed.vector is not None
     used = seed.vector[problem.off_u:problem.off_u + problem.k]
     assert seed.status == "seed" and np.isclose(used.sum(), 1.0)
+    assert seed.metadata["national_exact_count"] == 1
+    assert seed.metadata["phase"] == "national_feasibility"
+
+
+def _greedy_feasible_seed_is_reported_without_auxiliary_optimization():
+    seed = _seed(_problem([0.98], slots=1))
+    assert seed.status == "seed"
+    assert seed.metadata["phase"] == "greedy_feasible"
+    assert seed.metadata["status"] == "greedy_feasible"
+    assert seed.metadata["auxiliary_optimal"] is False
+
+
+def test_greedy_feasible_seed_is_reported_without_auxiliary_optimization():
+    _fresh("greedy_feasible_seed_is_reported_without_auxiliary_optimization")
 
 
 def test_seed_respects_exact_used_count():
@@ -98,13 +114,23 @@ def test_invalid_budget_or_thread_count_returns_clean_no_seed():
     assert build_group2_warm_start(problem, passed, threads=0).metadata["reason"] == "invalid_threads"
 
 
+def test_real_scenario_anchor_patterns_are_seed_only_and_exactly_fourteen():
+    states = ("CA", "TX", "NY", "FL", "NJ", "AZ", "IL", "MI", "GA", "VA",
+              "NC", "OH", "MD")
+    problem = SimpleNamespace(state_list=states)
+    patterns = _anchor_patterns(problem, 14)
+    assert len(patterns) == 2 and all(len(pattern) == 14 for pattern in patterns)
+    assert _anchor_patterns(problem, 13) == ()
+
+
 def _actual_seed_solves_a_miniature_case():
     problem = _problem([1.0, 1.0], slots=1)
     seed = _seed(problem)
     result = level0.solve_passes(problem, [level0.cover_pass(problem, ["N"])],
                                  engine="scipy", time_limit=5, warm_start=seed.warm_start)
     assert result["passes"][-1]["value"] >= 0.8
-    assert seed.metadata["status"] == 7 and seed.metadata["auxiliary_optimal"] is True
+    assert seed.metadata["status"] == 7
+    assert seed.metadata["auxiliary_optimal"] is True
 
 
 def test_actual_seed_solves_a_miniature_case():

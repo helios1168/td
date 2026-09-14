@@ -32,7 +32,7 @@ import full_plan
 from td import channels
 from td.solvers import level0
 from td.solvers import milp_engines
-from tools import group2_checkpoint, group2_initializer
+from tools import group2_checkpoint, group2_initializer, group2_symmetry
 
 # Colorado remains eligible as supporting territory, not a priority or required state.
 GROUP2: list[str] = [str(state) for state in
@@ -89,6 +89,48 @@ def constrain_problem(problem: level0.Level0Problem,
         lb=np.concatenate([problem.lb, np.zeros(n_rows)]),
         ub=np.concatenate([problem.ub, np.full(n_rows, np.inf)]),
         var_lb=lower, var_ub=upper, rows=rows)
+
+
+def drop_connectivity_for_diagnostic(problem: level0.Level0Problem) -> level0.Level0Problem:
+    """Project out only SCF connectivity for a labeled feasibility diagnostic."""
+    removed = {"root", "rz", "flow_tail", "flow_head", "net"}
+    keep = np.ones(len(problem.lb), dtype=bool)
+    for name in removed:
+        if name not in problem.rows:
+            raise ValueError(f"connectivity diagnostic needs row block {name!r}")
+        lo, hi = problem.rows[name]
+        keep[lo:hi] = False
+    rows: dict[str, tuple[int, int]] = {}
+    next_row = 0
+    for name, (lo, hi) in problem.rows.items():
+        if name in removed:
+            continue
+        size = int(keep[lo:hi].sum())
+        rows[name] = (next_row, next_row + size)
+        next_row += size
+    upper = problem.var_ub.copy()
+    upper[problem.off_r:problem.off_u] = 0.0
+    return dataclasses.replace(problem, A=problem.A[keep].tocsc(), lb=problem.lb[keep],
+                               ub=problem.ub[keep], var_ub=upper, rows=rows)
+
+
+def drop_geography_for_diagnostic(problem: level0.Level0Problem) -> level0.Level0Problem:
+    """Remove pair-distance rows while retaining all opportunity and purity rules."""
+    if "cap_dist" not in problem.rows:
+        return problem
+    lo_drop, hi_drop = problem.rows["cap_dist"]
+    keep = np.ones(len(problem.lb), dtype=bool)
+    keep[lo_drop:hi_drop] = False
+    rows: dict[str, tuple[int, int]] = {}
+    next_row = 0
+    for name, (lo, hi) in problem.rows.items():
+        if name == "cap_dist":
+            continue
+        size = int(keep[lo:hi].sum())
+        rows[name] = (next_row, next_row + size)
+        next_row += size
+    return dataclasses.replace(problem, A=problem.A[keep].tocsc(), lb=problem.lb[keep],
+                               ub=problem.ub[keep], rows=rows)
 
 
 def plan_audit(plan: dict[str, Any], case: str, count_mode: str = "fixed",
@@ -197,8 +239,9 @@ def write_json(path: Path, value: Any) -> None:
 def make_accelerated_runner(
     original_run: Callable[..., dict[str, Any]], *, checkpoint_dir: Path,
     resume_dir: Path | None, provenance: dict[str, Any], seed_seconds: float,
+    heuristic_effort: float = 1.0,
 ) -> Callable[..., dict[str, Any]]:
-    """Seed unchanged stage models and retain pass incumbents without skipping solves."""
+    """Seed unchanged stage models and retain live incumbents without skipping solves."""
     store = group2_checkpoint.CheckpointStore(checkpoint_dir, provenance)
     resume = (group2_checkpoint.CheckpointStore(resume_dir, provenance)
               if resume_dir is not None else None)
@@ -221,7 +264,7 @@ def make_accelerated_runner(
                 candidate = np.asarray(loaded["x"], dtype=float)
                 record["seed"] = dict(source="checkpoint", status="loaded")
         if candidate is None and kwargs.get("warm") is None and seed_seconds > 0:
-            seed = group2_initializer.build_group2_warm_start(
+            seed = group2_initializer.build_group2_feasibility_start(
                 problem, passes, time_limit=seed_seconds, threads=args.threads or 2)
             candidate = seed.vector
             record["seed"] = dict(source="purity_initializer", **seed.metadata)
@@ -249,10 +292,33 @@ def make_accelerated_runner(
         def solve(current: level0.Level0Problem, *a: Any, **kw: Any) -> dict[str, Any]:
             nonlocal pass_index
             pass_index += 1
-            item: dict[str, Any] = dict(index=pass_index, status="running")
+            item: dict[str, Any] = dict(index=pass_index, status="running",
+                                        live_incumbents=0)
             record["passes"].append(item)
             flush()
             pass_started = time.monotonic()
+            prior_callback = kw.get("on_incumbent")
+
+            def retain_incumbent(incumbent: dict[str, Any]) -> None:
+                """Atomically retain each improving feasible point from the native solver."""
+                if prior_callback is not None:
+                    prior_callback(incumbent)
+                try:
+                    path = store.save(stage, f"pass_{pass_index:03d}_live", incumbent, problem)
+                except (ValueError, OSError) as exc:
+                    item["live_checkpoint_error"] = str(exc)
+                else:
+                    item["live_incumbents"] = int(item["live_incumbents"]) + 1
+                    item["live_checkpoint"] = str(path)
+                    for field in ("objective", "seconds", "splits"):
+                        value = incumbent.get(field)
+                        if (isinstance(value, (int, float, np.integer, np.floating))
+                                and np.isfinite(float(value))):
+                            item[f"live_{field}"] = float(value)
+                flush()
+
+            kw["on_incumbent"] = retain_incumbent
+            kw.setdefault("heuristic_effort", heuristic_effort)
             try:
                 result = original_solve(current, *a, **kw)
                 item["status"] = str(result.get("status", "returned"))
@@ -302,11 +368,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--time-limit", type=float, default=180.0)
     parser.add_argument("--seed-time-limit", type=float, default=15.0,
                         help="Auxiliary purity-aware seed budget per stage; 0 disables seeding")
+    parser.add_argument("--heuristic-effort", type=float, default=1.0,
+                        help="HiGHS primal heuristic effort in [0,1] for production passes")
+    parser.add_argument("--diagnostic-drop-connectivity", action="store_true",
+                        help="Diagnostic only: remove SCF contiguity, retaining business bounds")
+    parser.add_argument("--diagnostic-drop-geography", action="store_true",
+                        help="Diagnostic only: remove state-distance rows")
     parser.add_argument("--resume-checkpoints", type=Path,
                         help="Prior checkpoints directory; compatible points seed fresh solves")
     args = parser.parse_args(argv)
     if not np.isfinite(args.seed_time_limit) or args.seed_time_limit < 0:
         parser.error("--seed-time-limit must be finite and nonnegative")
+    if not np.isfinite(args.heuristic_effort) or not 0.0 <= args.heuristic_effort <= 1.0:
+        parser.error("--heuristic-effort must be finite and in [0,1]")
     out = args.out.resolve()
     if args.audit_only:
         audit = realized_audit(out / "assignment.csv", args.case, args.count_mode,
@@ -328,6 +402,7 @@ def main(argv: list[str] | None = None) -> int:
     sources = [Path(__file__), ROOT / "tools/full_plan.py", ROOT / "tools/plan_realise.py",
                ROOT / "td/solvers/level0.py", ROOT / "td/stage2_state.py",
                ROOT / "tools/group2_checkpoint.py", ROOT / "tools/group2_initializer.py",
+               ROOT / "tools/group2_symmetry.py",
                ROOT / "td/solvers/milp_engines.py"]
     provenance = dict(
         input_sha256=hashlib.sha256((args.hub / "instance_descaled_v4_conus.json.gz").read_bytes()).hexdigest(),
@@ -338,6 +413,9 @@ def main(argv: list[str] | None = None) -> int:
         national_pool="CONUS" if args.supporting_states else GROUP2, planner_argv=command,
         **provenance,
         seed_time_limit=args.seed_time_limit,
+        heuristic_effort=args.heuristic_effort,
+        diagnostic_drop_connectivity=args.diagnostic_drop_connectivity,
+        diagnostic_drop_geography=args.diagnostic_drop_geography,
         resume_checkpoints=str(args.resume_checkpoints.resolve()) if args.resume_checkpoints else None,
         additions=["conditional purity rows for N, WH and FI",
                    "count lower and upper bounds" if args.count_mode == "fixed" else "count upper bounds"],
@@ -354,7 +432,15 @@ def main(argv: list[str] | None = None) -> int:
     original_run = full_plan._run_passes
 
     def build(*a: Any, **kw: Any) -> level0.Level0Problem:
-        return constrain_problem(original(*a, **kw), COUNTS, args.count_mode)
+        problem = constrain_problem(original(*a, **kw), COUNTS, args.count_mode)
+        if args.diagnostic_drop_connectivity:
+            problem = drop_connectivity_for_diagnostic(problem)
+        if args.diagnostic_drop_geography:
+            problem = drop_geography_for_diagnostic(problem)
+        if args.diagnostic_drop_connectivity or args.diagnostic_drop_geography:
+            return problem
+        return (group2_symmetry.canonicalize_slot_symmetry(problem, "N")
+                if "N" in problem.slots else problem)
 
     def passes(problem: level0.Level0Problem, *a: Any, **kw: Any) -> list[level0.Pass]:
         result = original_passes(problem, *a, **kw)
@@ -371,7 +457,8 @@ def main(argv: list[str] | None = None) -> int:
                     full_plan._run_passes = make_accelerated_runner(
                         original_run, checkpoint_dir=out / "checkpoints",
                         resume_dir=args.resume_checkpoints, provenance=provenance,
-                        seed_seconds=args.seed_time_limit)
+                        seed_seconds=args.seed_time_limit,
+                        heuristic_effort=args.heuristic_effort)
                     full_plan.main(command)
                 finally:
                     full_plan._build = original

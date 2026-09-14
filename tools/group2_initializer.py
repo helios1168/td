@@ -18,6 +18,10 @@ from td.solvers import level0
 
 
 DEFAULT_BUNDLES = ("N", "WH", "FI")
+_NATIONAL_ANCHOR_PATTERNS = (
+    ("CA", "CA", "CA", "TX", "TX", "NY", "NY", "FL", "NJ", "AZ", "IL", "MI", "GA", "VA"),
+    ("CA", "CA", "CA", "TX", "TX", "NY", "NY", "FL", "NJ", "AZ", "IL", "NC", "OH", "MD"),
+)
 
 
 @dataclass(frozen=True)
@@ -95,7 +99,8 @@ def _auxiliary(problem: level0.Level0Problem, bundles: tuple[str, ...], base_obj
 
 def _solve_auxiliary(c: np.ndarray, var_lb: np.ndarray, var_ub: np.ndarray,
                      matrix: sparse.csc_matrix, row_lb: np.ndarray, row_ub: np.ndarray,
-                     integrality: np.ndarray, *, time_limit: float, threads: int
+                     integrality: np.ndarray, *, time_limit: float, threads: int,
+                     mip_rel_gap: float = 0.0, heuristic_effort: float | None = None,
                      ) -> tuple[np.ndarray | None, int, str]:
     """Solve directly with highspy, isolated from scipy's separate HiGHS pool."""
     import highspy
@@ -120,9 +125,11 @@ def _solve_auxiliary(c: np.ndarray, var_lb: np.ndarray, var_ub: np.ndarray,
     lp.sense_ = highspy.ObjSense.kMinimize
     highs = highspy.Highs()
     highs.setOptionValue("output_flag", False)
-    highs.setOptionValue("mip_rel_gap", 0.0)
+    highs.setOptionValue("mip_rel_gap", mip_rel_gap)
     highs.setOptionValue("time_limit", time_limit)
     highs.setOptionValue("threads", threads)
+    if heuristic_effort is not None:
+        highs.setOptionValue("mip_heuristic_effort", heuristic_effort)
     if highs.passModel(lp) == highspy.HighsStatus.kError:
         return None, -1, "HiGHS rejected the auxiliary model"
     highs.run()
@@ -132,6 +139,55 @@ def _solve_auxiliary(c: np.ndarray, var_lb: np.ndarray, var_ub: np.ndarray,
     if info.primal_solution_status != highspy.kSolutionStatusFeasible:
         return None, int(model_status), message
     return np.asarray(highs.getSolution().col_value, float), int(model_status), message
+
+
+def _exact_national_count(problem: level0.Level0Problem) -> int | None:
+    """Read the exact N count from its fixed slot bounds, if this is an N stage."""
+    if "N" not in problem.slots:
+        return None
+    lo, hi = problem.slots["N"]
+    lower = problem.var_lb[problem.off_u + lo:problem.off_u + hi]
+    upper = problem.var_ub[problem.off_u + lo:problem.off_u + hi]
+    fixed = lower >= 1.0 - 1e-9
+    closed = upper <= 1e-9
+    if not fixed.any() or not np.all(fixed | closed):
+        return None
+    return int(fixed.sum())
+
+
+def _validated_vector(problem: level0.Level0Problem, x_aux: np.ndarray | None,
+                      exact_national: int | None) -> tuple[np.ndarray | None, str | None]:
+    """Strip selectors and check the untouched original model and exact N count."""
+    if x_aux is None:
+        return None, "no_incumbent"
+    vector = np.asarray(x_aux[:problem.n_var], float)
+    if not np.isfinite(vector).all():
+        return None, "nonfinite_vector"
+    integer_values = vector[np.asarray(problem.integrality, bool)]
+    if not np.all(np.abs(integer_values - np.rint(integer_values)) <= 1e-6):
+        return None, "fractional_integer"
+    if exact_national is not None:
+        lo, hi = problem.slots["N"]
+        used = vector[problem.off_u + lo:problem.off_u + hi]
+        if int(np.rint(used.sum())) != exact_national:
+            return None, "national_count_mismatch"
+    try:
+        level0.check_point(problem, vector)
+    except ValueError as exc:
+        return None, f"validation_failed:{exc}"
+    return vector, None
+
+
+def _anchor_patterns(problem: level0.Level0Problem,
+                     exact_national: int | None) -> tuple[tuple[int, ...], ...]:
+    """Resolve scenario seed contacts without making them production requirements."""
+    if exact_national != 14:
+        return ()
+    index = {state: s for s, state in enumerate(problem.state_list)}
+    if not all(state in index for pattern in _NATIONAL_ANCHOR_PATTERNS for state in pattern):
+        return ()
+    return tuple(tuple(index[state] for state in pattern)
+                 for pattern in _NATIONAL_ANCHOR_PATTERNS)
 
 
 def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[level0.Pass], *,
@@ -172,32 +228,118 @@ def build_group2_warm_start(problem: level0.Level0Problem, passes: Iterable[leve
         c, lb, ub, matrix, row_lb, row_ub, selectors = _auxiliary(problem, selected, objective)
     except ValueError as exc:
         return Group2InitializerResult("no_seed", None, dict(base, reason=str(exc)))
+    exact_national = _exact_national_count(problem)
+    greedy_failure: str | None = None
+    # This is the cheapest deterministic route to an incumbent.  It is still
+    # checked against the original constrained model, because the legacy
+    # greedy can fail conditional purity on a partial state.
     try:
+        greedy, greedy_seeds = level0.greedy_plan(problem, priority=selected)
+        vector, invalid_reason = _validated_vector(problem, greedy, exact_national)
+        if vector is not None:
+            seed_rows = [[problem.state_list[state] if state < len(problem.state_list) else str(state),
+                          slot]
+                         for bundle in selected for state, slot in greedy_seeds.get(bundle, [])]
+            return Group2InitializerResult("seed", vector,
+                                           dict(base, status="greedy_feasible", solver_status=None,
+                                                solver_message="validated deterministic greedy point",
+                                                selector_count=len(selectors), phase="greedy_feasible",
+                                                national_exact_count=exact_national,
+                                                coverage=float(-c[:problem.n_var] @ vector),
+                                                selected=seed_rows, auxiliary_optimal=False))
+    except ValueError as exc:
+        # An invalid greedy point is expected on some pure-state configurations;
+        # continue to the selector MILP without exposing it as a warm start.
+        greedy_failure = str(exc)
+    try:
+        # Try two geographically distributed contact patterns before the free
+        # auxiliary search.  They exist only in the seed model: a validated
+        # point is handed to the original planner, whose bounds remain free.
+        anchor_patterns = _anchor_patterns(problem, exact_national)
+        anchor_total = min(seconds * 0.25, 20.0) if anchor_patterns else 0.0
+        anchor_seconds = anchor_total / len(anchor_patterns) if anchor_patterns else 0.0
+        n_lo = problem.slots.get("N", (0, 0))[0]
+        for pattern_index, pattern in enumerate(anchor_patterns, start=1):
+            anchored_lb = lb.copy()
+            for offset, state in enumerate(pattern):
+                anchored_lb[problem.off_z + state * problem.k + n_lo + offset] = 1.0
+            x_aux, solver_status, solver_message = _solve_auxiliary(
+                c, anchored_lb, ub, matrix, row_lb, row_ub,
+                np.concatenate((problem.integrality, np.ones(len(selectors)))),
+                time_limit=anchor_seconds, threads=int(threads), mip_rel_gap=1.0,
+                heuristic_effort=1.0)
+            vector, invalid_reason = _validated_vector(problem, x_aux, exact_national)
+            if vector is not None:
+                assert x_aux is not None
+                chosen = [[problem.state_list[s], bundle]
+                          for i, (s, bundle) in enumerate(selectors)
+                          if x_aux[problem.n_var + i] > 0.5]
+                return Group2InitializerResult(
+                    "seed", vector,
+                    dict(base, status=solver_status, solver_status=solver_status,
+                         solver_message=solver_message, selector_count=len(selectors),
+                         phase="anchored_national_feasibility", pattern=pattern_index,
+                         anchors=[problem.state_list[s] for s in pattern],
+                         national_exact_count=exact_national, greedy_failure=greedy_failure,
+                         coverage=float(-c @ x_aux), selected=chosen,
+                         auxiliary_optimal=solver_status == 7))
+        # The national stage gets a bounded incumbent-first attempt.  It retains
+        # the real coverage objective, every count, purity and geometry row, but
+        # lets HiGHS stop as soon as its first useful incumbent closes the wide
+        # initial gap.  That seed is preferable to spending the whole budget on
+        # optimality before the production solver has any start at all.
+        feasibility_seconds = min(max(0.0, seconds - anchor_total), 5.0) if exact_national is not None else 0.0
+        x_aux = None
+        solver_status = -1
+        solver_message = ""
+        phase = "coverage"
+        if feasibility_seconds > 0.0:
+            x_aux, solver_status, solver_message = _solve_auxiliary(
+                c, lb, ub, matrix, row_lb, row_ub,
+                np.concatenate((problem.integrality, np.ones(len(selectors)))),
+                time_limit=feasibility_seconds, threads=int(threads), mip_rel_gap=1.0,
+                heuristic_effort=1.0)
+            vector, invalid_reason = _validated_vector(problem, x_aux, exact_national)
+            if vector is not None:
+                assert x_aux is not None
+                meta = dict(base, status=solver_status, solver_status=solver_status,
+                            solver_message=solver_message, selector_count=len(selectors),
+                            phase="national_feasibility", national_exact_count=exact_national,
+                            greedy_failure=greedy_failure)
+                chosen = [[problem.state_list[s] if s < len(problem.state_list) else str(s), bundle]
+                          for i, (s, bundle) in enumerate(selectors)
+                          if x_aux[problem.n_var + i] > 0.5]
+                return Group2InitializerResult("seed", vector,
+                                               dict(meta, coverage=float(-c @ x_aux), selected=chosen,
+                                                    auxiliary_optimal=solver_status == 7))
+            phase = "coverage_after_national_feasibility"
+        remaining = max(0.01, seconds - anchor_total - feasibility_seconds)
         x_aux, solver_status, solver_message = _solve_auxiliary(
             c, lb, ub, matrix, row_lb, row_ub,
             np.concatenate((problem.integrality, np.ones(len(selectors)))),
-            time_limit=seconds, threads=int(threads))
+            time_limit=remaining, threads=int(threads))
     except Exception as exc:  # A warm start is optional, including solver setup failures.
         return Group2InitializerResult("no_seed", None,
                                        dict(base, reason="solver_error", error=type(exc).__name__))
-    meta = dict(base, status=solver_status, solver_status=solver_status,
+    meta = dict(base, status=solver_status, solver_status=solver_status, phase=phase,
                 solver_message=solver_message,
-                selector_count=len(selectors))
-    if x_aux is None:
-        return Group2InitializerResult("no_seed", None, dict(meta, reason="no_incumbent"))
-    vector = np.asarray(x_aux[:problem.n_var], float)
-    if not np.isfinite(vector).all():
-        return Group2InitializerResult("no_seed", None, dict(meta, reason="nonfinite_vector"))
-    integer_values = vector[np.asarray(problem.integrality, bool)]
-    if not np.all(np.abs(integer_values - np.rint(integer_values)) <= 1e-6):
-        return Group2InitializerResult("no_seed", None, dict(meta, reason="fractional_integer"))
-    try:
-        level0.check_point(problem, vector)
-    except ValueError as exc:
-        return Group2InitializerResult("no_seed", None,
-                                       dict(meta, reason="validation_failed", error=str(exc)))
+                selector_count=len(selectors), national_exact_count=exact_national,
+                greedy_failure=greedy_failure)
+    vector, invalid_reason = _validated_vector(problem, x_aux, exact_national)
+    if vector is None:
+        return Group2InitializerResult("no_seed", None, dict(meta, reason=invalid_reason))
+    assert x_aux is not None
     chosen = [[problem.state_list[s] if s < len(problem.state_list) else str(s), bundle]
               for i, (s, bundle) in enumerate(selectors) if x_aux[problem.n_var + i] > 0.5]
     return Group2InitializerResult("seed", vector,
                                    dict(meta, coverage=float(-c @ x_aux), selected=chosen,
                                         auxiliary_optimal=solver_status == 7))
+
+
+def build_group2_feasibility_start(problem: level0.Level0Problem, passes: Iterable[level0.Pass], *,
+                                   time_limit: float = 15.0, threads: int = 2,
+                                   bundles: Iterable[str] = DEFAULT_BUNDLES
+                                   ) -> Group2InitializerResult:
+    """Public feasibility-first name for the Group 2 warm-start builder."""
+    return build_group2_warm_start(problem, passes, time_limit=time_limit,
+                                   threads=threads, bundles=bundles)

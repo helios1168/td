@@ -1,7 +1,7 @@
 {
   "task_id": "agy-group2-speed",
-  "status": "implemented_performance_inconclusive",
-  "summary": "Three Terra agents implemented and tested checkpointing and purity-aware warm initialization in parallel; root integrated them into the Group 2 runner. Short real-data smoke runs did not produce a nonempty national plan. No speedup or resolution of the original timeouts is claimed.",
+  "status": "feasibility_first_implemented_full_model_still_no_incumbent",
+  "summary": "Feasibility-first seeding, safe root canonicalization, primal-search emphasis, live incumbent checkpointing and a diagnostic relaxation ladder were implemented. Matched 180-second and 600-second real-data runs produced no full-model national incumbent. A diagnostic retaining exact counts, purity and opportunity bands became feasible only after both connectivity and state-distance constraints were projected out. Opportunity bounds have not been relaxed.",
   "scope": {
     "active_cases": ["planner-selected fixed counts", "planner-selected ceiling counts"],
     "counts": {"N": 14, "WH": 11, "FI": 21},
@@ -21,7 +21,11 @@
     "fallback": "No valid seed means the original solver runs cold. No constraint is relaxed and no pass is skipped.",
     "checkpoint_method": "Atomic JSON containing validated full vectors and model/input/source fingerprints. Save after a validated seed and after each returned engine pass. Root/flow variables are reconstructed and checked when the solver returns only z/y.",
     "resume_method": "Compatible checkpoints provide warm starts for fresh optimization. They are not certificates and do not skip previous objectives or stages.",
-    "progress": "stage_progress.json records seed status, per-pass termination, objectives, available dual bounds and node counts, timing, and checkpoint locations.",
+    "progress": "stage_progress.json records seed status, deterministic greedy failures, per-pass termination, live incumbent counts, objectives, available dual bounds and node counts, timing, and checkpoint locations.",
+    "feasibility_first": "Exact national stages try a validated deterministic greedy point, two seed-only geographic anchor patterns, a heuristic-heavy incumbent-first auxiliary solve, and then ordinary coverage optimization. Seed anchors are released in the production model.",
+    "symmetry": "National production models canonicalize each district's single-commodity-flow root to its lowest-index contacted state. This preserves the projected feasible set and composes with the existing nonincreasing-mass slot ordering.",
+    "live_checkpoints": "Native HiGHS improving-solution callbacks atomically save each fully reconstructable incumbent before the pass returns or fails.",
+    "diagnostics": "Explicit flags can project out SCF connectivity and state-distance rows for labeled feasibility diagnosis. They do not alter normal production runs.",
     "isolation": "Scenario-level hooks are restored on failure. Pre-existing user changes in core planning and staffing files were not edited or committed."
   },
   "usage": {
@@ -31,9 +35,9 @@
     "baseline": "Use --seed-time-limit 0 to disable the auxiliary initializer. Checkpointing remains enabled."
   },
   "tests": {
-    "group2": "37 passed, 0 failed",
+    "group2": "49 passed, 0 failed",
     "typecheck": "Pyright: 0 errors and 0 warnings on all three implementation modules",
-    "full_suite": "909 passed, 0 failed, 0 skipped with TD_GAZ_VINTAGE=2025, the hub 2025 TD_ZCTA_SHP, and pipefail preserving the runner exit status",
+    "full_suite": "921 passed, 0 failed, 0 skipped with TD_GAZ_VINTAGE=2025, the hub 2025 TD_ZCTA_SHP, and pipefail preserving the runner exit status",
     "coverage": [
       "Pure-state assignment, permitted same-channel district splitting and exact counts",
       "Auxiliary variables do not leak into the original solver model",
@@ -66,21 +70,57 @@
     },
     "provenance": "Each run_request.json records loaded source/input hashes. Final type-safety changes and seed-before-first-pass checkpointing landed after smoke launch; focused tests cover those final changes."
   },
+  "feasibility_first_20260914": {
+    "greedy_diagnostic": {
+      "result": "11 of 14 exact national slots filled",
+      "band": [553.724691, 676.774623],
+      "verdict": "No valid greedy seed"
+    },
+    "matched_180_seconds": {
+      "directory": "battery/results/agy_group2_matched180_20260914",
+      "cold": "180-second production search, no incumbent",
+      "seeded": "60-second seed plus 120-second production search, no incumbent",
+      "live_checkpoints": 0
+    },
+    "matched_600_seconds": {
+      "directory": "battery/results/agy_group2_matched600_20260914",
+      "cold": "600-second production search, no incumbent",
+      "seeded": "180-second seed plus 420-second production search, no incumbent",
+      "live_checkpoints": 0,
+      "verdict": "No measured speedup; full-model feasibility remains inconclusive"
+    },
+    "diagnostic_ladder": {
+      "drop_connectivity_only": "No incumbent in 60 seconds",
+      "drop_geography_only": "No incumbent in 60 seconds",
+      "drop_both": {
+        "exact_N": 14,
+        "group2_priority_optimal_seconds": 2.431,
+        "group2_national_opportunity": 5654.894623,
+        "nationwide_coverage_optimal_seconds": 3.867,
+        "nationwide_national_opportunity": 8613.495186,
+        "verdict": "Exact counts, purity and opportunity bands admit a solution in the projected model"
+      }
+    },
+    "conclusion": "Do not relax opportunity bounds based on these runs. The next implementation should decompose assignment from geography and contiguity, then repair or cut disconnected or over-distance districts."
+  },
   "limitations": [
     "No complete territory plan, realized ZIP assignment, staffing comparison or FEFx audit was produced.",
-    "The short smoke budgets do not establish whether the initializer improves production-budget performance.",
-    "Checkpointing preserves returned pass results and validated seeds, not every live incumbent during a running pass.",
+    "Matched 180-second and 600-second runs establish no initializer speedup on this instance.",
+    "Live checkpointing preserves reconstructable incumbents, but no full-model incumbent was found in these benchmarks.",
     "The underlying sequential planner still cannot reconsider national choices after downstream WH/FI failure; cross-channel repair or joint solving is not implemented here.",
     "HiGHS thread count remains process-global. Production Group 2 launches use a fresh process with two threads; live-solver tests use fresh processes to avoid contamination from unrelated suite settings."
   ],
   "followups": [
-    "Compare seeded and cold runs at matched wall-clock budgets, then tune seed versus main-search time based on time to first nonempty incumbent.",
-    "If national allocations still leave WH/FI without usable plans, implement a separately tested cross-channel repair or seeded joint workflow rather than silently relaxing purity or opportunity bounds."
+    "Implement a decomposed national feasibility workflow: solve exact count, purity and opportunity assignment first, then impose geography and connectivity through repair or iterative cuts.",
+    "Only measure a minimum opportunity-bound violation if the decomposed geography-aware feasibility stage proves the unchanged model infeasible.",
+    "After a valid national checkpoint exists, freeze it and solve exact WH=11 and FI=21 before considering joint cross-channel repair."
   ],
   "learned": [
     "level0.check_point does not reject NaN by itself; checkpoint and seed boundaries explicitly require finite vectors.",
     "Changing the thread count after a HiGHS pool is initialized can invalidate a solve. The auxiliary and production paths now use the same highspy thread setting.",
     "A full-suite pipeline needs pipefail or a captured runner exit code; filter success alone is not a test pass."
+    ,"The deterministic real-instance greedy constructor fills only 11 of 14 exact national slots within the unchanged band."
+    ,"Removing connectivity and geography together makes the exact national assignment easy, while removing either family alone did not yield an incumbent in 60 seconds."
   ],
   "missing_context": []
 }

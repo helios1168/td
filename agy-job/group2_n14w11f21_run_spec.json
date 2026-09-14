@@ -1,6 +1,6 @@
 {
   "task_id": "agy-group2-n14w11f21",
-  "status": "planner_selected_acceleration_implemented_no_full_plan",
+  "status": "planner_selected_exact_full_model_no_incumbent_decomposition_next",
   "acceleration_report": "agy-job/reports/GROUP2_ACCELERATION.json",
   "acceleration": {
     "seed_time_limit_per_stage_seconds": 15,
@@ -8,7 +8,9 @@
     "checkpoints": "Atomic JSON after validated seeds and each returned solver pass. Compatible checkpoints seed fresh optimization; they never skip passes or confer certification.",
     "resume_option": "--resume-checkpoints PATH_TO_PRIOR_CHECKPOINTS",
     "baseline_option": "--seed-time-limit 0",
-    "measured_speedup": "Not established. Short real-data smoke runs still timed out without a nonempty national plan."
+    "measured_speedup": "None. Matched 180-second and 600-second seeded/cold runs all ended without a national incumbent.",
+    "diagnostic_result": "Exact N=14, purity and opportunity bands solve quickly only when connectivity and state-distance rows are jointly projected out. Do not relax opportunity bounds yet.",
+    "next_method": "Decompose assignment from geography and connectivity, then repair or add iterative cuts before solving WH and FI."
   },
   "deferred_required_states_handoff": "agy-job/reports/GROUP2_REQUIRED20_HANDOFF.json",
   "results": "agy-job/reports/GROUP2_RUNS.json",
