@@ -131,6 +131,7 @@ def main():
         wifi = sc["wifi"]
         assert tot == n + wh + fi + wifi, f"Sum mismatch for {sc['run_d']}: {tot} != {n}+{wh}+{fi}+{wifi}"
 
+        new_id = f"{tot}_total_{n}n_{wh}wh_{fi}fi_{wifi}wifi"
         compact_id = f"{tot}_{n}_{wh}_{fi}_{wifi}"
         verbose_name = f"{tot}_districts_{n}_national_districts_{wh}_WH_districts_{fi}_FI_districts_{wifi}_WIFI_districts"
 
@@ -139,20 +140,21 @@ def main():
         if not src_png.exists():
             raise FileNotFoundError(f"Missing summary.png in {run_path}")
 
-        # 1. Save compact figure
+        # 1. Save new primary figure
+        new_fig = figures_dir / f"{new_id}.png"
+        shutil.copy(src_png, new_fig)
+
+        # 2. Save aliases for backwards compatibility
         compact_fig = figures_dir / f"{compact_id}.png"
         shutil.copy(src_png, compact_fig)
-
-        # 2. Save verbose figure
         verbose_fig = figures_dir / f"{verbose_name}.png"
         shutil.copy(src_png, verbose_fig)
-
-        # 3. Save legacy figure for backwards compatibility
         legacy_fig = REPO_ROOT / sc["legacy_fig"]
         shutil.copy(src_png, legacy_fig)
 
-        # 4. Copy to brain artifacts
+        # 3. Copy to brain artifacts
         if BRAIN_DIR.exists():
+            shutil.copy(src_png, BRAIN_DIR / new_fig.name)
             shutil.copy(src_png, BRAIN_DIR / compact_fig.name)
             shutil.copy(src_png, BRAIN_DIR / verbose_fig.name)
             shutil.copy(src_png, BRAIN_DIR / legacy_fig.name)
@@ -181,9 +183,9 @@ def main():
         fi_tau = (fi_slots[0]["L"] + fi_slots[0]["U"]) / 2.0 if fi_slots else 0.0
 
         summary_rows.append({
-            'scenario_id': compact_id,
-            'scenario_short_name': compact_id,
-            'scenario_name': verbose_name,
+            'scenario_id': new_id,
+            'scenario_short_name': new_id,
+            'scenario_name': new_id,
             'total_districts': tot,
             'national_districts': n,
             'WH_districts': wh,
@@ -197,10 +199,10 @@ def main():
             'unheld_mass': f'{unheld_m:.2f}',
             'unheld_mass_pct': f'{(unheld_m / total_m * 100):.2f}%',
             'contiguity_status': '100% Contiguous (0 violations)',
-            'map_path': f"figures/{compact_id}.png",
-            'map_path_verbose': f"figures/{verbose_name}.png",
+            'map_path': f"figures/{new_id}.png",
+            'map_path_verbose': f"figures/{new_id}.png",
         })
-        print(f"  [OK] {compact_id} -> {compact_fig.name} & {verbose_fig.name}")
+        print(f"  [OK] {new_id} -> {new_fig.name}")
 
     # Write summary.csv
     summary_path = REPO_ROOT / "summary.csv"
@@ -218,8 +220,8 @@ def main():
         "--out", str(REPO_ROOT / "scenarios.csv"),
     ]
     for sc in SCENARIOS:
-        compact_id = f"{sc['total']}_{sc['n']}_{sc['wh']}_{sc['fi']}_{sc['wifi']}"
-        export_cmd.extend(["--scenario", compact_id, str(REPO_ROOT / sc["run_d"])])
+        new_id = f"{sc['total']}_total_{sc['n']}n_{sc['wh']}wh_{sc['fi']}fi_{sc['wifi']}wifi"
+        export_cmd.extend(["--scenario", new_id, str(REPO_ROOT / sc["run_d"])])
 
     res = subprocess.run(export_cmd, capture_output=True, text=True)
     if res.returncode != 0:

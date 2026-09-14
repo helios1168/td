@@ -1,883 +1,883 @@
 scenario_id,state,pattern,pattern_label,pattern_color,wholesaler_count,is_split
-47_14_11_21_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,CA,three channels,"three channels, three reps",#a6cee3,8,True
-47_14_11_21_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-47_14_11_21_1,CT,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,FL,three channels,"three channels, three reps",#a6cee3,4,True
-47_14_11_21_1,GA,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-47_14_11_21_1,IL,three channels,"three channels, three reps",#a6cee3,5,True
-47_14_11_21_1,IN,three channels,"three channels, three reps",#a6cee3,4,True
-47_14_11_21_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,MA,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,ME,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,MI,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,MO,three channels,"three channels, three reps",#a6cee3,5,True
-47_14_11_21_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-47_14_11_21_1,NC,three channels,"three channels, three reps",#a6cee3,4,True
-47_14_11_21_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-47_14_11_21_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-47_14_11_21_1,NH,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-47_14_11_21_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,NY,three channels,"three channels, three reps",#a6cee3,6,True
-47_14_11_21_1,OH,three channels,"three channels, three reps",#a6cee3,5,True
-47_14_11_21_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,PA,three channels,"three channels, three reps",#a6cee3,5,True
-47_14_11_21_1,RI,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-47_14_11_21_1,TN,three channels,"three channels, three reps",#a6cee3,4,True
-47_14_11_21_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-47_14_11_21_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,VT,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-47_14_11_21_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-46_14_11_21_0,AL,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,AR,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,CA,three channels,"three channels, three reps",#a6cee3,8,True
-46_14_11_21_0,CO,partial,one or two channels,#f3e79b,2,True
-46_14_11_21_0,CT,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,DC,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,DE,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,FL,three channels,"three channels, three reps",#a6cee3,4,True
-46_14_11_21_0,GA,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,IA,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,ID,partial,one or two channels,#f3e79b,2,True
-46_14_11_21_0,IL,three channels,"three channels, three reps",#a6cee3,5,True
-46_14_11_21_0,IN,three channels,"three channels, three reps",#a6cee3,4,True
-46_14_11_21_0,KS,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,KY,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,LA,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,MA,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,MD,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,ME,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,MI,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,MN,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,MO,three channels,"three channels, three reps",#a6cee3,5,True
-46_14_11_21_0,MS,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,MT,partial,one or two channels,#f3e79b,2,True
-46_14_11_21_0,NC,three channels,"three channels, three reps",#a6cee3,4,True
-46_14_11_21_0,ND,partial,one or two channels,#f3e79b,2,True
-46_14_11_21_0,NE,partial,one or two channels,#f3e79b,2,True
-46_14_11_21_0,NH,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-46_14_11_21_0,NM,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,NV,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,NY,three channels,"three channels, three reps",#a6cee3,6,True
-46_14_11_21_0,OH,three channels,"three channels, three reps",#a6cee3,5,True
-46_14_11_21_0,OK,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,OR,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,PA,three channels,"three channels, three reps",#a6cee3,5,True
-46_14_11_21_0,RI,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,SC,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,SD,partial,one or two channels,#f3e79b,2,True
-46_14_11_21_0,TN,three channels,"three channels, three reps",#a6cee3,4,True
-46_14_11_21_0,TX,three channels,"three channels, three reps",#a6cee3,4,True
-46_14_11_21_0,UT,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,VA,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,VT,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,WA,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,WI,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,WV,three channels,"three channels, three reps",#a6cee3,3,False
-46_14_11_21_0,WY,partial,one or two channels,#f3e79b,2,True
-51_13_13_24_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,CT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,FL,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_13_24_1,GA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,IL,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,MA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,ME,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,MI,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_13_24_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,MO,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_13_24_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,NC,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_13_24_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,NH,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,NJ,three channels,"three channels, three reps",#a6cee3,6,True
-51_13_13_24_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-51_13_13_24_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_13_24_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,PA,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_13_24_1,RI,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,TN,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_13_24_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_13_24_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,VT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_13_24_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_13_13_24_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_13_14_24_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,CT,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,FL,three channels,"three channels, three reps",#a6cee3,5,True
-52_13_14_24_1,GA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,IL,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,MA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,ME,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,MI,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_14_24_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,MO,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_14_24_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,NC,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_14_24_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,NH,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-52_13_14_24_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_13_14_24_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_14_24_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,PA,three channels,"three channels, three reps",#a6cee3,6,True
-52_13_14_24_1,RI,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,TN,three channels,"three channels, three reps",#a6cee3,5,True
-52_13_14_24_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_14_24_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,VT,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_14_24_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_14_24_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-51_12_13_25_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_12_13_25_1,CT,partial,one or two channels,#f3e79b,2,True
-51_12_13_25_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,FL,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_25_1,GA,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_25_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_12_13_25_1,IL,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_25_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,MA,partial,one or two channels,#f3e79b,2,True
-51_12_13_25_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,ME,partial,one or two channels,#f3e79b,2,True
-51_12_13_25_1,MI,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_25_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,MO,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_25_1,NC,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_25_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_25_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_25_1,NH,partial,one or two channels,#f3e79b,2,True
-51_12_13_25_1,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_25_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-51_12_13_25_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_25_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,PA,three channels,"three channels, three reps",#a6cee3,6,True
-51_12_13_25_1,RI,partial,one or two channels,#f3e79b,2,True
-51_12_13_25_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_25_1,TN,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_25_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_25_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,VT,partial,one or two channels,#f3e79b,2,True
-51_12_13_25_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_25_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_25_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-53_13_14_25_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,CT,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,FL,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_25_1,GA,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_25_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,IL,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_25_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,MA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,ME,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,MI,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_25_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,MO,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,NC,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,NH,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_25_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-53_13_14_25_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_25_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,PA,three channels,"three channels, three reps",#a6cee3,7,True
-53_13_14_25_1,RI,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,TN,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_25_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_25_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,VT,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_25_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_25_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_12_14_25_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_14_25_1,CT,partial,one or two channels,#f3e79b,2,True
-52_12_14_25_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,FL,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_14_25_1,GA,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_14_25_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_14_25_1,IL,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_14_25_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,MA,partial,one or two channels,#f3e79b,2,True
-52_12_14_25_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,ME,partial,one or two channels,#f3e79b,2,True
-52_12_14_25_1,MI,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_14_25_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,MO,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_14_25_1,NC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_14_25_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_14_25_1,NH,partial,one or two channels,#f3e79b,2,True
-52_12_14_25_1,NJ,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_14_25_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_12_14_25_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_14_25_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,PA,three channels,"three channels, three reps",#a6cee3,7,True
-52_12_14_25_1,RI,partial,one or two channels,#f3e79b,2,True
-52_12_14_25_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_14_25_1,TN,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_14_25_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_14_25_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,VT,partial,one or two channels,#f3e79b,2,True
-52_12_14_25_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_14_25_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_14_25_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-51_12_13_24_2,AL,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,AR,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_12_13_24_2,CT,partial,one or two channels,#f3e79b,2,True
-51_12_13_24_2,DC,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,DE,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,FL,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_24_2,GA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,IA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_12_13_24_2,IL,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,IN,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,KS,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,KY,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,LA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,MA,partial,one or two channels,#f3e79b,2,True
-51_12_13_24_2,MD,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,ME,partial,one or two channels,#f3e79b,2,True
-51_12_13_24_2,MI,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,MN,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,MO,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_24_2,MS,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_24_2,NC,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_24_2,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_24_2,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_24_2,NH,partial,one or two channels,#f3e79b,2,True
-51_12_13_24_2,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_24_2,NM,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,NV,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,NY,three channels,"three channels, three reps",#a6cee3,7,True
-51_12_13_24_2,OH,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_24_2,OK,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,OR,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,PA,three channels,"three channels, three reps",#a6cee3,5,True
-51_12_13_24_2,RI,partial,one or two channels,#f3e79b,2,True
-51_12_13_24_2,SC,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_24_2,TN,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_24_2,TX,three channels,"three channels, three reps",#a6cee3,4,True
-51_12_13_24_2,UT,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,VA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,VT,partial,one or two channels,#f3e79b,2,True
-51_12_13_24_2,WA,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,WI,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,WV,three channels,"three channels, three reps",#a6cee3,3,False
-51_12_13_24_2,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-51_12_13_24_2,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_12_13_25_2,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,AR,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_13_25_2,CT,partial,one or two channels,#f3e79b,2,True
-52_12_13_25_2,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,FL,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_13_25_2,GA,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_13_25_2,IA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_13_25_2,IL,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_13_25_2,IN,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,KS,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,MA,partial,one or two channels,#f3e79b,2,True
-52_12_13_25_2,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,ME,partial,one or two channels,#f3e79b,2,True
-52_12_13_25_2,MI,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_13_25_2,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,MO,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,MS,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_13_25_2,NC,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_13_25_2,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_13_25_2,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_13_25_2,NH,partial,one or two channels,#f3e79b,2,True
-52_12_13_25_2,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_13_25_2,NM,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,NV,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_12_13_25_2,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_13_25_2,OK,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,OR,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,PA,three channels,"three channels, three reps",#a6cee3,6,True
-52_12_13_25_2,RI,partial,one or two channels,#f3e79b,2,True
-52_12_13_25_2,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_13_25_2,TN,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_13_25_2,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_13_25_2,UT,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,VT,partial,one or two channels,#f3e79b,2,True
-52_12_13_25_2,WA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_13_25_2,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_13_25_2,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_13_13_24_2,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,AR,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,CT,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,FL,three channels,"three channels, three reps",#a6cee3,5,True
-52_13_13_24_2,GA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,IA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,IL,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,IN,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,KS,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,MA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,ME,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,MI,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_13_24_2,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,MO,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_13_24_2,MS,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,NC,three channels,"three channels, three reps",#a6cee3,5,True
-52_13_13_24_2,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,NH,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,NJ,three channels,"three channels, three reps",#a6cee3,6,True
-52_13_13_24_2,NM,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,NV,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_13_13_24_2,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_13_24_2,OK,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,OR,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,PA,three channels,"three channels, three reps",#a6cee3,5,True
-52_13_13_24_2,RI,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,TN,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_13_24_2,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_13_13_24_2,UT,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,VT,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,WA,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_13_13_24_2,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_13_13_24_2,CA,three channels,"three channels, three reps",#a6cee3,9,True
-53_13_14_24_2,AL,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,AR,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,CT,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,DC,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,DE,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,FL,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_24_2,GA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,IA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,IL,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,IN,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,KS,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,KY,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,LA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,MA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,MD,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,ME,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,MI,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_24_2,MN,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,MO,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_24_2,MS,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,NC,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_24_2,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,NH,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_24_2,NM,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,NV,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,NY,three channels,"three channels, three reps",#a6cee3,7,True
-53_13_14_24_2,OH,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_24_2,OK,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,OR,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,PA,three channels,"three channels, three reps",#a6cee3,6,True
-53_13_14_24_2,RI,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,SC,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,TN,three channels,"three channels, three reps",#a6cee3,5,True
-53_13_14_24_2,TX,three channels,"three channels, three reps",#a6cee3,4,True
-53_13_14_24_2,UT,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,VA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,VT,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,WA,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,WI,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,WV,three channels,"three channels, three reps",#a6cee3,3,False
-53_13_14_24_2,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_13_14_24_2,CA,three channels,"three channels, three reps",#a6cee3,9,True
-53_12_14_25_2,AL,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,AR,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-53_12_14_25_2,CT,partial,one or two channels,#f3e79b,2,True
-53_12_14_25_2,DC,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,DE,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,FL,three channels,"three channels, three reps",#a6cee3,5,True
-53_12_14_25_2,GA,three channels,"three channels, three reps",#a6cee3,4,True
-53_12_14_25_2,IA,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-53_12_14_25_2,IL,three channels,"three channels, three reps",#a6cee3,5,True
-53_12_14_25_2,IN,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,KS,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,KY,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,LA,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,MA,partial,one or two channels,#f3e79b,2,True
-53_12_14_25_2,MD,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,ME,partial,one or two channels,#f3e79b,2,True
-53_12_14_25_2,MI,three channels,"three channels, three reps",#a6cee3,4,True
-53_12_14_25_2,MN,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,MO,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,MS,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_12_14_25_2,NC,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_12_14_25_2,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_12_14_25_2,NH,partial,one or two channels,#f3e79b,2,True
-53_12_14_25_2,NJ,three channels,"three channels, three reps",#a6cee3,4,True
-53_12_14_25_2,NM,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,NV,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,NY,three channels,"three channels, three reps",#a6cee3,7,True
-53_12_14_25_2,OH,three channels,"three channels, three reps",#a6cee3,4,True
-53_12_14_25_2,OK,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,OR,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,PA,three channels,"three channels, three reps",#a6cee3,7,True
-53_12_14_25_2,RI,partial,one or two channels,#f3e79b,2,True
-53_12_14_25_2,SC,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_12_14_25_2,TN,three channels,"three channels, three reps",#a6cee3,5,True
-53_12_14_25_2,TX,three channels,"three channels, three reps",#a6cee3,4,True
-53_12_14_25_2,UT,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,VA,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,VT,partial,one or two channels,#f3e79b,2,True
-53_12_14_25_2,WA,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,WI,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,WV,three channels,"three channels, three reps",#a6cee3,3,False
-53_12_14_25_2,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_12_14_25_2,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_14_13_24_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,CT,partial,one or two channels,#f3e79b,2,True
-52_14_13_24_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,FL,three channels,"three channels, three reps",#a6cee3,6,True
-52_14_13_24_1,GA,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,IL,three channels,"three channels, three reps",#a6cee3,4,True
-52_14_13_24_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,MA,partial,one or two channels,#f3e79b,2,True
-52_14_13_24_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,ME,partial,one or two channels,#f3e79b,2,True
-52_14_13_24_1,MI,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,MO,three channels,"three channels, three reps",#a6cee3,4,True
-52_14_13_24_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,NC,three channels,"three channels, three reps",#a6cee3,6,True
-52_14_13_24_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,NH,partial,one or two channels,#f3e79b,2,True
-52_14_13_24_1,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-52_14_13_24_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_14_13_24_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_14_13_24_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,PA,three channels,"three channels, three reps",#a6cee3,5,True
-52_14_13_24_1,RI,partial,one or two channels,#f3e79b,2,True
-52_14_13_24_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,TN,three channels,"three channels, three reps",#a6cee3,4,True
-52_14_13_24_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_14_13_24_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,VT,partial,one or two channels,#f3e79b,2,True
-52_14_13_24_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_14_13_24_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_14_13_24_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-53_14_14_24_1,AL,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,AR,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,CT,partial,one or two channels,#f3e79b,2,True
-53_14_14_24_1,DC,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,DE,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,FL,three channels,"three channels, three reps",#a6cee3,6,True
-53_14_14_24_1,GA,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,IA,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,IL,three channels,"three channels, three reps",#a6cee3,4,True
-53_14_14_24_1,IN,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,KS,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,KY,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,LA,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,MA,partial,one or two channels,#f3e79b,2,True
-53_14_14_24_1,MD,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,ME,partial,one or two channels,#f3e79b,2,True
-53_14_14_24_1,MI,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,MN,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,MO,three channels,"three channels, three reps",#a6cee3,4,True
-53_14_14_24_1,MS,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,NC,three channels,"three channels, three reps",#a6cee3,5,True
-53_14_14_24_1,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,NH,partial,one or two channels,#f3e79b,2,True
-53_14_14_24_1,NJ,three channels,"three channels, three reps",#a6cee3,4,True
-53_14_14_24_1,NM,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,NV,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,NY,three channels,"three channels, three reps",#a6cee3,7,True
-53_14_14_24_1,OH,three channels,"three channels, three reps",#a6cee3,4,True
-53_14_14_24_1,OK,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,OR,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,PA,three channels,"three channels, three reps",#a6cee3,6,True
-53_14_14_24_1,RI,partial,one or two channels,#f3e79b,2,True
-53_14_14_24_1,SC,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,TN,three channels,"three channels, three reps",#a6cee3,5,True
-53_14_14_24_1,TX,three channels,"three channels, three reps",#a6cee3,4,True
-53_14_14_24_1,UT,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,VA,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,VT,partial,one or two channels,#f3e79b,2,True
-53_14_14_24_1,WA,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,WI,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,WV,three channels,"three channels, three reps",#a6cee3,3,False
-53_14_14_24_1,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-53_14_14_24_1,CA,three channels,"three channels, three reps",#a6cee3,9,True
-51_13_11_24_3,AL,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,AR,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,AZ,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,CT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,DC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,DE,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,FL,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,GA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,IA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,IL,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,IN,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_11_24_3,KS,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,KY,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,LA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,MA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,MD,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,ME,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,MI,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,MN,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,MO,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_11_24_3,MS,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,NC,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,NH,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,NJ,three channels,"three channels, three reps",#a6cee3,6,True
-51_13_11_24_3,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_24_3,NV,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,NY,three channels,"three channels, three reps",#a6cee3,7,True
-51_13_11_24_3,OH,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,OK,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,OR,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,PA,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_11_24_3,RI,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,SC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,TN,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,TX,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_24_3,UT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,VA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,VT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,WA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,WI,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,WV,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_24_3,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_24_3,CA,three channels,"three channels, three reps",#a6cee3,9,True
-51_13_11_23_4,AL,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,AR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,AZ,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,CT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,DC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,DE,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,FL,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_23_4,GA,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_23_4,IA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,IL,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_11_23_4,IN,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_11_23_4,KS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,KY,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,LA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,MA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,MD,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,ME,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,MI,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_23_4,MN,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,MO,three channels,"three channels, three reps",#a6cee3,4,False
-51_13_11_23_4,MS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,NC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,NH,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,NJ,three channels,"three channels, three reps",#a6cee3,6,True
-51_13_11_23_4,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,NV,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,NY,three channels,"three channels, three reps",#a6cee3,7,True
-51_13_11_23_4,OH,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_23_4,OK,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,OR,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,PA,three channels,"three channels, three reps",#a6cee3,5,True
-51_13_11_23_4,RI,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,SC,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,TN,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_23_4,TX,three channels,"three channels, three reps",#a6cee3,4,True
-51_13_11_23_4,UT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-51_13_11_23_4,VA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,VT,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,WA,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,WI,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,WV,three channels,"three channels, three reps",#a6cee3,3,False
-51_13_11_23_4,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-51_13_11_23_4,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_12_11_25_4,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,AR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,AZ,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_11_25_4,CT,partial,one or two channels,#f3e79b,2,True
-52_12_11_25_4,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,FL,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_11_25_4,GA,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_11_25_4,IA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_11_25_4,IL,three channels,"three channels, three reps",#a6cee3,6,True
-52_12_11_25_4,IN,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_11_25_4,KS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,MA,partial,one or two channels,#f3e79b,2,True
-52_12_11_25_4,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,ME,partial,one or two channels,#f3e79b,2,True
-52_12_11_25_4,MI,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_11_25_4,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,MO,three channels,"three channels, three reps",#a6cee3,4,False
-52_12_11_25_4,MS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_11_25_4,NC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_11_25_4,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_11_25_4,NH,partial,one or two channels,#f3e79b,2,True
-52_12_11_25_4,NJ,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_11_25_4,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,NV,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_12_11_25_4,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_11_25_4,OK,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,OR,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,PA,three channels,"three channels, three reps",#a6cee3,6,True
-52_12_11_25_4,RI,partial,one or two channels,#f3e79b,2,True
-52_12_11_25_4,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_11_25_4,TN,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_11_25_4,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_11_25_4,UT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
-52_12_11_25_4,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,VT,partial,one or two channels,#f3e79b,2,True
-52_12_11_25_4,WA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_11_25_4,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_11_25_4,CA,three channels,"three channels, three reps",#a6cee3,9,True
-52_12_10_25_5,AL,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,AR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,AZ,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_10_25_5,CT,partial,one or two channels,#f3e79b,2,True
-52_12_10_25_5,DC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,DE,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,FL,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,GA,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,IA,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
-52_12_10_25_5,IL,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_10_25_5,IN,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,KS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,KY,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,LA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,MA,partial,one or two channels,#f3e79b,2,True
-52_12_10_25_5,MD,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,ME,partial,one or two channels,#f3e79b,2,True
-52_12_10_25_5,MI,three channels,"three channels, three reps",#a6cee3,5,True
-52_12_10_25_5,MN,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,MO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,MS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_10_25_5,NC,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_10_25_5,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_10_25_5,NH,partial,one or two channels,#f3e79b,2,True
-52_12_10_25_5,NJ,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,NV,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,NY,three channels,"three channels, three reps",#a6cee3,7,True
-52_12_10_25_5,OH,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,OK,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,OR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,PA,three channels,"three channels, three reps",#a6cee3,6,True
-52_12_10_25_5,RI,partial,one or two channels,#f3e79b,2,True
-52_12_10_25_5,SC,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_10_25_5,TN,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,TX,three channels,"three channels, three reps",#a6cee3,4,True
-52_12_10_25_5,UT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,VA,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,VT,partial,one or two channels,#f3e79b,2,True
-52_12_10_25_5,WA,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
-52_12_10_25_5,WI,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,WV,three channels,"three channels, three reps",#a6cee3,3,False
-52_12_10_25_5,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
-52_12_10_25_5,CA,three channels,"three channels, three reps",#a6cee3,8,True
+47_total_14n_11wh_21fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,8,True
+47_total_14n_11wh_21fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+47_total_14n_11wh_21fi_1wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,4,True
+47_total_14n_11wh_21fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+47_total_14n_11wh_21fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+47_total_14n_11wh_21fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,4,True
+47_total_14n_11wh_21fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,5,True
+47_total_14n_11wh_21fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+47_total_14n_11wh_21fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+47_total_14n_11wh_21fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+47_total_14n_11wh_21fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+47_total_14n_11wh_21fi_1wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+47_total_14n_11wh_21fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,6,True
+47_total_14n_11wh_21fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,5,True
+47_total_14n_11wh_21fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+47_total_14n_11wh_21fi_1wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+47_total_14n_11wh_21fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+47_total_14n_11wh_21fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+47_total_14n_11wh_21fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+47_total_14n_11wh_21fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+46_total_14n_11wh_21fi_0wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,CA,three channels,"three channels, three reps",#a6cee3,8,True
+46_total_14n_11wh_21fi_0wifi,CO,partial,one or two channels,#f3e79b,2,True
+46_total_14n_11wh_21fi_0wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,FL,three channels,"three channels, three reps",#a6cee3,4,True
+46_total_14n_11wh_21fi_0wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,ID,partial,one or two channels,#f3e79b,2,True
+46_total_14n_11wh_21fi_0wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+46_total_14n_11wh_21fi_0wifi,IN,three channels,"three channels, three reps",#a6cee3,4,True
+46_total_14n_11wh_21fi_0wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,MI,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,MO,three channels,"three channels, three reps",#a6cee3,5,True
+46_total_14n_11wh_21fi_0wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,MT,partial,one or two channels,#f3e79b,2,True
+46_total_14n_11wh_21fi_0wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+46_total_14n_11wh_21fi_0wifi,ND,partial,one or two channels,#f3e79b,2,True
+46_total_14n_11wh_21fi_0wifi,NE,partial,one or two channels,#f3e79b,2,True
+46_total_14n_11wh_21fi_0wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+46_total_14n_11wh_21fi_0wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,NY,three channels,"three channels, three reps",#a6cee3,6,True
+46_total_14n_11wh_21fi_0wifi,OH,three channels,"three channels, three reps",#a6cee3,5,True
+46_total_14n_11wh_21fi_0wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+46_total_14n_11wh_21fi_0wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,SD,partial,one or two channels,#f3e79b,2,True
+46_total_14n_11wh_21fi_0wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+46_total_14n_11wh_21fi_0wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+46_total_14n_11wh_21fi_0wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+46_total_14n_11wh_21fi_0wifi,WY,partial,one or two channels,#f3e79b,2,True
+51_total_13n_13wh_24fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_13wh_24fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_13wh_24fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_13wh_24fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_13wh_24fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,6,True
+51_total_13n_13wh_24fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+51_total_13n_13wh_24fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_13wh_24fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_13wh_24fi_1wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_13wh_24fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_13wh_24fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_13wh_24fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_13n_13wh_24fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_13n_14wh_24fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_13n_14wh_24fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_14wh_24fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_14wh_24fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_14wh_24fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_13n_14wh_24fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_13n_14wh_24fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_14wh_24fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_13n_14wh_24fi_1wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_13n_14wh_24fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_14wh_24fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_14wh_24fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_14wh_24fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+51_total_12n_13wh_25fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_12n_13wh_25fi_1wifi,CT,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_25fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_25fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_25fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_12n_13wh_25fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_25fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,MA,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_25fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,ME,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_25fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_25fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_25fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_25fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_25fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_25fi_1wifi,NH,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_25fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_25fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+51_total_12n_13wh_25fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_25fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+51_total_12n_13wh_25fi_1wifi,RI,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_25fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_25fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_25fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_25fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,VT,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_25fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_25fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_25fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+53_total_13n_14wh_25fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_25fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_25fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_25fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_25fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_25fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+53_total_13n_14wh_25fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_25fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,7,True
+53_total_13n_14wh_25fi_1wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_25fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_25fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_25fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_25fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_12n_14wh_25fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_14wh_25fi_1wifi,CT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_14wh_25fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_14wh_25fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_14wh_25fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_14wh_25fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_14wh_25fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,MA,partial,one or two channels,#f3e79b,2,True
+52_total_12n_14wh_25fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,ME,partial,one or two channels,#f3e79b,2,True
+52_total_12n_14wh_25fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_14wh_25fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_14wh_25fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_14wh_25fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_14wh_25fi_1wifi,NH,partial,one or two channels,#f3e79b,2,True
+52_total_12n_14wh_25fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_14wh_25fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_12n_14wh_25fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_14wh_25fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_12n_14wh_25fi_1wifi,RI,partial,one or two channels,#f3e79b,2,True
+52_total_12n_14wh_25fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_14wh_25fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_14wh_25fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_14wh_25fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,VT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_14wh_25fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_14wh_25fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_14wh_25fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+51_total_12n_13wh_24fi_2wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_12n_13wh_24fi_2wifi,CT,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_24fi_2wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_24fi_2wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_12n_13wh_24fi_2wifi,IL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,MA,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_24fi_2wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,ME,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_24fi_2wifi,MI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_24fi_2wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_24fi_2wifi,NC,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_24fi_2wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_24fi_2wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_24fi_2wifi,NH,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_24fi_2wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_24fi_2wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+51_total_12n_13wh_24fi_2wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_24fi_2wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_12n_13wh_24fi_2wifi,RI,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_24fi_2wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_24fi_2wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_24fi_2wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_12n_13wh_24fi_2wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,VT,partial,one or two channels,#f3e79b,2,True
+51_total_12n_13wh_24fi_2wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_12n_13wh_24fi_2wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+51_total_12n_13wh_24fi_2wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_12n_13wh_25fi_2wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_13wh_25fi_2wifi,CT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_13wh_25fi_2wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_13wh_25fi_2wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_13wh_25fi_2wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_13wh_25fi_2wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_13wh_25fi_2wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,MA,partial,one or two channels,#f3e79b,2,True
+52_total_12n_13wh_25fi_2wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,ME,partial,one or two channels,#f3e79b,2,True
+52_total_12n_13wh_25fi_2wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_13wh_25fi_2wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,MO,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_13wh_25fi_2wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_13wh_25fi_2wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_13wh_25fi_2wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_13wh_25fi_2wifi,NH,partial,one or two channels,#f3e79b,2,True
+52_total_12n_13wh_25fi_2wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_13wh_25fi_2wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_12n_13wh_25fi_2wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_13wh_25fi_2wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_12n_13wh_25fi_2wifi,RI,partial,one or two channels,#f3e79b,2,True
+52_total_12n_13wh_25fi_2wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_13wh_25fi_2wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_13wh_25fi_2wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_13wh_25fi_2wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,VT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_13wh_25fi_2wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_13wh_25fi_2wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_13wh_25fi_2wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_13n_13wh_24fi_2wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_13n_13wh_24fi_2wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,IL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_13wh_24fi_2wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_13wh_24fi_2wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,NC,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_13n_13wh_24fi_2wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,NJ,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_13n_13wh_24fi_2wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_13n_13wh_24fi_2wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_13wh_24fi_2wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_13n_13wh_24fi_2wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_13wh_24fi_2wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_13n_13wh_24fi_2wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_13n_13wh_24fi_2wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_13n_13wh_24fi_2wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+53_total_13n_14wh_24fi_2wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_24fi_2wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,IL,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_24fi_2wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_24fi_2wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_24fi_2wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_24fi_2wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+53_total_13n_14wh_24fi_2wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_24fi_2wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+53_total_13n_14wh_24fi_2wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,TN,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_13n_14wh_24fi_2wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_13n_14wh_24fi_2wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_13n_14wh_24fi_2wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_13n_14wh_24fi_2wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+53_total_12n_14wh_25fi_2wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+53_total_12n_14wh_25fi_2wifi,CT,partial,one or two channels,#f3e79b,2,True
+53_total_12n_14wh_25fi_2wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,FL,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_12n_14wh_25fi_2wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_12n_14wh_25fi_2wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+53_total_12n_14wh_25fi_2wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_12n_14wh_25fi_2wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,MA,partial,one or two channels,#f3e79b,2,True
+53_total_12n_14wh_25fi_2wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,ME,partial,one or two channels,#f3e79b,2,True
+53_total_12n_14wh_25fi_2wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_12n_14wh_25fi_2wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,MO,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_12n_14wh_25fi_2wifi,NC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_12n_14wh_25fi_2wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_12n_14wh_25fi_2wifi,NH,partial,one or two channels,#f3e79b,2,True
+53_total_12n_14wh_25fi_2wifi,NJ,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_12n_14wh_25fi_2wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+53_total_12n_14wh_25fi_2wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_12n_14wh_25fi_2wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,PA,three channels,"three channels, three reps",#a6cee3,7,True
+53_total_12n_14wh_25fi_2wifi,RI,partial,one or two channels,#f3e79b,2,True
+53_total_12n_14wh_25fi_2wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_12n_14wh_25fi_2wifi,TN,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_12n_14wh_25fi_2wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_12n_14wh_25fi_2wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,VT,partial,one or two channels,#f3e79b,2,True
+53_total_12n_14wh_25fi_2wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_12n_14wh_25fi_2wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_12n_14wh_25fi_2wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_14n_13wh_24fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,CT,partial,one or two channels,#f3e79b,2,True
+52_total_14n_13wh_24fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_14n_13wh_24fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_14n_13wh_24fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,MA,partial,one or two channels,#f3e79b,2,True
+52_total_14n_13wh_24fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,ME,partial,one or two channels,#f3e79b,2,True
+52_total_14n_13wh_24fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_14n_13wh_24fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_14n_13wh_24fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,NH,partial,one or two channels,#f3e79b,2,True
+52_total_14n_13wh_24fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_14n_13wh_24fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_14n_13wh_24fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_14n_13wh_24fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_14n_13wh_24fi_1wifi,RI,partial,one or two channels,#f3e79b,2,True
+52_total_14n_13wh_24fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_14n_13wh_24fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_14n_13wh_24fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,VT,partial,one or two channels,#f3e79b,2,True
+52_total_14n_13wh_24fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_14n_13wh_24fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_14n_13wh_24fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+53_total_14n_14wh_24fi_1wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,CT,partial,one or two channels,#f3e79b,2,True
+53_total_14n_14wh_24fi_1wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,FL,three channels,"three channels, three reps",#a6cee3,6,True
+53_total_14n_14wh_24fi_1wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,IL,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_14n_14wh_24fi_1wifi,IN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,MA,partial,one or two channels,#f3e79b,2,True
+53_total_14n_14wh_24fi_1wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,ME,partial,one or two channels,#f3e79b,2,True
+53_total_14n_14wh_24fi_1wifi,MI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,MO,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_14n_14wh_24fi_1wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,NC,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_14n_14wh_24fi_1wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,NH,partial,one or two channels,#f3e79b,2,True
+53_total_14n_14wh_24fi_1wifi,NJ,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_14n_14wh_24fi_1wifi,NM,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+53_total_14n_14wh_24fi_1wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_14n_14wh_24fi_1wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+53_total_14n_14wh_24fi_1wifi,RI,partial,one or two channels,#f3e79b,2,True
+53_total_14n_14wh_24fi_1wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,TN,three channels,"three channels, three reps",#a6cee3,5,True
+53_total_14n_14wh_24fi_1wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+53_total_14n_14wh_24fi_1wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,VT,partial,one or two channels,#f3e79b,2,True
+53_total_14n_14wh_24fi_1wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+53_total_14n_14wh_24fi_1wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+53_total_14n_14wh_24fi_1wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+51_total_13n_11wh_24fi_3wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,AR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,AZ,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,FL,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,GA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,IL,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,IN,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_11wh_24fi_3wifi,KS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,MO,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_11wh_24fi_3wifi,MS,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,NJ,three channels,"three channels, three reps",#a6cee3,6,True
+51_total_13n_11wh_24fi_3wifi,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_24fi_3wifi,NV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+51_total_13n_11wh_24fi_3wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,OK,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_11wh_24fi_3wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_24fi_3wifi,UT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_24fi_3wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_24fi_3wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+51_total_13n_11wh_23fi_4wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,AR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,AZ,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,CT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,FL,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_23fi_4wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_23fi_4wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_11wh_23fi_4wifi,IN,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_11wh_23fi_4wifi,KS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,MA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,ME,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_23fi_4wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,MO,three channels,"three channels, three reps",#a6cee3,4,False
+51_total_13n_11wh_23fi_4wifi,MS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,NC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,NH,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,NJ,three channels,"three channels, three reps",#a6cee3,6,True
+51_total_13n_11wh_23fi_4wifi,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,NV,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+51_total_13n_11wh_23fi_4wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_23fi_4wifi,OK,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,PA,three channels,"three channels, three reps",#a6cee3,5,True
+51_total_13n_11wh_23fi_4wifi,RI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_23fi_4wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+51_total_13n_11wh_23fi_4wifi,UT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+51_total_13n_11wh_23fi_4wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,VT,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+51_total_13n_11wh_23fi_4wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+51_total_13n_11wh_23fi_4wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_12n_11wh_25fi_4wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,AR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,AZ,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_11wh_25fi_4wifi,CT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_11wh_25fi_4wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,FL,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_11wh_25fi_4wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_11wh_25fi_4wifi,IA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_11wh_25fi_4wifi,IL,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_12n_11wh_25fi_4wifi,IN,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_11wh_25fi_4wifi,KS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,MA,partial,one or two channels,#f3e79b,2,True
+52_total_12n_11wh_25fi_4wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,ME,partial,one or two channels,#f3e79b,2,True
+52_total_12n_11wh_25fi_4wifi,MI,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_11wh_25fi_4wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,MO,three channels,"three channels, three reps",#a6cee3,4,False
+52_total_12n_11wh_25fi_4wifi,MS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_11wh_25fi_4wifi,NC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_11wh_25fi_4wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_11wh_25fi_4wifi,NH,partial,one or two channels,#f3e79b,2,True
+52_total_12n_11wh_25fi_4wifi,NJ,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_11wh_25fi_4wifi,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,NV,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_12n_11wh_25fi_4wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_11wh_25fi_4wifi,OK,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,OR,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_12n_11wh_25fi_4wifi,RI,partial,one or two channels,#f3e79b,2,True
+52_total_12n_11wh_25fi_4wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_11wh_25fi_4wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_11wh_25fi_4wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_11wh_25fi_4wifi,UT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,4,False
+52_total_12n_11wh_25fi_4wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,VT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_11wh_25fi_4wifi,WA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_11wh_25fi_4wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_11wh_25fi_4wifi,CA,three channels,"three channels, three reps",#a6cee3,9,True
+52_total_12n_10wh_25fi_5wifi,AL,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,AR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,AZ,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,CO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_10wh_25fi_5wifi,CT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_10wh_25fi_5wifi,DC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,DE,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,FL,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,GA,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,IA,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,ID,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,2,False
+52_total_12n_10wh_25fi_5wifi,IL,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_10wh_25fi_5wifi,IN,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,KS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,KY,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,LA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,MA,partial,one or two channels,#f3e79b,2,True
+52_total_12n_10wh_25fi_5wifi,MD,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,ME,partial,one or two channels,#f3e79b,2,True
+52_total_12n_10wh_25fi_5wifi,MI,three channels,"three channels, three reps",#a6cee3,5,True
+52_total_12n_10wh_25fi_5wifi,MN,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,MO,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,MS,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,MT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_10wh_25fi_5wifi,NC,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,ND,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_10wh_25fi_5wifi,NE,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_10wh_25fi_5wifi,NH,partial,one or two channels,#f3e79b,2,True
+52_total_12n_10wh_25fi_5wifi,NJ,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,NM,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,NV,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,NY,three channels,"three channels, three reps",#a6cee3,7,True
+52_total_12n_10wh_25fi_5wifi,OH,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,OK,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,OR,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,PA,three channels,"three channels, three reps",#a6cee3,6,True
+52_total_12n_10wh_25fi_5wifi,RI,partial,one or two channels,#f3e79b,2,True
+52_total_12n_10wh_25fi_5wifi,SC,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,SD,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_10wh_25fi_5wifi,TN,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,TX,three channels,"three channels, three reps",#a6cee3,4,True
+52_total_12n_10wh_25fi_5wifi,UT,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,VA,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,VT,partial,one or two channels,#f3e79b,2,True
+52_total_12n_10wh_25fi_5wifi,WA,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,3,False
+52_total_12n_10wh_25fi_5wifi,WI,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,WV,three channels,"three channels, three reps",#a6cee3,3,False
+52_total_12n_10wh_25fi_5wifi,WY,WH+FI merged,"WH + FI merged, one rep",#b2a0d6,1,False
+52_total_12n_10wh_25fi_5wifi,CA,three channels,"three channels, three reps",#a6cee3,8,True

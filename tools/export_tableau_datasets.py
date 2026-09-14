@@ -31,7 +31,7 @@ BRAIN_DIR = Path("/Users/sandvault-ntlee/.gemini/antigravity-cli/brain/09f078e7-
 from tools.update_scenario_naming import SCENARIOS
 
 SCENARIOS_TUPLES = [
-    (sc["run_d"], f"{sc['total']}_{sc['n']}_{sc['wh']}_{sc['fi']}_{sc['wifi']}")
+    (sc["run_d"], f"{sc['total']}_total_{sc['n']}n_{sc['wh']}wh_{sc['fi']}fi_{sc['wifi']}wifi")
     for sc in SCENARIOS
 ]
 
@@ -72,9 +72,9 @@ def export_state_structure(scenarios_list):
         import shutil
         shutil.copy(out_file, BRAIN_DIR / out_file.name)
 
-    # Export scenario-specific 51_13_11_24_3 file
-    rows_51 = [r for r in rows if r["scenario_id"] == "51_13_11_24_3"]
-    out_51 = OUT_DIR / "51_13_11_24_3_state_structure.csv"
+    # Export scenario-specific 51_total_13n_11wh_24fi_3wifi file
+    rows_51 = [r for r in rows if r["scenario_id"] == "51_total_13n_11wh_24fi_3wifi"]
+    out_51 = OUT_DIR / "51_total_13n_11wh_24fi_3wifi_state_structure.csv"
     with open(out_51, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -146,9 +146,9 @@ def export_district_geojson(scenarios_list):
         import shutil
         shutil.copy(out_file, BRAIN_DIR / out_file.name)
 
-    # Export scenario-specific 51_13_11_24_3 file
-    feat_51 = [f for f in features if f["properties"]["scenario_id"] == "51_13_11_24_3"]
-    out_51 = OUT_DIR / "51_13_11_24_3_district_reach.geojson"
+    # Export scenario-specific 51_total_13n_11wh_24fi_3wifi file
+    feat_51 = [f for f in features if f["properties"]["scenario_id"] == "51_total_13n_11wh_24fi_3wifi"]
+    out_51 = OUT_DIR / "51_total_13n_11wh_24fi_3wifi_district_reach.geojson"
     with open(out_51, "w") as f:
         json.dump({"type": "FeatureCollection", "features": feat_51}, f)
     print(f"Exported {len(feat_51)} district polygons to {out_51}")
