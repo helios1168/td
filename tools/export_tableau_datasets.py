@@ -28,12 +28,38 @@ from tools.plan_summary import (
 OUT_DIR = REPO_ROOT / "exports/tableau"
 BRAIN_DIR = Path("/Users/sandvault-ntlee/.gemini/antigravity-cli/brain/09f078e7-2f55-4c40-9905-5ed9fd054e07")
 
-from tools.update_scenario_naming import SCENARIOS
+DIR_MAP = {
+    "47_total_14n_11wh_21fi_1wifi": "battery/results/option1_exact_merged",
+    "46_total_14n_11wh_21fi_0wifi": "battery/results/option2_exact_multichannel",
+    "51_total_13n_13wh_24fi_1wifi": "battery/results/scenario_A_51",
+    "52_total_13n_14wh_24fi_1wifi": "battery/results/scenario_B_52",
+    "51_total_12n_13wh_25fi_1wifi": "battery/results/scenario_C_51",
+    "53_total_13n_14wh_25fi_1wifi": "battery/results/scenario_D_53",
+    "52_total_12n_14wh_25fi_1wifi": "battery/results/scenario_E_52",
+    "51_total_12n_13wh_24fi_2wifi": "battery/results/scenario_F_51",
+    "52_total_12n_13wh_25fi_2wifi": "battery/results/scenario_G_52",
+    "52_total_13n_13wh_24fi_2wifi": "battery/results/scenario_H_52",
+    "53_total_13n_14wh_24fi_2wifi": "battery/results/scenario_I_53",
+    "53_total_12n_14wh_25fi_2wifi": "battery/results/scenario_J_53",
+    "52_total_14n_13wh_24fi_1wifi": "battery/results/scenario_K_52",
+    "53_total_14n_14wh_24fi_1wifi": "battery/results/scenario_L_53",
+    "51_total_13n_11wh_24fi_3wifi": "battery/results/grid_W3_A_51",
+    "51_total_13n_11wh_23fi_4wifi": "battery/results/grid_W4_A_51",
+    "52_total_12n_11wh_25fi_4wifi": "battery/results/grid_W4_B_52",
+    "52_total_12n_10wh_25fi_5wifi": "battery/results/grid_W5_C_52",
+}
 
-SCENARIOS_TUPLES = [
-    (sc["run_d"], f"{sc['total']}_total_{sc['n']}n_{sc['wh']}wh_{sc['fi']}fi_{sc['wifi']}wifi")
-    for sc in SCENARIOS
-]
+def load_all_scenarios():
+    tuples = []
+    with open(REPO_ROOT / "summary.csv") as f:
+        for r in csv.DictReader(f):
+            sid = r["scenario_id"]
+            run_rel = DIR_MAP.get(sid, f"battery/results/{sid}")
+            if (REPO_ROOT / run_rel).exists():
+                tuples.append((run_rel, sid))
+    return tuples
+
+SCENARIOS_TUPLES = load_all_scenarios()
 
 
 def export_state_structure(scenarios_list):
