@@ -182,7 +182,7 @@ Thus, total system mass is preserved exactly. Finally, constraint (\ref{eq:sup_c
 \subsection{Computational Complexity and Independent Certification}
 Because the support space $|\mathcal{S}|$ on $G$ for $\bar{s} \le 6$ and $D_{\max} \le 900$~km contains only $1,200\text{--}4,500$ valid candidates, the Master MILP comprises fewer than $5,000$ binary columns and fewer than $300$ constraints. Solved using the HiGHS branch-and-cut engine, the problem achieves \textbf{provable global optimality in $0.8\text{--}2.8$ seconds}, completely bypassing the combinatorial timeouts of the legacy flow model.
 
-To ensure verification integrity, every generated solution is certified by an \textbf{independent, solver-agnostic audit script} (\texttt{td/solvers/support\_partitioning.py}) verifying:
+To ensure verification integrity, every generated solution is certified by an \textbf{independent, solver-agnostic audit script} (\texttt{tools/group2\_support.py}) verifying:
 \begin{itemize}[leftmargin=1.5em]
     \item Exact district count ($=K$).
     \item Full mass coverage ($\sum_{S} y_{v,S} = 1.000000 \pm 10^{-6}$).

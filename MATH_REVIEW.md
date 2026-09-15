@@ -43,7 +43,7 @@ To make this computationally tractable, the operational architecture initially a
 
 ## 3. The Support-Based Exact Reformulation Framework (The Latest Approach)
 
-To resolve the failure modes of the legacy pipeline, we developed and deployed the **Support-Based Exact Reformulation Framework** (`td/solvers/support_partitioning.py`, `tools/group2_support.py`, `tools/solve_global_multichannel.py`).
+To resolve the failure modes of the legacy pipeline, we developed and deployed the **Support-Based Exact Reformulation Framework** (`tools/group2_support.py`, `tools/solve_global_multichannel.py`).
 
 ### 3.1 Combinatorial Support Enumeration on Planning Graph $G=(V,E)$
 Instead of continuous fluid variables with post-hoc repair, we pre-compute the admissible support space $\mathcal{S}$:
