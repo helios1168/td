@@ -17,6 +17,7 @@ names before starting. Only Claude writes here; other agents report `LEARNED:` l
 - `facts/balance-ceiling`: the Jensen ceiling 110.883247 is the valid bound; free_search is not
 - `facts/map-contiguity`: Voronoi dissolve and power-cell contiguity of the committed draw; area against mass denominators
 - `facts/state-atoms-retired`: numbers of the retired state-atom route and its prototype; PYTHONHASHSEED=0
+- `facts/fi21-cover-grid`: FI 21 grid on v4, the plus-pair bug, cover rule infeasible, TX=1 under forcing, pieces before and after, the national-only answer (G1: all but IL CO; G2: all but CO WA UT MN), the sweep fix, the dollar-target study
 
 ## model
 - `model/reference-parameters`: the utility, θ 0.40 λ 0.30, per-zip sizing, the two saturation definitions

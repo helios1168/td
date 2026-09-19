@@ -34,6 +34,25 @@ channel can serve WA, MT or WY at a full book, so "every state served" needs all
   `worktree-contig-cut`.
 - Two exploratory cells: national at k 10 and 12; all channels merged at 48 to 53 districts.
 
+**User decisions of 2026-09-11 late night (the FI 21 run).**
+- FI 21 grid: national k 10 to 16, WH 11, FI 21, v4 CONUS, full rules; split caps
+  CA 3, TX 2, NY 2, FL 2 (replacing CA 3 TX 2 NY 3) and band break CA, TX, NY, FL.
+- Every solved cell re-realised with the contiguous cut on all seven bundles.
+- Full group lists: G1 = TX NY FL NJ IL AZ NC PA MI OH VA GA CO MD; G2 = G1 + WA UT IN LA MN CT;
+  other-first MT, WA, WY kept; no WA 1,200 km relaxation.
+- The "national cover" rule (`--cover-national`: national covered by any national-carrying
+  bundle in the planned stages) with N_WH finishing in seq_WH proved infeasible at every k, and
+  route joint found no incumbent. The user then chose "finish in seq_N plus other-first": the
+  group's national in pure N (`--force-national`) except CO (G1) or WA, CO, LA (G2), which go
+  in the other-first all-channel district. Under it TX needs one N district at k 10 to 13 (G1)
+  and 10 to 14 (G2). Numbers: `mem:facts/fi21-cover-grid`.
+
+**The question the FI 21 run answers (user, 2026-09-11, durable).** Which states must get a
+national-only district. G1 and G2 are candidate pools; national-only districts must not spread
+into other states (unforced runs put $5.8B of non-group national, CA $4.1B, into N districts,
+which the user rejected as missing the point). Every other state's national rides with its WH
+and FI (WH_PLUS / FI_PLUS pairs or all-channel WIFI). Answer so far: `mem:facts/fi21-cover-grid`.
+
 Open at the night checkpoint (user's calls): the "other" floor, ND SD NE on FI alone, the
 900 km / 6-state cap or none, counts 16/11/20 or 18/11/19, route R (parked), WH_03's CT-end
 piece, ★B WHFI⁺, ★C rep pool against district count, ★D η and the tie-break, ★E cross-plan
