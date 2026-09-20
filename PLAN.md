@@ -1,4 +1,238 @@
-# Track: full-problem
+# Support master and ZIP realization: proposed implementation plan
+
+**Status:** proposed, not implemented. **Review baseline:** `agy-math-review-memo` at `426d912`.
+**Current deliverable:** corrections to `MATH_REVIEW.md` and this plan only. No Python changes,
+solver runs, or regenerated production artifacts are authorized by this documentation task.
+The earlier full-problem track notes are preserved below under **Historical track**; their
+next steps are not the execution instructions for this follow-up.
+
+## Goal
+
+Make the delivered ZIP–channel ownership ledger the source of truth, with one district per
+required cell, whole-cell opportunity conserved, and final capacity, support, connectivity,
+and staffing claims independently checked. Clearly separate master feasibility/optimality
+from ZIP realization and geographic extension. Do not replace Nash staffing with an explicit
+balance-minimization objective, and do not change the business rules to make tests pass.
+
+## Next step
+
+1. Obtain decisions D1–D5 below before changing solver semantics or geographic policy.
+2. Implement P0, a read-only independent audit and adversarial fixtures, first. It must expose
+   current failures rather than normalize them away.
+3. Consolidate master construction (P1), ownership/fallback (P2), and finalization (P3).
+4. Add publication gates (P4), then rerun and regenerate only after acceptance (P5).
+
+## Done
+
+- [x] Traced the current varying-WIFI pipeline through `run_vary_wifi_grid.py`,
+      `run_wifi_grid.py`, `plan_realise.py`, and the scenario/nationwide exporters.
+- [x] Corrected `MATH_REVIEW.md` to distinguish aggregate support shares, multiplicity
+      decoding, discrete ZIP ownership, residual national routing, and final certification.
+- [x] Independently scanned the committed CSV exports using Python's standard library:
+      36 commercial scenarios, 6,478 ZIPs each, 1,166,040 rows; no duplicate primary keys,
+      incomplete five-source-channel sets, or residual district labels.
+- [x] Scanned the nationwide compressed long table: 6,082,380 rows, no duplicate keys or
+      incomplete five-channel sets; 88,380 unserved rows, all with zero reported opportunity.
+- [x] Found 235 district–scenario combinations with conflicting representative labels across
+      all 36 commercial scenarios. Fragment healing changes the district but not its rep.
+- [ ] Reproduce solver runs, source-mass conservation, and final ZIP connectivity. The raw
+      `battery/results` runs and the documented solver virtualenv were absent in this checkout;
+      the table audits do not substitute for those checks.
+
+## Decisions needed
+
+- **D1: Multiplicity and whole-unit integrity.** May several districts have the same support?
+  Is a non-splittable unit indivisible across district instances, or only across supports?
+  The current integer aggregate share can be divided among repeated instances, contradicting
+  whole-unit ownership. Recommended: enforce whole-unit ownership at district-instance grain.
+  Choose explicit candidate copies or a rigorously equivalent multiplicity encoding before
+  consolidating the solver; do not silently forbid repeated supports.
+- **D2: Final capacity policy.** Must the final ledger satisfy the nominal band, a specified
+  realization tolerance, or an explicitly approved exception? Current grids request 0.1 tau
+  repair slack, then heal without any band guard. A failed strict band must be reported, not
+  hidden by silently widening it or dropping opportunity.
+- **D3: National fallback and bundle semantics.** Decide whether final WH/FI/WIFI capacity
+  planning includes fallback national opportunity from the outset. Specify the allowed fine
+  channels per district and whether product-form bundle ownership is required at every ZIP.
+  A combined national business channel can currently split between WH and FI; source/fine
+  channels remain individually whole. Clarify whether that is the intended contract.
+- **D4: Geometry and missing data.** Pin graph construction, gazetteer vintage, planning
+  adjacency, support overrides, and the treatment of assigned ZIPs absent from the cell graph.
+  Distinguish commercial service from optional zero-mass nationwide extension. Missing graph
+  evidence must be unverified or failed, never silently certified.
+- **D5: Staffing and certificate tier.** Decide whether scenario outputs are district-only
+  plans with labeled placeholders or staffed plans using an actual roster. Select the solver
+  gap policy separately: exact-master runs request `mip_rel_gap=0.0`; nonzero-gap runs record
+  the actual bound/gap and are never called globally exact. No universal runtime promise.
+
+## Proposed code changes
+
+### P0. Independent final-ledger verifier and regression evidence
+
+Proposed files: `tools/verify/support_realization/audit_exports.py` (standalone, not
+test-discovered), a reusable `td/assignment_audit.py`, and `tests/test_assignment_audit.py`.
+Check owner conventions before creating files; any new `docs/` file needs an owner row.
+
+- Accept the source instance, final assignment, district/staffing metadata, declared graph,
+  bands, eligible domains, channel policy, and certificate tolerances explicitly. Do not infer
+  the modeled ZIP graph from rendered ZCTA polygons.
+- Before converting rows to a dictionary, reject duplicate `(scenario, zip, fine_channel)`
+  keys, even when the duplicate rows agree. Check expected keys for missing/extra cells.
+- Require a real district for each required positive-opportunity cell; represent allowed
+  residuals explicitly. Distinguish zero-mass unserved extension rows from unheld opportunity.
+- Compare each row's full mass to the source cell, then recompute district and channel totals.
+  Check the fine-to-source expansion without counting an aggregated N_FI mass twice when it
+  becomes National (Chase) and Wells FI rows; use the original source-channel masses.
+- Recompute final district count, non-emptiness, realized unit shares, state contacts/caps,
+  permitted channels, and deviations from original master targets/bands.
+- Require graph membership for every vertex in the audited connectivity domain, then check
+  connected components; report missing graph files and missing vertices separately.
+- Require one consistent rep per staffed district, at most one district per real rep, roster
+  eligibility, and matching district/assignment/staffing tables. Placeholder IDs are labeled,
+  not accepted as proof of actual staffing.
+- Emit structured `pass`, `fail`, and `unverified` checks with counts and counterexamples.
+  Keep feasibility checks separate from solver-bound evidence.
+
+Fixtures: duplicate row, missing cell, fractional/lost mass, positive residual, allowed
+zero-mass residual, disallowed channel, stale district mass, conflicting rep, missing graph,
+assigned ZIP outside graph, disconnected district, band breach, and source-channel expansion.
+The committed exports should reproduce the key/label counts above and expose the rep-label
+failures. Source-dependent checks remain unverified when their inputs are unavailable.
+
+### P1. Consolidate and specify the support master
+
+Affected files: `tools/group2_support.py`, `tools/solve_global_multichannel.py`, the duplicated
+`solve_generic_channel` implementations in `tools/run_{parallel_scenarios,extended_grid,wifi_grid}.py`,
+and their tests. Select one reusable builder/decoder, with scenario policy passed as data.
+
+- Resolve D1, then use one variable interpretation from construction through decoding and
+  validation. The global solver currently repeats aggregate shares without dividing by
+  multiplicity; the generic solver divides them. Eliminate this inconsistency.
+- If multiplicity remains, enforce whole-unit integrity on the actual instances, not merely
+  the aggregate support share. Preserve summed coverage and the requested district count.
+- Add an explicit activation link for shares, including zero-mass units; do not rely on the
+  upper mass row to deactivate unused supports. Encode required coverage even when a unit has
+  no candidate support, returning infeasible rather than skipping that row.
+- Reject/filter supports outside the channel's declared eligible domain. Optional coverage
+  must be explicit. Do not allow excluded Western units to enter unconstrained support shares.
+- Revalidate every manually appended support for connectivity, size, distance, and exclusions;
+  encode permitted exceptions explicitly. A seven-unit NE+NY support is an exception to a
+  six-unit cap, not an invisible post-enumeration bypass.
+- Parameterize articulation-share floors, splittable sets, macro caps, and pairwise distance
+  overrides. Contact caps and pair-coupling rules are distinct; implement only approved rules.
+- Preserve the declared objective: diameter cost, optionally covered mass when coverage is
+  partial. Keep total opportunity as a constant, not a purported extra objective, in full cover.
+- Save model/config hashes, objective, dual bound, achieved gap, termination reason, counts,
+  generated/accepted supports, and separate enumeration/solve times. One HiGHS thread count
+  per process. Do not relabel a time limit with no incumbent as proven infeasibility.
+
+Fixtures: a repeated singleton support; repeated support containing a protected whole unit;
+zero-mass unit on an inactive support; missing candidate for a required unit; excluded unit
+in a support; manually added invalid support; true cap vs pair coupling; full vs partial cover;
+time-limited incumbent vs no incumbent. Enumerate small toy cases as an independent oracle.
+
+### P2. Explicit final cell ownership and channel-routing policy
+
+Affected files: `tools/plan_realise.py`, `tools/run_wifi_grid.py`,
+`tools/run_{vary_wifi_grid,grid_48_49_50,extended_grid,parallel_scenarios}.py`, and tests.
+
+- Retain exactly one owner or explicit residual per fine cell. Define the final binary contract
+  `sum_j a[z,c,j] + residual[z,c] = 1`; a move transfers the entire source `M[z,c]`.
+- Represent fallback as a declared policy mapping, not a CSV mutation that silently changes
+  a district's business role. Record original bundle, allowed/actual channels, source owner,
+  destination owner, and reason for every transfer.
+- Resolve overlapping bundle projections consistently. If product form is required, claim
+  the whole bundle at a ZIP atomically or reject the conflict; do not claim a partial bundle
+  and still report complete product-form ownership. If partial ownership is allowed, name it.
+- Replace row-order tie-breaks with documented deterministic choices. Handle zero-mass cells,
+  coordinate-less ZIPs, and missing eligible destinations explicitly without fabricating service.
+- Under D3, either include fallback mass in the planning weights or report final band failure
+  and require a replan. Merely refreshing the exported district mass does not restore capacity.
+- Record both planned and realized per-unit shares and district masses, plus their deltas.
+
+Fixtures: one ZIP with different WH/FI owners; national fallback to each; all channels to WIFI;
+competing bundles; unavailable destination; zero-mass cell; missing-coordinate ZIP; and a
+fallback that violates the final band. Test invariance under input-row permutation.
+
+### P3. Guarded spatial moves and one finalization path
+
+Affected files: `tools/plan_realise.py`, duplicated `heal_assignment_contiguity` helpers,
+`tools/build_and_run_exact_summary.py`, scenario drivers, and tests.
+
+- Route every ZIP/component move through a shared ledger update. Check D2/D4 policy for
+  source/destination band excess, allowed state contacts, caps, channel compatibility,
+  non-emptiness, and required connectivity. Do not silently override master restrictions.
+- Stop calling an unrepaired result certified. A heuristic can fail to find a legal move;
+  return its remaining fragments and violated constraints rather than dropping cells or
+  claiming that no feasible solution exists.
+- After the last move and fallback, rebuild all derived tables from the ledger: district
+  masses, channels, membership, piece counts, representative labels, books, and retention.
+  Remove stale per-row representatives when district labels change. Refresh `realise.json`,
+  `districts.csv`, `wholesalers.csv`, and staffing provenance consistently.
+- Preserve actual roster assignments when appropriate; for rematching, use final ZIP gains
+  and the same eligibility convention. Held reps are excluded, never released into filler.
+  Placeholder-only mode must be explicit and must not claim Nash-optimal staffing.
+
+Fixtures: fragment move rejected by a band/cap/support restriction; allowed move updates every
+output consistently; a last-district ZIP cannot disappear; repaired labels remain exclusive;
+a moved ZIP's rep agrees with its new district; repeated finalization is idempotent.
+
+### P4. Fail-closed publication and independent certificate reporting
+
+Affected files: scenario grid scripts, `tools/scenario_export.py`,
+`tools/export_all_scenarios_nationwide_long.py`, related exporters, and tests.
+
+- Run P0 after all realization, healing, routing, and optional staffing. Publish an accepted
+  scenario only when its required checks pass. Keep failed/unverified artifacts for diagnosis
+  without adding them to the accepted catalog.
+- Derive summary fields from validation records. Remove unconditional `100% Contiguous`
+  strings and do not ignore `all_clean=False`. Missing graphs/vertices are not successful checks.
+- Export immutable final assignments with provenance. Never deduplicate conflicting rows
+  silently or use a spatial fallback to conceal an unassigned positive commercial cell.
+- Keep nationwide zero-mass extension separate, with its distance rule, state/channel
+  eligibility, unresolved rows, and tie-breaks recorded. Check membership against the input
+  universe so commercial ZIPs absent from the Census ZCTA file cannot disappear unnoticed.
+- Propagate placeholder/staffing status into exports. Recompute actual served district counts,
+  not just the requested scenario counts. Label measured runtime and achieved solver gaps;
+  do not advertise a Pareto frontier without an explicit dominance analysis and scope.
+
+Fixtures: failed check blocks publication; missing audit input yields unverified; summary agrees
+with certificate; a positive cell cannot be filled by geographic extension; zero-mass unserved
+row remains explicit; missing commercial ZCTA is reported; nationwide ties are deterministic.
+
+### P5. Verification and controlled regeneration
+
+- Run fast synthetic/oracle tests under the project's solver environment, with fixed solver
+  thread settings. Run geography-dependent tests only with the required app/geo dependencies.
+  Do not install into frozen environments to work around missing inputs.
+- On the same instance and gazetteer vintage, compare old/new master supports, final labels,
+  district masses, residuals, connectivity, and representative mappings. Differences caused
+  by correctness fixes must be explained, not hidden behind an output snapshot update.
+- Preserve old run artifacts. Regenerate the scenario catalog and tracked figures only after
+  policy decisions and final audits pass; never write under `battery/figures/`.
+- Synchronize `MATH_REVIEW.tex` only after the implemented contract is settled. The current
+  Markdown corrections are not proof that any planned code fix or solver rerun has happened.
+
+## Acceptance criteria
+
+- Every required source cell has exactly one real owner and its whole original opportunity.
+- All reported masses and staffing views agree with the final ledger; no stale rep labels.
+- Protected-unit, eligibility, channel, count, capacity, and connectivity policies are either
+  satisfied or explicitly reported as failed/unverified with approved exceptions distinguished.
+- Master feasibility, master optimality gap, realized-map feasibility, and staffing/fairness
+  verdicts are separate, with reproducible provenance.
+- No accepted catalog row is generated from an unchecked, failed, or missing-input result.
+
+## Files owned / forbidden
+
+Current task owns only `MATH_REVIEW.md` and this `PLAN.md`. All code paths above are **proposed
+future edits**, not ownership grants for this task. Preserve `docs/foundations/`, `STATE.md`,
+confidential inputs, existing runs, and frozen environments. No branch merge or commit is
+implied. Existing historical track notes follow unchanged apart from their heading.
+
+---
+
+# Historical track: full-problem
 
 Handoff plan for a fresh orchestrator session. Written 2026-09-10 from a planning session that
 read the codebase, ran three explore agents and one Plan agent, and settled the design with the
