@@ -2,21 +2,30 @@
 
 Balanced territory design for a new national sales channel: carve the two largest firms out of
 the financial-institutions and wirehouse channels into k districts of roughly equal opportunity
-(about $1B each), then staff each district from the incumbent reps (`docs/PROBLEM.md`). Claude
-Code orchestrates and Codex implements. Both read this file; it carries invariants only and is
-never stamped.
+(about $1B each), then staff each district from the incumbent reps (`docs/PROBLEM.md`). The main
+pi session orchestrates; subagents implement, verify, and reframe. This file carries invariants
+only and is never stamped. The workflow is `/Users/Shared/sv-ntlee/WORKFLOW.md`.
 
-## Start-up
+## Stores
 
-1. `STATE.md` `## Now` is the resume point; then `bd ready` for the open work and `bd show <id>`
-   for your bead. History: `git log --grep '^State:' -p -- STATE.md`.
-2. `docs/CODE_MAP.md` for files and recipes; `docs/PROBLEM.md` / `docs/MODEL.md` for the problem
-   and the model.
-3. A scenario question (pin a region, change k, swap the engine) goes to the Streamlit app
-   (`tools/app.sh`, `docs/APP.md`), which has an engine behind it. Artifacts are for fixed,
-   reviewed deliverables.
-4. Never read `docs/foundations/archive/`, or a whole `docs/*.md` unprompted; take the section you
-   need via Serena (headings are symbols).
+| kind | home | writer |
+|---|---|---|
+| Resume point | `STATE.md` (`## Now`, under 1 KB) | orchestrator |
+| Task queue | GitHub Issues, `gh` in bash; milestones per track | orchestrator opens and closes |
+| Facts and decisions | `docs/memory/` (`INDEX.md` first, files by name) | orchestrator, from `LEARNED:` lines |
+| Problem ledger | `docs/problem/PROBLEM.md` (settled/open), `UNKNOWNS.md` (U-numbers) | orchestrator via `triage` |
+| Lens output | `docs/lenses/<LENS>_<date>.md`, never edited after | orchestrator |
+| Unit record | `docs/units/<id>.md` with `Status:` and `## Model`, `## Verify`, `## Code verify` | orchestrator |
+| Code knowledge | Serena symbol tools; `docs/CODE_MAP.md` for entry points and recipes | tools |
+
+`docs/foundations/` is read-only and never edited; `docs/foundations/archive/` is never read.
+
+## Loop
+
+`orient` → pick an issue → `/plan` if more than one file → `execute` (one mission, one worktree)
+→ verify by a different vendor → `land` (acceptance output, curate memory, close with evidence,
+`STATE.md`, commit) → new session. `flush` before any compaction. Every subagent report ends
+with `LEARNED: <fact>` lines or `LEARNED: none`; only the orchestrator writes `docs/memory/`.
 
 ## Environment
 
@@ -31,8 +40,8 @@ never stamped.
   regenerate with `tools/us_maps.py` and commit alongside the change.
 - `data/`, `battery/results/` and `instance_descaled*.json.gz` (confidential) are gitignored;
   `docs/CODE_MAP.md` lists what a worktree must hand-copy.
-- Serena binds to the session's launch directory; activate by path before the first symbol
-  edit. Background solver runs with `"$TD_PY" -u`.
+- Serena resolves relative paths against the launch directory; pass absolute paths in a
+  worktree. Background solver runs with `"$TD_PY" -u`.
 
 ## Tests
 
@@ -45,85 +54,27 @@ need `.venv-app` to run for real; under `.venv` they skip, and `run_all.py -k` c
 there because discovery imports every `test_*.py` before filtering and `.venv-app` has no
 networkx. Run the module directly instead.
 
-## Docs discipline
-
-- One owner per file, listed in `.claude/doc-owners.txt` and enforced by
-  `tests/test_docs_owners.py`. A new `docs/*.md` needs a line there and an owner row in
-  `docs/CODE_MAP.md` `## Files`.
-- `docs/foundations/` is read-only and never edited.
-- The permanent record of a unit is `docs/units/<id>.md`, carrying a `Status: open|done|dropped`
-  line and `## Model`, `## Verify`, `## Code verify` sections. Verifier artifacts are committed
-  under `tools/verify/<id>/`; they are never test-discovered.
-- Bugs and small todos live in code as a `TODO` at the site (the runner has no `xfail`).
-- A track is an epic bead. There is no `PLAN.md`.
-- `STATE.md` holds only `## Now`, at most 1 KB, edited directly; its commits take the prefix
-  `State:`.
-
-## Worktrees
-
-A worktree is `.claude/worktrees/<id>` on branch `worktree-<id>`, created with plain git and
-locked:
-
-    git worktree add .claude/worktrees/<id> -b worktree-<id>
-    git worktree lock --reason "keep" .claude/worktrees/<id>
-
-Claude never uses `EnterWorktree(name)`; it enters an existing worktree by path. A worktree has
-no `.venv`; use `$TD_PY`. Serena must be given absolute worktree paths (relative paths resolve
-against the hub and can write to the user's checkout, trap 16). After a merge the orchestrator
-unlocks and removes the worktree and deletes the branch.
-
-## Beads workflow
-
-Beads (`bd`) is the task queue, committed as `.beads/issues.jsonl`.
-
-- `bd ready` lists unblocked beads; `bd show <id>` prints one in full. Start a bead with
-  `bd update <id> --status in_progress` and finish it with `bd close <id>`.
-- Labels: `thread:model` or `thread:impl`; `kind:verify-math` or `kind:verify-code`;
-  `unit:<id>`; `author:claude` or `author:codex`.
-- Metadata: `files` (the file set the bead owns; touch nothing outside it), `test` (the command
-  that must pass), `memories` (the Serena memories to read first), `unit`, `accept` (the
-  acceptance rule), `author`.
-- A unit runs as one chain, each bead blocked by the one before: model, verify math,
-  implementation, verify code. A verify bead goes by default to the agent that did not author the
-  work.
-
-## Memory
-
-Serena project memories in `.serena/memories/` are the only memory store. They are topic-named:
-`facts/...` for measured numbers, `solver/...` for solver behaviour, and so on. Read the ones a
-bead's `memories` names before starting. Only Claude writes them. Every other agent ends its
-report with one `LEARNED: <fact>` line per durable finding, and the orchestrator curates those
-into memories.
-
 ## Git
 
-- The orchestrator (the main Claude session) commits and merges into `main`.
-- A spawned agent (a Codex run, a Claude subagent, a verify run) commits and pushes only its own
-  `worktree-<id>` branch and never merges into `main`.
-- Never use `gh`. Git goes over SSH only.
+- The orchestrator commits and merges into `main`. A subagent commits only on its own worktree
+  branch and never merges.
+- Commit prefixes: `State:` for `STATE.md`, `Memory:` for `docs/memory/`, `Lens:` for
+  `docs/lenses/`. Issue numbers in every other commit message.
+- `gh` is for issues, labels, and milestones only. Git goes over SSH.
+- One owner per `docs/*.md`, listed in `.claude/doc-owners.txt` and enforced by
+  `tests/test_docs_owners.py`; a new doc needs a line there and a row in `docs/CODE_MAP.md`.
+- When sharing artifacts with the user, give GitHub web links
+  (`https://github.com/helios1168/td/blob/<branch>/<path>`), not `file://` paths.
 
 ## Tool routing
 
-- Know the name: Serena. `find_symbol` with `include_body` only when you will read or edit the
-  body, `depth=1` for a class; `get_symbols_overview` for a file you have not seen;
-  `find_referencing_symbols` for callers.
-- Know the text: `rtk rg -n`, starting with `-l` or `-c` and `--max` (`--max-len 160` for code),
-  then switch to Serena at the hit. This holds for non-Python files too.
-- Know the line: read about 40 lines around it (Claude: Read with `offset`/`limit`; Codex:
-  `sed -n a,bp`).
-- Markdown headings are symbols (`STATE.md` `## Now`, unit sections). In a worktree, pass
-  absolute paths.
-- Read a whole file only when it is a non-code file under 200 lines or 8 KB, or when most of it
-  changes.
-- Structured files: `jq` or `rtk read -m`.
-- Confidential data (`data/`, `battery/results/`, `instance_descaled*`): shapes, keys, counts and
-  aggregates only, never rows.
-- Edits: Claude uses Edit, `replace_symbol_body`, `rename_symbol` and `replace_in_files` (dry run
-  first). Codex uses `apply_patch` only, one multi-file patch per logical change, then
-  `get_diagnostics_for_file`, then the tests.
-- Batch independent reads: one message, or one exec with `Promise.allSettled`.
-- Every shell command goes through rtk. The hook rewrites plain commands; write `rtk test`,
-  `rtk rg --max`, `rtk read -m` and `rtk proxy` yourself where the hook cannot.
+- Symbols: `serena_get_symbols_overview` for an unseen file, `serena_find_symbol` with the body
+  only to edit, `serena_find_referencing_symbols` for callers; headings in Markdown are symbols.
+- Text: grep with `-l` or `-c` first, then Serena at the hit. Read about 40 lines around a line.
+- Whole-file reads only for a non-code file under 200 lines or 8 KB.
+- Structured files: `jq`. Confidential data (`data/`, `battery/results/`, `instance_descaled*`):
+  shapes, keys, counts, and aggregates only, never rows, and never in an issue or a memory.
+- `session_search` before re-deriving anything that sounds familiar.
 
 ## Traps that still apply
 

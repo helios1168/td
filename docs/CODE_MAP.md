@@ -32,6 +32,9 @@ way.
 
 | file | role |
 |---|---|
+| `docs/memory/` | facts, decisions, solver and verify notes; `INDEX.md` is one line per file. Orchestrator writes only, from `LEARNED:` lines |
+| `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md` | the settled/open ledger and the U-numbered unknowns; appended by the `triage` skill |
+| `docs/lenses/` | one file per lens or council pass, dated, never edited after |
 | `td/model.py` | N-way primitives: schema shim, per-rep utilities, gains, objective, perimeter, per-rep pieces, n-agent EF1 |
 | `td/channel.py` | stage 2 (Hungarian on logs), balance report, `place_by_state`, `allocate_districts` (the ceiling / dual bound) |
 | `td/instance.py` | loads the descaled real instance into the N-way schema |

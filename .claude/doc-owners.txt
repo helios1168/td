@@ -11,3 +11,6 @@ docs/HEADLINE.md
 docs/FULL_PROBLEM.md
 docs/MODEL_FULL.md
 docs/units/*.md
+docs/memory/*.md
+docs/problem/*.md
+docs/lenses/*.md
