@@ -5,7 +5,7 @@ the Track 2 anchored δ = 5% map in `figures/borders_track2_anchored_d05_voronoi
 program is written in the notation of `docs/MODEL.md` §7, every number carries its
 base, and every step names its code, its verification and its run directory. Alternatives that
 were built and not shipped (Track 1, the state-atom engine, the free MILP) are not described
-here; `STATE.md` `## Facts` holds their grids and `docs/units/state_borders.md` the model behind
+here; `.serena/memories/facts/` holds their grids and `docs/units/state_borders.md` the model behind
 them.
 
 | symbol | meaning | on this run |
@@ -44,7 +44,7 @@ deviation 6.26%, with D16 (+5.18%), D17 (+5.76%) and D18 (−6.26%) outside the 
 completion step had sent the 32 unknown-state zips to the lightest districts. The CONUS
 re-runs at δ = 5%, 7% and 10% are in `battery/results/borders_k18_v2conus_20260907/` from the
 CONUS draw `battery/results/draw_k18_v2conus_20260907/k18/`; their result tables are in
-`STATE.md` `## Facts`.
+`.serena/memories/facts/`.
 
 The utility model behind stage 2 (`docs/PROBLEM.md` §2, the welfare decomposition): for
 representative $i$ at zip $z$,
@@ -225,7 +225,7 @@ beyond that are NY's third district and CA's fifth.
 
 These four ratios are $M_s/\tau$ on the **level-1 ground set**, $\tau = 470.459$, as
 `--dump-state-shares` writes them straight from the arrays `build_milp` is handed (NJ, the fifth
-state over $\tau$, is 1.043). `STATE.md` `## Facts` quotes CA 4.126, TX 2.020, NY 1.794, FL 1.398
+state over $\tau$, is 1.043). `.serena/memories/facts/` quotes CA 4.126, TX 2.020, NY 1.794, FL 1.398
 and NJ 1.037 in its state-atom block, and those are a different base: the atom route keeps every
 zip, including the ones with no gazetteer point, so it divides by the whole-instance
 $\tau = 473.513$. Rescaling the level-1 masses to that $\tau$ reproduces CA 4.126, NY 1.794 and
@@ -302,8 +302,8 @@ centre array as it goes, so in general a later state's cut can depend on an earl
 rounds. On this cell it cannot: the four split states' district sets (CA: D02, D10, D14, D17, D18;
 FL: D07, D15; NY: D01, D04, D05; TX: D03, D16) are pairwise disjoint, and a state's rounds move
 only the centres of districts touching that state, so no centre used for one split state is moved
-by another. The order dependence STATE.md flags as unjudged is real for the code and inert for
-the shipped map.
+by another. The order dependence left open as an unjudged decision (a Beads `decision` item since
+2026-09-11) is real for the code and inert for the shipped map.
 
 Code: `td/solvers/state_splits.py::realise`, `td/solvers/centers.py::assign` (with `targets=`).
 The per-round iterates are recorded per split state for the "Borders in Motion" replay.
@@ -494,8 +494,8 @@ seeds; the second is deterministic given the draw.
   §10 (certificates). These absorbed `docs/CHANNEL_NOTE.md` on 2026-09-07; its text is
   `git show 81bd59f:docs/CHANNEL_NOTE.md`, its LaTeX source `docs/channel_note/channel_note.tex`.
 - The border build: `docs/units/state_borders.md` and `docs/units/state_splits.md` (brief,
-  `## Model`, `## Verify`, `## Code verify`), the Track 1 and Track 2 grids in `STATE.md`
-  `## Facts`, and the artifacts under `tools/verify/state_splits/`. The plan and results files
+  `## Model`, `## Verify`, `## Code verify`), the Track 1 and Track 2 grids in
+  `.serena/memories/facts/`, and the artifacts under `tools/verify/state_splits/`. The plan and results files
   they replaced are `git show ae2b18d:docs/BORDERS_PLAN.md` and
   `git show ae2b18d:docs/BORDERS_RESULTS.md`.
 - Runs: `battery/results/draw_k18_v2_20260904/k18/` and

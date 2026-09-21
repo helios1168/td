@@ -30,8 +30,8 @@ Folded from `docs/BORDERS_PLAN.md` (deleted 2026-09-07; full text
   district by `d²` to centre; zero parameters.
 
 Grid results (Track 1 never reaches zero residual splits: owner sets inherited from the
-committed map force 5-8 small-state crossings at every δ) are in `STATE.md ## Facts`,
-dated 2026-09-07.
+committed map force 5-8 small-state crossings at every δ) are in the Serena memory
+`facts/state-border-snapping`, dated 2026-09-07.
 
 ## Verify
 

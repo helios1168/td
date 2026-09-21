@@ -49,7 +49,8 @@ s.t.  Σ_j y_sj = 1                       ∀ s                (all of s placed)
   of its own states reaches; D18's CA piece is cut off from ID/MT); 28 state-district contacts
   sit under η. No upper bound on the split count exists from `y⁰`.
 
-Grid results (Track 2, free and anchored, all δ) are in `STATE.md ## Facts`, dated 2026-09-07.
+Grid results (Track 2, free and anchored, all δ) are in the Serena memory
+`facts/state-border-snapping`, dated 2026-09-07.
 
 ## Verify
 
