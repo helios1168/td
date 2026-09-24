@@ -49,3 +49,6 @@ instance_descaled*.json.gz
 
 # Uncompressed database export CSVs (>100 MB; use the .zip or .gz archives instead)
 exports/database/*.csv
+
+# Python packaging residue (blocks pi-subagents worktree runs when untracked)
+*.egg-info/
