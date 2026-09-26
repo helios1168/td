@@ -32,3 +32,5 @@ shades each zip cell by opportunity quantile within that hue (user: hue for iden
 for opportunity).
 
 Source: host memory td-contiguity-programme (2026-09-09 entries); CLAUDE.md traps 21 to 23.
+
+Update, 2026-09-25 (m5 session 01a0d8f6): for the support refactor the owner requires every Census and geography input to be 2025 vintage, so the new pipeline carries no 2020 pin (`mem:decisions/support-refactor-2026-09-25`).

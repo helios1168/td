@@ -23,6 +23,7 @@ FI 21, full rules, caps CA 3 TX 2 NY 2 FL 2, band break CA TX NY FL, 180 s per p
   stays in every cell but S1 n14 and n15: the district is CT, NJ and 5% of NY, and NY's share
   cannot join NJ to CT. A bridge seed in the cut joined it (15 to 2) but carried 14 times the
   share and starved neighbours (cut deviation to 1,371%), so it was reverted (`8e7b027`).
+  - Addendum, 2026-09-25 (m5 session 01a0d8f6, for td#52): this is the old realizer's only clean contiguity measurement (graph cut and repair, no healing), so the after figures, 15 districts in pieces over 8 maps and 70 over 14, are about 2 and 5 per map. The catalog's "100% Contiguous" came from healing with no band check and is not a baseline (MATH_REVIEW §3.4–3.5).
 
 - The border-aware seed (`9439874`) has a defect (bead `td-9ek.20.7`): over the 22 cells it
   leaves a district's share of FL or NY under 25% of target in 7 cells (old cut: 4). Worst U n16

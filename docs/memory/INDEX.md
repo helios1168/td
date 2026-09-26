@@ -18,6 +18,7 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `facts/map-contiguity`: Voronoi dissolve and power-cell contiguity of the committed draw; area against mass denominators
 - `facts/state-atoms-retired`: numbers of the retired state-atom route and its prototype; PYTHONHASHSEED=0
 - `facts/fi21-cover-grid`: FI 21 grid on v4, the plus-pair bug, cover rule infeasible, TX=1 under forcing, pieces before and after, the national-only answer (G1: all but IL CO; G2: all but CO WA UT MN), the sweep fix, the dollar-target study
+- `facts/support-pipeline`: the support pipeline before the refactor: import closure, irreproducible catalog, ownership drift, argmax rounding, exporter channels, the closure claim
 
 ## model
 - `model/full-problem-mathematical-setup`: the multi-channel problem's full mathematical setup (moved from the memory root 2026-09-21)
@@ -42,6 +43,7 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `decisions/rep-split-and-app-views`: contiguous rep splits on the cell graph, rep maps, sidebar picker and named views
 - `decisions/app-2026-09-08`: scenario app rules: bargaining both ways, territory = sales, release pricing, k grid
 - `decisions/full-problem-2026-09-11`: multi-channel rules: sub-channels, WIFI, split caps and band break, sweep, four state patterns
+- `decisions/support-refactor-2026-09-25`: scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding (td#52)
 
 ## workflow
 - `workflow/confidential-data`: descaled export only; shares and raw M never together; no per-record values anywhere
@@ -68,3 +70,4 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `refs/optimization-foundations`: FOUNDATIONS entries that carried the optimization plan
 - `refs/econ-theory-matching`: stability and matching citations, and which ones cannot be read as support
 - `refs/published-artifacts`: the four private artifact pages of 2026-09-07
+- `refs/literature`: td's .bib inventory before the refactor, what migrates to the global registry, the Shmoys–Tardos citation
