@@ -48,7 +48,7 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `decisions/app-2026-09-08`: scenario app rules: bargaining both ways, territory = sales, release pricing, k grid
 - `decisions/full-problem-2026-09-11`: multi-channel rules: sub-channels, WIFI, split caps and band break, sweep, four state patterns
 - `decisions/support-refactor-2026-09-25`: scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding (td#52); STATE.md shape Now/Next/Blocked ≤ 1 KB, v2 loader test removed until #66, exact requirement pins (td#54)
-- `decisions/open-decisions-2026-09-28`: OD2 (td#57): the Voronoi rook graph of 2025 points over placed extract ZIPs, explicit vertices, DC–VA only, missing-ZIP reports; OD3 (td#58): district-only outputs, three certificate tiers (exact, bounded, feasible only), no numeric successor to CERT_TOL/EPS_CERT
+- `decisions/open-decisions-2026-09-28`: OD2 (td#57): the Voronoi rook graph of 2025 points over placed extract ZIPs, explicit vertices, DC–VA only, missing-ZIP reports; OD3 (td#58): district-only outputs, three certificate tiers (exact, bounded, feasible only), no numeric successor to CERT_TOL/EPS_CERT; OD5 (td#60): scenario-listed 2025 metro CBSAs, whole if M^c ≤ U_c else own splittable unit, S14 keeps the unit, the integer-n feasibility condition
 - `decisions/issue-queue-reset-2026-09-28`: 50 legacy issues closed "not planned", `archived` on the 39 only, old milestones and labels left alone (td#53)
 
 ## workflow

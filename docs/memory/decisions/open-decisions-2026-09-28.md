@@ -43,3 +43,25 @@ The owner's answers to td#52's open decisions (OD codes), one section each. The 
 - Two tiers, or a single status: fewer tiers hide the bounded case, where a bound exists with a gap.
 
 **Consequences.** OD3 defines what each tier means and sets no numbers. The Nash-era tolerances `CERT_TOL` and `EPS_CERT` therefore have no successor in the support-master scope (td#58 comment, 2026-09-28). As of 2026-09-28, #70 (audit.py), which builds the tier row, does not link #58; only #71 does.
+
+## OD5: metro outlines and oversized metros (td#60)
+
+**Status:** answered by an oracle run (b7b1af8d) in m5 session 01a0e75a (alias `m5-60`) under the autonomous queue and recorded in [td#60's OD5 comment](https://github.com/helios1168/td/issues/60#issuecomment-5867324973) with four DECIDED lines. The owner adopted it as their own answer during `/land 60` ([comment](https://github.com/helios1168/td/issues/60#issuecomment-5867395304)), 2026-09-28. Decision-only: the empty marker commit 5785a33 was merged as 6b4560f.
+
+**Context.** #52 §4 gives a whole metro its own unit, and S13 makes the metro feature optional. For a cross-state metro in clipped mode, #52's S14 row says the metro "stays whole" while §4 says it "keeps its own unit". The two readings differ for a metro whose mass is above the band's upper bound, which cannot fit in one district (m5 session 01a0e75a, td#60, 2026-09-28). The owner's 2026-09-25 geography choice, that the metro wins over a state line in clipped mode and is logged as an exception, is in `decisions/support-refactor-2026-09-25`.
+
+**Decision.**
+- Metro outlines are the 2025 metropolitan CBSAs the scenario lists by code. Each is the union of the ZIPs assigned to its 2025 TIGER/Line CBSA counties: a ZIP's membership follows its G1 county and that county's 2025 CBSAFP.
+- The feature is off by default (S13). CSAs, metropolitan divisions and micropolitan CBSAs are not metro units.
+- Each planning channel classifies every metro once, against the scenario's declared band upper bound U_c. A metro with M^c ≤ U_c is whole and never split. One with M^c > U_c keeps its own unit and is split under the scenario's clipped or free mode by the master's shares and the ZIP realizer.
+- The classification stays fixed through a smallest-δ search.
+- S14 means that a cross-state metro keeps its own unit, not that it is forced whole. The audit logs the crossing.
+- There is no metro-binding step. A disconnected whole unit stops the run under OQ6.
+
+**Alternatives rejected.**
+- Carving all CBSAs, or using CSA or division outlines: adds units nobody asked for and conflicts with #52's CBSA recommendation.
+- A separate ZIP→CBSA polygon overlay: could break the county-union outline.
+- Always-free or always-clipped overrides, or reclassifying mid-search: changes the scenario's semantics or breaks C4's fixed-mode premise.
+- Forcing an oversized cross-state metro whole: a mass above U_c cannot fit in one district.
+
+**Consequences.** Under #52 §4's master rows, a clipped metro split only among its own singleton copies is feasible only if some integer n satisfies M^c/U_c ≤ n ≤ M^c/L_c. Without such an n, that mode can be infeasible (td#60, 2026-09-28; first proposed for #64's `MODEL.md`).
