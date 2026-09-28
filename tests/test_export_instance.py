@@ -1,33 +1,14 @@
 """
 test_export_instance.py -- `export/export_instance.py`, the work-machine exporter.
 
-Merged 2026-09-28 (td#54) from test_instance_export_v2.py and test_instance_export_sub.py;
-their docstrings follow. The v2 loader round-trip test left with `td/instance.py`.
-
-Format 2: the exporter's (zip, channel) output.
-
-Two things are being pinned. First, that a channel-less extract still writes exactly the file
-it wrote before channels existed: the committed instance was produced by that path and every
-number downstream of it would move if the path did. The golden payload below was captured from
-the exporter at `main` 7325737, before any of this was written.
-
-Second, that the national cells of a channelled export are the single-channel export, cell for
-cell and id for id. The expanded extract's national rows are the same data as today's whole
-extract, so kappa (pinned to the national median), every national m_rel and share, and every
-national rep's surrogate id have to come out unchanged. That is what lets tau = 471.21 at
-k = 18 and every comparison against the existing instance survive the arrival of WH and FI.
-
-Sub-channels: national's three sub-channels (2026-09-10).
-
-The business calls "national" three sub-channels: National (Chase), Wells (WH) and
-Wells (FI). An extract may carry those three instead of one `national` column, on both
-tables, never both at once. `canonical_channel` normalises whatever spelling a column
-carries to one of five names plus legacy `national`; when the three are present, kappa
-(and everything pinned to the national channel) is taken over their per-zip sum instead
-of a single `national` cell.
+Format 3 (td#61): the node table is long by (zip, channel) cell for any channel values, one
+descaling divisor (the median positive cell M) serves every channel, `channels.json` lists
+the channels for the owner to review, and there is no graph and no state column. The
+fixture is a synthetic seven-channel extract; every guard is checked against bad input.
 """
 from __future__ import annotations
 
+import ast
 import contextlib
 import csv
 import gzip
@@ -35,46 +16,60 @@ import importlib.util
 import io
 import json
 import os
+import statistics
+import sys
 import tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+EXPORTER = os.path.join(ROOT, "export", "export_instance.py")
 
 
 def _exporter():
-    path = os.path.join(ROOT, "export", "export_instance.py")
-    spec = importlib.util.spec_from_file_location("export_instance", path)
+    spec = importlib.util.spec_from_file_location("export_instance", EXPORTER)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
 # ------------------------------------------------------------------------ fixtures
-# 3 zips x 3 channels, 4 reps.  30003 has no `fi` cell at all; 30002's `fi` cell has
-# opportunity but no book (untapped); r_a sells in two channels; r_d sells in none of the
-# national rows, so it is one of the reps whose id must be assigned after the national ones.
-NAT_SALES = [
-    ("30001", "r_a", "FA", 20.0),
-    ("30001", "r_b", "FB", 10.0),
-    ("30002", "r_b", "FB", 30.0),
-    ("30002", "r_c", "FA", 20.0),
-    ("30002", "FILLER", "FB", 10.0),
-    ("30003", "r_a", "FA", 60.0),
-]
-OTHER_SALES = [
-    ("30001", "wh", "r_a", "FA", 8.0),
-    ("30001", "wh", "FILLER", "FB", 4.0),
-    ("30001", "fi", "r_c", "FA", 6.0),
-    ("30002", "wh", "r_d", "FC", 12.0),
-    ("30003", "wh", "r_d", "FC", 4.0),
-]
-NAT_OPP = [("30001", 100.0), ("30002", 200.0), ("30003", 300.0)]
-OTHER_OPP = [("30001", "wh", 40.0), ("30001", "fi", 30.0),
-             ("30002", "wh", 60.0), ("30002", "fi", 50.0),
-             ("30003", "wh", 20.0)]
-EDGES = [("30001", "30002"), ("30002", "30003")]
-STATES = [("30001", "GA"), ("30002", "GA"), ("30003", "AL")]
+# 3 zips x 7 channels. The opportunity table spells each channel one way and the sales table
+# another; both must normalise to the same name. (10002, wifi) has zero M and no book, so it
+# is no cell; (10003, bank_direct) has no row at all.
+ZIPS = ("10001", "10002", "10003")
+OPP_SPELLING = ("National", "Wells (WH)", "Wells (FI)", "WH", "FI", "WIFI", "Bank/Direct")
+CHANNELS = ["national", "wells_wh", "wells_fi", "wh", "fi", "wifi", "bank_direct"]
 
-KAPPA = 200.0                       # median of the three national M values
+
+def _m(i, j):
+    return 10.0 * (j + 1) * (i + 1)
+
+
+OPP = [(z, OPP_SPELLING[j], 0.0 if (z, j) == ("10002", 5) else _m(i, j))
+       for i, z in enumerate(ZIPS) for j in range(7) if (z, j) != ("10003", 6)]
+M_OF = {(z, channel): m for z, spelled, m in OPP
+        for channel in [CHANNELS[OPP_SPELLING.index(spelled)]] if m > 0}
+KAPPA = statistics.median(M_OF.values())    # one divisor: the median positive cell M
+
+NAT_SALES = [                               # (zip, rep, firm, sales), national only
+    ("10001", "r_a", "FA", 4.0),
+    ("10001", "r_b", "FB", 2.0),
+    ("10002", "r_b", "FB", 6.0),
+    ("10002", "r_c", "FA", 4.0),
+    ("10002", "FILLER", "FB", 2.0),
+    ("10003", "r_a", "FA", 12.0),
+]
+OTHER_SALES = [                             # (zip, channel as the sales table spells it, ...)
+    ("10001", "WELLS-WH", "r_d", "FC", 5.0),
+    ("10002", "wells fi", "r_a", "FA", 9.0),
+    ("10003", "wh", "r_e", "FD", 24.0),
+    ("10001", "fi", "r_d", "FC", 10.0),
+    ("10003", "wifi", "r_c", "FA", 45.0),
+    ("10002", "bank direct", "r_e", "FD", 28.0),
+    ("10001", "Bank/Direct", "FILLER", "FB", 7.0),
+]
+SALES = [(z, r, f, "NATIONAL", v) for z, r, f, v in NAT_SALES]
+SALES += [(z, r, f, c, v) for z, c, r, f, v in OTHER_SALES]
+SALES_HEADER = ["zip_code", "rep_id", "firm", "current_channel", "sales"]
 
 
 def _csv(tmp, name, header, rows):
@@ -86,270 +81,331 @@ def _csv(tmp, name, header, rows):
     return path
 
 
-def _v1_inputs(tmp, sales=None):
-    """The national rows only, with no channel column: today's extract."""
-    return (_csv(tmp, "sales1.csv", ["zip_code", "rep_id", "firm", "sales"],
-                 NAT_SALES if sales is None else sales),
-            _csv(tmp, "opp1.csv", ["zip_code", "M"], NAT_OPP))
+def _inputs(tmp, sales=None, opp=None, chan_col="current_channel"):
+    header = ["zip_code", "rep_id", "firm", chan_col, "sales"]
+    return (_csv(tmp, "sales.csv", header, SALES if sales is None else sales),
+            _csv(tmp, "opp.csv", ["zip_code", chan_col, "M"], OPP if opp is None else opp))
 
 
-def _v2_inputs(tmp, chan_col="current_channel", sales=None, opp=None):
-    """The same national rows plus wh and fi, both tables long by (zip, channel)."""
-    rows = [(z, r, f, "national", v) for z, r, f, v in (sales or NAT_SALES)]
-    rows += [(z, r, f, c, v) for z, c, r, f, v in OTHER_SALES]
-    orows = [(z, "national", m) for z, m in NAT_OPP]
-    orows += [(z, c, m) for z, c, m in (opp or OTHER_OPP)]
-    return (_csv(tmp, "sales2.csv", ["zip_code", "rep_id", "firm", chan_col, "sales"], rows),
-            _csv(tmp, "opp2.csv", ["zip_code", chan_col, "M"], orows))
+def _nat_inputs(tmp):
+    """The national rows only, with no channel column."""
+    return (_csv(tmp, "sales1.csv", ["zip_code", "rep_id", "firm", "sales"], NAT_SALES),
+            _csv(tmp, "opp1.csv", ["zip_code", "M"],
+                 [(z, m) for (z, c), m in M_OF.items() if c == "national"]))
 
 
-def _sides(tmp):
-    return (_csv(tmp, "edges.csv", ["u", "v"], EDGES),
-            _csv(tmp, "states.csv", ["zip_code", "state"], STATES))
-
-
-def _export(mod, tmp, sales, opp, out="out", extra=()):
-    """Run the CLI end to end.  Returns (exit code, payload or None, stdout)."""
-    gp, stp = _sides(tmp)
+def _run(mod, tmp, sales, opp, out="out", cmd="export", extra=()):
+    """Run the CLI end to end.  Returns (exit code, payload, channels doc, output, out dir)."""
     out_dir = os.path.join(tmp, out)
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-        rc = mod.main(["export", "--sales", sales, "--opportunity", opp, "--graph", gp,
-                       "--states", stp, "--out", out_dir, "--filler-key", "FILLER",
-                       "--yes", *extra])
+        rc = mod.main([cmd, "--sales", sales, "--opportunity", opp, "--out", out_dir,
+                       "--filler-key", "FILLER", "--yes", *extra])
+    payload = chans = None
     path = os.path.join(out_dir, "instance_descaled.json.gz")
-    payload = None
     if os.path.exists(path):
         with gzip.open(path, "rt", encoding="utf-8") as fh:
             payload = json.load(fh)
-    return rc, payload, buf.getvalue(), path
+    if os.path.exists(os.path.join(out_dir, "channels.json")):
+        with open(os.path.join(out_dir, "channels.json"), encoding="utf-8") as fh:
+            chans = json.load(fh)
+    return rc, payload, chans, buf.getvalue(), out_dir
 
 
 def _cells(payload):
-    """{(zip, channel): row} from a format-2 payload, or {(zip, ""): row} from a format-1."""
     n = payload["nodes"]
-    chan = n.get("channel") or [""] * len(n["z"])
-    return {(z, c): dict(m_rel=m, share=s, share_free=f, state=st)
-            for z, c, m, s, f, st in zip(n["z"], chan, n["m_rel"], n["share"],
-                                         n["share_free"], n["state"])}
+    return {(z, c): dict(m_rel=m, share=s, share_free=f)
+            for z, c, m, s, f in zip(n["z"], n["channel"], n["m_rel"], n["share"],
+                                     n["share_free"])}
 
 
-# ------------------------------------------------------------- the v1 regression
-# Captured from the exporter (then tools/instance_export/export_instance.py) at main 7325737,
-# the commit the committed instance's lineage runs through, before channels were added.
-V1_GOLDEN = {
-    "edges": {"u": ["30001", "30002"], "v": ["30002", "30003"]},
-    "firm": {"R0000": "F0", "R0001": "F1", "R0002": "F0"},
-    "format": "td_instance_descaled/1",
-    "meta": {"cand_histogram": {"1": 1, "2": 2}, "exporter": "export_instance",
-             "graph_hash": "a2f47c99fe6c54aa321cb253d2613aeb7b390c4fa8507ed1a84e6ec1b47ac7db",
-             "join_rate": 1.0, "lam": 0.3, "max_candidates": 2, "n_edges": 2,
-             "n_filler_keys": 1, "n_filler_rows": 1, "n_reps": 3, "n_sales_rows": 6,
-             "n_sales_rows_nonpositive": 0, "n_zips": 3, "repair_added_share": 0.0,
-             "scale": "descaled: M/median(positive M); shares dimensionless",
-             "scale_stripped": True, "theta": 0.4, "version": "0.1.0",
-             "zips_contested": 2, "zips_headroom_repaired": 0, "zips_m_imputed": 0,
-             "zips_uncontested": 1, "zips_untapped": 0, "zips_vacant": 0,
-             "zips_with_filler": 1},
-    "nodes": {"m_rel": [0.5, 1.0, 1.5],
-              "share": [{"R0000": 0.2, "R0001": 0.1}, {"R0001": 0.15, "R0002": 0.1},
-                        {"R0000": 0.2}],
-              "share_free": [0.0, 0.05, 0.0],
-              "state": ["GA", "GA", "AL"],
-              "z": ["30001", "30002", "30003"]},
-}
+def _refused(fn, exc, *words):
+    try:
+        fn()
+    except exc as e:
+        for w in words:
+            assert w in str(e), (w, str(e))
+        return
+    raise AssertionError(f"expected {exc.__name__}")
 
 
-def test_channelless_extract_writes_the_v1_file_byte_for_byte():
+# ------------------------------------------------------------------- the v3 output
+def test_seven_channel_extract_writes_format_3_nodes_and_meta():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        sp, op = _v1_inputs(tmp)
-        rc, payload, _, path = _export(mod, tmp, sp, op)
-        assert rc == 0
-        with gzip.open(path, "rt", encoding="utf-8") as fh:
-            text = fh.read()
-    expected = json.dumps(V1_GOLDEN, separators=(",", ":"), sort_keys=True)
-    assert text == expected, "the channel-less path is no longer what produced the instance"
+        rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp))
+    assert rc == 0, txt
+    assert payload["format"] == "td_instance_descaled/3"
+    assert set(payload) == {"format", "nodes", "firm", "meta"}, "no edges leave any more"
+    assert set(payload["nodes"]) == {"z", "channel", "m_rel", "share", "share_free"}
+    meta = payload["meta"]
+    assert meta["channels"] == CHANNELS, "channels in the order the opportunity table names them"
+    assert meta["n_cells"] == 19 and meta["n_zips"] == 3
+    assert not {"graph_hash", "n_edges", "kappa_channel", "channel_groups"} & set(meta)
+    assert set(_cells(payload)) == set(M_OF)
+    assert "10002:wifi" not in txt and chans is not None
 
 
-# ------------------------------------------------------------------ the v2 output
-def test_v2_format_string_and_channels_in_file_order():
+def test_one_divisor_is_the_median_positive_cell_m_over_all_channels():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp))
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp))
+    assert rc == 0, txt
+    cells = _cells(payload)
+    for cell, M in M_OF.items():
+        assert abs(cells[cell]["m_rel"] - M / KAPPA) <= 1e-5 * M / KAPPA, cell
+    assert "kappa" not in json.dumps(payload["meta"])
+    assert "all channels" in payload["meta"]["scale"]
+
+
+def test_share_is_the_cell_fraction_and_filler_book_is_free_share():
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        rc, payload, chans, _, _ = _run(mod, tmp, *_inputs(tmp))
+    cells = _cells(payload)
+    assert cells[("10001", "national")]["share"] == {"R0002": 0.4, "R0004": 0.2}
+    assert cells[("10001", "wells_wh")]["share"] == {"R0003": 5.0 / 20.0}
+    assert cells[("10003", "wifi")]["share"] == {"R0001": 45.0 / 180.0}
+    assert cells[("10002", "wh")]["share"] == {}, "opportunity, no book: an untapped cell"
+    assert cells[("10002", "national")]["share_free"] == 2.0 / 20.0
+    assert cells[("10001", "bank_direct")]["share_free"] == 7.0 / 70.0
+    assert "FILLER" not in json.dumps(payload) and "FILLER" not in json.dumps(chans)
+
+
+def test_channels_json_lists_every_channel_with_spellings_and_counts():
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        rc, _, chans, _, _ = _run(mod, tmp, *_inputs(tmp))
     assert rc == 0
-    assert payload["format"] == "td_instance_descaled/2"
-    assert payload["meta"]["channels"] == ["national", "wh", "fi"]
-    assert payload["meta"]["kappa_channel"] == "national"
-    assert "national" in payload["meta"]["scale"]
+    rows = {c["channel"]: c for c in chans["channels"]}
+    assert [c["channel"] for c in chans["channels"]] == CHANNELS
+    assert rows["national"]["spellings"] == ["NATIONAL", "National"]
+    assert rows["wells_wh"]["spellings"] == ["WELLS-WH", "Wells (WH)"]
+    assert rows["bank_direct"]["spellings"] == ["Bank/Direct", "bank direct"]
+    assert rows["national"]["sales_rows"] == 6 and rows["bank_direct"]["sales_rows"] == 2
+    assert rows["wifi"]["cells"] == 2 and rows["wifi"]["zips"] == 2
+    assert rows["bank_direct"]["cells"] == 2
+    total = sum(M_OF.values())
+    for name, row in rows.items():
+        want = sum(m for (z, c), m in M_OF.items() if c == name) / total
+        assert abs(row["opportunity_share"] - want) <= 1e-5 * want, name
+    assert "kappa" not in json.dumps(chans)
 
 
-def test_v2_nodes_are_long_by_zip_and_channel():
+def test_rep_books_stay_with_surrogate_ids_ranked_by_total_book():
+    """With no reference channel the ids rank by total book across channels:
+    r_e 52 > r_c 49 > r_a 25 > r_d 15 > r_b 8 (sales units; m_rel*share is S/kappa)."""
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp))
-    n = payload["nodes"]
-    assert set(n) == {"z", "channel", "m_rel", "share", "share_free", "state"}
-    cells = _cells(payload)
-    assert set(cells) == {("30001", "national"), ("30001", "wh"), ("30001", "fi"),
-                          ("30002", "national"), ("30002", "wh"), ("30002", "fi"),
-                          ("30003", "national"), ("30003", "wh")}, \
-        "30003 carries no fi row, so it must have no fi cell"
-    assert payload["meta"]["n_cells"] == 8
-    assert payload["meta"]["n_zips"] == 3
-    # the state column repeats with the zip; the graph stays on zips
-    assert {c: r["state"] for c, r in cells.items()}[("30003", "wh")] == "AL"
-    assert payload["edges"] == {"u": ["30001", "30002"], "v": ["30002", "30003"]}
-    assert payload["meta"]["graph_hash"] == V1_GOLDEN["meta"]["graph_hash"], \
-        "the graph is over zips and must hash the same as the single-channel export"
+        rc, payload, _, _, _ = _run(mod, tmp, *_inputs(tmp))
+    assert rc == 0
+    assert payload["firm"] == {"R0000": "F3", "R0001": "F0", "R0002": "F0", "R0003": "F2",
+                               "R0004": "F1"}
+    book = {}
+    for (z, c), row in _cells(payload).items():
+        for rep, s in row["share"].items():
+            book[rep] = book.get(rep, 0.0) + s * M_OF[(z, c)]
+    want = {"R0000": 52.0, "R0001": 49.0, "R0002": 25.0, "R0003": 15.0, "R0004": 8.0}
+    for rep, v in want.items():
+        assert abs(book[rep] - v) < 1e-6, rep
 
 
-def test_v2_share_is_the_cell_fraction_and_kappa_is_the_national_median():
+def test_channelless_extract_is_one_national_channel():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp))
-    cells = _cells(payload)
-    m_of = {("30001", "national"): 100.0, ("30001", "wh"): 40.0, ("30001", "fi"): 30.0,
-            ("30002", "national"): 200.0, ("30002", "wh"): 60.0, ("30002", "fi"): 50.0,
-            ("30003", "national"): 300.0, ("30003", "wh"): 20.0}
-    for cell, M in m_of.items():
-        assert abs(cells[cell]["m_rel"] - M / KAPPA) < 1e-12, cell
-
-    # share is sales / M of that cell, not of the zip
-    assert cells[("30001", "national")]["share"] == {"R0000": 0.2, "R0001": 0.1}
-    assert cells[("30001", "wh")]["share"] == {"R0000": 8.0 / 40.0}
-    assert cells[("30001", "fi")]["share"] == {"R0002": 6.0 / 30.0}
-    assert cells[("30002", "wh")]["share"] == {"R0003": 12.0 / 60.0}
-    assert cells[("30002", "fi")]["share"] == {}, "opportunity, no book: an untapped cell"
-    # the filler's book is free share of its own cell
-    assert cells[("30001", "wh")]["share_free"] == 4.0 / 40.0
-    assert cells[("30002", "national")]["share_free"] == 10.0 / 200.0
-    assert "FILLER" not in json.dumps(payload)
+        rc, payload, chans, txt, _ = _run(mod, tmp, *_nat_inputs(tmp))
+    assert rc == 0, txt
+    assert payload["format"] == "td_instance_descaled/3"
+    assert payload["meta"]["channels"] == ["national"]
+    assert set(payload["nodes"]["channel"]) == {"national"}
+    assert payload["nodes"]["m_rel"] == [0.5, 1.0, 1.5], "kappa is the national median, 20"
+    assert chans["channels"][0]["spellings"] == []
 
 
-def test_national_cells_reproduce_the_single_channel_export():
-    """The invariant the whole track pins on: adding WH and FI moves no national number."""
+def test_validate_prints_the_channel_table_and_writes_nothing():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc1, v1, _, _ = _export(mod, tmp, *_v1_inputs(tmp), out="one")
-        rc2, v2, _, _ = _export(mod, tmp, *_v2_inputs(tmp), out="two")
-    assert (rc1, rc2) == (0, 0)
-    nat = {z: r for (z, c), r in _cells(v2).items() if c == "national"}
-    for (z, _), row in _cells(v1).items():
-        assert nat[z]["m_rel"] == row["m_rel"], z
-        assert nat[z]["share"] == row["share"], z
-        assert nat[z]["share_free"] == row["share_free"], z
+        rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp), cmd="validate")
+        assert not os.path.exists(out_dir)
+    assert rc == 0 and payload is None and chans is None
+    assert "validation: clean" in txt
+    for name in CHANNELS:
+        assert name in txt, name
 
 
-def test_surrogate_ids_of_national_reps_are_unchanged_by_the_new_channels():
+def test_graph_and_states_flags_are_gone():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc1, v1, _, _ = _export(mod, tmp, *_v1_inputs(tmp), out="one")
-        rc2, v2, _, _ = _export(mod, tmp, *_v2_inputs(tmp), out="two")
-    # every id the single-channel export handed out means the same rep, with the same firm
-    for rep, firm in v1["firm"].items():
-        assert v2["firm"][rep] == firm, rep
-    assert set(v2["firm"]) - set(v1["firm"]) == {"R0003"}, \
-        "the WH-only rep must be numbered after the national ones, not among them"
-    assert v2["firm"]["R0003"] == "F2"
+        sp, op = _inputs(tmp)
+        edges = _csv(tmp, "edges.csv", ["u", "v"], [("10001", "10002")])
+        for flag in ("--graph", "--states"):
+            buf = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                    mod.main(["validate", "--sales", sp, "--opportunity", op, flag, edges])
+            except SystemExit as e:
+                assert e.code == 2 and "unrecognized arguments" in buf.getvalue(), flag
+            else:
+                raise AssertionError(f"{flag} is still accepted")
+
+
+def test_exporter_imports_only_the_standard_library():
+    with open(EXPORTER, encoding="utf-8") as fh:
+        tree = ast.parse(fh.read())
+    names = set()
+    for node in ast.walk(tree):                         # nested imports count too
+        if isinstance(node, ast.Import):
+            names |= {a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom):
+            assert node.level == 0, "no relative imports: the exporter is one file"
+            names.add(node.module.split(".")[0])
+        elif isinstance(node, ast.Call) and getattr(node.func, "id", "") == "__import__":
+            raise AssertionError("no dynamic imports")
+    assert names, "the walk found no imports at all"
+    assert names <= set(sys.stdlib_module_names), sorted(names - set(sys.stdlib_module_names))
 
 
 def test_rep_map_writes_the_surrogate_to_raw_id_map_only_when_asked():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp), out="one")
-        assert rc == 0 and not os.path.exists(os.path.join(tmp, "rep_map.csv"))
         path = os.path.join(tmp, "rep_map.csv")
-        rc2, payload2, txt, _ = _export(mod, tmp, *_v2_inputs(tmp), out="two",
-                                        extra=["--rep-map", path])
-        assert rc2 == 0 and "4 rep(s)" in txt
+        rc, _, _, _, _ = _run(mod, tmp, *_inputs(tmp), out="one")
+        assert rc == 0 and not os.path.exists(path)
+        rc2, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp), out="two",
+                                       extra=["--rep-map", path])
+        assert rc2 == 0 and "5 rep(s)" in txt
         with open(path, newline="") as fh:
             rows = list(csv.DictReader(fh))
-    assert [r["rep_surrogate"] for r in rows] == ["R0000", "R0001", "R0002", "R0003"]
-    assert set(r["rep_surrogate"] for r in rows) == set(payload2["firm"])
-    assert {r["rep_id"] for r in rows} == {"r_a", "r_b", "r_c", "r_d"}
-    # the firm columns say the same thing the instance says about each surrogate
+    assert [r["rep_surrogate"] for r in rows] == ["R0000", "R0001", "R0002", "R0003", "R0004"]
+    assert [r["rep_id"] for r in rows] == ["r_e", "r_c", "r_a", "r_d", "r_b"]
     for r in rows:
-        assert payload2["firm"][r["rep_surrogate"]] == r["firm_surrogate"]
-    raw = {r["rep_id"]: r["firm"] for r in rows}
-    assert raw == {"r_a": "FA", "r_b": "FB", "r_c": "FA", "r_d": "FC"}
+        assert payload["firm"][r["rep_surrogate"]] == r["firm_surrogate"]
 
 
-def test_rep_ids_flag_accepts_the_earlier_export_and_refuses_a_changed_book():
+# ------------------------------------------------------------------------ --rep-ids
+def _prior_single_channel(tmp):
+    """An earlier single-channel export: the national rows, nodes without a channel column."""
+    mod = _exporter()
+    rc, payload, _, txt, _ = _run(mod, tmp, *_nat_inputs(tmp), out="prior")
+    assert rc == 0, txt
+    del payload["nodes"]["channel"]
+    payload["format"] = "td_instance_descaled/1"
+    path = os.path.join(tmp, "prior.json.gz")
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        json.dump(payload, fh)
+    return path
+
+
+def test_rep_ids_ranks_the_named_channel_first_and_accepts_the_same_book():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc1, _, _, prior = _export(mod, tmp, *_v1_inputs(tmp), out="one")
-        assert rc1 == 0
+        prior = _prior_single_channel(tmp)
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp), extra=[
+            "--rep-ids", prior, "--rep-ids-channel", "National"])
+    assert rc == 0, txt
+    assert "3 checked" in txt and "2 new rep" in txt
+    # national reps keep their ids (r_a, r_b, r_c); r_e and r_d follow by total book
+    assert _cells(payload)[("10001", "national")]["share"] == {"R0000": 0.4, "R0001": 0.2}
+    assert _cells(payload)[("10003", "wh")]["share"] == {"R0003": 0.2}
 
-        rc2, payload, txt, _ = _export(mod, tmp, *_v2_inputs(tmp), out="two",
-                                       extra=["--rep-ids", prior])
-        assert rc2 == 0 and payload is not None
-        assert "3 checked" in txt and "1 new rep" in txt
 
-        # a national row that moved: an id would silently stand for a different book
-        moved = [(z, r, f, (v + 5.0 if r == "r_b" else v)) for z, r, f, v in NAT_SALES]
-        sp, op = _v2_inputs(tmp, sales=moved)
-        rc3, payload3, txt3, path3 = _export(mod, tmp, sp, op, out="three",
-                                             extra=["--rep-ids", prior])
-        assert rc3 == 2, "a moved national book must stop the export"
-        assert payload3 is None and not os.path.exists(path3)
-        assert "R0001" in txt3
+def test_rep_ids_refuses_a_moved_book_and_writes_nothing():
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        prior = _prior_single_channel(tmp)
+        moved = [(z, r, f, c, v + 1.0 if (r, c) == ("r_b", "NATIONAL") else v)
+                 for z, r, f, c, v in SALES]
+        rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp, sales=moved), extra=[
+            "--rep-ids", prior, "--rep-ids-channel", "national"])
+    assert rc == 2 and payload is None and chans is None
+    assert "R0001" in txt and "nothing written" in txt
+
+
+def test_rep_ids_needs_a_known_channel_and_a_single_channel_prior():
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        prior = _prior_single_channel(tmp)
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp), extra=["--rep-ids", prior])
+        assert rc == 4 and payload is None and "--rep-ids-channel" in txt
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp), extra=[
+            "--rep-ids", prior, "--rep-ids-channel", "mystery"])
+        assert rc == 4 and payload is None and "not a channel" in txt
+        channelled = os.path.join(tmp, "prior", "instance_descaled.json.gz")
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp), out="three", extra=[
+            "--rep-ids", channelled, "--rep-ids-channel", "national"])
+        assert rc == 4 and payload is None and "single-channel" in txt
 
 
 # ------------------------------------------------------------------------ guards
-def test_guard_rejects_a_cell_whose_book_exceeds_its_opportunity():
+def test_join_floor_refuses_unjoined_sales_until_lowered():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        # the wh cell at 30001 has M = 40 and one rep selling 8; give it 60 instead
-        blown = [(z, c, r, f, (60.0 if (z, c, r) == ("30001", "wh", "r_a") else v))
-                 for z, c, r, f, v in OTHER_SALES]
-        rows = [(z, r, f, "national", v) for z, r, f, v in NAT_SALES]
-        rows += [(z, r, f, c, v) for z, c, r, f, v in blown]
-        sp = _csv(tmp, "sales_bad.csv",
-                  ["zip_code", "rep_id", "firm", "current_channel", "sales"], rows)
-        _, op = _v2_inputs(tmp)
-        rc, payload, txt, path = _export(mod, tmp, sp, op)
-    assert rc == 3, "validation must catch it before anything is written"
-    assert payload is None and not os.path.exists(path)
-    assert "30001:wh" in txt
-
-    # and the guard itself, the last line before the bytes go out
-    payload = {"nodes": {"z": ["30001"], "channel": ["national"], "m_rel": [1.0],
-                         "share": [{"R0000": 1.5}], "share_free": [0.0]},
-               "meta": {"kappa_channel": "national"}}
-    mod.guard.filler_keys = ()
-    try:
-        mod.guard(payload)
-        raise AssertionError("expected GuardError")
-    except mod.GuardError as e:
-        assert "not a share" in str(e)
+        stray = SALES + [("10003", "r_a", "FA", "bank direct", 5.0)]   # no such cell
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, sales=stray))
+        assert rc == 4 and payload is None
+        assert "joined to an opportunity cell" in txt and "10003:bank_direct" in txt
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, sales=stray), out="low",
+                                      extra=["--join-floor", "0.9"])
+    assert rc == 0 and payload is not None, txt
 
 
-def test_guard_takes_the_median_over_the_kappa_channel_only():
-    """A channel a fifth the size of national must not read as an unstripped scale."""
-    mod = _exporter()
-    payload = {"nodes": {"z": ["30001"] * 5, "channel": ["national"] + ["wh"] * 4,
-                         "m_rel": [1.0, 0.2, 0.2, 0.2, 0.2],
-                         "share": [{}] * 5, "share_free": [0.0] * 5},
-               "meta": {"kappa_channel": "national"}}
-    mod.guard.filler_keys = ()
-    mod.guard(payload)                       # median over all five rows would be 0.2
-
-    payload["nodes"]["m_rel"][0] = 9000.0     # national itself unstripped: still caught
-    try:
-        mod.guard(payload)
-        raise AssertionError("expected GuardError")
-    except mod.GuardError as e:
-        assert "scale was not stripped" in str(e) or "currency amount" in str(e)
-
-
-def test_kappa_channel_in_meta_does_not_trip_the_divisor_guard():
+def test_a_share_outside_0_1_is_refused():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp))
-    assert rc == 0
-    assert payload["meta"]["kappa_channel"] == "national"
-    assert "kappa" not in {k for k in payload["meta"] if k != "kappa_channel"}
+        blown = [(z, r, f, c, 60.0 if (z, c) == ("10001", "WELLS-WH") else v)
+                 for z, r, f, c, v in SALES]
+        rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp, sales=blown))
+    assert rc == 3 and payload is None and chans is None
+    assert "outside [0,1]" in txt and "10001:wells_wh" in txt
+
+    mod.guard.filler_keys = ()
+    payload = {"nodes": {"z": ["10001"], "channel": ["wh"], "m_rel": [1.0],
+                         "share": [{"R0000": 1.5}], "share_free": [0.0]}, "meta": {}}
+    _refused(lambda: mod.guard(payload), mod.GuardError, "not a share")
+    payload["nodes"]["share"] = [{}]
+    payload["nodes"]["share_free"] = [-0.1]
+    _refused(lambda: mod.guard(payload), mod.GuardError, "not a share")
+
+
+def test_pointwise_headroom_violation_is_refused():
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        # fi at 10001 has M 50: shares 0.2, 0.9 and 0.8 are each in [0,1], but
+        # 0.9 + 0.4 * (1.9 - 0.9) = 1.3 > 1
+        crowded = SALES + [("10001", "r_a", "FA", "fi", 45.0),
+                           ("10001", "r_c", "FA", "fi", 40.0)]
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, sales=crowded))
+    assert rc == 3 and payload is None
+    assert "headroom" in txt
+
+
+def test_guard_refuses_an_unstripped_scale_a_currency_amount_or_a_negative_mass():
+    mod = _exporter()
+    mod.guard.filler_keys = ()
+
+    def payload(ms):
+        return {"nodes": {"z": ["10001"] * len(ms), "channel": ["wh"] * len(ms),
+                          "m_rel": ms, "share": [{}] * len(ms),
+                          "share_free": [0.0] * len(ms)}, "meta": {}}
+
+    mod.guard(payload([0.2, 1.0, 3.0]))
+    _refused(lambda: mod.guard(payload([900.0, 1000.0, 1100.0])), mod.GuardError,
+             "scale was not stripped")
+    _refused(lambda: mod.guard(payload([0.5, 1.0, 2e4])), mod.GuardError, "currency amount")
+    _refused(lambda: mod.guard(payload([0.5, 1.0, 1.5, -0.1])), mod.GuardError, "negative")
+    _refused(lambda: mod.guard(payload([])), mod.GuardError, "no nodes")
+
+
+def test_guard_refuses_the_divisor_in_meta_and_the_filler_name_anywhere():
+    mod = _exporter()
+    p = {"nodes": {"z": ["10001"], "channel": ["wh"], "m_rel": [1.0], "share": [{}],
+                   "share_free": [0.0]}, "meta": {"kappa": 123.0}}
+    mod.guard.filler_keys = ()
+    _refused(lambda: mod.guard(p), mod.GuardError, "divisor")
+    p["meta"] = {"note": "FILLER"}
+    mod.guard.filler_keys = ("FILLER",)
+    _refused(lambda: mod.guard(p), mod.GuardError, "filler key")
+    mod.guard.filler_keys = ()
 
 
 # ------------------------------------------------------------------ input handling
@@ -357,205 +413,58 @@ def test_channel_column_spellings_are_all_accepted():
     mod = _exporter()
     for spelling in ("current_channel", "current channel", "channel"):
         with tempfile.TemporaryDirectory() as tmp:
-            rc, payload, _, _ = _export(mod, tmp, *_v2_inputs(tmp, chan_col=spelling))
+            rc, payload, _, _, _ = _run(mod, tmp, *_inputs(tmp, chan_col=spelling))
         assert rc == 0, spelling
-        assert payload["meta"]["channels"] == ["national", "wh", "fi"], spelling
+        assert payload["meta"]["channels"] == CHANNELS, spelling
+
+
+def test_channel_name_normalises_any_value():
+    c = _exporter().channel_name
+    assert c("Wells (WH)") == c("WELLS-WH") == c("wells wh") == "wells_wh"
+    assert c(" Bank/Direct ") == "bank_direct"
+    assert c("wells.fi") == "wells_fi"
+    assert c("Mystery Channel") == "mystery_channel"
+    assert c("()") == ""
 
 
 def test_a_channel_column_on_one_table_only_is_refused():
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        sp, _ = _v2_inputs(tmp)
-        _, op = _v1_inputs(tmp)
-        rc, payload, txt, _ = _export(mod, tmp, sp, op)
+        sp, _ = _inputs(tmp)
+        _, op = _nat_inputs(tmp)
+        rc, payload, _, txt, _ = _run(mod, tmp, sp, op)
     assert rc == 4 and payload is None
     assert "exactly one of the two tables" in txt
 
 
 def test_a_blank_channel_value_is_refused():
     mod = _exporter()
-    with tempfile.TemporaryDirectory() as tmp:
-        orows = [(z, "", m) for z, m in NAT_OPP]
-        op = _csv(tmp, "opp_blank.csv", ["zip_code", "current_channel", "M"], orows)
-        sp, _ = _v2_inputs(tmp)
-        rc, payload, txt, _ = _export(mod, tmp, sp, op)
-    assert rc == 4 and payload is None
-    assert "empty" in txt
+    for blank in ("", "  ", "()"):
+        with tempfile.TemporaryDirectory() as tmp:
+            opp = OPP + [("10001", blank, 5.0)]
+            rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, opp=opp))
+        assert rc == 4 and payload is None, repr(blank)
+        assert "empty" in txt, repr(blank)
 
 
 def test_channelled_opportunity_sums_across_the_rows_of_a_cell():
-    """The three-channel extract carries a cell's M once across its rows (parts, or one row
-    with M and duplicates at 0); the cell's M is the sum. The channel-less extract keeps the
-    repeat rule, where two different positive values in one zip are a bad merge."""
+    """The channelled extract carries a cell's M once across its rows (parts, or one row with
+    M and duplicates at 0); the cell's M is the sum. The channel-less extract repeats M on
+    every row of a zip, so two different positive values there are a bad merge."""
     mod = _exporter()
     with tempfile.TemporaryDirectory() as tmp:
-        sp, _ = _v2_inputs(tmp)
-        orows = [("30001", "national", 60.0), ("30001", "national", 40.0),
-                 ("30002", "national", 200.0), ("30002", "national", 0.0),
-                 ("30003", "national", 300.0)]
-        orows += [(z, c, m) for z, c, m in OTHER_OPP] + [("30001", "wh", 0.0)]
-        op = _csv(tmp, "opp_split.csv", ["zip_code", "current_channel", "M"], orows)
-        rc, payload, txt, _ = _export(mod, tmp, sp, op)
+        split = [r for r in OPP if (r[0], r[1]) != ("10001", "National")]
+        split += [("10001", "National", 6.0), ("10001", "national", 4.0),
+                  ("10001", "WH", 0.0)]
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, opp=split))
         assert rc == 0, txt
         cells = _cells(payload)
-        assert abs(cells[("30001", "national")]["m_rel"] - 100.0 / KAPPA) < 1e-9
-        assert abs(cells[("30002", "national")]["m_rel"] - 200.0 / KAPPA) < 1e-9
-        assert abs(cells[("30001", "wh")]["m_rel"] - 40.0 / KAPPA) < 1e-9
+        assert abs(cells[("10001", "national")]["m_rel"] - 10.0 / KAPPA) < 1e-6
+        assert abs(cells[("10001", "wh")]["m_rel"] - 40.0 / KAPPA) < 1e-6
 
-        s1, _ = _v1_inputs(tmp)
-        op1 = _csv(tmp, "opp1_split.csv", ["zip_code", "M"],
-                   [("30001", 60.0), ("30001", 40.0), ("30002", 200.0), ("30003", 300.0)])
-        rc, payload, txt, _ = _export(mod, tmp, s1, op1, out="out1")
+        sp = _csv(tmp, "s1.csv", ["zip_code", "rep_id", "firm", "sales"], NAT_SALES)
+        op = _csv(tmp, "o1.csv", ["zip_code", "M"],
+                  [("10001", 6.0), ("10001", 4.0), ("10002", 20.0), ("10003", 30.0)])
+        rc, payload, _, txt, _ = _run(mod, tmp, sp, op, out="one")
     assert rc == 4 and payload is None
     assert "two different opportunity values" in txt
-
-
-def test_no_national_rows_is_refused_because_kappa_is_pinned_to_them():
-    mod = _exporter()
-    with tempfile.TemporaryDirectory() as tmp:
-        rows = [(z, r, f, "wh", v) for z, r, f, v in NAT_SALES]
-        orows = [(z, "wh", m) for z, m in NAT_OPP]
-        sp = _csv(tmp, "sales_wh.csv",
-                  ["zip_code", "rep_id", "firm", "current_channel", "sales"], rows)
-        op = _csv(tmp, "opp_wh.csv", ["zip_code", "current_channel", "M"], orows)
-        rc, payload, txt, _ = _export(mod, tmp, sp, op)
-    assert rc == 4 and payload is None
-    assert "national" in txt
-
-
-# ================================================================ national sub-channels
-
-def _export_sub(mod, tmp, sales, opp, edges, out="out", extra=()):
-    out_dir = os.path.join(tmp, out)
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-        rc = mod.main(["export", "--sales", sales, "--opportunity", opp, "--graph", edges,
-                       "--out", out_dir, "--yes", *extra])
-    path = os.path.join(out_dir, "instance_descaled.json.gz")
-    payload = None
-    if os.path.exists(path):
-        with gzip.open(path, "rt", encoding="utf-8") as fh:
-            payload = json.load(fh)
-    return rc, payload, buf.getvalue(), path
-
-
-def _sub_cells(payload):
-    n = payload["nodes"]
-    chan = n.get("channel") or [""] * len(n["z"])
-    return {(z, c): dict(m_rel=m, share=s)
-            for z, c, m, s in zip(n["z"], chan, n["m_rel"], n["share"])}
-
-
-# ------------------------------------------------------------------- the toy extract
-# 3 zips, national's three sub-channels spelled in mixed case, chosen so every m_rel and
-# share lands on a clean decimal -- 6-sig-fig rounding must not perturb the comparison.
-SUB_SALES = [
-    ("40001", "r_a", "FA", "National (Chase)", 4.0),
-    ("40001", "r_b", "FB", "Wells (WH)", 2.0),
-    ("40002", "r_a", "FA", "chase", 8.0),
-    ("40002", "r_c", "FC", "WELLS_FI", 6.0),
-    ("40003", "r_b", "FB", "national_chase", 12.0),
-    ("40003", "r_d", "FD", "wells_wh", 18.0),
-    ("40003", "r_e", "FE", "Wells (FI)", 9.0),
-]
-SUB_OPP = [
-    ("40001", "National (Chase)", 20.0), ("40001", "Wells (WH)", 20.0),
-    ("40001", "Wells (FI)", 10.0),
-    ("40002", "chase", 40.0), ("40002", "wells_wh", 40.0), ("40002", "wells_fi", 20.0),
-    ("40003", "national_chase", 60.0), ("40003", "national_wells_wh", 60.0),
-    ("40003", "national_wells_fi", 30.0),
-]
-SUB_EDGES = [("40001", "40002"), ("40002", "40003")]
-SUB_KAPPA = 100.0   # median of the per-zip sums 50, 100, 150
-
-
-def _sub_inputs(tmp, sales=None, opp=None):
-    return (_csv(tmp, "sales.csv", ["zip_code", "rep_id", "firm", "current_channel", "sales"],
-                 sales if sales is not None else SUB_SALES),
-            _csv(tmp, "opp.csv", ["zip_code", "current_channel", "M"],
-                 opp if opp is not None else SUB_OPP),
-            _csv(tmp, "edges.csv", ["u", "v"], SUB_EDGES))
-
-
-def test_subchannels_export_canonical_names_and_channel_groups_and_kappa():
-    mod = _exporter()
-    with tempfile.TemporaryDirectory() as tmp:
-        sp, op, gp = _sub_inputs(tmp)
-        rc, payload, txt, _ = _export_sub(mod, tmp, sp, op, gp)
-    assert rc == 0, txt
-    assert payload["format"] == "td_instance_descaled/2"
-    assert payload["meta"]["channels"] == \
-        ["national_chase", "national_wells_wh", "national_wells_fi"]
-    assert payload["meta"]["kappa_channel"] == "national"
-    assert payload["meta"]["channel_groups"] == \
-        {"national": ["national_chase", "national_wells_wh", "national_wells_fi"]}
-
-    cells = _sub_cells(payload)
-    m_of = {("40001", "national_chase"): 20.0, ("40001", "national_wells_wh"): 20.0,
-            ("40001", "national_wells_fi"): 10.0,
-            ("40002", "national_chase"): 40.0, ("40002", "national_wells_wh"): 40.0,
-            ("40002", "national_wells_fi"): 20.0,
-            ("40003", "national_chase"): 60.0, ("40003", "national_wells_wh"): 60.0,
-            ("40003", "national_wells_fi"): 30.0}
-    assert set(cells) == set(m_of)
-    for cell, M in m_of.items():
-        assert abs(cells[cell]["m_rel"] - M / SUB_KAPPA) < 1e-9, cell
-
-    # book is a fraction of that sub-channel's own M, not of the zip or of national's sum.
-    # rep ids: mask_reps ranks by total book weighted by m_rel -- r_d (0.18) > r_b (0.14) >
-    # r_a (0.12) > r_e (0.09) > r_c (0.06) -> R0000..R0004 in that order.
-    assert cells[("40001", "national_chase")]["share"] == {"R0002": 4.0 / 20.0}, "r_a"
-    assert cells[("40001", "national_wells_wh")]["share"] == {"R0001": 2.0 / 20.0}, "r_b"
-    assert cells[("40001", "national_wells_fi")]["share"] == {}, "no fi sale at 40001"
-    assert cells[("40002", "national_wells_wh")]["share"] == {}, "no wh sale at 40002"
-    assert cells[("40003", "national_wells_fi")]["share"]["R0003"] == 9.0 / 30.0, "r_e"
-
-
-def test_national_and_a_subchannel_together_is_refused():
-    mod = _exporter()
-    with tempfile.TemporaryDirectory() as tmp:
-        sp = _csv(tmp, "sales.csv", ["zip_code", "rep_id", "firm", "current_channel", "sales"],
-                  [("50001", "r_a", "FA", "national", 10.0)])
-        op = _csv(tmp, "opp.csv", ["zip_code", "current_channel", "M"],
-                  [("50001", "national", 100.0), ("50001", "chase", 50.0)])
-        gp = _csv(tmp, "edges.csv", ["u", "v"], [("50001", "50002")])
-        rc, payload, txt, _ = _export_sub(mod, tmp, sp, op, gp)
-    assert rc == 4 and payload is None
-    assert "ambiguous" in txt
-    assert "national_chase" in txt
-
-
-def test_unknown_channel_value_is_refused_with_accepted_spellings():
-    mod = _exporter()
-    with tempfile.TemporaryDirectory() as tmp:
-        sp = _csv(tmp, "sales.csv", ["zip_code", "rep_id", "firm", "current_channel", "sales"],
-                  [("60001", "r_a", "FA", "national", 5.0)])
-        op = _csv(tmp, "opp.csv", ["zip_code", "current_channel", "M"],
-                  [("60001", "mystery", 100.0)])
-        gp = _csv(tmp, "edges.csv", ["u", "v"], [("60001", "60002")])
-        rc, payload, txt, _ = _export_sub(mod, tmp, sp, op, gp)
-    assert rc == 4 and payload is None
-    assert "unknown channel" in txt and "accepted spellings" in txt
-    assert "national_chase" in txt and "wells_wh" in txt
-
-
-def test_canonical_channel_spellings():
-    mod = _exporter()
-    c = mod.canonical_channel
-    assert c("National (Chase)") == "national_chase"
-    assert c("NATIONAL_CHASE") == "national_chase"
-    assert c("chase") == "national_chase"
-    assert c("Wells (WH)") == "national_wells_wh"
-    assert c("wells wh") == "national_wells_wh"
-    assert c("WELLS-FI") == "national_wells_fi"
-    assert c("wells.fi") == "national_wells_fi"
-    assert c(" wh ") == "wh"
-    assert c("FI") == "fi"
-    assert c("National") == "national"
-
-    try:
-        c("mystery", label="opportunity")
-        raise AssertionError("expected InputError")
-    except mod.InputError as e:
-        assert "mystery" in str(e) and "opportunity" in str(e) \
-            and "accepted spellings" in str(e)
