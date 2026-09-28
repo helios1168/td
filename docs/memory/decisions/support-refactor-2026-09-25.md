@@ -2,6 +2,7 @@
 
 **Status:** the owner's choices in m5 sessions 01a0d8f6 and 01a0d98f, 2026-09-25. The plan that carries them, revision 6, is td#52 (`type:decide`, `owner-decision`), filed verbatim at 41,403 characters; it is accepted by the owner's review comment plus all 26 of its §7 issues filed across milestones M0 to M5, and it authorises no deletion itself (A1 and A2 gate that). td#52 was still open on 2026-09-26. Codes such as OD1, C4 and S25 refer to that plan; its decisions are numbered S1–S31 below. The pipeline as it stood: `mem:facts/support-pipeline`.
   - Correction, 2026-09-28 (council C18, td#55): this record first said 21 §7 issues. Revision 7 of td#52 §7 lists 18 work issues plus X2, F1 and OD1–OD6, 26 in all, and all 26 were filed that day (#3 and #53–#77 except #52; [filing comment](https://github.com/helios1168/td/issues/52#issuecomment-5866385436)).
+  - Note, 2026-09-28 (m5 session 01a0e73e, fork 01a0e8e0; checked by the curator the same day): td#52's GitHub edit history (`userContentEdits`) keeps revision 6 as filed on 2026-09-25, 41,403 characters and ending in "12. For the reviewer", and the current 58,823-character body is revision 7. The m5 draft `~/drafts/td-support-refactor-plan.md` therefore held no text that isn't on GitHub, and its deletion lost nothing.
 
 **Context.** td had grown a Nash staffing track, an app and legacy docs around the support master, and its 36-scenario catalog can't be reproduced (`mem:facts/support-pipeline`). The master MILP is about 100 lines inside a 38-file import closure.
 
@@ -59,6 +60,7 @@
 - **S27.** Drawability is settled in planning. The master carries a corridor floor, a border cap and a count cap, all computed from ZIP data, plus a rounding margin per support. [Council C6–C8: as printed, two of these rows exclude drawable plans and one is conditional; B1 corrects them (OQ1).]
 - **S28.** A draw failure stops the run. If a share still can't be drawn and the drawn map breaks the final tolerance, the run fails and names the unit and district. Each such case is filed as a missing planning rule.
 - **S29.** Literature lives in the global kb. `kb/references.bib` is the one registry of papers, fetched by DOI, and kb topic pages quote what papers say. td keeps only `docs/REFERENCES.md`, which says what td relies on each paper for.
+  - Note, 2026-09-28 (m5 session 01a0e73e, fork 01a0e8e0): the draft `~/drafts/literature-handling.md` on m5 is separate from the plan draft and still live. td#52 revision 7 §9 lists approving it as an owner action, and B1 (td#64) is blocked until those global literature changes are applied; keep the file until then. Only its sections 1, 2 and 2b are applied so far (global `decisions/literature`).
 - **S30.** Only what the support model cites is migrated. Each paper is re-read before it enters the registry. td's 6 `.bib` files and the LIT notes stay in the tag.
 - **S31.** A citation needs a quoted result, or it stays `claimed`. It names a result for a named claim. `verified` means the passage was read, quoted in kb and checked for retraction. Withdrawn citations stay listed with the reason. The rule replaces td's trap 17 and becomes global.
 
