@@ -1,12 +1,11 @@
-"""tests/test_docs_owners.py -- the doc-ownership allowlist and the STATE.md / unit-file shape
-it depends on (`.claude/doc-owners.txt`, enforced here).
+"""tests/test_docs_owners.py -- the doc-ownership allowlist and the STATE.md shape
+(`.claude/doc-owners.txt`, enforced here).
 
 (a) every docs/**/*.md outside docs/foundations/ matches at least one allowlist line;
 (b) every non-glob line names an existing file, every glob line matches at least one file;
 (c) no allowlist line points under docs/foundations/ (read-only, never listed);
-(d) STATE.md has exactly one H2 heading, ## Now, of at most 1024 bytes;
-(e) every docs/units/*.md has a Status: open|done|dropped line in its first 5 lines and the
-    three headings ## Model, ## Verify, ## Code verify.
+(d) STATE.md opens with ## Now, may add ## Next and ## Blocked in that order (the global
+    `land` skill's shape), and is at most 1024 bytes.
 
 Matching uses `fnmatch`, which gives `*` the same "matches anything, including `/`" behaviour as
 the hook's shell `case` patterns -- both are plain string globs with no path-segment awareness.
@@ -19,7 +18,6 @@ import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 ALLOWLIST = os.path.join(ROOT, ".claude", "doc-owners.txt")
 STATE = os.path.join(ROOT, "STATE.md")
-UNITS_DIR = os.path.join(ROOT, "docs", "units")
 
 
 def _allowlist_lines():
@@ -91,27 +89,13 @@ def _h2_sections(text):
     return sections
 
 
-def test_state_md_heading_order_and_now_cap():
+def test_state_md_headings_and_size_cap():
     text = _read(STATE)
-    sections = _h2_sections(text)
-    headings = [h for h, _ in sections]
-    assert headings == ["Now"], f"STATE.md H2 headings are {headings}, expected [Now]"
-    now_lines = dict(sections)["Now"]
-    now_text = ("\n".join(now_lines) + "\n") if now_lines else ""
-    now_bytes = len(now_text.encode("utf-8"))
-    assert now_bytes <= 1024, f"STATE.md ## Now is {now_bytes} bytes, over the 1024 byte cap"
-
-
-def test_unit_files_have_status_and_verifier_headings():
-    unit_files = sorted(f for f in os.listdir(UNITS_DIR) if f.endswith(".md"))
-    assert unit_files, "expected at least one docs/units/*.md file"
-    for f in unit_files:
-        path = os.path.join(UNITS_DIR, f)
-        lines = _read(path).splitlines()
-        head = lines[:5]
-        assert any(
-            ln.startswith("Status: open") or ln.startswith("Status: done") or ln.startswith("Status: dropped")
-            for ln in head
-        ), f"{f}: no 'Status: open|done|dropped' line in the first 5 lines"
-        for heading in ("## Model", "## Verify", "## Code verify"):
-            assert heading in lines, f"{f}: missing {heading!r} heading"
+    headings = [h for h, _ in _h2_sections(text)]
+    allowed = ["Now", "Next", "Blocked"]
+    assert headings and headings[0] == "Now", f"STATE.md H2 headings are {headings}, expected ## Now first"
+    assert headings == [h for h in allowed if h in headings], (
+        f"STATE.md H2 headings are {headings}, expected a subset of {allowed} in that order"
+    )
+    size = len(text.encode("utf-8"))
+    assert size <= 1024, f"STATE.md is {size} bytes, over the 1024 byte cap"

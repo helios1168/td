@@ -1,17 +1,16 @@
-# State — national channel territory design
+# State — support-master territory design
 
 **Updated:** 2026-09-28 · **Branch:** `main`
 
 ## Now
 
-#53 landed: `archive/pre-support-2026-09` is on origin, M0–M5 contain the 26 plan issues, and the legacy issue queue is reset. The tag preserves the pre-clean-slate tree. #54 (A2, clean slate) is ready.
+M0 clean slate (#54): `main` holds only #52 §6's M0 tree; everything else is in the tag
+`archive/pre-support-2026-09`. #55 (A3) prunes memory next.
 
 ## Next
 
-- `/execute 54` to prepare the A2 clean slate; its `AGENTS.md` diff needs the owner's approval on #54 before acceptance.
-- Then `/land 54`; #55 curates memory after A2.
+- `/execute 55` (A3, on m2), then X1 (#61) and B1 (#64).
 
 ## Blocked
 
-- #54's acceptance requires owner approval of its `AGENTS.md` diff.
-- Other owner-decision issues remain in the queue; see GitHub Issues.
+- Owner decisions #56–#60 and #75–#76; the fresh extract (#3).

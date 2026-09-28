@@ -3,12 +3,12 @@ run_all.py -- plain test runner for tests (pytest-compatible layout).
 
 Discovers every `test_*.py` in this directory, imports it, and runs every callable
 whose name starts with `test_`.  A module that sets `SLOW = True` is skipped unless
-the environment variable `TD_SLOW=1` is set (the zip50 anchor takes ~2 min).
+the environment variable `TD_SLOW=1` is set.
 
 Run from the repo root:
     .venv/bin/python3 tests/run_all.py            # fast tests
-    TD_SLOW=1 .venv/bin/python3 tests/run_all.py  # + anchors
-    .venv/bin/python3 tests/run_all.py -k base    # name filter
+    TD_SLOW=1 .venv/bin/python3 tests/run_all.py  # + slow modules
+    .venv/bin/python3 tests/run_all.py -k export  # name filter
 
 Exit status is nonzero if any test fails.  Also works under `pytest tests`.
 """

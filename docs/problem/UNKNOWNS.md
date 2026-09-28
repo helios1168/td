@@ -5,6 +5,41 @@ business answer, **T** needs a theorem. Every "number to compute" anywhere in th
 onto a U-number. An answered unknown keeps its number and is restated as answered with the
 source. Numbers are never reused.
 
+## Open: the support master (U30–U39)
+
+The plan's unknowns PU1–PU10 (#52 §9), numbered by the owner's answer to OQ3 on 2026-09-28:
+PU1 = U30 through PU10 = U39. "Settled in" names the #52 plan item and its issue.
+
+| id | plan | unknown | grade | settled in |
+|---|---|---|---|---|
+| U30 | PU1 | Claim 1: decoding equivalence. Council: (iii) holds only under the same support family and policy rows (C3). | T | B2 (#65) |
+| U31 | PU2 | Claim 2: the exact smallest-δ MILP. Council: exact for the master only (C4). | T | B2 (#65) |
+| U32 | PU3 | Support family size at caps 6 and 7 | E | C2 (#67) |
+| U33 | PU4 | Claim 3: tree rounding keeps each district's drawn mass within the heaviest split ZIP it touches. Proof sketched and tested numerically; this bound is what makes μ_S sufficient. Council: the argument holds for an exact vertex, before repair (C5). | T | B2 (#65) proof, C4 (#69) tests |
+| U34 | PU5 | How many pieces per map the minimal realizer leaves in free and clipped mode, and from which causes; counted both as pieces and as districts in pieces (C17) | E | C4 (#69), the trigger for C4b; E1 (#74) |
+| U35 | PU6 | Price of clipping and of pieces | E | D1 (#73) |
+| U36 | PU7 | Rurality cap schedule g | B/E | B1 (#64), D1 (#73) |
+| U37 | PU8 | Whole-metro feasibility per channel | E | D1 (#73) |
+| U38 | PU9 | Compactness objective: diameter or an alternative | B/T | B1 (#64) |
+| U39 | PU10 | Is the corridor floor (lightest chain across a separating unit) the right necessary condition, and how often does it bind on the real extract? Council: as printed, it is not necessary when v separates three or more components (C6). | T/E | B1 (#64), B2 (#65), D1 (#73) |
+
+## Reserved (U14–U29)
+
+Reserved by the owner's answer to OQ3 on 2026-09-28:
+
+- **U14–U19**: as `docs/lenses/GROMOV_2026-09-03.md` defines them (its unknowns table).
+- **U20–U27**: N1–N8 of `docs/lenses/GROMOV_2026-09-21.md`, numbered in order when the
+  `triage` skill takes them. Any N that duplicates one of U30–U39 is marked as a duplicate of
+  it, not numbered twice.
+- **U28–U29**: unused.
+
+## Archived (U1–U13)
+
+Archived 2026-09-28 (td#54): they belong to the Nash-staffing model, which the support-master
+scope archived (#52 S1). They were seeded 2026-09-21 from `docs/lenses/GROMOV_2026-09-03.md`
+(Move 14 ledger, A1 track, k = 13 on v1); the statuses are as of 2026-09-03 and are not
+re-measured. The rows are kept so the numbers are not reused.
+
 | id | unknown | grade | status |
 |---|---|---|---|
 | U1 | spread of realised `g_i` vs `M`-spread | E | **measured: 60.65% vs 0.781%** (seed 9: 59.47% vs 0.836%). A0's soft kill fires. |
@@ -20,12 +55,5 @@ source. Numbers are never reused.
 | U11 | audited book at zip × wholesaler grain | B | open; unchanged |
 | U12 | the balance↔continuity exchange rate | B → **E+B** | the band duals of `EG^bal` compute it as a shadow price (U14); the business answer becomes "is this the right δ" |
 
-U1 to U13 seeded 2026-09-21 from `docs/lenses/GROMOV_2026-09-03.md` (Move 14 ledger, A1 track,
-k = 13 on v1). Statuses are as of 2026-09-03; the k = 18 v2 instance and the full-problem track
-may have changed them. Re-measure before citing.
-
-## Untriaged sources
-
-- `docs/lenses/GROMOV_2026-09-21.md` names N1 to N8 (Opus 5 run on `MATH_REVIEW.md` §3). Not yet
-  triaged; they become U14 onward through the `triage` skill.
-- `PROBLEM.md` "Questions for the lenses" 1 to 12.
+U13 is defined in `docs/lenses/GROMOV_2026-09-03.md` (U7's restatement) and was never given a
+row here.
