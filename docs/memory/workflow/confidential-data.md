@@ -28,3 +28,14 @@ instances have identical optima, gaps and certificates at every ρ ≥ 0
   (`mem:decisions/app-2026-09-08`).
 
 Source: host memory td-work-machine-constraints (2026-08-31, updated 2026-09-08).
+
+**Correction, 2026-09-28 (td#61, merged 9beed30).** Exporter v3 lives at
+`export/export_instance.py` (runbook `export/README.md`), not `tools/instance_export/`. It
+writes `td_instance_descaled/3`, long by (zip, channel) cell, plus `channels.json` (per
+channel: raw spellings, row, cell and zip counts, opportunity share; never κ or a currency
+amount). One divisor κ, the median positive cell M over all channels, serves every channel.
+Any channel value is accepted and normalised; an extract with no channel column is one
+channel, `national`. No edges or states leave any more: the ZIP graph and states are built
+in the repo from public 2025 data (td#62). `--rep-ids` now requires `--rep-ids-channel`, the
+channel an earlier single-channel export is checked against. Decisions:
+`mem:decisions/exporter-v3-2026-09-28`. Source: m5-studio session 01a0e75a (m5-61), td#61.
