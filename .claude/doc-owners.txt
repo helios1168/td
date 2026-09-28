@@ -1,16 +1,8 @@
 # Allowlist of docs/*.md files this repo owns. One glob per line, relative to the repo root.
-# Read by tests/test_docs_owners.py (asserts every docs/**/*.md outside docs/foundations/
-# matches a line, and every line resolves to at least one real file). No hook enforces it since
-# 2026-09-11; the test does. docs/foundations/ is read-only and is never listed here.
+# Read by tests/test_docs_owners.py (asserts every docs/**/*.md matches a line, and every line
+# resolves to at least one real file).
 # Adding a new docs/*.md needs a line here AND an owner row in docs/CODE_MAP.md ## Files.
-docs/PROBLEM.md
-docs/MODEL.md
 docs/CODE_MAP.md
-docs/APP.md
-docs/HEADLINE.md
-docs/FULL_PROBLEM.md
-docs/MODEL_FULL.md
-docs/units/*.md
 docs/memory/*.md
 docs/problem/*.md
 docs/lenses/*.md

@@ -2,21 +2,10 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
-
-# LaTeX build residue
-*.aux
-*.log
-*.out
-*.bbl
-*.blg
-*.synctex.gz
-*.fdb_latexmk
-*.fls
+*.swp
 
 # Local environments
 .venv/
-.venv-app/
-.venv-opt/
 venv/
 
 # Claude Code worktrees (nested checkouts, never commit)
@@ -25,30 +14,14 @@ venv/
 # Local Claude Code settings — rely on global ~/.claude settings instead
 .claude/settings.local.json
 
-# Contiguity programme data (PLAN.md U0c): TIGER download and the synthetic twin
-data/tiger/
-data/twin_*
-data/public/
-
-# Census gazetteer / cartographic-boundary cache (td/geo.py).  The cache is ignored; the maps
-# built from it are NOT -- `figures/` is committed, because a figure is a primary artifact and
-# a claim in the docs that nobody can see is worse than 3 MB of PNG.  Regenerate with
-# `tools/us_maps.py` (the header names the flags) and commit the result alongside the change.
-data/geo/
-
-# Contiguity harness output (PLAN.md C.1): rows.jsonl, assignments, instance JSONs
-battery/results/
-
-# Scenarios saved from the app (working data; promote one to docs/artifacts/runs/scenarios/
-# deliberately if it becomes part of the record)
-battery/scenarios/
-
-# editor scratch
-*.swp
+# Confidential extract (docs/memory/workflow/confidential-data.md)
 instance_descaled*.json.gz
 
-# Uncompressed database export CSVs (>100 MB; use the .zip or .gz archives instead)
-exports/database/*.csv
+# Public geography downloads (cached; reference/2025/ holds the committed outputs)
+data/public/
+
+# Run output (python -m td run)
+runs/
 
 # Python packaging residue (blocks pi-subagents worktree runs when untracked)
 *.egg-info/
