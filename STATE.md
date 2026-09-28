@@ -4,14 +4,13 @@
 
 ## Now
 
-#54 landed: M0 clean slate at 80 tracked files including three curated trap facts; 24 fast tests pass. The pre-refactor tree is preserved at `archive/pre-support-2026-09`. #55 (memory pruning) and #61 (exporter v3) are ready.
+#57 landed: OD2 sets the authoritative ZIP graph to 2025 gazetteer-point Voronoi rook adjacency over placed extract ZIPs, with explicit vertices and DC–VA override. #62 is unblocked and ready. #55 (memory pruning) and #61 (exporter v3) are ready; #58 and #60 are being landed.
 
 ## Next
 
-- `/execute 55` on m2 to curate memory to the 60-file cap; #61 can run in another session.
-- `/execute 57` to settle the ZIP graph, unblocking #62 after #54.
+- `/execute 55` on m2 to curate memory to the 60-file cap; coordinate with any memory curator.
+- `/execute 62` to build the 2025 reference table and ZIP graph under OD2.
 
 ## Blocked
 
-- #62 waits on owner decision #57; #54 is complete.
-- #64 waits on global literature changes. Other owner decisions remain in GitHub Issues.
+- #64 waits on global literature changes; other owner decisions remain in GitHub Issues.
