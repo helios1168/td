@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """export_instance.py -- descaled real-instance export, run on the work machine.
 
-Supersedes the synthetic-twin route for the N-way problem (see NWAY.md and the CLAUDE.md
-"Real data route" decision, revised 2026-08-31).  The justification is algebraic rather than
-statistical: with s_i(z) = S_i(z)/M_z and t_z = T_z/M_z,
+The justification is algebraic rather than statistical: with s_i(z) = S_i(z)/M_z and
+t_z = T_z/M_z,
 
     u_i(z) = c1*S_i + c2*(T_z - S_i) + lam*M_z  =  M_z * [ c1*s_i + c2*(t_z - s_i) + lam ]
 
@@ -16,17 +15,19 @@ What this writes carries shares and a relative opportunity, never a currency amo
 deliberately does NOT write the two together in recoverable form: `share * M` would be the
 book, so M leaves only as M/median(M).
 
-When both extracts carry a `current_channel` column the node table goes long by (zip, channel)
-and the format string becomes td_instance_descaled/2.  A cell (z, c) is priced against its own
-M, the divisor stays pinned to the median of the `national` rows, and the surrogate rep ids of
-the national reps are the ones the single-channel export already gave them.  With no channel
-column nothing changes: the same format 1 file, byte for byte.
+Format 3 (td#61).  The node table is long by (zip, channel) cell, and the channel list is
+whatever the extract's `current_channel` column holds: any value, normalised, none of them
+special.  One divisor serves every channel: kappa is the median positive cell M over all
+channels, so masses are comparable across channels.  `channels.json`, written next to the
+instance, lists each channel with its raw spellings and counts for the owner to review.  An
+extract with no channel column is one channel, `national`.  No graph and no states: the ZIP
+graph and each ZIP's state are built in the repo from public 2025 data (td#62).
 
-Single file on purpose -- read it end to end before running it on confidential data.
+Single file, standard library only, on purpose -- read it end to end before running it on
+confidential data.
 
-    python3 export_instance.py validate --sales s.csv --opportunity o.csv --graph e.parquet
-    python3 export_instance.py export   --sales s.csv --opportunity o.csv --graph e.parquet \
-                                        --states st.csv --out ./out
+    python3 export_instance.py validate --sales s.csv --opportunity o.csv
+    python3 export_instance.py export   --sales s.csv --opportunity o.csv --out ./out
 
 Exit codes:  0 ok | 2 a guard fired, nothing written | 3 validation failed | 4 unreadable input
 """
@@ -35,7 +36,6 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
-import hashlib
 import json
 import math
 import os
@@ -43,49 +43,24 @@ import re
 import sys
 from collections import Counter, defaultdict
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 THETA_DEFAULT = 0.40
 JOIN_FLOOR = 0.99                 # hard-fail below this share of sales rows joining to M
 SIG = 6                           # significant figures on every emitted float
-FORMAT_V1 = "td_instance_descaled/1"      # nodes long by zip
-FORMAT_V2 = "td_instance_descaled/2"      # nodes long by (zip, channel)
-KAPPA_CHANNEL = "national"        # the channel the descaling divisor is pinned to
+FORMAT = "td_instance_descaled/3"         # nodes long by (zip, channel)
+DEFAULT_CHANNEL = "national"      # the one channel of an extract with no channel column
 CHANNEL_NAMES = ("current_channel", "channel")   # header spellings, see `pick`
-
-# national's three sub-channels (2026-09-10): a channelled extract may carry these instead
-# of one `national` column, never both.  Their sum plays the role `national` used to.
-SUBCHANNELS = ("national_chase", "national_wells_wh", "national_wells_fi")
-CHANNEL_ALIASES = {
-    "chase": "national_chase",
-    "national_chase": "national_chase",
-    "wells_wh": "national_wells_wh",
-    "national_wells_wh": "national_wells_wh",
-    "wells_fi": "national_wells_fi",
-    "national_wells_fi": "national_wells_fi",
-    "wh": "wh",
-    "fi": "fi",
-    "national": "national",
-}
 _CHANNEL_SEP = re.compile(r"[ \-/().]+")
 
 
-def canonical_channel(name, label=""):
-    """Normalise a channel value, case-insensitively, and map it to one of the five
-    canonical sub-channel names plus legacy `wh`, `fi` and `national`.
-
-    Normalisation: strip, lower-case, then any run of spaces, hyphens, slashes,
-    parentheses or dots becomes one underscore, and leading/trailing underscores are
-    stripped.  So "National (Chase)", "NATIONAL_CHASE" and "chase" all resolve to
-    national_chase; "Wells (WH)" and "wells wh" resolve to national_wells_wh.
+def channel_name(value):
+    """Normalise a channel value: strip, lower-case, then any run of spaces, hyphens,
+    slashes, parentheses or dots becomes one underscore, and leading/trailing underscores
+    are stripped.  So "Wells (WH)", "WELLS-WH" and "wells wh" are one channel, wells_wh.
+    Any value is accepted; `channels.json` shows the owner what each name was spelled as.
     """
-    norm = _CHANNEL_SEP.sub("_", str(name).strip().lower()).strip("_")
-    canon = CHANNEL_ALIASES.get(norm)
-    if canon is None:
-        where = f" in {label}" if label else ""
-        accepted = ", ".join(sorted(set(CHANNEL_ALIASES)))
-        raise InputError(f"unknown channel {name!r}{where}; accepted spellings are {accepted}")
-    return canon
+    return _CHANNEL_SEP.sub("_", str(value).strip().lower()).strip("_")
 
 
 class InputError(Exception):
@@ -105,8 +80,10 @@ def norm_id(x) -> str:
     return s.zfill(5)
 
 
-def _read_delimited(path):
-    import csv
+def read_rows(path):
+    """A delimited text table (comma, tab, semicolon or pipe), as a list of dicts."""
+    if not os.path.exists(path):
+        raise InputError(f"{path}: no such file")
     with open(path, newline="", encoding="utf-8-sig") as fh:
         sample = fh.read(8192)
         fh.seek(0)
@@ -115,25 +92,6 @@ def _read_delimited(path):
         except csv.Error:
             dialect = csv.excel
         return [dict(r) for r in csv.DictReader(fh, dialect=dialect)]
-
-
-def _read_arrow(path):
-    try:
-        import pyarrow.parquet as pq
-        import pyarrow.feather as feather
-    except ImportError as e:                                     # pragma: no cover
-        raise InputError(f"{path}: reading parquet/feather needs pyarrow") from e
-    tbl = feather.read_table(path) if path.endswith(".feather") else pq.read_table(path)
-    cols = tbl.column_names
-    return [dict(zip(cols, row)) for row in zip(*[c.to_pylist() for c in tbl.columns])]
-
-
-def read_rows(path):
-    if not os.path.exists(path):
-        raise InputError(f"{path}: no such file")
-    if path.endswith((".parquet", ".pq", ".feather")):
-        return _read_arrow(path)
-    return _read_delimited(path)
 
 
 def pick(row, *names, required=True, label=""):
@@ -148,38 +106,6 @@ def pick(row, *names, required=True, label=""):
     return None
 
 
-def read_edges(path, u_col=None, v_col=None):
-    rows = read_rows(path)
-    if not rows:
-        raise InputError(f"{path}: empty edge table")
-    r0 = rows[0]
-    if u_col is None or v_col is None:
-        for a, b in (("u", "v"), ("src", "dst"), ("zcta_a", "zcta_b"), ("source", "target")):
-            if pick(r0, a, required=False) and pick(r0, b, required=False):
-                u_col, v_col = pick(r0, a), pick(r0, b)
-                break
-        else:
-            cols = list(r0)
-            if len(cols) < 2:
-                raise InputError(f"{path}: need two id columns, found {cols}")
-            u_col, v_col = cols[0], cols[1]
-    out = set()
-    for r in rows:
-        u, v = norm_id(r[u_col]), norm_id(r[v_col])
-        if u != v:
-            out.add((u, v) if u < v else (v, u))
-    return sorted(out)
-
-
-def graph_hash(zips, edges) -> str:
-    h = hashlib.sha256()
-    for z in sorted(zips):
-        h.update(z.encode())
-    for u, v in sorted(edges):
-        h.update(u.encode()); h.update(v.encode())
-    return h.hexdigest()
-
-
 def rsig(x, sig=SIG):
     if x is None or not isinstance(x, (int, float)) or not math.isfinite(x) or x == 0:
         return x
@@ -190,9 +116,8 @@ def rsig(x, sig=SIG):
 class Instance(object):
     """Descaled instance, keyed by cell.
 
-    A cell is a (zip, channel) pair; with no channel column in the extract the channel is ""
-    and a cell is a zip, which is exactly the single-channel case.  `share[cell][rep]` is in
-    [0,1]; `m_rel[cell]` = M_cell / median(positive M over the kappa channel).
+    A cell is a (zip, channel) pair.  `share[cell][rep]` is in [0,1]; `m_rel[cell]` =
+    M_cell / median(positive cell M over every channel).
     """
 
     def __init__(self):
@@ -200,50 +125,17 @@ class Instance(object):
         self.free = {}                     # cell -> share booked under a vacancy filler key
         self.m_rel = {}                    # cell -> relative opportunity
         self.firm = {}                     # rep -> firm label
-        self.state = {}                    # zip -> state (optional)
-        self.channels = ()                 # () when the extract carries no channel column
-        self.kappa_channel = ""            # the channel the divisor was taken from
-        self.channel_groups = {}           # kappa_channel -> its sub-channels, when aggregated
-        self.edges = []
+        self.channels = ()                 # in the order the opportunity table names them
+        self.spellings = {}                # channel -> the raw values that normalised to it
+        self.sales_rows = {}               # channel -> sales rows read
         self.report = {}
 
 
-def cell_of(z, c):
-    """The key of a cell.  A zip when there is one channel, a (zip, channel) pair when more.
-
-    Degrading to the zip itself is not cosmetic: with no channel column every structure in
-    this module is keyed exactly as it was before channels existed, so the single-channel
-    path cannot drift from the one that has been run on real data.
-    """
-    return (z, c) if c else z
-
-
-def cell_zip(cell):
-    return cell[0] if isinstance(cell, tuple) else cell
-
-
-def cell_chan(cell):
-    return cell[1] if isinstance(cell, tuple) else ""
-
-
 def cell_label(cell):
-    return f"{cell[0]}:{cell[1]}" if isinstance(cell, tuple) else cell
+    return f"{cell[0]}:{cell[1]}"
 
 
-def zip_mass(inst):
-    """Relative opportunity per zip, summed over the channels present.
-
-    The graph, the components and the footprint report live on zips, not cells: a district is
-    contiguous in the zip graph whatever channels it carries.
-    """
-    out = defaultdict(float)
-    for cell, m in inst.m_rel.items():
-        out[cell_zip(cell)] += m
-    return out
-
-
-def build(sales_path, opp_path, graph_path, states_path=None,
-          theta=THETA_DEFAULT, u_col=None, v_col=None, keep_scale=False,
+def build(sales_path, opp_path, theta=THETA_DEFAULT, keep_scale=False,
           filler_keys=(), join_floor=JOIN_FLOOR, impute_missing_m=False,
           repair_headroom=False):
     sales = read_rows(sales_path)
@@ -266,28 +158,32 @@ def build(sales_path, opp_path, graph_path, states_path=None,
             "(zip, channel), or neither -- a channelled sales table joined to a per-zip "
             "opportunity table would price every channel against the whole zip's M.")
     channelled = c_chan is not None
+    spellings = defaultdict(set)
 
     def chan(row, col, label):
-        v = row.get(col)
-        v = "" if v is None else str(v).strip()
-        if not v:
+        if not channelled:
+            return DEFAULT_CHANNEL
+        raw = row.get(col)
+        raw = "" if raw is None else str(raw).strip()
+        c = channel_name(raw)
+        if not c:
             raise InputError(f"{label}: a row has an empty {col!r}. Every row must name its "
                              f"channel; a blank one would silently join to the wrong cell.")
-        return canonical_channel(v, label)
+        spellings[c].add(raw)
+        return c
 
     # --- opportunity -----------------------------------------------------------
-    M, channels, seen = {}, [], set()
+    M, channels = {}, []
     for r in opp:
         z = norm_id(r[o_zip])
-        c = chan(r, o_chan, "opportunity") if channelled else ""
-        if c not in seen:
-            seen.add(c)
+        c = chan(r, o_chan, "opportunity")
+        if c not in channels:
             channels.append(c)
         try:
             v = float(r[o_val])
         except (TypeError, ValueError):
             continue                        # blank/absent M: the cell stays out of M here
-        cell = cell_of(z, c)
+        cell = (z, c)
         if channelled:
             # The channelled extract carries a cell's opportunity once across its rows (one
             # row holds it and the duplicate rows hold 0, or several rows hold parts of it),
@@ -302,34 +198,9 @@ def build(sales_path, opp_path, graph_path, states_path=None,
                 f"identical on every row of a cell -- this looks like a bad merge.")
         M[cell] = max(v, M.get(cell, v))     # a positive value wins over a stray 0
 
-    # kappa is pinned to national, or, once the extract carries national's three
-    # sub-channels instead, to their per-zip sum, so that national's m_rel, and every
-    # number derived from it, is unchanged by the arrival of the others.
-    kappa_channel = KAPPA_CHANNEL if channelled else ""
-    subs_present = set(SUBCHANNELS) & seen
-    channel_groups = {}
-    if channelled and subs_present and kappa_channel in seen:
-        raise InputError(
-            f"the opportunity table carries both {kappa_channel!r} and sub-channel(s) "
-            f"{sorted(subs_present)}. The extract is ambiguous: national is either its own "
-            f"channel or the sum of {', '.join(SUBCHANNELS)}, never both.")
-    if channelled and not subs_present and kappa_channel not in seen:
-        raise InputError(
-            f"no {kappa_channel!r} rows in the opportunity table. The descaling divisor is "
-            f"pinned to that channel so the existing single-channel instance's m_rel, tau "
-            f"and k carry over unchanged; channels are {sorted(seen)}.")
-    if channelled and subs_present:
-        # national is now the sum of its three sub-channels: aggregate each zip's sub-channel
-        # opportunity first, then take the median over zips with a positive aggregate, so a
-        # file that used to carry one `national` channel gets the same kappa back.
-        channel_groups = {kappa_channel: list(SUBCHANNELS)}
-        agg = defaultdict(float)
-        for cell, v in M.items():
-            if cell_chan(cell) in SUBCHANNELS:
-                agg[cell_zip(cell)] += v
-        pos = sorted(v for v in agg.values() if v > 0)
-    else:
-        pos = sorted(v for cell, v in M.items() if v > 0 and cell_chan(cell) == kappa_channel)
+    # One divisor for every channel: the median positive cell M, so masses are comparable
+    # across channels and no channel is special (td#61).
+    pos = sorted(v for v in M.values() if v > 0)
     if not pos:
         raise InputError("no positive opportunity values")
     kappa = pos[len(pos) // 2] if len(pos) % 2 else 0.5 * (pos[len(pos) // 2 - 1] +
@@ -345,13 +216,13 @@ def build(sales_path, opp_path, graph_path, states_path=None,
     # opt-in: a cell with book but no (or nonpositive) M gets M = its total book.  The
     # conservative floor -- it values the cell at exactly what is already sold there (no
     # upside, satisfies pointwise headroom with equality at theta<=1) and keeps the zip in
-    # the graph instead of punching a hole in contiguity.  kappa above is computed from
-    # real M values only, so imputation never moves the descaling constant.
+    # the instance.  kappa above is computed from real M values only, so imputation never
+    # moves the descaling constant.
     n_imputed = 0
     if impute_missing_m:
         book = defaultdict(float)
         for r in sales:
-            cell = cell_of(norm_id(r[c_zip]), chan(r, c_chan, "sales") if channelled else "")
+            cell = (norm_id(r[c_zip]), chan(r, c_chan, "sales"))
             if cell in M and M[cell] > 0:
                 continue
             try:
@@ -365,11 +236,13 @@ def build(sales_path, opp_path, graph_path, states_path=None,
             n_imputed += 1
 
     n_rows = n_joined = n_nonpositive = n_unparsed = n_filler = 0
+    rows_by_chan = Counter()
     unjoined_value, total_value = defaultdict(float), 0.0
     for r in sales:
         n_rows += 1
         z, rep = norm_id(r[c_zip]), str(r[c_rep]).strip()
-        cell = cell_of(z, chan(r, c_chan, "sales") if channelled else "")
+        cell = (z, chan(r, c_chan, "sales"))
+        rows_by_chan[cell[1]] += 1
         try:
             v = float(r[c_val])
         except (TypeError, ValueError):
@@ -444,40 +317,27 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         inst.m_rel[cell] = M[cell] / kappa
         inst.free[cell] = v / M[cell]
 
-    # cells with opportunity but no sales at all: untapped glue, carried for adjacency only
+    # cells with opportunity but no sales at all: untapped, carried so the map stays whole
     for cell, v in M.items():
         if cell not in inst.m_rel and v > 0:
             inst.m_rel[cell] = v / kappa
 
-    inst.channels = tuple(channels) if channelled else ()
-    inst.kappa_channel = kappa_channel
-    inst.channel_groups = channel_groups
-
-    # --- states ----------------------------------------------------------------
-    if states_path:
-        rows = read_rows(states_path)
-        if rows:
-            sz = pick(rows[0], "zip_code", "zcta", "zip", label="states")
-            st = pick(rows[0], "state", "st", "state_code", label="states")
-            for r in rows:
-                inst.state[norm_id(r[sz])] = str(r[st]).strip().upper()
-
-    # --- graph -----------------------------------------------------------------
-    edges = read_edges(graph_path, u_col, v_col)
-    keep = {cell_zip(cell) for cell in inst.m_rel}
-    inst.edges = [(u, v) for u, v in edges if u in keep and v in keep]
+    inst.channels = tuple(channels)
+    inst.spellings = {c: sorted(spellings.get(c, ())) for c in channels}
+    inst.sales_rows = dict(rows_by_chan)
 
     # --- candidate structure ---------------------------------------------------
-    # counted per cell: with channels present a zip is contested in one channel and
-    # untapped in another, and the decision the histogram describes is per cell.
+    # counted per cell: a zip is contested in one channel and untapped in another, and the
+    # decision the histogram describes is per cell.
     ncand = Counter(len(inst.share.get(cell, {})) for cell in inst.m_rel)
     n_vacant = sum(1 for cell in inst.m_rel
                    if not inst.share.get(cell) and inst.free.get(cell, 0.0) > 0)
     n_untapped = sum(1 for cell in inst.m_rel
                      if not inst.share.get(cell) and not inst.free.get(cell, 0.0))
     inst.report = dict(
-        n_zips=len(keep),
-        n_edges=len(inst.edges),
+        n_zips=len({z for z, _ in inst.m_rel}),
+        n_cells=len(inst.m_rel),
+        channels=list(inst.channels),
         n_reps=len({r for d in inst.share.values() for r in d}),
         n_sales_rows=n_rows,
         n_sales_rows_nonpositive=n_nonpositive,
@@ -496,12 +356,6 @@ def build(sales_path, opp_path, graph_path, states_path=None,
         max_candidates=max(ncand) if ncand else 0,
         scale_stripped=not keep_scale,
     )
-    if channelled:
-        inst.report["channels"] = list(inst.channels)
-        inst.report["kappa_channel"] = kappa_channel
-        inst.report["n_cells"] = len(inst.m_rel)
-        if channel_groups:
-            inst.report["channel_groups"] = channel_groups
     if keep_scale:                          # never used by the runbook; here so the flag is honest
         inst.report["kappa"] = kappa
     return inst
@@ -536,40 +390,30 @@ def validate(inst, theta=THETA_DEFAULT):
             f"{len(viol)} cell(s) violate pointwise headroom at theta={theta} "
             f"(need <= 1, worst {worst:.4f}). The opportunity figure is smaller than the "
             f"book it is supposed to contain -- a modelling question, settle it first.")
-
-    if not inst.edges:
-        problems.append("no edges survived the join to the zip set")
     return problems
 
 
-def mask_reps(inst):
-    """Surrogate integer ids, assigned in descending total share.  The map stays local.
+def mask_reps(inst, ref_channel=""):
+    """Surrogate integer ids, assigned in descending total book.  The map stays local.
 
     Defence in depth: the upstream extract is already masked, so this is a second pass whose
     only job is to guarantee no upstream label -- however innocuous it looks -- rides along.
 
-    With channels present the ranking runs over the kappa channel's cells first and the
-    remaining reps follow.  The kappa channel's rows are the same data the single-channel
-    export was built from, so its reps rank among themselves exactly as they did there and
-    keep the ids they already have; reps seen only in the other channels are numbered after
-    the last of them.  Without that, one new rep with a large book would shift every id and
-    silently break every comparison against the existing instance.  Firm labels are numbered
-    the same way, for the same reason.
+    With `ref_channel` set (`--rep-ids-channel`), the reps with book in that channel are
+    ranked among themselves first, on that channel's book alone, and the rest follow.  So
+    reps keep the ids an earlier single-channel export of that channel gave them, and
+    `--rep-ids` can check it.  Firm labels are numbered the same way, for the same reason.
     """
-    # with national aggregated over its three sub-channels, the kappa channel's own cells
-    # carry no `national` label any more; ranking must sum a rep's book across the group
-    # instead, which is exactly the aggregate the rest of the file is pinned to.
-    ref_channels = set(inst.channel_groups.get(inst.kappa_channel, [inst.kappa_channel]))
     total, ref = defaultdict(float), defaultdict(float)
     for cell, d in inst.share.items():  # noqa: PLC0206
         for rep, s in d.items():
             total[rep] += s * inst.m_rel[cell]
-            if cell_chan(cell) in ref_channels:
+            if cell[1] == ref_channel:
                 ref[rep] += s * inst.m_rel[cell]
 
     def key(r):
-        # (-ref, str) inside the kappa channel: exactly the single-channel rule, including
-        # its tie-break, so nothing about the other channels can perturb that order.
+        # (-ref, str) inside the reference channel: exactly the single-channel rule,
+        # including its tie-break, so nothing about the other channels can perturb it.
         return (0, -ref[r], str(r)) if ref[r] > 0 else (1, -total[r], str(r))
 
     order = sorted(total, key=key)
@@ -586,16 +430,16 @@ def mask_reps(inst):
     return rep_map, firm_map
 
 
-def check_rep_ids(inst, path):
+def check_rep_ids(inst, path, channel):
     """Cross-check the surrogate ids against an earlier export, after `mask_reps`.
 
     The exported file carries surrogate ids only, so there is nothing in it to map a raw rep
-    id back to one; the ids line up because `mask_reps` ranks the kappa channel first, and
-    nothing is carried over from the file.  What the file does carry is each surrogate's
-    share vector, and the kappa channel is meant to be the same data it was built from, so
-    those vectors must match zip for zip.  A mismatch means an id now stands for a different
-    rep, or that the channel's data moved.  Every comparison against that file would then be
-    silently wrong, so it stops the export.
+    id back to one; the ids line up because `mask_reps` ranks `channel` first, and nothing is
+    carried over from the file.  What the file does carry is each surrogate's share vector,
+    and `channel` is meant to be the same data it was built from, so those vectors must match
+    zip for zip.  A mismatch means an id now stands for a different rep, or that the
+    channel's data moved.  Every comparison against that file would then be silently wrong,
+    so it stops the export.
 
     Only the zips the earlier file kept are compared: it may be a filtered derivative (the
     CONUS instance is), and a zip it dropped is not evidence of anything.
@@ -614,44 +458,18 @@ def check_rep_ids(inst, path):
         for rep, s in row.items():
             old_vec[rep][z] = s
     zips = set(nodes.get("z", []))
-    ref_channels = inst.channel_groups.get(inst.kappa_channel, [inst.kappa_channel])
     new_vec = defaultdict(dict)
-    if len(ref_channels) == 1:
-        chan = ref_channels[0]
-        for cell, d in inst.share.items():
-            z = cell_zip(cell)
-            if cell_chan(cell) != chan or z not in zips:
-                continue
-            for rep, s in d.items():
-                new_vec[rep][z] = rsig(s)
-    else:
-        # national is now the sum of its sub-channels: compare the aggregate share, S summed
-        # over the group divided by M summed over the group, which is what the earlier
-        # single-channel file's `national` share meant.
-        ref_set = set(ref_channels)
-        agg_m = defaultdict(float)
-        for cell, m in inst.m_rel.items():
-            z = cell_zip(cell)
-            if cell_chan(cell) in ref_set and z in zips:
-                agg_m[z] += m
-        agg_s = defaultdict(lambda: defaultdict(float))
-        for cell, d in inst.share.items():
-            z = cell_zip(cell)
-            if cell_chan(cell) not in ref_set or z not in zips:
-                continue
-            m = inst.m_rel[cell]
-            for rep, s in d.items():
-                agg_s[rep][z] += s * m
-        for rep, zmap in agg_s.items():
-            for z, sm in zmap.items():
-                if agg_m[z] > 0:
-                    new_vec[rep][z] = rsig(sm / agg_m[z])
+    for (z, c), d in inst.share.items():
+        if c != channel or z not in zips:
+            continue
+        for rep, s in d.items():
+            new_vec[rep][z] = rsig(s)
 
     bad = [rep for rep, vec in sorted(old_vec.items()) if new_vec.get(rep) != vec]
     if bad:
         raise GuardError(
             f"{len(bad)} of {len(old_vec)} rep id(s) in {os.path.basename(path)} no longer "
-            f"carry the same book in the {inst.kappa_channel or 'single'} channel "
+            f"carry the same book in the {channel} channel "
             f"(e.g. {bad[:8]}). Either that channel's rows are not the same data the file "
             f"was built from, or a filler key differs from the earlier run. Settle it "
             f"before exporting: the ids are how every result maps back.")
@@ -660,123 +478,27 @@ def check_rep_ids(inst, path):
     return dict(checked=len(old_vec), fresh=len(fresh), retired=len(retired))
 
 
-# -------------------------------------------------------------- footprint report
-CRUMB_SHARE = 0.01                # components below this share of M are reported, not sized
-
-
-def components(inst):
-    """Connected components of the footprint graph, as lists of zips (largest M first)."""
-    mass = zip_mass(inst)
-    parent = {z: z for z in mass}
-
-    def find(z):
-        while parent[z] != z:
-            parent[z] = parent[parent[z]]
-            z = parent[z]
-        return z
-
-    for u, v in inst.edges:
-        ru, rv = find(u), find(v)
-        if ru != rv:
-            parent[ru] = rv
-    groups = defaultdict(list)
-    for z in mass:
-        groups[find(z)].append(z)
-    return sorted(groups.values(), key=lambda zs: -sum(mass[z] for z in zs))
-
-
-def alloc_ceiling(shares, k):
-    """Best integer split of k districts over disconnected components, on shares alone.
-
-    Mirrors `td/channel.py::allocate_districts`, archived in tag archive/pre-support-2026-09: each
-    component c gets k_c >= 1 districts, and within c the best conceivable outcome is k_c
-    equal districts of M_c/k_c -- an upper bound on any real partition.  Maximises
-    sum_c k_c*log(M_c/k_c); also returns the spread-minimising allocation, which is
-    generally a different budget.  Shares suffice: the objective is scale-invariant.
-    """
-    n = len(shares)
-    if k < n:
-        return None
-    best = tight = None
-
-    def spread(acc):
-        sizes = [m / kc for m, kc in zip(shares, acc) for _ in range(kc)]
-        return (max(sizes) - min(sizes)) / (sum(sizes) / len(sizes))
-
-    def walk(i, left, acc):
-        nonlocal best, tight
-        if i == n - 1:
-            acc = acc + [left]
-            val = sum(kc * math.log(m / kc) for m, kc in zip(shares, acc))
-            if best is None or val > best[0]:
-                best = (val, acc)
-            sp = spread(acc)
-            if tight is None or sp < tight[0]:
-                tight = (sp, acc)
-            return
-        for kc in range(1, left - (n - i - 1) + 1):
-            walk(i + 1, left - kc, acc + [kc])
-
-    walk(0, k, [])
-    return dict(alloc=best[1], spread=spread(best[1]),
-                min_spread=tight[0], min_spread_alloc=tight[1])
-
-
-def footprint_text(inst):
-    """Components of the footprint and the balance ceiling, in shares -- no currency amount.
-
-    These are the four numbers stage 1 is blocked on: a contiguous district cannot span two
-    components, so the per-component opportunity shares bound the reachable balance before
-    any solver runs.  Read the share column off this report; nothing here needs to leave as
-    a file.
-    """
-    comps = components(inst)
-    mass = zip_mass(inst)
-    total = sum(mass.values())
-    if not comps or total <= 0:
-        return "\nfootprint: no zips with positive opportunity\n"
-
-    rows, crumb_zs, crumb_share = [], 0, 0.0
-    sized = []                                  # shares entering the ceiling
-    for zs in comps:
-        share = sum(mass[z] for z in zs) / total
-        if share < CRUMB_SHARE:
-            crumb_zs += len(zs)
-            crumb_share += share
-            continue
-        st = Counter(inst.state.get(z, "") for z in zs
-                     if inst.state.get(z))
-        label = " ".join(s for s, _ in st.most_common(3)) or "?"
-        rows.append((share, len(zs), label))
-        sized.append(share)
-
-    L = ["", "footprint components (a contiguous district cannot span two)", "-" * 46,
-         "  share of M      zips   states"]
-    for share, nz, label in rows:
-        L.append(f"  {share:>9.1%} {nz:>9,}   {label}")
-    if crumb_zs:
-        n_crumbs = len(comps) - len(rows)
-        L += [f"  {crumb_share:>9.1%} {crumb_zs:>9,}   in {n_crumbs} crumb component(s) "
-              f"below {CRUMB_SHARE:.0%} each",
-              "  NOTE every component must host a whole district, so each crumb would be",
-              "  one on its own -- decide upstream whether crumbs join the channel at all."]
-
-    n = len(sized)
-    L += ["", "balance ceiling (k_c equal districts per component; crumbs excluded)",
-          "-" * 46,
-          "  k   districts/component     ceiling spread   best possible spread"]
-    for k in range(n, n + 6):
-        c = alloc_ceiling(sized, k)
-        agree = "  (same split)" if c["alloc"] == c["min_spread_alloc"] else ""
-        L.append(f"  {k}   {'/'.join(map(str, c['alloc'])):<22}    {c['spread']:>8.1%}"
-                 f"       {c['min_spread']:>8.1%}{agree}")
-    L += ["", "  spread = (max - min)/mean district size.  A real contiguous partition can",
-          "  only be worse than the ceiling; if every k misses the band, move k or the band.",
-          ""]
-    return "\n".join(L)
-
-
 # ------------------------------------------------------------------------ write
+def channels_doc(inst):
+    """What `channels.json` holds, for the owner to review before anything is modelled.
+
+    Per channel, in the order the opportunity table names them: the raw values that
+    normalised to its name, its sales rows, cells and zips, and its share of the total
+    opportunity.  Counts and one ratio only -- no currency amount and no divisor.
+    """
+    cells, zips, mass = Counter(), defaultdict(set), defaultdict(float)
+    for (z, c), m in inst.m_rel.items():
+        cells[c] += 1
+        zips[c].add(z)
+        mass[c] += m
+    total = sum(mass.values())
+    return dict(channels=[
+        dict(channel=c, spellings=inst.spellings.get(c, []),
+             sales_rows=inst.sales_rows.get(c, 0), cells=cells[c], zips=len(zips[c]),
+             opportunity_share=rsig(mass[c] / total) if total else 0.0)
+        for c in inst.channels])
+
+
 def guard(payload):
     """Refuse to emit anything that looks like a currency amount, or an upstream label.
 
@@ -784,31 +506,16 @@ def guard(payload):
     thousands means the descaling did not happen.  This is the last line before the file is
     written, not a diagnostic.
 
-    The median is taken over the kappa channel's rows only, the ones whose median is 1.0 by
-    construction.  Over every row it would be a different statistic: a channel that is a
-    third of national has m_rel around a third, and a file that is mostly such rows would
-    fail a test it was never meant to be judged by.  When national is the sum of its three
-    sub-channels (`channel_groups` in meta) the rows are summed per zip first, since it is
-    that per-zip sum kappa was actually taken the median of.
+    The median is taken over the positive m_rel of every cell, the set kappa was the median
+    of, so it is 1.0 by construction up to imputed and repaired cells.
     """
     ms = payload["nodes"]["m_rel"]
     if not ms:
         raise GuardError("no nodes to write")
-    zs = payload["nodes"]["z"]
-    chans = payload["nodes"].get("channel")
-    ref = payload.get("meta", {}).get("kappa_channel", "")
-    ref_channels = set(payload.get("meta", {}).get("channel_groups", {}).get(ref, [ref]))
-    if chans:
-        agg = defaultdict(float)
-        for z, c, m in zip(zs, chans, ms):
-            if c in ref_channels:
-                agg[z] += m
-        ref_ms = list(agg.values())
-    else:
-        ref_ms = ms
-    if not ref_ms:
-        raise GuardError(f"no {ref!r} rows to check the descaling against")
-    med = sorted(ref_ms)[len(ref_ms) // 2]
+    pos = sorted(m for m in ms if m > 0)
+    if not pos:
+        raise GuardError("no positive m_rel to check the descaling against")
+    med = pos[len(pos) // 2]
     if not (0.5 <= med <= 2.0):
         raise GuardError(f"median m_rel is {med:.6g}, expected ~1.0 -- scale was not stripped")
     big = [m for m in ms if m > 1e4]
@@ -830,9 +537,7 @@ def guard(payload):
         if key and key in json.dumps(payload):
             raise GuardError(f"filler key {key!r} appears in the payload; the sentinel's "
                              f"own name must not leave -- only the count does")
-    # kappa_channel is a channel name, not the divisor; everything else named kappa is.
-    meta = {k: v for k, v in payload.get("meta", {}).items() if k != "kappa_channel"}
-    if "kappa" in json.dumps(meta):
+    if "kappa" in json.dumps(payload.get("meta", {})):
         raise GuardError("meta carries kappa; the divisor must not leave")
 
 
@@ -840,46 +545,27 @@ guard.filler_keys = ()          # set by `write`; checked above against the whol
 
 
 def write(inst, out_dir, theta, lam, verbose=True, filler_keys=()):
-    """Write the instance.  Format 2 when the extract carried channels, format 1 when not.
-
-    Format 2 is format 1 with the node table long by (zip, channel) and a `channel` column
-    beside it, plus `channels` and `kappa_channel` in meta.  Every other field, the rounding
-    and the graph hash are the same, and a channel-less run writes exactly what it always
-    wrote.
-    """
+    """Write the format-3 instance and `channels.json` beside it, both or neither."""
     os.makedirs(out_dir, exist_ok=True)
     rank = {c: i for i, c in enumerate(inst.channels)}
-    cells = sorted(inst.m_rel,
-                   key=lambda cell: (cell_zip(cell), rank.get(cell_chan(cell), len(rank))))
-    zips = sorted({cell_zip(cell) for cell in cells})
+    cells = sorted(inst.m_rel, key=lambda cell: (cell[0], rank.get(cell[1], len(rank))))
     nodes = dict(
-        z=[cell_zip(cell) for cell in cells],
+        z=[z for z, _ in cells],
+        channel=[c for _, c in cells],
         m_rel=[rsig(inst.m_rel[cell]) for cell in cells],
         share=[{r: rsig(s) for r, s in sorted(inst.share.get(cell, {}).items())}
                for cell in cells],
         share_free=[rsig(inst.free.get(cell, 0.0)) for cell in cells],
-        state=[inst.state.get(cell_zip(cell), "") for cell in cells],
     )
-    if inst.channels:
-        nodes["channel"] = [cell_chan(cell) for cell in cells]
-    scale = "descaled: M/median(positive M); shares dimensionless"
-    if inst.channels:
-        if inst.channel_groups.get(inst.kappa_channel):
-            grp = ", ".join(inst.channel_groups[inst.kappa_channel])
-            scale = (f"descaled: M/median(positive per-zip sum of {grp}); "
-                     f"shares dimensionless")
-        else:
-            scale = (f"descaled: M/median(positive M over {inst.kappa_channel} rows); "
-                     f"shares dimensionless")
     payload = dict(
-        format=FORMAT_V2 if inst.channels else FORMAT_V1,
+        format=FORMAT,
         nodes=nodes,
-        edges=dict(u=[u for u, _ in inst.edges], v=[v for _, v in inst.edges]),
         firm=inst.firm,
         meta=dict(
             exporter="export_instance", version=__version__,
-            theta=theta, lam=lam, scale=scale,
-            graph_hash=graph_hash(zips, inst.edges),
+            theta=theta, lam=lam,
+            scale="descaled: M/median(positive cell M over all channels); "
+                  "shares dimensionless",
             **{k: v for k, v in inst.report.items() if k != "kappa"},
         ),
     )
@@ -888,8 +574,13 @@ def write(inst, out_dir, theta, lam, verbose=True, filler_keys=()):
     path = os.path.join(out_dir, "instance_descaled.json.gz")
     with gzip.open(path, "wt", encoding="utf-8") as fh:
         json.dump(payload, fh, separators=(",", ":"), sort_keys=True)
+    chan_path = os.path.join(out_dir, "channels.json")
+    with open(chan_path, "w", encoding="utf-8") as fh:
+        json.dump(channels_doc(inst), fh, indent=2, sort_keys=True)
+        fh.write("\n")
     if verbose:
         print(f"wrote {path}  ({os.path.getsize(path)/1e6:.2f} MB)")
+        print(f"wrote {chan_path}  -- review the channel list before modelling")
     return path
 
 
@@ -897,32 +588,33 @@ def report_text(inst):
     r = inst.report
     L = ["", "what this export contains", "-" * 46,
          f"  zips                 {r['n_zips']:>10,}",
-         f"  edges                {r['n_edges']:>10,}",
+         f"  cells (zip, channel) {r['n_cells']:>10,}",
          f"  reps                 {r['n_reps']:>10,}",
-         f"  sales rows joined    {r['join_rate']:>10.4f}"]
-    if inst.channels:
-        L += [f"  cells (zip, channel) {r['n_cells']:>10,}",
-              f"  channels             {' '.join(inst.channels):>10}   "
-              f"kappa from {inst.kappa_channel}",
-              "",
-              "  every count below is per CELL, not per zip: a zip is contested in one",
-              "  channel and untapped in another, and the decision is per cell."]
+         f"  sales rows joined    {r['join_rate']:>10.4f}",
+         "", "channels (written to channels.json on export)", "-" * 46,
+         "  channel                  cells     zips   share of M   spelled"]
+    for c in channels_doc(inst)["channels"]:
+        L.append(f"  {c['channel']:<22} {c['cells']:>7,} {c['zips']:>8,}   "
+                 f"{c['opportunity_share']:>9.1%}   {', '.join(c['spellings'])}")
     L += ["",
-         "candidate structure (cand(z) = real reps with positive sales)", "-" * 46,
-         f"  untapped   (0 reps)  {r['zips_untapped']:>10,}   no sales at all; adjacency only",
-         f"  vacant     (0 reps)  {r['zips_vacant']:>10,}   sales, but only under a filler key",
-         f"  uncontested(1 rep )  {r['zips_uncontested']:>10,}   owner forced, no decision",
-         f"  contested  (2+ reps) {r['zips_contested']:>10,}   the actual problem",
-         f"  max candidates       {r['max_candidates']:>10,}",
-         f"  zips with filler book{r['zips_with_filler']:>10,}   ({r['n_filler_rows']:,} rows)",
-         f"  zips with M imputed  {r['zips_m_imputed']:>10,}   book but no M; M = total book",
-         f"  zips headroom-repaired{r['zips_headroom_repaired']:>9,}   M lifted to the floor; "
-         f"added {r['repair_added_share']:.2%} of total M",
-         "", "  |cand| histogram: " + ", ".join(f"{k}:{v}" for k, v in
-                                                 r["cand_histogram"].items()),
-         "",
-         "leaving this machine: shares in [0,1], opportunity as M/median(M),",
-         "surrogate rep ids, public ZCTA ids and edges. No currency amount.", ""]
+          "  every count below is per CELL, not per zip: a zip is contested in one",
+          "  channel and untapped in another, and the decision is per cell.",
+          "",
+          "candidate structure (cand(z) = real reps with positive sales)", "-" * 46,
+          f"  untapped   (0 reps)  {r['zips_untapped']:>10,}   no sales at all",
+          f"  vacant     (0 reps)  {r['zips_vacant']:>10,}   sales, but only under a filler key",
+          f"  uncontested(1 rep )  {r['zips_uncontested']:>10,}   owner forced, no decision",
+          f"  contested  (2+ reps) {r['zips_contested']:>10,}   the actual problem",
+          f"  max candidates       {r['max_candidates']:>10,}",
+          f"  zips with filler book{r['zips_with_filler']:>10,}   ({r['n_filler_rows']:,} rows)",
+          f"  zips with M imputed  {r['zips_m_imputed']:>10,}   book but no M; M = total book",
+          f"  zips headroom-repaired{r['zips_headroom_repaired']:>9,}   M lifted to the floor; "
+          f"added {r['repair_added_share']:.2%} of total M",
+          "", "  |cand| histogram: " + ", ".join(f"{k}:{v}" for k, v in
+                                                  r["cand_histogram"].items()),
+          "",
+          "leaving this machine: shares in [0,1], opportunity as M/median(M),",
+          "surrogate rep ids, public ZCTA ids, channel names. No currency amount.", ""]
     return "\n".join(L)
 
 
@@ -931,20 +623,18 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="export_instance", description=__doc__.split("\n")[0])
     p.add_argument("cmd", choices=["validate", "export"])
     p.add_argument("--sales", required=True,
-                   help="zip_code, rep_id, firm, sales (long), optionally current_channel")
+                   help="zip_code, rep_id, firm, current_channel, sales (long); with no "
+                        "channel column the whole extract is one channel, national")
     p.add_argument("--opportunity", required=True,
-                   help="zip_code, M, optionally current_channel")
-    p.add_argument("--graph", required=True, help="edge table (parquet/feather/csv)")
-    p.add_argument("--states", default=None, help="zip_code, state (optional)")
+                   help="zip_code, current_channel, M; the channel column on both tables "
+                        "or neither")
     p.add_argument("--out", default="./out")
     p.add_argument("--theta", type=float, default=THETA_DEFAULT)
     p.add_argument("--lam", type=float, default=0.30)
-    p.add_argument("--u-col", default=None)
-    p.add_argument("--v-col", default=None)
     p.add_argument("--impute-missing-m", action="store_true",
-                   help="a zip with book but no (or nonpositive) opportunity value gets "
-                        "M = its total book -- the conservative floor: no upside, zip "
-                        "stays in the graph. Off by default; the count is reported.")
+                   help="a cell with book but no (or nonpositive) opportunity value gets "
+                        "M = its total book -- the conservative floor: no upside, the cell "
+                        "stays in. Off by default; the count is reported.")
     p.add_argument("--repair-headroom", action="store_true",
                    help="where M is smaller than the book it must contain, lift it to "
                         "exactly the pointwise-headroom floor max_i(S_i + theta*(T-S_i)). "
@@ -952,19 +642,21 @@ def main(argv=None):
                         "count and added share are reported.")
     p.add_argument("--join-floor", type=float, default=JOIN_FLOOR,
                    help=f"minimum share of positive sales rows that must join to an "
-                        f"opportunity zip (default {JOIN_FLOOR}). Lower it only after "
+                        f"opportunity cell (default {JOIN_FLOOR}). Lower it only after "
                         f"reading the failure report: unjoined rows are dropped.")
     p.add_argument("--filler-key", action="append", default=[], metavar="KEY",
                    help="a rep_id that marks a VACANCY rather than a person. Repeatable. "
                         "Its sales stay in the instance as unowned book but it never "
                         "becomes a candidate owner.")
+    p.add_argument("--rep-ids-channel", default=None, metavar="NAME",
+                   help="rank the reps with book in this channel first, on that channel's "
+                        "book alone, so they keep the ids an earlier single-channel export "
+                        "of it gave them. Required by --rep-ids.")
     p.add_argument("--rep-ids", default=None, metavar="PATH",
                    help="an earlier single-channel export (instance_descaled*.json.gz) to "
-                        "cross-check the surrogate ids against. Nothing is carried into the "
-                        "export from it: the ids line up because the kappa channel is "
-                        "ranked first. This "
-                        "asserts they did, and stops the export if that channel's book "
-                        "moved. Compares only the zips that file kept.")
+                        "cross-check the surrogate ids against, over --rep-ids-channel. "
+                        "Nothing is carried into the export from it. Stops the export if "
+                        "that channel's book moved. Compares only the zips that file kept.")
     p.add_argument("--rep-map", default=None, metavar="PATH",
                    help="write the raw rep id to surrogate id map here (rep_surrogate, rep_id, "
                         "firm_surrogate, firm); confidential, it stays on this machine")
@@ -972,16 +664,21 @@ def main(argv=None):
     a = p.parse_args(argv)
 
     try:
-        inst = build(a.sales, a.opportunity, a.graph, a.states, theta=a.theta,
-                     u_col=a.u_col, v_col=a.v_col, filler_keys=a.filler_key,
+        if a.rep_ids and not a.rep_ids_channel:
+            raise InputError("--rep-ids needs --rep-ids-channel: the channel whose book the "
+                             "earlier single-channel export was built from")
+        inst = build(a.sales, a.opportunity, theta=a.theta, filler_keys=a.filler_key,
                      join_floor=a.join_floor, impute_missing_m=a.impute_missing_m,
                      repair_headroom=a.repair_headroom)
+        ref_channel = channel_name(a.rep_ids_channel) if a.rep_ids_channel else ""
+        if ref_channel and ref_channel not in inst.channels:
+            raise InputError(f"--rep-ids-channel {a.rep_ids_channel!r} is not a channel of "
+                             f"this extract; channels are {list(inst.channels)}")
     except InputError as e:
         print(f"input error: {e}", file=sys.stderr)
         return 4
 
     print(report_text(inst))
-    print(footprint_text(inst))
     problems = validate(inst, a.theta)
     if problems:
         print("VALIDATION PROBLEMS")
@@ -997,10 +694,10 @@ def main(argv=None):
         return 3
 
     raw_firm = dict(inst.firm)
-    rep_map, firm_map = mask_reps(inst)
+    rep_map, firm_map = mask_reps(inst, ref_channel)
     if a.rep_ids:
         try:
-            c = check_rep_ids(inst, a.rep_ids)
+            c = check_rep_ids(inst, a.rep_ids, ref_channel)
         except InputError as e:
             print(f"input error: {e}", file=sys.stderr)
             return 4
