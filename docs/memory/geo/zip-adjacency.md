@@ -18,6 +18,13 @@ on distances, chosen by the user over adjacency contiguity on 2026-09-01.
 - The two tessellations share 4,462 edges of 10,483 and 4,843 (Jaccard 0.411). A district that
   looks scattered on screen is not evidence of a contiguity failure.
 - Known gap: there is no DC to VA cell edge (queued on the full-problem track).
+  - Correction, 2026-09-28 (td#57 handoff, m5 session 01a0e73e fork 01a0e759; checked against
+    the tag): the gap was closed before the refactor. At `archive/pre-support-2026-09`,
+    `tools/geom_export.py::_proximity_edges` builds the graph from the instance's ZIP points
+    and their Voronoi cells clipped to state outlines. It adds a rook edge wherever two cells
+    share a border of positive length, plus one hand-made DC–VA edge between the nearest DC and
+    VA points (commit d341461). A ZIP whose cell clips away gets no vertex in
+    `proximity_zips`. The new pipeline's graph: `mem:decisions/open-decisions-2026-09-28` (OD2).
 
 Related: `mem:geo/zcta-geometry`, `mem:decisions/rep-split-and-app-views`.
 

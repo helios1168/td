@@ -22,7 +22,7 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `facts/refactor-archive-and-queue`: the tag `archive/pre-support-2026-09` at 1251534 (pre-A2), milestones M0–M5 as 5–10 with the 26 plan issues, old milestones 1–4 (td#53); 77 tracked files after #54, memory to at most 37 for A3's cap of 60
 - `facts/highs-traps`: evidence for AGENTS.md traps 12, 14, 18, 19: mip_rel_gap default, Solve error and the highs-ds pin, process-global threads, keep the objective
 - `facts/tooling-traps`: evidence for AGENTS.md traps 15, 16: retries keyed on the engine's stop reason, Serena resolves against the hub
-- `facts/geography-traps`: evidence for AGENTS.md traps 21, 22, 23: explicit vertex set, 2020 against 2025 vintage shifts, ZCTA against Voronoi edges (23 provisional on #57)
+- `facts/geography-traps`: evidence for AGENTS.md traps 21, 22, 23: explicit vertex set, 2020 against 2025 vintage shifts, ZCTA against Voronoi edges (23 settled by #57)
 
 ## model
 - `model/full-problem-mathematical-setup`: the multi-channel problem's full mathematical setup (moved from the memory root 2026-09-21)
@@ -48,6 +48,7 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `decisions/app-2026-09-08`: scenario app rules: bargaining both ways, territory = sales, release pricing, k grid
 - `decisions/full-problem-2026-09-11`: multi-channel rules: sub-channels, WIFI, split caps and band break, sweep, four state patterns
 - `decisions/support-refactor-2026-09-25`: scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding (td#52); STATE.md shape Now/Next/Blocked ≤ 1 KB, v2 loader test removed until #66, exact requirement pins (td#54)
+- `decisions/open-decisions-2026-09-28`: OD2 (td#57): the Voronoi rook graph of 2025 points over placed extract ZIPs, explicit vertices, DC–VA only, missing-ZIP reports; OD3 (td#58): district-only outputs, three certificate tiers (exact, bounded, feasible only), no numeric successor to CERT_TOL/EPS_CERT
 - `decisions/issue-queue-reset-2026-09-28`: 50 legacy issues closed "not planned", `archived` on the 39 only, old milestones and labels left alone (td#53)
 
 ## workflow
