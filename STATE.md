@@ -4,7 +4,7 @@
 
 ## Now
 
-#56 landed: OD1 sets the default final band at 10% per planning channel, declared per scenario, with 1e-9 × τ_c audit slack; old state band breaks are retired. #61 landed; #3 is ready, and #62 is in progress on m5.
+#52 landed: revision 7 approved, OQ1–OQ7 answered, and all 26 plan issues filed across M0–M5. #3 is ready for the fresh v3 extract; #62 is in progress on m5.
 
 ## Next
 
