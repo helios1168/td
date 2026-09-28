@@ -4,11 +4,10 @@
 
 ## Now
 
-#60 landed: OD5 sets scenario-listed 2025 metro CBSAs as county-union units; a metro is whole only when it fits its channel's upper band. #58 is landable; #62, #61, #56 and #55 are ready.
+#58 landed: OD3 sets district-only outputs and exact, bounded, or feasible-only master certificate tiers, separate from drawn-ledger feasibility. #57 and #60 are also landed; #55, #56, #61 and #62 are ready.
 
 ## Next
 
-- `/land 58` for the handed-off OD3 decision.
 - `/execute 55` on m2 to curate memory to the 60-file cap; coordinate with any memory curator.
 - `/execute 62` to build the 2025 reference table and ZIP graph under OD2.
 
