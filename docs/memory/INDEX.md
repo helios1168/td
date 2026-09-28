@@ -9,7 +9,7 @@ td#55 pruned memory to what applies to the support master. The last version of e
 - `facts/instance-versions`: v1 against v2 table, CONUS ground set (3,713 zips, tau 471.21), v3 and pending v4, masked firm shares
 - `facts/state-border-snapping`: Track 1 and Track 2 grids of 2026-09-07 on the whole v2 instance
 - `facts/conus-track2-grid`: the CONUS re-run at δ 5, 7, 10%; the band is always overshot after rounding
-- `facts/refactor-archive-and-queue`: the tag `archive/pre-support-2026-09` at 1251534 (pre-A2), milestones M0–M5 as 5–10 with the 26 plan issues, old milestones 1–4 (td#53); 77 tracked files after #54, memory to at most 37 for A3's cap of 60
+- `facts/refactor-archive-and-queue`: the tag `archive/pre-support-2026-09` at 1251534 (pre-A2), milestones M0–M5 as 5–10 with the 26 plan issues, old milestones 1–4 (td#53); 77 tracked files after #54, memory to at most 37 for A3's cap of 60, 38 tracked with 15 in memory after #55
 - `facts/highs-traps`: evidence for AGENTS.md traps 12, 14, 18, 19: mip_rel_gap default, Solve error and the highs-ds pin, process-global threads, keep the objective
 - `facts/tooling-traps`: evidence for AGENTS.md traps 15, 16: retries keyed on the engine's stop reason, Serena resolves against the hub
 - `facts/geography-traps`: evidence for AGENTS.md traps 21, 22, 23: explicit vertex set, 2020 against 2025 vintage shifts, ZCTA against Voronoi edges (23 settled by #57)
@@ -22,7 +22,7 @@ td#55 pruned memory to what applies to the support master. The last version of e
 - `geo/zcta-geometry`: real ZCTA polygons at 250 m, 2025 gazetteer default, the 2020 pin, district_reach
 
 ## decisions (user decisions that are settled)
-- `decisions/support-refactor-2026-09-25`: the td#52 decisions S1–S31 and its 26 §7 issues; scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding; STATE.md shape Now/Next/Blocked ≤ 1 KB, v2 loader test removed until #66, exact requirement pins (td#54)
+- `decisions/support-refactor-2026-09-25`: the td#52 decisions S1–S31 and its 26 §7 issues; scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding; STATE.md shape Now/Next/Blocked ≤ 1 KB, v2 loader test removed until #66, exact requirement pins (td#54); five memories kept beyond A3's keep list, dangling `mem:` links left (td#55)
 - `decisions/open-decisions-2026-09-28`: OD2 (td#57): the Voronoi rook graph of 2025 points over placed extract ZIPs, explicit vertices, DC–VA only, missing-ZIP reports; OD3 (td#58): district-only outputs, three certificate tiers (exact, bounded, feasible only), no numeric successor to CERT_TOL/EPS_CERT; OD5 (td#60): scenario-listed 2025 metro CBSAs, whole if M^c ≤ U_c else own splittable unit, S14 keeps the unit, the integer-n feasibility condition
 - `decisions/issue-queue-reset-2026-09-28`: 50 legacy issues closed "not planned", `archived` on the 39 only, old milestones and labels left alone (td#53)
 

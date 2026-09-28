@@ -78,4 +78,18 @@
 - Stubbing the loader test: there is no loader left to test until #66.
 - Unpinned requirements: a `.venv` rebuild would not be reproducible.
 
+## Pruning memory: td#55, 2026-09-28
+
+**Status:** two judgement calls made without asking while executing td#55 (A3, S6's memory pruning) on m2-studio, 2026-09-28, m2 session 01a0e76f fork 01a0e771 ([DECIDED comment](https://github.com/helios1168/td/issues/55#issuecomment-5867688957)); merged in `764c5c9`.
+
+**Context.** A3's keep list named the memories to keep from before the refactor. Five records written for the support master were not on it, and several kept memories carry `mem:` links to memories #55 deleted.
+
+**Decision.**
+- Five memories beyond A3's literal keep list stay: `decisions/support-refactor-2026-09-25`, `decisions/open-decisions-2026-09-28`, `decisions/issue-queue-reset-2026-09-28`, `facts/refactor-archive-and-queue` and `facts/tooling-traps`. Memory is 14 files plus `INDEX.md`, inside the 60-file cap.
+- `mem:` links in kept memories that point at deleted memories are left as they are. `INDEX.md` says where they resolve: `740a985` for all, and `archive/pre-support-2026-09` for all but `workflow/docs-and-state`.
+
+**Alternatives rejected.**
+- Deleting the five: it would lose the settled S1–S31 and OD records and break the `AGENTS.md` trap pointers to `facts/tooling-traps`.
+- Rewriting the dangling links: it would edit more of the kept memories than #55 asked for.
+
 **Consequences.** `STATE.md` may carry Next and Blocked under the 1 KB cap. The repo has no instance-loader test until #66 lands. A version change goes through an explicit `requirements.txt` edit.
