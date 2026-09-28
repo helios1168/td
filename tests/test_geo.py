@@ -104,7 +104,7 @@ def test_manifest_rejects_any_source_that_is_not_2025():
     else:
         raise AssertionError("check_manifest accepted a 2020 file name")
     bad = copy.deepcopy(m)
-    bad["sources"] = [e for e in bad["sources"] if e["name"] != "areawater"]
+    bad["sources"] = [e for e in bad["sources"] if e["name"] != "faces"]
     try:
         geo.check_manifest(bad)
     except ValueError:
@@ -115,12 +115,15 @@ def test_manifest_rejects_any_source_that_is_not_2025():
 
 def test_manifest_accepts_only_the_named_unavailable_files():
     m = _manifest()
-    water = next(e for e in m["sources"] if e["name"] == "areawater")
+    water = next(e for e in m["sources"] if e["name"] == "faces")
     assert water.get("unavailable", {}) == {f: r for f, r in geo.UNAVAILABLE.items()
-                                            if "areawater" in f}
+                                            if "faces" in f}
+    fallback = next(e for e in m["sources"] if e["name"] == "areawater")
+    assert {f.replace("areawater", "faces") for f in fallback["files"]} == set(water["unavailable"])
+    assert set(_report()["counties_without_faces"]) == {f.split("_")[2] for f in fallback["files"]}
     bad = copy.deepcopy(m)
-    water = next(e for e in bad["sources"] if e["name"] == "areawater")
-    water.setdefault("unavailable", {})["tl_2025_01001_areawater.zip"] = "gone"
+    water = next(e for e in bad["sources"] if e["name"] == "faces")
+    water.setdefault("unavailable", {})["tl_2025_01001_faces.zip"] = "gone"
     try:
         geo.check_manifest(bad)
     except ValueError:

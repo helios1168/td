@@ -18,8 +18,13 @@ kept) and writes `reference/2025/`:
 Everything is 2025 vintage (S17); `check_manifest` rejects any other.  HUD placement is G2.
 
 **Land.**  TIGER ZCTA polygons include their water, so a piece's polygon area is not its land.
-Each (ZCTA, county) piece has that county's TIGER/Line AREAWATER polygons removed, and the
-place and urban-area overlays run on those land pieces.  A ZCTA's primary county, place and
+Each (ZCTA, county) piece has that county's perennial water removed: the TIGER/Line FACES
+whose LWFLAG is P.  The Census counts every other face (L land, I intermittent water, G
+glacier) as land, so this is the gazetteer's own land, not an estimate.  AREAWATER alone failed
+the land check, because its partly-land polygons do not say where their land is (#62); it is
+read only for a county whose FACES file census.gov will not serve (`UNAVAILABLE`), where the
+water is its polygons with AWATER > 0 less its all-land (intermittent) ones.  The place and
+urban-area overlays run on those land pieces.  A ZCTA's primary county, place and
 urban area are the ones holding the most of its land; its state is its primary county's, and
 its CBSA, CSA and METDIV are too (S15: exports carry them per ZIP, and metros are county
 unions).
@@ -65,21 +70,20 @@ CONUS_STATEFP = frozenset(
 OVERRIDE_PAIR = ("DC", "VA")    # OD2: the one manual edge
 
 # Source files census.gov will not serve.  The owner's rule (#62): a file named here is listed
-# in the manifest as unavailable, and its county's pieces are measured with their water; no
-# other vintage stands in.
-UNAVAILABLE = {
-    "tl_2025_51690_areawater.zip":
-        "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); "
-        "Martinsville city, VA, AWATER 135,578 m2",
-}
+# in the manifest as unavailable, and a county whose FACES file is here takes its water from
+# its 2025 AREAWATER file instead; no other vintage stands in.
+_REJECTED = ("census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); "
+             "water from tl_2025_{g}_areawater.zip")
+UNAVAILABLE = {f"tl_2025_{g}_faces.zip": _REJECTED.format(g=g)
+               for g in ("19181", "36115", "37107", "39095", "42065", "50009", "51107")}
 
 TIGER = "https://www2.census.gov/geo/tiger/TIGER2025"
 GENZ = "https://www2.census.gov/geo/tiger/GENZ2025/shp"
 GAZ = "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer"
 POPEST = "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025"
 
-# name -> (url, use).  `place` and `areawater` are one file per state or county: their url is
-# the directory, and `source_files` lists the files.
+# name -> (url, use).  `place` and `faces` are one file per state or county: their url is the
+# directory, and `source_files` lists the files.
 SOURCES = {
     "gaz_zcta": (f"{GAZ}/2025_Gaz_zcta_national.zip", "ZCTA points and land area"),
     "zcta": (f"{TIGER}/ZCTA520/tl_2025_us_zcta520.zip", "ZCTA polygons for the overlays"),
@@ -98,18 +102,24 @@ SOURCES = {
     "sub_est": (f"{POPEST}/cities/totals/sub-est2025.csv", "place population, 2025"),
     "uac": (f"{TIGER}/UAC20/tl_2025_us_uac20.zip", "urban areas"),
     "co_est": (f"{POPEST}/counties/totals/co-est2025-alldata.csv", "county population, 2025"),
-    "areawater": (f"{TIGER}/AREAWATER/", "water polygons, one file per county, for land"),
+    "faces": (f"{TIGER}/FACES/", "land/water faces, one file per county, for land"),
+    "areawater": (f"{TIGER}/AREAWATER/", "water polygons, for the counties whose FACES file "
+                  "is unavailable"),
 }
 
 
 # ------------------------------------------------------------------------------ sources
 def source_files(name: str, county_geoids=()) -> list[str]:
-    """The URLs of source `name`: one, or one per CONUS state (`place`) or county (`areawater`)."""
+    """The URLs of source `name`: one, or one per CONUS state (`place`) or county (`faces`, and
+    `areawater` for the counties whose FACES file is unavailable)."""
     url = SOURCES[name][0]
     if name == "place":
         return [f"{url}tl_2025_{s}_place.zip" for s in sorted(CONUS_STATEFP)]
+    if name == "faces":
+        return [f"{url}tl_2025_{g}_faces.zip" for g in sorted(county_geoids)]
     if name == "areawater":
-        return [f"{url}tl_2025_{g}_areawater.zip" for g in sorted(county_geoids)]
+        return [f"{url}tl_2025_{g}_areawater.zip" for g in sorted(county_geoids)
+                if f"tl_2025_{g}_faces.zip" in UNAVAILABLE]
     return [url]
 
 
@@ -195,9 +205,10 @@ def check_manifest(manifest: dict) -> None:
 
 
 # ------------------------------------------------------------------------------ readers
-def _read(path: str, columns: list[str], geometry: bool = True):
+def _read(path: str, columns: list[str], geometry: bool = True, where: str | None = None):
     import pyogrio
-    df = pyogrio.read_dataframe(f"zip://{path}", columns=columns, read_geometry=geometry)
+    df = pyogrio.read_dataframe(f"zip://{path}", columns=columns, read_geometry=geometry,
+                                where=where)
     return df.to_crs(CRS) if geometry else df
 
 
@@ -329,40 +340,38 @@ def _overlay(left, right, left_key: str, right_key: str):
 
 
 def _county_water(county_geoids, public: str):
-    """(county geoid, polygon, ALAND, AWATER) arrays of the AREAWATER polygons of
-    `county_geoids`, in `CRS`."""
+    """(county geoid, polygon) arrays of each county's perennial water, in `CRS`: the union of
+    its FACES with LWFLAG P, split into its polygons, or its AREAWATER fallback (module doc)."""
     import numpy as np
+    import shapely
 
     def one(g):
-        if f"tl_2025_{g}_areawater.zip" in UNAVAILABLE:
-            return g, np.empty(0, dtype=object), np.empty(0), np.empty(0)
-        df = _read(os.path.join(public, f"tl_2025_{g}_areawater.zip"), ["ALAND", "AWATER"])
-        return (g, np.asarray(df.geometry.values), df["ALAND"].to_numpy(float),
-                df["AWATER"].to_numpy(float))
+        if f"tl_2025_{g}_faces.zip" in UNAVAILABLE:
+            df = _read(os.path.join(public, f"tl_2025_{g}_areawater.zip"), ["AWATER"])
+            geoms = np.asarray(df.geometry.values)
+            wet = df["AWATER"].to_numpy(float) > 0
+            water = shapely.difference(shapely.union_all(geoms[wet]),
+                                       shapely.union_all(geoms[~wet]))
+        else:
+            df = _read(os.path.join(public, f"tl_2025_{g}_faces.zip"), ["LWFLAG"],
+                       where="LWFLAG = 'P'")
+            water = shapely.union_all(np.asarray(df.geometry.values))
+        parts = shapely.get_parts(water)
+        return g, parts[shapely.area(parts) > 0]
 
     with concurrent.futures.ThreadPoolExecutor(8) as pool:
         got = list(pool.map(one, county_geoids))
     return (np.concatenate([np.full(len(x[1]), x[0], dtype=object) for x in got]),
-            *(np.concatenate([x[i] for x in got]) for i in (1, 2, 3)))
+            np.concatenate([x[1] for x in got]))
 
 
 def land_pieces(zctas, counties, water):
-    """The (ZCTA, county) land pieces: each ZCTA polygon cut by county, less the county's water.
-
-    `water` is `_county_water`'s arrays.  The Census counts intermittent water as land, and
-    each AREAWATER polygon carries its own ALAND and AWATER.  Polygons overlap: an all-land
-    (intermittent) polygon can sit inside a water one, and a partly-land polygon's land is
-    often exactly such an overlap.  So a piece loses the union of the water-bearing polygons
-    (AWATER > 0) of its county that meet it, less the union of the all-land ones.  What is left
-    of a partly-land polygon's ALAND after that, less what partly-land polygons nested in it
-    already give back, is given back to `land_m2` in proportion to the piece's share of the
-    polygon's remaining area.  It has no geometry, so the place and urban-area overlays, which
-    run on the geometry, count it as water."""
+    """The (ZCTA, county) land pieces: each ZCTA polygon cut by county, less the county's
+    perennial water (`_county_water`)."""
     import numpy as np
-    import pandas as pd
     import shapely
     pieces = _overlay(zctas, counties, "zcta", "county")
-    w_county, w_geom, w_land, w_water = water
+    w_county, w_geom = water
     geom = pieces["geometry"].values.copy()
     pi, wi = shapely.STRtree(w_geom).query(geom, predicate="intersects")
     same = pieces["county"].values[pi] == w_county[wi]
@@ -371,55 +380,15 @@ def land_pieces(zctas, counties, water):
     pi, wi = pi[order], wi[order]
     hit, first = np.unique(pi, return_index=True)
     groups = np.split(wi, first[1:])
-    wet = w_water > 0
-
-    def local_water(g):
-        w = shapely.union_all(w_geom[g[wet[g]]])
-        d = g[~wet[g]]
-        return shapely.difference(w, shapely.union_all(w_geom[d])) if len(d) else w
 
     def dry(lo, hi):
-        return shapely.difference(geom[hit[lo:hi]], [local_water(g) for g in groups[lo:hi]])
+        return shapely.difference(geom[hit[lo:hi]],
+                                  [shapely.union_all(w_geom[g]) for g in groups[lo:hi]])
 
     if len(hit):
         geom[hit] = np.concatenate(_threaded(dry, len(hit), 500))
-    land = shapely.area(geom)
-
-    # partly-land polygons: their ALAND not already covered by an all-land polygon
-    mixed = np.flatnonzero(wet & (w_land > 0))
-    if len(mixed):
-        di = np.flatnonzero(~wet)
-        mi, dj = shapely.STRtree(w_geom[di]).query(w_geom[mixed], predicate="intersects")
-        keep = w_county[mixed[mi]] == w_county[di[dj]]
-        cover = pd.Series(list(w_geom[di[dj[keep]]])).groupby(mi[keep]).agg(
-            lambda gs: shapely.union_all(list(gs)))
-        rest = w_geom[mixed].copy()
-        idx = cover.index.to_numpy()
-        rest[idx] = shapely.difference(rest[idx], cover.to_numpy())
-        owed = np.maximum(w_land[mixed] - (shapely.area(w_geom[mixed]) - shapely.area(rest)), 0)
-        # a partly-land polygon nested in another carries part of the outer one's land
-        area = shapely.area(w_geom[mixed])
-        qi, pj = shapely.STRtree(w_geom[mixed]).query(w_geom[mixed], predicate="intersects")
-        inner = ((qi != pj) & (w_county[mixed[qi]] == w_county[mixed[pj]])
-                 & (area[qi] < area[pj]))
-        qi, pj = qi[inner], pj[inner]
-        nested = shapely.area(shapely.intersection(w_geom[mixed[qi]], w_geom[mixed[pj]]))
-        qi, pj = qi[nested >= 0.99 * area[qi]], pj[nested >= 0.99 * area[qi]]
-        for q in np.argsort(area):              # inner polygons settle first
-            outer = pj[qi == q]
-            owed[outer] = np.maximum(owed[outer] - owed[q], 0)
-        rest_area = shapely.area(rest)
-        lookup = {int(w): k for k, w in enumerate(mixed)}
-        sel = np.asarray([int(w) in lookup for w in wi])
-        k = np.asarray([lookup[int(w)] for w in wi[sel]], dtype=int)
-        pk = pi[sel]
-        ok = (owed[k] > 0) & (rest_area[k] > 0)
-        k, pk = k[ok], pk[ok]
-        overlap = shapely.area(shapely.intersection(pieces["geometry"].values[pk], rest[k]))
-        back = pd.Series(overlap / rest_area[k] * owed[k]).groupby(pk).sum()
-        land[back.index.to_numpy()] += back.to_numpy()
     pieces["geometry"] = geom
-    pieces["land_m2"] = land
+    pieces["land_m2"] = shapely.area(geom)
     return pieces[pieces["land_m2"] >= MIN_PIECE_M2].reset_index(drop=True)
 
 
@@ -441,14 +410,16 @@ def build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> dict
     import shapely
 
     log("geo: fetching sources")
-    urls = {n: source_files(n) for n in SOURCES if n != "areawater"}
+    urls = {n: source_files(n) for n in SOURCES if n not in ("faces", "areawater")}
     for n, us in urls.items():
         fetch_all(us, public)
     counties = _read(cached(SOURCES["county"][0], public),
                      ["GEOID", "STATEFP", "NAMELSAD", "CBSAFP", "CSAFP", "METDIVFP", "ALAND"])
     counties = counties[counties["STATEFP"].isin(CONUS_STATEFP)].reset_index(drop=True)
+    urls["faces"] = source_files("faces", counties["GEOID"])
     urls["areawater"] = source_files("areawater", counties["GEOID"])
-    fetch_all([u for u in urls["areawater"] if os.path.basename(u) not in UNAVAILABLE], public)
+    fetch_all([u for n in ("faces", "areawater") for u in urls[n]
+               if os.path.basename(u) not in UNAVAILABLE], public)
     manifest = {"vintage": VINTAGE, "crs": CRS,
                 "sources": [manifest_entry(n, urls[n], public) for n in SOURCES]}
     check_manifest(manifest)
@@ -473,7 +444,7 @@ def build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> dict
     zctas = zctas.rename(columns={"ZCTA5CE20": "zcta"})
     counties = counties.rename(columns={"GEOID": "county"})
 
-    log("geo: water by county")
+    log("geo: perennial water by county")
     water = _county_water(counties["county"], public)
     log("geo: land pieces (ZCTA x county, less water)")
     land = land_pieces(zctas, counties, water)
@@ -555,9 +526,9 @@ def build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> dict
         "point_in_other_state": sorted(ref.loc[ref["point_state"] != ref["state"], "zcta"]),
         "counties_without_zcta": sorted(conus_cty - set(cty["geoid"])),
         "counties_without_estimate": sorted(conus_cty - set(cpop.index)),
-        "counties_without_water": {g: UNAVAILABLE[f"tl_2025_{g}_areawater.zip"]
+        "counties_without_faces": {g: UNAVAILABLE[f"tl_2025_{g}_faces.zip"]
                                    for g in sorted(conus_cty)
-                                   if f"tl_2025_{g}_areawater.zip" in UNAVAILABLE},
+                                   if f"tl_2025_{g}_faces.zip" in UNAVAILABLE},
         "graph": {
             "vertices": len(graph["vertices"]), "edges": int(len(edges)),
             "override_pair": graph["override"],

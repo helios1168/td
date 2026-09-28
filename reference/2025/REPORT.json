@@ -5,22 +5,8 @@
  "conus_zctas_without_county": [],
  "land_check": {
   "tolerance": 0.005,
-  "max_rel_err": 0.131479,
-  "over_tolerance": [
-   "58370",
-   "85281",
-   "90027",
-   "91201",
-   "92234",
-   "92262",
-   "92270",
-   "92316",
-   "92324",
-   "92346",
-   "92359",
-   "92374",
-   "93530"
-  ]
+  "max_rel_err": 9.1e-05,
+  "over_tolerance": []
  },
  "point_in_other_state": [
   "56219",
@@ -29,8 +15,14 @@
  ],
  "counties_without_zcta": [],
  "counties_without_estimate": [],
- "counties_without_water": {
-  "51690": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); Martinsville city, VA, AWATER 135,578 m2"
+ "counties_without_faces": {
+  "19181": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_19181_areawater.zip",
+  "36115": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_36115_areawater.zip",
+  "37107": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_37107_areawater.zip",
+  "39095": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_39095_areawater.zip",
+  "42065": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_42065_areawater.zip",
+  "50009": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_50009_areawater.zip",
+  "51107": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_51107_areawater.zip"
  },
  "graph": {
   "vertices": 33300,
