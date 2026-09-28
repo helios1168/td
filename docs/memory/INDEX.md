@@ -19,7 +19,10 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `facts/state-atoms-retired`: numbers of the retired state-atom route and its prototype; PYTHONHASHSEED=0
 - `facts/fi21-cover-grid`: FI 21 grid on v4, the plus-pair bug, cover rule infeasible, TX=1 under forcing, pieces before and after, the national-only answer (G1: all but IL CO; G2: all but CO WA UT MN), the sweep fix, the dollar-target study
 - `facts/support-pipeline`: the support pipeline before the refactor: import closure, irreproducible catalog, ownership drift, argmax rounding, exporter channels, the closure claim
-- `facts/refactor-archive-and-queue`: the tag `archive/pre-support-2026-09` at 1251534 (pre-A2), milestones M0–M5 as 5–10 with the 26 plan issues, old milestones 1–4 (td#53)
+- `facts/refactor-archive-and-queue`: the tag `archive/pre-support-2026-09` at 1251534 (pre-A2), milestones M0–M5 as 5–10 with the 26 plan issues, old milestones 1–4 (td#53); 77 tracked files after #54, memory to at most 37 for A3's cap of 60
+- `facts/highs-traps`: evidence for AGENTS.md traps 12, 14, 18, 19: mip_rel_gap default, Solve error and the highs-ds pin, process-global threads, keep the objective
+- `facts/tooling-traps`: evidence for AGENTS.md traps 15, 16: retries keyed on the engine's stop reason, Serena resolves against the hub
+- `facts/geography-traps`: evidence for AGENTS.md traps 21, 22, 23: explicit vertex set, 2020 against 2025 vintage shifts, ZCTA against Voronoi edges (23 provisional on #57)
 
 ## model
 - `model/full-problem-mathematical-setup`: the multi-channel problem's full mathematical setup (moved from the memory root 2026-09-21)
@@ -44,12 +47,12 @@ Only the orchestrator writes here; every other agent ends its report with `LEARN
 - `decisions/rep-split-and-app-views`: contiguous rep splits on the cell graph, rep maps, sidebar picker and named views
 - `decisions/app-2026-09-08`: scenario app rules: bargaining both ways, territory = sales, release pricing, k grid
 - `decisions/full-problem-2026-09-11`: multi-channel rules: sub-channels, WIFI, split caps and band break, sweep, four state patterns
-- `decisions/support-refactor-2026-09-25`: scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding (td#52)
+- `decisions/support-refactor-2026-09-25`: scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding (td#52); STATE.md shape Now/Next/Blocked ≤ 1 KB, v2 loader test removed until #66, exact requirement pins (td#54)
 - `decisions/issue-queue-reset-2026-09-28`: 50 legacy issues closed "not planned", `archived` on the 39 only, old milestones and labels left alone (td#53)
 
 ## workflow
 - `workflow/confidential-data`: descaled export only; shares and raw M never together; no per-record values anywhere
-- `workflow/docs-and-state`: STATE is `## Now` only, facts in memories, tasks in Beads, doc owners, unit files
+- `workflow/docs-and-state`: STATE shape (Now, then optional Next and Blocked since td#54), facts in memories, doc owners, unit files; Beads history
 - `workflow/full-problem-track`: where the multi-channel grids, REVIEW.md, hot/, best/ and the contig-cut worktree live
 
 ## verify

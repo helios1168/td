@@ -35,3 +35,5 @@ and `docs/math_note/` LaTeX sources with no owner row, and the bibliography thre
 
 Source: host memory td-workflow-redesign-2026-09-07; `git show a16c304:PLAN.md`; worktree
 `AGENTS.md` (2026-09-11).
+
+Correction, 2026-09-28 (td#54, m2 session 01a0e728 fork 01a0e738): `STATE.md` is no longer `## Now` only. `tests/test_docs_owners.py` accepts `## Now` followed by optional `## Next` and `## Blocked`, whole file at most 1 KB, the shape the global land skill writes (`mem:decisions/support-refactor-2026-09-25`, its td#54 section). The owner approved the change. Tasks now live in GitHub Issues, not Beads (`/Users/Shared/sv-ntlee/WORKFLOW.md`).

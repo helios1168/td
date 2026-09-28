@@ -1,0 +1,8 @@
+# HiGHS and scipy traps (AGENTS.md traps 12, 14, 18, 19)
+
+The evidence behind `AGENTS.md` traps 12, 14, 18 and 19. Filed 2026-09-28 from td#54 ([comment](https://github.com/helios1168/td/issues/54#issuecomment-5866766796), m2 session 01a0e728 fork 01a0e738). The pre-#54 wording is `git show b7a74c9:AGENTS.md` traps 12, 14, 18 and 19. Measured on the pre-refactor pipeline, now in the tag `archive/pre-support-2026-09`, and checked through 2026-09-09. Each fact holds for the solver versions it names: scipy 1.18.1 and highspy 1.15 (`requirements.txt` pins highspy 1.15.1 and scipy 1.18.1 at 2026-09-28). Engine setup and model sizes: `mem:solver/highs-and-scipy`.
+
+- **Trap 12.** `scipy.optimize.milp` defaults `mip_rel_gap` to 1e-4, so a certificate needs `mip_rel_gap=0.0`.
+- **Trap 14.** HiGHS 1.15 returns "Solve error" under 1e-9 tolerances. scipy 1.18.1's `linprog(method="highs")` hung on the v2 instance, so the old `centers.assign()` pinned `method="highs-ds"` with an explicit `options` dict (`{"time_limit": 60.0}`).
+- **Trap 18.** HiGHS's thread pool is process-global and sized by the first `threads` value a process uses. A later solve in the same process at a different count returns status "Not Set" instead of solving (highspy 1.15, found 2026-09-09). The old level-1 portfolio parent used 2 threads and its members their own counts, and `tests/run_all.py` never mixed counts.
+- **Trap 19.** A zero-objective feasibility solve is slower on the level-1 MILP. HiGHS found no 10-split map in 120 s with the objective dropped, and found one in 96 s with it kept. The objective guides the search.

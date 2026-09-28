@@ -23,3 +23,21 @@
 - Porting `contiguous_cut` now: deferred until free mode shows more than 2 pieces per map.
 
 **Consequences.** The legacy modules can't simply be dropped from the current tree, since the support master imports their helpers (`mem:facts/support-pipeline`); the clean slate ports from the tag instead. The 2020 gazetteer pin for the committed-map smoke test (`mem:geo/zcta-geometry`) does not carry into the new pipeline. The exporter needs v3 before a fresh extract with new channels (`mem:facts/support-pipeline`). td's papers migrate only as the support model cites them (`mem:refs/literature`).
+
+## Carrying out the clean slate: td#54, 2026-09-28
+
+**Status:** three choices made while executing td#54 (A2, the M0 clean slate) on m2-studio, 2026-09-28, m2 session 01a0e728 fork 01a0e738 ([handoff comment](https://github.com/helios1168/td/issues/54#issuecomment-5866766796)). They landed in `ce9f282` and were merged in `a7335d5`. The owner approved the first; the other two were judgement calls made without asking.
+
+**Context.** The clean slate deleted the legacy code, including `td/instance.py` and its tests, and reset the core docs. `tests/test_docs_owners.py` had required a `STATE.md` holding only `## Now` (`mem:workflow/docs-and-state`), but the global `/land` skill writes Now, Next and Blocked.
+
+**Decision.**
+- `tests/test_docs_owners.py` accepts the global land skill's `STATE.md` shape: `## Now` first, then optionally `## Next` and `## Blocked` in that order, with the whole file at most 1 KB. The owner approved this.
+- The v2 loader round-trip test is removed, not stubbed, because `td/instance.py` is deleted. A loader comes back in C1 (#66, "Implement data.py and the sparse fixture").
+- `requirements.txt` keeps exact pins at the versions installed in the hub `.venv` on 2026-09-28 (for example scipy 1.18.1, highspy 1.15.1), without the old frozen-pin rule. Its header says to bump versions deliberately.
+
+**Alternatives rejected.**
+- Keeping the `## Now`-only check: it would fail after every lander rewrite of `STATE.md`.
+- Stubbing the loader test: there is no loader left to test until #66.
+- Unpinned requirements: a `.venv` rebuild would not be reproducible.
+
+**Consequences.** `STATE.md` may carry Next and Blocked under the 1 KB cap. The repo has no instance-loader test until #66 lands. A version change goes through an explicit `requirements.txt` edit.
