@@ -13,7 +13,7 @@ td#55 pruned memory to what applies to the support master. The last version of e
 - `facts/highs-traps`: evidence for AGENTS.md traps 12, 14, 18, 19: mip_rel_gap default, Solve error and the highs-ds pin, process-global threads, keep the objective
 - `facts/tooling-traps`: evidence for AGENTS.md traps 15, 16: retries keyed on the engine's stop reason, Serena resolves against the hub
 - `facts/geography-traps`: evidence for AGENTS.md traps 21, 22, 23: explicit vertex set, 2020 against 2025 vintage shifts, ZCTA against Voronoi edges (23 settled by #57)
-- `facts/zcta-2025-land-and-graph`: td#62 (not landed) measurements: FACES land overlay within 9.1e-05 of ALAND on all 33,300 CONUS ZCTAs, the all-CONUS stand-in graph's 98,941 edges and one CA island
+- `facts/zcta-2025-land-and-graph`: td#62 (landed eb4b09a) measurements: FACES land overlay within 9.1e-05 of ALAND on all 33,300 CONUS ZCTAs, seven counties on the AREAWATER fallback, the all-CONUS stand-in graph's 98,941 edges and one CA island
 
 ## solver
 - `solver/highs-and-scipy`: highs-ds pin, python3 -u, level-1 portfolio engine and sizes, level-0 sizes
@@ -26,6 +26,7 @@ td#55 pruned memory to what applies to the support master. The last version of e
 - `decisions/support-refactor-2026-09-25`: the td#52 decisions S1–S31 and its 26 §7 issues; scope cut, clean slate, unit modes, 2025 geography, contiguity within tolerance, ownership S25 to S28, forest rounding; STATE.md shape Now/Next/Blocked ≤ 1 KB, v2 loader test removed until #66, exact requirement pins (td#54); five memories kept beyond A3's keep list, dangling `mem:` links left (td#55)
 - `decisions/open-decisions-2026-09-28`: OD1 (td#56): symmetric δ_c = 10% declared per planning channel, planning tightened by μ_S, repair and drawn audit on the final band with 1e-9 × τ_c slack, CA/TX/NY/FL band breaks retired, smallest master δ never auto-adopted; OD2 (td#57): the Voronoi rook graph of 2025 points over placed extract ZIPs, explicit vertices, DC–VA only, missing-ZIP reports; OD3 (td#58): district-only outputs, three certificate tiers (exact, bounded, feasible only), no numeric successor to CERT_TOL/EPS_CERT; OD5 (td#60): scenario-listed 2025 metro CBSAs, whole if M^c ≤ U_c else own splittable unit, S14 keeps the unit, the integer-n feasibility condition
 - `decisions/exporter-v3-2026-09-28`: td#61's autonomous-queue exporter policy: channel-less extract as `national`, any channel label normalised with `channels.json`, one κ over all channels, `--rep-ids` behind `--rep-ids-channel`, no geometry exported, format 3 only with synthetic seven-channel tests
+- `decisions/zcta-2025-build`: td#62's build choices: FACES land with a named AREAWATER fallback for seven counties, DC–VA kept as rook when already adjacent, county population over ZIP-covered land, CBSA/CSA/METDIV from the primary county
 - `decisions/issue-queue-reset-2026-09-28`: 50 legacy issues closed "not planned", `archived` on the 39 only, old milestones and labels left alone (td#53)
 
 ## workflow
