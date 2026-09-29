@@ -1,0 +1,43 @@
+{
+ "vintage": "2025",
+ "crs": "EPSG:5070",
+ "conus_zctas": 33300,
+ "conus_zctas_without_county": [],
+ "land_check": {
+  "tolerance": 0.005,
+  "max_rel_err": 9.1e-05,
+  "over_tolerance": []
+ },
+ "point_in_other_state": [
+  "56219",
+  "57648",
+  "87328"
+ ],
+ "counties_without_zcta": [],
+ "counties_without_estimate": [],
+ "counties_without_faces": {
+  "19181": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_19181_areawater.zip",
+  "36115": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_36115_areawater.zip",
+  "37107": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_37107_areawater.zip",
+  "39095": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_39095_areawater.zip",
+  "42065": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_42065_areawater.zip",
+  "50009": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_50009_areawater.zip",
+  "51107": "census.gov answers with a 'Request Rejected' page (2026-09-28, from m5 and m2); water from tl_2025_51107_areawater.zip"
+ },
+ "graph": {
+  "vertices": 33300,
+  "edges": 98941,
+  "override_pair": [
+   "20566",
+   "22209",
+   "rook"
+  ],
+  "missing": {},
+  "state_components": {
+   "CA": [
+    1801,
+    2
+   ]
+  }
+ }
+}
