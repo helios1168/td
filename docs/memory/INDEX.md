@@ -13,6 +13,7 @@ td#55 pruned memory to what applies to the support master. The last version of e
 - `facts/highs-traps`: evidence for AGENTS.md traps 12, 14, 18, 19: mip_rel_gap default, Solve error and the highs-ds pin, process-global threads, keep the objective
 - `facts/tooling-traps`: evidence for AGENTS.md traps 15, 16: retries keyed on the engine's stop reason, Serena resolves against the hub
 - `facts/geography-traps`: evidence for AGENTS.md traps 21, 22, 23: explicit vertex set, 2020 against 2025 vintage shifts, ZCTA against Voronoi edges (23 settled by #57)
+- `facts/zcta-2025-land-and-graph`: td#62 (not landed) measurements: FACES land overlay within 9.1e-05 of ALAND on all 33,300 CONUS ZCTAs, the all-CONUS stand-in graph's 98,941 edges and one CA island
 
 ## solver
 - `solver/highs-and-scipy`: highs-ds pin, python3 -u, level-1 portfolio engine and sizes, level-0 sizes
