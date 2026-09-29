@@ -1,16 +1,16 @@
 # State — support-master territory design
 
-**Updated:** 2026-09-28 · **Branch:** `main`
+**Updated:** 2026-09-29 · **Branch:** `main`
 
 ## Now
 
-#52 landed: revision 7 approved, OQ1–OQ7 answered, and all 26 plan issues filed across M0–M5. #3 is ready for the fresh v3 extract; #62 is in progress on m5.
+#62 landed (`eb4b09a`): the 2025 ZCTA reference table and ZIP graph, land from FACES with seven AREAWATER fallback counties. #66 is now ready. #63 also needs a HUD User token in `user/.zshenv` on both Studios (owner action).
 
 ## Next
 
-- `/execute 3`: run the fresh v3 extract with new channels.
-- `/land 62` when its m5 handoff is landable.
+- `/execute 66`: data.py and the sparse fixture.
+- `/execute 3`: the fresh v3 extract with new channels.
 
 ## Blocked
 
-#64 waits on global literature changes. Other owner decisions remain in GitHub Issues. `AGENTS.md` still reports 24 fast tests; 27 now pass (#61).
+#64 waits on global literature changes. #63 waits on the HUD token. `AGENTS.md` reports 24 fast tests; 38 now pass.
