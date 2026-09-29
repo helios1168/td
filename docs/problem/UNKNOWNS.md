@@ -12,16 +12,16 @@ PU1 = U30 through PU10 = U39. "Settled in" names the #52 plan item and its issue
 
 | id | plan | unknown | grade | settled in |
 |---|---|---|---|---|
-| U30 | PU1 | Claim 1: decoding equivalence. Council: (iii) holds only under the same support family and policy rows (C3). | T | B2 (#65) |
-| U31 | PU2 | Claim 2: the exact smallest-δ MILP. Council: exact for the master only (C4). | T | B2 (#65) |
+| U30 | PU1 | Claim 1: decoding equivalence. Council: (iii) holds only under the same support family and policy rows (C3). | T | B2 (#65); proof in `docs/MODEL.md` §5 (#64, 2026-09-29) |
+| U31 | PU2 | Claim 2: the exact smallest-δ MILP. Council: exact for the master only (C4). | T | B2 (#65); proof in `docs/MODEL.md` §5 (#64, 2026-09-29) |
 | U32 | PU3 | Support family size at caps 6 and 7 | E | C2 (#67) |
-| U33 | PU4 | Claim 3: tree rounding keeps each district's drawn mass within the heaviest split ZIP it touches. Proof sketched and tested numerically; this bound is what makes μ_S sufficient. Council: the argument holds for an exact vertex, before repair (C5). | T | B2 (#65) proof, C4 (#69) tests |
+| U33 | PU4 | Claim 3: tree rounding keeps each district's drawn mass within the heaviest split ZIP it touches. Proof sketched and tested numerically; this bound is what makes μ_S sufficient. Council: the argument holds for an exact vertex, before repair (C5). | T | B2 (#65) proof, C4 (#69) tests; proof in `docs/MODEL.md` §5 (#64, 2026-09-29) |
 | U34 | PU5 | How many pieces per map the minimal realizer leaves in free and clipped mode, and from which causes; counted both as pieces and as districts in pieces (C17) | E | C4 (#69), the trigger for C4b; E1 (#74) |
 | U35 | PU6 | Price of clipping and of pieces | E | D1 (#73) |
-| U36 | PU7 | Rurality cap schedule g | B/E | B1 (#64), D1 (#73) |
+| U36 | PU7 | Rurality cap schedule g | B/E | B1 (#64), D1 (#73). 2026-09-29: the form is stated in `docs/MODEL.md` §6 (#64); the schedule is open, D1 (#73) |
 | U37 | PU8 | Whole-metro feasibility per channel | E | D1 (#73) |
-| U38 | PU9 | Compactness objective: diameter or an alternative | B/T | B1 (#64) |
-| U39 | PU10 | Is the corridor floor (lightest chain across a separating unit) the right necessary condition, and how often does it bind on the real extract? Council: as printed, it is not necessary when v separates three or more components (C6). | T/E | B1 (#64), B2 (#65), D1 (#73) |
+| U38 | PU9 | Compactness objective: diameter or an alternative | B/T | B1 (#64). 2026-09-29: T part answered in `docs/MODEL.md` §3.5 (#64): Claims 1–3 hold for any w_S ≥ 0 that depends on S alone. The business choice is open, OD6 (#75) |
+| U39 | PU10 | Is the corridor floor (lightest chain across a separating unit) the right necessary condition, and how often does it bind on the real extract? Council: as printed, it is not necessary when v separates three or more components (C6). | T/E | B1 (#64), B2 (#65), D1 (#73). 2026-09-29: restated in `docs/MODEL.md` §4.2 (#64): the component-versus-rest floor, proved necessary in Proposition D; B2 checks it, and D1 measures how often it binds |
 
 ## Reserved (U14–U29)
 

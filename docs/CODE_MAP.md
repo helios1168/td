@@ -13,6 +13,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `README.md` | what the repo is and how to set it up |
 | `export/export_instance.py`, `export/README.md` | the work-machine exporter and its runbook; standard library only |
 | `docs/CODE_MAP.md` | this file |
+| `docs/MODEL.md` | the support-master model: cells, units, supports, the master and its drawability rows, Claims 1–3, the realizer, the ledger and the audit; every claim tagged proved, claimed or policy |
+| `docs/REFERENCES.md` | what td relies on each paper for: one row per claim, with its key, result, kb page and status |
 | `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md` | the settled/open ledger and the U-numbered unknowns |
 | `docs/lenses/` | one file per lens or council pass, dated, never edited after |
 | `docs/memory/` | facts and decisions; `INDEX.md` is one line per file, written through the `memory-curator` |

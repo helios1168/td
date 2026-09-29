@@ -3,6 +3,8 @@
 # resolves to at least one real file).
 # Adding a new docs/*.md needs a line here AND an owner row in docs/CODE_MAP.md ## Files.
 docs/CODE_MAP.md
+docs/MODEL.md
+docs/REFERENCES.md
 docs/memory/*.md
 docs/problem/*.md
 docs/lenses/*.md
