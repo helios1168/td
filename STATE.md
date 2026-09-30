@@ -4,12 +4,11 @@
 
 ## Now
 
-The overnight wave on m5 finished: the support-master chain #64/#65 and #67–#71 landed, #72 verified it (nine blockers fixed in #61, #67, #69, #70 and #71), and 205 tests pass on `main`. Wave decisions are `DECIDED` comments on each issue. Nothing is mid-flight.
+#79 landed (1cb1b3e, 209 tests): scenarios now carry only their own fine channels. The first real runs, WIFI 51 and IFA 50 (`runs/`, local), both stopped at δ = 0.10. The causes are measured on #73: the rounding margin μ_S (IFA needs ±45%; with μ_S = 0 it fits at 0%) and WH's west-coast component (1.6 districts at K = 11). Waiting on the owner: the margin policy, and K_WH.
 
 ## Next
 
-- `/execute 3`: the fresh v3 extract and channel review, then #73 (price of clipping).
-- Optional: #72 part A's three non-blocking geo.py P2s (#62).
+- After the owner decides, rerun both scenarios and review the maps and scorecards.
 
 ## Blocked
 
