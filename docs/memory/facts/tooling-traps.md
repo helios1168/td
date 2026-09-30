@@ -4,3 +4,7 @@ The evidence behind `AGENTS.md` traps 15 and 16. Filed 2026-09-28 from td#54 ([c
 
 - **Trap 15.** The archived solver harness (tag `archive/pre-support-2026-09`) keyed retries on the engine's own stop reason, `extra["retryable"]`, never on the status it reported to the harness. The new pipeline has no retry harness yet, and the rule carries over to the one it gets.
 - **Trap 16.** Serena resolves relative paths against the hub, not the active worktree, so work in a worktree must pass absolute paths or use Read/Edit. This holds as long as Serena is started against the hub checkout.
+
+## Other tooling facts
+
+- **`tests/run_all.py` has no per-test skip** (td#66, m5 session 01a0ee38 fork 01a0ee3a, 2026-09-29; checked against `tests/run_all.py` at `2949cb0`). Its `skipped` count covers only a `SLOW` module run without `TD_SLOW=1` and tests left out by `-k`. A test that returns early counts as PASS. So a data-dependent test that skips itself, like `tests/test_data.py`'s graph tests without `tl_2025_us_state.zip` (`mem:decisions/sparse-fixture-and-loader`), shows up only in the SKIP line it prints. The `rg -v '^\s*PASS '` filter in `AGENTS.md` keeps that line. This holds until the runner gains a skip status.
