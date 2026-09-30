@@ -22,7 +22,6 @@ from __future__ import annotations
 import gzip
 import json
 import math
-import re
 from dataclasses import dataclass, field
 
 from td import geo
@@ -36,8 +35,6 @@ FIXTURE_ZIPS = 4000
 # lognormal mean/median = exp(sigma^2 / 2) = 2.284, the v2 CONUS ratio (M 8,481.81 over 3,713
 # ZIPs, median 1; mem:facts/instance-versions)
 FIXTURE_SIGMA = 1.285
-
-_ZIP = re.compile(r"\d{5}")
 
 
 @dataclass
@@ -108,9 +105,9 @@ def from_payload(payload: dict) -> Extract:
         raise ValueError("node columns differ in length")
     meta = payload.get("meta", {})
     channels = tuple(meta.get("channels") or dict.fromkeys(nodes["channel"]))
+    cells = [(z, c) for z, c in zip(nodes["z"], nodes["channel"]) if isinstance(z, str)]
     bad = {
-        "ZIP ids not 5-digit strings":
-            sum(not (isinstance(z, str) and _ZIP.fullmatch(z)) for z in nodes["z"]),
+        "ZIP ids not strings": n - len(cells),
         "channels not in the channel list": sum(c not in channels for c in nodes["channel"]),
         "m_rel not finite and >= 0":
             sum(not (isinstance(m, (int, float)) and math.isfinite(m) and m >= 0)
@@ -118,7 +115,7 @@ def from_payload(payload: dict) -> Extract:
         "shares outside [0, 1]":
             sum(not all(0 <= s <= 1 for s in d.values()) for d in nodes["share"])
             + sum(not 0 <= s <= 1 for s in nodes["share_free"]),
-        "duplicate cells": n - len(set(zip(nodes["z"], nodes["channel"]))),
+        "duplicate cells": len(cells) - len(set(cells)),
     }
     bad = {k: v for k, v in bad.items() if v}
     if bad:
