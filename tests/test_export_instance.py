@@ -402,10 +402,180 @@ def test_guard_refuses_the_divisor_in_meta_and_the_filler_name_anywhere():
                    "share_free": [0.0]}, "meta": {"kappa": 123.0}}
     mod.guard.filler_keys = ()
     _refused(lambda: mod.guard(p), mod.GuardError, "divisor")
+    p["meta"] = {"counts": {"Kappa_value": 1.0}}
+    _refused(lambda: mod.guard(p), mod.GuardError, "divisor")
+    p["meta"] = {"channels": ["kappa"]}
+    mod.guard(p)                            # a channel named kappa is a value, not the divisor
     p["meta"] = {"note": "FILLER"}
     mod.guard.filler_keys = ("FILLER",)
     _refused(lambda: mod.guard(p), mod.GuardError, "filler key")
+    p["meta"] = {}
+    doc = {"channels": [{"channel": "filler_wh", "spellings": ["FILLER WH"]}]}
+    _refused(lambda: mod.guard(p, doc), mod.GuardError, "filler key", "channels.json")
     mod.guard.filler_keys = ()
+    _refused(lambda: mod.guard(p, {"kappa": 1.0}), mod.GuardError, "divisor")
+
+
+def test_the_filler_name_in_a_channel_spelling_is_refused_and_nothing_is_written():
+    """#72 A1: the raw spellings go to channels.json, so the sentinel is checked there too."""
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        sales = SALES + [("10001", "r_a", "FA", "FILLER WH", 1.0)]
+        opp = OPP + [("10001", "FILLER WH", 10.0)]
+        rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp, sales=sales, opp=opp))
+        assert not os.path.exists(out_dir), "the guard runs before the output directory exists"
+    assert rc == 2 and payload is None and chans is None, txt
+    assert "channels.json" in txt and "nothing written" in txt
+
+
+def test_a_filler_name_json_would_escape_is_refused_and_nothing_is_written():
+    """#72 A1: json.dumps escapes quotes, backslashes and non-ASCII, so the guard compares
+    decoded strings, NFKC-normalised and case-folded, not the serialized text."""
+    mod = _exporter()
+    for key in ('F"ILLER', "F\\ILLER", "F\u00cdLLER"):
+        channel = f"{key} WH"
+        with tempfile.TemporaryDirectory() as tmp:
+            sales = [("10001", "r_a", "FA", channel, 1.0)]
+            opp = [("10001", channel, 10.0)]
+            rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp, sales=sales, opp=opp),
+                                                    extra=["--filler-key", key])
+            assert not os.path.exists(out_dir), key
+        assert rc == 2 and payload is None and chans is None, (key, txt)
+        assert "filler key" in txt and "nothing written" in txt, (key, txt)
+
+
+def test_the_filler_guard_folds_case_and_unicode_width():
+    mod = _exporter()
+    fullwidth = "\uff26\uff29\uff2c\uff2c\uff25\uff32"     # FILLER in fullwidth letters
+    p = {"nodes": {"z": ["10001"], "channel": ["wh"], "m_rel": [1.0], "share": [{}],
+                   "share_free": [0.0]}, "meta": {"note": f"{fullwidth} wh"}}
+    mod.guard.filler_keys = ("filler",)
+    try:
+        _refused(lambda: mod.guard(p), mod.GuardError, "filler key")
+        p["meta"] = {}
+        _refused(lambda: mod.guard(p, {"Filler": 1}), mod.GuardError, "channels.json")  # a key
+    finally:
+        mod.guard.filler_keys = ()
+
+
+def test_a_filler_name_as_a_key_the_exporter_does_not_write_is_refused():
+    """#72 A1: only the exporter's own field names are exempt from the key check, each named;
+    an unknown key in `meta` or in a channel record is checked like any other."""
+    mod = _exporter()
+    p = {"format": mod.FORMAT, "firm": {}, "meta": {"FILLER": 1},
+         "nodes": {"z": ["10001"], "channel": ["wh"], "m_rel": [1.0], "share": [{}],
+                   "share_free": [0.0]}}
+    mod.guard.filler_keys = ("FILLER",)
+    try:
+        _refused(lambda: mod.guard(p, {"channels": [{"channel": "wh"}]}), mod.GuardError,
+                 "filler key", "the payload")
+        p["meta"] = {"n_filler_keys": 1, "zips_with_filler": 0, "n_filler_rows": 0}
+        mod.guard(p, {"channels": [{"channel": "wh"}]})     # the exporter's own fields pass
+        _refused(lambda: mod.guard(p, {"channels": [{"channel": "wh", "FILLER": 1}]}),
+                 mod.GuardError, "filler key", "channels.json")
+        p["meta"] = {"cand_histogram": {"FILLER": 1}}      # under an exempt field, not exempt
+        _refused(lambda: mod.guard(p), mod.GuardError, "filler key")
+    finally:
+        mod.guard.filler_keys = ()
+
+    build, channels_doc = mod.build, mod.channels_doc
+
+    def build_with_meta_key(*a, **kw):
+        inst = build(*a, **kw)
+        inst.report["FILLER"] = 1
+        return inst
+
+    def doc_with_record_key(inst):
+        doc = channels_doc(inst)
+        doc["channels"][0]["FILLER"] = 1
+        return doc
+
+    for patch in ({"build": build_with_meta_key}, {"channels_doc": doc_with_record_key}):
+        for name, fn in patch.items():
+            setattr(mod, name, fn)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp))
+                assert not os.path.exists(out_dir), patch
+        finally:
+            mod.build, mod.channels_doc = build, channels_doc
+        assert rc == 2 and payload is None and chans is None, (patch, txt)
+        assert "filler key" in txt and "nothing written" in txt, (patch, txt)
+
+
+def test_the_exempt_field_names_are_exactly_the_fields_the_exporter_writes():
+    """The guard's allowlists equal what `write` emits, so a new field is checked until it is
+    named, and no name is exempt that the exporter does not write."""
+    mod = _exporter()
+    for extra in ([], ["--impute-missing-m", "--repair-headroom"]):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp), extra=extra)
+        assert rc == 0, txt
+        assert set(payload) == set(mod.PAYLOAD_SCHEMA), extra
+        assert set(payload["meta"]) == mod.META_FIELDS, extra
+        assert set(payload["nodes"]) == set(mod.NODE_FIELDS), extra
+        assert set(chans) == set(mod.CHANNELS_SCHEMA), extra
+        assert all(set(c) == mod.CHANNEL_FIELDS for c in chans["channels"]), extra
+
+
+def test_a_channel_named_kappa_exports():
+    """#72 A4: the divisor guard looks for a kappa field, not the word in a channel name."""
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        sales = [(z, r, f, "Kappa", v) for z, r, f, v in NAT_SALES]
+        opp = [(z, "Kappa", m) for (z, c), m in M_OF.items() if c == "national"]
+        rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp, sales=sales, opp=opp))
+    assert rc == 0, txt
+    assert payload["meta"]["channels"] == ["kappa"]
+    assert [c["channel"] for c in chans["channels"]] == ["kappa"]
+
+
+def test_negative_or_non_finite_opportunity_is_refused_not_dropped():
+    """#72 A3: an untapped cell with M -5, NaN or infinity used to vanish with exit 0."""
+    mod = _exporter()
+    for bad in ("-5", "NaN", "inf", "-inf"):
+        with tempfile.TemporaryDirectory() as tmp:
+            opp = OPP + [("10004", "National", bad)]
+            rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp, opp=opp))
+        assert rc == 4 and payload is None and chans is None, (bad, txt)
+        assert "10004:national" in txt, bad
+        assert ("negative" if bad == "-5" else "not a finite number") in txt, bad
+
+
+def test_impute_missing_m_still_replaces_a_negative_m_under_book():
+    """The declared repair runs before the negative-total check: a cell with book and M -5
+    gets M = its book, and only a negative cell left over stops the export."""
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        opp = [r for r in OPP if (r[0], r[1]) != ("10003", "WH")] + [("10003", "WH", -5.0)]
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, opp=opp))
+        assert rc == 4 and payload is None and "negative" in txt
+        rc, payload, _, txt, _ = _run(mod, tmp, *_inputs(tmp, opp=opp), out="imputed",
+                                      extra=["--impute-missing-m"])
+    assert rc == 0, txt
+    assert _cells(payload)[("10003", "wh")]["share"] == {"R0000": 1.0}
+    assert payload["meta"]["zips_m_imputed"] == 1
+
+
+def test_a_sales_only_channel_imputed_is_listed_and_loads():
+    """#72 A2: CSV to export to td/data.py. A channel that --impute-missing-m brings in from
+    sales alone joins the channel list after the opportunity table's, so the loader takes it."""
+    from td import data
+    mod = _exporter()
+    with tempfile.TemporaryDirectory() as tmp:
+        sales = SALES + [("10002", "r_d", "FC", "Sales Only", 3.0),
+                         ("10001", "r_d", "FC", "sales-only", 2.0)]
+        rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp, sales=sales),
+                                                extra=["--impute-missing-m"])
+        assert rc == 0, txt
+        assert payload["meta"]["channels"] == CHANNELS + ["sales_only"]
+        rows = {c["channel"]: c for c in chans["channels"]}
+        assert [c["channel"] for c in chans["channels"]] == CHANNELS + ["sales_only"]
+        assert rows["sales_only"]["spellings"] == ["Sales Only", "sales-only"]
+        assert rows["sales_only"]["cells"] == 2 and rows["sales_only"]["sales_rows"] == 2
+        ext = data.load(os.path.join(out_dir, "instance_descaled.json.gz"))
+    assert list(ext.channels) == CHANNELS + ["sales_only"]
+    assert "sales_only" in set(ext.channel)
 
 
 # ------------------------------------------------------------------ input handling

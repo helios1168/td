@@ -41,6 +41,7 @@ import math
 import os
 import re
 import sys
+import unicodedata
 from collections import Counter, defaultdict
 
 __version__ = "0.3.0"
@@ -173,7 +174,7 @@ def build(sales_path, opp_path, theta=THETA_DEFAULT, keep_scale=False,
         return c
 
     # --- opportunity -----------------------------------------------------------
-    M, channels = {}, []
+    M, channels, nonfinite = {}, [], set()
     for r in opp:
         z = norm_id(r[o_zip])
         c = chan(r, o_chan, "opportunity")
@@ -184,6 +185,9 @@ def build(sales_path, opp_path, theta=THETA_DEFAULT, keep_scale=False,
         except (TypeError, ValueError):
             continue                        # blank/absent M: the cell stays out of M here
         cell = (z, c)
+        if not math.isfinite(v):
+            nonfinite.add(cell)             # NaN or infinity parses, but is no opportunity
+            continue
         if channelled:
             # The channelled extract carries a cell's opportunity once across its rows (one
             # row holds it and the duplicate rows hold 0, or several rows hold parts of it),
@@ -197,6 +201,12 @@ def build(sales_path, opp_path, theta=THETA_DEFAULT, keep_scale=False,
                 f"({M[cell]:g} vs {v:g}). With a combined sales+opportunity file, M must be "
                 f"identical on every row of a cell -- this looks like a bad merge.")
         M[cell] = max(v, M.get(cell, v))     # a positive value wins over a stray 0
+    if nonfinite:
+        bad = sorted(nonfinite)
+        raise InputError(
+            f"{len(bad)} opportunity cell(s) hold a value that is not a finite number (NaN or "
+            f"infinity), e.g. {[cell_label(c) for c in bad[:3]]}. A blank M reads as no "
+            f"value; a NaN or infinity is bad data. Fix it upstream before exporting.")
 
     # One divisor for every channel: the median positive cell M, so masses are comparable
     # across channels and no channel is special (td#61).
@@ -234,6 +244,17 @@ def build(sales_path, opp_path, theta=THETA_DEFAULT, keep_scale=False,
         for cell, t in book.items():
             M[cell] = t
             n_imputed += 1
+
+    # A negative cell total is bad data, never a cell to drop quietly: checked here, after
+    # --impute-missing-m has replaced the nonpositive M of every cell with book, so the
+    # declared repair still applies and any negative total left over stops the export.
+    negative = sorted(cell for cell, v in M.items() if v < 0)
+    if negative:
+        raise InputError(
+            f"{len(negative)} cell(s) carry negative opportunity, e.g. "
+            f"{[cell_label(c) for c in negative[:3]]}. A cell cannot hold negative "
+            f"opportunity; fix it upstream (--impute-missing-m replaces it only in a cell "
+            f"with book).")
 
     n_rows = n_joined = n_nonpositive = n_unparsed = n_filler = 0
     rows_by_chan = Counter()
@@ -322,6 +343,11 @@ def build(sales_path, opp_path, theta=THETA_DEFAULT, keep_scale=False,
         if cell not in inst.m_rel and v > 0:
             inst.m_rel[cell] = v / kappa
 
+    # A cell --impute-missing-m made from sales alone can be in a channel the opportunity
+    # table never names. It joins the list after those, in sales-table order, so the list
+    # covers every cell: td/data.py refuses a cell whose channel is not listed.
+    emitted = {c for _, c in inst.m_rel}
+    channels += [c for c in rows_by_chan if c in emitted and c not in channels]
     inst.channels = tuple(channels)
     inst.spellings = {c: sorted(spellings.get(c, ())) for c in channels}
     inst.sales_rows = dict(rows_by_chan)
@@ -499,12 +525,66 @@ def channels_doc(inst):
         for c in inst.channels])
 
 
-def guard(payload):
+def _keys(obj):
+    """Every dict key at any depth of a JSON-shaped object."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield str(k)
+            yield from _keys(v)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            yield from _keys(v)
+
+
+# The exporter's own field names, each named where it is written, which the filler guard does
+# not read: folded, `n_filler_keys` would match a key `FILLER`.  Any other key at any level,
+# a channel name, a rep id or a field this list does not name, and every string value, is
+# checked: the guard fails closed (#72 A1).  A test holds each list equal to what is emitted.
+META_FIELDS = frozenset((
+    "exporter", "version", "theta", "lam", "scale",                     # `write`
+    "n_zips", "n_cells", "channels", "n_reps", "n_sales_rows",          # `build`'s report
+    "n_sales_rows_nonpositive", "join_rate", "cand_histogram", "zips_uncontested",
+    "zips_vacant", "zips_untapped", "zips_with_filler", "n_filler_rows", "n_filler_keys",
+    "zips_m_imputed", "zips_headroom_repaired", "repair_added_share", "zips_contested",
+    "max_candidates", "scale_stripped"))
+NODE_FIELDS = ("z", "channel", "m_rel", "share", "share_free")
+CHANNEL_FIELDS = frozenset(("channel", "spellings", "sales_rows", "cells", "zips",
+                            "opportunity_share"))              # `channels_doc`, per channel
+PAYLOAD_SCHEMA = {"format": None, "firm": None, "meta": dict.fromkeys(META_FIELDS),
+                  "nodes": dict.fromkeys(NODE_FIELDS)}
+CHANNELS_SCHEMA = {"channels": [dict.fromkeys(CHANNEL_FIELDS)]}
+
+
+def _strings(obj, schema=None):
+    """Every dict key and every string value at any depth of a JSON-shaped object, less the
+    field names `schema` places: a dict maps each field it names to that value's schema, and
+    [s] is a list of s.  A key the schema does not name is yielded."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            fixed = isinstance(schema, dict) and k in schema
+            if not fixed:
+                yield str(k)
+            yield from _strings(v, schema.get(k) if isinstance(schema, dict) else None)
+    elif isinstance(obj, (list, tuple)):
+        item = schema[0] if isinstance(schema, list) else None
+        for v in obj:
+            yield from _strings(v, item)
+    elif isinstance(obj, str):
+        yield obj
+
+
+def _fold(text):
+    """The form the filler guard compares: NFKC-normalised, case-folded, trimmed."""
+    return unicodedata.normalize("NFKC", str(text)).casefold().strip()
+
+
+def guard(payload, channels=None):
     """Refuse to emit anything that looks like a currency amount, or an upstream label.
 
     Shares are in [0,1] by construction and m_rel is a ratio to the median, so a value in the
-    thousands means the descaling did not happen.  This is the last line before the file is
-    written, not a diagnostic.
+    thousands means the descaling did not happen.  This is the last line before either file is
+    written, not a diagnostic: `channels` is the `channels.json` document, and the filler
+    sentinel and the divisor are refused in it as in the payload.
 
     The median is taken over the positive m_rel of every cell, the set kappa was the median
     of, so it is 1.0 by construction up to imputed and repaired cells.
@@ -533,20 +613,30 @@ def guard(payload):
     for s in payload["nodes"]["share_free"]:
         if not (0.0 <= s <= 1.0):
             raise GuardError(f"free share {s!r} outside [0,1] -- not a share")
-    for key in guard.filler_keys:
-        if key and key in json.dumps(payload):
-            raise GuardError(f"filler key {key!r} appears in the payload; the sentinel's "
-                             f"own name must not leave -- only the count does")
-    if "kappa" in json.dumps(payload.get("meta", {})):
-        raise GuardError("meta carries kappa; the divisor must not leave")
+    # on decoded strings, not serialized JSON: json.dumps escapes quotes, backslashes and
+    # non-ASCII, so a substring search of the text misses those spellings (#72 A1)
+    docs = {"the payload": (payload, PAYLOAD_SCHEMA)}
+    if channels is not None:
+        docs["channels.json"] = (channels, CHANNELS_SCHEMA)
+    keys = [(key, _fold(key)) for key in guard.filler_keys if _fold(key)]
+    for name, (doc, schema) in docs.items():
+        for text in _strings(doc, schema):
+            folded = _fold(text)
+            for key, needle in keys:
+                if needle in folded:
+                    raise GuardError(f"filler key {key!r} appears in {name}; the sentinel's "
+                                     f"own name must not leave -- only the count does")
+    # a field named for the divisor, not the word in a value: a channel may be called kappa
+    for name, doc in (("meta", payload.get("meta", {})), ("channels.json", channels)):
+        if any("kappa" in k.lower() for k in _keys(doc)):
+            raise GuardError(f"{name} carries a kappa field; the divisor must not leave")
 
 
-guard.filler_keys = ()          # set by `write`; checked above against the whole payload
+guard.filler_keys = ()          # set by `write`; checked above against both documents
 
 
 def write(inst, out_dir, theta, lam, verbose=True, filler_keys=()):
     """Write the format-3 instance and `channels.json` beside it, both or neither."""
-    os.makedirs(out_dir, exist_ok=True)
     rank = {c: i for i, c in enumerate(inst.channels)}
     cells = sorted(inst.m_rel, key=lambda cell: (cell[0], rank.get(cell[1], len(rank))))
     nodes = dict(
@@ -569,14 +659,16 @@ def write(inst, out_dir, theta, lam, verbose=True, filler_keys=()):
             **{k: v for k, v in inst.report.items() if k != "kappa"},
         ),
     )
+    chans = channels_doc(inst)
     guard.filler_keys = tuple(filler_keys)
-    guard(payload)
+    guard(payload, chans)               # both documents, before either file is opened
+    os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "instance_descaled.json.gz")
     with gzip.open(path, "wt", encoding="utf-8") as fh:
         json.dump(payload, fh, separators=(",", ":"), sort_keys=True)
     chan_path = os.path.join(out_dir, "channels.json")
     with open(chan_path, "w", encoding="utf-8") as fh:
-        json.dump(channels_doc(inst), fh, indent=2, sort_keys=True)
+        json.dump(chans, fh, indent=2, sort_keys=True)
         fh.write("\n")
     if verbose:
         print(f"wrote {path}  ({os.path.getsize(path)/1e6:.2f} MB)")

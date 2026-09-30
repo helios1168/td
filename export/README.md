@@ -87,7 +87,8 @@ the whole extract is one channel, `national`.
 spaces, hyphens, slashes, parentheses or dots becomes one underscore, and a leading or
 trailing underscore is dropped. So `Wells (WH)`, `WELLS-WH` and `wells wh` are one channel,
 `wells_wh`. A value that normalises to nothing is refused. The channel list is the order in
-which the opportunity table first names each channel.
+which the opportunity table first names each channel. A channel that only `--impute-missing-m`
+brings in, from sales rows alone, follows those, in sales-table order.
 
 A cell is a (zip, channel) pair:
 
@@ -191,14 +192,16 @@ Checked before anything is written; any failure writes nothing.
 |---|---|
 | a channel column on one table only, or a blank channel value | 4 |
 | two different M values for one zip in a channel-less extract | 4 — a bad merge |
+| an opportunity value that is NaN or infinite | 4 — bad data; a blank M reads as no value |
+| a cell whose opportunity totals below 0, after `--impute-missing-m` | 4 — a cell cannot hold negative opportunity |
 | join rate below 0.99 | 4 — almost always an id-vintage or leading-zero problem, not missing data |
 | any share outside [0,1] | 3 — sales exceed opportunity in that cell |
 | pointwise headroom `1 ≥ maxᵢ(sᵢ + θ(t − sᵢ))` violated | 3 — the opportunity figure is smaller than the book it should contain. A modelling question; settle it first. |
 | median positive `m_rel` outside [0.5, 2.0] | 2 — the descaling did not happen |
 | any `m_rel` above 1e4 | 2 — looks like a currency amount |
 | any `m_rel` below 0 | 2 — a cell cannot hold negative opportunity |
-| `kappa` present in `meta` | 2 — the divisor must not leave |
-| the filler sentinel's name anywhere in the payload | 2 — only its count leaves |
+| a field named `kappa` in `meta` or `channels.json` | 2 — the divisor must not leave (a channel may still be called kappa) |
+| the filler sentinel's name anywhere in the payload or `channels.json`, in any value or key, raw channel spellings included, in any case or Unicode form (compared NFKC-normalised and case-folded); only the exporter's own field names, each listed in the code, are exempt | 2 — only its count leaves |
 | `--rep-ids` without `--rep-ids-channel`, or naming no channel of the extract | 4 |
 | a surrogate id's book moved in `--rep-ids-channel`, under `--rep-ids` | 2 — the ids no longer mean what they meant |
 
