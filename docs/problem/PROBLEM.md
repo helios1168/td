@@ -14,7 +14,7 @@ in a band around τ_c. Three parts do this:
 2. a ZIP realizer that turns planned unit shares into whole-ZIP borders;
 3. an audited `(ZIP, fine channel) → district` ledger.
 
-The full model is #52 §4 until B1 (#64) writes it out as `docs/MODEL.md`. Staffing is out of
+The full model is `docs/MODEL.md` (#64), pending verification in #65. Staffing is out of
 scope until it returns: scenarios are district-only plans.
 
 The previous ledger, its FRAME §9 rows (2026-08-31 to 2026-09-02) and the twelve questions for
