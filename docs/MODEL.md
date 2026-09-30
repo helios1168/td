@@ -53,7 +53,9 @@ such channels from the run, before solving, and reports each one **[policy #65 F
 for every v ∈ V_c and τ_c > 0 for every channel solved. This is what the drawn shares (§4.1, §8),
 Proposition D and the divided formulas of Claim 2 need. ZIPs with m_z = 0 inside a unit with
 M_v > 0 stay in scope. No share convention for a zero-opportunity unit is assumed: a dropped
-unit's cells in D_c carry no opportunity, are not drawn in c, and are listed with the unit.
+unit's cells in D_c carry no opportunity and are not drawn in c. They, and the cells of a dropped
+channel, keep their ledger rows with the district blank and the reason `dropped: zero
+opportunity` (§8), and the audit lists them without failing (§9).
 
 A **final tolerance** [L^fin_c, U^fin_c] ⊇ [L_c, U_c] is declared per scenario and judges the
 drawn map **[policy OD1]**.
@@ -566,9 +568,10 @@ open **[claimed U34]**. Bugs #1, #7 and #11 become tests in C4.
 The ledger's rules are policies **[policy S25, S26]**, except where a bullet is tagged.
 
 - A cell's owner is the district that its channel's realizer gave the cell's ZIP to. The domains
-  partition the cells, so each cell of a unit in V_c has exactly one owner, who holds all of its
-  opportunity **[proved]**. A cell of a unit dropped for zero opportunity (§1) has no owner in c
-  and is listed.
+  partition the cells, so each cell of a unit in V_c of a channel solved has exactly one owner, who
+  holds all of its opportunity **[proved]**. A cell of a unit or channel dropped for zero opportunity (§1) has no
+  owner in c. It keeps its ledger row, with the district blank and the reason `dropped: zero
+  opportunity`.
 - The master's shares are targets and are never read as masses after the realizer.
 - A district's drawn share of a unit is the opportunity of its ZIPs in the unit divided by the
   unit's opportunity, defined when M_v > 0, as it is for every unit in V_c (§1).
@@ -579,8 +582,10 @@ The ledger's rules are policies **[policy S25, S26]**, except where a bullet is 
 
 One `scorecard.md` per run, in the run directory. Each check is a policy of #52 §4, with its
 source where one is named **[policy S28, OD1, OD3, C16]**:
-- one owner per cell;
-- the district count per channel equals K_c;
+- one owner per cell of the retained domain, the cells of units in V_c of the channels solved;
+- the district count equals K_c for each channel solved;
+- the cells of units and channels dropped for zero opportunity (§1) are listed, each with a blank
+  district and the reason `dropped: zero opportunity`, and do not fail the run;
 - final bands on the drawn masses, with every breach listed against the final tolerance
   **[policy OD1]**. A breach caused by a share that could not be drawn fails the run and names the
   unit and district **[policy S28]**;
