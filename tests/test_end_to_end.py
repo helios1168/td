@@ -3,7 +3,9 @@
 The 51 scenario runs at the δ each channel can meet on the fixture (`test_realize.FIXTURE_DELTA`;
 its own 0.10 is infeasible there, #68), and its scorecard's hard checks must pass.  The CLI runs
 the disconnected-whole fixture spec to its stop, and redraws the 51 run's maps from its ledger.
-TIGER/Line 2025 state polygons are needed (`data/public/` or `$TD_REPO`'s); SKIP without.
+TIGER/Line 2025 state polygons are needed (`data/public/` or `$TD_REPO`'s); SKIP without.  The
+maps also need the ZCTA520 polygons there; without them the run must say `MAPS_SKIPPED`.  A run
+refuses a directory an earlier run wrote (the toy of `test_output`, no download needed).
 """
 from __future__ import annotations
 
@@ -14,6 +16,7 @@ import functools
 import io
 import json
 import os
+import sys
 import tempfile
 import tomllib
 
@@ -84,6 +87,13 @@ def test_the_51_maps_are_drawn_for_every_channel_and_the_maps_command_redraws_th
     if got is None:
         return
     res, _, public = got
+    report = json.load(open(res.paths["run"], encoding="utf-8"))
+    if output.zcta_file(public) is None:
+        print(f"SKIP  test_end_to_end.py: no {output.ZCTA_FILE} in {public}; the 51 maps were "
+              "not drawn", file=sys.stderr)
+        assert report["maps"] == output.MAPS_SKIPPED and "maps" not in res.paths
+        return
+    assert report["maps"] == "drawn" and report["maps_missing_polygons"] == []
     assert set(res.paths["maps"]) == {"national", "WH", "FI", "WIFI"}
     for path in res.paths["maps"].values():
         os.remove(path)
@@ -92,6 +102,44 @@ def test_the_51_maps_are_drawn_for_every_channel_and_the_maps_command_redraws_th
         assert main(["maps", res.out, "--public", public]) == 0
     assert all(os.path.exists(p) for p in res.paths["maps"].values())
     assert "national: " in buf.getvalue() and "13 districts" in buf.getvalue()
+
+
+def _snapshot(out):
+    return {os.path.relpath(os.path.join(d, f), out): open(os.path.join(d, f), "rb").read()
+            for d, _, fs in os.walk(out) for f in fs}
+
+
+def test_a_run_refuses_a_used_directory_and_a_stop_leaves_no_passing_outputs():
+    from tests import test_output as to
+    extract, graph = to._toy_inputs()
+    out = tempfile.mkdtemp(prefix="td-e2e-")
+    res = output.run(to._toy_spec(), extract, out, graph, ts._reference(), maps=False)
+    assert res.verdict == "pass"
+    before = _snapshot(out)
+    assert {"run.json", "scorecard.md", "solver.json", "ledger.csv", "districts.csv"} <= set(before)
+    for channel in ({"k": 3, "delta": 0.0, "final_delta": 0.0}, {}):     # infeasible, feasible
+        try:
+            output.run(to._toy_spec(**channel), extract, out, graph, ts._reference(), maps=False)
+        except output.RunError as e:
+            assert "not an empty directory" in str(e) and "--out" in str(e), str(e)
+        else:
+            raise AssertionError("a run wrote into a used directory")
+        assert _snapshot(out) == before
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        assert main(["run", ts.S51, "--fixture", "0", "--out", out, "--no-maps"]) == 1
+    assert "run stopped" in err.getvalue() and "not an empty directory" in err.getvalue()
+    assert _snapshot(out) == before
+
+    fresh = tempfile.mkdtemp(prefix="td-e2e-")
+    try:
+        output.run(to._toy_spec(k=3, delta=0.0, final_delta=0.0), extract, fresh, graph,
+                   ts._reference(), maps=False)
+    except output.RunError as e:
+        assert "no plan for X" in str(e)
+    else:
+        raise AssertionError("no RunError")
+    assert set(os.listdir(fresh)) == {"solver.json"}       # no run.json or scorecard.md
 
 
 def test_the_cli_stops_the_disconnected_whole_fixture_spec_and_names_the_piece():

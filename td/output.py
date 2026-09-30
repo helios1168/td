@@ -4,7 +4,8 @@
 instance on the declared ZIP graph, each channel's master (`td.master`) and map (`td.realize`),
 then the ledger, its audit (`td.audit`), the district names and the maps, all in one run
 directory.  A spec the loader refuses, a channel with no plan and a realizer stop each end the run
-with the reason (S28); a failed audit still writes everything and exits 1.
+with the reason (S28); a failed audit still writes everything and exits 1.  A run writes only into
+a new or empty directory, so no output of an earlier run can outlive a stop.
 
 **The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the CONUS
 extract.  It keeps the tagged `scenarios.csv` columns (`LEGACY_COLUMNS`, in order) and adds the
@@ -22,17 +23,28 @@ ledger back from the file, so it checks what was written.
 the ledger; a district with none takes `rural <state>` for its heaviest state.  Districts of a
 channel that share a name add their next CBSA, and any still alike an ordinal by drawn mass.
 
-**Maps** (`maps/<channel>.png`) read only the ledger file: each ZIP's 2025 gazetteer point, colored
-by its district, over TIGER/Line 2025 state outlines when the file is at hand, with labels at the
-principal cities of the channel's `TOP_METROS` largest metros by 2025 population.  The principal
-cities are the ones the 2025 CBSA title names, placed at their 2025 gazetteer place.
+**Pieces** (`ledger_pieces`) are the components of the ZIPs each district holds in the ledger, on
+the declared graph and in the audit's order, so the scorecard, `run.json` and `districts.csv`
+count the same pieces.  A piece inside a realizer piece keeps its cause; one inside the
+realizer's main component was joined only through ZIPs the ledger has no cell for in the channel
+(`CONNECTOR`).
+
+**Maps** (`maps/<channel>.png`) read only the ledger file: each ZCTA the ledger gives a district is
+its TIGER/Line 2025 ZCTA520 polygon (#52 §5.2), simplified by `SIMPLIFY_M` for the figure and
+filled in its district's color, over TIGER/Line 2025 state outlines when the file is at hand, with
+labels at the principal cities of the channel's `TOP_METROS` largest metros by 2025 population.
+The principal cities are the ones the 2025 CBSA title names, placed at their 2025 gazetteer place.
+Only the run's ZCTAs are read from the national file.  Without the file no map is drawn and
+`run.json` says `MAPS_SKIPPED`; a ledger ZCTA the file lacks is listed there, never dropped silently.
 """
 from __future__ import annotations
 
 import collections
 import csv
 import json
+import math
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 
@@ -44,7 +56,11 @@ LEGACY_COLUMNS = ("scenario", "zip_code", "current_channel", "state", "model_cha
 COLUMNS = LEGACY_COLUMNS + ("county", "cbsa", "place", "district_name", "m_rel", "reason")
 DROPPED = audit.DROPPED
 NOT_PLACED = "not placed: not a vertex of the declared ZIP graph"
+CONNECTOR = "connector ZIP not in ledger"
 TOP_METROS = 10
+ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
+SIMPLIFY_M = 250.0          # the figures' simplification, as the 2026-09-09 menu chose
+MAPS_SKIPPED = "maps skipped: ZCTA polygons missing"
 
 
 class RunError(RuntimeError):
@@ -79,7 +95,8 @@ def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
 def run(s, extract, out: str, graph: dict | None = None, reference=None,
         public: str = geo.PUBLIC_DIR, time_limit: float | None = None, maps: bool = True,
         source: str = "") -> Result:
-    """Spec `s` on `extract` into the run directory `out` (module docstring)."""
+    """Spec `s` on `extract` into the run directory `out`, new or empty (module docstring)."""
+    check_out(out)
     for c in s.channels:
         if tdspec.hook(s, c) is not None:
             raise RunError(f"channel {c} names a hook, and the run has no place to call one yet")
@@ -108,10 +125,12 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     led = read_ledger(paths["ledger"])
     with open(os.path.join(geo.REFERENCE_DIR, "MANIFEST.json"), encoding="utf-8") as fh:
         manifest = json.load(fh)
-    checks = audit.audit(audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref))
+    split = ledger_pieces(led, graph, drawings)
+    checks = audit.audit(audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref,
+                                   split))
     paths["scorecard"] = audit.write_scorecard(out, checks, f"{s.name} ({source or 'extract'})")
     paths["districts"] = write_districts(os.path.join(out, "districts.csv"), inst, plans,
-                                         drawings, names)
+                                         drawings, names, split)
     report = {
         "scenario": s.name, "spec": s.path, "source": source, "verdict": audit.verdict(checks),
         "cells": len(led), "zips": len({r["zip_code"] for r in led}),
@@ -123,16 +142,29 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "disconnected_units": sorted(inst.report.get("disconnected", {})),
         "channels": {c: {"k": inst.channels[c].k, "delta": plans[c].delta,
                          "tier": audit.tier(reports[c]), "status": reports[c]["status"],
-                         "moved": len(d.moved), "vanished": len(d.vanished), **d.counts()}
+                         "moved": len(d.moved), "vanished": len(d.vanished),
+                         **piece_counts(split, c)}
                      for c, d in drawings.items()}}
+    if not maps:
+        report["maps"] = "not drawn (--no-maps)"
+    elif zcta_file(public) is None:
+        report["maps"] = MAPS_SKIPPED
+    else:
+        drawn = draw_maps(paths["ledger"], os.path.join(out, "maps"), ref, areas, public)
+        paths["maps"] = {c: m["path"] for c, m in drawn.items()}
+        report["maps"] = "drawn"
+        report["maps_missing_polygons"] = sorted({z for m in drawn.values() for z in m["missing"]})
     paths["run"] = os.path.join(out, "run.json")
     with open(paths["run"], "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2, sort_keys=True)
         fh.write("\n")
-    if maps:
-        drawn = draw_maps(paths["ledger"], os.path.join(out, "maps"), ref, areas, public)
-        paths["maps"] = {c: m["path"] for c, m in drawn.items()}
     return Result(out, report["verdict"], checks, paths, report)
+
+
+def check_out(out: str) -> None:
+    """Stop unless the run directory `out` is new or empty, so no earlier output survives a stop."""
+    if os.path.exists(out) and (not os.path.isdir(out) or os.listdir(out)):
+        raise RunError(f"{out} exists and is not an empty directory; pass a fresh --out or remove it")
 
 
 # ------------------------------------------------------------------------------ the ledger
@@ -205,9 +237,10 @@ def read_ledger(path: str) -> list:
 
 
 def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: dict, names: dict,
-              manifest: dict | None = None, reference=None) -> audit.Run:
+              manifest: dict | None = None, reference=None, split: dict | None = None) -> audit.Run:
     """`td.audit.Run` over the ledger `rows`: the cells of placed ZIPs, the expected cells from
-    `extract` (the input, not the ledger), and the maps' planned and drawn shares as diagnostics."""
+    `extract` (the input, not the ledger), the maps' planned and drawn shares as diagnostics, and
+    the causes of the ledger's pieces (`split`, `ledger_pieces` of `rows` when None)."""
     ids = district_ids(drawings)
     placed = inst.units.unit_of
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
@@ -216,15 +249,52 @@ def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: d
     expected = {(z, f) for z, f in zip(extract.z, extract.channel) if z in placed}
     chans = {c: audit.Channel(ch.k, *ch.final_band) for c, ch in inst.channels.items()}
     mode = {(c, v): ch.mode[v] for c, ch in inst.channels.items() for v in ch.units}
-    planned, reported, causes = {}, {}, {}
+    planned, reported = {}, {}
     for c, d in drawings.items():
         M = inst.channels[c].M
         planned.update({(c, v, ids[c, j]): a / M[v] for (v, j), a in d.planned.items()})
         reported.update({(c, v, ids[c, j]): x / M[v] for (v, j), x in d.drawn.items()})
-        for pc in d.pieces:
-            causes.update({(ids[c, pc.district], z): pc.cause for z in pc.zips})
+    split = ledger_pieces(rows, graph, drawings) if split is None else split
+    causes = {(j, z): pc.cause for (_, j), pcs in split.items() for pc in pcs for z in pc.zips}
     return audit.Run(cells, chans, expected, dict(placed), mode, planned, reported, graph, causes,
                      metro_exceptions(inst, reference), manifest, reports, names)
+
+
+def ledger_pieces(rows: list, graph: dict, drawings: dict) -> dict:
+    """{(channel, district id): [realize.Piece]}, every district's pieces in the ledger `rows`: the
+    components of the ZIPs it holds there on the declared graph's explicit vertices (trap 21),
+    ordered as `td.audit.check_contiguity` orders them, less the first.  A piece inside a piece
+    of the realizer's map takes its cause; one inside the map's main component takes `CONNECTOR`."""
+    import networkx as nx
+    g = nx.Graph()
+    vertices = set(graph["vertices"])
+    g.add_nodes_from(vertices)
+    g.add_edges_from((a, b) for a, b, *_ in graph["edges"] if a in vertices and b in vertices)
+    held: dict = collections.defaultdict(collections.Counter)
+    for r in rows:
+        if r["district"]:
+            held[r["model_channel"], r["district"]][r["zip_code"]] += float(r["m_rel"])
+    ids = district_ids(drawings)
+    cause_of = {(c, ids[c, pc.district], z): pc.cause
+                for c, d in drawings.items() for pc in d.pieces for z in pc.zips}
+    out = {}
+    for (c, j), zips in sorted(held.items()):
+        comps = sorted(nx.connected_components(g.subgraph(z for z in zips if z in g)),
+                       key=lambda s: (-sum(zips[z] for z in s), min(s)))
+        out[c, j] = [realize.Piece(j, tuple(sorted(comp)), math.fsum(zips[z] for z in comp),
+                                   cause_of.get((c, j, min(comp)), CONNECTOR))
+                     for comp in comps[1:]]
+    return out
+
+
+def piece_counts(split: dict, channel: str) -> dict:
+    """U34 for one channel from `ledger_pieces`, in the shape of `realize.Drawing.counts`."""
+    pcs = [pc for (c, _), ps in split.items() if c == channel for pc in ps]
+    causes = sorted({pc.cause for pc in pcs})
+    return {"pieces": len(pcs), "districts": len({pc.district for pc in pcs}),
+            "pieces_by_cause": dict(collections.Counter(pc.cause for pc in pcs)),
+            "districts_by_cause": {k: len({pc.district for pc in pcs if pc.cause == k})
+                                   for k in causes}}
 
 
 def metro_exceptions(inst, reference=None) -> list:
@@ -241,8 +311,9 @@ def metro_exceptions(inst, reference=None) -> list:
     return out
 
 
-def write_districts(path: str, inst, plans: dict, drawings: dict, names: dict) -> str:
-    """One row per district: its id, name, copy, support, planned and drawn mass, and pieces."""
+def write_districts(path: str, inst, plans: dict, drawings: dict, names: dict, split: dict) -> str:
+    """One row per district: its id, name, copy, support, planned and drawn mass, and its pieces
+    in the ledger (`ledger_pieces`)."""
     ids = district_ids(drawings)
     cols = ("channel", "district", "district_name", "copy", "support", "planned_mass",
             "drawn_mass", "pieces")
@@ -253,7 +324,7 @@ def write_districts(path: str, inst, plans: dict, drawings: dict, names: dict) -
             for cp in sorted(plans[c].copies, key=lambda cp: ids[c, cp.name]):
                 j = ids[c, cp.name]
                 w.writerow((c, j, names.get(j, ""), cp.name, "+".join(sorted(cp.support)), cp.total,
-                            d.mass[cp.name], sum(1 for pc in d.pieces if pc.district == cp.name)))
+                            d.mass[cp.name], len(split.get((c, j), ()))))
     return path
 
 
@@ -382,20 +453,57 @@ def _places(areas, reference) -> dict:
     return out
 
 
+def zcta_file(public: str = geo.PUBLIC_DIR) -> str | None:
+    """The TIGER/Line 2025 ZCTA520 file under `public`, or None when it is missing or not a zip."""
+    path = os.path.join(public, ZCTA_FILE)
+    return path if os.path.exists(path) and geo._valid_download(path) else None
+
+
+def zcta_polygons(zips, public: str = geo.PUBLIC_DIR) -> dict:
+    """{ZCTA: polygon} in `geo.CRS`, simplified by `SIMPLIFY_M`, for the `zips` the ZCTA520 file
+    holds.  Only those are read: the file is 529 MB, and a `where` filter keeps it out of memory."""
+    path = zcta_file(public)
+    if path is None:
+        raise RunError(f"{MAPS_SKIPPED}: no {ZCTA_FILE} in {public}")
+    zs = sorted(z for z in set(zips) if re.fullmatch(r"\d{5}", z))
+    if not zs:
+        return {}
+    df = geo._read(path, ["ZCTA5CE20"], where=f"ZCTA5CE20 IN ({','.join(repr(z) for z in zs)})")
+    return {z: poly.simplify(SIMPLIFY_M, preserve_topology=True)
+            for z, poly in zip(df["ZCTA5CE20"], df.geometry)}
+
+
+def _polygon_path(geom):
+    """A matplotlib compound path of `geom`'s rings, oriented so the nonzero rule leaves holes."""
+    import numpy as np
+    from matplotlib.path import Path
+    from shapely.geometry.polygon import orient
+    rings = [ring for part in getattr(geom, "geoms", [geom]) if not part.is_empty
+             for ring in (orient(part, 1.0).exterior, *orient(part, 1.0).interiors)]
+    return Path.make_compound_path(*(Path(np.asarray(r.coords)[:, :2], closed=True) for r in rings))
+
+
 def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
               public: str = geo.PUBLIC_DIR, top: int = TOP_METROS) -> dict:
-    """{channel: {"path", "districts", "labels"}}: one map per planning channel, drawn only from
-    the ledger file at `ledger_path` (module docstring)."""
+    """{channel: {"path", "districts", "labels", "zctas", "missing"}}: one map per planning channel,
+    drawn only from the ledger file at `ledger_path` (module docstring).  `zctas` counts the
+    polygons drawn and `missing` lists the ledger's ZCTAs the ZCTA520 file lacks.  Without that
+    file it draws nothing and returns {} (`MAPS_SKIPPED`)."""
+    if zcta_file(public) is None:
+        return {}
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.patheffects as pe
     import matplotlib.pyplot as plt
     import pandas as pd
+    import shapely
+    from matplotlib.collections import PatchCollection
+    from matplotlib.patches import Patch, PathPatch
     ref = geo.read_reference() if reference is None else reference
     areas = read_areas() if areas is None else areas
     led = pd.read_csv(ledger_path, dtype=str, keep_default_na=False)
     led = led[led["district"] != ""].drop_duplicates(["model_channel", "zip_code"])
-    at = ref.set_index("zcta")
+    polys = zcta_polygons(led["zip_code"], public)
     titles, pop, places = cbsa_titles(areas), cbsa_population(ref), _places(areas, ref)
     outlines = []
     path = os.path.join(public, "tl_2025_us_state.zip")
@@ -405,17 +513,21 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
     os.makedirs(out_dir, exist_ok=True)
     out = {}
     for c, g in led.groupby("model_channel", sort=True):
-        x = at.loc[g["zip_code"], "x"].astype(float).to_numpy()
-        y = at.loc[g["zip_code"], "y"].astype(float).to_numpy()
         fig, ax = plt.subplots(figsize=(12, 8))
         for poly in outlines:
             for part in getattr(poly, "geoms", [poly]):
                 ax.plot(*part.exterior.xy, color="0.75", linewidth=0.4, zorder=1)
         districts = sorted(g["district"].unique())
+        drawn, handles = [], []
         for i, j in enumerate(districts):
-            sel = (g["district"] == j).to_numpy()
-            ax.scatter(x[sel], y[sel], s=4, color=colors[i % len(colors)], zorder=2,
-                       label=f"{j} {g['district_name'][sel].iloc[0]}")
+            sel = g[g["district"] == j]
+            shapes = [polys[z] for z in sel["zip_code"] if z in polys]
+            color = colors[i % len(colors)]
+            ax.add_collection(PatchCollection([PathPatch(_polygon_path(p)) for p in shapes],
+                                              facecolor=color, edgecolor=color, linewidth=0.2,
+                                              zorder=2))
+            handles.append(Patch(facecolor=color, label=f"{j} {sel['district_name'].iloc[0]}"))
+            drawn += shapes
         metros = sorted((code for code in set(g["cbsa"]) - {""}),
                         key=lambda code: (-pop.get(code, 0.0), code))[:top]
         labels = []
@@ -425,15 +537,18 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
                 ax.annotate(city, (px, py), xytext=(3, 3), textcoords="offset points", fontsize=7,
                             zorder=4, path_effects=[pe.withStroke(linewidth=2, foreground="white")])
                 labels.append(city)
-        pad = 0.03 * max(x.max() - x.min(), y.max() - y.min(), 1.0)
-        ax.set_xlim(x.min() - pad, x.max() + pad)
-        ax.set_ylim(y.min() - pad, y.max() + pad)
+        if drawn:
+            x0, y0, x1, y1 = shapely.total_bounds(drawn)
+            pad = 0.03 * max(x1 - x0, y1 - y0, 1.0)
+            ax.set_xlim(x0 - pad, x1 + pad)
+            ax.set_ylim(y0 - pad, y1 + pad)
         ax.set_aspect("equal")
         ax.set_axis_off()
         ax.set_title(f"{g['scenario'].iloc[0]}: {c}, {len(districts)} districts")
-        ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6, markerscale=2,
+        ax.legend(handles=handles, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6,
                   frameon=False)
-        out[c] = {"path": os.path.join(out_dir, f"{c}.png"), "districts": districts, "labels": labels}
+        out[c] = {"path": os.path.join(out_dir, f"{c}.png"), "districts": districts, "labels": labels,
+                  "zctas": len(drawn), "missing": sorted(set(g["zip_code"]) - set(polys))}
         fig.savefig(out[c]["path"], dpi=120, bbox_inches="tight")
         plt.close(fig)
     return out
@@ -447,20 +562,21 @@ def main_run(argv=None) -> int:
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--extract", help="a td_instance_descaled/3 extract")
     src.add_argument("--fixture", type=int, metavar="SEED", help="the seeded sparse fixture")
-    ap.add_argument("--out", help="the run directory (default runs/<scenario>)")
+    ap.add_argument("--out", help="the run directory, new or empty (default runs/<scenario>)")
     ap.add_argument("--public", default=geo.PUBLIC_DIR, help="where the 2025 downloads are cached")
     ap.add_argument("--time-limit", type=float, help="seconds for each channel's master")
     ap.add_argument("--no-maps", action="store_true", help="skip the maps")
     a = ap.parse_args(argv)
     try:
         s = tdspec.load(a.spec)
+        out = a.out or os.path.join(geo.ROOT, "runs", s.name)
+        check_out(out)
         ref = geo.read_reference()
         if a.fixture is not None:
             fx = data.fixture(a.fixture, channels=s.fine_channels, reference=ref, public=a.public)
             extract, graph, source = fx.extract, fx.graph, f"fixture seed {a.fixture}"
         else:
             extract, graph, source = data.load(a.extract), None, os.path.basename(a.extract)
-        out = a.out or os.path.join(geo.ROOT, "runs", s.name)
         res = run(s, extract, out, graph, ref, a.public, a.time_limit, not a.no_maps, source)
     except (tdspec.SpecError, master.MasterError, realize.RealizeError, RunError) as e:
         print(f"run stopped: {e}", file=sys.stderr)
@@ -468,6 +584,11 @@ def main_run(argv=None) -> int:
     for c, r in res.report["channels"].items():
         print(f"{c}: K = {r['k']}, δ = {r['delta']}, {r['status']}, tier {r['tier']}, "
               f"{r['pieces']} pieces, {r['moved']} moved")
+    if res.report["maps"] == MAPS_SKIPPED:
+        print(f"{MAPS_SKIPPED}: no {ZCTA_FILE} in {a.public}")
+    elif res.report.get("maps_missing_polygons"):
+        print(f"maps: {len(res.report['maps_missing_polygons'])} ledger ZCTAs have no polygon "
+              "(run.json lists them)")
     print(f"audit: {res.verdict}; {res.out}")
     return 0 if res.verdict == "pass" else 1
 
@@ -477,12 +598,17 @@ def main_maps(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m td maps", description="redraw a run's maps "
                                  "from its ledger.csv")
     ap.add_argument("run", help="a run directory")
-    ap.add_argument("--public", default=geo.PUBLIC_DIR, help="where tl_2025_us_state.zip is")
+    ap.add_argument("--public", default=geo.PUBLIC_DIR,
+                    help=f"where {ZCTA_FILE} and tl_2025_us_state.zip are")
     a = ap.parse_args(argv)
+    if zcta_file(a.public) is None:
+        print(f"{MAPS_SKIPPED}: no {ZCTA_FILE} in {a.public}", file=sys.stderr)
+        return 1
     drawn = draw_maps(os.path.join(a.run, "ledger.csv"), os.path.join(a.run, "maps"),
                       public=a.public)
     for c, m in drawn.items():
-        print(f"{c}: {m['path']}, {len(m['districts'])} districts, {len(m['labels'])} labels")
+        print(f"{c}: {m['path']}, {len(m['districts'])} districts, {m['zctas']} ZCTAs, "
+              f"{len(m['missing'])} without a polygon, {len(m['labels'])} labels")
     return 0
 
 
