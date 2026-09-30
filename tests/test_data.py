@@ -233,13 +233,22 @@ def test_loader_rejects_malformed_nodes_with_counts_not_values():
     msg = _raises(_payload(z=["10001", "10001"], m_rel=[1.0, -7.25]))
     assert "1 duplicate cells" in msg and "1 m_rel" in msg
     assert "10001" not in msg and "7.25" not in msg
-    assert "1 ZIP ids" in _raises(_payload(z=["10001", "1002"]))
+    assert "1 ZIP ids" in _raises(_payload(z=["10001", 10002]))
     assert "1 channels" in _raises(_payload(channel=["national", "wifi"]))
     assert "1 shares" in _raises(_payload(share=[{"R0000": 1.5}, {}]))
     assert "length" in _raises(_payload(m_rel=[1.0]))
     p = _payload()
     del p["nodes"]["share_free"]
     assert "share_free" in _raises(p)
+
+
+def test_loader_refuses_a_non_string_zip_id_without_naming_it():
+    for odd in (48213, None, 48213.0):
+        msg = _raises(_payload(z=["10001", odd]))
+        assert msg == "malformed extract: 1 ZIP ids not strings"
+        assert "48213" not in msg
+    msg = _raises(_payload(z=["10001", ["10002"]]))
+    assert "1 ZIP ids not strings" in msg and "10002" not in msg
 
 
 # ------------------------------------------------------------------------------ the CONUS rule
@@ -259,3 +268,23 @@ def test_conus_rule_drops_and_counts_by_reason():
         "not a CONUS ZCTA": {"zips": 2, "cells": 3, "m_rel_share": data.rsig(6 / 11)},
     }
     assert data.conus(out).dropped == {}
+
+
+def test_loader_passes_non_zip_ids_to_the_conus_rule():
+    kept = data.sample(0, n_zips=2, reference=_reference()).zips
+    odd = ["QXZQV", "QXZQV", "Q-17", ""]                # invented, not from any extract
+    z = kept + odd
+    ch = ["national", "national", "national", "wh", "national", "national"]
+    ext = data.Extract(("national", "wh"), z, ch, [1.0, 1.0, 2.0, 1.0, 3.0, 2.0],
+                       [{}] * 6, [0.0, 0.0, 0.5, 0.5, 0.0, 0.0])
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "instance_descaled.json.gz")
+        data.write(ext, path)
+        back = data.load(path)
+    assert back.z == z
+    out = data.conus(back, _reference())
+    assert out.z == kept and out.m_rel == [1.0, 1.0]
+    assert out.dropped == {
+        "not a CONUS ZCTA": {"zips": 3, "cells": 4, "m_rel_share": data.rsig(8 / 10)},
+    }
+    assert not any(i in repr(out.dropped) for i in ("QXZQV", "Q-17"))
