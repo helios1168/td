@@ -172,6 +172,50 @@ def test_certificate_tiers_follow_od3():
     assert audit.tier({"status": "time limit"}) == "none"
 
 
+def test_invalid_solver_reports_get_no_tier_and_fail():
+    exact = {"status": "optimal", "objective": 1.0, "bound": 2.0, "gap": 0.0, "mip_rel_gap": 0.0}
+    nan = {"objective": 1.0, "bound": float("nan"), "gap": None}
+    for report, why in ((exact, "bound 2.0 above the incumbent 1.0"),
+                        (nan, "bound nan is not a finite number")):
+        assert audit.tier(report) == "invalid"
+        checks = _checks(_run(solver={"X": report}))
+        assert checks["certificate tier"].status == "fail"
+        assert checks["certificate tier"].items == ["X: invalid"]
+        assert f"X: invalid report, {why}" in checks["solver status, bound and gap"].items
+    wrong_gap = {"status": "time limit", "objective": 1.0, "bound": 0.9, "gap": 0.0}
+    assert audit.tier(wrong_gap) == "invalid"
+    assert audit.tier({"objective": 1.0, "gap": 0.0}) == "invalid"      # a gap needs a bound
+
+
+def test_valid_solver_reports_keep_their_tier():
+    exact = {"status": "optimal", "objective": 7.0, "bound": 7.0, "gap": 0.0, "mip_rel_gap": 0.0}
+    assert _checks(_run(solver={"X": exact}))["certificate tier"].summary == "weakest tier: exact"
+    bounded = {"status": "time limit", "objective": 8.0, "bound": 6.0, "gap": 0.25}
+    assert audit.tier(bounded) == "bounded"
+    checks = _checks(_run(solver={"X": bounded}))
+    assert checks["certificate tier"].status == "pass"
+    assert checks["certificate tier"].summary == "weakest tier: bounded"
+
+
+def test_band_allows_od1_slack_at_both_boundaries():
+    # τ_c = 12 / 4 = 3, so OD1 allows 3e-9 past each end of [2, 4].
+    assert _fails(_run(mass={"c3": 1.0 + 1e-10})) == []                 # d1 draws 4 + 1e-10
+    assert _fails(_run(mass={"c3": 1.0 + 2e-9})) == []
+    assert _fails(_run(mass={"c3": 1.0 + 1e-6})) == ["final bands on drawn mass"]
+    assert _fails(_run(mass={"c1": 1.0 - 2e-9})) == []                 # d4 draws 2 - 2e-9
+    assert _fails(_run(mass={"c1": 1.0 - 1e-6})) == ["final bands on drawn mass"]
+
+
+def test_undeclared_channel_fails_the_audit_without_raising():
+    run = _run()
+    run.cells[0] = run.cells[0]._replace(channel="Y")
+    checks = _checks(run)
+    assert checks["district count per channel"].status == "fail"
+    assert "Y: not a declared channel" in checks["district count per channel"].items
+    assert "Y/d1: drawn 1 in an undeclared channel, no band" in checks["final bands on drawn mass"].items
+    assert audit.verdict(checks.values()) == "fail"
+
+
 def test_conflicting_rep_labels_fail_and_blank_labels_pass():
     assert _checks(_run())["rep labels"].status == "pass"
     run = _run()

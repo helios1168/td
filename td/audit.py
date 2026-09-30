@@ -22,6 +22,7 @@ over the catalog's own ZIPs, since the tag does not ship the graph it was drawn 
 from __future__ import annotations
 
 import collections
+import math
 import os
 import re
 import subprocess
@@ -34,6 +35,8 @@ from td import geo
 MODES = ("whole", "clipped", "free")
 PSEUDO = frozenset({"other", "unserved", "unassigned", "none"})   # owners that are not districts
 SHARE_TOL = 1e-9
+BAND_SLACK = 1e-9        # OD1: numerical slack at each band boundary, times τ_c
+GAP_TOL = 1e-9           # a solver report's bound and gap agree with its objective to this
 TAG = "archive/pre-support-2026-09"
 TAG_URL = f"https://github.com/helios1168/td/blob/{TAG}"
 
@@ -146,15 +149,20 @@ def check_bands(run: Run) -> Check:
         return Check(name, "unverified", "the ledger carries no opportunity")
     if any(s.lo is None or s.hi is None for s in run.channels.values()):
         return Check(name, "unverified", "no final tolerance declared (OD1)")
-    mass = collections.Counter()
+    mass, total = collections.Counter(), collections.Counter()
     for c in run.cells:
+        total[c.channel] += c.m
         if _real(c.district):
             mass[c.channel, c.district] += c.m
     drawn = _drawn(run)
     items = []
     for (ch, j), m in sorted(mass.items()):
-        spec = run.channels[ch]
-        if spec.lo <= m <= spec.hi:
+        spec = run.channels.get(ch)
+        if spec is None:
+            items.append(f"{ch}/{j}: drawn {m:.6g} in an undeclared channel, no band")
+            continue
+        slack = BAND_SLACK * total[ch] / spec.k     # τ_c from the ledger's own mass
+        if spec.lo - slack <= m <= spec.hi + slack:
             continue
         short = sorted(v for (c2, v, j2), p in (run.planned or {}).items()
                        if c2 == ch and j2 == j and drawn.get((ch, v, j), 0.0) < p - SHARE_TOL)
@@ -267,15 +275,53 @@ def check_geography(run: Run) -> Check:
     return Check(name, "pass", f"{len(run.manifest['sources'])} sources, all 2025")
 
 
+def _finite(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def actual_gap(obj: float, bound: float) -> float:
+    """The relative gap of a minimisation, (objective - bound) / |objective|, as HiGHS reports it."""
+    if obj == bound:
+        return 0.0
+    return (obj - bound) / abs(obj) if obj != 0 else math.inf
+
+
+def solver_problems(report: dict) -> list:
+    """Why a report with an incumbent cannot back a tier: an objective or bound that is not a
+    finite number, a bound above the incumbent, or a reported gap the objective and bound do not
+    give.  A report with no bound claims no optimality, so it needs no gap."""
+    obj, bound, gap = report.get("objective"), report.get("bound"), report.get("gap")
+    if not _finite(obj):
+        return [f"objective {obj!r} is not a finite number"]
+    if bound is None:
+        return [] if gap is None else [f"gap {gap!r} reported without a bound"]
+    if not _finite(bound):
+        return [f"bound {bound!r} is not a finite number"]
+    if bound - obj > GAP_TOL * max(1.0, abs(obj)):
+        return [f"bound {bound!r} above the incumbent {obj!r}"]
+    if gap is not None:
+        want = actual_gap(obj, min(bound, obj))
+        if not (isinstance(gap, (int, float)) and not isinstance(gap, bool)
+                and (gap == want or abs(gap - want) <= GAP_TOL)):
+            return [f"reported gap {gap!r}, objective and bound give {want:.6g}"]
+    return []
+
+
 def tier(report: dict) -> str:
-    """OD3 (#58): exact, bounded or feasible only; `none` without an incumbent."""
+    """OD3 (#58): exact, bounded or feasible only; `none` without an incumbent, and `invalid`
+    when the report cannot back a tier (`solver_problems`).  Exact needs a proven optimum at
+    `mip_rel_gap=0` with a reported and an actual gap of 0."""
     obj, bound = report.get("objective"), report.get("bound")
     if obj is None:
         return "none"
+    if solver_problems(report):
+        return "invalid"
+    if bound is None:
+        return "feasible only"
     if (report.get("status") == "optimal" and report.get("mip_rel_gap") == 0
-            and bound is not None and report.get("gap") == 0):
+            and report.get("gap") == 0 and actual_gap(obj, min(bound, obj)) <= GAP_TOL):
         return "exact"
-    return "bounded" if bound is not None else "feasible only"
+    return "bounded"
 
 
 def check_solver(run: Run) -> list:
@@ -287,8 +333,10 @@ def check_solver(run: Run) -> list:
     tiers = {ch: tier(r) for ch, r in run.solver.items()}
     missing = sorted(set(run.channels) - set(run.solver))
     bad = [f"{ch}: no incumbent" for ch, t in sorted(tiers.items()) if t == "none"]
+    bad += [f"{ch}: invalid report, {why}" for ch, r in sorted(run.solver.items())
+            if tiers[ch] == "invalid" for why in solver_problems(r)]
     bad += [f"{ch}: no solver report" for ch in missing]
-    order = ["exact", "bounded", "feasible only"]
+    order = ["exact", "bounded", "feasible only", "invalid"]
     worst = max((t for t in tiers.values() if t in order), key=order.index, default="none")
     return [Check("solver status, bound and gap", "fail" if bad else "listed",
                   f"{len(rows)} channels", bad + rows),
