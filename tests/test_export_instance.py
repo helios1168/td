@@ -458,6 +458,66 @@ def test_the_filler_guard_folds_case_and_unicode_width():
         mod.guard.filler_keys = ()
 
 
+def test_a_filler_name_as_a_key_the_exporter_does_not_write_is_refused():
+    """#72 A1: only the exporter's own field names are exempt from the key check, each named;
+    an unknown key in `meta` or in a channel record is checked like any other."""
+    mod = _exporter()
+    p = {"format": mod.FORMAT, "firm": {}, "meta": {"FILLER": 1},
+         "nodes": {"z": ["10001"], "channel": ["wh"], "m_rel": [1.0], "share": [{}],
+                   "share_free": [0.0]}}
+    mod.guard.filler_keys = ("FILLER",)
+    try:
+        _refused(lambda: mod.guard(p, {"channels": [{"channel": "wh"}]}), mod.GuardError,
+                 "filler key", "the payload")
+        p["meta"] = {"n_filler_keys": 1, "zips_with_filler": 0, "n_filler_rows": 0}
+        mod.guard(p, {"channels": [{"channel": "wh"}]})     # the exporter's own fields pass
+        _refused(lambda: mod.guard(p, {"channels": [{"channel": "wh", "FILLER": 1}]}),
+                 mod.GuardError, "filler key", "channels.json")
+        p["meta"] = {"cand_histogram": {"FILLER": 1}}      # under an exempt field, not exempt
+        _refused(lambda: mod.guard(p), mod.GuardError, "filler key")
+    finally:
+        mod.guard.filler_keys = ()
+
+    build, channels_doc = mod.build, mod.channels_doc
+
+    def build_with_meta_key(*a, **kw):
+        inst = build(*a, **kw)
+        inst.report["FILLER"] = 1
+        return inst
+
+    def doc_with_record_key(inst):
+        doc = channels_doc(inst)
+        doc["channels"][0]["FILLER"] = 1
+        return doc
+
+    for patch in ({"build": build_with_meta_key}, {"channels_doc": doc_with_record_key}):
+        for name, fn in patch.items():
+            setattr(mod, name, fn)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp))
+                assert not os.path.exists(out_dir), patch
+        finally:
+            mod.build, mod.channels_doc = build, channels_doc
+        assert rc == 2 and payload is None and chans is None, (patch, txt)
+        assert "filler key" in txt and "nothing written" in txt, (patch, txt)
+
+
+def test_the_exempt_field_names_are_exactly_the_fields_the_exporter_writes():
+    """The guard's allowlists equal what `write` emits, so a new field is checked until it is
+    named, and no name is exempt that the exporter does not write."""
+    mod = _exporter()
+    for extra in ([], ["--impute-missing-m", "--repair-headroom"]):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, payload, chans, txt, _ = _run(mod, tmp, *_inputs(tmp), extra=extra)
+        assert rc == 0, txt
+        assert set(payload) == set(mod.PAYLOAD_SCHEMA), extra
+        assert set(payload["meta"]) == mod.META_FIELDS, extra
+        assert set(payload["nodes"]) == set(mod.NODE_FIELDS), extra
+        assert set(chans) == set(mod.CHANNELS_SCHEMA), extra
+        assert all(set(c) == mod.CHANNEL_FIELDS for c in chans["channels"]), extra
+
+
 def test_a_channel_named_kappa_exports():
     """#72 A4: the divisor guard looks for a kappa field, not the word in a channel name."""
     mod = _exporter()

@@ -536,23 +536,32 @@ def _keys(obj):
             yield from _keys(v)
 
 
-# The exporter's own field names, by position, which the filler guard does not read: folded,
-# `n_filler_keys` would match a key `FILLER`.  FIELDS marks a level whose every key is one.
-# A key not named here, a channel name or a rep id, and every string value, is checked.
-FIELDS = "fields"
-PAYLOAD_SCHEMA = {"format": None, "firm": None, "meta": FIELDS,
-                  "nodes": {"z": None, "channel": None, "m_rel": None, "share": None,
-                            "share_free": None}}
-CHANNELS_SCHEMA = {"channels": [FIELDS]}
+# The exporter's own field names, each named where it is written, which the filler guard does
+# not read: folded, `n_filler_keys` would match a key `FILLER`.  Any other key at any level,
+# a channel name, a rep id or a field this list does not name, and every string value, is
+# checked: the guard fails closed (#72 A1).  A test holds each list equal to what is emitted.
+META_FIELDS = frozenset((
+    "exporter", "version", "theta", "lam", "scale",                     # `write`
+    "n_zips", "n_cells", "channels", "n_reps", "n_sales_rows",          # `build`'s report
+    "n_sales_rows_nonpositive", "join_rate", "cand_histogram", "zips_uncontested",
+    "zips_vacant", "zips_untapped", "zips_with_filler", "n_filler_rows", "n_filler_keys",
+    "zips_m_imputed", "zips_headroom_repaired", "repair_added_share", "zips_contested",
+    "max_candidates", "scale_stripped"))
+NODE_FIELDS = ("z", "channel", "m_rel", "share", "share_free")
+CHANNEL_FIELDS = frozenset(("channel", "spellings", "sales_rows", "cells", "zips",
+                            "opportunity_share"))              # `channels_doc`, per channel
+PAYLOAD_SCHEMA = {"format": None, "firm": None, "meta": dict.fromkeys(META_FIELDS),
+                  "nodes": dict.fromkeys(NODE_FIELDS)}
+CHANNELS_SCHEMA = {"channels": [dict.fromkeys(CHANNEL_FIELDS)]}
 
 
 def _strings(obj, schema=None):
     """Every dict key and every string value at any depth of a JSON-shaped object, less the
-    field names `schema` places: a dict maps a field to its value's schema, [s] is a list of
-    s, FIELDS a dict whose keys are all field names."""
+    field names `schema` places: a dict maps each field it names to that value's schema, and
+    [s] is a list of s.  A key the schema does not name is yielded."""
     if isinstance(obj, dict):
         for k, v in obj.items():
-            fixed = schema == FIELDS or (isinstance(schema, dict) and k in schema)
+            fixed = isinstance(schema, dict) and k in schema
             if not fixed:
                 yield str(k)
             yield from _strings(v, schema.get(k) if isinstance(schema, dict) else None)

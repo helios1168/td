@@ -201,7 +201,7 @@ Checked before anything is written; any failure writes nothing.
 | any `m_rel` above 1e4 | 2 — looks like a currency amount |
 | any `m_rel` below 0 | 2 — a cell cannot hold negative opportunity |
 | a field named `kappa` in `meta` or `channels.json` | 2 — the divisor must not leave (a channel may still be called kappa) |
-| the filler sentinel's name anywhere in the payload or `channels.json`, raw channel spellings included, in any case or Unicode form (compared NFKC-normalised and case-folded) | 2 — only its count leaves |
+| the filler sentinel's name anywhere in the payload or `channels.json`, in any value or key, raw channel spellings included, in any case or Unicode form (compared NFKC-normalised and case-folded); only the exporter's own field names, each listed in the code, are exempt | 2 — only its count leaves |
 | `--rep-ids` without `--rep-ids-channel`, or naming no channel of the extract | 4 |
 | a surrogate id's book moved in `--rep-ids-channel`, under `--rep-ids` | 2 — the ids no longer mean what they meant |
 
