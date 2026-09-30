@@ -19,8 +19,10 @@ family 𝒮_c (`td.supports`) and t_{v,S} ∈ [0, 1] per unit of S.  Each row is
 
 The η rows imply the contact cap Σ_{S∋v} n_S ≤ ⌊1/η_c⌋ (§3.2); it is built explicitly, with the
 same ⌊1/η_c⌋ as `exact_delta`'s k-range (`eta_cap`), so that HiGHS's feasibility tolerance cannot
-admit a copy a hair below η_c that the exact δ-MILP excludes.  The Menger row (§4.5, C9) is
-optional and off by default in MODEL.md; it is not built here.  The
+admit a copy a hair below η_c that the exact δ-MILP excludes.  An η_c below `ETA_MIN` (100 ×
+FEAS_TOL) stops the run in `build` and `exact_delta`: the incumbent check reads the η rows at
+FEAS_TOL, so a smaller η would let a chosen support carry a member at share 0.  The Menger row
+(§4.5, C9) is optional and off by default in MODEL.md; it is not built here.  The
 objective is Σ_S w_S n_S with w_S the support's diameter in km (§3.5).
 
 **Solving** uses HiGHS directly (`highspy`), so the report carries the engine's own model status
@@ -34,8 +36,9 @@ feasibility.
 A unit's shares must sum to 1; a sum off by more than `FEAS_TOL` stops the run, and the solver's
 float residual (≤ `FEAS_TOL`) goes onto the unit's largest t_{v,S}, never spread by rescaling
 (S26).  The decoded (n, t) is then checked against every row of the model at `FEAS_TOL`, and a
-row it breaks stops the run: the residual placement must not carry a plan past a band.  There is
-no `other` district.
+row it breaks stops the run: the residual placement must not carry a plan past a band.  A member
+of a chosen support whose decoded share is ≤ 0 stops it too, since the copy's footprint must be
+its support (Claim 1).  There is no `other` district.
 
 **The smallest δ** (§5 Claim 2, S10) is a property of the master, not of the ZIP map (C4):
 - with whole and clipped units only, `exact_delta` minimises δ in one MILP: multi-unit supports
@@ -62,6 +65,7 @@ from td import audit, supports
 FEAS_TOL = 1e-6         # an incumbent's rows, in shares and τ-normalised masses; HiGHS's own is 1e-7
 INT_TOL = 1e-6          # how far an integer variable may sit from an integer
 DELTA_TOL = 1e-4        # bisection stops when the bracket is this narrow
+ETA_MIN = 1e-4          # 100 × FEAS_TOL: the smallest η_c accepted; below it the η rows are vacuous
 SCOPE = "a property of the master (C4): it says nothing about drawing the plan on ZIPs"
 
 
@@ -101,6 +105,14 @@ def eta_cap(eta: float) -> int:
     return math.floor(1.0 / eta + 1e-12)
 
 
+def _check_eta(channel: str, eta: float) -> None:
+    """Refuse an η_c the incumbent check cannot enforce: at FEAS_TOL an η row below `ETA_MIN`
+    admits a member at share 0 (decided on #68)."""
+    if eta < ETA_MIN:
+        raise MasterError(f"channel {channel}: eta = {eta!r} is below {ETA_MIN!r} (100 × FEAS_TOL); "
+                          "the η rows could not keep every member of a support above share 0")
+
+
 def _add_col(model: Model, cost: float, lo: float, hi: float, integer: bool) -> int:
     model.cost.append(cost)
     model.lower.append(lo)
@@ -113,6 +125,7 @@ def build(inst, channel: str, delta: float | None = None, fam=None) -> Model:
     """The §3 master of `channel` at δ (the channel's planning δ when None)."""
     ch = inst.channels[channel]
     cs = ch.spec
+    _check_eta(channel, cs.eta)
     fam = supports.family(inst, channel) if fam is None else fam
     delta = cs.delta if delta is None else float(delta)
     tau = ch.tau
@@ -314,7 +327,8 @@ def decode(inst, model: Model, x) -> tuple:
     """(n, t, copies) from a validated incumbent (§3.1).  A unit whose shares do not sum to 1
     within FEAS_TOL stops the run; the float residual within it goes onto the unit's largest
     t_{v,S}.  Held units get t = n exactly.  The decoded (n, t) must then meet every row of the
-    model within FEAS_TOL, or the run stops naming the rows it breaks."""
+    model within FEAS_TOL, or the run stops naming the rows it breaks, and give every member of a
+    chosen support a share above 0, or the run stops naming the support and unit."""
     ch = inst.channels[model.channel]
     n = {}
     for s, c in model.n_col.items():
@@ -344,6 +358,11 @@ def decode(inst, model: Model, x) -> tuple:
     if bad:
         broken = "; ".join(f"{kind} {_key(key)} by {excess:.3g}" for kind, key, excess in bad)
         raise MasterError(f"channel {model.channel}: the decoded plan breaks {len(bad)} rows: {broken}")
+    empty = sorted(("+".join(sorted(s)), v) for (v, s), val in t.items() if val <= 0.0)
+    if empty:
+        raise MasterError(f"channel {model.channel}: the decoded plan gives "
+                          + "; ".join(f"unit {v} share 0 in support {s}" for s, v in empty)
+                          + " (Claim 1: a copy's footprint is its support)")
     copies = []
     for s in model.supports:
         for r in range(1, n.get(s, 0) + 1):
@@ -408,6 +427,7 @@ def _k_range(inst, ch, v) -> range:
 def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None) -> Delta:
     """The exact δ-MILP of Claim 2 for a channel with whole and clipped units only."""
     ch = inst.channels[channel]
+    _check_eta(channel, ch.spec.eta)
     if any(ch.mode[v] == "free" for v in ch.units):
         raise MasterError(f"channel {channel}: free units need bisection (Claim 2)")
     fam = supports.family(inst, channel) if fam is None else fam

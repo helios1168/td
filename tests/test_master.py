@@ -376,6 +376,38 @@ def test_decoding_stops_when_the_residual_carries_a_copy_past_its_band():
         raise AssertionError("no MasterError")
 
 
+def _zero_share_toy(eta):
+    """AL = {a} and AR = {b} (mass 4 each) both touch z0 (mass 0), the end of AZ's free path
+    z0 … z5 (z1 … z5 of mass 1).  K = 2, so τ = 6.5, and δ = 5/13 makes the band [4, 9]."""
+    zs = [f"z{i}" for i in range(6)]
+    return _toy({"AL": ["a"], "AR": ["b"], "AZ": zs}, [("a", "z0"), ("b", "z0")] + list(zip(zs, zs[1:])),
+                {"a": 4.0, "b": 4.0, "z0": 0.0, **{z: 1.0 for z in zs[1:]}},
+                {"a": (0, 0), "b": (1, 0), **{z: (4, 0) for z in zs}}, {"AZ": "free"},
+                k=2, delta=5.0 / 13.0, eta=eta)
+
+
+def test_decoding_stops_on_a_member_at_share_zero():
+    """The plan {AZ} (mass 5) + {AL, AR, AZ} with AZ's share 0 (mass 8) meets every row but the
+    η rows: AZ's corridor floor in {AL, AR, AZ} is z0, of mass 0.  With the η rows vacuous, as an
+    η below FEAS_TOL makes them, the decoder alone must refuse the copy whose footprint misses AZ
+    (Claim 1)."""
+    inst = _zero_share_toy(0.1)
+    m = master.build(inst, "X")
+    s1, s3 = frozenset(["AZ"]), frozenset(["AL", "AR", "AZ"])
+    x = [0.0] * len(m.cost)
+    x[m.n_col[s1]] = x[m.n_col[s3]] = 1.0
+    x[m.t_col["AZ", s1]] = x[m.t_col["AL", s3]] = x[m.t_col["AR", s3]] = 1.0
+    assert {k for k, _, _ in master.violations(m, x)} == {"eta"}
+    m.rows = [r for r in m.rows if r.kind != "eta"]
+    assert master.violations(m, x) == []
+    try:
+        master.decode(inst, m, x)
+    except master.MasterError as e:
+        assert "unit AZ share 0 in support AL+AR+AZ" in str(e), e
+    else:
+        raise AssertionError("no MasterError")
+
+
 def test_an_incumbent_that_breaks_a_row_is_found():
     inst = _c6_path_toy()
     m = master.build(inst, "X")
@@ -453,6 +485,25 @@ def test_exact_bisection_and_plan_agree_at_the_eta_boundary():
     assert e.delta - master.FEAS_TOL <= b.delta <= e.delta + master.DELTA_TOL, (e.delta, b.delta)
     p, _ = master.plan(inst, "X", delta=1.0)
     assert [c.share for c in p.copies] == [{"AL": 1.0 / 3.0}] * 3
+
+
+def test_an_eta_below_eta_min_is_refused():
+    """At η = 1e-8 the η rows sit below FEAS_TOL, and the master once planned the zero-share copy
+    of `test_decoding_stops_on_a_member_at_share_zero` as optimal.  Every path now refuses such an
+    η and names the channel; η = ETA_MIN itself is accepted."""
+    for call in (lambda: master.build(_zero_share_toy(1e-8), "X"),
+                 lambda: master.plan(_zero_share_toy(1e-8), "X"),
+                 lambda: master.bisect_delta(_zero_share_toy(1e-8), "X"),
+                 lambda: master.exact_delta(_eta_toy(1e-8), "X")):
+        try:
+            call()
+        except master.MasterError as e:
+            assert "channel X" in str(e) and "eta = 1e-08" in str(e), e
+        else:
+            raise AssertionError("no MasterError")
+    assert math.isclose(master.ETA_MIN, 100 * master.FEAS_TOL)
+    master.build(_zero_share_toy(master.ETA_MIN), "X")
+    assert master.exact_delta(_eta_toy(master.ETA_MIN), "X").status == "exact"
 
 
 def test_exact_delta_refuses_free_units():
