@@ -142,7 +142,7 @@ def parse(raw: dict, path: str | None = None) -> Spec:
     fine = tuple(sc.get("fine_channels", ()))
     if not fine or len(set(fine)) != len(fine):
         raise SpecError("[scenario] fine_channels must list each fine channel once")
-    delta = float(sc.get("delta", DEFAULT_DELTA))
+    delta = _number(sc.get("delta", DEFAULT_DELTA), "[scenario] delta")
 
     geo_raw = raw.get("geography", {})
     pieces = tuple(Piece(p["name"], p["state"], frozenset(map(str, p["counties"])))
@@ -216,18 +216,30 @@ def _units(value, sets: dict, units: tuple, where: str) -> frozenset:
     return out
 
 
+def _integer(value, where: str) -> int:
+    """A count of at least 1.  TOML's `true` is refused: Python counts a bool as an int."""
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise SpecError(f"{where} must be an integer >= 1, not {value!r}")
+    return value
+
+
+def _number(value, where: str) -> float:
+    """A number at least 0, as a float; a bool, a string or NaN is refused."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not value >= 0:
+        raise SpecError(f"{where} must be a number >= 0, not {value!r}")
+    return float(value)
+
+
 def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
     known = {"k", "delta", "final_delta", "eta", "domain", "mode", "whole", "clipped", "free",
              "metro_mode", "max_size", "max_dist_km", "dist_km", "contact_caps",
              "extra_supports", "supports", "confine", "forbid_pairs", "hook"}
     if set(c) - known:
         raise SpecError(f"channel {name}: unknown keys {_show(sorted(set(c) - known))}")
-    k = c.get("k")
-    if not isinstance(k, int) or k < 1:
-        raise SpecError(f"channel {name}: k must be a positive integer")
-    d = float(c.get("delta", delta))
-    fd = float(c.get("final_delta", d))
-    eta = float(c.get("eta", 0.0))
+    k = _integer(c.get("k"), f"channel {name}: k")
+    d = _number(c.get("delta", delta), f"channel {name}: delta")
+    fd = _number(c.get("final_delta", d), f"channel {name}: final_delta")
+    eta = _number(c.get("eta", 0.0), f"channel {name}: eta")
     if not (d >= 0 and fd >= d):
         raise SpecError(f"channel {name}: need 0 <= delta <= final_delta")
     if not 0 < eta <= 1:
@@ -284,17 +296,17 @@ def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
         if len(p) != 2:
             raise SpecError(f"channel {name}: forbid_pairs entry {sorted(p)} is not a pair")
         pairs.add(p)
-    caps = {str(u): int(v) for u, v in c.get("contact_caps", {}).items()}
-    dist = {str(u): float(v) for u, v in c.get("dist_km", {}).items()}
+    caps = {str(u): _integer(v, f"channel {name}: contact_caps {u}")
+            for u, v in c.get("contact_caps", {}).items()}
+    dist = {str(u): _number(v, f"channel {name}: dist_km {u}")
+            for u, v in c.get("dist_km", {}).items()}
     for u in list(caps) + list(dist):
         if u not in domain:
             raise SpecError(f"channel {name}: {u} has a cap but is not in the domain")
-    max_size = c.get("max_size", DEFAULT_MAX_SIZE)
-    if isinstance(max_size, bool) or not isinstance(max_size, int) or max_size < 1:
-        raise SpecError(f"channel {name}: max_size must be an integer >= 1, not {max_size!r}")
-    return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode, max_size,
-                       float(c.get("max_dist_km", DEFAULT_MAX_DIST_KM)), dist, caps,
-                       tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"))
+    max_size = _integer(c.get("max_size", DEFAULT_MAX_SIZE), f"channel {name}: max_size")
+    max_dist = _number(c.get("max_dist_km", DEFAULT_MAX_DIST_KM), f"channel {name}: max_dist_km")
+    return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode, max_size, max_dist, dist,
+                       caps, tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"))
 
 
 def check_partition(spec: Spec) -> None:

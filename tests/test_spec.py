@@ -208,6 +208,23 @@ def test_unknown_keys_and_bad_values_are_rejected():
         _raises(lambda: spec.parse(_toy_raw(max_size=cap)), "max_size")
 
 
+def test_a_boolean_is_neither_a_count_nor_a_number():
+    """TOML's `true` is a Python int, so `k = true` read as K = 1 (#67 round 2 review)."""
+    for k in (True, 0, 2.5, "2"):
+        _raises(lambda: spec.parse(_toy_raw(k=k)), "channel X: k must be an integer >= 1")
+    for caps in ({"AL": True}, {"AL": 2.5}, {"AL": 0}):
+        _raises(lambda: spec.parse(_toy_raw(contact_caps=caps)), "contact_caps AL")
+    for key in ("delta", "final_delta", "eta", "max_dist_km"):
+        _raises(lambda: spec.parse(_toy_raw(**{key: True})), f"channel X: {key} must be a number")
+    _raises(lambda: spec.parse(_toy_raw(dist_km={"AL": True})), "dist_km AL")
+    raw = _toy_raw()
+    raw["scenario"]["delta"] = True
+    _raises(lambda: spec.parse(raw), "[scenario] delta")
+    s = spec.parse(_toy_raw(k=3, contact_caps={"AL": 4}, dist_km={"AL": 1600}, max_dist_km=900))
+    x = s.channels["X"]
+    assert (x.k, x.contact_caps, x.dist_km, x.max_dist_km) == (3, {"AL": 4}, {"AL": 1600.0}, 900.0)
+
+
 # ------------------------------------------------------------------------------ units and modes
 def test_a_disconnected_whole_unit_stops_naming_its_components():
     s, units, cells = _toy({"AL": ["a1", "a2", "a3"], "AR": ["b1"]},

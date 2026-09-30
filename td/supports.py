@@ -229,7 +229,9 @@ def corridor_floor(inst, channel: str, s, v: str, _cache: dict | None = None,
         return 0.0
     bd = borders(inst, v)
     sides = [frozenset().union(*(bd.get(u, set()) for u in a)) for a in comps]
-    key = (channel, v, frozenset(sides))
+    # the sides as a multiset: two components on one border make that side meet the rest there,
+    # so a set of sides would share its key with a support whose floor differs
+    key = (channel, v, tuple(sorted(tuple(sorted(side)) for side in sides)))
     if _cache is not None and key in _cache:
         return _cache[key]
     zs = inst.units.zips[v]

@@ -214,6 +214,44 @@ def test_the_two_component_floor_is_the_pairwise_chain():
     assert supports.corridor_floor(inst, "X", s, "CA") == 5.0 == _least_need(inst, s, "CA")
 
 
+def test_the_batch_floors_keep_two_components_on_one_border_apart():
+    """AL and AR touch z1, AZ and CO touch z5: with all four, each side meets the rest at its own
+    ZIP, so c_v(S) = 1; with one unit per end it is the chain, 5.  The batch cache keyed on the
+    set of sides gave the larger support the smaller one's 5 (#67 round 2 review)."""
+    inst = _instance({"CA": ["z1", "z2", "z3", "z4", "z5"], "AL": ["a1"], "AR": ["a2"],
+                      "AZ": ["b1"], "CO": ["b2"]},
+                     [("z1", "z2"), ("z2", "z3"), ("z3", "z4"), ("z4", "z5"), ("a1", "z1"),
+                      ("a2", "z1"), ("b1", "z5"), ("b2", "z5")],
+                     {z: 1.0 for z in ("z1", "z2", "z3", "z4", "z5", "a1", "a2", "b1", "b2")},
+                     modes={"CA": "free"})
+    fam = supports.family(inst, "X")
+    batch = supports.corridor_floors(inst, fam)
+    full, chain = frozenset(["CA", "AL", "AR", "AZ", "CO"]), frozenset(["CA", "AL", "AZ"])
+    assert supports.corridor_floor(inst, "X", full, "CA") == 1.0 == batch[full, "CA"]
+    assert supports.corridor_floor(inst, "X", chain, "CA") == 5.0 == batch[chain, "CA"]
+    assert batch == {(s, v): supports.corridor_floor(inst, "X", s, v) for s, v in batch}
+
+
+def test_the_batch_floors_match_the_uncached_ones_on_random_units():
+    rng = random.Random(5)
+    checked = 0
+    for trial in range(40):
+        n = rng.randint(2, 6)
+        vz = [f"v{i}" for i in range(n)]
+        edges = [(vz[i], vz[rng.randrange(i)]) for i in range(1, n)]
+        others = {u: [u.lower()] for u in ("AL", "AR", "AZ", "CO", "CT")}
+        edges += [(z, rng.choice(vz[:2])) for (z,) in others.values()]
+        mass = {z: rng.choice((0.5, 1.0, 2.0, 7.0)) for z in vz}
+        mass.update({z: 1.0 for (z,) in others.values()})
+        inst = _instance({"CA": vz, **others}, edges, mass, modes={"CA": "free"})
+        fam = supports.family(inst, "X")
+        batch = supports.corridor_floors(inst, fam)
+        for (s, v), got in batch.items():
+            assert got == supports.corridor_floor(inst, "X", s, v), (trial, sorted(s), v)
+            checked += 1
+    assert checked == 40 * 26      # the supports holding CA and two or more of the five others
+
+
 def _brute_floor(inst, s, v):
     """max_i of the least mass of a connected set of v's ZIPs meeting ∂_i and ∂_{−i}."""
     units, m = inst.units, inst.channels["X"].m
@@ -287,6 +325,11 @@ def test_corridor_floor_matches_brute_force_on_the_fixtures_small_units():
                                 rel_tol=1e-12), (v, sorted(x))
             checked += 1
     assert checked > 0
+    # the batch floors agree with the uncached ones on every support of every channel's family
+    for channel in inst.channels:
+        batch = supports.corridor_floors(inst, supports.family(inst, channel))
+        uncached = {(x, v): supports.corridor_floor(inst, channel, x, v) for x, v in batch}
+        assert batch == uncached, channel
 
 
 # ------------------------------------------------------------------------------ border cap, μ_S
