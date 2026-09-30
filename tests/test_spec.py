@@ -19,6 +19,7 @@ from td import data, geo, spec
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 SCENARIOS = os.path.join(ROOT, "scenarios")
 S51 = os.path.join(SCENARIOS, "51_total_13n_11wh_24fi_3wifi.toml")
+S50_IFA = os.path.join(SCENARIOS, "50_ifa.toml")
 
 
 def _raises(fn, *needles):
@@ -159,9 +160,68 @@ def test_a_missing_fallback_does_not_skip_the_routing_check():
 
 def test_an_extract_with_a_fine_channel_outside_the_scenario_is_refused():
     s = spec.load(S51)
-    ext = data.Extract(("fi", "priafs"), ["10001", "10001"], ["fi", "priafs"], [1.0, 1.0],
-                       [{}, {}], [0.0, 0.0])
-    _raises(lambda: spec.build(s, ext, _reference()), "priafs", "#76")
+    ext = data.Extract(("fi", "priafs", "brand_new"), ["10001"] * 3, ["fi", "priafs", "brand_new"],
+                       [1.0] * 3, [{}] * 3, [0.0] * 3)
+    msg = _raises(lambda: spec.scope(s, ext), "brand_new", "planned_elsewhere", "#76")
+    assert "priafs" not in msg                 # planned elsewhere, so not refused (#79)
+    _raises(lambda: spec.build(s, ext, _reference()), "brand_new", "#76")
+
+
+def test_planned_elsewhere_is_listed_once_and_apart_from_fine_channels():
+    raw = _toy_raw()
+    raw["scenario"]["planned_elsewhere"] = ["h", "k", "h"]
+    _raises(lambda: spec.parse(raw), "planned_elsewhere lists h more than once")
+    raw["scenario"]["planned_elsewhere"] = ["h", "g"]
+    _raises(lambda: spec.parse(raw), "planned_elsewhere and fine_channels both list g")
+    raw["scenario"]["planned_elsewhere"] = "h"
+    _raises(lambda: spec.parse(raw), "planned_elsewhere must be a list")
+    raw["scenario"]["planned_elsewhere"] = ["h", "k"]
+    assert spec.parse(raw).planned_elsewhere == ("h", "k")
+    assert spec.parse(_toy_raw()).planned_elsewhere == ()
+
+
+def test_scope_keeps_only_the_scenario_fine_channels_in_file_order():
+    raw = _toy_raw()
+    raw["scenario"]["planned_elsewhere"] = ["h"]
+    s = spec.parse(raw)
+    ext = data.Extract(("h", "g", "f"), ["10001", "10001", "10001", "10002", "10002"],
+                       ["h", "g", "f", "h", "f"], [5.0, 2.0, 1.0, 7.0, 3.0],
+                       [{"a": 1.0}, {"b": 1.0}, {"c": 1.0}, {"d": 1.0}, {"e": 1.0}],
+                       [0.1, 0.2, 0.3, 0.4, 0.5], {"firm": 1}, {"meta": 2}, {"why": {}})
+    got = spec.scope(s, ext)
+    assert got.channels == ("g", "f")
+    assert (got.z, got.channel, got.m_rel) == (["10001", "10001", "10002"], ["g", "f", "f"],
+                                               [2.0, 1.0, 3.0])
+    assert got.share == [{"b": 1.0}, {"c": 1.0}, {"e": 1.0}] and got.share_free == [0.2, 0.3, 0.5]
+    assert (got.firm, got.meta, got.dropped) == (ext.firm, ext.meta, ext.dropped)
+    assert ext.channels == ("h", "g", "f") and len(ext.z) == 5      # the input is not changed
+    again = spec.scope(s, got)
+    assert (again.channels, again.z, again.channel, again.m_rel) == \
+        (got.channels, got.z, got.channel, got.m_rel)
+    wider = data.Extract(("f", "k"), ["10001"] * 2, ["f", "k"], [1.0] * 2, [{}] * 2, [0.0] * 2)
+    _raises(lambda: spec.scope(s, wider), "k", "#76")
+
+
+def test_the_scenarios_declare_every_fresh_fine_channel_and_ifa_plans_alone():
+    """#76: each new fine channel is independent, so the 51 and IFA scenarios together cover the
+    fresh extract's ten fine channels, each exactly once in each scenario's two lists."""
+    fresh = {"career", "edj", "fi", "ifa", "imo", "national_chase", "priafs", "wells_fi",
+             "wells_wh", "wh"}
+    for path in (S51, S50_IFA):
+        s = spec.load(path)
+        assert set(s.fine_channels) | set(s.planned_elsewhere) == fresh, path
+        assert not set(s.fine_channels) & set(s.planned_elsewhere), path
+    s = spec.load(S50_IFA)
+    assert s.fine_channels == ("ifa",) and list(s.channels) == ["IFA"]
+    c = s.channels["IFA"]
+    assert c.k == 50 and c.delta == 0.10 and c.eta == 0.05 and c.max_size == 6
+    assert c.max_dist_km == 900 and not c.contact_caps
+    assert c.units == set(s.units) and all(c.domain[u] == {"ifa"} for u in s.units)
+    free = {"AZ", "CA", "CO", "CT", "FL", "GA", "IA", "IL", "IN", "KS", "LA", "MA", "MD", "MI",
+            "MN", "MO", "NC", "NJ", "NY", "OH", "PA", "SC", "TN", "TX", "VA", "WA", "WI"}
+    assert {u for u, m in c.modes.items() if m == "free"} == free
+    assert all(c.modes[u] == "whole" for u in set(s.units) - free)
+    assert c.dist_km == spec.load(S51).channels["FI"].dist_km
 
 
 def test_overlapping_pieces_are_rejected():

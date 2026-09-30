@@ -1,18 +1,21 @@
 """output.py -- a run from spec to ledger, names, maps and exports (#71; `docs/MODEL.md` §8).
 
-`python -m td run <spec>` (`run`): the extract (or the seeded fixture) less its non-CONUS ZIPs, the
-instance on the declared ZIP graph, each channel's master (`td.master`) and map (`td.realize`),
-then the ledger, its audit (`td.audit`), the district names and the maps, all in one run
-directory.  A spec the loader refuses, a channel with no plan and a realizer stop each end the run
-with the reason (S28); a channel whose declared band is proven infeasible first has its smallest
-master δ searched and written to `solver.json`, and never adopted (OD1, S10).  A failed audit
-still writes everything and exits 1.  A run writes only into a new or empty directory, so no
+`python -m td run <spec>` (`run`): the extract (or the seeded fixture) less its non-CONUS ZIPs and
+scoped to the scenario's fine channels (`spec.scope`, #79), the instance on the declared ZIP
+graph, each channel's master (`td.master`) and map (`td.realize`), then the ledger, its audit
+(`td.audit`), the district names and the maps, all in one run directory.  A spec the loader
+refuses, a channel with no plan and a realizer stop each end the run with the reason (S28); a
+channel whose declared band is proven infeasible first has its smallest master δ searched and
+written to `solver.json`, and never adopted (OD1, S10).  A failed audit still writes everything
+and exits 1.  A run writes only into a new or empty directory, so no
 output of an earlier run can outlive a stop.
 
-**The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the CONUS
-extract.  It keeps the tagged `scenarios.csv` columns (`LEGACY_COLUMNS`, in order) and adds the
-ZIP's 2025 county, CBSA and place GEOIDs and the district's name, then the cell's opportunity
-`m_rel`, from which reported masses and bands are read (§8), and the `reason` for a blank district:
+**The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the scoped
+CONUS extract; the cells of fine channels the scenario leaves to other scenarios have no row, and
+`run.json` counts them per channel under `planned_elsewhere`.  It keeps the tagged
+`scenarios.csv` columns (`LEGACY_COLUMNS`, in order) and adds the ZIP's 2025 county, CBSA and
+place GEOIDs and the district's name, then the cell's opportunity `m_rel`, from which reported
+masses and bands are read (§8), and the `reason` for a blank district:
 - `dropped: zero opportunity`, a cell of a unit or channel dropped before solving (§1, #65 F1);
 - `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, so it is outside
   the audit's retained domain and counted in `run.json` (#67).  A ZIP with no opportunity in any
@@ -124,7 +127,8 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         if tdspec.hook(s, c) is not None:
             raise RunError(f"channel {c} names a hook, and the run has no place to call one yet")
     ref = geo.read_reference() if reference is None else reference
-    ext = data.conus(extract, ref)
+    conus = data.conus(extract, ref)
+    ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
     graph = declared_graph(ext, ref, public) if graph is None else graph
     inst = tdspec.build(s, ext, ref, graph)
     os.makedirs(out, exist_ok=True)
@@ -163,6 +167,8 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "not_placed_zips": len({r["zip_code"] for r in led if r["reason"] == NOT_PLACED}),
         "zero_opportunity_zips": len(set(ext.zips) - positive_zips(ext)),
         "conus_dropped": ext.dropped,
+        "planned_elsewhere": {f: sum(1 for c in conus.channel if c == f)
+                              for f in s.planned_elsewhere},
         "dropped_units": {c: list(u) for c, u in inst.report.get("dropped_units", {}).items()},
         "dropped_channels": list(inst.dropped_channels),
         "national_moved_units": sorted(inst.report.get("national_moved", {})),

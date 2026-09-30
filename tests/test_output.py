@@ -360,6 +360,47 @@ def test_a_zip_with_no_opportunity_is_no_vertex_of_the_declared_graph():
     assert all(zero not in e[:2] for e in g["edges"])
 
 
+
+def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has_no_row():
+    """#79: the run scopes the extract to the scenario's fine channels before it declares the
+    graph, so a ZIP with opportunity only in a channel planned elsewhere is no vertex and has no
+    ledger row, and `run.json` counts the cells left out per channel."""
+    public = ts._state_file()
+    if public is None:
+        return
+    raw = {"scenario": {"name": "toy_scoped", "fine_channels": ["f"], "planned_elsewhere": ["h"]},
+           "channels": {"X": {"k": 2, "domain": [{"units": "all", "fine": ["f"]}], "eta": 0.1,
+                              "max_dist_km": 1e9}}}
+    s = spec.parse(raw)
+    only_h = CT[0]                              # positive in h alone
+    zs = sorted(NY + NJ + PA)
+    cells = [(z, "f", MASS[z]) for z in zs] + [(z, "h", 2.0) for z in NY] + [(only_h, "h", 3.0)]
+    extract = data.Extract(("f", "h"), [z for z, _, _ in cells], [f for _, f, _ in cells],
+                           [m for _, _, m in cells], [{}] * len(cells), [0.0] * len(cells))
+    declared, graphs = output.declared_graph, []
+
+    def spy(ext, ref, pub=geo.PUBLIC_DIR):
+        graphs.append(declared(ext, ref, pub))
+        return graphs[-1]
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    output.declared_graph = spy
+    try:
+        res = output.run(s, extract, out, None, ts._reference(), public, maps=False, source="toy")
+    finally:
+        output.declared_graph = declared
+    assert len(graphs) == 1 and only_h not in graphs[0]["vertices"]
+    assert set(graphs[0]["vertices"]) == set(zs)
+    rows = output.read_ledger(res.paths["ledger"])
+    assert all(r["zip_code"] != only_h for r in rows)
+    assert {r["current_channel"] for r in rows} == {"f"}
+    assert sorted(r["zip_code"] for r in rows) == zs
+    report = json.load(open(res.paths["run"], encoding="utf-8"))
+    assert report["planned_elsewhere"] == {"h": len(NY) + 1}
+    assert report["not_placed_zips"] == 0 and report["zips"] == len(zs)
+    assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
+
+
 # ------------------------------------------------------------------------------ pieces
 def test_pieces_come_from_the_ledger_and_the_scorecard_run_json_and_districts_csv_agree():
     """NY's middle ZIPs have no cell in channel X: the map's district holds them at zero mass as
