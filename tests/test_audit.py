@@ -330,6 +330,19 @@ def test_a_ledger_zip_without_a_unit_fails_and_the_audit_completes():
     assert cells.status == "fail" and "cell zz/f: ZIP has no unit" in cells.items
 
 
+def test_a_zip_has_one_owner_per_planning_channel():
+    run = Run(cells=[Cell("z", "f1", "X", "d1", 1.0), Cell("z", "f2", "X", "d2", 1.0)],
+              channels={"X": Channel(2, 1.0, 1.0)}, expected={("z", "f1"), ("z", "f2")}, unit_of={"z": "U"})
+    cells = _checks(run)["one owner per cell"]
+    assert cells.status == "fail" and "ZIP z in X: 2 owners (d1, d2)" in cells.items
+
+
+def test_an_edge_does_not_add_a_vertex():
+    run = Run(cells=[Cell("a", "f", "X", "d1", 1.0), Cell("b", "f", "X", "d1", 1.0)],
+              channels={"X": Channel(1, 2.0, 2.0)}, graph={"vertices": ["a"], "edges": [("a", "b")]})
+    contiguity = audit.check_contiguity(run)
+    assert contiguity.counts["gaps"] == 1 and "X/d1: ZIP b not in the graph (graph gap)" in contiguity.items
+
 def test_scorecard_lists_every_item():
     many = audit.Check("final bands on drawn mass", "fail", "51 breaches", [f"breach {i}" for i in range(51)])
     text = audit.scorecard([many], "toy")

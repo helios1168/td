@@ -140,6 +140,13 @@ def check_cells(run: Run) -> Check:
               if not c.district and c.reason != DROPPED]
     if run.unit_of is not None:
         items += [f"cell {c.zip}/{c.fine}: ZIP has no unit" for c in run.cells if c.zip not in run.unit_of]
+    # the owner comes from the channel realizer's ZIP (§8), so a ZIP's cells in one channel share it
+    held = collections.defaultdict(set)
+    for c in run.cells:
+        if _real(c.district):
+            held[c.zip, c.channel].add(c.district)
+    items += [f"ZIP {z} in {ch}: {len(js)} owners ({', '.join(sorted(js))})"
+              for (z, ch), js in sorted(held.items()) if len(js) > 1]
     if run.expected is not None:
         items += [f"cell {z}/{f}: not in the ledger" for z, f in sorted(run.expected - set(seen))]
         items += [f"cell {z}/{f}: not expected" for z, f in sorted(set(seen) - run.expected)]
@@ -273,8 +280,9 @@ def check_contiguity(run: Run) -> Check:
         return Check(name, "unverified", "no declared graph")
     import networkx as nx
     g = nx.Graph()
-    g.add_nodes_from(run.graph["vertices"])
-    g.add_edges_from((a, b) for a, b, *_ in run.graph["edges"])
+    vertices = set(run.graph["vertices"])     # explicit (trap 21): an edge adds no vertex
+    g.add_nodes_from(vertices)
+    g.add_edges_from((a, b) for a, b, *_ in run.graph["edges"] if a in vertices and b in vertices)
     weigh = _masses(run)
     held = collections.defaultdict(lambda: collections.Counter())
     for c in run.cells:
