@@ -20,6 +20,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/run_all.py` | the test runner |
 | `tests/test_docs_owners.py` | the doc-ownership allowlist (`.claude/doc-owners.txt`) and the `STATE.md` shape |
 | `tests/test_export_instance.py` | the exporter |
+| `td/data.py` | v3 extract loader, CONUS rule and seeded sparse fixture |
+| `tests/test_data.py` | loader round-trip, fixture concentration and ZIP graph checks |
 
 ## Run
 
