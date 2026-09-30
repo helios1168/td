@@ -8,3 +8,4 @@ docs/REFERENCES.md
 docs/memory/*.md
 docs/problem/*.md
 docs/lenses/*.md
+docs/RESULTS.md

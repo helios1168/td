@@ -24,6 +24,9 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/test_export_instance.py` | the exporter |
 | `td/data.py` | v3 extract loader, CONUS rule and seeded sparse fixture |
 | `tests/test_data.py` | loader round-trip, fixture concentration and ZIP graph checks |
+| `td/audit.py` | the §9 audit: checks a run's ledger and writes `scorecard.md`; `python -m td.audit catalog` scores the tagged catalog |
+| `tests/test_audit.py` | each audit check on a toy plan with planted defects, and the tagged catalog's known defects |
+| `docs/RESULTS.md` | measured results, aggregates only: the tagged catalog's scorecard |
 
 ## Run
 
