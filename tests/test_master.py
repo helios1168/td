@@ -165,6 +165,8 @@ def test_every_row_of_model_md_is_built():
     border = {k for k, (_, over) in supports.border_rows(inst, fam).items() if over}
     assert border and set(m.rows_of("border")) == border
     assert set(m.rows_of("count_cap")) == {(v,) for v in ch.units}
+    assert set(m.rows_of("eta_cap")) == {(v,) for v in ch.units}
+    assert m.rows_of("eta_cap")[("AR",)].hi == master.eta_cap(ch.spec.eta)
     for s in fam.supports:
         assert m.upper[m.n_col[s]] == (1.0 if any(_held(ch, v, s) for v in s) else ch.k)
     # the rows carry MODEL.md's coefficients, in masses over τ
@@ -355,6 +357,25 @@ def test_decoding_sums_shares_to_one_and_stops_on_a_real_deficit():
         raise AssertionError("no MasterError")
 
 
+def test_decoding_stops_when_the_residual_carries_a_copy_past_its_band():
+    """Whole units of mass 10, 1 and 1, K = 3, so τ = 4.  At δ = 1.5 − 1.25e-6 the band's top is
+    9.999995.  A t_{AL} = 1 − 5e-7 passes every row (mass 9.999995, cover short by 5e-7), but
+    decoding holds AL whole at t = n = 1, mass 10: past the band by 1.25e-6 in τ units, more than
+    FEAS_TOL.  The decoder must stop and name the band row."""
+    inst = _toy({"AL": ["a"], "AR": ["b"], "AZ": ["c"]}, [], {"a": 10.0, "b": 1.0, "c": 1.0},
+                {"a": (0, 0), "b": (1, 0), "c": (2, 0)}, k=3, delta=1.5)
+    x = list(master.solve(master.build(inst, "X")).x)
+    m = master.build(inst, "X", delta=1.5 - 1.25e-6)
+    x[m.t_col["AL", frozenset(["AL"])]] -= 5e-7
+    assert master.violations(m, x) == []
+    try:
+        master.decode(inst, m, x)
+    except master.MasterError as e:
+        assert "band_hi (AL)" in str(e), e
+    else:
+        raise AssertionError("no MasterError")
+
+
 def test_an_incumbent_that_breaks_a_row_is_found():
     inst = _c6_path_toy()
     m = master.build(inst, "X")
@@ -407,6 +428,31 @@ def test_exact_and_bisection_agree_on_the_fixtures_51_scenario_clipped():
         _check_plan(inst, p)
         print(f"      smallest δ, fixture 51 clipped, {c}: exact {e.delta:.6f}, "
               f"bisection ({b.lower:.6f}, {b.delta:.6f}] in {len(b.steps)} steps")
+
+
+def _eta_toy(eta):
+    """One clipped unit of three unit-mass ZIPs on a path, K = 3, so τ = 1."""
+    return _toy({"AL": ["a", "b", "c"]}, [("a", "b"), ("b", "c")], {"a": 1.0, "b": 1.0, "c": 1.0},
+                {"a": (0, 0), "b": (1, 0), "c": (2, 0)}, {"AL": "clipped"}, k=3, delta=1.0, eta=eta)
+
+
+def test_exact_bisection_and_plan_agree_at_the_eta_boundary():
+    """Three copies of {AL} need η ≤ 1/3.  At η = 1/3 + 1e-8 the η row misses by 3e-8, inside
+    HiGHS's tolerance, so without the explicit ⌊1/η⌋ cap the master would plan three copies that
+    the exact δ-MILP excludes.  With it, all three paths say infeasible; at η = 1/3 exactly, all
+    three say feasible, each copy holding a third."""
+    inst = _eta_toy(1.0 / 3.0 + 1e-8)
+    assert list(master._k_range(inst, inst.channels["X"], "AL")) == [1, 2]
+    assert master.exact_delta(inst, "X").status == "infeasible"
+    assert master.bisect_delta(inst, "X").status == "infeasible"
+    p, rep = master.plan(inst, "X", delta=1.0)
+    assert p is None and rep["status"] == "infeasible", rep
+    inst = _eta_toy(1.0 / 3.0)
+    e, b = master.exact_delta(inst, "X"), master.bisect_delta(inst, "X")
+    assert e.status == "exact" and b.status == "converged", (e, b)
+    assert e.delta - master.FEAS_TOL <= b.delta <= e.delta + master.DELTA_TOL, (e.delta, b.delta)
+    p, _ = master.plan(inst, "X", delta=1.0)
+    assert [c.share for c in p.copies] == [{"AL": 1.0 / 3.0}] * 3
 
 
 def test_exact_delta_refuses_free_units():

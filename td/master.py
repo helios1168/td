@@ -12,11 +12,15 @@ family 𝒮_c (`td.supports`) and t_{v,S} ∈ [0, 1] per unit of S.  Each row is
     band_lo/hi   (L + μ_S) n_S ≤ Σ_v M_v t_{v,S} ≤ (U − μ_S) n_S       §4.6
     hold         t_{v,S} = n_S, n_S ≤ 1: v whole, or clipped with |S| > 1
     contact      Σ_{S∋v} n_S ≤ cap_v                                   the spec's contact caps
+    eta_cap      Σ_{S∋v} n_S ≤ ⌊1/η_c⌋                                 §3.2, implied by the η rows
     corridor     M_v t_{v,S} ≥ c_v(S) n_S, v a cut vertex of G[S]      §4.2, C6; n_S = 0 if c = ∞
     border       Σ_{S∋v, N(v)∩S={u}} n_S ≤ b_{uv}, free v, u ∈ N(v)    §4.3, C7
     count_cap    Σ_{S∋v} n_S ≤ |Z_v|                                   §4.4, C8
 
-The Menger row (§4.5, C9) is optional and off by default in MODEL.md; it is not built here.  The
+The η rows imply the contact cap Σ_{S∋v} n_S ≤ ⌊1/η_c⌋ (§3.2); it is built explicitly, with the
+same ⌊1/η_c⌋ as `exact_delta`'s k-range (`eta_cap`), so that HiGHS's feasibility tolerance cannot
+admit a copy a hair below η_c that the exact δ-MILP excludes.  The Menger row (§4.5, C9) is
+optional and off by default in MODEL.md; it is not built here.  The
 objective is Σ_S w_S n_S with w_S the support's diameter in km (§3.5).
 
 **Solving** uses HiGHS directly (`highspy`), so the report carries the engine's own model status
@@ -29,7 +33,9 @@ feasibility.
 **Decoding** (§3.1) expands each support with n_S ≥ 1 into copies with ȳ_{v,j} = t_{v,S} / n_S.
 A unit's shares must sum to 1; a sum off by more than `FEAS_TOL` stops the run, and the solver's
 float residual (≤ `FEAS_TOL`) goes onto the unit's largest t_{v,S}, never spread by rescaling
-(S26).  There is no `other` district.
+(S26).  The decoded (n, t) is then checked against every row of the model at `FEAS_TOL`, and a
+row it breaks stops the run: the residual placement must not carry a plan past a band.  There is
+no `other` district.
 
 **The smallest δ** (§5 Claim 2, S10) is a property of the master, not of the ZIP map (C4):
 - with whole and clipped units only, `exact_delta` minimises δ in one MILP: multi-unit supports
@@ -90,6 +96,11 @@ class Model:
         return {r.key: r for r in self.rows if r.kind == kind}
 
 
+def eta_cap(eta: float) -> int:
+    """⌊1/η_c⌋, the contact cap the η rows imply (§3.2); the guard keeps 1/0.1 at 10."""
+    return math.floor(1.0 / eta + 1e-12)
+
+
 def _add_col(model: Model, cost: float, lo: float, hi: float, integer: bool) -> int:
     model.cost.append(cost)
     model.lower.append(lo)
@@ -132,6 +143,9 @@ def build(inst, channel: str, delta: float | None = None, fam=None) -> Model:
         mass = {model.t_col[v, s]: ch.M[v] / tau for v in sorted(s)}
         rows.append(Row("band_lo", (s,), {**mass, n: -(lo_band + mu)}, 0.0, math.inf))
         rows.append(Row("band_hi", (s,), {**mass, n: -(hi_band - mu)}, -math.inf, 0.0))
+    for v in ch.units:
+        rows.append(Row("eta_cap", (v,), {model.n_col[s]: 1.0 for s in fam.supports if v in s},
+                        -math.inf, float(eta_cap(cs.eta))))
     for v, cap in sorted(cs.contact_caps.items()):
         if v in ch.M:
             rows.append(Row("contact", (v,), {model.n_col[s]: 1.0 for s in fam.supports if v in s},
@@ -299,7 +313,8 @@ class Plan:
 def decode(inst, model: Model, x) -> tuple:
     """(n, t, copies) from a validated incumbent (§3.1).  A unit whose shares do not sum to 1
     within FEAS_TOL stops the run; the float residual within it goes onto the unit's largest
-    t_{v,S}.  Held units get t = n exactly."""
+    t_{v,S}.  Held units get t = n exactly.  The decoded (n, t) must then meet every row of the
+    model within FEAS_TOL, or the run stops naming the rows it breaks."""
     ch = inst.channels[model.channel]
     n = {}
     for s, c in model.n_col.items():
@@ -320,6 +335,15 @@ def decode(inst, model: Model, x) -> tuple:
             raise MasterError(f"channel {model.channel}: unit {v}'s shares sum to {total}, not 1")
         top = frozenset(mine[0][1])
         t[v, top] = 1.0 - math.fsum(val for (u, s), val in t.items() if u == v and s != top)
+    y = [0.0] * len(model.cost)
+    for s, c in model.n_col.items():
+        y[c] = float(n.get(s, 0))
+    for key, c in model.t_col.items():
+        y[c] = t.get(key, 0.0)
+    bad = violations(model, y)
+    if bad:
+        broken = "; ".join(f"{kind} {_key(key)} by {excess:.3g}" for kind, key, excess in bad)
+        raise MasterError(f"channel {model.channel}: the decoded plan breaks {len(bad)} rows: {broken}")
     copies = []
     for s in model.supports:
         for r in range(1, n.get(s, 0) + 1):
@@ -328,6 +352,11 @@ def decode(inst, model: Model, x) -> tuple:
     if len(copies) != ch.k:
         raise MasterError(f"channel {model.channel}: {len(copies)} copies, K = {ch.k}")
     return n, t, copies
+
+
+def _key(key: tuple) -> str:
+    return "(" + ", ".join("+".join(sorted(k)) if isinstance(k, frozenset) else str(k)
+                           for k in key) + ")"
 
 
 def plan(inst, channel: str, delta: float | None = None, fam=None, mip_rel_gap: float = 0.0,
@@ -371,7 +400,7 @@ class Delta:
 
 def _k_range(inst, ch, v) -> range:
     cs = ch.spec
-    top = min(cs.k, len(inst.units.zips[v]), math.floor(1.0 / cs.eta + 1e-12),
+    top = min(cs.k, len(inst.units.zips[v]), eta_cap(cs.eta),
               cs.contact_caps.get(v, cs.k))
     return range(1, top + 1)
 
