@@ -181,6 +181,23 @@ def test_two_metros_on_one_cbsa_are_rejected():
     _raises(lambda: spec.parse(raw), "M35620", "BIG", "35620")
 
 
+def test_metros_must_be_2025_metropolitan_cbsas():
+    """OD5 (#72 B4): a micropolitan CBSA, a CSA or metro-division code, or an unknown code is not
+    a metro unit, and the spec is refused before any ZIP is carved."""
+    raw = _toy_raw()
+    raw["geography"] = {"metros": ["10100"]}                   # Aberdeen, SD Micro Area
+    _raises(lambda: spec.parse(raw), "M10100", "10100", "Aberdeen, SD Micro Area",
+            "not a metropolitan CBSA")
+    raw["geography"] = {"metros": [{"name": "CSA", "cbsa": "408"}]}  # New York CSA
+    _raises(lambda: spec.parse(raw), "CSA (408)", "csa code, not a CBSA")
+    raw["geography"] = {"metros": ["1446014454"]}               # Boston, MA Metro Division
+    _raises(lambda: spec.parse(raw), "1446014454", "metdiv code, not a CBSA")
+    raw["geography"] = {"metros": ["99999"]}
+    _raises(lambda: spec.parse(raw), "99999", "not a 2025 CBSA code")
+    raw["geography"] = {"metros": ["35620", "10180"]}           # New York, Abilene: metros
+    assert [m.name for m in spec.parse(raw).metros] == ["M35620", "M10180"]
+
+
 def test_hooks_are_looked_up_by_name():
     s = spec.parse(_toy_raw(hook="shape_west"))
     assert spec.hook(spec.parse(_toy_raw()), "X") is None
