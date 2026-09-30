@@ -224,7 +224,9 @@ def check_phantom(run: Run) -> Check:
         drawn, owners = _drawn(run), _owners(run)
         for (ch, v, j), share in sorted(run.reported.items()):
             compared += 1
-            if share > SHARE_TOL and j not in owners.get((ch, v), {}):
+            if not _finite(share):          # NaN fails every comparison below, so it is refused first
+                items.append(f"{ch}/{v}/{j}: reports share {share!r}, not a finite number")
+            elif share > SHARE_TOL and j not in owners.get((ch, v), {}):
                 items.append(f"{ch}/{v}/{j}: reports share {share:.6g}, owns no ZIP there")
             elif drawn and abs(share - drawn.get((ch, v, j), 0.0)) > SHARE_TOL:
                 items.append(f"{ch}/{v}/{j}: reports share {share:.6g}, "

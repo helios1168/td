@@ -91,6 +91,17 @@ def test_planted_phantom_share_fails():
     assert _fails(run) == ["phantom shares"]
 
 
+def test_nonfinite_reported_share_is_a_phantom_share():
+    """#72 B5: NaN fails both the ownership and the difference comparison, so it passed."""
+    for bad in (float("nan"), float("inf"), None):
+        run = _run()
+        run.reported[("X", "B", "d1")] = bad         # d1 owns no ZIP of B
+        assert _fails(run) == ["phantom shares"], bad
+        run = _run()
+        run.reported[("X", "C", "d4")] = bad         # d4 does own ZIPs of C
+        assert _fails(run) == ["phantom shares"], bad
+
+
 def test_cell_of_a_pseudo_district_is_a_phantom_share():
     run = _run(owner={"c2": "other"})
     fails = _fails(run)
