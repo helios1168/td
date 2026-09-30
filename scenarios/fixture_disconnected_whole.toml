@@ -1,0 +1,16 @@
+# A fixture spec for the connectivity stop (C11, OQ6): one piece made of two Texas counties that
+# do not touch, Harris (Houston) and El Paso, held whole.  Loading it on the fixture must stop and
+# name the piece and its two components.  Its numbers mean nothing else.
+
+[scenario]
+name = "fixture_disconnected_whole"
+fine_channels = ["national"]
+
+[geography]
+pieces = [{ name = "TX_harris_el_paso", state = "TX", counties = ["48201", "48141"] }]
+
+[channels.X]
+k = 20
+domain = [{ units = "all", fine = ["national"] }]
+mode = "whole"
+eta = 0.05
