@@ -1,0 +1,82 @@
+# The legacy catalog's recommended K = 51 scenario (MATH_REVIEW.md §3 at the tag): 13 national,
+# 11 WH, 24 FI and 3 WIFI districts.  Ported from `tools/run_wifi_grid.py` (grid_W3_A_51) and its
+# state structure export at `archive/pre-support-2026-09`.  The eight western units have no
+# national and plan WH and FI together as WIFI; the other 41 plan national, WH and FI apart.
+#
+# Only the five fine channels the legacy catalog knew are in this scenario.  The fresh extract's
+# priafs, ifa, imo, edj and career are placed by #76; until then `td.spec.build` refuses an
+# extract that carries them.
+
+[scenario]
+name = "51_total_13n_11wh_24fi_3wifi"
+fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+delta = 0.10                    # OD1's default final band, per channel
+
+[sets]
+west = ["CO", "ID", "MT", "ND", "NE", "NM", "SD", "WY"]
+new_england = ["CT", "MA", "ME", "NH", "RI", "VT"]
+southeast = ["AL", "FL", "GA", "SC"]
+
+# The owner's purity and fallback rule (#67): a unit with national keeps national chase, wells WH
+# and wells FI in national; a unit without it sends national chase and wells FI with FI, and
+# wells WH with WH.  In the west WH and FI are both WIFI, so all five go there.
+[national]
+channel = "national"
+fine = ["national_chase", "wells_wh", "wells_fi"]
+units = "all - west"
+fallback = { national_chase = "fi", wells_fi = "fi", wells_wh = "wh" }
+
+[channels.national]
+k = 13
+domain = [{ units = "all - west", fine = ["national_chase", "wells_wh", "wells_fi"] }]
+mode = "whole"
+free = ["CA", "TX", "NY", "NJ", "IL", "NC", "PA", "OH", "FL", "GA", "VA", "MI"]
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+# legacy 51 values; policy (CA was CA1 1600 and CA2 1500 there)
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }
+contact_caps = { CA = 4 }       # legacy 51 value; policy (CA1 and CA2 at 2 each)
+# The legacy National filter, ported closed (C19): New England with NY as one extra support,
+# New England units paired only with each other and NY, FL alone, MS apart from the southeast.
+extra_supports = [["new_england", "NY"]]
+confine = [
+    { units = "new_england", partners = ["new_england", "NY"] },
+    { units = ["FL"], partners = [] },
+]
+forbid_pairs = [["MS", "AL"], ["MS", "FL"], ["MS", "GA"], ["MS", "SC"]]
+
+[channels.WH]
+k = 11
+domain = [{ units = "all - west", fine = ["wh"] }]
+mode = "whole"
+free = ["CA", "TX", "NY", "NJ", "IL", "NC", "PA", "OH", "MI", "GA", "FL", "MO", "KY", "TN",
+        "VA", "IN"]
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }
+contact_caps = { CA = 4 }       # legacy 51 value; policy
+
+[channels.FI]
+k = 24
+domain = [{ units = "all - west", fine = ["fi"] }]
+mode = "whole"
+free = ["CA", "TX", "NY", "NJ", "IL", "NC", "PA", "OH", "FL", "GA", "VA", "MI", "KY", "TN",
+        "MO", "IN", "AR"]
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }
+contact_caps = { CA = 4 }       # legacy 51 value; policy
+
+# WIFI's three districts are fixed blocks, as the legacy catalog drew them: the family is those
+# blocks and their connected subsets, every unit whole.
+[channels.WIFI]
+k = 3
+domain = [{ units = "west", fine = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"] }]
+mode = "whole"
+delta = 1.0                     # no legacy band; K=3 fixed blocks make the band inert
+eta = 0.05                      # legacy 51 value; policy
+supports = "listed"
+extra_supports = [["ND", "SD", "NE"], ["ID", "MT", "WY"], ["CO", "NM"]]
