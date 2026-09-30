@@ -43,6 +43,7 @@ from td import audit
 from td.spec import zip_components
 
 POS_TOL = 1e-9          # a flow below POS_TOL × m_z is zero
+FLOW_TOL = 1e-6         # conservation slack of the normalised LP; HiGHS's own is 1e-7 (trap 14)
 KMEANS_ITERS = 100
 LP_OPTIONS = {"time_limit": 600.0, "presolve": True}     # trap 14: always an explicit dict
 CAUSES = ("graph gap", "corridor", "tiny share", "attachment", "shape")
@@ -150,21 +151,29 @@ def centres(inst, channel: str, v: str, support: dict, p: dict) -> dict:
 
 # ------------------------------------------------------------------------------ transport and rounding
 def transport(zs, m: dict, p: dict, c: dict, a: dict) -> dict:
-    """{(z, j): x_{zj} > 0}: the transport LP of Claim 3 in mass flows, at a basic solution."""
-    js = sorted(a)
-    n, k = len(zs), len(js)
+    """{(z, j): x_{zj} > 0}: the transport LP of Claim 3 in mass flows, at a basic solution.  It
+    runs on masses over their mean, so HiGHS's absolute tolerances cannot swallow a small-scale
+    unit (#72 B1); flows that miss a row by FLOW_TOL, or leave a ZIP unshipped, stop the run."""
+    js, n, k = sorted(a), len(zs), len(a)
+    scale = math.fsum(m[z] for z in zs) / n
     cost = np.array([_d2(p[z], c[j]) for z in zs for j in js])
     rows = [i for i in range(n) for _ in js] + [n + jj for _ in zs for jj in range(k)]
-    cols = list(range(n * k)) * 2
-    a_eq = sparse.csr_matrix((np.ones(2 * n * k), (rows, cols)), shape=(n + k, n * k))[:-1]
-    b_eq = np.array([m[z] for z in zs] + [a[j] for j in js])[:-1]   # the last target is implied
-    res = linprog(cost, A_eq=a_eq, b_eq=b_eq, bounds=(0.0, None), method="highs-ds",
-                  options=dict(LP_OPTIONS))
+    a_eq = sparse.csr_matrix((np.ones(2 * n * k), (rows, list(range(n * k)) * 2)), shape=(n + k, n * k))
+    b_eq = np.array([m[z] for z in zs] + [a[j] for j in js]) / scale
+    res = linprog(cost, A_eq=a_eq[:-1], b_eq=b_eq[:-1], bounds=(0.0, None), method="highs-ds",
+                  options=dict(LP_OPTIONS))                  # the last target is implied
     if res.status != 0:
         raise RealizeError(f"the transport LP failed: {res.message}")
-    x = res.x.reshape(n, k)
-    return {(z, j): float(x[i, jj]) for i, z in enumerate(zs) for jj, j in enumerate(js)
+    if (miss := np.abs(a_eq @ res.x - b_eq)).max() > FLOW_TOL * max(1.0, float(b_eq.max())):
+        worst = int(miss.argmax())
+        name = f"ZIP {zs[worst]}" if worst < n else f"district {js[worst - n]}"
+        raise RealizeError(f"the transport LP's flows miss {name} by {miss[worst] * scale:.3g}")
+    x = res.x.reshape(n, k) * scale
+    flow = {(z, j): float(x[i, jj]) for i, z in enumerate(zs) for jj, j in enumerate(js)
             if x[i, jj] > POS_TOL * m[z]}
+    if lost := sorted({z for z in zs if m[z] > 0} - {z for z, _ in flow}):
+        raise RealizeError(f"the transport LP places no flow on {len(lost)} ZIPs, e.g. {lost[:3]}")
+    return flow
 
 
 def check_forest(flow: dict) -> None:
@@ -275,11 +284,9 @@ def realize(inst, plan, xy: dict) -> Drawing:
         owner.update(own)
         owner.update(place_zero([z for z in units.zips[v] if ch.m[z] <= 0], own, units.zip_adj, p, c))
     moved = repair(inst, plan.channel, owner, support)
-    drawn = dict.fromkeys(planned, 0.0)
+    drawn, mass = dict.fromkeys(planned, 0.0), {c.name: 0.0 for c in plan.copies}
     for z, j in owner.items():
         drawn[units.unit_of[z], j] = drawn.get((units.unit_of[z], j), 0.0) + ch.m[z]
-    mass = {c.name: 0.0 for c in plan.copies}
-    for z, j in owner.items():
         mass[j] += ch.m[z]
     return Drawing(plan.channel, owner, mass, planned, drawn,
                    pieces(inst, plan.channel, owner, support, planned), moved)
@@ -298,8 +305,7 @@ def _admissible(ch, units, piece, k, owner, support) -> bool:
 def repair(inst, channel: str, owner: dict, support: dict) -> list:
     """One pass (S23) over the detached pieces found at its start; moves `owner` in place."""
     ch, units = inst.channels[channel], inst.units
-    lo, hi = ch.final_band
-    adj, m = units.zip_adj, ch.m
+    (lo, hi), adj, m = ch.final_band, units.zip_adj, ch.m
     mass = collections.Counter()
     for z, j in owner.items():
         mass[j] += m[z]
@@ -322,19 +328,16 @@ def repair(inst, channel: str, owner: dict, support: dict) -> list:
                 ok.append(k)
         if ok:
             k = min(ok, key=lambda k: (abs(mass[k] + w - ch.tau), k))
-            for z in part:
-                owner[z] = k
-            mass[j] -= w
-            mass[k] += w
+            owner.update(dict.fromkeys(part, k))
+            mass[j], mass[k] = mass[j] - w, mass[k] + w
             moved.append((part, j, k))
     return moved
 
 
 def pieces(inst, channel: str, owner: dict, support: dict, planned: dict) -> list:
     """Every detached piece, with its cause (the module docstring's order)."""
-    ch, units = inst.channels[channel], inst.units
-    adj, m = units.zip_adj, ch.m
-    out = []
+    units, out = inst.units, []
+    adj, m = units.zip_adj, inst.channels[channel].m
     for j, zs in sorted(_districts(owner).items()):
         parts = _parts(zs, adj, m)
         if len(parts) < 2:
