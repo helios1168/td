@@ -454,6 +454,91 @@ def test_a_channel_with_no_verdict_gets_no_smallest_delta_search():
     shutil.rmtree(out)
 
 
+def test_the_stop_words_each_smallest_delta_by_what_its_search_proves():
+    """#72 B3: an exact optimum is proved; a bisection's lower end is a δ a step proved
+    infeasible; an exact solve that stopped without a verdict gives the solver's bound, never
+    "infeasible at", and says unknown."""
+    rep = {"status": "infeasible"}
+    D = master.Delta
+    exact = output.no_plan("X", 0.0, rep, D("X", "exact", "exact", 0.875, 0.875, 0.0))
+    assert exact.endswith("smallest master δ 0.875 (exact, exact)"), exact
+    bis = output.no_plan("X", 0.0, rep, D("X", "bisection", "converged", 0.9, 0.8, 0.1))
+    assert bis.endswith("smallest master δ in (0.8, 0.9] (bisection, converged): feasible at 0.9, "
+                        "infeasible at 0.8"), bis
+    zero = output.no_plan("X", 0.1, rep, D("X", "bisection", "converged", 0.0, None, 0.1))
+    assert zero.endswith("smallest master δ 0 (bisection, converged): feasible at 0"), zero
+    stuck = output.no_plan("X", 0.0, rep, D("X", "bisection", "unknown", None, 0.5, 0.1))
+    assert stuck.endswith("smallest master δ unknown (bisection, unknown): infeasible at 0.5"), stuck
+    bound = output.no_plan("X", 0.0, rep, D("X", "exact", "unknown", 0.875, 0.875, 0.0))
+    assert bound.endswith("smallest master δ unknown (exact, unknown): feasible at 0.875, "
+                          "solver bound 0.875"), bound
+    blank = output.no_plan("X", 0.0, rep, D("X", "exact", "unknown", None, None, 0.0))
+    assert blank.endswith("smallest master δ unknown (exact, unknown), nothing proven"), blank
+    none = output.no_plan("X", 0.0, rep, D("X", "bisection", "infeasible", None, 9.0, 0.1))
+    assert none.endswith("and no δ is feasible (bisection)"), none
+    for text in (exact, bound, blank):
+        assert "infeasible at" not in text, text
+    assert output.delta_reading(D("X", "exact", "exact", 0.875, 0.875, 0.0)) == {
+        "proved": True, "feasible_at": 0.875, "infeasible_at": None, "solver_bound": None}
+    assert output.delta_reading(D("X", "bisection", "converged", 0.9, 0.8, 0.1)) == {
+        "proved": False, "feasible_at": 0.9, "infeasible_at": 0.8, "solver_bound": None}
+    assert output.delta_reading(D("X", "exact", "unknown", 0.875, 0.8, 0.0)) == {
+        "proved": False, "feasible_at": 0.875, "infeasible_at": None, "solver_bound": 0.8}
+
+
+def test_an_exact_search_stopped_without_a_verdict_stays_unknown_in_the_stop_and_solver_json():
+    """#72 B3 repro: the exact δ-MILP keeps a valid incumbent and a tight bound but reports a
+    time limit (injected), so its lower end is the solver's bound, and a plan exists there."""
+    from dataclasses import replace
+    from unittest.mock import patch
+    out = tempfile.mkdtemp(prefix="td-output-")
+    extract, graph = _toy_inputs()
+    s = _toy_spec(k=3, delta=0.0, final_delta=0.0, mode="clipped")
+    real = master._run
+
+    def timed_out(*a, **kw):
+        sol = real(*a, **kw)
+        return replace(sol, status="time limit") if sol.status == "optimal" else sol
+
+    with patch("td.master._run", side_effect=timed_out):
+        try:
+            output.run(s, extract, out, graph, ts._reference(), maps=False)
+        except output.RunError as e:
+            msg = str(e)
+        else:
+            raise AssertionError("no RunError")
+    assert "smallest master δ unknown (exact, unknown): feasible at 0.875, solver bound" in msg, msg
+    assert "infeasible at" not in msg, msg
+    got = json.load(open(os.path.join(out, "solver.json")))["X"]["smallest_delta"]
+    assert got["method"] == "exact" and got["status"] == "unknown", got
+    assert got["reading"]["proved"] is False and got["reading"]["infeasible_at"] is None, got
+    assert got["reading"]["feasible_at"] == got["delta"] and got["reading"]["solver_bound"] == got["lower"]
+    assert set(os.listdir(out)) == {"solver.json"}
+    shutil.rmtree(out)
+
+
+def test_a_bisected_smallest_delta_reports_its_bracket_in_the_stop_and_solver_json():
+    """#72 B3: a free channel's smallest δ is bisected; its lower end is a δ a step proved
+    infeasible, so it reads as such, and the answer is a bracket, not a proof."""
+    out = tempfile.mkdtemp(prefix="td-output-")
+    extract, graph = _toy_inputs()
+    try:
+        output.run(_toy_spec(k=3, delta=0.0, final_delta=0.0, mode="free"), extract, out, graph,
+                   ts._reference(), maps=False)
+    except output.RunError as e:
+        msg = str(e)
+    else:
+        raise AssertionError("no RunError")
+    got = json.load(open(os.path.join(out, "solver.json")))["X"]["smallest_delta"]
+    assert got["method"] == "bisection" and got["status"] == "converged", got
+    r = got["reading"]
+    assert r == {"proved": False, "feasible_at": got["delta"], "infeasible_at": got["lower"],
+                 "solver_bound": None}, got
+    assert any(st["delta"] == got["lower"] and st["verdict"] == "infeasible" for st in got["steps"])
+    assert (f"smallest master δ in ({got['lower']:.6g}, {got['delta']:.6g}] (bisection, converged): "
+            f"feasible at {got['delta']:.6g}, infeasible at {got['lower']:.6g}") in msg, msg
+    shutil.rmtree(out)
+
 def test_a_hook_that_td_hooks_lacks_stops_the_run_before_solving():
     import td.hooks as hooks
     assert not [k for k, v in vars(hooks).items() if callable(v) and not k.startswith("_")]

@@ -133,7 +133,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     # a declared band proven infeasible: report the smallest master δ, never adopt it (OD1, S10)
     deltas = {c: master.smallest_delta(inst, c, time_limit=time_limit)
               for c in none if reports[c]["status"] == "infeasible"}
-    paths = {"solver": master.write_report(os.path.join(out, "solver.json"), reports, deltas)}
+    paths = {"solver": write_solver(os.path.join(out, "solver.json"), reports, deltas)}
     if none:
         raise RunError("no plan for " + "; ".join(
             no_plan(c, inst.channels[c].spec.delta, reports[c], deltas.get(c)) for c in none)
@@ -188,19 +188,57 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     return Result(out, report["verdict"], checks, paths, report)
 
 
+def delta_reading(found) -> dict:
+    """What the smallest-δ search `found` (`master.Delta`) proves, by method (MODEL §5 Claim 2, C4).
+
+    A bisection's `lower` is a δ a step proved infeasible; an exact solve's `lower` is the
+    solver's bound when it stopped without a verdict, never a tested δ, and equals `delta` when
+    it is optimal.  `proved` is true only for a definite answer: an exact optimum, or no δ at
+    all.  Unknown stays unknown."""
+    exact = found.method == "exact"
+    return {
+        "proved": found.status in ("exact", "infeasible"),
+        "feasible_at": found.delta,
+        "infeasible_at": None if exact else found.lower,
+        "solver_bound": found.lower if exact and found.status == "unknown" else None}
+
+
+def write_solver(path: str, reports: dict, deltas: dict) -> str:
+    """`solver.json` as `master.write_report` writes it, each smallest δ with its reading."""
+    master.write_report(path, reports, deltas)
+    with open(path, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    for c, found in deltas.items():
+        doc[c]["smallest_delta"]["reading"] = delta_reading(found)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    return path
+
+
 def no_plan(channel: str, delta: float, report: dict, found) -> str:
     """Why `channel` has no plan at its declared δ, with the smallest master δ `found` when the
-    band was proven infeasible (`master.Delta`, as `solver.json` records it)."""
+    band was proven infeasible, worded from `delta_reading` so a bound never reads as a verdict."""
     head = f"{channel} at δ = {delta} ({report['status']})"
     if found is None:
         return f"{head}, no verdict, so no smallest δ was searched"
-    lower = "" if found.lower is None or found.status == "exact" else \
-        f", infeasible at {found.lower:.6g}"
-    if found.delta is None:
-        if found.status == "infeasible":
-            return f"{head}, and no δ is feasible ({found.method})"
-        return f"{head}; smallest master δ unknown ({found.method}, {found.status}{lower})"
-    return f"{head}; smallest master δ {found.delta:.6g} ({found.method}, {found.status}{lower})"
+    if found.status == "infeasible":
+        return f"{head}, and no δ is feasible ({found.method})"
+    r = delta_reading(found)
+    tag = f"({found.method}, {found.status})"
+    if found.status == "exact":
+        return f"{head}; smallest master δ {found.delta:.6g} {tag}"
+    known = [f"feasible at {r['feasible_at']:.6g}"] if r["feasible_at"] is not None else []
+    if r["infeasible_at"] is not None:
+        known.append(f"infeasible at {r['infeasible_at']:.6g}")
+    if r["solver_bound"] is not None:
+        known.append(f"solver bound {r['solver_bound']:.6g}")
+    facts = ": " + ", ".join(known) if known else ", nothing proven"
+    if found.status == "converged":
+        where = f"{found.delta:.6g}" if r["infeasible_at"] is None else \
+            f"in ({r['infeasible_at']:.6g}, {found.delta:.6g}]"
+        return f"{head}; smallest master δ {where} {tag}{facts}"
+    return f"{head}; smallest master δ unknown {tag}{facts}"
 
 
 def check_out(out: str) -> None:
