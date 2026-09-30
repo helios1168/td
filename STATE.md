@@ -4,13 +4,13 @@
 
 ## Now
 
-#78 landed (`42aef54`): non-ZIP string ids reach the CONUS rule and drop by count; 53 tests pass on m2 with state polygons present. #3 is ready for the fresh v3 extract and owner's channel review. The m5 extract was hand-edited before #78; compare after CONUS in #3. #64 remains doing on m5; #67 waits on #65, #70 on #64.
+Overnight autonomous wave on m5 (owner delegated all decisions): #64 landed (`ad42d25`), docs/MODEL.md is on main. #65 (verify MODEL.md) and #70 (audit.py) run now; the chain then goes #67 → #68 → #69 → #71 → #72, landing as each clears. Decisions are `DECIDED` comments on each issue.
 
 ## Next
 
-- `/execute 3`: load the fresh v3 extract and review the channels.
-- Land #64 when handed off, then verify it in #65.
+- #65 verdicts, then #67 spec.py and supports.py.
+- #70 lands independently; #71 waits on #69 and #70.
 
 ## Blocked
 
-#63 needs a HUD User token on both Studios. #64 lists global literature changes as a blocker. Owner decisions: #59 county pieces, #75 catalog (after #74), #76 channels/bundles (after #3). `AGENTS.md` still reports 24 tests; 53 now pass. Five #78 notes filed; 32 other notes remain deferred.
+#63 needs a HUD User token on both Studios. Owner decisions: #59 county pieces, #75 catalog (after #74), #76 channels/bundles (after #3). #73 is outside tonight's wave (needs #3, #59). `AGENTS.md` still reports 24 tests; 53 now pass.
