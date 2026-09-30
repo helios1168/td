@@ -27,6 +27,17 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `td/audit.py` | the §9 audit: checks a run's ledger and writes `scorecard.md`; `python -m td.audit catalog` scores the tagged catalog |
 | `tests/test_audit.py` | each audit check on a toy plan with planted defects, and the tagged catalog's known defects |
 | `docs/RESULTS.md` | measured results, aggregates only: the tagged catalog's scorecard |
+| `td/geo.py`, `reference/2025/` | the 2025 geography: the ZCTA reference table, its overlays, the ZIP graph and the source MANIFEST (#62) |
+| `tests/test_geo.py` | the reference table, the manifest's 2025-only rule and the graph's explicit vertex set |
+| `td/spec.py`, `scenarios/` | a TOML scenario: channels, domains, units, pieces and modes; the partition and ZIP-connectivity checks (#67) |
+| `td/supports.py` | the closed support family and its drawability terms: corridor floor, border cap, rounding margin (#67) |
+| `tests/test_spec.py`, `tests/test_supports.py` | partition, disconnected-whole stop, closure, brute-force corridor floor, the C6/C7 counterexamples |
+| `td/master.py` | the support master per channel: the MILP on highspy, decoding, and the smallest δ exact or by bisection (#68) |
+| `tests/test_master.py` | brute force on toys, decoded bands and shares, drawability rows, exact against bisection |
+| `td/realize.py` | the ZIP realizer: centres, the transport LP, tree rounding, the mode-guarded repair and piece causes (#69) |
+| `tests/test_realize.py` | the #1/#7/#11 regressions, the Claim 3 bound, the forest stop, clipped repair, the C10 star |
+| `td/output.py`, `td/__main__.py`, `td/hooks.py` | `python -m td run <spec>` and `python -m td maps`: master, realizer, ledger, audit, names, ZCTA polygon maps (#71); `python -m td geo` builds the reference (#62) |
+| `tests/test_output.py`, `tests/test_end_to_end.py` | the ledger schema against the tag's `scenarios.csv`, names, maps, and fixture scenarios end to end |
 
 ## Run
 
@@ -36,5 +47,6 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 
 ## What a worktree must hand-copy
 
-Nothing yet. The confidential extract, `instance_descaled*.json.gz`, stays at the hub root and
-is gitignored; a worktree that needs it reads it from `$TD_REPO`.
+Nothing. The confidential extract, `instance_descaled*.json.gz`, stays at the hub root and is
+gitignored, and so do the public 2025 files in `data/public/` (`tl_2025_us_state.zip`,
+`tl_2025_us_zcta520.zip`); a worktree reads them from `$TD_REPO`.
