@@ -4,12 +4,12 @@
 
 ## Now
 
-Overnight autonomous wave on m5 (owner delegated all decisions): #64 landed (`ad42d25`), docs/MODEL.md is on main. #65 (verify MODEL.md) and #70 (audit.py) run now; the chain then goes #67 → #68 → #69 → #71 → #72, landing as each clears. Decisions are `DECIDED` comments on each issue.
+Overnight autonomous wave on m5 (owner delegated all decisions). #64 relanded with #65's F1–F9 fixes (`1cf528a`); #65 closed. Running: #67 spec.py/supports.py (round 1) and #70 audit.py (round 3). Chain after #67: #68 → #69 → #71 → #72. Decisions are `DECIDED` comments on each issue.
 
 ## Next
 
-- #65 verdicts, then #67 spec.py and supports.py.
-- #70 lands independently; #71 waits on #69 and #70.
+- Land #67, then #68 master.py.
+- Land #70 when its review passes; #71 waits on #69 and #70.
 
 ## Blocked
 
