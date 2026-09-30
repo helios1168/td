@@ -1,6 +1,9 @@
 """python -m td <command>
 
     geo     fetch the 2025 geography sources and build reference/2025/ (td.geo)
+    run     run <spec> (--extract PATH | --fixture SEED): master, realizer, ledger, audit,
+            names and maps into runs/<scenario>/ (td.output)
+    maps    maps <run dir>: redraw a run's maps from its ledger.csv (td.output)
 """
 from __future__ import annotations
 
@@ -16,6 +19,9 @@ def main(argv=None) -> int:
     if cmd == "geo":
         from td import geo
         return geo.main(rest)
+    if cmd in ("run", "maps"):
+        from td import output
+        return output.main_run(rest) if cmd == "run" else output.main_maps(rest)
     print(f"unknown command {cmd!r}\n\n{__doc__.strip()}", file=sys.stderr)
     return 2
 
