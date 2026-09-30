@@ -41,6 +41,7 @@ import math
 import os
 import re
 import sys
+import unicodedata
 from collections import Counter, defaultdict
 
 __version__ = "0.3.0"
@@ -535,6 +536,39 @@ def _keys(obj):
             yield from _keys(v)
 
 
+# The exporter's own field names, by position, which the filler guard does not read: folded,
+# `n_filler_keys` would match a key `FILLER`.  FIELDS marks a level whose every key is one.
+# A key not named here, a channel name or a rep id, and every string value, is checked.
+FIELDS = "fields"
+PAYLOAD_SCHEMA = {"format": None, "firm": None, "meta": FIELDS,
+                  "nodes": {"z": None, "channel": None, "m_rel": None, "share": None,
+                            "share_free": None}}
+CHANNELS_SCHEMA = {"channels": [FIELDS]}
+
+
+def _strings(obj, schema=None):
+    """Every dict key and every string value at any depth of a JSON-shaped object, less the
+    field names `schema` places: a dict maps a field to its value's schema, [s] is a list of
+    s, FIELDS a dict whose keys are all field names."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            fixed = schema == FIELDS or (isinstance(schema, dict) and k in schema)
+            if not fixed:
+                yield str(k)
+            yield from _strings(v, schema.get(k) if isinstance(schema, dict) else None)
+    elif isinstance(obj, (list, tuple)):
+        item = schema[0] if isinstance(schema, list) else None
+        for v in obj:
+            yield from _strings(v, item)
+    elif isinstance(obj, str):
+        yield obj
+
+
+def _fold(text):
+    """The form the filler guard compares: NFKC-normalised, case-folded, trimmed."""
+    return unicodedata.normalize("NFKC", str(text)).casefold().strip()
+
+
 def guard(payload, channels=None):
     """Refuse to emit anything that looks like a currency amount, or an upstream label.
 
@@ -570,14 +604,19 @@ def guard(payload, channels=None):
     for s in payload["nodes"]["share_free"]:
         if not (0.0 <= s <= 1.0):
             raise GuardError(f"free share {s!r} outside [0,1] -- not a share")
-    docs = {"the payload": json.dumps(payload)}
+    # on decoded strings, not serialized JSON: json.dumps escapes quotes, backslashes and
+    # non-ASCII, so a substring search of the text misses those spellings (#72 A1)
+    docs = {"the payload": (payload, PAYLOAD_SCHEMA)}
     if channels is not None:
-        docs["channels.json"] = json.dumps(channels)
-    for key in guard.filler_keys:
-        for name, text in docs.items():
-            if key and key in text:
-                raise GuardError(f"filler key {key!r} appears in {name}; the sentinel's "
-                                 f"own name must not leave -- only the count does")
+        docs["channels.json"] = (channels, CHANNELS_SCHEMA)
+    keys = [(key, _fold(key)) for key in guard.filler_keys if _fold(key)]
+    for name, (doc, schema) in docs.items():
+        for text in _strings(doc, schema):
+            folded = _fold(text)
+            for key, needle in keys:
+                if needle in folded:
+                    raise GuardError(f"filler key {key!r} appears in {name}; the sentinel's "
+                                     f"own name must not leave -- only the count does")
     # a field named for the divisor, not the word in a value: a channel may be called kappa
     for name, doc in (("meta", payload.get("meta", {})), ("channels.json", channels)):
         if any("kappa" in k.lower() for k in _keys(doc)):

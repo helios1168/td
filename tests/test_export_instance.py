@@ -428,6 +428,36 @@ def test_the_filler_name_in_a_channel_spelling_is_refused_and_nothing_is_written
     assert "channels.json" in txt and "nothing written" in txt
 
 
+def test_a_filler_name_json_would_escape_is_refused_and_nothing_is_written():
+    """#72 A1: json.dumps escapes quotes, backslashes and non-ASCII, so the guard compares
+    decoded strings, NFKC-normalised and case-folded, not the serialized text."""
+    mod = _exporter()
+    for key in ('F"ILLER', "F\\ILLER", "F\u00cdLLER"):
+        channel = f"{key} WH"
+        with tempfile.TemporaryDirectory() as tmp:
+            sales = [("10001", "r_a", "FA", channel, 1.0)]
+            opp = [("10001", channel, 10.0)]
+            rc, payload, chans, txt, out_dir = _run(mod, tmp, *_inputs(tmp, sales=sales, opp=opp),
+                                                    extra=["--filler-key", key])
+            assert not os.path.exists(out_dir), key
+        assert rc == 2 and payload is None and chans is None, (key, txt)
+        assert "filler key" in txt and "nothing written" in txt, (key, txt)
+
+
+def test_the_filler_guard_folds_case_and_unicode_width():
+    mod = _exporter()
+    fullwidth = "\uff26\uff29\uff2c\uff2c\uff25\uff32"     # FILLER in fullwidth letters
+    p = {"nodes": {"z": ["10001"], "channel": ["wh"], "m_rel": [1.0], "share": [{}],
+                   "share_free": [0.0]}, "meta": {"note": f"{fullwidth} wh"}}
+    mod.guard.filler_keys = ("filler",)
+    try:
+        _refused(lambda: mod.guard(p), mod.GuardError, "filler key")
+        p["meta"] = {}
+        _refused(lambda: mod.guard(p, {"Filler": 1}), mod.GuardError, "channels.json")  # a key
+    finally:
+        mod.guard.filler_keys = ()
+
+
 def test_a_channel_named_kappa_exports():
     """#72 A4: the divisor guard looks for a kappa field, not the word in a channel name."""
     mod = _exporter()
