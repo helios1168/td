@@ -27,7 +27,7 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import NamedTuple
 
 from td import geo
@@ -35,6 +35,7 @@ from td import geo
 MODES = ("whole", "clipped", "free")
 PSEUDO = frozenset({"other", "unserved", "unassigned", "none"})   # owners that are not districts
 SHARE_TOL = 1e-9
+DROPPED = "dropped: zero opportunity"   # a ledger row's reason for a blank district (MODEL §1)
 BAND_SLACK = 1e-9        # OD1: numerical slack at each band boundary, times τ_c
 # How far a certificate's bound may sit from its objective and still count as equal, in objective
 # units: EXACT_ALLOWANCE × max(1, |objective|), mixed absolute/relative as HiGHS, so float noise at
@@ -53,6 +54,7 @@ class Cell(NamedTuple):
     district: str
     m: float | None = None
     rep: str = ""
+    reason: str = ""                 # DROPPED for a cell of a unit or channel dropped before solving
 
 
 @dataclass
@@ -115,6 +117,12 @@ def _drawn(run: Run) -> dict:
     return {(ch, v, j): m / unit_mass[ch, v] for (ch, v, j), m in held.items() if unit_mass[ch, v] > 0}
 
 
+def _unsolved(run: Run) -> set:
+    """Channels whose every cell was dropped for zero opportunity: not solved, so K_c and the
+    solver report do not apply (MODEL §1, §9)."""
+    return {c.channel for c in run.cells} - {c.channel for c in run.cells if c.reason != DROPPED}
+
+
 def _owners(run: Run) -> dict:
     """{(channel, unit): {district: set of its ZIPs there}}."""
     out: dict = collections.defaultdict(lambda: collections.defaultdict(set))
@@ -128,7 +136,10 @@ def _owners(run: Run) -> dict:
 def check_cells(run: Run) -> Check:
     seen = collections.Counter((c.zip, c.fine) for c in run.cells)
     items = [f"cell {z}/{f}: {n} owners" for (z, f), n in sorted(seen.items()) if n > 1]
-    items += [f"cell {c.zip}/{c.fine}: no owner" for c in run.cells if not c.district]
+    items += [f"cell {c.zip}/{c.fine}: no owner" for c in run.cells
+              if not c.district and c.reason != DROPPED]
+    if run.unit_of is not None:
+        items += [f"cell {c.zip}/{c.fine}: ZIP has no unit" for c in run.cells if c.zip not in run.unit_of]
     if run.expected is not None:
         items += [f"cell {z}/{f}: not in the ledger" for z, f in sorted(run.expected - set(seen))]
         items += [f"cell {z}/{f}: not expected" for z, f in sorted(set(seen) - run.expected)]
@@ -141,11 +152,32 @@ def check_count(run: Run) -> Check:
     for c in run.cells:
         if _real(c.district):
             got[c.channel].add(c.district)
+    unsolved = _unsolved(run)
     items = [f"{ch}: {len(got[ch])} districts, K = {spec.k}"
-             for ch, spec in sorted(run.channels.items()) if len(got[ch]) != spec.k]
+             for ch, spec in sorted(run.channels.items()) if ch not in unsolved and len(got[ch]) != spec.k]
     items += [f"{ch}: not a declared channel" for ch in sorted(set(got) - set(run.channels))]
     return Check("district count per channel", "fail" if items else "pass",
                  f"{len(run.channels)} channels, {len(items)} off K", items)
+
+
+def check_dropped(run: Run) -> Check:
+    """Cells dropped for zero opportunity (MODEL §1, §9) are listed and do not fail the run.  A drop
+    fails only when it is not one: the cell has an owner, or its unit has opportunity there."""
+    name = "dropped for zero opportunity"
+    dropped = [c for c in run.cells if c.reason == DROPPED]
+    if not dropped:
+        return Check(name, "pass", "no cells dropped")
+    mass = collections.Counter()
+    if run.unit_of is not None and _masses(run):
+        for c in run.cells:
+            mass[c.channel, run.unit_of[c.zip]] += c.m
+    bad = [f"cell {c.zip}/{c.fine}: dropped but owned by {c.district}" for c in dropped if c.district]
+    bad += [f"cell {c.zip}/{c.fine}: dropped but {c.channel}/{run.unit_of[c.zip]} has opportunity "
+            f"{mass[c.channel, run.unit_of[c.zip]]:.6g}"
+            for c in dropped if mass[c.channel, (run.unit_of or {}).get(c.zip)] > 0]
+    listed = [f"cell {c.zip}/{c.fine} ({c.channel}): {DROPPED}" for c in dropped]
+    return Check(name, "fail" if bad else "listed", f"{len(dropped)} cells dropped, {len(bad)} not valid",
+                 bad + listed)
 
 
 def check_bands(run: Run) -> Check:
@@ -366,7 +398,7 @@ def check_solver(run: Run) -> list:
     rows = [f"{ch}: status {r.get('status')}, objective {r.get('objective')}, bound {r.get('bound')}, "
             f"gap {_shown_gap(r)}, tier {tier(r)}" for ch, r in sorted(run.solver.items())]
     tiers = {ch: tier(r) for ch, r in run.solver.items()}
-    missing = sorted(set(run.channels) - set(run.solver))
+    missing = sorted(set(run.channels) - set(run.solver) - _unsolved(run))
     bad = [f"{ch}: no incumbent" for ch, t in sorted(tiers.items()) if t == "none"]
     bad += [f"{ch}: invalid report, {why}" for ch, r in sorted(run.solver.items())
             if tiers[ch] == "invalid" for why in solver_problems(r)]
@@ -406,25 +438,27 @@ def check_reps(run: Run) -> Check:
 
 
 def audit(run: Run) -> list:
-    """Every §9 check on `run`, in the scorecard's order."""
-    return [check_cells(run), check_count(run), check_bands(run), check_phantom(run),
-            check_planned(run), check_modes(run), check_contiguity(run), check_geography(run),
-            *check_solver(run), check_names(run), check_reps(run)]
+    """Every §9 check on `run`, in the scorecard's order.  A ledger cell whose ZIP has no unit fails
+    `check_cells`; the other checks run without it, so the scorecard still completes."""
+    mapped = run
+    if run.unit_of is not None and any(c.zip not in run.unit_of for c in run.cells):
+        mapped = replace(run, cells=[c for c in run.cells if c.zip in run.unit_of])
+    return [check_cells(run), check_count(mapped), check_dropped(mapped), check_bands(mapped),
+            check_phantom(mapped), check_planned(mapped), check_modes(mapped), check_contiguity(mapped),
+            check_geography(mapped), *check_solver(mapped), check_names(mapped), check_reps(mapped)]
 
 
 def verdict(checks: list) -> str:
     return "fail" if any(c.status == "fail" for c in checks) else "pass"
 
 
-def scorecard(checks: list, title: str, max_items: int = 50) -> str:
+def scorecard(checks: list, title: str) -> str:
     lines = [f"# Scorecard: {title}", "", f"**Verdict: {verdict(checks)}**", "",
              "| check | status | summary |", "|---|---|---|"]
     lines += [f"| {c.name} | {c.status} | {c.summary} |" for c in checks]
     for c in checks:
         if c.items:
-            lines += ["", f"## {c.name}", ""] + [f"- {i}" for i in c.items[:max_items]]
-            if len(c.items) > max_items:
-                lines.append(f"- and {len(c.items) - max_items} more")
+            lines += ["", f"## {c.name}", ""] + [f"- {i}" for i in c.items]    # every item (§9)
     return "\n".join(lines) + "\n"
 
 

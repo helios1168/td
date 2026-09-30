@@ -9,6 +9,7 @@ polygons (`tl_2025_us_state.zip` in `data/public/`, or `$TD_REPO`'s).
 from __future__ import annotations
 
 import collections
+import dataclasses
 import functools
 import json
 import math
@@ -295,6 +296,44 @@ def test_scorecard_is_written_with_verdict_and_items():
 def test_catalog_k_reads_the_scenario_name():
     assert audit.catalog_k("51_total_13n_11wh_24fi_3wifi") == {"N": 13, "WH": 11, "FI": 24, "WHFI": 3}
 
+
+
+def test_dropped_zero_opportunity_cells_are_listed_not_failed():
+    """MODEL §1 and §9 (#65 F1): a zero-opportunity unit's cells keep a blank district, carry the
+    reason, and are listed; a blank owner without it, or a drop where there is opportunity, fails."""
+    clean = _run()
+    zero = Cell("z0", "f", "X", "", 0.0, reason=audit.DROPPED)
+    run = _run(cells=clean.cells + [zero], expected=clean.expected | {("z0", "f")},
+               unit_of=dict(UNIT, z0="Zero"))
+    assert _fails(run) == []
+    dropped = _checks(run)["dropped for zero opportunity"]
+    assert dropped.status == "listed" and dropped.items == ["cell z0/f (X): dropped: zero opportunity"]
+    blank = dataclasses.replace(run, cells=clean.cells + [zero._replace(reason="")])
+    assert _fails(blank) == ["one owner per cell"]
+    heavy = dataclasses.replace(run, cells=clean.cells + [zero._replace(m=1.0)])
+    assert "dropped for zero opportunity" in _fails(heavy)
+
+
+def test_a_channel_dropped_whole_is_not_counted_against_k():
+    clean = _run()
+    run = _run(cells=clean.cells + [Cell("y0", "f", "Y", "", 0.0, reason=audit.DROPPED)],
+               channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(2, 0.0, 1.0)},
+               expected=clean.expected | {("y0", "f")}, unit_of=dict(UNIT, y0="Ynit"))
+    assert _checks(run)["district count per channel"].status == "pass"
+    assert _fails(run) == []
+
+
+def test_a_ledger_zip_without_a_unit_fails_and_the_audit_completes():
+    clean = _run()
+    run = dataclasses.replace(clean, cells=clean.cells + [Cell("zz", "f", "X", "d4", 0.0)])
+    cells = _checks(run)["one owner per cell"]
+    assert cells.status == "fail" and "cell zz/f: ZIP has no unit" in cells.items
+
+
+def test_scorecard_lists_every_item():
+    many = audit.Check("final bands on drawn mass", "fail", "51 breaches", [f"breach {i}" for i in range(51)])
+    text = audit.scorecard([many], "toy")
+    assert "- breach 50" in text and "more" not in text
 
 # ------------------------------------------------------------------------------ the tagged catalog
 @functools.cache

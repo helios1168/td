@@ -46,6 +46,7 @@ Contiguity is on the 2025 Voronoi rook graph over the catalog's ZIPs (OD2, built
 |---|---|---|---|---|
 | one owner per cell | 36 | 0 | 0 | 0 |
 | district count per channel | 36 | 0 | 0 | 0 |
+| dropped for zero opportunity | 36 | 0 | 0 | 0 |
 | final bands on drawn mass | 0 | 0 | 0 | 36 |
 | phantom shares | 36 | 0 | 0 | 0 |
 | planned against drawn owners | 0 | 0 | 0 | 36 |
