@@ -407,6 +407,85 @@ def test_a_hook_that_td_hooks_lacks_stops_the_run_before_solving():
         raise AssertionError("no SpecError")
 
 
+def _named_spec(channel: str, other: str = "Y", scenario: str = "toy"):
+    raw = {"scenario": {"name": scenario, "fine_channels": ["f", "g"]},
+           "channels": {channel: {"k": 2, "domain": [{"units": "all", "fine": ["f"]}], "eta": 0.1,
+                                 "max_dist_km": 1e9},
+                        other: {"k": 1, "domain": [{"units": "all", "fine": ["g"]}], "eta": 0.1}}}
+    return spec.parse(raw)
+
+
+def _refused(call, *names):
+    try:
+        call()
+    except output.RunError as e:
+        assert all(repr(n) in str(e) for n in names), str(e)
+    else:
+        raise AssertionError(f"no RunError for {names}")
+
+
+def test_a_channel_that_cannot_name_a_file_stops_the_run_before_it_writes():
+    extract, graph = _toy_inputs()
+    root = tempfile.mkdtemp(prefix="td-paths-")
+    sentinel = os.path.join(root, "escaped.png")
+    with open(sentinel, "wb") as fh:
+        fh.write(b"KEEP")
+    out = os.path.join(root, "run")
+    for bad in ("../../escaped", "/tmp/escaped", "a/b", "..", ".", "a b"):
+        _refused(lambda: output.run(_named_spec(bad), extract, out, graph, ts._reference(),
+                                    _toy_public()), bad)
+    _refused(lambda: output.run(_named_spec("WH", "wh"), extract, out, graph, ts._reference(),
+                                _toy_public()), "WH", "wh")
+    assert sorted(os.listdir(root)) == ["escaped.png"] and open(sentinel, "rb").read() == b"KEEP"
+    shutil.rmtree(root)
+
+
+def test_the_maps_command_refuses_a_ledger_channel_or_a_maps_dir_that_leaves_the_run():
+    res, _ = _toy_run()
+    root = tempfile.mkdtemp(prefix="td-paths-")
+    sentinel = os.path.join(root, "escaped.png")
+    with open(sentinel, "wb") as fh:
+        fh.write(b"KEEP")
+    run_dir = os.path.join(root, "run")
+    os.makedirs(run_dir)
+    with open(res.paths["ledger"], encoding="utf-8") as fh:
+        text = fh.read()
+    with open(os.path.join(run_dir, "ledger.csv"), "w", encoding="utf-8") as fh:
+        fh.write(text.replace(",X,", ",../../escaped,"))
+    _refused(lambda: output.draw_maps(os.path.join(run_dir, "ledger.csv"),
+                                      os.path.join(run_dir, "maps"), ts._reference(),
+                                      public=_toy_public(), root=run_dir), "../../escaped")
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        assert output.main_maps([run_dir, "--public", _toy_public()]) == 1
+    assert "'../../escaped'" in err.getvalue()
+    assert sorted(os.listdir(run_dir)) == ["ledger.csv"] and open(sentinel, "rb").read() == b"KEEP"
+    # a valid ledger whose maps directory is a link out of the run: nothing is drawn through it
+    shutil.copy(res.paths["ledger"], os.path.join(run_dir, "ledger.csv"))
+    elsewhere = tempfile.mkdtemp(prefix="td-elsewhere-")
+    os.symlink(elsewhere, os.path.join(run_dir, "maps"))
+    with contextlib.redirect_stderr(io.StringIO()):
+        assert output.main_maps([run_dir, "--public", _toy_public()]) == 1
+    assert os.listdir(elsewhere) == []
+    shutil.rmtree(root)
+    shutil.rmtree(elsewhere)
+
+
+def test_a_scenario_that_cannot_name_the_default_run_directory_is_refused():
+    """An absolute name would replace runs/ in the default --out; this one points into `tmp`."""
+    tmp = tempfile.mkdtemp(prefix="td-paths-")
+    name, path = os.path.join(tmp, "escaped"), os.path.join(tmp, "s.toml")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(f'[scenario]\nname = "{name}"\nfine_channels = ["f"]\n\n'
+                 '[channels.X]\nk = 1\neta = 0.1\ndomain = [{ units = "all", fine = ["f"] }]\n')
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        assert output.main_run([path, "--fixture", "0"]) == 1
+    assert f"scenario {name!r}" in err.getvalue(), err.getvalue()
+    assert os.listdir(tmp) == ["s.toml"]
+    shutil.rmtree(tmp)
+
+
 def test_the_cli_lists_run_and_maps():
     from td import __main__ as cli
     buf = io.StringIO()

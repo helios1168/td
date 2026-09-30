@@ -36,6 +36,11 @@ labels at the principal cities of the channel's `TOP_METROS` largest metros by 2
 The principal cities are the ones the 2025 CBSA title names, placed at their 2025 gazetteer place.
 Only the run's ZCTAs are read from the national file.  Without the file no map is drawn and
 `run.json` says `MAPS_SKIPPED`; a ledger ZCTA the file lacks is listed there, never dropped silently.
+
+**Paths.**  A planning channel names its map file, and the scenario names the default run
+directory, so each must be a plain file name (`FILE_NAME`, not `.` or `..`, and channels distinct
+without regard to case): the run and the maps command refuse any other before writing, and every
+map path must resolve inside the run directory.  District ids (`<channel>_<nn>`) name no file.
 """
 from __future__ import annotations
 
@@ -61,6 +66,7 @@ TOP_METROS = 10
 ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
 SIMPLIFY_M = 250.0          # the figures' simplification, as the 2026-09-09 menu chose
 MAPS_SKIPPED = "maps skipped: ZCTA polygons missing"
+FILE_NAME = re.compile(r"[A-Za-z0-9_.-]{1,250}")    # a key that may name a file: one component
 
 
 class RunError(RuntimeError):
@@ -96,6 +102,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         public: str = geo.PUBLIC_DIR, time_limit: float | None = None, maps: bool = True,
         source: str = "") -> Result:
     """Spec `s` on `extract` into the run directory `out`, new or empty (module docstring)."""
+    check_file_names("planning channel", s.channels)
     check_out(out)
     for c in s.channels:
         if tdspec.hook(s, c) is not None:
@@ -150,7 +157,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     elif zcta_file(public) is None:
         report["maps"] = MAPS_SKIPPED
     else:
-        drawn = draw_maps(paths["ledger"], os.path.join(out, "maps"), ref, areas, public)
+        drawn = draw_maps(paths["ledger"], os.path.join(out, "maps"), ref, areas, public, root=out)
         paths["maps"] = {c: m["path"] for c, m in drawn.items()}
         report["maps"] = "drawn"
         report["maps_missing_polygons"] = sorted({z for m in drawn.values() for z in m["missing"]})
@@ -165,6 +172,28 @@ def check_out(out: str) -> None:
     """Stop unless the run directory `out` is new or empty, so no earlier output survives a stop."""
     if os.path.exists(out) and (not os.path.isdir(out) or os.listdir(out)):
         raise RunError(f"{out} exists and is not an empty directory; pass a fresh --out or remove it")
+
+
+def check_file_names(kind: str, names) -> None:
+    """Stop unless each of `names` is a plain file name (`FILE_NAME`, not `.` or `..`) and no two
+    differ only in case, so a file named after one stays in its directory and overwrites no other."""
+    bad = [n for n in names if not isinstance(n, str) or not FILE_NAME.fullmatch(n) or n in (".", "..")]
+    if bad:
+        raise RunError(f"{kind} {', '.join(map(repr, bad))} cannot name an output file: use "
+                       "1 to 250 of A-Z a-z 0-9 _ . -, not . or ..")
+    folded = collections.Counter(n.casefold() for n in names)
+    alike = sorted(n for n in names if folded[n.casefold()] > 1)
+    if alike:
+        raise RunError(f"{kind} names {', '.join(map(repr, alike))} differ only in case and would "
+                       "name the same file")
+
+
+def inside(root: str, path: str) -> str:
+    """`path`, after checking that it resolves, symlinks followed, inside the directory `root`."""
+    r, p = os.path.realpath(root), os.path.realpath(path)
+    if os.path.commonpath([r, p]) != r:
+        raise RunError(f"{path} resolves to {p}, outside {root}")
+    return path
 
 
 # ------------------------------------------------------------------------------ the ledger
@@ -484,11 +513,12 @@ def _polygon_path(geom):
 
 
 def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
-              public: str = geo.PUBLIC_DIR, top: int = TOP_METROS) -> dict:
+              public: str = geo.PUBLIC_DIR, top: int = TOP_METROS, root: str | None = None) -> dict:
     """{channel: {"path", "districts", "labels", "zctas", "missing"}}: one map per planning channel,
     drawn only from the ledger file at `ledger_path` (module docstring).  `zctas` counts the
     polygons drawn and `missing` lists the ledger's ZCTAs the ZCTA520 file lacks.  Without that
-    file it draws nothing and returns {} (`MAPS_SKIPPED`)."""
+    file it draws nothing and returns {} (`MAPS_SKIPPED`).  It stops before writing when a
+    channel cannot name a file, and every map must resolve inside `root` (default `out_dir`)."""
     if zcta_file(public) is None:
         return {}
     import matplotlib
@@ -502,6 +532,9 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
     ref = geo.read_reference() if reference is None else reference
     areas = read_areas() if areas is None else areas
     led = pd.read_csv(ledger_path, dtype=str, keep_default_na=False)
+    check_file_names("planning channel", sorted(set(led["model_channel"])))
+    root = out_dir if root is None else root
+    inside(root, out_dir)
     led = led[led["district"] != ""].drop_duplicates(["model_channel", "zip_code"])
     polys = zcta_polygons(led["zip_code"], public)
     titles, pop, places = cbsa_titles(areas), cbsa_population(ref), _places(areas, ref)
@@ -547,8 +580,9 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
         ax.set_title(f"{g['scenario'].iloc[0]}: {c}, {len(districts)} districts")
         ax.legend(handles=handles, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6,
                   frameon=False)
-        out[c] = {"path": os.path.join(out_dir, f"{c}.png"), "districts": districts, "labels": labels,
-                  "zctas": len(drawn), "missing": sorted(set(g["zip_code"]) - set(polys))}
+        out[c] = {"path": inside(root, os.path.join(out_dir, f"{c}.png")), "districts": districts,
+                  "labels": labels, "zctas": len(drawn),
+                  "missing": sorted(set(g["zip_code"]) - set(polys))}
         fig.savefig(out[c]["path"], dpi=120, bbox_inches="tight")
         plt.close(fig)
     return out
@@ -569,6 +603,9 @@ def main_run(argv=None) -> int:
     a = ap.parse_args(argv)
     try:
         s = tdspec.load(a.spec)
+        check_file_names("planning channel", s.channels)
+        if not a.out:
+            check_file_names("scenario", [s.name])
         out = a.out or os.path.join(geo.ROOT, "runs", s.name)
         check_out(out)
         ref = geo.read_reference()
@@ -604,8 +641,12 @@ def main_maps(argv=None) -> int:
     if zcta_file(a.public) is None:
         print(f"{MAPS_SKIPPED}: no {ZCTA_FILE} in {a.public}", file=sys.stderr)
         return 1
-    drawn = draw_maps(os.path.join(a.run, "ledger.csv"), os.path.join(a.run, "maps"),
-                      public=a.public)
+    try:
+        drawn = draw_maps(os.path.join(a.run, "ledger.csv"), os.path.join(a.run, "maps"),
+                          public=a.public, root=a.run)
+    except RunError as e:
+        print(f"maps stopped: {e}", file=sys.stderr)
+        return 1
     for c, m in drawn.items():
         print(f"{c}: {m['path']}, {len(m['districts'])} districts, {m['zctas']} ZCTAs, "
               f"{len(m['missing'])} without a polygon, {len(m['labels'])} labels")
