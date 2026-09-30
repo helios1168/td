@@ -11,6 +11,7 @@ from __future__ import annotations
 import collections
 import functools
 import json
+import math
 import os
 import subprocess
 import sys
@@ -163,6 +164,16 @@ def test_cells_count_names_manifest_and_solver_fail_when_broken():
         "certificate tier", "solver status, bound and gap"]
 
 
+def test_ledger_cell_outside_the_expected_cells_fails():
+    assert _checks(_run())["one owner per cell"].status == "pass"
+    run = _run()
+    run.cells.append(Cell("c1", "invented", "X", "d4", 0.0))
+    check = audit.check_cells(run)
+    assert check.status == "fail"
+    assert check.items == ["cell c1/invented: not expected"]
+    assert _fails(run) == ["one owner per cell"]
+
+
 def test_certificate_tiers_follow_od3():
     exact = {"status": "optimal", "objective": 1.0, "bound": 1.0, "gap": 0.0, "mip_rel_gap": 0.0}
     assert audit.tier(exact) == "exact"
@@ -195,6 +206,42 @@ def test_valid_solver_reports_keep_their_tier():
     checks = _checks(_run(solver={"X": bounded}))
     assert checks["certificate tier"].status == "pass"
     assert checks["certificate tier"].summary == "weakest tier: bounded"
+
+
+def test_solver_row_shows_the_actual_gap():
+    for bounded in ({"status": "time limit", "objective": 8.0, "bound": 6.0},
+                    {"status": "time limit", "objective": 8.0, "bound": 6.0, "gap": 0.25}):
+        check, = [c for c in audit.check_solver(Run(cells=[], channels={"X": Channel(1)},
+                                                         solver={"X": bounded}))
+                  if c.name == "solver status, bound and gap"]
+        assert check.items == ["X: status time limit, objective 8.0, bound 6.0, gap 0.25, tier bounded"]
+    feasible = {"status": "time limit", "objective": 8.0}
+    check = audit.check_solver(Run(cells=[], channels={"X": Channel(1)}, solver={"X": feasible}))[0]
+    assert check.items == ["X: status time limit, objective 8.0, bound None, gap None, tier feasible only"]
+
+
+def test_exact_allowance_is_mixed_absolute_and_relative():
+    assert audit.allowance(1e6) == 1e-3 and audit.allowance(0.001) == 1e-9 and audit.allowance(0) == 1e-9
+    exact = {"status": "optimal", "mip_rel_gap": 0.0, "gap": 0.0}
+    big = dict(exact, objective=1e6)
+    assert audit.tier(dict(big, bound=1e6 - 5e-4)) == "exact"          # 5e-4 within 1e-3
+    assert audit.tier(dict(big, bound=1e6 - 5e-2, gap=None)) == "bounded"
+    assert audit.tier(dict(big, bound=1e6 - 5e-2, gap=5e-8)) == "bounded"
+    assert audit.tier(dict(big, bound=1e6 - 5e-2)) == "invalid"         # a gap of 0 misreports it
+    assert audit.solver_problems(dict(big, bound=1e6 + 5e-4)) == []
+    assert audit.tier(dict(big, bound=1e6 + 5e-4)) == "exact"
+    assert audit.solver_problems(dict(big, bound=1e6 + 5e-2)) != []
+    assert audit.tier(dict(big, bound=1e6 + 5e-2)) == "invalid"
+    small = dict(exact, objective=0.001)
+    assert audit.tier(dict(small, bound=0.001 + 5e-10)) == "exact"
+    assert audit.tier(dict(small, bound=0.001 + 5e-9)) == "invalid"
+    # Below |objective| = 1 the allowance is absolute: 5e-10 is a relative gap of 5e-7.
+    assert audit.tier(dict(small, bound=0.001 - 5e-10)) == "exact"
+    assert audit.tier(dict(small, bound=0.001 - 5e-9)) == "invalid"
+    assert audit.tier(dict(exact, objective=0.0, bound=-5e-10)) == "exact"
+    assert audit.tier(dict(exact, objective=0.0, bound=-1.0)) == "invalid"
+    assert audit.tier({"status": "time limit", "objective": 0.0, "bound": -1.0, "gap": math.inf}) == "bounded"
+    assert audit.tier({"status": "time limit", "objective": 0.0, "bound": 0.0, "gap": 5.0}) == "invalid"
 
 
 def test_band_allows_od1_slack_at_both_boundaries():

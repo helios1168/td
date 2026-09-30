@@ -36,7 +36,11 @@ MODES = ("whole", "clipped", "free")
 PSEUDO = frozenset({"other", "unserved", "unassigned", "none"})   # owners that are not districts
 SHARE_TOL = 1e-9
 BAND_SLACK = 1e-9        # OD1: numerical slack at each band boundary, times τ_c
-GAP_TOL = 1e-9           # a solver report's bound and gap agree with its objective to this
+# How far a certificate's bound may sit from its objective and still count as equal, in objective
+# units: EXACT_ALLOWANCE × max(1, |objective|), mixed absolute/relative as HiGHS, so float noise at
+# a proved optimum still earns `exact`. Decided on #70:
+# https://github.com/helios1168/td/issues/70#issuecomment-5908116656
+EXACT_ALLOWANCE = 1e-9
 TAG = "archive/pre-support-2026-09"
 TAG_URL = f"https://github.com/helios1168/td/blob/{TAG}"
 
@@ -127,6 +131,7 @@ def check_cells(run: Run) -> Check:
     items += [f"cell {c.zip}/{c.fine}: no owner" for c in run.cells if not c.district]
     if run.expected is not None:
         items += [f"cell {z}/{f}: not in the ledger" for z, f in sorted(run.expected - set(seen))]
+        items += [f"cell {z}/{f}: not expected" for z, f in sorted(set(seen) - run.expected)]
     return Check("one owner per cell", "fail" if items else "pass",
                  f"{len(seen)} cells, {len(items)} with other than one owner", items)
 
@@ -279,6 +284,12 @@ def _finite(x) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
 
+def allowance(obj: float) -> float:
+    """EXACT_ALLOWANCE × max(1, |objective|): the distance, in objective units, at which a bound
+    still counts as equal to the objective (#70)."""
+    return EXACT_ALLOWANCE * max(1.0, abs(obj))
+
+
 def actual_gap(obj: float, bound: float) -> float:
     """The relative gap of a minimisation, (objective - bound) / |objective|, as HiGHS reports it."""
     if obj == bound:
@@ -297,20 +308,33 @@ def solver_problems(report: dict) -> list:
         return [] if gap is None else [f"gap {gap!r} reported without a bound"]
     if not _finite(bound):
         return [f"bound {bound!r} is not a finite number"]
-    if bound - obj > GAP_TOL * max(1.0, abs(obj)):
+    if bound - obj > allowance(obj):
         return [f"bound {bound!r} above the incumbent {obj!r}"]
-    if gap is not None:
-        want = actual_gap(obj, min(bound, obj))
-        if not (isinstance(gap, (int, float)) and not isinstance(gap, bool)
-                and (gap == want or abs(gap - want) <= GAP_TOL)):
-            return [f"reported gap {gap!r}, objective and bound give {want:.6g}"]
+    if gap is not None and not _gap_agrees(gap, obj, min(bound, obj)):
+        return [f"reported gap {gap!r}, objective and bound give {actual_gap(obj, min(bound, obj)):.6g}"]
     return []
+
+
+def _gap_agrees(gap, obj: float, bound: float) -> bool:
+    """A reported gap agrees when it is the actual gap, or when the bound it implies,
+    objective − gap × |objective|, lies within the allowance of `bound`.  At a zero objective a
+    gap implies no bound, so only the actual gap, or 0 with the bound within the allowance, agrees."""
+    if not isinstance(gap, (int, float)) or isinstance(gap, bool):
+        return False
+    if gap == actual_gap(obj, bound):
+        return True
+    if not math.isfinite(gap):
+        return False
+    if obj == 0:
+        return gap == 0 and obj - bound <= allowance(obj)
+    return abs(obj - bound - gap * abs(obj)) <= allowance(obj)
 
 
 def tier(report: dict) -> str:
     """OD3 (#58): exact, bounded or feasible only; `none` without an incumbent, and `invalid`
     when the report cannot back a tier (`solver_problems`).  Exact needs a proven optimum at
-    `mip_rel_gap=0` with a reported and an actual gap of 0."""
+    `mip_rel_gap=0`, a reported gap of 0, and a bound within `allowance(objective)` =
+    EXACT_ALLOWANCE × max(1, |objective|) of the objective."""
     obj, bound = report.get("objective"), report.get("bound")
     if obj is None:
         return "none"
@@ -319,9 +343,20 @@ def tier(report: dict) -> str:
     if bound is None:
         return "feasible only"
     if (report.get("status") == "optimal" and report.get("mip_rel_gap") == 0
-            and report.get("gap") == 0 and actual_gap(obj, min(bound, obj)) <= GAP_TOL):
+            and report.get("gap") == 0 and obj - min(bound, obj) <= allowance(obj)):
         return "exact"
     return "bounded"
+
+
+def _shown_gap(report: dict) -> str:
+    """The gap a solver row prints: the actual gap of a report that backs a tier, None without a
+    bound, and the report's own value when it backs none."""
+    obj, bound = report.get("objective"), report.get("bound")
+    if tier(report) in ("invalid", "none"):
+        return f"{report.get('gap')}"
+    if bound is None:
+        return "None"
+    return f"{actual_gap(obj, min(bound, obj)):.6g}"
 
 
 def check_solver(run: Run) -> list:
@@ -329,7 +364,7 @@ def check_solver(run: Run) -> list:
         return [Check("solver status, bound and gap", "unverified", "no solver report"),
                 Check("certificate tier", "unverified", "no solver report")]
     rows = [f"{ch}: status {r.get('status')}, objective {r.get('objective')}, bound {r.get('bound')}, "
-            f"gap {r.get('gap')}, tier {tier(r)}" for ch, r in sorted(run.solver.items())]
+            f"gap {_shown_gap(r)}, tier {tier(r)}" for ch, r in sorted(run.solver.items())]
     tiers = {ch: tier(r) for ch, r in run.solver.items()}
     missing = sorted(set(run.channels) - set(run.solver))
     bad = [f"{ch}: no incumbent" for ch, t in sorted(tiers.items()) if t == "none"]
