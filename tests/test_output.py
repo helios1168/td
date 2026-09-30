@@ -23,7 +23,7 @@ import subprocess
 import sys
 import tempfile
 
-from td import audit, data, geo, output, spec
+from td import audit, data, geo, master, output, spec
 
 from tests import test_spec as ts
 
@@ -339,6 +339,27 @@ def test_a_full_extract_is_drawn_on_the_committed_graph():
     assert g["vertices"] == vertices and len(g["edges"]) == report["graph"]["edges"]
 
 
+def test_a_zip_with_no_opportunity_is_no_vertex_of_the_declared_graph():
+    """OD2 (#72 B2): a ZIP at zero in every channel is for display only, so the declared graph is
+    rebuilt over the other ZIPs; a ZIP at zero in one channel only keeps its vertex."""
+    public = ts._state_file()
+    if public is None:
+        return
+    zero, partial = NY[0], NJ[0]
+    zs = sorted(NY + NJ + PA)
+    m = {z: (0.0, 0.0) if z == zero else (0.0, 1.0) if z == partial else (1.0, 0.0) for z in zs}
+    extract = data.Extract(("f", "g"), [z for z in zs for _ in "fg"], [f for _ in zs for f in "fg"],
+                           [x for z in zs for x in m[z]], [{}] * 2 * len(zs), [0.0] * 2 * len(zs))
+    ref = ts._reference()
+    g = output.declared_graph(extract, ref, public)
+    assert zero not in g["vertices"] and partial in g["vertices"]
+    at = ref.set_index("zcta").loc[[z for z in zs if z != zero]]
+    want = geo.zip_graph(dict(zip(at.index, zip(at["x"].astype(float), at["y"].astype(float)))),
+                         dict(zip(at.index, at["state"])), data.state_polygons(public))
+    assert g["vertices"] == want["vertices"] and g["edges"] == want["edges"]
+    assert all(zero not in e[:2] for e in g["edges"])
+
+
 # ------------------------------------------------------------------------------ pieces
 def test_pieces_come_from_the_ledger_and_the_scorecard_run_json_and_districts_csv_agree():
     """NY's middle ZIPs have no cell in channel X: the map's district holds them at zero mass as
@@ -391,6 +412,45 @@ def test_a_channel_with_no_plan_stops_the_run_after_writing_the_solver_report():
     else:
         raise AssertionError("no RunError")
     assert json.load(open(os.path.join(out, "solver.json")))["X"]["solver"]["status"] == "infeasible"
+    shutil.rmtree(out)
+
+
+def test_an_infeasible_band_reports_the_smallest_master_delta_and_keeps_the_band():
+    """OD1 and S10 (#72 B3): a declared band proven infeasible gets its smallest master δ in
+    `solver.json` and the stop's reason, and the run does not go on at it."""
+    out = tempfile.mkdtemp(prefix="td-output-")
+    extract, graph = _toy_inputs()
+    s = _toy_spec(k=3, delta=0.0, final_delta=0.0, mode="clipped")
+    inst = spec.build(s, data.conus(extract, ts._reference()), ts._reference(), graph)
+    want = master.smallest_delta(inst, "X")
+    assert want.method == "exact" and want.status == "exact" and want.delta > 0.5, want
+    try:
+        output.run(s, extract, out, graph, ts._reference(), maps=False)
+    except output.RunError as e:
+        assert f"smallest master δ {want.delta:.6g} (exact, exact)" in str(e), str(e)
+        assert "declared bands are kept" in str(e), str(e)
+    else:
+        raise AssertionError("no RunError")
+    got = json.load(open(os.path.join(out, "solver.json")))["X"]
+    assert got["solver"]["status"] == "infeasible"
+    assert got["smallest_delta"]["delta"] == want.delta and got["smallest_delta"]["status"] == "exact"
+    assert set(os.listdir(out)) == {"solver.json"}          # no ledger at the found δ
+    shutil.rmtree(out)
+
+
+def test_a_channel_with_no_verdict_gets_no_smallest_delta_search():
+    """A master that ends without a verdict (here a zero time limit) is unknown, not infeasible:
+    no smallest δ is searched or written."""
+    out = tempfile.mkdtemp(prefix="td-output-")
+    extract, graph = _toy_inputs()
+    try:
+        output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False, time_limit=0.0)
+    except output.RunError as e:
+        assert "(time limit), no verdict, so no smallest δ was searched" in str(e), str(e)
+    else:
+        raise AssertionError("no RunError")
+    got = json.load(open(os.path.join(out, "solver.json")))["X"]
+    assert got["solver"]["status"] == "time limit" and "smallest_delta" not in got
     shutil.rmtree(out)
 
 

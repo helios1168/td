@@ -4,8 +4,10 @@
 instance on the declared ZIP graph, each channel's master (`td.master`) and map (`td.realize`),
 then the ledger, its audit (`td.audit`), the district names and the maps, all in one run
 directory.  A spec the loader refuses, a channel with no plan and a realizer stop each end the run
-with the reason (S28); a failed audit still writes everything and exits 1.  A run writes only into
-a new or empty directory, so no output of an earlier run can outlive a stop.
+with the reason (S28); a channel whose declared band is proven infeasible first has its smallest
+master δ searched and written to `solver.json`, and never adopted (OD1, S10).  A failed audit
+still writes everything and exits 1.  A run writes only into a new or empty directory, so no
+output of an earlier run can outlive a stop.
 
 **The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the CONUS
 extract.  It keeps the tagged `scenarios.csv` columns (`LEGACY_COLUMNS`, in order) and adds the
@@ -13,7 +15,8 @@ ZIP's 2025 county, CBSA and place GEOIDs and the district's name, then the cell'
 `m_rel`, from which reported masses and bands are read (§8), and the `reason` for a blank district:
 - `dropped: zero opportunity`, a cell of a unit or channel dropped before solving (§1, #65 F1);
 - `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, so it is outside
-  the audit's retained domain and counted in `run.json` (#67).
+  the audit's retained domain and counted in `run.json` (#67).  A ZIP with no opportunity in any
+  channel is never a vertex of the graph the run declares (OD2, `declared_graph`).
 `current_channel` is the fine channel, `model_channel` the planning channel holding the cell,
 `district` the district id `<channel>_<nn>`, `district_channels` its channel (blank with the
 district), and `rep` is blank: outputs are district-only plans (OD3, #58).  The audit reads the
@@ -83,16 +86,29 @@ class Result:
 
 
 # ------------------------------------------------------------------------------ the run
+def positive_zips(extract) -> set:
+    """The extract's ZIPs with opportunity in some fine channel.  A ZIP with none in every channel
+    is for display only and is no optimization vertex (OD2); a ZIP at zero in one channel but not
+    in all keeps its vertex."""
+    return {z for z, m in extract.masses().items() if m > 0}
+
+
 def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
-    """The OD2 graph a real extract is drawn on: the committed all-CONUS graph when the extract
-    holds all its vertices, else `geo.zip_graph` over the extract's placed points (trap 21)."""
+    """The OD2 graph a real extract is drawn on, over its `positive_zips` only: the committed
+    all-CONUS graph when each of its vertices has opportunity in the extract, else `geo.zip_graph`
+    rebuilt over the positive placed points, since inducing the committed graph on fewer points
+    would invent disconnections (trap 21).  A wholly-zero ZIP keeps its ledger rows, as
+    `NOT_PLACED`."""
     import pandas as pd
     ref = reference.set_index("zcta")
+    positive = positive_zips(extract)
     vertices = set(ref.index[ref["graph_vertex"].astype(int) == 1])
-    if vertices <= set(extract.zips):
+    if vertices <= positive:
         e = pd.read_csv(os.path.join(geo.REFERENCE_DIR, "zcta_graph_edges.csv.gz"), dtype=str)
         return {"vertices": sorted(vertices), "edges": list(zip(e["a"], e["b"]))}
-    placed = [z for z in extract.zips if z in ref.index and ref.at[z, "state"]]
+    placed = [z for z in sorted(positive) if z in ref.index and ref.at[z, "state"]]
+    if not placed:
+        raise RunError("no ZIP of the extract has opportunity and a 2025 point: there is no graph")
     rows = ref.loc[placed]
     points = dict(zip(placed, zip(rows["x"].astype(float), rows["y"].astype(float))))
     return geo.zip_graph(points, dict(zip(placed, rows["state"])), data.state_polygons(public))
@@ -113,12 +129,15 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     inst = tdspec.build(s, ext, ref, graph)
     os.makedirs(out, exist_ok=True)
     plans, reports = master.plan_all(inst, time_limit=time_limit)
-    paths = {"solver": master.write_report(os.path.join(out, "solver.json"), reports)}
     none = sorted(c for c, p in plans.items() if p is None)
+    # a declared band proven infeasible: report the smallest master δ, never adopt it (OD1, S10)
+    deltas = {c: master.smallest_delta(inst, c, time_limit=time_limit)
+              for c in none if reports[c]["status"] == "infeasible"}
+    paths = {"solver": master.write_report(os.path.join(out, "solver.json"), reports, deltas)}
     if none:
         raise RunError("no plan for " + "; ".join(
-            f"{c} at δ = {inst.channels[c].spec.delta} ({reports[c]['status']})" for c in none)
-            + "; td.master.smallest_delta finds the smallest δ a channel meets")
+            no_plan(c, inst.channels[c].spec.delta, reports[c], deltas.get(c)) for c in none)
+            + "; the declared bands are kept (OD1): a run at another δ must declare it")
     rows = ref.set_index("zcta").loc[sorted(inst.units.unit_of)]
     xy = dict(zip(rows.index, zip(rows["x"].astype(float), rows["y"].astype(float))))
     drawings = {c: realize.realize(inst, p, xy) for c, p in plans.items()}
@@ -142,6 +161,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "scenario": s.name, "spec": s.path, "source": source, "verdict": audit.verdict(checks),
         "cells": len(led), "zips": len({r["zip_code"] for r in led}),
         "not_placed_zips": len({r["zip_code"] for r in led if r["reason"] == NOT_PLACED}),
+        "zero_opportunity_zips": len(set(ext.zips) - positive_zips(ext)),
         "conus_dropped": ext.dropped,
         "dropped_units": {c: list(u) for c, u in inst.report.get("dropped_units", {}).items()},
         "dropped_channels": list(inst.dropped_channels),
@@ -166,6 +186,21 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         json.dump(report, fh, indent=2, sort_keys=True)
         fh.write("\n")
     return Result(out, report["verdict"], checks, paths, report)
+
+
+def no_plan(channel: str, delta: float, report: dict, found) -> str:
+    """Why `channel` has no plan at its declared δ, with the smallest master δ `found` when the
+    band was proven infeasible (`master.Delta`, as `solver.json` records it)."""
+    head = f"{channel} at δ = {delta} ({report['status']})"
+    if found is None:
+        return f"{head}, no verdict, so no smallest δ was searched"
+    lower = "" if found.lower is None or found.status == "exact" else \
+        f", infeasible at {found.lower:.6g}"
+    if found.delta is None:
+        if found.status == "infeasible":
+            return f"{head}, and no δ is feasible ({found.method})"
+        return f"{head}; smallest master δ unknown ({found.method}, {found.status}{lower})"
+    return f"{head}; smallest master δ {found.delta:.6g} ({found.method}, {found.status}{lower})"
 
 
 def check_out(out: str) -> None:
