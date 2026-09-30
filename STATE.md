@@ -4,11 +4,11 @@
 
 ## Now
 
-Overnight autonomous wave on m5 (owner delegated all decisions). The support-master code chain has landed: #64+#65 (`1cf528a`), #70 (`0ed87d2`), #67 (`89733c2`), #68 (`da20682`), #69 (`bc3a2e6`), #71 (`e9d4f3c`); 186 tests pass. #72 is verifying: part A found four exporter bugs, so #61 is reopened and in a fix round; part B (#67–#71) is running.
+Overnight autonomous wave on m5 (owner delegated all decisions). The support-master chain has landed (#64/#65, #67–#71), and 199 tests pass. #72 verification found nine blockers: #61, #67, #69 and #70 are fixed and relanded; #71's last fix (B3, smallest-δ wording) is in review. Decisions are `DECIDED` comments on each issue.
 
 ## Next
 
-- Land the #61 fix; fix any part B blockers; close #72.
+- Land #71's B3 fix, then close #72.
 
 ## Blocked
 
