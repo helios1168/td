@@ -8,6 +8,7 @@ without).  #1, #7 and #11 are the regressions named in their tests.
 from __future__ import annotations
 
 import collections
+import dataclasses
 import math
 import random
 import tomllib
@@ -261,6 +262,59 @@ def test_repair_skips_a_neighbour_outside_the_channel():
     inst, owner, support = _guard_toy("free")
     del owner["u0"], owner["u1"], support["AR#1"]
     assert realize.repair(inst, "X", owner, support) == [] and owner["v3"] == "AL#1"
+
+
+def _mixed_toy():
+    """The #69 round-1 review's case A2: free AL = v0–v1–v2–v3 (mass 2 each), clipped AR =
+    u0…u5 (mass 1 each), v3–u0 the only link.  The master's equal-share plan puts v0 and v3 in
+    AL#1 apart, and AR#1, which owns part of the clipped AR, is the band-feasible neighbour."""
+    v, u = ["v0", "v1", "v2", "v3"], [f"u{i}" for i in range(6)]
+    mass = {**dict.fromkeys(v, 2.0), **dict.fromkeys(u, 1.0)}
+    edges = list(zip(v, v[1:])) + list(zip(u, u[1:])) + [("v3", "u0")]
+    xy_km = {"v0": (0.0, 0.0), "v3": (1.0, 0.0), "v1": (10.0, 0.0), "v2": (11.0, 0.0),
+             **{z: (20.0 + i, 0.0) for i, z in enumerate(u)}}
+    inst, xy = _toy({"AL": v, "AR": u}, edges, mass, xy_km, {"AL": "free", "AR": "clipped"},
+                    k=4, delta=1.0)
+    model = master.build(inst, "X")
+    x = [0.0] * len(model.cost)
+    for s in (frozenset({"AL"}), frozenset({"AR"})):
+        x[model.n_col[s]] = 2
+        x[model.t_col[next(iter(s)), s]] = 1
+    assert master.violations(model, x) == []
+    n, t, copies = master.decode(inst, model, x)
+    return inst, xy, master.Plan("X", 1.0, n, t, copies, 0.0, {})
+
+
+def test_repair_gives_no_zip_outside_a_clipped_unit_to_a_district_owning_part_of_it():
+    """C16 on the recipient's side: a free piece may not join a district that holds part of a
+    clipped unit, or that district owns ZIPs outside its clip.  AR#1 is nearest τ after the move
+    (5 against AL#2's 6, τ = 3.5), so only the guard sends {v3} to AL#2 instead."""
+    inst, xy, plan = _mixed_toy()
+    d = realize.realize(inst, plan, xy)
+    assert d.moved == [(("v3",), "AL#1", "AL#2")] and d.owner["v3"] == "AL#2"
+    assert audit.check_modes(realize.to_run(inst, {"X": d})).status == "pass"
+
+
+def test_the_detached_piece_is_the_one_the_audit_detaches_on_a_mass_tie():
+    """Isolated a (mass 2) against connected {b, c} (mass 2): the audit keeps the component with
+    the smallest ZIP id, so {b, c} is the piece, and its contiguity item names a cause."""
+    xy_km = {"a": (0.0, 0.0), "b": (1.0, 0.0), "c": (2.0, 0.0)}
+    inst, xy = _toy({"AL": ["a", "b", "c"]}, [("b", "c")], {"a": 2.0, "b": 1.0, "c": 1.0},
+                    xy_km, {"AL": "free"}, k=1, delta=1.0)
+    d = realize.realize(inst, _plan(inst, [({"AL"}, {"AL": 1.0})]), xy)
+    assert [pc.zips for pc in d.pieces] == [("b", "c")]
+    item = audit.check_contiguity(realize.to_run(inst, {"X": d})).items
+    assert len(item) == 1 and "cause unreported" not in item[0], item
+
+
+def test_the_expected_cells_come_from_the_input_not_the_map():
+    inst, xy, plan = _mixed_toy()
+    d = realize.realize(inst, plan, xy)
+    assert audit.check_cells(realize.to_run(inst, {"X": d})).status == "pass"
+    owner = dict(d.owner)
+    del owner["v0"]
+    cells = audit.check_cells(realize.to_run(inst, {"X": dataclasses.replace(d, owner=owner)}))
+    assert cells.status == "fail" and "cell v0/X: not in the ledger" in cells.items, cells.items
 
 
 def test_c10_the_clipped_star_is_listed_with_a_cause_and_keeps_both_masses_in_band():

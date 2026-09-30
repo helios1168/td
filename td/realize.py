@@ -244,8 +244,8 @@ def place_zero(zeros, owner: dict, zip_adj: dict, p: dict, c: dict) -> dict:
 
 # ------------------------------------------------------------------------------ the map
 def _parts(zs, adj: dict, m: dict) -> list:
-    """The components of `zs`, the heaviest first (mass, then size, then ZIP id)."""
-    return sorted(zip_components(zs, adj), key=lambda c: (-math.fsum(m[z] for z in c), -len(c), c))
+    """The components of `zs`, the heaviest first, ties by smallest ZIP id, as `td.audit` orders them."""
+    return sorted(zip_components(zs, adj), key=lambda c: (-math.fsum(m[z] for z in c), min(c)))
 
 
 def _districts(owner: dict) -> dict:
@@ -285,12 +285,14 @@ def realize(inst, plan, xy: dict) -> Drawing:
                    pieces(inst, plan.channel, owner, support, planned), moved)
 
 
-def _admissible(ch, units, piece, target_support) -> bool:
-    """The mode guard (C16): the target may own the piece in every unit it touches."""
+def _admissible(ch, units, piece, k, owner, support) -> bool:
+    """The mode guard (C16): `k` may own the piece in every unit it touches, and gains no ZIP
+    outside a clipped unit it already owns part of."""
     for u in {units.unit_of[z] for z in piece}:
-        if ch.mode[u] == "whole" or (ch.mode[u] == "clipped" and target_support != frozenset({u})):
+        if ch.mode[u] == "whole" or (ch.mode[u] == "clipped" and support[k] != frozenset({u})):
             return False
-    return True
+    held = {units.unit_of[z] for z, j in owner.items() if j == k}
+    return not any(ch.mode[u] == "clipped" and any(units.unit_of[z] != u for z in piece) for u in held)
 
 
 def repair(inst, channel: str, owner: dict, support: dict) -> list:
@@ -315,7 +317,7 @@ def repair(inst, channel: str, owner: dict, support: dict) -> list:
         for k in near:
             main_k = set(_parts(_districts(owner)[k], adj, m)[0])
             if (any(y in main_k for z in part for y in adj[z])
-                    and _admissible(ch, units, part, support[k])
+                    and _admissible(ch, units, part, k, owner, support)
                     and lo <= mass[j] - w <= hi and lo <= mass[k] + w <= hi):
                 ok.append(k)
         if ok:
@@ -380,7 +382,7 @@ def to_run(inst, drawings: dict, reports: dict | None = None, graph: dict | None
         mode.update({(c, v): ch.mode[v] for v in ch.units})
         for z, j in sorted(d.owner.items()):
             cells.append(audit.Cell(z, c, c, f"{c}:{j}", ch.m[z]))
-            expected.add((z, c))
+        expected |= {(z, c) for v in ch.units for z in units.zips[v]}    # the input, not the map
         for (v, j), a in d.planned.items():
             planned[c, v, f"{c}:{j}"] = a / ch.M[v]
         for (v, j), x in d.drawn.items():
