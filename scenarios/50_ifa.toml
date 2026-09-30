@@ -1,0 +1,26 @@
+# IFA alone, K = 50 (#76, #79).  Each new fine channel of the fresh extract is an independent
+# planning channel, planned in its own scenario, so this one plans ifa over all 49 units, west
+# included, with no national filter, and leaves every other fine channel to its own scenario.
+#
+# The support values are the 51 scenario's (policy), without its CA contact cap: that cap
+# encoded the legacy CA1/CA2 split.
+
+[scenario]
+name = "50_ifa"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi",
+                     "wells_wh", "wh"]
+delta = 0.10                    # OD1's default final band
+
+[channels.IFA]
+k = 50
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+# Free: the units whose IFA opportunity exceeds half a district, M/(2K), as `td.spec.build`
+# measures it on the fresh extract (#76 rule; the list is that rule's output, not a choice).
+free = ["AZ", "CA", "CO", "CT", "FL", "GA", "IA", "IL", "IN", "KS", "LA", "MA", "MD", "MI", "MN",
+        "MO", "NC", "NJ", "NY", "OH", "PA", "SC", "TN", "TX", "VA", "WA", "WI"]
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }

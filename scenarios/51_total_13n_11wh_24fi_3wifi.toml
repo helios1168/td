@@ -4,12 +4,13 @@
 # national and plan WH and FI together as WIFI; the other 41 plan national, WH and FI apart.
 #
 # Only the five fine channels the legacy catalog knew are in this scenario.  The fresh extract's
-# priafs, ifa, imo, edj and career are placed by #76; until then `td.spec.build` refuses an
-# extract that carries them.
+# priafs, ifa, imo, edj and career are independent planning channels, each planned in its own
+# scenario (#76), so this one lists them as planned elsewhere and leaves their cells out (#79).
 
 [scenario]
 name = "51_total_13n_11wh_24fi_3wifi"
 fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+planned_elsewhere = ["career", "edj", "ifa", "imo", "priafs"]
 delta = 0.10                    # OD1's default final band, per channel
 
 [sets]

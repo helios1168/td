@@ -2,7 +2,8 @@
 
 A scenario file has these tables (`scenarios/*.toml`):
 
-    [scenario]    name, fine_channels (the scenario's universe F), delta (default 0.10, OD1)
+    [scenario]    name, fine_channels (the scenario's universe F), planned_elsewhere, delta
+                  (default 0.10, OD1)
     [sets]        named unit sets, for use wherever a unit list is expected
     [national]    channel, fine, units, fallback: which units have national, and where a unit
                   without it sends each national fine channel (owner comment on #67)
@@ -14,8 +15,14 @@ A unit list is an array of unit and set names, or a string `"a - b - ..."` where
 
 **The partition.**  The channels' domains partition V × F, where V is the scenario's units and
 F its declared fine channels (`docs/MODEL.md` §1).  `load` rejects a gap or an overlap, naming
-the cells.  An extract whose fine channels are not all in F is refused by `build`, naming them:
-placing a new fine channel is #76's decision, never done here.
+the cells.
+
+**Scope** (#79).  `planned_elsewhere` lists the fine channels the extract may carry that this
+scenario leaves to their own scenarios (#76: each new fine channel is an independent planning
+channel).  `scope` restricts an extract to F, so everything downstream (the positive ZIPs, the
+graph, the ledger and the audit) sees only the scenario's cells, and refuses, naming them, the
+extract's fine channels in neither list: placing a new fine channel is #76's decision, never done
+here.  `build` scopes first.
 
 **Units** (`MODEL.md` §1, §6).  A unit is a state less its carved pieces, a county-built piece,
 or a metro piece: the ZIPs whose G1 county has the metro's 2025 CBSA code (OD5).  `load` refuses a
@@ -42,7 +49,7 @@ import functools
 import importlib
 import math
 import tomllib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 CONUS_STATES = (
     "AL AR AZ CA CO CT DC DE FL GA IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH "
@@ -125,6 +132,7 @@ class Spec:
     national: National | None
     channels: dict              # name -> ChannelSpec, in file order
     path: str | None = None
+    planned_elsewhere: tuple = ()   # fine channels the extract may carry, left to other scenarios
 
     def channel_of(self, unit: str, fine: str) -> str:
         return next(c.name for c in self.channels.values() if fine in c.domain.get(unit, ()))
@@ -145,6 +153,15 @@ def parse(raw: dict, path: str | None = None) -> Spec:
     fine = tuple(sc.get("fine_channels", ()))
     if not fine or len(set(fine)) != len(fine):
         raise SpecError("[scenario] fine_channels must list each fine channel once")
+    elsewhere = sc.get("planned_elsewhere", [])
+    if not isinstance(elsewhere, list) or not all(isinstance(f, str) for f in elsewhere):
+        raise SpecError("[scenario] planned_elsewhere must be a list of fine channel names")
+    twice = sorted({f for f in elsewhere if elsewhere.count(f) > 1})
+    if twice:
+        raise SpecError(f"[scenario] planned_elsewhere lists {_show(twice)} more than once")
+    both = sorted(set(elsewhere) & set(fine))
+    if both:
+        raise SpecError(f"[scenario] planned_elsewhere and fine_channels both list {_show(both)}")
     delta = _number(sc.get("delta", DEFAULT_DELTA), "[scenario] delta")
 
     geo_raw = raw.get("geography", {})
@@ -194,7 +211,7 @@ def parse(raw: dict, path: str | None = None) -> Spec:
         national = National(n["channel"], frozenset(n["fine"]),
                             _units(n["units"], sets, units, "[national] units"),
                             dict(n.get("fallback", {})))
-    spec = Spec(name, fine, units, pieces, metros, national, channels, path)
+    spec = Spec(name, fine, units, pieces, metros, national, channels, path, tuple(elsewhere))
     check_partition(spec)
     check_national(spec)
     return spec
@@ -516,18 +533,16 @@ class Instance:
 def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Instance:
     """The scenario on an extract: units from the 2025 reference table, the ZIP graph among the
     extract's placed ZIPs (`graph`: `{"vertices", "edges"}`, as `geo.zip_graph` returns), and
-    per-channel masses.  Raises SpecError on a fine channel outside F, a disconnected whole
-    unit, or pieces that overlap on the ZIPs.
+    per-channel masses, on the extract `scope` leaves.  Raises SpecError on a fine channel in
+    neither F nor `planned_elsewhere`, a disconnected whole unit, or pieces that overlap on the
+    ZIPs.
 
     With no `graph`, the committed all-CONUS graph is used only when the extract holds every one
     of its vertices.  The graph is the Voronoi rook graph of the placed points (`td.geo`), so
     inducing the committed graph on a sparse extract would invent disconnections; a sparse
     extract must pass the graph `geo.zip_graph` builds on its own placed ZIPs."""
     from td import geo
-    extra = sorted(set(extract.channels) - set(spec.fine_channels))
-    if extra:
-        raise SpecError(f"the extract has fine channels outside {spec.name}'s fine_channels: "
-                        f"{_show(extra)}; placing them in a planning channel is #76's decision")
+    extract = scope(spec, extract)
     ref = geo.read_reference() if reference is None else reference
     ref = ref.set_index("zcta")
     if graph is not None:
@@ -554,6 +569,26 @@ def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Ins
             cells[z, f] = cells.get((z, f), 0.0) + m
     return assemble(spec, Units.from_graph(unit_of, edges, xy, land), cells,
                     {"off_graph": off_graph})
+
+
+def scope(spec: Spec, extract):
+    """The extract restricted to the scenario's fine channels F: every column filtered, `channels`
+    in file order.  Refuses, naming them, the extract's fine channels in neither F nor
+    `planned_elsewhere` (#76).  An extract already scoped comes back unchanged."""
+    extra = sorted((set(extract.channels) | set(extract.channel)) - set(spec.fine_channels)
+                   - set(spec.planned_elsewhere))
+    if extra:
+        raise SpecError(f"the extract has fine channels outside {spec.name}'s fine_channels and "
+                        f"planned_elsewhere: {_show(extra)}; placing them in a planning channel "
+                        "is #76's decision")
+    keep = set(spec.fine_channels)
+    rows = [i for i, f in enumerate(extract.channel) if f in keep]
+    return replace(
+        extract, channels=tuple(f for f in extract.channels if f in keep),
+        z=[extract.z[i] for i in rows], channel=[extract.channel[i] for i in rows],
+        m_rel=[extract.m_rel[i] for i in rows], share=[extract.share[i] for i in rows],
+        share_free=[extract.share_free[i] for i in rows], firm=dict(extract.firm),
+        meta=dict(extract.meta), dropped=dict(extract.dropped))
 
 
 def _reference_edges():
