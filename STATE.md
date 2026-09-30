@@ -4,12 +4,13 @@
 
 ## Now
 
-Overnight autonomous wave on m5 (owner delegated all decisions). The support-master chain has landed (#64/#65, #67–#71), and 199 tests pass. #72 verification found nine blockers: #61, #67, #69 and #70 are fixed and relanded; #71's last fix (B3, smallest-δ wording) is in review. Decisions are `DECIDED` comments on each issue.
+The overnight wave on m5 finished: the support-master chain #64/#65 and #67–#71 landed, #72 verified it (nine blockers fixed in #61, #67, #69, #70 and #71), and 205 tests pass on `main`. Wave decisions are `DECIDED` comments on each issue. Nothing is mid-flight.
 
 ## Next
 
-- Land #71's B3 fix, then close #72.
+- `/execute 3`: the fresh v3 extract and channel review, then #73 (price of clipping).
+- Optional: #72 part A's three non-blocking geo.py P2s (#62).
 
 ## Blocked
 
-#63 needs a HUD User token on both Studios. Owner decisions: #59 county pieces, #75 catalog (after #74), #76 channels/bundles (after #3). #73 is outside tonight's wave (needs #3, #59). `AGENTS.md` still reports 24 tests; 53 now pass.
+#63 needs a HUD User token on both Studios. Owner decisions: #3 channels, #59 county pieces, #75 catalog (after #74), #76 channels/bundles (after #3). The C4b threshold waits on #69's U34 counts. `AGENTS.md` still reports 24 tests; 205 pass.
