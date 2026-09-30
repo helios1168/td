@@ -4,12 +4,12 @@
 
 ## Now
 
-Overnight autonomous wave on m5 (owner delegated all decisions). Landed: #64 with #65's fixes (`1cf528a`), #70 audit.py (`0ed87d2`); #65 closed. Running: #67 spec.py/supports.py, round 3. Chain after #67: #68 → #69 → #71 → #72. Decisions are `DECIDED` comments on each issue.
+Overnight autonomous wave on m5 (owner delegated all decisions). Landed: #64 with #65's fixes (`1cf528a`), #70 audit.py (`0ed87d2`), #67 spec/supports (`89733c2`), #68 master.py (`da20682`); #65 closed. Running: #69 realize.py. Then #71 → #72. Decisions are `DECIDED` comments on each issue.
 
 ## Next
 
-- Land #67, then #68 master.py.
-- #71 waits on #69.
+- Land #69, then #71 output.py and the run command.
+- #72 verifies the code of #61, #62 and #66–#71.
 
 ## Blocked
 
