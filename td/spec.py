@@ -150,6 +150,11 @@ def parse(raw: dict, path: str | None = None) -> Spec:
     metros = tuple(Metro(m, m) if isinstance(m, str) else Metro(m["name"], str(m["cbsa"]))
                    for m in geo_raw.get("metros", ()))
     metros = tuple(Metro(m.name if m.name != m.cbsa else f"M{m.cbsa}", m.cbsa) for m in metros)
+    by_cbsa: dict = {}
+    for m in metros:
+        if m.cbsa in by_cbsa:
+            raise SpecError(f"metros {by_cbsa[m.cbsa]} and {m.name} overlap: both are CBSA {m.cbsa}")
+        by_cbsa[m.cbsa] = m.name
     units = tuple(CONUS_STATES) + tuple(p.name for p in pieces) + tuple(m.name for m in metros)
     if len(set(units)) != len(units):
         twice = sorted(u for u in set(units) if units.count(u) > 1)
@@ -284,8 +289,10 @@ def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
     for u in list(caps) + list(dist):
         if u not in domain:
             raise SpecError(f"channel {name}: {u} has a cap but is not in the domain")
-    return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode,
-                       int(c.get("max_size", DEFAULT_MAX_SIZE)),
+    max_size = c.get("max_size", DEFAULT_MAX_SIZE)
+    if isinstance(max_size, bool) or not isinstance(max_size, int) or max_size < 1:
+        raise SpecError(f"channel {name}: max_size must be an integer >= 1, not {max_size!r}")
+    return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode, max_size,
                        float(c.get("max_dist_km", DEFAULT_MAX_DIST_KM)), dist, caps,
                        tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"))
 
@@ -321,6 +328,13 @@ def check_national(spec: Spec) -> None:
         raise SpecError(f"[national] channel {n.channel!r} is not a channel")
     if n.fine - set(spec.fine_channels) or set(n.fallback) - n.fine:
         raise SpecError("[national] fine and fallback must name national fine channels of F")
+    targets = set(n.fallback.values()) - (set(spec.fine_channels) - n.fine)
+    if targets:
+        raise SpecError(f"[national] fallback targets must be fine channels of F that are not "
+                        f"national: {_show(sorted(targets))}")
+    if set(spec.units) - n.units and set(n.fallback) != n.fine:
+        raise SpecError(f"[national] units without national need a fallback for every national "
+                        f"fine channel; none for {_show(sorted(n.fine - set(n.fallback)))}")
     bad = []
     for u in spec.units:
         for f in sorted(n.fine):
@@ -331,7 +345,7 @@ def check_national(spec: Spec) -> None:
             else:
                 if got == n.channel:
                     bad.append(f"({u}, {f}) has no national but is in {n.channel}")
-                elif f in n.fallback and got != spec.channel_of(u, n.fallback[f]):
+                elif got != spec.channel_of(u, n.fallback[f]):
                     bad.append(f"({u}, {f}) is in {got}, not with {n.fallback[f]}")
     if bad:
         raise SpecError(f"[national] purity/fallback broken: {_show(bad)}")
@@ -455,7 +469,12 @@ def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Ins
     """The scenario on an extract: units from the 2025 reference table, the ZIP graph among the
     extract's placed ZIPs (`graph`: `{"vertices", "edges"}`, as `geo.zip_graph` returns), and
     per-channel masses.  Raises SpecError on a fine channel outside F, a disconnected whole
-    unit, or pieces that overlap on the ZIPs."""
+    unit, or pieces that overlap on the ZIPs.
+
+    With no `graph`, the committed all-CONUS graph is used only when the extract holds every one
+    of its vertices.  The graph is the Voronoi rook graph of the placed points (`td.geo`), so
+    inducing the committed graph on a sparse extract would invent disconnections; a sparse
+    extract must pass the graph `geo.zip_graph` builds on its own placed ZIPs."""
     from td import geo
     extra = sorted(set(extract.channels) - set(spec.fine_channels))
     if extra:
@@ -463,7 +482,16 @@ def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Ins
                         f"{_show(extra)}; placing them in a planning channel is #76's decision")
     ref = geo.read_reference() if reference is None else reference
     ref = ref.set_index("zcta")
-    vertices = set(graph["vertices"]) if graph is not None else set(ref.index)
+    if graph is not None:
+        vertices = set(graph["vertices"])
+    else:
+        vertices = set(ref.index[ref["graph_vertex"].astype(int) == 1])     # trap 21
+        missing = vertices - set(extract.zips)
+        if missing:
+            raise SpecError(
+                f"the extract is sparse: it lacks {len(missing)} of the committed graph's "
+                f"{len(vertices)} vertices ({_show(sorted(missing))}), so the committed all-CONUS "
+                "graph does not apply; pass the graph geo.zip_graph builds on its placed points")
     placed = [z for z in extract.zips if z in vertices and z in ref.index]
     off_graph = sorted(set(extract.zips) - set(placed))
     rows = ref.loc[placed]

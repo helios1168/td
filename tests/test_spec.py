@@ -136,6 +136,27 @@ def test_national_purity_and_fallback_are_checked():
     _raises(lambda: spec.parse(bad), "(AL, wells_wh) has national but is in WH")
 
 
+def test_a_missing_fallback_does_not_skip_the_routing_check():
+    with open(S51, "rb") as fh:
+        raw = tomllib.load(fh)
+    wrong = copy.deepcopy(raw)                 # CO sends national chase to WH, not with fi
+    wrong["channels"]["WIFI"]["domain"] = [
+        {"units": ["ID", "MT", "ND", "NE", "NM", "SD", "WY"], "fine": raw["scenario"]["fine_channels"]},
+        {"units": ["CO"], "fine": ["wells_wh", "wells_fi", "fi"]}]
+    wrong["channels"]["WH"]["domain"].append({"units": ["CO"], "fine": ["national_chase", "wh"]})
+    _raises(lambda: spec.parse(wrong), "(CO, national_chase) is in WH, not with fi")
+    omitted = copy.deepcopy(wrong)
+    del omitted["national"]["fallback"]
+    _raises(lambda: spec.parse(omitted), "need a fallback", "national_chase", "wells_fi")
+    partial = copy.deepcopy(raw)
+    del partial["national"]["fallback"]["national_chase"]
+    _raises(lambda: spec.parse(partial), "need a fallback", "national_chase")
+    circular = copy.deepcopy(raw)
+    circular["national"]["fallback"]["wells_fi"] = "national_chase"
+    _raises(lambda: spec.parse(circular), "not national", "national_chase")
+    spec.parse(raw)                            # the scenario's complete fallback passes
+
+
 def test_an_extract_with_a_fine_channel_outside_the_scenario_is_refused():
     s = spec.load(S51)
     ext = data.Extract(("fi", "priafs"), ["10001", "10001"], ["fi", "priafs"], [1.0, 1.0],
@@ -150,6 +171,14 @@ def test_overlapping_pieces_are_rejected():
     _raises(lambda: spec.parse(raw), "P1 and P2 overlap in county 48201")
     raw["geography"] = {"pieces": [{"name": "P1", "state": "TX", "counties": ["06037"]}]}
     _raises(lambda: spec.parse(raw), "counties outside TX")
+
+
+def test_two_metros_on_one_cbsa_are_rejected():
+    raw = _toy_raw()
+    raw["geography"] = {"metros": [{"name": "A", "cbsa": "35620"}, {"name": "B", "cbsa": "35620"}]}
+    _raises(lambda: spec.parse(raw), "A", "B", "35620")
+    raw["geography"] = {"metros": ["35620", {"name": "BIG", "cbsa": "35620"}]}
+    _raises(lambda: spec.parse(raw), "M35620", "BIG", "35620")
 
 
 def test_hooks_are_looked_up_by_name():
@@ -175,6 +204,8 @@ def test_unknown_keys_and_bad_values_are_rejected():
     _raises(lambda: spec.parse(_toy_raw(eta=0)), "eta")
     _raises(lambda: spec.parse(_toy_raw(delta=0.2, final_delta=0.1)), "final_delta")
     _raises(lambda: spec.parse(_toy_raw(free=["AL"], whole=["AL"])), "listed as")
+    for cap in (0, -1, 2.5, True):
+        _raises(lambda: spec.parse(_toy_raw(max_size=cap)), "max_size")
 
 
 # ------------------------------------------------------------------------------ units and modes
@@ -257,6 +288,15 @@ def test_the_fixture_spec_with_a_disconnected_whole_piece_stops():
     msg = _raises(lambda: spec.build(s, fx.extract, _reference(), fx.graph),
                   "not ZIP-connected", "TX_harris_el_paso: 2 components")
     assert msg.count("ZIPs") == 2
+
+
+def test_a_sparse_extract_needs_its_own_graph():
+    s = spec.load(S51)
+    fx = _fixture(tuple(s.fine_channels))
+    if fx is None:
+        return
+    _raises(lambda: spec.build(s, fx.extract, _reference()), "sparse", "geo.zip_graph")
+    assert spec.build(s, fx.extract, _reference(), fx.graph).report["disconnected"] == {}
 
 
 def test_the_51_scenario_builds_on_the_fixture():

@@ -125,6 +125,8 @@ def family(inst, channel: str, max_size: int | None = None) -> Family:
     cs = ch.spec
     adj = unit_graph(inst, channel)
     cap = cs.max_size if max_size is None else max_size
+    if isinstance(cap, bool) or not isinstance(cap, int) or cap < 1:
+        raise SpecError(f"channel {channel}: max_size must be an integer >= 1, not {cap!r}")
 
     def ok(u, v):
         return inst.units.distance_km(u, v) <= cs.dist_cap(u, v)

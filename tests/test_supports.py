@@ -146,6 +146,13 @@ def test_the_51_family_sizes_at_caps_6_and_7_on_the_committed_graph():
     assert sizes[6]["WH"] == sizes[6]["FI"] and sizes[6]["WIFI"] == sizes[7]["WIFI"] == 16
 
 
+def test_a_size_cap_below_one_is_refused():
+    inst = _instance({"AL": ["a"]}, [], {"a": 1.0})
+    for cap in (0, -1, True):
+        ts._raises(lambda: supports.family(inst, "X", max_size=cap), "max_size")
+    assert supports.family(inst, "X", max_size=1).supports == (frozenset(["AL"]),)
+
+
 def test_a_filter_that_removes_an_extra_support_is_refused():
     inst = _instance({"AL": ["a"], "AR": ["b"], "AZ": ["c"]}, [("a", "b"), ("b", "c")],
                      {"a": 1.0, "b": 1.0, "c": 1.0}, extra_supports=[["AL", "AR"]],
