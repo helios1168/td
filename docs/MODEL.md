@@ -11,7 +11,9 @@ and U-numbers to `docs/problem/PROBLEM.md` and `docs/problem/UNKNOWNS.md`.
 
 Every statement that could be false carries one tag. Definitions and algorithm steps carry none.
 
-- **[proved]**: the proof is in this file, and B2 (#65) checks it.
+- **[proved]**: the proof is in this file, and B2 (#65) checks it; or, written **[proved, *key*
+  *result*]**, the proof is the cited result's own, read at its source and listed as `verified` in
+  `docs/REFERENCES.md`.
 - **[claimed U*n*]**: not proved here; the unknown U*n* tracks it.
 - **[policy *X*]**: a choice, not a fact. *X* names the owner decision that sets it or will set it:
   an open OD, or a settled S-decision, council item or issue.
@@ -39,11 +41,21 @@ with some ZIP of the other.
   solving, so it counts in the bands **[policy S11]**;
 - units V_c = {v : (v, f) ∈ D_c for some f}, ZIP masses m_z = Σ_{f : (u(z), f) ∈ D_c} M_{z,f},
   and unit masses M_v = Σ_{z ∈ Z_v} m_z (#52 writes M^c_v; the channel is implicit here);
-- a district count K_c, the target τ_c = Σ_{v ∈ V_c} M_v / K_c, and the planning band
-  [L_c, U_c] = τ_c[1 − δ_c, 1 + δ_c];
+- a district count K_c, a positive integer, the target τ_c = Σ_{v ∈ V_c} M_v / K_c, and the
+  planning band [L_c, U_c] = τ_c[1 − δ_c, 1 + δ_c] with δ_c ≥ 0;
 - a mode per unit, mode_c(v) ∈ {whole, clipped, free} (S9). A unit is *splittable* when its mode
   is clipped or free;
 - support parameters (§2), η_c (§3.2) and optional contact caps (§3.3).
+
+**Zero opportunity.** A unit with M_v = 0 in channel c, and a channel whose units all have zero
+opportunity (τ_c = 0), are out of scope of this model: the loader drops such units from V_c, and
+such channels from the run, before solving, and reports each one **[policy #65 F1]**. So M_v > 0
+for every v ∈ V_c and τ_c > 0 for every channel solved. This is what the drawn shares (§4.1, §8),
+Proposition D and the divided formulas of Claim 2 need. ZIPs with m_z = 0 inside a unit with
+M_v > 0 stay in scope. No share convention for a zero-opportunity unit is assumed: a dropped
+unit's cells in D_c carry no opportunity and are not drawn in c. They, and the cells of a dropped
+channel, keep their ledger rows with the district blank and the reason `dropped: zero
+opportunity` (§8), and the audit lists them without failing (§9).
 
 A **final tolerance** [L^fin_c, U^fin_c] ⊇ [L_c, U_c] is declared per scenario and judges the
 drawn map **[policy OD1]**.
@@ -150,7 +162,8 @@ the correction the council requires.
 
 A **drawing** of channel c gives every ZIP of every unit in V_c to one of K_c districts. District
 j's *footprint* is the set of units in which it owns at least one ZIP. Its *drawn share* of v is
-(Σ of m_z over its ZIPs in v) / M_v, and its *drawn mass* is the sum of m_z over its ZIPs.
+(Σ of m_z over its ZIPs in v) / M_v, defined because M_v > 0 for every v ∈ V_c (§1), and its
+*drawn mass* is the sum of m_z over its ZIPs.
 
 The **read-back** of a drawing is the plan (n̂, t̂):
 - n̂_S is the number of districts whose footprint is S;
@@ -234,12 +247,15 @@ optional and off by default. C3 (#68) may add it; its acceptance does not requir
 μ_S = Σ_{v∈S splittable} max_{z∈Z_v} m_z is the sum, over the splittable units of S, of the
 heaviest ZIP in each.
 - **Sufficient for the mass band.** Take a plan that is feasible with μ_S in its band row. Then
-  every copy's drawn mass after transport and tree rounding (§7, steps 2–3) lies strictly inside
-  (L_c, U_c), before repair **[proved, Claim 3 and Corollary 3]**.
+  every copy's drawn mass after transport and tree rounding (§7, steps 2–3) lies in [L_c, U_c],
+  before repair, and strictly inside (L_c, U_c) when μ_S > 0 **[proved, Claim 3 and Corollary
+  3]**. With μ_S = 0 (a support of whole units) the drawn mass equals the planned mass, which may
+  sit on an endpoint.
 - **Conservative.** It uses the heaviest ZIP in each unit rather than the heaviest one actually
   split, which is unknown before solving. It also counts a clipped unit in a multi-unit support,
   which is never split there. Using only the free units of S, plus v itself when S = {v} is
-  clipped, is also sufficient **[proved, Corollary 3]**. D1 (#73) reports the smallest δ with the
+  clipped, is also sufficient, with the same closed and strict cases **[proved, Corollary 3]**.
+  D1 (#73) reports the smallest δ with the
   margin, without it, and limited to units actually split (N2).
 - **A policy.** It removes plans that could be drawn, and it can make lumpy units infeasible at
   tight tolerances. The planning band sits inside the final tolerance by the margin **[policy OD1,
@@ -247,7 +263,8 @@ heaviest ZIP in each.
 
 ### 4.7 What the rows are necessary for
 
-**Proposition D.** Let (n̂, t̂) be the read-back of a connected drawing in 𝒳_c(δ). Then (n̂, t̂)
+**Proposition D.** Let (n̂, t̂) be the read-back of a connected drawing in 𝒳_c(δ), with M_v > 0 for
+every v ∈ V_c (§1). Then (n̂, t̂)
 satisfies every row of §3 with μ ≡ 0, including the corrected corridor floor, the corrected border
 cap, the count cap and the Menger row, and its objective equals the drawing's Σ_j w_{footprint(j)}
 **[proved]**.
@@ -272,9 +289,18 @@ the districts with each footprint. Let district j have footprint S ∋ v.
 **Corollary (the master as a bound).** With μ ≡ 0 and the corrected rows, the master's optimum is at
 most the least objective over 𝒳_c(δ), and its smallest feasible δ is at most the smallest δ for
 which 𝒳_c(δ) is non-empty **[proved]**. #52 §4 claimed this for the printed rows, which C6 and C7
-show to be false. It holds with the corrections. With μ_S > 0 the master is a restriction, not a
-bound, and the rows remain necessary, not sufficient (§5, C10). A plan that passes every row can
-still fail to draw, and S28 makes that failure loud.
+show to be false. It holds with the corrections.
+
+With μ_S > 0 the band row is strengthened by the margin, and that row is a policy (§4.6), not a
+necessary condition. A connected unit v of two unit-mass ZIPs, free, with K_c = 2, η_c = 0.5 and
+band [0.5, 1.5], draws as one ZIP per district with drawn mass 1 each. But μ_{{v}} = 1 asks each
+planned mass to lie in [1.5, 0.5], which is empty **[proved]**. So the master with μ_S > 0 is a
+restriction of the master with μ ≡ 0, whose feasible set it shrinks, and neither its optimum nor
+its smallest δ bounds the drawings. What stays necessary for the read-back of every drawing in
+𝒳_c(δ) is the rest: the corrected corridor floor, the corrected border cap, the count cap, the
+Menger row and the other rows of §3 with μ ≡ 0 (Proposition D). No set of rows here is
+sufficient (§5, C10). A plan that passes every row can still fail to draw, and S28 makes that
+failure loud.
 
 ## 5. Claims
 
@@ -316,7 +342,8 @@ and its footprint could be disconnected.
 
 ### Claim 2 (smallest δ; U31)
 
-S10: when clipped mode is infeasible, the run reports the smallest feasible δ.
+S10: when clipped mode is infeasible, the run reports the smallest feasible δ. Throughout, K_c is a
+positive integer, δ ≥ 0, and τ_c > 0 (§1), so the formulas below that divide by τ_c are defined.
 - **Whole and clipped units only.** Minimising δ over the master is an exact MILP **[proved]**:
   - For |S| > 1, and for S = {v} with v whole, every unit of S is held whole, so n_S ∈ {0, 1} and
     t_{v,S} = n_S. The band row becomes δ ≥ (|M(S) − τ_c| + μ_S) n_S / τ_c, which is linear.
@@ -329,7 +356,8 @@ S10: when clipped mode is infeasible, the run reports the smallest feasible δ.
 - **With free units,** the band row multiplies δ by a general integer n_S, so the run bisects on δ.
   Each step solves the normal model **with its objective kept** (trap 19). Bisection is valid
   because the feasible set grows with δ: L_c falls, U_c rises, and μ_S does not depend on δ
-  **[proved]**. It needs fixed supports, modes and margins (C4).
+  **[proved]**. It needs fixed supports, modes and margins (C4), including OD5's metro
+  classification (§6).
 - A step that times out with a validated incumbent is feasible. A step that times out without one
   is **unknown**, never infeasible (C4).
 
@@ -338,8 +366,8 @@ restricted whole/clipped master. It says nothing about whether the plan can be d
 What does connect the two is the following **[proved]**:
 - By the Corollary of §4.7, the master's smallest δ with μ ≡ 0 is at most the smallest δ at which a
   connected drawing in 𝒳_c exists.
-- By Corollary 3, a plan feasible with μ_S draws, before repair, with every mass strictly inside
-  its band. Connectivity is not implied.
+- By Corollary 3, a plan feasible with μ_S draws, before repair, with every mass in its band
+  [L_c, U_c], and strictly inside it when μ_S > 0. Connectivity is not implied.
 
 The price of clipping, U35, is reported as a property of the master.
 
@@ -352,7 +380,8 @@ For a splittable unit v shared by the copies J_v (|J_v| ≥ 2), the realizer sol
 min Σ_{z,j} m_z ‖p_z − c_j‖² f_{zj}   s.t.   Σ_j f_{zj} = 1  (z ∈ Z_v),   Σ_z m_z f_{zj} = a_{v,j}  (j ∈ J_v),   f ≥ 0.
 ```
 
-It is feasible: f_{zj} = a_{v,j} / M_v works. Let x_{zj} = m_z f_{zj}. A ZIP is *split* when two or
+It is feasible: f_{zj} = ȳ_{v,j} works, since Σ_j ȳ_{v,j} = 1 and Σ_z m_z ȳ_{v,j} = M_v ȳ_{v,j} =
+a_{v,j}. Let x_{zj} = m_z f_{zj}. A ZIP is *split* when two or
 more of its f_{zj} are positive.
 
 **Lemma 3a (forest).** At a vertex (basic solution) of this LP **[proved]**:
@@ -380,19 +409,28 @@ span a forest H.
    Where taking and passing both keep the bound below, the realizer picks the cheaper one under the
    transport cost.
 
-**Claim 3.** Let m*_j be the heaviest split ZIP that touches j in H. Every district's drawn mass in
-v differs from a_{v,j} by strictly less than m*_j, in either direction **[proved]**.
+**Claim 3.** A district j that touches no split ZIP draws exactly a_{v,j} in v. For a district j
+that touches a split ZIP in H, let m*_j be the heaviest such ZIP; j's drawn mass in v differs
+from a_{v,j} by strictly less than m*_j, in either direction **[proved]**.
 
-*Proof.* e_j is exactly j's drawn mass in v minus a_{v,j}. A split ZIP has m_z > 0 (Lemma 3a) and
-0 < x_{zj} < m_z, so the starting error lies in (−m*_j, m*_j). If e < 0, taking gives
+*Proof.* e_j is exactly j's drawn mass in v minus a_{v,j}. If j touches no split ZIP, every ZIP
+with x_{zj} > 0 is unsplit, so x_{zj} = m_z and j gets all of it; j is an isolated root of H, and
+e_j = 0. Otherwise, a split ZIP has m_z > 0 (Lemma 3a) and 0 < x_{zj} < m_z, so the starting error,
+0 at a root, lies in (−m*_j, m*_j). If e < 0, taking gives
 e + m_z − x_{zj} ∈ (e, m_z) ⊂ (−m*_j, m*_j). If e ≥ 0, passing gives e − x_{zj} ∈ (−m_z, e)
 ⊂ (−m*_j, m*_j). So the sign rule always has a move that keeps the bound, and the refinement only
 chooses between moves that keep it. ∎
 
-**Corollary 3.** A copy of S that shares several split units is off by less than the heaviest split
-ZIP in each, so its total drawn mass differs from its planned mass by less than μ_S. If its planned
-mass lies in [L_c + μ_S, U_c − μ_S], its drawn mass lies in (L_c, U_c) **[proved]**. In a unit the
-copy holds alone there is no error, so the sum may run over the units actually split, as §4.6 says.
+**Corollary 3.** In each unit of S, a copy's error is 0 or less than the heaviest split ZIP it
+touches there, hence at most that unit's heaviest ZIP, and 0 in a unit it holds whole. So its total
+drawn mass differs from its planned mass by at most μ_S, and by strictly less when μ_S > 0: some
+splittable unit of S then has a heaviest ZIP M* > 0, and the copy's error there is 0 or below the
+heaviest split ZIP it touches, either way below M*. If its planned mass lies in
+[L_c + μ_S, U_c − μ_S], its drawn mass lies in [L_c, U_c], and in (L_c, U_c) when μ_S > 0
+**[proved]**. With μ_S = 0 the endpoints can be reached: two whole singleton units of mass 1 and
+3, K_c = 2 and δ = 0.5 give the band [1, 3] and drawn masses 1 and 3 **[proved]**. In a unit the
+copy holds alone there is no error, so the sum may run over the units actually split, as §4.6
+says, with the same closed and strict cases.
 
 **C5 (the scope of Claim 3).** The argument holds for an exact transport vertex, before repair,
 including a split ZIP with several child districts. Summing the per-unit bounds is valid. It does
@@ -400,16 +438,18 @@ not guarantee connectivity, and repair (§7, step 4) may move mass afterwards. A
 basis is checked, and a fractional graph that is not a forest stops the run (§7).
 
 **Origin.** This adapts the forest structure behind Lenstra–Shmoys–Tardos rounding: the support of
-a vertex of their assignment LP is a pseudoforest (`lenstra1990` Thm 1). Their rounding is
-one-sided. Each machine gets at most one job it held only fractionally, and the theorem bounds its
-load from above only, by d_i + t (`lenstra1990` Thm 1). That suits a makespan bound but not a
-two-sided band. Here a ZIP's mass is the same whichever district takes it, which makes
-the support a forest rather than a pseudoforest and makes the two-sided bound possible.
+a vertex of their assignment LP is a pseudoforest **[proved, `lenstra1990` Thm 1 and its proof]**.
+Their rounding is one-sided. Each machine gets at most one job it held only fractionally, and the
+theorem bounds its load from above only, by d_i + t **[proved, `lenstra1990` Thm 1]**. That suits
+a makespan bound but not a two-sided band. Here a ZIP's mass is the same whichever district takes
+it, which makes the support a forest rather than a pseudoforest and makes the two-sided bound
+possible.
 
 **Per-ZIP argmax has no such bound.** `centers.assign` at the tag takes each ZIP's largest share.
 Let a district hold 0.45 of each of s unit-mass split ZIPs, a star with s + 1 districts that is a
 valid vertex. Argmax gives every one of them away and misses by 0.45 s, which exceeds one ZIP from
-s = 3 **[proved]**. Claim 3 keeps every district within less than 1.
+s = 3 **[proved]**. Claim 3 keeps every district within less than 1, the heaviest split ZIP each
+touches.
 
 *Tested:* #52 ran 400 random units on 2026-09-25, and the worst error was 0.998 of the bound. A
 fresh run for this file on 2026-09-29 covered 400 units with heavy-tailed and zero ZIP masses and
@@ -438,7 +478,11 @@ All are off by default (S13), and all geography is 2025 vintage (S17).
   A whole unit lies inside one district, so a metro can be `whole` in channel c only if
   M_v ≤ U_c **[proved]**. A larger metro is an ordinary splittable unit (OD5).
 - **The metro exception in clipped mode (S14).** A metro that crosses a state line keeps its own
-  unit and stays whole, and the audit logs each such crossing **[policy S14]**.
+  unit, and the audit logs each such crossing **[policy S14, OD5]**. It stays whole only when OD5's
+  classification makes it whole. Each channel classifies every metro once, against the scenario's
+  declared U_c: a metro with M_v ≤ U_c is whole and never split, and a larger one keeps its unit
+  and is split under the scenario's clipped or free mode. The classification stays fixed through a
+  smallest-δ search (`docs/memory/decisions/open-decisions-2026-09-28.md`, OD5).
 - **Rurality caps (U36).** R_c(u, v) = base_c · g(r_u, r_v). Here r_v ∈ [0, 1] is v's rurality,
   built from its 2025 urban-area share and its counties' metro status (S19). The schedule g is
   symmetric, g ≥ 1, and nondecreasing in each argument, so caps loosen with rurality. g ≡ 1 when
@@ -461,19 +505,26 @@ be connected: pieces are reported with their cause, and S28 still applies **[pol
 For each splittable unit v with |J_v| ≥ 2:
 1. **Centres.**
    - Clipped mode: k-means on v.
-   - Free mode: border-aware centres (S24). c_j is the mass-weighted centroid of v's ZIPs that have
-     a graph edge into j's territory outside v. With no such ZIP, it is the centroid of j's other
-     units.
+   - Free mode, j a copy of S with |S| ≥ 2: border-aware centres (S24). j's border in v is the set
+     of v's ZIPs that have a ZIP-graph edge into a unit of S − v. It is never empty, since G[S] is
+     connected and adjacent units share a ZIP edge. c_j is the mass-weighted centroid of the border
+     when its mass is positive, and the unweighted centroid of the border's ZIPs when its mass is 0.
+   - Free mode, the k ≥ 1 copies of the singleton {v}: the centres of opportunity-weighted k-means
+     on v's ZIPs. For k = 1 this is v's opportunity-weighted centroid. The k-means is
+     deterministic, so a run reproduces: its initial centres are chosen by weighted farthest-point
+     from the heaviest ZIP, ties broken by ZIP id, and its iterations are capped at a fixed number.
 
-   **[policy S24]**
+   **[policy S24, #65 F6]**
 2. **Transport LP** (Claim 3), solved with dual simplex (`highs-ds` with an explicit options dict;
    trap 14) so the solution is basic. A fractional graph that is not a forest stops the run.
    - ZIPs with m_z = 0 have zero cost and zero mass in the LP, so it does not place them by
      position. C4 must place them, and where they go affects only contiguity.
-   - The whole ZIPs of each district lie in a convex cell. By LP duality, f_{zj} > 0 with m_z > 0
-     only if j minimises ‖p_z − c_k‖² − w_k over k, where w are the duals of the target rows. The
-     cells form a power diagram, and a convex cut across a non-convex unit leaves *shape* pieces
-     **[proved]**.
+   - Before repair, every ZIP with m_z > 0 lies in the convex power cell of the district that
+     transport and tree rounding give it to **[proved]**. By LP duality, f_{zj} > 0 with m_z > 0
+     only if j minimises ‖p_z − c_k‖² − w_k over k, where w are the duals of the target rows, and
+     rounding gives a ZIP only to a district with f_{zj} > 0. The cells form a power diagram, and a
+     convex cut across a non-convex unit leaves *shape* pieces. Zero-mass ZIPs, placed separately,
+     and pieces moved by repair are not covered.
 3. **Round along the forest** (Claim 3), not ZIP by ZIP.
 4. **One repair pass** (S23). Move each detached piece, meaning each component of a district other
    than its heaviest, to an adjacent district only if both of these hold:
@@ -488,7 +539,8 @@ For each splittable unit v with |J_v| ≥ 2:
    violation.
 
 There is no metro-binding step. A whole metro is its own whole unit, which the realizer never
-touches. Binding a metro inside a split unit would make it one enormous ZIP and inflate μ_S.
+touches; an oversized metro is an ordinary splittable unit (§6, OD5). Binding a metro inside a
+split unit would make it one enormous ZIP and inflate μ_S.
 
 The realizer reports the target error Δ_{v,j} = (j's drawn mass in v) − a_{v,j}. Each piece that
 remains is reported with one cause:
@@ -496,7 +548,16 @@ remains is reported with one cause:
 - *attachment*: the share does not touch the district's territory outside the unit;
 - *corridor*: a share too thin to link the district's other units, as with WH_03 = CT + NJ + 5% of
   NY. This is a master question (U39);
-- *tiny share*: smaller than the ZIPs available. The margin should prevent it;
+- *tiny share*: a planned share smaller than the ZIPs available, which rounding can leave with no
+  ZIP. The margin protects only the district's total mass band (Corollary 3), not the survival of
+  each planned contact, and a vanished planned share is listed by the audit (C8, §9). Example: a
+  free v of three unit-mass ZIPs at −2, −1 and 1 is shared by copies of {v, A}, {v, B} and {v, C},
+  with A, B and C whole of mass 9, K_c = 3, η_c = 0.05, band [8, 12] and μ = 1. Planned masses in v
+  of 0.2, 1.9 and 0.9 give district masses 9.2, 10.9 and 9.9, inside [9, 11]. With centres 0, −1.5 and 1 the transport
+  vertex gives z1 whole to B and splits z2 (0.1 to A, 0.9 to B) and z3 (0.1 to A, 0.9 to C); the
+  target-row duals (0, −0.75, −1) certify it optimal. Rounding from A as root passes both split
+  ZIPs to the child that is cheaper under the transport cost, so A draws none of v, with drawn
+  masses 9, 11 and 10 **[proved]**;
 - *graph gap*: a ZIP not in the graph, or a missing edge.
 
 How many pieces remain, by mode and cause, counted both as pieces and as districts in pieces, is
@@ -507,11 +568,13 @@ open **[claimed U34]**. Bugs #1, #7 and #11 become tests in C4.
 The ledger's rules are policies **[policy S25, S26]**, except where a bullet is tagged.
 
 - A cell's owner is the district that its channel's realizer gave the cell's ZIP to. The domains
-  partition the cells, so each cell has exactly one owner, who holds all of its opportunity
-  **[proved]**.
+  partition the cells, so each cell of a unit in V_c of a channel solved has exactly one owner, who
+  holds all of its opportunity **[proved]**. A cell of a unit or channel dropped for zero opportunity (§1) has no
+  owner in c. It keeps its ledger row, with the district blank and the reason `dropped: zero
+  opportunity`.
 - The master's shares are targets and are never read as masses after the realizer.
 - A district's drawn share of a unit is the opportunity of its ZIPs in the unit divided by the
-  unit's opportunity, defined when M_v > 0.
+  unit's opportunity, defined when M_v > 0, as it is for every unit in V_c (§1).
 - Planned shares appear only in the run's diagnostics, beside the drawn ones, as Δ.
 - Reported shares, masses and bands come from the ledger, and maps are drawn only from it.
 
@@ -519,8 +582,10 @@ The ledger's rules are policies **[policy S25, S26]**, except where a bullet is 
 
 One `scorecard.md` per run, in the run directory. Each check is a policy of #52 §4, with its
 source where one is named **[policy S28, OD1, OD3, C16]**:
-- one owner per cell;
-- the district count per channel equals K_c;
+- one owner per cell of the retained domain, the cells of units in V_c of the channels solved;
+- the district count equals K_c for each channel solved;
+- the cells of units and channels dropped for zero opportunity (§1) are listed, each with a blank
+  district and the reason `dropped: zero opportunity`, and do not fail the run;
 - final bands on the drawn masses, with every breach listed against the final tolerance
   **[policy OD1]**. A breach caused by a share that could not be drawn fails the run and names the
   unit and district **[policy S28]**;
