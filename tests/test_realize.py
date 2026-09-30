@@ -103,6 +103,46 @@ def test_a_fractional_graph_that_is_not_a_forest_stops_the_run():
             raise AssertionError("a cycle did not stop the run")
 
 
+def test_transport_ships_every_zip_at_any_mass_scale():
+    """#72 B1: HiGHS's absolute tolerances once let a unit of masses near 1e-9 ship nothing."""
+    rng = random.Random(7202)
+    for scale in (1e-12, 1e-9, 1.0, 1e9):
+        for _ in range(20):
+            zs = [f"z{i}" for i in range(8)]
+            m = {z: rng.uniform(0.1, 3.0) * scale for z in zs}
+            p = {z: (rng.random() * 10, rng.random() * 10) for z in zs}
+            c = {"a": (0.0, 0.0), "b": (10.0, 10.0), "c": (0.0, 10.0)}
+            w = [rng.uniform(0.1, 1.0) for _ in c]
+            a = {j: math.fsum(m.values()) * wi / sum(w) for j, wi in zip(c, w)}
+            flow = realize.transport(zs, m, p, c, a)
+            for z in zs:
+                assert abs(math.fsum(x for (y, _), x in flow.items() if y == z) - m[z]) <= 1e-6 * m[z]
+            for j in a:
+                assert abs(math.fsum(x for (_, k), x in flow.items() if k == j) - a[j]) <= 1e-6 * a[j]
+            owner = realize.round_forest(m, flow, lambda z, j: 0.0)
+            assert set(owner) == set(zs)
+            _claim3(m, flow, owner, a)
+
+
+def test_a_small_scale_unit_is_drawn_like_its_unit_scale_twin():
+    """#72 B1's repro: the same clipped unit at scale 1 and 1e-9 gets the same map, every ZIP."""
+    rng = random.Random(7202)
+    zs = [f"z{i}" for i in range(8)]
+    base = {z: rng.uniform(0.1, 3.0) for z in zs}
+    p = {z: (rng.random() * 10, rng.random() * 10) for z in zs}
+    maps = []
+    for scale in (1.0, 1e-9):
+        inst, xy = _toy({"AL": zs}, list(zip(zs, zs[1:])), {z: base[z] * scale for z in zs}, p,
+                        {"AL": "clipped"}, k=3, delta=1.0)
+        plan, rep = master.plan(inst, "X")
+        d = realize.realize(inst, plan, xy)
+        assert set(d.owner) == set(zs)
+        assert [c.name for c in audit.audit(realize.to_run(inst, {"X": d}, {"X": rep}))
+                if c.status == "fail"] == []
+        maps.append(d.owner)
+    assert maps[0] == maps[1]
+
+
 def test_the_tiny_share_example_of_model_md_draws_none_of_v_for_a():
     """MODEL.md §7: z1 whole to B, z2 split A 0.1 / B 0.9, z3 split A 0.1 / C 0.9, centres 0,
     −1.5 and 1.  Rounding from A passes both split ZIPs to the cheaper child: A draws none of v."""
