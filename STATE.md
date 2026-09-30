@@ -4,11 +4,11 @@
 
 ## Now
 
-Overnight autonomous wave on m5 (owner delegated all decisions). Landed: #64 with #65's fixes (`1cf528a`), #70 audit (`0ed87d2`), #67 spec/supports (`89733c2`), #68 master (`da20682`), #69 realize (`bc3a2e6`); #65 closed. Running: #71 output.py and the run command. Then #72 verifies the code. Decisions are `DECIDED` comments on each issue.
+Overnight autonomous wave on m5 (owner delegated all decisions). The support-master code chain has landed: #64+#65 (`1cf528a`), #70 (`0ed87d2`), #67 (`89733c2`), #68 (`da20682`), #69 (`bc3a2e6`), #71 (`e9d4f3c`); 186 tests pass. #72 is verifying: part A found four exporter bugs, so #61 is reopened and in a fix round; part B (#67–#71) is running.
 
 ## Next
 
-- Land #71, then run #72 (OpenAI verifier).
+- Land the #61 fix; fix any part B blockers; close #72.
 
 ## Blocked
 
