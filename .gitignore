@@ -16,6 +16,7 @@ venv/
 
 # Confidential extract (docs/memory/workflow/confidential-data.md)
 instance_descaled*.json.gz
+/channels.json
 
 # Public geography downloads (cached; reference/2025/ holds the committed outputs)
 data/public/
