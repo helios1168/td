@@ -12,4 +12,4 @@
 
 ## Blocked
 
-#63 needs a HUD User token on both Studios. Owner decisions: #3 channels, #59 county pieces, #75 catalog (after #74), #76 channels/bundles (after #3). The C4b threshold waits on #69's U34 counts. `AGENTS.md` still reports 24 tests; 205 pass.
+Owner decisions: #3 channels, #59 county pieces, #75 catalog (after #74), #76 channels/bundles (after #3). The C4b threshold waits on #69's U34 counts. `AGENTS.md` still reports 24 tests; 205 pass.
