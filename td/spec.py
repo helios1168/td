@@ -18,7 +18,9 @@ the cells.  An extract whose fine channels are not all in F is refused by `build
 placing a new fine channel is #76's decision, never done here.
 
 **Units** (`MODEL.md` §1, §6).  A unit is a state less its carved pieces, a county-built piece,
-or a metro piece: the ZIPs whose G1 county has the metro's 2025 CBSA code (OD5).  A ZIP in two
+or a metro piece: the ZIPs whose G1 county has the metro's 2025 CBSA code (OD5).  `load` refuses a
+metro code that is not a 2025 metropolitan CBSA: micropolitan, CSA, metro-division or unknown
+codes are not metro units (OD5, #72).  A ZIP in two
 pieces is an overlap and `load` or `build` rejects it.  After carving, `build` checks every unit
 for ZIP connectivity (C11): a disconnected unit is listed, and a disconnected unit that is
 `whole` in any channel stops the run, naming the unit and its components (OQ6).
@@ -36,6 +38,7 @@ centroids).  The distance cap reads it (`td.supports`).
 """
 from __future__ import annotations
 
+import functools
 import importlib
 import math
 import tomllib
@@ -155,6 +158,7 @@ def parse(raw: dict, path: str | None = None) -> Spec:
         if m.cbsa in by_cbsa:
             raise SpecError(f"metros {by_cbsa[m.cbsa]} and {m.name} overlap: both are CBSA {m.cbsa}")
         by_cbsa[m.cbsa] = m.name
+    check_metros(metros)
     units = tuple(CONUS_STATES) + tuple(p.name for p in pieces) + tuple(m.name for m in metros)
     if len(set(units)) != len(units):
         twice = sorted(u for u in set(units) if units.count(u) > 1)
@@ -194,6 +198,38 @@ def parse(raw: dict, path: str | None = None) -> Spec:
     check_partition(spec)
     check_national(spec)
     return spec
+
+
+@functools.lru_cache(maxsize=1)
+def _areas() -> dict:
+    """{(layer, geoid): name} for the CBSA, CSA and metro-division rows of the committed 2025
+    `areas.csv.gz` (#62)."""
+    import csv
+    import gzip
+    import os
+
+    from td import geo
+    with gzip.open(os.path.join(geo.REFERENCE_DIR, "areas.csv.gz"), "rt", newline="") as fh:
+        return {(r["layer"], r["geoid"]): r["name"] for r in csv.DictReader(fh)
+                if r["layer"] in ("cbsa", "csa", "metdiv")}
+
+
+def check_metros(metros, areas: dict | None = None) -> None:
+    """Every metro is a 2025 metropolitan CBSA (OD5): its code must be a CBSA of the committed
+    2025 areas table whose name ends ` Metro Area`.  A micropolitan CBSA, a CSA or metro-division
+    code, or an unknown code is refused, naming it, before any ZIP is carved."""
+    areas = _areas() if areas is None else areas
+    bad = []
+    for m in metros:
+        name = areas.get(("cbsa", m.cbsa))
+        if name is None:
+            other = [layer for layer in ("csa", "metdiv") if (layer, m.cbsa) in areas]
+            bad.append(f"{m.name} ({m.cbsa}): " + (f"a 2025 {other[0]} code, not a CBSA" if other
+                                                    else "not a 2025 CBSA code"))
+        elif not name.endswith(" Metro Area"):
+            bad.append(f"{m.name} ({m.cbsa}): {name} is not a metropolitan CBSA")
+    if bad:
+        raise SpecError("metros must be 2025 metropolitan CBSAs (OD5): " + "; ".join(bad))
 
 
 def _units(value, sets: dict, units: tuple, where: str) -> frozenset:
