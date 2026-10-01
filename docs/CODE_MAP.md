@@ -15,7 +15,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `docs/CODE_MAP.md` | this file |
 | `docs/MODEL.md` | the support-master model: cells, units, supports, the master and its drawability rows, Claims 1–3, the realizer, the ledger and the audit; every claim tagged proved, claimed or policy |
 | `docs/REFERENCES.md` | what td relies on each paper for: one row per claim, with its key, result, kb page and status |
-| `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md` | the settled/open ledger and the U-numbered unknowns |
+| `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md`, `docs/problem/BALANCE.md` | the settled/open ledger, the U-numbered unknowns, and the balance brief for the lens and the council |
 | `docs/lenses/` | one file per lens or council pass, dated, never edited after |
 | `docs/memory/` | facts and decisions; `INDEX.md` is one line per file, written through the `memory-curator` |
 | `data/README.md` | what `data/` holds; nothing else in it is tracked |
