@@ -41,7 +41,8 @@ a FAIL.
   does not use them, and they never leave the extract.
 - Not confidential (owner, 2026-09-30): descaled opportunity (`m_rel`) and everything the model
   makes from it, meaning run output, ledgers, maps and per-ZIP values. They may appear in docs,
-  issues and memories.
+  issues and memories. Since 2026-10-01 the same holds for opportunity in dollars (per-channel
+  totals and per-district $) as shown on the stakeholder maps; sales stay masked.
 
 ## Traps that still apply
 

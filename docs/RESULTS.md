@@ -97,3 +97,25 @@ Contiguity is on the 2025 Voronoi rook graph over the catalog's ZIPs (OD2, built
 | 53_total_13n_14wh_25fi_1wifi | fail | pass | pass | 6 | 0 | 0 |
 | 53_total_14n_14wh_24fi_1wifi | fail | pass | pass | 6 | 1 | 1 |
 | **total** | | | | 235 | 27 | 29 |
+
+## Stakeholder territory options (2026-10-02)
+
+Drawn, audited, margin-off runs from the comparative-statics grid (`runs/sweep/grid_2026-10-01/`,
+local), rendered for presentation. Deck: [`territory_options_2026-10-02.pdf`](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/territory_options_2026-10-02.pdf);
+cover table: [`comparison.png`](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/comparison.png); one folder per option with an overview and one
+page per channel.
+
+| option | districts | within ±10% | worst |
+|---|---|---|---|
+| [A](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/A_noWIFI_13_12_23): no WIFI region, 1,600 km mountain/plains cap, national 13 / WH 12 / FI 23 | 48 | 48/48 | 4.5% |
+| [B](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/B_WIFI6_13_12_24_1): WIFI = ID MT ND NE SD WY, 1,600 km cap, 13 / 12 / 24 + 1 | 50 | 50/50 | 9.2% |
+| [C](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/C_WIFI6_900km_16_12_21_2): same WIFI, 900 km cap, 16 / 12 / 21 + 2 | 51 | 50/51 | 11.2% |
+| [Reference](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/Z_today51_baseline): today's 51, 8-state WIFI, 13 / 11 / 24 / 3 | 51 | 41/51 | 88% |
+| [IFA](https://github.com/helios1168/td/blob/main/docs/figures/stakeholder_2026-10-02/IFA_49), separate channel, K = 49 | 49 | 49/49 | 9.6% |
+
+Dollars convert `m_rel` at each channel's own factor from the owner's channel totals. Areas with
+no opportunity in a channel are shaded with the nearest district in the same state, for display
+only; shapes are state-clipped ZIP Voronoi cells. ZIP 13027's FI cell is unassigned in every run
+(triage item I3). The 1,600 km cap is a policy change, not a model fix. Regenerate (local,
+gitignored scripts): `PYTHONPATH=. .venv/bin/python3 runs/sweep/grid_2026-10-01/present/render.py
+<stage2 run dir> <slug> "<title>"`.
