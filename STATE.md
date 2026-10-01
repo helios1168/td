@@ -1,14 +1,14 @@
 # State — support-master territory design
 
-**Updated:** 2026-10-01 · **Branch:** `main`
+**Updated:** 2026-10-02 · **Branch:** `main`
 
 ## Now
 
-Four-seat Gromov council on `docs/problem/BALANCE.md` (4be371a), on m5: pass 1 running (workflow 28840567); next one cross-exam, memo to `docs/lenses/COUNCIL_2026-10-01.md`, then `/triage`.
+Council memo `docs/lenses/COUNCIL_2026-10-01.md` (eb3382a); triage drafted, awaiting owner approval. Grid done on m5: `runs/sweep/grid_2026-10-01/SUMMARY.md` (1,141 cells, 39 mapped runs). Best: no WIFI, 1,600 km mountain cap, 13/12/23, all within ±5%; IFA K 49.
 
 ## Next
 
-- Stakeholder maps for 2026-10-02 (forked session): margin policy, K_WH, balance metric, fallback, WIFI region.
+- Owner picks the stakeholder option from the grid; apply the triage.
 
 ## Blocked
 
