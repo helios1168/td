@@ -9,3 +9,4 @@ docs/memory/*.md
 docs/problem/*.md
 docs/lenses/*.md
 docs/RESULTS.md
+docs/RUN_WALKTHROUGH.md

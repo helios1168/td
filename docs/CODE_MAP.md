@@ -27,6 +27,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `td/audit.py` | the §9 audit: checks a run's ledger and writes `scorecard.md`; `python -m td.audit catalog` scores the tagged catalog |
 | `tests/test_audit.py` | each audit check on a toy plan with planted defects, and the tagged catalog's known defects |
 | `docs/RESULTS.md` | measured results, aggregates only: the tagged catalog's scorecard |
+| `docs/RUN_WALKTHROUGH.md` | a plain-English walkthrough of `python -m td run` on the 51 scenario, and why it stopped at ±10% |
 | `td/geo.py`, `reference/2025/` | the 2025 geography: the ZCTA reference table, its overlays, the ZIP graph and the source MANIFEST (#62) |
 | `tests/test_geo.py` | the reference table, the manifest's 2025-only rule and the graph's explicit vertex set |
 | `td/spec.py`, `scenarios/` | a TOML scenario: channels, domains, units, pieces and modes; the partition and ZIP-connectivity checks (#67) |

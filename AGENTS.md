@@ -14,8 +14,8 @@ is never stamped. The workflow is `/Users/Shared/sv-ntlee/WORKFLOW.md`.
 - One environment, `.venv`, from `requirements.txt`.
 - Only the `docs/figures/` that `docs/RESULTS.md` cites are tracked; regenerate a cited figure
   and commit it alongside the change.
-- `data/public/`, `runs/` and `instance_descaled*.json.gz` (confidential) are gitignored;
-  `docs/CODE_MAP.md` lists what a worktree must hand-copy.
+- `data/public/`, `runs/` and `instance_descaled*.json.gz` (it carries per-rep sales shares) are
+  gitignored; `docs/CODE_MAP.md` lists what a worktree must hand-copy.
 - Background solver runs with `"$TD_PY" -u`.
 
 ## Tests
@@ -35,8 +35,13 @@ a FAIL.
 
 ## Tool routing
 
-- Confidential data (`instance_descaled*`, run output on the real extract, the rep map): shapes,
-  keys, counts, and aggregates only, never rows, and never in an issue or a memory.
+- Masked: sales, wholesaler (rep) names and firm names never enter this repo, an issue, a memory
+  or anything online. The exporter replaces reps and firms with surrogates (`R…`, `F…`). In the
+  extract, the per-rep shares (`share`, `share_free`) and the `firm` map are sales data: the model
+  does not use them, and they never leave the extract.
+- Not confidential (owner, 2026-09-30): descaled opportunity (`m_rel`) and everything the model
+  makes from it, meaning run output, ledgers, maps and per-ZIP values. They may appear in docs,
+  issues and memories.
 
 ## Traps that still apply
 
