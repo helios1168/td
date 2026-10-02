@@ -39,3 +39,5 @@ channel, `national`. No edges or states leave any more: the ZIP graph and states
 in the repo from public 2025 data (td#62). `--rep-ids` now requires `--rep-ids-channel`, the
 channel an earlier single-channel export is checked against. Decisions:
 `mem:decisions/exporter-v3-2026-09-28`. Source: m5-studio session 01a0e75a (m5-61), td#61.
+
+**Update, 2026-10-01 (owner; AGENTS.md since f98b9a3 and 2026-10-01).** Confidentiality is now masking: sales, rep names and firm names stay out of the repo, issues, memory and anything online. Descaled opportunity and everything the model makes from it, and since 2026-10-01 dollar opportunity (channel totals and dollars per district), may appear in the public repo. The privacy boundary of an export includes the raw spellings in `channels.json`, not only the gzipped instance (td#61 review, session 01a0f177).
