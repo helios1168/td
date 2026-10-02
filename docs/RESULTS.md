@@ -223,6 +223,19 @@ the left and Hess on the right, drawn from each ledger as `python -m td maps` dr
 follow sorted district ids, so the same colour in both panels is not the same territory. Each
 legend line gives the states the district holds opportunity in.
 
+**Stakeholder summaries.** The same three plans in the stakeholder map look (state-level
+districts per channel, $ from the channel totals, the legacy `plan_summary` figure the
+2026-10-02 deck uses):
+[support diameter](https://github.com/helios1168/td/blob/main/docs/figures/exp81_summary_support.png),
+[Hess](https://github.com/helios1168/td/blob/main/docs/figures/exp81_summary_hess.png) and
+[hess from support](https://github.com/helios1168/td/blob/main/docs/figures/exp81_summary_fromsupport.png).
+States split between districts in any channel: 8 under support diameter and 11 under Hess.
+
+| summary strip | national | WH | FI |
+|---|---|---|---|
+| support diameter: worst deviation, split states | 9.6%, 5 | 8.3%, 5 | 9.5%, 8 |
+| Hess: worst deviation, split states | 7.4%, 5 | 9.8%, 7 | 8.3%, 9 |
+
 **Why the maps differ.**
 - *Where units are whole, the maps mostly agree.* 12 of 16 national districts, 5 of 12 WH and 9
   of 24 FI have the same drawn unit set in both arms. The largest extents are set by sparse whole
@@ -403,4 +416,9 @@ Regenerate (m5, local inputs, `runs/exp81/`):
 "$TD_PY" -u tools/exp81/run_hess.py assemble --out runs/exp81/hess_from_support
 "$TD_PY" -u tools/exp81/run_variant.py compare
 "$TD_PY" tools/exp81/sidebyside.py runs/exp81/hess runs/exp81/hess_from_support --out <dir> --prefix exp81_fromsupport_ --labels "Hess (k-means seed)" "Hess (seeded from the support map)"   # FI's PNG only
+# stakeholder summaries: the gitignored sweep adapter and legacy plan_summary on m5, unchanged;
+# adapt.py reads <run_dir>.toml, a link to the 18-split spec
+export TD_ZCTA_SHP=runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp
+"$TD_PY" runs/sweep/caps_2026-10-02/adapt.py <run_dir> runs/exp81/summary/<name> "900 (1600 mtn/plains, WA, CA)"
+"$TD_PY" runs/sweep/caps_2026-10-02/wrap.py runs/exp81/summary/<name> --geo-cache runs/sweep/grid_2026-10-01/present/legacy/archive/geo
 ```
