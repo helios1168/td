@@ -1,0 +1,50 @@
+[scenario]
+name = "A_fi1600_v1_na16_WH12_FI24"
+fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+delta = 0.1
+planned_elsewhere = ["career", "edj", "ifa", "imo", "priafs"]
+
+[channels.national]
+k = 16
+domain = [{ units = ["WY", "VT", "ME", "MT", "MS", "RI", "DE", "SD", "WV", "NM", "KS", "OK", "DC", "AR", "ND", "NE", "NH", "IA", "OR", "ID", "TN", "MA", "AL", "WI", "KY", "MO", "SC", "NV", "CT", "LA", "MN", "IN", "UT", "WA", "MD", "CO", "GA", "OH", "VA", "MI", "AZ", "PA", "NC", "IL", "NJ", "FL", "NY", "TX", "CA"], fine = ["national_chase", "wells_wh", "wells_fi"] }]
+mode = "whole"
+eta = 0.05
+max_size = 5
+max_dist_km = 900
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600, CO = 1600, ID = 1600, MT = 1600, ND = 1600, NE = 1600, NM = 1600, SD = 1600, WY = 1600 }
+contact_caps = { CA = 4 }
+free = ["CA", "FL", "NJ", "NY", "TX"]
+delta = 0.0725
+final_delta = 0.1
+
+[channels.WH]
+k = 12
+domain = [{ units = ["AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"], fine = ["wh"] }]
+mode = "whole"
+eta = 0.25
+max_size = 6
+max_dist_km = 900
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600, CO = 1600, ID = 1600, MT = 1600, ND = 1600, NE = 1600, NM = 1600, SD = 1600, WY = 1600 }
+contact_caps = { CA = 4 }
+free = ["CA", "FL", "GA", "IL", "IN", "KY", "MI", "MO", "NC", "NJ", "NY", "OH", "PA", "TN", "TX", "VA"]
+delta = 0.05
+final_delta = 0.1
+
+[channels.FI]
+k = 24
+domain = [{ units = ["AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"], fine = ["fi"] }]
+mode = "whole"
+eta = 0.15
+max_size = 4
+max_dist_km = 900
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600, CO = 1600, ID = 1600, MT = 1600, ND = 1600, NE = 1600, NM = 1600, SD = 1600, WY = 1600 }
+contact_caps = { CA = 4 }
+free = ["CA", "FL", "NC", "NJ", "NY", "OH", "PA", "TN", "TX"]
+delta = 0.08
+final_delta = 0.1
+
+[national]
+channel = "national"
+fine = ["national_chase", "wells_wh", "wells_fi"]
+units = ["WY", "VT", "ME", "MT", "MS", "RI", "DE", "SD", "WV", "NM", "KS", "OK", "DC", "AR", "ND", "NE", "NH", "IA", "OR", "ID", "TN", "MA", "AL", "WI", "KY", "MO", "SC", "NV", "CT", "LA", "MN", "IN", "UT", "WA", "MD", "CO", "GA", "OH", "VA", "MI", "AZ", "PA", "NC", "IL", "NJ", "FL", "NY", "TX", "CA"]
+fallback = { national_chase = "fi", wells_fi = "fi", wells_wh = "wh" }
