@@ -521,17 +521,24 @@ class Result:
 
 
 def plan(inst, channel: str, p: dict, band: tuple, max_iters: int = MAX_ITERS,
-         time_limit: float = TIME_LIMIT, total_limit: float = TOTAL_LIMIT, log=print) -> tuple:
-    """(Result, Model): the location–allocation loop (module docstring)."""
+         time_limit: float = TIME_LIMIT, total_limit: float = TOTAL_LIMIT, log=print,
+         seed: list | None = None, relax: bool = True) -> tuple:
+    """(Result, Model): the location–allocation loop (module docstring).  `seed` replaces the
+    k-means seed with K given centres; `relax=False` skips the LP-relaxed rounds, so the first
+    assignment is made at the seed itself."""
     t0 = time.time()
     ch = inst.channels[channel]
     its = items(inst, channel, p)
     m = build(inst, channel, its, band)
     pos = sorted(z for z in ch.m if ch.m[z] > 0)
-    seed = realize.kmeans(pos, ch.m, p, ch.k)
+    if seed is None:
+        seed = realize.kmeans(pos, ch.m, p, ch.k)
+    elif len(seed) != ch.k:
+        raise HessError(f"channel {channel}: {len(seed)} seed centres for K = {ch.k}")
+    seed = [tuple(c) for c in seed]
     log(f"{channel}: {len(its)} items, {m.ncols} columns, {len(m.rows)} rows; seed in "
         f"{time.time() - t0:.1f}s")
-    centres, relaxed = relaxed_centres(m, list(seed), log)
+    centres, relaxed = relaxed_centres(m, list(seed), log) if relax else (list(seed), [])
     assign, steps = start_assignment(m, inst, centres, t0 + total_limit, log)
     if assign is None:
         raise HessError(f"channel {channel}: no connected assignment found to start from")
