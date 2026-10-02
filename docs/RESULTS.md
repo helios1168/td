@@ -302,14 +302,95 @@ It pays for that in several ways:
 - it runs about 480 times as long;
 - it gives no global certificate.
 
-Its gain in its own unit is 4–9%, and in mean district rms 1–5%. Neither arm dominates. Still
-open:
-- the "hess from support" variant below, which separates the objective from the seed;
-- the owner's reading of the side-by-side maps.
+Its gain in its own unit is 4–9%, and in mean district rms 1–5%. Neither arm dominates. The
+"hess from support" variant below separates the objective from the seed. Still open: the owner's
+reading of the side-by-side maps.
 
 ### Variant: hess from support
 
-Pending (`m5-studio/81-variant`).
+Measured 2026-10-02 on m5 (#81). The variant runs the Hess arm's location–allocation loop
+unchanged except for its start (`tools/exp81/run_variant.py`, `seed_support.py`):
+- *Seed.* District j starts at the M-weighted centroid of the support arm's j-th drawn district.
+  The LP-relaxed rounds are skipped, so the first assignment is made at the support map's own
+  geometry.
+- *First assignment.* It is still the restricted one (each item limited to its nearest 3, then 5
+  centres), because the support map lies outside the planning band and is not a feasible start.
+  On FI, nearest-3 was infeasible and nearest-5 stopped at its 120 s limit with a gap of 2.1e-6.
+- *Everything else* is the Hess arm's: the rows, the fixed-centre MILPs (`mip_rel_gap` 0), the
+  centroid moves, the stop when the assignment repeats, and `run_hess.py assemble`.
+
+The seed objective is the support map's Hess score at its own centroids, which is arm 1's Hess
+measure above. Objectives are the planned ones, in 10⁶ m_rel·km².
+
+| | national | WH | FI |
+|---|---|---|---|
+| seed objective | 1,109.09 | 1,008.37 | 1,303.35 |
+| converged objective | 1,062.04 | 970.40 | 1,216.47 |
+| change from the seed | −4.24% | −3.76% | −6.67% |
+| centre iterations; full MILPs, all optimal at gap 0 | 6; 6 | 4; 4 | 7; 8 |
+| wall time, s (box under load) | 205 | 9 | 794 |
+| Hess arm's objective (k-means seed) | 1,062.04 | 970.40 | 1,201.94 |
+| variant against the Hess arm | identical | identical | +1.21% |
+| drawn ZIPs (m_rel > 0) assigned differently from the Hess arm | 0 of 3,713 | 0 of 1,390 | 570 of 5,122 (13.4% of m_rel) |
+| whole units assigned differently from the Hess arm | 0 of 44 | 0 of 33 | 4 of 40: DC MS VT WV |
+| planned ZIPs moved from the support map (matched by largest shared mass) | 427 (11.4% of m_rel) | 145 (9.1%) | 616 (13.0%) |
+| whole units the plan moved from the support map | CT NV RI | CT NM NV VT WY | CT DE KS VT WY |
+
+On national and WH the variant's drawn ledger equals the Hess arm's ZIP for ZIP, district labels
+included, so every drawn measure in the main table holds for the variant and no new map is
+drawn. Only the run differs: national took 205 s against 580 s and WH 9 s against 21 s, without
+the LP-relaxed rounds and on a loaded box, so this is no clean benchmark. On FI
+the variant's labels drift from their seeds and from the Hess arm's, so the FI counts match
+districts by largest shared mass. The FI rows of the drawn measures:
+
+| measure | FI: diameter | FI: Hess | FI: Hess from support |
+|---|---|---|---|
+| final audit verdict | pass | pass | pass |
+| within ±10% | 24/24 | 24/24 | 24/24 |
+| worst deviation | 9.54% | 8.31% | 8.48% |
+| support diameter, km | **11,882** | 14,540 (planned 14,116) | 12,526 (planned the same) |
+| Hess, 10⁶ m_rel·km² | 1,303 | **1,196** | **1,216** |
+| mean / max district rms, km | 244 / 558 | 233 / 533 | 233 / 533 |
+| mean / max extent, km | 869 / 2,023 | 855 / 2,023 | 852 / 2,023 |
+| max support diameter, km | 1,399 | 1,360 | 1,360 |
+| contacts | 61 | 67 | 61 |
+| max units per district | 4 | 4 | 4 |
+| split units (owners in them) | 8 (20) | 9 (27) | 8 (20) |
+| districts in pieces | 10 | 14 | 12 |
+| pieces (bridged) | 38 (2) | 41 (0) | 38 (2) |
+| repair moves | 0 | 27 | 14 |
+| η shortfalls after repair | 0 | 4 | 1 |
+| solver status, gap | optimal, 0 | local optimum, no bound | local optimum, no bound |
+| solve time, s (Hess: the whole loop) | 0.05 | 4,970 | 794 |
+| model: columns (integer) / rows / nonzeros | 5,056 (1,143) / 14,747 / 47,785 | 59,832 (59,832) / 94,414 / 429,936 | 59,832 (59,832) / 94,078 / 427,488 |
+
+The variant's audit passes on all three channels, with the scorecard's "feasible only" tier. The
+support-family check (`run_hess.policy_check` on the drawn ledger) finds the Hess arm's
+national_16 NY shortfall again, since that plan is the same. On FI it finds one shortfall,
+FI_08's PA (DC DE MD PA), in place of the Hess arm's four. FI's split units are arm 1's eight:
+CA FL NC NJ NY OH PA TX, with TN in one district again. 16 of the variant's 24 FI unit sets are
+arm 1's, against 9 for the Hess arm. It keeps four single-state districts (FL, OH, PA and TN), where arm 1
+has six and the Hess arm one. Its upstate New York district, FI_21 (NY VT), has rms 198 km and
+extent 649 km.
+[FI map](https://github.com/helios1168/td/blob/main/docs/figures/exp81_fromsupport_FI.png):
+the Hess arm on the left and the variant on the right. As in the main maps, the same colour in
+both panels is not the same territory.
+
+**What it says.**
+- *Seed dependence.* The Hess local optimum depends on the seed on FI and not, from these two
+  seeds, on national or WH. On FI the support seed's plan is 1.2% above the k-means seed's and
+  assigns 13% of the m_rel differently. Two seeds bound nothing: the spread over other
+  seeds is unmeasured, and so is the gap to the global optimum.
+- *Distance from a Hess local optimum.* Under the Hess arm's rules, the local optimum the support
+  map descends to is 4.2%, 3.8% and 6.7% below it (national, WH, FI). On national and WH that
+  optimum is the Hess arm's plan.
+- *The FI tradeoff.* On Hess, arm 1 is 7.1% above the FI optimum near the support map, against
+  9.0% above the Hess arm. On support diameter, that optimum is 5.4% above arm 1, against 22.4%
+  for the Hess arm. It keeps arm 1's contacts, split units and piece count, and leaves one η
+  shortfall, not four. So on FI the extra fragmentation is not the price of Hess compactness: a
+  Hess local optimum within 1.2% of the Hess arm's has none of it. The lower of the two optima
+  found is still the fragmented one. On WH the fragmentation is in the only optimum found: KY
+  and VA split from both seeds.
 
 Regenerate (m5, local inputs, `runs/exp81/`):
 
@@ -318,4 +399,8 @@ Regenerate (m5, local inputs, `runs/exp81/`):
 "$TD_PY" -u tools/exp81/run_hess.py assemble --out runs/exp81/hess
 "$TD_PY" tools/exp81/measure.py <run_dir> --spec scenarios/experiments/16n_12wh_24fi_nowifi_mtn1600.toml --out runs/exp81/<arm>_measures.json
 "$TD_PY" tools/exp81/sidebyside.py <arm1_run_dir> runs/exp81/hess --out docs/figures --prefix exp81_ --labels "support diameter" "Hess (ZIP, location–allocation)"
+"$TD_PY" -u tools/exp81/run_variant.py solve <channel>       # one process per channel
+"$TD_PY" -u tools/exp81/run_hess.py assemble --out runs/exp81/hess_from_support
+"$TD_PY" -u tools/exp81/run_variant.py compare
+"$TD_PY" tools/exp81/sidebyside.py runs/exp81/hess runs/exp81/hess_from_support --out <dir> --prefix exp81_fromsupport_ --labels "Hess (k-means seed)" "Hess (seeded from the support map)"   # FI's PNG only
 ```
