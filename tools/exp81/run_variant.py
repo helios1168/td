@@ -14,8 +14,9 @@ district behind each centre, and the support map's Hess objective at those centr
 `compare` reads the variant's plans, lane A's plans and the support ledger, and reports per
 channel the seed's objective, the variant's converged objective and iterations, its distance from
 lane A's objective, and the ZIPs (m_z > 0) and whole units that left their support district.
-Variant district j is matched to the support district its centre started at; the variant and lane
-A are matched by the assignment of largest shared mass.  It writes `<out>/compare.json`.
+Variant district j is matched to the support district its centre started at, and also, as a check
+on label drift, by the one-to-one matching of largest shared mass; the variant and lane A are
+matched by the latter.  It writes `<out>/compare.json`.
 """
 from __future__ import annotations
 
@@ -81,9 +82,10 @@ def cmd_solve(a) -> int:
     return rc
 
 
-def plan_owner(doc: dict) -> dict:
-    """{zip: district index} over a plan's items, the ZIPs with m_z > 0."""
-    return {z: it["district"] for it in doc["items"] for z in it["zips"]}
+def plan_owner(doc: dict, m: dict) -> dict:
+    """{zip: district index} over a plan's ZIPs with m_z > 0 (a whole unit's item also lists
+    its zero-mass ZIPs)."""
+    return {z: it["district"] for it in doc["items"] for z in it["zips"] if m.get(z, 0.0) > 0}
 
 
 def max_overlap(a: dict, b: dict, m: dict) -> dict:
@@ -123,7 +125,7 @@ def cmd_compare(a) -> int:
                 docs[arm] = json.load(fh)
         var, la = docs["variant"], docs["lane_a"]
         sup_owner, _ = seed_support.read(a.ledger, c)
-        vo, lo = plan_owner(var), plan_owner(la)
+        vo, lo = plan_owner(var, inst.channels[c].m), plan_owner(la, inst.channels[c].m)
         if set(vo) != set(lo):
             raise SystemExit(f"{c}: the two plans place different ZIPs")
         so = {z: sup_owner[z] for z in vo}
@@ -145,6 +147,7 @@ def cmd_compare(a) -> int:
             "vs_seed": (var["objective"] - var["seed"]["objective"]) / var["seed"]["objective"],
             "match_by_label_is_max_overlap": by_mass == by_label,
             "moved_from_support": moved(inst, c, vo, so, by_label),
+            "moved_from_support_max_overlap": moved(inst, c, vo, so, by_mass),
             "differs_from_lane_a": moved(inst, c, vo, lo, max_overlap(vo, lo, inst.channels[c].m)),
         }
         r = out[c]
