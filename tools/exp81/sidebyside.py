@@ -1,15 +1,16 @@
 """sidebyside.py -- two run directories' maps side by side, one PNG per channel (experimental, td#81).
 
     "$TD_PY" tools/exp81/sidebyside.py <run_dir_left> <run_dir_right> --out <dir>
-        [--labels "support diameter" "Hess"]
+        [--labels "support diameter" "Hess"] [--prefix exp81_]
 
 Each panel is drawn as `td.output.draw_maps` draws a channel's map, from the ledger file only:
 TIGER/Line 2025 ZCTA520 polygons in EPSG:5070 simplified by `output.SIMPLIFY_M`, filled by
 district with the same palette rule (tab20, tab20b, tab20c in sorted district order), over the
-2025 state outlines, with the principal cities of the channel's `output.TOP_METROS` largest
-metros.  Two changes fit two panels on one figure: both panels share the extent of the union of
-their ZCTAs, and each legend sits below its panel.  The ZCTA file is read in batches of 500,
-because GDAL rejects one 6,623-item IN list (`runs/sweep/looks_2026-10-01/run3.py`).
+2025 state outlines.  Three changes fit two panels on one figure: both panels share the extent of
+the union of their ZCTAs; each legend sits below its panel, one line per district with the states
+it holds opportunity in and its first metro title; and the metro city labels are left out, since
+at this scale they overprint in the Northeast and around Los Angeles.  The ZCTA file is read in
+batches of 500, because GDAL rejects one 6,623-item IN list (`runs/sweep/looks_2026-10-01/run3.py`).
 """
 from __future__ import annotations
 
@@ -49,9 +50,18 @@ def read_drawn(run_dir: str):
     return led[led["district"] != ""].drop_duplicates(["model_channel", "zip_code"])
 
 
-def draw_panel(ax, g, label: str, polys: dict, outlines: list, context: dict, top: int) -> list:
+def legend_label(j: str, sel) -> str:
+    """`<district>  <states with positive m_rel>  <first metro of its name, before its comma>`."""
+    states = sorted(set(sel.loc[sel["m_rel"].astype(float) > 0, "state"]))
+    name = sel["district_name"].iloc[0].split(" / ")[0].split(",")[0]
+    channel = sel["model_channel"].iloc[0]
+    if name.startswith(channel + " "):
+        name = name[len(channel) + 1:]
+    return f"{j}  {' '.join(states)}  {name}"
+
+
+def draw_panel(ax, g, label: str, polys: dict, outlines: list) -> list:
     """One channel of one run on `ax`, as `output.draw_maps` draws it; the polygons drawn."""
-    import matplotlib.patheffects as pe
     import matplotlib.pyplot as plt
     from matplotlib.collections import PatchCollection
     from matplotlib.patches import Patch, PathPatch
@@ -67,28 +77,20 @@ def draw_panel(ax, g, label: str, polys: dict, outlines: list, context: dict, to
         color = colors[i % len(colors)]
         ax.add_collection(PatchCollection([PathPatch(output._polygon_path(p)) for p in shapes],
                                           facecolor=color, edgecolor=color, linewidth=0.2, zorder=2))
-        handles.append(Patch(facecolor=color, label=f"{j} {sel['district_name'].iloc[0]}"))
+        handles.append(Patch(facecolor=color, label=legend_label(j, sel)))
         drawn += shapes
-    pop, titles, places = context["pop"], context["titles"], context["places"]
-    metros = sorted((code for code in set(g["cbsa"]) - {""}),
-                    key=lambda code: (-pop.get(code, 0.0), code))[:top]
-    for code in metros:
-        for city, px, py in output.principal_cities(titles.get(code, ""), places):
-            ax.plot(px, py, "k.", markersize=3, zorder=3)
-            ax.annotate(city, (px, py), xytext=(3, 3), textcoords="offset points", fontsize=7,
-                        zorder=4, path_effects=[pe.withStroke(linewidth=2, foreground="white")])
     ax.set_aspect("equal")
     ax.set_axis_off()
     ax.set_title(f"{label}\n{g['scenario'].iloc[0]}: {g['model_channel'].iloc[0]}, "
-                 f"{len(districts)} districts")
-    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=2, fontsize=6,
-              frameon=False)
+                 f"{len(districts)} districts", fontsize=14)
+    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=2, fontsize=9,
+              frameon=False, handlelength=1.5, columnspacing=1.5)
     return drawn
 
 
 def sidebyside(left: str, right: str, out_dir: str, labels=None, public: str | None = None,
-               top: int = output.TOP_METROS) -> dict:
-    """{channel: png path} for every channel either run draws."""
+               prefix: str = "") -> dict:
+    """{channel: png path} for every channel either run draws, named `<prefix><channel>.png`."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -98,9 +100,6 @@ def sidebyside(left: str, right: str, out_dir: str, labels=None, public: str | N
                         os.path.basename(os.path.normpath(right))]
     runs = [read_drawn(left), read_drawn(right)]
     polys = zcta_polygons(set(runs[0]["zip_code"]) | set(runs[1]["zip_code"]), public)
-    ref, areas = geo.read_reference(), output.read_areas()
-    context = {"titles": output.cbsa_titles(areas), "pop": output.cbsa_population(ref),
-               "places": output._places(areas, ref)}
     outlines = []
     path = os.path.join(public, "tl_2025_us_state.zip")
     if os.path.exists(path) and geo._valid_download(path):
@@ -110,12 +109,12 @@ def sidebyside(left: str, right: str, out_dir: str, labels=None, public: str | N
     channels = sorted(set(runs[0]["model_channel"]) | set(runs[1]["model_channel"]))
     output.check_file_names("planning channel", channels)
     for c in channels:
-        fig, axes = plt.subplots(1, 2, figsize=(22, 9))
+        fig, axes = plt.subplots(1, 2, figsize=(22, 9), gridspec_kw={"wspace": 0.25})
         drawn = []
         for ax, led, label in zip(axes, runs, labels):
             g = led[led["model_channel"] == c]
             if len(g):
-                drawn += draw_panel(ax, g, label, polys, outlines, context, top)
+                drawn += draw_panel(ax, g, label, polys, outlines)
             else:
                 ax.set_axis_off()
                 ax.set_title(f"{label}\nno {c} districts")
@@ -125,7 +124,7 @@ def sidebyside(left: str, right: str, out_dir: str, labels=None, public: str | N
             for ax in axes:
                 ax.set_xlim(x0 - pad, x1 + pad)
                 ax.set_ylim(y0 - pad, y1 + pad)
-        out[c] = output.inside(out_dir, os.path.join(out_dir, f"{c}.png"))
+        out[c] = output.inside(out_dir, os.path.join(out_dir, f"{prefix}{c}.png"))
         fig.savefig(out[c], dpi=120, bbox_inches="tight")
         plt.close(fig)
     return out
@@ -139,8 +138,9 @@ def main(argv=None) -> int:
     ap.add_argument("--labels", nargs=2, metavar=("LEFT", "RIGHT"),
                     help="panel labels (default: the run directories' names)")
     ap.add_argument("--public", help="the 2025 downloads (default: $TD_REPO/data/public)")
+    ap.add_argument("--prefix", default="", help="file name prefix, e.g. exp81_")
     a = ap.parse_args(argv)
-    for c, p in sidebyside(a.left, a.right, a.out, a.labels, a.public).items():
+    for c, p in sidebyside(a.left, a.right, a.out, a.labels, a.public, a.prefix).items():
         print(f"{c}: {p}")
     return 0
 
