@@ -36,3 +36,4 @@ are in the tag `archive/pre-support-2026-09`.
 | F1: the new planning channels and bundles | **open** | 2026-09-28 | user | #76; after the fresh extract (#3) |
 
 <!-- seed line: rows above were seeded 2026-09-28 (td#54) from #52; append below -->
+| Looks first: a plain ±15% band (as ±10%, no per-channel exception count); rank maps by channel-state splits, then visual defects (one may outrank an extra split, flagged for review), then shape, then balance; main map K 48–54 with $ per district within ±10% of each channel's target. Supersedes the council's balance-first framing; M_c(δ) with μ = 0 stays the bound and seed. District definition open (U50); OD1 (#56) still records the final band | **settled** | 2026-10-04 | user | `docs/lenses/COUNCIL_2026-10-01.md` § Triage (the owner's 2026-10-04 answers) |

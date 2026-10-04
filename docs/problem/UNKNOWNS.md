@@ -23,6 +23,27 @@ PU1 = U30 through PU10 = U39. "Settled in" names the #52 plan item and its issue
 | U38 | PU9 | Compactness objective: diameter or an alternative | B/T | B1 (#64). 2026-09-29: T part answered in `docs/MODEL.md` §3.5 (#64): Claims 1–3 hold for any w_S ≥ 0 that depends on S alone. The business choice is open, OD6 (#75) |
 | U39 | PU10 | Is the corridor floor (lightest chain across a separating unit) the right necessary condition, and how often does it bind on the real extract? Council: as printed, it is not necessary when v separates three or more components (C6). | T/E | B1 (#64), B2 (#65), D1 (#73). 2026-09-29: restated in `docs/MODEL.md` §4.2 (#64): the component-versus-rest floor, proved necessary in Proposition D; B2 checks it, and D1 measures how often it binds |
 
+## Open: balance (U40–U52)
+
+From the 2026-10-01 Gromov council (`docs/lenses/COUNCIL_2026-10-01.md`, triaged 2026-10-04).
+Each entry carries one line of context, since this file is read on its own.
+
+| id | unknown | grade | status |
+|---|---|---|---|
+| U40 | WH island floor: in the 51 (fixed 8-state WIFI excluded from WH), the west holds 1.615 WH districts, so at K_WH = 11 every connected WH map has a west district at ≤ −19.25%. Same mechanism governs combined-channel designs that cut WH in two. Recompute 1.615 | T | open; #88 reports it |
+| U41 | Before repair, drift (drawn − planned) sums to zero over each exchange component, so ZIP swaps move districts only toward their component's mean | T | open; #85 |
+| U42 | An L1 balance objective Σ_S \|Σ_v M_v t_{v,S} − τ n_S\| is linear and keeps Claims 1–3; Claim 1(iii) and Prop D become inequalities | T | open; a candidate balance pass after splits are fixed (#80), not the objective (U49) |
+| U43 | What sets national's margin-off δ\* = 0.067 on the 51: a closed set of states, a rule row, or the distance cap | E | open; #73 |
+| U44 | Per channel, the gap between δ\*(μ=0) and the best audited drawing; the ZIP-level floor | E | open |
+| U45 | How close two districts sharing a split state get by exchanging boundary ZIPs | E | open; sizes #85 |
+| U46 | When a balanced support plan lifts to a connected ZIP partition | T | open; MODEL C10 |
+| U47 | Within an exchange component, drift bounded by the heaviest boundary ZIP rather than μ_S | T | open |
+| U48 | Heavy ZIPs as binary atoms in the master: Claim 3 holds with μ_S ≤ ε·\|split units of S\| | T | open |
+| U49 | The balance loss: worst district, sum, count within ±x%, or leximin | B | **answered 2026-10-04: balance is a plain ±15% band, not the objective.** Maps rank by channel-state splits, visual defects, shape, then worst and mean deviation (PROBLEM.md row 2026-10-04) |
+| U50 | Is a district the region it covers (zero-opportunity ZIPs included) or its opportunity ZIPs? Decides piece counts, thin links, and whether districts may cross empty ZIPs | B | open; #82 |
+| U51 | May K per channel and the WIFI region move? | B | **answered 2026-10-02: yes.** K set from per-channel dollar targets (2026-10-01; within ±10% of target and main total 48–54, 2026-10-04); combined region moved (no WIFI; New England; New England + ID MT ND SD WY NE KS OK NM). `docs/memory/facts/scenario-sweeps-2026-10.md`; #75 |
+| U52 | Is a ZIP holding 0.13τ–0.36τ territory, or a booking address to place apart? | B | open; #83 |
+
 ## Reserved (U14–U29)
 
 Reserved by the owner's answer to OQ3 on 2026-09-28:
