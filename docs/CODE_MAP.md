@@ -39,6 +39,9 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/test_realize.py` | the #1/#7/#11 regressions, the Claim 3 bound, the forest stop, clipped repair, the C10 star |
 | `td/output.py`, `td/__main__.py`, `td/hooks.py` | `python -m td run <spec>` and `python -m td maps`: master, realizer, ledger, audit, names, ZCTA polygon maps (#71); `python -m td geo` builds the reference (#62) |
 | `tests/test_output.py`, `tests/test_end_to_end.py` | the ledger schema against the tag's `scenarios.csv`, names, maps, and fixture scenarios end to end |
+| `tools/exp81/` | #81's experiment code, not a production planner: `hess.py` the Hess-style ZIP planner, `run_hess.py` its solve and assemble driver, `measure.py` the per-map measures, `sidebyside.py` the side-by-side maps |
+| `scenarios/experiments/` | experiment scenarios; `16n_12wh_24fi_nowifi_mtn1600.toml` is #81's (the 2026-10-01 18-split candidate) |
+| `tests/test_exp81_hess.py`, `tests/test_exp81_measure.py`, `tests/test_exp81_sidebyside.py` | #81's experiment code on toys: the Hess loop against brute force, the measures by hand, the map legend |
 
 ## Run
 
