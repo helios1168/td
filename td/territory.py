@@ -17,7 +17,7 @@ dropped for zero opportunity included; the instance holds every CONUS ZCTA on th
 4. **Join** (`join`): a district in pieces takes a shortest path of zero-opportunity ZIPs, inside
    the units where it holds opportunity, from one of its pieces to another of its ZIPs, whoever
    holds the path, when that lowers the total pieces of the district and of those it takes ZIPs
-   from.  A path stays in units the district holds, so no mode is broken (C16), and no district
+   from and leaves none of those in more pieces than before.  A path stays in units the district holds, so no mode is broken (C16), and no district
    is emptied.
 Opportunity never moves, so masses, bands and shares are the realizer's.
 """
@@ -98,9 +98,12 @@ def join(owner: dict, zero: set, adj: dict, unit_of: dict, holds: dict, m: dict)
                 after = {k: region[k] - set(path) for k in donors}
                 if not all(after.values()):
                     continue                        # a district is never emptied
-                before = sum(_count(region[k], adj) for k in [j, *donors])
-                if _count(region[j] | set(path), adj) + sum(_count(after[k], adj) for k in donors) \
-                        >= before:
+                was = {k: _count(region[k], adj) for k in donors}
+                now = {k: _count(after[k], adj) for k in donors}
+                if any(now[k] > was[k] for k in donors):
+                    continue                        # no donor is cut into more pieces
+                if _count(region[j] | set(path), adj) + sum(now.values()) \
+                        >= _count(region[j], adj) + sum(was.values()):
                     continue
                 for z in path:
                     owner[z] = j

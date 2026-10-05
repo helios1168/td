@@ -197,6 +197,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "not_placed_zips": len({r["zip_code"] for r in led if r["reason"] == NOT_PLACED}),
         "sub_tolerance_cells": sum(1 for r in led if r["reason"] == SUB_TOLERANCE),
         "zero_opportunity_zips": len(set(ext.zips) - positive_zips(ext)),
+        "fine_channels": list(s.fine_channels),        # M1's run-folder gate reads them (#116)
         "conus_dropped": ext.dropped,
         "planned_elsewhere": {f: sum(1 for c in conus.channel if c == f)
                               for f in s.planned_elsewhere},
@@ -422,8 +423,11 @@ def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: d
         reported.update({(c, v, ids[c, j]): x / M[v] for (v, j), x in d.drawn.items()})
     split = ledger_pieces(rows, graph, drawings) if split is None else split
     causes = {(j, z): pc.cause for (_, j), pcs in split.items() for pc in pcs for z in pc.zips}
+    s = inst.spec        # M1's cells and their planning channels come from the scenario (#116)
+    route = {(u, f): c.name for c in s.channels.values() for u, fs in c.domain.items() for f in fs}
     return audit.Run(cells, chans, expected, dict(placed), mode, planned, reported, graph, causes,
-                     metro_exceptions(inst, reference), manifest, reports, names, polygon)
+                     metro_exceptions(inst, reference), manifest, reports, names, polygon,
+                     tuple(s.fine_channels), route)
 
 
 def ledger_pieces(rows: list, graph: dict, drawings: dict) -> dict:

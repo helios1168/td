@@ -6,7 +6,9 @@
 `m1(run_dir)` reads a drawn run's `ledger.csv` and `districts.csv` (the layout `python -m td run`
 writes) and returns M1's verdict: `td.audit.check_m1` on the ledger with the committed polygon graph
 and its owner-approved connectors only (`td.geo.polygon_graph`).  It is strict: a detached piece
-or a CONUS ZCTA not owned once per fine channel fails the run, with no tolerance.  It also gives
+or a CONUS ZCTA not owned once per fine channel fails the run, with no tolerance.  The fine
+channels are the scenario's, from `run.json` (#116); a run from before #116 has none there, and
+its summary says the ledger's were read instead.  It also gives
 each district's largest detached piece as the looks scorer sizes it (`tools/looks/score.py`), in
 mass over τ_c: on the ledger, which owns every ZCTA since #116, so no display fill sizes a piece
 and the scorer's pieces are the check's.  The CLI prints one line per run and exits 1 when any run fails.
@@ -61,7 +63,7 @@ def m1(run_dir: str, g=None) -> dict:
     ks = {}
     for r in districts:
         ks[r["channel"]] = ks.get(r["channel"], 0) + 1
-    check = score.m1_check(ledger, ks, g)
+    check = score.m1_check(ledger, ks, g, score.fine_channels(run_dir))
     pieces = []
     if g.polygon_adj is not None:
         for ch in sorted(ks):

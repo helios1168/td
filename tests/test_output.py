@@ -157,6 +157,7 @@ def test_a_toy_run_passes_the_audit_and_writes_every_output():
     report = json.load(open(res.paths["run"], encoding="utf-8"))
     assert report["maps"] == "drawn" and report["maps_missing_polygons"] == []
     assert report["not_placed_zips"] == 1 and report["dropped_channels"] == ["Y"]
+    assert report["fine_channels"] == ["f", "g"]           # M1's run-folder gate reads them (#116)
     assert report["dropped_units"]["X"] and "CT" in report["dropped_units"]["X"]
     cells = checks["one owner per cell"]
     assert cells.status == "listed", cells.items
@@ -545,6 +546,17 @@ def test_a_zcta_of_the_instance_the_extract_lacks_has_a_no_cell_row_its_territor
     assert fails == {}, fails
     m1 = {c.name: c for c in checks}[audit.M1_CHECK]
     assert m1.status == "pass" and m1.counts["no_owner"] == m1.counts["no_row"] == 0
+    # M1's cells come from the scenario, not the ledger: with the g rows gone, each is missing,
+    # and a row moved to the other planning channel is held by the wrong one
+    def m1_of(led):
+        return audit.check_m1(output.audit_run(inst, led, drawings, ext, reports,
+                                               {"vertices": placed, "edges": edges}, names,
+                                               polygon=polygon))
+    m1 = m1_of([r for r in rows if r["current_channel"] != "g"])
+    assert m1.status == "fail" and m1.counts["no_row"] == len(placed)
+    moved = [dict(r, model_channel="Y") if (r["zip_code"], r["current_channel"]) == (extra, "f") else r
+             for r in rows]
+    assert f"fine channel f: ZCTA {extra} has a row in Y, held by X" in m1_of(moved).items
 
 
 def test_a_ledger_piece_inside_a_realizer_piece_keeps_its_cause():

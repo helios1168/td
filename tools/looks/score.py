@@ -28,7 +28,8 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
 - M1 holds (#108): `td.audit.check_m1` passes on the ledger with the committed polygon graph and
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
   ZCTA owned in every channel.  Without a polygon graph M1 is unverified, and the run is not
-  eligible.
+  eligible.  The run's own scorecard M1, which also checks each cell's planning channel against
+  the scenario, must not fail either (#116).
 
 Rank keys, compared in order, fewest or smallest first:
 1. **splits**: channel-state splits, Σ_c the states where two or more of c's districts own a ZCTA,
@@ -52,7 +53,7 @@ Rank keys, compared in order, fewest or smallest first:
      whatever the plan, so the count barely tells two maps apart;
 3. **shape**: largest_extent_km (the longest distance between two ZIP points one district holds,
    km, as #81's `measure.extent_km`), then states_per_district, the most states one district
-   holds positive mass in;
+   owns a ZCTA in, zero-opportunity ones included (council decision 1);
 4. **balance**: worst_dev, then mean_dev, of |drawn mass / channel mean − 1| over all districts.
 
 **REVIEW** (owner D2): across the eligible runs scored together, a run with one split more than
@@ -251,7 +252,7 @@ def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
             "crowded": crowded, "thin": thin, "multipart": multipart,
             "pieces": None if g.polygon_adj is None else sorted(pieces, key=lambda p: (-p[2], p)),
             "extent_km": extent,
-            "max_states": max(len([s for s in c if c[s] > 0]) for c in mass.values())}
+            "max_states": max(len(bys) for bys in held.values())}     # owned ZCTAs (#116)
 
 
 def dollar_rates(extract: data.Extract) -> dict:
@@ -299,20 +300,31 @@ def bands_at(ledger: list, ks: dict, band: float) -> audit.Check:
     return audit.check_bands(audit.Run(cells, chans))
 
 
-def m1_check(ledger: list, ks: dict, g: Geography) -> audit.Check:
-    """`td.audit.check_m1` on the drawn ledger with `g`'s polygon graph (strict: no display fill)."""
+def m1_check(ledger: list, ks: dict, g: Geography, fine=None) -> audit.Check:
+    """`td.audit.check_m1` on the drawn ledger with `g`'s polygon graph (strict: no display fill),
+    on the scenario's fine channels `fine` (`fine_channels`); None, for a run from before #116,
+    takes the ledger's, and the summary says so.  A run folder has no units, so the routing of a
+    cell to its planning channel is the run's own scorecard M1's to check."""
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
-                        float(r["m_rel"])) for r in ledger]
+                        float(r["m_rel"]), reason=r.get("reason", "")) for r in ledger]
     return audit.check_m1(audit.Run(cells, {ch: audit.Channel(k) for ch, k in ks.items()},
-                                    polygon=g.polygon))
+                                    polygon=g.polygon, fine=None if fine is None else tuple(fine)))
+
+
+def fine_channels(run_dir: str):
+    """The scenario's fine channels from the run's `run.json` (#116), or None without them."""
+    path = os.path.join(run_dir, "run.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh).get("fine_channels")
 
 
 def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict,
                 m1: audit.Check | None = None) -> list:
     """Why a run is not eligible, one reason per failed rule; empty when it is.  `m1` is the M1
     check; a run without one is not eligible."""
-    why = [f"audit: {name} fails" for name, s in checks.items()
-           if s == "fail" and name not in (BAND_CHECK, audit.M1_CHECK)]
+    why = [f"audit: {name} fails" for name, s in checks.items() if s == "fail" and name != BAND_CHECK]
     if m1 is None or m1.status != "pass":
         why.append(f"M1: {m1.status}, {m1.summary}" if m1 else "M1: not checked")
     if not checks:
@@ -366,7 +378,7 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
         rates = rates if rates is not None else rates_of(extract_path(run_dir))
         dollars = {ch: dollars_per_district(ch, k, ledger, rates) for ch, k in ks.items()}
     bands = bands_at(ledger, ks, BAND)
-    m1 = m1_check(ledger, ks, g)
+    m1 = m1_check(ledger, ks, g, fine_channels(run_dir))
     why = eligibility(scorecard_checks(sc), bands, ks, dollars, m1)
     devs = [abs(x) for c in chans.values() for x in c["deviation"].values()]
     pieces = [p for c in chans.values() for p in c["pieces"] or ()]

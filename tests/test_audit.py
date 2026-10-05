@@ -60,6 +60,8 @@ def _run(owner=None, mass=None, **over):
         solver={"X": {"status": "optimal", "objective": 7.0, "bound": 7.0, "gap": 0.0,
                       "mip_rel_gap": 0.0}},
         names={"d1": "Alpha", "d2": "Beta", "d3": "Gamma", "d4": "Delta"},
+        fine=("f",),
+        route={(v, "f"): "X" for v in MODE},
     )
     kw.update(over)
     return Run(**kw)
@@ -91,6 +93,7 @@ def test_m1_fails_a_detached_piece_and_an_unowned_zcta_and_is_unverified_without
     assert m1.items == [f"X/d1: detached piece of 1 ZIPs (c3...), 0.333 τ, cause {audit.M1_CUT}"]
     run = _run()
     run.polygon = dict(run.polygon, vertices=RING + ["z9"], state=dict(UNIT, z9="Z"))
+    run.unit_of = dict(UNIT, z9="C")
     m1 = _checks(run)[audit.M1_CHECK]              # z9 has no row in fine channel f (#116)
     assert _fails(run) == [audit.M1_CHECK] and m1.counts["no_row"] == 1
     assert m1.counts["no_owner"] == 0
@@ -108,7 +111,8 @@ def test_m1_owns_each_conus_zcta_once_per_fine_channel():
     territory = [Cell(z, "g", "Y", "e1", 0.0, reason=audit.NO_CELL) for z in RING]
     kw = dict(cells=clean.cells + territory,
               channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(1, 0.0, 0.0)},
-              solver=dict(clean.solver, Y=clean.solver["X"]), names=dict(clean.names, e1="Epsilon"))
+              solver=dict(clean.solver, Y=clean.solver["X"]), names=dict(clean.names, e1="Epsilon"),
+              fine=("f", "g"), route={**clean.route, **{(v, "g"): "Y" for v in MODE}})
     run = _run(**kw)
     assert _fails(run) == [], {n: c.items for n, c in _checks(run).items() if c.status == "fail"}
     m1 = _checks(run)[audit.M1_CHECK]
@@ -117,9 +121,101 @@ def test_m1_owns_each_conus_zcta_once_per_fine_channel():
                         names=dict(kw["names"], z1="Zeta")))
     m1 = _checks(twice)[audit.M1_CHECK]
     assert m1.counts["double"] == 1 and "fine channel g: ZCTA a1 owned in Y, Z" in m1.items
+    assert "fine channel g: ZCTA a1 has a row in Z, held by Y" in m1.items
     assert "cell a1/g: 2 owners" in audit.check_cells(twice).items
     heavy = _run(**dict(kw, cells=clean.cells + [territory[0]._replace(m=0.5)] + territory[1:]))
     assert f"cell a1/g: {audit.NO_CELL} with opportunity 0.5" in audit.check_cells(heavy).items
+
+
+def _two_fine(**over):
+    """The toy run with a second fine channel g in X, every ZCTA owned there as in f at zero
+    opportunity (`NO_CELL`)."""
+    clean = _run()
+    g = [Cell(z, "g", "X", OWNER[z], 0.0, reason=audit.NO_CELL) for z in RING]
+    kw = dict(cells=clean.cells + g, fine=("f", "g"), route={**clean.route, **{(v, "g"): "X" for v in MODE}})
+    kw.update(over)
+    return _run(**kw)
+
+
+def test_m1_checks_each_fine_channel_of_a_dropped_unit_apart():
+    """Review of #116 (P1-1): z9 is a ZCTA of unit D, dropped for zero opportunity in the solved
+    channel X.  Its g row is owned; its f row is blank.  Ownership is not pooled across fine
+    channels, and a blank row is excused only in a dropped channel, so M1 and the cell check fail."""
+    clean = _two_fine()
+    polygon = dict(clean.polygon, vertices=RING + ["z9"], edges=clean.polygon["edges"] + [("z9", "a1")],
+                   state=dict(UNIT, z9="D"))
+    z9 = [Cell("z9", "f", "X", "d1", 0.0, reason=audit.DROPPED),
+          Cell("z9", "g", "X", "d1", 0.0, reason=audit.DROPPED)]
+    owned = _two_fine(cells=clean.cells + z9, polygon=polygon, unit_of=dict(UNIT, z9="D"),
+                      route={**clean.route, ("D", "f"): "X", ("D", "g"): "X"})
+    assert _fails(owned) == [], {n: c.items for n, c in _checks(owned).items() if c.status == "fail"}
+    blank = dataclasses.replace(owned, cells=clean.cells + [z9[0]._replace(district=""), z9[1]])
+    m1 = _checks(blank)[audit.M1_CHECK]
+    assert m1.status == "fail" and m1.counts["no_owner"] == 1 and "X: 1 of 11 ZCTAs have no owner" in m1.items
+    assert "cell z9/f: no owner" in _checks(blank)["one owner per cell"].items
+    assert audit.check_m1(dataclasses.replace(blank, route=None)).counts["no_owner"] == 1
+
+
+def test_m1_takes_its_fine_channels_and_footprints_from_the_scenario():
+    """Review of #116 (P1-2): the cells M1 checks come from the scenario (`Run.fine`, `Run.route`),
+    so a fine channel with no row at all, a solved channel emptied from the ledger, and a row with
+    a blank fine channel each fail, with or without the routing."""
+    clean = _two_fine()
+    assert _fails(clean) == []
+    no_g = dataclasses.replace(clean, cells=[c for c in clean.cells if c.fine != "g"])
+    for run in (no_g, dataclasses.replace(no_g, route=None)):
+        m1 = audit.check_m1(run)
+        assert m1.status == "fail" and m1.counts["no_row"] == 10, m1.items
+        assert "fine channel g: 10 of 10 CONUS ZCTAs have no row" in m1.items
+    # without the scenario's fine channels, the ledger's are all M1 can read, and it says so
+    fallback = audit.check_m1(dataclasses.replace(no_g, fine=None, route=None))
+    assert fallback.status == "pass" and fallback.summary.endswith("(fine channels from the ledger)")
+    y = [Cell(z, "g", "Y", "e1", 0.0, reason=audit.NO_CELL) for z in RING]
+    two = _run(cells=_run().cells + y,
+               channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(1, 0.0, 0.0)},
+               solver=dict(_run().solver, Y=_run().solver["X"]), names=dict(_run().names, e1="Epsilon"),
+               fine=("f", "g"), route={**_run().route, **{(v, "g"): "Y" for v in MODE}})
+    assert _fails(two) == []
+    emptied = dataclasses.replace(two, cells=_run().cells)
+    for run in (emptied, dataclasses.replace(emptied, route=None)):
+        m1 = audit.check_m1(run)
+        assert m1.status == "fail" and m1.counts["no_row"] == 10, m1.items
+    blank = dataclasses.replace(clean, cells=clean.cells[:-1] + [clean.cells[-1]._replace(fine="")])
+    m1 = audit.check_m1(blank)
+    assert m1.status == "fail" and "X: a row of ZIP c3 has no fine channel" in m1.items
+    stray = dataclasses.replace(clean, cells=clean.cells + [Cell("a1", "h", "X", "d1", 0.0)])
+    assert "fine channel h: has rows but is not a fine channel of the scenario" in audit.check_m1(stray).items
+
+
+def test_m1_never_excuses_a_double_owner():
+    """Review of #116 (P1-3): X and Y both own every cell of f, and a dropped channel D adds a
+    blank row to each: owned rows are counted, so each cell is owned twice.  Two districts of one
+    planning channel owning one ZCTA in two fine channels fail too, whichever row comes last."""
+    clean = _run()
+    y = [Cell(z, "f", "Y", "e1", 0.0, reason=audit.NO_CELL) for z in RING]
+    d = [Cell(z, "f", "D", "", 0.0, reason=audit.DROPPED) for z in RING]
+    run = _run(cells=clean.cells + y + d,
+               channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(1, 0.0, 0.0)},
+               solver=dict(clean.solver, Y=clean.solver["X"]), names=dict(clean.names, e1="Epsilon"))
+    for r in (run, dataclasses.replace(run, route=None)):
+        m1 = audit.check_m1(r)
+        assert m1.status == "fail" and m1.counts["double"] == 10, m1.items
+        assert "fine channel f: ZCTA a1 owned in X, Y" in m1.items
+    two = _two_fine()
+    clash = dataclasses.replace(two, cells=[Cell("a1", "g", "X", "d2", 0.0, reason=audit.NO_CELL)]
+                                + [c for c in two.cells if (c.zip, c.fine) != ("a1", "g")])
+    m1 = audit.check_m1(clash)
+    assert m1.status == "fail" and "X: ZCTA a1 owned by d1, d2" in m1.items and m1.counts["double"] == 1
+
+
+def test_a_whole_unit_violation_with_unknown_mass_still_fails():
+    """Review of #116 (P2-5): only a cell known to hold no opportunity is left out of the mode
+    check; a ledger with no masses still fails a whole unit with two owners."""
+    for mass in (MASS, dict.fromkeys(UNIT)):
+        run = _run(owner={"a1": "d4"})
+        run.cells = [c._replace(m=mass[c.zip]) for c in run.cells]
+        modes = audit.check_modes(run)
+        assert modes.status == "fail" and "X/A: whole unit with 2 owners (d1, d4)" in modes.items
 
 
 def test_planted_phantom_share_fails():
@@ -241,7 +337,8 @@ def test_a_not_placed_cell_passes_only_when_its_zip_has_no_opportunity():
     clean = _run()
     off = [Cell("z9", "f", "X", "", 0.0, reason=audit.NOT_PLACED),
            Cell("z9", "g", "Y", "", 0.0, reason=audit.NOT_PLACED)]
-    run = _run(cells=clean.cells + off, expected=clean.expected | {("z9", "f"), ("z9", "g")})
+    run = _run(cells=clean.cells + off, expected=clean.expected | {("z9", "f"), ("z9", "g")},
+               fine=None, route=None)           # g is a fine channel of z9's rows only
     assert _fails(run) == []
     check = _checks(run)["one owner per cell"]
     assert check.status == "listed"
@@ -396,19 +493,23 @@ def test_catalog_k_reads_the_scenario_name():
 
 
 def test_dropped_zero_opportunity_cells_are_listed_not_failed():
-    """MODEL §1 and §9 (#65 F1): a zero-opportunity unit's cells keep a blank district, carry the
-    reason, and are listed; a blank owner without it, or a drop where there is opportunity, fails."""
+    """MODEL §1 and §9 (#65 F1): a cell of a channel dropped for zero opportunity, not among the
+    run's channels, keeps a blank district, carries the reason, and is listed; a blank owner
+    without it, a drop where there is opportunity, or a blank dropped row in a solved channel,
+    which the territory pass owns (#116), fails."""
     clean = _run()
-    zero = Cell("z0", "f", "X", "", 0.0, reason=audit.DROPPED)
+    zero = Cell("z0", "f", "Y", "", 0.0, reason=audit.DROPPED)
     run = _run(cells=clean.cells + [zero], expected=clean.expected | {("z0", "f")},
                unit_of=dict(UNIT, z0="Zero"))
     assert _fails(run) == []
     dropped = _checks(run)["dropped for zero opportunity"]
-    assert dropped.status == "listed" and dropped.items == ["cell z0/f (X): dropped: zero opportunity"]
+    assert dropped.status == "listed" and dropped.items == ["cell z0/f (Y): dropped: zero opportunity"]
     blank = dataclasses.replace(run, cells=clean.cells + [zero._replace(reason="")])
     assert _fails(blank) == ["one owner per cell"]
     heavy = dataclasses.replace(run, cells=clean.cells + [zero._replace(m=1.0)])
     assert "dropped for zero opportunity" in _fails(heavy)
+    solved = dataclasses.replace(run, cells=clean.cells + [zero._replace(channel="X")])
+    assert "cell z0/f: no owner" in _checks(solved)["one owner per cell"].items
 
 
 def test_a_channel_dropped_whole_is_not_counted_against_k():
@@ -416,10 +517,12 @@ def test_a_channel_dropped_whole_is_not_counted_against_k():
     dropped = [Cell(z, "g", "Y", "", 0.0, reason=audit.DROPPED) for z in RING]
     run = _run(cells=clean.cells + dropped,
                channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(2, 0.0, 1.0)},
-               expected=clean.expected | {(z, "g") for z in RING})
+               expected=clean.expected | {(z, "g") for z in RING},
+               fine=("f", "g"), route={**clean.route, **{(v, "g"): "Y" for v in MODE}})
     assert _checks(run)["district count per channel"].status == "pass"
-    # M1: a channel the run declares owns every ZCTA of its footprint (#116)
-    assert _fails(run) == [audit.M1_CHECK]
+    # M1: a channel the run declares owns every ZCTA of its footprint (#116), and its blank rows
+    # are not excused in `check_cells` either
+    assert _fails(run) == [audit.M1_CHECK, "one owner per cell"]
     assert _checks(run)[audit.M1_CHECK].items[0] == "Y: 10 of 10 ZCTAs have no owner"
     # a channel dropped for zero opportunity is not among the run's channels and has no districts:
     # its rows keep the blank district and are excused
@@ -501,3 +604,22 @@ def test_catalog_finds_unguarded_fragments():
     split = sum(_checks(run)["ZIP contiguity"].counts["split"]
                 for _, run in audit.catalog_runs(frame, graph))
     assert split > 0
+
+
+def test_m1_excuses_a_blank_row_only_as_a_zero_opportunity_drop_of_a_dropped_channel():
+    """Re-review of #116 (P1): a blank row in a channel the run does not declare excuses its cell
+    only when it is a zero-opportunity DROPPED row; one with opportunity, or with no DROPPED
+    reason, or of unknown opportunity, leaves the cell unowned.  One cell owned twice in one channel counts once."""
+    p = {"vertices": ["z"], "edges": []}
+    for cell, status in ((Cell("z", "f", "Y", "", 1.0), "fail"),
+                         (Cell("z", "f", "Y", "", 0.0), "fail"),
+                         (Cell("z", "f", "Y", "", 1.0, reason=audit.DROPPED), "fail"),
+                         (Cell("z", "f", "Y", "", None, reason=audit.DROPPED), "fail"),
+                         (Cell("z", "f", "Y", "", 0.0, reason=audit.DROPPED), "pass")):
+        m1 = audit.check_m1(audit.Run([cell], {"X": Channel(1)}, polygon=p, fine=("f",)))
+        assert m1.status == status, (cell, m1.items)
+        assert m1.counts["no_owner"] == (status == "fail"), m1.counts
+    two = audit.Run([Cell("z", "f", "X", "D1", 0.0), Cell("z", "f", "X", "D2", 0.0)],
+                    {"X": Channel(2)}, polygon=p, fine=("f",))
+    m1 = audit.check_m1(two)
+    assert m1.status == "fail" and m1.counts["double"] == 1, m1.items
