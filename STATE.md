@@ -4,12 +4,12 @@
 
 ## Now
 
-M1 (ZIP contiguity) is the goal's first part; no current map meets it. #108 gate on `m5-studio/108` (27dfa6e, pushed): Sol blocked it on P1 (exp81 Hess writer skips the M1 audit) and P2 (overlap-only pairs counted as edges); worker fixing (600089e0). #106 landed (c603d46) and triaged (4700e5b): U59–U65, #109/#116 amended, #118 filed. #110 closed: η-free bounding master certifies floors.
+M1 (ZIP contiguity) is the goal's first part; no current map meets it. #108 landed (b883d6b): the polygon graph with 163 owner-approved connectors is the M1 graph, the audit and scorer fail any detached piece or unowned ZCTA, and all 75 runs fail (best map's largest piece 0.272 τ). #106 landed and triaged (U59–U65, #118). Unblocked, not ready: #116, #109, #114, #118.
 
 ## Next
 
-- Land #108 after the fix and a re-review; then #116, #109, #114, #118 (this session's lanes).
-- contiguity-fast's lanes (owner-agreed 2026-10-05): #115 and #103 under #117. No runs on either side until the owner says run.
+- #116 (every CONUS ZCTA owned) first: until it lands no map can pass M1; then #109 and #114; #118 any time.
+- contiguity-fast's lanes (owner-agreed): #115 and #103 under #117. No runs on either side until the owner says run.
 - Wave 1 (#95-#104) held until #109 reports.
 
 ## Blocked
