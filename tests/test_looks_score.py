@@ -133,6 +133,16 @@ def test_eligibility_rules():
                              {"IFA": 1.227e9}) == ["audit: no scorecard", "audit at ±15%: 1 outside"]
 
 
+def test_dollar_band_inclusive():
+    ok = audit.Check(score.BAND_CHECK, "pass", "")
+    for ch, t in (("national", 1.25e9), ("WH", 1.0e9), ("FI", 0.9e9)):
+        for d in (t * 1.1, t * 0.9):                     # exactly ±10%: eligible
+            assert score.eligibility({}, ok, {"IFA": 1}, {ch: d}) == ["audit: no scorecard"], (ch, d)
+        for d in (t * 1.1 + 1, t * 0.9 - 1):             # a dollar past either edge: not
+            why = score.eligibility({}, ok, {"IFA": 1}, {ch: d})
+            assert len(why) == 2 and why[1].startswith(f"$ {ch} "), (ch, d, why)
+
+
 def _score_toy(ch: str, rates: dict) -> dict:
     """`score.score` on a run folder holding channel `ch` laid out as X."""
     with tempfile.TemporaryDirectory() as d:
@@ -181,5 +191,11 @@ def test_rank_and_review():
     # one split more and strictly fewer defects than every run at 10 splits (min 4): flagged
     assert flags == {"best_a": None, "best_b": None, "plus1_fewer": "REVIEW: +1 split for -2 defects",
                      "plus1_same": None, "plus2": None, "off": None}
+    # a repeated call recomputes the flag from the runs it is given
+    a, b, stale = _s("a", 10, 4), _s("b", 11, 2), _s("stale", 9, 0, eligible=False)
+    assert score.rank([a, b])[1]["review"] == "REVIEW: +1 split for -2 defects"
+    stale["review"] = "REVIEW: +1 split for -9 defects"
+    out = score.rank([b, stale])
+    assert [s["run"] for s in out] == ["b", "stale"] and b["review"] is None and stale["review"] is None
     ties = score.rank([_s("x", 3, 1, worst=0.09), _s("y", 3, 1, worst=0.08)])
     assert [s["run"] for s in ties] == ["y", "x"]

@@ -16,7 +16,8 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
 - the audit passes at a plain ±`BAND` band: no check of `scorecard.md` other than the band check
   fails, and `td.audit.check_bands` passes on the ledger with every channel's band τ_c(1 ± BAND),
   τ_c = the channel's ledger total / K_c;
-- every channel with a `TARGET` averages a $ per district within ±`DOLLAR_BAND` of it.  $ is
+- every channel with a `TARGET` averages a $ per district within ±`DOLLAR_BAND` of it, edges
+  included, compared in whole dollars.  $ is
   m_rel times the owner's dollar total over the extract's m_rel total, per fine channel
   (`DOLLARS`), summed over the channel's drawn cells; an IFA-only run uses the owner's
   whole-extract IFA total over K instead (owner, 2026-10-04).  A channel without a target, such
@@ -246,7 +247,10 @@ def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict) -> li
         why.append(f"audit at ±{100 * BAND:.0f}%: {bands.summary}")
     for ch, d in sorted(dollars.items()):
         t = TARGET.get(ch)
-        if t is not None and abs(d / t - 1) > DOLLAR_BAND:
+        if t is None:
+            continue
+        lo, hi = round(t * (1 - DOLLAR_BAND)), round(t * (1 + DOLLAR_BAND))   # whole dollars, inclusive
+        if round(d) < lo or round(d) > hi:
             why.append(f"$ {ch} {d / 1e6:,.0f}M is {100 * (d / t - 1):+.1f}% of {t / 1e6:,.0f}M")
     total = sum(ks.values())
     if set(ks) != IFA_ONLY and not MAIN_K[0] <= total <= MAIN_K[1]:
@@ -314,7 +318,10 @@ def rank_key(s: dict) -> tuple:
 
 
 def rank(scores: list) -> list:
-    """Eligible runs in rank-key order, then the rest; sets `review` on the D2 runs."""
+    """Eligible runs in rank-key order, then the rest; sets `review` on the D2 runs among
+    `scores` and clears it on every other run."""
+    for s in scores:
+        s["review"] = None
     ok = sorted((s for s in scores if s["eligible"]), key=rank_key)
     if ok:
         best = ok[0]["splits"]
