@@ -126,7 +126,8 @@ def map_figures(inst, c: str, owner: dict, state: dict) -> dict:
 
 
 def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,
-                 log=print, flow: bool = False, keep_support: bool = False):
+                 log=print, flow: bool = False, keep_support: bool = False,
+                 repairing: set = frozenset()):
     """`draw.Group` of the window `W` (module docstring), everything outside fixed.  With
     `keep_support` (arm 1) a ZCTA may go only to a district whose plan holds its unit (an exclave
     or dropped ZCTA to any); else to any district of the window (a unit may change holders: an
@@ -147,7 +148,17 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
     for z, j in outside.items():
         if j in js:
             by_j[j].add(z)
-    bodies = {j: draw.components(zs, adj) for j, zs in by_j.items()}
+    # a district's bodies are its components outside W that touch W, and for a district being
+    # repaired its main one; another component (a piece of a district repaired elsewhere) is left
+    # as it is, its mass counted in the band row
+    near = {y for z in W for y in adj[z]}
+    bodies, extra = {}, {}
+    for j, zs_j in by_j.items():
+        comps = sorted(draw.components(zs_j, adj),
+                       key=lambda cc: (-math.fsum(m.get(z, 0.0) for z in cc), -len(cc), min(cc)))
+        keep = [cc for i, cc in enumerate(comps) if cc & near or (i == 0 and j in repairing)]
+        bodies[j] = keep
+        extra[j] = math.fsum(m.get(z, 0.0) for cc in comps if cc not in keep for z in cc)
     body_of = {z: (j, i) for j, bs in bodies.items() for i, b in enumerate(bs) for z in b}
     hold = draw.holders(plan)
     planned = {(v, cp.name): cp.mass[v] for cp in plan.copies for v in cp.support}
@@ -163,7 +174,7 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
             return None
         g = draw._solve_group(c, zs, allowed, bodies, body_of, outside, adj, m, p, unit_of,
                               hold, plan, planned, support, inst, lo, hi, "arm1", False,
-                              min(left, time_limit / 4) if dag else left, log, None, dag=dag,
+                              min(left, time_limit / 4) if dag else left, log, extra, dag=dag,
                               start=seed, count=count, layers=True, flow=flow)
         log(f"  {c} window of {len(zs)} ZCTAs{' (dag)' if dag else ''}"
             f"{'' if cap else ' (no cap)'}: {len(g.districts)} districts, {g.columns} columns"
@@ -265,7 +276,8 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
             continue
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
-        g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow, keep_support)
+        g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow, keep_support,
+                         {j for j, _ in pieces})
         rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
                "window_zctas": len(W), "districts": g.districts,
                "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
