@@ -20,6 +20,10 @@ final main and IFA maps from a ranked shortlist (#105). Staffing is out of scope
 
 ## 2. Mandates (hard; only the owner changes them)
 
+The register is `docs/problem/MANDATES.md` (#107): one row per mandate, with the owner's words,
+the check, the latest value and the waiver history; `tests/test_mandates.py` fails an incomplete
+row or an expired deferral. The rows are restated here.
+
 **M1, ZIP contiguity.** Every district in every channel is one connected piece:
 - on the drawn 2025 TIGER ZCTA polygons, with rook adjacency (a shared boundary of positive
   length; a corner point does not count);
