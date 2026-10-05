@@ -374,6 +374,7 @@ def main(argv=None) -> int:
     ap.add_argument("--maps", action="store_true")
     a = ap.parse_args(argv)
     output.check_out(a.out)
+    commit = _commit()
     s, ref, ext, polygon, inst, plans, reports, owners, src = load(a.run_dir, a.extract, a.plans,
                                                                        a.plans_file)
     os.makedirs(a.out, exist_ok=True)
@@ -410,7 +411,7 @@ def main(argv=None) -> int:
                 "repair": {"h0": a.h0, "max_zctas": a.max_zctas, "time_limit": a.time_limit,
                            "plans_file": a.plans_file, "label": a.label,
                            "flow": a.flow, "keep_support": a.keep_support,
-                           "commit": _commit()},
+                           "commit": commit},
                 "m1": report["m1"]})
     with open(os.path.join(a.out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
