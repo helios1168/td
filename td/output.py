@@ -8,7 +8,8 @@ refuses, a channel with no plan and a realizer stop each end the run with the re
 channel whose declared band is proven infeasible first has its smallest master δ searched and
 written to `solver.json`, and never adopted (OD1, S10).  A failed audit still writes everything
 and exits 1.  A run writes only into a new or empty directory, so no
-output of an earlier run can outlive a stop.
+output of an earlier run can outlive a stop; a caller that tracks the run there (`tools/exp/sweep.py`)
+names the files it wrote first (`keep`).  Every file a run writes is flat in its directory.
 
 **The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the scoped
 CONUS extract; the cells of fine channels the scenario leaves to other scenarios have no row, and
@@ -20,6 +21,9 @@ masses and bands are read (§8), and the `reason` for a blank district:
 - `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, so it is outside
   the audit's retained domain and counted in `run.json` (#67).  A ZIP with no opportunity in any
   channel is never a vertex of the graph the run declares (OD2, `declared_graph`).
+An owned cell has a blank reason, except `SUB_TOLERANCE`: a ZIP the realizer placed by adjacency
+because its mass is below the transport LP's tolerance (#86), with its true `m_rel`, counted in
+`run.json`.
 `current_channel` is the fine channel, `model_channel` the planning channel holding the cell,
 `district` the district id `<channel>_<nn>`, `district_channels` its channel (blank with the
 district), and `rep` is blank: outputs are district-only plans (OD3, #58).  The audit reads the
@@ -35,7 +39,7 @@ count the same pieces.  A piece inside a realizer piece keeps its cause; one ins
 realizer's main component was joined only through ZIPs the ledger has no cell for in the channel
 (`CONNECTOR`).
 
-**Maps** (`maps/<channel>.png`) read only the ledger file: each ZCTA the ledger gives a district is
+**Maps** (`map_<channel>.png`) read only the ledger file: each ZCTA the ledger gives a district is
 its TIGER/Line 2025 ZCTA520 polygon (#52 §5.2), simplified by `SIMPLIFY_M` for the figure and
 filled in its district's color, over TIGER/Line 2025 state outlines when the file is at hand, with
 labels at the principal cities of the channel's `TOP_METROS` largest metros by 2025 population.
@@ -67,6 +71,7 @@ LEGACY_COLUMNS = ("scenario", "zip_code", "current_channel", "state", "model_cha
 COLUMNS = LEGACY_COLUMNS + ("county", "cbsa", "place", "district_name", "m_rel", "reason")
 DROPPED = audit.DROPPED
 NOT_PLACED = "not placed: not a vertex of the declared ZIP graph"
+SUB_TOLERANCE = "placed by adjacency: below the transport LP's tolerance"
 CONNECTOR = "connector ZIP not in ledger"
 TOP_METROS = 10
 ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
@@ -119,10 +124,11 @@ def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
 
 def run(s, extract, out: str, graph: dict | None = None, reference=None,
         public: str = geo.PUBLIC_DIR, time_limit: float | None = None, maps: bool = True,
-        source: str = "") -> Result:
-    """Spec `s` on `extract` into the run directory `out`, new or empty (module docstring)."""
+        source: str = "", keep=()) -> Result:
+    """Spec `s` on `extract` into the run directory `out`, new or empty but for the files named
+    in `keep` (module docstring)."""
     check_file_names("planning channel", s.channels)
-    check_out(out)
+    check_out(out, keep)
     for c in s.channels:
         if tdspec.hook(s, c) is not None:
             raise RunError(f"channel {c} names a hook, and the run has no place to call one yet")
@@ -131,13 +137,17 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
     graph = declared_graph(ext, ref, public) if graph is None else graph
     inst = tdspec.build(s, ext, ref, graph)
+    components = inst.report["components"]
+    for line in tdspec.component_lines(components):     # the floors, known before any solve
+        print(line, flush=True)
     os.makedirs(out, exist_ok=True)
     plans, reports = master.plan_all(inst, time_limit=time_limit)
     none = sorted(c for c, p in plans.items() if p is None)
     # a declared band proven infeasible: report the smallest master δ, never adopt it (OD1, S10)
     deltas = {c: master.smallest_delta(inst, c, time_limit=time_limit)
               for c in none if reports[c]["status"] == "infeasible"}
-    paths = {"solver": write_solver(os.path.join(out, "solver.json"), reports, deltas)}
+    paths = {"solver": write_solver(os.path.join(out, "solver.json"), reports, deltas,
+                                    components)}
     if none:
         raise RunError("no plan for " + "; ".join(
             no_plan(c, inst.channels[c].spec.delta, reports[c], deltas.get(c)) for c in none)
@@ -165,6 +175,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "scenario": s.name, "spec": s.path, "source": source, "verdict": audit.verdict(checks),
         "cells": len(led), "zips": len({r["zip_code"] for r in led}),
         "not_placed_zips": len({r["zip_code"] for r in led if r["reason"] == NOT_PLACED}),
+        "sub_tolerance_cells": sum(1 for r in led if r["reason"] == SUB_TOLERANCE),
         "zero_opportunity_zips": len(set(ext.zips) - positive_zips(ext)),
         "conus_dropped": ext.dropped,
         "planned_elsewhere": {f: sum(1 for c in conus.channel if c == f)
@@ -174,6 +185,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "national_moved_units": sorted(inst.report.get("national_moved", {})),
         "disconnected_units": sorted(inst.report.get("disconnected", {})),
         "channels": {c: {"k": inst.channels[c].k, "delta": plans[c].delta,
+                         "margin": inst.channels[c].spec.margin,
                          "tier": audit.tier(reports[c]), "status": reports[c]["status"],
                          "moved": len(d.moved), "vanished": len(d.vanished),
                          **piece_counts(split, c)}
@@ -183,7 +195,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     elif zcta_file(public) is None:
         report["maps"] = MAPS_SKIPPED
     else:
-        drawn = draw_maps(paths["ledger"], os.path.join(out, "maps"), ref, areas, public, root=out)
+        drawn = draw_maps(paths["ledger"], out, ref, areas, public, root=out)
         paths["maps"] = {c: m["path"] for c, m in drawn.items()}
         report["maps"] = "drawn"
         report["maps_missing_polygons"] = sorted({z for m in drawn.values() for z in m["missing"]})
@@ -209,13 +221,16 @@ def delta_reading(found) -> dict:
         "solver_bound": found.lower if exact and found.status == "unknown" else None}
 
 
-def write_solver(path: str, reports: dict, deltas: dict) -> str:
-    """`solver.json` as `master.write_report` writes it, each smallest δ with its reading."""
+def write_solver(path: str, reports: dict, deltas: dict, components: dict | None = None) -> str:
+    """`solver.json` as `master.write_report` writes it, each smallest δ with its reading, and
+    each channel's domain components with their floor (`tdspec.component_floor`)."""
     master.write_report(path, reports, deltas)
     with open(path, encoding="utf-8") as fh:
         doc = json.load(fh)
     for c, found in deltas.items():
         doc[c]["smallest_delta"]["reading"] = delta_reading(found)
+    for c, r in (components or {}).items():
+        doc.setdefault(c, {})["components"] = r
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
         fh.write("\n")
@@ -247,9 +262,10 @@ def no_plan(channel: str, delta: float, report: dict, found) -> str:
     return f"{head}; smallest master δ unknown {tag}{facts}"
 
 
-def check_out(out: str) -> None:
-    """Stop unless the run directory `out` is new or empty, so no earlier output survives a stop."""
-    if os.path.exists(out) and (not os.path.isdir(out) or os.listdir(out)):
+def check_out(out: str, keep=()) -> None:
+    """Stop unless the run directory `out` is new or holds only files named in `keep`, so no
+    earlier output survives a stop."""
+    if os.path.exists(out) and (not os.path.isdir(out) or set(os.listdir(out)) - set(keep)):
         raise RunError(f"{out} exists and is not an empty directory; pass a fresh --out or remove it")
 
 
@@ -316,6 +332,7 @@ def ledger(inst, drawings: dict, extract, reference) -> list:
             ownerless[c] += 1
         else:
             district = ids[c, drawings[c].owner[z]]
+            reason = SUB_TOLERANCE if z in drawings[c].sub_tolerance else ""
         out.append({"scenario": s.name, "zip_code": z, "current_channel": f, "state": state[z],
                     "model_channel": c, "district": district,
                     "district_channels": c if district else "", "rep": "", "county": county[z],
@@ -659,7 +676,7 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
         ax.set_title(f"{g['scenario'].iloc[0]}: {c}, {len(districts)} districts")
         ax.legend(handles=handles, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6,
                   frameon=False)
-        out[c] = {"path": inside(root, os.path.join(out_dir, f"{c}.png")), "districts": districts,
+        out[c] = {"path": inside(root, os.path.join(out_dir, f"map_{c}.png")), "districts": districts,
                   "labels": labels, "zctas": len(drawn),
                   "missing": sorted(set(g["zip_code"]) - set(polys))}
         fig.savefig(out[c]["path"], dpi=120, bbox_inches="tight")
@@ -721,8 +738,7 @@ def main_maps(argv=None) -> int:
         print(f"{MAPS_SKIPPED}: no {ZCTA_FILE} in {a.public}", file=sys.stderr)
         return 1
     try:
-        drawn = draw_maps(os.path.join(a.run, "ledger.csv"), os.path.join(a.run, "maps"),
-                          public=a.public, root=a.run)
+        drawn = draw_maps(os.path.join(a.run, "ledger.csv"), a.run, public=a.public, root=a.run)
     except RunError as e:
         print(f"maps stopped: {e}", file=sys.stderr)
         return 1
