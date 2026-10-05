@@ -1,17 +1,17 @@
 # State — support-master territory design
 
-**Updated:** 2026-10-04 · **Branch:** `main`
+**Updated:** 2026-10-05 · **Branch:** `main`
 
 ## Now
 
-Wave 0a done: #92 #84 #88 #86 #93 #94 #89 #85 landed (run tracking, margin switch, component report, sub-tolerance cells, looks scorer, split floor, missing-cell audit, swap pass with rule A). #90's SPLITS.md brief awaits owner review on branch m5-studio/90.
+M1 (ZIP contiguity, owner 2026-10-04) is the goal's first part, and no current map meets it. Running on m5: #106 recon and literature (workflows 47674459, 79ea10cc) and #91 split council pass 1 (a5594650). #90 landed as 470c18f. The watcher (pi-omp-advisor, Muse) guards WATCHDOG.md.
 
 ## Next
 
-- Owner starts the next wave: #95 baselines, lanes #96–#102 (all unblocked, not yet ready).
-- Council #91 after #90 is approved; #103 #104 after #91.
-- Small follow-up: CODE_MAP rows for td/swap.py, tests/test_swap.py; swap count in run.json.
+- #107 mandate record, then #108 gate (polygon graph, M1 fails maps), then #109 contiguity-aware realizer experiment. Filed, not ready.
+- #91 pass 2 after pass 1; #106 brief to owner after both workflows.
+- Wave 1 (#95-#102) held until #109 reports.
 
 ## Blocked
 
-#82 #83 owner decisions; swap rule B (#85, owner); D11 combined-channel $ target; #3, #59, #75, #76.
+#82 #83 owner decisions; swap rule B (#85); M1 connector list (owner review, #108); #3, #59, #75, #76.
