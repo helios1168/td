@@ -170,7 +170,7 @@ def split_fixed(inst, plan) -> tuple:
 # ------------------------------------------------------------------------------ the realizer
 def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
          fixed_targets: bool = False, time_limit: float = 600.0, wider=(),
-         group_limit: float | None = None, log=print) -> Result:
+         group_limit: float | None = None, sequential: bool = False, log=print) -> Result:
     """The channel's contiguity-aware map (module docstring); `xy` is {zip: (x, y)} in metres.
     A group with no connected drawing in the band of `delta` (the plan's by default) is tried
     again at each wider δ of `wider` in turn (the remedy "a wider internal band", reported per
@@ -243,6 +243,10 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
                          if v not in touches[j]})
     out, undrawn = [], set()
     t_end = time.time() + time_limit
+    if sequential:
+        return _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support,
+                           p, delta, wider, arm, fixed_targets, t_end, group_limit,
+                           fixed_split, share_only, log)
     for gi, qis in enumerate(sorted(groups.values(), key=lambda g: -sum(len(fcomps[q]) for q in g))):
         zs = sorted(z for q in qis for z in fcomps[q])
         tried = []
@@ -267,6 +271,66 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
             owner.update(g.owner)
         else:
             undrawn |= set(zs)
+    return Result(c, owner, out, undrawn, fixed_split, share_only, delta, arm, fixed_targets)
+
+
+def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support, p, delta,
+                wider, arm, fixed_targets, t_end, group_limit, fixed_split, share_only, log):
+    """The sequential restriction (`draw(sequential=True)`): one split unit at a time, each
+    district attached to what it already owns (its whole units and the units drawn before), the
+    units it has yet to draw counted at their planned shares in the band row; then the exclave and
+    dropped ZCTAs, all of zero opportunity here, grown breadth first from the drawn map.  A
+    restriction of the joint model: a unit it cannot draw proves nothing (`unknown`)."""
+    ch, units = inst.channels[c], inst.units
+    adj, m, unit_of = units.zip_adj, ch.m, units.unit_of
+    split = [v for v in ch.units if len(hold.get(v, [])) > 1]
+    pending = set(split)
+
+    def entry(v):       # holders with nothing next to v yet go last
+        return (sum(1 for j in hold[v] if not any(owner.get(y) == j for z in units.zips[v]
+                                                   for y in adj[z])), len(units.zips[v]), v)
+    out, undrawn = [], set()
+    while pending:
+        v = min(pending, key=entry)
+        pending.discard(v)
+        zs = sorted(z for z in units.zips[v] if z in free and z not in exclave)
+        js = sorted({j for z in zs for j in allowed[z]})
+        mine = collections.defaultdict(set)
+        for z, j in owner.items():
+            if j in js:
+                mine[j].add(z)
+        bodies = {j: components(mine[j], adj) for j in js if mine[j]}
+        body_of = {z: (j, i) for j, bs in bodies.items() for i, b in enumerate(bs) for z in b}
+        extra = {j: math.fsum(planned.get((w, j), 0.0) for w in pending) for j in js}
+        g = None
+        for d in [delta] + sorted(x for x in wider if x > delta):
+            left = t_end - time.time()
+            if left <= 1.0:
+                break
+            g = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
+                             plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
+                             arm, fixed_targets, min(left, group_limit or left), log, extra)
+            g.delta = d
+            g.tried = g.tried + [{"delta": d, "status": g.status, "seconds": round(g.seconds, 2)}]
+            log(f"  {c} unit {v} at δ = {d:g}: {len(g.districts)} districts, {g.free} ZCTAs -> "
+                f"{g.status} in {g.seconds:.1f}s, {g.iterations} solves, {g.cuts} cuts"
+                f"{(' (' + g.note + ')') if g.note else ''}")
+            if g.status in ("optimal", "connected"):
+                break
+        if g is None:
+            break
+        if g.status == "infeasible":
+            g.status, g.note = "unknown", "restricted model infeasible: " + g.note
+        out.append(g)
+        if g.status in ("optimal", "connected"):
+            owner.update(g.owner)
+        else:
+            undrawn |= set(zs)
+    left = {z for z in free if z not in owner and z not in undrawn}
+    grown = territory.grow(owner, left, adj)
+    undrawn |= left
+    log(f"  {c}: {len(grown)} exclave and dropped ZCTAs grown from the drawn map, "
+        f"{len(left)} unreached")
     return Result(c, owner, out, undrawn, fixed_split, share_only, delta, arm, fixed_targets)
 
 
@@ -339,16 +403,34 @@ def _solution(n, x0):
 
 
 def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target, root,
-              moves: int = 20000) -> tuple:
-    """(a connected drawing of the group to start the cut loop, or None with the reason): each district grows from
-    its bodies (or its nearest-centre ZCTA) by claiming the free ZCTA next to it nearest along
-    `geo`, the district furthest below its plan target first; then single border moves that keep
-    both districts connected bring masses into [lo, hi].  A heuristic: it proves nothing."""
+              seed: dict | None = None, moves: int = 20000) -> tuple:
+    """(a connected drawing of the group, or None with the reason), a heuristic that proves
+    nothing.  Each district starts from its bodies and, given a `seed` drawing (a cut-loop
+    solution), the component of its seed ZCTAs that holds its heaviest body (its heaviest
+    component if it has none); with no seed, a district with no body starts at its ZCTA nearest its
+    centre.  Districts then claim the free ZCTA next to them nearest along `geo`, the one furthest
+    below its plan target first, and border moves that keep both districts connected and lower
+    Σ (distance outside [lo, hi])² bring the masses into the band."""
     import heapq
     zset = set(zs)
     owner = {}
     region = {j: {b for b, k in vert_of.items() if k == j} for j in js}
     mass = dict(fixed_mass)
+    if seed is not None:
+        mine = collections.defaultdict(set)
+        for z, j in seed.items():
+            mine[j].add(z)
+        for j in js:
+            comps = components(mine[j] | region[j], gadj)
+            if not comps:
+                continue
+            keep = next((cc for cc in comps if root.get(j) in cc), None) or max(
+                comps, key=lambda cc: (math.fsum(m.get(z, 0.0) for z in cc), len(cc), min(cc)))
+            for z in keep:
+                if z in zset:
+                    owner[z] = j
+                    mass[j] += m.get(z, 0.0)
+            region[j] |= set(keep)
     for j in js:
         if not region[j]:
             cand = [z for z in zs if j in allowed[z] and geo[j].get(z) == 0.0 and z not in owner]
@@ -379,6 +461,9 @@ def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target
                 mass[j] += m.get(z, 0.0)
                 push(j, z)
                 break
+    for j in js:
+        if len(components(region[j], gadj)) > 1:
+            return None, f"{j}'s bodies do not join"
 
     def connected_without(j, z):
         rest = region[j] - {z}
@@ -395,45 +480,110 @@ def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target
                     stack.append(y)
         return len(seen) == len(rest)
 
-    def bad(j):
-        return max(0.0, lo - mass[j], mass[j] - hi)
+    def bad(x):
+        return max(0.0, lo - x, x - hi)
+
+    def path_move(t, donor):
+        """{zip: t} for the shortest path from t's region to a positive ZCTA, through ZCTAs t may
+        own (held by `donor` only, when given), when every donor stays connected and
+        Σ (distance outside the band)² falls; else None."""
+        prev, queue, hit = {}, collections.deque(sorted(region[t], key=str)), None
+        seen = set(region[t])
+        while queue and hit is None:
+            z = queue.popleft()
+            for y in sorted(gadj[z]):
+                if y in seen or y not in owner or t not in allowed[y]:
+                    continue
+                if donor is not None and owner[y] != donor:
+                    continue
+                seen.add(y)
+                prev[y] = z
+                if m.get(y, 0.0) > 0:
+                    hit = y
+                    break
+                queue.append(y)
+        if hit is None:
+            return None
+        path = []
+        while hit in prev:
+            path.append(hit)
+            hit = prev[hit]
+        delta = collections.Counter()
+        for z in path:
+            delta[owner[z]] -= m.get(z, 0.0)
+            delta[t] += m.get(z, 0.0)
+        before = sum(bad(mass[j]) ** 2 for j in delta)
+        after = sum(bad(mass[j] + delta[j]) ** 2 for j in delta)
+        if after >= before - 1e-12 * max(1.0, hi) ** 2:
+            return None
+        for x in {owner[z] for z in path}:
+            rest = region[x] - set(path)
+            if not rest or len(components(rest, gadj)) > 1:
+                return None
+        return dict.fromkeys(path, t)
+
+    tol = MASS_TOL * max(1.0, hi)
     for _ in range(moves):
-        worst = max(js, key=lambda j: (bad(j), j))
-        if bad(worst) <= 0:
+        off = [j for j in js if bad(mass[j]) > tol]
+        if not off:
             return owner, ""
         best = None
-        over = mass[worst] > hi
-        pairs = []
-        if over:            # give a border ZCTA away
-            pairs = [(z, worst, k) for z in region[worst] if z in owner
-                     for k in {owner.get(y) or vert_of.get(y) for y in gadj[z]} - {worst, None}
-                     if k in allowed[z]]
-        else:               # take a border ZCTA
-            pairs = [(y, owner[y], worst) for z in region[worst] for y in gadj[z]
-                     if y in owner and owner[y] != worst and worst in allowed[y]]
-        for z, a, b in pairs:
-            w = m.get(z, 0.0)
-            gain = bad(a) + bad(b) - max(0.0, lo - (mass[a] - w), mass[a] - w - hi) \
-                - max(0.0, lo - (mass[b] + w), mass[b] + w - hi)
-            if gain <= 1e-12:
-                continue
-            key = (gain, -geo[b].get(z, math.inf))
-            if best is None or key > best[0]:
-                if connected_without(a, z):
-                    best = (key, z, a, b)
-        if best is None:
-            return None, f"no move helps {worst} ({mass[worst]:.6g} against [{lo:.6g}, {hi:.6g}])"
-        _, z, a, b = best
-        owner[z] = b
-        region[a].discard(z)
-        region[b].add(z)
-        mass[a] -= m.get(z, 0.0)
-        mass[b] += m.get(z, 0.0)
+        for a in sorted(off, key=lambda j: -bad(mass[j])):
+            if mass[a] > hi:        # a gives a border ZCTA to a neighbour
+                pairs = [(z, a, k) for z in region[a] if z in owner
+                         for k in {owner.get(y) or vert_of.get(y) for y in gadj[z]} - {a, None}
+                         if k in allowed[z]]
+            else:                   # a takes one from a neighbour
+                pairs = [(y, owner[y], a) for z in region[a] for y in gadj[z]
+                         if y in owner and owner[y] != a and a in allowed[y]]
+            for z, x, y in pairs:
+                w = m.get(z, 0.0)
+                if w <= 0:
+                    continue
+                gain = bad(mass[x]) ** 2 + bad(mass[y]) ** 2 - bad(mass[x] - w) ** 2 \
+                    - bad(mass[y] + w) ** 2
+                if gain <= 1e-12 * max(1.0, hi) ** 2:
+                    continue
+                key = (gain, -geo[y].get(z, math.inf))
+                if (best is None or key > best[0]) and connected_without(x, z):
+                    best = (key, z, x, y)
+            if best is not None:
+                break
+        if best is None:        # no single ZCTA helps: move a path through zero-mass ZCTAs
+            path = None
+            for a in sorted(off, key=lambda j: -bad(mass[j])):
+                takers = [a] if mass[a] < lo else sorted(
+                    {owner.get(y) or vert_of.get(y) for z in region[a] for y in gadj[z]} - {a, None})
+                for t in takers:
+                    path = path_move(t, a if mass[a] > hi else None)
+                    if path is not None:
+                        break
+                if path is not None:
+                    break
+            if path is None:
+                worst = max(off, key=lambda j: bad(mass[j]))
+                return None, (f"no move helps {worst} ({mass[worst]:.6g} against "
+                              f"[{lo:.6g}, {hi:.6g}])")
+            for z in path:
+                x = owner[z]
+                owner[z] = path[z]
+                region[x].discard(z)
+                region[path[z]].add(z)
+                mass[x] -= m.get(z, 0.0)
+                mass[path[z]] += m.get(z, 0.0)
+            continue
+        _, z, x, y = best
+        owner[z] = y
+        region[x].discard(z)
+        region[y].add(z)
+        mass[x] -= m.get(z, 0.0)
+        mass[y] += m.get(z, 0.0)
     return None, "move limit"
 
 
 def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold, plan, planned,
-                 support, inst, lo, hi, arm, fixed_targets, time_limit, log=print) -> Group:
+                 support, inst, lo, hi, arm, fixed_targets, time_limit, log=print,
+                 extra: dict | None = None) -> Group:
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     js = sorted({j for z in zs for j in allowed[z]})
@@ -453,16 +603,14 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     for b in bnode.values():
         gadj.setdefault(b, set())
     root = {j: bnode[j, 0] for j in js if bodies.get(j)}     # the heaviest body: largest first
-    fixed_mass = {j: math.fsum(m.get(z, 0.0) for b in bodies.get(j, ()) for z in b) for j in js}
+    fixed_mass = {j: math.fsum(m.get(z, 0.0) for b in bodies.get(j, ()) for z in b)
+                  + (extra or {}).get(j, 0.0) for j in js}
     # shape centres per (unit, district), as td.realize places them
     cen = {}
     for v in sorted({unit_of[z] for z in zs}):
-        mine = {j: support[j] for j in js if any(j in allowed[z] for z in units.zips[v] if z in zset)}
-        if v in ch.M:
+        mine = {j: support[j] for j in hold.get(v, []) if j in js}
+        if v in ch.M and len(mine) > 1:     # only a share-only district's seed reads its centre
             cen.update({(v, j): x for j, x in tdrealize.centres(inst, c, v, mine, p).items()})
-        else:
-            cen.update({(v, j): tdrealize.centroid(units.zips[v], dict.fromkeys(units.zips[v], 1.0), p)
-                        for j in mine})
     allowed = prune(zs, allowed, js, root, gadj, vert_of, m, fixed_mass, lo, hi)
     empty = sorted(z for z in zs if not allowed[z])
     if empty:
@@ -547,24 +695,31 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     gap = PHASE1_GAP            # until a connected drawing is found, then 0 (trap 12)
     found = None                # the best connected drawing: (owner, objective, bound)
     target = {cp.name: cp.total for cp in plan.copies}
-    start, why = construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target, root)
-    if start is None:
-        log(f"    no constructed drawing: {why}")
-    if start is not None:
+    tol = 1e-7 * max(1.0, hi)
+
+    def accept(start, how):
+        """Keep `start` (a connected drawing) when it meets every row and beats `found`."""
+        nonlocal found, x_best
         x0 = np.zeros(n)
         for z, j in start.items():
             x0[col[z, j]] = 1.0
             x0[ycol[unit_of[z], j]] = 1.0
-        tol = 1e-7 * max(1.0, hi)
-        if all(lo_ - tol <= sum(x0[i] * a for i, a in zip(idx, val)) <= hi_ + tol
-               for lo_, hi_, idx, val in stored):
-            obj = float(np.dot(cost, x0))
-            found = (start, obj, None)
-            h.setSolution(_solution(n, x0))
-            log(f"    constructed a connected drawing in the band: objective {obj:.6g}, "
+        if not all(lo_ - tol <= sum(x0[i] * a for i, a in zip(idx, val)) <= hi_ + tol
+                   for lo_, hi_, idx, val in stored):
+            log(f"    the {how} drawing breaks a row (band or targets)")
+            return
+        obj = float(np.dot(cost, x0))
+        if found is None or obj < found[1] - 1e-9:
+            found, x_best = (dict(start), obj, None), x0
+            log(f"    {how}: a connected drawing in the band, objective {obj:.6g}, "
                 f"{time.time() - t0:.1f}s")
-        else:
-            log("    the constructed drawing breaks a row (band or targets); no start")
+
+    x_best = None
+    start, why = construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target, root)
+    if start is None:
+        log(f"    no constructed drawing: {why}")
+    else:
+        accept(start, "constructed")
     info = None
     while True:
         left = deadline - time.time()
@@ -573,6 +728,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             break
         h.setOptionValue("time_limit", float(left))
         h.setOptionValue("mip_abs_gap", gap)
+        if x_best is not None:
+            h.setSolution(_solution(n, x_best))
         h.run()
         g.iterations += 1
         st = h.getModelStatus()
@@ -640,6 +797,12 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         g.cuts += new
         if new:
             log(f"      {len(detached)} detached components: sizes {sorted(detached)[-4:]}; band [{lo:.4g}, {hi:.4g}]")
+            fixed_up, why = construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo,
+                                      target, root, seed=own)
+            if fixed_up is None:
+                log(f"      no repaired drawing: {why}")
+            else:
+                accept(fixed_up, "repaired")
         optimal = st == highspy.HighsModelStatus.kOptimal
         if new == 0:
             found = (own, info.objective_function_value, info.mip_dual_bound)
@@ -653,7 +816,7 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         if not optimal:
             g.note = f"stopped at solve {g.iterations} ({h.modelStatusToString(st)}) with a detached incumbent"
             break
-    if found is not None:
+    if found is not None and g.status != "infeasible":
         g.owner, g.objective, g.bound = found
         if g.bound is None and info is not None and info.mip_dual_bound is not None \
                 and math.isfinite(info.mip_dual_bound):

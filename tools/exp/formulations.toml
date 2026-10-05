@@ -7,3 +7,7 @@
 [support]
 entry = "tools/exp/sweep.py:run_support"
 about = "today's support master: td.output.run on params.scenario with the spec.* overrides"
+
+[contig]
+entry = "tools/exp/contig/run.py:run_contig"
+about = "#109's contiguity-aware realizer on today's master plans: params.arm (arm1, band, split, move), fixed_targets, sequential"
