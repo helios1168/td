@@ -316,7 +316,8 @@ def _attempt(solve, d, tried, prove: bool = True):
 
 def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support, p, delta,
                 wider, arm, fixed_targets, t_end, group_limit, fixed_split, share_only, log):
-    """The sequential restriction (`draw(sequential=True)`): one split unit at a time, each
+    """The sequential restriction (`draw(sequential=True)`): one split unit at a time (adjacent
+    split units together when one district enters the second only through the first), each
     district's ZCTAs in the unit attached to what it already owns next to the unit (its whole
     units and the units drawn before, taken as one body), the units it has yet to draw counted at
     their planned shares in the band row; then the exclave and dropped ZCTAs, all of zero
@@ -326,16 +327,32 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
     ch, units = inst.channels[c], inst.units
     adj, m, unit_of = units.zip_adj, ch.m, units.unit_of
     split = [v for v in ch.units if len(hold.get(v, [])) > 1]
-    pending = set(split)
+    # adjacent split units drawn together when a district holds both and its whole units touch
+    # at most one of them (its way into the other runs through the first: CT + NJ + a share of NY)
+    touch = collections.defaultdict(set)
+    for z, j in owner.items():
+        for y in adj[z]:
+            touch[j].add(unit_of[y])
+    cluster = {v: {v} for v in split}
+    for v in split:
+        for w in split:
+            if v < w and w in units.unit_adj[v] and cluster[v] is not cluster[w] and any(
+                    not (v in touch[j] and w in touch[j]) for j in set(hold[v]) & set(hold[w])):
+                merged = cluster[v] | cluster[w]
+                for u in merged:
+                    cluster[u] = merged
+    pending = {frozenset(c) for c in cluster.values()}
 
-    def entry(v):       # holders with nothing next to v yet go last
-        return (sum(1 for j in hold[v] if not any(owner.get(y) == j for z in units.zips[v]
-                                                   for y in adj[z])), len(units.zips[v]), v)
+    def entry(cl):      # holders with nothing next to the cluster yet go last
+        return (sum(1 for v in cl for j in hold[v] if not any(
+            owner.get(y) == j for z in units.zips[v] for y in adj[z])),
+            sum(len(units.zips[v]) for v in cl), sorted(cl))
     out, undrawn = [], set()
     while pending:
-        v = min(pending, key=entry)
-        pending.discard(v)
-        zs = sorted(z for z in units.zips[v] if z in free and z not in exclave)
+        cl = min(pending, key=entry)
+        pending.discard(cl)
+        v = "+".join(sorted(cl))
+        zs = sorted(z for u in cl for z in units.zips[u] if z in free and z not in exclave)
         js = sorted({j for z in zs for j in allowed[z]})
         mine = collections.defaultdict(set)
         for z, j in owner.items():
@@ -349,7 +366,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
             touching = set().union(*([cc for cc in components(mine[j], adj) if cc & near] or [set()]))
             if touching:
                 bodies[j] = [frozenset(touching)]
-            extra[j] = math.fsum(planned.get((w, j), 0.0) for w in pending) + math.fsum(
+            extra[j] = math.fsum(planned.get((w, j), 0.0) for c2 in pending for w in c2) + math.fsum(
                 m.get(z, 0.0) for z in mine[j] - touching)
         body_of = {z: (j, i) for j, bs in bodies.items() for i, b in enumerate(bs) for z in b}
         g, tried = None, []
@@ -371,7 +388,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
             if g is not None and g.status in ("optimal", "connected"):
                 break
         if g is None:       # no time left: this unit and the rest stay undrawn
-            undrawn |= set(zs) | {z for w in pending for z in units.zips[w] if z in free}
+            undrawn |= set(zs) | {z for c2 in pending for w in c2 for z in units.zips[w] if z in free}
             break
         g.tried = tried
         if g.status == "infeasible":
