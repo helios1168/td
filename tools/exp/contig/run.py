@@ -79,10 +79,12 @@ def sha256(path: str) -> str:
 
 
 def plans_for(inst, spec_path: str, extract_path: str | None, cache: str | None, time_limit=None):
-    """The master's plans and reports, from `cache` when it holds this spec on this extract."""
+    """The master's plans and reports, from `cache` when it holds this spec on this extract and
+    this connector list (the polygon graph the master plans on)."""
     key = None
     if cache and extract_path:
-        key = os.path.join(cache, f"{sha256(spec_path)[:16]}_{sha256(extract_path)[:16]}.pkl")
+        graph = sha256(os.path.join(geo.REFERENCE_DIR, "connectors.csv"))[:12]
+        key = os.path.join(cache, f"{sha256(spec_path)[:16]}_{sha256(extract_path)[:16]}_{graph}.pkl")
         if os.path.exists(key):
             with open(key, "rb") as fh:
                 return pickle.load(fh)
