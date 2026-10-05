@@ -703,7 +703,8 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   - an extra owner from repair in a free unit is listed;
   - an owner outside a clipped unit is a mode violation and fails the run (C16);
 - ZIP contiguity on the declared graph, with a verdict for any ZIP not in the graph. Pieces are
-  listed with their cause and their share of the district's mass;
+  listed with their cause and their share of the district's mass. A run on the extract declares
+  the polygon graph it planned on (#114), so these pieces are M1's (#116);
 - M1, ZIP contiguity on the drawn map **[policy M1, `docs/problem/MANDATES.md`; #108]**: in
   every channel, each district's ZCTAs in the ledger are one component of the polygon graph (the
   rook graph of the 2025 TIGER ZCTA polygons over every CONUS ZCTA, an edge only for a shared

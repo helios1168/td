@@ -2,7 +2,8 @@
 
 `python -m td run <spec>` (`run`): the extract (or the seeded fixture) less its non-CONUS ZIPs and
 scoped to the scenario's fine channels (`spec.scope`, #79), the instance on M1's polygon graph
-(#114; on the caller's graph when it passes one), each channel's master (`td.master`) and map
+(#114; on the caller's graph when it passes one), which the audit also reads, so the run counts
+one set of pieces (#116), each channel's master (`td.master`) and map
 (`td.realize`), then the ledger, its audit (`td.audit`), the district names and the maps, all in
 one run directory.  A spec the loader refuses, a channel with no plan and a realizer stop each end the run with the reason (S28); a
 channel whose declared band is proven infeasible first has its smallest master δ searched and
@@ -116,7 +117,8 @@ def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
     all-CONUS graph when each of its vertices has opportunity in the extract, else `geo.zip_graph`
     rebuilt over the positive placed points, since inducing the committed graph on fewer points
     would invent disconnections (trap 21).  A wholly-zero ZIP keeps its ledger rows, as
-    `NOT_PLACED`."""
+    `NOT_PLACED`.  Since #114 `run` plans and audits on M1's polygon graph instead; this graph
+    stays for callers that draw on it (`tools/exp81/run_hess.py`)."""
     import pandas as pd
     ref = reference.set_index("zcta")
     positive = positive_zips(extract)
@@ -147,9 +149,9 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     ref = geo.read_reference() if reference is None else reference
     conus = data.conus(extract, ref)
     ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
-    if graph is None:     # planned on M1's polygon graph (#114); `graph` is the audit's OD2 graph
-        graph = declared_graph(ext, ref, public)
+    if graph is None:     # planned and audited on M1's polygon graph (#114), one piece count (#116)
         polygon = geo.polygon_graph() if polygon is None else polygon
+        graph = polygon
         inst = tdspec.build(s, ext, ref)
     else:
         inst = tdspec.build(s, ext, ref, graph)

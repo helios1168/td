@@ -423,10 +423,12 @@ def test_a_zip_with_no_opportunity_is_no_vertex_of_the_declared_graph():
 
 
 
-def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has_no_row():
-    """#79: the run scopes the extract to the scenario's fine channels before it declares the
-    graph, so a ZIP with opportunity only in a channel planned elsewhere is no vertex and has no
-    ledger row, and `run.json` counts the cells left out per channel."""
+def test_a_zip_positive_only_in_a_channel_planned_elsewhere_has_no_row_there():
+    """#79: the run scopes the extract to the scenario's fine channels, so a ZIP with opportunity
+    only in a channel planned elsewhere has no ledger row there, and `run.json` counts the cells
+    left out per channel.  Its ZCTA is still territory (#116): the instance holds every CONUS
+    ZCTA (#114), so it has an f row at zero opportunity, owned by the territory pass, as every
+    CONUS ZCTA has."""
     public = ts._state_file()
     if public is None:
         return
@@ -439,32 +441,24 @@ def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has
     cells = [(z, "f", MASS[z]) for z in zs] + [(z, "h", 2.0) for z in NY] + [(only_h, "h", 3.0)]
     extract = data.Extract(("f", "h"), [z for z, _, _ in cells], [f for _, f, _ in cells],
                            [m for _, _, m in cells], [{}] * len(cells), [0.0] * len(cells))
-    declared, graphs = output.declared_graph, []
-
-    def spy(ext, ref, pub=geo.PUBLIC_DIR):
-        graphs.append(declared(ext, ref, pub))
-        return graphs[-1]
     out = tempfile.mkdtemp(prefix="td-output-")
     os.rmdir(out)
-    output.declared_graph = spy
-    try:
-        res = output.run(s, extract, out, None, ts._reference(), public, maps=False, source="toy")
-    finally:
-        output.declared_graph = declared
-    assert len(graphs) == 1 and only_h not in graphs[0]["vertices"]
-    assert set(graphs[0]["vertices"]) == set(zs)
+    res = output.run(s, extract, out, None, ts._reference(), public, maps=False, source="toy")
     rows = output.read_ledger(res.paths["ledger"])
-    assert all(r["zip_code"] != only_h for r in rows)
     assert {r["current_channel"] for r in rows} == {"f"}
-    assert sorted(r["zip_code"] for r in rows) == zs
+    territory = (output.NO_CELL, output.DROPPED)        # CT has no f opportunity: dropped in X
+    assert {(r["reason"], r["m_rel"]) for r in rows if r["zip_code"] == only_h} <= \
+        {(why, 0.0) for why in territory}
+    assert sorted(r["zip_code"] for r in rows if r["reason"] not in territory) == zs
     report = json.load(open(res.paths["run"], encoding="utf-8"))
     assert report["planned_elsewhere"] == {"h": len(NY) + 1}
-    assert report["not_placed_zips"] == 0 and report["zips"] == len(zs)
-    # the run declared its graph, so M1 is audited on the committed polygon graph (#108), and 12
-    # ZCTAs leave the rest of CONUS with no row in f (#116): M1 alone fails
-    fails = {c.name: c for c in res.checks if c.status == "fail"}
-    assert list(fails) == [audit.M1_CHECK], [(n, c.items[:3]) for n, c in fails.items()]
-    assert fails[audit.M1_CHECK].counts["no_row"] == 33300 - len(zs)
+    assert report["not_placed_zips"] == 0 and report["zips"] == len({r["zip_code"] for r in rows})
+    # the run declared its graph, so M1 is audited on the committed polygon graph (#108): every
+    # CONUS ZCTA without an f row is a gap (#116)
+    m1 = {c.name: c for c in res.checks}[audit.M1_CHECK]
+    assert m1.counts["no_row"] == 33300 - report["zips"] and m1.counts["no_owner"] == 0
+    fails = {c.name for c in res.checks if c.status == "fail"}
+    assert fails <= {audit.M1_CHECK}, fails
 
 
 def test_run_json_records_the_margin_per_channel():
