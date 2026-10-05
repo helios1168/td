@@ -623,6 +623,9 @@ def _places(areas, reference) -> dict:
     return out
 
 
+ZCTA_BATCH = 2000   # ZCTAs per `where` IN list read from the ZCTA520 file
+
+
 def zcta_file(public: str = geo.PUBLIC_DIR) -> str | None:
     """The TIGER/Line 2025 ZCTA520 file under `public`, or None when it is missing or not a zip."""
     path = os.path.join(public, ZCTA_FILE)
@@ -638,9 +641,13 @@ def zcta_polygons(zips, public: str = geo.PUBLIC_DIR) -> dict:
     zs = sorted(z for z in set(zips) if re.fullmatch(r"\d{5}", z))
     if not zs:
         return {}
-    df = geo._read(path, ["ZCTA5CE20"], where=f"ZCTA5CE20 IN ({','.join(repr(z) for z in zs)})")
-    return {z: poly.simplify(SIMPLIFY_M, preserve_topology=True)
-            for z, poly in zip(df["ZCTA5CE20"], df.geometry)}
+    out = {}
+    for i in range(0, len(zs), ZCTA_BATCH):    # one IN list of every CONUS ZCTA (#116) is refused
+        df = geo._read(path, ["ZCTA5CE20"],
+                       where=f"ZCTA5CE20 IN ({','.join(repr(z) for z in zs[i:i + ZCTA_BATCH])})")
+        out.update((z, poly.simplify(SIMPLIFY_M, preserve_topology=True))
+                   for z, poly in zip(df["ZCTA5CE20"], df.geometry))
+    return out
 
 
 def _polygon_path(geom):
