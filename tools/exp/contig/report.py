@@ -3,7 +3,8 @@
     "$TD_PY" tools/exp/contig/report.py <run_dir> [<run_dir> ...] [--json PATH]
 
 One row per run folder and channel: M1 from the audit's `check_m1` on the ledger (footprint
-coverage, D3) with the largest detached piece, the channel's drawn worst and mean |mass/τ − 1|,
+coverage, D3) with the largest detached piece and the necks (#121), the border between districts
+on the drawn map in km (before a repair → after, when `repair.py` wrote it), the channel's drawn worst and mean |mass/τ − 1|,
 split units and cuts counted on the drawn map (a state two or more of the channel's districts own
 a ZCTA of, zero-opportunity ZCTAs included; cuts Σ (districts − 1)), the realizer's status per
 group ("optimal" proved, "connected" connected and feasible, "infeasible" proved, "unknown" a time
@@ -40,6 +41,17 @@ def drawn_splits(ledger_path: str) -> dict:
     for c, by in own.items():
         split = sorted(s for s, js in by.items() if len(js) > 1)
         out[c] = (split, sum(len(by[s]) - 1 for s in split))
+    return out
+
+
+def m1_necks(scorecard_path: str) -> dict:
+    """{channel: [neck item]} from the scorecard's M1 section (#121)."""
+    out = collections.defaultdict(list)
+    with open(scorecard_path, encoding="utf-8") as fh:
+        for line in fh:
+            hit = re.match(r"- (\S+?)/\S+: neck ", line)
+            if hit:
+                out[hit.group(1)].append(line[2:].strip())
     return out
 
 
@@ -84,6 +96,7 @@ def rows(run_dir: str) -> list:
         run = json.load(fh)
     splits = drawn_splits(os.path.join(run_dir, "ledger.csv"))
     pieces = m1_pieces(os.path.join(run_dir, "scorecard.md"))
+    necks = m1_necks(os.path.join(run_dir, "scorecard.md"))
     dev = deviations(os.path.join(run_dir, "districts.csv"))
     m1 = doc["m1"]
     out = []
@@ -100,6 +113,10 @@ def rows(run_dir: str) -> list:
             "channel": c, "k": run["channels"][c]["k"], "plan_delta": r["plan_delta"],
             "m1_map": m1["status"], "m1_summary": m1["summary"],
             "pieces_m1": len(pieces.get(c, [])), "largest_tau": max(pieces.get(c, [0.0])),
+            "necks": necks.get(c, []),
+            "cut_border_km": r.get("cut_border_km"),
+            "cut_border_km_before": r.get("cut_border_km_before_repair"),
+            "shape": r.get("shape"),
             "pieces": run["channels"][c].get("pieces"),
             "connected": r["connected"], "status": r["status"],
             "groups": dict(st),
@@ -118,7 +135,7 @@ def rows(run_dir: str) -> list:
 
 def table(all_rows: list) -> str:
     cols = ("run", "arm", "channel", "K", "plan δ", "M1 (map, D3)", "pieces", "largest piece",
-            "drawn", "groups",
+            "necks", "border km (before repair → map)", "drawn", "groups",
             "s", "worst gap", "δ needed", "worst / mean dev", "split units", "cuts",
             "share-only (U61)", "exclave splits", "one-connector districts (U63)")
     lines = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
@@ -130,8 +147,12 @@ def table(all_rows: list) -> str:
             need = f"{r['repair_delta']:g} (repair)"
         one = "n/a" if r["single_connector"] is None or r["m1_map"] != "pass" \
             else str(len(r["single_connector"]))
+        km = "" if r.get("cut_border_km") is None else f"{r['cut_border_km']:,.0f}"
+        if r.get("cut_border_km_before") is not None:
+            km = f"{r['cut_border_km_before']:,.0f} → {km}"
         cells = (r["run"], r["arm"], r["channel"], str(r["k"]), f"{r['plan_delta']:g}",
                  r["m1_map"], str(r["pieces_m1"]), f"{r['largest_tau']:.3g} τ",
+                 str(len(r.get("necks") or ())), km,
                  f"{'all' if r['connected'] else 'not all'} ({r['status']})", groups,
                  f"{r['seconds']:g}", gap, need,
                  f"{100 * r['worst_dev']:.1f}% / {100 * r['mean_dev']:.1f}%",

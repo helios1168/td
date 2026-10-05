@@ -518,7 +518,8 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     both area and mass outside it, no neck exists; otherwise a MILP finds the narrowest cut with
     both sides qualifying (`mip_rel_gap = 0`, trap 12), stopping once its bound proves no cut is
     under `NECK_W_KM`.  A component the MILP cannot settle in `time_limit` seconds is listed as an
-    `unresolved` neck, so the check may over-report but never misses a neck."""
+    `unresolved` neck, so the check may over-report but never misses a neck.  The MILP leaves
+    `threads` at the process's own count (trap 18)."""
     import highspy
     import numpy as np
     states = frozenset(g.state.get(z, "") for z in zips)
@@ -599,7 +600,6 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
         inf = highspy.kHighsInf
         h = highspy.Highs()
         h.setOptionValue("output_flag", False)
-        h.setOptionValue("threads", 1)
         h.setOptionValue("mip_rel_gap", 0.0)
         h.setOptionValue("time_limit", float(time_limit))
         h.setOptionValue("objective_bound", NECK_W_KM)

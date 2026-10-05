@@ -309,3 +309,99 @@ def test_the_report_gives_a_repaired_channel_the_repairs_band():
         assert (a["delta_needed"], a["repair_delta"]) == (None, 0.1)
         assert (b["delta_needed"], b["repair_delta"]) == (0.05, None)
         assert "| 0.1 (repair) |" in report.table([a]) and "| 0.05 |" in report.table([b])
+
+
+def _least_border(inst, plan, border) -> float:
+    """The least border between the U toy's two districts over every connected drawing in the band,
+    by trying every split of NY's 13 ZCTAs (the definition of the border term's optimum)."""
+    units, ch = inst.units, inst.channels["X"]
+    adj, m = units.zip_adj, ch.m
+    ny = sorted(units.zips["NY"])
+    names = {cp.support and next(iter(cp.support - {"NY"})): cp.name for cp in plan.copies}
+    lo, hi = ch.tau * (1 - plan.delta), ch.tau * (1 + plan.delta)
+    best = float("inf")
+    for mask in range(2 ** len(ny)):
+        owner = {"a0": names["CT"], "b0": names["NJ"]}
+        owner.update({z: names["CT"] if mask >> i & 1 else names["NJ"] for i, z in enumerate(ny)})
+        mass = {}
+        for z, j in owner.items():
+            mass[j] = mass.get(j, 0.0) + m.get(z, 0.0)
+        if not all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()):
+            continue
+        if any(len(cs) > 1 for cs in _pieces(owner, inst).values()):
+            continue
+        best = min(best, sum(border.get((a, b), 1.0) for a in owner for b in adj[a]
+                             if a < b and owner[a] != owner[b]))
+    return best
+
+
+def test_the_shape_term_draws_the_least_border_between_districts():
+    """#121: the shape tier charges the border between districts (each edge 1 km without a border
+    table, the bottom row 5 km with one), so the drawing's reported `border_km` is the least over
+    every connected drawing in the band, and the moment tie-break is reported beside it."""
+    draw = _draw()
+    inst, xy, plan = _u_toy()
+    adj = inst.units.zip_adj
+    bottom = {(a, b): 5.0 if a[1:] in ("00", "10", "20", "30") and b[1:] in ("10", "20", "30", "40")
+              and a[2] == b[2] == "0" else 1.0 for a in adj for b in adj[a] if a < b}
+    assert sorted(e for e, x in bottom.items() if x == 5.0) == [
+        ("v00", "v10"), ("v10", "v20"), ("v20", "v30"), ("v30", "v40")]
+    for border in (None, bottom):
+        res = draw.draw(inst, plan, xy, border=border, log=lambda *_: None)
+        assert res.status == "optimal" and res.connected
+        [g] = res.groups
+        assert abs(g.border_km - _least_border(inst, plan, border or {})) < 1e-9, (border, g.owner)
+        assert g.moment is not None and g.report()["border_km"] == g.border_km
+
+
+def _finger_toy():
+    """NY is a 4 × 3 grid of free ZCTAs (mass 1); CT's a0 (mass 2) touches the left column and
+    NJ's b0 (4.6) the right one, every edge 6 km of border.  The drawing gives CT the two left
+    columns and (2, 0), a finger on one 6 km edge holding 1/9 of CT's mass: a neck (#121)."""
+    pts = [(x, y) for x in range(4) for y in range(3)]
+    name = {q: f"v{q[0]}{q[1]}" for q in pts}
+    edges = [(name[a], name[b]) for a in pts for b in pts
+             if a < b and abs(a[0] - b[0]) + abs(a[1] - b[1]) == 1]
+    edges += [("a0", name[0, y]) for y in range(3)] + [("b0", name[3, y]) for y in range(3)]
+    xy = {name[q]: (float(q[0]), float(q[1])) for q in pts}
+    xy.update({"a0": (-1.0, 1.0), "b0": (4.0, 1.0)})
+    mass = dict.fromkeys(xy, 1.0)
+    mass.update({"a0": 2.0, "b0": 4.6})
+    inst, xym = tr._toy({"NY": [name[q] for q in pts], "CT": ["a0"], "NJ": ["b0"]}, edges, mass,
+                        xy, {"NY": "free"}, k=2, delta=0.15, final_delta=0.15)
+    plan = tr._plan(inst, [({"CT", "NY"}, {"CT": 1.0, "NY": 7 / 12}),
+                           ({"NJ", "NY"}, {"NJ": 1.0, "NY": 5 / 12})])
+    ct, nj = sorted(cp.name for cp in plan.copies)
+    owner = {z: nj for z in xy}
+    owner.update({z: ct for z in ["a0", "v00", "v01", "v02", "v10", "v11", "v12", "v20"]})
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {tuple(sorted(e)): 6000.0 for e in edges}, "connectors": [],
+               "aland": dict.fromkeys(xy, 1e6)}
+    return inst, xym, plan, owner, polygon, ct
+
+
+def test_the_window_repair_removes_a_neck_with_the_border_term():
+    """#121: repair treats a neck like a detached piece, a window around the side it cuts off
+    re-solved with the border term; the finger goes and no district keeps a neck."""
+    repair = _repair_module()
+    inst, xy, plan, owner, polygon, ct = _finger_toy()
+    m = inst.channels["X"].m
+    ng = audit.NeckGraph(polygon)
+    [(j, side, nk)] = repair.necks(owner, m, ng)
+    assert (j, set(side), nk.width_km) == (ct, {"v20"}, 6.0)
+    assert not repair.unfixable(nk, m, ng, inst.channels["X"].final_band[1])
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    border = repair.draw.border_km(polygon)
+    fixed, attempts = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), h0=1,
+                                            max_zctas=100, time_limit=60.0, log=lambda *_: None,
+                                            keep_support=True, border=border, ng=ng)
+    assert repair.necks(fixed, m, ng) == [] and repair.detached(fixed, inst.units.zip_adj, m) == []
+    kept = [r for r in attempts if r.get("kind") == "neck" and r["kept"]]
+    assert kept and kept[0]["necks_before"] > kept[0]["necks_after"]
+    assert repair.draw.cut_border(fixed, inst.units.zip_adj, border) \
+        < repair.draw.cut_border(owner, inst.units.zip_adj, border)
+    lo, hi = inst.channels["X"].final_band
+    mass = {}
+    for z, k in fixed.items():
+        mass[k] = mass.get(k, 0.0) + m.get(z, 0.0)
+    assert all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()), mass

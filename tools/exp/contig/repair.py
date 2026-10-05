@@ -21,7 +21,7 @@ back to each ZCTA's plan copy):
   district's total drawn mass in the channel's final band (the band the audit judged the run
   at; a district whose mass outside W is already above it makes W infeasible, and a district
   with no ZCTA in or next to W is not in the model, so a window's status says nothing about its
-  band: each attempt lists the districts outside the band before and after), split units first in the objective, then holders (cuts), then geodesic shape; with the cap
+  band: each attempt lists the districts outside the band before and after), split units first in the objective, then holders (cuts), then the border shape term (#121, `draw`'s docstring); with the cap
   (the default) the window units' split units and cuts may not rise above the drawn map's.  The
   geodesic-DAG restriction runs first and seeds the complete model (`draw._attempt`).  Every
   detached component gets a separator row per BFS layer towards its district's main component;
@@ -31,6 +31,12 @@ back to each ZCTA's plan copy):
   takes the largest h whose W fits), then the corridor's slack grows; the last window, when
   infeasible with the cap, is tried once more without it, and the rise in splits or cuts is
   reported.
+
+- **Necks** (#121): once no detached piece is left, each neck M1 lists is repaired like a piece
+  (`_repair_neck`): the windows of `steps` around the side it cuts off, each re-solved with the
+  border term, the first kept that leaves no more detached pieces and fewer necks among its
+  districts.  A neck no drawing in the band can remove (`unfixable`: one ZCTA, no connector, its
+  whole border under 10 km, its mass past 5% of the band's top) is recorded and not tried.
 
 The source run is checked first (`check_source`): its districts.csv must list, per channel, the
 plan's copies under the ids, names and supports the ledger was written with, or nothing is
@@ -42,8 +48,10 @@ is connected and feasible, "infeasible" proves only that W at that h, the rest f
 drawing (never a certificate for the map: no no-good cut), "unknown" is the time limit.
 
 The output is a full run folder (ledger, scorecard, districts.csv, run.json; `run.write_folder`)
-and a contig.json that copies the source run's channels and adds each window attempt under
-`repair`: pieces before and after, the shape, |W|, h or slack, status, seconds, worst deviation, split states and cuts
+and a manifest.json (mandate T1, `run.write_manifest`; its parent is the source run), and a
+contig.json that copies the source run's channels and adds each window attempt under
+`repair` (a neck's marked `kind: neck`), the map's border between districts before and after
+(`cut_border_km_before_repair`, `cut_border_km`) and the necks left: pieces before and after, the shape, |W|, h or slack, status, seconds, worst deviation, split states and cuts
 on the drawn map.  A repaired channel's band is the repair's, not the source drawing's: its
 `group_delta_needed` moves to `source_group_delta_needed`, and `repair_band` holds the final band's
 δ the windows held and the worst |mass/τ − 1| reached.  `tools/mandates/check.py` audits it like any run folder.
@@ -159,7 +167,7 @@ def map_figures(inst, c: str, owner: dict, state: dict) -> dict:
 
 def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,
                  log=print, flow: bool = False, keep_support: bool = False,
-                 repairing: set = frozenset()):
+                 repairing: set = frozenset(), border: dict | None = None):
     """`draw.Group` of the window `W` (module docstring), everything outside fixed.  With
     `keep_support` (arm 1) a ZCTA may go only to a district whose plan holds its unit (an exclave
     or dropped ZCTA to any); else to any district of the window (a unit may change holders: an
@@ -207,7 +215,7 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
         g = draw._solve_group(c, zs, allowed, bodies, body_of, outside, adj, m, p, unit_of,
                               hold, plan, planned, support, inst, lo, hi, "arm1", False,
                               min(left, time_limit / 4) if dag else left, log, extra, dag=dag,
-                              start=seed, count=count, layers=True, flow=flow)
+                              start=seed, count=count, layers=True, flow=flow, border=border)
         log(f"  {c} window of {len(zs)} ZCTAs{' (dag)' if dag else ''}"
             f"{'' if cap else ' (no cap)'}: {len(g.districts)} districts, {g.columns} columns"
             f" -> {g.status} in {g.seconds:.1f}s, {g.iterations} solves, {g.cuts} cuts"
@@ -296,7 +304,7 @@ def clusters(pieces: list) -> list:
 
 
 def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, time_limit,
-                    attempts, log, flow=False, keep_support=False):
+                    attempts, log, flow=False, keep_support=False, border=None, ng=None):
     c = plan.channel
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
@@ -309,7 +317,7 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
         g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow, keep_support,
-                         {j for j, _ in pieces})
+                         {j for j, _ in pieces}, border)
         rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
                "window_zctas": len(W), "districts": g.districts,
                "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
@@ -335,13 +343,75 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
     return owner
 
 
+def necks(owner: dict, m: dict, ng, districts=None) -> list:
+    """[(district, frozenset of the side cut off, `td.audit.Neck`)] of M1's necks on the map
+    `owner` (#121), of `districts` only when given."""
+    by = collections.defaultdict(set)
+    for z, j in owner.items():
+        by[j].add(z)
+    return [(j, frozenset(nk.zips), nk) for j in sorted(districts if districts is not None else by)
+            for nk in audit.district_necks(by[j], m, ng)]
+
+
+def unfixable(nk, m: dict, ng, hi: float) -> bool:
+    """A neck no drawing in the band can remove: its side is one ZCTA with no connector, whose
+    whole border is under `NECK_W_KM` and whose mass is at least `NECK_SHARE` of the band's top,
+    so it is a neck of whichever district in the band holds it."""
+    if len(nk.zips) != 1:
+        return False
+    z = nk.zips[0]
+    return (not ng.connector.get(z) and math.fsum(ng.border[z].values()) < audit.NECK_W_KM
+            and m.get(z, 0.0) >= audit.NECK_SHARE * hi)
+
+
+def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time_limit,
+                 attempts, log, flow, keep_support, border, ng):
+    """Window repair of one neck, as of a detached piece (#121): the windows of `steps` around the
+    side cut off, each re-solved with the border term, the first kept that leaves no more
+    detached pieces and fewer necks among its districts."""
+    c = plan.channel
+    ch = inst.channels[c]
+    adj, m = inst.units.zip_adj, ch.m
+    for shape, k, W in steps([(j, side)], owner, free, adj, h0, max_zctas):
+        before = map_figures(inst, c, owner, state)
+        t0 = time.time()
+        g = solve_window(inst, plan, owner, W, p, time_limit, True, log, flow, keep_support,
+                         {j}, border)
+        n_before = len(necks(owner, m, ng, g.districts))
+        rec = {"channel": c, "kind": "neck", "shape": shape, "h" if shape == "ball" else "slack": k,
+               "window_zctas": len(W), "districts": g.districts, "cap": True, "flow": flow,
+               "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
+               "cluster": [f"{j} {min(side)} ({len(side)} ZCTAs)"], "necks_before": n_before,
+               "status": g.status, "seconds": None, "objective": g.objective, "bound": g.bound,
+               "gap": g.gap, "note": g.note, "tried": g.tried, "before": before, "kept": False}
+        new = {**owner, **g.owner} if g.status in ("optimal", "connected") else owner
+        rec["pieces_after"] = len(detached(new, adj, m))
+        rec["necks_after"] = len(necks(new, m, ng, g.districts))
+        if g.status in ("optimal", "connected") and rec["pieces_after"] <= rec["pieces_before"] \
+                and rec["necks_after"] < n_before:
+            owner, rec["kept"] = new, True
+            rec["after"] = map_figures(inst, c, owner, state)
+        rec["seconds"] = round(time.time() - t0, 1)
+        rec["group"] = g.report()
+        attempts.append(rec)
+        log(f"{c}: neck of {j} ({len(side)} ZCTAs), {shape} {'h' if shape == 'ball' else 'slack'} "
+            f"= {k}, |W| = {len(W)}: {g.status}, necks {n_before} -> {rec['necks_after']} in its "
+            f"districts, {'kept' if rec['kept'] else 'not kept'}, {rec['seconds']}s")
+        if rec["kept"]:
+            break
+    return owner
+
+
 def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_zctas: int,
                    time_limit: float, log=print, flow: bool = False,
-                   keep_support: bool = False) -> tuple:
+                   keep_support: bool = False, border: dict | None = None, ng=None) -> tuple:
     """(the repaired owner, [attempt records]); the owner changes only by a connected window.
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
-    rounds repeat while they remove pieces, at most three."""
+    rounds repeat while they remove pieces, at most three.  Then, given `ng`
+    (`td.audit.NeckGraph`), each neck M1 lists (#121) that some drawing could remove
+    (`unfixable`), smallest side first, by `_repair_neck`; rounds repeat while they remove
+    necks, at most three.  Every window solves with the border term over `border`."""
     c = plan.channel
     ch, units = inst.channels[c], inst.units
     adj, m = units.zip_adj, ch.m
@@ -358,11 +428,35 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             group = [pc for pc in group if pc in live]
             if group:
                 owner = _repair_cluster(inst, plan, owner, group, free, p, state, h0, max_zctas,
-                                        time_limit, attempts, log, flow, keep_support)
+                                        time_limit, attempts, log, flow, keep_support, border)
         left = detached(owner, adj, m)
         if len(left) >= len(pieces):
             break
         pieces = left
+    if ng is None:
+        return owner, attempts
+    hi = ch.final_band[1]
+    found = necks(owner, m, ng)
+    for nk in found:
+        if unfixable(nk[2], m, ng, hi):
+            attempts.append({"channel": c, "kind": "neck", "status": "unfixable",
+                             "cluster": [f"{nk[0]} {nk[2].zips[0]} (1 ZCTA)"],
+                             "note": "one ZCTA, no connector, border under the neck width, mass "
+                                     "past the neck share of the band's top: a neck in any district"})
+    for _ in range(3):
+        todo = [nk for nk in found if not unfixable(nk[2], m, ng, hi)]
+        if not todo:
+            break
+        for j in [n[0] for n in sorted(todo, key=lambda n: (len(n[1]), n[0]))]:
+            cur = [nk for nk in necks(owner, m, ng, [j]) if not unfixable(nk[2], m, ng, hi)]
+            if not cur:
+                continue            # gone with an earlier window
+            owner = _repair_neck(inst, plan, owner, j, cur[0][1], free, p, state, h0, max_zctas,
+                                 time_limit, attempts, log, flow, keep_support, border, ng)
+        left = necks(owner, m, ng)
+        if len(left) >= len(found):
+            break
+        found = left
     return owner, attempts
 
 
@@ -423,8 +517,13 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     output.check_out(a.out)
     commit = _commit()
+    params = {k: v for k, v in vars(a).items() if k not in ("run_dir", "out")}
+    with open(os.path.join(a.run_dir, "run.json")) as fh:
+        spec_path = json.load(fh)["spec"]
+    run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, a.plans_file, a.run_dir)
     s, ref, ext, polygon, inst, plans, reports, owners, src = load(a.run_dir, a.extract, a.plans,
                                                                        a.plans_file)
+    border, ng = draw.border_km(polygon), audit.NeckGraph(polygon)
     os.makedirs(a.out, exist_ok=True)
     rows = ref.set_index("zcta").loc[sorted(inst.units.unit_of)]
     p = {z: (float(x) / 1000.0, float(y) / 1000.0) for z, x, y in zip(rows.index, rows["x"], rows["y"])}
@@ -436,10 +535,11 @@ def main(argv=None) -> int:
     for c, plan in plans.items():
         owner = owners[c]
         attempts = []
+        before_km = draw.cut_border(owner, inst.units.zip_adj, border)
         if a.channels is None or c in a.channels:
             owner, attempts = repair_channel(inst, plan, owner, p, state, a.h0, a.max_zctas,
                                              a.time_limit, flow=a.flow,
-                                             keep_support=a.keep_support)
+                                             keep_support=a.keep_support, border=border, ng=ng)
         res = draw.Result(c, owner, [], set(), [], [], plan.delta, "repair", False)
         d = draw.drawing(inst, plan, res)
         drawings[c] = d
@@ -453,7 +553,10 @@ def main(argv=None) -> int:
             entry["source_group_delta_needed"] = entry.pop("group_delta_needed", None)
             entry["repair_band"] = {"delta": inst.channels[c].spec.final_delta,
                                    "worst_dev": map_figures(inst, c, owner, state)["worst_dev"]}
-        entry.update(run.drawn_stats(inst, plan, d, connectors, not left))
+        entry.update(run.drawn_stats(inst, plan, d, connectors, not left, border))
+        entry["cut_border_km_before_repair"] = before_km
+        entry["necks_left"] = [f"{j} {min(side)} ({len(side)} ZCTAs, {nk.width_km:.2f} km)"
+                               for j, side, nk in necks(owner, inst.channels[c].m, ng)]
     report, m1 = run.write_folder(a.out, s, inst, ext, ref, polygon, plans, reports, drawings,
                                   f"{s.name} (contig {doc['arm']} + window repair{', ' + a.label if a.label else ''})",
                                   f"tools/exp/contig ({doc['arm']} + repair)", src.get("source", ""),
@@ -467,6 +570,8 @@ def main(argv=None) -> int:
     with open(os.path.join(a.out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
         fh.write("\n")
+    run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, status="done",
+                       stop_reason="repaired", audit=report["verdict"], m1=m1.status)
     print(f"{s.name} (repair of {a.run_dir}): M1 {m1.status} ({m1.summary}); audit "
           f"{report['verdict']}")
     return 0 if m1.status == "pass" else 1

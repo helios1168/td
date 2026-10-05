@@ -4,15 +4,17 @@
 
     "$TD_PY" -u tools/exp/contig/run.py <spec.toml> --out <dir> [--extract PATH]
         [--arm arm1|band|split|move] [--fixed-targets] [--sequential] [--time-limit S]
-        [--group-limit S] [--plans PATH] [--maps]
+        [--group-limit S] [--plans PATH] [--plans-file PKL] [--parent RUN] [--maps]
 
 Or as the `contig` formulation of `tools/exp/sweep.py` (#92's tracker): params `scenario`,
 `arm`, `time_limit` (seconds per channel), `group_limit`, `fixed_targets`, `sequential`, `plans`.
 
 The steps are `td.output.run`'s with the realizer swapped: the instance on M1's polygon graph,
 each channel's master (`td.master.plan_all`, cached in `--plans` when given, keyed by the spec's
-and the extract's sha256), then per channel `draw.draw` at the arm's rules, the ledger, the audit,
-names and `districts.csv`.  A group with no connected drawing keeps `td.realize` and
+and the extract's sha256; or `--plans-file`, the pickled plans a source run drew, kept as they
+are on the current graph), then per channel `draw.draw` at the arm's rules with the border shape
+term over the polygon graph's borders (#121), the ledger, the audit, names and `districts.csv`.
+The CLI writes `manifest.json` (mandate T1, `write_manifest`) at the start and the end.  A group with no connected drawing keeps `td.realize` and
 `td.territory`'s owners there, so the ledger stays full and M1 fails on them, never patched.
 
 Arms (#109; what gives way is the owner's, #112, so each remedy is its own run):
@@ -32,7 +34,9 @@ of the joint model, so only the audit's M1 judges its maps, and its failures pro
 is proved, "connected" is connected and feasible, "infeasible" is proved, "unknown" is the time
 limit), solves, cuts, seconds and gap, the δ each group needed, share-only districts (U61),
 exclave splits (D2), districts whose connectivity rests on one connector (U63), and drawn
-deviations against τ.
+deviations against τ, and both shape terms per channel (`shape`: the border between districts
+inside the drawing's models and the moment tie-break) beside the whole map's border between
+districts (`cut_border_km`).
 """
 from __future__ import annotations
 
@@ -41,6 +45,7 @@ import collections
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import pickle
 import sys
@@ -67,6 +72,7 @@ def _load_draw():
 
 draw = _load_draw()
 WIDER = (0.05, 0.10, 0.15)
+LANE = "contig"
 ARMS = ("arm1", "band", "split", "move")
 
 
@@ -133,7 +139,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
                fixed_targets: bool = False, time_limit: float = 900.0,
                group_limit: float | None = None, plans_cache: str | None = None,
                source: str = "", keep=(), maps: bool = False, sequential: bool = False,
-               delta: float | None = None, log=print) -> dict:
+               delta: float | None = None, log=print, plans_file: str | None = None) -> dict:
     if arm not in ARMS:
         raise ValueError(f"arm {arm!r} not in {ARMS}")
     s = tdspec.load(spec_path)
@@ -147,7 +153,11 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     inst = tdspec.build(s, ext, ref)
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
-    plans, reports = plans_for(inst, spec_path, extract_path, plans_cache)
+    if plans_file:              # the plans a source run drew, on another connector list
+        with open(plans_file, "rb") as fh:
+            plans, reports = pickle.load(fh)
+    else:
+        plans, reports = plans_for(inst, spec_path, extract_path, plans_cache)
     plan_seconds = time.time() - t0
     none = sorted(c for c, p in plans.items() if p is None)
     output.write_solver(os.path.join(out, "solver.json"), reports, {},
@@ -158,6 +168,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     xy = dict(zip(rows.index, zip(rows["x"].astype(float), rows["y"].astype(float))))
     state = dict(zip(rows.index, rows["state"]))
     connectors = set(geo.approved_connectors(geo.read_connectors()))
+    border = draw.border_km(polygon)
     contig, drawings = {}, {}
     for c, p in plans.items():
         log(f"{c}: drawing ({arm}{', fixed targets' if fixed_targets else ''}"
@@ -165,7 +176,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
         res = draw.draw(inst, p, xy, arm="arm1" if arm == "band" else arm,
                         fixed_targets=fixed_targets, time_limit=time_limit,
                         wider=WIDER if arm == "band" else (), group_limit=group_limit,
-                        sequential=sequential, delta=delta, log=log)
+                        sequential=sequential, delta=delta, log=log, border=border)
         fallback = None
         if res.undrawn:
             fallback = realize.realize(inst, p, xy)
@@ -179,12 +190,13 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
             "group_delta_needed": max((g.delta for g in res.groups if g.delta is not None),
                                       default=p.delta),
             "fixed_split": res.fixed_split, "share_only": res.share_only,
-            **drawn_stats(inst, p, d, connectors, res.connected)}
+            "shape": shape_terms(res.groups),
+            **drawn_stats(inst, p, d, connectors, res.connected, border)}
     report, m1 = write_folder(out, s, inst, ext, ref, polygon, plans, reports, drawings,
                               f"{s.name} (contig {arm}, {source or 'extract'})",
                               f"tools/exp/contig ({arm})", source, maps)
     doc = {"scenario": s.name, "arm": arm, "fixed_targets": fixed_targets,
-           "sequential": sequential, "internal_delta": delta,
+           "sequential": sequential, "internal_delta": delta, "plans_file": plans_file,
            "plan_seconds": round(plan_seconds, 1), "m1": report["m1"], "channels": contig}
     with open(os.path.join(out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
@@ -193,10 +205,18 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     return doc
 
 
-def drawn_stats(inst, p, d, connectors: set, connected: bool) -> dict:
+def shape_terms(groups) -> dict:
+    """Both shape terms of a channel's drawing (#121), summed over its groups: the border between
+    districts inside each group's model (km) and the moment tie-break, unscaled."""
+    return {"border_km": math.fsum(g.border_km or 0.0 for g in groups),
+            "moment": math.fsum(g.moment or 0.0 for g in groups)}
+
+
+def drawn_stats(inst, p, d, connectors: set, connected: bool, border: dict | None = None) -> dict:
     """contig.json's per-channel figures of the drawn map `d`: exclave splits (D2), districts
-    resting on one connector (U63, when `connected`), deviations against τ, split units and
-    vanished shares."""
+    resting on one connector (U63, when `connected`), deviations against τ, split units,
+    vanished shares and, given `border` (`draw.border_km`), the total border between districts on
+    the whole map (`cut_border_km`, #121)."""
     _, _, exclave = draw.split_fixed(inst, p)
     ch = inst.channels[p.channel]
     dev = {j: (x - ch.tau) / ch.tau for j, x in d.mass.items()}
@@ -210,7 +230,8 @@ def drawn_stats(inst, p, d, connectors: set, connected: bool) -> dict:
         "worst_dev": max(abs(x) for x in dev.values()),
         "mean_dev": sum(abs(x) for x in dev.values()) / len(dev),
         "split_units": sorted(v for v, js in held.items() if len(js) > 1),
-        "vanished_shares": [f"{v} {j}" for v, j in d.vanished]}
+        "vanished_shares": [f"{v} {j}" for v, j in d.vanished],
+        "cut_border_km": None if border is None else draw.cut_border(d.owner, inst.units.zip_adj, border)}
 
 
 def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings, title: str,
@@ -256,6 +277,44 @@ def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings,
     return report, m1
 
 
+def _sweep():
+    if "exp_sweep" not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            "exp_sweep", os.path.join(ROOT, "tools", "exp", "sweep.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["exp_sweep"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["exp_sweep"]
+
+
+def write_manifest(out: str, formulation: str, spec_path: str, extract_path: str, params: dict,
+                   plans_file: str | None = None, parent: str | None = None,
+                   status: str = "running", **more) -> dict:
+    """Mandate T1's record of a hand-launched map run (#92's manifest fields): the code's commit
+    and dirty flag, the command line, the scenario TOML's path and sha256, the instance and its
+    sha256, the plan file and the parent run (the run a redraw or repair derives from).  Called
+    at the start with status `running` and again at the end with `done` or `failed`."""
+    sw = _sweep()
+    path = os.path.join(out, sw.MANIFEST)
+    m = sw.read_manifest(out) if os.path.exists(path) else {
+        "run_id": os.path.basename(os.path.normpath(out)), "lane": LANE,
+        "formulation": formulation, "folder": os.path.abspath(out), "stop_reason": None,
+        "params": params, "command": " ".join([sys.executable] + sys.argv),
+        "scenario": {"path": os.path.abspath(spec_path), "sha256": sha256(spec_path)},
+        "extract": os.path.abspath(extract_path), "plans_file": plans_file,
+        "parent": parent and os.path.abspath(parent),
+        "provenance": {**sw.code_state(), "instance": os.path.abspath(extract_path),
+                       "instance_sha256": sha256(extract_path), "host": sw.platform.node(),
+                       "queued_at": sw.now()},
+        "started_at": sw.now()}
+    m.update(status=status, **more)
+    if status in sw.FINISHED:
+        m["finished_at"] = sw.now()
+    os.makedirs(out, exist_ok=True)
+    sw.write_manifest(out, m)
+    return m
+
+
 def run_contig(m: dict, folder: str) -> None:
     """The `contig` formulation of `tools/exp/sweep.py`."""
     p = m["params"]
@@ -281,11 +340,27 @@ def main(argv=None) -> int:
     ap.add_argument("--time-limit", type=float, default=900.0)
     ap.add_argument("--group-limit", type=float, default=None)
     ap.add_argument("--plans", default=None, help="a directory caching the master's plans")
+    ap.add_argument("--plans-file", default=None,
+                    help="a pickle of the plans to draw (a source run's), instead of the master")
+    ap.add_argument("--parent", default=None, help="the run this one redraws, for the manifest")
     ap.add_argument("--maps", action="store_true")
     a = ap.parse_args(argv)
-    doc = contig_run(a.spec, a.extract, a.out, a.arm, a.fixed_targets, a.time_limit,
-                     a.group_limit, a.plans, os.path.basename(a.extract), maps=a.maps,
-                     sequential=a.sequential, delta=a.delta)
+    params = {k: v for k, v in vars(a).items() if k not in ("spec", "out")}
+    output.check_out(a.out)
+    write_manifest(a.out, "contig", a.spec, a.extract, params, a.plans_file, a.parent)
+    try:
+        doc = contig_run(a.spec, a.extract, a.out, a.arm, a.fixed_targets, a.time_limit,
+                         a.group_limit, a.plans, os.path.basename(a.extract), maps=a.maps,
+                         sequential=a.sequential, delta=a.delta, plans_file=a.plans_file,
+                         keep=("manifest.json",))
+    except Exception as e:
+        write_manifest(a.out, "contig", a.spec, a.extract, params, status="failed",
+                       stop_reason=f"{type(e).__name__}: {e}")
+        raise
+    with open(os.path.join(a.out, "run.json"), encoding="utf-8") as fh:
+        verdict = json.load(fh)["verdict"]
+    write_manifest(a.out, "contig", a.spec, a.extract, params, status="done",
+                   stop_reason="drawn", audit=verdict, m1=doc["m1"]["status"])
     return 0 if doc["m1"]["status"] == "pass" else 1
 
 
