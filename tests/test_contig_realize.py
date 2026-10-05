@@ -121,6 +121,8 @@ def test_a_zero_opportunity_exclave_goes_to_the_district_it_touches():
     assert exclave == {"bx"}
     if d.owner["bx"] != "NJ+NY#1":
         assert run.exclave_splits(inst, plan, d.owner, exclave) == [("NJ", d.owner["bx"])]
+    # fixed targets count NJ's fixed ZCTA b0 towards NJ+NY's target in NJ: still drawable
+    assert draw.draw(inst, plan, xy, fixed_targets=True, log=lambda *_: None).connected
 
 
 def _run_module():

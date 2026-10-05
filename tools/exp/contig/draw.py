@@ -419,7 +419,7 @@ def prune(zs, allowed, js, root, gadj, vert_of, m, fixed_mass, lo, hi) -> dict:
     """`allowed` less the pairs no connected drawing in the band can use: a district with a body
     reaches ZCTA z only along a path of ZCTAs it may own, whose mass (Dijkstra on node weights from
     its heaviest body) must fit in hi less its fixed mass; a district with no body lies inside one
-    component of the ZCTAs it may own, which must hold at least lo."""
+    component of the ZCTAs it may own, which must hold at least lo less its mass elsewhere."""
     import heapq
     keep = {z: set(allowed[z]) for z in zs}
     for j in js:
@@ -442,7 +442,8 @@ def prune(zs, allowed, js, root, gadj, vert_of, m, fixed_mass, lo, hi) -> dict:
                 keep[z].discard(j)
         else:
             for comp in components(mine, gadj):
-                if math.fsum(m.get(z, 0.0) for z in comp) < lo - MASS_TOL * max(1.0, lo):
+                need = lo - fixed_mass[j]       # its mass elsewhere counts (`extra`)
+                if math.fsum(m.get(z, 0.0) for z in comp) < need - MASS_TOL * max(1.0, lo):
                     for z in comp:
                         keep[z].discard(j)
     return {z: sorted(keep[z]) for z in zs}
@@ -747,7 +748,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 idx = [col[y, j] for y in nb if (y, j) in col and geo[j].get(y, math.inf) < dz]
                 row(-inf, 0.0, [col[z, j]] + idx, [1.0] + [-1.0] * len(idx))
                 continue
-            if j not in root and max((m.get(y, 0.0) for y in zs if (y, j) in col), default=0.0) >= lo:
+            if j not in root and max((m.get(y, 0.0) for y in zs if (y, j) in col),
+                                     default=0.0) >= lo - fixed_mass[j]:
                 continue
             idx = [col[y, j] for y in nb if (y, j) in col]
             row(-inf, 0.0, [col[z, j]] + idx, [1.0] + [-1.0] * len(idx))
