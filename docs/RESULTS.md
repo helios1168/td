@@ -547,7 +547,8 @@ first a ball, the free ZCTAs (split units, exclaves, dropped units) within h hop
 plus the pieces (a piece over 750 ZCTAs only to h hops inside its border), h = 3, 6, 12, ... while
 proved infeasible, up to 1,500 ZCTAs; then a corridor, the free ZCTAs on a path from the piece to
 the rest of its district at most `slack` hops longer than the shortest. Rows: each ZCTA one owner,
-each district's drawn mass in the channel's final band (±10%, the band the audit judges), the
+each district's drawn mass in the channel's final band (±10%, the band the audit judges; a
+district whose mass outside W is already above it makes W infeasible), the
 window units' split units and cuts not above the drawn map's; objective split units, then cuts,
 then geodesic shape. Connectivity is exact: separator rows per BFS layer in the cut loop, and
 with `--flow` a single-commodity flow per district from its root body, which proves an infeasible
@@ -596,6 +597,55 @@ and write a full run folder; a pre-connector drawing is repaired with the plan t
   must join; the earlier runs were not repeated with them. U63, the districts whose
   connectivity rests on one connector edge (contig.json lists the edges): s13 national 11, WH 10,
   FI 11, WIFI 3 (`s13-arm1-seq-repair`); grid and deck A national 11, WH 9, FI 13; IFA 17 of 49.
+
+**Per channel** (`tools/exp/contig/report.py` on the repaired folders, regenerated 2026-10-05
+after the review fixes; the folders were read, not rewritten). A channel the repair redrew shows
+the repair's final band δ in "δ needed", marked "(repair)", with the worst deviation it reached;
+before the fix the column copied the source drawing's δ (grid FI 0.02 at 8.7%). A channel with no
+window keeps its source drawing's δ.
+
+| run | arm | channel | K | plan δ | M1 (map, D3) | pieces | largest piece | drawn | groups | s | worst gap | δ needed | worst / mean dev | split units | cuts | share-only (U61) | exclave splits | one-connector districts (U63) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| s13-arm1-seq-repair | arm1+repair seq | FI | 20 | 0.08 | pass | 0 | 0 τ | not all (unknown) | connected 5, unknown 2 | 254.2 | 2.1e-16 |  | 8.0% / 5.1% | 7 | 11 | 5 | 0 | 11 |
+| s13-arm1-seq-repair | arm1+repair seq | WH | 12 | 0.0595 | pass | 0 | 0 τ | all (connected) | connected 3 | 216.2 | 0.012 | 0.0595 | 5.9% / 4.2% | 3 | 4 | 0 | 0 | 10 |
+| s13-arm1-seq-repair | arm1+repair seq | WIFI | 3 | 0.1 | pass | 0 | 0 τ | all (connected) |  | 0 |  | 0.1 | 9.3% / 6.2% | 0 | 0 | 0 | 0 | 3 |
+| s13-arm1-seq-repair | arm1+repair seq | national | 15 | 0.0938 | pass | 0 | 0 τ | all (connected) | connected 3, optimal 1, unknown 1 | 213.3 | 0 | 0.1 (repair) | 10.0% / 7.4% | 4 | 7 | 6 | 0 | 11 |
+| s13-band-seq-repair | band+repair seq | FI | 20 | 0.08 | pass | 0 | 0 τ | all (connected) | connected 7 | 288.9 | 2.1e-16 | 0.1 | 10.0% / 6.4% | 7 | 11 | 5 | 0 | 10 |
+| s13-band-seq-repair | band+repair seq | WH | 12 | 0.0595 | pass | 0 | 0 τ | all (connected) | connected 3 | 216 | 0.012 | 0.0595 | 5.9% / 4.2% | 3 | 4 | 0 | 0 | 10 |
+| s13-band-seq-repair | band+repair seq | WIFI | 3 | 0.1 | pass | 0 | 0 τ | all (connected) |  | 0 |  | 0.1 | 9.3% / 6.2% | 0 | 0 | 0 | 0 | 3 |
+| s13-band-seq-repair | band+repair seq | national | 15 | 0.0938 | pass | 0 | 0 τ | all (connected) | connected 3, optimal 1, unknown 1 | 573.6 | 0 | 0.1 (repair) | 10.0% / 7.4% | 4 | 7 | 6 | 0 | 11 |
+| g_na15_WH12_FI23-arm1-seq-pre-repair-ks | arm1+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 2, optimal 1, unknown 7 | 408.7 | 0.0039 | 0.1 (repair) | 8.7% / 1.7% | 17 | 20 | 10 | 0 | 13 |
+| g_na15_WH12_FI23-arm1-seq-pre-repair-ks | arm1+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 4, infeasible 2, optimal 1, unknown 2 | 260.8 | 0.0095 | 0.1 (repair) | 2.4% / 1.4% | 8 | 8 | 3 | 0 | 9 |
+| g_na15_WH12_FI23-arm1-seq-pre-repair-ks | arm1+repair seq | national | 15 | 0.025 | pass | 0 | 0 τ | all (connected) | connected 6, infeasible 2, optimal 1, unknown 3 | 365.3 | 0.042 | 0.1 (repair) | 9.5% / 2.7% | 13 | 15 | 6 | 0 | 11 |
+| deckA-band-seq-pre-repair | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 14, optimal 1 | 895.1 | 0.013 | 0.1 (repair) | 7.6% / 2.1% | 17 | 20 | 10 | 0 | 13 |
+| deckA-band-seq-pre-repair | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 3 | 949.9 | 0.0095 | 0.1 (repair) | 4.9% / 1.6% | 8 | 8 | 3 | 0 | 9 |
+| deckA-band-seq-pre-repair | band+repair seq | national | 13 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 8, infeasible 2, optimal 1 | 921.7 | 0.0035 | 0.1 (repair) | 5.0% / 2.6% | 11 | 14 | 3 | 0 | 11 |
+| deckA-band-seq-pre-repair-ks | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 14, optimal 1 | 894.1 | 0.013 | 0.1 (repair) | 7.6% / 2.1% | 17 | 20 | 10 | 0 | 13 |
+| deckA-band-seq-pre-repair-ks | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 3 | 951.6 | 0.0095 | 0.1 (repair) | 4.9% / 1.6% | 8 | 8 | 3 | 0 | 9 |
+| deckA-band-seq-pre-repair-ks | band+repair seq | national | 13 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 8, infeasible 2, optimal 1 | 921.2 | 0.0035 | 0.1 (repair) | 5.0% / 2.6% | 11 | 14 | 3 | 0 | 11 |
+| deckA-band-seq-repair | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 10, infeasible 3, optimal 1, unknown 2 | 2267.8 | 0.28 | 0.1 (repair) | 5.0% / 2.3% | 14 | 17 | 9 | 0 | 13 |
+| deckA-band-seq-repair | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 5 | 421.2 | 2.1e-16 | 0.15 | 15.0% / 3.6% | 6 | 6 | 2 | 0 | 9 |
+| deckA-band-seq-repair | band+repair seq | national | 13 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 2, optimal 1 | 1018.8 | 0.009 | 0.1 (repair) | 10.0% / 3.7% | 8 | 10 | 4 | 0 | 11 |
+| g_na15_WH12_FI23-band-seq-repair | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 10, infeasible 3, optimal 1, unknown 2 | 2273.6 | 0.28 | 0.1 (repair) | 5.0% / 2.3% | 14 | 17 | 9 | 0 | 13 |
+| g_na15_WH12_FI23-band-seq-repair | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 5 | 423 | 2.1e-16 | 0.15 | 15.0% / 3.6% | 6 | 6 | 2 | 0 | 9 |
+| g_na15_WH12_FI23-band-seq-repair | band+repair seq | national | 15 | 0.025 | pass | 0 | 0 τ | all (connected) | connected 8 | 419.2 | 0.015 | 0.05 | 2.6% / 2.0% | 9 | 11 | 5 | 0 | 11 |
+| ifa49-arm1-seq-repair-fast | arm1+repair seq | IFA | 49 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 16, infeasible 12, optimal 6, unknown 4 | 1286.3 | 0.012 | 0.1 (repair) | 9.9% / 3.2% | 22 | 40 | 33 | 0 | 17 |
+| s13_WH11-repair | arm1+repair seq | FI | 20 | 0.08 | pass | 0 | 0 τ | not all (unknown) | connected 5, unknown 2 | 258.3 | 2.1e-16 |  | 8.0% / 5.1% | 7 | 11 | 5 | 0 | 11 |
+| s13_WH11-repair | arm1+repair seq | WH | 11 | 0.09 | pass | 0 | 0 τ | all (connected) | connected 3 | 9.6 | 0 | 0.09 | 8.9% / 5.1% | 3 | 3 | 0 | 0 | 8 |
+| s13_WH11-repair | arm1+repair seq | WIFI | 3 | 0.1 | pass | 0 | 0 τ | all (connected) |  | 0 |  | 0.1 | 9.3% / 6.2% | 0 | 0 | 0 | 0 | 3 |
+| s13_WH11-repair | arm1+repair seq | national | 15 | 0.0938 | pass | 0 | 0 τ | all (connected) | connected 3, optimal 1, unknown 1 | 216.2 | 0 | 0.1 (repair) | 10.0% / 7.4% | 4 | 7 | 6 | 0 | 11 |
+
+**Review fixes** (Sol review 35e038f8). The window's band row had borrowed the sequential
+realizer's clamp, under which a district already above the band takes nothing more instead of
+making the window infeasible (a toy window next to a district fixed at 1.2 τ came back "optimal");
+it now keeps the negative upper residual, and each attempt lists the districts outside the band
+before and after. None of the runs above met that case: a window that used the clamp leaves its
+district above the band, and every repaired channel ends at or inside ±10%. Before repairing,
+`repair.py` now checks that the source's districts.csv lists the plan's copies under the ids, names
+and supports its ledger was written with; the four candidate maps' sources pass with the plan files
+they were repaired with (deck A and grid from `--plans-file`, s13 WH 11 from
+`wh_dollar/_plans_11`, IFA 49 from `_plans`). The joint `band` remedy no longer stops at an
+infeasible narrower band; the sequential runs above did not use that loop.
 
 Regenerate (m5, local): `runs/exp/contig/launch.sh deckA ifa49` (joint and fixed-target arms),
 `runs/exp/contig/launch_seq.sh <map> ...` (sequential arms), then `"$TD_PY"
