@@ -30,8 +30,8 @@ row or an expired deferral. The rows are restated here.
 - across water only through the committed connector list;
 - every CONUS ZCTA is assigned by the ledger, zero-opportunity ZIPs included;
 - no tolerance: a detached piece fails the map, and listing it is not enough;
-- a neck fails the map too (owner 2026-10-05, #121): a part holding ≥ 5% of a district's land
-  area or mass that reaches the rest only through a passage under 10 km of shared ZCTA border,
+- a neck fails the map too (owner 2026-10-05, #121): one connected part holding ≥ 5% of a
+  district's land area that reaches the rest only through a passage under 10 km of shared ZCTA border,
   or across a connector where land would do. Graph connectivity alone is not M1.
 
 The model plans and draws on that same polygon graph. M1 was set aside "for simplicity" on 09-01
