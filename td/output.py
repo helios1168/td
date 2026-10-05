@@ -2,7 +2,8 @@
 
 `python -m td run <spec>` (`run`): the extract (or the seeded fixture) less its non-CONUS ZIPs and
 scoped to the scenario's fine channels (`spec.scope`, #79), the instance on M1's polygon graph
-(#114; on the caller's graph when it passes one), each channel's master (`td.master`) and map
+(#114; on the caller's graph when it passes one), which the audit also reads, so the run counts
+one set of pieces (#116), each channel's master (`td.master`) and map
 (`td.realize`), then the ledger, its audit (`td.audit`), the district names and the maps, all in
 one run directory.  A spec the loader refuses, a channel with no plan and a realizer stop each end the run with the reason (S28); a
 channel whose declared band is proven infeasible first has its smallest master δ searched and
@@ -12,19 +13,26 @@ output of an earlier run can outlive a stop; a caller that tracks the run there 
 names the files it wrote first (`keep`).  Every file a run writes is flat in its directory.
 
 **The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the scoped
-CONUS extract; the cells of fine channels the scenario leaves to other scenarios have no row, and
-`run.json` counts them per channel under `planned_elsewhere`.  It keeps the tagged
+CONUS extract, and one per (ZCTA, fine channel) cell of every ZCTA of the instance that the
+extract lacks, at zero opportunity with the reason `NO_CELL`, so each planning channel's rows
+cover its footprint, every ZCTA of its domain, and every ZCTA has one row per fine channel of the
+scenario (#116); the cells of fine channels the scenario leaves to other scenarios have no row,
+and `run.json` counts them per channel under `planned_elsewhere`.  It keeps the tagged
 `scenarios.csv` columns (`LEGACY_COLUMNS`, in order) and adds the ZIP's 2025 county, CBSA and
 place GEOIDs and the district's name, then the cell's opportunity `m_rel`, from which reported
 masses and bands are read (§8), and the `reason` for a blank district:
-- `dropped: zero opportunity`, a cell of a unit or channel dropped before solving (§1, #65 F1);
+- `dropped: zero opportunity`, a cell of a channel dropped before solving (§1, #65 F1).  A cell of
+  a unit dropped in a channel that is solved keeps the reason and has an owner: the territory
+  pass (`td.territory`, #116) owns every ZCTA of the channel's footprint;
 - `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, is counted in
   `run.json` (#67), and passes the audit only when the whole ZIP has no opportunity (#89).  A ZIP
   with no opportunity in any channel is never a vertex of the graph the run declares (OD2,
   `declared_graph`).
 An owned cell has a blank reason, except `SUB_TOLERANCE`: a ZIP the realizer placed by adjacency
 because its mass is below the transport LP's tolerance (#86), with its true `m_rel`, counted in
-`run.json`.
+`run.json`; `NO_CELL`, a cell the extract lacks; and `dropped: zero opportunity` as above.  The
+owner of a zero-opportunity ZCTA is the territory pass's, which `run.json` reports per channel
+under `territory`.
 `current_channel` is the fine channel, `model_channel` the planning channel holding the cell,
 `district` the district id `<channel>_<nn>`, `district_channels` its channel (blank with the
 district), and `rep` is blank: outputs are district-only plans (OD3, #58).  The audit reads the
@@ -35,10 +43,10 @@ the ledger; a district with none takes `rural <state>` for its heaviest state.  
 channel that share a name add their next CBSA, and any still alike an ordinal by drawn mass.
 
 **Pieces** (`ledger_pieces`) are the components of the ZIPs each district holds in the ledger, on
-the declared graph and in the audit's order, so the scorecard, `run.json` and `districts.csv`
-count the same pieces.  A piece inside a realizer piece keeps its cause; one inside the
-realizer's main component was joined only through ZIPs the ledger has no cell for in the channel
-(`CONNECTOR`).
+M1's polygon graph when the run has one (#116) and on the declared graph otherwise, in the
+audit's order, so M1's check, `run.json` and `districts.csv` count the same pieces.  A piece
+inside a realizer piece keeps its cause; any other is not a piece of the realizer's map
+(`CONNECTOR`), as when the two graphs differ.
 
 **Maps** (`map_<channel>.png`) read only the ledger file: each ZCTA the ledger gives a district is
 its TIGER/Line 2025 ZCTA520 polygon (#52 §5.2), simplified by `SIMPLIFY_M` for the figure and
@@ -64,7 +72,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 
-from td import audit, data, geo, master, realize
+from td import audit, data, geo, master, realize, territory
 from td import spec as tdspec
 
 LEGACY_COLUMNS = ("scenario", "zip_code", "current_channel", "state", "model_channel", "district",
@@ -72,8 +80,9 @@ LEGACY_COLUMNS = ("scenario", "zip_code", "current_channel", "state", "model_cha
 COLUMNS = LEGACY_COLUMNS + ("county", "cbsa", "place", "district_name", "m_rel", "reason")
 DROPPED = audit.DROPPED
 NOT_PLACED = audit.NOT_PLACED
+NO_CELL = audit.NO_CELL
 SUB_TOLERANCE = "placed by adjacency: below the transport LP's tolerance"
-CONNECTOR = "connector ZIP not in ledger"
+CONNECTOR = "not a piece of the realizer's map"
 TOP_METROS = 10
 ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
 SIMPLIFY_M = 250.0          # the figures' simplification, as the 2026-09-09 menu chose
@@ -108,7 +117,8 @@ def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
     all-CONUS graph when each of its vertices has opportunity in the extract, else `geo.zip_graph`
     rebuilt over the positive placed points, since inducing the committed graph on fewer points
     would invent disconnections (trap 21).  A wholly-zero ZIP keeps its ledger rows, as
-    `NOT_PLACED`."""
+    `NOT_PLACED`.  Since #114 `run` plans and audits on M1's polygon graph instead; this graph
+    stays for callers that draw on it (`tools/exp81/run_hess.py`)."""
     import pandas as pd
     ref = reference.set_index("zcta")
     positive = positive_zips(extract)
@@ -139,9 +149,9 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     ref = geo.read_reference() if reference is None else reference
     conus = data.conus(extract, ref)
     ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
-    if graph is None:     # planned on M1's polygon graph (#114); `graph` is the audit's OD2 graph
-        graph = declared_graph(ext, ref, public)
+    if graph is None:     # planned and audited on M1's polygon graph (#114), one piece count (#116)
         polygon = geo.polygon_graph() if polygon is None else polygon
+        graph = polygon
         inst = tdspec.build(s, ext, ref)
     else:
         inst = tdspec.build(s, ext, ref, graph)
@@ -162,7 +172,9 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
             + "; the declared bands are kept (OD1): a run at another δ must declare it")
     rows = ref.set_index("zcta").loc[sorted(inst.units.unit_of)]
     xy = dict(zip(rows.index, zip(rows["x"].astype(float), rows["y"].astype(float))))
+    state = dict(zip(rows.index, rows["state"]))
     drawings = {c: realize.realize(inst, p, xy) for c, p in plans.items()}
+    owned = {c: territory.own_territory(inst, plans[c], d, xy, state) for c, d in drawings.items()}
 
     areas = read_areas()
     led = ledger(inst, drawings, ext, ref)
@@ -173,7 +185,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     led = read_ledger(paths["ledger"])
     with open(os.path.join(geo.REFERENCE_DIR, "MANIFEST.json"), encoding="utf-8") as fh:
         manifest = json.load(fh)
-    split = ledger_pieces(led, graph, drawings)
+    split = ledger_pieces(led, polygon or graph, drawings)
     checks = audit.audit(audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref,
                                    split, polygon))     # None only for a caller's own graph
     paths["scorecard"] = audit.write_scorecard(out, checks, f"{s.name} ({source or 'extract'})")
@@ -185,6 +197,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "not_placed_zips": len({r["zip_code"] for r in led if r["reason"] == NOT_PLACED}),
         "sub_tolerance_cells": sum(1 for r in led if r["reason"] == SUB_TOLERANCE),
         "zero_opportunity_zips": len(set(ext.zips) - positive_zips(ext)),
+        "fine_channels": list(s.fine_channels),        # M1's run-folder gate reads them (#116)
         "conus_dropped": ext.dropped,
         "planned_elsewhere": {f: sum(1 for c in conus.channel if c == f)
                               for f in s.planned_elsewhere},
@@ -196,7 +209,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
                          "margin": inst.channels[c].spec.margin,
                          "tier": audit.tier(reports[c]), "status": reports[c]["status"],
                          "moved": len(d.moved), "vanished": len(d.vanished),
-                         **piece_counts(split, c)}
+                         **piece_counts(split, c), "territory": territory_report(owned[c])}
                      for c, d in drawings.items()}}
     if not maps:
         report["maps"] = "not drawn (--no-maps)"
@@ -212,6 +225,14 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         json.dump(report, fh, indent=2, sort_keys=True)
         fh.write("\n")
     return Result(out, report["verdict"], checks, paths, report)
+
+
+def territory_report(t: dict) -> dict:
+    """`run.json`'s account of the territory pass on one channel (`territory.own_territory`'s
+    return): the zero ZCTAs it owned, by stage, how many it claimed to join pieces, and the zero
+    ZCTAs held across a state (each a split, owner 2026-10-05) or reached by no edge, listed."""
+    return {"zero_zctas": t["zero"], "by_stage": t["by_stage"], "joined": len(t["joined"]),
+            "cross_state": [f"{z} {j}" for z, j in t["cross_state"]], "unreached": t["unreached"]}
 
 
 def delta_reading(found) -> dict:
@@ -308,12 +329,14 @@ def district_ids(drawings: dict) -> dict:
 
 def ledger(inst, drawings: dict, extract, reference) -> list:
     """The ledger rows, dicts over COLUMNS, one per (ZIP, fine channel) cell of `extract` (a ZIP's
-    duplicate cells summed), sorted by ZIP and fine channel; `district_name` is left blank."""
+    duplicate cells summed) and one per cell of the scenario's fine channels at a ZIP of the
+    instance that `extract` lacks (`NO_CELL`, zero opportunity), sorted by ZIP and fine channel;
+    `district_name` is left blank."""
     s, units = inst.spec, inst.units
     cells: dict = collections.defaultdict(float)
     for z, f, m in zip(extract.z, extract.channel, extract.m_rel):
         cells[z, f] += m
-    zips = sorted({z for z, _ in cells})
+    zips = sorted({z for z, _ in cells} | set(units.unit_of))
     ref = reference.set_index("zcta")
     unknown = sum(1 for z in zips if z not in ref.index)
     if unknown:
@@ -327,27 +350,33 @@ def ledger(inst, drawings: dict, extract, reference) -> list:
                                 {z: cbsa[z] for z in off}))
     chan = {(u, f): c.name for c in s.channels.values() for u, fs in c.domain.items() for f in fs}
     ids = district_ids(drawings)
+    keys = set(cells) | {(z, f) for z in units.unit_of for f in s.fine_channels}
     out, ownerless = [], collections.Counter()
-    for z, f in sorted(cells):
+    for z, f in sorted(keys):
         v = unit_of[z]
         c = chan[v, f]
         district, reason = "", ""
         if z not in units.unit_of:
             reason = NOT_PLACED
-        elif c not in inst.channels or v not in inst.channels[c].M:
+        elif c not in inst.channels:
             reason = DROPPED
         elif z not in drawings[c].owner:
             ownerless[c] += 1
         else:
             district = ids[c, drawings[c].owner[z]]
-            reason = SUB_TOLERANCE if z in drawings[c].sub_tolerance else ""
+            if v not in inst.channels[c].M:
+                reason = DROPPED
+            elif (z, f) not in cells:
+                reason = NO_CELL
+            else:
+                reason = SUB_TOLERANCE if z in drawings[c].sub_tolerance else ""
         out.append({"scenario": s.name, "zip_code": z, "current_channel": f, "state": state[z],
                     "model_channel": c, "district": district,
                     "district_channels": c if district else "", "rep": "", "county": county[z],
-                    "cbsa": cbsa[z], "place": place[z], "district_name": "", "m_rel": cells[z, f],
-                    "reason": reason})
+                    "cbsa": cbsa[z], "place": place[z], "district_name": "",
+                    "m_rel": cells.get((z, f), 0.0), "reason": reason})
     if ownerless:
-        raise RunError("cells of a solved unit with no owner in the map: "
+        raise RunError("cells of a solved channel's footprint with no owner in the map: "
                        + ", ".join(f"{c} {n}" for c, n in sorted(ownerless.items())))
     return out
 
@@ -394,8 +423,11 @@ def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: d
         reported.update({(c, v, ids[c, j]): x / M[v] for (v, j), x in d.drawn.items()})
     split = ledger_pieces(rows, graph, drawings) if split is None else split
     causes = {(j, z): pc.cause for (_, j), pcs in split.items() for pc in pcs for z in pc.zips}
+    s = inst.spec        # M1's cells and their planning channels come from the scenario (#116)
+    route = {(u, f): c.name for c in s.channels.values() for u, fs in c.domain.items() for f in fs}
     return audit.Run(cells, chans, expected, dict(placed), mode, planned, reported, graph, causes,
-                     metro_exceptions(inst, reference), manifest, reports, names, polygon)
+                     metro_exceptions(inst, reference), manifest, reports, names, polygon,
+                     tuple(s.fine_channels), route)
 
 
 def ledger_pieces(rows: list, graph: dict, drawings: dict) -> dict:

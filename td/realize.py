@@ -260,7 +260,7 @@ def place_zero(zeros, owner: dict, zip_adj: dict, p: dict, c: dict) -> dict:
 # ------------------------------------------------------------------------------ the map
 def _parts(zs, adj: dict, m: dict) -> list:
     """The components of `zs`, the heaviest first, ties by smallest ZIP id, as `td.audit` orders them."""
-    return sorted(zip_components(zs, adj), key=lambda c: (-math.fsum(m[z] for z in c), min(c)))
+    return sorted(zip_components(zs, adj), key=lambda c: (-math.fsum(m.get(z, 0.0) for z in c), min(c)))
 
 
 def _districts(owner: dict) -> dict:
@@ -364,21 +364,21 @@ def pieces(inst, channel: str, owner: dict, support: dict, planned: dict) -> lis
         for part in parts[1:]:
             by_unit = collections.Counter()
             for z in part:
-                by_unit[units.unit_of[z]] += m[z]
+                by_unit[units.unit_of[z]] += m.get(z, 0.0)
             v = min(by_unit, key=lambda u: (-by_unit[u], u))
             mine_v = [z for z in zs if units.unit_of[z] == v]
             if not reach & set(part):
                 cause = "graph gap"
             elif set(by_unit) & whole:
                 cause = "corridor"
-            elif planned.get((v, j), 0.0) < max(m[z] for z in units.zips[v]):
+            elif planned.get((v, j), 0.0) < max(m.get(z, 0.0) for z in units.zips[v]):
                 cause = "tiny share"
             elif len(s) > 1 and not any(units.unit_of[y] != v and owner.get(y) == j
                                         for z in mine_v for y in adj[z]):
                 cause = "attachment"
             else:
                 cause = "shape"
-            out.append(Piece(j, part, math.fsum(m[z] for z in part), cause))
+            out.append(Piece(j, part, math.fsum(m.get(z, 0.0) for z in part), cause))
     return out
 
 
@@ -394,7 +394,7 @@ def to_run(inst, drawings: dict, reports: dict | None = None, graph: dict | None
         chans[c] = audit.Channel(ch.k, *ch.final_band)
         mode.update({(c, v): ch.mode[v] for v in ch.units})
         for z, j in sorted(d.owner.items()):
-            cells.append(audit.Cell(z, c, c, f"{c}:{j}", ch.m[z]))
+            cells.append(audit.Cell(z, c, c, f"{c}:{j}", ch.m.get(z, 0.0)))
         expected |= {(z, c) for v in ch.units for z in units.zips[v]}    # the input, not the map
         for (v, j), a in d.planned.items():
             planned[c, v, f"{c}:{j}"] = a / ch.M[v]
