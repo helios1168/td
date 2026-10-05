@@ -1,9 +1,13 @@
 # td: support-master territory design
 
-Plan districts for each planning channel of a national channel: divide the channel's
-(ZIP, fine channel) opportunity into K_c districts whose drawn masses lie in a band, with a
-support-based master MILP, a ZIP realizer and an audited `(ZIP, fine channel) → district` ledger
-(`docs/problem/PROBLEM.md`, #52). Staffing is out of scope. Everything before the 2026-09-28
+Make the sales territory maps the owner will put in front of stakeholders: the main map and the
+IFA map. In each planning channel, K_c districts cover every CONUS ZIP, and each district is **one
+connected piece of territory on the drawn map** (M1, the reason the project exists), looks like a
+sensible territory (few split states, no visual defects, compact) and is balanced (drawn mass in a
+band around τ_c, $ per district near target). The method is a support-based master MILP, a ZIP
+realizer and an audited `(ZIP, fine channel) → district` ledger (`docs/problem/PROBLEM.md`, #52).
+`WATCHDOG.md` holds the goal, mandates and settled frame that the always-on watcher checks against.
+Staffing is out of scope. Everything before the 2026-09-28
 clean slate is in the tag `archive/pre-support-2026-09`. This file carries invariants only and
 is never stamped. The workflow is `/Users/Shared/sv-ntlee/WORKFLOW.md`.
 
