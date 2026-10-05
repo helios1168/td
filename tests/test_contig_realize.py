@@ -144,3 +144,14 @@ def test_single_connector_dependence_is_found():
     adj["a"].add("d")
     adj["d"].add("a")
     assert run.single_connector(owner, adj, {("b", "c")}) == {}
+
+
+def test_the_sequential_restriction_draws_the_u_connected_and_never_claims_optimal():
+    """`sequential=True` draws one split unit at a time: on the U it is connected, and the channel
+    is reported "connected", never "optimal", since a per-unit optimum proves nothing jointly."""
+    draw = _draw()
+    inst, xy, plan = _u_toy()
+    res = draw.draw(inst, plan, xy, sequential=True, log=lambda *_: None)
+    assert res.connected and res.status == "connected"
+    d = draw.drawing(inst, plan, res)
+    assert all(len(cs) == 1 for cs in _pieces(d.owner, inst).values()), d.owner

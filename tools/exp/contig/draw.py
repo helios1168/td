@@ -292,12 +292,15 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
     return Result(c, owner, out, undrawn, fixed_split, share_only, delta, arm, fixed_targets)
 
 
-def _attempt(solve, d, tried):
+def _attempt(solve, d, tried, prove: bool = True):
     """One band: the geodesic-DAG restriction first, then the complete model started from the
-    restriction's drawing; the better of the two that is connected, else the complete model's
-    verdict.  `solve(d, dag, seed)` returns a Group, or None when the time is up."""
+    restriction's drawing (with `prove` false, only when the restriction found none); the better
+    of the two that is connected, else the complete model's verdict.  `solve(d, dag, seed)`
+    returns a Group, or None when the time is up."""
     out = None
     for dag in (True, False):
+        if not dag and not prove and out is not None and out.status == "connected":
+            break
         seed = out.owner if out is not None and out.status == "connected" else None
         r = solve(d, dag, seed)
         if r is None:
@@ -364,7 +367,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
                 f"{r.iterations} solves, {r.cuts} cuts{(' (' + r.note + ')') if r.note else ''}")
             return r
         for d in [delta] + sorted(x for x in wider if x > delta):
-            g = _attempt(solve, d, tried) or g
+            g = _attempt(solve, d, tried, prove=False) or g
             if g is not None and g.status in ("optimal", "connected"):
                 break
         if g is None:       # no time left: this unit and the rest stay undrawn
