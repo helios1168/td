@@ -158,7 +158,8 @@ def test_m1_keeps_the_owners_terms():
     definition = _register()["M1"]["definition"]
     for term in ("2025 TIGER ZCTA polygons", "rook", "positive length", "corner does not count",
                  "connector list", "zero-opportunity ZIPs", "No tolerance", "same polygon graph",
-                 "narrower than 10 km", "at least 5% of its land area or of its mass"):
+                 "narrower than 10 km", "one connected part of it holding at least 5% of its land",
+                 "has width 0"):
         assert term in definition, f"M1's definition lost {term!r}"
     from td import audit           # the check's constants are the owner's (#121)
     assert (audit.NECK_W_KM, audit.NECK_SHARE) == (10.0, 0.05)
