@@ -52,7 +52,6 @@ SPLIT_WEIGHT = 1000.0       # one more holder of a unit outweighs any shape diff
 SHAPE_SCALE = 0.9 * SPLIT_WEIGHT
 AREA_FLOOR = 0.1            # a zero-opportunity ZCTA's weight in the shape term, in m̄
 MASS_TOL = 1e-9
-THREADS = 1                 # one HiGHS thread count per process (trap 18)
 PHASE1_GAP = 0.05           # the cut loop's absolute gap until a connected drawing exists
 FINAL_ABS_GAP = 1e-6        # then mip_rel_gap = 0 and this absolute gap (trap 12)
 ARMS = ("arm1", "split", "move")
@@ -206,14 +205,25 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
         js = {fixed[y] for z in q for y in adj[z] if y in fixed}
         js |= {j for v in {unit_of[z] for z in q} if len(hold.get(v, [])) > 1 for j in hold[v]}
         near.append(sorted(js))
+    next_to = collections.defaultdict(set)      # unit -> districts owning a ZCTA next to it
+    for v in ch.units:
+        for z in units.zips[v]:
+            for y in adj[z]:
+                w = unit_of[y]
+                if w == v:
+                    continue
+                if y in fixed:
+                    next_to[v].add(fixed[y])
+                elif len(hold.get(w, [])) > 1:
+                    next_to[v] |= set(hold[w])
     allowed = {}
     for qi, q in enumerate(fcomps):
         for z in q:
             v = unit_of[z]
             if len(hold.get(v, [])) > 1 and arm == "arm1" and z not in exclave:
                 allowed[z] = list(hold[v])
-            elif len(hold.get(v, [])) > 1:
-                allowed[z] = sorted(set(hold[v]) | set(near[qi]))
+            elif len(hold.get(v, [])) > 1:      # `split`, `move`: v's neighbouring districts
+                allowed[z] = sorted(set(hold[v]) | next_to[v])
             else:
                 allowed[z] = list(near[qi])
     # coupled groups: free components joined by a shared district
@@ -685,7 +695,6 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     n = len(cost)
     h = highspy.Highs()
     h.setOptionValue("output_flag", False)
-    h.setOptionValue("threads", THREADS)
     h.setOptionValue("mip_rel_gap", 0.0)
     inf = highspy.kHighsInf
     h.addVars(n, np.zeros(n), np.ones(n))
