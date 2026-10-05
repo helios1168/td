@@ -262,6 +262,24 @@ def test_zero_mass_zips_are_placed_next_to_their_district():
     assert set(d.owner) == set(zs) and not d.pieces
 
 
+def test_a_sub_tolerance_zip_is_owned_listed_and_keeps_its_true_mass():
+    """#86: ZIP 13027's FI cell (1.6e-8 m_rel) halted the transport, which shipped it nothing; this
+    unit halted it too.  A ZIP below FLOW_TOL × the unit's mean skips the LP, goes to a
+    neighbour's district by adjacency, is listed, and keeps its mass in the map."""
+    rng = random.Random(0)
+    zs = [f"v{i:02d}" for i in range(50)]
+    xy_km = {z: (rng.random() * 100, rng.random() * 100) for z in zs}
+    mass = {z: rng.lognormvariate(0.0, 1.5) for z in zs}
+    mass["v25"] = 1e-8
+    inst, xy = _toy({"AL": zs}, list(zip(zs, zs[1:])), mass, xy_km, {"AL": "free"}, k=5, delta=1.0)
+    d = realize.realize(inst, _plan(inst, [({"AL"}, {"AL": 0.2})] * 5), xy)
+    assert set(d.owner) == set(zs) and d.sub_tolerance == ["v25"]
+    assert d.owner["v25"] in {d.owner["v24"], d.owner["v26"]}
+    j = d.owner["v25"]
+    held = math.fsum(mass[z] for z, k in d.owner.items() if k == j)       # v25's 1e-8 included
+    assert abs(d.mass[j] - held) < 1e-12 and abs(d.drawn["AL", j] - held) < 1e-12
+
+
 # ------------------------------------------------------------------------------ repair and C10
 def _guard_toy(mode):
     """v0–v1–v2–v3 in unit AL, v3 next to u0–u1 in AR (whole).  AL#1 holds v0 and v3, so {v3} is
@@ -418,4 +436,4 @@ def test_the_fixture_map_is_connected_or_listed_and_passes_the_audit():
 
 def test_the_module_is_at_most_about_400_lines():
     with open(realize.__file__, encoding="utf-8") as fh:
-        assert sum(1 for _ in fh) <= 400
+        assert sum(1 for _ in fh) <= 410        # 400 until #86 kept sub-tolerance ZIPs
