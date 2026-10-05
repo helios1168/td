@@ -21,7 +21,7 @@ Arms (#109; what gives way is the owner's, #112, so each remedy is its own run):
 - `split`: a split unit's ZCTAs may also go to districts next to its free component (each
   extra holder a split, reported);
 - `move`: as `split`, with no more holders per unit than the plan.
-`--fixed-targets` adds each (unit, district) mass within the unit's heaviest ZCTA of the plan's
+`--delta` starts every group at that internal band instead of the plan's δ.  `--fixed-targets` adds each (unit, district) mass within the unit's heaviest ZCTA of the plan's
 share (the triage's "fixed targets alone", row 15).  `--sequential` draws one split unit at a time
 (`draw._sequential`), a restriction of the joint model for coupled groups too large to solve
 jointly: its connected drawings are real, its failures prove nothing.
@@ -129,7 +129,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
                fixed_targets: bool = False, time_limit: float = 900.0,
                group_limit: float | None = None, plans_cache: str | None = None,
                source: str = "", keep=(), maps: bool = False, sequential: bool = False,
-               log=print) -> dict:
+               delta: float | None = None, log=print) -> dict:
     if arm not in ARMS:
         raise ValueError(f"arm {arm!r} not in {ARMS}")
     s = tdspec.load(spec_path)
@@ -161,7 +161,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
         res = draw.draw(inst, p, xy, arm="arm1" if arm == "band" else arm,
                         fixed_targets=fixed_targets, time_limit=time_limit,
                         wider=WIDER if arm == "band" else (), group_limit=group_limit,
-                        sequential=sequential, log=log)
+                        sequential=sequential, delta=delta, log=log)
         fallback = None
         if res.undrawn:
             fallback = realize.realize(inst, p, xy)
@@ -225,7 +225,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
         json.dump(report, fh, indent=2, sort_keys=True)
         fh.write("\n")
     doc = {"scenario": s.name, "arm": arm, "fixed_targets": fixed_targets,
-           "sequential": sequential,
+           "sequential": sequential, "internal_delta": delta,
            "plan_seconds": round(plan_seconds, 1), "m1": report["m1"], "channels": contig}
     with open(os.path.join(out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
@@ -254,6 +254,8 @@ def main(argv=None) -> int:
     ap.add_argument("--arm", default="arm1", choices=ARMS)
     ap.add_argument("--fixed-targets", action="store_true")
     ap.add_argument("--sequential", action="store_true")
+    ap.add_argument("--delta", type=float, default=None,
+                    help="the internal band to start from instead of the plan's δ")
     ap.add_argument("--time-limit", type=float, default=900.0)
     ap.add_argument("--group-limit", type=float, default=None)
     ap.add_argument("--plans", default=None, help="a directory caching the master's plans")
@@ -261,7 +263,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     doc = contig_run(a.spec, a.extract, a.out, a.arm, a.fixed_targets, a.time_limit,
                      a.group_limit, a.plans, os.path.basename(a.extract), maps=a.maps,
-                     sequential=a.sequential)
+                     sequential=a.sequential, delta=a.delta)
     return 0 if doc["m1"]["status"] == "pass" else 1
 
 

@@ -114,7 +114,8 @@ def table(all_rows: list) -> str:
         groups = ", ".join(f"{k} {v}" for k, v in sorted(r["groups"].items()))
         gap = "" if r["worst_gap"] is None else f"{r['worst_gap']:.2g}"
         need = "" if r["delta_needed"] is None else f"{r['delta_needed']:g}"
-        one = "n/a" if r["single_connector"] is None else str(len(r["single_connector"]))
+        one = "n/a" if r["single_connector"] is None or r["m1_map"] != "pass" \
+            else str(len(r["single_connector"]))
         cells = (r["run"], r["arm"], r["channel"], str(r["k"]), f"{r['plan_delta']:g}",
                  r["m1_map"], str(r["pieces_m1"]), f"{r['largest_tau']:.3g} τ",
                  f"{'all' if r['connected'] else 'not all'} ({r['status']})", groups,
