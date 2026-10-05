@@ -259,7 +259,8 @@ heaviest ZIP in each.
   margin, without it, and limited to units actually split (N2).
 - **A policy.** It removes plans that could be drawn, and it can make lumpy units infeasible at
   tight tolerances. The planning band sits inside the final tolerance by the margin **[policy OD1,
-  C3]**.
+  C3]**. A channel turns it off with `margin = false`, which sets μ ≡ 0 for that channel only;
+  the default is on, and `run.json` records the setting per channel (§4.8) **[policy #84]**.
 
 ### 4.7 What the rows are necessary for
 
@@ -301,6 +302,32 @@ its smallest δ bounds the drawings. What stays necessary for the read-back of e
 Menger row and the other rows of §3 with μ ≡ 0 (Proposition D). No set of rows here is
 sufficient (§5, C10). A plan that passes every row can still fail to draw, and S28 makes that
 failure loud.
+
+### 4.8 The margin off (#84; council 2026-10-01, Est. 4)
+
+With `margin = false` a channel's band row is #52's, L_c n_S ≤ Σ_{v∈S} M_v t_{v,S} ≤ U_c n_S, and
+every other row is unchanged. Write μ°_S for the value §4.6's formula gives, which the master no
+longer uses. What still holds:
+- **Claim 1** holds with μ_S = 0: each copy's footprint is S, the modes hold, and each planned mass
+  lies in [L_c, U_c]. Its proof uses no property of μ_S. (iii) now covers plans that obey the
+  rows with μ ≡ 0, a larger set **[proved]**.
+- **Claim 2** holds: the exact MILP's δ rows lose the μ term, and bisection stays valid because
+  μ ≡ 0 does not depend on δ **[proved]**.
+- **Proposition D and its Corollary** apply to this master as it stands, since they are stated
+  for μ ≡ 0. Its optimum and its smallest δ are lower bounds over 𝒳_c(δ), but only for drawings
+  with the same support family, modes, η_c, caps and drawability rows. With free units the bound
+  is the bisection's `lower`, a δ proved infeasible; its upper end is a feasible δ, not a bound
+  **[proved]**. Nothing here bounds a drawing under other supports or rules.
+- **Claim 3 and Corollary 3** still bound the rounding: before repair, a copy's drawn mass differs
+  from its planned mass by at most μ°_S, and by strictly less when μ°_S > 0, because Claim 3
+  never reads the band row **[proved]**. What is lost is the band: a plan at an edge of
+  [L_c, U_c] can draw anywhere in (L_c − μ°_S, U_c + μ°_S), so no row guarantees that a drawn mass
+  lies in the band. The audit's final-band check is then the only judge of drawn balance
+  **[policy S28, OD1]**.
+
+On the 51 scenario (extract of 2026-10-01), national's smallest δ is 0.0675 with the key set
+to false, as with the earlier in-memory zeroing of `supports.margin`, against 0.165 with the
+margin on.
 
 ## 5. Claims
 
@@ -524,19 +551,46 @@ For each splittable unit v with |J_v| ≥ 2:
      only if j minimises ‖p_z − c_k‖² − w_k over k, where w are the duals of the target rows, and
      rounding gives a ZIP only to a district with f_{zj} > 0. The cells form a power diagram, and a
      convex cut across a non-convex unit leaves *shape* pieces. Zero-mass ZIPs, placed separately,
-     and pieces moved by repair are not covered.
+     pieces moved by repair and ZIPs moved by the swap pass are not covered.
 3. **Round along the forest** (Claim 3), not ZIP by ZIP.
 4. **One repair pass** (S23). Move each detached piece, meaning each component of a district other
-   than its heaviest, to an adjacent district only if both of these hold:
+   than its heaviest, to an adjacent district only if all of these hold:
    - both districts stay inside the final tolerance **[policy OD1]**;
    - **mode guard (C16):** the target is admissible in every unit the piece touches, under that
      unit's mode. A piece of a clipped unit may go only to another district inside that unit. A
      piece of a free unit may go to any adjacent district.
+   - **component guard (#85):** a piece moves between two exchange components (step 5) only when
+     the worse of the pair improves, max(|m_j − w − τ_c|, |m_k + w − τ_c|) < max(|m_j − τ_c|,
+     |m_k − τ_c|) for a piece of mass w from j to k **[policy #85]**.
 
    Otherwise the piece stays. The owner may later relax clipped mode so that repair can add an
    owner from outside the unit. That would be a model change, recorded as a policy, with Claim
    1(ii)'s clipped guarantee qualified. Listing the extra owner in the audit does not cure the
    violation.
+5. **One swap pass** (#85). Two districts *share* a splittable unit v when both are planned there,
+   a_{v,j} > 0. The districts linked through shared units form an *exchange component*. Before
+   repair, drawn minus planned mass sums to zero over each one **[claimed U41]**. After repair,
+   the pass moves one ZIP z of positive mass at a time from a district j to a district k that
+   shares z's unit with j, and accepts the move only if all of these hold **[policy #85]**:
+   - the worse of the pair improves by more than 10⁻⁹ τ_c: max(|m_j − m_z − τ_c|,
+     |m_k + m_z − τ_c|) < max(|m_j − τ_c|, |m_k − τ_c|);
+   - z's neighbours in j stay connected in j without z, and z touches k's main component, its
+     heaviest, so neither district gains a piece and no detached piece grows;
+   - j keeps a ZIP of positive mass in z's unit, so no planned share vanishes (C8).
+
+   Each step makes the accepted move of largest gain, ties by ZIP id and target. Then
+   **[proved]**:
+   - every move stays inside one exchange component, so each component's drawn mass is unchanged;
+   - no exchange component's worst deviation max_j |m_j − τ_c| grows, since only j and k change and
+     both end below the pair's old worse deviation;
+   - a district inside the final band whose partner is inside it stays inside, since the band is
+     symmetric about τ_c; so if every drawn mass is in the band before the pass, it stays so;
+   - the pass ends: each move lowers the districts' deviations, sorted from the worst,
+     lexicographically, and there are finitely many maps.
+
+   The pass optimises deviation from τ_c and ignores the plan: a move can raise or lower the target
+   error Δ_{v,j}, so Claim 3 and Corollary 3 bound the map before repair and the swap pass, not
+   after. How close a pair gets is open **[claimed U45]**.
 
 There is no metro-binding step. A whole metro is its own whole unit, which the realizer never
 touches; an oversized metro is an ordinary splittable unit (§6, OD5). Binding a metro inside a

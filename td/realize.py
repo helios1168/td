@@ -1,23 +1,23 @@
 """realize.py -- the ZIP realizer (`docs/MODEL.md` §7, S21): a decoded master plan to a ZIP map.
 
 Whole units go to their one owner.  For each splittable unit v shared by the copies J_v:
-1. **Centres** (S24, #65 F6).  The copies of {v} take the centres of a deterministic
-   opportunity-weighted k-means on v's ZIPs (`kmeans`), clipped or free.  A copy of S with
-   |S| ≥ 2 (free v only: a clipped v in a multi-unit copy is held whole) takes the mass-weighted
-   centroid of its border in v, the ZIPs with a ZIP-graph edge into S − v, or its unweighted
-   centroid when the border's mass is 0.
+1. **Centres** (S24, #65 F6).  The copies of {v} take the centres of a deterministic opportunity-
+   weighted k-means on v's ZIPs (`kmeans`), clipped or free.  A copy of S with |S| ≥ 2 (free v
+   only: a clipped v in a multi-unit copy is held whole) takes the mass-weighted centroid of its
+   border in v, the ZIPs with a ZIP-graph edge into S − v, unweighted when the border's mass is 0.
 2. **Transport LP** (Claim 3) over v's ZIPs with m_z > 0, in mass flows x_{zj} = m_z f_{zj},
    solved by dual simplex (`highs-ds` with an explicit options dict, trap 14) so the solution is
    basic.  A positive flow graph that is not a forest stops the run (Lemma 3a, C5).
 3. **Tree rounding** along the forest (`round_forest`), not ZIP by ZIP: a district takes a split
    ZIP when its running error is negative and passes it otherwise; where both moves keep
-   |e_j| < m*_j, the one cheaper under the transport cost wins.  Zero-mass ZIPs, which the LP does
-   not place, go by breadth-first search from the rounded ZIPs of v (`place_zero`).
-4. **One repair pass** (S23).  Each detached piece, a component of a district other than its
-   heaviest, moves to a district whose main component it touches, only if both districts stay
-   inside the final tolerance (OD1) and the target is admissible in every unit the piece touches
-   (C16): nobody in a whole unit, only another copy of {u} in a clipped unit u, anybody in a free
-   one.  Otherwise the piece stays.
+   |e_j| < m*_j, the one cheaper under the transport cost wins.  Zero-mass ZIPs and ZIPs below
+   the LP's tolerance (#86), which the LP does not place, go by breadth-first search from the
+   rounded ZIPs of v (`place_zero`); the latter keep their mass and are listed.
+4. **One repair pass** (S23), then **one swap pass** (`td.swap`).  A detached piece, a component
+   of a district other than its heaviest, goes to a district whose main component it touches only if
+   both stay inside the final tolerance (OD1), the target is admissible in every unit the piece
+   touches (C16: nobody in a whole unit, only another copy of {u} in a clipped unit u, anybody in a
+   free one), and a move across exchange components improves the pair's worse district (#85).
 
 Contiguity is read on the instance's ZIP graph, which is the declared graph (#11, trap 21).
 Every remaining piece gets one cause, the first that applies (`CAUSES`):
@@ -39,7 +39,7 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import linprog
 
-from td import audit
+from td import audit, swap
 from td.spec import zip_components
 
 POS_TOL = 1e-9          # a flow below POS_TOL × m_z is zero
@@ -71,6 +71,8 @@ class Drawing:
     drawn: dict                 # (unit, district) -> drawn mass in the unit, 0 when vanished
     pieces: list                # the pieces left after repair, each with its cause
     moved: list = field(default_factory=list)   # (zips, from, to) done by repair
+    sub_tolerance: list = field(default_factory=list)   # positive ZIPs placed by adjacency (#86)
+    swapped: list = field(default_factory=list)  # (zip, from, to) done by the swap pass
 
     @property
     def error(self) -> dict:
@@ -153,13 +155,17 @@ def centres(inst, channel: str, v: str, support: dict, p: dict) -> dict:
 def transport(zs, m: dict, p: dict, c: dict, a: dict) -> dict:
     """{(z, j): x_{zj} > 0}: the transport LP of Claim 3 in mass flows, at a basic solution.  It
     runs on masses over their mean, so HiGHS's absolute tolerances cannot swallow a small-scale
-    unit (#72 B1); flows that miss a row by FLOW_TOL, or leave a ZIP unshipped, stop the run."""
+    unit (#72 B1); a ZIP below FLOW_TOL there is left out, the implied last target short by its
+    mass (#86).  Flows that miss a row by FLOW_TOL, or leave another ZIP unshipped, stop the run."""
+    scale = math.fsum(m[z] for z in zs) / len(zs)
+    tiny = [z for z in zs if m[z] < FLOW_TOL * scale]
+    zs = [z for z in zs if z not in tiny]
     js, n, k = sorted(a), len(zs), len(a)
-    scale = math.fsum(m[z] for z in zs) / n
     cost = np.array([_d2(p[z], c[j]) for z in zs for j in js])
     rows = [i for i in range(n) for _ in js] + [n + jj for _ in zs for jj in range(k)]
     a_eq = sparse.csr_matrix((np.ones(2 * n * k), (rows, list(range(n * k)) * 2)), shape=(n + k, n * k))
     b_eq = np.array([m[z] for z in zs] + [a[j] for j in js]) / scale
+    b_eq[-1] -= math.fsum(m[z] for z in tiny) / scale
     res = linprog(cost, A_eq=a_eq[:-1], b_eq=b_eq[:-1], bounds=(0.0, None), method="highs-ds",
                   options=dict(LP_OPTIONS))                  # the last target is implied
     if res.status != 0:
@@ -234,8 +240,8 @@ def round_forest(m: dict, flow: dict, cost) -> dict:
 
 
 def place_zero(zeros, owner: dict, zip_adj: dict, p: dict, c: dict) -> dict:
-    """Zero-mass ZIPs (§7 step 2) by breadth-first search from the ZIPs `owner` places in the
-    unit; one the search cannot reach goes to the nearest centre among those districts."""
+    """ZIPs the LP does not place (§7 step 2) by breadth-first search from the ZIPs `owner` places
+    in the unit; one the search cannot reach goes to the nearest centre among those districts."""
     left, out = set(zeros), {}
     queue = collections.deque(sorted(owner))
     while queue:
@@ -271,7 +277,7 @@ def realize(inst, plan, xy: dict) -> Drawing:
     p = {z: (xy[z][0] / 1000.0, xy[z][1] / 1000.0) for z in units.unit_of}
     support = {c.name: c.support for c in plan.copies}
     planned = {(v, c.name): c.mass[v] for c in plan.copies for v in c.support}
-    owner = {}
+    owner, tiny = {}, []
     for v in ch.units:
         mine = {j: support[j] for (u, j), a in planned.items() if u == v and a > 0}
         if len(mine) == 1:
@@ -281,15 +287,18 @@ def realize(inst, plan, xy: dict) -> Drawing:
         pos = [z for z in units.zips[v] if ch.m[z] > 0]
         flow = transport(pos, ch.m, p, c, {j: planned[v, j] for j in mine})
         own = round_forest(ch.m, flow, lambda z, j: ch.m[z] * _d2(p[z], c[j]))
+        tiny += [z for z in pos if z not in own]            # the ZIPs `transport` left out
         owner.update(own)
-        owner.update(place_zero([z for z in units.zips[v] if ch.m[z] <= 0], own, units.zip_adj, p, c))
-    moved = repair(inst, plan.channel, owner, support)
+        owner.update(place_zero([z for z in units.zips[v] if z not in own], own, units.zip_adj, p, c))
+    moved = repair(inst, plan.channel, owner, support, swap.components(planned))
+    swapped = swap.swap(inst, plan.channel, owner, planned)
     drawn, mass = dict.fromkeys(planned, 0.0), {c.name: 0.0 for c in plan.copies}
     for z, j in owner.items():
         drawn[units.unit_of[z], j] = drawn.get((units.unit_of[z], j), 0.0) + ch.m[z]
         mass[j] += ch.m[z]
     return Drawing(plan.channel, owner, mass, planned, drawn,
-                   pieces(inst, plan.channel, owner, support, planned), moved)
+                   pieces(inst, plan.channel, owner, support, planned), moved, sorted(tiny),
+                   swapped=swapped)
 
 
 def _admissible(ch, units, piece, k, owner, support) -> bool:
@@ -302,13 +311,13 @@ def _admissible(ch, units, piece, k, owner, support) -> bool:
     return not any(ch.mode[u] == "clipped" and any(units.unit_of[z] != u for z in piece) for u in held)
 
 
-def repair(inst, channel: str, owner: dict, support: dict) -> list:
-    """One pass (S23) over the detached pieces found at its start; moves `owner` in place."""
+def repair(inst, channel: str, owner: dict, support: dict, comp: dict | None = None) -> list:
+    """One pass (S23) over the detached pieces found at its start; moves `owner` in place.
+    `comp` is district -> exchange component, by default read off `support`."""
+    comp = swap.support_components(support) if comp is None else comp
     ch, units = inst.channels[channel], inst.units
     (lo, hi), adj, m = ch.final_band, units.zip_adj, ch.m
-    mass = collections.Counter()
-    for z, j in owner.items():
-        mass[j] += m[z]
+    mass = collections.Counter({j: sum(m[z] for z in zs) for j, zs in _districts(owner).items()})
     todo = [(j, part) for j, zs in sorted(_districts(owner).items()) for part in _parts(zs, adj, m)[1:]]
     moved = []
     for j, part in todo:
@@ -324,7 +333,8 @@ def repair(inst, channel: str, owner: dict, support: dict) -> list:
             main_k = set(_parts(_districts(owner)[k], adj, m)[0])
             if (any(y in main_k for z in part for y in adj[z])
                     and _admissible(ch, units, part, k, owner, support)
-                    and lo <= mass[j] - w <= hi and lo <= mass[k] + w <= hi):
+                    and lo <= mass[j] - w <= hi and lo <= mass[k] + w <= hi
+                    and swap.may_cross(comp, ch.tau, j, k, mass[j], mass[k], w)):
                 ok.append(k)
         if ok:
             k = min(ok, key=lambda k: (abs(mass[k] + w - ch.tau), k))

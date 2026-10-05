@@ -23,7 +23,8 @@ R_c(u, v) = max(max_dist_km, dist_km[u], dist_km[v]), the legacy per-state rule.
 - `border_count(inst, u, v)`: b_{uv}, the number of v's ZIPs with a ZIP-graph edge into u;
 - `border_rows(fam)`: for each free v and u ∈ N(v), the supports of the corrected border cap
   Σ_{S∋v, N(v)∩S={u}} n_S ≤ b_{uv} (C7);
-- `margin(inst, c, S)`: μ_S, the sum over S's splittable units of the heaviest ZIP (§4.6);
+- `margin(inst, c, S)`: μ_S, the sum over S's splittable units of the heaviest ZIP (§4.6), or 0
+  when the channel sets `margin = false` (#84);
 - `diameter(inst, S)`: w_S, the largest centroid distance in S (§3.5).
 """
 from __future__ import annotations
@@ -266,8 +267,10 @@ def border_rows(inst, fam: Family) -> dict:
 
 
 def margin(inst, channel: str, s) -> float:
-    """μ_S (§4.6)."""
+    """μ_S (§4.6); 0 when the channel's spec turns the margin off."""
     ch = inst.channels[channel]
+    if not ch.spec.margin:
+        return 0.0
     return sum(max(ch.m[z] for z in inst.units.zips[v]) for v in s if ch.splittable(v))
 
 

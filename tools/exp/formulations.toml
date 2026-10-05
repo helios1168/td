@@ -1,0 +1,9 @@
+# The formulations a grid may name (tools/exp/sweep.py, #92).  Each table's `entry` is
+# `<file under the td root>:<function>`, called in the job's own process as function(manifest,
+# folder) once the sweep has written manifest.json and log.txt there.  It writes every other file
+# of the run into the folder, flat, and raises to fail the run with the engine's stop reason.  A
+# lane adds its formulation here, with its code in tools/exp<lane>/.
+
+[support]
+entry = "tools/exp/sweep.py:run_support"
+about = "today's support master: td.output.run on params.scenario with the spec.* overrides"

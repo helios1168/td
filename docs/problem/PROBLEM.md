@@ -6,6 +6,19 @@ the `triage` skill from lens, council and review output.
 
 ## The problem
 
+**The goal** (owner, 2026-10-05). td makes the sales territory maps the owner will put in front of
+stakeholders: the main map (national, WH, FI, WIFI and the combined channel) and the IFA map. In
+each planning channel, K districts together cover every CONUS ZIP, and each district must be:
+
+- **one connected piece of territory on the drawn map** (M1, hard: drawn 2025 ZCTA polygons, rook
+  adjacency, a committed connector list for water, no tolerance; owner 2026-10-04);
+- a sensible-looking territory (few split states, no visual defects, compact);
+- balanced (drawn opportunity in the band around τ, $ per district near target).
+
+The owner picks the final maps from a ranked shortlist (#105). The method below serves this goal,
+and `WATCHDOG.md` restates it for the always-on watcher. M1 was set aside on 2026-09-01 "for
+simplicity" without a return trigger and is restored here.
+
 Since 2026-09-25 td has one problem, **the support master problem** (#52 §1). For each planning
 channel c, divide its (ZIP, fine channel) opportunity into K_c districts whose drawn masses lie
 in a band around τ_c. Three parts do this:

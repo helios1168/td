@@ -14,6 +14,7 @@ from __future__ import annotations
 import collections
 import contextlib
 import csv
+import dataclasses
 import functools
 import io
 import json
@@ -29,9 +30,9 @@ from tests import test_spec as ts
 
 NY, NJ, PA, CT = ("10001", "10002", "10003", "10004"), ("07102", "07103", "07104", "07105"), \
     ("19103", "19104", "19106", "19107"), ("06830", "06831")
-OFF = "19108"                   # in the extract, not a vertex of the toy graph
+OFF = "19108"                   # in the extract with no opportunity, not a vertex of the toy graph
 MASS = {**dict.fromkeys(NY, 1.0), **dict.fromkeys(NJ, 0.375), **dict.fromkeys(PA, 0.625),
-        **dict.fromkeys(CT, 0.0), OFF: 0.5}
+        **dict.fromkeys(CT, 0.0), OFF: 0.0}
 
 
 def _toy_spec(**channel):
@@ -42,12 +43,13 @@ def _toy_spec(**channel):
     return spec.parse(raw)
 
 
-def _toy_inputs():
-    """(extract, graph): every ZIP in f with MASS and in g with 0; chains inside each state and
-    the edges NY-NJ, NJ-PA, NY-CT."""
-    zs = sorted(MASS)
+def _toy_inputs(mass=None):
+    """(extract, graph): every ZIP in f with MASS, or `mass` over it, and in g with 0; chains
+    inside each state and the edges NY-NJ, NJ-PA, NY-CT."""
+    mass = dict(MASS, **(mass or {}))
+    zs = sorted(mass)
     extract = data.Extract(("f", "g"), [z for z in zs for _ in "fg"], [f for _ in zs for f in "fg"],
-                           [m for z in zs for m in (MASS[z], 0.0)], [{}] * 2 * len(zs),
+                           [m for z in zs for m in (mass[z], 0.0)], [{}] * 2 * len(zs),
                            [0.0] * 2 * len(zs))
     edges = [(a, b) for st in (NY, NJ, PA, CT) for a, b in zip(st, st[1:])]
     edges += [(NY[-1], NJ[0]), (NJ[-1], PA[0]), (NY[0], CT[0])]
@@ -155,6 +157,44 @@ def test_a_toy_run_passes_the_audit_and_writes_every_output():
     assert report["maps"] == "drawn" and report["maps_missing_polygons"] == []
     assert report["not_placed_zips"] == 1 and report["dropped_channels"] == ["Y"]
     assert report["dropped_units"]["X"] and "CT" in report["dropped_units"]["X"]
+    cells = checks["one owner per cell"]
+    assert cells.status == "listed", cells.items
+    assert cells.items == [f"cell {OFF}/{f} ({c}): {output.NOT_PLACED}, ZIP has no opportunity"
+                           for f, c in (("f", "X"), ("g", "Y"))]
+
+
+def test_a_not_placed_zip_with_opportunity_fails_the_one_owner_audit():
+    """#89: every cell enters the audit; a NOT_PLACED cell passes only when its whole ZIP has no
+    opportunity, as ZIP 13027's FI cell did not before the diagnostic zeroed it."""
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    extract, graph = _toy_inputs({OFF: 0.5})
+    res = output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False)
+    fails = {c.name: c.items for c in res.checks if c.status == "fail"}
+    assert res.verdict == "fail" and set(fails) == {"one owner per cell"}, fails
+    assert fails["one owner per cell"] == [f"cell {OFF}/{f}: not placed, ZIP {OFF} has opportunity 0.5"
+                                           for f in "fg"]
+    shutil.rmtree(out)
+
+
+def test_a_ledger_missing_a_domain_cell_fails_the_one_owner_audit():
+    """#89: the audit reads the ledger back from the file; a cell of the extract that the file
+    lacks, placed or not, fails `check_cells` by name."""
+    read = output.read_ledger
+    for z, f in ((OFF, "f"), (NY[0], "f")):
+        out = tempfile.mkdtemp(prefix="td-output-")
+        os.rmdir(out)
+        output.read_ledger = lambda path, cell=(z, f): [
+            r for r in read(path) if (r["zip_code"], r["current_channel"]) != cell]
+        try:
+            extract, graph = _toy_inputs()
+            res = output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False)
+        finally:
+            output.read_ledger = read
+        check = {c.name: c for c in res.checks}["one owner per cell"]
+        assert res.verdict == "fail" and check.status == "fail"
+        assert f"cell {z}/{f}: not in the ledger" in check.items, check.items
+        shutil.rmtree(out)
 
 
 def test_every_cell_has_one_row_and_a_blank_district_says_why():
@@ -176,6 +216,25 @@ def test_every_cell_has_one_row_and_a_blank_district_says_why():
     assert all(r["district_channels"] == (r["model_channel"] if r["district"] else "") for r in rows)
     assert {r["cbsa"] for r in rows if r["zip_code"] in PA} == {"37980"}
     assert all(r["county"] and r["state"] for r in rows)
+
+
+def test_a_sub_tolerance_cell_is_owned_and_listed_with_its_true_mass():
+    """#86: a cell below the transport LP's tolerance in a split unit is owned, says so, keeps its
+    `m_rel`, and is counted in `run.json`; the audit still passes."""
+    extract, graph = _toy_inputs()
+    tiny = NY[2]
+    extract = dataclasses.replace(extract, m_rel=[1e-8 if (z, f) == (tiny, "f") else m for z, f, m
+                                                  in zip(extract.z, extract.channel, extract.m_rel)])
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    res = output.run(_toy_spec(k=4, mode="free", delta=1.0), extract, out, graph, ts._reference(),
+                     maps=False, source="toy")
+    assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
+    by = {(r["zip_code"], r["current_channel"]): r for r in output.read_ledger(res.paths["ledger"])}
+    row = by[tiny, "f"]
+    assert row["district"] and row["reason"] == output.SUB_TOLERANCE and row["m_rel"] == 1e-8
+    assert [r for r in by.values() if r["reason"] == output.SUB_TOLERANCE] == [row]
+    assert res.report["sub_tolerance_cells"] == 1
 
 
 def test_districts_are_named_after_their_heaviest_cbsa():
@@ -401,6 +460,21 @@ def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has
     assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
 
 
+def test_run_json_records_the_margin_per_channel():
+    """#84: X turns the margin off and Y keeps the default; run.json says so per channel.  g gets
+    f's masses, so Y is planned rather than dropped."""
+    extract, graph = _toy_inputs()
+    m = [MASS[z] for z in extract.z]
+    both = data.Extract(extract.channels, extract.z, extract.channel, m, extract.share,
+                        extract.share_free)
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    res = output.run(_toy_spec(margin=False), both, out, graph, ts._reference(), maps=False)
+    report = json.load(open(res.paths["run"], encoding="utf-8"))["channels"]
+    assert {c: r["margin"] for c, r in report.items()} == {"X": False, "Y": True}
+    shutil.rmtree(out)
+
+
 # ------------------------------------------------------------------------------ pieces
 def test_pieces_come_from_the_ledger_and_the_scorecard_run_json_and_districts_csv_agree():
     """NY's middle ZIPs have no cell in channel X: the map's district holds them at zero mass as
@@ -443,16 +517,27 @@ def test_a_ledger_piece_inside_a_realizer_piece_keeps_its_cause():
 
 # ------------------------------------------------------------------------------ the stops
 def test_a_channel_with_no_plan_stops_the_run_after_writing_the_solver_report():
+    """Also #88: the domain components and their floor are printed before the solve and kept in
+    `solver.json`, even when the run stops."""
     out = tempfile.mkdtemp(prefix="td-output-")
     extract, graph = _toy_inputs()
+    printed = io.StringIO()
     try:
-        output.run(_toy_spec(k=3, delta=0.0, final_delta=0.0), extract, out, graph,
-                   ts._reference(), maps=False)
+        with contextlib.redirect_stdout(printed):
+            output.run(_toy_spec(k=3, delta=0.0, final_delta=0.0), extract, out, graph,
+                       ts._reference(), maps=False)
     except output.RunError as e:
         assert "no plan for X" in str(e) and "infeasible" in str(e), str(e)
     else:
         raise AssertionError("no RunError")
-    assert json.load(open(os.path.join(out, "solver.json")))["X"]["solver"]["status"] == "infeasible"
+    doc = json.load(open(os.path.join(out, "solver.json")))
+    assert doc["X"]["solver"]["status"] == "infeasible"
+    comps = doc["X"]["components"]
+    assert len(comps["components"]) == 1 and comps["components"][0]["units"] == \
+        ["NJ", "NY", "PA"] and abs(comps["components"][0]["mass_tau"] - 3.0) < 1e-12, comps
+    assert comps["allocation"] == [3] and comps["floor"] < 1e-12, comps
+    assert spec.component_lines({"X": comps})[0] in printed.getvalue().splitlines(), \
+        printed.getvalue()
     shutil.rmtree(out)
 
 
@@ -646,10 +731,10 @@ def test_the_maps_command_refuses_a_ledger_channel_or_a_maps_dir_that_leaves_the
         assert output.main_maps([run_dir, "--public", _toy_public()]) == 1
     assert "'../../escaped'" in err.getvalue()
     assert sorted(os.listdir(run_dir)) == ["ledger.csv"] and open(sentinel, "rb").read() == b"KEEP"
-    # a valid ledger whose maps directory is a link out of the run: nothing is drawn through it
+    # a valid ledger whose map file is a link out of the run: nothing is drawn through it
     shutil.copy(res.paths["ledger"], os.path.join(run_dir, "ledger.csv"))
     elsewhere = tempfile.mkdtemp(prefix="td-elsewhere-")
-    os.symlink(elsewhere, os.path.join(run_dir, "maps"))
+    os.symlink(os.path.join(elsewhere, "map_X.png"), os.path.join(run_dir, "map_X.png"))
     with contextlib.redirect_stderr(io.StringIO()):
         assert output.main_maps([run_dir, "--public", _toy_public()]) == 1
     assert os.listdir(elsewhere) == []
