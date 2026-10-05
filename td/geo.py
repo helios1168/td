@@ -66,6 +66,15 @@ added (kind `nearest`: an island with no crossing joined to its nearest ZCTA), a
 `polygon_graph` adds only approved rows.  The owner approved every row on 2026-10-05 (#108):
 bridges, tunnels, ferries, and roads across land in no ZCTA.
 
+The graph is one component, but seven states are not connected within it (#114).
+`python -m td geo --state-connectors` (`state_connectors`) proposes one in-state connector per
+detached group: the shortest-gap road across land in no ZCTA to the rest of its state, else the
+nearest ZCTA of the state (kind `nearest`), each `proposed` with source `STATE_PROPOSAL`, which a
+rebuild keeps until the owner rules.  `--pair-connectors A-B ...` (`pair_connectors`) proposes the
+same way the road crossings of a state line whatever their names: the build finds a bridge between
+two ZCTAs of one component only by a bridge word in its name, and TIGER/Line names some river
+bridges only by route (the Delaware Memorial Bridge is I-295 / US-40).
+
 A multipart ZCTA is one vertex whose parts count as connected to each other, adjacent to another
 ZCTA through any part (owner, 2026-10-05).  The part-level files let the looks scorer list a
 separate drawn piece that only a multipart ZCTA makes, a visual defect and not an M1 failure.
@@ -161,23 +170,29 @@ def _valid_download(path: str) -> bool:
     return head.startswith(b"PK") if path.endswith(".zip") else not head.lstrip().startswith(b"<")
 
 
-def cached(url: str, public: str = PUBLIC_DIR, tries: int = 6) -> str:
-    """Path of `url`'s file under `public`, downloading it only if absent or not valid."""
+def cached(url: str, public: str = PUBLIC_DIR, tries: int = 6, timeout: float = 600) -> str:
+    """Path of `url`'s file under `public`, downloading it only if absent or not valid.  A
+    transfer that stalls for `timeout` seconds counts as a failed try."""
     path = os.path.join(public, os.path.basename(url))
     if os.path.exists(path) and _valid_download(path):
         return path
     os.makedirs(public, exist_ok=True)
     tmp = path + ".part"
     for attempt in range(tries):
-        with urllib.request.urlopen(url, timeout=600) as fh, open(tmp, "wb") as out:
-            while chunk := fh.read(1 << 20):
-                out.write(chunk)
-        if _valid_download(tmp):
-            os.replace(tmp, path)
-            return path
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as fh, open(tmp, "wb") as out:
+                while chunk := fh.read(1 << 20):
+                    out.write(chunk)
+        except OSError:             # a stalled or dropped transfer (TimeoutError, URLError)
+            pass
+        else:
+            if _valid_download(tmp):
+                os.replace(tmp, path)
+                return path
         time.sleep(5 * 2 ** attempt)
-    os.remove(tmp)
-    raise RuntimeError(f"{url}: census.gov kept returning a rejection page")
+    if os.path.exists(tmp):
+        os.remove(tmp)
+    raise RuntimeError(f"{url}: census.gov kept returning a rejection page or stalling")
 
 
 def fetch_all(urls: list[str], public: str = PUBLIC_DIR) -> list[str]:
@@ -649,8 +664,12 @@ ROAD_SEARCH_M = 30_000.0    # roads this close to an island's ZCTAs are searched
 CONNECTOR_COLUMNS = ("a", "b", "kind", "crossing", "gap_km", "status", "source")
 CONNECTOR_STATUSES = ("proposed", "approved", "rejected")
 # `nearest`: an island no road or scheduled ferry reaches, joined to its nearest ZCTA by the
-# owner (2026-10-05, #108); the build never proposes one.
+# owner (2026-10-05, #108); the build never proposes one, `state_connectors` may (#114).
 CONNECTOR_KINDS = ("bridge", "tunnel", "road", "ferry", "nearest")
+# the source of `state_connectors`' rows; a rebuild keeps them until the owner rules on them
+STATE_PROPOSAL = "proposed 2026-10-05 (#114), owner to review"
+PAIR_BORDER_M = 10_000.0    # a state's ZCTAs this close to the other state's are searched (#114)
+PAIR_ZONE_M = 2_000.0       # roads this close to those ZCTAs are searched for crossings (#114)
 ZCTA_PARTS = "zcta_parts.csv.gz"
 PART_EDGES = "zcta_part_edges.csv.gz"
 ROAD_SOURCES = {
@@ -985,9 +1004,10 @@ def polygon_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print)
     old = {(r["a"], r["b"], r["crossing"]): r["status"] for r in read_connectors(out)}
     connectors = [{**r, "status": old.get((r["a"], r["b"], r["crossing"]), "proposed")}
                   for r in proposals]
-    kept = [r for r in read_connectors(out) if r["status"] != "proposed" and
+    kept = [r for r in read_connectors(out)
+            if (r["status"] != "proposed" or r["source"] == STATE_PROPOSAL) and
             (r["a"], r["b"], r["crossing"]) not in {(c["a"], c["b"], c["crossing"]) for c in connectors}]
-    connectors += kept                  # an owner's decision is never dropped by a rebuild
+    connectors += kept      # an owner's decision, or a #114 row awaiting one, outlives a rebuild
 
     joined = components(range(len(comps)), [(comp[r["a"]], comp[r["b"]]) for r in connectors])
     approved = components(vertices, got["edges"] + approved_connectors(connectors))
@@ -1044,6 +1064,165 @@ def polygon_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print)
     return report
 
 
+def state_groups(vertices, edges, state: dict) -> dict:
+    """{state: its components}: for each state not connected on the graph induced on its own
+    vertices, those components (`components` order, so the first is the largest)."""
+    by_state = collections.defaultdict(list)
+    for z in vertices:
+        by_state[state[z]].append(z)
+    inner = collections.defaultdict(list)
+    for a, b, *_ in edges:
+        if a in state and b in state and state[a] == state[b]:
+            inner[state[a]].append((a, b))
+    out = {}
+    for s in sorted(by_state):
+        comps = components(by_state[s], inner[s])
+        if len(comps) > 1:
+            out[s] = comps
+    return out
+
+
+def state_crossings(ids, geoms, comps: list, roads) -> list:
+    """One connector row per detached group of one state (`comps`, its components, largest first;
+    `ids` and `geoms` every CONUS ZCTA, so a road's stretch outside them is land in no ZCTA): the
+    shortest-gap road in `roads` whose stretch outside every ZCTA reaches the group and another
+    component of the state, preferring the largest, else the group's nearest ZCTA of the state
+    outside it, kind `nearest`.  Every row is `proposed`, source `STATE_PROPOSAL` (#114)."""
+    import numpy as np
+    import shapely
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    label = {z: i for i, c in enumerate(comps) for z in c}
+    comp = {z: label.get(z, -1) for z in ids}       # -1: another state's ZCTA
+    found = [r for r in road_crossings(ids, geoms, comp, roads, STATE_PROPOSAL)
+             if comp[r["a"]] >= 0 and comp[r["b"]] >= 0]
+    at = {z: i for i, z in enumerate(ids)}
+    out = []
+    for i in range(1, len(comps)):
+        joins = [r for r in found if i in (comp[r["a"]], comp[r["b"]])]
+        if joins:
+            row = min(joins, key=lambda r: (0 not in (comp[r["a"]], comp[r["b"]]), r["gap_km"],
+                                            r["crossing"]))
+        else:
+            group = [at[z] for z in comps[i]]
+            rest = [at[z] for c in comps[:i] + comps[i + 1:] for z in c]
+            d, g, r = min((float(shapely.distance(geoms[g], geoms[r])), g, r)
+                          for g in group for r in rest)
+            a, b = sorted((ids[g], ids[r]))
+            row = {"a": a, "b": b, "kind": "nearest",
+                   "crossing": f"{ids[g]} to {ids[r]}: no road across land in no ZCTA within the "
+                               "state; nearest ZCTA of the state",
+                   "gap_km": round(d / 1000.0, 2), "source": STATE_PROPOSAL}
+        out.append({**row, "status": "proposed"})
+    return out
+
+
+def state_connectors(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> list:
+    """Propose one in-state connector per detached group of each state not connected on the
+    polygon graph with the approved connectors (`state_crossings`), searching the state's primary
+    and secondary roads and every road of the groups' counties and their neighbours, and add the
+    rows not already listed to `connectors.csv` as `proposed`; no other row changes.  The owner
+    alone approves one, and until then `polygon_graph` adds no edge for it.  Returns the new rows."""
+    import numpy as np
+    import pandas as pd
+    g = polygon_graph(out)
+    groups = state_groups(g["vertices"], g["edges"], g["state"])
+    with open(os.path.join(out, "MANIFEST.json"), encoding="utf-8") as fh:
+        zcta_entry = next(e for e in json.load(fh)["sources"] if e["name"] == "zcta")
+    zpath = cached(SOURCES["zcta"][0], public)
+    if sha256(zpath) != zcta_entry["sha256"]:
+        raise ValueError(f"{zpath} is not the ZCTA file MANIFEST.json hashes")
+    log(f"geo: ZCTA polygons for {len(groups)} states not connected within: {sorted(groups)}")
+    df = _read(zpath, ["ZCTA5CE20"])
+    df = df[df["ZCTA5CE20"].isin(set(g["vertices"]))].sort_values("ZCTA5CE20")
+    ids, geoms = df["ZCTA5CE20"].to_numpy(), np.asarray(df.geometry.values)
+    ref = read_reference(out)
+    county = dict(zip(ref["zcta"], ref["county"]))
+    adj = read_reference(out, name="county_adjacency.csv.gz")
+    rows = []
+    for s, comps in groups.items():
+        home = {county[z] for c in comps[1:] for z in c}
+        near = home | set(adj.loc[adj["county"].isin(home), "neighbor"])
+        statefp = {county[z][:2] for c in comps for z in c}
+        paths, missing = _road_files(public, "prisecroads", statefp), []
+        for k in sorted(near):
+            try:
+                paths.append(cached(f"{ROAD_SOURCES['roads'][0]}tl_2025_{k}_roads.zip", public,
+                                    tries=3, timeout=60))
+            except RuntimeError:
+                missing.append(k)
+        roads = _read_roads(paths)
+        log(f"geo: {s}: {len(comps) - 1} detached groups, {len(roads)} roads"
+            + (f"; county roads census.gov would not serve: {missing}" if missing else ""))
+        got = state_crossings(ids, geoms, comps, roads)
+        if missing:
+            note = f" (county roads of {', '.join(missing)} not searched: census.gov would not serve them)"
+            got = [{**r, "crossing": r["crossing"] + note} for r in got]
+        rows += got
+    old = read_connectors(out)
+    have = {(r["a"], r["b"]) for r in old}
+    new = [r for r in rows if (r["a"], r["b"]) not in have]
+    pd.DataFrame(sorted(old + new, key=lambda r: (r["a"], r["b"], r["crossing"])),
+                 columns=list(CONNECTOR_COLUMNS)).to_csv(os.path.join(out, CONNECTORS), index=False,
+                                                         lineterminator="\n")
+    return new
+
+
+def pair_crossings(ids, geoms, state: dict, a: str, b: str, roads) -> list:
+    """Connector rows across the line between states `a` and `b` whatever the road's name (#114:
+    the build proposes a bridge only by a bridge word in its name or between two components, and
+    TIGER/Line 2025 names some river bridges only by route): each chain (`_gap_chains`) of the
+    roads in `roads` near ZCTAs of both states that reaches a ZCTA of each gives a row between its
+    nearest such pair, one per crossing name, the shortest gap's.  `ids` and `geoms` are every
+    CONUS ZCTA.  Every row is `proposed`, source `STATE_PROPOSAL`."""
+    import numpy as np
+    import shapely
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    ia = np.flatnonzero([state[z] == a for z in ids])
+    ib = np.flatnonzero([state[z] == b for z in ids])
+    ea = ia[shapely.dwithin(geoms[ia], shapely.union_all(geoms[ib]), PAIR_BORDER_M)]
+    eb = ib[shapely.dwithin(geoms[ib], shapely.union_all(geoms[ia]), PAIR_BORDER_M)]
+    zone = shapely.union_all(np.concatenate([geoms[ea], geoms[eb]])).buffer(PAIR_ZONE_M)
+    near = np.flatnonzero(shapely.intersects(np.asarray(roads.geometry.values), zone))
+    best = {}
+    for hit, names in _gap_chains(geoms, roads, near):
+        ha = [h for h in hit if state[ids[h]] == a]
+        hb = [h for h in hit if state[ids[h]] == b]
+        if ha and hb:
+            _, i, j = min((shapely.distance(geoms[i], geoms[j]), i, j) for i in ha for j in hb)
+            row = _row(ids, geoms, i, j, names, STATE_PROPOSAL)
+            if row["crossing"] not in best or row["gap_km"] < best[row["crossing"]]["gap_km"]:
+                best[row["crossing"]] = row
+    return [{**r, "status": "proposed"} for _, r in sorted(best.items())]
+
+
+def pair_connectors(pairs, public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> list:
+    """Propose the crossings `pair_crossings` finds on the two states' primary and secondary roads
+    for each state pair `(a, b)` of `pairs`, adding the rows whose ZCTA pair is not already listed
+    to `connectors.csv` as `proposed`; no other row changes.  Returns the new rows."""
+    import numpy as np
+    import pandas as pd
+    g = polygon_graph(out)
+    zpath = cached(SOURCES["zcta"][0], public)
+    df = _read(zpath, ["ZCTA5CE20"])
+    df = df[df["ZCTA5CE20"].isin(set(g["vertices"]))].sort_values("ZCTA5CE20")
+    ids, geoms = df["ZCTA5CE20"].to_numpy(), np.asarray(df.geometry.values)
+    ref = read_reference(out)
+    statefp = {s: c[:2] for s, c in zip(ref["state"], ref["county"])}
+    rows = []
+    for a, b in pairs:
+        roads = _read_roads(_road_files(public, "prisecroads", {statefp[a], statefp[b]}))
+        got = pair_crossings(ids, geoms, g["state"], a, b, roads.reset_index(drop=True))
+        log(f"geo: {a}-{b}: {len(got)} crossings")
+        rows += got
+    old = read_connectors(out)
+    have = {(r["a"], r["b"]) for r in old}
+    new = [r for r in rows if (r["a"], r["b"]) not in have]
+    pd.DataFrame(sorted(old + new, key=lambda r: (r["a"], r["b"], r["crossing"])),
+                 columns=list(CONNECTOR_COLUMNS)).to_csv(os.path.join(out, CONNECTORS), index=False,
+                                                         lineterminator="\n")
+    return new
+
+
 def _road_entry(name: str, paths: list, public: str) -> dict:
     """A manifest entry, as `manifest_entry`, for the road files a polygon build read."""
     files = {os.path.basename(p): sha256(p) for p in paths}
@@ -1060,7 +1239,18 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=REFERENCE_DIR, help="output (default reference/2025)")
     ap.add_argument("--polygon", action="store_true",
                     help="build M1's polygon graph and connector list from the reference in --out")
+    ap.add_argument("--state-connectors", action="store_true",
+                    help="propose one in-state connector per detached group of a state (#114)")
+    ap.add_argument("--pair-connectors", nargs="+", metavar="A-B",
+                    help="propose the road crossings between each pair of states (#114)")
     a = ap.parse_args(argv)
+    if a.state_connectors or a.pair_connectors:
+        log = lambda m: print(m, flush=True)    # noqa: E731
+        new = (state_connectors(a.public, a.out, log) if a.state_connectors else
+               pair_connectors([tuple(p.split("-")) for p in a.pair_connectors], a.public, a.out, log))
+        for r in new:
+            print(f"geo: proposed {r['a']}-{r['b']} {r['kind']}: {r['crossing']} ({r['gap_km']} km)")
+        return 0
     if a.polygon:
         r = polygon_build(a.public, a.out, log=lambda m: print(m, flush=True))
         print(f"geo: polygon graph {r['vertices']} vertices, {r['edges']} edges, "

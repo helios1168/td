@@ -1,10 +1,10 @@
 """output.py -- a run from spec to ledger, names, maps and exports (#71; `docs/MODEL.md` §8).
 
 `python -m td run <spec>` (`run`): the extract (or the seeded fixture) less its non-CONUS ZIPs and
-scoped to the scenario's fine channels (`spec.scope`, #79), the instance on the declared ZIP
-graph, each channel's master (`td.master`) and map (`td.realize`), then the ledger, its audit
-(`td.audit`), the district names and the maps, all in one run directory.  A spec the loader
-refuses, a channel with no plan and a realizer stop each end the run with the reason (S28); a
+scoped to the scenario's fine channels (`spec.scope`, #79), the instance on M1's polygon graph
+(#114; on the caller's graph when it passes one), each channel's master (`td.master`) and map
+(`td.realize`), then the ledger, its audit (`td.audit`), the district names and the maps, all in
+one run directory.  A spec the loader refuses, a channel with no plan and a realizer stop each end the run with the reason (S28); a
 channel whose declared band is proven infeasible first has its smallest master δ searched and
 written to `solver.json`, and never adopted (OD1, S10).  A failed audit still writes everything
 and exits 1.  A run writes only into a new or empty directory, so no
@@ -139,10 +139,12 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     ref = geo.read_reference() if reference is None else reference
     conus = data.conus(extract, ref)
     ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
-    if graph is None:
+    if graph is None:     # planned on M1's polygon graph (#114); `graph` is the audit's OD2 graph
         graph = declared_graph(ext, ref, public)
         polygon = geo.polygon_graph() if polygon is None else polygon
-    inst = tdspec.build(s, ext, ref, graph)
+        inst = tdspec.build(s, ext, ref)
+    else:
+        inst = tdspec.build(s, ext, ref, graph)
     components = inst.report["components"]
     for line in tdspec.component_lines(components):     # the floors, known before any solve
         print(line, flush=True)

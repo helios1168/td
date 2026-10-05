@@ -31,7 +31,8 @@ metro code that is not a 2025 metropolitan CBSA: micropolitan, CSA, metro-divisi
 codes are not metro units (OD5, #72).  A ZIP in two
 pieces is an overlap and `load` or `build` rejects it.  After carving, `build` checks every unit
 for ZIP connectivity (C11): a disconnected unit is listed, and a disconnected unit that is
-`whole` in any channel stops the run, naming the unit and its components (OQ6).
+`whole` in any channel stops the run, naming the unit and its components (OQ6), on a caller's
+own graph; on M1's polygon graph, the default (#114), it is listed in `disconnected_whole`.
 
 **Modes.**  Each channel sets a default mode and lists the units that differ.  A metro is
 classified once per channel against U_c: whole if its mass is at most U_c, else the channel's
@@ -467,6 +468,8 @@ class Units:
         centroid = {}
         for u, zs in zips.items():
             w = [1.0 if weight is None else float(weight.get(z, 0.0)) for z in zs]
+            if sum(w) <= 0:         # no land: the weighted ZIPs (the extract's) count equally
+                w = [1.0 if weight is None or z in weight else 0.0 for z in zs]
             if sum(w) <= 0:
                 w = [1.0] * len(zs)
             tot = sum(w)
@@ -537,44 +540,42 @@ class Instance:
 
 
 def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Instance:
-    """The scenario on an extract: units from the 2025 reference table, the ZIP graph among the
-    extract's placed ZIPs (`graph`: `{"vertices", "edges"}`, as `geo.zip_graph` returns), and
-    per-channel masses, on the extract `scope` leaves.  Raises SpecError on a fine channel in
-    neither F nor `planned_elsewhere`, a disconnected whole unit, or pieces that overlap on the
-    ZIPs.
+    """The scenario on an extract: units from the 2025 reference table over the planning graph's
+    vertices, and per-channel masses, on the extract `scope` leaves.
 
-    With no `graph`, the committed all-CONUS graph is used only when the extract holds every one
-    of its vertices.  The graph is the Voronoi rook graph of the placed points (`td.geo`), so
-    inducing the committed graph on a sparse extract would invent disconnections; a sparse
-    extract must pass the graph `geo.zip_graph` builds on its own placed ZIPs."""
+    The planning graph is M1's (#114): with no `graph`, `geo.polygon_graph()`, whose vertices are
+    every CONUS ZCTA (one the extract lacks has m_z = 0) and whose edges are the TIGER ZCTA
+    polygons' rook pairs and the owner-approved connectors, so the unit graph, the support family
+    and the drawability rows read the graph M1 judges.  A caller's own `graph` (`{"vertices",
+    "edges"}`, as `geo.zip_graph` returns for a fixture) replaces it, vertices included.
+    Centroids weigh only the extract's ZIPs, so the ZCTAs it lacks move no distance cap.
+
+    Raises SpecError on a fine channel in neither F nor `planned_elsewhere`, or pieces that
+    overlap on the ZIPs.  A whole unit that is not connected stops the build on a caller's graph
+    (OQ6); on the polygon graph it is reported in `disconnected_whole`, since an M1 district can
+    hold it whole through a neighbour (#114)."""
     from td import geo
     extract = scope(spec, extract)
     ref = geo.read_reference() if reference is None else reference
     ref = ref.set_index("zcta")
-    if graph is not None:
-        vertices = set(graph["vertices"])
-    else:
-        vertices = set(ref.index[ref["graph_vertex"].astype(int) == 1])     # trap 21
-        missing = vertices - set(extract.zips)
-        if missing:
-            raise SpecError(
-                f"the extract is sparse: it lacks {len(missing)} of the committed graph's "
-                f"{len(vertices)} vertices ({_show(sorted(missing))}), so the committed all-CONUS "
-                "graph does not apply; pass the graph geo.zip_graph builds on its placed points")
-    placed = [z for z in extract.zips if z in vertices and z in ref.index]
+    polygon = graph is None
+    if polygon:
+        graph = geo.polygon_graph()
+    vertices = set(graph["vertices"])
+    placed = sorted(z for z in vertices if z in ref.index)
     off_graph = sorted(set(extract.zips) - set(placed))
     rows = ref.loc[placed]
     unit_of = carve(spec, dict(zip(placed, rows["state"])), dict(zip(placed, rows["county"])),
                     dict(zip(placed, rows["cbsa"])))
     xy = dict(zip(placed, zip(rows["x"].astype(float), rows["y"].astype(float))))
-    land = dict(zip(placed, rows["aland_gaz"].astype(float)))
-    edges = graph["edges"] if graph is not None else _reference_edges()
+    in_extract = set(extract.zips)
+    land = {z: a for z, a in zip(placed, rows["aland_gaz"].astype(float)) if z in in_extract}
     cells = {}
     for z, f, m in zip(extract.z, extract.channel, extract.m_rel):
         if z in unit_of:
             cells[z, f] = cells.get((z, f), 0.0) + m
-    return assemble(spec, Units.from_graph(unit_of, edges, xy, land), cells,
-                    {"off_graph": off_graph})
+    return assemble(spec, Units.from_graph(unit_of, graph["edges"], xy, land), cells,
+                    {"off_graph": off_graph}, stop_disconnected_whole=not polygon)
 
 
 def scope(spec: Spec, extract):
@@ -597,16 +598,6 @@ def scope(spec: Spec, extract):
         meta=dict(extract.meta), dropped=dict(extract.dropped))
 
 
-def _reference_edges():
-    import os
-
-    import pandas as pd
-
-    from td import geo
-    e = pd.read_csv(os.path.join(geo.REFERENCE_DIR, "zcta_graph_edges.csv.gz"), dtype=str)
-    return list(zip(e["a"], e["b"]))
-
-
 def carve(spec: Spec, state: dict, county: dict, cbsa: dict) -> dict:
     """zip -> unit: a metro's ZIPs by CBSA, a piece's by county, the rest by state."""
     metro_of = {m.cbsa: m.name for m in spec.metros}
@@ -622,9 +613,11 @@ def carve(spec: Spec, state: dict, county: dict, cbsa: dict) -> dict:
     return out
 
 
-def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None) -> Instance:
+def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None,
+             stop_disconnected_whole: bool = True) -> Instance:
     """Channels from `cells` `{(zip, fine): M}`: masses, drops, metro classes, the national
-    checks and the connectivity check."""
+    checks and the connectivity check, which stops on a disconnected whole unit unless
+    `stop_disconnected_whole` is false (then `disconnected_whole` lists them)."""
     report = dict(report or {})
     unknown = sorted(set(units.zips) - set(spec.units))
     if unknown:
@@ -661,7 +654,8 @@ def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None) 
     report["components"] = {c.name: component_floor(units, c) for c in channels.values()}
     whole = sorted(u for u in units.components
                    if any(ch.mode.get(u) == "whole" for ch in channels.values()))
-    if whole:
+    report["disconnected_whole"] = whole
+    if whole and stop_disconnected_whole:
         raise SpecError("whole units that are not ZIP-connected (OQ6): " + "; ".join(
             f"{u}: {len(units.components[u])} components "
             + " | ".join(f"{len(c)} ZIPs {_show(c)}" for c in units.components[u])
