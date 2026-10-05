@@ -293,8 +293,9 @@ def test_connectors_name_their_crossing_and_the_graph_adds_only_approved_ones():
 
 def test_the_owners_connector_review_joins_every_island():
     """Owner, 2026-10-05 (#108): every row approved, each island with no crossing joined to its
-    nearest ZCTA; the polygon graph plus the approved connectors is one component."""
-    rows = geo.read_connectors()
+    nearest ZCTA; the polygon graph plus the approved connectors is one component.  The in-state
+    rows #114 proposed await the owner's review and are not part of it."""
+    rows = [r for r in geo.read_connectors() if r["source"] != geo.STATE_PROPOSAL]
     rep = _polygon_report()
     assert {r["status"] for r in rows} == {"approved"} and rep["connectors"]["approved"] == len(rows)
     nearest = {(r["a"], r["b"]) for r in rows if r["kind"] == "nearest"}

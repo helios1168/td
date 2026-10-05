@@ -31,9 +31,17 @@ M_{z,f} ≥ 0. The fine channels come from the extract's `channels.json`.
 - a metro piece, which may cross state lines (§6).
 
 Because every ZIP has exactly one unit, the loader rejects a spec whose pieces overlap. Z_v is the
-set of v's ZIPs, and G_v is the ZIP graph induced on Z_v. The ZIP graph is the one OD2 names
-**[policy OD2]**. The unit graph G joins two units when some ZIP of one shares a ZIP-graph edge
-with some ZIP of the other.
+set of v's ZIPs, and G_v is the ZIP graph induced on Z_v. The ZIP graph is M1's polygon graph
+(`td.geo.polygon_graph`): its vertices are every CONUS ZCTA, and two are adjacent when their 2025
+TIGER polygons share a boundary of positive length or an owner-approved connector joins them
+**[policy M1, OD2; #114]**. A ZCTA with no cell in the extract is a vertex with m_z = 0, so Z_v
+is every ZCTA of v. The unit graph G joins two units when some ZIP of one shares a ZIP-graph edge
+with some ZIP of the other, so a corner touch or a crossing with no approved connector joins no
+two units, and every M1 graph edge between units is an edge of G: on the same ZIPs, E(M1) ⊆
+E(G), which is sufficient for the units an M1-connected district touches to be connected in G
+(`docs/lenses/COUNCIL_2026-10-05.md` finding 13; a unit dropped for zero opportunity is not in
+V_c, #119). Unit centroids (§3.5, the distance cap) weigh
+only the extract's ZIPs, as before #114.
 
 **Planning channels.** A channel c has:
 - fine channels F_c and a domain D_c ⊆ V × F. The domains of a scenario's channels partition
@@ -527,9 +535,17 @@ except CA, TX, NY and FL fits whole in one district (`docs/memory/facts/state-bo
 Whole units need no realizer. If every unit is connected on the ZIP graph, a district made only of
 units it holds whole is connected **[proved]**: each unit is connected, its support is connected in
 G, and adjacent units in G share a ZIP edge.
-C2 checks every unit after pieces and metros are carved (C11), and a disconnected `whole` unit stops
-the run, naming the unit and its components **[policy OQ6]**. A district's part of a unit need not
-be connected: pieces are reported with their cause, and S28 still applies **[policy OQ6]**.
+C2 checks every unit after pieces and metros are carved (C11). On a caller's own graph (a
+fixture's) a disconnected `whole` unit stops the run, naming the unit and its components
+**[policy OQ6]**. On the polygon graph it is listed in `disconnected_whole` and the run goes on
+**[policy #114]**: an M1 district can hold such a unit whole when its other units reach every
+piece of it, which the master does not enforce, and the M1 audit (§9) fails a district that
+does not. On 2026-10-05 seven states are not connected within on the polygon graph with the
+approved connectors: CA, NV, NY, TN, UT, VA and WY, eleven detached groups; one in-state
+connector per group is proposed in `reference/2025/connectors.csv` for the owner's review and
+adds no edge until approved (`python -m td geo --state-connectors`). A district's part of a unit
+need not be connected: pieces are reported with their cause, and S28 still applies
+**[policy OQ6]**.
 
 For each splittable unit v with |J_v| ≥ 2:
 1. **Centres.**
