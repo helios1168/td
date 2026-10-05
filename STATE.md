@@ -4,14 +4,14 @@
 
 ## Now
 
-Looks-first experiment plan (PROBLEM.md row 2026-10-04): fewest splits inside a plain ±15% band, $ per district within ±10% of target. Research #90 running (W0, W1). Ready: #84 #85 #86 #88 #89. #81 landed (bd522bd).
+Wave 0a: landed #92 #84 #88 #86 #93 #94 (run tracking, margin switch, component report, sub-tolerance cells, looks scorer, split floor). In flight: #89 round 2 (merge main), #85 round 2 (fixes + merge main; swap rule A pending owner). #90's SPLITS.md brief awaits owner review on branch m5-studio/90.
 
 ## Next
 
-- Start wave 0: #84 #92 #93 #94 + #85 #86 #88 #89 as parallel worktree lanes (owner to start).
-- Brief docs/problem/SPLITS.md (#90) for owner review, then council #91.
-- Lanes #96–#102 after #84 + #92; #103 #104 after #91; #105 finalization.
+- Land #89 and #85 when their rounds pass.
+- Unblocked, not yet ready: #95 baselines, lanes #96–#102 (owner starts the wave).
+- Council #91 after #90 is approved; #103 #104 after #91.
 
 ## Blocked
 
-#82 #83 owner decisions; #3, #59, #75 (after #74), #76 (after #3). Combined-channel $ target (D11) open.
+#82 #83 owner decisions; #85 swap rule B (owner); D11 combined-channel $ target; #3, #59, #75, #76.
