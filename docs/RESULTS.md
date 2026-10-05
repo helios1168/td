@@ -427,7 +427,9 @@ export TD_ZCTA_SHP=runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/
 ## #109 A contiguity-aware realizer on today's plans (2026-10-05)
 
 Measured 2026-10-05 on m5 with `tools/exp/contig/` (#109) on the polygon graph and its 163
-approved connectors, after #114 and #116. Each scenario was re-planned on today's `main` with
+approved connectors, after #114 and #116, before the owner approved #114's 16 proposed connectors
+the same day; those runs are in `runs/exp/contig/pre_connectors/`, and s13, deck A and grid
+na15/WH12/FI23 are being redrawn on the approved list. Each scenario was re-planned on today's `main` with
 `margin = false` in every channel (μ = 0), and drawn by the realizer instead of the power diagram;
 the run folders are `runs/exp/contig/<map>-<arm>/` (gitignored; full ledger, scorecard, districts,
 run.json, contig.json). M1 is `td.audit.check_m1` on the written ledger, footprint coverage (D3).
@@ -454,8 +456,8 @@ are real maps judged by the audit, and its failures prove nothing.
 
 **What was run.** Deck A (`none_stay_0_m1600_na13_WH12_FI23`, national 13 / WH 12 / FI 23, every
 channel optimal at δ = 0.02 on the polygon graph), IFA K 49 (optimal at δ = 0.02), layout-`none`
-grid maps, and s13 (`ne_okks_s13_na15_WH12_FI20_CB3`, FI δ = 0.08) for comparison only: it cannot
-pass M1 until the owner rules on #114's proposed connectors (D14). Decks B and C are combined
+grid maps, and s13 (`ne_okks_s13_na15_WH12_FI20_CB3`, FI δ = 0.08), for comparison only while
+#114's proposed connectors were unruled (D14). Decks B and C are combined
 layouts blocked the same way and were not drawn. Arms: `arm1` (the master's support, shares
 recomputed in the plan's band), `arm1` with fixed targets (each (unit, district) mass within the
 unit's heaviest ZCTA of the plan, the triage's row 15), and arm 2's remedies as separate runs, never
@@ -478,8 +480,9 @@ certificate was produced for any real map, at fixed targets or recomputed shares
 certificate (#7's thin share, `tests/test_contig_realize.py`) is the only proof. The fixed-target
 runs were equally unknown on every large group.
 
-**Results** (runs ended by 08:45; per map, channels summed; `runs/exp/contig/TABLE.md` on m5 has
-the per-channel table, rebuilt by `tools/exp/contig/report.py` when the remaining runs end):
+**Results** on the pre-approval connector list (runs ended by 08:45; per map, channels summed;
+`runs/exp/contig/pre_connectors/TABLE.md` on m5 has the per-channel table, from
+`tools/exp/contig/report.py`):
 
 | run | M1 (D3) | pieces | largest piece | groups or units drawn connected | worst / mean dev | split units | cuts | δ needed | share-only (U61) | exclave splits |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -524,9 +527,9 @@ one connector) is defined on M1-passing drawings, and there are none.
   and no certificate exists for it.
 - **Elsewhere the sequential realizer draws most split units connected at the plan's δ**: IFA 20 of
   22 units (FL and NY unknown), deck A 15 of 28 at δ = 0.02 and all 28 at δ ≤ 0.05.
-- **s13** (comparison only) gets down to a largest piece of 0.088 τ, against 0.455 τ for the power
-  diagram, but fails on the cross-channel exclaves D14 names (06390, 89826, 89832, 82933–82944) and
-  on its NY unit.
+- **s13** gets down to a largest piece of 0.088 τ, against 0.455 τ for the power diagram, but on
+  the pre-approval list it fails on the cross-channel exclaves D14 names (06390, 89826, 89832,
+  82933–82944), which the approved connectors now join, and on five small NYC pieces.
 - **Arm 2** (`split`, `move`) did not beat arm 1: allowing a unit's neighbouring districts makes the
   per-unit models larger and slower, and no remedy produced an M1 map.
 
