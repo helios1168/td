@@ -13,7 +13,7 @@ import math
 import random
 import tomllib
 
-from td import audit, master, realize, spec, supports
+from td import audit, master, realize, spec, supports, swap
 
 from tests import test_master as tm
 from tests import test_spec as ts
@@ -176,6 +176,17 @@ def test_centres_are_deterministic_and_follow_the_f6_policy():
 
 
 # ------------------------------------------------------------------------------ the map
+def _unswapped(inst, d) -> collections.Counter:
+    """(unit, district) -> drawn mass before the swap pass (§7 step 5), which moves districts
+    toward τ whatever their plan, raising or lowering Δ: Claim 3 bounds the map before it."""
+    owner, m, drawn = dict(d.owner), inst.channels[d.channel].m, collections.Counter()
+    for z, j, _ in reversed(d.swapped):
+        owner[z] = j
+    for z, j in owner.items():
+        drawn[inst.units.unit_of[z], j] += m[z]
+    return drawn
+
+
 def _grid(prefix, nx, ny, x0=0.0, mass=1.0):
     zs = {(i, j): f"{prefix}{i:02d}{j}" for i in range(nx) for j in range(ny)}
     edges = [(zs[i, j], zs[i + 1, j]) for i in range(nx - 1) for j in range(ny)]
@@ -196,8 +207,9 @@ def test_1_no_district_is_starved_of_its_share_of_a_split_unit():
     plan = _plan(inst, [({"AR", "AL"}, {"AR": 1.0, "AL": 0.15}), ({"AL"}, {"AL": 0.6}),
                         ({"AZ", "AL"}, {"AZ": 1.0, "AL": 0.25})])
     d = realize.realize(inst, plan, xy)
+    drawn = _unswapped(inst, d)
     for (unit, j), a in d.planned.items():
-        assert abs(d.drawn[unit, j] - a) < 1.0 + 1e-6, (unit, j, d.drawn[unit, j], a)
+        assert abs(drawn[unit, j] - a) < 1.0 + 1e-6, (unit, j, drawn[unit, j], a)
     assert not d.pieces and not d.vanished
 
 
@@ -222,7 +234,7 @@ def test_7_a_share_too_thin_to_link_its_units_is_a_corridor_piece_not_a_bridge()
                         ({"NY"}, {"NY": 0.95})])
     d = realize.realize(inst, plan, xy)
     thin = "CT+NJ+NY#1"
-    assert d.drawn["NY", "NY#1"] >= d.planned["NY", "NY#1"] - 1.0 - 1e-9
+    assert _unswapped(inst, d)["NY", "NY#1"] >= d.planned["NY", "NY#1"] - 1.0 - 1e-9
     cut = [pc for pc in d.pieces if pc.district == thin]
     assert len(cut) == 1 and cut[0].cause == "corridor"
     assert {z[:2] for z in cut[0].zips} in ({"ct"}, {"nj"})         # a whole unit, cut off
@@ -294,13 +306,18 @@ def _guard_toy(mode):
     return inst, owner, support
 
 
+def _one(support):
+    """One exchange component for every district, so only the mode guard and the band decide."""
+    return dict.fromkeys(support, "one")
+
+
 def test_repair_never_moves_a_piece_of_a_clipped_unit_out_of_it():
     inst, owner, support = _guard_toy("clipped")
     assert inst.channels["X"].final_band == (1.5, 3.5)
-    assert realize.repair(inst, "X", owner, support) == []
+    assert realize.repair(inst, "X", owner, support, _one(support)) == []
     assert owner["v3"] == "AL#1"
     inst, owner, support = _guard_toy("free")                       # the guard is what stops it
-    assert realize.repair(inst, "X", owner, support) == [(("v3",), "AL#1", "AR#1")]
+    assert realize.repair(inst, "X", owner, support, _one(support)) == [(("v3",), "AL#1", "AR#1")]
     assert owner["v3"] == "AR#1"
 
 
@@ -311,7 +328,7 @@ def test_repair_never_moves_a_piece_of_a_whole_unit():
     support["AL#2"] = frozenset({"AL", "AR"})
     lo, hi = inst.channels["X"].final_band
     assert lo <= 1.5 + 1.5 <= hi and lo <= 1.0 + 1.0 <= hi          # the band would allow it
-    assert realize.repair(inst, "X", owner, support) == [] and owner["u1"] == "AL#2"
+    assert realize.repair(inst, "X", owner, support, _one(support)) == [] and owner["u1"] == "AL#2"
 
 
 def test_repair_skips_a_neighbour_outside_the_channel():
@@ -319,7 +336,7 @@ def test_repair_skips_a_neighbour_outside_the_channel():
     ZIP beside a national unit does: it owns nothing here and is no target."""
     inst, owner, support = _guard_toy("free")
     del owner["u0"], owner["u1"], support["AR#1"]
-    assert realize.repair(inst, "X", owner, support) == [] and owner["v3"] == "AL#1"
+    assert realize.repair(inst, "X", owner, support, _one(support)) == [] and owner["v3"] == "AL#1"
 
 
 def _mixed_toy():
@@ -351,6 +368,28 @@ def test_repair_gives_no_zip_outside_a_clipped_unit_to_a_district_owning_part_of
     d = realize.realize(inst, plan, xy)
     assert d.moved == [(("v3",), "AL#1", "AL#2")] and d.owner["v3"] == "AL#2"
     assert audit.check_modes(realize.to_run(inst, {"X": d})).status == "pass"
+
+
+def test_repair_with_four_arguments_reads_the_components_off_the_supports():
+    """Hess assembly (`tools/exp81/run_hess.py`) calls `repair(inst, channel, owner, support)`.
+    The exchange components then come from the supports: the moves match the call that passes
+    them, and the component guard still holds."""
+    inst, xy, plan = _mixed_toy()
+    d = realize.realize(inst, plan, xy)
+    before = dict(d.owner)
+    for z, j, _ in reversed(d.swapped):
+        before[z] = j
+    for part, j, _ in reversed(d.moved):
+        before.update(dict.fromkeys(part, j))
+    support = {c.name: c.support for c in plan.copies}
+    comp = swap.components(d.planned)
+    assert swap.support_components(support) == comp
+    given, default = dict(before), dict(before)
+    moved = realize.repair(inst, "X", given, support, comp)
+    assert realize.repair(inst, "X", default, support) == moved == d.moved and default == given
+    inst, owner, support = _guard_toy("free")       # AR#1 is its own component: 0.5 -> 1.0 refused
+    assert swap.support_components(support) == {"AL#1": "AL#1", "AL#2": "AL#1", "AR#1": "AR#1"}
+    assert realize.repair(inst, "X", owner, support) == [] and owner["v3"] == "AL#1"
 
 
 def test_the_detached_piece_is_the_one_the_audit_detaches_on_a_mass_tie():
