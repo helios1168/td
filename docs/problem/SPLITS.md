@@ -17,6 +17,14 @@ the support master count split units and minimise them, exactly and with a certi
 losing what Claims 1–3 and Proposition D guarantee?** And which of the candidate layouts (§5) is
 an exact method and which a heuristic?
 
+**Under M1 (added 2026-10-05).** Since 2026-10-04 every district must be one connected piece on the
+drawn ZCTA polygons, with no tolerance (M1, `docs/problem/PROBLEM.md` "The goal"). Today's maps all
+fail it: the power diagram places a split state's share with no requirement to touch the rest of
+its district. So every split count, floor and δ* in this brief is a unit-level result. Each is a
+lower bound for a contiguous map, since a tighter constraint can only raise it, not a value a
+contiguous map is known to reach. A formulation is useful only if it stays exact, or says what it
+loses, once the realizer must draw each share connected to the rest of its district (SU9).
+
 ## 2. The problem
 
 ### 2.1 What is counted (owner, 2026-10-04)
@@ -242,7 +250,8 @@ then spread (§4.1).
   claimed minimum must carry its certificate or be called a search result.
 - Solver settings: `mip_rel_gap = 0` and `mip_abs_gap = 0` for a certificate (trap 12); one
   thread count per process (trap 18); never drop the objective to find a feasible point (trap 19).
-- Non-goals: staffing; the realizer's geometry; new channels (#76, #77).
+- Non-goals: staffing; new channels (#76, #77). The realizer's geometry is out of scope here, but
+  M1 is not: a formulation must be judged on the contiguous maps it allows (SU9).
 
 ## 7. Unknowns
 
@@ -260,10 +269,11 @@ T claim with a proof sketch and a brute force over all plans on 6–10 units.
 | SU6 | **Which layouts are exact.** Prove or refute: F6 is exact under μ ≡ 0 with an exact outer search; F7 is exact only when it enumerates the K allocation and keeps τ_c. What does each lose when it is not exact? | T |
 | SU7 | **Defects in the master.** Which visual defects can be rows or weights (F4's piece floor; a cap on districts per split state, which bounds cuts), and which stay in the scorer? Does F4 keep Claim 1 and Proposition D as η does, as a restriction? | T/B |
 | SU8 | **Exchange rates.** Is CA in 5 worse than CA in 4, so cuts are rank 1b? Should a district holding a cross-state metro count as splitting each state? What is a split worth against one point of balance inside the band? | B |
+| SU9 | **Splits under M1.** Which candidate formulations keep their guarantees when every drawn district must be ZIP-connected on the polygon graph? Does a split unit's share need a contiguity condition in the master (for example, the share must border the district's whole units), and how far can the unit-level minimum split count understate the minimum for contiguous maps? | T/E |
 
 ## 8. What we want back
 
-- **Pass 1, each seat independently:** an answer to SU1–SU8 in your own terms, with a confidence
+- **Pass 1, each seat independently:** an answer to SU1–SU9 in your own terms, with a confidence
   and what would change it, and a recommendation for the master's objective: which formulation
   lane B2 (#103) builds, whether lane B1 (#99) stays as a cuts proxy, what lane B4 (#104) adds, and
   the certification protocol (passes, pins, gaps, cutoff).
