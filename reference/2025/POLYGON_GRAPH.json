@@ -1,0 +1,1377 @@
+{
+ "vintage": "2025",
+ "crs": "EPSG:5070",
+ "command": "python -m td geo --polygon --public $TD_REPO/data/public",
+ "adjacency": "rook: boundaries share a length > 0 m in EPSG:5070; a corner touch (length 0) is not an edge",
+ "min_border_m": 0.0,
+ "touch_m": 1.0,
+ "road_search_m": 30000.0,
+ "sources": [
+  {
+   "name": "zcta",
+   "url": "https://www2.census.gov/geo/tiger/TIGER2025/ZCTA520/tl_2025_us_zcta520.zip",
+   "vintage": "2025",
+   "use": "ZCTA polygons for the overlays",
+   "sha256": "e87129634eefe8719ef06ce4cfdf6588520be2e359360e590aaae90e4afb1911"
+  },
+  {
+   "name": "prisecroads",
+   "url": "https://www2.census.gov/geo/tiger/TIGER2025/PRISECROADS/",
+   "vintage": "2025",
+   "use": "primary and secondary roads, one file per state: the crossings connectors name",
+   "sha256": "46db1d1be5f2cb31079e2b2661ea71a99614217ea7a883afc5390ec516dae3c9",
+   "files": {
+    "tl_2025_01_prisecroads.zip": "e43196ea2a67b4d8eaed1906ba0fd6743d1ca472653dabd9c57d690b81b8e125",
+    "tl_2025_04_prisecroads.zip": "cbcea97b375bd62233b6ee6070c94b119e964f4bdf00eedc9ca3c90ae719d0bd",
+    "tl_2025_05_prisecroads.zip": "0c181b8023c36e5fa7c9e9f62d4b2e453552b30da9989031ad7abc77404944b2",
+    "tl_2025_06_prisecroads.zip": "79d8485a0ed8e1971390efb55f4e832e449c857a28be97db1ded3850b9f5f8cf",
+    "tl_2025_08_prisecroads.zip": "1f7ebfad36d1cc13d892b8db3911a51adbc5ff9c4d75fe6d32cd94b4880cb6b8",
+    "tl_2025_09_prisecroads.zip": "c4d783d7ae271d63b8f3ac70c4f17a229469117ef633f88f40020dc19b745698",
+    "tl_2025_10_prisecroads.zip": "702366d39de6b7c5dd55d85ead0f3250033da621652f6e733678880f802a9e3b",
+    "tl_2025_11_prisecroads.zip": "e2de714bdd27dd7a79bed4416cec14273b04936a0a5f691afbe8e2c930ee9288",
+    "tl_2025_12_prisecroads.zip": "4aed3d13d94f1e3433839b3ce9b7b07c9b919b214bd93b6254cbb6dfb479d166",
+    "tl_2025_13_prisecroads.zip": "172a11c5d7bc9d17b125868d43af418cbf734d4c6d9f6f7168f0e215bddc93cd",
+    "tl_2025_16_prisecroads.zip": "1a728ce252d64e1cf14f80683bc1d4b9f998c7b8f7ce07f4d4607cc4c5e169cc",
+    "tl_2025_17_prisecroads.zip": "f0852da8f07689189b4cd8d202e9da452326e4234ff49ddea31d3ea3573a4bb4",
+    "tl_2025_18_prisecroads.zip": "d6193f990a73982df887a9c16f48bd7c614146906404ac091ec91f4b0d5317ce",
+    "tl_2025_19_prisecroads.zip": "687b91fb8f2ef234fdc9d1ec949ce9b3f8ae4c63ce03415ea00573121df139de",
+    "tl_2025_20_prisecroads.zip": "e227b9f9cab383420e26efc90b0c093ff41a010ca1fa0a07e41938da201bd800",
+    "tl_2025_21_prisecroads.zip": "a0c703e78262ed2fa631305a930b27b21c22930664598558f3f69683d2dea78b",
+    "tl_2025_22_prisecroads.zip": "e284ed7e8937157d5da4efd1728a1b6a03409c33263db531fb01a3f51515bc55",
+    "tl_2025_23_prisecroads.zip": "7d66dd55eda92de357c6a0c87f452fec09a867451f2c03d0f3f4302978d3b941",
+    "tl_2025_24_prisecroads.zip": "f7651ff470980f567454d4f6357542d0ab442084f961de11c8887924eff73d76",
+    "tl_2025_25_prisecroads.zip": "59cea676388e5c14bc19796fb45047e15c15c10d3e2f05a1b763feed0f740d42",
+    "tl_2025_26_prisecroads.zip": "d5e388e53d871aca8c230921454555da328905a688bf45ad7c8aaad6f908eb67",
+    "tl_2025_27_prisecroads.zip": "dd87b5ad647c6efa8f822651d2457e8043d9090f7eb3a400b2d4de2d5a3fa342",
+    "tl_2025_28_prisecroads.zip": "afb49e6a20a28df944e3aca2e2a1b0967dff151829e386cdeb61dc583e189ea3",
+    "tl_2025_29_prisecroads.zip": "a6e4dd2df027908fbd5a1c2a2c0500b7864d43f557e20e90751f49c1e26d4d74",
+    "tl_2025_30_prisecroads.zip": "0c7c1d7af2436f56ae61fe9ae57f02f0f304b05254d5e54bcf4d21c8e23c5b99",
+    "tl_2025_31_prisecroads.zip": "26afda8ad38b0c270b08ef6242271d4128736b191ad1527b738adfb53203d2ed",
+    "tl_2025_32_prisecroads.zip": "0dbf3fdc4c666e3f9c20d097fe1d49d6ecef129c0dc117b40e54dc3e642e8652",
+    "tl_2025_33_prisecroads.zip": "dabe081a28e065598e395f2f81ace44204d30498820133ac761fcec434e7545f",
+    "tl_2025_34_prisecroads.zip": "3a539b3ec10fae675c7215086be9da06714f78ddcf3c753a39c6d2f8af24daf7",
+    "tl_2025_35_prisecroads.zip": "b2aa1cc17c3d0e623aed7dfd1ec9ad5ac4db4f123f3188737adeeb5366951f7a",
+    "tl_2025_36_prisecroads.zip": "f96453fdc03029be40d78203559e8833f34fa79d006d8d35901ed58340661a2f",
+    "tl_2025_37_prisecroads.zip": "cce2cbc384adf5f0158cee51ef6c312ba277ab939809d2d02ba1aca1e21fdb51",
+    "tl_2025_38_prisecroads.zip": "eda6c94392d352e8d4fd86422080e12511e32b410fd7516d0d56cdeb2e4e9eba",
+    "tl_2025_39_prisecroads.zip": "865913308b530235fb2bea969eba19d36b3769df248366ff2e61a768b3b6b08b",
+    "tl_2025_40_prisecroads.zip": "bb6921db25bc03f0321ccadcdb5ac9b709a837369ebb66234ce55bb1390f2a27",
+    "tl_2025_41_prisecroads.zip": "0901d1af70d2150fea90b09db30407dddb6ab0bc3aa6a6175798c60bceba7b67",
+    "tl_2025_42_prisecroads.zip": "fdeed89517877a3be8f3e692dc1ba1794e6f90da382fa528bce67ec44451a00e",
+    "tl_2025_44_prisecroads.zip": "c22789c4753b253bd83642a36944c036999c7d869c4cf278be4b25130039472b",
+    "tl_2025_45_prisecroads.zip": "068f6e302458122441dfa1c53f6b78e971ab2564e06cdcf42da1fc48ccd22eae",
+    "tl_2025_46_prisecroads.zip": "ff120346ad861fcbccefb9dcf15ddfd04987d11fd410f5209f5446063fee0207",
+    "tl_2025_47_prisecroads.zip": "4fcc9893c002af72ec0ef3608d86303171a798710ae2720768883ed59e9e653d",
+    "tl_2025_48_prisecroads.zip": "ab9b94248f46577b22e3bc87acdf03d1d7b988d93a7d4b6a32d46b9fc9edb56a",
+    "tl_2025_49_prisecroads.zip": "b736ecd5c107f39fa272ffa45b93231d8d20ee2bcf1ec0924669d6e6edfba7c1",
+    "tl_2025_50_prisecroads.zip": "dc904d7bb3161397eea234f110227293f6292e385b66fb122d518bf6aa368b86",
+    "tl_2025_51_prisecroads.zip": "13930357044ab577aa7f3e77fa4f361ccc2882ef4d8437534724098d7031af44",
+    "tl_2025_53_prisecroads.zip": "a2e2e66452b4a991e4252ff18a66222bc09ba0073b57ca26d36e95e6fd0cb092",
+    "tl_2025_54_prisecroads.zip": "e6b66d18976073d385a7df3e9485aae690e8227fd81f9016cd3887a106972bfc",
+    "tl_2025_55_prisecroads.zip": "9f0ecc924f87dc2e4d6816b085047e867a1c6e217c50a15a4c0ea62ba617e6e4",
+    "tl_2025_56_prisecroads.zip": "9310a7852a0d7b3a678ebc51583e8766948772679a01e61b64903621033c648f"
+   }
+  },
+  {
+   "name": "roads",
+   "url": "https://www2.census.gov/geo/tiger/TIGER2025/ROADS/",
+   "vintage": "2025",
+   "use": "all roads, one file per county, for the islands no primary or secondary road reaches",
+   "sha256": "6d8b5dc9fc68625e3e9878fd133191a356b65c47448435222358ecbc720f5bd1",
+   "files": {
+    "tl_2025_04012_roads.zip": "4bfd5b781c202da5e3fb62e0a466d3663ef4a1b572a1a1a799b7488f0b65c910",
+    "tl_2025_04015_roads.zip": "0e97ff5555912d1de232d443f19eb1e3c40b249ccb119273d347bd19192375f3",
+    "tl_2025_06027_roads.zip": "ed2c55e458b49abbf50d32bd6aad01aa2d6c6b17243126f13918216a8a0ea2cd",
+    "tl_2025_06029_roads.zip": "c6b2350ff3014458efd6fdde961f3166b0b82721acfd3bdf74a1db51ede6e84f",
+    "tl_2025_06031_roads.zip": "89060760aaafd22d7409939b408e9941a21003f44c64fb604010f763b6d3d349",
+    "tl_2025_06037_roads.zip": "242425987631ce0edb0a41d447e73e6dca31432a9168f322fb55c1d00cf34871",
+    "tl_2025_06059_roads.zip": "a72c5c40271959e9e09e45b3937ad69d74e0b0561e6b0999b3e6a38d9420362f",
+    "tl_2025_06065_roads.zip": "95f7ce224ede0a1eb8f4a9973dd385406429a9c5abff1d3cdc092b9206259956",
+    "tl_2025_06071_roads.zip": "9e59c75364decf4f8251d72d202f8836d452c10668a75260e685a656de65d7e1",
+    "tl_2025_06079_roads.zip": "f880e2299827ef74c195be5f2b3c950c70d23ebdd46943f1820db7fd18ef42f9",
+    "tl_2025_06083_roads.zip": "6f8c933b1ec0e8946da1c95b0218d50d130857dec738bb17ff3cf5f8e2ededb9",
+    "tl_2025_06107_roads.zip": "841ac8b7c1553abdb63540048f656e2d48feda8acb1ff8aa38d4dbfa459250d8",
+    "tl_2025_06111_roads.zip": "95e4a8ce219afb8a2061f11ca79a172a862a3eecd31f3853f6d78de4b998d4bf",
+    "tl_2025_23003_roads.zip": "0a916cdaca2d19ebc505bee2dc61d9ee198372dbdc34700a15eb280d7a05ffc9",
+    "tl_2025_23019_roads.zip": "ecb44892aa4013ae9ee87fef06967125bc71367acf46481e04238961f4cebbbc",
+    "tl_2025_23021_roads.zip": "0255e1db6dc99c5b41789fa90b64a378434fffa91e4870a3ae97357cace1ceb0",
+    "tl_2025_23025_roads.zip": "409a36c2feca13995ac2b36390ce0f347f8cdad2623be9c3942d04c74485751c",
+    "tl_2025_23029_roads.zip": "6db71536a928eb4f71be45a090a9ae2734effdb863640d41ce23f1ae132672c9",
+    "tl_2025_32003_roads.zip": "d305f61fb0090fef20bab19b108cefad8a3cc61dc1532429251212c255fd140e",
+    "tl_2025_32007_roads.zip": "8446094f707ee8eb4ff3b9573d2660672ddde5ac19ced91a54d8c90884ef058b",
+    "tl_2025_32033_roads.zip": "bc0c83685a50023ec06e02e36f5bdf1764af457342b4daf5e45883c8d0456187",
+    "tl_2025_39043_roads.zip": "ad4e8ad9783bc18be0fe507fa50bd6d553a68631d60008db750f195ae2ba90ad",
+    "tl_2025_39095_roads.zip": "9c81dc65c3120857da2cf008cc4e3a0394f4974b37a6f405351f4f05e1c881ff",
+    "tl_2025_39123_roads.zip": "3876b4ffe29e636cc8f2cbfb35acd68d06c8673f1f3724a315a9dfdf84878f13",
+    "tl_2025_39143_roads.zip": "8d2d85aeed905fca30e9009a6deec90079a0451f00f91cb40f01bc96ce822108",
+    "tl_2025_39173_roads.zip": "050871a7e8bb08a0f7e933b6bb4eb16414ea8439d485f13c56c4502843e33891",
+    "tl_2025_49003_roads.zip": "b2c69b2634e9e8d0ea5d7869d32335fa2ab2cba71263c7a4048a07b6102dec14",
+    "tl_2025_49011_roads.zip": "803b8879663fc640f3c53a5cab7cccffdf7ebae714f8a119cca254327da02ec1",
+    "tl_2025_49023_roads.zip": "0670510b4ace58c89fc6f40804aa59696019aa05774deae41762edc81e6e77a0",
+    "tl_2025_49035_roads.zip": "16ed6bd06a2687ac9c638fdabe6c083112c2df92abe71e014ec05ba540f2b775",
+    "tl_2025_49045_roads.zip": "99efd1b28227bbdb3dcdbf89def1b6ef87e95e8426e42b40f90950978dc490d6",
+    "tl_2025_49049_roads.zip": "52c4b5f36bfbf817e7c3342718d3872fdb0b66de8e7371e6d3a7e1c4fe4d0933",
+    "tl_2025_49057_roads.zip": "d8cf373fd086e15a3b69031b4ac81c9e88220067e660d945cf27c4c3064e7583",
+    "tl_2025_53009_roads.zip": "d3f6624fe66b55b5f17996b7fb1d36d8d4262bfd2d8145b2554db963450dd52f",
+    "tl_2025_53029_roads.zip": "58314edf9a066c2668fa427ba98fed0c435b269a26ff03a039d55c77d57e671f",
+    "tl_2025_53031_roads.zip": "a1eafd03a27441c3c974e6cf5ce96c181444f65808c8d80c033e78b4dbb9b2c4",
+    "tl_2025_53033_roads.zip": "515ed08d504aeaf6cab0afbd8ff6c81f6d547f6abab30c578b3b39a231b53b36",
+    "tl_2025_53035_roads.zip": "3c4bb9b0430b1be30fd60cf3271298e5779c52549a1c0e27472e34adcae9313b",
+    "tl_2025_53045_roads.zip": "1b08010211fb939f194f4a9dcd6d3d7c22b214ba61e0ddf749c808f5659612bd",
+    "tl_2025_53047_roads.zip": "11c9f924bc57f6fe9e1421d70f1fbe9b204e3b8a6396c19b4b893a24e46f11d8",
+    "tl_2025_53053_roads.zip": "13fc3076da4d20aea03f71f54fc2c3e45c92acb1c7b3350f5186e90c5c7eb422",
+    "tl_2025_53055_roads.zip": "1623d8702ff7050b7e4348ae4f1dc3efbe93ce25255c5efa8c2aaf192b2d4c3a",
+    "tl_2025_53057_roads.zip": "61f92df36cda9672db279eca20e1fa8f9ae3b98ddfba70d498ee6d420d82f825",
+    "tl_2025_53061_roads.zip": "6c8a564d9203698069006731bec78a63987fa8dfdbbaedcce8e06a3817e0cef9",
+    "tl_2025_53073_roads.zip": "b3deaf0fe985e20dd2b8d7e31094f37d9115fdc6487ec09a26919808771ed7f6"
+   }
+  }
+ ],
+ "vertices": 33300,
+ "no_polygon": [],
+ "edges": 89721,
+ "smallest_border_m": 1.441,
+ "corner_only_pairs": 1685,
+ "overlapping_pairs": [],
+ "against_voronoi": {
+  "voronoi_edges": 98941,
+  "shared": 70815,
+  "added": 18906,
+  "dropped": 28126
+ },
+ "components": 66,
+ "component_sizes": [
+  32921,
+  280,
+  13,
+  6,
+  5,
+  4,
+  4,
+  3,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1
+ ],
+ "connectors": {
+  "rows": 163,
+  "tunnel": 8,
+  "ferry": 22,
+  "bridge": 52,
+  "road": 77,
+  "nearest": 4,
+  "proposed": 0,
+  "approved": 163,
+  "rejected": 0
+ },
+ "components_with_approved_connectors": 1,
+ "component_sizes_with_approved_connectors": [
+  33300
+ ],
+ "multipart_zctas": 1429,
+ "part_edges": {
+  "rook": 10583,
+  "connector": 31
+ },
+ "county_road_counties": [
+  "04012",
+  "04015",
+  "06027",
+  "06029",
+  "06031",
+  "06037",
+  "06059",
+  "06065",
+  "06071",
+  "06079",
+  "06083",
+  "06107",
+  "06111",
+  "23003",
+  "23019",
+  "23021",
+  "23025",
+  "23029",
+  "32003",
+  "32007",
+  "32033",
+  "39043",
+  "39095",
+  "39123",
+  "39143",
+  "39173",
+  "49003",
+  "49011",
+  "49023",
+  "49035",
+  "49045",
+  "49049",
+  "49057",
+  "53009",
+  "53029",
+  "53031",
+  "53033",
+  "53035",
+  "53045",
+  "53047",
+  "53053",
+  "53055",
+  "53057",
+  "53061",
+  "53073"
+ ],
+ "islands": [
+  {
+   "component": 1,
+   "zctas": [
+    "11001",
+    "11003",
+    "11004",
+    "11005",
+    "11010",
+    "11020",
+    "11021",
+    "11023",
+    "11024",
+    "11030",
+    "11040",
+    "11042",
+    "11050",
+    "11096",
+    "11101",
+    "11102",
+    "11103",
+    "11104",
+    "11105",
+    "11106",
+    "11109",
+    "11201",
+    "11203",
+    "11204",
+    "11205",
+    "11206",
+    "11207",
+    "11208",
+    "11209",
+    "11210",
+    "11211",
+    "11212",
+    "11213",
+    "11214",
+    "11215",
+    "11216",
+    "11217",
+    "11218",
+    "11219",
+    "11220",
+    "11221",
+    "11222",
+    "11223",
+    "11224",
+    "11225",
+    "11226",
+    "11228",
+    "11229",
+    "11230",
+    "11231",
+    "11232",
+    "11233",
+    "11234",
+    "11235",
+    "11236",
+    "11237",
+    "11238",
+    "11239",
+    "11249",
+    "11354",
+    "11355",
+    "11356",
+    "11357",
+    "11358",
+    "11359",
+    "11360",
+    "11361",
+    "11362",
+    "11363",
+    "11364",
+    "11365",
+    "11366",
+    "11367",
+    "11368",
+    "11369",
+    "11370",
+    "11371",
+    "11372",
+    "11373",
+    "11374",
+    "11375",
+    "11377",
+    "11378",
+    "11379",
+    "11385",
+    "11411",
+    "11412",
+    "11413",
+    "11414",
+    "11415",
+    "11416",
+    "11417",
+    "11418",
+    "11419",
+    "11420",
+    "11421",
+    "11422",
+    "11423",
+    "11424",
+    "11426",
+    "11427",
+    "11428",
+    "11429",
+    "11430",
+    "11432",
+    "11433",
+    "11434",
+    "11435",
+    "11436",
+    "11439",
+    "11451",
+    "11501",
+    "11507",
+    "11509",
+    "11510",
+    "11514",
+    "11516",
+    "11518",
+    "11520",
+    "11530",
+    "11542",
+    "11545",
+    "11547",
+    "11548",
+    "11549",
+    "11550",
+    "11552",
+    "11553",
+    "11554",
+    "11556",
+    "11557",
+    "11558",
+    "11559",
+    "11560",
+    "11561",
+    "11563",
+    "11565",
+    "11566",
+    "11568",
+    "11569",
+    "11570",
+    "11572",
+    "11575",
+    "11576",
+    "11577",
+    "11579",
+    "11580",
+    "11581",
+    "11590",
+    "11596",
+    "11598",
+    "11691",
+    "11692",
+    "11693",
+    "11694",
+    "11697",
+    "11701",
+    "11702",
+    "11703",
+    "11704",
+    "11705",
+    "11706",
+    "11709",
+    "11710",
+    "11713",
+    "11714",
+    "11715",
+    "11716",
+    "11717",
+    "11718",
+    "11719",
+    "11720",
+    "11721",
+    "11722",
+    "11724",
+    "11725",
+    "11726",
+    "11727",
+    "11729",
+    "11730",
+    "11731",
+    "11732",
+    "11733",
+    "11735",
+    "11738",
+    "11739",
+    "11740",
+    "11741",
+    "11742",
+    "11743",
+    "11746",
+    "11747",
+    "11749",
+    "11751",
+    "11752",
+    "11753",
+    "11754",
+    "11755",
+    "11756",
+    "11757",
+    "11758",
+    "11762",
+    "11763",
+    "11764",
+    "11765",
+    "11766",
+    "11767",
+    "11768",
+    "11769",
+    "11770",
+    "11771",
+    "11772",
+    "11776",
+    "11777",
+    "11778",
+    "11779",
+    "11780",
+    "11782",
+    "11783",
+    "11784",
+    "11786",
+    "11787",
+    "11788",
+    "11789",
+    "11790",
+    "11791",
+    "11792",
+    "11793",
+    "11794",
+    "11795",
+    "11796",
+    "11797",
+    "11798",
+    "11801",
+    "11803",
+    "11804",
+    "11901",
+    "11930",
+    "11931",
+    "11932",
+    "11933",
+    "11934",
+    "11935",
+    "11937",
+    "11939",
+    "11940",
+    "11941",
+    "11942",
+    "11944",
+    "11946",
+    "11947",
+    "11948",
+    "11949",
+    "11950",
+    "11951",
+    "11952",
+    "11953",
+    "11954",
+    "11955",
+    "11956",
+    "11957",
+    "11958",
+    "11959",
+    "11960",
+    "11961",
+    "11962",
+    "11963",
+    "11964",
+    "11965",
+    "11967",
+    "11968",
+    "11970",
+    "11971",
+    "11972",
+    "11973",
+    "11975",
+    "11976",
+    "11977",
+    "11978",
+    "11980"
+   ],
+   "states": [
+    "NY"
+   ],
+   "connectors": 11,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 2,
+   "zctas": [
+    "10301",
+    "10302",
+    "10303",
+    "10304",
+    "10305",
+    "10306",
+    "10307",
+    "10308",
+    "10309",
+    "10310",
+    "10311",
+    "10312",
+    "10314"
+   ],
+   "states": [
+    "NY"
+   ],
+   "connectors": 7,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 3,
+   "zctas": [
+    "84728",
+    "89301",
+    "89311",
+    "89315",
+    "89318",
+    "89319"
+   ],
+   "states": [
+    "NV",
+    "UT"
+   ],
+   "connectors": 7,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 4,
+   "zctas": [
+    "02535",
+    "02539",
+    "02557",
+    "02568",
+    "02575"
+   ],
+   "states": [
+    "MA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 5,
+   "zctas": [
+    "89013",
+    "89020",
+    "92328",
+    "93562"
+   ],
+   "states": [
+    "CA",
+    "NV"
+   ],
+   "connectors": 9,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 6,
+   "zctas": [
+    "97707",
+    "97733",
+    "97737",
+    "97739"
+   ],
+   "states": [
+    "OR"
+   ],
+   "connectors": 4,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 7,
+   "zctas": [
+    "02554",
+    "02564",
+    "02584"
+   ],
+   "states": [
+    "MA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 8,
+   "zctas": [
+    "04853",
+    "04863"
+   ],
+   "states": [
+    "ME"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 9,
+   "zctas": [
+    "27954",
+    "27981"
+   ],
+   "states": [
+    "NC"
+   ],
+   "connectors": 4,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 10,
+   "zctas": [
+    "84520",
+    "84539"
+   ],
+   "states": [
+    "UT"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 11,
+   "zctas": [
+    "89001",
+    "89017"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 4,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 12,
+   "zctas": [
+    "89420",
+    "89422"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 13,
+   "zctas": [
+    "97463",
+    "97492"
+   ],
+   "states": [
+    "OR"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 14,
+   "zctas": [
+    "02807"
+   ],
+   "states": [
+    "RI"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 15,
+   "zctas": [
+    "02835"
+   ],
+   "states": [
+    "RI"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 16,
+   "zctas": [
+    "02872"
+   ],
+   "states": [
+    "RI"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 17,
+   "zctas": [
+    "04737"
+   ],
+   "states": [
+    "ME"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 18,
+   "zctas": [
+    "04851"
+   ],
+   "states": [
+    "ME"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 19,
+   "zctas": [
+    "04852"
+   ],
+   "states": [
+    "ME"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 20,
+   "zctas": [
+    "06390"
+   ],
+   "states": [
+    "NY"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 21,
+   "zctas": [
+    "10044"
+   ],
+   "states": [
+    "NY"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 22,
+   "zctas": [
+    "14072"
+   ],
+   "states": [
+    "NY"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 23,
+   "zctas": [
+    "21824"
+   ],
+   "states": [
+    "MD"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 24,
+   "zctas": [
+    "21866"
+   ],
+   "states": [
+    "MD"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 25,
+   "zctas": [
+    "23440"
+   ],
+   "states": [
+    "VA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 26,
+   "zctas": [
+    "31328"
+   ],
+   "states": [
+    "GA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 27,
+   "zctas": [
+    "43436"
+   ],
+   "states": [
+    "OH"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 28,
+   "zctas": [
+    "43438"
+   ],
+   "states": [
+    "OH"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 29,
+   "zctas": [
+    "43446"
+   ],
+   "states": [
+    "OH"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 30,
+   "zctas": [
+    "43456"
+   ],
+   "states": [
+    "OH"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 31,
+   "zctas": [
+    "49782"
+   ],
+   "states": [
+    "MI"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 32,
+   "zctas": [
+    "54246"
+   ],
+   "states": [
+    "WI"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 33,
+   "zctas": [
+    "54850"
+   ],
+   "states": [
+    "WI"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 34,
+   "zctas": [
+    "78338"
+   ],
+   "states": [
+    "TX"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 35,
+   "zctas": [
+    "78598"
+   ],
+   "states": [
+    "TX"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 36,
+   "zctas": [
+    "82335"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 37,
+   "zctas": [
+    "82336"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 38,
+   "zctas": [
+    "82635"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 39,
+   "zctas": [
+    "82643"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 40,
+   "zctas": [
+    "82929"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 41,
+   "zctas": [
+    "82932"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 4,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 42,
+   "zctas": [
+    "82934"
+   ],
+   "states": [
+    "WY"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 43,
+   "zctas": [
+    "83827"
+   ],
+   "states": [
+    "ID"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 44,
+   "zctas": [
+    "84034"
+   ],
+   "states": [
+    "UT"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 45,
+   "zctas": [
+    "84522"
+   ],
+   "states": [
+    "UT"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 46,
+   "zctas": [
+    "84656"
+   ],
+   "states": [
+    "UT"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 47,
+   "zctas": [
+    "89003"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 48,
+   "zctas": [
+    "89047"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 49,
+   "zctas": [
+    "89049"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 8,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 50,
+   "zctas": [
+    "89314"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 51,
+   "zctas": [
+    "89316"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 52,
+   "zctas": [
+    "89317"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 53,
+   "zctas": [
+    "89409"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 4,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 54,
+   "zctas": [
+    "89427"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 55,
+   "zctas": [
+    "89438"
+   ],
+   "states": [
+    "NV"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 56,
+   "zctas": [
+    "90704"
+   ],
+   "states": [
+    "CA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 57,
+   "zctas": [
+    "92309"
+   ],
+   "states": [
+    "CA"
+   ],
+   "connectors": 3,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 58,
+   "zctas": [
+    "92310"
+   ],
+   "states": [
+    "CA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 59,
+   "zctas": [
+    "93276"
+   ],
+   "states": [
+    "CA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 60,
+   "zctas": [
+    "93522"
+   ],
+   "states": [
+    "CA"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 61,
+   "zctas": [
+    "94130"
+   ],
+   "states": [
+    "CA"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 62,
+   "zctas": [
+    "98070"
+   ],
+   "states": [
+    "WA"
+   ],
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 63,
+   "zctas": [
+    "98281"
+   ],
+   "states": [
+    "WA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 64,
+   "zctas": [
+    "98297"
+   ],
+   "states": [
+    "WA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  },
+  {
+   "component": 65,
+   "zctas": [
+    "98353"
+   ],
+   "states": [
+    "WA"
+   ],
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
+  }
+ ],
+ "islands_without_a_connector": []
+}

@@ -4,6 +4,12 @@ The register fails the suite when a row lacks a field, a status is not `hard`, `
 `waived`, a deferred or waived row names no trigger test, a check names a file that does not
 exist (unless an issue is building it), or a trigger holds (an expired deferral).
 
+M1's named check must exist and must fail each committed broken fixture under
+`tests/fixtures/m1/` (#108): a detached piece, a corner-only touch, a zero-opportunity ZCTA with no
+owner, and an island joined only by a connector the owner has not approved; it passes the connected
+one.  The fixture world is eleven 10 km squares (`zctas.csv`) whose graph `geo.polygon_edges`
+builds, so the corner rule is the one the committed graph uses.
+
 A trigger is a function `trigger_<name>()` in this module.  It returns the reason the mandate
 must come back once its return condition holds, and None while it does not.  The 2026-09-01
 deferral of contiguity, replayed against the 2026-09-28 ZIP graph (`reference/2025/`, #62),
@@ -11,7 +17,9 @@ must fail: its reason was 547 components among sold ZIPs, and that graph spans e
 """
 from __future__ import annotations
 
+import csv
 import gzip
+import importlib.util
 import os
 import re
 import tempfile
@@ -235,3 +243,76 @@ def test_full_zcta_graph_trigger_does_not_hold_on_a_sold_zip_graph():
         with gzip.open(os.path.join(tmp, "zcta_reference.csv.gz"), "wt") as fh:
             fh.write("zcta,graph_vertex\n00001,1\n00002,0\n")
         assert trigger_full_zcta_graph(tmp) is None
+
+
+# ------------------------------------------------------------------------------ M1's check (#108)
+FIXTURES = os.path.join(ROOT, "tests", "fixtures", "m1")
+BROKEN = ("detached_piece", "corner_only", "uncovered_zero_opportunity", "unapproved_crossing")
+
+
+def _gate():
+    spec = importlib.util.spec_from_file_location(
+        "mandates_check", os.path.join(ROOT, "tools", "mandates", "check.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _world(gate, case: str):
+    """(Geography, polygon_edges output) of the fixture world for `case`: the rook edges of its
+    squares plus the case's approved connectors; its ZIP graph is the same rook graph."""
+    import shapely
+    from td import geo
+    with open(os.path.join(FIXTURES, "zctas.csv"), newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    ids, geoms = [r["zcta"] for r in rows], shapely.from_wkt([r["wkt"] for r in rows])
+    got = geo.polygon_edges(ids, geoms)
+    connectors = geo.read_connectors(path=os.path.join(FIXTURES, case, "connectors.csv"))
+    state = {r["zcta"]: r["state"] for r in rows}
+    edge = {z: {} for z in ids}
+    for a, b, m in got["edges"]:
+        edge[a][b] = edge[b][a] = m / 1000.0
+    xy = {z: (g.centroid.x / 1000.0, g.centroid.y / 1000.0) for z, g in zip(ids, geoms)}
+    polygon = {"vertices": ids, "state": state,
+               "edges": [(a, b) for a, b, _ in got["edges"]] + geo.approved_connectors(connectors)}
+    return gate.score.Geography(state, xy, edge, polygon), got
+
+
+def test_m1_names_a_check_that_exists():
+    check = _register()["M1"]["check"]
+    assert not BUILT_BY.search(check), check
+    for ref in ("td/audit.py::check_m1", "tools/mandates/check.py::m1"):
+        assert f"`{ref}`" in check, (ref, check)
+    assert _check_paths_exist(check) == [], check
+
+
+def test_the_corner_fixture_touches_at_a_point_and_is_no_edge():
+    _, got = _world(_gate(), "connected")
+    pairs = {(a, b) for a, b, _ in got["edges"]}
+    assert ("10006", "10007") in got["corner_only"] and ("10006", "10007") not in pairs
+    assert ("10007", "10012") in pairs and ("10003", "10008") not in pairs
+
+
+def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
+    gate = _gate()
+    got = {}
+    for case in BROKEN + ("connected",):
+        g, _ = _world(gate, case)
+        got[case] = gate.m1(os.path.join(FIXTURES, case), g)
+    assert got["connected"]["status"] == "pass", got["connected"]["check"].items
+    assert all(got[c]["status"] == "fail" for c in BROKEN), {c: got[c]["summary"] for c in BROKEN}
+    items = {c: got[c]["check"].items for c in got}
+    counts = {c: got[c]["check"].counts for c in got}
+    tau = "0.182 τ"                                     # 1 of 11 over K = 2
+    assert items["detached_piece"] == [
+        f"X/X_01: detached piece of 1 ZIPs (10007...), {tau}, cause cut off by other districts"]
+    assert items["corner_only"] == [
+        f"X/X_02: detached piece of 1 ZIPs (10007...), {tau}, cause cut off by other districts"]
+    assert counts["uncovered_zero_opportunity"]["pieces"] == 0
+    assert items["uncovered_zero_opportunity"] == ["X: 1 of 11 ZCTAs have no owner",
+                                                    "X: 1 ZCTAs of MA have no owner"]
+    assert items["unapproved_crossing"] == [
+        f"X/X_02: detached piece of 1 ZIPs (10008...), {tau}, cause no approved connector"]
+    # the size after display fill: the island and the corner piece stay detached, the blank fills
+    assert got["unapproved_crossing"]["largest"] == ("X", "X_02", 1, 0.1818, "IS")
+    assert got["uncovered_zero_opportunity"]["largest"] is None

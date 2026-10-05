@@ -4,8 +4,9 @@
 
 `score(run_dir)` returns the dict without printing (the interface #92's tools load by path):
 `eligible`, `splits`, `thin_links`, `small_pieces`, `crowded_states`, `contiguity_pieces`,
-`defects` (their sum), `largest_extent_km`, `states_per_district`, `worst_dev`, `mean_dev`
-(fractions), and details.  `rank(scores)` orders runs by the keys and sets `review`.
+`contiguity_weight`, `defects`, `largest_piece_tau`, `multipart_pieces`, `largest_extent_km`, `states_per_district`,
+`worst_dev`, `mean_dev` (fractions), and details.  `rank(scores)` orders runs by the keys and sets
+`review`.
 
 A run directory has the layout `python -m td run` writes: `ledger.csv`, `districts.csv`,
 `run.json`, `scorecard.md`.  Every measure comes from the drawn ledger.  The split, small-piece,
@@ -22,20 +23,31 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
   (`DOLLARS`), summed over the channel's drawn cells; an IFA-only run uses the owner's
   whole-extract IFA total over K instead (owner, 2026-10-04).  A channel without a target, such
   as a combined channel (D11), is printed but not checked;
-- the main map's total K is in `MAIN_K`; an IFA-only run is exempt.
+- the main map's total K is in `MAIN_K`; an IFA-only run is exempt;
+- M1 holds (#108): `td.audit.check_m1` passes on the ledger with the committed polygon graph and
+  its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
+  ZCTA owned in every channel.  Without a polygon graph M1 is unverified, and the run is not
+  eligible.
 
 Rank keys, compared in order, fewest or smallest first:
 1. **splits**: channel-state splits, Σ_c the states where two or more of c's districts hold
    positive mass (PA split in WH and in FI counts 2); `distinct` is the set of split states;
-2. **defects** = thin_links + small_pieces + crowded_states + contiguity_pieces, each printed:
+2. **defects** = thin_links + small_pieces + crowded_states + contiguity_weight, each printed:
    - thin: a district's piece in one state whose ZIP border with its pieces in its other states
      is under `THIN_KM`, measured on the display fill (every ZIP with no cell in the channel joins
      the nearest district of its state, by breadth-first search on the ZIP graph);
    - small: a district's piece of a split state under `SMALL_TAU` τ;
    - crowded: a split state with more than ceil(M_s / τ) + 1 districts;
-   - pieces: components of each district's display-fill ZIPs on the ZIP graph beyond the first.
-     The audit's own piece count (`audit_pieces`, from `scorecard.md`) is printed for reference;
-     it counts the sparse channels' "connector ZIP not in ledger" pieces, which the fill joins;
+   - pieces: components of each district's display-fill ZIPs on the M1 polygon graph beyond the
+     heaviest (`td.audit.district_pieces`), each weighing 1 + its ledger mass / τ (owner,
+     2026-10-05, #108), so a 0.45τ island weighs 1.45 and a 2-ZIP zero-mass piece 1;
+     `contiguity_pieces` counts them and `largest_piece_tau` is the heaviest, both "after display
+     fill" (owner, 2026-10-05: the plan's pieces, not the unowned blanks).  The audit's own
+     piece count (`audit_pieces`, from `scorecard.md`) is printed for reference;
+   - multipart pieces, listed and counted (`multipart_pieces`) but not in the sum: a separate
+     piece of a district's drawn union that only a multipart ZCTA makes is a visual defect, not
+     an M1 failure (owner, 2026-10-05, #108).  Most are islets of coastal ZCTAs, drawn apart
+     whatever the plan, so the count barely tells two maps apart;
 3. **shape**: largest_extent_km (the longest distance between two ZIP points one district holds,
    km, as #81's `measure.extent_km`), then states_per_district, the most states one district
    holds positive mass in;
@@ -79,10 +91,16 @@ BAND_CHECK = "final bands on drawn mass"
 
 class Geography:
     """The 2025 reference: `state` {zip: state}, `xy` {zip: (x, y) km}, `edge` {zip: {zip: border
-    km}} over the ZIP graph's edges."""
+    km}} over the ZIP graph's edges, `polygon`, M1's graph (`td.geo.polygon_graph`), or None, and
+    `parts`, the polygon parts: `{"area": {zip: [m2 per part]}, "edges": [(a, a_part, b, b_part,
+    kind)]}` (`td.geo.part_edges`), or None."""
 
-    def __init__(self, state: dict, xy: dict, edge: dict):
-        self.state, self.xy, self.edge = state, xy, edge
+    def __init__(self, state: dict, xy: dict, edge: dict, polygon: dict | None = None,
+                 parts: dict | None = None):
+        self.state, self.xy, self.edge, self.polygon = state, xy, edge, polygon
+        self.polygon_adj = audit.adjacency(polygon) if polygon is not None else None
+        self.parts = parts
+        self.part_adj = part_adjacency(polygon, parts) if polygon and parts else None
 
     @classmethod
     def load(cls, ref_dir: str = geo.REFERENCE_DIR) -> "Geography":
@@ -96,7 +114,53 @@ class Geography:
                 b = float(r["border_m"] or 0) / 1000.0
                 edge[r["a"]][r["b"]] = b
                 edge[r["b"]][r["a"]] = b
-        return cls(state, xy, edge)
+        parts = None
+        if os.path.exists(os.path.join(ref_dir, geo.ZCTA_PARTS)):
+            area = collections.defaultdict(list)
+            for z, a in zip(*geo.read_reference(ref_dir, geo.ZCTA_PARTS)[["zcta", "area_m2"]].T.values):
+                area[z].append(float(a))
+            pe = geo.read_reference(ref_dir, geo.PART_EDGES)
+            parts = {"area": dict(area), "edges": [(a, int(i), b, int(j), k) for a, i, b, j, k in
+                                                   pe[["a", "a_part", "b", "b_part", "kind"]].values]}
+        return cls(state, xy, edge, geo.polygon_graph(ref_dir), parts)
+
+
+def part_adjacency(polygon: dict, parts: dict) -> dict:
+    """{(zip, part): set of (zip, part)}: the polygon graph at part level.  An edge between two
+    single-part ZCTAs joins their part 0; one with a multipart end joins the part pairs `parts`
+    lists for it, its `connector` rows only when the pair is an edge of `polygon` (approved)."""
+    n = {z: len(a) for z, a in parts["area"].items()}
+    adj = {(z, k): set() for z in polygon["vertices"] for k in range(n.get(z, 1))}
+    pairs = {tuple(sorted(e[:2])) for e in polygon["edges"]}
+    listed = set()
+    for a, i, b, j, kind in parts["edges"]:
+        if (a, b) in pairs and (a, i) in adj and (b, j) in adj:
+            adj[a, i].add((b, j))
+            adj[b, j].add((a, i))
+            listed.add((a, b))
+    for a, b in pairs - listed:
+        if n.get(a, 1) == 1 and n.get(b, 1) == 1 and (a, 0) in adj and (b, 0) in adj:
+            adj[a, 0].add((b, 0))
+            adj[b, 0].add((a, 0))
+    return adj
+
+
+def multipart_pieces(owner: dict, g: Geography) -> list:
+    """[(district, ZIPs, km2)]: each separate piece of a district's drawn union that only a
+    multipart ZCTA makes (owner, 2026-10-05): within each component of the district's ZIPs on the
+    polygon graph, the components of their parts on `g.part_adj` beyond the largest by area."""
+    out = []
+    for d, comps in audit.district_pieces(owner, g.polygon_adj, {}).items():
+        for comp in comps:
+            if all(len(g.parts["area"].get(z, (0,))) == 1 for z in comp):
+                continue
+            nodes = {(z, k) for z in comp for k in range(len(g.parts["area"].get(z, (0,))))}
+            got = audit._components(nodes, g.part_adj)
+            area = [(math.fsum(g.parts["area"][z][k] for z, k in c), c) for c in got]
+            area.sort(key=lambda ac: (-ac[0], min(ac[1])))
+            out += [(d, "+".join(sorted({z for z, _ in c})), round(a / 1e6, 3)) for a, c in area[1:]]
+    return out
+
 
 
 def extent_km(points: list) -> float:
@@ -131,23 +195,6 @@ def display_fill(own: dict, g: Geography) -> dict:
     return fill
 
 
-def components(zips: set, edge: dict) -> int:
-    """How many components the ZIP graph has on `zips`."""
-    seen, n = set(), 0
-    for z in sorted(zips):
-        if z in seen:
-            continue
-        n += 1
-        seen.add(z)
-        stack = [z]
-        while stack:
-            for w in edge.get(stack.pop(), ()):
-                if w in zips and w not in seen:
-                    seen.add(w)
-                    stack.append(w)
-    return n
-
-
 def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
     """Balance and looks of channel `ch` from its ledger rows and its `districts.csv` rows."""
     rows = [r for r in districts if r["channel"] == ch]
@@ -175,10 +222,20 @@ def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
     filled = collections.defaultdict(lambda: collections.defaultdict(set))
     for z, d in display_fill(own, g).items():
         filled[d][g.state[z]].add(z)
-    thin, pieces = [], 0
+    thin, pieces, multipart = [], [], None
+    if g.polygon_adj is not None:
+        zip_mass = collections.Counter()
+        for r in ledger:
+            if r["model_channel"] == ch and r["district"]:
+                zip_mass[r["zip_code"]] += float(r["m_rel"])
+        owner = {z: d for d, bys in filled.items() for zs in bys.values() for z in zs}
+        for d, comps in audit.district_pieces(owner, g.polygon_adj, zip_mass).items():
+            pieces += [(d, len(c), round(math.fsum(zip_mass[z] for z in c) / tau, 4),
+                        "+".join(sorted({g.state.get(z, "?") for z in c}))) for c in comps[1:]]
+        if g.part_adj is not None:
+            multipart = multipart_pieces(owner, g)
     for d in sorted(filled):
         bys = filled[d]
-        pieces += components(set().union(*bys.values()), g.edge) - 1
         states = [s for s in sorted(bys) if mass[d][s] > 0]
         if len(states) < 2:
             continue
@@ -190,7 +247,9 @@ def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
     extent = max(extent_km([g.xy[z] for zs in bys.values() for z in zs if z in g.xy])
                  for bys in held.values())
     return {"k": len(rows), "tau": tau, "deviation": dev, "split": split, "small": small,
-            "crowded": crowded, "thin": thin, "pieces": pieces, "extent_km": extent,
+            "crowded": crowded, "thin": thin, "multipart": multipart,
+            "pieces": None if g.polygon_adj is None else sorted(pieces, key=lambda p: (-p[2], p)),
+            "extent_km": extent,
             "max_states": max(len([s for s in c if c[s] > 0]) for c in mass.values())}
 
 
@@ -238,9 +297,22 @@ def bands_at(ledger: list, ks: dict, band: float) -> audit.Check:
     return audit.check_bands(audit.Run(cells, chans))
 
 
-def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict) -> list:
-    """Why a run is not eligible, one reason per failed rule; empty when it is."""
-    why = [f"audit: {name} fails" for name, s in checks.items() if s == "fail" and name != BAND_CHECK]
+def m1_check(ledger: list, ks: dict, g: Geography) -> audit.Check:
+    """`td.audit.check_m1` on the drawn ledger with `g`'s polygon graph (strict: no display fill)."""
+    cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
+                        float(r["m_rel"])) for r in ledger]
+    return audit.check_m1(audit.Run(cells, {ch: audit.Channel(k) for ch, k in ks.items()},
+                                    polygon=g.polygon))
+
+
+def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict,
+                m1: audit.Check | None = None) -> list:
+    """Why a run is not eligible, one reason per failed rule; empty when it is.  `m1` is the M1
+    check; a run without one is not eligible."""
+    why = [f"audit: {name} fails" for name, s in checks.items()
+           if s == "fail" and name not in (BAND_CHECK, audit.M1_CHECK)]
+    if m1 is None or m1.status != "pass":
+        why.append(f"M1: {m1.status}, {m1.summary}" if m1 else "M1: not checked")
     if not checks:
         why.append("audit: no scorecard")
     if bands.status != "pass":
@@ -292,19 +364,27 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
         rates = rates if rates is not None else rates_of(extract_path(run_dir))
         dollars = {ch: dollars_per_district(ch, k, ledger, rates) for ch, k in ks.items()}
     bands = bands_at(ledger, ks, BAND)
-    why = eligibility(scorecard_checks(sc), bands, ks, dollars)
+    m1 = m1_check(ledger, ks, g)
+    why = eligibility(scorecard_checks(sc), bands, ks, dollars, m1)
     devs = [abs(x) for c in chans.values() for x in c["deviation"].values()]
+    pieces = [p for c in chans.values() for p in c["pieces"] or ()]
     defects = {"thin_links": sum(len(c["thin"]) for c in chans.values()),
                "small_pieces": sum(len(c["small"]) for c in chans.values()),
                "crowded_states": sum(len(c["crowded"]) for c in chans.values()),
-               "contiguity_pieces": sum(c["pieces"] for c in chans.values())}
+               "contiguity_weight": round(math.fsum(1 + p[2] for p in pieces), 4)}
     return {
         "run": os.path.basename(os.path.normpath(run_dir)), "dir": run_dir,
         "eligible": not why, "why": why, "k": ks, "dollars": dollars,
+        "m1": {"status": m1.status, "summary": m1.summary, **m1.counts},
         "splits": sum(len(c["split"]) for c in chans.values()),
         "split_list": [f"{ch}:{s}" for ch, c in chans.items() for s in c["split"]],
         "distinct": sorted({s for c in chans.values() for s in c["split"]}),
-        "defects": sum(defects.values()), **defects, "audit_pieces": audit_pieces(sc),
+        "defects": round(math.fsum(defects.values()), 4), **defects,
+        "contiguity_pieces": len(pieces),
+        "multipart_pieces": None if any(c["multipart"] is None for c in chans.values())
+        else sum(len(c["multipart"]) for c in chans.values()),
+        "largest_piece_tau": max((p[2] for p in pieces), default=0.0),
+        "audit_pieces": audit_pieces(sc),
         "largest_extent_km": max(c["extent_km"] for c in chans.values()),
         "states_per_district": max(c["max_states"] for c in chans.values()),
         "worst_dev": max(devs), "mean_dev": sum(devs) / len(devs),
@@ -336,8 +416,10 @@ def verdict(s: dict) -> str:
     head = "ELIGIBLE" if s["eligible"] else "INELIGIBLE (" + "; ".join(s["why"]) + ")"
     review = f" | {s['review']}" if s["review"] else ""
     return (f"{s['run']}: {head}{review} | {s['splits']} splits ({len(s['distinct'])} states) | "
-            f"{s['defects']} defects (thin {s['thin_links']}, small {s['small_pieces']}, crowded "
-            f"{s['crowded_states']}, pieces {s['contiguity_pieces']}) | extent {s['largest_extent_km']:,.0f} km, "
+            f"{s['defects']:g} defects (thin {s['thin_links']}, small {s['small_pieces']}, crowded "
+            f"{s['crowded_states']}, pieces {s['contiguity_pieces']} weighing {s['contiguity_weight']:g}, "
+            f"largest {s['largest_piece_tau']:.3g} τ after display fill; multipart pieces "
+            f"{s['multipart_pieces']}, listed only) | extent {s['largest_extent_km']:,.0f} km, "
             f"{s['states_per_district']} states | worst {100 * s['worst_dev']:.1f}%, mean {100 * s['mean_dev']:.1f}%")
 
 
@@ -352,15 +434,25 @@ def report(s: dict) -> str:
         worst = max(map(abs, c["deviation"].values()))
         lines.append(f"{ch}: K {c['k']}, {dol}, worst {100 * worst:.1f}%, splits {len(c['split'])} "
                      f"{' '.join(c['split'])}, thin {len(c['thin'])}, small {len(c['small'])}, "
-                     f"crowded {len(c['crowded'])}, pieces {c['pieces']}, extent {c['extent_km']:,.0f} km, "
-                     f"max states {c['max_states']}")
+                     f"crowded {len(c['crowded'])}, pieces {len(c['pieces'] or ())}, extent "
+                     f"{c['extent_km']:,.0f} km, max states {c['max_states']}")
         lines += [f"    thin {d} {st} {km} km" for d, st, km in c["thin"]]
         lines += [f"    small {d} {st} {f:.3f} tau" for d, st, f in c["small"]]
         lines += [f"    crowded {st}" for st in c["crowded"]]
+        largest = {}
+        for d, n, f, st in c["pieces"] or ():
+            largest.setdefault(d, (d, n, f, st))
+        lines += [f"    largest detached piece {d}: {n} ZIPs in {st}, {f:.3f} tau (after display fill)"
+                  for d, n, f, st in sorted(largest.values(), key=lambda p: (-p[2], p[0]))]
+        lines += [f"    multipart piece {d}: part of {zs}, {km2:,.3f} km2 (visual defect, not M1)"
+                  for d, zs, km2 in c["multipart"] or ()]
     lines += [f"channel-state splits: {s['splits']}: {' '.join(s['split_list'])}",
               f"distinct split states: {len(s['distinct'])}: {' '.join(s['distinct'])}",
-              f"defects: {s['defects']} = thin {s['thin_links']} + small {s['small_pieces']} + crowded "
-              f"{s['crowded_states']} + pieces {s['contiguity_pieces']} (audit's piece count {s['audit_pieces']})",
+              f"defects: {s['defects']:g} = thin {s['thin_links']} + small {s['small_pieces']} + crowded "
+              f"{s['crowded_states']} + pieces {s['contiguity_weight']:g} ({s['contiguity_pieces']} pieces "
+              f"weighing 1 + mass/tau each, after display fill; audit's piece count {s['audit_pieces']})",
+              f"multipart pieces: {s['multipart_pieces']} (listed, not in the defects sum)",
+              f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger)",
               f"shape: extent {s['largest_extent_km']:,.1f} km, {s['states_per_district']} states per district",
               f"balance: worst {100 * s['worst_dev']:.2f}%, mean {100 * s['mean_dev']:.2f}%",
               f"review: {s['review'] or 'none'} (rule: among eligible runs scored together, one split "

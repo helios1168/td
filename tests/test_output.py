@@ -457,7 +457,11 @@ def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has
     report = json.load(open(res.paths["run"], encoding="utf-8"))
     assert report["planned_elsewhere"] == {"h": len(NY) + 1}
     assert report["not_placed_zips"] == 0 and report["zips"] == len(zs)
-    assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
+    # the run declared its graph, so M1 is audited on the committed polygon graph (#108), and 12
+    # ZCTAs leave the rest of CONUS without an owner: M1 alone fails
+    fails = {c.name: c for c in res.checks if c.status == "fail"}
+    assert list(fails) == [audit.M1_CHECK], [(n, c.items[:3]) for n, c in fails.items()]
+    assert fails[audit.M1_CHECK].counts["no_owner"] == 33300 - len(zs)
 
 
 def test_run_json_records_the_margin_per_channel():
@@ -770,3 +774,29 @@ def test_the_cli_lists_run_and_maps():
             assert e.code == 2                  # --extract or --fixture is required
         else:
             raise AssertionError("argparse accepted a run with no extract")
+
+
+def test_an_extract_assembly_cannot_pass_with_m1_unverified():
+    """#108 review: `tools/exp81/run_hess.py` assembles an extract run by calling
+    `output.audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref, split)`
+    with no polygon.  That call shape audits M1 on the committed polygon graph, so the toy's
+    ledger, which owns 13 of 33,300 CONUS ZCTAs, fails M1 rather than leaving it unverified."""
+    extract, graph = _toy_inputs()
+    seen, real = [], output.audit_run
+
+    def spy(*args, **kw):
+        seen.append(args)
+        return real(*args, **kw)
+    out = tempfile.mkdtemp(prefix="td-output-")
+    output.audit_run = spy
+    try:
+        own = output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False)
+    finally:
+        output.audit_run = real
+    assert {c.name: c.status for c in own.checks}[audit.M1_CHECK] == "unverified"   # its own graph
+    inst, led, drawings, ext, reports, graph, names, manifest, ref, split = seen[0][:10]
+    checks = {c.name: c for c in audit.audit(output.audit_run(
+        inst, led, drawings, ext, reports, graph, names, manifest, ref, split))}
+    assert checks[audit.M1_CHECK].status == "fail", checks[audit.M1_CHECK].summary
+    assert checks[audit.M1_CHECK].counts["no_owner"] > 33000
+    assert audit.verdict(checks.values()) == "fail"

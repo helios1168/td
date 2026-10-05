@@ -200,3 +200,108 @@ def test_zip_graph_vertices_are_explicit_and_state_components_are_listed():
         found.setdefault(zip_state[next(iter(comp))], []).append(len(comp))
     split = {s: sorted(c, reverse=True) for s, c in found.items() if len(c) > 1}
     assert split == rep["state_components"]
+
+
+# ------------------------------------------------------------------------------ the polygon graph (M1)
+def test_polygon_edges_need_a_shared_length_and_skip_a_corner_touch():
+    polys = {"p": _square(0, 0, 10, 10), "q": _square(10, 0, 20, 10), "r": _square(20, 10, 30, 20),
+             "s": _square(40, 0, 50, 10)}
+    got = geo.polygon_edges(list(polys), list(polys.values()))
+    assert got["edges"] == [("p", "q", 10.0)]
+    assert got["corner_only"] == [("q", "r")] and got["overlaps"] == []
+    assert geo.components(list(polys), got["edges"]) == [["p", "q"], ["r"], ["s"]]
+
+
+def test_a_nested_zcta_is_adjacent_only_through_a_shared_boundary():
+    """Rook (M1): a box inside another without a hole overlaps it but shares no boundary, so it
+    is no edge and is reported as an overlap; with the inner box as the outer's hole they share
+    its 24 m ring and are an edge."""
+    import shapely
+    outer, inner = _square(0, 0, 10, 10), _square(2, 2, 8, 8)
+    got = geo.polygon_edges(["o", "i"], [outer, inner])
+    assert got == {"edges": [], "corner_only": [], "overlaps": [("i", "o")]}
+    holed = shapely.Polygon(outer.exterior.coords, [inner.exterior.coords])
+    got = geo.polygon_edges(["o", "i"], [holed, inner])
+    assert got == {"edges": [("i", "o", 24.0)], "corner_only": [], "overlaps": []}
+    m = shapely.MultiPolygon([outer, _square(20, 0, 30, 10)])    # the same at part level
+    # offered as a rook pair, so only the part-level predicate can reject it
+    assert geo.part_edges(["m", "i"], [m, inner], [("i", "m", 0.0)], [])["edges"] == []
+    m = shapely.MultiPolygon([holed, _square(20, 0, 30, 10)])
+    assert geo.part_edges(["m", "i"], [m, inner], [("i", "m", 24.0)], [])["edges"] == [
+        ("i", 0, "m", 0, "rook")]
+
+
+def test_a_multipart_zcta_is_one_vertex_adjacent_through_any_part():
+    """Owner, 2026-10-05: a ZCTA's parts count as connected to each other, and it meets another
+    ZCTA through a shared positive-length boundary of any part."""
+    import shapely
+    m = shapely.MultiPolygon([_square(0, 0, 10, 10), _square(30, 0, 40, 10)])
+    got = geo.polygon_edges(["m", "n", "o"], [m, _square(40, 0, 50, 10), _square(10, 10, 20, 20)])
+    assert got["edges"] == [("m", "n", 10.0)] and got["corner_only"] == [("m", "o")]
+    by_part = geo.part_edges(["m", "n", "o"], [m, _square(40, 0, 50, 10), _square(10, 10, 20, 20)],
+                             got["edges"], [{"a": "m", "b": "o", "status": "proposed"}])
+    assert [(z, k) for z, k, _ in by_part["parts"]] == [("m", 0), ("m", 1), ("n", 0), ("o", 0)]
+    assert by_part["edges"] == [("m", 0, "o", 0, "connector"), ("m", 1, "n", 0, "rook")]
+
+
+def _polygon_report():
+    with open(os.path.join(REF, geo.POLYGON_REPORT)) as fh:
+        return json.load(fh)
+
+
+def test_committed_polygon_graph_is_over_the_shipped_vertices_with_its_manifest():
+    rep = _polygon_report()
+    ref = geo.read_reference()
+    vertices = set(ref.loc[ref["graph_vertex"] == "1", "zcta"])
+    edges = geo.read_reference(name=geo.POLYGON_EDGES)
+    assert rep["vertices"] == len(vertices) and rep["no_polygon"] == [] and len(edges) == rep["edges"]
+    assert set(edges["a"]) | set(edges["b"]) <= vertices and (edges["a"] < edges["b"]).all()
+    assert (edges["border_m"].astype(float) > geo.MIN_BORDER_M).all()
+    assert rep["min_border_m"] == geo.MIN_BORDER_M == 0.0 and rep["crs"] == geo.CRS
+    assert rep["command"] == geo.POLYGON_COMMAND
+    zcta = next(e for e in _manifest()["sources"] if e["name"] == "zcta")
+    assert rep["sources"][0] == zcta
+    for e in rep["sources"]:
+        assert e["vintage"] == "2025" and all("2025" in f for f in e.get("files", {})), e["name"]
+    assert rep["component_sizes"] == [len(c) for c in geo.components(
+        sorted(vertices), list(zip(edges["a"], edges["b"])))]
+    diff = geo.read_reference(name=geo.POLYGON_DIFF)
+    voronoi = geo.read_reference(name="zcta_graph_edges.csv.gz")
+    assert (diff["change"] == "added").sum() == rep["against_voronoi"]["added"]
+    assert (diff["change"] == "dropped").sum() == rep["against_voronoi"]["dropped"]
+    assert rep["against_voronoi"]["voronoi_edges"] == len(voronoi)
+
+
+def test_connectors_name_their_crossing_and_the_graph_adds_only_approved_ones():
+    rows = geo.read_connectors()
+    ref = geo.read_reference()
+    vertices = set(ref.loc[ref["graph_vertex"] == "1", "zcta"])
+    # kind `nearest`: the owner joined four islands with no crossing to their nearest ZCTA
+    # (owner, 2026-10-05, #108)
+    assert geo.CONNECTOR_KINDS == ("bridge", "tunnel", "road", "ferry", "nearest")
+    assert rows and all(r["crossing"] and r["kind"] in geo.CONNECTOR_KINDS
+                        and {r["a"], r["b"]} <= vertices and r["a"] < r["b"] for r in rows)
+    assert {r["status"] for r in rows} <= set(geo.CONNECTOR_STATUSES)
+    g = geo.polygon_graph()
+    approved = {(r["a"], r["b"]) for r in rows if r["status"] == "approved"}
+    polygon = set(map(tuple, geo.read_reference(name=geo.POLYGON_EDGES)[["a", "b"]].values))
+    assert set(g["edges"]) == polygon | approved
+    held = [dict(r, status="proposed") if i == 0 else r for i, r in enumerate(rows)]
+    assert set(geo.polygon_graph(connectors=held)["edges"]) == polygon | approved - {
+        (rows[0]["a"], rows[0]["b"])}
+
+
+def test_the_owners_connector_review_joins_every_island():
+    """Owner, 2026-10-05 (#108): every row approved, each island with no crossing joined to its
+    nearest ZCTA; the polygon graph plus the approved connectors is one component."""
+    rows = geo.read_connectors()
+    rep = _polygon_report()
+    assert {r["status"] for r in rows} == {"approved"} and rep["connectors"]["approved"] == len(rows)
+    nearest = {(r["a"], r["b"]) for r in rows if r["kind"] == "nearest"}
+    assert nearest == {("43436", "43446"), ("98230", "98281"), ("98245", "98297"), ("98353", "98366")}
+    assert all(r["source"] == "owner 2026-10-05 (#108): nearest ZCTA" for r in rows
+               if r["kind"] == "nearest")
+    assert rep["islands_without_a_connector"] == [] and rep["components_with_approved_connectors"] == 1
+    assert all(i["joined_to_main_by_approved"] for i in rep["islands"])
+    g = geo.polygon_graph()
+    assert len(geo.components(g["vertices"], g["edges"])) == 1

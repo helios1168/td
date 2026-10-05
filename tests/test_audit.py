@@ -55,6 +55,7 @@ def _run(owner=None, mass=None, **over):
         planned=_drawn(OWNER, MASS),
         reported=_drawn(owner, mass),
         graph={"vertices": RING, "edges": list(zip(RING, RING[1:] + RING[:1]))},
+        polygon={"vertices": RING, "edges": list(zip(RING, RING[1:] + RING[:1])), "state": UNIT},
         manifest=manifest,
         solver={"X": {"status": "optimal", "objective": 7.0, "bound": 7.0, "gap": 0.0,
                       "mip_rel_gap": 0.0}},
@@ -80,6 +81,20 @@ def test_clean_plan_passes_every_check():
     assert [c.name for c in checks if c.status == "unverified"] == []
     tier = _checks(_run())["certificate tier"]
     assert tier.summary == "weakest tier: exact"
+
+
+def test_m1_fails_a_detached_piece_and_an_unowned_zcta_and_is_unverified_without_a_polygon_graph():
+    run = _run()
+    run.polygon["edges"] = [e for e in run.polygon["edges"] if e != ("c3", "a1")]
+    m1 = _checks(run)[audit.M1_CHECK]                # d1's c3 now meets d1 only across the cut
+    assert _fails(run) == [audit.M1_CHECK] and m1.counts["pieces"] == 1
+    assert m1.items == [f"X/d1: detached piece of 1 ZIPs (c3...), 0.333 τ, cause {audit.M1_CUT}"]
+    run = _run()
+    run.polygon = dict(run.polygon, vertices=RING + ["z9"], state=dict(UNIT, z9="Z"))
+    m1 = _checks(run)[audit.M1_CHECK]
+    assert _fails(run) == [audit.M1_CHECK] and m1.counts["no_owner"] == 1
+    assert m1.items == ["X: 1 of 11 ZCTAs have no owner", "X: 1 ZCTAs of Z have no owner"]
+    assert _checks(_run(polygon=None))[audit.M1_CHECK].status == "unverified"
 
 
 def test_planted_phantom_share_fails():
@@ -376,7 +391,9 @@ def test_a_channel_dropped_whole_is_not_counted_against_k():
                channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(2, 0.0, 1.0)},
                expected=clean.expected | {("y0", "f")}, unit_of=dict(UNIT, y0="Ynit"))
     assert _checks(run)["district count per channel"].status == "pass"
-    assert _fails(run) == []
+    # M1 (owner, 2026-10-05): every ZCTA has an owner in every channel, a dropped one included
+    assert _fails(run) == [audit.M1_CHECK]
+    assert _checks(run)[audit.M1_CHECK].items[0] == "Y: 10 of 10 ZCTAs have no owner"
 
 
 def test_a_ledger_zip_without_a_unit_fails_and_the_audit_completes():
