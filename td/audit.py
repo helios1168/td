@@ -36,6 +36,7 @@ MODES = ("whole", "clipped", "free")
 PSEUDO = frozenset({"other", "unserved", "unassigned", "none"})   # owners that are not districts
 SHARE_TOL = 1e-9
 DROPPED = "dropped: zero opportunity"   # a ledger row's reason for a blank district (MODEL §1)
+NOT_PLACED = "not placed: not a vertex of the declared ZIP graph"   # the reason for a ZIP with no unit
 BAND_SLACK = 1e-9        # OD1: numerical slack at each band boundary, times τ_c
 # How far a certificate's bound may sit from its objective and still count as equal, in objective
 # units: EXACT_ALLOWANCE × max(1, |objective|), mixed absolute/relative as HiGHS, so float noise at
@@ -133,13 +134,37 @@ def _owners(run: Run) -> dict:
 
 
 # ------------------------------------------------------------------------------ the checks
+def _not_placed(run: Run) -> tuple:
+    """(failed, listed) items for the `NOT_PLACED` cells (#89): a cell is excused, and listed, only
+    when it has no owner, its ZIP no unit, and its whole ZIP no opportunity in the ledger."""
+    zip_m = collections.defaultdict(float)
+    for c in run.cells:
+        zip_m[c.zip] += math.nan if c.m is None else c.m
+    bad, listed = [], []
+    for c in run.cells:
+        if c.reason != NOT_PLACED:
+            continue
+        if c.district:
+            bad.append(f"cell {c.zip}/{c.fine}: not placed but owned by {c.district}")
+        elif run.unit_of is not None and c.zip in run.unit_of:
+            bad.append(f"cell {c.zip}/{c.fine}: not placed but ZIP {c.zip} is in unit {run.unit_of[c.zip]}")
+        elif zip_m[c.zip] != 0:
+            bad.append(f"cell {c.zip}/{c.fine}: not placed, ZIP {c.zip} has opportunity {zip_m[c.zip]:.6g}")
+        else:
+            listed.append(f"cell {c.zip}/{c.fine} ({c.channel}): {NOT_PLACED}, ZIP has no opportunity")
+    return bad, listed
+
+
 def check_cells(run: Run) -> Check:
     seen = collections.Counter((c.zip, c.fine) for c in run.cells)
     items = [f"cell {z}/{f}: {n} owners" for (z, f), n in sorted(seen.items()) if n > 1]
     items += [f"cell {c.zip}/{c.fine}: no owner" for c in run.cells
-              if not c.district and c.reason != DROPPED]
+              if not c.district and c.reason not in (DROPPED, NOT_PLACED)]
     if run.unit_of is not None:
-        items += [f"cell {c.zip}/{c.fine}: ZIP has no unit" for c in run.cells if c.zip not in run.unit_of]
+        items += [f"cell {c.zip}/{c.fine}: ZIP has no unit" for c in run.cells
+                  if c.zip not in run.unit_of and c.reason != NOT_PLACED]
+    bad, listed = _not_placed(run)
+    items += bad
     # the owner comes from the channel realizer's ZIP (§8), so a ZIP's cells in one channel share it
     held = collections.defaultdict(set)
     for c in run.cells:
@@ -150,8 +175,9 @@ def check_cells(run: Run) -> Check:
     if run.expected is not None:
         items += [f"cell {z}/{f}: not in the ledger" for z, f in sorted(run.expected - set(seen))]
         items += [f"cell {z}/{f}: not expected" for z, f in sorted(set(seen) - run.expected)]
-    return Check("one owner per cell", "fail" if items else "pass",
-                 f"{len(seen)} cells, {len(items)} with other than one owner", items)
+    return Check("one owner per cell", "fail" if items else "listed" if listed else "pass",
+                 f"{len(seen)} cells, {len(items)} with other than one owner, "
+                 f"{len(listed)} not placed with no opportunity", items + listed)
 
 
 def check_count(run: Run) -> Check:
@@ -449,7 +475,8 @@ def check_reps(run: Run) -> Check:
 
 def audit(run: Run) -> list:
     """Every §9 check on `run`, in the scorecard's order.  A ledger cell whose ZIP has no unit fails
-    `check_cells`; the other checks run without it, so the scorecard still completes."""
+    `check_cells`, unless it is a `NOT_PLACED` cell of a ZIP with no opportunity, which it lists;
+    the other checks run without it, so the scorecard still completes."""
     mapped = run
     if run.unit_of is not None and any(c.zip not in run.unit_of for c in run.cells):
         mapped = replace(run, cells=[c for c in run.cells if c.zip in run.unit_of])
