@@ -9,7 +9,7 @@ M1 (ZIP contiguity) is the goal's first part; no current map meets it. #108 land
 ## Next
 
 - #116 (every CONUS ZCTA owned) first: until it lands no map can pass M1; then #109 and #114; #118 any time.
-- contiguity-fast's lanes (owner-agreed): #115 and #103 under #117. No runs on either side until the owner says run.
+- Lanes (owner, 2026-10-05, in contiguity-fast's session): this session runs #115 and #103 with #109, #114, #116 as wave lanes; contiguity-fast keeps #117 and its §6 falsifiers. No runs until the owner says run.
 - Wave 1 (#95-#104) held until #109 reports.
 
 ## Blocked
