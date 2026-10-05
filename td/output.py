@@ -125,9 +125,11 @@ def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
 
 def run(s, extract, out: str, graph: dict | None = None, reference=None,
         public: str = geo.PUBLIC_DIR, time_limit: float | None = None, maps: bool = True,
-        source: str = "", keep=()) -> Result:
+        source: str = "", keep=(), polygon: dict | None = None) -> Result:
     """Spec `s` on `extract` into the run directory `out`, new or empty but for the files named
-    in `keep` (module docstring)."""
+    in `keep` (module docstring).  M1 is audited on `polygon`, by default the committed polygon
+    graph when the run declares its graph itself; a caller passing its own `graph` passes its
+    own `polygon`, or M1 stays `unverified` (owner, 2026-10-05, #108)."""
     check_file_names("planning channel", s.channels)
     check_out(out, keep)
     for c in s.channels:
@@ -136,7 +138,9 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     ref = geo.read_reference() if reference is None else reference
     conus = data.conus(extract, ref)
     ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
-    graph = declared_graph(ext, ref, public) if graph is None else graph
+    if graph is None:
+        graph = declared_graph(ext, ref, public)
+        polygon = geo.polygon_graph() if polygon is None else polygon
     inst = tdspec.build(s, ext, ref, graph)
     components = inst.report["components"]
     for line in tdspec.component_lines(components):     # the floors, known before any solve
@@ -168,7 +172,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         manifest = json.load(fh)
     split = ledger_pieces(led, graph, drawings)
     checks = audit.audit(audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref,
-                                   split))
+                                   split, polygon))
     paths["scorecard"] = audit.write_scorecard(out, checks, f"{s.name} ({source or 'extract'})")
     paths["districts"] = write_districts(os.path.join(out, "districts.csv"), inst, plans,
                                          drawings, names, split)
@@ -363,10 +367,12 @@ def read_ledger(path: str) -> list:
 
 
 def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: dict, names: dict,
-              manifest: dict | None = None, reference=None, split: dict | None = None) -> audit.Run:
+              manifest: dict | None = None, reference=None, split: dict | None = None,
+              polygon: dict | None = None) -> audit.Run:
     """`td.audit.Run` over the ledger `rows`: every cell, placed or not (#89), the expected cells
     from `extract` (the input, not the ledger), the maps' planned and drawn shares as diagnostics,
-    and the causes of the ledger's pieces (`split`, `ledger_pieces` of `rows` when None)."""
+    the causes of the ledger's pieces (`split`, `ledger_pieces` of `rows` when None), and M1's
+    `polygon` graph."""
     ids = district_ids(drawings)
     placed = inst.units.unit_of
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
@@ -383,7 +389,7 @@ def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: d
     split = ledger_pieces(rows, graph, drawings) if split is None else split
     causes = {(j, z): pc.cause for (_, j), pcs in split.items() for pc in pcs for z in pc.zips}
     return audit.Run(cells, chans, expected, dict(placed), mode, planned, reported, graph, causes,
-                     metro_exceptions(inst, reference), manifest, reports, names)
+                     metro_exceptions(inst, reference), manifest, reports, names, polygon)
 
 
 def ledger_pieces(rows: list, graph: dict, drawings: dict) -> dict:

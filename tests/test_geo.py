@@ -200,3 +200,66 @@ def test_zip_graph_vertices_are_explicit_and_state_components_are_listed():
         found.setdefault(zip_state[next(iter(comp))], []).append(len(comp))
     split = {s: sorted(c, reverse=True) for s, c in found.items() if len(c) > 1}
     assert split == rep["state_components"]
+
+
+# ------------------------------------------------------------------------------ the polygon graph (M1)
+def test_polygon_edges_need_a_shared_length_and_skip_a_corner_touch():
+    polys = {"p": _square(0, 0, 10, 10), "q": _square(10, 0, 20, 10), "r": _square(20, 10, 30, 20),
+             "s": _square(40, 0, 50, 10)}
+    got = geo.polygon_edges(list(polys), list(polys.values()))
+    assert got["edges"] == [("p", "q", 10.0)]
+    assert got["corner_only"] == [("q", "r")] and got["overlaps"] == []
+    assert geo.components(list(polys), got["edges"]) == [["p", "q"], ["r"], ["s"]]
+
+
+def test_a_multipart_zcta_is_one_vertex_adjacent_through_any_part():
+    """Owner, 2026-10-05: a ZCTA's parts count as connected to each other, and it meets another
+    ZCTA through a shared positive-length boundary of any part."""
+    import shapely
+    m = shapely.MultiPolygon([_square(0, 0, 10, 10), _square(30, 0, 40, 10)])
+    got = geo.polygon_edges(["m", "n", "o"], [m, _square(40, 0, 50, 10), _square(10, 10, 20, 20)])
+    assert got["edges"] == [("m", "n", 10.0)] and got["corner_only"] == [("m", "o")]
+
+
+def _polygon_report():
+    with open(os.path.join(REF, geo.POLYGON_REPORT)) as fh:
+        return json.load(fh)
+
+
+def test_committed_polygon_graph_is_over_the_shipped_vertices_with_its_manifest():
+    rep = _polygon_report()
+    ref = geo.read_reference()
+    vertices = set(ref.loc[ref["graph_vertex"] == "1", "zcta"])
+    edges = geo.read_reference(name=geo.POLYGON_EDGES)
+    assert rep["vertices"] == len(vertices) and rep["no_polygon"] == [] and len(edges) == rep["edges"]
+    assert set(edges["a"]) | set(edges["b"]) <= vertices and (edges["a"] < edges["b"]).all()
+    assert (edges["border_m"].astype(float) > geo.MIN_BORDER_M).all()
+    assert rep["min_border_m"] == geo.MIN_BORDER_M == 0.0 and rep["crs"] == geo.CRS
+    assert rep["command"] == geo.POLYGON_COMMAND
+    zcta = next(e for e in _manifest()["sources"] if e["name"] == "zcta")
+    assert rep["sources"][0] == zcta
+    for e in rep["sources"]:
+        assert e["vintage"] == "2025" and all("2025" in f for f in e.get("files", {})), e["name"]
+    assert rep["component_sizes"] == [len(c) for c in geo.components(
+        sorted(vertices), list(zip(edges["a"], edges["b"])))]
+    diff = geo.read_reference(name=geo.POLYGON_DIFF)
+    voronoi = geo.read_reference(name="zcta_graph_edges.csv.gz")
+    assert (diff["change"] == "added").sum() == rep["against_voronoi"]["added"]
+    assert (diff["change"] == "dropped").sum() == rep["against_voronoi"]["dropped"]
+    assert rep["against_voronoi"]["voronoi_edges"] == len(voronoi)
+
+
+def test_connectors_name_their_crossing_and_the_graph_adds_only_approved_ones():
+    rows = geo.read_connectors()
+    ref = geo.read_reference()
+    vertices = set(ref.loc[ref["graph_vertex"] == "1", "zcta"])
+    assert rows and all(r["crossing"] and r["kind"] in ("bridge", "tunnel", "road", "ferry")
+                        and {r["a"], r["b"]} <= vertices and r["a"] < r["b"] for r in rows)
+    assert {r["status"] for r in rows} <= set(geo.CONNECTOR_STATUSES)
+    g = geo.polygon_graph()
+    approved = {(r["a"], r["b"]) for r in rows if r["status"] == "approved"}
+    polygon = set(map(tuple, geo.read_reference(name=geo.POLYGON_EDGES)[["a", "b"]].values))
+    assert set(g["edges"]) == polygon | approved
+    flipped = [dict(r, status="approved") if i == 0 else r for i, r in enumerate(rows)]
+    assert set(geo.polygon_graph(connectors=flipped)["edges"]) == polygon | approved | {
+        (rows[0]["a"], rows[0]["b"])}

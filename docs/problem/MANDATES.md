@@ -40,9 +40,22 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   the owner reviews once. Every CONUS ZCTA is assigned by the ledger, zero-opportunity ZIPs
   included. No tolerance: one detached piece fails the map, and listing it is not enough. The
   model plans and draws on this same polygon graph (OD2, `docs/problem/PROBLEM.md`).
-- **check:** the polygon contiguity check in `td/audit.py` and its run-folder gate
-  `tools/mandates/check.py`, built by #108.
-- **latest value:** not measured (#108's rescore writes it).
+  Multipart ZCTAs (owner, 2026-10-05, ruling relayed on #108; 1,429 of the 33,300 are
+  MultiPolygons): one ZCTA is one vertex and its own parts always count as connected to each
+  other; two ZCTAs are adjacent through a shared positive-length boundary of any of their parts.
+  A separate piece on a district's drawn union that only a multipart ZCTA makes is a visual
+  defect for the scorer to list, not an M1 failure.
+- **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
+  on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
+  eligibility also applies; pinned by
+  `tests/test_mandates.py::test_m1_fails_each_broken_fixture_and_passes_the_connected_one` on the
+  broken fixtures in tests/fixtures/m1/.
+- **latest value:** 75 of 75 drawn runs fail (2026-10-05, `tools/mandates/check.py --rescore`,
+  #108). Best map, the scorer's rank 1:
+  `sweep/comb_2026-10-02/stage2/ne_okks_forced_balance_na15_WH12_FI20_CB3`, M1 fail, largest
+  detached piece 0.385 τ (WH/WH_07, 857 ZIPs in MI) after display fill; strictly on the ledger 2726
+  detached pieces and 123242 channel ZCTAs with no owner. Smallest largest piece across runs: 0.297
+  τ (WH/WH_05, 288 ZIPs in CT), `sweep/must_2026-10-01/stage2/R_na16b8_WH12_FI24_TN+NC_b10_e15`.
 - **waiver history:**
   - 2026-09-01, set aside "for simplicity" (`d50bd42`) as the PROBLEM.md row "Adjacency
     contiguity is not required | settled | 2026-09-01 | user | 547 components. Reopenable only

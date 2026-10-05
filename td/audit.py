@@ -15,6 +15,14 @@ Two share defects are kept apart (#70):
   the legacy `other`.  It fails the run (S26: a share exists only as a set of ZIPs).
 - a *vanished share* is a planned share drawn as no ZIPs.  It is listed, not failed (C8).
 
+**M1** (`docs/problem/MANDATES.md`, #108) is `check_m1`, on the polygon graph
+(`geo.polygon_graph`: every CONUS ZCTA, the TIGER ZCTA polygons' rook edges and the owner-approved
+connectors only).  It fails the run when a district's ZCTAs in the ledger are not one component
+of that graph, or when a ZCTA of the graph has no owner in a channel.  No tolerance: every
+detached piece fails, and each is listed with its ZIP count, its mass over τ_c and its cause.
+A run without a polygon graph leaves M1 `unverified`, never `pass`.  `check_contiguity` still
+lists pieces on the run's declared (Voronoi) graph.
+
 `python -m td.audit catalog` scores the tagged catalog (`archive/pre-support-2026-09`,
 `scenarios.csv`) once, for `docs/RESULTS.md` (S22).  Its contiguity runs on the OD2 graph built
 over the catalog's own ZIPs, since the tag does not ship the graph it was drawn on.
@@ -87,6 +95,7 @@ class Run:
     manifest: dict | None = None
     solver: dict | None = None
     names: dict | None = None            # district -> name
+    polygon: dict | None = None          # geo.polygon_graph's {"vertices", "edges"[, "state"]} (M1)
 
 
 @dataclass
@@ -337,6 +346,117 @@ def check_contiguity(run: Run) -> Check:
                  {"split": split, "pieces": pieces, "gaps": gaps})
 
 
+M1_CHECK = "M1 polygon contiguity"
+M1_ISLAND = "no approved connector"            # the piece lies in another component of the graph
+M1_UNOWNED = "ZCTAs with no owner between"      # it joins the main piece only through unowned ZCTAs
+M1_CUT = "cut off by other districts"
+
+
+def adjacency(graph: dict) -> dict:
+    """{vertex: set of neighbours} over the graph's explicit vertices (trap 21)."""
+    adj = {z: set() for z in graph["vertices"]}
+    for a, b, *_ in graph["edges"]:
+        if a in adj and b in adj:
+            adj[a].add(b)
+            adj[b].add(a)
+    return adj
+
+
+def _components(zips: set, adj: dict) -> list:
+    out, seen = [], set()
+    for z in sorted(zips):
+        if z in seen:
+            continue
+        comp, stack = {z}, [z]
+        seen.add(z)
+        while stack:
+            for w in adj.get(stack.pop(), ()):
+                if w in zips and w not in seen:
+                    seen.add(w)
+                    comp.add(w)
+                    stack.append(w)
+        out.append(comp)
+    return out
+
+
+def _reach(start: set, allowed: set, adj: dict) -> set:
+    """The vertices of `allowed` reachable from `start` through `allowed`."""
+    seen, stack = set(start), list(start)
+    while stack:
+        for w in adj.get(stack.pop(), ()):
+            if w in allowed and w not in seen:
+                seen.add(w)
+                stack.append(w)
+    return seen
+
+
+def district_pieces(owner: dict, adj: dict, mass: dict) -> dict:
+    """{district: [components of its ZIPs on `adj`]}, the main piece first: heaviest by `mass`
+    ({zip: m}, missing = 0), then most ZIPs, then smallest ZIP.  `owner` is {zip: district} in one
+    channel; a ZIP that is not a vertex of `adj` is its own component."""
+    held = collections.defaultdict(set)
+    for z, j in owner.items():
+        held[j].add(z)
+    return {j: sorted(_components(zs, adj),
+                      key=lambda c: (-math.fsum(mass.get(z, 0.0) for z in c), -len(c), min(c)))
+            for j, zs in sorted(held.items())}
+
+
+def check_m1(run: Run) -> Check:
+    """M1 (module doc): one connected piece per district on the polygon graph, and an owner for
+    every ZCTA of the graph in every channel."""
+    name = M1_CHECK
+    if run.polygon is None:
+        return Check(name, "unverified", "no polygon graph: M1 is not checked")
+    adj = adjacency(run.polygon)
+    state = run.polygon.get("state", {})
+    weigh = _masses(run)
+    owner, mass, total = collections.defaultdict(dict), collections.defaultdict(dict), collections.Counter()
+    for c in run.cells:
+        if weigh:
+            total[c.channel] += c.m
+        if _real(c.district):
+            owner[c.channel][c.zip] = c.district
+            mass[c.channel][c.zip] = mass[c.channel].get(c.zip, 0.0) + (c.m if weigh else 0.0)
+    whole = {}
+    for i, comp in enumerate(_components(set(adj), adj)):
+        whole.update(dict.fromkeys(comp, i))
+    items, uncovered, n_pieces, split, largest, n_free = [], [], 0, 0, 0.0, 0
+    for ch in sorted(set(run.channels) | set(owner)):
+        spec = run.channels.get(ch)
+        tau = total[ch] / spec.k if weigh and spec and spec.k and total[ch] > 0 else None
+        free = set(adj) - set(owner[ch])
+        items += [f"{ch}: ZIP {z} of {j} is not a vertex of the polygon graph"
+                  for z, j in sorted(owner[ch].items()) if z not in adj]
+        for j, comps in district_pieces(owner[ch], adj, mass[ch]).items():
+            if len(comps) < 2:
+                continue
+            split += 1
+            n_pieces += len(comps) - 1
+            main = _reach(comps[0], set().union(*comps) | free, adj)
+            for comp in comps[1:]:
+                m = math.fsum(mass[ch].get(z, 0.0) for z in comp)
+                share = f"{m / tau:.3g} τ" if tau else "mass not in the ledger"
+                largest = max(largest, m / tau if tau else 0.0)
+                z0 = min(comp)
+                if whole.get(z0) != whole.get(min(comps[0])):
+                    cause = M1_ISLAND
+                else:
+                    cause = next((run.causes[j, z] for z in sorted(comp) if (j, z) in run.causes),
+                                 M1_UNOWNED if z0 in main else M1_CUT)
+                items.append(f"{ch}/{j}: detached piece of {len(comp)} ZIPs ({z0}...), {share}, "
+                             f"cause {cause}")
+        by_state = collections.Counter(state.get(z, "?") for z in free)
+        if free:
+            n_free += len(free)
+            items.append(f"{ch}: {len(free)} of {len(adj)} ZCTAs have no owner")
+            uncovered += [f"{ch}: {n} ZCTAs of {s} have no owner" for s, n in sorted(by_state.items())]
+    return Check(name, "fail" if items else "pass",
+                 f"{split} districts in pieces, {n_pieces} detached pieces (largest {largest:.3g} τ), "
+                 f"{n_free} channel ZCTAs with no owner", items + uncovered,
+                 {"split": split, "pieces": n_pieces, "largest_tau": largest, "no_owner": n_free})
+
+
 def check_geography(run: Run) -> Check:
     name = "geography manifest is 2025"
     if run.manifest is None:
@@ -482,7 +602,7 @@ def audit(run: Run) -> list:
         mapped = replace(run, cells=[c for c in run.cells if c.zip in run.unit_of])
     return [check_cells(run), check_count(mapped), check_dropped(mapped), check_bands(mapped),
             check_phantom(mapped), check_planned(mapped), check_modes(mapped), check_contiguity(mapped),
-            check_geography(mapped), *check_solver(mapped), check_names(mapped), check_reps(mapped)]
+            check_m1(run), check_geography(mapped), *check_solver(mapped), check_names(mapped), check_reps(mapped)]
 
 
 def verdict(checks: list) -> str:

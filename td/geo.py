@@ -15,6 +15,15 @@ kept) and writes `reference/2025/`:
     MANIFEST.json           URL, vintage and sha256 of every source file
     REPORT.json             the build's checks: coverage, land, graph vertices, state components
 
+`python -m td geo --polygon` adds M1's polygon graph (#108, module section below):
+
+    zcta_polygon_edges.csv.gz       (a, b, border_m): rook adjacency of the TIGER ZCTA polygons
+    zcta_polygon_vs_voronoi.csv.gz  (a, b, change, border_m): its edges added to and dropped from
+                                    the Voronoi ZIP graph
+    connectors.csv                  the connector list across gaps, each row `proposed` until the
+                                    owner approves it
+    POLYGON_GRAPH.json              its manifest (sources, CRS, threshold, command) and report
+
 Everything is 2025 vintage (S17); `check_manifest` rejects any other.  HUD placement is G2.
 
 **Land.**  TIGER ZCTA polygons include their water, so a piece's polygon area is not its land.
@@ -39,9 +48,21 @@ rerun on the extract's placed ZIPs in C2/E1.
 
 Coordinates and areas are EPSG:5070 (NAD83 CONUS Albers, equal-area on GRS80), so measured
 areas are comparable with the gazetteer's.
+
+**The polygon graph** (M1, `docs/problem/MANDATES.md`) is the rook graph of the TIGER/Line 2025
+ZCTA520 polygons over the shipped vertex set (`graph_vertex`, trap 21): two ZCTAs are adjacent
+when their boundaries share a length above `MIN_BORDER_M` = 0 m in `CRS`, so a corner touch
+(length 0) is not an edge.  ZCTAs do not tile the land or the water, so the graph has islands:
+water, and land in no ZCTA.  A *connector* joins two ZCTAs across such a gap; the build proposes
+one per crossing it can name: every TIGER/Line 2025 primary or secondary road, or for an island
+none reaches, any road of its counties and their neighbours, whose stretch outside every ZCTA
+reaches ZCTAs of two components, and the ferries of `FERRIES`.  Each row is `proposed`; only the
+owner sets `approved` (or `rejected`), the build keeps those statuses, and `polygon_graph` adds
+only approved rows.
 """
 from __future__ import annotations
 
+import collections
 import concurrent.futures
 import gzip
 import hashlib
@@ -606,12 +627,376 @@ def read_reference(ref_dir: str = REFERENCE_DIR, name: str = "zcta_reference.csv
     return pd.read_csv(os.path.join(ref_dir, name), dtype=str, keep_default_na=False)
 
 
+# ------------------------------------------------------------------------------ the polygon graph (M1)
+POLYGON_EDGES = "zcta_polygon_edges.csv.gz"
+POLYGON_DIFF = "zcta_polygon_vs_voronoi.csv.gz"
+CONNECTORS = "connectors.csv"
+POLYGON_REPORT = "POLYGON_GRAPH.json"
+POLYGON_COMMAND = "python -m td geo --polygon --public $TD_REPO/data/public"
+MIN_BORDER_M = 0.0          # an edge needs a shared boundary longer than this: a corner has length 0
+TOUCH_M = 1.0               # a road's stretch outside every ZCTA this close to a polygon reaches it
+ROAD_SEARCH_M = 30_000.0    # roads this close to an island's ZCTAs are searched for its crossings
+CONNECTOR_COLUMNS = ("a", "b", "kind", "crossing", "gap_km", "status", "source")
+CONNECTOR_STATUSES = ("proposed", "approved", "rejected")
+ROAD_SOURCES = {
+    "prisecroads": (f"{TIGER}/PRISECROADS/", "primary and secondary roads, one file per state: "
+                    "the crossings connectors name"),
+    "roads": (f"{TIGER}/ROADS/", "all roads, one file per county, for the islands no primary or "
+              "secondary road reaches"),
+}
+# (mainland ZCTA, island ZCTA, crossing): scheduled ferries to islands no road reaches, by their
+# terminals' ZCTAs.  A hand list for the owner's one review (#108), not a TIGER/Line source.
+FERRIES = (
+    ("02543", "02568", "Woods Hole-Vineyard Haven ferry (Steamship Authority)"),
+    ("02601", "02554", "Hyannis-Nantucket ferry (Steamship Authority)"),
+    ("04841", "04853", "Rockland-North Haven ferry (Maine State Ferry Service)"),
+    ("04841", "04863", "Rockland-Vinalhaven ferry (Maine State Ferry Service)"),
+    ("04841", "04851", "Rockland-Matinicus ferry (Maine State Ferry Service)"),
+    ("04855", "04852", "Port Clyde-Monhegan ferry"),
+    ("49720", "49782", "Charlevoix-Beaver Island ferry"),
+    ("43440", "43438", "Marblehead-Kelleys Island ferry"),
+    ("43452", "43456", "Catawba-Put-in-Bay ferry (Miller Ferry)"),
+    ("43452", "43446", "Catawba-Middle Bass ferry (Miller Ferry)"),
+    ("90802", "90704", "Long Beach-Avalon ferry (Catalina Express)"),
+    ("98136", "98070", "Fauntleroy-Vashon ferry (Washington State Ferries)"),
+    ("98407", "98070", "Point Defiance-Tahlequah ferry (Washington State Ferries)"),
+    ("54814", "54850", "Bayfield-La Pointe ferry (Madeline Island Ferry Line)"),
+    ("54210", "54246", "Northport-Washington Island ferry (Washington Island Ferry Line)"),
+    ("21817", "21824", "Crisfield-Ewell ferry (Smith Island)"),
+    ("21817", "21866", "Crisfield-Tylerton ferry (Smith Island)"),
+    ("21817", "23440", "Crisfield-Tangier ferry"),
+    ("02809", "02872", "Bristol-Prudence Island ferry"),
+    ("02882", "02807", "Point Judith-Block Island ferry"),
+    ("06320", "06390", "New London-Fishers Island ferry"),
+    ("10004", "10301", "Staten Island Ferry (Whitehall-St. George)"),
+)
+
+
+def polygon_edges(ids, geoms) -> dict:
+    """Rook adjacency of `geoms` (polygons in `CRS`, keyed by `ids`): `{"edges": [(a, b,
+    border_m)], "corner_only": [(a, b)], "overlaps": [(a, b)]}`, a < b.  A pair is an edge when the
+    length its boundaries share exceeds `MIN_BORDER_M`; a pair that touches with no shared length
+    is `corner_only`; a pair whose interiors overlap is listed in `overlaps` and is an edge."""
+    import numpy as np
+    import shapely
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    ia, ib = shapely.STRtree(geoms).query(geoms, predicate="intersects")
+    keep = ia < ib
+    ia, ib = ia[keep], ib[keep]
+    bound = shapely.boundary(geoms)
+
+    def shared(lo, hi):
+        return (shapely.length(shapely.intersection(bound[ia[lo:hi]], bound[ib[lo:hi]])),
+                shapely.area(shapely.intersection(geoms[ia[lo:hi]], geoms[ib[lo:hi]])))
+
+    parts = _threaded(shared, len(ia)) if len(ia) else []
+    border = np.concatenate([p[0] for p in parts]) if parts else np.zeros(0)
+    overlap = np.concatenate([p[1] for p in parts]) if parts else np.zeros(0)
+    out = {"edges": [], "corner_only": [], "overlaps": []}
+    for i, j, b, o in zip(ia, ib, border, overlap):
+        a, z = sorted((ids[i], ids[j]))
+        if o > 0:
+            out["overlaps"].append((a, z))
+        if b > MIN_BORDER_M or o > 0:
+            out["edges"].append((a, z, float(b)))
+        else:
+            out["corner_only"].append((a, z))
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def components(vertices, edges) -> list:
+    """The components of the graph, each a sorted list, largest first, then by smallest id."""
+    import networkx as nx
+    g = nx.Graph()
+    g.add_nodes_from(vertices)
+    g.add_edges_from((a, b) for a, b, *_ in edges)
+    return sorted((sorted(c) for c in nx.connected_components(g)), key=lambda c: (-len(c), c[0]))
+
+
+def _crossing_kind(names: list) -> str:
+    text = " ".join(names)
+    if re.search(r"\b(Tunl|Tunnel)\b", text):
+        return "tunnel"
+    if re.search(BRIDGE_NAME, text):
+        return "bridge"
+    return "road"
+
+
+BRIDGE_NAME = r"\b(?:Brg|Bridge|Tunl|Tunnel|Cswy|Causeway|Viaduct|Xing)\b"
+
+
+def _gap_chains(geoms, roads, near) -> list:
+    """[(indices of the polygons a chain reaches, its road names longest first)] for the roads
+    `near` (row indices of `roads`): each road's stretches outside the polygons it meets, chained
+    where they touch."""
+    import networkx as nx
+    import numpy as np
+    import shapely
+    tree = shapely.STRtree(geoms)
+    rg = np.asarray(roads.geometry.values)
+    names = roads["FULLNAME"].fillna("").to_numpy()
+    ri, zi = tree.query(rg[near], predicate="intersects")
+    met = collections.defaultdict(list)
+    for r, z in zip(ri, zi):
+        met[near[r]].append(z)
+    gaps, gap_names = [], []
+    for i in near:
+        rest = shapely.difference(rg[i], shapely.union_all(geoms[met[i]])) if met[i] else rg[i]
+        for part in shapely.get_parts(rest):
+            if part.length > 0:
+                gaps.append(part)
+                gap_names.append(names[i])
+    if not gaps:
+        return []
+    gaps = np.asarray(gaps)
+    ga, gb = shapely.STRtree(gaps).query(gaps, predicate="dwithin", distance=TOUCH_M)
+    chains = nx.Graph()
+    chains.add_nodes_from(range(len(gaps)))
+    chains.add_edges_from(zip(ga, gb))
+    out = []
+    for chain in sorted(map(sorted, nx.connected_components(chains))):
+        hit = np.unique(tree.query(gaps[chain], predicate="dwithin", distance=TOUCH_M)[1])
+        length = collections.Counter()
+        for p in chain:
+            length[gap_names[p] or "unnamed road"] += gaps[p].length
+        out.append((hit, [n for n, _ in sorted(length.items(), key=lambda kv: (-kv[1], kv[0]))]))
+    return out
+
+
+def _row(ids, geoms, i: int, j: int, names: list, source: str) -> dict:
+    import shapely
+    a, b = sorted((ids[i], ids[j]))
+    top = names[:3]
+    return {"a": a, "b": b, "kind": _crossing_kind(top), "crossing": " / ".join(top),
+            "gap_km": round(float(shapely.distance(geoms[i], geoms[j])) / 1000.0, 2),
+            "source": source}
+
+
+def road_crossings(ids, geoms, comp: dict, roads, source: str) -> list:
+    """Connector rows for the roads in `roads` (a frame with FULLNAME and geometry in `CRS`) that
+    cross a gap between two components of `comp` ({zcta: component index}, 0 the largest).
+
+    A chain (`_gap_chains`) reaching ZCTAs of two components, one not the largest, gives one row
+    per pair of them, between their nearest two ZCTAs, named by the chain's longest road names.
+    `gap_km` is the distance between those two polygons."""
+    import numpy as np
+    import shapely
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    minor = np.asarray([comp[z] > 0 for z in ids])
+    near = np.unique(shapely.STRtree(geoms[minor]).query(
+        np.asarray(roads.geometry.values), predicate="dwithin", distance=ROAD_SEARCH_M)[0])
+    out = []
+    for hit, names in _gap_chains(geoms, roads, near):
+        by_comp = collections.defaultdict(list)
+        for h in hit:
+            by_comp[comp[ids[h]]].append(h)
+        if len(by_comp) < 2 or max(by_comp) == 0:
+            continue
+        cs = sorted(by_comp)
+        for x in range(len(cs)):
+            for y in range(x + 1, len(cs)):
+                _, i, j = min((shapely.distance(geoms[i], geoms[j]), i, j)
+                              for i in by_comp[cs[x]] for j in by_comp[cs[y]])
+                out.append(_row(ids, geoms, i, j, names, source))
+    return out
+
+
+def bridge_crossings(ids, geoms, edges: set, roads, source: str) -> list:
+    """Connector rows for the bridges and tunnels in `roads` (FULLNAME matching `BRIDGE_NAME`)
+    anywhere: a chain (`_gap_chains`) of them gives one row per pair of the ZCTAs it reaches that
+    is not already an edge of `edges` ({(a, b)}, a < b), so a bridge between two ZCTAs of one
+    component (Mackinac, Chesapeake Bay) is proposed as well as one to an island."""
+    import numpy as np
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    near = np.flatnonzero(roads["FULLNAME"].fillna("").str.contains(BRIDGE_NAME, regex=True).to_numpy())
+    out = []
+    for hit, names in _gap_chains(geoms, roads, near):
+        out += [_row(ids, geoms, i, j, names, source) for x, i in enumerate(hit) for j in hit[x + 1:]
+                if tuple(sorted((ids[i], ids[j]))) not in edges]
+    return out
+
+
+def _dedupe_connectors(rows: list) -> list:
+    """One row per ZCTA pair: the shortest gap's, ties by crossing name."""
+    best = {}
+    for r in sorted(rows, key=lambda r: (r["gap_km"], r["crossing"])):
+        best.setdefault((r["a"], r["b"]), r)
+    return [best[k] for k in sorted(best)]
+
+
+def read_connectors(ref_dir: str = REFERENCE_DIR, path: str | None = None) -> list:
+    """The connector rows of `connectors.csv` (or `path`), as dicts; an absent file has none."""
+    import csv
+    path = path or os.path.join(ref_dir, CONNECTORS)
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    bad = [f"{r['a']}-{r['b']}: status {r['status']!r}" for r in rows
+           if r["status"] not in CONNECTOR_STATUSES]
+    if bad:
+        raise ValueError(f"{path}: " + "; ".join(bad))
+    return rows
+
+
+def polygon_graph(ref_dir: str = REFERENCE_DIR, connectors: list | None = None) -> dict:
+    """M1's graph: `{"vertices", "edges", "state"}`, the shipped vertex set, the polygon edges plus
+    the owner-approved connectors only (`connectors` defaults to `ref_dir`'s list), and each
+    vertex's state."""
+    ref = read_reference(ref_dir)
+    ref = ref[ref["graph_vertex"] == "1"]
+    edges = read_reference(ref_dir, name=POLYGON_EDGES)
+    rows = read_connectors(ref_dir) if connectors is None else connectors
+    return {"vertices": sorted(ref["zcta"]),
+            "edges": list(zip(edges["a"], edges["b"])) + approved_connectors(rows),
+            "state": dict(zip(ref["zcta"], ref["state"]))}
+
+
+def approved_connectors(rows: list) -> list:
+    """[(a, b)] of the connector rows the owner approved; a proposed or rejected row adds no edge."""
+    return [(r["a"], r["b"]) for r in rows if r["status"] == "approved"]
+
+
+def _road_files(public: str, kind: str, keys) -> list:
+    url = ROAD_SOURCES[kind][0]
+    return fetch_all([f"{url}tl_2025_{k}_{kind}.zip" for k in sorted(keys)], public)
+
+
+def _read_roads(paths: list):
+    import pandas as pd
+    return pd.concat([_read(p, ["FULLNAME"]) for p in paths], ignore_index=True)
+
+
+def polygon_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> dict:
+    """Build the polygon graph, its Voronoi comparison and the connector list into `out` (module
+    doc).  The connector rows already in `out` keep their status.  Returns the report."""
+    import numpy as np
+    import pandas as pd
+    import shapely
+
+    ref = read_reference(out)
+    vertices = sorted(ref.loc[ref["graph_vertex"] == "1", "zcta"])
+    with open(os.path.join(out, "MANIFEST.json"), encoding="utf-8") as fh:
+        zcta_entry = next(e for e in json.load(fh)["sources"] if e["name"] == "zcta")
+    zpath = cached(SOURCES["zcta"][0], public)
+    if sha256(zpath) != zcta_entry["sha256"]:
+        raise ValueError(f"{zpath} is not the ZCTA file MANIFEST.json hashes")
+    log("geo: ZCTA polygons")
+    df = _read(zpath, ["ZCTA5CE20"])
+    df = df[df["ZCTA5CE20"].isin(set(vertices))].sort_values("ZCTA5CE20").reset_index(drop=True)
+    ids, geoms = df["ZCTA5CE20"].to_numpy(), np.asarray(df.geometry.values)
+    no_polygon = sorted(set(vertices) - set(ids))
+
+    log("geo: polygon rook edges")
+    got = polygon_edges(ids, geoms)
+    comps = components(vertices, got["edges"])
+    comp = {z: i for i, c in enumerate(comps) for z in c}
+    vor = read_reference(out, name="zcta_graph_edges.csv.gz")
+    vor_border = {tuple(sorted(p)): float(m) for *p, m in zip(vor["a"], vor["b"], vor["border_m"])}
+    pol_border = {(a, b): m for a, b, m in got["edges"]}
+    diff = ([(a, b, "added", m) for (a, b), m in sorted(pol_border.items()) if (a, b) not in vor_border]
+            + [(a, b, "dropped", m) for (a, b), m in sorted(vor_border.items())
+               if (a, b) not in pol_border])
+
+    log("geo: connectors from primary and secondary roads")
+    prisec = _road_files(public, "prisecroads", CONUS_STATEFP)
+    prisec_roads = _read_roads(prisec)
+    rows = road_crossings(ids, geoms, comp, prisec_roads, "TIGER/Line 2025 prisecroads")
+    rows += bridge_crossings(ids, geoms, set(pol_border), prisec_roads, "TIGER/Line 2025 prisecroads")
+    reached = {comp[r["a"]] for r in rows} | {comp[r["b"]] for r in rows}
+    ferry_rows = []
+    for a, b, crossing in FERRIES:
+        if a not in comp or b not in comp or comp[a] == comp[b]:
+            raise ValueError(f"ferry {a}-{b}: both must be vertices, in different components")
+        i, j = np.searchsorted(ids, [a, b])
+        ferry_rows.append({"a": min(a, b), "b": max(a, b), "kind": "ferry", "crossing": crossing,
+                           "gap_km": round(float(shapely.distance(geoms[i], geoms[j])) / 1000.0, 2),
+                           "source": "geo.FERRIES (hand list)"})
+    reached |= {comp[r["b"]] for r in ferry_rows} | {comp[r["a"]] for r in ferry_rows}
+    lonely = [i for i in range(1, len(comps)) if i not in reached]
+    if lonely:
+        log(f"geo: connectors from county roads for {len(lonely)} islands")
+        adj = read_reference(out, name="county_adjacency.csv.gz")
+        county = dict(zip(ref["zcta"], ref["county"]))
+        home = {county[z] for i in lonely for z in comps[i]}
+        near = home | set(adj.loc[adj["county"].isin(home), "neighbor"])
+        roads = _road_files(public, "roads", near)
+        rows += road_crossings(ids, geoms, {z: (c if c in lonely else 0) for z, c in comp.items()},
+                               _read_roads(roads), "TIGER/Line 2025 roads")
+    else:
+        near, roads = set(), []
+    proposals = _dedupe_connectors(rows + ferry_rows)
+    old = {(r["a"], r["b"], r["crossing"]): r["status"] for r in read_connectors(out)}
+    connectors = [{**r, "status": old.get((r["a"], r["b"], r["crossing"]), "proposed")}
+                  for r in proposals]
+    kept = [r for r in read_connectors(out) if r["status"] != "proposed" and
+            (r["a"], r["b"], r["crossing"]) not in {(c["a"], c["b"], c["crossing"]) for c in connectors}]
+    connectors += kept                  # an owner's decision is never dropped by a rebuild
+
+    joined = components(range(len(comps)), [(comp[r["a"]], comp[r["b"]]) for r in connectors])
+    state = dict(zip(ref["zcta"], ref["state"]))
+    islands = [{"component": i, "zctas": comps[i], "states": sorted({state[z] for z in comps[i]}),
+                "connectors": sum(1 for r in connectors if i in (comp[r["a"]], comp[r["b"]])),
+                "joined_to_main_by_proposals": 0 in next(c for c in joined if i in c)}
+               for i in range(1, len(comps))]
+    sources = [_road_entry("prisecroads", prisec, public)]
+    if roads:
+        sources.append(_road_entry("roads", roads, public))
+    report = {
+        "vintage": VINTAGE, "crs": CRS, "command": POLYGON_COMMAND,
+        "adjacency": f"rook: boundaries share a length > {MIN_BORDER_M:g} m in {CRS}; a corner "
+                     "touch (length 0) is not an edge",
+        "min_border_m": MIN_BORDER_M, "touch_m": TOUCH_M, "road_search_m": ROAD_SEARCH_M,
+        "sources": [zcta_entry] + sources,
+        "vertices": len(vertices), "no_polygon": no_polygon, "edges": len(got["edges"]),
+        "smallest_border_m": round(min(m for *_, m in got["edges"]), 3),
+        "corner_only_pairs": len(got["corner_only"]), "overlapping_pairs": got["overlaps"],
+        "against_voronoi": {"voronoi_edges": len(vor_border), "shared": len(vor_border) - sum(
+            1 for d in diff if d[2] == "dropped"), "added": sum(1 for d in diff if d[2] == "added"),
+            "dropped": sum(1 for d in diff if d[2] == "dropped")},
+        "components": len(comps), "component_sizes": [len(c) for c in comps],
+        "connectors": {"rows": len(connectors), **collections.Counter(r["kind"] for r in connectors),
+                       "approved": sum(1 for r in connectors if r["status"] == "approved")},
+        "county_road_counties": sorted(near),
+        "islands": islands,
+        "islands_without_a_connector": [i["zctas"] for i in islands if not i["connectors"]],
+    }
+    log("geo: writing " + out)
+    _write_csv(pd.DataFrame(got["edges"], columns=["a", "b", "border_m"]).round({"border_m": 2}),
+               os.path.join(out, POLYGON_EDGES))
+    _write_csv(pd.DataFrame(diff, columns=["a", "b", "change", "border_m"]).round({"border_m": 2}),
+               os.path.join(out, POLYGON_DIFF))
+    pd.DataFrame(sorted(connectors, key=lambda r: (r["a"], r["b"], r["crossing"])),
+                 columns=list(CONNECTOR_COLUMNS)).to_csv(os.path.join(out, CONNECTORS), index=False,
+                                                         lineterminator="\n")
+    _write_json(report, os.path.join(out, POLYGON_REPORT))
+    return report
+
+
+def _road_entry(name: str, paths: list, public: str) -> dict:
+    """A manifest entry, as `manifest_entry`, for the road files a polygon build read."""
+    files = {os.path.basename(p): sha256(p) for p in paths}
+    listing = "".join(f"{f} {h}\n" for f, h in sorted(files.items()))
+    return {"name": name, "url": ROAD_SOURCES[name][0], "vintage": VINTAGE,
+            "use": ROAD_SOURCES[name][1], "sha256": hashlib.sha256(listing.encode()).hexdigest(),
+            "files": dict(sorted(files.items()))}
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(prog="python -m td geo", description=__doc__.splitlines()[0])
     ap.add_argument("--public", default=PUBLIC_DIR, help="download cache (default data/public)")
     ap.add_argument("--out", default=REFERENCE_DIR, help="output (default reference/2025)")
+    ap.add_argument("--polygon", action="store_true",
+                    help="build M1's polygon graph and connector list from the reference in --out")
     a = ap.parse_args(argv)
+    if a.polygon:
+        r = polygon_build(a.public, a.out, log=lambda m: print(m, flush=True))
+        print(f"geo: polygon graph {r['vertices']} vertices, {r['edges']} edges, "
+              f"{r['corner_only_pairs']} corner-only pairs, {r['components']} components; "
+              f"{r['connectors']['rows']} connectors, "
+              f"{len(r['islands_without_a_connector'])} islands without one")
+        return 0
     report = build(a.public, a.out, log=lambda m: print(m, flush=True))
     g = report["graph"]
     print(f"geo: {report['conus_zctas']} CONUS ZCTAs, {g['vertices']} graph vertices, "

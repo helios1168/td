@@ -17,7 +17,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `docs/REFERENCES.md` | what td relies on each paper for: one row per claim, with its key, result, kb page and status |
 | `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md`, `docs/problem/BALANCE.md`, `docs/problem/SPLITS.md` | the settled/open ledger, the U-numbered unknowns, the balance brief for the lens and the council, and the split brief for the council (#90) |
 | `docs/problem/MANDATES.md` | the owner-only register of hard requirements (M1 ZIP contiguity, masking): the owner's words, definition, check, latest value, waiver history and return trigger per row (#107) |
-| `tests/test_mandates.py` | the register's rows: every field present, status `hard`, `deferred` or `waived`, checks that exist, and no deferral whose trigger holds; the 2026-09-01 contiguity deferral replayed on the 2026-09-28 graph fails |
+| `tests/test_mandates.py`, `tests/fixtures/m1/` | the register's rows: every field present, status `hard`, `deferred` or `waived`, checks that exist, and no deferral whose trigger holds; the 2026-09-01 contiguity deferral replayed on the 2026-09-28 graph fails; M1's check fails the broken fixtures (a detached piece, a corner-only touch, an unowned zero-opportunity ZCTA, an unapproved crossing) and passes the connected one |
+| `tools/mandates/check.py` | the M1 run-folder gate (#108): `m1(run_dir)` is `td.audit.check_m1` on a run's ledger with the committed polygon graph and approved connectors, plus each district's largest detached piece after the scorer's display fill; `--rescore <root>` gates every run folder, writes the table and M1's latest value in `docs/problem/MANDATES.md` (its only writer) |
 | `docs/lenses/` | one file per lens or council pass, dated, never edited after |
 | `docs/memory/` | facts and decisions; `INDEX.md` is one line per file, written through the `memory-curator` |
 | `data/README.md` | what `data/` holds; nothing else in it is tracked |
@@ -26,11 +27,12 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/test_export_instance.py` | the exporter |
 | `td/data.py` | v3 extract loader, CONUS rule and seeded sparse fixture |
 | `tests/test_data.py` | loader round-trip, fixture concentration and ZIP graph checks |
-| `td/audit.py` | the §9 audit: checks a run's ledger and writes `scorecard.md`; `python -m td.audit catalog` scores the tagged catalog |
+| `td/audit.py` | the §9 audit: checks a run's ledger and writes `scorecard.md`, M1 (`check_m1`) among them; `python -m td.audit catalog` scores the tagged catalog |
 | `tests/test_audit.py` | each audit check on a toy plan with planted defects, and the tagged catalog's known defects |
 | `docs/RESULTS.md` | measured results, aggregates only: the tagged catalog's scorecard |
 | `docs/RUN_WALKTHROUGH.md` | a plain-English walkthrough of `python -m td run` on the 51 scenario, and why it stopped at ±10% |
 | `td/geo.py`, `reference/2025/` | the 2025 geography: the ZCTA reference table, its overlays, the ZIP graph and the source MANIFEST (#62) |
+| `reference/2025/zcta_polygon_edges.csv.gz`, `zcta_polygon_vs_voronoi.csv.gz`, `connectors.csv`, `POLYGON_GRAPH.json` | M1's polygon graph (#108): rook adjacency of the TIGER 2025 ZCTA polygons over the shipped vertices, its edges added to and dropped from the Voronoi graph, the connector list (each row `proposed` until the owner approves it), and its manifest and report; `python -m td geo --polygon --public $TD_REPO/data/public` builds them |
 | `tests/test_geo.py` | the reference table, the manifest's 2025-only rule and the graph's explicit vertex set |
 | `td/spec.py`, `scenarios/` | a TOML scenario: channels, domains, units, pieces and modes; the partition and ZIP-connectivity checks (#67) |
 | `td/supports.py` | the closed support family and its drawability terms: corridor floor, border cap, rounding margin (#67) |
@@ -49,7 +51,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tools/exp/split_floor.py` | #94's split floor: per layout (no combined channel, NE, NE + plains) and IFA, each channel's forced splits and connected-parts floor at every K the $ rule allows (IFA's on the whole extract's $62.14B); arithmetic, no solve |
 | `tests/test_split_floor.py` | #94's split floor on toys: forced splits by hand, the parts floor against brute force, the $-rule K range, the layouts as scenarios |
 | `tests/test_exp81_hess.py`, `tests/test_exp81_measure.py`, `tests/test_exp81_sidebyside.py` | #81's experiment code on toys: the Hess loop against brute force, the measures by hand, the map legend |
-| `tools/looks/score.py` | the looks scorer (#93): `score(run_dir)` gives a drawn run's eligibility (audit at ±15%, $ per district, main K) and rank keys (channel-state splits, visual defects, shape, balance); the CLI ranks run folders and flags `REVIEW` |
+| `tools/looks/score.py` | the looks scorer (#93): `score(run_dir)` gives a drawn run's eligibility (audit at ±15%, $ per district, main K, M1) and rank keys (channel-state splits, visual defects with polygon-graph pieces weighing 1 + mass/τ, shape, balance); the CLI ranks run folders and flags `REVIEW` |
 | `tests/test_looks_score.py` | the looks scorer on toys: the display fill, each defect, the $ and K rules, `REVIEW` |
 
 ## Run

@@ -457,7 +457,11 @@ def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has
     report = json.load(open(res.paths["run"], encoding="utf-8"))
     assert report["planned_elsewhere"] == {"h": len(NY) + 1}
     assert report["not_placed_zips"] == 0 and report["zips"] == len(zs)
-    assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
+    # the run declared its graph, so M1 is audited on the committed polygon graph (#108), and 12
+    # ZCTAs leave the rest of CONUS without an owner: M1 alone fails
+    fails = {c.name: c for c in res.checks if c.status == "fail"}
+    assert list(fails) == [audit.M1_CHECK], [(n, c.items[:3]) for n, c in fails.items()]
+    assert fails[audit.M1_CHECK].counts["no_owner"] == 33300 - len(zs)
 
 
 def test_run_json_records_the_margin_per_channel():

@@ -650,6 +650,14 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   - an owner outside a clipped unit is a mode violation and fails the run (C16);
 - ZIP contiguity on the declared graph, with a verdict for any ZIP not in the graph. Pieces are
   listed with their cause and their share of the district's mass;
+- M1, ZIP contiguity on the drawn map **[policy M1, `docs/problem/MANDATES.md`; #108]**: in
+  every channel, each district's ZCTAs in the ledger are one component of the polygon graph (the
+  rook graph of the 2025 TIGER ZCTA polygons over every CONUS ZCTA, an edge only for a shared
+  boundary of positive length, plus the owner-approved connectors across gaps), and every CONUS
+  ZCTA has an owner. **A detached piece fails the map**, and so does a ZCTA with no owner; no
+  tolerance, and listing a piece is not enough. Each piece is listed with its ZIP count, its mass
+  over τ_c and its cause. A run without the polygon graph leaves M1 unverified, never passed;
+  a run on the extract always has it. The looks scorer makes an M1 failure ineligible;
 - mode compliance, with the metro exceptions listed (S14);
 - the geography manifest is all 2025 (S17);
 - the solver's status, bound and gap;

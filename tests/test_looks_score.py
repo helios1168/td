@@ -18,14 +18,17 @@ _spec.loader.exec_module(score)
 
 def _geo():
     """States A (a1, a2, a3) and B (b1, b2, b3) on a line at x = 0, 1, 2, 3, 4, 10 km.  Borders:
-    a1-a2 30, a2-a3 30, a3-b1 8, b1-b2 30 km, and b3 touches only a1 (5 km), across the state line."""
+    a1-a2 30, a2-a3 30, a3-b1 8, b1-b2 30 km, and b3 touches only a1 (5 km), across the state line.
+    The M1 polygon graph has the same edges."""
     state = {"a1": "A", "a2": "A", "a3": "A", "b1": "B", "b2": "B", "b3": "B"}
     xy = {z: (x, 0.0) for z, x in zip(state, (0.0, 1.0, 2.0, 3.0, 4.0, 10.0))}
     edge = {z: {} for z in state}
     for a, b, km in (("a1", "a2", 30.0), ("a2", "a3", 30.0), ("a3", "b1", 8.0),
                      ("b1", "b2", 30.0), ("a1", "b3", 5.0)):
         edge[a][b] = edge[b][a] = km
-    return score.Geography(state, xy, edge)
+    polygon = {"vertices": sorted(state), "edges": [(a, b) for a in edge for b in edge[a] if a < b],
+               "state": state}
+    return score.Geography(state, xy, edge, polygon)
 
 
 def _rows(ch: str, cells) -> list:
@@ -55,15 +58,15 @@ def test_display_fill_and_looks():
     assert c["crowded"] == []                           # 2 districts, ceil(1.15) + 1 = 3
     # X_02's A piece {a2, a3} meets its B piece {b1, b2, b3} over a3-b1 only: 8 km, both ways
     assert c["thin"] == [("X_02", "A", 8.0), ("X_02", "B", 8.0)]
-    assert c["pieces"] == 1                             # b3 is cut off from X_02's other ZIPs
+    assert c["pieces"] == [("X_02", 1, 0.25, "B")]      # b3 is cut off from X_02's other ZIPs
     assert c["max_states"] == 2
     assert math.isclose(c["extent_km"], 9.0)            # a2 to b3, the ledger's ZIPs only
 
 
 def test_crowded_and_balance():
     # No edges: every two-state district is a thin link at 0 km and in two pieces.
-    g = score.Geography({z: z[0].upper() for z in ("c1", "c2", "c3", "d1", "d2", "d3")},
-                        {}, {})
+    state = {z: z[0].upper() for z in ("c1", "c2", "c3", "d1", "d2", "d3")}
+    g = score.Geography(state, {}, {}, {"vertices": sorted(state), "edges": [], "state": state})
     led = _rows("Y", (("c1", "Y_01", 0.25), ("d1", "Y_01", 0.75), ("c2", "Y_02", 0.25),
                       ("d2", "Y_02", 1.0), ("c3", "Y_03", 0.125), ("d3", "Y_03", 0.625)))
     c = score.channel_looks("Y", led, _districts("Y", (1.0, 1.25, 0.75)), g)
@@ -71,7 +74,8 @@ def test_crowded_and_balance():
     assert c["split"] == ["C", "D"]
     assert c["crowded"] == ["C"]                        # 3 districts > ceil(0.625) + 1 = 2
     assert c["small"] == [("Y_03", "C", 0.125)]
-    assert len(c["thin"]) == 6 and c["pieces"] == 3
+    assert len(c["thin"]) == 6 and c["pieces"] == [("Y_01", 1, 0.25, "C"), ("Y_02", 1, 0.25, "C"),
+                                                   ("Y_03", 1, 0.125, "C")]
 
 
 def test_dollars():
@@ -114,6 +118,9 @@ def test_scorecard_parse():
     assert score.audit_pieces("") is None
 
 
+M1_PASS = audit.Check(audit.M1_CHECK, "pass", "0 districts in pieces")
+
+
 def test_eligibility_rules():
     led = _rows("X", X_CELLS)
     ok = score.bands_at(led, {"X": 2}, 0.15)
@@ -123,23 +130,32 @@ def test_eligibility_rules():
     checks = score.scorecard_checks(SCORECARD)       # its ±10% band fail is replaced by ±15%
     main = {"national": 15, "WH": 12, "FI": 20, "NE": 3}
     good = {"national": 1.25e9, "WH": 1.09e9, "FI": 0.82e9, "NE": 2.0e9}   # NE: no target
-    assert score.eligibility(checks, ok, main, good) == []
+    assert score.eligibility(checks, ok, main, good, M1_PASS) == []
     bad = score.eligibility({**checks, "phantom shares": "fail"}, ok, {**main, "NE": 10},
-                            {**good, "WH": 0.845e9})
+                            {**good, "WH": 0.845e9}, M1_PASS)
     assert bad == ["audit: phantom shares fails", "$ WH 845M is -15.5% of 1,000M",
                    "main K 57 outside 48-54"]
-    assert score.eligibility(checks, ok, {"IFA": 49}, {"IFA": 1.227e9}) == []   # no main K rule
+    assert score.eligibility(checks, ok, {"IFA": 49}, {"IFA": 1.227e9}, M1_PASS) == []   # no main K rule
     assert score.eligibility({}, audit.Check("b", "fail", "1 outside"), {"IFA": 49},
-                             {"IFA": 1.227e9}) == ["audit: no scorecard", "audit at ±15%: 1 outside"]
+                             {"IFA": 1.227e9}, M1_PASS) == ["audit: no scorecard", "audit at ±15%: 1 outside"]
+    # M1 (#108): a failing or missing M1 check makes the run ineligible, whatever else holds
+    m1 = audit.Check(audit.M1_CHECK, "fail", "1 districts in pieces")
+    assert score.eligibility(checks, ok, main, good, m1) == ["M1: fail, 1 districts in pieces"]
+    assert score.eligibility({**checks, audit.M1_CHECK: "fail"}, ok, main, good, m1) == [
+        "M1: fail, 1 districts in pieces"]
+    assert score.eligibility(checks, ok, main, good) == ["M1: not checked"]
+    unverified = audit.Check(audit.M1_CHECK, "unverified", "no polygon graph: M1 is not checked")
+    assert score.eligibility(checks, ok, main, good, unverified) == [
+        "M1: unverified, no polygon graph: M1 is not checked"]
 
 
 def test_dollar_band_inclusive():
     ok = audit.Check(score.BAND_CHECK, "pass", "")
     for ch, t in (("national", 1.25e9), ("WH", 1.0e9), ("FI", 0.9e9)):
         for d in (t * 1.1, t * 0.9):                     # exactly ±10%: eligible
-            assert score.eligibility({}, ok, {"IFA": 1}, {ch: d}) == ["audit: no scorecard"], (ch, d)
+            assert score.eligibility({}, ok, {"IFA": 1}, {ch: d}, M1_PASS) == ["audit: no scorecard"], (ch, d)
         for d in (t * 1.1 + 1, t * 0.9 - 1):             # a dollar past either edge: not
-            why = score.eligibility({}, ok, {"IFA": 1}, {ch: d})
+            why = score.eligibility({}, ok, {"IFA": 1}, {ch: d}, M1_PASS)
             assert len(why) == 2 and why[1].startswith(f"$ {ch} "), (ch, d, why)
 
 
@@ -163,17 +179,23 @@ def _score_toy(ch: str, rates: dict) -> dict:
 def test_score_run_folder():
     s = _score_toy("WH", {"wh": 1.0e9})
     assert s["dollars"] == {"WH": 1.0e9}                # Σ m_rel × rate / K = 2 × 1e9 / 2
-    assert not s["eligible"] and s["why"] == ["main K 2 outside 48-54"]
+    # M1 on the ledger, strict: WH_02's a2 and b3 are cut off from b1, and a3, b2 have no owner
+    m1 = "M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 2 channel ZCTAs with no owner"
+    assert not s["eligible"] and s["why"] == [m1, "main K 2 outside 48-54"]
+    assert s["m1"]["status"] == "fail" and s["m1"]["no_owner"] == 2 and s["m1"]["pieces"] == 2
     assert (s["splits"], s["split_list"], s["distinct"]) == (1, ["WH:A"], ["A"])
+    # after the display fill only b3 (0.25 τ) is detached, weighing 1 + 0.25 (owner, 2026-10-05)
     assert (s["thin_links"], s["small_pieces"], s["crowded_states"], s["contiguity_pieces"]) == (2, 1, 0, 1)
-    assert s["defects"] == 4 and s["audit_pieces"] == 3
+    assert s["contiguity_weight"] == 1.25 and s["largest_piece_tau"] == 0.25
+    assert s["defects"] == 4.25 and s["audit_pieces"] == 3
     assert math.isclose(s["largest_extent_km"], 9.0) and s["states_per_district"] == 2
     assert s["worst_dev"] == 0.0 and s["mean_dev"] == 0.0
-    assert "INELIGIBLE (main K 2 outside 48-54) | 1 splits (1 states) | 4 defects" in score.verdict(s)
+    assert f"INELIGIBLE ({m1}; main K 2 outside 48-54) | 1 splits (1 states) | 4.25 defects" in score.verdict(s)
+    assert "largest detached piece WH_02: 1 ZIPs in B, 0.250 tau (after display fill)" in score.report(s)
     # An IFA-only run: no main K rule, and $ is the owner's whole-extract IFA total over K.
     ifa = _score_toy("IFA", {})
     assert ifa["dollars"] == {"IFA": 62.14e9 / 2}
-    assert ifa["why"] == ["$ IFA 31,070M is +2385.6% of 1,250M"]
+    assert ifa["why"] == [m1, "$ IFA 31,070M is +2385.6% of 1,250M"]
 
 
 def _s(run, splits, defects, eligible=True, extent=100.0, worst=0.05):
