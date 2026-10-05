@@ -14,6 +14,7 @@ a,b,kind,crossing,gap_km,status,source
 05440,12979,bridge,Bridge Rd,0.32,approved,TIGER/Line 2025 prisecroads
 05491,12928,bridge,Bridge Rd,0.17,approved,TIGER/Line 2025 prisecroads
 06320,06390,ferry,New London-Fishers Island ferry,4.79,approved,geo.FERRIES (hand list)
+06390,11957,nearest,06390 to 11957: no road across land in no ZCTA within the state; nearest ZCTA of the state (county roads of 36059 not searched: census.gov would not serve them),6.36,proposed,"proposed 2026-10-05 (#114), owner to review"
 07002,10302,bridge,Bayonne Brg,0.15,approved,TIGER/Line 2025 prisecroads
 07002,10303,bridge,Bayonne Brg,0.25,approved,TIGER/Line 2025 prisecroads
 07024,10032,bridge,George Washington Brg,0.47,approved,TIGER/Line 2025 prisecroads
@@ -52,6 +53,7 @@ a,b,kind,crossing,gap_km,status,source
 21817,21866,ferry,Crisfield-Tylerton ferry (Smith Island),12.12,approved,geo.FERRIES (hand list)
 21817,23440,ferry,Crisfield-Tangier ferry,14.64,approved,geo.FERRIES (hand list)
 23310,23455,tunnel,Chesapeake Bay Brg Tunl / Chesapeake Bay Bridge Tunl,22.75,approved,TIGER/Line 2025 prisecroads
+23417,23440,nearest,23440 to 23417: no road across land in no ZCTA within the state; nearest ZCTA of the state,14.03,proposed,"proposed 2026-10-05 (#114), owner to review"
 27953,27954,bridge,Manns Harbor Brg,3.64,approved,TIGER/Line 2025 prisecroads
 27953,27981,bridge,Virginia Dare Memorial Brg,4.42,approved,TIGER/Line 2025 prisecroads
 27954,27959,bridge,Washington Baum Brg,0.28,approved,TIGER/Line 2025 prisecroads
@@ -60,6 +62,7 @@ a,b,kind,crossing,gap_km,status,source
 32305,32344,bridge,Natural Bridge Rd,3.26,approved,TIGER/Line 2025 prisecroads
 32320,32328,bridge,John Gorrie Memorial Brg,3.63,approved,TIGER/Line 2025 prisecroads
 36527,36602,bridge,Cochrane Brg,0.02,approved,TIGER/Line 2025 prisecroads
+37851,37870,road,unnamed road / Rock Creek Ridge Rd / Mountain Rd,0.77,proposed,"proposed 2026-10-05 (#114), owner to review"
 40108,47142,bridge,Mauckport Brg,0.36,approved,TIGER/Line 2025 prisecroads
 40202,47130,bridge,Clark Memorial Brg,0.61,approved,TIGER/Line 2025 prisecroads
 41011,45202,bridge,Brent Spence Brg,0.29,approved,TIGER/Line 2025 prisecroads
@@ -95,18 +98,23 @@ a,b,kind,crossing,gap_km,status,source
 82932,82935,road,State Hwy 28 / Lower Farson Cutoff Rd / California-Mormon Emigrant Rd,10.33,approved,TIGER/Line 2025 prisecroads
 82932,82943,road,US Hwy 191,25.9,approved,TIGER/Line 2025 prisecroads
 82934,83124,road,US Hwy 30,0.57,approved,TIGER/Line 2025 prisecroads
+82935,82938,road,unnamed road / I- 80 / US Hwy 189,9.53,proposed,"proposed 2026-10-05 (#114), owner to review"
+82939,83101,road,unnamed road / I- 80 / US Hwy 189,16.57,proposed,"proposed 2026-10-05 (#114), owner to review"
 83823,83827,road,State Hwy 8 / N 3rd St / Elk River Rd,8.25,approved,TIGER/Line 2025 prisecroads
+84022,84034,road,unnamed road / US Hwy 93 Alt / Weis Hwy,22.74,proposed,"proposed 2026-10-05 (#114), owner to review"
 84034,89311,road,unnamed road / US Hwy 93 Alt / Weis Hwy,20.01,approved,TIGER/Line 2025 roads
 84501,84520,road,State Rte 123,5.16,approved,TIGER/Line 2025 prisecroads
 84522,84654,road,State Rte 10,2.6,approved,TIGER/Line 2025 prisecroads
 84620,84656,road,US Hwy 50 / W US Hwy 50 / N 10500 East St,29.84,approved,TIGER/Line 2025 prisecroads
 84624,84728,road,US Hwy 50 / US Hwy 6,81.17,approved,TIGER/Line 2025 prisecroads
 84636,84656,road,I- 15 / US Hwy 50,12.81,approved,TIGER/Line 2025 prisecroads
+84701,84747,road,unnamed road,0.42,proposed,"proposed 2026-10-05 (#114), owner to review"
 89001,89008,road,State Rte 7 / US Hwy 93,26.09,approved,TIGER/Line 2025 prisecroads
 89001,89049,road,State Hwy 375,42.85,approved,TIGER/Line 2025 prisecroads
 89003,89013,road,US Hwy 95 / State Hwy 267 / State Hwy 72,24.53,approved,TIGER/Line 2025 prisecroads
 89003,89020,road,US Hwy 95,14.48,approved,TIGER/Line 2025 prisecroads
 89003,92328,road,State Hwy 374 / Daylight Pass Rd,8.1,approved,TIGER/Line 2025 prisecroads
+89007,89021,road,unnamed road / Carp Elgin Rd,0.99,proposed,"proposed 2026-10-05 (#114), owner to review"
 89008,89017,road,US Hwy 93,20.15,approved,TIGER/Line 2025 prisecroads
 89010,89013,road,State Hwy 266,10.21,approved,TIGER/Line 2025 prisecroads
 89010,89047,road,Nivloc Rd / State Hwy 265,26.05,approved,TIGER/Line 2025 prisecroads
@@ -136,6 +144,8 @@ a,b,kind,crossing,gap_km,status,source
 89427,89447,road,State Hwy 3 / US Hwy 95 Alt,3.83,approved,TIGER/Line 2025 prisecroads
 89427,89496,road,US Hwy 95 / Schurz Hwy,4.66,approved,TIGER/Line 2025 prisecroads
 89438,89820,road,I- 80,6.45,approved,TIGER/Line 2025 prisecroads
+89826,89835,road,unnamed road / NFS Rd 306 / O'Neil-deeth County Rd,24.26,proposed,"proposed 2026-10-05 (#114), owner to review"
+89832,89834,road,unnamed road,0.0,proposed,"proposed 2026-10-05 (#114), owner to review"
 90704,90802,ferry,Long Beach-Avalon ferry (Catalina Express),30.24,approved,geo.FERRIES (hand list)
 92309,92364,road,I- 15 / Mojave Fwy,8.81,approved,TIGER/Line 2025 prisecroads
 92309,92365,road,I- 15 / Mojave Fwy,0.28,approved,TIGER/Line 2025 prisecroads
@@ -150,6 +160,7 @@ a,b,kind,crossing,gap_km,status,source
 94129,94965,bridge,Golden Gate Brg,1.6,approved,TIGER/Line 2025 prisecroads
 94130,94607,bridge,Bay Brg,0.89,approved,TIGER/Line 2025 prisecroads
 94404,94545,bridge,San Mateo Brg,9.27,approved,TIGER/Line 2025 prisecroads
+96023,96134,road,unnamed road / State Line Rd / State Rte 161,4.11,proposed,"proposed 2026-10-05 (#114), owner to review"
 97103,98614,bridge,Astoria-Megler Brg,4.66,approved,TIGER/Line 2025 prisecroads
 97452,97492,road,State Hwy 58 / Willamette Hwy,0.7,approved,TIGER/Line 2025 prisecroads
 97463,97733,road,State Hwy 58 / Willamette Hwy,20.25,approved,TIGER/Line 2025 prisecroads
