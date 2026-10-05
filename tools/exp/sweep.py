@@ -7,7 +7,9 @@ instance, `extract = "<path>"` or `fixture = <seed>`, with `public` for the 2025
 `[params]` table holds the settings every job shares and its `[grid]` table one list per swept
 setting; both are flattened to dotted keys, and the jobs are the product of the `[grid]` lists
 over `[params]`.  `threads` (default 1) is the job's HiGHS thread count; the support formulation
-reads `scenario`, `time_limit`, `maps` and the `spec.*` overrides into the scenario TOML.
+reads `scenario`, `time_limit`, `maps` and the `spec.*` overrides into the scenario TOML.  A
+`scenario` parameter names a file under the td root, or an absolute path: the sweep reads it once,
+and each job runs from that snapshot, `scenario.toml` in its run folder.
 
     lane = "smoke"
     formulation = "support"
@@ -19,10 +21,13 @@ reads `scenario`, `time_limit`, `maps` and the `spec.*` overrides into the scena
     "spec.channels.WH.k" = [10, 11]
 
 **Identity.**  A job's run id is `<lane>-<formulation>-<hash8>`, the hash over its flattened
-parameters, the code's commit (with the hash of the uncommitted diff when the tree is dirty, so
-uncommitted code never reuses a committed run) and the instance's sha256.  A run id whose
-manifest says `done` or `failed` is skipped (`--retry-failed` reruns the failed); one left
-`queued` or `running` by an interrupted sweep is cleared and run again.
+parameters, the scenario file's sha256, the code's commit (with the hash of the uncommitted diff
+when the tree is dirty, so uncommitted code never reuses a committed run) and the instance's
+sha256.  A run id whose manifest says `done` or `failed` is skipped (`--retry-failed` reruns the
+failed).  One left `queued` or `running` is cleared and run again only when it is abandoned: every
+owner the manifest records (the sweep that queued it, the job process that ran it) was on this
+host and is no longer running.  Any other unfinished run id refuses the whole sweep before a
+folder is touched.
 
 **The run folder** is `<root>/<lane>/<run_id>/`, `<root>` by default `$TD_REPO/runs/exp`.  It holds
 `manifest.json`, `log.txt` (the job's output) and every file the formulation writes, flat.  The
@@ -33,8 +38,9 @@ from `run.json`, and the metrics: `worst_dev` and `mean_dev` from `districts.csv
 looks scorer's `score(folder)` when `tools/looks/score.py` is present.
 
 **Processes.**  Each job runs in its own process (`--job <folder>`), at most `--jobs` at once,
-with every HiGHS solve of the process at the job's one thread count (trap 18).  The sweep ends with
-`/Users/Shared/sv-ntlee/agent/notify` (`--notify`), which wakes the launching session.
+with every HiGHS solve of the process at the job's one thread count (trap 18).  The sweep ends,
+however it ends, with `/Users/Shared/sv-ntlee/agent/notify` (`--notify`), which wakes the
+launching session.
 """
 from __future__ import annotations
 
@@ -64,6 +70,7 @@ LOOKS_SCORER = os.path.join(ROOT, "tools", "looks", "score.py")
 NOTIFY = "/Users/Shared/sv-ntlee/agent/notify"
 MANIFEST = "manifest.json"
 LOG = "log.txt"
+SCENARIO = "scenario.toml"
 NAME = re.compile(r"[A-Za-z0-9_.]{1,64}")      # a lane or formulation: no "-", which joins run ids
 FINISHED = ("done", "failed")
 
@@ -172,11 +179,31 @@ def code_state() -> dict:
     return {"commit": commit, "dirty": dirty, "diff_sha256": h.hexdigest() if dirty else None}
 
 
-def run_id(lane: str, formulation: str, params: dict, code: dict, inst: dict) -> str:
+def run_id(lane: str, formulation: str, params: dict, code: dict, inst: dict,
+           scenario_sha256: str | None = None) -> str:
     commit = code["commit"] + (f"+{code['diff_sha256'][:8]}" if code["dirty"] else "")
-    key = json.dumps({"params": params, "commit": commit, "instance": inst["instance_sha256"]},
-                     sort_keys=True, separators=(",", ":"))
+    key = json.dumps({"params": params, "commit": commit, "instance": inst["instance_sha256"],
+                      "scenario": scenario_sha256}, sort_keys=True, separators=(",", ":"))
     return f"{lane}-{formulation}-{hashlib.sha256(key.encode()).hexdigest()[:8]}"
+
+
+def process_start(pid: int):
+    """When process `pid` started, as `ps` prints it, or None when no such process runs."""
+    got = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True)
+    return got.stdout.strip() or None
+
+
+def owner() -> dict:
+    """This process as a run's owner: its host, pid and start time (a reused pid starts later)."""
+    return {"host": platform.node(), "pid": os.getpid(), "started": process_start(os.getpid())}
+
+
+def abandoned(m: dict) -> bool:
+    """True when every owner of an unfinished run was on this host and is no longer running.  An
+    owner on another host, or a manifest without owners, cannot be checked: not abandoned."""
+    owners = m.get("owners") or []
+    return bool(owners) and all(o.get("host") == platform.node() and o.get("started")
+                                and process_start(o["pid"]) != o["started"] for o in owners)
 
 
 # ------------------------------------------------------------------------------ the manifest
@@ -254,8 +281,15 @@ def metrics(folder: str) -> tuple:
 
 # ------------------------------------------------------------------------------ one job
 def pin_threads(n: int) -> None:
-    """Every `highspy.Highs` this process makes solves on `n` threads (trap 18)."""
+    """Every HiGHS solve this process makes runs on `n` threads (trap 18): each `highspy.Highs`,
+    and the realizer's SciPy `linprog`, whose bundled HiGHS takes `threads` from its options
+    verbatim with an OptimizeWarning that calls it unrecognized."""
+    import warnings
+
     import highspy
+    from scipy.optimize import OptimizeWarning
+
+    from td import realize
     base = highspy.Highs
 
     class Highs(base):
@@ -263,6 +297,9 @@ def pin_threads(n: int) -> None:
             super().__init__(*args, **kw)
             self.setOptionValue("threads", n)
     highspy.Highs = Highs
+    realize.LP_OPTIONS["threads"] = n           # copied by td/realize.py at each call
+    warnings.filterwarnings("ignore", r"Unrecognized options detected: \{'threads': \d+\}\. ",
+                            OptimizeWarning)
 
 
 def entry(name: str):
@@ -277,7 +314,7 @@ def entry(name: str):
 def run_job(folder: str) -> int:
     """The job process: run the manifest's formulation into `folder` and record the outcome."""
     m = read_manifest(folder)
-    m.update(status="running", started_at=now())
+    m.update(status="running", started_at=now(), owners=m.get("owners", []) + [owner()])
     write_manifest(folder, m)
     pin_threads(m["params"]["threads"])
     t0 = time.time()
@@ -298,12 +335,12 @@ def run_job(folder: str) -> int:
 
 
 def run_support(m: dict, folder: str) -> None:
-    """The `support` formulation: `td.output.run` on `params.scenario` with the `spec.*`
-    overrides, written to `spec.toml` in the run folder first."""
+    """The `support` formulation: `td.output.run` on the run's snapshot of `params.scenario` with
+    the `spec.*` overrides, written to `spec.toml` in the run folder first."""
     from td import data, geo, output
     from td import spec as tdspec
     p = m["params"]
-    with open(os.path.join(ROOT, p["scenario"]), "rb") as fh:
+    with open(os.path.join(folder, SCENARIO), "rb") as fh:
         raw = tomllib.load(fh)
     for key, value in p.items():
         if key.startswith("spec."):
@@ -369,8 +406,24 @@ def dump_toml(raw: dict) -> str:
 
 
 # ------------------------------------------------------------------------------ the sweep
+def read_scenario(params: dict, cache: dict):
+    """(resolved path, bytes) of the job's `scenario` parameter, each file read once per sweep, or
+    (None, None) without one."""
+    if "scenario" not in params:
+        return None, None
+    path = os.path.abspath(os.path.join(ROOT, params["scenario"]))
+    if path not in cache:
+        try:
+            with open(path, "rb") as fh:
+                cache[path] = fh.read()
+        except OSError as e:
+            raise SweepError(f"scenario {params['scenario']}: {e.strerror}") from None
+    return path, cache[path]
+
+
 def prepare(g: dict, root: str, retry_failed: bool = False) -> tuple:
-    """([folders to run], [run ids skipped]): a queued manifest in each new or cleared folder."""
+    """([folders to run], [run ids skipped]): a queued manifest and the scenario snapshot in each
+    new or cleared folder.  An unfinished run not verified abandoned refuses the sweep first."""
     code, inst = code_state(), instance(g)
     public = g.get("public")
     if public is None:
@@ -379,9 +432,11 @@ def prepare(g: dict, root: str, retry_failed: bool = False) -> tuple:
         if not os.path.exists(os.path.join(public, "tl_2025_us_state.zip")) and os.environ.get("TD_REPO"):
             public = os.path.join(os.environ["TD_REPO"], "data", "public")
     lane_dir = os.path.join(root, g["lane"])
-    todo, skipped, seen = [], [], set()
+    jobs, skipped, refused, seen, scenarios = [], [], [], set(), {}
     for params in expand(g):
-        rid = run_id(g["lane"], g["formulation"], params, code, inst)
+        path, text = read_scenario(params, scenarios)
+        sha = hashlib.sha256(text).hexdigest() if text is not None else None
+        rid = run_id(g["lane"], g["formulation"], params, code, inst, sha)
         if rid in seen:
             continue
         seen.add(rid)
@@ -389,18 +444,34 @@ def prepare(g: dict, root: str, retry_failed: bool = False) -> tuple:
         if os.path.exists(folder):
             if not os.path.exists(os.path.join(folder, MANIFEST)):
                 raise SweepError(f"{folder} exists without a {MANIFEST}; remove it by hand")
-            status = read_manifest(folder).get("status")
-            if status == "done" or (status == "failed" and not retry_failed):
+            m = read_manifest(folder)
+            if m.get("status") == "done" or (m.get("status") == "failed" and not retry_failed):
                 skipped.append(rid)
                 continue
+            if m.get("status") not in FINISHED and not abandoned(m):
+                refused.append(f"{rid} ({m.get('status')}, owners "
+                               + (", ".join(f"{o.get('host')}:{o.get('pid')}"
+                                            for o in m.get("owners") or []) or "unrecorded") + ")")
+                continue
+        jobs.append((folder, rid, params, path, text, sha))
+    if refused:
+        raise SweepError(f"runs still owned or not verified abandoned: {'; '.join(refused)}; "
+                         "wait for them, or remove a dead one by hand")
+    todo = []
+    for folder, rid, params, path, text, sha in jobs:
+        if os.path.exists(folder):
             shutil.rmtree(folder)
         os.makedirs(folder)
+        if text is not None:
+            with open(os.path.join(folder, SCENARIO), "wb") as fh:
+                fh.write(text)
         write_manifest(folder, {
             "run_id": rid, "lane": g["lane"], "formulation": g["formulation"], "folder": folder,
             "status": "queued", "stop_reason": None, "params": params,
+            "scenario": {"path": path, "sha256": sha, "snapshot": SCENARIO} if text is not None else None,
             "extract": g.get("extract"), "fixture": g.get("fixture"), "public": public,
             "provenance": {**code, **inst, "host": platform.node(), "queued_at": now()},
-            "solver": {}, "audit": None, "metrics": {}})
+            "owners": [owner()], "solver": {}, "audit": None, "metrics": {}})
         todo.append(folder)
     return todo, skipped
 
@@ -420,6 +491,35 @@ def launch(folder: str) -> str:
     return m["status"]
 
 
+def notify(command: str, line: str) -> None:
+    try:
+        if subprocess.run([command, line]).returncode != 0:
+            print(f"notify failed: {command}", file=sys.stderr)
+    except OSError as e:
+        print(f"notify failed: {e}", file=sys.stderr)
+
+
+def sweep(a) -> tuple:
+    """(exit code, one-line result) of the sweep `a` asks for; SweepError and the other preflight
+    errors stop it before any job starts."""
+    if not a.grid or a.jobs < 1:
+        raise SweepError("give a grid file and --jobs of at least 1")
+    g = load_grid(a.grid)
+    root = os.path.abspath(a.root or default_root())
+    todo, skipped = prepare(g, root, a.retry_failed)
+    for rid in skipped:
+        print(f"skip  {rid}")
+    with concurrent.futures.ThreadPoolExecutor(a.jobs) as pool:
+        futures = {pool.submit(launch, f): f for f in todo}
+        for fut in concurrent.futures.as_completed(futures):
+            print(f"{fut.result():7s}{os.path.basename(futures[fut])}", flush=True)
+    status = [read_manifest(f)["status"] for f in todo]
+    line = (f"sweep {g['lane']}/{g['formulation']}: {status.count('done')} done, "
+            f"{status.count('failed')} failed, {len(skipped)} skipped; {os.path.join(root, g['lane'])}")
+    print(line)
+    return (0 if "failed" not in status else 1), line
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="tools/exp/sweep.py", description=__doc__.splitlines()[0])
     ap.add_argument("grid", nargs="?", help="a grid TOML file")
@@ -431,31 +531,15 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.job:
         return run_job(a.job)
-    if not a.grid or a.jobs < 1:
-        ap.error("give a grid file and --jobs of at least 1")
+    rc, line = 1, f"sweep {a.grid}: stopped by an error before its end"
     try:
-        g = load_grid(a.grid)
-        todo, skipped = prepare(g, os.path.abspath(a.root or default_root()), a.retry_failed)
+        rc, line = sweep(a)
     except (SweepError, OSError, subprocess.CalledProcessError, tomllib.TOMLDecodeError) as e:
-        print(f"sweep stopped: {e}", file=sys.stderr)
-        return 2
-    for rid in skipped:
-        print(f"skip  {rid}")
-    with concurrent.futures.ThreadPoolExecutor(a.jobs) as pool:
-        futures = {pool.submit(launch, f): f for f in todo}
-        for fut in concurrent.futures.as_completed(futures):
-            print(f"{fut.result():7s}{os.path.basename(futures[fut])}", flush=True)
-    status = [read_manifest(f)["status"] for f in todo]
-    line = (f"sweep {g['lane']}/{g['formulation']}: {status.count('done')} done, "
-            f"{status.count('failed')} failed, {len(skipped)} skipped; "
-            f"{os.path.join(os.path.abspath(a.root or default_root()), g['lane'])}")
-    print(line)
-    try:
-        if subprocess.run([a.notify, line]).returncode != 0:
-            print(f"notify failed: {a.notify}", file=sys.stderr)
-    except OSError as e:
-        print(f"notify failed: {e}", file=sys.stderr)
-    return 0 if "failed" not in status else 1
+        rc, line = 2, f"sweep {a.grid}: stopped: {e}"
+        print(line, file=sys.stderr)
+    finally:
+        notify(a.notify, line)
+    return rc
 
 
 if __name__ == "__main__":

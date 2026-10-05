@@ -80,7 +80,13 @@ def test_a_two_job_grid_on_the_51_fixture_runs_once_and_is_indexed_and_ranked():
         manifests[folder] = open(os.path.join(folder, "manifest.json"), "rb").read()
         assert re.fullmatch(r"smoke-support-[0-9a-f]{8}", m["run_id"])
         assert os.path.basename(folder) == m["run_id"] and m["folder"] == folder
-        assert m["run_id"] == sweep.run_id("smoke", "support", m["params"], code, inst)
+        assert m["run_id"] == sweep.run_id("smoke", "support", m["params"], code, inst,
+                                           m["scenario"]["sha256"])
+        assert m["scenario"] == {"path": ts.S51, "sha256": sweep.sha256_file(ts.S51),
+                                 "snapshot": "scenario.toml"}
+        assert [o["pid"] for o in m["owners"]] and all(o["host"] and o["started"]
+                                                       for o in m["owners"])
+        assert len(m["owners"]) == 2 and sweep.abandoned(m)
         assert m["status"] == "done" and m["audit"] == "pass", (m["stop_reason"], m["audit"])
         assert m["stop_reason"] == "FI optimal; WH optimal; WIFI optimal; national optimal"
         p = m["provenance"]
@@ -96,8 +102,8 @@ def test_a_two_job_grid_on_the_51_fixture_runs_once_and_is_indexed_and_ranked():
         assert {"worst_dev", "mean_dev"} <= set(m["metrics"])
         files = os.listdir(folder)
         assert not [f for f in files if os.path.isdir(os.path.join(folder, f))], files
-        assert {"manifest.json", "log.txt", "spec.toml", "run.json", "solver.json", "scorecard.md",
-                "ledger.csv", "districts.csv"} <= set(files), files
+        assert {"manifest.json", "log.txt", "scenario.toml", "spec.toml", "run.json",
+                "solver.json", "scorecard.md", "ledger.csv", "districts.csv"} <= set(files), files
         raw = tomllib.load(open(os.path.join(folder, "spec.toml"), "rb"))
         assert raw["channels"]["national"]["delta"] == m["params"]["spec.channels.national.delta"]
     assert sorted(json.loads(manifests[f])["params"]["spec.channels.national.delta"]
@@ -122,32 +128,134 @@ def test_a_two_job_grid_on_the_51_fixture_runs_once_and_is_indexed_and_ranked():
     assert not glob.glob(os.path.join(root, "**", "*.png"), recursive=True)
 
 
+def _manifest(folder):
+    return json.load(open(os.path.join(folder, "manifest.json"), encoding="utf-8"))
+
+
+def _bogus_grid(tmp, table="bogus_a"):
+    """A grid whose one job fails fast: its scenario file has an unknown table."""
+    scenario = os.path.join(tmp, "bogus.toml")
+    with open(scenario, "w", encoding="utf-8") as fh:
+        fh.write(f"[{table}]\nx = 1\n")
+    grid, notify = _grid(tmp, "broken", {"scenario": scenario}, {"time_limit": [5]}, public=tmp)
+    return grid, notify, scenario
+
+
 def test_a_failed_job_records_its_stop_reason_and_reruns_only_when_asked():
     tmp = tempfile.mkdtemp(prefix="td-exp-")
     root = os.path.join(tmp, "exp")
-    grid, notify = _grid(tmp, "broken", {"scenario": "scenarios/no_such_scenario.toml"},
-                         {"time_limit": [5]}, public=tmp)
+    grid, notify = _grid(tmp, "broken", {"scenario": os.path.relpath(ts.S51, ROOT),
+                                         "spec.no_such_table.x": 1}, {"time_limit": [5]}, public=tmp)
     got = _tool("sweep", grid, "--root", root, "--notify", notify)
     assert got.returncode == 1 and "0 done, 1 failed, 0 skipped" in got.stdout, got.stdout
     (folder,) = glob.glob(os.path.join(root, "broken", "*"))
-    m = json.load(open(os.path.join(folder, "manifest.json"), encoding="utf-8"))
+    m = _manifest(folder)
     assert m["status"] == "failed" and m["finished_at"]
-    assert m["stop_reason"].startswith("FileNotFoundError") and "no_such_scenario" in m["stop_reason"]
+    assert m["stop_reason"].startswith("SpecError") and "no_such_table" in m["stop_reason"]
     assert m["metrics"] == {} and m["audit"] is None
     assert "1 skipped" in _tool("sweep", grid, "--root", root, "--notify", notify).stdout
     again = _tool("sweep", grid, "--root", root, "--notify", notify, "--retry-failed")
     assert "0 done, 1 failed, 0 skipped" in again.stdout, again.stdout
 
 
+def test_a_missing_scenario_or_extract_stops_the_sweep_and_still_notifies():
+    tmp = tempfile.mkdtemp(prefix="td-exp-")
+    root = os.path.join(tmp, "exp")
+    grid, notify = _grid(tmp, "nosuch", {"scenario": "scenarios/no_such_scenario.toml"},
+                         {"time_limit": [5]}, public=tmp)
+    got = _tool("sweep", grid, "--root", root, "--notify", notify)
+    assert got.returncode == 2 and "no_such_scenario" in got.stderr, got.stdout + got.stderr
+    path = os.path.join(tmp, "noextract.toml")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(f'lane = "noextract"\nformulation = "support"\nextract = "{tmp}/no_such.json.gz"\n'
+                 f'[params]\nscenario = "{os.path.relpath(ts.S51, ROOT)}"\n[grid]\ntime_limit = [5]\n')
+    got = _tool("sweep", path, "--root", root, "--notify", notify)
+    assert got.returncode == 2 and "no_such.json.gz" in got.stderr, got.stdout + got.stderr
+    notified = open(os.path.join(tmp, "notified"), encoding="utf-8").read().splitlines()
+    assert len(notified) == 2 and all(" stopped: " in n for n in notified), notified
+    assert "no_such_scenario" in notified[0] and "no_such.json.gz" in notified[1], notified
+    assert not os.path.exists(root)
+
+
+def test_a_live_owned_run_refuses_a_second_sweep_and_an_abandoned_one_is_cleared():
+    tmp = tempfile.mkdtemp(prefix="td-exp-")
+    root = os.path.join(tmp, "exp")
+    grid, notify, _ = _bogus_grid(tmp)
+    (folder,), skipped = sweep.prepare(sweep.load_grid(grid), root)   # owned by this live process
+    assert skipped == [] and not sweep.abandoned(_manifest(folder))
+    marker = os.path.join(folder, "partial.txt")
+    open(marker, "w").close()
+    got = _tool("sweep", grid, "--root", root, "--notify", notify)
+    assert got.returncode == 2 and "still owned" in got.stderr and str(os.getpid()) in got.stderr
+    assert os.path.exists(marker) and _manifest(folder)["status"] == "queued"
+    assert open(os.path.join(tmp, "notified"), encoding="utf-8").read().count(" stopped: ") == 1
+
+    m = _manifest(folder)
+    gone = subprocess.Popen(["true"])
+    gone.wait()
+    m["owners"] = [{**m["owners"][0], "pid": gone.pid}]
+    sweep.write_manifest(folder, m)
+    assert sweep.abandoned(m)
+    got = _tool("sweep", grid, "--root", root, "--notify", notify)
+    assert got.returncode == 1 and "0 done, 1 failed, 0 skipped" in got.stdout, got.stdout + got.stderr
+    assert not os.path.exists(marker) and _manifest(folder)["status"] == "failed"
+    m = _manifest(folder)
+    m.update(status="running", owners=[{**m["owners"][0], "host": "elsewhere"}])
+    sweep.write_manifest(folder, m)
+    assert not sweep.abandoned(m)
+    assert _tool("sweep", grid, "--root", root, "--notify", notify).returncode == 2
+
+
+def test_a_scenario_edited_in_place_gets_a_new_run_id_and_a_job_runs_its_snapshot():
+    tmp = tempfile.mkdtemp(prefix="td-exp-")
+    root = os.path.join(tmp, "exp")
+    grid, notify, scenario = _bogus_grid(tmp, "bogus_a")
+    (first,), _ = sweep.prepare(sweep.load_grid(grid), root)
+    with open(scenario, "w", encoding="utf-8") as fh:
+        fh.write("[bogus_b]\nx = 1\n")
+    job = subprocess.run([sys.executable, os.path.join(EXP, "sweep.py"), "--job", first], cwd=ROOT,
+                         capture_output=True, text=True)
+    assert job.returncode == 1 and "bogus_a" in _manifest(first)["stop_reason"], job.stderr
+    assert "bogus_b" not in _manifest(first)["stop_reason"]
+    got = _tool("sweep", grid, "--root", root, "--notify", notify)
+    assert got.returncode == 1 and "0 done, 1 failed, 0 skipped" in got.stdout, got.stdout + got.stderr
+    second = [f for f in glob.glob(os.path.join(root, "broken", "*")) if f != first]
+    assert len(second) == 1 and "bogus_b" in _manifest(second[0])["stop_reason"]
+    assert _manifest(second[0])["scenario"]["sha256"] == sweep.sha256_file(scenario)
+    assert _manifest(first)["scenario"]["sha256"] != sweep.sha256_file(scenario)
+    assert "1 skipped" in _tool("sweep", grid, "--root", root, "--notify", notify).stdout
+
+
 def test_a_job_process_solves_on_its_one_thread_count():
-    """In a process of its own: the pin would size this process's HiGHS pool (trap 18)."""
-    code = ("import importlib.util, sys; sys.path.insert(0, '.'); "
-            "s = importlib.util.spec_from_file_location('sw', 'tools/exp/sweep.py'); "
-            "m = importlib.util.module_from_spec(s); s.loader.exec_module(m); m.pin_threads(2); "
-            "from td import master; h = master.highspy.Highs(); "
-            "print(h.getOptionValue('threads')[1])")
-    got = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True)
-    assert got.returncode == 0 and got.stdout.strip() == "2", got.stdout + got.stderr
+    """In a process of its own, with warnings as errors: the pin would size this process's HiGHS
+    pools (trap 18).  Both solver paths: the master's highspy and the realizer's SciPy linprog."""
+    code = """if True:
+        import importlib.util, sys
+        sys.path.insert(0, '.')
+        s = importlib.util.spec_from_file_location('sw', 'tools/exp/sweep.py')
+        m = importlib.util.module_from_spec(s)
+        s.loader.exec_module(m)
+        m.pin_threads(2)
+        from td import master, realize
+        h = master.highspy.Highs()
+        h.setOptionValue('output_flag', False)
+        h.addVar(0.0, 1.0)
+        h.changeColCost(0, 1.0)
+        h.run()
+        print(h.getOptionValue('threads')[1], h.modelStatusToString(h.getModelStatus()))
+        seen, real = [], realize.linprog
+        def spy(*a, **k):
+            seen.append(dict(k['options']))
+            return real(*a, **k)
+        realize.linprog = spy
+        flow = realize.transport(['a', 'b'], {'a': 1.0, 'b': 1.0}, {'a': (0, 0), 'b': (1, 0)},
+                                 {'x': (0, 0), 'y': (1, 0)}, {'x': 1.0, 'y': 1.0})
+        print(seen[0]['threads'], sorted(flow))
+    """
+    got = subprocess.run([sys.executable, "-W", "error", "-c", code], cwd=ROOT, capture_output=True,
+                         text=True)
+    assert got.returncode == 0, got.stdout + got.stderr
+    assert got.stdout.splitlines() == ["2 Optimal", "2 [('a', 'x'), ('b', 'y')]"], got.stdout
 
 
 def test_a_grid_is_the_product_of_its_lists_over_its_params():
@@ -193,9 +301,10 @@ def test_the_table_ranks_by_the_owner_order_and_flags_review():
     rows = [row("failed", status="failed"), row("bare", worst_dev=0.01, mean_dev=0.0),
             row("s13", **looks(True, 13, 4)), row("s13b", **looks(True, 13, 4, worst=0.05)),
             row("s14", **looks(True, 14, 1)), row("s15", **looks(True, 15, 0)),
-            row("noteligible", **looks(False, 5, 0)), row("auditfail", audit="fail", **looks(True, 1, 0))]
+            row("noteligible", **looks(False, 5, 0)), row("bandfail", audit="fail", **looks(True, 14, 2))]
     assert [r["run_id"] for r in sorted(rows, key=table.rank_key)] == [
-        "s13b", "s13", "s14", "s15", "noteligible", "bare", "auditfail", "failed"]
-    assert table.review(rows) == {"s14"}
+        "s13b", "s13", "s14", "bandfail", "s15", "noteligible", "bare", "failed"]
+    assert table.review(rows) == {"s14", "bandfail"}
     text = table.tables(rows, [{"run_id": "s14", "tier": 1, "note": "a | b"}])
     assert text.startswith("## x\n") and "| 3 | s14 |" in text and "| REVIEW | 1 | a \\| b |" in text
+    assert "| 4 | bandfail | done | fail | yes | 14 | 2 |" in text and text.count("| REVIEW |") == 2

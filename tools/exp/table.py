@@ -5,11 +5,13 @@
 
 Reads `<root>/index.jsonl` (`tools/exp/index.py`) and prints one table per lane, or one across
 lanes with `--across`, each row with its run folder.  The order is the owner's (PROBLEM.md row
-2026-10-04): done runs whose audit passed first, then eligible, then channel-state splits, then
-defects (thin links + pieces under 20% τ + crowded states + ZIP-contiguity pieces), then largest
-extent and states per district, then worst and mean deviation; a metric a run lacks sorts last.
-`REVIEW` flags an eligible run with one split more than the table's best eligible split count and
-fewer defects than every eligible run at that count.
+2026-10-04): done runs first, then eligible by the looks scorer (`tools/looks/score.py`: the
+ledger audit at a plain ±15% band, the K and $ rules), then channel-state splits, then defects
+(thin links + pieces under 20% τ + crowded states + ZIP-contiguity pieces), then largest extent
+and states per district, then worst and mean deviation; a metric a run lacks sorts last.  td's
+own audit verdict, at the scenario's declared band, is shown and does not rank.  `REVIEW` flags
+an eligible run with one split more than the table's best eligible split count and fewer defects
+than every eligible run at that count.
 
 `<root>/shortlist.json` holds run ids, tier and note only: `--shortlist` adds or replaces one, and
 the table shows them.  Nothing is copied: a map is read in its run folder.
@@ -42,15 +44,15 @@ def rank_key(r: dict) -> tuple:
     def last(v):
         return math.inf if v is None else v
     eligible = {True: 0, False: 1}.get(m.get("eligible"), 2)
-    return (r["status"] != "done", r.get("audit") != "pass", eligible, last(m.get("splits")),
+    return (r["status"] != "done", eligible, last(m.get("splits")),
             last(defects(m)), last(m.get("largest_extent_km")), last(m.get("states_per_district")),
             last(m.get("worst_dev")), last(m.get("mean_dev")), r["run_id"])
 
 
 def review(rows: list) -> set:
     """Run ids flagged `REVIEW`: eligible, one split above the best eligible split count, and
-    fewer defects than every eligible run at that count; done runs whose audit passed only."""
-    ok = [r for r in rows if r["status"] == "done" and r.get("audit") == "pass"
+    fewer defects than every eligible run at that count; done runs only."""
+    ok = [r for r in rows if r["status"] == "done"
           and (r.get("metrics") or {}).get("eligible") is True
           and r["metrics"].get("splits") is not None]
     if not ok:
