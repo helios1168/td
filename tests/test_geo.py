@@ -224,7 +224,8 @@ def test_a_nested_zcta_is_adjacent_only_through_a_shared_boundary():
     got = geo.polygon_edges(["o", "i"], [holed, inner])
     assert got == {"edges": [("i", "o", 24.0)], "corner_only": [], "overlaps": []}
     m = shapely.MultiPolygon([outer, _square(20, 0, 30, 10)])    # the same at part level
-    assert geo.part_edges(["m", "i"], [m, inner], [], [])["edges"] == []
+    # offered as a rook pair, so only the part-level predicate can reject it
+    assert geo.part_edges(["m", "i"], [m, inner], [("i", "m", 0.0)], [])["edges"] == []
     m = shapely.MultiPolygon([holed, _square(20, 0, 30, 10)])
     assert geo.part_edges(["m", "i"], [m, inner], [("i", "m", 24.0)], [])["edges"] == [
         ("i", 0, "m", 0, "rook")]
