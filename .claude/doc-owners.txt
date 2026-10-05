@@ -7,6 +7,8 @@ docs/MODEL.md
 docs/REFERENCES.md
 docs/memory/*.md
 docs/problem/*.md
+# The mandate register: the owner alone adds, changes or waives a row (#107).
+docs/problem/MANDATES.md
 docs/lenses/*.md
 docs/RESULTS.md
 docs/RUN_WALKTHROUGH.md

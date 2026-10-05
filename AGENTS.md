@@ -7,6 +7,9 @@ sensible territory (few split states, no visual defects, compact) and is balance
 band around τ_c, $ per district near target). The method is a support-based master MILP, a ZIP
 realizer and an audited `(ZIP, fine channel) → district` ledger (`docs/problem/PROBLEM.md`, #52).
 `WATCHDOG.md` holds the goal, mandates and settled frame that the always-on watcher checks against.
+td's mandates are in `docs/problem/MANDATES.md`, which only the owner changes; no step may weaken,
+relabel or work around one without an owner-decision issue, and `tests/test_mandates.py` fails an
+incomplete row or an expired deferral.
 Staffing is out of scope. Everything before the 2026-09-28
 clean slate is in the tag `archive/pre-support-2026-09`. This file carries invariants only and
 is never stamped. The workflow is `/Users/Shared/sv-ntlee/WORKFLOW.md`.
