@@ -35,8 +35,7 @@ back to each ZCTA's plan copy):
 - **Necks** (#121): once no detached piece is left, each neck M1 lists is repaired like a piece
   (`_repair_neck`): the windows of `steps` around the side it cuts off, each re-solved with the
   border term, the first kept that leaves no more detached pieces and fewer necks among its
-  districts.  A neck no drawing in the band can remove (`unfixable`: one ZCTA, no connector, its
-  whole border under 10 km, its mass past 5% of the band's top) is recorded and not tried.
+  districts.
 
 The source run is checked first (`check_source`): its districts.csv must list, per channel, the
 plan's copies under the ids, names and supports the ledger was written with, or nothing is
@@ -353,17 +352,6 @@ def necks(owner: dict, m: dict, ng, districts=None) -> list:
             for nk in audit.district_necks(by[j], m, ng)]
 
 
-def unfixable(nk, m: dict, ng, hi: float) -> bool:
-    """A neck no drawing in the band can remove: its side is one ZCTA with no connector, whose
-    whole border is under `NECK_W_KM` and whose mass is at least `NECK_SHARE` of the band's top,
-    so it is a neck of whichever district in the band holds it."""
-    if len(nk.zips) != 1:
-        return False
-    z = nk.zips[0]
-    return (not ng.connector.get(z) and math.fsum(ng.border[z].values()) < audit.NECK_W_KM
-            and m.get(z, 0.0) >= audit.NECK_SHARE * hi)
-
-
 def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time_limit,
                  attempts, log, flow, keep_support, border, ng):
     """Window repair of one neck, as of a detached piece (#121): the windows of `steps` around the
@@ -404,14 +392,15 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
 
 def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_zctas: int,
                    time_limit: float, log=print, flow: bool = False,
-                   keep_support: bool = False, border: dict | None = None, ng=None) -> tuple:
+                   keep_support: bool = False, border: dict | None = None, ng=None,
+                   neck_time_limit: float | None = None) -> tuple:
     """(the repaired owner, [attempt records]); the owner changes only by a connected window.
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
     rounds repeat while they remove pieces, at most three.  Then, given `ng`
-    (`td.audit.NeckGraph`), each neck M1 lists (#121) that some drawing could remove
-    (`unfixable`), smallest side first, by `_repair_neck`; rounds repeat while they remove
-    necks, at most three.  Every window solves with the border term over `border`."""
+    (`td.audit.NeckGraph`), each neck M1 lists (#121), smallest side first, by `_repair_neck`;
+    rounds repeat while they remove necks, at most three, each neck window with `neck_time_limit` seconds (default
+    `time_limit`).  Every window solves with the border term over `border`."""
     c = plan.channel
     ch, units = inst.channels[c], inst.units
     adj, m = units.zip_adj, ch.m
@@ -435,24 +424,17 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
         pieces = left
     if ng is None:
         return owner, attempts
-    hi = ch.final_band[1]
     found = necks(owner, m, ng)
-    for nk in found:
-        if unfixable(nk[2], m, ng, hi):
-            attempts.append({"channel": c, "kind": "neck", "status": "unfixable",
-                             "cluster": [f"{nk[0]} {nk[2].zips[0]} (1 ZCTA)"],
-                             "note": "one ZCTA, no connector, border under the neck width, mass "
-                                     "past the neck share of the band's top: a neck in any district"})
     for _ in range(3):
-        todo = [nk for nk in found if not unfixable(nk[2], m, ng, hi)]
-        if not todo:
+        if not found:
             break
-        for j in [n[0] for n in sorted(todo, key=lambda n: (len(n[1]), n[0]))]:
-            cur = [nk for nk in necks(owner, m, ng, [j]) if not unfixable(nk[2], m, ng, hi)]
+        for j in [n[0] for n in sorted(found, key=lambda n: (len(n[1]), n[0]))]:
+            cur = necks(owner, m, ng, [j])
             if not cur:
                 continue            # gone with an earlier window
             owner = _repair_neck(inst, plan, owner, j, cur[0][1], free, p, state, h0, max_zctas,
-                                 time_limit, attempts, log, flow, keep_support, border, ng)
+                                 neck_time_limit or time_limit, attempts, log, flow, keep_support,
+                                 border, ng)
         left = necks(owner, m, ng)
         if len(left) >= len(found):
             break
@@ -508,6 +490,8 @@ def main(argv=None) -> int:
     ap.add_argument("--h0", type=int, default=3)
     ap.add_argument("--max-zctas", type=int, default=1500)
     ap.add_argument("--time-limit", type=float, default=600.0, help="seconds per window")
+    ap.add_argument("--neck-time-limit", type=float, default=None,
+                    help="seconds per neck window (default --time-limit)")
     ap.add_argument("--channels", nargs="*", default=None)
     ap.add_argument("--flow", action="store_true",
                     help="hold each window district connected by a flow as well as the cuts")
@@ -539,7 +523,8 @@ def main(argv=None) -> int:
         if a.channels is None or c in a.channels:
             owner, attempts = repair_channel(inst, plan, owner, p, state, a.h0, a.max_zctas,
                                              a.time_limit, flow=a.flow,
-                                             keep_support=a.keep_support, border=border, ng=ng)
+                                             keep_support=a.keep_support, border=border, ng=ng,
+                                             neck_time_limit=a.neck_time_limit)
         res = draw.Result(c, owner, [], set(), [], [], plan.delta, "repair", False)
         d = draw.drawing(inst, plan, res)
         drawings[c] = d
@@ -563,6 +548,7 @@ def main(argv=None) -> int:
                                   a.maps)
     doc.update({"arm": doc["arm"] + "+repair", "repair_of": os.path.abspath(a.run_dir),
                 "repair": {"h0": a.h0, "max_zctas": a.max_zctas, "time_limit": a.time_limit,
+                           "neck_time_limit": a.neck_time_limit,
                            "plans_file": a.plans_file, "label": a.label,
                            "flow": a.flow, "keep_support": a.keep_support,
                            "commit": commit},

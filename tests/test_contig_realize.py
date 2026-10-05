@@ -355,9 +355,9 @@ def test_the_shape_term_draws_the_least_border_between_districts():
 
 
 def _finger_toy():
-    """NY is a 4 × 3 grid of free ZCTAs (mass 1); CT's a0 (mass 2) touches the left column and
-    NJ's b0 (4.6) the right one, every edge 6 km of border.  The drawing gives CT the two left
-    columns and (2, 0), a finger on one 6 km edge holding 1/9 of CT's mass: a neck (#121)."""
+    """NY is a 4 × 3 grid of free ZCTAs (mass 1, 1 km² each); CT's a0 (mass 2) touches the left
+    column and NJ's b0 (4.6) the right one, every edge 6 km of border.  The drawing gives CT the
+    two left columns and (2, 0), a finger on one 6 km edge holding 1/8 of CT's land: a neck (#121)."""
     pts = [(x, y) for x in range(4) for y in range(3)]
     name = {q: f"v{q[0]}{q[1]}" for q in pts}
     edges = [(name[a], name[b]) for a in pts for b in pts
@@ -389,7 +389,6 @@ def test_the_window_repair_removes_a_neck_with_the_border_term():
     ng = audit.NeckGraph(polygon)
     [(j, side, nk)] = repair.necks(owner, m, ng)
     assert (j, set(side), nk.width_km) == (ct, {"v20"}, 6.0)
-    assert not repair.unfixable(nk, m, ng, inst.channels["X"].final_band[1])
     p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
     border = repair.draw.border_km(polygon)
     fixed, attempts = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), h0=1,

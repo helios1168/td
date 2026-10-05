@@ -11,7 +11,9 @@ one.  The fixture world is eleven 10 km squares (`zctas.csv`) whose graph `geo.p
 builds, so the corner rule is the one the committed graph uses.  The neck cases (#121) bring their
 own worlds (`<case>/zctas.csv`): a part joined by a 5 km passage fails and the same shape at
 10 km passes, a part under 5% on a 2 km passage passes, a ferry with no land alternative within
-the district's states passes, and a bridge whose sides land within the state joins fails.
+the district's states passes, a bridge whose sides land within the state joins fails, a dense
+ZCTA of small area on a short border passes (M1 is by land area; it is listed as a mass neck),
+and two parts under 5% each, on short borders on either side, do not combine into a neck.
 
 A trigger is a function `trigger_<name>()` in this module.  It returns the reason the mandate
 must come back once its return condition holds, and None while it does not.  The 2026-09-01
@@ -255,7 +257,8 @@ def test_full_zcta_graph_trigger_does_not_hold_on_a_sold_zip_graph():
 FIXTURES = os.path.join(ROOT, "tests", "fixtures", "m1")
 BROKEN = ("detached_piece", "corner_only", "uncovered_zero_opportunity", "unapproved_crossing",
           "neck_narrow", "connector_land_would_do")
-PASSING = ("connected", "neck_wide", "neck_small_part", "connector_needed")
+PASSING = ("connected", "neck_wide", "neck_small_part", "connector_needed", "neck_dense_small_zcta",
+           "neck_two_small_parts")
 
 
 def _gate():
@@ -313,7 +316,9 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
         got[case] = gate.m1(os.path.join(FIXTURES, case), g)
     assert all(got[c]["status"] == "pass" for c in PASSING), {c: got[c]["check"].items for c in PASSING}
     assert all(got[c]["status"] == "fail" for c in BROKEN), {c: got[c]["summary"] for c in BROKEN}
-    items = {c: got[c]["check"].items for c in got}
+    from td import audit
+    items = {c: [i for i in got[c]["check"].items if audit.MASS_NECK not in i] for c in got}
+    listed = {c: [i for i in got[c]["check"].items if audit.MASS_NECK in i] for c in got}
     counts = {c: got[c]["check"].counts for c in got}
     tau = "0.182 τ"                                     # 1 of 11 over K = 2
     assert items["detached_piece"] == [
@@ -337,3 +342,10 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
         "X/X_01: neck 0.00 km wide cuts off 1 ZIPs (10003...), 50.0% of its land area and 50.0% of "
         "its mass; cut 10001-10003 0.00 km"]
     assert all(counts[c]["necks"] == 0 for c in PASSING)
+    # by land area only (owner, 2026-10-05, "Area only"): a dense ZCTA of 1 km² on a 1 km border
+    # passes M1 and is listed beside it as a mass neck; two parts under 5% do not combine
+    assert counts["neck_dense_small_zcta"]["mass_necks"] == 1
+    assert items["neck_dense_small_zcta"] == [] and listed["neck_dense_small_zcta"] == [
+        "X/X_01: mass neck (diagnostic, not M1) 1.00 km wide cuts off 1 ZIPs (10001...), 99.8% of "
+        "its land area and 9.1% of its mass; cut 10001-10002 1.00 km"]
+    assert items["neck_two_small_parts"] == [] and listed["neck_two_small_parts"] == []

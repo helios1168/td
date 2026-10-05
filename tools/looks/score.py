@@ -48,7 +48,7 @@ Rank keys, compared in order, fewest or smallest first:
      No display fill sizes them (#116): the ledger owns every ZCTA, so the audit's piece list is
      the one count, and `audit_pieces`, M1's count read from `scorecard.md`, is printed beside it;
    - necks, listed from M1 (#121) and not in the sum: M1 fails a map with one, so an eligible
-     map has none;
+     map has none; the necks by mass M1 lists beside it, for the owner, are printed too;
    - multipart pieces, listed and counted (`multipart_pieces`) but not in the sum: a separate
      piece of a district's drawn union that only a multipart ZCTA makes is a visual defect, not
      an M1 failure (owner, 2026-10-05, #108).  Most are islets of coastal ZCTAs, drawn apart
@@ -394,6 +394,7 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
         "eligible": not why, "why": why, "k": ks, "dollars": dollars,
         "m1": {"status": m1.status, "summary": m1.summary, **m1.counts},
         "necks": [i for i in m1.items if NECK.search(i)],
+        "mass_necks": [i for i in m1.items if audit.MASS_NECK in i],
         "splits": sum(len(c["split"]) for c in chans.values()),
         "split_list": [f"{ch}:{s}" for ch, c in chans.items() for s in c["split"]],
         "distinct": sorted({s for c in chans.values() for s in c["split"]}),
@@ -471,7 +472,7 @@ def report(s: dict) -> str:
               f"weighing 1 + mass/tau each, on the ledger; M1's piece count {s['audit_pieces']})",
               f"multipart pieces: {s['multipart_pieces']} (listed, not in the defects sum)",
               f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger)"]
-    lines += [f"    {n}" for n in s["necks"]]
+    lines += [f"    {n}" for n in s["necks"] + s["mass_necks"]]
     lines += [f"shape: extent {s['largest_extent_km']:,.1f} km, {s['states_per_district']} states per district",
               f"balance: worst {100 * s['worst_dev']:.2f}%, mean {100 * s['mean_dev']:.2f}%",
               f"review: {s['review'] or 'none'} (rule: among eligible runs scored together, one split "

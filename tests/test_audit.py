@@ -639,7 +639,7 @@ def _neck_world(rng, n: int) -> tuple:
     edge's border drawn from widths around `NECK_W_KM`, and maybe one connector, with land areas
     and masses that include zeros."""
     vs = [f"v{i}" for i in range(n)]
-    edges = {(vs[i], vs[i + 1]) for i in range(n - 1)}
+    edges = {tuple(sorted((vs[i], vs[i + 1]))) for i in range(n - 1)}
     for _ in range(rng.randint(0, n)):
         edges.add(tuple(sorted(rng.sample(vs, 2))))
     edges = sorted(edges)
@@ -651,21 +651,27 @@ def _neck_world(rng, n: int) -> tuple:
     return vs, poly, {v: rng.choice([0.0, 0.0, 0.5, 1.0, 10.0]) for v in vs}
 
 
-def _narrowest_by_enumeration(vs, poly, mass) -> float:
-    """The narrowest neck of the district `vs` by trying every vertex set (the definition itself)."""
+def _narrowest_by_enumeration(vs, poly, mass, by="area") -> float:
+    """The narrowest neck of the district `vs` by trying every vertex set: a connected part and a
+    connected rest, each holding the share of land area (or of mass), across a cut under 10 km."""
     g = audit.NeckGraph(poly)
     states = frozenset(poly["state"].values())
     width = {e: m / 1000.0 for e, m in poly["border"].items()}
     for a, b in poly["connectors"]:
         width[a, b] = 0.0 if g.land_would_do(a, b, states) else math.inf
-    area, total = sum(poly["aland"].values()), sum(mass.values())
+    adj = collections.defaultdict(set)
+    for a, b in width:
+        adj[a].add(b)
+        adj[b].add(a)
+    weight = poly["aland"] if by == "area" else mass
+    total = sum(weight[v] for v in vs)
 
     def qualifies(side):
-        return ((sum(poly["aland"][v] for v in side) / area if area else 1.0) >= audit.NECK_SHARE
-                or (sum(mass[v] for v in side) / total if total else 1.0) >= audit.NECK_SHARE)
+        return (sum(weight[v] for v in side) / total if total else 1.0) >= audit.NECK_SHARE \
+            and len(audit._components(side, adj)) == 1
     best = math.inf
-    for mask in range(1, 2 ** len(vs) - 1):
-        side = {v for i, v in enumerate(vs) if mask >> i & 1}
+    for bits in range(1, 2 ** len(vs) - 1):
+        side = {v for i, v in enumerate(vs) if bits >> i & 1}
         cut = sum(k for (a, b), k in width.items() if (a in side) != (b in side))
         if cut < audit.NECK_W_KM and qualifies(side) and qualifies(set(vs) - side):
             best = min(best, cut)
@@ -673,17 +679,21 @@ def _narrowest_by_enumeration(vs, poly, mass) -> float:
 
 
 def test_the_neck_search_is_exact_against_enumeration():
-    """`district_necks` is exact (its docstring): on 300 small random districts it finds a neck
-    exactly when trying every vertex set finds one, and the narrowest."""
+    """`district_necks` is exact (its docstring): on 300 small random districts, by land area (M1)
+    and by mass (the diagnostic list), it finds a neck exactly when trying every vertex set finds
+    one, and the narrowest; the side it cuts off and the rest are each connected."""
     import random
     rng = random.Random(121)
     for _ in range(300):
         vs, poly, mass = _neck_world(rng, rng.randint(3, 9))
-        got = audit.district_necks(set(vs), mass, audit.NeckGraph(poly))
-        want = _narrowest_by_enumeration(vs, poly, mass)
-        assert all(nk.status == "proved" for nk in got), got
-        width = min((nk.width_km for nk in got), default=math.inf)
-        assert width == want or abs(width - want) < 1e-9, (poly, mass, got, want)
+        if len(audit._components(set(vs), audit.NeckGraph(poly).border)) != 1:
+            continue
+        for by in ("area", "mass"):
+            got = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), by=by)
+            want = _narrowest_by_enumeration(vs, poly, mass, by)
+            assert all(nk.status == "proved" for nk in got), got
+            width = min((nk.width_km for nk in got), default=math.inf)
+            assert width == want or abs(width - want) < 1e-9, (by, poly, mass, got, want)
 
 
 def test_a_neck_search_out_of_time_is_listed_never_passed():
@@ -693,12 +703,13 @@ def test_a_neck_search_out_of_time_is_listed_never_passed():
     rng = random.Random(3)
     for _ in range(100):
         vs, poly, mass = _neck_world(rng, rng.randint(5, 9))
-        full = audit.district_necks(set(vs), mass, audit.NeckGraph(poly))
-        cut_short = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), time_limit=0.0)
-        assert len(cut_short) >= len(full), (poly, mass)
-        assert all(nk.status in ("proved", "unresolved") for nk in cut_short)
+        for by in ("area", "mass"):
+            full = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), by=by)
+            cut_short = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), time_limit=0.0, by=by)
+            assert len(cut_short) >= len(full), (poly, mass)
+            assert all(nk.status in ("proved", "unresolved") for nk in cut_short)
     nk = audit.Neck(4.0, (), math.nan, math.nan, (), "unresolved")
-    assert audit.neck_item("X", "X_01", nk).endswith("failed as a neck")
+    assert audit.neck_item("X", "X_01", nk).endswith("listed as a neck")
 
 
 def test_a_connector_is_a_neck_only_where_land_would_do():
