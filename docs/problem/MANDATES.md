@@ -61,12 +61,21 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   (ZCTA, fine channel) cell is owned exactly once across the planning channels. Under the
   WIFI partition a carved channel does not cover all of CONUS; the goal's "every CONUS ZIP" is
   met by the channels together.
+  Necks (owner, 2026-10-05, in session: "a neck should fail m1"; structured picks "Narrow
+  passage on the map" and "No, unless land would do"; #121): a district fails M1 when some part
+  of it holding at least 5% of its land area or of its mass reaches the rest only through a
+  passage narrower than 10 km, the passage's width being the total shared ZCTA border across
+  the cut. An approved connector is a passage of unlimited width, except where the district
+  could have reached the far side by land; there it is a neck. W = 10 km and 5% are the values
+  of the option the owner picked; only the owner changes them. Reading of "by land" (agent,
+  2026-10-05, #121, owner to confirm): joined in the polygon graph without connectors, within
+  the states the district owns ZCTAs in.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by
   `tests/test_mandates.py::test_m1_fails_each_broken_fixture_and_passes_the_connected_one` on the
   broken fixtures in tests/fixtures/m1/.
-- **latest value:** 75 of 75 drawn runs fail (2026-10-05, `tools/mandates/check.py --rescore`,
+- **latest value:** necks: not measured until #121's check runs. 75 of 75 drawn runs fail (2026-10-05, `tools/mandates/check.py --rescore`,
   #108). Best map, the scorer's rank 1: `sweep/must_2026-10-01/stage2/A_fi1600_v1_na16_WH13_FI24`,
   M1 fail, largest detached piece 0.272 τ (national/national_08, 908 ZIPs in CT+MA+RI) after display
   fill; strictly on the ledger 2924 detached pieces and 89675 channel ZCTAs with no owner. Smallest
@@ -98,4 +107,32 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
 - **latest value:** not measured.
 - **waiver history:** none. Narrowed by the owner on 2026-09-30 from "confidential" to masking,
   and on 2026-10-01 to let dollar opportunity appear.
+- **return trigger:** none
+
+## T1: Tracking: every map run is tracked, every map shown is on the shortlist
+
+- **status:** hard
+- **owner's words:** owner, 2026-10-05, in session: "I'm having trouble easily keeping track what
+  m1, deck b, m2, m3 means, where the maps are, etc.", then on the proposed fix (shortlist the
+  eligible maps under descriptive ids, retire ad-hoc labels, track contig runs in the #92
+  tracker): "yes do the shortlist fix, file the issue, and add this to mandate.md so that the
+  advisor can monitor for deviation against this going forward" (#120).
+- **definition:** (1) every run that draws a map, whether `td run`, a sweep or a `tools/exp/*`
+  drawing or repair, writes its folder under `runs/exp/<lane>/<run_id>/` with a `manifest.json`
+  in #92's format (code commit and dirty flag, command, scenario, instance, status, and the
+  parent run of a repair or any run derived from another), so `tools/exp/index.py` indexes it; no
+  hand-written launcher writes a map run that the tracker cannot see. (2) Every map put in
+  front of the owner or stakeholders is an entry in the shortlist registry (`shortlist.json`:
+  id, tier, rank, label, run path, image paths, notes) and the generated
+  `runs/shortlist/INDEX.md` is rebuilt; a map that drops out moves to a superseded tier and is
+  never deleted. (3) Reports, issues, decks and conversation name a map by its shortlist id
+  and label (layout and K per channel) and give its image path; ad-hoc labels that are on no
+  shortlist ("M1", "M2", "deck B") are not used, and "M1" means only the contiguity mandate.
+- **check:** the `tracking` check of `tools/mandates/check.py`, built by #120: it fails a run
+  folder under `runs/exp/` with a ledger and no manifest, a shortlist entry whose run, image or
+  manifest is missing, and an id reused across tiers. Until it lands, part (3) is checked by the
+  mandate advisor reading the session.
+- **latest value:** not measured. On 2026-10-05 the 63 entries of `runs/exp/contig/` had no
+  manifest, and the shortlist was rebuilt by hand that day with today's eligible maps.
+- **waiver history:** none.
 - **return trigger:** none

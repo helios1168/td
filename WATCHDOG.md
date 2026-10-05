@@ -29,13 +29,23 @@ row or an expired deferral. The rows are restated here.
   length; a corner point does not count);
 - across water only through the committed connector list;
 - every CONUS ZCTA is assigned by the ledger, zero-opportunity ZIPs included;
-- no tolerance: a detached piece fails the map, and listing it is not enough.
+- no tolerance: a detached piece fails the map, and listing it is not enough;
+- a neck fails the map too (owner 2026-10-05, #121): a part holding ≥ 5% of a district's land
+  area or mass that reaches the rest only through a passage under 10 km of shared ZCTA border,
+  or across a connector where land would do. Graph connectivity alone is not M1.
 
 The model plans and draws on that same polygon graph. M1 was set aside "for simplicity" on 09-01
 with no return trigger, and for five weeks every map shipped with detached pieces while reports
 said "pieces are listed". That pattern is what you are here to catch, for any part of the goal.
 
 **Masking.** Sales, per-rep shares and rep or firm names never leave the extract.
+
+**T1, tracking** (owner 2026-10-05, #120). Every run that draws a map has a `manifest.json` under
+`runs/exp/<lane>/<run_id>/` that #92's index sees; every map shown to the owner or stakeholders is
+an entry in the shortlist registry with its run and image paths, and `runs/shortlist/INDEX.md` is
+rebuilt; maps are named by shortlist id and label with an image path, never by ad-hoc labels such
+as "M2" or "deck B", and "M1" means only the contiguity mandate. Flag a map run launched outside
+the tracker, a map shown that is not on the shortlist, and an unregistered label.
 
 ## 3. Settled frame (owner 2026-10-04; PROBLEM.md rows)
 
