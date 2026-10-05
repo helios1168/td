@@ -79,6 +79,7 @@ ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
 SIMPLIFY_M = 250.0          # the figures' simplification, as the 2026-09-09 menu chose
 MAPS_SKIPPED = "maps skipped: ZCTA polygons missing"
 FILE_NAME = re.compile(r"[A-Za-z0-9_.-]{1,250}")    # a key that may name a file: one component
+COMMITTED = "committed polygon graph"   # audit_run's default: M1 on `geo.polygon_graph()` (#108)
 
 
 class RunError(RuntimeError):
@@ -172,7 +173,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         manifest = json.load(fh)
     split = ledger_pieces(led, graph, drawings)
     checks = audit.audit(audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref,
-                                   split, polygon))
+                                   split, polygon))     # None only for a caller's own graph
     paths["scorecard"] = audit.write_scorecard(out, checks, f"{s.name} ({source or 'extract'})")
     paths["districts"] = write_districts(os.path.join(out, "districts.csv"), inst, plans,
                                          drawings, names, split)
@@ -368,11 +369,14 @@ def read_ledger(path: str) -> list:
 
 def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: dict, names: dict,
               manifest: dict | None = None, reference=None, split: dict | None = None,
-              polygon: dict | None = None) -> audit.Run:
+              polygon: dict | str | None = COMMITTED) -> audit.Run:
     """`td.audit.Run` over the ledger `rows`: every cell, placed or not (#89), the expected cells
     from `extract` (the input, not the ledger), the maps' planned and drawn shares as diagnostics,
     the causes of the ledger's pieces (`split`, `ledger_pieces` of `rows` when None), and M1's
-    `polygon` graph."""
+    `polygon` graph.  By default M1 runs on the committed polygon graph, so a caller assembling
+    an extract run (`tools/exp81/run_hess.py`) cannot pass the audit with M1 unverified; only a
+    caller drawing on its own toy or fixture graph passes `polygon=None` (owner, 2026-10-05)."""
+    polygon = geo.polygon_graph() if polygon is COMMITTED else polygon
     ids = district_ids(drawings)
     placed = inst.units.unit_of
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],

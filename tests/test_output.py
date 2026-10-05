@@ -774,3 +774,29 @@ def test_the_cli_lists_run_and_maps():
             assert e.code == 2                  # --extract or --fixture is required
         else:
             raise AssertionError("argparse accepted a run with no extract")
+
+
+def test_an_extract_assembly_cannot_pass_with_m1_unverified():
+    """#108 review: `tools/exp81/run_hess.py` assembles an extract run by calling
+    `output.audit_run(inst, led, drawings, ext, reports, graph, names, manifest, ref, split)`
+    with no polygon.  That call shape audits M1 on the committed polygon graph, so the toy's
+    ledger, which owns 13 of 33,300 CONUS ZCTAs, fails M1 rather than leaving it unverified."""
+    extract, graph = _toy_inputs()
+    seen, real = [], output.audit_run
+
+    def spy(*args, **kw):
+        seen.append(args)
+        return real(*args, **kw)
+    out = tempfile.mkdtemp(prefix="td-output-")
+    output.audit_run = spy
+    try:
+        own = output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False)
+    finally:
+        output.audit_run = real
+    assert {c.name: c.status for c in own.checks}[audit.M1_CHECK] == "unverified"   # its own graph
+    inst, led, drawings, ext, reports, graph, names, manifest, ref, split = seen[0][:10]
+    checks = {c.name: c for c in audit.audit(output.audit_run(
+        inst, led, drawings, ext, reports, graph, names, manifest, ref, split))}
+    assert checks[audit.M1_CHECK].status == "fail", checks[audit.M1_CHECK].summary
+    assert checks[audit.M1_CHECK].counts["no_owner"] > 33000
+    assert audit.verdict(checks.values()) == "fail"

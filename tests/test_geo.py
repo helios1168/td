@@ -212,6 +212,24 @@ def test_polygon_edges_need_a_shared_length_and_skip_a_corner_touch():
     assert geo.components(list(polys), got["edges"]) == [["p", "q"], ["r"], ["s"]]
 
 
+def test_a_nested_zcta_is_adjacent_only_through_a_shared_boundary():
+    """Rook (M1): a box inside another without a hole overlaps it but shares no boundary, so it
+    is no edge and is reported as an overlap; with the inner box as the outer's hole they share
+    its 24 m ring and are an edge."""
+    import shapely
+    outer, inner = _square(0, 0, 10, 10), _square(2, 2, 8, 8)
+    got = geo.polygon_edges(["o", "i"], [outer, inner])
+    assert got == {"edges": [], "corner_only": [], "overlaps": [("i", "o")]}
+    holed = shapely.Polygon(outer.exterior.coords, [inner.exterior.coords])
+    got = geo.polygon_edges(["o", "i"], [holed, inner])
+    assert got == {"edges": [("i", "o", 24.0)], "corner_only": [], "overlaps": []}
+    m = shapely.MultiPolygon([outer, _square(20, 0, 30, 10)])    # the same at part level
+    assert geo.part_edges(["m", "i"], [m, inner], [], [])["edges"] == []
+    m = shapely.MultiPolygon([holed, _square(20, 0, 30, 10)])
+    assert geo.part_edges(["m", "i"], [m, inner], [("i", "m", 24.0)], [])["edges"] == [
+        ("i", 0, "m", 0, "rook")]
+
+
 def test_a_multipart_zcta_is_one_vertex_adjacent_through_any_part():
     """Owner, 2026-10-05: a ZCTA's parts count as connected to each other, and it meets another
     ZCTA through a shared positive-length boundary of any part."""

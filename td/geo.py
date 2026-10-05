@@ -691,7 +691,9 @@ def polygon_edges(ids, geoms) -> dict:
     """Rook adjacency of `geoms` (polygons in `CRS`, keyed by `ids`): `{"edges": [(a, b,
     border_m)], "corner_only": [(a, b)], "overlaps": [(a, b)]}`, a < b.  A pair is an edge when the
     length its boundaries share exceeds `MIN_BORDER_M`; a pair that touches with no shared length
-    is `corner_only`; a pair whose interiors overlap is listed in `overlaps` and is an edge."""
+    and no common interior is `corner_only`; a pair whose interiors overlap is listed in
+    `overlaps`, and is an edge only if it also shares boundary length (rook: one ZCTA nested in
+    another without a hole is not adjacent).  The committed build has no overlapping pair."""
     import numpy as np
     import shapely
     ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
@@ -712,9 +714,9 @@ def polygon_edges(ids, geoms) -> dict:
         a, z = sorted((ids[i], ids[j]))
         if o > 0:
             out["overlaps"].append((a, z))
-        if b > MIN_BORDER_M or o > 0:
+        if b > MIN_BORDER_M:
             out["edges"].append((a, z, float(b)))
-        else:
+        elif o == 0:
             out["corner_only"].append((a, z))
     return {k: sorted(v) for k, v in out.items()}
 
@@ -723,8 +725,8 @@ def part_edges(ids, geoms, edges, connectors) -> dict:
     """The polygon graph at part level wherever a multipart ZCTA is an end: `{"parts": [(zcta,
     part, area_m2)] for every ZCTA, "edges": [(a, a_part, b, b_part, kind)]}`.  A part is a polygon
     of `shapely.get_parts`, in its order.  A rook pair of `edges` ((a, b, ...), a < b) with a
-    multipart end gives each pair of parts whose boundaries share a length above `MIN_BORDER_M`
-    (or whose interiors overlap), kind `rook`; a connector row with a multipart end gives its
+    multipart end gives each pair of parts whose boundaries share a length above `MIN_BORDER_M`,
+    kind `rook` (an overlap alone is no edge); a connector row with a multipart end gives its
     nearest pair of parts, kind `connector`, whatever its status."""
     import numpy as np
     import shapely
@@ -744,13 +746,11 @@ def part_edges(ids, geoms, edges, connectors) -> dict:
     pa, pb = np.asarray(pa), np.asarray(pb)
     near = shapely.intersects(pa, pb) if len(pa) else np.zeros(0, bool)
     border = np.zeros(len(pa))
-    overlap = np.zeros(len(pa))
     hit = np.flatnonzero(near)
     if len(hit):
         border[hit] = shapely.length(shapely.intersection(shapely.boundary(pa[hit]),
                                                           shapely.boundary(pb[hit])))
-        overlap[hit] = shapely.area(shapely.intersection(pa[hit], pb[hit]))
-    out = [(*la[n], *lb[n], "rook") for n in hit if border[n] > MIN_BORDER_M or overlap[n] > 0]
+    out = [(*la[n], *lb[n], "rook") for n in hit if border[n] > MIN_BORDER_M]
     for r in connectors:
         a, b = r["a"], r["b"]
         if a in multi or b in multi:
