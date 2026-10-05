@@ -511,15 +511,17 @@ one connector) is defined on M1-passing drawings, and there are none.
 
 **What the runs show.**
 - **No map passes M1** (footprint coverage, D3), in any arm. Nothing here is eligible.
-- **Every layout-`none` map fails on the same district shape**: one district per channel holds CT
-  and a share of NY (deck A national_07 / WH_05 / FI_07; grid na15 national_08 / WH_05 / FI_07).
-  CT reaches its other units only through NY, and no NY drawing that routes the share from CT to
-  them was found: the NY unit is `unknown` in every arm-1 run (the DAG restriction infeasible, the
-  complete loop out of time), so CT's 289 ZCTAs stay detached at 0.13–0.46 τ. Grid na15/WH12/FI23
-  is down to exactly these three pieces. With a wider band (`band`), every unit of deck A drew
-  connected at δ ≤ 0.05 one at a time, yet the three CT pieces remain, now as a gap between units
-  drawn separately (WH_05: CT plus its NY share drawn apart from its NJ share). This is #112's case;
-  it is unproved either way, and no certificate exists for it.
+- **Every layout-`none` map fails on the same district shape**: a district whose units join only
+  through split units, above all one per channel holding CT and a share of NY (deck A national_07,
+  WH_05 and FI_07 = CT + NJ + NY; grid na15 national_08, WH_05, FI_07). CT reaches its other units
+  only through NY, and no NY drawing that routes the share from CT to them was found at the plan's
+  δ: the NY unit is `unknown` in every arm-1 run (the DAG restriction infeasible, the complete loop
+  out of time), so CT's 289 ZCTAs stay detached at 0.13–0.46 τ. Grid na15/WH12/FI23 is down to
+  exactly these three pieces. With a wider band (`band`), every unit of deck A drew connected at
+  δ ≤ 0.05 one at a time and national_07 joined, yet three pieces remain as gaps between units drawn
+  separately: WH_05 and FI_07 (CT with its NY share, apart from the NJ share) and national_08
+  (DC + NC + NJ + PA + VA + WV, its PA share apart). This is #112's case; it is unproved either way,
+  and no certificate exists for it.
 - **Elsewhere the sequential realizer draws most split units connected at the plan's δ**: IFA 20 of
   22 units (FL and NY unknown), deck A 15 of 28 at δ = 0.02 and all 28 at δ ≤ 0.05.
 - **s13** (comparison only) gets down to a largest piece of 0.088 τ, against 0.455 τ for the power
