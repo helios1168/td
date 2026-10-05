@@ -41,7 +41,7 @@ are in the tag `archive/pre-support-2026-09`.
 | The support-master scope, the clean slate and decisions S1–S31 | **settled** | 2026-09-25 | user | `docs/memory/decisions/support-refactor-2026-09-25.md`; #52 revision 7 approved 2026-09-28 |
 | OQ1–OQ7 of #52: where the §4 corrections land, `docs/lenses/` kept, U-number ranges, blocker cycles, C7's gate, a disconnected whole unit stops the run, the file caps | **settled** | 2026-09-28 | user | [owner's answers on #52](https://github.com/helios1168/td/issues/52#issuecomment-5866293503) |
 | OD1: the final band tolerance | **open** | 2026-09-28 | user | #56; blocks D1 and E1, not implementation |
-| OD2: the authoritative ZIP graph | **open** | 2026-09-28 | user | #57; blocks G1 |
+| ~~OD2: the authoritative ZIP graph~~ | ~~**open**~~ | 2026-09-28 | user | ~~#57; blocks G1~~; answered 2026-10-04, row below |
 | OD3: output status and certificate tiers | **open** | 2026-09-28 | user | #58 |
 | OD4: county pieces and how they are drawn | **open** | 2026-09-28 | user | #59; decided on D1's free-mode splits |
 | OD5: the metro outline and the oversized-metro rule | **open** | 2026-09-28 | user | #60 |
@@ -50,3 +50,6 @@ are in the tag `archive/pre-support-2026-09`.
 
 <!-- seed line: rows above were seeded 2026-09-28 (td#54) from #52; append below -->
 | Looks first: a plain ±15% band (as ±10%, no per-channel exception count); rank maps by channel-state splits, then visual defects (one may outrank an extra split, flagged for review), then shape, then balance; main map K 48–54 with $ per district within ±10% of each channel's target. Supersedes the council's balance-first framing; M_c(δ) with μ = 0 stays the bound and seed. District definition open (U50); OD1 (#56) still records the final band | **settled** | 2026-10-04 | user | `docs/lenses/COUNCIL_2026-10-01.md` § Triage (the owner's 2026-10-04 answers) |
+| OD2 (#57): the authoritative ZIP graph is the 2025 TIGER ZCTA polygon rook graph: every CONUS ZCTA a vertex, an edge for a shared boundary of positive length (a shared corner does not count), water crossed only through the committed connector list. The model plans and draws on it. Supersedes the Voronoi rook graph on extract ZIPs (owner on #57, 2026-09-28) | **settled** | 2026-10-04 | user | M1 in `docs/problem/MANDATES.md` (#107) |
+| M1, ZIP contiguity, is a hard mandate; the register `docs/problem/MANDATES.md` holds it and masking. Restores ~~Adjacency contiguity is not required (2026-09-01, "Reopenable only by the full-ZCTA-graph experiment")~~, a row whose condition #62 met on 2026-09-28 and which the #54 clean slate archived in `archive/pre-support-2026-09` | **settled** | 2026-10-04 | user | `docs/problem/MANDATES.md`; #107 |
+| Every cleanup, archive and clean slate carries forward every mandate and every return trigger in `docs/problem/MANDATES.md`; none is archived, deleted or dropped with the rows around it. A deferred or waived mandate keeps its trigger test, and `tests/test_mandates.py` fails once the trigger holds | **settled** | 2026-10-05 | user | #107, design approved by the owner 2026-10-05 |
