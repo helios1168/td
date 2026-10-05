@@ -467,7 +467,7 @@ def check_m1(run: Run) -> Check:
               for f in sorted({f for _, f in at} - set(fine)) if not source]
     items += [f"{ch}: ZCTA {z} owned by {', '.join(sorted(js))}" for (ch, z), js in sorted(clash.items())]
     foot, free, missing = (collections.defaultdict(set) for _ in range(3))
-    n_double = len(clash)
+    n_double, dup, unexcused = 0, set(), []
     for z in sorted(adj):
         for f in fine:
             rows = at.get((z, f), [])
@@ -486,10 +486,17 @@ def check_m1(run: Run) -> Check:
             owned = sorted(c.channel for c in rows if _real(c.district))
             if len(owned) > 1:
                 n_double += 1
+                dup |= {(ch, z) for ch in owned}
                 items.append(f"fine channel {f}: ZCTA {z} owned in {', '.join(owned)}")
             if not owned:                   # a blank row is excused in a dropped channel only
                 for ch in solved:
                     free[ch].add(z)
+                if not solved and not any(c.channel not in run.channels and c.reason == DROPPED
+                                          and not c.m for c in rows):
+                    unexcused.append((f, z))
+                    items.append(f"fine channel {f}: ZCTA {z} has no owner, and no zero-opportunity "
+                                 "DROPPED row of a dropped channel excuses it")
+    n_double += sum(1 for k in clash if k not in dup)  # a clash across fine channels, not one cell's
     whole = {}
     for i, comp in enumerate(_components(set(adj), adj)):
         whole.update(dict.fromkeys(comp, i))
@@ -523,6 +530,7 @@ def check_m1(run: Run) -> Check:
             by_state = collections.Counter(state.get(z, "?") for z in free[ch])
             uncovered += [f"{ch}: {n} ZCTAs of {s} have no owner" for s, n in sorted(by_state.items())]
     n_norow = sum(len(zs) for zs in missing.values())
+    n_free += len(unexcused)
     for f in sorted(missing):
         items.append(f"fine channel {f}: {len(missing[f])} of {len(adj)} CONUS ZCTAs have no row")
         by_state = collections.Counter(state.get(z, "?") for z in missing[f])

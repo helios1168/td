@@ -306,7 +306,7 @@ def m1_check(ledger: list, ks: dict, g: Geography, fine=None) -> audit.Check:
     takes the ledger's, and the summary says so.  A run folder has no units, so the routing of a
     cell to its planning channel is the run's own scorecard M1's to check."""
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
-                        float(r["m_rel"])) for r in ledger]
+                        float(r["m_rel"]), reason=r.get("reason", "")) for r in ledger]
     return audit.check_m1(audit.Run(cells, {ch: audit.Channel(k) for ch, k in ks.items()},
                                     polygon=g.polygon, fine=None if fine is None else tuple(fine)))
 
