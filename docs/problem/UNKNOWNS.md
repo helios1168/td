@@ -40,9 +40,22 @@ Each entry carries one line of context, since this file is read on its own.
 | U47 | Within an exchange component, drift bounded by the heaviest boundary ZIP rather than μ_S | T | open |
 | U48 | Heavy ZIPs as binary atoms in the master: Claim 3 holds with μ_S ≤ ε·\|split units of S\| | T | open |
 | U49 | The balance loss: worst district, sum, count within ±x%, or leximin | B | **answered 2026-10-04: balance is a plain ±15% band, not the objective.** Maps rank by channel-state splits, visual defects, shape, then worst and mean deviation (PROBLEM.md row 2026-10-04) |
-| U50 | Is a district the region it covers (zero-opportunity ZIPs included) or its opportunity ZIPs? Decides piece counts, thin links, and whether districts may cross empty ZIPs | B | open; #82 |
+| U50 | Is a district the region it covers (zero-opportunity ZIPs included) or its opportunity ZIPs? Decides piece counts, thin links, and whether districts may cross empty ZIPs | B | **answered 2026-10-04/05: a district is the region it covers.** Zero-opportunity ZIPs are territory (owner 2026-10-04); a district owning any ZCTA of a state has split it (owner 2026-10-05, #91 decision 1). #82 closed |
 | U51 | May K per channel and the WIFI region move? | B | **answered 2026-10-02: yes.** K set from per-channel dollar targets (2026-10-01; within ±10% of target and main total 48–54, 2026-10-04); combined region moved (no WIFI; New England; New England + ID MT ND SD WY NE KS OK NM). `docs/memory/facts/scenario-sweeps-2026-10.md`; #75 |
 | U52 | Is a ZIP holding 0.13τ–0.36τ territory, or a booking address to place apart? | B | open; #83 |
+
+## Open: splits (U53–U58)
+
+From the 2026-10-05 split council (`docs/lenses/COUNCIL_2026-10-05.md`, #91, triaged 2026-10-05).
+
+| id | unknown | grade | status |
+|---|---|---|---|
+| U53 | F2's root gap, node count and pass times on the real channels with all states as candidates (F2 is exact but its LP is weak, ≈ cuts/(U−1)) | E | open; #103 |
+| U54 | The internal band an M1 drawing needs: internal band vs drawn splits vs M1 feasibility | E | open; #109 |
+| U55 | Liftability: which master plans have an M1 drawing; the connected masses reachable from each border, A_u(v), which no current row sees | T/E | open; extends U46 |
+| U56 | Per channel, the gap g between a covering bound s* and the best audited M1 map | E | open; #109 |
+| U57 | Whether an η-free bounding master's plans decode and draw, or it is a bound only | E/T | open; owner decision on the bounding master |
+| U58 | C4 on the real extract: are #94's 1.15τ forced sets the sweep's, and is the forced-only master at δ = 0.15 infeasible for WH and FI on NE + plains (would make 13 the unit-level minimum) | E | open |
 
 ## Reserved (U14–U29)
 
