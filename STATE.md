@@ -14,4 +14,4 @@ M1 (ZIP contiguity) is the goal's first part; no current map meets it. #106 land
 
 ## Blocked
 
-#110 #111 #112 #83 owner decisions; swap rule B (#85); #3, #59, #75, #76.
+#111 #112 #83 owner decisions (#110 answered: η-free bounding master certifies floors; #117 state-piece contract); swap rule B (#85); #3, #59, #75, #76.
