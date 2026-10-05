@@ -670,11 +670,16 @@ def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target
 def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold, plan, planned,
                  support, inst, lo, hi, arm, fixed_targets, time_limit, log=print,
                  extra: dict | None = None, dag: bool = False, start: dict | None = None,
-                 count: dict | None = None) -> Group:
+                 count: dict | None = None, layers: bool = False, flow: bool = False) -> Group:
     """One group's MILP and cut loop (module docstring).  `count` is the window repair's
     (`repair.py`): {"current": {unit: its holders on the drawn map}, "cap": bool}; then split
     units come first in the objective, holders (cuts) second, shape third, and with "cap" neither
-    the window units' split units nor their cuts may rise above the drawn map's."""
+    the window units' split units nor their cuts may rise above the drawn map's.  With `layers`,
+    a detached component also gets a separator row per BFS layer between it and its district's
+    main component (each layer up to the first touching main is crossed by every path).  With
+    `flow`, each district with a body is also held connected by a single-commodity flow from its
+    root body, each of its ZCTAs and other bodies consuming one unit (exact; the cut loop then
+    only checks)."""
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     js = sorted({j for z in zs for j in allowed[z]})
@@ -737,15 +742,31 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             held_by[v] = {fixed[y] for y in units.zips.get(v, ()) if y in fixed}
             scol[v] = len(cost)
             cost.append(big)
+    fcol = {}                   # (district, a, b) -> flow on the arc a -> b
+    if flow:
+        for j in sorted(root):
+            mine = {z for z in zs if j in allowed[z]} | {b for b, k in vert_of.items() if k == j}
+            for a in sorted(mine):
+                for b in sorted(gadj[a]):
+                    if b in mine and b != root[j]:
+                        fcol[j, a, b] = len(cost)
+                        cost.append(0.0)
     n = len(cost)
     h = highspy.Highs()
     h.setOptionValue("output_flag", False)
     h.setOptionValue("mip_rel_gap", 0.0)
     inf = highspy.kHighsInf
-    h.addVars(n, np.zeros(n), np.ones(n))
+    fset = set(fcol.values())
+    cap_of = {j: 1 + sum(1 for z in zs if j in allowed[z]) + sum(1 for k in vert_of.values() if k == j)
+              for j in root} if flow else {}
+    ub = np.ones(n)
+    for (j, _, _), k in fcol.items():
+        ub[k] = float(cap_of[j])
+    h.addVars(n, np.zeros(n), ub)
     h.changeColsCost(n, np.arange(n, dtype=np.int32), np.array(cost))
     h.changeColsIntegrality(n, np.arange(n, dtype=np.int32),
-                            np.array([highspy.HighsVarType.kInteger] * n))
+                            np.array([highspy.HighsVarType.kContinuous if i in fset
+                                      else highspy.HighsVarType.kInteger for i in range(n)]))
     nrows = 0
 
     stored = []
@@ -766,6 +787,22 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         if extra is not None:   # sequential: a district already past the band is not forced back
             a, b = max(0.0, a), max(0.0, b)
         row(a, b, idx, [m[z] for z in zs if (z, j) in col and m.get(z, 0.0) > 0])
+    if flow:                    # into a vertex only when j owns it; each consumes one unit
+        into, out_ = collections.defaultdict(list), collections.defaultdict(list)
+        for (j, a, b), k in fcol.items():
+            into[j, b].append(k)
+            out_[j, a].append(k)
+            if (b, j) in col:
+                row(-inf, 0.0, [k, col[b, j]], [1.0, -float(cap_of[j])])
+        for j in sorted(root):
+            for v in sorted({z for z in zs if j in allowed[z]} | {b for b, k in vert_of.items()
+                                                                  if k == j} - {root[j]}):
+                idx = into[j, v] + out_[j, v]
+                val = [1.0] * len(into[j, v]) + [-1.0] * len(out_[j, v])
+                if v in vert_of:
+                    row(1.0, 1.0, idx, val)
+                else:
+                    row(0.0, 0.0, idx + [col[v, j]], val + [-1.0])
     if count is not None:       # s_v = 1 when unit v has two holders or more
         free_y = {}
         for (v, j), k in ycol.items():
@@ -835,6 +872,18 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         for v, k in scol.items():
             x0[k] = float(len(held_by[v] | {j for (u, j), i in ycol.items()
                                             if u == v and x0[i] > 0.5}) > 1)
+        for j in sorted(root) if fcol else ():     # a BFS tree's subtree sizes from the root
+            mine = {z for z, k in start.items() if k == j} | {b for b, k in vert_of.items() if k == j}
+            up, order = {root[j]: None}, [root[j]]
+            for a in order:
+                for b in sorted(gadj[a]):
+                    if b in mine and b not in up:
+                        up[b] = a
+                        order.append(b)
+            size = dict.fromkeys(order, 1.0)
+            for b in reversed(order[1:]):
+                size[up[b]] += size[b]
+                x0[fcol[j, up[b], b]] = size[b]
         if not all(lo_ - tol <= sum(x0[i] * a for i, a in zip(idx, val)) <= hi_ + tol
                    for lo_, hi_, idx, val in stored):
             log(f"    the {how} drawing breaks a row (band or targets)")
@@ -913,6 +962,16 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 near_main = {y for z in main for y in gadj[z]} - main
                 seps = {tuple(sorted({y for z in cc for y in gadj[z]} - cc)),
                         tuple(sorted(near_main & seen))}
+                ring, done = set(cc), set(cc)
+                while layers:   # each BFS layer from cc up to the first touching main separates
+                    ring = {y for z in ring for y in gadj[z]
+                            if y in can and y not in done and y not in main}
+                    if not ring or any(vert_of.get(y) == j for y in ring):
+                        break
+                    done |= ring
+                    seps.add(tuple(sorted(ring)))
+                    if ring & near_main:
+                        break
                 for sep in sorted(seps):
                     sidx = [col[y, j] for y in sep if (y, j) in col]
                     if j in root:

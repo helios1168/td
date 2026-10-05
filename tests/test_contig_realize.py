@@ -188,9 +188,10 @@ def test_a_window_solve_reconnects_the_power_diagrams_detached_piece():
     assert last["status"] in ("optimal", "connected") and last["pieces_after"] == 0
     assert last["window_zctas"] < len(owner)
     assert set(owner) == set(power.owner)
-    assert all(owner[z] == power.owner[z] for z in owner if z not in repair.window(
-        set().union(*(cc for _, cc in repair.detached(power.owner, adj, m))),
-        repair.draw.split_fixed(inst, plan)[1], adj, last["h"]))
+    assert last["shape"] == "ball"
+    W = repair.ball(repair.detached(power.owner, adj, m), repair.draw.split_fixed(inst, plan)[1],
+                    adj, last["h"], 100 // 2)
+    assert all(owner[z] == power.owner[z] for z in owner if z not in W)
     lo, hi = inst.channels["X"].final_band
     mass = {}
     for z, j in owner.items():
@@ -198,3 +199,19 @@ def test_a_window_solve_reconnects_the_power_diagrams_detached_piece():
     assert all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()), mass
     after = repair.map_figures(inst, "X", owner, state)
     assert after["split_states"] <= before["split_states"] and after["cuts"] <= before["cuts"]
+
+
+def test_the_flow_window_reconnects_the_same_piece():
+    """With `flow` the window model also holds each district connected by a single-commodity
+    flow from its root body; on the U it reconnects the power diagram's piece as the cut loop does."""
+    repair = _repair_module()
+    inst, xy, plan = _u_toy()
+    power = realize.realize(inst, plan, xy)
+    adj, m = inst.units.zip_adj, inst.channels["X"].m
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    state = dict(inst.units.unit_of)
+    owner, attempts = repair.repair_channel(inst, plan, power.owner, p, state, h0=1,
+                                            max_zctas=100, time_limit=60.0, log=lambda *_: None,
+                                            flow=True)
+    assert repair.detached(owner, adj, m) == []
+    assert attempts[-1]["flow"] and attempts[-1]["status"] in ("optimal", "connected")
