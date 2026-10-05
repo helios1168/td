@@ -290,8 +290,8 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
             return r
         for d in [delta] + sorted(x for x in wider if x > delta):
             g = _attempt(solve, d, tried) or g
-            if g is not None and g.status in ("optimal", "connected", "infeasible"):
-                break
+            if g is not None and g.status in ("optimal", "connected"):
+                break       # an infeasible band proves nothing about a wider one
         if g is None:       # no time left for this group
             g = Group(sorted({j for z in zs for j in allowed[z]}), sorted({unit_of[z] for z in zs}),
                       len(zs), 0, 0, note="not tried: the channel's time limit")
@@ -390,7 +390,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
             r = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
                              arm, fixed_targets, min(left, group_limit or left), log, extra,
-                             dag=dag, start=seed)
+                             dag=dag, start=seed, sequential=True)
             log(f"  {c} unit {v} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
                 f"districts, {r.free} ZCTAs -> {r.status} in {r.seconds:.1f}s, "
                 f"{r.iterations} solves, {r.cuts} cuts{(' (' + r.note + ')') if r.note else ''}")
@@ -670,7 +670,8 @@ def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target
 def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold, plan, planned,
                  support, inst, lo, hi, arm, fixed_targets, time_limit, log=print,
                  extra: dict | None = None, dag: bool = False, start: dict | None = None,
-                 count: dict | None = None, layers: bool = False, flow: bool = False) -> Group:
+                 count: dict | None = None, layers: bool = False, flow: bool = False,
+                 sequential: bool = False) -> Group:
     """One group's MILP and cut loop (module docstring).  `count` is the window repair's
     (`repair.py`): {"current": {unit: its holders on the drawn map}, "cap": bool}; then split
     units come first in the objective, holders (cuts) second, shape third, and with "cap" neither
@@ -679,7 +680,9 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     main component (each layer up to the first touching main is crossed by every path).  With
     `flow`, each district with a body is also held connected by a single-commodity flow from its
     root body, each of its ZCTAs and other bodies consuming one unit (exact; the cut loop then
-    only checks)."""
+    only checks).  With `sequential` (`_sequential`) a district whose fixed mass and `extra` are
+    already past the band takes nothing more instead of being forced back; otherwise such a
+    district makes the group infeasible, since its mass outside the group cannot change."""
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     js = sorted({j for z in zs for j in allowed[z]})
@@ -707,6 +710,13 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         mine = {j: support[j] for j in hold.get(v, []) if j in js}
         if v in ch.M and len(mine) > 1:     # only a share-only district's seed reads its centre
             cen.update({(v, j): x for j, x in tdrealize.centres(inst, c, v, mine, p).items()})
+    over = [j for j in js if fixed_mass[j] > hi + MASS_TOL * max(1.0, hi)]
+    if over and not sequential:
+        g = Group(js, sorted({unit_of[z] for z in zs}), len(zs), 0, 0, "infeasible",
+                  note=f"{over[0]}'s mass outside the group ({fixed_mass[over[0]]:.6g}) is above "
+                       f"the band's {hi:.6g}")
+        g.seconds = time.time() - t0
+        return g
     allowed = prune(zs, allowed, js, root, gadj, vert_of, m, fixed_mass, lo, hi)
     empty = sorted(z for z in zs if not allowed[z])
     if empty:
@@ -784,7 +794,7 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     for j in js:
         idx = [col[z, j] for z in zs if (z, j) in col and m.get(z, 0.0) > 0]
         a, b = lo - fixed_mass[j], hi - fixed_mass[j]
-        if extra is not None:   # sequential: a district already past the band is not forced back
+        if sequential:          # a district already past the band is not forced back
             a, b = max(0.0, a), max(0.0, b)
         row(a, b, idx, [m[z] for z in zs if (z, j) in col and m.get(z, 0.0) > 0])
     if flow:                    # into a vertex only when j owns it; each consumes one unit

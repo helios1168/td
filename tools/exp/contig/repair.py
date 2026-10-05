@@ -19,7 +19,9 @@ back to each ZCTA's plan copy):
   `--keep-support`, arm 1, only the districts whose plan holds z's unit), each district's ZCTAs outside W its bodies (each component one vertex, the
   largest the root), every district connected by the separator solve-check-cut loop, each
   district's total drawn mass in the channel's final band (the band the audit judged the run
-  at), split units first in the objective, then holders (cuts), then geodesic shape; with the cap
+  at; a district whose mass outside W is already above it makes W infeasible, and a district
+  with no ZCTA in or next to W is not in the model, so a window's status says nothing about its
+  band: each attempt lists the districts outside the band before and after), split units first in the objective, then holders (cuts), then geodesic shape; with the cap
   (the default) the window units' split units and cuts may not rise above the drawn map's.  The
   geodesic-DAG restriction runs first and seeds the complete model (`draw._attempt`).  Every
   detached component gets a separator row per BFS layer towards its district's main component;
@@ -30,6 +32,10 @@ back to each ZCTA's plan copy):
   infeasible with the cap, is tried once more without it, and the rise in splits or cuts is
   reported.
 
+The source run is checked first (`check_source`): its districts.csv must list, per channel, the
+plan's copies under the ids, names and supports the ledger was written with, or nothing is
+repaired.
+
 Statuses stay apart: "optimal" is a connected optimum of W's complete model at
 `mip_rel_gap = 0` (W only, everything outside fixed; never an optimum of the map), "connected"
 is connected and feasible, "infeasible" proves only that W at that h, the rest fixed, has no
@@ -38,7 +44,9 @@ drawing (never a certificate for the map: no no-good cut), "unknown" is the time
 The output is a full run folder (ledger, scorecard, districts.csv, run.json; `run.write_folder`)
 and a contig.json that copies the source run's channels and adds each window attempt under
 `repair`: pieces before and after, the shape, |W|, h or slack, status, seconds, worst deviation, split states and cuts
-on the drawn map.  `tools/mandates/check.py` audits it like any run folder.
+on the drawn map.  A repaired channel's band is the repair's, not the source drawing's: its
+`group_delta_needed` moves to `source_group_delta_needed`, and `repair_band` holds the final band's
+δ the windows held and the worst |mass/τ − 1| reached.  `tools/mandates/check.py` audits it like any run folder.
 """
 from __future__ import annotations
 
@@ -72,6 +80,28 @@ def _load(name: str, file: str):
 
 draw = _load("contig_draw", "draw.py")
 run = _load("contig_run", "run.py")
+
+
+def check_source(districts_path: str, plans: dict) -> list:
+    """The mismatches between a run's districts.csv and `plans`: per channel of the file, the
+    (district id, copy name, support) rows must be the plan's copies numbered as
+    `output.district_ids` numbers them, so the ledger's ids read back to the copies that drew it."""
+    import csv
+    have = collections.defaultdict(set)
+    with open(districts_path, encoding="utf-8", newline="") as fh:
+        for r in csv.DictReader(fh):
+            have[r["channel"]].add((r["district"], r["copy"], r["support"]))
+    out = []
+    for c in sorted(have):
+        if c not in plans:
+            out.append(f"{c}: in districts.csv, not in the plans")
+            continue
+        want = {(f"{c}_{i:02d}", j, "+".join(sorted(s)))
+                for i, (j, s) in enumerate(sorted((cp.name, cp.support)
+                                                  for cp in plans[c].copies), 1)}
+        out += [f"{c}: districts.csv {d} {j} ({s}), not in the plan" for d, j, s in sorted(have[c] - want)]
+        out += [f"{c}: plan {d} {j} ({s}), not in districts.csv" for d, j, s in sorted(want - have[c])]
+    return out
 
 
 def owners_from_ledger(rows: list, plans: dict) -> dict:
@@ -121,8 +151,10 @@ def map_figures(inst, c: str, owner: dict, state: dict) -> dict:
         mass[j] += ch.m.get(z, 0.0)
         by[state[z]].add(j)
     split = sorted(s for s, js in by.items() if len(js) > 1)
+    lo, hi = ch.final_band
     return {"worst_dev": max(abs(x / ch.tau - 1) for x in mass.values()),
-            "split_states": len(split), "cuts": sum(len(by[s]) - 1 for s in split)}
+            "split_states": len(split), "cuts": sum(len(by[s]) - 1 for s in split),
+            "outside_band": sorted(j for j, x in mass.items() if not lo <= x <= hi)}
 
 
 def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,
@@ -361,6 +393,10 @@ def load(run_dir: str, extract_path: str, plans_cache: str | None, plans_file: s
             plans, reports = pickle.load(fh)
     else:
         plans, reports = run.plans_for(inst, spec_path, extract_path, plans_cache)
+    bad = check_source(os.path.join(run_dir, "districts.csv"), plans)
+    if bad:
+        raise RuntimeError(f"{run_dir} was not drawn by these plans: " + "; ".join(bad[:5])
+                           + (f" (+{len(bad) - 5} more)" if len(bad) > 5 else ""))
     owners = owners_from_ledger(output.read_ledger(os.path.join(run_dir, "ledger.csv")), plans)
     return s, ref, ext, polygon, inst, plans, reports, owners, src
 
@@ -414,6 +450,9 @@ def main(argv=None) -> int:
         if attempts:
             entry["connected"] = not left
             entry["status"] = "connected" if not left else entry["status"]
+            entry["source_group_delta_needed"] = entry.pop("group_delta_needed", None)
+            entry["repair_band"] = {"delta": inst.channels[c].spec.final_delta,
+                                   "worst_dev": map_figures(inst, c, owner, state)["worst_dev"]}
         entry.update(run.drawn_stats(inst, plan, d, connectors, not left))
     report, m1 = run.write_folder(a.out, s, inst, ext, ref, polygon, plans, reports, drawings,
                                   f"{s.name} (contig {doc['arm']} + window repair{', ' + a.label if a.label else ''})",

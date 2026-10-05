@@ -8,7 +8,8 @@ split units and cuts counted on the drawn map (a state two or more of the channe
 a ZCTA of, zero-opportunity ZCTAs included; cuts Σ (districts − 1)), the realizer's status per
 group ("optimal" proved, "connected" connected and feasible, "infeasible" proved, "unknown" a time
 limit or a restricted model), the solve seconds and the worst gap, the internal δ the drawing
-needed (U54), share-only districts (U61), exclave splits (D2), districts resting on one connector
+needed (U54; of a channel `repair.py` redrew, the repair's final band δ instead, marked "repair",
+since the source drawing's δ no longer describes the map), share-only districts (U61), exclave splits (D2), districts resting on one connector
 (U63), and the split count against a covering bound (U56): "not covered", since no all-M1 bound
 exists yet (#119).
 """
@@ -67,6 +68,15 @@ def deviations(districts_path: str) -> dict:
     return out
 
 
+def repair_delta(r: dict, spec_path: str, c: str) -> float:
+    """The final band δ `repair.py` held a channel's windows to: `repair_band` when the folder
+    records it, else the spec's final δ (the folders written before it did)."""
+    if "repair_band" in r:
+        return r["repair_band"]["delta"]
+    from td import spec as tdspec
+    return tdspec.load(spec_path).channels[c].final_delta
+
+
 def rows(run_dir: str) -> list:
     with open(os.path.join(run_dir, "contig.json")) as fh:
         doc = json.load(fh)
@@ -82,6 +92,7 @@ def rows(run_dir: str) -> list:
         st = collections.Counter(g["status"] for g in groups)
         gaps = [g["gap"] for g in groups if g.get("gap") is not None]
         split, cuts = splits.get(c, ([], 0))
+        repaired = bool(r.get("repair"))
         out.append({
             "run": os.path.basename(os.path.normpath(run_dir)), "scenario": doc["scenario"],
             "arm": doc["arm"] + (" seq" if doc.get("sequential") else "")
@@ -95,7 +106,8 @@ def rows(run_dir: str) -> list:
             "seconds": round(sum(sum(t["seconds"] for t in g["tried"]) or g["seconds"]
                                  for g in groups), 1),
             "worst_gap": max(gaps) if gaps else None,
-            "delta_needed": r["group_delta_needed"] if r["connected"] else None,
+            "delta_needed": None if repaired or not r["connected"] else r["group_delta_needed"],
+            "repair_delta": repair_delta(r, run["spec"], c) if repaired else None,
             "worst_dev": dev[c][0], "mean_dev": dev[c][1],
             "split_units": len(split), "split_states": split, "cuts": cuts,
             "share_only": len(r["share_only"]), "exclave_splits": r["exclave_splits"],
@@ -114,6 +126,8 @@ def table(all_rows: list) -> str:
         groups = ", ".join(f"{k} {v}" for k, v in sorted(r["groups"].items()))
         gap = "" if r["worst_gap"] is None else f"{r['worst_gap']:.2g}"
         need = "" if r["delta_needed"] is None else f"{r['delta_needed']:g}"
+        if r.get("repair_delta") is not None:
+            need = f"{r['repair_delta']:g} (repair)"
         one = "n/a" if r["single_connector"] is None or r["m1_map"] != "pass" \
             else str(len(r["single_connector"]))
         cells = (r["run"], r["arm"], r["channel"], str(r["k"]), f"{r['plan_delta']:g}",

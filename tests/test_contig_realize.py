@@ -215,3 +215,97 @@ def test_the_flow_window_reconnects_the_same_piece():
                                             flow=True)
     assert repair.detached(owner, adj, m) == []
     assert attempts[-1]["flow"] and attempts[-1]["status"] in ("optimal", "connected")
+
+
+def _over_band_toy():
+    """AL (one ZCTA of 12) | AR (w of 1, r of 8) | CA (one of 9) on a line, K 3, τ 10, final band
+    (9, 11): AL#1 is above the band and wholly outside a window {w}."""
+    edges = [("a", "w"), ("w", "r"), ("r", "c")]
+    xy = {"a": (0.0, 0.0), "w": (1.0, 0.0), "r": (2.0, 0.0), "c": (3.0, 0.0)}
+    mass = {"a": 12.0, "w": 1.0, "r": 8.0, "c": 9.0}
+    inst, _ = tr._toy({"AL": ["a"], "AR": ["w", "r"], "CA": ["c"]}, edges, mass, xy, k=3,
+                      delta=0.1, final_delta=0.1)
+    plan = tr._plan(inst, [({"AL"}, {"AL": 1.0}), ({"AR"}, {"AR": 1.0}), ({"CA"}, {"CA": 1.0})])
+    owner = {"a": "AL#1", "w": "AR#1", "r": "AR#1", "c": "CA#1"}
+    return inst, plan, owner, {z: (x, y) for z, (x, y) in xy.items()}
+
+
+def test_a_window_is_infeasible_when_a_fixed_district_is_already_above_the_band():
+    """Review of 35e038f8, P1: the sequential clamp (a district past the band takes nothing more)
+    let a window next to AL#1, fixed at 12 against (9, 11), report "optimal" as if the band held.
+    In repair the band row keeps its negative upper residual, so the window is infeasible, and the
+    attempt records list the districts outside the band."""
+    repair = _repair_module()
+    inst, plan, owner, p = _over_band_toy()
+    assert inst.channels["X"].final_band == (9.0, 11.0)
+    g = repair.solve_window(inst, plan, owner, {"w"}, p, 30.0, True, log=lambda *_: None)
+    assert g.status == "infeasible", (g.status, g.note)
+    assert "AL#1" in g.note
+    state = dict(inst.units.unit_of)
+    assert repair.map_figures(inst, "X", owner, state)["outside_band"] == ["AL#1"]
+
+
+def test_a_source_drawn_by_other_plans_is_rejected():
+    """Review of 35e038f8, P1: the ledger's ids read back to copies only when the source's
+    districts.csv lists the plan's copies under the same ids, names and supports."""
+    import tempfile
+    repair = _repair_module()
+    inst, plan, _, _ = _over_band_toy()
+    rows = ["channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces",
+            "X,X_01,,AL#1,AL,12,12,0", "X,X_02,,AR#1,AR,9,9,0", "X,X_03,,CA#1,CA,9,9,0"]
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "districts.csv")
+        with open(path, "w") as fh:
+            fh.write("\n".join(rows) + "\n")
+        assert repair.check_source(path, {"X": plan}) == []
+        other = tr._plan(inst, [({"AL", "AR"}, {"AL": 1.0, "AR": 1.0}), ({"CA"}, {"CA": 1.0}),
+                                ({"CA"}, {"CA": 0.0})])
+        bad = repair.check_source(path, {"X": other})
+        assert bad and any("AL+AR#1" in b for b in bad)
+        assert repair.check_source(path, {}) == ["X: in districts.csv, not in the plans"]
+
+
+def test_the_band_remedy_tries_a_wider_band_after_an_infeasible_one():
+    """Review of 35e038f8, P2: #7's thin share is infeasible at the plan's δ = 0.3 (CT + NJ + a
+    20-ZCTA path through NY is 42 against 40.3) and drawable at 0.4; the joint `band` remedy goes on
+    to the wider band instead of stopping at the narrower proof."""
+    draw = _draw()
+    inst, xy = tr._ct_ny_nj()
+    plan = tr._plan(inst, [({"CT", "NY", "NJ"}, {"CT": 1.0, "NJ": 1.0, "NY": 0.05}),
+                           ({"NY"}, {"NY": 0.95})])
+    res = draw.draw(inst, plan, xy, wider=(0.4,), log=lambda *_: None)
+    assert res.connected, [g.tried for g in res.groups]
+    tried = res.groups[0].tried
+    assert [t["status"] for t in tried if t["delta"] == 0.3 and not t["dag"]] == ["infeasible"]
+    assert any(t["delta"] == 0.4 and t["status"] in ("optimal", "connected") for t in tried)
+
+
+def test_the_report_gives_a_repaired_channel_the_repairs_band():
+    """Review of 35e038f8, P1: a channel `repair.py` redrew is reported at the repair's final band
+    δ, not the source drawing's δ needed."""
+    import json
+    import tempfile
+    spec = importlib.util.spec_from_file_location(
+        "contig_report", os.path.join(HERE, "..", "tools", "exp", "contig", "report.py"))
+    report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(report)
+    chan = {"groups": [], "plan_delta": 0.02, "connected": True, "status": "connected",
+            "share_only": [], "exclave_splits": [], "single_connector": {}}
+    doc = {"scenario": "toy", "arm": "arm1+repair", "m1": {"status": "pass", "summary": ""},
+           "channels": {"A": {**chan, "repair": [{"status": "optimal"}],
+                              "source_group_delta_needed": 0.02,
+                              "repair_band": {"delta": 0.1, "worst_dev": 0.087}},
+                        "B": {**chan, "repair": [], "group_delta_needed": 0.05}}}
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, body in (("contig.json", json.dumps(doc)),
+                           ("run.json", json.dumps({"spec": "", "channels": {"A": {"k": 2},
+                                                                             "B": {"k": 2}}})),
+                           ("ledger.csv", "model_channel,state,district\n"),
+                           ("scorecard.md", ""),
+                           ("districts.csv", "channel,drawn_mass\nA,9\nA,11\nB,10\nB,10\n")):
+            with open(os.path.join(tmp, name), "w") as fh:
+                fh.write(body)
+        a, b = report.rows(tmp)
+        assert (a["delta_needed"], a["repair_delta"]) == (None, 0.1)
+        assert (b["delta_needed"], b["repair_delta"]) == (0.05, None)
+        assert "| 0.1 (repair) |" in report.table([a]) and "| 0.05 |" in report.table([b])
