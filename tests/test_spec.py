@@ -302,6 +302,15 @@ def test_a_boolean_is_neither_a_count_nor_a_number():
     assert (x.k, x.contact_caps, x.dist_km, x.max_dist_km) == (3, {"AL": 4}, {"AL": 1600.0}, 900.0)
 
 
+def test_margin_is_on_by_default_and_takes_only_true_or_false():
+    """#84: `margin = false` turns μ_S off for the channel; any value but a TOML bool is refused."""
+    assert spec.parse(_toy_raw()).channels["X"].margin is True
+    assert spec.parse(_toy_raw(margin=True)).channels["X"].margin is True
+    assert spec.parse(_toy_raw(margin=False)).channels["X"].margin is False
+    for bad in (0, 1, 0.0, "false", "off", None, [False]):
+        _raises(lambda: spec.parse(_toy_raw(margin=bad)), "channel X: margin must be true or false")
+
+
 # ------------------------------------------------------------------------------ units and modes
 def test_a_disconnected_whole_unit_stops_naming_its_components():
     s, units, cells = _toy({"AL": ["a1", "a2", "a3"], "AR": ["b1"]},
@@ -319,6 +328,26 @@ def test_a_disconnected_splittable_unit_is_listed_not_stopped():
     inst = spec.assemble(s, units, cells)
     assert inst.report["disconnected"] == {"AL": [2, 1]}
     assert inst.channels["X"].mode["AL"] == "free"
+
+
+def test_each_domain_component_reports_mass_tau_its_residue_and_the_channel_floor():
+    """#88 (U40): AL-AR holds 1.5τ and AZ, cut off, 0.5τ at K = 2.  AL-AR alone is nearest
+    two districts (25%), but each part takes a whole number summing to K, so the floor is 50%
+    at one apiece; with K = 1 no allocation exists."""
+    zs = {"AL": ["a1"], "AR": ["b1"], "AZ": ["c1"]}
+    cells = {("a1", "f"): 1.0, ("b1", "f"): 0.5, ("c1", "f"): 0.5}
+    s, units, cells = _toy(zs, [("a1", "b1")], cells, k=2)
+    got = spec.assemble(s, units, cells).report["components"]["X"]
+    assert [(r["units"], r["mass_tau"], r["k"], r["residue"]) for r in got["components"]] == \
+        [(["AL", "AR"], 1.5, 2, 0.25), (["AZ"], 0.5, 1, 0.5)]
+    assert (got["floor"], got["allocation"]) == (0.5, [1, 1])
+    lines = spec.component_lines({"X": got})
+    assert lines[0] == "X: 2 domain components, floor 50.00% at k = [1, 1]", lines
+    assert lines[1] == "  1.500 τ, k = 2, residue 25.00%: AL, AR", lines
+    s, units, cells = _toy(zs, [("a1", "b1")], cells, k=1)
+    got = spec.assemble(s, units, cells).report["components"]["X"]
+    assert (got["floor"], got["allocation"]) == (None, [])
+    assert "floor none (more components than K)" in spec.component_lines({"X": got})[0]
 
 
 def test_zero_opportunity_units_and_channels_are_dropped_and_reported():

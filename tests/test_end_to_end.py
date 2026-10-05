@@ -4,7 +4,8 @@ The 51 scenario runs at the δ each channel can meet on the fixture (`test_reali
 its own 0.10 is infeasible there, #68), and its scorecard's hard checks must pass.  The CLI runs
 the disconnected-whole fixture spec to its stop, and redraws the 51 run's maps from its ledger.
 TIGER/Line 2025 state polygons are needed (`data/public/` or `$TD_REPO`'s); SKIP without.  The
-maps also need the ZCTA520 polygons there; without them the run must say `MAPS_SKIPPED`.  A run
+maps, `map_<channel>.png` flat in the run directory, also need the ZCTA520 polygons there; without
+them the run must say `MAPS_SKIPPED`.  A run
 refuses a directory an earlier run wrote (the toy of `test_output`, no download needed).
 """
 from __future__ import annotations
@@ -94,7 +95,9 @@ def test_the_51_maps_are_drawn_for_every_channel_and_the_maps_command_redraws_th
         assert report["maps"] == output.MAPS_SKIPPED and "maps" not in res.paths
         return
     assert report["maps"] == "drawn" and report["maps_missing_polygons"] == []
-    assert set(res.paths["maps"]) == {"national", "WH", "FI", "WIFI"}
+    assert res.paths["maps"] == {c: os.path.join(res.out, f"map_{c}.png")
+                                  for c in ("national", "WH", "FI", "WIFI")}
+    assert not any(os.path.isdir(os.path.join(res.out, f)) for f in os.listdir(res.out))
     for path in res.paths["maps"].values():
         os.remove(path)
     buf = io.StringIO()
