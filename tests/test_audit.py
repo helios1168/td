@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 
-from td import audit, geo
+from td import audit, geo, output
 from td.audit import Cell, Channel, Run
 
 UNIT = {"a1": "A", "a2": "A", "a3": "A", "b1": "B", "b2": "B", "b3": "B", "b4": "B",
@@ -184,6 +184,51 @@ def test_ledger_cell_outside_the_expected_cells_fails():
     assert check.status == "fail"
     assert check.items == ["cell c1/invented: not expected"]
     assert _fails(run) == ["one owner per cell"]
+
+
+def test_a_domain_cell_missing_from_the_ledger_fails_by_name():
+    """#89: a cell of the domain the ledger lacks fails, as ZIP 13027's FI cell should have."""
+    run = _run(cells=[c for c in _run().cells if c.zip != "b2"])
+    check = audit.check_cells(run)
+    assert check.status == "fail" and check.items == ["cell b2/f: not in the ledger"]
+    assert "one owner per cell" in _fails(run)
+
+
+def test_a_not_placed_cell_passes_only_when_its_zip_has_no_opportunity():
+    """#89 (owner, 2026-10-04): a NOT_PLACED cell is listed when it has no owner, its ZIP no unit,
+    and its whole ZIP no opportunity; otherwise it fails `check_cells`."""
+    clean = _run()
+    off = [Cell("z9", "f", "X", "", 0.0, reason=audit.NOT_PLACED),
+           Cell("z9", "g", "Y", "", 0.0, reason=audit.NOT_PLACED)]
+    run = _run(cells=clean.cells + off, expected=clean.expected | {("z9", "f"), ("z9", "g")})
+    assert _fails(run) == []
+    check = _checks(run)["one owner per cell"]
+    assert check.status == "listed"
+    assert check.items == [f"cell z9/{f} ({c}): {audit.NOT_PLACED}, ZIP has no opportunity"
+                           for f, c in (("f", "X"), ("g", "Y"))]
+    heavy = dataclasses.replace(run, cells=clean.cells + [off[0], off[1]._replace(m=1.6e-8)])
+    assert audit.check_cells(heavy).items == [f"cell z9/{f}: not placed, ZIP z9 has opportunity 1.6e-08"
+                                              for f in "fg"]
+    assert _fails(heavy) == ["one owner per cell"]
+    owned = dataclasses.replace(run, cells=clean.cells + [off[0]._replace(district="d1"), off[1]])
+    assert "cell z9/f: not placed but owned by d1" in audit.check_cells(owned).items
+    placed = dataclasses.replace(run, unit_of=dict(UNIT, z9="A"))
+    assert audit.check_cells(placed).items == [f"cell z9/{f}: not placed but ZIP z9 is in unit A"
+                                               for f in "fg"]
+    unknown = dataclasses.replace(run, cells=clean.cells + [off[0]._replace(m=None), off[1]])
+    assert audit.check_cells(unknown).status == "fail"
+
+
+def test_a_sub_tolerance_cell_is_owned_not_missing():
+    """#86 with #89: a `SUB_TOLERANCE` cell (ZIP 13027's FI cell) has an owner, so `check_cells`
+    counts it as owned and does not treat it as `NOT_PLACED`."""
+    run = _run(cells=[c._replace(m=1e-8, reason=output.SUB_TOLERANCE) if c.zip == "b2" else c
+                      for c in _run().cells])
+    check = audit.check_cells(run)
+    assert check.status == "pass" and check.items == []
+    unowned = dataclasses.replace(run, cells=[c._replace(district="") if c.zip == "b2" else c
+                                              for c in run.cells])
+    assert audit.check_cells(unowned).items == ["cell b2/f: no owner"]
 
 
 def test_certificate_tiers_follow_od3():

@@ -18,9 +18,10 @@ CONUS extract; the cells of fine channels the scenario leaves to other scenarios
 place GEOIDs and the district's name, then the cell's opportunity `m_rel`, from which reported
 masses and bands are read (§8), and the `reason` for a blank district:
 - `dropped: zero opportunity`, a cell of a unit or channel dropped before solving (§1, #65 F1);
-- `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, so it is outside
-  the audit's retained domain and counted in `run.json` (#67).  A ZIP with no opportunity in any
-  channel is never a vertex of the graph the run declares (OD2, `declared_graph`).
+- `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, is counted in
+  `run.json` (#67), and passes the audit only when the whole ZIP has no opportunity (#89).  A ZIP
+  with no opportunity in any channel is never a vertex of the graph the run declares (OD2,
+  `declared_graph`).
 An owned cell has a blank reason, except `SUB_TOLERANCE`: a ZIP the realizer placed by adjacency
 because its mass is below the transport LP's tolerance (#86), with its true `m_rel`, counted in
 `run.json`.
@@ -70,7 +71,7 @@ LEGACY_COLUMNS = ("scenario", "zip_code", "current_channel", "state", "model_cha
                   "district_channels", "rep")          # the tag's scenarios.csv header
 COLUMNS = LEGACY_COLUMNS + ("county", "cbsa", "place", "district_name", "m_rel", "reason")
 DROPPED = audit.DROPPED
-NOT_PLACED = "not placed: not a vertex of the declared ZIP graph"
+NOT_PLACED = audit.NOT_PLACED
 SUB_TOLERANCE = "placed by adjacency: below the transport LP's tolerance"
 CONNECTOR = "connector ZIP not in ledger"
 TOP_METROS = 10
@@ -363,15 +364,15 @@ def read_ledger(path: str) -> list:
 
 def audit_run(inst, rows: list, drawings: dict, extract, reports: dict, graph: dict, names: dict,
               manifest: dict | None = None, reference=None, split: dict | None = None) -> audit.Run:
-    """`td.audit.Run` over the ledger `rows`: the cells of placed ZIPs, the expected cells from
-    `extract` (the input, not the ledger), the maps' planned and drawn shares as diagnostics, and
-    the causes of the ledger's pieces (`split`, `ledger_pieces` of `rows` when None)."""
+    """`td.audit.Run` over the ledger `rows`: every cell, placed or not (#89), the expected cells
+    from `extract` (the input, not the ledger), the maps' planned and drawn shares as diagnostics,
+    and the causes of the ledger's pieces (`split`, `ledger_pieces` of `rows` when None)."""
     ids = district_ids(drawings)
     placed = inst.units.unit_of
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
                         float(r["m_rel"]), r["rep"], r["reason"])
-             for r in rows if r["reason"] != NOT_PLACED]
-    expected = {(z, f) for z, f in zip(extract.z, extract.channel) if z in placed}
+             for r in rows]
+    expected = set(zip(extract.z, extract.channel))
     chans = {c: audit.Channel(ch.k, *ch.final_band) for c, ch in inst.channels.items()}
     mode = {(c, v): ch.mode[v] for c, ch in inst.channels.items() for v in ch.units}
     planned, reported = {}, {}

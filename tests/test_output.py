@@ -30,9 +30,9 @@ from tests import test_spec as ts
 
 NY, NJ, PA, CT = ("10001", "10002", "10003", "10004"), ("07102", "07103", "07104", "07105"), \
     ("19103", "19104", "19106", "19107"), ("06830", "06831")
-OFF = "19108"                   # in the extract, not a vertex of the toy graph
+OFF = "19108"                   # in the extract with no opportunity, not a vertex of the toy graph
 MASS = {**dict.fromkeys(NY, 1.0), **dict.fromkeys(NJ, 0.375), **dict.fromkeys(PA, 0.625),
-        **dict.fromkeys(CT, 0.0), OFF: 0.5}
+        **dict.fromkeys(CT, 0.0), OFF: 0.0}
 
 
 def _toy_spec(**channel):
@@ -43,12 +43,13 @@ def _toy_spec(**channel):
     return spec.parse(raw)
 
 
-def _toy_inputs():
-    """(extract, graph): every ZIP in f with MASS and in g with 0; chains inside each state and
-    the edges NY-NJ, NJ-PA, NY-CT."""
-    zs = sorted(MASS)
+def _toy_inputs(mass=None):
+    """(extract, graph): every ZIP in f with MASS, or `mass` over it, and in g with 0; chains
+    inside each state and the edges NY-NJ, NJ-PA, NY-CT."""
+    mass = dict(MASS, **(mass or {}))
+    zs = sorted(mass)
     extract = data.Extract(("f", "g"), [z for z in zs for _ in "fg"], [f for _ in zs for f in "fg"],
-                           [m for z in zs for m in (MASS[z], 0.0)], [{}] * 2 * len(zs),
+                           [m for z in zs for m in (mass[z], 0.0)], [{}] * 2 * len(zs),
                            [0.0] * 2 * len(zs))
     edges = [(a, b) for st in (NY, NJ, PA, CT) for a, b in zip(st, st[1:])]
     edges += [(NY[-1], NJ[0]), (NJ[-1], PA[0]), (NY[0], CT[0])]
@@ -156,6 +157,44 @@ def test_a_toy_run_passes_the_audit_and_writes_every_output():
     assert report["maps"] == "drawn" and report["maps_missing_polygons"] == []
     assert report["not_placed_zips"] == 1 and report["dropped_channels"] == ["Y"]
     assert report["dropped_units"]["X"] and "CT" in report["dropped_units"]["X"]
+    cells = checks["one owner per cell"]
+    assert cells.status == "listed", cells.items
+    assert cells.items == [f"cell {OFF}/{f} ({c}): {output.NOT_PLACED}, ZIP has no opportunity"
+                           for f, c in (("f", "X"), ("g", "Y"))]
+
+
+def test_a_not_placed_zip_with_opportunity_fails_the_one_owner_audit():
+    """#89: every cell enters the audit; a NOT_PLACED cell passes only when its whole ZIP has no
+    opportunity, as ZIP 13027's FI cell did not before the diagnostic zeroed it."""
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    extract, graph = _toy_inputs({OFF: 0.5})
+    res = output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False)
+    fails = {c.name: c.items for c in res.checks if c.status == "fail"}
+    assert res.verdict == "fail" and set(fails) == {"one owner per cell"}, fails
+    assert fails["one owner per cell"] == [f"cell {OFF}/{f}: not placed, ZIP {OFF} has opportunity 0.5"
+                                           for f in "fg"]
+    shutil.rmtree(out)
+
+
+def test_a_ledger_missing_a_domain_cell_fails_the_one_owner_audit():
+    """#89: the audit reads the ledger back from the file; a cell of the extract that the file
+    lacks, placed or not, fails `check_cells` by name."""
+    read = output.read_ledger
+    for z, f in ((OFF, "f"), (NY[0], "f")):
+        out = tempfile.mkdtemp(prefix="td-output-")
+        os.rmdir(out)
+        output.read_ledger = lambda path, cell=(z, f): [
+            r for r in read(path) if (r["zip_code"], r["current_channel"]) != cell]
+        try:
+            extract, graph = _toy_inputs()
+            res = output.run(_toy_spec(), extract, out, graph, ts._reference(), maps=False)
+        finally:
+            output.read_ledger = read
+        check = {c.name: c for c in res.checks}["one owner per cell"]
+        assert res.verdict == "fail" and check.status == "fail"
+        assert f"cell {z}/{f}: not in the ledger" in check.items, check.items
+        shutil.rmtree(out)
 
 
 def test_every_cell_has_one_row_and_a_blank_district_says_why():
