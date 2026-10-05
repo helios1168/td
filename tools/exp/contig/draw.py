@@ -721,7 +721,10 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             row(-inf, 0.0, [col[z, j], ycol[unit_of[z], j]], [1.0, -1.0])
     for j in js:
         idx = [col[z, j] for z in zs if (z, j) in col and m.get(z, 0.0) > 0]
-        row(lo - fixed_mass[j], hi - fixed_mass[j], idx, [m[z] for z in zs if (z, j) in col and m.get(z, 0.0) > 0])
+        a, b = lo - fixed_mass[j], hi - fixed_mass[j]
+        if extra is not None:   # sequential: a district already past the band is not forced back
+            a, b = max(0.0, a), max(0.0, b)
+        row(a, b, idx, [m[z] for z in zs if (z, j) in col and m.get(z, 0.0) > 0])
     if arm == "move":
         for v in sorted({unit_of[z] for z in zs}):
             if len(hold.get(v, [])) > 1:
