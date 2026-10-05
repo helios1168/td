@@ -99,3 +99,31 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
 - **waiver history:** none. Narrowed by the owner on 2026-09-30 from "confidential" to masking,
   and on 2026-10-01 to let dollar opportunity appear.
 - **return trigger:** none
+
+## T1: Tracking: every map run is tracked, every map shown is on the shortlist
+
+- **status:** hard
+- **owner's words:** owner, 2026-10-05, in session: "I'm having trouble easily keeping track what
+  m1, deck b, m2, m3 means, where the maps are, etc.", then on the proposed fix (shortlist the
+  eligible maps under descriptive ids, retire ad-hoc labels, track contig runs in the #92
+  tracker): "yes do the shortlist fix, file the issue, and add this to mandate.md so that the
+  advisor can monitor for deviation against this going forward" (#120).
+- **definition:** (1) every run that draws a map, whether `td run`, a sweep or a `tools/exp/*`
+  drawing or repair, writes its folder under `runs/exp/<lane>/<run_id>/` with a `manifest.json`
+  in #92's format (code commit and dirty flag, command, scenario, instance, status, and the
+  parent run of a repair or any run derived from another), so `tools/exp/index.py` indexes it; no
+  hand-written launcher writes a map run that the tracker cannot see. (2) Every map put in
+  front of the owner or stakeholders is an entry in the shortlist registry (`shortlist.json`:
+  id, tier, rank, label, run path, image paths, notes) and the generated
+  `runs/shortlist/INDEX.md` is rebuilt; a map that drops out moves to a superseded tier and is
+  never deleted. (3) Reports, issues, decks and conversation name a map by its shortlist id
+  and label (layout and K per channel) and give its image path; ad-hoc labels that are on no
+  shortlist ("M1", "M2", "deck B") are not used, and "M1" means only the contiguity mandate.
+- **check:** the `tracking` check of `tools/mandates/check.py`, built by #120: it fails a run
+  folder under `runs/exp/` with a ledger and no manifest, a shortlist entry whose run, image or
+  manifest is missing, and an id reused across tiers. Until it lands, part (3) is checked by the
+  mandate advisor reading the session.
+- **latest value:** not measured. On 2026-10-05 the 63 entries of `runs/exp/contig/` had no
+  manifest, and the shortlist was rebuilt by hand that day with today's eligible maps.
+- **waiver history:** none.
+- **return trigger:** none

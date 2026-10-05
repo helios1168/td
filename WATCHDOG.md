@@ -37,6 +37,13 @@ said "pieces are listed". That pattern is what you are here to catch, for any pa
 
 **Masking.** Sales, per-rep shares and rep or firm names never leave the extract.
 
+**T1, tracking** (owner 2026-10-05, #120). Every run that draws a map has a `manifest.json` under
+`runs/exp/<lane>/<run_id>/` that #92's index sees; every map shown to the owner or stakeholders is
+an entry in the shortlist registry with its run and image paths, and `runs/shortlist/INDEX.md` is
+rebuilt; maps are named by shortlist id and label with an image path, never by ad-hoc labels such
+as "M2" or "deck B", and "M1" means only the contiguity mandate. Flag a map run launched outside
+the tracker, a map shown that is not on the shortlist, and an unregistered label.
+
 ## 3. Settled frame (owner 2026-10-04; PROBLEM.md rows)
 
 - **Eligible map:**
