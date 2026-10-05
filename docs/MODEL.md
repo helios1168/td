@@ -626,8 +626,8 @@ For each splittable unit v with |J_v| ≥ 2:
      M1 fails on it; it is listed, never patched;
    - *join*: a district in pieces takes a shortest path of zero-mass ZIPs, inside the units where
      it holds opportunity, from one piece to another of its ZIPs, whoever holds the path, when the
-     total pieces of the district and of the districts it takes ZIPs from fall. No district is
-     emptied.
+     total pieces of the district and of the districts it takes ZIPs from fall and none of those
+     districts is left in more pieces. No district is emptied.
 
    Then **[proved]**: no ZIP of positive mass changes owner, so drawn masses, bands, drawn shares
    and Δ are the realizer's; a grown ZIP joins the component of the ZIP it was reached from, so
@@ -709,13 +709,18 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   every channel, each district's ZCTAs in the ledger are one component of the polygon graph (the
   rook graph of the 2025 TIGER ZCTA polygons over every CONUS ZCTA, an edge only for a shared
   boundary of positive length, plus the owner-approved connectors across gaps), and every CONUS
-  ZCTA has an owner in every channel that holds it. A channel holds its footprint (§7 step 6), the
-  ZCTAs it has ledger rows for; across the channels, every CONUS ZCTA has exactly one owned row
-  per fine channel of the ledger, no gap and no double. Coverage is counted per footprint, not
+  ZCTA has an owner in every channel that holds it. A channel holds its footprint (§7 step 6): every
+  (ZCTA, fine channel) cell of the scenario's F that the domains give it. Each cell has a row in
+  that planning channel and exactly one owned row, no gap, no double and no row elsewhere; two
+  districts of one channel owning one ZCTA fail too. F and the cell's planning channel come from
+  the scenario, never from the ledger; the run-folder gate, which has no units, reads F from
+  `run.json` and leaves the routing to the run's own audit, which the looks scorer also requires
+  to pass. Coverage is counted per footprint, not
   over all CONUS in each planning channel, because the ledger is keyed (ZIP, fine channel) and
   the owner's domain partition (WIFI's region in the 51 and NE + plains layouts) is settled frame
   (orchestrator decision under the owner's autonomy grant, 2026-10-05, #116, for owner review). A
-  dropped channel's blank rows are excused: it has no districts. **A detached piece fails the
+  dropped channel's blank rows are excused: it has no districts. A blank row in a solved channel
+  is never excused, and no row excuses a double. **A detached piece fails the
   map**, and so does a ZCTA with no owner or no row; no tolerance, and listing a piece is not
   enough. The audit's piece list is the one piece count: `run.json`, `districts.csv` and the looks
   scorer count the same pieces, and no display fill sizes them (#116). Each piece is listed with its ZIP count, its mass

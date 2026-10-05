@@ -18,12 +18,15 @@ Two share defects are kept apart (#70):
 **M1** (`docs/problem/MANDATES.md`, #108) is `check_m1`, on the polygon graph
 (`geo.polygon_graph`: every CONUS ZCTA, the TIGER ZCTA polygons' rook edges and the owner-approved
 connectors only).  It fails the run when a district's ZCTAs in the ledger are not one component
-of that graph, or when a CONUS ZCTA is not owned exactly once per fine channel (#116): a planning
-channel owns every ZCTA of its footprint, the ZCTAs it has ledger rows for, and across the
-planning channels every ZCTA has one owned row per fine channel of the ledger, no gap and no
-double.  A row of a channel dropped for zero opportunity, which has no districts, is excused.  No
-tolerance: every detached piece fails, and each is listed with its ZIP count, its mass over τ_c
-and its cause.
+of that graph, or when a CONUS ZCTA is not owned exactly once per fine channel (#116): every
+(ZCTA, fine channel) cell of the scenario has a row, at most one owned row, and an owned row
+unless the planning channel holding it was dropped for zero opportunity (not among the run's
+channels, no districts), in which case its blank row is excused.  The fine channels and the
+planning channel holding each cell come from the scenario (`Run.fine`, `Run.route`), never from
+the ledger: a run without them, as a run folder read back, checks the fine channels of
+`run.json` or, before #116, of the ledger, and cannot check the routing.  Two districts owning one
+ZCTA in one planning channel also fail.  No tolerance: every detached piece fails, and each is
+listed with its ZIP count, its mass over τ_c and its cause.
 A run without a polygon graph leaves M1 `unverified`, never `pass`.  `check_contiguity` still
 lists pieces on the run's declared (Voronoi) graph.
 
@@ -102,6 +105,8 @@ class Run:
     solver: dict | None = None
     names: dict | None = None            # district -> name
     polygon: dict | None = None          # geo.polygon_graph's {"vertices", "edges"[, "state"]} (M1)
+    fine: tuple | None = None            # the scenario's fine channels F, planned_elsewhere excluded
+    route: dict | None = None            # (unit, fine channel) -> the planning channel holding it
 
 
 @dataclass
@@ -140,12 +145,12 @@ def _unsolved(run: Run) -> set:
 
 
 def _owners(run: Run, positive: bool = False) -> dict:
-    """{(channel, unit): {district: set of its ZIPs there}}; with `positive`, from the cells with
-    opportunity only, so a zero-opportunity ZCTA the territory pass gave across a unit owns no
-    share (#116)."""
+    """{(channel, unit): {district: set of its ZIPs there}}; with `positive`, less the cells known to
+    hold no opportunity, so a zero-opportunity ZCTA the territory pass gave across a unit owns no
+    share (#116); a cell of unknown mass still owns."""
     out: dict = collections.defaultdict(lambda: collections.defaultdict(set))
     for c in run.cells:
-        if _real(c.district) and (not positive or (c.m or 0.0) > 0):
+        if _real(c.district) and (not positive or c.m is None or c.m > 0):
             out[c.channel, run.unit_of[c.zip]][c.district].add(c.zip)
     return out
 
@@ -175,8 +180,9 @@ def _not_placed(run: Run) -> tuple:
 def check_cells(run: Run) -> Check:
     seen = collections.Counter((c.zip, c.fine) for c in run.cells)
     items = [f"cell {z}/{f}: {n} owners" for (z, f), n in sorted(seen.items()) if n > 1]
-    items += [f"cell {c.zip}/{c.fine}: no owner" for c in run.cells
-              if not c.district and c.reason not in (DROPPED, NOT_PLACED)]
+    # a blank row is excused only in a channel dropped for zero opportunity, which has no districts
+    items += [f"cell {c.zip}/{c.fine}: no owner" for c in run.cells if not c.district
+              and c.reason != NOT_PLACED and (c.reason != DROPPED or c.channel in run.channels)]
     if run.unit_of is not None:
         items += [f"cell {c.zip}/{c.fine}: ZIP has no unit" for c in run.cells
                   if c.zip not in run.unit_of and c.reason != NOT_PLACED]
@@ -429,9 +435,8 @@ def district_pieces(owner: dict, adj: dict, mass: dict) -> dict:
 
 
 def check_m1(run: Run) -> Check:
-    """M1 (module doc): one connected piece per district on the polygon graph, every ZCTA of each
-    planning channel's footprint owned, and every ZCTA of the graph owned exactly once per fine
-    channel of the ledger (#116)."""
+    """M1 (module doc): one connected piece per district on the polygon graph, and every (ZCTA,
+    fine channel) cell of the scenario owned exactly once, in the planning channel holding it."""
     name = M1_CHECK
     if run.polygon is None:
         return Check(name, "unverified", "no polygon graph: M1 is not checked")
@@ -439,30 +444,59 @@ def check_m1(run: Run) -> Check:
     state = run.polygon.get("state", {})
     weigh = _masses(run)
     owner, mass, total = collections.defaultdict(dict), collections.defaultdict(dict), collections.Counter()
-    foot = collections.defaultdict(set)         # channel -> the ZCTAs it has rows for
-    rows, held, excused = (collections.defaultdict(set) for _ in range(3))     # by fine channel
-    owned_by = collections.defaultdict(lambda: collections.defaultdict(set))   # fine -> zip -> channels
+    at = collections.defaultdict(list)                  # (zip, fine channel) -> its rows
+    clash = collections.defaultdict(set)                # (channel, zip) -> its districts
+    items = []
     for c in run.cells:
         if weigh:
             total[c.channel] += c.m
-        foot[c.channel].add(c.zip)
-        if c.fine and c.zip in adj:
-            rows[c.fine].add(c.zip)
+        if c.fine:
+            at[c.zip, c.fine].append(c)
+        else:
+            items.append(f"{c.channel}: a row of ZIP {c.zip} has no fine channel")
         if _real(c.district):
-            owner[c.channel][c.zip] = c.district
+            j = owner[c.channel].setdefault(c.zip, c.district)
+            if j != c.district:
+                clash[c.channel, c.zip] |= {j, c.district}
             mass[c.channel][c.zip] = mass[c.channel].get(c.zip, 0.0) + (c.m if weigh else 0.0)
-            if c.fine:
-                owned_by[c.fine][c.zip].add(c.channel)
-        elif c.fine and c.channel not in run.channels:
-            excused[c.fine].add(c.zip)              # a dropped channel has no districts
+    if run.fine is not None or run.route is not None:
+        fine, source = sorted(run.fine if run.fine is not None else {f for _, f in run.route}), ""
+    else:
+        fine, source = sorted({f for z, f in at if z in adj}), " (fine channels from the ledger)"
+    items += [f"fine channel {f}: has rows but is not a fine channel of the scenario"
+              for f in sorted({f for _, f in at} - set(fine)) if not source]
+    items += [f"{ch}: ZCTA {z} owned by {', '.join(sorted(js))}" for (ch, z), js in sorted(clash.items())]
+    foot, free, missing = (collections.defaultdict(set) for _ in range(3))
+    n_double = len(clash)
+    for z in sorted(adj):
+        for f in fine:
+            rows = at.get((z, f), [])
+            want = None if run.route is None else run.route.get(((run.unit_of or {}).get(z), f))
+            if want is not None:
+                items += [f"fine channel {f}: ZCTA {z} has a row in {ch}, held by {want}"
+                          for ch in sorted({c.channel for c in rows} - {want})]
+            elif run.route is not None:
+                items.append(f"fine channel {f}: ZCTA {z} is in no planning channel of the scenario")
+            solved = ({want} if want else {c.channel for c in rows}) & set(run.channels)
+            for ch in solved:
+                foot[ch].add(z)
+            if not rows:
+                missing[f].add(z)
+                continue
+            owned = sorted(c.channel for c in rows if _real(c.district))
+            if len(owned) > 1:
+                n_double += 1
+                items.append(f"fine channel {f}: ZCTA {z} owned in {', '.join(owned)}")
+            if not owned:                   # a blank row is excused in a dropped channel only
+                for ch in solved:
+                    free[ch].add(z)
     whole = {}
     for i, comp in enumerate(_components(set(adj), adj)):
         whole.update(dict.fromkeys(comp, i))
-    items, uncovered, n_pieces, split, largest, n_free = [], [], 0, 0, 0.0, 0
+    uncovered, n_pieces, split, largest, n_free = [], 0, 0, 0.0, 0
     for ch in sorted(set(run.channels) | set(owner)):
         spec = run.channels.get(ch)
         tau = total[ch] / spec.k if weigh and spec and spec.k and total[ch] > 0 else None
-        free = (foot[ch] & set(adj)) - set(owner[ch])
         items += [f"{ch}: ZIP {z} of {j} is not a vertex of the polygon graph"
                   for z, j in sorted(owner[ch].items()) if z not in adj]
         for j, comps in district_pieces(owner[ch], adj, mass[ch]).items():
@@ -470,7 +504,7 @@ def check_m1(run: Run) -> Check:
                 continue
             split += 1
             n_pieces += len(comps) - 1
-            main = _reach(comps[0], set().union(*comps) | free, adj)
+            main = _reach(comps[0], set().union(*comps) | free[ch], adj)
             for comp in comps[1:]:
                 m = math.fsum(mass[ch].get(z, 0.0) for z in comp)
                 share = f"{m / tau:.3g} τ" if tau else "mass not in the ledger"
@@ -483,28 +517,20 @@ def check_m1(run: Run) -> Check:
                                  M1_UNOWNED if z0 in main else M1_CUT)
                 items.append(f"{ch}/{j}: detached piece of {len(comp)} ZIPs ({z0}...), {share}, "
                              f"cause {cause}")
-        if free and ch in run.channels:
-            n_free += len(free)
-            items.append(f"{ch}: {len(free)} of {len(foot[ch] & set(adj))} ZCTAs have no owner")
-            by_state = collections.Counter(state.get(z, "?") for z in free)
+        if free[ch] and ch in run.channels:
+            n_free += len(free[ch])
+            items.append(f"{ch}: {len(free[ch])} of {len(foot[ch])} ZCTAs have no owner")
+            by_state = collections.Counter(state.get(z, "?") for z in free[ch])
             uncovered += [f"{ch}: {n} ZCTAs of {s} have no owner" for s, n in sorted(by_state.items())]
-    n_norow, n_double = 0, 0
-    for f in sorted(rows):
-        missing = set(adj) - rows[f]
-        double = {z: chs for z, chs in owned_by[f].items() if len(chs) > 1 and z not in excused[f]}
-        n_norow += len(missing)
-        n_double += len(double)
-        if missing:
-            items.append(f"fine channel {f}: {len(missing)} of {len(adj)} CONUS ZCTAs have no row")
-            by_state = collections.Counter(state.get(z, "?") for z in missing)
-            uncovered += [f"fine channel {f}: {n} ZCTAs of {s} have no row"
-                          for s, n in sorted(by_state.items())]
-        items += [f"fine channel {f}: ZCTA {z} owned in {', '.join(sorted(chs))}"
-                  for z, chs in sorted(double.items())]
+    n_norow = sum(len(zs) for zs in missing.values())
+    for f in sorted(missing):
+        items.append(f"fine channel {f}: {len(missing[f])} of {len(adj)} CONUS ZCTAs have no row")
+        by_state = collections.Counter(state.get(z, "?") for z in missing[f])
+        uncovered += [f"fine channel {f}: {n} ZCTAs of {s} have no row" for s, n in sorted(by_state.items())]
     return Check(name, "fail" if items else "pass",
                  f"{split} districts in pieces, {n_pieces} detached pieces (largest {largest:.3g} τ), "
                  f"{n_free} channel ZCTAs with no owner, {n_norow} (ZCTA, fine channel) cells with "
-                 f"no row, {n_double} owned twice", items + uncovered,
+                 f"no row, {n_double} owned twice{source}", items + uncovered,
                  {"split": split, "pieces": n_pieces, "largest_tau": largest, "no_owner": n_free,
                   "no_row": n_norow, "double": n_double})
 

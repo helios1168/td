@@ -93,3 +93,16 @@ def test_a_dropped_unit_is_owned_and_an_unreached_zcta_stays_a_detached_piece():
     assert d.owner["r1"] == d.owner["r2"] == k and ("r1", k) in done["cross_state"]
     assert done["unreached"] == ["i1"] and d.owner["i1"] == k        # a3 is nearest
     assert [(p.district, p.zips) for p in d.pieces] == [(k, ("i1",))]
+
+
+def test_a_join_that_cuts_a_donor_in_two_is_refused():
+    """Review of #116: J holds c, d and e, three pieces that meet only at z, which K holds at
+    zero opportunity between its a and b.  Claiming z joins J (3 pieces to 1) and lowers the
+    total (4 to 3), but cuts K in two, so the join step refuses it."""
+    adj = {"z": {"a", "b", "c", "d", "e"}, **{y: {"z"} for y in "abcde"}}
+    owner = {"a": "K", "b": "K", "z": "K", "c": "J", "d": "J", "e": "J"}
+    m = {y: 1.0 for y in "abcde"} | {"z": 0.0}
+    before = dict(owner)
+    claimed = territory.join(owner, {"z"}, adj, dict.fromkeys(adj, "U"),
+                             {"J": {"U"}, "K": {"U"}}, m)
+    assert claimed == [] and owner == before
