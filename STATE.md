@@ -4,14 +4,14 @@
 
 ## Now
 
-M1 (ZIP contiguity) is the goal's first part; no current map meets it. #107 landed (1323476): MANDATES.md register (M1, masking) and its tests. Running on m5: #106 recon and literature; #91 T-claim verification lanes A (acbec8ea, Sol) and B (5a69793e, Opus).
+M1 (ZIP contiguity) is the goal's first part; no current map meets it. #91 landed (c4eb392): split council memo, verification, triage (#110-#115, U53-U58; ranking now splits, cuts, defects, shape, balance). Running on m5: #108 gate worker (71354f54); #106 literature quote check (79ea10cc).
 
 ## Next
 
-- #108 gate (polygon graph, connector list for owner review, M1 fails maps), unblocked; then #109 contiguity-aware realizer.
-- #91 memo and triage after both lanes; #106 brief after both workflows.
-- Wave 1 (#95-#102) held until #109 reports.
+- #108 lands after Sol review and the owner's connector-list review; then #109 and #114.
+- #106 CONTIGUITY.md brief for owner review.
+- Wave 1 (#95-#104) held until #109 reports.
 
 ## Blocked
 
-#82 #83 owner decisions; swap rule B (#85); #3, #59, #75, #76.
+#110 #111 #112 #83 owner decisions; swap rule B (#85); #3, #59, #75, #76.
