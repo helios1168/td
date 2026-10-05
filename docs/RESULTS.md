@@ -592,8 +592,9 @@ and write a full run folder; a pre-connector drawing is repaired with the plan t
   The runs are from commits 28847d7 (`s13-arm1-seq-repair`), 7d4df99 (`deckA-band-seq-pre-repair`),
   0a04329 (the `-ks` grid run and the approved-list band-seq repairs) and b589d15 (IFA); the
   later commits change how pieces are grouped and which components of a neighbouring district
-  must join; the earlier runs were not repeated with them. U63 (districts resting on one
-  connector) is in each passing folder's contig.json.
+  must join; the earlier runs were not repeated with them. U63, the districts whose
+  connectivity rests on one connector edge (contig.json lists the edges): s13 national 11, WH 10,
+  FI 11, WIFI 3 (`s13-arm1-seq-repair`); grid and deck A national 11, WH 9, FI 13; IFA 17 of 49.
 
 Regenerate (m5, local): `runs/exp/contig/launch.sh deckA ifa49` (joint and fixed-target arms),
 `runs/exp/contig/launch_seq.sh <map> ...` (sequential arms), then `"$TD_PY"
