@@ -175,7 +175,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
         for z, j in d.owner.items():
             held[inst.units.unit_of[z]].add(j)
         contig[c] = {
-            "status": res.status, "connected": res.connected,
+            "status": res.status, "connected": res.connected, "undrawn_zctas": len(res.undrawn),
             "plan_delta": p.delta, "master_status": reports[c]["status"],
             "groups": [g.report() for g in res.groups],
             "group_delta_needed": max((g.delta for g in res.groups if g.delta is not None),

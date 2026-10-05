@@ -19,6 +19,7 @@ import collections
 import csv
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -38,6 +39,17 @@ def drawn_splits(ledger_path: str) -> dict:
     for c, by in own.items():
         split = sorted(s for s, js in by.items() if len(js) > 1)
         out[c] = (split, sum(len(by[s]) - 1 for s in split))
+    return out
+
+
+def m1_pieces(scorecard_path: str) -> dict:
+    """{channel: [mass/τ of each detached piece]} from the scorecard's M1 section."""
+    out = collections.defaultdict(list)
+    with open(scorecard_path, encoding="utf-8") as fh:
+        for line in fh:
+            hit = re.match(r"- (\S+?)/\S+: detached piece of \d+ ZIPs \(.*?\), ([\d.e+-]+) τ", line)
+            if hit:
+                out[hit.group(1)].append(float(hit.group(2)))
     return out
 
 
@@ -61,6 +73,7 @@ def rows(run_dir: str) -> list:
     with open(os.path.join(run_dir, "run.json")) as fh:
         run = json.load(fh)
     splits = drawn_splits(os.path.join(run_dir, "ledger.csv"))
+    pieces = m1_pieces(os.path.join(run_dir, "scorecard.md"))
     dev = deviations(os.path.join(run_dir, "districts.csv"))
     m1 = doc["m1"]
     out = []
@@ -75,6 +88,7 @@ def rows(run_dir: str) -> list:
             + (" fixed-targets" if doc.get("fixed_targets") else ""),
             "channel": c, "k": run["channels"][c]["k"], "plan_delta": r["plan_delta"],
             "m1_map": m1["status"], "m1_summary": m1["summary"],
+            "pieces_m1": len(pieces.get(c, [])), "largest_tau": max(pieces.get(c, [0.0])),
             "pieces": run["channels"][c].get("pieces"),
             "connected": r["connected"], "status": r["status"],
             "groups": dict(st),
@@ -91,7 +105,8 @@ def rows(run_dir: str) -> list:
 
 
 def table(all_rows: list) -> str:
-    cols = ("run", "arm", "channel", "K", "plan δ", "M1 (map, D3)", "channel connected", "groups",
+    cols = ("run", "arm", "channel", "K", "plan δ", "M1 (map, D3)", "pieces", "largest piece",
+            "drawn", "groups",
             "s", "worst gap", "δ needed", "worst / mean dev", "split units", "cuts",
             "share-only (U61)", "exclave splits", "one-connector districts (U63)")
     lines = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
@@ -101,7 +116,8 @@ def table(all_rows: list) -> str:
         need = "" if r["delta_needed"] is None else f"{r['delta_needed']:g}"
         one = "n/a" if r["single_connector"] is None else str(len(r["single_connector"]))
         cells = (r["run"], r["arm"], r["channel"], str(r["k"]), f"{r['plan_delta']:g}",
-                 r["m1_map"], f"{'yes' if r['connected'] else 'no'} ({r['status']})", groups,
+                 r["m1_map"], str(r["pieces_m1"]), f"{r['largest_tau']:.3g} τ",
+                 f"{'all' if r['connected'] else 'not all'} ({r['status']})", groups,
                  f"{r['seconds']:g}", gap, need,
                  f"{100 * r['worst_dev']:.1f}% / {100 * r['mean_dev']:.1f}%",
                  str(r["split_units"]), str(r["cuts"]), str(r["share_only"]),
