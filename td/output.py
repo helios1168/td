@@ -21,6 +21,9 @@ masses and bands are read (§8), and the `reason` for a blank district:
 - `NOT_PLACED`, a ZIP that is not a vertex of the declared graph: it has no unit, so it is outside
   the audit's retained domain and counted in `run.json` (#67).  A ZIP with no opportunity in any
   channel is never a vertex of the graph the run declares (OD2, `declared_graph`).
+An owned cell has a blank reason, except `SUB_TOLERANCE`: a ZIP the realizer placed by adjacency
+because its mass is below the transport LP's tolerance (#86), with its true `m_rel`, counted in
+`run.json`.
 `current_channel` is the fine channel, `model_channel` the planning channel holding the cell,
 `district` the district id `<channel>_<nn>`, `district_channels` its channel (blank with the
 district), and `rep` is blank: outputs are district-only plans (OD3, #58).  The audit reads the
@@ -68,6 +71,7 @@ LEGACY_COLUMNS = ("scenario", "zip_code", "current_channel", "state", "model_cha
 COLUMNS = LEGACY_COLUMNS + ("county", "cbsa", "place", "district_name", "m_rel", "reason")
 DROPPED = audit.DROPPED
 NOT_PLACED = "not placed: not a vertex of the declared ZIP graph"
+SUB_TOLERANCE = "placed by adjacency: below the transport LP's tolerance"
 CONNECTOR = "connector ZIP not in ledger"
 TOP_METROS = 10
 ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
@@ -171,6 +175,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "scenario": s.name, "spec": s.path, "source": source, "verdict": audit.verdict(checks),
         "cells": len(led), "zips": len({r["zip_code"] for r in led}),
         "not_placed_zips": len({r["zip_code"] for r in led if r["reason"] == NOT_PLACED}),
+        "sub_tolerance_cells": sum(1 for r in led if r["reason"] == SUB_TOLERANCE),
         "zero_opportunity_zips": len(set(ext.zips) - positive_zips(ext)),
         "conus_dropped": ext.dropped,
         "planned_elsewhere": {f: sum(1 for c in conus.channel if c == f)
@@ -327,6 +332,7 @@ def ledger(inst, drawings: dict, extract, reference) -> list:
             ownerless[c] += 1
         else:
             district = ids[c, drawings[c].owner[z]]
+            reason = SUB_TOLERANCE if z in drawings[c].sub_tolerance else ""
         out.append({"scenario": s.name, "zip_code": z, "current_channel": f, "state": state[z],
                     "model_channel": c, "district": district,
                     "district_channels": c if district else "", "rep": "", "county": county[z],

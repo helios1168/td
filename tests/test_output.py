@@ -14,6 +14,7 @@ from __future__ import annotations
 import collections
 import contextlib
 import csv
+import dataclasses
 import functools
 import io
 import json
@@ -176,6 +177,25 @@ def test_every_cell_has_one_row_and_a_blank_district_says_why():
     assert all(r["district_channels"] == (r["model_channel"] if r["district"] else "") for r in rows)
     assert {r["cbsa"] for r in rows if r["zip_code"] in PA} == {"37980"}
     assert all(r["county"] and r["state"] for r in rows)
+
+
+def test_a_sub_tolerance_cell_is_owned_and_listed_with_its_true_mass():
+    """#86: a cell below the transport LP's tolerance in a split unit is owned, says so, keeps its
+    `m_rel`, and is counted in `run.json`; the audit still passes."""
+    extract, graph = _toy_inputs()
+    tiny = NY[2]
+    extract = dataclasses.replace(extract, m_rel=[1e-8 if (z, f) == (tiny, "f") else m for z, f, m
+                                                  in zip(extract.z, extract.channel, extract.m_rel)])
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    res = output.run(_toy_spec(k=4, mode="free", delta=1.0), extract, out, graph, ts._reference(),
+                     maps=False, source="toy")
+    assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
+    by = {(r["zip_code"], r["current_channel"]): r for r in output.read_ledger(res.paths["ledger"])}
+    row = by[tiny, "f"]
+    assert row["district"] and row["reason"] == output.SUB_TOLERANCE and row["m_rel"] == 1e-8
+    assert [r for r in by.values() if r["reason"] == output.SUB_TOLERANCE] == [row]
+    assert res.report["sub_tolerance_cells"] == 1
 
 
 def test_districts_are_named_after_their_heaviest_cbsa():
