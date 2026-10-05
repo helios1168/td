@@ -4,14 +4,14 @@
 
 ## Now
 
-M1 is the goal's first part; no map meets it. #108 landed (b883d6b): polygon graph + 163 approved connectors, audit and scorer fail any detached piece or unowned ZCTA; all 75 runs fail (best 0.272 τ). #106 landed and triaged. Owner 2026-10-05: #103 floors labelled "over 𝒳_c(δ) only", balance a fixed-candidate LP plus a plan pool; all-M1 bound is #119. #117 amended for A3/B by contiguity-fast.
+Autonomous run (owner 2026-10-05; log runs/autonomous_2026-10-05/DECISIONS.md). #114 (135a529) and #116 (5383e43) landed: plans and ledgers span every CONUS ZCTA on the polygon graph, coverage is 0/0/0, one piece count. No map passes M1 yet; the remaining failures are detached pieces. #109 worker 9ca70eba (m5-studio/109) draws contiguous plans: deck A, IFA 49, then the layout-`none` grid (runs/autonomous_2026-10-05/grid/). Scenarios need `margin = false` (μ = 0).
 
 ## Next
 
-- Running on m5 (owner said run 2026-10-05): #116 worker 3db1aad8 and #114 worker 38cbf47e, in parallel; then #109 arm 1 on s13, deck A/B/C, IFA 49.
-- Fewer splits: #103 and #115 after #114; #119 only if "minimal" is wanted. #118 any time. contiguity-fast keeps #117.
+- Land #109; present M1-passing `$`-eligible maps (layout `none` + IFA) for stakeholder review.
+- Fewer splits: #103 and #115 now unblocked by #114; #119 only if "minimal" is wanted. #118 any time.
 - Wave 1 (#95-#104) held until #109 reports.
 
 ## Blocked
 
-#111 #112 #83 owner decisions; swap rule B (#85); #3, #59, #75, #76.
+Owner: coverage reading D3; #114's 16 proposed connectors (combined-channel layouts cannot pass M1 without them); #111 #112 #83; swap rule B (#85); #3, #59, #75, #76.
