@@ -609,11 +609,12 @@ def test_catalog_finds_unguarded_fragments():
 def test_m1_excuses_a_blank_row_only_as_a_zero_opportunity_drop_of_a_dropped_channel():
     """Re-review of #116 (P1): a blank row in a channel the run does not declare excuses its cell
     only when it is a zero-opportunity DROPPED row; one with opportunity, or with no DROPPED
-    reason, leaves the cell unowned.  One cell owned twice in one channel counts once."""
+    reason, or of unknown opportunity, leaves the cell unowned.  One cell owned twice in one channel counts once."""
     p = {"vertices": ["z"], "edges": []}
     for cell, status in ((Cell("z", "f", "Y", "", 1.0), "fail"),
                          (Cell("z", "f", "Y", "", 0.0), "fail"),
                          (Cell("z", "f", "Y", "", 1.0, reason=audit.DROPPED), "fail"),
+                         (Cell("z", "f", "Y", "", None, reason=audit.DROPPED), "fail"),
                          (Cell("z", "f", "Y", "", 0.0, reason=audit.DROPPED), "pass")):
         m1 = audit.check_m1(audit.Run([cell], {"X": Channel(1)}, polygon=p, fine=("f",)))
         assert m1.status == status, (cell, m1.items)

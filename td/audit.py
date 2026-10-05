@@ -492,7 +492,7 @@ def check_m1(run: Run) -> Check:
                 for ch in solved:
                     free[ch].add(z)
                 if not solved and not any(c.channel not in run.channels and c.reason == DROPPED
-                                          and not c.m for c in rows):
+                                          and c.m == 0.0 for c in rows):
                     unexcused.append((f, z))
                     items.append(f"fine channel {f}: ZCTA {z} has no owner, and no zero-opportunity "
                                  "DROPPED row of a dropped channel excuses it")
