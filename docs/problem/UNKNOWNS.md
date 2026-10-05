@@ -53,9 +53,23 @@ From the 2026-10-05 split council (`docs/lenses/COUNCIL_2026-10-05.md`, #91, tri
 | U53 | F2's root gap, node count and pass times on the real channels with all states as candidates (F2 is exact but its LP is weak, ≈ cuts/(U−1)) | E | open; #103 |
 | U54 | The internal band an M1 drawing needs: internal band vs drawn splits vs M1 feasibility | E | open; #109 |
 | U55 | Liftability: which master plans have an M1 drawing; the connected masses reachable from each border, A_u(v), which no current row sees | T/E | open; extends U46 |
-| U56 | Per channel, the gap g between a covering bound s* and the best audited M1 map | E | open; #109 |
+| U56 | Per channel, the gap g between a covering bound s* and the best audited M1 map, and the balance points an M1 drawing costs against the unit-level plan (restated 2026-10-05, CONTIGUITY.md CU10) | E | open; #109 |
 | U57 | Whether an η-free bounding master's plans decode and draw, or it is a bound only | E/T | open; owner decision on the bounding master |
 | U58 | C4 on the real extract: are #94's 1.15τ forced sets the sweep's, and is the forced-only master at δ = 0.15 infeasible for WH and FI on NE + plains (would make 13 the unit-level minimum) | E | open |
+
+## Open: contiguity (U59–U65)
+
+From `docs/problem/CONTIGUITY.md` §5 (CU1–CU9), triaged 2026-10-05 (`docs/lenses/TRIAGE_CONTIGUITY_2026-10-05.md`).
+
+| id | unknown | grade | status |
+|---|---|---|---|
+| U59 | Joint Detail at ZIP scale: per coupled group of split states on ne_okks_s13, deck A/B/C and ifa_49, the model size, HiGHS solve time and gap; does highspy expose a lazy-constraint callback, or must it be flow or a solve–check–cut loop (CU1) | E | open; #109 |
+| U60 | What infeasibility proof licenses removing a master plan when shares are continuous: a cut on the support, the share polytope, or the joint coupled group, and how weak it is (CU3) | T | open; COUNCIL_2026-10-05 finding 9 |
+| U61 | Per map, the districts with no fixed body touching a split state they hold a share of (share-only, or entry only through another split state) (CU4) | E | open; #109 |
+| U62 | One piece count: after #116, the audit's piece list on the polygon graph, with the s13, WH_07 and IFA 49 discrepancies reconciled (CU5) | E | open; #116 |
+| U63 | Per M1 map, the districts whose connectivity depends on a single approved connector (CU6) | E | open; #109 |
+| U64 | Whether the archived separator and flow engines (C03, C05, C06, C13) and `contiguous_cut` (C21) run on HiGHS against today's master (CU8) | E | open; #109 |
+| U65 | Does brieden2017 Thm 10 extend to port sets, under which conditions, and does HiGHS's optimum keep path closure after crossover (CU9) | T/E | open |
 
 ## Reserved (U14–U29)
 
