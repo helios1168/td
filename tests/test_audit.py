@@ -39,6 +39,14 @@ def _drawn(owner, mass):
     return {("X", v, j): m / unit[v] for (v, j), m in held.items()}
 
 
+def _polygon(vertices, edges, state=None, km=10.0) -> dict:
+    """A polygon graph whose every edge shares `km` of border (10 km: no neck) and whose ZCTAs
+    hold 100 km² of land each."""
+    return {"vertices": list(vertices), "edges": list(edges), "state": state or {},
+            "border": {tuple(sorted(e)): 1000.0 * km for e in edges}, "connectors": [],
+            "aland": dict.fromkeys(vertices, 1e8)}
+
+
 def _run(owner=None, mass=None, **over):
     """The clean toy run; `owner` and `mass` change the drawing, and the run's reported shares
     follow it, as a realizer's diagnostics would."""
@@ -55,7 +63,7 @@ def _run(owner=None, mass=None, **over):
         planned=_drawn(OWNER, MASS),
         reported=_drawn(owner, mass),
         graph={"vertices": RING, "edges": list(zip(RING, RING[1:] + RING[:1]))},
-        polygon={"vertices": RING, "edges": list(zip(RING, RING[1:] + RING[:1])), "state": UNIT},
+        polygon=_polygon(RING, list(zip(RING, RING[1:] + RING[:1])), UNIT),
         manifest=manifest,
         solver={"X": {"status": "optimal", "objective": 7.0, "bound": 7.0, "gap": 0.0,
                       "mip_rel_gap": 0.0}},
@@ -610,7 +618,7 @@ def test_m1_excuses_a_blank_row_only_as_a_zero_opportunity_drop_of_a_dropped_cha
     """Re-review of #116 (P1): a blank row in a channel the run does not declare excuses its cell
     only when it is a zero-opportunity DROPPED row; one with opportunity, or with no DROPPED
     reason, or of unknown opportunity, leaves the cell unowned.  One cell owned twice in one channel counts once."""
-    p = {"vertices": ["z"], "edges": []}
+    p = _polygon(["z"], [])
     for cell, status in ((Cell("z", "f", "Y", "", 1.0), "fail"),
                          (Cell("z", "f", "Y", "", 0.0), "fail"),
                          (Cell("z", "f", "Y", "", 1.0, reason=audit.DROPPED), "fail"),
@@ -623,3 +631,89 @@ def test_m1_excuses_a_blank_row_only_as_a_zero_opportunity_drop_of_a_dropped_cha
                     {"X": Channel(2)}, polygon=p, fine=("f",))
     m1 = audit.check_m1(two)
     assert m1.status == "fail" and m1.counts["double"] == 1, m1.items
+
+
+# ------------------------------------------------------------------------------ M1's necks (#121)
+def _neck_world(rng, n: int) -> tuple:
+    """(vertices, polygon graph, mass): a path of `n` ZCTAs in two states plus random chords, each
+    edge's border drawn from widths around `NECK_W_KM`, and maybe one connector, with land areas
+    and masses that include zeros."""
+    vs = [f"v{i}" for i in range(n)]
+    edges = {(vs[i], vs[i + 1]) for i in range(n - 1)}
+    for _ in range(rng.randint(0, n)):
+        edges.add(tuple(sorted(rng.sample(vs, 2))))
+    edges = sorted(edges)
+    border = {e: 1000.0 * rng.choice([0.5, 2, 3, 4, 6, 9.5, 10, 12, 30]) for e in edges}
+    conn = [e for e in [tuple(sorted(rng.sample(vs, 2)))] if e not in border and rng.random() < 0.5]
+    poly = {"vertices": vs, "edges": edges + conn, "state": {v: rng.choice("AB") for v in vs},
+            "border": border, "connectors": conn,
+            "aland": {v: rng.choice([0.0, 1.0, 3.0, 20.0, 100.0]) for v in vs}}
+    return vs, poly, {v: rng.choice([0.0, 0.0, 0.5, 1.0, 10.0]) for v in vs}
+
+
+def _narrowest_by_enumeration(vs, poly, mass) -> float:
+    """The narrowest neck of the district `vs` by trying every vertex set (the definition itself)."""
+    g = audit.NeckGraph(poly)
+    states = frozenset(poly["state"].values())
+    width = {e: m / 1000.0 for e, m in poly["border"].items()}
+    for a, b in poly["connectors"]:
+        width[a, b] = 0.0 if g.land_would_do(a, b, states) else math.inf
+    area, total = sum(poly["aland"].values()), sum(mass.values())
+
+    def qualifies(side):
+        return ((sum(poly["aland"][v] for v in side) / area if area else 1.0) >= audit.NECK_SHARE
+                or (sum(mass[v] for v in side) / total if total else 1.0) >= audit.NECK_SHARE)
+    best = math.inf
+    for mask in range(1, 2 ** len(vs) - 1):
+        side = {v for i, v in enumerate(vs) if mask >> i & 1}
+        cut = sum(k for (a, b), k in width.items() if (a in side) != (b in side))
+        if cut < audit.NECK_W_KM and qualifies(side) and qualifies(set(vs) - side):
+            best = min(best, cut)
+    return best
+
+
+def test_the_neck_search_is_exact_against_enumeration():
+    """`district_necks` is exact (its docstring): on 300 small random districts it finds a neck
+    exactly when trying every vertex set finds one, and the narrowest."""
+    import random
+    rng = random.Random(121)
+    for _ in range(300):
+        vs, poly, mass = _neck_world(rng, rng.randint(3, 9))
+        got = audit.district_necks(set(vs), mass, audit.NeckGraph(poly))
+        want = _narrowest_by_enumeration(vs, poly, mass)
+        assert all(nk.status == "proved" for nk in got), got
+        width = min((nk.width_km for nk in got), default=math.inf)
+        assert width == want or abs(width - want) < 1e-9, (poly, mass, got, want)
+
+
+def test_a_neck_search_out_of_time_is_listed_never_passed():
+    """A search stopped by its time limit lists the district as an `unresolved` neck: the check
+    may over-report, never under-report."""
+    import random
+    rng = random.Random(3)
+    for _ in range(100):
+        vs, poly, mass = _neck_world(rng, rng.randint(5, 9))
+        full = audit.district_necks(set(vs), mass, audit.NeckGraph(poly))
+        cut_short = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), time_limit=0.0)
+        assert len(cut_short) >= len(full), (poly, mass)
+        assert all(nk.status in ("proved", "unresolved") for nk in cut_short)
+    nk = audit.Neck(4.0, (), math.nan, math.nan, (), "unresolved")
+    assert audit.neck_item("X", "X_01", nk).endswith("failed as a neck")
+
+
+def test_a_connector_is_a_neck_only_where_land_would_do():
+    """Owner, 2026-10-05 (#121): an approved connector is unlimited, unless its sides are joined by
+    land within the district's states; a polygon graph without border lengths leaves M1 unverified."""
+    poly = {"vertices": ["m1", "m2", "y1"], "edges": [("m1", "y1"), ("m2", "y1"), ("m1", "m2")],
+            "state": {"m1": "MA", "m2": "MA", "y1": "NY"}, "border": {("m1", "y1"): 2e4, ("m2", "y1"): 2e4},
+            "connectors": [("m1", "m2")], "aland": {"m1": 1e8, "m2": 1e8, "y1": 1e8}}
+    g = audit.NeckGraph(poly)
+    mass = {"m1": 1.0, "m2": 1.0}
+    assert audit.district_necks({"m1", "m2"}, mass, g) == []         # land runs only through NY
+    assert g.land_would_do("m1", "m2", frozenset({"MA", "NY"}))
+    [nk] = audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(dict(poly, state={**poly["state"], "y1": "MA"})))
+    assert (nk.width_km, nk.cut, nk.status) == (0.0, (("m1", "m2", 0.0),), "proved")
+    cells = [Cell("m1", "f", "X", "D1", 1.0), Cell("m2", "f", "X", "D1", 1.0), Cell("y1", "f", "X", "D2", 1.0)]
+    bare = {k: poly[k] for k in ("vertices", "edges", "state")}
+    m1 = audit.check_m1(Run(cells, {"X": Channel(2)}, polygon=bare, fine=("f",)))
+    assert m1.status == "unverified" and m1.counts["necks"] is None, m1.summary

@@ -28,7 +28,9 @@ def _geo():
                      ("b1", "b2", 30.0), ("a1", "b3", 5.0)):
         edge[a][b] = edge[b][a] = km
     polygon = {"vertices": sorted(state), "edges": [(a, b) for a in edge for b in edge[a] if a < b],
-               "state": state}
+               "state": state, "border": {(a, b): 1000.0 * km for a in edge for b, km in edge[a].items()
+                                          if a < b},
+               "connectors": [], "aland": dict.fromkeys(state, 1e8)}
     return score.Geography(state, xy, edge, polygon)
 
 
@@ -228,9 +230,9 @@ def test_score_run_folder():
     s = _score_toy("WH", {"wh": 1.0e9})
     assert s["dollars"] == {"WH": 1.0e9}                # Σ m_rel × rate / K = 2 × 1e9 / 2
     # M1 on the ledger, strict: WH_02's a2 and b3 are cut off from b1, and a3, b2 have no row
-    m1 = ("M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 0 channel ZCTAs "
-          "with no owner, 2 (ZCTA, fine channel) cells with no row, 0 owned twice (fine channels "
-          "from the ledger)")
+    m1 = ("M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 0 necks, 0 channel "
+          "ZCTAs with no owner, 2 (ZCTA, fine channel) cells with no row, 0 owned twice (fine "
+          "channels from the ledger)")
     sc = f"audit: {audit.M1_CHECK} fails"           # SCORECARD's own M1 row
     assert not s["eligible"] and s["why"] == [sc, m1, "main K 2 outside 48-54"]
     assert s["m1"]["status"] == "fail" and s["m1"]["no_row"] == 2 and s["m1"]["pieces"] == 2

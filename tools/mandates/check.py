@@ -5,8 +5,9 @@
 
 `m1(run_dir)` reads a drawn run's `ledger.csv` and `districts.csv` (the layout `python -m td run`
 writes) and returns M1's verdict: `td.audit.check_m1` on the ledger with the committed polygon graph
-and its owner-approved connectors only (`td.geo.polygon_graph`).  It is strict: a detached piece
-or a CONUS ZCTA not owned once per fine channel fails the run, with no tolerance.  The fine
+and its owner-approved connectors only (`td.geo.polygon_graph`).  It is strict: a detached piece,
+a neck (#121) or a CONUS ZCTA not owned once per fine channel fails the run, with no tolerance;
+`necks` lists each neck as `td.audit.neck_item` words it.  The fine
 channels are the scenario's, from `run.json` (#116); a run from before #116 has none there, and
 its summary says the ledger's were read instead.  It also gives
 each district's largest detached piece as the looks scorer sizes it (`tools/looks/score.py`), in
@@ -71,7 +72,8 @@ def m1(run_dir: str, g=None) -> dict:
             pieces += [(ch, *p) for p in looks["pieces"]]
     largest = max(pieces, key=lambda p: (p[3], p[2], p[1]), default=None)
     return {"run": run_dir, "status": check.status, "summary": check.summary, "check": check,
-            "scorer_pieces": len(pieces), "largest": largest}
+            "scorer_pieces": len(pieces), "largest": largest,
+            "necks": [i for i in check.items if score.NECK.search(i)]}
 
 
 def _piece(p) -> str:
@@ -93,7 +95,7 @@ def rescore(root: str, g=None) -> dict:
         rows.append({"run": os.path.relpath(d, root), "m1": gate["status"],
                      "summary": gate["summary"], "largest": gate["largest"],
                      "scorer_pieces": gate["scorer_pieces"], **gate["check"].counts,
-                     "score": s, "scorer_error": err})
+                     "neck_items": gate["necks"], "score": s, "scorer_error": err})
     scored = score.rank([r["score"] for r in rows if r["score"] is not None])
     order = {id(s): i for i, s in enumerate(scored, 1)}
     for r in rows:
@@ -111,13 +113,13 @@ def table(res: dict) -> str:
              "", f"{len(rows)} runs, {n_fail} fail M1, {len(rows) - n_fail} do not fail.  M1 is strict, "
              "on the ledger and the committed polygon graph with approved connectors only, with no "
              "display fill (#116); the largest piece is in mass over τ_c.", "",
-             "| rank | run | M1 | largest detached piece | districts in pieces / pieces / channel "
-             "ZCTAs with no owner / (ZCTA, fine channel) cells with no row |",
-             "|---|---|---|---|---|"]
+             "| rank | run | M1 | largest detached piece | necks | districts in pieces / pieces / "
+             "channel ZCTAs with no owner / (ZCTA, fine channel) cells with no row |",
+             "|---|---|---|---|---|---|"]
     for r in rows:
         lines.append(f"| {r['rank'] or '-'} | `{r['run']}` | {r['m1']} | {_piece(r['largest'])} | "
-                     f"{r.get('split', '-')} / {r.get('pieces', '-')} / {r.get('no_owner', '-')} / "
-                     f"{r.get('no_row', '-')} |")
+                     f"{r.get('necks', '-')} | {r.get('split', '-')} / {r.get('pieces', '-')} / "
+                     f"{r.get('no_owner', '-')} / {r.get('no_row', '-')} |")
     errors = [r for r in rows if r["scorer_error"]]
     if errors:
         lines += ["", "Not ranked (the scorer could not read the run):", ""]
@@ -191,6 +193,8 @@ def main(argv=None) -> int:
         got = m1(d)
         print(f"{d}: M1 {got['status']}: {got['summary']}; largest detached piece "
               f"{_piece(got['largest'])}")
+        for n in got["necks"]:
+            print(f"  {n}")
         worst = max(worst, got["status"] != "pass")
     return worst
 

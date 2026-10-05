@@ -915,16 +915,21 @@ def read_connectors(ref_dir: str = REFERENCE_DIR, path: str | None = None) -> li
 
 
 def polygon_graph(ref_dir: str = REFERENCE_DIR, connectors: list | None = None) -> dict:
-    """M1's graph: `{"vertices", "edges", "state"}`, the shipped vertex set, the polygon edges plus
-    the owner-approved connectors only (`connectors` defaults to `ref_dir`'s list), and each
-    vertex's state."""
+    """M1's graph: `{"vertices", "edges", "state", "border", "connectors", "aland"}`, the shipped
+    vertex set, the polygon edges plus the owner-approved connectors only (`connectors` defaults to
+    `ref_dir`'s list), each vertex's state, each polygon edge's shared border in metres, the
+    approved connector pairs, and each vertex's gazetteer land area in m² (M1's necks, #121)."""
     ref = read_reference(ref_dir)
     ref = ref[ref["graph_vertex"] == "1"]
     edges = read_reference(ref_dir, name=POLYGON_EDGES)
     rows = read_connectors(ref_dir) if connectors is None else connectors
+    approved = approved_connectors(rows)
     return {"vertices": sorted(ref["zcta"]),
-            "edges": list(zip(edges["a"], edges["b"])) + approved_connectors(rows),
-            "state": dict(zip(ref["zcta"], ref["state"]))}
+            "edges": list(zip(edges["a"], edges["b"])) + approved,
+            "state": dict(zip(ref["zcta"], ref["state"])),
+            "border": {(a, b): float(m) for a, b, m in zip(edges["a"], edges["b"], edges["border_m"])},
+            "connectors": approved,
+            "aland": {z: float(a or 0) for z, a in zip(ref["zcta"], ref["aland_gaz"])}}
 
 
 def approved_connectors(rows: list) -> list:

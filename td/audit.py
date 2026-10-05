@@ -18,7 +18,10 @@ Two share defects are kept apart (#70):
 **M1** (`docs/problem/MANDATES.md`, #108) is `check_m1`, on the polygon graph
 (`geo.polygon_graph`: every CONUS ZCTA, the TIGER ZCTA polygons' rook edges and the owner-approved
 connectors only).  It fails the run when a district's ZCTAs in the ledger are not one component
-of that graph, or when a CONUS ZCTA is not owned exactly once per fine channel (#116): every
+of that graph, when a district has a neck (#121, `district_necks`: a part holding 5% of its land
+area or mass beyond a passage under 10 km of shared border, an approved connector counting as
+unlimited unless land within the district's states would do, where it is 0 km), or when a CONUS
+ZCTA is not owned exactly once per fine channel (#116): every
 (ZCTA, fine channel) cell of the scenario has a row, at most one owned row, and an owned row
 unless the planning channel holding it was dropped for zero opportunity (not among the run's
 channels, no districts), in which case its blank row is excused.  The fine channels and the
@@ -27,7 +30,8 @@ the ledger: a run without them, as a run folder read back, checks the fine chann
 `run.json` or, before #116, of the ledger, and cannot check the routing.  Two districts owning one
 ZCTA in one planning channel also fail.  No tolerance: every detached piece fails, and each is
 listed with its ZIP count, its mass over τ_c and its cause.
-A run without a polygon graph leaves M1 `unverified`, never `pass`.  `check_contiguity` still
+A run without a polygon graph, or with one that carries no border lengths, leaves M1
+`unverified`, never `pass`.  `check_contiguity` still
 lists pieces on the run's declared (Voronoi) graph.
 
 `python -m td.audit catalog` scores the tagged catalog (`archive/pre-support-2026-09`,
@@ -434,9 +438,237 @@ def district_pieces(owner: dict, adj: dict, mass: dict) -> dict:
             for j, zs in sorted(held.items())}
 
 
+# ------------------------------------------------------------------------------ M1's necks (#121)
+NECK_W_KM = 10.0        # owner, 2026-10-05 (#121): a passage narrower than this is a neck; never tuned
+NECK_SHARE = 0.05       # owner: a part holding this share of the district's land area or mass
+NECK_TIME = 60.0        # seconds per district component; past it the district is listed unresolved
+NECK_TOL = 1e-9         # relative slack of the width and share comparisons, against float noise
+
+
+class Neck(NamedTuple):
+    """One neck of a district: `zips`, the side cut off (the side without the district's core);
+    `area` and `mass`, that side's shares of the district's land area and mass; `cut`, the cut's
+    edges (a, b, km), a "land would do" connector at 0 km; `status` `proved` (a set meeting the
+    definition) or `unresolved` (the search stopped without proof either way: listed, and failed)."""
+    width_km: float
+    zips: tuple
+    area: float
+    mass: float
+    cut: tuple
+    status: str = "proved"
+
+
+class NeckGraph:
+    """The polygon graph as the neck check reads it: `border` {zip: {zip: km}} over the polygon
+    edges, `connector` {zip: set of zips} over the approved connectors, `aland` {zip: m²} and
+    `state`.  `polygon` is `geo.polygon_graph`'s dict, which carries "border", "connectors" and
+    "aland" since #121.  An edge of the graph that is neither a bordered polygon edge nor a
+    connector counts as a polygon edge 0 km wide."""
+
+    def __init__(self, polygon: dict):
+        self.state = polygon.get("state", {})
+        self.aland = polygon["aland"]
+        border = {tuple(sorted(e)): m for e, m in polygon["border"].items()}
+        joins = {tuple(sorted(e)) for e in polygon["connectors"]}
+        self.border = collections.defaultdict(dict)
+        self.connector = collections.defaultdict(set)
+        for a, b, *_ in polygon["edges"]:
+            e = tuple(sorted((a, b)))
+            if e in joins:
+                self.connector[a].add(b)
+                self.connector[b].add(a)
+            if e in border or e not in joins:
+                self.border[a][b] = self.border[b][a] = border.get(e, 0.0) / 1000.0
+        self.by_state = collections.defaultdict(set)
+        for z in polygon["vertices"]:
+            self.by_state[self.state.get(z, "")].add(z)
+        self._land = {}
+
+    def land_component(self, states: frozenset) -> dict:
+        """{zip: component id} of the ZCTAs of `states` on the polygon edges alone (no connector)."""
+        if states not in self._land:
+            inside = set().union(*(self.by_state.get(s, set()) for s in states))
+            comp = {}
+            for i, c in enumerate(_components(inside, self.border)):
+                comp.update(dict.fromkeys(c, i))
+            self._land[states] = comp
+        return self._land[states]
+
+    def land_would_do(self, a: str, b: str, states: frozenset) -> bool:
+        """A connector a-b is a neck of width 0 when its sides are joined by land within `states`,
+        the states the district owns ZCTAs in (owner, 2026-10-05, "No, unless land would do")."""
+        comp = self.land_component(states)
+        return a in comp and comp.get(a) == comp.get(b)
+
+
+def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK_TIME) -> list:
+    """[Neck] of one district (`zips`, `mass` {zip: m}): at most one per component of the district,
+    the narrowest.  M1's neck (owner, 2026-10-05, #121): a set A of the district's ZCTAs such that
+    A and the rest each hold at least `NECK_SHARE` of the district's land area (`aland`) or of its
+    mass, and the shared border across the cut is under `NECK_W_KM`.  The rest must qualify too,
+    or every narrow border of a small fringe would cut off the heavy rest; so a part under the
+    share on a narrow passage passes.  A polygon edge is as wide as its border; an approved
+    connector is unlimited, unless its two sides are joined by land within the district's states,
+    where it is 0 km wide.
+
+    **Exact**, to HiGHS's tolerances: two ZCTAs no cut under `NECK_W_KM` can separate are merged
+    first (an edge, or an edge plus its two-edge paths, at least `NECK_W_KM` wide, or a needed
+    connector), which keeps every narrow cut; the heaviest merged vertex Q is then on one side of
+    every narrow cut, so naming that side the rest loses nothing; if Q leaves under the share of
+    both area and mass outside it, no neck exists; otherwise a MILP finds the narrowest cut with
+    both sides qualifying (`mip_rel_gap = 0`, trap 12), stopping once its bound proves no cut is
+    under `NECK_W_KM`.  A component the MILP cannot settle in `time_limit` seconds is listed as an
+    `unresolved` neck, so the check may over-report but never misses a neck."""
+    import highspy
+    import numpy as np
+    states = frozenset(g.state.get(z, "") for z in zips)
+    area_tot = math.fsum(g.aland.get(z, 0.0) for z in zips)
+    mass_tot = math.fsum(mass.get(z, 0.0) for z in zips)
+    w_lim = NECK_W_KM * (1 - NECK_TOL)
+    width = {}                                  # (a, b) with a < b -> km (inf: a needed connector)
+    for z in zips:
+        for y, km in g.border.get(z, {}).items():
+            if y in zips and z < y:
+                width[z, y] = km
+        for y in g.connector.get(z, ()):
+            if y in zips and z < y:
+                width[z, y] = width.get((z, y), 0.0) + (0.0 if g.land_would_do(z, y, states) else math.inf)
+    adj = collections.defaultdict(set)
+    for a, b in width:
+        adj[a].add(b)
+        adj[b].add(a)
+
+    def heavy(a_share, m_share):
+        return a_share >= NECK_SHARE * (1 - NECK_TOL) or m_share >= NECK_SHARE * (1 - NECK_TOL)
+
+    def shares(side):
+        a = math.fsum(g.aland.get(z, 0.0) for z in side) / area_tot if area_tot > 0 else 1.0
+        m = math.fsum(mass.get(z, 0.0) for z in side) / mass_tot if mass_tot > 0 else 1.0
+        return a, m
+    out = []
+    for comp in _components(set(zips), adj):
+        if len(comp) < 2:
+            continue
+        parent = {z: z for z in comp}
+
+        def find(z):
+            while parent[z] != z:
+                parent[z] = parent[parent[z]]
+                z = parent[z]
+            return z
+        while True:                             # merge what no narrow cut separates
+            agg = collections.defaultdict(float)
+            for (a, b), km in width.items():
+                if a in parent:
+                    ra, rb = find(a), find(b)
+                    if ra != rb:
+                        agg[min(ra, rb), max(ra, rb)] += km
+            nb = collections.defaultdict(dict)
+            for (a, b), km in agg.items():
+                nb[a][b] = nb[b][a] = km
+            merged = False
+            for (a, b), km in sorted(agg.items()):
+                ra, rb = find(a), find(b)
+                if ra == rb:
+                    continue
+                if km < NECK_W_KM:
+                    km += math.fsum(min(k, nb[b].get(x, 0.0)) for x, k in nb[a].items() if x != b)
+                if km >= NECK_W_KM:
+                    parent[ra] = rb
+                    merged = True
+            if not merged:
+                break
+        group = collections.defaultdict(list)
+        for z in sorted(comp):
+            group[find(z)].append(z)
+        gs = sorted(group)
+        g_area = {r: math.fsum(g.aland.get(z, 0.0) for z in group[r]) for r in gs}
+        g_mass = {r: math.fsum(mass.get(z, 0.0) for z in group[r]) for r in gs}
+        core = max(gs, key=lambda r: ((g_area[r] / area_tot if area_tot else 0.0)
+                                      + (g_mass[r] / mass_tot if mass_tot else 0.0)))   # ties: first
+        if not heavy(*shares([z for r in gs if r != core for z in group[r]])):
+            continue                            # nothing outside the core can qualify
+        ix = {r: i for i, r in enumerate([core] + [r for r in gs if r != core])}
+        edges = collections.defaultdict(float)
+        for (a, b), km in width.items():
+            if a in parent and find(a) != find(b) and km > 0:
+                edges[tuple(sorted((ix[find(a)], ix[find(b)])))] += km
+        n, el = len(ix), sorted(edges.items())
+        am, bm = n, n + 1                       # A qualifies by mass (else area); the rest likewise
+        nv = n + 2 + len(el)
+        inf = highspy.kHighsInf
+        h = highspy.Highs()
+        h.setOptionValue("output_flag", False)
+        h.setOptionValue("threads", 1)
+        h.setOptionValue("mip_rel_gap", 0.0)
+        h.setOptionValue("time_limit", float(time_limit))
+        h.setOptionValue("objective_bound", NECK_W_KM)
+        upper = np.ones(nv)
+        upper[0] = 0.0                          # the core is in the rest
+        upper[n + 2:] = inf
+        h.addVars(nv, np.zeros(nv), upper)
+        h.changeColsCost(nv, np.arange(nv, dtype=np.int32),
+                         np.array([0.0] * (n + 2) + [km for _, km in el]))
+        h.changeColsIntegrality(n + 2, np.arange(n + 2, dtype=np.int32),
+                                np.array([highspy.HighsVarType.kInteger] * (n + 2)))
+        area_v = [0.0] * n
+        mass_v = [0.0] * n
+        for r, i in ix.items():
+            area_v[i], mass_v[i] = g_area[r], g_mass[r]
+
+        def row(lo, hi, idx, val):
+            h.addRow(lo, hi, len(idx), np.array(idx, dtype=np.int32), np.array(val, dtype=float))
+        for k, ((i, j), _) in enumerate(el):    # y_e >= |x_i - x_j|
+            row(0.0, inf, [n + 2 + k, i, j], [1.0, -1.0, 1.0])
+            row(0.0, inf, [n + 2 + k, i, j], [1.0, 1.0, -1.0])
+        idx = list(range(n))
+        sm, sa = NECK_SHARE * mass_tot, NECK_SHARE * area_tot
+        row(0.0, inf, idx + [am], mass_v + [-sm])                       # A by mass when am = 1
+        row(sa, inf, idx + [am], area_v + [sa])                         # A by area when am = 0
+        row(-mass_tot, inf, idx + [bm], [-v for v in mass_v] + [-sm])   # the rest by mass, bm = 1
+        row(sa - area_tot, inf, idx + [bm], [-v for v in area_v] + [sa])   # by area, bm = 0
+        row(1.0, inf, idx[1:], [1.0] * (n - 1))                         # A is not empty
+        h.run()
+        info, st = h.getInfo(), h.getModelStatus()
+        side = None
+        if info.primal_solution_status == 2:
+            x = h.getSolution().col_value
+            side = sorted(z for r, i in ix.items() if x[i] > 0.5 for z in group[r])
+        wkm = math.inf
+        if side:
+            inside = set(side)
+            cut = tuple(sorted((a, b, km) for (a, b), km in width.items()
+                               if a in parent and (a in inside) != (b in inside)))
+            wkm = math.fsum(km for _, _, km in cut)
+            a_s, m_s = shares(side)
+            if wkm < w_lim and heavy(a_s, m_s) and heavy(*shares(set(zips) - inside)):
+                out.append(Neck(wkm, tuple(side), a_s, m_s, cut))
+                continue
+        # no neck only when HiGHS proved it: infeasible under the bound, or optimal (the gap closed
+        # or the bound reached NECK_W_KM) with no cut under it; anything else is listed unresolved
+        if st in (highspy.HighsModelStatus.kInfeasible, highspy.HighsModelStatus.kObjectiveBound) or (
+                st == highspy.HighsModelStatus.kOptimal and wkm >= w_lim):
+            continue
+        a_s, m_s = shares(side) if side else (math.nan, math.nan)
+        out.append(Neck(min(wkm, info.mip_dual_bound), tuple(side or ()), a_s, m_s, (), "unresolved"))
+    return out
+
+
+def neck_item(ch: str, j: str, nk: Neck) -> str:
+    """One M1 item for a neck."""
+    if nk.status != "proved":
+        return (f"{ch}/{j}: neck unresolved (the search stopped at bound {nk.width_km:.3g} km, under "
+                f"{NECK_W_KM:g} km): failed as a neck")
+    cut = ", ".join(f"{a}-{b} {km:.2f} km" for a, b, km in nk.cut[:6]) + (", ..." if len(nk.cut) > 6 else "")
+    return (f"{ch}/{j}: neck {nk.width_km:.2f} km wide cuts off {len(nk.zips)} ZIPs ({nk.zips[0]}...), "
+            f"{nk.area:.1%} of its land area and {nk.mass:.1%} of its mass; cut {cut}")
+
+
 def check_m1(run: Run) -> Check:
-    """M1 (module doc): one connected piece per district on the polygon graph, and every (ZCTA,
-    fine channel) cell of the scenario owned exactly once, in the planning channel holding it."""
+    """M1 (module doc): one connected piece per district on the polygon graph, no neck
+    (`district_necks`), and every (ZCTA, fine channel) cell of the scenario owned exactly once, in
+    the planning channel holding it.  A polygon graph without border lengths leaves the necks, and
+    so M1, unverified."""
     name = M1_CHECK
     if run.polygon is None:
         return Check(name, "unverified", "no polygon graph: M1 is not checked")
@@ -501,12 +733,17 @@ def check_m1(run: Run) -> Check:
     for i, comp in enumerate(_components(set(adj), adj)):
         whole.update(dict.fromkeys(comp, i))
     uncovered, n_pieces, split, largest, n_free = [], 0, 0, 0.0, 0
+    ng = NeckGraph(run.polygon) if {"border", "connectors", "aland"} <= set(run.polygon) else None
+    neck_items, vertices = [], set(adj)
     for ch in sorted(set(run.channels) | set(owner)):
         spec = run.channels.get(ch)
         tau = total[ch] / spec.k if weigh and spec and spec.k and total[ch] > 0 else None
         items += [f"{ch}: ZIP {z} of {j} is not a vertex of the polygon graph"
                   for z, j in sorted(owner[ch].items()) if z not in adj]
         for j, comps in district_pieces(owner[ch], adj, mass[ch]).items():
+            if ng is not None:
+                zs = set().union(*comps) & vertices
+                neck_items += [neck_item(ch, j, nk) for nk in district_necks(zs, mass[ch], ng)]
             if len(comps) < 2:
                 continue
             split += 1
@@ -535,12 +772,15 @@ def check_m1(run: Run) -> Check:
         items.append(f"fine channel {f}: {len(missing[f])} of {len(adj)} CONUS ZCTAs have no row")
         by_state = collections.Counter(state.get(z, "?") for z in missing[f])
         uncovered += [f"fine channel {f}: {n} ZCTAs of {s} have no row" for s, n in sorted(by_state.items())]
-    return Check(name, "fail" if items else "pass",
+    items += neck_items
+    necks = f"{len(neck_items)} necks" if ng is not None else "necks not checked (no border lengths)"
+    return Check(name, "fail" if items else "pass" if ng is not None else "unverified",
                  f"{split} districts in pieces, {n_pieces} detached pieces (largest {largest:.3g} τ), "
-                 f"{n_free} channel ZCTAs with no owner, {n_norow} (ZCTA, fine channel) cells with "
-                 f"no row, {n_double} owned twice{source}", items + uncovered,
+                 f"{necks}, {n_free} channel ZCTAs with no owner, {n_norow} (ZCTA, fine channel) "
+                 f"cells with no row, {n_double} owned twice{source}", items + uncovered,
                  {"split": split, "pieces": n_pieces, "largest_tau": largest, "no_owner": n_free,
-                  "no_row": n_norow, "double": n_double})
+                  "no_row": n_norow, "double": n_double,
+                  "necks": len(neck_items) if ng is not None else None})
 
 
 def check_geography(run: Run) -> Check:
