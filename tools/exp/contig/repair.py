@@ -15,7 +15,8 @@ back to each ZCTA's plan copy):
   district at most `slack` hops longer than the shortest (the piece stays fixed, a body).  Every ZCTA outside W
   keeps its owner.
 - **The model** is `draw._solve_group` on W: x_{z,j} for z in W and every district owning a ZCTA
-  in or next to W, each district's ZCTAs outside W its bodies (each component one vertex, the
+  in or next to W (a unit may change holders, an arm-2 move the audit lists; with
+  `--keep-support`, arm 1, only the districts whose plan holds z's unit), each district's ZCTAs outside W its bodies (each component one vertex, the
   largest the root), every district connected by the separator solve-check-cut loop, each
   district's total drawn mass in the channel's final band (the band the audit judged the run
   at), split units first in the objective, then holders (cuts), then geodesic shape; with the cap
@@ -125,14 +126,23 @@ def map_figures(inst, c: str, owner: dict, state: dict) -> dict:
 
 
 def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,
-                 log=print, flow: bool = False):
-    """`draw.Group` of the window `W` (module docstring), everything outside fixed."""
+                 log=print, flow: bool = False, keep_support: bool = False):
+    """`draw.Group` of the window `W` (module docstring), everything outside fixed.  With
+    `keep_support` (arm 1) a ZCTA may go only to a district whose plan holds its unit (an exclave
+    or dropped ZCTA to any); else to any district of the window (a unit may change holders: an
+    arm-2 move, reported by the audit's planned-against-drawn check)."""
     c = plan.channel
     ch, units = inst.channels[c], inst.units
     adj, m, unit_of = units.zip_adj, ch.m, units.unit_of
     outside = {z: j for z, j in owner.items() if z not in W}
     js = sorted({owner[z] for z in W} | {outside[y] for z in W for y in adj[z] if y in outside})
     allowed = {z: list(js) for z in W}
+    if keep_support:
+        hold = draw.holders(plan)
+        _, _, exclave = draw.split_fixed(inst, plan)
+        for z in W:
+            if z not in exclave and unit_of[z] not in ch.dropped_units:
+                allowed[z] = [j for j in js if j in hold.get(unit_of[z], ())]
     by_j = collections.defaultdict(set)
     for z, j in outside.items():
         if j in js:
@@ -256,7 +266,7 @@ def clusters(pieces: list, free: set, adj: dict, h0: int, max_zctas: int) -> lis
 
 
 def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, time_limit,
-                    attempts, log, flow=False):
+                    attempts, log, flow=False, keep_support=False):
     c = plan.channel
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
@@ -268,10 +278,10 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
             continue
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
-        g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow)
+        g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow, keep_support)
         rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
                "window_zctas": len(W), "districts": g.districts,
-               "cap": cap, "flow": flow, "pieces_before": len(detached(owner, adj, m)),
+               "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
                "cluster": [f"{j} {min(cc)} ({len(cc)} ZCTAs)" for j, cc in pieces],
                "piece_tau_before": [round(math.fsum(m.get(z, 0.0) for z in cc) / ch.tau, 4)
                                     for _, cc in pieces],
@@ -295,7 +305,8 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
 
 
 def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_zctas: int,
-                   time_limit: float, log=print, flow: bool = False) -> tuple:
+                   time_limit: float, log=print, flow: bool = False,
+                   keep_support: bool = False) -> tuple:
     """(the repaired owner, [attempt records]); the owner changes only by a connected window.
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
@@ -316,7 +327,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             group = [pc for pc in group if pc in live]
             if group:
                 owner = _repair_cluster(inst, plan, owner, group, free, p, state, h0, max_zctas,
-                                        time_limit, attempts, log, flow)
+                                        time_limit, attempts, log, flow, keep_support)
         left = detached(owner, adj, m)
         if len(left) >= len(pieces):
             break
@@ -362,6 +373,8 @@ def main(argv=None) -> int:
     ap.add_argument("--channels", nargs="*", default=None)
     ap.add_argument("--flow", action="store_true",
                     help="hold each window district connected by a flow as well as the cuts")
+    ap.add_argument("--keep-support", action="store_true",
+                    help="arm 1: a ZCTA only to a district whose plan holds its unit")
     ap.add_argument("--maps", action="store_true")
     a = ap.parse_args(argv)
     output.check_out(a.out)
@@ -380,7 +393,8 @@ def main(argv=None) -> int:
         attempts = []
         if a.channels is None or c in a.channels:
             owner, attempts = repair_channel(inst, plan, owner, p, state, a.h0, a.max_zctas,
-                                             a.time_limit, flow=a.flow)
+                                             a.time_limit, flow=a.flow,
+                                             keep_support=a.keep_support)
         res = draw.Result(c, owner, [], set(), [], [], plan.delta, "repair", False)
         d = draw.drawing(inst, plan, res)
         drawings[c] = d
@@ -399,7 +413,7 @@ def main(argv=None) -> int:
     doc.update({"arm": doc["arm"] + "+repair", "repair_of": os.path.abspath(a.run_dir),
                 "repair": {"h0": a.h0, "max_zctas": a.max_zctas, "time_limit": a.time_limit,
                            "plans_file": a.plans_file, "label": a.label,
-                           "flow": a.flow},
+                           "flow": a.flow, "keep_support": a.keep_support},
                 "m1": report["m1"]})
     with open(os.path.join(a.out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
