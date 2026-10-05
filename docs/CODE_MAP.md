@@ -16,6 +16,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `docs/MODEL.md` | the support-master model: cells, units, supports, the master and its drawability rows, Claims 1–3, the realizer, the ledger and the audit; every claim tagged proved, claimed or policy |
 | `docs/REFERENCES.md` | what td relies on each paper for: one row per claim, with its key, result, kb page and status |
 | `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md`, `docs/problem/BALANCE.md`, `docs/problem/SPLITS.md` | the settled/open ledger, the U-numbered unknowns, the balance brief for the lens and the council, and the split brief for the council (#90) |
+| `docs/problem/CONTIGUITY.md` | the contiguity brief for owner review (#106): M1 and the owner's rulings since, the history of contiguity in td with its waivers, the literature applied to td, ranked options and the CU unknowns |
 | `docs/problem/MANDATES.md` | the owner-only register of hard requirements (M1 ZIP contiguity, masking): the owner's words, definition, check, latest value, waiver history and return trigger per row (#107) |
 | `tests/test_mandates.py` | the register's rows: every field present, status `hard`, `deferred` or `waived`, checks that exist, and no deferral whose trigger holds; the 2026-09-01 contiguity deferral replayed on the 2026-09-28 graph fails |
 | `docs/lenses/` | one file per lens or council pass, dated, never edited after |
