@@ -1,160 +1,164 @@
 a,b,kind,crossing,gap_km,status,source
-02109,02128,tunnel,Callahan Tunl,0.12,proposed,TIGER/Line 2025 prisecroads
-02543,02568,ferry,Woods Hole-Vineyard Haven ferry (Steamship Authority),4.5,proposed,geo.FERRIES (hand list)
-02554,02601,ferry,Hyannis-Nantucket ferry (Steamship Authority),31.55,proposed,geo.FERRIES (hand list)
-02807,02882,ferry,Point Judith-Block Island ferry,14.36,proposed,geo.FERRIES (hand list)
-02809,02872,ferry,Bristol-Prudence Island ferry,0.9,proposed,geo.FERRIES (hand list)
-02835,02841,bridge,Newport Brg,1.48,proposed,TIGER/Line 2025 prisecroads
-02835,02874,bridge,Jamestown Brg,0.79,proposed,TIGER/Line 2025 prisecroads
-04737,04768,road,unnamed road / Realty Rd / Cyr Rd,24.09,proposed,TIGER/Line 2025 roads
-04841,04851,ferry,Rockland-Matinicus ferry (Maine State Ferry Service),28.94,proposed,geo.FERRIES (hand list)
-04841,04853,ferry,Rockland-North Haven ferry (Maine State Ferry Service),9.73,proposed,geo.FERRIES (hand list)
-04841,04863,ferry,Rockland-Vinalhaven ferry (Maine State Ferry Service),12.3,proposed,geo.FERRIES (hand list)
-04852,04855,ferry,Port Clyde-Monhegan ferry,16.08,proposed,geo.FERRIES (hand list)
-05440,12979,bridge,Bridge Rd,0.32,proposed,TIGER/Line 2025 prisecroads
-05491,12928,bridge,Bridge Rd,0.17,proposed,TIGER/Line 2025 prisecroads
-06320,06390,ferry,New London-Fishers Island ferry,4.79,proposed,geo.FERRIES (hand list)
-07002,10302,bridge,Bayonne Brg,0.15,proposed,TIGER/Line 2025 prisecroads
-07002,10303,bridge,Bayonne Brg,0.25,proposed,TIGER/Line 2025 prisecroads
-07024,10032,bridge,George Washington Brg,0.47,proposed,TIGER/Line 2025 prisecroads
-07024,10034,bridge,George Washington Brg,0.47,proposed,TIGER/Line 2025 prisecroads
-07086,10018,tunnel,Lincoln Tunnel (Toll Rd),0.41,proposed,TIGER/Line 2025 prisecroads
-07202,10303,bridge,Goethals Brg,0.09,proposed,TIGER/Line 2025 prisecroads
-07202,10314,bridge,Goethals Brg,0.08,proposed,TIGER/Line 2025 prisecroads
-07310,10013,tunnel,Holland Tunl,0.55,proposed,TIGER/Line 2025 prisecroads
-07310,10014,tunnel,Holland Tunl,0.85,proposed,TIGER/Line 2025 prisecroads
-08861,10309,bridge,Korean War Veterans Pkwy / Outerbridge Xing / State Rte 440,0.23,proposed,TIGER/Line 2025 prisecroads
-10002,11201,bridge,Manhattan Brg,0.42,proposed,TIGER/Line 2025 prisecroads
-10002,11249,bridge,Williamsburg Brg,0.64,proposed,TIGER/Line 2025 prisecroads
-10004,10301,ferry,Staten Island Ferry (Whitehall-St. George),5.36,proposed,geo.FERRIES (hand list)
-10004,11201,tunnel,Brooklyn Battery Tunl / Hugh L Carey Tunl,0.46,proposed,TIGER/Line 2025 prisecroads
-10004,11231,tunnel,Brooklyn Battery Tunl / Hugh L Carey Tunl,0.44,proposed,TIGER/Line 2025 prisecroads
-10016,11101,tunnel,I- 495 / Queens Midtown Tunl,0.73,proposed,TIGER/Line 2025 prisecroads
-10022,10044,bridge,59th Street Brg / Ed Koch Queensboro Brg / Queensboro Brg,0.28,proposed,TIGER/Line 2025 prisecroads
-10033,10452,bridge,Alexander Hamilton Brg,0.1,proposed,TIGER/Line 2025 prisecroads
-10035,10454,bridge,Robert F Kennedy Brg / Triborough Brg,0.01,proposed,TIGER/Line 2025 prisecroads
-10035,11102,bridge,I- 278 / Robert F Kennedy Brg / Triborough Brg,0.44,proposed,TIGER/Line 2025 prisecroads
-10038,11201,bridge,Brooklyn Brg,0.47,proposed,TIGER/Line 2025 prisecroads
-10044,10065,bridge,59th Street Brg / Ed Koch Queensboro Brg / Queensboro Brg,0.22,proposed,TIGER/Line 2025 prisecroads
-10044,11101,bridge,59th Street Brg / Ed Koch Queensboro Brg / Queensboro Brg,0.19,proposed,TIGER/Line 2025 prisecroads
-10305,11209,bridge,I- 278 / Verrazano Brg,1.48,proposed,TIGER/Line 2025 prisecroads
-10465,11357,bridge,I- 295 / Throgs Neck Brg / Throgs Neck Expy,0.9,proposed,TIGER/Line 2025 prisecroads
-10465,11360,bridge,I- 295 / Throgs Neck Brg / Throgs Neck Expy,1.51,proposed,TIGER/Line 2025 prisecroads
-12401,12572,bridge,Kingston-Rhinecliff Brg,1.04,proposed,TIGER/Line 2025 prisecroads
-12508,12550,bridge,Newburgh-Beacon Brg,0.97,proposed,TIGER/Line 2025 prisecroads
-12528,12601,bridge,Mid Hudson Brg,0.59,proposed,TIGER/Line 2025 prisecroads
-14072,14150,road,I- 190 / State Rte 324,0.3,proposed,TIGER/Line 2025 prisecroads
-14072,14304,road,I- 190,0.79,proposed,TIGER/Line 2025 prisecroads
-20664,22448,bridge,Gov Harry Nice Memorial Brg,2.28,proposed,TIGER/Line 2025 prisecroads
-20664,22485,bridge,Gov Harry Nice Memorial Brg,1.9,proposed,TIGER/Line 2025 prisecroads
-21409,21666,bridge,Wm Preston Lane Jr Memorial Brg,5.14,proposed,TIGER/Line 2025 prisecroads
-21817,21824,ferry,Crisfield-Ewell ferry (Smith Island),12.43,proposed,geo.FERRIES (hand list)
-21817,21866,ferry,Crisfield-Tylerton ferry (Smith Island),12.12,proposed,geo.FERRIES (hand list)
-21817,23440,ferry,Crisfield-Tangier ferry,14.64,proposed,geo.FERRIES (hand list)
-23310,23455,tunnel,Chesapeake Bay Brg Tunl / Chesapeake Bay Bridge Tunl,22.75,proposed,TIGER/Line 2025 prisecroads
-27953,27954,bridge,Manns Harbor Brg,3.64,proposed,TIGER/Line 2025 prisecroads
-27953,27981,bridge,Virginia Dare Memorial Brg,4.42,proposed,TIGER/Line 2025 prisecroads
-27954,27959,bridge,Washington Baum Brg,0.28,proposed,TIGER/Line 2025 prisecroads
-27959,27981,bridge,US Hwy 264 / US Hwy 64 / Washington Baum Brg,0.06,proposed,TIGER/Line 2025 prisecroads
-31328,31410,road,State Rte 26 / US Hwy 80,0.1,proposed,TIGER/Line 2025 prisecroads
-32305,32344,bridge,Natural Bridge Rd,3.26,proposed,TIGER/Line 2025 prisecroads
-32320,32328,bridge,John Gorrie Memorial Brg,3.63,proposed,TIGER/Line 2025 prisecroads
-36527,36602,bridge,Cochrane Brg,0.02,proposed,TIGER/Line 2025 prisecroads
-40108,47142,bridge,Mauckport Brg,0.36,proposed,TIGER/Line 2025 prisecroads
-40202,47130,bridge,Clark Memorial Brg,0.61,proposed,TIGER/Line 2025 prisecroads
-41011,45202,bridge,Brent Spence Brg,0.29,proposed,TIGER/Line 2025 prisecroads
-41071,45202,bridge,Central Brg,0.32,proposed,TIGER/Line 2025 prisecroads
-41174,45663,bridge,Carl Perkins Memorial Brg,0.24,proposed,TIGER/Line 2025 prisecroads
-42301,47635,bridge,Glover Cary Brg,0.47,proposed,TIGER/Line 2025 prisecroads
-42303,47635,bridge,Glover Cary Brg,0.71,proposed,TIGER/Line 2025 prisecroads
-43438,43440,ferry,Marblehead-Kelleys Island ferry,5.11,proposed,geo.FERRIES (hand list)
-43446,43452,ferry,Catawba-Middle Bass ferry (Miller Ferry),9.37,proposed,geo.FERRIES (hand list)
-43452,43456,ferry,Catawba-Put-in-Bay ferry (Miller Ferry),4.48,proposed,geo.FERRIES (hand list)
-49701,49781,bridge,Mackinac Brg,1.89,proposed,TIGER/Line 2025 prisecroads
-49720,49782,ferry,Charlevoix-Beaver Island ferry,33.28,proposed,geo.FERRIES (hand list)
-54210,54246,ferry,Northport-Washington Island ferry (Washington Island Ferry Line),2.19,proposed,geo.FERRIES (hand list)
-54814,54850,ferry,Bayfield-La Pointe ferry (Madeline Island Ferry Line),1.89,proposed,geo.FERRIES (hand list)
-70002,70448,bridge,Lake Pontchartrain Cswy,34.68,proposed,TIGER/Line 2025 prisecroads
-70005,70448,bridge,Lake Pontchartrain Cswy,33.7,proposed,TIGER/Line 2025 prisecroads
-78338,78385,road,US Hwy 77,0.12,proposed,TIGER/Line 2025 prisecroads
-78338,78580,road,US Hwy 77,13.14,proposed,TIGER/Line 2025 prisecroads
-78580,78598,road,State Hwy 186,1.86,proposed,TIGER/Line 2025 prisecroads
-82301,82336,road,I- 80 / US Hwy 30,14.29,proposed,TIGER/Line 2025 prisecroads
-82324,82335,road,I- 80,11.72,proposed,TIGER/Line 2025 prisecroads
-82327,82335,road,US Hwy 287 / US Hwy 30,11.86,proposed,TIGER/Line 2025 prisecroads
-82334,82335,road,State Hwy 130 / I- 80 / US Hwy 30,0.42,proposed,TIGER/Line 2025 prisecroads
-82336,82901,road,I- 80 / US Hwy 30,9.09,proposed,TIGER/Line 2025 prisecroads
-82520,82932,road,State Hwy 28 / Dickinson Ave,25.59,proposed,TIGER/Line 2025 prisecroads
-82601,82643,road,I- 25 / US Hwy 87 / State Hwy 387,0.77,proposed,TIGER/Line 2025 prisecroads
-82635,82640,road,State Hwy 387,7.88,proposed,TIGER/Line 2025 prisecroads
-82635,82643,road,State Hwy 387,1.25,proposed,TIGER/Line 2025 prisecroads
-82923,82932,road,US Hwy 191,2.87,proposed,TIGER/Line 2025 prisecroads
-82929,82934,road,US Hwy 30,3.74,proposed,TIGER/Line 2025 prisecroads
-82929,82935,road,I- 80 / US Hwy 30 / State Hwy 374,12.2,proposed,TIGER/Line 2025 prisecroads
-82932,82935,road,State Hwy 28 / Lower Farson Cutoff Rd / California-Mormon Emigrant Rd,10.33,proposed,TIGER/Line 2025 prisecroads
-82932,82943,road,US Hwy 191,25.9,proposed,TIGER/Line 2025 prisecroads
-82934,83124,road,US Hwy 30,0.57,proposed,TIGER/Line 2025 prisecroads
-83823,83827,road,State Hwy 8 / N 3rd St / Elk River Rd,8.25,proposed,TIGER/Line 2025 prisecroads
-84034,89311,road,unnamed road / US Hwy 93 Alt / Weis Hwy,20.01,proposed,TIGER/Line 2025 roads
-84501,84520,road,State Rte 123,5.16,proposed,TIGER/Line 2025 prisecroads
-84522,84654,road,State Rte 10,2.6,proposed,TIGER/Line 2025 prisecroads
-84620,84656,road,US Hwy 50 / W US Hwy 50 / N 10500 East St,29.84,proposed,TIGER/Line 2025 prisecroads
-84624,84728,road,US Hwy 50 / US Hwy 6,81.17,proposed,TIGER/Line 2025 prisecroads
-84636,84656,road,I- 15 / US Hwy 50,12.81,proposed,TIGER/Line 2025 prisecroads
-89001,89008,road,State Rte 7 / US Hwy 93,26.09,proposed,TIGER/Line 2025 prisecroads
-89001,89049,road,State Hwy 375,42.85,proposed,TIGER/Line 2025 prisecroads
-89003,89013,road,US Hwy 95 / State Hwy 267 / State Hwy 72,24.53,proposed,TIGER/Line 2025 prisecroads
-89003,89020,road,US Hwy 95,14.48,proposed,TIGER/Line 2025 prisecroads
-89003,92328,road,State Hwy 374 / Daylight Pass Rd,8.1,proposed,TIGER/Line 2025 prisecroads
-89008,89017,road,US Hwy 93,20.15,proposed,TIGER/Line 2025 prisecroads
-89010,89013,road,State Hwy 266,10.21,proposed,TIGER/Line 2025 prisecroads
-89010,89047,road,Nivloc Rd / State Hwy 265,26.05,proposed,TIGER/Line 2025 prisecroads
-89010,89049,road,US Hwy 6 / US Hwy 95,39.86,proposed,TIGER/Line 2025 prisecroads
-89010,89422,road,State Hwy 3 / US Hwy 95 / State Hwy 360,27.78,proposed,TIGER/Line 2025 prisecroads
-89013,89049,road,US Hwy 95,15.8,proposed,TIGER/Line 2025 prisecroads
-89017,89317,road,State Hwy 38 / State Hwy 318,80.0,proposed,TIGER/Line 2025 prisecroads
-89020,89060,road,State Hwy 5 / US Hwy 95,4.75,proposed,TIGER/Line 2025 prisecroads
-89022,89049,road,State Hwy 82,17.26,proposed,TIGER/Line 2025 prisecroads
-89043,89301,road,State Hwy 894,9.84,proposed,TIGER/Line 2025 prisecroads
-89045,89049,road,State Hwy 376 / State Hwy 8 / State Hwy 377,6.96,proposed,TIGER/Line 2025 prisecroads
-89049,89314,road,State Hwy 379,0.65,proposed,TIGER/Line 2025 prisecroads
-89049,89317,road,US Hwy 6,21.96,proposed,TIGER/Line 2025 prisecroads
-89049,89409,road,State Hwy 89,39.58,proposed,TIGER/Line 2025 prisecroads
-89301,89316,road,US Hwy 50,30.04,proposed,TIGER/Line 2025 prisecroads
-89301,89317,road,US Hwy 6 / State Hwy 318 / State Hwy 38,12.99,proposed,TIGER/Line 2025 prisecroads
-89301,89835,road,US Hwy 93,63.97,proposed,TIGER/Line 2025 prisecroads
-89301,89883,road,US Hwy 93 Alt / State Hwy 24,7.18,proposed,TIGER/Line 2025 prisecroads
-89310,89316,road,US Hwy 50,9.34,proposed,TIGER/Line 2025 prisecroads
-89310,89409,road,State Hwy 844,11.75,proposed,TIGER/Line 2025 prisecroads
-89316,89822,road,State Rte 278,9.91,proposed,TIGER/Line 2025 prisecroads
-89406,89409,road,State Hwy 361 / State Rte 361 / State Hwy 23,11.11,proposed,TIGER/Line 2025 prisecroads
-89409,89420,road,State Hwy 361 / State Rte 23,23.33,proposed,TIGER/Line 2025 prisecroads
-89414,89438,road,I- 80,15.56,proposed,TIGER/Line 2025 prisecroads
-89415,89422,road,State Hwy 3 / US Hwy 95 / Veterans Memorial Hwy,10.6,proposed,TIGER/Line 2025 prisecroads
-89415,89427,road,State Hwy 3 / US Hwy 95,2.34,proposed,TIGER/Line 2025 prisecroads
-89427,89447,road,State Hwy 3 / US Hwy 95 Alt,3.83,proposed,TIGER/Line 2025 prisecroads
-89427,89496,road,US Hwy 95 / Schurz Hwy,4.66,proposed,TIGER/Line 2025 prisecroads
-89438,89820,road,I- 80,6.45,proposed,TIGER/Line 2025 prisecroads
-90704,90802,ferry,Long Beach-Avalon ferry (Catalina Express),30.24,proposed,geo.FERRIES (hand list)
-92309,92364,road,I- 15 / Mojave Fwy,8.81,proposed,TIGER/Line 2025 prisecroads
-92309,92365,road,I- 15 / Mojave Fwy,0.28,proposed,TIGER/Line 2025 prisecroads
-92309,92389,road,Death Valley Rd / State Rte 127,37.48,proposed,TIGER/Line 2025 prisecroads
-92310,92311,road,unnamed road / Randsburg Rd / Fort Irwin Rd,8.1,proposed,TIGER/Line 2025 roads
-92328,92384,road,State Hwy 127 / State Rte 127 / State Rte 190,32.73,proposed,TIGER/Line 2025 prisecroads
-92328,93522,road,State Hwy 190 / State Rte 190 / Nadeau Trl,4.59,proposed,TIGER/Line 2025 prisecroads
-93206,93276,road,Tupman Rd,0.05,proposed,TIGER/Line 2025 roads
-93522,93549,road,State Rte 190 / State Hwy 190 / State Hwy 136,6.35,proposed,TIGER/Line 2025 prisecroads
-93555,93562,road,State Rte 178 / Trona Rd,15.4,proposed,TIGER/Line 2025 prisecroads
-94105,94130,bridge,Bay Brg,1.83,proposed,TIGER/Line 2025 prisecroads
-94129,94965,bridge,Golden Gate Brg,1.6,proposed,TIGER/Line 2025 prisecroads
-94130,94607,bridge,Bay Brg,0.89,proposed,TIGER/Line 2025 prisecroads
-94404,94545,bridge,San Mateo Brg,9.27,proposed,TIGER/Line 2025 prisecroads
-97103,98614,bridge,Astoria-Megler Brg,4.66,proposed,TIGER/Line 2025 prisecroads
-97452,97492,road,State Hwy 58 / Willamette Hwy,0.7,proposed,TIGER/Line 2025 prisecroads
-97463,97733,road,State Hwy 58 / Willamette Hwy,20.25,proposed,TIGER/Line 2025 prisecroads
-97702,97707,road,The Dalles-California Hwy / US Hwy 97,1.29,proposed,TIGER/Line 2025 prisecroads
-97731,97733,road,E Diamond Lake Hwy / State Hwy 138,2.1,proposed,TIGER/Line 2025 prisecroads
-97735,97739,road,State Hwy 31 / Fremont Hwy,12.39,proposed,TIGER/Line 2025 prisecroads
-98070,98136,ferry,Fauntleroy-Vashon ferry (Washington State Ferries),3.62,proposed,geo.FERRIES (hand list)
-98070,98407,ferry,Point Defiance-Tahlequah ferry (Washington State Ferries),1.71,proposed,geo.FERRIES (hand list)
-98365,98370,bridge,Hood Canal Floating Brg,1.92,proposed,TIGER/Line 2025 prisecroads
+02109,02128,tunnel,Callahan Tunl,0.12,approved,TIGER/Line 2025 prisecroads
+02543,02568,ferry,Woods Hole-Vineyard Haven ferry (Steamship Authority),4.5,approved,geo.FERRIES (hand list)
+02554,02601,ferry,Hyannis-Nantucket ferry (Steamship Authority),31.55,approved,geo.FERRIES (hand list)
+02807,02882,ferry,Point Judith-Block Island ferry,14.36,approved,geo.FERRIES (hand list)
+02809,02872,ferry,Bristol-Prudence Island ferry,0.9,approved,geo.FERRIES (hand list)
+02835,02841,bridge,Newport Brg,1.48,approved,TIGER/Line 2025 prisecroads
+02835,02874,bridge,Jamestown Brg,0.79,approved,TIGER/Line 2025 prisecroads
+04737,04768,road,unnamed road / Realty Rd / Cyr Rd,24.09,approved,TIGER/Line 2025 roads
+04841,04851,ferry,Rockland-Matinicus ferry (Maine State Ferry Service),28.94,approved,geo.FERRIES (hand list)
+04841,04853,ferry,Rockland-North Haven ferry (Maine State Ferry Service),9.73,approved,geo.FERRIES (hand list)
+04841,04863,ferry,Rockland-Vinalhaven ferry (Maine State Ferry Service),12.3,approved,geo.FERRIES (hand list)
+04852,04855,ferry,Port Clyde-Monhegan ferry,16.08,approved,geo.FERRIES (hand list)
+05440,12979,bridge,Bridge Rd,0.32,approved,TIGER/Line 2025 prisecroads
+05491,12928,bridge,Bridge Rd,0.17,approved,TIGER/Line 2025 prisecroads
+06320,06390,ferry,New London-Fishers Island ferry,4.79,approved,geo.FERRIES (hand list)
+07002,10302,bridge,Bayonne Brg,0.15,approved,TIGER/Line 2025 prisecroads
+07002,10303,bridge,Bayonne Brg,0.25,approved,TIGER/Line 2025 prisecroads
+07024,10032,bridge,George Washington Brg,0.47,approved,TIGER/Line 2025 prisecroads
+07024,10034,bridge,George Washington Brg,0.47,approved,TIGER/Line 2025 prisecroads
+07086,10018,tunnel,Lincoln Tunnel (Toll Rd),0.41,approved,TIGER/Line 2025 prisecroads
+07202,10303,bridge,Goethals Brg,0.09,approved,TIGER/Line 2025 prisecroads
+07202,10314,bridge,Goethals Brg,0.08,approved,TIGER/Line 2025 prisecroads
+07310,10013,tunnel,Holland Tunl,0.55,approved,TIGER/Line 2025 prisecroads
+07310,10014,tunnel,Holland Tunl,0.85,approved,TIGER/Line 2025 prisecroads
+08861,10309,bridge,Korean War Veterans Pkwy / Outerbridge Xing / State Rte 440,0.23,approved,TIGER/Line 2025 prisecroads
+10002,11201,bridge,Manhattan Brg,0.42,approved,TIGER/Line 2025 prisecroads
+10002,11249,bridge,Williamsburg Brg,0.64,approved,TIGER/Line 2025 prisecroads
+10004,10301,ferry,Staten Island Ferry (Whitehall-St. George),5.36,approved,geo.FERRIES (hand list)
+10004,11201,tunnel,Brooklyn Battery Tunl / Hugh L Carey Tunl,0.46,approved,TIGER/Line 2025 prisecroads
+10004,11231,tunnel,Brooklyn Battery Tunl / Hugh L Carey Tunl,0.44,approved,TIGER/Line 2025 prisecroads
+10016,11101,tunnel,I- 495 / Queens Midtown Tunl,0.73,approved,TIGER/Line 2025 prisecroads
+10022,10044,bridge,59th Street Brg / Ed Koch Queensboro Brg / Queensboro Brg,0.28,approved,TIGER/Line 2025 prisecroads
+10033,10452,bridge,Alexander Hamilton Brg,0.1,approved,TIGER/Line 2025 prisecroads
+10035,10454,bridge,Robert F Kennedy Brg / Triborough Brg,0.01,approved,TIGER/Line 2025 prisecroads
+10035,11102,bridge,I- 278 / Robert F Kennedy Brg / Triborough Brg,0.44,approved,TIGER/Line 2025 prisecroads
+10038,11201,bridge,Brooklyn Brg,0.47,approved,TIGER/Line 2025 prisecroads
+10044,10065,bridge,59th Street Brg / Ed Koch Queensboro Brg / Queensboro Brg,0.22,approved,TIGER/Line 2025 prisecroads
+10044,11101,bridge,59th Street Brg / Ed Koch Queensboro Brg / Queensboro Brg,0.19,approved,TIGER/Line 2025 prisecroads
+10305,11209,bridge,I- 278 / Verrazano Brg,1.48,approved,TIGER/Line 2025 prisecroads
+10465,11357,bridge,I- 295 / Throgs Neck Brg / Throgs Neck Expy,0.9,approved,TIGER/Line 2025 prisecroads
+10465,11360,bridge,I- 295 / Throgs Neck Brg / Throgs Neck Expy,1.51,approved,TIGER/Line 2025 prisecroads
+12401,12572,bridge,Kingston-Rhinecliff Brg,1.04,approved,TIGER/Line 2025 prisecroads
+12508,12550,bridge,Newburgh-Beacon Brg,0.97,approved,TIGER/Line 2025 prisecroads
+12528,12601,bridge,Mid Hudson Brg,0.59,approved,TIGER/Line 2025 prisecroads
+14072,14150,road,I- 190 / State Rte 324,0.3,approved,TIGER/Line 2025 prisecroads
+14072,14304,road,I- 190,0.79,approved,TIGER/Line 2025 prisecroads
+20664,22448,bridge,Gov Harry Nice Memorial Brg,2.28,approved,TIGER/Line 2025 prisecroads
+20664,22485,bridge,Gov Harry Nice Memorial Brg,1.9,approved,TIGER/Line 2025 prisecroads
+21409,21666,bridge,Wm Preston Lane Jr Memorial Brg,5.14,approved,TIGER/Line 2025 prisecroads
+21817,21824,ferry,Crisfield-Ewell ferry (Smith Island),12.43,approved,geo.FERRIES (hand list)
+21817,21866,ferry,Crisfield-Tylerton ferry (Smith Island),12.12,approved,geo.FERRIES (hand list)
+21817,23440,ferry,Crisfield-Tangier ferry,14.64,approved,geo.FERRIES (hand list)
+23310,23455,tunnel,Chesapeake Bay Brg Tunl / Chesapeake Bay Bridge Tunl,22.75,approved,TIGER/Line 2025 prisecroads
+27953,27954,bridge,Manns Harbor Brg,3.64,approved,TIGER/Line 2025 prisecroads
+27953,27981,bridge,Virginia Dare Memorial Brg,4.42,approved,TIGER/Line 2025 prisecroads
+27954,27959,bridge,Washington Baum Brg,0.28,approved,TIGER/Line 2025 prisecroads
+27959,27981,bridge,US Hwy 264 / US Hwy 64 / Washington Baum Brg,0.06,approved,TIGER/Line 2025 prisecroads
+31328,31410,road,State Rte 26 / US Hwy 80,0.1,approved,TIGER/Line 2025 prisecroads
+32305,32344,bridge,Natural Bridge Rd,3.26,approved,TIGER/Line 2025 prisecroads
+32320,32328,bridge,John Gorrie Memorial Brg,3.63,approved,TIGER/Line 2025 prisecroads
+36527,36602,bridge,Cochrane Brg,0.02,approved,TIGER/Line 2025 prisecroads
+40108,47142,bridge,Mauckport Brg,0.36,approved,TIGER/Line 2025 prisecroads
+40202,47130,bridge,Clark Memorial Brg,0.61,approved,TIGER/Line 2025 prisecroads
+41011,45202,bridge,Brent Spence Brg,0.29,approved,TIGER/Line 2025 prisecroads
+41071,45202,bridge,Central Brg,0.32,approved,TIGER/Line 2025 prisecroads
+41174,45663,bridge,Carl Perkins Memorial Brg,0.24,approved,TIGER/Line 2025 prisecroads
+42301,47635,bridge,Glover Cary Brg,0.47,approved,TIGER/Line 2025 prisecroads
+42303,47635,bridge,Glover Cary Brg,0.71,approved,TIGER/Line 2025 prisecroads
+43436,43446,nearest,North Bass Island to Middle Bass Island: no road or scheduled ferry found; nearest ZCTA,1.37,approved,owner 2026-10-05 (#108): nearest ZCTA
+43438,43440,ferry,Marblehead-Kelleys Island ferry,5.11,approved,geo.FERRIES (hand list)
+43446,43452,ferry,Catawba-Middle Bass ferry (Miller Ferry),9.37,approved,geo.FERRIES (hand list)
+43452,43456,ferry,Catawba-Put-in-Bay ferry (Miller Ferry),4.48,approved,geo.FERRIES (hand list)
+49701,49781,bridge,Mackinac Brg,1.89,approved,TIGER/Line 2025 prisecroads
+49720,49782,ferry,Charlevoix-Beaver Island ferry,33.28,approved,geo.FERRIES (hand list)
+54210,54246,ferry,Northport-Washington Island ferry (Washington Island Ferry Line),2.19,approved,geo.FERRIES (hand list)
+54814,54850,ferry,Bayfield-La Pointe ferry (Madeline Island Ferry Line),1.89,approved,geo.FERRIES (hand list)
+70002,70448,bridge,Lake Pontchartrain Cswy,34.68,approved,TIGER/Line 2025 prisecroads
+70005,70448,bridge,Lake Pontchartrain Cswy,33.7,approved,TIGER/Line 2025 prisecroads
+78338,78385,road,US Hwy 77,0.12,approved,TIGER/Line 2025 prisecroads
+78338,78580,road,US Hwy 77,13.14,approved,TIGER/Line 2025 prisecroads
+78580,78598,road,State Hwy 186,1.86,approved,TIGER/Line 2025 prisecroads
+82301,82336,road,I- 80 / US Hwy 30,14.29,approved,TIGER/Line 2025 prisecroads
+82324,82335,road,I- 80,11.72,approved,TIGER/Line 2025 prisecroads
+82327,82335,road,US Hwy 287 / US Hwy 30,11.86,approved,TIGER/Line 2025 prisecroads
+82334,82335,road,State Hwy 130 / I- 80 / US Hwy 30,0.42,approved,TIGER/Line 2025 prisecroads
+82336,82901,road,I- 80 / US Hwy 30,9.09,approved,TIGER/Line 2025 prisecroads
+82520,82932,road,State Hwy 28 / Dickinson Ave,25.59,approved,TIGER/Line 2025 prisecroads
+82601,82643,road,I- 25 / US Hwy 87 / State Hwy 387,0.77,approved,TIGER/Line 2025 prisecroads
+82635,82640,road,State Hwy 387,7.88,approved,TIGER/Line 2025 prisecroads
+82635,82643,road,State Hwy 387,1.25,approved,TIGER/Line 2025 prisecroads
+82923,82932,road,US Hwy 191,2.87,approved,TIGER/Line 2025 prisecroads
+82929,82934,road,US Hwy 30,3.74,approved,TIGER/Line 2025 prisecroads
+82929,82935,road,I- 80 / US Hwy 30 / State Hwy 374,12.2,approved,TIGER/Line 2025 prisecroads
+82932,82935,road,State Hwy 28 / Lower Farson Cutoff Rd / California-Mormon Emigrant Rd,10.33,approved,TIGER/Line 2025 prisecroads
+82932,82943,road,US Hwy 191,25.9,approved,TIGER/Line 2025 prisecroads
+82934,83124,road,US Hwy 30,0.57,approved,TIGER/Line 2025 prisecroads
+83823,83827,road,State Hwy 8 / N 3rd St / Elk River Rd,8.25,approved,TIGER/Line 2025 prisecroads
+84034,89311,road,unnamed road / US Hwy 93 Alt / Weis Hwy,20.01,approved,TIGER/Line 2025 roads
+84501,84520,road,State Rte 123,5.16,approved,TIGER/Line 2025 prisecroads
+84522,84654,road,State Rte 10,2.6,approved,TIGER/Line 2025 prisecroads
+84620,84656,road,US Hwy 50 / W US Hwy 50 / N 10500 East St,29.84,approved,TIGER/Line 2025 prisecroads
+84624,84728,road,US Hwy 50 / US Hwy 6,81.17,approved,TIGER/Line 2025 prisecroads
+84636,84656,road,I- 15 / US Hwy 50,12.81,approved,TIGER/Line 2025 prisecroads
+89001,89008,road,State Rte 7 / US Hwy 93,26.09,approved,TIGER/Line 2025 prisecroads
+89001,89049,road,State Hwy 375,42.85,approved,TIGER/Line 2025 prisecroads
+89003,89013,road,US Hwy 95 / State Hwy 267 / State Hwy 72,24.53,approved,TIGER/Line 2025 prisecroads
+89003,89020,road,US Hwy 95,14.48,approved,TIGER/Line 2025 prisecroads
+89003,92328,road,State Hwy 374 / Daylight Pass Rd,8.1,approved,TIGER/Line 2025 prisecroads
+89008,89017,road,US Hwy 93,20.15,approved,TIGER/Line 2025 prisecroads
+89010,89013,road,State Hwy 266,10.21,approved,TIGER/Line 2025 prisecroads
+89010,89047,road,Nivloc Rd / State Hwy 265,26.05,approved,TIGER/Line 2025 prisecroads
+89010,89049,road,US Hwy 6 / US Hwy 95,39.86,approved,TIGER/Line 2025 prisecroads
+89010,89422,road,State Hwy 3 / US Hwy 95 / State Hwy 360,27.78,approved,TIGER/Line 2025 prisecroads
+89013,89049,road,US Hwy 95,15.8,approved,TIGER/Line 2025 prisecroads
+89017,89317,road,State Hwy 38 / State Hwy 318,80.0,approved,TIGER/Line 2025 prisecroads
+89020,89060,road,State Hwy 5 / US Hwy 95,4.75,approved,TIGER/Line 2025 prisecroads
+89022,89049,road,State Hwy 82,17.26,approved,TIGER/Line 2025 prisecroads
+89043,89301,road,State Hwy 894,9.84,approved,TIGER/Line 2025 prisecroads
+89045,89049,road,State Hwy 376 / State Hwy 8 / State Hwy 377,6.96,approved,TIGER/Line 2025 prisecroads
+89049,89314,road,State Hwy 379,0.65,approved,TIGER/Line 2025 prisecroads
+89049,89317,road,US Hwy 6,21.96,approved,TIGER/Line 2025 prisecroads
+89049,89409,road,State Hwy 89,39.58,approved,TIGER/Line 2025 prisecroads
+89301,89316,road,US Hwy 50,30.04,approved,TIGER/Line 2025 prisecroads
+89301,89317,road,US Hwy 6 / State Hwy 318 / State Hwy 38,12.99,approved,TIGER/Line 2025 prisecroads
+89301,89835,road,US Hwy 93,63.97,approved,TIGER/Line 2025 prisecroads
+89301,89883,road,US Hwy 93 Alt / State Hwy 24,7.18,approved,TIGER/Line 2025 prisecroads
+89310,89316,road,US Hwy 50,9.34,approved,TIGER/Line 2025 prisecroads
+89310,89409,road,State Hwy 844,11.75,approved,TIGER/Line 2025 prisecroads
+89316,89822,road,State Rte 278,9.91,approved,TIGER/Line 2025 prisecroads
+89406,89409,road,State Hwy 361 / State Rte 361 / State Hwy 23,11.11,approved,TIGER/Line 2025 prisecroads
+89409,89420,road,State Hwy 361 / State Rte 23,23.33,approved,TIGER/Line 2025 prisecroads
+89414,89438,road,I- 80,15.56,approved,TIGER/Line 2025 prisecroads
+89415,89422,road,State Hwy 3 / US Hwy 95 / Veterans Memorial Hwy,10.6,approved,TIGER/Line 2025 prisecroads
+89415,89427,road,State Hwy 3 / US Hwy 95,2.34,approved,TIGER/Line 2025 prisecroads
+89427,89447,road,State Hwy 3 / US Hwy 95 Alt,3.83,approved,TIGER/Line 2025 prisecroads
+89427,89496,road,US Hwy 95 / Schurz Hwy,4.66,approved,TIGER/Line 2025 prisecroads
+89438,89820,road,I- 80,6.45,approved,TIGER/Line 2025 prisecroads
+90704,90802,ferry,Long Beach-Avalon ferry (Catalina Express),30.24,approved,geo.FERRIES (hand list)
+92309,92364,road,I- 15 / Mojave Fwy,8.81,approved,TIGER/Line 2025 prisecroads
+92309,92365,road,I- 15 / Mojave Fwy,0.28,approved,TIGER/Line 2025 prisecroads
+92309,92389,road,Death Valley Rd / State Rte 127,37.48,approved,TIGER/Line 2025 prisecroads
+92310,92311,road,unnamed road / Randsburg Rd / Fort Irwin Rd,8.1,approved,TIGER/Line 2025 roads
+92328,92384,road,State Hwy 127 / State Rte 127 / State Rte 190,32.73,approved,TIGER/Line 2025 prisecroads
+92328,93522,road,State Hwy 190 / State Rte 190 / Nadeau Trl,4.59,approved,TIGER/Line 2025 prisecroads
+93206,93276,road,Tupman Rd,0.05,approved,TIGER/Line 2025 roads
+93522,93549,road,State Rte 190 / State Hwy 190 / State Hwy 136,6.35,approved,TIGER/Line 2025 prisecroads
+93555,93562,road,State Rte 178 / Trona Rd,15.4,approved,TIGER/Line 2025 prisecroads
+94105,94130,bridge,Bay Brg,1.83,approved,TIGER/Line 2025 prisecroads
+94129,94965,bridge,Golden Gate Brg,1.6,approved,TIGER/Line 2025 prisecroads
+94130,94607,bridge,Bay Brg,0.89,approved,TIGER/Line 2025 prisecroads
+94404,94545,bridge,San Mateo Brg,9.27,approved,TIGER/Line 2025 prisecroads
+97103,98614,bridge,Astoria-Megler Brg,4.66,approved,TIGER/Line 2025 prisecroads
+97452,97492,road,State Hwy 58 / Willamette Hwy,0.7,approved,TIGER/Line 2025 prisecroads
+97463,97733,road,State Hwy 58 / Willamette Hwy,20.25,approved,TIGER/Line 2025 prisecroads
+97702,97707,road,The Dalles-California Hwy / US Hwy 97,1.29,approved,TIGER/Line 2025 prisecroads
+97731,97733,road,E Diamond Lake Hwy / State Hwy 138,2.1,approved,TIGER/Line 2025 prisecroads
+97735,97739,road,State Hwy 31 / Fremont Hwy,12.39,approved,TIGER/Line 2025 prisecroads
+98070,98136,ferry,Fauntleroy-Vashon ferry (Washington State Ferries),3.62,approved,geo.FERRIES (hand list)
+98070,98407,ferry,Point Defiance-Tahlequah ferry (Washington State Ferries),1.71,approved,geo.FERRIES (hand list)
+98230,98281,nearest,Point Roberts to Blaine: by land only through Canada; nearest US ZCTA,14.95,approved,owner 2026-10-05 (#108): nearest ZCTA
+98245,98297,nearest,Waldron Island to Orcas Island: no road or scheduled ferry found; nearest ZCTA,1.57,approved,owner 2026-10-05 (#108): nearest ZCTA
+98353,98366,nearest,98353 to 98366: no road or scheduled ferry found; nearest ZCTA,0.74,approved,owner 2026-10-05 (#108): nearest ZCTA
+98365,98370,bridge,Hood Canal Floating Brg,1.92,approved,TIGER/Line 2025 prisecroads

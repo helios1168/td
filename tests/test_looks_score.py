@@ -63,6 +63,24 @@ def test_display_fill_and_looks():
     assert math.isclose(c["extent_km"], 9.0)            # a2 to b3, the ledger's ZIPs only
 
 
+def test_a_piece_only_a_multipart_zcta_makes_is_listed_and_not_an_m1_piece():
+    """Owner, 2026-10-05 (#108): m is one vertex with two parts; X_01 holds m and n, n touching
+    m's part 0 only, so m's part 1 is a separate drawn piece, listed as a visual defect, while
+    the district is one M1 piece."""
+    state = dict.fromkeys(("m", "n"), "A")
+    polygon = {"vertices": ["m", "n"], "edges": [("m", "n")], "state": state}
+    parts = {"area": {"m": [4e6, 1e6], "n": [2e6]}, "edges": [("m", 0, "n", 0, "rook")]}
+    g = score.Geography(state, {"m": (0.0, 0.0), "n": (1.0, 0.0)}, {"m": {"n": 1.0}, "n": {"m": 1.0}},
+                        polygon, parts)
+    c = score.channel_looks("X", _rows("X", (("m", "X_01", 1.0), ("n", "X_01", 1.0))),
+                            _districts("X", (2.0,)), g)
+    assert c["pieces"] == [] and c["multipart"] == [("X_01", "m", 1.0)]
+    parts["edges"].append(("m", 1, "n", 0, "rook"))     # n now meets both parts: one drawn piece
+    g = score.Geography(state, g.xy, g.edge, polygon, parts)
+    assert score.channel_looks("X", _rows("X", (("m", "X_01", 1.0), ("n", "X_01", 1.0))),
+                               _districts("X", (2.0,)), g)["multipart"] == []
+
+
 def test_crowded_and_balance():
     # No edges: every two-state district is a thin link at 0 km and in two pieces.
     state = {z: z[0].upper() for z in ("c1", "c2", "c3", "d1", "d2", "d3")}

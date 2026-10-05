@@ -22,6 +22,10 @@ kept) and writes `reference/2025/`:
                                     the Voronoi ZIP graph
     connectors.csv                  the connector list across gaps, each row `proposed` until the
                                     owner approves it
+    zcta_parts.csv.gz               (zcta, part, area_m2): the polygon parts of every ZCTA
+    zcta_part_edges.csv.gz          (a, a_part, b, b_part, kind): the edges above at part level
+                                    wherever a multipart ZCTA is an end, for the scorer's drawn
+                                    pieces
     POLYGON_GRAPH.json              its manifest (sources, CRS, threshold, command) and report
 
 Everything is 2025 vintage (S17); `check_manifest` rejects any other.  HUD placement is G2.
@@ -56,9 +60,15 @@ when their boundaries share a length above `MIN_BORDER_M` = 0 m in `CRS`, so a c
 water, and land in no ZCTA.  A *connector* joins two ZCTAs across such a gap; the build proposes
 one per crossing it can name: every TIGER/Line 2025 primary or secondary road, or for an island
 none reaches, any road of its counties and their neighbours, whose stretch outside every ZCTA
-reaches ZCTAs of two components, and the ferries of `FERRIES`.  Each row is `proposed`; only the
-owner sets `approved` (or `rejected`), the build keeps those statuses, and `polygon_graph` adds
-only approved rows.
+reaches ZCTAs of two components, and the ferries of `FERRIES`.  A new row is `proposed`; only
+the owner sets `approved` (or `rejected`), the build keeps those statuses and every row the owner
+added (kind `nearest`: an island with no crossing joined to its nearest ZCTA), and
+`polygon_graph` adds only approved rows.  The owner approved every row on 2026-10-05 (#108):
+bridges, tunnels, ferries, and roads across land in no ZCTA.
+
+A multipart ZCTA is one vertex whose parts count as connected to each other, adjacent to another
+ZCTA through any part (owner, 2026-10-05).  The part-level files let the looks scorer list a
+separate drawn piece that only a multipart ZCTA makes, a visual defect and not an M1 failure.
 """
 from __future__ import annotations
 
@@ -638,6 +648,11 @@ TOUCH_M = 1.0               # a road's stretch outside every ZCTA this close to 
 ROAD_SEARCH_M = 30_000.0    # roads this close to an island's ZCTAs are searched for its crossings
 CONNECTOR_COLUMNS = ("a", "b", "kind", "crossing", "gap_km", "status", "source")
 CONNECTOR_STATUSES = ("proposed", "approved", "rejected")
+# `nearest`: an island no road or scheduled ferry reaches, joined to its nearest ZCTA by the
+# owner (2026-10-05, #108); the build never proposes one.
+CONNECTOR_KINDS = ("bridge", "tunnel", "road", "ferry", "nearest")
+ZCTA_PARTS = "zcta_parts.csv.gz"
+PART_EDGES = "zcta_part_edges.csv.gz"
 ROAD_SOURCES = {
     "prisecroads": (f"{TIGER}/PRISECROADS/", "primary and secondary roads, one file per state: "
                     "the crossings connectors name"),
@@ -702,6 +717,47 @@ def polygon_edges(ids, geoms) -> dict:
         else:
             out["corner_only"].append((a, z))
     return {k: sorted(v) for k, v in out.items()}
+
+
+def part_edges(ids, geoms, edges, connectors) -> dict:
+    """The polygon graph at part level wherever a multipart ZCTA is an end: `{"parts": [(zcta,
+    part, area_m2)] for every ZCTA, "edges": [(a, a_part, b, b_part, kind)]}`.  A part is a polygon
+    of `shapely.get_parts`, in its order.  A rook pair of `edges` ((a, b, ...), a < b) with a
+    multipart end gives each pair of parts whose boundaries share a length above `MIN_BORDER_M`
+    (or whose interiors overlap), kind `rook`; a connector row with a multipart end gives its
+    nearest pair of parts, kind `connector`, whatever its status."""
+    import numpy as np
+    import shapely
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    pieces = {z: shapely.get_parts(g) for z, g in zip(ids, geoms)}
+    multi = {z for z, ps in pieces.items() if len(ps) > 1}
+    parts = [(z, k, float(shapely.area(p))) for z in ids for k, p in enumerate(pieces[z])]
+    pairs = [(a, b) for a, b, *_ in edges if a in multi or b in multi]
+    pa, pb, la, lb = [], [], [], []
+    for a, b in pairs:
+        for i, p in enumerate(pieces[a]):
+            for j, q in enumerate(pieces[b]):
+                pa.append(p)
+                pb.append(q)
+                la.append((a, i))
+                lb.append((b, j))
+    pa, pb = np.asarray(pa), np.asarray(pb)
+    near = shapely.intersects(pa, pb) if len(pa) else np.zeros(0, bool)
+    border = np.zeros(len(pa))
+    overlap = np.zeros(len(pa))
+    hit = np.flatnonzero(near)
+    if len(hit):
+        border[hit] = shapely.length(shapely.intersection(shapely.boundary(pa[hit]),
+                                                          shapely.boundary(pb[hit])))
+        overlap[hit] = shapely.area(shapely.intersection(pa[hit], pb[hit]))
+    out = [(*la[n], *lb[n], "rook") for n in hit if border[n] > MIN_BORDER_M or overlap[n] > 0]
+    for r in connectors:
+        a, b = r["a"], r["b"]
+        if a in multi or b in multi:
+            _, i, j = min((float(shapely.distance(p, q)), i, j) for i, p in enumerate(pieces[a])
+                          for j, q in enumerate(pieces[b]))
+            out.append((a, i, b, j, "connector"))
+    return {"parts": parts, "edges": sorted(set(out))}
 
 
 def components(vertices, edges) -> list:
@@ -934,11 +990,16 @@ def polygon_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print)
     connectors += kept                  # an owner's decision is never dropped by a rebuild
 
     joined = components(range(len(comps)), [(comp[r["a"]], comp[r["b"]]) for r in connectors])
+    approved = components(vertices, got["edges"] + approved_connectors(connectors))
     state = dict(zip(ref["zcta"], ref["state"]))
     islands = [{"component": i, "zctas": comps[i], "states": sorted({state[z] for z in comps[i]}),
                 "connectors": sum(1 for r in connectors if i in (comp[r["a"]], comp[r["b"]])),
-                "joined_to_main_by_proposals": 0 in next(c for c in joined if i in c)}
+                "joined_to_main_by_any_row": 0 in next(c for c in joined if i in c),
+                "joined_to_main_by_approved": comps[i][0] in approved[0]}
                for i in range(1, len(comps))]
+    log("geo: multipart ZCTAs at part level")
+    by_part = part_edges(ids, geoms, got["edges"], connectors)
+    n_parts = collections.Counter(z for z, *_ in by_part["parts"])
     sources = [_road_entry("prisecroads", prisec, public)]
     if roads:
         sources.append(_road_entry("roads", roads, public))
@@ -956,7 +1017,13 @@ def polygon_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print)
             "dropped": sum(1 for d in diff if d[2] == "dropped")},
         "components": len(comps), "component_sizes": [len(c) for c in comps],
         "connectors": {"rows": len(connectors), **collections.Counter(r["kind"] for r in connectors),
-                       "approved": sum(1 for r in connectors if r["status"] == "approved")},
+                       **{s: sum(1 for r in connectors if r["status"] == s)
+                          for s in CONNECTOR_STATUSES}},
+        "components_with_approved_connectors": len(approved),
+        "component_sizes_with_approved_connectors": [len(c) for c in approved],
+        "multipart_zctas": sum(1 for n in n_parts.values() if n > 1),
+        "part_edges": {"rook": sum(1 for e in by_part["edges"] if e[4] == "rook"),
+                       "connector": sum(1 for e in by_part["edges"] if e[4] == "connector")},
         "county_road_counties": sorted(near),
         "islands": islands,
         "islands_without_a_connector": [i["zctas"] for i in islands if not i["connectors"]],
@@ -969,6 +1036,10 @@ def polygon_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print)
     pd.DataFrame(sorted(connectors, key=lambda r: (r["a"], r["b"], r["crossing"])),
                  columns=list(CONNECTOR_COLUMNS)).to_csv(os.path.join(out, CONNECTORS), index=False,
                                                          lineterminator="\n")
+    _write_csv(pd.DataFrame(by_part["parts"], columns=["zcta", "part", "area_m2"]).round(
+        {"area_m2": 0}), os.path.join(out, ZCTA_PARTS))
+    _write_csv(pd.DataFrame(by_part["edges"], columns=["a", "a_part", "b", "b_part", "kind"]),
+               os.path.join(out, PART_EDGES))
     _write_json(report, os.path.join(out, POLYGON_REPORT))
     return report
 
@@ -995,7 +1066,8 @@ def main(argv=None) -> int:
         print(f"geo: polygon graph {r['vertices']} vertices, {r['edges']} edges, "
               f"{r['corner_only_pairs']} corner-only pairs, {r['components']} components; "
               f"{r['connectors']['rows']} connectors, "
-              f"{len(r['islands_without_a_connector'])} islands without one")
+              f"{len(r['islands_without_a_connector'])} islands without one; "
+              f"{r['components_with_approved_connectors']} components with the approved ones")
         return 0
     report = build(a.public, a.out, log=lambda m: print(m, flush=True))
     g = report["graph"]

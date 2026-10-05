@@ -4,7 +4,7 @@
 
 `score(run_dir)` returns the dict without printing (the interface #92's tools load by path):
 `eligible`, `splits`, `thin_links`, `small_pieces`, `crowded_states`, `contiguity_pieces`,
-`contiguity_weight`, `defects`, `largest_piece_tau`, `largest_extent_km`, `states_per_district`,
+`contiguity_weight`, `defects`, `largest_piece_tau`, `multipart_pieces`, `largest_extent_km`, `states_per_district`,
 `worst_dev`, `mean_dev` (fractions), and details.  `rank(scores)` orders runs by the keys and sets
 `review`.
 
@@ -44,6 +44,10 @@ Rank keys, compared in order, fewest or smallest first:
      `contiguity_pieces` counts them and `largest_piece_tau` is the heaviest, both "after display
      fill" (owner, 2026-10-05: the plan's pieces, not the unowned blanks).  The audit's own
      piece count (`audit_pieces`, from `scorecard.md`) is printed for reference;
+   - multipart pieces, listed and counted (`multipart_pieces`) but not in the sum: a separate
+     piece of a district's drawn union that only a multipart ZCTA makes is a visual defect, not
+     an M1 failure (owner, 2026-10-05, #108).  Most are islets of coastal ZCTAs, drawn apart
+     whatever the plan, so the count barely tells two maps apart;
 3. **shape**: largest_extent_km (the longest distance between two ZIP points one district holds,
    km, as #81's `measure.extent_km`), then states_per_district, the most states one district
    holds positive mass in;
@@ -87,11 +91,16 @@ BAND_CHECK = "final bands on drawn mass"
 
 class Geography:
     """The 2025 reference: `state` {zip: state}, `xy` {zip: (x, y) km}, `edge` {zip: {zip: border
-    km}} over the ZIP graph's edges, and `polygon`, M1's graph (`td.geo.polygon_graph`), or None."""
+    km}} over the ZIP graph's edges, `polygon`, M1's graph (`td.geo.polygon_graph`), or None, and
+    `parts`, the polygon parts: `{"area": {zip: [m2 per part]}, "edges": [(a, a_part, b, b_part,
+    kind)]}` (`td.geo.part_edges`), or None."""
 
-    def __init__(self, state: dict, xy: dict, edge: dict, polygon: dict | None = None):
+    def __init__(self, state: dict, xy: dict, edge: dict, polygon: dict | None = None,
+                 parts: dict | None = None):
         self.state, self.xy, self.edge, self.polygon = state, xy, edge, polygon
         self.polygon_adj = audit.adjacency(polygon) if polygon is not None else None
+        self.parts = parts
+        self.part_adj = part_adjacency(polygon, parts) if polygon and parts else None
 
     @classmethod
     def load(cls, ref_dir: str = geo.REFERENCE_DIR) -> "Geography":
@@ -105,7 +114,53 @@ class Geography:
                 b = float(r["border_m"] or 0) / 1000.0
                 edge[r["a"]][r["b"]] = b
                 edge[r["b"]][r["a"]] = b
-        return cls(state, xy, edge, geo.polygon_graph(ref_dir))
+        parts = None
+        if os.path.exists(os.path.join(ref_dir, geo.ZCTA_PARTS)):
+            area = collections.defaultdict(list)
+            for z, a in zip(*geo.read_reference(ref_dir, geo.ZCTA_PARTS)[["zcta", "area_m2"]].T.values):
+                area[z].append(float(a))
+            pe = geo.read_reference(ref_dir, geo.PART_EDGES)
+            parts = {"area": dict(area), "edges": [(a, int(i), b, int(j), k) for a, i, b, j, k in
+                                                   pe[["a", "a_part", "b", "b_part", "kind"]].values]}
+        return cls(state, xy, edge, geo.polygon_graph(ref_dir), parts)
+
+
+def part_adjacency(polygon: dict, parts: dict) -> dict:
+    """{(zip, part): set of (zip, part)}: the polygon graph at part level.  An edge between two
+    single-part ZCTAs joins their part 0; one with a multipart end joins the part pairs `parts`
+    lists for it, its `connector` rows only when the pair is an edge of `polygon` (approved)."""
+    n = {z: len(a) for z, a in parts["area"].items()}
+    adj = {(z, k): set() for z in polygon["vertices"] for k in range(n.get(z, 1))}
+    pairs = {tuple(sorted(e[:2])) for e in polygon["edges"]}
+    listed = set()
+    for a, i, b, j, kind in parts["edges"]:
+        if (a, b) in pairs and (a, i) in adj and (b, j) in adj:
+            adj[a, i].add((b, j))
+            adj[b, j].add((a, i))
+            listed.add((a, b))
+    for a, b in pairs - listed:
+        if n.get(a, 1) == 1 and n.get(b, 1) == 1 and (a, 0) in adj and (b, 0) in adj:
+            adj[a, 0].add((b, 0))
+            adj[b, 0].add((a, 0))
+    return adj
+
+
+def multipart_pieces(owner: dict, g: Geography) -> list:
+    """[(district, ZIPs, km2)]: each separate piece of a district's drawn union that only a
+    multipart ZCTA makes (owner, 2026-10-05): within each component of the district's ZIPs on the
+    polygon graph, the components of their parts on `g.part_adj` beyond the largest by area."""
+    out = []
+    for d, comps in audit.district_pieces(owner, g.polygon_adj, {}).items():
+        for comp in comps:
+            if all(len(g.parts["area"].get(z, (0,))) == 1 for z in comp):
+                continue
+            nodes = {(z, k) for z in comp for k in range(len(g.parts["area"].get(z, (0,))))}
+            got = audit._components(nodes, g.part_adj)
+            area = [(math.fsum(g.parts["area"][z][k] for z, k in c), c) for c in got]
+            area.sort(key=lambda ac: (-ac[0], min(ac[1])))
+            out += [(d, "+".join(sorted({z for z, _ in c})), round(a / 1e6, 3)) for a, c in area[1:]]
+    return out
+
 
 
 def extent_km(points: list) -> float:
@@ -167,7 +222,7 @@ def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
     filled = collections.defaultdict(lambda: collections.defaultdict(set))
     for z, d in display_fill(own, g).items():
         filled[d][g.state[z]].add(z)
-    thin, pieces = [], []
+    thin, pieces, multipart = [], [], None
     if g.polygon_adj is not None:
         zip_mass = collections.Counter()
         for r in ledger:
@@ -177,6 +232,8 @@ def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
         for d, comps in audit.district_pieces(owner, g.polygon_adj, zip_mass).items():
             pieces += [(d, len(c), round(math.fsum(zip_mass[z] for z in c) / tau, 4),
                         "+".join(sorted({g.state.get(z, "?") for z in c}))) for c in comps[1:]]
+        if g.part_adj is not None:
+            multipart = multipart_pieces(owner, g)
     for d in sorted(filled):
         bys = filled[d]
         states = [s for s in sorted(bys) if mass[d][s] > 0]
@@ -190,7 +247,7 @@ def channel_looks(ch: str, ledger: list, districts: list, g: Geography) -> dict:
     extent = max(extent_km([g.xy[z] for zs in bys.values() for z in zs if z in g.xy])
                  for bys in held.values())
     return {"k": len(rows), "tau": tau, "deviation": dev, "split": split, "small": small,
-            "crowded": crowded, "thin": thin,
+            "crowded": crowded, "thin": thin, "multipart": multipart,
             "pieces": None if g.polygon_adj is None else sorted(pieces, key=lambda p: (-p[2], p)),
             "extent_km": extent,
             "max_states": max(len([s for s in c if c[s] > 0]) for c in mass.values())}
@@ -324,6 +381,8 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
         "distinct": sorted({s for c in chans.values() for s in c["split"]}),
         "defects": round(math.fsum(defects.values()), 4), **defects,
         "contiguity_pieces": len(pieces),
+        "multipart_pieces": None if any(c["multipart"] is None for c in chans.values())
+        else sum(len(c["multipart"]) for c in chans.values()),
         "largest_piece_tau": max((p[2] for p in pieces), default=0.0),
         "audit_pieces": audit_pieces(sc),
         "largest_extent_km": max(c["extent_km"] for c in chans.values()),
@@ -359,7 +418,8 @@ def verdict(s: dict) -> str:
     return (f"{s['run']}: {head}{review} | {s['splits']} splits ({len(s['distinct'])} states) | "
             f"{s['defects']:g} defects (thin {s['thin_links']}, small {s['small_pieces']}, crowded "
             f"{s['crowded_states']}, pieces {s['contiguity_pieces']} weighing {s['contiguity_weight']:g}, "
-            f"largest {s['largest_piece_tau']:.3g} τ after display fill) | extent {s['largest_extent_km']:,.0f} km, "
+            f"largest {s['largest_piece_tau']:.3g} τ after display fill; multipart pieces "
+            f"{s['multipart_pieces']}, listed only) | extent {s['largest_extent_km']:,.0f} km, "
             f"{s['states_per_district']} states | worst {100 * s['worst_dev']:.1f}%, mean {100 * s['mean_dev']:.1f}%")
 
 
@@ -384,11 +444,14 @@ def report(s: dict) -> str:
             largest.setdefault(d, (d, n, f, st))
         lines += [f"    largest detached piece {d}: {n} ZIPs in {st}, {f:.3f} tau (after display fill)"
                   for d, n, f, st in sorted(largest.values(), key=lambda p: (-p[2], p[0]))]
+        lines += [f"    multipart piece {d}: part of {zs}, {km2:,.3f} km2 (visual defect, not M1)"
+                  for d, zs, km2 in c["multipart"] or ()]
     lines += [f"channel-state splits: {s['splits']}: {' '.join(s['split_list'])}",
               f"distinct split states: {len(s['distinct'])}: {' '.join(s['distinct'])}",
               f"defects: {s['defects']:g} = thin {s['thin_links']} + small {s['small_pieces']} + crowded "
               f"{s['crowded_states']} + pieces {s['contiguity_weight']:g} ({s['contiguity_pieces']} pieces "
               f"weighing 1 + mass/tau each, after display fill; audit's piece count {s['audit_pieces']})",
+              f"multipart pieces: {s['multipart_pieces']} (listed, not in the defects sum)",
               f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger)",
               f"shape: extent {s['largest_extent_km']:,.1f} km, {s['states_per_district']} states per district",
               f"balance: worst {100 * s['worst_dev']:.2f}%, mean {100 * s['mean_dev']:.2f}%",

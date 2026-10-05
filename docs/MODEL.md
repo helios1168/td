@@ -657,7 +657,9 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   ZCTA has an owner. **A detached piece fails the map**, and so does a ZCTA with no owner; no
   tolerance, and listing a piece is not enough. Each piece is listed with its ZIP count, its mass
   over τ_c and its cause. A run without the polygon graph leaves M1 unverified, never passed;
-  a run on the extract always has it. The looks scorer makes an M1 failure ineligible;
+  a run on the extract always has it. The looks scorer makes an M1 failure ineligible. A
+  multipart ZCTA is one vertex; a drawn piece only it makes is a looks defect, not an M1
+  failure (owner, 2026-10-05);
 - mode compliance, with the metro exceptions listed (S14);
 - the geography manifest is all 2025 (S17);
 - the solver's status, bound and gap;

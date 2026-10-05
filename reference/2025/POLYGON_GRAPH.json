@@ -209,12 +209,24 @@
   1
  ],
  "connectors": {
-  "rows": 159,
+  "rows": 163,
   "tunnel": 8,
   "ferry": 22,
   "bridge": 52,
   "road": 77,
-  "approved": 0
+  "nearest": 4,
+  "proposed": 0,
+  "approved": 163,
+  "rejected": 0
+ },
+ "components_with_approved_connectors": 1,
+ "component_sizes_with_approved_connectors": [
+  33300
+ ],
+ "multipart_zctas": 1429,
+ "part_edges": {
+  "rook": 10583,
+  "connector": 31
  },
  "county_road_counties": [
   "04012",
@@ -552,7 +564,8 @@
     "NY"
    ],
    "connectors": 11,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 2,
@@ -575,7 +588,8 @@
     "NY"
    ],
    "connectors": 7,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 3,
@@ -592,7 +606,8 @@
     "UT"
    ],
    "connectors": 7,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 4,
@@ -607,7 +622,8 @@
     "MA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 5,
@@ -622,7 +638,8 @@
     "NV"
    ],
    "connectors": 9,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 6,
@@ -636,7 +653,8 @@
     "OR"
    ],
    "connectors": 4,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 7,
@@ -649,7 +667,8 @@
     "MA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 8,
@@ -661,7 +680,8 @@
     "ME"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 9,
@@ -673,7 +693,8 @@
     "NC"
    ],
    "connectors": 4,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 10,
@@ -685,7 +706,8 @@
     "UT"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 11,
@@ -697,7 +719,8 @@
     "NV"
    ],
    "connectors": 4,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 12,
@@ -709,7 +732,8 @@
     "NV"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 13,
@@ -721,7 +745,8 @@
     "OR"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 14,
@@ -732,7 +757,8 @@
     "RI"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 15,
@@ -743,7 +769,8 @@
     "RI"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 16,
@@ -754,7 +781,8 @@
     "RI"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 17,
@@ -765,7 +793,8 @@
     "ME"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 18,
@@ -776,7 +805,8 @@
     "ME"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 19,
@@ -787,7 +817,8 @@
     "ME"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 20,
@@ -798,7 +829,8 @@
     "NY"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 21,
@@ -809,7 +841,8 @@
     "NY"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 22,
@@ -820,7 +853,8 @@
     "NY"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 23,
@@ -831,7 +865,8 @@
     "MD"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 24,
@@ -842,7 +877,8 @@
     "MD"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 25,
@@ -853,7 +889,8 @@
     "VA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 26,
@@ -864,7 +901,8 @@
     "GA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 27,
@@ -874,8 +912,9 @@
    "states": [
     "OH"
    ],
-   "connectors": 0,
-   "joined_to_main_by_proposals": false
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 28,
@@ -886,7 +925,8 @@
     "OH"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 29,
@@ -896,8 +936,9 @@
    "states": [
     "OH"
    ],
-   "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "connectors": 2,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 30,
@@ -908,7 +949,8 @@
     "OH"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 31,
@@ -919,7 +961,8 @@
     "MI"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 32,
@@ -930,7 +973,8 @@
     "WI"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 33,
@@ -941,7 +985,8 @@
     "WI"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 34,
@@ -952,7 +997,8 @@
     "TX"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 35,
@@ -963,7 +1009,8 @@
     "TX"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 36,
@@ -974,7 +1021,8 @@
     "WY"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 37,
@@ -985,7 +1033,8 @@
     "WY"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 38,
@@ -996,7 +1045,8 @@
     "WY"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 39,
@@ -1007,7 +1057,8 @@
     "WY"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 40,
@@ -1018,7 +1069,8 @@
     "WY"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 41,
@@ -1029,7 +1081,8 @@
     "WY"
    ],
    "connectors": 4,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 42,
@@ -1040,7 +1093,8 @@
     "WY"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 43,
@@ -1051,7 +1105,8 @@
     "ID"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 44,
@@ -1062,7 +1117,8 @@
     "UT"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 45,
@@ -1073,7 +1129,8 @@
     "UT"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 46,
@@ -1084,7 +1141,8 @@
     "UT"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 47,
@@ -1095,7 +1153,8 @@
     "NV"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 48,
@@ -1106,7 +1165,8 @@
     "NV"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 49,
@@ -1117,7 +1177,8 @@
     "NV"
    ],
    "connectors": 8,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 50,
@@ -1128,7 +1189,8 @@
     "NV"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 51,
@@ -1139,7 +1201,8 @@
     "NV"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 52,
@@ -1150,7 +1213,8 @@
     "NV"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 53,
@@ -1161,7 +1225,8 @@
     "NV"
    ],
    "connectors": 4,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 54,
@@ -1172,7 +1237,8 @@
     "NV"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 55,
@@ -1183,7 +1249,8 @@
     "NV"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 56,
@@ -1194,7 +1261,8 @@
     "CA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 57,
@@ -1205,7 +1273,8 @@
     "CA"
    ],
    "connectors": 3,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 58,
@@ -1216,7 +1285,8 @@
     "CA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 59,
@@ -1227,7 +1297,8 @@
     "CA"
    ],
    "connectors": 1,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 60,
@@ -1238,7 +1309,8 @@
     "CA"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 61,
@@ -1249,7 +1321,8 @@
     "CA"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 62,
@@ -1260,7 +1333,8 @@
     "WA"
    ],
    "connectors": 2,
-   "joined_to_main_by_proposals": true
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 63,
@@ -1270,8 +1344,9 @@
    "states": [
     "WA"
    ],
-   "connectors": 0,
-   "joined_to_main_by_proposals": false
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 64,
@@ -1281,8 +1356,9 @@
    "states": [
     "WA"
    ],
-   "connectors": 0,
-   "joined_to_main_by_proposals": false
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   },
   {
    "component": 65,
@@ -1292,22 +1368,10 @@
    "states": [
     "WA"
    ],
-   "connectors": 0,
-   "joined_to_main_by_proposals": false
+   "connectors": 1,
+   "joined_to_main_by_any_row": true,
+   "joined_to_main_by_approved": true
   }
  ],
- "islands_without_a_connector": [
-  [
-   "43436"
-  ],
-  [
-   "98281"
-  ],
-  [
-   "98297"
-  ],
-  [
-   "98353"
-  ]
- ]
+ "islands_without_a_connector": []
 }

@@ -219,6 +219,10 @@ def test_a_multipart_zcta_is_one_vertex_adjacent_through_any_part():
     m = shapely.MultiPolygon([_square(0, 0, 10, 10), _square(30, 0, 40, 10)])
     got = geo.polygon_edges(["m", "n", "o"], [m, _square(40, 0, 50, 10), _square(10, 10, 20, 20)])
     assert got["edges"] == [("m", "n", 10.0)] and got["corner_only"] == [("m", "o")]
+    by_part = geo.part_edges(["m", "n", "o"], [m, _square(40, 0, 50, 10), _square(10, 10, 20, 20)],
+                             got["edges"], [{"a": "m", "b": "o", "status": "proposed"}])
+    assert [(z, k) for z, k, _ in by_part["parts"]] == [("m", 0), ("m", 1), ("n", 0), ("o", 0)]
+    assert by_part["edges"] == [("m", 0, "o", 0, "connector"), ("m", 1, "n", 0, "rook")]
 
 
 def _polygon_report():
@@ -253,13 +257,32 @@ def test_connectors_name_their_crossing_and_the_graph_adds_only_approved_ones():
     rows = geo.read_connectors()
     ref = geo.read_reference()
     vertices = set(ref.loc[ref["graph_vertex"] == "1", "zcta"])
-    assert rows and all(r["crossing"] and r["kind"] in ("bridge", "tunnel", "road", "ferry")
+    # kind `nearest`: the owner joined four islands with no crossing to their nearest ZCTA
+    # (owner, 2026-10-05, #108)
+    assert geo.CONNECTOR_KINDS == ("bridge", "tunnel", "road", "ferry", "nearest")
+    assert rows and all(r["crossing"] and r["kind"] in geo.CONNECTOR_KINDS
                         and {r["a"], r["b"]} <= vertices and r["a"] < r["b"] for r in rows)
     assert {r["status"] for r in rows} <= set(geo.CONNECTOR_STATUSES)
     g = geo.polygon_graph()
     approved = {(r["a"], r["b"]) for r in rows if r["status"] == "approved"}
     polygon = set(map(tuple, geo.read_reference(name=geo.POLYGON_EDGES)[["a", "b"]].values))
     assert set(g["edges"]) == polygon | approved
-    flipped = [dict(r, status="approved") if i == 0 else r for i, r in enumerate(rows)]
-    assert set(geo.polygon_graph(connectors=flipped)["edges"]) == polygon | approved | {
+    held = [dict(r, status="proposed") if i == 0 else r for i, r in enumerate(rows)]
+    assert set(geo.polygon_graph(connectors=held)["edges"]) == polygon | approved - {
         (rows[0]["a"], rows[0]["b"])}
+
+
+def test_the_owners_connector_review_joins_every_island():
+    """Owner, 2026-10-05 (#108): every row approved, each island with no crossing joined to its
+    nearest ZCTA; the polygon graph plus the approved connectors is one component."""
+    rows = geo.read_connectors()
+    rep = _polygon_report()
+    assert {r["status"] for r in rows} == {"approved"} and rep["connectors"]["approved"] == len(rows)
+    nearest = {(r["a"], r["b"]) for r in rows if r["kind"] == "nearest"}
+    assert nearest == {("43436", "43446"), ("98230", "98281"), ("98245", "98297"), ("98353", "98366")}
+    assert all(r["source"] == "owner 2026-10-05 (#108): nearest ZCTA" for r in rows
+               if r["kind"] == "nearest")
+    assert rep["islands_without_a_connector"] == [] and rep["components_with_approved_connectors"] == 1
+    assert all(i["joined_to_main_by_approved"] for i in rep["islands"])
+    g = geo.polygon_graph()
+    assert len(geo.components(g["vertices"], g["edges"])) == 1

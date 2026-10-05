@@ -32,7 +32,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `docs/RESULTS.md` | measured results, aggregates only: the tagged catalog's scorecard |
 | `docs/RUN_WALKTHROUGH.md` | a plain-English walkthrough of `python -m td run` on the 51 scenario, and why it stopped at ±10% |
 | `td/geo.py`, `reference/2025/` | the 2025 geography: the ZCTA reference table, its overlays, the ZIP graph and the source MANIFEST (#62) |
-| `reference/2025/zcta_polygon_edges.csv.gz`, `zcta_polygon_vs_voronoi.csv.gz`, `connectors.csv`, `POLYGON_GRAPH.json` | M1's polygon graph (#108): rook adjacency of the TIGER 2025 ZCTA polygons over the shipped vertices, its edges added to and dropped from the Voronoi graph, the connector list (each row `proposed` until the owner approves it), and its manifest and report; `python -m td geo --polygon --public $TD_REPO/data/public` builds them |
+| `reference/2025/zcta_polygon_edges.csv.gz`, `zcta_polygon_vs_voronoi.csv.gz`, `connectors.csv`, `zcta_parts.csv.gz`, `zcta_part_edges.csv.gz`, `POLYGON_GRAPH.json` | M1's polygon graph (#108): rook adjacency of the TIGER 2025 ZCTA polygons over the shipped vertices, its edges added to and dropped from the Voronoi graph, the connector list (all approved by the owner on 2026-10-05; a rebuild keeps the owner's statuses and rows), the polygon parts and part-level edges the scorer uses for multipart pieces, and its manifest and report; `python -m td geo --polygon --public $TD_REPO/data/public` builds them |
 | `tests/test_geo.py` | the reference table, the manifest's 2025-only rule and the graph's explicit vertex set |
 | `td/spec.py`, `scenarios/` | a TOML scenario: channels, domains, units, pieces and modes; the partition and ZIP-connectivity checks (#67) |
 | `td/supports.py` | the closed support family and its drawability terms: corridor floor, border cap, rounding margin (#67) |
@@ -51,7 +51,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tools/exp/split_floor.py` | #94's split floor: per layout (no combined channel, NE, NE + plains) and IFA, each channel's forced splits and connected-parts floor at every K the $ rule allows (IFA's on the whole extract's $62.14B); arithmetic, no solve |
 | `tests/test_split_floor.py` | #94's split floor on toys: forced splits by hand, the parts floor against brute force, the $-rule K range, the layouts as scenarios |
 | `tests/test_exp81_hess.py`, `tests/test_exp81_measure.py`, `tests/test_exp81_sidebyside.py` | #81's experiment code on toys: the Hess loop against brute force, the measures by hand, the map legend |
-| `tools/looks/score.py` | the looks scorer (#93): `score(run_dir)` gives a drawn run's eligibility (audit at ±15%, $ per district, main K, M1) and rank keys (channel-state splits, visual defects with polygon-graph pieces weighing 1 + mass/τ, shape, balance); the CLI ranks run folders and flags `REVIEW` |
+| `tools/looks/score.py` | the looks scorer (#93): `score(run_dir)` gives a drawn run's eligibility (audit at ±15%, $ per district, main K, M1) and rank keys (channel-state splits, visual defects with polygon-graph pieces weighing 1 + mass/τ and multipart-only drawn pieces listed, shape, balance); the CLI ranks run folders and flags `REVIEW` |
 | `tests/test_looks_score.py` | the looks scorer on toys: the display fill, each defect, the $ and K rules, `REVIEW` |
 
 ## Run

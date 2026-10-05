@@ -45,17 +45,21 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   other; two ZCTAs are adjacent through a shared positive-length boundary of any of their parts.
   A separate piece on a district's drawn union that only a multipart ZCTA makes is a visual
   defect for the scorer to list, not an M1 failure.
+  Connector review (owner, 2026-10-05, #108): every row of `reference/2025/connectors.csv` is
+  approved: 52 bridges, 8 tunnels and 22 ferries as listed, and 77 roads across land in no
+  ZCTA ("land gaps count when crossed by a named road"); the four islands with no road or
+  scheduled ferry (43436, 98281, 98297, 98353) each join their nearest ZCTA by an owner row of
+  kind `nearest`. With them the polygon graph is one component.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by
   `tests/test_mandates.py::test_m1_fails_each_broken_fixture_and_passes_the_connected_one` on the
   broken fixtures in tests/fixtures/m1/.
 - **latest value:** 75 of 75 drawn runs fail (2026-10-05, `tools/mandates/check.py --rescore`,
-  #108). Best map, the scorer's rank 1:
-  `sweep/comb_2026-10-02/stage2/ne_okks_forced_balance_na15_WH12_FI20_CB3`, M1 fail, largest
-  detached piece 0.385 τ (WH/WH_07, 857 ZIPs in MI) after display fill; strictly on the ledger 2726
-  detached pieces and 123242 channel ZCTAs with no owner. Smallest largest piece across runs: 0.297
-  τ (WH/WH_05, 288 ZIPs in CT), `sweep/must_2026-10-01/stage2/R_na16b8_WH12_FI24_TN+NC_b10_e15`.
+  #108). Best map, the scorer's rank 1: `sweep/must_2026-10-01/stage2/A_fi1600_v1_na16_WH13_FI24`,
+  M1 fail, largest detached piece 0.272 τ (national/national_08, 908 ZIPs in CT+MA+RI) after display
+  fill; strictly on the ledger 2924 detached pieces and 89675 channel ZCTAs with no owner. Smallest
+  largest piece across runs: 0.252 τ (national/national_10, 545 ZIPs in DE+MD), `exp81/hess`.
 - **waiver history:**
   - 2026-09-01, set aside "for simplicity" (`d50bd42`) as the PROBLEM.md row "Adjacency
     contiguity is not required | settled | 2026-09-01 | user | 547 components. Reopenable only
