@@ -74,8 +74,9 @@ def test_a_support_joined_only_by_a_corner_or_an_unapproved_crossing_is_not_in_t
 def test_the_51_plans_on_the_committed_polygon_graph():
     """The default instance is on `geo.polygon_graph()`: its unit graph is that graph's, so the
     Voronoi graph's water contacts with no approved connector (NY-RI across Block Island Sound,
-    IL-MI across Lake Michigan) and the Four Corners touch (AZ-CO) are no supports; the seven
-    states the polygon graph does not connect within are reported, not stopped on."""
+    IL-MI across Lake Michigan) and the Four Corners touch (AZ-CO) are no supports; with #114's
+    16 connectors approved (owner, 2026-10-05) every state is connected within, and DE-NJ and
+    IL-KY are contacts again."""
     s = spec.load(ts.S51)
     inst = spec.build(s, ts._all_conus(s), ts._reference())
     g = geo.polygon_graph()
@@ -87,17 +88,21 @@ def test_the_51_plans_on_the_committed_polygon_graph():
     for pair in (("NY", "RI"), ("IL", "MI"), ("AZ", "CO")):
         assert pair not in pairs and frozenset(pair) not in nat, pair
     assert frozenset(["NY", "NJ"]) in nat
-    assert sorted(inst.report["disconnected"]) == ["CA", "NV", "NY", "TN", "UT", "VA", "WY"]
-    assert inst.report["disconnected_whole"] == ["NV", "TN", "UT", "WY"]
+    assert ("DE", "NJ") in pairs and ("IL", "KY") in pairs
+    assert not inst.report["disconnected"] and not inst.report["disconnected_whole"]
 
 
-def test_the_connectors_114_proposed_add_no_edge_and_one_joins_each_detached_group():
+def test_the_connectors_114_proposed_join_each_detached_group_once_approved():
     """In-state rows: one per detached group.  State-line rows: the DE-NJ and IL-KY crossings
-    TIGER/Line names only by route (`geo.pair_connectors`); none was found for KY-MO."""
+    TIGER/Line names only by route (`geo.pair_connectors`); none was found for KY-MO.  The owner
+    approved all 16 (2026-10-05, "Approve all 16"); held back, they add no edge."""
     rows = [r for r in geo.read_connectors() if r["source"] == geo.STATE_PROPOSAL]
-    g = geo.polygon_graph()
-    assert {r["status"] for r in rows} == {"proposed"}
+    assert len(rows) == 16 and {r["status"] for r in rows} == {"approved"}
+    held = [dict(r, status="proposed") if r["source"] == geo.STATE_PROPOSAL else r
+            for r in geo.read_connectors()]
+    g = geo.polygon_graph(connectors=held)
     assert not {(r["a"], r["b"]) for r in rows} & set(g["edges"])
+    assert not geo.state_groups(*(geo.polygon_graph()[k] for k in ("vertices", "edges", "state")))
     groups = geo.state_groups(g["vertices"], g["edges"], g["state"])
     assert sorted(groups) == ["CA", "NV", "NY", "TN", "UT", "VA", "WY"]
     inside = [r for r in rows if g["state"][r["a"]] == g["state"][r["b"]]]
@@ -109,10 +114,7 @@ def test_the_connectors_114_proposed_add_no_edge_and_one_joins_each_detached_gro
     assert across == [("KY", "IL", "I- 24"), ("KY", "IL", "Paducah-Brookport Rd / US Hwy 45"),
                       ("KY", "IL", "State Hwy 56"), ("KY", "IL", "US Hwy 51 / US Hwy 62 / US Hwy 60"),
                       ("NJ", "DE", "I- 295 / US Hwy 40")]
-    approved = [dict(r, status="approved") if r["source"] == geo.STATE_PROPOSAL else r
-                for r in geo.read_connectors()]
-    assert set(geo.polygon_graph(connectors=approved)["edges"]) == set(g["edges"]) | {
-        (r["a"], r["b"]) for r in rows}
+    assert set(geo.polygon_graph()["edges"]) == set(g["edges"]) | {(r["a"], r["b"]) for r in rows}
 
 
 def test_pair_crossings_name_a_road_across_the_state_line_whatever_its_name():
