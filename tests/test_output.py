@@ -401,6 +401,21 @@ def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has
     assert res.verdict == "pass", [(c.name, c.items[:3]) for c in res.checks if c.status == "fail"]
 
 
+def test_run_json_records_the_margin_per_channel():
+    """#84: X turns the margin off and Y keeps the default; run.json says so per channel.  g gets
+    f's masses, so Y is planned rather than dropped."""
+    extract, graph = _toy_inputs()
+    m = [MASS[z] for z in extract.z]
+    both = data.Extract(extract.channels, extract.z, extract.channel, m, extract.share,
+                        extract.share_free)
+    out = tempfile.mkdtemp(prefix="td-output-")
+    os.rmdir(out)
+    res = output.run(_toy_spec(margin=False), both, out, graph, ts._reference(), maps=False)
+    report = json.load(open(res.paths["run"], encoding="utf-8"))["channels"]
+    assert {c: r["margin"] for c, r in report.items()} == {"X": False, "Y": True}
+    shutil.rmtree(out)
+
+
 # ------------------------------------------------------------------------------ pieces
 def test_pieces_come_from_the_ledger_and_the_scorecard_run_json_and_districts_csv_agree():
     """NY's middle ZIPs have no cell in channel X: the map's district holds them at zero mass as

@@ -372,3 +372,22 @@ def test_margin_sums_the_heaviest_zip_of_splittable_units():
     assert supports.margin(inst, "X", ["AL", "AR", "AZ"]) == 8.0
     assert supports.margin(inst, "X", ["AZ"]) == 0.0
     assert supports.diameter(inst, ["AL"]) == 0.0
+
+
+def test_margin_false_zeroes_mu_for_that_channel_only():
+    """#84: X with `margin = false` has μ_S = 0; Y, on the same units and modes, keeps it."""
+    one = {"k": 2, "eta": 0.1, "max_dist_km": 1e9, "free": ["AL"], "clipped": ["AR"]}
+    raw = {"scenario": {"name": "toy", "fine_channels": ["f", "g"]},
+           "channels": {"X": {**one, "domain": [{"units": "all", "fine": ["f"]}], "margin": False},
+                        "Y": {**one, "domain": [{"units": "all", "fine": ["g"]}]}}}
+    unit_zips = {"AL": ["a1", "a2"], "AR": ["b1", "b2"], "AZ": ["c1"]}
+    unit_of = {z: u for u, zs in unit_zips.items() for z in zs}
+    xy = {z: (1000.0 * i, 0.0) for i, z in enumerate(sorted(unit_of))}
+    units = spec.Units.from_graph(unit_of, [("a1", "a2"), ("a2", "b1"), ("b1", "b2"),
+                                            ("b2", "c1")], xy)
+    mass = {"a1": 3.0, "a2": 1.0, "b1": 2.0, "b2": 5.0, "c1": 4.0}
+    inst = spec.assemble(spec.parse(raw), units,
+                         {(z, f): m for z, m in mass.items() for f in ("f", "g")})
+    s = ["AL", "AR", "AZ"]
+    assert supports.margin(inst, "X", s) == 0.0
+    assert supports.margin(inst, "Y", s) == 8.0

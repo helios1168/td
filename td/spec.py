@@ -8,7 +8,8 @@ A scenario file has these tables (`scenarios/*.toml`):
     [national]    channel, fine, units, fallback: which units have national, and where a unit
                   without it sends each national fine channel (owner comment on #67)
     [geography]   pieces = [{name, state, counties}], metros = [cbsa codes]; both optional (S13)
-    [channels.X]  one section per planning channel: k, domain, modes, support parameters, hook
+    [channels.X]  one section per planning channel: k, domain, modes, support parameters, margin,
+                  hook
 
 A unit list is an array of unit and set names, or a string `"a - b - ..."` where each term is
 `all`, a set name or a unit name.  `all` is every unit of the scenario.
@@ -113,6 +114,7 @@ class ChannelSpec:
     listed_only: bool           # the family is only the extras and their connected subsets
     forbid_pairs: frozenset     # frozensets {u, w}: no support holds both
     hook: str | None
+    margin: bool = True         # μ_S in the band rows; false sets μ ≡ 0 (MODEL §4.6, #84)
 
     @property
     def units(self) -> frozenset:
@@ -286,7 +288,7 @@ def _number(value, where: str) -> float:
 def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
     known = {"k", "delta", "final_delta", "eta", "domain", "mode", "whole", "clipped", "free",
              "metro_mode", "max_size", "max_dist_km", "dist_km", "contact_caps",
-             "extra_supports", "supports", "confine", "forbid_pairs", "hook"}
+             "extra_supports", "supports", "confine", "forbid_pairs", "hook", "margin"}
     if set(c) - known:
         raise SpecError(f"channel {name}: unknown keys {_show(sorted(set(c) - known))}")
     k = _integer(c.get("k"), f"channel {name}: k")
@@ -358,8 +360,12 @@ def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
             raise SpecError(f"channel {name}: {u} has a cap but is not in the domain")
     max_size = _integer(c.get("max_size", DEFAULT_MAX_SIZE), f"channel {name}: max_size")
     max_dist = _number(c.get("max_dist_km", DEFAULT_MAX_DIST_KM), f"channel {name}: max_dist_km")
+    margin = c.get("margin", True)
+    if not isinstance(margin, bool):
+        raise SpecError(f"channel {name}: margin must be true or false, not {margin!r}")
     return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode, max_size, max_dist, dist,
-                       caps, tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"))
+                       caps, tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"),
+                       margin)
 
 
 def check_partition(spec: Spec) -> None:
