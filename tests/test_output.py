@@ -646,10 +646,10 @@ def test_the_maps_command_refuses_a_ledger_channel_or_a_maps_dir_that_leaves_the
         assert output.main_maps([run_dir, "--public", _toy_public()]) == 1
     assert "'../../escaped'" in err.getvalue()
     assert sorted(os.listdir(run_dir)) == ["ledger.csv"] and open(sentinel, "rb").read() == b"KEEP"
-    # a valid ledger whose maps directory is a link out of the run: nothing is drawn through it
+    # a valid ledger whose map file is a link out of the run: nothing is drawn through it
     shutil.copy(res.paths["ledger"], os.path.join(run_dir, "ledger.csv"))
     elsewhere = tempfile.mkdtemp(prefix="td-elsewhere-")
-    os.symlink(elsewhere, os.path.join(run_dir, "maps"))
+    os.symlink(os.path.join(elsewhere, "map_X.png"), os.path.join(run_dir, "map_X.png"))
     with contextlib.redirect_stderr(io.StringIO()):
         assert output.main_maps([run_dir, "--public", _toy_public()]) == 1
     assert os.listdir(elsewhere) == []
