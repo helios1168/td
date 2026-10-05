@@ -139,8 +139,10 @@ def latest_value(res: dict) -> str:
     if best:
         text += (f" Best map, the scorer's rank 1: `{best['run']}`, M1 {best['m1']}, largest "
                  f"detached piece {_piece(best['largest'])}; on the ledger {best.get('pieces', 0)} "
-                 f"detached pieces, {best.get('no_owner', 0)} channel ZCTAs with no owner and "
-                 f"{best.get('no_row', 0)} (ZCTA, fine channel) cells with no row.")
+                 f"detached pieces, {best.get('necks', 0)} necks, {best.get('no_owner', 0)} channel "
+                 f"ZCTAs with no owner and {best.get('no_row', 0)} (ZCTA, fine channel) cells with "
+                 "no row.")
+    text += f" Runs with a neck (#121): {sum(1 for r in rows if r.get('necks'))} of {len(rows)}."
     if small:
         text += f" Smallest largest piece across runs: {_piece(small['largest'])}, `{small['run']}`."
     return text
