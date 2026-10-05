@@ -311,8 +311,10 @@ def _admissible(ch, units, piece, k, owner, support) -> bool:
     return not any(ch.mode[u] == "clipped" and any(units.unit_of[z] != u for z in piece) for u in held)
 
 
-def repair(inst, channel: str, owner: dict, support: dict, comp: dict) -> list:
-    """One pass (S23) over the detached pieces found at its start; moves `owner` in place."""
+def repair(inst, channel: str, owner: dict, support: dict, comp: dict | None = None) -> list:
+    """One pass (S23) over the detached pieces found at its start; moves `owner` in place.
+    `comp` is district -> exchange component, by default read off `support`."""
+    comp = swap.support_components(support) if comp is None else comp
     ch, units = inst.channels[channel], inst.units
     (lo, hi), adj, m = ch.final_band, units.zip_adj, ch.m
     mass = collections.Counter({j: sum(m[z] for z in zs) for j, zs in _districts(owner).items()})

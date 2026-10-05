@@ -56,6 +56,11 @@ def components(planned: dict) -> dict:
     return {j: find(j) for j in parent}
 
 
+def support_components(support: dict) -> dict:
+    """`components` with every district planned in every unit of its support."""
+    return components({(v, j): 1.0 for j, units in support.items() for v in units})
+
+
 def worse(tau: float, *masses) -> float:
     """The largest |mass − τ| among `masses`."""
     return max(abs(x - tau) for x in masses)

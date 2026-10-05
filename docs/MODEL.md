@@ -588,9 +588,9 @@ For each splittable unit v with |J_v| ≥ 2:
    - the pass ends: each move lowers the districts' deviations, sorted from the worst,
      lexicographically, and there are finitely many maps.
 
-   A move takes a district's drawn mass away from its plan, toward τ_c, so Claim 3 and Corollary
-   3 bound the map before repair and the swap pass, not after. How close a pair gets is open
-   **[claimed U45]**.
+   The pass optimises deviation from τ_c and ignores the plan: a move can raise or lower the target
+   error Δ_{v,j}, so Claim 3 and Corollary 3 bound the map before repair and the swap pass, not
+   after. How close a pair gets is open **[claimed U45]**.
 
 There is no metro-binding step. A whole metro is its own whole unit, which the realizer never
 touches; an oversized metro is an ordinary splittable unit (§6, OD5). Binding a metro inside a
