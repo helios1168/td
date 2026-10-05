@@ -8,7 +8,8 @@ refuses, a channel with no plan and a realizer stop each end the run with the re
 channel whose declared band is proven infeasible first has its smallest master δ searched and
 written to `solver.json`, and never adopted (OD1, S10).  A failed audit still writes everything
 and exits 1.  A run writes only into a new or empty directory, so no
-output of an earlier run can outlive a stop.
+output of an earlier run can outlive a stop; a caller that tracks the run there (`tools/exp/sweep.py`)
+names the files it wrote first (`keep`).  Every file a run writes is flat in its directory.
 
 **The ledger** (`ledger.csv`, S25, S26) has one row per (ZIP, fine channel) cell of the scoped
 CONUS extract; the cells of fine channels the scenario leaves to other scenarios have no row, and
@@ -35,7 +36,7 @@ count the same pieces.  A piece inside a realizer piece keeps its cause; one ins
 realizer's main component was joined only through ZIPs the ledger has no cell for in the channel
 (`CONNECTOR`).
 
-**Maps** (`maps/<channel>.png`) read only the ledger file: each ZCTA the ledger gives a district is
+**Maps** (`map_<channel>.png`) read only the ledger file: each ZCTA the ledger gives a district is
 its TIGER/Line 2025 ZCTA520 polygon (#52 §5.2), simplified by `SIMPLIFY_M` for the figure and
 filled in its district's color, over TIGER/Line 2025 state outlines when the file is at hand, with
 labels at the principal cities of the channel's `TOP_METROS` largest metros by 2025 population.
@@ -119,10 +120,11 @@ def declared_graph(extract, reference, public: str = geo.PUBLIC_DIR) -> dict:
 
 def run(s, extract, out: str, graph: dict | None = None, reference=None,
         public: str = geo.PUBLIC_DIR, time_limit: float | None = None, maps: bool = True,
-        source: str = "") -> Result:
-    """Spec `s` on `extract` into the run directory `out`, new or empty (module docstring)."""
+        source: str = "", keep=()) -> Result:
+    """Spec `s` on `extract` into the run directory `out`, new or empty but for the files named
+    in `keep` (module docstring)."""
     check_file_names("planning channel", s.channels)
-    check_out(out)
+    check_out(out, keep)
     for c in s.channels:
         if tdspec.hook(s, c) is not None:
             raise RunError(f"channel {c} names a hook, and the run has no place to call one yet")
@@ -183,7 +185,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     elif zcta_file(public) is None:
         report["maps"] = MAPS_SKIPPED
     else:
-        drawn = draw_maps(paths["ledger"], os.path.join(out, "maps"), ref, areas, public, root=out)
+        drawn = draw_maps(paths["ledger"], out, ref, areas, public, root=out)
         paths["maps"] = {c: m["path"] for c, m in drawn.items()}
         report["maps"] = "drawn"
         report["maps_missing_polygons"] = sorted({z for m in drawn.values() for z in m["missing"]})
@@ -247,9 +249,10 @@ def no_plan(channel: str, delta: float, report: dict, found) -> str:
     return f"{head}; smallest master δ unknown {tag}{facts}"
 
 
-def check_out(out: str) -> None:
-    """Stop unless the run directory `out` is new or empty, so no earlier output survives a stop."""
-    if os.path.exists(out) and (not os.path.isdir(out) or os.listdir(out)):
+def check_out(out: str, keep=()) -> None:
+    """Stop unless the run directory `out` is new or holds only files named in `keep`, so no
+    earlier output survives a stop."""
+    if os.path.exists(out) and (not os.path.isdir(out) or set(os.listdir(out)) - set(keep)):
         raise RunError(f"{out} exists and is not an empty directory; pass a fresh --out or remove it")
 
 
@@ -659,7 +662,7 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
         ax.set_title(f"{g['scenario'].iloc[0]}: {c}, {len(districts)} districts")
         ax.legend(handles=handles, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6,
                   frameon=False)
-        out[c] = {"path": inside(root, os.path.join(out_dir, f"{c}.png")), "districts": districts,
+        out[c] = {"path": inside(root, os.path.join(out_dir, f"map_{c}.png")), "districts": districts,
                   "labels": labels, "zctas": len(drawn),
                   "missing": sorted(set(g["zip_code"]) - set(polys))}
         fig.savefig(out[c]["path"], dpi=120, bbox_inches="tight")
@@ -721,8 +724,7 @@ def main_maps(argv=None) -> int:
         print(f"{MAPS_SKIPPED}: no {ZCTA_FILE} in {a.public}", file=sys.stderr)
         return 1
     try:
-        drawn = draw_maps(os.path.join(a.run, "ledger.csv"), os.path.join(a.run, "maps"),
-                          public=a.public, root=a.run)
+        drawn = draw_maps(os.path.join(a.run, "ledger.csv"), a.run, public=a.public, root=a.run)
     except RunError as e:
         print(f"maps stopped: {e}", file=sys.stderr)
         return 1
