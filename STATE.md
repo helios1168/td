@@ -4,14 +4,14 @@
 
 ## Now
 
-M1 (ZIP contiguity) is the goal's first part; no current map meets it. #106 landed (c603d46): `docs/problem/CONTIGUITY.md`, owner-approved; its CU1-CU10 await triage (from U59). #108 gate is on `m5-studio/108` at 27dfa6e (pushed): all 163 connectors approved, polygon graph one component, 288 tests pass; Sol review running (166e841f).
+M1 (ZIP contiguity) is the goal's first part; no current map meets it. #108 gate on `m5-studio/108` (27dfa6e, pushed): Sol blocked it on P1 (exp81 Hess writer skips the M1 audit) and P2 (overlap-only pairs counted as edges); worker fixing (600089e0). #106 landed (c603d46) and triaged (4700e5b): U59–U65, #109/#116 amended, #118 filed. #110 closed: η-free bounding master certifies floors.
 
 ## Next
 
-- Land #108 after the Sol review; then #116 (every CONUS ZCTA owned), #109, #114.
-- Triage CONTIGUITY.md's CU1-CU10 into UNKNOWNS.md and issues (draft, owner approves).
+- Land #108 after the fix and a re-review; then #116, #109, #114, #118 (this session's lanes).
+- contiguity-fast's lanes (owner-agreed 2026-10-05): #115 and #103 under #117. No runs on either side until the owner says run.
 - Wave 1 (#95-#104) held until #109 reports.
 
 ## Blocked
 
-#111 #112 #83 owner decisions (#110 answered: η-free bounding master certifies floors; #117 state-piece contract); swap rule B (#85); #3, #59, #75, #76.
+#111 #112 #83 owner decisions; swap rule B (#85); #3, #59, #75, #76.
