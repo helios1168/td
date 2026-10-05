@@ -41,6 +41,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/test_output.py`, `tests/test_end_to_end.py` | the ledger schema against the tag's `scenarios.csv`, names, maps, and fixture scenarios end to end |
 | `tools/exp81/` | #81's experiment code, not a production planner: `hess.py` the Hess-style ZIP planner, `run_hess.py` its solve and assemble driver, `measure.py` the per-map measures, `sidebyside.py` the side-by-side maps |
 | `scenarios/experiments/` | experiment scenarios; `16n_12wh_24fi_nowifi_mtn1600.toml` is #81's (the 2026-10-01 18-split candidate) |
+| `tools/exp/split_floor.py` | #94's split floor: per layout (no combined channel, NE, NE + plains) and IFA, each channel's forced splits and connected-parts floor at every K the $ rule allows; arithmetic, no solve |
+| `tests/test_split_floor.py` | #94's split floor on toys: forced splits by hand, the parts floor against brute force, the $-rule K range, the layouts as scenarios |
 | `tests/test_exp81_hess.py`, `tests/test_exp81_measure.py`, `tests/test_exp81_sidebyside.py` | #81's experiment code on toys: the Hess loop against brute force, the measures by hand, the map legend |
 
 ## Run
