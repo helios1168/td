@@ -530,6 +530,12 @@ one connector) is defined on M1-passing drawings, and there are none.
 - **s13** gets down to a largest piece of 0.088 τ, against 0.455 τ for the power diagram, but on
   the pre-approval list it fails on the cross-channel exclaves D14 names (06390, 89826, 89832,
   82933–82944), which the approved connectors now join, and on five small NYC pieces.
+- **s13 on the approved connector list** (`runs/exp/contig/s13-arm1-seq/`, sequential arm 1, after
+  the owner's 2026-10-05 ruling): M1 fail with 3 detached pieces, all in national's NY share
+  (11214..., 8 ZCTAs, 0.136 τ; 10302..., 8 ZCTAs, 0.0225 τ; 11701..., 5 ZCTAs, 0.0119 τ), where the
+  NY unit was not drawn (`unknown`) and kept the power diagram's owners. WH, FI and WIFI have no
+  detached piece; FI's OH and PA units were not drawn either and happen to be whole there. Worst
+  deviation 9.4% (national), split units 14, cuts 22, no exclave splits.
 - **Arm 2** (`split`, `move`) did not beat arm 1: allowing a unit's neighbouring districts makes the
   per-unit models larger and slower, and no remedy produced an M1 map.
 
