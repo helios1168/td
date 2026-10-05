@@ -12,28 +12,40 @@ Experimental, not a production realizer.  Per planning channel:
   the districts whose support holds it (allowed, not required: a share may vanish).  An exclave or
   dropped ZCTA may go to any district that holds a share in, or has a body touching, its free
   component (any other owner could not be connected).  `split` also lets a split unit's ZCTAs go
-  to those districts (each extra holder is a split, reported); `move` does the same but keeps each
-  split unit's number of holders at most the plan's.
+  to the districts owning a ZCTA next to the unit (each extra holder is a split, reported); `move`
+  does the same but keeps each split unit's number of holders at most the plan's.  `prune` drops
+  the pairs no drawing in the band can use (a path from the district's body too heavy for it).
 - **Coupled groups.**  Free components that share an allowed district are solved together, one
   MILP per group, over the group's free ZCTAs and its districts' bodies contracted to one vertex
   each.  Variables x_{z,j} (ZCTA z to district j) and y_{v,j} (j owns a ZCTA of unit v); rows:
   each ZCTA one owner, x ≤ y, each district's drawn mass in the internal band [τ(1−δ), τ(1+δ)]
-  (the plan's δ unless a wider one is asked), and with `fixed` targets each (unit, district) mass
+  (the plan's δ unless a wider one is asked), and with `fixed_targets` each (unit, district) mass
   within the unit's heaviest ZCTA of the plan's share (Claim 3's bound).
 - **Connectivity, exactly.**  highspy 1.15.1 never invokes its lazy-constraint callback, so the
   realizer runs a solve-check-cut loop: a ZCTA given to a district must have a neighbour of that
   district (rows up front), and every detached component C of a district's solution adds the
-  separator rows x_{z,j} ≤ Σ_{s ∈ N(C)} x_{s,j} for z ∈ C (rooted at the district's heaviest body;
-  a district with no body uses x_{a,j} + x_{b,j} − Σ_{s ∈ N(C)} x_{s,j} ≤ 1).  Each row holds for
+  separator rows x_{z,j} ≤ Σ_{s ∈ S} x_{s,j} for z ∈ C, for two separators S, the ring around C
+  and the ring around the main component seen from C (rooted at the district's heaviest body; a
+  district with no body uses x_{a,j} + x_{b,j} − Σ_{s ∈ S} x_{s,j} ≤ 1).  Each row holds for
   every connected drawing, so an infeasible step proves that no connected drawing exists under the
   group's rules (a certificate), and a connected optimum of a step is optimal for the group.
+- **The geodesic-DAG restriction first** (CONTIGUITY.md §4 rank 2): with `dag`, a ZCTA of a
+  district needs a neighbour of it nearer the district's bodies along `geodesic`, so every
+  solution is connected to the bodies; its drawing then starts the complete loop above.  Under
+  `dag` an optimum is the restriction's only (`connected`) and an infeasible model proves nothing
+  (`unknown`).  `construct` builds, and after each disconnected step repairs, a connected drawing
+  in the band to start from; it proves nothing either.
 - **Objective**, in the settled order (PROBLEM.md, 2026-10-05): holders per unit first (splits
-  and cuts, weight `SPLIT_WEIGHT` each), then shape, Σ (m_z / m̄ + `AREA_FLOOR`) ‖p_z − c_j‖²,
-  scaled below one split; c_j is `td.realize.centres`' centre of j in the unit.  Balance is held
-  by the band, not optimised.
-- **Status per group**: `optimal` (a connected optimum at `mip_rel_gap = 0`, trap 12),
-  `connected` (connected and feasible, stopped by the time limit), `infeasible` (proved), or
-  `unknown` (the time limit with no connected incumbent; never read as infeasible).
+  and cuts, weight `SPLIT_WEIGHT` each), then shape, Σ (m_z / m̄ + `AREA_FLOOR`) d_j(z)², scaled
+  below one split; d_j is the shortest path in km from j's bodies (or from its ZCTA nearest
+  `td.realize.centres`' centre when it has none) through the ZCTAs it may own.  Balance is held by
+  the band, not optimised.
+- **Status per group**: `optimal` (a connected optimum of the complete model at
+  `mip_rel_gap = 0`, trap 12), `connected` (connected and feasible, not proved optimal),
+  `infeasible` (proved), or `unknown` (a time limit or a restricted model; never infeasible).
+- **Sequential** (`sequential=True`, `_sequential`): one split unit at a time, for groups too
+  large to solve jointly; neither a restriction nor a relaxation of the joint model, so only the
+  audit's M1 judges its maps.
 """
 from __future__ import annotations
 

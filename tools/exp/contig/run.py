@@ -18,13 +18,15 @@ names and `districts.csv`.  A group with no connected drawing keeps `td.realize`
 Arms (#109; what gives way is the owner's, #112, so each remedy is its own run):
 - `arm1`: the master's support fixed, shares recomputed inside the plan's band;
 - `band`: as arm1, a group without a drawing retried at δ = 0.05, 0.10, 0.15 (`WIDER`);
-- `split`: a split unit's ZCTAs may also go to districts next to its free component (each
-  extra holder a split, reported);
+- `split`: a split unit's ZCTAs may also go to the districts owning a ZCTA next to the unit
+  (each extra holder a split, reported);
 - `move`: as `split`, with no more holders per unit than the plan.
-`--delta` starts every group at that internal band instead of the plan's δ.  `--fixed-targets` adds each (unit, district) mass within the unit's heaviest ZCTA of the plan's
-share (the triage's "fixed targets alone", row 15).  `--sequential` draws one split unit at a time
-(`draw._sequential`), a restriction of the joint model for coupled groups too large to solve
-jointly: its connected drawings are real, its failures prove nothing.
+`--delta` starts every group at that internal band instead of the plan's δ.  `--fixed-targets`
+adds each (unit, district) mass within the unit's heaviest ZCTA of the plan's share (the triage's
+"fixed targets alone", row 15).  `--sequential` draws one split unit at a time
+(`draw._sequential`, adjacent units together when one district enters the second only through
+the first), for coupled groups too large to solve jointly: neither a restriction nor a relaxation
+of the joint model, so only the audit's M1 judges its maps, and its failures prove nothing.
 
 `contig.json` holds what #109 reports per channel: each group's size, solve status ("optimal"
 is proved, "connected" is connected and feasible, "infeasible" is proved, "unknown" is the time
