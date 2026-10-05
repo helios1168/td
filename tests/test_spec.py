@@ -395,14 +395,12 @@ def test_the_national_report_moves_and_warns_per_unit():
 
 # ------------------------------------------------------------------------------ on real geography
 def test_the_51_scenario_lists_the_states_the_polygon_graph_disconnects():
-    """On the polygon graph (#114) seven states are not connected within: a whole one is listed
-    in `disconnected_whole`, not stopped on."""
+    """On the polygon graph (#114) seven states were not connected within; with the 16 connectors
+    #114 proposed, approved by the owner 2026-10-05, none is, so nothing is listed.  Without them
+    the seven are listed, and a whole one in `disconnected_whole`, not stopped on."""
     s = spec.load(S51)
     inst = spec.build(s, _all_conus(s), _reference())
-    assert inst.report["disconnected"] == {
-        "CA": [1802, 1], "NV": [175, 3, 1, 1], "NY": [1825, 1], "TN": [637, 1],
-        "UT": [280, 18, 1], "VA": [902, 1], "WY": [170, 4, 2]}
-    assert inst.report["disconnected_whole"] == ["NV", "TN", "UT", "WY"]
+    assert not inst.report["disconnected"] and not inst.report["disconnected_whole"]
     assert inst.report["off_graph"] == [] and inst.dropped_channels == ()
     assert len(inst.units.zips) == 49
     assert set(inst.channels["WIFI"].units) == s.channels["WIFI"].units

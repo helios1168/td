@@ -50,6 +50,17 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   ZCTA ("land gaps count when crossed by a named road"); the four islands with no road or
   scheduled ferry (43436, 98281, 98297, 98353) each join their nearest ZCTA by an owner row of
   kind `nearest`. With them the polygon graph is one component.
+  Second connector review (owner, 2026-10-05, structured pick "Approve all 16", #114): the 16
+  rows #114 proposed are approved: 11 in-state rows, one per group of ZCTAs that reach their
+  own state only through another (NY 06390 and VA 23440 by kind `nearest`; roads for TN 37851,
+  CA 96134, WY, southeast UT and NV), and 5 state-line roads TIGER names only by route (the
+  Delaware Memorial Bridge DE-NJ, I-295/US-40; four Ohio River crossings IL-KY). With them
+  every state is connected on its own ZCTAs. No KY-MO crossing is listed.
+  Coverage (owner, 2026-10-05, structured pick "Yes, footprint coverage"): a planning channel
+  covers every CONUS ZCTA of its own footprint, the units its domains carve, and every
+  (ZCTA, fine channel) cell is owned exactly once across the planning channels. Under the
+  WIFI partition a carved channel does not cover all of CONUS; the goal's "every CONUS ZIP" is
+  met by the channels together.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by

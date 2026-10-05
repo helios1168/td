@@ -209,14 +209,14 @@
   1
  ],
  "connectors": {
-  "rows": 163,
+  "rows": 179,
   "tunnel": 8,
   "ferry": 22,
   "bridge": 52,
-  "road": 77,
-  "nearest": 4,
+  "road": 91,
+  "nearest": 6,
   "proposed": 0,
-  "approved": 163,
+  "approved": 179,
   "rejected": 0
  },
  "components_with_approved_connectors": 1,
