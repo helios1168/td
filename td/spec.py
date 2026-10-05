@@ -468,6 +468,8 @@ class Units:
         centroid = {}
         for u, zs in zips.items():
             w = [1.0 if weight is None else float(weight.get(z, 0.0)) for z in zs]
+            if sum(w) <= 0:         # no land: the weighted ZIPs (the extract's) count equally
+                w = [1.0 if weight is None or z in weight else 0.0 for z in zs]
             if sum(w) <= 0:
                 w = [1.0] * len(zs)
             tot = sum(w)

@@ -143,3 +143,13 @@ def test_state_crossings_name_an_in_state_road_else_the_nearest_zcta_of_the_stat
         ("a1", "a3", "nearest", "a3 to a1: no road across land in no ZCTA within the state; "
                                 "nearest ZCTA of the state", 30.0)]
     assert all(r["status"] == "proposed" and r["source"] == geo.STATE_PROPOSAL for r in got)
+
+
+def test_a_unit_with_no_extract_land_centres_on_its_extract_zips_not_the_zctas_the_extract_lacks():
+    """a1 (in the extract, no land) at 0 km and a2 (not in the extract) at 100 km: AL's centroid
+    stays at a1, as before the unit graph grew to every CONUS ZCTA (review P2, #114)."""
+    xy = {"a1": (0.0, 0.0), "a2": (100 * KM, 0.0), "b1": (200 * KM, 0.0)}
+    units = spec.Units.from_graph({"a1": "AL", "a2": "AL", "b1": "AR"},
+                                  [("a1", "a2"), ("a2", "b1")], xy, {"a1": 0.0, "b1": 1.0})
+    assert units.centroid["AL"] == (0.0, 0.0)
+    assert units.centroid["AR"] == (200.0, 0.0)
