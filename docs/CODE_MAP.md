@@ -19,7 +19,7 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `docs/problem/CONTIGUITY.md` | the contiguity brief for owner review (#106): M1 and the owner's rulings since, the history of contiguity in td with its waivers, the literature applied to td, ranked options and the CU unknowns |
 | `docs/problem/MANDATES.md` | the owner-only register of hard requirements (M1 ZIP contiguity, masking): the owner's words, definition, check, latest value, waiver history and return trigger per row (#107) |
 | `tests/test_mandates.py`, `tests/fixtures/m1/` | the register's rows: every field present, status `hard`, `deferred` or `waived`, checks that exist, and no deferral whose trigger holds; the 2026-09-01 contiguity deferral replayed on the 2026-09-28 graph fails; M1's check fails the broken fixtures (a detached piece, a corner-only touch, an unowned zero-opportunity ZCTA, an unapproved crossing) and passes the connected one |
-| `tools/mandates/check.py` | the M1 run-folder gate (#108): `m1(run_dir)` is `td.audit.check_m1` on a run's ledger with the committed polygon graph and approved connectors, plus each district's largest detached piece after the scorer's display fill; `--rescore <root>` gates every run folder, writes the table and M1's latest value in `docs/problem/MANDATES.md` (its only writer) |
+| `tools/mandates/check.py` | the M1 run-folder gate (#108): `m1(run_dir)` is `td.audit.check_m1` on a run's ledger with the committed polygon graph and approved connectors, plus each district's largest detached piece as the scorer sizes it, on the ledger (#116); `--rescore <root>` gates every run folder, writes the table and M1's latest value in `docs/problem/MANDATES.md` (its only writer) |
 | `docs/lenses/` | one file per lens or council pass, dated, never edited after |
 | `docs/memory/` | facts and decisions; `INDEX.md` is one line per file, written through the `memory-curator` |
 | `data/README.md` | what `data/` holds; nothing else in it is tracked |
@@ -42,6 +42,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/test_master.py` | brute force on toys, decoded bands and shares, drawability rows, exact against bisection |
 | `td/realize.py` | the ZIP realizer: centres, the transport LP, tree rounding, the mode-guarded repair and piece causes (#69) |
 | `tests/test_realize.py` | the #1/#7/#11 regressions, the Claim 3 bound, the forest stop, clipped repair, the C10 star |
+| `td/territory.py` | the territory pass after the realizer (#116): every ZCTA of a channel's footprint owned, the zero-opportunity ones grown on the ZIP graph inside their unit, then state, then across a state, and joined where that lowers the pieces |
+| `tests/test_territory.py` | a zero-opportunity ZCTA joining two pieces of one district, one held across a state line (a split, listed), a dropped unit owned and an unreached ZCTA left detached |
 | `td/output.py`, `td/__main__.py`, `td/hooks.py` | `python -m td run <spec>` and `python -m td maps`: master, realizer, ledger, audit, names, ZCTA polygon maps (#71); `python -m td geo` builds the reference (#62) |
 | `tests/test_output.py`, `tests/test_end_to_end.py` | the ledger schema against the tag's `scenarios.csv`, names, maps, and fixture scenarios end to end |
 | `tools/exp81/` | #81's experiment code, not a production planner: `hess.py` the Hess-style ZIP planner, `run_hess.py` its solve and assemble driver, `measure.py` the per-map measures, `sidebyside.py` the side-by-side maps |

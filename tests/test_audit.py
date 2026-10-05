@@ -91,10 +91,35 @@ def test_m1_fails_a_detached_piece_and_an_unowned_zcta_and_is_unverified_without
     assert m1.items == [f"X/d1: detached piece of 1 ZIPs (c3...), 0.333 τ, cause {audit.M1_CUT}"]
     run = _run()
     run.polygon = dict(run.polygon, vertices=RING + ["z9"], state=dict(UNIT, z9="Z"))
-    m1 = _checks(run)[audit.M1_CHECK]
-    assert _fails(run) == [audit.M1_CHECK] and m1.counts["no_owner"] == 1
-    assert m1.items == ["X: 1 of 11 ZCTAs have no owner", "X: 1 ZCTAs of Z have no owner"]
+    m1 = _checks(run)[audit.M1_CHECK]              # z9 has no row in fine channel f (#116)
+    assert _fails(run) == [audit.M1_CHECK] and m1.counts["no_row"] == 1
+    assert m1.counts["no_owner"] == 0
+    assert m1.items == ["fine channel f: 1 of 11 CONUS ZCTAs have no row",
+                        "fine channel f: 1 ZCTAs of Z have no row"]
     assert _checks(_run(polygon=None))[audit.M1_CHECK].status == "unverified"
+
+
+def test_m1_owns_each_conus_zcta_once_per_fine_channel():
+    """#116: a channel owns the ZCTAs it has rows for, here Y every ZCTA in fine channel g at zero
+    opportunity (`NO_CELL` rows the extract lacks, which `check_cells` takes as territory); the
+    same (ZCTA, fine channel) owned in two channels fails M1, and a `NO_CELL` row with
+    opportunity fails `check_cells`."""
+    clean = _run()
+    territory = [Cell(z, "g", "Y", "e1", 0.0, reason=audit.NO_CELL) for z in RING]
+    kw = dict(cells=clean.cells + territory,
+              channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(1, 0.0, 0.0)},
+              solver=dict(clean.solver, Y=clean.solver["X"]), names=dict(clean.names, e1="Epsilon"))
+    run = _run(**kw)
+    assert _fails(run) == [], {n: c.items for n, c in _checks(run).items() if c.status == "fail"}
+    m1 = _checks(run)[audit.M1_CHECK]
+    assert m1.status == "pass" and (m1.counts["no_owner"], m1.counts["no_row"], m1.counts["double"]) == (0, 0, 0)
+    twice = _run(**dict(kw, cells=kw["cells"] + [Cell("a1", "g", "Z", "z1", 0.0, reason=audit.NO_CELL)],
+                        names=dict(kw["names"], z1="Zeta")))
+    m1 = _checks(twice)[audit.M1_CHECK]
+    assert m1.counts["double"] == 1 and "fine channel g: ZCTA a1 owned in Y, Z" in m1.items
+    assert "cell a1/g: 2 owners" in audit.check_cells(twice).items
+    heavy = _run(**dict(kw, cells=clean.cells + [territory[0]._replace(m=0.5)] + territory[1:]))
+    assert f"cell a1/g: {audit.NO_CELL} with opportunity 0.5" in audit.check_cells(heavy).items
 
 
 def test_planted_phantom_share_fails():
@@ -198,7 +223,8 @@ def test_ledger_cell_outside_the_expected_cells_fails():
     check = audit.check_cells(run)
     assert check.status == "fail"
     assert check.items == ["cell c1/invented: not expected"]
-    assert _fails(run) == ["one owner per cell"]
+    # M1 too (#116): a fine channel of the ledger needs a row at every CONUS ZCTA
+    assert _fails(run) == [audit.M1_CHECK, "one owner per cell"]
 
 
 def test_a_domain_cell_missing_from_the_ledger_fails_by_name():
@@ -387,13 +413,18 @@ def test_dropped_zero_opportunity_cells_are_listed_not_failed():
 
 def test_a_channel_dropped_whole_is_not_counted_against_k():
     clean = _run()
-    run = _run(cells=clean.cells + [Cell("y0", "f", "Y", "", 0.0, reason=audit.DROPPED)],
+    dropped = [Cell(z, "g", "Y", "", 0.0, reason=audit.DROPPED) for z in RING]
+    run = _run(cells=clean.cells + dropped,
                channels={"X": Channel(4, 2.0, 4.0), "Y": Channel(2, 0.0, 1.0)},
-               expected=clean.expected | {("y0", "f")}, unit_of=dict(UNIT, y0="Ynit"))
+               expected=clean.expected | {(z, "g") for z in RING})
     assert _checks(run)["district count per channel"].status == "pass"
-    # M1 (owner, 2026-10-05): every ZCTA has an owner in every channel, a dropped one included
+    # M1: a channel the run declares owns every ZCTA of its footprint (#116)
     assert _fails(run) == [audit.M1_CHECK]
     assert _checks(run)[audit.M1_CHECK].items[0] == "Y: 10 of 10 ZCTAs have no owner"
+    # a channel dropped for zero opportunity is not among the run's channels and has no districts:
+    # its rows keep the blank district and are excused
+    run = dataclasses.replace(run, channels={"X": Channel(4, 2.0, 4.0)})
+    assert _fails(run) == [], _checks(run)[audit.M1_CHECK].items
 
 
 def test_a_ledger_zip_without_a_unit_fails_and_the_audit_completes():

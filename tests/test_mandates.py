@@ -313,6 +313,6 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
                                                     "X: 1 ZCTAs of MA have no owner"]
     assert items["unapproved_crossing"] == [
         f"X/X_02: detached piece of 1 ZIPs (10008...), {tau}, cause no approved connector"]
-    # the size after display fill: the island and the corner piece stay detached, the blank fills
+    # the scorer's largest piece is on the ledger (#116): the island is detached, the blank no piece
     assert got["unapproved_crossing"]["largest"] == ("X", "X_02", 1, 0.1818, "IS")
     assert got["uncovered_zero_opportunity"]["largest"] is None

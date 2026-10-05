@@ -58,9 +58,27 @@ def test_display_fill_and_looks():
     assert c["crowded"] == []                           # 2 districts, ceil(1.15) + 1 = 3
     # X_02's A piece {a2, a3} meets its B piece {b1, b2, b3} over a3-b1 only: 8 km, both ways
     assert c["thin"] == [("X_02", "A", 8.0), ("X_02", "B", 8.0)]
-    assert c["pieces"] == [("X_02", 1, 0.25, "B")]      # b3 is cut off from X_02's other ZIPs
+    # pieces are on the ledger, not the fill (#116): b3 and a2 are cut off from b1
+    assert c["pieces"] == [("X_02", 1, 0.25, "B"), ("X_02", 1, 0.15, "A")]
     assert c["max_states"] == 2
     assert math.isclose(c["extent_km"], 9.0)            # a2 to b3, the ledger's ZIPs only
+
+
+def test_a_zero_opportunity_zcta_held_across_a_state_line_splits_that_state():
+    """Council decision 1 (owner, 2026-10-05): a district owning any ZCTA of a state, a zero-
+    opportunity one included, splits it.  X_01 holds b2 at zero mass, so B, X_02's, is split; a
+    run whose ledger owns every ZCTA (#116) has nothing for the display fill to add."""
+    g = _geo()
+    cells = (("a1", "X_01", 1.0), ("a2", "X_01", 0.0), ("a3", "X_01", 0.0), ("b1", "X_02", 0.6),
+             ("b2", "X_01", 0.0), ("b3", "X_02", 0.4))
+    led = _rows("X", cells)
+    c = score.channel_looks("X", led, _districts("X", (1.0, 1.0)), g)
+    assert c["split"] == ["B"] and c["small"] == [("X_01", "B", 0.0)]
+    own = {z: j for z, j, _ in cells}
+    assert score.display_fill(own, g) == own
+    without = score.channel_looks("X", _rows("X", [r for r in cells if r[0] != "b2"]),
+                                  _districts("X", (1.0, 1.0)), g)
+    assert without["split"] == []
 
 
 def test_a_piece_only_a_multipart_zcta_makes_is_listed_and_not_an_m1_piece():
@@ -125,14 +143,16 @@ SCORECARD = """# Scorecard: toy
 | final bands on drawn mass | fail | 2 districts, 1 outside the final tolerance |
 | planned against drawn owners | listed | 1 listed |
 | ZIP contiguity | listed | 1 districts in pieces, 3 pieces, 0 ZIPs not in the graph |
+| M1 polygon contiguity | fail | 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 0 channel ZCTAs with no owner, 2 (ZCTA, fine channel) cells with no row, 0 owned twice |
 """
 
 
 def test_scorecard_parse():
     assert score.scorecard_checks(SCORECARD) == {
         "one owner per cell": "pass", "final bands on drawn mass": "fail",
-        "planned against drawn owners": "listed", "ZIP contiguity": "listed"}
-    assert score.audit_pieces(SCORECARD) == 3
+        "planned against drawn owners": "listed", "ZIP contiguity": "listed",
+        audit.M1_CHECK: "fail"}
+    assert score.audit_pieces(SCORECARD) == 2          # M1's count, the one piece count (#116)
     assert score.audit_pieces("") is None
 
 
@@ -197,19 +217,21 @@ def _score_toy(ch: str, rates: dict) -> dict:
 def test_score_run_folder():
     s = _score_toy("WH", {"wh": 1.0e9})
     assert s["dollars"] == {"WH": 1.0e9}                # Σ m_rel × rate / K = 2 × 1e9 / 2
-    # M1 on the ledger, strict: WH_02's a2 and b3 are cut off from b1, and a3, b2 have no owner
-    m1 = "M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 2 channel ZCTAs with no owner"
+    # M1 on the ledger, strict: WH_02's a2 and b3 are cut off from b1, and a3, b2 have no row
+    m1 = ("M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 0 channel ZCTAs "
+          "with no owner, 2 (ZCTA, fine channel) cells with no row, 0 owned twice")
     assert not s["eligible"] and s["why"] == [m1, "main K 2 outside 48-54"]
-    assert s["m1"]["status"] == "fail" and s["m1"]["no_owner"] == 2 and s["m1"]["pieces"] == 2
+    assert s["m1"]["status"] == "fail" and s["m1"]["no_row"] == 2 and s["m1"]["pieces"] == 2
     assert (s["splits"], s["split_list"], s["distinct"]) == (1, ["WH:A"], ["A"])
-    # after the display fill only b3 (0.25 τ) is detached, weighing 1 + 0.25 (owner, 2026-10-05)
-    assert (s["thin_links"], s["small_pieces"], s["crowded_states"], s["contiguity_pieces"]) == (2, 1, 0, 1)
-    assert s["contiguity_weight"] == 1.25 and s["largest_piece_tau"] == 0.25
-    assert s["defects"] == 4.25 and s["audit_pieces"] == 3
+    # the scorer's pieces are M1's, on the ledger with no display fill (#116): b3 (0.25 τ) and a2
+    # (0.15 τ), weighing 1 + mass/τ each (owner, 2026-10-05)
+    assert (s["thin_links"], s["small_pieces"], s["crowded_states"], s["contiguity_pieces"]) == (2, 1, 0, 2)
+    assert s["contiguity_weight"] == 2.4 and s["largest_piece_tau"] == 0.25
+    assert s["defects"] == 5.4 and s["audit_pieces"] == s["m1"]["pieces"] == 2
     assert math.isclose(s["largest_extent_km"], 9.0) and s["states_per_district"] == 2
     assert s["worst_dev"] == 0.0 and s["mean_dev"] == 0.0
-    assert f"INELIGIBLE ({m1}; main K 2 outside 48-54) | 1 splits (1 states) | 4.25 defects" in score.verdict(s)
-    assert "largest detached piece WH_02: 1 ZIPs in B, 0.250 tau (after display fill)" in score.report(s)
+    assert f"INELIGIBLE ({m1}; main K 2 outside 48-54) | 1 splits (1 states) | 5.4 defects" in score.verdict(s)
+    assert "largest detached piece WH_02: 1 ZIPs in B, 0.250 tau" in score.report(s)
     # An IFA-only run: no main K rule, and $ is the owner's whole-extract IFA total over K.
     ifa = _score_toy("IFA", {})
     assert ifa["dollars"] == {"IFA": 62.14e9 / 2}

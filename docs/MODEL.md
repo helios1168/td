@@ -53,9 +53,11 @@ such channels from the run, before solving, and reports each one **[policy #65 F
 for every v ∈ V_c and τ_c > 0 for every channel solved. This is what the drawn shares (§4.1, §8),
 Proposition D and the divided formulas of Claim 2 need. ZIPs with m_z = 0 inside a unit with
 M_v > 0 stay in scope. No share convention for a zero-opportunity unit is assumed: a dropped
-unit's cells in D_c carry no opportunity and are not drawn in c. They, and the cells of a dropped
-channel, keep their ledger rows with the district blank and the reason `dropped: zero
-opportunity` (§8), and the audit lists them without failing (§9).
+unit's cells in D_c carry no opportunity and are not drawn in c by the master or the realizer.
+Zero-opportunity ZIPs are territory (owner, 2026-10-04, M1): the territory pass (§7 step 6) owns
+a dropped unit's ZIPs in c, and its cells keep the reason `dropped: zero opportunity` with that
+owner. A dropped channel has no districts; its cells keep their ledger rows with the district
+blank and the same reason (§8), and the audit lists them without failing (§9).
 
 A **final tolerance** [L^fin_c, U^fin_c] ⊇ [L_c, U_c] is declared per scenario and judges the
 drawn map **[policy OD1]**.
@@ -592,6 +594,32 @@ For each splittable unit v with |J_v| ≥ 2:
    error Δ_{v,j}, so Claim 3 and Corollary 3 bound the map before repair and the swap pass, not
    after. How close a pair gets is open **[claimed U45]**.
 
+6. **The territory pass** (#116, `td/territory.py`), after the swap pass. Channel c's
+   *footprint* is every ZIP of the instance in a unit of its domain D_c, the units dropped for zero
+   opportunity included. The instance holds every CONUS ZCTA on the polygon graph (#114) and the
+   domains partition V × F, so every (CONUS ZCTA, fine channel) lies in exactly one channel's
+   footprint **[proved]**. The pass gives every footprint ZIP an owner, on the instance's ZIP
+   graph **[policy M1, #116]**:
+   - the ZIPs with m_z > 0 keep the realizer's owners; every ZIP of the footprint with m_z = 0 is
+     released;
+   - *grow*: breadth first from the owned ZIPs, a released ZIP takes the owner of the ZIP it is
+     reached from, first only across edges inside one unit, then inside one state, then across a
+     state line. A ZIP held by a district with no opportunity in its state splits that state
+     (owner, 2026-10-05) and is listed in `run.json`;
+   - a ZIP no edge reaches takes the owner of the nearest owned ZIP and stays a detached piece, so
+     M1 fails on it; it is listed, never patched;
+   - *join*: a district in pieces takes a shortest path of zero-mass ZIPs, inside the units where
+     it holds opportunity, from one piece to another of its ZIPs, whoever holds the path, when the
+     total pieces of the district and of the districts it takes ZIPs from fall. No district is
+     emptied.
+
+   Then **[proved]**: no ZIP of positive mass changes owner, so drawn masses, bands, drawn shares
+   and Δ are the realizer's; a grown ZIP joins the component of the ZIP it was reached from, so
+   growth adds no piece to the components of the ZIPs with opportunity; each join lowers the total
+   piece count, so the pass ends; and a path stays inside units its district holds opportunity in,
+   so the join adds no owner to a unit (C16). Growth across a unit can, and the audit lists it
+   (§9). The pieces reported after the pass are its own.
+
 There is no metro-binding step. A whole metro is its own whole unit, which the realizer never
 touches; an oversized metro is an ordinary splittable unit (§6, OD5). Binding a metro inside a
 split unit would make it one enormous ZIP and inflate μ_S.
@@ -621,11 +649,17 @@ open **[claimed U34]**. Bugs #1, #7 and #11 become tests in C4.
 
 The ledger's rules are policies **[policy S25, S26]**, except where a bullet is tagged.
 
-- A cell's owner is the district that its channel's realizer gave the cell's ZIP to. The domains
-  partition the cells, so each cell of a unit in V_c of a channel solved has exactly one owner, who
-  holds all of its opportunity **[proved]**. A cell of a unit or channel dropped for zero opportunity (§1) has no
-  owner in c. It keeps its ledger row, with the district blank and the reason `dropped: zero
-  opportunity`.
+- The ledger has one row per (ZIP, fine channel) cell of the extract and one per cell of the
+  scenario's fine channels at every other ZIP of the instance, at zero opportunity with the reason
+  `no cell in the extract: territory at zero opportunity` (#116). So each channel's rows cover its
+  footprint (§7 step 6), and, the instance holding every CONUS ZCTA (#114), every CONUS ZCTA has
+  one row per fine channel.
+- A cell's owner is the district that its channel's realizer and territory pass gave the cell's ZIP
+  to. The domains partition the cells, so each cell of the footprint of a channel solved has
+  exactly one owner, who holds all of its opportunity **[proved]**. A cell of a unit dropped for zero opportunity (§1) keeps the reason `dropped: zero
+  opportunity` with the territory pass's owner. A cell of a channel dropped for zero opportunity
+  has no owner, since the channel has no districts; it keeps its row with the district blank and
+  that reason.
 - The master's shares are targets and are never read as masses after the realizer.
 - A district's drawn share of a unit is the opportunity of its ZIPs in the unit divided by the
   unit's opportunity, defined when M_v > 0, as it is for every unit in V_c (§1).
@@ -636,14 +670,18 @@ The ledger's rules are policies **[policy S25, S26]**, except where a bullet is 
 
 One `scorecard.md` per run, in the run directory. Each check is a policy of #52 §4, with its
 source where one is named **[policy S28, OD1, OD3, C16]**:
-- one owner per cell of the retained domain, the cells of units in V_c of the channels solved;
+- one owner per cell of the footprints of the channels solved; a row the extract has no cell for
+  passes only at zero opportunity with the reason `no cell in the extract` or `dropped: zero
+  opportunity` (#116);
 - the district count equals K_c for each channel solved;
-- the cells of units and channels dropped for zero opportunity (§1) are listed, each with a blank
-  district and the reason `dropped: zero opportunity`, and do not fail the run;
+- the cells of units and channels dropped for zero opportunity (§1) are listed with the reason
+  `dropped: zero opportunity`, and do not fail the run: a dropped unit's cell is owned by the
+  territory pass in a channel solved, and a dropped channel's cell has a blank district;
 - final bands on the drawn masses, with every breach listed against the final tolerance
   **[policy OD1]**. A breach caused by a share that could not be drawn fails the run and names the
   unit and district **[policy S28]**;
-- planned against drawn owners per unit:
+- planned against drawn owners per unit, the owners of its cells with opportunity, since the
+  modes split opportunity (#116):
   - a planned share drawn as no ZIPs is listed (C8);
   - a whole unit with more than one owner is a hard failure;
   - an extra owner from repair in a free unit is listed;
@@ -654,13 +692,23 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   every channel, each district's ZCTAs in the ledger are one component of the polygon graph (the
   rook graph of the 2025 TIGER ZCTA polygons over every CONUS ZCTA, an edge only for a shared
   boundary of positive length, plus the owner-approved connectors across gaps), and every CONUS
-  ZCTA has an owner. **A detached piece fails the map**, and so does a ZCTA with no owner; no
-  tolerance, and listing a piece is not enough. Each piece is listed with its ZIP count, its mass
+  ZCTA has an owner in every channel that holds it. A channel holds its footprint (§7 step 6), the
+  ZCTAs it has ledger rows for; across the channels, every CONUS ZCTA has exactly one owned row
+  per fine channel of the ledger, no gap and no double. Coverage is counted per footprint, not
+  over all CONUS in each planning channel, because the ledger is keyed (ZIP, fine channel) and
+  the owner's domain partition (WIFI's region in the 51 and NE + plains layouts) is settled frame
+  (orchestrator decision under the owner's autonomy grant, 2026-10-05, #116, for owner review). A
+  dropped channel's blank rows are excused: it has no districts. **A detached piece fails the
+  map**, and so does a ZCTA with no owner or no row; no tolerance, and listing a piece is not
+  enough. The audit's piece list is the one piece count: `run.json`, `districts.csv` and the looks
+  scorer count the same pieces, and no display fill sizes them (#116). Each piece is listed with its ZIP count, its mass
   over τ_c and its cause. A run without the polygon graph leaves M1 unverified, never passed;
   a run on the extract always has it. The looks scorer makes an M1 failure ineligible. A
   multipart ZCTA is one vertex; a drawn piece only it makes is a looks defect, not an M1
   failure (owner, 2026-10-05);
-- mode compliance, with the metro exceptions listed (S14);
+- mode compliance on the owners of cells with opportunity, with the metro exceptions listed
+  (S14); a zero-opportunity ZCTA the territory pass gave to a district holding no opportunity in
+  its unit is listed, not failed (#116; a state crossing is a split, owner 2026-10-05);
 - the geography manifest is all 2025 (S17);
 - the solver's status, bound and gap;
 - one name per district;

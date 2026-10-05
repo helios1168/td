@@ -19,8 +19,9 @@ sub-tolerance FI cell is zeroed at load, and the ZCTA polygons are read in batch
 - a free unit's zero-mass ZIPs go by `td.realize.place_zero`, from the unit's placed ZIPs, with
   the district centres as the fallback;
 - one repair pass, `td.realize.repair`, under the final band and the mode guard (S23, C16);
-- pieces and their causes by `td.realize.pieces`, then the ledger, names, audit, districts and
-  maps by `td.output`, as `td.output.run` calls them.
+- pieces and their causes by `td.realize.pieces`, the territory pass `td.territory.own_territory`
+  (#116), then the ledger, names, audit, districts and maps by `td.output`, as `td.output.run`
+  calls them.
 
 `solver.json` carries one report per channel for the audit: status `local optimum`, the Hess
 objective, and no bound, since the loop proves none over all centres; the audit's tier is then
@@ -43,7 +44,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from td import audit, data, geo, master, output, realize, supports  # noqa: E402
+from td import audit, data, geo, master, output, realize, supports, territory  # noqa: E402
 from td import spec as tdspec  # noqa: E402
 
 import hess  # noqa: E402
@@ -230,8 +231,10 @@ def cmd_assemble(a) -> int:
         with open(os.path.join(a.out, "plans", f"{c}.json"), encoding="utf-8") as fh:
             docs[c] = json.load(fh)
     plans, drawings, reports = {}, {}, {}
+    state = dict(zip(ref["zcta"], ref["state"]))
     for c in inst.channels:
         plans[c], drawings[c], reports[c] = drawing(inst, docs[c], p)
+        territory.own_territory(inst, plans[c], drawings[c], p, state)   # #116, as td.output.run
     out = a.out
     for f in ("ledger.csv", "districts.csv", "run.json", "solver.json", "scorecard.md"):
         if os.path.exists(os.path.join(out, f)):

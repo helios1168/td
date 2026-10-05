@@ -3,7 +3,8 @@
 The toy run uses real 2025 ZCTAs (Manhattan, Newark, Philadelphia, Greenwich) from the committed
 reference table on a hand-drawn ZIP graph, so its CBSAs, names and principal cities are real and
 it needs no download: NY holds one district, NJ + PA the other, CT has no opportunity and is
-dropped, channel Y has none and is dropped whole, and one Philadelphia ZIP is not a graph vertex.
+dropped from the master but owned by the territory pass through its edge to NY (#116), channel Y
+has none and is dropped whole, and one Philadelphia ZIP is not a graph vertex.
 Its maps read a synthetic ZCTA520 file (`_synthetic_public`): a 2 km square per ZCTA, written
 under the real file's name and field, so the map code reads it as it reads the national file.
 One test reads the real TIGER/Line 2025 ZCTA520 file (`data/public/` or `$TD_REPO`'s; SKIP
@@ -205,11 +206,13 @@ def test_every_cell_has_one_row_and_a_blank_district_says_why():
     for z in set(MASS) - {OFF}:
         g = by[z, "g"]
         assert (g["model_channel"], g["district"], g["reason"]) == ("Y", "", output.DROPPED)
+    # CT's unit is dropped from X's master; the territory pass owns it from NY across a state (#116)
     for z in CT:
-        assert (by[z, "f"]["district"], by[z, "f"]["reason"]) == ("", output.DROPPED)
+        assert (by[z, "f"]["district"], by[z, "f"]["reason"]) == (by[NY[0], "f"]["district"],
+                                                                  output.DROPPED)
     assert {(by[OFF, f]["district"], by[OFF, f]["reason"]) for f in "fg"} == {("", output.NOT_PLACED)}
     owned = [r for r in rows if r["district"]]
-    assert {r["zip_code"] for r in owned} == set(NY + NJ + PA)
+    assert {r["zip_code"] for r in owned} == set(NY + NJ + PA + CT)
     assert len({by[z, "f"]["district"] for z in NY}) == 1
     assert len({by[z, "f"]["district"] for z in NJ + PA}) == 1
     assert all(r["rep"] == "" for r in rows)
@@ -273,7 +276,7 @@ def test_maps_are_drawn_only_from_the_ledger_file():
             w.writerow(row)
     drawn = output.draw_maps(path, os.path.join(tmp, "maps"), ts._reference(), public=_toy_public())
     assert list(drawn) == ["X"] and drawn["X"]["districts"] == ["X_09"]
-    assert os.path.exists(drawn["X"]["path"]) and drawn["X"]["zctas"] == len(NY + NJ + PA)
+    assert os.path.exists(drawn["X"]["path"]) and drawn["X"]["zctas"] == len(NY + NJ + PA + CT)
     assert {"New York", "Newark", "Jersey City", "Philadelphia"} <= set(drawn["X"]["labels"])
     shutil.rmtree(tmp)
 
@@ -458,10 +461,10 @@ def test_a_zip_positive_only_in_a_channel_planned_elsewhere_is_no_vertex_and_has
     assert report["planned_elsewhere"] == {"h": len(NY) + 1}
     assert report["not_placed_zips"] == 0 and report["zips"] == len(zs)
     # the run declared its graph, so M1 is audited on the committed polygon graph (#108), and 12
-    # ZCTAs leave the rest of CONUS without an owner: M1 alone fails
+    # ZCTAs leave the rest of CONUS with no row in f (#116): M1 alone fails
     fails = {c.name: c for c in res.checks if c.status == "fail"}
     assert list(fails) == [audit.M1_CHECK], [(n, c.items[:3]) for n, c in fails.items()]
-    assert fails[audit.M1_CHECK].counts["no_owner"] == 33300 - len(zs)
+    assert fails[audit.M1_CHECK].counts["no_row"] == 33300 - len(zs)
 
 
 def test_run_json_records_the_margin_per_channel():
@@ -481,8 +484,9 @@ def test_run_json_records_the_margin_per_channel():
 
 # ------------------------------------------------------------------------------ pieces
 def test_pieces_come_from_the_ledger_and_the_scorecard_run_json_and_districts_csv_agree():
-    """NY's middle ZIPs have no cell in channel X: the map's district holds them at zero mass as
-    connectors, but the ledger does not, so the district is in two pieces there."""
+    """NY's middle ZIPs have no cell in channel X: the map's district holds them at zero mass, and
+    since #116 so does the ledger, as `NO_CELL` rows, so the district is one piece in the
+    scorecard, `run.json` and `districts.csv` alike (it was two pieces before)."""
     extract, graph = _toy_inputs()
     keep = [i for i, (z, f) in enumerate(zip(extract.z, extract.channel))
             if not (f == "f" and z in NY[1:3])]
@@ -498,12 +502,55 @@ def test_pieces_come_from_the_ledger_and_the_scorecard_run_json_and_districts_cs
     report = json.load(open(res.paths["run"], encoding="utf-8"))["channels"]["X"]
     with open(res.paths["districts"], encoding="utf-8") as fh:
         per = {r["district"]: int(r["pieces"]) for r in csv.DictReader(fh)}
-    assert contiguity.counts["split"] == report["districts"] == sum(1 for n in per.values() if n) == 1
-    assert contiguity.counts["pieces"] == report["pieces"] == sum(per.values()) == 1
-    assert report["pieces_by_cause"] == {output.CONNECTOR: 1}
-    assert contiguity.items and all("unreported" not in i for i in contiguity.items)
-    assert all(output.CONNECTOR in i for i in contiguity.items), contiguity.items
+    assert contiguity.counts["split"] == report["districts"] == sum(1 for n in per.values() if n) == 0
+    assert contiguity.counts["pieces"] == report["pieces"] == sum(per.values()) == 0
+    by = {(r["zip_code"], r["current_channel"]): r for r in output.read_ledger(res.paths["ledger"])}
+    for z in NY[1:3]:
+        assert (by[z, "f"]["reason"], by[z, "f"]["m_rel"]) == (output.NO_CELL, 0.0)
+        assert by[z, "f"]["district"] == by[NY[0], "f"]["district"]
     shutil.rmtree(out)
+
+
+def test_a_zcta_of_the_instance_the_extract_lacks_has_a_no_cell_row_its_territory_owner():
+    """#116 on an instance shaped as #114 builds it, over every ZCTA whether the extract has it or
+    not: 10005, a NY ZCTA with no cell, gets one row per fine channel, owned in X by NY's district
+    with `NO_CELL` at zero opportunity, and blank in Y, dropped whole.  The audit passes, M1 on the
+    toy's own graph included: every ZCTA owned once per fine channel."""
+    from td import realize, territory
+    extra, ref, s = "10005", ts._reference(), _toy_spec()
+    extract, graph = _toy_inputs()
+    ext = spec.scope(s, data.conus(extract, ref))
+    placed = sorted(set(graph["vertices"]) | {extra})
+    at = ref.set_index("zcta").loc[placed]
+    state = dict(zip(placed, at["state"]))
+    unit_of = spec.carve(s, state, dict(zip(placed, at["county"])), dict(zip(placed, at["cbsa"])))
+    xy = dict(zip(placed, zip(at["x"].astype(float), at["y"].astype(float))))
+    edges = graph["edges"] + [(NY[1], extra)]
+    cells = collections.Counter()
+    for z, f, m in zip(ext.z, ext.channel, ext.m_rel):
+        if z in unit_of:
+            cells[z, f] += m
+    inst = spec.assemble(s, spec.Units.from_graph(unit_of, edges, xy), dict(cells))
+    plans, reports = master.plan_all(inst)
+    drawings = {c: realize.realize(inst, p, xy) for c, p in plans.items()}
+    for c, d in drawings.items():
+        territory.own_territory(inst, plans[c], d, xy, state)
+    rows = output.ledger(inst, drawings, ext, ref)
+    by = {(r["zip_code"], r["current_channel"]): r for r in rows}
+    assert {(z, f) for z in unit_of for f in "fg"} <= set(by)
+    row = by[extra, "f"]
+    assert (row["reason"], row["m_rel"], row["model_channel"]) == (output.NO_CELL, 0.0, "X")
+    assert row["district"] == by[NY[0], "f"]["district"]
+    assert (by[extra, "g"]["district"], by[extra, "g"]["reason"]) == ("", output.DROPPED)
+    names = output.name_districts(rows, output.cbsa_titles(output.read_areas()))
+    polygon = {"vertices": placed, "edges": edges, "state": state}
+    checks = audit.audit(output.audit_run(inst, rows, drawings, ext, reports,
+                                          {"vertices": placed, "edges": edges}, names,
+                                          polygon=polygon))
+    fails = {c.name: c.items[:3] for c in checks if c.status == "fail"}
+    assert fails == {}, fails
+    m1 = {c.name: c for c in checks}[audit.M1_CHECK]
+    assert m1.status == "pass" and m1.counts["no_owner"] == m1.counts["no_row"] == 0
 
 
 def test_a_ledger_piece_inside_a_realizer_piece_keeps_its_cause():
@@ -798,5 +845,5 @@ def test_an_extract_assembly_cannot_pass_with_m1_unverified():
     checks = {c.name: c for c in audit.audit(output.audit_run(
         inst, led, drawings, ext, reports, graph, names, manifest, ref, split))}
     assert checks[audit.M1_CHECK].status == "fail", checks[audit.M1_CHECK].summary
-    assert checks[audit.M1_CHECK].counts["no_owner"] > 33000
+    assert checks[audit.M1_CHECK].counts["no_row"] > 33000
     assert audit.verdict(checks.values()) == "fail"
