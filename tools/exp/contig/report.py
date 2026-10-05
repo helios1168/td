@@ -77,7 +77,9 @@ def rows(run_dir: str) -> list:
             "m1_map": m1["status"], "m1_summary": m1["summary"],
             "pieces": run["channels"][c].get("pieces"),
             "connected": r["connected"], "status": r["status"],
-            "groups": dict(st), "seconds": round(sum(g["seconds"] for g in groups), 1),
+            "groups": dict(st),
+            "seconds": round(sum(sum(t["seconds"] for t in g["tried"]) or g["seconds"]
+                                 for g in groups), 1),
             "worst_gap": max(gaps) if gaps else None,
             "delta_needed": r["group_delta_needed"] if r["connected"] else None,
             "worst_dev": dev[c][0], "mean_dev": dev[c][1],
