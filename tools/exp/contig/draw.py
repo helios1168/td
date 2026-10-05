@@ -730,7 +730,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             top = max(m[z] for z in units.zips[v])
             for j in js:
                 idx = [col[z, j] for z in units.zips[v] if (z, j) in col and m[z] > 0]
-                a = planned.get((v, j), 0.0)
+                a = planned.get((v, j), 0.0) - math.fsum(m[z] for z in units.zips[v]
+                                                         if fixed.get(z) == j and z not in zset)
                 row(a - top, a + top, idx, [m[z] for z in units.zips[v] if (z, j) in col and m[z] > 0])
     # a ZCTA of a district needs a neighbour of it (when the district has two vertices or more);
     # under `dag`, a neighbour nearer its bodies or seed along `geo` (CONTIGUITY.md §4 rank 2)
