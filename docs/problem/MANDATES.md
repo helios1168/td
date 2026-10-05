@@ -62,11 +62,13 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   WIFI partition a carved channel does not cover all of CONUS; the goal's "every CONUS ZIP" is
   met by the channels together.
   Necks (owner, 2026-10-05, in session: "a neck should fail m1"; structured picks "Narrow
-  passage on the map" and "No, unless land would do"; #121): a district fails M1 when some part
-  of it holding at least 5% of its land area or of its mass reaches the rest only through a
-  passage narrower than 10 km, the passage's width being the total shared ZCTA border across
-  the cut. An approved connector is a passage of unlimited width, except where the district
-  could have reached the far side by land; there it is a neck. W = 10 km and 5% are the values
+  passage on the map" and "No, unless land would do"; then, once #121 showed that a mass clause
+  makes single dense downtown ZCTAs necks and no map passable, "Area only" and "One connected
+  piece"): a district fails M1 when one connected part of it holding at least 5% of its land
+  area reaches the rest only through a passage narrower than 10 km, the passage's width being
+  the total shared ZCTA border across the cut. Mass is reported for each neck but does not
+  decide it. An approved connector is a passage of unlimited width, except where the district
+  could have reached the far side by land; there it has width 0. W = 10 km and 5% are the values
   of the option the owner picked; only the owner changes them. Reading of "by land" (agent,
   2026-10-05, #121, owner to confirm): joined in the polygon graph without connectors, within
   the states the district owns ZCTAs in.
