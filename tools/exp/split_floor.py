@@ -2,8 +2,9 @@
 
     "$TD_PY" tools/exp/split_floor.py [--band 0.10 --band 0.15]
 
-Prints, for each layout and each K the $ rule allows, the fewest channel-state splits any plan
-can have and whether the K can balance at all.  Arithmetic on the units' masses only: no solve.
+Prints, for each layout and each K the $ rule allows, two lower bounds: the forced channel-state
+splits and the connected-parts floor.  Arithmetic on the units' masses only: no solve, and no
+feasibility certificate.
 
 Layouts (the 2026-10-02 looks driver's `scenario()`, `runs/sweep/comb_2026-10-02/run3.py`, with
 routing `stay` and every rest unit national): `none`, no combined channel; `ne`, New England
@@ -16,10 +17,11 @@ Per channel c with mass M_c over its units v (`td.spec.build`'s M_v) and K distr
 τ = M_c / K, at band δ:
 - **forced splits**: a whole unit lies in one district, so a unit with M_v > (1 + δ)τ is split
   in every plan, into at least ⌈M_v / ((1 + δ)τ)⌉ pieces, that many minus one cuts.  The count of
-  such units is the channel's split floor at K;
+  such units is a lower bound on the channel's splits at K;
 - **parts floor**: each connected component of the channel's units (the unit graph of the
   declared ZIP graph) takes a whole number k_i ≥ 1 of districts, Σ k_i = K, so no plan beats
-  min over k of max_i |M_i / (k_i τ) − 1|.  A K whose parts floor exceeds δ has no plan at δ.
+  min over k of max_i |M_i / (k_i τ) − 1|.  A K whose parts floor exceeds δ has no plan at δ;
+  one within δ only passes this necessary bound (`parts_bound_ok`), it does not have a plan.
 
 The $ rule: K is allowed when the channel's $ per district is within ±10% of its target
 (national $1.25B, WH $1.0B, FI $900M, IFA $1.25B; `docs/problem/PROBLEM.md` row 2026-10-04).
@@ -177,7 +179,7 @@ def channel_rows(name: str, M: dict, unit_adj: dict, usd_m: float, ks, bands) ->
             row["bands"][b] = {"forced": dict(sorted(cuts.items(), key=lambda kv: -M[kv[0]])),
                                "n_forced": len(cuts), "cuts": sum(cuts.values()),
                                "parts_floor": floor, "allocation": alloc,
-                               "feasible": floor <= b + 1e-12}
+                               "parts_bound_ok": floor <= b + 1e-12}
         rows.append(row)
     return rows
 
@@ -219,7 +221,7 @@ def markdown(title: str, rows: list, band: float, baseline: dict) -> str:
     pct = f"±{band * 100:g}%"
     lines = [f"### {title} at {pct}", "",
              "| channel | K | $M / district | vs target | forced | cuts | forced states (cuts) "
-             "| parts floor | allocation | plan at " + pct + " |",
+             "| parts floor | allocation | parts bound passes " + pct + " |",
              "|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         b = r["bands"][band]
@@ -234,7 +236,7 @@ def markdown(title: str, rows: list, band: float, baseline: dict) -> str:
         floor = "∞" if math.isinf(b["parts_floor"]) else f"{b['parts_floor'] * 100:.1f}%"
         lines.append(f"| {r['channel']} | {r['k']} | {r['usd_per_district_m']:,.0f} | {vs} "
                      f"| {b['n_forced']} | {b['cuts']} | {states} | {floor} | {alloc} "
-                     f"| {'yes' if b['feasible'] else 'no'} |")
+                     f"| {'yes' if b['parts_bound_ok'] else 'no'} |")
     return "\n".join(lines)
 
 

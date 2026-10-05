@@ -75,7 +75,20 @@ def test_channel_rows_on_a_toy():
     assert row["parts"] == ["A+1", "D"]
     b = row["bands"][0.10]
     assert b["forced"] == {"A": 2} and b["n_forced"] == 1 and b["cuts"] == 2
-    assert b["allocation"] == (3, 1) and b["parts_floor"] == 0.0 and b["feasible"]
+    assert b["allocation"] == (3, 1) and b["parts_floor"] == 0.0 and b["parts_bound_ok"]
+
+
+def test_parts_bound_output_is_not_a_plan():
+    # one indivisible unit of mass 2 at K 2, τ 1: the parts floor is 0, yet no two districts
+    # fit [0.85, 1.15]; the table says only that the bound passes
+    (row,) = split_floor.channel_rows("WH", {"A": 2.0}, {"A": set()}, 2000.0, [2], [0.15])
+    b = row["bands"][0.15]
+    assert b["parts_floor"] == 0.0 and b["allocation"] == (2,) and b["parts_bound_ok"]
+    table = split_floor.markdown("Toy", [row], 0.15, {})
+    header, _, line = table.splitlines()[2:5]
+    assert header.endswith("| parts bound passes ±15% |")
+    assert line.endswith("| 0.0% | A 2 | yes |")
+    assert "plan" not in table.lower() and "feasib" not in table.lower()
 
 
 def test_layouts_partition_the_units():
