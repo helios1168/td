@@ -423,3 +423,112 @@ export TD_ZCTA_SHP=runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/
 "$TD_PY" runs/sweep/caps_2026-10-02/adapt.py <run_dir> runs/exp81/summary/<name> "900 (1600 mtn/plains, WA, CA)"
 "$TD_PY" runs/sweep/caps_2026-10-02/wrap.py runs/exp81/summary/<name> --geo-cache runs/sweep/grid_2026-10-01/present/legacy/archive/geo
 ```
+
+## #109 A contiguity-aware realizer on today's plans (2026-10-05)
+
+Measured 2026-10-05 on m5 with `tools/exp/contig/` (#109) on the polygon graph and its 163
+approved connectors, after #114 and #116. Each scenario was re-planned on today's `main` with
+`margin = false` in every channel (μ = 0), and drawn by the realizer instead of the power diagram;
+the run folders are `runs/exp/contig/<map>-<arm>/` (gitignored; full ledger, scorecard, districts,
+run.json, contig.json). M1 is `td.audit.check_m1` on the written ledger, footprint coverage (D3).
+
+**The realizer.** Per channel, every ZCTA of a split unit, of an exclave (D2) and of a dropped unit
+is free, zero-opportunity ZCTAs included; the rest is fixed to its unit's one holder. Free ZCTAs go
+to districts by a MILP per coupled group (free components that share a district): each ZCTA one
+owner, each district's drawn mass in the internal band, holders per unit first and geodesic shape
+second in the objective. Connectivity is exact on the polygon graph: highspy 1.15.1 exposes
+`cbMipDefineLazyConstraints` but HiGHS never calls it (tested: the other MIP callbacks fire), so
+the realizer runs a solve-check-cut loop of separator rows (U59), each ZCTA demanding one unit, so
+zero-opportunity ZCTAs are held to it. A geodesic-DAG restriction (each ZCTA needs a neighbour of
+its district nearer the district's border, CONTIGUITY.md §4 rank 2) runs first and its drawing
+starts the complete loop. "optimal" is a connected optimum of the complete model at
+`mip_rel_gap = 0`; "connected" is connected and feasible; "infeasible" is a proof under the
+group's rules; "unknown" is a time limit or a restricted model, never infeasible. No archived
+engine was reused (U64): the pair-era SCIP engine (`td/solvers/scip_tree.py` at the tag, C03) is a
+two-label log-objective SCIP model; only its separator idea carried over.
+
+**Sequential.** Coupled groups are large (below), so the arms were also run one split unit at a
+time (`--sequential`): each unit drawn against what its districts already own next to it, the rest
+at planned shares. That is neither a restriction nor a relaxation of the joint model; its drawings
+are real maps judged by the audit, and its failures prove nothing.
+
+**What was run.** Deck A (`none_stay_0_m1600_na13_WH12_FI23`, national 13 / WH 12 / FI 23, every
+channel optimal at δ = 0.02 on the polygon graph), IFA K 49 (optimal at δ = 0.02), layout-`none`
+grid maps, and s13 (`ne_okks_s13_na15_WH12_FI20_CB3`, FI δ = 0.08) for comparison only: it cannot
+pass M1 until the owner rules on #114's proposed connectors (D14). Decks B and C are combined
+layouts blocked the same way and were not drawn. Arms: `arm1` (the master's support, shares
+recomputed in the plan's band), `arm1` with fixed targets (each (unit, district) mass within the
+unit's heaviest ZCTA of the plan, the triage's row 15), and arm 2's remedies as separate runs, never
+one chosen (#112): `band` (a group retried at δ = 0.05, 0.10, 0.15), `split` (a unit's neighbouring
+districts may also hold it, each a split) and `move` (as `split`, no more holders than the plan).
+No no-good cut was issued: no plan's whole read-back fibre was proved empty (#91 finding 10).
+
+**Coupled groups (U59).** Joint groups at ZIP scale, from the joint `arm1` runs:
+
+| map | channel | groups: districts / free ZCTAs (columns) | joint status at 300 s + 300 s |
+|---|---|---|---|
+| deck A | national | 7 / 7,421 (14,853); 6 / 3,822 (11,246) | unknown, unknown |
+| deck A | WH | 4 / 4,257 NY+NJ+PA (8,519); 2 / 1,833 CA (3,641); 2 / 1,397 IL; 2 / 1,013 FL; 1 / 1 | unknown; connected; three not reached in the channel's 900 s |
+| deck A | FI | 22 / 16,192 (37,864) | unknown |
+| IFA 49 | IFA | 49 / 21,182 (70,512; 170k rows) | unknown |
+
+No joint group above 1,833 free ZCTAs reached a connected drawing or a proof in the time given,
+so the joint maps keep the power diagram's owners there and fail M1 as before; no infeasibility
+certificate was produced for any real map, at fixed targets or recomputed shares. The toy
+certificate (#7's thin share, `tests/test_contig_realize.py`) is the only proof. The fixed-target
+runs were equally unknown on every large group.
+
+**Results** (runs ended by 08:45; per map, channels summed; `runs/exp/contig/TABLE.md` on m5 has
+the per-channel table, rebuilt by `tools/exp/contig/report.py` when the remaining runs end):
+
+| run | M1 (D3) | pieces | largest piece | groups or units drawn connected | worst / mean dev | split units | cuts | δ needed | share-only (U61) | exclave splits |
+|---|---|---|---|---|---|---|---|---|---|---|
+| deckA-arm1 (joint) | fail | 9 | 0.448 τ | 1 of 8 | 2.4% / 1.0% | 36 | 42 | – | 16 | 9 |
+| deckA-arm1-fixed (joint, fixed targets) | fail | 9 | 0.448 τ | 1 of 8 | 2.4% / 1.0% | 36 | 42 | – | 16 | 9 |
+| deckA-arm1-seq | fail | 7 | 0.448 τ | 15 of 28 | 3.8% / 1.3% | 36 | 42 | – | 16 | 9 |
+| deckA-band-seq | fail | 3 | 0.46 τ | 28 of 28 | 5.0% / 2.0% | 36 | 42 | 0.05 | 16 | 9 |
+| deckA-split-seq | fail | 5 | 0.448 τ | 14 of 28 | 2.4% / 1.2% | 36 | 42 | – | 16 | 9 |
+| deckA-move-seq | fail | 7 | 0.448 τ | 12 of 28 | 3.8% / 1.3% | 36 | 42 | – | 16 | 9 |
+| grid na13/WH12/FI24 arm1-seq | fail | 9 | 0.464 τ | 12 of 28 | 6.1% / 1.6% | 37 | 45 | – | 20 | 11 |
+| grid na13/WH11/FI24 arm1-seq | fail | 10 | 0.464 τ | 12 of 26 | 7.5% / 3.0% | 36 | 44 | – | 17 | 12 |
+| grid na15/WH12/FI23 arm1-seq | fail | 3 | 0.448 τ | 17 of 29 | 3.6% / 1.4% | 38 | 43 | – | 19 | 9 |
+| ifa49-arm1 (joint) | fail | 13 | 0.367 τ | 0 of 1 | 7.0% / 1.7% | 24 | 50 | – | 36 | 5 |
+| ifa49-arm1-fixed (joint, fixed targets) | fail | 13 | 0.367 τ | 0 of 1 | 7.0% / 1.7% | 24 | 50 | – | 36 | 5 |
+| ifa49-arm1-seq | fail | 6 | 0.367 τ | 20 of 22 | 16.4% / 2.5% | 24 | 49 | – | 36 | 5 |
+| ifa49-band-seq | fail | 6 | 0.367 τ | 21 of 22 | 16.4% / 2.9% | 24 | 49 | – | 36 | 5 |
+| ifa49-split-seq | fail | 11 | 0.367 τ | 15 of 22 | 16.4% / 2.5% | 24 | 51 | – | 36 | 5 |
+| ifa49-move-seq | fail | 13 | 0.367 τ | 12 of 22 | 16.4% / 2.4% | 24 | 50 | – | 36 | 5 |
+| s13-arm1-seq (comparison) | fail | 14 | 0.0882 τ | 14 of 15 | 9.4% / 6.0% | 24 | 32 | – | 12 | 9 |
+| s13-band-seq (comparison) | fail | 14 | 0.0882 τ | 14 of 15 | 9.4% / 6.0% | 24 | 32 | – | 12 | 9 |
+
+Pieces and the largest piece are M1's on the ledger. Deviation is drawn mass over the channel mean.
+A group or unit the realizer did not draw keeps `td.realize` and `td.territory`'s owners, so a
+failing map mixes the two realizers and its balance is not the realizer's (IFA's 16.4% is NY#3,
+from NY's fallback beside NJ drawn by the realizer). Split units and cuts are counted on the drawn
+map by polygon ownership; against a covering bound every map is **not covered** (U56): no all-M1
+bound exists yet (#119), and #103's s* is labelled "over 𝒳_c(δ) only". U63 (districts resting on
+one connector) is defined on M1-passing drawings, and there are none.
+
+**What the runs show.**
+- **No map passes M1** (footprint coverage, D3), in any arm. Nothing here is eligible.
+- **Every layout-`none` map fails on the same district shape**: one district per channel holds CT
+  and a share of NY (deck A national_07 / WH_05 / FI_07; grid na15 national_08 / WH_05 / FI_07).
+  CT reaches its other units only through NY, and no NY drawing that routes the share from CT to
+  them was found: the NY unit is `unknown` in every arm-1 run (the DAG restriction infeasible, the
+  complete loop out of time), so CT's 289 ZCTAs stay detached at 0.13–0.46 τ. Grid na15/WH12/FI23
+  is down to exactly these three pieces. With a wider band (`band`), every unit of deck A drew
+  connected at δ ≤ 0.05 one at a time, yet the three CT pieces remain, now as a gap between units
+  drawn separately (WH_05: CT plus its NY share drawn apart from its NJ share). This is #112's case;
+  it is unproved either way, and no certificate exists for it.
+- **Elsewhere the sequential realizer draws most split units connected at the plan's δ**: IFA 20 of
+  22 units (FL and NY unknown), deck A 15 of 28 at δ = 0.02 and all 28 at δ ≤ 0.05.
+- **s13** (comparison only) gets down to a largest piece of 0.088 τ, against 0.455 τ for the power
+  diagram, but fails on the cross-channel exclaves D14 names (06390, 89826, 89832, 82933–82944) and
+  on its NY unit.
+- **Arm 2** (`split`, `move`) did not beat arm 1: allowing a unit's neighbouring districts makes the
+  per-unit models larger and slower, and no remedy produced an M1 map.
+
+Regenerate (m5, local): `runs/exp/contig/launch.sh deckA ifa49` (joint and fixed-target arms),
+`runs/exp/contig/launch_seq.sh <map> ...` (sequential arms), then `"$TD_PY"
+tools/exp/contig/report.py runs/exp/contig/*/`. Specs are the stored TOMLs with `margin = false`
+added per channel, in `runs/exp/contig/_specs/`; plans cache in `runs/exp/contig/_plans/`.
