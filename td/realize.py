@@ -1,11 +1,10 @@
 """realize.py -- the ZIP realizer (`docs/MODEL.md` §7, S21): a decoded master plan to a ZIP map.
 
 Whole units go to their one owner.  For each splittable unit v shared by the copies J_v:
-1. **Centres** (S24, #65 F6).  The copies of {v} take the centres of a deterministic
-   opportunity-weighted k-means on v's ZIPs (`kmeans`), clipped or free.  A copy of S with
-   |S| ≥ 2 (free v only: a clipped v in a multi-unit copy is held whole) takes the mass-weighted
-   centroid of its border in v, the ZIPs with a ZIP-graph edge into S − v, or its unweighted
-   centroid when the border's mass is 0.
+1. **Centres** (S24, #65 F6).  The copies of {v} take the centres of a deterministic opportunity-
+   weighted k-means on v's ZIPs (`kmeans`), clipped or free.  A copy of S with |S| ≥ 2 (free v
+   only: a clipped v in a multi-unit copy is held whole) takes the mass-weighted centroid of its
+   border in v, the ZIPs with a ZIP-graph edge into S − v, unweighted when the border's mass is 0.
 2. **Transport LP** (Claim 3) over v's ZIPs with m_z > 0, in mass flows x_{zj} = m_z f_{zj},
    solved by dual simplex (`highs-ds` with an explicit options dict, trap 14) so the solution is
    basic.  A positive flow graph that is not a forest stops the run (Lemma 3a, C5).
@@ -13,11 +12,11 @@ Whole units go to their one owner.  For each splittable unit v shared by the cop
    ZIP when its running error is negative and passes it otherwise; where both moves keep
    |e_j| < m*_j, the one cheaper under the transport cost wins.  Zero-mass ZIPs, which the LP does
    not place, go by breadth-first search from the rounded ZIPs of v (`place_zero`).
-4. **One repair pass** (S23).  Each detached piece, a component of a district other than its
-   heaviest, moves to a district whose main component it touches, only if both districts stay
-   inside the final tolerance (OD1) and the target is admissible in every unit the piece touches
-   (C16): nobody in a whole unit, only another copy of {u} in a clipped unit u, anybody in a free
-   one.  Otherwise the piece stays.
+4. **One repair pass** (S23), then **one swap pass** (`td.swap`).  A detached piece, a component
+   of a district other than its heaviest, goes to a district whose main component it touches only if
+   both stay inside the final tolerance (OD1), the target is admissible in every unit the piece
+   touches (C16: nobody in a whole unit, only another copy of {u} in a clipped unit u, anybody in a
+   free one), and a move across exchange components improves the pair's worse district (#85).
 
 Contiguity is read on the instance's ZIP graph, which is the declared graph (#11, trap 21).
 Every remaining piece gets one cause, the first that applies (`CAUSES`):
@@ -39,7 +38,7 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import linprog
 
-from td import audit
+from td import audit, swap
 from td.spec import zip_components
 
 POS_TOL = 1e-9          # a flow below POS_TOL × m_z is zero
@@ -71,6 +70,7 @@ class Drawing:
     drawn: dict                 # (unit, district) -> drawn mass in the unit, 0 when vanished
     pieces: list                # the pieces left after repair, each with its cause
     moved: list = field(default_factory=list)   # (zips, from, to) done by repair
+    swapped: list = field(default_factory=list)  # (zip, from, to) done by the swap pass
 
     @property
     def error(self) -> dict:
@@ -283,13 +283,14 @@ def realize(inst, plan, xy: dict) -> Drawing:
         own = round_forest(ch.m, flow, lambda z, j: ch.m[z] * _d2(p[z], c[j]))
         owner.update(own)
         owner.update(place_zero([z for z in units.zips[v] if ch.m[z] <= 0], own, units.zip_adj, p, c))
-    moved = repair(inst, plan.channel, owner, support)
+    moved = repair(inst, plan.channel, owner, support, swap.components(planned))
+    swapped = swap.swap(inst, plan.channel, owner, planned)
     drawn, mass = dict.fromkeys(planned, 0.0), {c.name: 0.0 for c in plan.copies}
     for z, j in owner.items():
         drawn[units.unit_of[z], j] = drawn.get((units.unit_of[z], j), 0.0) + ch.m[z]
         mass[j] += ch.m[z]
     return Drawing(plan.channel, owner, mass, planned, drawn,
-                   pieces(inst, plan.channel, owner, support, planned), moved)
+                   pieces(inst, plan.channel, owner, support, planned), moved, swapped=swapped)
 
 
 def _admissible(ch, units, piece, k, owner, support) -> bool:
@@ -302,13 +303,11 @@ def _admissible(ch, units, piece, k, owner, support) -> bool:
     return not any(ch.mode[u] == "clipped" and any(units.unit_of[z] != u for z in piece) for u in held)
 
 
-def repair(inst, channel: str, owner: dict, support: dict) -> list:
+def repair(inst, channel: str, owner: dict, support: dict, comp: dict) -> list:
     """One pass (S23) over the detached pieces found at its start; moves `owner` in place."""
     ch, units = inst.channels[channel], inst.units
     (lo, hi), adj, m = ch.final_band, units.zip_adj, ch.m
-    mass = collections.Counter()
-    for z, j in owner.items():
-        mass[j] += m[z]
+    mass = collections.Counter({j: sum(m[z] for z in zs) for j, zs in _districts(owner).items()})
     todo = [(j, part) for j, zs in sorted(_districts(owner).items()) for part in _parts(zs, adj, m)[1:]]
     moved = []
     for j, part in todo:
@@ -324,7 +323,8 @@ def repair(inst, channel: str, owner: dict, support: dict) -> list:
             main_k = set(_parts(_districts(owner)[k], adj, m)[0])
             if (any(y in main_k for z in part for y in adj[z])
                     and _admissible(ch, units, part, k, owner, support)
-                    and lo <= mass[j] - w <= hi and lo <= mass[k] + w <= hi):
+                    and lo <= mass[j] - w <= hi and lo <= mass[k] + w <= hi
+                    and swap.may_cross(comp, ch.tau, j, k, mass[j], mass[k], w)):
                 ok.append(k)
         if ok:
             k = min(ok, key=lambda k: (abs(mass[k] + w - ch.tau), k))
