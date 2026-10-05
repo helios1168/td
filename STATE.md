@@ -4,12 +4,12 @@
 
 ## Now
 
-M1 (ZIP contiguity) is the goal's first part; no current map meets it. #91 landed (c4eb392): split council memo, verification, triage (#110-#115, U53-U58; ranking now splits, cuts, defects, shape, balance). Running on m5: #108 gate worker (71354f54); #106 literature quote check (79ea10cc).
+M1 (ZIP contiguity) is the goal's first part; no current map meets it. #106 landed (c603d46): `docs/problem/CONTIGUITY.md`, owner-approved; its CU1-CU10 await triage (from U59). #108 gate is on `m5-studio/108` at 27dfa6e (pushed): all 163 connectors approved, polygon graph one component, 288 tests pass; Sol review running (166e841f).
 
 ## Next
 
-- #108 lands after Sol review and the owner's connector-list review; then #109 and #114.
-- #106 CONTIGUITY.md brief for owner review.
+- Land #108 after the Sol review; then #116 (every CONUS ZCTA owned), #109, #114.
+- Triage CONTIGUITY.md's CU1-CU10 into UNKNOWNS.md and issues (draft, owner approves).
 - Wave 1 (#95-#104) held until #109 reports.
 
 ## Blocked
