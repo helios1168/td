@@ -302,6 +302,15 @@ def test_a_boolean_is_neither_a_count_nor_a_number():
     assert (x.k, x.contact_caps, x.dist_km, x.max_dist_km) == (3, {"AL": 4}, {"AL": 1600.0}, 900.0)
 
 
+def test_margin_is_on_by_default_and_takes_only_true_or_false():
+    """#84: `margin = false` turns μ_S off for the channel; any value but a TOML bool is refused."""
+    assert spec.parse(_toy_raw()).channels["X"].margin is True
+    assert spec.parse(_toy_raw(margin=True)).channels["X"].margin is True
+    assert spec.parse(_toy_raw(margin=False)).channels["X"].margin is False
+    for bad in (0, 1, 0.0, "false", "off", None, [False]):
+        _raises(lambda: spec.parse(_toy_raw(margin=bad)), "channel X: margin must be true or false")
+
+
 # ------------------------------------------------------------------------------ units and modes
 def test_a_disconnected_whole_unit_stops_naming_its_components():
     s, units, cells = _toy({"AL": ["a1", "a2", "a3"], "AR": ["b1"]},

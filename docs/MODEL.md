@@ -259,7 +259,8 @@ heaviest ZIP in each.
   margin, without it, and limited to units actually split (N2).
 - **A policy.** It removes plans that could be drawn, and it can make lumpy units infeasible at
   tight tolerances. The planning band sits inside the final tolerance by the margin **[policy OD1,
-  C3]**.
+  C3]**. A channel turns it off with `margin = false`, which sets μ ≡ 0 for that channel only;
+  the default is on, and `run.json` records the setting per channel (§4.8) **[policy #84]**.
 
 ### 4.7 What the rows are necessary for
 
@@ -301,6 +302,32 @@ its smallest δ bounds the drawings. What stays necessary for the read-back of e
 Menger row and the other rows of §3 with μ ≡ 0 (Proposition D). No set of rows here is
 sufficient (§5, C10). A plan that passes every row can still fail to draw, and S28 makes that
 failure loud.
+
+### 4.8 The margin off (#84; council 2026-10-01, Est. 4)
+
+With `margin = false` a channel's band row is #52's, L_c n_S ≤ Σ_{v∈S} M_v t_{v,S} ≤ U_c n_S, and
+every other row is unchanged. Write μ°_S for the value §4.6's formula gives, which the master no
+longer uses. What still holds:
+- **Claim 1** holds with μ_S = 0: each copy's footprint is S, the modes hold, and each planned mass
+  lies in [L_c, U_c]. Its proof uses no property of μ_S. (iii) now covers plans that obey the
+  rows with μ ≡ 0, a larger set **[proved]**.
+- **Claim 2** holds: the exact MILP's δ rows lose the μ term, and bisection stays valid because
+  μ ≡ 0 does not depend on δ **[proved]**.
+- **Proposition D and its Corollary** apply to this master as it stands, since they are stated
+  for μ ≡ 0. Its optimum and its smallest δ are lower bounds over 𝒳_c(δ), but only for drawings
+  with the same support family, modes, η_c, caps and drawability rows. With free units the bound
+  is the bisection's `lower`, a δ proved infeasible; its upper end is a feasible δ, not a bound
+  **[proved]**. Nothing here bounds a drawing under other supports or rules.
+- **Claim 3 and Corollary 3** still bound the rounding: before repair, a copy's drawn mass differs
+  from its planned mass by at most μ°_S, and by strictly less when μ°_S > 0, because Claim 3
+  never reads the band row **[proved]**. What is lost is the band: a plan at an edge of
+  [L_c, U_c] can draw anywhere in (L_c − μ°_S, U_c + μ°_S), so no row guarantees that a drawn mass
+  lies in the band. The audit's final-band check is then the only judge of drawn balance
+  **[policy S28, OD1]**.
+
+On the 51 scenario (extract of 2026-10-01), national's smallest δ is 0.0675 with the key set
+to false, as with the earlier in-memory zeroing of `supports.margin`, against 0.165 with the
+margin on.
 
 ## 5. Claims
 

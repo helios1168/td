@@ -174,6 +174,7 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
         "national_moved_units": sorted(inst.report.get("national_moved", {})),
         "disconnected_units": sorted(inst.report.get("disconnected", {})),
         "channels": {c: {"k": inst.channels[c].k, "delta": plans[c].delta,
+                         "margin": inst.channels[c].spec.margin,
                          "tier": audit.tier(reports[c]), "status": reports[c]["status"],
                          "moved": len(d.moved), "vanished": len(d.vanished),
                          **piece_counts(split, c)}
