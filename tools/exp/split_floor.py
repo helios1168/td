@@ -24,11 +24,12 @@ Per channel c with mass M_c over its units v (`td.spec.build`'s M_v) and K distr
 The $ rule: K is allowed when the channel's $ per district is within ±10% of its target
 (national $1.25B, WH $1.0B, FI $900M, IFA $1.25B; `docs/problem/PROBLEM.md` row 2026-10-04).
 A fine channel's $ per m_rel unit is the owner's 2026-10-01 total over the whole extract's m_rel,
-as `runs/sweep/grid_2026-10-01/prep.py` set it; a channel's dollars sum its cells on the CONUS
-units it plans.  The combined channel has no target (D11), so it is
+as `runs/sweep/grid_2026-10-01/prep.py` set it; a main-map channel's dollars sum its cells on the
+CONUS units it plans.  IFA's dollars are the whole extract's $62.14B (owner, 2026-10-04), so its
+rule allows K 46-55.  The combined channel has no target (D11), so it is
 listed at every K from 1 to the most districts any target of the channels it absorbs allows.
-The s13 baseline's K values (`runs/sweep/comb_2026-10-02/s13/`) and IFA K 46-55 are listed too,
-flagged when the $ rule does not allow them.
+The s13 baseline's K values (`runs/sweep/comb_2026-10-02/s13/`) and IFA K 45 (allowed on IFA's
+CONUS dollars, $61.35B) are listed too, flagged when the $ rule does not allow them.
 """
 from __future__ import annotations
 
@@ -62,9 +63,10 @@ USD_TOLERANCE = 0.10
 # what the combined channel absorbs from each layout channel, for its K range
 ABSORBED = ("national", "WH", "FI")
 BASELINE_K = {"ne_plains": {"national": 15, "WH": 12, "FI": 20, "combined": 3}}   # s13
-# td#94 lists IFA at K 46-55, its $ rule on the whole extract's $62.14B; on the CONUS units
-# IFA plans the rule allows 45-54
-LISTED_K = {"IFA": range(46, 56)}
+# IFA's $ rule is on the whole extract's total, not its CONUS units' (owner, 2026-10-04)
+WHOLE_EXTRACT_USD = {"IFA": "ifa"}
+# K 45 passes the rule on IFA's CONUS dollars only; listed so it shows failing
+LISTED_K = {"IFA": range(45, 56)}
 
 
 def usd_factors(extract) -> dict:
@@ -199,6 +201,7 @@ def layout_tables(raw: dict, extract, ref, fac: dict, bands, baseline: dict, gra
         graph = output.declared_graph(ext, ref, PUBLIC)
     inst = tdspec.build(s, ext, ref, graph)
     usd = channel_usd(s, inst, ext, fac)
+    usd.update({c: OWNER_USD_B[f] * 1e3 for c, f in WHOLE_EXTRACT_USD.items() if c in usd})
     rows = []
     for name, ch in inst.channels.items():
         if name in TARGET_USD_M:

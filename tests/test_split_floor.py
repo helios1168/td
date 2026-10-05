@@ -108,3 +108,20 @@ def test_s13_forced_splits_on_the_extract():
               if baseline[r["channel"]] == r["k"]}
     assert forced == {"national": ["CA", "FL", "NY", "TX"], "WH": ["CA", "FL"],
                       "FI": ["CA", "FL", "NY", "OH", "PA"], "combined": []}
+
+
+def test_ifa_usd_on_the_whole_extract():
+    """IFA's $ rule is on the whole extract's $62.14B (owner, 2026-10-04): K 46-55 pass and the
+    listed K 45 fails; SKIP without `$TD_REPO`'s extract and 2025 downloads."""
+    if not (os.path.exists(split_floor.EXTRACT) and os.path.isdir(split_floor.PUBLIC)):
+        print(f"SKIP  test_split_floor.py: no {split_floor.EXTRACT} or {split_floor.PUBLIC}; "
+              "the IFA $ check did not run", flush=True)
+        return
+    from td import data, geo
+    ref = geo.read_reference()
+    raw = data.load(split_floor.EXTRACT)
+    rows, _ = split_floor.layout_tables(split_floor.ifa_raw(), data.conus(raw, ref), ref,
+                                        split_floor.usd_factors(raw), [0.15], {})
+    assert [r["k"] for r in rows] == list(range(45, 56))
+    assert [r["k"] for r in rows if r["usd_ok"]] == list(range(46, 56))
+    assert all(math.isclose(r["usd_per_district_m"] * r["k"], 62140.0) for r in rows)
