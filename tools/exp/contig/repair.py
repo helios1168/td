@@ -243,26 +243,13 @@ def steps(pieces: list, owner: dict, free: set, adj: dict, h0: int, max_zctas: i
     return out
 
 
-def clusters(pieces: list, free: set, adj: dict, h0: int, max_zctas: int) -> list:
-    """The pieces in groups repaired one at a time: two pieces go together when they share a
-    district or their windows at h0 touch."""
-    wins = [ball([pc], free, adj, h0, max_zctas // 2) for pc in pieces]
-    near = [w | {y for z in w for y in adj[z]} for w in wins]
-    parent = list(range(len(pieces)))
-
-    def find(a):
-        while parent[a] != a:
-            parent[a] = parent[parent[a]]
-            a = parent[a]
-        return a
-    for a in range(len(pieces)):
-        for b in range(a):
-            if pieces[a][0] == pieces[b][0] or wins[a] & near[b]:
-                parent[find(a)] = find(b)
+def clusters(pieces: list) -> list:
+    """The pieces in groups repaired one at a time, smallest first: a district's pieces go
+    together (a piece left outside the window would be a body its district cannot reach)."""
     out = collections.defaultdict(list)
-    for a, pc in enumerate(pieces):
-        out[find(a)].append(pc)
-    return sorted(out.values(), key=lambda g: -sum(len(cc) for _, cc in g))
+    for pc in pieces:
+        out[pc[0]].append(pc)
+    return sorted(out.values(), key=lambda g: (sum(len(cc) for _, cc in g), g[0][0]))
 
 
 def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, time_limit,
@@ -322,7 +309,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
     for _ in range(3):
         if not pieces:
             break
-        for group in clusters(pieces, free, adj, h0, max_zctas):
+        for group in clusters(pieces):
             live = set(detached(owner, adj, m))
             group = [pc for pc in group if pc in live]
             if group:
@@ -333,6 +320,15 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             break
         pieces = left
     return owner, attempts
+
+
+def _commit() -> str:
+    import subprocess
+    try:
+        return subprocess.run(["git", "-C", HERE, "rev-parse", "--short", "HEAD"], check=True,
+                              capture_output=True, text=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return ""
 
 
 def load(run_dir: str, extract_path: str, plans_cache: str | None, plans_file: str | None = None):
@@ -413,7 +409,8 @@ def main(argv=None) -> int:
     doc.update({"arm": doc["arm"] + "+repair", "repair_of": os.path.abspath(a.run_dir),
                 "repair": {"h0": a.h0, "max_zctas": a.max_zctas, "time_limit": a.time_limit,
                            "plans_file": a.plans_file, "label": a.label,
-                           "flow": a.flow, "keep_support": a.keep_support},
+                           "flow": a.flow, "keep_support": a.keep_support,
+                           "commit": _commit()},
                 "m1": report["m1"]})
     with open(os.path.join(a.out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
