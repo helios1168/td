@@ -652,6 +652,7 @@ def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None) 
     report.update(national_report(spec, units, cells))
     report["disconnected"] = {u: [len(c) for c in comps]
                               for u, comps in units.components.items()}
+    report["components"] = {c.name: component_floor(units, c) for c in channels.values()}
     whole = sorted(u for u in units.components
                    if any(ch.mode.get(u) == "whole" for ch in channels.values()))
     if whole:
@@ -660,6 +661,69 @@ def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None) 
             + " | ".join(f"{len(c)} ZIPs {_show(c)}" for c in units.components[u])
             for u in whole))
     return Instance(spec, units, channels, tuple(dropped_channels), report)
+
+
+def domain_components(units: Units, ch: Channel) -> list:
+    """The components of the unit graph induced on V_c, each a sorted tuple of units, heaviest
+    first.  No district crosses between two of them."""
+    inside, seen, comps = set(ch.units), set(), []
+    for u in ch.units:
+        if u in seen:
+            continue
+        comp, stack = [], [u]
+        seen.add(u)
+        while stack:
+            v = stack.pop()
+            comp.append(v)
+            for w in units.unit_adj[v]:
+                if w in inside and w not in seen:
+                    seen.add(w)
+                    stack.append(w)
+        comps.append(tuple(sorted(comp)))
+    return sorted(comps, key=lambda c: (-sum(ch.M[u] for u in c), c))
+
+
+def component_floor(units: Units, ch: Channel) -> dict:
+    """Each domain component's M/τ and integer residue min over k ≥ 1 of |M/(kτ) − 1| (with that
+    k), and the channel's floor: min over k_i ≥ 1 with Σ k_i = K of max_i |M_i/(k_i τ) − 1|, with
+    its allocation.  Every connected map has a district at least the floor from τ, whatever the
+    rules (U40).  With more components than K the floor is None: no allocation exists."""
+    comps = domain_components(units, ch)
+    mass = [sum(ch.M[u] for u in c) for c in comps]
+
+    def dev(m, k):
+        return abs(m / (k * ch.tau) - 1)
+
+    rows = []
+    for c, m in zip(comps, mass):
+        k = min({max(1, math.floor(m / ch.tau)), max(1, math.ceil(m / ch.tau))},
+                key=lambda k: (dev(m, k), k))
+        rows.append({"units": list(c), "mass_tau": m / ch.tau, "k": k, "residue": dev(m, k)})
+    best = {0: (0.0, ())}         # districts used -> (worst deviation, allocation) so far
+    for m in mass:
+        nxt = {}
+        for used, (d, alloc) in best.items():
+            for k in range(1, ch.k - used + 1):
+                cand = (max(d, dev(m, k)), alloc + (k,))
+                if used + k not in nxt or cand < nxt[used + k]:
+                    nxt[used + k] = cand
+        best = nxt
+    floor, alloc = best.get(ch.k, (None, ()))
+    return {"components": rows, "floor": floor, "allocation": list(alloc)}
+
+
+def component_lines(report: dict) -> list:
+    """`component_floor` reports `{channel: report}` as printed lines, one per component."""
+    out = []
+    for c, r in report.items():
+        floor = "none (more components than K)" if r["floor"] is None else \
+            f"{100 * r['floor']:.2f}% at k = {r['allocation']}"
+        n = len(r["components"])
+        out.append(f"{c}: {n} domain component{'s' * (n != 1)}, floor {floor}")
+        for row in r["components"]:
+            out.append(f"  {row['mass_tau']:.3f} τ, k = {row['k']}, residue "
+                       f"{100 * row['residue']:.2f}%: {_show(row['units'])}")
+    return out
 
 
 def national_report(spec: Spec, units: Units, cells: dict) -> dict:

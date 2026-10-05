@@ -131,13 +131,17 @@ def run(s, extract, out: str, graph: dict | None = None, reference=None,
     ext = tdspec.scope(s, conus)        # the scenario's fine channels only, before the graph (#79)
     graph = declared_graph(ext, ref, public) if graph is None else graph
     inst = tdspec.build(s, ext, ref, graph)
+    components = inst.report["components"]
+    for line in tdspec.component_lines(components):     # the floors, known before any solve
+        print(line, flush=True)
     os.makedirs(out, exist_ok=True)
     plans, reports = master.plan_all(inst, time_limit=time_limit)
     none = sorted(c for c, p in plans.items() if p is None)
     # a declared band proven infeasible: report the smallest master δ, never adopt it (OD1, S10)
     deltas = {c: master.smallest_delta(inst, c, time_limit=time_limit)
               for c in none if reports[c]["status"] == "infeasible"}
-    paths = {"solver": write_solver(os.path.join(out, "solver.json"), reports, deltas)}
+    paths = {"solver": write_solver(os.path.join(out, "solver.json"), reports, deltas,
+                                    components)}
     if none:
         raise RunError("no plan for " + "; ".join(
             no_plan(c, inst.channels[c].spec.delta, reports[c], deltas.get(c)) for c in none)
@@ -209,13 +213,16 @@ def delta_reading(found) -> dict:
         "solver_bound": found.lower if exact and found.status == "unknown" else None}
 
 
-def write_solver(path: str, reports: dict, deltas: dict) -> str:
-    """`solver.json` as `master.write_report` writes it, each smallest δ with its reading."""
+def write_solver(path: str, reports: dict, deltas: dict, components: dict | None = None) -> str:
+    """`solver.json` as `master.write_report` writes it, each smallest δ with its reading, and
+    each channel's domain components with their floor (`tdspec.component_floor`)."""
     master.write_report(path, reports, deltas)
     with open(path, encoding="utf-8") as fh:
         doc = json.load(fh)
     for c, found in deltas.items():
         doc[c]["smallest_delta"]["reading"] = delta_reading(found)
+    for c, r in (components or {}).items():
+        doc.setdefault(c, {})["components"] = r
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
         fh.write("\n")

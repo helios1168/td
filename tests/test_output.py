@@ -443,16 +443,27 @@ def test_a_ledger_piece_inside_a_realizer_piece_keeps_its_cause():
 
 # ------------------------------------------------------------------------------ the stops
 def test_a_channel_with_no_plan_stops_the_run_after_writing_the_solver_report():
+    """Also #88: the domain components and their floor are printed before the solve and kept in
+    `solver.json`, even when the run stops."""
     out = tempfile.mkdtemp(prefix="td-output-")
     extract, graph = _toy_inputs()
+    printed = io.StringIO()
     try:
-        output.run(_toy_spec(k=3, delta=0.0, final_delta=0.0), extract, out, graph,
-                   ts._reference(), maps=False)
+        with contextlib.redirect_stdout(printed):
+            output.run(_toy_spec(k=3, delta=0.0, final_delta=0.0), extract, out, graph,
+                       ts._reference(), maps=False)
     except output.RunError as e:
         assert "no plan for X" in str(e) and "infeasible" in str(e), str(e)
     else:
         raise AssertionError("no RunError")
-    assert json.load(open(os.path.join(out, "solver.json")))["X"]["solver"]["status"] == "infeasible"
+    doc = json.load(open(os.path.join(out, "solver.json")))
+    assert doc["X"]["solver"]["status"] == "infeasible"
+    comps = doc["X"]["components"]
+    assert len(comps["components"]) == 1 and comps["components"][0]["units"] == \
+        ["NJ", "NY", "PA"] and abs(comps["components"][0]["mass_tau"] - 3.0) < 1e-12, comps
+    assert comps["allocation"] == [3] and comps["floor"] < 1e-12, comps
+    assert spec.component_lines({"X": comps})[0] in printed.getvalue().splitlines(), \
+        printed.getvalue()
     shutil.rmtree(out)
 
 
