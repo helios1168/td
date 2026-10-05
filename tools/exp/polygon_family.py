@@ -9,8 +9,9 @@ For each scenario, the instance on the OD2 Voronoi graph that runs declared befo
 channel: the unit-graph edges the polygon graph adds and drops, the supports in one family only,
 and the border rows (b_uv) and corridor floors c_v(S) that differ.  Then the whole units the
 polygon graph disconnects, and, as a what-if that no check uses, which states would be connected
-if the owner approved the proposed in-state connectors (`geo.state_connectors`).  `--full` lists
-every differing support; otherwise the first `SHOW`.  No solve.
+and which dropped supports would return if the owner approved the connectors #114 proposed
+(`geo.state_connectors`, `geo.pair_connectors`).  `--full` lists every differing support;
+otherwise the first `SHOW`.  No solve.
 """
 from __future__ import annotations
 
@@ -64,12 +65,15 @@ def channel_diff(old, new, channel: str) -> dict:
     }
 
 
-def what_if_connected(states) -> dict:
-    """{state: connected?} for `states` on the polygon graph with the proposed in-state connectors
-    taken as approved: a what-if for the owner's review, read by no check."""
-    rows = [dict(r, status="approved") if r["source"] == geo.STATE_PROPOSAL else r
-            for r in geo.read_connectors()]
-    g = geo.polygon_graph(connectors=rows)
+def what_if_graph() -> dict:
+    """The polygon graph with every connector #114 proposed taken as approved: a what-if for the
+    owner's review, read by no check."""
+    return geo.polygon_graph(connectors=[dict(r, status="approved") if r["source"] == geo.STATE_PROPOSAL
+                                         else r for r in geo.read_connectors()])
+
+
+def what_if_connected(states, g: dict) -> dict:
+    """{state: connected within?} for `states` on the what-if graph `g`."""
     still = geo.state_groups(g["vertices"], g["edges"], g["state"])
     return {s: s not in still for s in sorted(states)}
 
@@ -79,6 +83,8 @@ def report(path: str, extract, ref, full: bool = False) -> str:
     ext = tdspec.scope(s, extract)
     old = tdspec.build(s, ext, ref, output.declared_graph(ext, ref, PUBLIC))
     new = tdspec.build(s, ext, ref)
+    g = what_if_graph()
+    wif = tdspec.build(s, ext, ref, g)
     show = None if full else SHOW
     out = [f"## {s.name}", "",
            f"Voronoi: {len(old.units.unit_of)} ZIPs; polygon: {len(new.units.unit_of)} ZCTAs.", ""]
@@ -88,8 +94,8 @@ def report(path: str, extract, ref, full: bool = False) -> str:
         f"{u} {groups[u]}" + (" (whole in a channel)" if u in whole else "") for u in sorted(groups))
         or "none") + ".")
     if groups:
-        wi = what_if_connected(groups)
-        out.append("What-if (no check uses it): with the proposed in-state connectors approved, "
+        wi = what_if_connected(groups, g)
+        out.append("What-if (no check uses it): with the connectors #114 proposed approved, "
                    + ", ".join(f"{u} {'connected' if ok else 'still not connected'}"
                                for u, ok in wi.items()) + ".")
     out.append("")
@@ -102,7 +108,13 @@ def report(path: str, extract, ref, full: bool = False) -> str:
                 f"{' '.join(f'{a}-{b}' for a, b in d['edges_dropped']) or ''}",
                 f"- family: {d['family'][0]} on Voronoi, {d['family'][1]} on polygon; "
                 f"{len(d['only_voronoi'])} only on Voronoi, {len(d['only_polygon'])} only on polygon"]
-        for key, label in (("only_voronoi", "only on Voronoi"), ("only_polygon", "only on polygon")):
+        back = sorted(set(d["only_voronoi"]) & set(supports.family(wif, c).supports),
+                      key=lambda x: (len(x), sorted(x)))
+        out.append(f"- what-if (no check uses it): with the connectors #114 proposed approved, "
+                   f"{len(back)} of the {len(d['only_voronoi'])} return")
+        d["what_if_back"] = back
+        for key, label in (("only_voronoi", "only on Voronoi"), ("only_polygon", "only on polygon"),
+                           ("what_if_back", "return in the what-if")):
             if d[key]:
                 listed = d[key][:show]
                 more = len(d[key]) - len(listed)

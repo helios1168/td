@@ -24,6 +24,7 @@ a,b,kind,crossing,gap_km,status,source
 07202,10314,bridge,Goethals Brg,0.08,approved,TIGER/Line 2025 prisecroads
 07310,10013,tunnel,Holland Tunl,0.55,approved,TIGER/Line 2025 prisecroads
 07310,10014,tunnel,Holland Tunl,0.85,approved,TIGER/Line 2025 prisecroads
+08023,19720,road,I- 295 / US Hwy 40,1.03,proposed,"proposed 2026-10-05 (#114), owner to review"
 08861,10309,bridge,Korean War Veterans Pkwy / Outerbridge Xing / State Rte 440,0.23,approved,TIGER/Line 2025 prisecroads
 10002,11201,bridge,Manhattan Brg,0.42,approved,TIGER/Line 2025 prisecroads
 10002,11249,bridge,Williamsburg Brg,0.64,approved,TIGER/Line 2025 prisecroads
@@ -68,8 +69,12 @@ a,b,kind,crossing,gap_km,status,source
 41011,45202,bridge,Brent Spence Brg,0.29,approved,TIGER/Line 2025 prisecroads
 41071,45202,bridge,Central Brg,0.32,approved,TIGER/Line 2025 prisecroads
 41174,45663,bridge,Carl Perkins Memorial Brg,0.24,approved,TIGER/Line 2025 prisecroads
+42001,62910,road,Paducah-Brookport Rd / US Hwy 45,0.89,proposed,"proposed 2026-10-05 (#114), owner to review"
+42001,62960,road,I- 24,0.76,proposed,"proposed 2026-10-05 (#114), owner to review"
+42087,62914,road,US Hwy 51 / US Hwy 62 / US Hwy 60,1.15,proposed,"proposed 2026-10-05 (#114), owner to review"
 42301,47635,bridge,Glover Cary Brg,0.47,approved,TIGER/Line 2025 prisecroads
 42303,47635,bridge,Glover Cary Brg,0.71,approved,TIGER/Line 2025 prisecroads
+42459,62984,road,State Hwy 56,0.38,proposed,"proposed 2026-10-05 (#114), owner to review"
 43436,43446,nearest,North Bass Island to Middle Bass Island: no road or scheduled ferry found; nearest ZCTA,1.37,approved,owner 2026-10-05 (#108): nearest ZCTA
 43438,43440,ferry,Marblehead-Kelleys Island ferry,5.11,approved,geo.FERRIES (hand list)
 43446,43452,ferry,Catawba-Middle Bass ferry (Miller Ferry),9.37,approved,geo.FERRIES (hand list)

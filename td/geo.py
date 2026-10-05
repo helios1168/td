@@ -70,7 +70,10 @@ The graph is one component, but seven states are not connected within it (#114).
 `python -m td geo --state-connectors` (`state_connectors`) proposes one in-state connector per
 detached group: the shortest-gap road across land in no ZCTA to the rest of its state, else the
 nearest ZCTA of the state (kind `nearest`), each `proposed` with source `STATE_PROPOSAL`, which a
-rebuild keeps until the owner rules.
+rebuild keeps until the owner rules.  `--pair-connectors A-B ...` (`pair_connectors`) proposes the
+same way the road crossings of a state line whatever their names: the build finds a bridge between
+two ZCTAs of one component only by a bridge word in its name, and TIGER/Line names some river
+bridges only by route (the Delaware Memorial Bridge is I-295 / US-40).
 
 A multipart ZCTA is one vertex whose parts count as connected to each other, adjacent to another
 ZCTA through any part (owner, 2026-10-05).  The part-level files let the looks scorer list a
@@ -665,7 +668,8 @@ CONNECTOR_STATUSES = ("proposed", "approved", "rejected")
 CONNECTOR_KINDS = ("bridge", "tunnel", "road", "ferry", "nearest")
 # the source of `state_connectors`' rows; a rebuild keeps them until the owner rules on them
 STATE_PROPOSAL = "proposed 2026-10-05 (#114), owner to review"
-STATE_COMMAND = "python -m td geo --state-connectors --public $TD_REPO/data/public"
+PAIR_BORDER_M = 10_000.0    # a state's ZCTAs this close to the other state's are searched (#114)
+PAIR_ZONE_M = 2_000.0       # roads this close to those ZCTAs are searched for crossings (#114)
 ZCTA_PARTS = "zcta_parts.csv.gz"
 PART_EDGES = "zcta_part_edges.csv.gz"
 ROAD_SOURCES = {
@@ -1163,6 +1167,62 @@ def state_connectors(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=pri
     return new
 
 
+def pair_crossings(ids, geoms, state: dict, a: str, b: str, roads) -> list:
+    """Connector rows across the line between states `a` and `b` whatever the road's name (#114:
+    the build proposes a bridge only by a bridge word in its name or between two components, and
+    TIGER/Line 2025 names some river bridges only by route): each chain (`_gap_chains`) of the
+    roads in `roads` near ZCTAs of both states that reaches a ZCTA of each gives a row between its
+    nearest such pair, one per crossing name, the shortest gap's.  `ids` and `geoms` are every
+    CONUS ZCTA.  Every row is `proposed`, source `STATE_PROPOSAL`."""
+    import numpy as np
+    import shapely
+    ids, geoms = np.asarray(ids, dtype=object), np.asarray(geoms)
+    ia = np.flatnonzero([state[z] == a for z in ids])
+    ib = np.flatnonzero([state[z] == b for z in ids])
+    ea = ia[shapely.dwithin(geoms[ia], shapely.union_all(geoms[ib]), PAIR_BORDER_M)]
+    eb = ib[shapely.dwithin(geoms[ib], shapely.union_all(geoms[ia]), PAIR_BORDER_M)]
+    zone = shapely.union_all(np.concatenate([geoms[ea], geoms[eb]])).buffer(PAIR_ZONE_M)
+    near = np.flatnonzero(shapely.intersects(np.asarray(roads.geometry.values), zone))
+    best = {}
+    for hit, names in _gap_chains(geoms, roads, near):
+        ha = [h for h in hit if state[ids[h]] == a]
+        hb = [h for h in hit if state[ids[h]] == b]
+        if ha and hb:
+            _, i, j = min((shapely.distance(geoms[i], geoms[j]), i, j) for i in ha for j in hb)
+            row = _row(ids, geoms, i, j, names, STATE_PROPOSAL)
+            if row["crossing"] not in best or row["gap_km"] < best[row["crossing"]]["gap_km"]:
+                best[row["crossing"]] = row
+    return [{**r, "status": "proposed"} for _, r in sorted(best.items())]
+
+
+def pair_connectors(pairs, public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> list:
+    """Propose the crossings `pair_crossings` finds on the two states' primary and secondary roads
+    for each state pair `(a, b)` of `pairs`, adding the rows whose ZCTA pair is not already listed
+    to `connectors.csv` as `proposed`; no other row changes.  Returns the new rows."""
+    import numpy as np
+    import pandas as pd
+    g = polygon_graph(out)
+    zpath = cached(SOURCES["zcta"][0], public)
+    df = _read(zpath, ["ZCTA5CE20"])
+    df = df[df["ZCTA5CE20"].isin(set(g["vertices"]))].sort_values("ZCTA5CE20")
+    ids, geoms = df["ZCTA5CE20"].to_numpy(), np.asarray(df.geometry.values)
+    ref = read_reference(out)
+    statefp = {s: c[:2] for s, c in zip(ref["state"], ref["county"])}
+    rows = []
+    for a, b in pairs:
+        roads = _read_roads(_road_files(public, "prisecroads", {statefp[a], statefp[b]}))
+        got = pair_crossings(ids, geoms, g["state"], a, b, roads.reset_index(drop=True))
+        log(f"geo: {a}-{b}: {len(got)} crossings")
+        rows += got
+    old = read_connectors(out)
+    have = {(r["a"], r["b"]) for r in old}
+    new = [r for r in rows if (r["a"], r["b"]) not in have]
+    pd.DataFrame(sorted(old + new, key=lambda r: (r["a"], r["b"], r["crossing"])),
+                 columns=list(CONNECTOR_COLUMNS)).to_csv(os.path.join(out, CONNECTORS), index=False,
+                                                         lineterminator="\n")
+    return new
+
+
 def _road_entry(name: str, paths: list, public: str) -> dict:
     """A manifest entry, as `manifest_entry`, for the road files a polygon build read."""
     files = {os.path.basename(p): sha256(p) for p in paths}
@@ -1181,9 +1241,13 @@ def main(argv=None) -> int:
                     help="build M1's polygon graph and connector list from the reference in --out")
     ap.add_argument("--state-connectors", action="store_true",
                     help="propose one in-state connector per detached group of a state (#114)")
+    ap.add_argument("--pair-connectors", nargs="+", metavar="A-B",
+                    help="propose the road crossings between each pair of states (#114)")
     a = ap.parse_args(argv)
-    if a.state_connectors:
-        new = state_connectors(a.public, a.out, log=lambda m: print(m, flush=True))
+    if a.state_connectors or a.pair_connectors:
+        log = lambda m: print(m, flush=True)    # noqa: E731
+        new = (state_connectors(a.public, a.out, log) if a.state_connectors else
+               pair_connectors([tuple(p.split("-")) for p in a.pair_connectors], a.public, a.out, log))
         for r in new:
             print(f"geo: proposed {r['a']}-{r['b']} {r['kind']}: {r['crossing']} ({r['gap_km']} km)")
         return 0

@@ -91,22 +91,41 @@ def test_the_51_plans_on_the_committed_polygon_graph():
     assert inst.report["disconnected_whole"] == ["NV", "TN", "UT", "WY"]
 
 
-def test_the_proposed_in_state_connectors_add_no_edge_and_one_joins_each_detached_group():
+def test_the_connectors_114_proposed_add_no_edge_and_one_joins_each_detached_group():
+    """In-state rows: one per detached group.  State-line rows: the DE-NJ and IL-KY crossings
+    TIGER/Line names only by route (`geo.pair_connectors`); none was found for KY-MO."""
     rows = [r for r in geo.read_connectors() if r["source"] == geo.STATE_PROPOSAL]
     g = geo.polygon_graph()
-    groups = geo.state_groups(g["vertices"], g["edges"], g["state"])
-    assert sorted(groups) == ["CA", "NV", "NY", "TN", "UT", "VA", "WY"]
-    assert len(rows) == sum(len(c) - 1 for c in groups.values()) == 11
     assert {r["status"] for r in rows} == {"proposed"}
     assert not {(r["a"], r["b"]) for r in rows} & set(g["edges"])
+    groups = geo.state_groups(g["vertices"], g["edges"], g["state"])
+    assert sorted(groups) == ["CA", "NV", "NY", "TN", "UT", "VA", "WY"]
+    inside = [r for r in rows if g["state"][r["a"]] == g["state"][r["b"]]]
+    assert len(inside) == sum(len(c) - 1 for c in groups.values()) == 11
     detached = {z: s for s, comps in groups.items() for c in comps[1:] for z in c}
-    for r in rows:
-        assert g["state"][r["a"]] == g["state"][r["b"]], r
-        assert r["a"] in detached or r["b"] in detached, r
+    assert all(r["a"] in detached or r["b"] in detached for r in inside)
+    across = sorted((g["state"][r["a"]], g["state"][r["b"]], r["crossing"]) for r in rows
+                    if r not in inside)
+    assert across == [("KY", "IL", "I- 24"), ("KY", "IL", "Paducah-Brookport Rd / US Hwy 45"),
+                      ("KY", "IL", "State Hwy 56"), ("KY", "IL", "US Hwy 51 / US Hwy 62 / US Hwy 60"),
+                      ("NJ", "DE", "I- 295 / US Hwy 40")]
     approved = [dict(r, status="approved") if r["source"] == geo.STATE_PROPOSAL else r
                 for r in geo.read_connectors()]
     assert set(geo.polygon_graph(connectors=approved)["edges"]) == set(g["edges"]) | {
         (r["a"], r["b"]) for r in rows}
+
+
+def test_pair_crossings_name_a_road_across_the_state_line_whatever_its_name():
+    """AL's a1 and AR's r1 lie 1 km apart; "US Hwy 1" crosses the gap, "Spur Rd" leaves a1 into the
+    gap and stops, and "Inner Rd" stays inside a1."""
+    ids, geoms = ["a1", "r1"], [box(0, 0, 10 * KM, 10 * KM), box(11 * KM, 0, 21 * KM, 10 * KM)]
+    roads = gpd.GeoDataFrame({"FULLNAME": ["US Hwy 1", "Spur Rd", "Inner Rd"]}, crs=geo.CRS, geometry=[
+        LineString([(5 * KM, 5 * KM), (15 * KM, 5 * KM)]),
+        LineString([(5 * KM, 8 * KM), (10.5 * KM, 8 * KM)]),
+        LineString([(2 * KM, 2 * KM), (4 * KM, 2 * KM)])])
+    got = geo.pair_crossings(ids, geoms, {"a1": "AL", "r1": "AR"}, "AL", "AR", roads)
+    assert [(r["a"], r["b"], r["kind"], r["crossing"], r["gap_km"], r["status"]) for r in got] == [
+        ("a1", "r1", "road", "US Hwy 1", 1.0, "proposed")]
 
 
 def test_state_crossings_name_an_in_state_road_else_the_nearest_zcta_of_the_state():
