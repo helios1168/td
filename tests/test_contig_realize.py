@@ -155,3 +155,46 @@ def test_the_sequential_restriction_draws_the_u_connected_and_never_claims_optim
     assert res.connected and res.status == "connected"
     d = draw.drawing(inst, plan, res)
     assert all(len(cs) == 1 for cs in _pieces(d.owner, inst).values()), d.owner
+
+
+def _repair_module():
+    if "contig_repair" not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            "contig_repair", os.path.join(HERE, "..", "tools", "exp", "contig", "repair.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["contig_repair"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["contig_repair"]
+
+
+def test_a_window_solve_reconnects_the_power_diagrams_detached_piece():
+    """`repair.py`'s window repair: the power diagram's U map, where CT+NY holds a detached piece
+    at the top of NY's right arm, is repaired by an exact solve on a window around the piece, the
+    rest fixed: every district one piece, masses in the final band, split units and cuts not above
+    the drawn map's, and the window's status kept apart from any claim about the map."""
+    repair = _repair_module()
+    inst, xy, plan = _u_toy()
+    power = realize.realize(inst, plan, xy)
+    adj, m = inst.units.zip_adj, inst.channels["X"].m
+    assert repair.detached(power.owner, adj, m)
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    state = dict(inst.units.unit_of)
+    before = repair.map_figures(inst, "X", power.owner, state)
+    owner, attempts = repair.repair_channel(inst, plan, power.owner, p, state, h0=1,
+                                            max_zctas=100, time_limit=60.0, log=lambda *_: None)
+    assert repair.detached(owner, adj, m) == []
+    assert all(len(cs) == 1 for cs in _pieces(owner, inst).values()), owner
+    last = attempts[-1]
+    assert last["status"] in ("optimal", "connected") and last["pieces_after"] == 0
+    assert last["window_zctas"] < len(owner)
+    assert set(owner) == set(power.owner)
+    assert all(owner[z] == power.owner[z] for z in owner if z not in repair.window(
+        set().union(*(cc for _, cc in repair.detached(power.owner, adj, m))),
+        repair.draw.split_fixed(inst, plan)[1], adj, last["h"]))
+    lo, hi = inst.channels["X"].final_band
+    mass = {}
+    for z, j in owner.items():
+        mass[j] = mass.get(j, 0.0) + m.get(z, 0.0)
+    assert all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()), mass
+    after = repair.map_figures(inst, "X", owner, state)
+    assert after["split_states"] <= before["split_states"] and after["cuts"] <= before["cuts"]

@@ -669,7 +669,12 @@ def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target
 
 def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold, plan, planned,
                  support, inst, lo, hi, arm, fixed_targets, time_limit, log=print,
-                 extra: dict | None = None, dag: bool = False, start: dict | None = None) -> Group:
+                 extra: dict | None = None, dag: bool = False, start: dict | None = None,
+                 count: dict | None = None) -> Group:
+    """One group's MILP and cut loop (module docstring).  `count` is the window repair's
+    (`repair.py`): {"current": {unit: its holders on the drawn map}, "cap": bool}; then split
+    units come first in the objective, holders (cuts) second, shape third, and with "cap" neither
+    the window units' split units nor their cuts may rise above the drawn map's."""
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     js = sorted({j for z in zs for j in allowed[z]})
@@ -725,6 +730,13 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 ycol[v, j] = len(cost)
                 held = any(fixed.get(y) == j for y in units.zips.get(v, ()))
                 cost.append(0.0 if held else SPLIT_WEIGHT)
+    scol, held_by = {}, {}
+    if count is not None:       # one split unit outweighs every holder of the window
+        big = SPLIT_WEIGHT * (len(ycol) + 1)
+        for v in sorted({unit_of[z] for z in zs}):
+            held_by[v] = {fixed[y] for y in units.zips.get(v, ()) if y in fixed}
+            scol[v] = len(cost)
+            cost.append(big)
     n = len(cost)
     h = highspy.Highs()
     h.setOptionValue("output_flag", False)
@@ -754,6 +766,24 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         if extra is not None:   # sequential: a district already past the band is not forced back
             a, b = max(0.0, a), max(0.0, b)
         row(a, b, idx, [m[z] for z in zs if (z, j) in col and m.get(z, 0.0) > 0])
+    if count is not None:       # s_v = 1 when unit v has two holders or more
+        free_y = {}
+        for (v, j), k in ycol.items():
+            if j not in held_by[v]:
+                free_y.setdefault(v, []).append(k)
+        for v, k in scol.items():
+            ys, fixed_holders = free_y.get(v, []), len(held_by[v])
+            if fixed_holders >= 2:
+                h.changeColBounds(k, 1.0, 1.0)
+            elif ys:
+                row(-inf, 1.0 - fixed_holders, ys + [k], [1.0] * len(ys) + [-float(len(ys))])
+        if count.get("cap"):
+            cur = count["current"]
+            row(-inf, float(sum(1 for v in scol if len(cur[v]) > 1)), list(scol.values()),
+                [1.0] * len(scol))
+            ys = [k for v in scol for k in free_y.get(v, [])]
+            room = sum(len(cur[v]) for v in scol) - sum(len(held_by[v]) for v in scol)
+            row(-inf, float(room), ys, [1.0] * len(ys))
     if arm == "move":
         for v in sorted({unit_of[z] for z in zs}):
             if len(hold.get(v, [])) > 1:
@@ -802,6 +832,9 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         for z, j in start.items():
             x0[col[z, j]] = 1.0
             x0[ycol[unit_of[z], j]] = 1.0
+        for v, k in scol.items():
+            x0[k] = float(len(held_by[v] | {j for (u, j), i in ycol.items()
+                                            if u == v and x0[i] > 0.5}) > 1)
         if not all(lo_ - tol <= sum(x0[i] * a for i, a in zip(idx, val)) <= hi_ + tol
                    for lo_, hi_, idx, val in stored):
             log(f"    the {how} drawing breaks a row (band or targets)")

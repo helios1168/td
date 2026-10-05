@@ -172,12 +172,6 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
             territory.own_territory(inst, p, fallback, xy, state)
         d = draw.drawing(inst, p, res, fallback)
         drawings[c] = d
-        _, _, exclave = draw.split_fixed(inst, p)
-        ch = inst.channels[c]
-        dev = {j: (x - ch.tau) / ch.tau for j, x in d.mass.items()}
-        held = collections.defaultdict(set)
-        for z, j in d.owner.items():
-            held[inst.units.unit_of[z]].add(j)
         contig[c] = {
             "status": res.status, "connected": res.connected, "undrawn_zctas": len(res.undrawn),
             "plan_delta": p.delta, "master_status": reports[c]["status"],
@@ -185,13 +179,44 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
             "group_delta_needed": max((g.delta for g in res.groups if g.delta is not None),
                                       default=p.delta),
             "fixed_split": res.fixed_split, "share_only": res.share_only,
-            "exclave_splits": [f"{v} {j}" for v, j in exclave_splits(inst, p, d.owner, exclave)],
-            "single_connector": single_connector(d.owner, inst.units.zip_adj, connectors)
-            if res.connected else None,
-            "worst_dev": max(abs(x) for x in dev.values()),
-            "mean_dev": sum(abs(x) for x in dev.values()) / len(dev),
-            "split_units": sorted(v for v, js in held.items() if len(js) > 1),
-            "vanished_shares": [f"{v} {j}" for v, j in d.vanished]}
+            **drawn_stats(inst, p, d, connectors, res.connected)}
+    report, m1 = write_folder(out, s, inst, ext, ref, polygon, plans, reports, drawings,
+                              f"{s.name} (contig {arm}, {source or 'extract'})",
+                              f"tools/exp/contig ({arm})", source, maps)
+    doc = {"scenario": s.name, "arm": arm, "fixed_targets": fixed_targets,
+           "sequential": sequential, "internal_delta": delta,
+           "plan_seconds": round(plan_seconds, 1), "m1": report["m1"], "channels": contig}
+    with open(os.path.join(out, "contig.json"), "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    log(f"{s.name} ({arm}): M1 {m1.status} ({m1.summary}); audit {report['verdict']}")
+    return doc
+
+
+def drawn_stats(inst, p, d, connectors: set, connected: bool) -> dict:
+    """contig.json's per-channel figures of the drawn map `d`: exclave splits (D2), districts
+    resting on one connector (U63, when `connected`), deviations against τ, split units and
+    vanished shares."""
+    _, _, exclave = draw.split_fixed(inst, p)
+    ch = inst.channels[p.channel]
+    dev = {j: (x - ch.tau) / ch.tau for j, x in d.mass.items()}
+    held = collections.defaultdict(set)
+    for z, j in d.owner.items():
+        held[inst.units.unit_of[z]].add(j)
+    return {
+        "exclave_splits": [f"{v} {j}" for v, j in exclave_splits(inst, p, d.owner, exclave)],
+        "single_connector": single_connector(d.owner, inst.units.zip_adj, connectors)
+        if connected else None,
+        "worst_dev": max(abs(x) for x in dev.values()),
+        "mean_dev": sum(abs(x) for x in dev.values()) / len(dev),
+        "split_units": sorted(v for v, js in held.items() if len(js) > 1),
+        "vanished_shares": [f"{v} {j}" for v, j in d.vanished]}
+
+
+def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings, title: str,
+                 realizer: str, source: str, maps: bool) -> tuple:
+    """The run folder's ledger, scorecard, districts.csv and run.json from `drawings`;
+    (run.json's dict, the M1 check)."""
     areas = output.read_areas()
     led = output.ledger(inst, drawings, ext, ref)
     names = output.name_districts(led, output.cbsa_titles(areas))
@@ -204,12 +229,12 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     split = output.ledger_pieces(led, polygon, drawings)
     checks = audit.audit(output.audit_run(inst, led, drawings, ext, reports, polygon, names,
                                           manifest, ref, split, polygon))
-    audit.write_scorecard(out, checks, f"{s.name} (contig {arm}, {source or 'extract'})")
+    audit.write_scorecard(out, checks, title)
     output.write_districts(os.path.join(out, "districts.csv"), inst, plans, drawings, names, split)
     m1 = next(ch for ch in checks if ch.name == audit.M1_CHECK)
     report = {
         "scenario": s.name, "spec": s.path, "source": source, "verdict": audit.verdict(checks),
-        "realizer": f"tools/exp/contig ({arm})", "fine_channels": list(s.fine_channels),
+        "realizer": realizer, "fine_channels": list(s.fine_channels),
         "cells": len(led), "zips": len({r["zip_code"] for r in led}),
         "dropped_units": {c: list(u) for c, u in inst.report.get("dropped_units", {}).items()},
         "dropped_channels": list(inst.dropped_channels),
@@ -228,14 +253,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     with open(os.path.join(out, "run.json"), "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2, sort_keys=True)
         fh.write("\n")
-    doc = {"scenario": s.name, "arm": arm, "fixed_targets": fixed_targets,
-           "sequential": sequential, "internal_delta": delta,
-           "plan_seconds": round(plan_seconds, 1), "m1": report["m1"], "channels": contig}
-    with open(os.path.join(out, "contig.json"), "w", encoding="utf-8") as fh:
-        json.dump(doc, fh, indent=2, sort_keys=True)
-        fh.write("\n")
-    log(f"{s.name} ({arm}): M1 {m1.status} ({m1.summary}); audit {report['verdict']}")
-    return doc
+    return report, m1
 
 
 def run_contig(m: dict, folder: str) -> None:
