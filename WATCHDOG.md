@@ -44,11 +44,16 @@ said "pieces are listed". That pattern is what you are here to catch, for any pa
   - main-map total K 48-54, IFA K 46-55;
   - $ per district within ±10% of target (national $1.25B, WH $1.0B, FI $900M, IFA from the
     whole-extract total); the combined channel is exempt.
-- **Ranking, looks first:**
-  1. split units per channel (a state split in WH and in FI counts 2; cuts are not the key);
-  2. visual defects (one may outrank an extra split, flagged REVIEW);
-  3. shape;
-  4. balance (worst, then mean deviation).
+- **Ranking, looks first (owner 2026-10-05):**
+  1. split units per channel (a district owning any ZCTA of a state, zero-opportunity ones
+     included, has split it; a state split in WH and in FI counts 2);
+  2. cuts (Σ over split states of districts − 1: CA in 4 beats CA in 5);
+  3. visual defects (one may outrank an extra split, flagged REVIEW);
+  4. shape;
+  5. balance (worst, then mean deviation).
+- **Floors:** a split or balance floor from the master with η > 0 bounds only the drawings that
+  follow its family, modes, η and caps; it is not a floor on M1 maps (#91). "Minimal" means
+  g = 0 against a bound that covers the map.
 - **Not balance first.** Any framing that ranks balance ahead of splits and looks reverses this.
 - Zero-opportunity ZIPs are territory. Run tracking is filesystem-only. Every extract cell enters
   the one-owner audit.
@@ -56,10 +61,14 @@ said "pieces are listed". That pattern is what you are here to catch, for any pa
 ## 4. Open owner decisions (never settle by default, in code or in prose)
 
 - OD1 the final band (#56). OD3 output tiers (#58). OD4 county pieces (#59). OD5 metros (#60).
-- OD6 the catalog (#75). F1 new channels (#76). U50, what a district is (#82). Heavy ZIPs (#83).
+- OD6 the catalog (#75). F1 new channels (#76). Heavy ZIPs (#83).
+- Which master certifies split and balance floors (#110). The smallest share that counts beyond
+  a split (#111).
 - The #85 swap rule: A is only an interim default, and B is open.
 - How M1 is achieved (a failing map is already settled): a contiguity-aware realizer, a hand-off
   pass that may leave the band, or ZIP-grain planning (#102).
+- What gives way when a share cannot be drawn connected: another split, a wider internal band,
+  or a move of the share (#112, after #109).
 - When each wave starts, and which issues are `ready`.
 
 ## 5. Methods (free to change if they serve the goal)
