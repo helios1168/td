@@ -77,6 +77,7 @@ class Group:
     owner: dict = field(default_factory=dict)
     delta: float | None = None
     tried: list = field(default_factory=list)
+    dag: bool = False
 
     def report(self) -> dict:
         return {"districts": self.districts, "units": self.units, "free_zctas": self.free,
@@ -84,7 +85,7 @@ class Group:
                 "iterations": self.iterations, "cuts": self.cuts,
                 "seconds": round(self.seconds, 2), "objective": self.objective,
                 "bound": self.bound, "gap": self.gap, "note": self.note, "delta": self.delta,
-                "tried": self.tried}
+                "tried": self.tried, "dag": self.dag}
 
 
 @dataclass
@@ -98,6 +99,7 @@ class Result:
     delta: float
     arm: str
     fixed_targets: bool
+    sequential: bool = False
 
     @property
     def connected(self) -> bool:
@@ -110,7 +112,7 @@ class Result:
             return "infeasible"
         if "unknown" in st:
             return "unknown"
-        return "connected" if "connected" in st else "optimal"
+        return "connected" if "connected" in st or self.sequential else "optimal"
 
 
 # ------------------------------------------------------------------------------ the instance view
@@ -249,22 +251,28 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
                            fixed_split, share_only, log)
     for gi, qis in enumerate(sorted(groups.values(), key=lambda g: -sum(len(fcomps[q]) for q in g))):
         zs = sorted(z for q in qis for z in fcomps[q])
-        tried = []
-        for d in [delta] + sorted(x for x in wider if x > delta):
+        tried, g = [], None
+
+        def solve(d, dag, seed):
             left = t_end - time.time()
             if left <= 1.0:
-                break
-            g = _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold,
+                return None
+            r = _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
-                             arm, fixed_targets, min(left, group_limit or left), log)
-            g.delta = d
-            tried.append({"delta": d, "status": g.status, "seconds": round(g.seconds, 2),
-                          "note": g.note})
-            log(f"  {c} group {gi} at δ = {d:g}: {len(g.districts)} districts, {g.free} free "
-                f"ZCTAs, {g.columns} columns -> {g.status} in {g.seconds:.1f}s, {g.iterations} "
-                f"solves, {g.cuts} cuts{(' (' + g.note + ')') if g.note else ''}")
-            if g.status in ("optimal", "connected"):
+                             arm, fixed_targets, min(left, group_limit or left), log, dag=dag,
+                             start=seed)
+            log(f"  {c} group {gi} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
+                f"districts, {r.free} free ZCTAs, {r.columns} columns -> {r.status} in "
+                f"{r.seconds:.1f}s, {r.iterations} solves, {r.cuts} cuts"
+                f"{(' (' + r.note + ')') if r.note else ''}")
+            return r
+        for d in [delta] + sorted(x for x in wider if x > delta):
+            g = _attempt(solve, d, tried) or g
+            if g is not None and g.status in ("optimal", "connected", "infeasible"):
                 break
+        if g is None:       # no time left for this group
+            g = Group(sorted({j for z in zs for j in allowed[z]}), sorted({unit_of[z] for z in zs}),
+                      len(zs), 0, 0, note="not tried: the channel's time limit")
         g.tried = tried
         out.append(g)
         if g.status in ("optimal", "connected"):
@@ -274,13 +282,34 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
     return Result(c, owner, out, undrawn, fixed_split, share_only, delta, arm, fixed_targets)
 
 
+def _attempt(solve, d, tried):
+    """One band: the geodesic-DAG restriction first, then the complete model started from the
+    restriction's drawing; the better of the two that is connected, else the complete model's
+    verdict.  `solve(d, dag, seed)` returns a Group, or None when the time is up."""
+    out = None
+    for dag in (True, False):
+        seed = out.owner if out is not None and out.status == "connected" else None
+        r = solve(d, dag, seed)
+        if r is None:
+            break
+        r.delta = d
+        tried.append({"delta": d, "dag": dag, "status": r.status, "seconds": round(r.seconds, 2),
+                      "note": r.note})
+        if not dag and seed is not None and r.status not in ("optimal", "connected"):
+            break           # the complete model lost the DAG's drawing: keep the DAG's
+        out = r
+    return out
+
+
 def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support, p, delta,
                 wider, arm, fixed_targets, t_end, group_limit, fixed_split, share_only, log):
     """The sequential restriction (`draw(sequential=True)`): one split unit at a time, each
-    district attached to what it already owns (its whole units and the units drawn before), the
-    units it has yet to draw counted at their planned shares in the band row; then the exclave and
-    dropped ZCTAs, all of zero opportunity here, grown breadth first from the drawn map.  A
-    restriction of the joint model: a unit it cannot draw proves nothing (`unknown`)."""
+    district's ZCTAs in the unit attached to what it already owns next to the unit (its whole
+    units and the units drawn before, taken as one body), the units it has yet to draw counted at
+    their planned shares in the band row; then the exclave and dropped ZCTAs, all of zero
+    opportunity here, grown breadth first from the drawn map.  Neither a restriction nor a
+    relaxation of the joint model: a unit it cannot draw proves nothing (`unknown`), and only the
+    M1 audit of the finished ledger says whether a district is one piece."""
     ch, units = inst.channels[c], inst.units
     adj, m, unit_of = units.zip_adj, ch.m, units.unit_of
     split = [v for v in ch.units if len(hold.get(v, [])) > 1]
@@ -299,26 +328,39 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
         for z, j in owner.items():
             if j in js:
                 mine[j].add(z)
-        bodies = {j: components(mine[j], adj) for j in js if mine[j]}
+        # what each district owns next to v is one body: v's share must attach to it, and the
+        # rest of the district joins through units drawn later (a relaxation the audit checks)
+        near = set().union(*(adj[z] for z in zs)) if zs else set()
+        bodies, extra = {}, {}
+        for j in js:
+            touching = set().union(*([cc for cc in components(mine[j], adj) if cc & near] or [set()]))
+            if touching:
+                bodies[j] = [frozenset(touching)]
+            extra[j] = math.fsum(planned.get((w, j), 0.0) for w in pending) + math.fsum(
+                m.get(z, 0.0) for z in mine[j] - touching)
         body_of = {z: (j, i) for j, bs in bodies.items() for i, b in enumerate(bs) for z in b}
-        extra = {j: math.fsum(planned.get((w, j), 0.0) for w in pending) for j in js}
-        g = None
-        for d in [delta] + sorted(x for x in wider if x > delta):
+        g, tried = None, []
+
+        def solve(d, dag, seed):
             left = t_end - time.time()
             if left <= 1.0:
-                break
-            g = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
+                return None
+            r = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
-                             arm, fixed_targets, min(left, group_limit or left), log, extra)
-            g.delta = d
-            g.tried = g.tried + [{"delta": d, "status": g.status, "seconds": round(g.seconds, 2)}]
-            log(f"  {c} unit {v} at δ = {d:g}: {len(g.districts)} districts, {g.free} ZCTAs -> "
-                f"{g.status} in {g.seconds:.1f}s, {g.iterations} solves, {g.cuts} cuts"
-                f"{(' (' + g.note + ')') if g.note else ''}")
-            if g.status in ("optimal", "connected"):
+                             arm, fixed_targets, min(left, group_limit or left), log, extra,
+                             dag=dag, start=seed)
+            log(f"  {c} unit {v} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
+                f"districts, {r.free} ZCTAs -> {r.status} in {r.seconds:.1f}s, "
+                f"{r.iterations} solves, {r.cuts} cuts{(' (' + r.note + ')') if r.note else ''}")
+            return r
+        for d in [delta] + sorted(x for x in wider if x > delta):
+            g = _attempt(solve, d, tried) or g
+            if g is not None and g.status in ("optimal", "connected"):
                 break
-        if g is None:
+        if g is None:       # no time left: this unit and the rest stay undrawn
+            undrawn |= set(zs) | {z for w in pending for z in units.zips[w] if z in free}
             break
+        g.tried = tried
         if g.status == "infeasible":
             g.status, g.note = "unknown", "restricted model infeasible: " + g.note
         out.append(g)
@@ -331,7 +373,8 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
     undrawn |= left
     log(f"  {c}: {len(grown)} exclave and dropped ZCTAs grown from the drawn map, "
         f"{len(left)} unreached")
-    return Result(c, owner, out, undrawn, fixed_split, share_only, delta, arm, fixed_targets)
+    return Result(c, owner, out, undrawn, fixed_split, share_only, delta, arm, fixed_targets,
+                  sequential=True)
 
 
 def geodesic(zs, allowed, js, gadj, vert_of, cen, unit_of, p) -> dict:
@@ -583,7 +626,7 @@ def construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target
 
 def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold, plan, planned,
                  support, inst, lo, hi, arm, fixed_targets, time_limit, log=print,
-                 extra: dict | None = None) -> Group:
+                 extra: dict | None = None, dag: bool = False, start: dict | None = None) -> Group:
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     js = sorted({j for z in zs for j in allowed[z]})
@@ -680,11 +723,19 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 idx = [col[z, j] for z in units.zips[v] if (z, j) in col and m[z] > 0]
                 a = planned.get((v, j), 0.0)
                 row(a - top, a + top, idx, [m[z] for z in units.zips[v] if (z, j) in col and m[z] > 0])
-    # a ZCTA of a district needs a neighbour of it (when the district has two vertices or more)
+    # a ZCTA of a district needs a neighbour of it (when the district has two vertices or more);
+    # under `dag`, a neighbour nearer its bodies or seed along `geo` (CONTIGUITY.md §4 rank 2)
     for z in zs:
         for j in allowed[z]:
             nb = sorted(gadj[z])
             if any(vert_of.get(y) == j for y in nb):
+                continue
+            if dag:
+                dz = geo[j].get(z, math.inf)
+                if dz == 0.0:
+                    continue
+                idx = [col[y, j] for y in nb if (y, j) in col and geo[j].get(y, math.inf) < dz]
+                row(-inf, 0.0, [col[z, j]] + idx, [1.0] + [-1.0] * len(idx))
                 continue
             if j not in root and max((m.get(y, 0.0) for y in zs if (y, j) in col), default=0.0) >= lo:
                 continue
@@ -715,11 +766,13 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 f"{time.time() - t0:.1f}s")
 
     x_best = None
-    start, why = construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target, root)
-    if start is None:
+    if start is not None:
+        accept(start, "given")
+    built, why = construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target, root)
+    if built is None:
         log(f"    no constructed drawing: {why}")
     else:
-        accept(start, "constructed")
+        accept(built, "constructed")
     info = None
     while True:
         left = deadline - time.time()
@@ -822,8 +875,11 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 and math.isfinite(info.mip_dual_bound):
             g.bound = info.mip_dual_bound       # the last solve's bound holds for every drawing
         g.gap = abs(g.objective - g.bound) / max(1e-12, abs(g.objective)) if g.bound is not None else None
-        if g.status != "optimal":
-            g.status = "connected"
+        if g.status != "optimal" or dag:
+            g.status = "connected"      # under `dag` an optimum is the restriction's only
+    if dag and g.status == "infeasible":
+        g.status, g.note = "unknown", "the geodesic-DAG restriction is infeasible"
+    g.dag = dag
     g.rows = nrows
     g.seconds = time.time() - t0
     return g
