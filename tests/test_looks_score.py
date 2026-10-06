@@ -205,13 +205,13 @@ def test_dollar_band_inclusive():
             assert len(why) == 2 and why[1].startswith(f"$ {ch} "), (ch, d, why)
 
 
-def _score_toy(ch: str, rates: dict, fine=None) -> dict:
+def _score_toy(ch: str, rates: dict, fine=None, run_json=None) -> dict:
     """`score.score` on a run folder holding channel `ch` laid out as X; with `fine`, its
-    `run.json` names the scenario's fine channels."""
+    `run.json` names the scenario's fine channels; `run_json` adds to that file."""
     with tempfile.TemporaryDirectory() as d:
-        if fine is not None:
+        if fine is not None or run_json:
             with open(os.path.join(d, "run.json"), "w") as fh:
-                json.dump({"fine_channels": fine}, fh)
+                json.dump({**({"fine_channels": fine} if fine is not None else {}), **(run_json or {})}, fh)
         led = _rows(ch, ((z, j.replace("X", ch), m) for z, j, m in X_CELLS))
         with open(os.path.join(d, "ledger.csv"), "w", newline="") as fh:
             w = csv.DictWriter(fh, list(led[0]))
@@ -259,6 +259,17 @@ def _s(run, splits, defects, eligible=True, extent=100.0, worst=0.05):
     return {"run": run, "eligible": eligible, "splits": splits, "defects": defects,
             "largest_extent_km": extent, "states_per_district": 3, "worst_dev": worst,
             "mean_dev": 0.01, "review": None}
+
+
+def test_a_diagnostic_folder_is_never_eligible():
+    """Sol's review of #121 (P1): a folder marked diagnostic (a `--diag-final-delta` repair, its
+    children, or a backfilled one) is INELIGIBLE with the reason "diagnostic band", first."""
+    plain = _score_toy("WH", {"wh": 1.0e9})
+    diag = _score_toy("WH", {"wh": 1.0e9}, run_json={"diagnostic": True, "diagnostic_band": 0.15,
+                                                     "diagnostic_label": "backfilled"})
+    assert not plain["diagnostic"] and diag["diagnostic"] and not diag["eligible"]
+    assert diag["why"] == ["diagnostic band (backfilled)"] + plain["why"], diag["why"]
+    assert "INELIGIBLE (diagnostic band (backfilled); " in score.verdict(diag)
 
 
 def test_rank_and_review():

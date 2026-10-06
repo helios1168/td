@@ -13,7 +13,8 @@ channels are the scenario's, from `run.json` (#116); a run from before #116 has 
 its summary says the ledger's were read instead.  It also gives
 each district's largest detached piece as the looks scorer sizes it (`tools/looks/score.py`), in
 mass over τ_c: on the ledger, which owns every ZCTA since #116, so no display fill sizes a piece
-and the scorer's pieces are the check's.  The CLI prints one line per run and exits 1 when any run fails.
+and the scorer's pieces are the check's.  The CLI prints one line per run and exits 1 when any run fails
+or is diagnostic (#121, `td.audit.diagnostic`: printed DIAGNOSTIC, never a deliverable).
 
 `--rescore <root>` gates and scores every run folder under `root` (a folder with `ledger.csv` and
 `districts.csv`), writes `TABLE.md` and `rescore.json` to `--out`, and with `--write-register`
@@ -59,7 +60,8 @@ def run_dirs(root: str) -> list:
 def m1(run_dir: str, g=None) -> dict:
     """M1 on one run folder: `status` (`pass`, `fail` or `unverified`), the strict check, the
     scorer's pieces and the largest (`largest`: channel, district, ZIPs, mass / τ, states), or
-    None when no district is in pieces.  `g` defaults to the committed geography."""
+    None when no district is in pieces; `diagnostic`, `td.audit.diagnostic`'s record or None (a
+    diagnostic folder is never a deliverable: the CLI prints DIAGNOSTIC and exits 1, #121).  `g` defaults to the committed geography."""
     g = g or score.geography()
     ledger, districts = _read(run_dir, "ledger.csv"), _read(run_dir, "districts.csv")
     ks = {}
@@ -73,6 +75,7 @@ def m1(run_dir: str, g=None) -> dict:
             pieces += [(ch, *p) for p in looks["pieces"]]
     largest = max(pieces, key=lambda p: (p[3], p[2], p[1]), default=None)
     return {"run": run_dir, "status": check.status, "summary": check.summary, "check": check,
+            "diagnostic": audit.diagnostic(run_dir),
             "scorer_pieces": len(pieces), "largest": largest,
             "necks": [i for i in check.items if score.NECK.search(i)],
             "mass_necks": [i for i in check.items if audit.MASS_NECK in i]}
@@ -95,6 +98,7 @@ def rescore(root: str, g=None) -> dict:
         except Exception as e:              # a run the scorer cannot read still gets M1
             s, err = None, f"{type(e).__name__}: {e}"
         rows.append({"run": os.path.relpath(d, root), "m1": gate["status"],
+                     "diagnostic": gate["diagnostic"],
                      "summary": gate["summary"], "largest": gate["largest"],
                      "scorer_pieces": gate["scorer_pieces"], **gate["check"].counts,
                      "neck_items": gate["necks"], "mass_neck_items": gate["mass_necks"],
@@ -120,7 +124,8 @@ def table(res: dict) -> str:
              "channel ZCTAs with no owner / (ZCTA, fine channel) cells with no row |",
              "|---|---|---|---|---|---|"]
     for r in rows:
-        lines.append(f"| {r['rank'] or '-'} | `{r['run']}` | {r['m1']} | {_piece(r['largest'])} | "
+        diag = " DIAGNOSTIC" if r.get("diagnostic") else ""
+        lines.append(f"| {r['rank'] or '-'} | `{r['run']}` | {r['m1']}{diag} | {_piece(r['largest'])} | "
                      f"{r.get('necks', '-')} | {r.get('split', '-')} / {r.get('pieces', '-')} / "
                      f"{r.get('no_owner', '-')} / {r.get('no_row', '-')} |")
     errors = [r for r in rows if r["scorer_error"]]
@@ -192,15 +197,16 @@ def main(argv=None) -> int:
         print(f"\nM1 latest value: {value}")
         if a.write_register:
             write_latest_value(value)
-        return 1 if any(r["m1"] != "pass" for r in res["rows"]) else 0
+        return 1 if any(r["m1"] != "pass" or r["diagnostic"] for r in res["rows"]) else 0
     worst = 0
     for d in a.run_dirs:
         got = m1(d)
-        print(f"{d}: M1 {got['status']}: {got['summary']}; largest detached piece "
-              f"{_piece(got['largest'])}")
+        diag = got["diagnostic"]
+        print(f"{d}: {'DIAGNOSTIC (' + (diag['label'] or 'diagnostic band') + '), not a deliverable; ' if diag else ''}"
+              f"M1 {got['status']}: {got['summary']}; largest detached piece {_piece(got['largest'])}")
         for n in got["necks"] + got["mass_necks"]:
             print(f"  {n}")
-        worst = max(worst, got["status"] != "pass")
+        worst = max(worst, got["status"] != "pass" or diag is not None)
     return worst
 
 

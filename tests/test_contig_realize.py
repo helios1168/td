@@ -167,6 +167,32 @@ def _repair_module():
     return sys.modules["contig_repair"]
 
 
+def test_a_child_of_a_diagnostic_folder_is_diagnostic():
+    """Sol's review of #121 (P1): `run.write_manifest` marks a run whose parent is diagnostic
+    diagnostic too, so a repair of a `--diag-final-delta` folder is never a deliverable."""
+    import json
+    import tempfile
+    from td import audit
+    run = _repair_module().run
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = os.path.join(tmp, "spec.toml")
+        with open(spec, "w") as fh:
+            fh.write("")
+        parent, plain, child = (os.path.join(tmp, n) for n in ("diag", "plain", "child"))
+        run.write_manifest(parent, "contig_repair", spec, spec, {}, diagnostic=True,
+                           diagnostic_band=0.15, diagnostic_label="diagnostic band ±15%")
+        run.write_manifest(plain, "contig_repair", spec, spec, {})
+        run.write_manifest(child, "contig_repair", spec, spec, {}, parent=parent)
+        assert audit.diagnostic(parent) == {"band": 0.15, "label": "diagnostic band ±15%"}
+        assert audit.diagnostic(plain) is None
+        assert audit.diagnostic(child) == {"band": 0.15, "label": f"child of the diagnostic folder {parent}"}
+        assert audit.diagnostic(os.path.join(tmp, "grandchild")) is None
+        run.write_manifest(os.path.join(tmp, "grandchild"), "contig_repair", spec, spec, {}, parent=child)
+        assert audit.diagnostic(os.path.join(tmp, "grandchild"))["band"] == 0.15
+        with open(os.path.join(child, "manifest.json")) as fh:
+            assert json.load(fh)["diagnostic"] is True
+
+
 def test_a_window_solve_reconnects_the_power_diagrams_detached_piece():
     """`repair.py`'s window repair: the power diagram's U map, where CT+NY holds a detached piece
     at the top of NY's right arm, is repaired by an exact solve on a window around the piece, the

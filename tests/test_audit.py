@@ -558,6 +558,30 @@ def test_an_edge_does_not_add_a_vertex():
     contiguity = audit.check_contiguity(run)
     assert contiguity.counts["gaps"] == 1 and "X/d1: ZIP b not in the graph (graph gap)" in contiguity.items
 
+def test_a_diagnostic_folder_says_so_and_its_band_row_gives_the_scenario_result():
+    """Sol's review of #121 (P1): `audit.diagnostic` reads `"diagnostic": true` from run.json or
+    the manifest; a diagnostic band's scorecard row reads "diagnostic band ±X% (scenario band ±Y%:
+    pass/fail)", the scenario's result computed apart."""
+    with tempfile.TemporaryDirectory() as d:
+        assert audit.diagnostic(d) is None
+        with open(os.path.join(d, "manifest.json"), "w") as fh:
+            json.dump({"diagnostic": False}, fh)
+        assert audit.diagnostic(d) is None
+        with open(os.path.join(d, "manifest.json"), "w") as fh:
+            json.dump({"diagnostic": True, "diagnostic_band": 0.15, "diagnostic_label": "backfilled"}, fh)
+        assert audit.diagnostic(d) == {"band": 0.15, "label": "backfilled"}
+    cells = [Cell("a", "f", "X", "d1", 1.0), Cell("b", "f", "X", "d2", 1.3)]
+    diag = audit.check_bands(audit.Run(cells, {"X": Channel(2, 1.15 * 0.85, 1.15 * 1.15)}))
+    scen = audit.check_bands(audit.Run(cells, {"X": Channel(2, 1.15 * 0.95, 1.15 * 1.05)}))
+    assert (diag.status, scen.status) == ("pass", "fail")
+    other = audit.Check("ZIP contiguity", "pass", "fine")
+    [o, row] = audit.diagnostic_band_row([other, diag], 0.15, scen, "5%")
+    assert o is other and row.status == "pass"
+    assert row.summary.startswith("diagnostic band ±15% (scenario band ±5%: fail): "), row.summary
+    assert "| final bands on drawn mass | pass | diagnostic band ±15% (scenario band ±5%: fail)" \
+        in audit.scorecard([row], "toy")
+
+
 def test_scorecard_lists_every_item():
     many = audit.Check("final bands on drawn mass", "fail", "51 breaches", [f"breach {i}" for i in range(51)])
     text = audit.scorecard([many], "toy")

@@ -1063,6 +1063,34 @@ def scorecard(checks: list, title: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def diagnostic(folder: str) -> dict | None:
+    """The diagnostic record of a run folder (#121): {"band": the final band it was held to, or
+    None, "label": why} when its `run.json` or `manifest.json` carries `"diagnostic": true` (a
+    `--diag-final-delta` repair, a child of a diagnostic folder, or a backfilled one); None for a
+    folder that may be a deliverable.  A diagnostic folder never is: the looks scorer marks it
+    INELIGIBLE and M1's gate (`tools/mandates/check.py`) exits non-zero on it."""
+    import json
+    for name in ("run.json", "manifest.json"):
+        path = os.path.join(folder, name)
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                doc = json.load(fh)
+            if doc.get("diagnostic"):
+                return {"band": doc.get("diagnostic_band"), "label": doc.get("diagnostic_label", "")}
+    return None
+
+
+def diagnostic_band_row(checks: list, band: float, scenario: Check, scenario_delta: str) -> list:
+    """`checks` with the bands row of a diagnostic band reworded: "diagnostic band ±X%
+    (scenario band ±Y%: pass/fail)", the scenario's result `scenario` computed apart (#121)."""
+    def row(c):
+        if c.name != scenario.name:
+            return c
+        return replace(c, summary=f"diagnostic band ±{100 * band:g}% (scenario band ±{scenario_delta}: "
+                                  f"{scenario.status}): {c.summary}")
+    return [row(c) for c in checks]
+
+
 def write_scorecard(run_dir: str, checks: list, title: str) -> str:
     path = os.path.join(run_dir, "scorecard.md")
     with open(path, "w", encoding="utf-8") as fh:

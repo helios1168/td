@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import gzip
 import importlib.util
+import json
 import os
 import re
 import tempfile
@@ -300,6 +301,34 @@ def test_m1_names_a_check_that_exists():
     for ref in ("td/audit.py::check_m1", "tools/mandates/check.py::m1"):
         assert f"`{ref}`" in check, (ref, check)
     assert _check_paths_exist(check) == [], check
+
+
+def test_the_gate_prints_diagnostic_and_fails_a_diagnostic_folder():
+    """Sol's review of #121 (P1): M1's gate CLI prints DIAGNOSTIC for a diagnostic folder and
+    exits 1, though its M1 passes; the same folder unmarked exits 0."""
+    import contextlib
+    import io
+    import shutil
+    gate = _gate()
+    g, _ = _world(gate, "connected")
+    check = gate.m1
+    gate.m1 = lambda d, _g=None: check(d, g)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            d = os.path.join(tmp, "run")
+            shutil.copytree(os.path.join(FIXTURES, "connected"), d)
+            for diag, code in ((None, 0), ({"diagnostic": True, "diagnostic_band": 0.15,
+                                            "diagnostic_label": "backfilled"}, 1)):
+                if diag:
+                    with open(os.path.join(d, "run.json"), "w") as fh:
+                        json.dump(diag, fh)
+                out = io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    got = gate.main([d])
+                assert got == code and ("DIAGNOSTIC (backfilled)" in out.getvalue()) == bool(diag), out.getvalue()
+                assert "M1 pass" in out.getvalue(), out.getvalue()
+    finally:
+        gate.m1 = check
 
 
 def test_the_corner_fixture_touches_at_a_point_and_is_no_edge():
