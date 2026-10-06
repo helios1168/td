@@ -2,7 +2,7 @@
 folder that fails M1.
 
     "$TD_PY" -u tools/exp/contig/repair.py <run_dir> --out <dir> [--extract PATH] [--plans PATH]
-        [--h0 3] [--max-zctas 1500] [--time-limit 600] [--channels c ...] [--maps]
+        [--h0 3] [--max-zctas 1500] [--time-limit 600] [--budget s] [--channels c ...] [--maps]
 
 Per planning channel with a detached piece on the drawn map (the ledger of `<run_dir>`, read
 back to each ZCTA's plan copy):
@@ -435,8 +435,20 @@ def clusters(pieces: list) -> list:
     return sorted(out.values(), key=lambda g: (sum(len(cc) for _, cc in g), g[0][0]))
 
 
+def _time_left(time_limit: float, deadline: float | None, log, what: str) -> float:
+    """A window's seconds under the channel's `deadline` (`--budget`); 0 once it has passed."""
+    if deadline is None:
+        return time_limit
+    left = deadline - time.time()
+    if left < 30.0:
+        log(f"budget spent: {what} not tried")
+        return 0.0
+    return min(time_limit, left)
+
+
 def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, time_limit,
-                    attempts, log, flow=False, keep_support=False, border=None, ng=None):
+                    attempts, log, flow=False, keep_support=False, border=None, ng=None,
+                    deadline=None):
     c = plan.channel
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
@@ -446,9 +458,12 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
     for shape, k, W, cap in todo:
         if shape == skip and cap:
             continue
+        tl = _time_left(time_limit, deadline, log, f"{c} {shape} {k} of {pieces[0][0]}")
+        if not tl:
+            break
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
-        g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow, keep_support,
+        g = solve_window(inst, plan, owner, W, p, tl, cap, log, flow, keep_support,
                          {j for j, _ in pieces}, border, ng)
         rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
                "window_zctas": len(W), "districts": g.districts,
@@ -487,7 +502,7 @@ def necks(owner: dict, m: dict, ng, districts=None) -> list:
 
 
 def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time_limit,
-                 attempts, log, flow, keep_support, border, ng):
+                 attempts, log, flow, keep_support, border, ng, deadline=None):
     """Window repair of one neck, as of a detached piece (#121): the windows of `steps` around the
     side cut off, each re-solved with the border term, the first kept that leaves no more
     detached pieces and fewer necks among its districts."""
@@ -495,9 +510,12 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
     for shape, k, W in steps([(j, side)], owner, free, adj, h0, max_zctas):
+        tl = _time_left(time_limit, deadline, log, f"{c} neck of {j}, {shape} {k}")
+        if not tl:
+            break
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
-        g = solve_window(inst, plan, owner, W, p, time_limit, True, log, flow, keep_support,
+        g = solve_window(inst, plan, owner, W, p, tl, True, log, flow, keep_support,
                          {j}, border, ng)
         n_before = len(necks(owner, m, ng, g.districts))
         rec = {"channel": c, "kind": "neck", "shape": shape, "h" if shape == "ball" else "slack": k,
@@ -529,14 +547,16 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
 def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_zctas: int,
                    time_limit: float, log=print, flow: bool = False,
                    keep_support: bool = False, border: dict | None = None, ng=None,
-                   neck_time_limit: float | None = None) -> tuple:
+                   neck_time_limit: float | None = None, budget: float | None = None) -> tuple:
     """(the repaired owner, [attempt records]); the owner changes only by a connected window.
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
     rounds repeat while they remove pieces, at most three.  Then, given `ng`
     (`td.audit.NeckGraph`), each neck M1 lists (#121), smallest side first, by `_repair_neck`;
     rounds repeat while they remove necks, at most three, each neck window with `neck_time_limit` seconds (default
-    `time_limit`).  Every window solves with the border term over `border`."""
+    `time_limit`).  Every window solves with the border term over `border`.  With `budget`
+    (seconds), no window starts once the channel has spent it, and the last gets what is left."""
+    deadline = None if budget is None else time.time() + budget
     c = plan.channel
     ch, units = inst.channels[c], inst.units
     adj, m = units.zip_adj, ch.m
@@ -553,7 +573,8 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             group = [pc for pc in group if pc in live]
             if group:
                 owner = _repair_cluster(inst, plan, owner, group, free, p, state, h0, max_zctas,
-                                        time_limit, attempts, log, flow, keep_support, border, ng)
+                                        time_limit, attempts, log, flow, keep_support, border, ng,
+                                        deadline)
         left = detached(owner, adj, m)
         if len(left) >= len(pieces):
             break
@@ -570,7 +591,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
                 continue            # gone with an earlier window
             owner = _repair_neck(inst, plan, owner, j, cur[0][1], free, p, state, h0, max_zctas,
                                  neck_time_limit or time_limit, attempts, log, flow, keep_support,
-                                 border, ng)
+                                 border, ng, deadline)
         left = necks(owner, m, ng)
         if len(left) >= len(found):
             break
@@ -626,6 +647,8 @@ def main(argv=None) -> int:
     ap.add_argument("--h0", type=int, default=3)
     ap.add_argument("--max-zctas", type=int, default=1500)
     ap.add_argument("--time-limit", type=float, default=600.0, help="seconds per window")
+    ap.add_argument("--budget", type=float, default=None,
+                    help="seconds per channel; no window starts past it")
     ap.add_argument("--neck-time-limit", type=float, default=None,
                     help="seconds per neck window (default --time-limit)")
     ap.add_argument("--channels", nargs="*", default=None)
@@ -660,7 +683,7 @@ def main(argv=None) -> int:
             owner, attempts = repair_channel(inst, plan, owner, p, state, a.h0, a.max_zctas,
                                              a.time_limit, flow=a.flow,
                                              keep_support=a.keep_support, border=border, ng=ng,
-                                             neck_time_limit=a.neck_time_limit)
+                                             neck_time_limit=a.neck_time_limit, budget=a.budget)
         res = draw.Result(c, owner, [], set(), [], [], plan.delta, "repair", False)
         d = draw.drawing(inst, plan, res)
         drawings[c] = d
@@ -684,7 +707,7 @@ def main(argv=None) -> int:
                                   a.maps)
     doc.update({"arm": doc["arm"] + "+repair", "repair_of": os.path.abspath(a.run_dir),
                 "repair": {"h0": a.h0, "max_zctas": a.max_zctas, "time_limit": a.time_limit,
-                           "neck_time_limit": a.neck_time_limit,
+                           "neck_time_limit": a.neck_time_limit, "budget": a.budget,
                            "plans_file": a.plans_file, "label": a.label,
                            "flow": a.flow, "keep_support": a.keep_support,
                            "commit": commit},
