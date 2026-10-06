@@ -939,11 +939,11 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             elif ys:
                 row(-inf, 1.0 - fixed_holders, ys + [k], [1.0] * len(ys) + [-float(len(ys))])
         if count.get("cap"):
-            cur = count["current"]
-            row(-inf, float(sum(1 for v in scol if len(cur[v]) > 1)), list(scol.values()),
+            cur, extra = count["current"], count.get("extra", 0)     # extra: opened units (#122)
+            row(-inf, float(sum(1 for v in scol if len(cur[v]) > 1) + extra), list(scol.values()),
                 [1.0] * len(scol))
             ys = [k for v in scol for k in free_y.get(v, [])]
-            room = sum(len(cur[v]) for v in scol) - sum(len(held_by[v]) for v in scol)
+            room = sum(len(cur[v]) for v in scol) - sum(len(held_by[v]) for v in scol) + extra
             row(-inf, float(room), ys, [1.0] * len(ys))
     if arm == "move":
         for v in sorted({unit_of[z] for z in zs}):

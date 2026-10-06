@@ -484,3 +484,62 @@ def test_a_neck_cut_holds_for_every_drawing_without_a_neck():
     assert len(cuts) > 100 and len(clean) > 30, (len(cuts), len(clean))
     for c in cuts:
         assert all(c.holds(own) for own in clean), c.label
+
+
+def test_replan_bans_a_pair_in_a_copy_of_the_spec():
+    """#122: `replan.banned_text` adds the banned pairs to each channel's forbid_pairs, moves only
+    the listed channels' δ, leaves the other sections alone and refuses a second forbid_pairs."""
+    import tomllib
+    spec = importlib.util.spec_from_file_location(
+        "contig_replan", os.path.join(HERE, "..", "tools", "exp", "contig", "replan.py"))
+    replan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(replan)
+    src = ('[scenario]\nname = "toy"\n\n[channels.A]\nmargin = false\nk = 2\ndelta = 0.02\n\n'
+           '[channels.B]\nmargin = false\nk = 3\ndelta = 0.03\n\n[national]\nchannel = "A"\n')
+    pairs = [replan.pair("NJ-CT"), replan.pair("MA-NJ")]
+    assert pairs == [("CT", "NJ"), ("MA", "NJ")]
+    doc = tomllib.loads(replan.banned_text(src, pairs, deltas={"B": 0.0612}))
+    assert doc["channels"]["A"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
+    assert doc["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
+    assert (doc["channels"]["A"]["delta"], doc["channels"]["B"]["delta"]) == (0.02, 0.0612)
+    assert doc["national"] == {"channel": "A"} and doc["scenario"]["name"] == "toy"
+    only = tomllib.loads(replan.banned_text(src, pairs, channels=["B"]))
+    assert "forbid_pairs" not in only["channels"]["A"] and only["channels"]["B"]["forbid_pairs"]
+    try:
+        replan.banned_text(replan.banned_text(src, pairs), pairs)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a second forbid_pairs was accepted")
+    assert replan.pair("FI:UT-AZ") == ("FI", ("AZ", "UT"))
+    one = tomllib.loads(replan.banned_text(src, pairs, extra={"A": [("AZ", "UT")]}))
+    assert one["channels"]["A"]["forbid_pairs"] == [["AZ", "UT"], ["CT", "NJ"], ["MA", "NJ"]]
+    assert one["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
+
+
+def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
+    """#122: a neck inside a unit held whole (a1 hangs off a0 by 1 km) is out of every arm-1
+    window's reach; `--open-units CT` lets the window give a1 to Q, across 30 km, one more split."""
+    repair = _repair_module()
+    edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0")]
+    km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0}
+    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "b0": (0.5, 1.0)}
+    mass = {"a0": 2.0, "a1": 1.0, "b0": 2.0}
+    inst, xym = tr._toy({"CT": ["a0", "a1"], "NJ": ["b0"]}, edges, mass, xy, {}, k=2, delta=0.2,
+                        final_delta=0.2)
+    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0})])
+    pa, qb = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": dict.fromkeys(xy, 1e6)}
+    owner = {"a0": pa, "a1": pa, "b0": qb}
+    m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
+    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(pa, {"a1"})]
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xym.items()}
+    kw = dict(h0=1, max_zctas=100, time_limit=60.0, log=lambda *_: None, keep_support=True,
+              border=repair.draw.border_km(polygon), ng=ng)
+    same, _ = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), **kw)
+    assert same == owner
+    fixed, _ = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of),
+                                     open_units=("CT",), **kw)
+    assert fixed == {"a0": pa, "a1": qb, "b0": qb} and repair.necks(fixed, m, ng) == []
