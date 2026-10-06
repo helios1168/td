@@ -274,7 +274,7 @@
    "shown_images": [
     "runs/exp/contig/decks/deckC-repair/map_national.png"
    ],
-   "notes": "Moved from tier 2, owner 2026-10-06: tier 2 means passes M1. Not rescored under the #121 neck rule; expect it to fail on necks like the other pre-#121 drawings. Passes M1 and the audit; fails the $ rule: national 16 = $1,084M, -13.3% of target.",
+   "notes": "Moved from tier 2, owner 2026-10-06: tier 2 means passes M1. Fails M1 under the #121 neck rule (5 necks, 0 detached pieces; gate 2026-10-06); passed M1 before the neck rule. Fails the $ rule: national 16 = $1,084M, -13.3% of target.",
    "metrics": {
     "districts": 51,
     "within10": 51,
@@ -297,7 +297,7 @@
    "shown_images": [
     "runs/exp/contig/s13-arm1-seq-repair/map_national.png"
    ],
-   "notes": "Moved from tier 2, owner 2026-10-06: tier 2 means passes M1. Not rescored under the #121 neck rule; expect it to fail on necks like the other pre-#121 drawings. First map to pass M1 (2026-10-05). Fails the $ rule: WH 12 = $845M, -15.5%. Superseded by ne_plains_wh11.",
+   "notes": "Moved from tier 2, owner 2026-10-06: tier 2 means passes M1. Fails M1 under the #121 neck rule (6 necks, 0 detached pieces; gate 2026-10-06); first map to pass M1 before the neck rule (2026-10-05). Fails the $ rule: WH 12 = $845M, -15.5%. Superseded by ne_plains_wh11.",
    "metrics": {
     "districts": 50,
     "within10": 50,
