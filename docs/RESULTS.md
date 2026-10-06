@@ -840,3 +840,31 @@ Regenerate (m5, local): `runs/exp/contig/replan/chain.sh <id> <variant> <source 
 --keep-support --open-units UT --flow --h0 6 --max-zctas 2000 --time-limit 240 --neck-time-limit
 180 --budget 7200`; table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r2.py` (writes
 `TABLE_r2.md`, `rescore_r2.json`). Remaining items per map: `runs/autonomous_2026-10-05/batch_replan/BATCH.md`.
+
+### Round 3: short split lists, no bans (2026-10-06)
+
+Owner's picks: national, WH and low6's WIFI split only CA FL NY TX, FI also PA OH, and ifa_49's
+IFA its 15 forced states (NY CA FL PA NJ TX MI OH IL MA CT MD MN WI VA). Every other state stays
+whole, and round 2's six bans are dropped. low6 FI keeps AZ-UT (an orchestrator default). WIFI's
+domain (ID MT ND NE SD WY) holds none of CA FL NY TX, so it stays all whole as before.
+`replan.py --free CHANNEL=U1,...` replaces a channel's `free` in the copy, and `run.py`'s manifest
+`plan` now lists each channel's `free`.
+
+**Every map stops at the re-plan.** In each map at least one channel has no master plan within
+final_delta 0.1 (margin = false), so nothing was drawn, repaired, rendered or shortlisted. Smallest
+feasible δ (`td.master.smallest_delta`, converged):
+
+| id | binding channel(s): smallest δ | other channels: δ used |
+|---|---|---|
+| nocomb_13_12_23 | FI 0.1272 | national 0.0899, WH 0.0474 |
+| nocomb_15_12_23 | FI 0.1272 | national 0.0774, WH 0.0474 |
+| low6_cb1 | national 0.1070, FI 0.1173 (also 0.1173 without AZ-UT) | WH 0.0821, WIFI at its declared 0.02 |
+| ifa_49 | IFA 0.3432 | - |
+
+No whole state alone exceeds 1.1 τ (the largest are IFA NC 1.067 and low6 FI TN 1.079), so no
+single oversized state causes this; the master cannot balance the districts with the other states
+whole. Rounds 1 and 2 re-solved every channel at its declared δ (0.02-0.033) with the longer
+lists. Widening the band is the owner's call; the next step is theirs.
+
+Regenerate (m5, local): `runs/exp/contig/replan/chain_r3.sh <id> <variant> <source spec> <parent>
+"<repair args>" --free ...`; table `runs/exp/contig/replan/TABLE_r3.md`.
