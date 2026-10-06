@@ -4,11 +4,11 @@
 
 ## Now
 
-#109 (bbaa89b) and #121 (003fb9b) landed: M1 now fails necks (smaller-side rule, floored-cm widths, owner 2026-10-06). Only ne_plains_wh11 (border/ne_plains_wh11-r2-all) passes and is eligible. #122 round 2 worker 6469a6ec on m5-studio/122: ne5 + DE-NJ bans for nocomb_15/13 and low6_cb1, a UT window for ifa_49.
+#120 landed (cb25a57): one tracked renderer in the required look (`tools/maps/render.py`), shortlist at `tools/shortlist/`, deck built from it, T1 tracking check passing (25 entries). Only ne_plains_wh11 passes M1. Tier 2 is empty: its two maps fail on necks and moved to tier 3 (owner). #122 round 3 is next: short split lists (CA FL NY TX, plus PA and OH in FI).
 
 ## Next
 
-- Put #122's M1-passing re-plans to the owner (never final without their pick); update the shortlist.
+- #122 round 3: render and shortlist every result, and take any M1 pass to the owner before it is presented.
 - Fewer splits: #103, #115; #119 only if "minimal" is wanted. #118 any time.
 
 ## Blocked
