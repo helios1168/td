@@ -9,9 +9,9 @@ A ban is a pair of units no district may hold together: the copy adds them to ea
 closed), and the stored TOML is never edited.  Per channel the master runs at the declared δ; a
 channel with no plan there gets the smallest δ the master shows feasible (`td.master
 .smallest_delta`, rounded up to 1e-4), written into the copy only when it is at most the channel's
-`final_delta` (else the driver stops: the band is the owner's).  The plans are then solved once
-more from the copy by `run.plans_for` and cached in `--plans` under the copy's sha256, so
-`run.py <copy> --plans <dir>` draws exactly them.  `--report` lists per channel the δ declared
+`final_delta` (else the driver stops: the band is the owner's).  The plans (a channel moved to
+its smallest δ re-planned there) are cached in `--plans` under the copy's sha256 (`run.plans_key`),
+so `run.py <copy> --plans <dir>` draws exactly them.  `--report` lists per channel the δ declared
 and used, the pairs banned and the supports in use holding a unit of a banned pair.
 """
 from __future__ import annotations
@@ -21,6 +21,7 @@ import importlib.util
 import json
 import math
 import os
+import pickle
 import re
 import sys
 
@@ -123,7 +124,7 @@ def main(argv=None) -> int:
             f"{' in ' + ', '.join(a.channels) if a.channels else ' in every channel'}"
             + "".join(f", {c}: {', '.join('-'.join(p) for p in ps)}" for c, ps in extra.items())
             + " (tools/exp/contig/replan.py).\n")
-    deltas = {}
+    deltas, plans, reports = {}, {}, {}
 
     def write():
         os.makedirs(os.path.dirname(os.path.abspath(a.out_spec)), exist_ok=True)
@@ -136,6 +137,7 @@ def main(argv=None) -> int:
            "forbid_in": {c: ["-".join(p) for p in ps] for c, ps in extra.items()}, "channels": {}}
     for c, ch in inst.channels.items():
         p, rep = master.plan(inst, c, time_limit=a.time_limit)
+        plans[c], reports[c] = p, rep
         entry = {"declared_delta": ch.spec.delta, "final_delta": ch.spec.final_delta,
                  "status_at_declared": rep.get("status")}
         if p is None:
@@ -150,10 +152,17 @@ def main(argv=None) -> int:
         entry["delta"] = deltas.get(c, ch.spec.delta)
         doc["channels"][c] = entry
         print(f"{c}: δ {entry['delta']:g} (declared {ch.spec.delta:g})", flush=True)
-    if deltas:
+    if deltas:                  # the channels moved to their smallest δ, re-planned there
         write()
         s, inst = build(a.out_spec, a.extract)
-    plans, reports = run.plans_for(inst, a.out_spec, a.extract, a.plans, a.time_limit)
+        for c in deltas:
+            plans[c], reports[c] = master.plan(inst, c, time_limit=a.time_limit)
+    key = run.plans_key(a.out_spec, a.extract, a.plans)
+    if all(p is not None for p in plans.values()):     # `run.py --plans` reads them from here
+        os.makedirs(a.plans, exist_ok=True)
+        with open(key, "wb") as fh:
+            pickle.dump((plans, reports), fh)
+    doc["plans_file"] = key
     units = {u for p in pairs + [p for ps in extra.values() for p in ps] for u in p}
     for c, p in plans.items():
         if p is None:

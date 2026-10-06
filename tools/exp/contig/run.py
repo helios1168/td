@@ -87,10 +87,8 @@ def sha256(path: str) -> str:
 def plans_for(inst, spec_path: str, extract_path: str | None, cache: str | None, time_limit=None):
     """The master's plans and reports, from `cache` when it holds this spec on this extract and
     this connector list (the polygon graph the master plans on)."""
-    key = None
-    if cache and extract_path:
-        graph = sha256(os.path.join(geo.REFERENCE_DIR, "connectors.csv"))[:12]
-        key = os.path.join(cache, f"{sha256(spec_path)[:16]}_{sha256(extract_path)[:16]}_{graph}.pkl")
+    key = plans_key(spec_path, extract_path, cache)
+    if key:
         if os.path.exists(key):
             with open(key, "rb") as fh:
                 return pickle.load(fh)
@@ -100,6 +98,14 @@ def plans_for(inst, spec_path: str, extract_path: str | None, cache: str | None,
         with open(key, "wb") as fh:
             pickle.dump((plans, reports), fh)
     return plans, reports
+
+
+def plans_key(spec_path: str, extract_path: str | None, cache: str | None) -> str | None:
+    """The pickle `plans_for` caches this spec's plans in, on this extract and connector list."""
+    if not (cache and extract_path):
+        return None
+    graph = sha256(os.path.join(geo.REFERENCE_DIR, "connectors.csv"))[:12]
+    return os.path.join(cache, f"{sha256(spec_path)[:16]}_{sha256(extract_path)[:16]}_{graph}.pkl")
 
 
 def single_connector(owner: dict, adj: dict, connectors: set) -> dict:
