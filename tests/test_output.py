@@ -279,6 +279,7 @@ def test_maps_are_drawn_only_from_the_ledger_file():
     assert list(drawn) == ["X"] and drawn["X"]["districts"] == ["X_09"]
     assert os.path.exists(drawn["X"]["path"]) and drawn["X"]["zctas"] == len(NY + NJ + PA + CT)
     assert {"New York", "Newark", "Jersey City", "Philadelphia"} <= set(drawn["X"]["labels"])
+    assert drawn["X"]["title"].endswith(", debug view (not the required look)")   # #120
     shutil.rmtree(tmp)
 
 
