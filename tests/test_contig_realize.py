@@ -573,24 +573,28 @@ def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
 
 
 def test_a_neck_in_an_opened_unit_tries_the_districts_own_window_first():
-    """#122: for a neck whose side lies in an opened unit, the first window is the district's own
-    ZCTAs in that unit (`own_window`), here wider than the ball at h0 = 1 ({a0, a1}): a2 hangs off
-    a0 by 20 km, so a1 (by 1 km) is P's only neck, and the own window hands a1 to Q."""
+    """#122: a neck whose side lies in an opened unit is repaired before the others, and its first
+    window is the district's own ZCTAs in that unit (`own_window`), here wider than the ball at
+    h0 = 1 ({a0, a1}): a2 hangs off a0 by 20 km, so a1 (by 1 km) is P's only neck, and the own
+    window hands a1 to Q.  R (unit AL, first by name) has a neck too, by 1 km, that no window
+    can lose (no one else may hold AL); it comes second."""
     repair = _repair_module()
-    edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0"), ("a0", "a2")]
-    km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0, ("a0", "a2"): 20.0}
-    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "a2": (-1.0, 0.0), "b0": (0.5, 1.0)}
-    mass = {"a0": 2.0, "a1": 1.0, "a2": 0.5, "b0": 2.0}
-    inst, xym = tr._toy({"CT": ["a0", "a1", "a2"], "NJ": ["b0"]}, edges, mass, xy, {}, k=2,
-                        delta=0.2, final_delta=0.2)
-    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0})])
-    pa, qb = sorted(cp.name for cp in plan.copies)
+    edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0"), ("a0", "a2"), ("c0", "c1"), ("c0", "b0")]
+    km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0, ("a0", "a2"): 20.0,
+          ("c0", "c1"): 1.0, ("b0", "c0"): 20.0}
+    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "a2": (-1.0, 0.0), "b0": (0.5, 1.0),
+          "c0": (0.5, 2.0), "c1": (0.5, 3.0)}
+    mass = {"a0": 2.0, "a1": 1.0, "a2": 0.5, "b0": 2.0, "c0": 2.0, "c1": 1.0}
+    inst, xym = tr._toy({"CT": ["a0", "a1", "a2"], "NJ": ["b0"], "AL": ["c0", "c1"]}, edges,
+                        mass, xy, {}, k=3, delta=0.2, final_delta=0.2)
+    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0}), ({"AL"}, {"AL": 1.0})])
+    ra, pa, qb = sorted(cp.name for cp in plan.copies)
     polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
                "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
-               "aland": {"a0": 2e6, "a1": 1e6, "a2": 1e6, "b0": 1e6}}
-    owner = {"a0": pa, "a1": pa, "a2": pa, "b0": qb}
+               "aland": {"a0": 2e6, "a1": 1e6, "a2": 1e6, "b0": 1e6, "c0": 2e6, "c1": 1e6}}
+    owner = {"a0": pa, "a1": pa, "a2": pa, "b0": qb, "c0": ra, "c1": ra}
     m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
-    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(pa, {"a1"})]
+    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(ra, {"c1"}), (pa, {"a1"})]
     unit_of = inst.units.unit_of
     assert repair.own_window(owner, pa, {"a1"}, frozenset(("a0", "a1", "a2")), unit_of) \
         == {"a0", "a1", "a2"}
@@ -600,6 +604,7 @@ def test_a_neck_in_an_opened_unit_tries_the_districts_own_window_first():
                                          time_limit=60.0, log=lambda *_: None, keep_support=True,
                                          border=repair.draw.border_km(polygon), ng=ng,
                                          open_units=("CT",))
-    assert fixed == {"a0": pa, "a1": qb, "a2": pa, "b0": qb} and repair.necks(fixed, m, ng) == []
-    assert [(r["shape"], r.get("zctas"), r.get("kept")) for r in tried] == [("own", 3, True)], \
-        [(r["shape"], r.get("kind"), r.get("kept")) for r in tried]
+    assert {z: fixed[z] for z in ("a0", "a1", "a2", "b0")} == {"a0": pa, "a1": qb, "a2": pa, "b0": qb}
+    assert [(j, set(s)) for j, s, _ in repair.necks(fixed, m, ng)] == [(ra, {"c1"})]
+    assert (tried[0]["shape"], tried[0]["zctas"], tried[0]["kept"]) == ("own", 3, True)
+    assert tried[0]["cluster"][0].startswith(pa) and tried[1]["cluster"][0].startswith(ra)

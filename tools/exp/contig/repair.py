@@ -587,7 +587,8 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
     rounds repeat while they remove pieces, at most three.  Then, given `ng`
-    (`td.audit.NeckGraph`), each neck M1 lists (#121), smallest side first, by `_repair_neck`;
+    (`td.audit.NeckGraph`), each neck M1 lists (#121), those with a side in an opened unit first
+    (#122), then smallest side first, by `_repair_neck`;
     rounds repeat while they remove necks, at most three, each neck window with `neck_time_limit` seconds (default
     `time_limit`).  Every window solves with the border term over `border`.  With `budget`
     (seconds), no window starts once the channel has spent it, and the last gets what is left."""
@@ -621,7 +622,8 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
     for _ in range(3):
         if not found:
             break
-        for j in [n[0] for n in sorted(found, key=lambda n: (len(n[1]), n[0]))]:
+        order = sorted(found, key=lambda n: (not n[1] & opened, len(n[1]), n[0]))
+        for j in [n[0] for n in order]:
             cur = necks(owner, m, ng, [j])
             if not cur:
                 continue            # gone with an earlier window
