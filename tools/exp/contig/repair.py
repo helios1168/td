@@ -68,8 +68,10 @@ contig.json that copies the source run's channels and adds each window attempt u
 on the drawn map.  A repaired channel's band is the repair's, not the source drawing's: its
 `group_delta_needed` moves to `source_group_delta_needed`, and `repair_band` holds the final band's
 δ the windows held and the worst |mass/τ − 1| reached.  `tools/mandates/check.py` audits it like any run folder.
-`--diag-final-delta` holds the windows and the audit at another band instead: a diagnostic, named so
-in its title and its manifest's stop reason, never a deliverable.
+`--diag-final-delta` holds the windows and the audit at another band instead: a diagnostic, never a
+deliverable, marked `"diagnostic": true` in run.json and the manifest (as is any repair of a
+diagnostic folder, #121, `audit.diagnostic`), named so in its title and stop reason; its scorecard's
+bands row gives the scenario's bands' result beside the diagnostic one.
 """
 from __future__ import annotations
 
@@ -199,13 +201,19 @@ def _nbrs(ng, z) -> set:
     return set(ng.border.get(z, ())) | ng.connector.get(z, set())
 
 
+# M1's check: a cut of floored whole cm (`audit.border_cm`) is a neck at NECK_W_CM - 1 or less and
+# none at NECK_W_CM or more; half a cm between keeps the row's float sums off either side
+NECK_KM = (audit.NECK_W_CM - 0.5) / 1e5
+
+
 def _edge_km(ng, u: str, v: str, states: frozenset) -> float:
-    """The edge's width in a neck cut (`draw.NeckCut`): its border, plus for an approved connector
-    0 where land would do within `states` and the limit otherwise; capped at the limit."""
-    km = ng.border.get(u, {}).get(v, 0.0)
+    """The edge's width in a neck cut (`draw.NeckCut`), as M1's check counts it: its border in
+    floored whole cm, plus for an approved connector 0 where land would do within `states` and the
+    limit otherwise; in km, capped at the limit."""
+    km = ng.border_cm.get(u, {}).get(v, 0) / 1e5
     if v in ng.connector.get(u, ()):
-        km += 0.0 if ng.land_would_do(u, v, states) else audit.NECK_W_KM
-    return min(km, audit.NECK_W_KM)
+        km += 0.0 if ng.land_would_do(u, v, states) else NECK_KM
+    return min(km, NECK_KM)
 
 
 def _anchors(X: set, W: set, ng, target: float) -> set:
@@ -281,7 +289,7 @@ def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check) -> tup
             a_min = min(math.fsum(ng.aland.get(z, 0.0) for z in s) for s in (sa, sr)) / 1e6
             cuts.append(draw.NeckCut(j, const, tuple(single), tuple(pair),
                                      tuple(sorted((sa | sr) & W)), area_fixed, area, a_min,
-                                     audit.NECK_W_KM * (1 - audit.NECK_TOL), audit.NECK_SHARE,
+                                     NECK_KM, audit.NECK_SHARE,
                                      label))
     return cuts, labels
 
@@ -682,13 +690,24 @@ def main(argv=None) -> int:
     params = {k: v for k, v in vars(a).items() if k not in ("run_dir", "out")}
     with open(os.path.join(a.run_dir, "run.json")) as fh:
         spec_path = json.load(fh)["spec"]
-    run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, a.plans_file, a.run_dir)
+    diag = audit.diagnostic(a.run_dir)      # a child of a diagnostic folder is diagnostic (#121)
+    if diag is not None:
+        diag = {"band": diag["band"], "label": f"child of the diagnostic folder {os.path.abspath(a.run_dir)}"}
+    if a.diag_final_delta is not None:
+        diag = {"band": a.diag_final_delta, "label": f"diagnostic band ±{100 * a.diag_final_delta:g}%"}
+    flag = {} if diag is None else {"diagnostic": True, "diagnostic_band": diag["band"],
+                                    "diagnostic_label": diag["label"]}
+    run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, a.plans_file, a.run_dir,
+                       **flag)
     s, ref, ext, polygon, inst, plans, reports, owners, src = load(a.run_dir, a.extract, a.plans,
                                                                        a.plans_file)
+    scenario_bands = {c: (*ch.final_band, ch.spec.final_delta) for c, ch in inst.channels.items()}
     if a.diag_final_delta is not None:      # a diagnostic band (#121, OD1): never the scenario's
         for ch in inst.channels.values():
             ch.final_band = (ch.tau * (1 - a.diag_final_delta), ch.tau * (1 + a.diag_final_delta))
         a.label = f"DIAGNOSTIC final band ±{a.diag_final_delta:g}" + (f", {a.label}" if a.label else "")
+    elif diag is not None:
+        a.label = "DIAGNOSTIC (" + diag["label"] + ")" + (f", {a.label}" if a.label else "")
     border, ng = draw.border_km(polygon), audit.NeckGraph(polygon)
     os.makedirs(a.out, exist_ok=True)
     rows = ref.set_index("zcta").loc[sorted(inst.units.unit_of)]
@@ -728,7 +747,7 @@ def main(argv=None) -> int:
     report, m1 = run.write_folder(a.out, s, inst, ext, ref, polygon, plans, reports, drawings,
                                   f"{s.name} (contig {doc['arm']} + window repair{', ' + a.label if a.label else ''})",
                                   f"tools/exp/contig ({doc['arm']} + repair)", src.get("source", ""),
-                                  a.maps)
+                                  a.maps, diag, scenario_bands if a.diag_final_delta is not None else None)
     doc.update({"arm": doc["arm"] + "+repair", "repair_of": os.path.abspath(a.run_dir),
                 "repair": {"h0": a.h0, "max_zctas": a.max_zctas, "time_limit": a.time_limit,
                            "neck_time_limit": a.neck_time_limit, "budget": a.budget,
@@ -741,7 +760,7 @@ def main(argv=None) -> int:
         json.dump(doc, fh, indent=2, sort_keys=True)
         fh.write("\n")
     run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, status="done",
-                       stop_reason="diagnostic" if a.diag_final_delta is not None else "repaired",
+                       stop_reason="diagnostic" if diag is not None else "repaired",
                        audit=report["verdict"], m1=m1.status)
     print(f"{s.name} (repair of {a.run_dir}): M1 {m1.status} ({m1.summary}); audit "
           f"{report['verdict']}")

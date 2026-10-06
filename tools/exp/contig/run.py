@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import dataclasses
 import hashlib
 import importlib.util
 import json
@@ -241,9 +242,12 @@ def drawn_stats(inst, p, d, connectors: set, connected: bool, border: dict | Non
 
 
 def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings, title: str,
-                 realizer: str, source: str, maps: bool) -> tuple:
+                 realizer: str, source: str, maps: bool, diagnostic: dict | None = None,
+                 scenario_bands: dict | None = None) -> tuple:
     """The run folder's ledger, scorecard, districts.csv and run.json from `drawings`;
-    (run.json's dict, the M1 check)."""
+    (run.json's dict, the M1 check).  A `diagnostic` folder (#121, `audit.diagnostic`'s record)
+    says so in run.json; held to a diagnostic band, its scorecard's bands row also gives the
+    result at the scenario's bands, `scenario_bands` {channel: (lo, hi, delta)}."""
     areas = output.read_areas()
     led = output.ledger(inst, drawings, ext, ref)
     names = output.name_districts(led, output.cbsa_titles(areas))
@@ -254,8 +258,15 @@ def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings,
     with open(os.path.join(geo.REFERENCE_DIR, "MANIFEST.json"), encoding="utf-8") as fh:
         manifest = json.load(fh)
     split = output.ledger_pieces(led, polygon, drawings)
-    checks = audit.audit(output.audit_run(inst, led, drawings, ext, reports, polygon, names,
-                                          manifest, ref, split, polygon))
+    arun = output.audit_run(inst, led, drawings, ext, reports, polygon, names, manifest, ref, split,
+                            polygon)
+    checks = audit.audit(arun)
+    if diagnostic is not None and scenario_bands:
+        scen = audit.check_bands(dataclasses.replace(arun, channels={
+            c: audit.Channel(ch.k, *scenario_bands[c][:2]) if c in scenario_bands else ch
+            for c, ch in arun.channels.items()}))
+        deltas = "/".join(f"{100 * d:g}%" for d in sorted({b[2] for b in scenario_bands.values()}))
+        checks = audit.diagnostic_band_row(checks, diagnostic["band"], scen, deltas)
     audit.write_scorecard(out, checks, title)
     output.write_districts(os.path.join(out, "districts.csv"), inst, plans, drawings, names, split)
     m1 = next(ch for ch in checks if ch.name == audit.M1_CHECK)
@@ -272,6 +283,9 @@ def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings,
                      for c, d in drawings.items()},
         "m1": {"status": m1.status, "summary": m1.summary,
                "coverage": "footprint coverage (D3)"}}
+    if diagnostic is not None:
+        report.update(diagnostic=True, diagnostic_band=diagnostic["band"],
+                      diagnostic_label=diagnostic["label"])
     if maps and output.zcta_file(geo.PUBLIC_DIR) is not None:
         output.draw_maps(lpath, out, ref, areas, geo.PUBLIC_DIR, root=out)
         report["maps"] = "drawn"
@@ -299,7 +313,8 @@ def write_manifest(out: str, formulation: str, spec_path: str, extract_path: str
     """Mandate T1's record of a hand-launched map run (#92's manifest fields): the code's commit
     and dirty flag, the command line, the scenario TOML's path and sha256, the instance and its
     sha256, the plan file and the parent run (the run a redraw or repair derives from).  Called
-    at the start with status `running` and again at the end with `done` or `failed`."""
+    at the start with status `running` and again at the end with `done` or `failed`.  A child of
+    a diagnostic folder (`audit.diagnostic`) is diagnostic too (#121)."""
     sw = _sweep()
     path = os.path.join(out, sw.MANIFEST)
     m = sw.read_manifest(out) if os.path.exists(path) else {
@@ -314,6 +329,10 @@ def write_manifest(out: str, formulation: str, spec_path: str, extract_path: str
                        "queued_at": sw.now()},
         "started_at": sw.now()}
     m.update(status=status, **more)
+    up = audit.diagnostic(parent) if parent and not m.get("diagnostic") else None
+    if up is not None:
+        m.update(diagnostic=True, diagnostic_band=up["band"],
+                 diagnostic_label=f"child of the diagnostic folder {os.path.abspath(parent)}")
     if status in sw.FINISHED:
         m["finished_at"] = sw.now()
     os.makedirs(out, exist_ok=True)

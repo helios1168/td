@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import gzip
 import importlib.util
+import json
 import os
 import re
 import tempfile
@@ -302,6 +303,34 @@ def test_m1_names_a_check_that_exists():
     assert _check_paths_exist(check) == [], check
 
 
+def test_the_gate_prints_diagnostic_and_fails_a_diagnostic_folder():
+    """Sol's review of #121 (P1): M1's gate CLI prints DIAGNOSTIC for a diagnostic folder and
+    exits 1, though its M1 passes; the same folder unmarked exits 0."""
+    import contextlib
+    import io
+    import shutil
+    gate = _gate()
+    g, _ = _world(gate, "connected")
+    check = gate.m1
+    gate.m1 = lambda d, _g=None: check(d, g)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            d = os.path.join(tmp, "run")
+            shutil.copytree(os.path.join(FIXTURES, "connected"), d)
+            for diag, code in ((None, 0), ({"diagnostic": True, "diagnostic_band": 0.15,
+                                            "diagnostic_label": "backfilled"}, 1)):
+                if diag:
+                    with open(os.path.join(d, "run.json"), "w") as fh:
+                        json.dump(diag, fh)
+                out = io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    got = gate.main([d])
+                assert got == code and ("DIAGNOSTIC (backfilled)" in out.getvalue()) == bool(diag), out.getvalue()
+                assert "M1 pass" in out.getvalue(), out.getvalue()
+    finally:
+        gate.m1 = check
+
+
 def test_the_corner_fixture_touches_at_a_point_and_is_no_edge():
     _, got = _world(_gate(), "connected")
     pairs = {(a, b) for a, b, _ in got["edges"]}
@@ -340,8 +369,8 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
         "X/X_01: neck 5.00 km wide cuts off 1 ZIPs (10003...), 46.2% of its land area and 33.3% of "
         "its mass; cut 10002-10003 5.00 km"]
     assert items["connector_land_would_do"] == [
-        "X/X_01: neck 0.00 km wide cuts off 1 ZIPs (10003...), 50.0% of its land area and 50.0% of "
-        "its mass; cut 10001-10003 0.00 km"]
+        "X/X_01: neck 0.00 km wide cuts off 1 ZIPs (10001...), 50.0% of its land area and 50.0% of "
+        "its mass; cut 10001-10003 0.00 km"]       # two equal halves: either is the part cut off
     assert all(counts[c]["necks"] == 0 for c in PASSING)
     # land must be a real passage (owner, 2026-10-05, #121): the same bridge beside a land strip
     # 5 km wide keeps its full width

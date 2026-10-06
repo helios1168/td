@@ -29,7 +29,9 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
   ZCTA owned in every channel.  Without a polygon graph M1 is unverified, and the run is not
   eligible.  The run's own scorecard M1, which also checks each cell's planning channel against
-  the scenario, must not fail either (#116).
+  the scenario, must not fail either (#116);
+- the folder is not diagnostic (#121, `td.audit.diagnostic`): a run held to a diagnostic band,
+  or derived from one, is INELIGIBLE with the reason "diagnostic band".
 
 Rank keys, compared in order, fewest or smallest first:
 1. **splits**: channel-state splits, Σ_c the states where two or more of c's districts own a ZCTA,
@@ -383,6 +385,9 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
     bands = bands_at(ledger, ks, BAND)
     m1 = m1_check(ledger, ks, g, fine_channels(run_dir))
     why = eligibility(scorecard_checks(sc), bands, ks, dollars, m1)
+    diag = audit.diagnostic(run_dir)
+    if diag is not None:                 # never a deliverable (#121)
+        why.insert(0, "diagnostic band" + (f" ({diag['label']})" if diag["label"] else ""))
     devs = [abs(x) for c in chans.values() for x in c["deviation"].values()]
     pieces = [p for c in chans.values() for p in c["pieces"] or ()]
     defects = {"thin_links": sum(len(c["thin"]) for c in chans.values()),
@@ -391,7 +396,7 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
                "contiguity_weight": round(math.fsum(1 + p[2] for p in pieces), 4)}
     return {
         "run": os.path.basename(os.path.normpath(run_dir)), "dir": run_dir,
-        "eligible": not why, "why": why, "k": ks, "dollars": dollars,
+        "eligible": not why, "why": why, "diagnostic": diag is not None, "k": ks, "dollars": dollars,
         "m1": {"status": m1.status, "summary": m1.summary, **m1.counts},
         "necks": [i for i in m1.items if NECK.search(i)],
         "mass_necks": [i for i in m1.items if audit.MASS_NECK in i],

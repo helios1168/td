@@ -73,7 +73,11 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   polygon graph without connectors, within the states the district owns ZCTAs in, through a
   land passage that is itself at least 10 km wide (owner, 2026-10-05, structured pick "Land
   must be a real passage", #121, after WH_09's IN+KY bridges were judged against a 4.4 km
-  strip at Evansville); a narrower land route leaves the connector at full width.
+  strip at Evansville); a narrower land route leaves the connector at full width. The part cut
+  off is the smaller side (owner, 2026-10-06, structured pick "Cut-off part = smaller side",
+  #121, after Sol's review found a 6% hub with 24 lobes under 5% each, on 100 m threads,
+  passing): one connected part with at least 5% of the land and no more land than the rest,
+  which may lie in pieces; small fringes off a larger body are never added together.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by
