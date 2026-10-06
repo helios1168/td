@@ -545,7 +545,8 @@ def test_replan_bans_a_pair_in_a_copy_of_the_spec():
 
 def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
     """#122: a neck inside a unit held whole (a1 hangs off a0 by 1 km) is out of every arm-1
-    window's reach; `--open-units CT` lets the window give a1 to Q, across 30 km, one more split."""
+    window's reach; `--open-units CT` lets the window give a1 to Q, across 30 km, one more split.
+    a0 holds two thirds of P's land, so a1 is the smaller side, the part M1 cuts off."""
     repair = _repair_module()
     edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0")]
     km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0}
@@ -557,7 +558,7 @@ def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
     pa, qb = sorted(cp.name for cp in plan.copies)
     polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
                "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
-               "aland": dict.fromkeys(xy, 1e6)}
+               "aland": {"a0": 2e6, "a1": 1e6, "b0": 1e6}}
     owner = {"a0": pa, "a1": pa, "b0": qb}
     m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
     assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(pa, {"a1"})]
