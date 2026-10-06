@@ -703,3 +703,47 @@ tools/exp/contig/repair.py runs/exp/contig/border/<id>-draw --out runs/exp/conti
 `--max-zctas 1000 --time-limit 90 --neck-time-limit 90`); second pass `runs/exp/contig/border/repair2.sh`;
 rescore `runs/exp/contig/border/rescore_final/rescore.py` (writes `TABLE.md`, `rescore.json`).
 Each run folder's `manifest.json` holds its exact command and plan cache.
+
+### Third pass: neck-aware window repair (2026-10-06)
+
+Measured 2026-10-06 on m5 with `tools/exp/contig/repair.py` at m5-studio/121 (neck cuts ef03fc1,
+`--budget` 0380ee5, `--diag-final-delta` ee6b68e). Every repair window now runs M1's exact neck
+check on each drawing its solve-check-cut loop would keep; a neck whose side meets the window, in
+a district the window is held to, adds a `draw.NeckCut`: the border across the side, counted where
+both ends stay the district's, at least 10 km while two connected anchor sets (one in the side, one
+in the rest) stay the district's and its land stays small enough for each to hold the 5% share.
+The cut holds for every drawing in which the district has no neck (proof in `draw.NeckCut`;
+checked by enumeration on a toy), so "optimal" is an optimum of the cut-augmented model and
+"infeasible" proves that no drawing of the window, the rest fixed, is connected, inside the
+scenario's declared ±10% final band and without a neck in the districts cut. The single-anchor
+row x_j(a) + x_j(r) − 1 is not valid (a drawing keeping a tiny part of the side is not a neck),
+hence the anchor sets and the area row. Districts with a neck on the map that the window is not
+repairing are exempt. Runs: `runs/exp/contig/border/repair3.sh`, about 50 min per map, one channel
+after another (`--h0 8 --max-zctas 2000 --time-limit 300 --neck-time-limit 240 --budget 1000`;
+IFA `--h0 6 --time-limit 240 --neck-time-limit 180 --budget 3000`). Scorer as above, with its
+thin links and small pieces (`rescore_final/rescore_r3.py`).
+
+| rank | id | map (`runs/exp/contig/border/`) | pieces (largest τ) | necks | mass necks | worst / mean dev | splits / cuts | cut border km | thin / small | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | ne_plains_wh11 | `ne_plains_wh11-r2-all` (unchanged) | 0 | 0 | 13 | 9.3% / 5.2% | 14 / 21 | 37,557 | 0 / 3 | pass | ELIGIBLE |
+| 2 | low6_cb1 | `low6_cb1-r2-FI` → `low6_cb1-r3-national` | 0 | 6 → 4 | 19 → 17 | 10.0% / 2.9% | 29 / 34 | 53,322 → 53,001 | 3 / 19 → 2 / 19 | fail | M1 only |
+| 3 | nocomb_13_12_23 | `nocomb_13_12_23-r3-FI` (drawing unchanged) | 3 (0.398) | 3 | 16 | 9.2% / 1.6% | 28 / 34 | 69,649 | 3 / 15 | fail | M1 only |
+| 4 | nocomb_15_12_23 | `nocomb_15_12_23-r3-FI` (drawing unchanged) | 0 | 3 | 11 | 9.8% / 2.3% | 29 / 34 | 66,362 | 1 / 14 | fail | M1 only |
+| 5 | ifa_49 | `ifa_49-r3-IFA` (drawing unchanged) | 7 (0.338) | 5 | 16 | 9.8% / 3.4% | 22 / 40 | 45,663 | 6 / 7 | fail | M1 only |
+
+- The neck cuts removed two necks the border term had kept, low6_cb1's FI_08 (the NJ side of the
+  Delaware Memorial Bridge) and FI_11 (GA+TN), each in its first window (ball h 8, |W| 494 and
+  756, connected).
+- Every other window that touched a remaining neck or piece was either proved infeasible inside
+  the declared ±10% band for that window (corridors up to |W| ≈ 600, balls at h 5-8, the largest
+  nocomb_13_12_23's national_08 ball of 1962 ZCTAs) or unknown at its 240-300 s limit (every other
+  window of about 1000-2000 ZCTAs): unfinished, not shown infeasible for the map. Two necks, low6_cb1 FI_03 and ifa_49 IFA_19 (both UT 84621), lie in whole units of
+  one holder, out of every arm-1 window's reach.
+- ±15% diagnostic (never a deliverable; `<id>-r3-<channel>-diag15`, `--diag-final-delta 0.15`):
+  no map draws neck-free; of the 44 windows infeasible at ±10%, 35 stay infeasible, 2 are unknown
+  and 7 were not reached. Per-item windows, cuts and statuses, and the #112 list:
+  `runs/autonomous_2026-10-05/batch_border/BATCH.md`.
+
+Regenerate (m5, local): `runs/exp/contig/border/repair3.sh <id> <source folder> "<plans args>"
+"<repair args>" <channel> ...` and `diag15.sh` (same arguments); rescore
+`runs/exp/contig/border/rescore_final/rescore_r3.py` (writes `TABLE_r3.md`, `TABLE_diag15.md`).
