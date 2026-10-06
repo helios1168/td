@@ -55,6 +55,8 @@ labels at the principal cities of the channel's `TOP_METROS` largest metros by 2
 The principal cities are the ones the 2025 CBSA title names, placed at their 2025 gazetteer place.
 Only the run's ZCTAs are read from the national file.  Without the file no map is drawn and
 `run.json` says `MAPS_SKIPPED`; a ledger ZCTA the file lacks is listed there, never dropped silently.
+These maps, and `python -m td maps`'s, are a debug view: each is titled `DEBUG_VIEW` and none is a
+shortlist image; the required look is `tools/maps/render.py`'s (#120, mandate T1).
 
 **Paths.**  A planning channel names its map file, and the scenario names the default run
 directory, so each must be a plain file name (`FILE_NAME`, not `.` or `..`, and channels distinct
@@ -87,6 +89,7 @@ TOP_METROS = 10
 ZCTA_FILE = os.path.basename(geo.SOURCES["zcta"][0])   # tl_2025_us_zcta520.zip
 SIMPLIFY_M = 250.0          # the figures' simplification, as the 2026-09-09 menu chose
 MAPS_SKIPPED = "maps skipped: ZCTA polygons missing"
+DEBUG_VIEW = "debug view (not the required look)"
 FILE_NAME = re.compile(r"[A-Za-z0-9_.-]{1,250}")    # a key that may name a file: one component
 COMMITTED = "committed polygon graph"   # audit_run's default: M1 on `geo.polygon_graph()` (#108)
 
@@ -662,8 +665,8 @@ def _polygon_path(geom):
 
 def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
               public: str = geo.PUBLIC_DIR, top: int = TOP_METROS, root: str | None = None) -> dict:
-    """{channel: {"path", "districts", "labels", "zctas", "missing"}}: one map per planning channel,
-    drawn only from the ledger file at `ledger_path` (module docstring).  `zctas` counts the
+    """{channel: {"path", "districts", "labels", "zctas", "missing", "title"}}: one map per planning
+    channel, drawn only from the ledger file at `ledger_path` (module docstring).  `zctas` counts the
     polygons drawn and `missing` lists the ledger's ZCTAs the ZCTA520 file lacks.  Without that
     file it draws nothing and returns {} (`MAPS_SKIPPED`).  It stops before writing when a
     channel cannot name a file, and every map must resolve inside `root` (default `out_dir`)."""
@@ -725,11 +728,12 @@ def draw_maps(ledger_path: str, out_dir: str, reference=None, areas=None,
             ax.set_ylim(y0 - pad, y1 + pad)
         ax.set_aspect("equal")
         ax.set_axis_off()
-        ax.set_title(f"{g['scenario'].iloc[0]}: {c}, {len(districts)} districts")
+        title = f"{g['scenario'].iloc[0]}: {c}, {len(districts)} districts, {DEBUG_VIEW}"
+        ax.set_title(title)
         ax.legend(handles=handles, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6,
                   frameon=False)
         out[c] = {"path": inside(root, os.path.join(out_dir, f"map_{c}.png")), "districts": districts,
-                  "labels": labels, "zctas": len(drawn),
+                  "labels": labels, "zctas": len(drawn), "title": title,
                   "missing": sorted(set(g["zip_code"]) - set(polys))}
         fig.savefig(out[c]["path"], dpi=120, bbox_inches="tight")
         plt.close(fig)
@@ -795,7 +799,7 @@ def main_maps(argv=None) -> int:
         print(f"maps stopped: {e}", file=sys.stderr)
         return 1
     for c, m in drawn.items():
-        print(f"{c}: {m['path']}, {len(m['districts'])} districts, {m['zctas']} ZCTAs, "
+        print(f"{c}: {m['path']} ({DEBUG_VIEW}), {len(m['districts'])} districts, {m['zctas']} ZCTAs, "
               f"{len(m['missing'])} without a polygon, {len(m['labels'])} labels")
     return 0
 

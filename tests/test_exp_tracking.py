@@ -1,4 +1,6 @@
 """tools/exp (#92): the sweep runner, its manifests, the index, the ranked table and the shortlist.
+Since #120 (mandate T1) also the contig lane's manifests (`tools/exp/contig/run.py`, `repair.py`)
+and the backfill of the folders drawn before them, which the index reads at any depth.
 
 The two-job grid runs the 51 scenario on the seed-0 fixture at `test_realize.FIXTURE_DELTA` (one
 job per national δ) twice, through the command line as a lane would: the second call skips both.
@@ -119,12 +121,13 @@ def test_a_two_job_grid_on_the_51_fixture_runs_once_and_is_indexed_and_ranked():
     rows = [json.loads(line) for line in open(os.path.join(root, "index.jsonl"), encoding="utf-8")]
     assert len(rows) == 2 and {r["folder"] for r in rows} == set(folders)
     assert all(r["status"] == "done" and r["audit"] == "pass" and r["params"] for r in rows)
-    rid = rows[0]["run_id"]
-    shown = _tool("table", "--root", root, "--shortlist", rid, "--tier", "2", "--note", "smoke")
+    registry = os.path.join(tmp, "shortlist.json")
+    with open(registry, "w", encoding="utf-8") as fh:
+        json.dump({"tiers": {"2": "contender"}, "maps": [
+            {"id": "smoke_one", "tier": 2, "rank": 1, "label": "smoke", "run": rows[0]["folder"]}]}, fh)
+    shown = _tool("table", "--root", root, "--registry", registry)
     assert shown.returncode == 0 and "## smoke" in shown.stdout, shown.stderr
-    assert all(f in shown.stdout for f in folders) and "| 2 | smoke |" in shown.stdout
-    short = json.load(open(os.path.join(root, "shortlist.json"), encoding="utf-8"))
-    assert short == [{"run_id": rid, "tier": 2, "note": "smoke"}]
+    assert all(f in shown.stdout for f in folders) and "| smoke_one | 2 |" in shown.stdout
     assert not glob.glob(os.path.join(root, "**", "*.png"), recursive=True)
 
 
@@ -305,6 +308,91 @@ def test_the_table_ranks_by_the_owner_order_and_flags_review():
     assert [r["run_id"] for r in sorted(rows, key=table.rank_key)] == [
         "s13b", "s13", "s14", "bandfail", "s15", "noteligible", "bare", "failed"]
     assert table.review(rows) == {"s14", "bandfail"}
-    text = table.tables(rows, [{"run_id": "s14", "tier": 1, "note": "a | b"}])
-    assert text.startswith("## x\n") and "| 3 | s14 |" in text and "| REVIEW | 1 | a \\| b |" in text
+    text = table.tables(rows, [{"id": "a|b", "tier": 1, "run": "/runs/exp/x/s14"}])
+    assert text.startswith("## x\n") and "| 3 | s14 |" in text and "| REVIEW | a\\|b | 1 |" in text
     assert "| 4 | bandfail | done | fail | yes | 14 | 2 |" in text and text.count("| REVIEW |") == 2
+
+
+def _contig(name):
+    if f"contig_{name}" not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            f"contig_{name}", os.path.join(EXP, "contig", f"{name}.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[f"contig_{name}"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[f"contig_{name}"]
+
+
+def test_a_contig_run_writes_a_manifest_in_the_sweep_format_with_its_parent_run():
+    """Mandate T1 (#120): `run.write_manifest`, which `run.py` and `repair.py` call, records the
+    sweep's identity, status, provenance (commit, dirty flag and diff hash, host, instance sha256),
+    the command line, the scenario's path and sha256, and `parent_run`."""
+    run = _contig("run")
+    with tempfile.TemporaryDirectory() as tmp:
+        spec, extract = os.path.join(tmp, "spec.toml"), os.path.join(tmp, "extract.json.gz")
+        for p in (spec, extract):
+            with open(p, "w") as fh:
+                fh.write(p)
+        out = os.path.join(tmp, "group", "child")
+        run.write_manifest(out, "contig_repair", spec, extract, {"h0": 3}, parent=os.path.join(tmp, "src"))
+        m = run.write_manifest(out, "contig_repair", spec, extract, {"h0": 3}, status="done",
+                               stop_reason="repaired")
+        assert m == json.load(open(os.path.join(out, "manifest.json")))
+        assert (m["run_id"], m["lane"], m["status"], m["stop_reason"]) == ("child", "contig", "done", "repaired")
+        assert m["parent_run"] == os.path.join(tmp, "src") and "parent" not in m
+        assert m["scenario"] == {"path": spec, "sha256": sweep.sha256_file(spec)} and m["command"]
+        prov = m["provenance"]
+        assert {"commit", "dirty", "diff_sha256", "host"} <= set(prov) and len(prov["commit"]) == 40
+        assert prov["instance_sha256"] == sweep.sha256_file(extract) and m["finished_at"]
+
+
+def test_the_backfill_writes_a_manifest_per_untracked_folder_and_the_index_reads_nested_lanes():
+    """#120: `backfill.py` gives each folder with a ledger and no manifest one, marked
+    backfilled, with `parent_run` from `contig.json`'s `repair_of` and its path under the lane as
+    run id; a folder that has a manifest keeps it byte for byte; `index.py` indexes the lane's
+    nested folders and reads a pre-#120 manifest's `parent` as its parent run."""
+    backfill, index = _contig("backfill"), _load("index")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = os.path.join(tmp, "exp")
+        lane = os.path.join(root, "contig")
+        spec = os.path.join(tmp, "s.toml")
+        with open(spec, "w") as fh:
+            fh.write("[channels]\n")
+
+        def folder(rel, **docs):
+            d = os.path.join(lane, rel)
+            os.makedirs(d)
+            open(os.path.join(d, "ledger.csv"), "w").close()
+            for name, doc in docs.items():
+                with open(os.path.join(d, f"{name}.json"), "w") as fh:
+                    json.dump(doc, fh)
+            return d
+        src = folder("old/a", run={"spec": spec, "source": "nowhere.json.gz", "verdict": "fail"},
+                     contig={"arm": "arm1", "sequential": True})
+        child = folder("old/a-repair", run={"spec": spec, "verdict": "pass"},
+                       contig={"arm": "arm1+repair", "repair": {"h0": 3}, "repair_of": src})
+        same = folder("a", run={"spec": spec})
+        kept = folder("new/b", manifest={"run_id": "b", "lane": "contig", "formulation": "contig",
+                                         "status": "done", "parent": src})
+        before = open(os.path.join(kept, "manifest.json"), "rb").read()
+        open(os.path.join(lane, "old", "a-repair.log"), "w").close()
+        open(os.path.join(lane, "old", "go.sh"), "w").close()
+        assert backfill.pending(lane) == sorted([src, child, same])
+        written = {m["run_id"]: m for m in backfill.backfill(lane, "contig")}
+        assert set(written) == {"old/a", "old/a-repair", "a"} and backfill.pending(lane) == []
+        assert open(os.path.join(kept, "manifest.json"), "rb").read() == before
+        m = json.load(open(os.path.join(child, "manifest.json")))
+        assert m == written["old/a-repair"]
+        assert (m["formulation"], m["status"], m["parent_run"], m["audit"]) == ("contig_repair", "done", src, "pass")
+        assert m["provenance"]["backfilled"] is True and m["provenance"]["commit"] is None
+        assert m["params"] == {"arm": "arm1+repair", "repair.h0": 3}
+        assert m["scenario"] == {"path": spec, "sha256": sweep.sha256_file(spec)}
+        assert m["provenance"]["logs"] == [os.path.join(lane, "old", "a-repair.log")]
+        assert m["provenance"]["launch_scripts"] == [os.path.join(lane, "old", "go.sh")]
+        assert written["old/a"]["formulation"] == "contig" and written["a"]["formulation"] == "support"
+        assert backfill.backfill(lane, "contig") == []
+
+        rows = {r["run_id"]: r for r in index.rebuild(root)}
+        assert set(rows) == {"old/a", "old/a-repair", "a", "b"}
+        assert rows["old/a-repair"]["parent_run"] == src and rows["old/a-repair"]["backfilled"]
+        assert rows["b"]["parent_run"] == src and not rows["b"]["backfilled"]
