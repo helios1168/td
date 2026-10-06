@@ -20,7 +20,7 @@
     "runs/autonomous_2026-10-05/batch_border/deck/1_ne_plains_wh11.png",
     "runs/autonomous_2026-10-05/batch_border/zip/1_ne_plains_wh11_zip_pages.pdf"
    ],
-   "notes": "Lead option. #121 border-length redraw of the same plan + window repair; passes M1 including necks (final neck rules, 848e482) and every audit check; looks scorer ELIGIBLE. Worst/mean deviation 9.3% / 5.2%; cut border km 47,930 -> 37,557. Same ledger as border/ne_plains_wh11 (rendered from there).",
+   "notes": "Lead option. #121 border-length redraw of the same plan + window repair; passes M1 including necks (final neck rules, 848e482) and every audit check; looks scorer ELIGIBLE. Worst/mean deviation 9.3% / 5.2%; cut border km 47,930 -> 37,557. Same ledger as border/ne_plains_wh11 (the 2026-10-05 deck page was rendered from there; since #120 the page is rendered in this folder).",
    "metrics": {
     "districts": 49,
     "worst": 9.3,

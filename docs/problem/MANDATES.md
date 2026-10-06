@@ -142,7 +142,7 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   not the output of `tools/maps/render.py` in its run folder (no render.json, or a stale one), or
   whose recorded M1 differs from a fresh run of the gate; and an id used by more than one entry.
   Part (3) is checked by the mandate advisor reading the session.
-- **latest value:** not measured. On 2026-10-05 the 63 entries of `runs/exp/contig/` had no
-  manifest, and the shortlist was rebuilt by hand that day with today's eligible maps.
+- **latest value:** pass (2026-10-06, `tools/mandates/check.py --tracking` on m5-studio's runs/,
+  #120): 121 run folders with a ledger under runs/exp, 25 shortlist entries, 0 failures.
 - **waiver history:** none.
 - **return trigger:** none
