@@ -404,3 +404,83 @@ def test_the_window_repair_removes_a_neck_with_the_border_term():
     for z, k in fixed.items():
         mass[k] = mass.get(k, 0.0) + m.get(z, 0.0)
     assert all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()), mass
+
+
+def _bridge_toy():
+    """CT's a0 and NJ's b0 (mass 2 each) and NY's f and g (mass 1, free); every ZCTA 1 km², the
+    final band (2.55, 3.45) gives each district one of f, g.  Borders: a0-f 1 km, a0-g 30, f-g 5,
+    f-b0 12, g-b0 50.  CT with f is the least border (47 km against 56) but reaches f through
+    1 km, a neck; CT with g has none."""
+    edges = [("a0", "f"), ("a0", "g"), ("f", "g"), ("b0", "f"), ("b0", "g")]
+    km = {("a0", "f"): 1.0, ("a0", "g"): 30.0, ("f", "g"): 5.0, ("b0", "f"): 12.0, ("b0", "g"): 50.0}
+    xy = {"a0": (0.0, 0.0), "f": (1.0, 1.0), "g": (1.0, -1.0), "b0": (2.0, 0.0)}
+    mass = {"a0": 2.0, "b0": 2.0, "f": 1.0, "g": 1.0}
+    inst, xym = tr._toy({"NY": ["f", "g"], "CT": ["a0"], "NJ": ["b0"]}, edges, mass, xy,
+                        {"NY": "free"}, k=2, delta=0.15, final_delta=0.15)
+    plan = tr._plan(inst, [({"CT", "NY"}, {"CT": 1.0, "NY": 0.5}),
+                           ({"NJ", "NY"}, {"NJ": 1.0, "NY": 0.5})])
+    ct, nj = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": dict.fromkeys(xy, 1e6)}
+    owner = {"a0": ct, "f": ct, "b0": nj, "g": nj}
+    return inst, xym, plan, owner, polygon, ct, nj
+
+
+def test_a_neck_cut_removes_the_neck_the_border_term_keeps():
+    """#121: on the bridge toy the window's border-term optimum is CT through the 1 km edge, a
+    neck; the neck-aware window (`ng`) cuts it (`draw.NeckCut`) and its optimum, over the
+    cut-augmented model, is CT with g: no neck, in the band."""
+    repair = _repair_module()
+    inst, xy, plan, owner, polygon, ct, nj = _bridge_toy()
+    m = inst.channels["X"].m
+    ng = audit.NeckGraph(polygon)
+    [(j, _, nk)] = repair.necks(owner, m, ng)
+    assert (j, nk.width_km) == (ct, 1.0)
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    border = repair.draw.border_km(polygon)
+    W = {"f", "g"}
+    plain = repair.solve_window(inst, plan, owner, W, p, 30.0, True, log=lambda *_: None,
+                                keep_support=True, repairing={ct}, border=border)
+    assert plain.status == "optimal" and plain.owner == {"f": ct, "g": nj}, plain.owner
+    assert plain.neck_cuts == 0
+    aware = repair.solve_window(inst, plan, owner, W, p, 30.0, True, log=lambda *_: None,
+                                keep_support=True, repairing={ct}, border=border, ng=ng)
+    assert aware.status == "optimal" and aware.owner == {"f": nj, "g": ct}, (aware.owner, aware.note)
+    assert aware.neck_cuts >= 1 and aware.neck_exempt == []
+    assert repair.necks({**owner, **aware.owner}, m, ng) == []
+    assert abs(aware.border_km - 56.0) < 1e-9 and abs(plain.border_km - 47.0) < 1e-9
+
+
+def test_a_neck_cut_holds_for_every_drawing_without_a_neck():
+    """#121: every `draw.NeckCut` built from a necked drawing of the finger toy's 12 free ZCTAs,
+    its borders drawn in 3-30 km and its land in 0.3-3 km² (seeded), holds on every drawing in
+    which both districts are connected and have no neck (the cut's validity, by enumeration), and
+    each is broken by the drawing it was built from."""
+    import random
+    repair = _repair_module()
+    inst, _, plan, owner, polygon, ct = _finger_toy()
+    rnd = random.Random(121)
+    polygon["border"] = {e: 1000.0 * rnd.uniform(3.0, 30.0) for e in sorted(polygon["border"])}
+    polygon["aland"] = {z: 1e6 * rnd.uniform(0.3, 3.0) for z in sorted(polygon["aland"])}
+    nj = next(cp.name for cp in plan.copies if cp.name != ct)
+    m = inst.channels["X"].m
+    ng = audit.NeckGraph(polygon)
+    W = sorted(z for z in owner if z.startswith("v"))
+    adj = {z: repair._nbrs(ng, z) for z in owner}
+    cuts, clean = [], []
+    for mask in range(1, 2 ** len(W) - 1):
+        own = {z: ct if mask >> i & 1 else nj for i, z in enumerate(W)}
+        full = {**owner, **own}
+        sides = [{z for z, k in full.items() if k == j} for j in (ct, nj)]
+        if any(len(repair.draw.components(s, adj)) > 1 for s in sides):
+            continue
+        built, labels = repair.neck_cuts("X", owner, set(W), m, ng, own, {ct, nj})
+        if labels:
+            assert built and not any(c.holds(own) for c in built), labels
+            cuts += built
+        else:
+            clean.append(own)
+    assert len(cuts) > 100 and len(clean) > 30, (len(cuts), len(clean))
+    for c in cuts:
+        assert all(c.holds(own) for own in clean), c.label

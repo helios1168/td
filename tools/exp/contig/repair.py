@@ -36,6 +36,16 @@ back to each ZCTA's plan copy):
   (`_repair_neck`): the windows of `steps` around the side it cuts off, each re-solved with the
   border term, the first kept that leaves no more detached pieces and fewer necks among its
   districts.
+- **Neck-aware windows** (#121, given the neck graph, as `main` always is): every window, of a
+  piece or a neck, runs M1's exact neck check (`td.audit.district_necks`) on each drawing its
+  loop would keep, and each neck meeting W in a district of the window adds a `draw.NeckCut`
+  (`neck_cuts`): the border across the neck's side, counted where both ends stay the district's,
+  at least 10 km while its anchor sets stay the district's and its land stays small enough for
+  them to hold the 5% share; valid for every drawing without a neck.  Districts with a neck on
+  the map that the window is not repairing are exempt (listed).  A window's drawing then has no
+  neck meeting W in a district it is held to; its "optimal" is over the cut-augmented model and
+  its "infeasible" proves that no drawing of W, the rest fixed, is connected, in the band and
+  leaves every district it cut without a neck.
 
 The source run is checked first (`check_source`): its districts.csv must list, per channel, the
 plan's copies under the ids, names and supports the ledger was written with, or nothing is
@@ -164,13 +174,122 @@ def map_figures(inst, c: str, owner: dict, state: dict) -> dict:
             "outside_band": sorted(j for j, x in mass.items() if not lo <= x <= hi)}
 
 
+_NECKS = {}     # (id(m), id(ng), frozenset of a district's ZCTAs) -> (m, ng, [audit.Neck])
+ANCHOR_MARGIN = 1.2     # an anchor set holds this many times the share of its district's land
+
+
+def district_necks(zips, m: dict, ng) -> list:
+    """`audit.district_necks` of one district, cached by its ZCTAs (the entry holds `m` and `ng`,
+    so their ids stay theirs)."""
+    key = (id(m), id(ng), frozenset(zips))
+    if key not in _NECKS:
+        if len(_NECKS) >= 20000:
+            _NECKS.clear()
+        _NECKS[key] = (m, ng, audit.district_necks(set(zips), m, ng))
+    return _NECKS[key][2]
+
+
+def _nbrs(ng, z) -> set:
+    return set(ng.border.get(z, ())) | ng.connector.get(z, set())
+
+
+def _edge_km(ng, u: str, v: str, states: frozenset) -> float:
+    """The edge's width in a neck cut (`draw.NeckCut`): its border, plus for an approved connector
+    0 where land would do within `states` and the limit otherwise; capped at the limit."""
+    km = ng.border.get(u, {}).get(v, 0.0)
+    if v in ng.connector.get(u, ()):
+        km += 0.0 if ng.land_would_do(u, v, states) else audit.NECK_W_KM
+    return min(km, audit.NECK_W_KM)
+
+
+def _anchors(X: set, W: set, ng, target: float) -> set:
+    """A connected subset of the connected set `X` holding `target` km² of land, or all of `X`:
+    its largest component outside `W` (anchors outside the window cost the cut nothing), grown
+    by every neighbour outside `W`, else by the neighbour in `W` with the most land."""
+    area = {z: ng.aland.get(z, 0.0) / 1e6 for z in X}
+    out = {z: {y for y in _nbrs(ng, z) if y in X} for z in X}
+    fixed = draw.components(X - W, out)        # ties: the first, as `components` orders them
+    S = set(max(fixed, key=lambda cc: math.fsum(area[z] for z in cc))) if fixed \
+        else {max(sorted(X), key=lambda z: area[z])}
+    have = math.fsum(area[z] for z in S)
+    front = {y for z in S for y in out[z]} - S
+    while have < target and front:
+        take = (front - W) or {max(front & W, key=lambda z: (area[z], z))}
+        S |= take
+        have += math.fsum(area[z] for z in take)
+        front = (front | {y for z in take for y in out[z]}) - S
+    return S
+
+
+def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check) -> tuple:
+    """([draw.NeckCut], [labels]) of the necks the window drawing `own` {ZCTA of W: district}
+    must lose (#121): each neck M1 finds on the map `owner` with `own` in it, of a district in
+    `check`, whose side meets W or has an edge into W (a neck wholly outside W is the rest's).
+    Each gets one cut, its anchors (`_anchors`) holding `ANCHOR_MARGIN` times the share of the
+    district's land on that map (the cut binds while the district's land stays below
+    a_min / share)."""
+    new = {**owner, **own}
+    by = collections.defaultdict(set)
+    for z, j in new.items():
+        if j in check:
+            by[j].add(z)
+    cuts, labels = [], []
+    for j in sorted(by):
+        D = by[j]
+        for nk in district_necks(D, m, ng):
+            A = set(nk.zips)
+            delta = [(u, v) for u in sorted(A) for v in sorted(_nbrs(ng, u)) if v not in A]
+            if not (A & W or any(v in W for _, v in delta)) and nk.status == "proved":
+                continue
+            label = audit.neck_item(c, j, nk)
+            labels.append(label)
+            if nk.status != "proved":
+                continue
+            seen, stack = set(A), list(A)       # the rest: A's component of D, less A
+            while stack:
+                for y in _nbrs(ng, stack.pop()):
+                    if y in D and y not in seen:
+                        seen.add(y)
+                        stack.append(y)
+            R = seen - A
+            fixed_j = {z for z, k in owner.items() if k == j and z not in W}
+            states = frozenset(ng.state.get(z, "") for z in fixed_j)
+            const, single, pair = 0.0, [], []
+            for u, v in delta:
+                if not all(z in W or owner.get(z) == j for z in (u, v)):
+                    continue                    # an end fixed in another district
+                km = _edge_km(ng, u, v, states)
+                if km <= 0:
+                    continue
+                if u in W and v in W:
+                    pair.append((u, v, km))
+                elif u in W or v in W:
+                    single.append((u if u in W else v, km))
+                else:
+                    const += km
+            area_fixed = math.fsum(ng.aland.get(z, 0.0) for z in fixed_j) / 1e6
+            area = tuple((z, ng.aland.get(z, 0.0) / 1e6) for z in sorted(W))
+            tot = math.fsum(ng.aland.get(z, 0.0) for z in D) / 1e6
+            target = ANCHOR_MARGIN * audit.NECK_SHARE * tot
+            sa, sr = _anchors(A, W, ng, target), _anchors(R, W, ng, target)
+            a_min = min(math.fsum(ng.aland.get(z, 0.0) for z in s) for s in (sa, sr)) / 1e6
+            cuts.append(draw.NeckCut(j, const, tuple(single), tuple(pair),
+                                     tuple(sorted((sa | sr) & W)), area_fixed, area, a_min,
+                                     audit.NECK_W_KM * (1 - audit.NECK_TOL), audit.NECK_SHARE,
+                                     label))
+    return cuts, labels
+
+
 def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,
                  log=print, flow: bool = False, keep_support: bool = False,
-                 repairing: set = frozenset(), border: dict | None = None):
+                 repairing: set = frozenset(), border: dict | None = None, ng=None):
     """`draw.Group` of the window `W` (module docstring), everything outside fixed.  With
     `keep_support` (arm 1) a ZCTA may go only to a district whose plan holds its unit (an exclave
     or dropped ZCTA to any); else to any district of the window (a unit may change holders: an
-    arm-2 move, reported by the audit's planned-against-drawn check)."""
+    arm-2 move, reported by the audit's planned-against-drawn check).  Given `ng`
+    (`audit.NeckGraph`) the window is neck-aware (#121): its drawing must leave no neck meeting W
+    in its districts but the exempt ones, those with a neck on the map that are not `repairing`
+    (`neck_cuts`, `draw._solve_group`); the group lists them under `neck_exempt`."""
     c = plan.channel
     ch, units = inst.channels[c], inst.units
     adj, m, unit_of = units.zip_adj, ch.m, units.unit_of
@@ -205,6 +324,18 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
     lo, hi = ch.final_band
     count = {"current": holders_on(owner, units, {unit_of[z] for z in W}), "cap": cap}
     zs = sorted(W)
+    cutter, exempt = None, []
+    if ng is not None:
+        on_map = collections.defaultdict(set)
+        for z, j in owner.items():
+            if j in js:
+                on_map[j].add(z)
+        exempt = sorted(j for j in js
+                        if j not in repairing and district_necks(on_map[j], m, ng))
+        check = set(js) - set(exempt)
+
+        def cutter(own):
+            return neck_cuts(c, owner, W, m, ng, own, check)
     t_end = time.time() + time_limit
 
     def solve(_d, dag, seed):
@@ -214,7 +345,8 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
         g = draw._solve_group(c, zs, allowed, bodies, body_of, outside, adj, m, p, unit_of,
                               hold, plan, planned, support, inst, lo, hi, "arm1", False,
                               min(left, time_limit / 4) if dag else left, log, extra, dag=dag,
-                              start=seed, count=count, layers=True, flow=flow, border=border)
+                              start=seed, count=count, layers=True, flow=flow, border=border,
+                              necks=cutter, neck_seed={z: owner[z] for z in zs})
         log(f"  {c} window of {len(zs)} ZCTAs{' (dag)' if dag else ''}"
             f"{'' if cap else ' (no cap)'}: {len(g.districts)} districts, {g.columns} columns"
             f" -> {g.status} in {g.seconds:.1f}s, {g.iterations} solves, {g.cuts} cuts"
@@ -226,6 +358,7 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
         g = draw.Group(js, sorted({unit_of[z] for z in zs}), len(zs), 0, 0,
                        note="not tried: no time left")
     g.tried = tried
+    g.neck_exempt = exempt
     g.seconds = sum(t["seconds"] for t in tried)
     return g
 
@@ -316,7 +449,7 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
         g = solve_window(inst, plan, owner, W, p, time_limit, cap, log, flow, keep_support,
-                         {j for j, _ in pieces}, border)
+                         {j for j, _ in pieces}, border, ng)
         rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
                "window_zctas": len(W), "districts": g.districts,
                "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
@@ -325,7 +458,8 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
                                     for _, cc in pieces],
                "status": g.status, "seconds": round(time.time() - t0, 1),
                "objective": g.objective, "bound": g.bound, "gap": g.gap, "note": g.note,
-               "tried": g.tried, "before": before}
+               "tried": g.tried, "before": before, "neck_aware": ng is not None,
+               "neck_cuts": g.neck_cuts}
         if g.status in ("optimal", "connected"):
             owner = {**owner, **g.owner}
             rec["after"] = map_figures(inst, c, owner, state)
@@ -349,7 +483,7 @@ def necks(owner: dict, m: dict, ng, districts=None) -> list:
     for z, j in owner.items():
         by[j].add(z)
     return [(j, frozenset(nk.zips), nk) for j in sorted(districts if districts is not None else by)
-            for nk in audit.district_necks(by[j], m, ng)]
+            for nk in district_necks(by[j], m, ng)]
 
 
 def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time_limit,
@@ -364,14 +498,15 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
         g = solve_window(inst, plan, owner, W, p, time_limit, True, log, flow, keep_support,
-                         {j}, border)
+                         {j}, border, ng)
         n_before = len(necks(owner, m, ng, g.districts))
         rec = {"channel": c, "kind": "neck", "shape": shape, "h" if shape == "ball" else "slack": k,
                "window_zctas": len(W), "districts": g.districts, "cap": True, "flow": flow,
                "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
                "cluster": [f"{j} {min(side)} ({len(side)} ZCTAs)"], "necks_before": n_before,
                "status": g.status, "seconds": None, "objective": g.objective, "bound": g.bound,
-               "gap": g.gap, "note": g.note, "tried": g.tried, "before": before, "kept": False}
+               "gap": g.gap, "note": g.note, "tried": g.tried, "before": before, "kept": False,
+               "neck_aware": True, "neck_cuts": g.neck_cuts, "neck_exempt": g.neck_exempt}
         new = {**owner, **g.owner} if g.status in ("optimal", "connected") else owner
         rec["pieces_after"] = len(detached(new, adj, m))
         rec["necks_after"] = len(necks(new, m, ng, g.districts))
@@ -384,7 +519,8 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
         attempts.append(rec)
         log(f"{c}: neck of {j} ({len(side)} ZCTAs), {shape} {'h' if shape == 'ball' else 'slack'} "
             f"= {k}, |W| = {len(W)}: {g.status}, necks {n_before} -> {rec['necks_after']} in its "
-            f"districts, {'kept' if rec['kept'] else 'not kept'}, {rec['seconds']}s")
+            f"districts, {g.neck_cuts} neck cuts, {'kept' if rec['kept'] else 'not kept'}, "
+            f"{rec['seconds']}s")
         if rec["kept"]:
             break
     return owner
@@ -417,7 +553,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             group = [pc for pc in group if pc in live]
             if group:
                 owner = _repair_cluster(inst, plan, owner, group, free, p, state, h0, max_zctas,
-                                        time_limit, attempts, log, flow, keep_support, border)
+                                        time_limit, attempts, log, flow, keep_support, border, ng)
         left = detached(owner, adj, m)
         if len(left) >= len(pieces):
             break
