@@ -570,3 +570,36 @@ def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
     fixed, _ = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of),
                                      open_units=("CT",), **kw)
     assert fixed == {"a0": pa, "a1": qb, "b0": qb} and repair.necks(fixed, m, ng) == []
+
+
+def test_a_neck_in_an_opened_unit_tries_the_districts_own_window_first():
+    """#122: for a neck whose side lies in an opened unit, the first window is the district's own
+    ZCTAs in that unit (`own_window`), here wider than the ball at h0 = 1 ({a0, a1}): a2 hangs off
+    a0 by 20 km, so a1 (by 1 km) is P's only neck, and the own window hands a1 to Q."""
+    repair = _repair_module()
+    edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0"), ("a0", "a2")]
+    km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0, ("a0", "a2"): 20.0}
+    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "a2": (-1.0, 0.0), "b0": (0.5, 1.0)}
+    mass = {"a0": 2.0, "a1": 1.0, "a2": 0.5, "b0": 2.0}
+    inst, xym = tr._toy({"CT": ["a0", "a1", "a2"], "NJ": ["b0"]}, edges, mass, xy, {}, k=2,
+                        delta=0.2, final_delta=0.2)
+    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0})])
+    pa, qb = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"a0": 2e6, "a1": 1e6, "a2": 1e6, "b0": 1e6}}
+    owner = {"a0": pa, "a1": pa, "a2": pa, "b0": qb}
+    m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
+    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(pa, {"a1"})]
+    unit_of = inst.units.unit_of
+    assert repair.own_window(owner, pa, {"a1"}, frozenset(("a0", "a1", "a2")), unit_of) \
+        == {"a0", "a1", "a2"}
+    assert repair.own_window(owner, pa, {"a1"}, frozenset(), unit_of) == set()
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xym.items()}
+    fixed, tried = repair.repair_channel(inst, plan, owner, p, dict(unit_of), h0=1, max_zctas=100,
+                                         time_limit=60.0, log=lambda *_: None, keep_support=True,
+                                         border=repair.draw.border_km(polygon), ng=ng,
+                                         open_units=("CT",))
+    assert fixed == {"a0": pa, "a1": qb, "a2": pa, "b0": qb} and repair.necks(fixed, m, ng) == []
+    assert [(r["shape"], r.get("zctas"), r.get("kept")) for r in tried] == [("own", 3, True)], \
+        [(r["shape"], r.get("kind"), r.get("kept")) for r in tried]

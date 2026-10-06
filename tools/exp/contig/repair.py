@@ -519,16 +519,31 @@ def necks(owner: dict, m: dict, ng, districts=None) -> list:
             for nk in district_necks(by[j], m, ng)]
 
 
+STEP_KEY = {"ball": "h", "corridor": "slack", "own": "zctas"}   # a window step's size, by shape
+
+
+def own_window(owner: dict, j: str, side, opened: frozenset, unit_of: dict) -> set:
+    """The ZCTAs `j` holds in the opened units (`--open-units`) its neck's `side` lies in (#122):
+    a window of the district's own ZCTAs, through which a neighbour may take the side."""
+    units = {unit_of[z] for z in side if z in opened}
+    return {z for z in opened if owner.get(z) == j and unit_of[z] in units}
+
+
 def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time_limit,
                  attempts, log, flow, keep_support, border, ng, deadline=None,
                  opened=frozenset()):
     """Window repair of one neck, as of a detached piece (#121): the windows of `steps` around the
-    side cut off, each re-solved with the border term, the first kept that leaves no more
-    detached pieces and fewer necks among its districts."""
+    side cut off, after `own_window` when the side lies in an opened unit (#122), each re-solved
+    with the border term, the first kept that leaves no more detached pieces and fewer necks among
+    its districts."""
     c = plan.channel
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
-    for shape, k, W in steps([(j, side)], owner, free, adj, h0, max_zctas):
+    todo = steps([(j, side)], owner, free, adj, h0, max_zctas)
+    own = own_window(owner, j, side, opened, inst.units.unit_of)
+    if own and len(own) <= max_zctas:
+        todo = [("own", len(own), own)] + [st for st in todo if st[2] != own]
+    for shape, k, W in todo:
         tl = _time_left(time_limit, deadline, log, f"{c} neck of {j}, {shape} {k}")
         if not tl:
             break
@@ -537,7 +552,7 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
         g = solve_window(inst, plan, owner, W, p, tl, True, log, flow, keep_support,
                          {j}, border, ng, opened)
         n_before = len(necks(owner, m, ng, g.districts))
-        rec = {"channel": c, "kind": "neck", "shape": shape, "h" if shape == "ball" else "slack": k,
+        rec = {"channel": c, "kind": "neck", "shape": shape, STEP_KEY[shape]: k,
                "window_zctas": len(W), "districts": g.districts, "cap": True, "flow": flow,
                "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
                "cluster": [f"{j} {min(side)} ({len(side)} ZCTAs)"], "necks_before": n_before,
@@ -554,7 +569,7 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
         rec["seconds"] = round(time.time() - t0, 1)
         rec["group"] = g.report()
         attempts.append(rec)
-        log(f"{c}: neck of {j} ({len(side)} ZCTAs), {shape} {'h' if shape == 'ball' else 'slack'} "
+        log(f"{c}: neck of {j} ({len(side)} ZCTAs), {shape} {STEP_KEY[shape]} "
             f"= {k}, |W| = {len(W)}: {g.status}, necks {n_before} -> {rec['necks_after']} in its "
             f"districts, {g.neck_cuts} neck cuts, {'kept' if rec['kept'] else 'not kept'}, "
             f"{rec['seconds']}s")
@@ -679,7 +694,8 @@ def main(argv=None) -> int:
                     help="arm 1: a ZCTA only to a district whose plan holds its unit")
     ap.add_argument("--open-units", nargs="*", default=(),
                     help="units whose ZCTAs any window district may take, even with "
-                         "--keep-support: an arm-2 split, one more allowed per unit (#122)")
+                         "--keep-support: an arm-2 split, one more allowed per unit; a neck "
+                         "inside one first tries the district's own ZCTAs there (#122)")
     ap.add_argument("--maps", action="store_true")
     ap.add_argument("--diag-final-delta", type=float, default=None,
                     help="diagnostic only: windows and audit at this final band, not the "
