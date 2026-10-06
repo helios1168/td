@@ -4,12 +4,11 @@
 
 ## Now
 
-#109 landed (bbaa89b). #121 (neck rule in M1, border-length term, neck-aware repair) on m5-studio/121 at f6a0698, 328 pass, in Sol review 28757ee0; land after review. Only ne_plains_wh11 (border/ne_plains_wh11-r2-all) passes the neck rule. #122 worker 9a8f09ea re-plans the NY metro for the four failing maps (owner 2026-10-06).
+#109 (bbaa89b) and #121 (003fb9b) landed: M1 now fails necks (smaller-side rule, floored-cm widths, owner 2026-10-06). Only ne_plains_wh11 (border/ne_plains_wh11-r2-all) passes and is eligible. #122 round 2 worker 6469a6ec on m5-studio/122: ne5 + DE-NJ bans for nocomb_15/13 and low6_cb1, a UT window for ifa_49.
 
 ## Next
 
-- Land #121; put #122's re-planned maps to the owner (arm-2 changes are never final without them).
-- Owner: rest-side reading of the neck check (6% hub, sub-5% lobes) once Sol reports.
+- Put #122's M1-passing re-plans to the owner (never final without their pick); update the shortlist.
 - Fewer splits: #103, #115; #119 only if "minimal" is wanted. #118 any time.
 
 ## Blocked
