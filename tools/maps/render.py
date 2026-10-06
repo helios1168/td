@@ -42,7 +42,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 TD_REPO = os.environ.get("TD_REPO", ROOT)
 RENDER_JSON = "render.json"
-INPUTS = ("ledger.csv", "districts.csv", "run.json")
+INPUTS = ("ledger.csv", "districts.csv", "run.json", "manifest.json")
 CODE = (os.path.join("tools", "maps"), os.path.join("tools", "looks", "score.py"))
 LEGACY_ARCHIVE = os.path.join(TD_REPO, "runs", "sweep", "grid_2026-10-01", "present", "legacy", "archive")
 GEO_CACHE = os.path.join(LEGACY_ARCHIVE, "geo")
@@ -110,8 +110,8 @@ def read(run_dir: str):
 def current(run_dir: str, label: str | None = None, corridor: bool | None = None,
             fac: str | None = None) -> tuple:
     """(True, "") when the run's render is current for `label` and `corridor` (None: any), else
-    (False, why): no `render.json`, an input, the $ factors, an image or the renderer's code hash
-    changed, or another label or corridor flag."""
+    (False, why): no `render.json`, an input (`INPUTS`) unrecorded or changed, the $ factors, an
+    image or the renderer's code hash changed, or another label or corridor flag."""
     r = read(run_dir)
     if r is None:
         return False, f"no {RENDER_JSON}"
@@ -119,7 +119,11 @@ def current(run_dir: str, label: str | None = None, corridor: bool | None = None
         return False, f"rendered with label {r.get('label')!r}, not {label!r}"
     if corridor is not None and bool(r.get("corridor")) != corridor:
         return False, f"rendered with corridor {r.get('corridor')}, not {corridor}"
-    for name, sha in r.get("inputs", {}).items():
+    recorded = r.get("inputs", {})
+    for name in INPUTS:
+        if name not in recorded:
+            return False, f"the render records no sha256 of {name}"
+    for name, sha in recorded.items():
         path = os.path.join(run_dir, name)
         if not os.path.exists(path) or sha256_file(path) != sha:
             return False, f"{name} changed since the render"

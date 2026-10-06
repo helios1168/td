@@ -490,3 +490,32 @@ def test_tracking_passes_a_complete_world_and_fails_each_gap():
         base, registry = _tracked_world(tmp, gate)
         _rewrite(registry, lambda c: c["maps"].append({**c["maps"][0], "tier": 3}))
         assert "shortlist id good used by 2 entries (tiers 1, 3)" in gate.tracking(base, registry, passing)
+
+
+def test_tracking_fails_a_changed_or_unrecorded_manifest():
+    """A render is stale once the run's manifest.json changes (approved default 5, #120), and a
+    `render.json` that records no sha256 of an input in `render.INPUTS` is stale too."""
+    gate = _gate()
+    render = gate._load("maps_render", "tools", "maps", "render.py")
+    passing = lambda d: "pass"      # noqa: E731
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        run = os.path.join(base, "runs", "exp", "lane", "good")
+        with open(os.path.join(run, "manifest.json"), "w") as fh:
+            fh.write('{"parent_run": null}')
+        assert render.current(run) == (False, "manifest.json changed since the render")
+        assert any("render not current: manifest.json changed" in f
+                   for f in gate.tracking(base, registry, passing))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        run = os.path.join(base, "runs", "exp", "lane", "good")
+        path = os.path.join(run, "render.json")
+        with open(path) as fh:
+            rec = json.load(fh)
+        del rec["inputs"]["manifest.json"]
+        with open(path, "w") as fh:
+            json.dump(rec, fh)
+        assert render.current(run) == (False, "the render records no sha256 of manifest.json")
+        assert any("render not current: the render records no sha256 of manifest.json" in f
+                   for f in gate.tracking(base, registry, passing))
