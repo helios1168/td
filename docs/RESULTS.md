@@ -777,3 +777,66 @@ neck rule (28706a9) in the same check:
   INELIGIBLE, reason "diagnostic band".
 
 Regenerate (m5, local): `TD_REPO=... "$TD_PY" runs/exp/contig/border/rescore_0606/rescore.py`.
+
+## #122 Re-plan the four failing maps: bans and opened units (2026-10-06)
+
+Measured 2026-10-06 on m5 with `tools/exp/contig/` at m5-studio/122 (round 1 8fc44b7, round 2
+74b98a3). Every row is judged with the landed M1 check (`tools/mandates/check.py`, #121's final
+neck rule: the smaller side, widths in floored whole cm) and the looks scorer, inside each
+scenario's declared ±10% final band; round 1's maps are rescored under it here.
+`tools/exp/contig/replan.py` re-solves a scenario's master with `forbid_pairs` (unit pairs no
+district may hold together) added to a copy of its TOML, at the declared δ. Every re-solve below
+found a plan at its declared δ in every channel. `repair.py --open-units U` lets any window
+district take ZCTAs of U even with `--keep-support`: an arm-2 split, one more allowed per unit. A
+neck whose side lies in an opened unit is repaired first, and its first window is the district's
+own ZCTAs in that unit (`own_window`, round 2).
+
+"ne5" bans CT-NJ, MA-NJ, NJ-VT, CT-PA and MA-PA in every channel. The six-pair set with PA-VT
+has no plan within final_delta 0.1 on nocomb_15_12_23. Round 2 (owner, "Add DE-NJ, rerun after
+the #121 fix") adds DE-NJ, against the NJ end of the Delaware Memorial Bridge (08023, 5.67 km).
+low6_cb1 FI also bans AZ-UT, so UT does not need its 84621 neck. Splits/cuts: the scorer's splits
+and the state splits, from the #121 border map to the variant. $ is the scorer's per-channel $ per
+district (M).
+
+| id | variant | round | changes | pieces (τ) / necks | splits/cuts vs #121 border map | worst / mean | $ per district (M) | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|---|
+| nocomb_15_12_23 | `-r3-FI` (#121 border map) | - | - | 0 (0) / 3 | 29/34 | 9.8% / 2.3% | FI 880, WH 928, national 1,169 | fail | M1 only |
+| nocomb_15_12_23 | `-replan-a1` | 1 | arm-2 repair | 0 (0) / 3 | → 29/34 | 9.8% / 2.3% | same | fail | M1 only |
+| nocomb_15_12_23 | `-replan-ne5-r2` | 1 | ne5, 2 repair passes | 2 (0.199) / 2 | → 28/34 | 9.9% / 1.8% | same | fail | M1 only |
+| nocomb_15_12_23 | `-replan-ne5dn-r2` | 2 | ne5 + DE-NJ, 2 passes | 3 (0.375) / 4 | → 27/33 | 9.5% / 1.9% | same | fail | M1 only |
+| nocomb_13_12_23 | `-r3-FI` (#121 border map) | - | - | 3 (0.398) / 5 | 28/34 | 9.2% / 1.6% | FI 880, WH 928, national 1,349 | fail | M1 only |
+| nocomb_13_12_23 | `-replan-a1` | 1 | arm-2 repair | 3 (0.398) / 5 | → 28/34 | 9.2% / 1.6% | same | fail | M1 only |
+| nocomb_13_12_23 | `-replan-ne5-r2` | 1 | ne5, 2 passes | 3 (0.176) / 3 | → 27/33 | 9.9% / 2.0% | same | fail | M1 only |
+| nocomb_13_12_23 | `-replan-ne5dn-r2` | 2 | ne5 + DE-NJ, 2 passes | 2 (0.0868) / 1 | → 27/32 | 10.0% / 2.2% | same | fail | M1 only |
+| low6_cb1 | `-r3-national` (#121 border map) | - | - | 0 (0) / 4 | 29/34 | 10.0% / 2.9% | FI 833, WH 916, WIFI 576, national 1,334 | fail | M1 only |
+| low6_cb1 | `-replan-a1ut` | 1 | arm 1 + open UT (FI) | 0 (0) / 4 | → 29/34 | 10.0% / 2.9% | same | fail | M1 only |
+| low6_cb1 | `-replan-ne5ut-r2` | 1 | ne5, FI AZ-UT, 2 passes | 2 (0.434) / 5 | → 26/32 | 8.1% / 2.0% | same | fail | M1 only |
+| low6_cb1 | `-replan-ne5dnut-r2` | 2 | ne5 + DE-NJ, FI AZ-UT, 2 passes | 3 (0.397) / 5 | → 27/33 | 8.5% / 2.1% | same | fail | M1 only |
+| ifa_49 | `-r3-IFA` (#121 border map) | - | - | 7 (0.338) / 10 | 22/40 | 9.8% / 3.4% | IFA 1,268 | fail | M1 only |
+| ifa_49 | `-replan-a1ut` | 1 | arm 1 + open UT | 7 (0.338) / 10 | → 22/40 | 9.8% / 3.4% | same | fail | M1 only |
+| ifa_49 | `-replan-ne5` | 1 | ne5 | 15 (0.355) / 17 | → 22/42 | 13.6% / 1.7% | same | fail (band too) | M1 only |
+| ifa_49 | `-replan-a2ut` | 2 | arm 1 + open UT, IFA_19's own window first | 5 (0.267) / 6 | → 23/41 | 9.9% / 3.6% | same | fail | M1, mode compliance (the UT split) |
+
+- **No map passes M1**, so no deck or ZIP pages were rendered. The best by pieces and necks is
+  `nocomb_13_12_23-replan-ne5dn-r2`. Everything it fails is in one district, national_08
+  (DC+NC+NJ+PA+VA+WV): a DC piece of 85 ZIPs (0.0868 τ) and a WV piece of 738 ZIPs (0.0224 τ),
+  both cut off by other districts, and a 0.17 km neck inside PA that cuts off the NJ side. None of
+  these is a narrow state-pair crossing like the DE-NJ bridge, so no seventh pair is named; what to
+  do about it is the owner's call.
+- DE-NJ removed the Delaware Memorial Bridge neck, but on nocomb_15 and low6 DE moved into long
+  districts (WH_07 DE+ME+NH+NY+PA+VT, national_10 DE+MD+NY+PA+VT, national_13). Those are cut off
+  around Philadelphia and Baltimore (necks of 0.07-0.38 km, pieces up to 0.375 τ), so both maps
+  are no better than round 1's ne5.
+- ifa_49: the own UT window removed IFA_19's 84621 neck in its first try (299 ZCTAs, optimal,
+  1.8 s), and neck windows also cleared three New York necks. 5 pieces and 6 necks remain in New
+  York, New England, Maryland and west Texas.
+- Round 1's maps keep their M1 failures under the landed rule. Their neck counts change: for
+  example `ifa_49-r3-IFA` goes from 5 to 10 and `low6_cb1-replan-ne5ut` from 3 to 5.
+
+Regenerate (m5, local): `runs/exp/contig/replan/chain.sh <id> <variant> <source spec> <pairs...>`
+(`PARENT=`, `BUDGET=1500`), second pass `tools/exp/contig/repair.py <folder> --out <folder>-r2
+--keep-support --flow --channels <failing> --h0 8 --max-zctas 2000 --time-limit 300
+--neck-time-limit 300 --budget 1500`; ifa_49 `repair.py runs/exp/contig/border/ifa_49-r3-IFA
+--keep-support --open-units UT --flow --h0 6 --max-zctas 2000 --time-limit 240 --neck-time-limit
+180 --budget 7200`; table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r2.py` (writes
+`TABLE_r2.md`, `rescore_r2.json`). Remaining items per map: `runs/autonomous_2026-10-05/batch_replan/BATCH.md`.
