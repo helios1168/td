@@ -69,9 +69,11 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   the total shared ZCTA border across the cut. Mass is reported for each neck but does not
   decide it. An approved connector is a passage of unlimited width, except where the district
   could have reached the far side by land; there it has width 0. W = 10 km and 5% are the values
-  of the option the owner picked; only the owner changes them. Reading of "by land" (agent,
-  2026-10-05, #121, owner to confirm): joined in the polygon graph without connectors, within
-  the states the district owns ZCTAs in.
+  of the option the owner picked; only the owner changes them. "By land" means joined in the
+  polygon graph without connectors, within the states the district owns ZCTAs in, through a
+  land passage that is itself at least 10 km wide (owner, 2026-10-05, structured pick "Land
+  must be a real passage", #121, after WH_09's IN+KY bridges were judged against a 4.4 km
+  strip at Evansville); a narrower land route leaves the connector at full width.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by
