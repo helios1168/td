@@ -312,9 +312,10 @@ def write_manifest(out: str, formulation: str, spec_path: str, extract_path: str
                    status: str = "running", **more) -> dict:
     """Mandate T1's record of a hand-launched map run (#92's manifest fields): the code's commit
     and dirty flag, the command line, the scenario TOML's path and sha256, the instance and its
-    sha256, the plan file and the parent run (the run a redraw or repair derives from).  Called
-    at the start with status `running` and again at the end with `done` or `failed`.  A child of
-    a diagnostic folder (`audit.diagnostic`) is diagnostic too (#121)."""
+    sha256, the plan file and `parent_run` (the run a redraw or repair derives from; manifests
+    written before #120 call it `parent`).  Called at the start with status `running` and again at
+    the end with `done` or `failed`.  A child of a diagnostic folder (`audit.diagnostic`) is
+    diagnostic too (#121)."""
     sw = _sweep()
     path = os.path.join(out, sw.MANIFEST)
     m = sw.read_manifest(out) if os.path.exists(path) else {
@@ -323,7 +324,7 @@ def write_manifest(out: str, formulation: str, spec_path: str, extract_path: str
         "params": params, "command": " ".join([sys.executable] + sys.argv),
         "scenario": {"path": os.path.abspath(spec_path), "sha256": sha256(spec_path)},
         "extract": os.path.abspath(extract_path), "plans_file": plans_file,
-        "parent": parent and os.path.abspath(parent),
+        "parent_run": parent and os.path.abspath(parent),
         "provenance": {**sw.code_state(), "instance": os.path.abspath(extract_path),
                        "instance_sha256": sha256(extract_path), "host": sw.platform.node(),
                        "queued_at": sw.now()},

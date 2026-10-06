@@ -382,3 +382,140 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
         "X/X_01: mass neck (diagnostic, not M1) 1.00 km wide cuts off 1 ZIPs (10001...), 99.8% of "
         "its land area and 9.1% of its mass; cut 10001-10002 1.00 km"]
     assert items["neck_two_small_parts"] == [] and listed["neck_two_small_parts"] == []
+
+
+# ------------------------------------------------------------------------------ T1, tracking (#120)
+def test_t1_names_the_tracking_check():
+    check = _register()["T1"]["check"]
+    assert not BUILT_BY.search(check), check
+    assert "`tools/mandates/check.py::tracking`" in check, check
+    assert _check_paths_exist(check) == [], check
+
+
+def _tracked_world(tmp: str, gate) -> tuple:
+    """(base, registry): `base/runs/exp/lane/good` a complete run folder (ledger, manifest, a
+    current `render.json` written as `tools/maps/render.py` writes it) and a registry naming it."""
+    import hashlib
+    render = gate._load("maps_render", "tools", "maps", "render.py")
+    base = os.path.join(tmp, "td")
+    run = os.path.join(base, "runs", "exp", "lane", "good")
+    os.makedirs(run)
+    files = {"ledger.csv": "zip_code\n", "districts.csv": "channel,district\n", "run.json": "{}",
+             "manifest.json": "{}", "summary.png": "png", "zip_pages.pdf": "pdf"}
+    for name, text in files.items():
+        with open(os.path.join(run, name), "w") as fh:
+            fh.write(text)
+    fac = os.path.join(tmp, "tables.json")
+    with open(fac, "w") as fh:
+        fh.write('{"fac": {}}')
+    sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()   # noqa: E731
+    entry = {"id": "good", "tier": 1, "rank": 1, "label": "a layout (K 2)", "run": "runs/exp/lane/good",
+             "images": ["runs/exp/lane/good/summary.png", "runs/exp/lane/good/zip_pages.pdf"], "notes": ""}
+    with open(os.path.join(run, "render.json"), "w") as fh:
+        json.dump({"renderer": {"code_sha256": render.code_sha256()}, "label": "good: a layout (K 2)",
+                   "corridor": False, "m1": {"status": "pass"}, "fac": {"path": fac, "sha256": sha(fac)},
+                   "inputs": {n: sha(os.path.join(run, n)) for n in render.INPUTS},
+                   "images": {n: sha(os.path.join(run, n)) for n in ("summary.png", "zip_pages.pdf")}}, fh)
+    registry = os.path.join(tmp, "shortlist.json")
+    with open(registry, "w") as fh:
+        json.dump({"tiers": {"1": "presentable", "3": "reference"}, "maps": [entry]}, fh)
+    return base, registry
+
+
+def _rewrite(registry: str, edit) -> None:
+    with open(registry) as fh:
+        cfg = json.load(fh)
+    edit(cfg)
+    with open(registry, "w") as fh:
+        json.dump(cfg, fh)
+
+
+def test_tracking_passes_a_complete_world_and_fails_each_gap():
+    """Mandate T1's check (#120): a complete run folder and shortlist pass; a run folder with a
+    ledger and no manifest fails, as do an entry with no manifest, a missing image, an image
+    outside its run folder, no or a stale `render.json`, a recorded M1 the gate no longer gives,
+    and an id used twice across tiers."""
+    import shutil
+    gate = _gate()
+    passing = lambda d: "pass"      # noqa: E731  -- the fixture ledgers are not maps
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        assert gate.tracking(base, registry, passing) == []
+        run = os.path.join(base, "runs", "exp", "lane", "good")
+
+        bare = os.path.join(base, "runs", "exp", "lane", "group", "bare")
+        os.makedirs(bare)
+        open(os.path.join(bare, "ledger.csv"), "w").close()
+        got = gate.tracking(base, registry, passing)
+        assert got == ["run folder with a ledger and no manifest.json: runs/exp/lane/group/bare"], got
+        shutil.rmtree(bare)
+
+        assert any("render records M1 pass, the gate now says fail" in f
+                   for f in gate.tracking(base, registry, lambda d: "fail"))
+
+        os.rename(os.path.join(run, "manifest.json"), os.path.join(tmp, "m"))
+        assert any("no manifest.json" in f for f in gate.tracking(base, registry, passing))
+        os.rename(os.path.join(tmp, "m"), os.path.join(run, "manifest.json"))
+
+        with open(os.path.join(run, "ledger.csv"), "a") as fh:
+            fh.write("00501\n")
+        assert any("render not current: ledger.csv changed" in f
+                   for f in gate.tracking(base, registry, passing))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        run = os.path.join(base, "runs", "exp", "lane", "good")
+        os.remove(os.path.join(run, "zip_pages.pdf"))
+        assert any("image runs/exp/lane/good/zip_pages.pdf missing" in f
+                   for f in gate.tracking(base, registry, passing))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        with open(os.path.join(base, "elsewhere.png"), "w") as fh:
+            fh.write("png")
+        _rewrite(registry, lambda c: c["maps"][0]["images"].append("elsewhere.png"))
+        assert any("elsewhere.png is not in its run folder" in f
+                   for f in gate.tracking(base, registry, passing))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        _rewrite(registry, lambda c: c["maps"][0].update(label="another label"))
+        assert any("render not current: rendered with label" in f
+                   for f in gate.tracking(base, registry, passing))
+        os.remove(os.path.join(base, "runs", "exp", "lane", "good", "render.json"))
+        assert any("render not current: no render.json" in f
+                   for f in gate.tracking(base, registry, passing))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        _rewrite(registry, lambda c: c["maps"].append({**c["maps"][0], "tier": 3}))
+        assert "shortlist id good used by 2 entries (tiers 1, 3)" in gate.tracking(base, registry, passing)
+
+
+def test_tracking_fails_a_changed_or_unrecorded_manifest():
+    """A render is stale once the run's manifest.json changes (approved default 5, #120), and a
+    `render.json` that records no sha256 of an input in `render.INPUTS` is stale too."""
+    gate = _gate()
+    render = gate._load("maps_render", "tools", "maps", "render.py")
+    passing = lambda d: "pass"      # noqa: E731
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        run = os.path.join(base, "runs", "exp", "lane", "good")
+        with open(os.path.join(run, "manifest.json"), "w") as fh:
+            fh.write('{"parent_run": null}')
+        assert render.current(run) == (False, "manifest.json changed since the render")
+        assert any("render not current: manifest.json changed" in f
+                   for f in gate.tracking(base, registry, passing))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
+        run = os.path.join(base, "runs", "exp", "lane", "good")
+        path = os.path.join(run, "render.json")
+        with open(path) as fh:
+            rec = json.load(fh)
+        del rec["inputs"]["manifest.json"]
+        with open(path, "w") as fh:
+            json.dump(rec, fh)
+        assert render.current(run) == (False, "the render records no sha256 of manifest.json")
+        assert any("render not current: the render records no sha256 of manifest.json" in f
+                   for f in gate.tracking(base, registry, passing))

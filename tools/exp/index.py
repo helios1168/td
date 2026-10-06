@@ -2,9 +2,11 @@
 
     "$TD_PY" tools/exp/index.py [--root DIR]
 
-One row per `<root>/<lane>/<run_id>/manifest.json` (`tools/exp/sweep.py`), in run-id order: the
-identity, status and stop reason, provenance, flattened parameters, audit verdict, each channel's
-solver status and the metrics.  A done run is rescored with the looks scorer when
+One row per `manifest.json` under `<root>/<lane>/`: a sweep's flat `<lane>/<run_id>/`
+(`tools/exp/sweep.py`), or a hand-launched lane's nested folders, `runs/exp/contig/<group>/<run>/`
+(`tools/exp/contig/run.py`, `repair.py`, `backfill.py`), in run-id order: the identity, status and
+stop reason, provenance (`backfilled` for a manifest written after the run, #120), the parent run,
+flattened parameters, audit verdict, each channel's solver status and the metrics.  A done run is rescored with the looks scorer when
 `tools/looks/score.py` is present (`sweep.metrics`); the manifest itself is left as the run wrote it.
 The file is replaced whole, so a reader never sees half of it.
 """
@@ -36,16 +38,28 @@ def row(m: dict) -> dict:
         "folder": m["folder"], "status": m["status"], "stop_reason": m.get("stop_reason"),
         **{k: prov.get(k) for k in ("commit", "dirty", "diff_sha256", "host", "instance",
                                     "instance_sha256", "queued_at")},
+        "backfilled": bool(prov.get("backfilled")), "parent_run": parent_run(m),
         "started_at": m.get("started_at"), "finished_at": m.get("finished_at"),
         "seconds": m.get("seconds"), "params": m.get("params", {}), "audit": m.get("audit"),
         "solver": {c: s.get("status") for c, s in (m.get("solver") or {}).items()},
         "metrics": metrics, "scorer_error": error}
 
 
+def parent_run(m: dict):
+    """The run `m` derives from: `parent_run`, or `parent` in a manifest written before #120."""
+    return m.get("parent_run", m.get("parent"))
+
+
+def manifests(root: str) -> list:
+    """Every `manifest.json` in a lane folder under `root`, at any depth, sorted."""
+    return sorted(os.path.join(d, sweep.MANIFEST) for lane in glob.glob(os.path.join(root, "*", ""))
+                  for d, _, fs in os.walk(lane) if sweep.MANIFEST in fs)
+
+
 def rebuild(root: str) -> list:
     """Write `<root>/index.jsonl` from every manifest under `root`; its rows."""
     rows = []
-    for path in sorted(glob.glob(os.path.join(root, "*", "*", sweep.MANIFEST))):
+    for path in manifests(root):
         with open(path, encoding="utf-8") as fh:
             m = json.load(fh)
         m["folder"] = os.path.dirname(path)         # where the run is now

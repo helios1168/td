@@ -1,7 +1,6 @@
 """table.py -- the ranked Markdown table of the indexed runs, per lane or across lanes (#92).
 
-    "$TD_PY" tools/exp/table.py [--lane L ...] [--across] [--root DIR]
-    "$TD_PY" tools/exp/table.py --shortlist RUN_ID --tier N --note TEXT [--root DIR]
+    "$TD_PY" tools/exp/table.py [--lane L ...] [--across] [--root DIR] [--registry PATH]
 
 Reads `<root>/index.jsonl` (`tools/exp/index.py`) and prints one table per lane, or one across
 lanes with `--across`, each row with its run folder.  The order is the owner's (PROBLEM.md row
@@ -13,8 +12,9 @@ own audit verdict, at the scenario's declared band, is shown and does not rank. 
 an eligible run with one split more than the table's best eligible split count and fewer defects
 than every eligible run at that count.
 
-`<root>/shortlist.json` holds run ids, tier and note only: `--shortlist` adds or replaces one, and
-the table shows them.  Nothing is copied: a map is read in its run folder.
+A run on the map shortlist (`tools/shortlist/shortlist.json`, mandate T1, #120; edited by hand)
+shows its shortlist id and tier, matched by run folder.  Nothing is copied: a map is read in its
+run folder.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ _spec = importlib.util.spec_from_file_location("exp_index", os.path.join(HERE, "
 index = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(index)
 
-SHORTLIST = "shortlist.json"
+REGISTRY = os.path.join(os.path.dirname(HERE), "shortlist", "shortlist.json")
 DEFECTS = ("thin_links", "small_pieces", "crowded_states", "contiguity_pieces")
 
 
@@ -65,24 +65,14 @@ def review(rows: list) -> set:
             and defects(r["metrics"]) is not None and defects(r["metrics"]) < min(at_best)}
 
 
-def read_shortlist(root: str) -> list:
-    path = os.path.join(root, SHORTLIST)
+def read_shortlist(path: str = REGISTRY) -> list:
+    """The shortlist's entries, each `run` made absolute against `$TD_REPO`."""
     if not os.path.exists(path):
         return []
     with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
-
-
-def add_shortlist(root: str, run_id: str, tier: int, note: str) -> list:
-    entries = [e for e in read_shortlist(root) if e["run_id"] != run_id]
-    entries.append({"run_id": run_id, "tier": tier, "note": note})
-    entries.sort(key=lambda e: (e["tier"], e["run_id"]))
-    path = os.path.join(root, SHORTLIST)
-    with open(path + ".tmp", "w", encoding="utf-8") as fh:
-        json.dump(entries, fh, indent=2)
-        fh.write("\n")
-    os.replace(path + ".tmp", path)
-    return entries
+        maps = json.load(fh)["maps"]
+    base = os.environ.get("TD_REPO", os.path.dirname(os.path.dirname(HERE)))
+    return [{**e, "run": os.path.normpath(os.path.join(base, e["run"]))} for e in maps]
 
 
 def _cell(v) -> str:
@@ -97,17 +87,20 @@ def _cell(v) -> str:
 
 def markdown(rows: list, shortlist: list) -> str:
     """One ranked table of `rows`."""
-    short = {e["run_id"]: e for e in shortlist}
+    short = {}
+    for e in shortlist:
+        short.setdefault(os.path.normpath(e["run"]), []).append(e)
     flagged = review(rows)
     head = ("rank", "run", "status", "audit", "eligible", "splits", "defects", "extent km",
-            "states/district", "worst dev", "mean dev", "flag", "tier", "note", "folder")
+            "states/district", "worst dev", "mean dev", "flag", "shortlist", "tier", "folder")
     lines = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     for i, r in enumerate(sorted(rows, key=rank_key), 1):
-        m, s = r.get("metrics") or {}, short.get(r["run_id"], {})
+        m, s = r.get("metrics") or {}, short.get(os.path.normpath(r["folder"]), [])
         cells = (i, r["run_id"], r["status"], r.get("audit"), m.get("eligible"), m.get("splits"),
                  defects(m), m.get("largest_extent_km"), m.get("states_per_district"),
                  m.get("worst_dev"), m.get("mean_dev"),
-                 "REVIEW" if r["run_id"] in flagged else "", s.get("tier"), s.get("note"),
+                 "REVIEW" if r["run_id"] in flagged else "", " ".join(e["id"] for e in s) or None,
+                " ".join(str(e["tier"]) for e in s) or None,
                  r["folder"])
         lines.append("| " + " | ".join(map(_cell, cells)) + " |")
     return "\n".join(lines)
@@ -126,20 +119,11 @@ def main(argv=None) -> int:
     ap.add_argument("--root", default=None, help="runs root (default $TD_REPO/runs/exp)")
     ap.add_argument("--lane", action="append", help="only this lane (repeatable)")
     ap.add_argument("--across", action="store_true", help="one table across lanes")
-    ap.add_argument("--shortlist", metavar="RUN_ID", help="add or replace a shortlist entry")
-    ap.add_argument("--tier", type=int)
-    ap.add_argument("--note", default="")
+    ap.add_argument("--registry", default=REGISTRY, help="the map shortlist")
     a = ap.parse_args(argv)
     root = os.path.abspath(a.root or index.sweep.default_root())
     rows = index.read(root)
-    if a.shortlist:
-        if a.tier is None:
-            ap.error("--shortlist needs --tier")
-        if a.shortlist not in {r["run_id"] for r in rows}:
-            print(f"{a.shortlist} is not in {os.path.join(root, index.INDEX)}", file=sys.stderr)
-            return 1
-        add_shortlist(root, a.shortlist, a.tier, a.note)
-    print(tables(rows, read_shortlist(root), a.lane, a.across), end="")
+    print(tables(rows, read_shortlist(a.registry), a.lane, a.across), end="")
     return 0
 
 

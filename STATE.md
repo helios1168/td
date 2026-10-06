@@ -4,12 +4,11 @@
 
 ## Now
 
-#109 landed (bbaa89b). #121 (neck rule in M1, border-length term, neck-aware repair) on m5-studio/121 at f6a0698, 328 pass, in Sol review 28757ee0; land after review. Only ne_plains_wh11 (border/ne_plains_wh11-r2-all) passes the neck rule. #122 worker 9a8f09ea re-plans the NY metro for the four failing maps (owner 2026-10-06).
+#120 landed (cb25a57): one tracked renderer in the required look (`tools/maps/render.py`), shortlist at `tools/shortlist/`, deck built from it, T1 tracking check passing (25 entries). Only ne_plains_wh11 passes M1. Tier 2 is empty: its two maps fail on necks and moved to tier 3 (owner). #122 round 3 is next: short split lists (CA FL NY TX, plus PA and OH in FI).
 
 ## Next
 
-- Land #121; put #122's re-planned maps to the owner (arm-2 changes are never final without them).
-- Owner: rest-side reading of the neck check (6% hub, sub-5% lobes) once Sol reports.
+- #122 round 3: render and shortlist every result, and take any M1 pass to the owner before it is presented.
 - Fewer splits: #103, #115; #119 only if "minimal" is wanted. #118 any time.
 
 ## Blocked
