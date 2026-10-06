@@ -1,0 +1,538 @@
+{
+ "tiers": {
+  "1": "Presentable (2026-10-05 on): passes M1 (ZIP contiguity, mandate) and every audit check, looks scorer ELIGIBLE including the $ rule",
+  "2": "Contender: passes M1 and the audit, but fails the $ rule or another eligibility rule",
+  "3": "Reference: fails M1 (pieces or necks, #121), or is superseded, but answers a question worth keeping",
+  "S": "Superseded 2026-10-05: drawn before M1 was restored (2026-10-04); all fail M1 (detached pieces). Kept for the record, never presented as eligible"
+ },
+ "maps": [
+  {
+   "id": "ne_plains_wh11",
+   "tier": 1,
+   "rank": 1,
+   "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), border redraw, 14 splits",
+   "run": "runs/exp/contig/border/ne_plains_wh11-r2-all",
+   "images": [
+    "runs/exp/contig/border/ne_plains_wh11-r2-all/summary.png",
+    "runs/exp/contig/border/ne_plains_wh11-r2-all/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch_border/deck/1_ne_plains_wh11.png",
+    "runs/autonomous_2026-10-05/batch_border/zip/1_ne_plains_wh11_zip_pages.pdf"
+   ],
+   "notes": "Lead option. #121 border-length redraw of the same plan + window repair; passes M1 including necks (final neck rules, 848e482) and every audit check; looks scorer ELIGIBLE. Worst/mean deviation 9.3% / 5.2%; cut border km 47,930 -> 37,557. Same ledger as border/ne_plains_wh11 (rendered from there).",
+   "metrics": {
+    "districts": 49,
+    "worst": 9.3,
+    "mean": 5.2,
+    "splits": 14,
+    "cuts": 21,
+    "pieces": 0,
+    "necks": 0,
+    "within10": 49,
+    "thin": 0,
+    "small": 3
+   }
+  },
+  {
+   "id": "ne_plains_wh11_pre_neck",
+   "tier": 3,
+   "rank": 1,
+   "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), 14 splits",
+   "run": "runs/exp/contig/wh_dollar/s13_WH11-repair",
+   "images": [
+    "runs/exp/contig/wh_dollar/s13_WH11-repair/summary.png",
+    "runs/exp/contig/wh_dollar/s13_WH11-repair/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch/deck/1_ne_plains_wh11.png"
+   ],
+   "notes": "Superseded 2026-10-05 by the #121 border redraw. Fails M1 under the neck rule (owner 2026-10-05, #121) on necks alone. Lead option. The 2026-10-02 13-split map (ne_okks_s13) with WH 11 instead of 12 for the $ rule; WH master delta 0.090. Drawn by the #109 contiguity realizer + window repair (national window 117 ZCTAs, optimal on the window). 6 defects; mean deviation 5.9%; national mean $1,126M is -9.9% of the $1,250M target, at the edge. Districts resting on one connector: national 11, WH 10 (a recount gives 8; unresolved), FI 11, WIFI 3.",
+   "metrics": {
+    "districts": 49,
+    "within10": 49,
+    "worst": 10.0,
+    "splits": 14,
+    "thin": 0,
+    "small": 5
+   }
+  },
+  {
+   "id": "low6_cb1",
+   "tier": 3,
+   "rank": 2,
+   "label": "Low-6 combined, 2026-10-02 deck option B (13 / 12 / 24 / combined 1), border redraw, FAILS M1",
+   "run": "runs/exp/contig/border/low6_cb1-r3-national",
+   "images": [
+    "runs/exp/contig/border/low6_cb1-r3-national/summary.png",
+    "runs/exp/contig/border/low6_cb1-r3-national/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch_border/deck/2_low6_cb1.png",
+    "runs/autonomous_2026-10-05/batch_border/zip/2_low6_cb1_zip_pages.pdf"
+   ],
+   "notes": "#121 border redraw + neck-aware repair (r3); fails M1: 0 pieces, 4 necks (FI_03 at UT 84621 sits in whole units of one holder, out of reach of arm-1 windows). Worst/mean 10.0% / 2.9%; cut border km 88,553 -> 53,001. See batch_border/BATCH.md.",
+   "metrics": {
+    "districts": 50,
+    "worst": 10.0,
+    "mean": 2.9,
+    "splits": 29,
+    "cuts": 34,
+    "pieces": 0,
+    "necks": 4,
+    "within10": 50,
+    "thin": 2,
+    "small": 19
+   }
+  },
+  {
+   "id": "low6_cb1_pre_neck",
+   "tier": 3,
+   "rank": 2,
+   "label": "Low-6 combined, 2026-10-02 deck option B (13 / 12 / 24 / combined 1), 29 splits",
+   "run": "runs/exp/contig/decks/deckB-repair",
+   "images": [
+    "runs/exp/contig/decks/deckB-repair/summary.png",
+    "runs/exp/contig/decks/deckB-repair/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch/deck/2_low6_cb1.png"
+   ],
+   "notes": "Superseded 2026-10-05 by the #121 border redraw. Fails M1 under the neck rule (owner 2026-10-05, #121) on necks alone. Repaired on the reviewed #109 code with flow (m5-studio/109-fix). Two windows are connected at the 600 s limit, not proved optimal: national 785 ZCTAs, FI 921 ZCTAs. 17 defects, mean deviation 2.3%; $ per district national +6.7%, WH -8.4%, FI -7.4%. Combined district covers ID MT ND NE SD WY.",
+   "metrics": {
+    "districts": 50,
+    "within10": 50,
+    "worst": 10.0,
+    "splits": 29,
+    "thin": 2,
+    "small": 15
+   }
+  },
+  {
+   "id": "nocomb_13_12_23",
+   "tier": 3,
+   "rank": 3,
+   "label": "No combined channel, 2026-10-02 deck option A (13 / 12 / 23), border redraw, FAILS M1",
+   "run": "runs/exp/contig/border/nocomb_13_12_23",
+   "images": [
+    "runs/exp/contig/border/nocomb_13_12_23/summary.png",
+    "runs/exp/contig/border/nocomb_13_12_23/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch_border/deck/3_nocomb_13_12_23.png",
+    "runs/autonomous_2026-10-05/batch_border/zip/3_nocomb_13_12_23_zip_pages.pdf"
+   ],
+   "notes": "#121 border redraw + repair; fails M1: 3 detached pieces, 3 necks (see batch_border/BATCH.md for each and the windows tried). Otherwise passes the scorer. Worst/mean 9.2% / 1.6%; cut border km 130,220 -> 69,649. Needs a neck-aware repair or #112.",
+   "metrics": {
+    "districts": 48,
+    "worst": 9.2,
+    "mean": 1.6,
+    "splits": 28,
+    "cuts": 34,
+    "pieces": 3,
+    "necks": 3,
+    "within10": 48,
+    "thin": 3,
+    "small": 15
+   }
+  },
+  {
+   "id": "nocomb_13_12_23_pre_neck",
+   "tier": 3,
+   "rank": 3,
+   "label": "No combined channel, 2026-10-02 deck option A (13 / 12 / 23), 36 splits",
+   "run": "runs/exp/contig/deckA-band-seq-pre-repair-ks",
+   "images": [
+    "runs/exp/contig/deckA-band-seq-pre-repair-ks/summary.png",
+    "runs/exp/contig/deckA-band-seq-pre-repair-ks/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch/deck/3_nocomb_13_12_23.png"
+   ],
+   "notes": "Superseded 2026-10-05 by the #121 border redraw. Fails M1 under the neck rule (owner 2026-10-05, #121) on necks alone. Repaired from a drawing made before the 16 #114 connectors were approved; judged on the approved graph; plan pairing verified (repair.check_source). WH window 191 ZCTAs connected, not proved optimal. 30 defects, mean 2.1%.",
+   "metrics": {
+    "districts": 48,
+    "within10": 48,
+    "worst": 7.6,
+    "splits": 36,
+    "thin": 1,
+    "small": 28
+   }
+  },
+  {
+   "id": "nocomb_15_12_23",
+   "tier": 3,
+   "rank": 4,
+   "label": "No combined channel, 2026-10-05 grid (15 / 12 / 23), border redraw, FAILS M1",
+   "run": "runs/exp/contig/border/nocomb_15_12_23-r2-national",
+   "images": [
+    "runs/exp/contig/border/nocomb_15_12_23-r2-national/summary.png",
+    "runs/exp/contig/border/nocomb_15_12_23-r2-national/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch_border/deck/4_nocomb_15_12_23.png",
+    "runs/autonomous_2026-10-05/batch_border/zip/4_nocomb_15_12_23_zip_pages.pdf"
+   ],
+   "notes": "#121 border redraw + repair; fails M1: 0 detached pieces, 3 necks (see batch_border/BATCH.md for each and the windows tried). Otherwise passes the scorer. Worst/mean 9.8% / 2.3%; cut border km 102,270 -> 66,362. Needs a neck-aware repair or #112.",
+   "metrics": {
+    "districts": 50,
+    "worst": 9.8,
+    "mean": 2.3,
+    "splits": 29,
+    "cuts": 34,
+    "pieces": 0,
+    "necks": 3,
+    "within10": 50,
+    "thin": 1,
+    "small": 14
+   }
+  },
+  {
+   "id": "nocomb_15_12_23_pre_neck",
+   "tier": 3,
+   "rank": 4,
+   "label": "No combined channel, 2026-10-05 grid (15 / 12 / 23), 38 splits",
+   "run": "runs/exp/contig/g_na15_WH12_FI23-arm1-seq-pre-repair-ks",
+   "images": [
+    "runs/exp/contig/g_na15_WH12_FI23-arm1-seq-pre-repair-ks/summary.png",
+    "runs/exp/contig/g_na15_WH12_FI23-arm1-seq-pre-repair-ks/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch/deck/4_nocomb_15_12_23.png"
+   ],
+   "notes": "Superseded 2026-10-05 by the #121 border redraw. Fails M1 under the neck rule (owner 2026-10-05, #121) on necks alone. Pre-connector drawing repaired as above; the CT+NJ+NY district needed a window of 1,002 ZCTAs (372 and 528 proved infeasible). 30 defects, mean 1.9%.",
+   "metrics": {
+    "districts": 50,
+    "within10": 50,
+    "worst": 9.5,
+    "splits": 38,
+    "thin": 2,
+    "small": 28
+   }
+  },
+  {
+   "id": "ifa_49",
+   "tier": 3,
+   "rank": 5,
+   "label": "IFA, K 49 (separate channel), border redraw, FAILS M1",
+   "run": "runs/exp/contig/border/ifa_49",
+   "images": [
+    "runs/exp/contig/border/ifa_49/summary.png",
+    "runs/exp/contig/border/ifa_49/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch_border/deck/5_ifa_49.png",
+    "runs/autonomous_2026-10-05/batch_border/zip/5_ifa_49_zip_pages.pdf"
+   ],
+   "notes": "#121 border redraw + repair; fails M1: 7 detached pieces, 5 necks (see batch_border/BATCH.md for each and the windows tried). Otherwise passes the scorer. Worst/mean 9.8% / 3.4%; cut border km 75,444 -> 45,663. Needs a neck-aware repair or #112.",
+   "metrics": {
+    "districts": 49,
+    "worst": 9.8,
+    "mean": 3.4,
+    "splits": 22,
+    "cuts": 40,
+    "pieces": 7,
+    "necks": 5,
+    "within10": 49,
+    "thin": 6,
+    "small": 7
+   }
+  },
+  {
+   "id": "ifa_49_pre_neck",
+   "tier": 3,
+   "rank": 5,
+   "label": "IFA, K 49 (separate channel), 22 splits",
+   "run": "runs/exp/contig/ifa49-arm1-seq-repair-fast",
+   "images": [
+    "runs/exp/contig/ifa49-arm1-seq-repair-fast/summary.png",
+    "runs/exp/contig/ifa49-arm1-seq-repair-fast/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/autonomous_2026-10-05/batch/deck/ifa_49.png"
+   ],
+   "notes": "Superseded 2026-10-05 by the #121 border redraw. Fails M1 under the neck rule (owner 2026-10-05, #121) on necks alone. Redrawn on main 2026-10-05, 16 detached pieces repaired over 9 windows. 14 defects, mean 3.2%. Two planned shares vanish (IFA_11 CT, IFA_21 IL), listed by the audit. Districts resting on one connector: 17 of 49.",
+   "metrics": {
+    "districts": 49,
+    "within10": 49,
+    "worst": 9.9,
+    "splits": 22,
+    "thin": 3,
+    "small": 10
+   }
+  },
+  {
+   "id": "low6_cb2_na16",
+   "tier": 2,
+   "rank": 1,
+   "label": "Low-6 combined, 2026-10-02 deck option C (16 / 12 / 21 / combined 2), 26 splits",
+   "run": "runs/exp/contig/decks/deckC-repair",
+   "images": [
+    "runs/exp/contig/decks/deckC-repair/summary.png",
+    "runs/exp/contig/decks/deckC-repair/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/exp/contig/decks/deckC-repair/map_national.png"
+   ],
+   "notes": "Not rescored under the #121 neck rule; expect it to fail on necks like the other pre-#121 drawings. Passes M1 and the audit; fails the $ rule: national 16 = $1,084M, -13.3% of target.",
+   "metrics": {
+    "districts": 51,
+    "within10": 51,
+    "worst": 4.5,
+    "splits": 26,
+    "thin": 1,
+    "small": 16
+   }
+  },
+  {
+   "id": "ne_plains_wh12",
+   "tier": 2,
+   "rank": 2,
+   "label": "NE + plains combined, WH 12 (15 / 12 / 20 / combined 3), 14 splits",
+   "run": "runs/exp/contig/s13-arm1-seq-repair",
+   "images": [
+    "runs/exp/contig/s13-arm1-seq-repair/summary.png",
+    "runs/exp/contig/s13-arm1-seq-repair/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/exp/contig/s13-arm1-seq-repair/map_national.png"
+   ],
+   "notes": "Not rescored under the #121 neck rule; expect it to fail on necks like the other pre-#121 drawings. First map to pass M1 (2026-10-05). Fails the $ rule: WH 12 = $845M, -15.5%. Superseded by ne_plains_wh11.",
+   "metrics": {
+    "districts": 50,
+    "within10": 50,
+    "worst": 10.0,
+    "splits": 14,
+    "thin": null,
+    "small": null
+   }
+  },
+  {
+   "id": "ne_okks_s13_pre_m1",
+   "tier": "S",
+   "rank": 1,
+   "label": "NE + plains combined, 13 splits (national 15 / WH 12 / FI 20 / combined 3)",
+   "run": "runs/sweep/comb_2026-10-02/stage2/ne_okks_s13_na15_WH12_FI20_CB3",
+   "images": [
+    "runs/sweep/comb_2026-10-02/stage2/ne_okks_s13_na15_WH12_FI20_CB3/summary.png",
+    "runs/sweep/comb_2026-10-02/stage2/ne_okks_s13_na15_WH12_FI20_CB3/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/comb_2026-10-02/maps/ne_okks_s13_na15_WH12_FI20_CB3/maps/summary.png"
+   ],
+   "notes": "(was tier 1 rank 1 on 2026-10-02) Fewest splits found with all districts within ±10%: forced 11 + WH PA + FI NC. Weak spots: FI Mid-Atlantic (PA in 3 pieces, VA+OH+WV, GA+FL+NC), national_13 NY sliver, WH PA slivers. Combined plains district spans 9 states.",
+   "score": [
+    "runs/sweep/comb_2026-10-02/s13/score.json",
+    "ne_okks_s13_na15_WH12_FI20_CB3"
+   ]
+  },
+  {
+   "id": "ne6_clean_pre_m1",
+   "tier": "S",
+   "rank": 2,
+   "label": "NE-only combined, 16 splits (15 / 12 / 22 / combined 2)",
+   "run": "runs/sweep/comb_2026-10-02/stage2/ne6_clean_na15_WH12_FI22_CB2",
+   "images": [
+    "runs/sweep/comb_2026-10-02/stage2/ne6_clean_na15_WH12_FI22_CB2/summary.png",
+    "runs/sweep/comb_2026-10-02/stage2/ne6_clean_na15_WH12_FI22_CB2/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/comb_2026-10-02/maps/ne6_clean_na15_WH12_FI22_CB2/maps/summary.png"
+   ],
+   "notes": "(was tier 1 rank 2 on 2026-10-02) Combined channel is New England only (CT+RI, MA+NH+VT+ME). Removes NE thin links. FI Mid-Atlantic crowded; FI_17 1 km link.",
+   "score": [
+    "runs/sweep/comb_2026-10-02/score3.json",
+    "ne6_clean_na15_WH12_FI22_CB2"
+   ]
+  },
+  {
+   "id": "ne_okks_14_pre_m1",
+   "tier": "S",
+   "rank": 3,
+   "label": "NE + plains combined, 14 splits (national also splits NJ)",
+   "run": "runs/sweep/comb_2026-10-02/stage2/ne_okks_wh12_na15_WH12_FI20_CB3",
+   "images": [
+    "runs/sweep/comb_2026-10-02/stage2/ne_okks_wh12_na15_WH12_FI20_CB3/summary.png",
+    "runs/sweep/comb_2026-10-02/stage2/ne_okks_wh12_na15_WH12_FI20_CB3/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/comb_2026-10-02/maps/ne_okks_wh12_na15_WH12_FI20_CB3/maps/summary.png"
+   ],
+   "notes": "(was tier 2 rank 1 on 2026-10-02) Same as the 13-split map except national splits NJ instead of taking a NY sliver.",
+   "score": [
+    "runs/sweep/comb_2026-10-02/score3.json",
+    "ne_okks_wh12_na15_WH12_FI20_CB3"
+   ]
+  },
+  {
+   "id": "base_18split_pre_m1",
+   "tier": "S",
+   "rank": 4,
+   "label": "No combined channel, 18 splits (16 / 12 / 24)",
+   "run": "runs/sweep/looks_2026-10-01/stage2/A_fi1600_v1_na16_WH12_FI24",
+   "images": [
+    "runs/sweep/looks_2026-10-01/stage2/A_fi1600_v1_na16_WH12_FI24/summary.png",
+    "runs/sweep/looks_2026-10-01/stage2/A_fi1600_v1_na16_WH12_FI24/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/caps_2026-10-02/maps/BASE_na16_WH12_FI24/maps/summary.png"
+   ],
+   "notes": "(was tier 2 rank 2 on 2026-10-02) The no-combined reference. 6 thin links, all New England reaches. #81 benchmarks against this run.",
+   "score": [
+    "runs/sweep/looks_2026-10-01/score.json",
+    "A_fi1600_v1_na16_WH12_FI24"
+   ]
+  },
+  {
+   "id": "fieast_fi19_pre_m1",
+   "tier": "S",
+   "rank": 5,
+   "label": "NE + plains, FI 19 (49 districts, 15 splits)",
+   "run": "runs/sweep/comb_2026-10-02/stage2/fieast_FI19_gt075_e25_s4_cap0",
+   "images": [
+    "runs/sweep/comb_2026-10-02/stage2/fieast_FI19_gt075_e25_s4_cap0/summary.png",
+    "runs/sweep/comb_2026-10-02/stage2/fieast_FI19_gt075_e25_s4_cap0/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/comb_2026-10-02/maps/fieast_FI19_gt075_e25_s4_cap0/maps/summary.png"
+   ],
+   "notes": "(was tier 2 rank 3 on 2026-10-02) Cleaner FI east (no FI thin links or small pieces, OH in 2) but adds TN, TX splits, stretched FI_01 (N TX+AR+MS+AL), $974M FI districts.",
+   "score": [
+    "runs/sweep/comb_2026-10-02/fieast/score.json",
+    "fieast_FI19_gt075_e25_s4_cap0"
+   ]
+  },
+  {
+   "id": "ifa_49_pre_m1",
+   "tier": "S",
+   "rank": 6,
+   "label": "IFA, K 49 (separate channel)",
+   "run": "runs/sweep/grid_2026-10-01/stage2/ifa_49",
+   "images": [
+    "runs/sweep/grid_2026-10-01/stage2/ifa_49/summary.png",
+    "runs/sweep/grid_2026-10-01/stage2/ifa_49/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "docs/figures/stakeholder_2026-10-02/IFA_49_total.png"
+   ],
+   "notes": "(was tier 1 rank 3 on 2026-10-02) Only IFA K in 44-56 that draws within ±10%. Already on public main (db58fd3).",
+   "metrics": {
+    "districts": 49,
+    "within10": 49,
+    "worst": 9.6,
+    "splits": null,
+    "thin": null,
+    "small": null
+   }
+  },
+  {
+   "id": "phl_metro_pre_m1",
+   "tier": "S",
+   "rank": 7,
+   "label": "13-split design + Philadelphia metro unit",
+   "run": "runs/sweep/comb_2026-10-02/stage2/phl2_na15_WH12_FI20_CB3",
+   "images": [
+    "runs/sweep/comb_2026-10-02/stage2/phl2_na15_WH12_FI20_CB3/summary.png",
+    "runs/sweep/comb_2026-10-02/stage2/phl2_na15_WH12_FI20_CB3/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/comb_2026-10-02/maps/phl2_na15_WH12_FI20_CB3/maps/summary.png"
+   ],
+   "notes": "(was tier 3 rank 1 on 2026-10-02) Fails (WH_07 14%). Whole-metro FI district and VA+MD+DC, but rest of PA still cut 3 ways. Scorer counts the metro as PA/NJ/DE/MD splits; by unit it is 15.",
+   "score": [
+    "runs/sweep/comb_2026-10-02/metro/score.json",
+    "phl2_na15_WH12_FI20_CB3"
+   ]
+  },
+  {
+   "id": "ne_okks_forced_pre_m1",
+   "tier": "S",
+   "rank": 8,
+   "label": "NE + plains, forced splits only (9)",
+   "run": "runs/sweep/comb_2026-10-02/stage2/ne_okks_forced_anylooks_na15_WH12_FI20_CB3",
+   "images": [
+    "runs/sweep/comb_2026-10-02/stage2/ne_okks_forced_anylooks_na15_WH12_FI20_CB3/summary.png",
+    "runs/sweep/comb_2026-10-02/stage2/ne_okks_forced_anylooks_na15_WH12_FI20_CB3/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/comb_2026-10-02/maps/ne_okks_forced_anylooks_na15_WH12_FI20_CB3/maps/summary.png"
+   ],
+   "notes": "(was tier 3 rank 2 on 2026-10-02) Fails 32/50: WH needs PA, FI needs NC. Shows 13 is the practical minimum.",
+   "score": [
+    "runs/sweep/comb_2026-10-02/forced/score.json",
+    "ne_okks_forced_anylooks_na15_WH12_FI20_CB3"
+   ]
+  },
+  {
+   "id": "m2_hybrid_pre_m1",
+   "tier": "S",
+   "rank": 9,
+   "label": "No combined, must-splits hybrid, 14 splits",
+   "run": "runs/sweep/must_2026-10-01/stage2/M2_hybrid_na16_WH12_FI24",
+   "images": [
+    "runs/sweep/must_2026-10-01/stage2/M2_hybrid_na16_WH12_FI24/summary.png",
+    "runs/sweep/must_2026-10-01/stage2/M2_hybrid_na16_WH12_FI24/zip_pages.pdf"
+   ],
+   "shown_images": [
+    "runs/sweep/must_2026-10-01/maps/M2_hybrid_na16_WH12_FI24/maps/summary.png"
+   ],
+   "notes": "(was tier 3 rank 3 on 2026-10-02) 44/52 within ±10%. Superseded by the combined-channel maps.",
+   "score": [
+    "runs/sweep/must_2026-10-01/score.json",
+    "M2_hybrid_na16_WH12_FI24"
+   ]
+  },
+  {
+   "id": "nocomb_13_12_23_replan_ne5dn_r2",
+   "tier": 3,
+   "rank": 6,
+   "label": "No combined channel, 2026-10-02 deck option A (13 / 12 / 23), re-plan #122 round 2, FAILS M1",
+   "run": "runs/exp/contig/replan/nocomb_13_12_23-replan-ne5dn-r2",
+   "images": [
+    "runs/exp/contig/replan/nocomb_13_12_23-replan-ne5dn-r2/summary.png",
+    "runs/exp/contig/replan/nocomb_13_12_23-replan-ne5dn-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 2 (folder nocomb_13_12_23-replan-ne5dn-r2); fails M1. Registered by #120."
+  },
+  {
+   "id": "nocomb_15_12_23_replan_ne5dn_r2",
+   "tier": 3,
+   "rank": 7,
+   "label": "No combined channel, 2026-10-05 grid (15 / 12 / 23), re-plan #122 round 2, FAILS M1",
+   "run": "runs/exp/contig/replan/nocomb_15_12_23-replan-ne5dn-r2",
+   "images": [
+    "runs/exp/contig/replan/nocomb_15_12_23-replan-ne5dn-r2/summary.png",
+    "runs/exp/contig/replan/nocomb_15_12_23-replan-ne5dn-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 2 (folder nocomb_15_12_23-replan-ne5dn-r2); fails M1. Registered by #120."
+  },
+  {
+   "id": "low6_cb1_replan_ne5dnut_r2",
+   "tier": 3,
+   "rank": 8,
+   "label": "Low-6 combined, 2026-10-02 deck option B (13 / 12 / 24 / combined 1), re-plan #122 round 2, FAILS M1",
+   "run": "runs/exp/contig/replan/low6_cb1-replan-ne5dnut-r2",
+   "images": [
+    "runs/exp/contig/replan/low6_cb1-replan-ne5dnut-r2/summary.png",
+    "runs/exp/contig/replan/low6_cb1-replan-ne5dnut-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 2 (folder low6_cb1-replan-ne5dnut-r2); fails M1. Registered by #120."
+  },
+  {
+   "id": "ifa_49_replan_a2ut",
+   "tier": 3,
+   "rank": 9,
+   "label": "IFA, K 49 (separate channel), re-plan #122 round 2, FAILS M1",
+   "run": "runs/exp/contig/replan/ifa_49-replan-a2ut",
+   "images": [
+    "runs/exp/contig/replan/ifa_49-replan-a2ut/summary.png",
+    "runs/exp/contig/replan/ifa_49-replan-a2ut/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 2 (folder ifa_49-replan-a2ut); fails M1. Registered by #120."
+  }
+ ]
+}
