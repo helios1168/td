@@ -655,3 +655,51 @@ repair: `"$TD_PY" -u tools/exp/contig/repair.py runs/exp/contig/<run> --out
 runs/exp/contig/<run>-repair --plans runs/exp/contig/_plans --flow --keep-support` (IFA with
 `--time-limit 90 --max-zctas 1000`; a pre-connector drawing with `--plans-file
 runs/exp/contig/_plans/<spec>_<extract>.pkl`, the cache entry without the connector key).
+
+## #121 Border-length shape term and M1's necks (2026-10-05)
+
+Measured 2026-10-05 on m5 with `tools/exp/contig/` at m5-studio/121 (border term 71517c8, final
+neck rule 848e482). M1 is `td.audit.check_m1` under the owner's final neck rule (MANDATES.md M1,
+"Area only", "One connected piece", "Land must be a real passage"): a district fails when one
+connected part holding ≥ 5% of its land area reaches the rest only through < 10 km of shared ZCTA
+border; an approved connector is width 0 only where land within the district's states would join
+its sides through a passage itself ≥ 10 km wide (max flow on the polygon graph without
+connectors, `NeckGraph.land_would_do`, exact to the millimetre and erring towards a neck), else
+unlimited. Necks by mass are listed beside M1 and fail nothing.
+
+The five tier-1 maps were redrawn by the arm-1 sequential realizer with the border term (the shared
+ZCTA border between districts, the moment kept as a 1% tie-break), window repaired with
+`--keep-support --flow` (pieces, then necks), and given a second repair pass of at most ~45 min per
+map (`runs/exp/contig/border/repair2.sh`, one channel at a time). "Old" is the shortlist's current
+tier-1 drawing; "border map" the best border folder. Scorer is `tools/looks/score.py` with the
+current M1 (the folders' scorecard M1 rows predate the final rule).
+
+| rank | id | old: pieces, necks | border map (`runs/exp/contig/border/`) | pieces (largest τ) | necks | mass necks | worst / mean dev | splits / cuts old → border | cut border km old → border | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | ne_plains_wh11 | 0, 4 | `ne_plains_wh11-r2-all` | 0 | 0 | 13 | 9.3% / 5.2% | 14 / 21 → 14 / 21 | 47,930 → 37,557 | pass | ELIGIBLE |
+| 2 | low6_cb1 | 0, 10 | `low6_cb1-r2-FI` | 0 | 6 | 19 | 10.0% / 2.8% | 29 / 34 → 29 / 34 | 88,553 → 53,322 | fail | M1 only |
+| 3 | nocomb_13_12_23 | 0, 7 | `nocomb_13_12_23` | 3 (0.398) | 3 | 16 | 9.2% / 1.6% | 36 / 42 → 28 / 34 | 130,220 → 69,649 | fail | M1 only |
+| 4 | nocomb_15_12_23 | 0, 5 | `nocomb_15_12_23-r2-national` | 0 | 3 | 11 | 9.8% / 2.3% | 38 / 43 → 29 / 34 | 102,270 → 66,362 | fail | M1 only |
+| 5 | ifa_49 | 0, 18 | `ifa_49` | 7 (0.338) | 5 | 16 | 9.8% / 3.4% | 22 / 40 → 22 / 40 | 75,444 → 45,663 | fail | M1 only |
+
+- Every old drawing fails M1 under the final rule, by necks alone (4 to 18 per map).
+- The border term cuts the shared border between districts by 22% to 47% and never raises splits
+  or cuts; on the two no-combined-channel maps it lowers them (36 → 28 and 38 → 29 splits).
+- `ne_plains_wh11` passes M1 and is ELIGIBLE. Its last neck under the area rule, WH_09 (IN+KY)
+  across the Ohio River bridges, cleared under "Land must be a real passage": the land route at
+  Evansville is 4.4 km wide, so the bridges keep full width. `ne_plains_wh11-r2-all` is a re-audit
+  of `ne_plains_wh11` (same ledger byte for byte) whose scorecard and manifest carry the final rule.
+- The other four still fail inside the final band after the second pass. The neck windows'
+  model carries no neck term, so most neck windows came back optimal or connected with the neck
+  still there; the CT pieces of nocomb_15_12_23 were joined only through a thin Westchester strip
+  (WH_05 1.24 km) and Long Island (national_08 8.82 km). Remaining pieces and necks, and the
+  windows tried, are in `runs/autonomous_2026-10-05/batch_border/BATCH.md`; whether to relax
+  anything is #112, the owner's decision.
+
+Regenerate (m5, local): redraw `"$TD_PY" -u tools/exp/contig/run.py <spec> --arm arm1
+--sequential --plans <cache> --out runs/exp/contig/border/<id>-draw`; repair `"$TD_PY" -u
+tools/exp/contig/repair.py runs/exp/contig/border/<id>-draw --out runs/exp/contig/border/<id>
+--keep-support --flow --h0 3 --max-zctas 1500 --time-limit 600 --neck-time-limit 120` (IFA:
+`--max-zctas 1000 --time-limit 90 --neck-time-limit 90`); second pass `runs/exp/contig/border/repair2.sh`;
+rescore `runs/exp/contig/border/rescore_final/rescore.py` (writes `TABLE.md`, `rescore.json`).
+Each run folder's `manifest.json` holds its exact command and plan cache.
