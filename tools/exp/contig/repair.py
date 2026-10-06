@@ -64,6 +64,8 @@ contig.json that copies the source run's channels and adds each window attempt u
 on the drawn map.  A repaired channel's band is the repair's, not the source drawing's: its
 `group_delta_needed` moves to `source_group_delta_needed`, and `repair_band` holds the final band's
 δ the windows held and the worst |mass/τ − 1| reached.  `tools/mandates/check.py` audits it like any run folder.
+`--diag-final-delta` holds the windows and the audit at another band instead: a diagnostic, named so
+in its title and its manifest's stop reason, never a deliverable.
 """
 from __future__ import annotations
 
@@ -657,6 +659,9 @@ def main(argv=None) -> int:
     ap.add_argument("--keep-support", action="store_true",
                     help="arm 1: a ZCTA only to a district whose plan holds its unit")
     ap.add_argument("--maps", action="store_true")
+    ap.add_argument("--diag-final-delta", type=float, default=None,
+                    help="diagnostic only: windows and audit at this final band, not the "
+                         "scenario's; the folder is never a deliverable")
     a = ap.parse_args(argv)
     output.check_out(a.out)
     commit = _commit()
@@ -666,6 +671,10 @@ def main(argv=None) -> int:
     run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, a.plans_file, a.run_dir)
     s, ref, ext, polygon, inst, plans, reports, owners, src = load(a.run_dir, a.extract, a.plans,
                                                                        a.plans_file)
+    if a.diag_final_delta is not None:      # a diagnostic band (#121, OD1): never the scenario's
+        for ch in inst.channels.values():
+            ch.final_band = (ch.tau * (1 - a.diag_final_delta), ch.tau * (1 + a.diag_final_delta))
+        a.label = f"DIAGNOSTIC final band ±{a.diag_final_delta:g}" + (f", {a.label}" if a.label else "")
     border, ng = draw.border_km(polygon), audit.NeckGraph(polygon)
     os.makedirs(a.out, exist_ok=True)
     rows = ref.set_index("zcta").loc[sorted(inst.units.unit_of)]
@@ -695,7 +704,7 @@ def main(argv=None) -> int:
             entry["connected"] = not left
             entry["status"] = "connected" if not left else entry["status"]
             entry["source_group_delta_needed"] = entry.pop("group_delta_needed", None)
-            entry["repair_band"] = {"delta": inst.channels[c].spec.final_delta,
+            entry["repair_band"] = {"delta": a.diag_final_delta or inst.channels[c].spec.final_delta,
                                    "worst_dev": map_figures(inst, c, owner, state)["worst_dev"]}
         entry.update(run.drawn_stats(inst, plan, d, connectors, not left, border))
         entry["cut_border_km_before_repair"] = before_km
@@ -716,7 +725,8 @@ def main(argv=None) -> int:
         json.dump(doc, fh, indent=2, sort_keys=True)
         fh.write("\n")
     run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, status="done",
-                       stop_reason="repaired", audit=report["verdict"], m1=m1.status)
+                       stop_reason="diagnostic" if a.diag_final_delta is not None else "repaired",
+                       audit=report["verdict"], m1=m1.status)
     print(f"{s.name} (repair of {a.run_dir}): M1 {m1.status} ({m1.summary}); audit "
           f"{report['verdict']}")
     return 0 if m1.status == "pass" else 1
