@@ -197,13 +197,16 @@ def _nbrs(ng, z) -> set:
     return set(ng.border.get(z, ())) | ng.connector.get(z, set())
 
 
-NECK_KM = audit.NECK_W_KM * (1 + audit.NECK_TOL)   # a cut under this is a neck to M1's check
+# M1's check: a cut of floored whole cm (`audit.border_cm`) is a neck at NECK_W_CM - 1 or less and
+# none at NECK_W_CM or more; half a cm between keeps the row's float sums off either side
+NECK_KM = (audit.NECK_W_CM - 0.5) / 1e5
 
 
 def _edge_km(ng, u: str, v: str, states: frozenset) -> float:
-    """The edge's width in a neck cut (`draw.NeckCut`): its border, plus for an approved connector
-    0 where land would do within `states` and the limit otherwise; capped at the limit."""
-    km = ng.border.get(u, {}).get(v, 0.0)
+    """The edge's width in a neck cut (`draw.NeckCut`), as M1's check counts it: its border in
+    floored whole cm, plus for an approved connector 0 where land would do within `states` and the
+    limit otherwise; in km, capped at the limit."""
+    km = ng.border_cm.get(u, {}).get(v, 0) / 1e5
     if v in ng.connector.get(u, ()):
         km += 0.0 if ng.land_would_do(u, v, states) else NECK_KM
     return min(km, NECK_KM)

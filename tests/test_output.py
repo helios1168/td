@@ -539,7 +539,7 @@ def test_a_zcta_of_the_instance_the_extract_lacks_has_a_no_cell_row_its_territor
     assert (by[extra, "g"]["district"], by[extra, "g"]["reason"]) == ("", output.DROPPED)
     names = output.name_districts(rows, output.cbsa_titles(output.read_areas()))
     polygon = {"vertices": placed, "edges": edges, "state": state, "connectors": [],
-               "border": {tuple(sorted(e)): 1.1e4 for e in edges},    # 11 km each: no neck
+               "border": {tuple(sorted(e)): 1e4 for e in edges},      # 10 km each: no neck
                "aland": dict.fromkeys(placed, 1e8)}
     checks = audit.audit(output.audit_run(inst, rows, drawings, ext, reports,
                                           {"vertices": placed, "edges": edges}, names,
