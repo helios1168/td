@@ -39,8 +39,8 @@ def _drawn(owner, mass):
     return {("X", v, j): m / unit[v] for (v, j), m in held.items()}
 
 
-def _polygon(vertices, edges, state=None, km=10.0) -> dict:
-    """A polygon graph whose every edge shares `km` of border (10 km: no neck) and whose ZCTAs
+def _polygon(vertices, edges, state=None, km=11.0) -> dict:
+    """A polygon graph whose every edge shares `km` of border (11 km: no neck) and whose ZCTAs
     hold 100 km² of land each."""
     return {"vertices": list(vertices), "edges": list(edges), "state": state or {},
             "border": {tuple(sorted(e)): 1000.0 * km for e in edges}, "connectors": [],
@@ -651,9 +651,12 @@ def _neck_world(rng, n: int) -> tuple:
     return vs, poly, {v: rng.choice([0.0, 0.0, 0.5, 1.0, 10.0]) for v in vs}
 
 
-def _narrowest_by_enumeration(vs, poly, mass, by="area") -> float:
-    """The narrowest neck of the district `vs` by trying every vertex set: a connected part and a
-    connected rest, each holding the share of land area (or of mass), across a cut under 10 km."""
+def _narrowest_by_enumeration(vs, poly, mass, by="area",
+                              limit=audit.NECK_W_KM * (1 + audit.NECK_TOL)) -> float:
+    """The narrowest neck of the district `vs` by trying every vertex set (owner, 2026-10-06, "Cut-off
+    part = smaller side"): a connected part holding the share of land area (or of mass) and no more
+    than the rest, which may be in pieces, across a cut under `limit`: 10 km with `NECK_TOL`'s
+    slack, which only enlarges what fails."""
     g = audit.NeckGraph(poly)
     states = frozenset(poly["state"].values())
     width = {e: m / 1000.0 for e, m in poly["border"].items()}
@@ -667,13 +670,14 @@ def _narrowest_by_enumeration(vs, poly, mass, by="area") -> float:
     total = sum(weight[v] for v in vs)
 
     def qualifies(side):
-        return (sum(weight[v] for v in side) / total if total else 1.0) >= audit.NECK_SHARE \
+        held = sum(weight[v] for v in side)
+        return (held / total if total else 1.0) >= audit.NECK_SHARE and held <= total - held \
             and len(audit._components(side, adj)) == 1
     best = math.inf
     for bits in range(1, 2 ** len(vs) - 1):
         side = {v for i, v in enumerate(vs) if bits >> i & 1}
         cut = sum(k for (a, b), k in width.items() if (a in side) != (b in side))
-        if cut < audit.NECK_W_KM and qualifies(side) and qualifies(set(vs) - side):
+        if cut < limit and qualifies(side):
             best = min(best, cut)
     return best
 
@@ -681,7 +685,7 @@ def _narrowest_by_enumeration(vs, poly, mass, by="area") -> float:
 def test_the_neck_search_is_exact_against_enumeration():
     """`district_necks` is exact (its docstring): on 300 small random districts, by land area (M1)
     and by mass (the diagnostic list), it finds a neck exactly when trying every vertex set finds
-    one, and the narrowest; the side it cuts off and the rest are each connected."""
+    one, and the narrowest; the side it cuts off is connected and holds no more than the rest."""
     import random
     rng = random.Random(121)
     for _ in range(300):
@@ -694,6 +698,38 @@ def test_the_neck_search_is_exact_against_enumeration():
             assert all(nk.status == "proved" for nk in got), got
             width = min((nk.width_km for nk in got), default=math.inf)
             assert width == want or abs(width - want) < 1e-9, (by, poly, mass, got, want)
+            weight = poly["aland"] if by == "area" else mass
+            adj = audit.adjacency(poly)
+            for nk in got:
+                held = sum(weight[v] for v in nk.zips)
+                assert len(audit._components(set(nk.zips), adj)) == 1, (by, poly, nk)
+                assert held <= sum(weight[v] for v in vs) - held, (by, poly, nk)
+
+
+def test_a_hub_with_many_small_lobes_is_a_neck():
+    """Sol's review of #121 (P0), owner ruling 2026-10-06 ("Cut-off part = smaller side"): a hub
+    holding 6% of the land with 24 lobes of 94/24 % each, every lobe on a 100 m thread, is a neck:
+    the part cut off is the smaller side and the rest may lie in pieces under the share."""
+    lobes = [f"l{i:02d}" for i in range(24)]
+    poly = {"vertices": ["h"] + lobes, "edges": [("h", z) for z in lobes],
+            "state": dict.fromkeys(["h"] + lobes, "MA"), "border": {("h", z): 100.0 for z in lobes},
+            "connectors": [], "aland": {"h": 6.0, **{z: 94 / 24 for z in lobes}}}
+    [nk] = audit.district_necks({"h", *lobes}, {}, audit.NeckGraph(poly))
+    assert nk.status == "proved" and "h" in nk.zips and audit.NECK_SHARE <= nk.area <= 0.5, nk
+    # the narrowest: the hub with 11 lobes (49.1%), cut off by the 13 other threads
+    assert abs(nk.width_km - 1.3) < 1e-9 and len(nk.zips) == 12, nk
+
+
+def test_neck_tolerance_only_enlarges_what_fails():
+    """Sol's review of #121 (P2): a border under 10 km is a neck however close to 10 km
+    (9.999999995 km); `NECK_TOL` may only enlarge the failing interval (10 km itself fails), and a
+    cut too close above 10 km for the MILP to certify is `unresolved`, listed and failed; 10.001 km
+    passes."""
+    for km, want in ((9.999999995, "proved"), (10.0, "proved"), (10.00001, "unresolved"), (10.001, None)):
+        poly = {"vertices": ["a", "b"], "edges": [("a", "b")], "state": {"a": "MA", "b": "MA"},
+                "border": {("a", "b"): 1000.0 * km}, "connectors": [], "aland": {"a": 1.0, "b": 1.0}}
+        got = audit.district_necks({"a", "b"}, {}, audit.NeckGraph(poly))
+        assert [nk.status for nk in got] == ([want] if want else []), (km, got)
 
 
 def test_a_neck_search_out_of_time_is_listed_never_passed():

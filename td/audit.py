@@ -444,12 +444,14 @@ def district_pieces(owner: dict, adj: dict, mass: dict) -> dict:
 NECK_W_KM = 10.0        # owner, 2026-10-05 (#121): a passage narrower than this is a neck; never tuned
 NECK_SHARE = 0.05       # owner: a part holding this share of the district's land area
 NECK_TIME = 60.0        # seconds per district component; past it the district is listed unresolved
-NECK_TOL = 1e-9         # relative slack of the width and share comparisons, against float noise
+NECK_TOL = 1e-9         # relative slack of the width and share comparisons, against float noise; it
+                        # only enlarges what fails (a 9.999999995 km cut is a neck, and so is 10 km)
+NECK_MIP_TOL = 1e-5     # a MILP bound must clear NECK_W_KM by this to prove no neck (HiGHS's
+                        # tolerances are 1e-7 to 1e-6); a narrowest cut short of it is unresolved
 
 
 class Neck(NamedTuple):
-    """One neck of a district: `zips`, the side cut off (the side without the district's heaviest
-    part that no narrow cut divides);
+    """One neck of a district: `zips`, the connected part cut off, holding no more than the rest;
     `area` and `mass`, that side's shares of the district's land area and mass; `cut`, the cut's
     edges (a, b, km), a "land would do" connector at 0 km; `status` `proved` (a set meeting the
     definition) or `unresolved` (the search stopped without proof either way: listed, and failed)."""
@@ -552,29 +554,32 @@ class NeckGraph:
 def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK_TIME,
                    by: str = "area") -> list:
     """[Neck] of one district (`zips`, `mass` {zip: m}): at most one per component of the district,
-    the narrowest.  M1's neck (owner, 2026-10-05, #121, structured picks "Area only" and "One
-    connected piece"): a connected part A of the district holding at least `NECK_SHARE` of its land
-    area (`aland`) that reaches the rest only through a passage under `NECK_W_KM`, the total shared
-    border across the cut.  The rest must hold `NECK_SHARE` too, each of its pieces: else the heavy
-    body of a district with a small fringe on a narrow border would itself be a part cut off, and
-    two small fringes would combine.  That is the same as the rest being one connected part
-    holding `NECK_SHARE` (a light piece of the rest can join A, which stays connected, and the cut
-    only narrows; a heavy one alone is a rest), so both sides are connected here.  A polygon edge
-    is as wide as its border; an approved connector is unlimited, unless its two sides are joined
-    by land within the district's states, where it is 0 km wide.  With `by="mass"` the shares are
-    of the district's mass: the owner's diagnostic list, not M1.
+    the narrowest.  M1's neck (owner, 2026-10-05 and 2026-10-06, #121, structured picks "Area only",
+    "One connected piece" and "Cut-off part = smaller side"): one connected part A of the district
+    holding at least `NECK_SHARE` of its land area (`aland`) and no more land than the rest, that
+    reaches the rest only through a passage under `NECK_W_KM`, the total shared border across the
+    cut.  The rest may lie in pieces of any size; A is one connected part, so small fringes off a
+    larger body never add together.  A polygon edge is as wide as its border; an approved
+    connector is unlimited, unless its two sides are joined by land within the district's states,
+    where it is 0 km wide.  With `by="mass"` the shares are of the district's mass: the owner's
+    diagnostic list, not M1.
 
-    **Exact**, to HiGHS's tolerances: two ZCTAs no cut under `NECK_W_KM` can separate are merged
-    first (an edge, or an edge plus its two-edge paths, at least `NECK_W_KM` wide, or a needed
-    connector), which keeps every narrow cut; the heaviest merged vertex Q is then on one side of
-    every narrow cut, and as the definition is symmetric, naming that side the rest loses nothing;
-    if less than the share lies outside Q, no neck exists.  Otherwise a MILP finds the narrowest cut
-    with both sides holding the share (`mip_rel_gap = 0`, trap 12), stopping once its bound
-    proves no cut is under `NECK_W_KM`; when its sides are not both connected, a second MILP adds a
-    single-commodity flow on each side (from Q, and from a chosen root of A) and finds the
-    narrowest cut with both sides connected.  A component a MILP cannot settle in `time_limit`
-    seconds is listed as an `unresolved` neck, so the check may over-report but never misses a
-    neck.  The MILPs leave `threads` at the process's own count (trap 18)."""
+    **Conservative**: it may over-report, never misses a neck.  `NECK_TOL` only enlarges what
+    fails: a cut under `NECK_W_KM` (1 + `NECK_TOL`) is a neck, a part over `NECK_SHARE`
+    (1 - `NECK_TOL`) of the land qualifies, one up to half (1 + `NECK_TOL`) is not more than the
+    rest.  Two ZCTAs no cut under `NECK_W_KM` (1 + `NECK_MIP_TOL`) can separate are merged first
+    (an edge, or an edge plus its two-edge paths, that wide, or a needed connector), which keeps
+    every narrow cut.  A merged vertex Q holding more than half the district cannot lie in A, so
+    when the heaviest one does, it is fixed on the rest's side and if less than the share lies
+    outside it no neck exists; otherwise every merged vertex is free.  A MILP then finds the
+    narrowest cut whose side A holds between the share and half (`mip_rel_gap = 0`, trap 12),
+    stopping once its bound proves no cut is under `NECK_W_KM` (1 + `NECK_MIP_TOL`), the margin
+    over HiGHS's tolerances.  A side in pieces has a piece holding the share on a cut no wider (its
+    pieces do not touch), else a second MILP adds a single-commodity flow inside A from a chosen
+    root and finds the narrowest connected A.  Each side found is judged exactly; a component whose
+    MILP stops on its time limit (`time_limit` seconds) or whose narrowest cut lands between the
+    two thresholds is listed as an `unresolved` neck.  The MILPs leave `threads` at the process's
+    own count (trap 18)."""
     import highspy
     import numpy as np
     states = frozenset(g.state.get(z, "") for z in zips)
@@ -583,7 +588,9 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     mass_tot = math.fsum(mass.get(z, 0.0) for z in zips)
     w_tot = area_tot if by == "area" else mass_tot
     need = NECK_SHARE * w_tot * (1 - NECK_TOL)
-    w_lim = NECK_W_KM * (1 - NECK_TOL)
+    half = 0.5 * w_tot * (1 + NECK_TOL)         # A holds no more than the rest
+    w_fail = NECK_W_KM * (1 + NECK_TOL)
+    w_sure = NECK_W_KM * (1 + NECK_MIP_TOL)
     width = {}                                  # (a, b) with a < b -> km (inf: a needed connector)
     for z in zips:
         for y, km in g.border.get(z, {}).items():
@@ -601,12 +608,18 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
         tot = area_tot if of is g.aland else mass_tot
         return math.fsum(of.get(z, 0.0) for z in side) / tot if tot > 0 else 1.0
 
-    def qualifies(side):
-        return math.fsum(weight.get(z, 0.0) for z in side) >= need
+    def held(side):
+        return math.fsum(weight.get(z, 0.0) for z in side)
+
+    def cut_of(side):
+        inside = set(side)
+        return tuple(sorted((a, b, km) for (a, b), km in width.items()
+                            if a in inside_comp and (a in inside) != (b in inside)))
     out = []
     for comp in _components(set(zips), adj):
         if len(comp) < 2:
             continue
+        inside_comp = set(comp)
         parent = {z: z for z in comp}
 
         def find(z):
@@ -629,9 +642,9 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
                 ra, rb = find(a), find(b)
                 if ra == rb:
                     continue
-                if km < NECK_W_KM:
+                if km < w_sure:
                     km += math.fsum(min(k, nb[b].get(x, 0.0)) for x, k in nb[a].items() if x != b)
-                if km >= NECK_W_KM:
+                if km >= w_sure:
                     parent[ra] = rb
                     merged = True
             if not merged:
@@ -640,9 +653,10 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
         for z in sorted(comp):
             group[find(z)].append(z)
         gs = sorted(group)
-        g_w = {r: math.fsum(weight.get(z, 0.0) for z in group[r]) for r in gs}
+        g_w = {r: held(group[r]) for r in gs}
         core = max(gs, key=lambda r: g_w[r])    # ties: the first
-        if not qualifies([z for r in gs if r != core for z in group[r]]):
+        fixed = g_w[core] > half                # then the core lies in the rest
+        if len(gs) < 2 or (fixed and held([z for r in gs if r != core for z in group[r]]) < need):
             continue                            # nothing outside the core can hold the share
         order = [core] + [r for r in gs if r != core]
         ix = {r: i for i, r in enumerate(order)}
@@ -656,30 +670,29 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
                     edges[e] += km
         el = sorted(edges.items())
         wv = [g_w[r] for r in order]
-        w_comp = math.fsum(wv)
 
         def solve(connected: bool):
-            """(status, info, side or None) of the narrowest cut, sides connected when asked."""
+            """(status, info, side or None) of the narrowest cut, A connected when asked."""
             inf = highspy.kHighsInf
             h = highspy.Highs()
             h.setOptionValue("output_flag", False)
             h.setOptionValue("mip_rel_gap", 0.0)
             h.setOptionValue("time_limit", float(time_limit))
-            h.setOptionValue("objective_bound", NECK_W_KM)
+            h.setOptionValue("objective_bound", w_sure)
             arcs = [(i, j) for i, j in sorted(links)] + [(j, i) for i, j in sorted(links)]
             nf = len(arcs) if connected else 0
-            # columns: x (n), y (edges), then with `connected`: r (n), supply (n), f_R, f_A (arcs)
+            # columns: x (n), y (edges), then with `connected`: r (n), supply (n), f (arcs)
             x0, y0 = 0, n
-            r0, s0, fr0 = n + len(el), n + len(el) + n, n + len(el) + 2 * n
-            fa0 = fr0 + nf
-            nv = n + len(el) + (2 * n + 2 * nf if connected else 0)
+            r0, s0, f0 = n + len(el), n + len(el) + n, n + len(el) + 2 * n
+            nv = n + len(el) + (2 * n + nf if connected else 0)
             lower, upper = np.zeros(nv), np.ones(nv)
-            upper[0] = 0.0                      # the core is in the rest
+            if fixed:
+                upper[x0] = 0.0                 # the core is in the rest
             upper[y0:y0 + len(el)] = inf
             if connected:
-                upper[r0] = 0.0
+                upper[r0] = 0.0 if fixed else 1.0
                 upper[s0:s0 + n] = n
-                upper[fr0:fa0 + nf] = n
+                upper[f0:f0 + nf] = n
             cost = np.zeros(nv)
             cost[y0:y0 + len(el)] = [km for _, km in el]
             h.addVars(nv, lower, upper)
@@ -693,30 +706,19 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
             for k, ((i, j), _) in enumerate(el):    # y_e >= |x_i - x_j|
                 row(0.0, inf, [y0 + k, i, j], [1.0, -1.0, 1.0])
                 row(0.0, inf, [y0 + k, i, j], [1.0, 1.0, -1.0])
-            row(need, inf, list(range(n)), wv)                      # A holds the share
-            row(-inf, w_comp - need, list(range(n)), wv)            # and so does the rest
-            row(1.0, inf, list(range(1, n)), [1.0] * (n - 1))       # A is not empty
+            row(need, half, list(range(n)), wv)                     # A: the share, at most half
+            row(1.0, n - 1.0, list(range(n)), [1.0] * n)            # A and the rest not empty
             if connected:
                 row(1.0, 1.0, list(range(r0, r0 + n)), [1.0] * n)   # one root of A
-                into = collections.defaultdict(list)
+                into, outs = collections.defaultdict(list), collections.defaultdict(list)
                 for a, (u, v) in enumerate(arcs):
                     into[v].append(a)
-                    for f0, side in ((fr0, -1.0), (fa0, 1.0)):
-                        # an arc carries flow only inside its side: f <= n x (A), f <= n (1 - x) (rest)
-                        for w_ in (u, v):
-                            if side > 0:
-                                row(-inf, 0.0, [f0 + a, x0 + w_], [1.0, -float(n)])
-                            else:
-                                row(-inf, float(n), [f0 + a, x0 + w_], [1.0, float(n)])
-                outs = collections.defaultdict(list)
-                for a, (u, v) in enumerate(arcs):
                     outs[u].append(a)
+                    for w_ in (u, v):           # an arc carries flow only inside A
+                        row(-inf, 0.0, [f0 + a, x0 + w_], [1.0, -float(n)])
                 for v in range(n):
-                    io = [fr0 + a for a in into[v]] + [fr0 + a for a in outs[v]]
+                    ia = [f0 + a for a in into[v]] + [f0 + a for a in outs[v]]
                     vals = [1.0] * len(into[v]) + [-1.0] * len(outs[v])
-                    if v != 0:                  # each rest vertex but the core takes one unit
-                        row(1.0, 1.0, io + [x0 + v], vals + [1.0])
-                    ia = [fa0 + a for a in into[v]] + [fa0 + a for a in outs[v]]
                     row(0.0, 0.0, ia + [x0 + v, s0 + v], vals + [-1.0, 1.0])   # A: one unit each
                     row(-inf, 0.0, [s0 + v, r0 + v], [1.0, -float(n)])        # supply at its root
                     row(-inf, 0.0, [r0 + v, x0 + v], [1.0, -1.0])            # the root is in A
@@ -728,38 +730,34 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
                 side = sorted(z for r, i in ix.items() if xs[i] > 0.5 for z in group[r])
             return st, info, side
 
-        def judge(side):
-            """(width, cut) of `side` when it and the rest of the component are each connected and
-            hold the share, else None."""
-            inside = set(side)
-            rest = set(comp) - inside
-            if not side or not rest or not qualifies(inside) or not qualifies(rest):
-                return None
-            if len(_components(inside, adj)) != 1 or len(_components(rest, adj)) != 1:
-                return None
-            cut = tuple(sorted((a, b, km) for (a, b), km in width.items()
-                               if a in parent and (a in inside) != (b in inside)))
-            return math.fsum(km for _, _, km in cut), cut
+        def narrowest_part(side):
+            """(width, part, cut) of the narrowest connected part of `side` meeting the definition,
+            or None."""
+            best = None
+            for part in _components(set(side), adj):
+                if part == inside_comp or not need <= held(part) <= half:
+                    continue
+                cut = cut_of(part)
+                km = math.fsum(k for _, _, k in cut)
+                if best is None or km < best[0]:
+                    best = (km, tuple(sorted(part)), cut)
+            return best
         settled = (highspy.HighsModelStatus.kInfeasible, highspy.HighsModelStatus.kObjectiveBound)
         found = None
         for connected in (False, True):
             st, info, side = solve(connected)
-            got = judge(side) if side else None
-            wkm = math.inf
-            if side:
-                inside = set(side)
-                wkm = math.fsum(km for (a, b), km in width.items()
-                                if a in parent and (a in inside) != (b in inside))
-            if got is not None and got[0] < w_lim:
-                found = Neck(got[0], tuple(side), share(side, g.aland), share(side, mass), got[1])
+            if st in settled or info.mip_dual_bound >= w_sure:
+                break                           # proved: no cut under w_sure (of this model)
+            got = narrowest_part(side) if side else None
+            if got is not None and got[0] < w_fail:
+                found = Neck(got[0], got[1], share(got[1], g.aland), share(got[1], mass), got[2])
                 break
-            if st in settled or (st == highspy.HighsModelStatus.kOptimal and wkm >= w_lim):
-                break                           # proved: no cut under NECK_W_KM (of this model)
-            if connected or st != highspy.HighsModelStatus.kOptimal:
-                found = Neck(min(wkm, info.mip_dual_bound), tuple(side or ()),
-                             share(side or (), g.aland), share(side or (), mass), (), "unresolved")
-                break
-            # the narrowest cut has a side in pieces: solve again with both sides connected
+            wkm = math.fsum(k for _, _, k in cut_of(side)) if side else math.inf
+            if not connected and st == highspy.HighsModelStatus.kOptimal and wkm < w_fail:
+                continue                        # A's pieces are each under the share: connect A
+            found = Neck(min(wkm, info.mip_dual_bound), tuple(side or ()),
+                         share(side or (), g.aland), share(side or (), mass), (), "unresolved")
+            break
         if found is not None:
             out.append(found)
     return out

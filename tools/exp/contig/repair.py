@@ -195,13 +195,16 @@ def _nbrs(ng, z) -> set:
     return set(ng.border.get(z, ())) | ng.connector.get(z, set())
 
 
+NECK_KM = audit.NECK_W_KM * (1 + audit.NECK_TOL)   # a cut under this is a neck to M1's check
+
+
 def _edge_km(ng, u: str, v: str, states: frozenset) -> float:
     """The edge's width in a neck cut (`draw.NeckCut`): its border, plus for an approved connector
     0 where land would do within `states` and the limit otherwise; capped at the limit."""
     km = ng.border.get(u, {}).get(v, 0.0)
     if v in ng.connector.get(u, ()):
-        km += 0.0 if ng.land_would_do(u, v, states) else audit.NECK_W_KM
-    return min(km, audit.NECK_W_KM)
+        km += 0.0 if ng.land_would_do(u, v, states) else NECK_KM
+    return min(km, NECK_KM)
 
 
 def _anchors(X: set, W: set, ng, target: float) -> set:
@@ -277,7 +280,7 @@ def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check) -> tup
             a_min = min(math.fsum(ng.aland.get(z, 0.0) for z in s) for s in (sa, sr)) / 1e6
             cuts.append(draw.NeckCut(j, const, tuple(single), tuple(pair),
                                      tuple(sorted((sa | sr) & W)), area_fixed, area, a_min,
-                                     audit.NECK_W_KM * (1 - audit.NECK_TOL), audit.NECK_SHARE,
+                                     NECK_KM, audit.NECK_SHARE,
                                      label))
     return cuts, labels
 
