@@ -543,6 +543,34 @@ def test_replan_bans_a_pair_in_a_copy_of_the_spec():
     assert one["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
 
 
+def test_replan_replaces_a_channel_split_list_in_a_copy_of_the_spec():
+    """#122 round 3: `--free A=CA,NY` replaces A's split list, adds one to a section without it,
+    drops it for an empty list, leaves B's alone and refuses a channel with no section."""
+    import tomllib
+    spec = importlib.util.spec_from_file_location(
+        "contig_replan", os.path.join(HERE, "..", "tools", "exp", "contig", "replan.py"))
+    replan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(replan)
+    src = ('[scenario]\nname = "toy"\n\n[channels.A]\nk = 2\nfree = ["CA", "FL", "NY", "PA"]\n'
+           'delta = 0.02\n\n[channels.B]\nk = 3\nfree = ["OH"]\n\n[channels.C]\nk = 1\n\n'
+           '[national]\nchannel = "A"\n')
+    assert replan.free_list("A=CA,NY") == ("A", ("CA", "NY"))
+    assert replan.free_list("C=") == ("C", ())
+    doc = tomllib.loads(replan.banned_text(src, [], free={"A": ("CA", "NY"), "C": ("TX",)}))
+    assert doc["channels"]["A"] == {"k": 2, "free": ["CA", "NY"], "delta": 0.02}
+    assert doc["channels"]["B"]["free"] == ["OH"] and doc["channels"]["C"]["free"] == ["TX"]
+    assert "forbid_pairs" not in doc["channels"]["A"] and doc["national"] == {"channel": "A"}
+    none = tomllib.loads(replan.banned_text(src, [replan.pair("CT-NJ")], free={"B": ()}))
+    assert "free" not in none["channels"]["B"]
+    assert none["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"]]
+    try:
+        replan.banned_text(src, [], free={"D": ("CA",)})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a split list for a channel with no section was accepted")
+
+
 def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
     """#122: a neck inside a unit held whole (a1 hangs off a0 by 1 km) is out of every arm-1
     window's reach; `--open-units CT` lets the window give a1 to Q, across 30 km, one more split.

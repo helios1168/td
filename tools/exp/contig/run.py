@@ -372,9 +372,11 @@ def main(argv=None) -> int:
     ap.add_argument("--maps", action="store_true")
     a = ap.parse_args(argv)
     params = {k: v for k, v in vars(a).items() if k not in ("spec", "out")}
-    # the plan the spec asks for, so a re-planned run's manifest shows its bans and bands (#122)
+    # the plan the spec asks for, so a re-planned run's manifest shows its bans, split lists
+    # and bands (#122)
     params["plan"] = {c: {"delta": cs.delta, "final_delta": cs.final_delta,
-                          "forbid_pairs": sorted("-".join(sorted(p)) for p in cs.forbid_pairs)}
+                          "forbid_pairs": sorted("-".join(sorted(p)) for p in cs.forbid_pairs),
+                          "free": sorted(u for u, m in cs.modes.items() if m == "free")}
                       for c, cs in tdspec.load(a.spec).channels.items()}
     output.check_out(a.out)
     write_manifest(a.out, "contig", a.spec, a.extract, params, a.plans_file, a.parent)
