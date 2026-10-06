@@ -423,3 +423,235 @@ export TD_ZCTA_SHP=runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/
 "$TD_PY" runs/sweep/caps_2026-10-02/adapt.py <run_dir> runs/exp81/summary/<name> "900 (1600 mtn/plains, WA, CA)"
 "$TD_PY" runs/sweep/caps_2026-10-02/wrap.py runs/exp81/summary/<name> --geo-cache runs/sweep/grid_2026-10-01/present/legacy/archive/geo
 ```
+
+## #109 A contiguity-aware realizer on today's plans (2026-10-05)
+
+Measured 2026-10-05 on m5 with `tools/exp/contig/` (#109) on the polygon graph and its 163
+approved connectors, after #114 and #116, before the owner approved #114's 16 proposed connectors
+the same day; those runs are in `runs/exp/contig/pre_connectors/`, and s13, deck A and grid
+na15/WH12/FI23 are being redrawn on the approved list. Each scenario was re-planned on today's `main` with
+`margin = false` in every channel (μ = 0), and drawn by the realizer instead of the power diagram;
+the run folders are `runs/exp/contig/<map>-<arm>/` (gitignored; full ledger, scorecard, districts,
+run.json, contig.json). M1 is `td.audit.check_m1` on the written ledger, footprint coverage (D3).
+
+**The realizer.** Per channel, every ZCTA of a split unit, of an exclave (D2) and of a dropped unit
+is free, zero-opportunity ZCTAs included; the rest is fixed to its unit's one holder. Free ZCTAs go
+to districts by a MILP per coupled group (free components that share a district): each ZCTA one
+owner, each district's drawn mass in the internal band, holders per unit first and geodesic shape
+second in the objective. Connectivity is exact on the polygon graph: highspy 1.15.1 exposes
+`cbMipDefineLazyConstraints` but HiGHS never calls it (tested: the other MIP callbacks fire), so
+the realizer runs a solve-check-cut loop of separator rows (U59), each ZCTA demanding one unit, so
+zero-opportunity ZCTAs are held to it. A geodesic-DAG restriction (each ZCTA needs a neighbour of
+its district nearer the district's border, CONTIGUITY.md §4 rank 2) runs first and its drawing
+starts the complete loop. "optimal" is a connected optimum of the complete model at
+`mip_rel_gap = 0`; "connected" is connected and feasible; "infeasible" is a proof under the
+group's rules; "unknown" is a time limit or a restricted model, never infeasible. No archived
+engine was reused (U64): the pair-era SCIP engine (`td/solvers/scip_tree.py` at the tag, C03) is a
+two-label log-objective SCIP model; only its separator idea carried over.
+
+**Sequential.** Coupled groups are large (below), so the arms were also run one split unit at a
+time (`--sequential`): each unit drawn against what its districts already own next to it, the rest
+at planned shares. That is neither a restriction nor a relaxation of the joint model; its drawings
+are real maps judged by the audit, and its failures prove nothing.
+
+**What was run.** Deck A (`none_stay_0_m1600_na13_WH12_FI23`, national 13 / WH 12 / FI 23, every
+channel optimal at δ = 0.02 on the polygon graph), IFA K 49 (optimal at δ = 0.02), layout-`none`
+grid maps, and s13 (`ne_okks_s13_na15_WH12_FI20_CB3`, FI δ = 0.08), for comparison only while
+#114's proposed connectors were unruled (D14). Decks B and C are combined
+layouts blocked the same way and were not drawn. Arms: `arm1` (the master's support, shares
+recomputed in the plan's band), `arm1` with fixed targets (each (unit, district) mass within the
+unit's heaviest ZCTA of the plan, the triage's row 15), and arm 2's remedies as separate runs, never
+one chosen (#112): `band` (a group retried at δ = 0.05, 0.10, 0.15), `split` (a unit's neighbouring
+districts may also hold it, each a split) and `move` (as `split`, no more holders than the plan).
+No no-good cut was issued: no plan's whole read-back fibre was proved empty (#91 finding 10).
+
+**Coupled groups (U59).** Joint groups at ZIP scale, from the joint `arm1` runs:
+
+| map | channel | groups: districts / free ZCTAs (columns) | joint status at 300 s + 300 s |
+|---|---|---|---|
+| deck A | national | 7 / 7,421 (14,853); 6 / 3,822 (11,246) | unknown, unknown |
+| deck A | WH | 4 / 4,257 NY+NJ+PA (8,519); 2 / 1,833 CA (3,641); 2 / 1,397 IL; 2 / 1,013 FL; 1 / 1 | unknown; connected; three not reached in the channel's 900 s |
+| deck A | FI | 22 / 16,192 (37,864) | unknown |
+| IFA 49 | IFA | 49 / 21,182 (70,512; 170k rows) | unknown |
+
+No joint group above 1,833 free ZCTAs reached a connected drawing or a proof in the time given,
+so the joint maps keep the power diagram's owners there and fail M1 as before; no infeasibility
+certificate was produced for any real map, at fixed targets or recomputed shares. The toy
+certificate (#7's thin share, `tests/test_contig_realize.py`) is the only proof. The fixed-target
+runs were equally unknown on every large group.
+
+**Results** on the pre-approval connector list (runs ended by 08:45; per map, channels summed;
+`runs/exp/contig/pre_connectors/TABLE.md` on m5 has the per-channel table, from
+`tools/exp/contig/report.py`):
+
+| run | M1 (D3) | pieces | largest piece | groups or units drawn connected | worst / mean dev | split units | cuts | δ needed | share-only (U61) | exclave splits |
+|---|---|---|---|---|---|---|---|---|---|---|
+| deckA-arm1 (joint) | fail | 9 | 0.448 τ | 1 of 8 | 2.4% / 1.0% | 36 | 42 | – | 16 | 9 |
+| deckA-arm1-fixed (joint, fixed targets) | fail | 9 | 0.448 τ | 1 of 8 | 2.4% / 1.0% | 36 | 42 | – | 16 | 9 |
+| deckA-arm1-seq | fail | 7 | 0.448 τ | 15 of 28 | 3.8% / 1.3% | 36 | 42 | – | 16 | 9 |
+| deckA-band-seq | fail | 3 | 0.46 τ | 28 of 28 | 5.0% / 2.0% | 36 | 42 | 0.05 | 16 | 9 |
+| deckA-split-seq | fail | 5 | 0.448 τ | 14 of 28 | 2.4% / 1.2% | 36 | 42 | – | 16 | 9 |
+| deckA-move-seq | fail | 7 | 0.448 τ | 12 of 28 | 3.8% / 1.3% | 36 | 42 | – | 16 | 9 |
+| grid na13/WH12/FI24 arm1-seq | fail | 9 | 0.464 τ | 12 of 28 | 6.1% / 1.6% | 37 | 45 | – | 20 | 11 |
+| grid na13/WH11/FI24 arm1-seq | fail | 10 | 0.464 τ | 12 of 26 | 7.5% / 3.0% | 36 | 44 | – | 17 | 12 |
+| grid na15/WH12/FI23 arm1-seq | fail | 3 | 0.448 τ | 17 of 29 | 3.6% / 1.4% | 38 | 43 | – | 19 | 9 |
+| ifa49-arm1 (joint) | fail | 13 | 0.367 τ | 0 of 1 | 7.0% / 1.7% | 24 | 50 | – | 36 | 5 |
+| ifa49-arm1-fixed (joint, fixed targets) | fail | 13 | 0.367 τ | 0 of 1 | 7.0% / 1.7% | 24 | 50 | – | 36 | 5 |
+| ifa49-arm1-seq | fail | 6 | 0.367 τ | 20 of 22 | 16.4% / 2.5% | 24 | 49 | – | 36 | 5 |
+| ifa49-band-seq | fail | 6 | 0.367 τ | 21 of 22 | 16.4% / 2.9% | 24 | 49 | – | 36 | 5 |
+| ifa49-split-seq | fail | 11 | 0.367 τ | 15 of 22 | 16.4% / 2.5% | 24 | 51 | – | 36 | 5 |
+| ifa49-move-seq | fail | 13 | 0.367 τ | 12 of 22 | 16.4% / 2.4% | 24 | 50 | – | 36 | 5 |
+| s13-arm1-seq (comparison) | fail | 14 | 0.0882 τ | 14 of 15 | 9.4% / 6.0% | 24 | 32 | – | 12 | 9 |
+| s13-band-seq (comparison) | fail | 14 | 0.0882 τ | 14 of 15 | 9.4% / 6.0% | 24 | 32 | – | 12 | 9 |
+
+Pieces and the largest piece are M1's on the ledger. Deviation is drawn mass over the channel mean.
+A group or unit the realizer did not draw keeps `td.realize` and `td.territory`'s owners, so a
+failing map mixes the two realizers and its balance is not the realizer's (IFA's 16.4% is NY#3,
+from NY's fallback beside NJ drawn by the realizer). Split units and cuts are counted on the drawn
+map by polygon ownership; against a covering bound every map is **not covered** (U56): no all-M1
+bound exists yet (#119), and #103's s* is labelled "over 𝒳_c(δ) only". U63 (districts resting on
+one connector) is defined on M1-passing drawings, and there are none.
+
+**What the runs show.**
+- **No map drawn by the realizer alone passes M1** (footprint coverage, D3), in any arm; the window
+  repair below makes s13, deck A, grid na15/WH12/FI23 and IFA 49 pass.
+- **Every layout-`none` map fails on the same district shape**: a district whose units join only
+  through split units, above all one per channel holding CT and a share of NY (deck A national_07,
+  WH_05 and FI_07 = CT + NJ + NY; grid na15 national_08, WH_05, FI_07). CT reaches its other units
+  only through NY, and no NY drawing that routes the share from CT to them was found at the plan's
+  δ: the NY unit is `unknown` in every arm-1 run (the DAG restriction infeasible, the complete loop
+  out of time), so CT's 289 ZCTAs stay detached at 0.13–0.46 τ. Grid na15/WH12/FI23 is down to
+  exactly these three pieces. With a wider band (`band`), every unit of deck A drew connected at
+  δ ≤ 0.05 one at a time and national_07 joined, yet three pieces remain as gaps between units drawn
+  separately: WH_05 and FI_07 (CT with its NY share, apart from the NJ share) and national_08
+  (DC + NC + NJ + PA + VA + WV, its PA share apart). This is #112's case; it is unproved either way,
+  and no certificate exists for it.
+- **Elsewhere the sequential realizer draws most split units connected at the plan's δ**: IFA 20 of
+  22 units (FL and NY unknown), deck A 15 of 28 at δ = 0.02 and all 28 at δ ≤ 0.05.
+- **s13** gets down to a largest piece of 0.088 τ, against 0.455 τ for the power diagram, but on
+  the pre-approval list it fails on the cross-channel exclaves D14 names (06390, 89826, 89832,
+  82933–82944), which the approved connectors now join, and on five small NYC pieces.
+- **s13 on the approved connector list** (`runs/exp/contig/s13-arm1-seq/`, sequential arm 1, after
+  the owner's 2026-10-05 ruling): M1 fail with 3 detached pieces, all in national's NY share
+  (11214..., 8 ZCTAs, 0.136 τ; 10302..., 8 ZCTAs, 0.0225 τ; 11701..., 5 ZCTAs, 0.0119 τ), where the
+  NY unit was not drawn (`unknown`) and kept the power diagram's owners. WH, FI and WIFI have no
+  detached piece; FI's OH and PA units were not drawn either and happen to be whole there. Worst
+  deviation 9.4% (national), split units 14, cuts 22, no exclave splits.
+- **Arm 2** (`split`, `move`) did not beat arm 1: allowing a unit's neighbouring districts makes the
+  per-unit models larger and slower, and no remedy produced an M1 map.
+
+**Window repair** (`tools/exp/contig/repair.py`, 2026-10-05, m5). A large-neighbourhood search
+on a drawn run folder that fails M1: per channel, each district's detached pieces in turn, every
+ZCTA outside a window W keeps its owner and one exact MILP (`draw._solve_group`) redraws W. W is
+first a ball, the free ZCTAs (split units, exclaves, dropped units) within h hops of the pieces
+plus the pieces (a piece over 750 ZCTAs only to h hops inside its border), h = 3, 6, 12, ... while
+proved infeasible, up to 1,500 ZCTAs; then a corridor, the free ZCTAs on a path from the piece to
+the rest of its district at most `slack` hops longer than the shortest. Rows: each ZCTA one owner,
+each district's drawn mass in the channel's final band (±10%, the band the audit judges; a
+district whose mass outside W is already above it makes W infeasible), the
+window units' split units and cuts not above the drawn map's; objective split units, then cuts,
+then geodesic shape. Connectivity is exact: separator rows per BFS layer in the cut loop, and
+with `--flow` a single-commodity flow per district from its root body, which proves an infeasible
+window in seconds where the cut loop ran for minutes. `--keep-support` (arm 1) lets a ZCTA go only
+to a district whose plan holds its unit; without it a unit may change holders (arm 2), which the
+audit lists. "optimal" is optimal on W with the rest fixed (`mip_rel_gap = 0`), never an optimum
+of the map; "infeasible" proves only that W at that size has no drawing, never a certificate for
+the map, and no no-good cut was issued. The runs read their source's ledger back to plan copies
+and write a full run folder; a pre-connector drawing is repaired with the plan that drew it
+(`--plans-file`) and audited on the approved graph.
+
+| repaired run (`runs/exp/contig/`) | source drawing | channel: pieces before (largest) → windows (shape size \|W\| status s) | M1 / audit | worst dev before → after | split states / cuts |
+|---|---|---|---|---|---|
+| `s13-arm1-seq-repair` | s13 arm1-seq, approved list | national: 3 (0.136 τ) → ball 3 117 optimal <1 | **pass / pass** | national 9.4% → 10.0% | 4 / 7 unchanged |
+| `s13-band-seq-repair` (arm 1, flow) | s13 band-seq, approved list | national: same 3 → ball 3 117 optimal 0.1 | **pass / pass** | national 9.4% → 10.0% | 4 / 7 unchanged |
+| `g_na15_WH12_FI23-arm1-seq-pre-repair-ks` (arm 1, flow) | grid na15/WH12/FI23 arm1-seq, pre-connector | each channel CT (289 ZCTAs; 0.152 / 0.298 / 0.448 τ) → ball 3 372, ball 6 528 infeasible; ball 12 1002 optimal (national 21.5, WH 30.2, FI 2.5) | **pass / pass** | national 3.6% → 9.5%, WH 2.0% → 2.4%, FI 2.0% → 8.7% | 13/15, 8/8, 17/20 unchanged |
+| `deckA-band-seq-pre-repair` (flow) | deck A band-seq, pre-connector | national DC+NC+NJ+PA+VA+WV's PA/VA/WV piece (2,202 ZCTAs, 0.184 τ) → ball 1 1208, corridor 0 14 infeasible; corridor 1 47 optimal 0.5. WH CT+NY piece (572, 0.46 τ) → ball 2 1267, corridor 0 15, corridor 1 71 infeasible; corridor 2 191 connected (gap 3.8e-4, 600). FI CT (328, 0.45 τ) → ball 3 457 optimal 9.5 | **pass / pass** | national 5.0%, WH 4.9%, FI 4.9% → 7.6% | 11/14, 8/8, 17/20 unchanged |
+| `deckA-band-seq-pre-repair-ks` (arm 1, flow, b589d15) | the same | the same windows and statuses (WH corridor 2 connected, gap 2.3e-3) | **pass / pass** | the same | unchanged |
+| `deckA-band-seq-repair` (arm 1, flow) | deck A band-seq, approved list | national piece (2,019, 0.154 τ) → corridor 1 47 optimal 0.6; FI CT + 07844 (0.448 τ) → ball 3 409 infeasible, ball 6 767 unknown (600), corridor 2 164 optimal 5.9 | **pass** / fail (WH bands, from the source) | unchanged: national 10.0%, WH 15.0%, FI 5.0% | 8/10, 6/6, 14/17 unchanged |
+| `g_na15_WH12_FI23-band-seq-repair` (arm 1, flow) | grid band-seq, approved list | FI as deck A's | **pass** / fail (WH bands, from the source) | unchanged: national 2.6%, WH 15.0%, FI 5.0% | 9/11, 6/6, 14/17 unchanged |
+| `ifa49-arm1-seq-repair-fast` (arm 1, flow, 90 s and 1,000 ZCTAs per window) | IFA 49 arm1-seq, redrawn 2026-10-05 on the approved list (16 pieces, largest 0.366 τ) | IFA, one district at a time: 06901 ball 3 18, MI#2 ball 3 37, NY#2 ball 3 59, NJ#2 ball 3 88 optimal; NY#4's Manhattan piece (69, 0.366 τ) ball 3 192 unknown, corridor 2 57 optimal; NY#3's four (78 ZCTAs from 06390, 0.338 τ, and three upstate) corridor 8 675 connected; IL+IN+MI+OH#1's two ball 3 714 optimal; DC+DE+MD+NJ+PA#1's two ball 3 670 connected; CT+NY+RI+VT#1's last ball 16 933 connected; every other window proved infeasible | **pass / pass** | 9.5% → 9.9% | 22 / 42 → 22 / 40 |
+
+- **s13, deck A, grid na15/WH12/FI23 and IFA 49 each have an M1-passing map whose audit passes**:
+  `s13-arm1-seq-repair` and `s13-band-seq-repair`, `deckA-band-seq-pre-repair` and its arm-1 rerun,
+  `g_na15_WH12_FI23-arm1-seq-pre-repair-ks` and `ifa49-arm1-seq-repair-fast`. No split or cut
+  rises (IFA's cuts fall by two); the cost is balance inside the final band, not the plan's δ
+  (deck A's internal δ was 0.05 already, the `band` remedy). In s13, deck A and the grid no planned
+  share vanishes; in IFA two do (IFA_11's 0.086 of CT, IFA_21's 0.126 of IL; C8, listed by the
+  audit, not failed), which arm 1 allows since no district gains a unit. Deck A's and
+  the grid's are repairs of drawings made before the owner approved #114's connectors, judged on
+  the approved graph with the plans that drew them. The approved-list band-seq drawings of the
+  same two maps also pass M1 after repair, but their WH channel was drawn at δ = 0.15 by the `band`
+  remedy and fails the final band (WH_07 +15%, WH_11 −14.5%) before and after.
+- **The CT + NJ + NY district** joins CT to NJ through NY once W holds about 1,000 ZCTAs of
+  Westchester, the Bronx, Manhattan and the Hudson shore (ball 12), or a corridor of 164–191; the
+  balls of 372–528 are proved infeasible. Without `--keep-support` grid national instead moved CT
+  whole to national_15 and 32 NY ZCTAs back (`g_na15_WH12_FI23-arm1-seq-pre-repair`, an arm-2
+  move the audit lists), so the arm-1 run is the one to read.
+- Every window that drew took under 100 s except deck A's WH corridor (600 s, connected, not
+  proved optimal); the infeasible ones were proved in under 30 s each. IFA needed one fix: a
+  neighbouring district's own piece away from the window is left as it is (its mass still in the
+  band row) instead of having to join through W, which had made every IFA window infeasible.
+  The runs are from commits 28847d7 (`s13-arm1-seq-repair`), 7d4df99 (`deckA-band-seq-pre-repair`),
+  0a04329 (the `-ks` grid run and the approved-list band-seq repairs) and b589d15 (IFA); the
+  later commits change how pieces are grouped and which components of a neighbouring district
+  must join; the earlier runs were not repeated with them. U63, the districts whose
+  connectivity rests on one connector edge (contig.json lists the edges): s13 national 11, WH 10,
+  FI 11, WIFI 3 (`s13-arm1-seq-repair`); grid and deck A national 11, WH 9, FI 13; IFA 17 of 49.
+
+**Per channel** (`tools/exp/contig/report.py` on the repaired folders, regenerated 2026-10-05
+after the review fixes; the folders were read, not rewritten). A channel the repair redrew shows
+the repair's final band δ in "δ needed", marked "(repair)", with the worst deviation it reached;
+before the fix the column copied the source drawing's δ (grid FI 0.02 at 8.7%). A channel with no
+window keeps its source drawing's δ.
+
+| run | arm | channel | K | plan δ | M1 (map, D3) | pieces | largest piece | drawn | groups | s | worst gap | δ needed | worst / mean dev | split units | cuts | share-only (U61) | exclave splits | one-connector districts (U63) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| s13-arm1-seq-repair | arm1+repair seq | FI | 20 | 0.08 | pass | 0 | 0 τ | not all (unknown) | connected 5, unknown 2 | 254.2 | 2.1e-16 |  | 8.0% / 5.1% | 7 | 11 | 5 | 0 | 11 |
+| s13-arm1-seq-repair | arm1+repair seq | WH | 12 | 0.0595 | pass | 0 | 0 τ | all (connected) | connected 3 | 216.2 | 0.012 | 0.0595 | 5.9% / 4.2% | 3 | 4 | 0 | 0 | 10 |
+| s13-arm1-seq-repair | arm1+repair seq | WIFI | 3 | 0.1 | pass | 0 | 0 τ | all (connected) |  | 0 |  | 0.1 | 9.3% / 6.2% | 0 | 0 | 0 | 0 | 3 |
+| s13-arm1-seq-repair | arm1+repair seq | national | 15 | 0.0938 | pass | 0 | 0 τ | all (connected) | connected 3, optimal 1, unknown 1 | 213.3 | 0 | 0.1 (repair) | 10.0% / 7.4% | 4 | 7 | 6 | 0 | 11 |
+| s13-band-seq-repair | band+repair seq | FI | 20 | 0.08 | pass | 0 | 0 τ | all (connected) | connected 7 | 288.9 | 2.1e-16 | 0.1 | 10.0% / 6.4% | 7 | 11 | 5 | 0 | 10 |
+| s13-band-seq-repair | band+repair seq | WH | 12 | 0.0595 | pass | 0 | 0 τ | all (connected) | connected 3 | 216 | 0.012 | 0.0595 | 5.9% / 4.2% | 3 | 4 | 0 | 0 | 10 |
+| s13-band-seq-repair | band+repair seq | WIFI | 3 | 0.1 | pass | 0 | 0 τ | all (connected) |  | 0 |  | 0.1 | 9.3% / 6.2% | 0 | 0 | 0 | 0 | 3 |
+| s13-band-seq-repair | band+repair seq | national | 15 | 0.0938 | pass | 0 | 0 τ | all (connected) | connected 3, optimal 1, unknown 1 | 573.6 | 0 | 0.1 (repair) | 10.0% / 7.4% | 4 | 7 | 6 | 0 | 11 |
+| g_na15_WH12_FI23-arm1-seq-pre-repair-ks | arm1+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 2, optimal 1, unknown 7 | 408.7 | 0.0039 | 0.1 (repair) | 8.7% / 1.7% | 17 | 20 | 10 | 0 | 13 |
+| g_na15_WH12_FI23-arm1-seq-pre-repair-ks | arm1+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 4, infeasible 2, optimal 1, unknown 2 | 260.8 | 0.0095 | 0.1 (repair) | 2.4% / 1.4% | 8 | 8 | 3 | 0 | 9 |
+| g_na15_WH12_FI23-arm1-seq-pre-repair-ks | arm1+repair seq | national | 15 | 0.025 | pass | 0 | 0 τ | all (connected) | connected 6, infeasible 2, optimal 1, unknown 3 | 365.3 | 0.042 | 0.1 (repair) | 9.5% / 2.7% | 13 | 15 | 6 | 0 | 11 |
+| deckA-band-seq-pre-repair | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 14, optimal 1 | 895.1 | 0.013 | 0.1 (repair) | 7.6% / 2.1% | 17 | 20 | 10 | 0 | 13 |
+| deckA-band-seq-pre-repair | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 3 | 949.9 | 0.0095 | 0.1 (repair) | 4.9% / 1.6% | 8 | 8 | 3 | 0 | 9 |
+| deckA-band-seq-pre-repair | band+repair seq | national | 13 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 8, infeasible 2, optimal 1 | 921.7 | 0.0035 | 0.1 (repair) | 5.0% / 2.6% | 11 | 14 | 3 | 0 | 11 |
+| deckA-band-seq-pre-repair-ks | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 14, optimal 1 | 894.1 | 0.013 | 0.1 (repair) | 7.6% / 2.1% | 17 | 20 | 10 | 0 | 13 |
+| deckA-band-seq-pre-repair-ks | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 3 | 951.6 | 0.0095 | 0.1 (repair) | 4.9% / 1.6% | 8 | 8 | 3 | 0 | 9 |
+| deckA-band-seq-pre-repair-ks | band+repair seq | national | 13 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 8, infeasible 2, optimal 1 | 921.2 | 0.0035 | 0.1 (repair) | 5.0% / 2.6% | 11 | 14 | 3 | 0 | 11 |
+| deckA-band-seq-repair | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 10, infeasible 3, optimal 1, unknown 2 | 2267.8 | 0.28 | 0.1 (repair) | 5.0% / 2.3% | 14 | 17 | 9 | 0 | 13 |
+| deckA-band-seq-repair | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 5 | 421.2 | 2.1e-16 | 0.15 | 15.0% / 3.6% | 6 | 6 | 2 | 0 | 9 |
+| deckA-band-seq-repair | band+repair seq | national | 13 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 7, infeasible 2, optimal 1 | 1018.8 | 0.009 | 0.1 (repair) | 10.0% / 3.7% | 8 | 10 | 4 | 0 | 11 |
+| g_na15_WH12_FI23-band-seq-repair | band+repair seq | FI | 23 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 10, infeasible 3, optimal 1, unknown 2 | 2273.6 | 0.28 | 0.1 (repair) | 5.0% / 2.3% | 14 | 17 | 9 | 0 | 13 |
+| g_na15_WH12_FI23-band-seq-repair | band+repair seq | WH | 12 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 5 | 423 | 2.1e-16 | 0.15 | 15.0% / 3.6% | 6 | 6 | 2 | 0 | 9 |
+| g_na15_WH12_FI23-band-seq-repair | band+repair seq | national | 15 | 0.025 | pass | 0 | 0 τ | all (connected) | connected 8 | 419.2 | 0.015 | 0.05 | 2.6% / 2.0% | 9 | 11 | 5 | 0 | 11 |
+| ifa49-arm1-seq-repair-fast | arm1+repair seq | IFA | 49 | 0.02 | pass | 0 | 0 τ | all (connected) | connected 16, infeasible 12, optimal 6, unknown 4 | 1286.3 | 0.012 | 0.1 (repair) | 9.9% / 3.2% | 22 | 40 | 33 | 0 | 17 |
+| s13_WH11-repair | arm1+repair seq | FI | 20 | 0.08 | pass | 0 | 0 τ | not all (unknown) | connected 5, unknown 2 | 258.3 | 2.1e-16 |  | 8.0% / 5.1% | 7 | 11 | 5 | 0 | 11 |
+| s13_WH11-repair | arm1+repair seq | WH | 11 | 0.09 | pass | 0 | 0 τ | all (connected) | connected 3 | 9.6 | 0 | 0.09 | 8.9% / 5.1% | 3 | 3 | 0 | 0 | 8 |
+| s13_WH11-repair | arm1+repair seq | WIFI | 3 | 0.1 | pass | 0 | 0 τ | all (connected) |  | 0 |  | 0.1 | 9.3% / 6.2% | 0 | 0 | 0 | 0 | 3 |
+| s13_WH11-repair | arm1+repair seq | national | 15 | 0.0938 | pass | 0 | 0 τ | all (connected) | connected 3, optimal 1, unknown 1 | 216.2 | 0 | 0.1 (repair) | 10.0% / 7.4% | 4 | 7 | 6 | 0 | 11 |
+
+**Review fixes** (Sol review 35e038f8). The window's band row had borrowed the sequential
+realizer's clamp, under which a district already above the band takes nothing more instead of
+making the window infeasible (a toy window next to a district fixed at 1.2 τ came back "optimal");
+it now keeps the negative upper residual, and each attempt lists the districts outside the band
+before and after. None of the runs above met that case: a window that used the clamp leaves its
+district above the band, and every repaired channel ends at or inside ±10%. Before repairing,
+`repair.py` now checks that the source's districts.csv lists the plan's copies under the ids, names
+and supports its ledger was written with; the four candidate maps' sources pass with the plan files
+they were repaired with (deck A and grid from `--plans-file`, s13 WH 11 from
+`wh_dollar/_plans_11`, IFA 49 from `_plans`). The joint `band` remedy no longer stops at an
+infeasible narrower band; the sequential runs above did not use that loop.
+
+Regenerate (m5, local): `runs/exp/contig/launch.sh deckA ifa49` (joint and fixed-target arms),
+`runs/exp/contig/launch_seq.sh <map> ...` (sequential arms), then `"$TD_PY"
+tools/exp/contig/report.py runs/exp/contig/*/`. Specs are the stored TOMLs with `margin = false`
+added per channel, in `runs/exp/contig/_specs/`; plans cache in `runs/exp/contig/_plans/`. Window
+repair: `"$TD_PY" -u tools/exp/contig/repair.py runs/exp/contig/<run> --out
+runs/exp/contig/<run>-repair --plans runs/exp/contig/_plans --flow --keep-support` (IFA with
+`--time-limit 90 --max-zctas 1000`; a pre-connector drawing with `--plans-file
+runs/exp/contig/_plans/<spec>_<extract>.pkl`, the cache entry without the connector key).
