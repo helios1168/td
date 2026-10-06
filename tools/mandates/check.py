@@ -178,7 +178,9 @@ def tracking(base: str, registry: str | None = None, gate=None) -> list:
     gives a fresh M1 status (default `m1`'s)."""
     build = _load("shortlist_build", "tools", "shortlist", "build.py")
     render = _load("maps_render", "tools", "maps", "render.py")
-    gate = gate or (lambda d: m1(d)["status"])
+    if gate is None:
+        g = score.geography()
+        gate = lambda d: m1(d, g)["status"]       # noqa: E731
     out = []
     exp = os.path.join(base, "runs", "exp")
     for d, _, fs in sorted(os.walk(exp)):

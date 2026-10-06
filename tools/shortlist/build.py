@@ -146,6 +146,7 @@ def deck(cfg: dict, base: str, out: str, tiers=None, jobs: int = 4) -> list:
     """Render every selected entry unless current, then write `out`/deck.pdf and DECK.md; the
     (id, outcome) of each entry."""
     chosen = entries(cfg, tiers)
+    _render()                                      # loaded once, before the threads share it
     with concurrent.futures.ThreadPoolExecutor(jobs) as pool:
         done = list(pool.map(lambda e: render_one(e, base, os.path.join(out, "logs")), chosen))
     failed = [d for d in done if d[1].startswith("failed")]
