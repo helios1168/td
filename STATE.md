@@ -1,17 +1,17 @@
 # State — support-master territory design
 
-**Updated:** 2026-10-05 · **Branch:** `main`
+**Updated:** 2026-10-06 · **Branch:** `main`
 
 ## Now
 
-Autonomous run (owner 2026-10-05; log runs/autonomous_2026-10-05/DECISIONS.md). #114 (135a529) and #116 (5383e43) landed: plans and ledgers span every CONUS ZCTA on the polygon graph, coverage is 0/0/0, one piece count. No map passes M1 yet; the remaining failures are detached pieces. #109 worker 9ca70eba (m5-studio/109) draws contiguous plans: deck A, IFA 49, then the layout-`none` grid (runs/autonomous_2026-10-05/grid/). Scenarios need `margin = false` (μ = 0).
+#109 landed (bbaa89b). #121 (neck rule in M1, border-length term, neck-aware repair) on m5-studio/121 at f6a0698, 328 pass, in Sol review 28757ee0; land after review. Only ne_plains_wh11 (border/ne_plains_wh11-r2-all) passes the neck rule. #122 worker 9a8f09ea re-plans the NY metro for the four failing maps (owner 2026-10-06).
 
 ## Next
 
-- Land #109; present M1-passing `$`-eligible maps (layout `none` + IFA) for stakeholder review.
-- Fewer splits: #103 and #115 now unblocked by #114; #119 only if "minimal" is wanted. #118 any time.
-- Wave 1 (#95-#104) held until #109 reports.
+- Land #121; put #122's re-planned maps to the owner (arm-2 changes are never final without them).
+- Owner: rest-side reading of the neck check (6% hub, sub-5% lobes) once Sol reports.
+- Fewer splits: #103, #115; #119 only if "minimal" is wanted. #118 any time.
 
 ## Blocked
 
-Owner: coverage reading D3; #114's 16 proposed connectors (combined-channel layouts cannot pass M1 without them); #111 #112 #83; swap rule B (#85); #3, #59, #75, #76.
+Owner: #112 general rule (this round: re-plan), #111 #83; swap rule B (#85); #3, #59, #75, #76.
