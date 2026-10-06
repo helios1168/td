@@ -28,7 +28,9 @@ def _geo():
                      ("b1", "b2", 30.0), ("a1", "b3", 5.0)):
         edge[a][b] = edge[b][a] = km
     polygon = {"vertices": sorted(state), "edges": [(a, b) for a in edge for b in edge[a] if a < b],
-               "state": state}
+               "state": state, "border": {(a, b): 1000.0 * km for a in edge for b, km in edge[a].items()
+                                          if a < b},
+               "connectors": [], "aland": dict.fromkeys(state, 1e8)}
     return score.Geography(state, xy, edge, polygon)
 
 
@@ -203,13 +205,13 @@ def test_dollar_band_inclusive():
             assert len(why) == 2 and why[1].startswith(f"$ {ch} "), (ch, d, why)
 
 
-def _score_toy(ch: str, rates: dict, fine=None) -> dict:
+def _score_toy(ch: str, rates: dict, fine=None, run_json=None) -> dict:
     """`score.score` on a run folder holding channel `ch` laid out as X; with `fine`, its
-    `run.json` names the scenario's fine channels."""
+    `run.json` names the scenario's fine channels; `run_json` adds to that file."""
     with tempfile.TemporaryDirectory() as d:
-        if fine is not None:
+        if fine is not None or run_json:
             with open(os.path.join(d, "run.json"), "w") as fh:
-                json.dump({"fine_channels": fine}, fh)
+                json.dump({**({"fine_channels": fine} if fine is not None else {}), **(run_json or {})}, fh)
         led = _rows(ch, ((z, j.replace("X", ch), m) for z, j, m in X_CELLS))
         with open(os.path.join(d, "ledger.csv"), "w", newline="") as fh:
             w = csv.DictWriter(fh, list(led[0]))
@@ -228,9 +230,9 @@ def test_score_run_folder():
     s = _score_toy("WH", {"wh": 1.0e9})
     assert s["dollars"] == {"WH": 1.0e9}                # Σ m_rel × rate / K = 2 × 1e9 / 2
     # M1 on the ledger, strict: WH_02's a2 and b3 are cut off from b1, and a3, b2 have no row
-    m1 = ("M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 0 channel ZCTAs "
-          "with no owner, 2 (ZCTA, fine channel) cells with no row, 0 owned twice (fine channels "
-          "from the ledger)")
+    m1 = ("M1: fail, 1 districts in pieces, 2 detached pieces (largest 0.25 τ), 0 necks, 0 channel "
+          "ZCTAs with no owner, 2 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass "
+          "necks listed beside M1 (fine channels from the ledger)")
     sc = f"audit: {audit.M1_CHECK} fails"           # SCORECARD's own M1 row
     assert not s["eligible"] and s["why"] == [sc, m1, "main K 2 outside 48-54"]
     assert s["m1"]["status"] == "fail" and s["m1"]["no_row"] == 2 and s["m1"]["pieces"] == 2
@@ -257,6 +259,17 @@ def _s(run, splits, defects, eligible=True, extent=100.0, worst=0.05):
     return {"run": run, "eligible": eligible, "splits": splits, "defects": defects,
             "largest_extent_km": extent, "states_per_district": 3, "worst_dev": worst,
             "mean_dev": 0.01, "review": None}
+
+
+def test_a_diagnostic_folder_is_never_eligible():
+    """Sol's review of #121 (P1): a folder marked diagnostic (a `--diag-final-delta` repair, its
+    children, or a backfilled one) is INELIGIBLE with the reason "diagnostic band", first."""
+    plain = _score_toy("WH", {"wh": 1.0e9})
+    diag = _score_toy("WH", {"wh": 1.0e9}, run_json={"diagnostic": True, "diagnostic_band": 0.15,
+                                                     "diagnostic_label": "backfilled"})
+    assert not plain["diagnostic"] and diag["diagnostic"] and not diag["eligible"]
+    assert diag["why"] == ["diagnostic band (backfilled)"] + plain["why"], diag["why"]
+    assert "INELIGIBLE (diagnostic band (backfilled); " in score.verdict(diag)
 
 
 def test_rank_and_review():

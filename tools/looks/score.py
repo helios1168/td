@@ -29,7 +29,9 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
   ZCTA owned in every channel.  Without a polygon graph M1 is unverified, and the run is not
   eligible.  The run's own scorecard M1, which also checks each cell's planning channel against
-  the scenario, must not fail either (#116).
+  the scenario, must not fail either (#116);
+- the folder is not diagnostic (#121, `td.audit.diagnostic`): a run held to a diagnostic band,
+  or derived from one, is INELIGIBLE with the reason "diagnostic band".
 
 Rank keys, compared in order, fewest or smallest first:
 1. **splits**: channel-state splits, Σ_c the states where two or more of c's districts own a ZCTA,
@@ -47,6 +49,8 @@ Rank keys, compared in order, fewest or smallest first:
      zero-mass piece 1; `contiguity_pieces` counts them and `largest_piece_tau` is the heaviest.
      No display fill sizes them (#116): the ledger owns every ZCTA, so the audit's piece list is
      the one count, and `audit_pieces`, M1's count read from `scorecard.md`, is printed beside it;
+   - necks, listed from M1 (#121) and not in the sum: M1 fails a map with one, so an eligible
+     map has none; the necks by mass M1 lists beside it, for the owner, are printed too;
    - multipart pieces, listed and counted (`multipart_pieces`) but not in the sum: a separate
      piece of a district's drawn union that only a multipart ZCTA makes is a visual defect, not
      an M1 failure (owner, 2026-10-05, #108).  Most are islets of coastal ZCTAs, drawn apart
@@ -90,6 +94,7 @@ DOLLARS = {"wh": 11.36e9, "fi": 20.69e9, "wells_wh": 4.44e9, "wells_fi": 4.63e9,
            "national_chase": 8.55e9, "ifa": 62.14e9}                              # 2026-10-01
 IFA_ONLY = {"IFA"}
 BAND_CHECK = "final bands on drawn mass"
+NECK = re.compile(r"^[^:]+: neck ")       # M1's neck items (`td.audit.neck_item`)
 
 
 class Geography:
@@ -380,6 +385,9 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
     bands = bands_at(ledger, ks, BAND)
     m1 = m1_check(ledger, ks, g, fine_channels(run_dir))
     why = eligibility(scorecard_checks(sc), bands, ks, dollars, m1)
+    diag = audit.diagnostic(run_dir)
+    if diag is not None:                 # never a deliverable (#121)
+        why.insert(0, "diagnostic band" + (f" ({diag['label']})" if diag["label"] else ""))
     devs = [abs(x) for c in chans.values() for x in c["deviation"].values()]
     pieces = [p for c in chans.values() for p in c["pieces"] or ()]
     defects = {"thin_links": sum(len(c["thin"]) for c in chans.values()),
@@ -388,8 +396,10 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
                "contiguity_weight": round(math.fsum(1 + p[2] for p in pieces), 4)}
     return {
         "run": os.path.basename(os.path.normpath(run_dir)), "dir": run_dir,
-        "eligible": not why, "why": why, "k": ks, "dollars": dollars,
+        "eligible": not why, "why": why, "diagnostic": diag is not None, "k": ks, "dollars": dollars,
         "m1": {"status": m1.status, "summary": m1.summary, **m1.counts},
+        "necks": [i for i in m1.items if NECK.search(i)],
+        "mass_necks": [i for i in m1.items if audit.MASS_NECK in i],
         "splits": sum(len(c["split"]) for c in chans.values()),
         "split_list": [f"{ch}:{s}" for ch, c in chans.items() for s in c["split"]],
         "distinct": sorted({s for c in chans.values() for s in c["split"]}),
@@ -466,8 +476,9 @@ def report(s: dict) -> str:
               f"{s['crowded_states']} + pieces {s['contiguity_weight']:g} ({s['contiguity_pieces']} pieces "
               f"weighing 1 + mass/tau each, on the ledger; M1's piece count {s['audit_pieces']})",
               f"multipart pieces: {s['multipart_pieces']} (listed, not in the defects sum)",
-              f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger)",
-              f"shape: extent {s['largest_extent_km']:,.1f} km, {s['states_per_district']} states per district",
+              f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger)"]
+    lines += [f"    {n}" for n in s["necks"] + s["mass_necks"]]
+    lines += [f"shape: extent {s['largest_extent_km']:,.1f} km, {s['states_per_district']} states per district",
               f"balance: worst {100 * s['worst_dev']:.2f}%, mean {100 * s['mean_dev']:.2f}%",
               f"review: {s['review'] or 'none'} (rule: among eligible runs scored together, one split "
               f"more than the fewest and fewer defects than every run at the fewest)",

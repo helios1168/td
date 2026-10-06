@@ -36,10 +36,18 @@ Experimental, not a production realizer.  Per planning channel:
   (`unknown`).  `construct` builds, and after each disconnected step repairs, a connected drawing
   in the band to start from; it proves nothing either.
 - **Objective**, in the settled order (PROBLEM.md, 2026-10-05): holders per unit first (splits
-  and cuts, weight `SPLIT_WEIGHT` each), then shape, Σ (m_z / m̄ + `AREA_FLOOR`) d_j(z)², scaled
-  below one split; d_j is the shortest path in km from j's bodies (or from its ZCTA nearest
-  `td.realize.centres`' centre when it has none) through the ZCTAs it may own.  Balance is held by
-  the band, not optimised.
+  and cuts, weight `SPLIT_WEIGHT` each), then shape, scaled below one split (`SHAPE_SCALE`).
+  Since #121 shape is the border between districts: Σ over adjacent pairs (z, w) of the model, a
+  free ZCTA and a free ZCTA or a body of a district of the group, of border_km(z, w) ·
+  [z and w in different districts], linearised by c_zw ≥ x_{z,j} − x_{w,j} per district j of z
+  (a body's side is fixed, so its pair is border · (1 − x_{z,k})).  Charging border, not
+  opportunity, makes empty land as dear as dense land, so a finger on a narrow passage costs its
+  whole length (the necks M1 fails since #121).  The pre-#121 moment term, Σ (m_z / m̄ +
+  `AREA_FLOOR`) d_j(z)², d_j the shortest path in km from j's bodies (or from its ZCTA nearest
+  `td.realize.centres`' centre when it has none) through the ZCTAs it may own, stays as a
+  tie-break at `MOMENT_SHARE` of the shape tier's scale.  `border` is {(a, b) with a < b: km}
+  (`border_km`); without it every edge counts 1 km (toys).  Each group reports both terms of its
+  drawing (`border_km`, `moment`).  Balance is held by the band, not optimised.
 - **Status per group**: `optimal` (a connected optimum of the complete model at
   `mip_rel_gap = 0`, trap 12), `connected` (connected and feasible, not proved optimal),
   `infeasible` (proved), or `unknown` (a time limit or a restricted model; never infeasible).
@@ -62,7 +70,8 @@ from td import territory
 
 SPLIT_WEIGHT = 1000.0       # one more holder of a unit outweighs any shape difference
 SHAPE_SCALE = 0.9 * SPLIT_WEIGHT
-AREA_FLOOR = 0.1            # a zero-opportunity ZCTA's weight in the shape term, in m̄
+AREA_FLOOR = 0.1            # a zero-opportunity ZCTA's weight in the moment term, in m̄
+MOMENT_SHARE = 0.01         # the moment tie-break's scale against the border term's (#121)
 MASS_TOL = 1e-9
 PHASE1_GAP = 0.05           # the cut loop's absolute gap until a connected drawing exists
 FINAL_ABS_GAP = 1e-6        # then mip_rel_gap = 0 and this absolute gap (trap 12)
@@ -89,6 +98,11 @@ class Group:
     delta: float | None = None
     tried: list = field(default_factory=list)
     dag: bool = False
+    border_km: float | None = None      # the drawing's border between districts in the model
+    moment: float | None = None         # its Σ (m_z / m̄ + AREA_FLOOR) d_j(z)², unscaled
+    neck_cuts: int = 0                  # neck cuts added (`NeckCut`, #121)
+    necks_cut: list = field(default_factory=list)   # the necks they were cut for
+    neck_exempt: list = field(default_factory=list)     # districts whose necks it may keep
 
     def report(self) -> dict:
         return {"districts": self.districts, "units": self.units, "free_zctas": self.free,
@@ -96,7 +110,53 @@ class Group:
                 "iterations": self.iterations, "cuts": self.cuts,
                 "seconds": round(self.seconds, 2), "objective": self.objective,
                 "bound": self.bound, "gap": self.gap, "note": self.note, "delta": self.delta,
-                "tried": self.tried, "dag": self.dag}
+                "tried": self.tried, "dag": self.dag, "border_km": self.border_km,
+                "moment": self.moment, "neck_cuts": self.neck_cuts, "necks_cut": self.necks_cut,
+                "neck_exempt": self.neck_exempt}
+
+
+@dataclass(frozen=True)
+class NeckCut:
+    """One neck cut of a group's model (#121, `repair.neck_cuts`): for a neck of district `j`,
+    side A against the rest R of its component, anchors S_A ⊆ A and S_R ⊆ R, each connected,
+
+        Σ_{e ∈ δ(A)} w_e · [both ends of e are j's]  ≥  `need` · t,
+        share · area(j) − a_min  ≥  −big · (t + Σ_{z ∈ anchors} (1 − x_{z,j})),   t binary,
+
+    with big = a_min − share · `area_fixed`.  Valid for every drawing in which j has no neck and
+    its anchors lie in one component of j (in a group they lie in its bodies or free ZCTAs, all
+    held connected): when every anchor is j's and share · area(j) < a_min, the component C of j ∩ A
+    holding S_A and the component K of j − C holding S_R split j into two connected parts, K
+    reaching the rest only through edges of δ(A) and each part holding an anchor set of at least
+    the share, so a cut under `need` would be a neck.  w_e is the edge's border, plus for an approved
+    connector 0 when land would do within the states j owns outside the group (more states only
+    widen the land) and `need` otherwise, capped at `need`.  `const` sums w_e over edges both of
+    whose ends are j's outside the group; `single` [(z, w)] an edge from a group ZCTA z to one of
+    j's outside; `pair` [(u, v, w)] both ends in the group; `area` [(z, km²)] the group's ZCTAs;
+    `area_fixed` j's land outside the group; `anchors` the anchors in the group."""
+    j: str
+    const: float
+    single: tuple
+    pair: tuple
+    anchors: tuple
+    area_fixed: float
+    area: tuple
+    a_min: float
+    need: float
+    share: float
+    label: str = ""
+
+    def holds(self, own: dict) -> bool:
+        """Whether the drawing `own` {group ZCTA: district} meets the cut (the best t)."""
+        j = self.j
+        if any(own.get(z) != j for z in self.anchors):
+            return True
+        area = self.area_fixed + math.fsum(a for z, a in self.area if own.get(z) == j)
+        if self.share * area >= self.a_min:
+            return True
+        km = self.const + math.fsum(w for z, w in self.single if own.get(z) == j) \
+            + math.fsum(w for u, v, w in self.pair if own.get(u) == j and own.get(v) == j)
+        return km >= self.need
 
 
 @dataclass
@@ -127,6 +187,19 @@ class Result:
 
 
 # ------------------------------------------------------------------------------ the instance view
+def border_km(polygon: dict) -> dict:
+    """{(a, b) with a < b: km} of the shared borders of `geo.polygon_graph`'s polygon edges, the
+    shape term's lengths (#121); a connector has none."""
+    return {tuple(sorted(e)): m / 1000.0 for e, m in polygon["border"].items()}
+
+
+def cut_border(owner: dict, adj: dict, border: dict) -> float:
+    """The total border in km between different districts of a map `owner` {zip: district}, over
+    the edges of `adj` both of whose ends `owner` holds (#121: the shape term on the whole map)."""
+    return math.fsum(border.get((z, y), 0.0) for z, j in owner.items() for y in adj.get(z, ())
+                     if z < y and y in owner and owner[y] != j)
+
+
 def components(zs, adj) -> list:
     """Components of `zs` on `adj`, largest first, ties by smallest id."""
     inside, seen, out = set(zs), set(), []
@@ -183,7 +256,8 @@ def split_fixed(inst, plan) -> tuple:
 # ------------------------------------------------------------------------------ the realizer
 def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
          fixed_targets: bool = False, time_limit: float = 600.0, wider=(),
-         group_limit: float | None = None, sequential: bool = False, log=print) -> Result:
+         group_limit: float | None = None, sequential: bool = False, log=print,
+         border: dict | None = None) -> Result:
     """The channel's contiguity-aware map (module docstring); `xy` is {zip: (x, y)} in metres.
     A group with no connected drawing in the band of `delta` (the plan's by default) is tried
     again at each wider δ of `wider` in turn (the remedy "a wider internal band", reported per
@@ -270,7 +344,7 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
     if sequential:
         return _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support,
                            p, delta, wider, arm, fixed_targets, t_end, group_limit,
-                           fixed_split, share_only, log)
+                           fixed_split, share_only, log, border)
     for gi, qis in enumerate(sorted(groups.values(), key=lambda g: -sum(len(fcomps[q]) for q in g))):
         zs = sorted(z for q in qis for z in fcomps[q])
         tried, g = [], None
@@ -282,7 +356,7 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
             r = _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
                              arm, fixed_targets, min(left, group_limit or left), log, dag=dag,
-                             start=seed)
+                             start=seed, border=border)
             log(f"  {c} group {gi} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
                 f"districts, {r.free} free ZCTAs, {r.columns} columns -> {r.status} in "
                 f"{r.seconds:.1f}s, {r.iterations} solves, {r.cuts} cuts"
@@ -327,7 +401,8 @@ def _attempt(solve, d, tried, prove: bool = True):
 
 
 def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support, p, delta,
-                wider, arm, fixed_targets, t_end, group_limit, fixed_split, share_only, log):
+                wider, arm, fixed_targets, t_end, group_limit, fixed_split, share_only, log,
+                border=None):
     """The sequential restriction (`draw(sequential=True)`): one split unit at a time (adjacent
     split units together when one district enters the second only through the first), each
     district's ZCTAs in the unit attached to what it already owns next to the unit (its whole
@@ -390,7 +465,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
             r = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
                              arm, fixed_targets, min(left, group_limit or left), log, extra,
-                             dag=dag, start=seed, sequential=True)
+                             dag=dag, start=seed, sequential=True, border=border)
             log(f"  {c} unit {v} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
                 f"districts, {r.free} ZCTAs -> {r.status} in {r.seconds:.1f}s, "
                 f"{r.iterations} solves, {r.cuts} cuts{(' (' + r.note + ')') if r.note else ''}")
@@ -671,7 +746,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                  support, inst, lo, hi, arm, fixed_targets, time_limit, log=print,
                  extra: dict | None = None, dag: bool = False, start: dict | None = None,
                  count: dict | None = None, layers: bool = False, flow: bool = False,
-                 sequential: bool = False) -> Group:
+                 sequential: bool = False, border: dict | None = None, necks=None,
+                 neck_seed: dict | None = None) -> Group:
     """One group's MILP and cut loop (module docstring).  `count` is the window repair's
     (`repair.py`): {"current": {unit: its holders on the drawn map}, "cap": bool}; then split
     units come first in the objective, holders (cuts) second, shape third, and with "cap" neither
@@ -682,7 +758,17 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     root body, each of its ZCTAs and other bodies consuming one unit (exact; the cut loop then
     only checks).  With `sequential` (`_sequential`) a district whose fixed mass and `extra` are
     already past the band takes nothing more instead of being forced back; otherwise such a
-    district makes the group infeasible, since its mass outside the group cannot change."""
+    district makes the group infeasible, since its mass outside the group cannot change.  `border`
+    is the shape term's {(a, b) with a < b: km} (module docstring).
+
+    With `necks` (#121, the window repair's neck-aware solve), a callable taking a drawing {group
+    ZCTA: district} to ([NeckCut], [the necks it must lose]), the loop also cuts necks: a connected
+    solution, a seed or the start with a neck to lose adds its `NeckCut` rows and is not kept, and
+    the loop goes on; `neck_seed`, the drawing on the map, is cut first.  Every kept drawing then
+    has no neck to lose; "optimal" is an optimum of the cut-augmented model, "infeasible" proves
+    that no connected drawing in the band leaves the cut districts without a neck (each cut is
+    valid, `NeckCut`).  A neck whose cut its own drawing meets (a connector whose width the
+    group's states leave open) stops the loop."""
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     js = sorted({j for z in zs for j in allowed[z]})
@@ -735,8 +821,30 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             cost.append((m.get(z, 0.0) / mbar + AREA_FLOOR) * geo[j].get(z, math.inf) ** 2)
     far = max((x for x in cost if math.isfinite(x)), default=1.0)
     cost = [x if math.isfinite(x) else 4.0 * far for x in cost]
-    scale = SHAPE_SCALE / max(1e-12, math.fsum(max(cost[col[z, j]] for j in allowed[z]) for z in zs))
+    moment = list(cost)                 # unscaled, for the report
+    scale = MOMENT_SHARE * SHAPE_SCALE / max(1e-12, math.fsum(max(cost[col[z, j]] for j in allowed[z])
+                                                             for z in zs))
     cost = [x * scale for x in cost]
+    # the border term (#121): free-free pairs get c_zw, free-body pairs charge 1 - x_{z,k}
+    def km(a, b):
+        return 1.0 if border is None else border.get((a, b) if a < b else (b, a), 0.0)
+    pairs = {}                          # (z, w) free, z < w -> km
+    body_km = collections.Counter()     # (z, district) -> km of z's border with its bodies
+    for z in zs:
+        for y in adj[z]:
+            if y in zset:
+                if z < y and km(z, y) > 0:
+                    pairs[z, y] = km(z, y)
+            elif y in body_of and body_of[y][0] in js:
+                body_km[z, body_of[y][0]] += km(z, y)
+    b_scale = SHAPE_SCALE / max(1e-12, math.fsum(pairs.values()) + math.fsum(body_km.values()))
+    for (z, k), x in body_km.items():
+        if (z, k) in col:
+            cost[col[z, k]] -= b_scale * x
+    ccol = {}
+    for e, x in sorted(pairs.items()):
+        ccol[e] = len(cost)
+        cost.append(b_scale * x)
     ycol = {}
     for z in zs:
         v = unit_of[z]
@@ -766,7 +874,7 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     h.setOptionValue("output_flag", False)
     h.setOptionValue("mip_rel_gap", 0.0)
     inf = highspy.kHighsInf
-    fset = set(fcol.values())
+    fset = set(fcol.values()) | set(ccol.values())
     cap_of = {j: 1 + sum(1 for z in zs if j in allowed[z]) + sum(1 for k in vert_of.values() if k == j)
               for j in root} if flow else {}
     ub = np.ones(n)
@@ -791,6 +899,12 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         row(1.0, 1.0, [col[z, j] for j in allowed[z]], [1.0] * len(allowed[z]))
         for j in allowed[z]:
             row(-inf, 0.0, [col[z, j], ycol[unit_of[z], j]], [1.0, -1.0])
+    for (z, y), k in ccol.items():     # c_zy >= x_{z,j} - x_{y,j}: 1 when z and y differ
+        for j in allowed[z]:
+            if (y, j) in col:
+                row(0.0, inf, [k, col[z, j], col[y, j]], [1.0, -1.0, 1.0])
+            else:
+                row(0.0, inf, [k, col[z, j]], [1.0, -1.0])
     for j in js:
         idx = [col[z, j] for z in zs if (z, j) in col and m.get(z, 0.0) > 0]
         a, b = lo - fixed_mass[j], hi - fixed_mass[j]
@@ -866,6 +980,76 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             idx = [col[y, j] for y in nb if (y, j) in col]
             row(-inf, 0.0, [col[z, j]] + idx, [1.0] + [-1.0] * len(idx))
     g = Group(js, sorted({unit_of[z] for z in zs}), len(zs), n, nrows)
+    neck_rows, neck_keys = [], set()    # per neck cut: ({(u, v): y column}, t column, cut)
+
+    def add_neck_cut(cut: NeckCut) -> bool:
+        """The rows of one `NeckCut`; False when it is known or can never bind."""
+        nonlocal n
+        j = cut.j
+        if j not in js or any((z, j) not in col for z in cut.anchors):
+            return False                # an anchor j can never own: the cut never binds
+        big = cut.a_min - cut.share * cut.area_fixed
+        if cut.const >= cut.need or big <= 0:
+            return False
+        single = collections.Counter()
+        for z, w in cut.single:
+            if (z, j) in col and w > 0:
+                single[col[z, j]] += w
+        pairs = [(u, v, w) for u, v, w in cut.pair if (u, j) in col and (v, j) in col and w > 0]
+        key = (j, cut.const, tuple(sorted(single.items())), tuple(sorted(pairs)),
+               tuple(sorted(cut.anchors)), cut.a_min)
+        if key in neck_keys:
+            return False
+        neck_keys.add(key)
+        k0 = n
+        h.addVars(len(pairs) + 1, np.zeros(len(pairs) + 1), np.ones(len(pairs) + 1))
+        t = k0 + len(pairs)
+        h.changeColsIntegrality(1, np.array([t], dtype=np.int32),
+                                np.array([highspy.HighsVarType.kInteger]))
+        cost.extend([0.0] * (len(pairs) + 1))
+        n += len(pairs) + 1
+        ys = {}
+        for i, (u, v, w) in enumerate(pairs):     # y ≤ x_{u,j}, y ≤ x_{v,j}
+            ys[u, v] = k0 + i
+            row(-inf, 0.0, [k0 + i, col[u, j]], [1.0, -1.0])
+            row(-inf, 0.0, [k0 + i, col[v, j]], [1.0, -1.0])
+            single[k0 + i] += w
+        row(-cut.const, inf, list(single) + [t], list(single.values()) + [-cut.need])
+        lhs = collections.Counter()
+        for z, a in cut.area:
+            if (z, j) in col and a > 0:
+                lhs[col[z, j]] += cut.share * a
+        for z in cut.anchors:
+            lhs[col[z, j]] -= big
+        lhs[t] += big
+        row(cut.a_min - cut.share * cut.area_fixed - big * len(cut.anchors), inf,
+            list(lhs), list(lhs.values()))
+        neck_rows.append((ys, t, cut))
+        g.neck_cuts += 1
+        if cut.label not in g.necks_cut:
+            g.necks_cut.append(cut.label)
+        return True
+
+    def cut_necks(drawing: dict, how: str) -> bool:
+        """Cut the necks `drawing` must lose; True when it has one.  The kept drawing is checked
+        again against the new rows (it has no neck to lose, so a valid cut keeps it).  When no new
+        cut breaks `drawing` (a known one would have, to the solver's tolerance) the neck is open."""
+        nonlocal found, x_best, neck_open
+        neck_open = ""
+        cuts, labels = necks(drawing)
+        if not labels:
+            return False
+        added = [c for c in cuts if add_neck_cut(c)]
+        open_ = [c for c in added if not c.holds(drawing)]
+        log(f"    the {how} drawing has {len(labels)} neck(s) to lose: {len(added)} cuts added"
+            f"{'' if open_ else ' (none it breaks)'}; {labels[0]}")
+        if not open_:
+            neck_open = labels[0]
+        if added and found is not None:
+            keep, found, x_best = found[0], None, None
+            accept(keep, "kept")
+        return True
+    neck_open = ""
     deadline = t0 + time_limit
     gap = PHASE1_GAP            # until a connected drawing is found, then 0 (trap 12)
     found = None                # the best connected drawing: (owner, objective, bound)
@@ -875,13 +1059,23 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     def accept(start, how):
         """Keep `start` (a connected drawing) when it meets every row and beats `found`."""
         nonlocal found, x_best
+        if necks is not None and cut_necks(start, how):
+            return
         x0 = np.zeros(n)
         for z, j in start.items():
             x0[col[z, j]] = 1.0
             x0[ycol[unit_of[z], j]] = 1.0
+        for ys, t, cut in neck_rows:
+            for (u, v), k in ys.items():
+                x0[k] = float(start[u] == cut.j and start[v] == cut.j)
+            x0[t] = 0.0 if cut.share * (cut.area_fixed + math.fsum(
+                a for z, a in cut.area if start.get(z) == cut.j)) >= cut.a_min \
+                or any(start.get(z) != cut.j for z in cut.anchors) else 1.0
         for v, k in scol.items():
             x0[k] = float(len(held_by[v] | {j for (u, j), i in ycol.items()
                                             if u == v and x0[i] > 0.5}) > 1)
+        for (z, y), k in ccol.items():
+            x0[k] = float(start[z] != start[y])
         for j in sorted(root) if fcol else ():     # a BFS tree's subtree sizes from the root
             mine = {z for z, k in start.items() if k == j} | {b for b, k in vert_of.items() if k == j}
             up, order = {root[j]: None}, [root[j]]
@@ -905,6 +1099,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                 f"{time.time() - t0:.1f}s")
 
     x_best = None
+    if necks is not None and neck_seed:
+        cut_necks(neck_seed, "map's")
     if start is not None:
         accept(start, "given")
     built, why = construct(zs, allowed, js, gadj, vert_of, m, fixed_mass, lo, hi, geo, target, root)
@@ -1006,6 +1202,14 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             else:
                 accept(fixed_up, "repaired")
         optimal = st == highspy.HighsModelStatus.kOptimal
+        if new == 0 and necks is not None and cut_necks(own, f"solve {g.iterations}"):
+            if neck_open:
+                g.note = f"a neck its cut cannot separate: {neck_open}"
+                break
+            if not optimal:
+                g.note = f"stopped at solve {g.iterations} ({h.modelStatusToString(st)}) with a necked incumbent"
+                break
+            continue
         if new == 0:
             found = (own, info.objective_function_value, info.mip_dual_bound)
             if optimal and gap == FINAL_ABS_GAP:
@@ -1028,6 +1232,12 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             g.status = "connected"      # under `dag` an optimum is the restriction's only
     if dag and g.status == "infeasible":
         g.status, g.note = "unknown", "the geodesic-DAG restriction is infeasible"
+    if g.owner:                         # both shape terms of the drawing (#121)
+        own = {**{y: body_of[y][0] for z in zs for y in adj[z]
+                  if y in body_of and body_of[y][0] in js}, **g.owner}
+        g.border_km = math.fsum(km(z, y) for z in zs for y in adj[z]
+                                if y in own and own[y] != own[z] and (y not in zset or z < y))
+        g.moment = math.fsum(moment[col[z, j]] for z, j in g.owner.items())
     g.dag = dag
     g.rows = nrows
     g.seconds = time.time() - t0

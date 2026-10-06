@@ -655,3 +655,125 @@ repair: `"$TD_PY" -u tools/exp/contig/repair.py runs/exp/contig/<run> --out
 runs/exp/contig/<run>-repair --plans runs/exp/contig/_plans --flow --keep-support` (IFA with
 `--time-limit 90 --max-zctas 1000`; a pre-connector drawing with `--plans-file
 runs/exp/contig/_plans/<spec>_<extract>.pkl`, the cache entry without the connector key).
+
+## #121 Border-length shape term and M1's necks (2026-10-05)
+
+Measured 2026-10-05 on m5 with `tools/exp/contig/` at m5-studio/121 (border term 71517c8, final
+neck rule 848e482). M1 is `td.audit.check_m1` under the owner's final neck rule (MANDATES.md M1,
+"Area only", "One connected piece", "Land must be a real passage"): a district fails when one
+connected part holding ≥ 5% of its land area reaches the rest only through < 10 km of shared ZCTA
+border; an approved connector is width 0 only where land within the district's states would join
+its sides through a passage itself ≥ 10 km wide (max flow on the polygon graph without
+connectors, `NeckGraph.land_would_do`, exact to the millimetre and erring towards a neck), else
+unlimited. Necks by mass are listed beside M1 and fail nothing.
+
+The five tier-1 maps were redrawn by the arm-1 sequential realizer with the border term (the shared
+ZCTA border between districts, the moment kept as a 1% tie-break), window repaired with
+`--keep-support --flow` (pieces, then necks), and given a second repair pass of at most ~45 min per
+map (`runs/exp/contig/border/repair2.sh`, one channel at a time). "Old" is the shortlist's current
+tier-1 drawing; "border map" the best border folder. Scorer is `tools/looks/score.py` with the
+current M1 (the folders' scorecard M1 rows predate the final rule).
+
+| rank | id | old: pieces, necks | border map (`runs/exp/contig/border/`) | pieces (largest τ) | necks | mass necks | worst / mean dev | splits / cuts old → border | cut border km old → border | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | ne_plains_wh11 | 0, 4 | `ne_plains_wh11-r2-all` | 0 | 0 | 13 | 9.3% / 5.2% | 14 / 21 → 14 / 21 | 47,930 → 37,557 | pass | ELIGIBLE |
+| 2 | low6_cb1 | 0, 10 | `low6_cb1-r2-FI` | 0 | 6 | 19 | 10.0% / 2.8% | 29 / 34 → 29 / 34 | 88,553 → 53,322 | fail | M1 only |
+| 3 | nocomb_13_12_23 | 0, 7 | `nocomb_13_12_23` | 3 (0.398) | 3 | 16 | 9.2% / 1.6% | 36 / 42 → 28 / 34 | 130,220 → 69,649 | fail | M1 only |
+| 4 | nocomb_15_12_23 | 0, 5 | `nocomb_15_12_23-r2-national` | 0 | 3 | 11 | 9.8% / 2.3% | 38 / 43 → 29 / 34 | 102,270 → 66,362 | fail | M1 only |
+| 5 | ifa_49 | 0, 18 | `ifa_49` | 7 (0.338) | 5 | 16 | 9.8% / 3.4% | 22 / 40 → 22 / 40 | 75,444 → 45,663 | fail | M1 only |
+
+- Every old drawing fails M1 under the final rule, by necks alone (4 to 18 per map).
+- The border term cuts the shared border between districts by 22% to 47% and never raises splits
+  or cuts; on the two no-combined-channel maps it lowers them (36 → 28 and 38 → 29 splits).
+- `ne_plains_wh11` passes M1 and is ELIGIBLE. Its last neck under the area rule, WH_09 (IN+KY)
+  across the Ohio River bridges, cleared under "Land must be a real passage": the land route at
+  Evansville is 4.4 km wide, so the bridges keep full width. `ne_plains_wh11-r2-all` is a re-audit
+  of `ne_plains_wh11` (same ledger byte for byte) whose scorecard and manifest carry the final rule.
+- The other four still fail inside the final band after the second pass. The neck windows'
+  model carries no neck term, so most neck windows came back optimal or connected with the neck
+  still there; the CT pieces of nocomb_15_12_23 were joined only through a thin Westchester strip
+  (WH_05 1.24 km) and Long Island (national_08 8.82 km). Remaining pieces and necks, and the
+  windows tried, are in `runs/autonomous_2026-10-05/batch_border/BATCH.md`; whether to relax
+  anything is #112, the owner's decision.
+
+Regenerate (m5, local): redraw `"$TD_PY" -u tools/exp/contig/run.py <spec> --arm arm1
+--sequential --plans <cache> --out runs/exp/contig/border/<id>-draw`; repair `"$TD_PY" -u
+tools/exp/contig/repair.py runs/exp/contig/border/<id>-draw --out runs/exp/contig/border/<id>
+--keep-support --flow --h0 3 --max-zctas 1500 --time-limit 600 --neck-time-limit 120` (IFA:
+`--max-zctas 1000 --time-limit 90 --neck-time-limit 90`); second pass `runs/exp/contig/border/repair2.sh`;
+rescore `runs/exp/contig/border/rescore_final/rescore.py` (writes `TABLE.md`, `rescore.json`).
+Each run folder's `manifest.json` holds its exact command and plan cache.
+
+### Third pass: neck-aware window repair (2026-10-06)
+
+Measured 2026-10-06 on m5 with `tools/exp/contig/repair.py` at m5-studio/121 (neck cuts ef03fc1,
+`--budget` 0380ee5, `--diag-final-delta` ee6b68e). Every repair window now runs M1's exact neck
+check on each drawing its solve-check-cut loop would keep; a neck whose side meets the window, in
+a district the window is held to, adds a `draw.NeckCut`: the border across the side, counted where
+both ends stay the district's, at least 10 km while two connected anchor sets (one in the side, one
+in the rest) stay the district's and its land stays small enough for each to hold the 5% share.
+The cut holds for every drawing in which the district has no neck (proof in `draw.NeckCut`;
+checked by enumeration on a toy), so "optimal" is an optimum of the cut-augmented model and
+"infeasible" proves that no drawing of the window, the rest fixed, is connected, inside the
+scenario's declared ±10% final band and without a neck in the districts cut. The single-anchor
+row x_j(a) + x_j(r) − 1 is not valid (a drawing keeping a tiny part of the side is not a neck),
+hence the anchor sets and the area row. Districts with a neck on the map that the window is not
+repairing are exempt. Runs: `runs/exp/contig/border/repair3.sh`, about 50 min per map, one channel
+after another (`--h0 8 --max-zctas 2000 --time-limit 300 --neck-time-limit 240 --budget 1000`;
+IFA `--h0 6 --time-limit 240 --neck-time-limit 180 --budget 3000`). Scorer as above, with its
+thin links and small pieces (`rescore_final/rescore_r3.py`).
+
+| rank | id | map (`runs/exp/contig/border/`) | pieces (largest τ) | necks | mass necks | worst / mean dev | splits / cuts | cut border km | thin / small | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | ne_plains_wh11 | `ne_plains_wh11-r2-all` (unchanged) | 0 | 0 | 13 | 9.3% / 5.2% | 14 / 21 | 37,557 | 0 / 3 | pass | ELIGIBLE |
+| 2 | low6_cb1 | `low6_cb1-r2-FI` → `low6_cb1-r3-national` | 0 | 6 → 4 | 19 → 17 | 10.0% / 2.9% | 29 / 34 | 53,322 → 53,001 | 3 / 19 → 2 / 19 | fail | M1 only |
+| 3 | nocomb_13_12_23 | `nocomb_13_12_23-r3-FI` (drawing unchanged) | 3 (0.398) | 3 | 16 | 9.2% / 1.6% | 28 / 34 | 69,649 | 3 / 15 | fail | M1 only |
+| 4 | nocomb_15_12_23 | `nocomb_15_12_23-r3-FI` (drawing unchanged) | 0 | 3 | 11 | 9.8% / 2.3% | 29 / 34 | 66,362 | 1 / 14 | fail | M1 only |
+| 5 | ifa_49 | `ifa_49-r3-IFA` (drawing unchanged) | 7 (0.338) | 5 | 16 | 9.8% / 3.4% | 22 / 40 | 45,663 | 6 / 7 | fail | M1 only |
+
+- The neck cuts removed two necks the border term had kept, low6_cb1's FI_08 (the NJ side of the
+  Delaware Memorial Bridge) and FI_11 (GA+TN), each in its first window (ball h 8, |W| 494 and
+  756, connected).
+- Every other window that touched a remaining neck or piece was either proved infeasible inside
+  the declared ±10% band for that window (corridors up to |W| ≈ 600, balls at h 5-8, the largest
+  nocomb_13_12_23's national_08 ball of 1962 ZCTAs) or unknown at its 240-300 s limit (every other
+  window of about 1000-2000 ZCTAs): unfinished, not shown infeasible for the map. Two necks, low6_cb1 FI_03 and ifa_49 IFA_19 (both UT 84621), lie in whole units of
+  one holder, out of every arm-1 window's reach.
+- ±15% diagnostic (never a deliverable; `<id>-r3-<channel>-diag15`, `--diag-final-delta 0.15`):
+  no map draws neck-free; of the 44 windows infeasible at ±10%, 35 stay infeasible, 2 are unknown
+  and 7 were not reached. Per-item windows, cuts and statuses, and the #112 list:
+  `runs/autonomous_2026-10-05/batch_border/BATCH.md`.
+
+Regenerate (m5, local): `runs/exp/contig/border/repair3.sh <id> <source folder> "<plans args>"
+"<repair args>" <channel> ...` and `diag15.sh` (same arguments); rescore
+`runs/exp/contig/border/rescore_final/rescore_r3.py` (writes `TABLE_r3.md`, `TABLE_diag15.md`).
+
+### The cut-off part is the smaller side: rescore (2026-10-06)
+
+Measured 2026-10-06 on m5 with `td.audit.district_necks` at m5-studio/121 c26ed48. Sol's review
+of the neck check found that requiring the rest to be one connected piece holding ≥ 5% let a hub
+of 6% of a district's land, with 24 lobes of 94/24 % each on 100 m threads, pass. The owner ruled
+("Cut-off part = smaller side", MANDATES.md M1): a neck is one connected part with ≥ 5% of the
+district's land and no more land than the rest, behind < 10 km of border; the rest may lie in
+pieces of any size, and small fringes off a larger body never add together. The check now finds
+the narrowest such part (the hub plus 11 lobes, 1.3 km, on the counterexample). Widths are
+counted in whole centimetres, each border floored, so every cut is an integer and a neck is at
+most 999,999 cm: 9.999999995 km is a neck, exactly 10 km is not. Flooring errs only towards a
+neck (three borders of 3.333334 km, 10.000002 km in all, floor to 999,999 cm and are listed), and
+on the shipped borders, rounded to the centimetre, the check is exact; only a time-out is listed
+unresolved. A `--diag-final-delta` folder, or any folder derived from one, is marked
+`"diagnostic": true`, INELIGIBLE and failed by M1's gate.
+
+All 51 folders under `runs/exp/contig/border/` and `runs/exp/contig/replan/` were rescored
+(`runs/exp/contig/border/rescore_0606/`, `TABLE.md`, `rescore.json`), "old" being the reviewed
+neck rule (28706a9) in the same check:
+
+- **No M1 verdict changed.** `ne_plains_wh11-r2-all` (and its source `ne_plains_wh11`) still
+  passes M1 with 0 necks and stays ELIGIBLE, rank 1; every other folder failed and still fails.
+- Neck counts rose in 30 of 51 folders, for example `ifa_49-r3-IFA` 5 → 10,
+  `nocomb_13_12_23-r3-*` 3 → 5, `nocomb_15_12_23` 1 → 3, `low6_cb1-replan-ne5ut` 3 → 5; no
+  search was unresolved, and the slowest whole-map M1 check took 36 s with scoring (6 s before).
+- The ten `*-diag15` folders are backfilled `"diagnostic": true` ("backfilled") and score
+  INELIGIBLE, reason "diagnostic band".
+
+Regenerate (m5, local): `TD_REPO=... "$TD_PY" runs/exp/contig/border/rescore_0606/rescore.py`.

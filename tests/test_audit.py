@@ -39,6 +39,14 @@ def _drawn(owner, mass):
     return {("X", v, j): m / unit[v] for (v, j), m in held.items()}
 
 
+def _polygon(vertices, edges, state=None, km=10.0) -> dict:
+    """A polygon graph whose every edge shares `km` of border (10 km: no neck) and whose ZCTAs
+    hold 100 km² of land each."""
+    return {"vertices": list(vertices), "edges": list(edges), "state": state or {},
+            "border": {tuple(sorted(e)): 1000.0 * km for e in edges}, "connectors": [],
+            "aland": dict.fromkeys(vertices, 1e8)}
+
+
 def _run(owner=None, mass=None, **over):
     """The clean toy run; `owner` and `mass` change the drawing, and the run's reported shares
     follow it, as a realizer's diagnostics would."""
@@ -55,7 +63,7 @@ def _run(owner=None, mass=None, **over):
         planned=_drawn(OWNER, MASS),
         reported=_drawn(owner, mass),
         graph={"vertices": RING, "edges": list(zip(RING, RING[1:] + RING[:1]))},
-        polygon={"vertices": RING, "edges": list(zip(RING, RING[1:] + RING[:1])), "state": UNIT},
+        polygon=_polygon(RING, list(zip(RING, RING[1:] + RING[:1])), UNIT),
         manifest=manifest,
         solver={"X": {"status": "optimal", "objective": 7.0, "bound": 7.0, "gap": 0.0,
                       "mip_rel_gap": 0.0}},
@@ -550,6 +558,30 @@ def test_an_edge_does_not_add_a_vertex():
     contiguity = audit.check_contiguity(run)
     assert contiguity.counts["gaps"] == 1 and "X/d1: ZIP b not in the graph (graph gap)" in contiguity.items
 
+def test_a_diagnostic_folder_says_so_and_its_band_row_gives_the_scenario_result():
+    """Sol's review of #121 (P1): `audit.diagnostic` reads `"diagnostic": true` from run.json or
+    the manifest; a diagnostic band's scorecard row reads "diagnostic band ±X% (scenario band ±Y%:
+    pass/fail)", the scenario's result computed apart."""
+    with tempfile.TemporaryDirectory() as d:
+        assert audit.diagnostic(d) is None
+        with open(os.path.join(d, "manifest.json"), "w") as fh:
+            json.dump({"diagnostic": False}, fh)
+        assert audit.diagnostic(d) is None
+        with open(os.path.join(d, "manifest.json"), "w") as fh:
+            json.dump({"diagnostic": True, "diagnostic_band": 0.15, "diagnostic_label": "backfilled"}, fh)
+        assert audit.diagnostic(d) == {"band": 0.15, "label": "backfilled"}
+    cells = [Cell("a", "f", "X", "d1", 1.0), Cell("b", "f", "X", "d2", 1.3)]
+    diag = audit.check_bands(audit.Run(cells, {"X": Channel(2, 1.15 * 0.85, 1.15 * 1.15)}))
+    scen = audit.check_bands(audit.Run(cells, {"X": Channel(2, 1.15 * 0.95, 1.15 * 1.05)}))
+    assert (diag.status, scen.status) == ("pass", "fail")
+    other = audit.Check("ZIP contiguity", "pass", "fine")
+    [o, row] = audit.diagnostic_band_row([other, diag], 0.15, scen, "5%")
+    assert o is other and row.status == "pass"
+    assert row.summary.startswith("diagnostic band ±15% (scenario band ±5%: fail): "), row.summary
+    assert "| final bands on drawn mass | pass | diagnostic band ±15% (scenario band ±5%: fail)" \
+        in audit.scorecard([row], "toy")
+
+
 def test_scorecard_lists_every_item():
     many = audit.Check("final bands on drawn mass", "fail", "51 breaches", [f"breach {i}" for i in range(51)])
     text = audit.scorecard([many], "toy")
@@ -610,7 +642,7 @@ def test_m1_excuses_a_blank_row_only_as_a_zero_opportunity_drop_of_a_dropped_cha
     """Re-review of #116 (P1): a blank row in a channel the run does not declare excuses its cell
     only when it is a zero-opportunity DROPPED row; one with opportunity, or with no DROPPED
     reason, or of unknown opportunity, leaves the cell unowned.  One cell owned twice in one channel counts once."""
-    p = {"vertices": ["z"], "edges": []}
+    p = _polygon(["z"], [])
     for cell, status in ((Cell("z", "f", "Y", "", 1.0), "fail"),
                          (Cell("z", "f", "Y", "", 0.0), "fail"),
                          (Cell("z", "f", "Y", "", 1.0, reason=audit.DROPPED), "fail"),
@@ -623,3 +655,172 @@ def test_m1_excuses_a_blank_row_only_as_a_zero_opportunity_drop_of_a_dropped_cha
                     {"X": Channel(2)}, polygon=p, fine=("f",))
     m1 = audit.check_m1(two)
     assert m1.status == "fail" and m1.counts["double"] == 1, m1.items
+
+
+# ------------------------------------------------------------------------------ M1's necks (#121)
+def _neck_world(rng, n: int) -> tuple:
+    """(vertices, polygon graph, mass): a path of `n` ZCTAs in two states plus random chords, each
+    edge's border drawn from widths around `NECK_W_KM`, and maybe one connector, with land areas
+    and masses that include zeros."""
+    vs = [f"v{i}" for i in range(n)]
+    edges = {tuple(sorted((vs[i], vs[i + 1]))) for i in range(n - 1)}
+    for _ in range(rng.randint(0, n)):
+        edges.add(tuple(sorted(rng.sample(vs, 2))))
+    edges = sorted(edges)
+    border = {e: 1000.0 * rng.choice([0.5, 2, 3, 4, 6, 9.5, 10, 12, 30]) for e in edges}
+    conn = [e for e in [tuple(sorted(rng.sample(vs, 2)))] if e not in border and rng.random() < 0.5]
+    poly = {"vertices": vs, "edges": edges + conn, "state": {v: rng.choice("AB") for v in vs},
+            "border": border, "connectors": conn,
+            "aland": {v: rng.choice([0.0, 1.0, 3.0, 20.0, 100.0]) for v in vs}}
+    return vs, poly, {v: rng.choice([0.0, 0.0, 0.5, 1.0, 10.0]) for v in vs}
+
+
+def _narrowest_by_enumeration(vs, poly, mass, by="area") -> float:
+    """The narrowest neck of the district `vs`, in km, by trying every vertex set (owner, 2026-10-06,
+    "Cut-off part = smaller side"): a connected part holding the share of land area (or of mass)
+    and no more than the rest, which may be in pieces, across a cut under 10 km, summed in floored
+    whole cm (`audit.border_cm`)."""
+    g = audit.NeckGraph(poly)
+    states = frozenset(poly["state"].values())
+    width = {e: audit.border_cm(m) for e, m in poly["border"].items()}
+    for a, b in poly["connectors"]:
+        width[a, b] = 0 if g.land_would_do(a, b, states) else math.inf
+    adj = collections.defaultdict(set)
+    for a, b in width:
+        adj[a].add(b)
+        adj[b].add(a)
+    weight = poly["aland"] if by == "area" else mass
+    total = sum(weight[v] for v in vs)
+
+    def qualifies(side):
+        held = sum(weight[v] for v in side)
+        return (held / total if total else 1.0) >= audit.NECK_SHARE and held <= total - held \
+            and len(audit._components(side, adj)) == 1
+    best = math.inf
+    for bits in range(1, 2 ** len(vs) - 1):
+        side = {v for i, v in enumerate(vs) if bits >> i & 1}
+        cut = sum(k for (a, b), k in width.items() if (a in side) != (b in side))
+        if cut < audit.NECK_W_CM and qualifies(side):
+            best = min(best, cut / 1e5)
+    return best
+
+
+def test_the_neck_search_is_exact_against_enumeration():
+    """`district_necks` is exact (its docstring): on 300 small random districts, by land area (M1)
+    and by mass (the diagnostic list), it finds a neck exactly when trying every vertex set finds
+    one, and the narrowest; the side it cuts off is connected and holds no more than the rest."""
+    import random
+    rng = random.Random(121)
+    for _ in range(300):
+        vs, poly, mass = _neck_world(rng, rng.randint(3, 9))
+        if len(audit._components(set(vs), audit.NeckGraph(poly).border)) != 1:
+            continue
+        for by in ("area", "mass"):
+            got = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), by=by)
+            want = _narrowest_by_enumeration(vs, poly, mass, by)
+            assert all(nk.status == "proved" for nk in got), got
+            width = min((nk.width_km for nk in got), default=math.inf)
+            assert width == want or abs(width - want) < 1e-9, (by, poly, mass, got, want)
+            weight = poly["aland"] if by == "area" else mass
+            adj = audit.adjacency(poly)
+            for nk in got:
+                held = sum(weight[v] for v in nk.zips)
+                assert len(audit._components(set(nk.zips), adj)) == 1, (by, poly, nk)
+                assert held <= sum(weight[v] for v in vs) - held, (by, poly, nk)
+
+
+def test_a_hub_with_many_small_lobes_is_a_neck():
+    """Sol's review of #121 (P0), owner ruling 2026-10-06 ("Cut-off part = smaller side"): a hub
+    holding 6% of the land with 24 lobes of 94/24 % each, every lobe on a 100 m thread, is a neck:
+    the part cut off is the smaller side and the rest may lie in pieces under the share."""
+    lobes = [f"l{i:02d}" for i in range(24)]
+    poly = {"vertices": ["h"] + lobes, "edges": [("h", z) for z in lobes],
+            "state": dict.fromkeys(["h"] + lobes, "MA"), "border": {("h", z): 100.0 for z in lobes},
+            "connectors": [], "aland": {"h": 6.0, **{z: 94 / 24 for z in lobes}}}
+    [nk] = audit.district_necks({"h", *lobes}, {}, audit.NeckGraph(poly))
+    assert nk.status == "proved" and "h" in nk.zips and audit.NECK_SHARE <= nk.area <= 0.5, nk
+    # the narrowest: the hub with 11 lobes (49.1%), cut off by the 13 other threads
+    assert abs(nk.width_km - 1.3) < 1e-9 and len(nk.zips) == 12, nk
+
+
+def test_neck_widths_are_floored_whole_centimetres():
+    """Sol's review of #121 (P2), owner's rule "narrower than 10 km": widths are floored to whole
+    cm, so a border under 10 km is a neck however close (9.999999995 km floors to 999,999 cm),
+    exactly 10 km is not, nor is 10.001 km.  Flooring errs only towards a neck: three borders of
+    3.333334 km, 10.000002 km together, floor to 333,333 cm each, 999,999 cm, and are listed as a
+    neck (the over-report side).  A border shipped to the cm converts exactly."""
+    assert audit.border_cm(1234.56) == 123456 and audit.border_cm(0.29) == 29   # 0.29 * 100 < 29 in floats
+    for km, neck in ((9.999999995, True), (10.0, False), (10.001, False)):
+        poly = {"vertices": ["a", "b"], "edges": [("a", "b")], "state": {"a": "MA", "b": "MA"},
+                "border": {("a", "b"): 1000.0 * km}, "connectors": [], "aland": {"a": 1.0, "b": 1.0}}
+        got = audit.district_necks({"a", "b"}, {}, audit.NeckGraph(poly))
+        assert [nk.status for nk in got] == (["proved"] if neck else []), (km, got)
+    vs = ["a", "b1", "b2", "b3"]                # a reaches the rest through three borders
+    poly = {"vertices": vs, "edges": [("a", "b1"), ("a", "b2"), ("a", "b3"), ("b1", "b2"), ("b2", "b3")],
+            "state": dict.fromkeys(vs, "MA"), "connectors": [], "aland": dict.fromkeys(vs, 1.0),
+            "border": {("a", "b1"): 3333.334, ("a", "b2"): 3333.334, ("a", "b3"): 3333.334,
+                       ("b1", "b2"): 2e4, ("b2", "b3"): 2e4}}
+    [nk] = audit.district_necks(set(vs), {}, audit.NeckGraph(poly))
+    assert (nk.status, nk.zips, nk.width_km) == ("proved", ("a",), 9.99999), nk
+
+
+def test_a_neck_search_out_of_time_is_listed_never_passed():
+    """A search stopped by its time limit lists the district as an `unresolved` neck: the check
+    may over-report, never under-report."""
+    import random
+    rng = random.Random(3)
+    for _ in range(100):
+        vs, poly, mass = _neck_world(rng, rng.randint(5, 9))
+        for by in ("area", "mass"):
+            full = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), by=by)
+            cut_short = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), time_limit=0.0, by=by)
+            assert len(cut_short) >= len(full), (poly, mass)
+            assert all(nk.status in ("proved", "unresolved") for nk in cut_short)
+    nk = audit.Neck(4.0, (), math.nan, math.nan, (), "unresolved")
+    assert audit.neck_item("X", "X_01", nk).endswith("listed as a neck")
+
+
+def test_land_would_do_is_the_narrowest_land_cut_by_enumeration():
+    """`NeckGraph.land_would_do` (owner, 2026-10-05, "Land must be a real passage"): on 300 small
+    random worlds, a pair is joined by land at least 10 km wide exactly when every set of the
+    states' ZCTAs holding one and not the other has at least 10 km of polygon border across it."""
+    import random
+    rng = random.Random(1210)
+    for _ in range(300):
+        vs, poly, _ = _neck_world(rng, rng.randint(3, 9))
+        states = frozenset(rng.sample("AB", rng.randint(1, 2)))
+        inside = [v for v in vs if poly["state"][v] in states]
+        g = audit.NeckGraph(poly)
+        for a, b in [tuple(rng.sample(vs, 2)) for _ in range(3)]:
+            narrowest = 0.0 if a not in inside or b not in inside else math.inf
+            if a in inside and b in inside:
+                for bits in range(2 ** len(inside)):
+                    side = {v for i, v in enumerate(inside) if bits >> i & 1}
+                    if a in side and b not in side:
+                        narrowest = min(narrowest, sum(m / 1000.0 for (x, y), m in poly["border"].items()
+                                                       if x in inside and y in inside and (x in side) != (y in side)))
+            assert g.land_would_do(a, b, states) is (narrowest >= audit.NECK_W_KM), (poly, a, b, states, narrowest)
+
+
+def test_a_connector_is_a_neck_only_where_land_would_do():
+    """Owner, 2026-10-05 (#121): an approved connector is unlimited, unless its sides are joined by
+    land within the district's states; a polygon graph without border lengths leaves M1 unverified."""
+    poly = {"vertices": ["m1", "m2", "y1"], "edges": [("m1", "y1"), ("m2", "y1"), ("m1", "m2")],
+            "state": {"m1": "MA", "m2": "MA", "y1": "NY"}, "border": {("m1", "y1"): 2e4, ("m2", "y1"): 2e4},
+            "connectors": [("m1", "m2")], "aland": {"m1": 1e8, "m2": 1e8, "y1": 1e8}}
+    g = audit.NeckGraph(poly)
+    mass = {"m1": 1.0, "m2": 1.0}
+    assert audit.district_necks({"m1", "m2"}, mass, g) == []         # land runs only through NY
+    assert g.land_would_do("m1", "m2", frozenset({"MA", "NY"}))
+    [nk] = audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(dict(poly, state={**poly["state"], "y1": "MA"})))
+    assert (nk.width_km, nk.cut, nk.status) == (0.0, (("m1", "m2", 0.0),), "proved")
+    # land must be a real passage (owner, 2026-10-05, "Land must be a real passage"): through a
+    # strip under 10 km the connector keeps its full width; at 10 km it is 0 km wide
+    for km, neck in ((9.999, False), (10.0, True)):
+        strip = dict(poly, state={**poly["state"], "y1": "MA"}, border={("m1", "y1"): 1e3 * km, ("m2", "y1"): 2e4})
+        assert audit.NeckGraph(strip).land_would_do("m1", "m2", frozenset({"MA"})) is neck
+        assert len(audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(strip))) == neck
+    cells = [Cell("m1", "f", "X", "D1", 1.0), Cell("m2", "f", "X", "D1", 1.0), Cell("y1", "f", "X", "D2", 1.0)]
+    bare = {k: poly[k] for k in ("vertices", "edges", "state")}
+    m1 = audit.check_m1(Run(cells, {"X": Channel(2)}, polygon=bare, fine=("f",)))
+    assert m1.status == "unverified" and m1.counts["necks"] is None, m1.summary

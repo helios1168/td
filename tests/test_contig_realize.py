@@ -167,6 +167,32 @@ def _repair_module():
     return sys.modules["contig_repair"]
 
 
+def test_a_child_of_a_diagnostic_folder_is_diagnostic():
+    """Sol's review of #121 (P1): `run.write_manifest` marks a run whose parent is diagnostic
+    diagnostic too, so a repair of a `--diag-final-delta` folder is never a deliverable."""
+    import json
+    import tempfile
+    from td import audit
+    run = _repair_module().run
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = os.path.join(tmp, "spec.toml")
+        with open(spec, "w") as fh:
+            fh.write("")
+        parent, plain, child = (os.path.join(tmp, n) for n in ("diag", "plain", "child"))
+        run.write_manifest(parent, "contig_repair", spec, spec, {}, diagnostic=True,
+                           diagnostic_band=0.15, diagnostic_label="diagnostic band ±15%")
+        run.write_manifest(plain, "contig_repair", spec, spec, {})
+        run.write_manifest(child, "contig_repair", spec, spec, {}, parent=parent)
+        assert audit.diagnostic(parent) == {"band": 0.15, "label": "diagnostic band ±15%"}
+        assert audit.diagnostic(plain) is None
+        assert audit.diagnostic(child) == {"band": 0.15, "label": f"child of the diagnostic folder {parent}"}
+        assert audit.diagnostic(os.path.join(tmp, "grandchild")) is None
+        run.write_manifest(os.path.join(tmp, "grandchild"), "contig_repair", spec, spec, {}, parent=child)
+        assert audit.diagnostic(os.path.join(tmp, "grandchild"))["band"] == 0.15
+        with open(os.path.join(child, "manifest.json")) as fh:
+            assert json.load(fh)["diagnostic"] is True
+
+
 def test_a_window_solve_reconnects_the_power_diagrams_detached_piece():
     """`repair.py`'s window repair: the power diagram's U map, where CT+NY holds a detached piece
     at the top of NY's right arm, is repaired by an exact solve on a window around the piece, the
@@ -309,3 +335,178 @@ def test_the_report_gives_a_repaired_channel_the_repairs_band():
         assert (a["delta_needed"], a["repair_delta"]) == (None, 0.1)
         assert (b["delta_needed"], b["repair_delta"]) == (0.05, None)
         assert "| 0.1 (repair) |" in report.table([a]) and "| 0.05 |" in report.table([b])
+
+
+def _least_border(inst, plan, border) -> float:
+    """The least border between the U toy's two districts over every connected drawing in the band,
+    by trying every split of NY's 13 ZCTAs (the definition of the border term's optimum)."""
+    units, ch = inst.units, inst.channels["X"]
+    adj, m = units.zip_adj, ch.m
+    ny = sorted(units.zips["NY"])
+    names = {cp.support and next(iter(cp.support - {"NY"})): cp.name for cp in plan.copies}
+    lo, hi = ch.tau * (1 - plan.delta), ch.tau * (1 + plan.delta)
+    best = float("inf")
+    for mask in range(2 ** len(ny)):
+        owner = {"a0": names["CT"], "b0": names["NJ"]}
+        owner.update({z: names["CT"] if mask >> i & 1 else names["NJ"] for i, z in enumerate(ny)})
+        mass = {}
+        for z, j in owner.items():
+            mass[j] = mass.get(j, 0.0) + m.get(z, 0.0)
+        if not all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()):
+            continue
+        if any(len(cs) > 1 for cs in _pieces(owner, inst).values()):
+            continue
+        best = min(best, sum(border.get((a, b), 1.0) for a in owner for b in adj[a]
+                             if a < b and owner[a] != owner[b]))
+    return best
+
+
+def test_the_shape_term_draws_the_least_border_between_districts():
+    """#121: the shape tier charges the border between districts (each edge 1 km without a border
+    table, the bottom row 5 km with one), so the drawing's reported `border_km` is the least over
+    every connected drawing in the band, and the moment tie-break is reported beside it."""
+    draw = _draw()
+    inst, xy, plan = _u_toy()
+    adj = inst.units.zip_adj
+    bottom = {(a, b): 5.0 if a[1:] in ("00", "10", "20", "30") and b[1:] in ("10", "20", "30", "40")
+              and a[2] == b[2] == "0" else 1.0 for a in adj for b in adj[a] if a < b}
+    assert sorted(e for e, x in bottom.items() if x == 5.0) == [
+        ("v00", "v10"), ("v10", "v20"), ("v20", "v30"), ("v30", "v40")]
+    for border in (None, bottom):
+        res = draw.draw(inst, plan, xy, border=border, log=lambda *_: None)
+        assert res.status == "optimal" and res.connected
+        [g] = res.groups
+        assert abs(g.border_km - _least_border(inst, plan, border or {})) < 1e-9, (border, g.owner)
+        assert g.moment is not None and g.report()["border_km"] == g.border_km
+
+
+def _finger_toy():
+    """NY is a 4 × 3 grid of free ZCTAs (mass 1, 1 km² each); CT's a0 (mass 2) touches the left
+    column and NJ's b0 (4.6) the right one, every edge 6 km of border.  The drawing gives CT the
+    two left columns and (2, 0), a finger on one 6 km edge holding 1/8 of CT's land: a neck (#121)."""
+    pts = [(x, y) for x in range(4) for y in range(3)]
+    name = {q: f"v{q[0]}{q[1]}" for q in pts}
+    edges = [(name[a], name[b]) for a in pts for b in pts
+             if a < b and abs(a[0] - b[0]) + abs(a[1] - b[1]) == 1]
+    edges += [("a0", name[0, y]) for y in range(3)] + [("b0", name[3, y]) for y in range(3)]
+    xy = {name[q]: (float(q[0]), float(q[1])) for q in pts}
+    xy.update({"a0": (-1.0, 1.0), "b0": (4.0, 1.0)})
+    mass = dict.fromkeys(xy, 1.0)
+    mass.update({"a0": 2.0, "b0": 4.6})
+    inst, xym = tr._toy({"NY": [name[q] for q in pts], "CT": ["a0"], "NJ": ["b0"]}, edges, mass,
+                        xy, {"NY": "free"}, k=2, delta=0.15, final_delta=0.15)
+    plan = tr._plan(inst, [({"CT", "NY"}, {"CT": 1.0, "NY": 7 / 12}),
+                           ({"NJ", "NY"}, {"NJ": 1.0, "NY": 5 / 12})])
+    ct, nj = sorted(cp.name for cp in plan.copies)
+    owner = {z: nj for z in xy}
+    owner.update({z: ct for z in ["a0", "v00", "v01", "v02", "v10", "v11", "v12", "v20"]})
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {tuple(sorted(e)): 6000.0 for e in edges}, "connectors": [],
+               "aland": dict.fromkeys(xy, 1e6)}
+    return inst, xym, plan, owner, polygon, ct
+
+
+def test_the_window_repair_removes_a_neck_with_the_border_term():
+    """#121: repair treats a neck like a detached piece, a window around the side it cuts off
+    re-solved with the border term; the finger goes and no district keeps a neck."""
+    repair = _repair_module()
+    inst, xy, plan, owner, polygon, ct = _finger_toy()
+    m = inst.channels["X"].m
+    ng = audit.NeckGraph(polygon)
+    [(j, side, nk)] = repair.necks(owner, m, ng)
+    assert (j, set(side), nk.width_km) == (ct, {"v20"}, 6.0)
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    border = repair.draw.border_km(polygon)
+    fixed, attempts = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), h0=1,
+                                            max_zctas=100, time_limit=60.0, log=lambda *_: None,
+                                            keep_support=True, border=border, ng=ng)
+    assert repair.necks(fixed, m, ng) == [] and repair.detached(fixed, inst.units.zip_adj, m) == []
+    kept = [r for r in attempts if r.get("kind") == "neck" and r["kept"]]
+    assert kept and kept[0]["necks_before"] > kept[0]["necks_after"]
+    assert repair.draw.cut_border(fixed, inst.units.zip_adj, border) \
+        < repair.draw.cut_border(owner, inst.units.zip_adj, border)
+    lo, hi = inst.channels["X"].final_band
+    mass = {}
+    for z, k in fixed.items():
+        mass[k] = mass.get(k, 0.0) + m.get(z, 0.0)
+    assert all(lo - 1e-9 <= x <= hi + 1e-9 for x in mass.values()), mass
+
+
+def _bridge_toy():
+    """CT's a0 and NJ's b0 (mass 2 each) and NY's f and g (mass 1, free); every ZCTA 1 km², the
+    final band (2.55, 3.45) gives each district one of f, g.  Borders: a0-f 1 km, a0-g 30, f-g 5,
+    f-b0 12, g-b0 50.  CT with f is the least border (47 km against 56) but reaches f through
+    1 km, a neck; CT with g has none."""
+    edges = [("a0", "f"), ("a0", "g"), ("f", "g"), ("b0", "f"), ("b0", "g")]
+    km = {("a0", "f"): 1.0, ("a0", "g"): 30.0, ("f", "g"): 5.0, ("b0", "f"): 12.0, ("b0", "g"): 50.0}
+    xy = {"a0": (0.0, 0.0), "f": (1.0, 1.0), "g": (1.0, -1.0), "b0": (2.0, 0.0)}
+    mass = {"a0": 2.0, "b0": 2.0, "f": 1.0, "g": 1.0}
+    inst, xym = tr._toy({"NY": ["f", "g"], "CT": ["a0"], "NJ": ["b0"]}, edges, mass, xy,
+                        {"NY": "free"}, k=2, delta=0.15, final_delta=0.15)
+    plan = tr._plan(inst, [({"CT", "NY"}, {"CT": 1.0, "NY": 0.5}),
+                           ({"NJ", "NY"}, {"NJ": 1.0, "NY": 0.5})])
+    ct, nj = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": dict.fromkeys(xy, 1e6)}
+    owner = {"a0": ct, "f": ct, "b0": nj, "g": nj}
+    return inst, xym, plan, owner, polygon, ct, nj
+
+
+def test_a_neck_cut_removes_the_neck_the_border_term_keeps():
+    """#121: on the bridge toy the window's border-term optimum is CT through the 1 km edge, a
+    neck; the neck-aware window (`ng`) cuts it (`draw.NeckCut`) and its optimum, over the
+    cut-augmented model, is CT with g: no neck, in the band."""
+    repair = _repair_module()
+    inst, xy, plan, owner, polygon, ct, nj = _bridge_toy()
+    m = inst.channels["X"].m
+    ng = audit.NeckGraph(polygon)
+    [(j, _, nk)] = repair.necks(owner, m, ng)
+    assert (j, nk.width_km) == (ct, 1.0)
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    border = repair.draw.border_km(polygon)
+    W = {"f", "g"}
+    plain = repair.solve_window(inst, plan, owner, W, p, 30.0, True, log=lambda *_: None,
+                                keep_support=True, repairing={ct}, border=border)
+    assert plain.status == "optimal" and plain.owner == {"f": ct, "g": nj}, plain.owner
+    assert plain.neck_cuts == 0
+    aware = repair.solve_window(inst, plan, owner, W, p, 30.0, True, log=lambda *_: None,
+                                keep_support=True, repairing={ct}, border=border, ng=ng)
+    assert aware.status == "optimal" and aware.owner == {"f": nj, "g": ct}, (aware.owner, aware.note)
+    assert aware.neck_cuts >= 1 and aware.neck_exempt == []
+    assert repair.necks({**owner, **aware.owner}, m, ng) == []
+    assert abs(aware.border_km - 56.0) < 1e-9 and abs(plain.border_km - 47.0) < 1e-9
+
+
+def test_a_neck_cut_holds_for_every_drawing_without_a_neck():
+    """#121: every `draw.NeckCut` built from a necked drawing of the finger toy's 12 free ZCTAs,
+    its borders drawn in 3-30 km and its land in 0.3-3 km² (seeded), holds on every drawing in
+    which both districts are connected and have no neck (the cut's validity, by enumeration), and
+    each is broken by the drawing it was built from."""
+    import random
+    repair = _repair_module()
+    inst, _, plan, owner, polygon, ct = _finger_toy()
+    rnd = random.Random(121)
+    polygon["border"] = {e: 1000.0 * rnd.uniform(3.0, 30.0) for e in sorted(polygon["border"])}
+    polygon["aland"] = {z: 1e6 * rnd.uniform(0.3, 3.0) for z in sorted(polygon["aland"])}
+    nj = next(cp.name for cp in plan.copies if cp.name != ct)
+    m = inst.channels["X"].m
+    ng = audit.NeckGraph(polygon)
+    W = sorted(z for z in owner if z.startswith("v"))
+    adj = {z: repair._nbrs(ng, z) for z in owner}
+    cuts, clean = [], []
+    for mask in range(1, 2 ** len(W) - 1):
+        own = {z: ct if mask >> i & 1 else nj for i, z in enumerate(W)}
+        full = {**owner, **own}
+        sides = [{z for z, k in full.items() if k == j} for j in (ct, nj)]
+        if any(len(repair.draw.components(s, adj)) > 1 for s in sides):
+            continue
+        built, labels = repair.neck_cuts("X", owner, set(W), m, ng, own, {ct, nj})
+        if labels:
+            assert built and not any(c.holds(own) for c in built), labels
+            cuts += built
+        else:
+            clean.append(own)
+    assert len(cuts) > 100 and len(clean) > 30, (len(cuts), len(clean))
+    for c in cuts:
+        assert all(c.holds(own) for own in clean), c.label

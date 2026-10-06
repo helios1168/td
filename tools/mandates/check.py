@@ -5,13 +5,16 @@
 
 `m1(run_dir)` reads a drawn run's `ledger.csv` and `districts.csv` (the layout `python -m td run`
 writes) and returns M1's verdict: `td.audit.check_m1` on the ledger with the committed polygon graph
-and its owner-approved connectors only (`td.geo.polygon_graph`).  It is strict: a detached piece
-or a CONUS ZCTA not owned once per fine channel fails the run, with no tolerance.  The fine
+and its owner-approved connectors only (`td.geo.polygon_graph`).  It is strict: a detached piece,
+a neck (#121) or a CONUS ZCTA not owned once per fine channel fails the run, with no tolerance;
+`necks` lists each neck as `td.audit.neck_item` words it, and `mass_necks` the necks by mass
+the check lists beside M1 for the owner (#121), which fail nothing.  The fine
 channels are the scenario's, from `run.json` (#116); a run from before #116 has none there, and
 its summary says the ledger's were read instead.  It also gives
 each district's largest detached piece as the looks scorer sizes it (`tools/looks/score.py`), in
 mass over τ_c: on the ledger, which owns every ZCTA since #116, so no display fill sizes a piece
-and the scorer's pieces are the check's.  The CLI prints one line per run and exits 1 when any run fails.
+and the scorer's pieces are the check's.  The CLI prints one line per run and exits 1 when any run fails
+or is diagnostic (#121, `td.audit.diagnostic`: printed DIAGNOSTIC, never a deliverable).
 
 `--rescore <root>` gates and scores every run folder under `root` (a folder with `ledger.csv` and
 `districts.csv`), writes `TABLE.md` and `rescore.json` to `--out`, and with `--write-register`
@@ -57,7 +60,8 @@ def run_dirs(root: str) -> list:
 def m1(run_dir: str, g=None) -> dict:
     """M1 on one run folder: `status` (`pass`, `fail` or `unverified`), the strict check, the
     scorer's pieces and the largest (`largest`: channel, district, ZIPs, mass / τ, states), or
-    None when no district is in pieces.  `g` defaults to the committed geography."""
+    None when no district is in pieces; `diagnostic`, `td.audit.diagnostic`'s record or None (a
+    diagnostic folder is never a deliverable: the CLI prints DIAGNOSTIC and exits 1, #121).  `g` defaults to the committed geography."""
     g = g or score.geography()
     ledger, districts = _read(run_dir, "ledger.csv"), _read(run_dir, "districts.csv")
     ks = {}
@@ -71,7 +75,10 @@ def m1(run_dir: str, g=None) -> dict:
             pieces += [(ch, *p) for p in looks["pieces"]]
     largest = max(pieces, key=lambda p: (p[3], p[2], p[1]), default=None)
     return {"run": run_dir, "status": check.status, "summary": check.summary, "check": check,
-            "scorer_pieces": len(pieces), "largest": largest}
+            "diagnostic": audit.diagnostic(run_dir),
+            "scorer_pieces": len(pieces), "largest": largest,
+            "necks": [i for i in check.items if score.NECK.search(i)],
+            "mass_necks": [i for i in check.items if audit.MASS_NECK in i]}
 
 
 def _piece(p) -> str:
@@ -91,8 +98,10 @@ def rescore(root: str, g=None) -> dict:
         except Exception as e:              # a run the scorer cannot read still gets M1
             s, err = None, f"{type(e).__name__}: {e}"
         rows.append({"run": os.path.relpath(d, root), "m1": gate["status"],
+                     "diagnostic": gate["diagnostic"],
                      "summary": gate["summary"], "largest": gate["largest"],
                      "scorer_pieces": gate["scorer_pieces"], **gate["check"].counts,
+                     "neck_items": gate["necks"], "mass_neck_items": gate["mass_necks"],
                      "score": s, "scorer_error": err})
     scored = score.rank([r["score"] for r in rows if r["score"] is not None])
     order = {id(s): i for i, s in enumerate(scored, 1)}
@@ -111,13 +120,14 @@ def table(res: dict) -> str:
              "", f"{len(rows)} runs, {n_fail} fail M1, {len(rows) - n_fail} do not fail.  M1 is strict, "
              "on the ledger and the committed polygon graph with approved connectors only, with no "
              "display fill (#116); the largest piece is in mass over τ_c.", "",
-             "| rank | run | M1 | largest detached piece | districts in pieces / pieces / channel "
-             "ZCTAs with no owner / (ZCTA, fine channel) cells with no row |",
-             "|---|---|---|---|---|"]
+             "| rank | run | M1 | largest detached piece | necks | districts in pieces / pieces / "
+             "channel ZCTAs with no owner / (ZCTA, fine channel) cells with no row |",
+             "|---|---|---|---|---|---|"]
     for r in rows:
-        lines.append(f"| {r['rank'] or '-'} | `{r['run']}` | {r['m1']} | {_piece(r['largest'])} | "
-                     f"{r.get('split', '-')} / {r.get('pieces', '-')} / {r.get('no_owner', '-')} / "
-                     f"{r.get('no_row', '-')} |")
+        diag = " DIAGNOSTIC" if r.get("diagnostic") else ""
+        lines.append(f"| {r['rank'] or '-'} | `{r['run']}` | {r['m1']}{diag} | {_piece(r['largest'])} | "
+                     f"{r.get('necks', '-')} | {r.get('split', '-')} / {r.get('pieces', '-')} / "
+                     f"{r.get('no_owner', '-')} / {r.get('no_row', '-')} |")
     errors = [r for r in rows if r["scorer_error"]]
     if errors:
         lines += ["", "Not ranked (the scorer could not read the run):", ""]
@@ -134,8 +144,10 @@ def latest_value(res: dict) -> str:
     if best:
         text += (f" Best map, the scorer's rank 1: `{best['run']}`, M1 {best['m1']}, largest "
                  f"detached piece {_piece(best['largest'])}; on the ledger {best.get('pieces', 0)} "
-                 f"detached pieces, {best.get('no_owner', 0)} channel ZCTAs with no owner and "
-                 f"{best.get('no_row', 0)} (ZCTA, fine channel) cells with no row.")
+                 f"detached pieces, {best.get('necks', 0)} necks, {best.get('no_owner', 0)} channel "
+                 f"ZCTAs with no owner and {best.get('no_row', 0)} (ZCTA, fine channel) cells with "
+                 "no row.")
+    text += f" Runs with a neck (#121): {sum(1 for r in rows if r.get('necks'))} of {len(rows)}."
     if small:
         text += f" Smallest largest piece across runs: {_piece(small['largest'])}, `{small['run']}`."
     return text
@@ -185,13 +197,16 @@ def main(argv=None) -> int:
         print(f"\nM1 latest value: {value}")
         if a.write_register:
             write_latest_value(value)
-        return 1 if any(r["m1"] != "pass" for r in res["rows"]) else 0
+        return 1 if any(r["m1"] != "pass" or r["diagnostic"] for r in res["rows"]) else 0
     worst = 0
     for d in a.run_dirs:
         got = m1(d)
-        print(f"{d}: M1 {got['status']}: {got['summary']}; largest detached piece "
-              f"{_piece(got['largest'])}")
-        worst = max(worst, got["status"] != "pass")
+        diag = got["diagnostic"]
+        print(f"{d}: {'DIAGNOSTIC (' + (diag['label'] or 'diagnostic band') + '), not a deliverable; ' if diag else ''}"
+              f"M1 {got['status']}: {got['summary']}; largest detached piece {_piece(got['largest'])}")
+        for n in got["necks"] + got["mass_necks"]:
+            print(f"  {n}")
+        worst = max(worst, got["status"] != "pass" or diag is not None)
     return worst
 
 

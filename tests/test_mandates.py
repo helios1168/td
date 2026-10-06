@@ -8,7 +8,12 @@ M1's named check must exist and must fail each committed broken fixture under
 `tests/fixtures/m1/` (#108): a detached piece, a corner-only touch, a zero-opportunity ZCTA with no
 owner, and an island joined only by a connector the owner has not approved; it passes the connected
 one.  The fixture world is eleven 10 km squares (`zctas.csv`) whose graph `geo.polygon_edges`
-builds, so the corner rule is the one the committed graph uses.
+builds, so the corner rule is the one the committed graph uses.  The neck cases (#121) bring their
+own worlds (`<case>/zctas.csv`): a part joined by a 5 km passage fails and the same shape at
+10 km passes, a part under 5% on a 2 km passage passes, a ferry with no land alternative within
+the district's states passes, a bridge whose sides land within the state joins fails, a dense
+ZCTA of small area on a short border passes (M1 is by land area; it is listed as a mass neck),
+and two parts under 5% each, on short borders on either side, do not combine into a neck.
 
 A trigger is a function `trigger_<name>()` in this module.  It returns the reason the mandate
 must come back once its return condition holds, and None while it does not.  The 2026-09-01
@@ -20,6 +25,7 @@ from __future__ import annotations
 import csv
 import gzip
 import importlib.util
+import json
 import os
 import re
 import tempfile
@@ -152,8 +158,12 @@ def test_m1_keeps_the_owners_terms():
     """The owner's 2026-10-04 terms; a change to them is an owner decision and edits this test."""
     definition = _register()["M1"]["definition"]
     for term in ("2025 TIGER ZCTA polygons", "rook", "positive length", "corner does not count",
-                 "connector list", "zero-opportunity ZIPs", "No tolerance", "same polygon graph"):
+                 "connector list", "zero-opportunity ZIPs", "No tolerance", "same polygon graph",
+                 "narrower than 10 km", "one connected part of it holding at least 5% of its land",
+                 "has width 0"):
         assert term in definition, f"M1's definition lost {term!r}"
+    from td import audit           # the check's constants are the owner's (#121)
+    assert (audit.NECK_W_KM, audit.NECK_SHARE) == (10.0, 0.05)
 
 
 # ------------------------------------------------------------------------------ fixtures
@@ -247,7 +257,10 @@ def test_full_zcta_graph_trigger_does_not_hold_on_a_sold_zip_graph():
 
 # ------------------------------------------------------------------------------ M1's check (#108)
 FIXTURES = os.path.join(ROOT, "tests", "fixtures", "m1")
-BROKEN = ("detached_piece", "corner_only", "uncovered_zero_opportunity", "unapproved_crossing")
+BROKEN = ("detached_piece", "corner_only", "uncovered_zero_opportunity", "unapproved_crossing",
+          "neck_narrow", "connector_land_would_do")
+PASSING = ("connected", "neck_wide", "neck_small_part", "connector_needed", "neck_dense_small_zcta",
+           "neck_two_small_parts", "connector_land_too_narrow")
 
 
 def _gate():
@@ -263,7 +276,8 @@ def _world(gate, case: str):
     squares plus the case's approved connectors; its ZIP graph is the same rook graph."""
     import shapely
     from td import geo
-    with open(os.path.join(FIXTURES, "zctas.csv"), newline="") as fh:
+    own = os.path.join(FIXTURES, case, "zctas.csv")     # a neck case brings its own world
+    with open(own if os.path.exists(own) else os.path.join(FIXTURES, "zctas.csv"), newline="") as fh:
         rows = list(csv.DictReader(fh))
     ids, geoms = [r["zcta"] for r in rows], shapely.from_wkt([r["wkt"] for r in rows])
     got = geo.polygon_edges(ids, geoms)
@@ -273,8 +287,11 @@ def _world(gate, case: str):
     for a, b, m in got["edges"]:
         edge[a][b] = edge[b][a] = m / 1000.0
     xy = {z: (g.centroid.x / 1000.0, g.centroid.y / 1000.0) for z, g in zip(ids, geoms)}
+    approved = geo.approved_connectors(connectors)
     polygon = {"vertices": ids, "state": state,
-               "edges": [(a, b) for a, b, _ in got["edges"]] + geo.approved_connectors(connectors)}
+               "edges": [(a, b) for a, b, _ in got["edges"]] + approved,
+               "border": {(a, b): m for a, b, m in got["edges"]}, "connectors": approved,
+               "aland": {z: g.area for z, g in zip(ids, geoms)}}
     return gate.score.Geography(state, xy, edge, polygon), got
 
 
@@ -284,6 +301,34 @@ def test_m1_names_a_check_that_exists():
     for ref in ("td/audit.py::check_m1", "tools/mandates/check.py::m1"):
         assert f"`{ref}`" in check, (ref, check)
     assert _check_paths_exist(check) == [], check
+
+
+def test_the_gate_prints_diagnostic_and_fails_a_diagnostic_folder():
+    """Sol's review of #121 (P1): M1's gate CLI prints DIAGNOSTIC for a diagnostic folder and
+    exits 1, though its M1 passes; the same folder unmarked exits 0."""
+    import contextlib
+    import io
+    import shutil
+    gate = _gate()
+    g, _ = _world(gate, "connected")
+    check = gate.m1
+    gate.m1 = lambda d, _g=None: check(d, g)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            d = os.path.join(tmp, "run")
+            shutil.copytree(os.path.join(FIXTURES, "connected"), d)
+            for diag, code in ((None, 0), ({"diagnostic": True, "diagnostic_band": 0.15,
+                                            "diagnostic_label": "backfilled"}, 1)):
+                if diag:
+                    with open(os.path.join(d, "run.json"), "w") as fh:
+                        json.dump(diag, fh)
+                out = io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    got = gate.main([d])
+                assert got == code and ("DIAGNOSTIC (backfilled)" in out.getvalue()) == bool(diag), out.getvalue()
+                assert "M1 pass" in out.getvalue(), out.getvalue()
+    finally:
+        gate.m1 = check
 
 
 def test_the_corner_fixture_touches_at_a_point_and_is_no_edge():
@@ -296,12 +341,14 @@ def test_the_corner_fixture_touches_at_a_point_and_is_no_edge():
 def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
     gate = _gate()
     got = {}
-    for case in BROKEN + ("connected",):
+    for case in BROKEN + PASSING:
         g, _ = _world(gate, case)
         got[case] = gate.m1(os.path.join(FIXTURES, case), g)
-    assert got["connected"]["status"] == "pass", got["connected"]["check"].items
+    assert all(got[c]["status"] == "pass" for c in PASSING), {c: got[c]["check"].items for c in PASSING}
     assert all(got[c]["status"] == "fail" for c in BROKEN), {c: got[c]["summary"] for c in BROKEN}
-    items = {c: got[c]["check"].items for c in got}
+    from td import audit
+    items = {c: [i for i in got[c]["check"].items if audit.MASS_NECK not in i] for c in got}
+    listed = {c: [i for i in got[c]["check"].items if audit.MASS_NECK in i] for c in got}
     counts = {c: got[c]["check"].counts for c in got}
     tau = "0.182 τ"                                     # 1 of 11 over K = 2
     assert items["detached_piece"] == [
@@ -316,3 +363,22 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
     # the scorer's largest piece is on the ledger (#116): the island is detached, the blank no piece
     assert got["unapproved_crossing"]["largest"] == ("X", "X_02", 1, 0.1818, "IS")
     assert got["uncovered_zero_opportunity"]["largest"] is None
+    # necks (owner, 2026-10-05, #121): a 5 km passage fails, a 10 km one passes, and a connector
+    # whose sides land would join within the district's states is a passage 0 km wide
+    assert items["neck_narrow"] == [
+        "X/X_01: neck 5.00 km wide cuts off 1 ZIPs (10003...), 46.2% of its land area and 33.3% of "
+        "its mass; cut 10002-10003 5.00 km"]
+    assert items["connector_land_would_do"] == [
+        "X/X_01: neck 0.00 km wide cuts off 1 ZIPs (10001...), 50.0% of its land area and 50.0% of "
+        "its mass; cut 10001-10003 0.00 km"]       # two equal halves: either is the part cut off
+    assert all(counts[c]["necks"] == 0 for c in PASSING)
+    # land must be a real passage (owner, 2026-10-05, #121): the same bridge beside a land strip
+    # 5 km wide keeps its full width
+    assert items["connector_land_too_narrow"] == []
+    # by land area only (owner, 2026-10-05, "Area only"): a dense ZCTA of 1 km² on a 1 km border
+    # passes M1 and is listed beside it as a mass neck; two parts under 5% do not combine
+    assert counts["neck_dense_small_zcta"]["mass_necks"] == 1
+    assert items["neck_dense_small_zcta"] == [] and listed["neck_dense_small_zcta"] == [
+        "X/X_01: mass neck (diagnostic, not M1) 1.00 km wide cuts off 1 ZIPs (10001...), 99.8% of "
+        "its land area and 9.1% of its mass; cut 10001-10002 1.00 km"]
+    assert items["neck_two_small_parts"] == [] and listed["neck_two_small_parts"] == []
