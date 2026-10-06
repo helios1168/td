@@ -747,3 +747,30 @@ thin links and small pieces (`rescore_final/rescore_r3.py`).
 Regenerate (m5, local): `runs/exp/contig/border/repair3.sh <id> <source folder> "<plans args>"
 "<repair args>" <channel> ...` and `diag15.sh` (same arguments); rescore
 `runs/exp/contig/border/rescore_final/rescore_r3.py` (writes `TABLE_r3.md`, `TABLE_diag15.md`).
+
+### The cut-off part is the smaller side: rescore (2026-10-06)
+
+Measured 2026-10-06 on m5 with `td.audit.district_necks` at m5-studio/121 b70299f. Sol's review
+of the neck check found that requiring the rest to be one connected piece holding ≥ 5% let a hub
+of 6% of a district's land, with 24 lobes of 94/24 % each on 100 m threads, pass. The owner ruled
+("Cut-off part = smaller side", MANDATES.md M1): a neck is one connected part with ≥ 5% of the
+district's land and no more land than the rest, behind < 10 km of border; the rest may lie in
+pieces of any size, and small fringes off a larger body never add together. The check now finds
+the narrowest such part (the hub plus 11 lobes, 1.3 km, on the counterexample), errs only toward
+a neck (a 9.999999995 km or a 10 km cut is a neck; a narrowest cut within 1e-5 of 10 km that the
+MILP cannot certify is listed unresolved), and a `--diag-final-delta` folder, or any folder
+derived from one, is marked `"diagnostic": true`, INELIGIBLE and failed by M1's gate.
+
+All 51 folders under `runs/exp/contig/border/` and `runs/exp/contig/replan/` were rescored
+(`runs/exp/contig/border/rescore_0606/`, `TABLE.md`, `rescore.json`), "old" being the reviewed
+neck rule (28706a9) in the same check:
+
+- **No M1 verdict changed.** `ne_plains_wh11-r2-all` (and its source `ne_plains_wh11`) still
+  passes M1 with 0 necks and stays ELIGIBLE, rank 1; every other folder failed and still fails.
+- Neck counts rose in 30 of 51 folders, for example `ifa_49-r3-IFA` 5 → 10,
+  `nocomb_13_12_23-r3-*` 3 → 5, `nocomb_15_12_23` 1 → 3, `low6_cb1-replan-ne5ut` 3 → 5; no
+  search was unresolved, and the slowest whole-map M1 check took 27 s (6 s before).
+- The ten `*-diag15` folders are backfilled `"diagnostic": true` ("backfilled") and score
+  INELIGIBLE, reason "diagnostic band".
+
+Regenerate (m5, local): `TD_REPO=... "$TD_PY" runs/exp/contig/border/rescore_0606/rescore.py`.
