@@ -277,6 +277,7 @@ def write_folder(out: str, s, inst, ext, ref, polygon, plans, reports, drawings,
         "dropped_units": {c: list(u) for c, u in inst.report.get("dropped_units", {}).items()},
         "dropped_channels": list(inst.dropped_channels),
         "channels": {c: {"k": inst.channels[c].k, "delta": plans[c].delta,
+                         "final_delta": inst.channels[c].spec.final_delta,
                          "margin": inst.channels[c].spec.margin,
                          "tier": audit.tier(reports[c]), "status": reports[c]["status"],
                          "vanished": len(d.vanished), **output.piece_counts(split, c)}
@@ -305,6 +306,15 @@ def _sweep():
         sys.modules["exp_sweep"] = mod
         spec.loader.exec_module(mod)
     return sys.modules["exp_sweep"]
+
+
+def spec_plan(spec_path: str) -> dict:
+    """The plan the spec asks for, so a re-planned run's manifest shows its bans, split lists and
+    bands (#122)."""
+    return {c: {"delta": cs.delta, "final_delta": cs.final_delta,
+                "forbid_pairs": sorted("-".join(sorted(p)) for p in cs.forbid_pairs),
+                "free": sorted(u for u, m in cs.modes.items() if m == "free")}
+            for c, cs in tdspec.load(spec_path).channels.items()}
 
 
 def write_manifest(out: str, formulation: str, spec_path: str, extract_path: str, params: dict,
@@ -372,12 +382,7 @@ def main(argv=None) -> int:
     ap.add_argument("--maps", action="store_true")
     a = ap.parse_args(argv)
     params = {k: v for k, v in vars(a).items() if k not in ("spec", "out")}
-    # the plan the spec asks for, so a re-planned run's manifest shows its bans, split lists
-    # and bands (#122)
-    params["plan"] = {c: {"delta": cs.delta, "final_delta": cs.final_delta,
-                          "forbid_pairs": sorted("-".join(sorted(p)) for p in cs.forbid_pairs),
-                          "free": sorted(u for u, m in cs.modes.items() if m == "free")}
-                      for c, cs in tdspec.load(a.spec).channels.items()}
+    params["plan"] = spec_plan(a.spec)
     output.check_out(a.out)
     write_manifest(a.out, "contig", a.spec, a.extract, params, a.plans_file, a.parent)
     try:

@@ -2,8 +2,8 @@
 `run.py` to draw.
 
     "$TD_PY" -u tools/exp/contig/replan.py <spec.toml> --out-spec <copy.toml> --plans <dir>
-        [--forbid CT-NJ [CT-PA ...]] [--free FI=CA,FL,NY,TX ...] [--channels c ...]
-        [--extract PATH] [--report replan.json]
+        [--forbid CT-NJ [CT-PA ...]] [--free FI=CA,FL,NY,TX ...] [--widen FI ...]
+        [--channels c ...] [--extract PATH] [--report replan.json]
 
 A ban is a pair of units no district may hold together: the copy adds them to each channel's
 `forbid_pairs` (`td.supports.family` drops every support holding both, so the family stays
@@ -11,8 +11,10 @@ closed).  A `--free` override replaces one channel's split list (`free`; every o
 domain stays whole), and the stored TOML is never edited.  Per channel the master runs at the
 declared δ; a channel with no plan there gets the smallest δ the master shows feasible (`td.master
 .smallest_delta`, rounded up to 1e-4), written into the copy only when it is at most the channel's
-`final_delta` (else the driver stops: the band is the owner's).  The plans (a channel moved to
-its smallest δ re-planned there) are cached in `--plans` under the copy's sha256 (`run.plans_key`),
+`final_delta` (else the driver stops: the band is the owner's).  `--widen X` is the owner's
+widening (2026-10-06): the copy sets X's `final_delta` to 0.15, so X plans at its smallest δ up to
+0.15 and is judged in ±15%; every other channel keeps its own.  The plans (a channel moved to its
+smallest δ re-planned there) are cached in `--plans` under the copy's sha256 (`run.plans_key`),
 so `run.py <copy> --plans <dir>` draws exactly them.  `--report` lists per channel the δ declared
 and used, the pairs banned and the supports in use holding a unit of a banned pair.
 """
@@ -42,6 +44,7 @@ if run is None:
     sys.modules["contig_run"] = run
     _spec.loader.exec_module(run)
 
+WIDE_FINAL_DELTA = 0.15      # the owner's ±15% eligibility frame on drawn mass (2026-10-06)
 SECTION = re.compile(r"^\[channels\.([^\]]+)\]\s*$")
 
 
@@ -67,20 +70,23 @@ def free_list(text: str) -> tuple:
 
 
 def banned_text(text: str, pairs: list, channels=None, deltas: dict | None = None,
-                extra: dict | None = None, free: dict | None = None) -> str:
+                extra: dict | None = None, free: dict | None = None,
+                final_deltas: dict | None = None) -> str:
     """The TOML `text` with `pairs` added to the `forbid_pairs` of each `[channels.X]` section (of
     `channels` only when given), `extra` {X: pairs} to X's alone, each channel of `deltas` at
-    that `delta` and each channel of `free` {X: units} with that split list in place of its own.
-    A section that already lists `forbid_pairs` is refused (one line per section keeps the copy
-    readable)."""
-    deltas, extra, free = deltas or {}, extra or {}, free or {}
-    out, cur, seen = [], None, set()
+    that `delta`, each channel of `free` {X: units} with that split list in place of its own and
+    each channel of `final_deltas` at that `final_delta`.  A section that already lists
+    `forbid_pairs` is refused (one line per section keeps the copy readable)."""
+    deltas, extra, free, finals = deltas or {}, extra or {}, free or {}, final_deltas or {}
+    out, cur, seen, seen_final = [], None, set(), set()
 
     def close():
         if cur is None:
             return
         if cur in free and cur not in seen and free[cur]:
             out.append("free = [" + ", ".join(f'"{u}"' for u in free[cur]) + "]")
+        if cur in finals and cur not in seen_final:
+            out.append(f"final_delta = {finals[cur]:g}")
         mine = sorted(set((pairs if channels is None or cur in channels else [])
                           + list(extra.get(cur, ()))))
         if mine:
@@ -99,6 +105,9 @@ def banned_text(text: str, pairs: list, channels=None, deltas: dict | None = Non
             raise ValueError(f"channel {cur}: forbid_pairs already set")
         if cur in deltas and re.match(r"^delta\s*=", line):
             line = f"delta = {deltas[cur]:g}"
+        if cur in finals and re.match(r"^final_delta\s*=", line):
+            seen_final.add(cur)
+            line = f"final_delta = {finals[cur]:g}"
         if cur in free and re.match(r"^free\s*=", line):
             if not line.rstrip().endswith("]"):
                 raise ValueError(f"channel {cur}: free spans lines")
@@ -111,8 +120,8 @@ def banned_text(text: str, pairs: list, channels=None, deltas: dict | None = Non
         out.pop()
     close()
     sections = {m.group(1) for m in map(SECTION.match, text.splitlines()) if m}
-    if set(free) - sections:
-        raise ValueError(f"--free names no channel section: {sorted(set(free) - sections)}")
+    if (set(free) | set(finals)) - sections:
+        raise ValueError(f"no channel section: {sorted((set(free) | set(finals)) - sections)}")
     return "\n".join(out) + "\n"
 
 
@@ -131,6 +140,9 @@ def main(argv=None) -> int:
     ap.add_argument("--forbid", nargs="+", type=pair, default=[])
     ap.add_argument("--free", action="append", type=free_list, default=[],
                     help="CHANNEL=U1,U2,...: that channel's split list (repeatable)")
+    ap.add_argument("--widen", action="append", default=[],
+                    help=f"CHANNEL: final_delta {WIDE_FINAL_DELTA:g} in the copy (owner's pick; "
+                         "repeatable)")
     ap.add_argument("--channels", nargs="*", default=None)
     ap.add_argument("--extract", default=os.path.join(os.environ.get("TD_REPO", ROOT),
                                                       "instance_descaled.json.gz"))
@@ -140,8 +152,9 @@ def main(argv=None) -> int:
     free = dict(a.free)
     if len(free) != len(a.free):
         raise SystemExit("--free names a channel twice")
-    if not a.forbid and not free:
-        raise SystemExit("nothing to change: give --forbid or --free")
+    if not a.forbid and not free and not a.widen:
+        raise SystemExit("nothing to change: give --forbid, --free or --widen")
+    finals = dict.fromkeys(a.widen, WIDE_FINAL_DELTA)
     if os.path.abspath(a.out_spec) == os.path.abspath(a.spec):
         raise SystemExit("the copy must not overwrite the stored TOML")
     with open(a.spec, encoding="utf-8") as fh:
@@ -158,19 +171,22 @@ def main(argv=None) -> int:
                       for c, ps in extra.items())
             + "".join(f"\n# with {c}'s split list free = {', '.join(us) or 'none'}"
                       for c, us in sorted(free.items()))
+            + "".join(f"\n# with {c}'s final_delta widened to {d:g} (owner, 2026-10-06)"
+                      for c, d in sorted(finals.items()))
             + "\n# (tools/exp/contig/replan.py).\n")
     deltas, plans, reports = {}, {}, {}
 
     def write():
         os.makedirs(os.path.dirname(os.path.abspath(a.out_spec)), exist_ok=True)
         with open(a.out_spec, "w", encoding="utf-8") as fh:
-            fh.write(head + banned_text(src, pairs, a.channels, deltas, extra, free))
+            fh.write(head + banned_text(src, pairs, a.channels, deltas, extra, free, finals))
     write()
     s, inst = build(a.out_spec, a.extract)
     doc = {"source_spec": os.path.abspath(a.spec), "spec": os.path.abspath(a.out_spec),
            "forbid": ["-".join(p) for p in pairs],
            "forbid_in": {c: ["-".join(p) for p in ps] for c, ps in extra.items()},
-           "free": {c: list(us) for c, us in sorted(free.items())}, "channels": {}}
+           "free": {c: list(us) for c, us in sorted(free.items())},
+           "widen": {c: d for c, d in sorted(finals.items())}, "channels": {}}
     for c, ch in inst.channels.items():
         p, rep = master.plan(inst, c, time_limit=a.time_limit)
         plans[c], reports[c] = p, rep

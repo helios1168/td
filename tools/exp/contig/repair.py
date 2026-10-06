@@ -708,6 +708,7 @@ def main(argv=None) -> int:
     params = {k: v for k, v in vars(a).items() if k not in ("run_dir", "out")}
     with open(os.path.join(a.run_dir, "run.json")) as fh:
         spec_path = json.load(fh)["spec"]
+    params["plan"] = run.spec_plan(spec_path)
     diag = audit.diagnostic(a.run_dir)      # a child of a diagnostic folder is diagnostic (#121)
     if diag is not None:
         diag = {"band": diag["band"], "label": f"child of the diagnostic folder {os.path.abspath(a.run_dir)}"}

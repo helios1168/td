@@ -545,7 +545,8 @@ def test_replan_bans_a_pair_in_a_copy_of_the_spec():
 
 def test_replan_replaces_a_channel_split_list_in_a_copy_of_the_spec():
     """#122 round 3: `--free A=CA,NY` replaces A's split list, adds one to a section without it,
-    drops it for an empty list, leaves B's alone and refuses a channel with no section."""
+    drops it for an empty list, leaves B's alone and refuses a channel with no section; `--widen`
+    (`final_deltas`) sets or replaces a channel's final_delta and leaves the others alone."""
     import tomllib
     spec = importlib.util.spec_from_file_location(
         "contig_replan", os.path.join(HERE, "..", "tools", "exp", "contig", "replan.py"))
@@ -569,6 +570,13 @@ def test_replan_replaces_a_channel_split_list_in_a_copy_of_the_spec():
         pass
     else:
         raise AssertionError("a split list for a channel with no section was accepted")
+    wide = tomllib.loads(replan.banned_text(src, [], deltas={"A": 0.1272},
+                                            final_deltas={"A": replan.WIDE_FINAL_DELTA, "C": 0.15}))
+    assert (wide["channels"]["A"]["delta"], wide["channels"]["A"]["final_delta"]) == (0.1272, 0.15)
+    assert wide["channels"]["C"]["final_delta"] == 0.15 and "final_delta" not in wide["channels"]["B"]
+    lined = src.replace("delta = 0.02\n", "delta = 0.02\nfinal_delta = 0.1\n")
+    assert tomllib.loads(replan.banned_text(lined, [], final_deltas={"A": 0.15})
+                         )["channels"]["A"]["final_delta"] == 0.15
 
 
 def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
