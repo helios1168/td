@@ -259,7 +259,7 @@ FIXTURES = os.path.join(ROOT, "tests", "fixtures", "m1")
 BROKEN = ("detached_piece", "corner_only", "uncovered_zero_opportunity", "unapproved_crossing",
           "neck_narrow", "connector_land_would_do")
 PASSING = ("connected", "neck_wide", "neck_small_part", "connector_needed", "neck_dense_small_zcta",
-           "neck_two_small_parts")
+           "neck_two_small_parts", "connector_land_too_narrow")
 
 
 def _gate():
@@ -343,6 +343,9 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
         "X/X_01: neck 0.00 km wide cuts off 1 ZIPs (10003...), 50.0% of its land area and 50.0% of "
         "its mass; cut 10001-10003 0.00 km"]
     assert all(counts[c]["necks"] == 0 for c in PASSING)
+    # land must be a real passage (owner, 2026-10-05, #121): the same bridge beside a land strip
+    # 5 km wide keeps its full width
+    assert items["connector_land_too_narrow"] == []
     # by land area only (owner, 2026-10-05, "Area only"): a dense ZCTA of 1 km² on a 1 km border
     # passes M1 and is listed beside it as a mass neck; two parts under 5% do not combine
     assert counts["neck_dense_small_zcta"]["mass_necks"] == 1

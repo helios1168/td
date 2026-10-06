@@ -20,7 +20,8 @@ Two share defects are kept apart (#70):
 connectors only).  It fails the run when a district's ZCTAs in the ledger are not one component
 of that graph, when a district has a neck (#121, `district_necks`: a connected part holding 5% of
 its land area beyond a passage under 10 km of shared border, an approved connector counting as
-unlimited unless land within the district's states would do, where it is 0 km; the necks by mass
+unlimited unless land within the district's states would do through a passage itself 10 km wide
+(`NeckGraph.land_would_do`), where it is 0 km; the necks by mass
 are listed beside M1 for the owner, and fail nothing), or when a CONUS
 ZCTA is not owned exactly once per fine channel (#116): every
 (ZCTA, fine channel) cell of the scenario has a row, at most one owned row, and an owned row
@@ -485,6 +486,8 @@ class NeckGraph:
         for z in polygon["vertices"]:
             self.by_state[self.state.get(z, "")].add(z)
         self._land = {}
+        self._flow_net = {}
+        self._wide = {}
 
     def land_component(self, states: frozenset) -> dict:
         """{zip: component id} of the ZCTAs of `states` on the polygon edges alone (no connector)."""
@@ -496,11 +499,54 @@ class NeckGraph:
             self._land[states] = comp
         return self._land[states]
 
+    def land_flow_net(self, states: frozenset) -> tuple:
+        """({zip: index}, rows, cols, km) of the polygon edges (no connector) among the ZCTAs of
+        `states`, each edge in both directions."""
+        if states not in self._flow_net:
+            comp = self.land_component(states)
+            idx = {z: i for i, z in enumerate(sorted(comp))}
+            rows, cols, km = [], [], []
+            for z, i in idx.items():
+                for y, k in self.border.get(z, {}).items():
+                    if y in idx:
+                        rows.append(i)
+                        cols.append(idx[y])
+                        km.append(k)
+            self._flow_net[states] = idx, rows, cols, km
+        return self._flow_net[states]
+
     def land_would_do(self, a: str, b: str, states: frozenset) -> bool:
-        """A connector a-b is a neck of width 0 when its sides are joined by land within `states`,
-        the states the district owns ZCTAs in (owner, 2026-10-05, "No, unless land would do")."""
+        """A connector a-b is a neck of width 0 when land would do: its sides are joined in the
+        polygon graph without connectors, within `states`, the states the district owns ZCTAs in,
+        through a passage itself at least `NECK_W_KM` wide, the max flow between a and b with each
+        edge's shared border as its capacity (owner, 2026-10-05, "No, unless land would do", then
+        "Land must be a real passage").  A narrower land route leaves the connector at full width.
+
+        Exact: the flow runs on whole millimetres, each border rounded up, so a flow under the
+        limit proves the land narrow; each edge and the source are capped at the limit, which keeps
+        whether the flow reaches it.  A flow at the limit makes the connector width 0, the true
+        flow being at most a millimetre per cut edge less: the check may over-report a neck but
+        never misses one."""
+        key = (states, *sorted((a, b)))
+        if key in self._wide:
+            return self._wide[key]
         comp = self.land_component(states)
-        return a in comp and comp.get(a) == comp.get(b)
+        wide = False
+        if a in comp and comp.get(a) == comp.get(b):
+            import numpy as np
+            import scipy.sparse as sp
+            from scipy.sparse.csgraph import maximum_flow
+            idx, rows, cols, km = self.land_flow_net(states)
+            n, lim_mm = len(idx), NECK_W_KM * 1e6 * (1 - NECK_TOL)
+            cap_mm = math.ceil(lim_mm)                      # int32 holds it, and every flow under it
+
+            cap = [min(math.ceil(k * 1e6), cap_mm) for k in km] + [cap_mm]
+            net = sp.csr_matrix((np.array(cap, dtype=np.int32),
+                                 (np.array(rows + [n], dtype=np.int32),
+                                  np.array(cols + [idx[a]], dtype=np.int32))), shape=(n + 1, n + 1))
+            wide = int(maximum_flow(net, n, idx[b]).flow_value) >= lim_mm
+        self._wide[key] = wide
+        return wide
 
 
 def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK_TIME,

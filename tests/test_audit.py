@@ -712,6 +712,28 @@ def test_a_neck_search_out_of_time_is_listed_never_passed():
     assert audit.neck_item("X", "X_01", nk).endswith("listed as a neck")
 
 
+def test_land_would_do_is_the_narrowest_land_cut_by_enumeration():
+    """`NeckGraph.land_would_do` (owner, 2026-10-05, "Land must be a real passage"): on 300 small
+    random worlds, a pair is joined by land at least 10 km wide exactly when every set of the
+    states' ZCTAs holding one and not the other has at least 10 km of polygon border across it."""
+    import random
+    rng = random.Random(1210)
+    for _ in range(300):
+        vs, poly, _ = _neck_world(rng, rng.randint(3, 9))
+        states = frozenset(rng.sample("AB", rng.randint(1, 2)))
+        inside = [v for v in vs if poly["state"][v] in states]
+        g = audit.NeckGraph(poly)
+        for a, b in [tuple(rng.sample(vs, 2)) for _ in range(3)]:
+            narrowest = 0.0 if a not in inside or b not in inside else math.inf
+            if a in inside and b in inside:
+                for bits in range(2 ** len(inside)):
+                    side = {v for i, v in enumerate(inside) if bits >> i & 1}
+                    if a in side and b not in side:
+                        narrowest = min(narrowest, sum(m / 1000.0 for (x, y), m in poly["border"].items()
+                                                       if x in inside and y in inside and (x in side) != (y in side)))
+            assert g.land_would_do(a, b, states) is (narrowest >= audit.NECK_W_KM), (poly, a, b, states, narrowest)
+
+
 def test_a_connector_is_a_neck_only_where_land_would_do():
     """Owner, 2026-10-05 (#121): an approved connector is unlimited, unless its sides are joined by
     land within the district's states; a polygon graph without border lengths leaves M1 unverified."""
@@ -724,6 +746,12 @@ def test_a_connector_is_a_neck_only_where_land_would_do():
     assert g.land_would_do("m1", "m2", frozenset({"MA", "NY"}))
     [nk] = audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(dict(poly, state={**poly["state"], "y1": "MA"})))
     assert (nk.width_km, nk.cut, nk.status) == (0.0, (("m1", "m2", 0.0),), "proved")
+    # land must be a real passage (owner, 2026-10-05, "Land must be a real passage"): through a
+    # strip under 10 km the connector keeps its full width; at 10 km it is 0 km wide
+    for km, neck in ((9.999, False), (10.0, True)):
+        strip = dict(poly, state={**poly["state"], "y1": "MA"}, border={("m1", "y1"): 1e3 * km, ("m2", "y1"): 2e4})
+        assert audit.NeckGraph(strip).land_would_do("m1", "m2", frozenset({"MA"})) is neck
+        assert len(audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(strip))) == neck
     cells = [Cell("m1", "f", "X", "D1", 1.0), Cell("m2", "f", "X", "D1", 1.0), Cell("y1", "f", "X", "D2", 1.0)]
     bare = {k: poly[k] for k in ("vertices", "edges", "state")}
     m1 = audit.check_m1(Run(cells, {"X": Channel(2)}, polygon=bare, fine=("f",)))
