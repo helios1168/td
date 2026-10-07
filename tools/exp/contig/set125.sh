@@ -6,7 +6,8 @@
 # usage: [LAYOUT=ne6] set125.sh <id> <K national> <K WH> <K FI> <K WIFI> [repair.py extra args, e.g. --jobs 2]
 # LAYOUT=ne6 (issue item 7): WIFI holds New England only; the plains (ID MT ND NE SD WY NM OK KS) join
 # the national, WH and FI domains, with ne6_clean's (2026-10-02) 1600 km distance caps for ID MT ND NE
-# SD WY NM.
+# SD WY NM.  LAYOUT=ne6m5 is ne6 with WH's max_size 5 (ne6_clean's): at s13's 4, WH 11 has no plan
+# below δ 0.647 there.
 # Output in $TD_REPO/runs/exp/contig/set125/; run it from the worktree that holds this script.
 set -u
 export TD_REPO=${TD_REPO:-/Users/Shared/sv-ntlee/td}
@@ -19,7 +20,7 @@ base=$S/_specs/$id-base.toml; sp=$S/_specs/$id.toml
 import re, sys
 src, out, *ks, layout = sys.argv[1:]
 text = open(src).read()
-if layout == "ne6":
+if layout.startswith("ne6"):
     plains = ["ID", "MT", "ND", "NE", "SD", "WY", "NM", "OK", "KS"]
     wide = "".join(f", {u} = 1600" for u in plains[:6] + ["NM"])
     text = text.replace('units = ["ME", "NH", "VT", "MA", "RI", "CT", ' + ", ".join(f'"{u}"' for u in plains) + "]",
@@ -28,6 +29,9 @@ if layout == "ne6":
                   lambda m: "units = [" + m.group(1) + "".join(f', "{u}"' for u in plains) + "]", text)
     text = re.sub(r"(?m)^(dist_km = \{.*?) \}$", lambda m: m.group(1) + wide + " }", text)
     assert text.count('"KS"') == 4 and 'CT"]' in text, "ne6 layout edit missed a domain"
+    if layout == "ne6m5":
+        text = re.sub(r"(?s)(\[channels\.WH\]\n.*?)^max_size = 4$", r"\g<1>max_size = 5", text, count=1,
+                      flags=re.M)
 for c, k in zip(("national", "WH", "FI", "WIFI"), ks):
     head, sec, rest = re.match(rf"(?s)(.*?\[channels\.{c}\]\n)(.*?)(\n\[.*|\Z)", text).groups()
     sec = re.sub(r"(?m)^k = \d+$", f"k = {k}", sec)
