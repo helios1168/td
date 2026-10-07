@@ -1161,6 +1161,113 @@ def test_a_channel_that_dies_and_is_reaped_early_still_takes_its_windows():
                 os.kill(pid, 9)
 
 
+def _children() -> set:
+    """The pids of this process's child processes, a zombie included (not reaped), less
+    `multiprocessing`'s resource tracker and `ps` itself."""
+    import subprocess
+    ps = subprocess.Popen(["ps", "-axo", "pid=,ppid=,command="], stdout=subprocess.PIPE, text=True)
+    out = ps.communicate()[0]
+    return {int(pid) for pid, ppid, cmd in (ln.split(None, 2) for ln in out.splitlines() if ln.strip())
+            if int(ppid) == os.getpid() and int(pid) != ps.pid and "resource_tracker" not in cmd}
+
+
+def _reap(pids) -> None:
+    """Kill and reap `pids` (left by a failing test)."""
+    for pid in pids:
+        try:
+            os.kill(pid, 9)
+            os.waitpid(pid, 0)
+        except (ProcessLookupError, ChildProcessError):
+            pass
+
+
+def test_a_worker_whose_task_cannot_be_sent_is_still_joined():
+    """Sol's re-review of #123 (P1): a lead worker is held (`run.LEADERS`) from before its start,
+    so one whose task fails in `send` is stopped and joined, in both collectors."""
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    run = repair.run
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    xy = {z: (1000.0 * x, 1000.0 * y) for z, (x, y) in p.items()}
+    owners = {**owners, "Y": wp.Unsendable(owners["Y"])}
+    calls = {"repair": lambda: repair.repair_parallel(inst, plans, owners, p, state, ["X", "Y"],
+                                                      2, log=False, h0=1, max_zctas=100,
+                                                      time_limit=60.0),
+             "draw": lambda: run.draw_parallel(inst, plans, xy, 2, log=False,
+                                               time_limit=wp.Unsendable())}
+    for what, call in calls.items():
+        before = _children()
+        try:
+            call()
+            raise AssertionError(f"{what}: an unsendable task raised nothing")
+        except RuntimeError as e:
+            assert "cannot be sent" in str(e), e
+        left = _children() - before
+        _reap(left)
+        assert left == set(), f"{what}: workers not joined {left}"
+
+
+def test_a_ctrl_c_while_a_finished_worker_is_joined_still_joins_it():
+    """Sol's re-review of #123 (P1): a Ctrl-C while the collector joins a channel that has sent
+    its result (it is slow to exit) is raised, and the channel is still joined: it leaves
+    `run.LEADERS` only once joined."""
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    owners = {**owners, "X": wp.Probe(owners["X"], [(1, "interrupt_parent_at_exit", 5.0)])}
+    before = _children()
+    try:
+        repair.repair_parallel(inst, plans, owners, p, state, ["X"], 2, log=False, h0=1,
+                               max_zctas=100, time_limit=60.0)
+        raise AssertionError("the Ctrl-C was not raised")
+    except KeyboardInterrupt:
+        pass
+    left = _children() - before
+    _reap(left)
+    assert left == set(), f"a channel not joined {left}"
+
+
+def test_a_ctrl_c_while_channels_are_stopped_still_kills_and_joins_them():
+    """Sol's re-review of #123 (P1): X fails, Y ignores SIGTERM with a window running, and a
+    Ctrl-C comes during `run.stop`'s grace: it ends the grace, Y's group (its window with it) is
+    still killed and Y joined, and then the Ctrl-C is raised."""
+    import tempfile
+    import time
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    with tempfile.TemporaryDirectory() as tmp:
+        wins, chans = os.path.join(tmp, "windows"), os.path.join(tmp, "channels")
+        state = wp.Probe(state, [(1, "pid", chans), (2, "sleep", (wins, 120.0))])
+        owners = {"X": wp.Probe(owners["X"], [(1, "fail_after", wins)]),
+                  "Y": wp.Probe(owners["Y"], [(1, "block_sigterm", None),
+                                              (1, "interrupt_parent_after", (wins, 1.5))])}
+        grace = vars(repair.run).get("STOP_GRACE")
+        repair.run.STOP_GRACE = 20.0
+        before, t0 = _children(), time.time()
+        try:
+            repair.repair_parallel(inst, plans, owners, p, state, ["X", "Y"], 2, log=False, h0=1,
+                                   max_zctas=100, time_limit=60.0)
+            raise AssertionError("a failed channel raised nothing")
+        except KeyboardInterrupt:
+            pass
+        finally:
+            repair.run.STOP_GRACE = grace
+        seconds = time.time() - t0
+        left = _children() - before
+        windows = [int(x) for x in wp.lines(wins)]
+        end = time.time() + 10      # a killed window is reaped by launchd
+        while _alive(windows) and time.time() < end:
+            time.sleep(0.1)
+        running = _alive(windows)
+        _reap(left)
+        for pid in running:
+            os.kill(pid, 9)
+        assert len(wp.lines(chans)) == 2 and windows
+        assert (left, running) == (set(), []), f"channels not joined {left}, windows running {running}"
+        assert seconds < 20.0, seconds
+
+
 def test_a_failed_channel_stops_the_others_through_their_window_pools():
     """Sol's review of #123 (P1): when a channel fails, each other channel is sent SIGTERM and
     closes its `WindowPool` (its running window killed and joined) well within the grace, and

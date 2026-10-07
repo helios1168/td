@@ -44,6 +44,7 @@ districts (`cut_border_km`).
 from __future__ import annotations
 
 import argparse
+import atexit
 import collections
 import dataclasses
 import hashlib
@@ -225,15 +226,17 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
 # ------------------------------------------------------------------------------ in parallel (#123)
 WORKER = "contig_run_worker"        # the name a worker process runs this file under
 STOP_GRACE = 30.0                   # seconds a stopped worker gets before its group is killed
+LEADERS = set()                     # lead workers (`spawn`) from their start to their join
 
 
 def spawn(path: str, name: str, args: tuple, daemon: bool = True, lead: bool = False) -> tuple:
     """(process, connection) of a worker process running the file `path` under the module name
     `name`, with `WORKER_ARGS` (its end of the connection, *`args`); spawned (macOS), and by
     `runpy`, since a file loaded by path is no importable module.  A worker that will lead its own
-    process group (`lead`, for `stop`) is taken off `multiprocessing`'s list of children, whose
-    every `Process.start` reaps those that have exited: only its join reaps it, so its pid, the
-    id of its group, stays its own until `stop` has killed the group."""
+    process group (`lead`, for `stop`) is held in `LEADERS` from before its start until `join` or
+    `stop` has joined it, and taken off `multiprocessing`'s list of children, whose every
+    `Process.start` reaps those that have exited: only its join reaps it, so its pid, the id of
+    its group, stays its own until `stop` has killed the group."""
     import multiprocessing
     import runpy
     ctx = multiprocessing.get_context("spawn")
@@ -241,6 +244,8 @@ def spawn(path: str, name: str, args: tuple, daemon: bool = True, lead: bool = F
     proc = ctx.Process(target=runpy.run_path, args=(path,),
                        kwargs={"run_name": name, "init_globals": {"WORKER_ARGS": (there, *args)}},
                        daemon=daemon)
+    if lead:
+        LEADERS.add(proc)
     proc.start()
     if lead:
         multiprocessing.process._children.discard(proc)
@@ -259,29 +264,60 @@ def receive(conn, what: str):
     return msg
 
 
-def stop(procs: list, grace: float | None = None) -> None:
-    """Stop the worker processes `procs` (`spawn` with `lead`, none of them joined yet) and join
-    them all.  Each gets SIGTERM, on which a repair channel closes its `WindowPool`
-    (`repair._serve`); once each has exited or `grace` seconds (`STOP_GRACE`) have passed, each
-    one's process group is killed, so a worker that leads its own (`os.setpgrp`) takes its
-    descendants with it, even one that died first.  An unreaped worker keeps its pid, even dead,
-    so its group id is never another's; one reaped already is not signalled."""
+def join(proc) -> None:
+    """Join a lead worker (`spawn`); it leaves `LEADERS` only once joined."""
+    proc.join()
+    LEADERS.discard(proc)
+
+
+def _end(proc) -> None:
+    """Kill a lead worker's process group and join it (`stop`)."""
     import signal
-    from multiprocessing.connection import wait
-    for proc in procs:
-        proc.terminate()
-    end = time.time() + (STOP_GRACE if grace is None else grace)
-    left = [proc.sentinel for proc in procs]
-    while left and time.time() < end:
-        done = wait(left, max(0.0, end - time.time()))
-        left = [s for s in left if s not in done]
-    for proc in procs:
+    if proc._popen is not None:                 # started
         if proc._popen.returncode is None:     # not reaped (`spawn`'s `lead`): still its pid
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
             except (ProcessLookupError, PermissionError):
                 proc.kill()                     # it never led a group
         proc.join()
+    LEADERS.discard(proc)
+
+
+def stop(grace: float | None = None) -> None:
+    """Stop every lead worker not yet joined (`LEADERS`; a process runs one collector at a
+    time, so they are its) and join them all: a collector's `finally`, and at exit the net for
+    any left.  Each gets SIGTERM, on which a repair channel closes its `WindowPool`
+    (`repair._serve`); once each has exited or `grace` seconds (`STOP_GRACE`) have passed, each
+    one's process group is killed, so a worker that leads its own (`os.setpgrp`) takes its
+    descendants with it, even one that died first.  An unreaped worker keeps its pid, even dead,
+    so its group id is never another's; one reaped already is not signalled.  A
+    KeyboardInterrupt meanwhile ends the grace at once; every group is still killed and every
+    worker joined before it is raised."""
+    from multiprocessing.connection import wait
+    procs = list(LEADERS)
+    interrupt = None
+    try:
+        for proc in procs:
+            if proc._popen is not None:
+                proc.terminate()
+        end = time.time() + (STOP_GRACE if grace is None else grace)
+        left = [proc.sentinel for proc in procs if proc._popen is not None]
+        while left and time.time() < end:
+            done = wait(left, max(0.0, end - time.time()))
+            left = [s for s in left if s not in done]
+    except KeyboardInterrupt as e:
+        interrupt = e
+    for proc in procs:
+        while proc in LEADERS:
+            try:
+                _end(proc)
+            except KeyboardInterrupt as e:
+                interrupt = e
+    if interrupt is not None:
+        raise interrupt
+
+
+atexit.register(stop)
 
 
 def pin_threads() -> None:
@@ -332,15 +368,15 @@ def draw_parallel(inst, plans: dict, xy: dict, jobs: int, border=None, log: bool
             while todo and len(running) < jobs:
                 c = todo.pop(0)
                 proc, conn = spawn(os.path.abspath(__file__), WORKER, (shared, log), lead=True)
-                conn.send((c, kw))
                 running[conn] = (c, proc)
+                conn.send((c, kw))
             for conn in wait(list(running)):
                 c, proc = running[conn]
                 out[c] = receive(conn, f"{c} draw")
-                del running[conn]               # a failed one stays, for `stop`
-                proc.join()
+                del running[conn]
+                join(proc)
     finally:
-        stop([proc for _, proc in running.values()])
+        stop()                                  # every worker not joined above
         shutil.rmtree(tmp, ignore_errors=True)
     return out
 

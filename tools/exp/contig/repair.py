@@ -994,8 +994,9 @@ def repair_parallel(inst, plans: dict, owners: dict, p: dict, state: dict, chann
     `jobs` racing its windows, the processes together running at most `jobs` solves (a shared
     count of slots: each running channel's first solve is its own).  The channels' ledger
     cells are disjoint, so the dict is the one the sequential loop builds whenever no window stops
-    on a time limit.  When one fails, every other is stopped (`run.stop`) before the error is
-    raised.  With `log` false the processes print nothing."""
+    on a time limit.  When one fails or the collector is interrupted, every channel not joined
+    is stopped (`run.stop`) before the error is raised.  With `log` false the processes print
+    nothing."""
     import multiprocessing
     import shutil
     import tempfile
@@ -1009,18 +1010,18 @@ def repair_parallel(inst, plans: dict, owners: dict, p: dict, state: dict, chann
             while todo and len(running) < jobs:
                 c = todo.pop(0)
                 proc, conn = _spawn("channel", shared, slots, daemon=False, log=log)
-                conn.send((c, owners[c], jobs, kw))
                 running[conn] = (c, proc)
+                conn.send((c, owners[c], jobs, kw))
             for conn in wait(list(running)):
                 c, proc = running[conn]
                 out[c] = run.receive(conn, f"{c} channel")
-                del running[conn]               # a failed one stays, for `run.stop`
-                proc.join()
+                del running[conn]
+                run.join(proc)
                 if not todo:                    # its first-solve slot passes to the others
                     with slots.get_lock():
                         slots.value += 1
     finally:
-        run.stop([proc for _, proc in running.values()])
+        run.stop()                              # every channel not joined above (`run.LEADERS`)
         shutil.rmtree(tmp, ignore_errors=True)
     return out
 

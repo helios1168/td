@@ -113,6 +113,39 @@ def linger(arg: tuple) -> None:
     multiprocessing.util.Finalize(None, _linger, args=arg, exitpriority=100)
 
 
+class Unsendable(dict):
+    """A dict that cannot be pickled: a task holding it fails in `Connection.send`."""
+    def __reduce__(self):
+        raise RuntimeError("probe: this task cannot be sent")
+
+
+def _interrupt(seconds: float) -> None:
+    time.sleep(1.0)
+    os.kill(os.getppid(), signal.SIGINT)
+    time.sleep(seconds)
+
+
+def interrupt_parent_at_exit(seconds: float) -> None:
+    """As this worker exits, its result sent: a second later (its parent joining it) send the
+    parent SIGINT, a Ctrl-C, then take `seconds` more to exit."""
+    import multiprocessing.util
+    multiprocessing.util.Finalize(None, _interrupt, args=(seconds,), exitpriority=100)
+
+
+def interrupt_parent_after(arg: tuple) -> None:
+    """In a thread: once a window is running (a pid in `windows`), wait `delay` seconds and send
+    the parent SIGINT, a Ctrl-C."""
+    import threading
+    windows, delay = arg
+
+    def interrupt():
+        while not lines(windows):
+            time.sleep(0.05)
+        time.sleep(delay)
+        os.kill(os.getppid(), signal.SIGINT)
+    threading.Thread(target=interrupt, daemon=True).start()
+
+
 def block_sigterm(_) -> None:
     """A channel deaf to SIGTERM, as one stuck in a long solve is: only a kill stops it."""
     signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM})
