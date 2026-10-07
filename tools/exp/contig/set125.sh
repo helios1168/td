@@ -8,7 +8,8 @@
 # the national, WH and FI domains, with ne6_clean's (2026-10-02) 1600 km distance caps for ID MT ND NE
 # SD WY NM.  LAYOUT=ne6m5 is ne6 with WH's max_size 5 (ne6_clean's): at s13's 4, WH 11 has no plan
 # below δ 0.647 there.
-# FROM=repair starts at the repair of an existing <id>-draw.
+# FROM=repair starts at the repair of an existing <id>-draw.  FREE_NATIONAL, FREE_WH, FREE_FI
+# (U1,U2,...) replace that channel's split list (default: s13_WH11's).
 # Output in $TD_REPO/runs/exp/contig/set125/; run it from the worktree that holds this script.
 set -u
 export TD_REPO=${TD_REPO:-/Users/Shared/sv-ntlee/td}
@@ -45,7 +46,8 @@ open(out, "w").write(f"# #125: a copy of {src} in the {layout} layout with K set
                      "declared at δ 0.02\n" + text)
 PY
 "$P" -u tools/exp/contig/replan.py $base --out-spec $sp --plans $S/_plans --report $S/_specs/$id.json \
-  --free national=CA,FL,NY,TX --free WH=CA,FL,NJ,NY,PA,TX --free FI=CA,FL,NC,NY,OH,PA,TN,TX \
+  --free national=${FREE_NATIONAL:-CA,FL,NY,TX} --free WH=${FREE_WH:-CA,FL,NJ,NY,PA,TX} \
+  --free FI=${FREE_FI:-CA,FL,NC,NY,OH,PA,TN,TX} \
   > $S/$id-replan.log 2>&1 || { echo "$id: no plan at ±10%: $(tail -1 $S/$id-replan.log)" > $S/$id.done
   /Users/Shared/sv-ntlee/agent/notify "#125 $id: no plan at ±10%"; exit 1; }
 "$P" -u tools/exp/contig/run.py $sp --plans $S/_plans --out $S/$id-draw --arm arm1 --sequential \

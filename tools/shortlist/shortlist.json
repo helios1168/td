@@ -3,6 +3,7 @@
   "1": "Presentable (2026-10-05 on): passes M1 (ZIP contiguity, mandate) and every audit check, looks scorer ELIGIBLE including the $ rule",
   "2": "Contender: passes M1 and the audit, but fails the $ rule or another eligibility rule",
   "3": "Reference: fails M1 (pieces or necks, #121), or is superseded, but answers a question worth keeping",
+  "P": "Pending owner review: drawn autonomously 2026-10-07 and passes every tier-1 check (M1, audit, scorer ELIGIBLE with the $ rule); the owner places it",
   "S": "Superseded 2026-10-05: drawn before M1 was restored (2026-10-04); all fail M1 (detached pieces). Kept for the record, never presented as eligible"
  },
  "maps": [
@@ -32,6 +33,30 @@
     "within10": 49,
     "thin": 0,
     "small": 3
+   }
+  },
+  {
+   "id": "ne_plains_wh11_fi20_mind",
+   "tier": "P",
+   "rank": 1,
+   "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), smallest-δ plan, 13 splits",
+   "run": "runs/exp/contig/set125/na15_wh11_fi20-r1",
+   "images": [
+    "runs/exp/contig/set125/na15_wh11_fi20-r1/summary.png",
+    "runs/exp/contig/set125/na15_wh11_fi20-r1/zip_pages.pdf"
+   ],
+   "notes": "autonomous 2026-10-07, owner to review. #125: the lead map's layout and K (ne_plains_wh11), planned at the master's smallest δ per channel (national 0.0888, WH 0.0879, FI 0.0494, WIFI 0.0931; the lead used 0.0938/0.09/0.08/0.10), drawn (arm 1, sequential, border term) and repaired once. Passes M1 (0 pieces, 0 necks), the audit and the scorer (ELIGIBLE). Against the lead: 13 splits / 20 state splits (14/21), 1 defect (4), mean deviation 4.2% (5.2%), worst 9.3% (9.3%), cut border 39,189 km (37,557). $ per district: national 1,126M (-9.9%), WH 922M (-7.8%), FI 925M (+2.8%).",
+   "metrics": {
+    "districts": 49,
+    "worst": 9.3,
+    "mean": 4.2,
+    "splits": 13,
+    "cuts": 20,
+    "pieces": 0,
+    "necks": 0,
+    "within10": 49,
+    "thin": 0,
+    "small": 1
    }
   },
   {
