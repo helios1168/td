@@ -510,3 +510,263 @@ def test_a_neck_cut_holds_for_every_drawing_without_a_neck():
     assert len(cuts) > 100 and len(clean) > 30, (len(cuts), len(clean))
     for c in cuts:
         assert all(c.holds(own) for own in clean), c.label
+
+
+def test_replan_bans_a_pair_in_a_copy_of_the_spec():
+    """#122: `replan.banned_text` adds the banned pairs to each channel's forbid_pairs, moves only
+    the listed channels' δ, leaves the other sections alone and refuses a second forbid_pairs."""
+    import tomllib
+    spec = importlib.util.spec_from_file_location(
+        "contig_replan", os.path.join(HERE, "..", "tools", "exp", "contig", "replan.py"))
+    replan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(replan)
+    src = ('[scenario]\nname = "toy"\n\n[channels.A]\nmargin = false\nk = 2\ndelta = 0.02\n\n'
+           '[channels.B]\nmargin = false\nk = 3\ndelta = 0.03\n\n[national]\nchannel = "A"\n')
+    pairs = [replan.pair("NJ-CT"), replan.pair("MA-NJ")]
+    assert pairs == [("CT", "NJ"), ("MA", "NJ")]
+    doc = tomllib.loads(replan.banned_text(src, pairs, deltas={"B": 0.0612}))
+    assert doc["channels"]["A"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
+    assert doc["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
+    assert (doc["channels"]["A"]["delta"], doc["channels"]["B"]["delta"]) == (0.02, 0.0612)
+    assert doc["national"] == {"channel": "A"} and doc["scenario"]["name"] == "toy"
+    only = tomllib.loads(replan.banned_text(src, pairs, channels=["B"]))
+    assert "forbid_pairs" not in only["channels"]["A"] and only["channels"]["B"]["forbid_pairs"]
+    try:
+        replan.banned_text(replan.banned_text(src, pairs), pairs)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a second forbid_pairs was accepted")
+    assert replan.pair("FI:UT-AZ") == ("FI", ("AZ", "UT"))
+    one = tomllib.loads(replan.banned_text(src, pairs, extra={"A": [("AZ", "UT")]}))
+    assert one["channels"]["A"]["forbid_pairs"] == [["AZ", "UT"], ["CT", "NJ"], ["MA", "NJ"]]
+    assert one["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"], ["MA", "NJ"]]
+
+
+def test_replan_replaces_a_channel_split_list_in_a_copy_of_the_spec():
+    """#122 round 3: `--free A=CA,NY` replaces A's split list, adds one to a section without it,
+    drops it for an empty list, leaves B's alone and refuses a channel with no section; `--widen`
+    (`final_deltas`) sets or replaces a channel's final_delta and leaves the others alone."""
+    import tomllib
+    spec = importlib.util.spec_from_file_location(
+        "contig_replan", os.path.join(HERE, "..", "tools", "exp", "contig", "replan.py"))
+    replan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(replan)
+    src = ('[scenario]\nname = "toy"\n\n[channels.A]\nk = 2\nfree = ["CA", "FL", "NY", "PA"]\n'
+           'delta = 0.02\n\n[channels.B]\nk = 3\nfree = ["OH"]\n\n[channels.C]\nk = 1\n\n'
+           '[national]\nchannel = "A"\n')
+    assert replan.free_list("A=CA,NY") == ("A", ("CA", "NY"))
+    assert replan.free_list("C=") == ("C", ())
+    doc = tomllib.loads(replan.banned_text(src, [], free={"A": ("CA", "NY"), "C": ("TX",)}))
+    assert doc["channels"]["A"] == {"k": 2, "free": ["CA", "NY"], "delta": 0.02}
+    assert doc["channels"]["B"]["free"] == ["OH"] and doc["channels"]["C"]["free"] == ["TX"]
+    assert "forbid_pairs" not in doc["channels"]["A"] and doc["national"] == {"channel": "A"}
+    none = tomllib.loads(replan.banned_text(src, [replan.pair("CT-NJ")], free={"B": ()}))
+    assert "free" not in none["channels"]["B"]
+    assert none["channels"]["B"]["forbid_pairs"] == [["CT", "NJ"]]
+    try:
+        replan.banned_text(src, [], free={"D": ("CA",)})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a split list for a channel with no section was accepted")
+    wide = tomllib.loads(replan.banned_text(src, [], deltas={"A": 0.1272},
+                                            final_deltas={"A": replan.WIDE_FINAL_DELTA, "C": 0.15}))
+    assert (wide["channels"]["A"]["delta"], wide["channels"]["A"]["final_delta"]) == (0.1272, 0.15)
+    assert wide["channels"]["C"]["final_delta"] == 0.15 and "final_delta" not in wide["channels"]["B"]
+    lined = src.replace("delta = 0.02\n", "delta = 0.02\nfinal_delta = 0.1\n")
+    assert tomllib.loads(replan.banned_text(lined, [], final_deltas={"A": 0.15})
+                         )["channels"]["A"]["final_delta"] == 0.15
+
+
+def test_an_opened_unit_lets_the_repair_split_a_whole_unit():
+    """#122: a neck inside a unit held whole (a1 hangs off a0 by 1 km) is out of every arm-1
+    window's reach; `--open-units CT` lets the window give a1 to Q, across 30 km, one more split.
+    a0 holds two thirds of P's land, so a1 is the smaller side, the part M1 cuts off."""
+    repair = _repair_module()
+    edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0")]
+    km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0}
+    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "b0": (0.5, 1.0)}
+    mass = {"a0": 2.0, "a1": 1.0, "b0": 2.0}
+    inst, xym = tr._toy({"CT": ["a0", "a1"], "NJ": ["b0"]}, edges, mass, xy, {}, k=2, delta=0.2,
+                        final_delta=0.2)
+    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0})])
+    pa, qb = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"a0": 2e6, "a1": 1e6, "b0": 1e6}}
+    owner = {"a0": pa, "a1": pa, "b0": qb}
+    m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
+    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(pa, {"a1"})]
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xym.items()}
+    kw = dict(h0=1, max_zctas=100, time_limit=60.0, log=lambda *_: None, keep_support=True,
+              border=repair.draw.border_km(polygon), ng=ng)
+    same, _ = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), **kw)
+    assert same == owner
+    fixed, _ = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of),
+                                     open_units=("CT",), **kw)
+    assert fixed == {"a0": pa, "a1": qb, "b0": qb} and repair.necks(fixed, m, ng) == []
+
+
+def test_a_neck_in_an_opened_unit_tries_the_districts_own_window_first():
+    """#122: a neck whose side lies in an opened unit is repaired before the others, and its first
+    window is the district's own ZCTAs in that unit (`own_window`), here wider than the ball at
+    h0 = 1 ({a0, a1}): a2 hangs off a0 by 20 km, so a1 (by 1 km) is P's only neck, and the own
+    window hands a1 to Q.  R (unit AL, first by name) has a neck too, by 1 km, that no window
+    can lose (no one else may hold AL); it comes second."""
+    repair = _repair_module()
+    edges = [("a0", "a1"), ("a0", "b0"), ("a1", "b0"), ("a0", "a2"), ("c0", "c1"), ("c0", "b0")]
+    km = {("a0", "a1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0, ("a0", "a2"): 20.0,
+          ("c0", "c1"): 1.0, ("b0", "c0"): 20.0}
+    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "a2": (-1.0, 0.0), "b0": (0.5, 1.0),
+          "c0": (0.5, 2.0), "c1": (0.5, 3.0)}
+    mass = {"a0": 2.0, "a1": 1.0, "a2": 0.5, "b0": 2.0, "c0": 2.0, "c1": 1.0}
+    inst, xym = tr._toy({"CT": ["a0", "a1", "a2"], "NJ": ["b0"], "AL": ["c0", "c1"]}, edges,
+                        mass, xy, {}, k=3, delta=0.2, final_delta=0.2)
+    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0}), ({"AL"}, {"AL": 1.0})])
+    ra, pa, qb = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"a0": 2e6, "a1": 1e6, "a2": 1e6, "b0": 1e6, "c0": 2e6, "c1": 1e6}}
+    owner = {"a0": pa, "a1": pa, "a2": pa, "b0": qb, "c0": ra, "c1": ra}
+    m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
+    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(ra, {"c1"}), (pa, {"a1"})]
+    unit_of = inst.units.unit_of
+    assert repair.own_window(owner, pa, {"a1"}, frozenset(("a0", "a1", "a2")), unit_of) \
+        == {"a0", "a1", "a2"}
+    assert repair.own_window(owner, pa, {"a1"}, frozenset(), unit_of) == set()
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xym.items()}
+    fixed, tried = repair.repair_channel(inst, plan, owner, p, dict(unit_of), h0=1, max_zctas=100,
+                                         time_limit=60.0, log=lambda *_: None, keep_support=True,
+                                         border=repair.draw.border_km(polygon), ng=ng,
+                                         open_units=("CT",))
+    assert {z: fixed[z] for z in ("a0", "a1", "a2", "b0")} == {"a0": pa, "a1": qb, "a2": pa, "b0": qb}
+    assert [(j, set(s)) for j, s, _ in repair.necks(fixed, m, ng)] == [(ra, {"c1"})]
+    assert (tried[0]["shape"], tried[0]["zctas"], tried[0]["kept"]) == ("own", 3, True)
+    assert tried[0]["cluster"][0].startswith(pa) and tried[1]["cluster"][0].startswith(ra)
+
+
+def _replan_module():
+    spec = importlib.util.spec_from_file_location(
+        "contig_replan", os.path.join(HERE, "..", "tools", "exp", "contig", "replan.py"))
+    replan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(replan)
+    return replan
+
+
+def test_replan_refuses_a_copy_or_report_that_is_the_stored_toml_by_a_link():
+    """Sol's review of #122 (P1): `--out-spec` or `--report` naming the source through a symlink
+    or a hard link, or `--report` naming it outright, stops replan before anything is written."""
+    import tempfile
+    replan = _replan_module()
+    with tempfile.TemporaryDirectory() as d:
+        src = os.path.join(d, "src.toml")
+        body = '[scenario]\nname = "toy"\n\n[channels.A]\nk = 2\n'
+        with open(src, "w") as fh:
+            fh.write(body)
+        os.symlink(src, os.path.join(d, "soft.toml"))
+        os.link(src, os.path.join(d, "hard.toml"))
+        copy = os.path.join(d, "copy.toml")
+        for out, report in ((os.path.join(d, "soft.toml"), None),
+                            (os.path.join(d, "hard.toml"), None), (copy, src),
+                            (copy, os.path.join(d, "soft.toml")),
+                            (copy, os.path.join(d, "hard.toml"))):
+            argv = [src, "--out-spec", out, "--plans", d, "--forbid", "CT-NJ"]
+            try:
+                replan.main(argv + (["--report", report] if report else []))
+            except SystemExit as e:
+                assert "stored TOML" in str(e), e
+            else:
+                raise AssertionError(f"replan wrote over the source via {out}, {report}")
+            with open(src) as fh:
+                assert fh.read() == body
+            assert not os.path.exists(copy)
+        assert replan.same_file(copy, copy) and not replan.same_file(copy, src)
+
+
+def test_replan_writes_a_delta_for_a_channel_that_inherits_the_scenario_delta():
+    """Sol's review of #122 (P2): the smallest-δ fallback for a channel with no `delta` line of its
+    own (it inherits `[scenario].delta`) adds one, and a channel with its own line has it
+    replaced, not doubled."""
+    import tomllib
+    replan = _replan_module()
+    src = ('[scenario]\nname = "toy"\ndelta = 0.02\n\n[channels.A]\nk = 2\n\n'
+           '[channels.B]\nk = 3\ndelta = 0.03\n\n[national]\nchannel = "A"\n')
+    doc = tomllib.loads(replan.banned_text(src, [], deltas={"A": 0.1273, "B": 0.0612}))
+    assert (doc["channels"]["A"]["delta"], doc["channels"]["B"]["delta"]) == (0.1273, 0.0612)
+    assert doc["scenario"]["delta"] == 0.02 and doc["national"] == {"channel": "A"}
+
+
+def test_replan_report_lists_each_channels_effective_bans():
+    """Sol's review of #122 (P2): `effective_bans` (the report's `bans`) gives each channel the
+    pairs `banned_text` adds to it: the `--channels` restriction and a channel's own bans."""
+    import tomllib
+    replan = _replan_module()
+    src = '[scenario]\nname = "toy"\n\n[channels.A]\nk = 2\n\n[channels.B]\nk = 3\n'
+    pairs, extra = [("CT", "NJ")], {"A": [("AZ", "UT")]}
+    bans = replan.effective_bans(["A", "B"], pairs, ["B"], extra)
+    assert bans == {"A": ["AZ-UT"], "B": ["CT-NJ"]}
+    doc = tomllib.loads(replan.banned_text(src, pairs, ["B"], extra=extra))
+    assert {c: ["-".join(p) for p in doc["channels"][c].get("forbid_pairs", [])]
+            for c in ("A", "B")} == bans
+    assert replan.effective_bans(["A", "B"], pairs) == {"A": ["CT-NJ"], "B": ["CT-NJ"]}
+
+
+def test_two_opened_units_may_each_gain_one_holder_not_one_unit_two():
+    """Sol's review of #122 (P2): with CT and NJ opened, the window may not give CT's two outer
+    ZCTAs to Q and R (CT from one holder to three) on NJ's allowance; each opened unit gains one
+    holder at most.  P holds c0 (2) and c1, c2 (1 each), Q b0 (1), R d0 (1); τ = 2, band ±0.2, so
+    Q and R each need a ZCTA of CT: no drawing but the one with three CT holders is in band."""
+    repair = _repair_module()
+    edges = [("c0", "c1"), ("c0", "c2"), ("c1", "b0"), ("c2", "d0")]
+    xy = {"c0": (0.0, 0.0), "c1": (-1.0, 0.0), "c2": (1.0, 0.0), "b0": (-2.0, 0.0),
+          "d0": (2.0, 0.0)}
+    mass = {"c0": 2.0, "c1": 1.0, "c2": 1.0, "b0": 1.0, "d0": 1.0}
+    inst, xym = tr._toy({"CT": ["c0", "c1", "c2"], "NJ": ["b0"], "NY": ["d0"]}, edges, mass, xy,
+                        {}, k=3, delta=0.2, final_delta=0.2)
+    plan = tr._plan(inst, [({"CT"}, {"CT": 1.0}), ({"NJ"}, {"NJ": 1.0}), ({"NY"}, {"NY": 1.0})])
+    pc, qj, ry = (next(cp.name for cp in plan.copies if v in cp.support) for v in ("CT", "NJ", "NY"))
+    owner = {"c0": pc, "c1": pc, "c2": pc, "b0": qj, "d0": ry}
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xym.items()}
+    W = set(owner)
+
+    def solve(opened):
+        return repair.solve_window(inst, plan, owner, W, p, 60.0, True, lambda *_: None,
+                                   keep_support=True, repairing={pc, qj, ry},
+                                   opened=frozenset(z for v in opened for z in inst.units.zips[v]))
+    g = solve(("CT", "NJ"))
+    holders = {g.owner[z] for z in ("c0", "c1", "c2")} if g.owner else set()
+    assert len(holders) <= 2, (g.status, g.owner)
+    assert g.status not in ("optimal", "connected"), (g.status, g.owner)
+
+
+def test_an_opened_neck_comes_first_within_its_district():
+    """Sol's review of #122 (P2): P (AL+CT) is one piece on the contiguity graph but two on the
+    polygons (a0-c0 shares no border), each with a neck, {a0} in CT and {c0} in AL, so the district
+    has two necks; the one whose side lies in the opened unit is repaired first, whichever it is."""
+    repair = _repair_module()
+    edges = [("a0", "a1"), ("a0", "c0"), ("c0", "c1"), ("a0", "b0"), ("a1", "b0"), ("c1", "b0"),
+             ("c0", "b0")]
+    km = {("a0", "a1"): 1.0, ("c0", "c1"): 1.0, ("a0", "b0"): 20.0, ("a1", "b0"): 30.0,
+          ("c1", "b0"): 30.0, ("c0", "b0"): 20.0}
+    xy = {"a0": (0.0, 0.0), "a1": (1.0, 0.0), "c0": (0.0, -1.0), "c1": (1.0, -1.0),
+          "b0": (2.0, -0.5)}
+    mass = {"a0": 2.0, "a1": 1.0, "c0": 2.0, "c1": 1.0, "b0": 5.0}
+    inst, xym = tr._toy({"CT": ["a0", "a1"], "AL": ["c0", "c1"], "NJ": ["b0"]}, edges, mass, xy,
+                        {}, k=2, delta=0.2, final_delta=0.2)
+    plan = tr._plan(inst, [({"AL", "CT"}, {"CT": 1.0, "AL": 1.0}), ({"NJ"}, {"NJ": 1.0})])
+    pa, qb = sorted(cp.name for cp in plan.copies)
+    polygon = {"vertices": sorted(xy), "edges": [e for e in edges if e != ("a0", "c0")],
+               "state": dict(inst.units.unit_of), "border": {e: 1000.0 * x for e, x in km.items()},
+               "connectors": [], "aland": {"a0": 2e6, "a1": 1e6, "c0": 2e6, "c1": 1e6, "b0": 1e6}}
+    owner = {"a0": pa, "a1": pa, "c0": pa, "c1": pa, "b0": qb}
+    m, ng = inst.channels["X"].m, audit.NeckGraph(polygon)
+    assert [(j, set(s)) for j, s, _ in repair.necks(owner, m, ng)] == [(pa, {"a0"}), (pa, {"c0"})]
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xym.items()}
+    for unit, side in (("AL", "c0"), ("CT", "a0")):
+        _, tried = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), h0=1,
+                                         max_zctas=100, time_limit=60.0, log=lambda *_: None,
+                                         keep_support=True, border=repair.draw.border_km(polygon),
+                                         ng=ng, open_units=(unit,))
+        assert (tried[0]["shape"], tried[0]["cluster"]) == ("own", [f"{pa} {side} (1 ZCTAs)"]), \
+            (unit, tried[0]["shape"], tried[0]["cluster"])

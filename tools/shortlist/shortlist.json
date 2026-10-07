@@ -533,6 +533,45 @@
    ],
    "shown_images": [],
    "notes": "#122 re-plan, round 2 (folder ifa_49-replan-a2ut); fails M1. Registered by #120."
+  },
+  {
+   "id": "nocomb_13_12_23_replan_short_w15_r2",
+   "tier": 3,
+   "rank": 12,
+   "label": "No combined channel, 2026-10-02 deck option A (13 / 12 / 23), re-plan #122 round 3 (short split lists), planning band widened (owner 2026-10-06), FAILS M1",
+   "run": "runs/exp/contig/replan/nocomb_13_12_23-replan-short-w15-r2",
+   "images": [
+    "runs/exp/contig/replan/nocomb_13_12_23-replan-short-w15-r2/summary.png",
+    "runs/exp/contig/replan/nocomb_13_12_23-replan-short-w15-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 3: short split lists, no state-pair bans, the channels with no plan inside 0.10 planned at their smallest δ with final_delta 0.15 (owner 2026-10-06); second repair pass (folder nocomb_13_12_23-replan-short-w15-r2, parent nocomb_13_12_23-replan-short-w15); fails M1."
+  },
+  {
+   "id": "nocomb_15_12_23_replan_short_w15_r2",
+   "tier": 3,
+   "rank": 13,
+   "label": "No combined channel, 2026-10-05 grid (15 / 12 / 23), re-plan #122 round 3 (short split lists), planning band widened (owner 2026-10-06), FAILS M1",
+   "run": "runs/exp/contig/replan/nocomb_15_12_23-replan-short-w15-r2",
+   "images": [
+    "runs/exp/contig/replan/nocomb_15_12_23-replan-short-w15-r2/summary.png",
+    "runs/exp/contig/replan/nocomb_15_12_23-replan-short-w15-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 3: short split lists, no state-pair bans, the channels with no plan inside 0.10 planned at their smallest δ with final_delta 0.15 (owner 2026-10-06); second repair pass (folder nocomb_15_12_23-replan-short-w15-r2, parent nocomb_15_12_23-replan-short-w15); fails M1."
+  },
+  {
+   "id": "low6_cb1_replan_shortut_w15_r2",
+   "tier": 3,
+   "rank": 14,
+   "label": "Low-6 combined, 2026-10-02 deck option B (13 / 12 / 24 / combined 1), re-plan #122 round 3 (short split lists), planning band widened (owner 2026-10-06), FAILS M1",
+   "run": "runs/exp/contig/replan/low6_cb1-replan-shortut-w15-r2",
+   "images": [
+    "runs/exp/contig/replan/low6_cb1-replan-shortut-w15-r2/summary.png",
+    "runs/exp/contig/replan/low6_cb1-replan-shortut-w15-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#122 re-plan, round 3: short split lists, round-2 bans dropped; FI AZ-UT retained, the channels with no plan inside 0.10 planned at their smallest δ with final_delta 0.15 (owner 2026-10-06); second repair pass (folder low6_cb1-replan-shortut-w15-r2, parent low6_cb1-replan-shortut-w15); fails M1."
   }
  ]
 }

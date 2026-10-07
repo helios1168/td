@@ -777,3 +777,126 @@ neck rule (28706a9) in the same check:
   INELIGIBLE, reason "diagnostic band".
 
 Regenerate (m5, local): `TD_REPO=... "$TD_PY" runs/exp/contig/border/rescore_0606/rescore.py`.
+
+## #122 Re-plan the four failing maps: bans and opened units (2026-10-06)
+
+Measured 2026-10-06 on m5 with `tools/exp/contig/` at m5-studio/122 (round 1 8fc44b7, round 2
+74b98a3). Every row is judged with the landed M1 check (`tools/mandates/check.py`, #121's final
+neck rule: the smaller side, widths in floored whole cm) and the looks scorer, inside each
+scenario's declared ±10% final band; round 1's maps are rescored under it here.
+`tools/exp/contig/replan.py` re-solves a scenario's master with `forbid_pairs` (unit pairs no
+district may hold together) added to a copy of its TOML, at the declared δ. Every re-solve below
+found a plan at its declared δ in every channel. `repair.py --open-units U` lets any window
+district take ZCTAs of U even with `--keep-support`: an arm-2 split, one more allowed per unit. A
+neck whose side lies in an opened unit is repaired first, and its first window is the district's
+own ZCTAs in that unit (`own_window`, round 2).
+
+"ne5" bans CT-NJ, MA-NJ, NJ-VT, CT-PA and MA-PA in every channel. The six-pair set with PA-VT
+has no plan within final_delta 0.1 on nocomb_15_12_23. Round 2 (owner, "Add DE-NJ, rerun after
+the #121 fix") adds DE-NJ, against the NJ end of the Delaware Memorial Bridge (08023, 5.67 km).
+low6_cb1 FI also bans AZ-UT, so UT does not need its 84621 neck. Splits/cuts: the scorer's splits
+and the state splits, from the #121 border map to the variant. $ is the scorer's per-channel $ per
+district (M).
+
+| id | variant | round | changes | pieces (τ) / necks | splits/cuts vs #121 border map | worst / mean | $ per district (M) | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|---|
+| nocomb_15_12_23 | `-r3-FI` (#121 border map) | - | - | 0 (0) / 3 | 29/34 | 9.8% / 2.3% | FI 880, WH 928, national 1,169 | fail | M1 only |
+| nocomb_15_12_23 | `-replan-a1` | 1 | arm-2 repair | 0 (0) / 3 | → 29/34 | 9.8% / 2.3% | same | fail | M1 only |
+| nocomb_15_12_23 | `-replan-ne5-r2` | 1 | ne5, 2 repair passes | 2 (0.199) / 2 | → 28/34 | 9.9% / 1.8% | same | fail | M1 only |
+| nocomb_15_12_23 | `-replan-ne5dn-r2` | 2 | ne5 + DE-NJ, 2 passes | 3 (0.375) / 4 | → 27/33 | 9.5% / 1.9% | same | fail | M1 only |
+| nocomb_13_12_23 | `-r3-FI` (#121 border map) | - | - | 3 (0.398) / 5 | 28/34 | 9.2% / 1.6% | FI 880, WH 928, national 1,349 | fail | M1 only |
+| nocomb_13_12_23 | `-replan-a1` | 1 | arm-2 repair | 3 (0.398) / 5 | → 28/34 | 9.2% / 1.6% | same | fail | M1 only |
+| nocomb_13_12_23 | `-replan-ne5-r2` | 1 | ne5, 2 passes | 3 (0.176) / 3 | → 27/33 | 9.9% / 2.0% | same | fail | M1 only |
+| nocomb_13_12_23 | `-replan-ne5dn-r2` | 2 | ne5 + DE-NJ, 2 passes | 2 (0.0868) / 1 | → 27/32 | 10.0% / 2.2% | same | fail | M1 only |
+| low6_cb1 | `-r3-national` (#121 border map) | - | - | 0 (0) / 4 | 29/34 | 10.0% / 2.9% | FI 833, WH 916, WIFI 576, national 1,334 | fail | M1 only |
+| low6_cb1 | `-replan-a1ut` | 1 | arm 1 + open UT (FI) | 0 (0) / 4 | → 29/34 | 10.0% / 2.9% | same | fail | M1 only |
+| low6_cb1 | `-replan-ne5ut-r2` | 1 | ne5, FI AZ-UT, 2 passes | 2 (0.434) / 5 | → 26/32 | 8.1% / 2.0% | same | fail | M1 only |
+| low6_cb1 | `-replan-ne5dnut-r2` | 2 | ne5 + DE-NJ, FI AZ-UT, 2 passes | 3 (0.397) / 5 | → 27/33 | 8.5% / 2.1% | same | fail | M1 only |
+| ifa_49 | `-r3-IFA` (#121 border map) | - | - | 7 (0.338) / 10 | 22/40 | 9.8% / 3.4% | IFA 1,268 | fail | M1 only |
+| ifa_49 | `-replan-a1ut` | 1 | arm 1 + open UT | 7 (0.338) / 10 | → 22/40 | 9.8% / 3.4% | same | fail | M1 only |
+| ifa_49 | `-replan-ne5` | 1 | ne5 | 15 (0.355) / 17 | → 22/42 | 13.6% / 1.7% | same | fail (band too) | M1 only |
+| ifa_49 | `-replan-a2ut` | 2 | arm 1 + open UT, IFA_19's own window first | 5 (0.267) / 6 | → 23/41 | 9.9% / 3.6% | same | fail | M1, mode compliance (the UT split) |
+
+- **No map passes M1**, so the round-2 worker rendered no deck or ZIP pages; #120's renderer
+  (`tools/maps/render.py`, 2026-10-06) later rendered and shortlisted four of them (the three
+  `-ne5dn(ut)-r2` maps and `ifa_49-replan-a2ut`). The best by pieces and necks is
+  `nocomb_13_12_23-replan-ne5dn-r2`. Everything it fails is in one district, national_08
+  (DC+NC+NJ+PA+VA+WV): a DC piece of 85 ZIPs (0.0868 τ) and a WV piece of 738 ZIPs (0.0224 τ),
+  both cut off by other districts, and a 0.17 km neck inside PA that cuts off the NJ side. None of
+  these is a narrow state-pair crossing like the DE-NJ bridge, so no seventh pair is named; what to
+  do about it is the owner's call.
+- DE-NJ removed the Delaware Memorial Bridge neck, but on nocomb_15 and low6 DE moved into long
+  districts (WH_07 DE+ME+NH+NY+PA+VT, national_10 DE+MD+NY+PA+VT, national_13). Those are cut off
+  around Philadelphia and Baltimore (necks of 0.07-0.38 km, pieces up to 0.375 τ), so both maps
+  are no better than round 1's ne5.
+- ifa_49: the own UT window removed IFA_19's 84621 neck in its first try (299 ZCTAs, optimal,
+  1.8 s), and neck windows also cleared three New York necks. 5 pieces and 6 necks remain in New
+  York, New England, Maryland and west Texas.
+- Round 1's maps keep their M1 failures under the landed rule. Their neck counts change: for
+  example `ifa_49-r3-IFA` goes from 5 to 10 and `low6_cb1-replan-ne5ut` from 3 to 5.
+
+Regenerate (m5, local): `runs/exp/contig/replan/chain.sh <id> <variant> <source spec> <pairs...>`
+(`PARENT=`, `BUDGET=1500`), second pass `tools/exp/contig/repair.py <folder> --out <folder>-r2
+--keep-support --flow --channels <failing> --h0 8 --max-zctas 2000 --time-limit 300
+--neck-time-limit 300 --budget 1500`; ifa_49 `repair.py runs/exp/contig/border/ifa_49-r3-IFA
+--keep-support --open-units UT --flow --h0 6 --max-zctas 2000 --time-limit 240 --neck-time-limit
+180 --budget 7200`; table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r2.py` (writes
+`TABLE_r2.md`, `rescore_r2.json`). Remaining items per map: `runs/autonomous_2026-10-05/batch_replan/BATCH.md`.
+
+### Round 3: short split lists, round 2's bans dropped, then a widened planning band (2026-10-06)
+
+Owner's picks: national, WH and low6's WIFI split only CA FL NY TX, FI also PA OH, and ifa_49's
+IFA its 15 forced states (NY CA FL PA NJ TX MI OH IL MA CT MD MN WI VA). Every other state stays
+whole, and round 2's six bans are dropped. low6 FI keeps AZ-UT (an orchestrator default). WIFI's
+domain (ID MT ND NE SD WY) holds none of CA FL NY TX, so it stays all whole as before.
+`replan.py --free CHANNEL=U1,...` replaces a channel's `free` in the copy; `run.py`'s and
+`repair.py`'s manifest `plan` lists each channel's δ, final_delta, bans and `free`, and `run.json`
+each channel's final_delta.
+
+**Step 1, at the declared band: every map stops at the re-plan.** In each map some channel has no
+master plan within final_delta 0.1 (margin = false). Smallest feasible δ (`td.master
+.smallest_delta`, converged, rounded up to 1e-4 as `replan.py` does):
+
+| id | binding channel(s): smallest δ | other channels: δ used |
+|---|---|---|
+| nocomb_13_12_23 | FI 0.1273 | national 0.0899, WH 0.0474 |
+| nocomb_15_12_23 | FI 0.1273 | national 0.0774, WH 0.0474 |
+| low6_cb1 | national 0.1071, FI 0.1174 (also 0.1174 without AZ-UT) | WH 0.0821, WIFI at its declared 0.02 |
+| ifa_49 | IFA 0.3433 | - |
+
+No whole state alone exceeds 1.1 τ (the largest are IFA NC 1.067 and low6 FI TN 1.079), so no
+single oversized state causes this. Rounds 1 and 2 re-solved every channel at its declared δ
+(0.02-0.033) with the longer lists.
+
+**Step 2, the owner widened the planning band (2026-10-06): no map passes M1.** ifa_49 is out
+(0.3433). `replan.py --widen C` sets C's final_delta to 0.15 (the owner's ±15% eligibility frame)
+in the copy, so C plans at its smallest δ: nocomb FI, low6 national and FI. Every other channel
+keeps final_delta 0.10 at its smallest δ within it. The folders are not diagnostic: M1's gate and
+the scorer (its ±15% band and $ rule unchanged) judge them, and each run's own band check passes
+(every district inside its channel's band). Pipeline as round 2: draw (arm 1, sequential, border
+term), then `repair.py --flow --keep-support` at 1200 s per channel (`-w15`) and a second pass at
+2400 s per channel (`-w15-r2`, the result; the `-w15` folder is its parent).
+
+| id | variant | δ used (final band) | pieces (largest τ) / necks | splits / state splits / cut km vs #121 border map | worst / mean dev | $ per district (M), $ rule | M1 |
+|---|---|---|---|---|---|---|---|
+| nocomb_13_12_23 | `-replan-short-w15-r2` | national 0.0899, WH 0.0474 (±10%); FI 0.1273 (±15%) | 5 (0.416) / 4 | 28/34/69,649 → 11/18/67,168 | 12.7% / 5.1% | FI 880 (-2.3%), WH 928 (-7.2%), national 1,349 (+7.9%): all pass | fail |
+| nocomb_15_12_23 | `-replan-short-w15-r2` | national 0.0774, WH 0.0474 (±10%); FI 0.1273 (±15%) | 3 (0.416) / 4 | 29/34/66,362 → 12/19/65,628 | 12.7% / 5.3% | FI 880 (-2.3%), WH 928 (-7.2%), national 1,169 (-6.5%): all pass | fail |
+| low6_cb1 | `-replan-shortut-w15-r2` | WH 0.0821, WIFI 0.02 (±10%); national 0.1071, FI 0.1174 (±15%) | 4 (0.426) / 4 | 29/34/53,001 → 11/18/51,991 | 14.6% / 6.6% | FI 833 (-7.4%), WH 916 (-8.4%), national 1,334 (+6.7%): pass; WIFI 576 (no target) | fail |
+
+- The short lists cut the splits by more than half (scorer splits 28-29 → 11-12) and the cut border
+  by 1-4%. Mean deviation rises from 1.6-2.9% to 5.1-6.6%.
+- Every failure is in the Northeast corridor. The largest piece is FI_06 (CT+DE+NY+PA) on both
+  nocomb maps: 209 ZIPs from 17501, 0.416 τ. On low6 it is national_06
+  (CT+DE+NY+PA+RI): 1,901 ZIPs from 15001, 0.426 τ. Necks include WH_11 0.08 km at 10036-10173
+  (Manhattan) and FI_06 0.96 km at 17507-17517/17555.
+- Of the 12 pieces left (5 + 3 + 4), 11 are left because their last window hit its time limit
+  (unknown) and 1 (low6 national_06) because the budget ran out. The second pass removed one
+  neck each on nocomb_13 and low6 and changed nothing on nocomb_15.
+- The $ rule passes on every targeted channel of all three maps. $ per district is the channel total
+  over K, so it equals the earlier runs' figures.
+- Rendered with `tools/maps/render.py` and shortlisted at tier 3, FAILS M1. The legacy summary
+  page's subtitle still reads "drawn band ±10%" for every channel, including the widened ones.
+
+Regenerate (m5, local): `runs/exp/contig/replan/chain_r3.sh`, `repair_r3.sh`, `repair_r3b.sh`;
+table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r3.py` → `rescore_r3.json`,
+`TABLE_r3.md` (per-piece reasons, necks, split states per channel).
