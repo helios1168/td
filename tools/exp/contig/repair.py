@@ -796,8 +796,10 @@ def _race(pool, n, launch, settle, wanted) -> None:
 
 
 def _spawn(role: str, shared: str, slots=None, daemon: bool = True, log: bool = True) -> tuple:
-    """(process, connection) of a worker process (`_serve`) running this file (`run.spawn`)."""
-    return run.spawn(os.path.abspath(__file__), WORKER, (role, shared, slots, log), daemon)
+    """(process, connection) of a worker process (`_serve`) running this file (`run.spawn`; a
+    channel leads its process group)."""
+    return run.spawn(os.path.abspath(__file__), WORKER, (role, shared, slots, log), daemon,
+                     lead=role == "channel")
 
 
 class WindowPool:

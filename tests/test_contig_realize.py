@@ -1119,6 +1119,48 @@ def test_a_failed_drawing_stops_and_joins_every_draw_process():
                 os.kill(pid, 9)
 
 
+def test_a_channel_that_dies_and_is_reaped_early_still_takes_its_windows():
+    """Sol's re-review of #123 (P1): three channels at `--jobs 2`.  Y finishes, X dies abruptly
+    with a window running, and starting Z (`Process.start` reaps every exited child it knows)
+    comes before X's death is read; X's window must still be killed (`run.stop`), and every
+    process joined."""
+    import tempfile
+    import time
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    plans = {**plans, "Z": plans["X"]}
+    owners = {**owners, "Z": owners["X"]}
+    with tempfile.TemporaryDirectory() as tmp:
+        f = {n: os.path.join(tmp, n) for n in ("x", "windows", "channels", "y_done", "x_dying")}
+        state = wp.Probe(state, [(1, "pid", f["channels"]),
+                                 (2, "sleep_under", (f["x"], f["windows"], 120.0))])
+        owners = {**owners,
+                  "X": wp.Probe(owners["X"], [(1, "pid", f["x"]),
+                                              (1, "die_later", (f["windows"], f["y_done"],
+                                                                f["x_dying"]))]),
+                  "Y": wp.Probe(owners["Y"], [(1, "linger", (f["y_done"], f["x_dying"]))])}
+        try:
+            repair.repair_parallel(inst, plans, owners, p, state, ["X", "Y", "Z"], 2, log=False,
+                                   h0=1, max_zctas=100, time_limit=60.0)
+            raise AssertionError("a dead channel raised nothing")
+        except RuntimeError as e:
+            assert "X channel worker process died" in str(e), e
+        channels = [int(x) for x in wp.lines(f["channels"])]     # Z's, if it loaded before its stop
+        windows = [int(x) for x in wp.lines(f["windows"])]
+        try:
+            assert len(channels) >= 2 and windows and os.path.exists(f["x_dying"]), (channels, windows)
+            unjoined = _alive(channels)
+            end = time.time() + 10
+            while _alive(windows) and time.time() < end:
+                time.sleep(0.1)
+            running = _alive(windows)
+            assert (unjoined, running) == ([], []), f"channels unjoined {unjoined}, windows running {running}"
+        finally:
+            for pid in _alive(channels + windows):  # only when the test fails
+                os.kill(pid, 9)
+
+
 def test_a_failed_channel_stops_the_others_through_their_window_pools():
     """Sol's review of #123 (P1): when a channel fails, each other channel is sent SIGTERM and
     closes its `WindowPool` (its running window killed and joined) well within the grace, and

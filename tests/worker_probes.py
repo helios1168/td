@@ -76,6 +76,43 @@ def fail_first(path: str) -> None:
     raise RuntimeError("probe: this drawing fails")
 
 
+def sleep_under(arg: tuple) -> None:
+    """`sleep` in a window whose parent's pid is in `parents`: one channel's windows stuck."""
+    parents, path, seconds = arg
+    if str(os.getppid()) in lines(parents):
+        sleep((path, seconds))
+
+
+def die_later(arg: tuple) -> None:
+    """In a thread, once a window is stuck (a pid in `windows`) and `after` exists: write
+    `dying` and exit at once, no cleanup, as a channel killed from outside does."""
+    import threading
+    windows, after, dying = arg
+
+    def die():
+        while not (lines(windows) and os.path.exists(after)):
+            time.sleep(0.05)
+        time.sleep(0.5)
+        _append(dying, "")
+        os._exit(1)
+    threading.Thread(target=die, daemon=True).start()
+
+
+def _linger(done: str, dying: str) -> None:
+    _append(done, "")
+    end = time.time() + 120
+    while not os.path.exists(dying) and time.time() < end:
+        time.sleep(0.05)
+    time.sleep(1.0)
+
+
+def linger(arg: tuple) -> None:
+    """As this worker exits, its result sent: write `done`, then wait for `dying` and a second
+    more, so its parent, joining it, next acts once that other channel is dead."""
+    import multiprocessing.util
+    multiprocessing.util.Finalize(None, _linger, args=arg, exitpriority=100)
+
+
 def block_sigterm(_) -> None:
     """A channel deaf to SIGTERM, as one stuck in a long solve is: only a kill stops it."""
     signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM})
