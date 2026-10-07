@@ -1297,3 +1297,17 @@ Regenerate (m5, `runs/exp/contig/whole127/`, gitignored): `"$TD_PY" -u
 tools/exp/contig/wholeplan.py runs/exp/contig/_specs/ifa49.toml --out <dir> --k <K> [--pieces
 NY,CA,FL,PA,NJ,TX,MI,OH[,IL,MA,CT]]`. The loop's record (rounds, bans, every verdict, the cuts) is
 `<dir>/wholeplan.json`. One run takes 1–3 minutes.
+
+## #128 Summary map fill and band caption (2026-10-07)
+
+The required-look `summary.png` used to fill districts with legacy Voronoi cells around each ZIP's centre point, clipped to the ZIP's filed state. Its caption also printed "±10%" for every channel. Since #128 (`tools/maps/summary.py`, owner rulings 2026-10-07), each channel panel draws:
+- a state held by one district as that state's shape (cb_2025 500k, simplified 1 km);
+- a state split between districts by its ZCTA polygons, each clipped to the filed state, so splits follow ZIP borders and no colour crosses a state line;
+- land in a split state that no ZCTA filed there covers (land in no ZCTA, plus a neighbour's ZCTA crossing the line) shaded by the nearest district by default, or grey with `--gap-fill grey`; the ZIP pages draw the exact whole ZCTAs;
+- a caption with each channel's real final band.
+
+This is a display change only. M1 is still judged by the gate on whole 2025 ZCTAs, and ledgers and split counts are unchanged. Cross-state ZIP spill (137 ZCTAs) was judged negligible by the owner, so it is not marked.
+
+Cost: about the same render time; summary.svg grows about 2× (ne_plains_wh11 1.6 → 3.2 MB).
+
+Re-rendering is limited by the owner ("do not rerender the 58 other maps"). The 58 existing shortlist images keep the legacy look, and `tools/mandates/check.py --tracking` reports them as stale (renderer code changed) until they are re-rendered. Only new maps get the new look. Previews: `/tmp/iss/128-preview-B2/`.
