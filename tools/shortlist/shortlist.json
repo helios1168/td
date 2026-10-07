@@ -971,6 +971,75 @@
     "thin": 5,
     "small": 12
    }
+  },
+  {
+   "id": "ifa_46_126_ut",
+   "tier": 3,
+   "rank": 38,
+   "label": "IFA, K 46 (separate channel), #126 round 2 re-plan with UT free, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_46-ut-r2",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_46-ut-r2/summary.png",
+    "runs/exp/contig/ifa126/ifa_46-ut-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 round 2 (autonomous 2026-10-07): re-plan of ifa49.toml at K 46 with UT added to IFA's free list (orchestrator's scenario choice, +1 split state), border draw, two 1 h repairs with --jobs 4. UT's neck is gone (UT split), but M1 fails: 1 detached piece (PA, IFA_39), 3 necks (CT 06069, the Delaware Memorial Bridge 08023, west TX 79734). Worst/mean 9.9% / 3.2%, 22 splits, $ 1,351M per district.",
+   "metrics": {
+    "districts": 46,
+    "worst": 9.9,
+    "mean": 3.2,
+    "splits": 22,
+    "pieces": 1,
+    "necks": 3,
+    "thin": 4,
+    "small": 10
+   }
+  },
+  {
+   "id": "ifa_49_126_ut",
+   "tier": 3,
+   "rank": 39,
+   "label": "IFA, K 49 (separate channel), #126 round 2 re-plan with UT free, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_49-ut-r2",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_49-ut-r2/summary.png",
+    "runs/exp/contig/ifa126/ifa_49-ut-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 round 2 (autonomous 2026-10-07): re-plan of ifa49.toml at K 49 with UT added to IFA's free list (orchestrator's scenario choice, +1 split state), border draw, two 1 h repairs with --jobs 4. UT's neck is gone (UT split), but M1 fails: 6 detached pieces (largest 0.338 τ), 7 necks. Worst/mean 9.9% / 2.7%, 21 splits, $ 1,268M per district.",
+   "metrics": {
+    "districts": 49,
+    "worst": 9.9,
+    "mean": 2.7,
+    "splits": 21,
+    "pieces": 6,
+    "necks": 7,
+    "thin": 7,
+    "small": 10
+   }
+  },
+  {
+   "id": "ifa_52_126_ut",
+   "tier": 3,
+   "rank": 40,
+   "label": "IFA, K 52 (separate channel), #126 round 2 re-plan with UT free, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_52-ut-r2",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_52-ut-r2/summary.png",
+    "runs/exp/contig/ifa126/ifa_52-ut-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 round 2 (autonomous 2026-10-07): re-plan of ifa49.toml at K 52 with UT added to IFA's free list (orchestrator's scenario choice, +1 split state), border draw, two 1 h repairs with --jobs 4. UT's neck is gone (UT split), but M1 fails: 3 detached pieces (largest 0.118 τ), 5 necks (the Delaware Memorial Bridge 08023 and west TX 79734 among them). Worst/mean 9.4% / 2.4%, 20 splits, $ 1,195M per district.",
+   "metrics": {
+    "districts": 52,
+    "worst": 9.4,
+    "mean": 2.4,
+    "splits": 20,
+    "pieces": 3,
+    "necks": 5,
+    "thin": 4,
+    "small": 13
+   }
   }
  ]
 }

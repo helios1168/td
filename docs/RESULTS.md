@@ -1102,3 +1102,57 @@ Regenerate (m5, local): `runs/exp/contig/ifa126/chain.sh <variant> <spec> <paren
 <replan args>` (`REPAIR_EXTRA="--jobs 3"` for the `-azut` K 46 and 52), `repair_long.sh <variant>
 <source run> 7200`; table `TD_REPO=... "$TD_PY" runs/exp/contig/ifa126/rescore.py` →
 `rescore.json`, `TABLE.md`. Each folder's `manifest.json` holds its exact command and parent.
+
+### Round 2: UT on IFA's free list (2026-10-07)
+
+Measured 2026-10-07 on m5 at m5-studio/126 (main 15c8550 merged after the runs). The orchestrator,
+under the owner's overnight grant, added UT to IFA's free list: a labelled scenario change that
+allows one more split state, not a threshold change; the M1 constants, the ±10% final band and the
+$ target are unchanged. Approach 2b: `replan.py --free IFA=<ifa49's 27 states>,UT` at K 46, 49 and
+52 (each found a plan at the declared δ 0.02, and each splits UT: 3, 2 and 3 districts), border draw
+(`run.py --sequential --jobs 1`), a 1 h repair with `--jobs 4`, then a second 1 h repair of each
+(every first pass left budget or unknown causes). Columns as above; round 1's best map is the first
+row for comparison.
+
+| approach | folder | change | K | $ per district (M) | splits / cuts | cut border km | thin / small | worst / mean dev | pieces (largest τ) / necks | causes left | M1 | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2b | `ifa126/ifa_46-ut` | K 46, ifa49 free list + UT (+1 split state), repair 1 h --jobs 4 | 46 | 1,351 | 22 / 39 | 46,431 | 4 / 10 | 9.9% / 3.2% | 1 (0.214) / 3 | 2 neck budget, 1 neck unknown, 1 piece unknown | fail | ineligible: M1: fail |
+| 2b | `ifa126/ifa_46-ut-r2` | K 46, ifa49 free list + UT (+1 split state), second 1 h repair | 46 | 1,351 | 22 / 39 | 46,431 | 4 / 10 | 9.9% / 3.2% | 1 (0.214) / 3 | 1 neck infeasible, 2 neck unknown, 1 piece unknown | fail | ineligible: M1: fail |
+| 2b | `ifa126/ifa_49-ut` | K 49, ifa49 free list + UT (+1 split state), repair 1 h --jobs 4 | 49 | 1,268 | 21 / 41 | 45,583 | 7 / 9 | 9.9% / 2.4% | 9 (0.338) / 11 | 11 neck budget, 5 piece budget, 4 piece unknown | fail | ineligible: M1: fail |
+| 2b | `ifa126/ifa_49-ut-r2` | K 49, ifa49 free list + UT (+1 split state), second 1 h repair | 49 | 1,268 | 21 / 41 | 44,713 | 7 / 10 | 9.9% / 2.7% | 6 (0.338) / 7 | 7 neck budget, 6 piece unknown | fail | ineligible: M1: fail |
+| 2b | `ifa126/ifa_52-ut` | K 52, ifa49 free list + UT (+1 split state), repair 1 h --jobs 4 | 52 | 1,195 | 20 / 45 | 49,881 | 4 / 14 | 7.4% / 2.0% | 4 (0.262) / 11 | 11 neck budget, 4 piece unknown | fail | ineligible: M1: fail |
+| 2b | `ifa126/ifa_52-ut-r2` | K 52, ifa49 free list + UT (+1 split state), second 1 h repair | 52 | 1,195 | 20 / 44 | 47,980 | 4 / 13 | 9.4% / 2.4% | 3 (0.118) / 5 | 2 neck budget, 3 neck unknown, 3 piece unknown | fail | ineligible: M1: fail |
+
+- **No round-2 map passes M1**, so none goes in at tier P; the three final maps (`-r2`) are rendered
+  and shortlisted at tier 3 (`ifa_46_126_ut`, `ifa_49_126_ut`, `ifa_52_126_ut`, ranks 38-40).
+- **Opening UT removes the UT neck at every K.** No round-2 map has a neck or piece in UT. The cost
+  is one more split state (K 46: 21 → 22 splits against `ifa_46-replan`).
+- **The closest map is `ifa_46_126_ut`** (`ifa126/ifa_46-ut-r2`): 1 piece and 3 necks, against
+  round 1's 2 and 4. $1.351B per district (+8.1%), 22 splits, worst / mean 9.9% / 3.2%. Left: a
+  PA piece of IFA_39 (NY+PA#1, 208 ZIPs from 16925, 0.214 τ, window unknown), CT (IFA_10,
+  06069, 1.90 km, unknown), the Delaware Memorial Bridge (IFA_12, 08023, infeasible in every
+  window) and west TX (IFA_44, 79734, unknown). The second pass changed nothing on this map.
+- **Delaware Memorial Bridge (08023).** K 46: IFA_12 has support DE+MD+NJ#1 and no PA; its NJ part
+  (229 ZIPs from 07751, Monmouth / Ocean, 63% of its mass) meets DE only across the bridge
+  (08023-08069 3.34 km, 08023-08070 2.33 km) and otherwise borders NJ#2 (191 km), PA#1 (106 km)
+  and NJ#1 (68 km); the second pass proved every window around it infeasible. K 52: IFA_14 has
+  support DE+NJ#1; the hanging part is DE (68 ZIPs and 08023), which borders MD#1 (190 km) and
+  DC+MD+PA+VA+WV#1 (39 km). The plan change that avoids it: no support that holds DE and NJ without
+  PA (DE goes with MD or PA, and NJ's districts hold NJ, or NJ with PA); a support containing DE,
+  NJ and PA can join them through Philadelphia. K 49's IFA_13 (DC+DE+MD+NJ+PA#1) holds PA and has
+  no bridge neck, but a different one: its 116 ZIPs from 08002 (64 PA, 52 NJ) hang on
+  19013-19022 (2.24 km).
+- **West TX (79718-79734).** At every K the district is TX#2 (San Antonio; IFA_44, 47, 49): its 44
+  Trans-Pecos ZIPs from 79734 reach the rest of the district only through 79718-79734 (6.14 km),
+  and their one other neighbour district is the NM district (AZ+CO+NM#1 at K 46 and 49, CO+NM#1 at
+  K 52), across 228 km of border. The plan change that avoids it: give the NM district a support
+  that includes TX (TX is already free, so no new split state), so these ZIPs can join it; within
+  TX#2 alone the windows ended unknown or unreached.
+- K 49 and 52 keep more failures (6 pieces / 7 necks and 3 / 5), mostly in the NY-CT-NJ and
+  Great Lakes supports, with causes unknown or budget.
+
+Regenerate (m5, local): `runs/exp/contig/ifa126/chain2.sh <variant> <spec> runs/exp/contig/border/ifa_49
+3600 --free IFA=AZ,CA,CO,CT,FL,GA,IA,IL,IN,KS,LA,MA,MD,MI,MN,MO,NC,NJ,NY,OH,PA,SC,TN,TX,UT,VA,WA,WI`
+(specs `ifa126/_specs/ifa_46.toml`, `_specs/ifa49.toml`, `ifa126/_specs/ifa_52.toml`), then
+`repair2.sh <variant> 3600`; table `TD_REPO=... "$TD_PY" runs/exp/contig/ifa126/rescore.py --round 2`
+→ `rescore2.json`, `TABLE2.md`.
