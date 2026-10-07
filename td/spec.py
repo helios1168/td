@@ -116,6 +116,10 @@ class ChannelSpec:
     forbid_pairs: frozenset     # frozensets {u, w}: no support holds both
     hook: str | None
     margin: bool = True         # μ_S in the band rows; false sets μ ≡ 0 (MODEL §4.6, #84)
+    contact_min_km: float = 0.0     # #124 A: units touch where they share this much border; 0 off
+    drawable_alone: bool = False    # #124 B: each support in use must draw alone (plancheck.py)
+    replan_rounds: int = 0          # #124 C: re-plans after a drawing (plancheck.py); 0 off
+    ban_supports: tuple = ()        # #124 C: frozensets of units with n_S = 0 (spec copies only)
 
     @property
     def units(self) -> frozenset:
@@ -289,7 +293,8 @@ def _number(value, where: str) -> float:
 def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
     known = {"k", "delta", "final_delta", "eta", "domain", "mode", "whole", "clipped", "free",
              "metro_mode", "max_size", "max_dist_km", "dist_km", "contact_caps",
-             "extra_supports", "supports", "confine", "forbid_pairs", "hook", "margin"}
+             "extra_supports", "supports", "confine", "forbid_pairs", "hook", "margin",
+             "contact_min_km", "drawable_alone", "replan_rounds", "ban_supports"}
     if set(c) - known:
         raise SpecError(f"channel {name}: unknown keys {_show(sorted(set(c) - known))}")
     k = _integer(c.get("k"), f"channel {name}: k")
@@ -364,9 +369,23 @@ def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
     margin = c.get("margin", True)
     if not isinstance(margin, bool):
         raise SpecError(f"channel {name}: margin must be true or false, not {margin!r}")
+    contact_min = _number(c.get("contact_min_km", 0.0), f"channel {name}: contact_min_km")
+    alone = c.get("drawable_alone", False)
+    if not isinstance(alone, bool):
+        raise SpecError(f"channel {name}: drawable_alone must be true or false, not {alone!r}")
+    rounds = c.get("replan_rounds", 0)
+    if isinstance(rounds, bool) or not isinstance(rounds, int) or rounds < 0:
+        raise SpecError(f"channel {name}: replan_rounds must be an integer >= 0, not {rounds!r}")
+    bans = []
+    for b in c.get("ban_supports", ()):
+        b = _units(b, sets, units, f"channel {name} ban_supports")
+        if not b or b - set(domain):
+            raise SpecError(f"channel {name}: ban_supports entry {sorted(b)} is empty or holds "
+                            "units outside the domain")
+        bans.append(frozenset(b))
     return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode, max_size, max_dist, dist,
                        caps, tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"),
-                       margin)
+                       margin, contact_min, alone, rounds, tuple(sorted(set(bans), key=sorted)))
 
 
 def check_partition(spec: Spec) -> None:
@@ -537,6 +556,7 @@ class Instance:
     channels: dict              # name -> Channel, channels dropped for zero opportunity left out
     dropped_channels: tuple
     report: dict = field(default_factory=dict)
+    polygon: dict | None = None     # `geo.polygon_graph()` when planned on it: A's widths (#124)
 
 
 def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Instance:
@@ -574,8 +594,10 @@ def build(spec: Spec, extract, reference=None, graph: dict | None = None) -> Ins
     for z, f, m in zip(extract.z, extract.channel, extract.m_rel):
         if z in unit_of:
             cells[z, f] = cells.get((z, f), 0.0) + m
-    return assemble(spec, Units.from_graph(unit_of, graph["edges"], xy, land), cells,
+    inst = assemble(spec, Units.from_graph(unit_of, graph["edges"], xy, land), cells,
                     {"off_graph": off_graph}, stop_disconnected_whole=not polygon)
+    inst.polygon = graph if "border" in graph else None
+    return inst
 
 
 def scope(spec: Spec, extract):

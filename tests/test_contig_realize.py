@@ -4,11 +4,12 @@ its units proved infeasible, the fixed-target rows, and a zero-opportunity excla
 district it touches."""
 from __future__ import annotations
 
+import dataclasses
 import importlib.util
 import os
 import sys
 
-from td import audit, realize
+from td import audit, master, realize
 
 from tests import test_realize as tr
 
@@ -770,3 +771,114 @@ def test_an_opened_neck_comes_first_within_its_district():
                                          ng=ng, open_units=(unit,))
         assert (tried[0]["shape"], tried[0]["cluster"]) == ("own", [f"{pa} {side} (1 ZCTAs)"]), \
             (unit, tried[0]["shape"], tried[0]["cluster"])
+
+
+# ------------------------------------------------------------------------------ #124 plancheck.py
+def _plancheck_module():
+    if "contig_plancheck" not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            "contig_plancheck", os.path.join(HERE, "..", "tools", "exp", "contig", "plancheck.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["contig_plancheck"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["contig_plancheck"]
+
+
+def _corridor_toy(k: int):
+    """PA (p0, 100 km², mass 1) and NJ (q0, 100 km², mass 1) are joined only through NY, free,
+    a path n1-n2-n3 (1 km² and mass 0.01 each) whose inner edges share 1 km of border; p0-n1 and
+    n3-q0 share 20 km.  Every district on PA+NY+NJ crosses NY by a 1 km passage between two
+    halves of the land: a neck."""
+    edges = [("p0", "n1"), ("n1", "n2"), ("n2", "n3"), ("n3", "q0")]
+    km = {("n1", "p0"): 20.0, ("n1", "n2"): 1.0, ("n2", "n3"): 1.0, ("n3", "q0"): 20.0}
+    xy = {"p0": (0.0, 0.0), "n1": (1.0, 0.0), "n2": (2.0, 0.0), "n3": (3.0, 0.0), "q0": (4.0, 0.0)}
+    mass = {"p0": 1.0, "q0": 1.0, "n1": 0.01, "n2": 0.01, "n3": 0.01}
+    inst, _ = tr._toy({"PA": ["p0"], "NY": ["n1", "n2", "n3"], "NJ": ["q0"]}, edges, mass, xy,
+                      {"NY": "free"}, k=k, delta=0.1, eta=0.05)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"p0": 1e8, "q0": 1e8, "n1": 1e6, "n2": 1e6, "n3": 1e6}}
+    inst.polygon = polygon
+    return inst, audit.NeckGraph(polygon)
+
+
+def test_b_cuts_a_support_no_district_draws_without_a_neck_and_keeps_one_that_can():
+    """#124 B: {PA, NY, NJ} has no drawing without a neck (proved infeasible), so with K = 1, where
+    it is the only plan, `plan_checked` cuts it and the master has no plan left; {PA, NY} draws
+    (PA with n1, whose 1 km² is under 5% of the land) and is kept."""
+    pc = _plancheck_module()
+    inst, ng = _corridor_toy(1)
+    v = pc.drawable(inst, "X", frozenset({"PA", "NY", "NJ"}), 0.1, ng, 60.0, log=lambda *_: None)
+    assert v["status"] == "infeasible", v
+    p, rep, rec = pc.plan_checked(inst, "X", ng=ng, check_time=60.0, log=lambda *_: None)
+    assert p is None and rec["status"] == "infeasible", rec
+    assert [b["support"] for b in rec["bans"]] == ["NJ+NY+PA"] and rec["bans"][0]["objective_after"] is None
+    two, ng2 = _corridor_toy(2)
+    v = pc.drawable(two, "X", frozenset({"PA", "NY"}), 0.1, ng2, 60.0, log=lambda *_: None)
+    assert v["status"] == "drawable", v
+    p, _, rec = pc.plan_checked(two, "X", ng=ng2, check_time=60.0, log=lambda *_: None)
+    assert p is not None and rec["status"] == "passed" and not rec["bans"], rec
+
+
+def test_b_never_cuts_on_a_timeout():
+    """#124 B: out of time the test is unknown, listed, never a cut; the plan stands."""
+    pc = _plancheck_module()
+    inst, ng = _corridor_toy(1)
+    v = pc.drawable(inst, "X", frozenset({"PA", "NY", "NJ"}), 0.1, ng, 0.0, log=lambda *_: None)
+    assert v["status"] == "unknown", v
+    p, _, rec = pc.plan_checked(inst, "X", ng=ng, check_time=0.0, log=lambda *_: None)
+    assert p is not None and rec["status"] == "passed" and not rec["bans"]
+    assert [u["support"] for u in rec["unknown"]] == ["NJ+NY+PA"]
+    checks = pc.Checks()                # monotone: infeasible at 0.1 stands at 0.05, not at 0.2
+    checks.put("X", {"PA"}, 0.1, {"status": "infeasible"})
+    assert checks.get("X", {"PA"}, 0.05) and checks.get("X", {"PA"}, 0.2) is None
+
+
+def test_c_bans_a_support_after_a_proved_infeasible_window_and_leaves_an_unknown_uncut():
+    """#124 C: of two districts left in pieces, the one whose last window was proved infeasible
+    (outside fixed) gets its support banned, with the window as evidence and the cost before and
+    after once the next round is drawn; the one whose window ended unknown is listed, not cut; a
+    log line saying a window was not tried makes the cause "budget spent".  The re-plan honours
+    the ban (`ban_supports` in the next round's copy, `replan.banned_text`)."""
+    pc = _plancheck_module()
+    inst, xy, plan = _u_toy()
+    ct, nj = sorted(cp.name for cp in plan.copies)
+    owner = {z: ct for z in inst.units.unit_of}     # pieces: NJ+NY's v44 and CT+NY's v43
+    owner.update(dict.fromkeys(["b0", "v30", "v40", "v41", "v42", "v44"], nj))
+    attempts = [{"cluster": [f"{nj} v44 (1 ZCTAs)"], "status": "infeasible", "shape": "ball",
+                 "h": 1, "window_zctas": 3, "cap": True},
+                {"cluster": [f"{ct} v43 (1 ZCTAs)"], "status": "unknown", "shape": "ball",
+                 "h": 1, "window_zctas": 4, "cap": True}]
+    ng = audit.NeckGraph({"vertices": sorted(xy), "edges": [(a, b) for a in inst.units.zip_adj
+                                                            for b in inst.units.zip_adj[a] if a < b],
+                          "state": dict(inst.units.unit_of), "border": {}, "connectors": [],
+                          "aland": dict.fromkeys(xy, 1e6)})
+    found = [x for x in pc.causes(inst, plan, owner, attempts, "", ng, 1, 100) if x["kind"] == "piece"]
+    f, unknown = sorted(found, key=lambda x: x["district"] != nj)
+    assert (f["district"], f["cause"], f["window"]["window_zctas"]) == (nj, pc.INFEASIBLE, 3), f
+    assert f["window"]["cap_stopped_growth"] is False
+    assert (unknown["district"], unknown["cause"]) == (ct, "window unknown at its time limit")
+    spent = pc.causes(inst, plan, owner, attempts, f"budget spent: X ball 2 of {nj} not tried\n",
+                      ng, 1, 100)
+    assert {x["district"]: x["cause"] for x in spent if x["kind"] == "piece"}[nj] == "budget spent"
+    ch = inst.channels["X"]
+    ch.spec = dataclasses.replace(ch.spec, replan_rounds=1)
+    cost0 = {"X": {"delta": 0.1, "objective": 1.0, "splits": 1, "cuts": 1}}
+    entry = {"left": [f, unknown], "cost": cost0}
+    banned, done = {}, {}
+    nb = pc.close_round(entry, None, inst, done, banned, last=False)
+    assert [(b["channel"], b["support"], b["evidence"]["cause"]) for b in nb] == \
+        [("X", ["NJ", "NY"], pc.INFEASIBLE)] and "stop" not in entry
+    assert banned == {"X": {frozenset({"NJ", "NY"})}} and done == {"X": 1}
+    cost1 = {"X": {"delta": 0.1, "objective": 2.0, "splits": 2, "cuts": 2}}
+    nxt = {"left": [unknown], "cost": cost1}
+    assert pc.close_round(nxt, entry, inst, done, banned, last=False) == []
+    assert nb[0]["cost"] == {"before": cost0["X"], "after": cost1["X"]}
+    assert nxt["stop"].startswith("no window proved infeasible")
+    replan = _replan_module()
+    text = replan.banned_text("[channels.X]\nk = 2\n", [], keys={"X": {
+        "ban_supports": '[["NJ", "NY"]]'}})
+    assert 'ban_supports = [["NJ", "NY"]]' in text
+    ch.spec = dataclasses.replace(ch.spec, ban_supports=(frozenset({"NJ", "NY"}),))
+    p, _ = master.plan(inst, "X", delta=0.6)     # the re-plan: NJ+NY is gone
+    assert p is not None and frozenset({"NJ", "NY"}) not in p.n, p and p.n
