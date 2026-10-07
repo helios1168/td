@@ -224,6 +224,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
 
 # ------------------------------------------------------------------------------ in parallel (#123)
 WORKER = "contig_run_worker"        # the name a worker process runs this file under
+STOP_GRACE = 30.0                   # seconds a stopped worker gets before its group is killed
 
 
 def spawn(path: str, name: str, args: tuple, daemon: bool = True) -> tuple:
@@ -253,6 +254,30 @@ def receive(conn, what: str):
     return msg
 
 
+def stop(procs: list, grace: float | None = None) -> None:
+    """Stop the worker processes `procs` (`spawn`, none of them joined yet) and join them all.
+    Each gets SIGTERM, on which a repair channel closes its `WindowPool` (`repair._serve`); once
+    each has exited or `grace` seconds (`STOP_GRACE`) have passed, each one's process group is
+    killed, so a worker that leads its own (`os.setpgrp`) takes its descendants with it.  An
+    unjoined worker keeps its pid, so its group id is never another's."""
+    import signal
+    from multiprocessing.connection import wait
+    for proc in procs:
+        proc.terminate()
+    end = time.time() + (STOP_GRACE if grace is None else grace)
+    left = [proc.sentinel for proc in procs]
+    while left and time.time() < end:
+        done = wait(left, max(0.0, end - time.time()))
+        left = [s for s in left if s not in done]
+    for proc in procs:
+        if proc._popen.returncode is None:     # not reaped by `multiprocessing`: still its pid
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                proc.kill()                     # it never led a group
+        proc.join()
+
+
 def pin_threads() -> None:
     """Size this process's HiGHS thread pool at one thread before any other solve (trap 18):
     `draw`'s solves then set `threads` 1, and `td.audit`'s, at HiGHS's default, run in that pool."""
@@ -268,6 +293,7 @@ def pin_threads() -> None:
 def _serve(conn, shared: str, log: bool) -> None:
     """A worker process: `draw.draw` of one channel, HiGHS on one thread; sends the Result."""
     import traceback
+    os.setpgrp()                # its own process group, for `stop`
     try:
         with open(shared, "rb") as fh:
             sh = pickle.load(fh)
@@ -303,12 +329,12 @@ def draw_parallel(inst, plans: dict, xy: dict, jobs: int, border=None, log: bool
                 conn.send((c, kw))
                 running[conn] = (c, proc)
             for conn in wait(list(running)):
-                c, proc = running.pop(conn)
+                c, proc = running[conn]
                 out[c] = receive(conn, f"{c} draw")
+                del running[conn]               # a failed one stays, for `stop`
                 proc.join()
     finally:
-        for _, proc in running.values():
-            proc.terminate()
+        stop([proc for _, proc in running.values()])
         shutil.rmtree(tmp, ignore_errors=True)
     return out
 

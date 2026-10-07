@@ -55,11 +55,15 @@ back to each ZCTA's plan copy):
 - **In parallel** (#123, `--jobs N` above 1; 1 is the sequential loop): each channel is repaired
   in its own process (`repair_parallel`), and each escalation, of a piece or a neck, is a race
   (`_race`): up to N windows of its sequence solve at once in worker processes (`WindowPool`,
-  HiGHS pinned to one thread each, trap 18), at most N solves across the channels.  Attempts
-  settle in sequence order, never by finish time: the first success in sequence order is kept, an
-  earlier window is waited for to its own time limit, a later one is killed once an earlier one
-  succeeds, and an unknown window still skips the later capped ones of its shape.  With no window
-  stopped by a time limit (or `--budget`) the folder is the sequential run's but for seconds.
+  HiGHS pinned to one thread in every worker, trap 18), at most N solves across the channels, a
+  channel's own neck counts among them (`WindowPool.hold`).  A window gets the channel's deadline
+  and takes its time limit from it as its worker begins (`_window_task`).  When a channel fails
+  the others are stopped, each closing its windows, and every process is joined (`run.stop`).
+  Attempts settle in sequence order, never by finish time: the first success in sequence order is
+  kept, an earlier window is waited for to its own time limit, a later one is killed once an
+  earlier one succeeds, and an unknown window still skips the later capped ones of its shape.
+  With no window stopped by a time limit (or `--budget`) the folder is the sequential run's but
+  for seconds.
 
 The source run is checked first (`check_source`): its districts.csv must list, per channel, the
 plan's copies under the ids, names and supports the ledger was written with, or nothing is
@@ -87,6 +91,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import contextlib
 import importlib.util
 import json
 import math
@@ -545,8 +550,10 @@ def _race_cluster(inst, plan, owner, pieces, todo, repairing, state, time_limit,
 
     def launch(i):
         shape, k, W, cap = todo[i]
-        tl = _time_left(time_limit, deadline, log, f"{c} {shape} {k} of {pieces[0][0]}")
-        return (c, owner, W, tl, cap, flow, keep_support, repairing, opened) if tl else None
+        what = f"{c} {shape} {k} of {pieces[0][0]}"
+        if not _time_left(time_limit, deadline, log, what):
+            return None
+        return c, owner, W, time_limit, deadline, what, cap, flow, keep_support, repairing, opened
 
     def settle(i, res):
         nonlocal owner
@@ -652,15 +659,18 @@ def _race_neck(inst, plan, owner, j, side, todo, state, time_limit, attempts, lo
 
     def launch(i):
         shape, k, W = todo[i]
-        tl = _time_left(time_limit, deadline, log, f"{c} neck of {j}, {shape} {k}")
-        return (c, owner, W, tl, True, flow, keep_support, {j}, opened) if tl else None
+        what = f"{c} neck of {j}, {shape} {k}"
+        if not _time_left(time_limit, deadline, log, what):
+            return None
+        return c, owner, W, time_limit, deadline, what, True, flow, keep_support, {j}, opened
 
     def settle(i, res):
         nonlocal owner
         g, seconds = res
-        owner, kept = _settle_neck(inst, c, owner, j, side, todo[i], g, before,
-                                   time.time() - seconds, state, attempts, log, flow,
-                                   keep_support, ng)
+        with pool.hold():                       # its neck counts are MILPs here
+            owner, kept = _settle_neck(inst, c, owner, j, side, todo[i], g, before,
+                                       time.time() - seconds, state, attempts, log, flow,
+                                       keep_support, ng)
         return kept
 
     _race(pool, len(todo), launch, settle, lambda i: True)
@@ -739,7 +749,9 @@ def _race(pool, n, launch, settle, wanted) -> None:
     stops there; `wanted(i)` says whether attempt i still runs after those settled (a skip rule).
     Attempts settle in sequence order, never by finish time: an earlier one is waited for to its
     own time limit, and a later one is killed once an earlier one stops the escalation or a skip
-    rule drops it, so the attempts settled are the sequential loop's."""
+    rule drops it, so the attempts settled are the sequential loop's.  A result None is a window
+    its worker found the budget spent for as it began (`_window_task`): it and every later one go
+    unsettled, as the loop never starts them."""
     running, done = {}, {}
     head = nxt = 0
     end = n
@@ -769,7 +781,10 @@ def _race(pool, n, launch, settle, wanted) -> None:
                     done[back[h]] = res
                     del running[back[h]]
             if head in done:
-                stop = settle(head, done.pop(head))
+                res = done.pop(head)
+                if res is None:
+                    break
+                stop = settle(head, res)
                 head += 1
                 if stop:
                     break
@@ -787,33 +802,59 @@ def _spawn(role: str, shared: str, slots=None, daemon: bool = True, log: bool = 
 
 class WindowPool:
     """Up to `jobs` worker processes solving one channel's windows (#123), each with HiGHS pinned
-    to one thread (`run.pin_threads`).  With `slots`, a count of free solver processes shared by the
-    channels, a channel's first running solve is its own and each further one takes a slot.
-    With `log` false the workers print nothing."""
+    to one thread (`run.pin_threads`).  Every running solve passes one gate: the windows started
+    and not yet done, and a solve in the channel's own process (`hold`).  With `slots`, a count of
+    free solver processes shared by the channels, a channel's first running solve is its own and
+    each further one takes a slot.  With `log` false the workers print nothing."""
 
     def __init__(self, jobs: int, shared: str, slots=None, log: bool = True):
         self.jobs, self.shared, self.slots, self.log = jobs, shared, slots, log
         self.idle, self.busy = [], {}           # [(process, connection)], {connection: process}
+        self.done = {}                          # {connection: (process, result)}, not yet waited for
+        self.solving = 0                        # running solves, a reserved one counted
         self.reserved = False
         self.started = 0                        # tasks started
 
-    def reserve(self) -> bool:
-        """Whether one more solve may start now (taking a slot for it when one is needed)."""
-        if len(self.busy) >= self.jobs:
+    def _take(self) -> bool:
+        """Count one more running solve, when the gate lets it start."""
+        if self.solving >= self.jobs:
             return False
-        if self.busy and self.slots is not None:
+        if self.solving and self.slots is not None:
             with self.slots.get_lock():
                 if self.slots.value <= 0:
                     return False
                 self.slots.value -= 1
+        self.solving += 1
+        return True
+
+    def _give(self) -> None:
+        self.solving -= 1
+        if self.solving and self.slots is not None:
+            with self.slots.get_lock():
+                self.slots.value += 1
+
+    def reserve(self) -> bool:
+        """Whether one more window may start now (taking a slot for it when one is needed)."""
+        if len(self.busy) + len(self.done) >= self.jobs or not self._take():
+            return False
         self.reserved = True
         return True
 
     def unreserve(self) -> None:
-        if self.reserved and self.busy and self.slots is not None:
-            with self.slots.get_lock():
-                self.slots.value += 1
+        if self.reserved:
+            self._give()
         self.reserved = False
+
+    @contextlib.contextmanager
+    def hold(self):
+        """A solve in the channel's own process (`_settle_neck`'s neck counts) through the gate:
+        it waits for room, the windows that finish meanwhile moving to `done`."""
+        while not self._take():
+            self._collect(0.05)
+        try:
+            yield
+        finally:
+            self._give()
 
     def start(self, task):
         proc, conn = self.idle.pop() if self.idle else self._spawn()
@@ -823,43 +864,52 @@ class WindowPool:
         self.started += 1
         return conn
 
-    def _free(self, conn):
-        if len(self.busy) > 1 and self.slots is not None:
-            with self.slots.get_lock():
-                self.slots.value += 1
-        return self.busy.pop(conn)
+    def _collect(self, timeout: float) -> None:
+        """Move the windows done within `timeout` from `busy` to `done`."""
+        from multiprocessing.connection import wait
+        for conn in wait(list(self.busy), timeout):
+            res = run.receive(conn, "window")
+            self.done[conn] = (self.busy.pop(conn), res)
+            self._give()
 
     def wait(self, conns: list, timeout: float) -> list:
-        """[(connection, (Group, seconds))] of the solves of `conns` done within `timeout`."""
-        from multiprocessing.connection import wait
+        """[(connection, (Group, seconds) or None)] of the windows of `conns` done within `timeout`
+        (None: not started, `_window_task`)."""
+        if not any(conn in self.done for conn in conns):
+            self._collect(timeout)
         out = []
-        for conn in wait(conns, timeout):
-            res = run.receive(conn, "window")
-            self.idle.append((self._free(conn), conn))
-            out.append((conn, res))
+        for conn in conns:
+            if conn in self.done:
+                proc, res = self.done.pop(conn)
+                self.idle.append((proc, conn))
+                out.append((conn, res))
         return out
 
     def kill(self, conn) -> None:
-        """Stop a solve; a fresh worker starts loading in its place."""
-        proc = self._free(conn)
-        proc.kill()
-        proc.join()
-        conn.close()
+        """Stop a window; a fresh worker starts loading in its place."""
+        if conn in self.done:                   # done already: its worker is idle
+            self.idle.append((self.done.pop(conn)[0], conn))
+            return
+        proc = self.busy.pop(conn)
+        self._give()
+        self._stop(proc, conn)
         self.idle.append(self._spawn())
 
     def _spawn(self):
         return _spawn("window", self.shared, log=self.log)
 
+    def _stop(self, proc, conn) -> None:
+        proc.kill()
+        proc.join()
+        conn.close()
+
     def close(self) -> None:
-        for conn in list(self.busy):
-            proc = self.busy.pop(conn)
-            proc.kill()
-            proc.join()
-        for proc, conn in self.idle:
-            conn.close()                        # the worker reads EOF and exits
-        for proc, _ in self.idle:
-            proc.join()
-        self.idle = []
+        """Kill and join every worker."""
+        workers = [(proc, conn) for conn, proc in self.busy.items()] + self.idle \
+            + [(proc, conn) for conn, (proc, _) in self.done.items()]
+        self.busy, self.idle, self.done, self.solving = {}, [], {}, 0
+        for proc, conn in workers:
+            self._stop(proc, conn)
 
     def __enter__(self):
         return self
@@ -880,15 +930,40 @@ def _print(line: str) -> None:
     print(line, flush=True)
 
 
+def _window_task(sh: dict, task: tuple, log):
+    """A window task's (Group, seconds) (`_race_cluster`, `_race_neck`), its time limit taken
+    from the channel's deadline as the task begins; None, the window not tried, when the budget
+    is spent by then (`_time_left`)."""
+    c, owner, W, time_limit, deadline, what, cap, flow, keep_support, repairing, opened = task
+    tl = _time_left(time_limit, deadline, log, what)
+    if not tl:
+        return None
+    t0 = time.time()
+    g = solve_window(sh["inst"], sh["plans"][c], owner, W, sh["p"], tl, cap, log, flow,
+                     keep_support, repairing, sh["border"], sh["ng"], opened)
+    return g, time.time() - t0
+
+
+def _stopped(*_) -> None:
+    import signal
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    raise SystemExit(128 + signal.SIGTERM)
+
+
 def _serve(conn, role: str, shared: str, slots, log: bool) -> None:
-    """A worker process: `window` solves window tasks until its connection closes; `channel`
-    repairs one channel (`repair_channel`) with a `WindowPool` and sends (owner, attempts)."""
+    """A worker process, HiGHS pinned to one thread before anything else: `window` solves window
+    tasks (`_window_task`) until its connection closes; `channel` repairs one channel
+    (`repair_channel`) with a `WindowPool` and sends (owner, attempts).  A channel leads its own
+    process group, its windows in it, and on SIGTERM (`run.stop`) closes its pool and exits."""
+    import signal
     import traceback
+    run.pin_threads()
+    if role == "channel":
+        os.setpgrp()
+        signal.signal(signal.SIGTERM, _stopped)
     _log = _print if log else (lambda *_: None)
     with open(shared, "rb") as fh:
         sh = pickle.load(fh)
-    if role == "window":
-        run.pin_threads()
     while True:
         try:
             task = conn.recv()
@@ -896,11 +971,7 @@ def _serve(conn, role: str, shared: str, slots, log: bool) -> None:
             return
         try:
             if role == "window":
-                c, owner, W, tl, cap, flow, keep_support, repairing, opened = task
-                t0 = time.time()
-                g = solve_window(sh["inst"], sh["plans"][c], owner, W, sh["p"], tl, cap, _log,
-                                 flow, keep_support, repairing, sh["border"], sh["ng"], opened)
-                conn.send(("done", (g, time.time() - t0)))
+                conn.send(("done", _window_task(sh, task, _log)))
             else:
                 c, owner, jobs, kw = task
                 with WindowPool(jobs, shared, slots, log) as pool:
@@ -918,10 +989,11 @@ def repair_parallel(inst, plans: dict, owners: dict, p: dict, state: dict, chann
                     jobs: int, border=None, ng=None, log: bool = True, **kw) -> dict:
     """{channel: (the repaired owner, [attempt records])} of `channels` (#123): each repaired in
     its own process, at most `jobs` at once, by `repair_channel` with `kw` and a `WindowPool` of
-    `jobs` racing its windows, the processes together running at most `jobs` window solves (a
-    shared count of slots: each running channel's first solve is its own).  The channels' ledger
+    `jobs` racing its windows, the processes together running at most `jobs` solves (a shared
+    count of slots: each running channel's first solve is its own).  The channels' ledger
     cells are disjoint, so the dict is the one the sequential loop builds whenever no window stops
-    on a time limit.  With `log` false the processes print nothing."""
+    on a time limit.  When one fails, every other is stopped (`run.stop`) before the error is
+    raised.  With `log` false the processes print nothing."""
     import multiprocessing
     import shutil
     import tempfile
@@ -938,15 +1010,15 @@ def repair_parallel(inst, plans: dict, owners: dict, p: dict, state: dict, chann
                 conn.send((c, owners[c], jobs, kw))
                 running[conn] = (c, proc)
             for conn in wait(list(running)):
-                c, proc = running.pop(conn)
+                c, proc = running[conn]
                 out[c] = run.receive(conn, f"{c} channel")
+                del running[conn]               # a failed one stays, for `run.stop`
                 proc.join()
                 if not todo:                    # its first-solve slot passes to the others
                     with slots.get_lock():
                         slots.value += 1
     finally:
-        for _, proc in running.values():
-            proc.terminate()
+        run.stop([proc for _, proc in running.values()])
         shutil.rmtree(tmp, ignore_errors=True)
     return out
 

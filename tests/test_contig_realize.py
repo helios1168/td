@@ -893,3 +893,327 @@ def test_channels_drawn_in_parallel_are_the_sequential_drawings():
     for c in plans:
         assert par[c].owner == seq[c].owner and par[c].connected, c
         assert [g.status for g in par[c].groups] == [g.status for g in seq[c].groups], c
+
+
+def _scripted_pool(repair, jobs: int, sh: dict, pick, slots=None):
+    """A `WindowPool` whose windows solve in this process (`repair._window_task` on `sh`) as they
+    start, then finish one per `_collect`: the one `pick` chooses of those running, in start
+    order.  `pool.finished` lists the windows by start index in the order they finished."""
+    class Conn:
+        def __init__(self, pool):
+            self.pool = pool
+
+        def send(self, task):
+            self.index = self.pool.started
+            self.result = repair._window_task(sh, task, lambda *_: None)
+
+    class Scripted(repair.WindowPool):
+        def _spawn(self):
+            return None, Conn(self)
+
+        def _stop(self, proc, conn):
+            pass
+
+        def _collect(self, timeout):
+            if self.busy:
+                conn = pick(list(self.busy))
+                self.done[conn] = (self.busy.pop(conn), conn.result)
+                self._give()
+                self.finished.append(conn.index)
+    pool = Scripted(jobs, None, slots, log=False)
+    pool.finished = []
+    return pool
+
+
+def _finger_repair_args(repair):
+    """(inst, plan, owner, p, state, keyword arguments, shared dict) of `_finger_toy`'s neck
+    repair, neck-aware (`ng`) with the border term."""
+    inst, xy, plan, owner, polygon, ct = _finger_toy()
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    border, ng = repair.draw.border_km(polygon), audit.NeckGraph(polygon)
+    kw = {"h0": 1, "max_zctas": 100, "time_limit": 60.0, "log": lambda *_: None,
+          "keep_support": True, "border": border, "ng": ng}
+    sh = {"inst": inst, "plans": {"X": plan}, "p": p, "border": border, "ng": ng}
+    return inst, plan, owner, p, dict(inst.units.unit_of), kw, sh
+
+
+def test_a_later_window_finishing_first_does_not_change_the_window_kept():
+    """Sol's review of #123 (P2): every later window of the escalation finishes before the
+    earliest (a scripted pool, latest first), and the race still keeps the ball at h 1, as the
+    loop does, though the larger ball at h 2 also reconnects the piece."""
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    plan, owner = plans["X"], owners["X"]
+    kw = {"h0": 1, "max_zctas": 100, "time_limit": 60.0, "log": lambda *_: None}
+    seq_owner, seq = repair.repair_channel(inst, plan, owner, p, state, **kw)
+    sh = {"inst": inst, "plans": plans, "p": p, "border": None, "ng": None}
+    pool = _scripted_pool(repair, 4, sh, lambda conns: conns[-1])
+    par_owner, par = repair.repair_channel(inst, plan, owner, p, state, pool=pool, **kw)
+    first = pool.finished[:pool.finished.index(0) + 1]  # the first escalation's windows
+    assert len(first) >= 2 and first == sorted(first, reverse=True), pool.finished
+    assert [(r["shape"], r["h"], r["status"]) for r in par][:1] == [("ball", 1, seq[0]["status"])]
+    assert _untimed(par) == _untimed(seq) and par_owner == seq_owner
+
+
+def test_a_channels_own_neck_counts_pass_the_solve_gate():
+    """Sol's review of #123 (P2): a neck window settled while a later one still runs counts
+    necks by MILPs in the channel's own process (`_settle_neck`); they take a slot, so with
+    `--jobs 2` the channel never runs more than its own solve and the one slot."""
+    import multiprocessing
+    repair = _repair_module()
+    inst, plan, owner, p, state, kw, sh = _finger_repair_args(repair)
+    slots = multiprocessing.get_context("spawn").Value("i", 1)
+    pool = _scripted_pool(repair, 2, sh, lambda conns: conns[0], slots)
+    seen, necks = [], repair.necks
+
+    def counted(*a, **k):
+        seen.append((len(pool.busy), 1 - slots.value))  # (windows running, slots taken)
+        return necks(*a, **k)
+    repair.necks = counted
+    try:
+        got, attempts = repair.repair_channel(inst, plan, owner, p, state, pool=pool, **kw)
+    finally:
+        repair.necks = necks
+    assert any(busy for busy, _ in seen), seen          # a count ran beside a running window
+    assert all(busy + 1 <= 1 + taken for busy, taken in seen), seen
+    assert (pool.solving, slots.value) == (0, 1)
+    assert _untimed(attempts) == _untimed(repair.repair_channel(inst, plan, owner, p, state,
+                                                                **kw)[1])
+
+
+def test_neck_windows_raced_in_worker_processes_are_the_loops():
+    """Sol's review of #123 (P2): neck-aware windows (`ng`) solved in `WindowPool` workers settle
+    as the loop's: the finger's neck window kept, the same attempts and owner."""
+    import tempfile
+    repair = _repair_module()
+    inst, plan, owner, p, state, kw, sh = _finger_repair_args(repair)
+    seq_owner, seq = repair.repair_channel(inst, plan, owner, p, state, **kw)
+    with tempfile.TemporaryDirectory() as tmp:
+        shared = repair.write_shared(os.path.join(tmp, "shared.pkl"), inst, sh["plans"], p,
+                                     state, sh["border"], sh["ng"])
+        with repair.WindowPool(4, shared, log=False) as pool:
+            par_owner, par = repair.repair_channel(inst, plan, owner, p, state, pool=pool, **kw)
+            assert pool.started >= 2
+    assert [(r["kind"], r["kept"], r["neck_aware"]) for r in seq] == [("neck", True, True)]
+    assert _untimed(par) == _untimed(seq) and par_owner == seq_owner
+
+
+def test_a_window_whose_worker_starts_after_the_budget_is_spent_is_not_tried():
+    """Sol's review of #123 (P1): a window is sent the channel's deadline, not seconds, and its
+    worker takes its time limit from it as it begins.  Launched with 31 s of a 31 s budget left,
+    its worker starts over 5 s later, under `_time_left`'s 30 s: it is not tried, as the loop
+    tries no window once the budget is spent."""
+    import tempfile
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    plan, owner = plans["X"], owners["X"]
+    with tempfile.TemporaryDirectory() as tmp:
+        started = os.path.join(tmp, "started")
+        slow = wp.Probe(state, [(1, "sleep", (started, 5.0))])    # each worker, loading
+        shared = repair.write_shared(os.path.join(tmp, "shared.pkl"), inst, plans, p, slow,
+                                     None, None)
+        with repair.WindowPool(4, shared, log=False) as pool:
+            got, attempts = repair.repair_channel(inst, plan, owner, p, state, h0=1,
+                                                  max_zctas=100, time_limit=60.0, budget=31.0,
+                                                  log=lambda *_: None, pool=pool)
+            assert pool.started >= 1
+        assert wp.lines(started)
+    assert attempts == [] and got == owner, [(r["shape"], r["status"]) for r in attempts]
+
+
+def test_channel_workers_pin_highs_to_one_thread():
+    """Sol's review of #123 (P1): a channel worker, whose neck counts are MILPs, sizes HiGHS's
+    thread pool at one thread before anything else, as a window worker does: by the time it
+    reads the shared data a solve at `threads` 2 is "Not Set" (trap 18)."""
+    import tempfile
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "threads")
+        par = repair.repair_parallel(inst, plans, owners, p, wp.Probe(state, [(1, "threads", path)]),
+                                     list(plans), 4, log=False, h0=1, max_zctas=100,
+                                     time_limit=60.0)
+        assert wp.lines(path) == ["1 Not_Set"] * 2, wp.lines(path)
+    for c in plans:
+        assert repair.detached(par[c][0], inst.units.zip_adj, inst.channels[c].m) == [], c
+
+
+def _alive(pids: list) -> list:
+    out = []
+    for pid in pids:
+        try:
+            os.kill(pid, 0)
+            out.append(pid)
+        except ProcessLookupError:
+            pass
+    return out
+
+
+def _stop_when_a_channel_fails(deaf: bool) -> float:
+    """`repair_parallel` on the two-channel toy where X fails once a window of Y is running (a
+    window stuck loading for 120 s, as in a long solve): X's error is raised, every channel
+    process is joined and every window process is gone.  With `deaf` Y ignores SIGTERM; the
+    seconds it took."""
+    import tempfile
+    import time
+    from tests import worker_probes as wp
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    with tempfile.TemporaryDirectory() as tmp:
+        wins, chans = os.path.join(tmp, "windows"), os.path.join(tmp, "channels")
+        state = wp.Probe(state, [(1, "pid", chans), (2, "sleep", (wins, 120.0))])
+        owners = {"X": wp.Probe(owners["X"], [(1, "fail_after", wins)]),
+                  "Y": wp.Probe(owners["Y"], [(1, "block_sigterm", None)] if deaf else [])}
+        grace = vars(repair.run).get("STOP_GRACE")
+        repair.run.STOP_GRACE = 2.0 if deaf else 60.0
+        t0 = time.time()
+        try:
+            repair.repair_parallel(inst, plans, owners, p, state, ["X", "Y"], 4, log=False, h0=1,
+                                   max_zctas=100, time_limit=60.0)
+            raise AssertionError("a failed channel raised nothing")
+        except RuntimeError as e:
+            assert "X channel" in str(e), e
+        finally:
+            repair.run.STOP_GRACE = grace
+            if grace is None:
+                del repair.run.STOP_GRACE
+        seconds = time.time() - t0
+        channels, windows = [int(x) for x in wp.lines(chans)], [int(x) for x in wp.lines(wins)]
+        try:
+            assert len(channels) == 2 and windows
+            unjoined = _alive(channels)
+            end = time.time() + 10      # a killed window is reaped by its parent or by launchd
+            while _alive(windows) and time.time() < end:
+                time.sleep(0.1)
+            running = _alive(windows)
+            assert (unjoined, running) == ([], []), f"channels unjoined {unjoined}, windows running {running}"
+        finally:
+            for pid in _alive(channels + windows):  # only when the test fails
+                os.kill(pid, 9)
+    return seconds
+
+
+def test_a_failed_drawing_stops_and_joins_every_draw_process():
+    """Sol's review of #123 (P1), `run.draw_parallel`: when one channel's drawing fails while the
+    other's runs, both processes are stopped and joined before the error is raised."""
+    import tempfile
+    from tests import worker_probes as wp
+    run = _repair_module().run
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    xy = {z: (1000.0 * x, 1000.0 * y) for z, (x, y) in p.items()}
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "draws")
+        try:
+            run.draw_parallel(inst, plans, wp.Probe(xy, [(1, "fail_first", path)]), 2, log=False,
+                              time_limit=60.0)
+            raise AssertionError("a failed drawing raised nothing")
+        except RuntimeError as e:
+            assert "draw worker process failed" in str(e), e
+        pids = [int(x) for x in wp.lines(path)]
+        try:
+            assert len(pids) == 2 and _alive(pids) == [], (pids, _alive(pids))
+        finally:
+            for pid in _alive(pids):            # only when the test fails
+                os.kill(pid, 9)
+
+
+def test_a_failed_channel_stops_the_others_through_their_window_pools():
+    """Sol's review of #123 (P1): when a channel fails, each other channel is sent SIGTERM and
+    closes its `WindowPool` (its running window killed and joined) well within the grace, and
+    every process is joined before the error is raised."""
+    assert _stop_when_a_channel_fails(deaf=False) < 30.0
+
+
+def test_a_channel_deaf_to_sigterm_is_killed_with_its_windows():
+    """Sol's review of #123 (P1): a channel that does not stop within the grace (2 s here) is
+    killed with its whole process group, its running window with it (`run.stop`)."""
+    assert _stop_when_a_channel_fails(deaf=True) >= 2.0
+
+
+TOY_TOML = """[scenario]
+name = "toy"
+fine_channels = ["f", "g"]
+""" + "".join(f"""
+[channels.{c}]
+k = 2
+eta = 0.1
+max_dist_km = 1e9
+delta = 0.1
+final_delta = 0.1
+free = ["NJ"]
+domain = [{{units = "all", fine = ["{f}"]}}]
+""" for c, f in (("X", "f"), ("Y", "g")))
+
+
+def _normalized(folder: str) -> dict:
+    """{file: content} of a repair folder, less what two equal runs may differ in: every
+    "seconds", and the manifest's times, host, folder and `--jobs`."""
+    import json
+    out = {}
+    for name in sorted(os.listdir(folder)):
+        with open(os.path.join(folder, name), encoding="utf-8") as fh:
+            out[name] = json.load(fh) if name.endswith(".json") else fh.read()
+    m = out["manifest.json"]
+    for k in ("started_at", "finished_at", "folder", "command"):
+        m.pop(k)
+    m["provenance"] = {k: v for k, v in m["provenance"].items() if k not in ("queued_at", "host")}
+    m["params"].pop("jobs")
+    return _untimed(out)
+
+
+def test_repair_cli_writes_the_same_folder_with_jobs_4_as_with_jobs_1():
+    """Sol's review of #123 (P2): `repair.main` (the CLI's assembly: naming, audit, contig.json's
+    attempts in order, run.json, scorecard and manifest) writes, from the two-channel toy's drawn
+    map, the same folder at `--jobs 4` as at `--jobs 1`, but for seconds, times and `--jobs`."""
+    import json
+    import tempfile
+    from td import spec as tdspec
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    edges = sorted({tuple(sorted((a, b))) for a in inst.units.zip_adj for b in inst.units.zip_adj[a]})
+    zs = sorted(inst.units.unit_of)
+    polygon = {"vertices": zs, "edges": [list(e) for e in edges], "state": state,
+               "connectors": [], "border": {e: 1e4 for e in edges},  # 10 km each: no neck
+               "aland": dict.fromkeys(zs, 1e8)}
+    with tempfile.TemporaryDirectory() as tmp:
+        spec_path, src = os.path.join(tmp, "toy.toml"), os.path.join(tmp, "src")
+        with open(spec_path, "w") as fh:
+            fh.write(TOY_TOML)
+        os.makedirs(src)
+        with open(os.path.join(src, "run.json"), "w") as fh:
+            json.dump({"spec": spec_path, "source": "toy"}, fh)
+        with open(os.path.join(src, "contig.json"), "w") as fh:
+            json.dump({"arm": "arm1", "channels": {c: {"groups": [], "status": "connected"}
+                                                   for c in plans}}, fh)
+        s = tdspec.load(spec_path)
+        reports = {c: {"status": "optimal"} for c in plans}
+        loaded, repair.load = repair.load, lambda *a: (s, ref, ext, polygon, inst, plans, reports,
+                                                       owners, {"spec": spec_path})
+        sys.stdout.flush()
+        quiet = os.dup(1)                       # the CLI's and its workers' window logs
+        null = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(null, 1)
+        os.close(null)
+        try:
+            folders = []
+            for jobs in (1, 4):
+                out = os.path.join(tmp, f"j{jobs}", "repaired")
+                assert repair.main([src, "--out", out, "--extract", spec_path, "--h0", "1",
+                                    "--max-zctas", "100", "--time-limit", "60",
+                                    "--jobs", str(jobs)]) in (0, 1)
+                sys.stdout.flush()
+                folders.append(_normalized(out))
+        finally:
+            os.dup2(quiet, 1)
+            os.close(quiet)
+            repair.load = loaded
+    one, four = folders
+    assert sorted(one) == ["contig.json", "districts.csv", "ledger.csv", "manifest.json",
+                           "run.json", "scorecard.md"]
+    tried = {c: [(r["shape"], r["status"]) for r in one["contig.json"]["channels"][c]["repair"]]
+             for c in plans}
+    assert all(tried.values()) and one["contig.json"]["channels"]["X"]["connected"], tried
+    for name in one:
+        assert one[name] == four[name], name
