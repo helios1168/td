@@ -97,6 +97,28 @@ family, after the extras and any filters (C19). Porting notes, read at the tag
   every support with only part of New England, including the singletons
   (`tools/group2_support.py:80–86, 115–119`) **[proved]**. It is not ported unchanged (C19).
 
+**Width-aware contact (#124 A; `contact_min_km = W`, off by default).** This is a policy row
+**[policy #124; the owner sets the default]**. Two units u, v count as touching in a support S
+only where the ZIP-graph edges between them share at least W of land border, or where an approved
+connector joins them that M1's land-passage rule leaves at unlimited width. Width is measured
+as M1 measures it: `border_cm` per edge, floored to whole cm, summed over the edges between u and
+v, and compared with W in whole cm. A connector counts unless land within states(S) replaces it
+(`audit.NeckGraph.land_would_do`: joined by polygon edges alone through a passage at least 10 km
+wide). This is M1's district-level rule applied to the plan: it reads the states of S, not the
+states a drawn district actually ends up owning ZIPs in, so it is an approximation of M1, not
+M1 itself. With A on, 𝒮_c is the family above with "G[S] connected" replaced by "S connected in
+its own contact graph C(S)". `td.supports` enumerates on the most permissive contact graph P,
+which reads each pair's own states, and then drops each S that is not connected in C(S).
+- The family stays closed under subsets connected in their own contact graph **[proved]**. Take
+  S in the family and T ⊆ S with T connected in C(T). Then T is enumerated, because
+  states(T) ⊇ states(u) ∪ states(v) for every pair u, v of T. More states can only make land
+  replace a connector, never make one count again, so C(T) ⊆ P. The caps are inherited as above.
+  T contains no forbidden pair because S contains none, and T passes the filter by assumption.
+- C(S) ⊆ G, so Claim 1(i) still holds. In Claim 1(iii), "a connected footprint" now means one
+  that is connected in its own contact graph.
+- `Family.adj` stays G, so the drawability rows (§4) and Proposition D do not change. A support
+  dropped by A is out of 𝒮_c, and so is every drawing that uses it as a footprint.
+
 ## 3. The master
 
 The master is one block per channel, with variables n_S ∈ ℤ≥0 (the number of districts drawn on
@@ -116,6 +138,7 @@ corridor floor (§4.2):         M_v t_{v,S} ≥ c_v(S) n_S                      
 border cap (§4.3):             Σ_{S∋v, N(v)∩S={u}} n_S ≤ b_{uv}              free v, u ∈ N(v)
 count cap (§4.4):              Σ_{S∋v} n_S ≤ |Z_v|
 Menger row (§4.5, optional):   n_S ≤ κ_v(S)                                   v a cut vertex of G[S]
+support ban (§4.9, #124):      n_S = 0                                        S banned (B or C)
 objective:                     min Σ_S w_S n_S
 ```
 
@@ -338,6 +361,103 @@ longer uses. What still holds:
 On the 51 scenario (extract of 2026-10-01), national's smallest δ is 0.0675 with the key set
 to false, as with the earlier in-memory zeroing of `supports.margin`, against 0.165 with the
 margin on.
+
+### 4.9 Drawable alone and support bans (#124 B, C)
+
+The row n_S = 0 removes support S. B adds it lazily, and only when S is proved undrawable by any
+single district. C adds it after a drawing, as a policy. Both are off by default, and the owner
+sets the defaults **[policy #124]**. A timeout or an unknown result never adds the row; it is
+listed instead.
+
+**The single-district set.** For S ∈ 𝒮_c with |S| ≥ 2 and band [L_c, U_c], let D_c(S, δ) be the
+ZIP sets X ⊆ ∪_{v∈S} Z_v such that:
+- (a) Z_v ⊆ X for every v ∈ S that is held: whole, or clipped (in a support with |S| ≥ 2 a
+  clipped unit is held whole, §3.4);
+- (b) Σ_{z∈X∩Z_v} m_z ≥ η_c M_v for every free v ∈ S, which makes X ∩ Z_v non-empty because
+  η_c M_v > 0 (§1, §3.2);
+- (c) Σ_{z∈X} m_z ∈ [L_c, U_c];
+- (d) X is connected in the ZIP graph;
+- (e) X has no M1 neck (MANDATES M1: no connected part holding at least 5% of X's land and no
+  more land than the rest reaches the rest only through a passage narrower than 10 km, widths
+  as M1 measures them).
+
+Write 𝒳^N_c(δ) for the drawings in 𝒳_c(δ) (§4.1) in which no district has an M1 neck. M1
+requires this of every drawn map.
+
+**Proposition B.** If D_c(S, δ) = ∅, then n̂_S = 0 for the read-back (n̂, t̂) of every drawing
+in 𝒳^N_c(δ). So the row n_S = 0 is necessary for 𝒳^N_c(δ) in the sense of Proposition D, and
+Proposition D's Corollary holds with B's rows added, for drawings in 𝒳^N_c(δ)
+**[claimed; proof below, awaiting the verifier's sign-off]**.
+
+*Proof.* Suppose a drawing in 𝒳^N_c(δ) has n̂_S ≥ 1. Take a district j whose footprint is S, and
+let X be its ZIPs. Because the footprint is S, X ⊆ ∪_{v∈S} Z_v and X meets every Z_v with v ∈ S.
+- (a) The drawing obeys the modes. A whole v has one owner, and j owns a ZIP of v, so j owns
+  all of Z_v. A clipped v that a multi-unit district holds is whole inside that district (§3.4),
+  so j owns all of Z_v.
+- (b) The drawn shares obey η_c (§4.1).
+- (c) Every drawn mass lies in [L_c, U_c].
+- (d) The drawing is connected.
+- (e) The drawing is in 𝒳^N_c(δ).
+
+So X ∈ D_c(S, δ), which contradicts D_c(S, δ) = ∅. ∎
+
+**The test** (`tools/exp/contig/plancheck.py::drawable`) says `infeasible` only in the following
+cases **[claimed, with Proposition B]**.
+- *Held units only.* By (a), X is the union of S's ZIPs. The test reports a mass outside the
+  band by more than 1e-9 τ_c, two or more components, or an M1 neck the exact check proves
+  (`td.audit.district_necks`, status `proved`). An unresolved neck check gives `unknown`.
+- *Otherwise.* HiGHS proves infeasible a MILP whose feasible set contains every X ∈ D_c(S, δ).
+  Each of its rows holds for every such X:
+  - x_z ∈ {0, 1} on the ZIPs of the free units, with the held ZIPs fixed in: this is (a).
+  - The η rows are (b), and the band row is (c).
+  - A single-commodity flow from the heaviest held component, or from a chosen root ZIP when S
+    has no held unit, gives one unit to each chosen ZIP and to each other held component, and an
+    arc carries flow only between chosen ZIPs. Every connected X admits such a flow: send along
+    a spanning tree of X with the components contracted. So this row is (d).
+  - *Wide-passage rows.* Take the heaviest held component b_0 and any other held component b,
+    with land areas a_0 and a_b. A flow from b_0 to b of at least 10 km − 0.5 cm must exist. An
+    edge's capacity is its width, capped at that value, and an edge carries flow only between
+    chosen ZIPs. The row binds only when min(a_0, a_b) ≥ 0.05 (1 − 10⁻⁹) of X's land, through
+    a binary q and a row that lets q = 0 only when the share exceeds the smaller body's land.
+    Validity: take an X ∈ D_c(S, δ) in which both bodies hold the share, and any edge cut of X
+    separating b_0 from b. Let A′ be the component of b_0's side that contains b_0. If A′ holds
+    no more land than the rest, it meets the neck definition's side conditions, so by (e) its
+    cut is at least 10 km. Otherwise, let B′ be the component of X − A′ containing b. Then B′
+    holds the share and less than half the land, and every edge leaving B′ goes into A′, so B′'s
+    cut is a sub-cut of A′'s, and by (e) it is at least 10 km. Either way the cut holds a
+    sub-cut of at least 10 km. Widths are whole cm in M1's check, so a cut without a neck is at
+    least 1,000,000 cm, and the capped capacities sum to at least 10 km − 0.5 cm. By max-flow
+    min-cut the flow exists. Contracting a component only removes cuts.
+  - *Neck cuts.* These are `draw.NeckCut` rows built by `repair.neck_cuts` from each necked
+    incumbent. NeckCut is valid for every district without a neck whose anchors lie in one
+    component of it, and X is connected.
+  - *Widths in both kinds of row* are at least M1's widths. A border counts as its floored whole
+    cm. A connector counts at full width unless land replaces it within a set of states that X
+    certainly owns ZIPs in: the held ZIPs' states, and the state of each free unit that lies in
+    one state (X meets it by (b)). M1 reads X's own states, which form a superset, and in a
+    superset land replaces a connector at least as often.
+- HiGHS proves infeasibility to its feasibility tolerance (1e-7, trap 14). A plan at the edge of
+  a band is the same numerical corner as in the master. The verdict is cached monotonically in
+  δ: an infeasible verdict at δ also holds at every δ′ ≤ δ, because the band only narrows. A
+  drawable verdict at δ also holds at every δ′ ≥ δ.
+
+**B's loop** (`plan_checked`). Solve the master. Test each multi-unit support in use. Add n_S = 0
+for each one proved infeasible, and re-solve, until every support in use is drawable or unknown.
+A channel left with no plan at its δ moves to the smallest δ up to `final_delta` at which the
+loop finds one, by bisection with B inside each probe (`checked_delta`). The report records each
+δ change and the B bans that forced it. B is necessary only for drawings without a neck, in the
+sense above. It is not sufficient (C10).
+
+**C, support bans after a drawing (`replan_rounds = R`)** **[policy #124]**. The map is drawn
+and repaired. A district left in pieces or with a neck counts for C only when the last repair
+window on it was proved infeasible: not unknown, and not cut short by the budget. That support
+gets n_S = 0 (`ban_supports` in the next round's spec copy), and the map is planned, drawn and
+repaired again, for up to R rounds. A window's infeasibility is conditional on everything
+outside the window being fixed, so it does not prove that S cannot be drawn. A C ban is
+recorded as "window infeasible (outside fixed)". It can remove drawable plans, and the master
+with C bans bounds nothing. Each ban names the exact unit set, the channel, the window (attempt,
+shape, |W|, and whether the `--max-zctas` cap stopped its growth) and its cost before and after:
+δ, the master's objective, and the drawn map's splits and cuts.
 
 ## 5. Claims
 
