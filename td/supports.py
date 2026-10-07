@@ -194,8 +194,11 @@ def closure_violations(supports, adj: dict, connects=None) -> list:
     """(S, T) for each support S and connected T = S − x not in the family; `connects(T)`, when
     given, is what connected means (#124 A: T connected in its own contact graph).  Checking one
     deletion at a time suffices: every connected T ⊊ S is reached from S by deleting, one at a
-    time, a vertex of S − T whose removal keeps the set connected (under A, a T connected in its
-    own contact graph is connected in S's, which only has fewer edges, so the same holds)."""
+    time, a vertex of S − T whose removal keeps the set connected.  Under A that argument does
+    not carry over (a T connected in its own contact graph need not be connected in S's), and A's
+    family is closed by its enumeration instead: `family` enumerates on the most permissive
+    contact graph, so every T ⊆ S connected in its own (so in the permissive one) is enumerated
+    and kept; under A this check is a guard, not the closure argument."""
     have = set(map(frozenset, supports))
     connects = connects or (lambda t: connected(t, adj))
     out = []

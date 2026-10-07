@@ -14,7 +14,7 @@ when S holds no held unit) keeping the district connected, as `draw._solve_group
 `audit.district_necks`' rooted flow do, and its necks cut lazily by `draw.NeckCut` rows
 (`repair.neck_cuts`, valid for every connected district without a neck).  Its objective is the
 district's perimeter in km of shared border (trap 19: never a zero objective), and the solve
-stops at a 5% gap: only feasibility matters.  `infeasible` is HiGHS's proof on the cut-augmented
+stops at a 20% gap: only feasibility matters.  `infeasible` is HiGHS's proof on the cut-augmented
 model; a time limit, a neck the check leaves unresolved or a cut its own drawing meets is
 `unknown`, never a cut.  `Checks` caches verdicts monotonically in δ: an infeasible verdict at δ
 holds at every narrower band, a drawable one at every wider band.
@@ -37,9 +37,15 @@ proved infeasible is conditional on everything outside it being fixed: the ban i
 proof that S cannot be drawn.  An unknown window, a spent budget or no window is listed, never
 cut.  Each ban records the channel, the window (attempt, shape, size, |W|, whether the
 `--max-zctas` cap stopped its growth) and its cost: δ, the master's objective, the drawn map's
-splits and cuts, before and after.  The loop stops when a round finds nothing to ban or R rounds
-are used.  Every folder's run.json and manifest.json gain a `plan_check` block (the copy's keys,
-B's cuts, unknowns and δ changes, C's bans so far).
+splits and cuts before (when it is applied) and after (the next round's, or {"failed": why} when
+that round has no repaired map).  The round limits are the input spec's, also when round 0 is a
+reused folder (which must plan the input's channels), and the input's own `ban_supports` stay
+banned in every round.  `--planned` draws the report's planned copy, only when the report
+planned the input spec and its plans are that copy's cache entry on `--extract`; every round
+plans, draws and repairs on `--extract`, and no generated copy, report or record may name the
+input spec by any path or link (`replan.same_file`).  The loop stops when a round finds nothing
+to ban or R rounds are used.  Every folder's run.json and manifest.json gain a `plan_check`
+block (the copy's keys, B's cuts, unknowns and δ changes, C's bans so far).
 """
 from __future__ import annotations
 
@@ -528,7 +534,8 @@ def causes(inst, plan, owner: dict, attempts: list, log_text: str, ng, h0: int,
     window of its district was not tried, else the last window on it ("window infeasible (outside
     fixed)", "window unknown at its time limit", a drawing not kept), or "no window tried".  The
     window: its attempt index, shape, size, |W| and whether the `max_zctas` cap stopped its growth
-    (the ball one hop past the last tried exceeds it)."""
+    (the ball one hop past the last tried exceeds it; None when no ball was tried), for a piece
+    and for a neck's side alike."""
     c = plan.channel
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
@@ -563,9 +570,9 @@ def causes(inst, plan, owner: dict, attempts: list, log_text: str, ng, h0: int,
             size_key = next(k for k in ("h", "slack", "zctas") if k in t)
             balls = [x.get("h") for _, x in mine if x.get("shape") == "ball"]
             capped = None
-            if kind == "piece" and balls:
-                pcs = [(j, zs)]
-                capped = len(repair.ball(pcs, free, adj, max(balls) + 1, max_zctas // 2)) > max_zctas
+            if balls:                   # a neck's windows grow around its side as a piece's do
+                capped = len(repair.ball([(j, zs)], free, adj, max(balls) + 1,
+                                         max_zctas // 2)) > max_zctas
             rec["window"] = {"attempt": i, "shape": t["shape"], size_key: t[size_key],
                              "window_zctas": t["window_zctas"], "status": st,
                              "cap": t.get("cap"), "max_zctas": max_zctas,
@@ -574,16 +581,17 @@ def causes(inst, plan, owner: dict, attempts: list, log_text: str, ng, h0: int,
     return out
 
 
-def new_bans(found: list, inst, done: dict, banned: dict) -> list:
+def new_bans(found: list, limits: dict, done: dict, banned: dict) -> list:
     """The supports to ban next round: each district left with `INFEASIBLE` in a channel whose
-    `replan_rounds` exceeds its rounds `done`, not banned already; one record per support (its
+    round limit (`limits` {channel: replan_rounds}, read from the input spec, never from a reused
+    round 0's own) exceeds its rounds `done`, not banned already; one record per support (its
     first piece or neck as the evidence)."""
     out, seen = [], set()
     for f in found:
         c, s = f["channel"], frozenset(f["support"])
         if f["cause"] != INFEASIBLE or (c, s) in seen or s in banned.get(c, set()):
             continue
-        if done.get(c, 0) >= inst.channels[c].spec.replan_rounds:
+        if done.get(c, 0) >= limits.get(c, 0):
             continue
         seen.add((c, s))
         out.append({"channel": c, "support": sorted(s), "evidence": {
@@ -592,25 +600,39 @@ def new_bans(found: list, inst, done: dict, banned: dict) -> list:
     return out
 
 
-def close_round(entry: dict, prev: dict | None, inst, done: dict, banned: dict, last: bool) -> list:
-    """C's bookkeeping after a round's repair: the cost of the previous round's bans (`cost`
-    before, in `prev`, and after, in `entry`), this round's bans (`new_bans` on `entry["left"]`)
-    and, unless the loop stops (`entry["stop"]`: nothing to ban, or the `last` round), those bans
-    added to `banned` {channel: set of supports} and a round counted in `done` per channel."""
+def close_round(entry: dict, prev: dict | None, limits: dict, done: dict, banned: dict,
+                last: bool) -> list:
+    """C's bookkeeping after a round's repair: the previous round's applied bans get their cost
+    after (`entry["cost"]`), this round's bans (`new_bans` on `entry["left"]`) and, unless the
+    loop stops (`entry["stop"]`: nothing to ban, or the `last` round), those bans applied: each
+    gets its cost before (`entry["cost"]`, after None until the next round ends), is added to
+    `banned` {channel: set of supports} and counts a round in `done` for its channel."""
     if prev is not None:
         for b in prev["bans"]:
-            b["cost"] = {"before": prev["cost"][b["channel"]], "after": entry["cost"][b["channel"]]}
-    nb = new_bans(entry["left"], inst, done, banned)
+            if b["applied"]:
+                b["cost"]["after"] = entry["cost"][b["channel"]]
+    nb = new_bans(entry["left"], limits, done, banned)
     entry["bans"] = nb
     if not nb or last:
         entry["stop"] = ("no window proved infeasible: nothing to ban" if not nb
                          else "replan_rounds used; bans listed, not applied")
+        for b in nb:
+            b.update(applied=False, cost={"before": entry["cost"][b["channel"]], "after": None})
         return nb
     for b in nb:
+        b.update(applied=True, cost={"before": entry["cost"][b["channel"]], "after": None})
         banned.setdefault(b["channel"], set()).add(frozenset(b["support"]))
     for c in {b["channel"] for b in nb}:
         done[c] = done.get(c, 0) + 1
     return nb
+
+
+def fail_round(prev: dict | None, stop: str) -> None:
+    """The next round ended without a repaired map (`stop`): each ban `prev` applied records that
+    as its cost after, {"failed": stop}."""
+    for b in (prev or {}).get("bans", ()):
+        if b["applied"]:
+            b["cost"]["after"] = {"failed": stop}
 
 
 def map_cost(folder: str, plans: dict) -> dict:
@@ -654,7 +676,82 @@ def _python() -> str:
     return sys.executable
 
 
-def main(argv=None) -> int:
+def _replan():
+    return _load("contig_replan", "replan.py")
+
+
+class Steps:
+    """A C round's steps on the CLI's arguments `a`, each on `a.extract`: plan (replan.py, in
+    process), draw (run.py) and repair (repair.py, child processes logging to `<out>.log`), and
+    read a repaired folder back (`repair.load`)."""
+
+    def __init__(self, a):
+        self.a = a
+
+    def neck_graph(self):
+        from td import geo
+        return audit.NeckGraph(geo.polygon_graph())
+
+    def plan_argv(self, spec: str, out_spec: str, report: str) -> list:
+        a = self.a
+        return [spec, "--out-spec", out_spec, "--plans", a.plans, "--report", report, "--keep",
+                "--check-time", str(a.check_time), "--extract", a.extract]
+
+    def plan(self, spec: str, out_spec: str, report: str) -> int:
+        return _replan().main(self.plan_argv(spec, out_spec, report))
+
+    def draw_cmd(self, spec: str, out: str, parent: str) -> list:
+        a = self.a
+        return [_python(), "-u", os.path.join(HERE, "run.py"), spec, "--plans", a.plans,
+                "--extract", a.extract, "--out", out, "--arm", "arm1", "--sequential",
+                "--parent", parent]
+
+    def repair_cmd(self, src: str, out: str, r: int) -> list:
+        a = self.a
+        return [_python(), "-u", os.path.join(HERE, "repair.py"), src, "--out", out, "--plans",
+                a.plans, "--extract", a.extract, "--keep-support", "--flow", "--max-zctas",
+                str(a.max_zctas), "--budget", str(a.budget), "--h0", str(a.h0), "--time-limit",
+                str(a.time_limit), "--neck-time-limit", str(a.neck_time_limit), "--label",
+                f"{a.label} round {r}"]
+
+    def _child(self, cmd: list, out: str) -> bool:
+        with open(out + ".log", "w") as lg:
+            subprocess.run(cmd, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+        return os.path.exists(os.path.join(out, "ledger.csv"))
+
+    def draw(self, spec: str, out: str, parent: str) -> bool:
+        return self._child(self.draw_cmd(spec, out, parent), out)
+
+    def repair(self, src: str, out: str, r: int) -> bool:
+        return self._child(self.repair_cmd(src, out, r), out)
+
+    def load(self, folder: str) -> tuple:
+        """(instance, plans, owners) of a repaired folder."""
+        _, _, _, _, inst, plans, _, owners, _ = repair.load(folder, self.a.extract, self.a.plans)
+        return inst, plans, owners
+
+
+def planned_input(a) -> tuple:
+    """(the planned copy, its report) of `--planned`: replan.py's report on the input spec, its
+    plans cached under the copy's identity on `--extract` (`run.plans_key`), so run.py draws them
+    and never re-plans an unchecked copy."""
+    replan = _replan()
+    with open(a.planned, encoding="utf-8") as fh:
+        rep = json.load(fh)
+    spec, key = rep.get("spec"), rep.get("plans_file")
+    if not rep.get("source_spec") or not os.path.exists(rep["source_spec"]) \
+            or not replan.same_file(rep["source_spec"], a.spec):
+        raise SystemExit(f"--planned {a.planned} planned {rep.get('source_spec')}, not {a.spec}")
+    if not spec or not os.path.exists(spec):
+        raise SystemExit(f"--planned {a.planned}: its planned copy {spec} is missing")
+    want = replan.run.plans_key(spec, a.extract, a.plans)
+    if key != want or not os.path.exists(want):
+        raise SystemExit(f"--planned {a.planned}: its plans {key} are not the cache entry of "
+                         f"{spec} on {a.extract} ({want})")
+    return spec, os.path.abspath(a.planned)
+
+
+def parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("spec", help="the copy with the #124 keys (never a stored TOML)")
     ap.add_argument("--root", required=True, help="where the run folders and copies go")
@@ -674,71 +771,84 @@ def main(argv=None) -> int:
     ap.add_argument("--neck-time-limit", type=float, default=240.0)
     ap.add_argument("--check-time", type=float, default=CHECK_TIME)
     ap.add_argument("--label", default="#124 plan check")
-    a = ap.parse_args(argv)
-    from td import geo, output
-    replan = _load("contig_replan", "replan.py")
-    run = _load("contig_run", "run.py")
+    return ap
+
+
+def main(argv=None, steps: Steps | None = None) -> int:
+    a = parser().parse_args(argv)
+    from td import spec as tdspec
+    replan = _replan()
+    steps = Steps(a) if steps is None else steps
     specs = os.path.join(a.root, "_specs")
     os.makedirs(specs, exist_ok=True)
-    polygon = geo.polygon_graph()
-    ng = audit.NeckGraph(polygon)
+    ng = steps.neck_graph()
     keys0 = spec_keys(a.spec)
-    rounds = max((k["replan_rounds"] for k in keys0.values()), default=0)
+    limits = {c: k["replan_rounds"] for c, k in keys0.items()}     # C's, from the input spec
+    rounds = max(limits.values(), default=0)
     with open(a.spec, encoding="utf-8") as fh:
         base = fh.read()
-    banned = collections.defaultdict(set)       # channel -> supports banned so far (C)
+    banned = {c: set(cs.ban_supports) for c, cs in tdspec.load(a.spec).channels.items()
+              if cs.ban_supports}       # channel -> supports banned so far: the spec's, then C's
+    in_spec = {c: sorted(_name(x) for x in ss) for c, ss in banned.items()}
     history, done = [], collections.Counter()
     parent, prev = a.parent, None
+
+    def guard(path: str) -> str:
+        """A generated file never overwrites the input spec, by any path or link."""
+        if replan.same_file(path, a.spec):
+            raise SystemExit(f"{path} would overwrite the input spec {a.spec}")
+        return path
+
+    def stamp_entry(e: dict) -> None:
+        """The round's `plan_check` block in its folder (a reused round 0 keeps its own)."""
+        if e["folder"] is None or e.get("reused"):
+            return
+        stamp(e["folder"], {"keys": spec_keys(e["spec"]), "stop": e.get("stop"),
+                            "left": e["left"], "bans_in_input_spec": in_spec,
+                            "rounds": [{k: v for k, v in x.items() if k != "left"}
+                                       for x in history]})
     for r in range(rounds + 1):
         name = a.name if r == 0 else f"{a.name}-c{r}"
         folder = os.path.join(a.root, name)
-        if r == 0:
-            spec_r = a.spec
-        else:
-            spec_r = os.path.join(specs, f"{name}.toml")
-            extra = {c: {"ban_supports": "[" + ", ".join(
-                "[" + ", ".join(f'"{u}"' for u in sorted(s)) + "]"
-                for s in sorted(ss, key=sorted)) + "]"} for c, ss in banned.items() if ss}
-            with open(spec_r, "w", encoding="utf-8") as fh:
-                fh.write(f"# #124 C round {r}: a copy of {os.path.abspath(a.spec)} with the support "
-                         "bans of rounds before (tools/exp/contig/plancheck.py)\n"
-                         + replan.banned_text(base, [], keys=extra))
         report = os.path.join(specs, f"{name}.json")
-        if r == 0 and a.round0:
+        reused = bool(r == 0 and a.round0)
+        if reused:
             folder = os.path.abspath(a.round0)
             with open(os.path.join(folder, "run.json")) as fh:
                 spec_r = json.load(fh)["spec"]
+            if set(spec_keys(spec_r)) != set(keys0):
+                raise SystemExit(f"--round0 {folder} plans channels {sorted(spec_keys(spec_r))}, "
+                                 f"the input spec {sorted(keys0)}")
             report = re.sub(r"(-planned)?\.toml$", ".json", spec_r)
         else:
-            if r == 0 and a.planned:
-                rc, report = 0, a.planned
+            if r == 0:
+                spec_r = a.spec
             else:
-                rc = replan.main([spec_r, "--out-spec", os.path.join(specs, f"{name}-planned.toml"),
-                                  "--plans", a.plans, "--report", report, "--keep",
-                                  "--check-time", str(a.check_time)])
-                spec_r = os.path.join(specs, f"{name}-planned.toml")
-            if rc != 0:
-                history.append({"round": r, "folder": None, "spec": spec_r,
-                                "stop": f"no plan (replan.py exit {rc}, {report})"})
+                spec_r = guard(os.path.join(specs, f"{name}.toml"))
+                extra = {c: {"ban_supports": "[" + ", ".join(
+                    "[" + ", ".join(f'"{u}"' for u in sorted(s)) + "]"
+                    for s in sorted(ss, key=sorted)) + "]"} for c, ss in banned.items() if ss}
+                text = (f"# #124 C round {r}: a copy of {os.path.abspath(a.spec)} with the "
+                        "support bans of rounds before (tools/exp/contig/plancheck.py)\n"
+                        + replan.banned_text(base, [], keys=extra))
+                with open(spec_r, "w", encoding="utf-8") as fh:
+                    fh.write(text)
+            if r == 0 and a.planned:
+                rc, (spec_r, report) = 0, planned_input(a)
+            else:
+                planned = guard(os.path.join(specs, f"{name}-planned.toml"))
+                rc = steps.plan(spec_r, planned, guard(report))
+                spec_r = planned
+            stop = (f"no plan (replan.py exit {rc}, {report})" if rc != 0 else
+                    "draw failed" if not steps.draw(spec_r, folder + "-draw", parent) else
+                    "repair failed" if not steps.repair(folder + "-draw", folder, r) else None)
+            if stop:
+                fail_round(prev, stop)
+                history.append({"round": r, "folder": None, "spec": spec_r, "stop": stop})
+                if prev is not None:
+                    stamp_entry(prev)
                 break
-            cmd = [_python(), "-u", os.path.join(HERE, "run.py"), spec_r, "--plans", a.plans,
-                   "--out", folder + "-draw", "--arm", "arm1", "--sequential", "--parent", parent]
-            with open(folder + "-draw.log", "w") as lg:
-                subprocess.run(cmd, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
-            if not os.path.exists(os.path.join(folder + "-draw", "ledger.csv")):
-                history.append({"round": r, "folder": None, "spec": spec_r, "stop": "draw failed"})
-                break
-            cmd = [_python(), "-u", os.path.join(HERE, "repair.py"), folder + "-draw", "--out",
-                   folder, "--plans", a.plans, "--keep-support", "--flow", "--max-zctas",
-                   str(a.max_zctas), "--budget", str(a.budget), "--h0", str(a.h0), "--time-limit",
-                   str(a.time_limit), "--neck-time-limit", str(a.neck_time_limit), "--label",
-                   f"{a.label} round {r}"]
-            with open(folder + ".log", "w") as lg:
-                subprocess.run(cmd, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
-            if not os.path.exists(os.path.join(folder, "ledger.csv")):
-                history.append({"round": r, "folder": None, "spec": spec_r, "stop": "repair failed"})
-                break
-        s, ref, ext, _, inst, plans, _, owners, _ = repair.load(folder, a.extract, a.plans)
+        inst, plans, owners = steps.load(folder)
         with open(os.path.join(folder, "contig.json")) as fh:
             contig = json.load(fh)
         log_path = folder + ".log"
@@ -753,25 +863,20 @@ def main(argv=None) -> int:
             with open(report) as fh:
                 rep = json.load(fh)
         entry = {"round": r, "folder": folder, "spec": spec_r, "replan_report": report,
+                 "reused": reused, "limits": limits,
                  "plan_check_B": {c: e.get("plan_check") for c, e in rep["channels"].items()},
                  "cost": cost, "left": found, "bans_applied": {c: sorted(_name(x) for x in ss)
                                                                 for c, ss in banned.items()}}
-        nb = close_round(entry, prev, inst, done, banned, r == rounds)
+        close_round(entry, prev, limits, done, banned, r == rounds)
         history.append(entry)
-
-        def block(stop=None):
-            return {"keys": spec_keys(spec_r), "stop": stop, "left": found,
-                    "rounds": [{k: v for k, v in e.items() if k != "left"} for e in history]}
-        mine = [e for e in history if e["folder"] != (a.round0 and os.path.abspath(a.round0))]
-        if prev is not None and prev in mine:   # a reused round 0 keeps its own record
-            stamp(prev["folder"], {**block(prev.get("stop")), "left": prev["left"],
-                                   "keys": spec_keys(prev["spec"])})
-        if entry in mine:
-            stamp(folder, block(entry.get("stop")))
+        if prev is not None:
+            stamp_entry(prev)
+        stamp_entry(entry)
         if entry.get("stop"):
             break
         prev, parent = entry, folder
-    with open(os.path.join(a.root, f"{a.name}-plancheck.json"), "w", encoding="utf-8") as fh:
+    out = guard(os.path.join(a.root, f"{a.name}-plancheck.json"))
+    with open(out, "w", encoding="utf-8") as fh:
         json.dump(history, fh, indent=2, sort_keys=True, default=str)
         fh.write("\n")
     print(f"{a.name}: {len(history)} round(s); last {history[-1].get('folder')}; "

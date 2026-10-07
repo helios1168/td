@@ -387,7 +387,7 @@ requires this of every drawn map.
 **Proposition B.** If D_c(S, δ) = ∅, then n̂_S = 0 for the read-back (n̂, t̂) of every drawing
 in 𝒳^N_c(δ). So the row n_S = 0 is necessary for 𝒳^N_c(δ) in the sense of Proposition D, and
 Proposition D's Corollary holds with B's rows added, for drawings in 𝒳^N_c(δ)
-**[claimed; proof below, awaiting the verifier's sign-off]**.
+**[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
 
 *Proof.* Suppose a drawing in 𝒳^N_c(δ) has n̂_S ≥ 1. Take a district j whose footprint is S, and
 let X be its ZIPs. Because the footprint is S, X ⊆ ∪_{v∈S} Z_v and X meets every Z_v with v ∈ S.
@@ -402,7 +402,7 @@ let X be its ZIPs. Because the footprint is S, X ⊆ ∪_{v∈S} Z_v and X meets
 So X ∈ D_c(S, δ), which contradicts D_c(S, δ) = ∅. ∎
 
 **The test** (`tools/exp/contig/plancheck.py::drawable`) says `infeasible` only in the following
-cases **[claimed, with Proposition B]**.
+cases **[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
 - *Held units only.* By (a), X is the union of S's ZIPs. The test reports a mass outside the
   band by more than 1e-9 τ_c, two or more components, or an M1 neck the exact check proves
   (`td.audit.district_necks`, status `proved`). An unresolved neck check gives `unknown`.

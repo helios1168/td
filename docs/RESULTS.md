@@ -920,7 +920,16 @@ M1's constants and the bands are unchanged.
 - B cuts nothing, so A+B's plans equal A's, and A+B reuses A's folder (`reuse.json`).
 - C bans nothing, because no piece or neck the repair leaves has a last window proved infeasible:
   each one is "window unknown at its time limit" or "budget spent". So A+B+C stops at round 0
-  on A's folder, and the C loop past round 0 has run only in the toy tests.
+  on A's folder, and the C loop past round 0 has not run on a map.
+- C's gate was off in these A+B+C runs: reusing A's folder as round 0 read A's `replan_rounds`
+  of 0, not the copy's 3 (Sol's review, fixed after the runs). The outcome cannot change, since
+  the cause table shows 0 proved-infeasible windows on every map, so nothing was there to ban;
+  the maps were not rerun.
+- C past round 0 is covered on toys only: bookkeeping tests, and one end-to-end test from round 0
+  to round 1 (`test_c_bans_a_proved_infeasible_support_and_redraws_it_in_round_1`). In that
+  test a real repair window proves a support infeasible, and C bans it, re-plans, redraws,
+  repairs and records the ban's cost. Its plan, draw and repair steps run in process on the toy,
+  not as the replan.py, run.py and repair.py CLIs.
 
 The table is the same for A, A+B and A+B+C: one folder per map, `plancheck/<id>-pc-A`.
 
@@ -952,11 +961,11 @@ status.
 - ifa_49 is worse than `ifa_49-replan-a2ut` (5 pieces, 6 necks), whose repair opened UT and ran
   7200 s. This run opens no unit and spends its 3600 s before reaching most necks.
 - Every failure but the CA, UT, MI, TX and NC necks is in the Northeast corridor. These are the
-  districts #124's Goal names (CT+DE+NY+PA#1, CT+NJ+NY#1), and B can neither prove them
-  undrawable (unknown) nor C ban them (no window proved infeasible).
+  districts #124's Goal names (CT+DE+NY+PA#1, CT+NJ+NY#1). B finds them drawable or unknown,
+  so it cannot cut them, and C cannot ban them, since no window was proved infeasible.
 - Rendered with `tools/maps/render.py` (ifa_49 `--corridor`) and shortlisted at tier 3, FAILS M1
   (`<id>_pc_a`). `tools/mandates/check.py --tracking`: 147 run folders, 32 entries, 0 failures.
-- MODEL §4.9's Proposition B is still [claimed] and waits on the verifier.
+- MODEL §4.9's Proposition B is proved (Sol verifier 8b0ddc7f, 2026-10-07).
 
 Regenerate (m5, local, `runs/exp/contig/plancheck/`): copies `plan.sh <id> <base> <A|AB>`; draw,
 repair and C `loop.sh <id>-pc-<A|ABC> _specs/<id>-pc-<A|ABC>.toml <parent> <budget> [--planned
