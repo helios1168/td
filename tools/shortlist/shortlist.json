@@ -3,6 +3,7 @@
   "1": "Presentable (2026-10-05 on): passes M1 (ZIP contiguity, mandate) and every audit check, looks scorer ELIGIBLE including the $ rule",
   "2": "Contender: passes M1 and the audit, but fails the $ rule or another eligibility rule",
   "3": "Reference: fails M1 (pieces or necks, #121), or is superseded, but answers a question worth keeping",
+  "P": "Pending owner review: drawn autonomously 2026-10-07 and passes every tier-1 check (M1, audit, scorer ELIGIBLE with the $ rule); the owner places it",
   "S": "Superseded 2026-10-05: drawn before M1 was restored (2026-10-04); all fail M1 (detached pieces). Kept for the record, never presented as eligible"
  },
  "maps": [
