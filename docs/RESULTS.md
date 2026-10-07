@@ -1156,3 +1156,65 @@ Regenerate (m5, local): `runs/exp/contig/ifa126/chain2.sh <variant> <spec> runs/
 (specs `ifa126/_specs/ifa_46.toml`, `_specs/ifa49.toml`, `ifa126/_specs/ifa_52.toml`), then
 `repair2.sh <variant> 3600`; table `TD_REPO=... "$TD_PY" runs/exp/contig/ifa126/rescore.py --round 2`
 → `rescore2.json`, `TABLE2.md`.
+
+### Round 3: exact support bans at K 46 (2026-10-07)
+
+Measured 2026-10-07 on m5 at m5-studio/126 (main 99220a8, nothing new on main since). The
+orchestrator, under the owner's overnight grant, had round 2's two plan changes tested at K 46 from
+`ifa_46-ut`'s spec copy (UT free). Both are scenario choices made with #124's `ban_supports` (exact
+supports, n_S = 0), not state-pair bans; the M1 constants, the ±10% final band and the $ target are
+unchanged. The bans are enumerated from the family the master builds for that copy (1,963 supports):
+
+- **3a `ifa_46-ut-dnj`**, "support ban: DE+NJ without PA (round-2 windows proved infeasible)": the 65
+  supports holding DE and NJ but not PA (from DE+NJ and DE+MD+NJ to CT+DC+DE+MD+NJ+NY; the list is
+  in `ifa126/_specs/ifa_46-ut-dnj.bans.json` and the copy's `ban_supports`).
+- **3b `ifa_46-ut-dnj-tx`**: the same 65 plus the 16 supports holding NM but not TX (81 in all), so
+  the NM district must hold TX. Banning only the NM district's own support (AZ+CO+NM) is not enough:
+  the master moves NM to AZ+CO+NM+UT, still without TX. The family has 7 supports with NM and TX
+  (NM+TX, NM+OK+TX, CO+NM+TX, ...); no code change was needed.
+
+Both plans are optimal at the declared δ 0.02 (objective 10,434 km in round 2; 10,462 for 3a;
+10,696 for 3b). 3a puts DE in DC+DE+MD+NJ+PA#1 and keeps the NM district at AZ+CO+NM#1; 3b puts DE
+in DE+MD+NJ+PA#1 and NM in NM+OK+TX#1. Each was drawn (`run.py --sequential --jobs 1`) and repaired
+twice for 1 h with `--jobs 4` (every first pass left unknown or budget causes). Columns as above;
+round 2's best map is the first row for comparison.
+
+| approach | folder | change | K | $ per district (M) | splits / cuts | cut border km | thin / small | worst / mean dev | pieces (largest τ) / necks | causes left | M1 | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2b | `ifa126/ifa_46-ut-r2` | round 2 best: K 46, ifa49 free list + UT (+1 split state) | 46 | 1,351 | 22 / 39 | 46,431 | 4 / 10 | 9.9% / 3.2% | 1 (0.214) / 3 | 1 neck infeasible, 2 neck unknown, 1 piece unknown | fail | ineligible: M1: fail |
+| 3a | `ifa126/ifa_46-ut-dnj` | K 46, UT free, support ban: DE+NJ without PA (round-2 windows proved infeasible), 65 supports, repair 1 h --jobs 4 | 46 | 1,351 | 22 / 40 | 45,952 | 2 / 12 | 9.9% / 3.3% | 3 (0.311) / 5 | 5 neck budget, 3 piece unknown | fail | ineligible: M1: fail |
+| 3a | `ifa126/ifa_46-ut-dnj-r2` | K 46, UT free, support ban: DE+NJ without PA (round-2 windows proved infeasible), 65 supports, second 1 h repair | 46 | 1,351 | 22 / 40 | 46,016 | 2 / 12 | 10.0% / 3.7% | 2 (0.311) / 4 | 1 neck infeasible, 3 neck unknown, 2 piece unknown | fail | ineligible: M1: fail |
+| 3b | `ifa126/ifa_46-ut-dnj-tx` | K 46, UT free, support ban: DE+NJ without PA (round-2 windows proved infeasible), 65 supports + support ban: NM without TX (NM district must hold TX), 16 supports, repair 1 h --jobs 4 | 46 | 1,351 | 21 / 41 | 47,876 | 4 / 14 | 8.9% / 3.0% | 2 (0.29) / 1 | 1 neck unknown, 2 piece unknown | fail | ineligible: M1: fail |
+| 3b | `ifa126/ifa_46-ut-dnj-tx-r2` | K 46, UT free, support ban: DE+NJ without PA (round-2 windows proved infeasible), 65 supports + support ban: NM without TX (NM district must hold TX), 16 supports, second 1 h repair | 46 | 1,351 | 21 / 41 | 47,876 | 4 / 14 | 8.9% / 3.0% | 2 (0.29) / 1 | 1 neck unknown, 2 piece unknown | fail | ineligible: M1: fail |
+
+- **No round-3 map passes M1**, so none goes in at tier P; the two final maps (`-r2`) are rendered
+  (`--corridor`) and shortlisted at tier 3 (`ifa_46_126_dnj` rank 41, `ifa_46_126_dnjtx` rank 42).
+- **The Delaware Memorial Bridge neck is gone in both.** With DE and NJ held only together with PA,
+  neither map has a piece or neck at 08023; round 2's PA piece of IFA_39 (NY+PA#1) is gone too.
+- **Giving the NM district TX removes the west TX neck.** 3b's IFA_36 (NM+OK+TX#1) takes the
+  Trans-Pecos ZIPs; 3a, which keeps AZ+CO+NM#1, still has round 2's neck in TX#2 (IFA_44, 79734,
+  cut 79718-79734 6.14 km, unknown).
+- **The closest map is `ifa_46_126_dnjtx`** (`ifa126/ifa_46-ut-dnj-tx-r2`): 2 pieces and 1 neck, all
+  in the New York metro, against round 2's 1 and 3. $1.351B per district, 21 splits (one fewer
+  than round 2), worst / mean 8.9% / 3.0%. Left, all with windows ended unknown (the second pass
+  changed nothing):
+  - IFA_10 (CT+MA+NJ+NY+RI#1): a piece of 21 ZIPs from 07421 (north NJ, 0.29 τ) and a piece of 25
+    ZIPs from 10001 (Manhattan, 0.242 τ), both cut off by other districts;
+  - IFA_11 (CT+NY#1): a neck 0.90 km wide (11361-11362, Queens) that cuts off 110 ZIPs from 10017,
+    35.1% of its mass.
+- **`ifa_46_126_dnj`** (`ifa126/ifa_46-ut-dnj-r2`): 2 pieces and 4 necks. Left: IFA_26
+  (MA+NJ+NY+RI#1) pieces from 10001 (37 ZIPs, 0.311 τ) and 07430 (15 ZIPs, 0.29 τ), unknown;
+  IFA_10 (CT+NY#1) neck at 11547-11579 (1.65 km, 86 ZIPs from 06320), unknown; IFA_11
+  (DC+DE+MD+NJ+PA#1) neck at 21402-21403 (1.10 km, 158 ZIPs from 20001), unknown; IFA_36 (NY#1)
+  neck at 11702-11706 / 11702-11795 (6.17 km, 34 ZIPs from 11705), infeasible; IFA_44 (TX#2) west
+  TX, unknown. Its worst district is 10.0%.
+- What remains at K 46 is the New York metro: supports that join NJ, NYC and New England
+  (CT+MA+NJ+NY+RI, MA+NJ+NY+RI) leave Manhattan and north-NJ pieces cut off by the NY and CT+NY
+  districts.
+
+Regenerate (m5, local; run from a checkout, scripts in `$TD_REPO/runs/exp/contig/ifa126/`):
+`"$TD_PY" mkspec3.py ifa_46-ut-dnj` (and `mkspec3.py ifa_46-ut-dnj-tx "$("$TD_PY"
+nm_without_tx.py)" "<label>"`) writes `_specs/<variant>.in.toml`, a copy of `_specs/ifa_46-ut.toml`
+with the `ban_supports` line enumerated from the family; then `chain3.sh <variant> <that copy>
+runs/exp/contig/border/ifa_49 3600 --keep` and `repair2.sh <variant> 3600`; table `TD_REPO=...
+"$TD_PY" rescore.py --round 3` → `rescore3.json`, `TABLE3.md`.

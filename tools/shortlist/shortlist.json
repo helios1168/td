@@ -1040,6 +1040,52 @@
     "thin": 4,
     "small": 13
    }
+  },
+  {
+   "id": "ifa_46_126_dnj",
+   "tier": 3,
+   "rank": 41,
+   "label": "IFA, K 46 (separate channel), #126 round 3 re-plan with UT free and DE+NJ-without-PA supports banned, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_46-ut-dnj-r2",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_46-ut-dnj-r2/summary.png",
+    "runs/exp/contig/ifa126/ifa_46-ut-dnj-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 round 3 (autonomous 2026-10-07): ifa_46-ut's spec copy with IFA's ban_supports = the 65 family supports holding DE and NJ but not PA (support ban: DE+NJ without PA (round-2 windows proved infeasible)), planned at δ 0.02, border draw, two 1 h repairs with --jobs 4. The Delaware Memorial Bridge neck is gone, but M1 fails: 2 detached pieces (IFA_26 MA+NJ+NY+RI, 10001 and 07430), 4 necks (CT/Long Island 06320, DC 20001, Long Island 11705, west TX 79734). Worst/mean 10.0% / 3.7%, 22 splits, $ 1,351M per district.",
+   "metrics": {
+    "districts": 46,
+    "worst": 10.0,
+    "mean": 3.7,
+    "splits": 22,
+    "pieces": 2,
+    "necks": 4,
+    "thin": 2,
+    "small": 12
+   }
+  },
+  {
+   "id": "ifa_46_126_dnjtx",
+   "tier": 3,
+   "rank": 42,
+   "label": "IFA, K 46 (separate channel), #126 round 3 re-plan with UT free, DE+NJ-without-PA and NM-without-TX supports banned, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_46-ut-dnj-tx-r2",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_46-ut-dnj-tx-r2/summary.png",
+    "runs/exp/contig/ifa126/ifa_46-ut-dnj-tx-r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 round 3 (autonomous 2026-10-07): as ifa_46_126_dnj plus the 16 family supports holding NM but not TX banned (81 ban_supports; the NM district is NM+OK+TX), planned at δ 0.02, border draw, two 1 h repairs with --jobs 4. The bridge and west TX necks are gone; M1 fails in the NY metro only: 2 detached pieces of IFA_10 (CT+MA+NJ+NY+RI, 07421 and 10001), 1 neck of IFA_11 (CT+NY, 10017 at 11361-11362, 0.90 km). Worst/mean 8.9% / 3.0%, 21 splits, $ 1,351M per district.",
+   "metrics": {
+    "districts": 46,
+    "worst": 8.9,
+    "mean": 3.0,
+    "splits": 21,
+    "pieces": 2,
+    "necks": 1,
+    "thin": 4,
+    "small": 14
+   }
   }
  ]
 }
