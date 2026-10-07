@@ -763,6 +763,52 @@
     "thin": 8,
     "small": 9
    }
+  },
+  {
+   "id": "ifa_46_126_azut",
+   "tier": 3,
+   "rank": 36,
+   "label": "IFA, K 46 (separate channel), #126 re-plan with AZ-UT ban, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_46-azut",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_46-azut/summary.png",
+    "runs/exp/contig/ifa126/ifa_46-azut/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 (autonomous 2026-10-07): re-plan of ifa49.toml at K 46 with AZ-UT banned (same free list, δ 0.02), border draw, 45 min repair with --jobs 3. Fails M1: 3 detached pieces (largest 0.37 τ), 5 necks. Worst/mean 11.4% / 2.9%, 22 splits, $ 1,351M per district. One district is outside the declared ±10% final band (11.4%; scorecard 'final bands on drawn mass' fails).",
+   "metrics": {
+    "districts": 46,
+    "worst": 11.4,
+    "mean": 2.9,
+    "splits": 22,
+    "pieces": 3,
+    "necks": 5,
+    "thin": 5,
+    "small": 13
+   }
+  },
+  {
+   "id": "ifa_52_126_azut",
+   "tier": 3,
+   "rank": 37,
+   "label": "IFA, K 52 (separate channel), #126 re-plan with AZ-UT ban, FAILS M1",
+   "run": "runs/exp/contig/ifa126/ifa_52-azut",
+   "images": [
+    "runs/exp/contig/ifa126/ifa_52-azut/summary.png",
+    "runs/exp/contig/ifa126/ifa_52-azut/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#126 (autonomous 2026-10-07): re-plan of ifa49.toml at K 52 with AZ-UT banned (same free list, δ 0.02), border draw, 45 min repair with --jobs 3. Fails M1: 3 detached pieces (largest 0.474 τ), 8 necks. Worst/mean 10.0% / 3.1%, 23 splits, $ 1,195M per district.",
+   "metrics": {
+    "districts": 52,
+    "worst": 10.0,
+    "mean": 3.1,
+    "splits": 23,
+    "pieces": 3,
+    "necks": 8,
+    "thin": 5,
+    "small": 12
+   }
   }
  ]
 }
