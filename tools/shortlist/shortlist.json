@@ -571,7 +571,7 @@
     "runs/exp/contig/replan/low6_cb1-replan-shortut-w15-r2/zip_pages.pdf"
    ],
    "shown_images": [],
-   "notes": "#122 re-plan, round 3: short split lists, no state-pair bans, the channels with no plan inside 0.10 planned at their smallest δ with final_delta 0.15 (owner 2026-10-06); second repair pass (folder low6_cb1-replan-shortut-w15-r2, parent low6_cb1-replan-shortut-w15); fails M1."
+   "notes": "#122 re-plan, round 3: short split lists, round-2 bans dropped; FI AZ-UT retained, the channels with no plan inside 0.10 planned at their smallest δ with final_delta 0.15 (owner 2026-10-06); second repair pass (folder low6_cb1-replan-shortut-w15-r2, parent low6_cb1-replan-shortut-w15); fails M1."
   }
  ]
 }

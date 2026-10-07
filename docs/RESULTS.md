@@ -817,7 +817,9 @@ district (M).
 | ifa_49 | `-replan-ne5` | 1 | ne5 | 15 (0.355) / 17 | → 22/42 | 13.6% / 1.7% | same | fail (band too) | M1 only |
 | ifa_49 | `-replan-a2ut` | 2 | arm 1 + open UT, IFA_19's own window first | 5 (0.267) / 6 | → 23/41 | 9.9% / 3.6% | same | fail | M1, mode compliance (the UT split) |
 
-- **No map passes M1**, so no deck or ZIP pages were rendered. The best by pieces and necks is
+- **No map passes M1**, so the round-2 worker rendered no deck or ZIP pages; #120's renderer
+  (`tools/maps/render.py`, 2026-10-06) later rendered and shortlisted four of them (the three
+  `-ne5dn(ut)-r2` maps and `ifa_49-replan-a2ut`). The best by pieces and necks is
   `nocomb_13_12_23-replan-ne5dn-r2`. Everything it fails is in one district, national_08
   (DC+NC+NJ+PA+VA+WV): a DC piece of 85 ZIPs (0.0868 τ) and a WV piece of 738 ZIPs (0.0224 τ),
   both cut off by other districts, and a 0.17 km neck inside PA that cuts off the NJ side. None of
@@ -841,7 +843,7 @@ Regenerate (m5, local): `runs/exp/contig/replan/chain.sh <id> <variant> <source 
 180 --budget 7200`; table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r2.py` (writes
 `TABLE_r2.md`, `rescore_r2.json`). Remaining items per map: `runs/autonomous_2026-10-05/batch_replan/BATCH.md`.
 
-### Round 3: short split lists, no bans, then a widened planning band (2026-10-06)
+### Round 3: short split lists, round 2's bans dropped, then a widened planning band (2026-10-06)
 
 Owner's picks: national, WH and low6's WIFI split only CA FL NY TX, FI also PA OH, and ifa_49's
 IFA its 15 forced states (NY CA FL PA NJ TX MI OH IL MA CT MD MN WI VA). Every other state stays
@@ -887,9 +889,9 @@ term), then `repair.py --flow --keep-support` at 1200 s per channel (`-w15`) and
   nocomb maps: 209 ZIPs from 17501, 0.416 τ. On low6 it is national_06
   (CT+DE+NY+PA+RI): 1,901 ZIPs from 15001, 0.426 τ. Necks include WH_11 0.08 km at 10036-10173
   (Manhattan) and FI_06 0.96 km at 17507-17517/17555.
-- Of the 10 pieces left, 9 are left because their last window hit its time limit (unknown) and 1
-  (low6 national_06) because the budget ran out. The second pass removed one neck each on nocomb_13
-  and low6 and changed nothing on nocomb_15.
+- Of the 12 pieces left (5 + 3 + 4), 11 are left because their last window hit its time limit
+  (unknown) and 1 (low6 national_06) because the budget ran out. The second pass removed one
+  neck each on nocomb_13 and low6 and changed nothing on nocomb_15.
 - The $ rule passes on every targeted channel of all three maps. $ per district is the channel total
   over K, so it equals the earlier runs' figures.
 - Rendered with `tools/maps/render.py` and shortlisted at tier 3, FAILS M1. The legacy summary

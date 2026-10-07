@@ -16,7 +16,8 @@ widening (2026-10-06): the copy sets X's `final_delta` to 0.15, so X plans at it
 0.15 and is judged in ±15%; every other channel keeps its own.  The plans (a channel moved to its
 smallest δ re-planned there) are cached in `--plans` under the copy's sha256 (`run.plans_key`),
 so `run.py <copy> --plans <dir>` draws exactly them.  `--report` lists per channel the δ declared
-and used, the pairs banned and the supports in use holding a unit of a banned pair.
+and used, the pairs banned in it (`bans`, after `--channels`) and the supports in use holding a
+unit of one.  Neither the copy nor the report may be the stored TOML, by any path or link.
 """
 from __future__ import annotations
 
@@ -75,14 +76,17 @@ def banned_text(text: str, pairs: list, channels=None, deltas: dict | None = Non
     """The TOML `text` with `pairs` added to the `forbid_pairs` of each `[channels.X]` section (of
     `channels` only when given), `extra` {X: pairs} to X's alone, each channel of `deltas` at
     that `delta`, each channel of `free` {X: units} with that split list in place of its own and
-    each channel of `final_deltas` at that `final_delta`.  A section that already lists
-    `forbid_pairs` is refused (one line per section keeps the copy readable)."""
+    each channel of `final_deltas` at that `final_delta`; a channel with no line of its own (one
+    inheriting `[scenario].delta`, say) gets one.  A section that already lists `forbid_pairs` is
+    refused (one line per section keeps the copy readable)."""
     deltas, extra, free, finals = deltas or {}, extra or {}, free or {}, final_deltas or {}
-    out, cur, seen, seen_final = [], None, set(), set()
+    out, cur, seen, seen_final, seen_delta = [], None, set(), set(), set()
 
     def close():
         if cur is None:
             return
+        if cur in deltas and cur not in seen_delta:
+            out.append(f"delta = {deltas[cur]:g}")
         if cur in free and cur not in seen and free[cur]:
             out.append("free = [" + ", ".join(f'"{u}"' for u in free[cur]) + "]")
         if cur in finals and cur not in seen_final:
@@ -104,6 +108,7 @@ def banned_text(text: str, pairs: list, channels=None, deltas: dict | None = Non
         if cur is not None and re.match(r"^forbid_pairs\s*=", line):
             raise ValueError(f"channel {cur}: forbid_pairs already set")
         if cur in deltas and re.match(r"^delta\s*=", line):
+            seen_delta.add(cur)
             line = f"delta = {deltas[cur]:g}"
         if cur in finals and re.match(r"^final_delta\s*=", line):
             seen_final.add(cur)
@@ -120,9 +125,27 @@ def banned_text(text: str, pairs: list, channels=None, deltas: dict | None = Non
         out.pop()
     close()
     sections = {m.group(1) for m in map(SECTION.match, text.splitlines()) if m}
-    if (set(free) | set(finals)) - sections:
-        raise ValueError(f"no channel section: {sorted((set(free) | set(finals)) - sections)}")
+    if (set(free) | set(finals) | set(deltas)) - sections:
+        raise ValueError("no channel section: "
+                         f"{sorted((set(free) | set(finals) | set(deltas)) - sections)}")
     return "\n".join(out) + "\n"
+
+
+def effective_bans(names, pairs: list, channels=None, extra: dict | None = None) -> dict:
+    """{channel: ["A-B", ...]} of the pairs `banned_text` adds to each of `names`: `pairs` where
+    `channels` (`--channels`) is not given or lists it, and its own `extra`."""
+    extra = extra or {}
+    return {c: ["-".join(p) for p in sorted(set((pairs if channels is None or c in channels
+                                                 else []) + list(extra.get(c, ()))))]
+            for c in sorted(names)}
+
+
+def same_file(a: str, b: str) -> bool:
+    """True when the paths name one file: one inode where both exist (a symlink or a hard link
+    counts), else one real path."""
+    if os.path.exists(a) and os.path.exists(b):
+        return os.path.samefile(a, b)
+    return os.path.realpath(a) == os.path.realpath(b)
 
 
 def build(spec_path: str, extract_path: str):
@@ -155,8 +178,10 @@ def main(argv=None) -> int:
     if not a.forbid and not free and not a.widen:
         raise SystemExit("nothing to change: give --forbid, --free or --widen")
     finals = dict.fromkeys(a.widen, WIDE_FINAL_DELTA)
-    if os.path.abspath(a.out_spec) == os.path.abspath(a.spec):
+    if same_file(a.out_spec, a.spec):
         raise SystemExit("the copy must not overwrite the stored TOML")
+    if a.report and same_file(a.report, a.spec):
+        raise SystemExit("the report must not overwrite the stored TOML")
     with open(a.spec, encoding="utf-8") as fh:
         src = fh.read()
     pairs = sorted({p for p in a.forbid if isinstance(p[1], str)})
@@ -186,7 +211,8 @@ def main(argv=None) -> int:
            "forbid": ["-".join(p) for p in pairs],
            "forbid_in": {c: ["-".join(p) for p in ps] for c, ps in extra.items()},
            "free": {c: list(us) for c, us in sorted(free.items())},
-           "widen": {c: d for c, d in sorted(finals.items())}, "channels": {}}
+           "widen": {c: d for c, d in sorted(finals.items())}, "channels": {},
+           "bans": effective_bans(inst.channels, pairs, a.channels, extra)}
     for c, ch in inst.channels.items():
         p, rep = master.plan(inst, c, time_limit=a.time_limit)
         plans[c], reports[c] = p, rep
@@ -215,10 +241,10 @@ def main(argv=None) -> int:
         with open(key, "wb") as fh:
             pickle.dump((plans, reports), fh)
     doc["plans_file"] = key
-    units = {u for p in pairs + [p for ps in extra.values() for p in ps] for u in p}
     for c, p in plans.items():
         if p is None:
             raise SystemExit(f"{c}: no plan at δ {doc['channels'][c]['delta']:g} on re-solve")
+        units = {u for ban in doc["bans"][c] for u in ban.split("-")}
         doc["channels"][c].update(
             status=reports[c].get("status"), objective=p.objective,
             supports=sorted(f"{cp.name} " + " ".join(f"{v}:{y:.3f}" for v, y in sorted(cp.share.items()))

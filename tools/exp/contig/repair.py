@@ -340,7 +340,7 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
     support = {cp.name: cp.support for cp in plan.copies}
     lo, hi = ch.final_band
     count = {"current": holders_on(owner, units, {unit_of[z] for z in W}), "cap": cap,
-             "extra": len({unit_of[z] for z in W & opened})}
+             "opened": frozenset(unit_of[z] for z in W & opened)}
     zs = sorted(W)
     cutter, exempt = None, []
     if ng is not None:
@@ -618,18 +618,19 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
         pieces = left
     if ng is None:
         return owner, attempts
+    def first(n):               # the order necks are repaired in, within a district too
+        return not n[1] & opened, len(n[1]), n[0]
     found = necks(owner, m, ng)
     for _ in range(3):
         if not found:
             break
-        order = sorted(found, key=lambda n: (not n[1] & opened, len(n[1]), n[0]))
-        for j in [n[0] for n in order]:
+        for j in [n[0] for n in sorted(found, key=first)]:
             cur = necks(owner, m, ng, [j])
             if not cur:
                 continue            # gone with an earlier window
-            owner = _repair_neck(inst, plan, owner, j, cur[0][1], free, p, state, h0, max_zctas,
-                                 neck_time_limit or time_limit, attempts, log, flow, keep_support,
-                                 border, ng, deadline, opened)
+            owner = _repair_neck(inst, plan, owner, j, min(cur, key=first)[1], free, p, state,
+                                 h0, max_zctas, neck_time_limit or time_limit, attempts, log,
+                                 flow, keep_support, border, ng, deadline, opened)
         left = necks(owner, m, ng)
         if len(left) >= len(found):
             break

@@ -939,12 +939,21 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             elif ys:
                 row(-inf, 1.0 - fixed_holders, ys + [k], [1.0] * len(ys) + [-float(len(ys))])
         if count.get("cap"):
-            cur, extra = count["current"], count.get("extra", 0)     # extra: opened units (#122)
-            row(-inf, float(sum(1 for v in scol if len(cur[v]) > 1) + extra), list(scol.values()),
-                [1.0] * len(scol))
-            ys = [k for v in scol for k in free_y.get(v, [])]
-            room = sum(len(cur[v]) for v in scol) - sum(len(held_by[v]) for v in scol) + extra
-            row(-inf, float(room), ys, [1.0] * len(ys))
+            # each opened unit (#122) may gain one holder, so one split, of its own; the other
+            # units share the rest as before
+            cur, opened = count["current"], [v for v in scol if v in count.get("opened", ())]
+            splits = sum(1 for v in scol if len(cur[v]) > 1)
+            room = sum(len(cur[v]) for v in scol) - sum(len(held_by[v]) for v in scol)
+            groups = [(list(scol), len(opened))]
+            if opened:
+                groups.append(([v for v in scol if v not in opened], 0))
+            for vs, extra in groups:
+                row(-inf, float(splits + extra), [scol[v] for v in vs], [1.0] * len(vs))
+                ys = [k for v in vs for k in free_y.get(v, [])]
+                row(-inf, float(room + extra), ys, [1.0] * len(ys))
+            for v in opened:
+                ys = free_y.get(v, [])
+                row(-inf, float(len(cur[v]) + 1 - len(held_by[v])), ys, [1.0] * len(ys))
     if arm == "move":
         for v in sorted({unit_of[z] for z in zs}):
             if len(hold.get(v, [])) > 1:
