@@ -4,7 +4,7 @@
 
 ## Now
 
-Overnight autonomy (owner, 2026-10-07): "a good clean set of maps". #123 landed (ee800d8). Running: #124 (plan check; A, B, C remove nothing; in review), #125 (main maps, ne_plains layout at every $-eligible K), #126 (IFA map). Maps that pass every tier-1 check go to tier P (pending owner review). Only ne_plains_wh11 is eligible today.
+Overnight autonomy (owner, 2026-10-07): "a good clean set of maps". #123 (ee800d8) and #124 (12d3631, negative: A, B, C remove nothing; B proved) landed. Running: #125 (main maps, ne_plains layout at every $-eligible K), #126 (IFA map). Maps that pass every tier-1 check go to tier P (pending owner review). Eligible: ne_plains_wh11; na15_wh11_fi20-r1 (#125) pending owner.
 
 ## Next
 
