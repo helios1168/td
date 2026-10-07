@@ -3,6 +3,7 @@ folder that fails M1.
 
     "$TD_PY" -u tools/exp/contig/repair.py <run_dir> --out <dir> [--extract PATH] [--plans PATH]
         [--h0 3] [--max-zctas 1500] [--time-limit 600] [--budget s] [--channels c ...] [--maps]
+        [--jobs N]
 
 Per planning channel with a detached piece on the drawn map (the ledger of `<run_dir>`, read
 back to each ZCTA's plan copy):
@@ -50,6 +51,15 @@ back to each ZCTA's plan copy):
 - **Opened units** (#122, `--open-units`): the ZCTAs of the units named join the free ZCTAs, and
   any district of a window may take them even with `--keep-support`; the cap lets each such unit
   of W gain one split.  An arm-2 split of a unit held whole, for a neck no arm-1 window reaches.
+
+- **In parallel** (#123, `--jobs N` above 1; 1 is the sequential loop): each channel is repaired
+  in its own process (`repair_parallel`), and each escalation, of a piece or a neck, is a race
+  (`_race`): up to N windows of its sequence solve at once in worker processes (`WindowPool`,
+  HiGHS pinned to one thread each, trap 18), at most N solves across the channels.  Attempts
+  settle in sequence order, never by finish time: the first success in sequence order is kept, an
+  earlier window is waited for to its own time limit, a later one is killed once an earlier one
+  succeeds, and an unknown window still skips the later capped ones of its shape.  With no window
+  stopped by a time limit (or `--budget`) the folder is the sequential run's but for seconds.
 
 The source run is checked first (`check_source`): its districts.csv must list, per channel, the
 plan's copies under the ids, names and supports the ledger was written with, or nothing is
@@ -466,12 +476,15 @@ def _time_left(time_limit: float, deadline: float | None, log, what: str) -> flo
 
 def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, time_limit,
                     attempts, log, flow=False, keep_support=False, border=None, ng=None,
-                    deadline=None, opened=frozenset()):
+                    deadline=None, opened=frozenset(), pool=None):
     c = plan.channel
-    ch = inst.channels[c]
-    adj, m = inst.units.zip_adj, ch.m
+    adj = inst.units.zip_adj
     todo = steps(pieces, owner, free, adj, h0, max_zctas)
     todo = [(sh, k, W, True) for sh, k, W in todo] + [(sh, k, W, False) for sh, k, W in todo[-1:]]
+    repairing = {j for j, _ in pieces}
+    if pool is not None:
+        return _race_cluster(inst, plan, owner, pieces, todo, repairing, state, time_limit,
+                             attempts, log, flow, keep_support, ng, deadline, opened, pool)
     skip = None
     for shape, k, W, cap in todo:
         if shape == skip and cap:
@@ -482,30 +495,69 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
         before = map_figures(inst, c, owner, state)
         t0 = time.time()
         g = solve_window(inst, plan, owner, W, p, tl, cap, log, flow, keep_support,
-                         {j for j, _ in pieces}, border, ng, opened)
-        rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
-               "window_zctas": len(W), "districts": g.districts,
-               "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
-               "cluster": [f"{j} {min(cc)} ({len(cc)} ZCTAs)" for j, cc in pieces],
-               "piece_tau_before": [round(math.fsum(m.get(z, 0.0) for z in cc) / ch.tau, 4)
-                                    for _, cc in pieces],
-               "status": g.status, "seconds": round(time.time() - t0, 1),
-               "objective": g.objective, "bound": g.bound, "gap": g.gap, "note": g.note,
-               "tried": g.tried, "before": before, "neck_aware": ng is not None,
-               "neck_cuts": g.neck_cuts}
-        if g.status in ("optimal", "connected"):
-            owner = {**owner, **g.owner}
-            rec["after"] = map_figures(inst, c, owner, state)
-        rec["pieces_after"] = len(detached(owner, adj, m))
-        rec["group"] = g.report()
-        attempts.append(rec)
-        log(f"{c}: {shape} {'h' if shape == 'ball' else 'slack'} = {k}, |W| = {len(W)}"
-            f"{'' if cap else ' (no cap)'}: {g.status}, pieces {rec['pieces_before']} -> "
-            f"{rec['pieces_after']}, {rec['seconds']}s")
+                         repairing, border, ng, opened)
+        owner = _settle_cluster(inst, c, owner, pieces, (shape, k, W, cap), g, before,
+                                round(time.time() - t0, 1), state, attempts, log, flow,
+                                keep_support, ng)
         if g.status in ("optimal", "connected"):
             break
         if g.status != "infeasible":
             skip = shape
+    return owner
+
+
+def _settle_cluster(inst, c, owner, pieces, step, g, before, seconds, state, attempts, log, flow,
+                    keep_support, ng):
+    """Record a piece window's solve `g` (`_repair_cluster`); the owner, the window's drawing in
+    it when connected."""
+    shape, k, W, cap = step
+    ch = inst.channels[c]
+    adj, m = inst.units.zip_adj, ch.m
+    rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
+           "window_zctas": len(W), "districts": g.districts,
+           "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
+           "cluster": [f"{j} {min(cc)} ({len(cc)} ZCTAs)" for j, cc in pieces],
+           "piece_tau_before": [round(math.fsum(m.get(z, 0.0) for z in cc) / ch.tau, 4)
+                                for _, cc in pieces],
+           "status": g.status, "seconds": seconds,
+           "objective": g.objective, "bound": g.bound, "gap": g.gap, "note": g.note,
+           "tried": g.tried, "before": before, "neck_aware": ng is not None,
+           "neck_cuts": g.neck_cuts}
+    if g.status in ("optimal", "connected"):
+        owner = {**owner, **g.owner}
+        rec["after"] = map_figures(inst, c, owner, state)
+    rec["pieces_after"] = len(detached(owner, adj, m))
+    rec["group"] = g.report()
+    attempts.append(rec)
+    log(f"{c}: {shape} {'h' if shape == 'ball' else 'slack'} = {k}, |W| = {len(W)}"
+        f"{'' if cap else ' (no cap)'}: {g.status}, pieces {rec['pieces_before']} -> "
+        f"{rec['pieces_after']}, {rec['seconds']}s")
+    return owner
+
+
+def _race_cluster(inst, plan, owner, pieces, todo, repairing, state, time_limit, attempts, log,
+                  flow, keep_support, ng, deadline, opened, pool):
+    """`_repair_cluster`'s windows as a race on `pool` (`_race`): an unknown window still skips
+    the later capped ones of its shape, as in the loop."""
+    c = plan.channel
+    before = map_figures(inst, c, owner, state)
+    skip = []
+
+    def launch(i):
+        shape, k, W, cap = todo[i]
+        tl = _time_left(time_limit, deadline, log, f"{c} {shape} {k} of {pieces[0][0]}")
+        return (c, owner, W, tl, cap, flow, keep_support, repairing, opened) if tl else None
+
+    def settle(i, res):
+        nonlocal owner
+        g, seconds = res
+        owner = _settle_cluster(inst, c, owner, pieces, todo[i], g, before, round(seconds, 1),
+                                state, attempts, log, flow, keep_support, ng)
+        if g.status not in ("optimal", "connected", "infeasible"):
+            skip.append(todo[i][0])
+        return g.status in ("optimal", "connected")
+
+    _race(pool, len(todo), launch, settle, lambda i: not (todo[i][3] and todo[i][0] in skip))
     return owner
 
 
@@ -531,18 +583,20 @@ def own_window(owner: dict, j: str, side, opened: frozenset, unit_of: dict) -> s
 
 def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time_limit,
                  attempts, log, flow, keep_support, border, ng, deadline=None,
-                 opened=frozenset()):
+                 opened=frozenset(), pool=None):
     """Window repair of one neck, as of a detached piece (#121): the windows of `steps` around the
     side cut off, after `own_window` when the side lies in an opened unit (#122), each re-solved
     with the border term, the first kept that leaves no more detached pieces and fewer necks among
     its districts."""
     c = plan.channel
-    ch = inst.channels[c]
-    adj, m = inst.units.zip_adj, ch.m
+    adj = inst.units.zip_adj
     todo = steps([(j, side)], owner, free, adj, h0, max_zctas)
     own = own_window(owner, j, side, opened, inst.units.unit_of)
     if own and len(own) <= max_zctas:
         todo = [("own", len(own), own)] + [st for st in todo if st[2] != own]
+    if pool is not None:
+        return _race_neck(inst, plan, owner, j, side, todo, state, time_limit, attempts, log,
+                          flow, keep_support, ng, deadline, opened, pool)
     for shape, k, W in todo:
         tl = _time_left(time_limit, deadline, log, f"{c} neck of {j}, {shape} {k}")
         if not tl:
@@ -551,30 +605,65 @@ def _repair_neck(inst, plan, owner, j, side, free, p, state, h0, max_zctas, time
         t0 = time.time()
         g = solve_window(inst, plan, owner, W, p, tl, True, log, flow, keep_support,
                          {j}, border, ng, opened)
-        n_before = len(necks(owner, m, ng, g.districts))
-        rec = {"channel": c, "kind": "neck", "shape": shape, STEP_KEY[shape]: k,
-               "window_zctas": len(W), "districts": g.districts, "cap": True, "flow": flow,
-               "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
-               "cluster": [f"{j} {min(side)} ({len(side)} ZCTAs)"], "necks_before": n_before,
-               "status": g.status, "seconds": None, "objective": g.objective, "bound": g.bound,
-               "gap": g.gap, "note": g.note, "tried": g.tried, "before": before, "kept": False,
-               "neck_aware": True, "neck_cuts": g.neck_cuts, "neck_exempt": g.neck_exempt}
-        new = {**owner, **g.owner} if g.status in ("optimal", "connected") else owner
-        rec["pieces_after"] = len(detached(new, adj, m))
-        rec["necks_after"] = len(necks(new, m, ng, g.districts))
-        if g.status in ("optimal", "connected") and rec["pieces_after"] <= rec["pieces_before"] \
-                and rec["necks_after"] < n_before:
-            owner, rec["kept"] = new, True
-            rec["after"] = map_figures(inst, c, owner, state)
-        rec["seconds"] = round(time.time() - t0, 1)
-        rec["group"] = g.report()
-        attempts.append(rec)
-        log(f"{c}: neck of {j} ({len(side)} ZCTAs), {shape} {STEP_KEY[shape]} "
-            f"= {k}, |W| = {len(W)}: {g.status}, necks {n_before} -> {rec['necks_after']} in its "
-            f"districts, {g.neck_cuts} neck cuts, {'kept' if rec['kept'] else 'not kept'}, "
-            f"{rec['seconds']}s")
-        if rec["kept"]:
+        owner, kept = _settle_neck(inst, c, owner, j, side, (shape, k, W), g, before, t0, state,
+                                   attempts, log, flow, keep_support, ng)
+        if kept:
             break
+    return owner
+
+
+def _settle_neck(inst, c, owner, j, side, step, g, before, t0, state, attempts, log, flow,
+                 keep_support, ng) -> tuple:
+    """Record a neck window's solve `g` (`_repair_neck`), its seconds counted from `t0`; (the
+    owner, whether the window's drawing was kept in it)."""
+    shape, k, W = step
+    adj, m = inst.units.zip_adj, inst.channels[c].m
+    n_before = len(necks(owner, m, ng, g.districts))
+    rec = {"channel": c, "kind": "neck", "shape": shape, STEP_KEY[shape]: k,
+           "window_zctas": len(W), "districts": g.districts, "cap": True, "flow": flow,
+           "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
+           "cluster": [f"{j} {min(side)} ({len(side)} ZCTAs)"], "necks_before": n_before,
+           "status": g.status, "seconds": None, "objective": g.objective, "bound": g.bound,
+           "gap": g.gap, "note": g.note, "tried": g.tried, "before": before, "kept": False,
+           "neck_aware": True, "neck_cuts": g.neck_cuts, "neck_exempt": g.neck_exempt}
+    new = {**owner, **g.owner} if g.status in ("optimal", "connected") else owner
+    rec["pieces_after"] = len(detached(new, adj, m))
+    rec["necks_after"] = len(necks(new, m, ng, g.districts))
+    if g.status in ("optimal", "connected") and rec["pieces_after"] <= rec["pieces_before"] \
+            and rec["necks_after"] < n_before:
+        owner, rec["kept"] = new, True
+        rec["after"] = map_figures(inst, c, owner, state)
+    rec["seconds"] = round(time.time() - t0, 1)
+    rec["group"] = g.report()
+    attempts.append(rec)
+    log(f"{c}: neck of {j} ({len(side)} ZCTAs), {shape} {STEP_KEY[shape]} "
+        f"= {k}, |W| = {len(W)}: {g.status}, necks {n_before} -> {rec['necks_after']} in its "
+        f"districts, {g.neck_cuts} neck cuts, {'kept' if rec['kept'] else 'not kept'}, "
+        f"{rec['seconds']}s")
+    return owner, rec["kept"]
+
+
+def _race_neck(inst, plan, owner, j, side, todo, state, time_limit, attempts, log, flow,
+               keep_support, ng, deadline, opened, pool):
+    """`_repair_neck`'s windows as a race on `pool` (`_race`); a window's seconds are its solve's
+    and then the neck counts that judge it."""
+    c = plan.channel
+    before = map_figures(inst, c, owner, state)
+
+    def launch(i):
+        shape, k, W = todo[i]
+        tl = _time_left(time_limit, deadline, log, f"{c} neck of {j}, {shape} {k}")
+        return (c, owner, W, tl, True, flow, keep_support, {j}, opened) if tl else None
+
+    def settle(i, res):
+        nonlocal owner
+        g, seconds = res
+        owner, kept = _settle_neck(inst, c, owner, j, side, todo[i], g, before,
+                                   time.time() - seconds, state, attempts, log, flow,
+                                   keep_support, ng)
+        return kept
+
+    _race(pool, len(todo), launch, settle, lambda i: True)
     return owner
 
 
@@ -582,7 +671,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
                    time_limit: float, log=print, flow: bool = False,
                    keep_support: bool = False, border: dict | None = None, ng=None,
                    neck_time_limit: float | None = None, budget: float | None = None,
-                   open_units=()) -> tuple:
+                   open_units=(), pool=None) -> tuple:
     """(the repaired owner, [attempt records]); the owner changes only by a connected window.
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
@@ -591,7 +680,8 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
     (#122), then smallest side first, by `_repair_neck`;
     rounds repeat while they remove necks, at most three, each neck window with `neck_time_limit` seconds (default
     `time_limit`).  Every window solves with the border term over `border`.  With `budget`
-    (seconds), no window starts once the channel has spent it, and the last gets what is left."""
+    (seconds), no window starts once the channel has spent it, and the last gets what is left.
+    With `pool` (`WindowPool`, #123) each escalation is a race (`_race`), its result the loop's."""
     deadline = None if budget is None else time.time() + budget
     c = plan.channel
     ch, units = inst.channels[c], inst.units
@@ -611,7 +701,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             if group:
                 owner = _repair_cluster(inst, plan, owner, group, free, p, state, h0, max_zctas,
                                         time_limit, attempts, log, flow, keep_support, border, ng,
-                                        deadline, opened)
+                                        deadline, opened, pool)
         left = detached(owner, adj, m)
         if len(left) >= len(pieces):
             break
@@ -630,12 +720,235 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
                 continue            # gone with an earlier window
             owner = _repair_neck(inst, plan, owner, j, min(cur, key=first)[1], free, p, state,
                                  h0, max_zctas, neck_time_limit or time_limit, attempts, log,
-                                 flow, keep_support, border, ng, deadline, opened)
+                                 flow, keep_support, border, ng, deadline, opened, pool)
         left = necks(owner, m, ng)
         if len(left) >= len(found):
             break
         found = left
     return owner, attempts
+
+
+# ------------------------------------------------------------------------------ in parallel (#123)
+WORKER = "contig_repair_worker"     # the name a worker process runs this file under
+
+
+def _race(pool, n, launch, settle, wanted) -> None:
+    """Attempts 0..n-1 of one escalation, as many at a time as `pool` has room for (#123).
+    `launch(i)` gives attempt i's task, or None when the budget lets no window start (then no later
+    one starts either); `settle(i, result)` records attempt i and says whether the escalation
+    stops there; `wanted(i)` says whether attempt i still runs after those settled (a skip rule).
+    Attempts settle in sequence order, never by finish time: an earlier one is waited for to its
+    own time limit, and a later one is killed once an earlier one stops the escalation or a skip
+    rule drops it, so the attempts settled are the sequential loop's."""
+    running, done = {}, {}
+    head = nxt = 0
+    end = n
+    try:
+        while head < end:
+            if not wanted(head):
+                if head in running:
+                    pool.kill(running.pop(head))
+                done.pop(head, None)
+                head += 1
+                continue
+            nxt = max(nxt, head)
+            while nxt < end and (not wanted(nxt) or pool.reserve()):
+                if wanted(nxt):
+                    task = launch(nxt)
+                    if task is None:
+                        pool.unreserve()
+                        end = nxt
+                        break
+                    running[nxt] = pool.start(task)
+                nxt += 1
+            if head >= end:
+                break
+            if head not in done:
+                back = {h: i for i, h in running.items()}
+                for h, res in pool.wait(list(back), 1.0):
+                    done[back[h]] = res
+                    del running[back[h]]
+            if head in done:
+                stop = settle(head, done.pop(head))
+                head += 1
+                if stop:
+                    break
+                for i in [i for i in running if not wanted(i)]:
+                    pool.kill(running.pop(i))
+    finally:
+        for h in running.values():
+            pool.kill(h)
+
+
+def _spawn(role: str, shared: str, slots=None, daemon: bool = True, log: bool = True) -> tuple:
+    """(process, connection) of a worker process (`_serve`) running this file (`run.spawn`)."""
+    return run.spawn(os.path.abspath(__file__), WORKER, (role, shared, slots, log), daemon)
+
+
+class WindowPool:
+    """Up to `jobs` worker processes solving one channel's windows (#123), each with HiGHS pinned
+    to one thread (`run.pin_threads`).  With `slots`, a count of free solver processes shared by the
+    channels, a channel's first running solve is its own and each further one takes a slot.
+    With `log` false the workers print nothing."""
+
+    def __init__(self, jobs: int, shared: str, slots=None, log: bool = True):
+        self.jobs, self.shared, self.slots, self.log = jobs, shared, slots, log
+        self.idle, self.busy = [], {}           # [(process, connection)], {connection: process}
+        self.reserved = False
+        self.started = 0                        # tasks started
+
+    def reserve(self) -> bool:
+        """Whether one more solve may start now (taking a slot for it when one is needed)."""
+        if len(self.busy) >= self.jobs:
+            return False
+        if self.busy and self.slots is not None:
+            with self.slots.get_lock():
+                if self.slots.value <= 0:
+                    return False
+                self.slots.value -= 1
+        self.reserved = True
+        return True
+
+    def unreserve(self) -> None:
+        if self.reserved and self.busy and self.slots is not None:
+            with self.slots.get_lock():
+                self.slots.value += 1
+        self.reserved = False
+
+    def start(self, task):
+        proc, conn = self.idle.pop() if self.idle else self._spawn()
+        conn.send(task)
+        self.busy[conn] = proc
+        self.reserved = False
+        self.started += 1
+        return conn
+
+    def _free(self, conn):
+        if len(self.busy) > 1 and self.slots is not None:
+            with self.slots.get_lock():
+                self.slots.value += 1
+        return self.busy.pop(conn)
+
+    def wait(self, conns: list, timeout: float) -> list:
+        """[(connection, (Group, seconds))] of the solves of `conns` done within `timeout`."""
+        from multiprocessing.connection import wait
+        out = []
+        for conn in wait(conns, timeout):
+            res = run.receive(conn, "window")
+            self.idle.append((self._free(conn), conn))
+            out.append((conn, res))
+        return out
+
+    def kill(self, conn) -> None:
+        """Stop a solve; a fresh worker starts loading in its place."""
+        proc = self._free(conn)
+        proc.kill()
+        proc.join()
+        conn.close()
+        self.idle.append(self._spawn())
+
+    def _spawn(self):
+        return _spawn("window", self.shared, log=self.log)
+
+    def close(self) -> None:
+        for conn in list(self.busy):
+            proc = self.busy.pop(conn)
+            proc.kill()
+            proc.join()
+        for proc, conn in self.idle:
+            conn.close()                        # the worker reads EOF and exits
+        for proc, _ in self.idle:
+            proc.join()
+        self.idle = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
+def write_shared(path: str, inst, plans: dict, p: dict, state: dict, border, ng) -> str:
+    """Pickle what every worker process reads once to `path`."""
+    with open(path, "wb") as fh:
+        pickle.dump({"inst": inst, "plans": plans, "p": p, "state": state, "border": border,
+                     "ng": ng}, fh, protocol=pickle.HIGHEST_PROTOCOL)
+    return path
+
+
+def _print(line: str) -> None:
+    print(line, flush=True)
+
+
+def _serve(conn, role: str, shared: str, slots, log: bool) -> None:
+    """A worker process: `window` solves window tasks until its connection closes; `channel`
+    repairs one channel (`repair_channel`) with a `WindowPool` and sends (owner, attempts)."""
+    import traceback
+    _log = _print if log else (lambda *_: None)
+    with open(shared, "rb") as fh:
+        sh = pickle.load(fh)
+    if role == "window":
+        run.pin_threads()
+    while True:
+        try:
+            task = conn.recv()
+        except EOFError:
+            return
+        try:
+            if role == "window":
+                c, owner, W, tl, cap, flow, keep_support, repairing, opened = task
+                t0 = time.time()
+                g = solve_window(sh["inst"], sh["plans"][c], owner, W, sh["p"], tl, cap, _log,
+                                 flow, keep_support, repairing, sh["border"], sh["ng"], opened)
+                conn.send(("done", (g, time.time() - t0)))
+            else:
+                c, owner, jobs, kw = task
+                with WindowPool(jobs, shared, slots, log) as pool:
+                    res = repair_channel(sh["inst"], sh["plans"][c], owner, sh["p"], sh["state"],
+                                         log=_log, border=sh["border"], ng=sh["ng"], pool=pool,
+                                         **kw)
+                conn.send(("done", res))
+                return
+        except BaseException:
+            conn.send(("error", traceback.format_exc()))
+            raise
+
+
+def repair_parallel(inst, plans: dict, owners: dict, p: dict, state: dict, channels: list,
+                    jobs: int, border=None, ng=None, log: bool = True, **kw) -> dict:
+    """{channel: (the repaired owner, [attempt records])} of `channels` (#123): each repaired in
+    its own process, at most `jobs` at once, by `repair_channel` with `kw` and a `WindowPool` of
+    `jobs` racing its windows, the processes together running at most `jobs` window solves (a
+    shared count of slots: each running channel's first solve is its own).  The channels' ledger
+    cells are disjoint, so the dict is the one the sequential loop builds whenever no window stops
+    on a time limit.  With `log` false the processes print nothing."""
+    import multiprocessing
+    import shutil
+    import tempfile
+    from multiprocessing.connection import wait
+    tmp = tempfile.mkdtemp(prefix="td-repair-")
+    out, todo, running = {}, list(channels), {}
+    try:
+        shared = write_shared(os.path.join(tmp, "shared.pkl"), inst, plans, p, state, border, ng)
+        slots = multiprocessing.get_context("spawn").Value("i", jobs - min(jobs, len(todo)))
+        while todo or running:
+            while todo and len(running) < jobs:
+                c = todo.pop(0)
+                proc, conn = _spawn("channel", shared, slots, daemon=False, log=log)
+                conn.send((c, owners[c], jobs, kw))
+                running[conn] = (c, proc)
+            for conn in wait(list(running)):
+                c, proc = running.pop(conn)
+                out[c] = run.receive(conn, f"{c} channel")
+                proc.join()
+                if not todo:                    # its first-solve slot passes to the others
+                    with slots.get_lock():
+                        slots.value += 1
+    finally:
+        for _, proc in running.values():
+            proc.terminate()
+        shutil.rmtree(tmp, ignore_errors=True)
+    return out
 
 
 def _commit() -> str:
@@ -699,6 +1012,9 @@ def main(argv=None) -> int:
                     help="units whose ZCTAs any window district may take, even with "
                          "--keep-support: an arm-2 split, one more allowed per unit; a neck "
                          "inside one first tries the district's own ZCTAs there (#122)")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="processes (#123): each channel in its own, its windows raced, at most "
+                         "this many solves at once; 1 is the sequential loop")
     ap.add_argument("--maps", action="store_true")
     ap.add_argument("--diag-final-delta", type=float, default=None,
                     help="diagnostic only: windows and audit at this final band, not the "
@@ -736,12 +1052,22 @@ def main(argv=None) -> int:
     with open(os.path.join(a.run_dir, "contig.json")) as fh:
         doc = json.load(fh)
     connectors = set(geo.approved_connectors(geo.read_connectors()))
+    repaired = {}
+    if a.jobs > 1:
+        repaired = repair_parallel(inst, plans, owners, p, state,
+                                   [c for c in plans if a.channels is None or c in a.channels],
+                                   a.jobs, border, ng, h0=a.h0, max_zctas=a.max_zctas,
+                                   time_limit=a.time_limit, flow=a.flow,
+                                   keep_support=a.keep_support, neck_time_limit=a.neck_time_limit,
+                                   budget=a.budget, open_units=a.open_units)
     drawings = {}
     for c, plan in plans.items():
         owner = owners[c]
         attempts = []
         before_km = draw.cut_border(owner, inst.units.zip_adj, border)
-        if a.channels is None or c in a.channels:
+        if c in repaired:
+            owner, attempts = repaired[c]
+        elif a.channels is None or c in a.channels:
             owner, attempts = repair_channel(inst, plan, owner, p, state, a.h0, a.max_zctas,
                                              a.time_limit, flow=a.flow,
                                              keep_support=a.keep_support, border=border, ng=ng,
@@ -789,3 +1115,5 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+elif __name__ == WORKER:
+    _serve(*WORKER_ARGS)     # noqa: F821 (set by `run.spawn`)

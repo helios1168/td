@@ -770,3 +770,126 @@ def test_an_opened_neck_comes_first_within_its_district():
                                          ng=ng, open_units=(unit,))
         assert (tried[0]["shape"], tried[0]["cluster"]) == ("own", [f"{pa} {side} (1 ZCTAs)"]), \
             (unit, tried[0]["shape"], tried[0]["cluster"])
+
+
+# ------------------------------------------------------------------------------ #123: in parallel
+def _two_channel_toy():
+    """(inst, ext, ref, plans, owners, p, state): `test_output`'s real ZCTAs and graph (NY, NJ and
+    PA chains, NY-NJ, NJ-PA, NY-CT), NY 0.75, NJ 0.5 and PA 0.75 per ZCTA in both fine channels, CT
+    none; planning channels X (f) and Y (g), each NY+NJ and NJ+PA at τ 4, NJ split half and half.
+    The drawn map, in both, gives NY+NJ NY, CT, 07102 and 07104, and NJ+PA PA, 07105 and 07103:
+    each district has a detached piece of one ZCTA."""
+    from td import data, spec as tdspec
+    from tests import test_output as to
+    from tests import test_spec as ts
+    ch = {"k": 2, "eta": 0.1, "max_dist_km": 1e9, "delta": 0.1, "final_delta": 0.1,
+          "free": ["NJ"]}
+    s = tdspec.parse({"scenario": {"name": "toy", "fine_channels": ["f", "g"]},
+                      "channels": {c: {**ch, "domain": [{"units": "all", "fine": [f]}]}
+                                   for c, f in (("X", "f"), ("Y", "g"))}})
+    mass = {**dict.fromkeys(to.NY, 0.75), **dict.fromkeys(to.NJ, 0.5),
+            **dict.fromkeys(to.PA, 0.75), **dict.fromkeys(to.CT, 0.0)}
+    zs = sorted(mass)
+    extract = data.Extract(("f", "g"), [z for z in zs for _ in "fg"], [f for _ in zs for f in "fg"],
+                           [mass[z] for z in zs for _ in "fg"], [{}] * 2 * len(zs),
+                           [0.0] * 2 * len(zs))
+    _, graph = to._toy_inputs()
+    graph = {"vertices": zs, "edges": graph["edges"]}
+    ref = ts._reference()
+    ext = tdspec.scope(s, data.conus(extract, ref))
+    inst = tdspec.build(s, ext, ref, graph)
+    plans = {c: tr._plan(inst, [({"NJ", "NY"}, {"NY": 1.0, "NJ": 0.5}),
+                                ({"NJ", "PA"}, {"NJ": 0.5, "PA": 1.0})], channel=c)
+             for c in ("X", "Y")}
+    a, b = "NJ+NY#1", "NJ+PA#1"
+    owner = {**dict.fromkeys(to.NY + to.CT, a), **dict.fromkeys(to.PA, b),
+             "07102": a, "07103": b, "07104": a, "07105": b}
+    rows = ref.set_index("zcta").loc[zs]
+    p = {z: (float(x) / 1000.0, float(y) / 1000.0) for z, x, y in zip(zs, rows["x"], rows["y"])}
+    state = dict(zip(zs, rows["state"]))
+    return inst, ext, ref, plans, {"X": dict(owner), "Y": dict(owner)}, p, state
+
+
+def _untimed(x):
+    """`x` less every "seconds" key: wall-clock time is the one field two equal runs differ in."""
+    if isinstance(x, dict):
+        return {k: _untimed(v) for k, v in x.items() if k != "seconds"}
+    if isinstance(x, list):
+        return [_untimed(v) for v in x]
+    return x
+
+
+def _written(inst, ext, ref, plans, owners, out) -> tuple:
+    """(ledger.csv, districts.csv) as bytes, written by `td.output` from the repaired owners as
+    `repair.main` draws them."""
+    from td import output
+    draw = _repair_module().draw
+    drawings = {c: draw.drawing(inst, plans[c], draw.Result(c, owners[c], [], set(), [], [],
+                                                             plans[c].delta, "repair", False))
+                for c in plans}
+    output.write_ledger(os.path.join(out, "ledger.csv"), output.ledger(inst, drawings, ext, ref))
+    output.write_districts(os.path.join(out, "districts.csv"), inst, plans, drawings, {}, {})
+    return tuple(open(os.path.join(out, f), "rb").read() for f in ("ledger.csv", "districts.csv"))
+
+
+def test_channels_repaired_in_parallel_write_what_the_sequential_loop_writes():
+    """#123: with `--jobs 4` each channel is repaired in its own process (`repair_parallel`) and
+    its windows raced; with no time-limited solve the ledger, districts.csv and attempt list are
+    the sequential loop's (`--jobs 1`), the detached piece repaired in both channels."""
+    import tempfile
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    kw = {"h0": 1, "max_zctas": 100, "time_limit": 60.0}
+    seq = {c: repair.repair_channel(inst, plans[c], owners[c], p, state, log=lambda *_: None, **kw)
+           for c in plans}
+    par = repair.repair_parallel(inst, plans, owners, p, state, list(plans), 4, log=False, **kw)
+    assert list(par) and set(par) == set(seq)
+    for c in plans:
+        assert seq[c][1] and _untimed(par[c][1]) == _untimed(seq[c][1]), c
+        assert repair.detached(par[c][0], inst.units.zip_adj, inst.channels[c].m) == []
+    with tempfile.TemporaryDirectory() as one, tempfile.TemporaryDirectory() as four:
+        assert _written(inst, ext, ref, plans, {c: r[0] for c, r in seq.items()}, one) == \
+            _written(inst, ext, ref, plans, {c: r[0] for c, r in par.items()}, four)
+
+
+def test_a_raced_escalation_keeps_the_window_the_sequential_loop_keeps():
+    """#123's window race: the ball at h 1 around NY+NJ's piece 07104 reconnects both districts,
+    and so would the larger ball at h 2, launched with it; the race keeps h 1 and settles only what
+    the loop settles."""
+    import tempfile
+    repair = _repair_module()
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    plan, owner = plans["X"], owners["X"]
+    adj, free = inst.units.zip_adj, repair.draw.split_fixed(inst, plan)[1]
+    pieces = repair.clusters(repair.detached(owner, adj, inst.channels["X"].m))[0]
+    todo = repair.steps(pieces, owner, free, adj, 1, 100)
+    assert [(sh, k, len(W)) for sh, k, W in todo[:2]] == [("ball", 1, 3), ("ball", 2, 4)]
+    larger = repair.solve_window(inst, plan, owner, todo[1][2], p, 60.0, True, lambda *_: None,
+                                 repairing={pieces[0][0]})
+    assert larger.status in ("optimal", "connected")
+    kw = {"h0": 1, "max_zctas": 100, "time_limit": 60.0, "log": lambda *_: None}
+    seq_owner, seq = repair.repair_channel(inst, plan, owner, p, state, **kw)
+    with tempfile.TemporaryDirectory() as tmp:
+        shared = repair.write_shared(os.path.join(tmp, "shared.pkl"), inst, plans, p, state,
+                                     None, None)
+        with repair.WindowPool(4, shared, log=False) as pool:
+            par_owner, par = repair.repair_channel(inst, plan, owner, p, state, pool=pool, **kw)
+            assert pool.started >= 2            # the larger window ran alongside
+    assert [(r["shape"], r["h"], r["status"]) for r in seq] == [("ball", 1, seq[0]["status"])]
+    assert seq[0]["status"] in ("optimal", "connected")
+    assert _untimed(par) == _untimed(seq) and par_owner == seq_owner
+
+
+def test_channels_drawn_in_parallel_are_the_sequential_drawings():
+    """#123: `run.py --jobs 2` draws each channel in its own process (`run.draw_parallel`); with
+    no time-limited solve each channel's owners and group statuses are the sequential `draw.draw`'s."""
+    repair = _repair_module()
+    run, draw = repair.run, repair.draw
+    inst, ext, ref, plans, owners, p, state = _two_channel_toy()
+    xy = {z: (1000.0 * x, 1000.0 * y) for z, (x, y) in p.items()}
+    seq = {c: draw.draw(inst, plans[c], xy, time_limit=60.0, log=lambda *_: None) for c in plans}
+    par = run.draw_parallel(inst, plans, xy, 2, log=False, time_limit=60.0)
+    assert set(par) == set(seq)
+    for c in plans:
+        assert par[c].owner == seq[c].owner and par[c].connected, c
+        assert [g.status for g in par[c].groups] == [g.status for g in seq[c].groups], c
