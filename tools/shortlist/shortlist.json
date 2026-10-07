@@ -573,6 +573,58 @@
    ],
    "shown_images": [],
    "notes": "#122 re-plan, round 3: short split lists, round-2 bans dropped; FI AZ-UT retained, the channels with no plan inside 0.10 planned at their smallest δ with final_delta 0.15 (owner 2026-10-06); second repair pass (folder low6_cb1-replan-shortut-w15-r2, parent low6_cb1-replan-shortut-w15); fails M1."
+  },
+  {
+   "id": "nocomb_13_12_23_pc_a",
+   "tier": 3,
+   "rank": 15,
+   "label": "No combined channel, 2026-10-02 deck option A (13 / 12 / 23), #124 plan check A+B+C (same map as A and A+B), FAILS M1",
+   "run": "runs/exp/contig/plancheck/nocomb_13_12_23-pc-A",
+   "images": [
+    "runs/exp/contig/plancheck/nocomb_13_12_23-pc-A/summary.png",
+    "runs/exp/contig/plancheck/nocomb_13_12_23-pc-A/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#124 plan check: A (contact_min_km 10) drops no support and B (drawable_alone) cuts none, so A, A+B and A+B+C plan, draw and repair one map (folder nocomb_13_12_23-pc-A, spec copy of nocomb_13_12_23-replan-short-w15's); C bans nothing because no piece or neck left has a window proved infeasible (each is unknown or budget spent); fails M1."
+  },
+  {
+   "id": "nocomb_15_12_23_pc_a",
+   "tier": 3,
+   "rank": 16,
+   "label": "No combined channel, 2026-10-05 grid (15 / 12 / 23), #124 plan check A+B+C (same map as A and A+B), FAILS M1",
+   "run": "runs/exp/contig/plancheck/nocomb_15_12_23-pc-A",
+   "images": [
+    "runs/exp/contig/plancheck/nocomb_15_12_23-pc-A/summary.png",
+    "runs/exp/contig/plancheck/nocomb_15_12_23-pc-A/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#124 plan check: A (contact_min_km 10) drops no support and B (drawable_alone) cuts none, so A, A+B and A+B+C plan, draw and repair one map (folder nocomb_15_12_23-pc-A, spec copy of nocomb_15_12_23-replan-short-w15's); C bans nothing because no piece or neck left has a window proved infeasible (each is unknown or budget spent); fails M1."
+  },
+  {
+   "id": "low6_cb1_pc_a",
+   "tier": 3,
+   "rank": 17,
+   "label": "Low-6 combined, 2026-10-02 deck option B (13 / 12 / 24 / combined 1), #124 plan check A+B+C (same map as A and A+B), FAILS M1",
+   "run": "runs/exp/contig/plancheck/low6_cb1-pc-A",
+   "images": [
+    "runs/exp/contig/plancheck/low6_cb1-pc-A/summary.png",
+    "runs/exp/contig/plancheck/low6_cb1-pc-A/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#124 plan check: A (contact_min_km 10) drops no support and B (drawable_alone) cuts none, so A, A+B and A+B+C plan, draw and repair one map (folder low6_cb1-pc-A, spec copy of low6_cb1-replan-shortut-w15's); C bans nothing because no piece or neck left has a window proved infeasible (each is unknown or budget spent); fails M1."
+  },
+  {
+   "id": "ifa_49_pc_a",
+   "tier": 3,
+   "rank": 18,
+   "label": "IFA, K 49 (separate channel), #124 plan check A+B+C (same map as A and A+B), FAILS M1",
+   "run": "runs/exp/contig/plancheck/ifa_49-pc-A",
+   "images": [
+    "runs/exp/contig/plancheck/ifa_49-pc-A/summary.png",
+    "runs/exp/contig/plancheck/ifa_49-pc-A/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#124 plan check: A (contact_min_km 10) drops no support and B (drawable_alone) cuts none, so A, A+B and A+B+C plan, draw and repair one map (folder ifa_49-pc-A, spec copy of ifa_49-replan-a2ut's); C bans nothing because no piece or neck left has a window proved infeasible (each is unknown or budget spent); fails M1."
   }
  ]
 }

@@ -4,13 +4,13 @@
 
 ## Now
 
-#120 (cb25a57) and #122 (77f3b6a) landed. #122 is a negative result: three re-plan rounds, no map passes M1. Only ne_plains_wh11 (border/ne_plains_wh11-r2-all) passes and is eligible. Next is #124 (plan only districts that draw connected without a neck) and #123 (parallel repair). Both are unblocked but not ready, waiting for the owner.
+Overnight autonomy (owner, 2026-10-07): "a good clean set of maps". #123 (ee800d8) and #124 (12d3631, negative: A, B, C remove nothing; B proved) landed. Running: #125 (main maps, ne_plains layout at every $-eligible K), #126 (IFA map). Maps that pass every tier-1 check go to tier P (pending owner review). Eligible: ne_plains_wh11; na15_wh11_fi20-r1 (#125) pending owner.
 
 ## Next
 
-- Renderer caption: the summary page says "±10%" even for channels widened to ±15%. Small fix.
-- Fewer splits: #103, #115; #119 only if "minimal" is wanted. #118 any time.
+- Renderer caption says ±10% on widened channels.
+- Fewer splits: #103, #115; #119; #118.
 
 ## Blocked
 
-Owner: mark #123/#124 ready and choose #124's defaults; #112 general rule; #111 #83; swap rule B (#85); #3, #59, #75, #76.
+Owner: place tier-P maps; #124 defaults; any band widening (OD1); #112; #111 #83; #85; #3 #59 #75 #76.

@@ -900,3 +900,74 @@ term), then `repair.py --flow --keep-support` at 1200 s per channel (`-w15`) and
 Regenerate (m5, local): `runs/exp/contig/replan/chain_r3.sh`, `repair_r3.sh`, `repair_r3b.sh`;
 table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r3.py` → `rescore_r3.json`,
 `TABLE_r3.md` (per-piece reasons, necks, split states per channel).
+
+## #124 Plan check: width-aware contact (A), drawable alone (B), close the loop (C) (2026-10-07)
+
+Each map plans with A alone, then A+B, then A+B+C, using spec copies of #122 round 3's
+(`replan/_specs/<id>-replan-short(ut)-w15.toml`: short split lists, the owner's widened bands,
+low6 FI AZ-UT). ifa_49 had no round-3 run, so its copy is of round 2's spec (`_specs/ifa49.toml`,
+the `ifa_49-replan-a2ut` lineage, 27 free states, δ 0.02). A is `contact_min_km = 10` (M1's W),
+B is `drawable_alone` (a 600 s test per support, 120 s on ifa_49), and C is `replan_rounds = 3`.
+Each map is drawn (arm 1, sequential, border term) and repaired (`repair.py --flow
+--keep-support`, 1200 s per channel, 3600 s on ifa_49's one channel), once.
+M1's constants and the bands are unchanged.
+
+**No part changes any map.**
+- A removes no support: every adjacent pair of planning units shares at least 10 km of
+  land border. The only contacts that rest on a connector (DE-NJ, IL-KY, IN-KY) are connected
+  through land anyway. Support families are unchanged: 3,903 per channel on the nocomb maps;
+  1,991 / 1,991 / 1,975 / 47 on low6; 1,963 on ifa_49.
+- B cuts nothing, so A+B's plans equal A's, and A+B reuses A's folder (`reuse.json`).
+- C bans nothing, because no piece or neck the repair leaves has a last window proved infeasible:
+  each one is "window unknown at its time limit" or "budget spent". So A+B+C stops at round 0
+  on A's folder, and the C loop past round 0 has not run on a map.
+- C's gate was off in these A+B+C runs: reusing A's folder as round 0 read A's `replan_rounds`
+  of 0, not the copy's 3 (Sol's review, fixed after the runs). The outcome cannot change, since
+  the cause table shows 0 proved-infeasible windows on every map, so nothing was there to ban;
+  the maps were not rerun.
+- C past round 0 is covered on toys only: bookkeeping tests, and one end-to-end test from round 0
+  to round 1 (`test_c_bans_a_proved_infeasible_support_and_redraws_it_in_round_1`). In that
+  test a real repair window proves a support infeasible, and C bans it, re-plans, redraws,
+  repairs and records the ban's cost. Its plan, draw and repair steps run in process on the toy,
+  not as the replan.py, run.py and repair.py CLIs.
+
+The table is the same for A, A+B and A+B+C: one folder per map, `plancheck/<id>-pc-A`.
+
+| map | supports cut (B tested / cut / unknown) | δ before → after | pieces (largest τ) | necks (district width) | splits / cuts / cut km | worst / mean dev | M1 | scorer |
+|---|---|---|---|---|---|---|---|---|
+| nocomb_13_12_23 | none; national 10/0/0, WH 11/0/0, FI 14/0/1 (CT+DE+NY+PA, no incumbent in 600 s) | national 0.0899, WH 0.0474, FI 0.1273 → same | 5 (0.398) | 5: FI_06 0.96 km, WH_11 0.64 and 0.08 km, national_04 8.81 km, national_08 1.11 km | 11 / 18 / 67,298 | 14.2% / 5.2% | fail | ineligible: M1 |
+| nocomb_15_12_23 | none; national 10/0/0, WH 11/0/0, FI 14/0/1 (CT+DE+NY+PA, as above) | national 0.0774, WH 0.0474, FI 0.1273 → same | 3 (0.434) | 6: FI_06 0.78 km, WH_11 0.64 and 0.08 km, national_05 8.12 km, national_14 7.75 and 1.00 km | 12 / 19 / 65,800 | 12.7% / 5.2% | fail | ineligible: M1 |
+| low6_cb1 | none; national 9/0/0, WH 11/0/0, FI 15/0/0, WIFI 1/0/0 | national 0.1071, WH 0.0821, FI 0.1174, WIFI 0.02 → same | 4 (0.426) | 5: FI_06 0.00 km, FI_08 5.67 km, WH_12 0.29 km, national_06 0.74 km, national_12 1.00 km | 11 / 18 / 52,036 | 12.9% / 6.6% | fail | ineligible: M1 |
+| ifa_49 | none; IFA 19/0/7 (FL+GA, CT+NJ+NY, IA+IL+WI, CT+NY+RI+VT, IL+IN+MI+OH, DC+DE+MD+NJ+PA, ID+MT+UT+WA+WY at 120 s) | IFA 0.02 → same | 7 (0.338) | 14: IFA_38 four (0.00-3.45 km), IFA_11 0.05 km, IFA_07 0.61 km and eight more of 2.36-8.00 km | 21 / 40 / 45,550 | 9.9% / 3.1% | fail | ineligible: M1 |
+
+Splits are the scorer's count of split states, and cuts are the extra district holders per state.
+Every map's deviations are inside its own bands (the widened ±15% on nocomb FI and low6
+national and FI, ±10% elsewhere).
+
+What each piece and neck left traces to (`plancheck.causes`). "Budget spent" means the repair's
+log shows a window on that district that was never tried. Otherwise the cause is the last window's
+status.
+
+| map | pieces: unknown / budget / infeasible | necks: unknown / budget / infeasible | where |
+|---|---|---|---|
+| nocomb_13_12_23 | 2 / 3 / 0 | 1 / 4 / 0 | FI CT+DE+NY+PA (205 ZIPs from 17039, 0.398 τ: unknown after 5 infeasible windows); WH NJ+NY+VT; national CT+NJ+NY, DE+MD+NY+OH+PA, CA |
+| nocomb_15_12_23 | 2 / 1 / 0 | 1 / 5 / 0 | FI CT+DE+NY+PA (250 ZIPs, 0.434 τ); WH NJ+NY+VT; national MA+NJ+NY, CA |
+| low6_cb1 | 2 / 2 / 0 | 0 / 5 / 0 | national CT+DE+NY+PA+RI (1,901 ZIPs, 0.426 τ, budget), MA+ME+NH+NJ+NY+VT, NY; WH NJ+NY+VT; FI CT+NY, DE+NJ+PA |
+| ifa_49 | 0 / 7 / 0 | 0 / 14 / 0 | NY#3 (9 infeasible and 5 unknown windows, then budget), CT+NY+RI+VT, and necks across NY, NJ, DC-PA, NC-VA, UT, MI, TX, CA |
+
+- Against #122's `-w15` folders (same plans, same 1200 s budget, before #122's review fixes to
+  repair.py), the redrawn maps differ only in the repair. Pieces are 5 / 3 / 4 (unchanged).
+  Necks are 5 / 6 / 5, against 5 / 4 / 5.
+- ifa_49 is worse than `ifa_49-replan-a2ut` (5 pieces, 6 necks), whose repair opened UT and ran
+  7200 s. This run opens no unit and spends its 3600 s before reaching most necks.
+- Every failure but the CA, UT, MI, TX and NC necks is in the Northeast corridor. These are the
+  districts #124's Goal names (CT+DE+NY+PA#1, CT+NJ+NY#1). B finds them drawable or unknown,
+  so it cannot cut them, and C cannot ban them, since no window was proved infeasible.
+- Rendered with `tools/maps/render.py` (ifa_49 `--corridor`) and shortlisted at tier 3, FAILS M1
+  (`<id>_pc_a`). `tools/mandates/check.py --tracking`: 147 run folders, 32 entries, 0 failures.
+- MODEL §4.9's Proposition B is proved (Sol verifier 8b0ddc7f, 2026-10-07).
+
+Regenerate (m5, local, `runs/exp/contig/plancheck/`): copies `plan.sh <id> <base> <A|AB>`; draw,
+repair and C `loop.sh <id>-pc-<A|ABC> _specs/<id>-pc-<A|ABC>.toml <parent> <budget> [--planned
+_specs/<id>-pc-A.json | --round0 <id>-pc-A --check-time 600]`; table `TD_REPO=... "$TD_PY"
+rescore_pc.py --code <checkout>` → `rescore_pc.json`; per-round records `<id>-pc-<v>-plancheck.json`.
