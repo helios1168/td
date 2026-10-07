@@ -3,7 +3,8 @@
 adapted to its inputs.  Ported from `runs/autonomous_2026-10-05/batch/{adapt,wrap}.py` (m5,
 gitignored), which were copies of `runs/sweep/caps_2026-10-02/`'s.
 
-    "$TD_PY" tools/maps/summary.py <work_dir> --label TEXT --geo-cache DIR [plan_summary flags]
+    "$TD_PY" tools/maps/summary.py <work_dir> --label TEXT --zip-cache DIR [--gap-fill nearest]
+        --geo-cache DIR [plan_summary flags]
 
 `adapt(run_dir, dst, fac)` writes plan_summary's inputs (`assignment.csv`, `districts.csv`,
 `plan.json`, `params.json`) into `dst`.  The spec comes from `run.json`'s `spec` and the dist_max
@@ -14,9 +15,22 @@ wholesaler is written: reps are out of scope, and no rep or firm name reaches a 
 
 The CLI runs plan_summary unchanged except: IFA as a business channel, strip and footer text
 without the archived staffing model, the strip comparing the mean $ per district with the looks
-scorer's target (`tools/looks/score.py` TARGET, DOLLAR_BAND), and the title giving `--label`, the
-drawn band (the final ±10%) and the plan's internal bands in brackets.  It runs in its own process
-(`tools/maps/render.py`): the legacy code's `td` package shadows today's.
+scorer's target (`tools/looks/score.py` TARGET, DOLLAR_BAND) and a second line naming the states
+that look split only because of cross-state ZIPs (`tools/maps/spill.py`'s `spill_only`, #128),
+the title giving `--label`, each channel's final band (`final_bands`, #128) and the plan's
+internal bands in brackets, and the channel maps' fill (`draw_channel_map`, the owner's rulings of
+2026-10-07, #128), which replaces the legacy reach layer (a Voronoi diagram clipped to each ZIP's
+filed state), so the page is no longer the legacy render.  A state the ledger holds in one district
+of the channel is filled whole in its colour; a state it splits is drawn by ZCTA as the ZIP pages
+draw it (`tools/maps/zip_pages.py`: 2025 TIGER/Line ZCTA520 simplified by 250 m, land in no ZCTA
+grey, or with `--gap-fill nearest` in the colour of the nearest district holding ZCTAs in that
+state, `nearest_gap`); every held ZCTA's land across its filed state's line, in parts over
+`SPILL_KM2` km², is hatched in its district's colour on top, except where it lands in a state that
+district holds whole.  State shapes are the 2025 cartographic ones
+(cb_2025_us_state_500k) the ZIP pages draw.  All of it is read from the ZIP pages' pickles in
+`--zip-cache` and reprojected to the legacy LAEA.  Colours, labels, the structure panel and the
+layout stay the legacy code's.  It runs in its own process (`tools/maps/render.py`):
+the legacy code's `td` package shadows today's.
 """
 import ast
 import collections
@@ -31,11 +45,66 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 LEGACY = os.path.join(HERE, "legacy")
 BUNDLE = {"national": "N", "WH": "WH", "FI": "FI", "WIFI": "WHFI_PLUS", "IFA": "IFA"}
 CHAN = {"wells_wh": "N_WH", "national_chase": "N_FI", "wells_fi": "N_FI", "wh": "WH", "fi": "FI", "ifa": "IFA"}
+UNASSIGNED = "#dcdcdc"                  # zip_pages.py's
+SPILL_HATCH = "\\" * 6                  # zip_pages.py's
+SPILL_TINT = 0.25                       # zip_pages.py's
+SPILL_HATCH_W = 0.7                     # zip_pages.py's
+SPILL_EDGE_W = 0.6
+SPILL_KM2 = 1.0                         # spill.py's: a smaller spill is not hatched here
+SIMPLIFY_M = 250.0                      # td/output.py's, the ZCTA polygons' own; the spill's too
+STATE_SIMPLIFY_M = 1000.0               # the state shapes: a fifth of a pixel; unsimplified, most of the SVG
+STATE_LINE = "#606060"                  # zip_pages.py's dashed state lines
+RASTER_FILL = True                      # the by-ZCTA fill as an image inside the SVG (62 MB as paths)
+GAP_FILLS = ("grey", "nearest")         # --gap-fill: land in no ZCTA in a split state
+GAP_STEP_M = 2000.0                     # nearest_gap's spacing of ZCTA boundary points
+GAP_REACH_M = 5000.0                    # nearest_gap reads the ZCTAs this near the gap
+GAP_SNAP_M = 10.0                       # nearest_gap snaps those points to this grid
+FOOTER_GAP = {"grey": "grey: land in no ZCTA, unassigned",
+              "nearest": "land in no ZCTA shaded by nearest district (exact on the ZIP pages)"}
 
 
 def _resolve(path: str) -> str:
     """A path a run recorded, made absolute against `$TD_REPO` when relative."""
     return path if os.path.isabs(path) else os.path.join(os.environ.get("TD_REPO", ROOT), path)
+
+
+def _pct(delta: float) -> str:
+    """A band δ as the percentage the pages print: 0.1 as `10`, 3.1025 as `310.2`."""
+    text = f"{100 * delta:.1f}"
+    return text[:-2] if text.endswith(".0") else text
+
+
+def final_bands(src: str) -> dict:
+    """{planning channel: final band δ} of run folder `src`: `contig.json`'s `repair_band` when the
+    repair recorded one (a diagnostic band included), else `run.json`'s `final_delta` (#127's
+    whole-unit maps record their band there), else the spec's `final_delta`."""
+    run = json.load(open(os.path.join(src, "run.json")))
+    contig = {}
+    if os.path.exists(os.path.join(src, "contig.json")):
+        contig = json.load(open(os.path.join(src, "contig.json"))).get("channels", {})
+    out = {}
+    for c, ch in run["channels"].items():
+        if "repair_band" in contig.get(c, {}):
+            out[c] = contig[c]["repair_band"]["delta"]
+        elif ch.get("final_delta") is not None:
+            out[c] = ch["final_delta"]
+    if set(run["channels"]) - set(out):
+        if ROOT not in sys.path:
+            sys.path.insert(0, ROOT)
+        from td import spec as tdspec
+        spec = tdspec.load(_resolve(run["spec"]))
+        out.update({c: spec.channels[c].final_delta for c in run["channels"] if c not in out})
+    return out
+
+
+def _spill_module():
+    import importlib.util
+    if "maps_spill" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("maps_spill", os.path.join(HERE, "spill.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["maps_spill"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["maps_spill"]
 
 
 def adapt(src: str, dst: str, fac: dict) -> str:
@@ -80,6 +149,12 @@ def adapt(src: str, dst: str, fac: dict) -> str:
     _ch = tomllib.load(open(_resolve(json.load(open(src.rstrip("/") + "/run.json"))["spec"]), "rb"))["channels"]
     _ab = {"national": "N", "WH": "WH", "FI": "FI", "WIFI": "WIFI"}
     _bands = " ".join(f"{_ab.get(c, c)} ±{100 * v['delta']:.1f}%" for c, v in _ch.items() if c != "WIFI")
+    _final = final_bands(src)
+    _final_text = " ".join(f"{_ab.get(c, c)} ±{_pct(_final[c])}%" for c in _ch if c in _final)
+    sp = _spill_module()
+    land = sp.state_land(sp.fips_usps())
+    owned, filed = sp.ledger_owned(os.path.join(src, "ledger.csv"))
+    spill_only = {BUNDLE[c]: v for c, v in sp.spill_only(owned, filed, land).items() if c in BUNDLE}
     _sizes = " ".join(f"{_ab.get(c, c)} {v['max_size']}" for c, v in _ch.items() if c != "WIFI")
     _main = next(v for c, v in _ch.items() if c != "WIFI")
     _by = collections.defaultdict(list)
@@ -87,7 +162,8 @@ def adapt(src: str, dst: str, fac: dict) -> str:
         _by[km].append(st)
     dist_max = f"{_main['max_dist_km']}" + (" (" + "; ".join(f"{km} {' '.join(sorted(sts))}" for km, sts in sorted(_by.items(), reverse=True)) + ")" if _by else "")
     json.dump({"route": "stay", "band_lo": 0.90, "band_hi": 1.10, "dist_max": dist_max, "n_max": 6,
-               "bands_text": _bands, "sizes_text": _sizes},
+               "bands_text": _bands, "sizes_text": _sizes, "final_bands_text": _final_text,
+               "spill_only": spill_only},
               open(dst + "/params.json", "w"))
     return f"{dst} {len(newid)} districts, {zero} zero-m_rel rows kept as territory only"
 
@@ -101,7 +177,8 @@ def _score_constant(name):
 
 
 def main(argv: list) -> int:
-    """plan_summary on `argv` (module doc), `--label TEXT` taken out first."""
+    """plan_summary on `argv` (module doc), `--label TEXT`, `--zip-cache DIR` and `--gap-fill`
+    taken out first."""
     sys.path[:0] = [LEGACY, os.path.join(LEGACY, "tools")]
     import plan_summary as ps
     TARGET = _score_constant("TARGET")                  # $ per district, by planning channel
@@ -111,6 +188,21 @@ def main(argv: list) -> int:
     ps.BUSINESS = ps.BUSINESS + ("IFA",)
     ps.CHANNEL_BUSINESS["IFA"] = "IFA"
     ps.BUNDLE_TITLE.update({"N": "National", "WH": "WH", "FI": "FI", "WHFI_PLUS": "WIFI: national + WH + FI"})
+    argv = list(argv)
+    with open(os.path.join(argv[0], "params.json"), encoding="utf-8") as fh:
+        spill_only = json.load(fh)["spill_only"]
+    i = argv.index("--zip-cache")
+    geom = zcta_geometry(argv[i + 1], ps.geo.LAEA)
+    del argv[i:i + 2]
+    gap_fill = "grey"
+    if "--gap-fill" in argv:
+        i = argv.index("--gap-fill")
+        gap_fill = argv[i + 1]
+        del argv[i:i + 2]
+    if gap_fill not in GAP_FILLS:
+        raise SystemExit(f"--gap-fill {gap_fill!r}: one of {', '.join(GAP_FILLS)}")
+    ps.draw_bundle_map = lambda fig, ax, bundle, payload, meta, run, kappa, land=None: draw_channel_map(
+        ps, geom, fig, ax, bundle, payload, meta, run, kappa, land, gap_fill)
 
     def strip(bundle, run, meta, kappa):
         ds = sorted(set(run["zips_by_bundle"].get(bundle, {}).values()))
@@ -124,22 +216,200 @@ def main(argv: list) -> int:
         within = sum(abs(x) <= 0.10 for x in dv)
         return (f"{len(ds)} districts  ·  \\${min(m):,.0f}M to \\${max(m):,.0f}M, drawn mean \\${mean:,.0f}M ({vs})  ·  "
                 f"{within}/{len(ds)} within ±10%, worst {100 * worst:.1f}%  ·  "
-                f"{len(ps.bundle_split_states(bundle, run))} split states")
+                f"{len(ps.bundle_split_states(bundle, run))} split states\n"
+                f"{spill_text(spill_only.get(bundle, []))}")
     ps.bundle_strip = strip
     ps.footer_line = lambda run, staffing, kappa: (
         f"{len({d for c in ps.BUSINESS for d in run['districts'][c]})} districts  ·  margin-off plan, "
-        f"whole-ZIP drawing, audited  ·  $ from the channel totals")
+        f"whole-ZIP drawing, audited  ·  $ from the channel totals  ·  {FOOTER_GAP[gap_fill]}  ·  "
+        f"hatched: a ZIP's land across its state line")
     ps.TITLE_IN = 1.35
-    argv = list(argv)
     label = None
     if "--label" in argv:
         i = argv.index("--label")
         label = argv[i + 1]
         del argv[i:i + 2]
-    ps.title_line = lambda tag, params, n: (f"{label or tag}\ndrawn band ±10% (plan's internal {params['bands_text']})"
+    ps.title_line = lambda tag, params, n: (f"{label or tag}\nfinal band {params['final_bands_text']} "
+                                            f"(plan's internal {params['bands_text']})"
                                             f"\ndist_max {params['dist_max']}"
                                             f"  ·  max states/district {params['sizes_text']}")
     return ps.main(argv)
+
+
+def spill_text(states: list) -> str:
+    """The strip's second line (`tools/maps/spill.py`'s `spill_text`, which this process cannot
+    import: its `td` is the legacy one)."""
+    n = len(states)
+    return (f"{n} state{'s' if n != 1 else ''} look{'s' if n == 1 else ''} split only because of "
+            f"cross-state ZIPs: {', '.join(states) or 'none'}")
+
+
+def zcta_geometry(cache: str, laea: str) -> dict:
+    """The ZIP pages' pickles in `cache` (`zip_pages.geometry`, `EPSG:5070`) for `draw_channel_map`:
+    {"polys": {ZCTA: polygon} as stored, "move": a function taking a list of those to the legacy
+    LAEA, "states": {USPS: shape}, "gap": land in no ZCTA, "spill": {ZCTA: [(state, part)], its
+    parts outside its filed state of more than `SPILL_KM2` km² and the state each lands in}}; states
+    simplified by `STATE_SIMPLIFY_M` and spill by
+    `SIMPLIFY_M`, all but "polys" already in LAEA (the ZCTAs move per panel, only those of split
+    states)."""
+    import numpy as np
+    import pickle
+    import shapely
+    from pyproj import Transformer
+    tr = Transformer.from_crs("EPSG:5070", laea, always_xy=True)
+
+    def move(geoms):
+        return list(shapely.transform(np.asarray(geoms, dtype=object),
+                                      lambda xy: np.column_stack(tr.transform(xy[:, 0], xy[:, 1]))))
+
+    def load(name):
+        with open(os.path.join(cache, name), "rb") as fh:
+            return pickle.load(fh)
+    states = load("states.pkl")
+    spill = load("spill.pkl")["spill"]
+    out = {"polys": load("zcta_polys.pkl"), "move": move,
+           "states": {s: g.simplify(STATE_SIMPLIFY_M, preserve_topology=True)
+                      for s, g in zip(states, move(list(states.values())))},
+           "gap": move([load("no_zcta_land.pkl")])[0], "spill": {}}
+    names = list(out["states"])
+    tree = shapely.STRtree([out["states"][n] for n in names])
+    for z, g in zip(spill, move(list(spill.values()))):
+        parts = [p.simplify(SIMPLIFY_M, preserve_topology=True) for p in shapely.get_parts(g)
+                 if p.area > SPILL_KM2 * 1e6]
+        if parts:
+            at = tree.query(shapely.points([p.representative_point().coords[0] for p in parts]),
+                            predicate="within")
+            where = dict(zip(at[0], at[1]))
+            out["spill"][z] = [(names[where[i]] if i in where else None, p) for i, p in enumerate(parts)]
+    return out
+
+
+def nearest_gap(gap, polys: list, districts: list, step: float = GAP_STEP_M) -> dict:
+    """{district: [pieces of `gap`]}: each point of `gap` (land in no ZCTA inside one state) given to
+    the district of the nearest ZCTA among `polys` (held by `districts`, in that state) within
+    `GAP_REACH_M` of it, by a Voronoi diagram of their boundaries' points `step` m apart."""
+    import numpy as np
+    import shapely
+    out = collections.defaultdict(list)
+    if gap.is_empty or not polys:
+        return out
+    near = shapely.STRtree(polys).query(gap.buffer(GAP_REACH_M), predicate="intersects")
+    near = near if len(near) else np.arange(len(polys))
+    pts, lab = [], []
+    for i in near:
+        xy = shapely.get_coordinates(shapely.segmentize(polys[i].simplify(step / 4).boundary, step))
+        pts.append(xy)
+        lab += [districts[i]] * len(xy)
+    pts = np.round(np.concatenate(pts) / GAP_SNAP_M) * GAP_SNAP_M   # near-twins break GEOS's Voronoi
+    pts, first = np.unique(pts, axis=0, return_index=True)      # a shared edge keeps one owner
+    lab = [lab[i] for i in first]
+    if len(set(lab)) == 1:
+        out[lab[0]].append(gap)
+        return out
+    cells = shapely.make_valid(shapely.get_parts(shapely.voronoi_polygons(
+        shapely.multipoints(pts), extend_to=gap.envelope.buffer(step))))
+    at = shapely.STRtree(cells).query(shapely.points(pts), predicate="within")
+    owner = dict(zip(at[1], at[0]))                              # cell -> its point
+    parts = shapely.get_parts(shapely.make_valid(gap))        # reprojected, clipped: may self-touch
+    parts = parts[shapely.get_type_id(parts) == 3]              # its polygons, not stray lines
+    ci, pi = shapely.STRtree(parts).query(cells, predicate="intersects")
+    for c, piece in zip(ci, shapely.intersection(cells[ci], parts[pi], grid_size=1.0)):
+        if not piece.is_empty and c in owner:
+            out[lab[owner[c]]].append(piece)
+    return out
+
+
+def draw_channel_map(ps, geom: dict, fig, ax, bundle: str, payload: dict, meta: dict, run: dict, kappa,
+                     land=None, gap_fill: str = "grey") -> str:
+    """One channel's map (the legacy `draw_bundle_map`'s place, module doc): a state the ledger
+    holds in one district of the channel filled whole in its colour; a state it splits drawn by
+    ZCTA as the ZIP pages draw it, its land in no ZCTA grey (`gap_fill` "nearest": its nearest
+    district's colour, `nearest_gap`); each held ZCTA's land across its filed state's line hatched
+    in its district's colour on top, unless the state it lands in is that district's whole; state
+    lines, state codes and district labels as the legacy code places them.  Sets the panel's title
+    and returns the strip."""
+    import matplotlib.colors
+    import shapely
+    from matplotlib.collections import PatchCollection
+    from matplotlib.patches import PathPatch
+    districts = payload.get("districts", {})
+    colour_of = {d: info.get("color", "#888888") for d, info in districts.items()}
+    fill_of = {d: _on_white(c, ps.REACH_FILL_ALPHA) for d, c in colour_of.items()}
+    mapping = run["zips_by_bundle"].get(bundle, {})
+    held = collections.defaultdict(set)
+    for z, d in mapping.items():
+        held[run["zip_state"][z]].add(d)
+    for s, ds in sorted(held.items()):
+        if len(ds) == 1 and s in geom["states"]:
+            fill = fill_of.get(next(iter(ds)), "#888888")
+            ax.add_patch(PathPatch(_path(geom["states"][s]), facecolor=fill, edgecolor=fill, linewidth=0.2,
+                                   zorder=1.5))
+    split = {s for s, ds in held.items() if len(ds) > 1}
+    zs = sorted(z for z in mapping if run["zip_state"][z] in split and z in geom["polys"])
+    by_district = collections.defaultdict(list)
+    by_state = collections.defaultdict(list)
+    for z, poly in zip(zs, geom["move"]([geom["polys"][z] for z in zs])):
+        parts = [p for _, p in geom["spill"].get(z, ())]
+        kept = poly.difference(shapely.union_all(parts)) if parts else poly
+        by_district[mapping[z]].append(kept)
+        by_state[run["zip_state"][z]].append((poly, mapping[z]))
+    for s in sorted(split & set(geom["states"])):
+        gap = geom["gap"].intersection(geom["states"][s])
+        if gap.is_empty:
+            continue
+        if gap_fill == "nearest" and by_state[s]:
+            for d, pieces in sorted(nearest_gap(gap, *map(list, zip(*by_state[s]))).items()):
+                by_district[d].extend(pieces)
+        else:
+            ax.add_patch(PathPatch(_path(gap), facecolor=UNASSIGNED, edgecolor="none", zorder=1.2,
+                                   rasterized=RASTER_FILL))
+    for d, polys in sorted(by_district.items()):
+        fill = fill_of.get(d, "#888888")
+        ax.add_collection(PatchCollection([PathPatch(_path(p)) for p in polys if not p.is_empty],
+                                          facecolor=fill, edgecolor=fill, linewidth=0.2, zorder=1.5,
+                                          rasterized=RASTER_FILL))
+    for z, d in sorted(mapping.items()):
+        for s, part in geom["spill"].get(z, ()):
+            if held.get(s) == {d}:                  # lands in the district's own whole state
+                continue
+            colour = colour_of.get(d, "#888888")
+            ax.add_patch(PathPatch(_path(part), facecolor=matplotlib.colors.to_rgba(colour, SPILL_TINT),
+                                   edgecolor=colour, linewidth=SPILL_EDGE_W, hatch=SPILL_HATCH,
+                                   hatchcolor=colour, hatch_linewidth=SPILL_HATCH_W, zorder=1.7))
+    for shape in geom["states"].values():
+        ax.add_patch(PathPatch(_path(shape), facecolor="none", edgecolor=STATE_LINE, linewidth=0.4,
+                               linestyle=(0, (4, 2)), zorder=2.0))
+    ps._payload_state_labels(ax, payload.get("states", {}))
+    polys = {d: p for d, info in districts.items() if d in set(mapping.values())
+             for p in [ps._reach_polygon(info)] if p is not None}
+    if polys:                                   # the legacy placement, on each district's ZCTA union
+        um = ps.us_maps
+        labels = {ps._label(d, meta): p for d, p in polys.items()}
+        anchors = {name: (um._largest_part(g).representative_point().x,
+                          um._largest_part(g).representative_point().y) for name, g in labels.items()}
+        footprint = {name: um._largest_part(g).area for name, g in labels.items()}
+        um._place_labels(fig, ax, sorted(labels), anchors, footprint, fontsize=7.2, avoid_polys=labels,
+                         land=land, min_ratio=ps.LABEL_ROOM, leader_radii=ps.LEADER_RADII)
+    ax.set_title(ps.bundle_title(bundle), color=ps.us_maps.TEXT, fontsize=13, fontweight="bold", pad=6)
+    return ps.bundle_strip(bundle, run, meta, kappa)
+
+
+def _on_white(colour: str, alpha: float) -> tuple:
+    """`colour` at `alpha` over white, opaque: the legacy fill's look, with no darker seam where
+    two ZCTAs' edges overlap."""
+    import matplotlib.colors
+    return tuple(1 - alpha * (1 - c) for c in matplotlib.colors.to_rgb(colour))
+
+
+def _path(geom):
+    """A matplotlib compound path of `geom`'s polygons, oriented so the nonzero rule leaves holes
+    (`td/output.py`'s `_polygon_path`, which this process cannot import)."""
+    import numpy as np
+    from matplotlib.path import Path
+    from shapely.geometry.polygon import orient
+    rings = [ring for part in getattr(geom, "geoms", [geom]) if part.geom_type == "Polygon" and not part.is_empty
+             for ring in (orient(part, 1.0).exterior, *orient(part, 1.0).interiors)]
+    return Path.make_compound_path(*(Path(np.asarray(r.coords)[:, :2], closed=True) for r in rings))
 
 
 if __name__ == "__main__":
