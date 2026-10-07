@@ -588,3 +588,26 @@ def test_write_report_records_the_smallest_delta_as_a_property_of_the_master():
     assert sd["method"] == "bisection" and sd["status"] == "converged"
     assert sd["scope"] == master.SCOPE and "C4" in sd["scope"]
     assert sd["steps"] and all(s["verdict"] in ("feasible", "infeasible") for s in sd["steps"])
+
+
+def test_a_banned_support_gets_n_zero_in_the_model_and_the_smallest_delta():
+    """#124 B, C: a support in the spec's `ban_supports` or the caller's `banned` gets the row
+    n_S = 0, so the plan avoids it, and `exact_delta` blocks its binaries."""
+    unit_zips = {"AL": ["a"], "AZ": ["b"], "CO": ["c"], "DE": ["d"]}
+    edges = [("a", "b"), ("b", "c"), ("c", "d")]
+    xy = {"a": (0, 0), "b": (1, 0), "c": (2, 0), "d": (3, 0)}
+    mass = {"a": 1.0, "b": 1.0, "c": 1.0, "d": 1.0}
+    inst = _toy(unit_zips, edges, mass, xy, k=2, delta=0.5)
+    p, _ = master.plan(inst, "X")
+    target = next(s for s in p.n if len(s) >= 2)
+    p2, _ = master.plan(inst, "X", banned=[target])
+    assert target not in p2.n and master.build(inst, "X", banned=[target]).rows_of("ban")
+    raw = ts._toy_raw(max_dist_km=1e9, k=2, delta=0.5, ban_supports=[sorted(target)])
+    inst2 = spec.assemble(spec.parse(raw), inst.units, {(z, "f"): m for z, m in mass.items()})
+    assert target not in master.plan(inst2, "X")[0].n
+    tight = _toy(unit_zips, edges, mass, xy, k=2, delta=0.0)
+    both = [frozenset({"AL", "AZ"}), frozenset({"CO", "DE"})]
+    assert master.plan(tight, "X")[0] is not None
+    assert master.plan(tight, "X", banned=both)[0] is None
+    d = master.exact_delta(tight, "X", banned=both)     # {AL} + {AZ, CO, DE}, or the mirror
+    assert (d.status, d.delta) == ("exact", 0.5), (d.status, d.delta)

@@ -14,6 +14,15 @@
 4. the closure check on the final family (C2, C19), which raises if any support has a connected
    subset outside the family, and a coverage check that every unit of V_c is in some support.
 
+**Width-aware contact** (#124 A, `contact_min_km` > 0, a policy row, `MODEL.md` §2): a support
+must be connected in its own contact graph (`contact`), in which two units touch only where their
+shared border is at least `contact_min_km`, in whole cm as M1 counts width
+(`td.audit.border_cm`, floored per edge, summed over the edges between them), or an approved
+connector joins them that M1's land-passage rule leaves unlimited within the states of the
+support.  Steps 1 and 2 enumerate on the most permissive such graph (each pair's own states),
+step 3 drops the supports not connected in their own, and step 4 checks closure under subsets
+connected in their own.  `Family.adj` stays G, so the drawability rows are unchanged.
+
 The distance d(u, v) is between the unit centroids of `td.spec` (land-weighted ZIP points, km).
 R_c(u, v) = max(max_dist_km, dist_km[u], dist_km[v]), the legacy per-state rule.
 
@@ -29,6 +38,7 @@ R_c(u, v) = max(max_dist_km, dist_km[u], dist_km[v]), the legacy per-state rule.
 """
 from __future__ import annotations
 
+import collections
 import heapq
 import math
 from dataclasses import dataclass
@@ -43,6 +53,7 @@ class Family:
     adj: dict                   # the unit graph G[V_c]
     enumerated: int             # step 1's count, before extras and filters
     removed: int                # supports the filters removed
+    contact: object = None      # `Contact` when #124 A is on (each support connects in it)
 
     def __len__(self) -> int:
         return len(self.supports)
@@ -58,6 +69,79 @@ def unit_graph(inst, channel: str) -> dict:
     ch = inst.channels[channel]
     keep = set(ch.units)
     return {u: inst.units.unit_adj[u] & keep for u in ch.units}
+
+
+_NECK_GRAPHS: dict = {}         # id(polygon) -> (polygon, audit.NeckGraph)
+
+
+@dataclass
+class Contact:
+    """A's contact (#124, module docstring) of one channel: `adj` the most permissive contact
+    graph, a connector counted where land within the pair's own states does not replace it;
+    `via` {(u, v) with u < v: [connector edges]} the pairs that touch only through connectors,
+    whose contact a support S keeps only where land within the states of S does not replace one
+    (`connects`)."""
+    adj: dict
+    via: dict
+    states: dict                # unit -> frozenset of its ZCTAs' states
+    ng: object                  # audit.NeckGraph
+
+    def connects(self, s) -> bool:
+        """S is connected in its own contact graph: a `via` pair inside S counts only when one of
+        its connectors stays unlimited within the states of S."""
+        s = set(s)
+        inside = [(u, v) for (u, v) in self.via if u in s and v in s]
+        if not inside:
+            return connected(s, self.adj)
+        states = frozenset().union(*(self.states[u] for u in s))
+        drop = {e for e in inside
+                if all(self.ng.land_would_do(a, b, states) for a, b in self.via[e])}
+        adj = {u: {v for v in self.adj[u] if v in s and tuple(sorted((u, v))) not in drop}
+               for u in s}
+        return connected(s, adj)
+
+
+def contact(inst, channel: str) -> Contact:
+    """A's `Contact` of the channel: u and v of V_c touch when the ZIP-graph edges between them
+    share at least `contact_min_km` of border, in floored whole cm (`audit.border_cm`), or one of
+    them is an approved connector that land does not replace (`audit.NeckGraph.land_would_do`,
+    M1's rule, within the states of the support that holds them)."""
+    from td import audit
+    ch = inst.channels[channel]
+    adj = unit_graph(inst, channel)
+    if inst.polygon is None:
+        raise SpecError(f"channel {channel}: contact_min_km needs the polygon graph's borders")
+    if id(inst.polygon) not in _NECK_GRAPHS:
+        _NECK_GRAPHS[id(inst.polygon)] = (inst.polygon, audit.NeckGraph(inst.polygon))
+    ng = _NECK_GRAPHS[id(inst.polygon)][1]
+    need = round(ch.spec.contact_min_km * 1e5)
+    units = inst.units
+    states = {u: frozenset(ng.state.get(z, "") for z in units.zips[u]) for u in ch.units}
+    width, joins = collections.Counter(), collections.defaultdict(list)
+    for u in ch.units:
+        for a in units.zips[u]:
+            for b in units.zip_adj[a]:
+                v = units.unit_of[b]
+                if v not in adj[u] or not u < v:
+                    continue
+                width[u, v] += ng.border_cm.get(a, {}).get(b, 0)
+                if b in ng.connector.get(a, ()) and not ng.land_would_do(a, b, states[u] | states[v]):
+                    joins[u, v].append((a, b))
+    out, via = {u: set() for u in ch.units}, {}
+    for (u, v), cm in width.items():
+        if cm >= need or joins.get((u, v)):
+            out[u].add(v)
+            out[v].add(u)
+            if cm < need:
+                via[u, v] = joins[u, v]
+    return Contact(out, via, states, ng)
+
+
+def contact_graph(inst, channel: str) -> dict:
+    """A's most permissive contact graph (`contact`); G[V_c] itself when `contact_min_km` is 0."""
+    if inst.channels[channel].spec.contact_min_km <= 0:
+        return unit_graph(inst, channel)
+    return contact(inst, channel).adj
 
 
 def connected(nodes, adj) -> bool:
@@ -106,16 +190,22 @@ def connected_subsets(s, adj) -> list:
     return connected_sets(s, sub_adj, len(s))
 
 
-def closure_violations(supports, adj: dict) -> list:
-    """(S, T) for each support S and connected T = S − x not in the family.  Checking one
+def closure_violations(supports, adj: dict, connects=None) -> list:
+    """(S, T) for each support S and connected T = S − x not in the family; `connects(T)`, when
+    given, is what connected means (#124 A: T connected in its own contact graph).  Checking one
     deletion at a time suffices: every connected T ⊊ S is reached from S by deleting, one at a
-    time, a vertex of S − T whose removal keeps the set connected."""
+    time, a vertex of S − T whose removal keeps the set connected.  Under A that argument does
+    not carry over (a T connected in its own contact graph need not be connected in S's), and A's
+    family is closed by its enumeration instead: `family` enumerates on the most permissive
+    contact graph, so every T ⊆ S connected in its own (so in the permissive one) is enumerated
+    and kept; under A this check is a guard, not the closure argument."""
     have = set(map(frozenset, supports))
+    connects = connects or (lambda t: connected(t, adj))
     out = []
     for s in have:
         for x in s:
             t = s - {x}
-            if t and t not in have and connected(t, adj):
+            if t and t not in have and connects(t):
                 out.append((s, t))
     return out
 
@@ -125,6 +215,8 @@ def family(inst, channel: str, max_size: int | None = None) -> Family:
     ch = inst.channels[channel]
     cs = ch.spec
     adj = unit_graph(inst, channel)
+    con = contact(inst, channel) if cs.contact_min_km > 0 else None
+    touch = con.adj if con is not None else adj
     cap = cs.max_size if max_size is None else max_size
     if isinstance(cap, bool) or not isinstance(cap, int) or cap < 1:
         raise SpecError(f"channel {channel}: max_size must be an integer >= 1, not {cap!r}")
@@ -132,22 +224,25 @@ def family(inst, channel: str, max_size: int | None = None) -> Family:
     def ok(u, v):
         return inst.units.distance_km(u, v) <= cs.dist_cap(u, v)
 
-    found = set() if cs.listed_only else set(connected_sets(ch.units, adj, cap, ok))
+    found = set() if cs.listed_only else set(connected_sets(ch.units, touch, cap, ok))
     enumerated = len(found)
     for s in cs.extra_supports:
         s = s & set(ch.units)       # a unit dropped for zero opportunity leaves the extra
         if not s:
             continue
-        if not connected(s, adj):
-            raise SpecError(f"channel {channel}: extra support {sorted(s)} is not connected")
-        found |= set(connected_subsets(s, adj))
+        if not (con.connects(s) if con is not None else connected(s, adj)):
+            raise SpecError(f"channel {channel}: extra support {sorted(s)} is not connected"
+                            + (" in its contact graph" if con is not None else ""))
+        found |= set(connected_subsets(s, touch))
     before = len(found)
     found = {s for s in found if not any(p <= s for p in cs.forbid_pairs)}
+    if con is not None:                 # A: a connector pair counts only where land would not do
+        found = {s for s in found if con.connects(s)}
     for s in cs.extra_supports:
         s = frozenset(s & set(ch.units))
         if s and s not in found:
             raise SpecError(f"channel {channel}: a filter removes the extra support {sorted(s)}")
-    bad = closure_violations(found, adj)
+    bad = closure_violations(found, touch, con.connects if con is not None else None)
     if bad:
         raise SpecError(f"channel {channel}: the family is not closed under connected subsets: "
                         f"{len(bad)} cases, e.g. {sorted(bad[0][0])} without {sorted(bad[0][1])}")
@@ -156,7 +251,7 @@ def family(inst, channel: str, max_size: int | None = None) -> Family:
         raise SpecError(f"channel {channel}: units in no support: "
                         f"{sorted(set(ch.units) - covered)}")
     supports = tuple(sorted(found, key=lambda s: (len(s), sorted(s))))
-    return Family(channel, supports, adj, enumerated, before - len(found))
+    return Family(channel, supports, adj, enumerated, before - len(found), con)
 
 
 # ------------------------------------------------------------------------------ drawability
