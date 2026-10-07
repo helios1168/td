@@ -4,7 +4,7 @@
 
     "$TD_PY" -u tools/exp/contig/run.py <spec.toml> --out <dir> [--extract PATH]
         [--arm arm1|band|split|move] [--fixed-targets] [--sequential] [--time-limit S]
-        [--group-limit S] [--plans PATH] [--plans-file PKL] [--parent RUN] [--maps]
+        [--group-limit S] [--plans PATH] [--plans-file PKL] [--parent RUN] [--maps] [--jobs N]
 
 Or as the `contig` formulation of `tools/exp/sweep.py` (#92's tracker): params `scenario`,
 `arm`, `time_limit` (seconds per channel), `group_limit`, `fixed_targets`, `sequential`, `plans`.
@@ -14,6 +14,9 @@ each channel's master (`td.master.plan_all`, cached in `--plans` when given, key
 and the extract's sha256; or `--plans-file`, the pickled plans a source run drew, kept as they
 are on the current graph), then per channel `draw.draw` at the arm's rules with the border shape
 term over the polygon graph's borders (#121), the ledger, the audit, names and `districts.csv`.
+With `--jobs N` above 1 each channel is drawn in its own process, N at once, HiGHS on one thread
+each (`draw_parallel`, #123); a channel's drawing reads only its plan, so the folder is the
+sequential run's whenever no solve stops on a time limit.
 The CLI writes `manifest.json` (mandate T1, `write_manifest`) at the start and the end.  A group with no connected drawing keeps `td.realize` and
 `td.territory`'s owners there, so the ledger stays full and M1 fails on them, never patched.
 
@@ -41,6 +44,7 @@ districts (`cut_border_km`).
 from __future__ import annotations
 
 import argparse
+import atexit
 import collections
 import dataclasses
 import hashlib
@@ -146,7 +150,8 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
                fixed_targets: bool = False, time_limit: float = 900.0,
                group_limit: float | None = None, plans_cache: str | None = None,
                source: str = "", keep=(), maps: bool = False, sequential: bool = False,
-               delta: float | None = None, log=print, plans_file: str | None = None) -> dict:
+               delta: float | None = None, log=print, plans_file: str | None = None,
+               jobs: int = 1) -> dict:
     if arm not in ARMS:
         raise ValueError(f"arm {arm!r} not in {ARMS}")
     s = tdspec.load(spec_path)
@@ -177,13 +182,19 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     connectors = set(geo.approved_connectors(geo.read_connectors()))
     border = draw.border_km(polygon)
     contig, drawings = {}, {}
+    drawn = {}
+    if jobs > 1:
+        drawn = draw_parallel(inst, plans, xy, jobs, border, arm="arm1" if arm == "band" else arm,
+                              fixed_targets=fixed_targets, time_limit=time_limit,
+                              wider=WIDER if arm == "band" else (), group_limit=group_limit,
+                              sequential=sequential, delta=delta)
     for c, p in plans.items():
         log(f"{c}: drawing ({arm}{', fixed targets' if fixed_targets else ''}"
             f"{', sequential' if sequential else ''})")
-        res = draw.draw(inst, p, xy, arm="arm1" if arm == "band" else arm,
-                        fixed_targets=fixed_targets, time_limit=time_limit,
-                        wider=WIDER if arm == "band" else (), group_limit=group_limit,
-                        sequential=sequential, delta=delta, log=log, border=border)
+        res = drawn[c] if c in drawn else draw.draw(
+            inst, p, xy, arm="arm1" if arm == "band" else arm, fixed_targets=fixed_targets,
+            time_limit=time_limit, wider=WIDER if arm == "band" else (), group_limit=group_limit,
+            sequential=sequential, delta=delta, log=log, border=border)
         fallback = None
         if res.undrawn:
             fallback = realize.realize(inst, p, xy)
@@ -210,6 +221,164 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
         fh.write("\n")
     log(f"{s.name} ({arm}): M1 {m1.status} ({m1.summary}); audit {report['verdict']}")
     return doc
+
+
+# ------------------------------------------------------------------------------ in parallel (#123)
+WORKER = "contig_run_worker"        # the name a worker process runs this file under
+STOP_GRACE = 30.0                   # seconds a stopped worker gets before its group is killed
+LEADERS = set()                     # lead workers (`spawn`) from their start to their join
+
+
+def spawn(path: str, name: str, args: tuple, daemon: bool = True, lead: bool = False) -> tuple:
+    """(process, connection) of a worker process running the file `path` under the module name
+    `name`, with `WORKER_ARGS` (its end of the connection, *`args`); spawned (macOS), and by
+    `runpy`, since a file loaded by path is no importable module.  A worker that will lead its own
+    process group (`lead`, for `stop`) is held in `LEADERS` from before its start until `join` or
+    `stop` has joined it, and taken off `multiprocessing`'s list of children, whose every
+    `Process.start` reaps those that have exited: only its join reaps it, so its pid, the id of
+    its group, stays its own until `stop` has killed the group."""
+    import multiprocessing
+    import runpy
+    ctx = multiprocessing.get_context("spawn")
+    here, there = ctx.Pipe()
+    proc = ctx.Process(target=runpy.run_path, args=(path,),
+                       kwargs={"run_name": name, "init_globals": {"WORKER_ARGS": (there, *args)}},
+                       daemon=daemon)
+    if lead:
+        LEADERS.add(proc)
+    proc.start()
+    if lead:
+        multiprocessing.process._children.discard(proc)
+    there.close()
+    return proc, here
+
+
+def receive(conn, what: str):
+    """A worker's ("done", result) as the result; its ("error", traceback) or death raised."""
+    try:
+        kind, msg = conn.recv()
+    except EOFError:
+        raise RuntimeError(f"a {what} worker process died") from None
+    if kind == "error":
+        raise RuntimeError(f"a {what} worker process failed:\n{msg}")
+    return msg
+
+
+def join(proc) -> None:
+    """Join a lead worker (`spawn`); it leaves `LEADERS` only once joined."""
+    proc.join()
+    LEADERS.discard(proc)
+
+
+def _end(proc) -> None:
+    """Kill a lead worker's process group and join it (`stop`)."""
+    import signal
+    if proc._popen is not None:                 # started
+        if proc._popen.returncode is None:     # not reaped (`spawn`'s `lead`): still its pid
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                proc.kill()                     # it never led a group
+        proc.join()
+    LEADERS.discard(proc)
+
+
+def stop(grace: float | None = None) -> None:
+    """Stop every lead worker not yet joined (`LEADERS`; a process runs one collector at a
+    time, so they are its) and join them all: a collector's `finally`, and at exit the net for
+    any left.  Each gets SIGTERM, on which a repair channel closes its `WindowPool`
+    (`repair._serve`); once each has exited or `grace` seconds (`STOP_GRACE`) have passed, each
+    one's process group is killed, so a worker that leads its own (`os.setpgrp`) takes its
+    descendants with it, even one that died first.  An unreaped worker keeps its pid, even dead,
+    so its group id is never another's; one reaped already is not signalled.  A
+    KeyboardInterrupt meanwhile ends the grace at once; every group is still killed and every
+    worker joined before it is raised."""
+    from multiprocessing.connection import wait
+    procs = list(LEADERS)
+    interrupt = None
+    try:
+        for proc in procs:
+            if proc._popen is not None:
+                proc.terminate()
+        end = time.time() + (STOP_GRACE if grace is None else grace)
+        left = [proc.sentinel for proc in procs if proc._popen is not None]
+        while left and time.time() < end:
+            done = wait(left, max(0.0, end - time.time()))
+            left = [s for s in left if s not in done]
+    except KeyboardInterrupt as e:
+        interrupt = e
+    for proc in procs:
+        while proc in LEADERS:
+            try:
+                _end(proc)
+            except KeyboardInterrupt as e:
+                interrupt = e
+    if interrupt is not None:
+        raise interrupt
+
+
+atexit.register(stop)
+
+
+def pin_threads() -> None:
+    """Size this process's HiGHS thread pool at one thread before any other solve (trap 18):
+    `draw`'s solves then set `threads` 1, and `td.audit`'s, at HiGHS's default, run in that pool."""
+    import highspy
+    draw.THREADS = 1
+    h = highspy.Highs()
+    h.setOptionValue("output_flag", False)
+    h.setOptionValue("threads", 1)
+    h.addVar(0.0, 1.0)
+    h.run()
+
+
+def _serve(conn, shared: str, log: bool) -> None:
+    """A worker process: `draw.draw` of one channel, HiGHS on one thread; sends the Result."""
+    import traceback
+    os.setpgrp()                # its own process group, for `stop`
+    try:
+        with open(shared, "rb") as fh:
+            sh = pickle.load(fh)
+        pin_threads()
+        c, kw = conn.recv()
+        conn.send(("done", draw.draw(sh["inst"], sh["plans"][c], sh["xy"], border=sh["border"],
+                                     log=lambda line: log and print(line, flush=True), **kw)))
+    except BaseException:
+        conn.send(("error", traceback.format_exc()))
+        raise
+
+
+def draw_parallel(inst, plans: dict, xy: dict, jobs: int, border=None, log: bool = True,
+                  **kw) -> dict:
+    """{channel: `draw.Result`} of `draw.draw` with `kw`, each channel in its own process, at
+    most `jobs` at once (#123): a channel's drawing reads only its own plan, so the dict is the
+    sequential loop's whenever no solve stops on a time limit.  With `log` false the processes
+    print nothing."""
+    import shutil
+    import tempfile
+    from multiprocessing.connection import wait
+    tmp = tempfile.mkdtemp(prefix="td-draw-")
+    out, todo, running = {}, list(plans), {}
+    try:
+        shared = os.path.join(tmp, "shared.pkl")
+        with open(shared, "wb") as fh:
+            pickle.dump({"inst": inst, "plans": plans, "xy": xy, "border": border}, fh,
+                        protocol=pickle.HIGHEST_PROTOCOL)
+        while todo or running:
+            while todo and len(running) < jobs:
+                c = todo.pop(0)
+                proc, conn = spawn(os.path.abspath(__file__), WORKER, (shared, log), lead=True)
+                running[conn] = (c, proc)
+                conn.send((c, kw))
+            for conn in wait(list(running)):
+                c, proc = running[conn]
+                out[c] = receive(conn, f"{c} draw")
+                del running[conn]
+                join(proc)
+    finally:
+        stop()                                  # every worker not joined above
+        shutil.rmtree(tmp, ignore_errors=True)
+    return out
 
 
 def shape_terms(groups) -> dict:
@@ -379,6 +548,9 @@ def main(argv=None) -> int:
     ap.add_argument("--plans-file", default=None,
                     help="a pickle of the plans to draw (a source run's), instead of the master")
     ap.add_argument("--parent", default=None, help="the run this one redraws, for the manifest")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="processes (#123): each channel drawn in its own, at most this many at "
+                         "once; 1 is the sequential loop")
     ap.add_argument("--maps", action="store_true")
     a = ap.parse_args(argv)
     params = {k: v for k, v in vars(a).items() if k not in ("spec", "out")}
@@ -389,7 +561,7 @@ def main(argv=None) -> int:
         doc = contig_run(a.spec, a.extract, a.out, a.arm, a.fixed_targets, a.time_limit,
                          a.group_limit, a.plans, os.path.basename(a.extract), maps=a.maps,
                          sequential=a.sequential, delta=a.delta, plans_file=a.plans_file,
-                         keep=("manifest.json",))
+                         keep=("manifest.json",), jobs=a.jobs)
     except Exception as e:
         write_manifest(a.out, "contig", a.spec, a.extract, params, status="failed",
                        stop_reason=f"{type(e).__name__}: {e}")
@@ -403,3 +575,5 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+elif __name__ == WORKER:
+    _serve(*WORKER_ARGS)     # noqa: F821 (set by `spawn`)
