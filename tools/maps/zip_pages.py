@@ -15,11 +15,6 @@ land is the 2025 cartographic-boundary states (cb_2025_us_state_500k) less the u
 CONUS ZCTA, opened by `OPEN_M` so the slivers of a 250 m simplification and a generalised
 shoreline do not read as land.  Insets: the NYC metro, and with --corridor BOS-WAS.
 
-Where a ZCTA has land across its filed state's line (`tools/maps/spill.py`, #128), that part is
-hatched in its district's colour over a light tint of it, and the rest is drawn as before.  The
-footer's split states stay the ledger's; a second clause names the states that look split only
-because of cross-state ZIPs (`spill.spill_only`).
-
 The inputs that are not tracked are read from `$TD_REPO` or flags, never copied into the repo:
 `--cache` holds `cb_2025_us_state_500k.zip` and the pickled ZCTA polygons, state shapes and
 no-ZCTA land (built from `$TD_REPO/data/public` on a miss); `--fac` the $ per m_rel of each
@@ -68,24 +63,6 @@ PALETTE = ["#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f
            "#bfef45", "#9a6324", "#469990", "#dcbeff", "#800000", "#aaffc3", "#808000",
            "#ffd8b1", "#000075", "#fabed4", "#ffe119"]
 SCORE = os.path.join(ROOT, "tools", "looks", "score.py")
-SPILL_HATCH = "\\" * 6         # backslashes: the other channels' grey hatch runs the other way
-SPILL_TINT = 0.25           # the spill's fill: its district's colour at this alpha, hatched in it
-SPILL_HATCH_W = 0.7
-SPILL_EDGE_W = 0.5
-SPILL_TEXT = "Hatched: a ZIP's land across its state line, in its district's colour"
-
-
-def _load(name: str, path: str):
-    if name not in sys.modules:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(name, path)
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[name] = mod
-        spec.loader.exec_module(mod)
-    return sys.modules[name]
-
-
-spill_mod = _load("maps_spill", os.path.join(HERE, "spill.py"))
 
 
 def score_constant(name):
@@ -180,29 +157,17 @@ def borders(unions: dict, near: dict) -> list:
     return out
 
 
-def draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, box=None, labels=True, fs=7,
-         spill=None):
+def draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, box=None, labels=True, fs=7):
     if other is not None and not other.is_empty:
         ax.add_patch(PathPatch(_polygon_path(other), facecolor=OTHER_FILL, edgecolor=OTHER_EDGE,
                                hatch="////", linewidth=0, zorder=1))
     if gap is not None and not gap.is_empty:
         ax.add_patch(PathPatch(_polygon_path(gap), facecolor=UNASSIGNED, edgecolor="none", zorder=1))
-    spill = spill or {}
     for d, zs in ch_rows.items():
-        shapes, hatched = [], []
-        for z in zs:
-            if z in polys:
-                kept, part = spill_mod.split_drawn(polys[z], spill.get(z))
-                shapes.append(kept)
-                if part is not None:
-                    hatched.append(part)
-        ax.add_collection(PatchCollection([PathPatch(_polygon_path(p)) for p in shapes if not p.is_empty],
+        shapes = [polys[z] for z in zs if z in polys]
+        ax.add_collection(PatchCollection([PathPatch(_polygon_path(p)) for p in shapes],
                                           facecolor=colour[d], edgecolor=colour[d], linewidth=0.25,
                                           alpha=0.75, zorder=2))
-        for p in hatched:
-            ax.add_patch(PathPatch(_polygon_path(p), facecolor=matplotlib.colors.to_rgba(colour[d], SPILL_TINT),
-                                   edgecolor=colour[d], hatch=SPILL_HATCH, hatchcolor=colour[d],
-                                   hatch_linewidth=SPILL_HATCH_W, linewidth=SPILL_EDGE_W, zorder=2.1))
     segs = [np.asarray(ln.coords)[:, :2] for g in lines for ln in shapely.get_parts(g)
             if ln.geom_type == "LineString" and not ln.is_empty]
     from matplotlib.collections import LineCollection
@@ -229,8 +194,7 @@ def draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, box=None, la
     ax.set_yticks([])
 
 
-def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names, dollars, insets, out_dir, extra,
-         spill=None):
+def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names, dollars, insets, out_dir, extra):
     unions = {d: shapely.union_all([polys[z] for z in zs if z in polys]).buffer(150).buffer(-150)
               for d, zs in ch_rows.items()}
     near = neighbours(unions)
@@ -243,7 +207,7 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     x0, y0, x1, y1 = shapely.total_bounds(list(st.values()))
     pad = 0.01 * (x1 - x0)
     main_box = (x0 - pad, y0 - pad, x1 + pad, y1 + pad)
-    draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, main_box, fs=7 if k < 30 else 6, spill=spill)
+    draw(ax, ch_rows, polys, unions, colour, lines, st, gap, other, main_box, fs=7 if k < 30 else 6)
     for spine in ax.spines.values():
         spine.set_visible(False)
     hgt = 0.80 / max(n_in, 1)
@@ -253,16 +217,12 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
                                edgecolor="black", linewidth=1.0, zorder=7))
         ax.text(b[0], b[3], f" {chr(65 + i)}", ha="left", va="bottom", fontsize=9, fontweight="bold", zorder=7)
         iax = fig.add_axes([0.665, 0.12 + 0.80 - (i + 1) * hgt + 0.01, 0.20, hgt - 0.02])
-        draw(iax, ch_rows, polys, unions, colour, lines, st, gap, other, b, fs=8, spill=spill)
+        draw(iax, ch_rows, polys, unions, colour, lines, st, gap, other, b, fs=8)
         iax.set_title(f"{chr(65 + i)}: {title}", fontsize=10)
     handles = [Patch(facecolor=colour[d], alpha=0.75, edgecolor="#202020",
                      label=f"{d.rsplit('_', 1)[1]} {names.get(d, d).split(' ', 1)[-1][:30]}")
                for d in sorted(ch_rows)]
     handles.append(Patch(facecolor=UNASSIGNED, edgecolor="none", label=UNASSIGNED_TEXT))
-    if spill and any(z in spill for zs in ch_rows.values() for z in zs):
-        handles.append(Patch(facecolor=matplotlib.colors.to_rgba("#606060", SPILL_TINT), edgecolor="#606060",
-                             hatch=SPILL_HATCH, hatchcolor="#606060", hatch_linewidth=SPILL_HATCH_W,
-                             label=SPILL_TEXT))
     if other_names:
         handles.append(Patch(facecolor=OTHER_FILL, edgecolor=OTHER_EDGE, hatch="////",
                              label=f"Planned in {', '.join(other_names)} (its own page)"))
@@ -273,9 +233,8 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     mean = sum(m) / len(m)
     vs = f"target \\${t / 1e6:,.0f}M ±{100 * DOLLAR_BAND:.0f}%" if t else "no \\$ target"
     fig.suptitle(f"{label}  ·  {ch}: {k} districts", fontsize=17, fontweight="bold", y=0.975)
-    fig.text(0.01, 0.088, f"\\${min(m):,.0f}M to \\${max(m):,.0f}M per district, drawn mean \\${mean:,.0f}M ({vs})  ·  "
+    fig.text(0.01, 0.075, f"\\${min(m):,.0f}M to \\${max(m):,.0f}M per district, drawn mean \\${mean:,.0f}M ({vs})  ·  "
              f"{extra['splits']}", fontsize=10.5)
-    fig.text(0.01, 0.066, extra["spill_only"], fontsize=10.5)
     fig.text(0.01, 0.045, f"Every ZCTA a district owns is filled, zero-opportunity territory included.  "
              f"Grey: land in no ZCTA, unassigned (owner ruling), not a hole in a district.  "
              f"Black: borders between districts; dashed: state lines.  Run: {os.path.relpath(run_dir, TD_REPO)}", fontsize=8.5, color="#404040")
@@ -289,15 +248,14 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
 
 
 def geometry(cache: str = CACHE) -> tuple:
-    """(ZCTA polygons, state shapes, no-ZCTA land, cross-state spill), each pickled in `cache`
-    (`zcta_polys.pkl`, `states.pkl`, `no_zcta_land.pkl`, `spill.pkl`) and built on a miss; the
-    summary page reads the same pickles (`tools/maps/summary.py`)."""
+    """(ZCTA polygons, state shapes, no-ZCTA land), each pickled in `cache` (`zcta_polys.pkl`,
+    `states.pkl`, `no_zcta_land.pkl`) and built on a miss; the summary page reads the first two
+    (`tools/maps/summary.py`)."""
     public = os.path.join(TD_REPO, "data", "public")
     polys = cached("zcta_polys.pkl", lambda: zcta_polygons(all_zctas(), public), cache)
     st = cached("states.pkl", lambda: states(cache), cache)
     gap = cached("no_zcta_land.pkl", lambda: no_zcta_land(polys, st), cache)
-    cross = spill_mod.crossing(spill_mod.state_land(spill_mod.fips_usps()), spill_mod.filed_states())
-    return polys, st, gap, spill_mod.cached_spill(cache, cross)
+    return polys, st, gap
 
 
 def main(argv=None):
@@ -310,15 +268,7 @@ def main(argv=None):
     ap.add_argument("--cache", default=CACHE, help="the state shapes and the pickled geometry")
     a = ap.parse_args(argv)
     FAC = read_fac(a.fac)
-    polys, st, gap, spill = geometry(a.cache)
-    land = spill_mod.state_land(spill_mod.fips_usps())
-    cross = spill_mod.crossing(land, spill_mod.filed_states())
-    owned_cells, filed = spill_mod.ledger_owned(os.path.join(a.run_dir, "ledger.csv"))
-    moved = sorted(z for z in cross if z in filed and filed[z] != cross[z])
-    if moved:
-        raise ValueError(f"{len(moved)} ZCTAs filed under another state in the ledger than in the "
-                         f"reference: {' '.join(moved[:8])}")
-    spill_only = spill_mod.spill_only(owned_cells, filed, land)
+    polys, st, gap = geometry(a.cache)
     with open(os.path.join(a.run_dir, "districts.csv"), newline="") as fh:
         names = {r["district"]: r["district_name"] for r in csv.DictReader(fh)}
     owned = collections.defaultdict(lambda: collections.defaultdict(set))
@@ -346,8 +296,7 @@ def main(argv=None):
         split = sorted(s for s, ds in held.items() if len(ds) > 1)
         missing = sorted({z for zs in rows.values() for z in zs} - set(polys))
         extra = {"splits": f"{len(split)} split states: {' '.join(split) or 'none'}"
-                 + (f"  ·  {len(missing)} owned ZCTAs with no polygon" if missing else ""),
-                 "spill_only": spill_mod.spill_text(spill_only.get(ch, []))}
+                 + (f"  ·  {len(missing)} owned ZCTAs with no polygon" if missing else "")}
         mine = {z for zs in rows.values() for z in zs}
         other_names = [c for c in owned if c != ch
                        and any(z not in mine for zs in owned[c].values() for z in zs)]
@@ -355,7 +304,7 @@ def main(argv=None):
         other = (shapely.union_all([polys[z] for z in elsewhere if z in polys]).buffer(150).buffer(-150)
                  if elsewhere else None)
         fig, path = page(a.run_dir, a.label, ch, rows, polys, st, gap, other, other_names, names,
-                         {d: usd[ch][d] for d in rows}, insets, a.out_dir, extra, spill)
+                         {d: usd[ch][d] for d in rows}, insets, a.out_dir, extra)
         plt.close(fig)
         written.append(path)
         print(f"{ch}: {len(rows)} districts, {sum(map(len, rows.values()))} ZCTAs, "

@@ -22,7 +22,6 @@ must fail: its reason was 547 components among sold ZIPs, and that graph spans e
 """
 from __future__ import annotations
 
-import contextlib
 import csv
 import gzip
 import importlib.util
@@ -393,48 +392,34 @@ def test_t1_names_the_tracking_check():
     assert _check_paths_exist(check) == [], check
 
 
-@contextlib.contextmanager
-def _tracked_world(gate):
-    """(tmp, base, registry): `base/runs/exp/lane/good` a complete run folder (ledger, manifest, a
-    current `render.json` written as `tools/maps/render.py` writes it) and a registry naming it.
-    The renderer's `$TD_REPO` inputs (`render.INPUTS`) point into `base` while it is open."""
+def _tracked_world(tmp: str, gate) -> tuple:
+    """(base, registry): `base/runs/exp/lane/good` a complete run folder (ledger, manifest, a
+    current `render.json` written as `tools/maps/render.py` writes it) and a registry naming it."""
     import hashlib
     render = gate._load("maps_render", "tools", "maps", "render.py")
-    saved = render.TD_REPO
-    with tempfile.TemporaryDirectory() as tmp:
-        base = os.path.join(tmp, "td")
-        render.TD_REPO = base
-        try:
-            run = os.path.join(base, "runs", "exp", "lane", "good")
-            os.makedirs(run)
-            files = {"ledger.csv": "zip_code\n", "districts.csv": "channel,district\n", "run.json": "{}",
-                     "manifest.json": "{}", "summary.png": "png", "zip_pages.pdf": "pdf"}
-            for name, text in files.items():
-                with open(os.path.join(run, name), "w") as fh:
-                    fh.write(text)
-            for name in render.INPUTS:
-                path = render.input_path(run, name)
-                if name.startswith("$TD_REPO/"):
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
-                    with open(path, "w") as fh:
-                        fh.write(name)
-            fac = os.path.join(tmp, "tables.json")
-            with open(fac, "w") as fh:
-                fh.write('{"fac": {}}')
-            sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()   # noqa: E731
-            entry = {"id": "good", "tier": 1, "rank": 1, "label": "a layout (K 2)", "run": "runs/exp/lane/good",
-                     "images": ["runs/exp/lane/good/summary.png", "runs/exp/lane/good/zip_pages.pdf"], "notes": ""}
-            with open(os.path.join(run, "render.json"), "w") as fh:
-                json.dump({"renderer": {"code_sha256": render.code_sha256()}, "label": "good: a layout (K 2)",
-                           "corridor": False, "m1": {"status": "pass"}, "fac": {"path": fac, "sha256": sha(fac)},
-                           "inputs": {n: sha(render.input_path(run, n)) for n in render.INPUTS},
-                           "images": {n: sha(os.path.join(run, n)) for n in ("summary.png", "zip_pages.pdf")}}, fh)
-            registry = os.path.join(tmp, "shortlist.json")
-            with open(registry, "w") as fh:
-                json.dump({"tiers": {"1": "presentable", "3": "reference"}, "maps": [entry]}, fh)
-            yield tmp, base, registry
-        finally:
-            render.TD_REPO = saved
+    base = os.path.join(tmp, "td")
+    run = os.path.join(base, "runs", "exp", "lane", "good")
+    os.makedirs(run)
+    files = {"ledger.csv": "zip_code\n", "districts.csv": "channel,district\n", "run.json": "{}",
+             "manifest.json": "{}", "summary.png": "png", "zip_pages.pdf": "pdf"}
+    for name, text in files.items():
+        with open(os.path.join(run, name), "w") as fh:
+            fh.write(text)
+    fac = os.path.join(tmp, "tables.json")
+    with open(fac, "w") as fh:
+        fh.write('{"fac": {}}')
+    sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()   # noqa: E731
+    entry = {"id": "good", "tier": 1, "rank": 1, "label": "a layout (K 2)", "run": "runs/exp/lane/good",
+             "images": ["runs/exp/lane/good/summary.png", "runs/exp/lane/good/zip_pages.pdf"], "notes": ""}
+    with open(os.path.join(run, "render.json"), "w") as fh:
+        json.dump({"renderer": {"code_sha256": render.code_sha256()}, "label": "good: a layout (K 2)",
+                   "corridor": False, "m1": {"status": "pass"}, "fac": {"path": fac, "sha256": sha(fac)},
+                   "inputs": {n: sha(os.path.join(run, n)) for n in render.INPUTS},
+                   "images": {n: sha(os.path.join(run, n)) for n in ("summary.png", "zip_pages.pdf")}}, fh)
+    registry = os.path.join(tmp, "shortlist.json")
+    with open(registry, "w") as fh:
+        json.dump({"tiers": {"1": "presentable", "3": "reference"}, "maps": [entry]}, fh)
+    return base, registry
 
 
 def _rewrite(registry: str, edit) -> None:
@@ -453,7 +438,8 @@ def test_tracking_passes_a_complete_world_and_fails_each_gap():
     import shutil
     gate = _gate()
     passing = lambda d: "pass"      # noqa: E731  -- the fixture ledgers are not maps
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         assert gate.tracking(base, registry, passing) == []
         run = os.path.join(base, "runs", "exp", "lane", "good")
 
@@ -476,20 +462,23 @@ def test_tracking_passes_a_complete_world_and_fails_each_gap():
         assert any("render not current: ledger.csv changed" in f
                    for f in gate.tracking(base, registry, passing))
 
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         run = os.path.join(base, "runs", "exp", "lane", "good")
         os.remove(os.path.join(run, "zip_pages.pdf"))
         assert any("image runs/exp/lane/good/zip_pages.pdf missing" in f
                    for f in gate.tracking(base, registry, passing))
 
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         with open(os.path.join(base, "elsewhere.png"), "w") as fh:
             fh.write("png")
         _rewrite(registry, lambda c: c["maps"][0]["images"].append("elsewhere.png"))
         assert any("elsewhere.png is not in its run folder" in f
                    for f in gate.tracking(base, registry, passing))
 
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         _rewrite(registry, lambda c: c["maps"][0].update(label="another label"))
         assert any("render not current: rendered with label" in f
                    for f in gate.tracking(base, registry, passing))
@@ -497,7 +486,8 @@ def test_tracking_passes_a_complete_world_and_fails_each_gap():
         assert any("render not current: no render.json" in f
                    for f in gate.tracking(base, registry, passing))
 
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         _rewrite(registry, lambda c: c["maps"].append({**c["maps"][0], "tier": 3}))
         assert "shortlist id good used by 2 entries (tiers 1, 3)" in gate.tracking(base, registry, passing)
 
@@ -508,7 +498,8 @@ def test_tracking_fails_a_changed_or_unrecorded_manifest():
     gate = _gate()
     render = gate._load("maps_render", "tools", "maps", "render.py")
     passing = lambda d: "pass"      # noqa: E731
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         run = os.path.join(base, "runs", "exp", "lane", "good")
         with open(os.path.join(run, "manifest.json"), "w") as fh:
             fh.write('{"parent_run": null}')
@@ -516,7 +507,8 @@ def test_tracking_fails_a_changed_or_unrecorded_manifest():
         assert any("render not current: manifest.json changed" in f
                    for f in gate.tracking(base, registry, passing))
 
-    with _tracked_world(gate) as (tmp, base, registry):
+    with tempfile.TemporaryDirectory() as tmp:
+        base, registry = _tracked_world(tmp, gate)
         run = os.path.join(base, "runs", "exp", "lane", "good")
         path = os.path.join(run, "render.json")
         with open(path) as fh:
