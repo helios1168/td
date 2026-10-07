@@ -8,6 +8,7 @@
 # the national, WH and FI domains, with ne6_clean's (2026-10-02) 1600 km distance caps for ID MT ND NE
 # SD WY NM.  LAYOUT=ne6m5 is ne6 with WH's max_size 5 (ne6_clean's): at s13's 4, WH 11 has no plan
 # below δ 0.647 there.
+# FROM=repair starts at the repair of an existing <id>-draw.
 # Output in $TD_REPO/runs/exp/contig/set125/; run it from the worktree that holds this script.
 set -u
 export TD_REPO=${TD_REPO:-/Users/Shared/sv-ntlee/td}
@@ -16,6 +17,7 @@ W=$(cd "$(dirname "$0")/../../.." && pwd)
 id=$1; kn=$2; kw=$3; kf=$4; kc=$5; shift 5; extra="$*"
 mkdir -p $S/_specs; cd $W
 base=$S/_specs/$id-base.toml; sp=$S/_specs/$id.toml
+if [ "${FROM:-}" != repair ]; then
 "$P" - $R/wh_dollar/s13_WH11.toml $base $kn $kw $kf $kc ${LAYOUT:-ne_plains} <<'PY'
 import re, sys
 src, out, *ks, layout = sys.argv[1:]
@@ -48,6 +50,7 @@ PY
   /Users/Shared/sv-ntlee/agent/notify "#125 $id: no plan at ±10%"; exit 1; }
 "$P" -u tools/exp/contig/run.py $sp --plans $S/_plans --out $S/$id-draw --arm arm1 --sequential \
   --parent $R/border/ne_plains_wh11-r2-all > $S/$id-draw.log 2>&1
+fi
 [ -f $S/$id-draw/ledger.csv ] || { echo "$id: draw failed" > $S/$id.done
   /Users/Shared/sv-ntlee/agent/notify "#125 $id: draw failed"; exit 1; }
 "$P" -u tools/exp/contig/repair.py $S/$id-draw --out $S/$id-r1 --plans $S/_plans --keep-support --flow \
