@@ -247,6 +247,17 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     return fig, path
 
 
+def geometry(cache: str = CACHE) -> tuple:
+    """(ZCTA polygons, state shapes, no-ZCTA land), each pickled in `cache` (`zcta_polys.pkl`,
+    `states.pkl`, `no_zcta_land.pkl`) and built on a miss; the summary page reads the first two
+    (`tools/maps/summary.py`)."""
+    public = os.path.join(TD_REPO, "data", "public")
+    polys = cached("zcta_polys.pkl", lambda: zcta_polygons(all_zctas(), public), cache)
+    st = cached("states.pkl", lambda: states(cache), cache)
+    gap = cached("no_zcta_land.pkl", lambda: no_zcta_land(polys, st), cache)
+    return polys, st, gap
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir")
@@ -257,11 +268,7 @@ def main(argv=None):
     ap.add_argument("--cache", default=CACHE, help="the state shapes and the pickled geometry")
     a = ap.parse_args(argv)
     FAC = read_fac(a.fac)
-    public = os.path.join(TD_REPO, "data", "public")
-    zall = all_zctas()
-    polys = cached("zcta_polys.pkl", lambda: zcta_polygons(zall, public), a.cache)
-    st = cached("states.pkl", lambda: states(a.cache), a.cache)
-    gap = cached("no_zcta_land.pkl", lambda: no_zcta_land(polys, st), a.cache)
+    polys, st, gap = geometry(a.cache)
     with open(os.path.join(a.run_dir, "districts.csv"), newline="") as fh:
         names = {r["district"]: r["district_name"] for r in csv.DictReader(fh)}
     owned = collections.defaultdict(lambda: collections.defaultdict(set))

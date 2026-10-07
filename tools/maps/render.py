@@ -1,12 +1,15 @@
 """render.py -- the one tracked renderer of a map in the required look (#120, mandate T1).
 
     "$TD_PY" tools/maps/render.py <run_dir> [--label TEXT] [--corridor] [--fac PATH]
-        [--geo-cache DIR] [--zcta-shp PATH] [--zip-cache DIR] [--if-stale]
+        [--geo-cache DIR] [--zcta-shp PATH] [--zip-cache DIR] [--gap-fill nearest|grey] [--if-stale]
 
 Writes into the run's own folder:
 
 - `summary.png` and `summary.svg`: the 2026-10-02 deck look (`tools/maps/summary.py`, the
-  legacy `plan_summary` from tag `archive/pre-support-2026-09`, vendored in `tools/maps/legacy/`);
+  legacy `plan_summary` from tag `archive/pre-support-2026-09`, vendored in `tools/maps/legacy/`,
+  its channel maps filled by state and, in a split state, by ZCTA clipped to its filed state, #128;
+  a split state's land in no ZCTA shaded by its nearest district there, or grey with
+  `--gap-fill grey`);
 - `zip_<channel>.png` and `zip_pages.pdf`: the ZIP-level pages (`tools/maps/zip_pages.py`): grey
   unassigned land, the NYC inset, and with `--corridor` (IFA) the BOS-WAS one;
 - `render.json`: the renderer's commit, dirty flag and code hash (`CODE`), each input's sha256
@@ -149,7 +152,7 @@ def gate(run_dir: str) -> dict:
 
 def render(run_dir: str, label: str | None = None, corridor: bool = False, fac: str | None = None,
            geo_cache: str = GEO_CACHE, zcta_shp: str = ZCTA_SHP, zip_cache: str | None = None,
-           log=print) -> dict:
+           gap_fill: str = "nearest", log=print) -> dict:
     """Render `run_dir` (module doc); its `render.json` record."""
     run_dir = os.path.abspath(run_dir)
     summary = _load("maps_summary", os.path.join(HERE, "summary.py"))
@@ -163,9 +166,11 @@ def render(run_dir: str, label: str | None = None, corridor: bool = False, fac: 
     log(f"{run_dir}: M1 {verdict['status']}; title {text!r}")
     with tempfile.TemporaryDirectory(prefix="td-render-") as work:
         log(summary.adapt(run_dir, work, zip_pages.read_fac(fac)))
+        zip_pages.geometry(zip_cache or zip_pages.CACHE)      # the summary reads these pickles
         env = {**os.environ, "TD_ZCTA_SHP": zcta_shp}
         proc = subprocess.Popen([sys.executable, "-u", os.path.join(HERE, "summary.py"), work,
-                                 "--label", text, "--geo-cache", geo_cache], env=env,
+                                 "--label", text, "--geo-cache", geo_cache,
+                                 "--zip-cache", zip_cache or zip_pages.CACHE, "--gap-fill", gap_fill], env=env,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for old in glob.glob(os.path.join(run_dir, "zip_*.png")):
             os.remove(old)
@@ -183,7 +188,7 @@ def render(run_dir: str, label: str | None = None, corridor: bool = False, fac: 
     doc = {"renderer": renderer, "inputs": inputs, "fac": {"path": fac, "sha256": sha256_file(fac)},
            "geo_cache": geo_cache, "zcta_shp": zcta_shp,
            "zip_cache": os.path.abspath(zip_cache or zip_pages.CACHE),
-           "label": label, "title": text, "corridor": corridor, "m1": verdict,
+           "label": label, "title": text, "corridor": corridor, "gap_fill": gap_fill, "m1": verdict,
            "images": {n: sha256_file(os.path.join(run_dir, n)) for n in images},
            "rendered_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
     path = os.path.join(run_dir, RENDER_JSON)
@@ -203,6 +208,8 @@ def main(argv=None) -> int:
     ap.add_argument("--geo-cache", default=GEO_CACHE, help="the legacy code's geo cache")
     ap.add_argument("--zcta-shp", default=ZCTA_SHP, help="the 2025 TIGER ZCTA shapefile")
     ap.add_argument("--zip-cache", default=None, help="the ZIP pages' cache (default zip_pages.CACHE)")
+    ap.add_argument("--gap-fill", choices=("nearest", "grey"), default="nearest",
+                    help="the summary's land in no ZCTA inside a split state (#128)")
     ap.add_argument("--if-stale", action="store_true", help="skip a run whose render is current")
     a = ap.parse_args(argv)
     label = a.label or os.path.basename(os.path.abspath(a.run_dir))
@@ -211,7 +218,7 @@ def main(argv=None) -> int:
         if ok:
             print(f"{a.run_dir}: render current, skipped")
             return 0
-    doc = render(a.run_dir, label, a.corridor, a.fac, a.geo_cache, a.zcta_shp, a.zip_cache)
+    doc = render(a.run_dir, label, a.corridor, a.fac, a.geo_cache, a.zcta_shp, a.zip_cache, a.gap_fill)
     print(f"{a.run_dir}: {', '.join(doc['images'])}, {RENDER_JSON}; M1 {doc['m1']['status']}")
     return 0
 
