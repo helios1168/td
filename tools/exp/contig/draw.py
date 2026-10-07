@@ -76,6 +76,7 @@ MASS_TOL = 1e-9
 PHASE1_GAP = 0.05           # the cut loop's absolute gap until a connected drawing exists
 FINAL_ABS_GAP = 1e-6        # then mip_rel_gap = 0 and this absolute gap (trap 12)
 ARMS = ("arm1", "split", "move")
+THREADS = None              # HiGHS `threads` of every solve here; None leaves HiGHS's default (trap 18)
 
 
 @dataclass
@@ -873,6 +874,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     h = highspy.Highs()
     h.setOptionValue("output_flag", False)
     h.setOptionValue("mip_rel_gap", 0.0)
+    if THREADS is not None:
+        h.setOptionValue("threads", THREADS)
     inf = highspy.kHighsInf
     fset = set(fcol.values()) | set(ccol.values())
     cap_of = {j: 1 + sum(1 for z in zs if j in allowed[z]) + sum(1 for k in vert_of.values() if k == j)
