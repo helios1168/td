@@ -1218,3 +1218,82 @@ nm_without_tx.py)" "<label>"`) writes `_specs/<variant>.in.toml`, a copy of `_sp
 with the `ban_supports` line enumerated from the family; then `chain3.sh <variant> <that copy>
 runs/exp/contig/border/ifa_49 3600 --keep` and `repair2.sh <variant> 3600`; table `TD_REPO=...
 "$TD_PY" rescore.py --round 3` → `rescore3.json`, `TABLE3.md`.
+
+## #127 Whole-unit IFA plans checked against M1 at plan time (2026-10-07)
+
+`tools/exp/contig/wholeplan.py` plans IFA from a copy of `_specs/ifa49.toml` with the split list
+dropped, so every planning unit is held whole and every ZIP follows its unit. Each round plans at
+the exact smallest δ with no cap (`master.exact_delta`; the owner accepts any band for IFA,
+2026-10-07). It then checks every district against M1 on its ZIP set, using the gate's own
+`td.audit.district_pieces` and `district_necks`. A district that fails is banned as its exact unit
+set, with the reason, and the plan is re-solved. There is no drawing step and no repair: the
+folder is run.py's on the final copy (δ as `delta` and `final_delta`, the bans as
+`ban_supports`). The county-piece maps first cut the listed states with
+`tools/exp/contig/pieces.py`: round(m/τ) connected groups of whole counties per state (at least
+2), each piece and the remainder passing M1 on its own, built at the run's τ. M1's constants and
+the $ target are unchanged.
+
+**Every map passes M1 by the gate** (`tools/mandates/check.py`: 0 pieces, 0 necks). Every loop
+ended with all districts passing; no neck search was unknown. **None is eligible**: the scorer
+fails each on the ±15% band, and ifa20 also on the $ rule. They are shortlisted in the new tier E,
+"Exploratory: passes M1, fails a tier-1 balance check (named per entry); owner accepted any balance
+band for IFA scenario maps, 2026-10-07". Each label names the failed checks.
+
+| map | K | states cut | δ planned (set by) | drawn worst / mean dev | within ±10% | $ / district vs target | split states | pieces / necks | defects | bans / rounds | scorer | tier |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| ifa46-whole | 46 | none | 3.1025 (NY, 4.10 τ) | 310.2% / 78.8% | 3/46 | $1,351M, +8.1% | 0 | 0 / 0 | 0 | 3 / 4 | ineligible: band | E rank 5 |
+| ifa20-whole | 20 | none | 0.7837 (NY) | 78.4% / 49.3% | 2/20 | $3,107M, +148.6% | 0 | 0 / 0 | 0 | 4 / 4 | ineligible: band, $ | E rank 6 |
+| ifa46-pieces | 46 | 8 | 0.5997 (IL, 1.60 τ) | 60.0% / 22.2% | 14/46 | $1,351M, +8.1% | 8 | 0 / 0 | 0 | 5 / 6 | ineligible: band | E rank 3 |
+| ifa49-pieces | 49 | 8 | 0.7040 (IL, 1.70 τ) | 70.4% / 25.8% | 16/49 | $1,268M, +1.5% | 8 | 0 / 0 | 0 | 0 / 1 | ineligible: band | E rank 4 |
+| ifa46-pieces2 | 46 | 11 | 0.4345 (NY_p2, 1.43 τ) | 43.4% / 18.1% | 15/46 | $1,351M, +8.1% | 10 | 0 / 0 | 0 | 2 / 3 | ineligible: band | E rank 1 |
+| ifa49-pieces2 | 49 | 11 | 0.5281 (NY_p2, 1.53 τ) | 52.8% / 21.3% | 15/49 | $1,268M, +1.5% | 10 | 0 / 0 | 0 | 4 / 5 | ineligible: band | E rank 2 |
+
+The 8 states are NY CA FL PA NJ TX MI OH, those holding more than about 2 districts at K 46. The
+11 add IL, MA and CT, every state over about 1.25 τ at K 46 (CT is 1.2523 τ). "Within ±10%" counts
+drawn districts against τ. $ and the verdicts are `tools/looks/score.py`'s. Splits are the
+scorer's split states, so a state with k pieces counts once. Defects are the scorer's sum; every
+map also lists 71–82 multipart pieces, not in that sum. The gate lists 2–8 mass necks beside M1.
+
+The bans, all exact unit sets with M1's reason:
+- **ifa46-whole:** UT, then UT+WY (neck 3.86 km at 84740-84750 cutting off 52 ZIPs, 18.8% of
+  UT's land), then RI (6.58 km, 5 ZIPs from 02837). The plan is 43 single states: NY alone
+  forces δ 3.10, and inside that band the master's diameter objective keeps states apart.
+- **ifa20-whole:** DC+DE+MD+NJ (neck 5.67 km at 08023, NJ cut off from DE), then ID+MT+UT+WY,
+  ID+MT+UT and MT+SD+UT+WY (5.48 km at 84621).
+- **Pieces maps:** every ban is the 84621 neck on a district holding UT with ID/MT/WY/WA and
+  neither NV nor CO.
+- **The two known necks were found by the loop itself:** 84621 (UT without NV or CO, at K 20 and
+  in all four pieces runs) and 08023 (DE with NJ and without PA, at K 20). UT alone has a
+  narrower neck, at 84740-84750.
+
+The cuts, each part's mass in τ at K 46 / K 49:
+- CA 4 parts (1.31, 1.24, 0.63, 0.63 / 1.40, 1.32, 0.67, 0.67).
+- FL 3 (1.09 each / 1.16-1.17).
+- PA 3 (1.03 each / 1.10 each).
+- NJ 3 (0.85-0.94 / 0.91-1.00).
+- TX 3 (0.86-0.92 / 0.91-0.98).
+- OH 2 (1.03 / 1.09).
+- MI: at K 46, 2 parts of 1.23. At K 49, 3: Wayne County (1.05 τ) kept whole as its own piece,
+  0.79 and 0.79. Wayne is the only county over τ.
+- NY 4 (0.69, 1.43, 1.00, 0.98 / 0.73, 1.53, 1.06, 1.05). NY_p2 is Nassau with Queens: the
+  builder ties a county to the county its detached ZIPs touch (Far Rockaway touches only
+  Nassau), and Suffolk alone is 0.69 τ. NY_p2 sets the band of both pieces2 maps.
+- In pieces2: IL 2 (0.80 / 0.85), MA 2 (0.70-0.74 / 0.74-0.79), CT 2 (0.62-0.64 / 0.66-0.68).
+  The plan puts both CT parts in one district, so CT is not split and pieces2 has 10 split states.
+
+Each cut is the best of 100 seeded attempts (`pieces.ATTEMPTS`, `RNG_SEED` 127), the one whose
+parts all pass M1 with the worst part nearest the target. A piece takes its state's `dist_km`.
+
+- Cutting IL, MA and CT (pieces2) narrows the band from ±60% to ±43% at K 46 and from ±70% to ±53%
+  at K 49. Districts within ±10% go from 14/46 to 15/46 and from 16/49 to 15/49, and split
+  states from 8 to 10. The band is now set by NY's county granularity (NY_p2), not by a whole
+  state.
+- The summary page's caption still says "drawn band ±10%" on every map. This is a known renderer
+  bug (`tools/maps/summary.py`), left as it is. The scorer's band and the label are right.
+- Rendered with `tools/maps/render.py --corridor`. `tools/mandates/check.py --tracking`: 191 run
+  folders, 58 entries, 0 failures.
+
+Regenerate (m5, `runs/exp/contig/whole127/`, gitignored): `"$TD_PY" -u
+tools/exp/contig/wholeplan.py runs/exp/contig/_specs/ifa49.toml --out <dir> --k <K> [--pieces
+NY,CA,FL,PA,NJ,TX,MI,OH[,IL,MA,CT]]`. The loop's record (rounds, bans, every verdict, the cuts) is
+`<dir>/wholeplan.json`. One run takes 1–3 minutes.
