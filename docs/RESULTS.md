@@ -1290,7 +1290,8 @@ parts all pass M1 with the worst part nearest the target. A piece takes its stat
   state.
 - The summary page's caption still says "drawn band ±10%" on every map. This is a known renderer
   bug (`tools/maps/summary.py`), left as it is. The scorer's band and the label are right.
-- Rendered with `tools/maps/render.py --corridor`. `tools/mandates/check.py --tracking` passes.
+- Rendered with `tools/maps/render.py --corridor`. `tools/mandates/check.py --tracking`: 191 run
+  folders, 58 entries, 0 failures.
 
 Regenerate (m5, `runs/exp/contig/whole127/`, gitignored): `"$TD_PY" -u
 tools/exp/contig/wholeplan.py runs/exp/contig/_specs/ifa49.toml --out <dir> --k <K> [--pieces
