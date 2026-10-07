@@ -900,3 +900,71 @@ term), then `repair.py --flow --keep-support` at 1200 s per channel (`-w15`) and
 Regenerate (m5, local): `runs/exp/contig/replan/chain_r3.sh`, `repair_r3.sh`, `repair_r3b.sh`;
 table `TD_REPO=... "$TD_PY" runs/exp/contig/replan/rescore_r3.py` → `rescore_r3.json`,
 `TABLE_r3.md` (per-piece reasons, necks, split states per channel).
+
+## #125 Overnight main-map set: the ne_plains layout at every $-eligible K (2026-10-07)
+
+Measured 2026-10-07 on m5 with `tools/exp/contig/set125.sh` at m5-studio/125, autonomously (the
+owner was away; the orchestrator steered). The layout, split lists, eta, max_size and distance caps
+are `runs/exp/contig/wh_dollar/s13_WH11.toml`'s (ne_plains_wh11). Only K and, later, the split lists
+vary. Every channel plans at the master's smallest δ (`replan.py`; each copy is declared at δ 0.02
+and rounded up to 1e-4) within its final_delta 0.10. No channel is widened: on the orchestrator's
+steer, WH 10 (planned at ±12.5%) is dropped, and a K with no plan at ±10% is recorded and skipped.
+Pipeline: draw (`run.py --arm arm1 --sequential`, border term), then `repair.py --keep-support --flow
+--h0 3 --max-zctas 1500 --time-limit 600 --neck-time-limit 120 --budget 1800` (`-r1`). Where M1
+still fails, a second pass runs with `--h0 8 --max-zctas 2000 --time-limit 300 --neck-time-limit
+240` (`-r2`), plus, on FI 19 only, a third FI pass with `--max-zctas 2500 --time-limit 900` (`-r3`).
+Each final folder is gated (`tools/mandates/check.py`), scored (`tools/looks/score.py`) and rendered
+(`tools/maps/render.py`).
+
+**Which K plan at ±10%.** Smallest master δ per channel (`td.master.smallest_delta`, converged).
+National, WH and FI are judged against their $ rule, WIFI has no target, and the main map's
+total K must lie in 48-54.
+
+| layout | channel | K: smallest δ | plans at ±10% |
+|---|---|---|---|
+| ne_plains | national | 13: 0.1054, 14: 0.1201, 15: 0.0888 | 15 only |
+| ne_plains | WH | 11: 0.0879 | 11 |
+| ne_plains | FI | 19: 0.0355, 20: 0.0494, 21: 0.1008, 22: 0.1352 | 19, 20 |
+| ne_plains | WIFI | 2: 0.3657, 3: 0.0931, 4: 0.4574 | 3 only |
+| ne6 (item 7: New England alone in WIFI, the plains in national, WH and FI; plains caps 1600 km) | WH | 11: 0.6470 at s13's max_size 4, 0.1353 at max_size 5 | none |
+
+So issue items 1-5 have no plan at ±10% (national 13 or 14, FI 21 or 22), and item 7 has none at
+WH 11 (national 14: 0.0934 and 15: 0.0518 do plan there). Two K sets remain:
+na15/WH11/FI20/WIFI3 (the lead map's K at the smaller δ) and na15/WH11/FI19/WIFI3. On the
+orchestrator's second steer, variety then came from shorter split lists on na15/WH11/FI20.
+`tools/exp/split_floor.py` (±10%) forces splits in national CA TX NY FL, WH CA, and FI NY CA PA FL
+OH, so the candidates are WH without NJ and FI without TN, NC or both. FI without both NC and TN
+has no plan (smallest δ 0.1702).
+
+| variant | K nat/WH/FI/WIFI | split lists | δ used nat/WH/FI/WIFI | $ per district (M) vs target | splits / state splits | cut km | defects (thin, small, crowded) | worst / mean dev | pieces (largest τ) / necks | M1 | scorer | tier |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `ne_plains_wh11 (lead map, #121)` | 15/11/20/3 | s13_WH11 lists | 0.0938/0.09/0.08/0.1 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 14 / 21 | 37,557 | 4 (0, 3, 1) | 9.3% / 5.2% | 0 (0) / 0 | pass | ELIGIBLE | tier 1 (owner) |
+| `na15_wh11_fi20-r1` | 15/11/20/3 | s13_WH11 lists | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 20 | 39,189 | 1 (0, 1, 0) | 9.3% / 4.2% | 0 (0) / 0 | pass | ELIGIBLE | P 2 |
+| `fi20_wh_nonj-r1` | 15/11/20/3 | WH without NJ | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 12 / 20 | 38,992 | 2 (0, 1, 1) | 9.3% / 4.2% | 0 (0) / 0 | pass | ELIGIBLE | P 1 |
+| `fi20_fi_notn-r1` | 15/11/20/3 | FI without TN | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 20 | 38,049 | 1 (0, 1, 0) | 9.3% / 4.4% | 0 (0) / 0 | pass | ELIGIBLE | P 3 |
+| `fi20_fi_nonc-r1` | 15/11/20/3 | FI without NC | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 19 | 37,780 | 2 (0, 2, 0) | 9.3% / 4.3% | 0 (0) / 0 | pass | ELIGIBLE | P 4 |
+| `na15_wh11_fi19-r3` | 15/11/19/3 | s13_WH11 lists | 0.0888/0.0879/0.0355/0.0931 | FI 974 (+8.2%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 15 / 23 | 41,064 | 6.1042 (1, 3, 1) | 9.3% / 4.1% | 1 (0.104) / 0 | fail | INELIGIBLE (M1) | 3 |
+| `fi20_fi_notn_wh_nonj`, `fi20_fi_nonc_wh_nonj` | 15/11/20/3 | FI without TN (or NC) and WH without NJ | 0.0888/0.0879/0.0494/0.0931 | - | - | - | - | - | draws fail M1 (4 pieces, 5 necks); repair pass 1 was running at the checkpoint | - | - | - |
+
+- Every map that plans and is drawn at FI 20 passes M1 after one repair pass and is ELIGIBLE.
+  These maps go in at tier P (pending owner review), not tier 1: tiers are the owner's call (OD3).
+  Against the lead map (14 splits / 21 state splits, 4 defects, mean 5.2%), each has fewer splits
+  and fewer defects and a lower mean deviation. Each has the same worst deviation, 9.3%, and a
+  longer cut border (37,557 km → 37,780-39,189 km). Dropping NJ from WH's list
+  takes off one split; dropping TN or NC from FI's leaves 13.
+- $ per district is the channel's total over K, so it is the same on every FI 20 map: national
+  1,126M (-9.9%), WH 922M (-7.8%), FI 925M (+2.8%). FI 19 gives FI 974M (+8.2%). National 15 sits
+  at the edge of the $ rule on every map.
+- na15/WH11/FI19 fails M1 after three passes, on one piece: FI_07 (DE+NY+PA)'s DE, 68 ZIPs from
+  19701, 0.104 τ. DE is whole, so the district must reach it through PA's Philadelphia ZIPs; every
+  window was infeasible or hit its time limit (up to 900 s, 2,158 ZCTAs). It is at tier 3.
+- The national drawing is the same in every variant (the same plan at δ 0.0888). Its NY unit hits
+  its time limit with no incumbent (730 s), and repair joins the pieces.
+
+Files (gitignored, m5): `runs/exp/contig/set125/`: `_specs/<id>{-base.toml,.toml,.json}` (the K
+copy, the planned copy, the re-plan report), `<id>-{draw,r1,r2,r3}/`, `<id>-*.log`, `TABLE.md`,
+`rescore.json`. Regenerate: `[FREE_WH=… FREE_FI=… LAYOUT=ne6|ne6m5] tools/exp/contig/set125.sh <id>
+<K nat> <K WH> <K FI> <K WIFI> [--jobs N]`, `FROM=repair` to resume after a draw; the FI 19 third
+pass is `repair.py <id>-r2 --out <id>-r3 --channels FI --keep-support --flow --h0 8 --max-zctas
+2500 --time-limit 900 --neck-time-limit 240 --budget 2400 --jobs 3`; table `TD_REPO=… "$TD_PY"
+runs/exp/contig/set125/rescore.py`.
