@@ -939,19 +939,25 @@ has no plan (smallest δ 0.1702).
 | variant | K nat/WH/FI/WIFI | split lists | δ used nat/WH/FI/WIFI | $ per district (M) vs target | splits / state splits | cut km | defects (thin, small, crowded) | worst / mean dev | pieces (largest τ) / necks | M1 | scorer | tier |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `ne_plains_wh11 (lead map, #121)` | 15/11/20/3 | s13_WH11 lists | 0.0938/0.09/0.08/0.1 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 14 / 21 | 37,557 | 4 (0, 3, 1) | 9.3% / 5.2% | 0 (0) / 0 | pass | ELIGIBLE | tier 1 (owner) |
-| `na15_wh11_fi20-r1` | 15/11/20/3 | s13_WH11 lists | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 20 | 39,189 | 1 (0, 1, 0) | 9.3% / 4.2% | 0 (0) / 0 | pass | ELIGIBLE | P 2 |
+| `na15_wh11_fi20-r1` | 15/11/20/3 | s13_WH11 lists | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 20 | 39,189 | 1 (0, 1, 0) | 9.3% / 4.2% | 0 (0) / 0 | pass | ELIGIBLE | P 4 |
 | `fi20_wh_nonj-r1` | 15/11/20/3 | WH without NJ | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 12 / 20 | 38,992 | 2 (0, 1, 1) | 9.3% / 4.2% | 0 (0) / 0 | pass | ELIGIBLE | P 1 |
-| `fi20_fi_notn-r1` | 15/11/20/3 | FI without TN | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 20 | 38,049 | 1 (0, 1, 0) | 9.3% / 4.4% | 0 (0) / 0 | pass | ELIGIBLE | P 3 |
-| `fi20_fi_nonc-r1` | 15/11/20/3 | FI without NC | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 19 | 37,780 | 2 (0, 2, 0) | 9.3% / 4.3% | 0 (0) / 0 | pass | ELIGIBLE | P 4 |
+| `fi20_fi_notn-r1` | 15/11/20/3 | FI without TN | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 20 | 38,049 | 1 (0, 1, 0) | 9.3% / 4.4% | 0 (0) / 0 | pass | ELIGIBLE | P 5 |
+| `fi20_fi_nonc-r1` | 15/11/20/3 | FI without NC | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 13 / 19 | 37,780 | 2 (0, 2, 0) | 9.3% / 4.3% | 0 (0) / 0 | pass | ELIGIBLE | P 6 |
+| `fi20_fi_notn_wh_nonj-r1` | 15/11/20/3 | FI without TN, WH without NJ | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 12 / 20 | 37,852 | 3 (0, 2, 1) | 9.3% / 4.4% | 0 (0) / 0 | pass | ELIGIBLE | P 2 |
+| `fi20_fi_nonc_wh_nonj-r1` | 15/11/20/3 | FI without NC, WH without NJ | 0.0888/0.0879/0.0494/0.0931 | FI 925 (+2.8%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 12 / 19 | 37,582 | 4 (0, 3, 1) | 9.3% / 4.3% | 0 (0) / 0 | pass | ELIGIBLE | P 3 |
 | `na15_wh11_fi19-r3` | 15/11/19/3 | s13_WH11 lists | 0.0888/0.0879/0.0355/0.0931 | FI 974 (+8.2%), WH 922 (-7.8%), WIFI 1,123, national 1,126 (-9.9%) | 15 / 23 | 41,064 | 6.1042 (1, 3, 1) | 9.3% / 4.1% | 1 (0.104) / 0 | fail | INELIGIBLE (M1) | 3 |
-| `fi20_fi_notn_wh_nonj`, `fi20_fi_nonc_wh_nonj` | 15/11/20/3 | FI without TN (or NC) and WH without NJ | 0.0888/0.0879/0.0494/0.0931 | - | - | - | - | - | draws fail M1 (4 pieces, 5 necks); repair pass 1 was running at the checkpoint | - | - | - |
 
 - Every map that plans and is drawn at FI 20 passes M1 after one repair pass and is ELIGIBLE.
   These maps go in at tier P (pending owner review), not tier 1: tiers are the owner's call (OD3).
-  Against the lead map (14 splits / 21 state splits, 4 defects, mean 5.2%), each has fewer splits
-  and fewer defects and a lower mean deviation. Each has the same worst deviation, 9.3%, and a
-  longer cut border (37,557 km → 37,780-39,189 km). Dropping NJ from WH's list
-  takes off one split; dropping TN or NC from FI's leaves 13.
+  Against the lead map (14 splits / 21 state splits, 4 defects, mean 5.2%), each has fewer splits,
+  no more defects (1-4) and a lower mean deviation. Each has the same worst deviation, 9.3%, and a
+  longer cut border (37,557 km → 37,582-39,189 km). Dropping NJ from WH's list
+  takes off one split; dropping TN or NC from FI's takes off none (13 alone, 12 with WH without NJ).
+- Tier P's ranks are the scorer's order over the six (`tools/looks/score.py` `rank`: splits, then
+  defects, extent, states per district, worst and mean deviation): the three 12-split maps first
+  (WH without NJ 2 defects, plus FI without TN 3, plus FI without NC 4), then the three 13-split
+  maps (the s13_WH11 lists 1 defect and mean 4.2%, FI without TN 1 and 4.4%, FI without NC 2). The
+  scorer flags the two 13-split, 1-defect maps REVIEW (+1 split for -1 defect).
 - $ per district is the channel's total over K, so it is the same on every FI 20 map: national
   1,126M (-9.9%), WH 922M (-7.8%), FI 925M (+2.8%). FI 19 gives FI 974M (+8.2%). National 15 sits
   at the edge of the $ rule on every map.

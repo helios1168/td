@@ -38,7 +38,7 @@
   {
    "id": "ne_plains_wh11_fi20_mind",
    "tier": "P",
-   "rank": 2,
+   "rank": 4,
    "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), smallest-δ plan, 13 splits",
    "run": "runs/exp/contig/set125/na15_wh11_fi20-r1",
    "images": [
@@ -624,7 +624,7 @@
   {
    "id": "ne_plains_wh11_fi20_finotn",
    "tier": "P",
-   "rank": 3,
+   "rank": 5,
    "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), smallest-δ plan, FI without TN split, 13 splits",
    "run": "runs/exp/contig/set125/fi20_fi_notn-r1",
    "images": [
@@ -647,7 +647,7 @@
   {
    "id": "ne_plains_wh11_fi20_finonc",
    "tier": "P",
-   "rank": 4,
+   "rank": 6,
    "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), smallest-δ plan, FI without NC split, 13 splits",
    "run": "runs/exp/contig/set125/fi20_fi_nonc-r1",
    "images": [
@@ -687,6 +687,52 @@
     "pieces": 1,
     "necks": 0,
     "thin": 1,
+    "small": 3
+   }
+  },
+  {
+   "id": "ne_plains_wh11_fi20_finotn_whnonj",
+   "tier": "P",
+   "rank": 2,
+   "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), smallest-δ plan, FI without TN, WH without NJ, 12 splits",
+   "run": "runs/exp/contig/set125/fi20_fi_notn_wh_nonj-r1",
+   "images": [
+    "runs/exp/contig/set125/fi20_fi_notn_wh_nonj-r1/summary.png",
+    "runs/exp/contig/set125/fi20_fi_notn_wh_nonj-r1/zip_pages.pdf"
+   ],
+   "notes": "autonomous 2026-10-07, owner to review. #125: ne_plains_wh11's layout at national 15 / WH 11 / FI 20 / WIFI 3 with FI's split list without TN and WH's without NJ, planned at the master's smallest δ per channel (FI 0.0494, WH 0.0879, WIFI 0.0931, national 0.0888), drawn (arm 1, sequential, border term) and repaired (r1). Passes M1, the audit and the scorer (ELIGIBLE). 12 splits / 20 state splits, 3 defects, worst/mean 9.3% / 4.4%, cut border 37,852 km. $ per district: FI 925M (+2.8%), WH 922M (-7.8%), national 1,126M (-9.9%).",
+   "metrics": {
+    "districts": 49,
+    "worst": 9.3,
+    "mean": 4.4,
+    "splits": 12,
+    "cuts": 20,
+    "pieces": 0,
+    "necks": 0,
+    "thin": 0,
+    "small": 2
+   }
+  },
+  {
+   "id": "ne_plains_wh11_fi20_finonc_whnonj",
+   "tier": "P",
+   "rank": 3,
+   "label": "NE + plains combined, WH 11 (national 15 / WH 11 / FI 20 / combined 3), smallest-δ plan, FI without NC, WH without NJ, 12 splits",
+   "run": "runs/exp/contig/set125/fi20_fi_nonc_wh_nonj-r1",
+   "images": [
+    "runs/exp/contig/set125/fi20_fi_nonc_wh_nonj-r1/summary.png",
+    "runs/exp/contig/set125/fi20_fi_nonc_wh_nonj-r1/zip_pages.pdf"
+   ],
+   "notes": "autonomous 2026-10-07, owner to review. #125: ne_plains_wh11's layout at national 15 / WH 11 / FI 20 / WIFI 3 with FI's split list without NC and WH's without NJ, planned at the master's smallest δ per channel (FI 0.0494, WH 0.0879, WIFI 0.0931, national 0.0888), drawn (arm 1, sequential, border term) and repaired (r1). Passes M1, the audit and the scorer (ELIGIBLE). 12 splits / 19 state splits, 4 defects, worst/mean 9.3% / 4.3%, cut border 37,582 km. $ per district: FI 925M (+2.8%), WH 922M (-7.8%), national 1,126M (-9.9%).",
+   "metrics": {
+    "districts": 49,
+    "worst": 9.3,
+    "mean": 4.3,
+    "splits": 12,
+    "cuts": 19,
+    "pieces": 0,
+    "necks": 0,
+    "thin": 0,
     "small": 3
    }
   }
