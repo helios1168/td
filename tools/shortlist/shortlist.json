@@ -4,6 +4,7 @@
   "2": "Contender: passes M1 and the audit, but fails the $ rule or another eligibility rule",
   "3": "Reference: fails M1 (pieces or necks, #121), or is superseded, but answers a question worth keeping",
   "P": "Pending owner review: drawn autonomously 2026-10-07 and passes every tier-1 check (M1, audit, scorer ELIGIBLE with the $ rule); the owner places it",
+  "E": "Exploratory: passes M1, fails a tier-1 balance check (named per entry); owner accepted any balance band for IFA scenario maps, 2026-10-07",
   "S": "Superseded 2026-10-05: drawn before M1 was restored (2026-10-04); all fail M1 (detached pieces). Kept for the record, never presented as eligible"
  },
  "maps": [
@@ -787,6 +788,84 @@
    ],
    "shown_images": [],
    "notes": "#124 plan check: A (contact_min_km 10) drops no support and B (drawable_alone) cuts none, so A, A+B and A+B+C plan, draw and repair one map (folder ifa_49-pc-A, spec copy of ifa_49-replan-a2ut's); C bans nothing because no piece or neck left has a window proved infeasible (each is unknown or budget spent); fails M1."
+  },
+  {
+   "id": "ifa_46_whole",
+   "tier": "E",
+   "rank": 5,
+   "label": "IFA K 46, #127 every state whole, passes M1; fails: band ±310% (δ 3.1025, set by NY); 3/46 within ±10%",
+   "run": "runs/exp/contig/whole127/ifa46-whole",
+   "images": [
+    "runs/exp/contig/whole127/ifa46-whole/summary.png",
+    "runs/exp/contig/whole127/ifa46-whole/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. 4 rounds, 3 bans: UT (neck 3.86 km at 84740-84750), UT+WY (same neck), RI (neck 6.58 km, 5 ZIPs from 02837). 0 splits, 0 defects; worst/mean drawn deviation 310.2% / 78.8%; $ per district +8.1% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band (39 of 46 districts outside ±15%)."
+  },
+  {
+   "id": "ifa_20_whole",
+   "tier": "E",
+   "rank": 6,
+   "label": "IFA K 20, #127 every state whole, passes M1; fails: band ±78% (δ 0.7837); 2/20 within ±10%; $/district +149%; K 20 outside 46–55",
+   "run": "runs/exp/contig/whole127/ifa20-whole",
+   "images": [
+    "runs/exp/contig/whole127/ifa20-whole/summary.png",
+    "runs/exp/contig/whole127/ifa20-whole/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. 4 rounds, 4 bans: DC+DE+MD+NJ (neck 5.67 km at 08023), ID+MT+UT+WY, ID+MT+UT and MT+SD+UT+WY (neck 5.48 km at 84621). 0 splits, 0 defects; worst/mean 78.4% / 49.3%; $ per district +148.6% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band and the $ rule."
+  },
+  {
+   "id": "ifa_46_pieces",
+   "tier": "E",
+   "rank": 3,
+   "label": "IFA K 46, #127 whole states + county pieces of 8 states, passes M1; fails: band ±60% (δ 0.5997, set by IL); 14/46 within ±10%",
+   "run": "runs/exp/contig/whole127/ifa46-pieces",
+   "images": [
+    "runs/exp/contig/whole127/ifa46-pieces/summary.png",
+    "runs/exp/contig/whole127/ifa46-pieces/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. County pieces (tools/exp/contig/pieces.py, built at τ of K 46): CA 4 parts, FL 3, MI 2, NJ 3, NY 4, OH 2, PA 3, TX 3, each a connected group of whole counties passing M1 on its own. 6 rounds, 5 bans, all the 84621 neck (ID+MT+UT+WY, ID+MT+UT, MT+UT+WY, ID+MT+UT+WA+WY, ID+MT+UT+WA). 8 split states, 0 defects; worst/mean 60.0% / 22.2%; $ per district +8.1% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band (25 of 46 outside ±15%)."
+  },
+  {
+   "id": "ifa_49_pieces",
+   "tier": "E",
+   "rank": 4,
+   "label": "IFA K 49, #127 whole states + county pieces of 8 states, passes M1; fails: band ±70% (δ 0.704, set by IL); 16/49 within ±10%",
+   "run": "runs/exp/contig/whole127/ifa49-pieces",
+   "images": [
+    "runs/exp/contig/whole127/ifa49-pieces/summary.png",
+    "runs/exp/contig/whole127/ifa49-pieces/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. County pieces built at τ of K 49: CA 4 parts, FL 3, MI 3, NJ 3, NY 4, OH 2, PA 3, TX 3 (Wayne County MI, 1.05 τ, kept whole as its own piece). 1 round, no bans. 8 split states, 0 defects; worst/mean 70.4% / 25.8%; $ per district +1.5% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band (31 of 49 outside ±15%)."
+  },
+  {
+   "id": "ifa_46_pieces2",
+   "tier": "E",
+   "rank": 1,
+   "label": "IFA K 46, #127 whole states + county pieces of 11 states, passes M1; fails: band ±43% (δ 0.4345, set by NY_p2); 15/46 within ±10%",
+   "run": "runs/exp/contig/whole127/ifa46-pieces2",
+   "images": [
+    "runs/exp/contig/whole127/ifa46-pieces2/summary.png",
+    "runs/exp/contig/whole127/ifa46-pieces2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. County pieces (tools/exp/contig/pieces.py, built at τ of K 46) of every state over about 1.25 τ: CA 4 parts, FL 3, MI 2, NJ 3, NY 4, OH 2, PA 3, TX 3, IL 2, MA 2, CT 2 (1.2523 τ); the plan rejoins CT and CT_p1 in one district, so 10 states are split. NY_p2 (Nassau with Queens, tied because Far Rockaway touches only Nassau; 1.43 τ) sets δ. 3 rounds, 2 bans, both the 84621 neck (ID+MT+UT+WA, ID+MT+UT+WA+WY). 0 defects; worst/mean 43.4% / 18.1%; $ per district +8.1% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band (23 of 46 outside ±15%)."
+  },
+  {
+   "id": "ifa_49_pieces2",
+   "tier": "E",
+   "rank": 2,
+   "label": "IFA K 49, #127 whole states + county pieces of 11 states, passes M1; fails: band ±53% (δ 0.5281, set by NY_p2); 15/49 within ±10%",
+   "run": "runs/exp/contig/whole127/ifa49-pieces2",
+   "images": [
+    "runs/exp/contig/whole127/ifa49-pieces2/summary.png",
+    "runs/exp/contig/whole127/ifa49-pieces2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. County pieces built at τ of K 49 for the same 11 states: CA 4, FL 3, MI 3 (Wayne County, 1.05 τ, kept whole as its own piece), NJ 3, NY 4, OH 2, PA 3, TX 3, IL 2, MA 2, CT 2; the plan rejoins CT and CT_p1, so 10 states are split. NY_p2 (1.53 τ) sets δ. 5 rounds, 4 bans, all the 84621 neck (ID+MT+UT+WY, ID+MT+UT, ID+MT+UT+WA+WY, ID+MT+UT+WA). 0 defects; worst/mean 52.8% / 21.3%; $ per district +1.5% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band (29 of 49 outside ±15%)."
   }
  ]
 }
