@@ -4,11 +4,12 @@ its units proved infeasible, the fixed-target rows, and a zero-opportunity excla
 district it touches."""
 from __future__ import annotations
 
+import dataclasses
 import importlib.util
 import os
 import sys
 
-from td import audit, realize
+from td import audit, master, realize
 
 from tests import test_realize as tr
 
@@ -770,6 +771,406 @@ def test_an_opened_neck_comes_first_within_its_district():
                                          ng=ng, open_units=(unit,))
         assert (tried[0]["shape"], tried[0]["cluster"]) == ("own", [f"{pa} {side} (1 ZCTAs)"]), \
             (unit, tried[0]["shape"], tried[0]["cluster"])
+
+
+# ------------------------------------------------------------------------------ #124 plancheck.py
+def _plancheck_module():
+    if "contig_plancheck" not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            "contig_plancheck", os.path.join(HERE, "..", "tools", "exp", "contig", "plancheck.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["contig_plancheck"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["contig_plancheck"]
+
+
+def _corridor_toy(k: int):
+    """PA (p0, 100 km², mass 1) and NJ (q0, 100 km², mass 1) are joined only through NY, free,
+    a path n1-n2-n3 (1 km² and mass 0.01 each) whose inner edges share 1 km of border; p0-n1 and
+    n3-q0 share 20 km.  Every district on PA+NY+NJ crosses NY by a 1 km passage between two
+    halves of the land: a neck."""
+    edges = [("p0", "n1"), ("n1", "n2"), ("n2", "n3"), ("n3", "q0")]
+    km = {("n1", "p0"): 20.0, ("n1", "n2"): 1.0, ("n2", "n3"): 1.0, ("n3", "q0"): 20.0}
+    xy = {"p0": (0.0, 0.0), "n1": (1.0, 0.0), "n2": (2.0, 0.0), "n3": (3.0, 0.0), "q0": (4.0, 0.0)}
+    mass = {"p0": 1.0, "q0": 1.0, "n1": 0.01, "n2": 0.01, "n3": 0.01}
+    inst, _ = tr._toy({"PA": ["p0"], "NY": ["n1", "n2", "n3"], "NJ": ["q0"]}, edges, mass, xy,
+                      {"NY": "free"}, k=k, delta=0.1, eta=0.05)
+    polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"p0": 1e8, "q0": 1e8, "n1": 1e6, "n2": 1e6, "n3": 1e6}}
+    inst.polygon = polygon
+    return inst, audit.NeckGraph(polygon)
+
+
+def test_b_cuts_a_support_no_district_draws_without_a_neck_and_keeps_one_that_can():
+    """#124 B: {PA, NY, NJ} has no drawing without a neck (proved infeasible), so with K = 1, where
+    it is the only plan, `plan_checked` cuts it and the master has no plan left; {PA, NY} draws
+    (PA with n1, whose 1 km² is under 5% of the land) and is kept."""
+    pc = _plancheck_module()
+    inst, ng = _corridor_toy(1)
+    v = pc.drawable(inst, "X", frozenset({"PA", "NY", "NJ"}), 0.1, ng, 60.0, log=lambda *_: None)
+    assert v["status"] == "infeasible", v
+    p, rep, rec = pc.plan_checked(inst, "X", ng=ng, check_time=60.0, log=lambda *_: None)
+    assert p is None and rec["status"] == "infeasible", rec
+    assert [b["support"] for b in rec["bans"]] == ["NJ+NY+PA"] and rec["bans"][0]["objective_after"] is None
+    two, ng2 = _corridor_toy(2)
+    v = pc.drawable(two, "X", frozenset({"PA", "NY"}), 0.1, ng2, 60.0, log=lambda *_: None)
+    assert v["status"] == "drawable", v
+    p, _, rec = pc.plan_checked(two, "X", ng=ng2, check_time=60.0, log=lambda *_: None)
+    assert p is not None and rec["status"] == "passed" and not rec["bans"], rec
+
+
+def test_b_never_cuts_on_a_timeout():
+    """#124 B: out of time the test is unknown, listed, never a cut; the plan stands."""
+    pc = _plancheck_module()
+    inst, ng = _corridor_toy(1)
+    v = pc.drawable(inst, "X", frozenset({"PA", "NY", "NJ"}), 0.1, ng, 0.0, log=lambda *_: None)
+    assert v["status"] == "unknown", v
+    p, _, rec = pc.plan_checked(inst, "X", ng=ng, check_time=0.0, log=lambda *_: None)
+    assert p is not None and rec["status"] == "passed" and not rec["bans"]
+    assert [u["support"] for u in rec["unknown"]] == ["NJ+NY+PA"]
+    checks = pc.Checks()                # monotone: infeasible at 0.1 stands at 0.05, not at 0.2
+    checks.put("X", {"PA"}, 0.1, {"status": "infeasible"})
+    assert checks.get("X", {"PA"}, 0.05) and checks.get("X", {"PA"}, 0.2) is None
+
+
+def test_c_bans_a_support_after_a_proved_infeasible_window_and_leaves_an_unknown_uncut():
+    """#124 C: of two districts left in pieces, the one whose last window was proved infeasible
+    (outside fixed) gets its support banned, with the window as evidence and the cost before and
+    after once the next round is drawn; the one whose window ended unknown is listed, not cut; a
+    log line saying a window was not tried makes the cause "budget spent".  The re-plan honours
+    the ban (`ban_supports` in the next round's copy, `replan.banned_text`)."""
+    pc = _plancheck_module()
+    inst, xy, plan = _u_toy()
+    ct, nj = sorted(cp.name for cp in plan.copies)
+    owner = {z: ct for z in inst.units.unit_of}     # pieces: NJ+NY's v44 and CT+NY's v43
+    owner.update(dict.fromkeys(["b0", "v30", "v40", "v41", "v42", "v44"], nj))
+    attempts = [{"cluster": [f"{nj} v44 (1 ZCTAs)"], "status": "infeasible", "shape": "ball",
+                 "h": 1, "window_zctas": 3, "cap": True},
+                {"cluster": [f"{ct} v43 (1 ZCTAs)"], "status": "unknown", "shape": "ball",
+                 "h": 1, "window_zctas": 4, "cap": True}]
+    ng = audit.NeckGraph({"vertices": sorted(xy), "edges": [(a, b) for a in inst.units.zip_adj
+                                                            for b in inst.units.zip_adj[a] if a < b],
+                          "state": dict(inst.units.unit_of), "border": {}, "connectors": [],
+                          "aland": dict.fromkeys(xy, 1e6)})
+    found = [x for x in pc.causes(inst, plan, owner, attempts, "", ng, 1, 100) if x["kind"] == "piece"]
+    f, unknown = sorted(found, key=lambda x: x["district"] != nj)
+    assert (f["district"], f["cause"], f["window"]["window_zctas"]) == (nj, pc.INFEASIBLE, 3), f
+    assert f["window"]["cap_stopped_growth"] is False
+    assert (unknown["district"], unknown["cause"]) == (ct, "window unknown at its time limit")
+    spent = pc.causes(inst, plan, owner, attempts, f"budget spent: X ball 2 of {nj} not tried\n",
+                      ng, 1, 100)
+    assert {x["district"]: x["cause"] for x in spent if x["kind"] == "piece"}[nj] == "budget spent"
+    ch = inst.channels["X"]
+    cost0 = {"X": {"delta": 0.1, "objective": 1.0, "splits": 1, "cuts": 1}}
+    entry = {"left": [f, unknown], "cost": cost0}
+    banned, done = {}, {}
+    nb = pc.close_round(entry, None, {"X": 1}, done, banned, last=False)
+    assert [(b["channel"], b["support"], b["evidence"]["cause"]) for b in nb] == \
+        [("X", ["NJ", "NY"], pc.INFEASIBLE)] and "stop" not in entry
+    assert banned == {"X": {frozenset({"NJ", "NY"})}} and done == {"X": 1}
+    cost1 = {"X": {"delta": 0.1, "objective": 2.0, "splits": 2, "cuts": 2}}
+    nxt = {"left": [unknown], "cost": cost1}
+    assert pc.close_round(nxt, entry, {"X": 1}, done, banned, last=False) == []
+    assert nb[0]["cost"] == {"before": cost0["X"], "after": cost1["X"]}
+    assert nxt["stop"].startswith("no window proved infeasible")
+    replan = _replan_module()
+    text = replan.banned_text("[channels.X]\nk = 2\n", [], keys={"X": {
+        "ban_supports": '[["NJ", "NY"]]'}})
+    assert 'ban_supports = [["NJ", "NY"]]' in text
+    ch.spec = dataclasses.replace(ch.spec, ban_supports=(frozenset({"NJ", "NY"}),))
+    p, _ = master.plan(inst, "X", delta=0.6)     # the re-plan: NJ+NY is gone
+    assert p is not None and frozenset({"NJ", "NY"}) not in p.n, p and p.n
+
+
+
+def test_c_records_a_necks_growth_cap():
+    """Sol's review of #124 (P2): a neck's last window records whether the `--max-zctas` cap
+    stopped its growth, as a piece's does (the ball around the side one hop past the last)."""
+    pc = _plancheck_module()
+    inst, ng = _corridor_toy(1)
+    plan = tr._plan(inst, [({"PA", "NY", "NJ"}, {"PA": 1.0, "NY": 1.0, "NJ": 1.0})])
+    owner = dict.fromkeys(inst.units.unit_of, "NJ+NY+PA#1")
+    (j, side, _), = pc.repair.necks(owner, inst.channels["X"].m, ng)[:1]
+    attempts = [{"kind": "neck", "cluster": [f"{j} {min(side)} ({len(side)} ZCTAs)"],
+                 "status": "infeasible", "shape": "ball", "h": 1, "window_zctas": len(side),
+                 "cap": True}]
+    for max_zctas, capped in ((100, False), (1, True)):
+        necks = [x for x in pc.causes(inst, plan, owner, attempts, "", ng, 1, max_zctas)
+                 if x["kind"] == "neck"]
+        assert necks and all(x["cause"] == pc.INFEASIBLE for x in necks), necks
+        assert necks[0]["window"]["cap_stopped_growth"] is capped, necks[0]["window"]
+
+
+CHAIN_TOML = """[scenario]
+name = "toy"
+fine_channels = ["f", "g"]
+
+[channels.X]
+k = 2
+eta = 0.01
+max_dist_km = 1e9
+delta = 0.1
+margin = false
+free = ["NY"]
+domain = [{units = "all", fine = ["f", "g"]}]
+"""
+
+
+def _chain_toy(spec_path=None):
+    """(inst, xy in metres, NeckGraph): PA (p0) and NJ (q0), 0.5 each, joined through NY by the
+    path n1-n2-n3 (0.01 and 1 km² each, 1 km of border between them) and by NY's b1-b2 (0.5 each,
+    20 km borders to p0, to each other and to q0; b1-n2 1 km); K 2, δ 0.1.  The master's best is
+    NJ+NY+PA (the path, 1.03) and NY (b1 b2): drawn, NJ+NY+PA leaves q0 a piece every repair
+    window proves infeasible, its land route through b1 b2 over the band.  With it banned the
+    master plans NY+PA and NJ+NY, drawn connected.  `spec_path` gives the channel's C keys."""
+    from td import spec as tdspec
+    edges = [("p0", "n1"), ("n1", "n2"), ("n2", "n3"), ("n3", "q0"), ("p0", "b1"), ("b1", "b2"),
+             ("b2", "q0"), ("b1", "n2")]
+    km = {("n1", "p0"): 20.0, ("n1", "n2"): 1.0, ("n2", "n3"): 1.0, ("n3", "q0"): 20.0,
+          ("b1", "p0"): 20.0, ("b1", "b2"): 20.0, ("b2", "q0"): 20.0, ("b1", "n2"): 1.0}
+    xy = {"p0": (0.0, 0.0), "n1": (1.0, 0.0), "n2": (2.0, 0.0), "n3": (3.0, 0.0),
+          "q0": (4.0, 0.0), "b1": (1.0, -2.0), "b2": (3.0, -2.0)}
+    mass = {"p0": 0.5, "q0": 0.5, "n1": 0.01, "n2": 0.01, "n3": 0.01, "b1": 0.5, "b2": 0.5}
+    inst, xym = tr._toy({"PA": ["p0"], "NY": ["n1", "n2", "n3", "b1", "b2"], "NJ": ["q0"]},
+                        edges, mass, xy, {"NY": "free"}, k=2, delta=0.1, eta=0.01, margin=False)
+    inst.polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
+                    "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+                    "aland": {z: 1e8 if z[0] in "pqb" else 1e6 for z in xy}}
+    if spec_path:
+        cs, ch = tdspec.load(spec_path).channels["X"], inst.channels["X"]
+        ch.spec = dataclasses.replace(ch.spec, replan_rounds=cs.replan_rounds,
+                                      ban_supports=cs.ban_supports)
+    return inst, xym, audit.NeckGraph(inst.polygon)
+
+
+class _ChainSteps:
+    """`plancheck.Steps` on `_chain_toy`, in process: the master plans the copy's bans (replan.py's
+    part), `draw.draw` draws it (run.py's arm 1, sequential, border term) and
+    `repair.repair_channel` repairs it (`--keep-support --flow`, h0 1, 100 ZCTAs), each folder
+    holding what C reads back (contig.json's attempts, the ledger, run.json and the log)."""
+
+    def __init__(self):
+        self.plans, self.drawn, self.repaired, self.drew = {}, {}, {}, []
+
+    def neck_graph(self):
+        return _chain_toy()[2]
+
+    def plan(self, spec, out_spec, report):
+        import json
+        import shutil
+        inst, _, _ = _chain_toy(spec)
+        p, rep = master.plan(inst, "X")
+        shutil.copy(spec, out_spec)
+        with open(report, "w") as fh:
+            json.dump({"spec": os.path.abspath(out_spec),
+                       "channels": {"X": {"status": rep.get("status")}}}, fh)
+        if p is None:
+            return 1
+        self.plans[os.path.abspath(out_spec)] = p
+        return 0
+
+    def draw(self, spec, out, parent):
+        self.drew.append(spec)
+        spec = os.path.abspath(spec)
+        if spec not in self.plans:
+            return False
+        inst, xy, _ = _chain_toy(spec)
+        draw = _draw()
+        res = draw.draw(inst, self.plans[spec], xy, sequential=True,
+                        border=draw.border_km(inst.polygon), log=lambda *_: None)
+        self.drawn[out] = (spec, draw.drawing(inst, self.plans[spec], res).owner)
+        return True
+
+    def repair(self, src, out, r):
+        import json
+        repair = _repair_module()
+        spec, owner = self.drawn[src]
+        inst, xy, ng = _chain_toy(spec)
+        unit_of, m = inst.units.unit_of, inst.channels["X"].m
+        owner, attempts = repair.repair_channel(
+            inst, self.plans[spec], owner, {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()},
+            dict(unit_of), h0=1, max_zctas=100, time_limit=20.0, log=lambda *_: None, flow=True,
+            keep_support=True, border=repair.draw.border_km(inst.polygon), ng=ng)
+        os.makedirs(out)
+        with open(os.path.join(out, "contig.json"), "w") as fh:
+            json.dump({"channels": {"X": {"repair": attempts}}}, fh, default=str)
+        for name, doc in (("run.json", {"spec": spec}), ("manifest.json", {})):
+            with open(os.path.join(out, name), "w") as fh:
+                json.dump(doc, fh)
+        with open(os.path.join(out, "ledger.csv"), "w") as fh:
+            fh.write("model_channel,state,district,m_rel\n" + "".join(
+                f"X,{unit_of[z]},{j},{m.get(z, 0.0)}\n" for z, j in sorted(owner.items())))
+        open(out + ".log", "w").close()
+        self.repaired[out] = owner
+        return True
+
+    def load(self, folder):
+        import json
+        with open(os.path.join(folder, "run.json")) as fh:
+            spec = json.load(fh)["spec"]
+        return _chain_toy(spec)[0], {"X": self.plans[spec]}, {"X": self.repaired[folder]}
+
+
+def _chain_spec(d: str, name: str, extra: str = "") -> str:
+    path = os.path.join(d, name)
+    with open(path, "w") as fh:
+        fh.write(CHAIN_TOML + extra)
+    return path
+
+
+def _plancheck_main(pc, d, spec, name, steps, *more):
+    import contextlib
+    import io
+    with contextlib.redirect_stdout(io.StringIO()):
+        return pc.main([spec, "--root", d, "--name", name, "--parent", "src", "--plans",
+                        os.path.join(d, "plans"), "--h0", "1", "--max-zctas", "100", *more],
+                       steps=steps)
+
+
+def test_c_bans_a_proved_infeasible_support_and_redraws_it_in_round_1():
+    """Sol's review of #124 (item 9, P1, P2): round 0 to round 1 on `_chain_toy`.  Round 0's
+    repair proves every window on NJ+NY+PA's piece infeasible; C bans it in round 1's copy, with
+    the spec's own ban (NJ) kept, re-plans, redraws and repairs; round 1 leaves nothing, so the
+    loop stops, and the ban records its window and its cost before and after."""
+    import json
+    import tempfile
+    import tomllib
+    pc = _plancheck_module()
+    with tempfile.TemporaryDirectory() as d:
+        spec = _chain_spec(d, "abc.toml", 'replan_rounds = 1\nban_supports = [["NJ"]]\n')
+        steps = _ChainSteps()
+        assert _plancheck_main(pc, d, spec, "run", steps) == 0
+        with open(os.path.join(d, "run-plancheck.json")) as fh:
+            r0, r1 = json.load(fh)
+        (ban,) = r0["bans"]
+        assert (ban["support"], ban["applied"], ban["evidence"]["cause"]) == \
+            (["NJ", "NY", "PA"], True, pc.INFEASIBLE)
+        assert ban["evidence"]["kind"] == "piece" and ban["evidence"]["status"] == "infeasible"
+        assert ban["cost"]["before"] == r0["cost"]["X"] and ban["cost"]["after"] == r1["cost"]["X"]
+        assert ban["cost"]["before"]["objective"] < ban["cost"]["after"]["objective"]
+        with open(os.path.join(d, "_specs", "run-c1.toml"), "rb") as fh:
+            bans = tomllib.load(fh)["channels"]["X"]["ban_supports"]
+        assert sorted(map(sorted, bans)) == [["NJ"], ["NJ", "NY", "PA"]]
+        p1 = steps.plans[os.path.abspath(r1["spec"])]
+        assert frozenset({"NJ", "NY", "PA"}) not in p1.n, p1.n
+        assert r1["left"] == [] and r1["stop"].startswith("no window proved infeasible")
+        assert r1["bans_applied"] == {"X": ["NJ", "NJ+NY+PA"]}
+        with open(os.path.join(d, "run", "run.json")) as fh:
+            stamped = json.load(fh)["plan_check"]
+        assert stamped["rounds"][0]["bans"][0]["cost"]["after"] == r1["cost"]["X"]
+        with open(spec) as fh:
+            assert fh.read().endswith('ban_supports = [["NJ"]]\n')
+
+
+def test_c_reads_its_round_limits_from_the_input_spec_when_round_0_is_reused():
+    """Sol's review of #124 (P1): `--round0` reuses a folder planned by a copy with no C
+    (replan_rounds 0); the input spec's replan_rounds 1 still bans NJ+NY+PA and runs round 1."""
+    import json
+    import tempfile
+    pc = _plancheck_module()
+    with tempfile.TemporaryDirectory() as d:
+        steps = _ChainSteps()
+        a_spec = _chain_spec(d, "a.toml", "replan_rounds = 0\n")
+        assert _plancheck_main(pc, d, a_spec, "pc-A", steps) == 0
+        with open(os.path.join(d, "pc-A-plancheck.json")) as fh:
+            (only,) = json.load(fh)
+        assert only["bans"] == [] and only["left"][0]["cause"] == pc.INFEASIBLE
+        abc = _chain_spec(d, "abc.toml", "replan_rounds = 1\n")
+        assert _plancheck_main(pc, d, abc, "pc-ABC", steps, "--round0",
+                               os.path.join(d, "pc-A")) == 0
+        with open(os.path.join(d, "pc-ABC-plancheck.json")) as fh:
+            r0, r1 = json.load(fh)
+        assert r0["reused"] and r0["limits"] == {"X": 1}
+        assert [b["support"] for b in r0["bans"]] == [["NJ", "NY", "PA"]]
+        assert r1["folder"] == os.path.join(d, "pc-ABC-c1") and r1["left"] == []
+
+
+def test_c_records_a_failed_next_round_as_the_bans_cost_after():
+    """Sol's review of #124 (P2): with NJ+NY banned by the spec, banning NJ+NY+PA leaves the
+    master no plan; round 1 stops "no plan" and the ban's cost after says so."""
+    import json
+    import tempfile
+    pc = _plancheck_module()
+    with tempfile.TemporaryDirectory() as d:
+        spec = _chain_spec(d, "abc.toml", 'replan_rounds = 2\nban_supports = [["NJ", "NY"]]\n')
+        assert _plancheck_main(pc, d, spec, "run", _ChainSteps()) == 0
+        with open(os.path.join(d, "run-plancheck.json")) as fh:
+            r0, r1 = json.load(fh)
+        assert r1["folder"] is None and r1["stop"].startswith("no plan (replan.py exit 1")
+        (ban,) = r0["bans"]
+        assert ban["cost"] == {"before": r0["cost"]["X"], "after": {"failed": r1["stop"]}}
+        with open(os.path.join(d, "run", "run.json")) as fh:
+            assert json.load(fh)["plan_check"]["rounds"][0]["bans"][0]["cost"]["after"] == \
+                {"failed": r1["stop"]}
+
+
+def test_c_never_writes_a_round_copy_over_the_input_spec():
+    """Sol's review of #124 (P1): a round's generated copy that names the input spec through a
+    hard link or a symlink stops the loop before anything is written over it."""
+    import tempfile
+    pc = _plancheck_module()
+    for link in (os.link, os.symlink):
+        with tempfile.TemporaryDirectory() as d:
+            spec = _chain_spec(d, "abc.toml", "replan_rounds = 1\n")
+            with open(spec) as fh:
+                body = fh.read()
+            os.makedirs(os.path.join(d, "_specs"))
+            link(spec, os.path.join(d, "_specs", "run-c1.toml"))
+            try:
+                _plancheck_main(pc, d, spec, "run", _ChainSteps())
+            except SystemExit as e:
+                assert "overwrite the input spec" in str(e), e
+            else:
+                raise AssertionError(f"round 1's copy was written through a {link.__name__}")
+            with open(spec) as fh:
+                assert fh.read() == body
+
+
+def test_c_draws_the_planned_reports_copy_and_its_cached_plans_only():
+    """Sol's review of #124 (P1): `--planned` draws the report's planned copy, never the input
+    spec, and only when the report planned the input spec and its plans are the cache entry of
+    that copy on `--extract`."""
+    import json
+    import tempfile
+    pc = _plancheck_module()
+    run = pc._replan().run
+    with tempfile.TemporaryDirectory() as d:
+        spec = _chain_spec(d, "abc.toml")
+        copy = _chain_spec(d, "abc-planned.toml", "delta = 0.12\n")
+        extract, plans = os.path.join(d, "extract.json.gz"), os.path.join(d, "plans")
+        with open(extract, "w") as fh:
+            fh.write("toy")
+        os.makedirs(plans)
+        key = run.plans_key(copy, extract, plans)
+        open(key, "wb").close()
+        report = os.path.join(d, "abc.json")
+        for doc, why in (({"source_spec": copy, "spec": copy, "plans_file": key}, "planned"),
+                         ({"source_spec": spec, "spec": copy, "plans_file": key + "x"},
+                          "not the cache entry"),
+                         ({"source_spec": spec, "spec": copy, "plans_file": key}, None)):
+            with open(report, "w") as fh:
+                json.dump({**doc, "channels": {}}, fh)
+            steps = _ChainSteps()
+            try:
+                _plancheck_main(pc, d, spec, "run", steps, "--planned", report, "--extract",
+                                extract)
+            except SystemExit as e:
+                assert why and why in str(e), (why, e)
+                assert steps.drew == []
+            else:
+                assert why is None and steps.drew == [copy], steps.drew
+
+
+def test_c_forwards_the_extract_to_replan_run_and_repair():
+    """Sol's review of #124 (P1): each round plans, draws and repairs on `--extract`."""
+    pc = _plancheck_module()
+    a = pc.parser().parse_args(["s.toml", "--root", "r", "--name", "n", "--parent", "p",
+                                "--plans", "pl", "--extract", "/x/toy.json.gz"])
+    steps = pc.Steps(a)
+    for argv in (steps.plan_argv("s.toml", "o.toml", "o.json"), steps.draw_cmd("o.toml", "f", "p"),
+                 steps.repair_cmd("f-draw", "f", 1)):
+        assert argv[argv.index("--extract") + 1] == "/x/toy.json.gz", argv
 
 
 # ------------------------------------------------------------------------------ #123: in parallel

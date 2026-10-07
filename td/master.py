@@ -16,6 +16,7 @@ family 𝒮_c (`td.supports`) and t_{v,S} ∈ [0, 1] per unit of S.  Each row is
     corridor     M_v t_{v,S} ≥ c_v(S) n_S, v a cut vertex of G[S]      §4.2, C6; n_S = 0 if c = ∞
     border       Σ_{S∋v, N(v)∩S={u}} n_S ≤ b_{uv}, free v, u ∈ N(v)    §4.3, C7
     count_cap    Σ_{S∋v} n_S ≤ |Z_v|                                   §4.4, C8
+    ban          n_S = 0, S in the spec's `ban_supports` or `banned`   §4.9 (#124 B, C)
 
 The η rows imply the contact cap Σ_{S∋v} n_S ≤ ⌊1/η_c⌋ (§3.2); it is built explicitly, with the
 same ⌊1/η_c⌋ as `exact_delta`'s k-range (`eta_cap`), so that HiGHS's feasibility tolerance cannot
@@ -121,8 +122,15 @@ def _add_col(model: Model, cost: float, lo: float, hi: float, integer: bool) -> 
     return len(model.cost) - 1
 
 
-def build(inst, channel: str, delta: float | None = None, fam=None) -> Model:
-    """The §3 master of `channel` at δ (the channel's planning δ when None)."""
+def bans(inst, channel: str, banned=()) -> frozenset:
+    """The supports with n_S = 0 (§4.9): the spec's `ban_supports` (#124 C) and `banned`, the
+    caller's (B's lazy cuts, `tools/exp/contig/plancheck.py`)."""
+    return frozenset(inst.channels[channel].spec.ban_supports) | frozenset(map(frozenset, banned))
+
+
+def build(inst, channel: str, delta: float | None = None, fam=None, banned=()) -> Model:
+    """The §3 master of `channel` at δ (the channel's planning δ when None), with n_S = 0 for
+    each support of `bans`."""
     ch = inst.channels[channel]
     cs = ch.spec
     _check_eta(channel, cs.eta)
@@ -177,6 +185,8 @@ def build(inst, channel: str, delta: float | None = None, fam=None) -> Model:
     for v in ch.units:
         rows.append(Row("count_cap", (v,), {model.n_col[s]: 1.0 for s in fam.supports if v in s},
                         -math.inf, float(len(inst.units.zips[v]))))
+    for s in sorted(bans(inst, channel, banned) & set(model.n_col), key=sorted):
+        rows.append(Row("ban", (s,), {model.n_col[s]: 1.0}, -math.inf, 0.0))
     return model
 
 
@@ -379,10 +389,10 @@ def _key(key: tuple) -> str:
 
 
 def plan(inst, channel: str, delta: float | None = None, fam=None, mip_rel_gap: float = 0.0,
-         time_limit: float | None = None) -> tuple:
+         time_limit: float | None = None, banned=()) -> tuple:
     """(Plan or None, solver report): the channel's master solved at δ and decoded.  The plan is
     None when HiGHS ends without an incumbent; the report says why."""
-    model = build(inst, channel, delta, fam)
+    model = build(inst, channel, delta, fam, banned)
     sol = solve(model, mip_rel_gap, time_limit)
     if sol.x is None:
         return None, sol.report()
@@ -424,7 +434,8 @@ def _k_range(inst, ch, v) -> range:
     return range(1, top + 1)
 
 
-def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None) -> Delta:
+def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None,
+                banned=()) -> Delta:
     """The exact δ-MILP of Claim 2 for a channel with whole and clipped units only."""
     ch = inst.channels[channel]
     _check_eta(channel, ch.spec.eta)
@@ -433,6 +444,7 @@ def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None) -
     fam = supports.family(inst, channel) if fam is None else fam
     tau, cs = ch.tau, ch.spec
     floors = supports.corridor_floors(inst, fam)
+    out = bans(inst, channel, banned)
     cost, lower, upper, integer, rows = [1.0], [0.0], [math.inf], [False], []   # column 0 is δ
     cols, coef, units_of, copies_of = {}, {}, {}, {}
 
@@ -448,10 +460,10 @@ def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None) -
         if len(s) == 1 and ch.mode[next(iter(s))] == "clipped":
             v = next(iter(s))
             for k in _k_range(inst, ch, v):         # k copies of {v}, M_v / k each
-                binary((s, k), s, k, (abs(ch.M[v] / k - tau) + mu) / tau)
+                binary((s, k), s, k, (abs(ch.M[v] / k - tau) + mu) / tau, s in out)
         else:                                       # every unit held: t = n ∈ {0, 1}
             mass = math.fsum(ch.M[v] for v in s)
-            blocked = any(ch.M[v] < floors[s, v] for v in s if (s, v) in floors)
+            blocked = any(ch.M[v] < floors[s, v] for v in s if (s, v) in floors) or s in out
             binary((s, 1), s, 1, (abs(mass - tau) + mu) / tau, blocked)
     rows.append(Row("count", (), {c: float(copies_of[key]) for key, c in cols.items()}, cs.k, cs.k))
     for v in ch.units:
@@ -481,11 +493,11 @@ def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None) -
 
 
 def step(inst, channel: str, delta: float, fam=None, mip_rel_gap: float = 1.0,
-         time_limit: float | None = None) -> tuple:
+         time_limit: float | None = None, banned=()) -> tuple:
     """(verdict, report) for the master at δ, objective kept (trap 19): feasible with a validated
     incumbent, infeasible when HiGHS proves it, else unknown (C4).  The step asks only for an
     incumbent, so its default gap stops at the first one."""
-    sol = solve(build(inst, channel, delta, fam), mip_rel_gap, time_limit)
+    sol = solve(build(inst, channel, delta, fam, banned), mip_rel_gap, time_limit)
     if sol.x is not None:
         return "feasible", sol.report()
     return ("infeasible" if sol.status == "infeasible" else "unknown"), sol.report()
@@ -500,7 +512,7 @@ def delta_top(inst, channel: str, fam) -> float:
 
 
 def bisect_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
-                 time_limit: float | None = None, mip_rel_gap: float = 1.0) -> Delta:
+                 time_limit: float | None = None, mip_rel_gap: float = 1.0, banned=()) -> Delta:
     """Bisect on δ with the normal model (Claim 2).  δ is probed at the channel's planning δ, then
     at 0 or at `delta_top`, then halved until the bracket is within `tol`.  An unknown step stops
     the search: the bracket so far is the answer, and the status says unknown."""
@@ -509,7 +521,7 @@ def bisect_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
     steps = []
 
     def probe(d):
-        verdict, rep = step(inst, channel, d, fam, mip_rel_gap, time_limit)
+        verdict, rep = step(inst, channel, d, fam, mip_rel_gap, time_limit, banned)
         steps.append((d, verdict, rep))
         return verdict
 
@@ -551,12 +563,12 @@ def bisect_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
 
 
 def smallest_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
-                   time_limit: float | None = None) -> Delta:
+                   time_limit: float | None = None, banned=()) -> Delta:
     """Exact when the channel has no free unit, else bisection (Claim 2)."""
     ch = inst.channels[channel]
     if any(ch.mode[v] == "free" for v in ch.units):
-        return bisect_delta(inst, channel, fam, tol, time_limit)
-    return exact_delta(inst, channel, fam, time_limit)
+        return bisect_delta(inst, channel, fam, tol, time_limit, banned=banned)
+    return exact_delta(inst, channel, fam, time_limit, banned)
 
 
 # ------------------------------------------------------------------------------ the report

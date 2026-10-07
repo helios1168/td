@@ -391,3 +391,50 @@ def test_margin_false_zeroes_mu_for_that_channel_only():
     s = ["AL", "AR", "AZ"]
     assert supports.margin(inst, "X", s) == 0.0
     assert supports.margin(inst, "Y", s) == 8.0
+
+
+# ------------------------------------------------------------------------------ #124 A: contact
+_UNIT = {"p": "PA", "q": "NJ", "r": "NY", "a": "AL", "b": "AZ", "c": "CO"}
+
+
+def _contact_toy(km: dict, connectors=(), min_km=10.0):
+    """Units named by their ZIPs' first letter (`_UNIT`) on the edges of `km` {(a, b): border
+    km} and `connectors`, all in one state on the polygon graph, `contact_min_km` = `min_km`."""
+    edges = sorted(set(km) | set(connectors))
+    zs = sorted({z for e in edges for z in e})
+    unit_zips = {}
+    for z in zs:
+        unit_zips.setdefault(_UNIT[z[0]], []).append(z)
+    inst = _instance(unit_zips, edges, dict.fromkeys(zs, 1.0), contact_min_km=min_km)
+    inst.polygon = {"vertices": zs, "edges": edges, "state": dict.fromkeys(zs, "X"),
+                    "border": {tuple(sorted(e)): 1000.0 * x for e, x in km.items()},
+                    "connectors": list(connectors), "aland": dict.fromkeys(zs, 1e6)}
+    return inst
+
+
+def test_a_support_joined_only_by_a_border_shorter_than_w_is_excluded():
+    """#124 A: PA and NJ share 9.99999 km of border (999,999 cm, one under M1's 10 km), NJ and NY
+    12 km; with contact_min_km = 10 every support holding PA is a singleton, the family stays
+    closed, and with the key off (0) it is G's family."""
+    inst = _contact_toy({("p0", "q0"): 9.99999, ("q0", "r0"): 12.0})
+    fam = supports.family(inst, "X")
+    assert set(fam.supports) == {frozenset({"PA"}), frozenset({"NJ"}), frozenset({"NY"}),
+                                 frozenset({"NJ", "NY"})}
+    assert fam.adj["PA"] == {"NJ"} and fam.contact.adj["PA"] == set()
+    off = _contact_toy({("p0", "q0"): 9.99999, ("q0", "r0"): 12.0}, min_km=0.0)
+    every = frozenset({"PA", "NJ", "NY"})
+    assert every in supports.family(off, "X") and supports.family(off, "X").contact is None
+    wide = _contact_toy({("p0", "q0"): 10.0, ("q0", "r0"): 12.0})
+    assert every in supports.family(wide, "X")
+
+
+def test_a_connector_counts_only_where_land_would_not_do():
+    """#124 A on connectors (M1's land-passage rule): a0-b0 joins AL and AZ by a connector with no
+    border.  When a0 and b0 are joined by land at least 10 km wide (through CO) within the states,
+    the connector is 0 km and {AL, AZ} is out; when that land is 5 km wide, the connector counts."""
+    land = {("a0", "c0"): 15.0, ("c0", "c1"): 15.0, ("c1", "b0"): 15.0}
+    inst = _contact_toy(land, connectors=[("a0", "b0")])
+    fam = supports.family(inst, "X")
+    assert frozenset({"AL", "AZ"}) not in fam and frozenset({"AL", "AZ", "CO"}) in fam
+    narrow = _contact_toy({e: 5.0 for e in land}, connectors=[("a0", "b0")])
+    assert frozenset({"AL", "AZ"}) in supports.family(narrow, "X")
