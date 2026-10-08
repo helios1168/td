@@ -65,3 +65,14 @@ against [798.74, 1148.19] m_rel; the audit's τ ±15% final-band line is informa
 final_delta is never changed to make it agree (the mandate advisor blocked southatl's 0.1733; it was
 reverted to the default 0.15). MD+DE+WV ($1,924M) passes only under the widened F1 waiver (owner,
 same tab: "Both join MD's waiver district"). Filing with the lander is southatl's relay.
+
+**G3: El Paso coverage-gap neck passes (owner, 2026-10-08 ~05:35, td-research tab, after seeing
+docs/lenses/research-2026-10-08/elpaso_neck.png and texas_ifa_k3.png).** Owner's words: "looks
+great! lets pass it or make an exception. necks caused by empty zips should trigger a fail, that is a
+GREAT looking map". Reading applied (the sentence contradicts itself; "pass it", "make an exception"
+and "GREAT looking map" carry the intent): a neck that exists only because ZCTA polygons do not
+touch across land in no ZCTA (a coverage gap) does NOT fail M1. Applied tonight as: the South Central
+merge and the CONUS IFA merge are gated with the G1 prototype on (TD_NECK_GAP_WIDTH=1, measuring
+width across coverage gaps, #131) and both verdicts are reported; any verdict other than El Paso
+that the flag flips is reported to the owner, not decided. ifa_sc_merge_b moves to tier E with the
+note. Filing in PROBLEM.md / MANDATES.md is the lander's.
