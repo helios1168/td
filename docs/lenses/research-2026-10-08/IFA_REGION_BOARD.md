@@ -31,3 +31,13 @@ Region DECIDED lines, filed here for the record:
 - west: Pacific built from the gated CA K 4 drawing by moving 18 northern CA counties (47 m_rel) to
   OR+WA and re-gating with repair.py, instead of waiting on the tangled 1,800 s CA+OR+WA draw.
 - td-research: CO to western Kansas (owner pick B); band rule relayed to all tabs at 05:16.
+
+
+## CONUS assembly (07:15)
+
+| map | commit | verdict |
+|---|---|---|
+| ifa_midatl_merged_v2 | m5-studio/ifa-ny 1ff8b90 | NJ 3 + PA 4 + NY 5 (ifa_ny_k5_cd, Queens/Nassau closed by a 109-ZIP window); fails M1 on Manhattan only (5.50 km, 40 ZIPs, 5.2% land, 47.5% mass); all 12 in window |
+| ifa_conus_v2 | m5-studio/ifa-conus 38bcd2d | 52 districts, all 33,300 cells owned once, 0 pieces; fails M1 on Manhattan only (El Paso excepted under G3); 51 of 52 in window plus MD+DE+WV waiver; 16 split states; export/ holds the dataset; supersedes ifa_conus_v1 (4572e81) and ifa_conus_nony (da22b24) |
+
+G2 hand dilution (ifa_ny_k5_cd_dilute, 20 Putnam/Westchester ZIPs into the Manhattan district) removed the Manhattan neck but left a 0.77 km strip neck its windows could not close in time (evidence on m5-studio/ifa-ny 1ff8b90). The Queens/Nassau gap-width flip was water gaps, not G3; closed by repair instead.
