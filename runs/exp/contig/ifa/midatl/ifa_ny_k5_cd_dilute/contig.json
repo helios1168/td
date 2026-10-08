@@ -1,0 +1,86 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 2298.98838,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.15,
+      "groups": [
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 13819,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.15,
+          "districts": [
+            "NY#1",
+            "NY#2",
+            "NY#3",
+            "NY#4",
+            "NY#5"
+          ],
+          "free_zctas": 1826,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "drawing supplied by tools/exp/contig/coarse (cd); plan metadata copied from ifa_ny_k5",
+          "objective": null,
+          "rows": 43506,
+          "seconds": 480.02,
+          "status": "connected",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.15,
+              "note": "no incumbent (Time limit reached)",
+              "seconds": 480.02,
+              "status": "unknown"
+            }
+          ],
+          "units": [
+            "NY"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.014608666751146355,
+      "plan_delta": 0.15,
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [
+        "NY#1",
+        "NY#2",
+        "NY#3",
+        "NY#4",
+        "NY#5"
+      ],
+      "single_connector": null,
+      "split_units": [
+        "NY"
+      ],
+      "status": "unknown",
+      "undrawn_zctas": 1826,
+      "vanished_shares": [],
+      "worst_dev": 0.018289030989021397
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.15,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "1 districts in pieces, 2 detached pieces (largest 0.346 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 31474 (ZCTA, fine channel) cells with no row, 0 owned twice, 7 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_ny_k5",
+  "sequential": false
+}

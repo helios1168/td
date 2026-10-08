@@ -1,0 +1,58 @@
+{
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/tools/exp/contig/repair.py /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd_dilute --out /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd_dilute-neck --states NY --window 798.74,1148.19 --time-limit 240",
+  "extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd_dilute-neck",
+  "formulation": "contig_repair",
+  "lane": "contig",
+  "params": {
+    "budget": null,
+    "channels": null,
+    "diag_final_delta": null,
+    "extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "flow": false,
+    "h0": 3,
+    "jobs": 1,
+    "keep_support": false,
+    "label": "",
+    "maps": false,
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plan": {
+      "IFA": {
+        "delta": 0.15,
+        "final_delta": 0.15,
+        "forbid_pairs": [],
+        "free": [
+          "NY"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "states": "NY",
+    "time_limit": 240.0,
+    "window": "798.74,1148.19"
+  },
+  "parent_run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd_dilute",
+  "plans_file": null,
+  "provenance": {
+    "commit": "63c4f22df0cd97f1239c232dec40d0c05d7413a5",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "instance_sha256": "39e2b475c3ab5c6f57c44d10e930fc82569cd0bbf0f5dc65324e592c4a6bea8f",
+    "queued_at": "2026-10-08T11:41:00+00:00"
+  },
+  "run_id": "ifa_ny_k5_cd_dilute-neck",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/_specs/ifa_ny_k5.toml",
+    "sha256": "77d972533631be434b0aa4c8dab31772d87cf507d1d881a540cf633e8b57c04b"
+  },
+  "started_at": "2026-10-08T11:41:00+00:00",
+  "status": "aborted",
+  "stop_reason": "hard_deadline_no_windows_kept",
+  "audit": "not_completed",
+  "m1": "not_completed"
+}

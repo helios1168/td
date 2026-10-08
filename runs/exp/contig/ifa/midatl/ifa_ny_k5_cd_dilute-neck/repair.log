@@ -1,0 +1,207 @@
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    constructed: a connected drawing in the band, objective 2884.63, 0.1s
+    solve 1 (gap 0.05): Optimal, objective 2855.69, 0.2s, 706 rows
+    solve 2 (gap 1e-06): Optimal, objective 2855.69, 0.3s, 706 rows
+  IFA window of 66 ZCTAs (dag): 2 districts, 289 columns -> connected in 0.3s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    given: a connected drawing in the band, objective 2855.69, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2855.69, 0.0s, 706 rows
+    solve 2 (gap 1e-06): Optimal, objective 2855.69, 0.0s, 706 rows
+  IFA window of 66 ZCTAs: 2 districts, 289 columns -> optimal in 0.0s, 2 solves, 0 cuts
+IFA: neck of NY#2 (12 ZCTAs), ball h = 3, |W| = 66: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.3s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    constructed: a connected drawing in the band, objective 2875.99, 0.1s
+    solve 1 (gap 0.05): Optimal, objective 2871.57, 0.2s, 1657 rows
+    solve 2 (gap 1e-06): Optimal, objective 2871.57, 0.3s, 1657 rows
+  IFA window of 163 ZCTAs (dag): 2 districts, 723 columns -> connected in 0.3s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    given: a connected drawing in the band, objective 2871.57, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2871.57, 0.0s, 1657 rows
+    solve 2 (gap 1e-06): Optimal, objective 2871.57, 0.0s, 1657 rows
+  IFA window of 163 ZCTAs: 2 districts, 723 columns -> optimal in 0.0s, 2 solves, 0 cuts
+IFA: neck of NY#2 (12 ZCTAs), ball h = 6, |W| = 163: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.3s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    constructed: a connected drawing in the band, objective 4958.92, 0.2s
+    solve 1 (gap 0.05): Optimal, objective 4955.37, 6.9s, 9122 rows
+    solve 2 (gap 1e-06): Optimal, objective 4955.37, 13.5s, 9122 rows
+  IFA window of 473 ZCTAs (dag): 4 districts, 3104 columns -> connected in 13.5s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    given: a connected drawing in the band, objective 4955.37, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 4955.37, 1.3s, 9122 rows
+    solve 2 (gap 1e-06): Optimal, objective 4955.37, 2.6s, 9122 rows
+  IFA window of 473 ZCTAs: 4 districts, 3104 columns -> optimal in 2.6s, 2 solves, 0 cuts
+IFA: neck of NY#2 (12 ZCTAs), ball h = 12, |W| = 473: optimal, necks 2 -> 2 in its districts, 1 neck cuts, not kept, 16.1s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#5 has no seed
+    solve 1 (gap 0.05): Infeasible, objective inf, 0.2s, 34130 rows
+  IFA window of 1426 ZCTAs (dag): 5 districts, 10814 columns -> unknown in 0.2s, 1 solves, 0 cuts (the geodesic-DAG restriction is infeasible)
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#5 has no seed
+    solve 1 (gap 0.05): Time limit reached, objective 8300.47, 253.4s, 34132 rows
+      113 detached components: sizes [(57, 89.168, 'NY#4', 'NY', '12008'), (66, 12.894, 'NY#2', 'NY', '12036'), (74, 13.4669, 'NY#5', 'NY', '12116'), (125, 45.9422, 'NY#1', 'NY', '12020')]; band [798.7, 1005]
+      no repaired drawing: NY#4's bodies do not join
+  IFA window of 1426 ZCTAs: 5 districts, 10814 columns -> unknown in 265.4s, 1 solves, 37826 cuts (stopped at solve 1 (Time limit reached) with a detached incumbent)
+IFA: neck of NY#2 (12 ZCTAs), ball h = 24, |W| = 1426: unknown, necks 2 -> 2 in its districts, 1 neck cuts, not kept, 265.6s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#4's bodies do not join
+    solve 1 (gap 0.05): Time limit reached, objective inf, 64.7s, 35467 rows
+  IFA window of 1484 ZCTAs (dag): 5 districts, 11243 columns -> unknown in 64.7s, 1 solves, 0 cuts (no incumbent (Time limit reached))
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#4's bodies do not join
+    solve 1 (gap 0.05): Time limit reached, objective 9061.7, 175.4s, 35470 rows
+      17 detached components: sizes [(30, 31.3482, 'NY#2', 'NY', '10901'), (48, 90.4972, 'NY#2', 'NY', '12018'), (61, 6.2254, 'NY#2', 'NY', '12922'), (78, 61.537, 'NY#3', 'NY', '10910')]; band [798.7, 1005]
+      no repaired drawing: NY#4's bodies do not join
+  IFA window of 1484 ZCTAs: 5 districts, 11243 columns -> unknown in 176.2s, 1 solves, 6592 cuts (stopped at solve 1 (Time limit reached) with a detached incumbent)
+IFA: neck of NY#2 (12 ZCTAs), ball h = 26, |W| = 1484: unknown, necks 2 -> 2 in its districts, 1 neck cuts, not kept, 240.9s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#2's bodies do not join
+    solve 1 (gap 0.05): Infeasible, objective inf, 0.0s, 16 rows
+  IFA window of 2 ZCTAs (dag): 2 districts, 8 columns -> unknown in 0.0s, 1 solves, 0 cuts (the geodesic-DAG restriction is infeasible)
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#2's bodies do not join
+    solve 1 (gap 0.05): Infeasible, objective inf, 0.0s, 16 rows
+  IFA window of 2 ZCTAs: 2 districts, 8 columns -> infeasible in 0.0s, 1 solves, 0 cuts (proved at solve 1)
+IFA: neck of NY#2 (12 ZCTAs), corridor slack = 0, |W| = 2: infeasible, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.0s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#2's bodies do not join
+    solve 1 (gap 0.05): Optimal, objective 2851.85, 0.0s, 97 rows
+      2 detached components: sizes [(1, 0.0, 'NY#5', 'body', '@NY#5#2'), (7, 8.1041, 'NY#2', 'NY+body', '10535')]; band [798.7, 1005]
+      no repaired drawing: NY#2's bodies do not join
+    solve 2 (gap 0.05): Infeasible, objective inf, 0.0s, 127 rows
+  IFA window of 12 ZCTAs (dag): 2 districts, 46 columns -> unknown in 0.0s, 2 solves, 30 cuts (the geodesic-DAG restriction is infeasible)
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#2's bodies do not join
+    solve 1 (gap 0.05): Optimal, objective 2851.85, 0.0s, 97 rows
+      2 detached components: sizes [(1, 0.0, 'NY#5', 'body', '@NY#5#2'), (7, 8.1041, 'NY#2', 'NY+body', '10535')]; band [798.7, 1005]
+      no repaired drawing: NY#2's bodies do not join
+    solve 2 (gap 0.05): Infeasible, objective inf, 0.0s, 127 rows
+  IFA window of 12 ZCTAs: 2 districts, 46 columns -> infeasible in 0.0s, 2 solves, 30 cuts (proved at solve 2)
+IFA: neck of NY#2 (12 ZCTAs), corridor slack = 1, |W| = 12: infeasible, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.0s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    constructed: a connected drawing in the band, objective 2768, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2707.93, 0.0s, 332 rows
+    solve 2 (gap 1e-06): Optimal, objective 2707.93, 0.0s, 332 rows
+  IFA window of 31 ZCTAs (dag): 2 districts, 135 columns -> connected in 0.0s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    given: a connected drawing in the band, objective 2707.93, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2707.93, 0.0s, 332 rows
+    solve 2 (gap 1e-06): Optimal, objective 2707.93, 0.0s, 332 rows
+  IFA window of 31 ZCTAs: 2 districts, 135 columns -> optimal in 0.0s, 2 solves, 0 cuts
+IFA: neck of NY#2 (12 ZCTAs), corridor slack = 2, |W| = 31: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.0s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    constructed: a connected drawing in the band, objective 2898.88, 0.1s
+    solve 1 (gap 0.05): Optimal, objective 2890.83, 0.1s, 722 rows
+    solve 2 (gap 1e-06): Optimal, objective 2890.83, 0.1s, 722 rows
+  IFA window of 67 ZCTAs (dag): 2 districts, 298 columns -> connected in 0.1s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    given: a connected drawing in the band, objective 2890.83, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2890.83, 0.0s, 722 rows
+    solve 2 (gap 1e-06): Optimal, objective 2890.83, 0.0s, 722 rows
+  IFA window of 67 ZCTAs: 2 districts, 298 columns -> optimal in 0.0s, 2 solves, 0 cuts
+IFA: neck of NY#2 (12 ZCTAs), corridor slack = 4, |W| = 67: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.1s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    constructed: a connected drawing in the band, objective 2918.92, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2910.02, 0.0s, 1130 rows
+    solve 2 (gap 1e-06): Optimal, objective 2910.02, 0.0s, 1130 rows
+  IFA window of 108 ZCTAs (dag): 2 districts, 480 columns -> connected in 0.0s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    given: a connected drawing in the band, objective 2910.02, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 2910.02, 0.0s, 1130 rows
+    solve 2 (gap 1e-06): Optimal, objective 2910.02, 0.0s, 1130 rows
+  IFA window of 108 ZCTAs: 2 districts, 480 columns -> optimal in 0.0s, 2 solves, 0 cuts
+IFA: neck of NY#2 (12 ZCTAs), corridor slack = 8, |W| = 108: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.1s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#3's bodies do not join
+    solve 1 (gap 0.05): Optimal, objective 3873.33, 0.2s, 3947 rows
+    the solve 1 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 2 (gap 0.05): Optimal, objective 3873.33, 0.4s, 3963 rows
+    the solve 2 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.50 km wide cuts off 39 ZIPs (10001...), 5.1% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 3 (gap 0.05): Optimal, objective 3873.94, 0.8s, 3977 rows
+    the solve 3 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.54 km wide cuts off 41 ZIPs (10001...), 5.5% of its land area and 47.0% of its mass; cut 10025-10026 0.86 km, 10025-10027 1.33 km, 10026-10029 1.41 km, 10029-10035 1.94 km
+    solve 4 (gap 0.05): Optimal, objective 3873.94, 1.2s, 3991 rows
+    the solve 4 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.54 km wide cuts off 40 ZIPs (10001...), 5.4% of its land area and 47.0% of its mass; cut 10025-10026 0.86 km, 10025-10027 1.33 km, 10026-10029 1.41 km, 10029-10035 1.94 km
+    solve 5 (gap 0.05): Optimal, objective 3876.27, 3.4s, 4003 rows
+      1 detached components: sizes [(1, 0.0, 'NY#3', 'body', '@NY#3#3')]; band [798.7, 1005]
+      no repaired drawing: NY#3's bodies do not join
+    solve 6 (gap 0.05): Optimal, objective 3876.56, 6.8s, 4004 rows
+    the solve 6 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.99 km wide cuts off 50 ZIPs (10001...), 7.9% of its land area and 46.4% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km, 10451-10454 1.20 km, 10454-10455 2.23 km, 10454-10474 0.51 km
+    solve 7 (gap 0.05): Optimal, objective 3876.87, 11.6s, 4020 rows
+    the solve 7 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.99 km wide cuts off 49 ZIPs (10001...), 7.5% of its land area and 46.0% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km, 10451-10454 1.20 km, 10454-10455 2.23 km, 10454-10474 0.51 km
+    solve 8 (gap 0.05): Optimal, objective 3877.31, 17.6s, 4038 rows
+    the solve 8 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.99 km wide cuts off 50 ZIPs (10001...), 7.4% of its land area and 46.4% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km, 10451-10454 1.20 km, 10454-10455 2.23 km, 10454-10474 0.51 km
+    solve 9 (gap 0.05): Optimal, objective 3877.57, 23.0s, 4058 rows
+    the solve 9 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 46 ZIPs (10001...), 7.0% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 10 (gap 0.05): Optimal, objective 3877.88, 33.3s, 4086 rows
+    the solve 10 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 1.33 km wide cuts off 39 ZIPs (10001...), 5.3% of its land area and 47.5% of its mass; cut 10025-10027 1.33 km
+    solve 11 (gap 0.05): Optimal, objective 3877.88, 42.4s, 4104 rows
+    the solve 11 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 1.33 km wide cuts off 38 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10025-10027 1.33 km
+    solve 12 (gap 0.05): Optimal, objective 3877.94, 51.4s, 4120 rows
+    the solve 12 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 1.33 km wide cuts off 38 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10025-10027 1.33 km
+    solve 13 (gap 0.05): Time limit reached, objective 3877.94, 60.0s, 4140 rows
+    the solve 13 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 1.33 km wide cuts off 37 ZIPs (10001...), 5.0% of its land area and 47.5% of its mass; cut 10025-10027 1.33 km
+  IFA window of 279 ZCTAs (dag): 3 districts, 1495 columns -> unknown in 60.1s, 13 solves, 1 cuts (stopped at solve 13 (Time limit reached) with a necked incumbent)
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#3's bodies do not join
+    solve 1 (gap 0.05): Optimal, objective 3873.33, 0.4s, 3947 rows
+    the solve 1 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 2 (gap 0.05): Optimal, objective 3873.33, 0.6s, 3963 rows
+    the solve 2 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.50 km wide cuts off 39 ZIPs (10001...), 5.1% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 3 (gap 0.05): Optimal, objective 3873.94, 1.1s, 3977 rows
+    the solve 3 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.54 km wide cuts off 41 ZIPs (10001...), 5.5% of its land area and 47.0% of its mass; cut 10025-10026 0.86 km, 10025-10027 1.33 km, 10026-10029 1.41 km, 10029-10035 1.94 km
+    solve 4 (gap 0.05): Optimal, objective 3873.94, 1.9s, 3991 rows
+    the solve 4 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 5.54 km wide cuts off 40 ZIPs (10001...), 5.4% of its land area and 47.0% of its mass; cut 10025-10026 0.86 km, 10025-10027 1.33 km, 10026-10029 1.41 km, 10029-10035 1.94 km
+    solve 5 (gap 0.05): Optimal, objective 3874.19, 6.2s, 4003 rows
+      1 detached components: sizes [(60, 456.1774, 'NY#2', 'NY', '10451')]; band [798.7, 1005]
+      no repaired drawing: no move helps NY#2 (412.531 against [798.74, 1004.86])
+    solve 6 (gap 0.05): Optimal, objective 3874.32, 7.1s, 4183 rows
+      1 detached components: sizes [(2, 0.0485, 'NY#3', 'NY', '10028')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 7 (gap 0.05): Optimal, objective 3874.33, 8.5s, 4189 rows
+      1 detached components: sizes [(2, 0.0485, 'NY#5', 'NY', '10028')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 8 (gap 0.05): Optimal, objective 3874.72, 12.5s, 4217 rows
+      1 detached components: sizes [(2, 0.0, 'NY#3', 'NY', '10023')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 9 (gap 0.05): Optimal, objective 3874.74, 17.8s, 4227 rows
+      1 detached components: sizes [(2, 0.0, 'NY#5', 'NY', '10023')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 10 (gap 0.05): Optimal, objective 3874.75, 24.0s, 4259 rows
+      1 detached components: sizes [(12, 0.4485, 'NY#3', 'NY', '10025')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 11 (gap 0.05): Optimal, objective 3874.86, 28.4s, 4283 rows
+      1 detached components: sizes [(12, 0.4485, 'NY#5', 'NY', '10025')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 12 (gap 0.05): Optimal, objective 3875.05, 34.4s, 4403 rows
+      1 detached components: sizes [(64, 456.1774, 'NY#2', 'NY', '10032')]; band [798.7, 1005]
+      no repaired drawing: no move helps NY#2 (412.531 against [798.74, 1004.86])
+    solve 13 (gap 0.05): Optimal, objective 3875.11, 48.5s, 4531 rows
+    the solve 13 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 46 ZIPs (10001...), 6.6% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 14 (gap 0.05): Optimal, objective 3875.17, 56.4s, 4559 rows
+    the solve 14 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 44 ZIPs (10001...), 6.4% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 15 (gap 0.05): Optimal, objective 3875.17, 64.7s, 4587 rows
+    the solve 15 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 45 ZIPs (10001...), 6.5% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 16 (gap 0.05): Optimal, objective 3875.39, 74.1s, 4617 rows
+      1 detached components: sizes [(63, 464.469, 'NY#2', 'NY', '10451')]; band [798.7, 1005]
+      no repaired drawing: no move helps NY#2 (412.531 against [798.74, 1004.86])
+    solve 17 (gap 0.05): Optimal, objective 3875.43, 85.4s, 4806 rows
+    the solve 17 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 1.33 km wide cuts off 39 ZIPs (10001...), 5.1% of its land area and 47.5% of its mass; cut 10025-10027 1.33 km
+    solve 18 (gap 0.05): Optimal, objective 3875.43, 96.8s, 4824 rows
+    the solve 18 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 44 ZIPs (10001...), 6.3% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 19 (gap 0.05): Optimal, objective 3875.43, 109.4s, 4850 rows
+      1 detached components: sizes [(67, 464.469, 'NY#2', 'NY', '10032')]; band [798.7, 1005]
+      no repaired drawing: no move helps NY#2 (412.531 against [798.74, 1004.86])
+    solve 20 (gap 0.05): Optimal, objective 3875.48, 122.5s, 5051 rows
+    the solve 20 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 44 ZIPs (10001...), 6.3% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 21 (gap 0.05): Optimal, objective 3875.71, 134.8s, 5081 rows
+      2 detached components: sizes [(2, 0.7419, 'NY#3', 'NY', '10024'), (76, 456.6744, 'NY#2', 'NY', '10025')]; band [798.7, 1005]
+    the repaired drawing has 1 neck(s) to lose: 0 cuts added (none it breaks); IFA/NY#2: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.4% of its land area and 49.3% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    solve 22 (gap 0.05): Optimal, objective 3875.72, 147.9s, 5241 rows
+    the solve 22 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 43 ZIPs (10001...), 6.2% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 23 (gap 0.05): Optimal, objective 3875.72, 167.4s, 5275 rows
+    the solve 23 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 42 ZIPs (10001...), 6.0% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+    solve 24 (gap 0.05): Time limit reached, objective 3875.77, 179.9s, 5307 rows
+    the solve 24 drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 2.06 km wide cuts off 43 ZIPs (10001...), 6.2% of its land area and 47.5% of its mass; cut 10031-10032 1.29 km, 10032-10039 0.01 km, 10033-10039 0.76 km
+  IFA window of 279 ZCTAs: 3 districts, 1495 columns -> unknown in 180.0s, 24 solves, 1078 cuts (stopped at solve 24 (Time limit reached) with a necked incumbent)
+IFA: neck of NY#2 (12 ZCTAs), corridor slack = 16, |W| = 279: unknown, necks 2 -> 2 in its districts, 14 neck cuts, not kept, 240.1s
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#2: neck 0.77 km wide cuts off 12 ZIPs (10505...), 34.4% of its land area and 0.5% of its mass; cut 10549-10598 0.77 km
+    no constructed drawing: NY#1's bodies do not join

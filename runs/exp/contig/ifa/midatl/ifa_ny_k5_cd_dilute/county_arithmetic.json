@@ -1,0 +1,47 @@
+[
+  {
+    "county": "Putnam",
+    "donor": "IFA_05",
+    "zips": 9,
+    "m_rel": 7.452791,
+    "usd_millions": 9.330657003832838,
+    "land_km2": 581.861636,
+    "donor_after_m_rel": 817.30530931,
+    "donor_floor": 798.74,
+    "floor_break": 0,
+    "whole_county_components_donor_recipient": [
+      2,
+      2
+    ]
+  },
+  {
+    "county": "Rockland",
+    "donor": "IFA_05",
+    "zips": 26,
+    "m_rel": 31.34819842,
+    "usd_millions": 39.246946163539874,
+    "land_km2": 449.938023,
+    "donor_after_m_rel": 793.40990189,
+    "donor_floor": 798.74,
+    "floor_break": 5.3300981099999944,
+    "whole_county_components_donor_recipient": [
+      2,
+      2
+    ]
+  },
+  {
+    "county": "Remaining Westchester",
+    "donor": "IFA_05",
+    "zips": 39,
+    "m_rel": 146.1263688,
+    "usd_millions": 182.94556046028666,
+    "land_km2": 802.37013,
+    "donor_after_m_rel": 678.63173151,
+    "donor_floor": 798.74,
+    "floor_break": 120.10826849,
+    "whole_county_components_donor_recipient": [
+      1,
+      1
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+SKIP exhausted Manhattan neck: NY#2 10001 (40 ZIPs)
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#3: neck 7.48 km wide cuts off 41 ZIPs (11004...), 45.9% of its land area and 68.8% of its mass; cut 11361-11362 0.90 km, 11362-11364 3.19 km, 11362-11427 0.04 km, 11426-11427 2.48 km, 11426-11428 0.87 km
+    the constructed drawing has 2 neck(s) to lose: 2 cuts added; IFA/NY#1: neck 7.38 km wide cuts off 23 ZIPs (11096...), 5.2% of its land area and 4.4% of its mass; cut 11520-11566 4.86 km, 11566-11575 2.52 km
+    solve 1 (gap 0.05): Optimal, objective 3946.26, 0.6s, 1648 rows
+    solve 2 (gap 1e-06): Optimal, objective 3946.26, 1.1s, 1648 rows
+  IFA window of 109 ZCTAs (dag): 3 districts, 598 columns -> connected in 1.1s, 2 solves, 0 cuts
+    the map's drawing has 1 neck(s) to lose: 1 cuts added; IFA/NY#3: neck 7.48 km wide cuts off 41 ZIPs (11004...), 45.9% of its land area and 68.8% of its mass; cut 11361-11362 0.90 km, 11362-11364 3.19 km, 11362-11427 0.04 km, 11426-11427 2.48 km, 11426-11428 0.87 km
+    given: a connected drawing in the band, objective 3946.26, 0.0s
+    the constructed drawing has 2 neck(s) to lose: 2 cuts added; IFA/NY#1: neck 7.38 km wide cuts off 23 ZIPs (11096...), 5.2% of its land area and 4.4% of its mass; cut 11520-11566 4.86 km, 11566-11575 2.52 km
+    kept: a connected drawing in the band, objective 3946.26, 0.0s
+    solve 1 (gap 0.05): Optimal, objective 3946.26, 0.7s, 1648 rows
+    solve 2 (gap 1e-06): Optimal, objective 3946.26, 1.4s, 1648 rows
+  IFA window of 109 ZCTAs: 3 districts, 598 columns -> optimal in 1.4s, 2 solves, 0 cuts
+IFA: neck of NY#3 (41 ZCTAs), ball h = 3, |W| = 109: optimal, necks 2 -> 1 in its districts, 3 neck cuts, kept, 2.6s
+SKIP exhausted Manhattan neck: NY#2 10001 (40 ZIPs)
+ifa_ny_k5 (repair of /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd): M1 fail (0 districts in pieces, 0 detached pieces (largest 0 τ), 1 necks, 7482 channel ZCTAs with no owner, 23992 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1); audit fail

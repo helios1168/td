@@ -1,0 +1,17 @@
+{
+  "completed_windows": [
+    "IFA: neck of NY#2 (12 ZCTAs), ball h = 3, |W| = 66: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.3s",
+    "IFA: neck of NY#2 (12 ZCTAs), ball h = 6, |W| = 163: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.3s",
+    "IFA: neck of NY#2 (12 ZCTAs), ball h = 12, |W| = 473: optimal, necks 2 -> 2 in its districts, 1 neck cuts, not kept, 16.1s",
+    "IFA: neck of NY#2 (12 ZCTAs), ball h = 24, |W| = 1426: unknown, necks 2 -> 2 in its districts, 1 neck cuts, not kept, 265.6s",
+    "IFA: neck of NY#2 (12 ZCTAs), ball h = 26, |W| = 1484: unknown, necks 2 -> 2 in its districts, 1 neck cuts, not kept, 240.9s",
+    "IFA: neck of NY#2 (12 ZCTAs), corridor slack = 0, |W| = 2: infeasible, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.0s",
+    "IFA: neck of NY#2 (12 ZCTAs), corridor slack = 1, |W| = 12: infeasible, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.0s",
+    "IFA: neck of NY#2 (12 ZCTAs), corridor slack = 2, |W| = 31: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.0s",
+    "IFA: neck of NY#2 (12 ZCTAs), corridor slack = 4, |W| = 67: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.1s",
+    "IFA: neck of NY#2 (12 ZCTAs), corridor slack = 8, |W| = 108: optimal, necks 1 -> 1 in its districts, 1 neck cuts, not kept, 0.1s",
+    "IFA: neck of NY#2 (12 ZCTAs), corridor slack = 16, |W| = 279: unknown, necks 2 -> 2 in its districts, 14 neck cuts, not kept, 240.1s"
+  ],
+  "last_window": "corridor slack 32, interrupted before result; not kept",
+  "result": "No windows kept. No output ledger generated. Source still has strip and Queens/Nassau necks under default gate."
+}

@@ -1,0 +1,92 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 /tmp/iss/ifa/ny_qn_wrapper.py /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd --out /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd-qn --states NY --window 798.74,1148.19 --time-limit 240 --budget 540 --jobs 1",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+  "finished_at": "2026-10-08T11:41:23+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd-qn",
+  "formulation": "contig_repair",
+  "lane": "contig",
+  "m1": "fail",
+  "notes": {
+    "argv": [
+      "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd",
+      "--out",
+      "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd-qn",
+      "--states",
+      "NY",
+      "--window",
+      "798.74,1148.19",
+      "--time-limit",
+      "240",
+      "--budget",
+      "540",
+      "--jobs",
+      "1"
+    ],
+    "audit_logs": [
+      "audit_default.log",
+      "audit_gap1.log"
+    ],
+    "gate": "Default; TD_NECK_GAP_WIDTH unset.",
+    "repair_source": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/tools/exp/contig/repair.py",
+    "skip": "Exhausted Manhattan neck whose cut-off side contains ZIP 10001; unchanged exemption semantics.",
+    "wrapper": "/tmp/iss/ifa/ny_qn_wrapper.py",
+    "wrapper_copy": "repair_wrapper.py"
+  },
+  "params": {
+    "budget": 540.0,
+    "channels": null,
+    "diag_final_delta": null,
+    "extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "flow": false,
+    "h0": 3,
+    "jobs": 1,
+    "keep_support": false,
+    "label": "",
+    "maps": false,
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plan": {
+      "IFA": {
+        "delta": 0.15,
+        "final_delta": 0.15,
+        "forbid_pairs": [],
+        "free": [
+          "NY"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "states": "NY",
+    "time_limit": 240.0,
+    "window": "798.74,1148.19"
+  },
+  "parent_run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd",
+  "plans_file": null,
+  "provenance": {
+    "commit": "63c4f22df0cd97f1239c232dec40d0c05d7413a5",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "instance_sha256": "39e2b475c3ab5c6f57c44d10e930fc82569cd0bbf0f5dc65324e592c4a6bea8f",
+    "queued_at": "2026-10-08T11:41:18+00:00"
+  },
+  "run_id": "ifa_ny_k5_cd-qn",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/_specs/ifa_ny_k5.toml",
+    "sha256": "77d972533631be434b0aa4c8dab31772d87cf507d1d881a540cf633e8b57c04b"
+  },
+  "started_at": "2026-10-08T11:41:18+00:00",
+  "status": "done",
+  "stop_reason": "repaired",
+  "repair_actual_extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+  "extract_normalization_note": "State NY extract for regional merge; repair used full CONUS extract; ledger unchanged.",
+  "ledger_normalization": {
+    "original_sha256": "669829b4faaf6037cb621cf5de6e0b1151d80a0a33d2a0c41186784bff11eab5",
+    "removed_non_ny_unowned_rows": 7482,
+    "note": "Full-extract unowned rows removed for state merge; all NY assignments unchanged."
+  }
+}

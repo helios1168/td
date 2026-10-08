@@ -1,0 +1,276 @@
+{
+  "arm": "arm1+repair",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 1402.61671,
+      "cut_border_km_before_repair": 1461.85365,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "groups": [
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 13819,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.15,
+          "districts": [
+            "NY#1",
+            "NY#2",
+            "NY#3",
+            "NY#4",
+            "NY#5"
+          ],
+          "free_zctas": 1826,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "drawing supplied by tools/exp/contig/coarse (cd); plan metadata copied from ifa_ny_k5",
+          "objective": null,
+          "rows": 43506,
+          "seconds": 480.02,
+          "status": "connected",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.15,
+              "note": "no incumbent (Time limit reached)",
+              "seconds": 480.02,
+              "status": "unknown"
+            }
+          ],
+          "units": [
+            "NY"
+          ]
+        },
+        {
+          "border_km": 54.15003,
+          "bound": 3946.261619692107,
+          "columns": 598,
+          "cuts": 0,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "NY#1",
+            "NY#2",
+            "NY#3"
+          ],
+          "free_zctas": 109,
+          "gap": 0.0,
+          "iterations": 2,
+          "moment": 19775.497719165833,
+          "neck_cuts": 3,
+          "neck_exempt": [
+            "NY#2"
+          ],
+          "necks_cut": [
+            "IFA/NY#3: neck 7.48 km wide cuts off 41 ZIPs (11004...), 45.9% of its land area and 68.8% of its mass; cut 11361-11362 0.90 km, 11362-11364 3.19 km, 11362-11427 0.04 km, 11426-11427 2.48 km, 11426-11428 0.87 km",
+            "IFA/NY#1: neck 7.38 km wide cuts off 23 ZIPs (11096...), 5.2% of its land area and 4.4% of its mass; cut 11520-11566 4.86 km, 11566-11575 2.52 km",
+            "IFA/NY#3: neck 7.65 km wide cuts off 2 ZIPs (11724...), 7.0% of its land area and 2.8% of its mass; cut 11724-11791 3.59 km, 11724-11797 0.56 km, 11743-11797 3.50 km"
+          ],
+          "note": "",
+          "objective": 3946.261619692107,
+          "rows": 1648,
+          "seconds": 2.56,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 1.14,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 1.42,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "NY"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.046287828989953754,
+      "necks_left": [
+        "NY#2 10001 (40 ZCTAs, 5.50 km)"
+      ],
+      "plan_delta": 0.15,
+      "repair": [
+        {
+          "after": {
+            "cuts": 4,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.05940742139833932
+          },
+          "before": {
+            "cuts": 4,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.13078143426142774
+          },
+          "bound": 3946.261619692107,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "NY#3 11004 (41 ZCTAs)"
+          ],
+          "districts": [
+            "NY#1",
+            "NY#2",
+            "NY#3"
+          ],
+          "flow": false,
+          "gap": 0.0,
+          "group": {
+            "border_km": 54.15003,
+            "bound": 3946.261619692107,
+            "columns": 598,
+            "cuts": 0,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "NY#1",
+              "NY#2",
+              "NY#3"
+            ],
+            "free_zctas": 109,
+            "gap": 0.0,
+            "iterations": 2,
+            "moment": 19775.497719165833,
+            "neck_cuts": 3,
+            "neck_exempt": [
+              "NY#2"
+            ],
+            "necks_cut": [
+              "IFA/NY#3: neck 7.48 km wide cuts off 41 ZIPs (11004...), 45.9% of its land area and 68.8% of its mass; cut 11361-11362 0.90 km, 11362-11364 3.19 km, 11362-11427 0.04 km, 11426-11427 2.48 km, 11426-11428 0.87 km",
+              "IFA/NY#1: neck 7.38 km wide cuts off 23 ZIPs (11096...), 5.2% of its land area and 4.4% of its mass; cut 11520-11566 4.86 km, 11566-11575 2.52 km",
+              "IFA/NY#3: neck 7.65 km wide cuts off 2 ZIPs (11724...), 7.0% of its land area and 2.8% of its mass; cut 11724-11791 3.59 km, 11724-11797 0.56 km, 11743-11797 3.50 km"
+            ],
+            "note": "",
+            "objective": 3946.261619692107,
+            "rows": 1648,
+            "seconds": 2.56,
+            "status": "optimal",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "",
+                "seconds": 1.14,
+                "status": "connected"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "",
+                "seconds": 1.42,
+                "status": "optimal"
+              }
+            ],
+            "units": [
+              "NY"
+            ]
+          },
+          "h": 3,
+          "keep_support": false,
+          "kept": true,
+          "kind": "neck",
+          "neck_aware": true,
+          "neck_cuts": 3,
+          "neck_exempt": [
+            "NY#2"
+          ],
+          "necks_after": 1,
+          "necks_before": 2,
+          "note": "",
+          "objective": 3946.261619692107,
+          "pieces_after": 0,
+          "pieces_before": 0,
+          "seconds": 2.6,
+          "shape": "ball",
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 1.14,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 1.42,
+              "status": "optimal"
+            }
+          ],
+          "window_zctas": 109
+        }
+      ],
+      "repair_band": {
+        "delta": 0.15,
+        "worst_dev": 0.05940742139833932
+      },
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [
+        "NY#1",
+        "NY#2",
+        "NY#3",
+        "NY#4",
+        "NY#5"
+      ],
+      "single_connector": {
+        "NY#1": [
+          "06390-11957"
+        ]
+      },
+      "source_group_delta_needed": 0.15,
+      "split_units": [
+        "NY"
+      ],
+      "status": "connected",
+      "undrawn_zctas": 1826,
+      "vanished_shares": [],
+      "worst_dev": 0.059407421398339356
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.15,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 7482 channel ZCTAs with no owner, 23992 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "repair": {
+    "budget": 540.0,
+    "commit": "63c4f22",
+    "flow": false,
+    "h0": 3,
+    "keep_support": false,
+    "label": "",
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plans_file": null,
+    "time_limit": 240.0
+  },
+  "repair_of": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd",
+  "scenario": "ifa_ny_k5",
+  "sequential": false
+}

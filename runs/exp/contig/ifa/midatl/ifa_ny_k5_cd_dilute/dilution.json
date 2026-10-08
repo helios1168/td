@@ -1,0 +1,69 @@
+{
+  "status": "failed_candidate_not_landable",
+  "owner_decision": "G2",
+  "gate": "TD_NECK_GAP_WIDTH=1",
+  "source": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd",
+  "county": "Westchester (36119) and Putnam (36079), subsets preserving donor connection and richest ZIPs",
+  "from": "IFA_05",
+  "to": "IFA_02",
+  "zips": [
+    "10505",
+    "10507",
+    "10512",
+    "10514",
+    "10517",
+    "10519",
+    "10532",
+    "10535",
+    "10537",
+    "10540",
+    "10546",
+    "10547",
+    "10549",
+    "10570",
+    "10578",
+    "10579",
+    "10588",
+    "10594",
+    "10595",
+    "10598"
+  ],
+  "m_rel": 24.5397512,
+  "land_km2": 470.615018,
+  "window": [
+    798.74,
+    1148.19
+  ],
+  "districts": {
+    "IFA_01": {
+      "m_rel": 988.0694277499998,
+      "usd_millions": 1237.0314592625286,
+      "land_km2": 2610.265964,
+      "in_window": true
+    },
+    "IFA_02": {
+      "m_rel": 893.3208666950001,
+      "usd_millions": 1118.409278013797,
+      "land_km2": 932.877303,
+      "in_window": true
+    },
+    "IFA_03": {
+      "m_rel": 860.63250873,
+      "usd_millions": 1077.4844947762256,
+      "land_km2": 1054.689103,
+      "in_window": true
+    },
+    "IFA_04": {
+      "m_rel": 826.7261733739999,
+      "usd_millions": 1035.0348426306377,
+      "land_km2": 79178.909849,
+      "in_window": true
+    },
+    "IFA_05": {
+      "m_rel": 800.2183491100005,
+      "usd_millions": 1001.8478907725679,
+      "land_km2": 37542.684134,
+      "in_window": true
+    }
+  }
+}
