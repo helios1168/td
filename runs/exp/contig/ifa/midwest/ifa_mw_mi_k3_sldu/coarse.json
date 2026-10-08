@@ -1,0 +1,87 @@
+{
+  "band": [
+    798.74,
+    1148.19
+  ],
+  "districts": 38,
+  "groups": {
+    "MI#1": {
+      "mass": 952.633329236,
+      "units": [
+        "017.0",
+        "018.0",
+        "019.0",
+        "020.0",
+        "021.0",
+        "025.0",
+        "026.0",
+        "027.0",
+        "028.0",
+        "029.0",
+        "030.0",
+        "031.0",
+        "032.0",
+        "033.0",
+        "034.0",
+        "034.1",
+        "035.0",
+        "036.0",
+        "037.0",
+        "038.0",
+        "038.1"
+      ]
+    },
+    "MI#2": {
+      "mass": 844.756524,
+      "units": [
+        "007.0",
+        "009.0"
+      ]
+    },
+    "MI#3": {
+      "mass": 831.97573629,
+      "units": [
+        "001.0",
+        "002.0",
+        "003.0",
+        "004.0",
+        "005.0",
+        "006.0",
+        "008.0",
+        "010.0",
+        "011.0",
+        "012.0",
+        "013.0",
+        "014.0",
+        "015.0",
+        "016.0",
+        "017.1",
+        "022.0",
+        "023.0",
+        "024.0"
+      ]
+    }
+  },
+  "k": 3,
+  "level": "sldu",
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 32308 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "partition": {
+    "bound": 738.12194,
+    "cut_km": 738.10194,
+    "gap": 0.0,
+    "objective": 738.12194,
+    "seconds": 6.8,
+    "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "success": true,
+    "unit_edges": 97,
+    "units": 41
+  },
+  "state": "MI",
+  "thin": null,
+  "units": 41,
+  "verdict": "fail"
+}

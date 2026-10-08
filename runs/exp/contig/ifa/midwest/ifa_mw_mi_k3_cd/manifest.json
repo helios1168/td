@@ -1,0 +1,42 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/coarse.py --state MI --k 3 --level cd --window --lo 798.74 --hi 1148.19 --extract runs/exp/contig/ifa/midwest/_inst/ifa_mi.json.gz --spec runs/exp/contig/_specs/ifa_mi_k3.toml --time-limit 600 --out runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/_inst/ifa_mi.json.gz",
+  "finished_at": "2026-10-08T10:10:48+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd",
+  "formulation": "coarse",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract": "runs/exp/contig/ifa/midwest/_inst/ifa_mi.json.gz",
+    "hi": 1148.19,
+    "k": 3,
+    "level": "cd",
+    "lo": 798.74,
+    "nogood": [],
+    "spec": "runs/exp/contig/_specs/ifa_mi_k3.toml",
+    "state": "MI",
+    "thin_floor": false,
+    "time_limit": 600.0,
+    "window": true
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "a9caee61930d2808ee29bc8d28aa9f26696a29ab",
+    "diff_sha256": "94a71def76bda3f39a5212a086361078c021938f0c371ddc5756a8821ecf6a3b",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/_inst/ifa_mi.json.gz",
+    "instance_sha256": "e99f47fd69b8ecb8161de93800aa4362793482bdaf2596e31fe6756bde3cc02b",
+    "queued_at": "2026-10-08T10:10:43+00:00"
+  },
+  "run_id": "ifa_mw_mi_k3_cd",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/_specs/ifa_mi_k3.toml",
+    "sha256": "f04768baae7667217eab00536760988759e4a4bb5e292d3e1f5086ca867c4c96"
+  },
+  "started_at": "2026-10-08T10:10:43+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

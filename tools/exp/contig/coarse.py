@@ -28,7 +28,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
-FIPS = {"NY": "36"}
+FIPS = {"NY": "36", "MI": "26"}
 TIGER_FILE = {"sldu": "tl_2025_{fips}_sldu.zip", "cd": "tl_2025_{fips}_cd119.zip"}
 KEY = {"sldu": "SLDUST", "cd": "CD119FP"}
 DATA = os.path.join(ROOT, "runs", "exp", "contig", "nycd", "data")

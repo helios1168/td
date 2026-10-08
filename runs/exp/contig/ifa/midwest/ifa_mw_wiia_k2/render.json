@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "528ac23358b6d25d204918b12df0af2a9ef990c2c35239f12cdc6b657caef803",
+    "summary.svg": "cd9eaa65e0da3887075b7e1b4ca016d4be0a7fa8d1f3ba220f2b837cbefd0025",
+    "zip_IFA.png": "bcaacf0bed8dc95a03add6e889196385b718c5efe0c2d394b20b198cc89f93cf",
+    "zip_pages.pdf": "91df2d4c43b10876eb089dda4479c39c26af4418fe527dcf964aca7d7ad90aad"
+  },
+  "inputs": {
+    "districts.csv": "0bfe6d12670295f13eabca747a17f17f22b1244633096693fcf56c68578af1c8",
+    "ledger.csv": "ea107696b3e0b1d5c0ebef678cbd1583f3f39e4fb7d24e50c438122ee9a89f85",
+    "manifest.json": "92a74398cb2d261e745b37e161907b716f93bf26f2dd4834607769ffc4bfe878",
+    "run.json": "72fe971c90dc6979e0f32e4395dd00b1b51e04d0fd24a2e6a02f4d11d2a01b99"
+  },
+  "label": "ifa_mw_wiia_k2: IFA WI with IA whole, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31547 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:09:55+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_mw_wiia_k2: IFA WI with IA whole, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

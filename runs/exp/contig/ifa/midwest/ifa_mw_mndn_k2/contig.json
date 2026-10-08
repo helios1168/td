@@ -1,0 +1,86 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 283.50285,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.164,
+      "groups": [
+        {
+          "border_km": 283.50285,
+          "bound": 1983.5863438755978,
+          "columns": 4164,
+          "cuts": 4,
+          "dag": false,
+          "delta": 0.164,
+          "districts": [
+            "MN#1",
+            "MN+ND+NE+SD#1"
+          ],
+          "free_zctas": 880,
+          "gap": 0.0,
+          "iterations": 3,
+          "moment": 7086780.4986424465,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "",
+          "objective": 1983.5863438755978,
+          "rows": 9176,
+          "seconds": 1.0,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.164,
+              "note": "",
+              "seconds": 0.48,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": 0.164,
+              "note": "",
+              "seconds": 1.0,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "MN"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.16383463457895125,
+      "plan_delta": 0.164,
+      "shape": {
+        "border_km": 283.50285,
+        "moment": 7086780.4986424465
+      },
+      "share_only": [
+        "MN#1"
+      ],
+      "single_connector": {},
+      "split_units": [
+        "MN"
+      ],
+      "status": "optimal",
+      "undrawn_zctas": 0,
+      "vanished_shares": [],
+      "worst_dev": 0.16383463457895184
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": null,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31070 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_mw_mndn_k2",
+  "sequential": false
+}

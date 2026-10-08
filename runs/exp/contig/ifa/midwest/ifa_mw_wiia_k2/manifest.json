@@ -1,0 +1,54 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_mw_wiia_k2.toml --out runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2 --extract runs/exp/contig/ifa/midwest/_inst/ifa_wi_ia.json.gz --states WI,IA --jobs 1 --time-limit 480",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/_inst/ifa_wi_ia.json.gz",
+  "finished_at": "2026-10-08T10:09:42+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": null,
+    "extract": "runs/exp/contig/ifa/midwest/_inst/ifa_wi_ia.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.116,
+        "final_delta": 0.116,
+        "forbid_pairs": [],
+        "free": [
+          "WI"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "WI,IA",
+    "time_limit": 480.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/_inst/ifa_wi_ia.json.gz",
+    "instance_sha256": "87b7ad561cd306c2cf4761fedfbaef4cb8775586a1d334ec8a00ec955a161877",
+    "queued_at": "2026-10-08T10:01:41+00:00"
+  },
+  "run_id": "ifa_mw_wiia_k2",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/_specs/ifa_mw_wiia_k2.toml",
+    "sha256": "3ec638d852b1f52eb6627613dd0819d0c0f6a96d2953beaf22c0d05d94f83d6a"
+  },
+  "started_at": "2026-10-08T10:01:41+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

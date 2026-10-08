@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "6514457d12088f4789ba4bb685757acc5233336d0fad4578fc95944c56b2f0c3",
+    "summary.svg": "5d44dcba4d7cbaf85b82980c8f1f8fce3d9b163b5f0e82e794edba7ad40fedf2",
+    "zip_IFA.png": "ac26dafccb4715716718d7799ab8e4df58b2d4d55841923b2dea032628cd916d",
+    "zip_pages.pdf": "0f51d5fc4110c8477d78e248e49b44f335f04b711f425e4456f91ddbcda9029a"
+  },
+  "inputs": {
+    "districts.csv": "7141a4a7d090525751ebe7cbe0af28de3f5e32f1f101aab9555c6bed8b1a34ae",
+    "ledger.csv": "3ce2bfee6e8accc299f53aad082b02daa4f29f27db2e40913f02db0bfb1fd218",
+    "manifest.json": "a48b4bbb2fd861da40c50d60e92d608c62f5352f207ded5813d523b3d575fb3e",
+    "run.json": "a1489b736b28143c4c4d36c9f9d694fb545684a630923d3f6304ad3c505eb0dd"
+  },
+  "label": "ifa_mw_mi_k3_cd: IFA MI alone, K 3, cd grouping inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 32308 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:11:02+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "a9caee61930d2808ee29bc8d28aa9f26696a29ab",
+    "diff_sha256": "94a71def76bda3f39a5212a086361078c021938f0c371ddc5756a8821ecf6a3b",
+    "dirty": true
+  },
+  "title": "ifa_mw_mi_k3_cd: IFA MI alone, K 3, cd grouping inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

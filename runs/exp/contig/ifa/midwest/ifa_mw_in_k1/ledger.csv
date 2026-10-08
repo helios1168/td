@@ -1,0 +1,808 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_mw_in_k1,46001,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1800910,"IFA Indianapolis-Carmel-Greenwood, IN",0.0738178,
+ifa_mw_in_k1,46011,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1801468,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46012,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1801468,"IFA Indianapolis-Carmel-Greenwood, IN",4.5063,
+ifa_mw_in_k1,46013,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1801468,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46016,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1801468,"IFA Indianapolis-Carmel-Greenwood, IN",1.63458,
+ifa_mw_in_k1,46017,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1812376,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46030,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1869354,"IFA Indianapolis-Carmel-Greenwood, IN",0.251347,
+ifa_mw_in_k1,46031,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1869354,"IFA Indianapolis-Carmel-Greenwood, IN",0.198863,
+ifa_mw_in_k1,46032,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1810342,"IFA Indianapolis-Carmel-Greenwood, IN",58.7428,
+ifa_mw_in_k1,46033,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1810342,"IFA Indianapolis-Carmel-Greenwood, IN",1.12577,
+ifa_mw_in_k1,46034,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1812628,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46035,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1814284,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46036,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1821070,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46037,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1823278,"IFA Indianapolis-Carmel-Greenwood, IN",11.9162,
+ifa_mw_in_k1,46038,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1823278,"IFA Indianapolis-Carmel-Greenwood, IN",7.60762,
+ifa_mw_in_k1,46039,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1823926,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46040,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1824286,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46041,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1825324,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46044,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1825702,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46045,ifa,IN,IFA,IFA_01,IFA,,18159,26900,1828296,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46047,ifa,IN,IFA,IFA_01,IFA,,18159,26900,1834168,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46048,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1836342,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46049,ifa,IN,IFA,IFA_01,IFA,,18159,26900,1839366,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46050,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1869354,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46051,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1842228,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46052,ifa,IN,IFA,IFA_01,IFA,,18011,26900,1842624,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46055,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1845648,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46056,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1847178,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46057,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1848816,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46058,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1851840,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46060,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1854180,"IFA Indianapolis-Carmel-Greenwood, IN",9.5433,
+ifa_mw_in_k1,46062,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1854180,"IFA Indianapolis-Carmel-Greenwood, IN",3.65432,
+ifa_mw_in_k1,46063,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1856952,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46064,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1858662,"IFA Indianapolis-Carmel-Greenwood, IN",0.591918,
+ifa_mw_in_k1,46065,ifa,IN,IFA,IFA_01,IFA,,18023,23140,1866150,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46068,ifa,IN,IFA,IFA_01,IFA,,18159,26900,1869048,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46069,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1869354,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46070,ifa,IN,IFA,IFA_01,IFA,,18095,26900,1874132,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46071,ifa,IN,IFA,IFA_01,IFA,,18011,26900,1875626,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46072,ifa,IN,IFA,IFA_01,IFA,,18159,26900,1875986,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46074,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1882700,"IFA Indianapolis-Carmel-Greenwood, IN",2.3062,
+ifa_mw_in_k1,46075,ifa,IN,IFA,IFA_01,IFA,,18011,26900,1884014,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46076,ifa,IN,IFA,IFA_01,IFA,,18159,26900,1884806,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46077,ifa,IN,IFA,IFA_01,IFA,,18011,26900,1886372,"IFA Indianapolis-Carmel-Greenwood, IN",9.714,
+ifa_mw_in_k1,46102,ifa,IN,IFA,IFA_01,IFA,,18011,26900,1800640,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46103,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1801450,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46104,ifa,IN,IFA,IFA_01,IFA,,18139,,1802116,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46105,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1830114,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46106,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1803394,"IFA Indianapolis-Carmel-Greenwood, IN",3.29724,
+ifa_mw_in_k1,46107,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1804204,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46110,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1806292,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46111,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1808038,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46112,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1808416,"IFA Indianapolis-Carmel-Greenwood, IN",5.06958,
+ifa_mw_in_k1,46113,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46115,ifa,IN,IFA,IFA_01,IFA,,18139,,1810612,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46117,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1812196,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46118,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1804456,"IFA Indianapolis-Carmel-Greenwood, IN",0.190401,
+ifa_mw_in_k1,46120,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1813852,"IFA Indianapolis-Carmel-Greenwood, IN",3.92216,
+ifa_mw_in_k1,46121,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1833187,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46122,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1816804,"IFA Indianapolis-Carmel-Greenwood, IN",1.02255,
+ifa_mw_in_k1,46123,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1802908,"IFA Indianapolis-Carmel-Greenwood, IN",3.04323,
+ifa_mw_in_k1,46124,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1820404,"IFA Indianapolis-Carmel-Greenwood, IN",0.314253,
+ifa_mw_in_k1,46125,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1821106,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46126,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1822396,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46127,ifa,IN,IFA,IFA_01,IFA,,18139,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46128,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1823188,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46130,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1810558,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46131,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1825450,"IFA Indianapolis-Carmel-Greenwood, IN",3.29853,
+ifa_mw_in_k1,46133,ifa,IN,IFA,IFA_01,IFA,,18139,,1828062,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46135,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1829358,"IFA Indianapolis-Carmel-Greenwood, IN",3.63807,
+ifa_mw_in_k1,46140,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1829520,"IFA Indianapolis-Carmel-Greenwood, IN",0.576548,
+ifa_mw_in_k1,46142,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1829898,"IFA Indianapolis-Carmel-Greenwood, IN",7.03634,
+ifa_mw_in_k1,46143,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1829898,"IFA Indianapolis-Carmel-Greenwood, IN",15.3774,
+ifa_mw_in_k1,46144,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1830294,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46146,ifa,IN,IFA,IFA_01,IFA,,18139,,1834456,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46147,ifa,IN,IFA,IFA_01,IFA,,18011,26900,1837692,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46148,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1840266,"IFA Indianapolis-Carmel-Greenwood, IN",1.32176,
+ifa_mw_in_k1,46149,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1844442,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46150,ifa,IN,IFA,IFA_01,IFA,,18139,,1846422,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46151,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1847448,"IFA Indianapolis-Carmel-Greenwood, IN",0.740438,
+ifa_mw_in_k1,46154,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1847736,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46155,ifa,IN,IFA,IFA_01,IFA,,18139,,1847826,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46156,ifa,IN,IFA,IFA_01,IFA,,18139,,1849806,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46157,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1850580,"IFA Indianapolis-Carmel-Greenwood, IN",1.15628,
+ifa_mw_in_k1,46158,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1850976,"IFA Indianapolis-Carmel-Greenwood, IN",5.70668,
+ifa_mw_in_k1,46160,ifa,IN,IFA,IFA_01,IFA,,18013,26900,1832944,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46161,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1851192,"IFA Indianapolis-Carmel-Greenwood, IN",2.6929,
+ifa_mw_in_k1,46162,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1852146,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46163,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1853352,"IFA Indianapolis-Carmel-Greenwood, IN",0.636361,
+ifa_mw_in_k1,46164,ifa,IN,IFA,IFA_01,IFA,,18013,26900,1815115,"IFA Indianapolis-Carmel-Greenwood, IN",0.0226046,
+ifa_mw_in_k1,46165,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1855080,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46166,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1857870,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46167,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1860192,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46168,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1860246,"IFA Indianapolis-Carmel-Greenwood, IN",0.840781,
+ifa_mw_in_k1,46170,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1862406,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46171,ifa,IN,IFA,IFA_01,IFA,,18133,24600,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46172,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1864980,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46173,ifa,IN,IFA,IFA_01,IFA,,18139,,1866438,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46175,ifa,IN,IFA,IFA_01,IFA,,18133,24600,1866510,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46176,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1869318,"IFA Indianapolis-Carmel-Greenwood, IN",0.906145,
+ifa_mw_in_k1,46180,ifa,IN,IFA,IFA_01,IFA,,18109,26900,1873178,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46181,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1876310,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46182,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1879568,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46183,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46184,ifa,IN,IFA,IFA_01,IFA,,18081,26900,1883816,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46186,ifa,IN,IFA,IFA_01,IFA,,18059,26900,1884302,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46201,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46202,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46203,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",1.19819,
+ifa_mw_in_k1,46204,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",8.10672,
+ifa_mw_in_k1,46205,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46206,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0125546,
+ifa_mw_in_k1,46208,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",1.04686,
+ifa_mw_in_k1,46214,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46216,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1842426,"IFA Indianapolis-Carmel-Greenwood, IN",3.41999,
+ifa_mw_in_k1,46217,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.533802,
+ifa_mw_in_k1,46218,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46219,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",6.35181,
+ifa_mw_in_k1,46220,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",7.49922,
+ifa_mw_in_k1,46221,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46222,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46224,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",4.28532,
+ifa_mw_in_k1,46225,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46226,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46227,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",32.5903,
+ifa_mw_in_k1,46228,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.51437,
+ifa_mw_in_k1,46229,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46231,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.00129897,
+ifa_mw_in_k1,46234,ifa,IN,IFA,IFA_01,IFA,,18063,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",14.5356,
+ifa_mw_in_k1,46235,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46236,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1842426,"IFA Indianapolis-Carmel-Greenwood, IN",0.88098,
+ifa_mw_in_k1,46237,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",1.67348,
+ifa_mw_in_k1,46239,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.932257,
+ifa_mw_in_k1,46240,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",130.072,
+ifa_mw_in_k1,46241,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.529216,
+ifa_mw_in_k1,46250,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",2.26625,
+ifa_mw_in_k1,46254,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.167438,
+ifa_mw_in_k1,46256,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",5.44306,
+ifa_mw_in_k1,46259,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46260,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",5.38462,
+ifa_mw_in_k1,46268,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",16.2666,
+ifa_mw_in_k1,46278,ifa,IN,IFA,IFA_01,IFA,,18097,26900,1836003,"IFA Indianapolis-Carmel-Greenwood, IN",0.0636361,
+ifa_mw_in_k1,46280,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1810342,"IFA Indianapolis-Carmel-Greenwood, IN",5.94425,
+ifa_mw_in_k1,46290,ifa,IN,IFA,IFA_01,IFA,,18057,26900,1810342,"IFA Indianapolis-Carmel-Greenwood, IN",2.99546,
+ifa_mw_in_k1,46301,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1805158,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46302,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1806598,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46303,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1811062,"IFA Indianapolis-Carmel-Greenwood, IN",2.42947,
+ifa_mw_in_k1,46304,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1812412,"IFA Indianapolis-Carmel-Greenwood, IN",0.31307,
+ifa_mw_in_k1,46307,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1816138,"IFA Indianapolis-Carmel-Greenwood, IN",8.89901,
+ifa_mw_in_k1,46310,ifa,IN,IFA,IFA_01,IFA,,18073,16980,1866006,"IFA Indianapolis-Carmel-Greenwood, IN",0.00935355,
+ifa_mw_in_k1,46311,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1819270,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46312,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1819486,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46319,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1830042,"IFA Indianapolis-Carmel-Greenwood, IN",2.32468,
+ifa_mw_in_k1,46320,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1831000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46321,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1851912,"IFA Indianapolis-Carmel-Greenwood, IN",2.48922,
+ifa_mw_in_k1,46322,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1833466,"IFA Indianapolis-Carmel-Greenwood, IN",5.20564,
+ifa_mw_in_k1,46323,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1831000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46324,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1831000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46327,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1831000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46340,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1831180,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46341,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1832818,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46342,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1834114,"IFA Indianapolis-Carmel-Greenwood, IN",11.6916,
+ifa_mw_in_k1,46345,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1839816,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46346,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1839852,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46347,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1840518,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46348,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1840662,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46349,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1841652,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46350,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1842246,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46356,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1845144,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46360,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1848798,"IFA Indianapolis-Carmel-Greenwood, IN",0.198863,
+ifa_mw_in_k1,46365,ifa,IN,IFA,IFA_01,IFA,,18091,33140,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46366,ifa,IN,IFA,IFA_01,IFA,,18149,,1854900,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46368,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1861092,"IFA Indianapolis-Carmel-Greenwood, IN",3.24959,
+ifa_mw_in_k1,46371,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1865736,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46373,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1866852,"IFA Indianapolis-Carmel-Greenwood, IN",0.648617,
+ifa_mw_in_k1,46374,ifa,IN,IFA,IFA_01,IFA,,18149,,1868004,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46375,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1868220,"IFA Indianapolis-Carmel-Greenwood, IN",1.00952,
+ifa_mw_in_k1,46376,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1868238,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46377,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1869246,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46379,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1874078,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46381,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1875518,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46382,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1877804,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46383,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1878326,"IFA Indianapolis-Carmel-Greenwood, IN",8.49746,
+ifa_mw_in_k1,46385,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1878326,"IFA Indianapolis-Carmel-Greenwood, IN",1.62309,
+ifa_mw_in_k1,46390,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1880018,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46391,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1883420,"IFA Indianapolis-Carmel-Greenwood, IN",0.00015909,
+ifa_mw_in_k1,46392,ifa,IN,IFA,IFA_01,IFA,,18073,16980,1883528,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46393,ifa,IN,IFA,IFA_01,IFA,,18127,16980,1883600,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46394,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1831000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0960447,
+ifa_mw_in_k1,46402,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46403,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46404,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46405,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1841535,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46406,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46407,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46408,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46409,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1827000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46410,ifa,IN,IFA,IFA_01,IFA,,18089,16980,1848528,"IFA Indianapolis-Carmel-Greenwood, IN",24.0967,
+ifa_mw_in_k1,46501,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1802044,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46502,ifa,IN,IFA,IFA_01,IFA,,18085,47700,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46504,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1806760,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46506,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1807318,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46507,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1807750,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46508,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1809226,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46510,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1804032,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46511,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1816300,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46513,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1818388,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46514,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1820728,"IFA Indianapolis-Carmel-Greenwood, IN",5.37656,
+ifa_mw_in_k1,46516,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1820728,"IFA Indianapolis-Carmel-Greenwood, IN",4.80806,
+ifa_mw_in_k1,46517,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1820728,"IFA Indianapolis-Carmel-Greenwood, IN",1.13856,
+ifa_mw_in_k1,46524,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1821502,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46526,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1828386,"IFA Indianapolis-Carmel-Greenwood, IN",0.869508,
+ifa_mw_in_k1,46528,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1828386,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46530,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1828800,"IFA Indianapolis-Carmel-Greenwood, IN",16.0866,
+ifa_mw_in_k1,46531,ifa,IN,IFA,IFA_01,IFA,,18149,,1830150,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46532,ifa,IN,IFA,IFA_01,IFA,,18149,,1830708,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46534,ifa,IN,IFA,IFA_01,IFA,,18149,,1803610,"IFA Indianapolis-Carmel-Greenwood, IN",5.55581,
+ifa_mw_in_k1,46536,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1841670,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46537,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1842192,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46538,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1803358,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46539,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1857672,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46540,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1848924,"IFA Indianapolis-Carmel-Greenwood, IN",0.223503,
+ifa_mw_in_k1,46542,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1849320,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46543,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1849536,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46544,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1849932,"IFA Indianapolis-Carmel-Greenwood, IN",0.338067,
+ifa_mw_in_k1,46545,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1849932,"IFA Indianapolis-Carmel-Greenwood, IN",29.0985,
+ifa_mw_in_k1,46550,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1852020,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46552,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1852704,"IFA Indianapolis-Carmel-Greenwood, IN",7.84616,
+ifa_mw_in_k1,46553,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1853370,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46554,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1854918,"IFA Indianapolis-Carmel-Greenwood, IN",0.10945,
+ifa_mw_in_k1,46555,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1855134,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46556,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1855386,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46561,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1857114,"IFA Indianapolis-Carmel-Greenwood, IN",0.179729,
+ifa_mw_in_k1,46562,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1859598,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46563,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1860822,"IFA Indianapolis-Carmel-Greenwood, IN",1.46298,
+ifa_mw_in_k1,46565,ifa,IN,IFA,IFA_01,IFA,,18087,,1869480,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46567,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1874744,"IFA Indianapolis-Carmel-Greenwood, IN",0.359258,
+ifa_mw_in_k1,46570,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1875860,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46571,ifa,IN,IFA,IFA_01,IFA,,18087,,1876184,"IFA Indianapolis-Carmel-Greenwood, IN",1.20886,
+ifa_mw_in_k1,46572,ifa,IN,IFA,IFA_01,IFA,,18099,38500,1877030,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46573,ifa,IN,IFA,IFA_01,IFA,,18039,21140,1879478,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46574,ifa,IN,IFA,IFA_01,IFA,,18091,33140,1840464,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46580,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1880306,"IFA Indianapolis-Carmel-Greenwood, IN",7.28297,
+ifa_mw_in_k1,46582,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1880306,"IFA Indianapolis-Carmel-Greenwood, IN",4.22928,
+ifa_mw_in_k1,46590,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1884950,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46595,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1885724,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46601,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",2.80159,
+ifa_mw_in_k1,46613,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46614,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",2.52047,
+ifa_mw_in_k1,46615,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46616,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46617,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.832531,
+ifa_mw_in_k1,46619,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46624,ifa,IN,IFA,IFA_01,IFA,,18141,43780,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46628,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.847253,
+ifa_mw_in_k1,46635,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1828800,"IFA Indianapolis-Carmel-Greenwood, IN",6.76726,
+ifa_mw_in_k1,46637,ifa,IN,IFA,IFA_01,IFA,,18141,43780,1871000,"IFA Indianapolis-Carmel-Greenwood, IN",0.158158,
+ifa_mw_in_k1,46701,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1800820,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46702,ifa,IN,IFA,IFA_01,IFA,,18069,26540,1801612,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46703,ifa,IN,IFA,IFA_01,IFA,,18151,11420,1801666,"IFA Indianapolis-Carmel-Greenwood, IN",0.678803,
+ifa_mw_in_k1,46704,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1801990,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46705,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1802458,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46706,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1802674,"IFA Indianapolis-Carmel-Greenwood, IN",1.89638,
+ifa_mw_in_k1,46710,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1802872,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46711,ifa,IN,IFA,IFA_01,IFA,,18001,19540,1804888,"IFA Indianapolis-Carmel-Greenwood, IN",5.33673,
+ifa_mw_in_k1,46714,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1806220,"IFA Indianapolis-Carmel-Greenwood, IN",3.69381,
+ifa_mw_in_k1,46721,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1809532,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46723,ifa,IN,IFA,IFA_01,IFA,,18183,23060,1812610,"IFA Indianapolis-Carmel-Greenwood, IN",0.78327,
+ifa_mw_in_k1,46725,ifa,IN,IFA,IFA_01,IFA,,18183,23060,1814716,"IFA Indianapolis-Carmel-Greenwood, IN",2.21605,
+ifa_mw_in_k1,46730,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1815220,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46731,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1876076,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46732,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1821178,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46733,ifa,IN,IFA,IFA_01,IFA,,18001,19540,1817074,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46737,ifa,IN,IFA,IFA_01,IFA,,18151,11420,1825882,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46738,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1826386,"IFA Indianapolis-Carmel-Greenwood, IN",0.384928,
+ifa_mw_in_k1,46740,ifa,IN,IFA,IFA_01,IFA,,18001,19540,1827216,"IFA Indianapolis-Carmel-Greenwood, IN",0.0880719,
+ifa_mw_in_k1,46741,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1831432,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46742,ifa,IN,IFA,IFA_01,IFA,,18151,11420,1830594,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46743,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1831432,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46745,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1834096,"IFA Indianapolis-Carmel-Greenwood, IN",0.255454,
+ifa_mw_in_k1,46746,ifa,IN,IFA,IFA_01,IFA,,18087,,1834978,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46747,ifa,IN,IFA,IFA_01,IFA,,18151,11420,1835086,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46748,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1835266,"IFA Indianapolis-Carmel-Greenwood, IN",0.213708,
+ifa_mw_in_k1,46750,ifa,IN,IFA,IFA_01,IFA,,18069,26540,1835302,"IFA Indianapolis-Carmel-Greenwood, IN",1.27339,
+ifa_mw_in_k1,46755,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1839402,"IFA Indianapolis-Carmel-Greenwood, IN",2.92934,
+ifa_mw_in_k1,46759,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1839654,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46760,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1839744,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46761,ifa,IN,IFA,IFA_01,IFA,,18087,,1840860,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46763,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1842138,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46764,ifa,IN,IFA,IFA_01,IFA,,18183,23060,1842282,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46765,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1842861,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46766,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1843542,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46767,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1843686,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46770,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1847160,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46771,ifa,IN,IFA,IFA_01,IFA,,18087,,1850094,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46772,ifa,IN,IFA,IFA_01,IFA,,18001,19540,1850202,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46773,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1850562,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46774,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1852992,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46776,ifa,IN,IFA,IFA_01,IFA,,18151,11420,1857006,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46777,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1857168,"IFA Indianapolis-Carmel-Greenwood, IN",0.732418,
+ifa_mw_in_k1,46778,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1859418,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46779,ifa,IN,IFA,IFA_01,IFA,,18151,11420,1860534,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46781,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1861020,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46783,ifa,IN,IFA,IFA_01,IFA,,18069,26540,1865016,"IFA Indianapolis-Carmel-Greenwood, IN",1.9087,
+ifa_mw_in_k1,46784,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1865808,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46785,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1866834,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46786,ifa,IN,IFA,IFA_01,IFA,,18087,,1871396,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46787,ifa,IN,IFA,IFA_01,IFA,,18183,23060,1871612,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46788,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1871990,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46789,ifa,IN,IFA,IFA_01,IFA,,18087,,1873790,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46791,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1877786,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46792,ifa,IN,IFA,IFA_01,IFA,,18069,26540,1880108,"IFA Indianapolis-Carmel-Greenwood, IN",1.17844,
+ifa_mw_in_k1,46793,ifa,IN,IFA,IFA_01,IFA,,18033,12140,1881278,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46794,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1881530,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46795,ifa,IN,IFA,IFA_01,IFA,,18087,,1885076,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46796,ifa,IN,IFA,IFA_01,IFA,,18113,28340,1885130,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46797,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1885184,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46798,ifa,IN,IFA,IFA_01,IFA,,18003,23060,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46799,ifa,IN,IFA,IFA_01,IFA,,18179,23060,1886318,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46802,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",4.67944,
+ifa_mw_in_k1,46803,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",7.95451e-05,
+ifa_mw_in_k1,46804,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",20.7711,
+ifa_mw_in_k1,46805,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.100446,
+ifa_mw_in_k1,46806,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46807,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.755164,
+ifa_mw_in_k1,46808,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0912436,
+ifa_mw_in_k1,46809,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0812094,
+ifa_mw_in_k1,46814,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",5.58132,
+ifa_mw_in_k1,46815,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",5.93157,
+ifa_mw_in_k1,46816,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46818,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46819,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",5.1576,
+ifa_mw_in_k1,46825,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",58.7626,
+ifa_mw_in_k1,46835,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",5.01092,
+ifa_mw_in_k1,46845,ifa,IN,IFA,IFA_01,IFA,,18003,23060,1825000,"IFA Indianapolis-Carmel-Greenwood, IN",4.57023,
+ifa_mw_in_k1,46901,ifa,IN,IFA,IFA_01,IFA,,18067,29020,1840392,"IFA Indianapolis-Carmel-Greenwood, IN",3.36206,
+ifa_mw_in_k1,46902,ifa,IN,IFA,IFA_01,IFA,,18067,29020,1840392,"IFA Indianapolis-Carmel-Greenwood, IN",17.2834,
+ifa_mw_in_k1,46910,ifa,IN,IFA,IFA_01,IFA,,18049,,1800748,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46911,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1801360,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46913,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1823692,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46914,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1830060,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46915,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1809244,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46917,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1809910,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46919,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1814986,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46920,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1816480,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46922,ifa,IN,IFA,IFA_01,IFA,,18049,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46923,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1817614,"IFA Indianapolis-Carmel-Greenwood, IN",0.97202,
+ifa_mw_in_k1,46926,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1817776,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46928,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1822432,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46929,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1823692,"IFA Indianapolis-Carmel-Greenwood, IN",15.7963,
+ifa_mw_in_k1,46930,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1825198,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46931,ifa,IN,IFA,IFA_01,IFA,,18049,,1826152,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46932,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1826242,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46933,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1827054,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46936,ifa,IN,IFA,IFA_01,IFA,,18067,29020,1829772,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46937,ifa,IN,IFA,IFA_01,IFA,,18067,29020,1832998,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46938,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1838862,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46939,ifa,IN,IFA,IFA_01,IFA,,18049,,1839618,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46940,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1870524,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46941,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1840896,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46943,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1841562,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46945,ifa,IN,IFA,IFA_01,IFA,,18049,,1842822,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46946,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1843596,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46947,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1844658,"IFA Indianapolis-Carmel-Greenwood, IN",7.19036,
+ifa_mw_in_k1,46950,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1845234,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46951,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1855512,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46952,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1846908,"IFA Indianapolis-Carmel-Greenwood, IN",2.07286,
+ifa_mw_in_k1,46953,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1846908,"IFA Indianapolis-Carmel-Greenwood, IN",0.00795451,
+ifa_mw_in_k1,46957,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1847592,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46958,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1848636,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46959,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1848672,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46960,ifa,IN,IFA,IFA_01,IFA,,18131,,1803610,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46961,ifa,IN,IFA,IFA_01,IFA,,18017,30900,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46962,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1854954,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46965,ifa,IN,IFA,IFA_01,IFA,,18067,29020,1840392,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46967,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1856664,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46968,ifa,IN,IFA,IFA_01,IFA,,18131,,1856700,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46970,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1859328,"IFA Indianapolis-Carmel-Greenwood, IN",1.29222,
+ifa_mw_in_k1,46971,ifa,IN,IFA,IFA_01,IFA,,18103,37940,1830060,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46974,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1864998,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46975,ifa,IN,IFA,IFA_01,IFA,,18049,,1865214,"IFA Indianapolis-Carmel-Greenwood, IN",0.130849,
+ifa_mw_in_k1,46978,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1866222,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46979,ifa,IN,IFA,IFA_01,IFA,,18067,29020,1866546,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46980,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1868742,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46982,ifa,IN,IFA,IFA_01,IFA,,18085,47700,1869768,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46984,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1870524,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46985,ifa,IN,IFA,IFA_01,IFA,,18131,,1872638,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46986,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1874510,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46987,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1874546,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46988,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1876886,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46989,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1877966,"IFA Indianapolis-Carmel-Greenwood, IN",0.279711,
+ifa_mw_in_k1,46990,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1878056,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46991,ifa,IN,IFA,IFA_01,IFA,,18053,31980,1841994,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46992,ifa,IN,IFA,IFA_01,IFA,,18169,47340,1879370,"IFA Indianapolis-Carmel-Greenwood, IN",11.8557,
+ifa_mw_in_k1,46994,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1879964,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46996,ifa,IN,IFA,IFA_01,IFA,,18131,,1884734,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,46998,ifa,IN,IFA,IFA_01,IFA,,18017,30900,1886156,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47001,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1802782,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47003,ifa,IN,IFA,IFA_01,IFA,,18161,,1882556,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47006,ifa,IN,IFA,IFA_01,IFA,,18137,,1803664,"IFA Indianapolis-Carmel-Greenwood, IN",2.28315,
+ifa_mw_in_k1,47010,ifa,IN,IFA,IFA_01,IFA,,18047,17140,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47011,ifa,IN,IFA,IFA_01,IFA,,18155,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47012,ifa,IN,IFA,IFA_01,IFA,,18047,17140,1866978,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47016,ifa,IN,IFA,IFA_01,IFA,,18047,17140,1811044,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47017,ifa,IN,IFA,IFA_01,IFA,,18137,,1816030,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47018,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1818190,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47020,ifa,IN,IFA,IFA_01,IFA,,18155,,1823728,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47021,ifa,IN,IFA,IFA_01,IFA,,18137,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47022,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1846350,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47023,ifa,IN,IFA,IFA_01,IFA,,18137,,1834366,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47024,ifa,IN,IFA,IFA_01,IFA,,18047,17140,1841580,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47025,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1807624,"IFA Indianapolis-Carmel-Greenwood, IN",2.75557,
+ifa_mw_in_k1,47030,ifa,IN,IFA,IFA_01,IFA,,18047,17140,1858878,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47031,ifa,IN,IFA,IFA_01,IFA,,18137,,1849266,"IFA Indianapolis-Carmel-Greenwood, IN",0.00132958,
+ifa_mw_in_k1,47032,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1850958,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47033,ifa,IN,IFA,IFA_01,IFA,,18137,,1851174,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47034,ifa,IN,IFA,IFA_01,IFA,,18137,,1852002,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47035,ifa,IN,IFA,IFA_01,IFA,,18047,17140,1853712,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47036,ifa,IN,IFA,IFA_01,IFA,,18047,17140,1830564,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47037,ifa,IN,IFA,IFA_01,IFA,,18137,,1817506,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47038,ifa,IN,IFA,IFA_01,IFA,,18155,,1858392,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47040,ifa,IN,IFA,IFA_01,IFA,,18115,17140,1864674,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47041,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1874168,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47042,ifa,IN,IFA,IFA_01,IFA,,18137,,1878974,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47043,ifa,IN,IFA,IFA_01,IFA,,18155,,1879010,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47060,ifa,IN,IFA,IFA_01,IFA,,18029,17140,1807624,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47102,ifa,IN,IFA,IFA_01,IFA,,18143,,1802800,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47104,ifa,IN,IFA,IFA_01,IFA,,18019,31140,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47106,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1806634,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47108,ifa,IN,IFA,IFA_01,IFA,,18175,31140,1867626,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47110,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1852398,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47111,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1812124,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47112,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1815256,"IFA Indianapolis-Carmel-Greenwood, IN",1.46969,
+ifa_mw_in_k1,47114,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1815634,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47115,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1849716,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47116,ifa,IN,IFA,IFA_01,IFA,,18025,,1820134,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47117,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1820674,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47118,ifa,IN,IFA,IFA_01,IFA,,18025,,1821214,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47119,ifa,IN,IFA,IFA_01,IFA,,18043,31140,1823800,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47120,ifa,IN,IFA,IFA_01,IFA,,18175,31140,1825720,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47122,ifa,IN,IFA,IFA_01,IFA,,18043,31140,1827324,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47123,ifa,IN,IFA,IFA_01,IFA,,18025,,1828908,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47124,ifa,IN,IFA,IFA_01,IFA,,18043,31140,1829844,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47125,ifa,IN,IFA,IFA_01,IFA,,18175,31140,1831396,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47126,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1833142,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47129,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1812934,"IFA Indianapolis-Carmel-Greenwood, IN",1.50358,
+ifa_mw_in_k1,47130,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1838358,"IFA Indianapolis-Carmel-Greenwood, IN",4.16399,
+ifa_mw_in_k1,47135,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1840644,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47136,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1842048,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47137,ifa,IN,IFA,IFA_01,IFA,,18025,,1842606,"IFA Indianapolis-Carmel-Greenwood, IN",16.861,
+ifa_mw_in_k1,47138,ifa,IN,IFA,IFA_01,IFA,,18077,31500,1805680,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47140,ifa,IN,IFA,IFA_01,IFA,,18025,,1846746,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47141,ifa,IN,IFA,IFA_01,IFA,,18019,31140,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47142,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1847628,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47143,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1848384,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47145,ifa,IN,IFA,IFA_01,IFA,,18025,,1849716,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47147,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1853820,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47150,ifa,IN,IFA,IFA_01,IFA,,18043,31140,1852326,"IFA Indianapolis-Carmel-Greenwood, IN",5.34275,
+ifa_mw_in_k1,47160,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1853298,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47161,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1853586,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47162,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1853820,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47163,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1857222,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47164,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1857726,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47165,ifa,IN,IFA,IFA_01,IFA,,18175,31140,1853388,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47166,ifa,IN,IFA,IFA_01,IFA,,18061,31140,1862892,"IFA Indianapolis-Carmel-Greenwood, IN",0.344935,
+ifa_mw_in_k1,47167,ifa,IN,IFA,IFA_01,IFA,,18175,31140,1867464,"IFA Indianapolis-Carmel-Greenwood, IN",2.70292,
+ifa_mw_in_k1,47170,ifa,IN,IFA,IFA_01,IFA,,18143,,1868526,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47172,ifa,IN,IFA,IFA_01,IFA,,18019,31140,1868670,"IFA Indianapolis-Carmel-Greenwood, IN",0.0015909,
+ifa_mw_in_k1,47174,ifa,IN,IFA,IFA_01,IFA,,18025,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47175,ifa,IN,IFA,IFA_01,IFA,,18025,,1874978,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47177,ifa,IN,IFA,IFA_01,IFA,,18143,,1877084,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47201,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1814734,"IFA Indianapolis-Carmel-Greenwood, IN",17.2004,
+ifa_mw_in_k1,47203,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1814734,"IFA Indianapolis-Carmel-Greenwood, IN",0.217964,
+ifa_mw_in_k1,47220,ifa,IN,IFA,IFA_01,IFA,,18071,42980,1808470,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47223,ifa,IN,IFA,IFA_01,IFA,,18079,,1809622,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47224,ifa,IN,IFA,IFA_01,IFA,,18077,31500,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47225,ifa,IN,IFA,IFA_01,IFA,,18031,24700,1812880,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47226,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1813582,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47227,ifa,IN,IFA,IFA_01,IFA,,18079,,1814788,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47229,ifa,IN,IFA,IFA_01,IFA,,18071,42980,1816084,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47230,ifa,IN,IFA,IFA_01,IFA,,18077,31500,1857924,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47231,ifa,IN,IFA,IFA_01,IFA,,18077,31500,1819180,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47232,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1820692,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47234,ifa,IN,IFA,IFA_01,IFA,,18145,26900,1823566,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47235,ifa,IN,IFA,IFA_01,IFA,,18071,42980,1825864,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47236,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1828620,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47240,ifa,IN,IFA,IFA_01,IFA,,18031,24700,1829718,"IFA Indianapolis-Carmel-Greenwood, IN",0.0953954,
+ifa_mw_in_k1,47243,ifa,IN,IFA,IFA_01,IFA,,18077,31500,1831216,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47244,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1832332,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47246,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1834744,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47247,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1838916,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47250,ifa,IN,IFA,IFA_01,IFA,,18077,31500,1845990,"IFA Indianapolis-Carmel-Greenwood, IN",3.34825,
+ifa_mw_in_k1,47260,ifa,IN,IFA,IFA_01,IFA,,18071,42980,1848240,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47263,ifa,IN,IFA,IFA_01,IFA,,18031,24700,1853478,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47264,ifa,IN,IFA,IFA_01,IFA,,18071,42980,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47265,ifa,IN,IFA,IFA_01,IFA,,18079,,1855116,"IFA Indianapolis-Carmel-Greenwood, IN",0.198863,
+ifa_mw_in_k1,47270,ifa,IN,IFA,IFA_01,IFA,,18079,,1857924,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47272,ifa,IN,IFA,IFA_01,IFA,,18031,24700,1867212,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47273,ifa,IN,IFA,IFA_01,IFA,,18079,,1868328,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47274,ifa,IN,IFA,IFA_01,IFA,,18071,42980,1868832,"IFA Indianapolis-Carmel-Greenwood, IN",11.6038,
+ifa_mw_in_k1,47280,ifa,IN,IFA,IFA_01,IFA,,18005,18020,1875104,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47281,ifa,IN,IFA,IFA_01,IFA,,18071,42980,1878290,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47282,ifa,IN,IFA,IFA_01,IFA,,18079,,1878902,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47283,ifa,IN,IFA,IFA_01,IFA,,18031,24700,1883276,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47302,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1851876,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47303,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1851876,"IFA Indianapolis-Carmel-Greenwood, IN",1.57894,
+ifa_mw_in_k1,47304,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1851876,"IFA Indianapolis-Carmel-Greenwood, IN",11.2037,
+ifa_mw_in_k1,47305,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1851876,"IFA Indianapolis-Carmel-Greenwood, IN",0.538741,
+ifa_mw_in_k1,47306,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1851876,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47320,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1800802,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47324,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1806652,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47325,ifa,IN,IFA,IFA_01,IFA,,18161,,1808524,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47326,ifa,IN,IFA,IFA_01,IFA,,18075,,1808704,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47327,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1809874,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47330,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1811836,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47331,ifa,IN,IFA,IFA_01,IFA,,18041,18220,1814932,"IFA Indianapolis-Carmel-Greenwood, IN",0.815337,
+ifa_mw_in_k1,47334,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1886084,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47335,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1818766,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47336,ifa,IN,IFA,IFA_01,IFA,,18075,,1819054,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47337,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1819162,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47338,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1820080,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47339,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1820152,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47340,ifa,IN,IFA,IFA_01,IFA,,18135,,1822792,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47341,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1825090,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47342,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1827072,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47344,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1829682,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47345,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1829754,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47346,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1830402,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47348,ifa,IN,IFA,IFA_01,IFA,,18009,,1832242,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47351,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1839438,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47352,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1843074,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47353,ifa,IN,IFA,IFA_01,IFA,,18161,,1843434,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47354,ifa,IN,IFA,IFA_01,IFA,,18135,,1845000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47355,ifa,IN,IFA,IFA_01,IFA,,18135,,1845468,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47356,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1849014,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47357,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1849860,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47358,ifa,IN,IFA,IFA_01,IFA,,18135,,1850058,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47359,ifa,IN,IFA,IFA_01,IFA,,18009,,1850796,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47360,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1850940,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47361,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1851714,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47362,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1852740,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47366,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1853154,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47367,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1855818,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47368,ifa,IN,IFA,IFA_01,IFA,,18135,,1857978,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47369,ifa,IN,IFA,IFA_01,IFA,,18075,,1858788,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47370,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1819756,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47371,ifa,IN,IFA,IFA_01,IFA,,18075,,1861236,"IFA Indianapolis-Carmel-Greenwood, IN",2.82501,
+ifa_mw_in_k1,47373,ifa,IN,IFA,IFA_01,IFA,,18075,,1863450,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47374,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1864260,"IFA Indianapolis-Carmel-Greenwood, IN",3.53289,
+ifa_mw_in_k1,47380,ifa,IN,IFA,IFA_01,IFA,,18135,,1864422,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47381,ifa,IN,IFA,IFA_01,IFA,,18075,,1867302,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47382,ifa,IN,IFA,IFA_01,IFA,,18135,,1868058,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47383,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1868706,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47384,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1869516,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47385,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1872008,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47386,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1872332,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47387,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1873664,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47388,ifa,IN,IFA,IFA_01,IFA,,18065,35220,1874060,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47390,ifa,IN,IFA,IFA_01,IFA,,18135,,1877768,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47392,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1882142,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47393,ifa,IN,IFA,IFA_01,IFA,,18177,39980,1884356,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47394,ifa,IN,IFA,IFA_01,IFA,,18135,,1884752,"IFA Indianapolis-Carmel-Greenwood, IN",2.91627,
+ifa_mw_in_k1,47396,ifa,IN,IFA,IFA_01,IFA,,18035,34620,1886084,"IFA Indianapolis-Carmel-Greenwood, IN",1.80709,
+ifa_mw_in_k1,47401,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1870330,"IFA Indianapolis-Carmel-Greenwood, IN",39.3462,
+ifa_mw_in_k1,47403,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1805860,"IFA Indianapolis-Carmel-Greenwood, IN",10.7064,
+ifa_mw_in_k1,47404,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1805860,"IFA Indianapolis-Carmel-Greenwood, IN",7.98565,
+ifa_mw_in_k1,47405,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1805860,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47406,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1805860,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47408,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1805860,"IFA Indianapolis-Carmel-Greenwood, IN",0.535596,
+ifa_mw_in_k1,47420,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1802890,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47421,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1804114,"IFA Indianapolis-Carmel-Greenwood, IN",2.33644,
+ifa_mw_in_k1,47424,ifa,IN,IFA,IFA_01,IFA,,18055,,1805716,"IFA Indianapolis-Carmel-Greenwood, IN",0.18347,
+ifa_mw_in_k1,47427,ifa,IN,IFA,IFA_01,IFA,,18119,14020,1858374,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47429,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1820800,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47431,ifa,IN,IFA,IFA_01,IFA,,18119,14020,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47432,ifa,IN,IFA,IFA_01,IFA,,18117,,1825972,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47433,ifa,IN,IFA,IFA_01,IFA,,18119,14020,1828440,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47434,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1832170,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47435,ifa,IN,IFA,IFA_01,IFA,,18013,26900,1832944,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47436,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1832980,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47437,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1835392,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47438,ifa,IN,IFA,IFA_01,IFA,,18055,,1837764,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47441,ifa,IN,IFA,IFA_01,IFA,,18055,,1844190,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47443,ifa,IN,IFA,IFA_01,IFA,,18055,,1845504,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47445,ifa,IN,IFA,IFA_01,IFA,,18055,,1849086,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47446,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1849950,"IFA Indianapolis-Carmel-Greenwood, IN",0.0342044,
+ifa_mw_in_k1,47448,ifa,IN,IFA,IFA_01,IFA,,18013,26900,1852038,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47449,ifa,IN,IFA,IFA_01,IFA,,18055,,1868382,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47451,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1856682,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47452,ifa,IN,IFA,IFA_01,IFA,,18117,,1857024,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47453,ifa,IN,IFA,IFA_01,IFA,,18055,,1857510,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47454,ifa,IN,IFA,IFA_01,IFA,,18117,,1857780,"IFA Indianapolis-Carmel-Greenwood, IN",0.584775,
+ifa_mw_in_k1,47455,ifa,IN,IFA,IFA_01,IFA,,18119,14020,1858374,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47456,ifa,IN,IFA,IFA_01,IFA,,18119,14020,1821106,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47457,ifa,IN,IFA,IFA_01,IFA,,18055,,1868382,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47458,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1870330,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47459,ifa,IN,IFA,IFA_01,IFA,,18055,,1870506,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47460,ifa,IN,IFA,IFA_01,IFA,,18119,14020,1871972,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47462,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1832170,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47464,ifa,IN,IFA,IFA_01,IFA,,18105,14020,1873232,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47465,ifa,IN,IFA,IFA_01,IFA,,18055,,1874582,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47467,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1876742,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47468,ifa,IN,IFA,IFA_01,IFA,,18105,14020,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47469,ifa,IN,IFA,IFA_01,IFA,,18117,,1882376,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47470,ifa,IN,IFA,IFA_01,IFA,,18093,13260,1884338,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47471,ifa,IN,IFA,IFA_01,IFA,,18055,,1885598,"IFA Indianapolis-Carmel-Greenwood, IN",0.480452,
+ifa_mw_in_k1,47501,ifa,IN,IFA,IFA_01,IFA,,18027,47780,1880504,"IFA Indianapolis-Carmel-Greenwood, IN",1.20213,
+ifa_mw_in_k1,47512,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1805176,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47513,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1805374,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47514,ifa,IN,IFA,IFA_01,IFA,,18123,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47515,ifa,IN,IFA,IFA_01,IFA,,18123,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47516,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1821124,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47519,ifa,IN,IFA,IFA_01,IFA,,18027,47780,1810090,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47520,ifa,IN,IFA,IFA_01,IFA,,18123,,1810108,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47521,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1811134,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47522,ifa,IN,IFA,IFA_01,IFA,,18101,,1815652,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47523,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1816624,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47524,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1817110,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47525,ifa,IN,IFA,IFA_01,IFA,,18123,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47527,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1818784,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47528,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1825810,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47529,ifa,IN,IFA,IFA_01,IFA,,18027,47780,1820998,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47531,ifa,IN,IFA,IFA_01,IFA,,18147,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47532,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1822990,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47535,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1825810,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47537,ifa,IN,IFA,IFA_01,IFA,,18147,,1827270,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47541,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1834294,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47542,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1835284,"IFA Indianapolis-Carmel-Greenwood, IN",0.456824,
+ifa_mw_in_k1,47546,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1837782,"IFA Indianapolis-Carmel-Greenwood, IN",1.04786,
+ifa_mw_in_k1,47550,ifa,IN,IFA,IFA_01,IFA,,18147,,1868022,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47551,ifa,IN,IFA,IFA_01,IFA,,18123,,1842876,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47552,ifa,IN,IFA,IFA_01,IFA,,18147,,1868022,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47553,ifa,IN,IFA,IFA_01,IFA,,18101,,1844910,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47557,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1850526,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47558,ifa,IN,IFA,IFA_01,IFA,,18027,47780,1850688,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47561,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1821124,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47562,ifa,IN,IFA,IFA_01,IFA,,18027,47780,1856052,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47564,ifa,IN,IFA,IFA_01,IFA,,18125,,1857384,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47567,ifa,IN,IFA,IFA_01,IFA,,18125,,1859364,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47568,ifa,IN,IFA,IFA_01,IFA,,18027,47780,1860264,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47573,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1862730,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47574,ifa,IN,IFA,IFA_01,IFA,,18123,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47575,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1866744,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47576,ifa,IN,IFA,IFA_01,IFA,,18123,,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47577,ifa,IN,IFA,IFA_01,IFA,,18147,,1867176,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47578,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1867698,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47579,ifa,IN,IFA,IFA_01,IFA,,18147,,1868022,"IFA Indianapolis-Carmel-Greenwood, IN",0.843859,
+ifa_mw_in_k1,47580,ifa,IN,IFA,IFA_01,IFA,,18037,27540,1868256,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47581,ifa,IN,IFA,IFA_01,IFA,,18101,,1869552,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47584,ifa,IN,IFA,IFA_01,IFA,,18125,,1872440,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47585,ifa,IN,IFA,IFA_01,IFA,,18125,,1872980,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47586,ifa,IN,IFA,IFA_01,IFA,,18123,,1875248,"IFA Indianapolis-Carmel-Greenwood, IN",0.696558,
+ifa_mw_in_k1,47588,ifa,IN,IFA,IFA_01,IFA,,18147,,1876634,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47590,ifa,IN,IFA,IFA_01,IFA,,18125,,1878758,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47591,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1879208,"IFA Indianapolis-Carmel-Greenwood, IN",0.240853,
+ifa_mw_in_k1,47596,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1883204,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47597,ifa,IN,IFA,IFA_01,IFA,,18083,47180,1883564,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47598,ifa,IN,IFA,IFA_01,IFA,,18125,,1802296,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47601,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1806616,"IFA Indianapolis-Carmel-Greenwood, IN",1.98142,
+ifa_mw_in_k1,47610,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1812034,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47611,ifa,IN,IFA,IFA_01,IFA,,18147,,1812574,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47612,ifa,IN,IFA,IFA_01,IFA,,18051,,1816534,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47613,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1808848,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47615,ifa,IN,IFA,IFA_01,IFA,,18147,,1828692,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47616,ifa,IN,IFA,IFA_01,IFA,,18051,,1830024,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47619,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1845486,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47620,ifa,IN,IFA,IFA_01,IFA,,18129,21780,1851732,"IFA Indianapolis-Carmel-Greenwood, IN",0.843917,
+ifa_mw_in_k1,47630,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1852650,"IFA Indianapolis-Carmel-Greenwood, IN",9.55323,
+ifa_mw_in_k1,47631,ifa,IN,IFA,IFA_01,IFA,,18129,21780,1852974,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47633,ifa,IN,IFA,IFA_01,IFA,,18129,21780,1861416,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47634,ifa,IN,IFA,IFA_01,IFA,,18147,,1832494,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47635,ifa,IN,IFA,IFA_01,IFA,,18147,,1863810,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47637,ifa,IN,IFA,IFA_01,IFA,,18173,21780,1823836,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47638,ifa,IN,IFA,IFA_01,IFA,,18129,21780,1805644,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47639,ifa,IN,IFA,IFA_01,IFA,,18051,,1832512,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47640,ifa,IN,IFA,IFA_01,IFA,,18051,,1832728,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47648,ifa,IN,IFA,IFA_01,IFA,,18051,,1824250,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47649,ifa,IN,IFA,IFA_01,IFA,,18051,,1825306,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47654,ifa,IN,IFA,IFA_01,IFA,,18051,,1845774,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47660,ifa,IN,IFA,IFA_01,IFA,,18051,,1855710,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47665,ifa,IN,IFA,IFA_01,IFA,,18051,,1838664,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47666,ifa,IN,IFA,IFA_01,IFA,,18051,,1858320,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47670,ifa,IN,IFA,IFA_01,IFA,,18051,,1862046,"IFA Indianapolis-Carmel-Greenwood, IN",0.0460681,
+ifa_mw_in_k1,47683,ifa,IN,IFA,IFA_01,IFA,,18051,,1870542,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47708,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",4.56516,
+ifa_mw_in_k1,47710,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47711,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",1.62859,
+ifa_mw_in_k1,47712,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",3.83466,
+ifa_mw_in_k1,47713,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",1.53409,
+ifa_mw_in_k1,47714,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",4.36864,
+ifa_mw_in_k1,47715,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",22.4122,
+ifa_mw_in_k1,47720,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1822000,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47725,ifa,IN,IFA,IFA_01,IFA,,18163,21780,1816858,"IFA Indianapolis-Carmel-Greenwood, IN",0.649461,
+ifa_mw_in_k1,47802,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1875428,"IFA Indianapolis-Carmel-Greenwood, IN",9.40686,
+ifa_mw_in_k1,47803,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1875428,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47804,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1875428,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47805,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1855098,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47807,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1875428,"IFA Indianapolis-Carmel-Greenwood, IN",1.45209,
+ifa_mw_in_k1,47809,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1875428,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47831,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1805662,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47832,ifa,IN,IFA,IFA_01,IFA,,18121,,1805788,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47833,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1806832,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47834,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1807174,"IFA Indianapolis-Carmel-Greenwood, IN",0.030109,
+ifa_mw_in_k1,47836,ifa,IN,IFA,IFA_01,IFA,,18121,,1807570,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47837,ifa,IN,IFA,IFA_01,IFA,,18121,,1810198,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47838,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1810270,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47840,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1811746,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47841,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1813276,"IFA Indianapolis-Carmel-Greenwood, IN",0.00397725,
+ifa_mw_in_k1,47842,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1813780,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47845,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1814032,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47846,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1815238,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47847,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1816732,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47848,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1818892,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47849,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1822180,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47850,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1822738,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47851,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1823854,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47853,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1831486,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47854,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1833952,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47855,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1835500,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47857,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1840302,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47858,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1843020,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47859,ifa,IN,IFA,IFA_01,IFA,,18121,,1847322,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47860,ifa,IN,IFA,IFA_01,IFA,,18121,,1848132,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47861,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1848474,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47862,ifa,IN,IFA,IFA_01,IFA,,18121,,1850652,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47863,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1852956,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47865,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1858500,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47866,ifa,IN,IFA,IFA_01,IFA,,18167,45460,,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47868,ifa,IN,IFA,IFA_01,IFA,,18119,14020,1860912,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47869,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1861686,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47870,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1861758,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47871,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1864512,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47872,ifa,IN,IFA,IFA_01,IFA,,18121,,1865520,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47874,ifa,IN,IFA,IFA_01,IFA,,18121,,1845396,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47875,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1866762,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47876,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1867050,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47879,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1869192,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47880,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1869336,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47881,ifa,IN,IFA,IFA_01,IFA,,18021,45460,1872782,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47882,ifa,IN,IFA,IFA_01,IFA,,18153,45460,1874006,"IFA Indianapolis-Carmel-Greenwood, IN",0.736341,
+ifa_mw_in_k1,47884,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1877912,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47885,ifa,IN,IFA,IFA_01,IFA,,18167,45460,1875176,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47901,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1840788,"IFA Indianapolis-Carmel-Greenwood, IN",2.34196,
+ifa_mw_in_k1,47904,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1840788,"IFA Indianapolis-Carmel-Greenwood, IN",7.00291,
+ifa_mw_in_k1,47905,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1840788,"IFA Indianapolis-Carmel-Greenwood, IN",4.27249,
+ifa_mw_in_k1,47906,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1882862,"IFA Indianapolis-Carmel-Greenwood, IN",3.23747,
+ifa_mw_in_k1,47907,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1882862,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47909,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1868868,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47916,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1800784,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47917,ifa,IN,IFA,IFA_01,IFA,,18171,29200,1874780,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47918,ifa,IN,IFA,IFA_01,IFA,,18045,,1802620,"IFA Indianapolis-Carmel-Greenwood, IN",0.0378199,
+ifa_mw_in_k1,47920,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1803718,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47921,ifa,IN,IFA,IFA_01,IFA,,18007,29200,1806706,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47922,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1807966,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47923,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1808146,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47924,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1808812,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47925,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1808992,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47926,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1809316,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47928,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1810954,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47929,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1811944,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47930,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1812898,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47932,ifa,IN,IFA,IFA_01,IFA,,18045,,1815490,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47933,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1815742,"IFA Indianapolis-Carmel-Greenwood, IN",0.495928,
+ifa_mw_in_k1,47940,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1816840,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47941,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1817002,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47942,ifa,IN,IFA,IFA_01,IFA,,18007,29200,1819450,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47943,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1822468,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47944,ifa,IN,IFA,IFA_01,IFA,,18007,29200,1825180,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47946,ifa,IN,IFA,IFA_01,IFA,,18131,,1825288,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47948,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1828332,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47949,ifa,IN,IFA,IFA_01,IFA,,18045,,1833862,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47950,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1835536,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47951,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1839546,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47952,ifa,IN,IFA,IFA_01,IFA,,18045,,1839798,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47954,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1840698,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47955,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1844082,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47957,ifa,IN,IFA,IFA_01,IFA,,18131,,1848186,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47958,ifa,IN,IFA,IFA_01,IFA,,18045,,1848294,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47959,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1850148,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47960,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1850760,"IFA Indianapolis-Carmel-Greenwood, IN",1.76536,
+ifa_mw_in_k1,47963,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1851138,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47964,ifa,IN,IFA,IFA_01,IFA,,18111,16980,1851336,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47965,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1853262,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47966,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1853496,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47967,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1853532,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47968,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1853550,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47969,ifa,IN,IFA,IFA_01,IFA,,18045,,1853694,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47970,ifa,IN,IFA,IFA_01,IFA,,18171,29200,1857258,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47971,ifa,IN,IFA,IFA_01,IFA,,18007,29200,1857546,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47974,ifa,IN,IFA,IFA_01,IFA,,18165,45460,1859238,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47975,ifa,IN,IFA,IFA_01,IFA,,18171,29200,1860084,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47977,ifa,IN,IFA,IFA_01,IFA,,18073,16980,1863756,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47978,ifa,IN,IFA,IFA_01,IFA,,18073,16980,1863792,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47980,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1863918,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47981,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1865826,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47982,ifa,IN,IFA,IFA_01,IFA,,18171,29200,1872764,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47983,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1873340,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47986,ifa,IN,IFA,IFA_01,IFA,,18007,29200,1875284,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47987,ifa,IN,IFA,IFA_01,IFA,,18045,,1878740,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47989,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1881458,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47990,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1882052,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47991,ifa,IN,IFA,IFA_01,IFA,,18171,29200,1882934,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47992,ifa,IN,IFA,IFA_01,IFA,,18157,29200,1883222,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47993,ifa,IN,IFA,IFA_01,IFA,,18171,29200,1884410,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47994,ifa,IN,IFA,IFA_01,IFA,,18107,18820,1884914,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47995,ifa,IN,IFA,IFA_01,IFA,,18181,33900,1885058,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity
+ifa_mw_in_k1,47997,ifa,IN,IFA,IFA_01,IFA,,18015,29200,1885886,"IFA Indianapolis-Carmel-Greenwood, IN",0.0,no cell in the extract: territory at zero opportunity

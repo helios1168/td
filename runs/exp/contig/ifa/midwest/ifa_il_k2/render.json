@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "6a5e676538e6f69a3ce891c86338e4def8fdf47503412c38059e992cb4ea06c6",
+    "summary.svg": "b80f08f96deba72acfc59825568a4b096c57b176a48c9c9b8e76dc3128ccd3e2",
+    "zip_IFA.png": "d0c085d0321fc927f6b408d431abe5fe87375ed41538cb41cae55412cc1a54ff",
+    "zip_pages.pdf": "2857ec458dd73f976983614b0c5a337b91d66b6ef3f3cf30483a45ef80baef27"
+  },
+  "inputs": {
+    "districts.csv": "f33282c189d3f520ea31bc44908bde93489d4498c910974a4f244d38e1414b64",
+    "ledger.csv": "6093fabf1a8934c8c8c05a1bde05de29f9eef40a65791b251626e4c557f3f263",
+    "manifest.json": "6b21056b6994af0029e9477ed7723c9e24efb2135e6ae23edcc82eab26304e10",
+    "run.json": "d6468096bccebbbe8b66aef3f3c425ee3a87d924631af240aff7190cf6317fe1"
+  },
+  "label": "ifa_il_k2: IFA IL alone, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31904 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:11:42+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_il_k2: IFA IL alone, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

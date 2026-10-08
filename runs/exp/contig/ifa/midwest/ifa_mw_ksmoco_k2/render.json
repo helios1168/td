@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "1d370404af992fe37c92fab7c5e504f0ab47b2109a767164c3a80e13654c4eec",
+    "summary.svg": "3528820143a00d5ad35aacec005ecff6da767423e1d4e873f09cca505b8534a5",
+    "zip_IFA.png": "6e3332f2f8f79c6be7ac3ef964048b1737613f5c085660523bdc023375046e10",
+    "zip_pages.pdf": "4a3ee7e1a60edf0db547df15e025e895b5d34817be69719c5085abdfc9168dcf"
+  },
+  "inputs": {
+    "districts.csv": "5a81f8c4757ac59b8b68f1e017ffbcf6ad8467283d6015250ffcb09d9a6a45b3",
+    "ledger.csv": "6b96963675472cd24519bc9d1631a3c14158cfebac16e8428ac21afd07f91cb6",
+    "manifest.json": "04f4859e5536e3265d024123905a99eda4116e7a04220de4fd424c77c196507e",
+    "run.json": "e40d98b9b317d98ccd13e15b2445a70fc9a42aa6c6ad9a40c3ebe2e2786ed6f3"
+  },
+  "label": "ifa_mw_ksmoco_k2: IFA KS split with MO whole and CO whole, K 2 (owner pick B), realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31033 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:08:29+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_mw_ksmoco_k2: IFA KS split with MO whole and CO whole, K 2 (owner pick B), realizer on the induced graph, band inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

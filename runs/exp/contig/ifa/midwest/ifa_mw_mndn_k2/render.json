@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "7cd75339c7354024f623d7e8cec7c84cbd81c88469e6cdd2e18e6080aa4c92b4",
+    "summary.svg": "68378616aab8fdb51be358e6789a1eaee61d94c036b6b483f0c56921cc7accda",
+    "zip_IFA.png": "48ebc67b92f195ba506aa68ff1a790116bc2c93d5ae9d61d528341da018f261b",
+    "zip_pages.pdf": "1288fec09411be48f8f772d21abc3a2042131e8b2bb04e281e0c8ad0248f9c40"
+  },
+  "inputs": {
+    "districts.csv": "41d096a4ac9f49ab28c075337bf6819a028d8d412714e5315ae228559defb8ac",
+    "ledger.csv": "8f5974dd1d621152ffb2eb75ba12daaa6cc120bffb92f921dc2a8bb5beadb7d9",
+    "manifest.json": "ab1b14d3ec1ad572900efd5add2201bbd06afe4028911d7bd27f4314025c0f32",
+    "run.json": "d6af0525c053c43ed9286944e856cccafd1f7d15edeb17d8947a9d5f52642431"
+  },
+  "label": "ifa_mw_mndn_k2: IFA MN with ND, SD, NE whole, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31070 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:08:07+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_mw_mndn_k2: IFA MN with ND, SD, NE whole, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}
