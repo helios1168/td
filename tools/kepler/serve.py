@@ -2,8 +2,11 @@
 """Static file server with CORS, for loading extracts into kepler.gl from URL.
 
 Usage: python3 tools/kepler/serve.py [port] [dir]   (defaults: 8765 data/kepler)
+Bound to 0.0.0.0 so a tailnet/iPad client can fetch; serves one directory read-only.
 """
-import functools, http.server, sys
+import functools
+import http.server
+import sys
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
 root = sys.argv[2] if len(sys.argv) > 2 else "data/kepler"
@@ -16,5 +19,5 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 http.server.ThreadingHTTPServer(
-    ("0.0.0.0", port), functools.partial(H, directory=root)
+    ("0.0.0.0", port), functools.partial(Handler, directory=root)
 ).serve_forever()
