@@ -51,3 +51,8 @@ Sources (merged in this order):
 
 CONUS verdict: M1 fail (0 districts in pieces, 0 detached pieces (largest 0 τ), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1); with the gate default, M1 fail (0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1); band (window) fail; audit fail
 (its τ line information only).
+
+Tableau colouring: colour by `color_index` (18 classes, fits the 20-colour palettes; no two
+neighbouring districts alike), not by `district` (52 members wrap any built-in palette). To get the
+PNG's exact colours, merge `Preferences.tps` into `My Tableau Repository/Preferences.tps`, pick the
+"td districts" palette on `color_index` and "Assign Palette" in order (index 0 = first colour).
