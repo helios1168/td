@@ -7,16 +7,16 @@
   "gap_fill": "nearest",
   "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
   "images": {
-    "summary.png": "2d187c83618802fd2905fe6e04a7f8ce86cd18d36b69b6c6fb547a63980db2ee",
-    "summary.svg": "d62443cde14e64004c69b99585d02a8e44bb4f6f91950bcc0e7ad47239602d6d",
-    "zip_IFA.png": "ba586ebefdc2e005d6befec808b2ccbaf371ad142edd9b159cafff5c7650537d",
-    "zip_pages.pdf": "78a7ad048dc513387021d5d75efb5c17767b6988a425d16041c30c5470f9ffa9"
+    "summary.png": "40c16f9e65d808eb2af1bf9980462f1aeb9153b9a5896497cb5df587f65f2b4a",
+    "summary.svg": "ae1c05edbb2d16e2cc9a3c601642f4b9f0f95ef4cf30ef1c762274794188b9b9",
+    "zip_IFA.png": "7daac981aec1d799bb1865973a2ab1473e8b6f95609092a953d48e96bd7a5351",
+    "zip_pages.pdf": "5fb171650d641636d08cfb42bb30b1080fc5a1e9ce055df454f6721558a20817"
   },
   "inputs": {
     "districts.csv": "1bcfa1878ab2fd5901665d410ccc3941a237cdf01482665761dc4b9489991698",
     "ledger.csv": "010d4cb9a0ab6d8357a96ebe170aea8ba6aa4c2ded95d0f939084cb689c6abd1",
-    "manifest.json": "9f64dd954c3e3a64518c08a38f902f17a3424b19a4badc559260c2899ab28093",
-    "run.json": "2574686632914203602ba5e1dc7958a96a2c76488d231b3913c051e50ac91574"
+    "manifest.json": "c5a3c82ab3710c03cd89aa94dc0c294b126de14767957cb240237bf9c685319a",
+    "run.json": "047be94fbcee4f4c26fc858d2776d3e25e4b17ca1b2378012dda7e556a88f195"
   },
   "label": "ifa_newengland_k4_merge: IFA New England K 4, merged CT+RI K 2 (ifa_ctri_k2) and MA+VT+NH+ME K 2 (ifa_mavtnhme_k2), full-graph M1 audit",
   "m1": {
@@ -24,11 +24,11 @@
     "status": "fail",
     "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31454 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
   },
-  "rendered_at": "2026-10-08T10:00:01+00:00",
+  "rendered_at": "2026-10-08T10:17:40+00:00",
   "renderer": {
     "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
-    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
-    "diff_sha256": "498ff2b9434060caa3950ad418fab572d1c310b0406056cd91167679dc14eab9",
+    "commit": "d3a98fbf473e3653618c3c47ea680c6cfdae53af",
+    "diff_sha256": "acd107cd7c78a08bb1cdd2c1312c4be8e34fd71be7298fb7688c8e9ba73a2e8c",
     "dirty": true
   },
   "title": "ifa_newengland_k4_merge: IFA New England K 4, merged CT+RI K 2 (ifa_ctri_k2) and MA+VT+NH+ME K 2 (ifa_mavtnhme_k2), full-graph M1 audit, FAILS M1",
