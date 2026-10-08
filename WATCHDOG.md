@@ -56,7 +56,7 @@ the tracker, a map shown that is not on the shortlist, and an unregistered label
 - **Eligible map (band: owner 2026-10-07 and 2026-10-08, OD1 answered):**
   - every district's drawn $ within ±15% of its channel's target (national $1.25B, WH $1.0B,
     FI $900M); IFA within −20%/+15% of $1.25B; WIFI, with no target, within ±15% of its dollar
-    mean; planned and judged at the same band;
+    mean; the combined channel stays exempt; planned and judged at the same band;
   - $ is m_rel times each fine channel's whole-extract rate (IFA $1.25197M per m_rel);
   - one waiver: in IFA, Maryland whole as one district (about $1,507M, over U), recorded on
     every map that uses it; no other district is exempt;
