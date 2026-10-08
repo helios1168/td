@@ -1,0 +1,54 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_pa_k4.toml --out runs/exp/contig/nj/ifa_pa_k4 --extract runs/exp/contig/nj/_inst/ifa_pa.json.gz --states PA --delta 0.15 --jobs 1 --time-limit 480",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nj/runs/exp/contig/nj/_inst/ifa_pa.json.gz",
+  "finished_at": "2026-10-08T08:52:21+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nj/runs/exp/contig/nj/ifa_pa_k4",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.15,
+    "extract": "runs/exp/contig/nj/_inst/ifa_pa.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.15,
+        "final_delta": 0.15,
+        "forbid_pairs": [],
+        "free": [
+          "PA"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "PA",
+    "time_limit": 480.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "c511443ae17a4b24a96ceff9d2c2a3c2a25f3397",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nj/runs/exp/contig/nj/_inst/ifa_pa.json.gz",
+    "instance_sha256": "100216bb3ca8138ca4ae5e7b044406be71944dab12217f471fa38b9c8afdbc8b",
+    "queued_at": "2026-10-08T08:44:20+00:00"
+  },
+  "run_id": "ifa_pa_k4",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nj/runs/exp/contig/_specs/ifa_pa_k4.toml",
+    "sha256": "6fd46fb88432f301b731791ec97abda3463722d94cebf6b02bb7f71b923ea791"
+  },
+  "started_at": "2026-10-08T08:44:20+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

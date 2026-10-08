@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_nj/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_nj/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "1f9b7a8f9ba4902e5ba817c33dd35a3538b6a3ff04bd66cbee1711b26ea84668",
+    "summary.svg": "de533716bdfe559ae5013f61a6fb32b99e18bc5fb77d580019f6bd74a2e00fe9",
+    "zip_IFA.png": "ba83938f865441e48b7b7a47ac8f848a8d345b7c17faeb5c9b8ae07515d84081",
+    "zip_pages.pdf": "ca704fd07b3deb16134281b6d940ba2fff3b3b165040e82585cc24477e4da368"
+  },
+  "inputs": {
+    "districts.csv": "0ec5a99319c698f8387469e467d4554fd13bc0165465f11544b92d7026b9636e",
+    "ledger.csv": "aa4dbb473156592fd878388825792eaae4eea6897ff305e90f96de8716978a77",
+    "manifest.json": "02af326ddaee2c64ea3f8f90f22d3d28c9998c13752a6e909671a3ea4dca7b6f",
+    "run.json": "33a38bc6a781e20829b81aa429f6777f021de792d75c516c8113f9774035eca3"
+  },
+  "label": "ifa_pa_k4: IFA PA alone, K 4, realizer on the PA-induced graph, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 31467 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T08:52:35+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "c511443ae17a4b24a96ceff9d2c2a3c2a25f3397",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_pa_k4: IFA PA alone, K 4, realizer on the PA-induced graph, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_nj/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_nj/runs/autonomous_2026-10-05/batch/geo"
+}
