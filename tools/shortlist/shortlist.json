@@ -1512,6 +1512,48 @@
    ],
    "shown_images": [],
    "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at 1ec1be7; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New England, K 4: ifa_ctri_k2 and ifa_mavtnhme_k2 merged by merge.py and re-gated on the full graph. 0 pieces, 0 necks, 0 owned twice; split states CT and MA; districts $1,008M, $1,091M, $1,315M, $1,421M, all in the E2 window. The 31,454 cells with no row are exactly the ZCTAs outside New England, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_sc_arlaok_k1",
+   "tier": "E",
+   "rank": 22,
+   "label": "IFA AR+LA+OK whole, K 1, induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1",
+   "images": [
+    "runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1/summary.png",
+    "runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1/zip_pages.pdf",
+    "runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5d5176a; folder copied to the hub's runs/ for T1), 2026-10-08: IFA AR+LA+OK as one whole-state district, $1,280M, in the E2 window. 0 pieces, 0 necks; the only audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_sc_esc_k2",
+   "tier": "E",
+   "rank": 23,
+   "label": "IFA KY+TN+MS+AL, K 2, TN split, induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2",
+   "images": [
+    "runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2/summary.png",
+    "runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5d5176a; folder copied to the hub's runs/ for T1), 2026-10-08: IFA KY+TN+MS+AL, K 2, TN the only split state (owner's pick in that tab: TN split, in region): KY + north TN $1,347M, MS + AL + south TN $1,000.5M (0.05% above the $1,000M edge). 0 pieces, 0 necks; the only audit failure is the out-of-region cells; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_sc_merge",
+   "tier": 3,
+   "rank": 53,
+   "label": "IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype",
+   "run": "runs/exp/contig/ifa/southcentral/merged",
+   "images": [
+    "runs/exp/contig/ifa/southcentral/merged/summary.png",
+    "runs/exp/contig/ifa/southcentral/merged/zip_pages.pdf",
+    "runs/exp/contig/ifa/southcentral/merged/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5d5176a; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6: TX K 3 merged with ifa_sc_arlaok_k1 and ifa_sc_esc_k2, gated on the full graph. Every region ZCTA owned once, nothing outside; all six districts in the E2 window ($1,000.5M–$1,347M). Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Tier 3 (fails M1)."
   }
  ]
 }
