@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "595e1b2a1defa54e649dd3042b6103591056988ae096afda1e2de9c90a1903bf",
+    "summary.svg": "304525ca9d6e74ccd1fec4e1277166066df26e5cbb7137805004068115d6306a",
+    "zip_IFA.png": "a6ea21d480053cabeb5740e4e755edc295ca944b2c88415e0ce4bb7d0acfcd04",
+    "zip_pages.pdf": "21202b327c222fd76817490d37b6a31942800f045b1584d3817e99a623139ce6"
+  },
+  "inputs": {
+    "districts.csv": "0f41d551a977717ccbbf59f142a3e534c41c2588999c285aa0c993e4e8972f4b",
+    "ledger.csv": "4185dc47b3905866d9c0ec67e83e393dd4cb2d496c43a486bcbc99e9af3c085b",
+    "manifest.json": "17ff11c27c9cb0f40b1b5d6a5b10ffc083c37d317d9400c3247a2399c93d2d3e",
+    "run.json": "def4d8eba6776c3c189feb2091951136dec91044c896c71e0ad30ecb2750b1e6"
+  },
+  "label": "ifa_ny_k4_sldu: IFA NY alone, K 4, state senate districts grouped by min cut length, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 31474 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:06:20+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "9d6f341898551a027dbbc751d1c9e92d9268d9d6",
+    "diff_sha256": "8522b782e50bfda332940443e6d9b6210a6b43e419025f096aaf2d5d071b978b",
+    "dirty": true
+  },
+  "title": "ifa_ny_k4_sldu: IFA NY alone, K 4, state senate districts grouped by min cut length, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_nycd/runs/autonomous_2026-10-05/batch/geo"
+}
