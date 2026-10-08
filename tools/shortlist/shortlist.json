@@ -1567,7 +1567,7 @@
     "runs/exp/contig/ifa/southatl/merged/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Atlantic K 9 merged on the full graph: MD+DE+WV (owner's widened F1 waiver, $1,924M), VA+DC $1,420M, NC $1,046M, NC piece + SC $1,111M, GA $1,160M, FL 4 (from ifa_fl_k4-neck, $1,012M–$1,171M). 0 pieces, 0 necks; the 28,016 unowned cells are exactly the out-of-region ZCTAs. The audit's τ final band flags the waiver district and FL IFA_04 ($1,012M, inside the E2 window but 0.8 m_rel under the τ-band edge). The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 20cfe36 (re-audited at the spec default final_delta 0.15); folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Atlantic K 9 merged on the full graph: MD+DE+WV (owner's widened F1 waiver, $1,924M), VA+DC $1,420M, NC $1,046M, NC piece + SC $1,111M, GA $1,160M, FL 4 (from ifa_fl_k4-neck, $1,012M–$1,171M). 0 pieces, 0 necks; the 28,016 unowned cells are exactly the out-of-region ZCTAs. The audit's τ ±15% final-band line (information only, owner 2026-10-08) flags the waiver district, VA+DC $1,420M and FL IFA_04 $1,012M; the last two are inside the E2 window. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   },
   {
    "id": "ifa_ncsc_k2",
@@ -1638,6 +1638,104 @@
    ],
    "shown_images": [],
    "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Maryland whole alone, $1,507M (F1's original one-state waiver), superseded by ifa_mddewv_k1 when the owner widened the waiver. 0 pieces, 0 necks. Kept for tracking; tier E rather than the tier 3 the tab suggested, because it passes M1. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_merge",
+   "tier": "E",
+   "rank": 30,
+   "label": "IFA Midwest (ENC + WNC + CO, owner pick B), 14 districts merged from 7 runs, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_merge",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_merge/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_merge/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_merge/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Midwest K 14 (East North Central + West North Central + CO, owner pick B 'borrow Colorado'), merged from 7 runs and gated on the full graph: 0 pieces, 0 necks, every district in the E2 window ($1,021M–$1,437M); the 22,622 unowned cells are exactly the out-of-region ZCTAs. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_mi_k3_cd",
+   "tier": "E",
+   "rank": 31,
+   "label": "IFA MI alone, K 3, cd grouping inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Michigan alone, K 3, grouped by congressional districts: $1,164M, $1,107M, $1,021M. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_wiia_k2",
+   "tier": "E",
+   "rank": 32,
+   "label": "IFA WI with IA whole, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA WI split with IA whole, K 2: $1,182M, $1,081M. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_mndn_k2",
+   "tier": "E",
+   "rank": 33,
+   "label": "IFA MN with ND, SD, NE whole, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA MN split with ND, SD, NE whole, K 2: $1,032M and $1,436.9M (just under the $1,437.5M edge). 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_ksmoco_k2",
+   "tier": "E",
+   "rank": 34,
+   "label": "IFA KS split with MO whole and CO whole, K 2 (owner pick B), realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA KS split, KS-east + MO and KS-west + CO, K 2 (owner pick B): $1,294M, $1,327M. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_in_k1",
+   "tier": "E",
+   "rank": 35,
+   "label": "IFA IN whole, K 1, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_in_k1",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_in_k1/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_in_k1/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_in_k1/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Indiana whole as one district, $1,299M. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_mi_k3_sldu",
+   "tier": 3,
+   "rank": 54,
+   "label": "IFA MI alone, K 3, sldu grouping inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_sldu",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_sldu/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_sldu/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_sldu/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Michigan alone, K 3, grouped by state senate districts: $1,193M, $1,058M, $1,042M. Fails M1: one 5.88 km neck at 48025–48301. Tier 3 (fails M1)."
   }
  ]
 }
