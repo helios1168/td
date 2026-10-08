@@ -117,3 +117,39 @@ channels and WIFI triple that. Raising the cap is the owner's call.
 - Is "whole units plus at most one carved piece" too restrictive for balance anywhere?
 - Which unit level should be tried first, and is the metdiv prediction sound?
 - What in the matrix is wasted, and what is missing?
+
+## 7. Oracle co-development (GPT-6 Astra medium, `research-2026-10-08/ORACLE-PLAN.md`), accepted
+
+- **Two graphs.** Planning and drawing use the induced subgraph on the division's shipped
+  vertices (from `graph_vertex`, never from extract rows); the audit always uses the full
+  polygon graph, connectors, borders and land areas, because a connector's width depends on land
+  alternatives across the district's states (`td/audit.py:532-559`).
+- **The invariant** every job keeps: each admitted district owns a fixed, nonempty ZCTA set
+  inside an explicit footprint; every (ZCTA, fine channel) cell has exactly one owner, zero-dollar
+  cells included; each district passed the authoritative gate on exactly that set; merge never
+  adds, removes or re-routes a cell. Merge hazards beyond coverage: colliding district ids, fine
+  channels of one ZIP routed to different districts, geometry version drift, seam filling. So ids
+  are namespaced, gates are cached by hash of the ZIP set plus gate inputs, and the merged ledger
+  is re-gated with full `check_m1` regardless. An unresolved neck search is `unknown`, never a pass.
+- **"At most one carved piece" was a shape heuristic, not a contiguity rule**; dropped from
+  section 1. Rule C counts original split states, not units.
+- **Corrections to section 0:** the K 12 draw timed out on the global graph, so it measured
+  nothing about a scoped draw; NY's $5.47B admits at most five $1,000M-floor IFA districts, not
+  six, and the $1,913M city group cannot become two in-band districts without mass from outside.
+- **Coarse units, from the reference and polygon edges:** CSA and CBSA remainders are not
+  connected (NY's CSA remainder has 4 components, PA's 6), 19 of the Middle Atlantic's 150 county
+  groups disconnect on the polygon graph, and CSAs cross state lines so they must be intersected
+  by state. The "roughly district-sized metdiv" claim was unsupported. Two controlled proposals
+  replace the five-level matrix: (1) adaptive hierarchy, state-intersected CSA → CBSA → metdiv
+  where present → ZCTA refinement, every unit split into connected components, oversized units
+  expanded; (2) connected spatial aggregation inside original states with no administrative
+  labels. Same solver, same gate; only the proposal partition differs.
+- **Contract needs more than [L, U]:** explicit footprint, original-state map, full-precision
+  fine-channel dollars with rates frozen from the full extract, the cell-routing policy (not
+  proven binary: `td/spec.py:411-414` allows national-absent fallback), rule C with the F1
+  exception, global K and WIFI (M, K) resolved before any regional solve.
+- **Timing, honest:** S0 is 4–8 engineering hours including tests; the two-method pilot another
+  2–4 hours plus measured runs. No evidence yet supports minute-long gates or ten-minute
+  nationwide completion (a neck search alone may take 60 s per component). Four single-process
+  jobs including gate solvers; no nested pools.
+- **S0 task list** (files and runnable acceptance per task) is in the oracle report, section 5.
