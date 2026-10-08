@@ -58,8 +58,9 @@ the tracker, a map shown that is not on the shortlist, and an unregistered label
     FI $900M); IFA within −20%/+15% of $1.25B; WIFI, with no target, within ±15% of its dollar
     mean; the combined channel stays exempt; planned and judged at the same band;
   - $ is m_rel times each fine channel's whole-extract rate (IFA $1.25197M per m_rel);
-  - one waiver: in IFA, Maryland whole as one district (about $1,507M, over U), recorded on
-    every map that uses it; no other district is exempt;
+  - one waiver: in IFA, one district of MD+DE+WV whole (about $1,924M, 54% over target; owner
+    2026-10-08 widened F1 from MD alone), recorded on every map that uses it; no other district
+    is exempt;
   - main-map total K 48-54, IFA K 46-55 (IFA's K from the grid; "K ≥ 50" was revoked).
 - **Ranking, looks first (owner 2026-10-05):**
   1. split units per channel (a district owning any ZCTA of a state, zero-opportunity ones

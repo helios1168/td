@@ -1511,7 +1511,7 @@
     "runs/exp/contig/ifa/newengland/merged/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at 1ec1be7; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New England, K 4: ifa_ctri_k2 and ifa_mavtnhme_k2 merged by merge.py and re-gated on the full graph. 0 pieces, 0 necks, 0 owned twice; split states CT and MA; districts $1,008M, $1,091M, $1,315M, $1,421M, all in the E2 window. The 31,454 cells with no row are exactly the ZCTAs outside New England, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+   "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at d3a98fb; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New England, K 4: ifa_ctri_k2 and ifa_mavtnhme_k2 merged by merge.py and re-gated on the full graph. 0 pieces, 0 necks, 0 owned twice; split states CT and MA; districts $1,008M, $1,091M, $1,315M, $1,421M, all in the E2 window. The 31,454 cells with no row are exactly the ZCTAs outside New England, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   },
   {
    "id": "ifa_sc_arlaok_k1",
@@ -1554,6 +1554,90 @@
    ],
    "shown_images": [],
    "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5d5176a; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6: TX K 3 merged with ifa_sc_arlaok_k1 and ifa_sc_esc_k2, gated on the full graph. Every region ZCTA owned once, nothing outside; all six districts in the E2 window ($1,000.5M–$1,347M). Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_southatl_merge",
+   "tier": "E",
+   "rank": 24,
+   "label": "IFA South Atlantic K 9 merged (MD+DE+WV owner waiver, VA+DC, NC, NC piece+SC, GA, FL 4), full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southatl/merged",
+   "images": [
+    "runs/exp/contig/ifa/southatl/merged/summary.png",
+    "runs/exp/contig/ifa/southatl/merged/zip_pages.pdf",
+    "runs/exp/contig/ifa/southatl/merged/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Atlantic K 9 merged on the full graph: MD+DE+WV (owner's widened F1 waiver, $1,924M), VA+DC $1,420M, NC $1,046M, NC piece + SC $1,111M, GA $1,160M, FL 4 (from ifa_fl_k4-neck, $1,012M–$1,171M). 0 pieces, 0 necks; the 28,016 unowned cells are exactly the out-of-region ZCTAs. The audit's τ final band flags the waiver district and FL IFA_04 ($1,012M, inside the E2 window but 0.8 m_rel under the τ-band edge). The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_ncsc_k2",
+   "tier": "E",
+   "rank": 25,
+   "label": "IFA NC+SC, K 2, NC split with one piece attached to SC whole, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southatl/ifa_ncsc_k2",
+   "images": [
+    "runs/exp/contig/ifa/southatl/ifa_ncsc_k2/summary.png",
+    "runs/exp/contig/ifa/southatl/ifa_ncsc_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/southatl/ifa_ncsc_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA NC+SC, K 2, NC split with one piece attached to whole SC (rule C), optimal in 3.2 s: NC $1,046M, NC piece + SC $1,111M, both in the E2 window. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_vadc_k1",
+   "tier": "E",
+   "rank": 26,
+   "label": "IFA VA+DC whole, K 1, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southatl/ifa_vadc_k1",
+   "images": [
+    "runs/exp/contig/ifa/southatl/ifa_vadc_k1/summary.png",
+    "runs/exp/contig/ifa/southatl/ifa_vadc_k1/zip_pages.pdf",
+    "runs/exp/contig/ifa/southatl/ifa_vadc_k1/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA VA+DC whole as one district, $1,420M (inside the E2 window, 1.2% under its upper edge). 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_ga_k1",
+   "tier": "E",
+   "rank": 27,
+   "label": "IFA GA whole alone, K 1, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southatl/ifa_ga_k1",
+   "images": [
+    "runs/exp/contig/ifa/southatl/ifa_ga_k1/summary.png",
+    "runs/exp/contig/ifa/southatl/ifa_ga_k1/zip_pages.pdf",
+    "runs/exp/contig/ifa/southatl/ifa_ga_k1/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Georgia whole as one district, $1,160M, in the E2 window. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mddewv_k1",
+   "tier": "E",
+   "rank": 28,
+   "label": "IFA MD+DE+WV whole, K 1 (owner widened F1 waiver to MD+DE+WV), full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southatl/ifa_mddewv_k1",
+   "images": [
+    "runs/exp/contig/ifa/southatl/ifa_mddewv_k1/summary.png",
+    "runs/exp/contig/ifa/southatl/ifa_mddewv_k1/zip_pages.pdf",
+    "runs/exp/contig/ifa/southatl/ifa_mddewv_k1/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA MD+DE+WV whole as one district, $1,924M (54% over the $1.25B target): the owner's widened F1 waiver (2026-10-08, 'Both join MD's waiver district'). 0 pieces, 0 necks; fails the E2 band by the waiver only. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_md_k1",
+   "tier": "E",
+   "rank": 29,
+   "label": "IFA MD whole alone, K 1 (F1 one-state band waiver), full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/southatl/ifa_md_k1",
+   "images": [
+    "runs/exp/contig/ifa/southatl/ifa_md_k1/summary.png",
+    "runs/exp/contig/ifa/southatl/ifa_md_k1/zip_pages.pdf",
+    "runs/exp/contig/ifa/southatl/ifa_md_k1/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-southatl (branch m5-studio/ifa-southatl at 4a6cb4f; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Maryland whole alone, $1,507M (F1's original one-state waiver), superseded by ifa_mddewv_k1 when the owner widened the waiver. 0 pieces, 0 necks. Kept for tracking; tier E rather than the tier 3 the tab suggested, because it passes M1. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   }
  ]
 }
