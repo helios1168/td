@@ -1903,7 +1903,7 @@
     "runs/exp/contig/ifa/midatl/merged/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-research NY worker (branch m5-studio/ifa-ny at 63c4f22; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 (ifa_ny_k5_cd), merged and audited on the full graph. 0 pieces; all 12 districts in the E2 window. Fails M1 on two NY necks: Manhattan (5.50 km default / 6.99 km gap width, 40 ZIPs, 5.2-5.4% of land, 47% of mass) and Queens/Nassau (7.48 km default, 41 ZIPs, 46% of land, 69% of mass). Queens/Nassau passes under the G1 prototype only through water crossings (Manhasset Bay, Little Neck Bay, the Narrows, Flushing Bay), which G3 does not cover; owner ruling pending (td-research correction 2026-10-08). The 29,043 cells with no row are out of region. Tier 3 (fails M1)."
+   "notes": "td-research NY worker (branch m5-studio/ifa-ny at 63c4f22; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 (ifa_ny_k5_cd), merged and audited on the full graph. 0 pieces; all 12 districts in the E2 window. Fails M1 on two NY necks: Manhattan (5.50 km default / 6.99 km gap width, 40 ZIPs, 5.2-5.4% of land, 47% of mass) and Queens/Nassau (7.48 km default, 41 ZIPs, 46% of land, 69% of mass). Queens/Nassau passes under the G1 prototype only through water crossings (Manhasset Bay, Little Neck Bay, the Narrows, Flushing Bay), which G3 does not cover; owner ruling pending (td-research correction 2026-10-08). The 29,043 cells with no row are out of region. Tier 3 (fails M1). Superseded by ifa_midatl_merged_v2 (Queens/Nassau closed), 2026-10-08."
   },
   {
    "id": "ifa_conus_v1",
@@ -1918,6 +1918,20 @@
    ],
    "shown_images": [],
    "notes": "td-research (branch m5-studio/ifa-conus at 4572e81; folder copied to the hub's runs/ for T1), 2026-10-08: IFA CONUS, 52 districts from six region merges (New England 4, Middle Atlantic 12, South Atlantic 9, South Central 6, Midwest 14, West 7). Every CONUS cell owned once, 0 pieces; 51 of 52 districts in the E2 window plus the MD+DE+WV waiver district ($1,924M); 16 split states (CA CT FL IL KS MA MI MN NC NJ NY OH PA TN TX WI). Fails M1 on two NY necks: Manhattan (5.50 km default / 6.99 km gap width, 40 ZIPs, 5.2-5.4% of land, 47% of mass) and Queens/Nassau (7.48 km default, 41 ZIPs, 46% of land, 69% of mass). Queens/Nassau passes under the G1 prototype only through water crossings (Manhasset Bay, Little Neck Bay, the Narrows, Flushing Bay), which G3 does not cover; owner ruling pending (td-research correction 2026-10-08). El Paso (6.14 km default) passes under G3. render.json carries the default-width 3-neck summary because render.py re-audits without TD_NECK_GAP_WIDTH; run.json has the gap-width headline. export/ holds the owner's work-machine dataset (ZIP and district tables with m_rel and $, no sales). The first complete IFA map. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_midatl_merged_v2",
+   "tier": 3,
+   "rank": 58,
+   "label": "IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 (ifa_ny_k5_cd, Queens/Nassau windowed), full-graph audit",
+   "run": "runs/exp/contig/ifa/midatl/merged_v2",
+   "images": [
+    "runs/exp/contig/ifa/midatl/merged_v2/summary.png",
+    "runs/exp/contig/ifa/midatl/merged_v2/zip_pages.pdf",
+    "runs/exp/contig/ifa/midatl/merged_v2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-research NY worker (branch m5-studio/ifa-ny at 1ff8b90; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5, with New York's Queens/Nassau neck closed by a 109-ZIP local window (source ifa_ny_k5_cd-qn, not registered: no render of its own). 0 pieces; all 12 districts in the E2 window. Fails M1 on the NY Manhattan neck only (5.50 km default / 6.99 km gap width, 40 ZIPs, 5.2% of land, 47.5% of mass). The 29,043 cells with no row are out of region. Supersedes ifa_midatl_merged. Tier 3 (fails M1)."
   }
  ]
 }
