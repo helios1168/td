@@ -1302,6 +1302,20 @@
    ],
    "shown_images": [],
    "notes": "Research tab (branch m5-studio/explore-neck at c6dbb1b; folder copied to the hub's runs/ for T1), 2026-10-08: ifa_pa_k4 with its neck repaired by a local window (repair.py --states, 39 ZIPs, optimal in under 0.1 s). 0 pieces, 0 necks; districts $904M, $1,030M, $1,030M, $1,156M. Fails the E2 band: $904M is under IFA's $1,000M lower edge. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_pa_k4t-neck",
+   "tier": "E",
+   "rank": 13,
+   "label": "IFA PA alone, K 4, neck window at a band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_pa_k4t-neck",
+   "images": [
+    "runs/exp/contig/nj/ifa_pa_k4t-neck/summary.png",
+    "runs/exp/contig/nj/ifa_pa_k4t-neck/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_pa_k4t-neck/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck; folder copied to the hub's runs/ for T1), 2026-10-08: the PA K 4 local neck repair redone with the band set inside IFA's E2 window (final_delta 0.028). 0 pieces, 0 necks; districts $1,042M, $1,030M, $1,030M, $1,017M, all inside $1,000M–$1,437.5M. The only audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   }
  ]
 }
