@@ -1165,6 +1165,45 @@
    ],
    "shown_images": [],
    "notes": "#127 whole-unit plan (tools/exp/contig/wholeplan.py): the copy of runs/exp/contig/_specs/ifa49.toml drops IFA's split list, so every unit is held whole and every ZIP follows its unit; the master plans at the exact smallest δ with no cap (owner 2026-10-07, any band), every district is checked against M1 on its ZIP set (td.audit's pieces and necks), each failing one is banned as its exact unit set and the plan re-solved. County pieces built at τ of K 49 for the same 11 states: CA 4, FL 3, MI 3 (Wayne County, 1.05 τ, kept whole as its own piece), NJ 3, NY 4, OH 2, PA 3, TX 3, IL 2, MA 2, CT 2; the plan rejoins CT and CT_p1, so 10 states are split. NY_p2 (1.53 τ) sets δ. 5 rounds, 4 bans, all the 84621 neck (ID+MT+UT+WY, ID+MT+UT, ID+MT+UT+WA+WY, ID+MT+UT+WA). 0 defects; worst/mean 52.8% / 21.3%; $ per district +1.5% of target. Tier E (exploratory, never eligible): scorer INELIGIBLE on the band (29 of 49 outside ±15%)."
+  },
+  {
+   "id": "ifa_div2_midatl_k11",
+   "tier": "E",
+   "rank": 7,
+   "label": "IFA Middle Atlantic sealed, K 11, county pieces, any band (out-of-division ZCTAs carry no mass)",
+   "run": "runs/exp/contig/divisions/ifa_div2_midatl_k11",
+   "images": [
+    "runs/exp/contig/divisions/ifa_div2_midatl_k11/summary.png",
+    "runs/exp/contig/divisions/ifa_div2_midatl_k11/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "Research tab, 2026-10-08: wholeplan.py on a NJ+NY+PA-only extract (runs/exp/contig/divisions/_inst/ifa_div2.json.gz), K 11, county pieces; 8 cuts (NJ 3, PA 3, NY 5); 6 of 11 districts inside the E2 band. The render colours out-of-division zero-mass ZCTAs. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa46-mdwhole",
+   "tier": "E",
+   "rank": 8,
+   "label": "corridor pressure test, MD whole (F1), county pieces for 14 states, any band",
+   "run": "runs/exp/contig/necorridor/ifa46-mdwhole",
+   "images": [
+    "runs/exp/contig/necorridor/ifa46-mdwhole/summary.png",
+    "runs/exp/contig/necorridor/ifa46-mdwhole/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "Research tab, 2026-10-08. MD is held whole under F1 ('MD stays whole: one-state band waiver'), an owner answer given in the research tab and not yet filed in docs/problem/PROBLEM.md. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa46-md4",
+   "tier": "E",
+   "rank": 9,
+   "label": "R2 illustration, MD in 4 county groups on ifa46-whole (hand edit, not planned)",
+   "run": "runs/exp/contig/r2illustration/ifa46-md4",
+   "images": [
+    "runs/exp/contig/r2illustration/ifa46-md4/summary.png",
+    "runs/exp/contig/r2illustration/ifa46-md4/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "Research tab, 2026-10-08: a hand edit of runs/exp/contig/whole127/ifa46-whole for route R2, not produced by the planner. Tier E for tracking only (T1); never a candidate."
   }
  ]
 }
