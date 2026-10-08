@@ -28,3 +28,27 @@ shown again (T1).
   the 58 map re-render. don't ask again, store my explicit consent to avoid that"). The 58
   shortlist entries whose renders predate the 2026-10-07 renderer change stay as they are, their
   T1 "render not current" failures are accepted, and no session asks about the re-render again.
+
+## G1, G2: neck rule findings from the single-state draws (owner, 2026-10-08, structured answers)
+
+**G1 (their pick "Measure width across coverage gaps").** M1's neck width counts unassigned land
+between ZCTA polygons, so ZCTA coverage gaps do not read as necks. Cause: IFA TX K 3
+(`runs/exp/contig/nj/ifa_tx_k3`, branch `m5-studio/explore-neck`) has one neck, El Paso + the
+Trans-Pecos (44 ZIPs, $81M, 6.9% of IFA_02's land) joined to the rest of Texas by the single polygon
+edge 79718-79734 at 6.14 km, because the desert ZCTA polygons do not touch (79830 Alpine has no
+polygon edge to 79735 Fort Stockton) while the land passage is over 100 km wide; every neighbour is
+already in the district, and repair windows up to 1,443 ZIPs proved nothing local helps. This is a
+gate change (td/audit.py NeckGraph width); prototyped behind a flag, default off, until the
+lander's owner-decision issue lands. Alternatives recorded and not chosen: keep the rule and give El
+Paso New Mexico on the CONUS map; a one-off connector across the gap; defer.
+
+**G2 (their pick "Dilute: Manhattan + Bronx + Westchester").** Under the 10 km / 5% land rule any
+district whose land is more than 5% Manhattan fails M1: the island is under 4 km wide, so every cut
+across it is a neck once the cut-off side holds 5% of the district's land (the congressional-district
+NY K 5, `runs/exp/contig/nj/ifa_ny_k5_cd`, fails on a 5.5 km cut at 10024-10029 with 5.2% of the land
+south of it, and adding 48 km² of Westchester only moved the cut north). Manhattan is 57 km² and
+$546M, so a district holding it needs over 1,148 km² of land; Manhattan + Bronx + all of Westchester is
+$1,300M on 1,277 km² (Manhattan 4.5%), inside the window. NY K 5 is re-solved with a generic land
+floor: for every district, the land of units that have a neck on their own is at most NECK_SHARE of
+the district's land. Alternatives recorded and not chosen: a rule exemption for water-bounded cut-off
+parts; defer.
