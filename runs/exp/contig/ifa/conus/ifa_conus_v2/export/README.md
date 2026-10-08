@@ -17,7 +17,8 @@ Run folder: `runs/exp/contig/ifa/conus/ifa_conus_v2` (ifa_conus_merge), written 
 - `52_ifa_38bcd2d_district_reach.geojson`: the Tableau district-reach layer (archive
   `tools/export_tableau_datasets.py` shape): one WGS84 (Multi)Polygon per district dissolved from
   its ZCTAs, simplified at 250 m, properties `scenario_id, bundle, bundle_title, district_raw,
-  district, wholesaler, mass, color` (colours as on zip_IFA.png). Written by
+  district, wholesaler, mass, color` (colours as on zip_IFA.png) plus simplestyle `fill, fill-opacity,
+  stroke, stroke-width` so GitHub's preview colours each district. Written by
   `tools/exp/contig/export_geojson.py`.
 - Per-district verdicts (window, pieces, necks, both M1 gates) are in `../districts.csv` and `../run.json`.
 

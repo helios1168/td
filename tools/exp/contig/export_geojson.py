@@ -2,7 +2,8 @@
 (archive `tools/export_tableau_datasets.py::export_district_geojson`, 2026-09-14): one feature per
 district, WGS84 (Multi)Polygon dissolved from the ledger's ZCTA polygons (the same `zip_pages`
 geometry and colouring the ZIP map uses, so colours match the PNG), properties `scenario_id, bundle,
-bundle_title, district_raw, district, wholesaler, mass, color`.  Written as
+bundle_title, district_raw, district, wholesaler, mass, color` plus the simplestyle keys `fill, fill-opacity, stroke, stroke-width`
+(the same colour) so viewers such as GitHub's preview colour each district.  Written as
 `export/<scenario>_district_reach.geojson`; the scenario id comes from export/scenarios.csv
 (run tools/exp/contig/export_long.py first).
 
@@ -46,7 +47,9 @@ def main(argv=None):
         feats.append({"type": "Feature", "geometry": shapely.geometry.mapping(g),
                       "properties": {"scenario_id": scen["scenario"], "bundle": bundle[d],
                                      "bundle_title": BUNDLE_TITLE.get(bundle[d], bundle[d]), "district_raw": d,
-                                     "district": d, "wholesaler": "", "mass": round(mass[d], 7), "color": colour[d]}})
+                                     "district": d, "wholesaler": "", "mass": round(mass[d], 7), "color": colour[d],
+                                     # simplestyle keys, so GitHub's and geojson.io's previews colour the districts
+                                     "fill": colour[d], "fill-opacity": 0.6, "stroke": "#202020", "stroke-width": 1}})
     out = os.path.join(run_dir, "export", f"{scen['scenario']}_district_reach.geojson")
     with open(out, "w") as fh:
         json.dump({"type": "FeatureCollection", "features": feats}, fh)
