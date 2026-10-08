@@ -1460,7 +1460,7 @@
   {
    "id": "ifa_tx_k3",
    "tier": "E",
-   "rank": 52,
+   "rank": 44,
    "label": "IFA TX alone, K 3, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
    "run": "runs/exp/contig/nj/ifa_tx_k3",
    "images": [
@@ -1544,7 +1544,7 @@
   {
    "id": "ifa_sc_merge",
    "tier": "E",
-   "rank": 54,
+   "rank": 45,
    "label": "IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype",
    "run": "runs/exp/contig/ifa/southcentral/merged",
    "images": [
@@ -1866,7 +1866,7 @@
   {
    "id": "ifa_sc_merge_b",
    "tier": "E",
-   "rank": 57,
+   "rank": 46,
    "label": "IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south, balanced TN split), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype",
    "run": "runs/exp/contig/ifa/southcentral/merged_b",
    "images": [
