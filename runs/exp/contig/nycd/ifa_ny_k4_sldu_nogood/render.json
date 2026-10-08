@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "abe9b9f4842245c6ce4070815e7aea2fd4cf7e3a1ab7b469c41092530a5aa796",
+    "summary.svg": "83c40d57df0b804c242c3504c7f3b3a572073aba28aab0d8cfc7e8cd84f8e3bf",
+    "zip_IFA.png": "b0fc555f7110031b397b78c84d98619ca3c2590b66eacb965fcf58ad38d3d550",
+    "zip_pages.pdf": "6b017449e7f38a8944e85d94966d479561e3d76c6205e3d47afd24c31419fd2f"
+  },
+  "inputs": {
+    "districts.csv": "656bbeeb039f471f70823a5423db0a108fc8e2100ed000d27b22b13470acc341",
+    "ledger.csv": "9f59fd16569796097471cf17acb4b41461647876a47817185106ecd0a3d17bb7",
+    "manifest.json": "62bde2827686b6077a335432df3a19ba23442720e4c38c7622d5dbfd5f15ea3c",
+    "run.json": "def4d8eba6776c3c189feb2091951136dec91044c896c71e0ad30ecb2750b1e6"
+  },
+  "label": "ifa_ny_k4_sldu_nogood: IFA NY alone, K 4, senate districts, k4_sldu's two necked groups forbidden, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 31474 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:13:52+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d08bf30572b8d6838ae3b38d1b5e6caf3911f061",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_ny_k4_sldu_nogood: IFA NY alone, K 4, senate districts, k4_sldu's two necked groups forbidden, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_nycd/runs/autonomous_2026-10-05/batch/geo"
+}
