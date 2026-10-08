@@ -14,5 +14,5 @@ eta = 0.05
 max_size = 4
 max_dist_km = 900
 dist_km = { }
-delta = 0.198
-final_delta = 0.198
+delta = 0.15
+final_delta = 0.15

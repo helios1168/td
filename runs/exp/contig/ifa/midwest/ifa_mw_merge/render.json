@@ -7,16 +7,16 @@
   "gap_fill": "nearest",
   "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
   "images": {
-    "summary.png": "016a90f9c759ae9255bb3c75da3f18be125f7e056a65ab1c5486bfaa3a99d4b7",
-    "summary.svg": "2bbf58dfa2f26ae87becbba3d0728293fe22886710375fe508fba5e7a03b80ee",
-    "zip_IFA.png": "cab21099d338b9586fefa01fd7e61af89ccfa89c84b984b373efabf4d05c5b10",
-    "zip_pages.pdf": "85d00454b196bd2c2d17d23bc46b75852d405ee31fc75790dbad9374c1561aab"
+    "summary.png": "41786ecfb7130aa52c6f2e1a4519998b751ac95ba4f1fea33401571e0d11b66c",
+    "summary.svg": "7a78e4a1cb7eeceb088f2799a9621db8774ea3fdd05d155ea17d411d6092941c",
+    "zip_IFA.png": "abef9756a1b15a2daf0c856308cc22a2e5691d5722dc34425e798d7d13dc1dbd",
+    "zip_pages.pdf": "a4db491e540a9c3107ca88ebfa1315bbee096e4c1e214784a8f431896396bd93"
   },
   "inputs": {
     "districts.csv": "51751b2b73abda0b236d60b1466150a7b71e1a1869eefc81e7b728467ed48722",
     "ledger.csv": "350aa57a43b5b3156d421c2b86b26d76670db0963a53508e1996256352b0fef9",
-    "manifest.json": "7d243193864ef190fca7218ffd0b89357a2e2457f3975275de08c094ce349358",
-    "run.json": "a4b349299a1c452bac421b5ef751bc22cbcb2201d5ddb7c8fbc00646ba5c027a"
+    "manifest.json": "e56be52efb8240b8316261def845934af485fb0e092994d8381218b8811f023d",
+    "run.json": "619b635c91e588926cc057e0cbbfb24189d2f27068bfdd0b18039490d66782b1"
   },
   "label": "ifa_mw_merge: IFA Midwest (ENC + WNC + CO, owner pick B), 14 districts merged from 7 runs, full-graph M1 audit",
   "m1": {
@@ -24,11 +24,11 @@
     "status": "fail",
     "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 22622 (ZCTA, fine channel) cells with no row, 0 owned twice, 4 mass necks listed beside M1"
   },
-  "rendered_at": "2026-10-08T10:13:15+00:00",
+  "rendered_at": "2026-10-08T10:18:33+00:00",
   "renderer": {
     "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
-    "commit": "a9caee61930d2808ee29bc8d28aa9f26696a29ab",
-    "diff_sha256": "6384bc6d0fe1654776053235d45fda4ccc05f89262b6a04e4f8e07eae2077696",
+    "commit": "4e223f1a8c0d02e77f218a9e502e53c1819c8644",
+    "diff_sha256": "318a80bae8ae130f0a001eb16cbe30f4a4c7e2e86e97c775f9ede3ff5bc7593b",
     "dirty": true
   },
   "title": "ifa_mw_merge: IFA Midwest (ENC + WNC + CO, owner pick B), 14 districts merged from 7 runs, full-graph M1 audit, FAILS M1",

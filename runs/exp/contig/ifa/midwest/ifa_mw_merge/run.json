@@ -2,10 +2,10 @@
   "cells": 10678,
   "channels": {
     "IFA": {
-      "delta": 0.198,
+      "delta": 0.15,
       "districts": 0,
       "districts_by_cause": {},
-      "final_delta": 0.198,
+      "final_delta": 0.15,
       "k": 14,
       "margin": false,
       "pieces": 0,
