@@ -58,3 +58,10 @@ in the td-research session (01a119b6, around entries #4494-#4496) after the mach
 64 GB, about 500 MB per solver process); the launch that followed ran 11 solver processes at 4.3 GB.
 Tonight's IFA tabs hold 11 of the 12 with one spare for the assembly; main-map slots are the owner's
 allocation.
+
+**IFA band verdict is the E2 window (owner, 2026-10-08 ~05:15, southatl tab, their pick "E2 window
+$1,000M-$1,437.5M").** Every IFA region merge and the CONUS gate report band pass/fail per district
+against [798.74, 1148.19] m_rel; the audit's τ ±15% final-band line is information only and
+final_delta is never changed to make it agree (the mandate advisor blocked southatl's 0.1733; it was
+reverted to the default 0.15). MD+DE+WV ($1,924M) passes only under the widened F1 waiver (owner,
+same tab: "Both join MD's waiver district"). Filing with the lander is southatl's relay.
