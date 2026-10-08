@@ -1316,6 +1316,174 @@
    ],
    "shown_images": [],
    "notes": "Research tab (branch m5-studio/explore-neck; folder copied to the hub's runs/ for T1), 2026-10-08: the PA K 4 local neck repair redone with the band set inside IFA's E2 window (final_delta 0.028). 0 pieces, 0 necks; districts $1,042M, $1,030M, $1,030M, $1,017M, all inside $1,000M–$1,437.5M. The only audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_ctri_k2",
+   "tier": "E",
+   "rank": 14,
+   "label": "IFA CT,RI alone, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ctri_k2",
+   "images": [
+    "runs/exp/contig/nj/ifa_ctri_k2/summary.png",
+    "runs/exp/contig/nj/ifa_ctri_k2/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ctri_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA CT+RI, K 2, optimal in 2.5 s. 0 pieces, 0 necks; CT west $1,008M, CT east + RI $1,091M, both in the E2 window. Confirms at ZCTA grain the rule-C CT window (about 529 m_rel of CT in the RI district, inside 456–535). The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_il_k2",
+   "tier": "E",
+   "rank": 15,
+   "label": "IFA IL alone, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_il_k2",
+   "images": [
+    "runs/exp/contig/nj/ifa_il_k2/summary.png",
+    "runs/exp/contig/nj/ifa_il_k2/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_il_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Illinois alone, K 2, optimal in 38 s. 0 pieces, 0 necks; $1,109M (Chicago lakefront) and $1,024M, both in the E2 window. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_oh_k2",
+   "tier": "E",
+   "rank": 16,
+   "label": "IFA OH alone, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_oh_k2",
+   "images": [
+    "runs/exp/contig/nj/ifa_oh_k2/summary.png",
+    "runs/exp/contig/nj/ifa_oh_k2/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_oh_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Ohio alone, K 2. 0 pieces, 0 necks; $1,320M and $1,414M, both in the E2 window. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_fl_k4-neck",
+   "tier": "E",
+   "rank": 17,
+   "label": "IFA FL alone, local neck/piece windows on the ifa_fl_k4 drawing, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_fl_k4-neck",
+   "images": [
+    "runs/exp/contig/nj/ifa_fl_k4-neck/summary.png",
+    "runs/exp/contig/nj/ifa_fl_k4-neck/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_fl_k4-neck/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Florida alone, K 4, with a local neck window on ifa_fl_k4. 0 pieces, 0 necks; $1,091M, $1,091M, $1,171M, $1,012M, all in the E2 window. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_ca_k4-neck",
+   "tier": "E",
+   "rank": 18,
+   "label": "IFA CA alone, local neck/piece windows on the ifa_ca_k4 drawing, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ca_k4-neck",
+   "images": [
+    "runs/exp/contig/nj/ifa_ca_k4-neck/summary.png",
+    "runs/exp/contig/nj/ifa_ca_k4-neck/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ca_k4-neck/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA California alone, K 4, with a local neck window on ifa_ca_k4. 0 pieces, 0 necks; four at $1,270M, in the E2 window. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_ca_k5-neck",
+   "tier": "E",
+   "rank": 19,
+   "label": "IFA CA alone, local neck/piece windows on the ifa_ca_k5 drawing, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ca_k5-neck",
+   "images": [
+    "runs/exp/contig/nj/ifa_ca_k5-neck/summary.png",
+    "runs/exp/contig/nj/ifa_ca_k5-neck/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ca_k5-neck/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA California alone, K 5, with a local neck window on ifa_ca_k5. 0 pieces, 0 necks; five at $1,004M–$1,028M, in the E2 window. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_fl_k4",
+   "tier": 3,
+   "rank": 47,
+   "label": "IFA FL alone, K 4, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_fl_k4",
+   "images": [
+    "runs/exp/contig/nj/ifa_fl_k4/summary.png",
+    "runs/exp/contig/nj/ifa_fl_k4/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_fl_k4/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Florida alone, K 4, before the neck fix: 2 districts in pieces and 1 neck. Fixed in ifa_fl_k4-neck. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_ca_k4",
+   "tier": 3,
+   "rank": 48,
+   "label": "IFA CA alone, K 4, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ca_k4",
+   "images": [
+    "runs/exp/contig/nj/ifa_ca_k4/summary.png",
+    "runs/exp/contig/nj/ifa_ca_k4/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ca_k4/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA California alone, K 4, before the neck fix: 1 neck. Fixed in ifa_ca_k4-neck. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_ca_k5",
+   "tier": 3,
+   "rank": 49,
+   "label": "IFA CA alone, K 5, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ca_k5",
+   "images": [
+    "runs/exp/contig/nj/ifa_ca_k5/summary.png",
+    "runs/exp/contig/nj/ifa_ca_k5/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ca_k5/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA California alone, K 5, before the neck fix: 1 district in pieces and 4 necks. Fixed in ifa_ca_k5-neck. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_mi_k3",
+   "tier": 3,
+   "rank": 50,
+   "label": "IFA MI alone, K 3, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_mi_k3",
+   "images": [
+    "runs/exp/contig/nj/ifa_mi_k3/summary.png",
+    "runs/exp/contig/nj/ifa_mi_k3/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_mi_k3/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Michigan alone, K 3: 3 necks; tangled incumbent (480 s time limit). Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_tx_k3",
+   "tier": 3,
+   "rank": 51,
+   "label": "IFA TX alone, K 3, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_tx_k3",
+   "images": [
+    "runs/exp/contig/nj/ifa_tx_k3/summary.png",
+    "runs/exp/contig/nj/ifa_tx_k3/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_tx_k3/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Texas alone, K 3: one 6.14 km neck in the far west; repair in progress in the research tab. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_midatl_k12_merge",
+   "tier": 3,
+   "rank": 52,
+   "label": "IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 merged from single-state runs, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_midatl_k12_merge",
+   "images": [
+    "runs/exp/contig/nj/ifa_midatl_k12_merge/summary.png",
+    "runs/exp/contig/nj/ifa_midatl_k12_merge/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_midatl_k12_merge/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA NJ 3 + PA 4 + NY 5 merged (ifa_nj_k3-neck, ifa_pa_k4t-neck, NY K 5) and audited on the full graph: fails only on NY's districts (1 in pieces, 3 necks); the 29,043 unowned cells are out of region. All 12 districts in the E2 window. Tier 3 (fails M1)."
   }
  ]
 }
