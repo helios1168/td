@@ -1,0 +1,6 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,811.25471032738,812.89302152,0
+IFA,IFA_02,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA (2)",CA#2,CA,811.25471032738,801.6313078000001,0
+IFA,IFA_03,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA (1)",CA#3,CA,811.25471032738,811.6637071880003,0
+IFA,IFA_04,"IFA San Francisco-Oakland-Fremont, CA",CA#4,CA,811.25471032738,808.6317305108998,0
+IFA,IFA_05,"IFA San Diego-Chula Vista-Carlsbad, CA",CA#5,CA,811.25471032738,821.4537846180001,0

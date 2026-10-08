@@ -1,0 +1,58 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/repair.py runs/exp/contig/nj/ifa_ca_k5 --out runs/exp/contig/nj/ifa_ca_k5-neck --extract runs/exp/contig/nj/_inst/ifa_ca.json.gz --states CA --time-limit 240 --jobs 1",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-neck/runs/exp/contig/nj/_inst/ifa_ca.json.gz",
+  "finished_at": "2026-10-08T09:20:08+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-neck/runs/exp/contig/nj/ifa_ca_k5-neck",
+  "formulation": "contig_repair",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "budget": null,
+    "channels": null,
+    "diag_final_delta": null,
+    "extract": "runs/exp/contig/nj/_inst/ifa_ca.json.gz",
+    "flow": false,
+    "h0": 3,
+    "jobs": 1,
+    "keep_support": false,
+    "label": "",
+    "maps": false,
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plan": {
+      "IFA": {
+        "delta": 0.015,
+        "final_delta": 0.015,
+        "forbid_pairs": [],
+        "free": [
+          "CA"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "states": "CA",
+    "time_limit": 240.0
+  },
+  "parent_run": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-neck/runs/exp/contig/nj/ifa_ca_k5",
+  "plans_file": null,
+  "provenance": {
+    "commit": "ba7db96d5e11582d635829cc5b255ef59673cfd9",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-neck/runs/exp/contig/nj/_inst/ifa_ca.json.gz",
+    "instance_sha256": "f135fdd275e9ec7b04031aff1d9cd80d822f382b291f1662111ef4e99aac9415",
+    "queued_at": "2026-10-08T09:19:59+00:00"
+  },
+  "run_id": "ifa_ca_k5-neck",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-neck/runs/exp/contig/_specs/ifa_ca_k5.toml",
+    "sha256": "8a1246de7c85d88814501442e1cf927bc0a83a9989a20b25f20fcf342493811c"
+  },
+  "started_at": "2026-10-08T09:19:59+00:00",
+  "status": "done",
+  "stop_reason": "repaired"
+}
