@@ -34,8 +34,8 @@ row or an expired deferral. The rows are restated here.
   district's land area that reaches the rest only through a passage under 10 km of shared ZCTA border,
   or across a connector where land would do; the part is the smaller side, the rest may be in
   pieces (owner 2026-10-06); the width also counts land in no ZCTA between the district's
-  polygons, so a coverage gap is not a neck (owner 2026-10-08, G1, #131; until it lands the check
-  measures shared border only). Graph connectivity alone is not M1.
+  polygons, so a coverage gap is not a neck (owner 2026-10-08, G1, #131; in effect now under G3 with the prototype
+  flag on, both verdicts reported, any flip other than TX El Paso goes to the owner). Graph connectivity alone is not M1.
 
 The model plans and draws on that same polygon graph. M1 was set aside "for simplicity" on 09-01
 with no return trigger, and for five weeks every map shipped with detached pieces while reports

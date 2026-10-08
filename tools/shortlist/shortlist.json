@@ -1459,8 +1459,8 @@
   },
   {
    "id": "ifa_tx_k3",
-   "tier": 3,
-   "rank": 51,
+   "tier": "E",
+   "rank": 52,
    "label": "IFA TX alone, K 3, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
    "run": "runs/exp/contig/nj/ifa_tx_k3",
    "images": [
@@ -1469,7 +1469,7 @@
     "runs/exp/contig/nj/ifa_tx_k3/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Texas alone, K 3: one 6.14 km neck in the far west; repair in progress in the research tab. Tier 3 (fails M1)."
+   "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Texas alone, K 3: one 6.14 km neck in the far west; repair in progress in the research tab. Passes under G1 (owner G3, 2026-10-08): its only neck is the El Paso + Trans-Pecos coverage gap (79718–79734), which the G1 width (TD_NECK_GAP_WIDTH=1, 350 km) clears; the render's 'FAILS M1' is the flag-off audit. Tier E (exploratory, never eligible)."
   },
   {
    "id": "ifa_midatl_k12_merge",
@@ -1543,8 +1543,8 @@
   },
   {
    "id": "ifa_sc_merge",
-   "tier": 3,
-   "rank": 53,
+   "tier": "E",
+   "rank": 54,
    "label": "IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype",
    "run": "runs/exp/contig/ifa/southcentral/merged",
    "images": [
@@ -1553,7 +1553,7 @@
     "runs/exp/contig/ifa/southcentral/merged/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at ed8efa0, re-audited at the spec default final_delta 0.15; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6: TX K 3 merged with ifa_sc_arlaok_k1 and ifa_sc_esc_k2, gated on the full graph. Every region ZCTA owned once, nothing outside; all six districts in the E2 window ($1,000.5M–$1,347M). Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Tier 3 (fails M1). Superseded by the balanced-TN merge (merged_b)."
+   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at ed8efa0, re-audited at the spec default final_delta 0.15; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6: TX K 3 merged with ifa_sc_arlaok_k1 and ifa_sc_esc_k2, gated on the full graph. Every region ZCTA owned once, nothing outside; all six districts in the E2 window ($1,000.5M–$1,347M). Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Superseded by the balanced-TN merge (merged_b). Passes under G1 (owner G3, 2026-10-08): its only neck is the El Paso + Trans-Pecos coverage gap (79718–79734), which the G1 width (TD_NECK_GAP_WIDTH=1, 350 km) clears; the render's 'FAILS M1' is the flag-off audit. Tier E (exploratory, never eligible)."
   },
   {
    "id": "ifa_southatl_merge",
@@ -1865,8 +1865,8 @@
   },
   {
    "id": "ifa_sc_merge_b",
-   "tier": 3,
-   "rank": 56,
+   "tier": "E",
+   "rank": 57,
    "label": "IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south, balanced TN split), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype",
    "run": "runs/exp/contig/ifa/southcentral/merged_b",
    "images": [
@@ -1875,7 +1875,7 @@
     "runs/exp/contig/ifa/southcentral/merged_b/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5b5da26; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6 with the balanced TN split (TX 3, AR+LA+OK, ifa_sc_esc_k2b), gated on the full graph: all 6 districts in the E2 window. Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Supersedes ifa_sc_merge. Tier 3 (fails M1)."
+   "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5b5da26; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6 with the balanced TN split (TX 3, AR+LA+OK, ifa_sc_esc_k2b), gated on the full graph: all 6 districts in the E2 window. Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Supersedes ifa_sc_merge. Passes under G1 (owner G3, 2026-10-08): its only neck is the El Paso + Trans-Pecos coverage gap (79718–79734), which the G1 width (TD_NECK_GAP_WIDTH=1, 350 km) clears; the render's 'FAILS M1' is the flag-off audit. Tier E (exploratory, never eligible)."
   }
  ]
 }
