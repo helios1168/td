@@ -76,3 +76,11 @@ merge and the CONUS IFA merge are gated with the G1 prototype on (TD_NECK_GAP_WI
 width across coverage gaps, #131) and both verdicts are reported; any verdict other than El Paso
 that the flag flips is reported to the owner, not decided. ifa_sc_merge_b moves to tier E with the
 note. Filing in PROBLEM.md / MANDATES.md is the lander's.
+
+**Open (06:40): Queens/Nassau under the gap-width gate.** In ifa_conus_v1 (4572e81) the NY
+Queens/Nassau neck (7.48 km, 41 ZIPs, 46% land, 69% mass) passes only under the G1 prototype, and the
+gap edges the prototype adds inside that district are water crossings (11024-11050 Manhasset Bay
+4.80 km, 11024-11359 Little Neck Bay 3.04 km, 10306-11224 and 10301-11209 across the Narrows,
+11356-11371 Flushing Bay), the prototype's documented no-land-test caveat (td/audit.py:487-488).
+G3 covers necks caused by empty ZIPs (land in no ZCTA), not water, so the flip is reported to the
+owner, not adopted: ifa_conus_v1 fails M1 on Manhattan and Queens/Nassau, El Paso excepted.
