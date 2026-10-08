@@ -1,7 +1,7 @@
 {
   "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/coarse.py --state NY --k 5 --level cd --thin-floor --window --spec runs/exp/contig/_specs/ifa_ny_k5_window.toml --lo 798.74 --hi 1148.19 --time-limit 600 --out runs/exp/contig/nycd/ifa_ny_k5_cd_floor",
   "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
-  "finished_at": "2026-10-08T09:47:07+00:00",
+  "finished_at": "2026-10-08T09:53:17+00:00",
   "folder": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nycd/ifa_ny_k5_cd_floor",
   "formulation": "coarse",
   "lane": "contig",
@@ -21,20 +21,20 @@
   "parent_run": null,
   "plans_file": null,
   "provenance": {
-    "commit": "6a6867ed5ad60f6f196d84e6a13ab176270e105d",
-    "diff_sha256": "2cfbbefae2938f0d96eac5c8446935d7b7f10f5f82e29620a411a6b034972574",
+    "commit": "05effe7a4f07d99dd9582d6192276b637453e039",
+    "diff_sha256": "82ccc2d5b183c93c5a573129eaa12b9513b508fdbcdb4e5fd623274df178c406",
     "dirty": true,
     "host": "m5-studio",
     "instance": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
     "instance_sha256": "1c11ffccf12a78d6c59d77529b757a7e12782ad12bcbdce74278f0328ff787ce",
-    "queued_at": "2026-10-08T09:47:03+00:00"
+    "queued_at": "2026-10-08T09:53:05+00:00"
   },
   "run_id": "ifa_ny_k5_cd_floor",
   "scenario": {
     "path": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/_specs/ifa_ny_k5_window.toml",
     "sha256": "bff758403b1d43d3083255eb321822e338cd48005e60935fba2dfd28ce7d19f8"
   },
-  "started_at": "2026-10-08T09:47:03+00:00",
+  "started_at": "2026-10-08T09:53:05+00:00",
   "status": "failed",
   "stop_reason": "partition: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)"
 }

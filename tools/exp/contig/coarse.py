@@ -113,8 +113,9 @@ def coarse_graph(unit: dict, edges, border_km: dict, mass: dict) -> dict:
 
 
 def thin_units(unit: dict, mass: dict, polygon: dict, log=print) -> tuple:
-    """({unit: land m²}, {unit: land m² if thin else 0}): a unit is thin when, as a district on its
-    own, it has an M1 neck on the full polygon graph (`audit.district_necks`)."""
+    """({unit: land m²}, {unit: thin land m²}): a unit is thin when, as a district on its own, it
+    has an M1 neck on the full polygon graph (`audit.district_necks`); its thin land is the cut-off
+    side of that neck (its `area` share of the unit's land), 0 when it has none."""
     from td import audit
     ng = audit.NeckGraph(polygon)
     by = collections.defaultdict(set)
@@ -124,9 +125,10 @@ def thin_units(unit: dict, mass: dict, polygon: dict, log=print) -> tuple:
     for u, zs in sorted(by.items()):
         land[u] = float(sum(polygon["aland"].get(z, 0.0) for z in zs))
         necks = audit.district_necks(zs, {z: mass.get(z, 0.0) for z in zs}, ng)
-        thin[u] = land[u] if necks else 0.0
+        thin[u] = land[u] * sum(nk.area for nk in necks)
         if necks:
-            log(f"thin unit {u}: {len(zs)} ZCTAs, land {land[u] / 1e6:.1f} km², {necks}")
+            log(f"thin unit {u}: {len(zs)} ZCTAs, land {land[u] / 1e6:.1f} km², "
+                f"thin {thin[u] / 1e6:.1f} km², {necks}")
     return land, thin
 
 
@@ -292,7 +294,7 @@ def main(argv=None) -> int:
     doc = {"state": a.state, "k": a.k, "level": a.level, "band": band,
            "districts": len(set(district.values())), "units": len(g["units"]),
            "partition": {k: v for k, v in part.items() if k != "group"},
-           "thin": {u: land[u] for u in sorted(thin) if thin[u]} if thin else None,
+           "thin": {u: thin[u] for u in sorted(thin) if thin[u]} if thin else None,
            "groups": {j: {"units": sorted(us), "mass": sum(g["mass"][u] for u in us)}
                       for j, us in sorted(groups.items())},
            "m1": report["m1"], "verdict": report["verdict"]}
