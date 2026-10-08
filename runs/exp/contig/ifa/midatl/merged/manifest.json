@@ -1,0 +1,54 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/tools/exp/contig/merge.py /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/_specs/ifa_midatl_merge.toml NJ=/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_nj_k3-neck PA=/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_pa_k4t-neck NY=/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd --out /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/merged --extract-out /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/_inst/ifa_midatl.json.gz",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/_inst/ifa_midatl.json.gz",
+  "finished_at": "2026-10-08T11:21:59+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/merged",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/_inst/ifa_midatl.json.gz",
+    "sources": {
+      "NJ": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_nj_k3-neck",
+      "NY": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd",
+      "PA": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_pa_k4t-neck"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d3b2b9220bf491936982f55db99a87a9c754ffa8",
+    "diff_sha256": "bb0bf8179b6adeb87b4a405283c4e622ff2238f37c0a54c17cecbb714856e84f",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/_inst/ifa_midatl.json.gz",
+    "instance_sha256": "85952bea602c59552ec4cb7992f029f57463bb4780b72e78f2666c1cf7ebf479",
+    "queued_at": "2026-10-08T11:21:57+00:00"
+  },
+  "run_id": "merged",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/_specs/ifa_midatl_merge.toml",
+    "sha256": "4593ddf72071803bc7ef89c6ea1f4f22cfbe1461757933162f56ca8f3b5e1cbc"
+  },
+  "source_runs": [
+    {
+      "commit": "9d6f341898551a027dbbc751d1c9e92d9268d9d6",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_nj_k3-neck",
+      "state": "NJ"
+    },
+    {
+      "commit": "c6dbb1b34b4e0f105d9491afdc47b5c86360f25b",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_pa_k4t-neck",
+      "state": "PA"
+    },
+    {
+      "commit": "d08bf30572b8d6838ae3b38d1b5e6caf3911f061",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/nj/ifa_ny_k5_cd",
+      "state": "NY"
+    }
+  ],
+  "started_at": "2026-10-08T11:21:57+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}

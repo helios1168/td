@@ -115,7 +115,8 @@ def coarse_graph(unit: dict, edges, border_km: dict, mass: dict) -> dict:
 def thin_units(unit: dict, mass: dict, polygon: dict, log=print) -> tuple:
     """({unit: land m²}, {unit: thin land m²}): a unit is thin when, as a district on its own, it
     has an M1 neck on the full polygon graph (`audit.district_necks`); its thin land is the cut-off
-    side of that neck (its `area` share of the unit's land), 0 when it has none."""
+    side of that neck (its `area` share of the unit's land), 0 when it has none.
+    Connector-only cuts (0 polygon km) do not count as thin land."""
     from td import audit
     ng = audit.NeckGraph(polygon)
     by = collections.defaultdict(set)
@@ -124,7 +125,8 @@ def thin_units(unit: dict, mass: dict, polygon: dict, log=print) -> tuple:
     land, thin = {}, {}
     for u, zs in sorted(by.items()):
         land[u] = float(sum(polygon["aland"].get(z, 0.0) for z in zs))
-        necks = audit.district_necks(zs, {z: mass.get(z, 0.0) for z in zs}, ng)
+        necks = [nk for nk in audit.district_necks(zs, {z: mass.get(z, 0.0) for z in zs}, ng)
+                 if sum(km for _, _, km in nk.cut) > 0]
         thin[u] = land[u] * sum(nk.area for nk in necks)
         if necks:
             log(f"thin unit {u}: {len(zs)} ZCTAs, land {land[u] / 1e6:.1f} km², "

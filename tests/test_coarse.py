@@ -50,6 +50,22 @@ def test_toy_partition_in_band_connected():
     assert abs(out["cut_km"] - 2.0) < 1e-9
 
 
+def test_thin_units_skips_connector_only_cuts():
+    from unittest.mock import patch
+    from td import audit
+    polygon = {"vertices": ["a"], "edges": [], "border": {}, "connectors": [],
+               "aland": {"a": 100.0}}
+    necks = [audit.Neck(0.0, ("a",), 0.4, 0.5, (("a", "b", 0.0),)),
+             audit.Neck(2.0, ("a",), 0.1, 0.2, (("a", "b", 0.0), ("a", "c", 2.0)))]
+    with patch.object(audit, "district_necks", return_value=necks):
+        land, thin = coarse.thin_units({"a": "unit"}, {"a": 1.0}, polygon, log=lambda *_: None)
+    assert land == {"unit": 100.0}
+    assert thin == {"unit": 10.0}
+    with patch.object(audit, "district_necks", return_value=necks[:1]):
+        _, thin = coarse.thin_units({"a": "unit"}, {"a": 1.0}, polygon, log=lambda *_: None)
+    assert thin == {"unit": 0.0}
+
+
 def test_toy_thin_floor_row():
     # path a-b-c-d, mass 1 each, K 2 in [1, 3]; a is thin (land 1): without the floor the
     # cheapest cut is a|bcd (1 km), with it a's group needs land >= 20, so a-b-c|d (3 km)

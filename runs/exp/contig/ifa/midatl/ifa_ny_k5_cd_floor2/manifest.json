@@ -1,0 +1,40 @@
+{
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/tools/exp/contig/coarse.py --state NY --k 5 --level cd --extract /Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz --spec /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/_specs/ifa_ny_k5.toml --thin-floor --window --lo 798.74 --hi 1148.19 --time-limit 300 --out /Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd_floor2",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+  "finished_at": "2026-10-08T11:21:13+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/ifa/midatl/ifa_ny_k5_cd_floor2",
+  "formulation": "coarse",
+  "lane": "contig",
+  "params": {
+    "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+    "hi": 1148.19,
+    "k": 5,
+    "level": "cd",
+    "lo": 798.74,
+    "nogood": [],
+    "spec": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/_specs/ifa_ny_k5.toml",
+    "state": "NY",
+    "thin_floor": true,
+    "time_limit": 300.0,
+    "window": true
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d3b2b9220bf491936982f55db99a87a9c754ffa8",
+    "diff_sha256": "5a6d24802968da75dfcbc0b152035b5c04d2c14e9b91be68c58048b0373a6eb0",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+    "instance_sha256": "1c11ffccf12a78d6c59d77529b757a7e12782ad12bcbdce74278f0328ff787ce",
+    "queued_at": "2026-10-08T11:21:04+00:00"
+  },
+  "run_id": "ifa_ny_k5_cd_floor2",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-ny/runs/exp/contig/_specs/ifa_ny_k5.toml",
+    "sha256": "77d972533631be434b0aa4c8dab31772d87cf507d1d881a540cf633e8b57c04b"
+  },
+  "started_at": "2026-10-08T11:21:04+00:00",
+  "status": "failed",
+  "stop_reason": "partition: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)"
+}
