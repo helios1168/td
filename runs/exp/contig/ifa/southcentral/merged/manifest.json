@@ -1,0 +1,54 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_sc_merge.toml TX=runs/exp/contig/nj/ifa_tx_k3 AR+LA+OK=runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1 KY+TN+MS+AL=runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2 --out runs/exp/contig/ifa/southcentral/merged --extract-out runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged.json.gz",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged.json.gz",
+  "finished_at": "2026-10-08T10:17:22+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/merged",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged.json.gz",
+    "sources": {
+      "AR+LA+OK": "runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1",
+      "KY+TN+MS+AL": "runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2",
+      "TX": "runs/exp/contig/nj/ifa_tx_k3"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "5d5176a529affb8060d228e95b2c04e38020ca58",
+    "diff_sha256": "9af7101ab75167a3b2c7a3e6068ca99cc7a829e52adb24159e29a97c8909710b",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged.json.gz",
+    "instance_sha256": "7c7f6d5786d42f65149ffb57e2263248c128292ca4416e564019f4250bc4ab83",
+    "queued_at": "2026-10-08T10:17:21+00:00"
+  },
+  "run_id": "merged",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/_specs/ifa_sc_merge.toml",
+    "sha256": "9e6b18f1aa2d138d5cf434d1c9be7de25730a20f90e5b0f5f089cd32e7e129b4"
+  },
+  "source_runs": [
+    {
+      "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/nj/ifa_tx_k3",
+      "state": "TX"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1",
+      "state": "AR+LA+OK"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2",
+      "state": "KY+TN+MS+AL"
+    }
+  ],
+  "started_at": "2026-10-08T10:17:21+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}

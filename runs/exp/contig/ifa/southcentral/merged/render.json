@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "39dfe479225b1438f458d0801cf296b00f53a8d99c8269eb94b2a19f7b3c732c",
+    "summary.svg": "f678fa5ffba83fefc26e9600fa76ee39b83f7c1a430c26213b3b457d734c9a5a",
+    "zip_IFA.png": "7c0aab6739971e96fca2276334c62703ae00d4f2f9d16fbd74200c38d8114b59",
+    "zip_pages.pdf": "0a8ad2aa82d552c5663abcb75b0a322a27b932b2cbdf803fa754d215bce1be10"
+  },
+  "inputs": {
+    "districts.csv": "909e070b248b0550655d8cf92e5ea1ae827a3030cd14302fd7c2982b9a55bc59",
+    "ledger.csv": "90aa2f96fe8bdb3f7d6b23c7a1ddbce26d510d10db628f9ad63cb69b286a8cb7",
+    "manifest.json": "ac79a6d1d419bca6c757a12ebb833d72f5bf33de070a6fa809698519ef525ecf",
+    "run.json": "df224f0bcaad979450355bafbb9f7abfece46040e0a1eac3c36e6dd852884028"
+  },
+  "label": "ifa_sc_merge: IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 26994 (ZCTA, fine channel) cells with no row, 0 owned twice, 3 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:17:59+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "5d5176a529affb8060d228e95b2c04e38020ca58",
+    "diff_sha256": "9af7101ab75167a3b2c7a3e6068ca99cc7a829e52adb24159e29a97c8909710b",
+    "dirty": true
+  },
+  "title": "ifa_sc_merge: IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit; TX El Paso neck clears only under the G1 prototype, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}
