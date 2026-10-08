@@ -1218,6 +1218,62 @@
    ],
    "shown_images": [],
    "notes": "Research tab (branch m5-studio/explore-nj at c511443; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New Jersey alone, K 3, the existing realizer on the NJ-induced polygon graph (598 vertices), full-graph M1 audit. All three districts inside the IFA window ($1,310M, $1,007M, $1,236M). Fails M1: one 4.05 km neck in IFA_03 (31 ZIPs from 07701, 31% of its land). The 32,702 'cells with no row' are out-of-state ZCTAs absent from the NJ-only extract, not a defect. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_pa_k3",
+   "tier": "E",
+   "rank": 10,
+   "label": "IFA PA alone, K 3, realizer on the PA-induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_pa_k3",
+   "images": [
+    "runs/exp/contig/nj/ifa_pa_k3/summary.png",
+    "runs/exp/contig/nj/ifa_pa_k3/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_pa_k3/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-nj; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Pennsylvania alone, K 3, same recipe as ifa_nj_k3. 0 pieces, 0 necks; districts $1,374M, $1,373M, $1,373M. The only audit failure is the 31,467 out-of-state cells with no row, an artefact of the single-state extract. A regional pass, not a CONUS verdict. Tier E (exploratory, never eligible). The render title says FAILS M1 only because of those out-of-state cells."
+  },
+  {
+   "id": "ifa_pa_k4",
+   "tier": 3,
+   "rank": 44,
+   "label": "IFA PA alone, K 4, realizer on the PA-induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_pa_k4",
+   "images": [
+    "runs/exp/contig/nj/ifa_pa_k4/summary.png",
+    "runs/exp/contig/nj/ifa_pa_k4/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_pa_k4/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab, 2026-10-08: IFA Pennsylvania alone, K 4, same recipe as ifa_nj_k3. Fails M1: one 6.38 km neck in IFA_01 (3 ZIPs near 18977). Tier 3."
+  },
+  {
+   "id": "ifa_ny_k4",
+   "tier": 3,
+   "rank": 45,
+   "label": "IFA NY alone, K 4, realizer on the NY-induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ny_k4",
+   "images": [
+    "runs/exp/contig/nj/ifa_ny_k4/summary.png",
+    "runs/exp/contig/nj/ifa_ny_k4/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ny_k4/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab, 2026-10-08: IFA New York alone, K 4, same recipe as ifa_nj_k3. Fails M1: 4 necks; tangled incumbent (480 s time limit, gap 0.05). Tier 3."
+  },
+  {
+   "id": "ifa_ny_k5",
+   "tier": 3,
+   "rank": 46,
+   "label": "IFA NY alone, K 5, realizer on the NY-induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_ny_k5",
+   "images": [
+    "runs/exp/contig/nj/ifa_ny_k5/summary.png",
+    "runs/exp/contig/nj/ifa_ny_k5/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_ny_k5/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab, 2026-10-08: IFA New York alone, K 5, same recipe as ifa_nj_k3. Fails M1: one district in two pieces, plus 3 necks. Tier 3."
   }
  ]
 }
