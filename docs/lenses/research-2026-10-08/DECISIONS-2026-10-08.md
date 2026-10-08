@@ -115,3 +115,12 @@ answered "lets first plan out a fresh run from scratch with a whole new grid", s
 and the plan is a new grid (axes in the plan's §5). Q5 answered in the same tab: the grid is the whole main map, "WIFI region and every K on the
 axes" (over national only with WH, FI and WIFI held, and over national first then the whole
 map). Files to: PROBLEM.md settled table (lander).
+
+**G5 addendum: regions, not caps (owner, 2026-10-08, td-research tab).** Owner's words: "lets also
+take the same division level approach, so that we can drop the distance caps, support size caps,
+and the pinning freeing like we did for IFA." The main-map grid plans every channel inside sealed
+regions (unions of Census divisions, chosen per channel by the window-slack table), with no
+`max_dist_km`, `max_size`, `contact_caps` or hand `free` lists; the screen decides which states
+split. Sealing is a constraint stronger than any mandate and is adopted for the main map by this
+directive. Routing of national cells in WIFI states stays "stay" (DECIDED by td-research: fall
+back only mattered under the 900 km cap). Plan: `docs/lenses/NATIONAL_PLAN_2026-10-08.md` §5.
