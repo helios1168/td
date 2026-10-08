@@ -6,7 +6,7 @@ every merge audited at the spec default final_delta 0.15 with the τ line inform
 | region | branch, commit | folder | K | M1 (regional, full graph) | window |
 |---|---|---|---|---|---|
 | New England | m5-studio/ifa-newengland 01ffe5e | runs/exp/contig/ifa/newengland/merged | 4 | pass, 0 pieces 0 necks | 4 of 4 |
-| South Central | m5-studio/ifa-southcentral ed8efa0 | runs/exp/contig/ifa/southcentral/merged | 6 | fails default gate on the El Paso 6.14 km coverage-gap neck; clears under the G1 prototype | 6 of 6 |
+| South Central | m5-studio/ifa-southcentral 5b5da26 | runs/exp/contig/ifa/southcentral/merged_b (balanced successor) | 6 | fails default gate on the El Paso 6.14 km coverage-gap neck; clears under the G1 prototype | 6 of 6 |
 | South Atlantic | m5-studio/ifa-southatl 20cfe36 | runs/exp/contig/ifa/southatl/merged | 9 | pass | 8 of 9, MD+DE+WV $1,924M under the widened F1 waiver |
 | Midwest (ENC+WNC+CO) | m5-studio/ifa-midwest 8eeb8bf | runs/exp/contig/ifa/midwest/ifa_mw_merge | 14 | pass | 14 of 14 |
 | West (Mountain less CO, Pacific) | m5-studio/ifa-west a2d2602 | runs/exp/contig/ifa/west/merged | 7 | pass | 7 of 7 |
