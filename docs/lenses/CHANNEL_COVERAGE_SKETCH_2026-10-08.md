@@ -89,3 +89,19 @@ LEARNED: Under sealed Census divisions and D3, the main map's pure channels (nat
 are arithmetically feasible only in the Middle Atlantic, East North Central and South Atlantic;
 the other six divisions can be covered only by all-WIFI, because each pure channel's dollars there
 are a fraction of one district.
+
+## 6. Oracle corrections accepted (GPT-6 Astra medium, `research-2026-10-08/ORACLE-DIVISIONS.md`)
+
+- "WIFI cannot exist under sealing" (DIVISIONS doc, section 4) is wrong. WIFI can hold separate
+  districts in separate divisions; only the lead map's cross-division WIFI districts would need
+  replacing. Corrected reading: the lead map's WIFI layout cannot survive sealing.
+- Surviving assignments "pass the necessary mass screen"; they are not feasible maps. Geometry,
+  indivisible ZCTAs, M1 and rule C are unresolved by arithmetic.
+- Add a same-channel connected-component check: an under-L pure state needs a pure same-channel
+  neighbour, and a combined state is not a bridge between pure states.
+- The IFA South Atlantic row must reserve MD's one district under F1 and remove its mass before
+  the K range: remainder $9,520M gives 7–9, so 8–10 in all, not 8–11.
+- National K 15 is not impossible under D3: its mean $1,126M lies inside the target window, so a
+  τ-band with δ ≤ 0.056 implies D3 (the earlier "no δ works" claim was wrong; δ is merely tight).
+- Full-precision dollars before any published pass/fail count.
+- Fewest combined states is navigation, not an approved ranking.
