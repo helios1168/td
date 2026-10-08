@@ -1,0 +1,5 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces,source_run,source_district
+IFA,IFA_01,"IFA Waterbury-Shelton, CT",CT#1,CT,877.482393429711,804.9370167259999,0,ifa_ctri_k2,IFA_01
+IFA,IFA_02,"IFA Hartford-West Hartford-East Hartford, CT",CT+RI#1,CT+RI,798.7017391962888,871.2471159000006,0,ifa_ctri_k2,IFA_02
+IFA,IFA_03,"IFA Boston-Cambridge-Newton, MA-NH / Providence-Warwick, RI-MA",MA#1,MA,1038.2613811703634,1050.5435233658702,0,ifa_mavtnhme_k2,IFA_01
+IFA,IFA_04,"IFA Boston-Cambridge-Newton, MA-NH / Worcester, MA",MA+ME+NH+VT#1,MA+ME+NH+VT,1147.5520528725067,1135.2699106770003,0,ifa_mavtnhme_k2,IFA_02

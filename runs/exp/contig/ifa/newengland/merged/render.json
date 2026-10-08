@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "2d187c83618802fd2905fe6e04a7f8ce86cd18d36b69b6c6fb547a63980db2ee",
+    "summary.svg": "d62443cde14e64004c69b99585d02a8e44bb4f6f91950bcc0e7ad47239602d6d",
+    "zip_IFA.png": "ba586ebefdc2e005d6befec808b2ccbaf371ad142edd9b159cafff5c7650537d",
+    "zip_pages.pdf": "78a7ad048dc513387021d5d75efb5c17767b6988a425d16041c30c5470f9ffa9"
+  },
+  "inputs": {
+    "districts.csv": "1bcfa1878ab2fd5901665d410ccc3941a237cdf01482665761dc4b9489991698",
+    "ledger.csv": "010d4cb9a0ab6d8357a96ebe170aea8ba6aa4c2ded95d0f939084cb689c6abd1",
+    "manifest.json": "9f64dd954c3e3a64518c08a38f902f17a3424b19a4badc559260c2899ab28093",
+    "run.json": "2574686632914203602ba5e1dc7958a96a2c76488d231b3913c051e50ac91574"
+  },
+  "label": "ifa_newengland_k4_merge: IFA New England K 4, merged CT+RI K 2 (ifa_ctri_k2) and MA+VT+NH+ME K 2 (ifa_mavtnhme_k2), full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31454 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:00:01+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": "498ff2b9434060caa3950ad418fab572d1c310b0406056cd91167679dc14eab9",
+    "dirty": true
+  },
+  "title": "ifa_newengland_k4_merge: IFA New England K 4, merged CT+RI K 2 (ifa_ctri_k2) and MA+VT+NH+ME K 2 (ifa_mavtnhme_k2), full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

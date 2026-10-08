@@ -1,0 +1,48 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_newengland_k4_merge.toml CT,RI=runs/exp/contig/nj/ifa_ctri_k2 MA,VT,NH,ME=runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2 --out runs/exp/contig/ifa/newengland/merged --extract-out runs/exp/contig/ifa/newengland/_inst/ifa_ne_merged.json.gz",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/_inst/ifa_ne_merged.json.gz",
+  "finished_at": "2026-10-08T09:59:40+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/merged",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "runs/exp/contig/ifa/newengland/_inst/ifa_ne_merged.json.gz",
+    "sources": {
+      "CT,RI": "runs/exp/contig/nj/ifa_ctri_k2",
+      "MA,VT,NH,ME": "runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": "498ff2b9434060caa3950ad418fab572d1c310b0406056cd91167679dc14eab9",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/_inst/ifa_ne_merged.json.gz",
+    "instance_sha256": "9a126741cd83e7ab25c999d40b257ecee36df10a26c72f8d46c32ba1b4d8b52b",
+    "queued_at": "2026-10-08T09:59:40+00:00"
+  },
+  "run_id": "merged",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/_specs/ifa_newengland_k4_merge.toml",
+    "sha256": "8314571b73d924b7c32bfd961648e832b8e86f8dd8ae45fab7de95a1fda0b57d"
+  },
+  "source_runs": [
+    {
+      "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/nj/ifa_ctri_k2",
+      "state": "CT,RI"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2",
+      "state": "MA,VT,NH,ME"
+    }
+  ],
+  "started_at": "2026-10-08T09:59:40+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}
