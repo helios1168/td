@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "0fce781f645e7ac7e4bf8d49e03c9de3fad3610b14e9ec568943395e700d681b",
+    "summary.svg": "4ba55ab4e8348d165db7647222b0ac93e980dfc11e1d167ca1a885c562e45f4e",
+    "zip_IFA.png": "68724b8521b3cc081e1b4278fa8d56567202640dae5fc3a878d4129ebfe326a1",
+    "zip_pages.pdf": "4a4aae3a8e3c2d338a0d893a6dbec0f10c78770ac77120bfcebb13a25cdbc37d"
+  },
+  "inputs": {
+    "districts.csv": "939f9f0eb7c3720e822116a01c0639bcbd2753d5e3a299c19276dd32d785d82d",
+    "ledger.csv": "d768d6106acb0bb6af84300f2f9ba446813bef66221520e3982f7f7eaaca21e6",
+    "manifest.json": "f472e05067b19740633c11031bb6421b7e42a3e095b996cb9b99f527d3f88bfb",
+    "run.json": "2cb4dd67408dbae416ae192f7344e0e9aa9ee95203624de7655149acd5717914"
+  },
+  "label": "ifa_west_merged: IFA West (Mountain + Pacific) merged, K 7, CO with the Midwest (owner 2026-10-08), band verdict = E2 window per district, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28371 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:18:27+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "002ee6a25cdcd9ee3c46c8d508f9f80a2229af64",
+    "diff_sha256": "9e0da457d57563009e3b57292808e46096ded6b9181f8f5632109c29271eb4d8",
+    "dirty": true
+  },
+  "title": "ifa_west_merged: IFA West (Mountain + Pacific) merged, K 7, CO with the Midwest (owner 2026-10-08), band verdict = E2 window per district, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

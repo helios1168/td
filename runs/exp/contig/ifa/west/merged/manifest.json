@@ -1,0 +1,48 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_west_merge.toml AZ+ID+MT+NM+NV+UT+WY=runs/exp/contig/ifa/west/ifa_mtn_k2 CA+OR+WA=runs/exp/contig/ifa/west/ifa_pac_k5_hand --out runs/exp/contig/ifa/west/merged --extract-out runs/exp/contig/ifa/west/_inst/ifa_west.json.gz",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-west/runs/exp/contig/ifa/west/_inst/ifa_west.json.gz",
+  "finished_at": "2026-10-08T10:17:46+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-west/runs/exp/contig/ifa/west/merged",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "runs/exp/contig/ifa/west/_inst/ifa_west.json.gz",
+    "sources": {
+      "AZ+ID+MT+NM+NV+UT+WY": "runs/exp/contig/ifa/west/ifa_mtn_k2",
+      "CA+OR+WA": "runs/exp/contig/ifa/west/ifa_pac_k5_hand"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "002ee6a25cdcd9ee3c46c8d508f9f80a2229af64",
+    "diff_sha256": "9e0da457d57563009e3b57292808e46096ded6b9181f8f5632109c29271eb4d8",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-west/runs/exp/contig/ifa/west/_inst/ifa_west.json.gz",
+    "instance_sha256": "e7d763f7f1bb199f847d001189432b04a053b9255127cdce6f12a59ef674a60a",
+    "queued_at": "2026-10-08T10:17:45+00:00"
+  },
+  "run_id": "merged",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-west/runs/exp/contig/_specs/ifa_west_merge.toml",
+    "sha256": "7da4b871e002e530d7c773965748f019b70d98a0d1a1672cbd6373df7ad77748"
+  },
+  "source_runs": [
+    {
+      "commit": "440ecb884c6a7ef1ec9b557be543f199094b8521",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-west/runs/exp/contig/ifa/west/ifa_mtn_k2",
+      "state": "AZ+ID+MT+NM+NV+UT+WY"
+    },
+    {
+      "commit": "440ecb884c6a7ef1ec9b557be543f199094b8521",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-west/runs/exp/contig/ifa/west/ifa_pac_k5_hand",
+      "state": "CA+OR+WA"
+    }
+  ],
+  "started_at": "2026-10-08T10:17:45+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}
