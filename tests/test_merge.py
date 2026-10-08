@@ -56,3 +56,52 @@ def test_merge_refuses_overlapping_zctas():
         assert "07002" in str(e)
     else:
         raise AssertionError("an overlapping ZCTA was merged")
+
+
+def _folder(tmp, name, rows):
+    from td import output
+    d = os.path.join(tmp, name)
+    os.makedirs(d)
+    output.write_ledger(os.path.join(d, "ledger.csv"), rows)
+    return d
+
+
+def test_merge_source_tags_join_states_by_comma_or_plus_or_infer_them():
+    import tempfile
+    mg = _merge()
+    assert mg.parse_source("CT,RI=a/b") == ("CT,RI", ("CT", "RI"), "a/b")
+    assert mg.parse_source("AR+LA+OK=c") == ("AR+LA+OK", ("AR", "LA", "OK"), "c")
+    assert mg.parse_source("TX=d") == ("TX", ("TX",), "d")
+    with tempfile.TemporaryDirectory() as tmp:
+        rows = [dict(_row("02108", "IFA_01"), state="MA"), dict(_row("06101", "IFA_02"), state="CT"),
+                dict(_row("06102", "IFA_02"), state="CT")]
+        d = _folder(tmp, "merged", rows)
+        assert mg.parse_source(d) == ("CT,MA", ("CT", "MA"), d)
+        assert mg.source_run(d) == f"{os.path.basename(tmp)}/merged"
+    try:
+        mg.parse_source("=x")
+    except mg.MergeError:
+        pass
+    else:
+        raise AssertionError("a tag with no state was accepted")
+
+
+def test_merge_numbers_in_source_order_and_names_both_claimants():
+    mg = _merge()
+    src = list(reversed(_sources()))
+    _, ids = mg.merge_ledgers(src, "merged")
+    assert ids[("PA", "IFA", "IFA_01")] == "IFA_01" and ids[("NJ", "IFA", "IFA_02")] == "IFA_04"
+    src[1][1].append(_row("15002", ""))
+    try:
+        mg.merge_ledgers(src, "merged")
+    except mg.MergeError as e:
+        assert "15002" in str(e) and "PA" in str(e) and "NJ" in str(e)
+    else:
+        raise AssertionError("a ZCTA claimed by two sources was merged")
+
+
+def test_merge_window_column():
+    mg = _merge()
+    w = (798.74, 1148.19)
+    assert [mg.window_status(m, w) for m in (798.73, 798.74, 1000.0, 1148.19, 1148.2)] == \
+        ["under", "in", "in", "in", "over"]

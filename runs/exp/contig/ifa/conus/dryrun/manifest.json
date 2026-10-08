@@ -1,0 +1,128 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_conus_merge.toml runs/exp/contig/ifa/newengland/merged runs/exp/contig/ifa/southcentral/merged_b runs/exp/contig/ifa/southatl/merged runs/exp/contig/ifa/midwest/ifa_mw_merge runs/exp/contig/ifa/west/merged --out runs/exp/contig/ifa/conus/dryrun --extract-out runs/exp/contig/ifa/conus/_inst/ifa_conus_dryrun.json.gz --base-extract /Users/Shared/sv-ntlee/td/instance_descaled.json.gz --window 798.74,1148.19 --export",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/conus/_inst/ifa_conus_dryrun.json.gz",
+  "finished_at": "2026-10-08T10:21:13+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/conus/dryrun",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "base_extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "export": true,
+    "extract_out": "runs/exp/contig/ifa/conus/_inst/ifa_conus_dryrun.json.gz",
+    "sources": {
+      "AL,AR,KY,LA,MS,OK,TN,TX": "runs/exp/contig/ifa/southcentral/merged_b",
+      "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY": "runs/exp/contig/ifa/west/merged",
+      "CO,IA,IL,IN,KS,MI,MN,MO,ND,NE,OH,SD,WI": "runs/exp/contig/ifa/midwest/ifa_mw_merge",
+      "CT,MA,ME,NH,RI,VT": "runs/exp/contig/ifa/newengland/merged",
+      "DC,DE,FL,GA,MD,NC,SC,VA,WV": "runs/exp/contig/ifa/southatl/merged"
+    },
+    "window": [
+      798.74,
+      1148.19
+    ]
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": "e6ffa2cbf71e94adc04bd0facf2a6f0734e467d507572baaa244c978ab9a1069",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/conus/_inst/ifa_conus_dryrun.json.gz",
+    "instance_sha256": "538ae1cae71e01112b5ca9ab79650c347f4c41f8fd3fdbf08758726fb9310675",
+    "queued_at": "2026-10-08T10:21:11+00:00"
+  },
+  "run_id": "dryrun",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/_specs/ifa_conus_merge.toml",
+    "sha256": "b52a5e5e3b5d721a82ac15705f495f425607d7c904e577d559a32f3e2236cb60"
+  },
+  "source_runs": [
+    {
+      "commit": "d3a98fbf473e3653618c3c47ea680c6cfdae53af",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/newengland/merged",
+      "state": "CT,MA,ME,NH,RI,VT",
+      "states": [
+        "CT",
+        "MA",
+        "ME",
+        "NH",
+        "RI",
+        "VT"
+      ]
+    },
+    {
+      "commit": "ed8efa04bcdd44a39e202585f457de34ab345efd",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/southcentral/merged_b",
+      "state": "AL,AR,KY,LA,MS,OK,TN,TX",
+      "states": [
+        "AL",
+        "AR",
+        "KY",
+        "LA",
+        "MS",
+        "OK",
+        "TN",
+        "TX"
+      ]
+    },
+    {
+      "commit": "4a6cb4f06010e84573e72de6aa0395c309d74c34",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/southatl/merged",
+      "state": "DC,DE,FL,GA,MD,NC,SC,VA,WV",
+      "states": [
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "MD",
+        "NC",
+        "SC",
+        "VA",
+        "WV"
+      ]
+    },
+    {
+      "commit": "4e223f1a8c0d02e77f218a9e502e53c1819c8644",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/midwest/ifa_mw_merge",
+      "state": "CO,IA,IL,IN,KS,MI,MN,MO,ND,NE,OH,SD,WI",
+      "states": [
+        "CO",
+        "IA",
+        "IL",
+        "IN",
+        "KS",
+        "MI",
+        "MN",
+        "MO",
+        "ND",
+        "NE",
+        "OH",
+        "SD",
+        "WI"
+      ]
+    },
+    {
+      "commit": "002ee6a25cdcd9ee3c46c8d508f9f80a2229af64",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/exp/contig/ifa/west/merged",
+      "state": "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY",
+      "states": [
+        "AZ",
+        "CA",
+        "ID",
+        "MT",
+        "NM",
+        "NV",
+        "OR",
+        "UT",
+        "WA",
+        "WY"
+      ]
+    }
+  ],
+  "started_at": "2026-10-08T10:21:11+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}
