@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "bba55f1352533d2567d112a8eb44dfab7029b940ea64a3cba50df15c4a71a0a8",
+    "summary.svg": "f9ced1f6440034e7c8d85df7ad079a462faef6385180967bf1bc188ea8726e23",
+    "zip_IFA.png": "6a57d39cea68742151553a09952a1654df64345b5c96c79f04f574f666e4adfb",
+    "zip_pages.pdf": "81d3ad779bd3e5d9f1c9d2a5c66cdc522339e0245cecc71cedd7f3871f22373a"
+  },
+  "inputs": {
+    "districts.csv": "376104b6f13ebec1263209c44100852ccfaf4b6bf14e03ecf963647f83499911",
+    "ledger.csv": "4049bf959f0c547745d2c8011ee1d1041fecfee3e17d41d037b90e8dc1d7b9bd",
+    "manifest.json": "2e5eaf9c955312a4f6195dffb47693c9da7eeddc6236d5db1341bc64338f29be",
+    "run.json": "e4e3565735870fcada7a78abfdff135cce26bb0c56bf4d9f18b761fcec11aa7b"
+  },
+  "label": "ifa_sc_esc_k2: IFA KY+TN+MS+AL, K 2, TN split, induced graph, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 30800 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:08:31+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": "d7b0e5e658d64dc470a1fc43cb7c7b49d2c631fcb15fcc09e352cbbca59ae118",
+    "dirty": true
+  },
+  "title": "ifa_sc_esc_k2: IFA KY+TN+MS+AL, K 2, TN split, induced graph, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

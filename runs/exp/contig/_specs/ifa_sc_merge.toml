@@ -1,0 +1,18 @@
+[scenario]
+name = "ifa_sc_merge"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.1
+
+[channels.IFA]
+margin = false
+k = 6
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["TX", "TN"]
+eta = 0.05
+max_size = 3
+max_dist_km = 900
+dist_km = { }
+delta = 0.159
+final_delta = 0.159

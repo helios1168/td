@@ -1,0 +1,54 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_sc_esc_k2.toml --out runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2 --extract runs/exp/contig/ifa/southcentral/_inst/ifa_esc.json.gz --states KY,TN,MS,AL --delta 0.148 --jobs 1 --time-limit 480",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_esc.json.gz",
+  "finished_at": "2026-10-08T10:08:16+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.148,
+    "extract": "runs/exp/contig/ifa/southcentral/_inst/ifa_esc.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.148,
+        "final_delta": 0.148,
+        "forbid_pairs": [],
+        "free": [
+          "TN"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "KY,TN,MS,AL",
+    "time_limit": 480.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_esc.json.gz",
+    "instance_sha256": "11c3b39a52e9302dbf37f2b0dfe3761f00109616f89e377e418576342069ad0e",
+    "queued_at": "2026-10-08T10:00:15+00:00"
+  },
+  "run_id": "ifa_sc_esc_k2",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/_specs/ifa_sc_esc_k2.toml",
+    "sha256": "ada8deac845a186ad09eaba8f68f904b34b0646bc27bdc576c940c30d8736feb"
+  },
+  "started_at": "2026-10-08T10:00:15+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

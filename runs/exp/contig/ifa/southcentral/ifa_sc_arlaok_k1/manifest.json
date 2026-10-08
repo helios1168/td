@@ -1,0 +1,52 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_sc_arlaok_k1.toml --out runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1 --extract runs/exp/contig/ifa/southcentral/_inst/ifa_arlaok.json.gz --states AR,LA,OK --delta 0.12 --jobs 1 --time-limit 300",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_arlaok.json.gz",
+  "finished_at": "2026-10-08T10:00:13+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.12,
+    "extract": "runs/exp/contig/ifa/southcentral/_inst/ifa_arlaok.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.12,
+        "final_delta": 0.12,
+        "forbid_pairs": [],
+        "free": []
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "AR,LA,OK",
+    "time_limit": 300.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_arlaok.json.gz",
+    "instance_sha256": "5b8359b169206003c37f84c8f8acb64d34162e1ab8fb430f8ca02bfd3603eb9e",
+    "queued_at": "2026-10-08T10:00:12+00:00"
+  },
+  "run_id": "ifa_sc_arlaok_k1",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/_specs/ifa_sc_arlaok_k1.toml",
+    "sha256": "b78b908fde425181075df967ec48c507dc355423dc86ec25b7d35fc8a125037e"
+  },
+  "started_at": "2026-10-08T10:00:12+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}
