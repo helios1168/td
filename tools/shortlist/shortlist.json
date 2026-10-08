@@ -1484,6 +1484,34 @@
    ],
    "shown_images": [],
    "notes": "Research tab (branch m5-studio/explore-neck, d6d9d98 and after; folder copied to the hub's runs/ for T1), 2026-10-08: IFA NJ 3 + PA 4 + NY 5 merged (ifa_nj_k3-neck, ifa_pa_k4t-neck, NY K 5) and audited on the full graph: fails only on NY's districts (1 in pieces, 3 necks); the 29,043 unowned cells are out of region. All 12 districts in the E2 window. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_mavtnhme_k2",
+   "tier": "E",
+   "rank": 20,
+   "label": "IFA MA,VT,NH,ME, K 2, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2",
+   "images": [
+    "runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2/summary.png",
+    "runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at 1ec1be7; folder copied to the hub's runs/ for T1), 2026-10-08: IFA MA+VT+NH+ME, K 2, MA the only split state, optimal in 1.3 s. 0 pieces, 0 necks; $1,315M (Boston and eastern MA) and $1,421M (central and western MA + VT + NH + ME), both in the E2 window. The only audit failure is the 31,823 out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_newengland_k4_merge",
+   "tier": "E",
+   "rank": 21,
+   "label": "IFA New England K 4, merged CT+RI K 2 (ifa_ctri_k2) and MA+VT+NH+ME K 2 (ifa_mavtnhme_k2), full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/newengland/merged",
+   "images": [
+    "runs/exp/contig/ifa/newengland/merged/summary.png",
+    "runs/exp/contig/ifa/newengland/merged/zip_pages.pdf",
+    "runs/exp/contig/ifa/newengland/merged/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at 1ec1be7; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New England, K 4: ifa_ctri_k2 and ifa_mavtnhme_k2 merged by merge.py and re-gated on the full graph. 0 pieces, 0 necks, 0 owned twice; split states CT and MA; districts $1,008M, $1,091M, $1,315M, $1,421M, all in the E2 window. The 31,454 cells with no row are exactly the ZCTAs outside New England, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   }
  ]
 }
