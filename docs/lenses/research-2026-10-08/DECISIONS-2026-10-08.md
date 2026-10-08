@@ -103,3 +103,15 @@ Writer: `tools/exp/contig/export_long.py` (m5-studio/ifa-conus ef5d761), which r
 uncommitted run folder. Tonight's earlier two-file export (ifa_zip_districts.csv, ifa_districts.csv)
 is withdrawn. Files to: docs/memory (decision + fact), CODE_MAP row for export_long.py, and a line
 in td's AGENTS.md if the owner wants it as an invariant (lander).
+
+**G5: national under the regional recipe (owner, 2026-10-08, td-research tab).** Four answers to
+`docs/lenses/NATIONAL_PLAN_2026-10-08.md` §5: (1) national may drop to K 14 (main-map total 48)
+if K 15 cannot close without a third split state; (2) the solver sees dollars: each cell's mass is
+scaled by its fine channel's E1 rate so the planner's band is a dollar band, the transformed
+extract recorded in the manifest (alternatives rejected: shrinking the m_rel band 2.5% a side;
+checking dollars only after the draw); (3) scope is a full national re-plan, not an east-only
+redraw keeping the lead map's west, south centre and Midwest; (4) to the borrow question the owner
+answered "lets first plan out a fresh run from scratch with a whole new grid", so borrows are moot
+and the plan is a new grid (axes in the plan's §5). Open: whether the grid is national only with
+WH, FI and WIFI held at the lead map's drawings, or the whole main map (Q5). Files to: PROBLEM.md
+settled table (lander).

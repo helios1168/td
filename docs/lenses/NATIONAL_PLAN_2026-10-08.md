@@ -1,8 +1,9 @@
 # National under the regional recipe: plan (2026-10-08)
 
 Drafted in the td-research tab after the IFA CONUS map (`ifa_conus_v2`, 38bcd2d) shipped.
-Status: draft for the owner. Nothing here is a run, a registration or a decision; the open
-questions in §5 go to the owner before step 1 starts.
+Status: draft, revised after the owner's answers of 2026-10-08 (G5 in
+`research-2026-10-08/DECISIONS-2026-10-08.md`): a fresh national run from scratch on a new grid,
+full re-plan, dollar-scaled masses, K 14 allowed. Nothing here is a run or a registration.
 
 ## 1. The recipe the IFA map was built with
 
@@ -116,68 +117,94 @@ The east at K 5 (mean $1,371M, slack below U $334M) is the other side of the sam
 Whether K 5, K 6 or a wider east pool (borrowing IN+MI+OH or the TX group's slack, e.g. MS with
 AR+LA+TX at $1,107M) closes is exactly what step 1 computes; it is not settled here.
 
-## 4. Steps
+## 4. Owner answers (G5, 2026-10-08)
 
-Hub `main` lacks `run.py --states`, `repair.py --window`, `merge.py` and `coarse.py`; they live
-on `m5-studio/explore-neck` (d312834) and `m5-studio/ifa-conus`. Step 0 brings them onto one
-branch; td/audit.py's G1 prototype stays as the env-flag prototype until #131 lands.
+- **K.** K 14 is allowed if K 15 needs a third split state.
+- **Dollars.** Each cell's mass is scaled by its fine channel's E1 rate, so the planner's band is
+  a dollar band. The transformed extract is recorded in the manifest.
+- **Scope.** Full national re-plan, not an east-only redraw.
+- **Borrows.** Not answered as asked; the owner's words: "lets first plan out a fresh run from
+  scratch with a whole new grid". The plan below is that fresh run. The borrow question is moot
+  because a full re-plan has no fixed regions to borrow across.
 
-0. **Branch and freeze** (30 min). Cut `m5-studio/national` from `m5-studio/ifa-conus` (which has
-   the reconciled merge.py and export tools); carry nothing onto main. Freeze the lead ledger
-   `runs/exp/contig/set125/fi20_fi_nonc_wh_nonj-r1` as the base: every WH, FI, WIFI cell and the
-   national cells of the kept regions are copied, never re-solved.
-1. **Arithmetic screen** (1 h, one Sol worker). Enumerate whole-state groupings for the east pool
-   under rule C, `max_size 5`, polygon adjacency and the window, at K 5 and K 6, with and without
-   the two borrows (IN+MI+OH; MS to the TX group), at full precision. Output: every feasible
-   layout with its split states and cut count, ranked by the settled order (splits, cuts). If no
-   layout closes at K 15 without a third split, the K 14 question goes to the owner with the
-   layouts attached (Q1).
-2. **Regional spec and plan** (30 min). One TOML per east variant: `channels.national` only, the
-   east units, the chosen K, `free` = the split states the screen needs (NY always; FL only if a
-   layout needs it), the lead spec's `max_size`, `max_dist_km`, `contact_caps`, `fallback`, and δ
-   sized to the window. Plan with the master on the induced graph; a plan that needs more splits
-   than the screen said is a bug, stop and look.
-3. **Draw** (1–2 h wall, up to 6 solver processes). Split states on their own induced graph
-   (`run.py --states NY`, NY K 2–3 with the whole-state partners declared), whole-state districts
-   need no draw. NY first by congressional units (`coarse.py`, seconds), the ZIP draw only if the
-   coarse grouping leaves a neck the repair cannot close. The known NY trap stands: Manhattan
-   cannot be an in-band district's neck-free member below 1,148 km² of land; a national NY
-   district that holds Manhattan needs the Bronx and Westchester with it (G2 logic, not G2
-   itself, which was decided for IFA).
-4. **Repair** (30 min). `repair.py --states --window 1062.5,1437.5` in dollars (see Q2) on every
-   neck and piece; two "unknown" windows on one neck end the attempt and the district is reported
-   failing M1 with cause and mass.
-5. **Merge and gate** (30 min). `merge.py` with a channel filter: sources are the east national
-   run(s) plus the lead ledger restricted to everything else. Full-graph audit, both M1 gates,
-   D3 in dollars for all 15 (or 14) national districts, E3 unchanged for WIFI by construction,
-   `--window` column, render from the hub with `TD_NECK_GAP_WIDTH` matching the headline gate.
-6. **Register and show** (lander). Shortlist entry first (T1), then the map to the owner. Shape is
-   their call; a second east variant from step 1 is the fallback if the first looks wrong.
-7. **WH_09 afterwards** by the same recipe on the WH channel: a whole-state regroup screen for
-   IN+KY+MI+WI ($9.2M short) before any draw.
+## 5. The new grid
 
-Time, serial: about 5 h with one orchestrator and three workers; the screen and the spec are the
-only parts that cannot overlap.
+The 2026-10-01 grid (`runs/sweep/grid_2026-10-01`) was comparative statics on τ ± δ: stage 1
+bisected the smallest feasible δ* per (WIFI region, routing, national state list, K, mountain
+cap) cell, stage 2 drew the frontier. Under D3 the band is fixed in dollars, so δ* is no longer
+the question; a cell is feasible or not at the window, and the quantities that rank it are the
+settled ones: splits, cuts, defects, shape, balance. The new grid is built on that.
 
-## 5. Open questions for the owner
+**Fixed by decision, not swept.** Window [1,062.5, 1,437.5] $M (D3); rule C; E1 rates; the
+15 combined states (today's WIFI region: ME NH VT MA RI CT ID MT ND NE SD WY NM OK KS) and E3 for
+WIFI; the `fallback` table; masses in $M (G5). Changing the WIFI region re-plans WH, FI and WIFI
+too; see Q5.
 
-- **Q1, K.** If the east does not close at K 15 without a third split, is national K 14 (main map
-  total 48, still in 48–54) acceptable? Changes a reported number.
-- **Q2, dollars in the solver.** National's three rates spread 5%. Options: (a) scale each cell's
-  mass by its fine channel's rate so the planner's band is a dollar band (the extract is
-  transformed and the manifest records it; every mass in the run folder is then $M); (b) keep
-  m_rel and shrink the band 2.5% each side so dollars cannot leave the window; (c) keep m_rel and
-  check dollars only after the draw, redrawing on a miss. (a) is cleanest and (b) is cheapest;
-  both change numbers that get reported, so it is the owner's pick.
-- **Q3, scope.** Redraw the east only and keep the lead map's west, south centre and Midwest
-  national districts exactly as drawn (they pass dollars and cached M1)? The alternative is a full
-  national re-plan, which risks districts the owner has already accepted.
-- **Q4, borrows.** May the east pool take IN+MI+OH or send MS to AR+LA+TX if the screen needs it?
-  Both are inside national and inside rule C; they only widen the east's search.
+**Axes.**
 
-## 6. What this plan does not promise
+| axis | values | why |
+|---|---:|---|
+| K national | 13, 14, 15 | 12 puts the mean at $1,415M, $22M under U; 15 is today's; 14 is the owner's fallback |
+| support size | 5, 6 | today's 5; 6 lets AL+GA+MS+SC+NC-style groups form |
+| mountain cap | 900, 1,600 km | the 10-01 grid's single largest effect, a policy change if adopted |
+| free list | screen-derived | CA, TX, NY always (over U); FL, NJ, PA, IL, NC, AZ added one at a time only if the screen needs a fourth split |
+| routing of national cells in WIFI states | stay | "fall back" only mattered under the 900 km cap; kept fixed unless the cap axis says otherwise |
+
+That is 3 × 2 × 2 = 12 base cells, each with a short ladder of free lists. Stage 1 is seconds
+per cell, so the ladder costs nothing.
+
+**Stage 1, the screen** (one Sol worker, 1 h to build, minutes to run). For each cell, plan on
+whole states with the master (`wholeplan.py` logic: whole-unit supports, rule C row, max_size,
+distance caps, contact caps, dollar window as the band, split states as free units with pieces
+sized by the master). Output per cell: feasible or not, the plan's supports, split count, cut
+count, worst and mean dollar deviation from $1,250M, the tightest district. Rank by the settled
+order. The screen is a necessary condition: pieces are masses, not geometry.
+
+**Stage 2, the draw** (3–6 cells from the frontier, two Opus workers each, 1–2 h wall under the
+12-process cap). For each chosen cell:
+
+1. Freeze the plan's whole-state districts; they need no draw.
+2. Draw each split state on its own induced graph (`run.py --states`), its planned piece sizes
+   as the targets, NY by congressional units first (`coarse.py`), the ZIP draw only when the
+   coarse grouping leaves a neck; TX and CA by the ZIP draw as in the IFA runs, which cleared
+   both quickly; a piece that rides with whole states (CA+NV+OR+WA style) draws on the
+   multi-state induced graph with the whole states declared.
+3. Repair windows in the dollar window (`repair.py --states --window 1062.5,1437.5`), two
+   unknowns end an attempt.
+4. Merge by cell over the lead ledger's WH, FI and WIFI cells (`merge.py` with a per-source
+   channel filter, the one tooling change), full-graph audit, both M1 gates, D3 in dollars for
+   every national district, E3 unchanged for WIFI by construction, `--window` column, render from
+   the hub with `TD_NECK_GAP_WIDTH` matching the headline gate.
+5. Shortlist entry by the lander (T1), then the map to the owner. Shape is their gate; the next
+   frontier cell is the fallback.
+
+**Build items before stage 1.**
+
+- Dollar-scaled extract: `Extract` masses multiplied by the fine channel's E1 rate at load
+  (`td/data.py`), recorded in the manifest as `mass_unit = "usdM"` with the rates. The ledger's
+  `m_rel` column then holds $M, so `export_long.py` must divide by the rate per fine channel to
+  restore m_rel for the G4 schema; a test asserts the round trip. Masks are untouched.
+- Stage-1 cell runner: a `job.py` like the 10-01 grid's, taking the cell JSON, building the
+  national-only spec with the window as its band, calling the master, printing one JSON line.
+- `merge.py --source-channels`: restrict a source to named model channels so a national-only
+  run merges over a multi-channel ledger without claiming its ZCTAs' other cells.
+- `tests/`: the extract round trip, the merge channel filter, the induced-graph draw on a
+  two-state fixture (exists for NJ).
+
+**Time.** Build 3 h, stage 1 under 1 h, stage 2 2–3 h wall for three cells, lander registration
+after. One orchestrator tab, workers on deadlines, no review step, as on the IFA night.
+
+## 6. Open question
+
+- **Q5, grid scope.** Does "a whole new grid" mean national only, with WH, FI and WIFI held at
+  the lead map's drawings (the plan above), or the whole main map, with the WIFI region and the
+  other channels' K back on the axes as in the 10-01 grid? The second is the 10-01 grid redone
+  under D3, E3 and rule C with the regional draw recipe, roughly three times the stage-2 work,
+  and it reopens FI (20/20 in band) and WIFI (3/3).
+
+## 7. What this plan does not promise
 
 The screen is arithmetic, not feasibility. NY's necks are real geometry and the IFA night closed
-NY only at the cost of one reported neck. Cached M1 evidence for the kept regions is from the
-2026-10-07 gate and is re-gated in step 5, not trusted. No scenario id exists until the merged
-ledger is committed (G4).
+NY only at the cost of one reported neck. Cached M1 evidence for the lead map's other channels is
+from the 2026-10-07 gate and is re-gated in stage 2 step 4, not trusted. No scenario id exists
+until the merged ledger is committed (G4).
