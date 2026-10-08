@@ -3,7 +3,8 @@
 district, WGS84 (Multi)Polygon dissolved from the ledger's ZCTA polygons (the same `zip_pages`
 geometry and colouring the ZIP map uses, so colours match the PNG), properties `scenario_id, bundle,
 bundle_title, district_raw, district, wholesaler, mass, color` plus the simplestyle keys `fill, fill-opacity, stroke, stroke-width`
-(the same colour) so viewers such as GitHub's preview colour each district.  Written as
+(the same colour) so viewers such as GitHub's preview colour each district, and kepler.gl's `fillColor, lineColor,
+lineWidth` (RGB arrays).  Written as
 `export/<scenario>_district_reach.geojson`; the scenario id comes from export/scenarios.csv
 (run tools/exp/contig/export_long.py first).
 
@@ -16,6 +17,10 @@ from pyproj import Transformer
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 BUNDLE_TITLE = {"IFA": "IFA", "N": "National only", "WH": "WH", "FI": "FI", "WHFI": "WIFI Merged"}
+
+
+def rgb(hexcol: str) -> list:
+    return [int(hexcol[i:i + 2], 16) for i in (1, 3, 5)]
 
 
 def main(argv=None):
@@ -49,7 +54,9 @@ def main(argv=None):
                                      "bundle_title": BUNDLE_TITLE.get(bundle[d], bundle[d]), "district_raw": d,
                                      "district": d, "wholesaler": "", "mass": round(mass[d], 7), "color": colour[d],
                                      # simplestyle keys, so GitHub's and geojson.io's previews colour the districts
-                                     "fill": colour[d], "fill-opacity": 0.6, "stroke": "#202020", "stroke-width": 1}})
+                                     "fill": colour[d], "fill-opacity": 0.6, "stroke": "#202020", "stroke-width": 1,
+                                     # kepler.gl per-feature style keys (RGB arrays)
+                                     "fillColor": rgb(colour[d]), "lineColor": [32, 32, 32], "lineWidth": 1}})
     out = os.path.join(run_dir, "export", f"{scen['scenario']}_district_reach.geojson")
     with open(out, "w") as fh:
         json.dump({"type": "FeatureCollection", "features": feats}, fh)
