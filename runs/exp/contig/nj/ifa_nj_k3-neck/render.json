@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "7fe825da60a6b2ba00e3e73a3f26abd31e6166ce721d6a1af48271bb7d933f1e",
+    "summary.svg": "2988be2e06e3414be8601c4159f3613ce32c7d08b18973852ba6345f7fc4300c",
+    "zip_IFA.png": "3a5bbc355d80697676efd30b7604cc4a09826d02d26843811f1eb28158ae7858",
+    "zip_pages.pdf": "3efa16619b97e9035eb48d00bc62124c358bfe45bc2249833e205fb04e0e25cf"
+  },
+  "inputs": {
+    "districts.csv": "767cec3fdc283aa51109af95e0a29371f923e1d079856c24c153284d5143f609",
+    "ledger.csv": "a744b6f710235ba5c38fe2f099edf114c0b50fd5cce6e48b2c963c869cffc022",
+    "manifest.json": "0113dcf3e0dc18daf487c31bf616640c1a2f09dfd6722e0ac44082e92e8de801",
+    "run.json": "c84c62449bf4fea98d4078970ee06139a72a2937022e6d60a96a1de08f272a39"
+  },
+  "label": "ifa_nj_k3-neck: NJ alone, K 3, local neck window on the ifa_nj_k3 drawing, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 32702 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T08:59:35+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "9d6f341898551a027dbbc751d1c9e92d9268d9d6",
+    "diff_sha256": "fcc67a56e7546ab710921c5fb467e959a1fb0105ae3e4462c01b59e3c9d49ad5",
+    "dirty": true
+  },
+  "title": "ifa_nj_k3-neck: NJ alone, K 3, local neck window on the ifa_nj_k3 drawing, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

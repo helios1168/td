@@ -1035,7 +1035,8 @@ def _commit() -> str:
         return ""
 
 
-def load(run_dir: str, extract_path: str, plans_cache: str | None, plans_file: str | None = None):
+def load(run_dir: str, extract_path: str, plans_cache: str | None, plans_file: str | None = None,
+         states: tuple = ()):
     """The run's scenario on the current graph, the plans that drew it (`plans_file`, a pickle of
     `run.plans_for`'s pair, when the run was drawn on another connector list; else the cache) and
     its owners read back from the ledger."""
@@ -1046,8 +1047,8 @@ def load(run_dir: str, extract_path: str, plans_cache: str | None, plans_file: s
     ref = geo.read_reference()
     extract = data.load(extract_path)
     ext = tdspec.scope(s, data.conus(extract, ref))
-    polygon = geo.polygon_graph()
-    inst = tdspec.build(s, ext, ref)
+    polygon = geo.polygon_graph()       # M1's audit and the neck graph stay on the full graph
+    inst = tdspec.build(s, ext, ref, graph=run.induced_graph(polygon, states) if states else None)
     if plans_file:
         with open(plans_file, "rb") as fh:
             plans, reports = pickle.load(fh)
@@ -1091,6 +1092,9 @@ def main(argv=None) -> int:
                     help="processes (#123): each channel in its own, its windows raced, at most "
                          "this many solves at once; 1 is the sequential loop")
     ap.add_argument("--maps", action="store_true")
+    ap.add_argument("--states", default="",
+                    help="comma-separated states: the windows on the polygon graph induced on "
+                         "them, as `run.py --states` drew the run; M1 and necks on the full graph")
     ap.add_argument("--diag-final-delta", type=float, default=None,
                     help="diagnostic only: windows and audit at this final band, not the "
                          "scenario's; the folder is never a deliverable")
@@ -1110,8 +1114,9 @@ def main(argv=None) -> int:
                                     "diagnostic_label": diag["label"]}
     run.write_manifest(a.out, "contig_repair", spec_path, a.extract, params, a.plans_file, a.run_dir,
                        **flag)
+    states = tuple(x for x in a.states.split(",") if x)
     s, ref, ext, polygon, inst, plans, reports, owners, src = load(a.run_dir, a.extract, a.plans,
-                                                                       a.plans_file)
+                                                                       a.plans_file, states)
     scenario_bands = {c: (*ch.final_band, ch.spec.final_delta) for c, ch in inst.channels.items()}
     if a.diag_final_delta is not None:      # a diagnostic band (#121, OD1): never the scenario's
         for ch in inst.channels.values():
@@ -1119,7 +1124,8 @@ def main(argv=None) -> int:
         a.label = f"DIAGNOSTIC final band ±{a.diag_final_delta:g}" + (f", {a.label}" if a.label else "")
     elif diag is not None:
         a.label = "DIAGNOSTIC (" + diag["label"] + ")" + (f", {a.label}" if a.label else "")
-    border, ng = draw.border_km(polygon), audit.NeckGraph(polygon)
+    border = draw.border_km(run.induced_graph(polygon, states) if states else polygon)
+    ng = audit.NeckGraph(polygon)
     os.makedirs(a.out, exist_ok=True)
     rows = ref.set_index("zcta").loc[sorted(inst.units.unit_of)]
     p = {z: (float(x) / 1000.0, float(y) / 1000.0) for z, x, y in zip(rows.index, rows["x"], rows["y"])}

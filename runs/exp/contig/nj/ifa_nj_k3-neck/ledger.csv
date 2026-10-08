@@ -1,0 +1,599 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_nj_k3,07001,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3402350,"IFA New York-Newark-Jersey City, NY-NJ",2.88914,
+ifa_nj_k3,07002,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3403580,"IFA New York-Newark-Jersey City, NY-NJ",31.8528,
+ifa_nj_k3,07003,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3408110,"IFA New York-Newark-Jersey City, NY-NJ",0.612895,
+ifa_nj_k3,07004,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",87.4266,
+ifa_nj_k3,07005,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3406610,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",2.6646,
+ifa_nj_k3,07006,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3452620,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.479592,
+ifa_nj_k3,07008,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3410750,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07009,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3427390,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.25685,
+ifa_nj_k3,07010,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3413570,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07011,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3413690,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07012,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3413690,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07013,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3413690,"IFA New York-Newark-Jersey City, NY-NJ",0.508415,
+ifa_nj_k3,07014,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3413690,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07016,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3415638,"IFA New York-Newark-Jersey City, NY-NJ",19.1369,
+ifa_nj_k3,07017,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3419390,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07018,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3419390,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07020,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3420020,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07021,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3421840,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07022,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3422560,"IFA New York-Newark-Jersey City, NY-NJ",0.00556816,
+ifa_nj_k3,07023,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3422860,"IFA New York-Newark-Jersey City, NY-NJ",0.85806,
+ifa_nj_k3,07024,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3424420,"IFA New York-Newark-Jersey City, NY-NJ",9.76425,
+ifa_nj_k3,07026,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3425770,"IFA New York-Newark-Jersey City, NY-NJ",0.0874538,
+ifa_nj_k3,07027,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3425800,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07028,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3426610,"IFA New York-Newark-Jersey City, NY-NJ",0.357971,
+ifa_nj_k3,07029,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3430210,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07030,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3432250,"IFA New York-Newark-Jersey City, NY-NJ",2.25772,
+ifa_nj_k3,07031,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3452320,"IFA New York-Newark-Jersey City, NY-NJ",6.37802,
+ifa_nj_k3,07032,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436510,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07033,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3436690,"IFA New York-Newark-Jersey City, NY-NJ",0.966669,
+ifa_nj_k3,07034,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3437680,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.75291,
+ifa_nj_k3,07035,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3440290,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07036,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3440350,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07039,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",36.1859,
+ifa_nj_k3,07040,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3475590,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07041,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3467320,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07042,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ",2.83522,
+ifa_nj_k3,07043,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3475020,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07044,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.635891,
+ifa_nj_k3,07045,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3458650,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",13.2235,
+ifa_nj_k3,07046,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3448480,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",6.16458,
+ifa_nj_k3,07047,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07050,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07052,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3459385,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.941371,
+ifa_nj_k3,07054,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3456430,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",93.6351,
+ifa_nj_k3,07055,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3456550,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07057,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3476490,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07058,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3458650,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.59127,
+ifa_nj_k3,07059,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",190.637,
+ifa_nj_k3,07060,ifa,NJ,IFA,IFA_01,IFA,,34039,35620,3459190,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07062,ifa,NJ,IFA,IFA_01,IFA,,34039,35620,3459190,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07063,ifa,NJ,IFA,IFA_01,IFA,,34039,35620,3459190,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07064,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3460540,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07065,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3461530,"IFA New York-Newark-Jersey City, NY-NJ",0.00944996,
+ifa_nj_k3,07066,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3479040,"IFA New York-Newark-Jersey City, NY-NJ",10.8312,
+ifa_nj_k3,07067,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3414380,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07068,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3464590,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",28.5012,
+ifa_nj_k3,07069,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3477600,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",2.8109,
+ifa_nj_k3,07070,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3465280,"IFA New York-Newark-Jersey City, NY-NJ",2.02041,
+ifa_nj_k3,07071,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07072,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3410480,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07073,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3419510,"IFA New York-Newark-Jersey City, NY-NJ",0.0252962,
+ifa_nj_k3,07074,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3447700,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07075,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3482570,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07076,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,,"IFA New York-Newark-Jersey City, NY-NJ",10.6895,
+ifa_nj_k3,07077,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3466720,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07078,ifa,NJ,IFA,IFA_01,IFA,,34013,35620,3467320,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",7.71733,
+ifa_nj_k3,07079,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ",1.36938,
+ifa_nj_k3,07080,ifa,NJ,IFA,IFA_01,IFA,,34023,35620,3469390,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.449935,
+ifa_nj_k3,07081,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3470018,"IFA New York-Newark-Jersey City, NY-NJ",22.4328,
+ifa_nj_k3,07082,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3473170,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",5.15307,
+ifa_nj_k3,07083,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3474478,"IFA New York-Newark-Jersey City, NY-NJ",2.16695,
+ifa_nj_k3,07086,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3432250,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07087,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3474630,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07088,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3475590,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07090,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3479040,"IFA New York-Newark-Jersey City, NY-NJ",6.3161,
+ifa_nj_k3,07092,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3448510,"IFA New York-Newark-Jersey City, NY-NJ",2.45832,
+ifa_nj_k3,07093,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3479610,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07094,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3466570,"IFA New York-Newark-Jersey City, NY-NJ",0.244966,
+ifa_nj_k3,07095,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3481950,"IFA New York-Newark-Jersey City, NY-NJ",5.71967,
+ifa_nj_k3,07102,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0170207,
+ifa_nj_k3,07103,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07104,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07105,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",3.46455,
+ifa_nj_k3,07106,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07107,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07108,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07109,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3467590,"IFA New York-Newark-Jersey City, NY-NJ",0.0179013,
+ifa_nj_k3,07110,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3413690,"IFA New York-Newark-Jersey City, NY-NJ",0.452041,
+ifa_nj_k3,07111,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07112,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07114,ifa,NJ,IFA,IFA_03,IFA,,34013,35620,3451000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07201,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3421000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07202,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3421000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07203,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3464620,"IFA New York-Newark-Jersey City, NY-NJ",0.031264,
+ifa_nj_k3,07204,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3464650,"IFA New York-Newark-Jersey City, NY-NJ",0.00509088,
+ifa_nj_k3,07205,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3436484,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07206,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3421000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07208,ifa,NJ,IFA,IFA_03,IFA,,34039,35620,3421000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07302,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",5.76686,
+ifa_nj_k3,07304,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07305,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07306,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07307,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07310,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",0.155926,
+ifa_nj_k3,07311,ifa,NJ,IFA,IFA_03,IFA,,34017,35620,3436000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07401,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3400700,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",2.90988,
+ifa_nj_k3,07403,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3406340,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07405,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3437110,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.355002,
+ifa_nj_k3,07407,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3421300,"IFA New York-Newark-Jersey City, NY-NJ",0.0281416,
+ifa_nj_k3,07410,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3422470,"IFA New York-Newark-Jersey City, NY-NJ",16.2957,
+ifa_nj_k3,07416,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3424930,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07417,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3424990,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",14.2395,
+ifa_nj_k3,07418,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3475750,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07419,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3429220,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.781709,
+ifa_nj_k3,07420,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3476730,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07421,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3431110,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.190908,
+ifa_nj_k3,07422,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3431410,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07423,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3432310,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07424,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3482423,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.20685,
+ifa_nj_k3,07430,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3461632,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",21.5775,
+ifa_nj_k3,07432,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3446110,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0537894,
+ifa_nj_k3,07435,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3451420,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07436,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3453850,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07438,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3453910,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0397725,
+ifa_nj_k3,07439,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3454660,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07440,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07442,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3460090,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07444,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3460120,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.796687,
+ifa_nj_k3,07446,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3461680,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",7.62427,
+ifa_nj_k3,07450,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3463000,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",10.0412,
+ifa_nj_k3,07452,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3426640,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.24204,
+ifa_nj_k3,07456,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3463150,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07457,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3463300,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.8844,
+ifa_nj_k3,07458,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3475140,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.89009,
+ifa_nj_k3,07460,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07461,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3471670,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.528341,
+ifa_nj_k3,07462,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3475745,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.587185,
+ifa_nj_k3,07463,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3476400,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07465,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3476730,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07470,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3460810,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",7.58385,
+ifa_nj_k3,07480,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3442450,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07481,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3424990,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.394329,
+ifa_nj_k3,07501,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07502,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07503,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07504,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07505,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07506,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3430570,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07508,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3453040,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07512,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3473140,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",9.10079,
+ifa_nj_k3,07513,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07514,ifa,NJ,IFA,IFA_03,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07522,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07524,ifa,NJ,IFA,IFA_01,IFA,,34031,35620,3457000,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07601,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3428680,"IFA New York-Newark-Jersey City, NY-NJ",7.20255,
+ifa_nj_k3,07603,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3406490,"IFA New York-Newark-Jersey City, NY-NJ",0.00047727,
+ifa_nj_k3,07604,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3430420,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07605,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3440020,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07606,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3472480,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07607,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3444880,"IFA New York-Newark-Jersey City, NY-NJ",14.6114,
+ifa_nj_k3,07608,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3472480,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07620,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3401090,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07621,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3405170,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07624,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3413810,"IFA New York-Newark-Jersey City, NY-NJ",0.0141288,
+ifa_nj_k3,07626,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3415820,"IFA New York-Newark-Jersey City, NY-NJ",9.7002,
+ifa_nj_k3,07627,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3417530,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07628,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3418400,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07630,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3421450,"IFA New York-Newark-Jersey City, NY-NJ",1.89783,
+ifa_nj_k3,07631,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3421480,"IFA New York-Newark-Jersey City, NY-NJ",0.147657,
+ifa_nj_k3,07632,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3421510,"IFA New York-Newark-Jersey City, NY-NJ",3.95357,
+ifa_nj_k3,07640,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3430150,"IFA New York-Newark-Jersey City, NY-NJ",0.7635,
+ifa_nj_k3,07641,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3430540,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07642,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3431920,"IFA New York-Newark-Jersey City, NY-NJ",0.346381,
+ifa_nj_k3,07643,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3440680,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07644,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3441100,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07645,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3447610,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",17.2318,
+ifa_nj_k3,07646,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3451660,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07647,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3453430,"IFA New York-Newark-Jersey City, NY-NJ",0.0397725,
+ifa_nj_k3,07648,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3453610,"IFA New York-Newark-Jersey City, NY-NJ",0.387454,
+ifa_nj_k3,07649,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3454990,"IFA New York-Newark-Jersey City, NY-NJ",1.15522,
+ifa_nj_k3,07650,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3455770,"IFA New York-Newark-Jersey City, NY-NJ",0.0795451,
+ifa_nj_k3,07652,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3455950,"IFA New York-Newark-Jersey City, NY-NJ",228.543,
+ifa_nj_k3,07656,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3456130,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",16.7302,
+ifa_nj_k3,07657,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3462910,"IFA New York-Newark-Jersey City, NY-NJ",1.26463,
+ifa_nj_k3,07660,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3462940,"IFA New York-Newark-Jersey City, NY-NJ",0.150137,
+ifa_nj_k3,07661,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3463360,"IFA New York-Newark-Jersey City, NY-NJ",1.93056,
+ifa_nj_k3,07662,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,,"IFA New York-Newark-Jersey City, NY-NJ",2.1463,
+ifa_nj_k3,07663,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,,"IFA New York-Newark-Jersey City, NY-NJ",33.7195,
+ifa_nj_k3,07666,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,,"IFA New York-Newark-Jersey City, NY-NJ",1.93182,
+ifa_nj_k3,07670,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3472420,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07675,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,3454870,"IFA New York-Newark-Jersey City, NY-NJ",6.54968,
+ifa_nj_k3,07676,ifa,NJ,IFA,IFA_03,IFA,,34003,35620,,"IFA New York-Newark-Jersey City, NY-NJ",0.138823,
+ifa_nj_k3,07677,ifa,NJ,IFA,IFA_01,IFA,,34003,35620,3482300,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",6.0879,
+ifa_nj_k3,07701,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3462430,"IFA New York-Newark-Jersey City, NY-NJ",101.467,
+ifa_nj_k3,07702,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3467350,"IFA New York-Newark-Jersey City, NY-NJ",11.7055,
+ifa_nj_k3,07703,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3419840,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07704,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3422440,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07711,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3400730,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07712,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3473020,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.340843,
+ifa_nj_k3,07716,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3402110,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07717,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3402440,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07718,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3404600,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07719,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3404930,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",45.82,
+ifa_nj_k3,07720,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3406970,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.149326,
+ifa_nj_k3,07721,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3439360,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07722,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3473020,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.03694,
+ifa_nj_k3,07723,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3416660,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07724,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3473020,"IFA New York-Newark-Jersey City, NY-NJ",24.456,
+ifa_nj_k3,07726,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3483245,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",8.3948,
+ifa_nj_k3,07727,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3473020,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.400668,
+ifa_nj_k3,07728,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3479100,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",25.5155,
+ifa_nj_k3,07730,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3474540,"IFA New York-Newark-Jersey City, NY-NJ",0.950483,
+ifa_nj_k3,07731,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3461725,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.62809,
+ifa_nj_k3,07732,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3431500,"IFA New York-Newark-Jersey City, NY-NJ",0.0127271,
+ifa_nj_k3,07733,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,,"IFA New York-Newark-Jersey City, NY-NJ",36.8664,
+ifa_nj_k3,07734,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3436480,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07735,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3474540,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07737,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3439990,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07738,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3440320,"IFA New York-Newark-Jersey City, NY-NJ",11.1116,
+ifa_nj_k3,07739,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3440770,"IFA New York-Newark-Jersey City, NY-NJ",12.5565,
+ifa_nj_k3,07740,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3441310,"IFA New York-Newark-Jersey City, NY-NJ",0.397725,
+ifa_nj_k3,07746,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3463900,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.438105,
+ifa_nj_k3,07747,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3444520,"IFA New York-Newark-Jersey City, NY-NJ",18.752,
+ifa_nj_k3,07748,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3453205,"IFA New York-Newark-Jersey City, NY-NJ",12.2246,
+ifa_nj_k3,07750,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3447130,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07751,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3448030,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.452847,
+ifa_nj_k3,07753,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3473020,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",107.892,
+ifa_nj_k3,07755,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3453790,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",7.39615,
+ifa_nj_k3,07756,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3454480,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07757,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3454570,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07758,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3460360,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07760,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3465130,"IFA New York-Newark-Jersey City, NY-NJ",0.202159,
+ifa_nj_k3,07762,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3470110,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",8.37891,
+ifa_nj_k3,07764,ifa,NJ,IFA,IFA_03,IFA,,34025,35620,3479310,"IFA New York-Newark-Jersey City, NY-NJ",2.51281,
+ifa_nj_k3,07801,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3418070,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07803,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3480390,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07820,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3400640,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07821,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3432910,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",2.86087,
+ifa_nj_k3,07822,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3464860,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.342044,
+ifa_nj_k3,07823,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3404990,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.00373,
+ifa_nj_k3,07825,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3443980,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.561787,
+ifa_nj_k3,07826,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3439600,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07827,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3439600,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07828,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3408620,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.955817,
+ifa_nj_k3,07830,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3409280,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07831,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07832,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3428920,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07833,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3417200,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07834,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3461560,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",4.85967,
+ifa_nj_k3,07836,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3423640,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07838,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3427360,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07840,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3428710,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",8.99207,
+ifa_nj_k3,07842,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3431170,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07843,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3432910,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07844,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3433030,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07846,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3436150,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07847,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3436720,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07848,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3464860,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.18607,
+ifa_nj_k3,07849,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3437710,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.47727,
+ifa_nj_k3,07850,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3438700,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07851,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3439600,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07852,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3439750,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",5.89823,
+ifa_nj_k3,07853,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3441400,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07856,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3448690,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.965493,
+ifa_nj_k3,07857,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3450130,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07860,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3451930,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",2.52975,
+ifa_nj_k3,07863,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3455500,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07865,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3460450,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07866,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3480750,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",8.3252,
+ifa_nj_k3,07869,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",4.47217,
+ifa_nj_k3,07870,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07871,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3438040,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",2.39441,
+ifa_nj_k3,07874,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,3409170,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.31781,
+ifa_nj_k3,07876,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3471370,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",19.4442,
+ifa_nj_k3,07878,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3449290,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07880,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3475950,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07881,ifa,NJ,IFA,IFA_01,IFA,,34037,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07882,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3407360,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.000795451,
+ifa_nj_k3,07885,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3480390,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0825861,
+ifa_nj_k3,07901,ifa,NJ,IFA,IFA_01,IFA,,34039,35620,3471430,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",18.6352,
+ifa_nj_k3,07920,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3403340,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",10.9459,
+ifa_nj_k3,07921,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3438670,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",11.7679,
+ifa_nj_k3,07922,ifa,NJ,IFA,IFA_01,IFA,,34039,35620,3451810,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.20647,
+ifa_nj_k3,07924,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3405590,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",6.55637,
+ifa_nj_k3,07926,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3408260,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07927,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3411290,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",17.5204,
+ifa_nj_k3,07928,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3412100,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",3.93978,
+ifa_nj_k3,07930,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3412580,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",20.3527,
+ifa_nj_k3,07931,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3422890,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",4.74006,
+ifa_nj_k3,07932,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3423910,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",26.4565,
+ifa_nj_k3,07933,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3426220,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07934,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3457300,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.8061,
+ifa_nj_k3,07935,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3428020,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.119318,
+ifa_nj_k3,07936,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",3.69473,
+ifa_nj_k3,07939,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3442180,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07940,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3442510,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",10.7059,
+ifa_nj_k3,07945,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3445330,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",5.61135,
+ifa_nj_k3,07946,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3446470,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07950,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3448210,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",7.89026,
+ifa_nj_k3,07960,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3448300,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",62.1106,
+ifa_nj_k3,07961,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3423910,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07970,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07974,ifa,NJ,IFA,IFA_01,IFA,,34039,35620,3451810,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",3.48805,
+ifa_nj_k3,07976,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3452020,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07977,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3457300,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07979,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3460750,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07980,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3470920,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,07981,ifa,NJ,IFA,IFA_01,IFA,,34027,35620,3480540,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",7.44837,
+ifa_nj_k3,08001,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3400850,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08002,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3412385,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",14.111,
+ifa_nj_k3,08003,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3469900,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",9.69886,
+ifa_nj_k3,08004,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3402020,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0795451,
+ifa_nj_k3,08005,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3403040,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",4.87141,
+ifa_nj_k3,08006,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3403130,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08007,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3403250,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08008,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3452410,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08009,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3405440,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08010,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3405740,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08011,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08012,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3406040,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",8.97352,
+ifa_nj_k3,08014,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3407570,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08015,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3408455,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08016,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3408920,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.413685,
+ifa_nj_k3,08019,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08020,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3449200,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.19538,
+ifa_nj_k3,08021,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3440440,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08022,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3436300,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08023,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3457840,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08026,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3426070,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.78673,
+ifa_nj_k3,08027,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3426100,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08028,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3426340,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.917512,
+ifa_nj_k3,08029,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3426520,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.179979,
+ifa_nj_k3,08030,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3426820,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",18.9889,
+ifa_nj_k3,08031,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3404750,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08032,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3428380,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08033,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3428770,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",12.1595,
+ifa_nj_k3,08034,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3402880,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",13.1206,
+ifa_nj_k3,08035,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3428800,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",4.3695,
+ifa_nj_k3,08036,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08037,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3429430,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.325151,
+ifa_nj_k3,08038,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3429520,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08039,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3430270,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08041,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3436120,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08042,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3436300,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08043,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3419900,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",27.391,
+ifa_nj_k3,08045,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3439420,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08046,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0137676,
+ifa_nj_k3,08048,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.21635,
+ifa_nj_k3,08049,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3442630,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08050,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3454315,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.10286,
+ifa_nj_k3,08051,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",3.63251,
+ifa_nj_k3,08052,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08053,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3444100,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",86.935,
+ifa_nj_k3,08054,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3461650,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",30.5858,
+ifa_nj_k3,08055,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3445210,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",20.014,
+ifa_nj_k3,08056,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3445780,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08057,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3447895,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",46.8941,
+ifa_nj_k3,08059,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3448750,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08060,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08061,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3449200,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08062,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3462820,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.712943,
+ifa_nj_k3,08063,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3449680,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08064,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08065,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3455800,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08066,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3457150,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0741002,
+ifa_nj_k3,08067,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3457360,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08068,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3457540,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08069,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3410600,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08070,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3457840,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08071,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3459070,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",4.55,
+ifa_nj_k3,08072,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3461440,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08073,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08074,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3462820,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08075,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.451586,
+ifa_nj_k3,08077,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3463660,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",7.38113,
+ifa_nj_k3,08078,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3465160,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.323624,
+ifa_nj_k3,08079,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3465490,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08080,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3466750,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",14.1228,
+ifa_nj_k3,08081,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3467470,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0637415,
+ifa_nj_k3,08083,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3468340,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08084,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3471220,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08085,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3404400,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.439109,
+ifa_nj_k3,08086,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3472810,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.14785,
+ifa_nj_k3,08087,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3449560,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08088,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3439885,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.190519,
+ifa_nj_k3,08089,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3412550,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08090,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3478110,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.55648,
+ifa_nj_k3,08091,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3478410,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.26348,
+ifa_nj_k3,08092,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.179502,
+ifa_nj_k3,08093,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3480120,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.343926,
+ifa_nj_k3,08094,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3481380,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08095,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08096,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3482120,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.75925,
+ifa_nj_k3,08097,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3482180,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08098,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3402170,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.20585,
+ifa_nj_k3,08102,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3410000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08103,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3410000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08104,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3410000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08105,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3410000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08106,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3402200,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.60448,
+ifa_nj_k3,08107,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3453880,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.543146,
+ifa_nj_k3,08108,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3479520,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",4.77995,
+ifa_nj_k3,08109,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3445510,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0795451,
+ifa_nj_k3,08110,ifa,NJ,IFA,IFA_02,IFA,,34007,37980,3410000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08201,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3400100,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.21578,
+ifa_nj_k3,08202,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3402320,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.37399,
+ifa_nj_k3,08203,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3407810,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0696086,
+ifa_nj_k3,08204,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3421660,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.82956,
+ifa_nj_k3,08205,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3468190,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08210,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3410300,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08212,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3410330,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08215,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3420350,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08217,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3421420,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08221,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3440530,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",19.8952,
+ifa_nj_k3,08223,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3404540,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",5.8752,
+ifa_nj_k3,08224,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3451450,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08225,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3452950,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.22404,
+ifa_nj_k3,08226,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3454360,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",6.97182,
+ifa_nj_k3,08230,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3466540,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.108546,
+ifa_nj_k3,08232,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3459640,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08234,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3421540,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.03232,
+ifa_nj_k3,08240,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3470984,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08241,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3460600,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08242,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3463180,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08243,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3466390,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08244,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3468430,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08245,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3468850,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08246,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3469480,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08247,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3471010,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08248,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3471250,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08251,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3476010,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08260,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3453490,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.04053,
+ifa_nj_k3,08270,ifa,NJ,IFA,IFA_02,IFA,,34009,12100,3421870,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.110139,
+ifa_nj_k3,08302,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3407600,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0458631,
+ifa_nj_k3,08310,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3408680,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08311,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3411410,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08312,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3413360,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08314,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3417410,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08316,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3418010,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08317,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3418040,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08318,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,3454960,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",7.93973,
+ifa_nj_k3,08319,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3421870,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08320,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08321,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3424360,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08322,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3425050,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.545588,
+ifa_nj_k3,08323,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3455320,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08324,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3430810,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08326,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3408680,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08327,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3439870,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08328,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3442840,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08329,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3444670,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08330,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3421870,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.222164,
+ifa_nj_k3,08332,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3446680,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0298792,
+ifa_nj_k3,08340,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3446710,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08341,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3408680,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08343,ifa,NJ,IFA,IFA_02,IFA,,34033,37980,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08344,ifa,NJ,IFA,IFA_02,IFA,,34015,37980,3476070,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08345,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3451750,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08346,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3451990,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08348,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3460240,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08349,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3460510,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08350,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3462790,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08352,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3464740,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08353,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3467020,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08360,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3476070,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",18.0836,
+ifa_nj_k3,08361,ifa,NJ,IFA,IFA_02,IFA,,34011,47220,3476070,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",6.61318,
+ifa_nj_k3,08401,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3402080,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08402,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3443890,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08403,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3441370,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08406,ifa,NJ,IFA,IFA_02,IFA,,34001,12100,3475620,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08501,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3400760,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.00324807,
+ifa_nj_k3,08502,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3404630,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.970368,
+ifa_nj_k3,08505,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3406670,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",3.05335,
+ifa_nj_k3,08510,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08511,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3414980,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08512,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3415520,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.915926,
+ifa_nj_k3,08514,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3415730,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08515,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3416060,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.86513,
+ifa_nj_k3,08518,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3423820,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08520,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474330,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08525,ifa,NJ,IFA,IFA_01,IFA,,34021,45940,3433150,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.486949,
+ifa_nj_k3,08527,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3476107,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.61721,
+ifa_nj_k3,08528,ifa,NJ,IFA,IFA_02,IFA,,34035,35620,3436930,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",20.0374,
+ifa_nj_k3,08530,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3438610,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.682759,
+ifa_nj_k3,08533,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3451360,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08534,ifa,NJ,IFA,IFA_01,IFA,,34021,45940,3457600,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",5.21525,
+ifa_nj_k3,08535,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.25733,
+ifa_nj_k3,08536,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3460975,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.00397725,
+ifa_nj_k3,08540,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3460900,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",16.9336,
+ifa_nj_k3,08542,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3460900,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",3.31577,
+ifa_nj_k3,08544,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3460900,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08550,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3460960,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08551,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3463120,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.54534,
+ifa_nj_k3,08553,ifa,NJ,IFA,IFA_02,IFA,,34035,35620,3464320,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08554,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3464350,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08555,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3464410,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08558,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3467860,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08559,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3470980,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.703698,
+ifa_nj_k3,08560,ifa,NJ,IFA,IFA_01,IFA,,34021,45940,3473050,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08561,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3481620,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08562,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3482960,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08608,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08609,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08610,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3480630,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.03614,
+ifa_nj_k3,08611,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08618,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.363571,
+ifa_nj_k3,08619,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3445480,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",11.3875,
+ifa_nj_k3,08620,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3483170,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08628,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.00047727,
+ifa_nj_k3,08629,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08638,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3474000,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08640,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3424300,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08641,ifa,NJ,IFA,IFA_02,IFA,,34005,37980,3442390,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08648,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3439570,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",8.40003,
+ifa_nj_k3,08690,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3429370,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.124444,
+ifa_nj_k3,08691,ifa,NJ,IFA,IFA_02,IFA,,34021,45940,3483170,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.29299,
+ifa_nj_k3,08701,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3438580,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.77149,
+ifa_nj_k3,08720,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3400790,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08721,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3458590,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",13.3222,
+ifa_nj_k3,08722,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3404180,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08723,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",30.2528,
+ifa_nj_k3,08724,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3400790,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.23966,
+ifa_nj_k3,08730,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3407750,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",12.483,
+ifa_nj_k3,08731,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3424180,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",6.40739,
+ifa_nj_k3,08732,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3434530,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08733,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3437770,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08734,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08735,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3418148,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.18457,
+ifa_nj_k3,08736,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3443050,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",57.8267,
+ifa_nj_k3,08738,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3443380,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",1.07765,
+ifa_nj_k3,08740,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3454450,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08741,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3458590,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08742,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3459880,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",4.80029,
+ifa_nj_k3,08750,ifa,NJ,IFA,IFA_02,IFA,,34025,35620,3466330,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.88098,
+ifa_nj_k3,08751,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3418151,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.170108,
+ifa_nj_k3,08752,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3466480,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08753,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3473110,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",22.8735,
+ifa_nj_k3,08755,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3473110,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",12.2832,
+ifa_nj_k3,08757,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3432415,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08758,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3476820,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08759,ifa,NJ,IFA,IFA_02,IFA,,34029,35620,3415910,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",12.0263,
+ifa_nj_k3,08801,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3401480,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.150738,
+ifa_nj_k3,08802,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3401900,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08804,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3406370,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08805,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3406790,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0843381,
+ifa_nj_k3,08807,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3444430,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",13.1911,
+ifa_nj_k3,08809,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3413720,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",10.7141,
+ifa_nj_k3,08810,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3416630,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08812,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3418490,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",6.01989,
+ifa_nj_k3,08816,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",18.9419,
+ifa_nj_k3,08817,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3465260,"IFA New York-Newark-Jersey City, NY-NJ",5.39046,
+ifa_nj_k3,08820,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3469390,"IFA New York-Newark-Jersey City, NY-NJ",2.46577,
+ifa_nj_k3,08821,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3423610,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08822,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3423700,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",15.9466,
+ifa_nj_k3,08823,ifa,NJ,IFA,IFA_02,IFA,,34035,35620,3459500,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08824,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3436660,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.198863,
+ifa_nj_k3,08825,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3425350,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08826,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3426550,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08827,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3429460,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.254455,
+ifa_nj_k3,08828,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3430840,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08829,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3431320,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08830,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3434470,"IFA New York-Newark-Jersey City, NY-NJ",64.8276,
+ifa_nj_k3,08831,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3434890,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.000994313,
+ifa_nj_k3,08832,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3436570,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08833,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3439630,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",9.59145,
+ifa_nj_k3,08835,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3443620,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.476128,
+ifa_nj_k3,08836,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3444430,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",14.4872,
+ifa_nj_k3,08837,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3424030,"IFA New York-Newark-Jersey City, NY-NJ",10.3583,
+ifa_nj_k3,08840,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3445690,"IFA New York-Newark-Jersey City, NY-NJ",65.4017,
+ifa_nj_k3,08844,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3431880,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",6.54605,
+ifa_nj_k3,08846,ifa,NJ,IFA,IFA_01,IFA,,34023,35620,3445900,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08848,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3446260,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08850,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3446620,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08852,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3447190,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",6.25351,
+ifa_nj_k3,08853,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3450100,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08854,ifa,NJ,IFA,IFA_01,IFA,,34023,35620,3465260,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",6.34469,
+ifa_nj_k3,08857,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3454690,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",2.25854,
+ifa_nj_k3,08858,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3454900,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08859,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3465790,"IFA New York-Newark-Jersey City, NY-NJ",0.57305,
+ifa_nj_k3,08861,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3458200,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08863,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3424030,"IFA New York-Newark-Jersey City, NY-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08865,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3458350,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",1.09099,
+ifa_nj_k3,08867,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08869,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3461980,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",13.5742,
+ifa_nj_k3,08872,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3465790,"IFA New York-Newark-Jersey City, NY-NJ",0.940439,
+ifa_nj_k3,08873,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3467820,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",3.02112,
+ifa_nj_k3,08876,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3468460,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",38.0881,
+ifa_nj_k3,08879,ifa,NJ,IFA,IFA_03,IFA,,34023,35620,3465790,"IFA New York-Newark-Jersey City, NY-NJ",0.913351,
+ifa_nj_k3,08880,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3468730,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08882,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3469420,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08884,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3469810,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08886,ifa,NJ,IFA,IFA_01,IFA,,34041,10900,3470800,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08887,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3472870,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08889,ifa,NJ,IFA,IFA_01,IFA,,34019,35620,3480720,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",3.09699,
+ifa_nj_k3,08890,ifa,NJ,IFA,IFA_01,IFA,,34035,35620,3483290,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08901,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3451210,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_nj_k3,08902,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3416720,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.595714,
+ifa_nj_k3,08904,ifa,NJ,IFA,IFA_02,IFA,,34023,35620,3431470,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",0.0,no cell in the extract: territory at zero opportunity
