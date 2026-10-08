@@ -1,0 +1,31 @@
+{
+  "IFA": {
+    "components": {
+      "allocation": [
+        2
+      ],
+      "components": [
+        {
+          "k": 2,
+          "mass_tau": 2.0,
+          "residue": 0.0,
+          "units": [
+            "MA",
+            "ME",
+            "NH",
+            "VT"
+          ]
+        }
+      ],
+      "floor": 0.0
+    },
+    "solver": {
+      "bound": 298.88505372468256,
+      "gap": 0.0,
+      "mip_rel_gap": 0.0,
+      "objective": 298.88505372468256,
+      "status": "optimal",
+      "time_s": 0.003
+    }
+  }
+}

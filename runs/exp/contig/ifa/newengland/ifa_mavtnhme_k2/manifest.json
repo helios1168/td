@@ -1,0 +1,54 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_mavtnhme_k2.toml --out runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2 --extract runs/exp/contig/ifa/newengland/_inst/ifa_mavtnhme.json.gz --states MA,VT,NH,ME --delta 0.05 --jobs 1 --time-limit 480",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/_inst/ifa_mavtnhme.json.gz",
+  "finished_at": "2026-10-08T09:57:49+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.05,
+    "extract": "runs/exp/contig/ifa/newengland/_inst/ifa_mavtnhme.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.05,
+        "final_delta": 0.05,
+        "forbid_pairs": [],
+        "free": [
+          "MA"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "MA,VT,NH,ME",
+    "time_limit": 480.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/ifa/newengland/_inst/ifa_mavtnhme.json.gz",
+    "instance_sha256": "9f4f42cdf489b20c9bbbfb607ba772356c9671cbca2597a8e8b4ac2bed99cd8a",
+    "queued_at": "2026-10-08T09:57:44+00:00"
+  },
+  "run_id": "ifa_mavtnhme_k2",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-newengland/runs/exp/contig/_specs/ifa_mavtnhme_k2.toml",
+    "sha256": "d66fc8b97751a9338ccfd43194bbe4dabd9e7d5c861ea4177f53fc408c105e7d"
+  },
+  "started_at": "2026-10-08T09:57:44+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

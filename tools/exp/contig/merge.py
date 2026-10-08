@@ -127,7 +127,9 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list) -> dict:
     s = tdspec.load(spec_path)
     output.check_out(out, ("manifest.json",))
     folders = dict(sources)
-    states = tuple(tag for tag, _ in sources)
+    # a source tag is a state or several joined by "," (a multi-state run, `run.py --states A,B`)
+    tags = tuple(tag for tag, _ in sources)
+    states = tuple(st for tag in tags for st in tag.split(","))
     src_rows = [(tag, output.read_ledger(os.path.join(f, "ledger.csv"))) for tag, f in sources]
     src_manifest = {tag: json.load(open(os.path.join(f, "manifest.json"), encoding="utf-8"))
                     for tag, f in sources}
@@ -202,7 +204,7 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list) -> dict:
                          "margin": inst.channels[c].spec.margin,
                          "tier": "none (merged; no regional master)",
                          "status": "merged: " + ", ".join(
-                             f"{tag} {src_run[tag]['channels'][c]['status']}" for tag in states
+                             f"{tag} {src_run[tag]['channels'][c]['status']}" for tag in tags
                              if c in src_run[tag]["channels"]),
                          "vanished": 0, **output.piece_counts(split, c)}
                      for c in drawings},
@@ -211,7 +213,7 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list) -> dict:
         "merged_from": {tag: {"run": os.path.relpath(folders[tag], ROOT),
                               "m1": src_run[tag]["m1"]["status"],
                               "commit": src_manifest[tag]["provenance"]["commit"]}
-                        for tag in states},
+                        for tag in tags},
         "maps": "not drawn (tools/maps/render.py <dir> draws them)"}
     with open(os.path.join(out, "run.json"), "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2, sort_keys=True)
