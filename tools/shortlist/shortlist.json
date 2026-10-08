@@ -1876,6 +1876,20 @@
    ],
    "shown_images": [],
    "notes": "td-ifa-southcentral (branch m5-studio/ifa-southcentral at 5b5da26; folder copied to the hub's runs/ for T1), 2026-10-08: IFA South Central K 6 with the balanced TN split (TX 3, AR+LA+OK, ifa_sc_esc_k2b), gated on the full graph: all 6 districts in the E2 window. Fails M1 only on TX's El Paso + Trans-Pecos coverage-gap neck (79718–79734, 6.14 km), which clears under the G1 width (#131, not yet in effect). Supersedes ifa_sc_merge. Passes under G1 (owner G3, 2026-10-08): its only neck is the El Paso + Trans-Pecos coverage gap (79718–79734), which the G1 width (TD_NECK_GAP_WIDTH=1, 350 km) clears; the render's 'FAILS M1' is the flag-off audit. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_conus_nony",
+   "tier": "E",
+   "rank": 47,
+   "label": "IFA CONUS without New York, 47 districts (New England 4, NJ 3, PA 4, South Atlantic 9, South Central 6, Midwest 14, West 7), gated with G1 gap width on (owner G3); NY pending",
+   "run": "runs/exp/contig/ifa/conus/ifa_conus_nony",
+   "images": [
+    "runs/exp/contig/ifa/conus/ifa_conus_nony/summary.png",
+    "runs/exp/contig/ifa/conus/ifa_conus_nony/zip_pages.pdf",
+    "runs/exp/contig/ifa/conus/ifa_conus_nony/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-research (branch m5-studio/ifa-conus at da22b24; folder copied to the hub's runs/ for T1), 2026-10-08: IFA CONUS without New York, 47 districts merged from the regions (New England 4, NJ 3, PA 4, South Atlantic 9, South Central 6, Midwest 14, West 7) and gated on the full graph. 0 pieces; the one neck is TX El Paso's coverage gap, which passes under the G1 width (owner G3), so the render's 'FAILS M1' is the default-width audit. 46 of 47 districts in the E2 window; the 47th is the MD+DE+WV waiver district ($1,924M, widened F1). The 1,826 cells with no row are NY's, unowned by construction until NY lands. Not a complete IFA map. Tier E (exploratory, never eligible)."
   }
  ]
 }
