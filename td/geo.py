@@ -28,6 +28,11 @@ kept) and writes `reference/2025/`:
                                     pieces
     POLYGON_GRAPH.json              its manifest (sources, CRS, threshold, command) and report
 
+`python -m td geo --gap-land` adds the land in no ZCTA that M1's neck width counts (#131):
+
+    zcta_gap_land.csv.gz            (a, b, gap_m): the gap land between two ZCTAs of one state
+    GAP_LAND.json                   its manifest (sources, the FACES files read) and report
+
 Everything is 2025 vintage (S17); `check_manifest` rejects any other.  HUD placement is G2.
 
 **Land.**  TIGER ZCTA polygons include their water, so a piece's polygon area is not its land.
@@ -74,6 +79,14 @@ rebuild keeps until the owner rules.  `--pair-connectors A-B ...` (`pair_connect
 same way the road crossings of a state line whatever their names: the build finds a bridge between
 two ZCTAs of one component only by a bridge word in its name, and TIGER/Line names some river
 bridges only by route (the Delaware Memorial Bridge is I-295 / US-40).
+
+**Gap land** (owner, 2026-10-08, G1, #131): M1's neck width also counts land in no ZCTA between
+a district's polygons.  The gap land between two ZCTAs a and b of one state is the length of the
+shared border of their ZIP-graph Voronoi cells (clipped to the state, so it never crosses a state
+line) that lies in a piece of the two cells' land outside every ZCTA polygon, with the counties'
+perennial water removed as for land (FACES LWFLAG P, AREAWATER where `UNAVAILABLE`), that touches
+both polygons.  So a stretch across water, through a third ZCTA's polygon, or on dry land that
+water cuts off from either polygon counts nothing (`gap_candidates`, `gap_widths`).
 
 A multipart ZCTA is one vertex whose parts count as connected to each other, adjacent to another
 ZCTA through any part (owner, 2026-10-05).  The part-level files let the looks scorer list a
@@ -918,8 +931,12 @@ def polygon_graph(ref_dir: str = REFERENCE_DIR, connectors: list | None = None) 
     """M1's graph: `{"vertices", "edges", "state", "border", "connectors", "aland"}`, the shipped
     vertex set, the polygon edges plus the owner-approved connectors only (`connectors` defaults to
     `ref_dir`'s list), each vertex's state, each polygon edge's shared border in metres, the
-    approved connector pairs, and each vertex's gazetteer land area in m² (M1's necks, #121)."""
+    approved connector pairs, and each vertex's gazetteer land area in m² (M1's necks, #121); and
+    "gaps", {(a, b): metres} of gap land between two ZCTAs of one state (`GAP_LAND`, #131), empty
+    where `ref_dir` has no such file."""
     ref = read_reference(ref_dir)
+    gaps = (read_reference(ref_dir, name=GAP_LAND) if os.path.exists(os.path.join(ref_dir, GAP_LAND))
+            else None)
     ref = ref[ref["graph_vertex"] == "1"]
     edges = read_reference(ref_dir, name=POLYGON_EDGES)
     rows = read_connectors(ref_dir) if connectors is None else connectors
@@ -929,7 +946,9 @@ def polygon_graph(ref_dir: str = REFERENCE_DIR, connectors: list | None = None) 
             "state": dict(zip(ref["zcta"], ref["state"])),
             "border": {(a, b): float(m) for a, b, m in zip(edges["a"], edges["b"], edges["border_m"])},
             "connectors": approved,
-            "aland": {z: float(a or 0) for z, a in zip(ref["zcta"], ref["aland_gaz"])}}
+            "aland": {z: float(a or 0) for z, a in zip(ref["zcta"], ref["aland_gaz"])},
+            "gaps": {} if gaps is None else
+            {(a, b): float(m) for a, b, m in zip(gaps["a"], gaps["b"], gaps["gap_m"])}}
 
 
 def approved_connectors(rows: list) -> list:
@@ -1228,6 +1247,137 @@ def pair_connectors(pairs, public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, l
     return new
 
 
+# ------------------------------------------------------------------------------ gap land (#131)
+GAP_LAND = "zcta_gap_land.csv.gz"
+GAP_LAND_REPORT = "GAP_LAND.json"
+GAP_LAND_COMMAND = "python -m td geo --gap-land --public $TD_REPO/data/public"
+
+
+def gap_candidates(ids, geoms, points: dict, zip_state: dict, state_polys: dict) -> list:
+    """[(a, b, border, region)], a < b, for each pair of ZCTAs of one state whose Voronoi cells
+    (`voronoi_cells` of `points` clipped to the state, the ZIP graph's cells) share a border with
+    some length outside every ZCTA polygon: `border` that shared border and `region` the two cells
+    less every ZCTA polygon.  `ids` and `geoms` are the ZCTA polygons in `CRS`; `points` and
+    `zip_state` are as `zip_graph` takes them."""
+    import numpy as np
+    import shapely
+    geoms = np.asarray(geoms)
+    tree = shapely.STRtree(geoms)
+
+    def less_zctas(g):
+        hit = tree.query(g, predicate="intersects")
+        return shapely.difference(g, shapely.union_all(geoms[hit])) if len(hit) else g
+
+    by_state: dict = {}
+    for z, p in points.items():
+        if zip_state.get(z) in state_polys:
+            by_state.setdefault(zip_state[z], {})[z] = p
+    out = []
+    for s, pts in sorted(by_state.items()):
+        cells = voronoi_cells(pts, state_polys[s])
+        keys = sorted(cells)
+        cg = np.asarray([cells[k] for k in keys])
+        ia, ib = shapely.STRtree(cg).query(cg, predicate="intersects")
+        for i, j in zip(ia, ib):
+            if i >= j:
+                continue
+            border = shapely.intersection(cg[i], cg[j])
+            if shapely.length(border) > 0 and shapely.length(less_zctas(border)) > 0:
+                out.append((keys[i], keys[j], border, less_zctas(shapely.union(cg[i], cg[j]))))
+    return out
+
+
+def gap_widths(candidates: list, ids, geoms, water) -> dict:
+    """{(a, b): metres} of gap land between two ZCTAs (`gap_candidates`): the length of their
+    shared Voronoi border lying in a piece of their two cells' land in no ZCTA, perennial water
+    (`water`, polygons in `CRS`) removed, that touches both polygons (within `TOUCH_M`), floored
+    to the centimetre.  Water between a polygon and the gap land, or a third ZCTA's polygon, so
+    leaves that stretch out.  A pair with none is left out."""
+    import numpy as np
+    import shapely
+    geom = dict(zip(ids, geoms))
+    water = np.asarray(water)
+    wtree = shapely.STRtree(water) if len(water) else None
+    out = {}
+    for a, b, border, region in candidates:
+        hit = wtree.query(region, predicate="intersects") if wtree is not None else []
+        dry = shapely.difference(region, shapely.union_all(water[hit])) if len(hit) else region
+        pieces = [p for p in shapely.get_parts(dry) if shapely.area(p) > 0
+                  and shapely.dwithin(p, geom[a], TOUCH_M) and shapely.dwithin(p, geom[b], TOUCH_M)]
+        m = shapely.length(shapely.intersection(border, shapely.union_all(pieces))) if pieces else 0.0
+        if m >= 0.01:
+            out[a, b] = math.floor(m * 100) / 100
+    return out
+
+
+def gap_land_build(public: str = PUBLIC_DIR, out: str = REFERENCE_DIR, log=print) -> dict:
+    """Write `GAP_LAND` (a, b, gap_m) and its manifest and report `GAP_LAND_REPORT` into `out`
+    (module doc): `gap_widths` over the shipped vertices, from the gazetteer, ZCTA, state and county
+    files `MANIFEST.json` hashes and the FACES (or AREAWATER, `UNAVAILABLE`) files of every county
+    a candidate's region meets, each checked against its `MANIFEST.json` hash.  Returns the report."""
+    import geopandas as gpd
+    import numpy as np
+    import pandas as pd
+    import shapely
+
+    ref = read_reference(out)
+    ref = ref[ref["graph_vertex"] == "1"]
+    vertices = set(ref["zcta"])
+    with open(os.path.join(out, "MANIFEST.json"), encoding="utf-8") as fh:
+        shipped = {e["name"]: e for e in json.load(fh)["sources"]}
+    paths = {n: cached(SOURCES[n][0], public) for n in ("gaz_zcta", "zcta", "state", "county")}
+    for n, p in paths.items():
+        if sha256(p) != shipped[n]["sha256"]:
+            raise ValueError(f"{p} is not the {n} file MANIFEST.json hashes")
+    log("geo: gazetteer points, states, ZCTA polygons")
+    states = _read(paths["state"], ["STATEFP", "STUSPS"])
+    states = states[states["STATEFP"].isin(CONUS_STATEFP)]
+    gaz = _gazetteer(paths["gaz_zcta"])
+    pts = gpd.GeoDataFrame({"zcta": gaz["GEOID"].str.zfill(5)},
+                           geometry=gpd.points_from_xy(gaz["INTPTLONG"].astype(float),
+                                                       gaz["INTPTLAT"].astype(float)),
+                           crs="EPSG:4269").to_crs(CRS)
+    xy = {z: (x, y) for z, x, y in zip(pts["zcta"], pts.geometry.x, pts.geometry.y) if z in vertices}
+    df = _read(paths["zcta"], ["ZCTA5CE20"])
+    df = df[df["ZCTA5CE20"].isin(vertices)].sort_values("ZCTA5CE20").reset_index(drop=True)
+    ids, geoms = df["ZCTA5CE20"].to_numpy(), np.asarray(df.geometry.values)
+
+    log("geo: gap land candidates")
+    cands = gap_candidates(ids, geoms, xy, dict(zip(ref["zcta"], ref["state"])),
+                           dict(zip(states["STUSPS"], states.geometry)))
+    counties = _read(paths["county"], ["GEOID", "STATEFP"])
+    counties = counties[counties["STATEFP"].isin(CONUS_STATEFP)].reset_index(drop=True)
+    _, hit = shapely.STRtree(np.asarray(counties.geometry.values)).query(
+        np.asarray([c[3] for c in cands]), predicate="intersects")
+    need = sorted(set(counties["GEOID"].values[hit]))
+    log(f"geo: perennial water of {len(need)} counties")
+    urls = {n: source_files(n, need) for n in ("faces", "areawater")}
+    fetch_all([u for us in urls.values() for u in us if os.path.basename(u) not in UNAVAILABLE], public)
+    entries = [manifest_entry(n, urls[n], public) for n in ("faces", "areawater")]
+    for e in entries:
+        bad = sorted(f for f, h in e.get("files", {}).items() if shipped[e["name"]]["files"].get(f) != h)
+        if bad:
+            raise ValueError(f"{e['name']}: {len(bad)} files are not the ones MANIFEST.json hashes: {bad[:5]}")
+    water = _county_water(need, public)[1]
+    log("geo: gap land widths")
+    widths = gap_widths(cands, ids, geoms, water)
+
+    rows = pd.DataFrame([(a, b, m) for (a, b), m in sorted(widths.items())], columns=["a", "b", "gap_m"])
+    polygon = {tuple(p) for p in read_reference(out, name=POLYGON_EDGES)[["a", "b"]].values}
+    report = {
+        "vintage": VINTAGE, "crs": CRS, "command": GAP_LAND_COMMAND, "touch_m": TOUCH_M,
+        "sources": [shipped[n] for n in ("gaz_zcta", "zcta", "state", "county")] + entries,
+        "candidates": len(cands), "pairs": len(rows),
+        "pairs_with_a_polygon_edge": sum(1 for p in widths if p in polygon),
+        "gap_km": round(float(rows["gap_m"].sum()) / 1000.0, 3),
+        "counties": len(need),
+    }
+    log("geo: writing " + out)
+    _write_csv(rows, os.path.join(out, GAP_LAND))
+    _write_json(report, os.path.join(out, GAP_LAND_REPORT))
+    return report
+
+
 def _road_entry(name: str, paths: list, public: str) -> dict:
     """A manifest entry, as `manifest_entry`, for the road files a polygon build read."""
     files = {os.path.basename(p): sha256(p) for p in paths}
@@ -1248,7 +1398,14 @@ def main(argv=None) -> int:
                     help="propose one in-state connector per detached group of a state (#114)")
     ap.add_argument("--pair-connectors", nargs="+", metavar="A-B",
                     help="propose the road crossings between each pair of states (#114)")
+    ap.add_argument("--gap-land", action="store_true",
+                    help="write the gap land between same-state ZCTAs that M1's neck width counts (#131)")
     a = ap.parse_args(argv)
+    if a.gap_land:
+        r = gap_land_build(a.public, a.out, log=lambda m: print(m, flush=True))
+        print(f"geo: gap land on {r['pairs']} of {r['candidates']} candidate pairs, {r['gap_km']} km, "
+              f"water from {r['counties']} counties")
+        return 0
     if a.state_connectors or a.pair_connectors:
         log = lambda m: print(m, flush=True)    # noqa: E731
         new = (state_connectors(a.public, a.out, log) if a.state_connectors else

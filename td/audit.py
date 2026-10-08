@@ -19,7 +19,8 @@ Two share defects are kept apart (#70):
 (`geo.polygon_graph`: every CONUS ZCTA, the TIGER ZCTA polygons' rook edges and the owner-approved
 connectors only).  It fails the run when a district's ZCTAs in the ledger are not one component
 of that graph, when a district has a neck (#121, `district_necks`: a connected part holding 5% of
-its land area beyond a passage under 10 km of shared border, an approved connector counting as
+its land area beyond a passage under 10 km of shared border plus gap land (#131, land in no ZCTA
+between two of its polygons, `NeckGraph`), an approved connector counting as
 unlimited unless land within the district's states would do through a passage itself 10 km wide
 (`NeckGraph.land_would_do`), where it is 0 km; the necks by mass
 are listed beside M1 for the owner, and fail nothing), or when a CONUS
@@ -477,9 +478,18 @@ class NeckGraph:
     `state`, and `border_cm` the borders in whole centimetres, floored (`border_cm`).  `polygon` is
     `geo.polygon_graph`'s dict, which carries "border", "connectors" and
     "aland" since #121.  An edge of the graph that is neither a bordered polygon edge nor a
-    connector counts as a polygon edge 0 km wide."""
+    connector counts as a polygon edge 0 km wide.
 
-    def __init__(self, polygon: dict):
+    Gap land (owner, 2026-10-08, G1 "Measure width across coverage gaps", #131): a passage's width
+    also counts land in no ZCTA between the district's polygons.  `polygon["gaps"]` {(a, b): m} is
+    `geo`'s gap land between two ZCTAs (`geo.GAP_LAND`: the stretch of their Voronoi border on dry
+    land outside every ZCTA, touching both polygons, never across water or a state line); each pair
+    of one state that is not an approved connector adds it, floored to the cm, to `border_cm`, the
+    necks' widths, on top of any polygon border, so a pair with only gap land becomes a neck edge.
+    It enters neither `border` nor `connector`, so `land_would_do` and the pieces still read the
+    polygon edges.  `gap_width=False` is the width before #131, kept to compare verdicts."""
+
+    def __init__(self, polygon: dict, gap_width: bool = True):
         self.state = polygon.get("state", {})
         self.aland = polygon["aland"]
         border = {tuple(sorted(e)): m for e, m in polygon["border"].items()}
@@ -495,6 +505,10 @@ class NeckGraph:
             if e in border or e not in joins:
                 self.border[a][b] = self.border[b][a] = border.get(e, 0.0) / 1000.0
                 self.border_cm[a][b] = self.border_cm[b][a] = border_cm(border.get(e, 0.0))
+        for (a, b), m in (polygon.get("gaps", {}) if gap_width else {}).items():
+            if (a in self.aland and b in self.aland and b not in self.connector.get(a, ())
+                    and self.state.get(a) and self.state.get(a) == self.state.get(b)):
+                self.border_cm[a][b] = self.border_cm[b][a] = self.border_cm[a].get(b, 0) + border_cm(m)
         self.by_state = collections.defaultdict(set)
         for z in polygon["vertices"]:
             self.by_state[self.state.get(z, "")].add(z)
@@ -785,6 +799,7 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
 
 
 MASS_NECK = "mass neck (diagnostic, not M1)"   # the owner's list for a later decision (#121)
+GAP_WIDTH_OFF = "TD_NECK_GAP_WIDTH"     # set to 0, `check_m1` measures necks without gap land (#131)
 
 
 def neck_item(ch: str, j: str, nk: Neck, kind: str = "neck") -> str:
@@ -866,7 +881,8 @@ def check_m1(run: Run) -> Check:
     for i, comp in enumerate(_components(set(adj), adj)):
         whole.update(dict.fromkeys(comp, i))
     uncovered, n_pieces, split, largest, n_free = [], 0, 0, 0.0, 0
-    ng = NeckGraph(run.polygon) if {"border", "connectors", "aland"} <= set(run.polygon) else None
+    ng = (NeckGraph(run.polygon, gap_width=os.environ.get(GAP_WIDTH_OFF) != "0")
+          if {"border", "connectors", "aland"} <= set(run.polygon) else None)
     neck_items, mass_items, vertices = [], [], set(adj)
     for ch in sorted(set(run.channels) | set(owner)):
         spec = run.channels.get(ch)
