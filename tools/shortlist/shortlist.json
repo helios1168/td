@@ -1177,7 +1177,7 @@
     "runs/exp/contig/divisions/ifa_div2_midatl_k11/zip_pages.pdf"
    ],
    "shown_images": [],
-   "notes": "Research tab, 2026-10-08: wholeplan.py on a NJ+NY+PA-only extract (runs/exp/contig/divisions/_inst/ifa_div2.json.gz), K 11, county pieces; 8 cuts (NJ 3, PA 3, NY 5); 6 of 11 districts inside the E2 band. The render colours out-of-division zero-mass ZCTAs. Tier E (exploratory, never eligible)."
+   "notes": "Research tab, 2026-10-08: wholeplan.py on a NJ+NY+PA-only extract (runs/exp/contig/divisions/_inst/ifa_div2.json.gz), K 11, county pieces; 8 cuts (NJ 3, PA 3, NY 5); 6 of 11 districts inside the E2 band. The render colours out-of-division zero-mass ZCTAs. Tier E (exploratory, never eligible). Division-only: two districts (upstate NY IFA_04, western PA IFA_09) also hold every zero-mass ZCTA outside the division, so the M1 pass is not a CONUS IFA verdict; 9 of 11 districts are gated on their real ZIP sets, and a CONUS verdict needs the merged nine-division ledger."
   },
   {
    "id": "ifa46-mdwhole",
@@ -1190,7 +1190,7 @@
     "runs/exp/contig/necorridor/ifa46-mdwhole/zip_pages.pdf"
    ],
    "shown_images": [],
-   "notes": "Research tab, 2026-10-08. MD is held whole under F1 ('MD stays whole: one-state band waiver'), an owner answer given in the research tab and not yet filed in docs/problem/PROBLEM.md. Tier E (exploratory, never eligible)."
+   "notes": "Research tab, 2026-10-08. MD is held whole under F1 ('MD stays whole: one-state band waiver'), confirmed by the owner 2026-10-08 and filed in docs/problem/PROBLEM.md (the band row). Tier E (exploratory, never eligible)."
   },
   {
    "id": "ifa46-md4",
