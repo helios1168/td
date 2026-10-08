@@ -1092,6 +1092,9 @@ def main(argv=None) -> int:
                     help="processes (#123): each channel in its own, its windows raced, at most "
                          "this many solves at once; 1 is the sequential loop")
     ap.add_argument("--maps", action="store_true")
+    ap.add_argument("--window", default=None,
+                    help="LO,HI in m_rel: every channel's final band is intersected with it (a fixed "
+                         "dollar window; only ever tighter than the scenario's band)")
     ap.add_argument("--states", default="",
                     help="comma-separated states: the windows on the polygon graph induced on "
                          "them, as `run.py --states` drew the run; M1 and necks on the full graph")
@@ -1124,6 +1127,10 @@ def main(argv=None) -> int:
         a.label = f"DIAGNOSTIC final band ±{a.diag_final_delta:g}" + (f", {a.label}" if a.label else "")
     elif diag is not None:
         a.label = "DIAGNOSTIC (" + diag["label"] + ")" + (f", {a.label}" if a.label else "")
+    if a.window:
+        w_lo, w_hi = (float(x) for x in a.window.split(","))
+        for ch in inst.channels.values():
+            ch.final_band = (max(ch.final_band[0], w_lo), min(ch.final_band[1], w_hi))
     border = draw.border_km(run.induced_graph(polygon, states) if states else polygon)
     ng = audit.NeckGraph(polygon)
     os.makedirs(a.out, exist_ok=True)
