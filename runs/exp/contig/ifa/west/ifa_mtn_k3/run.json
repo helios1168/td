@@ -1,0 +1,79 @@
+{
+  "cells": 2621,
+  "channels": {
+    "IFA": {
+      "delta": 0.113,
+      "districts": 0,
+      "districts_by_cause": {},
+      "final_delta": 0.113,
+      "k": 3,
+      "margin": false,
+      "pieces": 0,
+      "pieces_by_cause": {},
+      "status": "optimal",
+      "tier": "exact",
+      "vanished": 0
+    }
+  },
+  "dropped_channels": [],
+  "dropped_units": {
+    "IFA": [
+      "AL",
+      "AR",
+      "CA",
+      "CT",
+      "DC",
+      "DE",
+      "FL",
+      "GA",
+      "IA",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MA",
+      "MD",
+      "ME",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "NC",
+      "ND",
+      "NE",
+      "NH",
+      "NJ",
+      "NY",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "VA",
+      "VT",
+      "WA",
+      "WI",
+      "WV"
+    ]
+  },
+  "fine_channels": [
+    "ifa"
+  ],
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 30679 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "maps": "not drawn (python -m td maps <dir> draws them)",
+  "realizer": "tools/exp/contig (arm1)",
+  "scenario": "ifa_mtn_k3",
+  "source": "ifa_mtn.json.gz",
+  "spec": "runs/exp/contig/_specs/ifa_mtn_k3.toml",
+  "verdict": "fail",
+  "zips": 2621
+}

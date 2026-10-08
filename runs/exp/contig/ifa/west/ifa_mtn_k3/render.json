@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "8b26f89636a61b44db69b6cd0a91b2ff0cddab3e4716ad612c61653bbb43bb5f",
+    "summary.svg": "5ef4015ee3c327c77fc12c8326640168c085a695538414d8b5591e25b9ca2ccd",
+    "zip_IFA.png": "8be784ce2f27ac51de687277b6a4f2f2f2565131a6c9ca53adc051f14c8a74e4",
+    "zip_pages.pdf": "0c1a2818ec495024b97c8b407d2460715b51fea103118c2a28537e74f016d57c"
+  },
+  "inputs": {
+    "districts.csv": "29ee3dd36251d6569d6b11023ab2bb49360d8ff5978dbec8350cd841e0b9f491",
+    "ledger.csv": "164fffe6e81fed0d80edc371a9791871f54cba9049d13bb712afdbec8479d746",
+    "manifest.json": "86139a532c237264b08ed90accfb852936315eb25ea5ef7c4fd8719a1e2ed413",
+    "run.json": "e51101ffec495e08bca6cd04591d2118c27ee168fa74c7fbe87150d500d56d6a"
+  },
+  "label": "ifa_mtn_k3: IFA Mountain, K 3, whole states only, band inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 30679 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:59:12+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_mtn_k3: IFA Mountain, K 3, whole states only, band inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

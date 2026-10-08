@@ -1,0 +1,49 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 1840.83273,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.113,
+      "groups": [],
+      "master_status": "optimal",
+      "mean_dev": 0.05650889236172318,
+      "plan_delta": 0.113,
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [],
+      "single_connector": {
+        "ID+MT+NV+UT+WY#1": [
+          "83823-83827",
+          "84501-84520",
+          "84522-84654",
+          "84701-84747",
+          "89007-89021",
+          "89010-89047",
+          "89049-89314",
+          "89316-89822"
+        ]
+      },
+      "split_units": [],
+      "status": "optimal",
+      "undrawn_zctas": 0,
+      "vanished_shares": [],
+      "worst_dev": 0.0847633385425852
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.113,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 30679 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_mtn_k3",
+  "sequential": false
+}

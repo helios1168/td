@@ -1,0 +1,18 @@
+[scenario]
+name = "ifa_pac_k5"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.1
+
+[channels.IFA]
+margin = false
+k = 5
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["CA"]
+eta = 0.05
+max_size = 3
+max_dist_km = 2000
+dist_km = { }
+delta = 0.173
+final_delta = 0.173
