@@ -1651,7 +1651,7 @@
     "runs/exp/contig/ifa/midwest/ifa_mw_merge/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Midwest K 14 (East North Central + West North Central + CO, owner pick B 'borrow Colorado'), merged from 7 runs and gated on the full graph: 0 pieces, 0 necks, every district in the E2 window ($1,021M–$1,437M); the 22,622 unowned cells are exactly the out-of-region ZCTAs. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at 8eeb8bf, re-audited at the spec default final_delta 0.15; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Midwest K 14 (East North Central + West North Central + CO, owner pick B 'borrow Colorado'), merged from 7 runs and gated on the full graph: 0 pieces, 0 necks, every district in the E2 window ($1,021M–$1,437M); the 22,622 unowned cells are exactly the out-of-region ZCTAs. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible). Under the E2 window 14 of 14 pass; the τ ±15% line (information only) lists MN+ND+SD+NE $1,437M and OH IFA_02 $1,414M."
   },
   {
    "id": "ifa_mw_mi_k3_cd",
@@ -1736,6 +1736,118 @@
    ],
    "shown_images": [],
    "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at a234f5d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Michigan alone, K 3, grouped by state senate districts: $1,193M, $1,058M, $1,042M. Fails M1: one 5.88 km neck at 48025–48301. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_west_merged",
+   "tier": "E",
+   "rank": 36,
+   "label": "IFA West (Mountain + Pacific) merged, K 7, CO with the Midwest (owner 2026-10-08), band verdict = E2 window per district, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/west/merged",
+   "images": [
+    "runs/exp/contig/ifa/west/merged/summary.png",
+    "runs/exp/contig/ifa/west/merged/zip_pages.pdf",
+    "runs/exp/contig/ifa/west/merged/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-west (branch m5-studio/ifa-west at a2d2602; folder copied to the hub's runs/ for T1), 2026-10-08: IFA West K 7 (Mountain + Pacific, CO with the Midwest per the owner's 'Yes, CO goes to the Midwest'), gated on the full graph at the spec default final_delta 0.15: AZ+NM $1,223M, ID+MT+NV+UT+WY $1,103M, CA LA $1,270M, CA San Diego $1,270M, CA LA/Inland $1,270M, CA Bay Area $1,212M, OR+WA + 18 northern CA counties $1,029M; 0 pieces, 0 necks, all in the E2 window. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mtn_k2",
+   "tier": "E",
+   "rank": 37,
+   "label": "IFA Mountain less CO (owner: CO borrowed by the Midwest), K 2, whole states only, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/west/ifa_mtn_k2",
+   "images": [
+    "runs/exp/contig/ifa/west/ifa_mtn_k2/summary.png",
+    "runs/exp/contig/ifa/west/ifa_mtn_k2/zip_pages.pdf",
+    "runs/exp/contig/ifa/west/ifa_mtn_k2/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-west (branch m5-studio/ifa-west at a2d2602; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Mountain less CO, K 2, whole states only: AZ+NM $1,223M, ID+MT+NV+UT+WY $1,103M. 0 pieces, 0 necks. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_pac_k5_hand",
+   "tier": "E",
+   "rank": 38,
+   "label": "IFA Pacific, K 5: CA K 4 drawing (ifa_ca_k4-neck) with 18 northern CA counties moved to OR+WA, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/west/ifa_pac_k5_hand",
+   "images": [
+    "runs/exp/contig/ifa/west/ifa_pac_k5_hand/summary.png",
+    "runs/exp/contig/ifa/west/ifa_pac_k5_hand/zip_pages.pdf",
+    "runs/exp/contig/ifa/west/ifa_pac_k5_hand/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-west (branch m5-studio/ifa-west at a2d2602; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Pacific K 5: ifa_ca_k4-neck's CA K 4 drawing with 18 northern CA counties (Del Norte to Sutter, Yuba, Nevada, Lake; 47 m_rel) moved to OR+WA, re-gated by repair.py: $1,270M ×3, $1,212M, $1,029M. 0 pieces, 0 necks. A hand edit. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_pac_k5",
+   "tier": 3,
+   "rank": 55,
+   "label": "IFA Pacific CA+OR+WA, K 5, CA split, OR and WA whole with one CA piece, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/west/ifa_pac_k5",
+   "images": [
+    "runs/exp/contig/ifa/west/ifa_pac_k5/summary.png",
+    "runs/exp/contig/ifa/west/ifa_pac_k5/zip_pages.pdf",
+    "runs/exp/contig/ifa/west/ifa_pac_k5/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-west (branch m5-studio/ifa-west at a2d2602; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Pacific CA+OR+WA, K 5, MILP draw (480 s, tangled incumbent). Fails M1: 4 necks. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ifa_west_merged_co",
+   "tier": "E",
+   "rank": 39,
+   "label": "IFA West (Mountain + Pacific) merged, K 8, CO in the West (superseded by the owner CO ruling), full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/west/merged_co",
+   "images": [
+    "runs/exp/contig/ifa/west/merged_co/summary.png",
+    "runs/exp/contig/ifa/west/merged_co/zip_pages.pdf",
+    "runs/exp/contig/ifa/west/merged_co/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-west (branch m5-studio/ifa-west at a2d2602; folder copied to the hub's runs/ for T1), 2026-10-08: IFA West K 8 with CO alone ($1,056M) in the West: 0 pieces, 0 necks, all in the E2 window. Superseded by the owner's CO ruling (CO goes to the Midwest); reference only. Tier E rather than the tab's tier 3, because it passes M1. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mtn_k3",
+   "tier": "E",
+   "rank": 40,
+   "label": "IFA Mountain, K 3, whole states only, band inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/west/ifa_mtn_k3",
+   "images": [
+    "runs/exp/contig/ifa/west/ifa_mtn_k3/summary.png",
+    "runs/exp/contig/ifa/west/ifa_mtn_k3/zip_pages.pdf",
+    "runs/exp/contig/ifa/west/ifa_mtn_k3/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-west (branch m5-studio/ifa-west at a2d2602; folder copied to the hub's runs/ for T1), 2026-10-08: IFA Mountain K 3, whole states, CO alone $1,056M: 0 pieces, 0 necks. Superseded by the owner's CO ruling; reference only. Tier E rather than the tab's tier 3, because it passes M1. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_mndn_k2_cd",
+   "tier": "E",
+   "rank": 41,
+   "label": "IFA MN with ND, SD, NE whole, K 2, MN cd grouping inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_cd",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_cd/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_cd/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_cd/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at 4e223f1; folder copied to the hub's runs/ for T1), 2026-10-08: IFA MN split with ND, SD, NE whole, K 2, MN grouped by congressional districts: $1,070M, $1,399M. 0 pieces, 0 necks; an alternative to ifa_mw_mndn_k2. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_mw_mndn_k2_sldu",
+   "tier": "E",
+   "rank": 42,
+   "label": "IFA MN with ND, SD, NE whole, K 2, MN sldu grouping inside the IFA window, full-graph M1 audit",
+   "run": "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_sldu",
+   "images": [
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_sldu/summary.png",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_sldu/zip_pages.pdf",
+    "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2_sldu/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "td-ifa-midwest (branch m5-studio/ifa-midwest at 4e223f1; folder copied to the hub's runs/ for T1), 2026-10-08: IFA MN split with ND, SD, NE whole, K 2, MN grouped by state senate districts: $1,048M, $1,421M. 0 pieces, 0 necks; an alternative to ifa_mw_mndn_k2. The only other audit failure is the out-of-region cells of the regional extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   }
  ]
 }
