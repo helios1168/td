@@ -1204,6 +1204,20 @@
    ],
    "shown_images": [],
    "notes": "Research tab, 2026-10-08: a hand edit of runs/exp/contig/whole127/ifa46-whole for route R2, not produced by the planner. Tier E for tracking only (T1); never a candidate."
+  },
+  {
+   "id": "ifa_nj_k3",
+   "tier": 3,
+   "rank": 43,
+   "label": "IFA New Jersey alone, K 3, realizer on the NJ-induced graph, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_nj_k3",
+   "images": [
+    "runs/exp/contig/nj/ifa_nj_k3/summary.png",
+    "runs/exp/contig/nj/ifa_nj_k3/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_nj_k3/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-nj at c511443; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New Jersey alone, K 3, the existing realizer on the NJ-induced polygon graph (598 vertices), full-graph M1 audit. All three districts inside the IFA window ($1,310M, $1,007M, $1,236M). Fails M1: one 4.05 km neck in IFA_03 (31 ZIPs from 07701, 31% of its land). The 32,702 'cells with no row' are out-of-state ZCTAs absent from the NJ-only extract, not a defect. Tier 3 (fails M1)."
   }
  ]
 }
