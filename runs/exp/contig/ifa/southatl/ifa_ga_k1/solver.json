@@ -1,0 +1,28 @@
+{
+  "IFA": {
+    "components": {
+      "allocation": [
+        1
+      ],
+      "components": [
+        {
+          "k": 1,
+          "mass_tau": 1.0,
+          "residue": 0.0,
+          "units": [
+            "GA"
+          ]
+        }
+      ],
+      "floor": 0.0
+    },
+    "solver": {
+      "bound": 0.0,
+      "gap": 0.0,
+      "mip_rel_gap": 0.0,
+      "objective": 0.0,
+      "status": "optimal",
+      "time_s": 0.0
+    }
+  }
+}

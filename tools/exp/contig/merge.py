@@ -136,7 +136,8 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list) -> dict:
     ref = geo.read_reference()
     ext = tdspec.scope(s, data.conus(data.load(extract_out), ref))
     polygon = geo.polygon_graph()       # M1's audit on the full graph (#52)
-    inst = tdspec.build(s, ext, ref, graph=run.induced_graph(polygon, states))
+    inst = tdspec.build(s, ext, ref, graph=run.induced_graph(
+        polygon, tuple(x for tag in states for x in tag.split(","))))   # a tag may name several states
     placed = set(inst.units.unit_of)
     held = {r["zip_code"] for r in led if r["district"]}
     if placed != held:

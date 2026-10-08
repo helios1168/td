@@ -1,0 +1,752 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_ga_k1,30002,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1304644,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30004,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1351670,"IFA Atlanta-Sandy Springs-Roswell, GA",2.48945,
+ifa_ga_k1,30005,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1301696,"IFA Atlanta-Sandy Springs-Roswell, GA",10.3925,
+ifa_ga_k1,30008,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30009,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1301696,"IFA Atlanta-Sandy Springs-Roswell, GA",29.5984,
+ifa_ga_k1,30011,ifa,GA,IFA,IFA_01,IFA,,13013,12060,1304140,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0624625,
+ifa_ga_k1,30012,ifa,GA,IFA,IFA_01,IFA,,13247,12060,1319336,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30013,ifa,GA,IFA,IFA_01,IFA,,13247,12060,1319336,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30014,ifa,GA,IFA,IFA_01,IFA,,13217,12060,1320064,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30016,ifa,GA,IFA,IFA_01,IFA,,13217,12060,1362244,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30017,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1334596,"IFA Atlanta-Sandy Springs-Roswell, GA",0.137526,
+ifa_ga_k1,30018,ifa,GA,IFA,IFA_01,IFA,,13297,12060,1342184,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30019,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1353706,"IFA Atlanta-Sandy Springs-Roswell, GA",0.904491,
+ifa_ga_k1,30021,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1316544,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30022,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1342425,"IFA Atlanta-Sandy Springs-Roswell, GA",19.5863,
+ifa_ga_k1,30024,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1374936,"IFA Atlanta-Sandy Springs-Roswell, GA",4.49952,
+ifa_ga_k1,30025,ifa,GA,IFA,IFA_01,IFA,,13297,12060,1371660,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30028,ifa,GA,IFA,IFA_01,IFA,,13117,12060,,"IFA Atlanta-Sandy Springs-Roswell, GA",2.73381,
+ifa_ga_k1,30030,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1322052,"IFA Atlanta-Sandy Springs-Roswell, GA",0.660088,
+ifa_ga_k1,30032,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1312834,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30033,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1356112,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30034,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1359080,"IFA Atlanta-Sandy Springs-Roswell, GA",1.99728,
+ifa_ga_k1,30035,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1373784,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30038,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1373784,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30039,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1371604,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30040,ifa,GA,IFA,IFA_01,IFA,,13117,12060,1320932,"IFA Atlanta-Sandy Springs-Roswell, GA",21.982,
+ifa_ga_k1,30041,ifa,GA,IFA,IFA_01,IFA,,13117,12060,1320932,"IFA Atlanta-Sandy Springs-Roswell, GA",1.73028,
+ifa_ga_k1,30043,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1345488,"IFA Atlanta-Sandy Springs-Roswell, GA",0.565165,
+ifa_ga_k1,30044,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1345488,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0733256,
+ifa_ga_k1,30045,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1321184,"IFA Atlanta-Sandy Springs-Roswell, GA",0.668949,
+ifa_ga_k1,30046,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1345488,"IFA Atlanta-Sandy Springs-Roswell, GA",0.227448,
+ifa_ga_k1,30047,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1346356,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0456589,
+ifa_ga_k1,30052,ifa,GA,IFA,IFA_01,IFA,,13297,12060,1347196,"IFA Atlanta-Sandy Springs-Roswell, GA",0.647107,
+ifa_ga_k1,30054,ifa,GA,IFA,IFA_01,IFA,,13217,12060,1358744,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30055,ifa,GA,IFA,IFA_01,IFA,,13217,12060,1349616,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30056,ifa,GA,IFA,IFA_01,IFA,,13159,12060,1354656,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30058,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1373784,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30060,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",10.2141,
+ifa_ga_k1,30062,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",11.091,
+ifa_ga_k1,30064,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",10.2204,
+ifa_ga_k1,30066,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",3.33014,
+ifa_ga_k1,30067,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",4.19755,
+ifa_ga_k1,30068,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",9.78433,
+ifa_ga_k1,30070,ifa,GA,IFA,IFA_01,IFA,,13217,12060,1362244,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30071,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1355776,"IFA Atlanta-Sandy Springs-Roswell, GA",0.482663,
+ifa_ga_k1,30072,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1361040,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30075,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1367284,"IFA Atlanta-Sandy Springs-Roswell, GA",6.62131,
+ifa_ga_k1,30076,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1367284,"IFA Atlanta-Sandy Springs-Roswell, GA",17.5063,
+ifa_ga_k1,30078,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1371604,"IFA Atlanta-Sandy Springs-Roswell, GA",0.764381,
+ifa_ga_k1,30079,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1369392,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30080,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1371492,"IFA Atlanta-Sandy Springs-Roswell, GA",5.88452,
+ifa_ga_k1,30082,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1371492,"IFA Atlanta-Sandy Springs-Roswell, GA",1.19532,
+ifa_ga_k1,30083,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1377652,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30084,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1377652,"IFA Atlanta-Sandy Springs-Roswell, GA",2.30245,
+ifa_ga_k1,30087,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1377652,"IFA Atlanta-Sandy Springs-Roswell, GA",0.917976,
+ifa_ga_k1,30088,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1363952,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30090,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1349756,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30092,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1359735,"IFA Atlanta-Sandy Springs-Roswell, GA",29.8523,
+ifa_ga_k1,30093,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1355776,"IFA Atlanta-Sandy Springs-Roswell, GA",1.51469,
+ifa_ga_k1,30094,ifa,GA,IFA,IFA_01,IFA,,13247,12060,1319336,"IFA Atlanta-Sandy Springs-Roswell, GA",0.164899,
+ifa_ga_k1,30096,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1324600,"IFA Atlanta-Sandy Springs-Roswell, GA",16.0737,
+ifa_ga_k1,30097,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1342425,"IFA Atlanta-Sandy Springs-Roswell, GA",20.8608,
+ifa_ga_k1,30101,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1300408,"IFA Atlanta-Sandy Springs-Roswell, GA",4.22673,
+ifa_ga_k1,30102,ifa,GA,IFA,IFA_01,IFA,,13057,12060,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.539772,
+ifa_ga_k1,30103,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1300436,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30104,ifa,GA,IFA,IFA_01,IFA,,13233,16340,1302592,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30105,ifa,GA,IFA,IFA_01,IFA,,13115,40660,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30106,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1348288,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30107,ifa,GA,IFA,IFA_01,IFA,,13057,12060,1305036,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0710167,
+ifa_ga_k1,30108,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1309544,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30110,ifa,GA,IFA,IFA_01,IFA,,13143,12060,1310132,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30111,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1304252,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30113,ifa,GA,IFA,IFA_01,IFA,,13143,12060,1311616,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30114,ifa,GA,IFA,IFA_01,IFA,,13057,12060,1312988,"IFA Atlanta-Sandy Springs-Roswell, GA",0.706912,
+ifa_ga_k1,30115,ifa,GA,IFA,IFA_01,IFA,,13057,12060,1339524,"IFA Atlanta-Sandy Springs-Roswell, GA",6.54507,
+ifa_ga_k1,30116,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1313492,"IFA Atlanta-Sandy Springs-Roswell, GA",0.736402,
+ifa_ga_k1,30117,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1313492,"IFA Atlanta-Sandy Springs-Roswell, GA",1.8413,
+ifa_ga_k1,30118,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1313492,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30120,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1313688,"IFA Atlanta-Sandy Springs-Roswell, GA",10.8012,
+ifa_ga_k1,30121,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1313688,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30122,ifa,GA,IFA,IFA_01,IFA,,13097,12060,1346832,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30124,ifa,GA,IFA,IFA_01,IFA,,13115,40660,1314108,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30125,ifa,GA,IFA,IFA_01,IFA,,13233,16340,1314500,"IFA Atlanta-Sandy Springs-Roswell, GA",4.02201,
+ifa_ga_k1,30126,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1348288,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0119318,
+ifa_ga_k1,30127,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1362524,"IFA Atlanta-Sandy Springs-Roswell, GA",0.517069,
+ifa_ga_k1,30132,ifa,GA,IFA,IFA_01,IFA,,13223,12060,1321324,"IFA Atlanta-Sandy Springs-Roswell, GA",0.334758,
+ifa_ga_k1,30134,ifa,GA,IFA,IFA_01,IFA,,13097,12060,1323900,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30135,ifa,GA,IFA,IFA_01,IFA,,13097,12060,1323900,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30137,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1327344,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30139,ifa,GA,IFA,IFA_01,IFA,,13129,15660,1328492,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30141,ifa,GA,IFA,IFA_01,IFA,,13223,12060,1339076,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30143,ifa,GA,IFA,IFA_01,IFA,,13227,12060,1341932,"IFA Atlanta-Sandy Springs-Roswell, GA",0.00238635,
+ifa_ga_k1,30144,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1343192,"IFA Atlanta-Sandy Springs-Roswell, GA",17.3865,
+ifa_ga_k1,30145,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1327988,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30147,ifa,GA,IFA,IFA_01,IFA,,13115,40660,1346580,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30148,ifa,GA,IFA,IFA_01,IFA,,13085,12060,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30149,ifa,GA,IFA,IFA_01,IFA,,13115,40660,1307380,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30152,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1343192,"IFA Atlanta-Sandy Springs-Roswell, GA",2.97836,
+ifa_ga_k1,30153,ifa,GA,IFA,IFA_01,IFA,,13233,16340,1366276,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30157,ifa,GA,IFA,IFA_01,IFA,,13223,12060,1321324,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30161,ifa,GA,IFA,IFA_01,IFA,,13115,40660,1366668,"IFA Atlanta-Sandy Springs-Roswell, GA",3.68435,
+ifa_ga_k1,30165,ifa,GA,IFA,IFA_01,IFA,,13115,40660,1366668,"IFA Atlanta-Sandy Springs-Roswell, GA",2.29186,
+ifa_ga_k1,30168,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1348288,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30170,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1327708,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30171,ifa,GA,IFA,IFA_01,IFA,,13015,12060,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30173,ifa,GA,IFA,IFA_01,IFA,,13115,40660,1346580,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30175,ifa,GA,IFA,IFA_01,IFA,,13227,12060,1375272,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30176,ifa,GA,IFA,IFA_01,IFA,,13143,12060,1375300,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30177,ifa,GA,IFA,IFA_01,IFA,,13227,12060,1354572,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30178,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1375664,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30179,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1375832,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30180,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1379528,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30182,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1353620,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30183,ifa,GA,IFA,IFA_01,IFA,,13057,12060,1379948,"IFA Atlanta-Sandy Springs-Roswell, GA",0.343635,
+ifa_ga_k1,30184,ifa,GA,IFA,IFA_01,IFA,,13015,12060,1313688,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30185,ifa,GA,IFA,IFA_01,IFA,,13045,12060,1382720,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30187,ifa,GA,IFA,IFA_01,IFA,,13097,12060,1328548,"IFA Atlanta-Sandy Springs-Roswell, GA",0.146974,
+ifa_ga_k1,30188,ifa,GA,IFA,IFA_01,IFA,,13057,12060,1384176,"IFA Atlanta-Sandy Springs-Roswell, GA",10.4898,
+ifa_ga_k1,30189,ifa,GA,IFA,IFA_01,IFA,,13057,12060,1384176,"IFA Atlanta-Sandy Springs-Roswell, GA",0.546151,
+ifa_ga_k1,30204,ifa,GA,IFA,IFA_01,IFA,,13171,,1305344,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30205,ifa,GA,IFA,IFA_01,IFA,,13113,12060,1311056,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30206,ifa,GA,IFA,IFA_01,IFA,,13231,12060,1338866,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30213,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1372122,"IFA Atlanta-Sandy Springs-Roswell, GA",2.81941,
+ifa_ga_k1,30214,ifa,GA,IFA,IFA_01,IFA,,13113,12060,1328968,"IFA Atlanta-Sandy Springs-Roswell, GA",2.5341,
+ifa_ga_k1,30215,ifa,GA,IFA,IFA_01,IFA,,13113,12060,1328968,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30216,ifa,GA,IFA,IFA_01,IFA,,13035,12060,1330312,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30217,ifa,GA,IFA,IFA_01,IFA,,13149,12060,1315026,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30218,ifa,GA,IFA,IFA_01,IFA,,13199,12060,1332384,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30220,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1334428,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30222,ifa,GA,IFA,IFA_01,IFA,,13199,12060,1335016,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30223,ifa,GA,IFA,IFA_01,IFA,,13255,12060,1335324,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30224,ifa,GA,IFA,IFA_01,IFA,,13255,12060,1335324,"IFA Atlanta-Sandy Springs-Roswell, GA",3.88996,
+ifa_ga_k1,30228,ifa,GA,IFA,IFA_01,IFA,,13151,12060,1336276,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30229,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1336528,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30230,ifa,GA,IFA,IFA_01,IFA,,13285,29300,1339244,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30233,ifa,GA,IFA,IFA_01,IFA,,13035,12060,1341596,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30234,ifa,GA,IFA,IFA_01,IFA,,13035,12060,1342156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30236,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1342604,"IFA Atlanta-Sandy Springs-Roswell, GA",0.00721633,
+ifa_ga_k1,30238,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1341347,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30240,ifa,GA,IFA,IFA_01,IFA,,13285,29300,1344340,"IFA Atlanta-Sandy Springs-Roswell, GA",2.59471,
+ifa_ga_k1,30241,ifa,GA,IFA,IFA_01,IFA,,13285,29300,1344340,"IFA Atlanta-Sandy Springs-Roswell, GA",6.66658,
+ifa_ga_k1,30248,ifa,GA,IFA,IFA_01,IFA,,13151,12060,1347140,"IFA Atlanta-Sandy Springs-Roswell, GA",0.151136,
+ifa_ga_k1,30250,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1347616,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30251,ifa,GA,IFA,IFA_01,IFA,,13199,12060,1348008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30252,ifa,GA,IFA,IFA_01,IFA,,13151,12060,1348624,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30253,ifa,GA,IFA,IFA_01,IFA,,13151,12060,1348624,"IFA Atlanta-Sandy Springs-Roswell, GA",6.17487,
+ifa_ga_k1,30256,ifa,GA,IFA,IFA_01,IFA,,13231,12060,1350596,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30257,ifa,GA,IFA,IFA_01,IFA,,13171,,1351604,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30258,ifa,GA,IFA,IFA_01,IFA,,13231,12060,1352108,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30259,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1352668,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30260,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1353004,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30263,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1355020,"IFA Atlanta-Sandy Springs-Roswell, GA",10.2534,
+ifa_ga_k1,30265,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1355020,"IFA Atlanta-Sandy Springs-Roswell, GA",3.4608,
+ifa_ga_k1,30268,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1315552,"IFA Atlanta-Sandy Springs-Roswell, GA",0.956736,
+ifa_ga_k1,30269,ifa,GA,IFA,IFA_01,IFA,,13113,12060,1359724,"IFA Atlanta-Sandy Springs-Roswell, GA",11.0523,
+ifa_ga_k1,30272,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1372122,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30273,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1373704,"IFA Atlanta-Sandy Springs-Roswell, GA",0.490661,
+ifa_ga_k1,30274,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1365464,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30275,ifa,GA,IFA,IFA_01,IFA,,13077,12060,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30276,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1369672,"IFA Atlanta-Sandy Springs-Roswell, GA",2.58104,
+ifa_ga_k1,30277,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1369980,"IFA Atlanta-Sandy Springs-Roswell, GA",3.75757,
+ifa_ga_k1,30281,ifa,GA,IFA,IFA_01,IFA,,13151,12060,1373704,"IFA Atlanta-Sandy Springs-Roswell, GA",3.68773,
+ifa_ga_k1,30284,ifa,GA,IFA,IFA_01,IFA,,13255,12060,1374572,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30285,ifa,GA,IFA,IFA_01,IFA,,13293,45580,1376112,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30286,ifa,GA,IFA,IFA_01,IFA,,13293,45580,1376168,"IFA Atlanta-Sandy Springs-Roswell, GA",0.975198,
+ifa_ga_k1,30288,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1319280,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30289,ifa,GA,IFA,IFA_01,IFA,,13077,12060,1377764,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30290,ifa,GA,IFA,IFA_01,IFA,,13113,12060,1378044,"IFA Atlanta-Sandy Springs-Roswell, GA",11.0963,
+ifa_ga_k1,30291,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1378324,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30292,ifa,GA,IFA,IFA_01,IFA,,13231,12060,1383084,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30293,ifa,GA,IFA,IFA_01,IFA,,13199,12060,1383896,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30294,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1330536,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30295,ifa,GA,IFA,IFA_01,IFA,,13231,12060,1385128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30296,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1372122,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30297,ifa,GA,IFA,IFA_01,IFA,,13063,12060,1330536,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30303,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30305,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",22.9624,
+ifa_ga_k1,30306,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",1.17493,
+ifa_ga_k1,30307,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.138915,
+ifa_ga_k1,30308,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30309,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",1.7093,
+ifa_ga_k1,30310,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30311,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30312,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0302271,
+ifa_ga_k1,30313,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30314,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30315,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30316,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30317,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30318,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30319,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1310944,"IFA Atlanta-Sandy Springs-Roswell, GA",0.283609,
+ifa_ga_k1,30322,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30324,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30326,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",11.7085,
+ifa_ga_k1,30327,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",15.8849,
+ifa_ga_k1,30328,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1368516,"IFA Atlanta-Sandy Springs-Roswell, GA",60.7206,
+ifa_ga_k1,30329,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1356168,"IFA Atlanta-Sandy Springs-Roswell, GA",1.17589,
+ifa_ga_k1,30331,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1372122,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30332,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30334,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30336,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1372122,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30337,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1317776,"IFA Atlanta-Sandy Springs-Roswell, GA",0.251724,
+ifa_ga_k1,30338,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1324768,"IFA Atlanta-Sandy Springs-Roswell, GA",57.022,
+ifa_ga_k1,30339,ifa,GA,IFA,IFA_01,IFA,,13067,12060,1379612,"IFA Atlanta-Sandy Springs-Roswell, GA",40.1206,
+ifa_ga_k1,30340,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1323536,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30341,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1315172,"IFA Atlanta-Sandy Springs-Roswell, GA",3.90403,
+ifa_ga_k1,30342,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1368516,"IFA Atlanta-Sandy Springs-Roswell, GA",16.7432,
+ifa_ga_k1,30344,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1325720,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30345,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1315172,"IFA Atlanta-Sandy Springs-Roswell, GA",0.177646,
+ifa_ga_k1,30346,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1324768,"IFA Atlanta-Sandy Springs-Roswell, GA",10.633,
+ifa_ga_k1,30349,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1372122,"IFA Atlanta-Sandy Springs-Roswell, GA",1.79173,
+ifa_ga_k1,30350,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1368516,"IFA Atlanta-Sandy Springs-Roswell, GA",5.29197,
+ifa_ga_k1,30354,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.583702,
+ifa_ga_k1,30360,ifa,GA,IFA,IFA_01,IFA,,13089,12060,1323536,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30363,ifa,GA,IFA,IFA_01,IFA,,13121,12060,1304000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.255748,
+ifa_ga_k1,30401,ifa,GA,IFA,IFA_01,IFA,,13107,,1374964,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30410,ifa,GA,IFA,IFA_01,IFA,,13209,47080,1338348,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30411,ifa,GA,IFA,IFA_01,IFA,,13309,,1300996,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30412,ifa,GA,IFA,IFA_01,IFA,,13209,47080,1301808,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30413,ifa,GA,IFA,IFA_01,IFA,,13163,,1305680,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30414,ifa,GA,IFA,IFA_01,IFA,,13109,44340,1306688,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30415,ifa,GA,IFA,IFA_01,IFA,,13031,44340,1311000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30417,ifa,GA,IFA,IFA_01,IFA,,13109,44340,1336024,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30420,ifa,GA,IFA,IFA_01,IFA,,13043,,1317272,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30421,ifa,GA,IFA,IFA_01,IFA,,13267,,1317832,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30423,ifa,GA,IFA,IFA_01,IFA,,13109,44340,1321268,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30425,ifa,GA,IFA,IFA_01,IFA,,13107,,1332188,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30426,ifa,GA,IFA,IFA_01,IFA,,13033,12260,1332916,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30427,ifa,GA,IFA,IFA_01,IFA,,13267,,1333336,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30428,ifa,GA,IFA,IFA_01,IFA,,13309,,1333392,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30429,ifa,GA,IFA,IFA_01,IFA,,13109,44340,1336024,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30434,ifa,GA,IFA,IFA_01,IFA,,13163,,1347560,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30436,ifa,GA,IFA,IFA_01,IFA,,13279,47080,1348232,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30439,ifa,GA,IFA,IFA_01,IFA,,13043,,1351072,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30441,ifa,GA,IFA,IFA_01,IFA,,13107,,1351240,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30442,ifa,GA,IFA,IFA_01,IFA,,13165,,1351520,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30445,ifa,GA,IFA,IFA_01,IFA,,13209,47080,1353508,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30446,ifa,GA,IFA,IFA_01,IFA,,13251,,1354992,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30448,ifa,GA,IFA,IFA_01,IFA,,13107,,1356644,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30449,ifa,GA,IFA,IFA_01,IFA,,13251,,1358100,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30450,ifa,GA,IFA,IFA_01,IFA,,13031,44340,1362216,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30451,ifa,GA,IFA,IFA_01,IFA,,13043,,1363000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30452,ifa,GA,IFA,IFA_01,IFA,,13031,44340,1364372,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30453,ifa,GA,IFA,IFA_01,IFA,,13267,,1364512,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30454,ifa,GA,IFA,IFA_01,IFA,,13175,20140,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30455,ifa,GA,IFA,IFA_01,IFA,,13251,,1366444,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30456,ifa,GA,IFA,IFA_01,IFA,,13033,12260,1368740,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30457,ifa,GA,IFA,IFA_01,IFA,,13283,,1371772,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30458,ifa,GA,IFA,IFA_01,IFA,,13031,44340,1373256,"IFA Atlanta-Sandy Springs-Roswell, GA",1.81503,
+ifa_ga_k1,30460,ifa,GA,IFA,IFA_01,IFA,,13031,44340,1373256,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30461,ifa,GA,IFA,IFA_01,IFA,,13031,44340,1373256,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30464,ifa,GA,IFA,IFA_01,IFA,,13107,,1373620,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30467,ifa,GA,IFA,IFA_01,IFA,,13251,,1375160,"IFA Atlanta-Sandy Springs-Roswell, GA",0.230681,
+ifa_ga_k1,30470,ifa,GA,IFA,IFA_01,IFA,,13209,47080,1375496,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30471,ifa,GA,IFA,IFA_01,IFA,,13107,,1377988,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30473,ifa,GA,IFA,IFA_01,IFA,,13279,47080,1378744,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30474,ifa,GA,IFA,IFA_01,IFA,,13279,47080,1379388,"IFA Atlanta-Sandy Springs-Roswell, GA",0.511553,
+ifa_ga_k1,30477,ifa,GA,IFA,IFA_01,IFA,,13163,,1379864,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30501,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1331908,"IFA Atlanta-Sandy Springs-Roswell, GA",7.16651,
+ifa_ga_k1,30504,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1331908,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30506,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1331908,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30507,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1331908,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30510,ifa,GA,IFA,IFA_01,IFA,,13011,,1363588,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30511,ifa,GA,IFA,IFA_01,IFA,,13011,,1304980,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30512,ifa,GA,IFA,IFA_01,IFA,,13291,,1308480,"IFA Atlanta-Sandy Springs-Roswell, GA",1.31268,
+ifa_ga_k1,30513,ifa,GA,IFA,IFA_01,IFA,,13111,,1308928,"IFA Atlanta-Sandy Springs-Roswell, GA",2.8766,
+ifa_ga_k1,30516,ifa,GA,IFA,IFA_01,IFA,,13147,,1309656,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30517,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1310076,"IFA Atlanta-Sandy Springs-Roswell, GA",0.091723,
+ifa_ga_k1,30518,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1311784,"IFA Atlanta-Sandy Springs-Roswell, GA",0.489337,
+ifa_ga_k1,30519,ifa,GA,IFA,IFA_01,IFA,,13135,12060,1353706,"IFA Atlanta-Sandy Springs-Roswell, GA",2.1515,
+ifa_ga_k1,30520,ifa,GA,IFA,IFA_01,IFA,,13147,,1312932,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30521,ifa,GA,IFA,IFA_01,IFA,,13119,,1313352,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30522,ifa,GA,IFA,IFA_01,IFA,,13123,,1315844,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30523,ifa,GA,IFA,IFA_01,IFA,,13137,18460,1375328,"IFA Atlanta-Sandy Springs-Roswell, GA",0.270948,
+ifa_ga_k1,30525,ifa,GA,IFA,IFA_01,IFA,,13241,,1316656,"IFA Atlanta-Sandy Springs-Roswell, GA",0.250917,
+ifa_ga_k1,30527,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1316796,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30528,ifa,GA,IFA,IFA_01,IFA,,13311,,1316824,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30529,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1319112,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30530,ifa,GA,IFA,IFA_01,IFA,,13011,,1319112,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30531,ifa,GA,IFA,IFA_01,IFA,,13137,18460,1319728,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30533,ifa,GA,IFA,IFA_01,IFA,,13187,12060,1321240,"IFA Atlanta-Sandy Springs-Roswell, GA",0.279044,
+ifa_ga_k1,30534,ifa,GA,IFA,IFA_01,IFA,,13085,12060,1321940,"IFA Atlanta-Sandy Springs-Roswell, GA",2.07507,
+ifa_ga_k1,30535,ifa,GA,IFA,IFA_01,IFA,,13137,18460,1322304,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30536,ifa,GA,IFA,IFA_01,IFA,,13123,,1325356,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30537,ifa,GA,IFA,IFA_01,IFA,,13241,,1371282,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30538,ifa,GA,IFA,IFA_01,IFA,,13257,45740,1376756,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30539,ifa,GA,IFA,IFA_01,IFA,,13123,,1325356,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30540,ifa,GA,IFA,IFA_01,IFA,,13123,,1327092,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30541,ifa,GA,IFA,IFA_01,IFA,,13111,,1327736,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30542,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1330340,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30543,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1332860,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30545,ifa,GA,IFA,IFA_01,IFA,,13311,,1337788,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30546,ifa,GA,IFA,IFA_01,IFA,,13281,,1338124,"IFA Atlanta-Sandy Springs-Roswell, GA",2.69094,
+ifa_ga_k1,30547,ifa,GA,IFA,IFA_01,IFA,,13011,,1339720,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30548,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1340056,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0182412,
+ifa_ga_k1,30549,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1341988,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30552,ifa,GA,IFA,IFA_01,IFA,,13241,,1375328,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30553,ifa,GA,IFA,IFA_01,IFA,,13119,,1335814,"IFA Atlanta-Sandy Springs-Roswell, GA",2.28925,
+ifa_ga_k1,30554,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1347896,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30555,ifa,GA,IFA,IFA_01,IFA,,13111,,1348428,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30557,ifa,GA,IFA,IFA_01,IFA,,13119,,1350008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30558,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1350484,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30559,ifa,GA,IFA,IFA_01,IFA,,13111,,1351744,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30560,ifa,GA,IFA,IFA_01,IFA,,13111,,1352724,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30562,ifa,GA,IFA,IFA_01,IFA,,13241,,1353116,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30563,ifa,GA,IFA,IFA_01,IFA,,13137,18460,1353284,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30564,ifa,GA,IFA,IFA_01,IFA,,13139,23580,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30565,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1355468,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30566,ifa,GA,IFA,IFA_01,IFA,,13139,23580,1357260,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30567,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1360032,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30568,ifa,GA,IFA,IFA_01,IFA,,13241,,1353116,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30571,ifa,GA,IFA,IFA_01,IFA,,13311,,1368880,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30572,ifa,GA,IFA,IFA_01,IFA,,13291,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30573,ifa,GA,IFA,IFA_01,IFA,,13241,,1375328,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30575,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1375412,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30576,ifa,GA,IFA,IFA_01,IFA,,13241,,1376504,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30577,ifa,GA,IFA,IFA_01,IFA,,13257,45740,1376756,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0598131,
+ifa_ga_k1,30581,ifa,GA,IFA,IFA_01,IFA,,13241,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30582,ifa,GA,IFA,IFA_01,IFA,,13281,,1384960,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30597,ifa,GA,IFA,IFA_01,IFA,,13187,12060,1321240,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30598,ifa,GA,IFA,IFA_01,IFA,,13257,45740,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30601,ifa,GA,IFA,IFA_01,IFA,,13059,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",0.199619,
+ifa_ga_k1,30602,ifa,GA,IFA,IFA_01,IFA,,13059,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30605,ifa,GA,IFA,IFA_01,IFA,,13059,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",5.05876,
+ifa_ga_k1,30606,ifa,GA,IFA,IFA_01,IFA,,13059,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",4.17834,
+ifa_ga_k1,30607,ifa,GA,IFA,IFA_01,IFA,,13157,27600,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30609,ifa,GA,IFA,IFA_01,IFA,,13059,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30619,ifa,GA,IFA,IFA_01,IFA,,13221,12020,1303124,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30620,ifa,GA,IFA,IFA_01,IFA,,13013,12060,1307612,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30621,ifa,GA,IFA,IFA_01,IFA,,13219,12020,1356308,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30622,ifa,GA,IFA,IFA_01,IFA,,13219,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",1.34789,
+ifa_ga_k1,30623,ifa,GA,IFA,IFA_01,IFA,,13211,12060,1309488,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30624,ifa,GA,IFA,IFA_01,IFA,,13105,,1309712,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30625,ifa,GA,IFA,IFA_01,IFA,,13211,12060,1311672,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30627,ifa,GA,IFA,IFA_01,IFA,,13221,12020,1313212,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30628,ifa,GA,IFA,IFA_01,IFA,,13195,12020,1317552,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30629,ifa,GA,IFA,IFA_01,IFA,,13195,12020,1319084,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30630,ifa,GA,IFA,IFA_01,IFA,,13221,12020,1320288,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30631,ifa,GA,IFA,IFA_01,IFA,,13265,,1320316,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30633,ifa,GA,IFA,IFA_01,IFA,,13195,12020,1321632,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30634,ifa,GA,IFA,IFA_01,IFA,,13105,,1322724,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30635,ifa,GA,IFA,IFA_01,IFA,,13105,,1326616,"IFA Atlanta-Sandy Springs-Roswell, GA",0.567382,
+ifa_ga_k1,30639,ifa,GA,IFA,IFA_01,IFA,,13119,,1331320,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30641,ifa,GA,IFA,IFA_01,IFA,,13297,12060,1333896,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30642,ifa,GA,IFA,IFA_01,IFA,,13133,,1334876,"IFA Atlanta-Sandy Springs-Roswell, GA",6.21554,
+ifa_ga_k1,30643,ifa,GA,IFA,IFA_01,IFA,,13147,,1364288,"IFA Atlanta-Sandy Springs-Roswell, GA",1.40243,
+ifa_ga_k1,30646,ifa,GA,IFA,IFA_01,IFA,,13195,12020,1340532,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30648,ifa,GA,IFA,IFA_01,IFA,,13221,12020,1346188,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30650,ifa,GA,IFA,IFA_01,IFA,,13211,12060,1349196,"IFA Atlanta-Sandy Springs-Roswell, GA",1.03644,
+ifa_ga_k1,30655,ifa,GA,IFA,IFA_01,IFA,,13297,12060,1352192,"IFA Atlanta-Sandy Springs-Roswell, GA",1.82137,
+ifa_ga_k1,30656,ifa,GA,IFA,IFA_01,IFA,,13297,12060,1352192,"IFA Atlanta-Sandy Springs-Roswell, GA",3.30366,
+ifa_ga_k1,30660,ifa,GA,IFA,IFA_01,IFA,,13317,,1363756,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30662,ifa,GA,IFA,IFA_01,IFA,,13119,,1367452,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30663,ifa,GA,IFA,IFA_01,IFA,,13211,12060,1367760,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30664,ifa,GA,IFA,IFA_01,IFA,,13265,,1369896,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30665,ifa,GA,IFA,IFA_01,IFA,,13133,,1370932,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30666,ifa,GA,IFA,IFA_01,IFA,,13013,12060,1373312,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0780392,
+ifa_ga_k1,30667,ifa,GA,IFA,IFA_01,IFA,,13221,12020,1350260,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30668,ifa,GA,IFA,IFA_01,IFA,,13317,,1376532,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30669,ifa,GA,IFA,IFA_01,IFA,,13133,,1384260,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0335841,
+ifa_ga_k1,30673,ifa,GA,IFA,IFA_01,IFA,,13317,,1380704,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30677,ifa,GA,IFA,IFA_01,IFA,,13219,12020,1380788,"IFA Atlanta-Sandy Springs-Roswell, GA",22.3625,
+ifa_ga_k1,30678,ifa,GA,IFA,IFA_01,IFA,,13133,,1382692,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30680,ifa,GA,IFA,IFA_01,IFA,,13013,12060,1383420,"IFA Atlanta-Sandy Springs-Roswell, GA",3.50099,
+ifa_ga_k1,30683,ifa,GA,IFA,IFA_01,IFA,,13221,12020,1303440,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30701,ifa,GA,IFA,IFA_01,IFA,,13129,15660,1312456,"IFA Atlanta-Sandy Springs-Roswell, GA",0.586767,
+ifa_ga_k1,30705,ifa,GA,IFA,IFA_01,IFA,,13213,19140,1315508,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30707,ifa,GA,IFA,IFA_01,IFA,,13295,16860,1315984,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30708,ifa,GA,IFA,IFA_01,IFA,,13213,19140,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30710,ifa,GA,IFA,IFA_01,IFA,,13313,19140,1317496,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30711,ifa,GA,IFA,IFA_01,IFA,,13213,19140,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30720,ifa,GA,IFA,IFA_01,IFA,,13313,19140,1321380,"IFA Atlanta-Sandy Springs-Roswell, GA",8.60395,
+ifa_ga_k1,30721,ifa,GA,IFA,IFA_01,IFA,,13313,19140,1321380,"IFA Atlanta-Sandy Springs-Roswell, GA",0.785703,
+ifa_ga_k1,30724,ifa,GA,IFA,IFA_01,IFA,,13213,19140,1327932,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30725,ifa,GA,IFA,IFA_01,IFA,,13295,16860,1315585,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30726,ifa,GA,IFA,IFA_01,IFA,,13047,16860,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30728,ifa,GA,IFA,IFA_01,IFA,,13295,16860,1344312,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30730,ifa,GA,IFA,IFA_01,IFA,,13055,44900,1348092,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30731,ifa,GA,IFA,IFA_01,IFA,,13055,44900,1350848,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30733,ifa,GA,IFA,IFA_01,IFA,,13129,15660,1361684,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30734,ifa,GA,IFA,IFA_01,IFA,,13129,15660,1363560,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30735,ifa,GA,IFA,IFA_01,IFA,,13129,15660,1364736,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30736,ifa,GA,IFA,IFA_01,IFA,,13047,16860,1365324,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30738,ifa,GA,IFA,IFA_01,IFA,,13083,16860,1381488,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30739,ifa,GA,IFA,IFA_01,IFA,,13295,16860,1366304,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30740,ifa,GA,IFA,IFA_01,IFA,,13313,19140,1321380,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30741,ifa,GA,IFA,IFA_01,IFA,,13295,16860,1328632,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30742,ifa,GA,IFA,IFA_01,IFA,,13047,16860,1330956,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30746,ifa,GA,IFA,IFA_01,IFA,,13129,15660,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30747,ifa,GA,IFA,IFA_01,IFA,,13055,44900,1374376,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30750,ifa,GA,IFA,IFA_01,IFA,,13295,16860,1347336,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30751,ifa,GA,IFA,IFA_01,IFA,,13213,19140,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30752,ifa,GA,IFA,IFA_01,IFA,,13083,16860,1377372,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30753,ifa,GA,IFA,IFA_01,IFA,,13055,44900,1377540,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30755,ifa,GA,IFA,IFA_01,IFA,,13313,19140,1377736,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30756,ifa,GA,IFA,IFA_01,IFA,,13313,19140,1378996,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30757,ifa,GA,IFA,IFA_01,IFA,,13083,16860,1382916,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30802,ifa,GA,IFA,IFA_01,IFA,,13073,12260,1302536,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30803,ifa,GA,IFA,IFA_01,IFA,,13163,,1304448,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30805,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30807,ifa,GA,IFA,IFA_01,IFA,,13301,,1312512,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30808,ifa,GA,IFA,IFA_01,IFA,,13189,12260,1322024,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30809,ifa,GA,IFA,IFA_01,IFA,,13073,12260,1328044,"IFA Atlanta-Sandy Springs-Roswell, GA",1.37777,
+ifa_ga_k1,30810,ifa,GA,IFA,IFA_01,IFA,,13125,,1332748,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30812,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30813,ifa,GA,IFA,IFA_01,IFA,,13073,12260,1335716,"IFA Atlanta-Sandy Springs-Roswell, GA",1.56042,
+ifa_ga_k1,30814,ifa,GA,IFA,IFA_01,IFA,,13073,12260,1336696,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30815,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30816,ifa,GA,IFA,IFA_01,IFA,,13033,12260,1343360,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30817,ifa,GA,IFA,IFA_01,IFA,,13181,12260,1346552,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0974853,
+ifa_ga_k1,30818,ifa,GA,IFA,IFA_01,IFA,,13163,,1350176,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30820,ifa,GA,IFA,IFA_01,IFA,,13125,,1351968,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30821,ifa,GA,IFA,IFA_01,IFA,,13301,,1356560,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30822,ifa,GA,IFA,IFA_01,IFA,,13165,,1360312,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30823,ifa,GA,IFA,IFA_01,IFA,,13163,,1373004,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30824,ifa,GA,IFA,IFA_01,IFA,,13189,12260,1376280,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30828,ifa,GA,IFA,IFA_01,IFA,,13301,,1380592,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30830,ifa,GA,IFA,IFA_01,IFA,,13033,12260,1380984,"IFA Atlanta-Sandy Springs-Roswell, GA",0.165454,
+ifa_ga_k1,30833,ifa,GA,IFA,IFA_01,IFA,,13163,,1384456,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30901,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",7.28326,
+ifa_ga_k1,30904,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",1.55094,
+ifa_ga_k1,30905,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30906,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,30907,ifa,GA,IFA,IFA_01,IFA,,13073,12260,1350036,"IFA Atlanta-Sandy Springs-Roswell, GA",11.1497,
+ifa_ga_k1,30909,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",2.84575,
+ifa_ga_k1,30912,ifa,GA,IFA,IFA_01,IFA,,13245,12260,1304204,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31001,ifa,GA,IFA,IFA_01,IFA,,13315,,1300184,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31002,ifa,GA,IFA,IFA_01,IFA,,13107,,1300660,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31003,ifa,GA,IFA,IFA_01,IFA,,13319,,1301500,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31004,ifa,GA,IFA,IFA_01,IFA,,13207,31420,1309152,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31005,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1380508,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31006,ifa,GA,IFA,IFA_01,IFA,,13269,,1312120,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31007,ifa,GA,IFA,IFA_01,IFA,,13093,,1312232,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31008,ifa,GA,IFA,IFA_01,IFA,,13225,47580,1312260,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31009,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1312344,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31011,ifa,GA,IFA,IFA_01,IFA,,13091,,1315648,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31012,ifa,GA,IFA,IFA_01,IFA,,13091,,1315900,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31014,ifa,GA,IFA,IFA_01,IFA,,13023,,1317328,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31015,ifa,GA,IFA,IFA_01,IFA,,13081,18380,1319616,"IFA Atlanta-Sandy Springs-Roswell, GA",1.83714,
+ifa_ga_k1,31016,ifa,GA,IFA,IFA_01,IFA,,13207,31420,1368129,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31017,ifa,GA,IFA,IFA_01,IFA,,13319,,1301500,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31018,ifa,GA,IFA,IFA_01,IFA,,13303,,1321800,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31019,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1322752,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31020,ifa,GA,IFA,IFA_01,IFA,,13289,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31021,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1324376,"IFA Atlanta-Sandy Springs-Roswell, GA",1.29719,
+ifa_ga_k1,31022,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1324488,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31023,ifa,GA,IFA,IFA_01,IFA,,13091,,1325552,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31024,ifa,GA,IFA,IFA_01,IFA,,13237,,1326084,"IFA Atlanta-Sandy Springs-Roswell, GA",0.484263,
+ifa_ga_k1,31025,ifa,GA,IFA,IFA_01,IFA,,13153,47580,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31027,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1325300,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31028,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1314920,"IFA Atlanta-Sandy Springs-Roswell, GA",2.57396,
+ifa_ga_k1,31029,ifa,GA,IFA,IFA_01,IFA,,13207,31420,1330732,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31030,ifa,GA,IFA,IFA_01,IFA,,13225,47580,1331096,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31031,ifa,GA,IFA,IFA_01,IFA,,13319,,1333980,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31032,ifa,GA,IFA,IFA_01,IFA,,13169,31420,1334512,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31033,ifa,GA,IFA,IFA_01,IFA,,13169,31420,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31034,ifa,GA,IFA,IFA_01,IFA,,13009,33300,1336668,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31035,ifa,GA,IFA,IFA_01,IFA,,13303,,1336920,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31036,ifa,GA,IFA,IFA_01,IFA,,13235,,1337396,"IFA Atlanta-Sandy Springs-Roswell, GA",0.00286362,
+ifa_ga_k1,31037,ifa,GA,IFA,IFA_01,IFA,,13271,,1349100,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31038,ifa,GA,IFA,IFA_01,IFA,,13169,31420,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31039,ifa,GA,IFA,IFA_01,IFA,,13269,,1340196,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31041,ifa,GA,IFA,IFA_01,IFA,,13193,,1340812,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31042,ifa,GA,IFA,IFA_01,IFA,,13319,,1341400,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31044,ifa,GA,IFA,IFA_01,IFA,,13289,31420,1342100,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31045,ifa,GA,IFA,IFA_01,IFA,,13141,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31046,ifa,GA,IFA,IFA_01,IFA,,13207,31420,1342772,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31047,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1380508,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31049,ifa,GA,IFA,IFA_01,IFA,,13167,20140,1343892,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31050,ifa,GA,IFA,IFA_01,IFA,,13079,31420,1344060,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31051,ifa,GA,IFA,IFA_01,IFA,,13093,,1346384,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31052,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31054,ifa,GA,IFA,IFA_01,IFA,,13319,,1348848,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31055,ifa,GA,IFA,IFA_01,IFA,,13271,,1349100,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31057,ifa,GA,IFA,IFA_01,IFA,,13193,,1349924,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31058,ifa,GA,IFA,IFA_01,IFA,,13269,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31060,ifa,GA,IFA,IFA_01,IFA,,13271,,1351408,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31061,ifa,GA,IFA,IFA_01,IFA,,13009,33300,1351492,"IFA Atlanta-Sandy Springs-Roswell, GA",1.58913,
+ifa_ga_k1,31062,ifa,GA,IFA,IFA_01,IFA,,13009,33300,1351492,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31063,ifa,GA,IFA,IFA_01,IFA,,13193,,1352304,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31064,ifa,GA,IFA,IFA_01,IFA,,13159,12060,1352416,"IFA Atlanta-Sandy Springs-Roswell, GA",0.125043,
+ifa_ga_k1,31065,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1352500,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31066,ifa,GA,IFA,IFA_01,IFA,,13079,31420,1354012,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31067,ifa,GA,IFA,IFA_01,IFA,,13303,,1357456,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31068,ifa,GA,IFA,IFA_01,IFA,,13193,,1357736,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31069,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1360340,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31070,ifa,GA,IFA,IFA_01,IFA,,13093,,1360984,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31071,ifa,GA,IFA,IFA_01,IFA,,13235,,1361320,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31072,ifa,GA,IFA,IFA_01,IFA,,13315,,1369728,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31075,ifa,GA,IFA,IFA_01,IFA,,13175,20140,1364680,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31076,ifa,GA,IFA,IFA_01,IFA,,13269,,1364876,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31077,ifa,GA,IFA,IFA_01,IFA,,13091,,1364932,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31078,ifa,GA,IFA,IFA_01,IFA,,13079,31420,1365856,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31079,ifa,GA,IFA,IFA_01,IFA,,13315,,1366024,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31081,ifa,GA,IFA,IFA_01,IFA,,13269,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31082,ifa,GA,IFA,IFA_01,IFA,,13303,,1368208,"IFA Atlanta-Sandy Springs-Roswell, GA",1.70186,
+ifa_ga_k1,31083,ifa,GA,IFA,IFA_01,IFA,,13271,,1369336,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31084,ifa,GA,IFA,IFA_01,IFA,,13315,,1369728,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31085,ifa,GA,IFA,IFA_01,IFA,,13159,12060,1369784,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31087,ifa,GA,IFA,IFA_01,IFA,,13141,,1372584,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31088,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1380508,"IFA Atlanta-Sandy Springs-Roswell, GA",2.92623,
+ifa_ga_k1,31089,ifa,GA,IFA,IFA_01,IFA,,13303,,1375888,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31090,ifa,GA,IFA,IFA_01,IFA,,13319,,1376952,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31091,ifa,GA,IFA,IFA_01,IFA,,13093,,1378156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31092,ifa,GA,IFA,IFA_01,IFA,,13093,,1379444,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31093,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1380508,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31094,ifa,GA,IFA,IFA_01,IFA,,13303,,1380648,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31096,ifa,GA,IFA,IFA_01,IFA,,13167,20140,1384512,"IFA Atlanta-Sandy Springs-Roswell, GA",0.5138,
+ifa_ga_k1,31097,ifa,GA,IFA,IFA_01,IFA,,13293,45580,1384708,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31098,ifa,GA,IFA,IFA_01,IFA,,13153,47580,1365968,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31201,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",1.76948,
+ifa_ga_k1,31204,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",6.3328,
+ifa_ga_k1,31206,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31207,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31210,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",23.0994,
+ifa_ga_k1,31211,ifa,GA,IFA,IFA_01,IFA,,13169,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31213,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31216,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31217,ifa,GA,IFA,IFA_01,IFA,,13169,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31220,ifa,GA,IFA,IFA_01,IFA,,13021,31420,1349008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31301,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1380256,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31302,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1308844,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31303,ifa,GA,IFA,IFA_01,IFA,,13103,42340,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31305,ifa,GA,IFA,IFA_01,IFA,,13191,15260,1321716,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31307,ifa,GA,IFA,IFA_01,IFA,,13103,42340,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31308,ifa,GA,IFA,IFA_01,IFA,,13029,42340,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31309,ifa,GA,IFA,IFA_01,IFA,,13179,25980,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31312,ifa,GA,IFA,IFA_01,IFA,,13103,42340,1335884,"IFA Atlanta-Sandy Springs-Roswell, GA",1.87521,
+ifa_ga_k1,31313,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1338964,"IFA Atlanta-Sandy Springs-Roswell, GA",4.78518,
+ifa_ga_k1,31314,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1331068,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31315,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1331068,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31316,ifa,GA,IFA,IFA_01,IFA,,13183,25980,1347784,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31318,ifa,GA,IFA,IFA_01,IFA,,13103,42340,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31320,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1351352,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31321,ifa,GA,IFA,IFA_01,IFA,,13029,42340,1360004,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31322,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1362104,"IFA Atlanta-Sandy Springs-Roswell, GA",1.58109,
+ifa_ga_k1,31323,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1364960,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31324,ifa,GA,IFA,IFA_01,IFA,,13029,42340,1365044,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31326,ifa,GA,IFA,IFA_01,IFA,,13103,42340,1365296,"IFA Atlanta-Sandy Springs-Roswell, GA",1.25694,
+ifa_ga_k1,31327,ifa,GA,IFA,IFA_01,IFA,,13191,15260,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31328,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1378036,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31329,ifa,GA,IFA,IFA_01,IFA,,13103,42340,1372780,"IFA Atlanta-Sandy Springs-Roswell, GA",1.25895,
+ifa_ga_k1,31331,ifa,GA,IFA,IFA_01,IFA,,13191,15260,1321716,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31333,ifa,GA,IFA,IFA_01,IFA,,13179,25980,1380256,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31401,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",4.25856,
+ifa_ga_k1,31404,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",1.2476,
+ifa_ga_k1,31405,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",3.52289,
+ifa_ga_k1,31406,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",6.06974,
+ifa_ga_k1,31407,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1362328,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31408,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1332048,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31409,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31410,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1383168,"IFA Atlanta-Sandy Springs-Roswell, GA",0.683744,
+ifa_ga_k1,31411,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1371184,"IFA Atlanta-Sandy Springs-Roswell, GA",3.07006,
+ifa_ga_k1,31415,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31419,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",12.7383,
+ifa_ga_k1,31421,ifa,GA,IFA,IFA_01,IFA,,13051,42340,1369000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31501,ifa,GA,IFA,IFA_01,IFA,,13299,48180,1380956,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31503,ifa,GA,IFA,IFA_01,IFA,,13299,48180,1380956,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31510,ifa,GA,IFA,IFA_01,IFA,,13005,,1301612,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31512,ifa,GA,IFA,IFA_01,IFA,,13069,20060,1302060,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31513,ifa,GA,IFA,IFA_01,IFA,,13001,,1306016,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31516,ifa,GA,IFA,IFA_01,IFA,,13229,48180,1308284,"IFA Atlanta-Sandy Springs-Roswell, GA",1.52797,
+ifa_ga_k1,31518,ifa,GA,IFA,IFA_01,IFA,,13001,,1310664,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31519,ifa,GA,IFA,IFA_01,IFA,,13069,20060,1311504,"IFA Atlanta-Sandy Springs-Roswell, GA",0.353375,
+ifa_ga_k1,31520,ifa,GA,IFA,IFA_01,IFA,,13127,15260,1311560,"IFA Atlanta-Sandy Springs-Roswell, GA",1.99858,
+ifa_ga_k1,31522,ifa,GA,IFA,IFA_01,IFA,,13127,15260,1368040,"IFA Atlanta-Sandy Springs-Roswell, GA",12.0646,
+ifa_ga_k1,31523,ifa,GA,IFA,IFA_01,IFA,,13127,15260,1373452,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31524,ifa,GA,IFA,IFA_01,IFA,,13127,15260,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31525,ifa,GA,IFA,IFA_01,IFA,,13127,15260,1319830,"IFA Atlanta-Sandy Springs-Roswell, GA",4.56168,
+ifa_ga_k1,31527,ifa,GA,IFA,IFA_01,IFA,,13127,15260,1342128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31532,ifa,GA,IFA,IFA_01,IFA,,13161,,1322388,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31533,ifa,GA,IFA,IFA_01,IFA,,13069,20060,1323872,"IFA Atlanta-Sandy Springs-Roswell, GA",1.9506,
+ifa_ga_k1,31535,ifa,GA,IFA,IFA_01,IFA,,13069,20060,1323872,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31537,ifa,GA,IFA,IFA_01,IFA,,13049,,1330424,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31539,ifa,GA,IFA,IFA_01,IFA,,13161,,1337564,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31542,ifa,GA,IFA,IFA_01,IFA,,13025,15260,1339216,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31543,ifa,GA,IFA,IFA_01,IFA,,13025,15260,1340028,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31544,ifa,GA,IFA,IFA_01,IFA,,13271,,1341708,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31545,ifa,GA,IFA,IFA_01,IFA,,13305,27700,1342268,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31546,ifa,GA,IFA,IFA_01,IFA,,13305,27700,1342268,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31547,ifa,GA,IFA,IFA_01,IFA,,13039,28680,1343580,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31548,ifa,GA,IFA,IFA_01,IFA,,13039,28680,1343640,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31549,ifa,GA,IFA,IFA_01,IFA,,13271,,1347952,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31550,ifa,GA,IFA,IFA_01,IFA,,13299,48180,1349588,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31551,ifa,GA,IFA,IFA_01,IFA,,13229,48180,1350960,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31552,ifa,GA,IFA,IFA_01,IFA,,13299,48180,1351576,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31553,ifa,GA,IFA,IFA_01,IFA,,13025,15260,1354124,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31554,ifa,GA,IFA,IFA_01,IFA,,13069,20060,1355440,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31555,ifa,GA,IFA,IFA_01,IFA,,13305,27700,1357540,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31556,ifa,GA,IFA,IFA_01,IFA,,13229,48180,1357568,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31557,ifa,GA,IFA,IFA_01,IFA,,13229,48180,1357568,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31558,ifa,GA,IFA,IFA_01,IFA,,13039,28680,1367984,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31560,ifa,GA,IFA,IFA_01,IFA,,13305,27700,1369448,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31561,ifa,GA,IFA,IFA_01,IFA,,13127,15260,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31562,ifa,GA,IFA,IFA_01,IFA,,13049,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31563,ifa,GA,IFA,IFA_01,IFA,,13001,,1374852,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31564,ifa,GA,IFA,IFA_01,IFA,,13299,48180,1380368,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31565,ifa,GA,IFA,IFA_01,IFA,,13039,28680,1380816,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31566,ifa,GA,IFA,IFA_01,IFA,,13025,15260,1381012,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31567,ifa,GA,IFA,IFA_01,IFA,,13069,20060,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31568,ifa,GA,IFA,IFA_01,IFA,,13039,28680,1383868,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31569,ifa,GA,IFA,IFA_01,IFA,,13039,28680,1343640,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31599,ifa,GA,IFA,IFA_01,IFA,,13305,27700,1342268,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31601,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1378800,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31602,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1378800,"IFA Atlanta-Sandy Springs-Roswell, GA",14.8614,
+ifa_ga_k1,31605,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1306968,"IFA Atlanta-Sandy Springs-Roswell, GA",13.1879,
+ifa_ga_k1,31606,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1326156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31620,ifa,GA,IFA,IFA_01,IFA,,13075,,1300576,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0415434,
+ifa_ga_k1,31622,ifa,GA,IFA,IFA_01,IFA,,13019,,1301024,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31623,ifa,GA,IFA,IFA_01,IFA,,13065,,1302844,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31624,ifa,GA,IFA,IFA_01,IFA,,13003,20060,1304700,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31625,ifa,GA,IFA,IFA_01,IFA,,13027,46660,1353032,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31626,ifa,GA,IFA,IFA_01,IFA,,13275,45620,1309460,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31627,ifa,GA,IFA,IFA_01,IFA,,13075,,1314192,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31629,ifa,GA,IFA,IFA_01,IFA,,13027,46660,1323060,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31630,ifa,GA,IFA,IFA_01,IFA,,13065,,1326156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31631,ifa,GA,IFA,IFA_01,IFA,,13101,46660,1326156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31632,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1336052,"IFA Atlanta-Sandy Springs-Roswell, GA",0.123713,
+ifa_ga_k1,31634,ifa,GA,IFA,IFA_01,IFA,,13065,,1339748,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31635,ifa,GA,IFA,IFA_01,IFA,,13173,46660,1344592,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31636,ifa,GA,IFA,IFA_01,IFA,,13101,46660,1326156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31637,ifa,GA,IFA,IFA_01,IFA,,13075,,1345936,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31638,ifa,GA,IFA,IFA_01,IFA,,13027,46660,1353032,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31639,ifa,GA,IFA,IFA_01,IFA,,13019,,1354264,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31641,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1354404,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31642,ifa,GA,IFA,IFA_01,IFA,,13003,20060,1359808,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31643,ifa,GA,IFA,IFA_01,IFA,,13027,46660,1363224,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31645,ifa,GA,IFA,IFA_01,IFA,,13019,,1363728,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31647,ifa,GA,IFA,IFA_01,IFA,,13075,,1372556,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31648,ifa,GA,IFA,IFA_01,IFA,,13101,46660,1326156,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31649,ifa,GA,IFA,IFA_01,IFA,,13173,46660,1373760,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31650,ifa,GA,IFA,IFA_01,IFA,,13003,20060,1382972,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31698,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1378800,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31699,ifa,GA,IFA,IFA_01,IFA,,13185,46660,1352556,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31701,ifa,GA,IFA,IFA_01,IFA,,13095,10500,1301052,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31704,ifa,GA,IFA,IFA_01,IFA,,13095,10500,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31705,ifa,GA,IFA,IFA_01,IFA,,13095,10500,1363084,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31707,ifa,GA,IFA,IFA_01,IFA,,13095,10500,1301052,"IFA Atlanta-Sandy Springs-Roswell, GA",5.14828,
+ifa_ga_k1,31709,ifa,GA,IFA,IFA_01,IFA,,13261,11140,1302116,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0773507,
+ifa_ga_k1,31711,ifa,GA,IFA,IFA_01,IFA,,13261,11140,1302256,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31712,ifa,GA,IFA,IFA_01,IFA,,13081,18380,1302564,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31714,ifa,GA,IFA,IFA_01,IFA,,13287,45700,1303236,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31716,ifa,GA,IFA,IFA_01,IFA,,13205,,1304840,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31719,ifa,GA,IFA,IFA_01,IFA,,13261,11140,1302116,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31720,ifa,GA,IFA,IFA_01,IFA,,13027,46660,1305708,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31721,ifa,GA,IFA,IFA_01,IFA,,13095,10500,1301052,"IFA Atlanta-Sandy Springs-Roswell, GA",0.825749,
+ifa_ga_k1,31722,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1307304,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31727,ifa,GA,IFA,IFA_01,IFA,,13277,45700,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31730,ifa,GA,IFA,IFA_01,IFA,,13205,,1312624,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31733,ifa,GA,IFA,IFA_01,IFA,,13155,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31735,ifa,GA,IFA,IFA_01,IFA,,13261,11140,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31738,ifa,GA,IFA,IFA_01,IFA,,13275,45620,1319392,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31743,ifa,GA,IFA,IFA_01,IFA,,13177,10500,1322472,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31744,ifa,GA,IFA,IFA_01,IFA,,13321,10500,1323284,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31747,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1327008,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31749,ifa,GA,IFA,IFA_01,IFA,,13019,,1327596,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31750,ifa,GA,IFA,IFA_01,IFA,,13017,22340,1329528,"IFA Atlanta-Sandy Springs-Roswell, GA",1.39209,
+ifa_ga_k1,31753,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1331684,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31756,ifa,GA,IFA,IFA_01,IFA,,13071,34220,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31757,ifa,GA,IFA,IFA_01,IFA,,13275,45620,1376224,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31763,ifa,GA,IFA,IFA_01,IFA,,13177,10500,1345768,"IFA Atlanta-Sandy Springs-Roswell, GA",0.769809,
+ifa_ga_k1,31764,ifa,GA,IFA,IFA_01,IFA,,13261,11140,1346020,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31765,ifa,GA,IFA,IFA_01,IFA,,13205,,1350680,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31768,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1353060,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31771,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1355860,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31772,ifa,GA,IFA,IFA_01,IFA,,13321,10500,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31773,ifa,GA,IFA,IFA_01,IFA,,13275,45620,1357372,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31774,ifa,GA,IFA,IFA_01,IFA,,13155,,1357428,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31775,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1358184,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31778,ifa,GA,IFA,IFA_01,IFA,,13027,46660,1359556,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31779,ifa,GA,IFA,IFA_01,IFA,,13205,,1359976,"IFA Atlanta-Sandy Springs-Roswell, GA",1.89092,
+ifa_ga_k1,31780,ifa,GA,IFA,IFA_01,IFA,,13261,11140,1381128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31781,ifa,GA,IFA,IFA_01,IFA,,13321,10500,1362496,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31783,ifa,GA,IFA,IFA_01,IFA,,13287,45700,1363840,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31784,ifa,GA,IFA,IFA_01,IFA,,13205,,1368096,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31787,ifa,GA,IFA,IFA_01,IFA,,13177,10500,1371464,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31788,ifa,GA,IFA,IFA_01,IFA,,13071,34220,1353060,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31789,ifa,GA,IFA,IFA_01,IFA,,13321,10500,1374432,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31790,ifa,GA,IFA,IFA_01,IFA,,13287,45700,1375104,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31791,ifa,GA,IFA,IFA_01,IFA,,13321,10500,1375188,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0229393,
+ifa_ga_k1,31792,ifa,GA,IFA,IFA_01,IFA,,13275,45620,1376224,"IFA Atlanta-Sandy Springs-Roswell, GA",5.60242,
+ifa_ga_k1,31793,ifa,GA,IFA,IFA_01,IFA,,13277,45700,1376476,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31794,ifa,GA,IFA,IFA_01,IFA,,13277,45700,1376476,"IFA Atlanta-Sandy Springs-Roswell, GA",6.99129,
+ifa_ga_k1,31795,ifa,GA,IFA,IFA_01,IFA,,13321,10500,1378100,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31796,ifa,GA,IFA,IFA_01,IFA,,13321,10500,1380676,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31798,ifa,GA,IFA,IFA_01,IFA,,13155,,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31801,ifa,GA,IFA,IFA_01,IFA,,13197,17980,1309768,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31803,ifa,GA,IFA,IFA_01,IFA,,13197,17980,1311728,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31804,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1314024,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31805,ifa,GA,IFA,IFA_01,IFA,,13053,17980,1321017,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31806,ifa,GA,IFA,IFA_01,IFA,,13249,11140,1326980,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31807,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1327064,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31808,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31810,ifa,GA,IFA,IFA_01,IFA,,13263,17980,1332412,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31811,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1336220,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31812,ifa,GA,IFA,IFA_01,IFA,,13263,17980,1342800,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31814,ifa,GA,IFA,IFA_01,IFA,,13259,17980,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31815,ifa,GA,IFA,IFA_01,IFA,,13259,17980,1347980,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31816,ifa,GA,IFA,IFA_01,IFA,,13199,12060,1349532,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31820,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31821,ifa,GA,IFA,IFA_01,IFA,,13259,17980,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31822,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1361124,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31823,ifa,GA,IFA,IFA_01,IFA,,13145,17980,,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31824,ifa,GA,IFA,IFA_01,IFA,,13307,,1381128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31825,ifa,GA,IFA,IFA_01,IFA,,13259,17980,1381128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31826,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1370428,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31827,ifa,GA,IFA,IFA_01,IFA,,13263,17980,1375244,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31829,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31830,ifa,GA,IFA,IFA_01,IFA,,13199,12060,1349532,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31831,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1380844,"IFA Atlanta-Sandy Springs-Roswell, GA",0.530264,
+ifa_ga_k1,31832,ifa,GA,IFA,IFA_01,IFA,,13307,,1381128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31833,ifa,GA,IFA,IFA_01,IFA,,13145,17980,1382132,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31836,ifa,GA,IFA,IFA_01,IFA,,13263,17980,1383952,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31901,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",1.01022,
+ifa_ga_k1,31903,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31904,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",4.39156,
+ifa_ga_k1,31905,ifa,GA,IFA,IFA_01,IFA,,13053,17980,1321017,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31906,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31907,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,31909,ifa,GA,IFA,IFA_01,IFA,,13215,17980,1319000,"IFA Atlanta-Sandy Springs-Roswell, GA",0.00636361,
+ifa_ga_k1,39813,ifa,GA,IFA,IFA_01,IFA,,13037,,1302928,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39815,ifa,GA,IFA,IFA_01,IFA,,13087,12460,1304084,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39817,ifa,GA,IFA,IFA_01,IFA,,13087,12460,1304896,"IFA Atlanta-Sandy Springs-Roswell, GA",0.423251,
+ifa_ga_k1,39819,ifa,GA,IFA,IFA_01,IFA,,13087,12460,1304896,"IFA Atlanta-Sandy Springs-Roswell, GA",1.10752,
+ifa_ga_k1,39823,ifa,GA,IFA,IFA_01,IFA,,13099,,1308536,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39824,ifa,GA,IFA,IFA_01,IFA,,13061,,1308956,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39825,ifa,GA,IFA,IFA_01,IFA,,13087,12460,1310608,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39826,ifa,GA,IFA,IFA_01,IFA,,13273,10500,1310860,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39827,ifa,GA,IFA,IFA_01,IFA,,13131,45620,1312400,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39828,ifa,GA,IFA,IFA_01,IFA,,13131,45620,1312400,"IFA Atlanta-Sandy Springs-Roswell, GA",0.356595,
+ifa_ga_k1,39832,ifa,GA,IFA,IFA_01,IFA,,13099,,1314472,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39834,ifa,GA,IFA,IFA_01,IFA,,13087,12460,1316908,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39836,ifa,GA,IFA,IFA_01,IFA,,13243,,1317580,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39837,ifa,GA,IFA,IFA_01,IFA,,13201,,1318000,"IFA Atlanta-Sandy Springs-Roswell, GA",1.35136,
+ifa_ga_k1,39840,ifa,GA,IFA,IFA_01,IFA,,13243,,1321072,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39841,ifa,GA,IFA,IFA_01,IFA,,13099,,1321436,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39842,ifa,GA,IFA,IFA_01,IFA,,13273,10500,1321912,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39845,ifa,GA,IFA,IFA_01,IFA,,13253,,1323368,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39846,ifa,GA,IFA,IFA_01,IFA,,13037,,1326448,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39851,ifa,GA,IFA,IFA_01,IFA,,13061,,1330816,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39854,ifa,GA,IFA,IFA_01,IFA,,13239,21640,1332528,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39859,ifa,GA,IFA,IFA_01,IFA,,13253,,1341344,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39861,ifa,GA,IFA,IFA_01,IFA,,13099,,1314472,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39862,ifa,GA,IFA,IFA_01,IFA,,13037,,1345600,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39866,ifa,GA,IFA,IFA_01,IFA,,13037,,1352696,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39867,ifa,GA,IFA,IFA_01,IFA,,13239,21640,1332528,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39870,ifa,GA,IFA,IFA_01,IFA,,13007,,1355244,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39877,ifa,GA,IFA,IFA_01,IFA,,13273,10500,1381128,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39885,ifa,GA,IFA,IFA_01,IFA,,13273,10500,1368796,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39886,ifa,GA,IFA,IFA_01,IFA,,13243,,1370120,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity
+ifa_ga_k1,39897,ifa,GA,IFA,IFA_01,IFA,,13131,45620,1382412,"IFA Atlanta-Sandy Springs-Roswell, GA",0.0,no cell in the extract: territory at zero opportunity

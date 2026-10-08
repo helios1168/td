@@ -1,0 +1,961 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_vadc_k1,20001,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.291303,
+ifa_vadc_k1,20002,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.10714,
+ifa_vadc_k1,20003,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.944253,
+ifa_vadc_k1,20004,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20005,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20006,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.52872,
+ifa_vadc_k1,20007,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.679105,
+ifa_vadc_k1,20008,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20009,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.238635,
+ifa_vadc_k1,20010,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20011,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.198863,
+ifa_vadc_k1,20012,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00815497,
+ifa_vadc_k1,20015,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.222686,
+ifa_vadc_k1,20016,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.691908,
+ifa_vadc_k1,20017,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20018,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20019,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.611702,
+ifa_vadc_k1,20020,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20024,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.81632,
+ifa_vadc_k1,20032,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20036,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.154528,
+ifa_vadc_k1,20037,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.31818,
+ifa_vadc_k1,20045,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20052,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20057,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20059,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20064,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20105,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5175702,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.47087,
+ifa_vadc_k1,20106,ifa,VA,IFA,IFA_01,IFA,,51157,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20109,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5176416,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.20796,
+ifa_vadc_k1,20110,ifa,VA,IFA,IFA_01,IFA,,51683,47900,5148952,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",7.79592,
+ifa_vadc_k1,20111,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5110776,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20112,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5110776,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20115,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5149656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20117,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5151448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.397725,
+ifa_vadc_k1,20119,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5112264,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20120,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5111224,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20121,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5111224,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20124,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5180029,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.73694,
+ifa_vadc_k1,20129,ifa,VA,IFA,IFA_01,IFA,,51107,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20130,ifa,VA,IFA,IFA_01,IFA,,51043,47900,5160536,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20132,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5165008,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.536956,
+ifa_vadc_k1,20135,ifa,VA,IFA,IFA_01,IFA,,51043,47900,5171825,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.120871,
+ifa_vadc_k1,20136,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5145957,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20137,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5155528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20141,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5169168,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.661543,
+ifa_vadc_k1,20143,ifa,VA,IFA,IFA_01,IFA,,51153,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20144,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5166032,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20147,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5103320,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",8.05365,
+ifa_vadc_k1,20148,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5109188,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.55244,
+ifa_vadc_k1,20151,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5114744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.40366,
+ifa_vadc_k1,20152,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5174100,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.95556,
+ifa_vadc_k1,20155,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5130176,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.296838,
+ifa_vadc_k1,20158,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5134240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20164,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5175376,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.809497,
+ifa_vadc_k1,20165,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5113403,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.29361,
+ifa_vadc_k1,20166,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5123732,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.165916,
+ifa_vadc_k1,20169,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5130176,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",6.75149,
+ifa_vadc_k1,20170,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5136648,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.95226,
+ifa_vadc_k1,20171,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5129628,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",7.00657,
+ifa_vadc_k1,20175,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5144984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.18775,
+ifa_vadc_k1,20176,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5144984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",29.0479,
+ifa_vadc_k1,20180,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5147208,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20181,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5156464,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20184,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5180224,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20186,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5183136,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.16971,
+ifa_vadc_k1,20187,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5155528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20190,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5166672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",41.5795,
+ifa_vadc_k1,20191,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5166672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",22.6309,
+ifa_vadc_k1,20194,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5166672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20197,ifa,VA,IFA,IFA_01,IFA,,51107,47900,5183440,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20198,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5149656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20204,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20220,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20230,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20240,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20245,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20250,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20260,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20317,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20319,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20373,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20388,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20390,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20408,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20415,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20418,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20422,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20427,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20431,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20510,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20515,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20520,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20530,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20535,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20540,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20542,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20551,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20560,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20565,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20566,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,20591,ifa,DC,IFA,IFA_01,IFA,,11001,47900,1150000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22003,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5101912,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.614057,
+ifa_vadc_k1,22015,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5111464,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.74077,
+ifa_vadc_k1,22025,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5152658,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22026,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5115176,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22027,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5123984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22030,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5109072,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.0119,
+ifa_vadc_k1,22031,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5149144,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.78283,
+ifa_vadc_k1,22032,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5142680,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22033,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5126875,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.35956,
+ifa_vadc_k1,22035,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5126875,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22039,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5126592,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.258522,
+ifa_vadc_k1,22041,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5104088,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.31721,
+ifa_vadc_k1,22042,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5184368,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",6.71435,
+ifa_vadc_k1,22043,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5139448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.337253,
+ifa_vadc_k1,22044,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5143352,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22046,ifa,VA,IFA,IFA_01,IFA,,51610,47900,5127200,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.278408,
+ifa_vadc_k1,22060,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5129008,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22066,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5132496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.808178,
+ifa_vadc_k1,22079,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5149998,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22101,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5148376,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.74031,
+ifa_vadc_k1,22102,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5148376,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",54.4355,
+ifa_vadc_k1,22124,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5122472,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",10.4403,
+ifa_vadc_k1,22125,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5158696,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22134,ifa,VA,IFA,IFA_01,IFA,,51179,47900,5165128,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.258534,
+ifa_vadc_k1,22150,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5174592,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.241482,
+ifa_vadc_k1,22151,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5157560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22152,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5184976,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.635532,
+ifa_vadc_k1,22153,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5155758,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22172,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5179360,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22180,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5181072,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.367058,
+ifa_vadc_k1,22181,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5158472,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.659713,
+ifa_vadc_k1,22182,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5187240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",69.4489,
+ifa_vadc_k1,22191,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5187312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.766973,
+ifa_vadc_k1,22192,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5143432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.15413,
+ifa_vadc_k1,22193,ifa,VA,IFA,IFA_01,IFA,,51153,47900,5121088,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.54906,
+ifa_vadc_k1,22201,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.07608,
+ifa_vadc_k1,22202,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.56515,
+ifa_vadc_k1,22203,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.309407,
+ifa_vadc_k1,22204,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22205,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22206,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22207,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22209,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",17.8391,
+ifa_vadc_k1,22211,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22213,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22214,ifa,VA,IFA,IFA_01,IFA,,51013,47900,5103000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22301,ifa,VA,IFA,IFA_01,IFA,,51510,47900,5101000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.501636,
+ifa_vadc_k1,22302,ifa,VA,IFA,IFA_01,IFA,,51510,47900,5101000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22303,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5139064,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22304,ifa,VA,IFA,IFA_01,IFA,,51510,47900,5101000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.876128,
+ifa_vadc_k1,22305,ifa,VA,IFA,IFA_01,IFA,,51510,47900,5101000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.974802,
+ifa_vadc_k1,22306,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5133584,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22307,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5105928,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22308,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5129136,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22309,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5154144,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22310,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5168880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.33951,
+ifa_vadc_k1,22311,ifa,VA,IFA,IFA_01,IFA,,51510,47900,5101000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22312,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5145784,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.88479,
+ifa_vadc_k1,22314,ifa,VA,IFA,IFA_01,IFA,,51510,47900,5101000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",17.2695,
+ifa_vadc_k1,22315,ifa,VA,IFA,IFA_01,IFA,,51059,47900,5142746,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.630223,
+ifa_vadc_k1,22401,ifa,VA,IFA,IFA_01,IFA,,51630,47900,5129744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",15.7458,
+ifa_vadc_k1,22405,ifa,VA,IFA,IFA_01,IFA,,51179,47900,5127264,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.131051,
+ifa_vadc_k1,22406,ifa,VA,IFA,IFA_01,IFA,,51179,47900,5174922,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22407,ifa,VA,IFA,IFA_01,IFA,,51177,47900,5129744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.17351,
+ifa_vadc_k1,22408,ifa,VA,IFA,IFA_01,IFA,,51177,47900,5129744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.27337,
+ifa_vadc_k1,22427,ifa,VA,IFA,IFA_01,IFA,,51033,,5108888,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22432,ifa,VA,IFA,IFA_01,IFA,,51133,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22433,ifa,VA,IFA,IFA_01,IFA,,51137,29470,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22435,ifa,VA,IFA,IFA_01,IFA,,51133,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22436,ifa,VA,IFA,IFA_01,IFA,,51057,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22437,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22438,ifa,VA,IFA,IFA_01,IFA,,51057,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22443,ifa,VA,IFA,IFA_01,IFA,,51193,,5118400,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22448,ifa,VA,IFA,IFA_01,IFA,,51099,,5121016,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22454,ifa,VA,IFA,IFA_01,IFA,,51057,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22460,ifa,VA,IFA,IFA_01,IFA,,51159,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0252875,
+ifa_vadc_k1,22469,ifa,VA,IFA,IFA_01,IFA,,51193,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22472,ifa,VA,IFA,IFA_01,IFA,,51159,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22473,ifa,VA,IFA,IFA_01,IFA,,51133,,5136216,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22476,ifa,VA,IFA,IFA_01,IFA,,51057,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22480,ifa,VA,IFA,IFA_01,IFA,,51103,,5140088,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22482,ifa,VA,IFA,IFA_01,IFA,,51133,,5142424,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.98812,
+ifa_vadc_k1,22485,ifa,VA,IFA,IFA_01,IFA,,51099,,5142568,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00139204,
+ifa_vadc_k1,22488,ifa,VA,IFA,IFA_01,IFA,,51193,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22503,ifa,VA,IFA,IFA_01,IFA,,51103,,5143704,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22504,ifa,VA,IFA,IFA_01,IFA,,51057,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22508,ifa,VA,IFA,IFA_01,IFA,,51137,29470,5143430,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.456954,
+ifa_vadc_k1,22509,ifa,VA,IFA,IFA_01,IFA,,51057,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22511,ifa,VA,IFA,IFA_01,IFA,,51133,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22514,ifa,VA,IFA,IFA_01,IFA,,51033,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22520,ifa,VA,IFA,IFA_01,IFA,,51193,,5152952,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22529,ifa,VA,IFA,IFA_01,IFA,,51193,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22534,ifa,VA,IFA,IFA_01,IFA,,51177,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22535,ifa,VA,IFA,IFA_01,IFA,,51033,,5163928,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22538,ifa,VA,IFA,IFA_01,IFA,,51033,,5163928,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22539,ifa,VA,IFA,IFA_01,IFA,,51133,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22542,ifa,VA,IFA,IFA_01,IFA,,51137,29470,5166800,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22546,ifa,VA,IFA,IFA_01,IFA,,51033,,5143420,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22548,ifa,VA,IFA,IFA_01,IFA,,51159,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22551,ifa,VA,IFA,IFA_01,IFA,,51177,47900,5174470,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22553,ifa,VA,IFA,IFA_01,IFA,,51177,47900,5174470,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22554,ifa,VA,IFA,IFA_01,IFA,,51179,47900,5102112,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22556,ifa,VA,IFA,IFA_01,IFA,,51179,47900,5182232,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.397493,
+ifa_vadc_k1,22560,ifa,VA,IFA,IFA_01,IFA,,51057,,5177568,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22567,ifa,VA,IFA,IFA_01,IFA,,51137,29470,5180048,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22572,ifa,VA,IFA,IFA_01,IFA,,51159,,5183168,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22576,ifa,VA,IFA,IFA_01,IFA,,51103,,5183888,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22578,ifa,VA,IFA,IFA_01,IFA,,51103,,5185600,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.78133,
+ifa_vadc_k1,22580,ifa,VA,IFA,IFA_01,IFA,,51033,,5108888,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.20364,
+ifa_vadc_k1,22601,ifa,VA,IFA,IFA_01,IFA,,51840,49020,5186720,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.63956,
+ifa_vadc_k1,22602,ifa,VA,IFA,IFA_01,IFA,,51069,49020,5171625,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.13999,
+ifa_vadc_k1,22603,ifa,VA,IFA,IFA_01,IFA,,51069,49020,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22610,ifa,VA,IFA,IFA_01,IFA,,51187,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22611,ifa,VA,IFA,IFA_01,IFA,,51043,47900,5106968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.36417,
+ifa_vadc_k1,22620,ifa,VA,IFA,IFA_01,IFA,,51043,47900,5108984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22623,ifa,VA,IFA,IFA_01,IFA,,51157,47900,5116240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22624,ifa,VA,IFA,IFA_01,IFA,,51069,49020,5110568,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22625,ifa,VA,IFA,IFA_01,IFA,,51069,49020,5143392,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22627,ifa,VA,IFA,IFA_01,IFA,,51157,47900,5128496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22630,ifa,VA,IFA,IFA_01,IFA,,51187,47900,5129968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",8.90884,
+ifa_vadc_k1,22637,ifa,VA,IFA,IFA_01,IFA,,51069,49020,5131952,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22639,ifa,VA,IFA,IFA_01,IFA,,51061,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22640,ifa,VA,IFA,IFA_01,IFA,,51157,47900,5116240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22641,ifa,VA,IFA,IFA_01,IFA,,51171,,5144712,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22642,ifa,VA,IFA,IFA_01,IFA,,51187,47900,5171810,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22643,ifa,VA,IFA,IFA_01,IFA,,51061,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22644,ifa,VA,IFA,IFA_01,IFA,,51171,,5150200,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22645,ifa,VA,IFA,IFA_01,IFA,,51069,49020,5151512,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22646,ifa,VA,IFA,IFA_01,IFA,,51043,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22650,ifa,VA,IFA,IFA_01,IFA,,51139,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22652,ifa,VA,IFA,IFA_01,IFA,,51171,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22654,ifa,VA,IFA,IFA_01,IFA,,51069,49020,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22655,ifa,VA,IFA,IFA_01,IFA,,51069,49020,5175344,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22656,ifa,VA,IFA,IFA_01,IFA,,51069,49020,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22657,ifa,VA,IFA,IFA_01,IFA,,51171,,5176000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.31818,
+ifa_vadc_k1,22660,ifa,VA,IFA,IFA_01,IFA,,51171,,5154056,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22663,ifa,VA,IFA,IFA_01,IFA,,51043,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22664,ifa,VA,IFA,IFA_01,IFA,,51171,,5187712,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22701,ifa,VA,IFA,IFA_01,IFA,,51047,47900,5120752,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.18063,
+ifa_vadc_k1,22709,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22711,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22712,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5105336,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22713,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22714,ifa,VA,IFA,IFA_01,IFA,,51047,47900,5109352,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22715,ifa,VA,IFA,IFA_01,IFA,,51113,,5109752,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22716,ifa,VA,IFA,IFA_01,IFA,,51157,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22718,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22719,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22720,ifa,VA,IFA,IFA_01,IFA,,51061,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22722,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22723,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22724,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22725,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22726,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22727,ifa,VA,IFA,IFA_01,IFA,,51113,,5148488,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22728,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5151544,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22729,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22730,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22731,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22732,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22733,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22734,ifa,VA,IFA,IFA_01,IFA,,51061,47900,5166512,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22735,ifa,VA,IFA,IFA_01,IFA,,51113,,5109752,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22736,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22737,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22738,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22740,ifa,VA,IFA,IFA_01,IFA,,51157,47900,5174384,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22741,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22742,ifa,VA,IFA,IFA_01,IFA,,51061,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22743,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22746,ifa,VA,IFA,IFA_01,IFA,,51047,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22747,ifa,VA,IFA,IFA_01,IFA,,51157,47900,5183248,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22749,ifa,VA,IFA,IFA_01,IFA,,51157,47900,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22801,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5135624,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",9.373,
+ifa_vadc_k1,22802,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5135624,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22807,ifa,VA,IFA,IFA_01,IFA,,51660,25500,5135624,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22810,ifa,VA,IFA,IFA_01,IFA,,51171,,5104920,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22811,ifa,VA,IFA,IFA_01,IFA,,51165,25500,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22812,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5109656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22815,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5110040,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.515945,
+ifa_vadc_k1,22820,ifa,VA,IFA,IFA_01,IFA,,51165,25500,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22821,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5121648,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22824,ifa,VA,IFA,IFA_01,IFA,,51171,,5108925,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22827,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5125408,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.268862,
+ifa_vadc_k1,22830,ifa,VA,IFA,IFA_01,IFA,,51165,25500,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22831,ifa,VA,IFA,IFA_01,IFA,,51165,25500,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22832,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5141624,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22834,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5145960,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22835,ifa,VA,IFA,IFA_01,IFA,,51139,,5147528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22840,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5150030,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22841,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5153864,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22842,ifa,VA,IFA,IFA_01,IFA,,51171,,5104920,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22843,ifa,VA,IFA,IFA_01,IFA,,51015,44420,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22844,ifa,VA,IFA,IFA_01,IFA,,51171,,5155848,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22845,ifa,VA,IFA,IFA_01,IFA,,51171,,5159672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22846,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5150020,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22847,ifa,VA,IFA,IFA_01,IFA,,51171,,5153992,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22849,ifa,VA,IFA,IFA_01,IFA,,51139,,5171776,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22850,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5172736,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22851,ifa,VA,IFA,IFA_01,IFA,,51139,,5175024,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22853,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5178736,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22901,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5114968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.51306,
+ifa_vadc_k1,22902,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5114968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",10.9378,
+ifa_vadc_k1,22903,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5114968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",12.5914,
+ifa_vadc_k1,22904,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5180165,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22908,ifa,VA,IFA,IFA_01,IFA,,51540,16820,5114968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22911,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5138032,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",10.5026,
+ifa_vadc_k1,22920,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5100484,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22922,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5103208,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22923,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5104392,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22931,ifa,VA,IFA,IFA_01,IFA,,51003,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22932,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5120560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.397725,
+ifa_vadc_k1,22935,ifa,VA,IFA,IFA_01,IFA,,51079,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22936,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5124272,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22937,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5125968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22938,ifa,VA,IFA,IFA_01,IFA,,51125,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22939,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5127968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.64251,
+ifa_vadc_k1,22940,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5129840,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22942,ifa,VA,IFA,IFA_01,IFA,,51109,,5131936,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22943,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5100484,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22946,ifa,VA,IFA,IFA_01,IFA,,51003,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22947,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5167331,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22948,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22949,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5147224,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22952,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5171904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22957,ifa,VA,IFA,IFA_01,IFA,,51137,29470,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22958,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5155400,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22959,ifa,VA,IFA,IFA_01,IFA,,51003,16820,5157368,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22960,ifa,VA,IFA,IFA_01,IFA,,51137,29470,5159496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.198489,
+ifa_vadc_k1,22963,ifa,VA,IFA,IFA_01,IFA,,51065,16820,5143424,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.120113,
+ifa_vadc_k1,22964,ifa,VA,IFA,IFA_01,IFA,,51125,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22967,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5187008,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22968,ifa,VA,IFA,IFA_01,IFA,,51079,16820,5169360,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22969,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5170704,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22971,ifa,VA,IFA,IFA_01,IFA,,51125,16820,5172080,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22972,ifa,VA,IFA,IFA_01,IFA,,51137,29470,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22973,ifa,VA,IFA,IFA_01,IFA,,51079,16820,5175008,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0711859,
+ifa_vadc_k1,22974,ifa,VA,IFA,IFA_01,IFA,,51065,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22976,ifa,VA,IFA,IFA_01,IFA,,51125,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,22980,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5183680,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",10.0914,
+ifa_vadc_k1,22989,ifa,VA,IFA,IFA_01,IFA,,51113,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23002,ifa,VA,IFA,IFA_01,IFA,,51007,40060,5101640,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23004,ifa,VA,IFA,IFA_01,IFA,,51029,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23005,ifa,VA,IFA,IFA_01,IFA,,51085,40060,5103368,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.113437,
+ifa_vadc_k1,23009,ifa,VA,IFA,IFA_01,IFA,,51101,40060,5114312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23011,ifa,VA,IFA,IFA_01,IFA,,51127,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23015,ifa,VA,IFA,IFA_01,IFA,,51085,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.546228,
+ifa_vadc_k1,23021,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23022,ifa,VA,IFA,IFA_01,IFA,,51065,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23023,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23024,ifa,VA,IFA,IFA_01,IFA,,51109,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0047727,
+ifa_vadc_k1,23025,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23027,ifa,VA,IFA,IFA_01,IFA,,51049,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23030,ifa,VA,IFA,IFA_01,IFA,,51036,40060,5114904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23032,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23035,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23038,ifa,VA,IFA,IFA_01,IFA,,51075,40060,5118624,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23039,ifa,VA,IFA,IFA_01,IFA,,51075,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23040,ifa,VA,IFA,IFA_01,IFA,,51049,,5120768,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23043,ifa,VA,IFA,IFA_01,IFA,,51119,,5122064,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23045,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23047,ifa,VA,IFA,IFA_01,IFA,,51085,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23050,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23055,ifa,VA,IFA,IFA_01,IFA,,51065,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23056,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23059,ifa,VA,IFA,IFA_01,IFA,,51085,40060,5131200,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",50.4406,
+ifa_vadc_k1,23060,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5131200,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",40.0963,
+ifa_vadc_k1,23061,ifa,VA,IFA,IFA_01,IFA,,51073,47260,5131608,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.137177,
+ifa_vadc_k1,23062,ifa,VA,IFA,IFA_01,IFA,,51073,47260,5131616,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23063,ifa,VA,IFA,IFA_01,IFA,,51075,40060,5131808,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23065,ifa,VA,IFA,IFA_01,IFA,,51075,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23066,ifa,VA,IFA,IFA_01,IFA,,51115,47260,5133824,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23068,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23069,ifa,VA,IFA,IFA_01,IFA,,51085,40060,5135160,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23070,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23071,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23072,ifa,VA,IFA,IFA_01,IFA,,51073,47260,5131616,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23075,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5137032,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23076,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23079,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23081,ifa,VA,IFA,IFA_01,IFA,,51095,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23083,ifa,VA,IFA,IFA_01,IFA,,51007,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23084,ifa,VA,IFA,IFA_01,IFA,,51065,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23085,ifa,VA,IFA,IFA_01,IFA,,51097,40060,5142536,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23086,ifa,VA,IFA,IFA_01,IFA,,51101,40060,5142792,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.031153,
+ifa_vadc_k1,23089,ifa,VA,IFA,IFA_01,IFA,,51127,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.403584,
+ifa_vadc_k1,23091,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23092,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23093,ifa,VA,IFA,IFA_01,IFA,,51109,,5147144,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23102,ifa,VA,IFA,IFA_01,IFA,,51075,40060,5131808,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23103,ifa,VA,IFA,IFA_01,IFA,,51075,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23106,ifa,VA,IFA,IFA_01,IFA,,51101,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23108,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23109,ifa,VA,IFA,IFA_01,IFA,,51115,47260,5150104,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23110,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23111,ifa,VA,IFA,IFA_01,IFA,,51085,40060,5150856,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00517043,
+ifa_vadc_k1,23112,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5109248,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",7.33639,
+ifa_vadc_k1,23113,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5151560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",19.4843,
+ifa_vadc_k1,23114,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5151560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",9.56532,
+ifa_vadc_k1,23116,ifa,VA,IFA,IFA_01,IFA,,51085,40060,5150856,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.55013,
+ifa_vadc_k1,23117,ifa,VA,IFA,IFA_01,IFA,,51109,,5152120,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0164833,
+ifa_vadc_k1,23119,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23120,ifa,VA,IFA,IFA_01,IFA,,51041,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23123,ifa,VA,IFA,IFA_01,IFA,,51029,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23124,ifa,VA,IFA,IFA_01,IFA,,51127,40060,5155800,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23126,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23128,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23129,ifa,VA,IFA,IFA_01,IFA,,51075,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23130,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23138,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23139,ifa,VA,IFA,IFA_01,IFA,,51145,40060,5164384,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23140,ifa,VA,IFA,IFA_01,IFA,,51127,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23141,ifa,VA,IFA,IFA_01,IFA,,51127,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23146,ifa,VA,IFA,IFA_01,IFA,,51085,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23147,ifa,VA,IFA,IFA_01,IFA,,51036,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23148,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23149,ifa,VA,IFA,IFA_01,IFA,,51119,,5170112,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23150,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5170256,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23153,ifa,VA,IFA,IFA_01,IFA,,51075,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23156,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23160,ifa,VA,IFA,IFA_01,IFA,,51145,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23161,ifa,VA,IFA,IFA_01,IFA,,51097,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23163,ifa,VA,IFA,IFA_01,IFA,,51115,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23168,ifa,VA,IFA,IFA_01,IFA,,51095,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23169,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23173,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23175,ifa,VA,IFA,IFA_01,IFA,,51119,,5180272,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23176,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23177,ifa,VA,IFA,IFA_01,IFA,,51097,40060,5142792,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23180,ifa,VA,IFA,IFA_01,IFA,,51119,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23181,ifa,VA,IFA,IFA_01,IFA,,51101,40060,5184960,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0137024,
+ifa_vadc_k1,23185,ifa,VA,IFA,IFA_01,IFA,,51095,47260,5186160,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",9.89461,
+ifa_vadc_k1,23188,ifa,VA,IFA,IFA_01,IFA,,51095,47260,5186160,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",9.08363,
+ifa_vadc_k1,23192,ifa,VA,IFA,IFA_01,IFA,,51085,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.37871,
+ifa_vadc_k1,23219,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.87741,
+ifa_vadc_k1,23220,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.127551,
+ifa_vadc_k1,23221,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.21002,
+ifa_vadc_k1,23222,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23223,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5124496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.69211,
+ifa_vadc_k1,23224,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23225,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.000715906,
+ifa_vadc_k1,23226,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",19.2052,
+ifa_vadc_k1,23227,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5114544,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.73043,
+ifa_vadc_k1,23228,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5144280,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.48228,
+ifa_vadc_k1,23229,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5179560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.7299,
+ifa_vadc_k1,23230,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",7.05852,
+ifa_vadc_k1,23231,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5152904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23233,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5172272,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",11.9351,
+ifa_vadc_k1,23234,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23235,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5108472,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",17.1147,
+ifa_vadc_k1,23236,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5168470,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",16.0016,
+ifa_vadc_k1,23237,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5106216,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23238,ifa,VA,IFA,IFA_01,IFA,,51075,40060,5179560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",11.0984,
+ifa_vadc_k1,23250,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5170256,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23284,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23294,ifa,VA,IFA,IFA_01,IFA,,51087,40060,5144280,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.33074,
+ifa_vadc_k1,23298,ifa,VA,IFA,IFA_01,IFA,,51760,40060,5167000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23301,ifa,VA,IFA,IFA_01,IFA,,51001,,5177648,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23302,ifa,VA,IFA,IFA_01,IFA,,51001,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23303,ifa,VA,IFA,IFA_01,IFA,,51001,,5103528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23304,ifa,VA,IFA,IFA_01,IFA,,51093,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23306,ifa,VA,IFA,IFA_01,IFA,,51001,,5105912,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23307,ifa,VA,IFA,IFA_01,IFA,,51131,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23308,ifa,VA,IFA,IFA_01,IFA,,51001,,5155448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23310,ifa,VA,IFA,IFA_01,IFA,,51131,,5112808,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0769573,
+ifa_vadc_k1,23314,ifa,VA,IFA,IFA_01,IFA,,51093,47260,5113160,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23315,ifa,VA,IFA,IFA_01,IFA,,51093,47260,5113192,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23316,ifa,VA,IFA,IFA_01,IFA,,51131,,5115112,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23320,ifa,VA,IFA,IFA_01,IFA,,51550,47260,5116000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",16.8622,
+ifa_vadc_k1,23321,ifa,VA,IFA,IFA_01,IFA,,51550,47260,5116000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.670233,
+ifa_vadc_k1,23322,ifa,VA,IFA,IFA_01,IFA,,51550,47260,5116000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.64989,
+ifa_vadc_k1,23323,ifa,VA,IFA,IFA_01,IFA,,51550,47260,5116000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23324,ifa,VA,IFA,IFA_01,IFA,,51550,47260,5116000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23325,ifa,VA,IFA,IFA_01,IFA,,51550,47260,5116000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23336,ifa,VA,IFA,IFA_01,IFA,,51001,,5116512,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23337,ifa,VA,IFA,IFA_01,IFA,,51001,,5183568,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23347,ifa,VA,IFA,IFA_01,IFA,,51131,,5124752,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23350,ifa,VA,IFA,IFA_01,IFA,,51131,,5126416,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23354,ifa,VA,IFA,IFA_01,IFA,,51131,,5129712,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23356,ifa,VA,IFA,IFA_01,IFA,,51001,,5112915,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.04397,
+ifa_vadc_k1,23357,ifa,VA,IFA,IFA_01,IFA,,51001,,5132624,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23358,ifa,VA,IFA,IFA_01,IFA,,51001,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23359,ifa,VA,IFA,IFA_01,IFA,,51001,,5134176,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23389,ifa,VA,IFA,IFA_01,IFA,,51001,,5135240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23395,ifa,VA,IFA,IFA_01,IFA,,51001,,5138504,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23398,ifa,VA,IFA,IFA_01,IFA,,51131,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23401,ifa,VA,IFA,IFA_01,IFA,,51001,,5141656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23405,ifa,VA,IFA,IFA_01,IFA,,51131,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23407,ifa,VA,IFA,IFA_01,IFA,,51001,,5149336,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23408,ifa,VA,IFA,IFA_01,IFA,,51131,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23409,ifa,VA,IFA,IFA_01,IFA,,51001,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23410,ifa,VA,IFA,IFA_01,IFA,,51001,,5108320,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23413,ifa,VA,IFA,IFA_01,IFA,,51131,,5154984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23414,ifa,VA,IFA,IFA_01,IFA,,51001,,5155448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23415,ifa,VA,IFA,IFA_01,IFA,,51001,,5183568,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23416,ifa,VA,IFA,IFA_01,IFA,,51001,,5158184,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23417,ifa,VA,IFA,IFA_01,IFA,,51001,,5105200,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23418,ifa,VA,IFA,IFA_01,IFA,,51001,,5159384,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.26652,
+ifa_vadc_k1,23420,ifa,VA,IFA,IFA_01,IFA,,51001,,5113635,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23421,ifa,VA,IFA,IFA_01,IFA,,51001,,5130384,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23422,ifa,VA,IFA,IFA_01,IFA,,51001,,5164976,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23423,ifa,VA,IFA,IFA_01,IFA,,51001,,5165280,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23426,ifa,VA,IFA,IFA_01,IFA,,51001,,5170352,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23427,ifa,VA,IFA,IFA_01,IFA,,51001,,5170576,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23430,ifa,VA,IFA,IFA_01,IFA,,51093,47260,5169472,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.91971,
+ifa_vadc_k1,23432,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23433,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23434,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.83126,
+ifa_vadc_k1,23435,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.24298,
+ifa_vadc_k1,23436,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.131735,
+ifa_vadc_k1,23437,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23438,ifa,VA,IFA,IFA_01,IFA,,51800,47260,5176432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23440,ifa,VA,IFA,IFA_01,IFA,,51001,,5177520,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23441,ifa,VA,IFA,IFA_01,IFA,,51001,,5177648,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23442,ifa,VA,IFA,IFA_01,IFA,,51001,,5177856,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23451,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",31.7458,
+ifa_vadc_k1,23452,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",38.0344,
+ifa_vadc_k1,23453,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23454,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.98229,
+ifa_vadc_k1,23455,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.09954,
+ifa_vadc_k1,23456,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.91662,
+ifa_vadc_k1,23457,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23459,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23460,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23461,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23462,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",39.1752,
+ifa_vadc_k1,23464,ifa,VA,IFA,IFA_01,IFA,,51810,47260,5182000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0856424,
+ifa_vadc_k1,23480,ifa,VA,IFA,IFA_01,IFA,,51001,,5182320,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23486,ifa,VA,IFA,IFA_01,IFA,,51131,,5186336,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23487,ifa,VA,IFA,IFA_01,IFA,,51093,47260,5186784,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23488,ifa,VA,IFA,IFA_01,IFA,,51001,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23502,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.30743,
+ifa_vadc_k1,23503,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23504,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.1033,
+ifa_vadc_k1,23505,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23507,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23508,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00795451,
+ifa_vadc_k1,23509,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23510,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.84261,
+ifa_vadc_k1,23511,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23513,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23517,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.551349,
+ifa_vadc_k1,23518,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.243275,
+ifa_vadc_k1,23523,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23551,ifa,VA,IFA,IFA_01,IFA,,51710,47260,5157000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23601,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.918199,
+ifa_vadc_k1,23602,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.249677,
+ifa_vadc_k1,23603,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23604,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23605,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23606,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",26.011,
+ifa_vadc_k1,23607,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23608,ifa,VA,IFA,IFA_01,IFA,,51700,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23651,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23661,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23662,ifa,VA,IFA,IFA_01,IFA,,51735,47260,5163768,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",8.00895,
+ifa_vadc_k1,23663,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23664,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23665,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23666,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.0568,
+ifa_vadc_k1,23667,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23668,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23669,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00437498,
+ifa_vadc_k1,23681,ifa,VA,IFA,IFA_01,IFA,,51650,47260,5135000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23690,ifa,VA,IFA,IFA_01,IFA,,51199,47260,5188240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23691,ifa,VA,IFA,IFA_01,IFA,,51199,47260,5156000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23692,ifa,VA,IFA,IFA_01,IFA,,51199,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23693,ifa,VA,IFA,IFA_01,IFA,,51199,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0214657,
+ifa_vadc_k1,23696,ifa,VA,IFA,IFA_01,IFA,,51199,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23701,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23702,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23703,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23704,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23707,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23708,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23709,ifa,VA,IFA,IFA_01,IFA,,51740,47260,5164000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23801,ifa,VA,IFA,IFA_01,IFA,,51149,40060,5129098,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23803,ifa,VA,IFA,IFA_01,IFA,,51053,40060,5161832,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0136022,
+ifa_vadc_k1,23805,ifa,VA,IFA,IFA_01,IFA,,51149,40060,5161832,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23821,ifa,VA,IFA,IFA_01,IFA,,51025,,5100724,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23824,ifa,VA,IFA,IFA_01,IFA,,51135,,5107832,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23827,ifa,VA,IFA,IFA_01,IFA,,51175,,5109032,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23828,ifa,VA,IFA,IFA_01,IFA,,51175,,5109208,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23829,ifa,VA,IFA,IFA_01,IFA,,51175,,5112904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23830,ifa,VA,IFA,IFA_01,IFA,,51053,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23831,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5116096,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.337738,
+ifa_vadc_k1,23832,ifa,VA,IFA,IFA_01,IFA,,51041,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",17.5612,
+ifa_vadc_k1,23833,ifa,VA,IFA,IFA_01,IFA,,51053,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23834,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5118448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",16.8899,
+ifa_vadc_k1,23836,ifa,VA,IFA,IFA_01,IFA,,51041,40060,5125877,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23837,ifa,VA,IFA,IFA_01,IFA,,51175,,5119600,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23838,ifa,VA,IFA,IFA_01,IFA,,51041,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.82144,
+ifa_vadc_k1,23839,ifa,VA,IFA,IFA_01,IFA,,51181,47260,5122160,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23840,ifa,VA,IFA,IFA_01,IFA,,51053,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23841,ifa,VA,IFA,IFA_01,IFA,,51053,40060,5122576,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23842,ifa,VA,IFA,IFA_01,IFA,,51149,40060,5122640,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23843,ifa,VA,IFA,IFA_01,IFA,,51025,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23844,ifa,VA,IFA,IFA_01,IFA,,51175,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23845,ifa,VA,IFA,IFA_01,IFA,,51025,,5124816,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23846,ifa,VA,IFA,IFA_01,IFA,,51181,47260,5176880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23847,ifa,VA,IFA,IFA_01,IFA,,51081,,5125808,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0836534,
+ifa_vadc_k1,23850,ifa,VA,IFA,IFA_01,IFA,,51053,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23851,ifa,VA,IFA,IFA_01,IFA,,51175,,5129600,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.07124,
+ifa_vadc_k1,23856,ifa,VA,IFA,IFA_01,IFA,,51025,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23857,ifa,VA,IFA,IFA_01,IFA,,51025,,5130480,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23860,ifa,VA,IFA,IFA_01,IFA,,51149,40060,5138424,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.14667,
+ifa_vadc_k1,23866,ifa,VA,IFA,IFA_01,IFA,,51175,,5140232,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23867,ifa,VA,IFA,IFA_01,IFA,,51183,40060,5140536,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23868,ifa,VA,IFA,IFA_01,IFA,,51025,,5144520,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23870,ifa,VA,IFA,IFA_01,IFA,,51081,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23872,ifa,VA,IFA,IFA_01,IFA,,51053,40060,5148344,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23874,ifa,VA,IFA,IFA_01,IFA,,51175,,5156096,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23875,ifa,VA,IFA,IFA_01,IFA,,51149,40060,5164560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23876,ifa,VA,IFA,IFA_01,IFA,,51025,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23878,ifa,VA,IFA,IFA_01,IFA,,51175,,5171040,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23879,ifa,VA,IFA,IFA_01,IFA,,51081,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23881,ifa,VA,IFA,IFA_01,IFA,,51181,47260,5116880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23882,ifa,VA,IFA,IFA_01,IFA,,51183,40060,5175840,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23883,ifa,VA,IFA,IFA_01,IFA,,51181,47260,5170715,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23884,ifa,VA,IFA,IFA_01,IFA,,51183,40060,5176912,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23885,ifa,VA,IFA,IFA_01,IFA,,51053,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23887,ifa,VA,IFA,IFA_01,IFA,,51025,,5130480,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23888,ifa,VA,IFA,IFA_01,IFA,,51183,40060,5182384,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.291778,
+ifa_vadc_k1,23889,ifa,VA,IFA,IFA_01,IFA,,51025,,5183056,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23890,ifa,VA,IFA,IFA_01,IFA,,51183,40060,5176912,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23891,ifa,VA,IFA,IFA_01,IFA,,51183,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23893,ifa,VA,IFA,IFA_01,IFA,,51025,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23894,ifa,VA,IFA,IFA_01,IFA,,51053,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23897,ifa,VA,IFA,IFA_01,IFA,,51183,40060,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23898,ifa,VA,IFA,IFA_01,IFA,,51093,47260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23899,ifa,VA,IFA,IFA_01,IFA,,51181,47260,5116880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23901,ifa,VA,IFA,IFA_01,IFA,,51049,,5127440,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.46923,
+ifa_vadc_k1,23909,ifa,VA,IFA,IFA_01,IFA,,51147,,5127440,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23915,ifa,VA,IFA,IFA_01,IFA,,51117,,5104856,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23917,ifa,VA,IFA,IFA_01,IFA,,51117,,5109016,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23919,ifa,VA,IFA,IFA_01,IFA,,51117,,5109064,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00198863,
+ifa_vadc_k1,23920,ifa,VA,IFA,IFA_01,IFA,,51025,,5110072,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23921,ifa,VA,IFA,IFA_01,IFA,,51029,,5188145,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23922,ifa,VA,IFA,IFA_01,IFA,,51135,,5111560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23923,ifa,VA,IFA,IFA_01,IFA,,51037,,5114952,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.626612,
+ifa_vadc_k1,23924,ifa,VA,IFA,IFA_01,IFA,,51117,,5114984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23927,ifa,VA,IFA,IFA_01,IFA,,51117,,5116992,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.32473,
+ifa_vadc_k1,23930,ifa,VA,IFA,IFA_01,IFA,,51135,,5120160,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23934,ifa,VA,IFA,IFA_01,IFA,,51147,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23936,ifa,VA,IFA,IFA_01,IFA,,51029,,5122560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23937,ifa,VA,IFA,IFA_01,IFA,,51037,,5123376,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23938,ifa,VA,IFA,IFA_01,IFA,,51025,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23942,ifa,VA,IFA,IFA_01,IFA,,51147,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23943,ifa,VA,IFA,IFA_01,IFA,,51147,,5134304,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23944,ifa,VA,IFA,IFA_01,IFA,,51111,,5141832,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23947,ifa,VA,IFA,IFA_01,IFA,,51111,,5142264,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23950,ifa,VA,IFA,IFA_01,IFA,,51117,,5109064,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23952,ifa,VA,IFA,IFA_01,IFA,,51111,,5147496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23954,ifa,VA,IFA,IFA_01,IFA,,51147,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23955,ifa,VA,IFA,IFA_01,IFA,,51135,,5157870,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23958,ifa,VA,IFA,IFA_01,IFA,,51011,31340,5160488,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23959,ifa,VA,IFA,IFA_01,IFA,,51037,,5161896,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23960,ifa,VA,IFA,IFA_01,IFA,,51147,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23962,ifa,VA,IFA,IFA_01,IFA,,51037,,5117632,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23963,ifa,VA,IFA,IFA_01,IFA,,51037,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23964,ifa,VA,IFA,IFA_01,IFA,,51037,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23966,ifa,VA,IFA,IFA_01,IFA,,51147,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23967,ifa,VA,IFA,IFA_01,IFA,,51037,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23968,ifa,VA,IFA,IFA_01,IFA,,51117,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23970,ifa,VA,IFA,IFA_01,IFA,,51117,,5173904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.02406,
+ifa_vadc_k1,23974,ifa,VA,IFA,IFA_01,IFA,,51111,,5181024,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,23976,ifa,VA,IFA,IFA_01,IFA,,51037,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24011,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.75951,
+ifa_vadc_k1,24012,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24013,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24014,ifa,VA,IFA,IFA_01,IFA,,51161,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.3334,
+ifa_vadc_k1,24015,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.21264,
+ifa_vadc_k1,24016,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",6.96357,
+ifa_vadc_k1,24017,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24018,ifa,VA,IFA,IFA_01,IFA,,51161,40220,5113720,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",51.7937,
+ifa_vadc_k1,24019,ifa,VA,IFA,IFA_01,IFA,,51161,40220,5137880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.46404,
+ifa_vadc_k1,24020,ifa,VA,IFA,IFA_01,IFA,,51161,40220,5137880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24022,ifa,VA,IFA,IFA_01,IFA,,51770,40220,5168000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24053,ifa,VA,IFA,IFA_01,IFA,,51141,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24054,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5170296,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24055,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5158312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24058,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5106424,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24059,ifa,VA,IFA,IFA_01,IFA,,51161,40220,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24060,ifa,VA,IFA,IFA_01,IFA,,51121,13980,5107784,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.09659,
+ifa_vadc_k1,24061,ifa,VA,IFA,IFA_01,IFA,,51121,13980,5107784,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24064,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5108200,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24065,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5108584,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24066,ifa,VA,IFA,IFA_01,IFA,,51023,40220,5110744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24067,ifa,VA,IFA,IFA_01,IFA,,51067,40220,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24069,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24070,ifa,VA,IFA,IFA_01,IFA,,51161,40220,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24072,ifa,VA,IFA,IFA_01,IFA,,51063,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24073,ifa,VA,IFA,IFA_01,IFA,,51121,13980,5116608,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24076,ifa,VA,IFA,IFA_01,IFA,,51141,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24077,ifa,VA,IFA,IFA_01,IFA,,51023,40220,5117680,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24078,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5118352,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24079,ifa,VA,IFA,IFA_01,IFA,,51063,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24082,ifa,VA,IFA,IFA_01,IFA,,51141,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24083,ifa,VA,IFA,IFA_01,IFA,,51023,40220,5121152,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.65811,
+ifa_vadc_k1,24084,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5123648,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24085,ifa,VA,IFA,IFA_01,IFA,,51023,40220,5124208,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24086,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5125136,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24087,ifa,VA,IFA,IFA_01,IFA,,51121,13980,5125488,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24088,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5127712,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24089,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5127744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24090,ifa,VA,IFA,IFA_01,IFA,,51023,40220,5127824,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.36395,
+ifa_vadc_k1,24091,ifa,VA,IFA,IFA_01,IFA,,51063,13980,5128544,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.27719,
+ifa_vadc_k1,24092,ifa,VA,IFA,IFA_01,IFA,,51067,40220,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24093,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5131376,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24095,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5175504,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24101,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5184632,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24102,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5158312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24104,ifa,VA,IFA,IFA_01,IFA,,51019,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24105,ifa,VA,IFA,IFA_01,IFA,,51063,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24112,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5149784,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0167045,
+ifa_vadc_k1,24120,ifa,VA,IFA,IFA_01,IFA,,51141,,5150696,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24121,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5157531,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.68586,
+ifa_vadc_k1,24122,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5152968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24124,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5154904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24127,ifa,VA,IFA,IFA_01,IFA,,51045,40220,5155592,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24128,ifa,VA,IFA,IFA_01,IFA,,51071,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24129,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5156048,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24131,ifa,VA,IFA,IFA_01,IFA,,51045,40220,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24132,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5160840,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24133,ifa,VA,IFA,IFA_01,IFA,,51141,,5160984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24134,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5161208,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24136,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5161336,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24137,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5161464,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24138,ifa,VA,IFA,IFA_01,IFA,,51121,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24139,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24141,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5165392,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.53061,
+ifa_vadc_k1,24142,ifa,VA,IFA,IFA_01,IFA,,51750,13980,5165392,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24147,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5166896,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24148,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5170296,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24149,ifa,VA,IFA,IFA_01,IFA,,51121,13980,5167256,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.26277,
+ifa_vadc_k1,24150,ifa,VA,IFA,IFA_01,IFA,,51071,13980,5167304,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24151,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5168496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24153,ifa,VA,IFA,IFA_01,IFA,,51161,40220,5170000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.132472,
+ifa_vadc_k1,24161,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24162,ifa,VA,IFA,IFA_01,IFA,,51121,13980,5171632,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24165,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5138552,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24167,ifa,VA,IFA,IFA_01,IFA,,51071,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24168,ifa,VA,IFA,IFA_01,IFA,,51089,32300,5175040,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24171,ifa,VA,IFA,IFA_01,IFA,,51141,,5160984,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24174,ifa,VA,IFA,IFA_01,IFA,,51019,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24175,ifa,VA,IFA,IFA_01,IFA,,51023,40220,5144620,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.253947,
+ifa_vadc_k1,24176,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5180000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24179,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5181280,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24184,ifa,VA,IFA,IFA_01,IFA,,51067,40220,5184632,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24185,ifa,VA,IFA,IFA_01,IFA,,51141,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24201,ifa,VA,IFA,IFA_01,IFA,,51520,28700,5109816,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24202,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5109816,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0523276,
+ifa_vadc_k1,24210,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5100148,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.48551,
+ifa_vadc_k1,24211,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5100148,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.068011,
+ifa_vadc_k1,24216,ifa,VA,IFA,IFA_01,IFA,,51195,,5102040,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24217,ifa,VA,IFA,IFA_01,IFA,,51051,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24219,ifa,VA,IFA,IFA_01,IFA,,51195,,5107480,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24220,ifa,VA,IFA,IFA_01,IFA,,51051,,5136008,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24221,ifa,VA,IFA,IFA_01,IFA,,51105,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24224,ifa,VA,IFA,IFA_01,IFA,,51167,,5113512,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24225,ifa,VA,IFA,IFA_01,IFA,,51167,,5117296,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24226,ifa,VA,IFA,IFA_01,IFA,,51051,,5117504,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24228,ifa,VA,IFA,IFA_01,IFA,,51051,,5117552,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24230,ifa,VA,IFA,IFA_01,IFA,,51195,,5117952,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24236,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5121184,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24237,ifa,VA,IFA,IFA_01,IFA,,51051,,5121312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24239,ifa,VA,IFA,IFA_01,IFA,,51027,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24243,ifa,VA,IFA,IFA_01,IFA,,51105,,5123584,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24244,ifa,VA,IFA,IFA_01,IFA,,51169,28700,5175536,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24245,ifa,VA,IFA,IFA_01,IFA,,51169,28700,5123952,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24246,ifa,VA,IFA,IFA_01,IFA,,51195,,5124720,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24248,ifa,VA,IFA,IFA_01,IFA,,51105,,5126384,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24250,ifa,VA,IFA,IFA_01,IFA,,51169,28700,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24251,ifa,VA,IFA,IFA_01,IFA,,51169,28700,5130496,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.321056,
+ifa_vadc_k1,24256,ifa,VA,IFA,IFA_01,IFA,,51051,,5136008,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24258,ifa,VA,IFA,IFA_01,IFA,,51169,28700,5137432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24260,ifa,VA,IFA,IFA_01,IFA,,51167,,5138280,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24263,ifa,VA,IFA,IFA_01,IFA,,51105,,5141272,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24265,ifa,VA,IFA,IFA_01,IFA,,51105,,5142104,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24266,ifa,VA,IFA,IFA_01,IFA,,51167,,5144696,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24269,ifa,VA,IFA,IFA_01,IFA,,51051,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24270,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5151096,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24271,ifa,VA,IFA,IFA_01,IFA,,51169,28700,5156304,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24272,ifa,VA,IFA,IFA_01,IFA,,51051,,5121312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24273,ifa,VA,IFA,IFA_01,IFA,,51195,,5157688,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24277,ifa,VA,IFA,IFA_01,IFA,,51105,,5161560,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24279,ifa,VA,IFA,IFA_01,IFA,,51195,,5164272,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24280,ifa,VA,IFA,IFA_01,IFA,,51167,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24281,ifa,VA,IFA,IFA_01,IFA,,51105,,5168885,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24282,ifa,VA,IFA,IFA_01,IFA,,51105,,5169792,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24283,ifa,VA,IFA,IFA_01,IFA,,51195,,5169936,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24290,ifa,VA,IFA,IFA_01,IFA,,51169,28700,5183808,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24292,ifa,VA,IFA,IFA_01,IFA,,51077,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24293,ifa,VA,IFA,IFA_01,IFA,,51195,,5187072,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24301,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5164880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24311,ifa,VA,IFA,IFA_01,IFA,,51173,,5103512,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24312,ifa,VA,IFA,IFA_01,IFA,,51035,,5103656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24313,ifa,VA,IFA,IFA_01,IFA,,51197,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24314,ifa,VA,IFA,IFA_01,IFA,,51021,,5104904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24315,ifa,VA,IFA,IFA_01,IFA,,51021,,5107976,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24316,ifa,VA,IFA,IFA_01,IFA,,51185,14140,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24317,ifa,VA,IFA,IFA_01,IFA,,51035,,5112600,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24318,ifa,VA,IFA,IFA_01,IFA,,51021,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24319,ifa,VA,IFA,IFA_01,IFA,,51173,,5116480,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24322,ifa,VA,IFA,IFA_01,IFA,,51197,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24323,ifa,VA,IFA,IFA_01,IFA,,51197,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24324,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5123408,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24325,ifa,VA,IFA,IFA_01,IFA,,51035,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24326,ifa,VA,IFA,IFA_01,IFA,,51077,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24327,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5125792,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24328,ifa,VA,IFA,IFA_01,IFA,,51035,,5127296,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24330,ifa,VA,IFA,IFA_01,IFA,,51077,,5175440,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24333,ifa,VA,IFA,IFA_01,IFA,,51077,,5130208,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.68621,
+ifa_vadc_k1,24340,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5125792,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24343,ifa,VA,IFA,IFA_01,IFA,,51035,,5137336,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24347,ifa,VA,IFA,IFA_01,IFA,,51155,13980,5137544,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24348,ifa,VA,IFA,IFA_01,IFA,,51077,,5139528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24350,ifa,VA,IFA,IFA_01,IFA,,51197,,5140216,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24351,ifa,VA,IFA,IFA_01,IFA,,51035,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24352,ifa,VA,IFA,IFA_01,IFA,,51035,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24354,ifa,VA,IFA,IFA_01,IFA,,51173,,5100468,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24360,ifa,VA,IFA,IFA_01,IFA,,51197,,5129040,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24361,ifa,VA,IFA,IFA_01,IFA,,51191,28700,5150760,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24363,ifa,VA,IFA,IFA_01,IFA,,51077,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24366,ifa,VA,IFA,IFA_01,IFA,,51021,,5168480,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24368,ifa,VA,IFA,IFA_01,IFA,,51197,,5169456,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24370,ifa,VA,IFA,IFA_01,IFA,,51173,,5170096,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24374,ifa,VA,IFA,IFA_01,IFA,,51197,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24375,ifa,VA,IFA,IFA_01,IFA,,51173,,5176448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24377,ifa,VA,IFA,IFA_01,IFA,,51185,14140,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24378,ifa,VA,IFA,IFA_01,IFA,,51077,,5179456,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24380,ifa,VA,IFA,IFA_01,IFA,,51063,13980,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24381,ifa,VA,IFA,IFA_01,IFA,,51035,,5187408,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24382,ifa,VA,IFA,IFA_01,IFA,,51197,,5188000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.917111,
+ifa_vadc_k1,24401,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5175216,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.372428,
+ifa_vadc_k1,24411,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5103608,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24412,ifa,VA,IFA,IFA_01,IFA,,51017,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24413,ifa,VA,IFA,IFA_01,IFA,,51091,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24415,ifa,VA,IFA,IFA_01,IFA,,51163,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24416,ifa,VA,IFA,IFA_01,IFA,,51163,,5111032,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",2.68399,
+ifa_vadc_k1,24421,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5116736,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24422,ifa,VA,IFA,IFA_01,IFA,,51005,,5117440,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24426,ifa,VA,IFA,IFA_01,IFA,,51005,,5119728,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24430,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5119904,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24431,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5120240,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24432,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5121872,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24433,ifa,VA,IFA,IFA_01,IFA,,51091,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24435,ifa,VA,IFA,IFA_01,IFA,,51163,,5126656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24437,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5155720,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24439,ifa,VA,IFA,IFA_01,IFA,,51163,,5131968,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24440,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5132944,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24441,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5133488,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24442,ifa,VA,IFA,IFA_01,IFA,,51091,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24445,ifa,VA,IFA,IFA_01,IFA,,51017,,5138632,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24448,ifa,VA,IFA,IFA_01,IFA,,51005,,5140024,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24450,ifa,VA,IFA,IFA_01,IFA,,51163,,5145512,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24457,ifa,VA,IFA,IFA_01,IFA,,51005,,5147352,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24458,ifa,VA,IFA,IFA_01,IFA,,51091,,5148184,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24459,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5151432,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24460,ifa,VA,IFA,IFA_01,IFA,,51017,,5151848,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24464,ifa,VA,IFA,IFA_01,IFA,,51125,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24465,ifa,VA,IFA,IFA_01,IFA,,51091,,5152680,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24467,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5154120,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24469,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5155720,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24471,ifa,VA,IFA,IFA_01,IFA,,51165,25500,5163896,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24472,ifa,VA,IFA,IFA_01,IFA,,51163,,5126656,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24473,ifa,VA,IFA,IFA_01,IFA,,51163,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24474,ifa,VA,IFA,IFA_01,IFA,,51005,,5171072,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24476,ifa,VA,IFA,IFA_01,IFA,,51015,44420,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24477,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5176272,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24479,ifa,VA,IFA,IFA_01,IFA,,51015,44420,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24482,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5180864,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24483,ifa,VA,IFA,IFA_01,IFA,,51163,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24484,ifa,VA,IFA,IFA_01,IFA,,51017,,5183088,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24485,ifa,VA,IFA,IFA_01,IFA,,51015,44420,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24486,ifa,VA,IFA,IFA_01,IFA,,51015,44420,5185184,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24487,ifa,VA,IFA,IFA_01,IFA,,51091,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24501,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5147672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",5.64989,
+ifa_vadc_k1,24502,ifa,VA,IFA,IFA_01,IFA,,51680,31340,5147672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",6.52006,
+ifa_vadc_k1,24503,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5147672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.42362,
+ifa_vadc_k1,24504,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5147672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",3.28958,
+ifa_vadc_k1,24515,ifa,VA,IFA,IFA_01,IFA,,51680,31340,5147672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24517,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5101528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24520,ifa,VA,IFA,IFA_01,IFA,,51083,,5117776,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24521,ifa,VA,IFA,IFA_01,IFA,,51009,31340,5101672,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24522,ifa,VA,IFA,IFA_01,IFA,,51011,31340,5102072,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24523,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5105544,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.16906,
+ifa_vadc_k1,24526,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5107400,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24527,ifa,VA,IFA,IFA_01,IFA,,51143,19260,5107944,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24528,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5110296,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24529,ifa,VA,IFA,IFA_01,IFA,,51117,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24530,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24531,ifa,VA,IFA,IFA_01,IFA,,51143,19260,5115000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24534,ifa,VA,IFA,IFA_01,IFA,,51083,,5117632,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24536,ifa,VA,IFA,IFA_01,IFA,,51019,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24538,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5118880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24539,ifa,VA,IFA,IFA_01,IFA,,51083,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24540,ifa,VA,IFA,IFA_01,IFA,,51143,19260,5121344,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.42674,
+ifa_vadc_k1,24541,ifa,VA,IFA,IFA_01,IFA,,51143,19260,5121344,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.340412,
+ifa_vadc_k1,24549,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24550,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5178688,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24551,ifa,VA,IFA,IFA_01,IFA,,51019,31340,5128688,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",1.93595,
+ifa_vadc_k1,24553,ifa,VA,IFA,IFA_01,IFA,,51029,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24554,ifa,VA,IFA,IFA_01,IFA,,51031,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24555,ifa,VA,IFA,IFA_01,IFA,,51163,,5131136,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24556,ifa,VA,IFA,IFA_01,IFA,,51019,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24557,ifa,VA,IFA,IFA_01,IFA,,51143,19260,5133232,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24558,ifa,VA,IFA,IFA_01,IFA,,51083,,5153584,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24562,ifa,VA,IFA,IFA_01,IFA,,51029,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24563,ifa,VA,IFA,IFA_01,IFA,,51143,19260,5139224,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24565,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24566,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24569,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24570,ifa,VA,IFA,IFA_01,IFA,,51019,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24571,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5101528,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24572,ifa,VA,IFA,IFA_01,IFA,,51009,31340,5148520,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24574,ifa,VA,IFA,IFA_01,IFA,,51009,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24577,ifa,VA,IFA,IFA_01,IFA,,51083,,5155000,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24578,ifa,VA,IFA,IFA_01,IFA,,51163,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24579,ifa,VA,IFA,IFA_01,IFA,,51163,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24580,ifa,VA,IFA,IFA_01,IFA,,51117,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24581,ifa,VA,IFA,IFA_01,IFA,,51125,16820,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24586,ifa,VA,IFA,IFA_01,IFA,,51143,19260,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24588,ifa,VA,IFA,IFA_01,IFA,,51031,31340,5169536,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24589,ifa,VA,IFA,IFA_01,IFA,,51083,,5170752,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24590,ifa,VA,IFA,IFA_01,IFA,,51029,,5170800,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.00119318,
+ifa_vadc_k1,24592,ifa,VA,IFA,IFA_01,IFA,,51083,,5173712,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.19938,
+ifa_vadc_k1,24593,ifa,VA,IFA,IFA_01,IFA,,51011,31340,5118880,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24594,ifa,VA,IFA,IFA_01,IFA,,51083,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24595,ifa,VA,IFA,IFA_01,IFA,,51009,31340,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24597,ifa,VA,IFA,IFA_01,IFA,,51083,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24598,ifa,VA,IFA,IFA_01,IFA,,51083,,5181312,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24599,ifa,VA,IFA,IFA_01,IFA,,51029,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24601,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5101752,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24602,ifa,VA,IFA,IFA_01,IFA,,51185,14140,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24603,ifa,VA,IFA,IFA_01,IFA,,51027,,5107448,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24604,ifa,VA,IFA,IFA_01,IFA,,51185,14140,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24605,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5108152,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24606,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5108376,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24607,ifa,VA,IFA,IFA_01,IFA,,51027,,5109400,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24609,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5117120,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",4.55963,
+ifa_vadc_k1,24612,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5165744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24613,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5127232,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24614,ifa,VA,IFA,IFA_01,IFA,,51027,,5133648,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0570191,
+ifa_vadc_k1,24620,ifa,VA,IFA,IFA_01,IFA,,51027,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24622,ifa,VA,IFA,IFA_01,IFA,,51027,,5141016,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24630,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5174848,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24631,ifa,VA,IFA,IFA_01,IFA,,51027,,5180608,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24634,ifa,VA,IFA,IFA_01,IFA,,51027,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24635,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5163288,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24637,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5117120,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24639,ifa,VA,IFA,IFA_01,IFA,,51027,,5165744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24641,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5166928,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.31818,
+ifa_vadc_k1,24646,ifa,VA,IFA,IFA_01,IFA,,51027,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24649,ifa,VA,IFA,IFA_01,IFA,,51167,,5165744,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24651,ifa,VA,IFA,IFA_01,IFA,,51185,14140,5132320,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24656,ifa,VA,IFA,IFA_01,IFA,,51027,,5180608,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity
+ifa_vadc_k1,24657,ifa,VA,IFA,IFA_01,IFA,,51027,,,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",0.0,no cell in the extract: territory at zero opportunity

@@ -1,0 +1,1284 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_mddewv_k1,19701,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1004130,"IFA Baltimore-Columbia-Towson, MD",2.50638,
+ifa_mddewv_k1,19702,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1029350,"IFA Baltimore-Columbia-Towson, MD",0.00636361,
+ifa_mddewv_k1,19703,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1015310,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19706,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1019730,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19707,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1035850,"IFA Baltimore-Columbia-Towson, MD",1.56866,
+ifa_mddewv_k1,19709,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1047030,"IFA Baltimore-Columbia-Towson, MD",12.7463,
+ifa_mddewv_k1,19710,ifa,DE,IFA,IFA_01,IFA,,10003,37980,,"IFA Baltimore-Columbia-Towson, MD",1.46972,
+ifa_mddewv_k1,19711,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1050670,"IFA Baltimore-Columbia-Towson, MD",3.47912,
+ifa_mddewv_k1,19713,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1009850,"IFA Baltimore-Columbia-Towson, MD",81.6042,
+ifa_mddewv_k1,19716,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1050670,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19717,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1050670,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19720,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1050800,"IFA Baltimore-Columbia-Towson, MD",19.6613,
+ifa_mddewv_k1,19730,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1054050,"IFA Baltimore-Columbia-Towson, MD",0.016952,
+ifa_mddewv_k1,19731,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1058600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19732,ifa,DE,IFA,IFA_01,IFA,,10003,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19733,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1063800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19734,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1047030,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19735,ifa,DE,IFA,IFA_01,IFA,,10003,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19736,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1035850,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19801,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1077580,"IFA Baltimore-Columbia-Towson, MD",3.99833,
+ifa_mddewv_k1,19802,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1077580,"IFA Baltimore-Columbia-Towson, MD",3.73809,
+ifa_mddewv_k1,19803,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1077580,"IFA Baltimore-Columbia-Towson, MD",9.10149,
+ifa_mddewv_k1,19804,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1051190,"IFA Baltimore-Columbia-Towson, MD",0.723029,
+ifa_mddewv_k1,19805,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1077580,"IFA Baltimore-Columbia-Towson, MD",5.23112,
+ifa_mddewv_k1,19806,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1077580,"IFA Baltimore-Columbia-Towson, MD",4.1486,
+ifa_mddewv_k1,19807,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1031430,"IFA Baltimore-Columbia-Towson, MD",18.5614,
+ifa_mddewv_k1,19808,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1056490,"IFA Baltimore-Columbia-Towson, MD",8.6452,
+ifa_mddewv_k1,19809,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1077580,"IFA Baltimore-Columbia-Towson, MD",0.15909,
+ifa_mddewv_k1,19810,ifa,DE,IFA,IFA_01,IFA,,10003,37980,1001400,"IFA Baltimore-Columbia-Towson, MD",9.63666,
+ifa_mddewv_k1,19901,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1021200,"IFA Baltimore-Columbia-Towson, MD",2.26034,
+ifa_mddewv_k1,19902,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1021200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19904,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1021200,"IFA Baltimore-Columbia-Towson, MD",5.25036,
+ifa_mddewv_k1,19930,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1005690,"IFA Baltimore-Columbia-Towson, MD",0.901623,
+ifa_mddewv_k1,19931,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1005820,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19933,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1008680,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19934,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1010760,"IFA Baltimore-Columbia-Towson, MD",0.242612,
+ifa_mddewv_k1,19936,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1014660,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19938,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1015440,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19939,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1018950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19940,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1020380,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19941,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1024020,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19943,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1061480,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19944,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1026880,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19945,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1028310,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19946,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1028440,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19947,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1029090,"IFA Baltimore-Columbia-Towson, MD",0.0190908,
+ifa_mddewv_k1,19950,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1031560,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19951,ifa,DE,IFA,IFA_01,IFA,,10005,42580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19952,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1033120,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19953,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1033250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19954,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1036760,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19955,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1039100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19956,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1041310,"IFA Baltimore-Columbia-Towson, MD",4.29272,
+ifa_mddewv_k1,19958,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1041830,"IFA Baltimore-Columbia-Towson, MD",5.15629,
+ifa_mddewv_k1,19960,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1042480,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19962,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1061265,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19963,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1047420,"IFA Baltimore-Columbia-Towson, MD",0.643369,
+ifa_mddewv_k1,19964,ifa,DE,IFA,IFA_01,IFA,,10001,20100,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19966,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1047940,"IFA Baltimore-Columbia-Towson, MD",1.29775,
+ifa_mddewv_k1,19967,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1048200,"IFA Baltimore-Columbia-Towson, MD",0.278703,
+ifa_mddewv_k1,19968,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1048330,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19970,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1053920,"IFA Baltimore-Columbia-Towson, MD",1.56648,
+ifa_mddewv_k1,19971,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1060290,"IFA Baltimore-Columbia-Towson, MD",2.38874,
+ifa_mddewv_k1,19973,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1064320,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19975,ifa,DE,IFA,IFA_01,IFA,,10005,42580,1064840,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19977,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1067310,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19979,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1074330,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,19980,ifa,DE,IFA,IFA_01,IFA,,10001,20100,1080830,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20601,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2481175,"IFA Baltimore-Columbia-Towson, MD",0.622018,
+ifa_mddewv_k1,20602,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2481175,"IFA Baltimore-Columbia-Towson, MD",1.59856,
+ifa_mddewv_k1,20603,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2406662,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20606,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20607,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2400250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20608,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2401925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20609,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20611,ifa,MD,IFA,IFA_01,IFA,,24017,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20612,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2406550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20613,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2403500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20615,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2410650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20616,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2410925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20617,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2410950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20618,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20619,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2412150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20620,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2412175,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20621,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20622,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2415475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20623,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2468300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20624,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20625,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2418200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20626,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20628,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20629,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2473325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20630,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20632,ifa,MD,IFA,IFA_01,IFA,,24017,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20634,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2412150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20636,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20637,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2440700,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20639,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2441025,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20640,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2410925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20645,ifa,MD,IFA,IFA_01,IFA,,24017,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20646,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2445750,"IFA Baltimore-Columbia-Towson, MD",1.62972,
+ifa_mddewv_k1,20650,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2446475,"IFA Baltimore-Columbia-Towson, MD",3.01131,
+ifa_mddewv_k1,20653,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2446725,"IFA Baltimore-Columbia-Towson, MD",0.235646,
+ifa_mddewv_k1,20656,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20657,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2416050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20658,ifa,MD,IFA,IFA_01,IFA,,24017,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20659,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2451800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20660,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20661,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2418200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20662,ifa,MD,IFA,IFA_01,IFA,,24017,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20664,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2467500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20667,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20670,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20674,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2461875,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20675,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2462675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20676,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2469675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20677,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2463225,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20678,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2463950,"IFA Baltimore-Columbia-Towson, MD",2.85329,
+ifa_mddewv_k1,20680,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20684,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20685,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2469675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20686,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20687,ifa,MD,IFA,IFA_01,IFA,,24037,30500,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20688,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2473325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20689,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2415925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20690,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2476675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20692,ifa,MD,IFA,IFA_01,IFA,,24037,30500,2476675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20693,ifa,MD,IFA,IFA_01,IFA,,24017,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20695,ifa,MD,IFA,IFA_01,IFA,,24017,47900,2481175,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20701,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2442550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20705,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2406400,"IFA Baltimore-Columbia-Towson, MD",0.218741,
+ifa_mddewv_k1,20706,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2445550,"IFA Baltimore-Columbia-Towson, MD",0.254557,
+ifa_mddewv_k1,20707,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2445900,"IFA Baltimore-Columbia-Towson, MD",0.0047727,
+ifa_mddewv_k1,20708,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2473650,"IFA Baltimore-Columbia-Towson, MD",2.95255,
+ifa_mddewv_k1,20710,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2407850,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20711,ifa,MD,IFA,IFA_01,IFA,,24003,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20712,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2454275,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20714,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2456300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20715,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2408775,"IFA Baltimore-Columbia-Towson, MD",0.510559,
+ifa_mddewv_k1,20716,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2408775,"IFA Baltimore-Columbia-Towson, MD",3.58807,
+ifa_mddewv_k1,20720,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2427580,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20721,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2486710,"IFA Baltimore-Columbia-Towson, MD",0.721031,
+ifa_mddewv_k1,20722,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2418850,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20723,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2456725,"IFA Baltimore-Columbia-Towson, MD",1.46856,
+ifa_mddewv_k1,20724,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2451075,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20732,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2415925,"IFA Baltimore-Columbia-Towson, MD",0.276817,
+ifa_mddewv_k1,20733,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2422050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20735,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2417900,"IFA Baltimore-Columbia-Towson, MD",0.278929,
+ifa_mddewv_k1,20736,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2459375,"IFA Baltimore-Columbia-Towson, MD",0.109034,
+ifa_mddewv_k1,20737,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2466635,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20740,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2418750,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20742,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2418750,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20743,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2481250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20744,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2429525,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20745,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2432350,"IFA Baltimore-Columbia-Towson, MD",0.047727,
+ifa_mddewv_k1,20746,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2475725,"IFA Baltimore-Columbia-Towson, MD",1.92367,
+ifa_mddewv_k1,20747,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2429000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20748,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2412600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20751,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2422050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20754,ifa,MD,IFA,IFA_01,IFA,,24009,30500,2424050,"IFA Baltimore-Columbia-Towson, MD",0.0892112,
+ifa_mddewv_k1,20755,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2429400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20758,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2430650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20759,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2431025,"IFA Baltimore-Columbia-Towson, MD",7.3186,
+ifa_mddewv_k1,20762,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2401450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20763,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2470475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20764,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20765,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2431275,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20769,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2433400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20770,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2434775,"IFA Baltimore-Columbia-Towson, MD",2.76664,
+ifa_mddewv_k1,20771,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2434775,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20772,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2420925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20774,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2410150,"IFA Baltimore-Columbia-Towson, MD",2.96071,
+ifa_mddewv_k1,20776,ifa,MD,IFA,IFA_01,IFA,,24003,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20777,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2438475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20778,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20779,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2422050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20781,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2441250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20782,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2416875,"IFA Baltimore-Columbia-Towson, MD",0.521046,
+ifa_mddewv_k1,20783,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2400400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20784,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2455400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20785,ifa,MD,IFA,IFA_01,IFA,,24033,47900,2475810,"IFA Baltimore-Columbia-Towson, MD",0.395001,
+ifa_mddewv_k1,20794,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2442550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20812,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2432900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20814,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2407125,"IFA Baltimore-Columbia-Towson, MD",33.9908,
+ifa_mddewv_k1,20815,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2416625,"IFA Baltimore-Columbia-Towson, MD",7.43754,
+ifa_mddewv_k1,20816,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2407125,"IFA Baltimore-Columbia-Towson, MD",1.32026,
+ifa_mddewv_k1,20817,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2407125,"IFA Baltimore-Columbia-Towson, MD",20.5368,
+ifa_mddewv_k1,20818,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2412075,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20832,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2458900,"IFA Baltimore-Columbia-Towson, MD",6.18185,
+ifa_mddewv_k1,20833,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2458900,"IFA Baltimore-Columbia-Towson, MD",1.61132,
+ifa_mddewv_k1,20837,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2462850,"IFA Baltimore-Columbia-Towson, MD",0.0695678,
+ifa_mddewv_k1,20838,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2404475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20839,ifa,MD,IFA,IFA_01,IFA,,24031,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20841,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2477262,"IFA Baltimore-Columbia-Towson, MD",1.38467,
+ifa_mddewv_k1,20842,ifa,MD,IFA,IFA_01,IFA,,24031,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20850,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2467675,"IFA Baltimore-Columbia-Towson, MD",77.7798,
+ifa_mddewv_k1,20851,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2467675,"IFA Baltimore-Columbia-Towson, MD",0.800106,
+ifa_mddewv_k1,20852,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2456337,"IFA Baltimore-Columbia-Towson, MD",41.3289,
+ifa_mddewv_k1,20853,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2402825,"IFA Baltimore-Columbia-Towson, MD",0.44645,
+ifa_mddewv_k1,20854,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2463300,"IFA Baltimore-Columbia-Towson, MD",16.9318,
+ifa_mddewv_k1,20855,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2465312,"IFA Baltimore-Columbia-Towson, MD",0.419827,
+ifa_mddewv_k1,20860,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2402762,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20861,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2402762,"IFA Baltimore-Columbia-Towson, MD",0.79395,
+ifa_mddewv_k1,20862,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2402762,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20866,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2411750,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20868,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2411750,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20871,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2417350,"IFA Baltimore-Columbia-Towson, MD",0.65404,
+ifa_mddewv_k1,20872,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2421475,"IFA Baltimore-Columbia-Towson, MD",2.12768,
+ifa_mddewv_k1,20874,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2421825,"IFA Baltimore-Columbia-Towson, MD",15.4752,
+ifa_mddewv_k1,20876,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2432025,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20877,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2431175,"IFA Baltimore-Columbia-Towson, MD",10.1101,
+ifa_mddewv_k1,20878,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2431175,"IFA Baltimore-Columbia-Towson, MD",10.4309,
+ifa_mddewv_k1,20879,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2428512,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20880,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2481675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20882,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2421475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20886,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2453325,"IFA Baltimore-Columbia-Towson, MD",1.81249,
+ifa_mddewv_k1,20889,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2407125,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20892,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2407125,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20894,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2407125,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20895,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2473600,"IFA Baltimore-Columbia-Towson, MD",3.9464,
+ifa_mddewv_k1,20896,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2431525,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20899,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2431175,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20901,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2472450,"IFA Baltimore-Columbia-Towson, MD",0.964403,
+ifa_mddewv_k1,20902,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2483775,"IFA Baltimore-Columbia-Towson, MD",1.06483,
+ifa_mddewv_k1,20903,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2438850,"IFA Baltimore-Columbia-Towson, MD",1.32581,
+ifa_mddewv_k1,20904,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2418475,"IFA Baltimore-Columbia-Towson, MD",4.64748,
+ifa_mddewv_k1,20905,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2418150,"IFA Baltimore-Columbia-Towson, MD",0.21874,
+ifa_mddewv_k1,20906,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2402825,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,20910,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2472450,"IFA Baltimore-Columbia-Towson, MD",4.73159,
+ifa_mddewv_k1,20912,ifa,MD,IFA,IFA_01,IFA,,24031,47900,2476650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21001,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2400125,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21005,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2400175,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21009,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2405950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21010,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2425150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21012,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2402275,"IFA Baltimore-Columbia-Towson, MD",0.251596,
+ifa_mddewv_k1,21013,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2427700,"IFA Baltimore-Columbia-Towson, MD",0.387453,
+ifa_mddewv_k1,21014,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2405825,"IFA Baltimore-Columbia-Towson, MD",8.73616,
+ifa_mddewv_k1,21015,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2405950,"IFA Baltimore-Columbia-Towson, MD",0.0572725,
+ifa_mddewv_k1,21017,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2466762,"IFA Baltimore-Columbia-Towson, MD",5.79776,
+ifa_mddewv_k1,21023,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21028,ifa,MD,IFA,IFA_01,IFA,,24025,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21029,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2419125,"IFA Baltimore-Columbia-Towson, MD",1.83939,
+ifa_mddewv_k1,21030,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2418250,"IFA Baltimore-Columbia-Towson, MD",43.343,
+ifa_mddewv_k1,21031,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2418250,"IFA Baltimore-Columbia-Towson, MD",94.2124,
+ifa_mddewv_k1,21032,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2421075,"IFA Baltimore-Columbia-Towson, MD",4.41746,
+ifa_mddewv_k1,21034,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2421800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21035,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2466400,"IFA Baltimore-Columbia-Towson, MD",0.00141113,
+ifa_mddewv_k1,21036,ifa,MD,IFA,IFA_01,IFA,,24027,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0770185,
+ifa_mddewv_k1,21037,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2451575,"IFA Baltimore-Columbia-Towson, MD",3.88276,
+ifa_mddewv_k1,21040,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2425150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21042,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2426000,"IFA Baltimore-Columbia-Towson, MD",17.1998,
+ifa_mddewv_k1,21043,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2426000,"IFA Baltimore-Columbia-Towson, MD",52.2139,
+ifa_mddewv_k1,21044,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2419125,"IFA Baltimore-Columbia-Towson, MD",11.4166,
+ifa_mddewv_k1,21045,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2419125,"IFA Baltimore-Columbia-Towson, MD",20.3853,
+ifa_mddewv_k1,21046,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2419125,"IFA Baltimore-Columbia-Towson, MD",32.7326,
+ifa_mddewv_k1,21047,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2427700,"IFA Baltimore-Columbia-Towson, MD",0.119318,
+ifa_mddewv_k1,21048,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2425575,"IFA Baltimore-Columbia-Towson, MD",2.15869,
+ifa_mddewv_k1,21050,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2405825,"IFA Baltimore-Columbia-Towson, MD",0.97398,
+ifa_mddewv_k1,21051,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21052,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2424950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21053,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0313457,
+ifa_mddewv_k1,21054,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2458300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21056,ifa,MD,IFA,IFA_01,IFA,,24003,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21057,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2413325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21060,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2432650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21061,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2432650,"IFA Baltimore-Columbia-Towson, MD",5.42181,
+ifa_mddewv_k1,21071,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21074,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2436500,"IFA Baltimore-Columbia-Towson, MD",0.198863,
+ifa_mddewv_k1,21075,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2425750,"IFA Baltimore-Columbia-Towson, MD",10.2259,
+ifa_mddewv_k1,21076,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471150,"IFA Baltimore-Columbia-Towson, MD",1.22022,
+ifa_mddewv_k1,21077,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21078,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2437600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21082,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2462175,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21084,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2442325,"IFA Baltimore-Columbia-Towson, MD",2.16209,
+ifa_mddewv_k1,21085,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2442875,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21087,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2444350,"IFA Baltimore-Columbia-Towson, MD",1.53817,
+ifa_mddewv_k1,21090,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2447125,"IFA Baltimore-Columbia-Towson, MD",0.198863,
+ifa_mddewv_k1,21093,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2478050,"IFA Baltimore-Columbia-Towson, MD",72.1647,
+ifa_mddewv_k1,21102,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2449950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21104,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2425575,"IFA Baltimore-Columbia-Towson, MD",3.04151,
+ifa_mddewv_k1,21105,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21108,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471200,"IFA Baltimore-Columbia-Towson, MD",9.30254,
+ifa_mddewv_k1,21111,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",2.25238,
+ifa_mddewv_k1,21113,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2458300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21114,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2420875,"IFA Baltimore-Columbia-Towson, MD",4.42939,
+ifa_mddewv_k1,21117,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2459425,"IFA Baltimore-Columbia-Towson, MD",77.9282,
+ifa_mddewv_k1,21120,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",2.23361,
+ifa_mddewv_k1,21122,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2444975,"IFA Baltimore-Columbia-Towson, MD",0.334322,
+ifa_mddewv_k1,21128,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2440200,"IFA Baltimore-Columbia-Towson, MD",1.19734,
+ifa_mddewv_k1,21130,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2461075,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21131,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2418250,"IFA Baltimore-Columbia-Towson, MD",0.163042,
+ifa_mddewv_k1,21132,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2464375,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21133,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2464950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21136,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2465600,"IFA Baltimore-Columbia-Towson, MD",0.0748211,
+ifa_mddewv_k1,21140,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2466400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21144,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471150,"IFA Baltimore-Columbia-Towson, MD",1.59939,
+ifa_mddewv_k1,21146,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2471200,"IFA Baltimore-Columbia-Towson, MD",36.6488,
+ifa_mddewv_k1,21152,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",3.3363,
+ifa_mddewv_k1,21153,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2461400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21154,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2464375,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21155,ifa,MD,IFA,IFA_01,IFA,,24005,12580,,"IFA Baltimore-Columbia-Towson, MD",0.648292,
+ifa_mddewv_k1,21156,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2444350,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21157,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2483100,"IFA Baltimore-Columbia-Towson, MD",15.7574,
+ifa_mddewv_k1,21158,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2483100,"IFA Baltimore-Columbia-Towson, MD",0.958674,
+ifa_mddewv_k1,21160,ifa,MD,IFA,IFA_01,IFA,,24025,12580,2464375,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21161,ifa,MD,IFA,IFA_01,IFA,,24025,12580,,"IFA Baltimore-Columbia-Towson, MD",0.25671,
+ifa_mddewv_k1,21162,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2440200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21163,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2464950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21201,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",9.34506,
+ifa_mddewv_k1,21202,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",1.10108,
+ifa_mddewv_k1,21204,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2478425,"IFA Baltimore-Columbia-Towson, MD",19.3722,
+ifa_mddewv_k1,21205,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21206,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21207,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2447450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21208,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2461400,"IFA Baltimore-Columbia-Towson, MD",11.5891,
+ifa_mddewv_k1,21209,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",5.7626,
+ifa_mddewv_k1,21210,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21211,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.177109,
+ifa_mddewv_k1,21212,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0595904,
+ifa_mddewv_k1,21213,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21214,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",2.55746,
+ifa_mddewv_k1,21215,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21216,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21217,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21218,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21219,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2424950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21220,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2452300,"IFA Baltimore-Columbia-Towson, MD",0.556816,
+ifa_mddewv_k1,21221,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2426600,"IFA Baltimore-Columbia-Towson, MD",1.18421,
+ifa_mddewv_k1,21222,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2423975,"IFA Baltimore-Columbia-Towson, MD",3.55039,
+ifa_mddewv_k1,21223,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21224,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.230856,
+ifa_mddewv_k1,21225,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2410475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21226,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21227,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2401975,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21228,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2414125,"IFA Baltimore-Columbia-Towson, MD",4.25894,
+ifa_mddewv_k1,21229,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21230,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",1.5075,
+ifa_mddewv_k1,21231,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.260654,
+ifa_mddewv_k1,21233,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21234,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2413325,"IFA Baltimore-Columbia-Towson, MD",3.75559,
+ifa_mddewv_k1,21236,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2460975,"IFA Baltimore-Columbia-Towson, MD",0.000715906,
+ifa_mddewv_k1,21237,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2468400,"IFA Baltimore-Columbia-Towson, MD",0.0313457,
+ifa_mddewv_k1,21239,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21240,ifa,MD,IFA,IFA_01,IFA,,24003,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21244,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2452562,"IFA Baltimore-Columbia-Towson, MD",0.795451,
+ifa_mddewv_k1,21250,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2414125,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21251,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21252,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2478425,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21285,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2478425,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21286,ifa,MD,IFA,IFA_01,IFA,,24005,12580,2436512,"IFA Baltimore-Columbia-Towson, MD",14.5329,
+ifa_mddewv_k1,21287,ifa,MD,IFA,IFA_01,IFA,,24510,12580,2404000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21401,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2460325,"IFA Baltimore-Columbia-Towson, MD",85.4699,
+ifa_mddewv_k1,21402,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2455050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21403,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2401635,"IFA Baltimore-Columbia-Towson, MD",5.33962,
+ifa_mddewv_k1,21405,ifa,MD,IFA,IFA_01,IFA,,24003,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21409,ifa,MD,IFA,IFA_01,IFA,,24003,12580,2412912,"IFA Baltimore-Columbia-Towson, MD",4.73714,
+ifa_mddewv_k1,21502,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2421325,"IFA Baltimore-Columbia-Towson, MD",8.11542,
+ifa_mddewv_k1,21520,ifa,MD,IFA,IFA_01,IFA,,24023,,2400225,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21521,ifa,MD,IFA,IFA_01,IFA,,24023,,2453700,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21523,ifa,MD,IFA,IFA_01,IFA,,24023,,2408050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21524,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2419975,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21529,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2425925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21530,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2428425,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21531,ifa,MD,IFA,IFA_01,IFA,,24023,,2430850,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21532,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2428275,"IFA Baltimore-Columbia-Towson, MD",0.537088,
+ifa_mddewv_k1,21536,ifa,MD,IFA,IFA_01,IFA,,24023,,2434525,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21538,ifa,MD,IFA,IFA_01,IFA,,24023,,2444450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21539,ifa,MD,IFA,IFA_01,IFA,,24023,,2447875,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21540,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2448775,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21541,ifa,MD,IFA,IFA_01,IFA,,24023,,,"IFA Baltimore-Columbia-Towson, MD",0.300919,
+ifa_mddewv_k1,21542,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2452475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21543,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2452525,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21545,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2454325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21550,ifa,MD,IFA,IFA_01,IFA,,24023,,2457650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21555,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2458775,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21557,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2421675,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21560,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2474350,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21561,ifa,MD,IFA,IFA_01,IFA,,24023,,2476450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21562,ifa,MD,IFA,IFA_01,IFA,,24023,,2482750,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21601,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2424475,"IFA Baltimore-Columbia-Towson, MD",2.8196,
+ifa_mddewv_k1,21607,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2404250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21610,ifa,MD,IFA,IFA_01,IFA,,24029,,2407200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21612,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21613,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2412400,"IFA Baltimore-Columbia-Towson, MD",4.3413,
+ifa_mddewv_k1,21617,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2414950,"IFA Baltimore-Columbia-Towson, MD",0.93883,
+ifa_mddewv_k1,21619,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2416125,"IFA Baltimore-Columbia-Towson, MD",1.81417,
+ifa_mddewv_k1,21620,ifa,MD,IFA,IFA_01,IFA,,24029,,2427325,"IFA Baltimore-Columbia-Towson, MD",0.0504485,
+ifa_mddewv_k1,21622,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2428300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21623,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2417100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21624,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21625,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2419900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21626,ifa,MD,IFA,IFA_01,IFA,,24019,15700,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21627,ifa,MD,IFA,IFA_01,IFA,,24019,15700,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21628,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2421150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21629,ifa,MD,IFA,IFA_01,IFA,,24011,,2422725,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21631,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2424450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21632,ifa,MD,IFA,IFA_01,IFA,,24011,,2427900,"IFA Baltimore-Columbia-Towson, MD",0.673081,
+ifa_mddewv_k1,21634,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2428300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21635,ifa,MD,IFA,IFA_01,IFA,,24029,,2431225,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21636,ifa,MD,IFA,IFA_01,IFA,,24011,,2433950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21638,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2434550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21639,ifa,MD,IFA,IFA_01,IFA,,24011,,2435200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21640,ifa,MD,IFA,IFA_01,IFA,,24011,,2437925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21641,ifa,MD,IFA,IFA_01,IFA,,24011,,2439175,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21643,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2441125,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21644,ifa,MD,IFA,IFA_01,IFA,,24035,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21645,ifa,MD,IFA,IFA_01,IFA,,24029,,2443475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21647,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21648,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2449700,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21649,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2451025,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21650,ifa,MD,IFA,IFA_01,IFA,,24029,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21651,ifa,MD,IFA,IFA_01,IFA,,24029,,2452825,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21652,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21653,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21654,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2459450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21655,ifa,MD,IFA,IFA_01,IFA,,24011,,2463825,"IFA Baltimore-Columbia-Towson, MD",5.68751,
+ifa_mddewv_k1,21657,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2464500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21658,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2464600,"IFA Baltimore-Columbia-Towson, MD",0.124319,
+ifa_mddewv_k1,21659,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2431250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21660,ifa,MD,IFA,IFA_01,IFA,,24011,,2466000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21661,ifa,MD,IFA,IFA_01,IFA,,24029,,2467400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21662,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21663,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2469825,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21664,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2470900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21665,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2477912,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21666,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2475025,"IFA Baltimore-Columbia-Towson, MD",10.4952,
+ifa_mddewv_k1,21667,ifa,MD,IFA,IFA_01,IFA,,24029,,2475150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21668,ifa,MD,IFA,IFA_01,IFA,,24035,12580,2475650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21669,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2476925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21671,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2477912,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21672,ifa,MD,IFA,IFA_01,IFA,,24019,15700,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21673,ifa,MD,IFA,IFA_01,IFA,,24041,20660,2478575,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21675,ifa,MD,IFA,IFA_01,IFA,,24019,15700,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21676,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21677,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2449700,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21678,ifa,MD,IFA,IFA_01,IFA,,24029,,2487000,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21679,ifa,MD,IFA,IFA_01,IFA,,24041,20660,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21701,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2430325,"IFA Baltimore-Columbia-Towson, MD",16.8748,
+ifa_mddewv_k1,21702,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2430325,"IFA Baltimore-Columbia-Towson, MD",1.80658,
+ifa_mddewv_k1,21703,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2403800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21704,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2479900,"IFA Baltimore-Columbia-Towson, MD",19.8727,
+ifa_mddewv_k1,21705,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2430325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21710,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2400350,"IFA Baltimore-Columbia-Towson, MD",0.56494,
+ifa_mddewv_k1,21711,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2460770,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21713,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2408625,"IFA Baltimore-Columbia-Towson, MD",0.353943,
+ifa_mddewv_k1,21714,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2409100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21715,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2410800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21716,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2410900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21717,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2411050,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21718,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2411400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21719,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2438437,"IFA Baltimore-Columbia-Towson, MD",1.50959,
+ifa_mddewv_k1,21722,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2485395,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21723,ifa,MD,IFA,IFA_01,IFA,,24027,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0532328,
+ifa_mddewv_k1,21727,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2426200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21733,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2469550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21734,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2431100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21737,ifa,MD,IFA,IFA_01,IFA,,24027,12580,,"IFA Baltimore-Columbia-Towson, MD",2.03012,
+ifa_mddewv_k1,21738,ifa,MD,IFA,IFA_01,IFA,,24027,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21740,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2436075,"IFA Baltimore-Columbia-Towson, MD",8.14271,
+ifa_mddewv_k1,21742,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2429712,"IFA Baltimore-Columbia-Towson, MD",0.898261,
+ifa_mddewv_k1,21746,ifa,MD,IFA,IFA_01,IFA,,24043,25180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21750,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2436600,"IFA Baltimore-Columbia-Towson, MD",3.10094,
+ifa_mddewv_k1,21754,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2479900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21755,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2442350,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21756,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2443100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21757,ifa,MD,IFA,IFA_01,IFA,,24013,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21758,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2431575,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21762,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2446800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21766,ifa,MD,IFA,IFA_01,IFA,,24001,19060,2447275,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21767,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2451425,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21769,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2452425,"IFA Baltimore-Columbia-Towson, MD",0.377839,
+ifa_mddewv_k1,21770,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2435412,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21771,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2435412,"IFA Baltimore-Columbia-Towson, MD",6.41807,
+ifa_mddewv_k1,21773,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2454875,"IFA Baltimore-Columbia-Towson, MD",0.957443,
+ifa_mddewv_k1,21774,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2447040,"IFA Baltimore-Columbia-Towson, MD",0.0795491,
+ifa_mddewv_k1,21776,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2455925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21777,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2462575,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21778,ifa,MD,IFA,IFA_01,IFA,,24021,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21779,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2431400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21780,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2469200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21781,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2469550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21782,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2451945,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21783,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2414225,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21784,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2425575,"IFA Baltimore-Columbia-Towson, MD",13.2542,
+ifa_mddewv_k1,21787,ifa,MD,IFA,IFA_01,IFA,,24013,12580,2476725,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21788,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2477825,"IFA Baltimore-Columbia-Towson, MD",0.685121,
+ifa_mddewv_k1,21790,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2462575,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21791,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2479350,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21793,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2481275,"IFA Baltimore-Columbia-Towson, MD",0.364555,
+ifa_mddewv_k1,21794,ifa,MD,IFA,IFA_01,IFA,,24027,12580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21795,ifa,MD,IFA,IFA_01,IFA,,24043,25180,2436125,"IFA Baltimore-Columbia-Towson, MD",1.82715,
+ifa_mddewv_k1,21797,ifa,MD,IFA,IFA_01,IFA,,24027,12580,2447250,"IFA Baltimore-Columbia-Towson, MD",0.465866,
+ifa_mddewv_k1,21798,ifa,MD,IFA,IFA_01,IFA,,24021,47900,2486750,"IFA Baltimore-Columbia-Towson, MD",13.3038,
+ifa_mddewv_k1,21801,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2469925,"IFA Baltimore-Columbia-Towson, MD",4.40313,
+ifa_mddewv_k1,21804,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2469925,"IFA Baltimore-Columbia-Towson, MD",5.91979,
+ifa_mddewv_k1,21810,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2400800,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21811,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2458275,"IFA Baltimore-Columbia-Towson, MD",5.60107,
+ifa_mddewv_k1,21813,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2407625,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21814,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2442575,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21817,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2420775,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21821,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2421550,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21822,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2424850,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21824,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2472887,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21826,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2430950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21829,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2432250,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21830,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2464475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21835,ifa,MD,IFA,IFA_01,IFA,,24019,15700,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21837,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2450525,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21838,ifa,MD,IFA,IFA_01,IFA,,24039,41540,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21840,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2454925,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21841,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2455325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21842,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2458225,"IFA Baltimore-Columbia-Towson, MD",20.7449,
+ifa_mddewv_k1,21849,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2460425,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21850,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2463725,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21851,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2483337,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21853,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2454375,"IFA Baltimore-Columbia-Towson, MD",0.0214772,
+ifa_mddewv_k1,21856,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2464475,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21861,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2471650,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21862,ifa,MD,IFA,IFA_01,IFA,,24047,36180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21863,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2473075,"IFA Baltimore-Columbia-Towson, MD",2.97045,
+ifa_mddewv_k1,21864,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2475200,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21865,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2479225,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21866,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2472887,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21867,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2427375,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21869,ifa,MD,IFA,IFA_01,IFA,,24019,15700,2480600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21871,ifa,MD,IFA,IFA_01,IFA,,24039,41540,2427375,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21872,ifa,MD,IFA,IFA_01,IFA,,24047,36180,2483746,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21874,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2484950,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21875,ifa,MD,IFA,IFA_01,IFA,,24045,41540,2422600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21890,ifa,MD,IFA,IFA_01,IFA,,24039,41540,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21901,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2456450,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21902,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2461150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21903,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2461150,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21904,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2463075,"IFA Baltimore-Columbia-Towson, MD",0.31818,
+ifa_mddewv_k1,21911,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2466275,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21912,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2414325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21913,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2414325,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21914,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2415400,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21915,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2415950,"IFA Baltimore-Columbia-Towson, MD",0.142987,
+ifa_mddewv_k1,21917,ifa,MD,IFA,IFA_01,IFA,,24015,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21918,ifa,MD,IFA,IFA_01,IFA,,24015,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21919,ifa,MD,IFA,IFA_01,IFA,,24015,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21920,ifa,MD,IFA,IFA_01,IFA,,24015,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,21921,ifa,MD,IFA,IFA_01,IFA,,24015,37980,2425800,"IFA Baltimore-Columbia-Towson, MD",0.0763935,
+ifa_mddewv_k1,21930,ifa,MD,IFA,IFA_01,IFA,,24015,37980,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24701,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5408524,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24712,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5403292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24714,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24715,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5409796,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24716,ifa,WV,IFA,IFA_01,IFA,,54109,,5411212,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24719,ifa,WV,IFA,IFA_01,IFA,,54109,,5418388,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24724,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5409796,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24726,ifa,WV,IFA,IFA_01,IFA,,54109,,5411212,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24729,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24731,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24733,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24736,ifa,WV,IFA,IFA_01,IFA,,54109,,5452420,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24737,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5455372,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24738,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24739,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5460196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24740,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5465692,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24747,ifa,WV,IFA,IFA_01,IFA,,54055,14140,5445292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24801,ifa,WV,IFA,IFA_01,IFA,,54109,,5485228,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24808,ifa,WV,IFA,IFA_01,IFA,,54047,,5401780,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24811,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24813,ifa,WV,IFA,IFA_01,IFA,,54047,,5404732,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24815,ifa,WV,IFA,IFA_01,IFA,,54047,,5406748,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24816,ifa,WV,IFA,IFA_01,IFA,,54047,,5407516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24817,ifa,WV,IFA,IFA_01,IFA,,54047,,5409700,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24818,ifa,WV,IFA,IFA_01,IFA,,54109,,5409964,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24822,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24823,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24826,ifa,WV,IFA,IFA_01,IFA,,54047,,5419492,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24827,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24828,ifa,WV,IFA,IFA_01,IFA,,54047,,5420500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24830,ifa,WV,IFA,IFA_01,IFA,,54047,,5430196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24831,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24834,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24836,ifa,WV,IFA,IFA_01,IFA,,54047,,5430196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24839,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24843,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24844,ifa,WV,IFA,IFA_01,IFA,,54047,,5439652,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24845,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24846,ifa,WV,IFA,IFA_01,IFA,,54047,,5430777,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24847,ifa,WV,IFA,IFA_01,IFA,,54109,,5440444,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24848,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24849,ifa,WV,IFA,IFA_01,IFA,,54109,,5452372,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24850,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24851,ifa,WV,IFA,IFA_01,IFA,,54059,,5442292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24853,ifa,WV,IFA,IFA_01,IFA,,54047,,5443780,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24854,ifa,WV,IFA,IFA_01,IFA,,54109,,5444548,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24855,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24857,ifa,WV,IFA,IFA_01,IFA,,54109,,5460364,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24860,ifa,WV,IFA,IFA_01,IFA,,54109,,5452372,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24861,ifa,WV,IFA,IFA_01,IFA,,54047,,5452588,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24862,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24866,ifa,WV,IFA,IFA_01,IFA,,54047,,5419492,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24867,ifa,WV,IFA,IFA_01,IFA,,54109,,5458756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24868,ifa,WV,IFA,IFA_01,IFA,,54047,,5419324,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24869,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24870,ifa,WV,IFA,IFA_01,IFA,,54109,,5460364,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24871,ifa,WV,IFA,IFA_01,IFA,,54047,,5461684,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24872,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24873,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24874,ifa,WV,IFA,IFA_01,IFA,,54109,,5463940,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24878,ifa,WV,IFA,IFA_01,IFA,,54047,,5485228,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24879,ifa,WV,IFA,IFA_01,IFA,,54047,,5467228,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24880,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24881,ifa,WV,IFA,IFA_01,IFA,,54047,,5469844,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24882,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24884,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24887,ifa,WV,IFA,IFA_01,IFA,,54047,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24888,ifa,WV,IFA,IFA_01,IFA,,54047,,5430196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24892,ifa,WV,IFA,IFA_01,IFA,,54047,,5484484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24894,ifa,WV,IFA,IFA_01,IFA,,54047,,5484484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24895,ifa,WV,IFA,IFA_01,IFA,,54047,,5430196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24898,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24901,ifa,WV,IFA,IFA_01,IFA,,54025,,5446636,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24910,ifa,WV,IFA,IFA_01,IFA,,54025,,5400772,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24915,ifa,WV,IFA,IFA_01,IFA,,54075,,5433124,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24916,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24918,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24920,ifa,WV,IFA,IFA_01,IFA,,54075,,5404780,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24924,ifa,WV,IFA,IFA_01,IFA,,54075,,5451676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24925,ifa,WV,IFA,IFA_01,IFA,,54025,,5486812,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24927,ifa,WV,IFA,IFA_01,IFA,,54075,,5413684,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24931,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24934,ifa,WV,IFA,IFA_01,IFA,,54075,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24935,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24938,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24941,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24943,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24944,ifa,WV,IFA,IFA_01,IFA,,54075,,5433124,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24945,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24946,ifa,WV,IFA,IFA_01,IFA,,54075,,5437372,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24951,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24954,ifa,WV,IFA,IFA_01,IFA,,54075,,5451676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24957,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24962,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24963,ifa,WV,IFA,IFA_01,IFA,,54063,,5463052,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24966,ifa,WV,IFA,IFA_01,IFA,,54025,,5426692,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24970,ifa,WV,IFA,IFA_01,IFA,,54025,,5426428,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24974,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24976,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24977,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24981,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24983,ifa,WV,IFA,IFA_01,IFA,,54063,,5481940,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24984,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24985,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24986,ifa,WV,IFA,IFA_01,IFA,,54025,,5486812,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24991,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,24993,ifa,WV,IFA,IFA_01,IFA,,54063,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25002,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5426812,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25003,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5401396,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25005,ifa,WV,IFA,IFA_01,IFA,,54087,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25007,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25008,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25009,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25011,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5404204,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25015,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5405836,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25019,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25021,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25022,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25024,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25025,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25028,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25030,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25031,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5409100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25033,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5411284,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25035,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414812,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25036,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5474740,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25039,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5413924,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25040,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5414630,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25043,ifa,WV,IFA,IFA_01,IFA,,54015,16620,5415676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25044,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25045,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5416012,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25047,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25048,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5421964,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25049,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5417380,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25051,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25053,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5450524,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25054,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25057,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5420764,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25059,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5421628,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25060,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5421964,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25061,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25062,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25063,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25064,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5422564,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25067,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5423092,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25070,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5424292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25071,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5463772,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25075,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5425732,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25076,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25081,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5450524,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25082,ifa,WV,IFA,IFA_01,IFA,,54079,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25083,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25085,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5430364,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25086,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5431324,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25088,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25090,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5431732,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25093,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25102,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5434756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25103,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5438092,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25106,ifa,WV,IFA,IFA_01,IFA,,54053,,5436436,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25107,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25108,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25109,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5438260,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25110,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5455468,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25111,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25112,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5440156,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25113,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25114,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5433580,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25115,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25118,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5465284,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25119,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5443852,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25121,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25123,ifa,WV,IFA,IFA_01,IFA,,54053,,5446300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25124,ifa,WV,IFA,IFA_01,IFA,,54079,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25125,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25126,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5455468,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25130,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5450524,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25132,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25133,ifa,WV,IFA,IFA_01,IFA,,54015,16620,5415676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25134,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25136,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5455468,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25139,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5443828,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25140,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25141,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25142,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25143,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5459068,"IFA Baltimore-Columbia-Towson, MD",0.047727,
+ifa_mddewv_k1,25148,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25149,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25152,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5461660,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25154,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25156,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5463772,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25159,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5464516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25160,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25161,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5465284,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25162,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5465356,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25164,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25165,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5466484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25168,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5438260,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25169,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25173,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5405068,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25174,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25177,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5471212,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25180,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25181,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25183,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25185,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25186,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5474740,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25187,ifa,WV,IFA,IFA_01,IFA,,54053,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25193,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5478964,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25201,ifa,WV,IFA,IFA_01,IFA,,54039,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25202,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5401396,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25203,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25204,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5481484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25205,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5450524,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25206,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5482852,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25208,ifa,WV,IFA,IFA_01,IFA,,54005,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25209,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5486836,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25211,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25213,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5487988,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25214,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5415028,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25231,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25234,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25235,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25239,ifa,WV,IFA,IFA_01,IFA,,54035,,5418124,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25241,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25243,ifa,WV,IFA,IFA_01,IFA,,54087,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25244,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25245,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25247,ifa,WV,IFA,IFA_01,IFA,,54053,,5435500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25248,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25251,ifa,WV,IFA,IFA_01,IFA,,54087,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25252,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25253,ifa,WV,IFA,IFA_01,IFA,,54053,,5435500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25259,ifa,WV,IFA,IFA_01,IFA,,54087,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25260,ifa,WV,IFA,IFA_01,IFA,,54053,,5452180,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25261,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25262,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25264,ifa,WV,IFA,IFA_01,IFA,,54053,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25265,ifa,WV,IFA,IFA_01,IFA,,54053,,5458564,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25266,ifa,WV,IFA,IFA_01,IFA,,54087,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25267,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25268,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25270,ifa,WV,IFA,IFA_01,IFA,,54087,,5467660,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25271,ifa,WV,IFA,IFA_01,IFA,,54035,,5468596,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25275,ifa,WV,IFA,IFA_01,IFA,,54035,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25276,ifa,WV,IFA,IFA_01,IFA,,54087,,5475820,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25285,ifa,WV,IFA,IFA_01,IFA,,54015,16620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25286,ifa,WV,IFA,IFA_01,IFA,,54087,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25287,ifa,WV,IFA,IFA_01,IFA,,54053,,5435500,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25301,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.929694,
+ifa_mddewv_k1,25302,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25303,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5475292,"IFA Baltimore-Columbia-Towson, MD",0.340247,
+ifa_mddewv_k1,25304,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25305,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25306,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5416612,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25309,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5475292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25311,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.288177,
+ifa_mddewv_k1,25312,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5474356,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25313,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5419108,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25314,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25315,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5451724,"IFA Baltimore-Columbia-Towson, MD",0.0199525,
+ifa_mddewv_k1,25320,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5474356,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25387,ifa,WV,IFA,IFA_01,IFA,,54039,16620,5414600,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25401,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5452060,"IFA Baltimore-Columbia-Towson, MD",2.29518,
+ifa_mddewv_k1,25403,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5452060,"IFA Baltimore-Columbia-Towson, MD",4.85334,
+ifa_mddewv_k1,25404,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5452060,"IFA Baltimore-Columbia-Towson, MD",0.123839,
+ifa_mddewv_k1,25405,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5452060,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25411,ifa,WV,IFA,IFA_01,IFA,,54065,25180,5404876,"IFA Baltimore-Columbia-Towson, MD",0.125681,
+ifa_mddewv_k1,25413,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5440204,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25414,ifa,WV,IFA,IFA_01,IFA,,54037,47900,5414610,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25419,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5426716,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25420,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5440204,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25421,ifa,WV,IFA,IFA_01,IFA,,54003,25180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25422,ifa,WV,IFA,IFA_01,IFA,,54065,25180,5433100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25425,ifa,WV,IFA,IFA_01,IFA,,54037,47900,5473252,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25427,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5436220,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25428,ifa,WV,IFA,IFA_01,IFA,,54003,25180,5440204,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25430,ifa,WV,IFA,IFA_01,IFA,,54037,47900,5466988,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25431,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25432,ifa,WV,IFA,IFA_01,IFA,,54037,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25434,ifa,WV,IFA,IFA_01,IFA,,54027,49020,5462332,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25437,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25438,ifa,WV,IFA,IFA_01,IFA,,54037,47900,5466988,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25442,ifa,WV,IFA,IFA_01,IFA,,54037,47900,5473444,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25443,ifa,WV,IFA,IFA_01,IFA,,54037,47900,5473468,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25444,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25446,ifa,WV,IFA,IFA_01,IFA,,54037,47900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25501,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25502,ifa,WV,IFA,IFA_01,IFA,,54053,,5402188,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25503,ifa,WV,IFA,IFA_01,IFA,,54053,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25504,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5404276,"IFA Baltimore-Columbia-Towson, MD",2.87562,
+ifa_mddewv_k1,25505,ifa,WV,IFA,IFA_01,IFA,,54043,,5407228,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25506,ifa,WV,IFA,IFA_01,IFA,,54043,,5485804,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25507,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5414308,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25508,ifa,WV,IFA,IFA_01,IFA,,54045,,5414524,"IFA Baltimore-Columbia-Towson, MD",0.139935,
+ifa_mddewv_k1,25510,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5419516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25511,ifa,WV,IFA,IFA_01,IFA,,54099,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25512,ifa,WV,IFA,IFA_01,IFA,,54099,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25514,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5428516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25515,ifa,WV,IFA,IFA_01,IFA,,54053,,5429716,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25517,ifa,WV,IFA,IFA_01,IFA,,54099,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25520,ifa,WV,IFA,IFA_01,IFA,,54011,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25521,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25523,ifa,WV,IFA,IFA_01,IFA,,54043,,5434516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25524,ifa,WV,IFA,IFA_01,IFA,,54043,,5435596,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25526,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5439532,"IFA Baltimore-Columbia-Towson, MD",2.6593,
+ifa_mddewv_k1,25529,ifa,WV,IFA,IFA_01,IFA,,54005,16620,5420212,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25530,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5443180,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25534,ifa,WV,IFA,IFA_01,IFA,,54099,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25535,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5445580,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25537,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5446420,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25540,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25541,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5454484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25544,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25545,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5404276,"IFA Baltimore-Columbia-Towson, MD",0.114456,
+ifa_mddewv_k1,25547,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25550,ifa,WV,IFA,IFA_01,IFA,,54053,,5464708,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25555,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5465596,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25557,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25559,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5471476,"IFA Baltimore-Columbia-Towson, MD",0.0152727,
+ifa_mddewv_k1,25560,ifa,WV,IFA,IFA_01,IFA,,54079,26580,5479545,"IFA Baltimore-Columbia-Towson, MD",2.32322,
+ifa_mddewv_k1,25564,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25565,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25567,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25570,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5484940,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25571,ifa,WV,IFA,IFA_01,IFA,,54043,,5485804,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25573,ifa,WV,IFA,IFA_01,IFA,,54043,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25601,ifa,WV,IFA,IFA_01,IFA,,54045,,5456342,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25606,ifa,WV,IFA,IFA_01,IFA,,54045,,5400196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25607,ifa,WV,IFA,IFA_01,IFA,,54045,,5469100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25608,ifa,WV,IFA,IFA_01,IFA,,54059,,5430777,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25611,ifa,WV,IFA,IFA_01,IFA,,54045,,5410876,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25612,ifa,WV,IFA,IFA_01,IFA,,54045,,5414716,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25617,ifa,WV,IFA,IFA_01,IFA,,54045,,5450932,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25621,ifa,WV,IFA,IFA_01,IFA,,54059,,5430772,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25624,ifa,WV,IFA,IFA_01,IFA,,54045,,5436484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25625,ifa,WV,IFA,IFA_01,IFA,,54045,,5437948,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25628,ifa,WV,IFA,IFA_01,IFA,,54045,,5444188,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25630,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25632,ifa,WV,IFA,IFA_01,IFA,,54045,,5457916,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25634,ifa,WV,IFA,IFA_01,IFA,,54045,,5450860,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25635,ifa,WV,IFA,IFA_01,IFA,,54045,,5450932,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25637,ifa,WV,IFA,IFA_01,IFA,,54045,,5456342,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25638,ifa,WV,IFA,IFA_01,IFA,,54045,,5460628,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25639,ifa,WV,IFA,IFA_01,IFA,,54045,,5419060,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25644,ifa,WV,IFA,IFA_01,IFA,,54045,,5472004,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25646,ifa,WV,IFA,IFA_01,IFA,,54045,,5449732,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25647,ifa,WV,IFA,IFA_01,IFA,,54045,,5478796,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25649,ifa,WV,IFA,IFA_01,IFA,,54045,,5483332,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25650,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25651,ifa,WV,IFA,IFA_01,IFA,,54059,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25652,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25653,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25654,ifa,WV,IFA,IFA_01,IFA,,54045,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25661,ifa,WV,IFA,IFA_01,IFA,,54059,,5487508,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25666,ifa,WV,IFA,IFA_01,IFA,,54059,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25667,ifa,WV,IFA,IFA_01,IFA,,54059,,5414692,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25669,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5419300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25670,ifa,WV,IFA,IFA_01,IFA,,54059,,5420980,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25671,ifa,WV,IFA,IFA_01,IFA,,54059,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25672,ifa,WV,IFA,IFA_01,IFA,,54059,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25674,ifa,WV,IFA,IFA_01,IFA,,54059,,5443300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25676,ifa,WV,IFA,IFA_01,IFA,,54059,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25678,ifa,WV,IFA,IFA_01,IFA,,54059,,5452324,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25685,ifa,WV,IFA,IFA_01,IFA,,54059,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25688,ifa,WV,IFA,IFA_01,IFA,,54059,,5467396,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25690,ifa,WV,IFA,IFA_01,IFA,,54059,,5420980,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25692,ifa,WV,IFA,IFA_01,IFA,,54059,,5467396,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25696,ifa,WV,IFA,IFA_01,IFA,,54059,,5467396,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25699,ifa,WV,IFA,IFA_01,IFA,,54099,26580,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25701,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5439460,"IFA Baltimore-Columbia-Towson, MD",12.2732,
+ifa_mddewv_k1,25702,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5439460,"IFA Baltimore-Columbia-Towson, MD",2.59004,
+ifa_mddewv_k1,25703,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5439460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25704,ifa,WV,IFA,IFA_01,IFA,,54099,26580,5439460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25705,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5439460,"IFA Baltimore-Columbia-Towson, MD",2.99123,
+ifa_mddewv_k1,25755,ifa,WV,IFA,IFA_01,IFA,,54011,26580,5439460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25801,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5405332,"IFA Baltimore-Columbia-Towson, MD",10.2341,
+ifa_mddewv_k1,25810,ifa,WV,IFA,IFA_01,IFA,,54109,,5417836,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25811,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25812,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5401996,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25813,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5405260,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25817,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5408956,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25818,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5409676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25820,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25823,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5416516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25825,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5473108,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25826,ifa,WV,IFA,IFA_01,IFA,,54109,,5417836,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25827,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5418508,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25831,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25832,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5420164,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25836,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5423644,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25837,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25839,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5408956,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25840,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5427028,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25841,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25843,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5430724,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25844,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25845,ifa,WV,IFA,IFA_01,IFA,,54109,,5431756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25846,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5431876,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25848,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25849,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5432068,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25851,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25853,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5436292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25854,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5437036,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25855,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5437444,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25857,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25862,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25864,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5463988,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25865,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5446468,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25866,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5460028,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25868,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25870,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25871,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5449492,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25873,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5449564,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25875,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25876,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25878,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5475172,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25879,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5460028,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25880,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5409676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25882,ifa,WV,IFA,IFA_01,IFA,,54109,,5457148,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25901,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5460028,"IFA Baltimore-Columbia-Towson, MD",0.00647918,
+ifa_mddewv_k1,25902,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25904,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5462356,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25907,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5465668,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25908,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5416516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25909,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5465836,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25911,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5466748,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25913,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25915,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5467996,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25916,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25917,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5472292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25918,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5473108,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25920,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25921,ifa,WV,IFA,IFA_01,IFA,,54081,13220,5416516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25922,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25928,ifa,WV,IFA,IFA_01,IFA,,54109,,5457148,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25932,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25936,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5480284,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25938,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5437036,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25942,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25943,ifa,WV,IFA,IFA_01,IFA,,54109,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25951,ifa,WV,IFA,IFA_01,IFA,,54089,,5437636,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25958,ifa,WV,IFA,IFA_01,IFA,,54025,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25962,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5466652,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25966,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25969,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25971,ifa,WV,IFA,IFA_01,IFA,,54055,14140,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25972,ifa,WV,IFA,IFA_01,IFA,,54025,,5466412,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25976,ifa,WV,IFA,IFA_01,IFA,,54019,13220,5452780,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25977,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25978,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25979,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25981,ifa,WV,IFA,IFA_01,IFA,,54025,,5466412,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25984,ifa,WV,IFA,IFA_01,IFA,,54025,,5470828,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25985,ifa,WV,IFA,IFA_01,IFA,,54089,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25986,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,25989,ifa,WV,IFA,IFA_01,IFA,,54081,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26003,ifa,WV,IFA,IFA_01,IFA,,54069,48540,5486452,"IFA Baltimore-Columbia-Towson, MD",10.915,
+ifa_mddewv_k1,26030,ifa,WV,IFA,IFA_01,IFA,,54009,48260,5405452,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26031,ifa,WV,IFA,IFA_01,IFA,,54051,48540,5406340,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26032,ifa,WV,IFA,IFA_01,IFA,,54009,48260,5406844,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26033,ifa,WV,IFA,IFA_01,IFA,,54051,48540,5412484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26034,ifa,WV,IFA,IFA_01,IFA,,54029,48260,5415076,"IFA Baltimore-Columbia-Towson, MD",0.026216,
+ifa_mddewv_k1,26035,ifa,WV,IFA,IFA_01,IFA,,54009,48260,5485156,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26036,ifa,WV,IFA,IFA_01,IFA,,54051,48540,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26037,ifa,WV,IFA,IFA_01,IFA,,54009,48260,5438476,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26038,ifa,WV,IFA,IFA_01,IFA,,54051,48540,5431492,"IFA Baltimore-Columbia-Towson, MD",0.15616,
+ifa_mddewv_k1,26039,ifa,WV,IFA,IFA_01,IFA,,54051,48540,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26040,ifa,WV,IFA,IFA_01,IFA,,54051,48540,5450260,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26041,ifa,WV,IFA,IFA_01,IFA,,54051,48540,5456020,"IFA Baltimore-Columbia-Towson, MD",0.00636361,
+ifa_mddewv_k1,26047,ifa,WV,IFA,IFA_01,IFA,,54029,48260,5458372,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26050,ifa,WV,IFA,IFA_01,IFA,,54029,48260,5458420,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26055,ifa,WV,IFA,IFA_01,IFA,,54051,48540,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26056,ifa,WV,IFA,IFA_01,IFA,,54029,48260,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26058,ifa,WV,IFA,IFA_01,IFA,,54009,48260,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26059,ifa,WV,IFA,IFA_01,IFA,,54069,48540,5480932,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26060,ifa,WV,IFA,IFA_01,IFA,,54069,48540,5482732,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26062,ifa,WV,IFA,IFA_01,IFA,,54029,48260,5485156,"IFA Baltimore-Columbia-Towson, MD",3.1626,
+ifa_mddewv_k1,26070,ifa,WV,IFA,IFA_01,IFA,,54009,48260,5485324,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26074,ifa,WV,IFA,IFA_01,IFA,,54069,48540,5485876,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26075,ifa,WV,IFA,IFA_01,IFA,,54009,48260,5487892,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26101,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5462140,"IFA Baltimore-Columbia-Towson, MD",2.49728,
+ifa_mddewv_k1,26104,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5462140,"IFA Baltimore-Columbia-Towson, MD",0.257529,
+ifa_mddewv_k1,26105,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5483500,"IFA Baltimore-Columbia-Towson, MD",7.96964,
+ifa_mddewv_k1,26133,ifa,WV,IFA,IFA_01,IFA,,54107,37620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26134,ifa,WV,IFA,IFA_01,IFA,,54073,,5406004,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26136,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26137,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26138,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26141,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26142,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5442388,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26143,ifa,WV,IFA,IFA_01,IFA,,54105,37620,5458252,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26146,ifa,WV,IFA,IFA_01,IFA,,54095,,5429404,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26147,ifa,WV,IFA,IFA_01,IFA,,54013,,5432884,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26148,ifa,WV,IFA,IFA_01,IFA,,54085,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26149,ifa,WV,IFA,IFA_01,IFA,,54095,,5453572,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26150,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5454580,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26151,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26152,ifa,WV,IFA,IFA_01,IFA,,54013,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26155,ifa,WV,IFA,IFA_01,IFA,,54103,,5458684,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26159,ifa,WV,IFA,IFA_01,IFA,,54103,,5461636,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26160,ifa,WV,IFA,IFA_01,IFA,,54105,37620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26161,ifa,WV,IFA,IFA_01,IFA,,54085,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26162,ifa,WV,IFA,IFA_01,IFA,,54103,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26164,ifa,WV,IFA,IFA_01,IFA,,54035,,5467108,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26167,ifa,WV,IFA,IFA_01,IFA,,54103,,5467252,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26169,ifa,WV,IFA,IFA_01,IFA,,54107,37620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26170,ifa,WV,IFA,IFA_01,IFA,,54073,,5471356,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26175,ifa,WV,IFA,IFA_01,IFA,,54095,,5474380,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26178,ifa,WV,IFA,IFA_01,IFA,,54085,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26180,ifa,WV,IFA,IFA_01,IFA,,54107,37620,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26181,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5484724,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26184,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5484916,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26187,ifa,WV,IFA,IFA_01,IFA,,54107,37620,5408836,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26201,ifa,WV,IFA,IFA_01,IFA,,54097,,5411188,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26202,ifa,WV,IFA,IFA_01,IFA,,54067,,5427196,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26203,ifa,WV,IFA,IFA_01,IFA,,54101,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26205,ifa,WV,IFA,IFA_01,IFA,,54067,,5418604,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26206,ifa,WV,IFA,IFA_01,IFA,,54101,,5418412,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26208,ifa,WV,IFA,IFA_01,IFA,,54101,,5412436,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26209,ifa,WV,IFA,IFA_01,IFA,,54075,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26210,ifa,WV,IFA,IFA_01,IFA,,54097,,5400460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26215,ifa,WV,IFA,IFA_01,IFA,,54101,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26217,ifa,WV,IFA,IFA_01,IFA,,54101,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26218,ifa,WV,IFA,IFA_01,IFA,,54097,,5469244,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26222,ifa,WV,IFA,IFA_01,IFA,,54101,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26224,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5436340,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26228,ifa,WV,IFA,IFA_01,IFA,,54097,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26230,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5463484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26234,ifa,WV,IFA,IFA_01,IFA,,54097,,5469244,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26236,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26237,ifa,WV,IFA,IFA_01,IFA,,54097,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26238,ifa,WV,IFA,IFA_01,IFA,,54001,,5414212,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26241,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5424580,"IFA Baltimore-Columbia-Towson, MD",5.09213,
+ifa_mddewv_k1,26250,ifa,WV,IFA,IFA_01,IFA,,54001,,5405788,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26253,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5423140,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26254,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26257,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5488324,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26259,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5419948,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26260,ifa,WV,IFA,IFA_01,IFA,,54093,,5420428,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26261,ifa,WV,IFA,IFA_01,IFA,,54025,,5468116,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26263,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26264,ifa,WV,IFA,IFA_01,IFA,,54075,,5422852,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26266,ifa,WV,IFA,IFA_01,IFA,,54101,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26267,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26268,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26269,ifa,WV,IFA,IFA_01,IFA,,54093,,5434492,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26270,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5435092,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26271,ifa,WV,IFA,IFA_01,IFA,,54093,,5436460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26273,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5439628,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26275,ifa,WV,IFA,IFA_01,IFA,,54001,,5442244,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26276,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26278,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26280,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5454100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26282,ifa,WV,IFA,IFA_01,IFA,,54083,21180,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26283,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5455540,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26285,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5459668,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26287,ifa,WV,IFA,IFA_01,IFA,,54093,,5462284,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26288,ifa,WV,IFA,IFA_01,IFA,,54101,,5400364,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26289,ifa,WV,IFA,IFA_01,IFA,,54093,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26291,ifa,WV,IFA,IFA_01,IFA,,54075,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26292,ifa,WV,IFA,IFA_01,IFA,,54093,,5480020,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26293,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5482564,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26294,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5482756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26296,ifa,WV,IFA,IFA_01,IFA,,54083,21180,5486932,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26298,ifa,WV,IFA,IFA_01,IFA,,54101,,5406436,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26301,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5415628,"IFA Baltimore-Columbia-Towson, MD",0.967542,
+ifa_mddewv_k1,26320,ifa,WV,IFA,IFA_01,IFA,,54095,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26321,ifa,WV,IFA,IFA_01,IFA,,54041,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26323,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5401900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26325,ifa,WV,IFA,IFA_01,IFA,,54085,,5403364,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26327,ifa,WV,IFA,IFA_01,IFA,,54085,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26330,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5410180,"IFA Baltimore-Columbia-Towson, MD",5.64752,
+ifa_mddewv_k1,26335,ifa,WV,IFA,IFA_01,IFA,,54007,,5411716,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26337,ifa,WV,IFA,IFA_01,IFA,,54085,,5412124,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26338,ifa,WV,IFA,IFA_01,IFA,,54041,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26339,ifa,WV,IFA,IFA_01,IFA,,54017,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26342,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26343,ifa,WV,IFA,IFA_01,IFA,,54041,,5469244,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26346,ifa,WV,IFA,IFA_01,IFA,,54085,,5424844,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26347,ifa,WV,IFA,IFA_01,IFA,,54091,17220,5427940,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26348,ifa,WV,IFA,IFA_01,IFA,,54103,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26349,ifa,WV,IFA,IFA_01,IFA,,54001,,5429740,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26351,ifa,WV,IFA,IFA_01,IFA,,54021,,5432044,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26354,ifa,WV,IFA,IFA_01,IFA,,54091,17220,5432716,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26361,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5434180,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26362,ifa,WV,IFA,IFA_01,IFA,,54085,,5435428,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26366,ifa,WV,IFA,IFA_01,IFA,,54033,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26369,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5436628,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26372,ifa,WV,IFA,IFA_01,IFA,,54041,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26374,ifa,WV,IFA,IFA_01,IFA,,54077,34060,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26376,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26377,ifa,WV,IFA,IFA_01,IFA,,54103,,5440636,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26378,ifa,WV,IFA,IFA_01,IFA,,54041,,5440828,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26384,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26385,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5448748,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26386,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5449252,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26404,ifa,WV,IFA,IFA_01,IFA,,54033,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26405,ifa,WV,IFA,IFA_01,IFA,,54001,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26408,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5448748,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26410,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5458300,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26411,ifa,WV,IFA,IFA_01,IFA,,54017,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26412,ifa,WV,IFA,IFA_01,IFA,,54041,,5411716,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26415,ifa,WV,IFA,IFA_01,IFA,,54085,,5462764,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26416,ifa,WV,IFA,IFA_01,IFA,,54001,,5463292,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26419,ifa,WV,IFA,IFA_01,IFA,,54103,,5463892,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26421,ifa,WV,IFA,IFA_01,IFA,,54085,,5465956,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26422,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5467972,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26424,ifa,WV,IFA,IFA_01,IFA,,54091,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26425,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5470588,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26426,ifa,WV,IFA,IFA_01,IFA,,54017,17220,5471380,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26430,ifa,WV,IFA,IFA_01,IFA,,54021,,5471620,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26431,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5473636,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26435,ifa,WV,IFA,IFA_01,IFA,,54091,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26436,ifa,WV,IFA,IFA_01,IFA,,54017,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26437,ifa,WV,IFA,IFA_01,IFA,,54103,,5474788,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26438,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5475796,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26440,ifa,WV,IFA,IFA_01,IFA,,54091,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26443,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26444,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5481268,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26447,ifa,WV,IFA,IFA_01,IFA,,54041,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26448,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5484172,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26451,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5485924,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26452,ifa,WV,IFA,IFA_01,IFA,,54041,,5485972,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26456,ifa,WV,IFA,IFA_01,IFA,,54017,17220,5486116,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26463,ifa,WV,IFA,IFA_01,IFA,,54033,17220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26501,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5485996,"IFA Baltimore-Columbia-Towson, MD",12.7514,
+ifa_mddewv_k1,26505,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5455756,"IFA Baltimore-Columbia-Towson, MD",10.049,
+ifa_mddewv_k1,26506,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5455756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26508,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5414775,"IFA Baltimore-Columbia-Towson, MD",12.2456,
+ifa_mddewv_k1,26519,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5400748,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26520,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5402908,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26521,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5408092,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26524,ifa,WV,IFA,IFA_01,IFA,,54077,34060,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26525,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5409844,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26534,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5432932,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26537,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5444044,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26541,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5413756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26542,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5452228,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26543,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5461180,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26544,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5462788,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26546,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5485996,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26547,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5402908,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26554,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5426452,"IFA Baltimore-Columbia-Towson, MD",4.43925,
+ifa_mddewv_k1,26559,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5404612,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26560,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5404900,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26562,ifa,WV,IFA,IFA_01,IFA,,54103,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26563,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5413468,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26568,ifa,WV,IFA,IFA_01,IFA,,54033,17220,5425516,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26570,ifa,WV,IFA,IFA_01,IFA,,54061,34060,5426524,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26571,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5426932,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26572,ifa,WV,IFA,IFA_01,IFA,,54049,21900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26574,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5432908,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26575,ifa,WV,IFA,IFA_01,IFA,,54103,,5439340,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26576,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5439676,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26581,ifa,WV,IFA,IFA_01,IFA,,54103,,5447788,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26582,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5451100,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26585,ifa,WV,IFA,IFA_01,IFA,,54049,21900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26586,ifa,WV,IFA,IFA_01,IFA,,54049,21900,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26587,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5466460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26588,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5468908,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26590,ifa,WV,IFA,IFA_01,IFA,,54061,34060,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26591,ifa,WV,IFA,IFA_01,IFA,,54049,21900,5488708,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26601,ifa,WV,IFA,IFA_01,IFA,,54007,,5478580,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26610,ifa,WV,IFA,IFA_01,IFA,,54067,,5407756,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26611,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26615,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26617,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26619,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26621,ifa,WV,IFA,IFA_01,IFA,,54007,,5427868,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26623,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26624,ifa,WV,IFA,IFA_01,IFA,,54007,,5430220,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26627,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26629,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26631,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26636,ifa,WV,IFA,IFA_01,IFA,,54007,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26638,ifa,WV,IFA,IFA_01,IFA,,54021,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26651,ifa,WV,IFA,IFA_01,IFA,,54067,,5477980,"IFA Baltimore-Columbia-Towson, MD",0.114958,
+ifa_mddewv_k1,26656,ifa,WV,IFA,IFA_01,IFA,,54067,,5406052,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26660,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26662,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26667,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26671,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26676,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26678,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26679,ifa,WV,IFA,IFA_01,IFA,,54067,,5477980,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26680,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26681,ifa,WV,IFA,IFA_01,IFA,,54067,,5458180,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26684,ifa,WV,IFA,IFA_01,IFA,,54067,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26690,ifa,WV,IFA,IFA_01,IFA,,54019,13220,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26691,ifa,WV,IFA,IFA_01,IFA,,54067,,5480476,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26704,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.12632,
+ifa_mddewv_k1,26705,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5403460,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26707,ifa,WV,IFA,IFA_01,IFA,,54023,,5404924,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26710,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5411620,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26711,ifa,WV,IFA,IFA_01,IFA,,54027,49020,5413108,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26714,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26716,ifa,WV,IFA,IFA_01,IFA,,54077,34060,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26717,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5424484,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26719,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5428444,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26720,ifa,WV,IFA,IFA_01,IFA,,54023,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26722,ifa,WV,IFA,IFA_01,IFA,,54027,49020,5433436,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26726,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5443492,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26731,ifa,WV,IFA,IFA_01,IFA,,54023,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26739,ifa,WV,IFA,IFA_01,IFA,,54023,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26743,ifa,WV,IFA,IFA_01,IFA,,54057,19060,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26750,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5463604,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26753,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5413525,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26755,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26757,ifa,WV,IFA,IFA_01,IFA,,54027,49020,5470084,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26761,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26763,ifa,WV,IFA,IFA_01,IFA,,54027,49020,5476084,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26764,ifa,WV,IFA,IFA_01,IFA,,54077,34060,5479708,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26767,ifa,WV,IFA,IFA_01,IFA,,54057,19060,5487316,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26801,ifa,WV,IFA,IFA_01,IFA,,54031,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26802,ifa,WV,IFA,IFA_01,IFA,,54071,,5409868,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26804,ifa,WV,IFA,IFA_01,IFA,,54071,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26807,ifa,WV,IFA,IFA_01,IFA,,54071,,5429044,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26808,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26810,ifa,WV,IFA,IFA_01,IFA,,54031,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26812,ifa,WV,IFA,IFA_01,IFA,,54031,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26814,ifa,WV,IFA,IFA_01,IFA,,54071,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26815,ifa,WV,IFA,IFA_01,IFA,,54071,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26817,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26818,ifa,WV,IFA,IFA_01,IFA,,54031,,5455588,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26823,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26833,ifa,WV,IFA,IFA_01,IFA,,54023,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26836,ifa,WV,IFA,IFA_01,IFA,,54031,,5455588,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26838,ifa,WV,IFA,IFA_01,IFA,,54031,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26845,ifa,WV,IFA,IFA_01,IFA,,54031,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26847,ifa,WV,IFA,IFA_01,IFA,,54023,,5462956,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26851,ifa,WV,IFA,IFA_01,IFA,,54031,,5484580,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26852,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26855,ifa,WV,IFA,IFA_01,IFA,,54023,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26865,ifa,WV,IFA,IFA_01,IFA,,54027,49020,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26866,ifa,WV,IFA,IFA_01,IFA,,54071,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26884,ifa,WV,IFA,IFA_01,IFA,,54071,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
+ifa_mddewv_k1,26886,ifa,WV,IFA,IFA_01,IFA,,54071,,,"IFA Baltimore-Columbia-Towson, MD",0.0,no cell in the extract: territory at zero opportunity
