@@ -1,0 +1,57 @@
+STUSPS,NAME,REGION,DIVISION
+NY,New York,1,2
+NV,Nevada,4,8
+AK,Alaska,4,9
+AS,American Samoa,9,0
+VT,Vermont,1,1
+CT,Connecticut,1,1
+DE,Delaware,3,5
+NM,New Mexico,4,8
+NC,North Carolina,3,5
+WI,Wisconsin,2,3
+OR,Oregon,4,9
+NE,Nebraska,2,4
+GA,Georgia,3,5
+AL,Alabama,3,6
+UT,Utah,4,8
+OH,Ohio,2,3
+OK,Oklahoma,3,7
+TN,Tennessee,3,6
+WY,Wyoming,4,8
+MA,Massachusetts,1,1
+VA,Virginia,3,5
+DC,District of Columbia,3,5
+IA,Iowa,2,4
+AZ,Arizona,4,8
+TX,Texas,3,7
+HI,Hawaii,4,9
+ND,North Dakota,2,4
+KY,Kentucky,3,6
+VI,United States Virgin Islands,9,0
+WV,West Virginia,3,5
+FL,Florida,3,5
+IL,Illinois,2,3
+MN,Minnesota,2,4
+MD,Maryland,3,5
+RI,Rhode Island,1,1
+ID,Idaho,4,8
+NH,New Hampshire,1,1
+CA,California,4,9
+NJ,New Jersey,1,2
+SC,South Carolina,3,5
+MI,Michigan,2,3
+AR,Arkansas,3,7
+MS,Mississippi,3,6
+MO,Missouri,2,4
+MT,Montana,4,8
+KS,Kansas,2,4
+IN,Indiana,2,3
+PR,Puerto Rico,9,0
+SD,South Dakota,2,4
+CO,Colorado,4,8
+PA,Pennsylvania,1,2
+WA,Washington,4,9
+LA,Louisiana,3,7
+MP,Commonwealth of the Northern Mariana Islands,9,0
+GU,Guam,9,0
+ME,Maine,1,1
