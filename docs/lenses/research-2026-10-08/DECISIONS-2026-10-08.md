@@ -84,3 +84,22 @@ gap edges the prototype adds inside that district are water crossings (11024-110
 11356-11371 Flushing Bay), the prototype's documented no-land-test caveat (td/audit.py:487-488).
 G3 covers necks caused by empty ZIPs (land in no ZCTA), not water, so the flip is reported to the
 owner, not adopted: ifa_conus_v1 fails M1 on Manhattan and Queens/Nassau, El Paso excepted.
+
+**G4: export schema and scenario id (owner, 2026-10-08, 14:20).** Every data export for the owner's
+work machine is the database's nationwide long schema, column for column, no additions:
+`scenario, zip_code, current_channel, canonical_channel, state, model_channel, bundle, district,
+district_channels, rep, m_rel, has_commercial_opportunity` (archive
+`tools/export_all_scenarios_nationwide_long.py`, 2026-09-14; owner: "match the same exact schema we
+uploaded previously"). No dollars (usd is derived downstream from m_rel and the rate), `rep` blank,
+`has_commercial_opportunity` = m_rel > 0, one row per (scenario, ZCTA, source channel) over every
+CONUS ZCTA. The scenario id is `<K>_<channels>_<commit>`: K the district count, the channels in
+lower case sorted alphabetically and joined by `_`, and the short hash of the commit that first
+committed the run folder's ledger.csv on its branch (owner: "just use 52_ifa_ and the relevant
+commit hash at the end"); e.g. `52_ifa_38bcd2d` for ifa_conus_v2, and a main map would read
+`51_fi_n_wh_wifi_<hash>`. The file is `<scenario>_nationwide_zcta_long.csv` (+ `.gz`) under the run
+folder's `export/`, with `scenarios.csv` beside it mapping the id to run_id, branch, commit,
+ledger_commit, code_commit, spec and instance sha256, source runs, m1 and shortlist rank.
+Writer: `tools/exp/contig/export_long.py` (m5-studio/ifa-conus ef5d761), which refuses an
+uncommitted run folder. Tonight's earlier two-file export (ifa_zip_districts.csv, ifa_districts.csv)
+is withdrawn. Files to: docs/memory (decision + fact), CODE_MAP row for export_long.py, and a line
+in td's AGENTS.md if the owner wants it as an invariant (lander).
