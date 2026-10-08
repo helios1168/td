@@ -1274,6 +1274,34 @@
    ],
    "shown_images": [],
    "notes": "Research tab, 2026-10-08: IFA New York alone, K 5, same recipe as ifa_nj_k3. Fails M1: one district in two pieces, plus 3 necks. Tier 3."
+  },
+  {
+   "id": "ifa_nj_k3-neck",
+   "tier": "E",
+   "rank": 11,
+   "label": "NJ alone, K 3, local neck window on the ifa_nj_k3 drawing, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_nj_k3-neck",
+   "images": [
+    "runs/exp/contig/nj/ifa_nj_k3-neck/summary.png",
+    "runs/exp/contig/nj/ifa_nj_k3-neck/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_nj_k3-neck/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck at c6dbb1b; folder copied to the hub's runs/ for T1), 2026-10-08: ifa_nj_k3 with its neck repaired by a local window (repair.py --states, 75 ZIPs, optimal in 4.6 s). 0 pieces, 0 necks; districts $1,310M, $1,153M, $1,089M, all inside IFA's $1,000M–$1,437.5M. The only audit failure is the out-of-state cells of the single-state extract, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+  },
+  {
+   "id": "ifa_pa_k4-neck",
+   "tier": "E",
+   "rank": 12,
+   "label": "PA alone, K 4, local neck window on the ifa_pa_k4 drawing, full-graph M1 audit",
+   "run": "runs/exp/contig/nj/ifa_pa_k4-neck",
+   "images": [
+    "runs/exp/contig/nj/ifa_pa_k4-neck/summary.png",
+    "runs/exp/contig/nj/ifa_pa_k4-neck/zip_pages.pdf",
+    "runs/exp/contig/nj/ifa_pa_k4-neck/zip_IFA.png"
+   ],
+   "shown_images": [],
+   "notes": "Research tab (branch m5-studio/explore-neck at c6dbb1b; folder copied to the hub's runs/ for T1), 2026-10-08: ifa_pa_k4 with its neck repaired by a local window (repair.py --states, 39 ZIPs, optimal in under 0.1 s). 0 pieces, 0 necks; districts $904M, $1,030M, $1,030M, $1,156M. Fails the E2 band: $904M is under IFA's $1,000M lower edge. The only other audit failure is the out-of-state cells of the single-state extract; a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
   }
  ]
 }
