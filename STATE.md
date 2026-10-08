@@ -4,12 +4,12 @@
 
 ## Now
 
-Overnight autonomy (owner, 2026-10-07): "a good clean set of maps". #123 (ee800d8) and #124 (12d3631, negative: A, B, C remove nothing; B proved) landed. #125 landed (15c8550): six main maps at tier P. #126 landed (negative: no IFA map passes M1). #127 landed: six IFA maps pass M1, tier E (fail balance). Maps that pass every tier-1 check go to tier P (pending owner review). Eligible: ne_plains_wh11 (tier 1) and six tier-P maps. #128 landed (16cb73f): the summary draws whole states as state shapes and splits by ZIP. The 58 old shortlist images are not re-rendered (owner), so --tracking shows them stale.
+Fewest-splits pipeline (#103 #129 #130): three review rounds done, carve-first adopted (library of gate-passed districts plus a selection MILP). Checkpoint, owner decisions D1–E4 and open routes R1–R6: `docs/lenses/REVIEW_2026-10-07.md`. The three issues are off ready (v1 bodies invalid). Earlier today #123–#128 landed; six tier-P main maps await the owner.
 
 ## Next
 
-- Fewer splits: #103, #115; #119; #118.
+- Pick routes; v3 bodies replacing #103 #129 #130; /triage D1–E3 into PROBLEM.md and WATCHDOG.md.
 
 ## Blocked
 
-Owner: place tier-P maps; #124 defaults; any band widening (OD1); #112; #111 #83; #85; #3 #59 #75 #76.
+Owner: IFA's MD under rule C (R1–R4); library budget (R5); main-map K (R6); place tier-P maps; #124 defaults; #112; #111 #83; #85; #3 #59 #75 #76.
