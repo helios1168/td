@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "e85666b64f0886d1ef3d0a1788f2b6e96a4646f8db620229856b0df18590d3f1",
+    "summary.svg": "f6e91c28a629fb09a07e04752f07f5b993a31e36622e01f94d458fece89924af",
+    "zip_IFA.png": "5505305cde50488cfb4cab8350fa63c67dc035e42faabcb92654279bee26ebd6",
+    "zip_pages.pdf": "ce0fe0f2a17e372d55cab1053d634675051a4280bd525c5df8cf7976ab459a46"
+  },
+  "inputs": {
+    "districts.csv": "d321f35746ecd7eeb2a9df26786d8b88dbf2f7b2d5bf97c26cb38ac199ab5c36",
+    "ledger.csv": "1d24f89260e5555566f2970a0de315a48dc54b765a0b91fef3d05a4831687ec6",
+    "manifest.json": "a5fc6e8587bf2b5f17d349273168aedf2bda5766b2e5fbfd42547f4703d6a7be",
+    "run.json": "0993e7be3cec35897d98042a123148aca1da792f0e77829f2d62eae92829bd30"
+  },
+  "label": "ifa_conus_dryrun2: CONUS merge of five regions (New England, South Central, South Atlantic, Midwest, West), gated with G1 gap width on (owner G3), Middle Atlantic pending",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 4257 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:41:44+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "f172d699b1a843241a37b3ca87974413710188df",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_conus_dryrun2: CONUS merge of five regions (New England, South Central, South Atlantic, Midwest, West), gated with G1 gap width on (owner G3), Middle Atlantic pending, FAILS M1",
+  "zcta_shp": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/autonomous_2026-10-05/batch/geo"
+}

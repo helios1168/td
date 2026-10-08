@@ -1,0 +1,41 @@
+district,district_name,states,n_zips,m_rel,usd,window,pieces,necks,m1,m1_default
+IFA_01,"IFA Waterbury-Shelton, CT",CT,168,804.9370167259999,1007.8,in,0,0,pass,pass
+IFA_02,"IFA Hartford-West Hartford-East Hartford, CT",CT+RI,201,871.2471159000006,1090.8,in,0,0,pass,pass
+IFA_03,"IFA Boston-Cambridge-Newton, MA-NH / Providence-Warwick, RI-MA",MA,264,1050.5435233658702,1315.2,in,0,0,pass,pass
+IFA_04,"IFA Boston-Cambridge-Newton, MA-NH / Worcester, MA",MA+ME+NH+VT,1213,1135.2699106770003,1421.3,in,0,0,pass,pass
+IFA_05,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",FL,169,871.6963089449999,1091.3,in,0,0,pass,pass
+IFA_06,"IFA Tampa-St. Petersburg-Clearwater, FL",FL,353,871.7428146500001,1091.4,in,0,0,pass,pass
+IFA_07,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",FL,298,935.3086495509997,1171.0,in,0,0,pass,pass
+IFA_08,"IFA Orlando-Kissimmee-Sanford, FL",FL,193,808.2071164399999,1011.8,in,0,0,pass,pass
+IFA_09,"IFA Atlanta-Sandy Springs-Roswell, GA",GA,751,926.7834638100007,1160.3,in,0,0,pass,pass
+IFA_10,"IFA Baltimore-Columbia-Towson, MD",DE+MD+WV,1283,1536.6138081359998,1923.8,over,0,0,pass,pass
+IFA_11,"IFA Charlotte-Concord-Gastonia, NC-SC / Raleigh-Cary, NC",NC,641,835.8755967388,1046.5,in,0,0,pass,pass
+IFA_12,"IFA Charlotte-Concord-Gastonia, NC-SC / Charleston-North Charleston, SC",NC+SC,636,887.0312521050004,1110.5,in,0,0,pass,pass
+IFA_13,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+VA,960,1134.4417686460001,1420.3,in,0,0,pass,pass
+IFA_14,"IFA New Orleans-Metairie, LA",AR+LA+OK,1817,1022.0669445967903,1279.6,in,0,0,pass,pass
+IFA_15,"IFA Birmingham, AL",AL+MS+TN,1327,881.7198028279998,1103.9,in,0,0,pass,pass
+IFA_16,"IFA Louisville/Jefferson County, KY-IN",KY+TN,1173,993.323898659,1243.6,in,0,0,pass,pass
+IFA_17,"IFA Houston-Pasadena-The Woodlands, TX",TX,695,935.9782595900004,1171.8,in,0,0,pass,pass
+IFA_18,"IFA San Antonio-New Braunfels, TX",TX,741,935.9770900800002,1171.8,in,0,0,pass,fail
+IFA_19,"IFA Dallas-Fort Worth-Arlington, TX",TX,553,935.9944322840001,1171.8,in,0,0,pass,pass
+IFA_20,"IFA Chicago-Naperville-Elgin, IL-IN",IL,174,885.8846430900003,1109.1,in,0,0,pass,pass
+IFA_21,"IFA Chicago-Naperville-Elgin, IL-IN / Peoria, IL",IL,1222,817.6651927199994,1023.7,in,0,0,pass,pass
+IFA_22,"IFA Indianapolis-Carmel-Greenwood, IN",IN,807,1037.776802895101,1299.3,in,0,0,pass,pass
+IFA_23,"IFA Denver-Aurora-Centennial, CO",CO+KS,929,1033.4754454300003,1293.9,in,0,0,pass,pass
+IFA_24,"IFA St. Louis, MO-IL",KS+MO,1338,1059.7131374450003,1326.7,in,0,0,pass,pass
+IFA_25,"IFA Detroit-Warren-Dearborn, MI / Flint, MI",MI,224,929.60708681,1163.8,in,0,0,pass,pass
+IFA_26,"IFA Grand Rapids-Wyoming-Kentwood, MI",MI,675,884.3375774259999,1107.2,in,0,0,pass,pass
+IFA_27,"IFA Detroit-Warren-Dearborn, MI / Ann Arbor, MI",MI,93,815.4209252900001,1020.9,in,0,0,pass,pass
+IFA_28,"IFA Minneapolis-St. Paul-Bloomington, MN-WI",MN,113,824.5885777800002,1032.4,in,0,0,pass,pass
+IFA_29,"IFA Omaha, NE-IA",MN+ND+NE+SD,2117,1147.7212352790002,1436.9,in,0,0,pass,pass
+IFA_30,"IFA Cleveland, OH",OH,275,1054.6830342610003,1320.4,in,0,0,pass,pass
+IFA_31,"IFA Columbus, OH",OH,958,1129.4294030257,1414.0,in,0,0,pass,pass
+IFA_32,"IFA Des Moines-West Des Moines, IA",IA+WI,1480,944.2101819500002,1182.1,in,0,0,pass,pass
+IFA_33,"IFA Milwaukee-Waukesha, WI",WI,273,863.1539153560005,1080.6,in,0,0,pass,pass
+IFA_34,"IFA Phoenix-Mesa-Chandler, AZ",AZ+NM,789,976.8729094719996,1223.0,in,0,0,pass,pass
+IFA_35,"IFA Las Vegas-Henderson-North Las Vegas, NV",ID+MT+NV+UT+WY,1304,881.3440142409997,1103.4,in,0,0,pass,pass
+IFA_36,"IFA Los Angeles-Long Beach-Anaheim, CA / San Jose-Sunnyvale-Santa Clara, CA",CA,490,1014.0507615410003,1269.6,in,0,0,pass,pass
+IFA_37,"IFA San Diego-Chula Vista-Carlsbad, CA",CA,233,1014.0814849179999,1269.6,in,0,0,pass,pass
+IFA_38,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA",CA,278,1014.0615922570005,1269.6,in,0,0,pass,pass
+IFA_39,"IFA San Francisco-Oakland-Fremont, CA",CA,539,967.87553762,1211.7,in,0,0,pass,pass
+IFA_40,"IFA Seattle-Tacoma-Bellevue, WA",CA+OR+WA,1296,821.5085301889,1028.5,in,0,0,pass,pass
