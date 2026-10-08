@@ -112,6 +112,6 @@ extract recorded in the manifest (alternatives rejected: shrinking the m_rel ban
 checking dollars only after the draw); (3) scope is a full national re-plan, not an east-only
 redraw keeping the lead map's west, south centre and Midwest; (4) to the borrow question the owner
 answered "lets first plan out a fresh run from scratch with a whole new grid", so borrows are moot
-and the plan is a new grid (axes in the plan's §5). Open: whether the grid is national only with
-WH, FI and WIFI held at the lead map's drawings, or the whole main map (Q5). Files to: PROBLEM.md
-settled table (lander).
+and the plan is a new grid (axes in the plan's §5). Q5 answered in the same tab: the grid is the whole main map, "WIFI region and every K on the
+axes" (over national only with WH, FI and WIFI held, and over national first then the whole
+map). Files to: PROBLEM.md settled table (lander).

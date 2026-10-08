@@ -1,9 +1,10 @@
 # National under the regional recipe: plan (2026-10-08)
 
 Drafted in the td-research tab after the IFA CONUS map (`ifa_conus_v2`, 38bcd2d) shipped.
-Status: draft, revised after the owner's answers of 2026-10-08 (G5 in
-`research-2026-10-08/DECISIONS-2026-10-08.md`): a fresh national run from scratch on a new grid,
-full re-plan, dollar-scaled masses, K 14 allowed. Nothing here is a run or a registration.
+Status: draft, revised twice after the owner's answers of 2026-10-08 (G5 in
+`research-2026-10-08/DECISIONS-2026-10-08.md`): a fresh main-map run from scratch on a new grid
+with the WIFI region and every channel's K on the axes, dollar-scaled masses, national K 14
+allowed. Nothing here is a run or a registration.
 
 ## 1. The recipe the IFA map was built with
 
@@ -72,8 +73,8 @@ National is one channel of the joint main map, not a map of its own.
 
 ## 3. Arithmetic (full precision, E1 rates, `instance_descaled.json.gz`)
 
-Window [L, U] = [$1,062.5M, $1,437.5M], target $1,250M. Pure-state total $16,980.6M, so K is
-12–15 (16,980.6/1,437.5 = 11.8; /1,062.5 = 16.0). Means: K 15 $1,132M (slack above L $70M per
+Window [L, U] = [$1,062.5M, $1,437.5M], target $1,250M. Pure-state total $16,980.6M, of which $16,895.7M
+sits on ledger vertices, so K is 12–15 (16,895.7/1,437.5 = 11.8; /1,062.5 = 15.9). Means: K 15 $1,132M (slack above L $70M per
 district on average), K 14 $1,213M, K 13 $1,306M.
 
 | state | $M | | state | $M | | state | $M |
@@ -124,87 +125,104 @@ AR+LA+TX at $1,107M) closes is exactly what step 1 computes; it is not settled h
   a dollar band. The transformed extract is recorded in the manifest.
 - **Scope.** Full national re-plan, not an east-only redraw.
 - **Borrows.** Not answered as asked; the owner's words: "lets first plan out a fresh run from
-  scratch with a whole new grid". The plan below is that fresh run. The borrow question is moot
-  because a full re-plan has no fixed regions to borrow across.
+  scratch with a whole new grid". Asked what the grid covers, the owner chose the whole main map:
+  the WIFI region and every channel's K on the axes. Borrows are moot; nothing is frozen.
 
-## 5. The new grid
+## 5. The new grid: the whole main map
 
 The 2026-10-01 grid (`runs/sweep/grid_2026-10-01`) was comparative statics on τ ± δ: stage 1
 bisected the smallest feasible δ* per (WIFI region, routing, national state list, K, mountain
 cap) cell, stage 2 drew the frontier. Under D3 the band is fixed in dollars, so δ* is no longer
-the question; a cell is feasible or not at the window, and the quantities that rank it are the
-settled ones: splits, cuts, defects, shape, balance. The new grid is built on that.
+the question; a cell is feasible or not at its windows, and the quantities that rank it are the
+settled ones: splits, cuts, defects, shape, balance. The new grid is built on that, over all
+four planning channels at once, because the WIFI region moves dollars between them.
 
-**Fixed by decision, not swept.** Window [1,062.5, 1,437.5] $M (D3); rule C; E1 rates; the
-15 combined states (today's WIFI region: ME NH VT MA RI CT ID MT ND NE SD WY NM OK KS) and E3 for
-WIFI; the `fallback` table; masses in $M (G5). Changing the WIFI region re-plans WH, FI and WIFI
-too; see Q5.
+**Fixed by decision, not swept.** D3 windows (national [1,062.5, 1,437.5], WH [850, 1,150],
+FI [765, 1,035] $M), E3 for WIFI (±15% of its dollar mean), rule C, E1 rates, the `fallback`
+table, masses in $M (G5), main-map total K 48–54. The national state list is all pure states
+(the 10-01 grid: shortening it never helped).
+
+**Arithmetic per WIFI region** (full precision, ledger vertices, E1 rates; K ranges from each
+channel's total against its window; "over U" states must split):
+
+| WIFI region | national $M, K | WH $M, K | FI $M, K | WIFI $M | total K |
+|---|---|---|---|---|---|
+| none | 17,535, 13–16 | 11,141, 10–13 | 20,233, 20–26 | 0 | 43–55 |
+| 6 low (ID MT ND NE SD WY) | 17,345, 13–16 | 10,990, 10–12 | 19,997, 20–26 | 576 | 44–58 |
+| plains 9 (6 low + NM OK KS) | 17,250, 13–16 | 10,819, 10–12 | 19,773, 20–25 | 1,067 | 44–57 |
+| New England 6 | 17,181, 12–16 | 10,460, 10–12 | 18,964, 19–24 | 2,303 | 42–56 |
+| today's 15 (NE + plains 9) | 16,896, 12–15 | 10,139, 9–11 | 18,504, 18–24 | 3,370 | 40–54 |
+
+Over U in every region: national CA TX NY; WH CA; FI NY CA PA FL OH. WIFI passes E3 at any K
+by construction when its districts are balanced, so its K is a looks choice bounded by the total.
 
 **Axes.**
 
 | axis | values | why |
 |---|---:|---|
-| K national | 13, 14, 15 | 12 puts the mean at $1,415M, $22M under U; 15 is today's; 14 is the owner's fallback |
-| support size | 5, 6 | today's 5; 6 lets AL+GA+MS+SC+NC-style groups form |
-| mountain cap | 900, 1,600 km | the 10-01 grid's single largest effect, a policy change if adopted |
-| free list | screen-derived | CA, TX, NY always (over U); FL, NJ, PA, IL, NC, AZ added one at a time only if the screen needs a fourth split |
-| routing of national cells in WIFI states | stay | "fall back" only mattered under the 900 km cap; kept fixed unless the cap axis says otherwise |
+| WIFI region | none, 6 low, plains 9, New England 6, today's 15 | the coupling axis; "none" was the 10-01 best with the 1,600 km cap |
+| routing of national cells in WIFI states | stay, fall back | matters only under the 900 km cap |
+| mountain cap | 900, 1,600 km | the 10-01 grid's largest effect; a policy change if adopted |
+| K per channel | national 13–15 (12 only where its mean is under U), WH 10–12, FI 19–24, WIFI 1–3; total 48–54 | D3 ranges above |
+| support size | 5, 6 | today's; 6 lets five-state groups form |
+| free lists | screen-derived | the over-U states always; the next-largest state added one at a time only if the screen needs another split |
 
-That is 3 × 2 × 2 = 12 base cells, each with a short ladder of free lists. Stage 1 is seconds
-per cell, so the ladder costs nothing.
+Stage 1 cells are single-channel (a channel's plan depends on the region, routing, cap, K, size
+and free list, not on the other channels' K), so the count is 5 regions × 2 routings × 2 caps ×
+2 sizes × (3 + 3 + 6 + 3 K values) × a short free-list ladder, about 600 cells at seconds each:
+one worker, one hour. Stage 2 cells are full combinations chosen from the frontier under the
+total-K rule.
 
-**Stage 1, the screen** (one Sol worker, 1 h to build, minutes to run). For each cell, plan on
-whole states with the master (`wholeplan.py` logic: whole-unit supports, rule C row, max_size,
-distance caps, contact caps, dollar window as the band, split states as free units with pieces
-sized by the master). Output per cell: feasible or not, the plan's supports, split count, cut
-count, worst and mean dollar deviation from $1,250M, the tightest district. Rank by the settled
-order. The screen is a necessary condition: pieces are masses, not geometry.
+**Stage 1, the screen** (one Sol worker, 1 h to build). For each cell, plan on whole states with
+the master (`wholeplan.py` logic: whole-unit supports, rule C row, max_size, distance and contact
+caps, the dollar window as the band, split states as free units with pieces sized by the master).
+Output per cell: feasible or not, supports, split count, cut count, worst and mean deviation
+from the target, the tightest district. Rank by the settled order. A necessary condition only:
+pieces are masses, not geometry.
 
-**Stage 2, the draw** (3–6 cells from the frontier, two Opus workers each, 1–2 h wall under the
-12-process cap). For each chosen cell:
+**Stage 2, the draw** (3–6 frontier combinations, the IFA recipe per channel, 1–3 h wall each
+under the 12-process cap). For each combination:
 
-1. Freeze the plan's whole-state districts; they need no draw.
-2. Draw each split state on its own induced graph (`run.py --states`), its planned piece sizes
-   as the targets, NY by congressional units first (`coarse.py`), the ZIP draw only when the
-   coarse grouping leaves a neck; TX and CA by the ZIP draw as in the IFA runs, which cleared
-   both quickly; a piece that rides with whole states (CA+NV+OR+WA style) draws on the
-   multi-state induced graph with the whole states declared.
-3. Repair windows in the dollar window (`repair.py --states --window 1062.5,1437.5`), two
-   unknowns end an attempt.
-4. Merge by cell over the lead ledger's WH, FI and WIFI cells (`merge.py` with a per-source
-   channel filter, the one tooling change), full-graph audit, both M1 gates, D3 in dollars for
-   every national district, E3 unchanged for WIFI by construction, `--window` column, render from
-   the hub with `TD_NECK_GAP_WIDTH` matching the headline gate.
+1. Freeze the plans' whole-state districts; they need no draw.
+2. Draw each channel's split states on their own induced graphs (`run.py --states`), planned
+   piece sizes as targets; NY by congressional units first (`coarse.py`), the ZIP draw only when
+   the coarse grouping leaves a neck; TX, CA, FL by the ZIP draw as in the IFA runs; a piece that
+   rides with whole states draws on the multi-state induced graph with the whole states declared.
+   Channels draw in parallel; a state split in two channels is two independent draws.
+3. Repair windows in each channel's dollar window (`repair.py --states --window`), two unknowns
+   end an attempt.
+4. Merge by (ZCTA, fine channel) across channels (`merge.py` with a per-source channel filter),
+   full-graph audit, both M1 gates, D3 in dollars per channel, E3 for WIFI, `--window` column,
+   render from the hub with `TD_NECK_GAP_WIDTH` matching the headline gate.
 5. Shortlist entry by the lander (T1), then the map to the owner. Shape is their gate; the next
-   frontier cell is the fallback.
+   frontier combination is the fallback.
 
 **Build items before stage 1.**
 
 - Dollar-scaled extract: `Extract` masses multiplied by the fine channel's E1 rate at load
   (`td/data.py`), recorded in the manifest as `mass_unit = "usdM"` with the rates. The ledger's
-  `m_rel` column then holds $M, so `export_long.py` must divide by the rate per fine channel to
+  `m_rel` column then holds $M, so `export_long.py` divides by the rate per fine channel to
   restore m_rel for the G4 schema; a test asserts the round trip. Masks are untouched.
 - Stage-1 cell runner: a `job.py` like the 10-01 grid's, taking the cell JSON, building the
-  national-only spec with the window as its band, calling the master, printing one JSON line.
-- `merge.py --source-channels`: restrict a source to named model channels so a national-only
-  run merges over a multi-channel ledger without claiming its ZCTAs' other cells.
+  single-channel spec with the window as its band, calling the master, printing one JSON line.
+- `merge.py --source-channels`: restrict a source to named model channels so single-channel
+  runs merge into one multi-channel ledger.
 - `tests/`: the extract round trip, the merge channel filter, the induced-graph draw on a
   two-state fixture (exists for NJ).
 
-**Time.** Build 3 h, stage 1 under 1 h, stage 2 2–3 h wall for three cells, lander registration
-after. One orchestrator tab, workers on deadlines, no review step, as on the IFA night.
+**Time.** Build 3 h, stage 1 1 h, stage 2 about 3 h wall per combination with three drawn in
+parallel under the cap, lander registration after. One orchestrator tab per combination,
+workers on deadlines, no review step, as on the IFA night. First map in about 8 h from go.
 
-## 6. Open question
+## 6. Settled by the owner, 2026-10-08
 
-- **Q5, grid scope.** Does "a whole new grid" mean national only, with WH, FI and WIFI held at
-  the lead map's drawings (the plan above), or the whole main map, with the WIFI region and the
-  other channels' K back on the axes as in the 10-01 grid? The second is the 10-01 grid redone
-  under D3, E3 and rule C with the regional draw recipe, roughly three times the stage-2 work,
-  and it reopens FI (20/20 in band) and WIFI (3/3).
+Q1–Q4 in G5; Q5 (grid scope) answered "whole main map". No question is open; the plan waits
+only for the go and the issue the lander files for it.
 
 ## 7. What this plan does not promise
 
 The screen is arithmetic, not feasibility. NY's necks are real geometry and the IFA night closed
-NY only at the cost of one reported neck. Cached M1 evidence for the lead map's other channels is
-from the 2026-10-07 gate and is re-gated in stage 2 step 4, not trusted. No scenario id exists
-until the merged ledger is committed (G4).
+NY only at the cost of one reported neck. No cached evidence from the lead map is carried; every
+district is re-gated in stage 2 step 4. No scenario id exists until the merged ledger is
+committed (G4). The 1,600 km mountain cap, if a frontier cell uses it, is a policy change the
+owner adopts explicitly, not a model fix.
