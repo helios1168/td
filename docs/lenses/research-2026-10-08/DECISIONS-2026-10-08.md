@@ -52,3 +52,9 @@ $1,300M on 1,277 km² (Manhattan 4.5%), inside the window. NY K 5 is re-solved w
 floor: for every district, the land of units that have a neck on their own is at most NECK_SHARE of
 the district's land. Alternatives recorded and not chosen: a rule exemption for water-bounded cut-off
 parts; defer.
+
+**Solver process cap 4 → 12 (owner, 2026-10-08 ~04:10, structured answer "Raise to 12").** Asked
+in the td-research session (01a119b6, around entries #4494-#4496) after the machine check (18 cores,
+64 GB, about 500 MB per solver process); the launch that followed ran 11 solver processes at 4.3 GB.
+Tonight's IFA tabs hold 11 of the 12 with one spare for the assembly; main-map slots are the owner's
+allocation.
