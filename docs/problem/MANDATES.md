@@ -78,6 +78,11 @@ three, a deferred or waived row without a trigger test, or a trigger that holds.
   #121, after Sol's review found a 6% hub with 24 lobes under 5% each, on 100 m threads,
   passing): one connected part with at least 5% of the land and no more land than the rest,
   which may lie in pieces; small fringes off a larger body are never added together.
+  Coverage gaps (owner, 2026-10-08, structured pick "Measure width across coverage gaps", G1,
+  #131, after IFA TX K 3's El Paso + Trans-Pecos part met the rest of Texas by one 6.14 km
+  polygon edge, 79718-79734, across desert over 100 km wide): a passage's width also counts land
+  in no ZCTA between the district's polygons, so a coverage gap is not a neck. Until #131 lands,
+  `check_m1` measures shared ZCTA border only.
 - **check:** the polygon contiguity check `td/audit.py::check_m1` (#108), run by every td run
   on the extract, and its run-folder gate `tools/mandates/check.py::m1`, which the looks scorer's
   eligibility also applies; pinned by
