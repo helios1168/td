@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "b14debdb5bfc31826ba7f781294ae01110487f0add21c51c9a7b8d17df9f0f24",
+    "summary.svg": "a02f290734020fa00788af6201141d933cec82bb383132dc356a2423164f3e23",
+    "zip_IFA.png": "f27dbd08c1fe335be1e62a976ff011750b7c149f723d1445cd0011a79d3a42c9",
+    "zip_pages.pdf": "7c860a5d3cf92ec10567094913b02a2407b4769c77b4bcc7cd843a793d2f9b93"
+  },
+  "inputs": {
+    "districts.csv": "6ce8c51b398ab30163a6d18641f596202b68b1d23c28985aff4e9c2f17a6a396",
+    "ledger.csv": "9f43199f3d572755536983d72133eca351c3c43b173a3f62b5f0a135d01c9d2d",
+    "manifest.json": "14fd12972e7d3eece08148252f181151b6372a9244a5a24a9c5ffa480b8ba6dd",
+    "run.json": "903ac14aa27dcfc5f3966f4cc5e6b46eb6f7cc99b30011e3f32d060205ea7244"
+  },
+  "label": "ifa_conus_nony: IFA CONUS without New York, 47 districts (New England 4, NJ 3, PA 4, South Atlantic 9, South Central 6, Midwest 14, West 7), gated with G1 gap width on (owner G3); NY pending",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 1826 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:53:11+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "dff4eec37c82e7eb209d9b3739772c6d44354e99",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_conus_nony: IFA CONUS without New York, 47 districts (New England 4, NJ 3, PA 4, South Atlantic 9, South Central 6, Midwest 14, West 7), gated with G1 gap width on (owner G3); NY pending, FAILS M1",
+  "zcta_shp": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/autonomous_2026-10-05/batch/geo"
+}
