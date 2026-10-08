@@ -56,7 +56,10 @@ def main(argv=None):
                                      # simplestyle keys, so GitHub's and geojson.io's previews colour the districts
                                      "fill": colour[d], "fill-opacity": 0.6, "stroke": "#202020", "stroke-width": 1,
                                      # kepler.gl per-feature style keys (RGB arrays)
-                                     "fillColor": rgb(colour[d]), "lineColor": [32, 32, 32], "lineWidth": 1}})
+                                     "fillColor": rgb(colour[d]), "lineColor": [32, 32, 32], "lineWidth": 1,
+                                     # colour class 0..len(PALETTE)-1: colour "by field" on this in a viewer and
+                                     # its categorical palette (20 colours or fewer) never wraps
+                                     "color_index": zp.PALETTE.index(colour[d])}})
     out = os.path.join(run_dir, "export", f"{scen['scenario']}_district_reach.geojson")
     with open(out, "w") as fh:
         json.dump({"type": "FeatureCollection", "features": feats}, fh)
