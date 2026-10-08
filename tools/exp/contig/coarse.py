@@ -6,7 +6,8 @@ the least total border between groups (a small flow-contiguity MILP), and the gr
 ZCTAs and written as a `run.py` folder audited on the full polygon graph (#52).
 
     "$TD_PY" -u tools/exp/contig/coarse.py --state NY --k 5 --level sldu|cd --out <dir>
-        [--extract PATH] [--spec PATH] [--lo M --hi M] [--time-limit S] [--nogood UNITS ...]
+        [--extract PATH] [--spec PATH] [--lo M --hi M] [--window] [--time-limit S]
+        [--nogood UNITS ...] [--thin-floor]
 """
 from __future__ import annotations
 
@@ -111,12 +112,31 @@ def coarse_graph(unit: dict, edges, border_km: dict, mass: dict) -> dict:
     return {"units": units, "mass": {u: float(m[u]) for u in units}, "edges": dict(e)}
 
 
+def thin_units(unit: dict, mass: dict, polygon: dict, log=print) -> tuple:
+    """({unit: land m²}, {unit: land m² if thin else 0}): a unit is thin when, as a district on its
+    own, it has an M1 neck on the full polygon graph (`audit.district_necks`)."""
+    from td import audit
+    ng = audit.NeckGraph(polygon)
+    by = collections.defaultdict(set)
+    for z, u in unit.items():
+        by[u].add(z)
+    land, thin = {}, {}
+    for u, zs in sorted(by.items()):
+        land[u] = float(sum(polygon["aland"].get(z, 0.0) for z in zs))
+        necks = audit.district_necks(zs, {z: mass.get(z, 0.0) for z in zs}, ng)
+        thin[u] = land[u] if necks else 0.0
+        if necks:
+            log(f"thin unit {u}: {len(zs)} ZCTAs, land {land[u] / 1e6:.1f} km², {necks}")
+    return land, thin
+
+
 def partition(g: dict, k: int, lo: float, hi: float, time_limit: float = 300.0,
-              nogood=(), log=print) -> dict:
+              nogood=(), land=None, thin=None, log=print) -> dict:
     """{"group": {unit: 0..k-1}, "status", "gap", "seconds", "cut_km"}: k connected groups of the
     unit graph `g`, each of mass in [lo, hi], at the least total border between groups.  A
     single-commodity flow per group from a chosen root; the heaviest unit is fixed to group 0;
-    each set in `nogood` may not be a group exactly."""
+    each set in `nogood` may not be a group exactly.  With `land` and `thin` ({unit: m²}, see
+    `thin_units`), each group's thin land is at most `audit.NECK_SHARE` of its land."""
     U, E = g["units"], sorted(g["edges"])
     n, ne = len(U), len(E)
     idx = {u: i for i, u in enumerate(U)}
@@ -167,6 +187,10 @@ def partition(g: dict, k: int, lo: float, hi: float, time_limit: float = 300.0,
         S = {idx[u] for u in bad}
         for h in range(k):
             add([(X(u, h), 1 if u in S else -1) for u in range(n)], -np.inf, len(S) - 1)
+    if thin is not None:    # sum_u x[u,h] (thin(u) - NECK_SHARE land(u)) <= 0, all h
+        from td.audit import NECK_SHARE
+        for h in range(k):
+            add([(X(u, h), thin[U[u]] - NECK_SHARE * land[U[u]]) for u in range(n)], -np.inf, 0)
     lo_b, hi_b = np.zeros(nv), np.ones(nv)
     hi_b[2 * n * k: 2 * n * k + na * k] = n - 1
     heavy = int(np.argmax(mass))
@@ -216,6 +240,10 @@ def main(argv=None) -> int:
     ap.add_argument("--spec", default=None)
     ap.add_argument("--lo", type=float, default=798.74, help="E2's lower mass bound (m_rel)")
     ap.add_argument("--hi", type=float, default=1148.19, help="E2's upper mass bound (m_rel)")
+    ap.add_argument("--window", action="store_true",
+                    help="band = [lo, hi] exactly, not intersected with the plan's τ band")
+    ap.add_argument("--thin-floor", action="store_true",
+                    help="each group's thin-unit land at most NECK_SHARE of its land")
     ap.add_argument("--time-limit", type=float, default=300.0)
     ap.add_argument("--nogood", nargs="*", default=[],
                     help="comma-separated unit sets no group may equal")
@@ -233,15 +261,17 @@ def main(argv=None) -> int:
     plans, reports = master.plan_all(inst)
     (c, p), = plans.items()
     ch = inst.channels[c]
-    band = (max(a.lo, ch.tau * (1 - p.delta)), min(a.hi, ch.tau * (1 + p.delta)))
+    band = ((a.lo, a.hi) if a.window else
+            (max(a.lo, ch.tau * (1 - p.delta)), min(a.hi, ch.tau * (1 + p.delta))))
     print(f"{c}: τ {ch.tau:.2f}, plan δ {p.delta}, band {band[0]:.2f}..{band[1]:.2f}")
     district = district_of(planning["vertices"], a.state, a.level)
     unit = assign_units(planning["vertices"], planning["edges"], district)
     border = contig.draw.border_km(planning)
     g = coarse_graph(unit, planning["edges"], border, ch.m)
     print(f"{len(set(district.values()))} {a.level} districts -> {len(g['units'])} units")
+    land, thin = thin_units(unit, ch.m, polygon) if a.thin_floor else (None, None)
     part = partition(g, a.k, *band, time_limit=a.time_limit,
-                     nogood=[x.split(",") for x in a.nogood])
+                     nogood=[x.split(",") for x in a.nogood], land=land, thin=thin)
     print({k: v for k, v in part.items() if k != "group"})
     if "group" not in part:
         contig.write_manifest(a.out, "coarse", spec_path, a.extract, params, status="failed",
@@ -262,6 +292,7 @@ def main(argv=None) -> int:
     doc = {"state": a.state, "k": a.k, "level": a.level, "band": band,
            "districts": len(set(district.values())), "units": len(g["units"]),
            "partition": {k: v for k, v in part.items() if k != "group"},
+           "thin": {u: land[u] for u in sorted(thin) if thin[u]} if thin else None,
            "groups": {j: {"units": sorted(us), "mass": sum(g["mass"][u] for u in us)}
                       for j, us in sorted(groups.items())},
            "m1": report["m1"], "verdict": report["verdict"]}

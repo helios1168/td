@@ -48,3 +48,20 @@ def test_toy_partition_in_band_connected():
         assert 5.0 <= sum(mass[u] for u in zs) <= 7.0
         assert len(coarse.components(zs, adj)) == 1
     assert abs(out["cut_km"] - 2.0) < 1e-9
+
+
+def test_toy_thin_floor_row():
+    # path a-b-c-d, mass 1 each, K 2 in [1, 3]; a is thin (land 1): without the floor the
+    # cheapest cut is a|bcd (1 km), with it a's group needs land >= 20, so a-b-c|d (3 km)
+    units = list("abcd")
+    edges = {("a", "b"): 1.0, ("b", "c"): 2.0, ("c", "d"): 3.0}
+    g = {"units": units, "mass": {u: 1.0 for u in units}, "edges": edges}
+    land = {"a": 1.0, "b": 10.0, "c": 100.0, "d": 1.0}
+    thin = {"a": 1.0, "b": 0.0, "c": 0.0, "d": 0.0}
+    free = coarse.partition(g, 2, 1.0, 3.0, time_limit=30, log=lambda *_: None)
+    assert abs(free["cut_km"] - 1.0) < 1e-9
+    out = coarse.partition(g, 2, 1.0, 3.0, time_limit=30, land=land, thin=thin,
+                           log=lambda *_: None)
+    grp = out["group"]
+    assert grp["a"] == grp["b"] == grp["c"] != grp["d"]
+    assert abs(out["cut_km"] - 3.0) < 1e-9
