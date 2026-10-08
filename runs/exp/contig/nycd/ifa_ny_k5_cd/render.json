@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "231e820c14da830de413b7cd03b3d3fd2e0c84ac154273a2e7291652297af5ae",
+    "summary.svg": "198037e79d392acd94cbb309efa81a99591c721e54f9cf9b4b0bc99f5abe903a",
+    "zip_IFA.png": "e2c1201600270e37ab97d8ba8a52c98fbc97107649a5f88460e967ca3f1c05a4",
+    "zip_pages.pdf": "39db655494e816c82856a6bfc9b2ba6fe0731aee9b1803feb6259f50431e4650"
+  },
+  "inputs": {
+    "districts.csv": "92ff2ce465f679f7e63f3ad01a77e5fcb8d20ffc4ff0d604084febd866542886",
+    "ledger.csv": "6103a6b34bfba94eff3c36a148c98bae064597f66d64ed4926228647e876ef1a",
+    "manifest.json": "ab54ce3e4424671a63b2684535abb800b906083d7d2c6d68b662493adfb3a06f",
+    "run.json": "67c82fa75fc833cf651898d0090fe22ba9f100559e299a60b464aeb9d8dbddb5"
+  },
+  "label": "ifa_ny_k5_cd: IFA NY alone, K 5, congressional districts grouped by min cut length, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 31474 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:15:27+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "5f2df8ee184695f24fb94e513dcddab8edaf4c50",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_ny_k5_cd: IFA NY alone, K 5, congressional districts grouped by min cut length, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_nycd/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_nycd/runs/autonomous_2026-10-05/batch/geo"
+}
