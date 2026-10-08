@@ -1,0 +1,105 @@
+{
+  "cells": 5284,
+  "channels": {
+    "IFA": {
+      "delta": 0.15,
+      "districts": 0,
+      "districts_by_cause": {},
+      "final_delta": 0.15,
+      "k": 9,
+      "margin": false,
+      "pieces": 0,
+      "pieces_by_cause": {},
+      "status": "merged: MD,DE,WV optimal, VA,DC optimal, NC,SC optimal, GA optimal, FL optimal",
+      "tier": "none (merged; no regional master)",
+      "vanished": 0
+    }
+  },
+  "dropped_channels": [],
+  "dropped_units": {
+    "IFA": [
+      "AL",
+      "AR",
+      "AZ",
+      "CA",
+      "CO",
+      "CT",
+      "IA",
+      "ID",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MA",
+      "ME",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "MT",
+      "ND",
+      "NE",
+      "NH",
+      "NJ",
+      "NM",
+      "NV",
+      "NY",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "WA",
+      "WI",
+      "WY"
+    ]
+  },
+  "fine_channels": [
+    "ifa"
+  ],
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28016 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "maps": "not drawn (tools/maps/render.py <dir> draws them)",
+  "merged_from": {
+    "FL": {
+      "commit": "ba7db96d5e11582d635829cc5b255ef59673cfd9",
+      "m1": "fail",
+      "run": "runs/exp/contig/nj/ifa_fl_k4-neck"
+    },
+    "GA": {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/southatl/ifa_ga_k1"
+    },
+    "MD,DE,WV": {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/southatl/ifa_mddewv_k1"
+    },
+    "NC,SC": {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/southatl/ifa_ncsc_k2"
+    },
+    "VA,DC": {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/southatl/ifa_vadc_k1"
+    }
+  },
+  "realizer": "tools/exp/contig/merge.py",
+  "scenario": "ifa_southatl_merge",
+  "source": "ifa_southatl.json.gz",
+  "spec": "runs/exp/contig/_specs/ifa_southatl_merge.toml",
+  "verdict": "fail",
+  "zips": 5284
+}

@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "ec5640ad519900edbf46e48a17f59a011752dbef1a80c8ddf8039f0c3ae49f5d",
+    "summary.svg": "8ea77970478c5f9e3d01951ba80206e8d0201e80ba7c9ebd5ac4f6e331ad4951",
+    "zip_IFA.png": "6dab752bd9d29354965286504709e332a20918a0abcb3b5836b41e225b798361",
+    "zip_pages.pdf": "98706dac5f3173c26bdd516472ee30565115505d7d7dde5c20f71dec88f7b141"
+  },
+  "inputs": {
+    "districts.csv": "c5b398e18a77a3ff6bed16a04838447af23a9762873958432ce7a671f08a295f",
+    "ledger.csv": "ba6605540faf52e9dcac6848c83aff75eed791d811d9a3a907a4f0d12f480263",
+    "manifest.json": "8858203af13922175e4b7b9068d7fe232eba7c7a9f21d9c01cccad79aa0ab9ef",
+    "run.json": "a2053f243a8a3477c6d0b25afa90aeaf45daae95f84ef26a489cca09522a8122"
+  },
+  "label": "ifa_sc_merge_b: IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit with the G1 gap-width prototype on (owner G3); default gate fails on the El Paso coverage-gap neck",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 26994 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:35:46+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "5b5da2621f01d6c01e6b7f8f1d945f0741d8cf59",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_sc_merge_b: IFA South Central K 6 (TX 3, AR+LA+OK, KY+TN north, MS+AL+TN south), regional merge, full-graph M1 audit with the G1 gap-width prototype on (owner G3); default gate fails on the El Paso coverage-gap neck, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

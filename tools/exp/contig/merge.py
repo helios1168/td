@@ -14,7 +14,11 @@ is `free`, whatever the spec says (`run.json` "spec_overrides"): no master is so
 modes only set τ and the instance's units.  `--window LO,HI` (m_rel) writes each district's
 window check (in, under or over), the band verdict (owner, 2026-10-08, E2); the audit's final-band
 check on τ[1 ± final_delta] stays as the spec sets it and is information only.  `--export` writes
-the stakeholder dataset to `<out>/export/`.
+the stakeholder dataset to `<out>/export/`.  `--gap-width` audits the merged ledger twice, with
+the gate default and with `TD_NECK_GAP_WIDTH=1` (G1, #131); the gap-width verdict is the headline
+M1 (owner, 2026-10-08, G3: a neck that exists only because ZCTA polygons do not touch across a
+coverage gap does not fail M1), run.json keeps both ("m1_default", "m1_gap_width") and lists in
+"gap_width_flips" every district whose verdict differs.
 
 The merge invariant: every district keeps its exact ZCTA set; every (ZCTA, fine channel) cell has
 exactly one owner; the merge never adds, removes or re-routes a cell; the sources' ZCTA sets are
@@ -135,6 +139,40 @@ def window_status(m: float, window: tuple) -> str:
     return "under" if m < window[0] else "over" if m > window[1] else "in"
 
 
+def audit_with_gap_width(arun, gap_width: bool) -> list:
+    """`audit.audit(arun)` with `TD_NECK_GAP_WIDTH` set to "1" (`gap_width`) or unset, then
+    restored."""
+    old = os.environ.pop("TD_NECK_GAP_WIDTH", None)
+    try:
+        if gap_width:
+            os.environ["TD_NECK_GAP_WIDTH"] = "1"
+        return audit.audit(arun)
+    finally:
+        os.environ.pop("TD_NECK_GAP_WIDTH", None)
+        if old is not None:
+            os.environ["TD_NECK_GAP_WIDTH"] = old
+
+
+def m1_record(checks: list) -> dict:
+    """M1's verdict in `checks`: status, summary, necks per `channel/district`, and the districts
+    it fails (a mass neck, listed beside M1, fails none)."""
+    m1 = next(ch for ch in checks if ch.name == audit.M1_CHECK)
+    necks = collections.Counter(re.match(r"(\S+/\S+): neck", x).group(1)
+                                for x in m1.items if re.match(r"\S+/\S+: neck", x))
+    failing = {re.match(r"(\S+/\S+): ", x).group(1) for x in m1.items
+               if re.match(r"\S+/\S+: ", x) and audit.MASS_NECK not in x}
+    return {"status": m1.status, "summary": m1.summary, "necks": dict(sorted(necks.items())),
+            "failing": sorted(failing)}
+
+
+def gap_width_flips(default: dict, gap: dict, districts: list) -> list:
+    """Each `channel/district` of `districts` whose M1 verdict differs between the `m1_record`s
+    `default` and `gap`."""
+    v = lambda rec, d: "fail" if d in rec["failing"] else "pass"
+    return [{"district": d, "m1_default": v(default, d), "m1_gap_width": v(gap, d)}
+            for d in sorted(districts) if v(default, d) != v(gap, d)]
+
+
 def merge_extracts(extracts: list) -> data.Extract:
     """The extracts' rows concatenated; their ZIP sets must be disjoint."""
     seen = set()
@@ -194,9 +232,10 @@ def merge_spec(s, led: list) -> tuple:
 
 
 def merge(spec_path: str, out: str, extract_out: str, sources: list,
-          window: tuple | None = None) -> dict:
+          window: tuple | None = None, gap_width: bool = False) -> dict:
     """Write the merged run folder `out` from `sources`, [(tag, states, run folder)] and their
-    merged extract `extract_out` (`write_extract`); run.json's dict."""
+    merged extract `extract_out` (`write_extract`); run.json's dict.  With `gap_width`, the
+    ledger is audited with the gate default and with gap width on, and the latter is headline."""
     run = _run()
     output.check_out(out, ("manifest.json",))
     folders = {tag: f for tag, _, f in sources}
@@ -247,13 +286,15 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list,
     split = output.ledger_pieces(led, polygon, drawings)
     arun = output.audit_run(inst, led, drawings, ext, None, polygon, names, ref_manifest, ref,
                             split, polygon)
-    checks = audit.audit(arun)
+    if gap_width:
+        default = m1_record(audit_with_gap_width(arun, False))
+        checks = audit_with_gap_width(arun, True)
+    else:
+        default, checks = None, audit.audit(arun)
     audit.write_scorecard(out, checks, f"{s.name} (merged from {'; '.join(tags)})")
     m1 = next(ch for ch in checks if ch.name == audit.M1_CHECK)
-    necks = collections.Counter(re.match(r"(\S+/\S+): neck", x).group(1)
-                                for x in m1.items if re.match(r"\S+/\S+: neck", x))
-    flagged = {re.match(r"(\S+/\S+): ", x).group(1) for x in m1.items
-               if re.match(r"\S+/\S+: ", x) and audit.MASS_NECK not in x}
+    rec = m1_record(checks)
+    necks, flagged = collections.Counter(rec["necks"]), set(rec["failing"])
 
     src_district = {}
     for tag, _, f in sources:
@@ -273,6 +314,8 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list,
             per[v] = {"m_rel": m, "usd_m": round(m * DOLLARS_PER_M_REL, 1),
                       "pieces": len(split.get((c, v), ())), "necks": necks[f"{c}/{v}"],
                       "m1": "fail" if f"{c}/{v}" in flagged else "pass"}
+            if default is not None:
+                per[v]["m1_default"] = "fail" if f"{c}/{v}" in default["failing"] else "pass"
             if window:
                 per[v]["window"] = window_status(m, window)
             w.writerow((c, v, names.get(v, ""), sd["copy"], sd["support"], sd["planned_mass"],
@@ -305,9 +348,13 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list,
                               "commit": src_manifest[tag]["provenance"]["commit"]}
                         for tag in tags},
         "spec_overrides": overrides,
-        "neck_gap_width": os.environ.get("TD_NECK_GAP_WIDTH") == "1",
+        "neck_gap_width": gap_width or os.environ.get("TD_NECK_GAP_WIDTH") == "1",
         "districts": per,
         "maps": "not drawn (tools/maps/render.py <dir> draws them)"}
+    if default is not None:
+        report["m1_default"], report["m1_gap_width"] = default, rec
+        report["gap_width_flips"] = gap_width_flips(
+            default, rec, [f"{back[v][1]}/{v}" for v in per])
     if window:
         bad = sorted(v for v, d in per.items() if d["window"] != "in")
         report["window"] = {"m_rel": list(window),
@@ -331,7 +378,7 @@ Run folder: `{run}` ({scenario}), written by `tools/exp/contig/merge.py` at comm
 - `ifa_zip_districts.csv`: one row per ZCTA: zip_code, state, county, cbsa, district,
   district_name, m_rel, usd.
 - `ifa_districts.csv`: one row per district: district, district_name, states, n_zips, m_rel,
-  usd, window, pieces, necks, m1 (the full-graph M1 audit, per district).
+  usd, window, pieces, necks, m1 (the full-graph M1 audit, per district){m1_default_col}.
 
 Rate: usd = m_rel x {rate} $M per m_rel, rounded to 0.1 ($M).
 
@@ -343,12 +390,18 @@ Decisions:
 - F1: MD is kept whole, under a band waiver.
 - G1 (#131): a neck's width may count the coverage gaps beside it; the gate default measures
   the shared border only. {g1}
-- G2: as recorded in the owner's decision record (not restated here).
+- G2: IFA NY K 5 is re-solved with a generic land floor so a unit with a neck on its own stays
+  under 5% of its district's land (owner 2026-10-08, pick 'Dilute: Manhattan + Bronx +
+  Westchester', issue #132).
+- G3 (owner, 2026-10-08 05:35): a neck that exists only because ZCTA polygons do not touch across
+  land in no ZCTA (a coverage gap) does not fail M1.  The owner's words: "looks great! lets pass
+  it or make an exception. necks caused by empty zips should trigger a fail, that is a GREAT
+  looking map" (read as: should not fail).  {g3}
 
 Sources (merged in this order):
 {sources}
 
-CONUS verdict: M1 {m1} ({m1_summary}); band (window) {window_verdict}; audit {verdict}
+CONUS verdict: M1 {m1} ({m1_summary}){m1_default}; band (window) {window_verdict}; audit {verdict}
 (its τ line information only).
 """
 
@@ -374,22 +427,34 @@ def export(out: str, report: dict, window: tuple | None) -> str:
     per = report["districts"]
     with open(os.path.join(d, "ifa_districts.csv"), "w", encoding="utf-8", newline="") as fh:
         w = csv.writer(fh, lineterminator="\n")
+        both = "m1_default" in report
         w.writerow(("district", "district_name", "states", "n_zips", "m_rel", "usd", "window",
-                    "pieces", "necks", "m1"))
+                    "pieces", "necks", "m1") + (("m1_default",) if both else ()))
         for v in sorted(per):
             p = per[v]
             w.writerow((v, name.get(v, ""), "+".join(sorted(sts[v])), len(zips[v]), p["m_rel"],
-                        usd(p["m_rel"]), p.get("window", ""), p["pieces"], p["necks"], p["m1"]))
+                        usd(p["m_rel"]), p.get("window", ""), p["pieces"], p["necks"], p["m1"])
+                       + ((p["m1_default"],) if both else ()))
     win = report.get("window")
     lo, hi = window if window else (float("nan"), float("nan"))
     man = json.load(open(os.path.join(out, "manifest.json"), encoding="utf-8"))
+    dflt = report.get("m1_default")
+    flips = ", ".join(f["district"] for f in report.get("gap_width_flips", [])) or "none"
     text = EXPORT_README.format(
+        m1_default_col=("; m1_default (the same audit with the gate default)" if dflt else ""),
+        g3=(f"This run's headline M1 is the gap-width audit; the gate-default verdict is shown "
+            f"beside it, and the districts whose verdict differs are: {flips}." if dflt else
+            "This run reports one audit only."),
+        m1_default=(f"; with the gate default, M1 {dflt['status']} ({dflt['summary']})"
+                    if dflt else ""),
         run=os.path.relpath(out, ROOT), scenario=report["scenario"],
         commit=man["provenance"]["commit"], rate=DOLLARS_PER_M_REL, lo=lo, hi=hi,
         lo_usd=lo * DOLLARS_PER_M_REL, hi_usd=hi * DOLLARS_PER_M_REL,
         window=(f"{sum(p.get('window') == 'in' for p in per.values())} of {len(per)} districts in "
                 f"it" if win else "not checked (no --window)"),
-        g1=("This run was audited with TD_NECK_GAP_WIDTH=1 (gap width counted)."
+        g1=("This run was audited twice: with the gate default and with TD_NECK_GAP_WIDTH=1 "
+            "(gap width counted)." if dflt else
+            "This run was audited with TD_NECK_GAP_WIDTH=1 (gap width counted)."
             if report["neck_gap_width"] else "This run was audited with the gate default."),
         sources="\n".join(f"- `{tag}`: `{m['run']}` at commit `{m['commit']}`, source M1 {m['m1']}"
                           for tag, m in report["merged_from"].items()),
@@ -427,6 +492,9 @@ def main(argv=None) -> int:
                          "states, not from the sources' own extracts")
     ap.add_argument("--window", help="LO,HI in m_rel: the per-district window check")
     ap.add_argument("--export", action="store_true", help="write <out>/export/")
+    ap.add_argument("--gap-width", action="store_true",
+                    help="audit with the gate default and with TD_NECK_GAP_WIDTH=1 (G1); the "
+                         "gap-width verdict is headline (owner, G3), both are in run.json")
     a = ap.parse_args(argv)
     sources = [parse_source(x) for x in a.sources]
     window = tuple(float(x) for x in a.window.split(",")) if a.window else None
@@ -435,7 +503,7 @@ def main(argv=None) -> int:
     run = _run()
     params = {"sources": {tag: f for tag, _, f in sources}, "extract_out": a.extract_out,
               "base_extract": a.base_extract, "window": list(window) if window else None,
-              "export": a.export}
+              "export": a.export, "gap_width": a.gap_width}
     output.check_out(a.out)
     os.makedirs(a.out, exist_ok=True)
     src = [{"state": tag, "states": list(sts), "run": os.path.abspath(f),
@@ -445,7 +513,7 @@ def main(argv=None) -> int:
     write_extract(sources, a.extract_out, a.base_extract)
     run.write_manifest(a.out, "contig_merge", a.spec, a.extract_out, params, source_runs=src)
     try:
-        report = merge(a.spec, a.out, a.extract_out, sources, window)
+        report = merge(a.spec, a.out, a.extract_out, sources, window, a.gap_width)
         if a.export:
             export(a.out, report, window)
     except Exception as e:
@@ -453,10 +521,17 @@ def main(argv=None) -> int:
                            stop_reason=f"{type(e).__name__}: {e}")
         raise
     run.write_manifest(a.out, "contig_merge", a.spec, a.extract_out, params, status="done",
-                       stop_reason="merged", audit=report["verdict"], m1=report["m1"]["status"])
+                       stop_reason="merged", audit=report["verdict"], m1=report["m1"]["status"],
+                       **({"m1_gate": "gap width (G1 on, owner G3)",
+                           "m1_default": report["m1_default"]["status"]}
+                          if a.gap_width else {}))
     win = report.get("window")
-    print(f"{report['scenario']}: M1 {report['m1']['status']} ({report['m1']['summary']}); "
-          f"audit {report['verdict']}"
+    dflt = report.get("m1_default")
+    print(f"{report['scenario']}: M1 {report['m1']['status']} ({report['m1']['summary']})"
+          + (f" [gap width on]; gate default M1 {dflt['status']} ({dflt['summary']}); gap-width "
+             f"flips: {', '.join(f['district'] for f in report['gap_width_flips']) or 'none'}"
+             if dflt else "")
+          + f"; audit {report['verdict']}"
           + (f"; window: {win['in']} of {win['districts']} in [{window[0]:g}, {window[1]:g}] m_rel"
              f" (band {win['verdict']}); τ band (information only): {report['tau_band']['status']}"
              f", {report['tau_band']['summary']}" if win else ""))

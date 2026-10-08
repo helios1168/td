@@ -1,0 +1,57 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_sc_merge_b.toml TX=runs/exp/contig/nj/ifa_tx_k3 AR+LA+OK=runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1 KY+TN+MS+AL=runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2b --out runs/exp/contig/ifa/southcentral/merged_b --extract-out runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged_b.json.gz",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged_b.json.gz",
+  "finished_at": "2026-10-08T10:35:21+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/merged_b",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged_b.json.gz",
+    "sources": {
+      "AR+LA+OK": "runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1",
+      "KY+TN+MS+AL": "runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2b",
+      "TX": "runs/exp/contig/nj/ifa_tx_k3"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "5b5da2621f01d6c01e6b7f8f1d945f0741d8cf59",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/_inst/ifa_sc_merged_b.json.gz",
+    "instance_sha256": "7c7f6d5786d42f65149ffb57e2263248c128292ca4416e564019f4250bc4ab83",
+    "queued_at": "2026-10-08T10:35:20+00:00"
+  },
+  "run_id": "merged_b",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/_specs/ifa_sc_merge_b.toml",
+    "sha256": "c557ecdb481d459b6429db6f952acd519ede61ed4cc7d76186ef4f20d535acc1"
+  },
+  "source_runs": [
+    {
+      "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/nj/ifa_tx_k3",
+      "state": "TX"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/ifa_sc_arlaok_k1",
+      "state": "AR+LA+OK"
+    },
+    {
+      "commit": "5d5176a529affb8060d228e95b2c04e38020ca58",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southcentral/runs/exp/contig/ifa/southcentral/ifa_sc_esc_k2b",
+      "state": "KY+TN+MS+AL"
+    }
+  ],
+  "started_at": "2026-10-08T10:35:20+00:00",
+  "status": "done",
+  "stop_reason": "merged",
+  "notes": [
+    "Audited with TD_NECK_GAP_WIDTH=1 (G1 #131 prototype; owner G3 2026-10-08: tonight's gate runs with it on): 0 pieces, 0 necks; M1 status reads fail only because of the 26,994 out-of-region (ZCTA, fine channel) cells a regional merge leaves unowned (every one of the region's 6,306 ZCTAs is owned once). Default gate (shared border only): additionally one neck, IFA_05 El Paso 6.14 km at 79718-79734; that audit is kept as run_default_gate.json and scorecard_default_gate.md (scorecard not committed). Band verdict is per district against the E2 window [798.74, 1148.19] m_rel: all 6 inside."
+  ]
+}

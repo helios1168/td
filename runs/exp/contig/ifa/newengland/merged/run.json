@@ -1,0 +1,93 @@
+{
+  "cells": 1846,
+  "channels": {
+    "IFA": {
+      "delta": 0.15,
+      "districts": 0,
+      "districts_by_cause": {},
+      "final_delta": 0.15,
+      "k": 4,
+      "margin": false,
+      "pieces": 0,
+      "pieces_by_cause": {},
+      "status": "merged: CT,RI optimal, MA,VT,NH,ME optimal",
+      "tier": "none (merged; no regional master)",
+      "vanished": 0
+    }
+  },
+  "dropped_channels": [],
+  "dropped_units": {
+    "IFA": [
+      "AL",
+      "AR",
+      "AZ",
+      "CA",
+      "CO",
+      "DC",
+      "DE",
+      "FL",
+      "GA",
+      "IA",
+      "ID",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MD",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "MT",
+      "NC",
+      "ND",
+      "NE",
+      "NJ",
+      "NM",
+      "NV",
+      "NY",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VA",
+      "WA",
+      "WI",
+      "WV",
+      "WY"
+    ]
+  },
+  "fine_channels": [
+    "ifa"
+  ],
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31454 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "maps": "not drawn (tools/maps/render.py <dir> draws them)",
+  "merged_from": {
+    "CT,RI": {
+      "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+      "m1": "fail",
+      "run": "runs/exp/contig/nj/ifa_ctri_k2"
+    },
+    "MA,VT,NH,ME": {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/newengland/ifa_mavtnhme_k2"
+    }
+  },
+  "realizer": "tools/exp/contig/merge.py",
+  "scenario": "ifa_newengland_k4_merge",
+  "source": "ifa_ne_merged.json.gz",
+  "spec": "runs/exp/contig/_specs/ifa_newengland_k4_merge.toml",
+  "verdict": "fail",
+  "zips": 1846
+}

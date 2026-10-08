@@ -105,3 +105,20 @@ def test_merge_window_column():
     w = (798.74, 1148.19)
     assert [mg.window_status(m, w) for m in (798.73, 798.74, 1000.0, 1148.19, 1148.2)] == \
         ["under", "in", "in", "in", "over"]
+
+
+def test_merge_gap_width_records_both_verdicts_and_lists_flips():
+    mg = _merge()
+    from td import audit
+
+    def check(items):
+        return audit.Check(audit.M1_CHECK, "fail" if items else "pass", "s", items)
+    dflt = mg.m1_record([check(["IFA/IFA_02: neck 1", "IFA/IFA_03: neck 2",
+                                f"IFA/IFA_04: {audit.MASS_NECK} x"])])
+    gap = mg.m1_record([check(["IFA/IFA_03: neck 2"])])
+    assert dflt["status"] == "fail" and dflt["necks"] == {"IFA/IFA_02": 1, "IFA/IFA_03": 1}
+    assert dflt["failing"] == ["IFA/IFA_02", "IFA/IFA_03"] and gap["failing"] == ["IFA/IFA_03"]
+    ds = [f"IFA/IFA_0{i}" for i in range(1, 5)]
+    assert mg.gap_width_flips(dflt, gap, ds) == [
+        {"district": "IFA/IFA_02", "m1_default": "fail", "m1_gap_width": "pass"}]
+    assert mg.gap_width_flips(gap, gap, ds) == []

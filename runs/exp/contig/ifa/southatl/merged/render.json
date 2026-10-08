@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "91b968647a4a07d1da42bbff320b4ec33450a805371de618345e424b18531704",
+    "summary.svg": "e7596ea8cd6a8e99145cdc5fc82994c8e79dc603de25a9b946b82fc19f462cbf",
+    "zip_IFA.png": "cb26637e4ab3b717dd008d57b6bff7acb57568fce87b19482b6787a0ae645c03",
+    "zip_pages.pdf": "a612401c43cdcdcd47f894ccf4c92a321839fefc07424cc767690e3a54709946"
+  },
+  "inputs": {
+    "districts.csv": "0fa04cc482f2f77b0be5a55a874c8aea6fe18e043642ec53582759863ec8a3f4",
+    "ledger.csv": "a745915bb5bcc75260b5d00be2d52cd22d3d5155d7a1781b03f8c9a623b55f74",
+    "manifest.json": "b3b5584b5714c2180886e707d469aa3dfd48476df077e3c36436fe2576ea1128",
+    "run.json": "7fd94529a1396e9e44787473d660643a31e379b27df2482171025e3fbe7a9be0"
+  },
+  "label": "ifa_southatl_merge: IFA South Atlantic K 9 merged (MD+DE+WV owner waiver, VA+DC, NC, NC piece+SC, GA, FL 4), full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28016 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T10:14:41+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "4a6cb4f06010e84573e72de6aa0395c309d74c34",
+    "diff_sha256": "95bcb3ebfee88c384fa8af903e66089e0db8361372af025d764d48e37c108265",
+    "dirty": true
+  },
+  "title": "ifa_southatl_merge: IFA South Atlantic K 9 merged (MD+DE+WV owner waiver, VA+DC, NC, NC piece+SC, GA, FL 4), full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

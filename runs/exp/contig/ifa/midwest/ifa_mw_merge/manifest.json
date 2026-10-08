@@ -1,0 +1,78 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_mw_merge.toml --out runs/exp/contig/ifa/midwest/ifa_mw_merge --extract-out runs/exp/contig/ifa/midwest/_inst/ifa_mw_merge.json.gz MI=runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd OH=runs/exp/contig/ifa/midwest/ifa_oh_k2 IL=runs/exp/contig/ifa/midwest/ifa_il_k2 IN=runs/exp/contig/ifa/midwest/ifa_mw_in_k1 WI+IA=runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2 MN+ND+SD+NE=runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2 KS+MO+CO=runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/_inst/ifa_mw_merge.json.gz",
+  "finished_at": "2026-10-08T10:18:09+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_merge",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "runs/exp/contig/ifa/midwest/_inst/ifa_mw_merge.json.gz",
+    "sources": {
+      "IL": "runs/exp/contig/ifa/midwest/ifa_il_k2",
+      "IN": "runs/exp/contig/ifa/midwest/ifa_mw_in_k1",
+      "KS+MO+CO": "runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2",
+      "MI": "runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd",
+      "MN+ND+SD+NE": "runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2",
+      "OH": "runs/exp/contig/ifa/midwest/ifa_oh_k2",
+      "WI+IA": "runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "4e223f1a8c0d02e77f218a9e502e53c1819c8644",
+    "diff_sha256": "78fd7e870fc31f85041df23c668d69cc1ad04414ecf58c6133233389e9a83786",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/_inst/ifa_mw_merge.json.gz",
+    "instance_sha256": "7ab1e6e9eda0f145aadc6cddb1dd83d35d88b0cba4077af0a9515687dcc8bd3f",
+    "queued_at": "2026-10-08T10:18:08+00:00"
+  },
+  "run_id": "ifa_mw_merge",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/_specs/ifa_mw_merge.toml",
+    "sha256": "4fcf695eabb639ccc3c2d8e16f9d6c386b4897e1bf8081548663cc77040de260"
+  },
+  "source_runs": [
+    {
+      "commit": "a9caee61930d2808ee29bc8d28aa9f26696a29ab",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_mi_k3_cd",
+      "state": "MI"
+    },
+    {
+      "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_oh_k2",
+      "state": "OH"
+    },
+    {
+      "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_il_k2",
+      "state": "IL"
+    },
+    {
+      "commit": "a9caee61930d2808ee29bc8d28aa9f26696a29ab",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_in_k1",
+      "state": "IN"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_wiia_k2",
+      "state": "WI+IA"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_mndn_k2",
+      "state": "MN+ND+SD+NE"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-midwest/runs/exp/contig/ifa/midwest/ifa_mw_ksmoco_k2",
+      "state": "KS+MO+CO"
+    }
+  ],
+  "started_at": "2026-10-08T10:18:08+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}
