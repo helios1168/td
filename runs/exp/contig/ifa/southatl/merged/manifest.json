@@ -1,0 +1,66 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_southatl_merge.toml MD,DE,WV=runs/exp/contig/ifa/southatl/ifa_mddewv_k1 VA,DC=runs/exp/contig/ifa/southatl/ifa_vadc_k1 NC,SC=runs/exp/contig/ifa/southatl/ifa_ncsc_k2 GA=runs/exp/contig/ifa/southatl/ifa_ga_k1 FL=runs/exp/contig/nj/ifa_fl_k4-neck --out runs/exp/contig/ifa/southatl/merged --extract-out runs/exp/contig/ifa/southatl/_inst/ifa_southatl.json.gz",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/_inst/ifa_southatl.json.gz",
+  "finished_at": "2026-10-08T10:14:24+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/merged",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract_out": "runs/exp/contig/ifa/southatl/_inst/ifa_southatl.json.gz",
+    "sources": {
+      "FL": "runs/exp/contig/nj/ifa_fl_k4-neck",
+      "GA": "runs/exp/contig/ifa/southatl/ifa_ga_k1",
+      "MD,DE,WV": "runs/exp/contig/ifa/southatl/ifa_mddewv_k1",
+      "NC,SC": "runs/exp/contig/ifa/southatl/ifa_ncsc_k2",
+      "VA,DC": "runs/exp/contig/ifa/southatl/ifa_vadc_k1"
+    }
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "4a6cb4f06010e84573e72de6aa0395c309d74c34",
+    "diff_sha256": "95bcb3ebfee88c384fa8af903e66089e0db8361372af025d764d48e37c108265",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/_inst/ifa_southatl.json.gz",
+    "instance_sha256": "6173a8ae993d32613bcaf94b7a59d0831144202ce679295b7b8e389dd172bb96",
+    "queued_at": "2026-10-08T10:14:23+00:00"
+  },
+  "run_id": "merged",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/_specs/ifa_southatl_merge.toml",
+    "sha256": "74e0cbe262563c067c4ff2848836256c9fb272b471927ce4d7fc36e3bb5105b0"
+  },
+  "source_runs": [
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/ifa_mddewv_k1",
+      "state": "MD,DE,WV"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/ifa_vadc_k1",
+      "state": "VA,DC"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/ifa_ncsc_k2",
+      "state": "NC,SC"
+    },
+    {
+      "commit": "d312834f9b0acfdb4485c0e021402086b9645e1e",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/ifa/southatl/ifa_ga_k1",
+      "state": "GA"
+    },
+    {
+      "commit": "ba7db96d5e11582d635829cc5b255ef59673cfd9",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/ifa-southatl/runs/exp/contig/nj/ifa_fl_k4-neck",
+      "state": "FL"
+    }
+  ],
+  "started_at": "2026-10-08T10:14:23+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}

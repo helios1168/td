@@ -1,0 +1,10 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces,source_run,source_district
+IFA,IFA_01,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",FL#1,FL,871.7387223965,871.6963089449999,0,ifa_fl_k4-neck,IFA_01
+IFA,IFA_02,"IFA Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,871.7387223965,871.7428146500001,0,ifa_fl_k4-neck,IFA_02
+IFA,IFA_03,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",FL#3,FL,871.7387223965,935.3086495509997,0,ifa_fl_k4-neck,IFA_03
+IFA,IFA_04,"IFA Orlando-Kissimmee-Sanford, FL",FL#4,FL,871.7387223965,808.2071164399999,0,ifa_fl_k4-neck,IFA_04
+IFA,IFA_05,"IFA Atlanta-Sandy Springs-Roswell, GA",GA#1,GA,926.7834638100001,926.7834638100007,0,ifa_ga_k1,IFA_01
+IFA,IFA_06,"IFA Baltimore-Columbia-Towson, MD",DE+MD+WV#1,DE+MD+WV,1536.613808136,1536.6138081359998,0,ifa_mddewv_k1,IFA_01
+IFA,IFA_07,"IFA Charlotte-Concord-Gastonia, NC-SC / Raleigh-Cary, NC",NC#1,NC,923.4780709802768,835.8755967388,0,ifa_ncsc_k2,IFA_01
+IFA,IFA_08,"IFA Charlotte-Concord-Gastonia, NC-SC / Charleston-North Charleston, SC",NC+SC#1,NC+SC,799.4287778635234,887.0312521050004,0,ifa_ncsc_k2,IFA_02
+IFA,IFA_09,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+VA#1,DC+VA,1134.441768646,1134.4417686460001,0,ifa_vadc_k1,IFA_01
