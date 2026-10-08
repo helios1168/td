@@ -477,9 +477,18 @@ class NeckGraph:
     `state`, and `border_cm` the borders in whole centimetres, floored (`border_cm`).  `polygon` is
     `geo.polygon_graph`'s dict, which carries "border", "connectors" and
     "aland" since #121.  An edge of the graph that is neither a bordered polygon edge nor a
-    connector counts as a polygon edge 0 km wide."""
+    connector counts as a polygon edge 0 km wide.
 
-    def __init__(self, polygon: dict):
+    `gap_width` is the G1 prototype (owner, 2026-10-08, "Measure width across coverage gaps"), off
+    by default until its owner-decision issue lands: when True, every pair of ZCTAs of one state
+    adjacent in the Voronoi ZIP graph but neither a polygon edge nor a connector (`geo`'s
+    `zcta_polygon_vs_voronoi.csv.gz` rows `dropped`, or `polygon["voronoi_gaps"]` {(a, b): m})
+    is a neck edge as wide as its shared Voronoi border, so land in no ZCTA counts towards a
+    passage.  No land test: `geo` separates land from water only per county at build time, so a
+    gap across water (a lake, a sound) counts too.  The gap edges enter `border_cm`, the necks'
+    widths, and not `border`, so `land_would_do` and the pieces still read the polygon edges."""
+
+    def __init__(self, polygon: dict, gap_width: bool = False):
         self.state = polygon.get("state", {})
         self.aland = polygon["aland"]
         border = {tuple(sorted(e)): m for e, m in polygon["border"].items()}
@@ -495,6 +504,16 @@ class NeckGraph:
             if e in border or e not in joins:
                 self.border[a][b] = self.border[b][a] = border.get(e, 0.0) / 1000.0
                 self.border_cm[a][b] = self.border_cm[b][a] = border_cm(border.get(e, 0.0))
+        if gap_width:
+            gaps = polygon.get("voronoi_gaps")
+            if gaps is None:
+                vs = geo.read_reference(name="zcta_polygon_vs_voronoi.csv.gz")
+                vs = vs[vs["change"] == "dropped"]
+                gaps = {(a, b): float(m) for a, b, m in zip(vs["a"], vs["b"], vs["border_m"])}
+            for (a, b), m in gaps.items():
+                if (a in self.aland and b in self.aland and b not in self.border_cm.get(a, {})
+                        and b not in self.connector.get(a, ()) and self.state.get(a) == self.state.get(b)):
+                    self.border_cm[a][b] = self.border_cm[b][a] = border_cm(m)
         self.by_state = collections.defaultdict(set)
         for z in polygon["vertices"]:
             self.by_state[self.state.get(z, "")].add(z)
@@ -866,7 +885,8 @@ def check_m1(run: Run) -> Check:
     for i, comp in enumerate(_components(set(adj), adj)):
         whole.update(dict.fromkeys(comp, i))
     uncovered, n_pieces, split, largest, n_free = [], 0, 0, 0.0, 0
-    ng = NeckGraph(run.polygon) if {"border", "connectors", "aland"} <= set(run.polygon) else None
+    ng = (NeckGraph(run.polygon, gap_width=os.environ.get("TD_NECK_GAP_WIDTH") == "1")
+          if {"border", "connectors", "aland"} <= set(run.polygon) else None)
     neck_items, mass_items, vertices = [], [], set(adj)
     for ch in sorted(set(run.channels) | set(owner)):
         spec = run.channels.get(ch)
