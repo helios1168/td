@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "72546d8e486e97128b2d731b0fdf7def3c5232b6be56f7e555b08f87afa5f57e",
+    "summary.svg": "31b6165eec5f2e46c1573aafbff31f4ee5b1ae1e80a18b315038a98d0f64dee4",
+    "zip_IFA.png": "6e61ef14a96d80cbadf16858d32c35dca6581e6ed8c0b61089a8a7edb6934f05",
+    "zip_pages.pdf": "500400d1e4c60ec1f507aa4a4049054ae32b5132542da3a2eb691a17952901ef"
+  },
+  "inputs": {
+    "districts.csv": "e5f7176076e95adc49d7b959e5678cccd9a95599ee0f86472f12abb50b3f35eb",
+    "ledger.csv": "290220e6738583da9f017d39234db524b4f9f3af752c8d4c72e81596e4a9ec15",
+    "manifest.json": "3a147a8256d1b44a92e656224d0230175819e6c5fb8dea28cc2129056889f87e",
+    "run.json": "d8a5ee1aa9f9829e5fdbb6cdcfc750a041d1e130666be035e7bf495a5c1cdd50"
+  },
+  "label": "ifa_conus_v2: IFA CONUS, 52 districts, six region merges (New England 4, Middle Atlantic 12, South Atlantic 9, South Central 6, Midwest 14, West 7); NY Queens/Nassau neck windowed; Manhattan neck open; El Paso excepted under G3",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T12:00:44+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "4572e81cc81e7b94f2233e5c3969407e4f502e7d",
+    "diff_sha256": "b0681a07a5085e1513352faaae6557b943507202fa5fe88b9374fe32e02ce435",
+    "dirty": true
+  },
+  "title": "ifa_conus_v2: IFA CONUS, 52 districts, six region merges (New England 4, Middle Atlantic 12, South Atlantic 9, South Central 6, Midwest 14, West 7); NY Queens/Nassau neck windowed; Manhattan neck open; El Paso excepted under G3, FAILS M1",
+  "zcta_shp": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/autonomous_2026-10-05/batch/geo"
+}

@@ -1,0 +1,614 @@
+{
+  "cells": 33300,
+  "channels": {
+    "IFA": {
+      "delta": 0.15,
+      "districts": 0,
+      "districts_by_cause": {},
+      "final_delta": 0.15,
+      "k": 52,
+      "margin": false,
+      "pieces": 0,
+      "pieces_by_cause": {},
+      "status": "merged: CT,MA,ME,NH,RI,VT merged: CT,RI optimal, MA,VT,NH,ME optimal, NJ,NY,PA merged: NJ optimal, PA optimal, NY optimal, DC,DE,FL,GA,MD,NC,SC,VA,WV merged: MD,DE,WV optimal, VA,DC optimal, NC,SC optimal, GA optimal, FL optimal, AL,AR,KY,LA,MS,OK,TN,TX merged: TX optimal, AR+LA+OK optimal, KY+TN+MS+AL optimal, CO,IA,IL,IN,KS,MI,MN,MO,ND,NE,OH,SD,WI merged: MI optimal, OH optimal, IL optimal, IN optimal, WI+IA optimal, MN+ND+SD+NE optimal, KS+MO+CO optimal, AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY merged: AZ+ID+MT+NM+NV+UT+WY optimal, CA+OR+WA optimal",
+      "tier": "none (merged; no regional master)",
+      "vanished": 0
+    }
+  },
+  "districts": {
+    "IFA_01": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 804.9370167259999,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1007.8,
+      "window": "in"
+    },
+    "IFA_02": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 871.2471159000006,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1090.8,
+      "window": "in"
+    },
+    "IFA_03": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1050.5435233658702,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1315.2,
+      "window": "in"
+    },
+    "IFA_04": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1135.2699106770003,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1421.3,
+      "window": "in"
+    },
+    "IFA_05": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1046.2540255510005,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1309.9,
+      "window": "in"
+    },
+    "IFA_06": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 921.2780413030001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1153.4,
+      "window": "in"
+    },
+    "IFA_07": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 869.78992937,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1088.9,
+      "window": "in"
+    },
+    "IFA_08": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 922.9986547499998,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1155.6,
+      "window": "in"
+    },
+    "IFA_09": {
+      "m1": "fail",
+      "m1_default": "fail",
+      "m_rel": 868.781115495,
+      "necks": 1,
+      "pieces": 0,
+      "usd_m": 1087.7,
+      "window": "in"
+    },
+    "IFA_10": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 925.7032817300001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1159.0,
+      "window": "in"
+    },
+    "IFA_11": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 826.7261733739999,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1035.0,
+      "window": "in"
+    },
+    "IFA_12": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 824.7581003100006,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1032.6,
+      "window": "in"
+    },
+    "IFA_13": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 832.4047054578001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1042.1,
+      "window": "in"
+    },
+    "IFA_14": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 822.827489455,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1030.2,
+      "window": "in"
+    },
+    "IFA_15": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 822.6191343000002,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1029.9,
+      "window": "in"
+    },
+    "IFA_16": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 812.6264213140001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1017.4,
+      "window": "in"
+    },
+    "IFA_17": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 871.6963089449999,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1091.3,
+      "window": "in"
+    },
+    "IFA_18": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 871.7428146500001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1091.4,
+      "window": "in"
+    },
+    "IFA_19": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 935.3086495509997,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1171.0,
+      "window": "in"
+    },
+    "IFA_20": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 808.2071164399999,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1011.8,
+      "window": "in"
+    },
+    "IFA_21": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 926.7834638100007,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1160.3,
+      "window": "in"
+    },
+    "IFA_22": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1536.6138081359998,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1923.8,
+      "window": "over"
+    },
+    "IFA_23": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 835.8755967388,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1046.5,
+      "window": "in"
+    },
+    "IFA_24": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 887.0312521050004,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1110.5,
+      "window": "in"
+    },
+    "IFA_25": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1134.4417686460001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1420.3,
+      "window": "in"
+    },
+    "IFA_26": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1022.0669445967903,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1279.6,
+      "window": "in"
+    },
+    "IFA_27": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 881.7198028279998,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1103.9,
+      "window": "in"
+    },
+    "IFA_28": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 993.323898659,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1243.6,
+      "window": "in"
+    },
+    "IFA_29": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 935.9782595900004,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1171.8,
+      "window": "in"
+    },
+    "IFA_30": {
+      "m1": "pass",
+      "m1_default": "fail",
+      "m_rel": 935.9770900800002,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1171.8,
+      "window": "in"
+    },
+    "IFA_31": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 935.9944322840001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1171.8,
+      "window": "in"
+    },
+    "IFA_32": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 885.8846430900003,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1109.1,
+      "window": "in"
+    },
+    "IFA_33": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 817.6651927199994,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1023.7,
+      "window": "in"
+    },
+    "IFA_34": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1037.776802895101,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1299.3,
+      "window": "in"
+    },
+    "IFA_35": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1033.4754454300003,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1293.9,
+      "window": "in"
+    },
+    "IFA_36": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1059.7131374450003,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1326.7,
+      "window": "in"
+    },
+    "IFA_37": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 929.60708681,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1163.8,
+      "window": "in"
+    },
+    "IFA_38": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 884.3375774259999,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1107.2,
+      "window": "in"
+    },
+    "IFA_39": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 815.4209252900001,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1020.9,
+      "window": "in"
+    },
+    "IFA_40": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 824.5885777800002,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1032.4,
+      "window": "in"
+    },
+    "IFA_41": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1147.7212352790002,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1436.9,
+      "window": "in"
+    },
+    "IFA_42": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1054.6830342610003,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1320.4,
+      "window": "in"
+    },
+    "IFA_43": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1129.4294030257,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1414.0,
+      "window": "in"
+    },
+    "IFA_44": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 944.2101819500002,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1182.1,
+      "window": "in"
+    },
+    "IFA_45": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 863.1539153560005,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1080.6,
+      "window": "in"
+    },
+    "IFA_46": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 976.8729094719996,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1223.0,
+      "window": "in"
+    },
+    "IFA_47": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 881.3440142409997,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1103.4,
+      "window": "in"
+    },
+    "IFA_48": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1014.0507615410003,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1269.6,
+      "window": "in"
+    },
+    "IFA_49": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1014.0814849179999,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1269.6,
+      "window": "in"
+    },
+    "IFA_50": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1014.0615922570005,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1269.6,
+      "window": "in"
+    },
+    "IFA_51": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 967.87553762,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1211.7,
+      "window": "in"
+    },
+    "IFA_52": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 821.5085301889,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1028.5,
+      "window": "in"
+    }
+  },
+  "dropped_channels": [],
+  "dropped_units": {},
+  "fine_channels": [
+    "ifa"
+  ],
+  "gap_width_flips": [
+    {
+      "district": "IFA/IFA_30",
+      "m1_default": "fail",
+      "m1_gap_width": "pass"
+    }
+  ],
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1"
+  },
+  "m1_default": {
+    "failing": [
+      "IFA/IFA_09",
+      "IFA/IFA_30"
+    ],
+    "necks": {
+      "IFA/IFA_09": 1,
+      "IFA/IFA_30": 1
+    },
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1"
+  },
+  "m1_gap_width": {
+    "failing": [
+      "IFA/IFA_09"
+    ],
+    "necks": {
+      "IFA/IFA_09": 1
+    },
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1"
+  },
+  "maps": "not drawn (tools/maps/render.py <dir> draws them)",
+  "merged_from": {
+    "AL,AR,KY,LA,MS,OK,TN,TX": {
+      "commit": "5b5da2621f01d6c01e6b7f8f1d945f0741d8cf59",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/southcentral/merged_b"
+    },
+    "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY": {
+      "commit": "002ee6a25cdcd9ee3c46c8d508f9f80a2229af64",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/west/merged"
+    },
+    "CO,IA,IL,IN,KS,MI,MN,MO,ND,NE,OH,SD,WI": {
+      "commit": "4e223f1a8c0d02e77f218a9e502e53c1819c8644",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/midwest/ifa_mw_merge"
+    },
+    "CT,MA,ME,NH,RI,VT": {
+      "commit": "d3a98fbf473e3653618c3c47ea680c6cfdae53af",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/newengland/merged"
+    },
+    "DC,DE,FL,GA,MD,NC,SC,VA,WV": {
+      "commit": "4a6cb4f06010e84573e72de6aa0395c309d74c34",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/southatl/merged"
+    },
+    "NJ,NY,PA": {
+      "commit": "63c4f22df0cd97f1239c232dec40d0c05d7413a5",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/midatl/merged_v2"
+    }
+  },
+  "neck_gap_width": true,
+  "realizer": "tools/exp/contig/merge.py",
+  "scenario": "ifa_conus_merge",
+  "source": "ifa_conus_v2.json.gz",
+  "spec": "runs/exp/contig/_specs/ifa_conus_merge.toml",
+  "spec_overrides": {
+    "IFA": {
+      "free": [
+        "CA",
+        "CT",
+        "FL",
+        "IL",
+        "KS",
+        "MA",
+        "MI",
+        "MN",
+        "NC",
+        "NJ",
+        "NY",
+        "OH",
+        "PA",
+        "TN",
+        "TX",
+        "WI"
+      ],
+      "k": 52
+    }
+  },
+  "tau_band": {
+    "final_delta": {
+      "IFA": 0.15
+    },
+    "role": "information only (owner, 2026-10-08)",
+    "status": "fail",
+    "summary": "52 districts, 5 outside the final tolerance"
+  },
+  "verdict": "fail",
+  "window": {
+    "districts": 52,
+    "in": 51,
+    "m_rel": [
+      798.74,
+      1148.19
+    ],
+    "outside": [
+      "IFA_22"
+    ],
+    "usd_m": [
+      1000.0,
+      1437.5
+    ],
+    "verdict": "fail"
+  },
+  "zips": 33300
+}

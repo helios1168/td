@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "585fe24ca8de53fcc16d1de9a51090d1409b2281b214947bed6e481fe5c733a3",
+    "summary.svg": "4c37adfa82f32a8f797d1c07b942ee6b8b7b17f45e0992ffb3660bbd160369fc",
+    "zip_IFA.png": "8246dc518aeaf4a5eeeaa08541e129fc1265c4414a62e7d0ec9b869f91244a46",
+    "zip_pages.pdf": "0758673881a361a8d1630cecab0259635d7278e875fec82909e859958c110b44"
+  },
+  "inputs": {
+    "districts.csv": "14116134aa1871b6c99d466f59d07c81189c1bd3c69a0755bb83532d2f5a5671",
+    "ledger.csv": "d410f1724f22acdf403edccb46ce45d19fd20243f69264db839f111a5cc82b00",
+    "manifest.json": "137514a5a68207cff94e81ee2a745fc9e645d479c3e43d615d360e8193227632",
+    "run.json": "60efed431d88991f3e3dea027c5b7298b89adccde402dfb62b806deed9242799"
+  },
+  "label": "ifa_midatl_merged_v2: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 (ifa_ny_k5_cd, Queens/Nassau windowed), full-graph audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 29043 (ZCTA, fine channel) cells with no row, 0 owned twice, 3 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T11:56:23+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "63c4f22df0cd97f1239c232dec40d0c05d7413a5",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "ifa_midatl_merged_v2: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 (ifa_ny_k5_cd, Queens/Nassau windowed), full-graph audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}
