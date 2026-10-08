@@ -33,7 +33,9 @@ row or an expired deferral. The rows are restated here.
 - a neck fails the map too (owner 2026-10-05, #121): one connected part holding ≥ 5% of a
   district's land area that reaches the rest only through a passage under 10 km of shared ZCTA border,
   or across a connector where land would do; the part is the smaller side, the rest may be in
-  pieces (owner 2026-10-06). Graph connectivity alone is not M1.
+  pieces (owner 2026-10-06); the width also counts land in no ZCTA between the district's
+  polygons, so a coverage gap is not a neck (owner 2026-10-08, G1, #131; until it lands the check
+  measures shared border only). Graph connectivity alone is not M1.
 
 The model plans and draws on that same polygon graph. M1 was set aside "for simplicity" on 09-01
 with no return trigger, and for five weeks every map shipped with detached pieces while reports
@@ -44,17 +46,22 @@ said "pieces are listed". That pattern is what you are here to catch, for any pa
 **T1, tracking** (owner 2026-10-05, #120). Every run that draws a map has a `manifest.json` under
 `runs/exp/<lane>/<run_id>/` that #92's index sees; every map shown to the owner or stakeholders is
 an entry in the shortlist registry with its run and image paths, and `runs/shortlist/INDEX.md` is
-rebuilt; maps are named by shortlist id and label with an image path, never by ad-hoc labels such
+rebuilt (the 58 renders made before #128 stay as they are and their "render not current" failures
+are accepted: owner 2026-10-08, "don't ask again"); maps are named by shortlist id and label with an image path, never by ad-hoc labels such
 as "M2" or "deck B", and "M1" means only the contiguity mandate. Flag a map run launched outside
 the tracker, a map shown that is not on the shortlist, and an unregistered label.
 
 ## 3. Settled frame (owner 2026-10-04; PROBLEM.md rows)
 
-- **Eligible map:**
-  - drawn masses within a plain ±15% band;
-  - main-map total K 48-54, IFA K 46-55;
-  - $ per district within ±10% of target (national $1.25B, WH $1.0B, FI $900M, IFA from the
-    whole-extract total); the combined channel is exempt.
+- **Eligible map (band: owner 2026-10-07 and 2026-10-08, OD1 answered):**
+  - every district's drawn $ within ±15% of its channel's target (national $1.25B, WH $1.0B,
+    FI $900M); IFA within −20%/+15% of $1.25B; WIFI, with no target, within ±15% of its dollar
+    mean; the combined channel stays exempt; planned and judged at the same band;
+  - $ is m_rel times each fine channel's whole-extract rate (IFA $1.25197M per m_rel);
+  - one waiver: in IFA, one district of MD+DE+WV whole (about $1,924M, 54% over target; owner
+    2026-10-08 widened F1 from MD alone), recorded on every map that uses it; no other district
+    is exempt;
+  - main-map total K 48-54, IFA K 46-55 (IFA's K from the grid; "K ≥ 50" was revoked).
 - **Ranking, looks first (owner 2026-10-05):**
   1. split units per channel (a district owning any ZCTA of a state, zero-opportunity ones
      included, has split it; a state split in WH and in FI counts 2);
@@ -71,7 +78,7 @@ the tracker, a map shown that is not on the shortlist, and an unregistered label
 
 ## 4. Open owner decisions (never settle by default, in code or in prose)
 
-- OD1 the final band (#56). OD3 output tiers (#58). OD4 county pieces (#59). OD5 metros (#60).
+- OD3 output tiers (#58). OD4 county pieces (#59). OD5 metros (#60).
 - OD6 the catalog (#75). F1 new channels (#76). Heavy ZIPs (#83).
 - Which master certifies split and balance floors (#110). The smallest share that counts beyond
   a split (#111).
