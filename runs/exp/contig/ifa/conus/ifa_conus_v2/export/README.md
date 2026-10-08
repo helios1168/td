@@ -14,6 +14,11 @@ Run folder: `runs/exp/contig/ifa/conus/ifa_conus_v2` (ifa_conus_merge), written 
   the merge tool's code state, `spec_sha256`/`instance_sha256` the spec and extract it ran on,
   `source_runs` the six region runs with their commits (each has its own manifest.json), `m1` and
   `m1_gate` the verdict. Written by `tools/exp/contig/export_long.py`.
+- `52_ifa_38bcd2d_district_reach.geojson`: the Tableau district-reach layer (archive
+  `tools/export_tableau_datasets.py` shape): one WGS84 (Multi)Polygon per district dissolved from
+  its ZCTAs, simplified at 250 m, properties `scenario_id, bundle, bundle_title, district_raw,
+  district, wholesaler, mass, color` (colours as on zip_IFA.png). Written by
+  `tools/exp/contig/export_geojson.py`.
 - Per-district verdicts (window, pieces, necks, both M1 gates) are in `../districts.csv` and `../run.json`.
 
 Rate: usd = m_rel x 1.2519681558 $M per m_rel, rounded to 0.1 ($M).
