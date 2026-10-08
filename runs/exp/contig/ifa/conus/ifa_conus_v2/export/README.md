@@ -21,6 +21,10 @@ Run folder: `runs/exp/contig/ifa/conus/ifa_conus_v2` (ifa_conus_merge), written 
   stroke, stroke-width`, kepler.gl `fillColor, lineColor, lineWidth` (RGB arrays) and `color_index`
   (0-17, the palette class; colour by this field in a viewer whose palette has 20 or fewer colours). Written by
   `tools/exp/contig/export_geojson.py`.
+- `52_ifa_38bcd2d_states.geojson`: the 49 CONUS state polygons (cb_2025_us_state_500k, 250 m
+  simplified) with `state`, `name`, `label_lon`/`label_lat`, a black 2 px border and zero fill
+  opacity, to lay over the districts for state borders and names (kepler.gl: drop it as a second
+  layer, fill off, label by `name`; Tableau: a second spatial layer, Label on `name`).
 - Per-district verdicts (window, pieces, necks, both M1 gates) are in `../districts.csv` and `../run.json`.
 
 Rate: usd = m_rel x 1.2519681558 $M per m_rel, rounded to 0.1 ($M).

@@ -5,7 +5,8 @@ geometry and colouring the ZIP map uses, so colours match the PNG), properties `
 bundle_title, district_raw, district, wholesaler, mass, color` plus the simplestyle keys `fill, fill-opacity, stroke, stroke-width`
 (the same colour) so viewers such as GitHub's preview colour each district, and kepler.gl's `fillColor, lineColor,
 lineWidth` (RGB arrays).  Written as
-`export/<scenario>_district_reach.geojson`; the scenario id comes from export/scenarios.csv
+`export/<scenario>_district_reach.geojson`, with `export/<scenario>_states.geojson` beside it (CONUS state
+polygons with `state`, `name`, a black 2 px border and no fill, for borders and labels on top); the scenario id comes from export/scenarios.csv
 (run tools/exp/contig/export_long.py first).
 
     TD_REPO=<repo with data/public> "$TD_PY" tools/exp/contig/export_geojson.py <run_dir> [--simplify M]
@@ -64,6 +65,25 @@ def main(argv=None):
     with open(out, "w") as fh:
         json.dump({"type": "FeatureCollection", "features": feats}, fh)
     print(f"{out}: {len(feats)} districts, {os.path.getsize(out) / 1e6:.1f} MB")
+    # the states layer: one polygon per CONUS state with its name, black 2 px border and no colour
+    # of its own (in kepler.gl turn the layer's fill off, or drop its opacity, and label by `name`)
+    from td import geo
+    st = geo._read(os.path.join(zp.CACHE, "cb_2025_us_state_500k.zip"), ["STATEFP", "STUSPS", "NAME"])
+    st = st[st["STATEFP"].isin(geo.CONUS_STATEFP)]
+    sfeats = []
+    for postal, name, g in zip(st["STUSPS"], st["NAME"], st.geometry):
+        g = g.simplify(a.simplify, preserve_topology=True) if a.simplify else g
+        g = shapely.transform(g, lambda xy: __import__("numpy").column_stack(tr.transform(xy[:, 0], xy[:, 1])))
+        c = g.representative_point()
+        sfeats.append({"type": "Feature", "geometry": shapely.geometry.mapping(g),
+                       "properties": {"scenario_id": scen["scenario"], "state": postal, "name": name,
+                                      "label_lon": round(c.x, 5), "label_lat": round(c.y, 5),
+                                      "stroke": "#000000", "stroke-width": 2, "fill-opacity": 0,
+                                      "lineColor": [0, 0, 0], "lineWidth": 2}})
+    sout = os.path.join(run_dir, "export", f"{scen['scenario']}_states.geojson")
+    with open(sout, "w") as fh:
+        json.dump({"type": "FeatureCollection", "features": sorted(sfeats, key=lambda f: f["properties"]["state"])}, fh)
+    print(f"{sout}: {len(sfeats)} states, {os.path.getsize(sout) / 1e6:.1f} MB")
     return 0
 
 
