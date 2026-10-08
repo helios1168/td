@@ -1,0 +1,56 @@
+{
+  "band": [
+    798.74,
+    1148.19
+  ],
+  "districts": 11,
+  "groups": {
+    "MN#1": {
+      "mass": 854.5719755250001,
+      "units": [
+        "02.0",
+        "03.0",
+        "04.0",
+        "05.0"
+      ]
+    },
+    "MN+ND+NE+SD#1": {
+      "mass": 1117.737837534,
+      "units": [
+        "01.0",
+        "01.1",
+        "02.1",
+        "06.0",
+        "07.0",
+        "07.1",
+        "08.0",
+        "08.1",
+        "ND.0",
+        "NE.0",
+        "SD.0"
+      ]
+    }
+  },
+  "k": 2,
+  "level": "cd",
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31070 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "partition": {
+    "bound": 782.85956,
+    "cut_km": 782.85256,
+    "gap": 0.0,
+    "objective": 782.85956,
+    "seconds": 0.0,
+    "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "success": true,
+    "unit_edges": 25,
+    "units": 15
+  },
+  "state": "MN",
+  "thin": null,
+  "units": 15,
+  "verdict": "fail"
+}

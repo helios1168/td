@@ -28,7 +28,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
-FIPS = {"NY": "36", "MI": "26"}
+FIPS = {"NY": "36", "MI": "26", "MN": "27"}
 TIGER_FILE = {"sldu": "tl_2025_{fips}_sldu.zip", "cd": "tl_2025_{fips}_cd119.zip"}
 KEY = {"sldu": "SLDUST", "cd": "CD119FP"}
 DATA = os.path.join(ROOT, "runs", "exp", "contig", "nycd", "data")
@@ -246,6 +246,10 @@ def main(argv=None) -> int:
                     help="band = [lo, hi] exactly, not intersected with the plan's τ band")
     ap.add_argument("--thin-floor", action="store_true",
                     help="each group's thin-unit land at most NECK_SHARE of its land")
+    ap.add_argument("--attach", default="",
+                    help="comma-separated whole states drawn with --state: each is one unit (its "
+                         "connected components), never split; groups are matched to the plan's "
+                         "copies by their state set")
     ap.add_argument("--time-limit", type=float, default=300.0)
     ap.add_argument("--nogood", nargs="*", default=[],
                     help="comma-separated unit sets no group may equal")
@@ -258,7 +262,8 @@ def main(argv=None) -> int:
     ref = geo.read_reference()
     ext = tdspec.scope(s, data.conus(data.load(a.extract), ref))
     polygon = geo.polygon_graph()
-    planning = contig.induced_graph(polygon, (a.state,))
+    attach = tuple(x for x in a.attach.split(",") if x)
+    planning = contig.induced_graph(polygon, (a.state,) + attach)
     inst = tdspec.build(s, ext, ref, graph=planning)
     plans, reports = master.plan_all(inst)
     (c, p), = plans.items()
@@ -266,7 +271,9 @@ def main(argv=None) -> int:
     band = ((a.lo, a.hi) if a.window else
             (max(a.lo, ch.tau * (1 - p.delta)), min(a.hi, ch.tau * (1 + p.delta))))
     print(f"{c}: τ {ch.tau:.2f}, plan δ {p.delta}, band {band[0]:.2f}..{band[1]:.2f}")
-    district = district_of(planning["vertices"], a.state, a.level)
+    st_of = polygon["state"]
+    district = district_of([z for z in planning["vertices"] if st_of.get(z) == a.state], a.state, a.level)
+    district.update({z: st_of[z] for z in planning["vertices"] if st_of.get(z) in attach})
     unit = assign_units(planning["vertices"], planning["edges"], district)
     border = contig.draw.border_km(planning)
     g = coarse_graph(unit, planning["edges"], border, ch.m)
@@ -282,6 +289,17 @@ def main(argv=None) -> int:
     heavy = sorted(range(a.k), key=lambda h: -sum(g["mass"][u] for u, x in part["group"].items() if x == h))
     names = [cp.name for cp in p.copies]
     order = {h: i for i, h in enumerate(heavy)}
+    if attach:      # match each group to the copy whose support is the group's state set
+        ust = {u: (st_of[z]) for z, u in unit.items()}
+        sets = {h: frozenset(ust[u] for u, x in part["group"].items() if x == h) for h in range(a.k)}
+        free = list(range(len(p.copies)))
+        for h in heavy:
+            i = next((i for i in free if p.copies[i].support == sets[h]), None)
+            if i is None:
+                raise RuntimeError(f"group with states {sorted(sets[h])} matches no plan copy "
+                                   f"{[cp.name for cp in p.copies]}")
+            order[h] = i
+            free.remove(i)
     owner = expand(unit, {u: order[h] for u, h in part["group"].items()}, names)
     res = Result(c, owner, [], set(), [], [], p.delta, "coarse", False)
     d = drawing(inst, p, res)
