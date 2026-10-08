@@ -2,15 +2,15 @@
 
 Run folder: `runs/exp/contig/ifa/conus/ifa_conus_v2` (ifa_conus_merge), written by `tools/exp/contig/merge.py` at commit `4572e81cc81e7b94f2233e5c3969407e4f502e7d`.
 
-- `ifa_conus_v2_nationwide_zcta_long.csv` (+ `.gz`): the database's nationwide long schema
+- `52_ifa_38bcd2d_nationwide_zcta_long.csv` (+ `.gz`): the database's nationwide long schema
   (archive `tools/export_all_scenarios_nationwide_long.py`, 2026-09-14), one row per (scenario,
   ZCTA, source channel), columns exactly `scenario, zip_code, current_channel, canonical_channel,
   state, model_channel, bundle, district, district_channels, rep, m_rel, has_commercial_opportunity`;
   33,300 rows (every CONUS ZCTA, 25,305 of them at zero IFA opportunity), `rep` blank (staffing is
   out of scope), `has_commercial_opportunity` = m_rel > 0. No dollars: usd = m_rel x the rate below.
-- `scenarios.csv`: one row per scenario, the tie-back. `scenario` is the run id (`ifa_conus_v2`,
-  unique on the shortlist, rank 59); `legacy_id` is the old `<K>_total_<k><channel>` spelling
-  (`52_total_52ifa`); `branch`/`commit` locate the run folder on GitHub, `code_commit`/`code_dirty`
+- `scenarios.csv`: one row per scenario, the tie-back. `scenario` is `<K>_<channels>_<commit>` (`52_ifa_38bcd2d`,
+  the commit that first committed this folder's ledger.csv on its branch; owner 2026-10-08);
+  `run_id` is `ifa_conus_v2` (shortlist rank 59) and `legacy_id` the old spelling (`52_total_52ifa`); `branch`/`commit` locate the run folder on GitHub, `code_commit`/`code_dirty`
   the merge tool's code state, `spec_sha256`/`instance_sha256` the spec and extract it ran on,
   `source_runs` the six region runs with their commits (each has its own manifest.json), `m1` and
   `m1_gate` the verdict. Written by `tools/exp/contig/export_long.py`.
