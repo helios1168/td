@@ -20,3 +20,11 @@ Washington-Baltimore CSA as a unit moves the obstruction to VA (DC + VA + DC-sid
 Tracked illustration: `runs/exp/contig/r2illustration/ifa46-md4/` (hand edit of ifa46-whole, MD in
 4 county groups, M1 pass; not a candidate) awaits its shortlist entry from the lander before it is
 shown again (T1).
+
+## Later the same session (~02:20 owner's clock)
+
+- **F1 and F2 confirmed** (owner: "for 1 yes confirm f1 and f2"). The lander files them.
+- **F3, the #128 re-render is declined for good** (owner's words: "no we do not want to run
+  the 58 map re-render. don't ask again, store my explicit consent to avoid that"). The 58
+  shortlist entries whose renders predate the 2026-10-07 renderer change stay as they are, their
+  T1 "render not current" failures are accepted, and no session asks about the re-render again.
