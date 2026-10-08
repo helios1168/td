@@ -1511,7 +1511,7 @@
     "runs/exp/contig/ifa/newengland/merged/zip_IFA.png"
    ],
    "shown_images": [],
-   "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at d3a98fb; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New England, K 4: ifa_ctri_k2 and ifa_mavtnhme_k2 merged by merge.py and re-gated on the full graph. 0 pieces, 0 necks, 0 owned twice; split states CT and MA; districts $1,008M, $1,091M, $1,315M, $1,421M, all in the E2 window. The 31,454 cells with no row are exactly the ZCTAs outside New England, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible)."
+   "notes": "td-ifa-newengland (branch m5-studio/ifa-newengland at 01ffe5e, re-audited at the spec default final_delta 0.15; folder copied to the hub's runs/ for T1), 2026-10-08: IFA New England, K 4: ifa_ctri_k2 and ifa_mavtnhme_k2 merged by merge.py and re-gated on the full graph. 0 pieces, 0 necks, 0 owned twice; split states CT and MA; districts $1,008M, $1,091M, $1,315M, $1,421M, all in the E2 window. The 31,454 cells with no row are exactly the ZCTAs outside New England, so this is a regional pass, not a CONUS verdict. Tier E (exploratory, never eligible). The audit's τ ±15% final-band line (information only, owner 2026-10-08) lists 2 of 4 districts outside τ ±15%; all 4 are inside the E2 window."
   },
   {
    "id": "ifa_sc_arlaok_k1",
