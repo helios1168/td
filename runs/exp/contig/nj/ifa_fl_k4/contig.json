@@ -1,0 +1,84 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": false,
+      "cut_border_km": 2073.42753,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.084,
+      "groups": [
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 6627,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.084,
+          "districts": [
+            "FL#1",
+            "FL#2",
+            "FL#3",
+            "FL#4"
+          ],
+          "free_zctas": 1013,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "no incumbent (Time limit reached)",
+          "objective": null,
+          "rows": 19401,
+          "seconds": 480.01,
+          "status": "unknown",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.084,
+              "note": "no incumbent (Time limit reached)",
+              "seconds": 480.01,
+              "status": "unknown"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 2.4326928705778754e-05,
+      "plan_delta": 0.084,
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [
+        "FL#1",
+        "FL#2",
+        "FL#3",
+        "FL#4"
+      ],
+      "single_connector": null,
+      "split_units": [
+        "FL"
+      ],
+      "status": "unknown",
+      "undrawn_zctas": 1013,
+      "vanished_shares": [],
+      "worst_dev": 4.8653857411622716e-05
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.084,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "2 districts in pieces, 2 detached pieces (largest 0.0415 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 32287 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_fl_k4",
+  "sequential": false
+}

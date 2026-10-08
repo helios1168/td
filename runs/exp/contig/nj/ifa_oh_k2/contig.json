@@ -1,0 +1,94 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 564.62763,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.052,
+      "groups": [
+        {
+          "border_km": 564.62763,
+          "bound": 2005.193255555049,
+          "columns": 5715,
+          "cuts": 550,
+          "dag": false,
+          "delta": 0.052,
+          "districts": [
+            "OH#1",
+            "OH#2"
+          ],
+          "free_zctas": 1233,
+          "gap": 0.00596297765585747,
+          "iterations": 15,
+          "moment": 5740594.331467885,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "stopped at solve 15 (Time limit reached) with a detached incumbent",
+          "objective": 2017.2219046996795,
+          "rows": 13211,
+          "seconds": 387.0,
+          "status": "connected",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.052,
+              "note": "",
+              "seconds": 93.13,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": 0.052,
+              "note": "stopped at solve 15 (Time limit reached) with a detached incumbent",
+              "seconds": 387.0,
+              "status": "connected"
+            }
+          ],
+          "units": [
+            "OH"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.03422276595684617,
+      "plan_delta": 0.052,
+      "shape": {
+        "border_km": 564.62763,
+        "moment": 5740594.331467885
+      },
+      "share_only": [
+        "OH#1",
+        "OH#2"
+      ],
+      "single_connector": {
+        "OH#1": [
+          "43436-43446",
+          "43438-43440",
+          "43446-43452",
+          "43452-43456"
+        ]
+      },
+      "split_units": [
+        "OH"
+      ],
+      "status": "connected",
+      "undrawn_zctas": 0,
+      "vanished_shares": [],
+      "worst_dev": 0.034222765956846375
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.052,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 32067 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_oh_k2",
+  "sequential": false
+}

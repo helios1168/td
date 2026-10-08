@@ -1,0 +1,1014 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_fl_k4,32003,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1222660,"IFA Orlando-Kissimmee-Sanford, FL",2.53465,
+ifa_fl_k4,32008,ifa,FL,IFA,IFA_02,IFA,,12067,,1208175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32009,ifa,FL,IFA,IFA_02,IFA,,12089,27260,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32011,ifa,FL,IFA,IFA_02,IFA,,12089,27260,1247787,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32013,ifa,FL,IFA,IFA_02,IFA,,12067,,1216500,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32024,ifa,FL,IFA,IFA_02,IFA,,12023,29380,1237775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.732793,
+ifa_fl_k4,32025,ifa,FL,IFA,IFA_02,IFA,,12023,29380,1237775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32026,ifa,FL,IFA,IFA_02,IFA,,12007,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32033,ifa,FL,IFA,IFA_04,IFA,,12109,27260,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32034,ifa,FL,IFA,IFA_04,IFA,,12089,27260,1222175,"IFA Orlando-Kissimmee-Sanford, FL",1.17199,
+ifa_fl_k4,32038,ifa,FL,IFA,IFA_02,IFA,,12023,29380,1224500,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32040,ifa,FL,IFA,IFA_02,IFA,,12003,27260,1226075,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32043,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1202187,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32044,ifa,FL,IFA,IFA_02,IFA,,12007,,1228575,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32046,ifa,FL,IFA,IFA_02,IFA,,12089,27260,1230750,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32052,ifa,FL,IFA,IFA_02,IFA,,12047,,1235375,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32053,ifa,FL,IFA,IFA_02,IFA,,12047,,1235525,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32054,ifa,FL,IFA,IFA_02,IFA,,12125,,1237650,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32055,ifa,FL,IFA,IFA_02,IFA,,12023,29380,1237775,"IFA Tampa-St. Petersburg-Clearwater, FL",3.69809,
+ifa_fl_k4,32058,ifa,FL,IFA,IFA_02,IFA,,12007,,1239700,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32059,ifa,FL,IFA,IFA_02,IFA,,12079,,1239850,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32060,ifa,FL,IFA,IFA_02,IFA,,12121,,1240875,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32061,ifa,FL,IFA,IFA_02,IFA,,12023,29380,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32062,ifa,FL,IFA,IFA_02,IFA,,12121,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32063,ifa,FL,IFA,IFA_02,IFA,,12003,27260,1241950,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32064,ifa,FL,IFA,IFA_02,IFA,,12121,,1240875,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32065,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1250630,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32066,ifa,FL,IFA,IFA_02,IFA,,12067,,1243575,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32068,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1245350,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32071,ifa,FL,IFA,IFA_02,IFA,,12121,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32072,ifa,FL,IFA,IFA_02,IFA,,12003,27260,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32073,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1205025,"IFA Orlando-Kissimmee-Sanford, FL",5.06501,
+ifa_fl_k4,32079,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1255875,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32080,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1262500,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32081,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1248850,"IFA Orlando-Kissimmee-Sanford, FL",4.05628,
+ifa_fl_k4,32082,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1254525,"IFA Orlando-Kissimmee-Sanford, FL",41.7007,
+ifa_fl_k4,32083,ifa,FL,IFA,IFA_02,IFA,,12125,,1259400,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32084,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1262500,"IFA Orlando-Kissimmee-Sanford, FL",5.69298,
+ifa_fl_k4,32086,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1262550,"IFA Orlando-Kissimmee-Sanford, FL",5.44979,
+ifa_fl_k4,32087,ifa,FL,IFA,IFA_02,IFA,,12003,27260,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32091,ifa,FL,IFA,IFA_02,IFA,,12007,,1268525,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32092,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1278740,"IFA Orlando-Kissimmee-Sanford, FL",8.98502,
+ifa_fl_k4,32094,ifa,FL,IFA,IFA_02,IFA,,12121,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32095,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1248850,"IFA Orlando-Kissimmee-Sanford, FL",7.02104,
+ifa_fl_k4,32096,ifa,FL,IFA,IFA_02,IFA,,12023,29380,1277400,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32097,ifa,FL,IFA,IFA_02,IFA,,12089,27260,1279175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.679903,
+ifa_fl_k4,32102,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1202275,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32110,ifa,FL,IFA,IFA_04,IFA,,12035,19660,1209550,"IFA Orlando-Kissimmee-Sanford, FL",1.73043,
+ifa_fl_k4,32112,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1215375,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32113,ifa,FL,IFA,IFA_02,IFA,,12083,36100,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32114,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216525,"IFA Orlando-Kissimmee-Sanford, FL",0.828774,
+ifa_fl_k4,32117,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216525,"IFA Orlando-Kissimmee-Sanford, FL",6.1217,
+ifa_fl_k4,32118,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216525,"IFA Orlando-Kissimmee-Sanford, FL",1.50559,
+ifa_fl_k4,32119,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216525,"IFA Orlando-Kissimmee-Sanford, FL",4.11124,
+ifa_fl_k4,32124,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216525,"IFA Orlando-Kissimmee-Sanford, FL",0.701525,
+ifa_fl_k4,32127,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1258575,"IFA Orlando-Kissimmee-Sanford, FL",0.695565,
+ifa_fl_k4,32128,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1258575,"IFA Orlando-Kissimmee-Sanford, FL",1.69989,
+ifa_fl_k4,32129,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1258575,"IFA Orlando-Kissimmee-Sanford, FL",1.82201,
+ifa_fl_k4,32130,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216975,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32131,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1219350,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32132,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1219825,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32133,ifa,FL,IFA,IFA_04,IFA,,12083,36100,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32134,ifa,FL,IFA,IFA_04,IFA,,12083,36100,1238238,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32136,ifa,FL,IFA,IFA_04,IFA,,12035,19660,1222550,"IFA Orlando-Kissimmee-Sanford, FL",6.67373,
+ifa_fl_k4,32137,ifa,FL,IFA,IFA_04,IFA,,12035,19660,1254200,"IFA Orlando-Kissimmee-Sanford, FL",17.4452,
+ifa_fl_k4,32139,ifa,FL,IFA,IFA_04,IFA,,12107,37260,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32140,ifa,FL,IFA,IFA_04,IFA,,12107,37260,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32141,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1219825,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32145,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1222560,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32147,ifa,FL,IFA,IFA_04,IFA,,12107,37260,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32148,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1233900,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32157,ifa,FL,IFA,IFA_04,IFA,,12107,37260,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32159,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1237375,"IFA Orlando-Kissimmee-Sanford, FL",4.39872,
+ifa_fl_k4,32162,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1271625,"IFA Orlando-Kissimmee-Sanford, FL",11.2476,
+ifa_fl_k4,32163,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1277675,"IFA Orlando-Kissimmee-Sanford, FL",6.54688,
+ifa_fl_k4,32164,ifa,FL,IFA,IFA_04,IFA,,12035,19660,1254200,"IFA Orlando-Kissimmee-Sanford, FL",3.03116,
+ifa_fl_k4,32168,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1248625,"IFA Orlando-Kissimmee-Sanford, FL",7.26548,
+ifa_fl_k4,32169,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1248625,"IFA Orlando-Kissimmee-Sanford, FL",1.09887,
+ifa_fl_k4,32174,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1253150,"IFA Orlando-Kissimmee-Sanford, FL",5.57852,
+ifa_fl_k4,32176,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1253150,"IFA Orlando-Kissimmee-Sanford, FL",4.68797,
+ifa_fl_k4,32177,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1253875,"IFA Orlando-Kissimmee-Sanford, FL",0.516805,
+ifa_fl_k4,32179,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1266179,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32180,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1256425,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32181,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1258025,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32182,ifa,FL,IFA,IFA_04,IFA,,12083,36100,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32187,ifa,FL,IFA,IFA_04,IFA,,12107,37260,,"IFA Orlando-Kissimmee-Sanford, FL",0.158436,
+ifa_fl_k4,32189,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1275750,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32190,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1265200,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32192,ifa,FL,IFA,IFA_02,IFA,,12083,36100,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32193,ifa,FL,IFA,IFA_04,IFA,,12107,37260,1275750,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32195,ifa,FL,IFA,IFA_04,IFA,,12083,36100,1237375,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32202,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",24.8505,
+ifa_fl_k4,32203,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",1.16387,
+ifa_fl_k4,32204,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",2.03201,
+ifa_fl_k4,32205,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.253828,
+ifa_fl_k4,32206,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.00392364,
+ifa_fl_k4,32207,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",4.13346,
+ifa_fl_k4,32208,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32209,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32210,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",1.19181,
+ifa_fl_k4,32211,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",4.46203,
+ifa_fl_k4,32212,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32214,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32216,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",68.2669,
+ifa_fl_k4,32217,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.432312,
+ifa_fl_k4,32218,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.13539,
+ifa_fl_k4,32219,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32220,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32221,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.846454,
+ifa_fl_k4,32222,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.312597,
+ifa_fl_k4,32223,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",1.52709,
+ifa_fl_k4,32224,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",10.0479,
+ifa_fl_k4,32225,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.635905,
+ifa_fl_k4,32226,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32227,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32228,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32233,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32234,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32244,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.107975,
+ifa_fl_k4,32246,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",5.07515,
+ifa_fl_k4,32250,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235050,"IFA Orlando-Kissimmee-Sanford, FL",4.49223,
+ifa_fl_k4,32254,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32256,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",45.9801,
+ifa_fl_k4,32257,ifa,FL,IFA,IFA_02,IFA,,12031,27260,1235000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.00879848,
+ifa_fl_k4,32258,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",10.1281,
+ifa_fl_k4,32259,ifa,FL,IFA,IFA_04,IFA,,12109,27260,1224925,"IFA Orlando-Kissimmee-Sanford, FL",3.45603,
+ifa_fl_k4,32266,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1248100,"IFA Orlando-Kissimmee-Sanford, FL",3.60456,
+ifa_fl_k4,32277,ifa,FL,IFA,IFA_04,IFA,,12031,27260,1235000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32301,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",10.6272,
+ifa_fl_k4,32303,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",14.1677,
+ifa_fl_k4,32304,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.785315,
+ifa_fl_k4,32305,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32306,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32307,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32308,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",106.246,
+ifa_fl_k4,32309,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",22.7724,
+ifa_fl_k4,32310,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32311,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",3.41937,
+ifa_fl_k4,32312,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.437498,
+ifa_fl_k4,32313,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32317,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",21.452,
+ifa_fl_k4,32320,ifa,FL,IFA,IFA_02,IFA,,12037,,1201625,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32321,ifa,FL,IFA,IFA_02,IFA,,12077,,1238519,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32322,ifa,FL,IFA,IFA_02,IFA,,12037,,1210725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32323,ifa,FL,IFA,IFA_02,IFA,,12037,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32324,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1211800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32327,ifa,FL,IFA,IFA_02,IFA,,12129,45220,1215300,"IFA Tampa-St. Petersburg-Clearwater, FL",4.23569,
+ifa_fl_k4,32328,ifa,FL,IFA,IFA_02,IFA,,12037,,1219400,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32330,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1227550,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32331,ifa,FL,IFA,IFA_02,IFA,,12079,,1227575,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32332,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1227650,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32333,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1229150,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32334,ifa,FL,IFA,IFA_02,IFA,,12077,,1232675,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32336,ifa,FL,IFA,IFA_02,IFA,,12123,,1239100,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32337,ifa,FL,IFA,IFA_02,IFA,,12065,45220,1240950,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32340,ifa,FL,IFA,IFA_02,IFA,,12079,,1242425,"IFA Tampa-St. Petersburg-Clearwater, FL",0.501134,
+ifa_fl_k4,32343,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1245425,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32344,ifa,FL,IFA,IFA_02,IFA,,12065,45220,1246500,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32346,ifa,FL,IFA,IFA_02,IFA,,12129,45220,1254625,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32347,ifa,FL,IFA,IFA_02,IFA,,12123,,1256150,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32348,ifa,FL,IFA,IFA_02,IFA,,12123,,1256150,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32350,ifa,FL,IFA,IFA_02,IFA,,12079,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32351,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1259325,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32352,ifa,FL,IFA,IFA_02,IFA,,12039,45220,1259325,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32355,ifa,FL,IFA,IFA_02,IFA,,12129,45220,1262825,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32356,ifa,FL,IFA,IFA_02,IFA,,12123,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32358,ifa,FL,IFA,IFA_02,IFA,,12129,45220,1266925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32359,ifa,FL,IFA,IFA_02,IFA,,12029,,1268625,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32360,ifa,FL,IFA,IFA_02,IFA,,12077,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32361,ifa,FL,IFA,IFA_02,IFA,,12065,45220,1274700,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32399,ifa,FL,IFA,IFA_02,IFA,,12073,45220,1270600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32401,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1254700,"IFA Tampa-St. Petersburg-Clearwater, FL",3.83706,
+ifa_fl_k4,32403,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1272875,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32404,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1254700,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32405,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1254700,"IFA Tampa-St. Petersburg-Clearwater, FL",3.14136,
+ifa_fl_k4,32407,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1254725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32408,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1273312,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32409,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1267800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32410,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1244300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32413,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1254725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32420,ifa,FL,IFA,IFA_02,IFA,,12063,,1200625,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32421,ifa,FL,IFA,IFA_02,IFA,,12013,,1201000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32423,ifa,FL,IFA,IFA_02,IFA,,12063,,1203725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32424,ifa,FL,IFA,IFA_02,IFA,,12013,,1206925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32425,ifa,FL,IFA,IFA_02,IFA,,12059,,1207450,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32426,ifa,FL,IFA,IFA_02,IFA,,12063,,1209900,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32427,ifa,FL,IFA,IFA_02,IFA,,12133,37460,1210975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32428,ifa,FL,IFA,IFA_02,IFA,,12133,37460,1211975,"IFA Tampa-St. Petersburg-Clearwater, FL",21.6662,
+ifa_fl_k4,32430,ifa,FL,IFA,IFA_02,IFA,,12013,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32431,ifa,FL,IFA,IFA_02,IFA,,12063,,1235200,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32432,ifa,FL,IFA,IFA_02,IFA,,12063,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32433,ifa,FL,IFA,IFA_02,IFA,,12131,18880,1216800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32435,ifa,FL,IFA,IFA_02,IFA,,12131,18880,1216800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.331574,
+ifa_fl_k4,32437,ifa,FL,IFA,IFA_02,IFA,,12133,37460,1219725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32438,ifa,FL,IFA,IFA_02,IFA,,12005,37460,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32439,ifa,FL,IFA,IFA_02,IFA,,12131,18880,1224825,"IFA Tampa-St. Petersburg-Clearwater, FL",2.76104,
+ifa_fl_k4,32440,ifa,FL,IFA,IFA_02,IFA,,12063,,1227000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32442,ifa,FL,IFA,IFA_02,IFA,,12063,,1227175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32443,ifa,FL,IFA,IFA_02,IFA,,12063,,1227600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32444,ifa,FL,IFA,IFA_02,IFA,,12005,37460,1241825,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0805928,
+ifa_fl_k4,32445,ifa,FL,IFA,IFA_02,IFA,,12063,,1242650,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32446,ifa,FL,IFA,IFA_02,IFA,,12063,,1243175,"IFA Tampa-St. Petersburg-Clearwater, FL",6.49795,
+ifa_fl_k4,32448,ifa,FL,IFA,IFA_02,IFA,,12063,,1243175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.102394,
+ifa_fl_k4,32449,ifa,FL,IFA,IFA_02,IFA,,12013,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32455,ifa,FL,IFA,IFA_02,IFA,,12131,18880,1258175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32456,ifa,FL,IFA,IFA_02,IFA,,12045,,1258675,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0662593,
+ifa_fl_k4,32459,ifa,FL,IFA,IFA_02,IFA,,12131,18880,1246000,"IFA Tampa-St. Petersburg-Clearwater, FL",2.65957,
+ifa_fl_k4,32460,ifa,FL,IFA,IFA_02,IFA,,12063,,1266725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32461,ifa,FL,IFA,IFA_02,IFA,,12131,18880,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32462,ifa,FL,IFA,IFA_02,IFA,,12133,37460,1274125,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32463,ifa,FL,IFA,IFA_02,IFA,,12133,37460,1275450,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32464,ifa,FL,IFA,IFA_02,IFA,,12059,,1276975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32465,ifa,FL,IFA,IFA_02,IFA,,12045,,1277100,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32466,ifa,FL,IFA,IFA_02,IFA,,12005,37460,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32501,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1255925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.195129,
+ifa_fl_k4,32502,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1255925,"IFA Tampa-St. Petersburg-Clearwater, FL",28.6253,
+ifa_fl_k4,32503,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1255925,"IFA Tampa-St. Petersburg-Clearwater, FL",4.26392,
+ifa_fl_k4,32504,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1255925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.880835,
+ifa_fl_k4,32505,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1208300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32506,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1247550,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32507,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1275200,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32508,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1256004,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32509,ifa,FL,IFA,IFA_02,IFA,,12033,37860,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32511,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1247550,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32512,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1247550,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32514,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1222275,"IFA Tampa-St. Petersburg-Clearwater, FL",1.279,
+ifa_fl_k4,32526,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1205462,"IFA Tampa-St. Petersburg-Clearwater, FL",0.268544,
+ifa_fl_k4,32530,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1202925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32531,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1247300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32533,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1226700,"IFA Tampa-St. Petersburg-Clearwater, FL",2.3801,
+ifa_fl_k4,32534,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1220925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32535,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1211362,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32536,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1215475,"IFA Tampa-St. Petersburg-Clearwater, FL",10.8828,
+ifa_fl_k4,32539,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1215475,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0168332,
+ifa_fl_k4,32541,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1217325,"IFA Tampa-St. Petersburg-Clearwater, FL",8.16869,
+ifa_fl_k4,32542,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1273675,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32544,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1232975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32547,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1278800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.721818,
+ifa_fl_k4,32548,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1224475,"IFA Tampa-St. Petersburg-Clearwater, FL",2.04221,
+ifa_fl_k4,32550,ifa,FL,IFA,IFA_02,IFA,,12131,18880,1246000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.950396,
+ifa_fl_k4,32561,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1228000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.243882,
+ifa_fl_k4,32563,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1245465,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32564,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1229000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32565,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1212300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32566,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1248050,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32567,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1239650,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32568,ifa,FL,IFA,IFA_02,IFA,,12033,37860,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32569,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1243375,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32570,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1247300,"IFA Tampa-St. Petersburg-Clearwater, FL",8.35458,
+ifa_fl_k4,32571,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1253725,"IFA Tampa-St. Petersburg-Clearwater, FL",1.06003,
+ifa_fl_k4,32577,ifa,FL,IFA,IFA_02,IFA,,12033,37860,1246225,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32578,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1248750,"IFA Tampa-St. Petersburg-Clearwater, FL",0.316611,
+ifa_fl_k4,32579,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1238287,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32580,ifa,FL,IFA,IFA_02,IFA,,12091,18880,1273675,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32583,ifa,FL,IFA,IFA_02,IFA,,12113,37860,1219275,"IFA Tampa-St. Petersburg-Clearwater, FL",1.71277,
+ifa_fl_k4,32601,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",10.0383,
+ifa_fl_k4,32603,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32605,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",1.06056,
+ifa_fl_k4,32606,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",4.80509,
+ifa_fl_k4,32607,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",3.69996,
+ifa_fl_k4,32608,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",5.21307,
+ifa_fl_k4,32609,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32610,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32612,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32615,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1200375,"IFA Tampa-St. Petersburg-Clearwater, FL",0.24215,
+ifa_fl_k4,32616,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1200375,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32617,ifa,FL,IFA,IFA_02,IFA,,12083,36100,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32618,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1201775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32619,ifa,FL,IFA,IFA_02,IFA,,12041,23540,1204975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32621,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1219025,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32622,ifa,FL,IFA,IFA_02,IFA,,12007,,1237300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32625,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1211225,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32626,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1242787,"IFA Tampa-St. Petersburg-Clearwater, FL",1.79228,
+ifa_fl_k4,32628,ifa,FL,IFA,IFA_02,IFA,,12029,,1215575,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32631,ifa,FL,IFA,IFA_04,IFA,,12001,23540,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32634,ifa,FL,IFA,IFA_02,IFA,,12083,36100,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32639,ifa,FL,IFA,IFA_02,IFA,,12075,23540,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32640,ifa,FL,IFA,IFA_04,IFA,,12001,23540,1229275,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32641,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32643,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1230525,"IFA Tampa-St. Petersburg-Clearwater, FL",0.978524,
+ifa_fl_k4,32648,ifa,FL,IFA,IFA_02,IFA,,12029,,1232650,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32653,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1225175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32656,ifa,FL,IFA,IFA_04,IFA,,12019,27260,1236475,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32658,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1237300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32664,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1242150,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32666,ifa,FL,IFA,IFA_04,IFA,,12107,37260,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32667,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1245225,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32668,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1277837,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32669,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1248200,"IFA Tampa-St. Petersburg-Clearwater, FL",3.28573,
+ifa_fl_k4,32680,ifa,FL,IFA,IFA_02,IFA,,12029,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32681,ifa,FL,IFA,IFA_02,IFA,,12083,36100,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32683,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1253500,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32686,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1259675,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32692,ifa,FL,IFA,IFA_02,IFA,,12029,,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32693,ifa,FL,IFA,IFA_02,IFA,,12041,23540,1221850,"IFA Tampa-St. Petersburg-Clearwater, FL",0.979281,
+ifa_fl_k4,32694,ifa,FL,IFA,IFA_02,IFA,,12001,23540,1274925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32696,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1277837,"IFA Tampa-St. Petersburg-Clearwater, FL",0.718019,
+ifa_fl_k4,32697,ifa,FL,IFA,IFA_02,IFA,,12125,,1278775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32701,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1200950,"IFA Orlando-Kissimmee-Sanford, FL",2.01577,
+ifa_fl_k4,32702,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1257380,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32703,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1201700,"IFA Orlando-Kissimmee-Sanford, FL",0.00198863,
+ifa_fl_k4,32707,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1211050,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32708,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1278325,"IFA Orlando-Kissimmee-Sanford, FL",19.433,
+ifa_fl_k4,32709,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1212250,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32712,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1201700,"IFA Orlando-Kissimmee-Sanford, FL",0.441087,
+ifa_fl_k4,32713,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216675,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32714,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1200950,"IFA Orlando-Kissimmee-Sanford, FL",34.7253,
+ifa_fl_k4,32720,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216875,"IFA Orlando-Kissimmee-Sanford, FL",1.45727,
+ifa_fl_k4,32723,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216875,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32724,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1216875,"IFA Orlando-Kissimmee-Sanford, FL",3.65744,
+ifa_fl_k4,32725,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1217200,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32726,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1221350,"IFA Orlando-Kissimmee-Sanford, FL",0.618209,
+ifa_fl_k4,32730,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1222250,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32732,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1225750,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32735,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1221350,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32736,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1221350,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32738,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1217200,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32744,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1238025,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32746,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1238425,"IFA Orlando-Kissimmee-Sanford, FL",52.6717,
+ifa_fl_k4,32750,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1241250,"IFA Orlando-Kissimmee-Sanford, FL",2.04624,
+ifa_fl_k4,32751,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1242575,"IFA Orlando-Kissimmee-Sanford, FL",61.9288,
+ifa_fl_k4,32754,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1245775,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32757,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1247050,"IFA Orlando-Kissimmee-Sanford, FL",2.45655,
+ifa_fl_k4,32759,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1250450,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32763,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1251825,"IFA Orlando-Kissimmee-Sanford, FL",0.500912,
+ifa_fl_k4,32764,ifa,FL,IFA,IFA_04,IFA,,12127,19660,1217200,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32765,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1253575,"IFA Orlando-Kissimmee-Sanford, FL",9.40782,
+ifa_fl_k4,32766,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1253575,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32767,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1253850,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32768,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1201700,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32771,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1263650,"IFA Orlando-Kissimmee-Sanford, FL",2.48482,
+ifa_fl_k4,32773,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1263650,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32775,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1264625,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32776,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1247125,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32778,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1271225,"IFA Orlando-Kissimmee-Sanford, FL",0.88187,
+ifa_fl_k4,32779,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1275725,"IFA Orlando-Kissimmee-Sanford, FL",0.368158,
+ifa_fl_k4,32780,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1271900,"IFA Orlando-Kissimmee-Sanford, FL",0.0775557,
+ifa_fl_k4,32784,ifa,FL,IFA,IFA_04,IFA,,12083,36100,1273025,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32789,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1278300,"IFA Orlando-Kissimmee-Sanford, FL",34.5897,
+ifa_fl_k4,32792,ifa,FL,IFA,IFA_04,IFA,,12117,36740,1226475,"IFA Orlando-Kissimmee-Sanford, FL",11.5329,
+ifa_fl_k4,32796,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1271900,"IFA Orlando-Kissimmee-Sanford, FL",1.50332,
+ifa_fl_k4,32798,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1279200,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32801,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",35.1737,
+ifa_fl_k4,32803,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",19.4995,
+ifa_fl_k4,32804,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",13.4765,
+ifa_fl_k4,32805,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32806,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",1.03116,
+ifa_fl_k4,32807,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32808,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1256825,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32809,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1256500,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32810,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1241025,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32811,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32812,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.477282,
+ifa_fl_k4,32814,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",11.4374,
+ifa_fl_k4,32816,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1273172,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32817,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1273172,"IFA Orlando-Kissimmee-Sanford, FL",1.93506,
+ifa_fl_k4,32818,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1256825,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32819,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",18.5576,
+ifa_fl_k4,32820,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1206625,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32821,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1277735,"IFA Orlando-Kissimmee-Sanford, FL",0.596588,
+ifa_fl_k4,32822,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32824,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1243800,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32825,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1200410,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32826,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1273172,"IFA Orlando-Kissimmee-Sanford, FL",0.928897,
+ifa_fl_k4,32827,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.201147,
+ifa_fl_k4,32828,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1200410,"IFA Orlando-Kissimmee-Sanford, FL",13.1422,
+ifa_fl_k4,32829,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",1.98372,
+ifa_fl_k4,32830,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1204150,"IFA Orlando-Kissimmee-Sanford, FL",0.637885,
+ifa_fl_k4,32831,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32832,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",0.593906,
+ifa_fl_k4,32833,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1275612,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32835,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",9.63899,
+ifa_fl_k4,32836,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1217725,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32837,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1232967,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32839,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1253000,"IFA Orlando-Kissimmee-Sanford, FL",4.41961,
+ifa_fl_k4,32899,ifa,FL,IFA,IFA_04,IFA,,12009,37340,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32901,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1243975,"IFA Orlando-Kissimmee-Sanford, FL",13.7881,
+ifa_fl_k4,32903,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1233375,"IFA Orlando-Kissimmee-Sanford, FL",2.43536,
+ifa_fl_k4,32904,ifa,FL,IFA,IFA_03,IFA,,12009,37340,1276500,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.458413,
+ifa_fl_k4,32905,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1254000,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32907,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1254000,"IFA Orlando-Kissimmee-Sanford, FL",1.82797,
+ifa_fl_k4,32908,ifa,FL,IFA,IFA_03,IFA,,12009,37340,1254000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32909,ifa,FL,IFA,IFA_03,IFA,,12009,37340,1254000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32920,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1210250,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32922,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1213150,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32925,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1255375,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32926,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1213150,"IFA Orlando-Kissimmee-Sanford, FL",3.977,
+ifa_fl_k4,32927,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1258700,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32931,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1213175,"IFA Orlando-Kissimmee-Sanford, FL",0.000954541,
+ifa_fl_k4,32934,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1243975,"IFA Orlando-Kissimmee-Sanford, FL",0.318268,
+ifa_fl_k4,32935,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1243975,"IFA Orlando-Kissimmee-Sanford, FL",0.394358,
+ifa_fl_k4,32937,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1264400,"IFA Orlando-Kissimmee-Sanford, FL",7.07592,
+ifa_fl_k4,32940,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1274370,"IFA Orlando-Kissimmee-Sanford, FL",13.094,
+ifa_fl_k4,32948,ifa,FL,IFA,IFA_03,IFA,,12061,42680,1222100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32949,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1227256,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32950,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1242625,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32951,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1244000,"IFA Orlando-Kissimmee-Sanford, FL",1.60887,
+ifa_fl_k4,32952,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1244275,"IFA Orlando-Kissimmee-Sanford, FL",7.17929,
+ifa_fl_k4,32953,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1249435,"IFA Orlando-Kissimmee-Sanford, FL",9.0005,
+ifa_fl_k4,32955,ifa,FL,IFA,IFA_03,IFA,,12009,37340,1261500,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",35.5684,
+ifa_fl_k4,32958,ifa,FL,IFA,IFA_03,IFA,,12061,42680,1264825,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0919697,
+ifa_fl_k4,32959,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1265525,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32960,ifa,FL,IFA,IFA_03,IFA,,12061,42680,1274150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",4.38006,
+ifa_fl_k4,32962,ifa,FL,IFA,IFA_03,IFA,,12061,42680,1223050,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32963,ifa,FL,IFA,IFA_04,IFA,,12061,42680,1233600,"IFA Orlando-Kissimmee-Sanford, FL",5.82755,
+ifa_fl_k4,32966,ifa,FL,IFA,IFA_04,IFA,,12061,42680,1222100,"IFA Orlando-Kissimmee-Sanford, FL",0.00159093,
+ifa_fl_k4,32967,ifa,FL,IFA,IFA_04,IFA,,12061,42680,1278225,"IFA Orlando-Kissimmee-Sanford, FL",2.77734,
+ifa_fl_k4,32968,ifa,FL,IFA,IFA_03,IFA,,12061,42680,1274200,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32970,ifa,FL,IFA,IFA_03,IFA,,12061,42680,1274625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,32976,ifa,FL,IFA,IFA_04,IFA,,12009,37340,1245275,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33001,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1239725,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33004,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216335,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33009,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1228452,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.242752,
+ifa_fl_k4,33010,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1230000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.18846,
+ifa_fl_k4,33012,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1230000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.357971,
+ifa_fl_k4,33013,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1230000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33014,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",16.909,
+ifa_fl_k4,33015,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1214895,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0148908,
+ifa_fl_k4,33016,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1230000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.622643,
+ifa_fl_k4,33018,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1230000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33019,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1232000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33020,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1232000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.53322,
+ifa_fl_k4,33021,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1232000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",8.27781,
+ifa_fl_k4,33022,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1232000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33023,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1245975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",4.112,
+ifa_fl_k4,33024,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1255775,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.596502,
+ifa_fl_k4,33025,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1245975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33026,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1255775,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",4.39873,
+ifa_fl_k4,33027,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1245975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",2.09023,
+ifa_fl_k4,33028,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1255775,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33029,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1245975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33030,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1232275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33031,ifa,FL,IFA,IFA_01,IFA,,12086,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33032,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1258975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33033,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1232275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33034,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1222975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33035,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1232275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33036,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1234132,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",6.54223,
+ifa_fl_k4,33037,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1249406,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.545513,
+ifa_fl_k4,33039,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1232325,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33040,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1236550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",4.25128,
+ifa_fl_k4,33042,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1215862,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33043,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1206425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33050,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1243000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33051,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1236325,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33054,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1251650,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33055,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245060,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0524998,
+ifa_fl_k4,33056,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245060,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33060,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1258050,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.55008,
+ifa_fl_k4,33062,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1258050,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.615043,
+ifa_fl_k4,33063,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1243125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.598607,
+ifa_fl_k4,33064,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1258050,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",6.19551,
+ifa_fl_k4,33065,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1214400,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",10.6074,
+ifa_fl_k4,33066,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1213275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33067,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1255125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",27.1164,
+ifa_fl_k4,33068,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1249425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33069,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1258050,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.572267,
+ifa_fl_k4,33070,ifa,FL,IFA,IFA_01,IFA,,12087,28580,1271250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.00233863,
+ifa_fl_k4,33071,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1214400,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",5.78732,
+ifa_fl_k4,33073,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1213275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",24.1345,
+ifa_fl_k4,33076,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1255125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",7.40142,
+ifa_fl_k4,33101,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33109,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1222375,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33122,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1217935,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0526531,
+ifa_fl_k4,33125,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33126,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",7.74275,
+ifa_fl_k4,33127,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33128,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33129,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.107285,
+ifa_fl_k4,33130,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.162277,
+ifa_fl_k4,33131,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",10.5705,
+ifa_fl_k4,33132,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.757188,
+ifa_fl_k4,33133,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",9.54201,
+ifa_fl_k4,33134,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1214250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",85.5495,
+ifa_fl_k4,33135,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0596588,
+ifa_fl_k4,33136,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33137,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",3.25751,
+ifa_fl_k4,33138,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33139,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245025,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.431394,
+ifa_fl_k4,33140,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245025,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33141,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245025,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33142,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33143,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1226100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",6.33918,
+ifa_fl_k4,33144,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33145,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0909887,
+ifa_fl_k4,33146,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1214250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.242463,
+ifa_fl_k4,33147,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1276487,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33149,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33150,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33154,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1270075,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.000238635,
+ifa_fl_k4,33155,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1214412,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",7.99976,
+ifa_fl_k4,33156,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1256625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",26.4889,
+ifa_fl_k4,33157,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1254275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.98489,
+ifa_fl_k4,33158,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1254275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.307469,
+ifa_fl_k4,33160,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1249450,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.289025,
+ifa_fl_k4,33161,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1249450,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.334089,
+ifa_fl_k4,33162,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1249475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.107359,
+ifa_fl_k4,33165,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1276075,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33166,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245200,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.660072,
+ifa_fl_k4,33167,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1276950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33168,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1249450,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33169,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1245060,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33170,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1226950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33172,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1217935,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",3.99543,
+ifa_fl_k4,33173,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1269812,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.50171,
+ifa_fl_k4,33174,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1276075,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.00911373,
+ifa_fl_k4,33175,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1270700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33176,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1236100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",2.61376,
+ifa_fl_k4,33177,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1267575,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33178,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1217935,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.455182,
+ifa_fl_k4,33179,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1234400,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0047727,
+ifa_fl_k4,33180,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1202681,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",3.44768,
+ifa_fl_k4,33181,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1249450,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33182,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1270700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33183,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1236062,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.368338,
+ifa_fl_k4,33184,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1270700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33185,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1236121,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33186,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1271567,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",4.32515,
+ifa_fl_k4,33187,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1260230,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33189,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1215968,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33190,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1215968,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33193,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1236121,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.161442,
+ifa_fl_k4,33194,ifa,FL,IFA,IFA_01,IFA,,12086,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33196,ifa,FL,IFA,IFA_01,IFA,,12086,33100,1271569,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.232771,
+ifa_fl_k4,33301,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",22.7543,
+ifa_fl_k4,33304,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",7.13219,
+ifa_fl_k4,33305,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",2.58836,
+ifa_fl_k4,33306,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.683924,
+ifa_fl_k4,33308,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",7.63612,
+ifa_fl_k4,33309,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",16.1011,
+ifa_fl_k4,33311,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33312,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",5.8661,
+ifa_fl_k4,33313,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1239550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33314,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.8617,
+ifa_fl_k4,33315,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.541729,
+ifa_fl_k4,33316,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1224000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",3.12402,
+ifa_fl_k4,33317,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1257425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.53234,
+ifa_fl_k4,33319,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1270675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",2.52025,
+ifa_fl_k4,33321,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1270675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.72904,
+ifa_fl_k4,33322,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1257425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.00572725,
+ifa_fl_k4,33323,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1269700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.94609,
+ifa_fl_k4,33324,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1257425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",72.7601,
+ifa_fl_k4,33325,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33326,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1276582,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",4.09062,
+ifa_fl_k4,33327,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1276582,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.15209,
+ifa_fl_k4,33328,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.542,
+ifa_fl_k4,33330,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",3.18769,
+ifa_fl_k4,33331,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1268135,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",5.90362,
+ifa_fl_k4,33332,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1276582,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33334,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1250575,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",98.5301,
+ifa_fl_k4,33351,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1269700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33388,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1257425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33401,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1276600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",40.2151,
+ifa_fl_k4,33403,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1238600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33404,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1260975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.53379,
+ifa_fl_k4,33405,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1276600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33406,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1254450,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",17.9683,
+ifa_fl_k4,33407,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1276600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.62293,
+ifa_fl_k4,33408,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1249600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",22.5025,
+ifa_fl_k4,33409,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1276600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.63595,
+ifa_fl_k4,33410,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1254075,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",59.9895,
+ifa_fl_k4,33411,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1262100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",9.77922,
+ifa_fl_k4,33412,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1276600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.5444,
+ifa_fl_k4,33413,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1227322,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33414,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1275812,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.51244,
+ifa_fl_k4,33415,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1227322,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33417,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1276600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.635265,
+ifa_fl_k4,33418,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1254075,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",6.74268,
+ifa_fl_k4,33426,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",8.55938,
+ifa_fl_k4,33428,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1275275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.928644,
+ifa_fl_k4,33430,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1205200,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33431,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",120.122,
+ifa_fl_k4,33432,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",37.1398,
+ifa_fl_k4,33433,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",32.2748,
+ifa_fl_k4,33434,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.05173,
+ifa_fl_k4,33435,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",4.73536,
+ifa_fl_k4,33436,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",2.42188,
+ifa_fl_k4,33437,ifa,FL,IFA,IFA_03,IFA,,12099,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.4413,
+ifa_fl_k4,33438,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1210100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33440,ifa,FL,IFA,IFA_03,IFA,,12051,17500,1246520,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33441,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216725,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0386414,
+ifa_fl_k4,33442,ifa,FL,IFA,IFA_01,IFA,,12011,33100,1216725,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.723554,
+ifa_fl_k4,33444,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1217100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",1.2097,
+ifa_fl_k4,33445,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1217100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.535857,
+ifa_fl_k4,33446,ifa,FL,IFA,IFA_01,IFA,,12099,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.597173,
+ifa_fl_k4,33449,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1275812,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.164099,
+ifa_fl_k4,33455,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1230975,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.65506,
+ifa_fl_k4,33458,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1235875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",43.938,
+ifa_fl_k4,33460,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1239081,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.206022,
+ifa_fl_k4,33461,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1254450,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.183025,
+ifa_fl_k4,33462,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1239375,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.817259,
+ifa_fl_k4,33463,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1227322,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",6.05474,
+ifa_fl_k4,33467,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1227322,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0015909,
+ifa_fl_k4,33469,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1271525,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.51593,
+ifa_fl_k4,33470,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1271564,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.70371,
+ifa_fl_k4,33471,ifa,FL,IFA,IFA_03,IFA,,12043,17500,1246550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33472,ifa,FL,IFA,IFA_03,IFA,,12099,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",6.28752,
+ifa_fl_k4,33473,ifa,FL,IFA,IFA_01,IFA,,12099,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.651152,
+ifa_fl_k4,33476,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1253800,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33477,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1235875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",8.87052,
+ifa_fl_k4,33478,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1235890,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.81825,
+ifa_fl_k4,33480,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1254025,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0047727,
+ifa_fl_k4,33483,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1217100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",8.02018,
+ifa_fl_k4,33484,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1217100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",2.02859,
+ifa_fl_k4,33486,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",20.2407,
+ifa_fl_k4,33487,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",20.6049,
+ifa_fl_k4,33493,ifa,FL,IFA,IFA_03,IFA,,12099,33100,1267175,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33496,ifa,FL,IFA,IFA_01,IFA,,12099,33100,1207300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",8.02114,
+ifa_fl_k4,33498,ifa,FL,IFA,IFA_01,IFA,,12099,33100,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",0.0631028,
+ifa_fl_k4,33503,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1203375,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33510,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1208150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",10.2068,
+ifa_fl_k4,33511,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1208150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",10.1036,
+ifa_fl_k4,33513,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1209625,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33514,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1277675,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33521,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1213400,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33523,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1260325,"IFA Tampa-St. Petersburg-Clearwater, FL",0.00770589,
+ifa_fl_k4,33525,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1255305,"IFA Tampa-St. Petersburg-Clearwater, FL",0.456046,
+ifa_fl_k4,33527,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1218075,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33530,ifa,FL,IFA,IFA_03,IFA,,12057,45300,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33534,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1225900,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.622485,
+ifa_fl_k4,33538,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1238575,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33540,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1215800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33541,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1255305,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33542,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1279225,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33543,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1275875,"IFA Tampa-St. Petersburg-Clearwater, FL",3.90761,
+ifa_fl_k4,33544,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1275875,"IFA Tampa-St. Petersburg-Clearwater, FL",17.0508,
+ifa_fl_k4,33545,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1255305,"IFA Tampa-St. Petersburg-Clearwater, FL",2.75848,
+ifa_fl_k4,33547,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1222387,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.151429,
+ifa_fl_k4,33548,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1241775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.40568,
+ifa_fl_k4,33549,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1241775,"IFA Tampa-St. Petersburg-Clearwater, FL",5.55221,
+ifa_fl_k4,33550,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1242850,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33556,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1236462,"IFA Tampa-St. Petersburg-Clearwater, FL",2.52032,
+ifa_fl_k4,33558,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1211912,"IFA Tampa-St. Petersburg-Clearwater, FL",4.11294,
+ifa_fl_k4,33559,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1241775,"IFA Tampa-St. Petersburg-Clearwater, FL",1.57457,
+ifa_fl_k4,33563,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1257550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.563273,
+ifa_fl_k4,33565,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1257550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33566,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1257550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.352217,
+ifa_fl_k4,33567,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1257550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33569,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1260950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.14992,
+ifa_fl_k4,33570,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1262275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33572,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1201675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.6124,
+ifa_fl_k4,33573,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1269250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.74488,
+ifa_fl_k4,33574,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1262775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33576,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1255305,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0670705,
+ifa_fl_k4,33578,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1260950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.788154,
+ifa_fl_k4,33579,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1260950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.779049,
+ifa_fl_k4,33584,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271725,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33585,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1277675,"IFA Orlando-Kissimmee-Sanford, FL",0.00334089,
+ifa_fl_k4,33592,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271725,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33594,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1273700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33596,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1273700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.622892,
+ifa_fl_k4,33597,ifa,FL,IFA,IFA_02,IFA,,12119,48680,1275600,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33598,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1278025,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.142437,
+ifa_fl_k4,33602,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",17.0363,
+ifa_fl_k4,33603,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.278124,
+ifa_fl_k4,33604,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",11.0869,
+ifa_fl_k4,33605,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33606,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",12.8694,
+ifa_fl_k4,33607,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271000,"IFA Tampa-St. Petersburg-Clearwater, FL",84.3622,
+ifa_fl_k4,33609,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",74.4358,
+ifa_fl_k4,33610,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1219212,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.46976,
+ifa_fl_k4,33611,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.62988,
+ifa_fl_k4,33612,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.596694,
+ifa_fl_k4,33613,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1238350,"IFA Tampa-St. Petersburg-Clearwater, FL",0.00047727,
+ifa_fl_k4,33614,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1220108,"IFA Tampa-St. Petersburg-Clearwater, FL",0.286405,
+ifa_fl_k4,33615,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1272145,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33616,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.846843,
+ifa_fl_k4,33617,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271400,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0420057,
+ifa_fl_k4,33618,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1210825,"IFA Tampa-St. Petersburg-Clearwater, FL",7.03687,
+ifa_fl_k4,33619,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1254387,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.7971,
+ifa_fl_k4,33620,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33621,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33624,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1210825,"IFA Tampa-St. Petersburg-Clearwater, FL",4.34535,
+ifa_fl_k4,33625,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1212425,"IFA Tampa-St. Petersburg-Clearwater, FL",10.6996,
+ifa_fl_k4,33626,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1276062,"IFA Tampa-St. Petersburg-Clearwater, FL",9.1235,
+ifa_fl_k4,33629,ifa,FL,IFA,IFA_03,IFA,,12057,45300,1271000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.9146,
+ifa_fl_k4,33634,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1272145,"IFA Tampa-St. Petersburg-Clearwater, FL",27.6161,
+ifa_fl_k4,33635,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1272145,"IFA Tampa-St. Petersburg-Clearwater, FL",0.12686,
+ifa_fl_k4,33637,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271400,"IFA Tampa-St. Petersburg-Clearwater, FL",2.09138,
+ifa_fl_k4,33647,ifa,FL,IFA,IFA_02,IFA,,12057,45300,1271000,"IFA Tampa-St. Petersburg-Clearwater, FL",4.17583,
+ifa_fl_k4,33701,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",20.9622,
+ifa_fl_k4,33702,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",7.29781,
+ifa_fl_k4,33703,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",3.4463,
+ifa_fl_k4,33704,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",1.84091,
+ifa_fl_k4,33705,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.00556816,
+ifa_fl_k4,33706,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1262885,"IFA Tampa-St. Petersburg-Clearwater, FL",1.42337,
+ifa_fl_k4,33707,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1228175,"IFA Tampa-St. Petersburg-Clearwater, FL",4.05351,
+ifa_fl_k4,33708,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1242400,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33709,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1276481,"IFA Tampa-St. Petersburg-Clearwater, FL",0.13226,
+ifa_fl_k4,33710,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",8.82264,
+ifa_fl_k4,33711,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33712,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33713,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",7.15068,
+ifa_fl_k4,33714,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1239775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33715,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1271825,"IFA Tampa-St. Petersburg-Clearwater, FL",0.202881,
+ifa_fl_k4,33716,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1263000,"IFA Tampa-St. Petersburg-Clearwater, FL",15.9489,
+ifa_fl_k4,33744,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1204200,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33755,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",0.563105,
+ifa_fl_k4,33756,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",6.40864,
+ifa_fl_k4,33759,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",14.1643,
+ifa_fl_k4,33760,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1239425,"IFA Tampa-St. Petersburg-Clearwater, FL",2.62392,
+ifa_fl_k4,33761,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",11.2577,
+ifa_fl_k4,33762,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1221945,"IFA Tampa-St. Petersburg-Clearwater, FL",1.86064,
+ifa_fl_k4,33763,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",2.70024,
+ifa_fl_k4,33764,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",8.25825,
+ifa_fl_k4,33765,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",4.28325,
+ifa_fl_k4,33767,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1212875,"IFA Tampa-St. Petersburg-Clearwater, FL",0.903316,
+ifa_fl_k4,33770,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1239425,"IFA Tampa-St. Petersburg-Clearwater, FL",3.19554,
+ifa_fl_k4,33771,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1239425,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33772,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1264975,"IFA Tampa-St. Petersburg-Clearwater, FL",3.09897,
+ifa_fl_k4,33773,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1256975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33774,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1239425,"IFA Tampa-St. Petersburg-Clearwater, FL",2.74194,
+ifa_fl_k4,33776,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1264975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33777,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1203480,"IFA Tampa-St. Petersburg-Clearwater, FL",1.46688,
+ifa_fl_k4,33778,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1239425,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33781,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1256975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33782,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1256975,"IFA Tampa-St. Petersburg-Clearwater, FL",0.103409,
+ifa_fl_k4,33785,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1233625,"IFA Tampa-St. Petersburg-Clearwater, FL",0.238635,
+ifa_fl_k4,33786,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1205100,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33801,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.60463,
+ifa_fl_k4,33803,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",25.8389,
+ifa_fl_k4,33805,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33809,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.56325,
+ifa_fl_k4,33810,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1235950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.34629,
+ifa_fl_k4,33811,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0870351,
+ifa_fl_k4,33812,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1230225,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33813,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238262,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.44813,
+ifa_fl_k4,33815,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33823,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1202550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.20179,
+ifa_fl_k4,33825,ifa,FL,IFA,IFA_03,IFA,,12055,42700,1202750,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33827,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1224900,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33830,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1203675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33834,ifa,FL,IFA,IFA_03,IFA,,12049,,1223875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33835,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1208125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33837,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1216450,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33838,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1218550,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33839,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1218875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33840,ifa,FL,IFA,IFA_03,IFA,,12105,29460,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.104562,
+ifa_fl_k4,33841,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1201100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33843,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1224900,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33844,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1228400,"IFA Orlando-Kissimmee-Sanford, FL",0.0165719,
+ifa_fl_k4,33847,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1232250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33848,ifa,FL,IFA,IFA_04,IFA,,12097,36740,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33849,ifa,FL,IFA,IFA_02,IFA,,12105,29460,,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33850,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1237525,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33851,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1237975,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33852,ifa,FL,IFA,IFA_03,IFA,,12055,42700,1238625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.928317,
+ifa_fl_k4,33853,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1238950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.28705,
+ifa_fl_k4,33854,ifa,FL,IFA,IFA_04,IFA,,12105,29460,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33855,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1233500,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33856,ifa,FL,IFA,IFA_04,IFA,,12105,29460,,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33857,ifa,FL,IFA,IFA_03,IFA,,12055,42700,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33858,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1241400,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33859,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1201100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.807326,
+ifa_fl_k4,33860,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1247200,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33865,ifa,FL,IFA,IFA_03,IFA,,12049,,1240525,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33867,ifa,FL,IFA,IFA_03,IFA,,12105,29460,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33868,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1257950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33870,ifa,FL,IFA,IFA_03,IFA,,12055,42700,1264875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.57877,
+ifa_fl_k4,33872,ifa,FL,IFA,IFA_03,IFA,,12055,42700,1264875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33873,ifa,FL,IFA,IFA_03,IFA,,12049,,1240100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33875,ifa,FL,IFA,IFA_03,IFA,,12055,42700,1264875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33876,ifa,FL,IFA,IFA_03,IFA,,12055,42700,1264875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0893934,
+ifa_fl_k4,33877,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1275475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33880,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1235300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",15.5632,
+ifa_fl_k4,33881,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1278275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.69324,
+ifa_fl_k4,33884,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1278275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0238635,
+ifa_fl_k4,33890,ifa,FL,IFA,IFA_03,IFA,,12049,,1240100,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33896,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1257900,"IFA Orlando-Kissimmee-Sanford, FL",1.73817,
+ifa_fl_k4,33897,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1224581,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33898,ifa,FL,IFA,IFA_04,IFA,,12105,29460,1233500,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33901,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1224125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.69446,
+ifa_fl_k4,33903,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1249350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33904,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.9083,
+ifa_fl_k4,33905,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1209350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.593686,
+ifa_fl_k4,33907,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1274512,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",39.1804,
+ifa_fl_k4,33908,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1234012,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",4.57028,
+ifa_fl_k4,33909,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.415632,
+ifa_fl_k4,33912,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1224125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",23.2265,
+ifa_fl_k4,33913,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1224125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",4.49077,
+ifa_fl_k4,33914,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0198864,
+ifa_fl_k4,33916,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1224125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.995572,
+ifa_fl_k4,33917,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1249350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33919,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1216062,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",6.42278,
+ifa_fl_k4,33920,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1201125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33921,ifa,FL,IFA,IFA_03,IFA,,12071,15980,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33922,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1207375,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.83337,
+ifa_fl_k4,33924,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33928,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1221150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.89183,
+ifa_fl_k4,33930,ifa,FL,IFA,IFA_03,IFA,,12051,17500,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33931,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1224150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33935,ifa,FL,IFA,IFA_03,IFA,,12051,17500,1223730,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33936,ifa,FL,IFA,IFA_03,IFA,,12051,17500,1239925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33944,ifa,FL,IFA,IFA_03,IFA,,12043,17500,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33946,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1261937,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.515354,
+ifa_fl_k4,33947,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1261937,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33948,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1258350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.958496,
+ifa_fl_k4,33950,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1259200,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.99174,
+ifa_fl_k4,33952,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1258350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.424479,
+ifa_fl_k4,33953,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1258350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33954,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1258350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33955,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1259200,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33956,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1262675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33957,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1263700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33960,ifa,FL,IFA,IFA_03,IFA,,12055,42700,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33965,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1223005,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33966,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1224125,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.781517,
+ifa_fl_k4,33967,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1263425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33971,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1239925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33972,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1239925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33973,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1239925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33974,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1239925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33976,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1239925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33980,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1258350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.535797,
+ifa_fl_k4,33981,ifa,FL,IFA,IFA_03,IFA,,12015,39460,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0331751,
+ifa_fl_k4,33982,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1212950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0519829,
+ifa_fl_k4,33983,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1228800,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.163545,
+ifa_fl_k4,33990,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,33991,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",4.77369,
+ifa_fl_k4,33993,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1210275,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34101,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1247625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.187018,
+ifa_fl_k4,34102,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1247625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.31899,
+ifa_fl_k4,34103,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1247625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.91038,
+ifa_fl_k4,34104,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1247625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.63528,
+ifa_fl_k4,34105,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1247625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",6.45536,
+ifa_fl_k4,34108,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1255650,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",18.1794,
+ifa_fl_k4,34109,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1255680,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.92384,
+ifa_fl_k4,34110,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1207525,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.96763,
+ifa_fl_k4,34112,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1247625,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.21744,
+ifa_fl_k4,34113,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1240037,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.75251,
+ifa_fl_k4,34114,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1278063,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",7.87787,
+ifa_fl_k4,34116,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1226300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34117,ifa,FL,IFA,IFA_03,IFA,,12021,34940,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34119,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1274562,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",11.8029,
+ifa_fl_k4,34120,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1252162,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.30245,
+ifa_fl_k4,34134,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1207525,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",4.36687,
+ifa_fl_k4,34135,ifa,FL,IFA,IFA_03,IFA,,12071,15980,1207525,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.60523,
+ifa_fl_k4,34137,ifa,FL,IFA,IFA_03,IFA,,12021,34940,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34138,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1212150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34139,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1221425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34140,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1243083,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34141,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1221425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34142,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1233250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.56989,
+ifa_fl_k4,34145,ifa,FL,IFA,IFA_03,IFA,,12021,34940,1243083,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.798998,
+ifa_fl_k4,34201,ifa,FL,IFA,IFA_03,IFA,,12081,35840,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.06995,
+ifa_fl_k4,34202,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1239067,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",25.6423,
+ifa_fl_k4,34203,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1276740,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34205,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1207950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",5.41102,
+ifa_fl_k4,34207,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1204350,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.14661,
+ifa_fl_k4,34208,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1207950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.4057,
+ifa_fl_k4,34209,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1207950,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.52756,
+ifa_fl_k4,34210,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1214700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.03039,
+ifa_fl_k4,34211,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1239067,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.40897,
+ifa_fl_k4,34212,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1239067,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.237918,
+ifa_fl_k4,34215,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1214700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34216,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1201475,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34217,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1232150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34219,ifa,FL,IFA,IFA_03,IFA,,12081,35840,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.35523,
+ifa_fl_k4,34221,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1254250,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34222,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1220375,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.12112,
+ifa_fl_k4,34223,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.34518,
+ifa_fl_k4,34224,ifa,FL,IFA,IFA_03,IFA,,12015,39460,1220825,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.56046,
+ifa_fl_k4,34228,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1241150,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34229,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1253425,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.14397,
+ifa_fl_k4,34231,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1228045,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",7.16161,
+ifa_fl_k4,34232,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1225000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.90363,
+ifa_fl_k4,34233,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1204925,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.12197,
+ifa_fl_k4,34234,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1264175,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.449831,
+ifa_fl_k4,34235,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1271580,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34236,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1264175,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",28.3252,
+ifa_fl_k4,34237,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1264175,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",15.9479,
+ifa_fl_k4,34238,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1254238,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.20627,
+ifa_fl_k4,34239,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1264175,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.92351,
+ifa_fl_k4,34240,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1239067,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",24.2847,
+ifa_fl_k4,34241,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1238690,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.588623,
+ifa_fl_k4,34242,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1266000,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34243,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1277467,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.16625,
+ifa_fl_k4,34250,ifa,FL,IFA,IFA_03,IFA,,12081,35840,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.386591,
+ifa_fl_k4,34251,ifa,FL,IFA,IFA_03,IFA,,12081,35840,1251342,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.668671,
+ifa_fl_k4,34266,ifa,FL,IFA,IFA_03,IFA,,12027,11580,1267355,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34267,ifa,FL,IFA,IFA_03,IFA,,12027,11580,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34268,ifa,FL,IFA,IFA_03,IFA,,12027,11580,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34269,ifa,FL,IFA,IFA_03,IFA,,12027,11580,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34275,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1239600,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.00432725,
+ifa_fl_k4,34285,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1273900,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.87988,
+ifa_fl_k4,34286,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34287,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34288,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34289,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.00417373,
+ifa_fl_k4,34291,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34292,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1273900,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.133485,
+ifa_fl_k4,34293,ifa,FL,IFA,IFA_03,IFA,,12115,35840,1249675,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.20159,
+ifa_fl_k4,34420,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1205375,"IFA Tampa-St. Petersburg-Clearwater, FL",1.16847,
+ifa_fl_k4,34428,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1215775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34429,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1215775,"IFA Tampa-St. Petersburg-Clearwater, FL",12.394,
+ifa_fl_k4,34431,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1259450,"IFA Tampa-St. Petersburg-Clearwater, FL",0.309969,
+ifa_fl_k4,34432,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1259470,"IFA Tampa-St. Petersburg-Clearwater, FL",0.31059,
+ifa_fl_k4,34433,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1212450,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34434,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1212450,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34436,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1222775,"IFA Tampa-St. Petersburg-Clearwater, FL",0.520352,
+ifa_fl_k4,34442,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1229425,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0397725,
+ifa_fl_k4,34445,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1212450,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34446,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1268950,"IFA Tampa-St. Petersburg-Clearwater, FL",1.06788,
+ifa_fl_k4,34448,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1232400,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34449,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1233800,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34450,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1233950,"IFA Tampa-St. Petersburg-Clearwater, FL",0.342333,
+ifa_fl_k4,34452,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1233966,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34453,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1233950,"IFA Tampa-St. Petersburg-Clearwater, FL",1.53493,
+ifa_fl_k4,34461,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1239825,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34465,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1257058,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34470,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",2.21654,
+ifa_fl_k4,34471,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",42.2286,
+ifa_fl_k4,34472,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1266175,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0795451,
+ifa_fl_k4,34473,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1243300,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34474,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",2.17622,
+ifa_fl_k4,34475,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",6.95881,
+ifa_fl_k4,34476,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1240387,"IFA Tampa-St. Petersburg-Clearwater, FL",0.639576,
+ifa_fl_k4,34479,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34480,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",0.13488,
+ifa_fl_k4,34481,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1251587,"IFA Tampa-St. Petersburg-Clearwater, FL",0.293853,
+ifa_fl_k4,34482,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1250750,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0795451,
+ifa_fl_k4,34484,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1277675,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34487,ifa,FL,IFA,IFA_02,IFA,,12017,26140,1232375,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34488,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1266125,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34491,ifa,FL,IFA,IFA_02,IFA,,12083,36100,1271625,"IFA Tampa-St. Petersburg-Clearwater, FL",0.394168,
+ifa_fl_k4,34498,ifa,FL,IFA,IFA_02,IFA,,12075,23540,1278925,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34601,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1267266,"IFA Tampa-St. Petersburg-Clearwater, FL",0.397725,
+ifa_fl_k4,34602,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1268375,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34604,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1268350,"IFA Tampa-St. Petersburg-Clearwater, FL",0.219761,
+ifa_fl_k4,34606,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1268350,"IFA Tampa-St. Petersburg-Clearwater, FL",8.72384,
+ifa_fl_k4,34607,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1229437,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34608,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1268350,"IFA Tampa-St. Petersburg-Clearwater, FL",1.96645,
+ifa_fl_k4,34609,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1268350,"IFA Tampa-St. Petersburg-Clearwater, FL",30.9389,
+ifa_fl_k4,34610,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1265385,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34613,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1249905,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34614,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1249905,"IFA Tampa-St. Petersburg-Clearwater, FL",0.00517043,
+ifa_fl_k4,34637,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1213965,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34638,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1239200,"IFA Tampa-St. Petersburg-Clearwater, FL",12.6413,
+ifa_fl_k4,34639,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1239200,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34652,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1248500,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34653,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1248525,"IFA Tampa-St. Petersburg-Clearwater, FL",1.88958,
+ifa_fl_k4,34654,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1246540,"IFA Tampa-St. Petersburg-Clearwater, FL",0.731249,
+ifa_fl_k4,34655,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1272442,"IFA Tampa-St. Petersburg-Clearwater, FL",15.8431,
+ifa_fl_k4,34661,ifa,FL,IFA,IFA_02,IFA,,12053,45300,1248825,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34667,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1232825,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0837057,
+ifa_fl_k4,34668,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1235350,"IFA Tampa-St. Petersburg-Clearwater, FL",16.7033,
+ifa_fl_k4,34669,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1265385,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34677,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1251350,"IFA Tampa-St. Petersburg-Clearwater, FL",9.18094,
+ifa_fl_k4,34679,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1201875,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34681,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1254350,"IFA Tampa-St. Petersburg-Clearwater, FL",0.564325,
+ifa_fl_k4,34683,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1254350,"IFA Tampa-St. Petersburg-Clearwater, FL",0.332413,
+ifa_fl_k4,34684,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1254350,"IFA Tampa-St. Petersburg-Clearwater, FL",4.71915,
+ifa_fl_k4,34685,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1219206,"IFA Tampa-St. Petersburg-Clearwater, FL",1.23735,
+ifa_fl_k4,34688,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1219206,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34689,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1271150,"IFA Tampa-St. Petersburg-Clearwater, FL",10.6029,
+ifa_fl_k4,34690,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1231075,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34691,ifa,FL,IFA,IFA_02,IFA,,12101,45300,1231075,"IFA Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34695,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1262425,"IFA Tampa-St. Petersburg-Clearwater, FL",2.45989,
+ifa_fl_k4,34698,ifa,FL,IFA,IFA_02,IFA,,12103,45300,1218575,"IFA Tampa-St. Petersburg-Clearwater, FL",13.1417,
+ifa_fl_k4,34705,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1202250,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34711,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1212925,"IFA Orlando-Kissimmee-Sanford, FL",19.7538,
+ifa_fl_k4,34714,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1224581,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34715,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1245900,"IFA Orlando-Kissimmee-Sanford, FL",1.59977,
+ifa_fl_k4,34729,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1222225,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34731,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1224975,"IFA Orlando-Kissimmee-Sanford, FL",8.23224,
+ifa_fl_k4,34734,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1226900,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34736,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1227800,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34737,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1227800,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34739,ifa,FL,IFA,IFA_03,IFA,,12097,36740,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34741,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1236950,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34743,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1209415,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34744,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1236950,"IFA Orlando-Kissimmee-Sanford, FL",0.424323,
+ifa_fl_k4,34746,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1236950,"IFA Orlando-Kissimmee-Sanford, FL",0.966219,
+ifa_fl_k4,34747,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1224581,"IFA Orlando-Kissimmee-Sanford, FL",0.609873,
+ifa_fl_k4,34748,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1239875,"IFA Orlando-Kissimmee-Sanford, FL",3.66785,
+ifa_fl_k4,34753,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1243425,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34756,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1246525,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34758,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1257900,"IFA Orlando-Kissimmee-Sanford, FL",0.309029,
+ifa_fl_k4,34759,ifa,FL,IFA,IFA_03,IFA,,12105,29460,1257900,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0775537,
+ifa_fl_k4,34760,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1250525,"IFA Orlando-Kissimmee-Sanford, FL",0.556816,
+ifa_fl_k4,34761,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1251075,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34762,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1239875,"IFA Orlando-Kissimmee-Sanford, FL",4.60785,
+ifa_fl_k4,34769,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1262625,"IFA Orlando-Kissimmee-Sanford, FL",3.08547,
+ifa_fl_k4,34771,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1262625,"IFA Orlando-Kissimmee-Sanford, FL",0.0728315,
+ifa_fl_k4,34772,ifa,FL,IFA,IFA_04,IFA,,12097,36740,1262625,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34773,ifa,FL,IFA,IFA_03,IFA,,12097,36740,,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34785,ifa,FL,IFA,IFA_04,IFA,,12119,48680,1277675,"IFA Orlando-Kissimmee-Sanford, FL",1.06901,
+ifa_fl_k4,34786,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1237648,"IFA Orlando-Kissimmee-Sanford, FL",0.469222,
+ifa_fl_k4,34787,ifa,FL,IFA,IFA_04,IFA,,12095,36740,1232610,"IFA Orlando-Kissimmee-Sanford, FL",22.0648,
+ifa_fl_k4,34788,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1239875,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34797,ifa,FL,IFA,IFA_04,IFA,,12069,36740,1278900,"IFA Orlando-Kissimmee-Sanford, FL",0.0248181,
+ifa_fl_k4,34945,ifa,FL,IFA,IFA_04,IFA,,12111,38940,1258715,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34946,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1224337,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34947,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1224300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.333534,
+ifa_fl_k4,34949,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1224300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.334007,
+ifa_fl_k4,34950,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1224300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0795451,
+ifa_fl_k4,34951,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1239062,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.159886,
+ifa_fl_k4,34952,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1258715,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",2.10115,
+ifa_fl_k4,34953,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1258715,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.733767,
+ifa_fl_k4,34956,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1233700,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34957,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1235550,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34972,ifa,FL,IFA,IFA_04,IFA,,12093,36380,1278975,"IFA Orlando-Kissimmee-Sanford, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34974,ifa,FL,IFA,IFA_03,IFA,,12043,17500,1271300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34981,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1224300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.39793,
+ifa_fl_k4,34982,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1224300,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0991578,
+ifa_fl_k4,34983,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1258715,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.0,no cell in the extract: territory at zero opportunity
+ifa_fl_k4,34984,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1258715,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",0.785447,
+ifa_fl_k4,34986,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1258715,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",9.36816,
+ifa_fl_k4,34987,ifa,FL,IFA,IFA_03,IFA,,12111,38940,1258715,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.73004,
+ifa_fl_k4,34990,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1254175,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.33655,
+ifa_fl_k4,34994,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1268875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",23.4777,
+ifa_fl_k4,34996,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1268875,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",3.50701,
+ifa_fl_k4,34997,ifa,FL,IFA,IFA_03,IFA,,12085,38940,1258727,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",1.22037,
