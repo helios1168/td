@@ -146,12 +146,25 @@ def exclave_splits(inst, plan, owner: dict, exclave: set) -> list:
     return sorted({(unit_of[z], owner[z]) for z in exclave if (unit_of[z], owner[z]) not in held})
 
 
+def induced_graph(polygon: dict, states) -> dict:
+    """`geo.polygon_graph()` induced on its vertices in `states`: same keys, connectors and edges
+    with both ends inside, every vertex's land area, zero-opportunity ZCTAs included."""
+    keep = {z for z in polygon["vertices"] if polygon["state"][z] in set(states)}
+    inside = lambda e: e[0] in keep and e[1] in keep
+    return {"vertices": sorted(keep),
+            "edges": [e for e in polygon["edges"] if inside(e)],
+            "state": {z: polygon["state"][z] for z in keep},
+            "border": {e: m for e, m in polygon["border"].items() if inside(e)},
+            "connectors": [e for e in polygon["connectors"] if inside(e)],
+            "aland": {z: polygon["aland"][z] for z in keep}}
+
+
 def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
                fixed_targets: bool = False, time_limit: float = 900.0,
                group_limit: float | None = None, plans_cache: str | None = None,
                source: str = "", keep=(), maps: bool = False, sequential: bool = False,
                delta: float | None = None, log=print, plans_file: str | None = None,
-               jobs: int = 1) -> dict:
+               jobs: int = 1, states: tuple = ()) -> dict:
     if arm not in ARMS:
         raise ValueError(f"arm {arm!r} not in {ARMS}")
     s = tdspec.load(spec_path)
@@ -161,8 +174,9 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     extract = data.load(extract_path)
     conus = data.conus(extract, ref)
     ext = tdspec.scope(s, conus)
-    polygon = geo.polygon_graph()
-    inst = tdspec.build(s, ext, ref)
+    polygon = geo.polygon_graph()       # M1's audit stays on the full graph (#52)
+    planning = induced_graph(polygon, states) if states else None
+    inst = tdspec.build(s, ext, ref, graph=planning)
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
     if plans_file:              # the plans a source run drew, on another connector list
@@ -180,7 +194,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     xy = dict(zip(rows.index, zip(rows["x"].astype(float), rows["y"].astype(float))))
     state = dict(zip(rows.index, rows["state"]))
     connectors = set(geo.approved_connectors(geo.read_connectors()))
-    border = draw.border_km(polygon)
+    border = draw.border_km(planning or polygon)
     contig, drawings = {}, {}
     drawn = {}
     if jobs > 1:
@@ -552,6 +566,9 @@ def main(argv=None) -> int:
                     help="processes (#123): each channel drawn in its own, at most this many at "
                          "once; 1 is the sequential loop")
     ap.add_argument("--maps", action="store_true")
+    ap.add_argument("--states", default="",
+                    help="comma-separated states: plan and draw on the polygon graph induced on "
+                         "them; M1 is still audited on the full graph")
     a = ap.parse_args(argv)
     params = {k: v for k, v in vars(a).items() if k not in ("spec", "out")}
     params["plan"] = spec_plan(a.spec)
@@ -561,7 +578,8 @@ def main(argv=None) -> int:
         doc = contig_run(a.spec, a.extract, a.out, a.arm, a.fixed_targets, a.time_limit,
                          a.group_limit, a.plans, os.path.basename(a.extract), maps=a.maps,
                          sequential=a.sequential, delta=a.delta, plans_file=a.plans_file,
-                         keep=("manifest.json",), jobs=a.jobs)
+                         keep=("manifest.json",), jobs=a.jobs,
+                         states=tuple(x for x in a.states.split(",") if x))
     except Exception as e:
         write_manifest(a.out, "contig", a.spec, a.extract, params, status="failed",
                        stop_reason=f"{type(e).__name__}: {e}")
