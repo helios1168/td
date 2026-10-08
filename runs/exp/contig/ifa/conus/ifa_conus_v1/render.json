@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "095770c28ba126c3b86d0089537ab23e35610406ca3ba077cecff2672ec22902",
+    "summary.svg": "ffebb3bd131cfad8be27185562c5b246d4f9b87e7a8767d49ea1e881cea503cd",
+    "zip_IFA.png": "e36c4f29afbbddf456eac12fe48a4a453455fdec34ce381de3d1f3e03690f0b4",
+    "zip_pages.pdf": "9810e621520a38cbc5178f804693b88b2c3f7c3764996cd43b30ecb1c9b35833"
+  },
+  "inputs": {
+    "districts.csv": "7cec845fb662ea4cbfdaccfdb1a84d0461e9e57766355118a71df4843db4f50e",
+    "ledger.csv": "5bc331b8c62ab5bb55762abc4c084958b6d0d706d2d2d7373e3b20e07bf1188c",
+    "manifest.json": "2a3537ab231ba2f6e989f8c2943aeff61fb7eec1954a08f7e7818e6f8d2b4893",
+    "run.json": "f0632e56f05f92223fe4625e63216c61eed5b6be59c935122c93d9977ea0cd2d"
+  },
+  "label": "ifa_conus_v1: IFA CONUS, 52 districts, six region merges (New England 4, Middle Atlantic 12, South Atlantic 9, South Central 6, Midwest 14, West 7), gated with G1 gap width on (owner G3); NY Manhattan neck open",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 16 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T11:29:44+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "da22b24217d1e73a687886a041ae8b4f162e440b",
+    "diff_sha256": "0ae475148af0d44abe76d454ed2746514412552d053fc696db70e541c6a84129",
+    "dirty": true
+  },
+  "title": "ifa_conus_v1: IFA CONUS, 52 districts, six region merges (New England 4, Middle Atlantic 12, South Atlantic 9, South Central 6, Midwest 14, West 7), gated with G1 gap width on (owner G3); NY Manhattan neck open, FAILS M1",
+  "zcta_shp": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/sandvault-ntlee/.pi/worktrees/ifa-conus/runs/autonomous_2026-10-05/batch/geo"
+}
