@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Census geography — Kepler.gl</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css">
+  <style>
+    html,body,#app {margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,sans-serif}
+    nav {position:fixed;right:12px;top:12px;z-index:10001;background:white;padding:10px;border-radius:6px;box-shadow:0 1px 8px #5556}
+    nav a {display:inline-block;padding:8px;color:#154c79;text-decoration:none}
+    nav a[aria-current] {background:#d8e9f7;font-weight:bold}
+    #status {position:fixed;right:12px;bottom:12px;z-index:10001;background:white;padding:8px;border-radius:4px;max-width:80vw;font-size:12px}
+    #status.error {color:#a00}
+  </style>
+  <script type="importmap">
+    {"imports":{
+      "react":"https://esm.sh/react@19.1.0",
+      "react/jsx-runtime":"https://esm.sh/react@19.1.0/jsx-runtime",
+      "react-dom":"https://esm.sh/react-dom@19.1.0?external=react",
+      "react-dom/client":"https://esm.sh/react-dom@19.1.0/client?external=react",
+      "redux":"https://esm.sh/redux@5.0.1",
+      "react-redux":"https://esm.sh/react-redux@9.3.0?external=react,react-dom,redux",
+      "styled-components":"https://esm.sh/styled-components@6.1.19?external=react,react-dom"
+    }}
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <nav aria-label="Map presets"><a id="regions" href="?view=regions">Regions</a><a id="divisions" href="?view=divisions">Divisions</a><a id="download">Saved map JSON</a></nav>
+  <div id="status" role="status">Loading Kepler.gl…</div>
+  <script type="module">
+    import * as React from 'react';
+    import * as ReactDOM from 'react-dom';
+    import * as ReactDOMClient from 'react-dom/client';
+    import * as Redux from 'redux';
+    import * as ReactRedux from 'react-redux';
+    import * as Styled from 'styled-components';
+
+    const view = new URLSearchParams(location.search).get('view') === 'divisions' ? 'divisions' : 'regions';
+    document.getElementById(view).setAttribute('aria-current', 'page');
+    const file = `census_${view}.kepler.gl.json`;
+    document.getElementById('download').href = file;
+    Object.assign(window, {React: React.default || React, ReactDOM: {...ReactDOM, ...ReactDOMClient}, Redux, ReactRedux,
+      styled: Object.assign(Styled.default, Styled)});
+    try {
+      await new Promise((resolve,reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/kepler.gl@3.3.0-alpha.6/umd/keplergl.min.js';
+        script.crossOrigin = 'anonymous'; script.onload = resolve;
+        script.onerror = () => reject(new Error('Kepler CDN unavailable'));
+        document.head.appendChild(script);
+      });
+      const store = Redux.createStore(Redux.combineReducers({keplerGl: KeplerGl.keplerGlReducer}),
+        Redux.applyMiddleware(...KeplerGl.enhanceReduxMiddleware([])));
+      // Same UMD bootstrap as Kepler's official example. Default Carto basemap needs no token.
+      function Map() {
+        const [size,setSize] = React.useState({width:innerWidth,height:innerHeight});
+        React.useEffect(() => {
+          const resize = () => setSize({width:innerWidth,height:innerHeight});
+          addEventListener('resize',resize); return () => removeEventListener('resize',resize);
+        }, []);
+        return React.createElement(KeplerGl.KeplerGl, {id:'map',...size,mapboxApiAccessToken:'pk.xxx.yyy'});
+      }
+      ReactDOMClient.createRoot(document.getElementById('app')).render(
+        React.createElement(ReactRedux.Provider,{store},React.createElement(Map)));
+      const saved = await fetch(file).then(r => {if (!r.ok) throw new Error(`Map fetch: ${r.status}`); return r.json()});
+      for (let n=0; !store.getState().keplerGl.map; n++) {
+        if (n > 500) throw new Error('Kepler initialization timed out');
+        await new Promise(resolve => setTimeout(resolve,20));
+      }
+      saved.config.config.mapState.zoom = Math.min(3.3, 3.3 + Math.log2(innerWidth / 1366));
+      store.dispatch(KeplerGl.addDataToMap({...KeplerGl.processKeplerglJSON(saved),options:{centerMap:false}}));
+      store.dispatch(KeplerGl.toggleSidePanel(null));
+      document.getElementById('status').textContent = '2025 TIGER · 50 states + DC · display geometry simplified 0.002° · editable layers';
+      window.censusMapStore = store;
+    } catch (error) {
+      console.error(error);
+      document.getElementById('status').textContent = `Map failed: ${error.message}. Use saved-map JSON in kepler.gl/demo.`;
+      document.getElementById('status').classList.add('error');
+    }
+  </script>
+</body>
+</html>

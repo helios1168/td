@@ -22,7 +22,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tools/mandates/check.py` | the M1 run-folder gate (#108): `m1(run_dir)` is `td.audit.check_m1` on a run's ledger with the committed polygon graph and approved connectors, plus each district's largest detached piece as the scorer sizes it, on the ledger (#116); `--rescore <root>` gates every run folder, writes the table and M1's latest value in `docs/problem/MANDATES.md` (its only writer); `--tracking` is mandate T1's check (`tracking`, #120): run folders under `runs/exp/` with a ledger and no manifest, shortlist entries whose run, manifest or image is missing, whose image is not `tools/maps/render.py`'s current output in its run folder, or whose recorded M1 a fresh gate run contradicts, and reused ids; with `--write-register` it writes T1's latest value |
 | `docs/lenses/` | one file per lens or council pass, dated, never edited after |
 | `docs/memory/` | facts and decisions; `INDEX.md` is one line per file, written through the `memory-curator` |
-| `data/README.md` | what `data/` holds; nothing else in it is tracked |
+| `data/README.md` | what `data/` holds; public Kepler extracts below are also tracked |
+| `data/kepler/`, `tools/kepler/build.py`, `tools/kepler/serve.py`, `tests/test_kepler_maps.py` | public 2025 Census region/division/state GeoJSON, editable saved-map presets and a preloaded Kepler page; `python3 tools/kepler/build.py` rebuilds saved JSON from extracts (stdlib); `python3 tools/kepler/serve.py 8765 data/kepler` serves this directory with CORS; browser uses pinned CDN libraries and a token-free Carto basemap; saved-map contract checks run in the suite |
 | `tests/run_all.py` | the test runner |
 | `tests/test_docs_owners.py` | the doc-ownership allowlist (`.claude/doc-owners.txt`) and the `STATE.md` shape |
 | `tests/test_export_instance.py` | the exporter |
