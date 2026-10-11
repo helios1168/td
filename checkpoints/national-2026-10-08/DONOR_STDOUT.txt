@@ -1,0 +1,12 @@
+Original Oct 8 measurement stdout, not recomputed at checkpoint.
+Candidate: ne_plains_wh11_fi20_finonc_whnonj.
+Method: sum original ledger m_rel * approved v2 usd_per_m_rel by existing
+owner district and state; ledger SHA matched v2 before and after the read.
+Amounts below are rounded output in opportunity dollars, not sales.
+
+WH_08 : IA $59.703772M, IL $442.760056M, MN $257.673135M, MO $141.071447M
+WH_09 : IN $140.457784M, KY $180.939773M, MI $325.252285M, WI $194.119764M
+WH_11 : OH $433.552448M, TN $171.958557M, VA $247.393419M, WV $39.800625M
+national_01 : AL $111.192310M, FL $347.557488M, GA $374.560735M, MS $18.838591M, SC $161.936058M
+national_09 : FL $1022.841012M
+national_12 : KY $130.717809M, NC $545.216690M, TN $76.528882M, VA $409.646677M, WV $30.591346M
