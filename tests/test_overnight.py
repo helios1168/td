@@ -96,6 +96,21 @@ def test_plan_point_delta_floor_widens_only_its_channel():
     assert list(bad["infeasible"]) == ["WIFI"]
 
 
+def test_wide_floor_reads_replan_json():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "replan.json")
+        assert overnight.wide_floor(path, {}) is None
+        with open(path, "w") as fh:
+            json.dump({"channels": {"WH": {"final_delta": 0.1305, "smallest_delta": {"delta": 0.15071, "status": "converged"}},
+                                    "FI": {"final_delta": 0.14, "smallest_delta": {"delta": 0.1, "status": "converged"}},
+                                    "national": {"final_delta": 0.2, "status_at_declared": "feasible"}}}, fh)
+        assert overnight.wide_floor(path, {}) == {"WH": 0.1508}
+        assert overnight.wide_floor(path, {"WH": 0.2}) is None                 # already above it
+        with open(path, "w") as fh:
+            json.dump({"channels": {"WH": {"final_delta": 0.1, "smallest_delta": {"delta": 0.6}}}}, fh)
+        assert overnight.wide_floor(path, {}) is None                          # past WIDE_MAX
+
+
 def test_point_spec_text_sets_k_and_both_deltas():
     plan = {"channels": {"national": {"k": 3, "final_delta": 0.15}, "WIFI": {"k": 1, "final_delta": 0.01}}}
     text = overnight.point_spec_text(TOY, "pt-1", plan)

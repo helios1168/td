@@ -296,6 +296,28 @@ def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None) 
     return out
 
 
+WIDE_MAX = 0.35                 # a -wide point's floor stops here: a wider band is no territory
+
+
+def wide_floor(replan_json: str, floor: dict) -> dict | None:
+    """The δ floors a `-wide` point raises after a "no plan" replan: each channel whose master's
+    smallest feasible δ (`replan.json`, rounded up to 1e-4) is above its final δ and its floor;
+    None when there is none or one would pass `WIDE_MAX`."""
+    try:
+        with open(replan_json, encoding="utf-8") as fh:
+            ch = json.load(fh)["channels"]
+    except (OSError, ValueError, KeyError):
+        return None
+    out = {}
+    for c, v in ch.items():
+        sd = (v.get("smallest_delta") or {}).get("delta")
+        if sd is not None and sd > v["final_delta"] + 1e-12 and sd > floor.get(c, 0.0):
+            out[c] = math.ceil(sd * 1e4 - 1e-9) / 1e4
+    if not out or any(x > WIDE_MAX for x in out.values()):
+        return None
+    return out
+
+
 def point_spec_text(base_text: str, pid: str, plan: dict) -> str:
     """The point's spec copy: the base TOML with each channel's K, its declared δ
     (`DECLARED_DELTA`, or the final δ when smaller) and its final δ (`replan.banned_text`), and
@@ -627,26 +649,38 @@ class Runner:
         jobs = slots_of(pt)
         base_path, rule = STRUCTURES[pt["structure"]]
         base_path = os.path.join(ROOT, base_path)
-        plan = plan_point(ks, tdspec.load(base_path), self.cells, rule, pt.get("delta_floor"))
-        self.grid.update(pid, plan=plan)
-        if plan["infeasible"]:
-            return "infeasible", "; ".join(plan["infeasible"].values()), None, []
+        floor = dict(pt.get("delta_floor") or {})
         spec = os.path.join(pdir, "spec.toml")
-        if not (os.path.exists(spec) and finished(os.path.join(pdir, "draw"))):
+        for attempt in range(1 + (len(ks) if pt.get("wide_of") else 0)):
+            plan = plan_point(ks, tdspec.load(base_path), self.cells, rule, floor)
+            self.grid.update(pid, plan=plan)
+            if plan["infeasible"]:
+                return "infeasible", "; ".join(plan["infeasible"].values()), None, []
+            if os.path.exists(spec) and finished(os.path.join(pdir, "draw")):
+                break
             with open(base_path, encoding="utf-8") as fh:
                 text = point_spec_text(fh.read(), pid, plan)
             base = os.path.join(pdir, "spec-base.toml")
             with open(base, "w", encoding="utf-8") as fh:
                 fh.write(text)
-            log = os.path.join(pdir, "replan.log")
-            info = self.stage(pid, "replan", replan_cmd(base, pdir, self.plans, self.extract, plan), log,
+            name = "replan" if attempt == 0 else f"replan{attempt + 1}"
+            log = os.path.join(pdir, f"{name}.log")
+            info = self.stage(pid, name, replan_cmd(base, pdir, self.plans, self.extract, plan), log,
                               PLAN_S * len(ks) + CAP_S["replan"])
             if info["stop"] == "cap":
                 raise Stop("stopped", f"replan.py killed at its cap ({(PLAN_S * len(ks) + CAP_S['replan']) / 60:g} min)")
             if info["rc"] == 1 and "no plan" in _text(log):
-                return "infeasible", _tail(log), None, []
+                more = wide_floor(os.path.join(pdir, "replan.json"), floor) if pt.get("wide_of") else None
+                if not more:
+                    return "infeasible", _tail(log), None, []
+                floor.update(more)
+                self.grid.update(pid, delta_floor=floor)
+                continue
             if info["rc"] != 0:
                 raise Stop("error", f"replan.py exited {info['rc']}: {_tail(log)}")
+            break
+        else:
+            return "infeasible", f"no plan after {len(ks) + 1} replans of a -wide point: {_tail(log)}", None, []
         src = self._draw(pid, pdir, spec, jobs)
         final = self._repair(pid, pdir, src, jobs, 1)
         if self.stage(pid, "gate_r1", gate_cmd(final), os.path.join(pdir, "gate_r1.log"),
