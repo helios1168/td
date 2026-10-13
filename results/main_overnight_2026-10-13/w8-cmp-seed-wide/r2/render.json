@@ -1,0 +1,40 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "3663fdaa0aadee8254bb32f6e83e47eb94d5c5893d385301b7892c070cfb5585",
+    "summary.svg": "cf85b08d24e8fe4715ae10c229721da2145f5899a914214a67aea554ed9d755a",
+    "zip_FI.png": "79a67710658d44c44ad827303b42a489d104f3a5c31bab2677a019ddceea4dd4",
+    "zip_WH.png": "1f2760adef6631401bbbf54a5c1cb671b9f0badd9b8ffad76b5887e4ee307674",
+    "zip_WIFI.png": "bb536feb55c052f08ca3cb8b3016553e6da82855639e359d029b0a24380f0d06",
+    "zip_national.png": "d478260d7898dac8ceaac3f375126b6828f2ee090cef3d9b16bd12d52b7ed08c",
+    "zip_pages.pdf": "d9dc1abf55136b7164cfa23f6a1ace4bfe81ad2feedad1a0aa28532c66ea36a4"
+  },
+  "inputs": {
+    "districts.csv": "3b49468a8ebf66e75008c143e5a303c20288dd87a975d6832c904b78016ef798",
+    "ledger.csv": "c968d2b920da88d6a619f1d8a898a643c0404445bb9188e456b0f187fe94e3a5",
+    "manifest.json": "94afb301ac58bb739c66b7d27221c5158673bc852b436bcd94827d3d024a30b1",
+    "run.json": "ffadac59232e92f129769ea7812cdaa183358ba15db4f0c9c9a80e1a351eb9d3"
+  },
+  "label": "w8-cmp-seed-wide: west8, K national 13, WH 11, FI 24, WIFI 1 = 49; FAILS M1",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "2 districts in pieces, 2 detached pieces (largest 0.477 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T13:48:12+00:00",
+  "renderer": {
+    "code_sha256": "e36c2c1ba3e2636d68dd2c33c7b3adc39a6448e64efe07c09027400841143992",
+    "commit": "e729723653c88cedb536ec5272c464a42fd83d51",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w8-cmp-seed-wide: west8, K national 13, WH 11, FI 24, WIFI 1 = 49; FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}

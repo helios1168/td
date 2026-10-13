@@ -1,0 +1,38 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "57ce60e597cb9fb5c5b4c3a8a9f232e439b8a76a735a9be438c44d42e1e18981",
+    "summary.svg": "c37b17765b549a551b13423bce8e39a34b9fbc9ba204490847b3cf5f0581cabc",
+    "zip_WIFI.png": "5cd922d7aeea3dd8535019f8992b506fc8a78346e37e83b37a423f63c0fc9af9",
+    "zip_national.png": "985c967a18ab9ebd8dd2c68926052f1dde7e64f9ce9211a284e243779bb3a92a",
+    "zip_pages.pdf": "2d308fc71da3dc58891b40adcca2225900125c28e298fb2eeb1b51880921ec8a"
+  },
+  "inputs": {
+    "districts.csv": "6ad1ed62e1f949efb225521b636f0210f39907af9b4b8b29471e650dc637ad74",
+    "ledger.csv": "303b292c7ec907b719e8c3bd846454105bd11a673ccca2aa3d495a8fa3ea7bd4",
+    "manifest.json": "3891acc5ada5bb5650331291c8830d36df5911e12238cd14d4cd0208657d7731",
+    "run.json": "3784a65660752159933ce0f8d73eb6eda405aa0df2b1c96a1185e5ec1068d835"
+  },
+  "label": "nw34-48-wide: nw34, K national 14, WIFI 34 = 48; FAILS M1",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "1 districts in pieces, 1 detached pieces (largest 0.32 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T13:39:24+00:00",
+  "renderer": {
+    "code_sha256": "e36c2c1ba3e2636d68dd2c33c7b3adc39a6448e64efe07c09027400841143992",
+    "commit": "4e38abf14a971f1d69e88eb9525b8ebc71abcfe5",
+    "diff_sha256": "1d2f7d3f7211516a4e6f00234d48f6e2cea2d146738e2e6f66eeb2c0271f18ad",
+    "dirty": true
+  },
+  "title": "nw34-48-wide: nw34, K national 14, WIFI 34 = 48; FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}
