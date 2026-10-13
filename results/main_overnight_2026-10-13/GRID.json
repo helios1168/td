@@ -36,7 +36,7 @@
   },
   "points": {
     "ne-48-bal": {
-      "final": null,
+      "final": "ne-48-bal/r2",
       "finished_at": "2026-10-13T17:47:56+00:00",
       "host": "m5",
       "id": "ne-48-bal",
@@ -46,7 +46,7 @@
         "WIFI": 3,
         "national": 14
       },
-      "label": "stopped",
+      "label": "fails M1",
       "parent": null,
       "plan": {
         "channels": {
@@ -114,7 +114,8 @@
         },
         "infeasible": {}
       },
-      "reason": "the 8 h stop during score_r2",
+      "reason": "M1 across coverage gaps: fail, 0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 8 mass necks listed beside M1; relabelled from r2's completed score after the 8 h stop (was: stopped, the 8 h stop during score_r2)",
+      "relabelled_at": "2026-10-13T18:16:31+00:00",
       "rerun": null,
       "stages": {
         "draw": {
@@ -3164,7 +3165,7 @@
         "WH": 0.3018,
         "national": 0.1786
       },
-      "final": null,
+      "final": "w8-48-bal-wide/draw_retry",
       "finished_at": "2026-10-13T17:48:35+00:00",
       "host": "m2",
       "id": "w8-48-bal-wide",
@@ -3174,7 +3175,7 @@
         "WIFI": 1,
         "national": 14
       },
-      "label": "stopped",
+      "label": "fails M1",
       "parent": null,
       "plan": {
         "channels": {
@@ -3269,7 +3270,8 @@
         },
         "infeasible": {}
       },
-      "reason": "the 8 h stop during score_draw_retry",
+      "reason": "M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.441 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1; relabelled from draw_retry's completed score after the 8 h stop (was: stopped, the 8 h stop during score_draw_retry)",
+      "relabelled_at": "2026-10-13T18:16:31+00:00",
       "rerun": null,
       "stages": {
         "draw": {

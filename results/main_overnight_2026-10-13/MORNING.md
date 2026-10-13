@@ -1,8 +1,8 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T18:11:20+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T18:16:31+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
 
-38 points: 13 fails M1, 20 infeasible, 5 stopped.
+38 points: 15 fails M1, 20 infeasible, 3 stopped.
 
 ## Assumptions (owner decisions open)
 
@@ -22,40 +22,40 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 | 1 | ne-50-bal-wide | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | 11 | 2 | FI_04 +13.5% (954.8M) | fail / fail | 32.1 (3 > R) | **fails M1** | [folder](ne-50-bal-wide/r2/) · [map](ne-50-bal-wide/r2/summary.png) · [score](ne-50-bal-wide/r2/score.txt) |
 | 2 | w1-50-wide | w1 | WIFI 50 = 50 | 11 | 10.7492 | WIFI_01 -31.4% (670.9M) | fail / fail, 1 flips | 395.7 (4 > R) | **fails M1** | [folder](w1-50-wide/r2/) · [map](w1-50-wide/r2/summary.png) · [score](w1-50-wide/r2/score.txt) |
 | 3 | ne-52-filight-wide | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | 12 | 1 | FI_04 +13.5% (954.8M) | fail / fail, 1 flips | 32.3 (3 > R) | **fails M1** | [folder](ne-52-filight-wide/r2/) · [map](ne-52-filight-wide/r2/summary.png) · [score](ne-52-filight-wide/r2/score.txt) |
-| 4 | w1-48-wide | w1 | WIFI 48 = 48 | 12 | 9.7483 | WIFI_31 +30.3% (1,327.9M) | fail / fail, 1 flips | 123.4 (4 > R) | **fails M1** | [folder](w1-48-wide/r2/) · [map](w1-48-wide/r2/summary.png) · [score](w1-48-wide/r2/score.txt) |
-| 5 | w1-52-wide | w1 | WIFI 52 = 52 | 13 | 8.7538 | WIFI_20 -28.8% (669.6M) | fail / fail | 405.7 (5 > R) | **fails M1** | [folder](w1-52-wide/r2/) · [map](w1-52-wide/r2/summary.png) · [score](w1-52-wide/r2/score.txt) |
-| 6 | w8-cmp-seed-wide | west8 | national 13, WH 11, FI 24, WIFI 1 = 49 | 13 | 8.7594 | WH_04 -29.8% (686.7M) | fail / fail, 1 flips | 55.6 (2 > R) | **fails M1** | [folder](w8-cmp-seed-wide/r2/) · [map](w8-cmp-seed-wide/r2/summary.png) · [score](w8-cmp-seed-wide/r2/score.txt) |
-| 7 | w8-50-bal-wide | west8 | national 15, WH 11, FI 23, WIFI 1 = 50 | 13 | 9.4477 | WH_04 -29.8% (686.7M) | fail / fail | 55.2 (4 > R) | **fails M1** | [folder](w8-50-bal-wide/r2/) · [map](w8-50-bal-wide/r2/summary.png) · [score](w8-50-bal-wide/r2/score.txt) |
-| 8 | ne-52-bal-wide | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | 14 | 3 | FI_05 -12.0% (708.2M) | fail / fail | 33.4 (3 > R) | **fails M1** | [folder](ne-52-bal-wide/r2/) · [map](ne-52-bal-wide/r2/summary.png) · [score](ne-52-bal-wide/r2/score.txt) |
-| 9 | w8-52-bal-wide | west8 | national 15, WH 12, FI 24, WIFI 1 = 52 | 15 | 4 | national_14 -24.4% (855.3M) | fail / fail | 55.5 (4 > R) | **fails M1** | [folder](w8-52-bal-wide/r2/) · [map](w8-52-bal-wide/r2/summary.png) · [score](w8-52-bal-wide/r2/score.txt) |
-| 10 | nw34-50-wide | nw34 | national 15, WIFI 35 = 50 | 16 | 0 | national_10 -28.1% (809.4M) | fail / fail, 1 flips | 91.6 (4 > R) | **fails M1** | [folder](nw34-50-wide/r2/) · [map](nw34-50-wide/r2/summary.png) · [score](nw34-50-wide/r2/score.txt) |
-| 11 | w8-52-filight-wide | west8 | national 16, WH 12, FI 23, WIFI 1 = 52 | 16 | 8.6796 | national_15 -31.5% (727.1M) | fail / fail, 1 flips | 54.2 (3 > R) | **fails M1** | [folder](w8-52-filight-wide/r2/) · [map](w8-52-filight-wide/r2/summary.png) · [score](w8-52-filight-wide/r2/score.txt) |
-| 12 | nw34-48-wide | nw34 | national 14, WIFI 34 = 48 | 17 | 6.3197 | WIFI_21 -22.7% (727.6M) | fail / fail, 3 flips | 34.2 (2 > R) | **fails M1** | [folder](nw34-48-wide/r2/) · [map](nw34-48-wide/r2/summary.png) · [score](nw34-48-wide/r2/score.txt) |
-| 13 | nw34-52-wide | nw34 | national 16, WIFI 36 = 52 | 19 | 8.2367 | WIFI_31 +27.2% (1,131.0M) | fail / fail | 52.2 (2 > R) | **fails M1** | [folder](nw34-52-wide/r2/) · [map](nw34-52-wide/r2/summary.png) · [score](nw34-52-wide/r2/score.txt) |
-| 14 | ne-50-bal | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
-| 15 | ne-50-filight | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
-| 16 | ne-52-bal | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
-| 17 | ne-52-filight | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
-| 18 | ne-cmp-tierP | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **infeasible** | — |
-| 19 | nw34-48 | nw34 | national 14, WIFI 34 = 48 | — | — | — | — | — | **infeasible** | — |
-| 20 | nw34-50 | nw34 | national 15, WIFI 35 = 50 | — | — | — | — | — | **infeasible** | — |
-| 21 | nw34-52 | nw34 | national 16, WIFI 36 = 52 | — | — | — | — | — | **infeasible** | — |
-| 22 | nw49-48 | nw49 | national 15, WIFI 33 = 48 | — | — | — | — | — | **infeasible** | — |
-| 23 | nw49-50 | nw49 | national 16, WIFI 34 = 50 | — | — | — | — | — | **infeasible** | — |
-| 24 | nw49-52 | nw49 | national 17, WIFI 35 = 52 | — | — | — | — | — | **infeasible** | — |
-| 25 | w1-48 | w1 | WIFI 48 = 48 | — | — | — | — | — | **infeasible** | — |
-| 26 | w1-50 | w1 | WIFI 50 = 50 | — | — | — | — | — | **infeasible** | — |
-| 27 | w1-52 | w1 | WIFI 52 = 52 | — | — | — | — | — | **infeasible** | — |
-| 28 | w8-48-bal | west8 | national 14, WH 11, FI 22, WIFI 1 = 48 | — | — | — | — | — | **infeasible** | — |
-| 29 | w8-50-bal | west8 | national 15, WH 11, FI 23, WIFI 1 = 50 | — | — | — | — | — | **infeasible** | — |
-| 30 | w8-50-filight | west8 | national 16, WH 12, FI 21, WIFI 1 = 50 | — | — | — | — | — | **infeasible** | — |
-| 31 | w8-52-bal | west8 | national 15, WH 12, FI 24, WIFI 1 = 52 | — | — | — | — | — | **infeasible** | — |
-| 32 | w8-52-filight | west8 | national 16, WH 12, FI 23, WIFI 1 = 52 | — | — | — | — | — | **infeasible** | — |
-| 33 | w8-cmp-seed | west8 | national 13, WH 11, FI 24, WIFI 1 = 49 | — | — | — | — | — | **infeasible** | — |
-| 34 | ne-48-bal | ne_plains | national 14, WH 10, FI 21, WIFI 3 = 48 | — | — | — | — | — | **stopped** | — |
-| 35 | ne-50-filight-wide | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **stopped** | — |
-| 36 | ne-cmp-tierP-wide | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **stopped** | — |
-| 37 | w8-48-bal-wide | west8 | national 14, WH 11, FI 22, WIFI 1 = 48 | — | — | — | — | — | **stopped** | — |
+| 4 | ne-48-bal | ne_plains | national 14, WH 10, FI 21, WIFI 3 = 48 | 12 | 2 | national_12 +16.8% (1,410.1M) | fail / fail | — | **fails M1** | [folder](ne-48-bal/r2/) · [map](ne-48-bal/r2/summary.png) · [score](ne-48-bal/r2/score.txt) |
+| 5 | w1-48-wide | w1 | WIFI 48 = 48 | 12 | 9.7483 | WIFI_31 +30.3% (1,327.9M) | fail / fail, 1 flips | 123.4 (4 > R) | **fails M1** | [folder](w1-48-wide/r2/) · [map](w1-48-wide/r2/summary.png) · [score](w1-48-wide/r2/score.txt) |
+| 6 | w1-52-wide | w1 | WIFI 52 = 52 | 13 | 8.7538 | WIFI_20 -28.8% (669.6M) | fail / fail | 405.7 (5 > R) | **fails M1** | [folder](w1-52-wide/r2/) · [map](w1-52-wide/r2/summary.png) · [score](w1-52-wide/r2/score.txt) |
+| 7 | w8-cmp-seed-wide | west8 | national 13, WH 11, FI 24, WIFI 1 = 49 | 13 | 8.7594 | WH_04 -29.8% (686.7M) | fail / fail, 1 flips | 55.6 (2 > R) | **fails M1** | [folder](w8-cmp-seed-wide/r2/) · [map](w8-cmp-seed-wide/r2/summary.png) · [score](w8-cmp-seed-wide/r2/score.txt) |
+| 8 | w8-50-bal-wide | west8 | national 15, WH 11, FI 23, WIFI 1 = 50 | 13 | 9.4477 | WH_04 -29.8% (686.7M) | fail / fail | 55.2 (4 > R) | **fails M1** | [folder](w8-50-bal-wide/r2/) · [map](w8-50-bal-wide/r2/summary.png) · [score](w8-50-bal-wide/r2/score.txt) |
+| 9 | ne-52-bal-wide | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | 14 | 3 | FI_05 -12.0% (708.2M) | fail / fail | 33.4 (3 > R) | **fails M1** | [folder](ne-52-bal-wide/r2/) · [map](ne-52-bal-wide/r2/summary.png) · [score](ne-52-bal-wide/r2/score.txt) |
+| 10 | w8-52-bal-wide | west8 | national 15, WH 12, FI 24, WIFI 1 = 52 | 15 | 4 | national_14 -24.4% (855.3M) | fail / fail | 55.5 (4 > R) | **fails M1** | [folder](w8-52-bal-wide/r2/) · [map](w8-52-bal-wide/r2/summary.png) · [score](w8-52-bal-wide/r2/score.txt) |
+| 11 | nw34-50-wide | nw34 | national 15, WIFI 35 = 50 | 16 | 0 | national_10 -28.1% (809.4M) | fail / fail, 1 flips | 91.6 (4 > R) | **fails M1** | [folder](nw34-50-wide/r2/) · [map](nw34-50-wide/r2/summary.png) · [score](nw34-50-wide/r2/score.txt) |
+| 12 | w8-52-filight-wide | west8 | national 16, WH 12, FI 23, WIFI 1 = 52 | 16 | 8.6796 | national_15 -31.5% (727.1M) | fail / fail, 1 flips | 54.2 (3 > R) | **fails M1** | [folder](w8-52-filight-wide/r2/) · [map](w8-52-filight-wide/r2/summary.png) · [score](w8-52-filight-wide/r2/score.txt) |
+| 13 | nw34-48-wide | nw34 | national 14, WIFI 34 = 48 | 17 | 6.3197 | WIFI_21 -22.7% (727.6M) | fail / fail, 3 flips | 34.2 (2 > R) | **fails M1** | [folder](nw34-48-wide/r2/) · [map](nw34-48-wide/r2/summary.png) · [score](nw34-48-wide/r2/score.txt) |
+| 14 | w8-48-bal-wide | west8 | national 14, WH 11, FI 22, WIFI 1 = 48 | 17 | 12.724 | WH_01 +22.4% (1,196.1M) | fail / fail, 2 flips | — | **fails M1** | [folder](w8-48-bal-wide/draw_retry/) · [map](w8-48-bal-wide/draw_retry/summary.png) · [score](w8-48-bal-wide/draw_retry/score.txt) |
+| 15 | nw34-52-wide | nw34 | national 16, WIFI 36 = 52 | 19 | 8.2367 | WIFI_31 +27.2% (1,131.0M) | fail / fail | 52.2 (2 > R) | **fails M1** | [folder](nw34-52-wide/r2/) · [map](nw34-52-wide/r2/summary.png) · [score](nw34-52-wide/r2/score.txt) |
+| 16 | ne-50-bal | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
+| 17 | ne-50-filight | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
+| 18 | ne-52-bal | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
+| 19 | ne-52-filight | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
+| 20 | ne-cmp-tierP | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **infeasible** | — |
+| 21 | nw34-48 | nw34 | national 14, WIFI 34 = 48 | — | — | — | — | — | **infeasible** | — |
+| 22 | nw34-50 | nw34 | national 15, WIFI 35 = 50 | — | — | — | — | — | **infeasible** | — |
+| 23 | nw34-52 | nw34 | national 16, WIFI 36 = 52 | — | — | — | — | — | **infeasible** | — |
+| 24 | nw49-48 | nw49 | national 15, WIFI 33 = 48 | — | — | — | — | — | **infeasible** | — |
+| 25 | nw49-50 | nw49 | national 16, WIFI 34 = 50 | — | — | — | — | — | **infeasible** | — |
+| 26 | nw49-52 | nw49 | national 17, WIFI 35 = 52 | — | — | — | — | — | **infeasible** | — |
+| 27 | w1-48 | w1 | WIFI 48 = 48 | — | — | — | — | — | **infeasible** | — |
+| 28 | w1-50 | w1 | WIFI 50 = 50 | — | — | — | — | — | **infeasible** | — |
+| 29 | w1-52 | w1 | WIFI 52 = 52 | — | — | — | — | — | **infeasible** | — |
+| 30 | w8-48-bal | west8 | national 14, WH 11, FI 22, WIFI 1 = 48 | — | — | — | — | — | **infeasible** | — |
+| 31 | w8-50-bal | west8 | national 15, WH 11, FI 23, WIFI 1 = 50 | — | — | — | — | — | **infeasible** | — |
+| 32 | w8-50-filight | west8 | national 16, WH 12, FI 21, WIFI 1 = 50 | — | — | — | — | — | **infeasible** | — |
+| 33 | w8-52-bal | west8 | national 15, WH 12, FI 24, WIFI 1 = 52 | — | — | — | — | — | **infeasible** | — |
+| 34 | w8-52-filight | west8 | national 16, WH 12, FI 23, WIFI 1 = 52 | — | — | — | — | — | **infeasible** | — |
+| 35 | w8-cmp-seed | west8 | national 13, WH 11, FI 24, WIFI 1 = 49 | — | — | — | — | — | **infeasible** | — |
+| 36 | ne-50-filight-wide | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **stopped** | — |
+| 37 | ne-cmp-tierP-wide | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **stopped** | — |
 | 38 | w8-50-filight-wide | west8 | national 16, WH 12, FI 21, WIFI 1 = 50 | — | — | — | — | — | **stopped** | — |
 
 ## Reasons
@@ -63,6 +63,7 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - **ne-50-bal-wide** (fails M1): M1 across coverage gaps: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 8 mass necks listed beside M1
 - **w1-50-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.406 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1
 - **ne-52-filight-wide** (fails M1): M1 across coverage gaps: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 9 mass necks listed beside M1
+- **ne-48-bal** (fails M1): M1 across coverage gaps: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 8 mass necks listed beside M1; relabelled from r2's completed score after the 8 h stop (was: stopped, the 8 h stop during score_r2)
 - **w1-48-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.414 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1
 - **w1-52-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.423 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 16 mass necks listed beside M1
 - **w8-cmp-seed-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.477 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1
@@ -72,6 +73,7 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - **nw34-50-wide** (fails M1): M1 across coverage gaps: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1
 - **w8-52-filight-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.514 τ), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 13 mass necks listed beside M1
 - **nw34-48-wide** (fails M1): M1 across coverage gaps: fail, 1 districts in pieces, 1 detached pieces (largest 0.32 τ), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1
+- **w8-48-bal-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.441 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1; relabelled from draw_retry's completed score after the 8 h stop (was: stopped, the 8 h stop during score_draw_retry)
 - **nw34-52-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.126 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1
 - **ne-50-bal** (infeasible): FI: no plan up to final_delta 0.0904 (converged)
 - **ne-50-filight** (infeasible): national: no plan up to final_delta 0.053 (converged)
@@ -93,10 +95,8 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - **w8-52-bal** (infeasible): national: no plan up to final_delta 0.1166 (converged)
 - **w8-52-filight** (infeasible): national: no plan up to final_delta 0.0577 (converged)
 - **w8-cmp-seed** (infeasible): national: no plan up to final_delta 0.1004 (converged)
-- **ne-48-bal** (stopped): the 8 h stop during score_r2
 - **ne-50-filight-wide** (stopped): the 8 h stop during draw_retry
 - **ne-cmp-tierP-wide** (stopped): the 8 h stop during draw_retry
-- **w8-48-bal-wide** (stopped): the 8 h stop during score_draw_retry
 - **w8-50-filight-wide** (stopped): the 8 h stop during r1
 
 ## Needs your eye
@@ -115,6 +115,7 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - ne-52-filight-wide: FI NY in-state land ratio 31.55 beyond R = 10 (FI_17 117494.7 km², FI_16 3724.6 km²)
 - ne-52-filight-wide: national CA in-state land ratio 29.67 beyond R = 10 (national_07 167368.5 km², national_06 5640.2 km²)
 - ne-52-filight-wide: national NY in-state land ratio 32.28 beyond R = 10 (national_09 117674.1 km², national_14 3645.4 km²)
+- ne-48-bal: WIFI_03 1,230.7M on the whole-state allowance (up to 1,600.0M)
 - w1-48-wide: WIFI_25 1,230.7M on the whole-state allowance (up to 1,600.0M)
 - w1-48-wide: WIFI CA in-state land ratio 45.40 beyond R = 10 (WIFI_07 121259.2 km², WIFI_06 2670.7 km²)
 - w1-48-wide: WIFI IL in-state land ratio 24.48 beyond R = 10 (WIFI_21 138077.4 km², WIFI_20 5641.4 km²)
@@ -159,5 +160,8 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - nw34-48-wide: M1 flip WIFI/WIFI_11, a neck strict only: WIFI/WIFI_11: neck 3.01 km wide cuts off 4 ZIPs (33430...), 19.8% of its land area and 0.0% of its mass; cut 33430-33470 3.01 km
 - nw34-48-wide: WIFI NY in-state land ratio 31.37 beyond R = 10 (WIFI_29 114000.9 km², WIFI_09 3634.2 km²)
 - nw34-48-wide: national CA in-state land ratio 34.21 beyond R = 10 (national_07 164082.4 km², national_06 4795.9 km²)
+- w8-48-bal-wide: M1 flip national/national_03, a neck strict only: national/national_03: neck 5.48 km wide cuts off 203 ZIPs (82930...), 13.4% of its land area and 15.0% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km
+- w8-48-bal-wide: M1 flip national/national_04, a neck strict only: national/national_04: neck 8.81 km wide cuts off 5 ZIPs (93527...), 5.9% of its land area and 0.0% of its mass; cut 93527-93554 8.81 km
+- w8-48-bal-wide: WIFI_01 1,542.7M on the whole-state allowance (up to 1,600.0M)
 - nw34-52-wide: WIFI NY in-state land ratio 52.23 beyond R = 10 (WIFI_29 100997.3 km², WIFI_28 1933.8 km²)
 - nw34-52-wide: national CA in-state land ratio 42.70 beyond R = 10 (national_07 117407.9 km², national_06 2749.4 km²)

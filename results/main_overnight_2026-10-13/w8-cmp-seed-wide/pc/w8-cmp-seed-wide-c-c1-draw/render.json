@@ -1,0 +1,41 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "eab7c89bf31830feed3e8c43205ffbfe9a77f6030119019739d32ba526765b65",
+    "summary.svg": "e0775085c7cc8b3b221534104ccee4f7591dc02ff3dec1f213b65c6a314f77cb",
+    "zip_FI.png": "6b80f4a423c567332c0a66a525b710f4045b78a6d2eb2f4d93fd7c7417f20421",
+    "zip_WH.png": "bd633acbea0aba22c0edd3fdc003c30303b4f12fae5c6ccc713421c7b0b3a8b2",
+    "zip_WIFI.png": "e60acea825c74fd6f23f43f4be4fe1214345129b4d9dfd34329e17b345d097de",
+    "zip_national.png": "546cf8a9ff2191f8a1ea4bf2d82bafc8d353055e6b4e257f63edddb21a34066d",
+    "zip_pages.pdf": "8091989eda189e3dfd0f832180495f065c9636e1ec0a1a7cee2967809e3a4db3",
+    "zip_summary.png": "49fb54d05b0ef0e58e77b4181f714789a9c522c050eed460bb031f7dc1d27e4d"
+  },
+  "inputs": {
+    "districts.csv": "73374ac25c3a7c47eaa984a7ce24c61b9a3b64d6a04ba30953588d1bb431a36d",
+    "ledger.csv": "1eec47687e0a43d13d7403eec013a773541b50a2c1f26fd522aa201ef26da265",
+    "manifest.json": "b975a5d313f45688ed87674f01e2c5f54ebc33a7fc3ee588e43c1fa4e37c5b71",
+    "run.json": "58585ca89869e25f51652ed1eb18200f0865c3b3c605832b9e923c9b71f089fd"
+  },
+  "label": "w8-cmp-seed-wide pc w8-cmp-seed-wide-c-c1-draw",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "3 districts in pieces, 4 detached pieces (largest 0.477 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T18:16:30+00:00",
+  "renderer": {
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w8-cmp-seed-wide pc w8-cmp-seed-wide-c-c1-draw, FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}
