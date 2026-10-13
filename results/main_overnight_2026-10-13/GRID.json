@@ -4,7 +4,8 @@
     "#119 (all-M1 bound): not used; no point is claimed minimal",
     "#133: R = 10 on in-state land, pieces of 20% of district mass or more, for this run only",
     "WIFI window $850-1,150M with the $1.6B whole-state allowance, national floor $1,000M: owner decisions (2026-10-12) still to be filed in PROBLEM.md",
-    "M1 gated with necks across coverage gaps (scouts G1, TD_NECK_GAP_WIDTH=1); strict beside it"
+    "M1 gated with necks across coverage gaps (scouts G1, TD_NECK_GAP_WIDTH=1); strict beside it",
+    "-wide points (2026-10-13 05:00, the planner, owner asleep): a point whose master had no plan within the window-fitted final \u03b4 is drawn again as <id>-wide at the master's smallest feasible \u03b4 (rounded up to 1e-4); the per-district dollar gate and every window are unchanged, so it is eligible only when every district lands in its window. Not for nw49 (smallest \u03b4 0.64 or more)"
   ],
   "code": {
     "commit": "54f5afa4a6a3aa180fdbfe66918303731dd69cc7",
@@ -47,20 +48,189 @@
       },
       "label": null,
       "parent": null,
-      "plan": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1318,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 21,
+            "lo_m": 765.0,
+            "tau_m": 881.1533192558692,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.1342,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 10,
+            "lo_m": 850.0,
+            "tau_m": 1013.8801152484141,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1713,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 14,
+            "lo_m": 1000.0,
+            "tau_m": 1206.8368400075192,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
       "reason": null,
       "rerun": null,
-      "stages": {},
-      "started_at": null,
+      "stages": {
+        "replan": {
+          "log": "ne-48-bal/replan.log",
+          "rc": 0,
+          "seconds": 29.4,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:49:08+00:00",
       "status": "queued",
       "structure": "ne_plains",
       "total": 48
     },
     "ne-50-bal": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:49:24+00:00",
       "host": "m5",
       "id": "ne-50-bal",
+      "k": {
+        "FI": 22,
+        "WH": 10,
+        "WIFI": 3,
+        "national": 15
+      },
+      "label": "infeasible",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.0904,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 22,
+            "lo_m": 765.0,
+            "tau_m": 841.1008956533296,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.1342,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 10,
+            "lo_m": 850.0,
+            "tau_m": 1013.8801152484141,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "FI: no plan up to final_delta 0.0904 (converged)",
+      "rerun": null,
+      "stages": {
+        "replan": {
+          "log": "ne-50-bal/replan.log",
+          "rc": 1,
+          "seconds": 28.8,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:48:55+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 50
+    },
+    "ne-50-bal-wide": {
+      "delta_floor": {
+        "FI": 0.1352
+      },
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "ne-50-bal-wide",
       "k": {
         "FI": 22,
         "WH": 10,
@@ -76,13 +246,111 @@
       "started_at": null,
       "status": "queued",
       "structure": "ne_plains",
-      "total": 50
+      "total": 50,
+      "wide_of": "ne-50-bal"
     },
     "ne-50-filight": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:49:18+00:00",
       "host": "m5",
       "id": "ne-50-filight",
+      "k": {
+        "FI": 20,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 16
+      },
+      "label": "infeasible",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1186,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 20,
+            "lo_m": 765.0,
+            "tau_m": 925.2109852186626,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.053,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1055.9822350065792,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "national: no plan up to final_delta 0.053 (converged)",
+      "rerun": null,
+      "stages": {
+        "replan": {
+          "log": "ne-50-filight/replan.log",
+          "rc": 1,
+          "seconds": 9.2,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:49:09+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 50
+    },
+    "ne-50-filight-wide": {
+      "delta_floor": {
+        "national": 0.121
+      },
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "ne-50-filight-wide",
       "k": {
         "FI": 20,
         "WH": 11,
@@ -98,13 +366,111 @@
       "started_at": null,
       "status": "queued",
       "structure": "ne_plains",
-      "total": 50
+      "total": 50,
+      "wide_of": "ne-50-filight"
     },
     "ne-52-bal": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:49:00+00:00",
       "host": "m5",
       "id": "ne-52-bal",
+      "k": {
+        "FI": 23,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 15
+      },
+      "label": "infeasible",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.0491,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 23,
+            "lo_m": 765.0,
+            "tau_m": 804.5312914944892,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "WH: no plan up to final_delta 0.0778 (converged)",
+      "rerun": null,
+      "stages": {
+        "replan": {
+          "log": "ne-52-bal/replan.log",
+          "rc": 1,
+          "seconds": 14.2,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:48:46+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 52
+    },
+    "ne-52-bal-wide": {
+      "delta_floor": {
+        "WH": 0.0879
+      },
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "ne-52-bal-wide",
       "k": {
         "FI": 23,
         "WH": 11,
@@ -120,13 +486,111 @@
       "started_at": null,
       "status": "queued",
       "structure": "ne_plains",
-      "total": 52
+      "total": 52,
+      "wide_of": "ne-52-bal"
     },
     "ne-52-filight": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:49:09+00:00",
       "host": "m5",
       "id": "ne-52-filight",
+      "k": {
+        "FI": 22,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 16
+      },
+      "label": "infeasible",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.0904,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 22,
+            "lo_m": 765.0,
+            "tau_m": 841.1008956533296,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.053,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1055.9822350065792,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "national: no plan up to final_delta 0.053 (converged)",
+      "rerun": null,
+      "stages": {
+        "replan": {
+          "log": "ne-52-filight/replan.log",
+          "rc": 1,
+          "seconds": 9.4,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:49:00+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 52
+    },
+    "ne-52-filight-wide": {
+      "delta_floor": {
+        "national": 0.121
+      },
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "ne-52-filight-wide",
       "k": {
         "FI": 22,
         "WH": 11,
@@ -142,13 +606,111 @@
       "started_at": null,
       "status": "queued",
       "structure": "ne_plains",
-      "total": 52
+      "total": 52,
+      "wide_of": "ne-52-filight"
     },
     "ne-cmp-tierP": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:49:32+00:00",
       "host": "m5",
       "id": "ne-cmp-tierP",
+      "k": {
+        "FI": 20,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 15
+      },
+      "label": "infeasible",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1186,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 20,
+            "lo_m": 765.0,
+            "tau_m": 925.2109852186626,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "WH: no plan up to final_delta 0.0778 (converged)",
+      "rerun": null,
+      "stages": {
+        "replan": {
+          "log": "ne-cmp-tierP/replan.log",
+          "rc": 1,
+          "seconds": 13.3,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:49:18+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 49
+    },
+    "ne-cmp-tierP-wide": {
+      "delta_floor": {
+        "WH": 0.0879
+      },
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "ne-cmp-tierP-wide",
       "k": {
         "FI": 20,
         "WH": 11,
@@ -164,38 +726,182 @@
       "started_at": null,
       "status": "queued",
       "structure": "ne_plains",
-      "total": 49
+      "total": 49,
+      "wide_of": "ne-cmp-tierP"
     },
     "nw34-48": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:49:08+00:00",
       "host": "m5",
       "id": "nw34-48",
       "k": {
         "WIFI": 34,
         "national": 14
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
-      "plan": null,
-      "reason": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0972,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 34,
+            "lo_m": 850.0,
+            "tau_m": 941.5588529683314,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1713,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 14,
+            "lo_m": 1000.0,
+            "tau_m": 1206.8368400075192,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "WIFI: no plan up to final_delta 0.0972 (converged)",
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "nw34-48/replan.log",
+          "rc": 1,
+          "seconds": 63.6,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:48:04+00:00",
+      "status": "done",
       "structure": "nw34",
       "total": 48
     },
-    "nw34-50": {
+    "nw34-48-wide": {
+      "delta_floor": {
+        "WIFI": 0.2273
+      },
       "final": null,
       "finished_at": null,
+      "host": "m5",
+      "id": "nw34-48-wide",
+      "k": {
+        "WIFI": 34,
+        "national": 14
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.2273,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 34,
+            "lo_m": 850.0,
+            "tau_m": 941.5588529683314,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1713,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 14,
+            "lo_m": 1000.0,
+            "tau_m": 1206.8368400075192,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:53:35+00:00",
+      "status": "running",
+      "structure": "nw34",
+      "total": 48,
+      "wide_of": "nw34-48"
+    },
+    "nw34-50": {
+      "final": null,
+      "finished_at": "2026-10-13T09:48:55+00:00",
       "host": "m5",
       "id": "nw34-50",
       "k": {
         "WIFI": 35,
         "national": 15
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
       "plan": {
         "channels": {
@@ -255,24 +961,112 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "WIFI: no plan up to final_delta 0.0706 (converged)",
       "rerun": null,
-      "stages": {},
+      "stages": {
+        "replan": {
+          "log": "nw34-50/replan.log",
+          "rc": 1,
+          "seconds": 61.7,
+          "stop": null
+        }
+      },
       "started_at": "2026-10-13T09:47:53+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "nw34",
       "total": 50
     },
-    "nw34-52": {
+    "nw34-50-wide": {
+      "delta_floor": {
+        "WIFI": 0.234
+      },
       "final": null,
       "finished_at": null,
+      "host": "m5",
+      "id": "nw34-50-wide",
+      "k": {
+        "WIFI": 35,
+        "national": 15
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.234,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 35,
+            "lo_m": 850.0,
+            "tau_m": 914.6571714549506,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:53:35+00:00",
+      "status": "running",
+      "structure": "nw34",
+      "total": 50,
+      "wide_of": "nw34-50"
+    },
+    "nw34-52": {
+      "final": null,
+      "finished_at": "2026-10-13T09:48:04+00:00",
       "host": "m5",
       "id": "nw34-52",
       "k": {
         "WIFI": 36,
         "national": 16
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
       "plan": {
         "channels": {
@@ -335,64 +1129,282 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "national: no plan up to final_delta 0.053 (converged)",
       "rerun": null,
-      "stages": {},
+      "stages": {
+        "replan": {
+          "log": "nw34-52/replan.log",
+          "rc": 1,
+          "seconds": 11.0,
+          "stop": null
+        }
+      },
       "started_at": "2026-10-13T09:47:53+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "nw34",
       "total": 52
     },
-    "nw49-48": {
+    "nw34-52-wide": {
+      "delta_floor": {
+        "national": 0.0565
+      },
       "final": null,
       "finished_at": null,
+      "host": "m5",
+      "id": "nw34-52-wide",
+      "k": {
+        "WIFI": 36,
+        "national": 16
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0441,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 36,
+            "lo_m": 850.0,
+            "tau_m": 889.2500278034241,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.0565,
+            "free": [
+              "AZ",
+              "CA",
+              "FL",
+              "IL",
+              "NC",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1055.9822350065792,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:53:35+00:00",
+      "status": "running",
+      "structure": "nw34",
+      "total": 52,
+      "wide_of": "nw34-52"
+    },
+    "nw49-48": {
+      "final": null,
+      "finished_at": "2026-10-13T09:49:02+00:00",
       "host": "m5",
       "id": "nw49-48",
       "k": {
         "WIFI": 33,
         "national": 15
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
-      "plan": null,
-      "reason": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.1059,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 33,
+            "lo_m": 850.0,
+            "tau_m": 950.7166255672894,
+            "usd_m": 31373.64864372055,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1445,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1169.0045411538658,
+            "usd_m": 17535.068117307987,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "national: no plan up to final_delta 0.1445 (converged)",
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "nw49-48/replan.log",
+          "rc": 1,
+          "seconds": 23.4,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:48:38+00:00",
+      "status": "done",
       "structure": "nw49",
       "total": 48
     },
     "nw49-50": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:48:50+00:00",
       "host": "m5",
       "id": "nw49-50",
       "k": {
         "WIFI": 34,
         "national": 16
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
-      "plan": null,
-      "reason": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0788,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 34,
+            "lo_m": 850.0,
+            "tau_m": 922.7543718741338,
+            "usd_m": 31373.64864372055,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.0875,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1095.9417573317492,
+            "usd_m": 17535.068117307987,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "national: no plan up to final_delta 0.0875 (converged)",
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "nw49-50/replan.log",
+          "rc": 1,
+          "seconds": 24.5,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:48:26+00:00",
+      "status": "done",
       "structure": "nw49",
       "total": 50
     },
     "nw49-52": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:48:26+00:00",
       "host": "m5",
       "id": "nw49-52",
       "k": {
         "WIFI": 35,
         "national": 17
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
       "plan": {
         "channels": {
@@ -455,23 +1467,30 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "national: no plan up to final_delta 0.0305 (converged)",
       "rerun": null,
-      "stages": {},
+      "stages": {
+        "replan": {
+          "log": "nw49-52/replan.log",
+          "rc": 1,
+          "seconds": 32.3,
+          "stop": null
+        }
+      },
       "started_at": "2026-10-13T09:47:53+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "nw49",
       "total": 52
     },
     "w1-48": {
       "final": null,
-      "finished_at": null,
+      "finished_at": "2026-10-13T09:48:46+00:00",
       "host": "m5",
       "id": "w1-48",
       "k": {
         "WIFI": 48
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
       "plan": {
         "channels": {
@@ -516,23 +1535,95 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "WIFI: no plan up to final_delta 0.1286 (converged)",
       "rerun": null,
-      "stages": {},
+      "stages": {
+        "replan": {
+          "log": "w1-48/replan.log",
+          "rc": 1,
+          "seconds": 52.4,
+          "stop": null
+        }
+      },
       "started_at": "2026-10-13T09:47:53+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "w1",
       "total": 48
     },
-    "w1-50": {
+    "w1-48-wide": {
+      "delta_floor": {
+        "WIFI": 0.325
+      },
       "final": null,
       "finished_at": null,
+      "host": "m5",
+      "id": "w1-48-wide",
+      "k": {
+        "WIFI": 48
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.325,
+            "free": [
+              "AL",
+              "AZ",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 48,
+            "lo_m": 850.0,
+            "tau_m": 1018.9315991880944,
+            "usd_m": 48908.71676102853,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:53:35+00:00",
+      "status": "running",
+      "structure": "w1",
+      "total": 48,
+      "wide_of": "w1-48"
+    },
+    "w1-50": {
+      "final": null,
+      "finished_at": "2026-10-13T09:48:43+00:00",
       "host": "m5",
       "id": "w1-50",
       "k": {
         "WIFI": 50
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
       "plan": {
         "channels": {
@@ -577,23 +1668,95 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "WIFI: no plan up to final_delta 0.131 (converged)",
       "rerun": null,
-      "stages": {},
+      "stages": {
+        "replan": {
+          "log": "w1-50/replan.log",
+          "rc": 1,
+          "seconds": 49.5,
+          "stop": null
+        }
+      },
       "started_at": "2026-10-13T09:47:53+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "w1",
       "total": 50
     },
-    "w1-52": {
+    "w1-50-wide": {
+      "delta_floor": {
+        "WIFI": 0.3144
+      },
       "final": null,
       "finished_at": null,
+      "host": "m5",
+      "id": "w1-50-wide",
+      "k": {
+        "WIFI": 50
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.3144,
+            "free": [
+              "AL",
+              "AZ",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 50,
+            "lo_m": 850.0,
+            "tau_m": 978.1743352205707,
+            "usd_m": 48908.71676102853,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:53:35+00:00",
+      "status": "running",
+      "structure": "w1",
+      "total": 50,
+      "wide_of": "w1-50"
+    },
+    "w1-52": {
+      "final": null,
+      "finished_at": "2026-10-13T09:48:38+00:00",
       "host": "m5",
       "id": "w1-52",
       "k": {
         "WIFI": 52
       },
-      "label": null,
+      "label": "infeasible",
       "parent": null,
       "plan": {
         "channels": {
@@ -639,13 +1802,86 @@
         },
         "infeasible": {}
       },
+      "reason": "WIFI: no plan up to final_delta 0.0962 (converged)",
+      "rerun": null,
+      "stages": {
+        "replan": {
+          "log": "w1-52/replan.log",
+          "rc": 1,
+          "seconds": 45.0,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T09:47:53+00:00",
+      "status": "done",
+      "structure": "w1",
+      "total": 52
+    },
+    "w1-52-wide": {
+      "delta_floor": {
+        "WIFI": 0.2906
+      },
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "w1-52-wide",
+      "k": {
+        "WIFI": 52
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.2906,
+            "free": [
+              "AL",
+              "AZ",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "UT",
+              "VA",
+              "WA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 52,
+            "lo_m": 850.0,
+            "tau_m": 940.5522454043949,
+            "usd_m": 48908.71676102853,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
       "reason": null,
       "rerun": null,
       "stages": {},
-      "started_at": "2026-10-13T09:47:53+00:00",
+      "started_at": "2026-10-13T09:53:35+00:00",
       "status": "running",
       "structure": "w1",
-      "total": 52
+      "total": 52,
+      "wide_of": "w1-52"
     },
     "w8-48-bal": {
       "final": null,
