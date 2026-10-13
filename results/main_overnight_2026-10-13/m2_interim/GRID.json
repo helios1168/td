@@ -908,6 +908,8 @@
     },
     "w8-52-bal-wide": {
       "delta_floor": {
+        "FI": 0.1303,
+        "WH": 0.2383,
         "national": 0.2445
       },
       "final": null,
@@ -922,12 +924,123 @@
       },
       "label": null,
       "parent": null,
-      "plan": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1303,
+            "free": [
+              "AR",
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1035.0,
+            "k": 24,
+            "lo_m": 765.0,
+            "tau_m": 817.9604205281544,
+            "usd_m": 19631.050092675705,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.2383,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1150.0,
+            "k": 12,
+            "lo_m": 850.0,
+            "tau_m": 896.1622389982857,
+            "usd_m": 10753.946867979428,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.1,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 1,
+            "lo_m": 850.0,
+            "tau_m": 1542.7387897595586,
+            "usd_m": 1542.7387897595586,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.2445,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "MI",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1132.0654007075898,
+            "usd_m": 16980.981010613847,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
       "reason": null,
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "w8-52-bal-wide/replan.log",
+          "rc": 1,
+          "seconds": 120.6,
+          "stop": null
+        },
+        "replan2": {
+          "log": "w8-52-bal-wide/replan2.log",
+          "rc": 1,
+          "seconds": 191.2,
+          "stop": null
+        },
+        "replan3": {
+          "log": "w8-52-bal-wide/replan3.log",
+          "rc": 0,
+          "seconds": 201.6,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T10:00:39+00:00",
+      "status": "running",
       "structure": "west8",
       "total": 52,
       "wide_of": "w8-52-bal"
@@ -1202,6 +1315,8 @@
     },
     "w8-cmp-seed-wide": {
       "delta_floor": {
+        "FI": 0.1303,
+        "WH": 0.3018,
         "national": 0.1659
       },
       "final": null,
@@ -1216,12 +1331,123 @@
       },
       "label": null,
       "parent": null,
-      "plan": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1303,
+            "free": [
+              "AR",
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1035.0,
+            "k": 24,
+            "lo_m": 765.0,
+            "tau_m": 817.9604205281544,
+            "usd_m": 19631.050092675705,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.3018,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 977.6315334526753,
+            "usd_m": 10753.946867979428,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.1,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 1,
+            "lo_m": 850.0,
+            "tau_m": 1542.7387897595586,
+            "usd_m": 1542.7387897595586,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1659,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "MI",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1437.5,
+            "k": 13,
+            "lo_m": 1000.0,
+            "tau_m": 1306.2293085087574,
+            "usd_m": 16980.981010613847,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
       "reason": null,
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "w8-cmp-seed-wide/replan.log",
+          "rc": 1,
+          "seconds": 108.4,
+          "stop": null
+        },
+        "replan2": {
+          "log": "w8-cmp-seed-wide/replan2.log",
+          "rc": 1,
+          "seconds": 178.4,
+          "stop": null
+        },
+        "replan3": {
+          "log": "w8-cmp-seed-wide/replan3.log",
+          "rc": 0,
+          "seconds": 184.7,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T10:00:39+00:00",
+      "status": "running",
       "structure": "west8",
       "total": 49,
       "wide_of": "w8-cmp-seed"

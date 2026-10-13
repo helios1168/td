@@ -1,6 +1,6 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T10:00:39+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T11:00:43+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
 
 27 points: 6 infeasible, 21 error.
 
@@ -73,9 +73,9 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - **w8-48-bal-wide** (error): no label (status queued)
 - **w8-50-bal-wide** (error): no label (status queued)
 - **w8-50-filight-wide** (error): no label (status queued)
-- **w8-52-bal-wide** (error): no label (status queued)
+- **w8-52-bal-wide** (error): no label (status running)
 - **w8-52-filight-wide** (error): no label (status queued)
-- **w8-cmp-seed-wide** (error): no label (status queued)
+- **w8-cmp-seed-wide** (error): no label (status running)
 
 ## Needs your eye
 
@@ -97,6 +97,6 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - w8-48-bal-wide: no label (status queued), counted as an error
 - w8-50-bal-wide: no label (status queued), counted as an error
 - w8-50-filight-wide: no label (status queued), counted as an error
-- w8-52-bal-wide: no label (status queued), counted as an error
+- w8-52-bal-wide: no label (status running), counted as an error
 - w8-52-filight-wide: no label (status queued), counted as an error
-- w8-cmp-seed-wide: no label (status queued), counted as an error
+- w8-cmp-seed-wide: no label (status running), counted as an error

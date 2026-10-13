@@ -889,7 +889,7 @@
         "replan": {
           "log": "nw34-48-wide/replan.log",
           "rc": 0,
-          "seconds": 116.8,
+          "seconds": 129.8,
           "stop": null
         }
       },
@@ -1061,7 +1061,7 @@
         "replan": {
           "log": "nw34-50-wide/replan.log",
           "rc": 0,
-          "seconds": 133.6,
+          "seconds": 148.1,
           "stop": null
         }
       },
@@ -1160,6 +1160,7 @@
     },
     "nw34-52-wide": {
       "delta_floor": {
+        "WIFI": 0.2407,
         "national": 0.0565
       },
       "final": null,
@@ -1175,7 +1176,7 @@
       "plan": {
         "channels": {
           "WIFI": {
-            "final_delta": 0.0441,
+            "final_delta": 0.2407,
             "free": [
               "AL",
               "CA",
@@ -1235,7 +1236,20 @@
       },
       "reason": null,
       "rerun": null,
-      "stages": {},
+      "stages": {
+        "replan": {
+          "log": "nw34-52-wide/replan.log",
+          "rc": 1,
+          "seconds": 79.3,
+          "stop": null
+        },
+        "replan2": {
+          "log": "nw34-52-wide/replan2.log",
+          "rc": 0,
+          "seconds": 133.4,
+          "stop": null
+        }
+      },
       "started_at": "2026-10-13T10:00:39+00:00",
       "status": "running",
       "structure": "nw34",
@@ -1626,7 +1640,7 @@
         "replan": {
           "log": "w1-48-wide/replan.log",
           "rc": 0,
-          "seconds": 61.6,
+          "seconds": 68.6,
           "stop": null
         }
       },
@@ -1766,7 +1780,7 @@
         "replan": {
           "log": "w1-50-wide/replan.log",
           "rc": 0,
-          "seconds": 61.9,
+          "seconds": 68.5,
           "stop": null
         }
       },
@@ -1908,7 +1922,7 @@
         "replan": {
           "log": "w1-52-wide/replan.log",
           "rc": 0,
-          "seconds": 54.2,
+          "seconds": 60.3,
           "stop": null
         }
       },
