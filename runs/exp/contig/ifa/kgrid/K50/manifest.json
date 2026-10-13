@@ -2,7 +2,7 @@
   "audit": "fail",
   "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_conus_merge.toml runs/exp/contig/ifa/newengland/merged runs/exp/contig/ifa/midatl/merged_v2 runs/exp/contig/ifa/southatl/merged runs/exp/contig/ifa/southcentral/merged_b runs/exp/contig/ifa/kgrid/regions/midwest_k13 runs/exp/contig/ifa/kgrid/regions/west_k6 --out runs/exp/contig/ifa/kgrid/K50 --extract-out runs/exp/contig/ifa/kgrid/_inst/K50.json.gz --base-extract /Users/Shared/sv-ntlee/td/instance_descaled.json.gz --window 798.74,1148.19 --gap-width",
   "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/K50.json.gz",
-  "finished_at": "2026-10-13T17:46:41+00:00",
+  "finished_at": "2026-10-13T18:36:25+00:00",
   "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/K50",
   "formulation": "contig_merge",
   "lane": "contig",
@@ -30,13 +30,13 @@
   "parent_run": null,
   "plans_file": null,
   "provenance": {
-    "commit": "fff4b199f29dae36be8ff49872e3a0be6499e127",
-    "diff_sha256": "14f6cf27b2c80f246f61a409bfb0a1330d1b7b2823d0cc8ad7314e993c5cca6e",
+    "commit": "c6b5fd067f7e0431fa6686f04609906beef70dda",
+    "diff_sha256": "60094bb33915d63858da575d8257601cf6b107eb3e161aba4a6b4169049592c0",
     "dirty": true,
     "host": "m5-studio",
     "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/K50.json.gz",
     "instance_sha256": "aa31c95b21214860315344127afe718634f0e507389e2b1eb619e0ffd9d08f1e",
-    "queued_at": "2026-10-13T17:46:36+00:00"
+    "queued_at": "2026-10-13T18:36:20+00:00"
   },
   "run_id": "K50",
   "scenario": {
@@ -99,7 +99,7 @@
       ]
     },
     {
-      "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+      "commit": "c6b5fd067f7e0431fa6686f04609906beef70dda",
       "run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/midwest_k13",
       "state": "CO,IA,IL,IN,KS,MI,MN,MO,ND,NE,OH,SD,WI",
       "states": [
@@ -136,7 +136,7 @@
       ]
     }
   ],
-  "started_at": "2026-10-13T17:46:36+00:00",
+  "started_at": "2026-10-13T18:36:20+00:00",
   "status": "done",
   "stop_reason": "merged"
 }

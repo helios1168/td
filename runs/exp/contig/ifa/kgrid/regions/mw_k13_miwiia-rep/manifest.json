@@ -1,0 +1,61 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/repair.py runs/exp/contig/ifa/kgrid/regions/mw_k13_miwiia --out runs/exp/contig/ifa/kgrid/regions/mw_k13_miwiia-rep --extract runs/exp/contig/ifa/kgrid/_inst/miwiia.json.gz --states MI,WI,IA --window 798.74,1148.19 --time-limit 240 --jobs 1",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/miwiia.json.gz",
+  "finished_at": "2026-10-13T16:14:36+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/mw_k13_miwiia-rep",
+  "formulation": "contig_repair",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "budget": null,
+    "channels": null,
+    "diag_final_delta": null,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/miwiia.json.gz",
+    "flow": false,
+    "h0": 3,
+    "jobs": 1,
+    "keep_support": false,
+    "label": "",
+    "maps": false,
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plan": {
+      "IFA": {
+        "delta": 0.035,
+        "final_delta": 0.035,
+        "forbid_pairs": [],
+        "free": [
+          "IA",
+          "MI",
+          "WI"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "states": "MI,WI,IA",
+    "time_limit": 240.0,
+    "window": "798.74,1148.19"
+  },
+  "parent_run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/mw_k13_miwiia",
+  "plans_file": null,
+  "provenance": {
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/miwiia.json.gz",
+    "instance_sha256": "a8fd1cb8d2b0219ea4ce791a12992f49a2369a64555cc25b4b766f6455ef28d1",
+    "queued_at": "2026-10-13T15:58:28+00:00"
+  },
+  "run_id": "mw_k13_miwiia-rep",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_miwiia_k4.toml",
+    "sha256": "42c00af2f4e358ed738a2e8eb92e6395d86b702a3f6241867066770473ef8c14"
+  },
+  "started_at": "2026-10-13T15:58:28+00:00",
+  "status": "done",
+  "stop_reason": "repaired"
+}

@@ -7,28 +7,28 @@
   "gap_fill": "nearest",
   "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
   "images": {
-    "summary.png": "002c258ceeb4a2dc7b12f732eab63842982d9bba10dafe7027c75aac56accbb6",
-    "summary.svg": "a340546678b03dab2c11798e1c9b698f8175a8a2f414ff5e3edc383a408b24f4",
-    "zip_IFA.png": "c34171e218eb5206de2bab3d180e241cbf22727c5c722fa6f7cb77076aed3de6",
-    "zip_pages.pdf": "c55bdc82af4ab4bb2f403303519403713ccccecfc56848762d2b410a298d6b8e"
+    "summary.png": "ae75a2233b4f02c93c8d3859004200dcdde1fa6c19edacc8514cf7b87b3fd005",
+    "summary.svg": "3268c145db821c4fb41459dbd739ab5d129ad9170744e95c684571f6e7c04502",
+    "zip_IFA.png": "2d896773bfe8ec2e92517228e5de103a728008b4bd6099098efb4757b670d3a9",
+    "zip_pages.pdf": "67001c3f90c29fa8f47ccb1121ed75680ce4f14c938f4e643277b5cc9730be45"
   },
   "inputs": {
-    "districts.csv": "7ca63cf8f787cf7d69059e1c53651f0e6932e352f0f70dd1f6ada65d9616f547",
-    "ledger.csv": "8af8cc910decd556eda97f1e1e1535d7f57d13194ffbf4f0784f6447841d4206",
-    "manifest.json": "a31b2f924a014caea07cff2cfceb4a24387644c9084c44c63aa79c4bdc6212a7",
-    "run.json": "fb84c4e1b22f1792161df4f133b91b386a0996f66fa077ef256cbe2439e521c1"
+    "districts.csv": "496ac616d00bbaf50220292f7de09f06a68aca7b9f6c3d6e43681e4e6c6542ad",
+    "ledger.csv": "4f95adf401d89d85578aa85bb450a01fcfdedb407b07c1a51a3f717cb74293e8",
+    "manifest.json": "e27c8accd4bb26fa1e085041f23b234c8ea3287908ac634d88d1fc06aa651ca0",
+    "run.json": "73895e247b8b92383ca3d09bbf548fdc3ef70ccc30c2c527dff92689d00d16ba"
   },
   "label": "K48: IFA CONUS, 48 districts (New England 4, Middle Atlantic 11, South Atlantic 8, South Central 6, Midwest 13, West 6); MD whole (F1); Manhattan neck open",
   "m1": {
     "diagnostic": null,
     "status": "fail",
-    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 13 mass necks listed beside M1"
   },
-  "rendered_at": "2026-10-13T17:48:28+00:00",
+  "rendered_at": "2026-10-13T18:38:04+00:00",
   "renderer": {
     "code_sha256": "9c87d1e7ef30fa6c3343df1822a977ec05e150b7f1685c9778e7be70275f03b4",
-    "commit": "fff4b199f29dae36be8ff49872e3a0be6499e127",
-    "diff_sha256": "14f6cf27b2c80f246f61a409bfb0a1330d1b7b2823d0cc8ad7314e993c5cca6e",
+    "commit": "c6b5fd067f7e0431fa6686f04609906beef70dda",
+    "diff_sha256": "43a2449ee60b3d2cdbfc56aadaab1dfef57ca1348928d58799a602467cfa825c",
     "dirty": true
   },
   "title": "K48: IFA CONUS, 48 districts (New England 4, Middle Atlantic 11, South Atlantic 8, South Central 6, Midwest 13, West 6); MD whole (F1); Manhattan neck open, FAILS M1",

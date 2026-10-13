@@ -1,7 +1,6 @@
-runs/exp/contig/ifa/kgrid/K50: M1 fail: 0 districts in pieces, 0 detached pieces (largest 0 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 17 mass necks listed beside M1; largest detached piece none
+runs/exp/contig/ifa/kgrid/K50: M1 fail: 0 districts in pieces, 0 detached pieces (largest 0 τ), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 16 mass necks listed beside M1; largest detached piece none
   IFA/IFA_09: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
   IFA/IFA_30: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.9% of its land area and 6.9% of its mass; cut 79718-79734 6.14 km
-  IFA/IFA_34: neck 0.81 km wide cuts off 14 ZIPs (47584...), 5.0% of its land area and 0.3% of its mass; cut 47542-47585 0.81 km
   IFA/IFA_46: neck 5.48 km wide cuts off 203 ZIPs (82930...), 9.9% of its land area and 30.4% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km
   IFA/IFA_03: mass neck (diagnostic, not M1) 4.87 km wide cuts off 1 ZIPs (02110...), 0.0% of its land area and 6.2% of its mass; cut 02108-02110 0.21 km, 02109-02110 2.38 km, 02110-02111 0.92 km, 02110-02210 1.36 km
   IFA/IFA_09: mass neck (diagnostic, not M1) 0.69 km wide cuts off 1 ZIPs (10170...), 0.0% of its land area and 8.3% of its mass; cut 10017-10170 0.51 km, 10168-10170 0.10 km, 10170-10174 0.09 km
@@ -12,9 +11,8 @@ runs/exp/contig/ifa/kgrid/K50: M1 fail: 0 districts in pieces, 0 detached pieces
   IFA/IFA_29: mass neck (diagnostic, not M1) 3.64 km wide cuts off 1 ZIPs (77046...), 0.0% of its land area and 5.5% of its mass; cut 77027-77046 2.91 km, 77046-77098 0.73 km
   IFA/IFA_30: mass neck (diagnostic, not M1) 3.33 km wide cuts off 32 ZIPs (79821...), 1.4% of its land area and 6.9% of its mass; cut 79839-79853 3.33 km
   IFA/IFA_31: mass neck (diagnostic, not M1) 4.84 km wide cuts off 2 ZIPs (76102...), 0.0% of its land area and 5.8% of its mass; cut 76102-76103 0.89 km, 76102-76111 3.95 km
-  IFA/IFA_32: mass neck (diagnostic, not M1) 9.32 km wide cuts off 1 ZIPs (60515...), 0.0% of its land area and 5.9% of its mass; cut 60137-60515 2.76 km, 60189-60515 0.34 km, 60515-60532 6.22 km
-  IFA/IFA_33: mass neck (diagnostic, not M1) 1.22 km wide cuts off 4 ZIPs (60428...), 0.1% of its land area and 10.6% of its mass; cut 60422-60429 1.22 km
-  IFA/IFA_34: mass neck (diagnostic, not M1) 4.74 km wide cuts off 2 ZIPs (48033...), 0.1% of its land area and 35.3% of its mass; cut 48033-48219 2.37 km, 48033-48240 2.37 km
+  IFA/IFA_32: mass neck (diagnostic, not M1) 5.10 km wide cuts off 1 ZIPs (60606...), 0.0% of its land area and 6.3% of its mass; cut 60601-60606 0.28 km, 60602-60606 0.28 km, 60603-60606 0.29 km, 60604-60606 0.28 km, 60606-60607 1.29 km, 60606-60654 1.00 km, ...
+  IFA/IFA_33: mass neck (diagnostic, not M1) 2.40 km wide cuts off 10 ZIPs (60404...), 0.2% of its land area and 16.3% of its mass; cut 60404-60410 1.02 km, 60404-60436 1.38 km
   IFA/IFA_41: mass neck (diagnostic, not M1) 3.20 km wide cuts off 1 ZIPs (55402...), 0.0% of its land area and 5.6% of its mass; cut 55401-55402 1.03 km, 55402-55403 1.30 km, 55402-55404 0.37 km, 55402-55415 0.50 km
   IFA/IFA_45: mass neck (diagnostic, not M1) 8.07 km wide cuts off 2 ZIPs (85028...), 0.1% of its land area and 5.2% of its mass; cut 85022-85028 2.10 km, 85028-85032 5.97 km
   IFA/IFA_46: mass neck (diagnostic, not M1) 4.72 km wide cuts off 4 ZIPs (85012...), 0.0% of its land area and 8.6% of its mass; cut 85018-85251 4.72 km

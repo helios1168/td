@@ -1,0 +1,55 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces,source_run,source_district,window
+IFA,IFA_01,"IFA Waterbury-Shelton, CT",CT#1,CT,877.482393429711,804.9370167259999,0,newengland/merged,IFA_01,in
+IFA,IFA_02,"IFA Hartford-West Hartford-East Hartford, CT",CT+RI#1,CT+RI,798.7017391962888,871.2471159000006,0,newengland/merged,IFA_02,in
+IFA,IFA_03,"IFA Boston-Cambridge-Newton, MA-NH / Providence-Warwick, RI-MA",MA#1,MA,1038.2613811703634,1050.5435233658702,0,newengland/merged,IFA_03,in
+IFA,IFA_04,"IFA Boston-Cambridge-Newton, MA-NH / Worcester, MA",MA+ME+NH+VT#1,MA+ME+NH+VT,1147.5520528725067,1135.2699106770003,0,newengland/merged,IFA_04,in
+IFA,IFA_05,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",NJ#1,NJ,945.7739987413333,1046.2540255510005,0,merged_v2,IFA_01,in
+IFA,IFA_06,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NJ#2,NJ,945.7739987413333,921.2780413030001,0,merged_v2,IFA_02,in
+IFA,IFA_07,"IFA New York-Newark-Jersey City, NY-NJ (3)",NJ#3,NJ,945.7739987413333,869.78992937,0,merged_v2,IFA_03,in
+IFA,IFA_08,"IFA New York-Newark-Jersey City, NY-NJ (2)",NY#1,NY,873.7934651318001,922.9986547499998,0,merged_v2,IFA_04,in
+IFA,IFA_09,"IFA New York-Newark-Jersey City, NY-NJ (4)",NY#2,NY,873.7934651318001,868.781115495,0,merged_v2,IFA_05,in
+IFA,IFA_10,"IFA New York-Newark-Jersey City, NY-NJ (1)",NY#3,NY,873.7934651318001,925.7032817300001,0,merged_v2,IFA_06,in
+IFA,IFA_11,"IFA Buffalo-Cheektowaga, NY",NY#4,NY,873.7934651318001,826.7261733739999,0,merged_v2,IFA_07,in
+IFA,IFA_12,"IFA Albany-Schenectady-Troy, NY",NY#5,NY,873.7934651318001,824.7581003100006,0,merged_v2,IFA_08,in
+IFA,IFA_13,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",PA#1,PA,822.6194376317,832.4047054578001,0,merged_v2,IFA_09,in
+IFA,IFA_14,"IFA Pittsburgh, PA",PA#2,PA,822.6194376317,822.827489455,0,merged_v2,IFA_10,in
+IFA,IFA_15,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / Harrisburg-Carlisle, PA",PA#3,PA,822.6194376317,822.6191343000002,0,merged_v2,IFA_11,in
+IFA,IFA_16,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / Allentown-Bethlehem-Easton, PA-NJ",PA#4,PA,822.6194376317,812.6264213140001,0,merged_v2,IFA_12,in
+IFA,IFA_17,"IFA Baltimore-Columbia-Towson, MD",DE+MD#1,DE+MD,1414.942609146,1414.9426091459995,0,southatl_k10,IFA_01,over
+IFA,IFA_18,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+VA+WV#1,DC+VA+WV,799.239299921017,816.3029614159998,0,southatl_k10,IFA_02,in
+IFA,IFA_19,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",FL#1,FL,828.1517862766749,823.8939865449997,0,southatl_k10,IFA_03,in
+IFA,IFA_20,"IFA Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,828.1517862766749,813.1673780600001,0,southatl_k10,IFA_04,in
+IFA,IFA_21,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / North Port-Bradenton-Sarasota, FL",FL#3,FL,828.1517862766749,843.4526331799998,0,southatl_k10,IFA_05,in
+IFA,IFA_22,"IFA Orlando-Kissimmee-Sanford, FL",FL#4,FL,828.1517862766749,813.3344705809998,0,southatl_k10,IFA_06,in
+IFA,IFA_23,"IFA Charleston-North Charleston, SC",FL+GA+SC#1,FL+GA+SC,838.8372760657774,805.6525928450003,0,southatl_k10,IFA_07,in
+IFA,IFA_24,"IFA Atlanta-Sandy Springs-Roswell, GA",GA#1,GA,843.5958489402717,835.9221568100006,0,southatl_k10,IFA_08,in
+IFA,IFA_25,"IFA Raleigh-Cary, NC",NC#1,NC,799.2392999210169,818.3275228588001,0,southatl_k10,IFA_09,in
+IFA,IFA_26,"IFA Charlotte-Concord-Gastonia, NC-SC",NC+SC+VA#1,NC+SC+VA,799.239299921017,822.7044675799999,0,southatl_k10,IFA_10,in
+IFA,IFA_27,"IFA New Orleans-Metairie, LA",AR+LA+OK#1,AR+LA+OK,1022.06694459679,1022.0669445967903,0,merged_b,IFA_01,in
+IFA,IFA_28,"IFA Birmingham, AL",AL+MS+TN#1,AL+MS+TN,993.77316178811,881.7198028279998,0,merged_b,IFA_02,in
+IFA,IFA_29,"IFA Louisville/Jefferson County, KY-IN",KY+TN#1,KY+TN,881.2705396988902,993.323898659,0,merged_b,IFA_03,in
+IFA,IFA_30,"IFA Houston-Pasadena-The Woodlands, TX",TX#1,TX,935.9832606513334,935.9782595900004,0,merged_b,IFA_04,in
+IFA,IFA_31,"IFA San Antonio-New Braunfels, TX",TX#2,TX,935.9832606513334,935.9770900800002,0,merged_b,IFA_05,in
+IFA,IFA_32,"IFA Dallas-Fort Worth-Arlington, TX",TX#3,TX,935.9832606513334,935.9944322840001,0,merged_b,IFA_06,in
+IFA,IFA_33,"IFA Chicago-Naperville-Elgin, IL-IN",IL#1,IL,851.7749179049999,885.8846430900003,0,ifa_mw_merge,IFA_01,in
+IFA,IFA_34,"IFA Chicago-Naperville-Elgin, IL-IN / Peoria, IL",IL#2,IL,851.7749179049999,817.6651927199994,0,ifa_mw_merge,IFA_02,in
+IFA,IFA_35,"IFA Indianapolis-Carmel-Greenwood, IN",IN#1,IN,1037.7768028951,1037.776802895101,0,ifa_mw_merge,IFA_03,in
+IFA,IFA_36,"IFA Denver-Aurora-Centennial, CO",CO+KS#1,CO+KS,1148.1139377069373,1033.4754454300003,0,ifa_mw_merge,IFA_04,in
+IFA,IFA_37,"IFA St. Louis, MO-IL",KS+MO#1,KS+MO,945.0746451680625,1059.7131374450003,0,ifa_mw_merge,IFA_05,in
+IFA,IFA_38,"IFA Detroit-Warren-Dearborn, MI / Flint, MI",MI#1,MI,876.4551965086666,929.60708681,0,ifa_mw_merge,IFA_06,in
+IFA,IFA_39,"IFA Grand Rapids-Wyoming-Kentwood, MI",MI#2,MI,876.4551965086666,884.3375774259999,0,ifa_mw_merge,IFA_07,in
+IFA,IFA_40,"IFA Detroit-Warren-Dearborn, MI / Ann Arbor, MI",MI#3,MI,876.4551965086666,815.4209252900001,0,ifa_mw_merge,IFA_08,in
+IFA,IFA_41,"IFA Minneapolis-St. Paul-Bloomington, MN-WI",MN#1,MN,824.425501858662,824.5885777800002,0,ifa_mw_merge,IFA_09,in
+IFA,IFA_42,"IFA Omaha, NE-IA",MN+ND+NE+SD#1,MN+ND+NE+SD,1147.884311200338,1147.7212352790002,0,ifa_mw_merge,IFA_10,in
+IFA,IFA_43,"IFA Cleveland, OH",OH#1,OH,1092.05621864335,1054.6830342610003,0,ifa_mw_merge,IFA_11,in
+IFA,IFA_44,"IFA Columbus, OH",OH#2,OH,1092.05621864335,1129.4294030257,0,ifa_mw_merge,IFA_12,in
+IFA,IFA_45,"IFA Des Moines-West Des Moines, IA",IA+WI#1,IA+WI,798.854931009252,944.2101819500002,0,ifa_mw_merge,IFA_13,in
+IFA,IFA_46,"IFA Milwaukee-Waukesha, WI",WI#1,WI,1008.5091662967479,863.1539153560005,0,ifa_mw_merge,IFA_14,in
+IFA,IFA_47,"IFA Phoenix-Mesa-Chandler, AZ",AZ#1,AZ,841.3831259011499,852.0109598669994,0,west_k8,IFA_01,in
+IFA,IFA_48,"IFA Salt Lake City-Murray, UT",AZ+MT+NM+NV+UT+WY#1,AZ+MT+NM+NV+UT+WY,799.430482213429,800.428620296,0,west_k8,IFA_02,in
+IFA,IFA_49,"IFA San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,862.5300644241157,843.9646280100004,0,west_k8,IFA_03,in
+IFA,IFA_50,"IFA San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,862.5300644241157,851.8837492180002,0,west_k8,IFA_04,in
+IFA,IFA_51,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA (2)",CA#3,CA,862.5300644241157,820.140946757,0,west_k8,IFA_05,in
+IFA,IFA_52,"IFA San Francisco-Oakland-Fremont, CA",CA#4,CA,862.5300644241157,843.8481834208997,0,west_k8,IFA_06,in
+IFA,IFA_53,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA (1)",CA+NV+OR#1,CA+NV+OR,799.4304822134291,846.2800792010006,0,west_k8,IFA_07,in
+IFA,IFA_54,"IFA Seattle-Tacoma-Bellevue, WA",ID+OR+WA#1,ID+OR+WA,799.430482213429,831.237663468,0,west_k8,IFA_08,in

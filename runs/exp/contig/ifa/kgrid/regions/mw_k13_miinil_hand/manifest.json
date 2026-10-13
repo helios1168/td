@@ -1,0 +1,61 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/repair.py runs/exp/contig/ifa/kgrid/regions/mw_k13_miinil_hand-src --out runs/exp/contig/ifa/kgrid/regions/mw_k13_miinil_hand --extract runs/exp/contig/ifa/kgrid/_inst/miinil.json.gz --states MI,IN,IL --window 798.74,1148.19 --time-limit 240 --jobs 1 --label 14 SW Indiana ZCTAs moved by hand off a 0.81 km neck",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/miinil.json.gz",
+  "finished_at": "2026-10-13T18:10:26+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/mw_k13_miinil_hand",
+  "formulation": "contig_repair",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "budget": null,
+    "channels": null,
+    "diag_final_delta": null,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/miinil.json.gz",
+    "flow": false,
+    "h0": 3,
+    "jobs": 1,
+    "keep_support": false,
+    "label": "14 SW Indiana ZCTAs moved by hand off a 0.81 km neck",
+    "maps": false,
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plan": {
+      "IFA": {
+        "delta": 0.068,
+        "final_delta": 0.068,
+        "forbid_pairs": [],
+        "free": [
+          "IL",
+          "IN",
+          "MI"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "states": "MI,IN,IL",
+    "time_limit": 240.0,
+    "window": "798.74,1148.19"
+  },
+  "parent_run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/mw_k13_miinil_hand-src",
+  "plans_file": null,
+  "provenance": {
+    "commit": "fff4b199f29dae36be8ff49872e3a0be6499e127",
+    "diff_sha256": "14f6cf27b2c80f246f61a409bfb0a1330d1b7b2823d0cc8ad7314e993c5cca6e",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/miinil.json.gz",
+    "instance_sha256": "fb405815029b1af2acde1eeafba75e1b95c1770b81d5010603906e59f506586b",
+    "queued_at": "2026-10-13T17:49:17+00:00"
+  },
+  "run_id": "mw_k13_miinil_hand",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_miinil_k5.toml",
+    "sha256": "b15f155a8bbb4f0d6acfdf5854ae647e59e4e4eeb2881ab28ab498569acc760a"
+  },
+  "started_at": "2026-10-13T17:49:17+00:00",
+  "status": "done",
+  "stop_reason": "repaired"
+}

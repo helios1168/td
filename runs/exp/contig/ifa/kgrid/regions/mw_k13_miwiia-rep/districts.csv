@@ -1,0 +1,5 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA Grand Rapids-Wyoming-Kentwood, MI",IA+MI+WI#1,IA+MI+WI,1148.0038064677801,1100.5160770559999,1
+IFA,IFA_02,"IFA Detroit-Warren-Dearborn, MI / Ann Arbor, MI",MI#1,MI,1085.22262574601,1097.4490802900002,0
+IFA,IFA_03,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",MI#2,MI,1085.22262574601,1103.4775824100004,0
+IFA,IFA_04,"IFA Milwaukee-Waukesha, WI",WI#1,WI,1118.2806288722,1135.286947076,0

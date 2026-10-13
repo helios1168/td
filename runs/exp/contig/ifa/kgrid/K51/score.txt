@@ -2,8 +2,8 @@
 dir: runs/exp/contig/ifa/kgrid/K51
 eligible: no
   - audit: M1 polygon contiguity fails
-  - M1: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1
-  - audit at ±15%: 51 districts, 10 outside the final tolerance
+  - M1: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1
+  - audit at ±15%: 51 districts, 9 outside the final tolerance
 K: IFA 51 = 51
 IFA: K 51, $1,218M (-2.5% of target), worst 60.0%, splits 17 CA CT FL IL IN KS MA MI MN NC NJ NY OH PA TN TX WI, thin 0, small 2, crowded 0, pieces 0, extent 1,758 km, max states 5
     small IFA_43 KS 0.198 tau
@@ -41,25 +41,11 @@ IFA: K 51, $1,218M (-2.5% of target), worst 60.0%, splits 17 CA CT FL IL IN KS M
     multipart piece IFA_30: part of 76544, 48.641 km2 (visual defect, not M1)
     multipart piece IFA_30: part of 76511, 1.200 km2 (visual defect, not M1)
     multipart piece IFA_32: part of 60431, 1.157 km2 (visual defect, not M1)
-    multipart piece IFA_32: part of 60478, 0.263 km2 (visual defect, not M1)
     multipart piece IFA_32: part of 60435, 0.258 km2 (visual defect, not M1)
-    multipart piece IFA_32: part of 60101, 0.040 km2 (visual defect, not M1)
-    multipart piece IFA_32: part of 60081, 0.030 km2 (visual defect, not M1)
-    multipart piece IFA_32: part of 60561, 0.022 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60020, 2.928 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 46774, 0.707 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60073, 0.469 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 46229, 0.270 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60004, 0.191 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60005, 0.167 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60516, 0.076 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60020, 0.075 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60181, 0.038 km2 (visual defect, not M1)
-    multipart piece IFA_33: part of 60521, 0.038 km2 (visual defect, not M1)
-    multipart piece IFA_34: part of 46143, 0.041 km2 (visual defect, not M1)
-    multipart piece IFA_35: part of 48075, 0.025 km2 (visual defect, not M1)
+    multipart piece IFA_32: part of 60563, 0.119 km2 (visual defect, not M1)
     multipart piece IFA_36: part of 49630, 58.335 km2 (visual defect, not M1)
     multipart piece IFA_36: part of 49654, 21.481 km2 (visual defect, not M1)
+    multipart piece IFA_36: part of 48881, 0.028 km2 (visual defect, not M1)
     multipart piece IFA_37: part of 43456, 0.188 km2 (visual defect, not M1)
     multipart piece IFA_39: part of 54850, 65.030 km2 (visual defect, not M1)
     multipart piece IFA_39: part of 54850, 40.033 km2 (visual defect, not M1)
@@ -111,11 +97,10 @@ IFA: K 51, $1,218M (-2.5% of target), worst 60.0%, splits 17 CA CT FL IL IN KS M
 channel-state splits: 17: IFA:CA IFA:CT IFA:FL IFA:IL IFA:IN IFA:KS IFA:MA IFA:MI IFA:MN IFA:NC IFA:NJ IFA:NY IFA:OH IFA:PA IFA:TN IFA:TX IFA:WI
 distinct split states: 17: CA CT FL IL IN KS MA MI MN NC NJ NY OH PA TN TX WI
 defects: 2 = thin 0 + small 2 + crowded 0 + pieces 0 (0 pieces weighing 1 + mass/tau each, on the ledger; M1's piece count 0)
-multipart pieces: 100 (listed, not in the defects sum)
-M1: fail: 0 districts in pieces, 0 detached pieces (largest 0 τ), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1 (strict, on the ledger)
+multipart pieces: 86 (listed, not in the defects sum)
+M1: fail: 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1 (strict, on the ledger)
     IFA/IFA_09: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
     IFA/IFA_30: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.9% of its land area and 6.9% of its mass; cut 79718-79734 6.14 km
-    IFA/IFA_34: neck 0.81 km wide cuts off 14 ZIPs (47584...), 5.0% of its land area and 0.3% of its mass; cut 47542-47585 0.81 km
     IFA/IFA_03: mass neck (diagnostic, not M1) 4.87 km wide cuts off 1 ZIPs (02110...), 0.0% of its land area and 6.2% of its mass; cut 02108-02110 0.21 km, 02109-02110 2.38 km, 02110-02111 0.92 km, 02110-02210 1.36 km
     IFA/IFA_09: mass neck (diagnostic, not M1) 0.69 km wide cuts off 1 ZIPs (10170...), 0.0% of its land area and 8.3% of its mass; cut 10017-10170 0.51 km, 10168-10170 0.10 km, 10170-10174 0.09 km
     IFA/IFA_13: mass neck (diagnostic, not M1) 7.17 km wide cuts off 1 ZIPs (19103...), 0.1% of its land area and 5.4% of its mass; cut 19102-19103 2.23 km, 19103-19104 1.26 km, 19103-19130 1.54 km, 19103-19146 2.14 km
@@ -125,14 +110,13 @@ M1: fail: 0 districts in pieces, 0 detached pieces (largest 0 τ), 3 necks, 0 ch
     IFA/IFA_29: mass neck (diagnostic, not M1) 3.64 km wide cuts off 1 ZIPs (77046...), 0.0% of its land area and 5.5% of its mass; cut 77027-77046 2.91 km, 77046-77098 0.73 km
     IFA/IFA_30: mass neck (diagnostic, not M1) 3.33 km wide cuts off 32 ZIPs (79821...), 1.4% of its land area and 6.9% of its mass; cut 79839-79853 3.33 km
     IFA/IFA_31: mass neck (diagnostic, not M1) 4.84 km wide cuts off 2 ZIPs (76102...), 0.0% of its land area and 5.8% of its mass; cut 76102-76103 0.89 km, 76102-76111 3.95 km
-    IFA/IFA_32: mass neck (diagnostic, not M1) 9.32 km wide cuts off 1 ZIPs (60515...), 0.0% of its land area and 5.9% of its mass; cut 60137-60515 2.76 km, 60189-60515 0.34 km, 60515-60532 6.22 km
-    IFA/IFA_33: mass neck (diagnostic, not M1) 1.22 km wide cuts off 4 ZIPs (60428...), 0.1% of its land area and 10.6% of its mass; cut 60422-60429 1.22 km
-    IFA/IFA_34: mass neck (diagnostic, not M1) 4.74 km wide cuts off 2 ZIPs (48033...), 0.1% of its land area and 35.3% of its mass; cut 48033-48219 2.37 km, 48033-48240 2.37 km
+    IFA/IFA_32: mass neck (diagnostic, not M1) 5.10 km wide cuts off 1 ZIPs (60606...), 0.0% of its land area and 6.3% of its mass; cut 60601-60606 0.28 km, 60602-60606 0.28 km, 60603-60606 0.29 km, 60604-60606 0.28 km, 60606-60607 1.29 km, 60606-60654 1.00 km, ...
+    IFA/IFA_33: mass neck (diagnostic, not M1) 2.40 km wide cuts off 10 ZIPs (60404...), 0.2% of its land area and 16.3% of its mass; cut 60404-60410 1.02 km, 60404-60436 1.38 km
     IFA/IFA_41: mass neck (diagnostic, not M1) 3.20 km wide cuts off 1 ZIPs (55402...), 0.0% of its land area and 5.6% of its mass; cut 55401-55402 1.03 km, 55402-55403 1.30 km, 55402-55404 0.37 km, 55402-55415 0.50 km
     IFA/IFA_49: mass neck (diagnostic, not M1) 7.23 km wide cuts off 1 ZIPs (91101...), 0.0% of its land area and 8.3% of its mass; cut 91101-91105 1.74 km, 91101-91106 5.49 km
     IFA/IFA_51: mass neck (diagnostic, not M1) 9.72 km wide cuts off 4 ZIPs (98104...), 0.0% of its land area and 5.2% of its mass; cut 98101-98104 2.48 km, 98101-98154 0.10 km, 98104-98122 1.99 km, 98104-98134 4.59 km, 98104-98144 0.56 km
 shape: extent 1,757.9 km, 5 states per district
 balance: worst 59.97%, mean 10.49%
 review: none (rule: among eligible runs scored together, one split more than the fewest and fewer defects than every run at the fewest)
-verdict: K51: INELIGIBLE (audit: M1 polygon contiguity fails; M1: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1; audit at ±15%: 51 districts, 10 outside the final tolerance) | 17 splits (17 states) | 2 defects (thin 0, small 2, crowded 0, pieces 0 weighing 0, largest 0 τ; multipart pieces 100, listed only) | extent 1,758 km, 5 states | worst 60.0%, mean 10.5%
+verdict: K51: INELIGIBLE (audit: M1 polygon contiguity fails; M1: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1; audit at ±15%: 51 districts, 9 outside the final tolerance) | 17 splits (17 states) | 2 defects (thin 0, small 2, crowded 0, pieces 0 weighing 0, largest 0 τ; multipart pieces 86, listed only) | extent 1,758 km, 5 states | worst 60.0%, mean 10.5%
 

@@ -1,0 +1,6 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA Chicago-Naperville-Elgin, IL-IN / Peoria, IL",IL#1,IL,1147.1798599501633,1120.15197238,0
+IFA,IFA_02,"IFA Chicago-Naperville-Elgin, IL-IN / Indianapolis-Carmel-Greenwood, IN",IL+IN#1,IL+IN,1001.0970313422768,1113.2189950851,0
+IFA,IFA_03,"IFA Detroit-Warren-Dearborn, MI / Indianapolis-Carmel-Greenwood, IN",IN+MI#1,IN+MI,1001.0970313422773,1032.3835127300001,0
+IFA,IFA_04,"IFA Detroit-Warren-Dearborn, MI / Ann Arbor, MI",MI#1,MI,1110.6591527981911,1077.6497868000004,0
+IFA,IFA_05,"IFA Grand Rapids-Wyoming-Kentwood, MI",MI#2,MI,1110.6591527981911,1027.287961236,0

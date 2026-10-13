@@ -280,46 +280,46 @@
     "IFA_30": {
       "m1": "pass",
       "m1_default": "pass",
-      "m_rel": 1119.8554913799999,
+      "m_rel": 1088.6847620800002,
       "necks": 0,
       "pieces": 0,
-      "usd_m": 1402.0,
+      "usd_m": 1363.0,
       "window": "in"
     },
     "IFA_31": {
       "m1": "pass",
       "m1_default": "pass",
-      "m_rel": 1137.8240426251,
+      "m_rel": 1117.0242930699992,
       "necks": 0,
       "pieces": 0,
-      "usd_m": 1424.5,
+      "usd_m": 1398.5,
       "window": "in"
     },
     "IFA_32": {
-      "m1": "fail",
-      "m1_default": "fail",
-      "m_rel": 1008.0749461900001,
-      "necks": 1,
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 1077.4157410951,
+      "necks": 0,
       "pieces": 0,
-      "usd_m": 1262.1,
+      "usd_m": 1348.9,
       "window": "in"
     },
     "IFA_33": {
       "m1": "pass",
       "m1_default": "pass",
-      "m_rel": 1019.3318408000002,
+      "m_rel": 1077.9168907999995,
       "necks": 0,
       "pieces": 0,
-      "usd_m": 1276.2,
+      "usd_m": 1349.5,
       "window": "in"
     },
     "IFA_34": {
       "m1": "pass",
       "m1_default": "pass",
-      "m_rel": 1085.6059072360006,
+      "m_rel": 1009.650541186,
       "necks": 0,
       "pieces": 0,
-      "usd_m": 1359.1,
+      "usd_m": 1264.1,
       "window": "in"
     },
     "IFA_35": {
@@ -469,35 +469,31 @@
   "m1": {
     "coverage": "footprint coverage (D3)",
     "status": "fail",
-    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1"
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1"
   },
   "m1_default": {
     "failing": [
       "IFA/IFA_12",
       "IFA/IFA_28",
-      "IFA/IFA_32",
       "IFA/IFA_44"
     ],
     "necks": {
       "IFA/IFA_12": 1,
       "IFA/IFA_28": 1,
-      "IFA/IFA_32": 1,
       "IFA/IFA_44": 1
     },
     "status": "fail",
-    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 13 mass necks listed beside M1"
   },
   "m1_gap_width": {
     "failing": [
-      "IFA/IFA_12",
-      "IFA/IFA_32"
+      "IFA/IFA_12"
     ],
     "necks": {
-      "IFA/IFA_12": 1,
-      "IFA/IFA_32": 1
+      "IFA/IFA_12": 1
     },
     "status": "fail",
-    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1"
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1"
   },
   "maps": "not drawn (tools/maps/render.py <dir> draws them)",
   "merged_from": {
@@ -512,7 +508,7 @@
       "run": "runs/exp/contig/ifa/kgrid/regions/west_k6"
     },
     "CO,IA,IL,IN,KS,MI,MN,MO,ND,NE,OH,SD,WI": {
-      "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+      "commit": "c6b5fd067f7e0431fa6686f04609906beef70dda",
       "m1": "fail",
       "run": "runs/exp/contig/ifa/kgrid/regions/midwest_k13"
     },

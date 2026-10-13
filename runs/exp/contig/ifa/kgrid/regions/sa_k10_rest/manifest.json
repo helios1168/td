@@ -1,0 +1,58 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_kg_sarest_k9.toml --out runs/exp/contig/ifa/kgrid/regions/sa_k10_rest --extract runs/exp/contig/ifa/kgrid/_inst/sarest.json.gz --states VA,DC,NC,SC,GA,FL --delta 0.011 --jobs 1 --time-limit 1800",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/sarest.json.gz",
+  "finished_at": "2026-10-13T15:53:34+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k10_rest",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.011,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/sarest.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.011,
+        "final_delta": 0.011,
+        "forbid_pairs": [],
+        "free": [
+          "FL",
+          "GA",
+          "NC",
+          "SC",
+          "VA"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "VA,DC,NC,SC,GA,FL",
+    "time_limit": 1800.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "2946e41ca6ccc295a056dbe9a2058001c238312f",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/sarest.json.gz",
+    "instance_sha256": "7f7c7f9c96303f1f929e16962ee606edd5c0ba6f6a71fa946964ea22b22660b0",
+    "queued_at": "2026-10-13T15:23:31+00:00"
+  },
+  "run_id": "sa_k10_rest",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_sarest_k9.toml",
+    "sha256": "4dec705a7103d4a8b9bc755c6468c28ac5460591482a3d9e03fc6f046f895650"
+  },
+  "started_at": "2026-10-13T15:23:31+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

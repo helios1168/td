@@ -1,0 +1,95 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 2348.9897,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.068,
+      "groups": [
+        {
+          "border_km": 2348.9897,
+          "bound": 6011.519532269472,
+          "columns": 16029,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.068,
+          "districts": [
+            "IL#1",
+            "IL+IN#1",
+            "IN+MI#1",
+            "MI#1",
+            "MI#2"
+          ],
+          "free_zctas": 3195,
+          "gap": 0.14424323646306583,
+          "iterations": 1,
+          "moment": 40101128.63793571,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "",
+          "objective": 7024.799321974645,
+          "rows": 37847,
+          "seconds": 3601.34,
+          "status": "connected",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.068,
+              "note": "",
+              "seconds": 3601.34,
+              "status": "connected"
+            }
+          ],
+          "units": [
+            "IL",
+            "IN",
+            "MI"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.0240147458538913,
+      "plan_delta": 0.068,
+      "shape": {
+        "border_km": 2348.9897,
+        "moment": 40101128.63793571
+      },
+      "share_only": [
+        "IL#1",
+        "IL+IN#1",
+        "IN+MI#1",
+        "MI#1",
+        "MI#2"
+      ],
+      "single_connector": {
+        "MI#2": [
+          "49701-49781",
+          "49720-49782"
+        ]
+      },
+      "split_units": [
+        "IL",
+        "IN",
+        "MI"
+      ],
+      "status": "connected",
+      "undrawn_zctas": 0,
+      "vanished_shares": [],
+      "worst_dev": 0.060036864634728564
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.068,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 30105 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_kg_miinil_k5",
+  "sequential": false
+}
