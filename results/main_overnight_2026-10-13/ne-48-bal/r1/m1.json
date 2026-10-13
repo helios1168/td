@@ -1,0 +1,33 @@
+{
+ "strict": {
+  "status": "fail",
+  "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1",
+  "split": 0,
+  "pieces": 0,
+  "largest_tau": 0.0,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "national/national_08: neck 5.67 km wide cuts off 597 ZIPs (07001...), 38.5% of its land area and 76.3% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km"
+  ],
+  "mass_necks": 11,
+  "gap_width": false
+ },
+ "gap_width": {
+  "status": "fail",
+  "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 8 mass necks listed beside M1",
+  "split": 0,
+  "pieces": 0,
+  "largest_tau": 0.0,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "national/national_08: neck 5.67 km wide cuts off 597 ZIPs (07001...), 38.5% of its land area and 76.3% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km"
+  ],
+  "mass_necks": 8,
+  "gap_width": true
+ },
+ "flips": []
+}
