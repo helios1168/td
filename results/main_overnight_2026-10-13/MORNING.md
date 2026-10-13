@@ -1,8 +1,131 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T18:18:29+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T18:48:00+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.  `MORNING.pdf` opens with this index.
 
 38 points: 15 fails M1, 20 infeasible, 3 stopped.
+
+## Index
+
+N: national; target: $M per district (TARGET; WIFI has none, so its window's midpoint 1,000M); window: the dollar gate lo-hi (cap: WIFI's whole-state allowance); deviation: (x - target) / target; out: districts outside the window; avg/min/max from the final folder's dollars.csv, or the planned τ (usd_m / K) when nothing was drawn.
+
+| # | id | structure | label | K | channel | target $M | window $M | avg $M | min $M | max $M | out |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **1** | ne-50-bal-wide | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | fails M1 | 50 = N 15 · WH 10 · FI 22 · WIFI 3 | national 15 | 1,250 | 1,000-1,438 | 1,126 (-9.9%) | 1,030 (-17.6%) | 1,251 (+0.1%) | 0 |
+|  |  |  |  |  | WH 10 | 1,000 | 850-1,150 | 1,014 (+1.4%) | 891 (-10.9%) | 1,128 (+12.8%) | 0 |
+|  |  |  |  |  | FI 22 | 900 | 765-1,035 | 841 (-6.5%) | 731 (-18.7%) | 955 (+6.1%) | 7 |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | 1,123 (+12.3%) | 1,067 (+6.7%) | 1,231 (+23.1%) | 0 |
+| **2** | w1-50-wide | w1: WIFI only: all 5 fine channels over 49 units; no N | fails M1 | 50 = WIFI 50 | WIFI 50 | 1,000 | 850-1,150 cap 1,600 | 978 (-2.2%) | 671 (-32.9%) | 1,275 (+27.5%) | 16 |
+| **3** | ne-52-filight-wide | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | fails M1 | 52 = N 16 · WH 11 · FI 22 · WIFI 3 | national 16 | 1,250 | 1,000-1,438 | 1,056 (-15.5%) | 928 (-25.7%) | 1,181 (-5.5%) | 6 |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | 922 (-7.8%) | 841 (-15.9%) | 992 (-0.8%) | 1 |
+|  |  |  |  |  | FI 22 | 900 | 765-1,035 | 841 (-6.5%) | 731 (-18.8%) | 955 (+6.1%) | 7 |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | 1,123 (+12.3%) | 1,067 (+6.7%) | 1,231 (+23.1%) | 0 |
+| **4** | ne-48-bal | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | fails M1 | 48 = N 14 · WH 10 · FI 21 · WIFI 3 | national 14 | 1,250 | 1,000-1,438 | 1,207 (-3.5%) | 1,085 (-13.2%) | 1,410 (+12.8%) | 0 |
+|  |  |  |  |  | WH 10 | 1,000 | 850-1,150 | 1,014 (+1.4%) | 891 (-10.9%) | 1,128 (+12.8%) | 0 |
+|  |  |  |  |  | FI 21 | 900 | 765-1,035 | 881 (-2.1%) | 781 (-13.2%) | 990 (+10.0%) | 0 |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | 1,123 (+12.3%) | 1,067 (+6.7%) | 1,231 (+23.1%) | 0 |
+| **5** | w1-48-wide | w1: WIFI only: all 5 fine channels over 49 units; no N | fails M1 | 48 = WIFI 48 | WIFI 48 | 1,000 | 850-1,150 cap 1,600 | 1,019 (+1.9%) | 747 (-25.3%) | 1,328 (+32.8%) | 13 |
+| **6** | w1-52-wide | w1: WIFI only: all 5 fine channels over 49 units; no N | fails M1 | 52 = WIFI 52 | WIFI 52 | 1,000 | 850-1,150 cap 1,600 | 941 (-5.9%) | 670 (-33.0%) | 1,206 (+20.6%) | 14 |
+| **7** | w8-cmp-seed-wide | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | fails M1 | 49 = N 13 · WH 11 · FI 24 · WIFI 1 | national 13 | 1,250 | 1,000-1,438 | 1,306 (+4.5%) | 1,090 (-12.8%) | 1,521 (+21.7%) | 2 |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | 978 (-2.2%) | 687 (-31.3%) | 1,228 (+22.8%) | 3 |
+|  |  |  |  |  | FI 24 | 900 | 765-1,035 | 818 (-9.1%) | 711 (-20.9%) | 924 (+2.7%) | 6 |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | 1,543 (+54.3%) | 1,543 (+54.3%) | 1,543 (+54.3%) | 0 |
+| **8** | w8-50-bal-wide | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | fails M1 | 50 = N 15 · WH 11 · FI 23 · WIFI 1 | national 15 | 1,250 | 1,000-1,438 | 1,132 (-9.4%) | 855 (-31.6%) | 1,370 (+9.6%) | 2 |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | 978 (-2.2%) | 687 (-31.3%) | 1,228 (+22.8%) | 3 |
+|  |  |  |  |  | FI 23 | 900 | 765-1,035 | 854 (-5.2%) | 739 (-17.9%) | 969 (+7.7%) | 3 |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | 1,543 (+54.3%) | 1,543 (+54.3%) | 1,543 (+54.3%) | 0 |
+| **9** | ne-52-bal-wide | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | fails M1 | 52 = N 15 · WH 11 · FI 23 · WIFI 3 | national 15 | 1,250 | 1,000-1,438 | 1,126 (-9.9%) | 1,030 (-17.6%) | 1,251 (+0.1%) | 0 |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | 922 (-7.8%) | 841 (-15.9%) | 992 (-0.8%) | 1 |
+|  |  |  |  |  | FI 23 | 900 | 765-1,035 | 805 (-10.6%) | 708 (-21.3%) | 899 (-0.1%) | 9 |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | 1,123 (+12.3%) | 1,067 (+6.7%) | 1,231 (+23.1%) | 0 |
+| **10** | w8-52-bal-wide | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | fails M1 | 52 = N 15 · WH 12 · FI 24 · WIFI 1 | national 15 | 1,250 | 1,000-1,438 | 1,132 (-9.4%) | 855 (-31.6%) | 1,370 (+9.6%) | 2 |
+|  |  |  |  |  | WH 12 | 1,000 | 850-1,150 | 896 (-10.4%) | 687 (-31.3%) | 1,107 (+10.7%) | 4 |
+|  |  |  |  |  | FI 24 | 900 | 765-1,035 | 818 (-9.1%) | 711 (-20.9%) | 924 (+2.7%) | 7 |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | 1,543 (+54.3%) | 1,543 (+54.3%) | 1,543 (+54.3%) | 0 |
+| **11** | nw34-50-wide | nw34: N over 34 units; WIFI over 49 (all 5 in NE+plains) | fails M1 | 50 = N 15 · WIFI 35 | national 15 | 1,250 | 1,000-1,438 | 1,126 (-9.9%) | 809 (-35.2%) | 1,419 (+13.5%) | 2 |
+|  |  |  |  |  | WIFI 35 | 1,000 | 850-1,150 cap 1,600 | 915 (-8.5%) | 674 (-32.6%) | 1,163 (+16.3%) | 12 |
+| **12** | w8-52-filight-wide | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | fails M1 | 52 = N 16 · WH 12 · FI 23 · WIFI 1 | national 16 | 1,250 | 1,000-1,438 | 1,061 (-15.1%) | 727 (-41.8%) | 1,383 (+10.7%) | 6 |
+|  |  |  |  |  | WH 12 | 1,000 | 850-1,150 | 896 (-10.4%) | 687 (-31.3%) | 1,102 (+10.2%) | 4 |
+|  |  |  |  |  | FI 23 | 900 | 765-1,035 | 854 (-5.2%) | 739 (-17.9%) | 969 (+7.7%) | 3 |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | 1,543 (+54.3%) | 1,543 (+54.3%) | 1,543 (+54.3%) | 0 |
+| **13** | nw34-48-wide | nw34: N over 34 units; WIFI over 49 (all 5 in NE+plains) | fails M1 | 48 = N 14 · WIFI 34 | national 14 | 1,250 | 1,000-1,438 | 1,207 (-3.5%) | 1,085 (-13.2%) | 1,352 (+8.2%) | 0 |
+|  |  |  |  |  | WIFI 34 | 1,000 | 850-1,150 cap 1,600 | 942 (-5.8%) | 728 (-27.2%) | 1,154 (+15.4%) | 12 |
+| **14** | w8-48-bal-wide | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | fails M1 | 48 = N 14 · WH 11 · FI 22 · WIFI 1 | national 14 | 1,250 | 1,000-1,438 | 1,213 (-3.0%) | 1,057 (-15.5%) | 1,370 (+9.6%) | 0 |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | 978 (-2.2%) | 761 (-23.9%) | 1,196 (+19.6%) | 4 |
+|  |  |  |  |  | FI 22 | 900 | 765-1,035 | 892 (-0.9%) | 693 (-23.0%) | 1,011 (+12.4%) | 2 |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | 1,543 (+54.3%) | 1,543 (+54.3%) | 1,543 (+54.3%) | 0 |
+| **15** | nw34-52-wide | nw34: N over 34 units; WIFI over 49 (all 5 in NE+plains) | fails M1 | 52 = N 16 · WIFI 36 | national 16 | 1,250 | 1,000-1,438 | 1,056 (-15.5%) | 996 (-20.3%) | 1,116 (-10.7%) | 4 |
+|  |  |  |  |  | WIFI 36 | 1,000 | 850-1,150 cap 1,600 | 889 (-11.1%) | 689 (-31.1%) | 1,131 (+13.1%) | 17 |
+| **16** | ne-50-bal | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | infeasible; planned τ, not drawn | 50 = N 15 · WH 10 · FI 22 · WIFI 3 | national 15 | 1,250 | 1,000-1,438 | τ 1,126 (-9.9%) | — | — | — |
+|  |  |  |  |  | WH 10 | 1,000 | 850-1,150 | τ 1,014 (+1.4%) | — | — | — |
+|  |  |  |  |  | FI 22 | 900 | 765-1,035 | τ 841 (-6.5%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **17** | ne-50-filight | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | infeasible; planned τ, not drawn | 50 = N 16 · WH 11 · FI 20 · WIFI 3 | national 16 | 1,250 | 1,000-1,438 | τ 1,056 (-15.5%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 922 (-7.8%) | — | — | — |
+|  |  |  |  |  | FI 20 | 900 | 765-1,035 | τ 925 (+2.8%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **18** | ne-52-bal | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | infeasible; planned τ, not drawn | 52 = N 15 · WH 11 · FI 23 · WIFI 3 | national 15 | 1,250 | 1,000-1,438 | τ 1,126 (-9.9%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 922 (-7.8%) | — | — | — |
+|  |  |  |  |  | FI 23 | 900 | 765-1,035 | τ 805 (-10.6%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **19** | ne-52-filight | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | infeasible; planned τ, not drawn | 52 = N 16 · WH 11 · FI 22 · WIFI 3 | national 16 | 1,250 | 1,000-1,438 | τ 1,056 (-15.5%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 922 (-7.8%) | — | — | — |
+|  |  |  |  |  | FI 22 | 900 | 765-1,035 | τ 841 (-6.5%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **20** | ne-cmp-tierP | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | infeasible; planned τ, not drawn | 49 = N 15 · WH 11 · FI 20 · WIFI 3 | national 15 | 1,250 | 1,000-1,438 | τ 1,126 (-9.9%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 922 (-7.8%) | — | — | — |
+|  |  |  |  |  | FI 20 | 900 | 765-1,035 | τ 925 (+2.8%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **21** | nw34-48 | nw34: N over 34 units; WIFI over 49 (all 5 in NE+plains) | infeasible; planned τ, not drawn | 48 = N 14 · WIFI 34 | national 14 | 1,250 | 1,000-1,438 | τ 1,207 (-3.5%) | — | — | — |
+|  |  |  |  |  | WIFI 34 | 1,000 | 850-1,150 | τ 942 (-5.8%) | — | — | — |
+| **22** | nw34-50 | nw34: N over 34 units; WIFI over 49 (all 5 in NE+plains) | infeasible; planned τ, not drawn | 50 = N 15 · WIFI 35 | national 15 | 1,250 | 1,000-1,438 | τ 1,126 (-9.9%) | — | — | — |
+|  |  |  |  |  | WIFI 35 | 1,000 | 850-1,150 | τ 915 (-8.5%) | — | — | — |
+| **23** | nw34-52 | nw34: N over 34 units; WIFI over 49 (all 5 in NE+plains) | infeasible; planned τ, not drawn | 52 = N 16 · WIFI 36 | national 16 | 1,250 | 1,000-1,438 | τ 1,056 (-15.5%) | — | — | — |
+|  |  |  |  |  | WIFI 36 | 1,000 | 850-1,150 | τ 889 (-11.1%) | — | — | — |
+| **24** | nw49-48 | nw49: N over all 49 units; WIFI (WH+FI) over all 49 | infeasible; planned τ, not drawn | 48 = N 15 · WIFI 33 | national 15 | 1,250 | 1,000-1,438 | τ 1,169 (-6.5%) | — | — | — |
+|  |  |  |  |  | WIFI 33 | 1,000 | 850-1,150 | τ 951 (-4.9%) | — | — | — |
+| **25** | nw49-50 | nw49: N over all 49 units; WIFI (WH+FI) over all 49 | infeasible; planned τ, not drawn | 50 = N 16 · WIFI 34 | national 16 | 1,250 | 1,000-1,438 | τ 1,096 (-12.3%) | — | — | — |
+|  |  |  |  |  | WIFI 34 | 1,000 | 850-1,150 | τ 923 (-7.7%) | — | — | — |
+| **26** | nw49-52 | nw49: N over all 49 units; WIFI (WH+FI) over all 49 | infeasible; planned τ, not drawn | 52 = N 17 · WIFI 35 | national 17 | 1,250 | 1,000-1,438 | τ 1,031 (-17.5%) | — | — | — |
+|  |  |  |  |  | WIFI 35 | 1,000 | 850-1,150 | τ 896 (-10.4%) | — | — | — |
+| **27** | w1-48 | w1: WIFI only: all 5 fine channels over 49 units; no N | infeasible; planned τ, not drawn | 48 = WIFI 48 | WIFI 48 | 1,000 | 850-1,150 | τ 1,019 (+1.9%) | — | — | — |
+| **28** | w1-50 | w1: WIFI only: all 5 fine channels over 49 units; no N | infeasible; planned τ, not drawn | 50 = WIFI 50 | WIFI 50 | 1,000 | 850-1,150 | τ 978 (-2.2%) | — | — | — |
+| **29** | w1-52 | w1: WIFI only: all 5 fine channels over 49 units; no N | infeasible; planned τ, not drawn | 52 = WIFI 52 | WIFI 52 | 1,000 | 850-1,150 | τ 941 (-5.9%) | — | — | — |
+| **30** | w8-48-bal | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | infeasible; planned τ, not drawn | 48 = N 14 · WH 11 · FI 22 · WIFI 1 | national 14 | 1,250 | 1,000-1,438 | τ 1,213 (-3.0%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 978 (-2.2%) | — | — | — |
+|  |  |  |  |  | FI 22 | 900 | 765-1,035 | τ 892 (-0.9%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
+| **31** | w8-50-bal | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | infeasible; planned τ, not drawn | 50 = N 15 · WH 11 · FI 23 · WIFI 1 | national 15 | 1,250 | 1,000-1,438 | τ 1,132 (-9.4%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 978 (-2.2%) | — | — | — |
+|  |  |  |  |  | FI 23 | 900 | 765-1,035 | τ 854 (-5.2%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
+| **32** | w8-50-filight | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | infeasible; planned τ, not drawn | 50 = N 16 · WH 12 · FI 21 · WIFI 1 | national 16 | 1,250 | 1,000-1,438 | τ 1,061 (-15.1%) | — | — | — |
+|  |  |  |  |  | WH 12 | 1,000 | 850-1,150 | τ 896 (-10.4%) | — | — | — |
+|  |  |  |  |  | FI 21 | 900 | 765-1,035 | τ 935 (+3.9%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
+| **33** | w8-52-bal | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | infeasible; planned τ, not drawn | 52 = N 15 · WH 12 · FI 24 · WIFI 1 | national 15 | 1,250 | 1,000-1,438 | τ 1,132 (-9.4%) | — | — | — |
+|  |  |  |  |  | WH 12 | 1,000 | 850-1,150 | τ 896 (-10.4%) | — | — | — |
+|  |  |  |  |  | FI 24 | 900 | 765-1,035 | τ 818 (-9.1%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
+| **34** | w8-52-filight | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | infeasible; planned τ, not drawn | 52 = N 16 · WH 12 · FI 23 · WIFI 1 | national 16 | 1,250 | 1,000-1,438 | τ 1,061 (-15.1%) | — | — | — |
+|  |  |  |  |  | WH 12 | 1,000 | 850-1,150 | τ 896 (-10.4%) | — | — | — |
+|  |  |  |  |  | FI 23 | 900 | 765-1,035 | τ 854 (-5.2%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
+| **35** | w8-cmp-seed | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | infeasible; planned τ, not drawn | 49 = N 13 · WH 11 · FI 24 · WIFI 1 | national 13 | 1,250 | 1,000-1,438 | τ 1,306 (+4.5%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 978 (-2.2%) | — | — | — |
+|  |  |  |  |  | FI 24 | 900 | 765-1,035 | τ 818 (-9.1%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
+| **36** | ne-50-filight-wide | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | stopped; planned τ, not drawn | 50 = N 16 · WH 11 · FI 20 · WIFI 3 | national 16 | 1,250 | 1,000-1,438 | τ 1,056 (-15.5%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 922 (-7.8%) | — | — | — |
+|  |  |  |  |  | FI 20 | 900 | 765-1,035 | τ 925 (+2.8%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **37** | ne-cmp-tierP-wide | ne_plains: WIFI = 15 NE+plains states whole; N/WH/FI rest | stopped; planned τ, not drawn | 49 = N 15 · WH 11 · FI 20 · WIFI 3 | national 15 | 1,250 | 1,000-1,438 | τ 1,126 (-9.9%) | — | — | — |
+|  |  |  |  |  | WH 11 | 1,000 | 850-1,150 | τ 922 (-7.8%) | — | — | — |
+|  |  |  |  |  | FI 20 | 900 | 765-1,035 | τ 925 (+2.8%) | — | — | — |
+|  |  |  |  |  | WIFI 3 | 1,000 | 850-1,150 cap 1,600 | τ 1,123 (+12.3%) | — | — | — |
+| **38** | w8-50-filight-wide | west8: WIFI = 8 western states whole; N/WH/FI elsewhere | stopped; planned τ, not drawn | 50 = N 16 · WH 12 · FI 21 · WIFI 1 | national 16 | 1,250 | 1,000-1,438 | τ 1,061 (-15.1%) | — | — | — |
+|  |  |  |  |  | WH 12 | 1,000 | 850-1,150 | τ 896 (-10.4%) | — | — | — |
+|  |  |  |  |  | FI 21 | 900 | 765-1,035 | τ 935 (+3.9%) | — | — | — |
+|  |  |  |  |  | WIFI 1 | 1,000 | 850-1,150 cap 1,600 | τ 1,543 (+54.3%) | — | — | — |
 
 ## Assumptions (owner decisions open)
 
