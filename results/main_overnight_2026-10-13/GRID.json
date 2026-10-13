@@ -633,6 +633,12 @@
           "seconds": 4537.5,
           "stop": null
         },
+        "draw_retry": {
+          "log": "ne-52-bal-wide/draw_retry.log",
+          "rc": 1,
+          "seconds": 4529.1,
+          "stop": null
+        },
         "replan": {
           "log": "ne-52-bal-wide/replan.log",
           "rc": 1,
@@ -833,6 +839,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "ne-52-filight-wide/draw.log",
+          "rc": 1,
+          "seconds": 4529.8,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "ne-52-filight-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 8.0,
+          "stop": null
+        },
+        "r1": {
+          "log": "ne-52-filight-wide/r1.log",
+          "rc": 1,
+          "seconds": 278.9,
+          "stop": null
+        },
         "replan": {
           "log": "ne-52-filight-wide/replan.log",
           "rc": 1,

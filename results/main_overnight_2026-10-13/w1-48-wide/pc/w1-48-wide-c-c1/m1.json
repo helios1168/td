@@ -1,0 +1,46 @@
+{
+ "strict": {
+  "status": "fail",
+  "summary": "1 districts in pieces, 1 detached pieces (largest 0.578 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 20 mass necks listed beside M1",
+  "split": 1,
+  "pieces": 1,
+  "largest_tau": 0.5784681974446754,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "WIFI/WIFI_13: neck 0.76 km wide cuts off 103 ZIPs (07004...), 12.0% of its land area and 39.7% of its mass; cut 08505-08611 0.76 km",
+   "WIFI/WIFI_31: neck 1.30 km wide cuts off 27 ZIPs (07717...), 27.3% of its land area and 8.8% of its mass; cut 07717-07720 1.30 km",
+   "WIFI/WIFI_32: neck 1.97 km wide cuts off 40 ZIPs (07438...), 31.5% of its land area and 2.3% of its mass; cut 08628-08638 1.97 km",
+   "WIFI/WIFI_46: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.0% of its land area and 6.7% of its mass; cut 79718-79734 6.14 km"
+  ],
+  "mass_necks": 20,
+  "gap_width": false
+ },
+ "gap_width": {
+  "status": "fail",
+  "summary": "1 districts in pieces, 1 detached pieces (largest 0.578 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 17 mass necks listed beside M1",
+  "split": 1,
+  "pieces": 1,
+  "largest_tau": 0.5784681974446754,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "WIFI/WIFI_13: neck 0.76 km wide cuts off 103 ZIPs (07004...), 12.0% of its land area and 39.7% of its mass; cut 08505-08611 0.76 km",
+   "WIFI/WIFI_31: neck 1.30 km wide cuts off 27 ZIPs (07717...), 27.3% of its land area and 8.8% of its mass; cut 07717-07720 1.30 km",
+   "WIFI/WIFI_32: neck 1.97 km wide cuts off 40 ZIPs (07438...), 31.5% of its land area and 2.3% of its mass; cut 08628-08638 1.97 km"
+  ],
+  "mass_necks": 17,
+  "gap_width": true
+ },
+ "flips": [
+  {
+   "district": "WIFI/WIFI_46",
+   "strict": [
+    "WIFI/WIFI_46: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.0% of its land area and 6.7% of its mass; cut 79718-79734 6.14 km"
+   ],
+   "gap_width": []
+  }
+ ]
+}
