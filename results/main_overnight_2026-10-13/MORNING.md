@@ -1,6 +1,6 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T09:46:02+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `6acac19`; stop at 2026-10-13T17:46:02+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T09:47:53+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
 
 21 points: 21 error.
 

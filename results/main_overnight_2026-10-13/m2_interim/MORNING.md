@@ -1,6 +1,6 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T09:46:02+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `6acac19`; stop at 2026-10-13T17:45:33+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T09:47:53+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
 
 21 points: 21 error.
 
@@ -57,12 +57,12 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - **w1-48** (error): no label (status elsewhere)
 - **w1-50** (error): no label (status elsewhere)
 - **w1-52** (error): no label (status elsewhere)
-- **w8-48-bal** (error): AttributeError: module 'contig_replan' has no attribute 'banned_text'
-- **w8-50-bal** (error): AttributeError: module 'contig_replan' has no attribute 'banned_text'
-- **w8-50-filight** (error): AttributeError: module 'contig_replan' has no attribute 'banned_text'
-- **w8-52-bal** (error): no label (status running)
-- **w8-52-filight** (error): AttributeError: module 'contig_replan' has no attribute 'banned_text'
-- **w8-cmp-seed** (error): AttributeError: module 'contig_replan' has no attribute 'banned_text'
+- **w8-48-bal** (error): no label (status queued)
+- **w8-50-bal** (error): no label (status queued)
+- **w8-50-filight** (error): no label (status queued)
+- **w8-52-bal** (error): no label (status queued)
+- **w8-52-filight** (error): no label (status queued)
+- **w8-cmp-seed** (error): no label (status queued)
 
 ## Needs your eye
 
@@ -81,4 +81,9 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - w1-48: no label (status elsewhere), counted as an error
 - w1-50: no label (status elsewhere), counted as an error
 - w1-52: no label (status elsewhere), counted as an error
-- w8-52-bal: no label (status running), counted as an error
+- w8-48-bal: no label (status queued), counted as an error
+- w8-50-bal: no label (status queued), counted as an error
+- w8-50-filight: no label (status queued), counted as an error
+- w8-52-bal: no label (status queued), counted as an error
+- w8-52-filight: no label (status queued), counted as an error
+- w8-cmp-seed: no label (status queued), counted as an error
