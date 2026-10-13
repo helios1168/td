@@ -578,6 +578,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w8-48-bal-wide/draw.log",
+          "rc": 1,
+          "seconds": 4558.7,
+          "stop": null
+        },
         "replan": {
           "log": "w8-48-bal-wide/replan.log",
           "rc": 1,
@@ -1040,6 +1046,7 @@
     },
     "w8-50-filight-wide": {
       "delta_floor": {
+        "FI": 0.1443,
         "WH": 0.2383,
         "national": 0.3275
       },
@@ -1058,7 +1065,7 @@
       "plan": {
         "channels": {
           "FI": {
-            "final_delta": 0.1071,
+            "final_delta": 0.1443,
             "free": [
               "AR",
               "CA",
@@ -1155,6 +1162,18 @@
           "log": "w8-50-filight-wide/replan.log",
           "rc": 1,
           "seconds": 121.9,
+          "stop": null
+        },
+        "replan2": {
+          "log": "w8-50-filight-wide/replan2.log",
+          "rc": 1,
+          "seconds": 198.9,
+          "stop": null
+        },
+        "replan3": {
+          "log": "w8-50-filight-wide/replan3.log",
+          "rc": 0,
+          "seconds": 298.4,
           "stop": null
         }
       },
