@@ -1,0 +1,131 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 3395.98502,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.029,
+      "groups": [
+        {
+          "border_km": 3113.62425,
+          "bound": 7150.260627619493,
+          "columns": 14285,
+          "cuts": 1286,
+          "dag": false,
+          "delta": 0.029,
+          "districts": [
+            "AZ+CA+NV#1",
+            "AZ+NM+UT#1",
+            "CA#1",
+            "CA#2",
+            "CA#3",
+            "ID+MT+NV+OR+WA+WY#1"
+          ],
+          "free_zctas": 2400,
+          "gap": 0.108405279866935,
+          "iterations": 1,
+          "moment": 55281688.82224978,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "stopped at solve 1 (Time limit reached) with a detached incumbent",
+          "objective": 8019.630967029909,
+          "rows": 41147,
+          "seconds": 1799.86,
+          "status": "connected",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.029,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 0.46,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": 0.029,
+              "note": "stopped at solve 1 (Time limit reached) with a detached incumbent",
+              "seconds": 1799.86,
+              "status": "connected"
+            }
+          ],
+          "units": [
+            "AZ",
+            "CA",
+            "NV"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.024655487408129548,
+      "plan_delta": 0.029,
+      "shape": {
+        "border_km": 3113.62425,
+        "moment": 55281688.82224978
+      },
+      "share_only": [
+        "AZ+CA+NV#1",
+        "CA#1",
+        "CA#2",
+        "CA#3"
+      ],
+      "single_connector": {
+        "AZ+CA+NV#1": [
+          "89007-89021",
+          "92310-92311"
+        ],
+        "AZ+NM+UT#1": [
+          "84022-84034",
+          "84501-84520",
+          "84522-84654",
+          "84624-84728"
+        ],
+        "CA#1": [
+          "96023-96134"
+        ],
+        "CA#2": [
+          "90704-90802"
+        ],
+        "CA#3": [
+          "92328-92384",
+          "93206-93276"
+        ],
+        "ID+MT+NV+OR+WA+WY#1": [
+          "82935-82938",
+          "82939-83101",
+          "83823-83827",
+          "89003-89013",
+          "89003-89020",
+          "89010-89047",
+          "89020-89060",
+          "89049-89314",
+          "98230-98281",
+          "98245-98297",
+          "98353-98366"
+        ]
+      },
+      "split_units": [
+        "AZ",
+        "CA",
+        "NV"
+      ],
+      "status": "connected",
+      "undrawn_zctas": 0,
+      "vanished_shares": [],
+      "worst_dev": 0.028135085335226306
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.029,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 28371 (ZCTA, fine channel) cells with no row, 0 owned twice, 4 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.2,
+  "plans_file": null,
+  "scenario": "ifa_kg_west_k6",
+  "sequential": false
+}

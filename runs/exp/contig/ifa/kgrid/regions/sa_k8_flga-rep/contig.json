@@ -1,0 +1,835 @@
+{
+  "arm": "arm1+repair",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 1113.78455,
+      "cut_border_km_before_repair": 1733.31837,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "groups": [
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 6627,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.04,
+          "districts": [
+            "FL#1",
+            "FL#2",
+            "FL#3",
+            "FL+GA#1"
+          ],
+          "free_zctas": 1013,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "no incumbent (Time limit reached)",
+          "objective": null,
+          "rows": 19381,
+          "seconds": 1800.11,
+          "status": "unknown",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.04,
+              "note": "no incumbent (Time limit reached)",
+              "seconds": 1800.11,
+              "status": "unknown"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        },
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 115,
+          "cuts": 0,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "FL#2",
+            "FL#3"
+          ],
+          "free_zctas": 34,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [
+            "FL#2"
+          ],
+          "necks_cut": [],
+          "note": "proved at solve 1",
+          "objective": null,
+          "rows": 182,
+          "seconds": 0.01,
+          "status": "infeasible",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 0.01,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "proved at solve 1",
+              "seconds": 0.0,
+              "status": "infeasible"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        },
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 154,
+          "cuts": 0,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "FL#2",
+            "FL#3"
+          ],
+          "free_zctas": 46,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [
+            "FL#2"
+          ],
+          "necks_cut": [],
+          "note": "proved at solve 1",
+          "objective": null,
+          "rows": 245,
+          "seconds": 0.01,
+          "status": "infeasible",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 0.0,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "proved at solve 1",
+              "seconds": 0.01,
+              "status": "infeasible"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        },
+        {
+          "border_km": 66.71936,
+          "bound": 2880.2558943905474,
+          "columns": 501,
+          "cuts": 0,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "FL#2",
+            "FL#3"
+          ],
+          "free_zctas": 112,
+          "gap": 0.0,
+          "iterations": 2,
+          "moment": 103810.38419162443,
+          "neck_cuts": 0,
+          "neck_exempt": [
+            "FL#2"
+          ],
+          "necks_cut": [],
+          "note": "",
+          "objective": 2880.2558943905474,
+          "rows": 1096,
+          "seconds": 0.05,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 0.03,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 0.02,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        },
+        {
+          "border_km": 279.34762,
+          "bound": 3824.5141221142862,
+          "columns": 366,
+          "cuts": 16,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "FL#2",
+            "FL#3",
+            "FL+GA#1"
+          ],
+          "free_zctas": 89,
+          "gap": 1.189033002276034e-16,
+          "iterations": 3,
+          "moment": 87526.261039062,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "",
+          "objective": 3824.5141221142867,
+          "rows": 794,
+          "seconds": 0.16,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 0.06,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 0.1,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        },
+        {
+          "border_km": 149.98694,
+          "bound": 2709.7367847391984,
+          "columns": 172,
+          "cuts": 0,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "FL#1",
+            "FL#3"
+          ],
+          "free_zctas": 42,
+          "gap": 0.0,
+          "iterations": 2,
+          "moment": 3660.9295025586603,
+          "neck_cuts": 1,
+          "neck_exempt": [],
+          "necks_cut": [
+            "IFA/FL#1: neck 3.01 km wide cuts off 3 ZIPs (33430...), 9.7% of its land area and 0.0% of its mass; cut 33430-33470 3.01 km"
+          ],
+          "note": "",
+          "objective": 2709.7367847391984,
+          "rows": 368,
+          "seconds": 0.03,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 0.02,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 0.01,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "FL"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.033053326138770656,
+      "necks_left": [],
+      "plan_delta": 0.04,
+      "repair": [
+        {
+          "before": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.00042099151223351505
+          },
+          "bound": null,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "FL#3 33701 (18 ZCTAs)"
+          ],
+          "districts": [
+            "FL#2",
+            "FL#3"
+          ],
+          "flow": false,
+          "gap": null,
+          "group": {
+            "border_km": null,
+            "bound": null,
+            "columns": 115,
+            "cuts": 0,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "FL#2",
+              "FL#3"
+            ],
+            "free_zctas": 34,
+            "gap": null,
+            "iterations": 1,
+            "moment": null,
+            "neck_cuts": 0,
+            "neck_exempt": [
+              "FL#2"
+            ],
+            "necks_cut": [],
+            "note": "proved at solve 1",
+            "objective": null,
+            "rows": 182,
+            "seconds": 0.01,
+            "status": "infeasible",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "the geodesic-DAG restriction is infeasible",
+                "seconds": 0.01,
+                "status": "unknown"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "proved at solve 1",
+                "seconds": 0.0,
+                "status": "infeasible"
+              }
+            ],
+            "units": [
+              "FL"
+            ]
+          },
+          "h": 3,
+          "keep_support": false,
+          "neck_aware": true,
+          "neck_cuts": 0,
+          "note": "proved at solve 1",
+          "objective": null,
+          "piece_tau_before": [
+            0.0646
+          ],
+          "pieces_after": 3,
+          "pieces_before": 3,
+          "seconds": 0.0,
+          "shape": "ball",
+          "status": "infeasible",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 0.01,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "proved at solve 1",
+              "seconds": 0.0,
+              "status": "infeasible"
+            }
+          ],
+          "window_zctas": 34
+        },
+        {
+          "before": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.00042099151223351505
+          },
+          "bound": null,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "FL#3 33701 (18 ZCTAs)"
+          ],
+          "districts": [
+            "FL#2",
+            "FL#3"
+          ],
+          "flow": false,
+          "gap": null,
+          "group": {
+            "border_km": null,
+            "bound": null,
+            "columns": 154,
+            "cuts": 0,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "FL#2",
+              "FL#3"
+            ],
+            "free_zctas": 46,
+            "gap": null,
+            "iterations": 1,
+            "moment": null,
+            "neck_cuts": 0,
+            "neck_exempt": [
+              "FL#2"
+            ],
+            "necks_cut": [],
+            "note": "proved at solve 1",
+            "objective": null,
+            "rows": 245,
+            "seconds": 0.01,
+            "status": "infeasible",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "the geodesic-DAG restriction is infeasible",
+                "seconds": 0.0,
+                "status": "unknown"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "proved at solve 1",
+                "seconds": 0.01,
+                "status": "infeasible"
+              }
+            ],
+            "units": [
+              "FL"
+            ]
+          },
+          "h": 6,
+          "keep_support": false,
+          "neck_aware": true,
+          "neck_cuts": 0,
+          "note": "proved at solve 1",
+          "objective": null,
+          "piece_tau_before": [
+            0.0646
+          ],
+          "pieces_after": 3,
+          "pieces_before": 3,
+          "seconds": 0.0,
+          "shape": "ball",
+          "status": "infeasible",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 0.0,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "proved at solve 1",
+              "seconds": 0.01,
+              "status": "infeasible"
+            }
+          ],
+          "window_zctas": 46
+        },
+        {
+          "after": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.03133469607811945
+          },
+          "before": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.00042099151223351505
+          },
+          "bound": 2880.2558943905474,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "FL#3 33701 (18 ZCTAs)"
+          ],
+          "districts": [
+            "FL#2",
+            "FL#3"
+          ],
+          "flow": false,
+          "gap": 0.0,
+          "group": {
+            "border_km": 66.71936,
+            "bound": 2880.2558943905474,
+            "columns": 501,
+            "cuts": 0,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "FL#2",
+              "FL#3"
+            ],
+            "free_zctas": 112,
+            "gap": 0.0,
+            "iterations": 2,
+            "moment": 103810.38419162443,
+            "neck_cuts": 0,
+            "neck_exempt": [
+              "FL#2"
+            ],
+            "necks_cut": [],
+            "note": "",
+            "objective": 2880.2558943905474,
+            "rows": 1096,
+            "seconds": 0.05,
+            "status": "optimal",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "",
+                "seconds": 0.03,
+                "status": "connected"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "",
+                "seconds": 0.02,
+                "status": "optimal"
+              }
+            ],
+            "units": [
+              "FL"
+            ]
+          },
+          "h": 12,
+          "keep_support": false,
+          "neck_aware": true,
+          "neck_cuts": 0,
+          "note": "",
+          "objective": 2880.2558943905474,
+          "piece_tau_before": [
+            0.0646
+          ],
+          "pieces_after": 2,
+          "pieces_before": 3,
+          "seconds": 0.1,
+          "shape": "ball",
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 0.03,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 0.02,
+              "status": "optimal"
+            }
+          ],
+          "window_zctas": 112
+        },
+        {
+          "after": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.03728721409989655
+          },
+          "before": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.03133469607811945
+          },
+          "bound": 3824.5141221142862,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "FL#2 32301 (19 ZCTAs)",
+            "FL#2 34760 (1 ZCTAs)"
+          ],
+          "districts": [
+            "FL#2",
+            "FL#3",
+            "FL+GA#1"
+          ],
+          "flow": false,
+          "gap": 1.189033002276034e-16,
+          "group": {
+            "border_km": 279.34762,
+            "bound": 3824.5141221142862,
+            "columns": 366,
+            "cuts": 16,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "FL#2",
+              "FL#3",
+              "FL+GA#1"
+            ],
+            "free_zctas": 89,
+            "gap": 1.189033002276034e-16,
+            "iterations": 3,
+            "moment": 87526.261039062,
+            "neck_cuts": 0,
+            "neck_exempt": [],
+            "necks_cut": [],
+            "note": "",
+            "objective": 3824.5141221142867,
+            "rows": 794,
+            "seconds": 0.16,
+            "status": "optimal",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "",
+                "seconds": 0.06,
+                "status": "connected"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "",
+                "seconds": 0.1,
+                "status": "optimal"
+              }
+            ],
+            "units": [
+              "FL"
+            ]
+          },
+          "h": 3,
+          "keep_support": false,
+          "neck_aware": true,
+          "neck_cuts": 0,
+          "note": "",
+          "objective": 3824.5141221142867,
+          "piece_tau_before": [
+            0.1098,
+            0.0005
+          ],
+          "pieces_after": 0,
+          "pieces_before": 2,
+          "seconds": 0.2,
+          "shape": "ball",
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 0.06,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 0.1,
+              "status": "optimal"
+            }
+          ],
+          "window_zctas": 89
+        },
+        {
+          "after": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.039398314918736355
+          },
+          "before": {
+            "cuts": 3,
+            "outside_band": [],
+            "split_states": 1,
+            "worst_dev": 0.03728721409989655
+          },
+          "bound": 2709.7367847391984,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "FL#1 33430 (3 ZCTAs)"
+          ],
+          "districts": [
+            "FL#1",
+            "FL#3"
+          ],
+          "flow": false,
+          "gap": 0.0,
+          "group": {
+            "border_km": 149.98694,
+            "bound": 2709.7367847391984,
+            "columns": 172,
+            "cuts": 0,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "FL#1",
+              "FL#3"
+            ],
+            "free_zctas": 42,
+            "gap": 0.0,
+            "iterations": 2,
+            "moment": 3660.9295025586603,
+            "neck_cuts": 1,
+            "neck_exempt": [],
+            "necks_cut": [
+              "IFA/FL#1: neck 3.01 km wide cuts off 3 ZIPs (33430...), 9.7% of its land area and 0.0% of its mass; cut 33430-33470 3.01 km"
+            ],
+            "note": "",
+            "objective": 2709.7367847391984,
+            "rows": 368,
+            "seconds": 0.03,
+            "status": "optimal",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "",
+                "seconds": 0.02,
+                "status": "connected"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "",
+                "seconds": 0.01,
+                "status": "optimal"
+              }
+            ],
+            "units": [
+              "FL"
+            ]
+          },
+          "h": 3,
+          "keep_support": false,
+          "kept": true,
+          "kind": "neck",
+          "neck_aware": true,
+          "neck_cuts": 1,
+          "neck_exempt": [],
+          "necks_after": 0,
+          "necks_before": 1,
+          "note": "",
+          "objective": 2709.7367847391984,
+          "pieces_after": 0,
+          "pieces_before": 0,
+          "seconds": 0.0,
+          "shape": "ball",
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 0.02,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 0.01,
+              "status": "optimal"
+            }
+          ],
+          "window_zctas": 42
+        }
+      ],
+      "repair_band": {
+        "delta": 0.04,
+        "worst_dev": 0.039398314918736355
+      },
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [
+        "FL#1",
+        "FL#2",
+        "FL#3"
+      ],
+      "single_connector": {
+        "FL+GA#1": [
+          "31328-31410"
+        ]
+      },
+      "source_group_delta_needed": 0.04,
+      "split_units": [
+        "FL"
+      ],
+      "status": "connected",
+      "undrawn_zctas": 1013,
+      "vanished_shares": [],
+      "worst_dev": 0.03939831491873633
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.04,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 31536 (ZCTA, fine channel) cells with no row, 0 owned twice, 0 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "repair": {
+    "budget": null,
+    "commit": "74cec50",
+    "flow": false,
+    "h0": 3,
+    "keep_support": false,
+    "label": "",
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plans_file": null,
+    "time_limit": 240.0
+  },
+  "repair_of": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k8_flga",
+  "scenario": "ifa_kg_flga_k4",
+  "sequential": false
+}

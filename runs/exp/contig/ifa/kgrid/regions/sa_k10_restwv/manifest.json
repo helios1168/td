@@ -1,0 +1,59 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_kg_sarestwv_k9.toml --out runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv --extract runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz --states VA,DC,WV,NC,SC,GA,FL --delta 0.027 --jobs 1 --time-limit 1800",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz",
+  "finished_at": "2026-10-13T16:53:15+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.027,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.027,
+        "final_delta": 0.027,
+        "forbid_pairs": [],
+        "free": [
+          "FL",
+          "GA",
+          "NC",
+          "SC",
+          "VA",
+          "WV"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "VA,DC,WV,NC,SC,GA,FL",
+    "time_limit": 1800.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz",
+    "instance_sha256": "1fd97e47297fcca23cdfe8a1d0421c4104130489d3cc423a14487a1ad36b8e4e",
+    "queued_at": "2026-10-13T16:23:13+00:00"
+  },
+  "run_id": "sa_k10_restwv",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_sarestwv_k9.toml",
+    "sha256": "79753da153ee1f037a8756a8c46c131ac46af3601ac41635276dfadfbdc720c8"
+  },
+  "started_at": "2026-10-13T16:23:13+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

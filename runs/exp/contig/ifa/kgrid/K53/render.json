@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "1e33d9308ede084b332ba292a5c52e63db668949f0fc0f4757a725084f6f6cf5",
+    "summary.svg": "36271006a2f25f07241f755964e3421f3cb570301e470ed81f651e53f2e694c9",
+    "zip_IFA.png": "85e73921f3aa8ec03a2c1b902727dcaf5e1b21b333d58be2a88d20d3bd31c4f8",
+    "zip_pages.pdf": "fb8f8e1e753cc9fb51ac472fb985e5af527dd01c8c9345ccfc8c078ed0170588"
+  },
+  "inputs": {
+    "districts.csv": "d3a022377ea3043cd0e69d19a6535bca7579d38443dcc01a7ac7fedd492c9a83",
+    "ledger.csv": "e767868819d9ebd5334540a23ba8d8abbc88ebac7e1b1886e2c37aaea3a0fd1d",
+    "manifest.json": "4578a9be53e1b6cbef06fe54c147c4f6b3bd5179072b13d832953f5450c2da93",
+    "run.json": "8a3d23b135a6337da33010cd7893defc5582d739949de2b2bd81f4b6e0456aaf"
+  },
+  "label": "K53: IFA CONUS, 53 districts (New England 4, Middle Atlantic 12, South Atlantic 10, South Central 6, Midwest 14, West 7); MD whole (F1); Manhattan neck open",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 17 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T17:12:50+00:00",
+  "renderer": {
+    "code_sha256": "9c87d1e7ef30fa6c3343df1822a977ec05e150b7f1685c9778e7be70275f03b4",
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true
+  },
+  "title": "K53: IFA CONUS, 53 districts (New England 4, Middle Atlantic 12, South Atlantic 10, South Central 6, Midwest 14, West 7); MD whole (F1); Manhattan neck open, FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}

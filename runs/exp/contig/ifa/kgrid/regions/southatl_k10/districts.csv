@@ -1,0 +1,11 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces,source_run,source_district,window
+IFA,IFA_01,"IFA Baltimore-Columbia-Towson, MD",DE+MD#1,DE+MD,1414.942609146,1414.9426091459995,0,sa_k10_mdde,IFA_01,over
+IFA,IFA_02,"IFA Washington-Arlington-Alexandria, DC-VA-MD-WV",DC+VA+WV#1,DC+VA+WV,799.239299921017,816.3029614159998,0,sa_k10_restwv-rep,IFA_01,in
+IFA,IFA_03,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",FL#1,FL,828.1517862766749,823.8939865449997,0,sa_k10_restwv-rep,IFA_02,in
+IFA,IFA_04,"IFA Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,828.1517862766749,813.1673780600001,0,sa_k10_restwv-rep,IFA_03,in
+IFA,IFA_05,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / North Port-Bradenton-Sarasota, FL",FL#3,FL,828.1517862766749,843.4526331799998,0,sa_k10_restwv-rep,IFA_04,in
+IFA,IFA_06,"IFA Orlando-Kissimmee-Sanford, FL",FL#4,FL,828.1517862766749,813.3344705809998,0,sa_k10_restwv-rep,IFA_05,in
+IFA,IFA_07,"IFA Charleston-North Charleston, SC",FL+GA+SC#1,FL+GA+SC,838.8372760657774,805.6525928450003,0,sa_k10_restwv-rep,IFA_06,in
+IFA,IFA_08,"IFA Atlanta-Sandy Springs-Roswell, GA",GA#1,GA,843.5958489402717,835.9221568100006,0,sa_k10_restwv-rep,IFA_07,in
+IFA,IFA_09,"IFA Raleigh-Cary, NC",NC#1,NC,799.2392999210169,818.3275228588001,0,sa_k10_restwv-rep,IFA_08,in
+IFA,IFA_10,"IFA Charlotte-Concord-Gastonia, NC-SC",NC+SC+VA#1,NC+SC+VA,799.239299921017,822.7044675799999,0,sa_k10_restwv-rep,IFA_09,in

@@ -1,0 +1,63 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_west_merge.toml AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY=runs/exp/contig/ifa/kgrid/regions/w_k6-rep --out runs/exp/contig/ifa/kgrid/regions/west_k6 --extract-out runs/exp/contig/ifa/kgrid/regions/_inst/west_k6.json.gz --base-extract /Users/Shared/sv-ntlee/td/instance_descaled.json.gz --window 798.74,1148.19 --gap-width",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/_inst/west_k6.json.gz",
+  "finished_at": "2026-10-13T16:07:11+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/west_k6",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "m1_default": "fail",
+  "m1_gate": "gap width (G1 on, owner G3)",
+  "params": {
+    "base_extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "export": false,
+    "extract_out": "runs/exp/contig/ifa/kgrid/regions/_inst/west_k6.json.gz",
+    "gap_width": true,
+    "sources": {
+      "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY": "runs/exp/contig/ifa/kgrid/regions/w_k6-rep"
+    },
+    "window": [
+      798.74,
+      1148.19
+    ]
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/_inst/west_k6.json.gz",
+    "instance_sha256": "e7d763f7f1bb199f847d001189432b04a053b9255127cdce6f12a59ef674a60a",
+    "queued_at": "2026-10-13T16:07:09+00:00"
+  },
+  "run_id": "west_k6",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_west_merge.toml",
+    "sha256": "7da4b871e002e530d7c773965748f019b70d98a0d1a1672cbd6373df7ad77748"
+  },
+  "source_runs": [
+    {
+      "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/w_k6-rep",
+      "state": "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY",
+      "states": [
+        "AZ",
+        "CA",
+        "ID",
+        "MT",
+        "NM",
+        "NV",
+        "OR",
+        "UT",
+        "WA",
+        "WY"
+      ]
+    }
+  ],
+  "started_at": "2026-10-13T16:07:09+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}

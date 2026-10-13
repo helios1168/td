@@ -1,0 +1,12 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces,source_run,source_district,window
+IFA,IFA_01,"IFA New York-Newark-Jersey City, NY-NJ / Allentown-Bethlehem-Easton, PA-NJ",NJ#1,NJ,945.7739987413333,1046.2540255510005,0,ifa_nj_k3-neck,IFA_01,in
+IFA,IFA_02,"IFA New York-Newark-Jersey City, NY-NJ / Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",NJ#2,NJ,945.7739987413333,921.2780413030001,0,ifa_nj_k3-neck,IFA_02,in
+IFA,IFA_03,"IFA New York-Newark-Jersey City, NY-NJ (3)",NJ#3,NJ,945.7739987413333,869.78992937,0,ifa_nj_k3-neck,IFA_03,in
+IFA,IFA_04,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",PA#1,PA,1096.8259168422665,1097.2480214578002,0,ifa_pa_k3,IFA_01,in
+IFA,IFA_05,"IFA Pittsburgh, PA",PA#2,PA,1096.8259168422665,1096.6697824900002,0,ifa_pa_k3,IFA_02,in
+IFA,IFA_06,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / Allentown-Bethlehem-Easton, PA-NJ",PA#3,PA,1096.8259168422665,1096.5599465790006,0,ifa_pa_k3,IFA_03,in
+IFA,IFA_07,"IFA New York-Newark-Jersey City, NY-NJ (2)",NY#1,NY,873.7934651318001,922.9986547499998,0,ifa_ny_k5_cd-qn,IFA_01,in
+IFA,IFA_08,"IFA New York-Newark-Jersey City, NY-NJ (4)",NY#2,NY,873.7934651318001,868.781115495,0,ifa_ny_k5_cd-qn,IFA_02,in
+IFA,IFA_09,"IFA New York-Newark-Jersey City, NY-NJ (1)",NY#3,NY,873.7934651318001,925.7032817300001,0,ifa_ny_k5_cd-qn,IFA_03,in
+IFA,IFA_10,"IFA Buffalo-Cheektowaga, NY",NY#4,NY,873.7934651318001,826.7261733739999,0,ifa_ny_k5_cd-qn,IFA_04,in
+IFA,IFA_11,"IFA Albany-Schenectady-Troy, NY",NY#5,NY,873.7934651318001,824.7581003100006,0,ifa_ny_k5_cd-qn,IFA_05,in

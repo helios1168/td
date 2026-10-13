@@ -1,0 +1,5 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA Miami-Fort Lauderdale-West Palm Beach, FL",FL#1,FL,1104.2023817022332,1059.961124945,0
+IFA,IFA_02,"IFA Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,1104.2023817022332,1144.5785900900005,0
+IFA,IFA_03,"IFA Orlando-Kissimmee-Sanford, FL",FL#3,FL,1104.2023817022332,1135.2349532509988,0
+IFA,IFA_04,"IFA Atlanta-Sandy Springs-Roswell, GA",FL+GA#1,FL+GA,1101.1312082893,1073.9636851100008,0

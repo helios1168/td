@@ -1,0 +1,64 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/repair.py runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv --out runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv-rep --extract runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz --states VA,DC,WV,NC,SC,GA,FL --window 798.74,1148.19 --time-limit 240 --jobs 1",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz",
+  "finished_at": "2026-10-13T17:00:42+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv-rep",
+  "formulation": "contig_repair",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "budget": null,
+    "channels": null,
+    "diag_final_delta": null,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz",
+    "flow": false,
+    "h0": 3,
+    "jobs": 1,
+    "keep_support": false,
+    "label": "",
+    "maps": false,
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plan": {
+      "IFA": {
+        "delta": 0.027,
+        "final_delta": 0.027,
+        "forbid_pairs": [],
+        "free": [
+          "FL",
+          "GA",
+          "NC",
+          "SC",
+          "VA",
+          "WV"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "states": "VA,DC,WV,NC,SC,GA,FL",
+    "time_limit": 240.0,
+    "window": "798.74,1148.19"
+  },
+  "parent_run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv",
+  "plans_file": null,
+  "provenance": {
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/sarestwv.json.gz",
+    "instance_sha256": "1fd97e47297fcca23cdfe8a1d0421c4104130489d3cc423a14487a1ad36b8e4e",
+    "queued_at": "2026-10-13T17:00:39+00:00"
+  },
+  "run_id": "sa_k10_restwv-rep",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_sarestwv_k9.toml",
+    "sha256": "79753da153ee1f037a8756a8c46c131ac46af3601ac41635276dfadfbdc720c8"
+  },
+  "started_at": "2026-10-13T17:00:39+00:00",
+  "status": "done",
+  "stop_reason": "repaired"
+}

@@ -1,0 +1,70 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/merge.py runs/exp/contig/_specs/ifa_southatl_merge.toml MD,DE=runs/exp/contig/ifa/kgrid/regions/sa_k10_mdde VA,DC,WV,NC,SC,GA,FL=runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv-rep --out runs/exp/contig/ifa/kgrid/regions/southatl_k10 --extract-out runs/exp/contig/ifa/kgrid/regions/_inst/southatl_k10.json.gz --base-extract /Users/Shared/sv-ntlee/td/instance_descaled.json.gz --window 798.74,1148.19 --gap-width",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/_inst/southatl_k10.json.gz",
+  "finished_at": "2026-10-13T17:11:00+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/southatl_k10",
+  "formulation": "contig_merge",
+  "lane": "contig",
+  "m1": "fail",
+  "m1_default": "fail",
+  "m1_gate": "gap width (G1 on, owner G3)",
+  "params": {
+    "base_extract": "/Users/Shared/sv-ntlee/td/instance_descaled.json.gz",
+    "export": false,
+    "extract_out": "runs/exp/contig/ifa/kgrid/regions/_inst/southatl_k10.json.gz",
+    "gap_width": true,
+    "sources": {
+      "MD,DE": "runs/exp/contig/ifa/kgrid/regions/sa_k10_mdde",
+      "VA,DC,WV,NC,SC,GA,FL": "runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv-rep"
+    },
+    "window": [
+      798.74,
+      1148.19
+    ]
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/_inst/southatl_k10.json.gz",
+    "instance_sha256": "da5e668f380a38d029d7569400d2e76a0feb407e7bd85bdc1acdb7814a5af046",
+    "queued_at": "2026-10-13T17:10:59+00:00"
+  },
+  "run_id": "southatl_k10",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_southatl_merge.toml",
+    "sha256": "74e0cbe262563c067c4ff2848836256c9fb272b471927ce4d7fc36e3bb5105b0"
+  },
+  "source_runs": [
+    {
+      "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k10_mdde",
+      "state": "MD,DE",
+      "states": [
+        "MD",
+        "DE"
+      ]
+    },
+    {
+      "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+      "run": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/sa_k10_restwv-rep",
+      "state": "VA,DC,WV,NC,SC,GA,FL",
+      "states": [
+        "VA",
+        "DC",
+        "WV",
+        "NC",
+        "SC",
+        "GA",
+        "FL"
+      ]
+    }
+  ],
+  "started_at": "2026-10-13T17:10:59+00:00",
+  "status": "done",
+  "stop_reason": "merged"
+}

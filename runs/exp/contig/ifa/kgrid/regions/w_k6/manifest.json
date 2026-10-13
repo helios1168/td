@@ -1,0 +1,59 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_kg_west_k6.toml --out runs/exp/contig/ifa/kgrid/regions/w_k6 --extract runs/exp/contig/ifa/kgrid/_inst/west.json.gz --states AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY --delta 0.029 --jobs 1 --time-limit 1800",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/west.json.gz",
+  "finished_at": "2026-10-13T15:53:33+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/w_k6",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.029,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/west.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.029,
+        "final_delta": 0.029,
+        "forbid_pairs": [],
+        "free": [
+          "AZ",
+          "CA",
+          "NV",
+          "OR",
+          "UT",
+          "WA"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY",
+    "time_limit": 1800.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "2946e41ca6ccc295a056dbe9a2058001c238312f",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/west.json.gz",
+    "instance_sha256": "e7d763f7f1bb199f847d001189432b04a053b9255127cdce6f12a59ef674a60a",
+    "queued_at": "2026-10-13T15:23:31+00:00"
+  },
+  "run_id": "w_k6",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_west_k6.toml",
+    "sha256": "a5d1a0058ed2998ea349b2f728bbfbebff9f263ef4a9d1272334d93460288069"
+  },
+  "started_at": "2026-10-13T15:23:31+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}
