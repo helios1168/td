@@ -83,6 +83,19 @@ def test_plan_point_rule_window_and_whole_state_cap():
         raise AssertionError("a K for some channels only was planned")
 
 
+def test_plan_point_delta_floor_widens_only_its_channel():
+    """A `-wide` point (2026-10-13): the master's smallest feasible δ raises that channel's final
+    δ; the window, τ and the other channels are as without it, and τ outside the window stays
+    infeasible."""
+    p = overnight.plan_point({"national": 2, "WIFI": 2}, _toy(), CELLS, "rule", {"WIFI": 0.2345})
+    assert p["channels"]["WIFI"]["final_delta"] == 0.2345 and p["channels"]["national"]["final_delta"] == 0.15
+    assert p["channels"]["WIFI"]["hi_m"] == 1150.0 and p["infeasible"] == {}
+    low = overnight.plan_point({"national": 2, "WIFI": 2}, _toy(), CELLS, "rule", {"WIFI": 0.01})
+    assert low["channels"]["WIFI"]["final_delta"] == 0.1052
+    bad = overnight.plan_point({"national": 2, "WIFI": 4}, _toy(), CELLS, "rule", {"WIFI": 0.3})
+    assert list(bad["infeasible"]) == ["WIFI"]
+
+
 def test_point_spec_text_sets_k_and_both_deltas():
     plan = {"channels": {"national": {"k": 3, "final_delta": 0.15}, "WIFI": {"k": 1, "final_delta": 0.01}}}
     text = overnight.point_spec_text(TOY, "pt-1", plan)

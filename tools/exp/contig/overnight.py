@@ -260,11 +260,13 @@ def fit_delta(tau: float, k: int, lo: float, hi: float) -> float | None:
     return d if d > 0 else None
 
 
-def plan_point(ks: dict, sp, cells: dict, rule: str) -> dict:
+def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None) -> dict:
     """The point's channels on its base spec `sp` (D9, D10): per channel K, its $M and τ, its
     split list (`rule` "base": the spec's own; "rule": #76's, the units above τ/2), its window in
     $M (`hi` the whole-state cap for a channel with no split unit and a cap) and its final δ;
-    `infeasible` {channel: why} for each channel whose τ is outside its window."""
+    `infeasible` {channel: why} for each channel whose τ is outside its window.  `floor`
+    {channel: δ} raises a channel's final δ to at least that (a `-wide` point: the master's
+    smallest feasible δ when the window's fit has no plan); the dollar gate is unchanged."""
     if set(ks) != set(sp.channels):
         raise ValueError(f"{sp.name}: K for {sorted(ks)}, channels {sorted(sp.channels)}")
     mass = unit_mass(sp, cells)
@@ -282,6 +284,8 @@ def plan_point(ks: dict, sp, cells: dict, rule: str) -> dict:
         if window is not None:
             lo, hi = window[0] / 1e6, (score.WHOLE_STATE_CAP[c] if whole else window[1]) / 1e6
             d = fit_delta(tau, k, lo, hi)
+            if d is not None and floor and c in floor:
+                d = max(d, float(floor[c]))
         out["channels"][c] = {"k": k, "usd_m": total, "tau_m": tau, "free": free, "lo_m": lo,
                               "hi_m": hi, "whole_state_cap": whole, "final_delta": d}
         if window is None:
@@ -623,7 +627,7 @@ class Runner:
         jobs = slots_of(pt)
         base_path, rule = STRUCTURES[pt["structure"]]
         base_path = os.path.join(ROOT, base_path)
-        plan = plan_point(ks, tdspec.load(base_path), self.cells, rule)
+        plan = plan_point(ks, tdspec.load(base_path), self.cells, rule, pt.get("delta_floor"))
         self.grid.update(pid, plan=plan)
         if plan["infeasible"]:
             return "infeasible", "; ".join(plan["infeasible"].values()), None, []
