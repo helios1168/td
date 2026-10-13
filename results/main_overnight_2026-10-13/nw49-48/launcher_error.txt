@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/sandvault-ntlee/.pi/worktrees/td-national-overnight/tools/exp/contig/overnight.py", line 601, in point
+    label, reason, final, new = self._chain(pt)
+                                ~~~~~~~~~~~^^^^
+  File "/Users/sandvault-ntlee/.pi/worktrees/td-national-overnight/tools/exp/contig/overnight.py", line 629, in _chain
+    text = point_spec_text(fh.read(), pid, plan)
+  File "/Users/sandvault-ntlee/.pi/worktrees/td-national-overnight/tools/exp/contig/overnight.py", line 296, in point_spec_text
+    body = _replan().banned_text(
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'contig_replan' has no attribute 'banned_text'

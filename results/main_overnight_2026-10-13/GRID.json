@@ -1,0 +1,1342 @@
+{
+  "assumptions": [
+    "#111, #112 (what gives way): open; no remedy arm beyond the stop/retry policy",
+    "#119 (all-M1 bound): not used; no point is claimed minimal",
+    "#133: R = 10 on in-state land, pieces of 20% of district mass or more, for this run only",
+    "WIFI window $850-1,150M with the $1.6B whole-state allowance, national floor $1,000M: owner decisions (2026-10-12) still to be filed in PROBLEM.md",
+    "M1 gated with necks across coverage gaps (scouts G1, TD_NECK_GAP_WIDTH=1); strict beside it"
+  ],
+  "code": {
+    "commit": "6acac190842884d2a468deaff04f55c30a565a6b",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "created_at": "2026-10-13T09:46:02+00:00",
+  "deadline": "2026-10-13T17:46:02+00:00",
+  "extract": "/Users/Shared/sv-ntlee/td/instance_descaled_usd.json.gz",
+  "extract_sha256": "98cc87bc8ba593599b93013c01db81ddc9b4f87dd61ebf2618d552f0065f22c8",
+  "gap_width_gate": true,
+  "grid": "main_overnight_2026-10-13",
+  "host": "m5",
+  "land_ratio": 10.0,
+  "limits": {
+    "caps_s": {
+      "draw": 1800.0,
+      "gate": 900.0,
+      "post": 1800.0,
+      "repair": 1500.0,
+      "replan": 300.0
+    },
+    "draw_s_per_channel": 4500.0,
+    "hours": 8.0,
+    "plan_s_per_solve": 600.0,
+    "repair_s_per_pass": 1800.0,
+    "retry_widen": 0.05
+  },
+  "points": {
+    "ne-48-bal": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "ne-48-bal",
+      "k": {
+        "FI": 21,
+        "WH": 10,
+        "WIFI": 3,
+        "national": 14
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1318,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 21,
+            "lo_m": 765.0,
+            "tau_m": 881.1533192558692,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.1342,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 10,
+            "lo_m": 850.0,
+            "tau_m": 1013.8801152484141,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1713,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 14,
+            "lo_m": 1000.0,
+            "tau_m": 1206.8368400075192,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 48
+    },
+    "ne-50-bal": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "ne-50-bal",
+      "k": {
+        "FI": 22,
+        "WH": 10,
+        "WIFI": 3,
+        "national": 15
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.0904,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 22,
+            "lo_m": 765.0,
+            "tau_m": 841.1008956533296,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.1342,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 10,
+            "lo_m": 850.0,
+            "tau_m": 1013.8801152484141,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 50
+    },
+    "ne-50-filight": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "ne-50-filight",
+      "k": {
+        "FI": 20,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 16
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1186,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 20,
+            "lo_m": 765.0,
+            "tau_m": 925.2109852186626,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.053,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1055.9822350065792,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 50
+    },
+    "ne-52-bal": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "ne-52-bal",
+      "k": {
+        "FI": 23,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 15
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.0491,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 23,
+            "lo_m": 765.0,
+            "tau_m": 804.5312914944892,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 52
+    },
+    "ne-52-filight": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "ne-52-filight",
+      "k": {
+        "FI": 22,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 16
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.0904,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 22,
+            "lo_m": 765.0,
+            "tau_m": 841.1008956533296,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.053,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1055.9822350065792,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 52
+    },
+    "ne-cmp-tierP": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "ne-cmp-tierP",
+      "k": {
+        "FI": 20,
+        "WH": 11,
+        "WIFI": 3,
+        "national": 15
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1186,
+            "free": [
+              "CA",
+              "FL",
+              "NC",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX"
+            ],
+            "hi_m": 1035.0,
+            "k": 20,
+            "lo_m": 765.0,
+            "tau_m": 925.2109852186626,
+            "usd_m": 18504.219704373252,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.0778,
+            "free": [
+              "CA",
+              "FL",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 921.7091956803764,
+            "usd_m": 10138.80115248414,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.2433,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 3,
+            "lo_m": 850.0,
+            "tau_m": 1123.326714688626,
+            "usd_m": 3369.980144065878,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "ne_plains",
+      "total": 49
+    },
+    "nw34-48": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "nw34-48",
+      "k": {
+        "WIFI": 34,
+        "national": 14
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0972,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 34,
+            "lo_m": 850.0,
+            "tau_m": 941.5588529683314,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1713,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 14,
+            "lo_m": 1000.0,
+            "tau_m": 1206.8368400075192,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "nw34",
+      "total": 48
+    },
+    "nw34-50": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "nw34-50",
+      "k": {
+        "WIFI": 35,
+        "national": 15
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0706,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 35,
+            "lo_m": 850.0,
+            "tau_m": 914.6571714549506,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1122,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1126.3810506736845,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "nw34",
+      "total": 50
+    },
+    "nw34-52": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "nw34-52",
+      "k": {
+        "WIFI": 36,
+        "national": 16
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0441,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 36,
+            "lo_m": 850.0,
+            "tau_m": 889.2500278034241,
+            "usd_m": 32013.00100092327,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.053,
+            "free": [
+              "AZ",
+              "CA",
+              "FL",
+              "IL",
+              "NC",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1055.9822350065792,
+            "usd_m": 16895.715760105268,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "nw34",
+      "total": 52
+    },
+    "nw49-48": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "nw49-48",
+      "k": {
+        "WIFI": 33,
+        "national": 15
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.1059,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 33,
+            "lo_m": 850.0,
+            "tau_m": 950.7166255672894,
+            "usd_m": 31373.64864372055,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.1445,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 15,
+            "lo_m": 1000.0,
+            "tau_m": 1169.0045411538658,
+            "usd_m": 17535.068117307987,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "nw49",
+      "total": 48
+    },
+    "nw49-50": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "nw49-50",
+      "k": {
+        "WIFI": 34,
+        "national": 16
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0788,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 34,
+            "lo_m": 850.0,
+            "tau_m": 922.7543718741338,
+            "usd_m": 31373.64864372055,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.0875,
+            "free": [
+              "CA",
+              "FL",
+              "IL",
+              "NJ",
+              "NY",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1095.9417573317492,
+            "usd_m": 17535.068117307987,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "nw49",
+      "total": 50
+    },
+    "nw49-52": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "nw49-52",
+      "k": {
+        "WIFI": 35,
+        "national": 17
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0517,
+            "free": [
+              "AL",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 35,
+            "lo_m": 850.0,
+            "tau_m": 896.3899612491585,
+            "usd_m": 31373.64864372055,
+            "whole_state_cap": false
+          },
+          "national": {
+            "final_delta": 0.0305,
+            "free": [
+              "AZ",
+              "CA",
+              "FL",
+              "IL",
+              "NC",
+              "NJ",
+              "NY",
+              "PA",
+              "TX"
+            ],
+            "hi_m": 1437.5,
+            "k": 17,
+            "lo_m": 1000.0,
+            "tau_m": 1031.4745951357638,
+            "usd_m": 17535.068117307987,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "nw49",
+      "total": 52
+    },
+    "w1-48": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "w1-48",
+      "k": {
+        "WIFI": 48
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.1286,
+            "free": [
+              "AL",
+              "AZ",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 48,
+            "lo_m": 850.0,
+            "tau_m": 1018.9315991880944,
+            "usd_m": 48908.71676102853,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "w1",
+      "total": 48
+    },
+    "w1-50": {
+      "final": null,
+      "finished_at": "2026-10-13T09:46:02+00:00",
+      "host": "m5",
+      "id": "w1-50",
+      "k": {
+        "WIFI": 50
+      },
+      "label": "error",
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.131,
+            "free": [
+              "AL",
+              "AZ",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "VA",
+              "WA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 50,
+            "lo_m": 850.0,
+            "tau_m": 978.1743352205707,
+            "usd_m": 48908.71676102853,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": "AttributeError: module 'contig_replan' has no attribute 'banned_text'",
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "done",
+      "structure": "w1",
+      "total": 50
+    },
+    "w1-52": {
+      "final": null,
+      "finished_at": null,
+      "host": "m5",
+      "id": "w1-52",
+      "k": {
+        "WIFI": 52
+      },
+      "label": null,
+      "parent": null,
+      "plan": {
+        "channels": {
+          "WIFI": {
+            "final_delta": 0.0962,
+            "free": [
+              "AL",
+              "AZ",
+              "CA",
+              "CO",
+              "CT",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "LA",
+              "MA",
+              "MD",
+              "MI",
+              "MN",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "SC",
+              "TN",
+              "TX",
+              "UT",
+              "VA",
+              "WA",
+              "WI"
+            ],
+            "hi_m": 1150.0,
+            "k": 52,
+            "lo_m": 850.0,
+            "tau_m": 940.5522454043949,
+            "usd_m": 48908.71676102853,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": "2026-10-13T09:46:02+00:00",
+      "status": "running",
+      "structure": "w1",
+      "total": 52
+    },
+    "w8-48-bal": {
+      "final": null,
+      "finished_at": null,
+      "host": "m2",
+      "id": "w8-48-bal",
+      "k": {
+        "FI": 22,
+        "WH": 11,
+        "WIFI": 1,
+        "national": 14
+      },
+      "label": null,
+      "parent": null,
+      "plan": null,
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": null,
+      "status": "elsewhere",
+      "structure": "west8",
+      "total": 48
+    },
+    "w8-50-bal": {
+      "final": null,
+      "finished_at": null,
+      "host": "m2",
+      "id": "w8-50-bal",
+      "k": {
+        "FI": 23,
+        "WH": 11,
+        "WIFI": 1,
+        "national": 15
+      },
+      "label": null,
+      "parent": null,
+      "plan": null,
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": null,
+      "status": "elsewhere",
+      "structure": "west8",
+      "total": 50
+    },
+    "w8-50-filight": {
+      "final": null,
+      "finished_at": null,
+      "host": "m2",
+      "id": "w8-50-filight",
+      "k": {
+        "FI": 21,
+        "WH": 12,
+        "WIFI": 1,
+        "national": 16
+      },
+      "label": null,
+      "parent": null,
+      "plan": null,
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": null,
+      "status": "elsewhere",
+      "structure": "west8",
+      "total": 50
+    },
+    "w8-52-bal": {
+      "final": null,
+      "finished_at": null,
+      "host": "m2",
+      "id": "w8-52-bal",
+      "k": {
+        "FI": 24,
+        "WH": 12,
+        "WIFI": 1,
+        "national": 15
+      },
+      "label": null,
+      "parent": null,
+      "plan": null,
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": null,
+      "status": "elsewhere",
+      "structure": "west8",
+      "total": 52
+    },
+    "w8-52-filight": {
+      "final": null,
+      "finished_at": null,
+      "host": "m2",
+      "id": "w8-52-filight",
+      "k": {
+        "FI": 23,
+        "WH": 12,
+        "WIFI": 1,
+        "national": 16
+      },
+      "label": null,
+      "parent": null,
+      "plan": null,
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": null,
+      "status": "elsewhere",
+      "structure": "west8",
+      "total": 52
+    },
+    "w8-cmp-seed": {
+      "final": null,
+      "finished_at": null,
+      "host": "m2",
+      "id": "w8-cmp-seed",
+      "k": {
+        "FI": 24,
+        "WH": 11,
+        "WIFI": 1,
+        "national": 13
+      },
+      "label": null,
+      "parent": null,
+      "plan": null,
+      "reason": null,
+      "rerun": null,
+      "stages": {},
+      "started_at": null,
+      "status": "elsewhere",
+      "structure": "west8",
+      "total": 49
+    }
+  }
+}
