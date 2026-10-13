@@ -138,7 +138,7 @@ def adapt(src: str, dst: str, fac: dict) -> str:
     _final = final_bands(src)
     _final_text = " ".join(f"{_ab.get(c, c)} ±{_pct(_final[c])}%" for c in _ch if c in _final)
     _sizes = " ".join(f"{_ab.get(c, c)} {v['max_size']}" for c, v in _ch.items() if c != "WIFI")
-    _main = next(v for c, v in _ch.items() if c != "WIFI")
+    _main = next((v for c, v in _ch.items() if c != "WIFI"), next(iter(_ch.values())))  # a WIFI-only run: WIFI's
     _by = collections.defaultdict(list)
     for st, km in _main.get("dist_km", {}).items():
         _by[km].append(st)
