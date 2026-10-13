@@ -1020,6 +1020,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w8-52-bal-wide/draw.log",
+          "rc": 1,
+          "seconds": 4526.8,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "w8-52-bal-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 7.2,
+          "stop": null
+        },
+        "r1": {
+          "log": "w8-52-bal-wide/r1.log",
+          "rc": 1,
+          "seconds": 1725.5,
+          "stop": null
+        },
         "replan": {
           "log": "w8-52-bal-wide/replan.log",
           "rc": 1,
@@ -1427,6 +1445,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w8-cmp-seed-wide/draw.log",
+          "rc": 1,
+          "seconds": 4564.1,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "w8-cmp-seed-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 8.4,
+          "stop": null
+        },
+        "r1": {
+          "log": "w8-cmp-seed-wide/r1.log",
+          "rc": 1,
+          "seconds": 1888.2,
+          "stop": null
+        },
         "replan": {
           "log": "w8-cmp-seed-wide/replan.log",
           "rc": 1,

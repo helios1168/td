@@ -1,6 +1,6 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T11:00:43+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T12:01:27+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
 
 27 points: 6 infeasible, 21 error.
 
@@ -79,6 +79,10 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 
 ## Needs your eye
 
+- render failed (exit 1): w8-52-bal-wide/draw/render.log
+- render failed (exit 1): w8-52-bal-wide/r1/render.log
+- render failed (exit 1): w8-cmp-seed-wide/draw/render.log
+- render failed (exit 1): w8-cmp-seed-wide/r1/render.log
 - ne-48-bal: no label (status elsewhere), counted as an error
 - ne-50-bal: no label (status elsewhere), counted as an error
 - ne-50-filight: no label (status elsewhere), counted as an error

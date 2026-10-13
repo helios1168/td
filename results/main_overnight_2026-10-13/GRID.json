@@ -886,6 +886,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "nw34-48-wide/draw.log",
+          "rc": 1,
+          "seconds": 4514.9,
+          "stop": null
+        },
         "replan": {
           "log": "nw34-48-wide/replan.log",
           "rc": 0,
@@ -1058,6 +1064,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "nw34-50-wide/draw.log",
+          "rc": 1,
+          "seconds": 4512.8,
+          "stop": null
+        },
         "replan": {
           "log": "nw34-50-wide/replan.log",
           "rc": 0,
@@ -1237,6 +1249,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "nw34-52-wide/draw.log",
+          "rc": 1,
+          "seconds": 4511.8,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "nw34-52-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 5.1,
+          "stop": null
+        },
+        "r1": {
+          "log": "nw34-52-wide/r1.log",
+          "rc": 1,
+          "seconds": 1811.8,
+          "stop": null
+        },
         "replan": {
           "log": "nw34-52-wide/replan.log",
           "rc": 1,
@@ -1637,6 +1667,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w1-48-wide/draw.log",
+          "rc": 1,
+          "seconds": 4506.6,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "w1-48-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 3.1,
+          "stop": null
+        },
+        "r1": {
+          "log": "w1-48-wide/r1.log",
+          "rc": 1,
+          "seconds": 1806.7,
+          "stop": null
+        },
         "replan": {
           "log": "w1-48-wide/replan.log",
           "rc": 0,
@@ -1777,6 +1825,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w1-50-wide/draw.log",
+          "rc": 1,
+          "seconds": 4507.7,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "w1-50-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 4.5,
+          "stop": null
+        },
+        "r1": {
+          "log": "w1-50-wide/r1.log",
+          "rc": 1,
+          "seconds": 1807.6,
+          "stop": null
+        },
         "replan": {
           "log": "w1-50-wide/replan.log",
           "rc": 0,
@@ -1919,6 +1985,24 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w1-52-wide/draw.log",
+          "rc": 1,
+          "seconds": 4506.8,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "w1-52-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 3.3,
+          "stop": null
+        },
+        "r1": {
+          "log": "w1-52-wide/r1.log",
+          "rc": 1,
+          "seconds": 1807.9,
+          "stop": null
+        },
         "replan": {
           "log": "w1-52-wide/replan.log",
           "rc": 0,
