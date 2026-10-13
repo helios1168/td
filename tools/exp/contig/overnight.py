@@ -72,7 +72,8 @@ district's $ against its channel's mean, M1 across gaps and strict, the largest 
 ratio, the label and links, the assumptions above it and "Needs your eye" below (`eye_items`:
 every M1 flip but El Paso's, every whole-state allowance, every split group beyond R, every
 failed render and unlabelled point); and `MORNING.pdf`, one page per point in that order, the
-final folder's `summary.png` or a page naming the label and reason.
+final folder's `zip_summary.png` (`summary.png` when it has none, `map_png`) or a page naming the
+label and reason.
 
 **smoke** (before the launch, on each Studio): one point's replan and draw, as `run` would draw
 it, into an empty folder with its own plan cache; `smoke.json` records the code, the extract's
@@ -1090,6 +1091,12 @@ def morning_md(doc: dict, rows: list, eye: list, at: str) -> str:
     return "\n".join(md) + "\n"
 
 
+def map_png(final: str) -> str:
+    """The final folder's page in MORNING.pdf: the ZIP pages' state summary, else `summary.png`."""
+    zp = os.path.join(final, "zip_summary.png")
+    return zp if os.path.exists(zp) else os.path.join(final, "summary.png")
+
+
 def morning_pdf(path: str, pages: list) -> None:
     """A raster PDF (`tools/shortlist/build.py`'s `deck`): one page per (png or None, text), a
     page without a map showing its text."""
@@ -1127,7 +1134,7 @@ def cmd_morning(a) -> int:
     with open(md, "w", encoding="utf-8") as fh:
         fh.write(morning_md(doc, rows, eye, now()))
     pdf = os.path.join(a.root, "MORNING.pdf")
-    morning_pdf(pdf, [(r["final"] and os.path.join(a.root, r["final"], "summary.png"),
+    morning_pdf(pdf, [(r["final"] and map_png(os.path.join(a.root, r["final"])),
                        title_of(r["rec"]) + (f"\n{r['reason']}" if r["reason"] else "") + "\nno map")
                       for r in rows])
     print(f"{md}\n{pdf}\n{len(rows)} points, {len(eye)} items need your eye", flush=True)

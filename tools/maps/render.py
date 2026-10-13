@@ -10,8 +10,11 @@ Writes into the run's own folder:
   its channel maps filled by state and, in a split state, by ZCTA clipped to its filed state, #128;
   a split state's land in no ZCTA shaded by its nearest district there, or grey with
   `--gap-fill grey`);
-- `zip_<channel>.png` and `zip_pages.pdf`: the ZIP-level pages (`tools/maps/zip_pages.py`): grey
-  unassigned land, the NYC inset, and with `--corridor` (IFA) the BOS-WAS one;
+- `zip_summary.png`, `zip_<channel>.png` and `zip_pages.pdf`: the ZIP-level pages
+  (`tools/maps/zip_pages.py`), the primary view (owner, 2026-10-13): the state summary page
+  (territories per state, split states) first, then one page per channel with grey unassigned
+  land, the NYC inset, and with `--corridor` (IFA) the BOS-WAS one, every page labelling the
+  major metros;
 - `render.json`: the renderer's commit, dirty flag and code hash (`CODE`), each input's sha256
   (`INPUTS` and the $ factors file), the label and title, M1's verdict from the gate
   (`tools/mandates/check.py`'s `m1`), and each image's sha256.

@@ -385,6 +385,9 @@ def test_morning_files_from_a_toy_grid():
         with open(os.path.join(fin, "land.csv"), "w") as fh:
             fh.write("channel,state,ratio,over\nWH,NY,12.50,1\nFI,PA,,0\n")
         Image.new("RGB", (300, 200), "red").save(os.path.join(fin, "summary.png"))
+        assert overnight.map_png(fin) == os.path.join(fin, "summary.png")
+        Image.new("RGB", (300, 200), "blue").save(os.path.join(fin, "zip_summary.png"))
+        assert overnight.map_png(fin) == os.path.join(fin, "zip_summary.png")
         recs = [_rec("ne-cmp-tierP", "eligible", final="ne-cmp-tierP/r1"),
                 _rec("w1-48", "stopped", "w1", reason="not started before the 8 h stop"),
                 _rec("w8-48-bal", None, "west8")]

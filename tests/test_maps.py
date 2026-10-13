@@ -9,6 +9,10 @@
   footer says M1 is judged on whole ZCTAs.
 - The caption: `summary.final_bands` takes `contig.json`'s repair band, else `run.json`'s
   `final_delta`, else the spec's, on a ±15% channel and a #127 map.
+- The ZIP pages' summary page: per-state territory counts by channel and split states from a toy
+  ledger (`zip_pages.state_territories`, `split_states`, `state_text`); the metros, the heaviest
+  Metro Areas by $ named by their first principal city (`top_metros`, `metro_name`); and
+  `place_labels` drops a label that would overlap one already placed.
 """
 from __future__ import annotations
 
@@ -148,6 +152,50 @@ def test_the_clip_is_display_only_and_an_m1_failure_keeps_its_title():
                                              "the ZIP pages)")
     assert inspect.signature(render.render).parameters["gap_fill"].default == "nearest"
     assert inspect.signature(summary.draw_channel_map).parameters["gap_fill"].default == "nearest"
+
+
+def test_the_summary_page_counts_territories_and_splits_per_state():
+    zp = _load("maps_zip_pages", "zip_pages.py")
+    rows = [("national", "national_01", "TX"), ("national", "national_02", "TX"),
+            ("national", "national_02", "OK"), ("WIFI", "WIFI_01", "TX"), ("WIFI", "WIFI_01", "TX"),
+            ("WIFI", "WIFI_02", "OK"), ("WIFI", "WIFI_03", "OK"), ("WIFI", "WIFI_04", "NM")]
+    counts = zp.state_territories(rows)
+    assert counts == {"TX": {"national": 2, "WIFI": 1}, "OK": {"national": 1, "WIFI": 2},
+                      "NM": {"WIFI": 1}}
+    assert zp.split_states(counts) == {"national": ["TX"], "WIFI": ["OK"]}
+    assert zp.state_text("TX", counts["TX"], ["national", "WIFI"]) == "TX\nN 2 · W 1"
+    assert zp.state_text("NM", counts["NM"], ["national", "WIFI"]) == "NM\nW 1"
+
+
+def test_the_metros_are_the_heaviest_metro_areas_by_their_principal_city():
+    zp = _load("maps_zip_pages", "zip_pages.py")
+    assert zp.metro_name("Dallas-Fort Worth-Arlington, TX Metro Area") == "Dallas–Fort Worth"
+    assert zp.metro_name("New York-Newark-Jersey City, NY-NJ Metro Area") == "New York"
+    assert zp.metro_name("Boise City, ID Metro Area") == "Boise City"
+    areas = {"1": ("New York-Newark-Jersey City, NY-NJ Metro Area", -74.0, 40.7),
+             "2": ("Dallas-Fort Worth-Arlington, TX Metro Area", -97.0, 32.8),
+             "3": ("Aberdeen, SD Micro Area", -98.7, 45.5),
+             "4": ("Boise City, ID Metro Area", -116.2, 43.6)}
+    weight = {"1": 5.0, "2": 9.0, "3": 50.0, "4": 1.0, "5": 7.0, "6": 0.0}
+    assert zp.top_metros(weight, areas, 2) == [("Dallas–Fort Worth", -97.0, 32.8), ("New York", -74.0, 40.7)]
+    assert [m[0] for m in zp.top_metros(weight, areas)] == ["Dallas–Fort Worth", "New York", "Boise City"]
+
+
+def test_place_labels_drops_a_label_that_would_overlap():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    zp = _load("maps_zip_pages", "zip_pages.py")
+    fig, ax = plt.subplots(figsize=(4, 3))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 100)
+    items = [(50, 50, "Alpha"), (50.2, 50.1, "Beta"), (10, 90, "Gamma"), (500, 50, "Outside")]
+    placed = zp.place_labels(ax, items, near=zp.NEAR[:1], leader=[])
+    assert [t.get_text() for t in placed] == ["Alpha", "Gamma"]
+    assert len(ax.lines) == 2                                     # a dot per placed label only
+    placed = zp.place_labels(ax, [(80, 20, "Delta")], near=zp.NEAR[:1], leader=[], avoid=placed)
+    assert [t.get_text() for t in placed] == ["Delta"]
+    plt.close(fig)
 
 
 def _run(tmp: str, channels: dict, contig: dict | None = None, spec: str | None = None) -> str:
