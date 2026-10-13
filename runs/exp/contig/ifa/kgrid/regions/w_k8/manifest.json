@@ -1,0 +1,59 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/run.py runs/exp/contig/_specs/ifa_kg_west_k8.toml --out runs/exp/contig/ifa/kgrid/regions/w_k8 --extract runs/exp/contig/ifa/kgrid/_inst/west.json.gz --states AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY --delta 0.044 --jobs 1 --time-limit 1800",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/west.json.gz",
+  "finished_at": "2026-10-13T17:54:27+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/w_k8",
+  "formulation": "contig",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "arm": "arm1",
+    "delta": 0.044,
+    "extract": "runs/exp/contig/ifa/kgrid/_inst/west.json.gz",
+    "fixed_targets": false,
+    "group_limit": null,
+    "jobs": 1,
+    "maps": false,
+    "parent": null,
+    "plan": {
+      "IFA": {
+        "delta": 0.044,
+        "final_delta": 0.044,
+        "forbid_pairs": [],
+        "free": [
+          "AZ",
+          "CA",
+          "NV",
+          "OR",
+          "UT",
+          "WA"
+        ]
+      }
+    },
+    "plans": null,
+    "plans_file": null,
+    "sequential": false,
+    "states": "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY",
+    "time_limit": 1800.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "74cec50f2096baadf9608bf3169a6f7bea2018c3",
+    "diff_sha256": "e1cedd52d4a1e594c8dbb4d89e48b93755d200a93fb8a523278e51f4e238ed74",
+    "dirty": true,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/_inst/west.json.gz",
+    "instance_sha256": "e7d763f7f1bb199f847d001189432b04a053b9255127cdce6f12a59ef674a60a",
+    "queued_at": "2026-10-13T16:15:24+00:00"
+  },
+  "run_id": "w_k8",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/_specs/ifa_kg_west_k8.toml",
+    "sha256": "fbe54f52c7f9fcea580b4281b19f7bdbc4d6e1cef3aa4b305c9f7664669d4923"
+  },
+  "started_at": "2026-10-13T16:15:24+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

@@ -1,0 +1,479 @@
+{
+  "arm": "arm1+repair",
+  "channels": {
+    "IFA": {
+      "connected": true,
+      "cut_border_km": 7949.68629,
+      "cut_border_km_before_repair": 8886.12215,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "groups": [
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 17892,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.044,
+          "districts": [
+            "AZ#1",
+            "AZ+MT+NM+NV+UT+WY#1",
+            "CA#1",
+            "CA#2",
+            "CA#3",
+            "CA#4",
+            "CA+NV+OR#1",
+            "ID+OR+WA#1"
+          ],
+          "free_zctas": 2828,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "no incumbent (Time limit reached)",
+          "objective": null,
+          "rows": 51961,
+          "seconds": 5940.62,
+          "status": "unknown",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.044,
+              "note": "no incumbent (Time limit reached)",
+              "seconds": 5940.62,
+              "status": "unknown"
+            }
+          ],
+          "units": [
+            "AZ",
+            "CA",
+            "NV",
+            "OR"
+          ]
+        },
+        {
+          "border_km": 212.28563,
+          "bound": 3896.463271294129,
+          "columns": 337,
+          "cuts": 2,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "CA#2",
+            "CA#3",
+            "CA+NV+OR#1"
+          ],
+          "free_zctas": 62,
+          "gap": 0.0,
+          "iterations": 8,
+          "moment": 4929.416713870708,
+          "neck_cuts": 6,
+          "neck_exempt": [],
+          "necks_cut": [
+            "IFA/CA#3: neck 8.16 km wide cuts off 3 ZIPs (92610...), 5.6% of its land area and 0.7% of its mass; cut 92679-92883 8.16 km",
+            "IFA/CA#3: neck 9.15 km wide cuts off 7 ZIPs (91752...), 14.1% of its land area and 2.2% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+            "IFA/CA#3: neck 9.15 km wide cuts off 10 ZIPs (91752...), 18.7% of its land area and 3.1% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+            "IFA/CA#3: neck 9.15 km wide cuts off 11 ZIPs (91752...), 20.4% of its land area and 3.9% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+            "IFA/CA#3: neck 9.15 km wide cuts off 11 ZIPs (91752...), 21.2% of its land area and 3.1% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+            "IFA/CA#3: neck 9.15 km wide cuts off 12 ZIPs (91752...), 22.8% of its land area and 3.9% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km"
+          ],
+          "note": "",
+          "objective": 3896.463271294129,
+          "rows": 934,
+          "seconds": 11.72,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 5.69,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 6.03,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "CA"
+          ]
+        },
+        {
+          "border_km": 936.49115,
+          "bound": 27990.645223154635,
+          "columns": 3520,
+          "cuts": 141,
+          "dag": false,
+          "delta": null,
+          "districts": [
+            "AZ#1",
+            "AZ+MT+NM+NV+UT+WY#1",
+            "CA+NV+OR#1"
+          ],
+          "free_zctas": 671,
+          "gap": 0.0,
+          "iterations": 6,
+          "moment": 70674032.9005621,
+          "neck_cuts": 1,
+          "neck_exempt": [],
+          "necks_cut": [
+            "IFA/AZ+MT+NM+NV+UT+WY#1: neck 5.48 km wide cuts off 533 ZIPs (79837...), 37.6% of its land area and 19.8% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km, 89007-89021 0.00 km"
+          ],
+          "note": "",
+          "objective": 27990.645223154635,
+          "rows": 9431,
+          "seconds": 8.39,
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 1.16,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 7.23,
+              "status": "optimal"
+            }
+          ],
+          "units": [
+            "AZ",
+            "NM",
+            "NV",
+            "UT"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 0.017000769757894163,
+      "necks_left": [],
+      "plan_delta": 0.044,
+      "repair": [
+        {
+          "after": {
+            "cuts": 7,
+            "outside_band": [
+              "AZ+MT+NM+NV+UT+WY#1"
+            ],
+            "split_states": 4,
+            "worst_dev": 0.044051698945664186
+          },
+          "before": {
+            "cuts": 7,
+            "outside_band": [
+              "AZ+MT+NM+NV+UT+WY#1"
+            ],
+            "split_states": 4,
+            "worst_dev": 0.044051698945664186
+          },
+          "bound": 3896.463271294129,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "CA#3 92610 (3 ZCTAs)"
+          ],
+          "districts": [
+            "CA#2",
+            "CA#3",
+            "CA+NV+OR#1"
+          ],
+          "flow": false,
+          "gap": 0.0,
+          "group": {
+            "border_km": 212.28563,
+            "bound": 3896.463271294129,
+            "columns": 337,
+            "cuts": 2,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "CA#2",
+              "CA#3",
+              "CA+NV+OR#1"
+            ],
+            "free_zctas": 62,
+            "gap": 0.0,
+            "iterations": 8,
+            "moment": 4929.416713870708,
+            "neck_cuts": 6,
+            "neck_exempt": [],
+            "necks_cut": [
+              "IFA/CA#3: neck 8.16 km wide cuts off 3 ZIPs (92610...), 5.6% of its land area and 0.7% of its mass; cut 92679-92883 8.16 km",
+              "IFA/CA#3: neck 9.15 km wide cuts off 7 ZIPs (91752...), 14.1% of its land area and 2.2% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+              "IFA/CA#3: neck 9.15 km wide cuts off 10 ZIPs (91752...), 18.7% of its land area and 3.1% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+              "IFA/CA#3: neck 9.15 km wide cuts off 11 ZIPs (91752...), 20.4% of its land area and 3.9% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+              "IFA/CA#3: neck 9.15 km wide cuts off 11 ZIPs (91752...), 21.2% of its land area and 3.1% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km",
+              "IFA/CA#3: neck 9.15 km wide cuts off 12 ZIPs (91752...), 22.8% of its land area and 3.9% of its mass; cut 91709-92880 8.55 km, 92880-92887 0.59 km"
+            ],
+            "note": "",
+            "objective": 3896.463271294129,
+            "rows": 934,
+            "seconds": 11.72,
+            "status": "optimal",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "",
+                "seconds": 5.69,
+                "status": "connected"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "",
+                "seconds": 6.03,
+                "status": "optimal"
+              }
+            ],
+            "units": [
+              "CA"
+            ]
+          },
+          "h": 3,
+          "keep_support": false,
+          "kept": true,
+          "kind": "neck",
+          "neck_aware": true,
+          "neck_cuts": 6,
+          "neck_exempt": [],
+          "necks_after": 0,
+          "necks_before": 1,
+          "note": "",
+          "objective": 3896.463271294129,
+          "pieces_after": 0,
+          "pieces_before": 0,
+          "seconds": 11.7,
+          "shape": "ball",
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "",
+              "seconds": 5.69,
+              "status": "connected"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 6.03,
+              "status": "optimal"
+            }
+          ],
+          "window_zctas": 62
+        },
+        {
+          "after": {
+            "cuts": 7,
+            "outside_band": [],
+            "split_states": 4,
+            "worst_dev": 0.04280637525317299
+          },
+          "before": {
+            "cuts": 7,
+            "outside_band": [
+              "AZ+MT+NM+NV+UT+WY#1"
+            ],
+            "split_states": 4,
+            "worst_dev": 0.044051698945664186
+          },
+          "bound": 27990.645223154635,
+          "cap": true,
+          "channel": "IFA",
+          "cluster": [
+            "AZ+MT+NM+NV+UT+WY#1 79837 (533 ZCTAs)"
+          ],
+          "districts": [
+            "AZ#1",
+            "AZ+MT+NM+NV+UT+WY#1",
+            "CA+NV+OR#1"
+          ],
+          "flow": false,
+          "gap": 0.0,
+          "group": {
+            "border_km": 936.49115,
+            "bound": 27990.645223154635,
+            "columns": 3520,
+            "cuts": 141,
+            "dag": false,
+            "delta": null,
+            "districts": [
+              "AZ#1",
+              "AZ+MT+NM+NV+UT+WY#1",
+              "CA+NV+OR#1"
+            ],
+            "free_zctas": 671,
+            "gap": 0.0,
+            "iterations": 6,
+            "moment": 70674032.9005621,
+            "neck_cuts": 1,
+            "neck_exempt": [],
+            "necks_cut": [
+              "IFA/AZ+MT+NM+NV+UT+WY#1: neck 5.48 km wide cuts off 533 ZIPs (79837...), 37.6% of its land area and 19.8% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km, 89007-89021 0.00 km"
+            ],
+            "note": "",
+            "objective": 27990.645223154635,
+            "rows": 9431,
+            "seconds": 8.39,
+            "status": "optimal",
+            "tried": [
+              {
+                "dag": true,
+                "delta": null,
+                "note": "the geodesic-DAG restriction is infeasible",
+                "seconds": 1.16,
+                "status": "unknown"
+              },
+              {
+                "dag": false,
+                "delta": null,
+                "note": "",
+                "seconds": 7.23,
+                "status": "optimal"
+              }
+            ],
+            "units": [
+              "AZ",
+              "NM",
+              "NV",
+              "UT"
+            ]
+          },
+          "h": 3,
+          "keep_support": false,
+          "kept": true,
+          "kind": "neck",
+          "neck_aware": true,
+          "neck_cuts": 1,
+          "neck_exempt": [],
+          "necks_after": 0,
+          "necks_before": 1,
+          "note": "",
+          "objective": 27990.645223154635,
+          "pieces_after": 0,
+          "pieces_before": 0,
+          "seconds": 8.4,
+          "shape": "ball",
+          "status": "optimal",
+          "tried": [
+            {
+              "dag": true,
+              "delta": null,
+              "note": "the geodesic-DAG restriction is infeasible",
+              "seconds": 1.16,
+              "status": "unknown"
+            },
+            {
+              "dag": false,
+              "delta": null,
+              "note": "",
+              "seconds": 7.23,
+              "status": "optimal"
+            }
+          ],
+          "window_zctas": 671
+        }
+      ],
+      "repair_band": {
+        "delta": 0.044,
+        "worst_dev": 0.04280637525317299
+      },
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [
+        "AZ#1",
+        "CA#1",
+        "CA#2",
+        "CA#3",
+        "CA#4",
+        "CA+NV+OR#1"
+      ],
+      "single_connector": {
+        "AZ+MT+NM+NV+UT+WY#1": [
+          "84501-84520",
+          "84522-84654"
+        ],
+        "CA#1": [
+          "93206-93276",
+          "94404-94545"
+        ],
+        "CA#3": [
+          "90704-90802"
+        ],
+        "CA#4": [
+          "94105-94130",
+          "94129-94965",
+          "94130-94607",
+          "96023-96134"
+        ],
+        "CA+NV+OR#1": [
+          "89010-89047",
+          "89049-89314",
+          "89301-89835",
+          "89316-89822",
+          "89826-89835",
+          "89832-89834",
+          "92309-92364",
+          "92310-92311",
+          "97735-97739"
+        ],
+        "ID+OR+WA#1": [
+          "83823-83827",
+          "98230-98281",
+          "98245-98297",
+          "98353-98366"
+        ]
+      },
+      "source_group_delta_needed": 0.044,
+      "split_units": [
+        "AZ",
+        "CA",
+        "NV",
+        "OR"
+      ],
+      "status": "connected",
+      "undrawn_zctas": 2828,
+      "vanished_shares": [],
+      "worst_dev": 0.042806375253173
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.044,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28371 (ZCTA, fine channel) cells with no row, 0 owned twice, 3 mass necks listed beside M1"
+  },
+  "plan_seconds": 1.2,
+  "plans_file": null,
+  "repair": {
+    "budget": null,
+    "commit": "fff4b19",
+    "flow": false,
+    "h0": 3,
+    "keep_support": false,
+    "label": "",
+    "max_zctas": 1500,
+    "neck_time_limit": null,
+    "open_units": [],
+    "plans_file": null,
+    "time_limit": 240.0
+  },
+  "repair_of": "/Users/sandvault-ntlee/.pi/worktrees/td-ifa-kgrid/runs/exp/contig/ifa/kgrid/regions/w_k8",
+  "scenario": "ifa_kg_west_k8",
+  "sequential": false
+}

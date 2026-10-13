@@ -1,0 +1,9 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces,source_run,source_district,window
+IFA,IFA_01,"IFA Phoenix-Mesa-Chandler, AZ",AZ#1,AZ,841.3831259011499,852.0109598669994,0,w_k8-rep,IFA_01,in
+IFA,IFA_02,"IFA Salt Lake City-Murray, UT",AZ+MT+NM+NV+UT+WY#1,AZ+MT+NM+NV+UT+WY,799.430482213429,800.428620296,0,w_k8-rep,IFA_02,in
+IFA,IFA_03,"IFA San Jose-Sunnyvale-Santa Clara, CA",CA#1,CA,862.5300644241157,843.9646280100004,0,w_k8-rep,IFA_03,in
+IFA,IFA_04,"IFA San Diego-Chula Vista-Carlsbad, CA",CA#2,CA,862.5300644241157,851.8837492180002,0,w_k8-rep,IFA_04,in
+IFA,IFA_05,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA (2)",CA#3,CA,862.5300644241157,820.140946757,0,w_k8-rep,IFA_05,in
+IFA,IFA_06,"IFA San Francisco-Oakland-Fremont, CA",CA#4,CA,862.5300644241157,843.8481834208997,0,w_k8-rep,IFA_06,in
+IFA,IFA_07,"IFA Los Angeles-Long Beach-Anaheim, CA / Riverside-San Bernardino-Ontario, CA (1)",CA+NV+OR#1,CA+NV+OR,799.4304822134291,846.2800792010006,0,w_k8-rep,IFA_07,in
+IFA,IFA_08,"IFA Seattle-Tacoma-Bellevue, WA",ID+OR+WA#1,ID+OR+WA,799.430482213429,831.237663468,0,w_k8-rep,IFA_08,in

@@ -1,0 +1,205 @@
+{
+  "cells": 4929,
+  "channels": {
+    "IFA": {
+      "delta": 0.15,
+      "districts": 0,
+      "districts_by_cause": {},
+      "final_delta": 0.15,
+      "k": 8,
+      "margin": false,
+      "pieces": 0,
+      "pieces_by_cause": {},
+      "status": "merged: AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY optimal",
+      "tier": "none (merged; no regional master)",
+      "vanished": 0
+    }
+  },
+  "districts": {
+    "IFA_01": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 852.0109598669994,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1066.7,
+      "window": "in"
+    },
+    "IFA_02": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 800.428620296,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1002.1,
+      "window": "in"
+    },
+    "IFA_03": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 843.9646280100004,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1056.6,
+      "window": "in"
+    },
+    "IFA_04": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 851.8837492180002,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1066.5,
+      "window": "in"
+    },
+    "IFA_05": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 820.140946757,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1026.8,
+      "window": "in"
+    },
+    "IFA_06": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 843.8481834208997,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1056.5,
+      "window": "in"
+    },
+    "IFA_07": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 846.2800792010006,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1059.5,
+      "window": "in"
+    },
+    "IFA_08": {
+      "m1": "pass",
+      "m1_default": "pass",
+      "m_rel": 831.237663468,
+      "necks": 0,
+      "pieces": 0,
+      "usd_m": 1040.7,
+      "window": "in"
+    }
+  },
+  "dropped_channels": [],
+  "dropped_units": {
+    "IFA": [
+      "AL",
+      "AR",
+      "CO",
+      "CT",
+      "DC",
+      "DE",
+      "FL",
+      "GA",
+      "IA",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MA",
+      "MD",
+      "ME",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "NC",
+      "ND",
+      "NE",
+      "NH",
+      "NJ",
+      "NY",
+      "OH",
+      "OK",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "VA",
+      "VT",
+      "WI",
+      "WV"
+    ]
+  },
+  "fine_channels": [
+    "ifa"
+  ],
+  "gap_width_flips": [],
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28371 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "m1_default": {
+    "failing": [],
+    "necks": {},
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28371 (ZCTA, fine channel) cells with no row, 0 owned twice, 3 mass necks listed beside M1"
+  },
+  "m1_gap_width": {
+    "failing": [],
+    "necks": {},
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 0 necks, 0 channel ZCTAs with no owner, 28371 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "maps": "not drawn (tools/maps/render.py <dir> draws them)",
+  "merged_from": {
+    "AZ,CA,ID,MT,NM,NV,OR,UT,WA,WY": {
+      "commit": "fff4b199f29dae36be8ff49872e3a0be6499e127",
+      "m1": "fail",
+      "run": "runs/exp/contig/ifa/kgrid/regions/w_k8-rep"
+    }
+  },
+  "neck_gap_width": true,
+  "realizer": "tools/exp/contig/merge.py",
+  "scenario": "ifa_west_merge",
+  "source": "west_k8.json.gz",
+  "spec": "runs/exp/contig/_specs/ifa_west_merge.toml",
+  "spec_overrides": {
+    "IFA": {
+      "free": [
+        "AZ",
+        "CA",
+        "NV",
+        "OR"
+      ],
+      "k": 8
+    }
+  },
+  "tau_band": {
+    "final_delta": {
+      "IFA": 0.15
+    },
+    "role": "information only (owner, 2026-10-08)",
+    "status": "pass",
+    "summary": "8 districts, 0 outside the final tolerance"
+  },
+  "verdict": "fail",
+  "window": {
+    "districts": 8,
+    "in": 8,
+    "m_rel": [
+      798.74,
+      1148.19
+    ],
+    "outside": [],
+    "usd_m": [
+      1000.0,
+      1437.5
+    ],
+    "verdict": "pass"
+  },
+  "zips": 4929
+}
