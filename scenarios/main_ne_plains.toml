@@ -1,0 +1,71 @@
+# The main-map overnight grid's ne_plains structure (2026-10-13, tools/exp/contig/overnight.py):
+# the lead-map layout of the six tier-P maps, ported from the hub's untracked
+# runs/exp/contig/wh_dollar/s13_WH11.toml (set125.sh's seed) with its lists unchanged (D10).
+# WIFI is 15 whole states, New England and the plains, holding all five fine channels; national,
+# WH and FI plan the other 34 units apart under the #67 rule.  The launcher sets each channel's k,
+# delta and final_delta per grid point on the dollar extract; the split lists are this file's.
+
+[scenario]
+name = "main_ne_plains"
+fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+delta = 0.1
+planned_elsewhere = ["career", "edj", "ifa", "imo", "priafs"]
+
+[channels.national]
+margin = false
+k = 15
+domain = [{ units = ["MS", "DE", "WV", "DC", "AR", "IA", "OR", "TN", "AL", "WI", "KY", "MO", "SC", "NV", "LA", "MN", "IN", "UT", "WA", "MD", "CO", "GA", "OH", "VA", "MI", "AZ", "PA", "NC", "IL", "NJ", "FL", "NY", "TX", "CA"], fine = ["national_chase", "wells_wh", "wells_fi"] }]
+mode = "whole"
+eta = 0.05
+max_size = 5
+max_dist_km = 900
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600, CO = 1600 }
+contact_caps = { CA = 4 }
+free = ["CA", "FL", "NY", "TX"]
+delta = 0.0938
+final_delta = 0.1
+
+[channels.WH]
+margin = false
+k = 11
+domain = [{ units = ["AL", "AR", "AZ", "CA", "CO", "DC", "DE", "FL", "GA", "IA", "IL", "IN", "KY", "LA", "MD", "MI", "MN", "MO", "MS", "NC", "NJ", "NV", "NY", "OH", "OR", "PA", "SC", "TN", "TX", "UT", "VA", "WA", "WI", "WV"], fine = ["wh"] }]
+mode = "whole"
+eta = 0.05
+max_size = 4
+max_dist_km = 900
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600, CO = 1600 }
+contact_caps = { CA = 4 }
+free = ["CA", "FL", "NJ", "NY", "PA", "TX"]
+delta = 0.090
+final_delta = 0.1
+
+[channels.FI]
+margin = false
+k = 20
+domain = [{ units = ["AL", "AR", "AZ", "CA", "CO", "DC", "DE", "FL", "GA", "IA", "IL", "IN", "KY", "LA", "MD", "MI", "MN", "MO", "MS", "NC", "NJ", "NV", "NY", "OH", "OR", "PA", "SC", "TN", "TX", "UT", "VA", "WA", "WI", "WV"], fine = ["fi"] }]
+mode = "whole"
+eta = 0.15
+max_size = 6
+max_dist_km = 900
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600, CO = 1600 }
+contact_caps = { CA = 4 }
+free = ["CA", "FL", "NC", "NY", "OH", "PA", "TN", "TX"]
+delta = 0.08
+final_delta = 0.1
+
+[channels.WIFI]
+margin = false
+k = 3
+domain = [{ units = ["ME", "NH", "VT", "MA", "RI", "CT", "ID", "MT", "ND", "NE", "SD", "WY", "NM", "OK", "KS"], fine = ["wh", "fi", "national_chase", "wells_wh", "wells_fi"] }]
+mode = "whole"
+eta = 0.05
+delta = 0.1
+max_size = 9
+max_dist_km = 5000
+final_delta = 0.1
+
+[national]
+channel = "national"
+fine = ["national_chase", "wells_wh", "wells_fi"]
+units = ["MS", "DE", "WV", "DC", "AR", "IA", "OR", "TN", "AL", "WI", "KY", "MO", "SC", "NV", "LA", "MN", "IN", "UT", "WA", "MD", "CO", "GA", "OH", "VA", "MI", "AZ", "PA", "NC", "IL", "NJ", "FL", "NY", "TX", "CA"]
+fallback = { national_chase = "fi", wells_fi = "fi", wells_wh = "wh" }

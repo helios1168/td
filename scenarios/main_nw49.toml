@@ -1,0 +1,36 @@
+# The main-map overnight grid's nw49 structure (2026-10-13, tools/exp/contig/overnight.py):
+# national + WIFI over all 49 units.  Every unit has national, so national holds national chase,
+# wells WH and wells FI everywhere and WIFI holds WH and FI everywhere; WIFI units may split.
+# No split list here: the launcher computes one per grid point by the #76 rule (units whose
+# channel $ exceeds half a district) and passes it to replan.py, and sets k, delta and
+# final_delta.  Support values are scenario 50's (50_ifa.toml), the one channel planned over all
+# 49 units at a comparable K (policy).
+
+[scenario]
+name = "main_nw49"
+fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+planned_elsewhere = ["career", "edj", "ifa", "imo", "priafs"]
+delta = 0.10                    # OD1's default final band; the launcher sets each channel's
+
+[national]
+channel = "national"
+fine = ["national_chase", "wells_wh", "wells_fi"]
+units = "all"
+
+[channels.national]
+k = 16
+domain = [{ units = "all", fine = ["national_chase", "wells_wh", "wells_fi"] }]
+mode = "whole"
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }
+
+[channels.WIFI]
+k = 34
+domain = [{ units = "all", fine = ["wh", "fi"] }]
+mode = "whole"
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }

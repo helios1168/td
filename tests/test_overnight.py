@@ -6,6 +6,7 @@ from __future__ import annotations
 import collections
 import importlib.util
 import json
+import math
 import os
 import re
 import sys
@@ -425,3 +426,99 @@ def test_subcommands_parse():
     s = p.parse_args(["smoke", "--compare", "a.json", "m2:/tmp/b.json"])
     assert s.compare == ["a.json", "m2:/tmp/b.json"] and s.point == "ne-48-bal" and s.func is overnight.cmd_smoke
 
+
+# ------------------------------------------------ the base specs (the pre-launch gates, Slice 7)
+NE_PLAINS = {"ME", "NH", "VT", "MA", "RI", "CT", "ID", "MT", "ND", "NE", "SD", "WY", "NM", "OK", "KS"}
+WEST = {"CO", "ID", "MT", "ND", "NE", "NM", "SD", "WY"}
+ALL = set(tdspec.CONUS_STATES)
+FIVE = {"national_chase", "wells_wh", "wells_fi", "wh", "fi"}
+NATIONAL_FINE = {"national_chase", "wells_wh", "wells_fi"}
+
+
+def _base(structure):
+    path = os.path.join(overnight.ROOT, overnight.STRUCTURES[structure][0])
+    with open(path, encoding="utf-8") as fh:
+        return tdspec.load(path), fh.read(), overnight.STRUCTURES[structure][1]
+
+
+def _free(cs):
+    return sorted(u for u, m in cs.modes.items() if m == "free")
+
+
+def test_base_specs_load_and_fit_every_point():
+    assert set(overnight.STRUCTURES) == {p["structure"] for p in overnight.POINTS}
+    cells = {(u, f): 1.0 for u in ALL for f in FIVE}
+    for structure in overnight.STRUCTURES:
+        sp, text, rule = _base(structure)
+        assert sp.name == f"main_{structure}" and re.search(r'(?m)^name = ".*"$', text)
+        assert set(sp.fine_channels) == FIVE
+        assert {"career", "edj", "imo", "priafs"} <= set(sp.planned_elsewhere)   # no owner total
+        mass = overnight.unit_mass(sp, cells)                                     # units are states
+        assert math.fsum(m for c in mass.values() for m in c.values()) == len(ALL) * len(FIVE)
+        for pt in overnight.POINTS:
+            if pt["structure"] == structure:
+                assert set(pt["k"]) == set(sp.channels), pt["id"]
+        free = {c: _free(cs) for c, cs in sp.channels.items()}
+        if rule == "rule":
+            assert not any(free.values()), structure                              # #76 per point
+        else:
+            assert free.pop("WIFI") == [] and all(free.values()), structure       # whole-state cap
+
+
+def test_base_footprints():
+    ne, _, _ = _base("ne_plains")
+    assert ne.channels["WIFI"].units == NE_PLAINS and set(ne.channels["WIFI"].domain.values()) == {frozenset(FIVE)}
+    assert all(ne.channels[c].units == ALL - NE_PLAINS for c in ("national", "WH", "FI"))
+    assert ne.national.units == ALL - NE_PLAINS
+    assert [_free(ne.channels[c]) for c in ("national", "WH", "FI")] == [            # s13_WH11's (D10)
+        ["CA", "FL", "NY", "TX"], ["CA", "FL", "NJ", "NY", "PA", "TX"],
+        ["CA", "FL", "NC", "NY", "OH", "PA", "TN", "TX"]]
+    assert ne.channels["WIFI"].max_size == 9 and not ne.channels["WIFI"].listed_only
+
+    w8, _, _ = _base("west8")
+    s51 = tdspec.load(os.path.join(overnight.ROOT, "scenarios", "51_total_13n_11wh_24fi_3wifi.toml"))
+    assert all(w8.channels[c] == s51.channels[c] for c in ("national", "WH", "FI"))  # D11
+    assert w8.national == s51.national
+    wifi = w8.channels["WIFI"]
+    assert wifi.units == WEST and set(wifi.domain.values()) == {frozenset(FIVE)}
+    assert (wifi.listed_only, wifi.extra_supports, wifi.max_size, wifi.max_dist_km) == (False, (), 8, 5000.0)
+    assert set(wifi.modes.values()) == {"whole"}
+
+    nw49, _, _ = _base("nw49")
+    assert nw49.channels["national"].units == ALL and nw49.national.units == ALL
+    assert set(nw49.channels["national"].domain.values()) == {frozenset(NATIONAL_FINE)}
+    assert nw49.channels["WIFI"].units == ALL
+    assert set(nw49.channels["WIFI"].domain.values()) == {frozenset({"wh", "fi"})}
+
+    nw34, _, _ = _base("nw34")
+    n34, n = nw34.channels["national"], ne.channels["national"]
+    assert n34.units == ALL - NE_PLAINS and nw34.national.units == ALL - NE_PLAINS
+    assert ((n34.eta, n34.max_size, n34.max_dist_km, n34.dist_km, n34.contact_caps, n34.margin)
+            == (n.eta, n.max_size, n.max_dist_km, n.dist_km, n.contact_caps, n.margin))
+    assert all(f == (FIVE if u in NE_PLAINS else {"wh", "fi"}) for u, f in nw34.channels["WIFI"].domain.items())
+    assert nw34.channels["WIFI"].units == ALL
+
+    w1, _, _ = _base("w1")
+    assert list(w1.channels) == ["WIFI"] and w1.national is None
+    assert w1.channels["WIFI"].units == ALL and set(w1.channels["WIFI"].domain.values()) == {frozenset(FIVE)}
+    for s in ("nw49", "nw34", "w1"):                     # scenario 50's support values (policy)
+        sp, _, _ = _base(s)
+        w = sp.channels["WIFI"]
+        assert (w.eta, w.max_size, w.max_dist_km, w.dist_km["CA"], w.margin) == (0.05, 6, 900.0, 1600.0, True)
+
+
+def test_base_specs_take_the_launchers_rewrites():
+    banned_text = overnight._replan().banned_text
+    for structure in overnight.STRUCTURES:
+        sp, text, rule = _base(structure)
+        pt = next(p for p in overnight.POINTS if p["structure"] == structure)
+        plan = {"channels": {c: {"k": k, "final_delta": 0.05} for c, k in pt["k"].items()}}
+        copy = overnight.point_spec_text(text, pt["id"], plan)
+        got = tdspec.parse(tomllib.loads(copy))
+        assert got.name == pt["id"]
+        assert {c: (cs.k, cs.delta, cs.final_delta) for c, cs in got.channels.items()} == \
+            {c: (k, 0.02, 0.05) for c, k in pt["k"].items()}
+        free = ({c: _free(cs) for c, cs in sp.channels.items() if _free(cs)} if rule == "base"
+                else {c: ["CA", "TX"] for c in sp.channels})               # replan.py --free's rewrite
+        out = tdspec.parse(tomllib.loads(banned_text(copy, [], free=free)))
+        assert {c: _free(cs) for c, cs in out.channels.items() if c in free} == free, structure
