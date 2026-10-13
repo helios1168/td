@@ -1,0 +1,19 @@
+# IFA K grid (2026-10-13): MW13: MI+IN+IL K 5 (tau 1074.1 m_rel); MI+WI+IA K 4 left a 0.42 tau piece
+[scenario]
+name = "ifa_kg_miinil_k5"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.068
+
+[channels.IFA]
+margin = false
+k = 5
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["MI", "IN", "IL"]
+eta = 0.05
+max_size = 3
+max_dist_km = 900
+dist_km = { }
+delta = 0.068
+final_delta = 0.068
