@@ -1,0 +1,19 @@
+# IFA K grid (2026-10-13): SA10: VA+DC+NC+SC+GA+FL K 9 (tau 807.9 m_rel); MD+DE+WV K 1 kept
+[scenario]
+name = "ifa_kg_sarest_k9"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.011
+
+[channels.IFA]
+margin = false
+k = 9
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["FL", "GA", "NC", "SC", "VA"]
+eta = 0.05
+max_size = 3
+max_dist_km = 900
+dist_km = { }
+delta = 0.011
+final_delta = 0.011

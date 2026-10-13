@@ -1,0 +1,19 @@
+# IFA K grid (2026-10-13): W6: all ten West states K 6 (tau 1115.0 m_rel)
+[scenario]
+name = "ifa_kg_west_k6"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.029
+
+[channels.IFA]
+margin = false
+k = 6
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["CA", "AZ", "NV", "OR", "WA", "UT"]
+eta = 0.05
+max_size = 6
+max_dist_km = 2000
+dist_km = { }
+delta = 0.029
+final_delta = 0.029
