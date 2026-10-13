@@ -337,7 +337,8 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list,
     src_run = {tag: json.load(open(os.path.join(f, "run.json"), encoding="utf-8"))
                for tag, _, f in sources}
     report = {
-        "scenario": s.name, "spec": os.path.relpath(spec_path, ROOT), "source": os.path.basename(extract_out),
+        "scenario": s.name, "spec": os.path.relpath(spec_path, ROOT), "source": os.path.relpath(os.path.abspath(extract_out),     # under $TD_REPO, as score.py reads it
+                                  os.environ.get("TD_REPO", ROOT)),
         "verdict": audit.verdict(checks), "realizer": "tools/exp/contig/merge.py",
         "fine_channels": list(s.fine_channels), "cells": len(led),
         "zips": len({r["zip_code"] for r in led}),
