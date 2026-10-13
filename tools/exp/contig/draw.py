@@ -48,6 +48,16 @@ Experimental, not a production realizer.  Per planning channel:
   tie-break at `MOMENT_SHARE` of the shape tier's scale.  `border` is {(a, b) with a < b: km}
   (`border_km`); without it every edge counts 1 km (toys).  Each group reports both terms of its
   drawing (`border_km`, `moment`).  Balance is held by the band, not optimised.
+- **Land balance** (#133, `land`, the main-map overnight grid, 2026-10-13): for each unit of the
+  group with two holders or more planned at `LAND_MIN_SHARE` of τ or more (a unit is a state in
+  every main-map scenario), and each ordered pair (j, k) of them, a continuous excess
+  e ≥ (L_j − R·L_k) / A − (1 − y_{v,k}), L_j being j's land in the unit (its ZCTAs there outside
+  the group plus Σ aland_z · x_{z,j}), A the unit's land and R the ratio: k's land need not reach
+  1/R of j's once k holds none of the unit.  Each e costs `LAND_WEIGHT` over (holders − 1) and
+  over the group's units with the term, so the group's whole land term stays at or below
+  `LAND_WEIGHT`, under one split; a whole unit's excess in a group of one such unit and two
+  holders costs the shape tier's whole scale.  It never makes a group infeasible; each group
+  reports its drawing's Σ e (`land_excess`).
 - **Status per group**: `optimal` (a connected optimum of the complete model at
   `mip_rel_gap = 0`, trap 12), `connected` (connected and feasible, not proved optimal),
   `infeasible` (proved), or `unknown` (a time limit or a restricted model; never infeasible).
@@ -72,6 +82,8 @@ SPLIT_WEIGHT = 1000.0       # one more holder of a unit outweighs any shape diff
 SHAPE_SCALE = 0.9 * SPLIT_WEIGHT
 AREA_FLOOR = 0.1            # a zero-opportunity ZCTA's weight in the moment term, in m̄
 MOMENT_SHARE = 0.01         # the moment tie-break's scale against the border term's (#121)
+LAND_WEIGHT = SHAPE_SCALE   # the land term's (#133) most per group, below one split
+LAND_MIN_SHARE = 0.20       # #133: a holder counts when it plans this share of τ in the unit
 MASS_TOL = 1e-9
 PHASE1_GAP = 0.05           # the cut loop's absolute gap until a connected drawing exists
 FINAL_ABS_GAP = 1e-6        # then mip_rel_gap = 0 and this absolute gap (trap 12)
@@ -104,6 +116,7 @@ class Group:
     neck_cuts: int = 0                  # neck cuts added (`NeckCut`, #121)
     necks_cut: list = field(default_factory=list)   # the necks they were cut for
     neck_exempt: list = field(default_factory=list)     # districts whose necks it may keep
+    land_excess: float | None = None    # the drawing's Σ e of the land term (#133); None without it
 
     def report(self) -> dict:
         return {"districts": self.districts, "units": self.units, "free_zctas": self.free,
@@ -113,7 +126,7 @@ class Group:
                 "bound": self.bound, "gap": self.gap, "note": self.note, "delta": self.delta,
                 "tried": self.tried, "dag": self.dag, "border_km": self.border_km,
                 "moment": self.moment, "neck_cuts": self.neck_cuts, "necks_cut": self.necks_cut,
-                "neck_exempt": self.neck_exempt}
+                "neck_exempt": self.neck_exempt, "land_excess": self.land_excess}
 
 
 @dataclass(frozen=True)
@@ -201,6 +214,13 @@ def cut_border(owner: dict, adj: dict, border: dict) -> float:
                      if z < y and y in owner and owner[y] != j)
 
 
+def land_term(polygon: dict, ratio: float, min_share: float = LAND_MIN_SHARE) -> dict:
+    """`draw`'s `land` (#133): {"aland": {zip: km²}, from `geo.polygon_graph`'s m², "ratio": R,
+    "min_share": the share of τ a holder plans in the unit to count}."""
+    return {"aland": {z: a / 1e6 for z, a in polygon["aland"].items()}, "ratio": float(ratio),
+            "min_share": float(min_share)}
+
+
 def components(zs, adj) -> list:
     """Components of `zs` on `adj`, largest first, ties by smallest id."""
     inside, seen, out = set(zs), set(), []
@@ -258,11 +278,12 @@ def split_fixed(inst, plan) -> tuple:
 def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
          fixed_targets: bool = False, time_limit: float = 600.0, wider=(),
          group_limit: float | None = None, sequential: bool = False, log=print,
-         border: dict | None = None) -> Result:
+         border: dict | None = None, land: dict | None = None) -> Result:
     """The channel's contiguity-aware map (module docstring); `xy` is {zip: (x, y)} in metres.
     A group with no connected drawing in the band of `delta` (the plan's by default) is tried
     again at each wider δ of `wider` in turn (the remedy "a wider internal band", reported per
-    group); each attempt has `group_limit` seconds, all of them `time_limit` together."""
+    group); each attempt has `group_limit` seconds, all of them `time_limit` together.  `land`
+    (`land_term`) adds the land term (#133, module docstring)."""
     if arm not in ARMS:
         raise ValueError(f"arm {arm!r} not in {ARMS}")
     c = plan.channel
@@ -345,7 +366,7 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
     if sequential:
         return _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support,
                            p, delta, wider, arm, fixed_targets, t_end, group_limit,
-                           fixed_split, share_only, log, border)
+                           fixed_split, share_only, log, border, land)
     for gi, qis in enumerate(sorted(groups.values(), key=lambda g: -sum(len(fcomps[q]) for q in g))):
         zs = sorted(z for q in qis for z in fcomps[q])
         tried, g = [], None
@@ -357,7 +378,7 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
             r = _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
                              arm, fixed_targets, min(left, group_limit or left), log, dag=dag,
-                             start=seed, border=border)
+                             start=seed, border=border, land=land)
             log(f"  {c} group {gi} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
                 f"districts, {r.free} free ZCTAs, {r.columns} columns -> {r.status} in "
                 f"{r.seconds:.1f}s, {r.iterations} solves, {r.cuts} cuts"
@@ -403,7 +424,7 @@ def _attempt(solve, d, tried, prove: bool = True):
 
 def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, support, p, delta,
                 wider, arm, fixed_targets, t_end, group_limit, fixed_split, share_only, log,
-                border=None):
+                border=None, land=None):
     """The sequential restriction (`draw(sequential=True)`): one split unit at a time (adjacent
     split units together when one district enters the second only through the first), each
     district's ZCTAs in the unit attached to what it already owns next to the unit (its whole
@@ -466,7 +487,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
             r = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
                              plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
                              arm, fixed_targets, min(left, group_limit or left), log, extra,
-                             dag=dag, start=seed, sequential=True, border=border)
+                             dag=dag, start=seed, sequential=True, border=border, land=land)
             log(f"  {c} unit {v} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
                 f"districts, {r.free} ZCTAs -> {r.status} in {r.seconds:.1f}s, "
                 f"{r.iterations} solves, {r.cuts} cuts{(' (' + r.note + ')') if r.note else ''}")
@@ -748,7 +769,7 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                  extra: dict | None = None, dag: bool = False, start: dict | None = None,
                  count: dict | None = None, layers: bool = False, flow: bool = False,
                  sequential: bool = False, border: dict | None = None, necks=None,
-                 neck_seed: dict | None = None) -> Group:
+                 neck_seed: dict | None = None, land: dict | None = None) -> Group:
     """One group's MILP and cut loop (module docstring).  `count` is the window repair's
     (`repair.py`): {"current": {unit: its holders on the drawn map}, "cap": bool}; then split
     units come first in the objective, holders (cuts) second, shape third, and with "cap" neither
@@ -760,7 +781,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     only checks).  With `sequential` (`_sequential`) a district whose fixed mass and `extra` are
     already past the band takes nothing more instead of being forced back; otherwise such a
     district makes the group infeasible, since its mass outside the group cannot change.  `border`
-    is the shape term's {(a, b) with a < b: km} (module docstring).
+    is the shape term's {(a, b) with a < b: km} and `land` the land term's (`land_term`; both in
+    the module docstring).
 
     With `necks` (#121, the window repair's neck-aware solve), a callable taking a drawing {group
     ZCTA: district} to ([NeckCut], [the necks it must lose]), the loop also cuts necks: a connected
@@ -861,6 +883,24 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
             held_by[v] = {fixed[y] for y in units.zips.get(v, ()) if y in fixed}
             scol[v] = len(cost)
             cost.append(big)
+    lcol, lunit = {}, {}        # the land term (#133): (unit, j, k) -> e; unit -> (A, {j: fixed km²})
+    if land is not None:
+        aland, ratio = land["aland"], float(land["ratio"])
+        floor_ = float(land.get("min_share", LAND_MIN_SHARE)) * ch.tau - MASS_TOL * max(1.0, ch.tau)
+        terms = []
+        for v in sorted({unit_of[z] for z in zs}):
+            area = math.fsum(aland.get(z, 0.0) for z in units.zips[v])
+            hs = [j for j in js if (v, j) in ycol and planned.get((v, j), 0.0) >= floor_]
+            if area > 0 and len(hs) > 1:
+                terms.append((v, area, hs))
+        for v, area, hs in terms:
+            lunit[v] = (area, {j: math.fsum(aland.get(z, 0.0) for z in units.zips[v]
+                                            if fixed.get(z) == j and z not in zset) for j in hs})
+            for j in hs:
+                for k in hs:
+                    if j != k:
+                        lcol[v, j, k] = len(cost)
+                        cost.append(LAND_WEIGHT / ((len(hs) - 1) * len(terms)))
     fcol = {}                   # (district, a, b) -> flow on the arc a -> b
     if flow:
         for j in sorted(root):
@@ -877,7 +917,7 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     if THREADS is not None:
         h.setOptionValue("threads", THREADS)
     inf = highspy.kHighsInf
-    fset = set(fcol.values()) | set(ccol.values())
+    fset = set(fcol.values()) | set(ccol.values()) | set(lcol.values())
     cap_of = {j: 1 + sum(1 for z in zs if j in allowed[z]) + sum(1 for k in vert_of.values() if k == j)
               for j in root} if flow else {}
     ub = np.ones(n)
@@ -914,6 +954,16 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         if sequential:          # a district already past the band is not forced back
             a, b = max(0.0, a), max(0.0, b)
         row(a, b, idx, [m[z] for z in zs if (z, j) in col and m.get(z, 0.0) > 0])
+    for (v, j, k), e in lcol.items():   # e ≥ (L_j − R·L_k) / A − (1 − y_{v,k})
+        area, held = lunit[v]
+        idx, val = [e, ycol[v, k]], [1.0, -1.0]
+        for z in zs:
+            if unit_of[z] == v and aland.get(z, 0.0) > 0:
+                for d, w in ((j, -1.0), (k, ratio)):
+                    if (z, d) in col:
+                        idx.append(col[z, d])
+                        val.append(w * aland[z] / area)
+        row((held[j] - ratio * held[k]) / area - 1.0, inf, idx, val)
     if flow:                    # into a vertex only when j owns it; each consumes one unit
         into, out_ = collections.defaultdict(list), collections.defaultdict(list)
         for (j, a, b), k in fcol.items():
@@ -1067,6 +1117,18 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
     found = None                # the best connected drawing: (owner, objective, bound)
     target = {cp.name: cp.total for cp in plan.copies}
     tol = 1e-7 * max(1.0, hi)
+    lzs = {v: [z for z in zs if unit_of[z] == v] for v in lunit}
+
+    def land_e(own: dict) -> dict:
+        """{(unit, j, k): e} of a drawing `own` {group ZCTA: district}, each e at its least."""
+        out = {}
+        for v, j, k in lcol:
+            area, held = lunit[v]
+            got = {d: held[d] + math.fsum(aland.get(z, 0.0) for z in lzs[v] if own.get(z) == d)
+                   for d in (j, k)}
+            has_k = any(own.get(z) == k for z in lzs[v])
+            out[v, j, k] = max(0.0, (got[j] - ratio * got[k]) / area - (0.0 if has_k else 1.0))
+        return out
 
     def accept(start, how):
         """Keep `start` (a connected drawing) when it meets every row and beats `found`."""
@@ -1088,6 +1150,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
                                             if u == v and x0[i] > 0.5}) > 1)
         for (z, y), k in ccol.items():
             x0[k] = float(start[z] != start[y])
+        for key, e in land_e(start).items():
+            x0[lcol[key]] = e
         for j in sorted(root) if fcol else ():     # a BFS tree's subtree sizes from the root
             mine = {z for z, k in start.items() if k == j} | {b for b, k in vert_of.items() if k == j}
             up, order = {root[j]: None}, [root[j]]
@@ -1250,6 +1314,8 @@ def _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hol
         g.border_km = math.fsum(km(z, y) for z in zs for y in adj[z]
                                 if y in own and own[y] != own[z] and (y not in zset or z < y))
         g.moment = math.fsum(moment[col[z, j]] for z, j in g.owner.items())
+        if land is not None:
+            g.land_excess = math.fsum(land_e(g.owner).values())
     g.dag = dag
     g.rows = nrows
     g.seconds = time.time() - t0

@@ -5,6 +5,7 @@
     "$TD_PY" -u tools/exp/contig/run.py <spec.toml> --out <dir> [--extract PATH]
         [--arm arm1|band|split|move] [--fixed-targets] [--sequential] [--time-limit S]
         [--group-limit S] [--plans PATH] [--plans-file PKL] [--parent RUN] [--maps] [--jobs N]
+        [--land-ratio R]
 
 Or as the `contig` formulation of `tools/exp/sweep.py` (#92's tracker): params `scenario`,
 `arm`, `time_limit` (seconds per channel), `group_limit`, `fixed_targets`, `sequential`, `plans`.
@@ -32,6 +33,10 @@ adds each (unit, district) mass within the unit's heaviest ZCTA of the plan's sh
 (`draw._sequential`, adjacent units together when one district enters the second only through
 the first), for coupled groups too large to solve jointly: neither a restriction nor a relaxation
 of the joint model, so only the audit's M1 judges its maps, and its failures prove nothing.
+`--land-ratio R` adds the draw's land term (#133, `draw.land_term` on the polygon graph's land,
+the main-map overnight grid at R = 10): in each split state the land of a holder planned at
+`draw.LAND_MIN_SHARE` of τ or more is held within R of every other's, a soft penalty below one
+split; `contig.json` records R (`land_ratio`) and each channel's Σ excess (`land_excess`).
 
 `contig.json` holds what #109 reports per channel: each group's size, solve status ("optimal"
 is proved, "connected" is connected and feasible, "infeasible" is proved, "unknown" is the time
@@ -151,7 +156,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
                group_limit: float | None = None, plans_cache: str | None = None,
                source: str = "", keep=(), maps: bool = False, sequential: bool = False,
                delta: float | None = None, log=print, plans_file: str | None = None,
-               jobs: int = 1) -> dict:
+               jobs: int = 1, land_ratio: float | None = None) -> dict:
     if arm not in ARMS:
         raise ValueError(f"arm {arm!r} not in {ARMS}")
     s = tdspec.load(spec_path)
@@ -181,10 +186,12 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
     state = dict(zip(rows.index, rows["state"]))
     connectors = set(geo.approved_connectors(geo.read_connectors()))
     border = draw.border_km(polygon)
+    land = None if land_ratio is None else draw.land_term(polygon, land_ratio)
     contig, drawings = {}, {}
     drawn = {}
     if jobs > 1:
-        drawn = draw_parallel(inst, plans, xy, jobs, border, arm="arm1" if arm == "band" else arm,
+        drawn = draw_parallel(inst, plans, xy, jobs, border, land=land,
+                              arm="arm1" if arm == "band" else arm,
                               fixed_targets=fixed_targets, time_limit=time_limit,
                               wider=WIDER if arm == "band" else (), group_limit=group_limit,
                               sequential=sequential, delta=delta)
@@ -194,7 +201,7 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
         res = drawn[c] if c in drawn else draw.draw(
             inst, p, xy, arm="arm1" if arm == "band" else arm, fixed_targets=fixed_targets,
             time_limit=time_limit, wider=WIDER if arm == "band" else (), group_limit=group_limit,
-            sequential=sequential, delta=delta, log=log, border=border)
+            sequential=sequential, delta=delta, log=log, border=border, land=land)
         fallback = None
         if res.undrawn:
             fallback = realize.realize(inst, p, xy)
@@ -209,12 +216,14 @@ def contig_run(spec_path: str, extract_path: str, out: str, arm: str = "arm1",
                                       default=p.delta),
             "fixed_split": res.fixed_split, "share_only": res.share_only,
             "shape": shape_terms(res.groups),
+            "land_excess": None if land is None else math.fsum(g.land_excess or 0.0 for g in res.groups),
             **drawn_stats(inst, p, d, connectors, res.connected, border)}
     report, m1 = write_folder(out, s, inst, ext, ref, polygon, plans, reports, drawings,
                               f"{s.name} (contig {arm}, {source or 'extract'})",
                               f"tools/exp/contig ({arm})", source, maps)
     doc = {"scenario": s.name, "arm": arm, "fixed_targets": fixed_targets,
            "sequential": sequential, "internal_delta": delta, "plans_file": plans_file,
+           "land_ratio": land_ratio,
            "plan_seconds": round(plan_seconds, 1), "m1": report["m1"], "channels": contig}
     with open(os.path.join(out, "contig.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True)
@@ -342,6 +351,7 @@ def _serve(conn, shared: str, log: bool) -> None:
         pin_threads()
         c, kw = conn.recv()
         conn.send(("done", draw.draw(sh["inst"], sh["plans"][c], sh["xy"], border=sh["border"],
+                                     land=sh.get("land"),
                                      log=lambda line: log and print(line, flush=True), **kw)))
     except BaseException:
         conn.send(("error", traceback.format_exc()))
@@ -349,11 +359,11 @@ def _serve(conn, shared: str, log: bool) -> None:
 
 
 def draw_parallel(inst, plans: dict, xy: dict, jobs: int, border=None, log: bool = True,
-                  **kw) -> dict:
+                  land: dict | None = None, **kw) -> dict:
     """{channel: `draw.Result`} of `draw.draw` with `kw`, each channel in its own process, at
     most `jobs` at once (#123): a channel's drawing reads only its own plan, so the dict is the
     sequential loop's whenever no solve stops on a time limit.  With `log` false the processes
-    print nothing."""
+    print nothing.  `border` and `land` (`draw.land_term`) travel in the shared pickle."""
     import shutil
     import tempfile
     from multiprocessing.connection import wait
@@ -362,7 +372,7 @@ def draw_parallel(inst, plans: dict, xy: dict, jobs: int, border=None, log: bool
     try:
         shared = os.path.join(tmp, "shared.pkl")
         with open(shared, "wb") as fh:
-            pickle.dump({"inst": inst, "plans": plans, "xy": xy, "border": border}, fh,
+            pickle.dump({"inst": inst, "plans": plans, "xy": xy, "border": border, "land": land}, fh,
                         protocol=pickle.HIGHEST_PROTOCOL)
         while todo or running:
             while todo and len(running) < jobs:
@@ -528,7 +538,7 @@ def run_contig(m: dict, folder: str) -> None:
                bool(p.get("fixed_targets", False)), float(p.get("time_limit", 900)),
                p.get("group_limit"), p.get("plans"), m["provenance"]["instance"],
                keep=tuple(os.listdir(folder)), maps=bool(p.get("maps", False)),
-               sequential=bool(p.get("sequential", False)))
+               sequential=bool(p.get("sequential", False)), land_ratio=p.get("land_ratio"))
 
 
 def main(argv=None) -> int:
@@ -552,6 +562,9 @@ def main(argv=None) -> int:
                     help="processes (#123): each channel drawn in its own, at most this many at "
                          "once; 1 is the sequential loop")
     ap.add_argument("--maps", action="store_true")
+    ap.add_argument("--land-ratio", type=float, default=None,
+                    help="#133's R: hold each split state's in-state land ratio within R (soft, "
+                         "draw.land_term); off by default")
     a = ap.parse_args(argv)
     params = {k: v for k, v in vars(a).items() if k not in ("spec", "out")}
     params["plan"] = spec_plan(a.spec)
@@ -561,7 +574,7 @@ def main(argv=None) -> int:
         doc = contig_run(a.spec, a.extract, a.out, a.arm, a.fixed_targets, a.time_limit,
                          a.group_limit, a.plans, os.path.basename(a.extract), maps=a.maps,
                          sequential=a.sequential, delta=a.delta, plans_file=a.plans_file,
-                         keep=("manifest.json",), jobs=a.jobs)
+                         keep=("manifest.json",), jobs=a.jobs, land_ratio=a.land_ratio)
     except Exception as e:
         write_manifest(a.out, "contig", a.spec, a.extract, params, status="failed",
                        stop_reason=f"{type(e).__name__}: {e}")
