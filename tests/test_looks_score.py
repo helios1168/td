@@ -205,6 +205,87 @@ def test_dollar_band_inclusive():
             assert len(why) == 2 and why[1].startswith(f"$ {ch} "), (ch, d, why)
 
 
+def _gate_rows(ch: str, cells) -> list:
+    """Ledger rows of channel `ch` from (ZIP, district, $) cells at a rate of 1 per $; the state is
+    the ZIP's first letter."""
+    return [{"zip_code": z, "current_channel": "x", "state": z[0].upper(), "model_channel": ch,
+             "district": d, "m_rel": repr(float(m))} for z, d, m in cells]
+
+
+def _gate(ch: str, cells, names) -> list:
+    return score.dollar_gate(_gate_rows(ch, cells), [{"channel": ch, "district": d} for d in names],
+                             {"x": 1.0})
+
+
+def test_dollar_gate_window_edges_inclusive():
+    """Every main-map window in whole dollars, edges included (precedent 2d189e9); a district
+    sharing its state with another takes no allowance."""
+    for ch, (lo, hi) in score.WINDOWS.items():
+        for x, ok in ((lo, True), (hi, True), (lo - 1, False), (hi + 1, False)):
+            rows = _gate(ch, (("a1", "D_01", x), ("a2", "D_02", lo)), ("D_02", "D_01"))
+            assert [r["district"] for r in rows] == ["D_01", "D_02"]
+            r = rows[0]
+            assert (r["ok"], r["allowance"], r["whole_states"], r["cap"]) == (ok, False, False, None), (ch, x, r)
+            assert (r["usd"], r["lo"], r["hi"], r["states"]) == (x, lo, hi, ["A"])
+
+
+def test_whole_state_allowance_is_wifi_only_and_whole_states_only():
+    """Owner, 2026-10-13: a WIFI district owning alone, in WIFI, every state it owns a ZCTA in may
+    reach $1.6B; a zero-mass ZCTA of a shared state ends that, and no other channel has it."""
+    names = ("W_01", "W_02", "W_03")
+    cells = (("a1", "W_01", 1.0e9), ("a2", "W_01", 0.6e9), ("c1", "W_01", 0.0),   # A and C whole
+             ("b1", "W_02", 1.2e9), ("b2", "W_03", 1.0e9))                          # B shared
+    w1, w2, w3 = _gate("WIFI", cells, names)
+    assert (w1["ok"], w1["allowance"], w1["whole_states"], w1["cap"], w1["states"]) == (
+        True, True, True, 1.6e9, ["A", "C"])
+    assert (w2["ok"], w2["allowance"], w2["whole_states"], w2["cap"]) == (False, False, False, None)
+    assert (w3["ok"], w3["allowance"]) == (True, False)
+    assert score.gate_reason(w2) == "$ W_02 1,200.0M outside 850.0-1,150.0M"
+    edge = _gate("WIFI", (("a1", "W_01", 1.6e9),), names[:1])[0]
+    over = _gate("WIFI", (("a1", "W_01", 1.6e9 + 1),), names[:1])[0]
+    assert (edge["ok"], edge["allowance"]) == (True, True) and (over["ok"], over["allowance"]) == (False, False)
+    assert score.gate_reason(over) == "$ W_01 1,600.0M outside 850.0-1,150.0M (whole states: up to 1,600.0M)"
+    w1 = _gate("WIFI", cells + (("b3", "W_01", 0.0),), names)[0]
+    assert (w1["ok"], w1["whole_states"], w1["states"]) == (False, False, ["A", "B", "C"])
+    nat = _gate("national", (("a1", "N_01", 1.5e9),), ("N_01",))[0]
+    assert (nat["ok"], nat["whole_states"], nat["cap"]) == (False, True, None)
+    ne = _gate("NE", (("a1", "NE_01", 1.0e9),), ("NE_01",))[0]
+    assert ne["lo"] is None and not ne["ok"]
+    assert score.gate_reason(ne) == "$ NE_01: no dollar window for NE"
+
+
+def test_eligibility_with_a_gate():
+    """A main-map run: the gate's failing districts replace the ±15% band and the channel
+    averages; an IFA-only run ignores a gate, and a call without one keeps the old rules."""
+    checks = {**score.scorecard_checks(SCORECARD), audit.M1_CHECK: "pass"}
+    off = audit.Check(score.BAND_CHECK, "fail", "1 outside")
+    main = {"national": 15, "WH": 12, "FI": 20, "WIFI": 3}
+    far = {"national": 2.0e9, "WH": 0.5e9, "FI": 0.9e9, "WIFI": 1.0e9}      # averages the gate never reads
+    good = {"channel": "WH", "district": "WH_01", "usd": 1.0e9, "lo": 0.85e9, "hi": 1.15e9,
+            "states": ["A"], "whole_states": False, "cap": None, "allowance": False, "ok": True}
+    bad = dict(good, district="WH_02", usd=1.2e9, ok=False)
+    assert score.eligibility(checks, off, main, far, M1_PASS, [good]) == []
+    assert score.eligibility(checks, off, main, far, M1_PASS, [good, bad]) == [
+        "$ WH_02 1,200.0M outside 850.0-1,150.0M"]
+    assert score.eligibility({}, off, {"IFA": 49}, {"IFA": 1.227e9}, M1_PASS, [bad]) == [
+        "audit: no scorecard", "audit at ±15%: 1 outside"]
+    assert score.eligibility(checks, off, main, far, M1_PASS) == [
+        "audit at ±15%: 1 outside", "$ WH 500M is -50.0% of 1,000M", "$ national 2,000M is +60.0% of 1,250M"]
+
+
+def test_write_dollars():
+    rows = _gate("WIFI", (("a1", "W_01", 1.5e9), ("b1", "W_02", 0.9e9), ("b2", "W_03", 0.9e9)),
+                 ("W_01", "W_02", "W_03"))
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "dollars.csv")
+        score.write_dollars(path, rows)
+        with open(path, newline="") as fh:
+            got = list(csv.reader(fh))
+    assert got[0] == score.DOLLAR_COLUMNS and len(got) == 4
+    assert got[1] == ["WIFI", "W_01", "1500.000", "850.000", "1150.000", "1600.000", "A", "1", "1", "1"]
+    assert got[2] == ["WIFI", "W_02", "900.000", "850.000", "1150.000", "", "B", "0", "0", "1"]
+
+
 def _score_toy(ch: str, rates: dict, fine=None, run_json=None) -> dict:
     """`score.score` on a run folder holding channel `ch` laid out as X; with `fine`, its
     `run.json` names the scenario's fine channels; `run_json` adds to that file."""
@@ -246,9 +327,16 @@ def test_score_run_folder():
     assert s["worst_dev"] == 0.0 and s["mean_dev"] == 0.0
     assert f"INELIGIBLE ({sc}; {m1}; main K 2 outside 48-54) | 1 splits (1 states) | 5.4 defects" in score.verdict(s)
     assert "largest detached piece WH_02: 1 ZIPs in B, 0.250 tau" in score.report(s)
+    # the main map's dollar gate checks every district (2026-10-13): $1,000M each, in WH's window
+    assert [(r["district"], round(r["usd"]), r["ok"]) for r in s["dollar_gate"]] == [
+        ("WH_01", 1000000000, True), ("WH_02", 1000000000, True)]
+    hot = _score_toy("WH", {"wh": 1.2e9})
+    assert hot["why"] == [sc, m1, "$ WH_01 1,200.0M outside 850.0-1,150.0M",
+                          "$ WH_02 1,200.0M outside 850.0-1,150.0M", "main K 2 outside 48-54"]
+    assert "$ gate: 2 districts, 2 outside their window, 0 on the whole-state allowance" in score.report(hot)
     # An IFA-only run: no main K rule, and $ is the owner's whole-extract IFA total over K.
     ifa = _score_toy("IFA", {})
-    assert ifa["dollars"] == {"IFA": 62.14e9 / 2}
+    assert ifa["dollars"] == {"IFA": 62.14e9 / 2} and ifa["dollar_gate"] is None
     assert ifa["why"] == [sc, m1, "$ IFA 31,070M is +2385.6% of 1,250M"]
     # the scenario's fine channels come from run.json (#116): fi has no row at all
     both = _score_toy("WH", {"wh": 1.0e9}, fine=["wh", "fi"])

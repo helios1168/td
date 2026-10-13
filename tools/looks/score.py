@@ -17,13 +17,22 @@ with the display fill made deterministic; the display fill sizes no piece.
 A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXPERIMENTS.md` §1):
 - the audit passes at a plain ±`BAND` band: no check of `scorecard.md` other than the band check
   fails, and `td.audit.check_bands` passes on the ledger with every channel's band τ_c(1 ± BAND),
-  τ_c = the channel's ledger total / K_c;
-- every channel with a `TARGET` averages a $ per district within ±`DOLLAR_BAND` of it, edges
-  included, compared in whole dollars.  $ is
-  m_rel times the owner's dollar total over the extract's m_rel total, per fine channel
-  (`DOLLARS`), summed over the channel's drawn cells; an IFA-only run uses the owner's
-  whole-extract IFA total over K instead (owner, 2026-10-04).  A channel without a target, such
-  as a combined channel (D11), is printed but not checked;
+  τ_c = the channel's ledger total / K_c.  A main-map run is exempt: the dollar gate below
+  replaces it;
+- a main-map run (any run but an IFA-only one) passes the dollar gate (`dollar_gate`, main-map
+  overnight grid, 2026-10-13): every district's $ lies in its channel's `WINDOWS`, edges
+  included, compared in whole dollars, and a channel without a window fails.  A district of a
+  channel in `WHOLE_STATE_CAP` (WIFI) that owns alone, in its channel, every state it owns a
+  ZCTA in may reach the cap, and its row says it took the allowance.  `--dollars-csv` writes the
+  rows to each run's `dollars.csv`.  $ is m_rel times the owner's dollar total over the
+  extract's m_rel total, per fine channel (`DOLLARS`), summed over the district's drawn cells; on
+  a dollar extract (`tools/exp/contig/dollarize.py`, $M) that rate is 1e6 for every fine
+  channel;
+- an IFA-only run averages a $ per district within ±`DOLLAR_BAND` of its `TARGET`, edges
+  included, compared in whole dollars, $ being the owner's whole-extract IFA total over K (owner,
+  2026-10-04).  A run scored by `eligibility` without a gate is held to the same average rule on
+  every channel with a target, a channel without one, such as a combined channel (D11), printed
+  but not checked;
 - the main map's total K is in `MAIN_K`; an IFA-only run is exempt;
 - M1 holds (#108): `td.audit.check_m1` passes on the ledger with the committed polygon graph and
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
@@ -92,6 +101,11 @@ SMALL_TAU = 0.20
 TARGET = {"national": 1.25e9, "WH": 1.0e9, "FI": 0.9e9, "IFA": 1.25e9}          # $ per district
 DOLLARS = {"wh": 11.36e9, "fi": 20.69e9, "wells_wh": 4.44e9, "wells_fi": 4.63e9,  # owner's totals,
            "national_chase": 8.55e9, "ifa": 62.14e9}                              # 2026-10-01
+WINDOWS = {"national": (1.0e9, 1.4375e9), "WH": (0.85e9, 1.15e9),      # $ per district, the main
+           "FI": (0.765e9, 1.035e9), "WIFI": (0.85e9, 1.15e9)}           # map's gate (2026-10-13)
+WHOLE_STATE_CAP = {"WIFI": 1.6e9}       # a district of whole states only (owner, 2026-10-13)
+DOLLAR_COLUMNS = ["channel", "district", "usd_m", "lo_m", "hi_m", "whole_state_cap_m", "states",
+                  "whole_states", "allowance", "ok"]
 IFA_ONLY = {"IFA"}
 BAND_CHECK = "final bands on drawn mass"
 NECK = re.compile(r"^[^:]+: neck ")       # M1's neck items (`td.audit.neck_item`)
@@ -268,13 +282,79 @@ def dollar_rates(extract: data.Extract) -> dict:
     return {f: DOLLARS[f] / total[f] for f in DOLLARS if total[f] > 0}
 
 
-def dollars_per_district(ch: str, k: int, ledger: list, rates: dict) -> float:
+def _need_rates(ch: str, ledger: list, rates: dict) -> None:
     fine = {r["current_channel"] for r in ledger if r["model_channel"] == ch and r["district"]}
     missing = sorted(fine - set(rates))
     if missing:
         raise ValueError(f"channel {ch}: no dollar total for fine channel(s) {', '.join(missing)}")
+
+
+def dollars_per_district(ch: str, k: int, ledger: list, rates: dict) -> float:
+    _need_rates(ch, ledger, rates)
     return sum(float(r["m_rel"]) * rates[r["current_channel"]] for r in ledger
                if r["model_channel"] == ch and r["district"]) / k
+
+
+def district_dollars(ch: str, ledger: list, rates: dict) -> dict:
+    """{district: $} of channel `ch`: m_rel times its fine channel's rate over the district's
+    drawn cells."""
+    _need_rates(ch, ledger, rates)
+    out = collections.Counter()
+    for r in ledger:
+        if r["model_channel"] == ch and r["district"]:
+            out[r["district"]] += float(r["m_rel"]) * rates[r["current_channel"]]
+    return out
+
+
+def dollar_gate(ledger: list, districts: list, rates: dict) -> list:
+    """The main map's dollar gate, one row per `districts.csv` row: `usd`, its channel's window
+    `lo`, `hi` (None without one), `states` it owns a ZCTA in, `whole_states` when it owns each
+    alone in its channel, `cap`, the channel's `WHOLE_STATE_CAP` for such a district (else None),
+    `allowance` when its $ is above `hi` and within the cap, and `ok`.  Whole dollars, edges
+    included; a channel without a window is never ok."""
+    owners = collections.defaultdict(set)          # (channel, state) -> districts owning a ZCTA
+    states = collections.defaultdict(set)          # (channel, district) -> states
+    for r in ledger:
+        if r["district"]:
+            owners[r["model_channel"], r["state"]].add(r["district"])
+            states[r["model_channel"], r["district"]].add(r["state"])
+    usd, out = {}, []
+    for row in sorted(districts, key=lambda r: (r["channel"], r["district"])):
+        ch, d = row["channel"], row["district"]
+        if ch not in usd:
+            usd[ch] = district_dollars(ch, ledger, rates)
+        x, st = usd[ch].get(d, 0.0), sorted(states[ch, d])
+        whole = bool(st) and all(owners[ch, s] == {d} for s in st)
+        lo, hi = WINDOWS.get(ch, (None, None))
+        cap = WHOLE_STATE_CAP.get(ch) if whole else None
+        inside = lo is not None and round(lo) <= round(x) <= round(hi)
+        allowance = (not inside and lo is not None and cap is not None
+                     and round(lo) <= round(x) <= round(cap))
+        out.append({"channel": ch, "district": d, "usd": x, "lo": lo, "hi": hi, "states": st,
+                    "whole_states": whole, "cap": cap, "allowance": allowance,
+                    "ok": inside or allowance})
+    return out
+
+
+def gate_reason(r: dict) -> str:
+    """Why a `dollar_gate` row fails."""
+    if r["lo"] is None:
+        return f"$ {r['district']}: no dollar window for {r['channel']}"
+    cap = f" (whole states: up to {r['cap'] / 1e6:,.1f}M)" if r["cap"] is not None else ""
+    return (f"$ {r['district']} {r['usd'] / 1e6:,.1f}M outside {r['lo'] / 1e6:,.1f}-"
+            f"{r['hi'] / 1e6:,.1f}M{cap}")
+
+
+def write_dollars(path: str, gate: list) -> None:
+    """`dollars.csv`: the `dollar_gate` rows, $ in $M."""
+    def m(v):
+        return "" if v is None else f"{v / 1e6:.3f}"
+    with open(path, "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(DOLLAR_COLUMNS)
+        for r in gate:
+            w.writerow([r["channel"], r["district"], m(r["usd"]), m(r["lo"]), m(r["hi"]), m(r["cap"]),
+                        ";".join(r["states"]), int(r["whole_states"]), int(r["allowance"]), int(r["ok"])])
 
 
 def scorecard_checks(text: str) -> dict:
@@ -326,17 +406,21 @@ def fine_channels(run_dir: str):
 
 
 def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict,
-                m1: audit.Check | None = None) -> list:
+                m1: audit.Check | None = None, gate: list | None = None) -> list:
     """Why a run is not eligible, one reason per failed rule; empty when it is.  `m1` is the M1
-    check; a run without one is not eligible."""
+    check; a run without one is not eligible.  `gate`, the `dollar_gate` rows of a main-map run,
+    replaces the ±`BAND` band and the per-channel average with one reason per failing district;
+    an IFA-only run ignores it."""
+    gated = gate is not None and set(ks) != IFA_ONLY
     why = [f"audit: {name} fails" for name, s in checks.items() if s == "fail" and name != BAND_CHECK]
     if m1 is None or m1.status != "pass":
         why.append(f"M1: {m1.status}, {m1.summary}" if m1 else "M1: not checked")
     if not checks:
         why.append("audit: no scorecard")
-    if bands.status != "pass":
+    if bands.status != "pass" and not gated:
         why.append(f"audit at ±{100 * BAND:.0f}%: {bands.summary}")
-    for ch, d in sorted(dollars.items()):
+    why += [gate_reason(r) for r in gate or () if gated and not r["ok"]]
+    for ch, d in sorted(dollars.items()) if not gated else ():
         t = TARGET.get(ch)
         if t is None:
             continue
@@ -377,14 +461,16 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
     sc = open(sc_path, encoding="utf-8").read() if os.path.exists(sc_path) else ""
     chans = {ch: channel_looks(ch, ledger, districts, g) for ch in sorted({r["channel"] for r in districts})}
     ks = {ch: c["k"] for ch, c in chans.items()}
+    gate = None
     if set(ks) == IFA_ONLY:              # owner, 2026-10-04: the whole-extract IFA total over K
         dollars = {ch: DOLLARS["ifa"] / k for ch, k in ks.items()}
     else:
         rates = rates if rates is not None else rates_of(extract_path(run_dir))
         dollars = {ch: dollars_per_district(ch, k, ledger, rates) for ch, k in ks.items()}
+        gate = dollar_gate(ledger, districts, rates)
     bands = bands_at(ledger, ks, BAND)
     m1 = m1_check(ledger, ks, g, fine_channels(run_dir))
-    why = eligibility(scorecard_checks(sc), bands, ks, dollars, m1)
+    why = eligibility(scorecard_checks(sc), bands, ks, dollars, m1, gate)
     diag = audit.diagnostic(run_dir)
     if diag is not None:                 # never a deliverable (#121)
         why.insert(0, "diagnostic band" + (f" ({diag['label']})" if diag["label"] else ""))
@@ -397,6 +483,7 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
     return {
         "run": os.path.basename(os.path.normpath(run_dir)), "dir": run_dir,
         "eligible": not why, "why": why, "diagnostic": diag is not None, "k": ks, "dollars": dollars,
+        "dollar_gate": gate,
         "m1": {"status": m1.status, "summary": m1.summary, **m1.counts},
         "necks": [i for i in m1.items if NECK.search(i)],
         "mass_necks": [i for i in m1.items if audit.MASS_NECK in i],
@@ -470,6 +557,13 @@ def report(s: dict) -> str:
                   for d, n, f, st in sorted(largest.values(), key=lambda p: (-p[2], p[0]))]
         lines += [f"    multipart piece {d}: part of {zs}, {km2:,.3f} km2 (visual defect, not M1)"
                   for d, zs, km2 in c["multipart"] or ()]
+    gate = s.get("dollar_gate")
+    if gate is not None:
+        lines.append(f"$ gate: {len(gate)} districts, {sum(not r['ok'] for r in gate)} outside their window, "
+                     f"{sum(r['allowance'] for r in gate)} on the whole-state allowance")
+        lines += [f"    {gate_reason(r)}" for r in gate if not r["ok"]]
+        lines += [f"    {r['district']} {r['usd'] / 1e6:,.1f}M on the whole-state allowance "
+                  f"({'+'.join(r['states'])}, up to {r['cap'] / 1e6:,.1f}M)" for r in gate if r["allowance"]]
     lines += [f"channel-state splits: {s['splits']}: {' '.join(s['split_list'])}",
               f"distinct split states: {len(s['distinct'])}: {' '.join(s['distinct'])}",
               f"defects: {s['defects']:g} = thin {s['thin_links']} + small {s['small_pieces']} + crowded "
@@ -490,9 +584,15 @@ def main(argv=None) -> list:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("run_dirs", nargs="+")
     ap.add_argument("--extract", help="the extract (default: run.json's source under $TD_REPO)")
+    ap.add_argument("--dollars-csv", action="store_true",
+                    help="write each main-map run's dollar gate to its dollars.csv")
     a = ap.parse_args(argv)
     rates = rates_of(a.extract) if a.extract else None
     scores = rank([score(d, rates=rates) for d in a.run_dirs])
+    if a.dollars_csv:
+        for s in scores:
+            if s["dollar_gate"] is not None:
+                write_dollars(os.path.join(s["dir"], "dollars.csv"), s["dollar_gate"])
     for s in scores:
         print(report(s), end="\n\n")
     if len(scores) > 1:
