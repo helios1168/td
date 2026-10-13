@@ -1,0 +1,44 @@
+{
+ "strict": {
+  "status": "fail",
+  "summary": "2 districts in pieces, 2 detached pieces (largest 0.406 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 23 mass necks listed beside M1",
+  "split": 2,
+  "pieces": 2,
+  "largest_tau": 0.40648551954958756,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "WIFI/WIFI_13: neck 5.67 km wide cuts off 69 ZIPs (08023...), 43.6% of its land area and 30.4% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "WIFI/WIFI_20: neck 5.48 km wide cuts off 96 ZIPs (84511...), 6.5% of its land area and 6.6% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km",
+   "WIFI/WIFI_38: neck 2.32 km wide cuts off 51 ZIPs (10001...), 17.5% of its land area and 85.1% of its mass; cut 10004-10005 0.78 km, 10004-10038 0.05 km, 10005-10006 0.25 km, 10006-10007 0.68 km, 10006-10038 0.09 km, 10006-10271 0.06 km, ..."
+  ],
+  "mass_necks": 23,
+  "gap_width": false
+ },
+ "gap_width": {
+  "status": "fail",
+  "summary": "2 districts in pieces, 2 detached pieces (largest 0.406 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1",
+  "split": 2,
+  "pieces": 2,
+  "largest_tau": 0.40648551954958756,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "WIFI/WIFI_13: neck 5.67 km wide cuts off 69 ZIPs (08023...), 43.6% of its land area and 30.4% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "WIFI/WIFI_38: neck 2.46 km wide cuts off 53 ZIPs (10001...), 17.8% of its land area and 85.3% of its mass; cut 10004-10005 0.78 km, 10004-10006 0.68 km, 10004-10038 0.05 km, 10004-10280 0.95 km"
+  ],
+  "mass_necks": 15,
+  "gap_width": true
+ },
+ "flips": [
+  {
+   "district": "WIFI/WIFI_20",
+   "strict": [
+    "WIFI/WIFI_20: neck 5.48 km wide cuts off 96 ZIPs (84511...), 6.5% of its land area and 6.6% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km"
+   ],
+   "gap_width": []
+  }
+ ]
+}

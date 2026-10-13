@@ -1,8 +1,8 @@
 # MORNING: main_overnight_2026-10-13
 
-Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T12:07:39+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
+Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at 2026-10-13T13:08:11+00:00.  Extract `instance_descaled_usd.json.gz` (sha256 `98cc87bc8ba5`); code `54f5afa`; stop at 2026-10-13T17:47:53+00:00.
 
-32 points: 14 infeasible, 18 error.
+32 points: 4 fails M1, 14 infeasible, 14 error.
 
 ## Assumptions (owner decisions open)
 
@@ -19,32 +19,32 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 
 | # | id | structure | K | splits | defects | worst $ | M1 gaps / strict | land | label | links |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 1 | ne-50-bal | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
-| 2 | ne-50-filight | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
-| 3 | ne-52-bal | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
-| 4 | ne-52-filight | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
-| 5 | ne-cmp-tierP | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **infeasible** | — |
-| 6 | nw34-48 | nw34 | national 14, WIFI 34 = 48 | — | — | — | — | — | **infeasible** | — |
-| 7 | nw34-50 | nw34 | national 15, WIFI 35 = 50 | — | — | — | — | — | **infeasible** | — |
-| 8 | nw34-52 | nw34 | national 16, WIFI 36 = 52 | — | — | — | — | — | **infeasible** | — |
-| 9 | nw49-48 | nw49 | national 15, WIFI 33 = 48 | — | — | — | — | — | **infeasible** | — |
-| 10 | nw49-50 | nw49 | national 16, WIFI 34 = 50 | — | — | — | — | — | **infeasible** | — |
-| 11 | nw49-52 | nw49 | national 17, WIFI 35 = 52 | — | — | — | — | — | **infeasible** | — |
-| 12 | w1-48 | w1 | WIFI 48 = 48 | — | — | — | — | — | **infeasible** | — |
-| 13 | w1-50 | w1 | WIFI 50 = 50 | — | — | — | — | — | **infeasible** | — |
-| 14 | w1-52 | w1 | WIFI 52 = 52 | — | — | — | — | — | **infeasible** | — |
-| 15 | ne-48-bal | ne_plains | national 14, WH 10, FI 21, WIFI 3 = 48 | — | — | — | — | — | **error** | — |
-| 16 | ne-50-bal-wide | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | — | — | — | — | — | **error** | — |
-| 17 | ne-50-filight-wide | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **error** | — |
-| 18 | ne-52-bal-wide | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | — | — | — | — | — | **error** | — |
-| 19 | ne-52-filight-wide | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | — | — | — | — | — | **error** | — |
-| 20 | ne-cmp-tierP-wide | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **error** | — |
-| 21 | nw34-48-wide | nw34 | national 14, WIFI 34 = 48 | — | — | — | — | — | **error** | — |
-| 22 | nw34-50-wide | nw34 | national 15, WIFI 35 = 50 | — | — | — | — | — | **error** | — |
-| 23 | nw34-52-wide | nw34 | national 16, WIFI 36 = 52 | — | — | — | — | — | **error** | — |
-| 24 | w1-48-wide | w1 | WIFI 48 = 48 | — | — | — | — | — | **error** | — |
-| 25 | w1-50-wide | w1 | WIFI 50 = 50 | — | — | — | — | — | **error** | — |
-| 26 | w1-52-wide | w1 | WIFI 52 = 52 | — | — | — | — | — | **error** | — |
+| 1 | w1-50-wide | w1 | WIFI 50 = 50 | 11 | 10.7492 | WIFI_01 -31.4% (670.9M) | fail / fail, 1 flips | 395.7 (4 > R) | **fails M1** | [folder](w1-50-wide/r2/) · [map](w1-50-wide/r2/summary.png) · [score](w1-50-wide/r2/score.txt) |
+| 2 | w1-48-wide | w1 | WIFI 48 = 48 | 12 | 9.7483 | WIFI_31 +30.3% (1,327.9M) | fail / fail, 1 flips | 123.4 (4 > R) | **fails M1** | [folder](w1-48-wide/r2/) · [map](w1-48-wide/r2/summary.png) · [score](w1-48-wide/r2/score.txt) |
+| 3 | w1-52-wide | w1 | WIFI 52 = 52 | 13 | 8.7538 | WIFI_20 -28.8% (669.6M) | fail / fail | 405.7 (5 > R) | **fails M1** | [folder](w1-52-wide/r2/) · [map](w1-52-wide/r2/summary.png) · [score](w1-52-wide/r2/score.txt) |
+| 4 | nw34-52-wide | nw34 | national 16, WIFI 36 = 52 | 19 | 8.2367 | WIFI_31 +27.2% (1,131.0M) | fail / fail | 52.2 (2 > R) | **fails M1** | [folder](nw34-52-wide/r2/) · [map](nw34-52-wide/r2/summary.png) · [score](nw34-52-wide/r2/score.txt) |
+| 5 | ne-50-bal | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
+| 6 | ne-50-filight | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **infeasible** | — |
+| 7 | ne-52-bal | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
+| 8 | ne-52-filight | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | — | — | — | — | — | **infeasible** | — |
+| 9 | ne-cmp-tierP | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **infeasible** | — |
+| 10 | nw34-48 | nw34 | national 14, WIFI 34 = 48 | — | — | — | — | — | **infeasible** | — |
+| 11 | nw34-50 | nw34 | national 15, WIFI 35 = 50 | — | — | — | — | — | **infeasible** | — |
+| 12 | nw34-52 | nw34 | national 16, WIFI 36 = 52 | — | — | — | — | — | **infeasible** | — |
+| 13 | nw49-48 | nw49 | national 15, WIFI 33 = 48 | — | — | — | — | — | **infeasible** | — |
+| 14 | nw49-50 | nw49 | national 16, WIFI 34 = 50 | — | — | — | — | — | **infeasible** | — |
+| 15 | nw49-52 | nw49 | national 17, WIFI 35 = 52 | — | — | — | — | — | **infeasible** | — |
+| 16 | w1-48 | w1 | WIFI 48 = 48 | — | — | — | — | — | **infeasible** | — |
+| 17 | w1-50 | w1 | WIFI 50 = 50 | — | — | — | — | — | **infeasible** | — |
+| 18 | w1-52 | w1 | WIFI 52 = 52 | — | — | — | — | — | **infeasible** | — |
+| 19 | ne-48-bal | ne_plains | national 14, WH 10, FI 21, WIFI 3 = 48 | — | — | — | — | — | **error** | — |
+| 20 | ne-50-bal-wide | ne_plains | national 15, WH 10, FI 22, WIFI 3 = 50 | — | — | — | — | — | **error** | — |
+| 21 | ne-50-filight-wide | ne_plains | national 16, WH 11, FI 20, WIFI 3 = 50 | — | — | — | — | — | **error** | — |
+| 22 | ne-52-bal-wide | ne_plains | national 15, WH 11, FI 23, WIFI 3 = 52 | — | — | — | — | — | **error** | — |
+| 23 | ne-52-filight-wide | ne_plains | national 16, WH 11, FI 22, WIFI 3 = 52 | — | — | — | — | — | **error** | — |
+| 24 | ne-cmp-tierP-wide | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | — | — | — | — | — | **error** | — |
+| 25 | nw34-48-wide | nw34 | national 14, WIFI 34 = 48 | — | — | — | — | — | **error** | — |
+| 26 | nw34-50-wide | nw34 | national 15, WIFI 35 = 50 | — | — | — | — | — | **error** | — |
 | 27 | w8-48-bal | west8 | national 14, WH 11, FI 22, WIFI 1 = 48 | — | — | — | — | — | **error** | — |
 | 28 | w8-50-bal | west8 | national 15, WH 11, FI 23, WIFI 1 = 50 | — | — | — | — | — | **error** | — |
 | 29 | w8-50-filight | west8 | national 16, WH 12, FI 21, WIFI 1 = 50 | — | — | — | — | — | **error** | — |
@@ -54,6 +54,10 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 
 ## Reasons
 
+- **w1-50-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.406 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1
+- **w1-48-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.414 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1
+- **w1-52-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.423 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 16 mass necks listed beside M1
+- **nw34-52-wide** (fails M1): M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.126 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1
 - **ne-50-bal** (infeasible): FI: no plan up to final_delta 0.0904 (converged)
 - **ne-50-filight** (infeasible): national: no plan up to final_delta 0.053 (converged)
 - **ne-52-bal** (infeasible): WH: no plan up to final_delta 0.0778 (converged)
@@ -69,17 +73,13 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 - **w1-50** (infeasible): WIFI: no plan up to final_delta 0.131 (converged)
 - **w1-52** (infeasible): WIFI: no plan up to final_delta 0.0962 (converged)
 - **ne-48-bal** (error): no label (status queued)
-- **ne-50-bal-wide** (error): no label (status queued)
+- **ne-50-bal-wide** (error): no label (status running)
 - **ne-50-filight-wide** (error): no label (status queued)
-- **ne-52-bal-wide** (error): no label (status queued)
+- **ne-52-bal-wide** (error): no label (status running)
 - **ne-52-filight-wide** (error): no label (status queued)
 - **ne-cmp-tierP-wide** (error): no label (status queued)
 - **nw34-48-wide** (error): no label (status running)
 - **nw34-50-wide** (error): no label (status running)
-- **nw34-52-wide** (error): no label (status running)
-- **w1-48-wide** (error): no label (status running)
-- **w1-50-wide** (error): no label (status running)
-- **w1-52-wide** (error): no label (status running)
 - **w8-48-bal** (error): no label (status elsewhere)
 - **w8-50-bal** (error): no label (status elsewhere)
 - **w8-50-filight** (error): no label (status elsewhere)
@@ -91,22 +91,39 @@ Eligible first by the scorer's rank key (splits, defects, extent, states per dis
 
 - render failed (exit 1): w1-48-wide/draw/render.log
 - render failed (exit 1): w1-48-wide/r1/render.log
+- render failed (exit 1): w1-48-wide/r2/render.log
 - render failed (exit 1): w1-50-wide/draw/render.log
 - render failed (exit 1): w1-50-wide/r1/render.log
+- render failed (exit 1): w1-50-wide/r2/render.log
 - render failed (exit 1): w1-52-wide/draw/render.log
 - render failed (exit 1): w1-52-wide/r1/render.log
+- render failed (exit 1): w1-52-wide/r2/render.log
+- w1-50-wide: M1 flip WIFI/WIFI_20, a neck strict only: WIFI/WIFI_20: neck 5.48 km wide cuts off 96 ZIPs (84511...), 6.5% of its land area and 6.6% of its mass; cut 84621-84652 4.19 km, 84621-84654 1.29 km
+- w1-50-wide: WIFI_31 1,275.4M on the whole-state allowance (up to 1,600.0M)
+- w1-50-wide: WIFI CA in-state land ratio 54.82 beyond R = 10 (WIFI_10 106875.0 km², WIFI_06 1949.5 km²)
+- w1-50-wide: WIFI IL in-state land ratio 24.48 beyond R = 10 (WIFI_22 138077.4 km², WIFI_21 5641.4 km²)
+- w1-50-wide: WIFI NY in-state land ratio 395.70 beyond R = 10 (WIFI_39 69930.5 km², WIFI_38 176.7 km²)
+- w1-50-wide: WIFI PA in-state land ratio 19.63 beyond R = 10 (WIFI_44 76026.7 km², WIFI_43 3872.6 km²)
+- w1-48-wide: WIFI_25 1,230.7M on the whole-state allowance (up to 1,600.0M)
+- w1-48-wide: WIFI CA in-state land ratio 45.40 beyond R = 10 (WIFI_07 121259.2 km², WIFI_06 2670.7 km²)
+- w1-48-wide: WIFI IL in-state land ratio 24.48 beyond R = 10 (WIFI_21 138077.4 km², WIFI_20 5641.4 km²)
+- w1-48-wide: WIFI NY in-state land ratio 123.40 beyond R = 10 (WIFI_37 68651.1 km², WIFI_36 556.4 km²)
+- w1-48-wide: WIFI PA in-state land ratio 15.52 beyond R = 10 (WIFI_41 74135.7 km², WIFI_40 4777.5 km²)
+- w1-52-wide: WIFI CA in-state land ratio 60.58 beyond R = 10 (WIFI_07 123333.0 km², WIFI_06 2035.8 km²)
+- w1-52-wide: WIFI IL in-state land ratio 24.48 beyond R = 10 (WIFI_23 138077.4 km², WIFI_22 5641.4 km²)
+- w1-52-wide: WIFI NY in-state land ratio 405.67 beyond R = 10 (WIFI_42 71010.5 km², WIFI_41 175.0 km²)
+- w1-52-wide: WIFI PA in-state land ratio 15.52 beyond R = 10 (WIFI_45 74135.7 km², WIFI_44 4777.5 km²)
+- w1-52-wide: WIFI VA in-state land ratio 20.25 beyond R = 10 (WIFI_51 97218.3 km², WIFI_13 4801.8 km²)
+- nw34-52-wide: WIFI NY in-state land ratio 52.23 beyond R = 10 (WIFI_29 100997.3 km², WIFI_28 1933.8 km²)
+- nw34-52-wide: national CA in-state land ratio 42.70 beyond R = 10 (national_07 117407.9 km², national_06 2749.4 km²)
 - ne-48-bal: no label (status queued), counted as an error
-- ne-50-bal-wide: no label (status queued), counted as an error
+- ne-50-bal-wide: no label (status running), counted as an error
 - ne-50-filight-wide: no label (status queued), counted as an error
-- ne-52-bal-wide: no label (status queued), counted as an error
+- ne-52-bal-wide: no label (status running), counted as an error
 - ne-52-filight-wide: no label (status queued), counted as an error
 - ne-cmp-tierP-wide: no label (status queued), counted as an error
 - nw34-48-wide: no label (status running), counted as an error
 - nw34-50-wide: no label (status running), counted as an error
-- nw34-52-wide: no label (status running), counted as an error
-- w1-48-wide: no label (status running), counted as an error
-- w1-50-wide: no label (status running), counted as an error
-- w1-52-wide: no label (status running), counted as an error
 - w8-48-bal: no label (status elsewhere), counted as an error
 - w8-50-bal: no label (status elsewhere), counted as an error
 - w8-50-filight: no label (status elsewhere), counted as an error
