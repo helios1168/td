@@ -388,6 +388,9 @@ def test_morning_files_from_a_toy_grid():
         assert overnight.map_png(fin) == os.path.join(fin, "summary.png")
         Image.new("RGB", (300, 200), "blue").save(os.path.join(fin, "zip_summary.png"))
         assert overnight.map_png(fin) == os.path.join(fin, "zip_summary.png")
+        for c in ("WIFI", "national"):
+            open(os.path.join(fin, f"zip_{c}.png"), "w").close()
+        assert overnight.map_pages(fin) == [os.path.join(fin, x) for x in ("zip_summary.png", "zip_national.png", "zip_WIFI.png")]
         recs = [_rec("ne-cmp-tierP", "eligible", final="ne-cmp-tierP/r1"),
                 _rec("w1-48", "stopped", "w1", reason="not started before the 8 h stop"),
                 _rec("w8-48-bal", None, "west8")]

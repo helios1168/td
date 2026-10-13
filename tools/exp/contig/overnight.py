@@ -1097,6 +1097,14 @@ def map_png(final: str) -> str:
     return zp if os.path.exists(zp) else os.path.join(final, "summary.png")
 
 
+def map_pages(final: str) -> list:
+    """A final folder's pages in MORNING.pdf: the ZIP pages (state summary, then each planning
+    channel's district map, `CHANNELS` order), else `map_png`'s one page."""
+    chans = [os.path.join(final, f"zip_{c}.png") for c in CHANNELS + ("IFA",)]
+    got = [p for p in [os.path.join(final, "zip_summary.png")] + chans if os.path.exists(p)]
+    return got or [map_png(final)]
+
+
 def morning_pdf(path: str, pages: list) -> None:
     """A raster PDF (`tools/shortlist/build.py`'s `deck`): one page per (png or None, text), a
     page without a map showing its text."""
@@ -1134,9 +1142,9 @@ def cmd_morning(a) -> int:
     with open(md, "w", encoding="utf-8") as fh:
         fh.write(morning_md(doc, rows, eye, now()))
     pdf = os.path.join(a.root, "MORNING.pdf")
-    morning_pdf(pdf, [(r["final"] and map_png(os.path.join(a.root, r["final"])),
-                       title_of(r["rec"]) + (f"\n{r['reason']}" if r["reason"] else "") + "\nno map")
-                      for r in rows])
+    morning_pdf(pdf, [(png, title_of(r["rec"]) + (f"\n{r['reason']}" if r["reason"] else "") + "\nno map")
+                      for r in rows
+                      for png in (map_pages(os.path.join(a.root, r["final"])) if r["final"] else [None])])
     print(f"{md}\n{pdf}\n{len(rows)} points, {len(eye)} items need your eye", flush=True)
     return 0
 
