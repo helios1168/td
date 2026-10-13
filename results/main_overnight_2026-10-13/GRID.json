@@ -117,6 +117,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "ne-48-bal/draw.log",
+          "rc": 1,
+          "seconds": 4535.3,
+          "stop": null
+        },
         "replan": {
           "log": "ne-48-bal/replan.log",
           "rc": 0,
@@ -567,6 +573,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "ne-50-filight-wide/draw.log",
+          "rc": 1,
+          "seconds": 4533.0,
+          "stop": null
+        },
         "replan": {
           "log": "ne-50-filight-wide/replan.log",
           "rc": 1,
@@ -1308,6 +1320,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "ne-cmp-tierP-wide/draw.log",
+          "rc": 1,
+          "seconds": 4535.3,
+          "stop": null
+        },
         "replan": {
           "log": "ne-cmp-tierP-wide/replan.log",
           "rc": 0,

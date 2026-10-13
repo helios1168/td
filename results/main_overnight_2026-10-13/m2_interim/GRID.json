@@ -1158,6 +1158,12 @@
       "reason": null,
       "rerun": null,
       "stages": {
+        "draw": {
+          "log": "w8-50-filight-wide/draw.log",
+          "rc": 1,
+          "seconds": 4517.2,
+          "stop": null
+        },
         "replan": {
           "log": "w8-50-filight-wide/replan.log",
           "rc": 1,
