@@ -38,7 +38,10 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
   ZCTA owned in every channel.  Without a polygon graph M1 is unverified, and the run is not
   eligible.  The run's own scorecard M1, which also checks each cell's planning channel against
-  the scenario, must not fail either (#116);
+  the scenario, must not fail either (#116).  Necks are measured on polygon borders unless
+  `td.audit.GAP_WIDTH_ENV` is "1" (G1, #131), as the main-map overnight grid gates (G3,
+  2026-10-13); `m1_both` gives both verdicts and the districts they disagree on, and
+  `--m1-json` writes them to each run's `m1.json`;
 - the folder is not diagnostic (#121, `td.audit.diagnostic`): a run held to a diagnostic band,
   or derived from one, is INELIGIBLE with the reason "diagnostic band".
 
@@ -385,15 +388,44 @@ def bands_at(ledger: list, ks: dict, band: float) -> audit.Check:
     return audit.check_bands(audit.Run(cells, chans))
 
 
-def m1_check(ledger: list, ks: dict, g: Geography, fine=None) -> audit.Check:
+def m1_check(ledger: list, ks: dict, g: Geography, fine=None, gap_width: bool | None = None) -> audit.Check:
     """`td.audit.check_m1` on the drawn ledger with `g`'s polygon graph (strict: no display fill),
     on the scenario's fine channels `fine` (`fine_channels`); None, for a run from before #116,
     takes the ledger's, and the summary says so.  A run folder has no units, so the routing of a
-    cell to its planning channel is the run's own scorecard M1's to check."""
+    cell to its planning channel is the run's own scorecard M1's to check.  `gap_width` goes to
+    `check_m1`: None reads `td.audit.GAP_WIDTH_ENV`."""
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
                         float(r["m_rel"]), reason=r.get("reason", "")) for r in ledger]
     return audit.check_m1(audit.Run(cells, {ch: audit.Channel(k) for ch, k in ks.items()},
-                                    polygon=g.polygon, fine=None if fine is None else tuple(fine)))
+                                    polygon=g.polygon, fine=None if fine is None else tuple(fine)),
+                          gap_width=gap_width)
+
+
+def m1_both(ledger: list, ks: dict, g: Geography, fine=None) -> dict:
+    """M1 both ways (G3, the main-map overnight grid, 2026-10-13): `strict`, necks on polygon
+    borders, and `gap_width`, necks across coverage gaps too (`td.audit.NeckGraph`), each a
+    `m1_check`, and `flips`, one row per district with a neck one way and none the other:
+    {"district": "channel/district", "strict": its neck items, "gap_width": its neck items}."""
+    got = {k: m1_check(ledger, ks, g, fine, gap_width=k == "gap_width") for k in ("strict", "gap_width")}
+    necks = {k: collections.defaultdict(list) for k in got}
+    for k, c in got.items():
+        for i in c.items:
+            if NECK.search(i):
+                necks[k][i.split(":", 1)[0]].append(i)
+    flips = [{"district": d, "strict": necks["strict"].get(d, []), "gap_width": necks["gap_width"].get(d, [])}
+             for d in sorted(set(necks["strict"]) ^ set(necks["gap_width"]))]
+    return {**got, "flips": flips}
+
+
+def write_m1(path: str, both: dict) -> None:
+    """`m1.json`: `m1_both`'s verdicts (status, summary, counts, neck items) and flips."""
+    doc = {k: {"status": c.status, "summary": c.summary, **c.counts,
+               "necks": [i for i in c.items if NECK.search(i)]}
+           for k, c in both.items() if k != "flips"}
+    doc["flips"] = both["flips"]
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=1)
+        fh.write("\n")
 
 
 def fine_channels(run_dir: str):
@@ -570,7 +602,8 @@ def report(s: dict) -> str:
               f"{s['crowded_states']} + pieces {s['contiguity_weight']:g} ({s['contiguity_pieces']} pieces "
               f"weighing 1 + mass/tau each, on the ledger; M1's piece count {s['audit_pieces']})",
               f"multipart pieces: {s['multipart_pieces']} (listed, not in the defects sum)",
-              f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger)"]
+              f"M1: {s['m1']['status']}: {s['m1']['summary']} (strict, on the ledger, necks "
+              f"{'across coverage gaps' if s['m1'].get('gap_width') else 'on polygon borders'})"]
     lines += [f"    {n}" for n in s["necks"] + s["mass_necks"]]
     lines += [f"shape: extent {s['largest_extent_km']:,.1f} km, {s['states_per_district']} states per district",
               f"balance: worst {100 * s['worst_dev']:.2f}%, mean {100 * s['mean_dev']:.2f}%",
@@ -586,6 +619,8 @@ def main(argv=None) -> list:
     ap.add_argument("--extract", help="the extract (default: run.json's source under $TD_REPO)")
     ap.add_argument("--dollars-csv", action="store_true",
                     help="write each main-map run's dollar gate to its dollars.csv")
+    ap.add_argument("--m1-json", action="store_true",
+                    help="write each run's M1, strict and across coverage gaps, to its m1.json")
     a = ap.parse_args(argv)
     rates = rates_of(a.extract) if a.extract else None
     scores = rank([score(d, rates=rates) for d in a.run_dirs])
@@ -593,6 +628,12 @@ def main(argv=None) -> list:
         for s in scores:
             if s["dollar_gate"] is not None:
                 write_dollars(os.path.join(s["dir"], "dollars.csv"), s["dollar_gate"])
+    if a.m1_json:
+        for s in scores:
+            with open(os.path.join(s["dir"], "ledger.csv"), newline="") as fh:
+                ledger = list(csv.DictReader(fh))
+            write_m1(os.path.join(s["dir"], "m1.json"),
+                     m1_both(ledger, s["k"], geography(), fine_channels(s["dir"])))
     for s in scores:
         print(report(s), end="\n\n")
     if len(scores) > 1:
