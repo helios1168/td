@@ -4,6 +4,12 @@ totals 48-52, each planned, drawn and repaired by #125's chain (`set125.sh`) on 
 
     "$TD_PY" -u tools/exp/contig/overnight.py run --host m5|m2 [--hours 8] [--slots N]
         [--only ID ...] [--root DIR] [--extract PATH] [--notify CMD]
+    "$TD_PY" tools/exp/contig/overnight.py collect --from m2 [--ssh ALIAS] [--remote-root DIR]
+        [--root DIR] [--anyway]
+    "$TD_PY" tools/exp/contig/overnight.py morning [--root DIR] [--no-render] [--jobs N]
+    "$TD_PY" -u tools/exp/contig/overnight.py smoke --out DIR [--point ID] [--host m5|m2]
+        [--extract PATH] [--hours H]
+    "$TD_PY" tools/exp/contig/overnight.py smoke --compare A B
 
 **Points** (`POINTS`, the research's settled grid): each names a structure, the base spec under
 `scenarios/` (`STRUCTURES`), and a K per channel; west8's six run on m2, the other fifteen on m5
@@ -49,6 +55,31 @@ launch, kept on a resume) starts no stage after it and kills the stages it finds
 to the stage's process group, then SIGKILL after `STOP_GRACE`).  Nothing here prints a cell's
 value; maps are rendered on m5 after the run.
 
+**collect** (on m5, after the run): the other host's GRID.json read over ssh, refused while one
+of its points has no label (`--anyway` copies them as they are) or when its extract is not this
+grid's; its points' folders hashed there (`shasum -a 256`), copied with `rsync -a`, hashed here
+and compared file by file.  On a match its records replace the "elsewhere" ones in this GRID.json
+with a `collected` note and its own GRID.json is kept as `GRID.<host>.json`; a mismatch merges
+nothing and exits 1.  `collect_<host>.json` lists every file's sha256 and the problems either way.
+
+**morning** (on m5, after collect): every stage folder rendered unless current
+(`tools/maps/render.py --if-stale`, under the G3 gate, its $M through `fac_usd.json`, a factor
+of 1 per fine channel, D14), the final folder titled with its point's label (`title_of`); then
+`MORNING.md`, one table in the settled order (`morning_order`: eligible first by the scorer's
+`rank_key`, then fails M1, ineligible ($), ineligible, infeasible, stopped and error, a balanced
+point beside its FI-light partner when both carry one label) with K, splits, defects, the worst
+district's $ against its channel's mean, M1 across gaps and strict, the largest in-state land
+ratio, the label and links, the assumptions above it and "Needs your eye" below (`eye_items`:
+every M1 flip but El Paso's, every whole-state allowance, every split group beyond R, every
+failed render and unlabelled point); and `MORNING.pdf`, one page per point in that order, the
+final folder's `summary.png` or a page naming the label and reason.
+
+**smoke** (before the launch, on each Studio): one point's replan and draw, as `run` would draw
+it, into an empty folder with its own plan cache; `smoke.json` records the code, the extract's
+and the ledger's sha256, each channel's drawing status, the seconds, the peak RSS of any one
+child process (`RUSAGE_CHILDREN`) and the slots it leaves room for (`suggest_slots`, D12).
+`--compare` reads two of them (`host:path` over ssh) and exits 0 only when they agree
+(`compare_smoke`).
 """
 from __future__ import annotations
 
@@ -62,9 +93,13 @@ import json
 import math
 import os
 import re
+import resource
+import shlex
 import signal
+import socket
 import subprocess
 import sys
+import textwrap
 import threading
 import time
 import traceback
@@ -145,6 +180,12 @@ ASSUMPTIONS = [
     "owner decisions (2026-10-12) still to be filed in PROBLEM.md",
     "M1 gated with necks across coverage gaps (scouts G1, TD_NECK_GAP_WIDTH=1); strict beside it",
 ]
+CHANNELS = ("national", "WH", "FI", "WIFI")    # the order K is written in
+STAGES = ("draw", "draw_retry", "r1", "r2")     # a point's stage folders, in chain order
+RENDER_S = 1800.0               # one folder's render cap
+EL_PASO = ("79718-79734", "79734-79718")        # the TX K3 flip of d312834's audit (G3)
+MEM_GIB = {"m2": 24}            # the memory the smoke's peak RSS divides (D12)
+PDF_PAGE = (2600, 1500)         # a page without a map, when no map sets the size
 LIVE = set()                    # the stage processes running, for the stop
 LIVE_LOCK = threading.Lock()
 
@@ -171,6 +212,10 @@ def _dollarize():
 
 def _sweep():
     return _load("exp_sweep", os.path.join(ROOT, "tools", "exp", "sweep.py"))
+
+
+def _render():
+    return _load("maps_render", os.path.join(ROOT, "tools", "maps", "render.py"))
 
 
 def now() -> str:
@@ -697,6 +742,440 @@ def schedule(todo: list, slots: int, deadline: float, work, need=slots_of, clock
     return queue
 
 
+# ------------------------------------------------------------------------------ collect
+def ssh_text(alias: str, command: str) -> str:
+    """`command`'s stdout on the host `alias` (`ssh m2` on the LAN, `m2-ts` over Tailscale)."""
+    got = subprocess.run(["ssh", "-o", "BatchMode=yes", alias, command], capture_output=True, text=True,
+                         stdin=subprocess.DEVNULL)
+    if got.returncode:
+        raise SystemExit(f"ssh {alias} {command!r} exited {got.returncode}: {got.stderr.strip()[-300:]}")
+    return got.stdout
+
+
+def read_json_at(where: str) -> dict:
+    """A JSON file here, or at `host:path` over ssh."""
+    if not os.path.exists(where) and ":" in where:
+        alias, path = where.split(":", 1)
+        return json.loads(ssh_text(alias, f"cat {shlex.quote(path)}"))
+    with open(where, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def parse_shasum(text: str) -> dict:
+    """{path: sha256} from `shasum -a 256` lines, paths relative to the grid root."""
+    out = {}
+    for line in text.splitlines():
+        if line.strip():
+            sha, path = line.split("  ", 1)
+            out[path[2:] if path.startswith("./") else path] = sha
+    return out
+
+
+def hash_tree(root: str, ids: list) -> dict:
+    """{path: sha256} of every file under `root`/<id> for the `ids`, paths relative to `root`."""
+    out = {}
+    for pid in ids:
+        for d, _, fs in os.walk(os.path.join(root, pid)):
+            for name in fs:
+                path = os.path.join(d, name)
+                out[os.path.relpath(path, root).replace(os.sep, "/")] = _dollarize().sha256(path)
+    return out
+
+
+def compare_hashes(theirs: dict, ours: dict) -> list:
+    """Each file of `theirs` missing here or with another sha256; files only here are not compared
+    (a render made on m5 after an earlier collect)."""
+    return [f"missing {p}" if p not in ours else f"differs {p}" for p in sorted(theirs) if ours.get(p) != theirs[p]]
+
+
+def remote_unlabelled(remote: dict, host: str) -> list:
+    return sorted(pid for pid, r in remote["points"].items() if r["host"] == host and r["label"] is None)
+
+
+def check_remote(doc: dict, remote: dict, host: str) -> list:
+    """The ids of `host`'s points in its GRID.json `remote`, after checking it is `host`'s grid
+    of this one's name on this one's extract and that no point here is another host's."""
+    if remote.get("grid") != doc.get("grid") or remote.get("host") != host:
+        raise ValueError(f"the remote GRID.json is {remote.get('host')}'s {remote.get('grid')}, not {host}'s "
+                         f"{doc.get('grid')}")
+    if remote.get("extract_sha256") != doc.get("extract_sha256"):
+        raise ValueError(f"{host} ran on extract {str(remote.get('extract_sha256'))[:12]}, this grid on "
+                         f"{str(doc.get('extract_sha256'))[:12]}")
+    ids = sorted(pid for pid, r in remote["points"].items() if r["host"] == host)
+    clash = [pid for pid in ids if pid in doc["points"] and doc["points"][pid]["host"] != host]
+    if clash:
+        raise ValueError(f"points of another host here: {clash}")
+    return ids
+
+
+def merge_remote(doc: dict, remote: dict, host: str, note: dict) -> list:
+    """`host`'s records from `remote` into `doc` in place of its "elsewhere" ones (its re-runs
+    added), each with `collected` = `note`; the ids merged."""
+    ids = check_remote(doc, remote, host)
+    for pid in ids:
+        doc["points"][pid] = {**remote["points"][pid], "collected": dict(note)}
+    return ids
+
+
+def cmd_collect(a) -> int:
+    path = os.path.join(a.root, GRID_JSON)
+    if not os.path.exists(path):
+        raise SystemExit(f"no {path}: collect into the grid `run` wrote on this host")
+    with open(path, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    alias, rroot = a.ssh or a.src, a.remote_root or a.root
+    remote = json.loads(ssh_text(alias, f"cat {shlex.quote(os.path.join(rroot, GRID_JSON))}"))
+    try:
+        ids = check_remote(doc, remote, a.src)
+    except ValueError as e:
+        raise SystemExit(f"{a.src}: {e}")
+    open_ = remote_unlabelled(remote, a.src)
+    if open_ and not a.anyway:
+        raise SystemExit(f"{a.src}'s points without a label: {', '.join(open_)} (still running? --anyway "
+                         "copies them as they are)")
+    listing = ssh_text(alias, f"cd {shlex.quote(rroot)} && find {' '.join(map(shlex.quote, ids))} -type f "
+                              "-print0 2>/dev/null | xargs -0 shasum -a 256")
+    theirs = parse_shasum(listing)
+    copied = sorted({p.split("/", 1)[0] for p in theirs})
+    for pid in copied:
+        rc = subprocess.run(["rsync", "-a", f"{alias}:{rroot}/{pid}/", os.path.join(a.root, pid) + "/"],
+                            stdin=subprocess.DEVNULL).returncode
+        if rc:
+            raise SystemExit(f"rsync of {pid} from {alias} exited {rc}; nothing merged")
+    bad = compare_hashes(theirs, hash_tree(a.root, copied))
+    at = now()
+    _write_json(os.path.join(a.root, f"collect_{a.src}.json"),
+                {"from": a.src, "ssh": alias, "remote_root": rroot, "at": at, "points": ids, "copied": copied,
+                 "files": len(theirs), "problems": bad, "sha256": theirs})
+    if bad:
+        print(f"{len(bad)} of {len(theirs)} files from {a.src} do not match; nothing merged:", *bad[:20], sep="\n  ")
+        return 1
+    _write_json(os.path.join(a.root, f"GRID.{a.src}.json"), remote)
+    merged = merge_remote(doc, remote, a.src, {"from": a.src, "at": at, "files": len(theirs),
+                                               "sha256_checked": True, "code": remote.get("code")})
+    Grid(path, doc)
+    print(f"collected {len(merged)} points of {a.src} ({len(copied)} folders, {len(theirs)} files, sha256 "
+          f"checked) into {path}", flush=True)
+    return 0
+
+
+# ------------------------------------------------------------------------------ morning
+def k_text(ks: dict) -> str:
+    return ", ".join(f"{c} {ks[c]}" for c in CHANNELS if c in ks) + f" = {sum(ks.values())}"
+
+
+def title_of(rec: dict, stage: str | None = None) -> str:
+    """A map's one-line title: the point, its structure and K, and its label (`render.FAILS` for
+    fails M1, so the renderer adds none); a stage folder other than the final one says so."""
+    head = f"{rec['id']}: {rec['structure']}, K {k_text(rec['k'])}"
+    if stage is not None:
+        return f"{head} ({stage}, not the final folder)"
+    label = _render().FAILS if rec["label"] == "fails M1" else rec["label"] or "no label"
+    return f"{head}; {label}" + (f" (re-run of {rec['parent']})" if rec.get("parent") else "")
+
+
+def fac_file(root: str) -> str:
+    """`<root>/fac_usd.json`: $M per $M, 1 for every fine channel with an owner total (D14)."""
+    path = os.path.join(root, "fac_usd.json")
+    _write_json(path, {"fac": {f: 1.0 for f in sorted(score.DOLLARS)},
+                       "note": "the overnight grid's ledgers hold $M (tools/exp/contig/dollarize.py)"})
+    return path
+
+
+def render_jobs(root: str, recs: list) -> list:
+    """(folder, title) for every stage folder with a ledger, the final one titled with the label."""
+    out = []
+    for rec in recs:
+        final = rec.get("final") and os.path.join(root, rec["final"])
+        for name in STAGES:
+            folder = os.path.join(root, rec["id"], name)
+            if os.path.exists(os.path.join(folder, "ledger.csv")):
+                out.append((folder, title_of(rec) if folder == final else title_of(rec, name)))
+    return out
+
+
+def render_one(folder: str, title: str, fac: str) -> tuple:
+    """(folder, exit code) of `render.py` on it, under the G3 gate, logged to its `render.log`."""
+    cmd = [sys.executable, "-u", os.path.join(ROOT, "tools", "maps", "render.py"), folder, "--label", title,
+           "--fac", fac, "--if-stale"]
+    return folder, child(cmd, os.path.join(folder, "render.log"), RENDER_S, time.time() + RENDER_S + 60, GAP_ENV)["rc"]
+
+
+LOOKS = {"splits": (r"^channel-state splits: (\d+):", int),           # score.report's lines
+         "defects": (r"^defects: (\S+) =", float),
+         "largest_extent_km": (r"^shape: extent ([\d,.]+) km", lambda x: float(x.replace(",", ""))),
+         "states_per_district": (r"^shape: extent [\d,.]+ km, (\d+) states per district", int),
+         "worst_dev": (r"^balance: worst ([\d.]+)%", lambda x: float(x) / 100),
+         "mean_dev": (r"^balance: worst [\d.]+%, mean ([\d.]+)%", lambda x: float(x) / 100)}
+
+
+def read_looks(path: str) -> dict | None:
+    """`score.rank_key`'s fields from a `score.py` report, or None without one."""
+    text, out = _text(path), {}
+    for k, (pat, conv) in LOOKS.items():
+        m = re.search(pat, text, re.M)
+        if m is None:
+            return None
+        out[k] = conv(m.group(1))
+    return out
+
+
+def worst_usd(rows: list) -> tuple | None:
+    """(district, $M, deviation) of the district farthest from its channel's mean $ per district."""
+    by, best = collections.defaultdict(list), None
+    for r in rows:
+        by[r["channel"]].append(r)
+    for _, rs in sorted(by.items()):
+        tau = math.fsum(r["usd"] for r in rs) / len(rs)
+        for r in rs:
+            dev = (r["usd"] - tau) / tau if tau else 0.0
+            if best is None or abs(dev) > abs(best[2]):
+                best = (r["district"], r["usd"], dev)
+    return best
+
+
+def folder_metrics(folder: str | None) -> dict:
+    """A final folder's score report fields, dollar rows, `m1.json` and `land.csv` rows (None where
+    absent)."""
+    def opt(name, read):
+        path = folder and os.path.join(folder, name)
+        return read(path) if path and os.path.exists(path) else None
+
+    def land(path):
+        with open(path, newline="") as fh:
+            return list(csv.DictReader(fh))
+
+    def m1(path):
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    return {"looks": opt("score.txt", read_looks), "dollars": opt("dollars.csv", read_dollars),
+            "m1": opt("m1.json", m1), "land": opt("land.csv", land)}
+
+
+def point_row(root: str, rec: dict) -> dict:
+    final = os.path.join(root, rec["final"]) if rec.get("final") else None
+    m = folder_metrics(final)
+    return {"id": rec["id"], "rec": rec, "label": rec["label"] or "error", "final": rec.get("final"),
+            "reason": rec["reason"] or ("" if rec["label"] else f"no label (status {rec['status']})"),
+            "m": m, "key": score.rank_key(m["looks"]) if m["looks"] else None}
+
+
+def pair_of(pid: str) -> str | None:
+    m = re.match(r"^(.*)-(bal|filight)$", pid)
+    return m and m.group(1)
+
+
+def morning_order(rows: list) -> list:
+    """The settled order: by label (`LABELS`, unknown last), within one by the scorer's
+    `rank_key` (rows without a report after), then id; a balanced point's FI-light partner
+    (`<x>-bal`, `<x>-filight`) moved beside the first of the two when both carry one label."""
+    at = {x: i for i, x in enumerate(LABELS)}
+    rows = sorted(rows, key=lambda r: (at.get(r["label"], len(LABELS)), r["key"] is None, r["key"] or (), r["id"]))
+    out, seen = [], set()
+    for r in rows:
+        if r["id"] in seen:
+            continue
+        out.append(r)
+        seen.add(r["id"])
+        p = pair_of(r["id"])
+        for s in rows:
+            if p and s["id"] not in seen and pair_of(s["id"]) == p and s["label"] == r["label"]:
+                out.append(s)
+                seen.add(s["id"])
+    return out
+
+
+def el_paso(flip: dict) -> bool:
+    items = flip["strict"] + flip["gap_width"]
+    return bool(items) and all(any(c in i for c in EL_PASO) for i in items)
+
+
+def eye_items(pid: str, m: dict) -> list:
+    """G3's flips but El Paso's, the whole-state allowances and the split groups beyond R of a
+    point's final folder."""
+    out = []
+    for f in (m["m1"] or {}).get("flips", []):
+        if not el_paso(f):
+            way = "strict only" if f["strict"] else "across coverage gaps only"
+            out.append(f"{pid}: M1 flip {f['district']}, a neck {way}: {(f['strict'] or f['gap_width'])[0]}")
+    out += [f"{pid}: {r['district']} {r['usd']:,.1f}M on the whole-state allowance (up to {r['cap']:,.1f}M)"
+            for r in m["dollars"] or () if r["allowance"]]
+    out += [f"{pid}: {r['channel']} {r['state']} in-state land ratio {r['ratio']} beyond R = {LAND_RATIO:g} "
+            f"({r['largest']} {r['largest_km2']} km², {r['smallest']} {r['smallest_km2']} km²)"
+            for r in m["land"] or () if r["over"] == "1"]
+    return out
+
+
+def _cells(r: dict) -> list:
+    m, final = r["m"], r["final"]
+    looks, w = m["looks"], worst_usd(m["dollars"] or [])
+    ratios = [float(x["ratio"]) for x in m["land"] or () if x["ratio"]]
+    over = sum(x["over"] == "1" for x in m["land"] or ())
+    m1 = m["m1"]
+    return [r["id"], r["rec"]["structure"], k_text(r["rec"]["k"]),
+            "—" if looks is None else str(looks["splits"]), "—" if looks is None else f"{looks['defects']:g}",
+            "—" if w is None else f"{w[0]} {100 * w[2]:+.1f}% ({w[1]:,.1f}M)",
+            "—" if m1 is None else f"{m1['gap_width']['status']} / {m1['strict']['status']}"
+            + (f", {len(m1['flips'])} flips" if m1["flips"] else ""),
+            "—" if not ratios else f"{max(ratios):.1f}" + (f" ({over} > R)" if over else ""),
+            f"**{r['label']}**",
+            "—" if not final else f"[folder]({final}/) · [map]({final}/summary.png) · [score]({final}/score.txt)"]
+
+
+def morning_md(doc: dict, rows: list, eye: list, at: str) -> str:
+    counts = collections.Counter(r["label"] for r in rows)
+    codes = sorted({json.dumps(c, sort_keys=True) for c in [doc.get("code")]
+                    + [r["rec"].get("collected", {}).get("code") for r in rows] if c})
+    md = [f"# MORNING: {GRID_NAME}", "",
+          f"Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at {at}.  Extract "
+          f"`{os.path.basename(doc['extract'])}` (sha256 `{doc['extract_sha256'][:12]}`); code "
+          + ", ".join(f"`{json.loads(c)['commit'][:7]}`" + (" (dirty)" if json.loads(c)["dirty"] else "") for c in codes)
+          + f"; stop at {doc['deadline']}.", "",
+          f"{len(rows)} points: " + ", ".join(f"{counts[x]} {x}" for x in LABELS if counts[x]) + ".", "",
+          "## Assumptions (owner decisions open)", ""] + [f"- {x}" for x in doc["assumptions"]] + [
+          "", "## Points", "",
+          "Eligible first by the scorer's rank key (splits, defects, extent, states per district, worst and mean "
+          "deviation), then fails M1, ineligible ($), ineligible, infeasible, stopped and error; a balanced point "
+          "beside its FI-light partner when both carry one label.  Worst $: the district farthest from its "
+          "channel's mean $ per district.  M1: across coverage gaps (the gate) / strict.  Land: the largest "
+          f"in-state ratio, groups beyond R = {LAND_RATIO:g}.  `MORNING.pdf` has one page per point in this order.",
+          "", "| # | id | structure | K | splits | defects | worst $ | M1 gaps / strict | land | label | links |",
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
+    md += [f"| {i} | " + " | ".join(_cells(r)) + " |" for i, r in enumerate(rows, 1)]
+    md += ["", "## Reasons", ""] + ([f"- **{r['id']}** ({r['label']}): {r['reason']}" for r in rows if r["reason"]]
+                                    or ["- none"])
+    md += ["", "## Needs your eye", ""] + ([f"- {x}" for x in eye] or ["- nothing"])
+    return "\n".join(md) + "\n"
+
+
+def morning_pdf(path: str, pages: list) -> None:
+    """A raster PDF (`tools/shortlist/build.py`'s `deck`): one page per (png or None, text), a
+    page without a map showing its text."""
+    from PIL import Image, ImageDraw, ImageFont
+    size = next((Image.open(p).size for p, _ in pages if p and os.path.exists(p)), PDF_PAGE)
+    font, imgs = ImageFont.load_default(size=40), []
+    for png, text in pages:
+        if png and os.path.exists(png):
+            imgs.append(Image.open(png).convert("RGB"))
+            continue
+        im = Image.new("RGB", size, "white")
+        body = "\n".join(textwrap.fill(x, 100) for x in text.splitlines())
+        ImageDraw.Draw(im).multiline_text((60, 60), body, fill="black", font=font, spacing=12)
+        imgs.append(im)
+    imgs[0].save(path, save_all=True, append_images=imgs[1:], resolution=100)
+
+
+def cmd_morning(a) -> int:
+    with open(os.path.join(a.root, GRID_JSON), encoding="utf-8") as fh:
+        doc = json.load(fh)
+    recs = [doc["points"][pid] for pid in sorted(doc["points"])]
+    eye = []
+    if not a.no_render:
+        fac = fac_file(a.root)
+        _render()
+        with concurrent.futures.ThreadPoolExecutor(a.jobs) as pool:
+            done = list(pool.map(lambda j: render_one(*j, fac), render_jobs(a.root, recs)))
+        eye += [f"render failed (exit {rc}): {os.path.relpath(f, a.root)}/render.log" for f, rc in done if rc != 0]
+    rows = morning_order([point_row(a.root, rec) for rec in recs])
+    for r in rows:
+        eye += eye_items(r["id"], r["m"])
+        if r["rec"]["label"] is None:
+            eye.append(f"{r['id']}: {r['reason']}, counted as an error")
+    md = os.path.join(a.root, "MORNING.md")
+    with open(md, "w", encoding="utf-8") as fh:
+        fh.write(morning_md(doc, rows, eye, now()))
+    pdf = os.path.join(a.root, "MORNING.pdf")
+    morning_pdf(pdf, [(r["final"] and os.path.join(a.root, r["final"], "summary.png"),
+                       title_of(r["rec"]) + (f"\n{r['reason']}" if r["reason"] else "") + "\nno map")
+                      for r in rows])
+    print(f"{md}\n{pdf}\n{len(rows)} points, {len(eye)} items need your eye", flush=True)
+    return 0
+
+
+# ------------------------------------------------------------------------------ smoke
+def peak_rss(maxrss: int, platform: str = sys.platform) -> int:
+    """`ru_maxrss` in bytes: bytes on macOS, KiB on Linux."""
+    return maxrss if platform == "darwin" else maxrss * 1024
+
+
+def suggest_slots(host: str, peak: int) -> int:
+    """D12: `MEM_GIB`[host] over the smoke's peak RSS, at most `SLOTS`[host]; `SLOTS` where no
+    budget is set."""
+    if host not in MEM_GIB or peak <= 0:
+        return SLOTS[host]
+    return max(1, min(SLOTS[host], int(MEM_GIB[host] * 2 ** 30 // peak)))
+
+
+def this_host() -> str | None:
+    name = socket.gethostname().split(".")[0]
+    return next((h for h in sorted(SLOTS) if name.startswith(h)), None)
+
+
+SMOKE_SAME = ("point", "extract_sha256", "ledger_sha256", "statuses")
+
+
+def compare_smoke(a: dict, b: dict) -> list:
+    """What differs between two `smoke.json`: the point, extract, ledger, statuses or code."""
+    out = [f"{k}: {a.get(k)!r} vs {b.get(k)!r}" for k in SMOKE_SAME if a.get(k) != b.get(k)]
+    ca, cb = ((c["code"]["commit"], c["code"]["diff_sha256"]) for c in (a, b))
+    if ca != cb:
+        out.append(f"code: {ca} vs {cb}")
+    return out
+
+
+def cmd_smoke(a) -> int:
+    if a.compare:
+        x, y = map(read_json_at, a.compare)
+        diff = compare_smoke(x, y)
+        print(*(diff or [f"match: {x['point']} ledger {x['ledger_sha256'][:12]} on {x['host']} and {y['host']}; "
+                         f"peak RSS {x['peak_rss_bytes'] / 2 ** 30:.2f} / {y['peak_rss_bytes'] / 2 ** 30:.2f} GiB"]),
+              sep="\n")
+        return 1 if diff else 0
+    if not a.out:
+        raise SystemExit("smoke needs --out DIR (or --compare A B)")
+    host = a.host or this_host()
+    if host is None:
+        raise SystemExit("cannot tell the host from the hostname; pass --host")
+    pt = {p["id"]: p for p in POINTS}.get(a.point)
+    if pt is None:
+        raise SystemExit(f"no point {a.point}")
+    if _dollarize().rates_of(a.extract) is None:
+        raise SystemExit(f"{a.extract} is not a dollar extract (tools/exp/contig/dollarize.py)")
+    if os.path.exists(a.out) and os.listdir(a.out):
+        raise SystemExit(f"{a.out} is not empty")
+    os.makedirs(a.out, exist_ok=True)
+    base_path, rule = STRUCTURES[pt["structure"]]
+    base_path = os.path.join(ROOT, base_path)
+    plan = plan_point(pt["k"], tdspec.load(base_path), state_cells(a.extract), rule)
+    if plan["infeasible"]:
+        raise SystemExit("; ".join(plan["infeasible"].values()))
+    base, spec, plans = (os.path.join(a.out, x) for x in ("spec-base.toml", "spec.toml", "_plans"))
+    with open(base_path, encoding="utf-8") as fh:
+        text = point_spec_text(fh.read(), pt["id"], plan)
+    with open(base, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    deadline = time.time() + 3600.0 * a.hours
+    rp = child(replan_cmd(base, a.out, plans, a.extract, plan), os.path.join(a.out, "replan.log"),
+               PLAN_S * len(pt["k"]) + CAP_S["replan"], deadline)
+    if rp["rc"] != 0:
+        raise SystemExit(f"replan.py: {rp}, {_tail(os.path.join(a.out, 'replan.log'))}")
+    out = os.path.join(a.out, "draw")
+    dr = child(draw_cmd(spec, out, plans, a.extract, slots_of(pt)), os.path.join(a.out, "draw.log"),
+               DRAW_S + CAP_S["draw"], deadline)
+    ledger = os.path.join(out, "ledger.csv")
+    contig = read_json_at(os.path.join(out, "contig.json")) if os.path.exists(os.path.join(out, "contig.json")) else {}
+    peak = peak_rss(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+    doc = {"point": pt["id"], "host": host, "at": now(), "code": _sweep().code_state(), "extract": a.extract,
+           "extract_sha256": _dollarize().sha256(a.extract),
+           "ledger_sha256": _dollarize().sha256(ledger) if os.path.exists(ledger) else None,
+           "statuses": {c: ch.get("status") for c, ch in sorted(contig.get("channels", {}).items())},
+           "stages": {"replan": rp, "draw": dr}, "peak_rss_bytes": peak, "slots": suggest_slots(host, peak)}
+    _write_json(os.path.join(a.out, "smoke.json"), doc)
+    print(f"smoke {pt['id']} on {host}: ledger {str(doc['ledger_sha256'])[:12]}, {doc['statuses']}, "
+          f"{rp['seconds'] + dr['seconds']:,.0f} s, peak RSS {peak / 2 ** 30:.2f} GiB, slots {doc['slots']}", flush=True)
+    return 0 if doc["ledger_sha256"] and dr["rc"] == 0 else 1
+
+
 # ------------------------------------------------------------------------------ the CLI
 def open_grid(root: str, host: str, extract: str, hours: float) -> Grid:
     """GRID.json at `root`: the one there (a resume, its stop kept), or a new one listing every
@@ -754,6 +1233,27 @@ def parser() -> argparse.ArgumentParser:
     r.add_argument("--extract", default=EXTRACT)
     r.add_argument("--notify", default=None, help="a command the run ends with (sweep.py's NOTIFY)")
     r.set_defaults(func=cmd_run)
+    c = sub.add_parser("collect", help="copy another host's points here, sha256 checked, and merge GRID.json")
+    c.add_argument("--from", dest="src", required=True, choices=sorted(SLOTS))
+    c.add_argument("--ssh", default=None, help="the ssh alias (default the host's name; m2-ts over Tailscale)")
+    c.add_argument("--remote-root", default=None, help="the grid there (default --root)")
+    c.add_argument("--root", default=GRID_ROOT)
+    c.add_argument("--anyway", action="store_true", help="copy points that have no label yet")
+    c.set_defaults(func=cmd_collect)
+    m = sub.add_parser("morning", help="render, then write MORNING.md and MORNING.pdf")
+    m.add_argument("--root", default=GRID_ROOT)
+    m.add_argument("--no-render", action="store_true", help="use the maps already there")
+    m.add_argument("--jobs", type=int, default=4, help="renders at once")
+    m.set_defaults(func=cmd_morning)
+    s = sub.add_parser("smoke", help="one point's replan and draw, its ledger sha256 and peak RSS")
+    s.add_argument("--point", default="ne-48-bal")
+    s.add_argument("--out", default=None, help="an empty folder")
+    s.add_argument("--host", default=None, choices=sorted(SLOTS), help="default from the hostname")
+    s.add_argument("--extract", default=EXTRACT)
+    s.add_argument("--hours", type=float, default=2.0, help="the smoke's own stop")
+    s.add_argument("--compare", nargs=2, default=None, metavar=("A", "B"),
+                   help="two smoke.json (host:path over ssh): exit 0 when they match")
+    s.set_defaults(func=cmd_smoke)
     return ap
 
 

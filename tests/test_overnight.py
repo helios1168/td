@@ -7,6 +7,7 @@ import collections
 import importlib.util
 import json
 import os
+import re
 import sys
 import tempfile
 import threading
@@ -255,4 +256,172 @@ def test_commands_carry_the_settled_flags():
     assert r[r.index("--budget") + 1] == "1800" and "--keep-support" in r and "--flow" in r
     assert overnight.slots_of({"k": {"WIFI": 48}}) == 2
     assert overnight.slots_of({"k": dict.fromkeys(("national", "WH", "FI", "WIFI"), 1)}) == 4
+
+
+def test_collect_hashes_and_merge():
+    with tempfile.TemporaryDirectory() as tmp:
+        for rel, body in (("w8-48-bal/r1/ledger.csv", b"a"), ("w8-48-bal/r1/m1.json", b"b"),
+                          ("w8-50-bal/draw/ledger.csv", b"c")):
+            os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
+            with open(os.path.join(tmp, rel), "wb") as fh:
+                fh.write(body)
+        ours = overnight.hash_tree(tmp, ["w8-48-bal", "w8-50-bal"])
+    assert sorted(ours) == ["w8-48-bal/r1/ledger.csv", "w8-48-bal/r1/m1.json", "w8-50-bal/draw/ledger.csv"]
+    listing = "".join(f"{s}  ./{p}\n" for p, s in ours.items())
+    theirs = overnight.parse_shasum(listing)
+    assert theirs == ours and overnight.compare_hashes(theirs, {**ours, "w8-48-bal/r1/summary.png": "x"}) == []
+    bad = {**ours, "w8-48-bal/r1/m1.json": "0" * 64}
+    del bad["w8-50-bal/draw/ledger.csv"]
+    assert overnight.compare_hashes(theirs, bad) == ["differs w8-48-bal/r1/m1.json", "missing w8-50-bal/draw/ledger.csv"]
+    code = {"commit": "c", "dirty": False, "diff_sha256": None}
+    doc = overnight.grid_doc("m5", "/x", "abc", time.time() + 60, code)
+    remote = overnight.grid_doc("m2", "/x", "abc", time.time() + 60, code)
+    remote["points"]["w8-48-bal"].update(status="done", label="eligible", final="w8-48-bal/r1")
+    remote["points"]["w8-48-bal-WH10"] = overnight.record(
+        {"id": "w8-48-bal-WH10", "structure": "west8", "k": {"WH": 10}}, "m2", "w8-48-bal")
+    assert overnight.remote_unlabelled(remote, "m2") == [
+        "w8-48-bal-WH10", "w8-50-bal", "w8-50-filight", "w8-52-bal", "w8-52-filight", "w8-cmp-seed"]
+    got = overnight.merge_remote(doc, remote, "m2", {"from": "m2"})
+    assert len(got) == 7 and doc["points"]["w8-48-bal"]["label"] == "eligible"
+    assert doc["points"]["w8-48-bal-WH10"]["parent"] == "w8-48-bal"
+    assert doc["points"]["w8-48-bal"]["collected"] == {"from": "m2"} and doc["points"]["w1-48"]["status"] == "queued"
+    for bad_remote in ({**remote, "extract_sha256": "zzz"}, {**remote, "host": "m5"}):
+        try:
+            overnight.check_remote(doc, bad_remote, "m2")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("a GRID.json of another extract or host was merged")
+
+
+def _rec(pid, label, structure="ne_plains", final=None, reason=None, parent=None):
+    ks = {"national": 15, "WH": 11, "FI": 20, "WIFI": 3}
+    return {"id": pid, "structure": structure, "k": ks, "label": label, "reason": reason, "final": final,
+            "status": "done" if label else "running", "parent": parent}
+
+
+def _ordered(pid, label, key=None):
+    return {"id": pid, "label": label, "key": key}
+
+
+def test_morning_order_ranks_labels_and_pairs():
+    rows = [_ordered("ne-52-filight", "eligible", (3, 1.0)), _ordered("w1-48", "stopped"),
+            _ordered("ne-50-bal", "eligible", (2, 5.0)), _ordered("ne-52-bal", "eligible", (2, 0.5)),
+            _ordered("ne-50-filight", "fails M1", (1, 0.0)), _ordered("nw49-48", "infeasible"),
+            _ordered("w8-48-bal", "ineligible ($)", (4, 0.0)), _ordered("x", "error"), _ordered("y", "odd")]
+    got = [r["id"] for r in overnight.morning_order(rows)]
+    assert got == ["ne-52-bal", "ne-52-filight", "ne-50-bal", "ne-50-filight", "w8-48-bal", "nw49-48",
+                   "w1-48", "x", "y"]
+
+
+def test_needs_your_eye_skips_el_paso():
+    ep = ("IFA/IFA_02: neck 5.10 km wide cuts off 3 ZIPs (79734...), 1.0% of its land area and 0.5% of its "
+          "mass; cut 79718-79734 6.14 km")
+    other = ("WH/WH_03: neck 4.00 km wide cuts off 9 ZIPs (10001...), 2.0% of its land area and 1.0% of its "
+             "mass; cut 10001-10002 4.00 km")
+    m = {"m1": {"flips": [{"district": "IFA/IFA_02", "strict": [ep], "gap_width": []},
+                          {"district": "WH/WH_03", "strict": [], "gap_width": [other]}]},
+         "dollars": [{"channel": "WIFI", "district": "WIFI_01", "usd": 1543.0, "lo": 850.0, "hi": 1150.0,
+                      "cap": 1600.0, "allowance": True, "ok": True}],
+         "land": [{"channel": "national", "state": "CA", "ratio": "32.10", "largest": "national_01",
+                   "largest_km2": "90000.0", "smallest": "national_02", "smallest_km2": "2800.0", "over": "1"},
+                  {"channel": "FI", "state": "TX", "ratio": "3.00", "over": "0"}]}
+    got = overnight.eye_items("ne-48-bal", m)
+    assert len(got) == 3
+    assert "WH/WH_03, a neck across coverage gaps only" in got[0] and "79718" not in " ".join(got)
+    assert "WIFI_01 1,543.0M on the whole-state allowance (up to 1,600.0M)" in got[1]
+    assert "national CA in-state land ratio 32.10 beyond R = 10" in got[2]
+
+
+REPORT = ("# r1\ndir: d\neligible: yes\nK: national 15 WH 11 FI 20 WIFI 3 = 49\n"
+          "channel-state splits: 7: national:CA\ndefects: 2.5 = thin 1 + small 0 + crowded 0 + pieces 1.5\n"
+          "shape: extent 1,234.5 km, 4 states per district\nbalance: worst 9.50%, mean 3.25%\n")
+
+
+def test_morning_files_from_a_toy_grid():
+    from PIL import Image
+    doc = overnight.grid_doc("m5", "/hub/instance_descaled_usd.json.gz", "abcdef0123456789", time.time() + 60,
+                             {"commit": "e82d6a4aaaa", "dirty": False, "diff_sha256": None})
+    with tempfile.TemporaryDirectory() as tmp:
+        fin = os.path.join(tmp, "ne-cmp-tierP", "r1")
+        os.makedirs(fin)
+        with open(os.path.join(fin, "score.txt"), "w") as fh:
+            fh.write(REPORT)
+        score.write_dollars(os.path.join(fin, "dollars.csv"), [
+            {"channel": "WH", "district": f"WH_0{i}", "usd": u, "lo": 0.85e9, "hi": 1.15e9, "states": ["NY"],
+             "whole_states": False, "cap": None, "allowance": False, "ok": True}
+            for i, u in ((1, 0.9e9), (2, 1.1e9))])
+        with open(os.path.join(fin, "m1.json"), "w") as fh:
+            json.dump({"strict": {"status": "pass"}, "gap_width": {"status": "pass"}, "flips": []}, fh)
+        with open(os.path.join(fin, "land.csv"), "w") as fh:
+            fh.write("channel,state,ratio,over\nWH,NY,12.50,1\nFI,PA,,0\n")
+        Image.new("RGB", (300, 200), "red").save(os.path.join(fin, "summary.png"))
+        recs = [_rec("ne-cmp-tierP", "eligible", final="ne-cmp-tierP/r1"),
+                _rec("w1-48", "stopped", "w1", reason="not started before the 8 h stop"),
+                _rec("w8-48-bal", None, "west8")]
+        rows = overnight.morning_order([overnight.point_row(tmp, r) for r in recs])
+        assert [r["label"] for r in rows] == ["eligible", "stopped", "error"]
+        assert rows[0]["key"] == (7, 2.5, 1234.5, 4, 0.095, 0.0325)
+        md = overnight.morning_md(doc, rows, ["x"], "2026-10-13T12:00:00+00:00")
+        pdf = os.path.join(tmp, "MORNING.pdf")
+        overnight.morning_pdf(pdf, [(r["final"] and os.path.join(tmp, r["final"], "summary.png"),
+                                     overnight.title_of(r["rec"])) for r in rows])
+        with open(pdf, "rb") as fh:
+            raw = fh.read()
+    assert raw.startswith(b"%PDF") and len(re.findall(rb"/Type\s*/Page\b(?!s)", raw)) == 3
+    lines = md.splitlines()
+    table = [x for x in lines if re.match(r"^\| [123] \|", x)]
+    assert table[0].startswith("| 1 | ne-cmp-tierP | ne_plains | national 15, WH 11, FI 20, WIFI 3 = 49 | 7 | 2.5 | ")
+    assert "WH_01 -10.0% (900.0M)" in table[0] and "pass / pass" in table[0] and "12.5 (1 > R)" in table[0]
+    assert "[map](ne-cmp-tierP/r1/summary.png)" in table[0]
+    assert "| **stopped** | — |" in table[1] and "| **error** | — |" in table[2]
+    assert "- **w8-48-bal** (error): no label (status running)" in lines
+    assert any("#133" in x for x in lines) and "- x" in lines and "1 eligible, 1 stopped, 1 error." in md
+    assert "`e82d6a4`" in md and "sha256 `abcdef012345`" in md
+
+
+def test_titles_and_fac_for_renders():
+    rec = _rec("ne-50-bal", "fails M1")
+    assert overnight.title_of(rec) == "ne-50-bal: ne_plains, K national 15, WH 11, FI 20, WIFI 3 = 49; FAILS M1"
+    assert overnight.title_of(rec, "draw").endswith("(draw, not the final folder)")
+    kid = _rec("ne-50-bal-WH10", "eligible", parent="ne-50-bal")
+    assert overnight.title_of(kid).endswith("; eligible (re-run of ne-50-bal)")
+    with tempfile.TemporaryDirectory() as tmp:
+        fac = json.load(open(overnight.fac_file(tmp)))["fac"]
+        for name in ("draw", "r1", "r2"):
+            os.makedirs(os.path.join(tmp, "ne-50-bal", name))
+            if name != "r2":
+                open(os.path.join(tmp, "ne-50-bal", name, "ledger.csv"), "w").close()
+        jobs = overnight.render_jobs(tmp, [{**rec, "final": "ne-50-bal/r1"}])
+    assert fac == dict.fromkeys(sorted(score.DOLLARS), 1.0)
+    assert [(os.path.basename(f), t.endswith("FAILS M1")) for f, t in jobs] == [("draw", False), ("r1", True)]
+
+
+def test_smoke_slots_and_compare():
+    assert overnight.peak_rss(3 * 2 ** 30, "darwin") == 3 * 2 ** 30
+    assert overnight.peak_rss(1024, "linux") == 2 ** 20
+    assert overnight.suggest_slots("m2", 3 * 2 ** 30) == 8
+    assert overnight.suggest_slots("m2", 4 * 2 ** 30) == 6
+    assert overnight.suggest_slots("m2", 40 * 2 ** 30) == 1
+    assert overnight.suggest_slots("m5", 9 * 2 ** 30) == 12
+    a = {"point": "ne-48-bal", "host": "m5", "extract_sha256": "e", "ledger_sha256": "l",
+         "statuses": {"WH": "optimal"}, "code": {"commit": "c", "diff_sha256": None}, "peak_rss_bytes": 1}
+    assert overnight.compare_smoke(a, {**a, "host": "m2"}) == []
+    got = overnight.compare_smoke(a, {**a, "ledger_sha256": "m", "code": {"commit": "d", "diff_sha256": None}})
+    assert got == ["ledger_sha256: 'l' vs 'm'", "code: ('c', None) vs ('d', None)"]
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "smoke.json")
+        with open(path, "w") as fh:
+            json.dump(a, fh)
+        assert overnight.read_json_at(path) == a
+
+
+def test_subcommands_parse():
+    p = overnight.parser()
+    c = p.parse_args(["collect", "--from", "m2"])
+    assert (c.src, c.ssh, c.remote_root, c.anyway, c.root) == ("m2", None, None, False, overnight.GRID_ROOT)
+    m = p.parse_args(["morning", "--no-render"])
+    assert m.no_render and m.jobs == 4 and m.func is overnight.cmd_morning
+    s = p.parse_args(["smoke", "--compare", "a.json", "m2:/tmp/b.json"])
+    assert s.compare == ["a.json", "m2:/tmp/b.json"] and s.point == "ne-48-bal" and s.func is overnight.cmd_smoke
 
