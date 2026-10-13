@@ -417,6 +417,26 @@ def test_smoke_slots_and_compare():
         assert overnight.read_json_at(path) == a
 
 
+def test_modules_load_whole_across_threads():
+    """Points start on threads (2026-10-13 launch: 'contig_replan' seen half-loaded): every thread
+    gets the module with its functions."""
+    name = "contig_replan_threads"
+    sys.modules.pop(name, None)
+    path = os.path.join(overnight.HERE, "replan.py")
+    got, start = [], threading.Barrier(8)
+
+    def go():
+        start.wait()
+        got.append(hasattr(overnight._load(name, path), "banned_text"))
+    ts = [threading.Thread(target=go) for _ in range(8)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    sys.modules.pop(name, None)
+    assert got == [True] * 8
+
+
 def test_subcommands_parse():
     p = overnight.parser()
     c = p.parse_args(["collect", "--from", "m2"])

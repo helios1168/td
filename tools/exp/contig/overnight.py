@@ -190,13 +190,17 @@ LIVE = set()                    # the stage processes running, for the stop
 LIVE_LOCK = threading.Lock()
 
 
+_LOAD_LOCK = threading.RLock()     # points start on threads; a module is never seen half-loaded
+
+
 def _load(name: str, path: str):
-    if name not in sys.modules:
-        spec = importlib.util.spec_from_file_location(name, path)
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[name] = mod
-        spec.loader.exec_module(mod)
-    return sys.modules[name]
+    with _LOAD_LOCK:
+        if name not in sys.modules:
+            spec = importlib.util.spec_from_file_location(name, path)
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[name] = mod
+            spec.loader.exec_module(mod)
+        return sys.modules[name]
 
 
 score = _load("looks_score", os.path.join(ROOT, "tools", "looks", "score.py"))
