@@ -1,0 +1,70 @@
+{
+ "strict": {
+  "status": "fail",
+  "summary": "4 districts in pieces, 5 detached pieces (largest 0.223 \u03c4), 7 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1",
+  "split": 4,
+  "pieces": 5,
+  "largest_tau": 0.22286019521363662,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "FI/FI_08: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.0% of its land area and 12.8% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "FI/FI_11: neck 0.42 km wide cuts off 94 ZIPs (37385...), 9.4% of its land area and 25.1% of its mass; cut 37902-37929 0.42 km",
+   "FI/FI_18: neck 0.99 km wide cuts off 14 ZIPs (10464...), 5.9% of its land area and 4.5% of its mass; cut 10464-10475 0.27 km, 10466-10803 0.33 km, 10475-10803 0.39 km",
+   "national/national_04: neck 8.81 km wide cuts off 5 ZIPs (93527...), 6.2% of its land area and 0.0% of its mass; cut 93527-93554 8.81 km",
+   "national/national_05: neck 8.12 km wide cuts off 4 ZIPs (92328...), 9.1% of its land area and 0.0% of its mass; cut 92384-92389 8.12 km",
+   "national/national_09: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.0% of its land area and 2.3% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "national/national_15: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.7% of its land area and 3.3% of its mass; cut 79718-79734 6.14 km"
+  ],
+  "mass_necks": 15,
+  "gap_width": false
+ },
+ "gap_width": {
+  "status": "fail",
+  "summary": "4 districts in pieces, 5 detached pieces (largest 0.223 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1",
+  "split": 4,
+  "pieces": 5,
+  "largest_tau": 0.22286019521363662,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "FI/FI_08: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.0% of its land area and 12.8% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "FI/FI_11: neck 7.52 km wide cuts off 94 ZIPs (37385...), 9.4% of its land area and 24.7% of its mass; cut 37902-37915 1.80 km, 37902-37916 2.60 km, 37902-37917 0.88 km, 37902-37920 1.81 km, 37902-37929 0.42 km",
+   "national/national_09: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.0% of its land area and 2.3% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km"
+  ],
+  "mass_necks": 11,
+  "gap_width": true
+ },
+ "flips": [
+  {
+   "district": "FI/FI_18",
+   "strict": [
+    "FI/FI_18: neck 0.99 km wide cuts off 14 ZIPs (10464...), 5.9% of its land area and 4.5% of its mass; cut 10464-10475 0.27 km, 10466-10803 0.33 km, 10475-10803 0.39 km"
+   ],
+   "gap_width": []
+  },
+  {
+   "district": "national/national_04",
+   "strict": [
+    "national/national_04: neck 8.81 km wide cuts off 5 ZIPs (93527...), 6.2% of its land area and 0.0% of its mass; cut 93527-93554 8.81 km"
+   ],
+   "gap_width": []
+  },
+  {
+   "district": "national/national_05",
+   "strict": [
+    "national/national_05: neck 8.12 km wide cuts off 4 ZIPs (92328...), 9.1% of its land area and 0.0% of its mass; cut 92384-92389 8.12 km"
+   ],
+   "gap_width": []
+  },
+  {
+   "district": "national/national_15",
+   "strict": [
+    "national/national_15: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.7% of its land area and 3.3% of its mass; cut 79718-79734 6.14 km"
+   ],
+   "gap_width": []
+  }
+ ]
+}

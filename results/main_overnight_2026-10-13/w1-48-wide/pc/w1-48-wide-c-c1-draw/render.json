@@ -1,0 +1,38 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "2f143d1a8e518ad6dd201099c1badf28641bf978d9cb83ca40dd41bc5bddbdac",
+    "summary.svg": "801d1c1ebf8e4b78076e22b2315b3cf66cd6c57c1bf90b414658321a9c365de3",
+    "zip_WIFI.png": "97b8ca0421ad7d695968a3677838f5494b1f58f4a93bfcf13a50ca1317f3b5c4",
+    "zip_pages.pdf": "b3b1c33fa68c4c419e70611fa37ae095c986e287052da35706c5356ba9d2dc94",
+    "zip_summary.png": "59e795dac74a95035c4e326ffab7cd48fed99130b3aa44f59fe2dbf70e611ee4"
+  },
+  "inputs": {
+    "districts.csv": "390a42128d96463866e31a8a32d7dfb544a3078aba80aefbdff3cacde6b86898",
+    "ledger.csv": "6d354758addc18731e5f7fe80c1823df6d60ef60afe76f902176db00ee32457a",
+    "manifest.json": "8bbc8516984c38a5a25f82df50d7a20e8910016925b4a3b061ff19975cf62696",
+    "run.json": "7ec5bd40ce91c0be951e31854318ac7d63160cc64233c3cb489287de6467ba3f"
+  },
+  "label": "w1-48-wide-c-c1-draw (#124 C)",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "2 districts in pieces, 3 detached pieces (largest 0.438 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 18 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T15:01:58+00:00",
+  "renderer": {
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w1-48-wide-c-c1-draw (#124 C), FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}

@@ -8,12 +8,13 @@
   "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
   "images": {
     "summary.png": "4deca4dfb03556acad08fa4894f36acfe8bd0ef7e5f84b7cf0ae0919e8ba2455",
-    "summary.svg": "253d402b5a41588d9d900edc0c3d8ca4a7eba4e3ca7918983123996addf09a99",
-    "zip_FI.png": "ac49dddf05717b4c6378e841461063fc9fceb1fca571526484bbb92d0df2e83e",
-    "zip_WH.png": "288243360653dcfff292cdcce35d53d40675d0d1a7ef62e012bb26da93c8ebfc",
-    "zip_WIFI.png": "278aa428ec3d26eca8a6757fc689b8675ea2b8c725579c6c01d40a253346c7b9",
-    "zip_national.png": "6533b52fb3b5caf45bffcf1f74be04a211e042a5484984feb27a991e2fe70974",
-    "zip_pages.pdf": "28cf16d2dc6c3fbf15874f1ee354451c75d680141e7c7088b41a3c784ea529c3"
+    "summary.svg": "e0f9f55a5f136d817126d5b6afdffdb7e63ffcc197ffbe37c64d5db875c1db4e",
+    "zip_FI.png": "70457977230e40a69d2b63116c13f57bd300a1f53a131aa6824a588db0dbd178",
+    "zip_WH.png": "774e8b09265a0691458768224645c6aed20f4faa5bd240c795320b0309e2bc52",
+    "zip_WIFI.png": "aa0a2b690cdf99cf0fe4ecf19473db393f944141f1caaf97ff9acce3c7c9e4b2",
+    "zip_national.png": "06908209383e40407e5c2f73faeb4bae49a33c9582582d7d34734f54385559be",
+    "zip_pages.pdf": "5895dc2a9ac2dcf71020c07be262cb944a58aa3783675f337842e294f245db48",
+    "zip_summary.png": "6d9076686ead25e1c53c2ea94348e10d1274ab04f903bd684ab624e8756cc628"
   },
   "inputs": {
     "districts.csv": "f4da4b5ea4fbe2b9949ea44d53a21a6930d721001f54b9472bc4e9a1e904f2ba",
@@ -27,10 +28,10 @@
     "status": "fail",
     "summary": "3 districts in pieces, 4 detached pieces (largest 0.113 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 8 mass necks listed beside M1"
   },
-  "rendered_at": "2026-10-13T14:32:42+00:00",
+  "rendered_at": "2026-10-13T15:33:00+00:00",
   "renderer": {
-    "code_sha256": "e36c2c1ba3e2636d68dd2c33c7b3adc39a6448e64efe07c09027400841143992",
-    "commit": "e729723653c88cedb536ec5272c464a42fd83d51",
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
     "diff_sha256": null,
     "dirty": false
   },

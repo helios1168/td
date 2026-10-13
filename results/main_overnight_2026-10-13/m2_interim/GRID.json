@@ -467,6 +467,7 @@
     },
     "w8-48-bal-wide": {
       "delta_floor": {
+        "WH": 0.3018,
         "national": 0.1786
       },
       "final": null,
@@ -481,12 +482,117 @@
       },
       "label": null,
       "parent": null,
-      "plan": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1426,
+            "free": [
+              "AR",
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1035.0,
+            "k": 22,
+            "lo_m": 765.0,
+            "tau_m": 892.3204587579866,
+            "usd_m": 19631.050092675705,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.3018,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1150.0,
+            "k": 11,
+            "lo_m": 850.0,
+            "tau_m": 977.6315334526753,
+            "usd_m": 10753.946867979428,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.1,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 1,
+            "lo_m": 850.0,
+            "tau_m": 1542.7387897595586,
+            "usd_m": 1542.7387897595586,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.1786,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "MI",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1437.5,
+            "k": 14,
+            "lo_m": 1000.0,
+            "tau_m": 1212.9272150438462,
+            "usd_m": 16980.981010613847,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
       "reason": null,
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "w8-48-bal-wide/replan.log",
+          "rc": 1,
+          "seconds": 119.3,
+          "stop": null
+        },
+        "replan2": {
+          "log": "w8-48-bal-wide/replan2.log",
+          "rc": 0,
+          "seconds": 196.3,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T14:34:27+00:00",
+      "status": "running",
       "structure": "west8",
       "total": 48,
       "wide_of": "w8-48-bal"
@@ -618,8 +724,8 @@
         "WH": 0.3018,
         "national": 0.2445
       },
-      "final": null,
-      "finished_at": null,
+      "final": "w8-50-bal-wide/r2",
+      "finished_at": "2026-10-13T14:34:27+00:00",
       "host": "m2",
       "id": "w8-50-bal-wide",
       "k": {
@@ -628,7 +734,7 @@
         "WIFI": 1,
         "national": 15
       },
-      "label": null,
+      "label": "fails M1",
       "parent": null,
       "plan": {
         "channels": {
@@ -723,7 +829,7 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.283 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 11 mass necks listed beside M1",
       "rerun": null,
       "stages": {
         "draw": {
@@ -738,10 +844,34 @@
           "seconds": 9.5,
           "stop": null
         },
+        "land_draw": {
+          "log": "w8-50-bal-wide/land_draw.log",
+          "rc": 0,
+          "seconds": 1.0,
+          "stop": null
+        },
+        "land_r1": {
+          "log": "w8-50-bal-wide/land_r1.log",
+          "rc": 0,
+          "seconds": 1.0,
+          "stop": null
+        },
+        "land_r2": {
+          "log": "w8-50-bal-wide/land_r2.log",
+          "rc": 0,
+          "seconds": 0.9,
+          "stop": null
+        },
         "r1": {
           "log": "w8-50-bal-wide/r1.log",
           "rc": 1,
           "seconds": 1857.4,
+          "stop": null
+        },
+        "r2": {
+          "log": "w8-50-bal-wide/r2.log",
+          "rc": 1,
+          "seconds": 1857.3,
           "stop": null
         },
         "replan": {
@@ -761,10 +891,28 @@
           "rc": 0,
           "seconds": 206.0,
           "stop": null
+        },
+        "score_draw": {
+          "log": "w8-50-bal-wide/draw/score.txt",
+          "rc": 0,
+          "seconds": 65.7,
+          "stop": null
+        },
+        "score_r1": {
+          "log": "w8-50-bal-wide/r1/score.txt",
+          "rc": 0,
+          "seconds": 65.3,
+          "stop": null
+        },
+        "score_r2": {
+          "log": "w8-50-bal-wide/r2/score.txt",
+          "rc": 0,
+          "seconds": 60.1,
+          "stop": null
         }
       },
       "started_at": "2026-10-13T12:04:46+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "west8",
       "total": 50,
       "wide_of": "w8-50-bal"
@@ -892,6 +1040,7 @@
     },
     "w8-50-filight-wide": {
       "delta_floor": {
+        "WH": 0.2383,
         "national": 0.3275
       },
       "final": null,
@@ -906,12 +1055,111 @@
       },
       "label": null,
       "parent": null,
-      "plan": null,
+      "plan": {
+        "channels": {
+          "FI": {
+            "final_delta": 0.1071,
+            "free": [
+              "AR",
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1035.0,
+            "k": 21,
+            "lo_m": 765.0,
+            "tau_m": 934.8119091750335,
+            "usd_m": 19631.050092675705,
+            "whole_state_cap": false
+          },
+          "WH": {
+            "final_delta": 0.2383,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "IN",
+              "KY",
+              "MI",
+              "MO",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TN",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1150.0,
+            "k": 12,
+            "lo_m": 850.0,
+            "tau_m": 896.1622389982857,
+            "usd_m": 10753.946867979428,
+            "whole_state_cap": false
+          },
+          "WIFI": {
+            "final_delta": 0.1,
+            "free": [],
+            "hi_m": 1600.0,
+            "k": 1,
+            "lo_m": 850.0,
+            "tau_m": 1542.7387897595586,
+            "usd_m": 1542.7387897595586,
+            "whole_state_cap": true
+          },
+          "national": {
+            "final_delta": 0.3275,
+            "free": [
+              "CA",
+              "FL",
+              "GA",
+              "IL",
+              "MI",
+              "NC",
+              "NJ",
+              "NY",
+              "OH",
+              "PA",
+              "TX",
+              "VA"
+            ],
+            "hi_m": 1437.5,
+            "k": 16,
+            "lo_m": 1000.0,
+            "tau_m": 1061.3113131633654,
+            "usd_m": 16980.981010613847,
+            "whole_state_cap": false
+          }
+        },
+        "infeasible": {}
+      },
       "reason": null,
       "rerun": null,
-      "stages": {},
-      "started_at": null,
-      "status": "queued",
+      "stages": {
+        "replan": {
+          "log": "w8-50-filight-wide/replan.log",
+          "rc": 1,
+          "seconds": 121.9,
+          "stop": null
+        }
+      },
+      "started_at": "2026-10-13T14:58:12+00:00",
+      "status": "running",
       "structure": "west8",
       "total": 50,
       "wide_of": "w8-50-filight"
@@ -1363,8 +1611,8 @@
         "WH": 0.2383,
         "national": 0.3275
       },
-      "final": null,
-      "finished_at": null,
+      "final": "w8-52-filight-wide/r2",
+      "finished_at": "2026-10-13T14:58:12+00:00",
       "host": "m2",
       "id": "w8-52-filight-wide",
       "k": {
@@ -1373,7 +1621,7 @@
         "WIFI": 1,
         "national": 16
       },
-      "label": null,
+      "label": "fails M1",
       "parent": null,
       "plan": {
         "channels": {
@@ -1468,13 +1716,49 @@
         },
         "infeasible": {}
       },
-      "reason": null,
+      "reason": "M1 across coverage gaps: fail, 2 districts in pieces, 2 detached pieces (largest 0.514 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 13 mass necks listed beside M1",
       "rerun": null,
       "stages": {
         "draw": {
           "log": "w8-52-filight-wide/draw.log",
           "rc": 1,
           "seconds": 4521.8,
+          "stop": null
+        },
+        "gate_r1": {
+          "log": "w8-52-filight-wide/gate_r1.log",
+          "rc": 1,
+          "seconds": 11.1,
+          "stop": null
+        },
+        "land_draw": {
+          "log": "w8-52-filight-wide/land_draw.log",
+          "rc": 0,
+          "seconds": 0.9,
+          "stop": null
+        },
+        "land_r1": {
+          "log": "w8-52-filight-wide/land_r1.log",
+          "rc": 0,
+          "seconds": 0.9,
+          "stop": null
+        },
+        "land_r2": {
+          "log": "w8-52-filight-wide/land_r2.log",
+          "rc": 0,
+          "seconds": 1.0,
+          "stop": null
+        },
+        "r1": {
+          "log": "w8-52-filight-wide/r1.log",
+          "rc": 1,
+          "seconds": 1835.3,
+          "stop": null
+        },
+        "r2": {
+          "log": "w8-52-filight-wide/r2.log",
+          "rc": 1,
+          "seconds": 1833.7,
           "stop": null
         },
         "replan": {
@@ -1494,10 +1778,28 @@
           "rc": 0,
           "seconds": 213.2,
           "stop": null
+        },
+        "score_draw": {
+          "log": "w8-52-filight-wide/draw/score.txt",
+          "rc": 0,
+          "seconds": 31.6,
+          "stop": null
+        },
+        "score_r1": {
+          "log": "w8-52-filight-wide/r1/score.txt",
+          "rc": 0,
+          "seconds": 44.2,
+          "stop": null
+        },
+        "score_r2": {
+          "log": "w8-52-filight-wide/r2/score.txt",
+          "rc": 0,
+          "seconds": 46.9,
+          "stop": null
         }
       },
       "started_at": "2026-10-13T12:30:34+00:00",
-      "status": "running",
+      "status": "done",
       "structure": "west8",
       "total": 52,
       "wide_of": "w8-52-filight"

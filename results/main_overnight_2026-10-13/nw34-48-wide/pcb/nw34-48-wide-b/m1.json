@@ -1,0 +1,52 @@
+{
+ "strict": {
+  "status": "fail",
+  "summary": "1 districts in pieces, 2 detached pieces (largest 0.375 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1",
+  "split": 1,
+  "pieces": 2,
+  "largest_tau": 0.3746335735115548,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "WIFI/WIFI_10: neck 5.26 km wide cuts off 11 ZIPs (06405...), 5.0% of its land area and 8.9% of its mass; cut 06516-06519 5.26 km",
+   "WIFI/WIFI_10: neck 1.27 km wide cuts off 118 ZIPs (06390...), 27.3% of its land area and 34.6% of its mass; cut 11901-11947 0.92 km, 11947-11970 0.35 km",
+   "WIFI/WIFI_12: neck 5.67 km wide cuts off 69 ZIPs (08023...), 38.4% of its land area and 24.9% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "WIFI/WIFI_13: neck 3.01 km wide cuts off 4 ZIPs (33430...), 19.8% of its land area and 0.0% of its mass; cut 33430-33470 3.01 km"
+  ],
+  "mass_necks": 12,
+  "gap_width": false
+ },
+ "gap_width": {
+  "status": "fail",
+  "summary": "1 districts in pieces, 2 detached pieces (largest 0.375 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 8 mass necks listed beside M1",
+  "split": 1,
+  "pieces": 2,
+  "largest_tau": 0.3746335735115548,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "WIFI/WIFI_12: neck 5.67 km wide cuts off 69 ZIPs (08023...), 38.4% of its land area and 24.9% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km"
+  ],
+  "mass_necks": 8,
+  "gap_width": true
+ },
+ "flips": [
+  {
+   "district": "WIFI/WIFI_10",
+   "strict": [
+    "WIFI/WIFI_10: neck 5.26 km wide cuts off 11 ZIPs (06405...), 5.0% of its land area and 8.9% of its mass; cut 06516-06519 5.26 km",
+    "WIFI/WIFI_10: neck 1.27 km wide cuts off 118 ZIPs (06390...), 27.3% of its land area and 34.6% of its mass; cut 11901-11947 0.92 km, 11947-11970 0.35 km"
+   ],
+   "gap_width": []
+  },
+  {
+   "district": "WIFI/WIFI_13",
+   "strict": [
+    "WIFI/WIFI_13: neck 3.01 km wide cuts off 4 ZIPs (33430...), 19.8% of its land area and 0.0% of its mass; cut 33430-33470 3.01 km"
+   ],
+   "gap_width": []
+  }
+ ]
+}

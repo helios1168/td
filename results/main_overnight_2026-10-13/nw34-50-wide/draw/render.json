@@ -8,10 +8,11 @@
   "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
   "images": {
     "summary.png": "af69fe0062783a93d6af72ee1f7a23e64a1727f0445ebace9e97d9d43220f93e",
-    "summary.svg": "d33794c275f595b2cd813b526fcf5a8a0c683dc96970a7aa023ca31bcc79d5de",
-    "zip_WIFI.png": "3a4b6cb1e1029acfb551224524ba4fc0a7d232faa50a0687d4dfff28aebfe070",
-    "zip_national.png": "e507ff9d0430731249549141e918018fa225d1bdbd1d552fd84e6abcff53be8c",
-    "zip_pages.pdf": "77f186a709797cbc68d2d01dee4497fcb738b0ff4d1b5919cbc7ae0a680e31d9"
+    "summary.svg": "4ba28a5edc5944e27a136399421e499c255d3f2d923322cd8ff1706aa19e9b34",
+    "zip_WIFI.png": "b0f79ce56ef70713620b4165c29a5648a1ef4d60f9ddf430eb1494a09c1691b0",
+    "zip_national.png": "732a6627f7fccd831e1a7010c658995d2e546c7ae6cfd673b93beff92095de7d",
+    "zip_pages.pdf": "3e6379afbb3df455c83e1d3e2d0d92cbe9aac6e5c815af15144f78cfc436db25",
+    "zip_summary.png": "e2aba35baa55d9c2906eaaea3bda7719c7fd07f29a63381ce2dedfc91a1c2081"
   },
   "inputs": {
     "districts.csv": "9aa2f6be4cdb4892be6d60d485c155e24c0c36789e7985f5af50b4d7456a3b57",
@@ -25,10 +26,10 @@
     "status": "fail",
     "summary": "3 districts in pieces, 6 detached pieces (largest 0.498 \u03c4), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
   },
-  "rendered_at": "2026-10-13T14:39:05+00:00",
+  "rendered_at": "2026-10-13T15:53:03+00:00",
   "renderer": {
-    "code_sha256": "e36c2c1ba3e2636d68dd2c33c7b3adc39a6448e64efe07c09027400841143992",
-    "commit": "e729723653c88cedb536ec5272c464a42fd83d51",
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
     "diff_sha256": null,
     "dirty": false
   },

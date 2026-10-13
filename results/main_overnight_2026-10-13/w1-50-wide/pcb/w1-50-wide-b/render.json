@@ -1,0 +1,38 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "0736562e154a21d54af692378d3e252c3276ac76f55192137a24784f7a452ecf",
+    "summary.svg": "ebe06a9b8d096224555589a8ca8e681d7887716f907ff16ea27f5f30248e8a6a",
+    "zip_WIFI.png": "222fd0b653c4e9342b34831c4b3a34bf720572ac9e4ac9aa0ea57fe094de5a95",
+    "zip_pages.pdf": "7c7315064be836369318d492e19819499b389cf7525dcbcea9bdcd63405606d8",
+    "zip_summary.png": "715d5d83ea6df55aff81cb3ea3dc06e3afb4088758a17cf1ace773f8477eb75b"
+  },
+  "inputs": {
+    "districts.csv": "b0fb6d8d6e63e8fe682d94b19d65e85d5db2057a90385c4f3d9b0afe3e05eac0",
+    "ledger.csv": "f75fb06d3d6e6cb711e905d0950da0a4e66a641b05bff4fe8b8d472e5f811614",
+    "manifest.json": "c000f589221dd78c29c8b88abb3be0d6148e926fc4e8ad16261447a3751afc3a",
+    "run.json": "b3fc140545731e1157befd8785cf3998c9f0f1566220f84bc7f758efa8f70c02"
+  },
+  "label": "w1-50-wide-b (#124 C, bans)",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "3 districts in pieces, 4 detached pieces (largest 0.348 \u03c4), 8 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 23 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T15:03:13+00:00",
+  "renderer": {
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w1-50-wide-b (#124 C, bans), FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}
