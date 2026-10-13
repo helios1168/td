@@ -73,7 +73,11 @@ ratio, the label and links, the assumptions above it and "Needs your eye" below 
 every M1 flip but El Paso's, every whole-state allowance, every split group beyond R, every
 failed render and unlabelled point); and `MORNING.pdf`, one page per point in that order, the
 final folder's `zip_summary.png` (`summary.png` when it has none, `map_png`) or a page naming the
-label and reason.
+label and reason.  Both open with the index (`index_rows`; `index_md`, `index_pages`): per point,
+in that order, K and its channel structure, and per channel the target $ per district (WIFI's
+window midpoint), the window, and the final folder's average, min and max $ per district with
+their deviation from the target and the districts outside the window, or the planned τ for a
+point with no final folder.
 
 **smoke** (before the launch, on each Studio): one point's replan and draw, as `run` would draw
 it, into an empty folder with its own plan cache; `smoke.json` records the code, the extract's
@@ -1073,9 +1077,10 @@ def morning_md(doc: dict, rows: list, eye: list, at: str) -> str:
           f"Built by `tools/exp/contig/overnight.py morning` from `GRID.json` at {at}.  Extract "
           f"`{os.path.basename(doc['extract'])}` (sha256 `{doc['extract_sha256'][:12]}`); code "
           + ", ".join(f"`{json.loads(c)['commit'][:7]}`" + (" (dirty)" if json.loads(c)["dirty"] else "") for c in codes)
-          + f"; stop at {doc['deadline']}.", "",
-          f"{len(rows)} points: " + ", ".join(f"{counts[x]} {x}" for x in LABELS if counts[x]) + ".", "",
-          "## Assumptions (owner decisions open)", ""] + [f"- {x}" for x in doc["assumptions"]] + [
+          + f"; stop at {doc['deadline']}.  `MORNING.pdf` opens with this index.", "",
+          f"{len(rows)} points: " + ", ".join(f"{counts[x]} {x}" for x in LABELS if counts[x]) + ".", ""]
+    md += index_md(index_rows(rows)) + ["", "## Assumptions (owner decisions open)", ""]
+    md += [f"- {x}" for x in doc["assumptions"]] + [
           "", "## Points", "",
           "Eligible first by the scorer's rank key (splits, defects, extent, states per district, worst and mean "
           "deviation), then fails M1, ineligible ($), ineligible, infeasible, stopped and error; a balanced point "
@@ -1089,6 +1094,160 @@ def morning_md(doc: dict, rows: list, eye: list, at: str) -> str:
                                     or ["- none"])
     md += ["", "## Needs your eye", ""] + ([f"- {x}" for x in eye] or ["- nothing"])
     return "\n".join(md) + "\n"
+
+
+MEANING = {                     # structure -> its channel footprint, for the index page
+    "ne_plains": "WIFI = 15 NE+plains states whole; N/WH/FI rest",
+    "west8": "WIFI = 8 western states whole; N/WH/FI elsewhere",
+    "nw49": "N over all 49 units; WIFI (WH+FI) over all 49",
+    "nw34": "N over 34 units; WIFI over 49 (all 5 in NE+plains)",
+    "w1": "WIFI only: all 5 fine channels over 49 units; no N",
+}
+SHORT = {"national": "N", "WH": "WH", "FI": "FI", "WIFI": "WIFI"}
+
+
+def target_m(c: str) -> float:
+    """A channel's $M per district target: `score.TARGET`, else its window's midpoint (WIFI)."""
+    if c in score.TARGET:
+        return score.TARGET[c] / 1e6
+    lo, hi = score.WINDOWS[c]
+    return (lo + hi) / 2e6
+
+
+def _dev(x: float | None, t: float) -> float | None:
+    return None if x is None else (x - t) / t
+
+
+def index_rows(rows: list) -> list:
+    """The index page's rows, one per point in `rows`' order (numbered as MORNING.pdf's points):
+    K, the channel structure and per channel the target, window, whole-state cap and, from the
+    final folder's dollars, the average, min and max $M per district with their deviation from
+    the target and the districts outside the window; a point without a final folder carries its
+    planned τ (GRID plan's usd_m / k) instead, `planned` set."""
+    out = []
+    for n, r in enumerate(rows, 1):
+        rec, dollars = r["rec"], r["m"]["dollars"] if r["final"] else None
+        plan = ((rec.get("plan") or {}).get("channels") or {})
+        chans = []
+        for c in (c for c in CHANNELS if c in rec["k"]):
+            t, (lo, hi), p = target_m(c), score.WINDOWS[c], plan.get(c) or {}
+            ds = [d for d in dollars or () if d["channel"] == c and d["usd"] is not None]
+            cap = p.get("whole_state_cap") or any(d["cap"] for d in ds)
+            row = {"channel": c, "k": rec["k"][c], "target_m": t, "lo_m": lo / 1e6, "hi_m": hi / 1e6,
+                   "cap_m": score.WHOLE_STATE_CAP[c] / 1e6 if cap and c in score.WHOLE_STATE_CAP else None,
+                   "planned": dollars is None, "avg_m": None, "min_m": None, "max_m": None, "out": None}
+            if ds:
+                us = [d["usd"] for d in ds]
+                row.update(avg_m=math.fsum(us) / len(us), min_m=min(us), max_m=max(us),
+                           out=sum(not d["ok"] for d in ds))
+            elif dollars is None and p.get("usd_m") is not None:
+                row["avg_m"] = p["usd_m"] / p["k"]
+            for x in ("avg", "min", "max"):
+                row[f"{x}_dev"] = _dev(row[f"{x}_m"], t)
+            chans.append(row)
+        out.append({"n": n, "id": rec["id"], "structure": rec["structure"],
+                    "meaning": MEANING.get(rec["structure"], ""), "label": r["label"],
+                    "reason": r["reason"], "drawn": dollars is not None, "k_total": sum(rec["k"].values()),
+                    "k_text": " · ".join(f"{SHORT[c['channel']]} {c['k']}" for c in chans), "channels": chans})
+    return out
+
+
+INDEX_LEGEND = ("N: national; target: $M per district (TARGET; WIFI has none, so its window's midpoint 1,000M); window: the "
+                "dollar gate lo-hi (cap: WIFI's whole-state allowance); deviation: (x - target) / target; "
+                "out: districts outside the window; avg/min/max from the final folder's dollars.csv, "
+                "or the planned τ (usd_m / K) when nothing was drawn")
+
+
+def _m(x: float | None, dev: float | None) -> str:
+    return "—" if x is None else f"{x:,.0f} ({100 * dev:+.1f}%)"
+
+
+def _window(c: dict) -> str:
+    return f"{c['lo_m']:,.0f}-{c['hi_m']:,.0f}" + (f" cap {c['cap_m']:,.0f}" if c["cap_m"] else "")
+
+
+def _status(x: dict) -> str:
+    return x["label"] + ("" if x["drawn"] else "; planned τ, not drawn")
+
+
+def index_md(index: list) -> list:
+    """The index as MORNING.md lines: one table row per channel, the point's cells on its first."""
+    md = ["## Index", "", INDEX_LEGEND[0].upper() + INDEX_LEGEND[1:] + ".", "",
+          "| # | id | structure | label | K | channel | target $M | window $M | avg $M | min $M | max $M | out |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for x in index:
+        head = [f"**{x['n']}**", x["id"], f"{x['structure']}: {x['meaning']}", _status(x),
+                f"{x['k_total']} = {x['k_text']}"]
+        for i, c in enumerate(x["channels"]):
+            avg = ("τ " if c["planned"] else "") + _m(c["avg_m"], c["avg_dev"])
+            md.append("| " + " | ".join((head if i == 0 else [""] * 5) + [
+                f"{c['channel']} {c['k']}", f"{c['target_m']:,.0f}", _window(c), avg, _m(c["min_m"], c["min_dev"]),
+                _m(c["max_m"], c["max_dev"]), "—" if c["out"] is None else str(c["out"])]) + " |")
+    return md
+
+
+INDEX_COLS = (("#  point · K · structure · label", 63), ("chan", 6), ("K", 4), ("target", 8), ("window", 21),
+              ("avg (dev)", 18), ("min (dev)", 16), ("max (dev)", 16), ("out", 4))
+
+
+def _index_lines(x: dict) -> list:
+    """A point's block: the point's lines down the first column, one channel per line beside them."""
+    w = INDEX_COLS[0][1] - 3
+    left = [f"{x['n']:>2} {x['id']}", f"   K {x['k_total']} = {x['k_text']}", f"   {x['structure']}: {x['meaning']}",
+            f"   {_status(x)}"] + ([f"   {x['reason']}"] if not x["drawn"] and x["reason"] else [])
+    left = [s if len(s) <= w else s[:w - 1] + "…" for s in left]
+    out = []
+    for i in range(max(len(left), len(x["channels"]))):
+        cells = [left[i] if i < len(left) else ""]
+        if i < len(x["channels"]):
+            c = x["channels"][i]
+            cells += [SHORT[c["channel"]], str(c["k"]), f"{c['target_m']:,.0f}", _window(c),
+                      ("τ " if c["planned"] else "") + _m(c["avg_m"], c["avg_dev"]), _m(c["min_m"], c["min_dev"]),
+                      _m(c["max_m"], c["max_dev"]), "—" if c["out"] is None else str(c["out"])]
+        out.append(cells)
+    return out
+
+
+def index_pages(index: list, size: tuple = PDF_PAGE, title: str = f"MORNING index: {GRID_NAME}") -> list:
+    """The index as landscape PIL pages of `size`: the title, the legend and a monospace table,
+    one shaded block per point, split between pages at block boundaries."""
+    from matplotlib import font_manager
+    from PIL import Image, ImageDraw, ImageFont
+    W, H = size
+    chars = sum(w for _, w in INDEX_COLS)
+    mono = font_manager.findfont("DejaVu Sans Mono")
+    px = max(12, int((W - 120) / chars / 0.602))     # DejaVu Sans Mono's advance is 0.602 em
+    font, bold = ImageFont.truetype(mono, px), ImageFont.truetype(mono, int(px * 1.4))
+    small = ImageFont.truetype(font_manager.findfont("DejaVu Sans"), int(px * 0.8))
+    lh, cw = int(px * 1.25), px * 0.602
+    xs = [60 + cw * sum(w for _, w in INDEX_COLS[:i]) for i in range(len(INDEX_COLS))]
+    blocks = [_index_lines(x) for x in index]
+    legend = textwrap.wrap(INDEX_LEGEND, int((W - 120) / (px * 0.8 * 0.5)))
+    pages, i = [], 0
+    while i < len(blocks) or not pages:
+        im = Image.new("RGB", size, "white")
+        d = ImageDraw.Draw(im)
+        y = 40
+        d.text((60, y), title + (f"  (page {len(pages) + 1})" if len(pages) else ""), fill="black", font=bold)
+        y += int(px * 1.9)
+        for s in legend:
+            d.text((60, y), s, fill="#333333", font=small)
+            y += int(px * 1.05)
+        y += lh // 3
+        for (name, _), x in zip(INDEX_COLS, xs):
+            d.text((x, y), name, fill="black", font=font)
+        y += lh
+        d.line((60, y - 4, W - 60, y - 4), fill="black", width=2)
+        while i < len(blocks) and (y + lh * len(blocks[i]) <= H - 40 or y < H // 3):
+            if i % 2 == 0:
+                d.rectangle((50, y, W - 50, y + lh * len(blocks[i])), fill="#eef2f7")
+            for cells in blocks[i]:
+                for j, (s, x) in enumerate(zip(cells, xs)):
+                    d.text((x, y + 2), s, fill="black" if j else "#1a1a1a", font=font)
+                y += lh
+            i += 1
+        pages.append(im)
+    return pages
 
 
 def map_png(final: str) -> str:
@@ -1105,12 +1264,18 @@ def map_pages(final: str) -> list:
     return got or [map_png(final)]
 
 
-def morning_pdf(path: str, pages: list) -> None:
+def page_size(pages: list) -> tuple:
+    """The first map page's size, else `PDF_PAGE`."""
+    from PIL import Image
+    return next((Image.open(p).size for p, _ in pages if p and os.path.exists(p)), PDF_PAGE)
+
+
+def morning_pdf(path: str, pages: list, front: tuple = ()) -> None:
     """A raster PDF (`tools/shortlist/build.py`'s `deck`): one page per (png or None, text), a
-    page without a map showing its text."""
+    page without a map showing its text; `front` (PIL images, the index) goes first."""
     from PIL import Image, ImageDraw, ImageFont
-    size = next((Image.open(p).size for p, _ in pages if p and os.path.exists(p)), PDF_PAGE)
-    font, imgs = ImageFont.load_default(size=40), []
+    size = page_size(pages)
+    font, imgs = ImageFont.load_default(size=40), [im.convert("RGB") for im in front]
     for png, text in pages:
         if png and os.path.exists(png):
             imgs.append(Image.open(png).convert("RGB"))
@@ -1142,10 +1307,11 @@ def cmd_morning(a) -> int:
     with open(md, "w", encoding="utf-8") as fh:
         fh.write(morning_md(doc, rows, eye, now()))
     pdf = os.path.join(a.root, "MORNING.pdf")
-    morning_pdf(pdf, [(png, title_of(r["rec"]) + (f"\n{r['reason']}" if r["reason"] else "") + "\nno map")
-                      for r in rows
-                      for png in (map_pages(os.path.join(a.root, r["final"])) if r["final"] else [None])])
-    print(f"{md}\n{pdf}\n{len(rows)} points, {len(eye)} items need your eye", flush=True)
+    pages = [(png, title_of(r["rec"]) + (f"\n{r['reason']}" if r["reason"] else "") + "\nno map")
+             for r in rows for png in (map_pages(os.path.join(a.root, r["final"])) if r["final"] else [None])]
+    front = index_pages(index_rows(rows), page_size(pages))
+    morning_pdf(pdf, pages, front)
+    print(f"{md}\n{pdf}\n{len(rows)} points, {len(front)} index pages, {len(eye)} items need your eye", flush=True)
     return 0
 
 

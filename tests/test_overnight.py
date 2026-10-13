@@ -415,6 +415,47 @@ def test_morning_files_from_a_toy_grid():
     assert "`e82d6a4`" in md and "sha256 `abcdef012345`" in md
 
 
+def test_index_rows_from_dollars_and_planned_tau():
+    with tempfile.TemporaryDirectory() as tmp:
+        fin = os.path.join(tmp, "ne-48-bal", "r2")
+        os.makedirs(fin)
+        score.write_dollars(os.path.join(fin, "dollars.csv"), [
+            {"channel": c, "district": d, "usd": u, "lo": lo, "hi": hi, "states": ["NY"], "whole_states": cap,
+             "cap": 1.6e9 if cap else None, "allowance": u > hi, "ok": ok}
+            for c, d, u, lo, hi, cap, ok in (
+                ("WH", "WH_01", 0.8e9, 0.85e9, 1.15e9, False, False), ("WH", "WH_02", 1.0e9, 0.85e9, 1.15e9, False, True),
+                ("WH", "WH_03", 1.15e9, 0.85e9, 1.15e9, False, True),
+                ("WIFI", "WIFI_01", 1.543e9, 0.85e9, 1.15e9, True, True))])
+        drawn = dict(_rec("ne-48-bal", "fails M1", final="ne-48-bal/r2"), k={"WH": 3, "WIFI": 1})
+        plan = {"channels": {"national": {"usd_m": 15000.0, "k": 12, "whole_state_cap": False},
+                             "WIFI": {"usd_m": 3200.0, "k": 4, "whole_state_cap": False}}}
+        undrawn = dict(_rec("nw49-48", "infeasible", "nw49", reason="national: no plan"),
+                       k={"national": 12, "WIFI": 4}, plan=plan)
+        rows = [overnight.point_row(tmp, r) for r in (drawn, undrawn)]
+        got = overnight.index_rows(rows)
+    a, b = got
+    assert (a["n"], a["k_total"], a["k_text"], a["drawn"]) == (1, 4, "WH 3 · WIFI 1", True)
+    assert a["meaning"].startswith("WIFI = 15 NE+plains")
+    wh, wifi = a["channels"]
+    assert (wh["target_m"], wh["lo_m"], wh["hi_m"], wh["cap_m"], wh["out"]) == (1000.0, 850.0, 1150.0, None, 1)
+    assert math.isclose(wh["avg_m"], 2950 / 3) and math.isclose(wh["avg_dev"], -50 / 3000)
+    assert (wh["min_m"], wh["max_m"]) == (800.0, 1150.0)
+    assert math.isclose(wh["min_dev"], -0.2) and math.isclose(wh["max_dev"], 0.15) and not wh["planned"]
+    assert wifi["target_m"] == 1000.0 and wifi["cap_m"] == 1600.0 and wifi["out"] == 0      # window midpoint
+    assert math.isclose(wifi["avg_dev"], 0.543) and wifi["min_m"] == wifi["max_m"] == 1543.0
+    assert (b["n"], b["drawn"], b["k_total"], b["reason"]) == (2, False, 16, "national: no plan")
+    nat, wifi = b["channels"]
+    assert nat["planned"] and math.isclose(nat["avg_m"], 1250.0) and math.isclose(nat["avg_dev"], 0.0)
+    assert math.isclose(wifi["avg_m"], 800.0) and math.isclose(wifi["avg_dev"], -0.2)
+    assert nat["min_m"] is None and nat["out"] is None and wifi["cap_m"] is None
+    md = overnight.index_md(got)
+    assert "| **1** | ne-48-bal | ne_plains: " in md[4 + 2] and "| 983 (-1.7%) | 800 (-20.0%) | 1,150 (+15.0%) | 1 |" in md[6]
+    assert "| infeasible; planned τ, not drawn | 16 = N 12 · WIFI 4 | national 12 | 1,250 |" in md[8]
+    assert "| τ 1,250 (+0.0%) | — | — | — |" in md[8] and "| τ 800 (-20.0%) |" in md[9]
+    pages = overnight.index_pages(got, (2600, 1500))
+    assert len(pages) == 1 and pages[0].size == (2600, 1500)
+
+
 def test_titles_and_fac_for_renders():
     rec = _rec("ne-50-bal", "fails M1")
     assert overnight.title_of(rec) == "ne-50-bal: ne_plains, K national 15, WH 11, FI 20, WIFI 3 = 49; FAILS M1"
