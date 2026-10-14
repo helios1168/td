@@ -15,6 +15,7 @@ gate (G3), as in v2; the strict gate is shown beside it. $ = m_rel × 1.25196815
 | K48 = K49 + MA 12→11 | `regions/midatl_k11` | NJ (3) · PA (3) · NY (5) |
 
 Folders are under `runs/exp/contig/ifa/kgrid/`; each has a `manifest.json`.
+The region specs behind the merge are tracked in `scenarios/regions/ifa/` (they were under `runs/exp/contig/_specs/` on the kgrid branch).
 
 | K | region Ks (NE+MA+SA+SC+MW+W) | split states | M1 gap width (failing) / strict (failing) | districts in/under/over window | worst district | mean $/district | label | map |
 |---|---|---|---|---|---|---|---|---|
