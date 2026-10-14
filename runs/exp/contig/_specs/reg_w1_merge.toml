@@ -1,0 +1,27 @@
+# #122 master re-solve: a copy of /Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/w1-50-wide/spec-base.toml
+# with WIFI's split list free = AL, AZ, CA, CO, CT, FL, GA, IL, IN, KY, LA, MA, MD, MI, MN, MO, NC, NJ, NY, OH, PA, SC, TN, TX, VA, WA, WI
+# (tools/exp/contig/replan.py).
+# main-map overnight grid point w1-50-wide (main_overnight_2026-10-13, tools/exp/contig/overnight.py): the base spec with K, declared δ and final δ set per channel
+# The main-map overnight grid's w1 structure (2026-10-13, tools/exp/contig/overnight.py): the
+# original single WIFI channel, all five fine channels over all 49 units, no national (the
+# baseline grid point).  No split list here: the launcher computes one per grid point by the #76
+# rule and sets k, delta and final_delta.  Support values are scenario 50's (50_ifa.toml), the
+# one channel planned over all 49 units at a comparable K (policy).
+
+[scenario]
+name = "w1-50-wide"
+fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+planned_elsewhere = ["career", "edj", "ifa", "imo", "priafs"]
+delta = 0.10                    # OD1's default final band; the launcher sets each channel's
+
+[channels.WIFI]
+k = 50
+domain = [{ units = "all", fine = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"] }]
+mode = "whole"
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }
+delta = 0.3144
+final_delta = 0.3144
+free = ["AL", "AZ", "CA", "CO", "CT", "FL", "GA", "IL", "IN", "KY", "LA", "MA", "MD", "MI", "MN", "MO", "NC", "NJ", "NY", "OH", "PA", "SC", "TN", "TX", "VA", "WA", "WI"]

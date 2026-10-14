@@ -1,0 +1,25 @@
+# regional seal test (2026-10-13): w1-50-wide's spec sealed to MA+ME+NH+VT, K 1, $M 1230.7, tau 1230.7, final delta by fit_delta (WIFI window 850-1,150M, whole-state cap 1,600M)
+# The main-map overnight grid's w1 structure (2026-10-13, tools/exp/contig/overnight.py): the
+# original single WIFI channel, all five fine channels over all 49 units, no national (the
+# baseline grid point).  No split list here: the launcher computes one per grid point by the #76
+# rule and sets k, delta and final_delta.  Support values are scenario 50's (50_ifa.toml), the
+# one channel planned over all 49 units at a comparable K (policy).
+
+[scenario]
+name = "reg_mannev_k1"
+fine_channels = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"]
+planned_elsewhere = ["career", "edj", "ifa", "imo", "priafs"]
+delta = 0.10                    # OD1's default final band; the launcher sets each channel's
+
+[channels.WIFI]
+margin = false                  # IFA regional convention: no μ_S in the band rows
+k = 1
+domain = [{ units = "all", fine = ["national_chase", "wells_wh", "wells_fi", "wh", "fi"] }]
+mode = "whole"
+eta = 0.05                      # legacy 51 value; policy
+max_size = 6                    # legacy 51 value; policy
+max_dist_km = 900               # legacy 51 value; policy
+dist_km = { WA = 1600, TX = 1200, OR = 1000, UT = 1100, AZ = 1100, LA = 1150, CA = 1600 }
+delta = 0.1
+final_delta = 0.1
+free = []
