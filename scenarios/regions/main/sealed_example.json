@@ -1,0 +1,86 @@
+{
+  "_comment": [
+    "Example partition for tools/exp/contig/sealed.py (2026-10-14): ne-48-bal (overnight.POINTS: national 14, WH 10, FI 21, WIFI 3).",
+    "The Northeast corridor NY NJ PA DE MD DC VA is sealed in national, WH and FI (one run, the three channels drawn together); 'rest': true adds the channel's other footprint states with K = the point's K less the corridor's. WIFI (15 NE+plains states, whole) is one unsealed rest region.",
+    "K: tools/exp/region_arith.py (branch m5-studio/region-arith) has no row for this state set (its corridor variants B1/B7 add New England or drop VA), so the numbers are its arithmetic done on this corridor: overnight.fit_delta on the dollar extract, $M national 4,033.1, WH 3,145.7, FI 5,094.5.",
+    "Window-feasible K in the corridor: national 3 (final delta 0.0692) or 4 (0.0082), WH 3 (0.0967), FI 6 (0.099) or 5 (0.0157); the rest then takes national 11, WH 7, FI 15, all window-feasible. The roomier K are the primary; k_alt is the other feasible K, used once, only if the drawing ends infeasible or unknown (its band is a hair).",
+    "The DE-VA forbid pair is the one the 2026-10-13 w1-50 DC+DE+MD+VA region needed (notes/2026-10-13_overnight-grid-to-regional-sealing.md)."
+  ],
+  "points": [
+    {
+      "id": "ne-48-bal",
+      "structure": "ne_plains",
+      "channels": {
+        "national": {
+          "regions": [
+            {
+              "name": "corridor",
+              "states": [
+                "NY",
+                "NJ",
+                "PA",
+                "DE",
+                "MD",
+                "DC",
+                "VA"
+              ],
+              "k": 3,
+              "k_alt": 4,
+              "forbid": [
+                "DE-VA"
+              ]
+            }
+          ],
+          "rest": true
+        },
+        "WH": {
+          "regions": [
+            {
+              "name": "corridor",
+              "states": [
+                "NY",
+                "NJ",
+                "PA",
+                "DE",
+                "MD",
+                "DC",
+                "VA"
+              ],
+              "k": 3,
+              "forbid": [
+                "DE-VA"
+              ]
+            }
+          ],
+          "rest": true
+        },
+        "FI": {
+          "regions": [
+            {
+              "name": "corridor",
+              "states": [
+                "NY",
+                "NJ",
+                "PA",
+                "DE",
+                "MD",
+                "DC",
+                "VA"
+              ],
+              "k": 6,
+              "k_alt": 5,
+              "forbid": [
+                "DE-VA"
+              ]
+            }
+          ],
+          "rest": true
+        },
+        "WIFI": {
+          "regions": [],
+          "rest": true
+        }
+      }
+    }
+  ]
+}
