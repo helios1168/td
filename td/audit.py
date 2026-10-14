@@ -486,8 +486,10 @@ class NeckGraph:
     `zcta_polygon_vs_voronoi.csv.gz` rows `dropped`, or `polygon["voronoi_gaps"]` {(a, b): m})
     is a neck edge as wide as its shared Voronoi border, so land in no ZCTA counts towards a
     passage.  No land test: `geo` separates land from water only per county at build time, so a
-    gap across water (a lake, a sound) counts too.  The gap edges enter `border_cm`, the necks'
-    widths, and not `border`, so `land_would_do` and the pieces still read the polygon edges."""
+    gap across water (a lake, a sound) counts too, unless `polygon["gaps"]` is non-empty
+    (`geo.polygon_graph` reads `zcta_gap_land.csv.gz`, built by `python -m td geo --gap-land`, land
+    only, never across water): then those widths are used instead of the Voronoi rows.  The gap
+    edges enter `border_cm`, the necks' widths, and not `border`, so `land_would_do` and the pieces still read the polygon edges."""
 
     def __init__(self, polygon: dict, gap_width: bool = False):
         self.state = polygon.get("state", {})
@@ -507,6 +509,8 @@ class NeckGraph:
                 self.border_cm[a][b] = self.border_cm[b][a] = border_cm(border.get(e, 0.0))
         if gap_width:
             gaps = polygon.get("voronoi_gaps")
+            if gaps is None and polygon.get("gaps"):    # land-only gap widths, `geo.GAP_LAND` (#131)
+                gaps = polygon["gaps"]
             if gaps is None:
                 vs = geo.read_reference(name="zcta_polygon_vs_voronoi.csv.gz")
                 vs = vs[vs["change"] == "dropped"]

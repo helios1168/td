@@ -19,6 +19,18 @@ def test_gap_width_turns_coverage_gap_neck_into_none():
     poly["state"] = dict(poly["state"], s="NM")
     assert len(audit.district_necks(set(vs), {}, audit.NeckGraph(poly, gap_width=True))) == 1
 
+
+def test_land_gap_widths_from_geo_are_used_when_present():
+    # `polygon["gaps"]` (geo.GAP_LAND, land only, #131) stands in for the Voronoi rows.
+    vs = ["a", "b", "c", "s"]
+    poly = {"vertices": vs, "edges": [("a", "b"), ("b", "c"), ("b", "s")], "state": dict.fromkeys(vs, "TX"),
+            "border": {("a", "b"): 50000.0, ("b", "c"): 50000.0, ("b", "s"): 1000.0},
+            "connectors": [], "aland": dict.fromkeys(vs, 1e8), "gaps": {("c", "s"): 30000.0}}
+    assert audit.district_necks(set(vs), {}, audit.NeckGraph(poly, gap_width=True)) == []
+    poly["gaps"] = {}       # empty: not consulted; the Voronoi fallback needs the reference files
+    poly["voronoi_gaps"] = {}
+    assert len(audit.district_necks(set(vs), {}, audit.NeckGraph(poly, gap_width=True))) == 1
+
 # ----------------------------------------------- check_m1's switch and score.m1_both (G3, 2026-10-13)
 import importlib.util  # noqa: E402
 import json  # noqa: E402
