@@ -6,33 +6,23 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 
 ## Files
 
+Code and tools only: the docs answer their own questions (`AGENTS.md` lists them) and get no row here.
+
 | file | role |
 |---|---|
-| `AGENTS.md` | project invariants for agents |
-| `STATE.md` | the resume point |
+| `AGENTS.md`, `PROBLEM.md`, `STATE.md` | operating rules and traps; the goal, mandates and settled decisions; the five-line resume point |
 | `README.md` | what the repo is and how to set it up |
 | `export/export_instance.py`, `export/README.md` | the work-machine exporter and its runbook; standard library only |
-| `docs/CODE_MAP.md` | this file |
-| `docs/MODEL.md` | the support-master model: cells, units, supports, the master and its drawability rows, Claims 1–3, the realizer, the ledger and the audit; every claim tagged proved, claimed or policy |
-| `docs/REFERENCES.md` | what td relies on each paper for: one row per claim, with its key, result, kb page and status |
-| `docs/problem/PROBLEM.md`, `docs/problem/UNKNOWNS.md`, `docs/problem/BALANCE.md`, `docs/problem/SPLITS.md` | the settled/open ledger, the U-numbered unknowns, the balance brief for the lens and the council, and the split brief for the council (#90) |
-| `docs/problem/CONTIGUITY.md` | the contiguity brief for owner review (#106): M1 and the owner's rulings since, the history of contiguity in td with its waivers, the literature applied to td, ranked options and the CU unknowns |
-| `docs/problem/MANDATES.md` | the owner-only register of hard requirements (M1 ZIP contiguity, masking): the owner's words, definition, check, latest value, waiver history and return trigger per row (#107) |
 | `tests/test_mandates.py`, `tests/fixtures/m1/` | the register's rows: every field present, status `hard`, `deferred` or `waived`, checks that exist, and no deferral whose trigger holds; the 2026-09-01 contiguity deferral replayed on the 2026-09-28 graph fails; M1's check fails the broken fixtures (a detached piece, a corner-only touch, an unowned zero-opportunity ZCTA, an unapproved crossing) and passes the connected one |
-| `tools/mandates/check.py` | the M1 run-folder gate (#108): `m1(run_dir)` is `td.audit.check_m1` on a run's ledger with the committed polygon graph and approved connectors, plus each district's largest detached piece as the scorer sizes it, on the ledger (#116); `--rescore <root>` gates every run folder, writes the table and M1's latest value in `docs/problem/MANDATES.md` (its only writer); `--tracking` is mandate T1's check (`tracking`, #120): run folders under `runs/exp/` with a ledger and no manifest, shortlist entries whose run, manifest or image is missing, whose image is not `tools/maps/render.py`'s current output in its run folder, or whose recorded M1 a fresh gate run contradicts, and reused ids; with `--write-register` it writes T1's latest value |
-| `docs/lenses/` | one file per lens or council pass, dated, never edited after |
-| `docs/memory/` | facts and decisions; `INDEX.md` is one line per file, written through the `memory-curator` |
+| `tools/mandates/check.py` | the M1 run-folder gate (#108): `m1(run_dir)` is `td.audit.check_m1` on a run's ledger with the committed polygon graph and approved connectors, plus each district's largest detached piece as the scorer sizes it, on the ledger (#116); `--rescore <root>` gates every run folder, writes the table and M1's latest value in `PROBLEM.md` (its only writer); `--tracking` is mandate T1's check (`tracking`, #120): run folders under `runs/exp/` with a ledger and no manifest, shortlist entries whose run, manifest or image is missing, whose image is not `tools/maps/render.py`'s current output in its run folder, or whose recorded M1 a fresh gate run contradicts, and reused ids; with `--write-register` it writes T1's latest value |
 | `data/README.md` | what `data/` holds; public Kepler extracts below are also tracked |
 | `data/kepler/`, `tools/kepler/build.py`, `tools/kepler/serve.py`, `tests/test_kepler_maps.py` | public 2025 Census region/division/state GeoJSON, editable saved-map presets and a preloaded Kepler page; `python3 tools/kepler/build.py` rebuilds saved JSON from extracts (stdlib); `python3 tools/kepler/serve.py 8765 data/kepler` serves this directory with CORS; browser uses pinned CDN libraries and a token-free Carto basemap; saved-map contract checks run in the suite |
 | `tests/run_all.py` | the test runner |
-| `tests/test_docs_owners.py` | the doc-ownership allowlist (`.claude/doc-owners.txt`) and the `STATE.md` shape |
 | `tests/test_export_instance.py` | the exporter |
 | `td/data.py` | v3 extract loader, CONUS rule and seeded sparse fixture |
 | `tests/test_data.py` | loader round-trip, fixture concentration and ZIP graph checks |
 | `td/audit.py` | the §9 audit: checks a run's ledger and writes `scorecard.md`, M1 (`check_m1`) among them; `python -m td.audit catalog` scores the tagged catalog |
 | `tests/test_audit.py` | each audit check on a toy plan with planted defects, and the tagged catalog's known defects |
-| `docs/RESULTS.md` | measured results, aggregates only: the tagged catalog's scorecard |
-| `docs/RUN_WALKTHROUGH.md` | a plain-English walkthrough of `python -m td run` on the 51 scenario, and why it stopped at ±10% |
 | `td/geo.py`, `reference/2025/` | the 2025 geography: the ZCTA reference table, its overlays, the ZIP graph and the source MANIFEST (#62) |
 | `reference/2025/zcta_polygon_edges.csv.gz`, `zcta_polygon_vs_voronoi.csv.gz`, `connectors.csv`, `zcta_parts.csv.gz`, `zcta_part_edges.csv.gz`, `POLYGON_GRAPH.json` | M1's polygon graph (#108): rook adjacency of the TIGER 2025 ZCTA polygons over the shipped vertices, its edges added to and dropped from the Voronoi graph, the connector list (all approved by the owner on 2026-10-05; a rebuild keeps the owner's statuses and rows), the polygon parts and part-level edges the scorer uses for multipart pieces, and its manifest and report; `python -m td geo --polygon --public $TD_REPO/data/public` builds them; `python -m td geo --state-connectors --public $TD_REPO/data/public` adds one `proposed` in-state connector per detached group of a state, and `--pair-connectors A-B ...` the `proposed` road crossings of a state line whatever their names (#114) |
 | `tests/test_geo.py` | the reference table, the manifest's 2025-only rule and the graph's explicit vertex set |

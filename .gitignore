@@ -14,7 +14,7 @@ venv/
 # Local Claude Code settings — rely on global ~/.claude settings instead
 .claude/settings.local.json
 
-# Confidential extract (docs/memory/workflow/confidential-data.md)
+# Confidential extract (docs/archive/memory/workflow/confidential-data.md)
 instance_descaled*.json.gz
 /channels.json
 

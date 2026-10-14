@@ -4,8 +4,8 @@ This file states td's model: the support master, the ZIP realizer, the ledger an
 is #52 §4 (revision 7) written out in full, with the council's corrections of 2026-09-28
 ([memo](https://github.com/helios1168/td/issues/52#issuecomment-5865965201)) applied here as the
 owner's answer OQ1 (i) directs. B2 (#65) verifies it. The C-numbers refer to the memo, the
-S-numbers to the decisions in `docs/memory/decisions/support-refactor-2026-09-25.md`, and the OD
-and U-numbers to `docs/problem/PROBLEM.md` and `docs/problem/UNKNOWNS.md`.
+S-numbers to the decisions in `docs/archive/memory/decisions/support-refactor-2026-09-25.md`, and the OD
+and U-numbers to `PROBLEM.md` and `docs/archive/problem/UNKNOWNS.md`.
 
 ## 0. Tags
 
@@ -39,7 +39,7 @@ is every ZCTA of v. The unit graph G joins two units when some ZIP of one shares
 with some ZIP of the other, so a corner touch or a crossing with no approved connector joins no
 two units, and every M1 graph edge between units is an edge of G: on the same ZIPs, E(M1) ⊆
 E(G), which is sufficient for the units an M1-connected district touches to be connected in G
-(`docs/lenses/COUNCIL_2026-10-05.md` finding 13; a unit dropped for zero opportunity is not in
+(`docs/archive/lenses/COUNCIL_2026-10-05.md` finding 13; a unit dropped for zero opportunity is not in
 V_c, #119). Unit centroids (§3.5, the distance cap) weigh
 only the extract's ZIPs, as before #114.
 
@@ -377,7 +377,7 @@ ZIP sets X ⊆ ∪_{v∈S} Z_v such that:
   η_c M_v > 0 (§1, §3.2);
 - (c) Σ_{z∈X} m_z ∈ [L_c, U_c];
 - (d) X is connected in the ZIP graph;
-- (e) X has no M1 neck (MANDATES M1: no connected part holding at least 5% of X's land and no
+- (e) X has no M1 neck (PROBLEM.md M1: no connected part holding at least 5% of X's land and no
   more land than the rest reaches the rest only through a passage narrower than 10 km, widths
   as M1 measures them).
 
@@ -639,7 +639,7 @@ All are off by default (S13), and all geography is 2025 vintage (S17).
   classification makes it whole. Each channel classifies every metro once, against the scenario's
   declared U_c: a metro with M_v ≤ U_c is whole and never split, and a larger one keeps its unit
   and is split under the scenario's clipped or free mode. The classification stays fixed through a
-  smallest-δ search (`docs/memory/decisions/open-decisions-2026-09-28.md`, OD5).
+  smallest-δ search (`docs/archive/memory/decisions/open-decisions-2026-09-28.md`, OD5).
 - **Rurality caps (U36).** R_c(u, v) = base_c · g(r_u, r_v). Here r_v ∈ [0, 1] is v's rurality,
   built from its 2025 urban-area share and its counties' metro status (S19). The schedule g is
   symmetric, g ≥ 1, and nondecreasing in each argument, so caps loosen with rurality. g ≡ 1 when
@@ -647,7 +647,7 @@ All are off by default (S13), and all geography is 2025 vintage (S17).
   formula for r_v and the values of g are open **[claimed U36: B/E, D1 (#73)]**.
 
 The state-level context is from the v2 whole instance at δ = 5% on the pre-2025 graph: every state
-except CA, TX, NY and FL fits whole in one district (`docs/memory/facts/state-border-snapping.md`,
+except CA, TX, NY and FL fits whole in one district (`docs/archive/memory/facts/state-border-snapping.md`,
 2026-09-07). It is not re-measured on the fresh extract **[claimed U35]**.
 
 ## 7. The realizer (S21)
@@ -825,7 +825,7 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
 - ZIP contiguity on the declared graph, with a verdict for any ZIP not in the graph. Pieces are
   listed with their cause and their share of the district's mass. A run on the extract declares
   the polygon graph it planned on (#114), so these pieces are M1's (#116);
-- M1, ZIP contiguity on the drawn map **[policy M1, `docs/problem/MANDATES.md`; #108]**: in
+- M1, ZIP contiguity on the drawn map **[policy M1, `PROBLEM.md` ## Mandates; #108]**: in
   every channel, each district's ZCTAs in the ledger are one component of the polygon graph (the
   rook graph of the 2025 TIGER ZCTA polygons over every CONUS ZCTA, an edge only for a shared
   boundary of positive length, plus the owner-approved connectors across gaps), and every CONUS

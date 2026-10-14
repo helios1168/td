@@ -1,7 +1,7 @@
 # Results
 
 Measured results on `main`. Each section names the command that regenerates it. Per
-`docs/memory/workflow/confidential-data.md`, this file carries aggregates only.
+`docs/archive/memory/workflow/confidential-data.md`, this file carries aggregates only.
 
 ## The tagged catalog's scorecard (#70, 2026-09-30)
 
@@ -305,7 +305,7 @@ integer.
   objective over all centres, so the Hess arm's 4–9% gain is measured against a local optimum
   from one seed.
 
-**Verdict.** Inconclusive (`docs/problem/UNKNOWNS.md` U38). At ZIP grain, Hess removes two real
+**Verdict.** Inconclusive (`docs/archive/problem/UNKNOWNS.md` U38). At ZIP grain, Hess removes two real
 failure modes of support diameter:
 - diameter-0 single-state districts that spread across a large state;
 - small-diameter supports that the realizer draws long.
@@ -659,7 +659,7 @@ runs/exp/contig/_plans/<spec>_<extract>.pkl`, the cache entry without the connec
 ## #121 Border-length shape term and M1's necks (2026-10-05)
 
 Measured 2026-10-05 on m5 with `tools/exp/contig/` at m5-studio/121 (border term 71517c8, final
-neck rule 848e482). M1 is `td.audit.check_m1` under the owner's final neck rule (MANDATES.md M1,
+neck rule 848e482). M1 is `td.audit.check_m1` under the owner's final neck rule (PROBLEM.md M1,
 "Area only", "One connected piece", "Land must be a real passage"): a district fails when one
 connected part holding ≥ 5% of its land area reaches the rest only through < 10 km of shared ZCTA
 border; an approved connector is width 0 only where land within the district's states would join
@@ -753,7 +753,7 @@ Regenerate (m5, local): `runs/exp/contig/border/repair3.sh <id> <source folder> 
 Measured 2026-10-06 on m5 with `td.audit.district_necks` at m5-studio/121 c26ed48. Sol's review
 of the neck check found that requiring the rest to be one connected piece holding ≥ 5% let a hub
 of 6% of a district's land, with 24 lobes of 94/24 % each on 100 m threads, pass. The owner ruled
-("Cut-off part = smaller side", MANDATES.md M1): a neck is one connected part with ≥ 5% of the
+("Cut-off part = smaller side", PROBLEM.md M1): a neck is one connected part with ≥ 5% of the
 district's land and no more land than the rest, behind < 10 km of border; the rest may lie in
 pieces of any size, and small fringes off a larger body never add together. The check now finds
 the narrowest such part (the hub plus 11 lobes, 1.3 km, on the counterexample). Widths are

@@ -4,7 +4,7 @@ The extract is `export/export_instance.py`'s `td_instance_descaled/3`: node colu
 channel, m_rel, share, share_free`, one row per (ZIP, channel) cell, `m_rel` = M over the median
 positive cell M.  It carries no states, edges or geometry; a ZIP's state comes from the 2025
 reference table (td#62).  Nothing here prints or raises with a row's values: errors and the
-CONUS report carry counts and aggregates only (docs/memory/workflow/confidential-data.md).
+CONUS report carry counts and aggregates only (docs/archive/memory/workflow/confidential-data.md).
 
 **The CONUS rule.**  A ZIP is kept only if it is a row of `reference/2025/zcta_reference.csv.gz`
 with a state.  That table holds the CONUS ZCTAs only, so AK, HI, territories, blank ids and ZIPs
@@ -33,7 +33,7 @@ SIG = 6                         # the exporter's significant figures
 
 FIXTURE_ZIPS = 4000
 # lognormal mean/median = exp(sigma^2 / 2) = 2.284, the v2 CONUS ratio (M 8,481.81 over 3,713
-# ZIPs, median 1; mem:facts/instance-versions)
+# ZIPs, median 1; docs/archive/memory/facts/instance-versions)
 FIXTURE_SIGMA = 1.285
 
 

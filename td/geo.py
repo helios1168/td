@@ -58,7 +58,7 @@ rerun on the extract's placed ZIPs in C2/E1.
 Coordinates and areas are EPSG:5070 (NAD83 CONUS Albers, equal-area on GRS80), so measured
 areas are comparable with the gazetteer's.
 
-**The polygon graph** (M1, `docs/problem/MANDATES.md`) is the rook graph of the TIGER/Line 2025
+**The polygon graph** (M1, `PROBLEM.md` ## Mandates) is the rook graph of the TIGER/Line 2025
 ZCTA520 polygons over the shipped vertex set (`graph_vertex`, trap 21): two ZCTAs are adjacent
 when their boundaries share a length above `MIN_BORDER_M` = 0 m in `CRS`, so a corner touch
 (length 0) is not an edge.  ZCTAs do not tile the land or the water, so the graph has islands:

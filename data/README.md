@@ -17,7 +17,7 @@ Nothing here is tracked except this file.
   G2) will be cached here too.
 - The confidential extract, `instance_descaled*.json.gz`, lives at the hub root on m2 and is
   gitignored. It is produced on the work machine by `export/export_instance.py`; see
-  `docs/memory/workflow/confidential-data.md` for what may and may not leave it.
+  `docs/archive/memory/workflow/confidential-data.md` for what may and may not leave it.
 
 The pre-2026-09-28 contents of this file (the 2020 ZCTA rook-adjacency recipe) are in the tag
 `archive/pre-support-2026-09`.

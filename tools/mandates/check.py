@@ -1,4 +1,4 @@
-"""check.py -- the run-folder gate for mandate M1, ZIP contiguity (#108, `docs/problem/MANDATES.md`).
+"""check.py -- the run-folder gate for mandate M1, ZIP contiguity (#108, `PROBLEM.md` ## Mandates).
 
     "$TD_PY" tools/mandates/check.py <run_dir> [<run_dir> ...]
     "$TD_PY" tools/mandates/check.py --rescore <root> [--out DIR] [--write-register]
@@ -19,7 +19,7 @@ or is diagnostic (#121, `td.audit.diagnostic`: printed DIAGNOSTIC, never a deliv
 
 `--rescore <root>` gates and scores every run folder under `root` (a folder with `ledger.csv` and
 `districts.csv`), writes `TABLE.md` and `rescore.json` to `--out`, and with `--write-register`
-writes M1's latest value into `docs/problem/MANDATES.md`: the scorer's rank-1 run over all
+writes M1's latest value into `PROBLEM.md`: the scorer's rank-1 run over all
 rescored runs and its largest detached piece, and the smallest largest piece across runs (owner,
 2026-10-05).  This is the only writer of that field.
 
@@ -53,7 +53,7 @@ _spec = importlib.util.spec_from_file_location(
 score = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(score)
 
-REGISTER = os.path.join(ROOT, "docs", "problem", "MANDATES.md")
+REGISTER = os.path.join(ROOT, "PROBLEM.md")
 COMMAND = "tools/mandates/check.py --rescore"
 TRACKING = "tools/mandates/check.py --tracking"
 
@@ -236,7 +236,7 @@ def write_latest_value(text: str, path: str = REGISTER, row: str = "M1") -> None
     """Replace the `latest value` field of mandate `row` in the register with `text`."""
     with open(path, encoding="utf-8") as fh:
         lines = fh.read().split("\n")
-    start = next(i for i, ln in enumerate(lines) if ln.startswith(f"## {row}:"))
+    start = next(i for i, ln in enumerate(lines) if ln.startswith(f"### {row}:"))
     field = next(i for i in range(start, len(lines)) if lines[i].startswith("- **latest value:**"))
     end = field + 1
     while end < len(lines) and lines[end].startswith("  ") and lines[end].strip():
@@ -263,7 +263,7 @@ def main(argv=None) -> int:
                     help="where runs/ is, for --tracking (default $TD_REPO)")
     ap.add_argument("--registry", default=None, help="the shortlist (default tools/shortlist/shortlist.json)")
     ap.add_argument("--write-register", action="store_true",
-                    help="write M1's (or with --tracking T1's) latest value into docs/problem/MANDATES.md")
+                    help="write M1's (or with --tracking T1's) latest value into PROBLEM.md")
     a = ap.parse_args(argv)
     if a.tracking:
         failures = tracking(a.base, a.registry)
