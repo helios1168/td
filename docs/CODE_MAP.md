@@ -81,6 +81,8 @@ Code and tools only: the docs answer their own questions (`AGENTS.md` lists them
 | `tests/test_looks_score.py` | the looks scorer on toys: the display fill, each defect, the $ and K rules, `REVIEW` |
 | `tools/looks/study.py` | the looks-and-effort study (measurement only, no solver): per district and channel the hull fill, bite, longest axis and aspect, state-split cut proxy, land per $M, m_rel spread (mean distance, r90), CBSA doughnut tests and hub, for the Census divisions and regions as reference and the drawn maps; writes `districts.csv`, `maps.csv`, `SUMMARY.md` and figures to `runs/exp/looks_study_<date>/` |
 | `tests/test_looks_study.py` | the study's measures on a toy ledger with hand-computed values |
+| `tools/looks/explain.py` | the looks metrics explained: `results/looks_explainer_2026-10-14/LOOKS_METRICS.pdf` (landscape, 11 pages: glossary with Census-division and real-map ranges, `hull_fill` and `bite` with the counted land shaded, axis, effort, cut, doughnut, hub, the scorer's splits, thin links, pieces and necks, the provisional limits table); values come from the study's `districts.csv`, each drawn district is re-derived from its ledger with `study._hull` and must reproduce its row (`Ctx.check`) |
+| `tests/test_looks_explain.py` | the page builders and the row check on the study's toy ledger; one real district against its row when the hub inputs exist, else a SKIP line |
 
 ## Run
 
