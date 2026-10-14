@@ -675,16 +675,17 @@ def _neck_world(rng, n: int) -> tuple:
     return vs, poly, {v: rng.choice([0.0, 0.0, 0.5, 1.0, 10.0]) for v in vs}
 
 
-def _narrowest_by_enumeration(vs, poly, mass, by="area") -> float:
+def _narrowest_by_enumeration(vs, poly, mass, by="area", land_rule=False) -> float:
     """The narrowest neck of the district `vs`, in km, by trying every vertex set (owner, 2026-10-06,
     "Cut-off part = smaller side"): a connected part holding the share of land area (or of mass)
     and no more than the rest, which may be in pieces, across a cut under 10 km, summed in floored
-    whole cm (`audit.border_cm`)."""
+    whole cm (`audit.border_cm`).  A connector is unlimited (owner, 2026-10-14), or with `land_rule`
+    (the pre-2026-10-14 rule) 0 km where land would do."""
     g = audit.NeckGraph(poly)
     states = frozenset(poly["state"].values())
     width = {e: audit.border_cm(m) for e, m in poly["border"].items()}
     for a, b in poly["connectors"]:
-        width[a, b] = 0 if g.land_would_do(a, b, states) else math.inf
+        width[a, b] = 0 if land_rule and g.land_would_do(a, b, states) else math.inf
     adj = collections.defaultdict(set)
     for a, b in width:
         adj[a].add(b)
@@ -715,12 +716,13 @@ def test_the_neck_search_is_exact_against_enumeration():
         vs, poly, mass = _neck_world(rng, rng.randint(3, 9))
         if len(audit._components(set(vs), audit.NeckGraph(poly).border)) != 1:
             continue
-        for by in ("area", "mass"):
-            got = audit.district_necks(set(vs), mass, audit.NeckGraph(poly), by=by)
-            want = _narrowest_by_enumeration(vs, poly, mass, by)
+        for by, land_rule in (("area", False), ("mass", False), ("area", True), ("mass", True)):
+            got = audit.district_necks(set(vs), mass, audit.NeckGraph(poly, pre_2026_10_14_land_rule=land_rule),
+                                       by=by)
+            want = _narrowest_by_enumeration(vs, poly, mass, by, land_rule)
             assert all(nk.status == "proved" for nk in got), got
             width = min((nk.width_km for nk in got), default=math.inf)
-            assert width == want or abs(width - want) < 1e-9, (by, poly, mass, got, want)
+            assert width == want or abs(width - want) < 1e-9, (by, land_rule, poly, mass, got, want)
             weight = poly["aland"] if by == "area" else mass
             adj = audit.adjacency(poly)
             for nk in got:
@@ -802,24 +804,32 @@ def test_land_would_do_is_the_narrowest_land_cut_by_enumeration():
             assert g.land_would_do(a, b, states) is (narrowest >= audit.NECK_W_KM), (poly, a, b, states, narrowest)
 
 
-def test_a_connector_is_a_neck_only_where_land_would_do():
-    """Owner, 2026-10-05 (#121): an approved connector is unlimited, unless its sides are joined by
-    land within the district's states; a polygon graph without border lengths leaves M1 unverified."""
+def test_a_connector_is_unlimited_and_land_would_do_is_the_opt_in_old_rule():
+    """Owner, 2026-10-14 (answering "which water rule", "(a) Any water crossing. A neck or detached
+    piece passes if its narrow passage is an approved water connector (bridge, tunnel or ferry)",
+    "keep the manhattan exception and in general those water split cases are ok"): an approved
+    connector is unlimited always, land beside it or not.  The rule before (owner, 2026-10-05, #121:
+    0 km where its sides are joined by land within the district's states) is
+    `pre_2026_10_14_land_rule`.  A polygon graph without border lengths leaves M1 unverified."""
     poly = {"vertices": ["m1", "m2", "y1"], "edges": [("m1", "y1"), ("m2", "y1"), ("m1", "m2")],
             "state": {"m1": "MA", "m2": "MA", "y1": "NY"}, "border": {("m1", "y1"): 2e4, ("m2", "y1"): 2e4},
             "connectors": [("m1", "m2")], "aland": {"m1": 1e8, "m2": 1e8, "y1": 1e8}}
     g = audit.NeckGraph(poly)
+    old = lambda p: audit.NeckGraph(p, pre_2026_10_14_land_rule=True)   # noqa: E731
     mass = {"m1": 1.0, "m2": 1.0}
     assert audit.district_necks({"m1", "m2"}, mass, g) == []         # land runs only through NY
     assert g.land_would_do("m1", "m2", frozenset({"MA", "NY"}))
-    [nk] = audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(dict(poly, state={**poly["state"], "y1": "MA"})))
+    wide = dict(poly, state={**poly["state"], "y1": "MA"})           # land would do within the states
+    assert audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(wide)) == []
+    [nk] = audit.district_necks({"m1", "m2"}, mass, old(wide))
     assert (nk.width_km, nk.cut, nk.status) == (0.0, (("m1", "m2", 0.0),), "proved")
-    # land must be a real passage (owner, 2026-10-05, "Land must be a real passage"): through a
-    # strip under 10 km the connector keeps its full width; at 10 km it is 0 km wide
+    # a land strip under 10 km beside the bridge: the connector kept its full width under the old
+    # rule, and does under the new one; at 10 km the old rule made it 0 km wide
     for km, neck in ((9.999, False), (10.0, True)):
-        strip = dict(poly, state={**poly["state"], "y1": "MA"}, border={("m1", "y1"): 1e3 * km, ("m2", "y1"): 2e4})
+        strip = dict(wide, border={("m1", "y1"): 1e3 * km, ("m2", "y1"): 2e4})
         assert audit.NeckGraph(strip).land_would_do("m1", "m2", frozenset({"MA"})) is neck
-        assert len(audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(strip))) == neck
+        assert audit.district_necks({"m1", "m2"}, mass, audit.NeckGraph(strip)) == []
+        assert len(audit.district_necks({"m1", "m2"}, mass, old(strip))) == neck
     cells = [Cell("m1", "f", "X", "D1", 1.0), Cell("m2", "f", "X", "D1", 1.0), Cell("y1", "f", "X", "D2", 1.0)]
     bare = {k: poly[k] for k in ("vertices", "edges", "state")}
     m1 = audit.check_m1(Run(cells, {"X": Channel(2)}, polygon=bare, fine=("f",)))

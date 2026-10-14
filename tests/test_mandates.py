@@ -283,9 +283,12 @@ def test_full_zcta_graph_trigger_does_not_hold_on_a_sold_zip_graph():
 # ------------------------------------------------------------------------------ M1's check (#108)
 FIXTURES = os.path.join(ROOT, "tests", "fixtures", "m1")
 BROKEN = ("detached_piece", "corner_only", "uncovered_zero_opportunity", "unapproved_crossing",
-          "neck_narrow", "connector_land_would_do")
+          "neck_narrow")
+# connector_land_would_do failed until 2026-10-14; the owner then took "(a) Any water crossing. A neck
+# or detached piece passes if its narrow passage is an approved water connector (bridge, tunnel or
+# ferry)", so it passes; the old rule is an opt-in (`audit.LAND_RULE_ENV`) the test below still checks
 PASSING = ("connected", "neck_wide", "neck_small_part", "connector_needed", "neck_dense_small_zcta",
-           "neck_two_small_parts", "connector_land_too_narrow")
+           "neck_two_small_parts", "connector_land_too_narrow", "connector_land_would_do")
 
 
 def _gate():
@@ -393,9 +396,19 @@ def test_m1_fails_each_broken_fixture_and_passes_the_connected_one():
     assert items["neck_narrow"] == [
         "X/X_01: neck 5.00 km wide cuts off 1 ZIPs (10003...), 46.2% of its land area and 33.3% of "
         "its mass; cut 10002-10003 5.00 km"]
-    assert items["connector_land_would_do"] == [
+    # (owner, 2026-10-14: a connector is unlimited always; the pre-2026-10-14 rule, kept as an
+    # opt-in, still reads it as a passage 0 km wide, two equal halves: either is the part cut off)
+    assert items["connector_land_would_do"] == []
+    g, _ = _world(gate, "connector_land_would_do")
+    os.environ[audit.LAND_RULE_ENV] = "1"
+    try:
+        old_rule = gate.m1(os.path.join(FIXTURES, "connector_land_would_do"), g)
+    finally:
+        del os.environ[audit.LAND_RULE_ENV]
+    assert old_rule["status"] == "fail" and old_rule["check"].counts["land_rule"] is True
+    assert [i for i in old_rule["check"].items if audit.MASS_NECK not in i] == [
         "X/X_01: neck 0.00 km wide cuts off 1 ZIPs (10001...), 50.0% of its land area and 50.0% of "
-        "its mass; cut 10001-10003 0.00 km"]       # two equal halves: either is the part cut off
+        "its mass; cut 10001-10003 0.00 km"]
     assert all(counts[c]["necks"] == 0 for c in PASSING)
     # land must be a real passage (owner, 2026-10-05, #121): the same bridge beside a land strip
     # 5 km wide keeps its full width

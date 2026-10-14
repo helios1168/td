@@ -18,8 +18,8 @@ is `free`, whatever the spec says (`run.json` "spec_overrides"): no master is so
 modes only set τ and the instance's units.  `--window LO,HI` (m_rel) writes each district's
 window check (in, under or over), the band verdict (owner, 2026-10-08, E2); the audit's final-band
 check on τ[1 ± final_delta] stays as the spec sets it and is information only.  `--export` writes
-the stakeholder dataset to `<out>/export/`.  `--gap-width` audits the merged ledger twice, with
-the gate default and with `TD_NECK_GAP_WIDTH=1` (G1, #131); the gap-width verdict is the headline
+the stakeholder dataset to `<out>/export/`.  `--gap-width` audits the merged ledger twice, strict
+(`TD_NECK_GAP_WIDTH=0`, "m1_default") and with gap width (`=1`; G1, #131); the gap-width verdict is the headline
 M1 (owner, 2026-10-08, G3: a neck that exists only because ZCTA polygons do not touch across a
 coverage gap does not fail M1), run.json keeps both ("m1_default", "m1_gap_width") and lists in
 "gap_width_flips" every district whose verdict differs.
@@ -144,17 +144,17 @@ def window_status(m: float, window: tuple) -> str:
 
 
 def audit_with_gap_width(arun, gap_width: bool) -> list:
-    """`audit.audit(arun)` with `TD_NECK_GAP_WIDTH` set to "1" (`gap_width`) or unset, then
-    restored."""
-    old = os.environ.pop("TD_NECK_GAP_WIDTH", None)
+    """`audit.audit(arun)` with `TD_NECK_GAP_WIDTH` pinned to "1" (`gap_width`, gap land counted) or
+    "0" (strict, polygon borders only), whatever the environment's default, then restored."""
+    old = os.environ.get(audit.GAP_WIDTH_ENV)
+    os.environ[audit.GAP_WIDTH_ENV] = "1" if gap_width else "0"
     try:
-        if gap_width:
-            os.environ["TD_NECK_GAP_WIDTH"] = "1"
         return audit.audit(arun)
     finally:
-        os.environ.pop("TD_NECK_GAP_WIDTH", None)
-        if old is not None:
-            os.environ["TD_NECK_GAP_WIDTH"] = old
+        if old is None:
+            os.environ.pop(audit.GAP_WIDTH_ENV, None)
+        else:
+            os.environ[audit.GAP_WIDTH_ENV] = old
 
 
 def m1_record(checks: list) -> dict:
@@ -239,7 +239,9 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list,
           window: tuple | None = None, gap_width: bool = False) -> dict:
     """Write the merged run folder `out` from `sources`, [(tag, states, run folder)] and their
     merged extract `extract_out` (`write_extract`); run.json's dict.  With `gap_width`, the
-    ledger is audited with the gate default and with gap width on, and the latter is headline."""
+    ledger is audited strict (gap width off) and with gap width on, and the latter is headline;
+    without it one audit runs at the environment's default, and "neck_gap_width" is that check's
+    own `counts["gap_width"]`."""
     run = _run()
     output.check_out(out, ("manifest.json",))
     folders = {tag: f for tag, _, f in sources}
@@ -361,7 +363,7 @@ def merge(spec_path: str, out: str, extract_out: str, sources: list,
                               "commit": src_manifest[tag]["provenance"]["commit"]}
                         for tag in tags},
         "spec_overrides": overrides,
-        "neck_gap_width": gap_width or os.environ.get("TD_NECK_GAP_WIDTH") == "1",
+        "neck_gap_width": bool(m1.counts.get("gap_width")),     # the effective check's switch
         "districts": per,
         "maps": "not drawn (tools/maps/render.py <dir> draws them)"}
     if default is not None:
@@ -401,7 +403,7 @@ Band rule (owner, 2026-10-08, E2): each district passes when its m_rel lies in t
 
 Decisions:
 - F1: MD is kept whole, under a band waiver.
-- G1 (#131): a neck's width may count the coverage gaps beside it; the gate default measures
+- G1 (#131): a neck's width may count the coverage gaps beside it; the strict audit measures
   the shared border only. {g1}
 - G2: IFA NY K 5 is re-solved with a generic land floor so a unit with a neck on its own stays
   under 5% of its district's land (owner 2026-10-08, pick 'Dilute: Manhattan + Bronx +
@@ -454,21 +456,22 @@ def export(out: str, report: dict, window: tuple | None) -> str:
     dflt = report.get("m1_default")
     flips = ", ".join(f["district"] for f in report.get("gap_width_flips", [])) or "none"
     text = EXPORT_README.format(
-        m1_default_col=("; m1_default (the same audit with the gate default)" if dflt else ""),
+        m1_default_col=("; m1_default (the same audit strict, gap width off)" if dflt else ""),
         g3=(f"This run's headline M1 is the gap-width audit; the gate-default verdict is shown "
             f"beside it, and the districts whose verdict differs are: {flips}." if dflt else
             "This run reports one audit only."),
-        m1_default=(f"; with the gate default, M1 {dflt['status']} ({dflt['summary']})"
+        m1_default=(f"; strict (gap width off), M1 {dflt['status']} ({dflt['summary']})"
                     if dflt else ""),
         run=os.path.relpath(out, ROOT), scenario=report["scenario"],
         commit=man["provenance"]["commit"], rate=DOLLARS_PER_M_REL, lo=lo, hi=hi,
         lo_usd=lo * DOLLARS_PER_M_REL, hi_usd=hi * DOLLARS_PER_M_REL,
         window=(f"{sum(p.get('window') == 'in' for p in per.values())} of {len(per)} districts in "
                 f"it" if win else "not checked (no --window)"),
-        g1=("This run was audited twice: with the gate default and with TD_NECK_GAP_WIDTH=1 "
-            "(gap width counted)." if dflt else
-            "This run was audited with TD_NECK_GAP_WIDTH=1 (gap width counted)."
-            if report["neck_gap_width"] else "This run was audited with the gate default."),
+        g1=("This run was audited twice: strict (TD_NECK_GAP_WIDTH=0, polygon borders only) and with "
+            "TD_NECK_GAP_WIDTH=1 (gap width counted)." if dflt else
+            "This run was audited with gap width counted."
+            if report["neck_gap_width"] else
+            "This run was audited strict (TD_NECK_GAP_WIDTH=0, polygon borders only)."),
         sources="\n".join(f"- `{tag}`: `{m['run']}` at commit `{m['commit']}`, source M1 {m['m1']}"
                           for tag, m in report["merged_from"].items()),
         tau=f"final_delta {report['tau_band']['final_delta']}: {report['tau_band']['status']}, "
@@ -506,7 +509,7 @@ def main(argv=None) -> int:
     ap.add_argument("--window", help="LO,HI in m_rel: the per-district window check")
     ap.add_argument("--export", action="store_true", help="write <out>/export/")
     ap.add_argument("--gap-width", action="store_true",
-                    help="audit with the gate default and with TD_NECK_GAP_WIDTH=1 (G1); the "
+                    help="audit strict (TD_NECK_GAP_WIDTH=0) and with TD_NECK_GAP_WIDTH=1 (G1); the "
                          "gap-width verdict is headline (owner, G3), both are in run.json")
     ap.add_argument("--rate", type=float, default=None,
                     help="$M per m_rel (1 on the dollar extract); default the IFA rate")
@@ -549,7 +552,7 @@ def main(argv=None) -> int:
     win = report.get("window")
     dflt = report.get("m1_default")
     print(f"{report['scenario']}: M1 {report['m1']['status']} ({report['m1']['summary']})"
-          + (f" [gap width on]; gate default M1 {dflt['status']} ({dflt['summary']}); gap-width "
+          + (f" [gap width on]; strict M1 {dflt['status']} ({dflt['summary']}); gap-width "
              f"flips: {', '.join(f['district'] for f in report['gap_width_flips']) or 'none'}"
              if dflt else "")
           + f"; audit {report['verdict']}"
