@@ -19,8 +19,7 @@ def _world(border: dict, state=None, connectors=(), aland=None) -> dict:
     vs = sorted({z for e in list(border) + list(connectors) for z in e})
     return {"vertices": vs, "edges": sorted(set(border) | set(connectors)),
             "state": state or dict.fromkeys(vs, "TX"), "border": dict(border),
-            "connectors": list(connectors), "aland": aland or dict.fromkeys(vs, 1e8),
-            "voronoi_gaps": {}}
+            "connectors": list(connectors), "aland": aland or dict.fromkeys(vs, 1e8)}
 
 
 def _m1(poly: dict, owner: dict, mass: dict, k: int = 2, **kw) -> audit.Check:
@@ -153,8 +152,7 @@ def _world_with_relays(rng, n: int) -> tuple:
     border = {e: 1000.0 * rng.choice([0.5, 2, 3, 4, 6, 9.5, 10, 12, 30]) for e in edges}
     conn = [e for e in [tuple(sorted(rng.sample(vs, 2)))] if e not in border and rng.random() < 0.5]
     poly = {"vertices": vs, "edges": edges + conn, "state": dict.fromkeys(vs, "TX"), "border": border,
-            "connectors": conn, "aland": {v: rng.choice([1.0, 3.0, 20.0, 100.0]) for v in vs},
-            "voronoi_gaps": {}}
+            "connectors": conn, "aland": {v: rng.choice([1.0, 3.0, 20.0, 100.0]) for v in vs}}
     free = set(rng.sample(vs, rng.randint(0, n - 2)))
     return poly, set(vs) - free, free
 
@@ -169,8 +167,9 @@ def _near(poly: dict) -> dict:
 
 def _narrowest_with_relays(poly: dict, own: set, free: set) -> float:
     """The narrowest neck of `own` in km (inf if none) by trying every vertex set of own + relays:
-    a connected part holding 5% of the land area of `own`, no more than the rest, across a cut under
-    10 km in floored whole cm; relays hold no land, and a connector is unlimited."""
+    a part holding 5% of the land area of `own`, no more than the rest, across a cut under 10 km in
+    floored whole cm, whose own ZCTAs are connected among themselves, never through a relay (owner,
+    2026-10-06, "One connected piece"); relays hold no land, and a connector is unlimited."""
     relay, stack = set(), list(own)
     near = _near(poly)
     while stack:
@@ -185,6 +184,7 @@ def _narrowest_with_relays(poly: dict, own: set, free: set) -> float:
         if e[0] in vs and e[1] in vs:
             width[e] = math.inf
     adj = _near({"edges": list(width)})
+    own_adj = _near({"edges": [e for e in width if e[0] in own and e[1] in own]})
     if len(audit._components(set(vs), adj)) != 1:
         return None
     total = sum(poly["aland"][v] for v in own)
@@ -194,7 +194,7 @@ def _narrowest_with_relays(poly: dict, own: set, free: set) -> float:
         held = sum(poly["aland"][v] for v in side if v in own)
         if not (held / total >= audit.NECK_SHARE and held <= total - held):
             continue
-        if len(audit._components(side, adj)) != 1:
+        if len(audit._components(side & own, own_adj)) != 1:
             continue
         cut = sum(k for (a, b), k in width.items() if (a in side) != (b in side))
         if cut < audit.NECK_W_CM:
@@ -224,8 +224,6 @@ def _gap_pieces_world(**extra) -> tuple:
     """D1 = a + b with no polygon edge between them, D2 = c touching both 20 km; `extra` goes into the
     polygon graph (`gaps`: land-only gap land, `voronoi_gaps`: Voronoi rows that may cross water)."""
     poly = dict(_world({("a", "c"): 2e4, ("b", "c"): 2e4}), **extra)
-    if "gaps" in extra:
-        del poly["voronoi_gaps"]            # the land-only widths stand in for the Voronoi rows
     return poly, {"a": "D1", "b": "D1", "c": "D2"}, dict.fromkeys("abc", 1.0)
 
 
@@ -245,13 +243,42 @@ def test_two_parts_separated_only_by_land_in_no_zcta_are_one_piece():
 
 
 def test_the_same_parts_across_water_stay_two_pieces():
-    """A pair only the Voronoi rows give (`voronoi_gaps`, which can cross water) widens a neck's passage
-    (G1) but never joins pieces; a graph with no land-only gap file says R5 is inactive."""
-    poly, owner, mass = _gap_pieces_world(voronoi_gaps={("a", "b"): 3e4}, gaps={})
-    poly["voronoi_gaps"] = {("a", "b"): 3e4}
+    """A pair only the Voronoi rows give (`voronoi_gaps`, which can cross water) joins no pieces and
+    widens no passage: the graph is refused (R2), and one with no land-only gap file says R5 is
+    inactive and keeps the district in two pieces."""
+    poly, owner, mass = _gap_pieces_world(gaps={})
     got = _m1(poly, owner, mass)
     assert got.status == "fail" and got.counts["pieces"] == 1 and got.counts["gap_edges"] == 0, got.items
     assert "R5 inactive" in got.summary, got.summary
+    try:
+        _m1(dict(poly, voronoi_gaps={("a", "b"): 3e4}), owner, mass)
+    except ValueError as e:
+        assert "never a width" in str(e), e
+    else:
+        raise AssertionError("a Voronoi gap row was accepted")
     assert audit.adjacency(poly, gaps=True)["a"] == {"c"}
     assert audit.adjacency(dict(poly, gaps={("a", "b"): 3e4}), gaps=True)["a"] == {"b", "c"}
     assert audit.adjacency(dict(poly, gaps={("a", "b"): 3e4}))["a"] == {"c"}      # off by default here
+
+
+# ------------------------------- relays give width, never connect the cut-off part (owner, 2026-10-06)
+def test_fringes_that_touch_only_through_a_relay_do_not_add_up_to_a_neck():
+    """h holds 94% of the land; a, b and c (2% each) each touch h across 1 km and a relay z across 20
+    km, and each other not at all.  With z free the three are one connected part only through z, a
+    ZCTA the district does not own, so they are three 2% fringes, no part holding the 5% share:
+    "One connected piece" (owner, 2026-10-06, #121).  Made one piece by a polygon edge among them, or
+    by an owned z, the same 6% across the same 3 km is a neck."""
+    border = {("h", v): 1000.0 for v in "abc"}
+    border.update({(v, "z"): 20000.0 for v in "abc"})
+    land = {"h": 94.0, "a": 2.0, "b": 2.0, "c": 2.0, "z": 50.0}
+    g = audit.NeckGraph(_world(border, aland=land))
+    assert audit.district_necks(set("habc"), {}, g) == []
+    assert audit.district_necks(set("habc"), {}, g, free={"z"}) == []
+    # owned: z joins the district (a, b, c, z then hold 56 of 150, a neck on a cut of 3 km only if z
+    # is part of the district and the three still reach h through 1 km edges)
+    [nk] = audit.district_necks(set("habcz"), {}, g)
+    assert set(nk.zips) <= set("abcz") and nk.width_km == 3.0, nk
+    # a polygon edge among the fringes makes them one part: 6% over 1 + 1 + 20 km... narrow via h
+    joined = audit.NeckGraph(_world({**border, ("a", "b"): 3000.0, ("b", "c"): 3000.0}, aland=land))
+    [nk] = audit.district_necks(set("habc"), {}, joined, free={"z"})
+    assert nk.zips == ("a", "b", "c") and nk.width_km == 3.0, nk

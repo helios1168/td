@@ -861,19 +861,24 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
     the district's states would do through 10 km, `NeckGraph.land_would_do`) is the opt-in
     `NeckGraph(pre_2026_10_14_land_rule=True)` / `TD_NECK_PRE_2026_10_14_LAND_RULE=1`.
   - R2: land in no ZCTA counts (G1, `NeckGraph(gap_width=True)`, the default); opt out with
-    `gap_width=False` / `TD_NECK_GAP_WIDTH=0`.
+    `gap_width=False` / `TD_NECK_GAP_WIDTH=0`. Only the land-only rows of `polygon["gaps"]` are
+    read; the Voronoi rows carry no land or water marker, so they are never a fallback and a graph
+    carrying `voronoi_gaps` is refused. Without `zcta_gap_land.csv.gz` no gap width is measured
+    (which only adds necks).
   - R3: ZCTAs of zero opportunity in the district's planning channel count, whoever owns them.
     `check_m1` finds them as the ZCTAs all of whose rows in that channel have m = 0 (a ZCTA with
     no row in the channel, or a ledger with no opportunity, has none). `district_necks(free=)`
     adds those that reach the district through free ZCTAs alone as relay vertices of the width
     graph, with the same edge widths, no land area and no mass: a cut may put a relay on either
     side, so a passage through them is as wide as its narrowest link. A ZCTA of positive
-    opportunity that another district owns is never a relay. The detached-piece check is not
+    opportunity that another district owns is never a relay. The cut-off part is connected on the
+    district's own ZCTAs (polygon edges, connectors, R5 gap edges), never through a relay: three
+    2% fringes that touch only through a relay are no 6% neck. The detached-piece check is not
     changed by R3 (a district joined only through empty land is still in pieces).
   - R5 (owner, 2026-10-14, #140): the pieces check reads the land-only gap edges too
     (`audit.adjacency(gaps=True)`, `geo.polygon_graph()["gaps"]`): two ZCTAs of one state that face
     each other across land in no ZCTA are adjacent, never across water (the Voronoi rows, which can
-    cross water, only widen necks), behind G1's switch. `reference/2025/zcta_gap_land.csv.gz` is not
+    cross water, are not read at all), behind G1's switch. `reference/2025/zcta_gap_land.csv.gz` is not
     shipped yet, so R5 is inactive on the real graph and `check_m1` says so.
   The master side (`td.supports.contact`, `repair.neck_cuts`, `plancheck`) still reads the
   pre-2026-10-14 land rule (§2 contact, §4.9 widths): it drops a connector that land replaces, so

@@ -470,18 +470,6 @@ LAND_RULE_ENV = "TD_NECK_PRE_2026_10_14_LAND_RULE"  # "1": a connector is 0 km w
 #                                      rule before 2026-10-14; off by default (owner, 2026-10-14)
 
 
-_VORONOI_GAPS: dict = {}
-
-
-def _voronoi_gaps() -> dict:
-    """{(a, b): metres} of the Voronoi-adjacent pairs the polygon graph dropped, read once."""
-    if not _VORONOI_GAPS:
-        vs = geo.read_reference(name="zcta_polygon_vs_voronoi.csv.gz")
-        vs = vs[vs["change"] == "dropped"]
-        _VORONOI_GAPS.update({(a, b): float(m) for a, b, m in zip(vs["a"], vs["b"], vs["border_m"])})
-    return _VORONOI_GAPS
-
-
 def border_cm(metres: float) -> int:
     """A shared border in whole centimetres, floored: a cut of floored widths is never wider than
     the real one, so the neck check may over-report but never misses a neck.  The float is read as
@@ -515,16 +503,16 @@ class NeckGraph:
     `gap_width` is G1 (owner, 2026-10-08, "Measure width across coverage gaps"), on by default since
     the owner's 2026-10-14 decision (R2, "(a) Any water crossing ... except we should treat necks that
     are surrounded by empty or zero-opportunity zips the same way we treat water", #131); False is the
-    opt-out kept for comparison.  When True, every pair of ZCTAs of one state
-    adjacent in the Voronoi ZIP graph but neither a polygon edge nor a connector (`geo`'s
-    `zcta_polygon_vs_voronoi.csv.gz` rows `dropped`, or `polygon["voronoi_gaps"]` {(a, b): m})
-    is a neck edge as wide as its shared Voronoi border, so land in no ZCTA counts towards a
-    passage.  No land test: `geo` separates land from water only per county at build time, so a
-    gap across water (a lake, a sound) counts too, unless `polygon["gaps"]` is non-empty
-    (`geo.polygon_graph` reads `zcta_gap_land.csv.gz`, built by `python -m td geo --gap-land`, land
-    only, never across water): then those widths are used instead of the Voronoi rows.  The gap
+    opt-out kept for comparison.  When True, every pair of `polygon["gaps"]` (`geo.polygon_graph`
+    reads `zcta_gap_land.csv.gz`, built by `python -m td geo --gap-land`: land in no ZCTA between two
+    ZCTAs of one state, never across water) that is neither a polygon edge nor a connector is a
+    neck edge as wide as its gap land, so land in no ZCTA counts towards a passage.  Only those
+    land-only rows: the Voronoi rows (`zcta_polygon_vs_voronoi.csv.gz`) carry no land or water
+    marker, so a gap across a lake or a sound would pass a neck the owner has not approved; they
+    are never a fallback, and a polygon graph carrying `voronoi_gaps` is refused.  A graph with no
+    land-only gap rows measures no gap width, which only adds necks.  The gap
     edges enter `border_cm`, the necks' widths, and not `border`, so `land_would_do` still reads the polygon edges.  The pieces
-    check reads the land-only ones (`adjacency(gaps=True)`, R5), never the Voronoi rows.
+    check reads the same rows (`adjacency(gaps=True)`, R5).
 
     Every approved connector (a bridge, tunnel or ferry, a road across land in no ZCTA, an island's
     `nearest` row) is a passage of unlimited width, always (R1; owner, 2026-10-14, "keep the
@@ -533,6 +521,9 @@ class NeckGraph:
     would do (`land_would_do`); `district_necks` reads it as `land_rule`."""
 
     def __init__(self, polygon: dict, gap_width: bool = True, pre_2026_10_14_land_rule: bool = False):
+        if polygon.get("voronoi_gaps"):
+            raise ValueError("polygon['voronoi_gaps']: Voronoi gap rows can cross water and are never "
+                             "a width (R2); pass the land-only rows as polygon['gaps']")
         self.land_rule = pre_2026_10_14_land_rule
         self.state = polygon.get("state", {})
         self.aland = polygon["aland"]
@@ -550,12 +541,7 @@ class NeckGraph:
                 self.border[a][b] = self.border[b][a] = border.get(e, 0.0) / 1000.0
                 self.border_cm[a][b] = self.border_cm[b][a] = border_cm(border.get(e, 0.0))
         if gap_width:
-            gaps = polygon.get("voronoi_gaps")
-            if gaps is None and polygon.get("gaps"):    # land-only gap widths, `geo.GAP_LAND` (#131)
-                gaps = polygon["gaps"]
-            if gaps is None:
-                gaps = _voronoi_gaps()
-            for (a, b), m in gaps.items():
+            for (a, b), m in (polygon.get("gaps") or {}).items():   # land-only, `geo.GAP_LAND` (#131)
                 if (a in self.aland and b in self.aland and b not in self.border_cm.get(a, {})
                         and b not in self.connector.get(a, ()) and self.state.get(a) == self.state.get(b)):
                     self.border_cm[a][b] = self.border_cm[b][a] = border_cm(m)
@@ -652,7 +638,10 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     neck that is narrow only because the land around it is empty or zero-opportunity passes.  A
     ZCTA of positive opportunity that another district owns is never a relay.  Relays only add
     width: a relay is never in `Neck.zips`, which lists the district's own ZCTAs, and the pieces
-    check (`district_pieces`) is not changed by them.
+    check (`district_pieces`) is not changed by them.  The cut-off part is one connected piece
+    of the district's own ZCTAs (the owner's 2026-10-06 "One connected piece"): connected on the
+    polygon edges, connectors and gap edges (R5) among them, never through a relay, so fringes
+    that touch only through a relay do not add up to a neck.
 
     **Exact in whole centimetres**, erring only towards a neck.  Every width is an integer number of
     cm, floored (`border_cm`; a needed connector, or an edge, at least `NECK_W_CM` counts as
@@ -668,9 +657,11 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     less than the share lies outside it no neck exists; otherwise every merged vertex is free.  A
     MILP then finds the narrowest cut whose side A holds between the share and half
     (`mip_rel_gap = 0`, trap 12), in cm; a dual bound at least `NECK_W_CM` - 0.5 proves no integer
-    cut is a neck, half a centimetre being far above HiGHS's 1e-6 tolerances.  A side in pieces has
-    a piece holding the share on a cut no wider (its pieces do not touch), else a second MILP adds
-    a single-commodity flow inside A from a chosen root and finds the narrowest connected A.  Each
+    cut is a neck, half a centimetre being far above HiGHS's 1e-6 tolerances.  A side whose own
+    ZCTAs are in pieces is judged piece by piece (a piece takes the side's relays and is a neck if
+    it holds the share on a cut under 10 km); if none is, a second MILP adds a single-commodity
+    flow inside A, over the own-connected parts of the groups and never through a relay, from a
+    chosen root and finds the narrowest A whose own ZCTAs are connected.  Each
     side found is judged exactly, its width an integer sum of cm.  A component whose MILP stops on
     its time limit (`time_limit` seconds) without a proof either way is listed as an `unresolved`
     neck, as is, conservatively, one whose optimum the exact judge rejects (a solver-tolerance
@@ -703,10 +694,13 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
                 no = g.land_rule and g.land_would_do(z, y, states)
                 width[z, y] = width.get((z, y), 0) + (0 if no else NECK_W_CM)
     width = {e: min(cm, NECK_W_CM) for e, cm in width.items()}
-    adj = collections.defaultdict(set)
+    adj, own_adj = collections.defaultdict(set), collections.defaultdict(set)
     for a, b in width:
         adj[a].add(b)
         adj[b].add(a)
+        if a in own and b in own:               # the district's own ZCTAs touch, no relay between
+            own_adj[a].add(b)
+            own_adj[b].add(a)
 
     def share(side, of):
         tot = area_tot if of is g.aland else mass_tot
@@ -769,15 +763,21 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
         order = [core] + [r for r in gs if r != core]
         ix = {r: i for i, r in enumerate(order)}
         n = len(order)
-        edges, links = collections.defaultdict(int), set()
+        edges = collections.defaultdict(int)
         for (a, b), km in width.items():
             if a in parent and find(a) != find(b):
                 e = tuple(sorted((ix[find(a)], ix[find(b)])))
-                links.add(e)
                 if km > 0:
                     edges[e] += km
         el = sorted(edges.items())
         wv = [g_w[r] for r in order]
+        nodes, node_of = [], {}                 # the own-connected parts of each group, as flow nodes
+        for r in order:
+            for part in _components({z for z in group[r] if z in own}, own_adj):
+                node_of.update(dict.fromkeys(part, len(nodes)))
+                nodes.append(ix[r])
+        narcs = sorted({arc for a, b in width if a in node_of and b in node_of and node_of[a] != node_of[b]
+                        for arc in ((node_of[a], node_of[b]), (node_of[b], node_of[a]))})
 
         def solve(connected: bool):
             """(status, info, side or None) of the narrowest cut, A connected when asked."""
@@ -787,25 +787,24 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
             h.setOptionValue("mip_rel_gap", 0.0)
             h.setOptionValue("time_limit", float(time_limit))
             h.setOptionValue("objective_bound", NECK_W_CM - 0.5)
-            arcs = [(i, j) for i, j in sorted(links)] + [(j, i) for i, j in sorted(links)]
-            nf = len(arcs) if connected else 0
-            # columns: x (n), y (edges), then with `connected`: r (n), supply (n), f (arcs)
+            nn, nf = len(nodes), len(narcs) if connected else 0
+            big = float(max(nn, 1))
+            # columns: x (n), y (edges), then with `connected`: r (nodes), supply (nodes), f (arcs)
             x0, y0 = 0, n
-            r0, s0, f0 = n + len(el), n + len(el) + n, n + len(el) + 2 * n
-            nv = n + len(el) + (2 * n + nf if connected else 0)
+            r0, s0, f0 = n + len(el), n + len(el) + nn, n + len(el) + 2 * nn
+            nv = n + len(el) + (2 * nn + nf if connected else 0)
             lower, upper = np.zeros(nv), np.ones(nv)
             if fixed:
                 upper[x0] = 0.0                 # the core is in the rest
             upper[y0:y0 + len(el)] = inf
             if connected:
-                upper[r0] = 0.0 if fixed else 1.0
-                upper[s0:s0 + n] = n
-                upper[f0:f0 + nf] = n
+                upper[s0:s0 + nn] = big
+                upper[f0:f0 + nf] = big
             cost = np.zeros(nv)
             cost[y0:y0 + len(el)] = [float(cm) for _, cm in el]
             h.addVars(nv, lower, upper)
             h.changeColsCost(nv, np.arange(nv, dtype=np.int32), cost)
-            ints = list(range(n)) + (list(range(r0, r0 + n)) if connected else [])
+            ints = list(range(n)) + (list(range(r0, r0 + nn)) if connected else [])
             h.changeColsIntegrality(len(ints), np.array(ints, dtype=np.int32),
                                     np.array([highspy.HighsVarType.kInteger] * len(ints)))
 
@@ -817,19 +816,21 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
             row(need, half, list(range(n)), wv)                     # A: the share, at most half
             row(1.0, n - 1.0, list(range(n)), [1.0] * n)            # A and the rest not empty
             if connected:
-                row(1.0, 1.0, list(range(r0, r0 + n)), [1.0] * n)   # one root of A
+                # A's own ZCTAs are one connected part on `own_adj`: the flow runs over the nodes (a
+                # group's own-connected parts), never through a relay, which only adds width
+                row(1.0, 1.0, list(range(r0, r0 + nn)), [1.0] * nn)   # one root of A
                 into, outs = collections.defaultdict(list), collections.defaultdict(list)
-                for a, (u, v) in enumerate(arcs):
+                for a, (u, v) in enumerate(narcs):
                     into[v].append(a)
                     outs[u].append(a)
                     for w_ in (u, v):           # an arc carries flow only inside A
-                        row(-inf, 0.0, [f0 + a, x0 + w_], [1.0, -float(n)])
-                for v in range(n):
+                        row(-inf, 0.0, [f0 + a, x0 + nodes[w_]], [1.0, -big])
+                for v in range(nn):
                     ia = [f0 + a for a in into[v]] + [f0 + a for a in outs[v]]
                     vals = [1.0] * len(into[v]) + [-1.0] * len(outs[v])
-                    row(0.0, 0.0, ia + [x0 + v, s0 + v], vals + [-1.0, 1.0])   # A: one unit each
-                    row(-inf, 0.0, [s0 + v, r0 + v], [1.0, -float(n)])        # supply at its root
-                    row(-inf, 0.0, [r0 + v, x0 + v], [1.0, -1.0])            # the root is in A
+                    row(0.0, 0.0, ia + [x0 + nodes[v], s0 + v], vals + [-1.0, 1.0])   # A: one unit each
+                    row(-inf, 0.0, [s0 + v, r0 + v], [1.0, -big])             # supply at its root
+                    row(-inf, 0.0, [r0 + v, x0 + nodes[v]], [1.0, -1.0])     # the root is in A
             h.run()
             info, st = h.getInfo(), h.getModelStatus()
             side = None
@@ -839,16 +840,18 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
             return st, info, side
 
         def narrowest_part(side):
-            """(width in cm, part, cut) of the narrowest connected part of `side` meeting the
-            definition, or None."""
+            """(width in cm, own ZCTAs, cut) of the narrowest part of `side` meeting the definition,
+            or None: a part is connected on the district's own ZCTAs (`own_adj`), never through a
+            relay, and takes the side's relays with it (a relay only adds width)."""
             best = None
-            for part in _components(set(side), adj):
-                if part == inside_comp or not need <= held(part) <= half:
+            relays = {z for z in side if z not in own}
+            for part in _components({z for z in side if z in own}, own_adj):
+                if part | relays == inside_comp or not need <= held(part) <= half:
                     continue
-                cut = cut_of(part)
+                cut = cut_of(part | relays)
                 cm = sum(k for _, _, k in cut)
                 if best is None or cm < best[0]:
-                    best = (cm, tuple(sorted(z for z in part if z in own)), cut)
+                    best = (cm, tuple(sorted(part)), cut)
             return best
         settled = (highspy.HighsModelStatus.kInfeasible, highspy.HighsModelStatus.kObjectiveBound)
         found = None
@@ -857,13 +860,14 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
             if st in settled or info.mip_dual_bound >= NECK_W_CM - 0.5:
                 break                           # proved: no cut of this model is a neck
             got = narrowest_part(side) if side else None
-            if got is not None and got[0] <= narrow:
+            wcm = sum(k for _, _, k in cut_of(side)) if side else math.inf
+            relaxed = not connected and st == highspy.HighsModelStatus.kOptimal    # cut = the optimum
+            if got is not None and got[0] <= narrow and not (relaxed and got[0] > wcm):
                 found = Neck(got[0] / 1e5, got[1], share(got[1], g.aland), share(got[1], mass),
                              in_km(got[2]))
                 break
-            wcm = sum(k for _, _, k in cut_of(side)) if side else math.inf
-            if not connected and st == highspy.HighsModelStatus.kOptimal and wcm <= narrow:
-                continue                        # A's pieces are each under the share: connect A
+            if relaxed and wcm <= narrow:
+                continue                        # no connected part of A is as narrow: connect A
             found = Neck(min(wcm, info.mip_dual_bound) / 1e5, tuple(z for z in side or () if z in own),
                          share(side or (), g.aland), share(side or (), mass), (), "unresolved")
             break

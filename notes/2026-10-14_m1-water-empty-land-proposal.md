@@ -9,8 +9,11 @@ The owner's words (2026-10-14, answering "which water rule"): picked "(a) Any wa
 or detached piece passes if its narrow passage is an approved water connector (bridge, tunnel or
 ferry)... Narrow land necks (Cincinnati, El Paso, Utah) would still fail", amended: "(a) except we
 should treat necks that are surrounded by empty or zero-opportunity zips the same way we treat water,
-which i believe is what happened to el paso". Also: "keep the manhattan exception and in general those
-water split cases are ok".
+which i believe is what happened to el paso". Also, the same day: "keep the manhattan exception and in
+general those water split cases are ok". The owner's later no-exceptions ruling supersedes the
+"manhattan exception" half of that sentence (its exact words are not in the repo or in this note: the
+supervisor inserts them with the issue link before the row goes to the owner); the proposed row below
+carries no exception for any map or district.
 
 ## 1. Replace, in the M1 row's **definition**, from "An approved connector is a passage of unlimited width, except ..." to "... leaves the connector at full width."
 
@@ -51,8 +54,9 @@ Proposed text:
 > fails as before. R2 is the default (G3's `TD_NECK_GAP_WIDTH=1` flag is retired: `=0` opts out for
 > comparison); #131 lands the width on main. R3 changes widths only: a district whose parts touch
 > only through empty land is still in pieces, and a detached piece still fails (no change to the
-> piece rule). The Manhattan neck of the IFA map is an owner exception (2026-10-14), kept whether or
-> not the rule above clears it; it is named at the map, not coded.
+> piece rule). There is no map-specific or district-specific exception: every map, the IFA map's
+> Manhattan district included, passes the same implemented M1 rules or fails M1 (the owner's later
+> no-exceptions ruling).
 
 ### 2b. R5, add to the same paragraph (owner, 2026-10-14, recorded on #140, "yes")
 
@@ -63,16 +67,21 @@ Proposed text:
 > give, joins nothing. The switch is the same as G1's (default on, `TD_NECK_GAP_WIDTH=0` opts out).
 > Reassigning zero-opportunity glue ZCTAs is a repair-step change and is not part of this rule.
 
-**R5 is coded but inactive on every real map today.** `zcta_gap_land.csv.gz` is not in
+**R5 is coded but inactive on every real map today, and not shippable until the reference is integrated.** `zcta_gap_land.csv.gz` is not in
 `reference/2025/` (the repo ships only the Voronoi rows, `zcta_polygon_vs_voronoi.csv.gz`, columns
 `a,b,change,border_m`, which carry no land/water marker, so they cannot be made land-only). Building the
 file needs `python -m td geo --gap-land --public $TD_REPO/data/public` with the gazetteer, county and
 FACES/AREAWATER downloads that `data/public/` does not hold, and writes into `reference/2025/` and
-its `MANIFEST.json`, outside this task's files. `geo.polygon_graph()["gaps"]` is empty (0 pairs), so
-`check_m1` says "R5 inactive" in its summary and `counts["gap_edges"]` is 0. Fixtures in
+its `MANIFEST.json`, outside the worker's files: integrating it, and testing R5 against that real
+input, is an open step for the supervisor and the owner, not done here. `geo.polygon_graph()["gaps"]`
+is empty (0 pairs), so `check_m1` says "R5 inactive" in its summary and `counts["gap_edges"]` is 0. Fixtures in
 `tests/test_neck_water_empty.py` cover the rule on toy graphs (one piece across land; two pieces across
-water, across a state line, or with the switch off). R2 (neck width) falls back on the Voronoi rows
-when `gaps` is empty, as the G1 prototype did, and those rows can cross water.
+water, across a state line, or with the switch off). R2 (neck width) reads only the land-only rows
+too: with `gaps` empty no gap width is measured, so a neck through populated land fails as before.
+The Voronoi rows can cross water, are never a fallback, and a graph carrying `voronoi_gaps` is
+refused (`NeckGraph`), so an unapproved water gap cannot turn a failing neck into a passage
+(`tests/test_neck_gapwidth.py`). The cut-off part of a neck is connected on the district's own
+ZCTAs, never through a relay (`tests/test_neck_water_empty.py`).
 
 ## 3. Waiver history: add after the 2026-10-04 line
 
