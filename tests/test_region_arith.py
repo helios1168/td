@@ -173,3 +173,77 @@ def test_report_header_carries_arithmetic_notice():
     # no generated report bypasses the helper
     src = open(os.path.join(HERE, "..", "tools", "exp", "region_arith.py"), encoding="utf-8").read()
     assert "fh.write(" not in src.replace('fh.write("\\n".join([ARITH_NOTICE', "")
+
+
+def test_head_matches_at_the_displayed_two_decimals():
+    assert region_arith.head_matches(0.8555, 0.86) and not region_arith.head_matches(0.8555, 0.85)
+    for pid, note in region_arith.SECTION10_HEAD.items():
+        assert region_arith.head_matches(note, note), pid
+        assert not region_arith.head_matches(note + 0.01, note), pid
+        assert not region_arith.head_matches(note - 0.01, note), pid
+
+
+def _section10_results(heads: dict, f0: dict) -> dict:
+    """check_section10's input with every §10 K as given in `f0` and the points in `heads`."""
+    res = {}
+    for name, chans in region_arith.SECTION10_K.items():
+        res[name] = {"tr": {"f0": f0[name], "windows": {c: (0, 1) for c in chans}},
+                     "st": {"channels": {c: {} for c in chans}}, "adj": {}, "points": []}
+    res["ne_plains"]["points"] = [{"id": i, "headroom": h} for i, h in heads.items()]
+    return res
+
+
+def test_check_section10_every_range_and_headroom():
+    f0 = {n: {c: list(range(a, b + 1)) for c, (a, b) in chans.items()}
+          for n, chans in region_arith.SECTION10_K.items()}
+    heads = dict(region_arith.SECTION10_HEAD)
+    real = region_arith.region_analysis
+    region_arith.region_analysis = lambda *a, **k: {"k": []}    # WH's raw window: not the row under test
+    try:
+        rows = region_arith.check_section10(_section10_results(heads, f0))
+        data_rows = [r for r in rows if r.startswith("| ") and "---" not in r and "match" not in r]
+        assert len(data_rows) == sum(len(c) for c in region_arith.SECTION10_K.values()) + len(heads)
+        assert all(r.endswith("| yes |") for r in data_rows if "WH" not in r)
+        # every K range: one more K than the note's fails that row
+        for name, chans in region_arith.SECTION10_K.items():
+            for c, (a, b) in chans.items():
+                if c == "WH":
+                    continue
+                bad = {n: {cc: list(v) for cc, v in d.items()} for n, d in f0.items()}
+                bad[name][c].append(b + 1)
+                got = [r for r in region_arith.check_section10(_section10_results(heads, bad))
+                       if r.startswith(f"| {name} | {c} |")]
+                assert len(got) == 1 and got[0].endswith("| NO |"), (name, c)
+        # every headroom: a hundredth off fails that row, 0.8555 against 0.85 fails w8-48-bal
+        for pid, note in region_arith.SECTION10_HEAD.items():
+            off = region_arith.check_section10(_section10_results({**heads, pid: note + 0.01}, f0))
+            got = [r for r in off if r.startswith(f"| {pid} |")]
+            assert len(got) == 1 and got[0].endswith("| NO |"), pid
+        off = region_arith.check_section10(_section10_results({**heads, "w8-48-bal": 0.8555}, f0))
+        assert [r for r in off if r.startswith("| w8-48-bal |")][0].endswith("| NO |")
+    finally:
+        region_arith.region_analysis = real
+
+
+def test_non_dollar_extract_is_rejected_before_any_report():
+    calls = []
+
+    class Stub:
+        @staticmethod
+        def rates_of(path):
+            return None
+
+    real_d, real_c = region_arith.overnight._dollarize, region_arith.overnight.state_cells
+    region_arith.overnight._dollarize = lambda: Stub
+    region_arith.overnight.state_cells = lambda *a, **k: calls.append(a)
+    try:
+        for fn in (region_arith.run, region_arith.run_search):
+            try:
+                fn("/nonexistent/m_rel.json.gz", "/nonexistent/out")
+            except SystemExit as e:
+                assert "not a dollar extract" in str(e)
+            else:
+                raise AssertionError(f"{fn.__name__} accepted an m_rel extract")
+        assert calls == []                       # rejected before the cells were read
+    finally:
+        region_arith.overnight._dollarize, region_arith.overnight.state_cells = real_d, real_c

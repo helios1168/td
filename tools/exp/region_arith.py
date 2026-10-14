@@ -1065,6 +1065,7 @@ def write_report(path: str, lines: list) -> None:
 
 def run_search(extract: str, out: str) -> dict:
     """--search: 7_partition_search.md and 7b_ifa_combos.md under `out`."""
+    require_dollar_extract(extract)
     cells = overnight.state_cells(extract)
     adj = state_graph()
     parts = partitions()
@@ -1124,6 +1125,12 @@ def run_search(extract: str, out: str) -> dict:
 
 
 # ------------------------------------------------------------------------------ checks and main
+def head_matches(here: float, note: float) -> bool:
+    """`here` and the note's headroom agree at the note's two displayed decimals (the table prints
+    both with `:.2f`, so 0.8555 against 0.85 is a NO)."""
+    return f"{here:.2f}" == f"{note:.2f}"
+
+
 def check_section10(results: dict) -> list:
     """P0 against §10: the feasible K per channel and the locked grid's headroom."""
     lines = ["| structure | channel | §10 K | here (WH ≥ 8 shown; raw window in brackets) | match |",
@@ -1140,7 +1147,7 @@ def check_section10(results: dict) -> list:
     for name, res in results.items():
         for r in res["points"]:
             if r["id"] in SECTION10_HEAD and r["headroom"] is not None:
-                ok = abs(r["headroom"] - SECTION10_HEAD[r["id"]]) < 0.006
+                ok = head_matches(r["headroom"], SECTION10_HEAD[r["id"]])
                 lines.append(f"| {r['id']} | {SECTION10_HEAD[r['id']]:.2f} | {r['headroom']:.2f} | "
                              f"{'yes' if ok else 'NO'} |")
     return lines + [""]
@@ -1150,7 +1157,14 @@ def ifa_points() -> list:
     return [{"id": f"ifa-{t}", "structure": "ifa", "k": {"IFA": t}} for t in IFA_TOTALS]
 
 
+def require_dollar_extract(extract: str) -> None:
+    """Exit on an extract in `m_rel`: the windows are $M, so its cells would be read as dollars."""
+    if overnight._dollarize().rates_of(extract) is None:
+        raise SystemExit(f"{extract} is not a dollar extract (tools/exp/contig/dollarize.py)")
+
+
 def run(extract: str, out: str) -> dict:
+    require_dollar_extract(extract)
     cells = overnight.state_cells(extract)
     adj = state_graph()
     parts = partitions()
