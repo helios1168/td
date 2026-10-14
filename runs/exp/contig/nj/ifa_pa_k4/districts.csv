@@ -1,0 +1,5 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",PA#1,PA,822.6194376317,822.5120264578002,0
+IFA,IFA_02,"IFA Pittsburgh, PA",PA#2,PA,822.6194376317,822.8274894550004,0
+IFA,IFA_03,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / Harrisburg-Carlisle, PA",PA#3,PA,822.6194376317,822.6191342999998,0
+IFA,IFA_04,"IFA Philadelphia-Camden-Wilmington, PA-NJ-DE-MD / Allentown-Bethlehem-Easton, PA-NJ",PA#4,PA,822.6194376317,822.5191003140008,0

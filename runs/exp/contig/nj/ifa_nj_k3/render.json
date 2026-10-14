@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_nj/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_nj/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "3b6ebe32e925a01ea61dfaa285bbac81eaba8c36c16a1768183bbc94f6fe4b3f",
+    "summary.svg": "20ae55927ef0abcf9eba959b6d8f7455addbbabb161025faa2fa1d7866c38498",
+    "zip_IFA.png": "3d71b2db939c815fbfe2e76f12d4cd69c6aa97365f9a4f3bcb88cef7db3a0762",
+    "zip_pages.pdf": "3eca32bd16ec71432d97477c5bbbb2c65d0dddf141260f96503ddbacd65f3c38"
+  },
+  "inputs": {
+    "districts.csv": "eaa27878b347d959f394eb65dbef441f4a8a87448a9f7a0b6cc672452f0d20bb",
+    "ledger.csv": "d8046e33e2621090ed95f251f08a7ac5ad73354fcdfc17da885591f9d9ccc07f",
+    "manifest.json": "2be71ec9e145017b76341dbd9967a0a9fe40e692b8d243181862e0335f57b4db",
+    "run.json": "67a5593df89b722b8a24524a7293f28a056fad61e1101092f40a9bd314ff5aeb"
+  },
+  "label": "ifa_nj_k3: IFA New Jersey alone, K 3, realizer on the NJ-induced graph, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 32702 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T08:28:07+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "e0248b1dc16be716fc0d54e69698a5e873ee057c",
+    "diff_sha256": "1809b2b8898324aac48161ff60aa60a2a38a7721bc869e868a74bdc1afc5652b",
+    "dirty": true
+  },
+  "title": "ifa_nj_k3: IFA New Jersey alone, K 3, realizer on the NJ-induced graph, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_nj/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_nj/runs/autonomous_2026-10-05/batch/geo"
+}

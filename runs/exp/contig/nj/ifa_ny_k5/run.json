@@ -1,0 +1,90 @@
+{
+  "cells": 1826,
+  "channels": {
+    "IFA": {
+      "delta": 0.15,
+      "districts": 1,
+      "districts_by_cause": {
+        "shape": 1
+      },
+      "final_delta": 0.15,
+      "k": 5,
+      "margin": false,
+      "pieces": 2,
+      "pieces_by_cause": {
+        "shape": 2
+      },
+      "status": "optimal",
+      "tier": "exact",
+      "vanished": 0
+    }
+  },
+  "dropped_channels": [],
+  "dropped_units": {
+    "IFA": [
+      "AL",
+      "AR",
+      "AZ",
+      "CA",
+      "CO",
+      "CT",
+      "DC",
+      "DE",
+      "FL",
+      "GA",
+      "IA",
+      "ID",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MA",
+      "MD",
+      "ME",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "MT",
+      "NC",
+      "ND",
+      "NE",
+      "NH",
+      "NJ",
+      "NM",
+      "NV",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VA",
+      "VT",
+      "WA",
+      "WI",
+      "WV",
+      "WY"
+    ]
+  },
+  "fine_channels": [
+    "ifa"
+  ],
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "1 districts in pieces, 2 detached pieces (largest 0.346 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 31474 (ZCTA, fine channel) cells with no row, 0 owned twice, 7 mass necks listed beside M1"
+  },
+  "maps": "not drawn (python -m td maps <dir> draws them)",
+  "realizer": "tools/exp/contig (arm1)",
+  "scenario": "ifa_ny_k5",
+  "source": "ifa_ny.json.gz",
+  "spec": "runs/exp/contig/_specs/ifa_ny_k5.toml",
+  "verdict": "fail",
+  "zips": 1826
+}
