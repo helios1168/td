@@ -1,0 +1,370 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_ctri_k2,02802,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02804,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4403520,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02806,ifa,RI,IFA,IFA_02,IFA,,44001,39300,,"IFA Hartford-West Hartford-East Hartford, CT",1.9426,
+ifa_ctri_k2,02807,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.564917,
+ifa_ctri_k2,02808,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4408020,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02809,ifa,RI,IFA,IFA_02,IFA,,44001,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0662507,
+ifa_ctri_k2,02812,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4412340,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02813,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4414320,"IFA Hartford-West Hartford-East Hartford, CT",0.503522,
+ifa_ctri_k2,02814,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4414860,"IFA Hartford-West Hartford-East Hartford, CT",0.609494,
+ifa_ctri_k2,02815,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4415940,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02816,ifa,RI,IFA,IFA_02,IFA,,44003,39300,,"IFA Hartford-West Hartford-East Hartford, CT",3.28428,
+ifa_ctri_k2,02817,ifa,RI,IFA,IFA_02,IFA,,44003,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02818,ifa,RI,IFA,IFA_02,IFA,,44003,39300,4474300,"IFA Hartford-West Hartford-East Hartford, CT",2.32084,
+ifa_ctri_k2,02822,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02823,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4419180,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02824,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02825,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4427640,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02826,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02827,ifa,RI,IFA,IFA_02,IFA,,44003,39300,4431240,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02828,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4431600,"IFA Hartford-West Hartford-East Hartford, CT",0.965165,
+ifa_ctri_k2,02829,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4433040,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02830,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4433400,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02831,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4419180,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02832,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4434660,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02833,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4435200,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02835,ifa,RI,IFA,IFA_02,IFA,,44005,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02836,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02837,ifa,RI,IFA,IFA_02,IFA,,44005,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02838,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02839,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02840,ifa,RI,IFA,IFA_02,IFA,,44005,39300,4449960,"IFA Hartford-West Hartford-East Hartford, CT",8.61576,
+ifa_ctri_k2,02841,ifa,RI,IFA,IFA_02,IFA,,44005,39300,4449960,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02842,ifa,RI,IFA,IFA_02,IFA,,44005,39300,4450140,"IFA Hartford-West Hartford-East Hartford, CT",9.00269,
+ifa_ctri_k2,02852,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",2.47268,
+ifa_ctri_k2,02857,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4433040,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02858,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02859,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4454460,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02860,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4454640,"IFA Hartford-West Hartford-East Hartford, CT",0.118124,
+ifa_ctri_k2,02861,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4454640,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02863,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4414140,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02864,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4472500,"IFA Hartford-West Hartford-East Hartford, CT",2.6202,
+ifa_ctri_k2,02865,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",1.10574,
+ifa_ctri_k2,02871,ifa,RI,IFA,IFA_02,IFA,,44005,39300,4445010,"IFA Hartford-West Hartford-East Hartford, CT",2.4227,
+ifa_ctri_k2,02872,ifa,RI,IFA,IFA_02,IFA,,44005,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02873,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02874,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",2.15946,
+ifa_ctri_k2,02875,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02876,ifa,RI,IFA,IFA_02,IFA,,44007,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02878,ifa,RI,IFA,IFA_02,IFA,,44005,39300,4470700,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02879,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4473132,"IFA Hartford-West Hartford-East Hartford, CT",2.68411,
+ifa_ctri_k2,02881,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4438980,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02882,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4448700,"IFA Hartford-West Hartford-East Hartford, CT",2.87556,
+ifa_ctri_k2,02885,ifa,RI,IFA,IFA_02,IFA,,44001,39300,,"IFA Hartford-West Hartford-East Hartford, CT",1.89586,
+ifa_ctri_k2,02886,ifa,RI,IFA,IFA_02,IFA,,44003,39300,4474300,"IFA Hartford-West Hartford-East Hartford, CT",189.085,
+ifa_ctri_k2,02888,ifa,RI,IFA,IFA_02,IFA,,44003,39300,4474300,"IFA Hartford-West Hartford-East Hartford, CT",3.42507,
+ifa_ctri_k2,02889,ifa,RI,IFA,IFA_02,IFA,,44003,39300,4474300,"IFA Hartford-West Hartford-East Hartford, CT",8.39123,
+ifa_ctri_k2,02891,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4476820,"IFA Hartford-West Hartford-East Hartford, CT",2.79765,
+ifa_ctri_k2,02892,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02893,ifa,RI,IFA,IFA_02,IFA,,44003,39300,,"IFA Hartford-West Hartford-East Hartford, CT",9.18247,
+ifa_ctri_k2,02894,ifa,RI,IFA,IFA_02,IFA,,44009,39300,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02895,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4480780,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02896,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4480780,"IFA Hartford-West Hartford-East Hartford, CT",0.884597,
+ifa_ctri_k2,02898,ifa,RI,IFA,IFA_02,IFA,,44009,39300,4480960,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02903,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",11.68,
+ifa_ctri_k2,02904,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.0235132,
+ifa_ctri_k2,02905,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.0554761,
+ifa_ctri_k2,02906,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.690824,
+ifa_ctri_k2,02907,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02908,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.347053,
+ifa_ctri_k2,02909,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",1.70121,
+ifa_ctri_k2,02910,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4419180,"IFA Hartford-West Hartford-East Hartford, CT",0.581936,
+ifa_ctri_k2,02911,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02912,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02914,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4422960,"IFA Hartford-West Hartford-East Hartford, CT",2.49281,
+ifa_ctri_k2,02915,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4422960,"IFA Hartford-West Hartford-East Hartford, CT",37.7681,
+ifa_ctri_k2,02916,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4422960,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02917,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4431600,"IFA Hartford-West Hartford-East Hartford, CT",0.308135,
+ifa_ctri_k2,02918,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,02919,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4459000,"IFA Hartford-West Hartford-East Hartford, CT",1.20458,
+ifa_ctri_k2,02920,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4419180,"IFA Hartford-West Hartford-East Hartford, CT",24.6762,
+ifa_ctri_k2,02921,ifa,RI,IFA,IFA_02,IFA,,44007,39300,4419180,"IFA Hartford-West Hartford-East Hartford, CT",1.03253,
+ifa_ctri_k2,06001,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",21.073,
+ifa_ctri_k2,06002,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0906050,"IFA Waterbury-Shelton, CT",5.40533,
+ifa_ctri_k2,06010,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0908420,"IFA Waterbury-Shelton, CT",2.57453,
+ifa_ctri_k2,06013,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06016,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0908770,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06018,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0910870,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06019,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0916120,"IFA Waterbury-Shelton, CT",1.78638,
+ifa_ctri_k2,06020,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06021,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06022,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06023,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.993851,
+ifa_ctri_k2,06024,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06026,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06027,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06029,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0918220,"IFA Hartford-West Hartford-East Hartford, CT",1.40298,
+ifa_ctri_k2,06031,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0927390,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06032,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0952210,"IFA Waterbury-Shelton, CT",46.4989,
+ifa_ctri_k2,06033,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0931270,"IFA Hartford-West Hartford-East Hartford, CT",238.658,
+ifa_ctri_k2,06035,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0966455,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06037,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0940150,"IFA Waterbury-Shelton, CT",2.44079,
+ifa_ctri_k2,06039,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0941830,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06040,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0944690,"IFA Hartford-West Hartford-East Hartford, CT",28.9808,
+ifa_ctri_k2,06042,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0944690,"IFA Hartford-West Hartford-East Hartford, CT",2.99224,
+ifa_ctri_k2,06043,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06051,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0950370,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06052,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0950370,"IFA Waterbury-Shelton, CT",0.0172708,
+ifa_ctri_k2,06053,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0950370,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06057,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0951420,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06058,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0953400,"IFA Waterbury-Shelton, CT",0.00954541,
+ifa_ctri_k2,06059,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06060,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0954660,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06061,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0951420,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06062,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0908420,"IFA Waterbury-Shelton, CT",1.40078,
+ifa_ctri_k2,06063,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0960540,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06065,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0964880,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06066,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0965230,"IFA Hartford-West Hartford-East Hartford, CT",2.11818,
+ifa_ctri_k2,06067,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",31.5405,
+ifa_ctri_k2,06068,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0941830,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06069,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0967890,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06070,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0969010,"IFA Waterbury-Shelton, CT",0.784909,
+ifa_ctri_k2,06071,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0969150,"IFA Hartford-West Hartford-East Hartford, CT",0.220507,
+ifa_ctri_k2,06072,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06073,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0965376,
+ifa_ctri_k2,06074,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",22.9749,
+ifa_ctri_k2,06076,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0972300,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06078,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0974655,"IFA Waterbury-Shelton, CT",0.495062,
+ifa_ctri_k2,06079,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06080,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06081,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0975100,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06082,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0937770,"IFA Hartford-West Hartford-East Hartford, CT",8.15041,
+ifa_ctri_k2,06084,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0918220,"IFA Hartford-West Hartford-East Hartford, CT",1.29208,
+ifa_ctri_k2,06085,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06088,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",1.87136,
+ifa_ctri_k2,06089,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0980770,"IFA Waterbury-Shelton, CT",9.24404,
+ifa_ctri_k2,06090,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06091,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06092,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0983990,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06093,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06095,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",7.23619,
+ifa_ctri_k2,06096,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0987140,"IFA Waterbury-Shelton, CT",1.7234,
+ifa_ctri_k2,06098,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0987350,"IFA Waterbury-Shelton, CT",0.288495,
+ifa_ctri_k2,06103,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",8.178,
+ifa_ctri_k2,06105,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06106,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",7.54858,
+ifa_ctri_k2,06107,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0982660,"IFA Waterbury-Shelton, CT",43.8787,
+ifa_ctri_k2,06108,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0922700,"IFA Hartford-West Hartford-East Hartford, CT",5.61627,
+ifa_ctri_k2,06109,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0984970,"IFA Hartford-West Hartford-East Hartford, CT",9.19131,
+ifa_ctri_k2,06110,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0982660,"IFA Waterbury-Shelton, CT",4.92464,
+ifa_ctri_k2,06111,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0952210,"IFA Waterbury-Shelton, CT",4.21396,
+ifa_ctri_k2,06112,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06114,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06117,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0982660,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06118,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0922700,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06119,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0982660,"IFA Waterbury-Shelton, CT",0.12728,
+ifa_ctri_k2,06120,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0937000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06226,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0985810,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06231,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.233764,
+ifa_ctri_k2,06232,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06234,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0921160,"IFA Hartford-West Hartford-East Hartford, CT",3.84387,
+ifa_ctri_k2,06235,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06237,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06238,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0917835,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06239,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0918780,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06241,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0918990,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06242,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06243,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06247,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06248,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",1.01072,
+ifa_ctri_k2,06249,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06250,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0945120,"IFA Hartford-West Hartford-East Hartford, CT",0.263106,
+ifa_ctri_k2,06254,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06255,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0963270,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06256,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0985810,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06258,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06259,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0553634,
+ifa_ctri_k2,06260,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0962640,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06262,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0963270,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06263,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06264,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06266,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0971250,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06268,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0973980,"IFA Hartford-West Hartford-East Hartford, CT",1.35315,
+ifa_ctri_k2,06269,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0973980,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06277,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0946240,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06278,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0941238,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06279,ifa,CT,IFA,IFA_02,IFA,,09110,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06280,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0971250,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06281,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0971530,"IFA Hartford-West Hartford-East Hartford, CT",0.103414,
+ifa_ctri_k2,06282,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0941226,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06320,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0952280,"IFA Hartford-West Hartford-East Hartford, CT",5.08591,
+ifa_ctri_k2,06330,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0902550,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06331,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06332,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06333,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.159166,
+ifa_ctri_k2,06334,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0276284,
+ifa_ctri_k2,06335,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0930190,"IFA Hartford-West Hartford-East Hartford, CT",0.342656,
+ifa_ctri_k2,06336,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06338,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0945995,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06339,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0945995,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06340,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0916960,"IFA Hartford-West Hartford-East Hartford, CT",4.20993,
+ifa_ctri_k2,06350,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06351,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0939940,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06353,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0958520,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06354,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0949180,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06355,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0957180,"IFA Hartford-West Hartford-East Hartford, CT",5.16411,
+ifa_ctri_k2,06357,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0953120,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06359,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06360,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0956200,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06365,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0945995,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06370,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0958520,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06371,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06373,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06374,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0960090,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06375,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06376,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06377,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06378,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0949810,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06379,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0959140,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06380,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0956200,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06382,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0958520,"IFA Hartford-West Hartford-East Hartford, CT",0.222301,
+ifa_ctri_k2,06384,ifa,CT,IFA,IFA_02,IFA,,09150,39480,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06385,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0980210,"IFA Hartford-West Hartford-East Hartford, CT",13.0148,
+ifa_ctri_k2,06387,ifa,CT,IFA,IFA_02,IFA,,09150,39480,0980630,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06389,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0956200,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06401,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0901150,"IFA Waterbury-Shelton, CT",4.16781,
+ifa_ctri_k2,06403,ifa,CT,IFA,IFA_01,IFA,,09140,47930,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06405,ifa,CT,IFA,IFA_02,IFA,,09170,35300,0907345,"IFA Hartford-West Hartford-East Hartford, CT",14.6261,
+ifa_ctri_k2,06409,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0926370,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06410,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0914200,"IFA Waterbury-Shelton, CT",20.8316,
+ifa_ctri_k2,06412,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0914370,"IFA Hartford-West Hartford-East Hartford, CT",0.257635,
+ifa_ctri_k2,06413,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0915420,"IFA Hartford-West Hartford-East Hartford, CT",12.8617,
+ifa_ctri_k2,06414,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06415,ifa,CT,IFA,IFA_02,IFA,,09180,35980,0915840,"IFA Hartford-West Hartford-East Hartford, CT",4.50257,
+ifa_ctri_k2,06416,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",3.3041,
+ifa_ctri_k2,06417,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0919200,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06418,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0919480,"IFA Waterbury-Shelton, CT",0.138266,
+ifa_ctri_k2,06419,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0359755,
+ifa_ctri_k2,06420,ifa,CT,IFA,IFA_02,IFA,,09180,35980,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06422,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0920740,"IFA Hartford-West Hartford-East Hartford, CT",0.682709,
+ifa_ctri_k2,06423,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0949110,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06424,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0941410,"IFA Hartford-West Hartford-East Hartford, CT",0.154488,
+ifa_ctri_k2,06426,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0926370,"IFA Hartford-West Hartford-East Hartford, CT",2.35632,
+ifa_ctri_k2,06437,ifa,CT,IFA,IFA_02,IFA,,09170,35300,0935020,"IFA Hartford-West Hartford-East Hartford, CT",66.6988,
+ifa_ctri_k2,06438,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0938050,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06439,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06441,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0938050,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06442,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06443,ifa,CT,IFA,IFA_02,IFA,,09170,35300,0944630,"IFA Hartford-West Hartford-East Hartford, CT",20.3294,
+ifa_ctri_k2,06444,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06447,ifa,CT,IFA,IFA_02,IFA,,09110,25540,0975200,"IFA Hartford-West Hartford-East Hartford, CT",1.51843,
+ifa_ctri_k2,06450,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0946450,"IFA Waterbury-Shelton, CT",5.17481,
+ifa_ctri_k2,06451,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0946450,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06455,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06456,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06457,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0947290,"IFA Hartford-West Hartford-East Hartford, CT",0.622827,
+ifa_ctri_k2,06459,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0947290,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06460,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0947515,"IFA Waterbury-Shelton, CT",12.9112,
+ifa_ctri_k2,06461,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0947515,"IFA Waterbury-Shelton, CT",3.23313,
+ifa_ctri_k2,06467,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",0.00111363,
+ifa_ctri_k2,06468,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0973280,"IFA Waterbury-Shelton, CT",6.48926,
+ifa_ctri_k2,06469,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0949110,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06470,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0952910,"IFA Waterbury-Shelton, CT",1.52152,
+ifa_ctri_k2,06471,ifa,CT,IFA,IFA_02,IFA,,09170,35300,,"IFA Hartford-West Hartford-East Hartford, CT",1.4139,
+ifa_ctri_k2,06472,ifa,CT,IFA,IFA_02,IFA,,09170,35300,0954450,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06473,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0954940,"IFA Waterbury-Shelton, CT",38.2738,
+ifa_ctri_k2,06475,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0957390,"IFA Hartford-West Hartford-East Hartford, CT",2.89678,
+ifa_ctri_k2,06477,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0957670,"IFA Waterbury-Shelton, CT",0.461614,
+ifa_ctri_k2,06478,ifa,CT,IFA,IFA_01,IFA,,09140,47930,,"IFA Waterbury-Shelton, CT",0.374614,
+ifa_ctri_k2,06479,ifa,CT,IFA,IFA_01,IFA,,09110,25540,0960260,"IFA Waterbury-Shelton, CT",0.906168,
+ifa_ctri_k2,06480,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0961870,"IFA Hartford-West Hartford-East Hartford, CT",3.26745,
+ifa_ctri_k2,06481,ifa,CT,IFA,IFA_02,IFA,,09130,25540,,"IFA Hartford-West Hartford-East Hartford, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06482,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0966700,"IFA Waterbury-Shelton, CT",1.97962,
+ifa_ctri_k2,06483,ifa,CT,IFA,IFA_01,IFA,,09140,47930,,"IFA Waterbury-Shelton, CT",1.55786,
+ifa_ctri_k2,06484,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0968100,"IFA Waterbury-Shelton, CT",264.202,
+ifa_ctri_k2,06488,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0937930,"IFA Waterbury-Shelton, CT",30.8838,
+ifa_ctri_k2,06489,ifa,CT,IFA,IFA_01,IFA,,09110,25540,,"IFA Waterbury-Shelton, CT",9.09935,
+ifa_ctri_k2,06492,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0978880,"IFA Waterbury-Shelton, CT",13.4636,
+ifa_ctri_k2,06498,ifa,CT,IFA,IFA_02,IFA,,09130,25540,0981750,"IFA Hartford-West Hartford-East Hartford, CT",1.96978,
+ifa_ctri_k2,06510,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0952000,"IFA Waterbury-Shelton, CT",0.800779,
+ifa_ctri_k2,06511,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0952000,"IFA Waterbury-Shelton, CT",6.44238,
+ifa_ctri_k2,06512,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0922980,"IFA Waterbury-Shelton, CT",0.00286362,
+ifa_ctri_k2,06513,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0952000,"IFA Waterbury-Shelton, CT",10.1265,
+ifa_ctri_k2,06514,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0952000,"IFA Waterbury-Shelton, CT",1.36808,
+ifa_ctri_k2,06515,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0952000,"IFA Waterbury-Shelton, CT",0.135227,
+ifa_ctri_k2,06516,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0982800,"IFA Waterbury-Shelton, CT",1.60077,
+ifa_ctri_k2,06517,ifa,CT,IFA,IFA_01,IFA,,09170,35300,,"IFA Waterbury-Shelton, CT",1.14701,
+ifa_ctri_k2,06518,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0963313,"IFA Waterbury-Shelton, CT",29.8025,
+ifa_ctri_k2,06519,ifa,CT,IFA,IFA_01,IFA,,09170,35300,0952000,"IFA Waterbury-Shelton, CT",0.000954541,
+ifa_ctri_k2,06524,ifa,CT,IFA,IFA_01,IFA,,09170,35300,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06525,ifa,CT,IFA,IFA_01,IFA,,09170,35300,,"IFA Waterbury-Shelton, CT",0.234658,
+ifa_ctri_k2,06604,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0908000,"IFA Waterbury-Shelton, CT",0.000397725,
+ifa_ctri_k2,06605,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0908000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06606,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0908000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06607,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0908000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06608,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0908000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06610,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0908000,"IFA Waterbury-Shelton, CT",1.38366,
+ifa_ctri_k2,06611,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0977278,"IFA Waterbury-Shelton, CT",6.11485,
+ifa_ctri_k2,06612,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0960365,"IFA Waterbury-Shelton, CT",0.611169,
+ifa_ctri_k2,06614,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0957880,"IFA Waterbury-Shelton, CT",1.76356,
+ifa_ctri_k2,06615,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0944000,"IFA Waterbury-Shelton, CT",3.36045,
+ifa_ctri_k2,06702,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980000,"IFA Waterbury-Shelton, CT",0.690142,
+ifa_ctri_k2,06704,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06705,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06706,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06708,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980000,"IFA Waterbury-Shelton, CT",1.48073,
+ifa_ctri_k2,06710,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06712,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0949880,"IFA Waterbury-Shelton, CT",0.428826,
+ifa_ctri_k2,06716,ifa,CT,IFA,IFA_01,IFA,,09140,47930,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06750,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0902690,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06751,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0904945,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06752,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0908140,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06753,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0917170,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06754,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0917310,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06755,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0930470,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06756,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06757,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.088295,
+ifa_ctri_k2,06758,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06759,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0943300,"IFA Waterbury-Shelton, CT",0.504413,
+ifa_ctri_k2,06762,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0949880,"IFA Waterbury-Shelton, CT",0.097406,
+ifa_ctri_k2,06763,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06770,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0949880,"IFA Waterbury-Shelton, CT",1.69422,
+ifa_ctri_k2,06776,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0952560,"IFA Waterbury-Shelton, CT",3.61699,
+ifa_ctri_k2,06777,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0952770,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06778,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06779,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0956690,"IFA Waterbury-Shelton, CT",0.906654,
+ifa_ctri_k2,06782,ifa,CT,IFA,IFA_01,IFA,,09140,47930,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06783,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06784,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0941714,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06785,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06786,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0975240,"IFA Waterbury-Shelton, CT",0.932815,
+ifa_ctri_k2,06787,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0975660,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06790,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0976500,"IFA Waterbury-Shelton, CT",0.23869,
+ifa_ctri_k2,06791,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0955725,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06793,ifa,CT,IFA,IFA_01,IFA,,09160,45860,,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06794,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0952770,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06795,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0980420,"IFA Waterbury-Shelton, CT",1.2859,
+ifa_ctri_k2,06796,ifa,CT,IFA,IFA_01,IFA,,09160,45860,0982030,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06798,ifa,CT,IFA,IFA_01,IFA,,09140,47930,0987980,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06801,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0904790,"IFA Waterbury-Shelton, CT",3.32832,
+ifa_ctri_k2,06804,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0909050,"IFA Waterbury-Shelton, CT",8.56405,
+ifa_ctri_k2,06807,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0917520,"IFA Waterbury-Shelton, CT",0.563057,
+ifa_ctri_k2,06810,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0918430,"IFA Waterbury-Shelton, CT",17.8315,
+ifa_ctri_k2,06811,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0918430,"IFA Waterbury-Shelton, CT",2.13948,
+ifa_ctri_k2,06812,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0902480,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06820,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0976150,"IFA Waterbury-Shelton, CT",14.3073,
+ifa_ctri_k2,06824,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0949720,"IFA Waterbury-Shelton, CT",10.7978,
+ifa_ctri_k2,06825,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0960365,"IFA Waterbury-Shelton, CT",0.318356,
+ifa_ctri_k2,06830,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0933690,"IFA Waterbury-Shelton, CT",2.97753,
+ifa_ctri_k2,06831,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",1.58313,
+ifa_ctri_k2,06840,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0950576,"IFA Waterbury-Shelton, CT",2.60821,
+ifa_ctri_k2,06850,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0955990,"IFA Waterbury-Shelton, CT",1.93774,
+ifa_ctri_k2,06851,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0955990,"IFA Waterbury-Shelton, CT",7.39723,
+ifa_ctri_k2,06853,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0955990,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06854,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0955990,"IFA Waterbury-Shelton, CT",0.136919,
+ifa_ctri_k2,06855,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0955990,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06870,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0956900,"IFA Waterbury-Shelton, CT",3.76469,
+ifa_ctri_k2,06877,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0963900,"IFA Waterbury-Shelton, CT",11.3845,
+ifa_ctri_k2,06878,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0964530,"IFA Waterbury-Shelton, CT",5.40516,
+ifa_ctri_k2,06880,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973175,"IFA Waterbury-Shelton, CT",20.9103,
+ifa_ctri_k2,06883,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0983360,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06890,ifa,CT,IFA,IFA_01,IFA,,09120,14860,0971040,"IFA Waterbury-Shelton, CT",0.692357,
+ifa_ctri_k2,06896,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0963620,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06897,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0930540,"IFA Waterbury-Shelton, CT",5.92046,
+ifa_ctri_k2,06901,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",4.84992,
+ifa_ctri_k2,06902,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",5.1545,
+ifa_ctri_k2,06903,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06905,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",9.9827,
+ifa_ctri_k2,06906,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity
+ifa_ctri_k2,06907,ifa,CT,IFA,IFA_01,IFA,,09190,14860,0973000,"IFA Waterbury-Shelton, CT",0.0,no cell in the extract: territory at zero opportunity

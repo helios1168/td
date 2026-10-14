@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "7da16784059c5b5e987741afeb23fcbfbaddd5065f6c9eba4f664df5e2a26eaf",
+    "summary.svg": "716443a799eff48558cf8b48ec593efd0e51ee558c51414b5dd25aad21898bea",
+    "zip_IFA.png": "8db248e27d5e413034e896674306580e8ded204875bb4ba6a0b2c21ccf9b2c94",
+    "zip_pages.pdf": "97c9f6e91984c16c306306abc1ab127a438adbcb9e9ebb5d9b61d6b0ebb2bce6"
+  },
+  "inputs": {
+    "districts.csv": "f508c9db67d8b2830803dcd7afe202c7c0ce8f771d81cbd5bb1eb16008cddf0a",
+    "ledger.csv": "59d74005fc2edaa647a0eb3fdef60ebf8471f06f564fb47d19b4246b4e352328",
+    "manifest.json": "d2290bbba0c2c39f07960d11f7d9988b1792da14e11e6e07c80261bfd0e33dc7",
+    "run.json": "ab1ea229053fc10def8bb132cb2dec1b5c798e498bf94d998895d6f7ac2ee124"
+  },
+  "label": "ifa_ca_k4: IFA CA alone, K 4, realizer on the induced graph, band inside the IFA window, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 31497 (ZCTA, fine channel) cells with no row, 0 owned twice, 1 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:18:43+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+    "diff_sha256": "74ca108632f5947c4788a907f9b6a65359ff3da42aec30c55ce7694922794f03",
+    "dirty": true
+  },
+  "title": "ifa_ca_k4: IFA CA alone, K 4, realizer on the induced graph, band inside the IFA window, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

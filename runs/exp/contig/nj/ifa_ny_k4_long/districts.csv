@@ -1,0 +1,5 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA New York-Newark-Jersey City, NY-NJ",NY#1,NY,1092.24183141475,1092.7018570699995,0
+IFA,IFA_02,"IFA New York-Newark-Jersey City, NY-NJ / Buffalo-Cheektowaga, NY",NY#2,NY,1092.24183141475,1102.971789228,0
+IFA,IFA_03,"IFA New York-Newark-Jersey City, NY-NJ / Albany-Schenectady-Troy, NY",NY#3,NY,1092.24183141475,1189.0476789610004,0
+IFA,IFA_04,"IFA Buffalo-Cheektowaga, NY",NY#4,NY,1092.24183141475,984.2460004000002,0

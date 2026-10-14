@@ -1,0 +1,5 @@
+channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces
+IFA,IFA_01,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Key West-Key Largo, FL",FL#1,FL,871.7387223965,871.6963089450003,0
+IFA,IFA_02,"IFA Tampa-St. Petersburg-Clearwater, FL",FL#2,FL,871.7387223965,871.7516131299997,1
+IFA,IFA_03,"IFA Miami-Fort Lauderdale-West Palm Beach, FL / Tampa-St. Petersburg-Clearwater, FL",FL#3,FL,871.7387223965,871.7565906799999,1
+IFA,IFA_04,"IFA Orlando-Kissimmee-Sanford, FL",FL#4,FL,871.7387223965,871.7503768309998,0

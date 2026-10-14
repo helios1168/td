@@ -1,0 +1,40 @@
+{
+  "audit": "fail",
+  "command": "/Users/Shared/sv-ntlee/td/.venv/bin/python3 tools/exp/contig/coarse.py --state NY --k 5 --level cd --out runs/exp/contig/nycd/ifa_ny_k5_cd",
+  "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+  "finished_at": "2026-10-08T09:14:02+00:00",
+  "folder": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nycd/ifa_ny_k5_cd",
+  "formulation": "coarse",
+  "lane": "contig",
+  "m1": "fail",
+  "params": {
+    "extract": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+    "hi": 1148.19,
+    "k": 5,
+    "level": "cd",
+    "lo": 798.74,
+    "nogood": [],
+    "spec": null,
+    "state": "NY",
+    "time_limit": 300.0
+  },
+  "parent_run": null,
+  "plans_file": null,
+  "provenance": {
+    "commit": "d08bf30572b8d6838ae3b38d1b5e6caf3911f061",
+    "diff_sha256": null,
+    "dirty": false,
+    "host": "m5-studio",
+    "instance": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/nj/_inst/ifa_ny.json.gz",
+    "instance_sha256": "1c11ffccf12a78d6c59d77529b757a7e12782ad12bcbdce74278f0328ff787ce",
+    "queued_at": "2026-10-08T09:13:28+00:00"
+  },
+  "run_id": "ifa_ny_k5_cd",
+  "scenario": {
+    "path": "/Users/sandvault-ntlee/.pi/worktrees/explore-td-nycd/runs/exp/contig/_specs/ifa_ny_k5.toml",
+    "sha256": "77d972533631be434b0aa4c8dab31772d87cf507d1d881a540cf633e8b57c04b"
+  },
+  "started_at": "2026-10-08T09:13:28+00:00",
+  "status": "done",
+  "stop_reason": "drawn"
+}

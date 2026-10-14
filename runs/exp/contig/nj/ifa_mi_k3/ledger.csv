@@ -1,0 +1,993 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_mi_k3,48001,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2663200,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",2.30423,
+ifa_mi_k3,48002,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48003,ifa,MI,IFA,IFA_02,IFA,,26087,19820,2601660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48005,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2603520,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48006,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48009,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2608640,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",24.3471,
+ifa_mi_k3,48014,ifa,MI,IFA,IFA_02,IFA,,26147,19820,2613140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48015,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2614320,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48017,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2616160,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48021,ifa,MI,IFA,IFA_02,IFA,,26099,19820,2624290,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48022,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2625940,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48023,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48025,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2608160,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",20.1589,
+ifa_mi_k3,48026,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2630420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48027,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.3873,
+ifa_mi_k3,48028,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48030,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2637420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48032,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48033,ifa,MI,IFA,IFA_02,IFA,,26125,19820,2674900,"IFA Grand Rapids-Wyoming-Kentwood, MI",4.1479,
+ifa_mi_k3,48034,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2674900,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",351.572,
+ifa_mi_k3,48035,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2670760,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.398974,
+ifa_mi_k3,48036,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2655820,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",27.9926,
+ifa_mi_k3,48038,ifa,MI,IFA,IFA_01,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",25.1979,
+ifa_mi_k3,48039,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2651600,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48040,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2652080,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.49435,
+ifa_mi_k3,48041,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2652960,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48042,ifa,MI,IFA,IFA_01,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.979687,
+ifa_mi_k3,48043,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2655820,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.10773,
+ifa_mi_k3,48044,ifa,MI,IFA,IFA_03,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",3.68078,
+ifa_mi_k3,48045,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2670760,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48047,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2657100,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",6.36713,
+ifa_mi_k3,48048,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2657380,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.170219,
+ifa_mi_k3,48049,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2670160,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48050,ifa,MI,IFA,IFA_01,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.00636361,
+ifa_mi_k3,48051,ifa,MI,IFA,IFA_01,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",4.1269,
+ifa_mi_k3,48054,ifa,MI,IFA,IFA_01,IFA,,26147,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",10.3024,
+ifa_mi_k3,48059,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2645000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.33371,
+ifa_mi_k3,48060,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2665820,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.622072,
+ifa_mi_k3,48062,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2668380,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.36269,
+ifa_mi_k3,48063,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2668380,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48064,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2668380,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48065,ifa,MI,IFA,IFA_02,IFA,,26099,19820,2669400,"IFA Grand Rapids-Wyoming-Kentwood, MI",22.5056,
+ifa_mi_k3,48066,ifa,MI,IFA,IFA_02,IFA,,26099,19820,2669800,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.676133,
+ifa_mi_k3,48067,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2670040,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",3.69954,
+ifa_mi_k3,48069,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2664900,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48070,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2640000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48071,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2650560,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48072,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2607660,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.268906,
+ifa_mi_k3,48073,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2670040,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",4.0157,
+ifa_mi_k3,48074,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2652080,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48075,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2674900,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",87.5681,
+ifa_mi_k3,48076,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2674900,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",18.7488,
+ifa_mi_k3,48079,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2670680,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",10.4752,
+ifa_mi_k3,48080,ifa,MI,IFA,IFA_03,IFA,,26099,19820,2670760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",5.16085,
+ifa_mi_k3,48081,ifa,MI,IFA,IFA_02,IFA,,26099,19820,2670760,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.7339,
+ifa_mi_k3,48082,ifa,MI,IFA,IFA_02,IFA,,26099,19820,2670760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48083,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2680700,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",19.7421,
+ifa_mi_k3,48084,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2680700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",41.9403,
+ifa_mi_k3,48085,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2680700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",25.8288,
+ifa_mi_k3,48088,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2684000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48089,ifa,MI,IFA,IFA_02,IFA,,26099,19820,2684000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48091,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2684000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48092,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2684000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48093,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2684000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.110455,
+ifa_mi_k3,48094,ifa,MI,IFA,IFA_03,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.21766,
+ifa_mi_k3,48095,ifa,MI,IFA,IFA_03,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",6.89364,
+ifa_mi_k3,48096,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2669400,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48097,ifa,MI,IFA,IFA_01,IFA,,26147,19820,2689000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48098,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2680700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",37.3084,
+ifa_mi_k3,48101,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2601380,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",15.9835,
+ifa_mi_k3,48103,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2603000,"IFA Grand Rapids-Wyoming-Kentwood, MI",15.7265,
+ifa_mi_k3,48104,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2603000,"IFA Grand Rapids-Wyoming-Kentwood, MI",8.08556,
+ifa_mi_k3,48105,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2603000,"IFA Grand Rapids-Wyoming-Kentwood, MI",91.6641,
+ifa_mi_k3,48108,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2603000,"IFA Grand Rapids-Wyoming-Kentwood, MI",34.5645,
+ifa_mi_k3,48109,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2603000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48111,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2607020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48114,ifa,MI,IFA,IFA_03,IFA,,26093,19820,2610620,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",45.4855,
+ifa_mi_k3,48116,ifa,MI,IFA,IFA_02,IFA,,26093,19820,2610620,"IFA Grand Rapids-Wyoming-Kentwood, MI",41.536,
+ifa_mi_k3,48117,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2613220,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.963707,
+ifa_mi_k3,48118,ifa,MI,IFA,IFA_03,IFA,,26161,11460,2615020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",7.90757,
+ifa_mi_k3,48120,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2621000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.641236,
+ifa_mi_k3,48122,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2652940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48124,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2621000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.85131,
+ifa_mi_k3,48125,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2621020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48126,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2621000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.16785,
+ifa_mi_k3,48127,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2621020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48128,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2621000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48130,ifa,MI,IFA,IFA_03,IFA,,26161,11460,2622160,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48131,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2623380,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.923063,
+ifa_mi_k3,48133,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2649700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48134,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2628360,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48135,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2631420,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0127278,
+ifa_mi_k3,48137,ifa,MI,IFA,IFA_02,IFA,,26093,19820,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48138,ifa,MI,IFA,IFA_03,IFA,,26163,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48139,ifa,MI,IFA,IFA_03,IFA,,26093,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48140,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2640240,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48141,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2640680,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48143,ifa,MI,IFA,IFA_02,IFA,,26093,19820,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48144,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2645420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48145,ifa,MI,IFA,IFA_03,IFA,,26115,33780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48146,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2647800,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48150,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2649000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48152,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2649000,"IFA Grand Rapids-Wyoming-Kentwood, MI",12.2646,
+ifa_mi_k3,48154,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2649000,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.56374,
+ifa_mi_k3,48157,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2649700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48158,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2650660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48159,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2652440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48160,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2653920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48161,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2655020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",7.38543,
+ifa_mi_k3,48162,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2655020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.35394,
+ifa_mi_k3,48164,ifa,MI,IFA,IFA_03,IFA,,26163,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",5.75837,
+ifa_mi_k3,48165,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",4.56604,
+ifa_mi_k3,48166,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2676720,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48167,ifa,MI,IFA,IFA_02,IFA,,26125,19820,2659440,"IFA Grand Rapids-Wyoming-Kentwood, MI",12.5431,
+ifa_mi_k3,48168,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2658980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0755678,
+ifa_mi_k3,48169,ifa,MI,IFA,IFA_02,IFA,,26093,19820,2664140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.406222,
+ifa_mi_k3,48170,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2665060,"IFA Grand Rapids-Wyoming-Kentwood, MI",7.28425,
+ifa_mi_k3,48173,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2632020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48174,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2669420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48176,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2671140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.333321,
+ifa_mi_k3,48177,ifa,MI,IFA,IFA_03,IFA,,26115,33780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48178,ifa,MI,IFA,IFA_02,IFA,,26125,19820,2675100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.563465,
+ifa_mi_k3,48179,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2675280,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48180,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2679000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",28.7546,
+ifa_mi_k3,48182,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2679240,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.576703,
+ifa_mi_k3,48183,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2680420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",15.586,
+ifa_mi_k3,48184,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2684940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48185,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2686000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48186,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2686000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48187,ifa,MI,IFA,IFA_02,IFA,,26163,19820,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.524505,
+ifa_mi_k3,48188,ifa,MI,IFA,IFA_02,IFA,,26163,19820,,"IFA Grand Rapids-Wyoming-Kentwood, MI",6.82462,
+ifa_mi_k3,48189,ifa,MI,IFA,IFA_03,IFA,,26161,11460,2687060,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.09916,
+ifa_mi_k3,48190,ifa,MI,IFA,IFA_03,IFA,,26161,11460,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48191,ifa,MI,IFA,IFA_03,IFA,,26161,11460,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48192,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2688900,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.95706,
+ifa_mi_k3,48193,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2668880,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.46861,
+ifa_mi_k3,48195,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2674960,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",10.5072,
+ifa_mi_k3,48197,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2689140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.934256,
+ifa_mi_k3,48198,ifa,MI,IFA,IFA_02,IFA,,26161,11460,2689140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48201,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48202,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48203,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48204,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48205,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48206,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48207,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.527132,
+ifa_mi_k3,48208,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48209,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48210,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48211,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48212,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48213,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48214,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48215,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48216,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48217,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48218,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2668760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48219,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.00827269,
+ifa_mi_k3,48220,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2627880,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48221,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48223,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48224,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48225,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2636700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.369891,
+ifa_mi_k3,48226,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.61101,
+ifa_mi_k3,48227,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48228,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48229,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2624740,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48230,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2635540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.178976,
+ifa_mi_k3,48233,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48234,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48235,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48236,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2635580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",10.7609,
+ifa_mi_k3,48237,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2659920,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.609135,
+ifa_mi_k3,48238,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48239,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48240,ifa,MI,IFA,IFA_02,IFA,,26163,19820,2622000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48242,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2669420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48243,ifa,MI,IFA,IFA_03,IFA,,26163,19820,2622000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48301,ifa,MI,IFA,IFA_01,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",4.41305,
+ifa_mi_k3,48302,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2665440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",54.3785,
+ifa_mi_k3,48304,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2609180,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",45.2686,
+ifa_mi_k3,48306,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2669035,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.5665,
+ifa_mi_k3,48307,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2669035,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",36.1913,
+ifa_mi_k3,48309,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2669035,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",4.71899,
+ifa_mi_k3,48310,ifa,MI,IFA,IFA_03,IFA,,26099,19820,2676460,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.33086,
+ifa_mi_k3,48312,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2676460,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",7.92487,
+ifa_mi_k3,48313,ifa,MI,IFA,IFA_01,IFA,,26099,19820,2676460,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",17.732,
+ifa_mi_k3,48314,ifa,MI,IFA,IFA_03,IFA,,26099,19820,2676460,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.853624,
+ifa_mi_k3,48315,ifa,MI,IFA,IFA_03,IFA,,26099,19820,2681540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",3.90493,
+ifa_mi_k3,48316,ifa,MI,IFA,IFA_03,IFA,,26099,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",6.2924,
+ifa_mi_k3,48317,ifa,MI,IFA,IFA_03,IFA,,26099,19820,2681540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",13.2904,
+ifa_mi_k3,48320,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2642460,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.620599,
+ifa_mi_k3,48322,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2627440,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",3.95385,
+ifa_mi_k3,48323,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2661020,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.198749,
+ifa_mi_k3,48324,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2661020,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.56534,
+ifa_mi_k3,48326,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2604105,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",88.0198,
+ifa_mi_k3,48327,ifa,MI,IFA,IFA_01,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",2.62822,
+ifa_mi_k3,48328,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48329,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2644440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.19333,
+ifa_mi_k3,48331,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2627440,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.69782,
+ifa_mi_k3,48334,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2627440,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",47.3675,
+ifa_mi_k3,48335,ifa,MI,IFA,IFA_02,IFA,,26125,19820,2627440,"IFA Grand Rapids-Wyoming-Kentwood, MI",9.11581,
+ifa_mi_k3,48336,ifa,MI,IFA,IFA_02,IFA,,26125,19820,2627440,"IFA Grand Rapids-Wyoming-Kentwood, MI",15.3377,
+ifa_mi_k3,48340,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2665440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48341,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2665440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48342,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2665440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48346,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2682450,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",7.21827,
+ifa_mi_k3,48348,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",3.87044,
+ifa_mi_k3,48350,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48353,ifa,MI,IFA,IFA_03,IFA,,26093,19820,2637020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48356,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48357,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",6.40363,
+ifa_mi_k3,48359,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2604105,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.970055,
+ifa_mi_k3,48360,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48362,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2644940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.176596,
+ifa_mi_k3,48363,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48367,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2646940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48370,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48371,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2662020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",4.93549,
+ifa_mi_k3,48374,ifa,MI,IFA,IFA_02,IFA,,26125,19820,2659440,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48375,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2659440,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",27.4397,
+ifa_mi_k3,48377,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2659440,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",4.24553,
+ifa_mi_k3,48380,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.178976,
+ifa_mi_k3,48381,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2653960,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",8.55523,
+ifa_mi_k3,48382,ifa,MI,IFA,IFA_01,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.58225,
+ifa_mi_k3,48383,ifa,MI,IFA,IFA_03,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.01702,
+ifa_mi_k3,48386,ifa,MI,IFA,IFA_01,IFA,,26125,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48390,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2683060,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",3.72903,
+ifa_mi_k3,48393,ifa,MI,IFA,IFA_01,IFA,,26125,19820,2688140,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.26251,
+ifa_mi_k3,48401,ifa,MI,IFA,IFA_01,IFA,,26151,,2603200,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48410,ifa,MI,IFA,IFA_01,IFA,,26151,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48411,ifa,MI,IFA,IFA_03,IFA,,26049,22420,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48412,ifa,MI,IFA,IFA_03,IFA,,26087,19820,2604020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48413,ifa,MI,IFA,IFA_01,IFA,,26063,,2604740,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",5.21333,
+ifa_mi_k3,48414,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2605080,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48415,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2608540,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48416,ifa,MI,IFA,IFA_01,IFA,,26151,,2611180,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48417,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2612000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48418,ifa,MI,IFA,IFA_02,IFA,,26155,37020,2612260,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48419,ifa,MI,IFA,IFA_01,IFA,,26151,,2613620,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48420,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2616620,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.71155,
+ifa_mi_k3,48421,ifa,MI,IFA,IFA_03,IFA,,26087,19820,2654132,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48422,ifa,MI,IFA,IFA_01,IFA,,26151,,2618920,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",1.57502,
+ifa_mi_k3,48423,ifa,MI,IFA,IFA_03,IFA,,26049,22420,2619880,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",10.1138,
+ifa_mi_k3,48426,ifa,MI,IFA,IFA_01,IFA,,26151,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48427,ifa,MI,IFA,IFA_01,IFA,,26151,,2621100,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48428,ifa,MI,IFA,IFA_03,IFA,,26087,19820,2623140,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48429,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2623500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48430,ifa,MI,IFA,IFA_03,IFA,,26093,19820,2627760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",16.7751,
+ifa_mi_k3,48432,ifa,MI,IFA,IFA_01,IFA,,26063,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48433,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629200,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48434,ifa,MI,IFA,IFA_01,IFA,,26151,,2629660,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48435,ifa,MI,IFA,IFA_02,IFA,,26157,,2629920,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48436,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2631200,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48437,ifa,MI,IFA,IFA_02,IFA,,26049,22420,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48438,ifa,MI,IFA,IFA_03,IFA,,26049,22420,2632980,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48439,ifa,MI,IFA,IFA_03,IFA,,26049,22420,2633280,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",17.9116,
+ifa_mi_k3,48440,ifa,MI,IFA,IFA_03,IFA,,26087,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48441,ifa,MI,IFA,IFA_01,IFA,,26063,,2636460,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48442,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2638700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48444,ifa,MI,IFA,IFA_02,IFA,,26087,19820,2640320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48445,ifa,MI,IFA,IFA_01,IFA,,26063,,2643220,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48446,ifa,MI,IFA,IFA_02,IFA,,26087,19820,2646040,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.53683,
+ifa_mi_k3,48449,ifa,MI,IFA,IFA_02,IFA,,26155,37020,2646880,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48450,ifa,MI,IFA,IFA_01,IFA,,26151,,2647280,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48451,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2647820,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.209652,
+ifa_mi_k3,48453,ifa,MI,IFA,IFA_01,IFA,,26151,,2651820,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48454,ifa,MI,IFA,IFA_01,IFA,,26151,,2652920,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48455,ifa,MI,IFA,IFA_03,IFA,,26087,19820,2653340,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.179399,
+ifa_mi_k3,48456,ifa,MI,IFA,IFA_01,IFA,,26151,,2654560,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48457,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2612000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48458,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2606820,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48460,ifa,MI,IFA,IFA_02,IFA,,26155,37020,2657520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48461,ifa,MI,IFA,IFA_02,IFA,,26087,19820,2658080,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48462,ifa,MI,IFA,IFA_03,IFA,,26125,19820,2661220,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48463,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2661600,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48464,ifa,MI,IFA,IFA_02,IFA,,26087,19820,2661760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48465,ifa,MI,IFA,IFA_01,IFA,,26151,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48466,ifa,MI,IFA,IFA_01,IFA,,26151,,2663260,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48467,ifa,MI,IFA,IFA_01,IFA,,26063,,2665680,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48468,ifa,MI,IFA,IFA_01,IFA,,26063,,2665800,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48469,ifa,MI,IFA,IFA_01,IFA,,26151,,2665900,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48470,ifa,MI,IFA,IFA_01,IFA,,26063,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48471,ifa,MI,IFA,IFA_01,IFA,,26151,,2671540,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48472,ifa,MI,IFA,IFA_01,IFA,,26151,,2674380,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48473,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2677700,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48475,ifa,MI,IFA,IFA_01,IFA,,26151,,2681200,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48476,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2682020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48502,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",9.22512,
+ifa_mi_k3,48503,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48504,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48505,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48506,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48507,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",5.70961,
+ifa_mi_k3,48509,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2612060,"IFA Grand Rapids-Wyoming-Kentwood, MI",4.21806,
+ifa_mi_k3,48519,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2612060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0795451,
+ifa_mi_k3,48529,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2612060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0795451,
+ifa_mi_k3,48532,ifa,MI,IFA,IFA_02,IFA,,26049,22420,2629000,"IFA Grand Rapids-Wyoming-Kentwood, MI",21.6043,
+ifa_mi_k3,48601,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2670520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.300202,
+ifa_mi_k3,48602,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2670520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48603,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2630540,"IFA Grand Rapids-Wyoming-Kentwood, MI",5.1481,
+ifa_mi_k3,48604,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2689320,"IFA Grand Rapids-Wyoming-Kentwood, MI",6.78881,
+ifa_mi_k3,48607,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2670520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48609,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2673560,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48610,ifa,MI,IFA,IFA_02,IFA,,26051,,2674200,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48611,ifa,MI,IFA,IFA_02,IFA,,26017,13020,2604080,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48612,ifa,MI,IFA,IFA_02,IFA,,26051,,2606660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48613,ifa,MI,IFA,IFA_01,IFA,,26017,13020,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48614,ifa,MI,IFA,IFA_02,IFA,,26145,40980,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48615,ifa,MI,IFA,IFA_02,IFA,,26057,10940,2610160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48616,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2615140,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.84029,
+ifa_mi_k3,48617,ifa,MI,IFA,IFA_02,IFA,,26035,,2615920,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48618,ifa,MI,IFA,IFA_02,IFA,,26111,33220,2617100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48619,ifa,MI,IFA,IFA_01,IFA,,26135,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48620,ifa,MI,IFA,IFA_02,IFA,,26111,33220,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48621,ifa,MI,IFA,IFA_01,IFA,,26135,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48622,ifa,MI,IFA,IFA_02,IFA,,26035,,2627500,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48623,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2630540,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.29006,
+ifa_mi_k3,48624,ifa,MI,IFA,IFA_02,IFA,,26051,,2632320,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.39047,
+ifa_mi_k3,48625,ifa,MI,IFA,IFA_02,IFA,,26035,,2636800,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48626,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2637600,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48627,ifa,MI,IFA,IFA_02,IFA,,26143,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48628,ifa,MI,IFA,IFA_02,IFA,,26111,33220,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48629,ifa,MI,IFA,IFA_02,IFA,,26143,,2639400,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48630,ifa,MI,IFA,IFA_02,IFA,,26143,,2639400,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48631,ifa,MI,IFA,IFA_01,IFA,,26017,13020,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48632,ifa,MI,IFA,IFA_02,IFA,,26035,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48633,ifa,MI,IFA,IFA_02,IFA,,26035,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48634,ifa,MI,IFA,IFA_01,IFA,,26017,13020,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48635,ifa,MI,IFA,IFA_02,IFA,,26129,,2649720,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48636,ifa,MI,IFA,IFA_02,IFA,,26135,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48637,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2653180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48638,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2670520,"IFA Grand Rapids-Wyoming-Kentwood, MI",29.2535,
+ifa_mi_k3,48640,ifa,MI,IFA,IFA_02,IFA,,26111,33220,2653780,"IFA Grand Rapids-Wyoming-Kentwood, MI",27.4998,
+ifa_mi_k3,48642,ifa,MI,IFA,IFA_02,IFA,,26111,33220,2653780,"IFA Grand Rapids-Wyoming-Kentwood, MI",36.4257,
+ifa_mi_k3,48647,ifa,MI,IFA,IFA_02,IFA,,26135,,2654660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48649,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2659860,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48650,ifa,MI,IFA,IFA_01,IFA,,26017,13020,2664160,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48651,ifa,MI,IFA,IFA_02,IFA,,26143,,2666400,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.373699,
+ifa_mi_k3,48652,ifa,MI,IFA,IFA_01,IFA,,26051,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48653,ifa,MI,IFA,IFA_02,IFA,,26143,,2669540,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48654,ifa,MI,IFA,IFA_02,IFA,,26129,,2669680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48655,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2670640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48656,ifa,MI,IFA,IFA_02,IFA,,26143,,2670800,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48657,ifa,MI,IFA,IFA_02,IFA,,26111,33220,2671560,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.58815,
+ifa_mi_k3,48658,ifa,MI,IFA,IFA_01,IFA,,26011,,2676120,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48659,ifa,MI,IFA,IFA_02,IFA,,26011,,2676420,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48661,ifa,MI,IFA,IFA_02,IFA,,26129,,2685580,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0234305,
+ifa_mi_k3,48662,ifa,MI,IFA,IFA_02,IFA,,26057,10940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48701,ifa,MI,IFA,IFA_01,IFA,,26157,,2600700,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48703,ifa,MI,IFA,IFA_01,IFA,,26011,,2604120,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48705,ifa,MI,IFA,IFA_01,IFA,,26001,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48706,ifa,MI,IFA,IFA_01,IFA,,26017,13020,2606020,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",19.5808,
+ifa_mi_k3,48708,ifa,MI,IFA,IFA_01,IFA,,26017,13020,2606020,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",10.8694,
+ifa_mi_k3,48710,ifa,MI,IFA,IFA_01,IFA,,26017,13020,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48720,ifa,MI,IFA,IFA_01,IFA,,26063,,2606120,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48721,ifa,MI,IFA,IFA_01,IFA,,26001,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48722,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2610440,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.22426,
+ifa_mi_k3,48723,ifa,MI,IFA,IFA_01,IFA,,26157,,2613420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.929157,
+ifa_mi_k3,48724,ifa,MI,IFA,IFA_02,IFA,,26145,40980,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48725,ifa,MI,IFA,IFA_01,IFA,,26063,,2613760,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48726,ifa,MI,IFA,IFA_01,IFA,,26157,,2613880,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",4.27159,
+ifa_mi_k3,48727,ifa,MI,IFA,IFA_01,IFA,,26087,19820,2616420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48728,ifa,MI,IFA,IFA_01,IFA,,26001,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48729,ifa,MI,IFA,IFA_01,IFA,,26157,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48730,ifa,MI,IFA,IFA_01,IFA,,26069,,2624420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.434287,
+ifa_mi_k3,48731,ifa,MI,IFA,IFA_01,IFA,,26063,,2625360,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48732,ifa,MI,IFA,IFA_01,IFA,,26017,13020,2626420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48733,ifa,MI,IFA,IFA_01,IFA,,26157,,2627080,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48734,ifa,MI,IFA,IFA_02,IFA,,26145,40980,2630200,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.961189,
+ifa_mi_k3,48735,ifa,MI,IFA,IFA_01,IFA,,26157,,2631180,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48737,ifa,MI,IFA,IFA_02,IFA,,26001,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48738,ifa,MI,IFA,IFA_01,IFA,,26001,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48739,ifa,MI,IFA,IFA_01,IFA,,26069,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48740,ifa,MI,IFA,IFA_01,IFA,,26001,,2636860,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48741,ifa,MI,IFA,IFA_01,IFA,,26157,,2643380,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48742,ifa,MI,IFA,IFA_01,IFA,,26001,,2649450,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48743,ifa,MI,IFA,IFA_02,IFA,,26069,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48744,ifa,MI,IFA,IFA_01,IFA,,26157,,2652540,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48745,ifa,MI,IFA,IFA_01,IFA,,26001,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48746,ifa,MI,IFA,IFA_02,IFA,,26157,,2654220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48747,ifa,MI,IFA,IFA_01,IFA,,26017,13020,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48748,ifa,MI,IFA,IFA_01,IFA,,26069,,2671340,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48749,ifa,MI,IFA,IFA_01,IFA,,26011,,2660660,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48750,ifa,MI,IFA,IFA_01,IFA,,26069,,2604280,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48754,ifa,MI,IFA,IFA_01,IFA,,26063,,2661920,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48755,ifa,MI,IFA,IFA_01,IFA,,26063,,2664060,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48756,ifa,MI,IFA,IFA_01,IFA,,26129,,2674200,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48757,ifa,MI,IFA,IFA_02,IFA,,26157,,2667900,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48759,ifa,MI,IFA,IFA_01,IFA,,26063,,2672180,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48760,ifa,MI,IFA,IFA_01,IFA,,26087,19820,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48761,ifa,MI,IFA,IFA_02,IFA,,26129,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48762,ifa,MI,IFA,IFA_01,IFA,,26001,,2639634,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48763,ifa,MI,IFA,IFA_01,IFA,,26069,,2671340,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48765,ifa,MI,IFA,IFA_01,IFA,,26011,,2680820,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48766,ifa,MI,IFA,IFA_01,IFA,,26011,,2681020,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48767,ifa,MI,IFA,IFA_01,IFA,,26157,,2681420,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48768,ifa,MI,IFA,IFA_02,IFA,,26157,,2681840,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.17023,
+ifa_mi_k3,48770,ifa,MI,IFA,IFA_01,IFA,,26069,,2687140,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48801,ifa,MI,IFA,IFA_02,IFA,,26057,10940,2601540,"IFA Grand Rapids-Wyoming-Kentwood, MI",6.19417,
+ifa_mi_k3,48806,ifa,MI,IFA,IFA_02,IFA,,26057,10940,2603740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48807,ifa,MI,IFA,IFA_02,IFA,,26057,10940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48808,ifa,MI,IFA,IFA_02,IFA,,26037,29620,2605880,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48809,ifa,MI,IFA,IFA_02,IFA,,26067,24340,2606900,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48811,ifa,MI,IFA,IFA_03,IFA,,26117,24340,2613600,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48813,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2614820,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.828213,
+ifa_mi_k3,48815,ifa,MI,IFA,IFA_03,IFA,,26067,24340,2616140,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48816,ifa,MI,IFA,IFA_03,IFA,,26093,19820,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48817,ifa,MI,IFA,IFA_02,IFA,,26155,37020,2618300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48818,ifa,MI,IFA,IFA_03,IFA,,26117,24340,2619060,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48819,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2619780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48820,ifa,MI,IFA,IFA_02,IFA,,26037,29620,2622120,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.190908,
+ifa_mi_k3,48821,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2622380,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48822,ifa,MI,IFA,IFA_03,IFA,,26037,29620,2682680,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48823,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2624120,"IFA Grand Rapids-Wyoming-Kentwood, MI",21.5088,
+ifa_mi_k3,48824,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2624120,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48825,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2624120,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48827,ifa,MI,IFA,IFA_02,IFA,,26045,29620,2624540,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48829,ifa,MI,IFA,IFA_02,IFA,,26117,24340,2625000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48831,ifa,MI,IFA,IFA_02,IFA,,26037,29620,2625780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48832,ifa,MI,IFA,IFA_03,IFA,,26057,10940,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48834,ifa,MI,IFA,IFA_02,IFA,,26117,24340,2662260,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48835,ifa,MI,IFA,IFA_03,IFA,,26037,29620,2630040,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48836,ifa,MI,IFA,IFA_03,IFA,,26093,19820,2630060,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48837,ifa,MI,IFA,IFA_02,IFA,,26045,29620,2682680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.624539,
+ifa_mi_k3,48838,ifa,MI,IFA,IFA_02,IFA,,26117,24340,2635100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0027257,
+ifa_mi_k3,48840,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2637100,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.80977,
+ifa_mi_k3,48841,ifa,MI,IFA,IFA_02,IFA,,26155,37020,2637620,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48842,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2638780,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48843,ifa,MI,IFA,IFA_03,IFA,,26093,19820,2639540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.29303,
+ifa_mi_k3,48845,ifa,MI,IFA,IFA_03,IFA,,26067,24340,2639660,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48846,ifa,MI,IFA,IFA_02,IFA,,26067,24340,2640860,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48847,ifa,MI,IFA,IFA_02,IFA,,26057,10940,2641340,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48848,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2644200,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48849,ifa,MI,IFA,IFA_03,IFA,,26067,24340,2644880,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48850,ifa,MI,IFA,IFA_03,IFA,,26117,24340,2645240,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48851,ifa,MI,IFA,IFA_02,IFA,,26067,24340,2649900,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48852,ifa,MI,IFA,IFA_02,IFA,,26117,24340,2650000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48853,ifa,MI,IFA,IFA_03,IFA,,26037,29620,2651200,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48854,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2652180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.430129,
+ifa_mi_k3,48855,ifa,MI,IFA,IFA_03,IFA,,26093,19820,2639540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.262104,
+ifa_mi_k3,48856,ifa,MI,IFA,IFA_02,IFA,,26057,10940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48857,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2655560,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48858,ifa,MI,IFA,IFA_02,IFA,,26073,34380,2656020,"IFA Grand Rapids-Wyoming-Kentwood, MI",18.6733,
+ifa_mi_k3,48859,ifa,MI,IFA,IFA_02,IFA,,26073,34380,2656020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48860,ifa,MI,IFA,IFA_02,IFA,,26067,24340,2656080,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48861,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2656140,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48862,ifa,MI,IFA,IFA_02,IFA,,26057,10940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48864,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2660340,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",79.9382,
+ifa_mi_k3,48865,ifa,MI,IFA,IFA_02,IFA,,26067,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48866,ifa,MI,IFA,IFA_02,IFA,,26037,29620,2661860,"IFA Grand Rapids-Wyoming-Kentwood, MI",8.76439,
+ifa_mi_k3,48867,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2661940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.48839,
+ifa_mi_k3,48870,ifa,MI,IFA,IFA_02,IFA,,26067,24340,2662260,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48871,ifa,MI,IFA,IFA_02,IFA,,26057,10940,2663660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48872,ifa,MI,IFA,IFA_03,IFA,,26155,37020,2663700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.259298,
+ifa_mi_k3,48873,ifa,MI,IFA,IFA_03,IFA,,26067,24340,2663900,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48874,ifa,MI,IFA,IFA_02,IFA,,26057,10940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48875,ifa,MI,IFA,IFA_03,IFA,,26067,24340,2665860,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",5.09838,
+ifa_mi_k3,48876,ifa,MI,IFA,IFA_02,IFA,,26045,29620,2666100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48877,ifa,MI,IFA,IFA_03,IFA,,26057,10940,2625580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48878,ifa,MI,IFA,IFA_02,IFA,,26073,34380,2669640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48879,ifa,MI,IFA,IFA_02,IFA,,26037,29620,2670940,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.08061,
+ifa_mi_k3,48880,ifa,MI,IFA,IFA_02,IFA,,26057,10940,2671000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48881,ifa,MI,IFA,IFA_03,IFA,,26067,24340,2671660,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.19642,
+ifa_mi_k3,48883,ifa,MI,IFA,IFA_02,IFA,,26073,34380,2672960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48884,ifa,MI,IFA,IFA_02,IFA,,26117,24340,2673100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48885,ifa,MI,IFA,IFA_02,IFA,,26117,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48886,ifa,MI,IFA,IFA_02,IFA,,26117,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48888,ifa,MI,IFA,IFA_02,IFA,,26117,24340,2676220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48889,ifa,MI,IFA,IFA_02,IFA,,26057,10940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48890,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2677420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48891,ifa,MI,IFA,IFA_02,IFA,,26117,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48892,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2685080,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48893,ifa,MI,IFA,IFA_02,IFA,,26073,34380,2685140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48894,ifa,MI,IFA,IFA_03,IFA,,26037,29620,2686120,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48895,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2687420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48896,ifa,MI,IFA,IFA_02,IFA,,26073,34380,2687920,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48897,ifa,MI,IFA,IFA_03,IFA,,26015,24340,2688420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48906,ifa,MI,IFA,IFA_02,IFA,,26037,29620,2646000,"IFA Grand Rapids-Wyoming-Kentwood, MI",12.4546,
+ifa_mi_k3,48910,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2646000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.06906,
+ifa_mi_k3,48911,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2646000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",4.55427,
+ifa_mi_k3,48912,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2646000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48915,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2646000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,48917,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2684800,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",18.5594,
+ifa_mi_k3,48933,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2646000,"IFA Grand Rapids-Wyoming-Kentwood, MI",3.59303,
+ifa_mi_k3,49001,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2642160,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",10.6442,
+ifa_mi_k3,49002,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2665560,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.42075,
+ifa_mi_k3,49004,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2642160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49006,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2642160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.00256294,
+ifa_mi_k3,49007,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2642160,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.94961,
+ifa_mi_k3,49008,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2642160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.371214,
+ifa_mi_k3,49009,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2642160,"IFA Grand Rapids-Wyoming-Kentwood, MI",26.6449,
+ifa_mi_k3,49010,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2601260,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.329268,
+ifa_mi_k3,49011,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2603880,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49012,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2604160,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.96287,
+ifa_mi_k3,49013,ifa,MI,IFA,IFA_02,IFA,,26159,,2605140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49014,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2605920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.95816,
+ifa_mi_k3,49015,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2605920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",3.48788,
+ifa_mi_k3,49017,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2605920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",8.47597,
+ifa_mi_k3,49021,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2607060,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49022,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2627160,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49024,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2665560,"IFA Grand Rapids-Wyoming-Kentwood, MI",5.42073,
+ifa_mi_k3,49026,ifa,MI,IFA,IFA_02,IFA,,26159,,2609220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49027,ifa,MI,IFA,IFA_02,IFA,,26159,,2610180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49028,ifa,MI,IFA,IFA_03,IFA,,26023,17740,2610860,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49029,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2611800,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49030,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2611920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49031,ifa,MI,IFA,IFA_03,IFA,,26027,43780,2613900,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.42563,
+ifa_mi_k3,49032,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2614460,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49033,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2651940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49034,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2605920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49036,ifa,MI,IFA,IFA_03,IFA,,26023,17740,2617020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49037,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2605920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49038,ifa,MI,IFA,IFA_02,IFA,,26021,35660,2644820,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49040,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2617360,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49042,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2617840,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49043,ifa,MI,IFA,IFA_02,IFA,,26159,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49045,ifa,MI,IFA,IFA_03,IFA,,26159,,2621040,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49046,ifa,MI,IFA,IFA_02,IFA,,26015,24340,2621560,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49047,ifa,MI,IFA,IFA_03,IFA,,26027,43780,2622880,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49048,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2617690,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.598182,
+ifa_mi_k3,49050,ifa,MI,IFA,IFA_03,IFA,,26015,24340,2622900,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49051,ifa,MI,IFA,IFA_03,IFA,,26025,12980,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49052,ifa,MI,IFA,IFA_03,IFA,,26077,28020,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49053,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2631260,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49055,ifa,MI,IFA,IFA_02,IFA,,26159,,2632640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49056,ifa,MI,IFA,IFA_02,IFA,,26159,,2610180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49057,ifa,MI,IFA,IFA_02,IFA,,26159,,2636960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49058,ifa,MI,IFA,IFA_03,IFA,,26015,24340,2637120,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.445396,
+ifa_mi_k3,49060,ifa,MI,IFA,IFA_02,IFA,,26015,24340,2637960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49061,ifa,MI,IFA,IFA_03,IFA,,26027,43780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49063,ifa,MI,IFA,IFA_02,IFA,,26159,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49064,ifa,MI,IFA,IFA_02,IFA,,26159,,2646440,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0614761,
+ifa_mi_k3,49065,ifa,MI,IFA,IFA_03,IFA,,26159,,2646500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.78506,
+ifa_mi_k3,49066,ifa,MI,IFA,IFA_03,IFA,,26149,44780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49067,ifa,MI,IFA,IFA_03,IFA,,26027,43780,2651460,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49068,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2651940,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.37212,
+ifa_mi_k3,49070,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2651980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49071,ifa,MI,IFA,IFA_02,IFA,,26159,,2652380,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.33612,
+ifa_mi_k3,49072,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2652980,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49073,ifa,MI,IFA,IFA_03,IFA,,26015,24340,2656680,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49074,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2642160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49075,ifa,MI,IFA,IFA_03,IFA,,26149,44780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49076,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2660580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49078,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2661620,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49079,ifa,MI,IFA,IFA_02,IFA,,26159,,2662980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49080,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2664740,"IFA Grand Rapids-Wyoming-Kentwood, MI",4.45358,
+ifa_mi_k3,49082,ifa,MI,IFA,IFA_03,IFA,,26023,17740,2666640,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49083,ifa,MI,IFA,IFA_02,IFA,,26077,28020,2668240,"IFA Grand Rapids-Wyoming-Kentwood, MI",3.05456,
+ifa_mi_k3,49084,ifa,MI,IFA,IFA_03,IFA,,26021,35660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49085,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2670960,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",21.8978,
+ifa_mi_k3,49087,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2671860,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.00954541,
+ifa_mi_k3,49088,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2672060,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49089,ifa,MI,IFA,IFA_03,IFA,,26023,17740,2673420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49090,ifa,MI,IFA,IFA_02,IFA,,26159,,2674980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.30092,
+ifa_mi_k3,49091,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2676960,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",10.085,
+ifa_mi_k3,49092,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2679160,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49093,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2679760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49094,ifa,MI,IFA,IFA_03,IFA,,26023,17740,2681360,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49095,ifa,MI,IFA,IFA_03,IFA,,26027,43780,2681680,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49096,ifa,MI,IFA,IFA_03,IFA,,26045,29620,2681960,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49097,ifa,MI,IFA,IFA_03,IFA,,26077,28020,2682300,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49098,ifa,MI,IFA,IFA_02,IFA,,26021,35660,2663020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49099,ifa,MI,IFA,IFA_03,IFA,,26149,44780,2686920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49101,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2605500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49102,ifa,MI,IFA,IFA_03,IFA,,26021,35660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49103,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2607860,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49104,ifa,MI,IFA,IFA_03,IFA,,26021,35660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49106,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2610580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49107,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2611400,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49111,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2624580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49112,ifa,MI,IFA,IFA_03,IFA,,26027,43780,2625040,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49113,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2631300,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49115,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2673730,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49116,ifa,MI,IFA,IFA_03,IFA,,26021,35660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49117,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2657220,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49119,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2657660,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49120,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2657760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.65227,
+ifa_mi_k3,49125,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2673730,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49126,ifa,MI,IFA,IFA_03,IFA,,26021,35660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49127,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2676500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.723865,
+ifa_mi_k3,49128,ifa,MI,IFA,IFA_03,IFA,,26021,35660,2679720,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49129,ifa,MI,IFA,IFA_03,IFA,,26021,35660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49130,ifa,MI,IFA,IFA_03,IFA,,26027,43780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49201,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2656620,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",5.70295,
+ifa_mi_k3,49202,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2641420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.11441,
+ifa_mi_k3,49203,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2641420,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",7.61176,
+ifa_mi_k3,49220,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2600380,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49221,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2600440,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",6.813,
+ifa_mi_k3,49224,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2600980,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49227,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2601300,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49228,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2609000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.70397,
+ifa_mi_k3,49229,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2610760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49230,ifa,MI,IFA,IFA_02,IFA,,26075,27100,2682490,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.184524,
+ifa_mi_k3,49232,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2612760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49233,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2614260,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49234,ifa,MI,IFA,IFA_03,IFA,,26075,27100,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49235,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2616280,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49236,ifa,MI,IFA,IFA_02,IFA,,26091,10300,2616480,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49237,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2617740,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49238,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2621180,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49240,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2634480,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49241,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2636380,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49242,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2638460,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49245,ifa,MI,IFA,IFA_03,IFA,,26025,12980,2638920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49246,ifa,MI,IFA,IFA_03,IFA,,26075,27100,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49247,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2639720,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49248,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2641540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49249,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2644752,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49250,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2641920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49251,ifa,MI,IFA,IFA_03,IFA,,26065,29620,2647180,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0744921,
+ifa_mi_k3,49252,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2647980,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49253,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2650830,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.281277,
+ifa_mi_k3,49254,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2653580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49255,ifa,MI,IFA,IFA_03,IFA,,26023,17740,2655220,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49256,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2655500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49258,ifa,MI,IFA,IFA_03,IFA,,26059,25880,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49259,ifa,MI,IFA,IFA_03,IFA,,26075,27100,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49261,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2656620,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49262,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2657920,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49263,ifa,MI,IFA,IFA_02,IFA,,26075,27100,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49264,ifa,MI,IFA,IFA_03,IFA,,26065,29620,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49265,ifa,MI,IFA,IFA_02,IFA,,26091,10300,2660840,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49266,ifa,MI,IFA,IFA_03,IFA,,26059,25880,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49267,ifa,MI,IFA,IFA_03,IFA,,26115,33780,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49268,ifa,MI,IFA,IFA_03,IFA,,26091,10300,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49269,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2662740,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49270,ifa,MI,IFA,IFA_03,IFA,,26115,33780,2663800,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49271,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2664600,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49272,ifa,MI,IFA,IFA_03,IFA,,26075,27100,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49274,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2667500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49276,ifa,MI,IFA,IFA_03,IFA,,26091,10300,2609000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49277,ifa,MI,IFA,IFA_03,IFA,,26075,27100,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49279,ifa,MI,IFA,IFA_03,IFA,,26091,10300,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49282,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2644752,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49283,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2675620,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49284,ifa,MI,IFA,IFA_03,IFA,,26075,27100,2675860,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49285,ifa,MI,IFA,IFA_02,IFA,,26065,29620,2676560,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49286,ifa,MI,IFA,IFA_02,IFA,,26091,10300,2679120,"IFA Grand Rapids-Wyoming-Kentwood, MI",32.7417,
+ifa_mi_k3,49287,ifa,MI,IFA,IFA_02,IFA,,26091,10300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49288,ifa,MI,IFA,IFA_03,IFA,,26059,25880,2682880,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49289,ifa,MI,IFA,IFA_03,IFA,,26091,10300,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49301,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2629580,"IFA Grand Rapids-Wyoming-Kentwood, MI",13.8147,
+ifa_mi_k3,49302,ifa,MI,IFA,IFA_02,IFA,,26081,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49303,ifa,MI,IFA,IFA_02,IFA,,26121,34740,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49304,ifa,MI,IFA,IFA_02,IFA,,26085,,2604940,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49305,ifa,MI,IFA,IFA_02,IFA,,26107,13660,2605580,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49306,ifa,MI,IFA,IFA_03,IFA,,26081,24340,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",2.63027,
+ifa_mi_k3,49307,ifa,MI,IFA,IFA_03,IFA,,26107,13660,2608300,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",3.1022,
+ifa_mi_k3,49309,ifa,MI,IFA,IFA_02,IFA,,26123,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49310,ifa,MI,IFA,IFA_02,IFA,,26073,34380,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49312,ifa,MI,IFA,IFA_02,IFA,,26123,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49315,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2612280,"IFA Grand Rapids-Wyoming-Kentwood, MI",3.27769,
+ifa_mi_k3,49316,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2612480,"IFA Grand Rapids-Wyoming-Kentwood, MI",7.92003,
+ifa_mi_k3,49318,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2613820,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49319,ifa,MI,IFA,IFA_03,IFA,,26081,24340,2614200,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49320,ifa,MI,IFA,IFA_03,IFA,,26107,13660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49321,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2617700,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49322,ifa,MI,IFA,IFA_03,IFA,,26117,24340,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49323,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2622660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49325,ifa,MI,IFA,IFA_03,IFA,,26015,24340,2630580,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49326,ifa,MI,IFA,IFA_03,IFA,,26081,24340,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49327,ifa,MI,IFA,IFA_02,IFA,,26123,,2634360,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49328,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2639180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49329,ifa,MI,IFA,IFA_03,IFA,,26117,24340,2639500,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49330,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2642780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.33821,
+ifa_mi_k3,49331,ifa,MI,IFA,IFA_03,IFA,,26081,24340,2649540,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0464711,
+ifa_mi_k3,49332,ifa,MI,IFA,IFA_03,IFA,,26107,13660,2652760,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49333,ifa,MI,IFA,IFA_02,IFA,,26015,24340,2653760,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.83702,
+ifa_mi_k3,49335,ifa,MI,IFA,IFA_02,IFA,,26005,26090,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49336,ifa,MI,IFA,IFA_02,IFA,,26107,13660,2655540,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49337,ifa,MI,IFA,IFA_03,IFA,,26123,,2657080,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0479257,
+ifa_mi_k3,49338,ifa,MI,IFA,IFA_03,IFA,,26123,,2662400,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49339,ifa,MI,IFA,IFA_03,IFA,,26117,24340,2664020,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49340,ifa,MI,IFA,IFA_02,IFA,,26107,13660,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49341,ifa,MI,IFA,IFA_03,IFA,,26081,24340,2669080,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",4.90156,
+ifa_mi_k3,49342,ifa,MI,IFA,IFA_03,IFA,,26107,13660,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49343,ifa,MI,IFA,IFA_03,IFA,,26081,24340,2671360,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49344,ifa,MI,IFA,IFA_02,IFA,,26005,26090,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49345,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2675420,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.12967,
+ifa_mi_k3,49346,ifa,MI,IFA,IFA_03,IFA,,26107,13660,2613010,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49347,ifa,MI,IFA,IFA_03,IFA,,26117,24340,2680720,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49348,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2684880,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.91943,
+ifa_mi_k3,49349,ifa,MI,IFA,IFA_02,IFA,,26123,,2686680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49401,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2601340,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49402,ifa,MI,IFA,IFA_02,IFA,,26085,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49403,ifa,MI,IFA,IFA_02,IFA,,26139,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49404,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2618020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.760299,
+ifa_mi_k3,49405,ifa,MI,IFA,IFA_02,IFA,,26105,31220,2619420,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49406,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2622740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49408,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2627740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49409,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2627960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49410,ifa,MI,IFA,IFA_02,IFA,,26105,31220,2629940,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49411,ifa,MI,IFA,IFA_02,IFA,,26105,31220,2630600,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49412,ifa,MI,IFA,IFA_03,IFA,,26123,,2630700,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0954947,
+ifa_mi_k3,49415,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2631000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49417,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2633340,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.71839,
+ifa_mi_k3,49418,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2634160,"IFA Grand Rapids-Wyoming-Kentwood, MI",69.7147,
+ifa_mi_k3,49419,ifa,MI,IFA,IFA_02,IFA,,26005,26090,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0397725,
+ifa_mi_k3,49420,ifa,MI,IFA,IFA_02,IFA,,26127,,2636920,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49421,ifa,MI,IFA,IFA_02,IFA,,26127,,2637860,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49423,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2638640,"IFA Grand Rapids-Wyoming-Kentwood, MI",11.3251,
+ifa_mi_k3,49424,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2606880,"IFA Grand Rapids-Wyoming-Kentwood, MI",4.29898,
+ifa_mi_k3,49425,ifa,MI,IFA,IFA_02,IFA,,26121,34740,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49426,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2639800,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.03095,
+ifa_mi_k3,49428,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2641680,"IFA Grand Rapids-Wyoming-Kentwood, MI",4.72755,
+ifa_mi_k3,49430,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2645440,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49431,ifa,MI,IFA,IFA_02,IFA,,26105,31220,2649640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.115164,
+ifa_mi_k3,49434,ifa,MI,IFA,IFA_02,IFA,,26139,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49435,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2645440,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49436,ifa,MI,IFA,IFA_02,IFA,,26127,,2652720,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49437,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2655100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49440,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2656320,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.99341,
+ifa_mi_k3,49441,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2659140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.801724,
+ifa_mi_k3,49442,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2656320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.000558406,
+ifa_mi_k3,49443,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2656320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49444,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2659140,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.77806,
+ifa_mi_k3,49445,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2658640,"IFA Grand Rapids-Wyoming-Kentwood, MI",6.14192,
+ifa_mi_k3,49446,ifa,MI,IFA,IFA_02,IFA,,26127,,2657280,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49448,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2659520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49449,ifa,MI,IFA,IFA_02,IFA,,26127,,2663540,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49450,ifa,MI,IFA,IFA_02,IFA,,26005,26090,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49451,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2667280,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49452,ifa,MI,IFA,IFA_02,IFA,,26127,,2669880,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49453,ifa,MI,IFA,IFA_02,IFA,,26005,26090,2671700,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49454,ifa,MI,IFA,IFA_02,IFA,,26105,31220,2672080,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49455,ifa,MI,IFA,IFA_02,IFA,,26127,,2672840,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49456,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2627960,"IFA Grand Rapids-Wyoming-Kentwood, MI",6.16671,
+ifa_mi_k3,49457,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2681040,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49458,ifa,MI,IFA,IFA_02,IFA,,26105,31220,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49459,ifa,MI,IFA,IFA_02,IFA,,26127,,2683020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49460,ifa,MI,IFA,IFA_02,IFA,,26139,24340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49461,ifa,MI,IFA,IFA_02,IFA,,26121,34740,2686780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49464,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2689260,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.04476,
+ifa_mi_k3,49503,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2634000,"IFA Grand Rapids-Wyoming-Kentwood, MI",13.0507,
+ifa_mi_k3,49504,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2634000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49505,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2634000,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.91919,
+ifa_mi_k3,49506,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2634000,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.28147,
+ifa_mi_k3,49507,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2634000,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49508,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2642820,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.457192,
+ifa_mi_k3,49509,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2688940,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.600257,
+ifa_mi_k3,49512,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2642820,"IFA Grand Rapids-Wyoming-Kentwood, MI",11.0756,
+ifa_mi_k3,49519,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2688940,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49525,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2658945,"IFA Grand Rapids-Wyoming-Kentwood, MI",33.5817,
+ifa_mi_k3,49534,ifa,MI,IFA,IFA_02,IFA,,26139,24340,2682960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49544,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2682960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.24682,
+ifa_mi_k3,49546,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2629580,"IFA Grand Rapids-Wyoming-Kentwood, MI",43.926,
+ifa_mi_k3,49548,ifa,MI,IFA,IFA_02,IFA,,26081,24340,2688940,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0893355,
+ifa_mi_k3,49601,ifa,MI,IFA,IFA_03,IFA,,26165,15620,2612320,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",37.6342,
+ifa_mi_k3,49611,ifa,MI,IFA,IFA_03,IFA,,26009,,2600900,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49612,ifa,MI,IFA,IFA_02,IFA,,26009,,2601060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49613,ifa,MI,IFA,IFA_02,IFA,,26101,,2603300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49614,ifa,MI,IFA,IFA_02,IFA,,26101,,2606460,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49615,ifa,MI,IFA,IFA_02,IFA,,26009,,2606980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49616,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2607580,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49617,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2608100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49618,ifa,MI,IFA,IFA_02,IFA,,26165,15620,2609560,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49619,ifa,MI,IFA,IFA_02,IFA,,26101,,2610300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49620,ifa,MI,IFA,IFA_02,IFA,,26055,45900,2611480,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49621,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2635300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49622,ifa,MI,IFA,IFA_02,IFA,,26009,,2614400,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49623,ifa,MI,IFA,IFA_03,IFA,,26085,,,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49625,ifa,MI,IFA,IFA_02,IFA,,26101,,2618040,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49626,ifa,MI,IFA,IFA_02,IFA,,26101,,2624060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49627,ifa,MI,IFA,IFA_02,IFA,,26009,,2624300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49628,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2625180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49629,ifa,MI,IFA,IFA_02,IFA,,26009,,2625320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.438227,
+ifa_mi_k3,49630,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2625980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.802917,
+ifa_mi_k3,49631,ifa,MI,IFA,IFA_03,IFA,,26133,,2626640,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49632,ifa,MI,IFA,IFA_02,IFA,,26113,15620,2627320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49633,ifa,MI,IFA,IFA_03,IFA,,26079,45900,2628000,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49634,ifa,MI,IFA,IFA_02,IFA,,26101,,2628060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49635,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2630260,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49636,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2632360,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49637,ifa,MI,IFA,IFA_02,IFA,,26055,45900,2634620,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49638,ifa,MI,IFA,IFA_02,IFA,,26165,15620,2636720,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49639,ifa,MI,IFA,IFA_03,IFA,,26133,,2637820,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49640,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2639080,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49642,ifa,MI,IFA,IFA_02,IFA,,26085,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49643,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2607220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49644,ifa,MI,IFA,IFA_02,IFA,,26085,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49645,ifa,MI,IFA,IFA_02,IFA,,26101,,2642240,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49646,ifa,MI,IFA,IFA_03,IFA,,26079,45900,2606430,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0507959,
+ifa_mi_k3,49648,ifa,MI,IFA,IFA_02,IFA,,26009,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.198863,
+ifa_mi_k3,49649,ifa,MI,IFA,IFA_02,IFA,,26055,45900,2643340,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49650,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2636585,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49651,ifa,MI,IFA,IFA_03,IFA,,26113,15620,2644480,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49653,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2644760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49654,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2646800,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49655,ifa,MI,IFA,IFA_02,IFA,,26133,,2647100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49656,ifa,MI,IFA,IFA_02,IFA,,26085,,2649740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49657,ifa,MI,IFA,IFA_03,IFA,,26113,15620,2649980,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49659,ifa,MI,IFA,IFA_03,IFA,,26009,,2645144,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49660,ifa,MI,IFA,IFA_02,IFA,,26101,,2650720,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49663,ifa,MI,IFA,IFA_02,IFA,,26165,15620,2650880,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49664,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2650920,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49665,ifa,MI,IFA,IFA_02,IFA,,26133,,2651660,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49667,ifa,MI,IFA,IFA_02,IFA,,26113,15620,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49668,ifa,MI,IFA,IFA_02,IFA,,26165,15620,2653320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49670,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2660640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49674,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2660640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49675,ifa,MI,IFA,IFA_02,IFA,,26101,,2660740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49676,ifa,MI,IFA,IFA_02,IFA,,26079,45900,2667140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49677,ifa,MI,IFA,IFA_03,IFA,,26133,,2667820,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",1.34007,
+ifa_mi_k3,49679,ifa,MI,IFA,IFA_02,IFA,,26133,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49680,ifa,MI,IFA,IFA_03,IFA,,26079,45900,2674740,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49682,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2677600,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49683,ifa,MI,IFA,IFA_02,IFA,,26019,45900,2619195,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49684,ifa,MI,IFA,IFA_02,IFA,,26089,45900,2635300,"IFA Grand Rapids-Wyoming-Kentwood, MI",15.313,
+ifa_mi_k3,49685,ifa,MI,IFA,IFA_02,IFA,,26055,45900,2615715,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.19417,
+ifa_mi_k3,49686,ifa,MI,IFA,IFA_02,IFA,,26055,45900,2680340,"IFA Grand Rapids-Wyoming-Kentwood, MI",8.6627,
+ifa_mi_k3,49688,ifa,MI,IFA,IFA_03,IFA,,26133,,2680960,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49689,ifa,MI,IFA,IFA_02,IFA,,26101,,2685300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49690,ifa,MI,IFA,IFA_02,IFA,,26055,45900,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49696,ifa,MI,IFA,IFA_02,IFA,,26055,45900,,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.48331,
+ifa_mi_k3,49701,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2650320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49705,ifa,MI,IFA,IFA_02,IFA,,26031,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49706,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2611380,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49707,ifa,MI,IFA,IFA_01,IFA,,26007,10980,2601740,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",4.36418,
+ifa_mi_k3,49709,ifa,MI,IFA,IFA_02,IFA,,26119,,2603920,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49710,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49712,ifa,MI,IFA,IFA_03,IFA,,26029,,2639340,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.677468,
+ifa_mi_k3,49713,ifa,MI,IFA,IFA_03,IFA,,26029,,2609840,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49715,ifa,MI,IFA,IFA_02,IFA,,26033,42300,2610680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49716,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2611380,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49717,ifa,MI,IFA,IFA_02,IFA,,26031,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49718,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2613480,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49719,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49720,ifa,MI,IFA,IFA_02,IFA,,26029,,2614780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49721,ifa,MI,IFA,IFA_01,IFA,,26031,,2615000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.637935,
+ifa_mi_k3,49722,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2617900,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49724,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49725,ifa,MI,IFA,IFA_02,IFA,,26033,42300,2621780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49726,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49727,ifa,MI,IFA,IFA_02,IFA,,26009,,2624020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49728,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49729,ifa,MI,IFA,IFA_02,IFA,,26009,,2625420,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49730,ifa,MI,IFA,IFA_03,IFA,,26009,,2645144,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49733,ifa,MI,IFA,IFA_02,IFA,,26039,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49735,ifa,MI,IFA,IFA_02,IFA,,26137,,2631720,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.751755,
+ifa_mi_k3,49736,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49738,ifa,MI,IFA,IFA_02,IFA,,26039,,2634640,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49740,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2636560,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.181873,
+ifa_mi_k3,49743,ifa,MI,IFA,IFA_01,IFA,,26141,,,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49744,ifa,MI,IFA,IFA_02,IFA,,26007,10980,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49745,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49746,ifa,MI,IFA,IFA_02,IFA,,26119,,2638380,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49747,ifa,MI,IFA,IFA_01,IFA,,26001,,2639634,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",2.22607,
+ifa_mi_k3,49748,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49749,ifa,MI,IFA,IFA_02,IFA,,26031,,2640480,"IFA Grand Rapids-Wyoming-Kentwood, MI",1.08276,
+ifa_mi_k3,49751,ifa,MI,IFA,IFA_02,IFA,,26137,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49752,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49753,ifa,MI,IFA,IFA_02,IFA,,26007,10980,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49755,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2647240,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49756,ifa,MI,IFA,IFA_02,IFA,,26135,,2647260,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49757,ifa,MI,IFA,IFA_02,IFA,,26097,,2650280,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49759,ifa,MI,IFA,IFA_01,IFA,,26141,,2654120,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49760,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49762,ifa,MI,IFA,IFA_02,IFA,,26097,,2656760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49764,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2660180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49765,ifa,MI,IFA,IFA_02,IFA,,26141,,2660680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49766,ifa,MI,IFA,IFA_01,IFA,,26007,10980,2661500,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49768,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49769,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2663300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49770,ifa,MI,IFA,IFA_02,IFA,,26047,37950,2663820,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.03571,
+ifa_mi_k3,49774,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49775,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49776,ifa,MI,IFA,IFA_01,IFA,,26141,,2666000,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49777,ifa,MI,IFA,IFA_01,IFA,,26141,,2666343,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49779,ifa,MI,IFA,IFA_01,IFA,,26141,,2669260,"IFA Detroit-Warren-Dearborn, MI / Bay City, MI",0.00445452,
+ifa_mi_k3,49780,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49781,ifa,MI,IFA,IFA_02,IFA,,26097,,2670840,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49782,ifa,MI,IFA,IFA_02,IFA,,26029,,2670900,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49783,ifa,MI,IFA,IFA_02,IFA,,26033,42300,2671740,"IFA Grand Rapids-Wyoming-Kentwood, MI",13.2806,
+ifa_mi_k3,49784,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49788,ifa,MI,IFA,IFA_02,IFA,,26033,42300,2643180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49791,ifa,MI,IFA,IFA_02,IFA,,26031,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49793,ifa,MI,IFA,IFA_02,IFA,,26033,42300,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49795,ifa,MI,IFA,IFA_02,IFA,,26137,,2681700,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49796,ifa,MI,IFA,IFA_03,IFA,,26029,,2683140,"IFA Detroit-Warren-Dearborn, MI / Lansing-East Lansing, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49799,ifa,MI,IFA,IFA_02,IFA,,26031,,2688240,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49801,ifa,MI,IFA,IFA_02,IFA,,26043,27020,2640960,"IFA Grand Rapids-Wyoming-Kentwood, MI",2.65689,
+ifa_mi_k3,49802,ifa,MI,IFA,IFA_02,IFA,,26043,27020,2643300,"IFA Grand Rapids-Wyoming-Kentwood, MI",3.83954,
+ifa_mi_k3,49805,ifa,MI,IFA,IFA_02,IFA,,26083,26340,2623740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49806,ifa,MI,IFA,IFA_02,IFA,,26003,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49807,ifa,MI,IFA,IFA_02,IFA,,26041,21540,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49808,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2608180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49812,ifa,MI,IFA,IFA_02,IFA,,26109,31940,2613400,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49814,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2653520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49815,ifa,MI,IFA,IFA_02,IFA,,26043,27020,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49816,ifa,MI,IFA,IFA_02,IFA,,26003,,2614940,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49817,ifa,MI,IFA,IFA_02,IFA,,26041,21540,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49818,ifa,MI,IFA,IFA_02,IFA,,26103,32100,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49820,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49821,ifa,MI,IFA,IFA_02,IFA,,26109,31940,2619560,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0503191,
+ifa_mi_k3,49822,ifa,MI,IFA,IFA_02,IFA,,26003,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49825,ifa,MI,IFA,IFA_02,IFA,,26003,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49826,ifa,MI,IFA,IFA_02,IFA,,26003,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49827,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49829,ifa,MI,IFA,IFA_02,IFA,,26041,21540,2626360,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.497299,
+ifa_mi_k3,49831,ifa,MI,IFA,IFA_02,IFA,,26043,27020,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49833,ifa,MI,IFA,IFA_02,IFA,,26103,32100,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49834,ifa,MI,IFA,IFA_02,IFA,,26043,27020,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49835,ifa,MI,IFA,IFA_02,IFA,,26041,21540,2631380,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49836,ifa,MI,IFA,IFA_02,IFA,,26153,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49837,ifa,MI,IFA,IFA_02,IFA,,26041,21540,2632300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49838,ifa,MI,IFA,IFA_02,IFA,,26097,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49839,ifa,MI,IFA,IFA_02,IFA,,26003,,2633440,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49840,ifa,MI,IFA,IFA_02,IFA,,26153,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49841,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2635760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49847,ifa,MI,IFA,IFA_02,IFA,,26109,31940,2637760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49848,ifa,MI,IFA,IFA_02,IFA,,26109,31940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49849,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2641220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49852,ifa,MI,IFA,IFA_02,IFA,,26043,27020,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49853,ifa,MI,IFA,IFA_02,IFA,,26095,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49854,ifa,MI,IFA,IFA_02,IFA,,26153,,2650760,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49855,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2651900,"IFA Grand Rapids-Wyoming-Kentwood, MI",23.0842,
+ifa_mi_k3,49858,ifa,MI,IFA,IFA_02,IFA,,26109,31940,2653020,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.800801,
+ifa_mi_k3,49861,ifa,MI,IFA,IFA_02,IFA,,26013,,2679680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49862,ifa,MI,IFA,IFA_02,IFA,,26003,,2656200,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49863,ifa,MI,IFA,IFA_02,IFA,,26109,31940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49864,ifa,MI,IFA,IFA_02,IFA,,26041,21540,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49866,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2656860,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.633787,
+ifa_mi_k3,49868,ifa,MI,IFA,IFA_02,IFA,,26095,,2657140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49870,ifa,MI,IFA,IFA_02,IFA,,26043,27020,2659220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49871,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2662180,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49872,ifa,MI,IFA,IFA_02,IFA,,26041,21540,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49873,ifa,MI,IFA,IFA_02,IFA,,26109,31940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49874,ifa,MI,IFA,IFA_02,IFA,,26109,31940,2666140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49876,ifa,MI,IFA,IFA_02,IFA,,26043,27020,2666720,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49877,ifa,MI,IFA,IFA_02,IFA,,26043,27020,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49878,ifa,MI,IFA,IFA_02,IFA,,26041,21540,2667160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49879,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2667980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49880,ifa,MI,IFA,IFA_02,IFA,,26103,32100,2669060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49881,ifa,MI,IFA,IFA_02,IFA,,26043,27020,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49883,ifa,MI,IFA,IFA_02,IFA,,26153,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49884,ifa,MI,IFA,IFA_02,IFA,,26003,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49885,ifa,MI,IFA,IFA_02,IFA,,26103,32100,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49886,ifa,MI,IFA,IFA_02,IFA,,26109,31940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49887,ifa,MI,IFA,IFA_02,IFA,,26109,31940,2676380,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49891,ifa,MI,IFA,IFA_02,IFA,,26003,,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49892,ifa,MI,IFA,IFA_02,IFA,,26043,27020,2659220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49893,ifa,MI,IFA,IFA_02,IFA,,26109,31940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49894,ifa,MI,IFA,IFA_02,IFA,,26041,21540,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49895,ifa,MI,IFA,IFA_02,IFA,,26041,21540,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49896,ifa,MI,IFA,IFA_02,IFA,,26109,31940,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49901,ifa,MI,IFA,IFA_02,IFA,,26083,26340,2600620,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49902,ifa,MI,IFA,IFA_02,IFA,,26071,,2601800,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49903,ifa,MI,IFA,IFA_02,IFA,,26071,,2601960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49905,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2603960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49908,ifa,MI,IFA,IFA_02,IFA,,26013,,2605320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49910,ifa,MI,IFA,IFA_02,IFA,,26131,,2644620,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49911,ifa,MI,IFA,IFA_02,IFA,,26053,,2607960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49912,ifa,MI,IFA,IFA_02,IFA,,26131,,2611320,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49913,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2639680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49915,ifa,MI,IFA,IFA_02,IFA,,26071,,2613860,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49916,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2614900,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49917,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2618080,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49918,ifa,MI,IFA,IFA_02,IFA,,26083,26340,2618100,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49919,ifa,MI,IFA,IFA_02,IFA,,26013,,2618580,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49920,ifa,MI,IFA,IFA_02,IFA,,26071,,2619140,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.00397725,
+ifa_mi_k3,49921,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2622500,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49922,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2622520,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49925,ifa,MI,IFA,IFA_02,IFA,,26131,,2626820,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49927,ifa,MI,IFA,IFA_02,IFA,,26071,,2631160,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49929,ifa,MI,IFA,IFA_02,IFA,,26131,,2634980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49930,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2636300,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49931,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2639360,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49934,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2639680,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49935,ifa,MI,IFA,IFA_02,IFA,,26071,,2640980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49938,ifa,MI,IFA,IFA_02,IFA,,26053,,2641060,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49942,ifa,MI,IFA,IFA_02,IFA,,26061,26340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49945,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2644780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49946,ifa,MI,IFA,IFA_02,IFA,,26013,,2689240,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49947,ifa,MI,IFA,IFA_02,IFA,,26053,,2651540,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49948,ifa,MI,IFA,IFA_02,IFA,,26131,,2652280,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49950,ifa,MI,IFA,IFA_02,IFA,,26083,26340,2623740,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49952,ifa,MI,IFA,IFA_02,IFA,,26061,26340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49953,ifa,MI,IFA,IFA_02,IFA,,26131,,2660860,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49955,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2662120,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49958,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2663280,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49959,ifa,MI,IFA,IFA_02,IFA,,26053,,2666980,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49960,ifa,MI,IFA,IFA_02,IFA,,26131,,2669120,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49961,ifa,MI,IFA,IFA_02,IFA,,26061,26340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49962,ifa,MI,IFA,IFA_02,IFA,,26013,,2674120,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49963,ifa,MI,IFA,IFA_02,IFA,,26061,26340,2675220,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49965,ifa,MI,IFA,IFA_02,IFA,,26061,26340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49967,ifa,MI,IFA,IFA_02,IFA,,26061,26340,,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49968,ifa,MI,IFA,IFA_02,IFA,,26053,,2682780,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49969,ifa,MI,IFA,IFA_02,IFA,,26053,,2684360,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49970,ifa,MI,IFA,IFA_02,IFA,,26013,,2618580,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity
+ifa_mi_k3,49971,ifa,MI,IFA,IFA_02,IFA,,26131,,2686960,"IFA Grand Rapids-Wyoming-Kentwood, MI",0.0,no cell in the extract: territory at zero opportunity

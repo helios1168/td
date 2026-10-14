@@ -1,0 +1,1234 @@
+scenario,zip_code,current_channel,state,model_channel,district,district_channels,rep,county,cbsa,place,district_name,m_rel,reason
+ifa_oh_k2,43001,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3931434,"IFA Columbus, OH",0.213911,
+ifa_oh_k2,43002,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43003,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3902582,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43004,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.000636361,
+ifa_oh_k2,43005,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3906740,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43006,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3908859,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43007,ifa,OH,IFA,IFA_02,IFA,,39159,18140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43008,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3909890,"IFA Columbus, OH",0.192212,
+ifa_oh_k2,43009,ifa,OH,IFA,IFA_02,IFA,,39021,46500,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43010,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3912560,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43011,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3913036,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43013,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3934202,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43014,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3920114,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43015,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3921434,"IFA Columbus, OH",4.98991,
+ifa_oh_k2,43016,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3922694,"IFA Columbus, OH",13.4574,
+ifa_oh_k2,43017,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3922694,"IFA Columbus, OH",87.055,
+ifa_oh_k2,43018,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3925676,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43019,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3928658,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43021,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3975602,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43022,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3929246,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43023,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3931434,"IFA Columbus, OH",7.18089,
+ifa_oh_k2,43025,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3934790,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43026,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3935476,"IFA Columbus, OH",1.08447,
+ifa_oh_k2,43027,ifa,OH,IFA,IFA_02,IFA,,39089,18140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43028,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3902266,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43029,ifa,OH,IFA,IFA_02,IFA,,39097,18140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43030,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3938276,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43031,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3953970,"IFA Columbus, OH",0.0796209,
+ifa_oh_k2,43032,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3940124,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43033,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3940572,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43035,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3918000,"IFA Columbus, OH",1.36569,
+ifa_oh_k2,43036,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3946830,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43037,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3948090,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43040,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3948160,"IFA Columbus, OH",2.97888,
+ifa_oh_k2,43044,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3948706,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43045,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3950218,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43046,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3940572,"IFA Columbus, OH",0.236161,
+ifa_oh_k2,43047,ifa,OH,IFA,IFA_02,IFA,,39021,46500,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43050,ifa,OH,IFA,IFA_02,IFA,,39083,34540,3953102,"IFA Columbus, OH",12.2462,
+ifa_oh_k2,43054,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3953970,"IFA Columbus, OH",25.1684,
+ifa_oh_k2,43055,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3954040,"IFA Columbus, OH",7.42211,
+ifa_oh_k2,43056,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3934748,"IFA Columbus, OH",1.92193,
+ifa_oh_k2,43060,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3956770,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43061,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3958940,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43062,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3961112,"IFA Columbus, OH",1.08165,
+ifa_oh_k2,43064,ifa,OH,IFA,IFA_02,IFA,,39097,18140,3963030,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43065,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3964486,"IFA Columbus, OH",9.22881,
+ifa_oh_k2,43066,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3965298,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43067,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3965676,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43068,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3966390,"IFA Columbus, OH",0.981985,
+ifa_oh_k2,43070,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3968574,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43071,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3969652,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43072,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3969708,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43074,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3975602,"IFA Columbus, OH",0.169993,
+ifa_oh_k2,43076,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3933362,"IFA Columbus, OH",0.0397725,
+ifa_oh_k2,43077,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3978834,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43078,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3979072,"IFA Columbus, OH",0.0994313,
+ifa_oh_k2,43080,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3979114,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43081,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3983342,"IFA Columbus, OH",18.6717,
+ifa_oh_k2,43082,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3983342,"IFA Columbus, OH",5.92437,
+ifa_oh_k2,43084,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3986478,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43085,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3986604,"IFA Columbus, OH",47.9867,
+ifa_oh_k2,43101,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3900450,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43102,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3901630,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43103,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3973068,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43105,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3903758,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43106,ifa,OH,IFA,IFA_02,IFA,,39047,47920,3907188,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43107,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3908392,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43109,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43110,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3918000,"IFA Columbus, OH",1.36528,
+ifa_oh_k2,43111,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3912056,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43112,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3912252,"IFA Columbus, OH",0.384253,
+ifa_oh_k2,43113,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3915070,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43115,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3915336,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43116,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3918070,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43117,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3921784,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43119,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.00190908,
+ifa_oh_k2,43123,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3932592,"IFA Columbus, OH",2.45872,
+ifa_oh_k2,43125,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3932606,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43126,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3933740,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43127,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3934594,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43128,ifa,OH,IFA,IFA_02,IFA,,39047,47920,3938920,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43130,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3941720,"IFA Columbus, OH",6.1892,
+ifa_oh_k2,43135,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3942084,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43136,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3944086,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43137,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43138,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3944632,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43140,ifa,OH,IFA,IFA_02,IFA,,39097,18140,3944674,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43142,ifa,OH,IFA,IFA_02,IFA,,39047,47920,3950316,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43143,ifa,OH,IFA,IFA_02,IFA,,39097,18140,3953046,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43144,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3953410,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43145,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3954726,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43146,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3921784,"IFA Columbus, OH",0.0775222,
+ifa_oh_k2,43147,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3962498,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43148,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3963716,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43149,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3967804,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43150,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3969204,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43151,ifa,OH,IFA,IFA_02,IFA,,39097,18140,3950008,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43152,ifa,OH,IFA,IFA_02,IFA,,39073,18140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43153,ifa,OH,IFA,IFA_02,IFA,,39097,18140,3973768,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43154,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3974916,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43155,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3935126,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43156,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3976148,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43157,ifa,OH,IFA,IFA_02,IFA,,39045,18140,3976764,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43158,ifa,OH,IFA,IFA_02,IFA,,39073,18140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43160,ifa,OH,IFA,IFA_02,IFA,,39047,47920,3981718,"IFA Columbus, OH",2.08467,
+ifa_oh_k2,43162,ifa,OH,IFA,IFA_02,IFA,,39097,18140,3983580,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43164,ifa,OH,IFA,IFA_02,IFA,,39129,18140,3985414,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43201,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43202,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43203,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43204,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43205,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43206,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43207,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43209,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0814542,
+ifa_oh_k2,43210,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43211,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43212,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",3.59993,
+ifa_oh_k2,43213,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43214,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43215,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",25.4793,
+ifa_oh_k2,43217,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43218,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43219,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",3.15118,
+ifa_oh_k2,43220,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3979002,"IFA Columbus, OH",13.1937,
+ifa_oh_k2,43221,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3979002,"IFA Columbus, OH",12.8768,
+ifa_oh_k2,43222,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43223,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43224,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43227,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43228,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43229,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0312214,
+ifa_oh_k2,43230,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3929106,"IFA Columbus, OH",2.4917,
+ifa_oh_k2,43231,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43232,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43235,ifa,OH,IFA,IFA_02,IFA,,39049,18140,3918000,"IFA Columbus, OH",75.1602,
+ifa_oh_k2,43240,ifa,OH,IFA,IFA_02,IFA,,39041,18140,3918000,"IFA Columbus, OH",30.8795,
+ifa_oh_k2,43302,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3947754,"IFA Columbus, OH",2.57599,
+ifa_oh_k2,43310,ifa,OH,IFA,IFA_02,IFA,,39065,,3905116,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43311,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3905130,"IFA Columbus, OH",3.37642,
+ifa_oh_k2,43314,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3910954,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43315,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3912084,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43316,ifa,OH,IFA,IFA_02,IFA,,39175,,3912112,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43317,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3914114,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43318,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3921378,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43319,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3923702,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43320,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3924598,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43321,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3929050,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43322,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3931948,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43323,ifa,OH,IFA,IFA_02,IFA,,39175,,3933656,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43324,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3936988,"IFA Columbus, OH",7.14414,
+ifa_oh_k2,43325,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3937142,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43326,ifa,OH,IFA,IFA_02,IFA,,39065,,3939886,"IFA Columbus, OH",1.22762,
+ifa_oh_k2,43330,ifa,OH,IFA,IFA_02,IFA,,39175,,3940558,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43331,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3941608,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43332,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3941902,"IFA Columbus, OH",2.03093,
+ifa_oh_k2,43333,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3942966,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43334,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3947558,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43336,ifa,OH,IFA,IFA_02,IFA,,39091,13340,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43337,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3952276,"IFA Columbus, OH",0.392731,
+ifa_oh_k2,43338,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3952738,"IFA Columbus, OH",0.529442,
+ifa_oh_k2,43340,ifa,OH,IFA,IFA_02,IFA,,39065,,3953144,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43341,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3954152,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43342,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3964780,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43343,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3965200,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43344,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3966936,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43345,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3967118,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43346,ifa,OH,IFA,IFA_02,IFA,,39065,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43347,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3969176,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43348,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3969302,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43350,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3973950,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43351,ifa,OH,IFA,IFA_02,IFA,,39175,,3979044,"IFA Columbus, OH",1.80911,
+ifa_oh_k2,43356,ifa,OH,IFA,IFA_02,IFA,,39101,32020,3980500,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43357,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3983734,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43358,ifa,OH,IFA,IFA_02,IFA,,39159,18140,3983818,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43359,ifa,OH,IFA,IFA_02,IFA,,39175,,3984574,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43360,ifa,OH,IFA,IFA_02,IFA,,39091,13340,3979226,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43402,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3907972,"IFA Columbus, OH",2.97212,
+ifa_oh_k2,43403,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3907972,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43406,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3908112,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43407,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3910282,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43408,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3915588,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43410,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3916308,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43412,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3919736,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43413,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3919820,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43414,ifa,OH,IFA,IFA_02,IFA,,39173,45780,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43416,ifa,OH,IFA,IFA_02,IFA,,39123,41780,3925144,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43420,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3928826,"IFA Columbus, OH",0.58655,
+ifa_oh_k2,43430,ifa,OH,IFA,IFA_02,IFA,,39123,41780,3929722,"IFA Columbus, OH",0.5039,
+ifa_oh_k2,43431,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3930072,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43432,ifa,OH,IFA,IFA_01,IFA,,39123,41780,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43433,ifa,OH,IFA,IFA_01,IFA,,39123,41780,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43434,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3933376,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43435,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3934860,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43436,ifa,OH,IFA,IFA_01,IFA,,39123,41780,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43437,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3939074,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43438,ifa,OH,IFA,IFA_01,IFA,,39043,41780,3939662,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43439,ifa,OH,IFA,IFA_01,IFA,,39123,41780,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43440,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3947502,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43442,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3943904,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43443,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3945332,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43445,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3915588,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43446,ifa,OH,IFA,IFA_01,IFA,,39123,41780,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43447,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3950260,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43449,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3957582,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43450,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3961504,"IFA Columbus, OH",0.25338,
+ifa_oh_k2,43451,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3964108,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43452,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3964150,"IFA Cleveland, OH",0.423224,
+ifa_oh_k2,43456,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3965032,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43457,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3967314,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43458,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3968042,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43460,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3968686,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43462,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3968938,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43463,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3974846,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43464,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3979982,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43465,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3980486,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43466,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3982334,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43467,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3983888,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43468,ifa,OH,IFA,IFA_01,IFA,,39123,41780,3985442,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43469,ifa,OH,IFA,IFA_02,IFA,,39143,23380,3986492,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43501,ifa,OH,IFA,IFA_02,IFA,,39171,,3901588,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43502,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3902344,"IFA Columbus, OH",3.9486,
+ifa_oh_k2,43504,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3905732,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43505,ifa,OH,IFA,IFA_02,IFA,,39171,,3906810,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43506,ifa,OH,IFA,IFA_02,IFA,,39171,,3909792,"IFA Columbus, OH",5.51479,
+ifa_oh_k2,43510,ifa,OH,IFA,IFA_02,IFA,,39069,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43511,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3919750,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43512,ifa,OH,IFA,IFA_02,IFA,,39039,19580,3921308,"IFA Columbus, OH",0.100034,
+ifa_oh_k2,43515,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3921616,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43516,ifa,OH,IFA,IFA_02,IFA,,39069,,3921812,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43517,ifa,OH,IFA,IFA_02,IFA,,39171,,3924486,"IFA Columbus, OH",1.3572,
+ifa_oh_k2,43518,ifa,OH,IFA,IFA_02,IFA,,39171,,3924640,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43519,ifa,OH,IFA,IFA_02,IFA,,39039,19580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43520,ifa,OH,IFA,IFA_02,IFA,,39039,19580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43521,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3926768,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43522,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3931206,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43523,ifa,OH,IFA,IFA_02,IFA,,39069,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43524,ifa,OH,IFA,IFA_02,IFA,,39069,,3933096,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43525,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3934412,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43526,ifa,OH,IFA,IFA_02,IFA,,39039,19580,3935098,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43527,ifa,OH,IFA,IFA_02,IFA,,39069,,3935854,"IFA Columbus, OH",0.0731572,
+ifa_oh_k2,43528,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3935882,"IFA Columbus, OH",2.7536,
+ifa_oh_k2,43529,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3936568,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43530,ifa,OH,IFA,IFA_02,IFA,,39039,19580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43531,ifa,OH,IFA,IFA_02,IFA,,39171,,3940978,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43532,ifa,OH,IFA,IFA_02,IFA,,39069,,3943414,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43533,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3945626,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43534,ifa,OH,IFA,IFA_02,IFA,,39069,,3945794,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43535,ifa,OH,IFA,IFA_02,IFA,,39069,,3946942,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43536,ifa,OH,IFA,IFA_02,IFA,,39039,19580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43537,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3948342,"IFA Columbus, OH",60.7026,
+ifa_oh_k2,43540,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3949238,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43541,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3950708,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43542,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3984770,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43543,ifa,OH,IFA,IFA_02,IFA,,39171,,3951772,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43545,ifa,OH,IFA,IFA_02,IFA,,39069,,3953550,"IFA Columbus, OH",0.889756,
+ifa_oh_k2,43547,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3953718,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43548,ifa,OH,IFA,IFA_02,IFA,,39069,,3954110,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43549,ifa,OH,IFA,IFA_02,IFA,,39039,19580,3955874,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43551,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3962148,"IFA Columbus, OH",22.6422,
+ifa_oh_k2,43553,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3962344,"IFA Columbus, OH",0.517043,
+ifa_oh_k2,43554,ifa,OH,IFA,IFA_02,IFA,,39171,,3962834,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43555,ifa,OH,IFA,IFA_02,IFA,,39069,,3967104,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43556,ifa,OH,IFA,IFA_02,IFA,,39039,19580,3972256,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43557,ifa,OH,IFA,IFA_02,IFA,,39171,,3975140,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43558,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3975896,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43560,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3976022,"IFA Cleveland, OH",43.3416,
+ifa_oh_k2,43565,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3977070,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43566,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3981858,"IFA Columbus, OH",0.0306555,
+ifa_oh_k2,43567,ifa,OH,IFA,IFA_02,IFA,,39051,45780,3981928,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43569,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3983972,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43570,ifa,OH,IFA,IFA_02,IFA,,39171,,3984308,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43571,ifa,OH,IFA,IFA_02,IFA,,39095,45780,3984770,"IFA Columbus, OH",1.26048,
+ifa_oh_k2,43604,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.180582,
+ifa_oh_k2,43605,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43606,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",17.1091,
+ifa_oh_k2,43607,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43608,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43609,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43610,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43611,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43612,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43613,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43614,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",1.1821,
+ifa_oh_k2,43615,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",4.08559,
+ifa_oh_k2,43616,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3958730,"IFA Cleveland, OH",0.696797,
+ifa_oh_k2,43617,ifa,OH,IFA,IFA_01,IFA,,39095,45780,,"IFA Cleveland, OH",83.8649,
+ifa_oh_k2,43619,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3957190,"IFA Columbus, OH",0.431703,
+ifa_oh_k2,43620,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43623,ifa,OH,IFA,IFA_01,IFA,,39095,45780,3977000,"IFA Cleveland, OH",27.6062,
+ifa_oh_k2,43701,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3988084,"IFA Columbus, OH",7.47086,
+ifa_oh_k2,43711,ifa,OH,IFA,IFA_02,IFA,,39121,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43713,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3903926,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43716,ifa,OH,IFA,IFA_02,IFA,,39111,,3985834,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43717,ifa,OH,IFA,IFA_02,IFA,,39121,,3905158,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43718,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3905312,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43719,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3906138,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43720,ifa,OH,IFA,IFA_02,IFA,,39119,49780,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43721,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3909596,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43722,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3910128,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43723,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3910716,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43724,ifa,OH,IFA,IFA_02,IFA,,39121,,3910940,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43725,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3910996,"IFA Columbus, OH",2.14692,
+ifa_oh_k2,43727,ifa,OH,IFA,IFA_02,IFA,,39119,49780,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43728,ifa,OH,IFA,IFA_02,IFA,,39115,,3914086,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43730,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3918770,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43731,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3919456,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43732,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3919694,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43733,ifa,OH,IFA,IFA_02,IFA,,39059,15740,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43734,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3922820,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43735,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3923534,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43736,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3926348,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43738,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3929064,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43739,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3909596,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43740,ifa,OH,IFA,IFA_02,IFA,,39089,18140,3931458,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43746,ifa,OH,IFA,IFA_02,IFA,,39119,49780,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43747,ifa,OH,IFA,IFA_02,IFA,,39111,,3939130,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43748,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3939508,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43749,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3940264,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43750,ifa,OH,IFA,IFA_02,IFA,,39059,15740,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43754,ifa,OH,IFA,IFA_02,IFA,,39111,,3942980,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43755,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3944954,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43756,ifa,OH,IFA,IFA_02,IFA,,39115,,3945822,"IFA Columbus, OH",0.234658,
+ifa_oh_k2,43758,ifa,OH,IFA,IFA_02,IFA,,39115,,3946970,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43759,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3952346,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43760,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3909596,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43761,ifa,OH,IFA,IFA_02,IFA,,39127,18140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43762,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3954446,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43764,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3954866,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43766,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3955552,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43767,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3957372,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43768,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3958226,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43771,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3962442,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43772,ifa,OH,IFA,IFA_02,IFA,,39121,,3963436,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43773,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3965116,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43777,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3968560,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43778,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3970072,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43779,ifa,OH,IFA,IFA_02,IFA,,39121,,3970520,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43780,ifa,OH,IFA,IFA_02,IFA,,39059,15740,3971360,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43782,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3971962,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43783,ifa,OH,IFA,IFA_02,IFA,,39127,18140,3972977,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43786,ifa,OH,IFA,IFA_02,IFA,,39111,,3974300,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43787,ifa,OH,IFA,IFA_02,IFA,,39115,,3974748,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43788,ifa,OH,IFA,IFA_02,IFA,,39121,,3975406,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43791,ifa,OH,IFA,IFA_02,IFA,,39119,49780,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43793,ifa,OH,IFA,IFA_02,IFA,,39111,,3986436,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43802,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3900380,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43804,ifa,OH,IFA,IFA_02,IFA,,39075,,3903744,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43805,ifa,OH,IFA,IFA_02,IFA,,39031,18740,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43811,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3918266,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43812,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3918868,"IFA Columbus, OH",5.14478,
+ifa_oh_k2,43821,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3922610,"IFA Columbus, OH",0.428692,
+ifa_oh_k2,43822,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3928574,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43824,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3928882,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43830,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3953606,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43832,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3954432,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43836,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3963044,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43837,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3964346,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43840,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3974804,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43842,ifa,OH,IFA,IFA_02,IFA,,39119,49780,3977434,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43843,ifa,OH,IFA,IFA_02,IFA,,39031,18740,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43844,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3953816,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43845,ifa,OH,IFA,IFA_02,IFA,,39031,18740,3983608,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43901,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3900464,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43902,ifa,OH,IFA,IFA_02,IFA,,39013,48540,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43903,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3901938,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43905,ifa,OH,IFA,IFA_02,IFA,,39013,48540,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43906,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3953788,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43907,ifa,OH,IFA,IFA_02,IFA,,39067,,3910800,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43908,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3905718,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43909,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3906754,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43910,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3924066,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43912,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3908560,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43913,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3908812,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43914,ifa,OH,IFA,IFA_02,IFA,,39111,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43915,ifa,OH,IFA,IFA_02,IFA,,39111,,3915210,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43917,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3922022,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43920,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3910926,"IFA Columbus, OH",0.926905,
+ifa_oh_k2,43925,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3924066,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43926,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3925368,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43928,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3930352,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43930,ifa,OH,IFA,IFA_02,IFA,,39081,48260,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43931,ifa,OH,IFA,IFA_02,IFA,,39111,,3933222,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43932,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3937422,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43933,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3930352,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43934,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3941860,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43935,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3948104,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43938,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3950904,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43939,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3952976,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43940,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3953788,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43942,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3964542,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43943,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3965662,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43944,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3966824,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43945,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3970100,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43946,ifa,OH,IFA,IFA_02,IFA,,39111,,3970548,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43947,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3971640,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43948,ifa,OH,IFA,IFA_02,IFA,,39081,48260,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43950,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3969526,"IFA Columbus, OH",3.52237,
+ifa_oh_k2,43951,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3941188,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43952,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3974608,"IFA Columbus, OH",4.27674,
+ifa_oh_k2,43953,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3974608,"IFA Columbus, OH",0.00892496,
+ifa_oh_k2,43961,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3975000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43962,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3975574,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43963,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3976806,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43964,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3977112,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43967,ifa,OH,IFA,IFA_02,IFA,,39013,48540,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43968,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3982740,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43971,ifa,OH,IFA,IFA_02,IFA,,39081,48260,3987178,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43972,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3903786,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43973,ifa,OH,IFA,IFA_02,IFA,,39067,,3928798,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43974,ifa,OH,IFA,IFA_02,IFA,,39067,,3934090,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43976,ifa,OH,IFA,IFA_02,IFA,,39067,,3936260,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43977,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3927552,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43981,ifa,OH,IFA,IFA_02,IFA,,39067,,3954068,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43983,ifa,OH,IFA,IFA_02,IFA,,39013,48540,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43985,ifa,OH,IFA,IFA_02,IFA,,39013,48540,3935924,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43986,ifa,OH,IFA,IFA_02,IFA,,39067,,3939172,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,43988,ifa,OH,IFA,IFA_02,IFA,,39067,,3970814,"IFA Columbus, OH",0.0401703,
+ifa_oh_k2,44001,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3901798,"IFA Cleveland, OH",0.277053,
+ifa_oh_k2,44003,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3902050,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44004,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3902638,"IFA Cleveland, OH",2.43115,
+ifa_oh_k2,44010,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3903142,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44011,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3903352,"IFA Cleveland, OH",13.1035,
+ifa_oh_k2,44012,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3903464,"IFA Cleveland, OH",3.5029,
+ifa_oh_k2,44017,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3905690,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44021,ifa,OH,IFA,IFA_01,IFA,,39055,17410,3910436,"IFA Cleveland, OH",0.00047727,
+ifa_oh_k2,44022,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3936918,"IFA Cleveland, OH",1.15624,
+ifa_oh_k2,44023,ifa,OH,IFA,IFA_01,IFA,,39055,17410,3903585,"IFA Cleveland, OH",1.47527,
+ifa_oh_k2,44024,ifa,OH,IFA,IFA_01,IFA,,39055,17410,3913554,"IFA Cleveland, OH",3.32028,
+ifa_oh_k2,44026,ifa,OH,IFA,IFA_01,IFA,,39055,17410,3914100,"IFA Cleveland, OH",0.396998,
+ifa_oh_k2,44028,ifa,OH,IFA,IFA_01,IFA,,39093,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44030,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3918350,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44032,ifa,OH,IFA,IFA_01,IFA,,39007,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44035,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3925256,"IFA Cleveland, OH",7.31361,
+ifa_oh_k2,44039,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3956966,"IFA Cleveland, OH",0.330852,
+ifa_oh_k2,44040,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3929498,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44041,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3929610,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44044,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3931150,"IFA Cleveland, OH",1.76713,
+ifa_oh_k2,44045,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3931234,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44046,ifa,OH,IFA,IFA_01,IFA,,39055,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44047,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3938500,"IFA Cleveland, OH",1.27425,
+ifa_oh_k2,44048,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3940390,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44049,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3940544,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44050,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3941230,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44052,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3944856,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44053,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3944856,"IFA Cleveland, OH",0.00958652,
+ifa_oh_k2,44054,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3972060,"IFA Cleveland, OH",0.139906,
+ifa_oh_k2,44055,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3944856,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44056,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3945976,"IFA Cleveland, OH",0.859519,
+ifa_oh_k2,44057,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3946480,"IFA Cleveland, OH",2.05943,
+ifa_oh_k2,44060,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3949056,"IFA Cleveland, OH",42.6993,
+ifa_oh_k2,44062,ifa,OH,IFA,IFA_01,IFA,,39055,17410,3949700,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44064,ifa,OH,IFA,IFA_01,IFA,,39055,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44065,ifa,OH,IFA,IFA_01,IFA,,39055,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44067,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3956448,"IFA Cleveland, OH",1.04193,
+ifa_oh_k2,44068,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3956700,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44070,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3956882,"IFA Cleveland, OH",3.11617,
+ifa_oh_k2,44072,ifa,OH,IFA,IFA_01,IFA,,39055,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44074,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3957834,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44076,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3958856,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44077,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3959416,"IFA Cleveland, OH",14.7366,
+ifa_oh_k2,44080,ifa,OH,IFA,IFA_01,IFA,,39055,17410,3959934,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44081,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3956910,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44082,ifa,OH,IFA,IFA_01,IFA,,39007,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44084,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3967600,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44085,ifa,OH,IFA,IFA_01,IFA,,39007,17410,3967600,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44086,ifa,OH,IFA,IFA_01,IFA,,39055,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44087,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3978050,"IFA Cleveland, OH",10.1621,
+ifa_oh_k2,44089,ifa,OH,IFA,IFA_01,IFA,,39043,41780,3979716,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44090,ifa,OH,IFA,IFA_01,IFA,,39093,17410,3982642,"IFA Cleveland, OH",0.189363,
+ifa_oh_k2,44092,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3985036,"IFA Cleveland, OH",1.90227,
+ifa_oh_k2,44093,ifa,OH,IFA,IFA_01,IFA,,39007,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44094,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3940642,"IFA Cleveland, OH",24.2888,
+ifa_oh_k2,44095,ifa,OH,IFA,IFA_01,IFA,,39085,17410,3923618,"IFA Cleveland, OH",2.01923,
+ifa_oh_k2,44099,ifa,OH,IFA,IFA_01,IFA,,39007,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44101,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44102,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.377478,
+ifa_oh_k2,44103,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44104,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44105,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44106,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44107,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3941664,"IFA Cleveland, OH",2.25861,
+ifa_oh_k2,44108,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44109,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.958414,
+ifa_oh_k2,44110,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44111,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",1.45067,
+ifa_oh_k2,44112,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3923380,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44113,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",30.9609,
+ifa_oh_k2,44114,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",3.63344,
+ifa_oh_k2,44115,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",1.61809,
+ifa_oh_k2,44116,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3968056,"IFA Cleveland, OH",3.52457,
+ifa_oh_k2,44117,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3925704,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44118,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916014,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44119,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44120,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3971682,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44121,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3973264,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44122,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3904500,"IFA Cleveland, OH",93.4339,
+ifa_oh_k2,44123,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3925704,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44124,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3961686,"IFA Cleveland, OH",28.6298,
+ifa_oh_k2,44125,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3929428,"IFA Cleveland, OH",17.1967,
+ifa_oh_k2,44126,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3926446,"IFA Cleveland, OH",5.84179,
+ifa_oh_k2,44127,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44128,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3980990,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44129,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3961000,"IFA Cleveland, OH",6.46505,
+ifa_oh_k2,44130,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3949644,"IFA Cleveland, OH",4.57929,
+ifa_oh_k2,44131,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3937240,"IFA Cleveland, OH",69.0526,
+ifa_oh_k2,44132,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3925704,"IFA Cleveland, OH",0.0540609,
+ifa_oh_k2,44133,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3957008,"IFA Cleveland, OH",20.1918,
+ifa_oh_k2,44134,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3961000,"IFA Cleveland, OH",5.01267,
+ifa_oh_k2,44135,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3916000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44136,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3975098,"IFA Cleveland, OH",6.27254,
+ifa_oh_k2,44137,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3947306,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44138,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3958422,"IFA Cleveland, OH",1.24609,
+ifa_oh_k2,44139,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3972928,"IFA Cleveland, OH",39.5999,
+ifa_oh_k2,44140,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3904416,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44141,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3908364,"IFA Cleveland, OH",2.83441,
+ifa_oh_k2,44142,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3909288,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44143,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3935252,"IFA Cleveland, OH",1.67331,
+ifa_oh_k2,44144,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3909246,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44145,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3983622,"IFA Cleveland, OH",69.3148,
+ifa_oh_k2,44146,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3980738,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44147,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3909064,"IFA Cleveland, OH",25.6627,
+ifa_oh_k2,44149,ifa,OH,IFA,IFA_01,IFA,,39035,17410,3975098,"IFA Cleveland, OH",1.38671,
+ifa_oh_k2,44201,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3902848,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44202,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3903086,"IFA Cleveland, OH",2.96334,
+ifa_oh_k2,44203,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3957260,"IFA Cleveland, OH",1.37185,
+ifa_oh_k2,44212,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3909680,"IFA Cleveland, OH",2.40308,
+ifa_oh_k2,44214,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3910254,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44215,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3914254,"IFA Cleveland, OH",0.841141,
+ifa_oh_k2,44216,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3954562,"IFA Cleveland, OH",0.499365,
+ifa_oh_k2,44217,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3919344,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44221,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3919778,"IFA Cleveland, OH",0.484453,
+ifa_oh_k2,44223,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3919778,"IFA Cleveland, OH",2.54854,
+ifa_oh_k2,44224,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3974944,"IFA Cleveland, OH",0.640514,
+ifa_oh_k2,44230,ifa,OH,IFA,IFA_01,IFA,,39169,49300,3922568,"IFA Cleveland, OH",0.982382,
+ifa_oh_k2,44231,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3929442,"IFA Cleveland, OH",3.54494,
+ifa_oh_k2,44232,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3931860,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44233,ifa,OH,IFA,IFA_01,IFA,,39103,17410,,"IFA Cleveland, OH",0.702471,
+ifa_oh_k2,44234,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3935658,"IFA Cleveland, OH",0.284498,
+ifa_oh_k2,44235,ifa,OH,IFA,IFA_02,IFA,,39103,17410,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44236,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3936651,"IFA Cleveland, OH",24.1622,
+ifa_oh_k2,44240,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3939872,"IFA Cleveland, OH",3.81387,
+ifa_oh_k2,44241,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3975014,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44243,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3939872,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44250,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3941454,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44251,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3983468,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44253,ifa,OH,IFA,IFA_01,IFA,,39103,17410,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44254,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3944604,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44255,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3947180,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44256,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3948790,"IFA Cleveland, OH",21.1876,
+ifa_oh_k2,44260,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3975182,"IFA Cleveland, OH",1.63991,
+ifa_oh_k2,44262,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3953312,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44264,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3961574,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44266,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3965592,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44270,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3967356,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44272,ifa,OH,IFA,IFA_01,IFA,,39133,10420,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44273,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3971486,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44274,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3971836,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44275,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3973992,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44276,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3974566,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44278,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3976106,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44280,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3979184,"IFA Cleveland, OH",0.000954541,
+ifa_oh_k2,44281,ifa,OH,IFA,IFA_01,IFA,,39103,17410,3980304,"IFA Cleveland, OH",3.81906,
+ifa_oh_k2,44285,ifa,OH,IFA,IFA_01,IFA,,39133,10420,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44286,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3966530,"IFA Cleveland, OH",4.2577,
+ifa_oh_k2,44287,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3915008,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44288,ifa,OH,IFA,IFA_01,IFA,,39133,10420,3985946,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44301,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44302,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44303,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44304,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44305,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44306,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44307,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44308,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44310,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44311,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",2.89595,
+ifa_oh_k2,44312,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3931860,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44313,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",5.85,
+ifa_oh_k2,44314,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44319,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3954562,"IFA Cleveland, OH",1.14789,
+ifa_oh_k2,44320,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44321,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3962578,"IFA Cleveland, OH",2.10297,
+ifa_oh_k2,44325,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3901000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44333,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3951816,"IFA Cleveland, OH",54.2286,
+ifa_oh_k2,44401,ifa,OH,IFA,IFA_01,IFA,,39099,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44402,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44403,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3909200,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44404,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3958674,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44405,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3911066,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44406,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3911360,"IFA Cleveland, OH",13.8628,
+ifa_oh_k2,44408,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3917036,"IFA Cleveland, OH",5.35472,
+ifa_oh_k2,44410,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3918812,"IFA Cleveland, OH",0.410948,
+ifa_oh_k2,44411,ifa,OH,IFA,IFA_01,IFA,,39133,10420,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44412,ifa,OH,IFA,IFA_01,IFA,,39133,10420,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44413,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3923940,"IFA Cleveland, OH",0.203517,
+ifa_oh_k2,44415,ifa,OH,IFA,IFA_02,IFA,,39029,41400,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44417,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.730896,
+ifa_oh_k2,44418,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44420,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3930198,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44423,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3932680,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44424,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44425,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3936582,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44427,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3975574,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44428,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3940507,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44429,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3941440,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44430,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3942308,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44431,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3942560,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44432,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3944030,"IFA Columbus, OH",0.0348599,
+ifa_oh_k2,44436,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3945178,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44437,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3945934,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44438,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3948272,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44439,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44440,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3950778,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44441,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3953802,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44442,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3955118,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44443,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3955524,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44444,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3955650,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44445,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3955790,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44446,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3955916,"IFA Cleveland, OH",0.976608,
+ifa_oh_k2,44449,ifa,OH,IFA,IFA_01,IFA,,39099,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44450,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44451,ifa,OH,IFA,IFA_01,IFA,,39099,49660,,"IFA Cleveland, OH",0.91187,
+ifa_oh_k2,44452,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3956798,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44454,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3962302,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44455,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3968084,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44460,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3969834,"IFA Cleveland, OH",2.15354,
+ifa_oh_k2,44470,ifa,OH,IFA,IFA_01,IFA,,39155,49660,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44471,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3975126,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44473,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3980066,"IFA Cleveland, OH",0.422047,
+ifa_oh_k2,44481,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3944912,"IFA Cleveland, OH",3.76851,
+ifa_oh_k2,44483,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3980892,"IFA Cleveland, OH",0.203073,
+ifa_oh_k2,44484,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3936557,"IFA Cleveland, OH",4.80767,
+ifa_oh_k2,44485,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3980892,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44490,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3981732,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44491,ifa,OH,IFA,IFA_01,IFA,,39155,49660,3983384,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44493,ifa,OH,IFA,IFA_01,IFA,,39029,41400,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44502,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44503,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44504,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44505,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",5.54945,
+ifa_oh_k2,44506,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44507,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44509,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44510,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",1.0336,
+ifa_oh_k2,44511,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44512,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",27.1046,
+ifa_oh_k2,44514,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3986534,"IFA Cleveland, OH",3.78004,
+ifa_oh_k2,44515,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3903184,"IFA Cleveland, OH",9.45717,
+ifa_oh_k2,44555,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3988000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44601,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3901420,"IFA Cleveland, OH",2.80803,
+ifa_oh_k2,44606,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3940096,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44607,ifa,OH,IFA,IFA_02,IFA,,39019,15940,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44608,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3904458,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44609,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3905410,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44610,ifa,OH,IFA,IFA_02,IFA,,39075,,3905816,"IFA Columbus, OH",1.03772,
+ifa_oh_k2,44611,ifa,OH,IFA,IFA_02,IFA,,39075,,3953634,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44612,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3985228,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44613,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3908504,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44614,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3911304,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44615,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3912280,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44618,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3919974,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44619,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3920030,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44620,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3921560,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44621,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3921714,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44622,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3922456,"IFA Columbus, OH",1.00863,
+ifa_oh_k2,44624,ifa,OH,IFA,IFA_02,IFA,,39075,,3922848,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44625,ifa,OH,IFA,IFA_02,IFA,,39029,41400,3924024,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44626,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3924052,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44627,ifa,OH,IFA,IFA_02,IFA,,39075,,3928616,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44628,ifa,OH,IFA,IFA_02,IFA,,39075,,3930506,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44629,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3930702,"IFA Columbus, OH",0.00315975,
+ifa_oh_k2,44630,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3932298,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44632,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3934328,"IFA Cleveland, OH",12.7606,
+ifa_oh_k2,44633,ifa,OH,IFA,IFA_02,IFA,,39075,,3935994,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44634,ifa,OH,IFA,IFA_01,IFA,,39029,41400,3936176,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44637,ifa,OH,IFA,IFA_02,IFA,,39075,,3940180,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44638,ifa,OH,IFA,IFA_02,IFA,,39075,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44639,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3942518,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44640,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3943596,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44641,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3945094,"IFA Cleveland, OH",1.26199,
+ifa_oh_k2,44643,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3946844,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44644,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3941443,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44645,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3948048,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44646,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3948244,"IFA Columbus, OH",0.112318,
+ifa_oh_k2,44647,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3948244,"IFA Columbus, OH",0.0240736,
+ifa_oh_k2,44651,ifa,OH,IFA,IFA_02,IFA,,39019,15940,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44652,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3949588,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44653,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3949966,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44654,ifa,OH,IFA,IFA_02,IFA,,39075,,3905816,"IFA Columbus, OH",1.23982,
+ifa_oh_k2,44656,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3950764,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44657,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3950834,"IFA Columbus, OH",3.08885,
+ifa_oh_k2,44659,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3952682,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44660,ifa,OH,IFA,IFA_02,IFA,,39075,,3952822,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44661,ifa,OH,IFA,IFA_02,IFA,,39075,,3953634,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44662,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3953690,"IFA Columbus, OH",7.43679,
+ifa_oh_k2,44663,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3955216,"IFA Columbus, OH",8.58104,
+ifa_oh_k2,44665,ifa,OH,IFA,IFA_01,IFA,,39029,41400,,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44666,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3956756,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44667,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3958828,"IFA Columbus, OH",4.9049,
+ifa_oh_k2,44669,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3967664,"IFA Columbus, OH",0.0152726,
+ifa_oh_k2,44670,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3967664,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44671,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3970464,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44672,ifa,OH,IFA,IFA_01,IFA,,39099,49660,3971220,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44675,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3972242,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44676,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3972396,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44677,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3972788,"IFA Columbus, OH",1.26355,
+ifa_oh_k2,44678,ifa,OH,IFA,IFA_02,IFA,,39157,35420,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44680,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3974958,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44681,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3975210,"IFA Columbus, OH",4.7727e-06,
+ifa_oh_k2,44682,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3977924,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44683,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3978176,"IFA Columbus, OH",3.94611,
+ifa_oh_k2,44685,ifa,OH,IFA,IFA_01,IFA,,39153,10420,3931860,"IFA Cleveland, OH",6.40619,
+ifa_oh_k2,44687,ifa,OH,IFA,IFA_02,IFA,,39075,,3980612,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44688,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3982376,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44689,ifa,OH,IFA,IFA_02,IFA,,39075,,3985806,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44690,ifa,OH,IFA,IFA_02,IFA,,39075,,3986072,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44691,ifa,OH,IFA,IFA_02,IFA,,39169,49300,3986548,"IFA Columbus, OH",12.7633,
+ifa_oh_k2,44693,ifa,OH,IFA,IFA_02,IFA,,39067,,3921294,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44695,ifa,OH,IFA,IFA_02,IFA,,39019,15940,3907916,"IFA Columbus, OH",0.00047727,
+ifa_oh_k2,44697,ifa,OH,IFA,IFA_02,IFA,,39157,35420,3988168,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44699,ifa,OH,IFA,IFA_02,IFA,,39067,,3976890,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44702,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44703,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3912000,"IFA Cleveland, OH",0.565352,
+ifa_oh_k2,44704,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44705,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3912000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44706,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44707,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44708,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",1.79804,
+ifa_oh_k2,44709,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3912000,"IFA Cleveland, OH",0.00104403,
+ifa_oh_k2,44710,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44714,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3912000,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44718,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3912000,"IFA Cleveland, OH",19.2454,
+ifa_oh_k2,44720,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3931860,"IFA Cleveland, OH",10.2096,
+ifa_oh_k2,44721,ifa,OH,IFA,IFA_01,IFA,,39151,15940,3949588,"IFA Cleveland, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44730,ifa,OH,IFA,IFA_02,IFA,,39151,15940,3912000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44802,ifa,OH,IFA,IFA_02,IFA,,39147,45660,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44804,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3902316,"IFA Columbus, OH",1.32522,
+ifa_oh_k2,44805,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3902568,"IFA Columbus, OH",1.48905,
+ifa_oh_k2,44807,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3902820,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44809,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3904094,"IFA Columbus, OH",4.45405,
+ifa_oh_k2,44811,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3905228,"IFA Columbus, OH",12.391,
+ifa_oh_k2,44813,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3905284,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44814,ifa,OH,IFA,IFA_02,IFA,,39043,41780,3905900,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44815,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3906194,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44817,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3907062,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44818,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3907286,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44820,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3910030,"IFA Columbus, OH",0.0598612,
+ifa_oh_k2,44822,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3910632,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44824,ifa,OH,IFA,IFA_01,IFA,,39043,41780,3912476,"IFA Cleveland, OH",1.25221,
+ifa_oh_k2,44825,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3913694,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44826,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3916784,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44827,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3919330,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44828,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3927356,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44830,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3928014,"IFA Columbus, OH",6.68666,
+ifa_oh_k2,44833,ifa,OH,IFA,IFA_02,IFA,,39117,18140,3929162,"IFA Columbus, OH",1.56719,
+ifa_oh_k2,44836,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3932256,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44837,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3932368,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44838,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3934636,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44839,ifa,OH,IFA,IFA_01,IFA,,39043,41780,3937016,"IFA Cleveland, OH",8.61219,
+ifa_oh_k2,44840,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3939060,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44841,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3939578,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44842,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3945066,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44843,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3945276,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44844,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3945892,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44846,ifa,OH,IFA,IFA_02,IFA,,39043,41780,3950134,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44847,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3951618,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44849,ifa,OH,IFA,IFA_02,IFA,,39175,,3953942,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44850,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3954698,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44851,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3954908,"IFA Columbus, OH",0.67358,
+ifa_oh_k2,44853,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3955398,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44854,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3955776,"IFA Columbus, OH",0.00708269,
+ifa_oh_k2,44855,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3956420,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44856,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3956994,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44857,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3957302,"IFA Columbus, OH",0.741337,
+ifa_oh_k2,44859,ifa,OH,IFA,IFA_02,IFA,,39005,11740,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44861,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3958156,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44864,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3962190,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44865,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3963800,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44866,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3963996,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44867,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3966320,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44870,ifa,OH,IFA,IFA_01,IFA,,39043,41780,3970380,"IFA Cleveland, OH",7.16179,
+ifa_oh_k2,44874,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3970576,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44875,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3972102,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44878,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3972298,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44880,ifa,OH,IFA,IFA_02,IFA,,39005,11740,3975350,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44881,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3975392,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44882,ifa,OH,IFA,IFA_02,IFA,,39175,,3975980,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44883,ifa,OH,IFA,IFA_02,IFA,,39147,45660,3976778,"IFA Columbus, OH",16.7749,
+ifa_oh_k2,44887,ifa,OH,IFA,IFA_02,IFA,,39033,15340,3976932,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44889,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3906502,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44890,ifa,OH,IFA,IFA_02,IFA,,39077,35940,3985232,"IFA Columbus, OH",0.000715906,
+ifa_oh_k2,44901,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3947138,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44902,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3947138,"IFA Columbus, OH",8.02293,
+ifa_oh_k2,44903,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3947138,"IFA Columbus, OH",0.287427,
+ifa_oh_k2,44904,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3942994,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44905,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3947138,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44906,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3947138,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,44907,ifa,OH,IFA,IFA_02,IFA,,39139,31900,3947138,"IFA Columbus, OH",3.74806,
+ifa_oh_k2,45001,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3900436,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45002,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3907377,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45003,ifa,OH,IFA,IFA_02,IFA,,39135,,3916700,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45005,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3928476,"IFA Columbus, OH",2.04523,
+ifa_oh_k2,45011,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3933012,"IFA Columbus, OH",2.63595,
+ifa_oh_k2,45013,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3933012,"IFA Columbus, OH",1.53202,
+ifa_oh_k2,45014,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3925970,"IFA Columbus, OH",1.39986,
+ifa_oh_k2,45015,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3933012,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45030,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3933838,"IFA Columbus, OH",2.22174,
+ifa_oh_k2,45032,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3934384,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45033,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3936232,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45034,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3940348,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45036,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3942364,"IFA Columbus, OH",4.13247,
+ifa_oh_k2,45039,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3941755,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45040,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3948188,"IFA Columbus, OH",10.0299,
+ifa_oh_k2,45041,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3949462,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45042,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3949840,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45044,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3949840,"IFA Columbus, OH",0.927957,
+ifa_oh_k2,45050,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3951310,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45051,ifa,OH,IFA,IFA_02,IFA,,39061,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45052,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3971958,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45053,ifa,OH,IFA,IFA_02,IFA,,39017,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45054,ifa,OH,IFA,IFA_02,IFA,,39165,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45055,ifa,OH,IFA,IFA_02,IFA,,39017,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45056,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3959234,"IFA Columbus, OH",0.309003,
+ifa_oh_k2,45062,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3971444,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45064,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3972998,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45065,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3973446,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45066,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3974076,"IFA Columbus, OH",1.4991,
+ifa_oh_k2,45067,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3977322,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45068,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3982418,"IFA Columbus, OH",0.00636361,
+ifa_oh_k2,45069,ifa,OH,IFA,IFA_02,IFA,,39017,17140,3904840,"IFA Columbus, OH",10.8888,
+ifa_oh_k2,45070,ifa,OH,IFA,IFA_02,IFA,,39135,,3983216,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45101,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3900142,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45102,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3901742,"IFA Columbus, OH",3.36395,
+ifa_oh_k2,45103,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3904150,"IFA Columbus, OH",0.154545,
+ifa_oh_k2,45105,ifa,OH,IFA,IFA_02,IFA,,39001,,3905676,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45106,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3906068,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45107,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3906908,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45111,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3976582,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45112,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3914226,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45113,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3915406,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45115,ifa,OH,IFA,IFA_02,IFA,,39015,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45118,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3941419,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45119,ifa,OH,IFA,IFA_02,IFA,,39015,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45120,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3926880,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45121,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3929778,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45122,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3930996,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45123,ifa,OH,IFA,IFA_02,IFA,,39071,,3932088,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45130,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3932984,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45131,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3935168,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45132,ifa,OH,IFA,IFA_02,IFA,,39071,,3935210,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45133,ifa,OH,IFA,IFA_02,IFA,,39071,,3935560,"IFA Columbus, OH",0.630674,
+ifa_oh_k2,45135,ifa,OH,IFA,IFA_02,IFA,,39071,,3942476,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45140,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3945108,"IFA Columbus, OH",2.743,
+ifa_oh_k2,45142,ifa,OH,IFA,IFA_02,IFA,,39071,,3969666,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45144,ifa,OH,IFA,IFA_02,IFA,,39001,,3947012,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45146,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3948118,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45147,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3949504,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45148,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3949896,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45150,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3950176,"IFA Columbus, OH",5.65237,
+ifa_oh_k2,45152,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3952374,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45153,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3952416,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45154,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3952906,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45155,ifa,OH,IFA,IFA_02,IFA,,39071,,3953186,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45156,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3953956,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45157,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3955384,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45158,ifa,OH,IFA,IFA_02,IFA,,39025,17140,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45159,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3955748,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45160,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3959220,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45162,ifa,OH,IFA,IFA_02,IFA,,39165,17140,3963576,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45164,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3964360,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45166,ifa,OH,IFA,IFA_02,IFA,,39027,48940,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45167,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3967272,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45168,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3969316,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45169,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3969400,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45171,ifa,OH,IFA,IFA_02,IFA,,39015,17140,3941657,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45172,ifa,OH,IFA,IFA_02,IFA,,39071,,3972578,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45174,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3976428,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45176,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3985288,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45177,ifa,OH,IFA,IFA_02,IFA,,39027,48940,3985792,"IFA Columbus, OH",0.0164601,
+ifa_oh_k2,45202,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",42.404,
+ifa_oh_k2,45203,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45204,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45205,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45206,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45207,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45208,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",1.03813,
+ifa_oh_k2,45209,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",15.6865,
+ifa_oh_k2,45211,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",3.06796,
+ifa_oh_k2,45212,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3957386,"IFA Columbus, OH",0.119309,
+ifa_oh_k2,45213,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45214,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45215,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3986730,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45216,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45217,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3969470,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45218,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3932158,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45219,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45220,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45223,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45224,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45225,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45226,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",2.06048,
+ifa_oh_k2,45227,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",1.00681,
+ifa_oh_k2,45229,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.151884,
+ifa_oh_k2,45230,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",13.4635,
+ifa_oh_k2,45231,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3954264,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45232,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45233,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3946088,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45236,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3939914,"IFA Columbus, OH",17.1763,
+ifa_oh_k2,45237,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",2.62874,
+ifa_oh_k2,45238,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",11.0369,
+ifa_oh_k2,45239,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3984812,"IFA Columbus, OH",0.464935,
+ifa_oh_k2,45240,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3927706,"IFA Columbus, OH",0.517043,
+ifa_oh_k2,45241,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3971892,"IFA Columbus, OH",4.02087,
+ifa_oh_k2,45242,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3907300,"IFA Columbus, OH",19.7944,
+ifa_oh_k2,45243,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3976582,"IFA Columbus, OH",3.43203,
+ifa_oh_k2,45244,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3922674,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45245,ifa,OH,IFA,IFA_02,IFA,,39025,17140,3986254,"IFA Columbus, OH",5.91075,
+ifa_oh_k2,45246,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3974104,"IFA Columbus, OH",4.76478,
+ifa_oh_k2,45247,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3976197,"IFA Columbus, OH",1.59397,
+ifa_oh_k2,45248,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3946088,"IFA Columbus, OH",8.73088,
+ifa_oh_k2,45249,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3951716,"IFA Columbus, OH",10.1469,
+ifa_oh_k2,45251,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3956553,"IFA Columbus, OH",0.116329,
+ifa_oh_k2,45252,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3922960,"IFA Columbus, OH",0.0102718,
+ifa_oh_k2,45255,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3927776,"IFA Columbus, OH",0.248783,
+ifa_oh_k2,45267,ifa,OH,IFA,IFA_02,IFA,,39061,17140,3915000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45301,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3904720,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45302,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3902092,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45303,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3902120,"IFA Columbus, OH",0.0389771,
+ifa_oh_k2,45304,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3902330,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45305,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3905102,"IFA Columbus, OH",0.0125681,
+ifa_oh_k2,45306,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3907832,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45307,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3907930,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45308,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3908084,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45309,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3909358,"IFA Columbus, OH",1.78657,
+ifa_oh_k2,45310,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3910296,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45311,ifa,OH,IFA,IFA_02,IFA,,39135,,3911024,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45312,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3912462,"IFA Columbus, OH",0.208249,
+ifa_oh_k2,45314,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3912784,"IFA Columbus, OH",0.23862,
+ifa_oh_k2,45315,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3915644,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45316,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3916056,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45317,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3968574,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45318,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3919050,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45319,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3922288,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45320,ifa,OH,IFA,IFA_02,IFA,,39135,,3924234,"IFA Columbus, OH",0.569039,
+ifa_oh_k2,45321,ifa,OH,IFA,IFA_02,IFA,,39135,,3924766,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45322,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3915644,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45323,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3925452,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45324,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3925914,"IFA Columbus, OH",0.0934296,
+ifa_oh_k2,45325,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3926656,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45326,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3927412,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45327,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3929932,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45328,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3929974,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45330,ifa,OH,IFA,IFA_02,IFA,,39135,,3931472,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45331,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3932340,"IFA Columbus, OH",3.41536,
+ifa_oh_k2,45332,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3935896,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45333,ifa,OH,IFA,IFA_02,IFA,,39149,43380,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45334,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3938220,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45335,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3971983,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45336,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3940054,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45337,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3942028,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45338,ifa,OH,IFA,IFA_02,IFA,,39135,,3942938,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45339,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3983902,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45340,ifa,OH,IFA,IFA_02,IFA,,39149,43380,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45341,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3948832,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45342,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3949434,"IFA Columbus, OH",4.36738,
+ifa_oh_k2,45344,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3954334,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45345,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3954852,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45346,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3954978,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45347,ifa,OH,IFA,IFA_02,IFA,,39135,,3955188,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45348,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3955818,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45349,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3956588,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45350,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3957064,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45351,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3958912,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45352,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3959598,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45353,ifa,OH,IFA,IFA_02,IFA,,39149,43380,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45354,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3962414,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45356,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3962848,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45358,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3962890,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45359,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3963534,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45360,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3964262,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45361,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3964430,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45362,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3957064,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45363,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3969344,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45365,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3972424,"IFA Columbus, OH",4.917,
+ifa_oh_k2,45368,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3973124,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45369,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3973796,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45370,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3974216,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45371,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3976876,"IFA Columbus, OH",2.31101,
+ifa_oh_k2,45372,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3977308,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45373,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3977588,"IFA Columbus, OH",23.1606,
+ifa_oh_k2,45377,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3979492,"IFA Columbus, OH",3.27856,
+ifa_oh_k2,45378,ifa,OH,IFA,IFA_02,IFA,,39135,,3979898,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45380,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3979912,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45381,ifa,OH,IFA,IFA_02,IFA,,39135,,3982880,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45382,ifa,OH,IFA,IFA_02,IFA,,39135,,3983804,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45383,ifa,OH,IFA,IFA_02,IFA,,39109,19430,3983902,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45384,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3985092,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45385,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3986772,"IFA Columbus, OH",1.47601,
+ifa_oh_k2,45387,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3986940,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45388,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3987164,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45389,ifa,OH,IFA,IFA_02,IFA,,39021,46500,3914296,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45390,ifa,OH,IFA,IFA_02,IFA,,39037,24820,3978624,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45402,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.7471,
+ifa_oh_k2,45403,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45404,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45405,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45406,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45409,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3940040,"IFA Columbus, OH",1.2824,
+ifa_oh_k2,45410,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45414,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",5.01271,
+ifa_oh_k2,45415,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3915644,"IFA Columbus, OH",0.720323,
+ifa_oh_k2,45416,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3977504,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45417,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45419,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3957764,"IFA Columbus, OH",0.711309,
+ifa_oh_k2,45420,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3940040,"IFA Columbus, OH",0.258032,
+ifa_oh_k2,45423,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45424,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3936610,"IFA Columbus, OH",1.82306,
+ifa_oh_k2,45426,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3977504,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45428,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45429,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3940040,"IFA Columbus, OH",8.29732,
+ifa_oh_k2,45430,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3904720,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45431,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3904720,"IFA Columbus, OH",8.84302,
+ifa_oh_k2,45432,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3904720,"IFA Columbus, OH",1.43559,
+ifa_oh_k2,45433,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3986660,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45434,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3904720,"IFA Columbus, OH",0.864916,
+ifa_oh_k2,45435,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3925914,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45439,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3952010,"IFA Columbus, OH",0.252157,
+ifa_oh_k2,45440,ifa,OH,IFA,IFA_02,IFA,,39057,19430,3940040,"IFA Columbus, OH",9.5887,
+ifa_oh_k2,45449,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3983090,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45458,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3913190,"IFA Columbus, OH",25.2736,
+ifa_oh_k2,45459,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3913190,"IFA Columbus, OH",12.6868,
+ifa_oh_k2,45469,ifa,OH,IFA,IFA_02,IFA,,39113,19430,3921000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45501,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3974118,"IFA Columbus, OH",0.0790281,
+ifa_oh_k2,45502,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3974118,"IFA Columbus, OH",15.2525,
+ifa_oh_k2,45503,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3974118,"IFA Columbus, OH",1.08481,
+ifa_oh_k2,45504,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3974118,"IFA Columbus, OH",5.12619,
+ifa_oh_k2,45505,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3974118,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45506,ifa,OH,IFA,IFA_02,IFA,,39023,44220,3974118,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45601,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3914184,"IFA Columbus, OH",9.5776,
+ifa_oh_k2,45612,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3903604,"IFA Columbus, OH",3.39583,
+ifa_oh_k2,45613,ifa,OH,IFA,IFA_02,IFA,,39131,,3974734,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45614,ifa,OH,IFA,IFA_02,IFA,,39053,23680,3906320,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45616,ifa,OH,IFA,IFA_02,IFA,,39001,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45617,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3907888,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45618,ifa,OH,IFA,IFA_02,IFA,,39001,,3913834,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45619,ifa,OH,IFA,IFA_02,IFA,,39087,26580,3913904,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45620,ifa,OH,IFA,IFA_02,IFA,,39053,23680,3913932,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45621,ifa,OH,IFA,IFA_02,IFA,,39079,,3916434,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45622,ifa,OH,IFA,IFA_02,IFA,,39163,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45623,ifa,OH,IFA,IFA_02,IFA,,39053,23680,3919554,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45624,ifa,OH,IFA,IFA_02,IFA,,39131,,3919848,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45628,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3928182,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45629,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3928532,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45630,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3928896,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45631,ifa,OH,IFA,IFA_02,IFA,,39053,23680,3929204,"IFA Columbus, OH",0.790467,
+ifa_oh_k2,45634,ifa,OH,IFA,IFA_02,IFA,,39163,,3932956,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45636,ifa,OH,IFA,IFA_02,IFA,,39145,39020,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45638,ifa,OH,IFA,IFA_02,IFA,,39087,26580,3937464,"IFA Columbus, OH",0.851692,
+ifa_oh_k2,45640,ifa,OH,IFA,IFA_02,IFA,,39079,,3937842,"IFA Columbus, OH",1.8245,
+ifa_oh_k2,45642,ifa,OH,IFA,IFA_02,IFA,,39131,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45644,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3940376,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45645,ifa,OH,IFA,IFA_02,IFA,,39087,26580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45646,ifa,OH,IFA,IFA_02,IFA,,39131,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45647,ifa,OH,IFA,IFA_02,IFA,,39163,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45648,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3945304,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45650,ifa,OH,IFA,IFA_02,IFA,,39001,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45651,ifa,OH,IFA,IFA_02,IFA,,39163,,3945696,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45652,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3945906,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45653,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3950876,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45654,ifa,OH,IFA,IFA_02,IFA,,39163,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45656,ifa,OH,IFA,IFA_02,IFA,,39079,,3957596,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45657,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3959066,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45658,ifa,OH,IFA,IFA_02,IFA,,39053,23680,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45659,ifa,OH,IFA,IFA_02,IFA,,39087,26580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45660,ifa,OH,IFA,IFA_02,IFA,,39001,,3961420,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45661,ifa,OH,IFA,IFA_02,IFA,,39131,,3962708,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45662,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3964304,"IFA Columbus, OH",2.19024,
+ifa_oh_k2,45663,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3984140,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45669,ifa,OH,IFA,IFA_02,IFA,,39087,26580,3902722,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45671,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3965508,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45672,ifa,OH,IFA,IFA_02,IFA,,39163,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45673,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3966880,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45674,ifa,OH,IFA,IFA_02,IFA,,39053,23680,3967258,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45677,ifa,OH,IFA,IFA_02,IFA,,39145,39020,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45678,ifa,OH,IFA,IFA_02,IFA,,39087,26580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45679,ifa,OH,IFA,IFA_02,IFA,,39001,,3971206,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45680,ifa,OH,IFA,IFA_02,IFA,,39087,26580,3973670,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45681,ifa,OH,IFA,IFA_02,IFA,,39141,17060,3907888,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45682,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3973824,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45684,ifa,OH,IFA,IFA_02,IFA,,39001,,3928896,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45685,ifa,OH,IFA,IFA_02,IFA,,39079,,3913169,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45686,ifa,OH,IFA,IFA_02,IFA,,39053,23680,3980178,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45688,ifa,OH,IFA,IFA_02,IFA,,39087,26580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45690,ifa,OH,IFA,IFA_02,IFA,,39131,,3981935,"IFA Columbus, OH",3.55535,
+ifa_oh_k2,45692,ifa,OH,IFA,IFA_02,IFA,,39079,,3982712,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45693,ifa,OH,IFA,IFA_02,IFA,,39001,,3984294,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45694,ifa,OH,IFA,IFA_02,IFA,,39145,39020,3984588,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45695,ifa,OH,IFA,IFA_02,IFA,,39163,,3985190,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45696,ifa,OH,IFA,IFA_02,IFA,,39087,26580,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45697,ifa,OH,IFA,IFA_02,IFA,,39001,,3985876,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45698,ifa,OH,IFA,IFA_02,IFA,,39163,,3988028,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45699,ifa,OH,IFA,IFA_02,IFA,,39145,39020,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45701,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3902736,"IFA Columbus, OH",3.18046,
+ifa_oh_k2,45710,ifa,OH,IFA,IFA_02,IFA,,39105,,3901042,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45711,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3901784,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45714,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3905424,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45715,ifa,OH,IFA,IFA_02,IFA,,39115,,3906222,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45716,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3909834,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45719,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3913778,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45720,ifa,OH,IFA,IFA_02,IFA,,39105,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45721,ifa,OH,IFA,IFA_02,IFA,,39167,31930,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45723,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3918588,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45724,ifa,OH,IFA,IFA_02,IFA,,39167,31930,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45727,ifa,OH,IFA,IFA_02,IFA,,39121,,3921910,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45729,ifa,OH,IFA,IFA_02,IFA,,39167,31930,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45732,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3930674,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45734,ifa,OH,IFA,IFA_02,IFA,,39111,,3931542,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45735,ifa,OH,IFA,IFA_02,IFA,,39009,11900,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45739,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3935826,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45740,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3938304,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45741,ifa,OH,IFA,IFA_02,IFA,,39105,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45742,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3944128,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45743,ifa,OH,IFA,IFA_02,IFA,,39105,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45744,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3921868,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45745,ifa,OH,IFA,IFA_02,IFA,,39121,,3945220,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45746,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3946158,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45750,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3947628,"IFA Columbus, OH",12.5997,
+ifa_oh_k2,45760,ifa,OH,IFA,IFA_02,IFA,,39105,,3949756,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45761,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3950456,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45764,ifa,OH,IFA,IFA_02,IFA,,39073,18140,3953886,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45766,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3955062,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45767,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3948286,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45768,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3955342,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45769,ifa,OH,IFA,IFA_02,IFA,,39105,,3964024,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45770,ifa,OH,IFA,IFA_02,IFA,,39105,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45771,ifa,OH,IFA,IFA_02,IFA,,39105,,3965256,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45772,ifa,OH,IFA,IFA_02,IFA,,39105,,3977812,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45773,ifa,OH,IFA,IFA_02,IFA,,39167,31930,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45775,ifa,OH,IFA,IFA_02,IFA,,39105,,3969358,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45776,ifa,OH,IFA,IFA_02,IFA,,39105,,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45778,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3974622,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45779,ifa,OH,IFA,IFA_02,IFA,,39105,,3976050,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45780,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3976568,"IFA Columbus, OH",0.210794,
+ifa_oh_k2,45782,ifa,OH,IFA,IFA_02,IFA,,39009,11900,3977406,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45783,ifa,OH,IFA,IFA_02,IFA,,39105,,3977812,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45784,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3980150,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45786,ifa,OH,IFA,IFA_02,IFA,,39167,31930,3981760,"IFA Columbus, OH",0.00636361,
+ifa_oh_k2,45788,ifa,OH,IFA,IFA_02,IFA,,39167,31930,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45789,ifa,OH,IFA,IFA_02,IFA,,39167,31930,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45801,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3943554,"IFA Columbus, OH",0.0715331,
+ifa_oh_k2,45804,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3943554,"IFA Columbus, OH",3.37747,
+ifa_oh_k2,45805,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3943554,"IFA Columbus, OH",6.62707,
+ifa_oh_k2,45806,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3927944,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45807,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3930814,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45808,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3904752,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45809,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3930814,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45810,ifa,OH,IFA,IFA_02,IFA,,39065,,3900198,"IFA Columbus, OH",0.468587,
+ifa_oh_k2,45812,ifa,OH,IFA,IFA_02,IFA,,39065,,3901210,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45813,ifa,OH,IFA,IFA_02,IFA,,39125,,3902204,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45814,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3902400,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45815,ifa,OH,IFA,IFA_02,IFA,,39137,,3905396,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45816,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3905662,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45817,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3907426,"IFA Columbus, OH",5.49131,
+ifa_oh_k2,45819,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3909974,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45820,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3910884,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45821,ifa,OH,IFA,IFA_02,IFA,,39125,,3912700,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45822,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3912868,"IFA Columbus, OH",2.02696,
+ifa_oh_k2,45826,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3914156,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45827,ifa,OH,IFA,IFA_02,IFA,,39137,,3916266,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45828,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3916532,"IFA Columbus, OH",8.27681,
+ifa_oh_k2,45830,ifa,OH,IFA,IFA_02,IFA,,39137,,3918014,"IFA Columbus, OH",2.239,
+ifa_oh_k2,45831,ifa,OH,IFA,IFA_02,IFA,,39137,,3918504,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45832,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3918546,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45833,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3921602,"IFA Columbus, OH",0.106159,
+ifa_oh_k2,45835,ifa,OH,IFA,IFA_02,IFA,,39065,,3922260,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45836,ifa,OH,IFA,IFA_02,IFA,,39065,,3922946,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45838,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3924794,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45840,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3927048,"IFA Columbus, OH",6.13894,
+ifa_oh_k2,45841,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3938948,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45843,ifa,OH,IFA,IFA_02,IFA,,39065,,3927636,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45844,ifa,OH,IFA,IFA_02,IFA,,39137,,3927818,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45845,ifa,OH,IFA,IFA_02,IFA,,39149,43380,3927832,"IFA Columbus, OH",0.0439317,
+ifa_oh_k2,45846,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3927902,"IFA Columbus, OH",0.000715906,
+ifa_oh_k2,45848,ifa,OH,IFA,IFA_02,IFA,,39137,,3930282,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45849,ifa,OH,IFA,IFA_02,IFA,,39125,,3932620,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45850,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3983930,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45851,ifa,OH,IFA,IFA_02,IFA,,39125,,3934552,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45853,ifa,OH,IFA,IFA_02,IFA,,39137,,3939536,"IFA Columbus, OH",1.40651,
+ifa_oh_k2,45854,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3941118,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45855,ifa,OH,IFA,IFA_02,IFA,,39125,,3941986,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45856,ifa,OH,IFA,IFA_02,IFA,,39137,,3942602,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45858,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3945808,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45859,ifa,OH,IFA,IFA_02,IFA,,39065,,3946046,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45860,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3947586,"IFA Columbus, OH",6.85218,
+ifa_oh_k2,45861,ifa,OH,IFA,IFA_02,IFA,,39125,,3949000,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45862,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3949042,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45863,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3949728,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45864,ifa,OH,IFA,IFA_02,IFA,,39137,,3950358,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45865,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3950918,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45866,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3951674,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45867,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3952598,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45868,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3952668,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45869,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3954194,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45870,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3954628,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45871,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3954838,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45872,ifa,OH,IFA,IFA_02,IFA,,39173,45780,3956154,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45873,ifa,OH,IFA,IFA_02,IFA,,39125,,3957792,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45874,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3958002,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45875,ifa,OH,IFA,IFA_02,IFA,,39137,,3958982,"IFA Columbus, OH",0.257531,
+ifa_oh_k2,45876,ifa,OH,IFA,IFA_02,IFA,,39137,,3959052,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45877,ifa,OH,IFA,IFA_02,IFA,,39137,,3959738,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45879,ifa,OH,IFA,IFA_02,IFA,,39125,,3961252,"IFA Columbus, OH",0.0795451,
+ifa_oh_k2,45880,ifa,OH,IFA,IFA_02,IFA,,39125,,3961322,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45881,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3965634,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45882,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3967874,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45883,ifa,OH,IFA,IFA_02,IFA,,39107,16380,3969540,"IFA Columbus, OH",0.18348,
+ifa_oh_k2,45884,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3969596,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45885,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3969680,"IFA Columbus, OH",0.00636361,
+ifa_oh_k2,45886,ifa,OH,IFA,IFA_02,IFA,,39125,,3971080,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45887,ifa,OH,IFA,IFA_02,IFA,,39003,30620,3974034,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45888,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3978848,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45889,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3979394,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45890,ifa,OH,IFA,IFA_02,IFA,,39063,22300,3979534,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45891,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3979562,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45893,ifa,OH,IFA,IFA_02,IFA,,39137,,3979590,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45894,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3924794,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45895,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3980766,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45896,ifa,OH,IFA,IFA_02,IFA,,39011,47540,3982390,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45897,ifa,OH,IFA,IFA_02,IFA,,39063,22300,,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45898,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3985736,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity
+ifa_oh_k2,45899,ifa,OH,IFA,IFA_02,IFA,,39161,46780,3986632,"IFA Columbus, OH",0.0,no cell in the extract: territory at zero opportunity

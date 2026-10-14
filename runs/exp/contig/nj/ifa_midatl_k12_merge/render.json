@@ -1,0 +1,37 @@
+{
+  "corridor": true,
+  "fac": {
+    "path": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/tables.json",
+    "sha256": "a7a6aa9aa0ab6d15101d57316d95a64b7eb7371a6e1a2c0e6079ae130f381b57"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "c0b55858e94b46bad14e03d8476c4b562244421e1b4704aab5c069d38092a382",
+    "summary.svg": "c2249dbe55ccc37b47f54f63e5ffa43fe661a2dc920e7701e794d3451372e940",
+    "zip_IFA.png": "4cd83d39ca825e046e47171e5e6a643044fcbfce50019600a56332fd499c416c",
+    "zip_pages.pdf": "f3432f9d73f04efd98243fac0b01ceab912b38f15ce54338d2ff78f10f8b8d81"
+  },
+  "inputs": {
+    "districts.csv": "98066cc887abfb489d247640471962474247bed1c7f900e79a38fddbbf526cda",
+    "ledger.csv": "6e89d6af53f22fc73f96ddc7cbaa8a83eea3637df372d8a22e2a354bf15dbfc0",
+    "manifest.json": "7566f42da5dcbff914b1097b2310704c4836fd3f0a3ba05094c93923e9325b16",
+    "run.json": "15c0ff0c8b1ff36a280a88895c58a8d14df1aab0d88b56f5e0a1594c3b40a291"
+  },
+  "label": "ifa_midatl_k12_merge: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 merged from single-state runs, full-graph M1 audit",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "1 districts in pieces, 2 detached pieces (largest 0.345 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 29043 (ZCTA, fine channel) cells with no row, 0 owned twice, 9 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-08T09:13:14+00:00",
+  "renderer": {
+    "code_sha256": "bb2ec4f7a66bf61daaabaedcd7044404cd7d512212f41b2a27cf2898582c8ba1",
+    "commit": "49e20f6bad04a529347ff6e50901e2492ace1351",
+    "diff_sha256": "639a76b45a4d366514154bb37e4707187cbb3282fbdbfa92cac648e47fa83bc5",
+    "dirty": true
+  },
+  "title": "ifa_midatl_k12_merge: IFA Middle Atlantic, NJ 3 + PA 4 + NY 5 merged from single-state runs, full-graph M1 audit, FAILS M1",
+  "zcta_shp": "/tmp/tdr_neck/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/tmp/tdr_neck/runs/autonomous_2026-10-05/batch/geo"
+}

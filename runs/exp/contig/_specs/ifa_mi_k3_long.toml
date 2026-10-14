@@ -1,0 +1,18 @@
+[scenario]
+name = "ifa_mi_k3_long"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.1
+
+[channels.IFA]
+margin = false
+k = 3
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["MI"]
+eta = 0.05
+max_size = 1
+max_dist_km = 900
+dist_km = { }
+delta = 0.089
+final_delta = 0.089

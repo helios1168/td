@@ -1,0 +1,92 @@
+{
+  "band": [
+    798.74,
+    1004.86248490157
+  ],
+  "districts": 26,
+  "groups": {
+    "NY#1": {
+      "mass": 988.06942775,
+      "units": [
+        "01.0",
+        "02.0",
+        "04.0",
+        "05.1"
+      ]
+    },
+    "NY#2": {
+      "mass": 868.781115495,
+      "units": [
+        "12.0",
+        "13.0",
+        "13.1",
+        "14.0",
+        "14.2",
+        "15.0",
+        "16.0"
+      ]
+    },
+    "NY#3": {
+      "mass": 860.6325087300002,
+      "units": [
+        "03.0",
+        "03.1",
+        "05.0",
+        "06.0",
+        "07.0",
+        "08.0",
+        "09.0",
+        "10.0",
+        "11.0",
+        "14.1",
+        "14.3"
+      ]
+    },
+    "NY#4": {
+      "mass": 826.7261733740002,
+      "units": [
+        "21.0",
+        "23.0",
+        "24.0",
+        "24.1",
+        "25.0",
+        "26.0"
+      ]
+    },
+    "NY#5": {
+      "mass": 824.7581003099999,
+      "units": [
+        "17.0",
+        "17.1",
+        "18.0",
+        "18.1",
+        "18.2",
+        "19.0",
+        "20.0",
+        "20.1",
+        "22.0"
+      ]
+    }
+  },
+  "k": 5,
+  "level": "cd",
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 31474 (ZCTA, fine channel) cells with no row, 0 owned twice, 2 mass necks listed beside M1"
+  },
+  "partition": {
+    "bound": 1461.8686499999997,
+    "cut_km": 1461.85365,
+    "gap": 0.0,
+    "objective": 1461.8686499999997,
+    "seconds": 27.9,
+    "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "success": true,
+    "unit_edges": 59,
+    "units": 37
+  },
+  "state": "NY",
+  "units": 37,
+  "verdict": "fail"
+}

@@ -1,0 +1,82 @@
+{
+  "arm": "arm1",
+  "channels": {
+    "IFA": {
+      "connected": false,
+      "cut_border_km": 3816.85895,
+      "exclave_splits": [],
+      "fixed_split": [],
+      "group_delta_needed": 0.147,
+      "groups": [
+        {
+          "border_km": null,
+          "bound": null,
+          "columns": 11237,
+          "cuts": 0,
+          "dag": true,
+          "delta": 0.147,
+          "districts": [
+            "TX#1",
+            "TX#2",
+            "TX#3"
+          ],
+          "free_zctas": 1989,
+          "gap": null,
+          "iterations": 1,
+          "moment": null,
+          "neck_cuts": 0,
+          "neck_exempt": [],
+          "necks_cut": [],
+          "note": "no incumbent (Time limit reached)",
+          "objective": null,
+          "rows": 29724,
+          "seconds": 480.02,
+          "status": "unknown",
+          "tried": [
+            {
+              "dag": true,
+              "delta": 0.147,
+              "note": "no incumbent (Time limit reached)",
+              "seconds": 480.02,
+              "status": "unknown"
+            }
+          ],
+          "units": [
+            "TX"
+          ]
+        }
+      ],
+      "master_status": "optimal",
+      "mean_dev": 7.957145628874682e-06,
+      "plan_delta": 0.147,
+      "shape": {
+        "border_km": 0.0,
+        "moment": 0.0
+      },
+      "share_only": [
+        "TX#1",
+        "TX#2",
+        "TX#3"
+      ],
+      "single_connector": null,
+      "split_units": [
+        "TX"
+      ],
+      "status": "unknown",
+      "undrawn_zctas": 1989,
+      "vanished_shares": [],
+      "worst_dev": 1.1935718443797874e-05
+    }
+  },
+  "fixed_targets": false,
+  "internal_delta": 0.147,
+  "m1": {
+    "coverage": "footprint coverage (D3)",
+    "status": "fail",
+    "summary": "0 districts in pieces, 0 detached pieces (largest 0 \u03c4), 1 necks, 0 channel ZCTAs with no owner, 31311 (ZCTA, fine channel) cells with no row, 0 owned twice, 3 mass necks listed beside M1"
+  },
+  "plan_seconds": 0.0,
+  "plans_file": null,
+  "scenario": "ifa_tx_k3",
+  "sequential": false
+}
