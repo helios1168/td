@@ -159,3 +159,17 @@ def test_corridor_blocks_restrict_to_footprint():
     v = region_arith.CORRIDOR_VARIANTS["B2 NY,NJ,PA,NE / DE,MD,DC,VA"]
     assert region_arith.corridor_blocks(v, foot) == [["CT", "NY", "PA"], ["VA"]]
     assert region_arith.corridor_blocks([["DE", "MD"]], foot) == []
+
+
+def test_report_header_carries_arithmetic_notice():
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        for fn in ("7b_ifa_combos.md", "4_summary.md"):
+            path = os.path.join(d, fn)
+            region_arith.write_report(path, ["# a pass table", "", "| K | pass |", "|---|---|", "| 50 | yes |"])
+            head = open(path, encoding="utf-8").read().splitlines()
+            assert head[0] == region_arith.ARITH_NOTICE and head[2] == "# a pass table"
+            assert "Arithmetic only; no feasibility certificate" in head[0]
+    # no generated report bypasses the helper
+    src = open(os.path.join(HERE, "..", "tools", "exp", "region_arith.py"), encoding="utf-8").read()
+    assert "fh.write(" not in src.replace('fh.write("\\n".join([ARITH_NOTICE', "")

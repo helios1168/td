@@ -1052,6 +1052,17 @@ def md_ifa_confirm(sts: dict, adj: dict, parts: dict) -> tuple:
     return lines + [""], full
 
 
+ARITH_NOTICE = ("> **Arithmetic only; no feasibility certificate.** Every pass, feasible-K and band/win "
+                "entry below is a necessary check on dollar sums, not a statement that a connected, "
+                "balanced district map exists.")
+
+
+def write_report(path: str, lines: list) -> None:
+    """One generated markdown report, the arithmetic-only notice first (every table is standalone)."""
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join([ARITH_NOTICE, ""] + list(lines)) + "\n")
+
+
 def run_search(extract: str, out: str) -> dict:
     """--search: 7_partition_search.md and 7b_ifa_combos.md under `out`."""
     cells = overnight.state_cells(extract)
@@ -1107,10 +1118,8 @@ def run_search(extract: str, out: str) -> dict:
            "| B best variant (every channel) | B feasible (win) |", "|---|---|---|---|---|"]
     doc += head_rows + ["", "## C. IFA under P1 (IFA regions)", ""] + ifa_lines
     doc += ["## Per grid point", ""] + sections
-    with open(os.path.join(out, "7_partition_search.md"), "w", encoding="utf-8") as fh:
-        fh.write("\n".join(doc) + "\n")
-    with open(os.path.join(out, "7b_ifa_combos.md"), "w", encoding="utf-8") as fh:
-        fh.write("\n".join(["# IFA P1: per-region K combos by total", ""] + ifa_full) + "\n")
+    write_report(os.path.join(out, "7_partition_search.md"), doc)
+    write_report(os.path.join(out, "7b_ifa_combos.md"), ["# IFA P1: per-region K combos by total", ""] + ifa_full)
     return results
 
 
@@ -1168,8 +1177,7 @@ def run(extract: str, out: str) -> dict:
     files["4_summary.md"] = md_summary(results, parts)
     files["1b_matrix.md"] = md_matrix(results, parts)
     for fn, lines in files.items():
-        with open(os.path.join(out, fn), "w", encoding="utf-8") as fh:
-            fh.write("\n".join(lines) + "\n")
+        write_report(os.path.join(out, fn), lines)
     with open(os.path.join(out, "region_arith.json"), "w", encoding="utf-8") as fh:
         json.dump({n: {"f0": r["tr"]["f0"], "points": r["points"], "grouping": r["grouping"],
                        "reach": {p: {tk: {c: {str(k): v[:2] for k, v in rc.items()}
