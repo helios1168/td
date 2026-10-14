@@ -1,15 +1,15 @@
 # State — support-master territory design
 
-**Updated:** 2026-10-07 · **Branch:** `main`
+**Updated:** 2026-10-13 · **Branch:** `m5-studio/integrate`
 
 ## Now
 
-Fewest-splits pipeline (#103 #129 #130): three review rounds done, carve-first adopted (library of gate-passed districts plus a selection MILP). Checkpoint, owner decisions D1–E4 and open routes R1–R6: `docs/lenses/REVIEW_2026-10-07.md`. The three issues are off ready (v1 bodies invalid). Earlier today #123–#128 landed; six tier-P main maps await the owner.
+Main map: 21-point grid, no plan in window at 20; best `ne-48-bal/r2` 0 pieces, 1 neck. Sealing w1-50: 1 piece, 1 neck (NYC). IFA K48–54 all eligible (Manhattan, MD F1 excepted). Detail: `docs/RESULTS.md` (last 2 sections); `results/ifa_kgrid_2026-10-13/REVIEW.md`; [main](https://github.com/helios1168/td/tree/m5-studio/overnight-results/results). Handoffs, research: `.rpiv/artifacts/{handoffs,research}/` 2026-10-13.
 
 ## Next
 
-- Pick routes; v3 bodies replacing #103 #129 #130; /triage D1–E3 into PROBLEM.md and WATCHDOG.md.
+- T2 shape filter, T3 NY K5 hub rule, T4 division sealing; overnight.py for IFA; exec-style fixes; review `zip-census-views`.
 
 ## Blocked
 
-Owner: IFA's MD under rule C (R1–R4); library budget (R5); main-map K (R6); place tier-P maps; #124 defaults; #112; #111 #83; #85; #3 #59 #75 #76.
+Owner: bite/hull-fill limits, metro cut at a state line, effort band, band hard, "compact", certificate vs incumbent, Manhattan (main), rule C.

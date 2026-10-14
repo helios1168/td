@@ -1311,3 +1311,27 @@ This is a display change only. M1 is still judged by the gate on whole 2025 ZCTA
 Cost: about the same render time; summary.svg grows about 2× (ne_plains_wh11 1.6 → 3.2 MB).
 
 Re-rendering is limited by the owner ("do not rerender the 58 other maps"). The 58 existing shortlist images keep the legacy look, and `tools/mandates/check.py --tracking` reports them as stale (renderer code changed) until they are re-rendered. Only new maps get the new look. Previews: `/tmp/iss/128-preview-B2/`.
+
+## Main-map overnight grid 2026-10-13
+
+Branch `m5-studio/national-overnight` (code `54f5afa`..`16820a5`), run on m5 and m2 on the dollar extract (`instance_descaled_usd.json.gz`, gitignored); `tools/exp/contig/overnight.py run|collect|morning`. The index, every point's ZIP pages and the table are published at
+[`results/main_overnight_2026-10-13`](https://github.com/helios1168/td/tree/m5-studio/overnight-results/results/main_overnight_2026-10-13) (branch `m5-studio/overnight-results`).
+
+- **21 grid points** (five WIFI structures by K totals 48–52). **20 of 21 have no plan inside their dollar windows**: the master's smallest feasible δ is above the δ that fits the window.
+- **17 `-wide` siblings** (δ floored at the master's smallest feasible, up to 0.35; a planner decision while the owner slept, recorded in `GRID.json`) were drawn. **All fail M1.** 13–22 of their districts land outside the windows, so they are diagnostics, not deliverables.
+- **Best map: `ne-48-bal/r2`**, the one point whose plan is in window: 0 pieces, 1 neck (national_08, the Delaware Memorial Bridge, 5.67 km), all 48 districts in their windows. Shortlist entry `ne-48-bal` (tier 3, fails M1).
+- **Sealing test, `w1-50-wide`** (branch `m5-studio/regional-seal`, region specs in `scenarios/regions/main/`, run output under `runs/exp/regional_2026-10-13/`): CT+RI K1, MA+ME+NH+VT K1, NY K5, NJ+PA K5, DC+DE+MD+VA K3 (DE–VA forbidden), merged by `merge.py`. Gap-width M1 goes from 2 pieces / 2 necks to **1 piece / 1 neck, both NYC** (default gate: 1 piece, 3 necks). Sealed districts outside the dollar window go from 6 of 15 to **0 of 15**; the whole map from 16 to 10 outside, all in the unsealed part. Cost: split states 11 to 13 (MD, VA), multistate districts 16 to 18, worse land ratios (NY 753, VA 278, MD 64).
+- **Looks study** (`tools/looks/study.py`, [`results/looks_study_2026-10-13`](https://github.com/helios1168/td/tree/m5-studio/overnight-results/results/looks_study_2026-10-13)): the Census divisions reach a max bite of 0.21 and a min hull fill of 0.52; the real maps (main grid and IFA) run from 0.29 to 0.61 and from 0.24 to 0.48. The Lake Michigan district scores bite 0.18, inside the Census range, so a hull measure alone does not catch it. Executive-style renders of `ne-48-bal/r2` and the regional merge: [`results/exec_render_2026-10-13`](https://github.com/helios1168/td/tree/m5-studio/overnight-results/results/exec_render_2026-10-13).
+
+Regenerate: `"$TD_PY" -u tools/exp/contig/overnight.py run|collect|morning` (see its docstring); `"$TD_PY" tools/looks/study.py`.
+
+## IFA K grid 48–54 2026-10-13
+
+Branch `m5-studio/ifa-kgrid` @ `4b5c99a` (code and bundle squashed here; its ~174 MB of run outputs stay on that branch as the archive). A nested ladder from `ifa_conus_v2` (K52): each step redraws one region and every other region is v2's folder unchanged. Per-district window $1,000–1,437.5M (E2); headline M1 is the gap-width gate (G3), the strict gate beside it. Bundle: `results/ifa_kgrid_2026-10-13/` (`REVIEW.md`, `REVIEW.pdf`, per-K maps, `districts.csv`, `score.txt`, `check.txt`).
+
+- **All seven points (K 48..54) are eligible with the Manhattan neck and the MD F1 district excepted**: no point fails or errors; 47/0/1 (K48) up to 53/0/1 (K54) districts in/under/over the window, the one over being the MD F1 district ($1,923.8M with WV, $1,771.5M as MD+DE).
+- Mean $ per district falls from $1,277.8M (K48) to $1,135.8M (K54); split states 19, 19, 19, 17, 16, 19, 22 for K48..54.
+- Under the strict gate El Paso (every K) and the West K6 Phoenix+NM+UT 5.5 km Utah neck (K48–50) also fail; G3 clears them.
+- Looks to review: the Salt Lake City district spanning six states (K54, at $1,002M), SA10's Charlotte and Charleston districts, Indianapolis + southwest Michigan (MW13).
+
+Regenerate: `tools/exp/contig/kgrid.sh <K>` then `kgrid_review.py` (they read the region folders and `scenarios/regions/ifa/`).
