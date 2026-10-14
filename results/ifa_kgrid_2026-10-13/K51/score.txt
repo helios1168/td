@@ -1,0 +1,122 @@
+# K51
+dir: runs/exp/contig/ifa/kgrid/K51
+eligible: no
+  - audit: M1 polygon contiguity fails
+  - M1: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1
+  - audit at ±15%: 51 districts, 9 outside the final tolerance
+K: IFA 51 = 51
+IFA: K 51, $1,218M (-2.5% of target), worst 60.0%, splits 17 CA CT FL IL IN KS MA MI MN NC NJ NY OH PA TN TX WI, thin 0, small 2, crowded 0, pieces 0, extent 1,758 km, max states 5
+    small IFA_43 KS 0.198 tau
+    small IFA_51 CA 0.048 tau
+    multipart piece IFA_02: part of 02872, 1.659 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04737+04768, 137.714 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04945, 112.606 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04743, 46.254 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04732, 14.987 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04854, 12.165 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04854, 3.502 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 04854, 3.473 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 03870, 0.138 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 03870, 0.031 km2 (visual defect, not M1)
+    multipart piece IFA_04: part of 03870, 0.030 km2 (visual defect, not M1)
+    multipart piece IFA_08: part of 11702+11706+11770+11772+11782, 32.562 km2 (visual defect, not M1)
+    multipart piece IFA_08: part of 11693, 1.386 km2 (visual defect, not M1)
+    multipart piece IFA_09: part of 10464, 1.098 km2 (visual defect, not M1)
+    multipart piece IFA_10: part of 11370, 1.677 km2 (visual defect, not M1)
+    multipart piece IFA_11: part of 13618, 6.483 km2 (visual defect, not M1)
+    multipart piece IFA_11: part of 13618, 6.370 km2 (visual defect, not M1)
+    multipart piece IFA_11: part of 13618, 1.629 km2 (visual defect, not M1)
+    multipart piece IFA_11: part of 13135, 0.557 km2 (visual defect, not M1)
+    multipart piece IFA_11: part of 13624, 0.039 km2 (visual defect, not M1)
+    multipart piece IFA_12: part of 12866, 0.233 km2 (visual defect, not M1)
+    multipart piece IFA_16: part of 18940, 0.378 km2 (visual defect, not M1)
+    multipart piece IFA_17: part of 33040, 0.151 km2 (visual defect, not M1)
+    multipart piece IFA_18: part of 33617, 0.019 km2 (visual defect, not M1)
+    multipart piece IFA_19: part of 33437, 0.097 km2 (visual defect, not M1)
+    multipart piece IFA_19: part of 33437, 0.015 km2 (visual defect, not M1)
+    multipart piece IFA_26: part of 70461, 1.395 km2 (visual defect, not M1)
+    multipart piece IFA_26: part of 70563, 1.215 km2 (visual defect, not M1)
+    multipart piece IFA_28: part of 42211, 12.390 km2 (visual defect, not M1)
+    multipart piece IFA_28: part of 40212, 0.167 km2 (visual defect, not M1)
+    multipart piece IFA_30: part of 76544, 48.641 km2 (visual defect, not M1)
+    multipart piece IFA_30: part of 76511, 1.200 km2 (visual defect, not M1)
+    multipart piece IFA_32: part of 60431, 1.157 km2 (visual defect, not M1)
+    multipart piece IFA_32: part of 60435, 0.258 km2 (visual defect, not M1)
+    multipart piece IFA_32: part of 60563, 0.119 km2 (visual defect, not M1)
+    multipart piece IFA_36: part of 49630, 58.335 km2 (visual defect, not M1)
+    multipart piece IFA_36: part of 49654, 21.481 km2 (visual defect, not M1)
+    multipart piece IFA_36: part of 48881, 0.028 km2 (visual defect, not M1)
+    multipart piece IFA_37: part of 43456, 0.188 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 65.030 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 40.033 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 31.809 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 20.334 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54814, 14.937 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 7.342 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 6.183 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 5.419 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 5.363 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 5.353 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 4.247 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 3.108 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 2.695 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54814, 2.002 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54814, 1.988 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 1.361 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 1.256 km2 (visual defect, not M1)
+    multipart piece IFA_39: part of 54850, 0.670 km2 (visual defect, not M1)
+    multipart piece IFA_40: part of 54246, 58.836 km2 (visual defect, not M1)
+    multipart piece IFA_40: part of 54212, 11.339 km2 (visual defect, not M1)
+    multipart piece IFA_40: part of 54246, 3.962 km2 (visual defect, not M1)
+    multipart piece IFA_40: part of 54246, 2.659 km2 (visual defect, not M1)
+    multipart piece IFA_40: part of 54246, 0.000 km2 (visual defect, not M1)
+    multipart piece IFA_41: part of 55073, 0.063 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 84511+84512+84515+84525+84530+84531+84532+84533+84534+84535+84536+84540, 22,941.768 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 89445, 1,155.466 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 84022, 94.134 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 89406, 53.179 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 89830, 45.705 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 84542, 22.359 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 82939, 8.148 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 89061, 7.370 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 83546, 7.234 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 84648, 4.024 km2 (visual defect, not M1)
+    multipart piece IFA_46: part of 83873, 0.977 km2 (visual defect, not M1)
+    multipart piece IFA_47: part of 93042, 67.426 km2 (visual defect, not M1)
+    multipart piece IFA_48: part of 92782, 5.518 km2 (visual defect, not M1)
+    multipart piece IFA_48: part of 92504, 0.069 km2 (visual defect, not M1)
+    multipart piece IFA_48: part of 92268, 0.001 km2 (visual defect, not M1)
+    multipart piece IFA_49: part of 90704, 3.362 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 98221+98222+98243+98245+98250+98261+98279+98280+98286+98297, 770.863 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 97731, 123.361 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 98221, 21.195 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 98201, 1.792 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 97913, 1.439 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 98221, 0.877 km2 (visual defect, not M1)
+    multipart piece IFA_51: part of 98262, 0.823 km2 (visual defect, not M1)
+channel-state splits: 17: IFA:CA IFA:CT IFA:FL IFA:IL IFA:IN IFA:KS IFA:MA IFA:MI IFA:MN IFA:NC IFA:NJ IFA:NY IFA:OH IFA:PA IFA:TN IFA:TX IFA:WI
+distinct split states: 17: CA CT FL IL IN KS MA MI MN NC NJ NY OH PA TN TX WI
+defects: 2 = thin 0 + small 2 + crowded 0 + pieces 0 (0 pieces weighing 1 + mass/tau each, on the ledger; M1's piece count 0)
+multipart pieces: 86 (listed, not in the defects sum)
+M1: fail: 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1 (strict, on the ledger)
+    IFA/IFA_09: neck 5.50 km wide cuts off 40 ZIPs (10001...), 5.2% of its land area and 47.5% of its mass; cut 10024-10029 0.73 km, 10025-10026 0.86 km, 10025-10027 1.33 km, 10025-10029 1.13 km, 10029-10128 1.45 km
+    IFA/IFA_30: neck 6.14 km wide cuts off 44 ZIPs (79734...), 6.9% of its land area and 6.9% of its mass; cut 79718-79734 6.14 km
+    IFA/IFA_03: mass neck (diagnostic, not M1) 4.87 km wide cuts off 1 ZIPs (02110...), 0.0% of its land area and 6.2% of its mass; cut 02108-02110 0.21 km, 02109-02110 2.38 km, 02110-02111 0.92 km, 02110-02210 1.36 km
+    IFA/IFA_09: mass neck (diagnostic, not M1) 0.69 km wide cuts off 1 ZIPs (10170...), 0.0% of its land area and 8.3% of its mass; cut 10017-10170 0.51 km, 10168-10170 0.10 km, 10170-10174 0.09 km
+    IFA/IFA_13: mass neck (diagnostic, not M1) 7.17 km wide cuts off 1 ZIPs (19103...), 0.1% of its land area and 5.4% of its mass; cut 19102-19103 2.23 km, 19103-19104 1.26 km, 19103-19130 1.54 km, 19103-19146 2.14 km
+    IFA/IFA_15: mass neck (diagnostic, not M1) 5.46 km wide cuts off 1 ZIPs (19406...), 0.1% of its land area and 8.3% of its mass; cut 19355-19406 0.71 km, 19406-19460 4.76 km
+    IFA/IFA_19: mass neck (diagnostic, not M1) 4.37 km wide cuts off 5 ZIPs (33609...), 0.2% of its land area and 8.6% of its mass; cut 33606-33609 2.77 km, 33606-33629 1.60 km
+    IFA/IFA_22: mass neck (diagnostic, not M1) 8.61 km wide cuts off 1 ZIPs (21031...), 0.0% of its land area and 6.1% of its mass; cut 21030-21031 8.61 km
+    IFA/IFA_29: mass neck (diagnostic, not M1) 3.64 km wide cuts off 1 ZIPs (77046...), 0.0% of its land area and 5.5% of its mass; cut 77027-77046 2.91 km, 77046-77098 0.73 km
+    IFA/IFA_30: mass neck (diagnostic, not M1) 3.33 km wide cuts off 32 ZIPs (79821...), 1.4% of its land area and 6.9% of its mass; cut 79839-79853 3.33 km
+    IFA/IFA_31: mass neck (diagnostic, not M1) 4.84 km wide cuts off 2 ZIPs (76102...), 0.0% of its land area and 5.8% of its mass; cut 76102-76103 0.89 km, 76102-76111 3.95 km
+    IFA/IFA_32: mass neck (diagnostic, not M1) 5.10 km wide cuts off 1 ZIPs (60606...), 0.0% of its land area and 6.3% of its mass; cut 60601-60606 0.28 km, 60602-60606 0.28 km, 60603-60606 0.29 km, 60604-60606 0.28 km, 60606-60607 1.29 km, 60606-60654 1.00 km, ...
+    IFA/IFA_33: mass neck (diagnostic, not M1) 2.40 km wide cuts off 10 ZIPs (60404...), 0.2% of its land area and 16.3% of its mass; cut 60404-60410 1.02 km, 60404-60436 1.38 km
+    IFA/IFA_41: mass neck (diagnostic, not M1) 3.20 km wide cuts off 1 ZIPs (55402...), 0.0% of its land area and 5.6% of its mass; cut 55401-55402 1.03 km, 55402-55403 1.30 km, 55402-55404 0.37 km, 55402-55415 0.50 km
+    IFA/IFA_49: mass neck (diagnostic, not M1) 7.23 km wide cuts off 1 ZIPs (91101...), 0.0% of its land area and 8.3% of its mass; cut 91101-91105 1.74 km, 91101-91106 5.49 km
+    IFA/IFA_51: mass neck (diagnostic, not M1) 9.72 km wide cuts off 4 ZIPs (98104...), 0.0% of its land area and 5.2% of its mass; cut 98101-98104 2.48 km, 98101-98154 0.10 km, 98104-98122 1.99 km, 98104-98134 4.59 km, 98104-98144 0.56 km
+shape: extent 1,757.9 km, 5 states per district
+balance: worst 59.97%, mean 10.49%
+review: none (rule: among eligible runs scored together, one split more than the fewest and fewer defects than every run at the fewest)
+verdict: K51: INELIGIBLE (audit: M1 polygon contiguity fails; M1: fail, 0 districts in pieces, 0 detached pieces (largest 0 τ), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1; audit at ±15%: 51 districts, 9 outside the final tolerance) | 17 splits (17 states) | 2 defects (thin 0, small 2, crowded 0, pieces 0 weighing 0, largest 0 τ; multipart pieces 86, listed only) | extent 1,758 km, 5 states | worst 60.0%, mean 10.5%
+
