@@ -1,4 +1,4 @@
-"""tests/test_mandates.py -- the mandate register, docs/problem/MANDATES.md (#107).
+"""tests/test_mandates.py -- the mandate register, the `## Mandates` section of PROBLEM.md (#107).
 
 The register fails the suite when a row lacks a field, a status is not `hard`, `deferred` or
 `waived`, a deferred or waived row names no trigger test, a check names a file that does not
@@ -31,7 +31,8 @@ import re
 import tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-REGISTER = os.path.join(ROOT, "docs", "problem", "MANDATES.md")
+REGISTER = os.path.join(ROOT, "PROBLEM.md")
+SECTION = "## Mandates"
 REFERENCE = os.path.join(ROOT, "reference", "2025")
 
 FIELDS = ("status", "owner's words", "definition", "check", "latest value", "waiver history",
@@ -42,14 +43,25 @@ TRIGGER_REF = re.compile(r"tests/test_mandates\.py::(\w+)")
 BUILT_BY = re.compile(r"built by #\d+")
 
 
+def section(text: str) -> str:
+    """The `## Mandates` section of PROBLEM.md: from its heading to the next `## ` heading."""
+    lines = text.splitlines()
+    starts = [i for i, ln in enumerate(lines) if ln.rstrip() == SECTION]
+    if len(starts) != 1:
+        raise ValueError(f"PROBLEM.md needs exactly one {SECTION!r} heading, found {len(starts)}")
+    end = next((i for i in range(starts[0] + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    return "\n".join(lines[starts[0] + 1:end])
+
+
 def parse(text: str) -> dict[str, dict[str, str]]:
-    """{mandate id: {field: value}}, one entry per `##` section.  The id is the heading up to its
-    colon; a field is a `- **name:** value` line plus the indented lines under it."""
+    """{mandate id: {field: value}}, one entry per `###` section of the mandates section.  The id
+    is the heading up to its colon; a field is a `- **name:** value` line plus the indented lines
+    under it."""
     rows: dict[str, dict[str, str]] = {}
     row = field = None
     for line in text.splitlines():
-        if line.startswith("## "):
-            mid = line[3:].split(":", 1)[0].strip()
+        if line.startswith("### "):
+            mid = line[4:].split(":", 1)[0].strip()
             if mid in rows:
                 raise ValueError(f"mandate {mid!r} appears twice")
             row = rows[mid] = {}
@@ -140,13 +152,26 @@ def trigger_full_zcta_graph(ref_dir: str = REFERENCE):
 # ------------------------------------------------------------------------------ the register
 def _register():
     with open(REGISTER, encoding="utf-8") as fh:
-        return parse(fh.read())
+        return parse(section(fh.read()))
 
 
 def test_register_rows_are_complete_and_none_has_expired():
     rows = _register()
     assert rows, f"{REGISTER} has no rows"
     assert not problems(rows), problems(rows)
+
+
+def test_the_mandates_section_is_found_once_and_ends_at_the_next_section():
+    with open(REGISTER, encoding="utf-8") as fh:
+        text = fh.read()
+    body = section(text)
+    assert "### M1:" in body and "## Settled" not in body and "## Goal" not in body
+    for bad in ("# x\n", "# x\n## Mandates\n## Mandates\n"):
+        try:
+            section(bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"section accepted {bad!r}")
 
 
 def test_register_keeps_m1_and_masking():
@@ -168,7 +193,7 @@ def test_m1_keeps_the_owners_terms():
 
 # ------------------------------------------------------------------------------ fixtures
 ROW = """\
-## X1: a fixture mandate
+### X1: a fixture mandate
 
 - **status:** {status}
 - **owner's words:** owner, 2026-10-05, a fixture.
@@ -231,7 +256,7 @@ def test_the_2026_09_01_contiguity_deferral_replayed_on_the_2026_09_28_graph_fai
     """The archived row (`archive/pre-support-2026-09:docs/problem/PROBLEM.md`), as a deferral
     with the trigger it should have had."""
     text = """\
-## C0: adjacency contiguity
+### C0: adjacency contiguity
 
 - **status:** deferred
 - **owner's words:** "Adjacency contiguity is not required | settled | 2026-09-01 | user | 547
