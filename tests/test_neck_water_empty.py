@@ -281,3 +281,20 @@ def test_fringes_that_touch_only_through_a_relay_do_not_add_up_to_a_neck():
     joined = audit.NeckGraph(_world({**border, ("a", "b"): 3000.0, ("b", "c"): 3000.0}, aland=land))
     [nk] = audit.district_necks(set("habc"), {}, joined, free={"z"})
     assert nk.zips == ("a", "b", "c") and nk.width_km == 3.0, nk
+
+
+def test_fringes_linked_only_by_a_voronoi_gap_are_two_fringes():
+    """h holds 94% of the land, a and b 3% each, each touching h across 1 km and each other not at all
+    on a polygon edge.  A Voronoi row a-b (`voronoi_gaps`, may cross water) widens passages (G1) but does
+    not join the district's own ZCTAs into one part (owner, 2026-10-06, "One connected piece"; R5 reads
+    the land-only rows alone): two 3% fringes, no neck.  The same pair as a land-only gap row (`gaps`,
+    R5) is one 6% part on a 2 km cut: a neck."""
+    border = {("h", "a"): 1000.0, ("h", "b"): 1000.0}
+    land = {"h": 94.0, "a": 3.0, "b": 3.0}
+    voronoi = dict(_world(border, aland=land), voronoi_gaps={("a", "b"): 2e4})
+    assert audit.district_necks(set("hab"), {}, audit.NeckGraph(voronoi)) == []
+    land_only = dict(_world(border, aland=land), gaps={("a", "b"): 2e4})
+    del land_only["voronoi_gaps"]
+    [nk] = audit.district_necks(set("hab"), {}, audit.NeckGraph(land_only))
+    assert nk.zips == ("a", "b") and nk.width_km == 2.0, nk
+    assert audit.district_necks(set("hab"), {}, audit.NeckGraph(land_only, gap_width=False)) == []

@@ -561,6 +561,11 @@ class NeckGraph:
                 if (a in self.aland and b in self.aland and b not in self.border_cm.get(a, {})
                         and b not in self.connector.get(a, ()) and self.state.get(a) == self.state.get(b)):
                     self.border_cm[a][b] = self.border_cm[b][a] = border_cm(m)
+        self.gap_land = set()                           # R5: the pairs `adjacency(gaps=True)` joins
+        if gap_width:
+            vs = set(polygon["vertices"])
+            self.gap_land = {tuple(sorted(e)) for e, m in (polygon.get("gaps") or {}).items()
+                             if e[0] in vs and e[1] in vs and m > 0 and self.state.get(e[0]) == self.state.get(e[1])}
         self.by_state = collections.defaultdict(set)
         for z in polygon["vertices"]:
             self.by_state[self.state.get(z, "")].add(z)
@@ -656,8 +661,9 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     width: a relay is never in `Neck.zips`, which lists the district's own ZCTAs, and the pieces
     check (`district_pieces`) is not changed by them.  The cut-off part is one connected piece
     of the district's own ZCTAs (the owner's 2026-10-06 "One connected piece"): connected on the
-    polygon edges, connectors and gap edges (R5) among them, never through a relay, so fringes
-    that touch only through a relay do not add up to a neck.
+    polygon edges, approved connectors and the land-only gap edges (R5, `NeckGraph.gap_land`) among
+    them, never through a relay or a Voronoi width edge, so fringes that touch only through a relay
+    or a Voronoi gap do not add up to a neck.
 
     **Exact in whole centimetres**, erring only towards a neck.  Every width is an integer number of
     cm, floored (`border_cm`; a needed connector, or an edge, at least `NECK_W_CM` counts as
@@ -714,7 +720,8 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     for a, b in width:
         adj[a].add(b)
         adj[b].add(a)
-        if a in own and b in own:               # the district's own ZCTAs touch, no relay between
+        if (a in own and b in own               # the district's own ZCTAs touch, no relay between:
+                and (b in g.border.get(a, ()) or b in g.connector.get(a, ()) or (a, b) in g.gap_land)):
             own_adj[a].add(b)
             own_adj[b].add(a)
 
@@ -792,7 +799,7 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
             for part in _components({z for z in group[r] if z in own}, own_adj):
                 node_of.update(dict.fromkeys(part, len(nodes)))
                 nodes.append(ix[r])
-        narcs = sorted({arc for a, b in width if a in node_of and b in node_of and node_of[a] != node_of[b]
+        narcs = sorted({arc for a, b in width if a in node_of and b in own_adj.get(a, ()) and node_of[a] != node_of[b]
                         for arc in ((node_of[a], node_of[b]), (node_of[b], node_of[a]))})
 
         def solve(connected: bool):
