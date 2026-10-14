@@ -8,9 +8,10 @@ Per planning channel, for each district with a detached piece under `td.audit.di
 (M1's pieces, on the polygon graph with the approved connectors): the shortest path from the piece
 to the district's other ZCTAs whose every ZCTA has zero mass in the channel (`mass.get(z, 0) == 0`)
 and is held by another district of the run; the path goes to the district.  It is applied only if
-every donor district ends with no more pieces and no more necks than it had
-(`td.audit.district_necks`: a clean donor stays clean) and the district itself ends with fewer
-pieces and no more necks than before.  On a refusal the donor that failed is kept off the next
+every donor district keeps its failures by identity and size: a clean donor stays clean, and each
+detached piece and each neck (`td.audit.district_necks`, the part cut off) it has afterwards lies
+inside a different one it had before, so a new or enlarged piece or neck is refused even when the
+counts do not rise; the district itself ends with fewer pieces and no more necks than before.  On a refusal the donor that failed is kept off the next
 path, up to `--tries` paths per piece; a piece still detached is left as it is and listed under
 `left` with the reason, its τ share and its size, for the owner.  A ZCTA with positive mass in the
 channel is never moved, and the check at the end of `glue_channel` stops the run if one was.
@@ -82,11 +83,24 @@ def shortest_path(start: set, targets: set, allowed, adj: dict) -> list | None:
     return None
 
 
+def _inside(after: list, before: list) -> bool:
+    """True when every set of `after` lies inside a different set of `before` (a `None` is a set of
+    unknown identity: it matches only a `None`)."""
+    free = list(before)
+    for a in sorted(after, key=lambda x: -len(x or ())):
+        fits = [b for b in free if (a is None and b is None) or (a is not None and b is not None and a <= b)]
+        if not fits:
+            return False
+        free.remove(min(fits, key=lambda x: len(x or ())))
+    return True
+
+
 def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIES,
                  tau: float | None = None) -> tuple:
     """(owner after, report) of one planning channel: `owner` {zip: district}, `adj` {zip: set of
     neighbours} (M1's graph), `mass` {zip: mass in the channel}, `necks_of(frozenset of zips)` the
-    number of M1 necks of a district holding them.  The report holds `glued` [{district, piece,
+    M1 necks of a district holding them, each as the frozenset of ZCTAs of the part cut off (a
+    number n stands for n necks of unknown identity).  The report holds `glued` [{district, piece,
     path, donors}], `left` [{district, first, zips, mass, tau_share, reason}] for the pieces
     still detached at the end, and `moved` {zip: [from, to]}."""
     owner = dict(owner)
@@ -96,8 +110,12 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
     def necks(zs):
         zs = frozenset(zs)
         if zs not in memo:
-            memo[zs] = necks_of(zs)
+            got = necks_of(zs)
+            memo[zs] = [None] * got if isinstance(got, int) else [frozenset(x) for x in got]
         return memo[zs]
+
+    def detached(zs):
+        return [frozenset(c) for c in _pieces(zs, adj, mass)[1:]]
 
     def held(own, j):
         return {z for z, d in own.items() if d == j}
@@ -128,9 +146,9 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
                 before, after = held(owner, d), held(trial, d)
                 if not after:
                     bad.append((d, "would be left with no ZCTA"))
-                elif len(_pieces(after, adj, mass)) > len(_pieces(before, adj, mass)):
+                elif not _inside(detached(after), detached(before)):
                     bad.append((d, "would gain a piece"))
-                elif necks(after) > necks(before):
+                elif not _inside(necks(after), necks(before)):
                     bad.append((d, "would gain a neck"))
             if bad:
                 barred |= {d for d, _ in bad}
@@ -140,7 +158,7 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
             if len(_pieces(mine_after, adj, mass)) >= len(_pieces(mine_before, adj, mass)):
                 reason = "the path does not reduce the district's pieces"
                 break
-            if necks(mine_after) > necks(mine_before):
+            if len(necks(mine_after)) > len(necks(mine_before)):
                 reason = "the path would give the district a neck"
                 break
             glued.append({"district": j, "piece": first, "path": path,
@@ -167,14 +185,15 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
 
 # ------------------------------------------------------------------------------ the run
 def neck_counter(polygon: dict, mass: dict):
-    """necks_of(zips) -> the number of M1 necks `td.audit.district_necks` finds, on the polygon
-    graph with gap width as `TD_NECK_GAP_WIDTH` sets it (the gate's reading)."""
+    """necks_of(zips) -> the M1 necks `td.audit.district_necks` finds (each as the frozenset of ZCTAs
+    of the part cut off), on the polygon graph with gap width as `TD_NECK_GAP_WIDTH` sets it (the
+    gate's reading)."""
     gap = os.environ.get(audit.GAP_WIDTH_ENV) == "1"
     try:
         ng = audit.NeckGraph(polygon, gap_width=gap)
     except TypeError:                   # a NeckGraph that reads the environment itself
         ng = audit.NeckGraph(polygon)
-    return (lambda zs: len(audit.district_necks(set(zs), mass, ng))), ng
+    return (lambda zs: [frozenset(n.zips) for n in audit.district_necks(set(zs), mass, ng)]), ng
 
 
 def main(argv=None) -> int:

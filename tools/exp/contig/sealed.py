@@ -13,10 +13,17 @@ structure is listed.  A region's `states` are disjoint from the channel's other 
 at least one of its footprint states; `rest: true` adds the region of the channel's footprint states
 in no region, with `k_total` (the channel's K over the whole map, default the K of the
 `overnight.POINTS` entry of the same id) less the regions' K; `rest: false` needs every footprint
-state in a region.  `merge.py` takes one partition per point, so the state sets of the point's
-regions, over all channels, are equal or disjoint, and a channel with footprint states in a state
-set lists a region of exactly that set: channels sharing a state set are drawn together in one run.
-`validate_partition` refuses anything else, naming it.
+state in a region.  The channels are partitioned independently: a channel's regions need not
+match another channel's state sets or names.  Channels whose regions have one state set are drawn
+together in one run (named for the region, or the regions' names joined by `-`); any other run holds
+only the channels of its regions, on `extract.json.gz`, a copy of the extract cut to their fine
+channels, so a channel outside the run is not drawn there.  When the runs' state sets are pairwise
+disjoint and each holds every channel with footprint states in it, `merge.py` takes the runs' last
+folders as its sources; otherwise `combined/` is written first: one ledger with each (ZCTA, fine
+channel) cell from the run that owns its planning channel in the ZCTA's state (district ids
+prefixed by the run), which `merge.py` takes as its one source.  Point ids and region names may
+not be a name the driver writes itself (`merged`, `combined`, `spec-merge.toml`, `SEALED.json`,
+...).  `validate_partition` refuses anything else, naming it.
 
 **A run** (one state set of a point; the unit of work and of the scheduler) is, in
 `<root>/<point>/<run>/`, each stage a child process killed at its wall cap (`CAPS`, `--cap`), logging
@@ -39,9 +46,9 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
 3. `run.py --states` into `draw/` (arm 1, sequential, `overnight.LAND_RATIO`).  The drawing is strict
    (owner, 2026-10-14: contiguity at the solver level): `draw.py` gives the ZCTAs of a group with no
    connected drawing to a non-contiguous fallback, so after every draw `contig.json` is read
-   (`drawing_failures`): a channel with `undrawn_zctas`, `fixed_split` districts, `connected` false or
-   a status other than optimal/connected is a failure, and a failed drawing is never repaired or
-   merged.  When the region lists `k_alt` for a failing channel, K moves to `k_alt` and the run is
+   (`drawing_failures`): a channel with `undrawn_zctas` or a status other than optimal/connected is a
+   failure, and a failed drawing is never repaired or merged; a drawing that succeeded but leaves
+   detached pieces (`connected` false, `fixed_split` districts) goes on to the repair and the glue.  When the region lists `k_alt` for a failing channel, K moves to `k_alt` and the run is
    drawn once more in `alt/`, only if `k_alt` has a final δ in the window (the region's feasible set,
    `fit_delta`); the drawing with fewer failing channels goes on.  If it still fails the run, and the
    point, end `no connected drawing` with the groups' details.  The band never widens.
@@ -50,16 +57,20 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
    only (the repair intersects every channel's band with one window); the final δ already fits each
    channel's window.
 5. glue repair (`glue.py`) into `glue/`: detached pieces joined through zero-opportunity ZCTAs of
-   other districts, applied only when no donor gains a piece or a neck; what it leaves is in
-   `glue.json` for the owner.
+   other districts, applied only when no donor gains or enlarges a piece or a neck; what it leaves is in
+   `glue.json` for the owner.  A `glue/` folder is reused on a resume only when its manifest says
+   done and, if it moved a ZCTA, its ledger is written; an interrupted one is moved aside.
 
 **A point** is finished when its runs are: `merge.py` over every run's last folder into `merged/`
 (`--rate 1`, `--gap-width`, `--window` for one channel), the gate (`tools/mandates/check.py`),
 `score.py` (`score.txt`, `dollars.csv`, `m1.json`), `land.py`, and the per-district shape measures
-of `tools/looks/study.py` (`shape.json`).  **Labels**: `fails M1` (the gap-width verdict of
-`m1.json`), else `outside band` (a district outside its channel's dollar window, `dollars.csv`),
-else `passes`; `fails shape` instead when the shape limits file says `"hard": true` and a district
-breaches one; `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
+of `tools/looks/study.py` (stage `shape`, `sealed.py shape`: a child killed at its cap or the
+`--hours` stop; every district's row in `shape-districts.json` and `.csv` beside the merged ledger,
+the channel summary and the limit breaches in `shape.json`).  **Labels**: `fails M1` (the gap-width
+verdict of `m1.json`), else `outside band` (a district outside its channel's dollar window,
+`dollars.csv`), else `ineligible` (`score.txt`'s `eligible: no` with its reasons, such as a main
+map K outside the allowed range), else `passes`; `fails shape` instead when the shape limits file
+says `"hard": true` and a district breaches one; `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
 `infeasible` (a run with no plan inside its window), `stopped` (a stage's cap or the `--hours` stop), `error` otherwise.
 Shape limits (`L.json`: `{"hard": false, "limits": {<study column>: {"min": x, "max": y}}}`) are
 parameters, not decisions: with no file, or `"hard": false`, the shape is reported and decides
@@ -76,6 +87,7 @@ from __future__ import annotations
 import argparse
 import collections
 import dataclasses
+import csv
 import datetime
 import hashlib
 import importlib.util
@@ -95,7 +107,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from td import data, geo  # noqa: E402
+from td import data, geo, output  # noqa: E402
 from td import spec as tdspec  # noqa: E402
 
 
@@ -118,14 +130,19 @@ NAME = "sealed"
 SEALED_ROOT = os.path.join(HUB, "runs", "exp", NAME)
 STATE_JSON = "SEALED.json"
 INDEX_MD = "SEALED.md"
-CAPS = {"replan": 600.0, "draw": 2700.0, "repair": 1800.0, "glue": 600.0, "merge": 3600.0}
+CAPS = {"replan": 600.0, "draw": 2700.0, "repair": 1800.0, "glue": 600.0, "merge": 3600.0, "shape": 1800.0}
 DRAW_FRAC = 0.85                # run.py's per-channel time limit, of the draw's wall cap
 NO_DRAWING = "no connected drawing"
-LABELS = ("passes", "fails M1", "outside band", "fails shape", NO_DRAWING, "infeasible", "stopped", "error")
+LABELS = ("passes", "fails M1", "outside band", "ineligible", "fails shape", NO_DRAWING, "infeasible", "stopped",
+          "error")
 RUN_BAD = ("error", "stopped", NO_DRAWING, "infeasible")   # a run's failing statuses, worst first
 DRAWN_OK = ("optimal", "connected")        # a group or channel drawing the owner accepts (2026-10-14: contiguity at the solver)
 STRUCTURES = {k: (os.path.join(ROOT, p), rule) for k, (p, rule) in overnight.STRUCTURES.items()}
 GAP_ENV = overnight.GAP_ENV
+SHAPE_ROWS = "shape-districts.json"     # every district's study measures, beside the merged ledger (+ .csv)
+POINT_NAMES = ("SEALED.json", "SEALED.json.tmp", "SEALED.md", "_plans")     # written in the root
+RUN_NAMES = ("alt", "merged", "combined", "spec-merge.toml", "merged_extract.json.gz", "merge.log", "gate.log",
+             "land.log", "shape.log", "launcher_error.txt")                # written in a point's folder
 
 
 class PartitionError(ValueError):
@@ -153,6 +170,12 @@ def _count(x, where: str, errs: list) -> int | None:
     return x
 
 
+def _taken(name: str, owned) -> bool:
+    """True when `name` is one of the `owned` names, ignoring case (a Mac volume is case-insensitive)
+    and the `.stale<N>` suffix `overnight.set_aside` adds."""
+    return re.sub(r"\.stale\d+$", "", name).casefold() in {x.casefold() for x in owned}
+
+
 def parse_pair(text: str) -> tuple:
     """("DE", "VA") from "DE-VA" or "VA-DE"."""
     a, sep, b = text.partition("-")
@@ -165,7 +188,7 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
                        load=tdspec.load) -> list:
     """The points of `doc` (P.json) normalised, or `PartitionError` naming every problem: per point
     `{id, structure, base, rule, channels: {c: {regions, rest_states, rest_k, k_total}}, runs:
-    [{name, states, ks, k_alt, forbid}]}`.  `structures` {name: (base spec path, split rule)}
+    [{name, states, ks, k_alt, forbid}], aligned}` (`_group_runs`).  `structures` {name: (base spec path, split rule)}
     (default `STRUCTURES`), `totals` {point id: {channel: K over the whole map}} (default
     `overnight.POINTS`), `load` the spec loader."""
     structures = STRUCTURES if structures is None else structures
@@ -176,8 +199,9 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
         raise PartitionError("P.json needs a non-empty list under 'points'")
     for p in doc["points"]:
         pid, structure = p.get("id"), p.get("structure")
-        if not isinstance(pid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", pid):
-            errs.append(f"point {pid!r}: the id must be a file-name word")
+        if not isinstance(pid, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", pid) or _taken(pid, POINT_NAMES):
+            errs.append(f"point {pid!r}: the id must be a file-name word other than the driver's own "
+                        f"({', '.join(POINT_NAMES)})")
             continue
         if pid in seen_ids:
             errs.append(f"point {pid}: listed twice")
@@ -206,8 +230,9 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
             for r in ch.get("regions", []):
                 name = r.get("name")
                 rw = f"{where} region {name!r}"
-                if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) or name == "alt":
-                    errs.append(f"{rw}: the name must be a file-name word other than 'alt'")
+                if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) or _taken(name, RUN_NAMES):
+                    errs.append(f"{rw}: the name must be a file-name word other than the driver's own "
+                                f"({', '.join(RUN_NAMES)})")
                     continue
                 if names.count(name) > 1:
                     errs.append(f"{rw}: name used twice in {c}")
@@ -260,23 +285,25 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
                     errs.append(f"{where}: k_total {ch['k_total']} is not the regions' {ksum}")
             norm[c] = {"regions": regions, "rest": rest, "rest_states": rest_states if rest else (),
                        "rest_k": rest_k, "k_total": k_total}
-        runs = _group_runs(pid, entries, foot, errs)
-        out.append({"id": pid, "structure": structure, "base": base, "rule": rule, "channels": norm, "runs": runs})
+        runs, aligned = _group_runs(pid, entries, foot, errs)
+        out.append({"id": pid, "structure": structure, "base": base, "rule": rule, "channels": norm, "runs": runs,
+                    "aligned": aligned})
     if errs:
         raise PartitionError("\n".join(errs))
     return out
 
 
-def _group_runs(pid: str, entries: list, foot: dict, errs: list) -> list:
-    """The runs of one point from its (channel, name, states, k, k_alt, forbid, rest) entries: one per
-    distinct state set, the sets pairwise disjoint, every channel with footprint states in a set
-    listed there."""
+def _group_runs(pid: str, entries: list, foot: dict, errs: list) -> tuple:
+    """(runs, aligned) of one point from its (channel, name, states, k, k_alt, forbid, rest) entries.
+    The channels are partitioned independently; a run is one state set, holding the channels whose
+    regions have it.  `aligned`: the runs' state sets are pairwise disjoint and each run holds every
+    channel with footprint states in it, so `merge.py` can take the runs' folders as its sources."""
     by = collections.OrderedDict()
     for c, name, sts, k, k_alt, forbid, rest in entries:
-        r = by.setdefault(frozenset(sts), {"states": sts, "names": [], "ks": {}, "k_alt": {}, "forbid": set(),
+        r = by.setdefault(frozenset(sts), {"states": sts, "names": set(), "ks": {}, "k_alt": {}, "forbid": set(),
                                             "rest": []})
         if not rest:
-            r["names"].append(name)
+            r["names"].add(name)
         else:
             r["rest"].append(c)
         r["ks"][c] = k
@@ -286,27 +313,23 @@ def _group_runs(pid: str, entries: list, foot: dict, errs: list) -> list:
     rest_sets = [r for r in by.values() if not r["names"]]
     runs = []
     for r in by.values():
-        names = sorted(set(r["names"]))
-        if len(names) > 1:
-            errs.append(f"point {pid}: regions {names} have the same states ({', '.join(r['states'])}) in different channels "
-                        "and must share one name")
-        name = names[0] if names else ("rest" if len(rest_sets) == 1 else "rest-" + "-".join(sorted(r["rest"])))
+        name = ("-".join(sorted(r["names"])) if r["names"] else
+                "rest" if len(rest_sets) == 1 else "rest-" + "-".join(sorted(r["rest"])))
         runs.append({"name": name, "states": r["states"], "ks": r["ks"], "k_alt": r["k_alt"],
                      "forbid": sorted(r["forbid"])})
-    names = [r["name"] for r in runs]
+    same = [sum(x["name"].casefold() == r["name"].casefold() for x in runs) > 1 for r in runs]
+    for r, dup in zip(runs, same):      # one name for different state sets (the channels' regions are independent)
+        if dup:
+            r["name"] += "-" + "-".join(sorted(r["ks"]))
+    names = [r["name"].casefold() for r in runs]
     errs += [f"point {pid}: two runs are named {n!r}" for n in sorted({n for n in names if names.count(n) > 1})]
+    errs += [f"point {pid}: the run name {r['name']!r} is one the driver writes itself ({', '.join(RUN_NAMES)})"
+             for r in runs if _taken(r["name"], RUN_NAMES)]
+    aligned = True
     for i, a in enumerate(runs):
-        for b in runs[i + 1:]:
-            both = sorted(set(a["states"]) & set(b["states"]))
-            if both:
-                errs.append(f"point {pid}: runs {a['name']!r} and {b['name']!r} overlap in {', '.join(both)} "
-                            "without being the same set (merge.py takes one partition per point)")
-        for c, fs in foot.items():
-            if fs & set(a["states"]) and c not in a["ks"]:
-                errs.append(f"point {pid}: {c} has footprint states in run {a['name']!r} "
-                            f"({', '.join(sorted(fs & set(a['states'])))}) but lists no region of exactly "
-                            f"{', '.join(a['states'])}")
-    return runs
+        aligned &= all(not set(a["states"]) & set(b["states"]) for b in runs[i + 1:])
+        aligned &= all(c in a["ks"] for c, fs in foot.items() if fs & set(a["states"]))
+    return runs, aligned
 
 
 def load_partition(path: str, **kw) -> list:
@@ -316,22 +339,42 @@ def load_partition(path: str, **kw) -> list:
 
 # ------------------------------------------------------------------------------ a run's spec copy
 def region_plan(sp, states, ks: dict, cells: dict, rule: str) -> dict:
-    """`overnight.plan_point` on the run's states: per present channel (one with mass in the states)
-    K, the region's $M, τ, the split list (the rule's, or the base's, on the states) and the final δ;
-    `infeasible` {channel: why}; `absent` the channels with no cell there."""
+    """`overnight.plan_point` on the run's states: per present channel (one of `ks` with mass in the
+    states) K, the region's $M, τ, the split list (the rule's, or the base's, on the states) and the
+    final δ; `infeasible` {channel: why}; `absent` the channels of `ks` with no cell there; `outside`
+    the channels not in `ks` that have cells there (another region's, cut from the run's extract)."""
     S = set(states)
     cs = {k: m for k, m in cells.items() if k[0] in S}
     mass = overnight.unit_mass(sp, cs)
-    present = sorted(c for c in sp.channels if math.fsum(mass[c].values()) > 0)
-    missing = [c for c in present if c not in ks]
-    if missing:
-        raise PartitionError(f"{', '.join(missing)} have cells in {', '.join(states)} but no K")
+    has = sorted(c for c in sp.channels if math.fsum(mass[c].values()) > 0)
+    present = [c for c in has if c in ks]
     sub = dataclasses.replace(sp, channels={c: sp.channels[c] for c in present})
     plan = overnight.plan_point({c: ks[c] for c in present}, sub, cs, rule)
     for v in plan["channels"].values():
         v["free"] = [u for u in v["free"] if u in S]
-    plan["absent"] = sorted(set(sp.channels) - set(present))
+    plan["absent"] = sorted(set(ks) & (set(sp.channels) - set(present)))
+    plan["outside"] = sorted(set(has) - set(ks))
     return plan
+
+
+def run_fine(sp, channels) -> set:
+    """The fine channels in the domains of `channels` of the spec `sp`."""
+    return {f for c in channels for fs in sp.channels[c].domain.values() for f in fs}
+
+
+def cut_extract(src: str, dst: str, fine) -> str:
+    """`dst`: the extract `src` less the cells of fine channels outside `fine` (as `td.spec.scope`
+    cuts the columns), written atomically; a channel whose cells are all gone is dropped by the spec
+    build."""
+    ext = data.load(src)
+    rows = [i for i, f in enumerate(ext.channel) if f in fine]
+    cut = dataclasses.replace(
+        ext, channels=tuple(f for f in ext.channels if f in fine), z=[ext.z[i] for i in rows],
+        channel=[ext.channel[i] for i in rows], m_rel=[ext.m_rel[i] for i in rows],
+        share=[ext.share[i] for i in rows], share_free=[ext.share_free[i] for i in rows])
+    data.write(cut, dst + ".tmp")
+    os.replace(dst + ".tmp", dst)
+    return dst
 
 
 def run_spec_text(base_text: str, pid: str, run_name: str, states, plan: dict, forbid=(),
@@ -437,16 +480,91 @@ def nominal_chain(pid: str, run: dict, rdir: str, plans: str, extract: str, plan
              caps["glue"], GAP_ENV)]
 
 
+def shape_cmd(folder: str, name: str, out_dir: str) -> list:
+    return [sys.executable, "-u", os.path.join(HERE, "sealed.py"), "shape", "--folder", folder, "--name", name,
+            "--out-dir", out_dir]
+
+
 def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str, window: str | None,
                 caps: dict) -> list:
-    """[(stage, command, cap, env)] of a point's merge, gate, score and land."""
+    """[(stage, command, cap, env)] of a point's merge, gate, score, land and shape."""
     merged = os.path.join(pdir, "merged")
     sources = [f"{'+'.join(states)}={final}" for states, final in finals]
     return [("merge", merge_cmd(base_spec, merged, os.path.join(pdir, "merged_extract.json.gz"), extract, sources,
                                 window), caps["merge"], GAP_ENV),
             ("gate", overnight.gate_cmd(merged), overnight.CAP_S["gate"], GAP_ENV),
             ("score", overnight.score_cmd(merged), overnight.CAP_S["post"], GAP_ENV),
-            ("land", overnight.land_cmd(merged), overnight.CAP_S["post"], None)]
+            ("land", overnight.land_cmd(merged), overnight.CAP_S["post"], None),
+            ("shape", shape_cmd(merged, pid, merged), caps["shape"], None)]
+
+
+def all_states(runs: list) -> tuple:
+    return tuple(sorted({st for r in runs for st in r["states"]}))
+
+
+def combine_point(runs: list, folders: dict, out: str) -> dict:
+    """`out`: one run folder (`ledger.csv`, `districts.csv`, `manifest.json`, `run.json`: what
+    `merge.py` reads of a source) holding every cell of a point whose channels were drawn by
+    independent regions.  A cell (ZCTA, fine channel) comes from the run that has its planning channel
+    (`model_channel`) for the ZCTA's state, else, for a cell of no run's channel, from the first run
+    holding the state; a run's rows outside its states, and its other channels' rows, are left to
+    their own runs.  Districts are renamed `<run>/<id>`, so no two runs' districts collide.
+    `runs` the normalised runs, `folders` {run name: its last folder}."""
+    owner, first = collections.defaultdict(dict), {}
+    for run in runs:
+        for st in run["states"]:
+            first.setdefault(st, run["name"])
+            for c in run["ks"]:
+                owner[c].setdefault(st, run["name"])
+    ledger, used, seen = [], collections.defaultdict(set), {}
+    for run in runs:
+        name, held = run["name"], set(run["states"])
+        for r in output.read_ledger(os.path.join(folders[name], "ledger.csv")):
+            st, c = r["state"], r["model_channel"]
+            if st not in held or owner[c].get(st, first[st]) != name:
+                continue
+            cell = (r["zip_code"], r["current_channel"])
+            if cell in seen:
+                raise ValueError(f"cell {cell} is in both {seen[cell]} and {name}")
+            seen[cell] = name
+            if r["district"]:
+                used[name].add((c, r["district"]))
+                r["district"] = f"{name}/{r['district']}"
+            ledger.append(r)
+    os.makedirs(out, exist_ok=True)
+    output.write_ledger(os.path.join(out, "ledger.csv"), ledger)
+    rows, header = [], None
+    for run in runs:
+        name = run["name"]
+        with open(os.path.join(folders[name], "districts.csv"), encoding="utf-8", newline="") as fh:
+            rd = csv.DictReader(fh)
+            header = header or rd.fieldnames
+            for r in rd:
+                if (r["channel"], r["district"]) in used[name]:
+                    used[name].discard((r["channel"], r["district"]))
+                    rows.append(dict(r, district=f"{name}/{r['district']}"))
+        if used[name]:
+            raise ValueError(f"{name}: districts {sorted(used[name])[:3]} are in the ledger but not in districts.csv")
+    with open(os.path.join(out, "districts.csv"), "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=header, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+    status, m1 = collections.defaultdict(list), []
+    for run in runs:
+        with open(os.path.join(folders[run["name"]], "run.json"), encoding="utf-8") as fh:
+            rj = json.load(fh)
+        m1.append(f"{run['name']} {rj['m1']['status']}")
+        for c, v in rj["channels"].items():
+            if any(owner[c].get(st) == run["name"] for st in run["states"]):
+                status[c].append(f"{run['name']} {v['status']}")
+    with open(os.path.join(folders[runs[0]["name"]], "manifest.json"), encoding="utf-8") as fh:
+        provenance = json.load(fh)["provenance"]
+    overnight._write_json(os.path.join(out, "manifest.json"), {
+        "provenance": provenance, "status": "done", "combined_from": {n: os.path.abspath(f) for n, f in folders.items()}})
+    overnight._write_json(os.path.join(out, "run.json"), {
+        "channels": {c: {"status": "; ".join(v)} for c, v in sorted(status.items())},
+        "m1": {"status": "unverified here (the runs': " + ", ".join(m1) + ")"}})
+    return {"cells": len(ledger), "districts": len(rows)}
 
 
 # ------------------------------------------------------------------------------ the replan stage
@@ -563,11 +681,29 @@ def measure_shape(folder: str, name: str) -> list:
     return drows
 
 
+def cmd_shape(a) -> int:
+    """`sealed.py shape` (a point's shape stage, a child of the driver so its cap and the `--hours`
+    stop can end it): every district's measures of `--folder` to `<out-dir>/shape-districts.json` and
+    `.csv`."""
+    rows = measure_shape(a.folder, a.name)
+    plain = lambda x: x.item() if hasattr(x, "item") else str(x)
+    path = os.path.join(a.out_dir, SHAPE_ROWS)
+    with open(path + ".tmp", "w", encoding="utf-8") as fh:
+        json.dump(rows, fh, indent=1, default=plain)
+        fh.write("\n")
+    os.replace(path + ".tmp", path)
+    _study().write_csv(os.path.join(a.out_dir, os.path.splitext(SHAPE_ROWS)[0] + ".csv"),
+                       _study().DISTRICT_COLUMNS, rows)
+    print(f"{a.name}: {len(rows)} districts", flush=True)
+    return 0
+
+
 # ------------------------------------------------------------------------------ labels
-def label_point(m1: dict, rows: list, breaches: list, hard: bool) -> tuple:
+def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=()) -> tuple:
     """(label, reason): `fails M1` on the gap-width verdict of `m1.json`, else `outside band` when a
-    district of `dollars.csv` is outside its window, else `fails shape` for a breach under a hard
-    limits file, else `passes`."""
+    district of `dollars.csv` is outside its window, else `ineligible` with the scorer's reasons
+    (`eligible`, `why` of `overnight.read_score`: the main K outside its range, a failed audit check),
+    else `fails shape` for a breach under a hard limits file, else `passes`."""
     if m1["status"] != "pass":
         return "fails M1", f"M1 across coverage gaps: {m1['status']}, {m1['summary']}"
     bad = [r for r in rows if not r["ok"]]
@@ -575,28 +711,26 @@ def label_point(m1: dict, rows: list, breaches: list, hard: bool) -> tuple:
         return "outside band", "; ".join(
             f"{r['district']} {r['usd']:,.1f}M outside "
             + ("no window" if r["lo"] is None else f"{r['lo']:,.1f}-{(r['cap'] or r['hi']):,.1f}M") for r in bad)
+    if not eligible:
+        return "ineligible", "; ".join(why) or "score.txt says eligible: no"
     if hard and breaches:
         return "fails shape", f"{len(breaches)} breaches of the hard shape limits, first {breaches[0]}"
     return "passes", ""
 
 
 def drawing_failures(contig: dict) -> dict:
-    """{channel: {reasons, groups}} for each channel of a run's `contig.json` whose drawing is not a
-    connected one (owner, 2026-10-14: contiguity at the solver level): ZCTAs handed to the
-    non-contiguous fallback (`undrawn_zctas`), a channel not `connected`, districts whose bodies no
-    free ZCTA can join (`fixed_split`), or a status other than `DRAWN_OK`; `groups` are the coupled
-    groups whose solve ended otherwise."""
+    """{channel: {reasons, groups}} for each channel of a run's `contig.json` that has no drawing to
+    repair (owner, 2026-10-14: contiguity at the solver level): ZCTAs handed to the non-contiguous
+    fallback (`undrawn_zctas`), or a status other than `DRAWN_OK`; `groups` are the coupled groups
+    whose solve ended otherwise.  A drawing that succeeded and leaves detached pieces (`connected`
+    false, `fixed_split` districts) is not a failure here: the repair and the glue take it."""
     out = {}
     for c, ch in sorted(contig.get("channels", {}).items()):
         why = []
         if ch.get("undrawn_zctas"):
             why.append(f"{ch['undrawn_zctas']} undrawn ZCTAs left to the non-contiguous fallback")
-        if ch.get("fixed_split"):
-            why.append(f"{len(ch['fixed_split'])} districts split by fixed bodies ({', '.join(map(str, ch['fixed_split'][:3]))})")
         if ch.get("status") not in DRAWN_OK:
             why.append(f"drawing status {ch.get('status')}")
-        if ch.get("connected") is False and not why:
-            why.append("drawing not connected")
         if why:
             out[c] = {"reasons": why, "groups": [
                 {"districts": g.get("districts"), "units": g.get("units"), "free_zctas": g.get("free_zctas"),
@@ -656,6 +790,16 @@ class Driver(overnight.Runner):
     def rel(self, path: str) -> str:
         return os.path.relpath(path, self.root)
 
+    def run_extract(self, sp, run: dict, plan: dict, rdir: str) -> str:
+        """The extract a run's stages read: the driver's own, or, when channels outside the run have
+        cells in its states, `<run>/extract.json.gz` less their fine channels (made once)."""
+        if not plan["outside"]:
+            return self.extract
+        path = os.path.join(rdir, "extract.json.gz")
+        if not os.path.exists(path):
+            cut_extract(self.extract, path, run_fine(sp, [c for c in run["ks"] if c in sp.channels]))
+        return path
+
     # -- one run
     def region(self, task: dict) -> list:
         pt, run = self.points[task["point"]], task["run"]
@@ -689,12 +833,13 @@ class Driver(overnight.Runner):
         plan = region_plan(sp, run["states"], ks, self.cells, pt["rule"])
         if plan["infeasible"]:
             raise Stop("infeasible", "; ".join(plan["infeasible"].values()))
+        extract = self.run_extract(sp, run, plan, os.path.join(self.root, pid, rn))
         base, spec, out = (os.path.join(adir, x) for x in ("spec-base.toml", "spec.toml", "draw"))
         with open(base, "w", encoding="utf-8") as fh:
             fh.write(run_spec_text(text, pid, rn, run["states"], plan, self.forbid | set(map(tuple, run["forbid"])),
                                    self.max_size))
         chain = dict((s, (cmd, cap, env)) for s, cmd, cap, env in
-                     nominal_chain(pid, run, adir, self.plans, self.extract, plan, self.caps, self.drawable_alone))
+                     nominal_chain(pid, run, adir, self.plans, extract, plan, self.caps, self.drawable_alone))
         if not (os.path.exists(spec) and finished(out)):
             cmd, cap, _ = chain["replan"]
             log = os.path.join(adir, "replan.log")
@@ -719,7 +864,7 @@ class Driver(overnight.Runner):
             contig = json.load(fh)
         failures = drawing_failures(contig)
         return {"dir": adir, "draw": out, "contig": contig, "failures": failures, "failing": sorted(failures),
-                "ks": ks, "plan": plan}
+                "ks": ks, "plan": plan, "extract": extract}
 
     def _chain(self, pt: dict, run: dict, rdir: str) -> None:
         pid, rn = pt["id"], run["name"]
@@ -749,7 +894,7 @@ class Driver(overnight.Runner):
                   draw_failing=got["failing"], draw_failures=got["failures"])
         if got["failures"]:     # never a deliverable: not repaired, not merged (owner, 2026-10-14)
             raise Stop(NO_DRAWING, failure_text(got["failures"]))
-        adir, src = got["dir"], got["draw"]
+        adir, src, extract = got["dir"], got["draw"], got.get("extract") or self.extract
         plan, jobs, label = got["plan"], jobs_of(run), f"sealed {pid}/{rn}"
         win = window_of(plan)
         for npass in (1, 2):
@@ -760,23 +905,23 @@ class Driver(overnight.Runner):
                 overnight.set_aside(out)
                 cap = self.caps["repair"]
                 info = self.stage(pid, f"{rn}.r{npass}",
-                                  repair_cmd(src, out, self.plans, self.extract, jobs, npass, label, run["states"], cap,
+                                  repair_cmd(src, out, self.plans, extract, jobs, npass, label, run["states"], cap,
                                              win), os.path.join(adir, f"r{npass}.log"), cap)
                 if info["stop"] == "cap":
                     self.note(pid, rn, **{f"r{npass}": f"killed at its cap ({cap / 60:g} min)"})
             if os.path.exists(os.path.join(out, "ledger.csv")):
                 src = out
         gout = os.path.join(adir, "glue")
-        if not os.path.exists(os.path.join(gout, "glue.json")):
+        if not glue_done(gout):
             overnight.set_aside(gout)
             cap = self.caps["glue"]
-            info = self.stage(pid, f"{rn}.glue", glue_cmd(src, gout, self.plans, self.extract, label, run["states"]),
+            info = self.stage(pid, f"{rn}.glue", glue_cmd(src, gout, self.plans, extract, label, run["states"]),
                               os.path.join(adir, "glue.log"), cap, GAP_ENV)
             if info["stop"] == "cap":
                 self.note(pid, rn, glue=f"killed at its cap ({cap / 60:g} min)")
             elif info["rc"] != 0:
                 raise Stop("error", f"glue.py exited {info['rc']}: {overnight._tail(os.path.join(adir, 'glue.log'))}")
-        if os.path.exists(os.path.join(gout, "glue.json")):
+        if glue_done(gout):
             with open(os.path.join(gout, "glue.json"), encoding="utf-8") as fh:
                 g = json.load(fh)["channels"]
             self.note(pid, rn, glue={c: {"glued": len(v["glued"]), "left": v["left"], "moved": len(v["moved"])}
@@ -810,7 +955,10 @@ class Driver(overnight.Runner):
         worst = worst_run(rec["runs"])
         if worst:
             return worst[0], worst[1], None, {}
-        finals = [(run["states"], os.path.join(self.root, rec["runs"][run["name"]]["final"])) for run in pt["runs"]]
+        folders = {run["name"]: os.path.join(self.root, rec["runs"][run["name"]]["final"]) for run in pt["runs"]}
+        combined = os.path.join(pdir, "combined")
+        finals = ([(run["states"], folders[run["name"]]) for run in pt["runs"]] if pt["aligned"]
+                  else [(all_states(pt["runs"]), combined)])
         sp, text = self.spec_of(pt)
         mspec = os.path.join(pdir, "spec-merge.toml")
         with open(mspec, "w", encoding="utf-8") as fh:
@@ -821,6 +969,8 @@ class Driver(overnight.Runner):
         merged = os.path.join(pdir, "merged")
         if not finished(merged):
             overnight.set_aside(merged)
+            if not pt["aligned"]:       # independent regions per channel: one source holding each cell once
+                combine_point(pt["runs"], folders, combined)
             cmd, cap, env = chain["merge"]
             info = self.stage(pid, "merge", cmd, os.path.join(pdir, "merge.log"), cap, env)
             if info["stop"] == "cap":
@@ -840,17 +990,32 @@ class Driver(overnight.Runner):
         with open(os.path.join(merged, "m1.json"), encoding="utf-8") as fh:
             m1 = json.load(fh)
         rows = overnight.read_dollars(os.path.join(merged, "dollars.csv"))
-        shape = {"error": None, "summary": {}, "breaches": [], "limits": self.limits}
         try:
-            drows = measure_shape(merged, pid)
-            shape["summary"] = shape_summary(drows)
-            shape["breaches"] = shape_breaches(drows, self.limits["limits"])
-        except Exception as e:      # reported, loudly: it decides the label only under hard limits
-            shape["error"] = f"{type(e).__name__}: {e}"
-            if self.limits["hard"]:
-                raise Stop("error", f"shape measures failed under hard limits: {shape['error']}")
+            eligible, why = overnight.read_score(os.path.join(merged, "score.txt"))
+        except ValueError as e:
+            raise Stop("error", f"score.py: {e}")
+        shape = {"error": None, "summary": {}, "breaches": [], "limits": self.limits, "districts": None}
+        cmd, cap, env = chain["shape"]
+        log = os.path.join(pdir, "shape.log")
+        info = self.stage(pid, "shape", cmd, log, cap, env)      # a Stop at the --hours stop, a kill at its cap
+        if info["stop"] == "cap":
+            shape["error"] = f"shape killed at its cap ({cap / 60:g} min)"
+        elif info["rc"] != 0:
+            shape["error"] = f"shape exited {info['rc']}: {overnight._tail(log)}"
+        else:
+            try:
+                with open(os.path.join(merged, SHAPE_ROWS), encoding="utf-8") as fh:
+                    drows = json.load(fh)
+                shape["summary"] = shape_summary(drows)
+                shape["breaches"] = shape_breaches(drows, self.limits["limits"])
+                shape["districts"] = SHAPE_ROWS
+            except (OSError, ValueError, KeyError) as e:
+                shape["error"] = f"{type(e).__name__}: {e}"
+        if shape["error"] and self.limits["hard"]:     # reported, loudly; it decides the label only under hard limits
+            raise Stop("stopped" if info["stop"] == "cap" else "error",
+                       f"shape measures failed under hard limits: {shape['error']}")
         overnight._write_json(os.path.join(merged, "shape.json"), shape)
-        label, reason = label_point(m1["gap_width"], rows, shape["breaches"], self.limits["hard"])
+        label, reason = label_point(m1["gap_width"], rows, shape["breaches"], self.limits["hard"], eligible, why)
         looks = overnight.read_looks(os.path.join(merged, "score.txt"))
         bands = {}
         for c in sorted({r["channel"] for r in rows}):
@@ -867,6 +1032,22 @@ class Driver(overnight.Runner):
 
 def finished(folder: str) -> bool:
     return overnight.finished(folder)
+
+
+def glue_done(folder: str) -> bool:
+    """True when a `glue/` folder is one a resumed run keeps: its manifest says done and `glue.json`
+    reads; if it moved a ZCTA, the folder `glue.py` writes then (ledger, `contig.json`, `run.json`) is
+    all there, else (a done run with nothing to glue) only `glue.json` is."""
+    try:
+        with open(os.path.join(folder, "manifest.json"), encoding="utf-8") as fh:
+            if json.load(fh).get("status") != "done":
+                return False
+        with open(os.path.join(folder, "glue.json"), encoding="utf-8") as fh:
+            moved = sum(len(v["moved"]) for v in json.load(fh)["channels"].values())
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+    return not moved or (finished(folder) and all(os.path.exists(os.path.join(folder, f))
+                                                  for f in ("contig.json", "run.json")))
 
 
 def clean(folder: str) -> bool:
@@ -996,6 +1177,9 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
                       f"split list {','.join(v['free']) or 'none'}")
             if plan["absent"]:
                 print(f"  no cell in the run (dropped by the spec build): {', '.join(plan['absent'])}")
+            if plan["outside"]:
+                print(f"  channels of other regions with cells here ({', '.join(plan['outside'])}): the stages read "
+                      f"{os.path.join(rdir, 'extract.json.gz')}, the extract less their fine channels")
             for c, why in plan["infeasible"].items():
                 print(f"  INFEASIBLE {why}")
             for c, k in sorted(run["k_alt"].items()):
@@ -1007,13 +1191,18 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
             print(run_spec_text(text, pt["id"], run["name"], run["states"], plan, forbid | set(map(tuple, run["forbid"])),
                                 a.max_size), end="")
             print("---")
-            for stage, cmd, cap, env in nominal_chain(pt["id"], run, rdir, plans, a.extract, plan, caps, a.drawable_alone):
+            rx = os.path.join(rdir, "extract.json.gz") if plan["outside"] else a.extract
+            for stage, cmd, cap, env in nominal_chain(pt["id"], run, rdir, plans, rx, plan, caps, a.drawable_alone):
                 print(f"[{stage}, cap {cap:g} s{', env ' + str(env) if env else ''}] " + " ".join(map(q, cmd)))
             finals.append((run["states"], os.path.join(rdir, "glue")))
         if len(finals) == len(pt["runs"]):
             pdir = os.path.join(a.root, pt["id"])
             win = merge_window(sp)
-            print(f"\n==== point {pt['id']}: merge, gate, score, land")
+            if not pt["aligned"]:
+                print(f"\n==== point {pt['id']}: the regions are independent per channel; {os.path.join(pdir, 'combined')} "
+                      f"gets each cell from the run owning its channel, and is merge.py's one source")
+                finals = [(all_states(pt["runs"]), os.path.join(pdir, "combined"))]
+            print(f"\n==== point {pt['id']}: merge, gate, score, land, shape")
             for stage, cmd, cap, env in point_chain(pt["id"], pdir, finals, os.path.join(pdir, "spec-merge.toml"),
                                                     a.extract, win, caps):
                 print(f"[{stage}, cap {cap:g} s{', env ' + str(env) if env else ''}] " + " ".join(map(q, cmd)))
@@ -1040,6 +1229,10 @@ def open_state(root: str, host: str, extract: str, hours: float, part_path: str,
         if doc["partition"]["sha256"] != part_sha:
             raise SystemExit(f"{path} was written for another partition file ({doc['partition']['sha256'][:12]}, "
                              f"this one {part_sha[:12]}); use a new --root")
+        saved, now_sha = doc.get("extract_sha256"), overnight._dollarize().sha256(extract)
+        if saved != now_sha:
+            raise SystemExit(f"{path} was written for another extract ({(saved or 'no hash')[:12]}, {extract} is "
+                             f"{now_sha[:12]}); use a new --root")
         grid = Grid(path, doc)
     else:
         doc = {"grid": NAME, "host": host, "created_at": overnight.now(),
@@ -1135,6 +1328,11 @@ def parser() -> argparse.ArgumentParser:
         i = sub.add_parser(name, help="write <root>/SEALED.md from SEALED.json")
         i.add_argument("--root", required=True)
         i.set_defaults(func=cmd_index)
+    sh = sub.add_parser("shape", help="(a point's shape stage) every district's study measures of a folder")
+    sh.add_argument("--folder", required=True)
+    sh.add_argument("--name", required=True)
+    sh.add_argument("--out-dir", required=True)
+    sh.set_defaults(func=cmd_shape)
     p = sub.add_parser("replan", help="(a run's replan stage) replan.py on the polygon graph induced on --states")
     p.add_argument("spec")
     p.add_argument("--out-spec", required=True)
