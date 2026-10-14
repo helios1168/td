@@ -104,7 +104,7 @@ connector joins them that M1's land-passage rule leaves at unlimited width. Widt
 as M1 measures it: `border_cm` per edge, floored to whole cm, summed over the edges between u and
 v, and compared with W in whole cm. A connector counts unless land within states(S) replaces it
 (`audit.NeckGraph.land_would_do`: joined by polygon edges alone through a passage at least 10 km
-wide). This is M1's district-level rule applied to the plan: it reads the states of S, not the
+wide; this is the rule before 2026-10-14, M1 now counts every connector, §9). This is M1's district-level rule applied to the plan: it reads the states of S, not the
 states a drawn district actually ends up owning ZIPs in, so it is an approximation of M1, not
 M1 itself. With A on, 𝒮_c is the family above with "G[S] connected" replaced by "S connected in
 its own contact graph C(S)". `td.supports` enumerates on the most permissive contact graph P,
@@ -432,7 +432,8 @@ cases **[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
     incumbent. NeckCut is valid for every district without a neck whose anchors lie in one
     component of it, and X is connected.
   - *Widths in both kinds of row* are at least M1's widths. A border counts as its floored whole
-    cm. A connector counts at full width unless land replaces it within a set of states that X
+    cm. A connector counts at full width unless land replaces it (the pre-2026-10-14 rule, §9: M1 now
+    counts it at full width always, so for connectors these widths are at most M1's) within a set of states that X
     certainly owns ZIPs in: the held ZIPs' states, and the state of each free unit that lies in
     one state (X meets it by (b)). M1 reads X's own states, which form a superset, and in a
     superset land replaces a connector at least as often.
@@ -848,6 +849,44 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   a run on the extract always has it. The looks scorer makes an M1 failure ineligible. A
   multipart ZCTA is one vertex; a drawn piece only it makes is a looks defect, not an M1
   failure (owner, 2026-10-05);
+- **M1's neck passage widths (owner, 2026-10-14; `td.audit.NeckGraph`, `district_necks`,
+  `check_m1`)** **[policy #131; owner's words, "(a) Any water crossing. A neck or detached piece
+  passes if its narrow passage is an approved water connector (bridge, tunnel or ferry)... Narrow
+  land necks (Cincinnati, El Paso, Utah) would still fail", "(a) except we should treat necks that
+  are surrounded by empty or zero-opportunity zips the same way we treat water", "keep the
+  manhattan exception and in general those water split cases are ok"]**. The 5% land share and the
+  10 km threshold are unchanged; three rules set a passage's width:
+  - R1: every approved connector (bridge, tunnel, ferry, a road across land in no ZCTA, an island's
+    `nearest` row) is unlimited, always. The rule before (a connector 0 km wide where land within
+    the district's states would do through 10 km, `NeckGraph.land_would_do`) is the opt-in
+    `NeckGraph(pre_2026_10_14_land_rule=True)` / `TD_NECK_PRE_2026_10_14_LAND_RULE=1`.
+  - R2: land in no ZCTA counts (G1, `NeckGraph(gap_width=True)`, the default); opt out with
+    `gap_width=False` / `TD_NECK_GAP_WIDTH=0`. The width source is the one the maps have been gated
+    with since G1 (owner, 2026-10-08, #131; accepted for widths): the land-only rows of
+    `polygon["gaps"]` when present, else the Voronoi `dropped` rows (`polygon["voronoi_gaps"]` or
+    `zcta_polygon_vs_voronoi.csv.gz`), which carry no land or water marker and can cross water.
+    Neck width only: the pieces check (R5) never reads the Voronoi rows.
+  - R3: ZCTAs of zero opportunity in the district's planning channel count, whoever owns them.
+    `check_m1` finds them as the ZCTAs all of whose rows in that channel have m = 0 (a ZCTA with
+    no row in the channel, or a ledger with no opportunity, has none). `district_necks(free=)`
+    adds those that reach the district through free ZCTAs alone as relay vertices of the width
+    graph, with the same edge widths, no land area and no mass: a cut may put a relay on either
+    side, so a passage through them is as wide as its narrowest link. A ZCTA of positive
+    opportunity that another district owns is never a relay. The cut-off part is connected on the
+    district's own ZCTAs (polygon edges, connectors, R5 gap edges), never through a relay: three
+    2% fringes that touch only through a relay are no 6% neck. The detached-piece check is not
+    changed by R3 (a district joined only through empty land is still in pieces).
+  - R5 (owner, 2026-10-14, #140): the pieces check reads the land-only gap edges too
+    (`audit.adjacency(gaps=True)`, `geo.polygon_graph()["gaps"]`): two ZCTAs of one state that face
+    each other across land in no ZCTA are adjacent, never across water (the Voronoi rows, which can
+    cross water, only widen necks, never join pieces), behind G1's switch. `reference/2025/zcta_gap_land.csv.gz` is not
+    shipped yet, so R5 is inactive on the real graph and `check_m1` says so.
+  The master side (`td.supports.contact`, `repair.neck_cuts`, `plancheck`) still reads the
+  pre-2026-10-14 land rule (§2 contact, §4.9 widths): it drops a connector that land replaces, so
+  its rows can reject a drawing M1 now accepts (a plan it accepts is still accepted by M1's
+  connector rule); the claim in §4.9 that its widths are at least M1's no longer holds for
+  connectors, and a `repair.neck_cuts` row built on the old connector width may cut a drawing the new rule
+  accepts (a follow-up, not changed here);
 - mode compliance on the owners of cells with opportunity, with the metro exceptions listed
   (S14); a zero-opportunity ZCTA the territory pass gave to a district holding no opportunity in
   its unit is listed, not failed (#116; a state crossing is a split, owner 2026-10-05);

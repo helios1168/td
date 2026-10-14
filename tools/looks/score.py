@@ -38,10 +38,12 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
   ZCTA owned in every channel.  Without a polygon graph M1 is unverified, and the run is not
   eligible.  The run's own scorecard M1, which also checks each cell's planning channel against
-  the scenario, must not fail either (#116).  Necks are measured on polygon borders unless
-  `td.audit.GAP_WIDTH_ENV` is "1" (G1, #131), as the main-map overnight grid gates (G3,
-  2026-10-13); `m1_both` gives both verdicts and the districts they disagree on, and
-  `--m1-json` writes them to each run's `m1.json`;
+  the scenario, must not fail either (#116).  Necks follow the owner's 2026-10-14 rule
+  (`td.audit.check_m1`): connectors unlimited, land in no ZCTA (G1, #131) and zero-opportunity
+  ZCTAs of the channel count towards a passage; `td.audit.GAP_WIDTH_ENV` = "0" opts out of the
+  gap land and `td.audit.LAND_RULE_ENV` = "1" back into the pre-2026-10-14 land rule.
+  `m1_both` gives the verdict with gap land off (`strict`) and on (`gap_width`) and the districts
+  they disagree on (by a neck or a detached piece, R5), and `--m1-json` writes them to each run's `m1.json`;
 - the folder is not diagnostic (#121, `td.audit.diagnostic`): a run held to a diagnostic band,
   or derived from one, is INELIGIBLE with the reason "diagnostic band".
 
@@ -112,6 +114,7 @@ DOLLAR_COLUMNS = ["channel", "district", "usd_m", "lo_m", "hi_m", "whole_state_c
 IFA_ONLY = {"IFA"}
 BAND_CHECK = "final bands on drawn mass"
 NECK = re.compile(r"^[^:]+: neck ")       # M1's neck items (`td.audit.neck_item`)
+PIECE = re.compile(r"^[^:]+: detached piece ")   # M1's detached-piece items (`td.audit.check_m1`)
 
 
 class Geography:
@@ -123,7 +126,8 @@ class Geography:
     def __init__(self, state: dict, xy: dict, edge: dict, polygon: dict | None = None,
                  parts: dict | None = None):
         self.state, self.xy, self.edge, self.polygon = state, xy, edge, polygon
-        self.polygon_adj = audit.adjacency(polygon) if polygon is not None else None
+        # the pieces M1 lists: land-only gap edges join them unless G1 is off (R5, owner, 2026-10-14)
+        self.polygon_adj = audit.adjacency(polygon, gaps=audit.gap_width_on()) if polygon is not None else None
         self.parts = parts
         self.part_adj = part_adjacency(polygon, parts) if polygon and parts else None
 
@@ -388,39 +392,46 @@ def bands_at(ledger: list, ks: dict, band: float) -> audit.Check:
     return audit.check_bands(audit.Run(cells, chans))
 
 
-def m1_check(ledger: list, ks: dict, g: Geography, fine=None, gap_width: bool | None = None) -> audit.Check:
+def m1_check(ledger: list, ks: dict, g: Geography, fine=None, gap_width: bool | None = None,
+             land_rule: bool | None = None) -> audit.Check:
     """`td.audit.check_m1` on the drawn ledger with `g`'s polygon graph (strict: no display fill),
     on the scenario's fine channels `fine` (`fine_channels`); None, for a run from before #116,
     takes the ledger's, and the summary says so.  A run folder has no units, so the routing of a
     cell to its planning channel is the run's own scorecard M1's to check.  `gap_width` goes to
-    `check_m1`: None reads `td.audit.GAP_WIDTH_ENV`."""
+    `check_m1`: None reads `td.audit.GAP_WIDTH_ENV` (on unless "0", owner, 2026-10-14); so does
+    `land_rule`, the opt-in pre-2026-10-14 land rule (`td.audit.LAND_RULE_ENV`)."""
     cells = [audit.Cell(r["zip_code"], r["current_channel"], r["model_channel"], r["district"],
                         float(r["m_rel"]), reason=r.get("reason", "")) for r in ledger]
     return audit.check_m1(audit.Run(cells, {ch: audit.Channel(k) for ch, k in ks.items()},
                                     polygon=g.polygon, fine=None if fine is None else tuple(fine)),
-                          gap_width=gap_width)
+                          gap_width=gap_width, land_rule=land_rule)
 
 
 def m1_both(ledger: list, ks: dict, g: Geography, fine=None) -> dict:
     """M1 both ways (G3, the main-map overnight grid, 2026-10-13): `strict`, necks on polygon
-    borders, and `gap_width`, necks across coverage gaps too (`td.audit.NeckGraph`), each a
-    `m1_check`, and `flips`, one row per district with a neck one way and none the other:
-    {"district": "channel/district", "strict": its neck items, "gap_width": its neck items}."""
+    borders (gap land off), and `gap_width`, necks across coverage gaps too (`td.audit.NeckGraph`,
+    the default since 2026-10-14; both read connectors and zero-opportunity ZCTAs the new way), each a
+    `m1_check`, and `flips`, one row per district that fails one way and not the other, by a neck
+    or by a detached piece (R5's land-only gap edges join pieces with the switch on):
+    {"district": "channel/district", "strict": its neck and detached-piece items, "gap_width": the
+    same}."""
     got = {k: m1_check(ledger, ks, g, fine, gap_width=k == "gap_width") for k in ("strict", "gap_width")}
-    necks = {k: collections.defaultdict(list) for k in got}
+    bad = {k: collections.defaultdict(list) for k in got}
     for k, c in got.items():
         for i in c.items:
-            if NECK.search(i):
-                necks[k][i.split(":", 1)[0]].append(i)
-    flips = [{"district": d, "strict": necks["strict"].get(d, []), "gap_width": necks["gap_width"].get(d, [])}
-             for d in sorted(set(necks["strict"]) ^ set(necks["gap_width"]))]
+            if NECK.search(i) or PIECE.search(i):
+                bad[k][i.split(":", 1)[0]].append(i)
+    flips = [{"district": d, "strict": bad["strict"].get(d, []), "gap_width": bad["gap_width"].get(d, [])}
+             for d in sorted(set(bad["strict"]) ^ set(bad["gap_width"]))]
     return {**got, "flips": flips}
 
 
 def write_m1(path: str, both: dict) -> None:
-    """`m1.json`: `m1_both`'s verdicts (status, summary, counts, neck items) and flips."""
+    """`m1.json`: `m1_both`'s verdicts (status, summary, counts, neck and detached-piece items) and
+    flips."""
     doc = {k: {"status": c.status, "summary": c.summary, **c.counts,
-               "necks": [i for i in c.items if NECK.search(i)]}
+               "necks": [i for i in c.items if NECK.search(i)],
+               "pieces": [i for i in c.items if PIECE.search(i)]}
            for k, c in both.items() if k != "flips"}
     doc["flips"] = both["flips"]
     with open(path, "w", encoding="utf-8") as fh:
