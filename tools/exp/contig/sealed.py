@@ -203,9 +203,9 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
             errs.append(f"point {pid!r}: the id must be a file-name word other than the driver's own "
                         f"({', '.join(POINT_NAMES)})")
             continue
-        if pid in seen_ids:
-            errs.append(f"point {pid}: listed twice")
-        seen_ids.add(pid)
+        if pid.casefold() in seen_ids:     # a Mac volume is case-insensitive: Pt and pt are one folder
+            errs.append(f"point {pid}: listed twice (ids are compared ignoring case)")
+        seen_ids.add(pid.casefold())
         if structure not in structures:
             errs.append(f"point {pid}: structure {structure!r} is not one of {sorted(structures)}")
             continue
@@ -362,14 +362,33 @@ def run_fine(sp, channels) -> set:
     return {f for c in channels for fs in sp.channels[c].domain.values() for f in fs}
 
 
-def cut_extract(src: str, dst: str, fine) -> str:
-    """`dst`: the extract `src` less the cells of fine channels outside `fine` (as `td.spec.scope`
-    cuts the columns), written atomically; a channel whose cells are all gone is dropped by the spec
-    build."""
+def run_cells(sp, channels) -> set:
+    """{(state, fine channel)} the domains of `channels` of the spec `sp` give them: a fine channel
+    can belong to one planning channel in a state and another in the next (`main_ne_plains`'
+    national_chase: national in CA, WIFI in CT)."""
+    return {(u, f) for c in channels for u, fs in sp.channels[c].domain.items() for f in fs}
+
+
+def zip_states() -> dict:
+    """{ZCTA: state} over M1's vertex set, as `overnight.state_cells` places the extract's cells."""
+    ref = geo.read_reference()
+    ref = ref[ref["graph_vertex"] == "1"]
+    return dict(zip(ref["zcta"], ref["state"]))
+
+
+def cut_extract(src: str, dst: str, cells, state_of: dict) -> str:
+    """`dst`: the extract `src` less the cells whose (state of the ZCTA, fine channel) is not in
+    `cells` (`run_cells`: the planning channel that owns a cell is the state's, not the fine
+    channel's), written atomically; a ZCTA with no state in `state_of` is judged by its fine channel
+    alone (`td.spec.build` places only the vertex set).  A channel whose cells are all gone is
+    dropped by the spec build."""
     ext = data.load(src)
-    rows = [i for i, f in enumerate(ext.channel) if f in fine]
+    fine = {f for _, f in cells}
+    rows = [i for i, (z, f) in enumerate(zip(ext.z, ext.channel))
+            if ((state_of[z], f) in cells if z in state_of else f in fine)]
+    kept = {ext.channel[i] for i in rows}
     cut = dataclasses.replace(
-        ext, channels=tuple(f for f in ext.channels if f in fine), z=[ext.z[i] for i in rows],
+        ext, channels=tuple(f for f in ext.channels if f in kept), z=[ext.z[i] for i in rows],
         channel=[ext.channel[i] for i in rows], m_rel=[ext.m_rel[i] for i in rows],
         share=[ext.share[i] for i in rows], share_free=[ext.share_free[i] for i in rows])
     data.write(cut, dst + ".tmp")
@@ -502,14 +521,48 @@ def all_states(runs: list) -> tuple:
     return tuple(sorted({st for r in runs for st in r["states"]}))
 
 
-def combine_point(runs: list, folders: dict, out: str) -> dict:
+def _run():
+    return overnight._load("contig_run", os.path.join(HERE, "run.py"))
+
+
+def combine_point(runs: list, folders: dict, out: str, spec_path: str, extract_path: str) -> dict:
     """`out`: one run folder (`ledger.csv`, `districts.csv`, `manifest.json`, `run.json`: what
     `merge.py` reads of a source) holding every cell of a point whose channels were drawn by
     independent regions.  A cell (ZCTA, fine channel) comes from the run that has its planning channel
     (`model_channel`) for the ZCTA's state, else, for a cell of no run's channel, from the first run
     holding the state; a run's rows outside its states, and its other channels' rows, are left to
     their own runs.  Districts are renamed `<run>/<id>`, so no two runs' districts collide.
-    `runs` the normalised runs, `folders` {run name: its last folder}."""
+    `runs` the normalised runs, `folders` {run name: its last folder}.  The folder's manifest is its
+    own (mandate T1, `run.write_manifest`: identity, command, `spec_path` and `extract_path` with
+    their sha256, this code's commit), with every source run in `source_runs` and `combined_from`,
+    so the tracker index lists it as a run of its own."""
+    srcs = []
+    for run in runs:
+        with open(os.path.join(folders[run["name"]], "manifest.json"), encoding="utf-8") as fh:
+            commit = json.load(fh)["provenance"]["commit"]
+        srcs.append({"run": run["name"], "states": list(run["states"]), "folder": os.path.abspath(folders[run["name"]]),
+                     "commit": commit})
+    params = {"runs": {r["name"]: {"states": list(r["states"]), "channels": sorted(r["ks"])} for r in runs}}
+    os.makedirs(out, exist_ok=True)
+    stale = os.path.join(out, "manifest.json")
+    if os.path.exists(stale):
+        os.remove(stale)        # a retry is a new run: its own start time and code state
+    mrun = _run()
+    mrun.write_manifest(out, "sealed_combine", spec_path, extract_path, params, source_runs=srcs,
+                        combined_from={r["run"]: r["folder"] for r in srcs})
+    try:
+        got = _combine_cells(runs, folders, out)
+    except Exception as e:
+        mrun.write_manifest(out, "sealed_combine", spec_path, extract_path, params, status="failed",
+                            stop_reason=f"{type(e).__name__}: {e}")
+        raise
+    mrun.write_manifest(out, "sealed_combine", spec_path, extract_path, params, status="done",
+                        stop_reason="combined", **got)
+    return got
+
+
+def _combine_cells(runs: list, folders: dict, out: str) -> dict:
+    """The ledger, districts and run.json of `combine_point`'s folder; {cells, districts}."""
     owner, first = collections.defaultdict(dict), {}
     for run in runs:
         for st in run["states"]:
@@ -557,10 +610,6 @@ def combine_point(runs: list, folders: dict, out: str) -> dict:
         for c, v in rj["channels"].items():
             if any(owner[c].get(st) == run["name"] for st in run["states"]):
                 status[c].append(f"{run['name']} {v['status']}")
-    with open(os.path.join(folders[runs[0]["name"]], "manifest.json"), encoding="utf-8") as fh:
-        provenance = json.load(fh)["provenance"]
-    overnight._write_json(os.path.join(out, "manifest.json"), {
-        "provenance": provenance, "status": "done", "combined_from": {n: os.path.abspath(f) for n, f in folders.items()}})
     overnight._write_json(os.path.join(out, "run.json"), {
         "channels": {c: {"status": "; ".join(v)} for c, v in sorted(status.items())},
         "m1": {"status": "unverified here (the runs': " + ", ".join(m1) + ")"}})
@@ -610,6 +659,9 @@ def plan_report(path: str) -> dict:
 _SHAPE = {}
 _SHAPE_LOCK = threading.Lock()
 SUM_COLUMNS = ("hull_fill", "bite", "aspect", "longest_axis_km", "doughnut", "doughnut_soft")
+LIMIT_COLUMNS = ("n_states", "usd_m", "m_rel", "n_zips", "land_km2", "hull_km2", "hull_fill", "hull_fill_raw", "bite",
+                 "longest_axis_km", "aspect", "cut_edges", "cut_counties", "land_per_usd", "wmean_dist_km",
+                 "r90_km", "doughnut", "doughnut_soft", "hub_share")      # the numeric columns of study.DISTRICT_COLUMNS
 
 
 def _study():
@@ -617,8 +669,8 @@ def _study():
 
 
 def load_limits(path: str | None) -> dict:
-    """{"hard": bool, "limits": {column: {"min"?: x, "max"?: y}}} from L.json (columns of
-    `tools/looks/study.py`'s per-district measures); the default is no limits, report only."""
+    """{"hard": bool, "limits": {column: {"min"?: x, "max"?: y}}} from L.json (numeric columns of
+    `tools/looks/study.py`'s per-district measures, `LIMIT_COLUMNS`); the default is no limits, report only."""
     if path is None:
         return {"hard": False, "limits": {}}
     with open(path, encoding="utf-8") as fh:
@@ -626,8 +678,9 @@ def load_limits(path: str | None) -> dict:
     lim = doc.get("limits")
     if not isinstance(lim, dict) or not isinstance(doc.get("hard", False), bool) or set(doc) - {"hard", "limits"}:
         raise PartitionError(f"{path}: expected {{\"hard\": bool, \"limits\": {{column: {{min, max}}}}}}")
-    cols = set(_study().DISTRICT_COLUMNS)
-    errs = [f"{path}: {k!r} is not a district measure of tools/looks/study.py" for k in lim if k not in cols]
+    cols = set(_study().DISTRICT_COLUMNS) & set(LIMIT_COLUMNS)
+    errs = [f"{path}: {k!r} is not a numeric district measure of tools/looks/study.py ({', '.join(LIMIT_COLUMNS)})"
+            for k in lim if k not in cols]
     errs += [f"{path}: {k}: a limit is {{\"min\": x}} and/or {{\"max\": y}} with numbers"
              for k, v in lim.items() if not isinstance(v, dict) or not v or set(v) - {"min", "max"}
              or not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in v.values())]
@@ -769,6 +822,7 @@ class Driver(overnight.Runner):
         super().__init__(grid, root, host, extract, cells)
         self.points, self.caps, self.forbid, self.max_size, self.limits = points, caps, forbid, max_size, limits
         self.drawable_alone = drawable_alone
+        self.state_of = None            # {ZCTA: state}, read when a run needs a cut extract
         self.lock = threading.Lock()
         self.pending = collections.Counter()
         self.specs = {}
@@ -797,7 +851,10 @@ class Driver(overnight.Runner):
             return self.extract
         path = os.path.join(rdir, "extract.json.gz")
         if not os.path.exists(path):
-            cut_extract(self.extract, path, run_fine(sp, [c for c in run["ks"] if c in sp.channels]))
+            if self.state_of is None:
+                self.state_of = zip_states()
+            cut_extract(self.extract, path, run_cells(sp, [c for c in run["ks"] if c in sp.channels]),
+                        self.state_of)
         return path
 
     # -- one run
@@ -901,7 +958,7 @@ class Driver(overnight.Runner):
             if npass == 2 and clean(src):
                 break
             out = os.path.join(adir, f"r{npass}")
-            if not finished(out):
+            if not repair_done(out):
                 overnight.set_aside(out)
                 cap = self.caps["repair"]
                 info = self.stage(pid, f"{rn}.r{npass}",
@@ -909,7 +966,7 @@ class Driver(overnight.Runner):
                                              win), os.path.join(adir, f"r{npass}.log"), cap)
                 if info["stop"] == "cap":
                     self.note(pid, rn, **{f"r{npass}": f"killed at its cap ({cap / 60:g} min)"})
-            if os.path.exists(os.path.join(out, "ledger.csv")):
+            if repair_done(out):        # an interrupted pass leaves the last completed source in place
                 src = out
         gout = os.path.join(adir, "glue")
         if not glue_done(gout):
@@ -970,7 +1027,7 @@ class Driver(overnight.Runner):
         if not finished(merged):
             overnight.set_aside(merged)
             if not pt["aligned"]:       # independent regions per channel: one source holding each cell once
-                combine_point(pt["runs"], folders, combined)
+                combine_point(pt["runs"], folders, combined, mspec, self.extract)
             cmd, cap, env = chain["merge"]
             info = self.stage(pid, "merge", cmd, os.path.join(pdir, "merge.log"), cap, env)
             if info["stop"] == "cap":
@@ -1032,6 +1089,12 @@ class Driver(overnight.Runner):
 
 def finished(folder: str) -> bool:
     return overnight.finished(folder)
+
+
+def repair_done(folder: str) -> bool:
+    """True when a repair pass folder is a completed one the next stage can read: `finished` (manifest
+    done, ledger written) with its `contig.json` and `run.json`."""
+    return finished(folder) and all(os.path.exists(os.path.join(folder, f)) for f in ("contig.json", "run.json"))
 
 
 def glue_done(folder: str) -> bool:

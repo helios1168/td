@@ -419,6 +419,13 @@ def test_labels_follow_m1_then_band_then_hard_shape():
     assert sealed.worst_run({"a": {"status": "infeasible", "reason": "x"}, "b": {"status": "stopped", "reason": "y"}})[0] == "stopped"
 
 
+def test_point_ids_differing_only_in_case_are_listed_twice():
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = _doc()
+        doc["points"].append(dict(doc["points"][0], id="TOY-PT"))
+        _refused(doc, tmp, "TOY-PT", "listed twice")
+
+
 def test_shape_limits_file_and_breaches():
     rows = [{"channel": "WH", "district": "WH_01", "hull_fill": 0.5, "bite": 0.05, "aspect": 2.0, "longest_axis_km": 800.0,
              "doughnut": 0, "doughnut_soft": 0},
@@ -440,6 +447,14 @@ def test_shape_limits_file_and_breaches():
             raise AssertionError("accepted an unknown measure")
         except sealed.PartitionError as e:
             assert "not_a_measure" in str(e)
+        for col in ("hub", "states", "channel", "cut_detail"):     # text columns: a number limit never compares
+            json.dump({"limits": {col: {"max": 1}}}, open(path, "w"))
+            try:
+                sealed.load_limits(path)
+                raise AssertionError(f"accepted a limit on the text column {col}")
+            except sealed.PartitionError as e:
+                assert f"'{col}'" in str(e) and "numeric" in str(e)
+        assert set(sealed.LIMIT_COLUMNS) <= set(sealed._study().DISTRICT_COLUMNS)
 
 
 def test_index_rows_and_markdown():
@@ -616,6 +631,31 @@ def test_a_drawing_that_succeeded_with_detached_pieces_goes_on_to_the_repair_and
         assert drv.calls == ["south.r1", "south.r2", "south.glue"]      # a piece is for the repair, not a failed drawing
         rec = drv.grid.get("toy-pt")["runs"]["south"]
         assert rec["status"] == "done" and rec["draw_failing"] == [] and rec["draw"] == {"WIFI": "optimal", "national": "connected"}
+
+
+def test_an_interrupted_repair_pass_with_only_a_ledger_is_not_the_next_source():
+    """A pass killed at its cap can leave a `ledger.csv` with no `contig.json` or `run.json` and a
+    manifest still `running`: glue reads the draw folder, not that one."""
+    with tempfile.TemporaryDirectory() as tmp:
+        drv, pt, run = _stub_driver(tmp, None, [[]])
+        rdir = os.path.join(tmp, "toy-pt", "south")
+        r1 = os.path.join(rdir, "r1")
+        os.makedirs(r1)
+        open(os.path.join(r1, "ledger.csv"), "w").write("zip_code\n")
+        json.dump({"status": "running"}, open(os.path.join(r1, "manifest.json"), "w"))
+        assert not sealed.repair_done(r1)
+        glued = []
+        drv.stage = lambda pid, name, cmd, log, cap, env=None: (
+            glued.append(cmd[3]) if name == "south.glue" else None) or {"rc": 0, "stop": None, "seconds": 0.0}
+        drv._chain(pt, run, rdir)
+        assert glued == [os.path.join(rdir, "draw")]
+        os.makedirs(r1, exist_ok=True)                          # the driver moved the interrupted pass aside
+        open(os.path.join(r1, "ledger.csv"), "w").write("zip_code\n")
+        json.dump({"status": "done"}, open(os.path.join(r1, "manifest.json"), "w"))
+        assert not sealed.repair_done(r1)                       # done, ledger, but no contig.json / run.json
+        for f in ("contig.json", "run.json"):
+            open(os.path.join(r1, f), "w").write("{}")
+        assert sealed.repair_done(r1)
 
 
 # ------------------------------------------------------------------------------ a resumed glue folder
@@ -877,11 +917,22 @@ def _independent_runs(tmp):
     return runs, folders
 
 
+def _combine(runs, folders, out):
+    """`combine_point` with a scenario and an extract file beside the output (its manifest hashes both)."""
+    tmp = os.path.dirname(out)
+    spec, extract = os.path.join(tmp, "spec-merge.toml"), os.path.join(tmp, "extract.json.gz")
+    for path in (spec, extract):
+        if not os.path.exists(path):
+            os.makedirs(tmp, exist_ok=True)
+            open(path, "w").write(path)
+    return sealed.combine_point(runs, folders, out, spec, extract)
+
+
 def test_combine_takes_each_cell_from_the_run_that_owns_its_channel_in_its_state():
     with tempfile.TemporaryDirectory() as tmp:
         runs, folders = _independent_runs(tmp)
         out = os.path.join(tmp, "combined")
-        got = sealed.combine_point(runs, folders, out)
+        got = _combine(runs, folders, out)
         led = output.read_ledger(os.path.join(out, "ledger.csv"))
         cells = {(r["zip_code"], r["current_channel"]): (r["district"], r["model_channel"]) for r in led}
         assert got == {"cells": 8, "districts": 4} and len(led) == 8
@@ -893,7 +944,14 @@ def test_combine_takes_each_cell_from_the_run_that_owns_its_channel_in_its_state
                          ("33101", "wh"): ("rest-WIFI/WIFI_01", "WIFI"), ("75001", "wh"): ("rest-WIFI/WIFI_01", "WIFI")}
         dist = list(csv_rows(os.path.join(out, "districts.csv")))
         assert sorted(r["district"] for r in dist) == sorted({j for j, _ in cells.values()})
-        assert json.load(open(os.path.join(out, "manifest.json")))["provenance"] == {"commit": "abc123"}
+        m = json.load(open(os.path.join(out, "manifest.json")))        # its own manifest (T1), not a source's
+        assert (m["run_id"], m["lane"], m["status"], m["stop_reason"]) == ("combined", "contig", "done", "combined")
+        assert m["formulation"] == "sealed_combine" and m["command"] and m["finished_at"]
+        assert m["scenario"]["sha256"] and m["provenance"]["instance_sha256"] and len(m["provenance"]["commit"]) == 40
+        assert m["provenance"] != {"commit": "abc123"} and {"dirty", "diff_sha256", "host"} <= set(m["provenance"])
+        assert [(r["run"], r["commit"], r["folder"]) for r in m["source_runs"]] == [
+            (n, "abc123", os.path.abspath(folders[n])) for n, *_ in INDEPENDENT]
+        assert m["combined_from"] == {n: os.path.abspath(f) for n, f in folders.items()}
         rj = json.load(open(os.path.join(out, "run.json")))
         assert rj["channels"]["WIFI"]["status"] == "south-WIFI optimal; rest-WIFI optimal" and "m1" in rj
         # a district a run never listed in districts.csv is refused, not merged
@@ -901,11 +959,30 @@ def test_combine_takes_each_cell_from_the_run_that_owns_its_channel_in_its_state
         open(os.path.join(folders["rest-WIFI"], "districts.csv"), "w").write(
             "channel,district,district_name,copy,support,planned_mass,drawn_mass,pieces\n")
         try:
-            sealed.combine_point(runs, folders, out)
+            _combine(runs, folders, out)
         except ValueError as e:
             assert "rest-WIFI" in str(e) and "not in districts.csv" in str(e)
         else:
             raise AssertionError("combined a district with no districts.csv row")
+        m = json.load(open(os.path.join(out, "manifest.json")))
+        assert m["status"] == "failed" and "not in districts.csv" in m["stop_reason"]
+
+
+def test_a_combined_folder_of_independent_channels_is_a_run_of_its_own_in_the_tracker_index():
+    """Mandate T1: `tools/exp/index.py` needs `run_id`, `lane`, `formulation`, `folder` and `status` of
+    every manifest it finds; the combined folder's is written by `run.write_manifest`, with the source
+    runs' folders and commits as its lineage."""
+    spec = importlib.util.spec_from_file_location("exp_index_t", os.path.join(CONTIG, "..", "index.py"))
+    index = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(index)
+    with tempfile.TemporaryDirectory() as tmp:
+        runs, folders = _independent_runs(tmp)
+        out = os.path.join(tmp, "exp", "contig", "toy-pt", "combined")
+        _combine(runs, folders, out)
+        (row,) = index.rebuild(os.path.join(tmp, "exp"))
+        assert (row["run_id"], row["lane"], row["formulation"], row["status"]) == ("combined", "contig", "sealed_combine", "done")
+        assert row["folder"] == out and row["commit"] and row["commit"] != "abc123" and row["instance_sha256"]
+        assert row["params"]["runs"]["south-national"] == {"states": ["CA", "TX"], "channels": ["national"]}
 
 
 def csv_rows(path):
@@ -922,7 +999,7 @@ def test_a_cell_of_no_run_s_channel_comes_from_the_first_run_holding_its_state_a
                    "b": _run_folder(os.path.join(tmp, "b"), [_row("90001", "career", "CA", "", ""),
                                                              _row("75001", "career", "TX", "", ""),
                                                              _row("90001", "national_chase", "CA", "national", "national_01")], ["national"])}
-        sealed.combine_point(runs, folders, os.path.join(tmp, "out"))
+        _combine(runs, folders, os.path.join(tmp, "out"))
         led = output.read_ledger(os.path.join(tmp, "out", "ledger.csv"))
         by = {(r["zip_code"], r["current_channel"]): r["district"] for r in led}
         assert by == {("90001", "career"): "", ("75001", "career"): "", ("90001", "national_chase"): "a/national_01"}
@@ -942,6 +1019,7 @@ def test_a_run_of_some_channels_reads_an_extract_cut_to_their_fine_channels():
         assert both["outside"] == []
         drv, pt, run = _stub_driver(tmp, None, [])
         drv.extract = src
+        drv.state_of = {"90001": "CA", "75001": "TX"}
         assert drv.run_extract(sp, run, both, os.path.join(tmp, "r")) == src                   # nothing outside: the extract itself
         rdir = os.path.join(tmp, "r")
         os.makedirs(rdir)
@@ -951,6 +1029,54 @@ def test_a_run_of_some_channels_reads_an_extract_cut_to_their_fine_channels():
         cut = data.load(path)
         assert cut.channels == ("national_chase",) and cut.z == ["90001"] and cut.channel == ["national_chase"]
         assert cut.meta["note"] == "kept" and data.load(src).z == ["90001", "90001", "75001"]       # the source is untouched
+
+
+CT_TOY = """[scenario]
+name = "toy-ct"
+fine_channels = ["national_chase", "wh"]
+planned_elsewhere = ["career", "edj", "fi", "ifa", "imo", "priafs", "wells_fi", "wells_wh"]
+
+[channels.national]
+k = 2
+domain = [{ units = "all - CT", fine = ["national_chase"] }]
+mode = "whole"
+eta = 0.05
+
+[channels.WH]
+k = 2
+domain = [{ units = "all - CT", fine = ["wh"] }]
+mode = "whole"
+eta = 0.05
+
+[channels.WIFI]
+k = 1
+domain = [{ units = ["CT"], fine = ["national_chase", "wh"] }]
+mode = "whole"
+eta = 0.05
+"""
+
+
+def test_a_national_only_region_with_ct_does_not_read_the_cts_national_chase_cells_that_wifi_owns():
+    """`main_ne_plains` plans national_chase in CT under WIFI, in every other state under national: a
+    run of national over CA + CT keeps CA's national_chase cells only."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "toy-ct.toml")
+        open(path, "w").write(CT_TOY)
+        sp = tdspec.load(path)
+        cells = {("CA", "national_chase"): 1500.0, ("CT", "national_chase"): 400.0, ("CA", "wh"): 1000.0, ("CT", "wh"): 300.0}
+        plan = sealed.region_plan(sp, ("CA", "CT"), {"national": 2}, cells, "base")
+        assert list(plan["channels"]) == ["national"] and plan["outside"] == ["WH", "WIFI"]
+        assert sealed.run_cells(sp, ["national"]) >= {("CA", "national_chase")} and ("CT", "national_chase") not in sealed.run_cells(sp, ["national"])
+        src = os.path.join(tmp, "toy-extract.json.gz")
+        data.write(data.Extract(("national_chase", "wh"), ["90001", "06001", "90001", "06001"],
+                                ["national_chase", "national_chase", "wh", "wh"], [1.0, 2.0, 3.0, 4.0],
+                                [{}, {}, {}, {}], [0.0] * 4, {}, {}), src)
+        drv, pt, run = _stub_driver(tmp, None, [])
+        drv.extract, drv.state_of = src, {"90001": "CA", "06001": "CT"}
+        rdir = os.path.join(tmp, "r")
+        os.makedirs(rdir)
+        cut = data.load(drv.run_extract(sp, dict(run, ks={"national": 2}), plan, rdir))
+        assert cut.z == ["90001"] and cut.channel == ["national_chase"] and cut.channels == ("national_chase",)
 
 
 def test_dry_run_of_independent_regions_cuts_the_extract_and_merges_the_combined_ledger():
