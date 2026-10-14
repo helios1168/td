@@ -284,7 +284,8 @@ final band and the audit's final band all read it, and `delta` and `final_delta`
 reporting only (the equivalent δ is max(1 − band_lo, band_hi − 1)). The band is hard and never
 widened: there is no wider-δ retry, `--diag-final-delta` is capped at it, and there is no δ to
 search, so the smallest-δ searches (§5 Claim 2) solve the window once and report that
-(`master.window_feasibility`, method `window`). Without the two keys everything is as before.
+(`master.window_feasibility`, method `window`), `exact_delta` too whether or not the channel has free
+units (the window branch comes before the free-unit rejection). Without the two keys everything is as before.
 
 ### 4.6 The rounding margin μ_S (U33)
 

@@ -222,6 +222,11 @@ def test_the_caption_prints_each_channels_final_band():
         whole = _run(os.path.join(tmp, "b"), {"IFA": {"delta": 3.1025, "final_delta": 3.1025}})
         assert summary.final_bands(whole) == {"IFA": 3.1025}
     assert [summary._pct(x) for x in (0.1, 0.15, 3.1025, 0.0938)] == ["10", "15", "310.2", "9.4"]
+    # a window band (#112) prints as its asymmetric window, a channel without one as ±δ
+    assert summary.window_text(0.947, 1.361) == "-5.3%/+36.1%"
+    assert summary.window_text(0.85 / 0.87, 1.15 / 0.87) == "-2.3%/+32.2%"
+    assert summary.band_text({"delta": 0.1}) is None
+    assert summary.band_text({"delta": 0.1, "band_lo": 0.947, "band_hi": 1.361}) == "-5.3%/+36.1%"
     if os.path.exists(os.path.join(PC_A, "run.json")):
         assert summary.final_bands(PC_A) == {"FI": 0.15, "WH": 0.1, "national": 0.1}
     else:

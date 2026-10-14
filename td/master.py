@@ -472,10 +472,10 @@ def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None,
     band there is no δ to minimise: it reports feasibility in the window (`window_feasibility`)."""
     ch = inst.channels[channel]
     _check_eta(channel, ch.spec.eta)
+    if ch.spec.window:      # before the free-unit rejection: the window is solved once, free units or not
+        return window_feasibility(inst, channel, fam, time_limit, banned=banned)
     if any(ch.mode[v] == "free" for v in ch.units):
         raise MasterError(f"channel {channel}: free units need bisection (Claim 2)")
-    if ch.spec.window:
-        return window_feasibility(inst, channel, fam, time_limit, banned=banned)
     fam = supports.family(inst, channel) if fam is None else fam
     tau, cs = ch.tau, ch.spec
     floors = supports.corridor_floors(inst, fam)

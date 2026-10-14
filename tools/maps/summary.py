@@ -70,6 +70,19 @@ def _pct(delta: float) -> str:
     return text[:-2] if text.endswith(".0") else text
 
 
+def window_text(lo: float, hi: float) -> str:
+    """A window band [τ·lo, τ·hi] as the caption prints it, asymmetric: 0.947, 1.361 as `-5.3%/+36.1%`."""
+    return f"{100 * (lo - 1):+.1f}%/{100 * (hi - 1):+.1f}%"
+
+
+def band_text(channel: dict, legacy: str | None = None) -> str | None:
+    """The caption's band of a spec channel table: its window (`window_text`) when it sets `band_lo`
+    and `band_hi` (#112), else `legacy`, the ±δ text."""
+    if "band_lo" in channel and "band_hi" in channel:
+        return window_text(channel["band_lo"], channel["band_hi"])
+    return legacy
+
+
 def final_bands(src: str) -> dict:
     """{planning channel: final band δ} of run folder `src`: `contig.json`'s `repair_band` when the
     repair recorded one (a diagnostic band included), else `run.json`'s `final_delta` (#127's
@@ -134,9 +147,11 @@ def adapt(src: str, dst: str, fac: dict) -> str:
                "per_state": per_state}, open(dst + "/plan.json", "w"))
     _ch = tomllib.load(open(_resolve(json.load(open(src.rstrip("/") + "/run.json"))["spec"]), "rb"))["channels"]
     _ab = {"national": "N", "WH": "WH", "FI": "FI", "WIFI": "WIFI"}
-    _bands = " ".join(f"{_ab.get(c, c)} ±{100 * v['delta']:.1f}%" for c, v in _ch.items() if c != "WIFI")
+    _bands = " ".join(f"{_ab.get(c, c)} " + (band_text(v) or f"±{100 * v['delta']:.1f}%")
+                      for c, v in _ch.items() if c != "WIFI")
     _final = final_bands(src)
-    _final_text = " ".join(f"{_ab.get(c, c)} ±{_pct(_final[c])}%" for c in _ch if c in _final)
+    _final_text = " ".join(f"{_ab.get(c, c)} " + (band_text(_ch[c]) or f"±{_pct(_final[c])}%")
+                           for c in _ch if c in _final)
     _sizes = " ".join(f"{_ab.get(c, c)} {v['max_size']}" for c, v in _ch.items() if c != "WIFI")
     _main = next((v for c, v in _ch.items() if c != "WIFI"), next(iter(_ch.values())))  # a WIFI-only run: WIFI's
     _by = collections.defaultdict(list)

@@ -7,13 +7,19 @@ each district inside one region (owner, 2026-10-13: regional sealing for the mai
     "$TD_PY" tools/exp/contig/sealed.py index --root DIR      (`collect` is the same command)
 
 **The partition** (`P.json`): `{"points": [{"id", "structure", "channels": {<channel>: {"regions":
-[{"name", "states": [...], "k", "k_alt"?, "forbid"?: ["DE-VA"]}], "rest": bool, "k_total"?}}]}}`.
+[{"name", "states": [...], "k", "k_alt"?, "forbid"?: ["DE-VA"]}], "rest": bool, "k_total"?, "overrides"?:
+{"free_rule"?, "max_dist_km"?, "max_size"?}}}]}`.
 `structure` is one of `overnight.STRUCTURES` (its base spec and split rule).  Every channel of the
 structure is listed.  A region's `states` are disjoint from the channel's other regions' and hold
 at least one of its footprint states; `rest: true` adds the region of the channel's footprint states
 in no region, with `k_total` (the channel's K over the whole map, default the K of the
 `overnight.POINTS` entry of the same id) less the regions' K; `rest: false` needs every footprint
-state in a region.  The channels are partitioned independently: a channel's regions need not
+state in a region.  A channel's optional `overrides` (owner's decisions, 2026-10-14, #112) change that channel
+alone, in every one of its regions and its rest: `free_rule` `"R1"` (the base split list plus the units whose $
+in the region exceeds τ/2), `"base"` (the spec's own list) or `"rule"` (#76's, the units above τ/2) in place
+of the point's rule; `max_dist_km` (a number above 0) and `max_size` (an integer of 1 or more), which the
+channel's block gets in place of the base spec's, `max_size` also in place of `--max-size`.  Any other key is
+refused; a channel with no `overrides` is built exactly as before.  The channels are partitioned independently: a channel's regions need not
 match another channel's state sets or names.  Channels whose regions have one state set are drawn
 together in one run (named for the region, or the regions' names joined by `-`); any other run holds
 only the channels of its regions, on `extract.json.gz`, a copy of the extract cut to their fine
@@ -188,11 +194,43 @@ def parse_pair(text: str) -> tuple:
     return tuple(sorted((a, b)))
 
 
+FREE_RULES = ("R1", "base", "rule")
+OVERRIDE_KEYS = ("free_rule", "max_dist_km", "max_size")
+
+
+def _overrides(x, where: str, errs: list) -> dict:
+    """A channel's `overrides` object checked, as `{key: value}`; every problem goes to `errs`."""
+    if not isinstance(x, dict):
+        errs.append(f"{where}: overrides must be an object")
+        return {}
+    out = {}
+    bad = sorted(k for k in x if k not in OVERRIDE_KEYS)
+    if bad:
+        errs.append(f"{where}: unknown overrides key {', '.join(map(repr, bad))} (known: {', '.join(OVERRIDE_KEYS)})")
+    if "free_rule" in x:
+        if x["free_rule"] in FREE_RULES:
+            out["free_rule"] = x["free_rule"]
+        else:
+            errs.append(f"{where}: free_rule must be one of {', '.join(FREE_RULES)}, not {x['free_rule']!r}")
+    if "max_dist_km" in x:
+        d = x["max_dist_km"]
+        if isinstance(d, bool) or not isinstance(d, (int, float)) or not math.isfinite(d) or d <= 0:
+            errs.append(f"{where}: max_dist_km must be a number above 0, not {d!r}")
+        else:
+            out["max_dist_km"] = float(d)
+    if "max_size" in x:
+        n = _count(x["max_size"], f"{where} max_size", errs)
+        if n is not None:
+            out["max_size"] = n
+    return out
+
+
 def validate_partition(doc: dict, structures: dict | None = None, totals: dict | None = None,
                        load=tdspec.load) -> list:
     """The points of `doc` (P.json) normalised, or `PartitionError` naming every problem: per point
     `{id, structure, base, rule, channels: {c: {regions, rest_states, rest_k, k_total}}, runs:
-    [{name, states, ks, k_alt, forbid}], aligned}` (`_group_runs`).  `structures` {name: (base spec path, split rule)}
+    [{name, states, ks, k_alt, forbid, overrides}], aligned}` (`_group_runs`; `overrides` {channel: {key:
+    value}} of the run's channels that have them, `_overrides`).  `structures` {name: (base spec path, split rule)}
     (default `STRUCTURES`), `totals` {point id: {channel: K over the whole map}} (default
     `overnight.POINTS`), `load` the spec loader."""
     structures = STRUCTURES if structures is None else structures
@@ -230,6 +268,7 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
             if not isinstance(ch, dict) or not isinstance(ch.get("regions", []), list):
                 errs.append(f"{where}: needs an object with a list 'regions'")
                 continue
+            over = _overrides(ch["overrides"], where, errs) if "overrides" in ch else {}
             names = [r.get("name") for r in ch.get("regions", [])]
             for r in ch.get("regions", []):
                 name = r.get("name")
@@ -288,8 +327,10 @@ def validate_partition(doc: dict, structures: dict | None = None, totals: dict |
                 if "k_total" in ch and ch["k_total"] != ksum:
                     errs.append(f"{where}: k_total {ch['k_total']} is not the regions' {ksum}")
             norm[c] = {"regions": regions, "rest": rest, "rest_states": rest_states if rest else (),
-                       "rest_k": rest_k, "k_total": k_total}
+                       "rest_k": rest_k, "k_total": k_total, "overrides": over}
         runs, aligned = _group_runs(pid, entries, foot, errs)
+        for r in runs:
+            r["overrides"] = {c: norm[c]["overrides"] for c in sorted(r["ks"]) if c in norm and norm[c]["overrides"]}
         out.append({"id": pid, "structure": structure, "base": base, "rule": rule, "channels": norm, "runs": runs,
                     "aligned": aligned})
     if errs:
@@ -342,19 +383,37 @@ def load_partition(path: str, **kw) -> list:
 
 
 # ------------------------------------------------------------------------------ a run's spec copy
-def region_plan(sp, states, ks: dict, cells: dict, rule: str, window_band: bool = False) -> dict:
+def region_plan(sp, states, ks: dict, cells: dict, rule: str, window_band: bool = False,
+                overrides: dict | None = None) -> dict:
     """`overnight.plan_point` on the run's states: per present channel (one of `ks` with mass in the
     states) K, the region's $M, τ, the split list (the rule's, or the base's, on the states) and the
     final δ; `infeasible` {channel: why}; `absent` the channels of `ks` with no cell there; `outside`
     the channels not in `ks` that have cells there (another region's, cut from the run's extract).
-    With `window_band` each channel also has `band_lo`, `band_hi` (`overnight.plan_point`)."""
+    With `window_band` each channel also has `band_lo`, `band_hi` (`overnight.plan_point`).
+    `overrides` {channel: {"free_rule": ...}} (`_overrides`) gives a channel its own split rule in place
+    of `rule`: "base" and "rule" are `plan_point`'s; "R1" the base list plus the units whose $ in
+    the region exceeds τ/2 (those units are marked free on the spec `plan_point` reads, so the
+    whole-state cap follows the list).  The other channels are planned together, as without it."""
     S = set(states)
     cs = {k: m for k, m in cells.items() if k[0] in S}
     mass = overnight.unit_mass(sp, cs)
     has = sorted(c for c in sp.channels if math.fsum(mass[c].values()) > 0)
     present = [c for c in has if c in ks]
     sub = dataclasses.replace(sp, channels={c: sp.channels[c] for c in present})
-    plan = overnight.plan_point({c: ks[c] for c in present}, sub, cs, rule, window_band=window_band)
+    own = {c: overrides[c]["free_rule"] for c in present if (overrides or {}).get(c, {}).get("free_rule")}
+    rest = [c for c in present if c not in own]
+    plan = overnight.plan_point({c: ks[c] for c in rest}, dataclasses.replace(
+        sub, channels={c: sub.channels[c] for c in rest}), cs, rule, window_band=window_band)
+    for c, own_rule in own.items():
+        ch = sub.channels[c]
+        if own_rule == "R1":
+            tau = math.fsum(mass[c].values()) / ks[c]
+            ch = dataclasses.replace(ch, modes={**ch.modes, **{u: "free" for u, m in mass[c].items() if m > tau / 2}})
+        one = overnight.plan_point({c: ks[c]}, dataclasses.replace(sub, channels={c: ch}), cs,
+                                   "base" if own_rule == "R1" else own_rule, window_band=window_band)
+        plan["channels"].update(one["channels"])
+        plan["infeasible"].update(one["infeasible"])
+    plan["channels"] = {c: plan["channels"][c] for c in sorted(plan["channels"])}
     for v in plan["channels"].values():
         v["free"] = [u for u in v["free"] if u in S]
     plan["absent"] = sorted(set(ks) & (set(sp.channels) - set(present)))
@@ -402,19 +461,23 @@ def cut_extract(src: str, dst: str, cells, state_of: dict) -> str:
 
 
 def run_spec_text(base_text: str, pid: str, run_name: str, states, plan: dict, forbid=(),
-                  max_size: int | None = None) -> str:
+                  max_size: int | None = None, overrides: dict | None = None) -> str:
     """The run's spec copy: the base TOML with each present channel's K, declared δ
     (`overnight.DECLARED_DELTA`, or the final δ when smaller), final δ, split list, `margin = false`,
     `max_size` when given and the forbid pairs with both states in the run; named `<point>-<run>`.
     A channel of `plan` with `band_lo`, `band_hi` (`region_plan(window_band=True)`) gets them as its
     band, the dollar window [L, U] (owner, #112 comment, 2026-10-14); its δ keys are then for
-    reporting."""
+    reporting.  A channel of `overrides` {channel: {"max_dist_km", "max_size"}} (`_overrides`) gets those
+    in its block, its `max_size` in place of `max_size`."""
     ch, S = plan["channels"], set(states)
     if plan["infeasible"]:
         raise PartitionError("no spec copy for a region outside the window: " + "; ".join(plan["infeasible"].values()))
     pairs = sorted({tuple(sorted(p)) for p in forbid if set(p) <= S})
+    over = overrides or {}
     keys = {c: {"k": str(v["k"]), "margin": "false", **({"max_size": str(max_size)} if max_size else {}),
-                **overnight.window_keys(v)} for c, v in ch.items()}
+                **overnight.window_keys(v),
+                **{k: repr(over[c][k]) for k in ("max_dist_km", "max_size") if k in over.get(c, {})}}
+            for c, v in ch.items()}
     body = overnight._replan().banned_text(
         base_text, [], deltas={c: min(overnight.DECLARED_DELTA, v["final_delta"]) for c, v in ch.items()},
         extra={c: pairs for c in ch} if pairs else None, free={c: v["free"] for c, v in ch.items()},
@@ -434,7 +497,7 @@ def merge_window_keys(sp, runs: list, ks_by_run: dict, cells: dict, rule: str) -
     a whole-state region's top is the cap.  A channel any region has no window band for is left out."""
     got = {}
     for run in runs:
-        plan = region_plan(sp, run["states"], ks_by_run[run["name"]], cells, rule, True)
+        plan = region_plan(sp, run["states"], ks_by_run[run["name"]], cells, rule, True, run.get("overrides"))
         for c, v in plan["channels"].items():
             got.setdefault(c, []).append(v)
     out = {}
@@ -952,14 +1015,14 @@ class Driver(overnight.Runner):
         pid, rn = pt["id"], run["name"]
         sp, text = self.spec_of(pt)
         os.makedirs(adir, exist_ok=True)
-        plan = region_plan(sp, run["states"], ks, self.cells, pt["rule"], self.window_band)
+        plan = region_plan(sp, run["states"], ks, self.cells, pt["rule"], self.window_band, run.get("overrides"))
         if plan["infeasible"]:
             raise Stop("infeasible", "; ".join(plan["infeasible"].values()))
         extract = self.run_extract(sp, run, plan, os.path.join(self.root, pid, rn))
         base, spec, out = (os.path.join(adir, x) for x in ("spec-base.toml", "spec.toml", "draw"))
         with open(base, "w", encoding="utf-8") as fh:
             fh.write(run_spec_text(text, pid, rn, run["states"], plan, self.forbid | set(map(tuple, run["forbid"])),
-                                   self.max_size))
+                                   self.max_size, run.get("overrides")))
         chain = dict((s, (cmd, cap, env)) for s, cmd, cap, env in
                      nominal_chain(pid, run, adir, self.plans, extract, plan, self.caps, self.drawable_alone))
         if not (os.path.exists(spec) and finished(out)):
@@ -996,7 +1059,8 @@ class Driver(overnight.Runner):
         if alt:
             ks2 = {**run["ks"], **alt}
             sp, _ = self.spec_of(pt)
-            bad = region_plan(sp, run["states"], ks2, self.cells, pt["rule"], self.window_band)["infeasible"]
+            bad = region_plan(sp, run["states"], ks2, self.cells, pt["rule"], self.window_band,
+                               run.get("overrides"))["infeasible"]
             retry = {"k_alt": alt, "failing": first["failing"]}
             if bad:
                 retry["result"] = "k_alt has no final δ in the window: " + "; ".join(bad.values())
@@ -1312,7 +1376,7 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
         finals = []
         for run in pt["runs"]:
             rdir = os.path.join(a.root, pt["id"], run["name"])
-            plan = region_plan(sp, run["states"], run["ks"], cells, pt["rule"], wb)
+            plan = region_plan(sp, run["states"], run["ks"], cells, pt["rule"], wb, run.get("overrides"))
             print(f"\n==== run {run['name']} ({','.join(run['states'])}), K {run['ks']}, slots {jobs_of(run)}")
             for c, v in sorted(plan["channels"].items()):
                 print(f"  {c}: K {v['k']}, ${v['usd_m']:,.1f}M, τ {v['tau_m']:,.1f}M, final δ {v['final_delta']}, "
@@ -1326,13 +1390,13 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
             for c, why in plan["infeasible"].items():
                 print(f"  INFEASIBLE {why}")
             for c, k in sorted(run["k_alt"].items()):
-                alt = region_plan(sp, run["states"], {**run["ks"], c: k}, cells, pt["rule"], wb)
+                alt = region_plan(sp, run["states"], {**run["ks"], c: k}, cells, pt["rule"], wb, run.get("overrides"))
                 print(f"  k_alt {c} {k}: " + (alt["infeasible"].get(c) or f"final δ {alt['channels'][c]['final_delta']}"))
             if plan["infeasible"]:
                 continue
             print(f"--- spec copy {os.path.join(rdir, 'spec-base.toml')}")
             print(run_spec_text(text, pt["id"], run["name"], run["states"], plan, forbid | set(map(tuple, run["forbid"])),
-                                a.max_size), end="")
+                                a.max_size, run.get("overrides")), end="")
             print("---")
             rx = os.path.join(rdir, "extract.json.gz") if plan["outside"] else a.extract
             for stage, cmd, cap, env in nominal_chain(pt["id"], run, rdir, plans, rx, plan, caps, a.drawable_alone):

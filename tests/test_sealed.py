@@ -250,6 +250,85 @@ def test_dry_run_prints_the_chain_of_a_two_region_point_and_writes_nothing():
     assert "--drawable-alone" not in off.getvalue()                                      # --no-drawable-alone
 
 
+def _with_overrides(over, channels=("national",)):
+    doc = _doc()
+    for c in channels:
+        doc["points"][0]["channels"][c]["overrides"] = over
+    return doc
+
+
+def test_partition_overrides_are_validated_and_carried_to_the_runs():
+    with tempfile.TemporaryDirectory() as tmp:
+        (plain,) = _validate(_doc(), tmp)
+        assert all(r["overrides"] == {} for r in plain["runs"]) and plain["channels"]["national"]["overrides"] == {}
+        (pt,) = _validate(_with_overrides({"free_rule": "R1", "max_dist_km": 1200, "max_size": 4}), tmp)
+        want = {"free_rule": "R1", "max_dist_km": 1200.0, "max_size": 4}
+        assert pt["channels"]["national"]["overrides"] == want and pt["channels"]["WIFI"]["overrides"] == {}
+        assert [r["overrides"] for r in pt["runs"]] == [{"national": want}] * 2        # south and rest, WIFI has none
+        for bad, words in (({"free_rul": "R1"}, ("unknown overrides key 'free_rul'",)),
+                           ({"free_rule": "R2"}, ("free_rule must be one of R1, base, rule",)),
+                           ({"max_dist_km": 0}, ("max_dist_km must be a number above 0",)),
+                           ({"max_dist_km": True}, ("max_dist_km must be a number above 0",)),
+                           ({"max_dist_km": "1200"}, ("max_dist_km must be a number above 0",)),
+                           ({"max_size": 0}, ("max_size: must be an integer of 1 or more",)),
+                           ({"max_size": 2.5}, ("max_size: must be an integer of 1 or more",))):
+            _refused(_with_overrides(bad), tmp, "point toy-pt national", *words)
+        _refused(_with_overrides([1]), tmp, "overrides must be an object")
+
+
+def test_the_free_rule_override_changes_one_channels_split_list_and_nothing_else():
+    text = TOY.replace('free = ["CA", "NY"]', 'free = ["CA", "FL", "NY"]')
+    cells = {**CELLS, ("FL", "national_chase"): 100.0}
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "t.toml")
+        with open(path, "w") as fh:
+            fh.write(text)
+        sp = tdspec.load(path)
+    S, ks = ("CA", "FL", "NY", "TX"), {"national": 4, "WIFI": 4}      # national τ 1150, τ/2 575: CA NY TX above it
+    free = {r: sealed.region_plan(sp, S, ks, cells, "rule", False, {"national": {"free_rule": r}} if r else None)
+            for r in ("R1", "base", "rule", None)}
+    assert free["R1"]["channels"]["national"]["free"] == ["CA", "FL", "NY", "TX"]    # base ∪ τ/2
+    assert free["base"]["channels"]["national"]["free"] == ["CA", "FL", "NY"]
+    assert free["rule"]["channels"]["national"]["free"] == ["CA", "NY", "TX"]
+    assert free[None]["channels"]["national"]["free"] == ["CA", "NY", "TX"]           # the point's rule
+    for r in ("R1", "base", "rule"):                                                   # the other channel and the rest are as without
+        assert free[r]["channels"]["WIFI"] == free[None]["channels"]["WIFI"] and free[r]["infeasible"] == {}
+        assert list(free[r]["channels"]) == ["WIFI", "national"] and free[r]["absent"] == free[None]["absent"]
+    assert sealed.region_plan(sp, S, ks, cells, "rule", False, {}) == free[None]
+    assert sealed.region_plan(sp, S, ks, cells, "base")["channels"]["national"]["free"] == ["CA", "FL", "NY"]
+    # the split list is clipped to the region, as the point's rule's is
+    small = sealed.region_plan(sp, ("CA", "FL"), {"national": 2}, cells, "rule", False, {"national": {"free_rule": "R1"}})
+    assert small["channels"]["national"]["free"] == ["CA", "FL"]
+
+
+def test_the_overrides_reach_the_channels_block_of_the_spec_copy():
+    with tempfile.TemporaryDirectory() as tmp:
+        sp = tdspec.load(_toy_file(tmp))
+    over = {"national": {"free_rule": "R1", "max_dist_km": 1200.0, "max_size": 4}}
+    plan = sealed.region_plan(sp, ("CA", "TX"), {"national": 2, "WIFI": 2}, CELLS, "base", True, over)
+    raw = tomllib.loads(sealed.run_spec_text(TOY, "toy-pt", "south", ("CA", "TX"), plan, max_size=5, overrides=over))
+    n, w = raw["channels"]["national"], raw["channels"]["WIFI"]
+    assert (n["max_dist_km"], n["max_size"], n["free"]) == (1200.0, 4, ["CA", "TX"])     # --max-size 5 yields to the override
+    assert w["max_size"] == 5 and "max_dist_km" not in w
+    tdspec.parse(raw)
+    none = tomllib.loads(sealed.run_spec_text(TOY, "toy-pt", "south", ("CA", "TX"), plan, max_size=5))
+    assert none["channels"]["national"]["max_size"] == 5 and "max_dist_km" not in none["channels"]["national"]
+    # the dry run prints the same copy, and the merged window follows the run's overrides
+    with tempfile.TemporaryDirectory() as tmp:
+        (pt,) = _validate(_with_overrides({"max_dist_km": 1200, "max_size": 4}), tmp)
+        a = types.SimpleNamespace(root=os.path.join(tmp, "root"), extract="/x/e.json.gz", max_size=5, drawable_alone=True,
+                                  window_band=True)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            assert sealed.cmd_dry_run(a, [pt], CELLS, dict(sealed.CAPS), set()) == 0
+    copies = re.findall(r"^--- spec copy .*?\n(.*?)^---$", out.getvalue(), re.M | re.S)
+    assert len(copies) == 2
+    for body in copies:
+        n = tomllib.loads(body)["channels"]["national"]
+        assert (n["max_dist_km"], n["max_size"]) == (1200.0, 4)
+        assert tomllib.loads(body)["channels"]["WIFI"]["max_size"] == 5
+
+
 def test_repair_window_only_for_a_run_of_one_channel():
     with tempfile.TemporaryDirectory() as tmp:
         sp = tdspec.load(_toy_file(tmp))

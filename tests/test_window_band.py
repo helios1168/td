@@ -157,6 +157,31 @@ def test_the_smallest_delta_searches_report_feasibility_in_the_window():
         assert os.path.getsize(path) > 0
 
 
+def test_exact_delta_takes_the_window_before_rejecting_free_units():
+    """A window channel with a free unit is solved once in the window by `exact_delta`, as
+    `smallest_delta` and `bisect_delta` do; the free-unit rejection is for the symmetric search only."""
+    unit_zips = {"AL": ["a"], "AR": ["b"], "AZ": [f"z{i}" for i in range(1, 6)]}
+    edges = [("a", "z1"), ("z5", "b")] + [(f"z{i}", f"z{i + 1}") for i in range(1, 5)]
+    mass = {"a": 4.0, "b": 4.0, **{f"z{i}": 1.0 for i in range(1, 6)}}
+    xy = {"a": (0, 0), "b": (1, 0), **{f"z{i}": (i + 1, 0) for i in range(1, 6)}}
+    modes = {"AZ": "free"}
+    win = tm._toy(unit_zips, edges, mass, xy, modes, k=2, delta=0.5, eta=0.1, band_lo=0.5, band_hi=1.5)
+    assert any(win.channels["X"].mode[v] == "free" for v in win.channels["X"].units)
+    found = master.exact_delta(win, "X")
+    assert (found.method, found.status, found.lower) == ("window", "converged", None), found
+    assert math.isclose(found.delta, win.channels["X"].spec.window_delta)
+    assert [v for _, v, _ in found.steps] == ["feasible"]
+    tight = tm._toy(unit_zips, edges, mass, xy, modes, k=2, delta=0.5, eta=0.1, band_lo=0.99, band_hi=1.01)
+    assert master.exact_delta(tight, "X").status == "infeasible"     # nothing is widened
+    plain = tm._toy(unit_zips, edges, mass, xy, modes, k=2, delta=0.5, eta=0.1)
+    try:
+        master.exact_delta(plain, "X")
+    except master.MasterError as e:
+        assert "free units need bisection" in str(e)
+    else:
+        raise AssertionError("a plain channel with a free unit is still refused")
+
+
 # ------------------------------------------------------------------------------ draw, drawable
 def _thin(**channel):
     """tests.test_realize._ct_ny_nj with channel keys: the thin-share plan is infeasible at
