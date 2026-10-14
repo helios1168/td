@@ -1946,6 +1946,25 @@
    ],
    "shown_images": [],
    "notes": "td-research (branch m5-studio/ifa-conus at 38bcd2d; folder copied to the hub's runs/ for T1), 2026-10-08: IFA CONUS, 52 districts from six region merges with Middle Atlantic v2 (NY Queens/Nassau neck closed by a 109-ZIP window). Every CONUS cell owned once, 0 pieces; 51 of 52 districts in the E2 window plus the MD+DE+WV waiver district ($1,924M); 16 split states (CA CT FL IL KS MA MI MN NC NJ NY OH PA TN TX WI). Fails M1 on the NY Manhattan neck only (5.50 km default / 6.99 km gap width, 40 ZIPs, 5.2% of land, 47.5% of mass); El Paso passes under G3 and is the only verdict the gap width flips. The render is the default-width audit, so its title reads FAILS M1 either way. export/ holds the owner's work-machine dataset (ZIP and district tables with m_rel and $, no sales). Supersedes ifa_conus_v1. Tier 3 (fails M1)."
+  },
+  {
+   "id": "ne-48-bal",
+   "tier": 3,
+   "rank": 60,
+   "label": "ne_plains, K national 14, WH 10, FI 21, WIFI 3 = 48 (r2, not the final folder)",
+   "run": "runs/exp/main_overnight_2026-10-13/ne-48-bal/r2",
+   "images": [
+    "runs/exp/main_overnight_2026-10-13/ne-48-bal/r2/summary.png",
+    "runs/exp/main_overnight_2026-10-13/ne-48-bal/r2/zip_pages.pdf"
+   ],
+   "shown_images": [],
+   "notes": "Main-map overnight grid 2026-10-13 (branch m5-studio/national-overnight; point ne-48-bal, stage r2), the best map of the grid and the one point whose plan is inside the dollar windows: 0 pieces, 1 neck (national_08, Delaware Memorial Bridge, 08023, 5.67 km), all 48 districts in their windows, 12 split states. Fails M1 on that neck; every other grid point fails more. Tier 3 (fails M1). The regional-seal merge of w1-50-wide (1 piece, 1 neck, both NYC; 10 of 50 districts outside the WIFI window) is not registered: its render title does not have the id: label form the check needs (re-render it under an id first).",
+   "metrics": {
+    "districts": 48,
+    "splits": 12,
+    "pieces": 0,
+    "necks": 1
+   }
   }
  ]
 }
