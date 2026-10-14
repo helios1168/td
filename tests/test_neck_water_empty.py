@@ -19,7 +19,8 @@ def _world(border: dict, state=None, connectors=(), aland=None) -> dict:
     vs = sorted({z for e in list(border) + list(connectors) for z in e})
     return {"vertices": vs, "edges": sorted(set(border) | set(connectors)),
             "state": state or dict.fromkeys(vs, "TX"), "border": dict(border),
-            "connectors": list(connectors), "aland": aland or dict.fromkeys(vs, 1e8)}
+            "connectors": list(connectors), "aland": aland or dict.fromkeys(vs, 1e8),
+            "voronoi_gaps": {}}
 
 
 def _m1(poly: dict, owner: dict, mass: dict, k: int = 2, **kw) -> audit.Check:
@@ -152,7 +153,8 @@ def _world_with_relays(rng, n: int) -> tuple:
     border = {e: 1000.0 * rng.choice([0.5, 2, 3, 4, 6, 9.5, 10, 12, 30]) for e in edges}
     conn = [e for e in [tuple(sorted(rng.sample(vs, 2)))] if e not in border and rng.random() < 0.5]
     poly = {"vertices": vs, "edges": edges + conn, "state": dict.fromkeys(vs, "TX"), "border": border,
-            "connectors": conn, "aland": {v: rng.choice([1.0, 3.0, 20.0, 100.0]) for v in vs}}
+            "connectors": conn, "aland": {v: rng.choice([1.0, 3.0, 20.0, 100.0]) for v in vs},
+            "voronoi_gaps": {}}
     free = set(rng.sample(vs, rng.randint(0, n - 2)))
     return poly, set(vs) - free, free
 
@@ -224,6 +226,8 @@ def _gap_pieces_world(**extra) -> tuple:
     """D1 = a + b with no polygon edge between them, D2 = c touching both 20 km; `extra` goes into the
     polygon graph (`gaps`: land-only gap land, `voronoi_gaps`: Voronoi rows that may cross water)."""
     poly = dict(_world({("a", "c"): 2e4, ("b", "c"): 2e4}), **extra)
+    if "gaps" in extra:
+        del poly["voronoi_gaps"]            # the land-only widths stand in for the Voronoi rows
     return poly, {"a": "D1", "b": "D1", "c": "D2"}, dict.fromkeys("abc", 1.0)
 
 
@@ -243,19 +247,14 @@ def test_two_parts_separated_only_by_land_in_no_zcta_are_one_piece():
 
 
 def test_the_same_parts_across_water_stay_two_pieces():
-    """A pair only the Voronoi rows give (`voronoi_gaps`, which can cross water) joins no pieces and
-    widens no passage: the graph is refused (R2), and one with no land-only gap file says R5 is
-    inactive and keeps the district in two pieces."""
-    poly, owner, mass = _gap_pieces_world(gaps={})
+    """A pair only the Voronoi rows give (`voronoi_gaps`, which can cross water) widens a neck's passage
+    (G1, owner 2026-10-08, #131) but never joins pieces (R5 reads the land-only rows alone): the
+    district stays in two pieces, and a graph with no land-only gap file says R5 is inactive."""
+    poly, owner, mass = _gap_pieces_world(voronoi_gaps={("a", "b"): 3e4}, gaps={})
+    poly["voronoi_gaps"] = {("a", "b"): 3e4}
     got = _m1(poly, owner, mass)
     assert got.status == "fail" and got.counts["pieces"] == 1 and got.counts["gap_edges"] == 0, got.items
     assert "R5 inactive" in got.summary, got.summary
-    try:
-        _m1(dict(poly, voronoi_gaps={("a", "b"): 3e4}), owner, mass)
-    except ValueError as e:
-        assert "never a width" in str(e), e
-    else:
-        raise AssertionError("a Voronoi gap row was accepted")
     assert audit.adjacency(poly, gaps=True)["a"] == {"c"}
     assert audit.adjacency(dict(poly, gaps={("a", "b"): 3e4}), gaps=True)["a"] == {"b", "c"}
     assert audit.adjacency(dict(poly, gaps={("a", "b"): 3e4}))["a"] == {"c"}      # off by default here

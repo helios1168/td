@@ -122,3 +122,32 @@ def test_merge_gap_width_records_both_verdicts_and_lists_flips():
     assert mg.gap_width_flips(dflt, gap, ds) == [
         {"district": "IFA/IFA_02", "m1_default": "fail", "m1_gap_width": "pass"}]
     assert mg.gap_width_flips(gap, gap, ds) == []
+
+
+def test_merge_audits_pin_the_gap_width_switch_whatever_the_environment():
+    """`--gap-width`'s two audits are strict (`TD_NECK_GAP_WIDTH=0`) and gap width (`=1`); the gate's
+    default is now on, so an unset or "1" environment must not turn the strict audit into the other
+    one (owner, 2026-10-14).  The environment is restored."""
+    import os
+    mg = _merge()
+    from td import audit
+    seen, real = [], mg.audit.audit
+    mg.audit.audit = lambda arun: seen.append(os.environ.get(audit.GAP_WIDTH_ENV)) or []
+    old = os.environ.get(audit.GAP_WIDTH_ENV)
+    try:
+        for env in (None, "0", "1"):
+            if env is None:
+                os.environ.pop(audit.GAP_WIDTH_ENV, None)
+            else:
+                os.environ[audit.GAP_WIDTH_ENV] = env
+            seen.clear()
+            mg.audit_with_gap_width(None, False)
+            mg.audit_with_gap_width(None, True)
+            assert seen == ["0", "1"], (env, seen)
+            assert os.environ.get(audit.GAP_WIDTH_ENV) == env
+    finally:
+        mg.audit.audit = real
+        if old is None:
+            os.environ.pop(audit.GAP_WIDTH_ENV, None)
+        else:
+            os.environ[audit.GAP_WIDTH_ENV] = old

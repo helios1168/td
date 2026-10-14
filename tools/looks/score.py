@@ -43,7 +43,7 @@ A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXP
   ZCTAs of the channel count towards a passage; `td.audit.GAP_WIDTH_ENV` = "0" opts out of the
   gap land and `td.audit.LAND_RULE_ENV` = "1" back into the pre-2026-10-14 land rule.
   `m1_both` gives the verdict with gap land off (`strict`) and on (`gap_width`) and the districts
-  they disagree on, and `--m1-json` writes them to each run's `m1.json`;
+  they disagree on (by a neck or a detached piece, R5), and `--m1-json` writes them to each run's `m1.json`;
 - the folder is not diagnostic (#121, `td.audit.diagnostic`): a run held to a diagnostic band,
   or derived from one, is INELIGIBLE with the reason "diagnostic band".
 
@@ -114,6 +114,7 @@ DOLLAR_COLUMNS = ["channel", "district", "usd_m", "lo_m", "hi_m", "whole_state_c
 IFA_ONLY = {"IFA"}
 BAND_CHECK = "final bands on drawn mass"
 NECK = re.compile(r"^[^:]+: neck ")       # M1's neck items (`td.audit.neck_item`)
+PIECE = re.compile(r"^[^:]+: detached piece ")   # M1's detached-piece items (`td.audit.check_m1`)
 
 
 class Geography:
@@ -410,23 +411,27 @@ def m1_both(ledger: list, ks: dict, g: Geography, fine=None) -> dict:
     """M1 both ways (G3, the main-map overnight grid, 2026-10-13): `strict`, necks on polygon
     borders (gap land off), and `gap_width`, necks across coverage gaps too (`td.audit.NeckGraph`,
     the default since 2026-10-14; both read connectors and zero-opportunity ZCTAs the new way), each a
-    `m1_check`, and `flips`, one row per district with a neck one way and none the other:
-    {"district": "channel/district", "strict": its neck items, "gap_width": its neck items}."""
+    `m1_check`, and `flips`, one row per district that fails one way and not the other, by a neck
+    or by a detached piece (R5's land-only gap edges join pieces with the switch on):
+    {"district": "channel/district", "strict": its neck and detached-piece items, "gap_width": the
+    same}."""
     got = {k: m1_check(ledger, ks, g, fine, gap_width=k == "gap_width") for k in ("strict", "gap_width")}
-    necks = {k: collections.defaultdict(list) for k in got}
+    bad = {k: collections.defaultdict(list) for k in got}
     for k, c in got.items():
         for i in c.items:
-            if NECK.search(i):
-                necks[k][i.split(":", 1)[0]].append(i)
-    flips = [{"district": d, "strict": necks["strict"].get(d, []), "gap_width": necks["gap_width"].get(d, [])}
-             for d in sorted(set(necks["strict"]) ^ set(necks["gap_width"]))]
+            if NECK.search(i) or PIECE.search(i):
+                bad[k][i.split(":", 1)[0]].append(i)
+    flips = [{"district": d, "strict": bad["strict"].get(d, []), "gap_width": bad["gap_width"].get(d, [])}
+             for d in sorted(set(bad["strict"]) ^ set(bad["gap_width"]))]
     return {**got, "flips": flips}
 
 
 def write_m1(path: str, both: dict) -> None:
-    """`m1.json`: `m1_both`'s verdicts (status, summary, counts, neck items) and flips."""
+    """`m1.json`: `m1_both`'s verdicts (status, summary, counts, neck and detached-piece items) and
+    flips."""
     doc = {k: {"status": c.status, "summary": c.summary, **c.counts,
-               "necks": [i for i in c.items if NECK.search(i)]}
+               "necks": [i for i in c.items if NECK.search(i)],
+               "pieces": [i for i in c.items if PIECE.search(i)]}
            for k, c in both.items() if k != "flips"}
     doc["flips"] = both["flips"]
     with open(path, "w", encoding="utf-8") as fh:

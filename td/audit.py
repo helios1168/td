@@ -470,6 +470,18 @@ LAND_RULE_ENV = "TD_NECK_PRE_2026_10_14_LAND_RULE"  # "1": a connector is 0 km w
 #                                      rule before 2026-10-14; off by default (owner, 2026-10-14)
 
 
+_VORONOI_GAPS: dict = {}
+
+
+def _voronoi_gaps() -> dict:
+    """{(a, b): metres} of the Voronoi-adjacent pairs the polygon graph dropped, read once."""
+    if not _VORONOI_GAPS:
+        vs = geo.read_reference(name="zcta_polygon_vs_voronoi.csv.gz")
+        vs = vs[vs["change"] == "dropped"]
+        _VORONOI_GAPS.update({(a, b): float(m) for a, b, m in zip(vs["a"], vs["b"], vs["border_m"])})
+    return _VORONOI_GAPS
+
+
 def border_cm(metres: float) -> int:
     """A shared border in whole centimetres, floored: a cut of floored widths is never wider than
     the real one, so the neck check may over-report but never misses a neck.  The float is read as
@@ -503,16 +515,18 @@ class NeckGraph:
     `gap_width` is G1 (owner, 2026-10-08, "Measure width across coverage gaps"), on by default since
     the owner's 2026-10-14 decision (R2, "(a) Any water crossing ... except we should treat necks that
     are surrounded by empty or zero-opportunity zips the same way we treat water", #131); False is the
-    opt-out kept for comparison.  When True, every pair of `polygon["gaps"]` (`geo.polygon_graph`
-    reads `zcta_gap_land.csv.gz`, built by `python -m td geo --gap-land`: land in no ZCTA between two
-    ZCTAs of one state, never across water) that is neither a polygon edge nor a connector is a
-    neck edge as wide as its gap land, so land in no ZCTA counts towards a passage.  Only those
-    land-only rows: the Voronoi rows (`zcta_polygon_vs_voronoi.csv.gz`) carry no land or water
-    marker, so a gap across a lake or a sound would pass a neck the owner has not approved; they
-    are never a fallback, and a polygon graph carrying `voronoi_gaps` is refused.  A graph with no
-    land-only gap rows measures no gap width, which only adds necks.  The gap
-    edges enter `border_cm`, the necks' widths, and not `border`, so `land_would_do` still reads the polygon edges.  The pieces
-    check reads the same rows (`adjacency(gaps=True)`, R5).
+    opt-out kept for comparison.  When True, every pair of ZCTAs of one state
+    adjacent in the Voronoi ZIP graph but neither a polygon edge nor a connector (`geo`'s
+    `zcta_polygon_vs_voronoi.csv.gz` rows `dropped`, or `polygon["voronoi_gaps"]` {(a, b): m})
+    is a neck edge as wide as its shared Voronoi border, so land in no ZCTA counts towards a
+    passage.  This is the width source the maps have been gated with since G1 (owner, 2026-10-08,
+    #131; the owner accepted it for widths, El Paso passes that way).  No land test: `geo` separates
+    land from water only per county at build time, so a gap across water (a lake, a sound) counts
+    too, unless `polygon["gaps"]` is non-empty (`geo.polygon_graph` reads `zcta_gap_land.csv.gz`,
+    built by `python -m td geo --gap-land`, land only, never across water): then those widths are
+    used instead of the Voronoi rows.  For neck WIDTH only: the pieces check reads the land-only
+    rows alone (`adjacency(gaps=True)`, R5), never the Voronoi rows.  The gap edges enter
+    `border_cm`, the necks' widths, and not `border`, so `land_would_do` still reads the polygon edges.
 
     Every approved connector (a bridge, tunnel or ferry, a road across land in no ZCTA, an island's
     `nearest` row) is a passage of unlimited width, always (R1; owner, 2026-10-14, "keep the
@@ -521,9 +535,6 @@ class NeckGraph:
     would do (`land_would_do`); `district_necks` reads it as `land_rule`."""
 
     def __init__(self, polygon: dict, gap_width: bool = True, pre_2026_10_14_land_rule: bool = False):
-        if polygon.get("voronoi_gaps"):
-            raise ValueError("polygon['voronoi_gaps']: Voronoi gap rows can cross water and are never "
-                             "a width (R2); pass the land-only rows as polygon['gaps']")
         self.land_rule = pre_2026_10_14_land_rule
         self.state = polygon.get("state", {})
         self.aland = polygon["aland"]
@@ -541,7 +552,12 @@ class NeckGraph:
                 self.border[a][b] = self.border[b][a] = border.get(e, 0.0) / 1000.0
                 self.border_cm[a][b] = self.border_cm[b][a] = border_cm(border.get(e, 0.0))
         if gap_width:
-            for (a, b), m in (polygon.get("gaps") or {}).items():   # land-only, `geo.GAP_LAND` (#131)
+            gaps = polygon.get("voronoi_gaps")
+            if gaps is None and polygon.get("gaps"):    # land-only gap widths, `geo.GAP_LAND` (#131)
+                gaps = polygon["gaps"]
+            if gaps is None:
+                gaps = _voronoi_gaps()
+            for (a, b), m in gaps.items():
                 if (a in self.aland and b in self.aland and b not in self.border_cm.get(a, {})
                         and b not in self.connector.get(a, ()) and self.state.get(a) == self.state.get(b)):
                     self.border_cm[a][b] = self.border_cm[b][a] = border_cm(m)
