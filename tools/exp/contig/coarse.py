@@ -252,7 +252,7 @@ def main(argv=None) -> int:
     ap.add_argument("--nogood", nargs="*", default=[],
                     help="comma-separated unit sets no group may equal")
     a = ap.parse_args(argv)
-    spec_path = a.spec or os.path.join(ROOT, f"runs/exp/contig/_specs/ifa_{a.state.lower()}_k{a.k}.toml")
+    spec_path = a.spec or os.path.join(ROOT, f"scenarios/regions/ifa/ifa_{a.state.lower()}_k{a.k}.toml")
     params = {k: v for k, v in vars(a).items() if k != "out"}
     output.check_out(a.out)
     contig.write_manifest(a.out, "coarse", spec_path, a.extract, params)

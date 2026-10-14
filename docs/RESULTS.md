@@ -1335,3 +1335,5 @@ Branch `m5-studio/ifa-kgrid` @ `4b5c99a` (code and bundle squashed here; its ~17
 - Looks to review: the Salt Lake City district spanning six states (K54, at $1,002M), SA10's Charlotte and Charleston districts, Indianapolis + southwest Michigan (MW13).
 
 Regenerate: `tools/exp/contig/kgrid.sh <K>` then `kgrid_review.py` (they read the region folders and `scenarios/regions/ifa/`).
+
+The tracked copies of the region specs now live only in `scenarios/regions/ifa/` (byte-identical to the former `runs/exp/contig/_specs/` copies, which are untracked); older `runs/exp/contig/_specs/` paths in run records refer to the same files.
