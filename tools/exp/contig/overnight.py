@@ -279,7 +279,9 @@ def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None,
     `window_band` (`--window-band`, owner's approval, #112 comment, 2026-10-14) each channel with a
     window also gets `band_lo` = L/τ and `band_hi` = U/τ (U the whole-state cap where `hi_m` is),
     the spec's band in place of ±δ, and its `final_delta` becomes max(1 − band_lo, band_hi − 1),
-    which is for reporting; a channel whose τ is not strictly inside the window gets neither."""
+    which is for reporting; a channel whose τ is not strictly inside the window gets neither.  Under
+    `window_band` a channel is feasible exactly when τ is strictly inside [L, U], however small the
+    headroom (`fit_delta`'s rounded symmetric δ may be None there)."""
     if set(ks) != set(sp.channels):
         raise ValueError(f"{sp.name}: K for {sorted(ks)}, channels {sorted(sp.channels)}")
     mass = unit_mass(sp, cells)
@@ -301,13 +303,14 @@ def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None,
                 d = max(d, float(floor[c]))
         out["channels"][c] = {"k": k, "usd_m": total, "tau_m": tau, "free": free, "lo_m": lo,
                               "hi_m": hi, "whole_state_cap": whole, "final_delta": d}
-        if window_band and d is not None and 0 < lo / tau < 1 < hi / tau:
+        banded = window_band and window is not None and 0 < lo < tau < hi   # the unrounded bounds, not fit_delta's δ
+        if banded:
             band_lo, band_hi = lo / tau, hi / tau
             out["channels"][c].update(band_lo=band_lo, band_hi=band_hi,
                                       final_delta=max(1.0 - band_lo, band_hi - 1.0))
         if window is None:
             out["infeasible"][c] = f"{c}: no dollar window"
-        elif d is None:
+        elif d is None and not banded:
             out["infeasible"][c] = (f"{c}: τ outside the dollar window ({tau:,.1f}M at K {k}, "
                                     f"window {lo:,.1f}-{hi:,.1f}M)")
     return out
@@ -1422,19 +1425,31 @@ def cmd_smoke(a) -> int:
 
 
 # ------------------------------------------------------------------------------ the CLI
-def open_grid(root: str, host: str, extract: str, hours: float) -> Grid:
-    """GRID.json at `root`: the one there (a resume, its stop kept), or a new one listing every
-    point."""
+def check_window_band(path: str, doc: dict, window_band: bool) -> None:
+    """A resume keeps the band mode the grid was written in: `doc["window_band"]` (absent: off,
+    a grid from before the flag); a run that asks for the other mode is refused, since its
+    finished stage folders were built under the first."""
+    saved = bool(doc.get("window_band", False))
+    if saved != window_band:
+        raise SystemExit(f"{path} was written {'with' if saved else 'without'} --window-band, this run is "
+                         f"{'with' if window_band else 'without'}; use a new --root")
+
+
+def open_grid(root: str, host: str, extract: str, hours: float, window_band: bool = False) -> Grid:
+    """GRID.json at `root`: the one there (a resume, its stop and its band mode kept), or a new one
+    listing every point."""
     path = os.path.join(root, GRID_JSON)
     if os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
             doc = json.load(fh)
         if doc.get("host") != host:
             raise SystemExit(f"{path} is {doc.get('host')}'s grid, not {host}'s")
+        check_window_band(path, doc, window_band)
         return Grid(path, doc)
     doc = grid_doc(host, extract, _dollarize().sha256(extract), time.time() + 3600.0 * hours,
                    _sweep().code_state())
     doc["limits"]["hours"] = hours
+    doc["window_band"] = window_band
     return Grid(path, doc)
 
 
@@ -1442,7 +1457,7 @@ def cmd_run(a) -> int:
     if _dollarize().rates_of(a.extract) is None:
         raise SystemExit(f"{a.extract} is not a dollar extract (tools/exp/contig/dollarize.py)")
     os.makedirs(a.root, exist_ok=True)
-    grid = open_grid(a.root, a.host, a.extract, a.hours)
+    grid = open_grid(a.root, a.host, a.extract, a.hours, a.window_band)
     pts = [grid.get(pid) for pid in grid.doc["points"]]
     todo = order([p for p in pts if p["host"] == a.host and p["label"] is None
                   and (not a.only or p["id"] in a.only)])

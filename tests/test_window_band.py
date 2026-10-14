@@ -5,6 +5,7 @@ never retry wider, `overnight.py` and `sealed.py` write the keys, and a channel 
 built exactly as before."""
 from __future__ import annotations
 
+import json
 import math
 import os
 import tempfile
@@ -396,3 +397,103 @@ def test_replan_writes_the_band_keys_through_banned_text():
     replan = tc._replan_module()
     text = replan.banned_text("[channels.X]\nk = 2\n", [], keys={"X": {"band_lo": repr(0.8), "band_hi": repr(1.2)}})
     assert text.split() == "[channels.X] k = 2 band_hi = 1.2 band_lo = 0.8".split()
+
+
+# ------------------------------------------------------------------------------ near the window's edge
+def test_window_mode_is_feasible_strictly_inside_the_window_whatever_fit_delta_rounds_to():
+    """τ 1000.01 in the window [1000, 1437.5]: fit_delta's rounded symmetric δ is 0 (None), the
+    window is not empty.  Without the flag the channel is infeasible as before."""
+    ov = to.overnight
+    cells = {**to.CELLS, ("CA", "national_chase"): 2000.02, ("TX", "national_chase"): 0.0,
+             ("NY", "national_chase"): 0.0}
+    assert ov.fit_delta(1000.01, 2, 1000.0, 1437.5) is None
+    on = ov.plan_point({"national": 2, "WIFI": 2}, to._toy(), cells, "base", window_band=True)
+    assert on["infeasible"] == {}, on
+    nat = on["channels"]["national"]
+    assert nat["band_lo"] == nat["lo_m"] / nat["tau_m"] and nat["band_hi"] == nat["hi_m"] / nat["tau_m"]
+    assert nat["final_delta"] == max(1 - nat["band_lo"], nat["band_hi"] - 1)
+    off = ov.plan_point({"national": 2, "WIFI": 2}, to._toy(), cells, "base")
+    assert list(off["infeasible"]) == ["national"] and "band_lo" not in off["channels"]["national"]
+    on_edge = {**cells, ("CA", "national_chase"): 2000.0}                      # τ = L: no window at all
+    for flag in (True, False):
+        p = ov.plan_point({"national": 2, "WIFI": 2}, to._toy(), on_edge, "base", window_band=flag)
+        assert list(p["infeasible"]) == ["national"] and "band_lo" not in p["channels"]["national"], flag
+
+
+# ------------------------------------------------------------------------------ the merged spec
+def test_sealed_merge_keeps_window_band():
+    sealed = ts_.sealed
+    with tempfile.TemporaryDirectory() as tmp:
+        sp = tdspec.load(ts_._toy_file(tmp))
+    one = [{"name": "south", "states": ("CA", "TX")}]
+    ks = {"south": {"national": 2, "WIFI": 2}}
+    keys = sealed.merge_window_keys(sp, one, ks, ts_.CELLS, "base")
+    region = sealed.region_plan(sp, ("CA", "TX"), ks["south"], ts_.CELLS, "base", True)["channels"]
+    for c in ("national", "WIFI"):                                  # one region: its own band, exactly
+        assert keys[c] == {"band_lo": repr(region[c]["band_lo"]), "band_hi": repr(region[c]["band_hi"])}
+    assert float(keys["national"]["band_lo"]) == 1000.0 / 1100.0
+    assert float(keys["national"]["band_hi"]) == 1437.5 / 1100.0    # asymmetric about τ
+    text = sealed.merge_spec_text(ts_.TOY, "toy-pt", keys)
+    parsed = tdspec.parse(tomllib.loads(text))
+    assert parsed.name == "toy-pt" and parsed.channels["national"].window == (1000.0 / 1100.0, 1437.5 / 1100.0)
+    assert sealed.merge_spec_text(ts_.TOY, "toy-pt", {}) == ts_.TOY.replace('name = "toy"', 'name = "toy-pt"')
+    # two regions: the window over the merged τ (national 6600 / 6 = 1100, WIFI 3900 / 4 = 975)
+    with tempfile.TemporaryDirectory() as tmp:
+        drv, pt = ts_._merge_driver(tmp)
+        drv.window_band = True
+        ts_._merged_folder(tmp, "toy-pt", shape_rows=[])
+        drv._merge(pt)
+        raw = tomllib.loads(open(os.path.join(tmp, "toy-pt", "spec-merge.toml")).read())
+        n, w = raw["channels"]["national"], raw["channels"]["WIFI"]
+        assert (n["band_lo"], n["band_hi"]) == (1000.0 / 1100.0, 1437.5 / 1100.0)
+        assert (w["band_lo"], w["band_hi"]) == (850.0 / 975.0, 1600.0 / 975.0)       # WIFI: whole-state cap on top
+        drv.window_band = False
+        drv._merge(pt)
+        off = tomllib.loads(open(os.path.join(tmp, "toy-pt", "spec-merge.toml")).read())
+        assert all("band_lo" not in v for v in off["channels"].values())
+
+
+# ------------------------------------------------------------------------------ a resume
+def test_resume_rejects_changed_window_band():
+    ov = to.overnight
+    sealed = ts_.sealed
+    for on in (True, False):
+        with tempfile.TemporaryDirectory() as tmp:
+            extract = os.path.join(tmp, "extract.json.gz")
+            open(extract, "wb").write(b"toy")
+            ov.open_grid(tmp, "m5", extract, 1.0, on)
+            ov.open_grid(tmp, "m5", extract, 1.0, on)                       # the same mode resumes
+            try:
+                ov.open_grid(tmp, "m5", extract, 1.0, not on)
+            except SystemExit as e:
+                assert "window-band" in str(e) and "new --root" in str(e), str(e)
+            else:
+                raise AssertionError("overnight resumed under the other band mode")
+        with tempfile.TemporaryDirectory() as tmp:
+            (pt,) = ts_._validate(ts_._doc(), tmp)
+            extract = os.path.join(tmp, "extract.json.gz")
+            open(extract, "wb").write(b"toy")
+            sealed.open_state(tmp, "m5", extract, 1.0, "p", "sha", [pt], on)
+            sealed.open_state(tmp, "m5", extract, 1.0, "p", "sha", [pt], on)
+            try:
+                sealed.open_state(tmp, "m5", extract, 1.0, "p", "sha", [pt], not on)
+            except SystemExit as e:
+                assert "window-band" in str(e) and "new --root" in str(e), str(e)
+            else:
+                raise AssertionError("sealed resumed under the other band mode")
+    # a grid from before the flag has no key: it is the ±δ mode
+    with tempfile.TemporaryDirectory() as tmp:
+        extract = os.path.join(tmp, "extract.json.gz")
+        open(extract, "wb").write(b"toy")
+        ov.open_grid(tmp, "m5", extract, 1.0)
+        path = os.path.join(tmp, ov.GRID_JSON)
+        doc = json.load(open(path))
+        del doc["window_band"]
+        json.dump(doc, open(path, "w"))
+        ov.open_grid(tmp, "m5", extract, 1.0, False)
+        try:
+            ov.open_grid(tmp, "m5", extract, 1.0, True)
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError("a grid without the key resumed under --window-band")

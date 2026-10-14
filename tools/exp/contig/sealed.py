@@ -427,6 +427,34 @@ def run_spec_text(base_text: str, pid: str, run_name: str, states, plan: dict, f
             f"# states: {', '.join(states)}\n" + body)
 
 
+def merge_window_keys(sp, runs: list, ks_by_run: dict, cells: dict, rule: str) -> dict:
+    """{channel: {"band_lo", "band_hi"}} (`overnight.window_keys`) for the merged spec: each channel's
+    dollar window in the regions that drew it, over the merged τ, the regions' $ over their K
+    together (what `merge.py` builds, k being the merged districts); `hi` the widest region's, since
+    a whole-state region's top is the cap.  A channel any region has no window band for is left out."""
+    got = {}
+    for run in runs:
+        plan = region_plan(sp, run["states"], ks_by_run[run["name"]], cells, rule, True)
+        for c, v in plan["channels"].items():
+            got.setdefault(c, []).append(v)
+    out = {}
+    for c, vs in sorted(got.items()):
+        if not all("band_lo" in v for v in vs):
+            continue
+        tau = math.fsum(v["usd_m"] for v in vs) / sum(v["k"] for v in vs)
+        lo, hi = max(v["lo_m"] for v in vs), max(v["hi_m"] for v in vs)
+        if 0 < lo < tau < hi:
+            out[c] = overnight.window_keys({"band_lo": lo / tau, "band_hi": hi / tau})
+    return out
+
+
+def merge_spec_text(base_text: str, pid: str, window: dict) -> str:
+    """The merged map's spec copy: the base TOML named `pid`, each channel of `window`
+    (`merge_window_keys`) with its dollar window as its band."""
+    text = overnight._replan().banned_text(base_text, [], keys=window) if window else base_text
+    return re.sub(r'(?m)^name = ".*"$', f'name = "{pid}"', text, count=1)
+
+
 # ------------------------------------------------------------------------------ commands
 def _patched(cmd: list, flag: str, value: str) -> list:
     i = cmd.index(flag)
@@ -1055,8 +1083,11 @@ class Driver(overnight.Runner):
                   else [(all_states(pt["runs"]), combined)])
         sp, text = self.spec_of(pt)
         mspec = os.path.join(pdir, "spec-merge.toml")
+        keys = (merge_window_keys(sp, pt["runs"], {r["name"]: rec["runs"][r["name"]].get("ks_used") or r["ks"]
+                                                   for r in pt["runs"]}, self.cells, pt["rule"])
+                if self.window_band else {})
         with open(mspec, "w", encoding="utf-8") as fh:
-            fh.write(re.sub(r'(?m)^name = ".*"$', f'name = "{pid}"', text, count=1))
+            fh.write(merge_spec_text(text, pid, keys))
         window = merge_window(sp)
         chain = dict((s, (cmd, cap, env)) for s, cmd, cap, env in
                      point_chain(pid, pdir, finals, mspec, self.extract, window, self.caps))
@@ -1335,7 +1366,8 @@ def parse_caps(items: list) -> dict:
     return caps
 
 
-def open_state(root: str, host: str, extract: str, hours: float, part_path: str, part_sha: str, points: list) -> Grid:
+def open_state(root: str, host: str, extract: str, hours: float, part_path: str, part_sha: str, points: list,
+               window_band: bool = False) -> Grid:
     path = os.path.join(root, STATE_JSON)
     if os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
@@ -1349,13 +1381,14 @@ def open_state(root: str, host: str, extract: str, hours: float, part_path: str,
         if saved != now_sha:
             raise SystemExit(f"{path} was written for another extract ({(saved or 'no hash')[:12]}, {extract} is "
                              f"{now_sha[:12]}); use a new --root")
+        overnight.check_window_band(path, doc, window_band)
         grid = Grid(path, doc)
     else:
         doc = {"grid": NAME, "host": host, "created_at": overnight.now(),
                "deadline": datetime.datetime.fromtimestamp(time.time() + 3600.0 * hours,
                                                            datetime.timezone.utc).isoformat(timespec="seconds"),
                "extract": extract, "extract_sha256": overnight._dollarize().sha256(extract),
-               "partition": {"path": part_path, "sha256": part_sha},
+               "window_band": window_band, "partition": {"path": part_path, "sha256": part_sha},
                "code": overnight._sweep().code_state(), "limits": {"hours": hours, "caps_s": CAPS}, "points": {}}
         grid = Grid(path, doc)
     for p in points:
@@ -1387,7 +1420,8 @@ def cmd_run(a) -> int:
     if a.dry_run:
         return cmd_dry_run(a, points, cells, caps, forbid)
     os.makedirs(a.root, exist_ok=True)
-    grid = open_state(a.root, a.host, a.extract, a.hours, os.path.abspath(a.partition), part_sha, points)
+    grid = open_state(a.root, a.host, a.extract, a.hours, os.path.abspath(a.partition), part_sha, points,
+                      a.window_band)
     todo = [p for p in points if grid.get(p["id"])["label"] is None]
     drv = Driver(grid, a.root, a.host, a.extract, cells, {p["id"]: p for p in todo}, caps, forbid, a.max_size, limits,
                  a.drawable_alone, a.window_band)
