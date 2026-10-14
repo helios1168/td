@@ -1,0 +1,19 @@
+# IFA night 2026-10-14: MD DE DC VA WV NC SC K 4, MD VA NC SC split-able (MD's mass shared, F1 lifted); tau 1098.5 m_rel
+[scenario]
+name = "ifa_night_n_k4"
+fine_channels = ["ifa"]
+planned_elsewhere = ["career", "edj", "fi", "imo", "national_chase", "priafs", "wells_fi", "wells_wh", "wh"]
+delta = 0.04
+
+[channels.IFA]
+margin = false
+k = 4
+domain = [{ units = "all", fine = ["ifa"] }]
+mode = "whole"
+free = ["MD", "NC", "SC", "VA"]
+eta = 0.05
+max_size = 3
+max_dist_km = 900
+dist_km = { }
+delta = 0.04
+final_delta = 0.04
