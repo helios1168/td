@@ -247,3 +247,22 @@ def test_non_dollar_extract_is_rejected_before_any_report():
         assert calls == []                       # rejected before the cells were read
     finally:
         region_arith.overnight._dollarize, region_arith.overnight.state_cells = real_d, real_c
+
+
+def test_check_section10_empty_wh_window_is_no_not_an_error():
+    f0 = {n: {c: list(range(a, b + 1)) for c, (a, b) in chans.items()}
+          for n, chans in region_arith.SECTION10_K.items()}
+    f0["ne_plains"]["WH"] = []
+    real = region_arith.region_analysis
+    region_arith.region_analysis = lambda *a, **k: {"k": []}
+    try:
+        rows = region_arith.check_section10(_section10_results(dict(region_arith.SECTION10_HEAD), f0))
+    finally:
+        region_arith.region_analysis = real
+    assert [r for r in rows if r.startswith("| ne_plains | WH |")][0].endswith("| NO |")
+
+
+def test_ifa_footprint_is_the_49_units_with_zero_for_absent_cells():
+    ifa = region_arith.structures({("NY", "ifa"): 1250.0})["ifa"]["channels"]["IFA"]
+    assert set(ifa) == set(region_arith.partitions()["P0"]["ALL"])
+    assert ifa["NY"] == 1250.0 and ifa["CA"] == 0.0
