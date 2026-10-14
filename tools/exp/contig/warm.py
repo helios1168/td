@@ -20,11 +20,13 @@ finals from `<main>/SEALED.json` (a run whose drawing finished), and does in `<r
    undrawn ZCTAs the final ledger still carries per channel (`undrawn_zctas` of the final `contig.json`),
    the pieces and necks left, and the dollar window verdict.
 
-A point whose final ledger still holds ZCTAs `draw.py` handed to the fallback is labelled
-`gate-clean, fallback-filled` when the gate passes, never `passes`: the solver did not draw those
-ZCTAs and the map is not a deliverable.  `index` writes `<root>/INDEX.md` from the `warm.json` files;
-`render` runs `tools/maps/zip_pages.py` on a `passes` point's merged folder into `<root>/<ID>/final/` and, with
-`--maps`, copies the summary and the pages PDF there as `MAIN_<ID>_summary.png` and `MAIN_<ID>_pages.pdf`.
+A point whose final ledger still holds ZCTAs `draw.py` handed to the realizer's fallback and whose gate passes
+(owner's rule, relayed 2026-10-14: the final exact gate shows every district contiguous, Manhattan the only
+exception, and in its window) is labelled `passes (gate-verified; N ZCTAs placed by the realizer heuristic, not
+the exact draw)`: a candidate deliverable whose heuristic-placed groups `warm.json` and `INDEX.md` list.  `index` writes `<root>/INDEX.md` from the `warm.json` files;
+`render` runs `tools/maps/zip_pages.py` on a passing point's merged folder into `<root>/<ID>/final/` and, with
+`--maps`, copies the summary, the pages PDF and the channel pages there as `MAIN_<ID>_summary.png`,
+`MAIN_<ID>_pages.pdf` and `MAIN_<ID>_<channel>.png`.
 """
 from __future__ import annotations
 
@@ -56,9 +58,7 @@ def _load(name: str, path: str):
 sealed = _load("contig_sealed", os.path.join(HERE, "sealed.py"))
 overnight = sealed.overnight
 HUB = overnight.HUB
-FALLBACK = "gate-clean, fallback-filled"
 WARM_JSON = "warm.json"
-CLEAR = ("passes", FALLBACK)
 
 
 def warm_repair_cmd(src: str, out: str, plans: str, extract: str, jobs: int, npass: int, label: str, states,
@@ -115,6 +115,17 @@ def final_undrawn(folder: str) -> dict:
     with open(os.path.join(folder, "contig.json"), encoding="utf-8") as fh:
         ch = json.load(fh)["channels"]
     return {c: v["undrawn_zctas"] for c, v in sorted(ch.items()) if v.get("undrawn_zctas")}
+
+
+def heuristic_groups(draw_dir: str) -> dict:
+    """{channel: {"zctas": undrawn ZCTAs, "groups": [{districts, units, status, free_zctas}]}} of the first
+    attempt's draw: the coupled groups whose solve ended other than optimal or connected."""
+    with open(os.path.join(draw_dir, "contig.json"), encoding="utf-8") as fh:
+        ch = json.load(fh)["channels"]
+    return {c: {"zctas": v["undrawn_zctas"],
+                "groups": [{k: g.get(k) for k in ("districts", "units", "status", "free_zctas", "seconds")}
+                           for g in v.get("groups", []) if g.get("status") not in sealed.DRAWN_OK]}
+            for c, v in sorted(ch.items()) if v.get("undrawn_zctas")}
 
 
 def left_over(folder: str) -> dict:
@@ -182,10 +193,11 @@ def cmd_point(a) -> int:
     merged = os.path.join(pdir, "merged")
     undrawn = final_undrawn(src)
     lab = got["label"]
+    heur = heuristic_groups(os.path.join(a.main, pid, run["name"], "draw"))
     if lab == "passes" and undrawn:
-        lab = FALLBACK
+        lab = f"passes (gate-verified; {sum(undrawn.values()):,} ZCTAs placed by the realizer heuristic, not the exact draw)"
     doc = {"id": pid, "label": lab, "driver_label": got["label"], "reason": got["reason"],
-           "run_final": os.path.relpath(src, a.root), "undrawn_zctas": undrawn, "left": left_over(src),
+           "run_final": os.path.relpath(src, a.root), "undrawn_zctas": undrawn, "heuristic_groups": heur, "left": left_over(src),
            "summary": got.get("summary"), "merged": os.path.relpath(merged, a.root) if got.get("final") else None,
            "finished_at": overnight.now()}
     overnight._write_json(os.path.join(pdir, WARM_JSON), doc)
@@ -227,10 +239,11 @@ def cmd_index(a) -> int:
     a.root = os.path.abspath(a.root)
     lines = ["# Warm start (2026-10-14): the unsealed grid's undrawn points", "",
              f"Written by `tools/exp/contig/warm.py index` at {overnight.now()}.  A label is `passes` only when the final gate "
-             "passes M1 (Manhattan the one allowed exception), every district is inside its channel's dollar window "
-             "and no ZCTA in the final ledger is left to `draw.py`'s fallback; `gate-clean, fallback-filled` is not a "
-             "deliverable.", "",
-             "| point | label | M1 | districts in window | worst $ position in window (0 = L, 1 = U) | split states | undrawn ZCTAs in the final ledger |",
+             "passes M1 (Manhattan the one allowed exception), every district is inside its channel's dollar window; "
+             "`passes (gate-verified; ...)` marks a map with ZCTAs in groups the exact draw did not finish, placed by the "
+             "realizer heuristic and then verified by the gate (a candidate deliverable, supervisor ruling 2026-10-14).  "
+             "$ is scored with the full dollar extract (`--extract`; the merged extract's own rates are 2% high).", "",
+             "| point | label | M1 | districts in window | worst $ position in window (0 = L, 1 = U) | channel-state splits | heuristic-placed ZCTAs (realizer fallback) |",
              "|---|---|---|---|---|---|---|"]
     notes = []
     for pid in sorted(d for d in os.listdir(a.root) if os.path.exists(os.path.join(a.root, d, WARM_JSON))):
@@ -247,7 +260,14 @@ def cmd_index(a) -> int:
             inw = worst = m1 = spl = "—"
         und = ", ".join(f"{c} {n}" for c, n in w["undrawn_zctas"].items()) or "0"
         lines.append(f"| {pid} | **{w['label']}** | {m1} | {inw} | {worst} | {spl} | {und} |")
-        notes.append(f"- **{pid}**: {w['reason'] or 'no reason'}; final `{w['run_final']}`; merged `{w['merged']}`")
+        heur = "; ".join(f"{c}: {v['zctas']:,} ZCTAs, groups " + (", ".join(
+            f"{'+'.join(map(str, g['districts'] or []))} [{','.join(map(str, g['units'] or []))}] {g['status']}"
+            for g in v["groups"]) or "not recorded") for c, v in w.get("heuristic_groups", {}).items())
+        sh = (w.get("summary") or {}).get("shape") or {}
+        shp = "; ".join(f"{c} aspect≤{v['aspect_max']:g}, hull fill≥{v['hull_fill_min']:g}, bite≤{v['bite_max']:g}, "
+                        f"doughnuts {v['doughnuts']} ({v['doughnuts_soft']} soft)" for c, v in sorted(sh.items()))
+        notes.append(f"- **{pid}**: {w['reason'] or 'no reason'}; final `{w['run_final']}`; merged `{w['merged']}`"
+                     + (f"\n  - heuristic-placed: {heur}" if heur else "") + (f"\n  - shape (`tools/looks/study.py`): {shp}" if shp else ""))
     lines += ["", "## Details", *notes, ""]
     with open(os.path.join(a.root, "INDEX.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
@@ -261,16 +281,20 @@ def cmd_render(a) -> int:
     fac = overnight.fac_file(a.root)
     with open(os.path.join(a.root, a.id, WARM_JSON), encoding="utf-8") as fh:
         w = json.load(fh)
-    if w["label"] not in a.labels:
-        raise SystemExit(f"{a.id}: label {w['label']!r} is not one of {a.labels}; not rendered")
+    if not w["label"].startswith("passes"):
+        raise SystemExit(f"{a.id}: label {w['label']!r} is not a passing one; not rendered")
     out = os.path.join(a.root, a.id, "final")
     os.makedirs(out, exist_ok=True)
-    paths = zp.main([os.path.join(a.root, w["merged"]), f"{a.id}: {w['label']}", out, "--fac", fac])
+    short = w["label"].split(";")[0] + (")" if ";" in w["label"] else "")
+    paths = zp.main([os.path.join(a.root, w["merged"]), f"{a.id}: {short}", out, "--fac", fac])
     print("\n".join(map(str, paths)))
     if a.maps:
         os.makedirs(a.maps, exist_ok=True)
         shutil.copy(os.path.join(out, "zip_summary.png"), os.path.join(a.maps, f"MAIN_{a.id}_summary.png"))
         shutil.copy(os.path.join(out, "zip_pages.pdf"), os.path.join(a.maps, f"MAIN_{a.id}_pages.pdf"))
+        for f in sorted(os.listdir(out)):
+            if f.startswith("zip_") and f.endswith(".png") and f != "zip_summary.png":
+                shutil.copy(os.path.join(out, f), os.path.join(a.maps, f"MAIN_{a.id}_{f[4:]}"))
     return 0
 
 
@@ -295,7 +319,6 @@ def main(argv=None) -> int:
     r.add_argument("id")
     r.add_argument("--root", required=True)
     r.add_argument("--maps", default=None, help="copy zip_summary.png and zip_pages.pdf here as MAIN_<ID>_*")
-    r.add_argument("--labels", nargs="*", default=["passes"])
     r.set_defaults(func=cmd_render)
     a = ap.parse_args(argv)
     if a.cmd == "point" and a.partition is None:
