@@ -1,5 +1,5 @@
 """tools/exp/region_arith.py (regional sealing arithmetic) on a five-state toy with hand values,
-the partitions, and §10's feasible K on the dollar extract (SKIP without it)."""
+the partitions, the division-coarsening enumerator, and §10's feasible K on the dollar extract (SKIP without it)."""
 from __future__ import annotations
 
 import importlib.util
@@ -112,3 +112,50 @@ def test_section10_k_on_the_extract():
     tr = region_arith.total_rows("ifa", sts["ifa"], {"P1": parts["P1"]}, adj, region_arith.IFA_TOTALS)
     reach = tr["partitions"]["P1"]["tracks"]["band"]["reach"]["IFA"]
     assert all(t in reach for t in region_arith.IFA_TOTALS)
+
+
+def test_coarsenings_are_connected_unions():
+    # path A-B-C-D-E; divisions X = A B, Y = C, Z = D E, W has no footprint state (dropped)
+    divs = {"X": ["A", "B"], "Y": ["C"], "Z": ["D", "E"], "W": []}
+    got = region_arith.coarsenings(divs, ADJ)
+    assert sorted(got) == sorted([[("X",), ("Y",), ("Z",)], [("X", "Y"), ("Z",)],
+                                  [("X",), ("Y", "Z")], [("X", "Y", "Z")]])
+    # X + Z alone is not connected (Y is the bridge): no coarsening has that block
+    assert all(("X", "Z") not in c for c in got)
+    # a division with two apart states cannot be a region alone: only the union with its bridge
+    far = {"P": ["A", "E"], "Q": ["B", "C", "D"]}
+    assert region_arith.coarsenings(far, ADJ) == [[("P", "Q")]]
+    assert len(list(region_arith.set_partitions(list("abcd")))) == 15       # Bell(4)
+
+
+def test_coarsening_k_sums_and_ranking():
+    # window 10-20; the dollars of M: X = A+B is $10M (k 1, headroom 0), Y = C is $25M (k 2),
+    # Z = D+E is $15M (k 1); X + Y is $35M (k 2, 3), Y + Z $40M (k 3), all five $50M (k 3, 4)
+    divs = {"X": ["A", "B"], "Y": ["C"], "Z": ["D", "E"]}
+    found = region_arith.search_channel(M, divs, ADJ, LO, HI)
+    assert found["n"] == 4
+    k3 = region_arith.feasible_at(found, 3, "win")
+    assert [r["divisions"] for r in k3] == [[("X", "Y"), ("Z",)], [("X", "Y", "Z")]]
+    # the best has most regions; its K per region sum to 3 and the headroom is the smaller one
+    assert k3[0]["ks"] == (2, 1) and sum(k3[0]["ks"]) == 3
+    assert math.isclose(k3[0]["head"], min(region_arith.headroom(35 / 2, LO, HI),
+                                            region_arith.headroom(15.0, LO, HI)))
+    # K 4: X, Y, Z alone take 1 + 2 + 1 (most regions), then X+Y with Z (3 + 1, headroom 1/3), then
+    # X with Y+Z (1 + 3, headroom 0), then all three together
+    k4 = region_arith.feasible_at(found, 4, "win")
+    assert [r["divisions"] for r in k4] == [[("X",), ("Y",), ("Z",)], [("X", "Y"), ("Z",)],
+                                           [("X",), ("Y", "Z")], [("X", "Y", "Z")]]
+    assert [r["ks"] for r in k4] == [(1, 2, 1), (3, 1), (1, 3), (4,)]
+    assert region_arith.feasible_at(found, 2, "win") == []     # no region set sums to 2
+    # every feasible coarsening: regional K add up to the K asked, each region inside its own set
+    for k in (3, 4):
+        for r in region_arith.feasible_at(found, k, "win"):
+            assert sum(r["ks"]) == k
+            assert all(kk in region_arith.pass_k(info, "win") for kk, info in zip(r["ks"], r["infos"]))
+
+
+def test_corridor_blocks_restrict_to_footprint():
+    foot = {"NY", "PA", "VA", "OH", "CT"}
+    v = region_arith.CORRIDOR_VARIANTS["B2 NY,NJ,PA,NE / DE,MD,DC,VA"]
+    assert region_arith.corridor_blocks(v, foot) == [["CT", "NY", "PA"], ["VA"]]
+    assert region_arith.corridor_blocks([["DE", "MD"]], foot) == []

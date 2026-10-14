@@ -1,7 +1,7 @@
 """region_arith.py -- regional sealing arithmetic for the main-map and IFA grids (arithmetic only,
 no feasibility certificate: no MILP over ZIPs, no run).
 
-    "$TD_PY" tools/exp/region_arith.py [--out DIR] [--extract PATH]
+    "$TD_PY" tools/exp/region_arith.py [--out DIR] [--extract PATH] [--search]
 
 Sealing draws each region on its own and merges them (`tools/exp/contig/merge.py`).  Every
 district then lies in one region, so each region needs its own K_r with $_r / K_r inside the
@@ -48,6 +48,12 @@ split; the attach sets (connected whole neighbour states, at most `ATTACH_MAX`, 
 state) and the states no group and no attach set can take (rule C orphans: `orphans` and
 `orphans_usable` attach to the must/may states only, `orphans_any` lets every neighbour state
 split).
+
+`--search` (only that, no grouping): per structure and channel footprint (a fixed WIFI channel is
+not searched), A, every coarsening of the Census divisions into connected regions whose regional
+window-feasible K sum to a grid point's K, ranked by regions, headroom, largest region; B, the
+Northeast corridor sealed (`CORRIDOR_VARIANTS`) with the rest one unsealed region; C, IFA under P1
+at K48-K54 with the per-region K combos.  Writes `7_partition_search.md`, `7b_ifa_combos.md`.
 """
 from __future__ import annotations
 
@@ -731,6 +737,383 @@ def md_matrix(results: dict, parts: dict) -> list:
     return lines
 
 
+# ------------------------------------------------------------------------------ partition search
+# A: coarsenings of the Census divisions; B: a sealed Northeast corridor and one unsealed rest.
+# Channels are independent footprints: a region is a set of footprint states, and a region whose
+# footprint states are not one connected piece of the state graph is not a region.
+CORRIDOR = {"NE": "CT ME MA NH RI VT", "NY": "NY", "NJ": "NJ", "PA": "PA",
+            "DE": "DE", "MD": "MD", "DC": "DC", "VA": "VA"}     # atoms; "NE" is New England
+CORRIDOR_VARIANTS = {                                          # name: blocks of atoms (rest: unsealed)
+    "B1 corridor": [["NE", "NY", "NJ", "PA", "DE", "MD", "DC", "VA"]],
+    "B2 NY,NJ,PA,NE / DE,MD,DC,VA": [["NE", "NY", "NJ", "PA"], ["DE", "MD", "DC", "VA"]],
+    "B3 NY,NJ,NE / PA,DE,MD,DC,VA": [["NE", "NY", "NJ"], ["PA", "DE", "MD", "DC", "VA"]],
+    "B4 NY,NJ,PA,NE / DE,MD,DC (VA to rest)": [["NE", "NY", "NJ", "PA"], ["DE", "MD", "DC"]],
+    "B5 NY,NJ,NE / PA,DE,MD,DC (VA to rest)": [["NE", "NY", "NJ"], ["PA", "DE", "MD", "DC"]],
+    "B6 NE / NY,NJ,PA / DE,MD,DC,VA": [["NE"], ["NY", "NJ", "PA"], ["DE", "MD", "DC", "VA"]],
+    "B7 corridor without VA (VA to rest)": [["NE", "NY", "NJ", "PA", "DE", "MD", "DC"]],
+}
+DIV_CODE = {"New England": "NE", "Middle Atlantic": "MA", "East North Central": "ENC",
+            "West North Central": "WNC", "South Atlantic": "SA", "East South Central": "ESC",
+            "West South Central": "WSC", "Mountain": "MTN", "Pacific": "PAC"}
+SEARCH_TOP = 3
+SEARCH_TRACKS = ("win", "band")
+
+
+def is_connected(states, adj: dict) -> bool:
+    """Whether `states` is one connected piece of the state graph `adj` (edges among them only)."""
+    states = set(states)
+    if not states:
+        return False
+    seen, todo = set(), [next(iter(states))]
+    while todo:
+        s = todo.pop()
+        if s not in seen:
+            seen.add(s)
+            todo.extend((adj.get(s, set()) & states) - seen)
+    return seen == states
+
+
+def set_partitions(items: list):
+    """Every partition of `items` into blocks (lists), Bell(len) of them."""
+    if not items:
+        yield []
+        return
+    first, rest = items[0], items[1:]
+    for part in set_partitions(rest):
+        yield [[first]] + part
+        for i in range(len(part)):
+            yield part[:i] + [[first] + part[i]] + part[i + 1:]
+
+
+def coarsenings(divs: dict, adj: dict) -> list:
+    """The unions of divisions that cover the footprint, each union connected.  `divs` is
+    {division: footprint states in it}; a division with no footprint state is dropped.  Returns
+    [[(division, ...), ...]]: the regions as tuples of division names, one list per coarsening."""
+    names = sorted(d for d, ss in divs.items() if ss)
+    ok = {}
+
+    def connected(block):
+        key = frozenset(block)
+        if key not in ok:
+            ok[key] = is_connected([s for d in block for s in divs[d]], adj)
+        return ok[key]
+    out = []
+    for part in set_partitions(names):
+        if all(connected(b) for b in part):
+            out.append([tuple(sorted(b)) for b in sorted(part, key=lambda b: sorted(b))])
+    return out
+
+
+def k_splits(infos: list, track: str, lo: float, hi: float) -> dict:
+    """{K: (min regional headroom, (k per region))} over the ways to give each region one of its
+    `track`-passing k, maximising the minimum headroom; `infos` is a list of region_analysis dicts,
+    {} when a region has no passing k."""
+    best = {0: (math.inf, ())}
+    for info in infos:
+        nxt = {}
+        for s, (h, ks) in best.items():
+            for k in pass_k(info, track):
+                cand = (min(h, headroom(info["usd"] / k, lo, hi)), ks + (k,))
+                if s + k not in nxt or cand[0] > nxt[s + k][0]:
+                    nxt[s + k] = cand
+        best = nxt
+    return {} if not infos else {k: v for k, v in best.items() if k > 0}
+
+
+def search_blocks(M: dict, blocks: list, adj: dict, lo: float, hi: float, cache: dict) -> list:
+    """region_analysis of each block (a list of footprint states of `M`), cached by the state set."""
+    out = []
+    for b in blocks:
+        key = frozenset(b)
+        if key not in cache:
+            cache[key] = region_analysis({s: M[s] for s in b}, adj, lo, hi)
+        out.append(cache[key])
+    return out
+
+
+def rank_key(rec: dict) -> tuple:
+    """Most regions, then the largest minimum headroom, then the fewest states in the largest region."""
+    return (-len(rec["regions"]), -rec["head"], max(len(r) for r in rec["regions"]),
+            [sorted(r) for r in rec["regions"]])
+
+
+def search_channel(M: dict, divisions: dict, adj: dict, lo: float, hi: float) -> dict:
+    """A, for one channel footprint `M` {state: $M}: every connected coarsening of the divisions,
+    each with its states per region and, per track, {K: (min headroom, k per region)}.  `n` counts
+    the connected coarsenings, `cache` the region analyses."""
+    divs = {d: [s for s in ss if s in M] for d, ss in divisions.items()}
+    cache = {}
+    recs = []
+    for co in coarsenings(divs, adj):
+        regions = [sorted(s for d in blk for s in divs[d]) for blk in co]
+        infos = search_blocks(M, regions, adj, lo, hi, cache)
+        recs.append({"divisions": co, "labels": [" + ".join(b) for b in co], "regions": regions, "infos": infos,
+                     "splits": {tk: k_splits(infos, tk, lo, hi) for tk in SEARCH_TRACKS}})
+    return {"n": len(recs), "recs": recs}
+
+
+def feasible_at(found: dict, k: int, track: str) -> list:
+    """The coarsenings of `search_channel` whose regions reach K = k on the track, ranked, each a
+    dict with its regions, k per region and minimum headroom."""
+    out = []
+    for r in found["recs"]:
+        hit = r["splits"][track].get(k)
+        if hit:
+            out.append({**r, "head": hit[0], "ks": hit[1], "track": track})
+    return sorted(out, key=rank_key)
+
+
+def corridor_blocks(variant: list, footprint: set) -> list:
+    """The variant's blocks as footprint-state lists (empty blocks dropped)."""
+    blocks = [sorted(s for a in blk for s in CORRIDOR[a].split() if s in footprint) for blk in variant]
+    return [b for b in blocks if b]
+
+
+def search_corridor(M: dict, adj: dict, lo: float, hi: float, cache: dict) -> dict:
+    """B, for one channel footprint: per variant the blocks, the unsealed rest, connectedness of
+    each block and, per track, {K: (min headroom, k per region)}.  Duplicate restrictions of two
+    variants to the footprint stay separate rows (the name tells what was meant)."""
+    out = {}
+    for name, variant in CORRIDOR_VARIANTS.items():
+        blocks = corridor_blocks(variant, set(M))
+        used = {s for b in blocks for s in b}
+        rest = sorted(set(M) - used)
+        regions = blocks + ([rest] if rest else [])
+        labels = [" + ".join(a for a in blk if any(s in set(M) for s in CORRIDOR[a].split()))
+                  for blk in variant if any(s in set(M) for a in blk for s in CORRIDOR[a].split())]
+        rec = {"regions": regions, "labels": labels + (["REST"] if rest else []),
+               "n_sealed": len(blocks), "rest": rest,
+               "connected": [is_connected(b, adj) for b in blocks],
+               "rest_components": len(split_floor.components({s: M[s] for s in rest},
+                                                              {s: adj.get(s, set()) & set(rest) for s in rest}))
+               if rest else 0}
+        if not all(rec["connected"]):
+            rec["splits"] = {tk: {} for tk in SEARCH_TRACKS}
+            rec["infos"] = []
+        else:
+            rec["infos"] = search_blocks(M, regions, adj, lo, hi, cache)
+            rec["splits"] = {tk: k_splits(rec["infos"], tk, lo, hi) for tk in SEARCH_TRACKS}
+        out[name] = rec
+    return out
+
+
+def search_structure(st: dict, adj: dict, divisions: dict) -> dict:
+    """Search results for one structure: per channel (not a fixed one) the A search and the B
+    variants, memoised by footprint and window."""
+    out = {}
+    done = {}
+    for c, M in st["channels"].items():
+        if c in st["fixed"]:
+            continue
+        lo, hi = window_of(c, st["whole"][c])
+        key = (round(lo, 6), round(hi, 6), tuple(sorted((s, round(v, 3)) for s, v in M.items())))
+        if key not in done:
+            done[key] = {"A": search_channel(M, divisions, adj, lo, hi),
+                         "B": search_corridor(M, adj, lo, hi, {}), "window": (lo, hi)}
+        out[c] = done[key]
+    return out
+
+
+def code_of(rec: dict) -> str:
+    """A coarsening's regions as division codes: [NE+MA][ENC+ESC]..."""
+    return "".join("[" + "+".join(DIV_CODE[d] for d in blk) + "]" for blk in rec["divisions"])
+
+
+def md_region_table(rec: dict, ks: tuple, lo: float, hi: float) -> list:
+    lines = ["| region | states | $M | feasible K (win) | feasible K (band) | chosen K | headroom |",
+             "|---|---|---|---|---|---|---|"]
+    for label, states, info, k in zip(rec["labels"], rec["regions"], rec["infos"], ks):
+        lines.append(f"| {label} | {', '.join(states)} ({len(states)}) | {info['usd']:,.0f} | "
+                     f"{fmt_ks(pass_k(info, 'win'))} | {fmt_ks(pass_k(info, 'band'))} | {k} | "
+                     f"{headroom(info['usd'] / k, lo, hi):.2f} |")
+    return lines
+
+
+def md_point_search(pt: dict, st: dict, res: dict) -> tuple:
+    """The section of one grid point (lines, A feasible per track, the B variants that pass every channel)."""
+    chans = {c: k for c, k in pt["k"].items()}
+    lines = [f"### {pt['id']}  ({', '.join(f'{c} {k}' for c, k in chans.items())})", ""]
+    a_ok = {"win": True, "band": True}
+    for c, k in chans.items():
+        if c in st["fixed"]:
+            lines += [f"**{c} K{k}: fixed**, not searched (whole-state districts, not sealed: "
+                      "New England 2 + plains 1).", ""]
+            continue
+        lo, hi = res[c]["window"]
+        found = res[c]["A"]
+        win, band = feasible_at(found, k, "win"), feasible_at(found, k, "band")
+        for tk, lst in (("win", win), ("band", band)):
+            a_ok[tk] = a_ok[tk] and bool(lst)
+        lines += [f"**A, {c} K{k}** (window ${lo:,.0f}-{hi:,.0f}M, τ = {math.fsum(st['channels'][c].values()) / k:,.0f}M): "
+                  f"{found['n']} connected coarsenings; feasible {len(win)} (win), {len(band)} (band).", ""]
+        if not win:
+            lines += ["No coarsening has window-feasible K per region summing to K.", ""]
+            continue
+        sealed = [r for r in win if len(r["regions"]) > 1]
+        top_h = max(sealed, key=lambda r: (r["head"], len(r["regions"]))) if sealed else None
+        if top_h is not None and top_h is not win[0]:
+            lines += [f"Highest headroom among the sealed ones (2+ regions): {code_of(top_h)}, "
+                      f"{len(top_h['regions'])} regions, min headroom {top_h['head']:.2f}.", ""]
+        for i, r in enumerate(win[:SEARCH_TOP]):
+            b = r["splits"]["band"].get(k)
+            lines += [f"- A{i + 1}: {len(r['regions'])} regions, min headroom {r['head']:.2f} (win)"
+                      + (f", band-feasible (headroom {b[0]:.2f}, K {'+'.join(map(str, b[1]))})" if b
+                         else ", not band-feasible"),
+                      f"  largest region {max(len(x) for x in r['regions'])} states"]
+            lines += [""] + md_region_table(r, r["ks"], lo, hi) + [""]
+        if band and not any(r["splits"]["band"].get(k) for r in win[:SEARCH_TOP]):
+            r = band[0]
+            lines += [f"- best band-feasible: {len(r['regions'])} regions, headroom {r['head']:.2f}", ""]
+            lines += md_region_table(r, r["ks"], lo, hi) + [""]
+    lines += [f"**A verdict, {pt['id']}**: win {'YES' if a_ok['win'] else 'NO'}, "
+              f"band {'YES' if a_ok['band'] else 'NO'}.", ""]
+    lines += ["**B (Northeast corridor sealed, the rest one unsealed region)**", "",
+              "| variant | " + " | ".join(f"{c} K{k}" for c, k in chans.items() if c not in st["fixed"]) + " |",
+              "|---|" + "---|" * sum(c not in st["fixed"] for c in chans)]
+    b_pass = {}
+    for v in CORRIDOR_VARIANTS:
+        cells = []
+        for c, k in chans.items():
+            if c in st["fixed"]:
+                continue
+            lo, hi = res[c]["window"]
+            rec = res[c]["B"][v]
+            w, b = rec["splits"]["win"].get(k), rec["splits"]["band"].get(k)
+            if not all(rec["connected"]):
+                cells.append("block disconnected")
+            elif not w:
+                cells.append("no")
+            else:
+                cells.append(f"yes{' (band)' if b else ' (win only)'} h {w[0]:.2f} "
+                             f"K {'+'.join(map(str, w[1]))}")
+            if w and all(rec["connected"]):
+                b_pass.setdefault(v, []).append((c, rec, w, b))
+        lines.append(f"| {v} | " + " | ".join(cells) + " |")
+    n_ch = sum(c not in st["fixed"] for c in chans)
+    common = {v: x for v, x in b_pass.items() if len(x) == n_ch}
+    lines += [""]
+    if common:
+        def bkey(v):
+            x = common[v]
+            return (-len(x[0][1]["regions"]), -min(w[0] for _, _, w, _ in x))
+        best = min(common, key=bkey)
+        lines += [f"**B verdict, {pt['id']}**: YES with {', '.join(common)}; best {best}.", ""]
+        for c, rec, w, b in common[best]:
+            lo, hi = res[c]["window"]
+            lines += [f"{c} K{chans[c]} under {best}:", ""] + md_region_table(rec, w[1], lo, hi)
+            if rec["rest_components"] > 1:
+                lines += ["", f"REST is {rec['rest_components']} components on this footprint "
+                          "(judged by the parts check)."]
+            lines += [""]
+    else:
+        per = {c: [v for v, x in b_pass.items() if any(cc == c for cc, *_ in x)]
+               for c in chans if c not in st["fixed"]}
+        lines += [f"**B verdict, {pt['id']}**: NO variant passes every channel. Passing variants "
+                  "per channel: " + "; ".join(f"{c}: {', '.join(v) or 'none'}" for c, v in per.items()), ""]
+    return lines, a_ok, common
+
+
+def md_ifa_confirm(sts: dict, adj: dict, parts: dict) -> tuple:
+    """C: P1 at K48-54 and the per-region K combos that hit each total."""
+    st = sts["ifa"]
+    M = st["channels"]["IFA"]
+    lo, hi = window_of("IFA", False)
+    regs = channel_regions(M, parts["P1"], adj, lo, hi)
+    names = list(regs)
+    lines = [f"IFA window ${lo:,.0f}-{hi:,.0f}M (merge.BAND_M); P1 regions and their feasible K:", "",
+             "| region | states | $M | feasible K (win) | feasible K (band) |", "|---|---|---|---|---|"]
+    for r in names:
+        v = regs[r]
+        lines.append(f"| {r} | {', '.join(s for s in parts['P1'][r] if s in M)} | {v['usd']:,.0f} | "
+                     f"{fmt_ks(pass_k(v, 'win'))} | {fmt_ks(pass_k(v, 'band'))} |")
+    lines += ["", "| total | combos (win) | combos (band) | best headroom (win), K by region in the order "
+              + " ".join(names) + " | forced states/cuts (band, minimum) |", "|---|---|---|---|---|"]
+    full = []
+    for tot in IFA_TOTALS:
+        combos_ = {}
+        for tk in SEARCH_TRACKS:
+            ks = [sorted(pass_k(regs[r], tk)) for r in names]
+            combos_[tk] = [c for c in itertools.product(*ks) if sum(c) == tot]
+
+        def h(c):
+            return min(headroom(regs[r]["usd"] / k, lo, hi) for r, k in zip(names, c))
+        best = max(combos_["win"], key=h) if combos_["win"] else None
+        reach = reach_of(regs, "band")
+        lines.append(f"| {tot} | {len(combos_['win'])} | {len(combos_['band'])} | "
+                     + (f"{h(best):.2f}: {' '.join(map(str, best))}" if best else "none") + " | "
+                     + (f"{reach[tot][0]}/{reach[tot][1]}" if tot in reach else "—") + " |")
+        full += [f"### IFA K{tot}: {len(combos_['win'])} combos (win), {len(combos_['band'])} (band)", "",
+                 "K by region " + " ".join(names) + "; headroom = min over regions; band = also band-feasible", "",
+                 "| " + " | ".join(names) + " | headroom | band |", "|" + "---|" * (len(names) + 2)]
+        bandset = set(combos_["band"])
+        for c in sorted(combos_["win"], key=lambda c: (-h(c), c)):
+            full.append("| " + " | ".join(map(str, c)) + f" | {h(c):.2f} | {'yes' if c in bandset else 'no'} |")
+        full.append("")
+    return lines + [""], full
+
+
+def run_search(extract: str, out: str) -> dict:
+    """--search: 7_partition_search.md and 7b_ifa_combos.md under `out`."""
+    cells = overnight.state_cells(extract)
+    adj = state_graph()
+    parts = partitions()
+    sts = structures(cells)
+    divisions = parts["P2"]
+    os.makedirs(out, exist_ok=True)
+    head_rows, sections, results = [], [], {}
+    for name in ("ne_plains", "nw49", "nw34", "w1"):
+        st = sts[name]
+        res = search_structure(st, adj, divisions)
+        results[name] = res
+        for pt in [p for p in overnight.POINTS if p["structure"] == name]:
+            sec, a_ok, common = md_point_search(pt, st, res)
+            sections += sec
+            ch = [c for c in pt["k"] if c not in st["fixed"]]
+            best_a = []
+            for c in ch:
+                w = feasible_at(res[c]["A"], pt["k"][c], "win")
+                best_a.append(f"{c} {code_of(w[0])} h{w[0]['head']:.2f} ({len(w)})" if w
+                              else f"{c} none")
+            if common:
+                bkey = min(common, key=lambda v: (-len(common[v][0][1]["regions"]),
+                                                  -min(w[0] for _, _, w, _ in common[v])))
+                best_b = bkey.split()[0]
+            else:
+                best_b = "none"
+            head_rows.append(f"| {pt['id']} | {'; '.join(best_a)} | {'YES' if a_ok['win'] else 'NO'}"
+                             f"/{'YES' if a_ok['band'] else 'NO'} | {best_b} | "
+                             f"{'YES' if common else 'NO'} |")
+    ifa_lines, ifa_full = md_ifa_confirm(sts, adj, parts)
+    doc = ["# Partition search (arithmetic only: window fit and K sums, no feasibility certificate)", "",
+           "Generated by `tools/exp/region_arith.py --search`. Channels are independent footprints; "
+           "ne_plains WIFI stays NE 2 + plains 1 whole-state districts, not sealed (not searched). "
+           "west8 is skipped (WH has no band-passing K even unsealed).", "",
+           "**Rules.** A region is a set of footprint states, connected in the state graph "
+           "(`state_graph`, polygon edges plus connectors). *Feasible* means every region has a "
+           "window-feasible K that passes the `win` parts check (`ok_win`) and the regional K sum to "
+           "the point's K; *band* also needs `ok_band` (parts floor against the final δ). Headroom per "
+           "region is 2 min(τ_r - L, U - τ_r) / (U - L) at the chosen K; a split maximises the minimum "
+           "over regions. Ranking: most regions, then the largest minimum headroom, then the fewest "
+           "states in the largest region. A = unions of adjacent Census divisions (all connected "
+           "coarsenings, by set partition of the divisions that hold a footprint state). B = the corridor "
+           "(CT ME MA NH RI VT NY NJ PA DE MD DC VA, footprint only) sealed as the named variant, the "
+           "rest of the footprint one unsealed region (its components are judged by the parts check, "
+           "as in P0). `win` is the bound any method meets; `band` is the chain's rule.", "",
+           "## Headline", "",
+           "A: best coarsening per channel as division codes (NE New England, MA Middle Atlantic, ENC/WNC East/"
+           "West North Central, SA South Atlantic, ESC/WSC East/West South Central, MTN Mountain, PAC Pacific), "
+           "its minimum headroom h and the number of feasible coarsenings; feasible = win/band.", "",
+           "| point | A best per channel (coarsening, h, count) | A feasible win/band "
+           "| B best variant (every channel) | B feasible (win) |", "|---|---|---|---|---|"]
+    doc += head_rows + ["", "## C. IFA under P1 (IFA regions)", ""] + ifa_lines
+    doc += ["## Per grid point", ""] + sections
+    with open(os.path.join(out, "7_partition_search.md"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(doc) + "\n")
+    with open(os.path.join(out, "7b_ifa_combos.md"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(["# IFA P1: per-region K combos by total", ""] + ifa_full) + "\n")
+    return results
+
+
 # ------------------------------------------------------------------------------ checks and main
 def check_section10(results: dict) -> list:
     """P0 against §10: the feasible K per channel and the locked grid's headroom."""
@@ -801,10 +1184,16 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=OUT_DEFAULT, help="where the tables go (default /tmp)")
     ap.add_argument("--extract", default=overnight.EXTRACT, help="the dollar extract")
+    ap.add_argument("--search", action="store_true",
+                    help="only the partition search: 7_partition_search.md, 7b_ifa_combos.md")
     a = ap.parse_args(argv)
     if not os.path.exists(a.extract):
         print(f"missing {a.extract}", file=sys.stderr)
         return 2
+    if a.search:
+        run_search(a.extract, a.out)
+        print(f"wrote {os.path.join(a.out, '7_partition_search.md')}")
+        return 0
     results = run(a.extract, a.out)
     print(f"wrote {a.out}: " + ", ".join(sorted(os.listdir(a.out))))
     print("\n".join(check_section10(results)))
