@@ -245,7 +245,7 @@ def test_dry_run_prints_the_chain_of_a_two_region_point_and_writes_nothing():
     assert "--rate 1 --gap-width" in merge and "--window" not in merge
     assert dict(stages)["shape"] == "1800"
     assert re.search(r"sealed\.py shape --folder \S+/toy-pt/merged --name toy-pt --out-dir \S+/toy-pt/merged$", lines["shape"])
-    assert "/combined" not in text and "/south/extract.json.gz" not in text and "/rest/extract.json.gz" not in text
+    assert "/combined" not in text and "[combine" not in text and "/south/extract.json.gz" not in text and "/rest/extract.json.gz" not in text
     assert "k_alt" not in text
     assert "--drawable-alone" not in off.getvalue()                                      # --no-drawable-alone
 
@@ -404,6 +404,68 @@ def test_plan_report_lists_the_supports_the_drawable_alone_check_banned():
 
 
 # ------------------------------------------------------------------------------ labels, shape, index
+def test_a_hard_shape_limit_on_a_missing_or_nan_value_is_not_a_pass():
+    row = {"map": "toy-pt", "channel": "WIFI", "district": "WIFI_01", "hull_fill": 0.5, "bite": 0.05, "aspect": 2.0,
+           "longest_axis_km": 800.0, "doughnut": 0, "doughnut_soft": 0}
+    limits = {"bite": {"max": 0.3}}
+    assert sealed.shape_unmeasured([row], limits) == []
+    for bad in (None, float("nan"), float("inf"), "0.1"):
+        rows = [dict(row, bite=bad)]
+        assert [g["measure"] for g in sealed.shape_unmeasured(rows, limits)] == ["bite"]
+    gone = {k: v for k, v in row.items() if k != "bite"}
+    assert [g["district"] for g in sealed.shape_unmeasured([gone], limits)] == ["WIFI_01"]
+    for bad in (None, float("nan")):
+        with tempfile.TemporaryDirectory() as tmp:          # hard: labelled error, never passes
+            drv, pt = _merge_driver(tmp, limits={"hard": True, "limits": limits})
+            _merged_folder(tmp, "toy-pt", shape_rows=[dict(row, bite=bad)])
+            try:
+                drv._merge(pt)
+            except sealed.Stop as e:
+                assert e.label == "error" and "hard limits" in e.reason and "non-finite" in e.reason
+            else:
+                raise AssertionError(f"labelled a map whose hard-limited bite was {bad!r}")
+        with tempfile.TemporaryDirectory() as tmp:          # report only: as before, the label stands
+            drv, pt = _merge_driver(tmp, limits={"hard": False, "limits": limits})
+            merged = _merged_folder(tmp, "toy-pt", shape_rows=[dict(row, bite=bad)])
+            assert drv._merge(pt)[0] == "passes"
+            assert json.load(open(os.path.join(merged, "shape.json")))["error"] is None
+
+
+def test_a_combine_that_hangs_is_killed_at_its_cap_and_at_the_hours_stop():
+    nat = _doc()["points"][0]["channels"]["national"]
+    wifi = {"regions": [{"name": "south", "states": ["CA", "NY"], "k": 2}], "rest": True}
+    doc = _doc(channels={"national": nat, "WIFI": wifi})
+    hang = lambda args, out, spec, extract: [sys.executable, "-c", "import time; time.sleep(120)"]
+    real, sealed.combine_cmd = sealed.combine_cmd, hang
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            drv, pt = _merge_driver(tmp, doc=doc, caps=dict(sealed.CAPS, combine=1.0), real=("combine",))
+            os.makedirs(os.path.join(tmp, "toy-pt"), exist_ok=True)
+            t0 = time.time()
+            try:
+                drv._merge(pt)
+            except sealed.Stop as e:
+                assert e.label == "stopped" and "combine killed at its cap" in e.reason
+            else:
+                raise AssertionError("a hung combine was waited for")
+            assert time.time() - t0 < 40 and drv.grid.get("toy-pt")["stages"]["combine"]["stop"] == "cap"
+            assert "merge" not in [n for n, _ in drv.calls]
+        with tempfile.TemporaryDirectory() as tmp:           # the --hours stop ends it too, whatever the cap
+            drv, pt = _merge_driver(tmp, doc=doc, real=("combine",))
+            os.makedirs(os.path.join(tmp, "toy-pt"), exist_ok=True)
+            drv.deadline = time.time() + 1.0
+            t0 = time.time()
+            try:
+                drv._merge(pt)
+            except sealed.Stop as e:
+                assert e.label == "stopped" and "during combine" in e.reason
+            else:
+                raise AssertionError("the launcher ran past its stop")
+            assert time.time() - t0 < 40
+    finally:
+        sealed.combine_cmd = real
+
+
 def test_labels_follow_m1_then_band_then_hard_shape():
     ok = {"status": "pass", "summary": "ok"}
     rows = [{"district": "WIFI_01", "channel": "WIFI", "usd": 900.0, "lo": 850.0, "hi": 1150.0, "cap": None, "ok": True}]
@@ -1100,6 +1162,8 @@ def test_dry_run_of_independent_regions_cuts_the_extract_and_merges_the_combined
         assert re.search(rf"glue\.py .*--extract \S+/{name}/extract\.json\.gz ", block)
     merge = re.search(r"^\[merge, .*$", text, re.M).group(0)
     assert "regions are independent per channel" in text and re.search(r"[A-Z+]+=\S+/toy-pt/combined ", merge)
+    assert re.search(r"^\[combine, cap 600 s\] .*sealed\.py combine --runs \S+/toy-pt/combine-args\.json --out \S+/toy-pt/combined ",
+                     text, re.M)
     assert "/glue " not in merge
 
 
@@ -1109,7 +1173,8 @@ def test_a_point_of_independent_regions_is_merged_from_the_combined_ledger():
     with tempfile.TemporaryDirectory() as tmp:
         doc = _doc(channels={"national": nat, "WIFI": wifi})
         made = []
-        drv, pt = _merge_driver(tmp, doc=doc, on_merge=lambda: made.append(_merged_folder(tmp, "toy-pt", shape_rows=[])))
+        drv, pt = _merge_driver(tmp, doc=doc, real=("combine",),       # the combine stage runs as the child it is
+                                on_merge=lambda: made.append(_merged_folder(tmp, "toy-pt", shape_rows=[])))
         assert sorted(r["name"] for r in pt["runs"]) == ["rest-WIFI", "rest-national", "south-WIFI", "south-national"]
         for n, st, chans, rows in INDEPENDENT:           # the final folders the runs left, by the run names validate gave
             _run_folder(os.path.join(tmp, "toy-pt", n, "glue"), rows, chans)
@@ -1117,5 +1182,7 @@ def test_a_point_of_independent_regions_is_merged_from_the_combined_ledger():
         assert label == "passes" and made
         merge = dict(drv.calls)["merge"]
         assert merge[merge.index("--out") - 1].endswith("toy-pt/combined") and "/glue" not in " ".join(merge)
+        assert [n for n, _ in drv.calls][:2] == ["combine", "merge"]
+        assert drv.grid.get("toy-pt")["stages"]["combine"]["rc"] == 0
         led = output.read_ledger(os.path.join(tmp, "toy-pt", "combined", "ledger.csv"))
         assert len(led) == 8 and {r["district"] for r in led if r["district"]} >= {"south-national/national_01"}

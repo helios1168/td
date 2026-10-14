@@ -19,7 +19,7 @@ together in one run (named for the region, or the regions' names joined by `-`);
 only the channels of its regions, on `extract.json.gz`, a copy of the extract cut to their fine
 channels, so a channel outside the run is not drawn there.  When the runs' state sets are pairwise
 disjoint and each holds every channel with footprint states in it, `merge.py` takes the runs' last
-folders as its sources; otherwise `combined/` is written first: one ledger with each (ZCTA, fine
+folders as its sources; otherwise `combined/` is written first (stage `combine`, `sealed.py combine`, a capped child): one ledger with each (ZCTA, fine
 channel) cell from the run that owns its planning channel in the ZCTA's state (district ids
 prefixed by the run), which `merge.py` takes as its one source.  Point ids and region names may
 not be a name the driver writes itself (`merged`, `combined`, `spec-merge.toml`, `SEALED.json`,
@@ -70,7 +70,7 @@ the channel summary and the limit breaches in `shape.json`).  **Labels**: `fails
 verdict of `m1.json`), else `outside band` (a district outside its channel's dollar window,
 `dollars.csv`), else `ineligible` (`score.txt`'s `eligible: no` with its reasons, such as a main
 map K outside the allowed range), else `passes`; `fails shape` instead when the shape limits file
-says `"hard": true` and a district breaches one; `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
+says `"hard": true` and a district breaches one (a missing or non-finite value of a hard-limited measure is an `error`); `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
 `infeasible` (a run with no plan inside its window), `stopped` (a stage's cap or the `--hours` stop), `error` otherwise.
 Shape limits (`L.json`: `{"hard": false, "limits": {<study column>: {"min": x, "max": y}}}`) are
 parameters, not decisions: with no file, or `"hard": false`, the shape is reported and decides
@@ -130,7 +130,8 @@ NAME = "sealed"
 SEALED_ROOT = os.path.join(HUB, "runs", "exp", NAME)
 STATE_JSON = "SEALED.json"
 INDEX_MD = "SEALED.md"
-CAPS = {"replan": 600.0, "draw": 2700.0, "repair": 1800.0, "glue": 600.0, "merge": 3600.0, "shape": 1800.0}
+CAPS = {"replan": 600.0, "draw": 2700.0, "repair": 1800.0, "glue": 600.0, "combine": 600.0, "merge": 3600.0,
+        "shape": 1800.0}
 DRAW_FRAC = 0.85                # run.py's per-channel time limit, of the draw's wall cap
 NO_DRAWING = "no connected drawing"
 LABELS = ("passes", "fails M1", "outside band", "ineligible", "fails shape", NO_DRAWING, "infeasible", "stopped",
@@ -504,6 +505,11 @@ def shape_cmd(folder: str, name: str, out_dir: str) -> list:
             "--out-dir", out_dir]
 
 
+def combine_cmd(args_json: str, out: str, spec: str, extract: str) -> list:
+    return [sys.executable, "-u", os.path.join(HERE, "sealed.py"), "combine", "--runs", args_json, "--out", out,
+            "--spec", spec, "--extract", extract]
+
+
 def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str, window: str | None,
                 caps: dict) -> list:
     """[(stage, command, cap, env)] of a point's merge, gate, score, land and shape."""
@@ -519,6 +525,22 @@ def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str,
 
 def all_states(runs: list) -> tuple:
     return tuple(sorted({st for r in runs for st in r["states"]}))
+
+
+def combine_args(runs: list, folders: dict) -> dict:
+    """What `sealed.py combine` reads: the normalised runs (name, states, channels' K) and their last folders."""
+    return {"runs": [{"name": r["name"], "states": list(r["states"]), "ks": dict(r["ks"])} for r in runs],
+            "folders": {r["name"]: folders[r["name"]] for r in runs}}
+
+
+def cmd_combine(a) -> int:
+    """`sealed.py combine` (a point's combine stage, a child of the driver so its cap and the `--hours`
+    stop can end it): `combine_point` over the runs of `--runs`."""
+    with open(a.runs, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    got = combine_point(doc["runs"], doc["folders"], a.out, a.spec, a.extract)
+    print(f"combined: {got['cells']} cells, {got['districts']} districts", flush=True)
+    return 0
 
 
 def _run():
@@ -702,6 +724,14 @@ def shape_breaches(rows: list, limits: dict) -> list:
                     out.append({"channel": r["channel"], "district": r["district"], "measure": col,
                                 "value": float(v), "limit": f"{kind} {x:g}"})
     return out
+
+
+def shape_unmeasured(rows: list, limits: dict) -> list:
+    """[{channel, district, measure, value}] for each district row whose value of a configured limit
+    column is missing or not a finite number; `shape_breaches` skips them, which a hard limit may not."""
+    return [{"channel": r.get("channel"), "district": r.get("district"), "measure": col, "value": r.get(col)}
+            for r in rows for col in sorted(limits)
+            if isinstance(r.get(col), bool) or not isinstance(r.get(col), (int, float)) or not math.isfinite(r[col])]
 
 
 def shape_summary(rows: list) -> dict:
@@ -1027,7 +1057,14 @@ class Driver(overnight.Runner):
         if not finished(merged):
             overnight.set_aside(merged)
             if not pt["aligned"]:       # independent regions per channel: one source holding each cell once
-                combine_point(pt["runs"], folders, combined, mspec, self.extract)
+                cargs, log = os.path.join(pdir, "combine-args.json"), os.path.join(pdir, "combine.log")
+                overnight._write_json(cargs, combine_args(pt["runs"], folders))
+                cap = self.caps["combine"]
+                info = self.stage(pid, "combine", combine_cmd(cargs, combined, mspec, self.extract), log, cap)
+                if info["stop"] == "cap":
+                    raise Stop("stopped", f"combine killed at its cap ({cap / 60:g} min)")
+                if info["rc"] != 0:
+                    raise Stop("error", f"combine exited {info['rc']}: {overnight._tail(log)}")
             cmd, cap, env = chain["merge"]
             info = self.stage(pid, "merge", cmd, os.path.join(pdir, "merge.log"), cap, env)
             if info["stop"] == "cap":
@@ -1065,6 +1102,9 @@ class Driver(overnight.Runner):
                     drows = json.load(fh)
                 shape["summary"] = shape_summary(drows)
                 shape["breaches"] = shape_breaches(drows, self.limits["limits"])
+                gaps = shape_unmeasured(drows, self.limits["limits"]) if self.limits["hard"] else []
+                if gaps:      # a hard limit on a value that was not measured is not a pass
+                    shape["error"] = f"{len(gaps)} missing or non-finite values under hard shape limits, first {gaps[0]}"
                 shape["districts"] = SHAPE_ROWS
             except (OSError, ValueError, KeyError) as e:
                 shape["error"] = f"{type(e).__name__}: {e}"
@@ -1264,6 +1304,10 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
             if not pt["aligned"]:
                 print(f"\n==== point {pt['id']}: the regions are independent per channel; {os.path.join(pdir, 'combined')} "
                       f"gets each cell from the run owning its channel, and is merge.py's one source")
+                cargs = os.path.join(pdir, "combine-args.json")
+                print(f"[combine, cap {caps['combine']:g} s] "
+                      + " ".join(map(q, combine_cmd(cargs, os.path.join(pdir, "combined"),
+                                                    os.path.join(pdir, "spec-merge.toml"), a.extract))))
                 finals = [(all_states(pt["runs"]), os.path.join(pdir, "combined"))]
             print(f"\n==== point {pt['id']}: merge, gate, score, land, shape")
             for stage, cmd, cap, env in point_chain(pt["id"], pdir, finals, os.path.join(pdir, "spec-merge.toml"),
@@ -1391,6 +1435,12 @@ def parser() -> argparse.ArgumentParser:
         i = sub.add_parser(name, help="write <root>/SEALED.md from SEALED.json")
         i.add_argument("--root", required=True)
         i.set_defaults(func=cmd_index)
+    cb = sub.add_parser("combine", help="(a point's combine stage) one folder holding each cell of independent regions once")
+    cb.add_argument("--runs", required=True, help="the JSON the driver wrote: {runs, folders}")
+    cb.add_argument("--out", required=True)
+    cb.add_argument("--spec", required=True)
+    cb.add_argument("--extract", required=True)
+    cb.set_defaults(func=cmd_combine)
     sh = sub.add_parser("shape", help="(a point's shape stage) every district's study measures of a folder")
     sh.add_argument("--folder", required=True)
     sh.add_argument("--name", required=True)
