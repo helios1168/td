@@ -46,3 +46,18 @@ For an interactive session the owner runs in parallel. Start with `/skill:plan` 
 - Option A or B for combining with sealing (A recommended).
 - Shape filter values: the provisional ones are bite ≤ 0.30, hull fill ≥ 0.45, at most 4 states per district, no hard doughnut; retune them after the PDF (#135, #138).
 - Compute: m5 and m2 shared with tonight's sealing runs; agree slot counts with that session.
+
+## Refinement (same session, later): phased plan
+- **Phase 0, sizing (arithmetic, no solve).** `tools/exp/region_arith.py` (worker run 1cab5266, in progress; land it before starting). Per channel and K it gives: feasible K, forced splits (a floor for the certificate), the whole-state library size at caps 4/6/none, the carving job list (σ, k) with candidate attach-set counts, and rule C orphans. Go/no-go per channel: no orphans, small states coverable under the shape cap, attach-set counts that will not blow up. This decides #141 with data.
+- **Phase 1, contract.**
+  - Column record: id, channel, whole states, split state σ or none, ZCTA list (side file), $M, M1 verdict and details under the 2026-10-14 rule, shape metrics from `study.py`, border km, gate commit.
+  - Pattern record: σ, k, its k column ids, and a check that the pieces partition σ's ZCTAs.
+  - A library is per channel and window, and independent of K (WIFI: per K).
+- **Phase 2, three workers in parallel.**
+  - (a) Whole-state columns from the Phase 0 enumeration, gated and scored in parallel.
+  - (b) Carver per (σ, k): choose k disjoint attach sets from the Phase 0 candidates (one may be empty), then run a flow MILP at the sldu grain generalised from `coarse.py`. It contracts each attach set to a root, puts a window on each piece plus its attach set, and minimises border plus a compactness term. Randomised variants; keep a pattern only when all k districts pass the gate and the shape metrics are computed.
+  - (c) Selection MILP and assembly. Coverage rows carry an elastic slack per state at a large penalty, so an infeasible library names the states it cannot cover. Shape and band are filters; the objective is splits, then cuts, then shape, then balance. Output is the ledger, the full gate and a `zip_pages` render.
+- **Phase 3, IFA pilot at one K** (K52, compared against `results/ifa_kgrid_2026-10-13/K52`).
+- **Phase 4, growth loop.** Each state the slack names becomes a targeted carver job; repeat. Pricing by duals is later.
+- **Phase 5, grids.** IFA K48–54. Then the main-map channels: each channel's footprint is separate, so the libraries are independent and build in parallel.
+- **Sealing tie-in.** Region partitions are used only to shard Phase 2 work across m5/m2 (Phase 0 gives the per-region load). Option B (selection per region) is the fallback for a slow or infeasible national selection.
