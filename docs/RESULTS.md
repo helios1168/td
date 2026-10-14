@@ -442,11 +442,11 @@ second in the objective. Connectivity is exact on the polygon graph: highspy 1.1
 `cbMipDefineLazyConstraints` but HiGHS never calls it (tested: the other MIP callbacks fire), so
 the realizer runs a solve-check-cut loop of separator rows (U59), each ZCTA demanding one unit, so
 zero-opportunity ZCTAs are held to it. A geodesic-DAG restriction (each ZCTA needs a neighbour of
-its district nearer the district's border, CONTIGUITY.md §4 rank 2) runs first and its drawing
-starts the complete loop. "optimal" is a connected optimum of the complete model at
-`mip_rel_gap = 0`; "connected" is connected and feasible; "infeasible" is a proof under the
-group's rules; "unknown" is a time limit or a restricted model, never infeasible. No archived
-engine was reused (U64): the pair-era SCIP engine (`td/solvers/scip_tree.py` at the tag, C03) is a
+its district nearer the district's border, `docs/archive/problem/CONTIGUITY.md` §4 rank 2) runs
+first and its drawing starts the complete loop. "optimal" is a connected optimum of the complete
+model at `mip_rel_gap = 0`; "connected" is connected and feasible; "infeasible" is a proof under the
+group's rules; "unknown" is a time limit or a restricted model, never infeasible. No archived engine
+was reused (U64): the pair-era SCIP engine (`td/solvers/scip_tree.py` at the tag, C03) is a
 two-label log-objective SCIP model; only its separator idea carried over.
 
 **Sequential.** Coupled groups are large (below), so the arms were also run one split unit at a
