@@ -552,9 +552,9 @@ class NeckGraph:
                 self.border[a][b] = self.border[b][a] = border.get(e, 0.0) / 1000.0
                 self.border_cm[a][b] = self.border_cm[b][a] = border_cm(border.get(e, 0.0))
         if gap_width:
-            gaps = polygon.get("voronoi_gaps")
-            if gaps is None and polygon.get("gaps"):    # land-only gap widths, `geo.GAP_LAND` (#131)
-                gaps = polygon["gaps"]
+            gaps = polygon.get("gaps") or None          # land-only gap widths, `geo.GAP_LAND` (#131), win
+            if gaps is None:
+                gaps = polygon.get("voronoi_gaps")
             if gaps is None:
                 gaps = _voronoi_gaps()
             for (a, b), m in gaps.items():

@@ -298,3 +298,9 @@ def test_fringes_linked_only_by_a_voronoi_gap_are_two_fringes():
     [nk] = audit.district_necks(set("hab"), {}, audit.NeckGraph(land_only))
     assert nk.zips == ("a", "b") and nk.width_km == 2.0, nk
     assert audit.district_necks(set("hab"), {}, audit.NeckGraph(land_only, gap_width=False)) == []
+    # both keys supplied: the land-only row wins, so the pair still joins the own-connectivity graph
+    both = dict(land_only, voronoi_gaps={("a", "b"): 5e3, ("h", "a"): 9e4})
+    [nk] = audit.district_necks(set("hab"), {}, audit.NeckGraph(both))
+    assert nk.zips == ("a", "b") and nk.width_km == 2.0, nk
+    assert audit.NeckGraph(both).gap_land == {("a", "b")}
+    assert audit.NeckGraph(dict(both, voronoi_gaps={})).border_cm["a"]["b"] == audit.border_cm(2e4)
