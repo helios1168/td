@@ -29,15 +29,22 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
    split list the rule's or the base's on the region's states, `--max-size` and the forbid pairs
    (`--forbid` and the region's) with both states in the run.  A channel with no cell in the run is
    dropped by the spec build; its lines stay as the base has them.
-2. `plan` (this file, on the polygon graph induced on the run's states; `replan.py` plans on the
-   full graph, which a region's K does not fit): the master per channel at the declared δ, else the
-   smallest feasible δ up to the final δ (never wider, the band is the owner's), the plans cached
-   for `run.py --plans`.
-3. `run.py --states` into `draw/` (arm 1, sequential, `overnight.LAND_RATIO`).  A channel's drawing
-   ends "infeasible" or "unknown" (`overnight.needs_retry`: the realizer's own stop reasons): when
-   the region lists `k_alt` for it, K moves to `k_alt` and the run is drawn once more in `alt/`,
-   only if `k_alt` has a final δ in the window (the region's feasible set, `fit_delta`); the drawing
-   with fewer failing channels goes on.  The band never widens.
+2. `replan` (`sealed.py replan`: `replan.py` itself with its instance built on the polygon graph
+   induced on the run's states, since `replan.py` alone plans the full graph, which a region's K does
+   not fit): the master per channel at the declared δ, else the smallest feasible δ up to the final δ
+   (never wider, the band is the owner's), the plans cached for `run.py --plans`.  `--drawable-alone`
+   (#124 B) is on by default (`--no-drawable-alone` turns it off): the master plans only supports that
+   `plancheck.drawable` shows can be drawn alone, connected and without a neck; its bans and
+   unknowns per channel are in the run's `plan` record (and `replan.json`).
+3. `run.py --states` into `draw/` (arm 1, sequential, `overnight.LAND_RATIO`).  The drawing is strict
+   (owner, 2026-10-14: contiguity at the solver level): `draw.py` gives the ZCTAs of a group with no
+   connected drawing to a non-contiguous fallback, so after every draw `contig.json` is read
+   (`drawing_failures`): a channel with `undrawn_zctas`, `fixed_split` districts, `connected` false or
+   a status other than optimal/connected is a failure, and a failed drawing is never repaired or
+   merged.  When the region lists `k_alt` for a failing channel, K moves to `k_alt` and the run is
+   drawn once more in `alt/`, only if `k_alt` has a final δ in the window (the region's feasible set,
+   `fit_delta`); the drawing with fewer failing channels goes on.  If it still fails the run, and the
+   point, end `no connected drawing` with the groups' details.  The band never widens.
 4. `repair.py --states` pass 1 into `r1/`, pass 2 into `r2/` when a channel of `r1/` is still in
    pieces or necked (`contig.json`).  `--window` is `score.WINDOWS` in $M for a run of one channel
    only (the repair intersects every channel's band with one window); the final δ already fits each
@@ -52,8 +59,8 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
 of `tools/looks/study.py` (`shape.json`).  **Labels**: `fails M1` (the gap-width verdict of
 `m1.json`), else `outside band` (a district outside its channel's dollar window, `dollars.csv`),
 else `passes`; `fails shape` instead when the shape limits file says `"hard": true` and a district
-breaches one; `infeasible` (a run with no plan inside its window or a drawing left infeasible with
-no alternative that planned), `stopped` (a stage's cap or the `--hours` stop), `error` otherwise.
+breaches one; `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
+`infeasible` (a run with no plan inside its window), `stopped` (a stage's cap or the `--hours` stop), `error` otherwise.
 Shape limits (`L.json`: `{"hard": false, "limits": {<study column>: {"min": x, "max": y}}}`) are
 parameters, not decisions: with no file, or `"hard": false`, the shape is reported and decides
 nothing.
@@ -113,8 +120,10 @@ STATE_JSON = "SEALED.json"
 INDEX_MD = "SEALED.md"
 CAPS = {"replan": 600.0, "draw": 2700.0, "repair": 1800.0, "glue": 600.0, "merge": 3600.0}
 DRAW_FRAC = 0.85                # run.py's per-channel time limit, of the draw's wall cap
-LABELS = ("passes", "fails M1", "outside band", "fails shape", "infeasible", "stopped", "error")
-RUN_BAD = ("error", "stopped", "infeasible")        # a run's failing statuses, worst first
+NO_DRAWING = "no connected drawing"
+LABELS = ("passes", "fails M1", "outside band", "fails shape", NO_DRAWING, "infeasible", "stopped", "error")
+RUN_BAD = ("error", "stopped", NO_DRAWING, "infeasible")   # a run's failing statuses, worst first
+DRAWN_OK = ("optimal", "connected")        # a group or channel drawing the owner accepts (2026-10-14: contiguity at the solver)
 STRUCTURES = {k: (os.path.join(ROOT, p), rule) for k, (p, rule) in overnight.STRUCTURES.items()}
 GAP_ENV = overnight.GAP_ENV
 
@@ -331,6 +340,8 @@ def run_spec_text(base_text: str, pid: str, run_name: str, states, plan: dict, f
     (`overnight.DECLARED_DELTA`, or the final δ when smaller), final δ, split list, `margin = false`,
     `max_size` when given and the forbid pairs with both states in the run; named `<point>-<run>`."""
     ch, S = plan["channels"], set(states)
+    if plan["infeasible"]:
+        raise PartitionError("no spec copy for a region outside the window: " + "; ".join(plan["infeasible"].values()))
     pairs = sorted({tuple(sorted(p)) for p in forbid if set(p) <= S})
     keys = {c: {"k": str(v["k"]), "margin": "false", **({"max_size": str(max_size)} if max_size else {})}
             for c, v in ch.items()}
@@ -353,10 +364,10 @@ def _patched(cmd: list, flag: str, value: str) -> list:
 
 
 def plan_cmd(base: str, out_spec: str, plans: str, report: str, extract: str, states, cap: float,
-             nch: int) -> list:
-    return [sys.executable, "-u", os.path.join(HERE, "sealed.py"), "plan", base, "--out-spec", out_spec,
+             nch: int, drawable_alone: bool = True) -> list:
+    return [sys.executable, "-u", os.path.join(HERE, "sealed.py"), "replan", base, "--out-spec", out_spec,
             "--plans", plans, "--report", report, "--extract", extract, "--states", ",".join(states),
-            "--time-limit", f"{max(30.0, cap / (2 * nch + 2)):g}"]
+            "--time-limit", f"{max(30.0, cap / (2 * nch + 2)):g}"] + (["--drawable-alone"] if drawable_alone else [])
 
 
 def draw_cmd(spec: str, out: str, plans: str, extract: str, jobs: int, states, cap: float) -> list:
@@ -407,14 +418,16 @@ def jobs_of(run: dict) -> int:
     return max(2, len(run["ks"]))
 
 
-def nominal_chain(pid: str, run: dict, rdir: str, plans: str, extract: str, plan: dict, caps: dict) -> list:
+def nominal_chain(pid: str, run: dict, rdir: str, plans: str, extract: str, plan: dict, caps: dict,
+                  drawable_alone: bool = True) -> list:
     """[(stage, command, cap, env)] of a run's chain as it runs when nothing fails and nothing is
-    retried: plan, draw, repair pass 1, glue (pass 2 and the `k_alt` re-run depend on the results)."""
+    retried: replan, draw, repair pass 1, glue (pass 2 and the `k_alt` re-run depend on the
+    results)."""
     st, jobs, label = run["states"], jobs_of(run), f"sealed {pid}/{run['name']}"
     nch = len(plan["channels"])
     win = window_of(plan)
-    return [("plan", plan_cmd(os.path.join(rdir, "spec-base.toml"), os.path.join(rdir, "spec.toml"), plans,
-                              os.path.join(rdir, "replan.json"), extract, st, caps["replan"], nch),
+    return [("replan", plan_cmd(os.path.join(rdir, "spec-base.toml"), os.path.join(rdir, "spec.toml"), plans,
+                                os.path.join(rdir, "replan.json"), extract, st, caps["replan"], nch, drawable_alone),
              caps["replan"], None),
             ("draw", draw_cmd(os.path.join(rdir, "spec.toml"), os.path.join(rdir, "draw"), plans, extract, jobs, st,
                               caps["draw"]), caps["draw"], None),
@@ -436,73 +449,43 @@ def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str,
             ("land", overnight.land_cmd(merged), overnight.CAP_S["post"], None)]
 
 
-# ------------------------------------------------------------------------------ the plan stage
-def cmd_plan(a) -> int:
-    """`sealed.py plan`: `replan.py` on the polygon graph induced on `--states`."""
-    from td import master
+# ------------------------------------------------------------------------------ the replan stage
+def cmd_replan(a) -> int:
+    """`sealed.py replan`: `replan.py` itself, its instance built on the polygon graph induced on
+    `--states` (`replan.build` swapped; `replan.py` plans the full graph, which a region's K does not
+    fit).  Everything else is `replan.main`'s: the master at the declared δ else the smallest feasible
+    one up to the final δ, the plans cached for `run.py --plans`, `replan.json`; with
+    `--drawable-alone` (#124 B) every channel plans only supports `plancheck.drawable` shows can be
+    drawn alone without a neck, its tests and bans in the report's `plan_check`."""
     replan = overnight._replan()
-    run = replan.run
     states = tuple(x for x in a.states.split(",") if x)
-    with open(a.spec, encoding="utf-8") as fh:
-        src = fh.read()
-    if replan.same_file(a.out_spec, a.spec):
-        raise SystemExit("the copy must not overwrite the base spec")
-    head = (f"# sealed-region master (tools/exp/contig/sealed.py plan): a copy of {os.path.abspath(a.spec)}\n"
-            f"# planned on the polygon graph induced on {', '.join(states)}\n")
-    deltas, plans, reports, doc = {}, {}, {}, {"source_spec": os.path.abspath(a.spec), "states": list(states),
-                                                "channels": {}}
 
-    def write():
-        os.makedirs(os.path.dirname(os.path.abspath(a.out_spec)), exist_ok=True)
-        with open(a.out_spec, "w", encoding="utf-8") as fh:
-            fh.write(head + replan.banned_text(src, [], deltas=deltas))
-
-    def build():
-        s = tdspec.load(a.out_spec)
+    def build(spec_path: str, extract_path: str):
+        s = tdspec.load(spec_path)
         ref = geo.read_reference()
-        ext = tdspec.scope(s, data.conus(data.load(a.extract), ref))
-        return tdspec.build(s, ext, ref, graph=run.induced_graph(geo.polygon_graph(), states))
-    write()
-    inst = build()
-    for c, ch in inst.channels.items():
-        p, rep = master.plan(inst, c, time_limit=a.time_limit)
-        plans[c], reports[c] = p, rep
-        entry = {"declared_delta": ch.spec.delta, "final_delta": ch.spec.final_delta,
-                 "status_at_declared": rep.get("status")}
-        if p is None:
-            d = master.smallest_delta(inst, c, time_limit=a.time_limit)
-            entry["smallest_delta"] = {"status": d.status, "delta": d.delta, "lower": d.lower}
-            if d.delta is None or d.delta > ch.spec.final_delta:
-                doc["channels"][c] = entry
-                print(f"{c}: no plan up to final_delta {ch.spec.final_delta:g} ({d.status})", flush=True)
-                _dump(a.report, doc)
-                return 1
-            deltas[c] = math.ceil(d.delta * 1e4) / 1e4
-        entry["delta"] = deltas.get(c, ch.spec.delta)
-        doc["channels"][c] = entry
-        print(f"{c}: δ {entry['delta']:g} (declared {ch.spec.delta:g})", flush=True)
-    if deltas:
-        write()
-        inst = build()
-        for c in deltas:
-            plans[c], reports[c] = master.plan(inst, c, time_limit=a.time_limit)
-    for c, p in plans.items():
-        if p is None:
-            print(f"{c}: no plan at δ {doc['channels'][c]['delta']:g} on re-solve", flush=True)
-            _dump(a.report, doc)
-            return 1
-    key = run.plans_key(a.out_spec, a.extract, a.plans)
-    os.makedirs(a.plans, exist_ok=True)
-    with open(key, "wb") as fh:
-        pickle.dump((plans, reports), fh)
-    doc["plans_file"] = key
-    _dump(a.report, doc)
-    return 0
+        ext = tdspec.scope(s, data.conus(data.load(extract_path), ref))
+        return s, tdspec.build(s, ext, ref, graph=replan.run.induced_graph(geo.polygon_graph(), states))
+    replan.build = build
+    argv = [a.spec, "--out-spec", a.out_spec, "--plans", a.plans, "--extract", a.extract,
+            "--time-limit", f"{a.time_limit:g}", "--check-time", f"{min(120.0, a.time_limit):g}",
+            "--drawable-alone" if a.drawable_alone else "--keep"]
+    if a.report:
+        argv += ["--report", a.report]
+    return replan.main(argv)
 
 
-def _dump(path, doc) -> None:
-    if path:
-        overnight._write_json(path, doc)
+def plan_report(path: str) -> dict:
+    """What a region's `replan.json` says per channel: the δ planned at, the supports `plancheck`
+    banned (B's bans: not drawable alone), those it could not decide, and the tests run."""
+    with open(path, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    out = {}
+    for c, e in sorted(doc.get("channels", {}).items()):
+        pc = e.get("plan_check") or e.get("plan_check_at_declared") or {}
+        out[c] = {"delta": e.get("delta"), "status": e.get("status"),
+                  "bans": [b["support"] for b in pc.get("bans", [])],
+                  "unknown": [u["support"] for u in pc.get("unknown", [])], "tested": len(pc.get("tested", []))}
+    return out
 
 
 # ------------------------------------------------------------------------------ shape
@@ -597,6 +580,39 @@ def label_point(m1: dict, rows: list, breaches: list, hard: bool) -> tuple:
     return "passes", ""
 
 
+def drawing_failures(contig: dict) -> dict:
+    """{channel: {reasons, groups}} for each channel of a run's `contig.json` whose drawing is not a
+    connected one (owner, 2026-10-14: contiguity at the solver level): ZCTAs handed to the
+    non-contiguous fallback (`undrawn_zctas`), a channel not `connected`, districts whose bodies no
+    free ZCTA can join (`fixed_split`), or a status other than `DRAWN_OK`; `groups` are the coupled
+    groups whose solve ended otherwise."""
+    out = {}
+    for c, ch in sorted(contig.get("channels", {}).items()):
+        why = []
+        if ch.get("undrawn_zctas"):
+            why.append(f"{ch['undrawn_zctas']} undrawn ZCTAs left to the non-contiguous fallback")
+        if ch.get("fixed_split"):
+            why.append(f"{len(ch['fixed_split'])} districts split by fixed bodies ({', '.join(map(str, ch['fixed_split'][:3]))})")
+        if ch.get("status") not in DRAWN_OK:
+            why.append(f"drawing status {ch.get('status')}")
+        if ch.get("connected") is False and not why:
+            why.append("drawing not connected")
+        if why:
+            out[c] = {"reasons": why, "groups": [
+                {"districts": g.get("districts"), "units": g.get("units"), "free_zctas": g.get("free_zctas"),
+                 "status": g.get("status"), "seconds": g.get("seconds"), "gap": g.get("gap")}
+                for g in ch.get("groups", []) if g.get("status") not in DRAWN_OK]}
+    return out
+
+
+def failure_text(failures: dict) -> str:
+    return "; ".join(
+        f"{c}: {', '.join(f['reasons'])}" + ("; groups " + ", ".join(
+            f"{'+'.join(map(str, g['districts'] or []))} [{','.join(map(str, g['units'] or []))}] {g['status']}"
+            for g in f["groups"][:4]) + (f" (+{len(f['groups']) - 4} more)" if len(f["groups"]) > 4 else "")
+            if f["groups"] else "") for c, f in sorted(failures.items()))
+
+
 def worst_run(runs: dict) -> tuple | None:
     """(status, reason) of the worst failing run (`RUN_BAD`), or None when every run is done."""
     bad = {s: [(n, v) for n, v in sorted(runs.items()) if v.get("status") == s] for s in RUN_BAD}
@@ -614,9 +630,11 @@ class Driver(overnight.Runner):
     """One host's sealed points: `region` runs one run's chain, `finish` merges a point whose runs
     are all done and labels it."""
 
-    def __init__(self, grid, root, host, extract, cells, points: dict, caps: dict, forbid, max_size, limits):
+    def __init__(self, grid, root, host, extract, cells, points: dict, caps: dict, forbid, max_size, limits,
+                 drawable_alone: bool = True):
         super().__init__(grid, root, host, extract, cells)
         self.points, self.caps, self.forbid, self.max_size, self.limits = points, caps, forbid, max_size, limits
+        self.drawable_alone = drawable_alone
         self.lock = threading.Lock()
         self.pending = collections.Counter()
         self.specs = {}
@@ -663,8 +681,8 @@ class Driver(overnight.Runner):
         return []
 
     def _attempt(self, pt: dict, run: dict, adir: str, ks: dict, tag: str) -> dict:
-        """Spec copy, plan and draw of one K choice in `adir`; the drawn folder, its contig.json and
-        the channels whose drawing ended on a stop reason of the realizer's own."""
+        """Spec copy, replan and draw of one K choice in `adir`; the drawn folder, its contig.json and
+        `failures`, `drawing_failures` of it: a channel whose drawing is not a connected one."""
         pid, rn = pt["id"], run["name"]
         sp, text = self.spec_of(pt)
         os.makedirs(adir, exist_ok=True)
@@ -676,17 +694,19 @@ class Driver(overnight.Runner):
             fh.write(run_spec_text(text, pid, rn, run["states"], plan, self.forbid | set(map(tuple, run["forbid"])),
                                    self.max_size))
         chain = dict((s, (cmd, cap, env)) for s, cmd, cap, env in
-                     nominal_chain(pid, run, adir, self.plans, self.extract, plan, self.caps))
+                     nominal_chain(pid, run, adir, self.plans, self.extract, plan, self.caps, self.drawable_alone))
         if not (os.path.exists(spec) and finished(out)):
-            cmd, cap, _ = chain["plan"]
+            cmd, cap, _ = chain["replan"]
             log = os.path.join(adir, "replan.log")
-            info = self.stage(pid, f"{rn}{tag}.plan", cmd, log, cap)
+            info = self.stage(pid, f"{rn}{tag}.replan", cmd, log, cap)
             if info["stop"] == "cap":
-                raise Stop("stopped", f"plan killed at its cap ({cap / 60:g} min)")
+                raise Stop("stopped", f"replan killed at its cap ({cap / 60:g} min)")
             if info["rc"] == 1 and "no plan" in overnight._text(log):
                 raise Stop("infeasible", overnight._tail(log))
             if info["rc"] != 0:
-                raise Stop("error", f"plan exited {info['rc']}: {overnight._tail(log)}")
+                raise Stop("error", f"replan exited {info['rc']}: {overnight._tail(log)}")
+        if os.path.exists(os.path.join(adir, "replan.json")):
+            self.note(pid, rn, **{f"plan{tag.replace('.', '_')}": plan_report(os.path.join(adir, "replan.json"))})
         if not finished(out):
             overnight.set_aside(out)
             cmd, cap, _ = chain["draw"]
@@ -697,8 +717,9 @@ class Driver(overnight.Runner):
             raise Stop("error", f"run.py wrote no ledger: {overnight._tail(os.path.join(adir, 'draw.log'))}")
         with open(os.path.join(out, "contig.json"), encoding="utf-8") as fh:
             contig = json.load(fh)
-        return {"dir": adir, "draw": out, "contig": contig, "failing": overnight.needs_retry(contig), "ks": ks,
-                "plan": plan}
+        failures = drawing_failures(contig)
+        return {"dir": adir, "draw": out, "contig": contig, "failures": failures, "failing": sorted(failures),
+                "ks": ks, "plan": plan}
 
     def _chain(self, pt: dict, run: dict, rdir: str) -> None:
         pid, rn = pt["id"], run["name"]
@@ -725,7 +746,9 @@ class Driver(overnight.Runner):
                         got = second
         self.note(pid, rn, ks_used=got["ks"], retry=retry,
                   draw={c: ch.get("status") for c, ch in sorted(got["contig"]["channels"].items())},
-                  draw_failing=got["failing"])
+                  draw_failing=got["failing"], draw_failures=got["failures"])
+        if got["failures"]:     # never a deliverable: not repaired, not merged (owner, 2026-10-14)
+            raise Stop(NO_DRAWING, failure_text(got["failures"]))
         adir, src = got["dir"], got["draw"]
         plan, jobs, label = got["plan"], jobs_of(run), f"sealed {pid}/{rn}"
         win = window_of(plan)
@@ -984,7 +1007,7 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
             print(run_spec_text(text, pt["id"], run["name"], run["states"], plan, forbid | set(map(tuple, run["forbid"])),
                                 a.max_size), end="")
             print("---")
-            for stage, cmd, cap, env in nominal_chain(pt["id"], run, rdir, plans, a.extract, plan, caps):
+            for stage, cmd, cap, env in nominal_chain(pt["id"], run, rdir, plans, a.extract, plan, caps, a.drawable_alone):
                 print(f"[{stage}, cap {cap:g} s{', env ' + str(env) if env else ''}] " + " ".join(map(q, cmd)))
             finals.append((run["states"], os.path.join(rdir, "glue")))
         if len(finals) == len(pt["runs"]):
@@ -1057,7 +1080,8 @@ def cmd_run(a) -> int:
     os.makedirs(a.root, exist_ok=True)
     grid = open_state(a.root, a.host, a.extract, a.hours, os.path.abspath(a.partition), part_sha, points)
     todo = [p for p in points if grid.get(p["id"])["label"] is None]
-    drv = Driver(grid, a.root, a.host, a.extract, cells, {p["id"]: p for p in todo}, caps, forbid, a.max_size, limits)
+    drv = Driver(grid, a.root, a.host, a.extract, cells, {p["id"]: p for p in todo}, caps, forbid, a.max_size, limits,
+                 a.drawable_alone)
     tasks = tasks_of(todo)
     for p in todo:
         drv.pending[p["id"]] = len(p["runs"])
@@ -1103,13 +1127,15 @@ def parser() -> argparse.ArgumentParser:
     r.add_argument("--shape-limits", default=None, help="L.json; report only unless it says \"hard\": true")
     r.add_argument("--cap", action="append", default=None, metavar="STAGE=S",
                    help=f"a stage's wall cap in seconds ({', '.join(f'{k} {v:g}' for k, v in CAPS.items())})")
+    r.add_argument("--no-drawable-alone", dest="drawable_alone", action="store_false",
+                   help="plan without replan.py's --drawable-alone (default: on, the owner's contiguity at the solver, 2026-10-14)")
     r.add_argument("--dry-run", action="store_true", help="print the spec copies and commands; solve nothing")
     r.set_defaults(func=cmd_run)
     for name in ("index", "collect"):
         i = sub.add_parser(name, help="write <root>/SEALED.md from SEALED.json")
         i.add_argument("--root", required=True)
         i.set_defaults(func=cmd_index)
-    p = sub.add_parser("plan", help="(a run's plan stage) the master per channel on the polygon graph induced on --states")
+    p = sub.add_parser("replan", help="(a run's replan stage) replan.py on the polygon graph induced on --states")
     p.add_argument("spec")
     p.add_argument("--out-spec", required=True)
     p.add_argument("--plans", required=True)
@@ -1117,7 +1143,9 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--extract", required=True)
     p.add_argument("--states", required=True)
     p.add_argument("--time-limit", type=float, default=150.0, help="seconds per master solve")
-    p.set_defaults(func=cmd_plan)
+    p.add_argument("--drawable-alone", action="store_true",
+                   help="replan.py --drawable-alone: only supports that draw alone without a neck")
+    p.set_defaults(func=cmd_replan)
     return ap
 
 

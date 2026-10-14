@@ -181,19 +181,24 @@ def test_dry_run_prints_the_chain_of_a_two_region_point_and_writes_nothing():
         (pt,) = _validate(_doc(), tmp)
         root = os.path.join(tmp, "root")
         os.makedirs(root)
-        a = types.SimpleNamespace(root=root, extract="/x/extract.json.gz", max_size=None)
+        a = types.SimpleNamespace(root=root, extract="/x/extract.json.gz", max_size=None, drawable_alone=True)
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             rc = sealed.cmd_dry_run(a, [pt], CELLS, dict(sealed.CAPS), {("CA", "TX")})
         assert rc == 0 and os.listdir(root) == []
+        off = io.StringIO()
+        with contextlib.redirect_stdout(off):
+            sealed.cmd_dry_run(types.SimpleNamespace(root=root, extract="/x/e.json.gz", max_size=None, drawable_alone=False),
+                               [pt], CELLS, dict(sealed.CAPS), set())
     text = out.getvalue()
     stages = re.findall(r"^\[(\w+), cap (\d+) s", text, re.M)
     names = [s for s, _ in stages]
-    assert names == ["plan", "draw", "r1", "glue"] * 2 + ["merge", "gate", "score", "land"]
-    assert dict(stages[:4]) == {"plan": "600", "draw": "2700", "r1": "1800", "glue": "600"}
+    assert names == ["replan", "draw", "r1", "glue"] * 2 + ["merge", "gate", "score", "land"]
+    assert dict(stages[:4]) == {"replan": "600", "draw": "2700", "r1": "1800", "glue": "600"}
     lines = {m.group(1): m.group(0) for m in re.finditer(r"^\[(\w+), cap .*$", text, re.M)}
     first = text.split("==== run rest")[0]
-    assert "sealed.py plan" in first and "--states CA,TX" in first and "--time-limit 2295" in first
+    assert "sealed.py replan" in first and "--states CA,TX" in first and "--time-limit 2295" in first
+    assert re.search(r"sealed\.py replan .*--states CA,TX --time-limit 100 --drawable-alone", first)    # plancheck B on by default
     assert re.search(r"run\.py \S+/south/spec\.toml .*--land-ratio 10 .*--jobs 2 --states CA,TX", first)
     assert re.search(r"repair\.py \S+/south/draw --out \S+/south/r1 .*--keep-support --flow .*--states CA,TX", first)
     assert "--budget 1170" in first and "--window" not in first                                # two channels: no one window
@@ -203,6 +208,7 @@ def test_dry_run_prints_the_chain_of_a_two_region_point_and_writes_nothing():
     assert " CA+TX=" in merge and "/south/glue " in merge and "/rest/glue " in merge
     assert "--rate 1 --gap-width" in merge and "--window" not in merge
     assert "k_alt" not in text
+    assert "--drawable-alone" not in off.getvalue()                                      # --no-drawable-alone
 
 
 def test_repair_window_only_for_a_run_of_one_channel():
@@ -229,6 +235,7 @@ class _Stub(sealed.Driver):
         failing = self.outcomes.pop(0)
         plan = {"channels": {c: {"lo_m": 1.0, "hi_m": 2.0} for c in ks}}
         return {"dir": adir, "draw": os.path.join(adir, "draw"), "ks": ks, "plan": plan, "failing": failing,
+                "failures": {c: {"reasons": ["drawing status infeasible"], "groups": []} for c in failing},
                 "contig": {"channels": {c: {"status": "infeasible" if c in failing else "connected"} for c in ks}}}
 
     def stage(self, pid, name, cmd, log, cap, env=None):
@@ -251,6 +258,15 @@ def _stub_driver(tmp, k_alt, outcomes, cells=CELLS_K):
     return drv, pt, pt["runs"][0]
 
 
+def _stops(drv, pt, run, tmp):
+    try:
+        drv._chain(pt, run, os.path.join(tmp, "toy-pt", "south"))
+    except sealed.Stop as e:
+        assert e.label == sealed.NO_DRAWING, e.label
+        return e
+    raise AssertionError("a run with a failing drawing went on to the repair")
+
+
 def _attempts(drv):
     return [c for c in drv.calls if isinstance(c, tuple)]
 
@@ -271,19 +287,81 @@ def test_a_drawing_that_ends_infeasible_is_redrawn_once_at_k_alt_and_the_better_
 def test_the_retry_keeps_the_first_drawing_when_k_alt_is_no_better_and_needs_a_k_in_the_window():
     with tempfile.TemporaryDirectory() as tmp:
         drv, pt, run = _stub_driver(tmp, 4, [["national"], ["national"]])
-        drv._chain(pt, run, os.path.join(tmp, "toy-pt", "south"))
+        _stops(drv, pt, run, tmp)                                         # neither drawing is connected: the run stops
         rec = drv.grid.get("toy-pt")["runs"]["south"]
-        assert rec["ks_used"] == {"national": 3, "WIFI": 2} and rec["final"] == os.path.join("toy-pt", "south", "draw")
+        assert rec["ks_used"] == {"national": 3, "WIFI": 2} and rec["draw_failing"] == ["national"]
+        assert "0 channels" not in rec["retry"]["result"] and not any(isinstance(c, str) and c.startswith("south.r") for c in drv.calls)
     with tempfile.TemporaryDirectory() as tmp:
         drv, pt, run = _stub_driver(tmp, 1, [["national"]])               # 4,200M over one district: no final δ
-        drv._chain(pt, run, os.path.join(tmp, "toy-pt", "south"))
+        _stops(drv, pt, run, tmp)
         assert _attempts(drv) == [("", {"national": 3, "WIFI": 2})]
         assert "no final δ in the window" in drv.grid.get("toy-pt")["runs"]["south"]["retry"]["result"]
     with tempfile.TemporaryDirectory() as tmp:
         drv, pt, run = _stub_driver(tmp, None, [["national"]])            # no k_alt listed: no retry
-        drv._chain(pt, run, os.path.join(tmp, "toy-pt", "south"))
+        _stops(drv, pt, run, tmp)
         assert _attempts(drv) == [("", {"national": 3, "WIFI": 2})]
         assert drv.grid.get("toy-pt")["runs"]["south"]["retry"] is None
+
+
+# ------------------------------------------------------------------------------ a strict drawing
+CONTIG_BAD = {"channels": {
+    "national": {"status": "connected", "connected": False, "undrawn_zctas": 6475, "fixed_split": [],
+                 "groups": [{"districts": ["NC+SC#1", "NC+VA#1"], "units": ["NC"], "free_zctas": 853, "status": "connected",
+                             "seconds": 42.6, "gap": 0.0},
+                            {"districts": ["NY#1", "NY#2"], "units": ["NY"], "free_zctas": 1200, "status": "infeasible",
+                             "seconds": 310.0, "gap": None}]},
+    "WH": {"status": "optimal", "connected": True, "undrawn_zctas": 0, "fixed_split": [], "groups": []},
+    "FI": {"status": "unknown", "connected": False, "undrawn_zctas": 0, "fixed_split": [],
+           "groups": [{"districts": ["PA#1"], "units": ["PA"], "free_zctas": 40, "status": "unknown", "seconds": 900.0,
+                       "gap": 0.3}]}}}
+
+
+def test_a_drawing_with_undrawn_zctas_or_a_group_not_connected_is_a_failure():
+    got = sealed.drawing_failures(CONTIG_BAD)
+    assert sorted(got) == ["FI", "national"]                       # WH is optimal with nothing undrawn
+    assert "6475 undrawn ZCTAs" in got["national"]["reasons"][0]
+    assert [g["districts"] for g in got["national"]["groups"]] == [["NY#1", "NY#2"]]   # the group that failed, not the connected one
+    assert got["FI"]["reasons"] == ["drawing status unknown"]
+    text = sealed.failure_text(got)
+    assert "national: 6475 undrawn ZCTAs" in text and "NY#1+NY#2 [NY] infeasible" in text and "FI: drawing status unknown" in text
+    ok = {"channels": {"WH": CONTIG_BAD["channels"]["WH"], "x": {"status": "connected", "connected": True,
+                                                                  "undrawn_zctas": 0, "fixed_split": []}}}
+    assert sealed.drawing_failures(ok) == {}
+    held = {"channels": {"x": {"status": "connected", "connected": False, "undrawn_zctas": 0, "fixed_split": ["A#1"]}}}
+    assert "districts split by fixed bodies" in sealed.drawing_failures(held)["x"]["reasons"][0]
+
+
+def test_a_fake_draw_folder_with_undrawn_zctas_is_never_repaired_or_merged():
+    with tempfile.TemporaryDirectory() as tmp:
+        drv, pt, run = _stub_driver(tmp, None, [])
+        real = sealed.Driver._attempt                                 # the real attempt, reading the folder
+        drv._attempt = lambda *a: real(drv, *a)
+        rdir = os.path.join(tmp, "toy-pt", "south")
+        out = os.path.join(rdir, "draw")
+        os.makedirs(out)
+        open(os.path.join(out, "ledger.csv"), "w").write("zip_code\n")
+        json.dump({"status": "done"}, open(os.path.join(out, "manifest.json"), "w"))
+        json.dump(CONTIG_BAD, open(os.path.join(out, "contig.json"), "w"))
+        open(os.path.join(rdir, "spec.toml"), "w").write("# canned\n")
+        drv.drawable_alone = True
+        drv.pending["toy-pt"] = 1                                     # this run is the point's last: `finish` follows
+        drv.region({"id": "toy-pt/south", "point": "toy-pt", "run": run, "need": 2})
+        assert drv.calls == []                                        # no replan, no repair, no glue, no merge launched
+        rec = drv.grid.get("toy-pt")
+        assert rec["runs"]["south"]["status"] == sealed.NO_DRAWING and rec["runs"]["south"]["draw_failures"]["national"]
+        assert rec["label"] == sealed.NO_DRAWING and "6475 undrawn ZCTAs" in rec["reason"] and "NY#1+NY#2" in rec["reason"]
+        assert rec["final"] is None and not os.path.exists(os.path.join(tmp, "toy-pt", "merged"))
+
+
+def test_plan_report_lists_the_supports_the_drawable_alone_check_banned():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "replan.json")
+        json.dump({"channels": {"national": {"delta": 0.02, "status": "optimal", "plan_check": {
+            "tested": [{"support": "CA+NV"}, {"support": "NY+NJ"}], "bans": [{"support": "NY+NJ"}],
+            "unknown": [{"support": "OR+WA"}]}}, "WH": {"delta": 0.02}}}, open(path, "w"))
+        rep = sealed.plan_report(path)
+    assert rep["national"] == {"delta": 0.02, "status": "optimal", "bans": ["NY+NJ"], "unknown": ["OR+WA"], "tested": 2}
+    assert rep["WH"]["bans"] == [] and rep["WH"]["tested"] == 0
 
 
 # ------------------------------------------------------------------------------ labels, shape, index
