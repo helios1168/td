@@ -79,6 +79,8 @@ its row here. Everything removed from `main` is in the tag `archive/pre-support-
 | `tests/worker_probes.py` | #123's test probes: a dict that acts (records its pid, sleeps, fails, blocks SIGTERM, reads HiGHS's thread pool) when a spawned worker unpickles it |
 | `tools/looks/score.py` | the looks scorer (#93): `score(run_dir)` gives a drawn run's eligibility (audit at ±15%, $ per district, main K, M1) and rank keys (channel-state splits, visual defects with polygon-graph pieces weighing 1 + mass/τ and multipart-only drawn pieces listed, shape, balance); the CLI ranks run folders and flags `REVIEW` |
 | `tests/test_looks_score.py` | the looks scorer on toys: the display fill, each defect, the $ and K rules, `REVIEW` |
+| `tools/looks/study.py` | the looks-and-effort study (measurement only, no solver): per district and channel the hull fill, bite, longest axis and aspect, state-split cut proxy, land per $M, m_rel spread (mean distance, r90), CBSA doughnut tests and hub, for the Census divisions and regions as reference and the drawn maps; writes `districts.csv`, `maps.csv`, `SUMMARY.md` and figures to `runs/exp/looks_study_<date>/` |
+| `tests/test_looks_study.py` | the study's measures on a toy ledger with hand-computed values |
 
 ## Run
 
