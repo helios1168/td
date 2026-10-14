@@ -235,6 +235,12 @@ def m1_detail(merged: str) -> str:
     return f"{g['status']}: {g['summary']}"
 
 
+def m1_pieces(merged: str) -> list:
+    with open(os.path.join(merged, "m1.json"), encoding="utf-8") as fh:
+        m1 = json.load(fh)["gap_width"]
+    return m1.get("pieces", []) + m1.get("necks", [])
+
+
 def cmd_index(a) -> int:
     a.root = os.path.abspath(a.root)
     lines = ["# Warm start (2026-10-14): the unsealed grid's undrawn points", "",
@@ -266,8 +272,10 @@ def cmd_index(a) -> int:
         sh = (w.get("summary") or {}).get("shape") or {}
         shp = "; ".join(f"{c} aspect≤{v['aspect_max']:g}, hull fill≥{v['hull_fill_min']:g}, bite≤{v['bite_max']:g}, "
                         f"doughnuts {v['doughnuts']} ({v['doughnuts_soft']} soft)" for c, v in sorted(sh.items()))
+        left = m1_pieces(merged) if merged and os.path.exists(os.path.join(merged, "m1.json")) else []
         notes.append(f"- **{pid}**: {w['reason'] or 'no reason'}; final `{w['run_final']}`; merged `{w['merged']}`"
-                     + (f"\n  - heuristic-placed: {heur}" if heur else "") + (f"\n  - shape (`tools/looks/study.py`): {shp}" if shp else ""))
+                     + (f"\n  - heuristic-placed: {heur}" if heur else "") + (f"\n  - M1 pieces and necks left: " + "; ".join(left) if left else "")
+                     + (f"\n  - shape (`tools/looks/study.py`): {shp}" if shp else ""))
     lines += ["", "## Details", *notes, ""]
     with open(os.path.join(a.root, "INDEX.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
