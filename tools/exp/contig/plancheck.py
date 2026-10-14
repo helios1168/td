@@ -17,7 +17,9 @@ district's perimeter in km of shared border (trap 19: never a zero objective), a
 stops at a 20% gap: only feasibility matters.  `infeasible` is HiGHS's proof on the cut-augmented
 model; a time limit, a neck the check leaves unresolved or a cut its own drawing meets is
 `unknown`, never a cut.  `Checks` caches verdicts monotonically in δ: an infeasible verdict at δ
-holds at every narrower band, a drawable one at every wider band.
+holds at every narrower band, a drawable one at every wider band.  A channel with a window band
+(`band_lo`, `band_hi`, `td.spec`; owner, #112 comment, 2026-10-14) is tested in [τ·band_lo,
+τ·band_hi] at its one δ, `ChannelSpec.window_delta`, whatever δ is asked.
 
 `plan_checked` runs B lazily: the master at δ, then `drawable` on each multi-unit support it
 uses, n_S = 0 (`master.build`'s `banned`) for each proved infeasible, and a re-solve, until every
@@ -122,7 +124,9 @@ def drawable(inst, c: str, s, delta: float, ng, time_limit: float = CHECK_TIME,
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     adj, m = units.zip_adj, ch.m
-    lo, hi = ch.tau * (1 - delta), ch.tau * (1 + delta)
+    if ch.spec.window:      # the owner's dollar window (#112): the one band, whatever δ is asked
+        delta = ch.spec.window_delta
+    lo, hi = (ch.tau * x for x in ch.spec.rel_band(delta))
     slack = BAND_TOL * ch.tau
     held = sorted(v for v in s if ch.mode[v] != "free")
     free_units = sorted(v for v in s if ch.mode[v] == "free")
@@ -448,6 +452,8 @@ def plan_checked(inst, c: str, delta: float | None = None, fam=None, checks: Che
     support in use drawable or unknown), or the master's status when it ends without a plan."""
     ch = inst.channels[c]
     delta = ch.spec.delta if delta is None else delta
+    if ch.spec.window:      # the band is the window: one δ for the master, the tests and the cache
+        delta = ch.spec.window_delta
     fam = supports.family(inst, c) if fam is None else fam
     checks = Checks() if checks is None else checks
     banned, rec = [], {"delta": delta, "iterations": 0, "tested": [], "bans": [], "unknown": []}
@@ -499,6 +505,11 @@ def checked_delta(inst, c: str, lo: float, first: float | None, checks: Checks, 
                       "bans": [b["support"] for b in rec["bans"]]})
         return "feasible" if p is not None else ("infeasible" if rec["status"] == "infeasible"
                                                  else "unknown")
+    wd = inst.channels[c].spec.window_delta
+    if wd is not None:      # a window band (td.spec): no δ to search, the one band is probed
+        v = probe(wd)
+        return {"status": "converged" if v == "feasible" else v, "delta": wd if v == "feasible" else None,
+                "lower": None, "steps": steps}
     if first is not None and lo < first < top:
         v = probe(first)
         if v == "feasible":

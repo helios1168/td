@@ -275,6 +275,17 @@ n_S ≤ κ_v(S) is necessary for the two-component case and for component versus
 Proposition D]**. It strengthens the drawability rows; it does not make them sufficient. It is
 optional and off by default. C3 (#68) may add it; its acceptance does not require it.
 
+### 4.6a The window band (`band_lo`, `band_hi`) **[policy, owner #112 comment, 2026-10-14]**
+
+A channel may set `band_lo` and `band_hi` (0 < band_lo < 1 < band_hi). Its band is then the
+dollar window [L_c, U_c] = [τ_c · band_lo, τ_c · band_hi] itself, not [τ_c(1 − δ), τ_c(1 + δ)]:
+the master's band rows (§3), the realizer's internal band, B's `drawable` test, the repair's
+final band and the audit's final band all read it, and `delta` and `final_delta` are kept for
+reporting only (the equivalent δ is max(1 − band_lo, band_hi − 1)). The band is hard and never
+widened: there is no wider-δ retry, `--diag-final-delta` is capped at it, and there is no δ to
+search, so the smallest-δ searches (§5 Claim 2) solve the window once and report that
+(`master.window_feasibility`, method `window`). Without the two keys everything is as before.
+
 ### 4.6 The rounding margin μ_S (U33)
 
 μ_S = Σ_{v∈S splittable} max_{z∈Z_v} m_z is the sum, over the splittable units of S, of the

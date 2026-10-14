@@ -31,7 +31,8 @@ Code and tools only: the docs answer their own questions (`AGENTS.md` lists them
 | `td/spec.py`, `scenarios/` | a TOML scenario: channels, domains, units, pieces and modes; the partition and ZIP-connectivity checks (#67); the instance on M1's polygon graph over every CONUS ZCTA (#114) |
 | `td/supports.py` | the closed support family and its drawability terms: corridor floor, border cap, rounding margin (#67) |
 | `tests/test_spec.py`, `tests/test_supports.py` | partition, disconnected-whole stop, closure, brute-force corridor floor, the C6/C7 counterexamples |
-| `td/master.py` | the support master per channel: the MILP on highspy, decoding, and the smallest δ exact or by bisection (#68) |
+| `td/master.py` | the support master per channel: the MILP on highspy, decoding, and the smallest δ exact or by bisection (#68); a channel with `band_lo`/`band_hi` plans in that dollar window whatever δ is asked and its smallest-δ searches report feasibility in it (`window_feasibility`; MODEL §4.6a, owner #112 comment, 2026-10-14) |
+| `tests/test_window_band.py` | the window band (`band_lo`, `band_hi`): the spec's validation, the master planning where the symmetric δ of `fit_delta` is infeasible, the smallest-δ searches in the window, `draw.py` / `plancheck.drawable` / `repair.py` holding the window and never retrying wider, absent keys giving today's rows, `overnight.py` (`--window-band`, off) and `sealed.py` (on) writing the keys, `replan.py` stopping on a window channel with no plan |
 | `tests/test_master.py` | brute force on toys, decoded bands and shares, drawability rows, exact against bisection |
 | `td/realize.py` | the ZIP realizer: centres, the transport LP, tree rounding, the mode-guarded repair and piece causes (#69) |
 | `tests/test_realize.py` | the #1/#7/#11 regressions, the Claim 3 bound, the forest stop, clipped repair, the C10 star |

@@ -39,6 +39,12 @@ classified once per channel against U_c: whole if its mass is at most U_c, else 
 `metro_mode` (OD5).  A unit or channel with zero opportunity is dropped before solving and
 reported (#65 F1).
 
+**The window band** (owner, #112 comment, 2026-10-14).  A channel may set `band_lo` and `band_hi`
+together, 0 < band_lo < 1 < band_hi: its band is then the dollar window [τ·band_lo, τ·band_hi]
+(`rel_band`, `Channel.band`, `Channel.final_band`), the master's band rows and every later check
+read it, and `delta` and `final_delta` stay for reporting only.  Neither key set is today's
+behaviour exactly.
+
 **Centroids.**  A unit's centroid p_u is the mean of its ZIPs' 2025 gazetteer points weighted by
 their gazetteer land area, in km in EPSG:5070 (#67 decision; legacy used state polygon
 centroids).  The distance cap reads it (`td.supports`).
@@ -120,10 +126,27 @@ class ChannelSpec:
     drawable_alone: bool = False    # #124 B: each support in use must draw alone (plancheck.py)
     replan_rounds: int = 0          # #124 C: re-plans after a drawing (plancheck.py); 0 off
     ban_supports: tuple = ()        # #124 C: frozensets of units with n_S = 0 (spec copies only)
+    band_lo: float | None = None    # the dollar window as a band, [τ·band_lo, τ·band_hi] (#112); with
+    band_hi: float | None = None    # both set, δ and final_delta no longer set a band (reporting only)
 
     @property
     def units(self) -> frozenset:
         return frozenset(self.domain)
+
+    @property
+    def window(self) -> tuple | None:
+        """(band_lo, band_hi) when the channel's band is a fixed window, else None."""
+        return None if self.band_lo is None else (self.band_lo, self.band_hi)
+
+    @property
+    def window_delta(self) -> float | None:
+        """The symmetric δ that covers the window, max(1 − band_lo, band_hi − 1); None without one."""
+        return None if self.band_lo is None else max(1.0 - self.band_lo, self.band_hi - 1.0)
+
+    def rel_band(self, delta: float) -> tuple:
+        """(lo, hi) in units of τ: the window when the channel has one (`delta` is ignored: there is
+        no wider band), else (1 − δ, 1 + δ)."""
+        return self.window or (1.0 - delta, 1.0 + delta)
 
     def dist_cap(self, u: str, v: str) -> float:
         return max(self.max_dist_km, self.dist_km.get(u, 0.0), self.dist_km.get(v, 0.0))
@@ -294,7 +317,8 @@ def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
     known = {"k", "delta", "final_delta", "eta", "domain", "mode", "whole", "clipped", "free",
              "metro_mode", "max_size", "max_dist_km", "dist_km", "contact_caps",
              "extra_supports", "supports", "confine", "forbid_pairs", "hook", "margin",
-             "contact_min_km", "drawable_alone", "replan_rounds", "ban_supports"}
+             "contact_min_km", "drawable_alone", "replan_rounds", "ban_supports", "band_lo",
+             "band_hi"}
     if set(c) - known:
         raise SpecError(f"channel {name}: unknown keys {_show(sorted(set(c) - known))}")
     k = _integer(c.get("k"), f"channel {name}: k")
@@ -383,9 +407,27 @@ def _channel(name, c, sets, units, fine, delta) -> ChannelSpec:
             raise SpecError(f"channel {name}: ban_supports entry {sorted(b)} is empty or holds "
                             "units outside the domain")
         bans.append(frozenset(b))
+    band_lo, band_hi = _window(name, c)
     return ChannelSpec(name, k, d, fd, eta, domain, modes, metro_mode, max_size, max_dist, dist,
                        caps, tuple(extras), supports == "listed", frozenset(pairs), c.get("hook"),
-                       margin, contact_min, alone, rounds, tuple(sorted(set(bans), key=sorted)))
+                       margin, contact_min, alone, rounds, tuple(sorted(set(bans), key=sorted)),
+                       band_lo, band_hi)
+
+
+def _window(name: str, c: dict) -> tuple:
+    """(band_lo, band_hi) of a channel's table, both None when it has neither key.  They come
+    together, finite, with 0 < band_lo < 1 < band_hi: a band that holds τ."""
+    have = [k for k in ("band_lo", "band_hi") if k in c]
+    if not have:
+        return None, None
+    if len(have) != 2:
+        raise SpecError(f"channel {name}: band_lo and band_hi are set together, not {have[0]} alone")
+    lo = _number(c["band_lo"], f"channel {name}: band_lo")
+    hi = _number(c["band_hi"], f"channel {name}: band_hi")
+    if not (math.isfinite(lo) and math.isfinite(hi) and 0 < lo < 1 < hi):
+        raise SpecError(f"channel {name}: need 0 < band_lo < 1 < band_hi, finite "
+                        f"(got band_lo = {lo!r}, band_hi = {hi!r})")
+    return lo, hi
 
 
 def check_partition(spec: Spec) -> None:
@@ -658,7 +700,8 @@ def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None,
             dropped_channels.append(c.name)
             continue
         tau = sum(M[u] for u in keep) / c.k
-        band = (tau * (1 - c.delta), tau * (1 + c.delta))
+        lo, hi = c.rel_band(c.delta)
+        band = (tau * lo, tau * hi)
         mode = {}
         for u in keep:
             mode[u] = c.modes[u]
@@ -666,7 +709,8 @@ def assemble(spec: Spec, units: Units, cells: dict, report: dict | None = None,
                 mode[u] = "whole" if M[u] <= band[1] else c.metro_mode
         channels[c.name] = Channel(
             c, keep, {z: m[z] for u in keep for z in units.zips[u]}, {u: M[u] for u in keep},
-            mode, tau, band, (tau * (1 - c.final_delta), tau * (1 + c.final_delta)), dropped)
+            mode, tau, band, (tau * lo, tau * hi) if c.window else
+            (tau * (1 - c.final_delta), tau * (1 + c.final_delta)), dropped)
     report["dropped_units"] = {c.name: c.dropped_units for c in channels.values()
                                if c.dropped_units}
     report["dropped_channels"] = tuple(dropped_channels)

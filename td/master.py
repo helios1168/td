@@ -26,6 +26,15 @@ FEAS_TOL, so a smaller η would let a chosen support carry a member at share 0. 
 (§4.5, C9) is optional and off by default in MODEL.md; it is not built here.  The
 objective is Σ_S w_S n_S with w_S the support's diameter in km (§3.5).
 
+**The window band** (owner's approval, #112 comment, 2026-10-14).  A channel whose spec sets
+`band_lo` and `band_hi` (`td.spec`) plans in the dollar window [τ·band_lo, τ·band_hi]: `build` takes
+the band rows' (lo_band, hi_band) from them and ignores the δ it is given, so no step of this
+module widens the band.  `Model.delta` and `Plan.delta` then hold the window's equivalent δ,
+max(1 − band_lo, band_hi − 1), for reporting.  A channel without the keys is built exactly as
+before.  The smallest-δ searches have no δ to find under a window: `exact_delta`, `bisect_delta`
+and `smallest_delta` solve the window once (`window_feasibility`) and report that, never a wider
+band.
+
 **Solving** uses HiGHS directly (`highspy`), so the report carries the engine's own model status
 (trap 15).  A certificate solve sets `mip_rel_gap` and `mip_abs_gap` to 0 (trap 12).  Tolerances
 stay at HiGHS's defaults (trap 14), and `threads` is never set, so one process uses one thread
@@ -130,14 +139,17 @@ def bans(inst, channel: str, banned=()) -> frozenset:
 
 def build(inst, channel: str, delta: float | None = None, fam=None, banned=()) -> Model:
     """The §3 master of `channel` at δ (the channel's planning δ when None), with n_S = 0 for
-    each support of `bans`."""
+    each support of `bans`.  A channel with a window band (`band_lo`, `band_hi`; owner's approval,
+    #112 comment, 2026-10-14) is built with lo_band, hi_band = band_lo, band_hi whatever δ is."""
     ch = inst.channels[channel]
     cs = ch.spec
     _check_eta(channel, cs.eta)
     fam = supports.family(inst, channel) if fam is None else fam
     delta = cs.delta if delta is None else float(delta)
+    if cs.window:
+        delta = cs.window_delta         # the band is the window; δ is only how the plan reports it
     tau = ch.tau
-    lo_band, hi_band = 1.0 - delta, 1.0 + delta
+    lo_band, hi_band = cs.rel_band(delta)
     model = Model(channel, delta, fam.supports, {}, {}, [], [], [], [])
     held = {}                   # S -> True when some unit of S is held whole in it
     for s in fam.supports:
@@ -415,9 +427,11 @@ class Delta:
 
     `delta` is the smallest δ shown feasible, `lower` the largest shown infeasible (exact: equal
     to `delta`).  `status` is exact, converged (the bracket is within `tol`), unknown (a step or
-    the exact solve ended without a verdict; the bracket stands) or infeasible (no δ works)."""
+    the exact solve ended without a verdict; the bracket stands) or infeasible (no δ works).  For
+    a window band (`window_feasibility`) the method is window and the status converged, infeasible
+    or unknown, at the one band there is."""
     channel: str
-    method: str                 # exact | bisection
+    method: str                 # exact | bisection | window
     status: str
     delta: float | None
     lower: float | None
@@ -434,13 +448,34 @@ def _k_range(inst, ch, v) -> range:
     return range(1, top + 1)
 
 
+def window_feasibility(inst, channel: str, fam=None, time_limit: float | None = None,
+                       mip_rel_gap: float = 1.0, banned=()) -> Delta:
+    """The smallest-δ searches of a channel with a window band (`td.spec`): there is no δ to
+    search, since the band is [τ·band_lo, τ·band_hi] whatever δ is, so the master is solved once
+    in the window and that is the answer.  method "window"; status converged with `delta` the
+    window's equivalent δ (`ChannelSpec.window_delta`) when a validated incumbent exists, infeasible
+    when HiGHS proves none does, unknown otherwise; `lower` is None (no narrower band was tried,
+    and none is a wider band).  Nothing is widened."""
+    ch = inst.channels[channel]
+    wd = ch.spec.window_delta
+    if wd is None:
+        raise MasterError(f"channel {channel} has no window band")
+    verdict, rep = step(inst, channel, wd, fam, mip_rel_gap, time_limit, banned)
+    status = {"feasible": "converged", "infeasible": "infeasible"}.get(verdict, "unknown")
+    return Delta(channel, "window", status, wd if verdict == "feasible" else None, None, 0.0,
+                 [(wd, verdict, rep)], rep)
+
+
 def exact_delta(inst, channel: str, fam=None, time_limit: float | None = None,
                 banned=()) -> Delta:
-    """The exact δ-MILP of Claim 2 for a channel with whole and clipped units only."""
+    """The exact δ-MILP of Claim 2 for a channel with whole and clipped units only.  With a window
+    band there is no δ to minimise: it reports feasibility in the window (`window_feasibility`)."""
     ch = inst.channels[channel]
     _check_eta(channel, ch.spec.eta)
     if any(ch.mode[v] == "free" for v in ch.units):
         raise MasterError(f"channel {channel}: free units need bisection (Claim 2)")
+    if ch.spec.window:
+        return window_feasibility(inst, channel, fam, time_limit, banned=banned)
     fam = supports.family(inst, channel) if fam is None else fam
     tau, cs = ch.tau, ch.spec
     floors = supports.corridor_floors(inst, fam)
@@ -515,8 +550,11 @@ def bisect_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
                  time_limit: float | None = None, mip_rel_gap: float = 1.0, banned=()) -> Delta:
     """Bisect on δ with the normal model (Claim 2).  δ is probed at the channel's planning δ, then
     at 0 or at `delta_top`, then halved until the bracket is within `tol`.  An unknown step stops
-    the search: the bracket so far is the answer, and the status says unknown."""
+    the search: the bracket so far is the answer, and the status says unknown.  With a window band
+    there is no δ to bisect: it reports feasibility in the window (`window_feasibility`)."""
     ch = inst.channels[channel]
+    if ch.spec.window:
+        return window_feasibility(inst, channel, fam, time_limit, mip_rel_gap, banned)
     fam = supports.family(inst, channel) if fam is None else fam
     steps = []
 
@@ -564,8 +602,11 @@ def bisect_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
 
 def smallest_delta(inst, channel: str, fam=None, tol: float = DELTA_TOL,
                    time_limit: float | None = None, banned=()) -> Delta:
-    """Exact when the channel has no free unit, else bisection (Claim 2)."""
+    """Exact when the channel has no free unit, else bisection (Claim 2); the window's feasibility
+    when the channel has a window band."""
     ch = inst.channels[channel]
+    if ch.spec.window:
+        return window_feasibility(inst, channel, fam, time_limit, banned=banned)
     if any(ch.mode[v] == "free" for v in ch.units):
         return bisect_delta(inst, channel, fam, tol, time_limit, banned=banned)
     return exact_delta(inst, channel, fam, time_limit, banned)

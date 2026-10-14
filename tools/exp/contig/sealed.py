@@ -3,7 +3,7 @@ each district inside one region (owner, 2026-10-13: regional sealing for the mai
 
     "$TD_PY" -u tools/exp/contig/sealed.py run --partition P.json --root DIR --host m5|m2
         [--slots N] [--hours H] [--only ID ...] [--extract PATH] [--max-size N] [--forbid A-B ...]
-        [--shape-limits L.json] [--dry-run]
+        [--shape-limits L.json] [--no-window-band] [--dry-run]
     "$TD_PY" tools/exp/contig/sealed.py index --root DIR      (`collect` is the same command)
 
 **The partition** (`P.json`): `{"points": [{"id", "structure", "channels": {<channel>: {"regions":
@@ -32,7 +32,10 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
 1. the spec copy `spec-base.toml`: the structure's base spec with each present channel's k the
    region's, `margin = false`, the final δ `overnight.fit_delta` gives the region's τ (region $ over
    k, from the dollar extract as `overnight.plan_point` computes it) in the channel's dollar window
-   (`score.WINDOWS`), the declared δ `overnight.DECLARED_DELTA` or the final δ when smaller, the
+   (`score.WINDOWS`), and, by default (`--window-band`, owner's approval, #112 comment, 2026-10-14;
+   `--no-window-band` turns it off), `band_lo` = L/τ and `band_hi` = U/τ: the band of the master, the
+   draw, the repair and the audit is the dollar window itself, never ±δ or wider (the δ keys are then
+   for reporting), the declared δ `overnight.DECLARED_DELTA` or the final δ when smaller, the
    split list the rule's or the base's on the region's states, `--max-size` and the forbid pairs
    (`--forbid` and the region's) with both states in the run.  A channel with no cell in the run is
    dropped by the spec build; its lines stay as the base has them.
@@ -339,18 +342,19 @@ def load_partition(path: str, **kw) -> list:
 
 
 # ------------------------------------------------------------------------------ a run's spec copy
-def region_plan(sp, states, ks: dict, cells: dict, rule: str) -> dict:
+def region_plan(sp, states, ks: dict, cells: dict, rule: str, window_band: bool = False) -> dict:
     """`overnight.plan_point` on the run's states: per present channel (one of `ks` with mass in the
     states) K, the region's $M, τ, the split list (the rule's, or the base's, on the states) and the
     final δ; `infeasible` {channel: why}; `absent` the channels of `ks` with no cell there; `outside`
-    the channels not in `ks` that have cells there (another region's, cut from the run's extract)."""
+    the channels not in `ks` that have cells there (another region's, cut from the run's extract).
+    With `window_band` each channel also has `band_lo`, `band_hi` (`overnight.plan_point`)."""
     S = set(states)
     cs = {k: m for k, m in cells.items() if k[0] in S}
     mass = overnight.unit_mass(sp, cs)
     has = sorted(c for c in sp.channels if math.fsum(mass[c].values()) > 0)
     present = [c for c in has if c in ks]
     sub = dataclasses.replace(sp, channels={c: sp.channels[c] for c in present})
-    plan = overnight.plan_point({c: ks[c] for c in present}, sub, cs, rule)
+    plan = overnight.plan_point({c: ks[c] for c in present}, sub, cs, rule, window_band=window_band)
     for v in plan["channels"].values():
         v["free"] = [u for u in v["free"] if u in S]
     plan["absent"] = sorted(set(ks) & (set(sp.channels) - set(present)))
@@ -401,13 +405,16 @@ def run_spec_text(base_text: str, pid: str, run_name: str, states, plan: dict, f
                   max_size: int | None = None) -> str:
     """The run's spec copy: the base TOML with each present channel's K, declared δ
     (`overnight.DECLARED_DELTA`, or the final δ when smaller), final δ, split list, `margin = false`,
-    `max_size` when given and the forbid pairs with both states in the run; named `<point>-<run>`."""
+    `max_size` when given and the forbid pairs with both states in the run; named `<point>-<run>`.
+    A channel of `plan` with `band_lo`, `band_hi` (`region_plan(window_band=True)`) gets them as its
+    band, the dollar window [L, U] (owner, #112 comment, 2026-10-14); its δ keys are then for
+    reporting."""
     ch, S = plan["channels"], set(states)
     if plan["infeasible"]:
         raise PartitionError("no spec copy for a region outside the window: " + "; ".join(plan["infeasible"].values()))
     pairs = sorted({tuple(sorted(p)) for p in forbid if set(p) <= S})
-    keys = {c: {"k": str(v["k"]), "margin": "false", **({"max_size": str(max_size)} if max_size else {})}
-            for c, v in ch.items()}
+    keys = {c: {"k": str(v["k"]), "margin": "false", **({"max_size": str(max_size)} if max_size else {}),
+                **overnight.window_keys(v)} for c, v in ch.items()}
     body = overnight._replan().banned_text(
         base_text, [], deltas={c: min(overnight.DECLARED_DELTA, v["final_delta"]) for c, v in ch.items()},
         extra={c: pairs for c in ch} if pairs else None, free={c: v["free"] for c, v in ch.items()},
@@ -848,8 +855,8 @@ class Driver(overnight.Runner):
     are all done and labels it."""
 
     def __init__(self, grid, root, host, extract, cells, points: dict, caps: dict, forbid, max_size, limits,
-                 drawable_alone: bool = True):
-        super().__init__(grid, root, host, extract, cells)
+                 drawable_alone: bool = True, window_band: bool = False):
+        super().__init__(grid, root, host, extract, cells, window_band)
         self.points, self.caps, self.forbid, self.max_size, self.limits = points, caps, forbid, max_size, limits
         self.drawable_alone = drawable_alone
         self.state_of = None            # {ZCTA: state}, read when a run needs a cut extract
@@ -917,7 +924,7 @@ class Driver(overnight.Runner):
         pid, rn = pt["id"], run["name"]
         sp, text = self.spec_of(pt)
         os.makedirs(adir, exist_ok=True)
-        plan = region_plan(sp, run["states"], ks, self.cells, pt["rule"])
+        plan = region_plan(sp, run["states"], ks, self.cells, pt["rule"], self.window_band)
         if plan["infeasible"]:
             raise Stop("infeasible", "; ".join(plan["infeasible"].values()))
         extract = self.run_extract(sp, run, plan, os.path.join(self.root, pid, rn))
@@ -961,7 +968,7 @@ class Driver(overnight.Runner):
         if alt:
             ks2 = {**run["ks"], **alt}
             sp, _ = self.spec_of(pt)
-            bad = region_plan(sp, run["states"], ks2, self.cells, pt["rule"])["infeasible"]
+            bad = region_plan(sp, run["states"], ks2, self.cells, pt["rule"], self.window_band)["infeasible"]
             retry = {"k_alt": alt, "failing": first["failing"]}
             if bad:
                 retry["result"] = "k_alt has no final δ in the window: " + "; ".join(bad.values())
@@ -1265,6 +1272,7 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
     written or solved."""
     q = shlex.quote
     plans = os.path.join(a.root, "_plans")
+    wb = getattr(a, "window_band", False)
     for pt in points:
         sp = tdspec.load(pt["base"])
         with open(pt["base"], encoding="utf-8") as fh:
@@ -1273,11 +1281,12 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
         finals = []
         for run in pt["runs"]:
             rdir = os.path.join(a.root, pt["id"], run["name"])
-            plan = region_plan(sp, run["states"], run["ks"], cells, pt["rule"])
+            plan = region_plan(sp, run["states"], run["ks"], cells, pt["rule"], wb)
             print(f"\n==== run {run['name']} ({','.join(run['states'])}), K {run['ks']}, slots {jobs_of(run)}")
             for c, v in sorted(plan["channels"].items()):
                 print(f"  {c}: K {v['k']}, ${v['usd_m']:,.1f}M, τ {v['tau_m']:,.1f}M, final δ {v['final_delta']}, "
-                      f"split list {','.join(v['free']) or 'none'}")
+                      f"split list {','.join(v['free']) or 'none'}"
+                      + (f", window band [{v['band_lo']:.6g}, {v['band_hi']:.6g}] τ" if "band_lo" in v else ""))
             if plan["absent"]:
                 print(f"  no cell in the run (dropped by the spec build): {', '.join(plan['absent'])}")
             if plan["outside"]:
@@ -1286,7 +1295,7 @@ def cmd_dry_run(a, points: list, cells: dict, caps: dict, forbid: set) -> int:
             for c, why in plan["infeasible"].items():
                 print(f"  INFEASIBLE {why}")
             for c, k in sorted(run["k_alt"].items()):
-                alt = region_plan(sp, run["states"], {**run["ks"], c: k}, cells, pt["rule"])
+                alt = region_plan(sp, run["states"], {**run["ks"], c: k}, cells, pt["rule"], wb)
                 print(f"  k_alt {c} {k}: " + (alt["infeasible"].get(c) or f"final δ {alt['channels'][c]['final_delta']}"))
             if plan["infeasible"]:
                 continue
@@ -1381,7 +1390,7 @@ def cmd_run(a) -> int:
     grid = open_state(a.root, a.host, a.extract, a.hours, os.path.abspath(a.partition), part_sha, points)
     todo = [p for p in points if grid.get(p["id"])["label"] is None]
     drv = Driver(grid, a.root, a.host, a.extract, cells, {p["id"]: p for p in todo}, caps, forbid, a.max_size, limits,
-                 a.drawable_alone)
+                 a.drawable_alone, a.window_band)
     tasks = tasks_of(todo)
     for p in todo:
         drv.pending[p["id"]] = len(p["runs"])
@@ -1429,6 +1438,9 @@ def parser() -> argparse.ArgumentParser:
                    help=f"a stage's wall cap in seconds ({', '.join(f'{k} {v:g}' for k, v in CAPS.items())})")
     r.add_argument("--no-drawable-alone", dest="drawable_alone", action="store_false",
                    help="plan without replan.py's --drawable-alone (default: on, the owner's contiguity at the solver, 2026-10-14)")
+    r.add_argument("--window-band", dest="window_band", action=argparse.BooleanOptionalAction, default=True,
+                   help="each channel's band is its dollar window [L, U] (band_lo, band_hi), not ±δ "
+                        "(default: on; owner, #112 comment, 2026-10-14); --no-window-band is the ±δ band")
     r.add_argument("--dry-run", action="store_true", help="print the spec copies and commands; solve nothing")
     r.set_defaults(func=cmd_run)
     for name in ("index", "collect"):

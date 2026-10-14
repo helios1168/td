@@ -11,7 +11,8 @@ closed).  A `--free` override replaces one channel's split list (`free`; every o
 domain stays whole), and the stored TOML is never edited.  Per channel the master runs at the
 declared δ; a channel with no plan there gets the smallest δ the master shows feasible (`td.master
 .smallest_delta`, rounded up to 1e-4), written into the copy only when it is at most the channel's
-`final_delta` (else the driver stops: the band is the owner's).  `--widen X` is the owner's
+`final_delta` (else the driver stops: the band is the owner's).  A channel with a window band
+(`band_lo`, `band_hi`, `td.spec`) has no δ to move: with no plan in its window the driver stops.  `--widen X` is the owner's
 widening (2026-10-06): the copy sets X's `final_delta` to 0.15, so X plans at its smallest δ up to
 0.15 and is judged in ±15%; every other channel keeps its own.  The plans (a channel moved to its
 smallest δ re-planned there) are cached in `--plans` under the copy's sha256 (`run.plans_key`),
@@ -244,6 +245,9 @@ def main(argv=None) -> int:
             fh.write(head + banned_text(src, pairs, a.channels, deltas, extra, free, finals, keys))
     write()
     s, inst = build(a.out_spec, a.extract)
+    if [c for c in a.widen if c in inst.channels and inst.channels[c].spec.window]:
+        raise SystemExit("--widen names a channel with a window band (band_lo, band_hi): the window is "
+                         "the owner's and is never widened")
     checks = ng = None
     if any(ch.spec.drawable_alone for ch in inst.channels.values()):
         from td import audit
@@ -275,6 +279,11 @@ def main(argv=None) -> int:
         if p is None:
             d = master.smallest_delta(inst, c, time_limit=a.time_limit)
             entry["smallest_delta"] = {"status": d.status, "delta": d.delta, "lower": d.lower}
+            if ch.spec.window:      # a window band (td.spec) has no wider δ to move to: the driver stops
+                doc["channels"][c] = entry
+                print(f"{c}: no plan in the window band [{ch.spec.band_lo:g}, {ch.spec.band_hi:g}] τ ({d.status})")
+                _dump(a.report, doc)
+                return 1
             if d.delta is not None and d.delta <= ch.spec.final_delta and c in records:
                 # B: the master plans at d.delta, its checks may not; bisect with B inside
                 cd = plancheck.checked_delta(inst, c, ch.spec.delta, d.delta, checks, ng,

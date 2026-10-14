@@ -20,7 +20,7 @@ back to each ZCTA's plan copy):
   `--keep-support`, arm 1, only the districts whose plan holds z's unit), each district's ZCTAs outside W its bodies (each component one vertex, the
   largest the root), every district connected by the separator solve-check-cut loop, each
   district's total drawn mass in the channel's final band (the band the audit judged the run
-  at; a district whose mass outside W is already above it makes W infeasible, and a district
+  at: [τ·band_lo, τ·band_hi] for a channel with a window band, `td.spec`, which no option widens; a district whose mass outside W is already above it makes W infeasible, and a district
   with no ZCTA in or next to W is not in the model, so a window's status says nothing about its
   band: each attempt lists the districts outside the band before and after), split units first in the objective, then holders (cuts), then the border shape term (#121, `draw`'s docstring); with the cap
   (the default) the window units' split units and cuts may not rise above the drawn map's.  The
@@ -164,6 +164,15 @@ def detached(owner: dict, adj: dict, m: dict) -> list:
     as `td.audit.district_pieces` orders them)."""
     return [(j, frozenset(cc)) for j, comps in audit.district_pieces(owner, adj, m).items()
             for cc in comps[1:]]
+
+
+def diag_band(ch, delta: float) -> tuple:
+    """(lo, hi) in mass of the diagnostic band τ(1 ± δ) of `--diag-final-delta`; a channel with a
+    window band (`td.spec`) keeps the owner's dollar window, which no diagnostic exceeds (#112)."""
+    lo, hi = ch.tau * (1 - delta), ch.tau * (1 + delta)
+    if ch.spec.window:
+        lo, hi = max(lo, ch.tau * ch.spec.band_lo), min(hi, ch.tau * ch.spec.band_hi)
+    return lo, hi
 
 
 def window(seeds: set, free: set, adj: dict, h: int) -> set:
@@ -1123,7 +1132,7 @@ def main(argv=None) -> int:
     scenario_bands = {c: (*ch.final_band, ch.spec.final_delta) for c, ch in inst.channels.items()}
     if a.diag_final_delta is not None:      # a diagnostic band (#121, OD1): never the scenario's
         for ch in inst.channels.values():
-            ch.final_band = (ch.tau * (1 - a.diag_final_delta), ch.tau * (1 + a.diag_final_delta))
+            ch.final_band = diag_band(ch, a.diag_final_delta)
         a.label = f"DIAGNOSTIC final band ±{a.diag_final_delta:g}" + (f", {a.label}" if a.label else "")
     elif diag is not None:
         a.label = "DIAGNOSTIC (" + diag["label"] + ")" + (f", {a.label}" if a.label else "")

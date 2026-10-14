@@ -19,7 +19,8 @@ Experimental, not a production realizer.  Per planning channel:
   MILP per group, over the group's free ZCTAs and its districts' bodies contracted to one vertex
   each.  Variables x_{z,j} (ZCTA z to district j) and y_{v,j} (j owns a ZCTA of unit v); rows:
   each ZCTA one owner, x ≤ y, each district's drawn mass in the internal band [τ(1−δ), τ(1+δ)]
-  (the plan's δ unless a wider one is asked), and with `fixed_targets` each (unit, district) mass
+  (the plan's δ unless a wider one is asked; a channel with a window band, `td.spec`, draws in
+  [τ·band_lo, τ·band_hi] whatever δ is asked and is never retried wider), and with `fixed_targets` each (unit, district) mass
   within the unit's heaviest ZCTA of the plan's share (Claim 3's bound).
 - **Connectivity, exactly.**  highspy 1.15.1 never invokes its lazy-constraint callback, so the
   realizer runs a solve-check-cut loop: a ZCTA given to a district must have a neighbour of that
@@ -290,7 +291,9 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
     ch, units = inst.channels[c], inst.units
     adj, m = units.zip_adj, ch.m
     delta = plan.delta if delta is None else delta
-    lo, hi = ch.tau * (1 - delta), ch.tau * (1 + delta)
+    if ch.spec.window:      # the band is the owner's dollar window: no wider retry, no other δ
+        delta, wider = ch.spec.window_delta, ()
+    lo, hi = (ch.tau * x for x in ch.spec.rel_band(delta))
     p = {z: (xy[z][0] / 1000.0, xy[z][1] / 1000.0) for z in units.unit_of}
     hold = holders(plan)
     planned = {(v, cp.name): cp.mass[v] for cp in plan.copies for v in cp.support}
@@ -376,7 +379,7 @@ def draw(inst, plan, xy: dict, arm: str = "arm1", delta: float | None = None,
             if left <= 1.0:
                 return None
             r = _solve_group(c, zs, allowed, bodies, body_of, fixed, adj, m, p, unit_of, hold,
-                             plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
+                             plan, planned, support, inst, *(ch.tau * x for x in ch.spec.rel_band(d)),
                              arm, fixed_targets, min(left, group_limit or left), log, dag=dag,
                              start=seed, border=border, land=land)
             log(f"  {c} group {gi} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "
@@ -485,7 +488,7 @@ def _sequential(inst, plan, c, owner, free, exclave, allowed, hold, planned, sup
             if left <= 1.0:
                 return None
             r = _solve_group(c, zs, allowed, bodies, body_of, owner, adj, m, p, unit_of, hold,
-                             plan, planned, support, inst, ch.tau * (1 - d), ch.tau * (1 + d),
+                             plan, planned, support, inst, *(ch.tau * x for x in ch.spec.rel_band(d)),
                              arm, fixed_targets, min(left, group_limit or left), log, extra,
                              dag=dag, start=seed, sequential=True, border=border, land=land)
             log(f"  {c} unit {v} at δ = {d:g}{' (dag)' if dag else ''}: {len(r.districts)} "

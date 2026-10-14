@@ -3,7 +3,7 @@ totals 48-52, each planned, drawn and repaired by #125's chain (`set125.sh`) on 
 (`dollarize.py`, $M), unsealed on the full polygon graph, and labelled.
 
     "$TD_PY" -u tools/exp/contig/overnight.py run --host m5|m2 [--hours 8] [--slots N]
-        [--only ID ...] [--root DIR] [--extract PATH] [--notify CMD]
+        [--only ID ...] [--root DIR] [--extract PATH] [--notify CMD] [--window-band]
     "$TD_PY" tools/exp/contig/overnight.py collect --from m2 [--ssh ALIAS] [--remote-root DIR]
         [--root DIR] [--anyway]
     "$TD_PY" tools/exp/contig/overnight.py morning [--root DIR] [--no-render] [--jobs N]
@@ -19,7 +19,10 @@ the dollar extract over the spec's domain on M1's vertex set; the split list is 
 final δ is the largest, to 1e-4 below, whose band τ_c(1 ± δ) lies in the channel's dollar window
 (`score.WINDOWS`), up to the whole-state cap (`score.WHOLE_STATE_CAP`) for a channel with no split
 unit, `K1_FINAL_DELTA` for one district.  A channel whose τ is outside its window makes the point
-**infeasible** unrun.
+**infeasible** unrun.  With `--window-band` (off here, so the 10-13 grid reproduces; on in
+`sealed.py`; owner's approval, #112 comment, 2026-10-14) the spec copy also writes `band_lo` = L/τ
+and `band_hi` = U/τ per channel (`td.spec`): the band the master, the draw, the repair and the audit
+hold is then the dollar window itself, never ±δ, and `final_delta` is written for reporting only.
 
 **The chain** per point, in `<root>/<id>/`, each stage a child process logging to `<stage>.log`:
 the spec copy (`spec-base.toml`: K, δ declared at `DECLARED_DELTA` or the final δ when smaller,
@@ -28,7 +31,7 @@ in `<root>/_plans`); `run.py` into `draw/` (arm 1, sequential, the #133 land ter
 `LAND_RATIO`, `DRAW_S` per channel); one retry into `draw_retry/` at the failing channels' largest
 plan δ plus `RETRY_WIDEN` when a channel's drawing ends "infeasible" or "unknown" (`needs_retry`:
 the realizer's own stop reasons, trap 15), kept when fewer channels fail there (run.py's
-`--delta` starts every channel at it); repair pass 1 into `r1/`; pass 2 into `r2/` only when M1
+`--delta` starts every channel at it; none under `--window-band`, where the band cannot widen); repair pass 1 into `r1/`; pass 2 into `r2/` only when M1
 still fails on `r1/`; then `score.py --dollars-csv --m1-json` (`score.txt`, `dollars.csv`, `m1.json`)
 and `land.py` (`land.csv`) on every stage folder.  Every M1 here, the gate and the score's,
 measures necks across coverage gaps (`td.audit.GAP_WIDTH_ENV` = "1", G3); `m1.json` keeps the strict
@@ -265,13 +268,18 @@ def fit_delta(tau: float, k: int, lo: float, hi: float) -> float | None:
     return d if d > 0 else None
 
 
-def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None) -> dict:
+def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None,
+               window_band: bool = False) -> dict:
     """The point's channels on its base spec `sp` (D9, D10): per channel K, its $M and τ, its
     split list (`rule` "base": the spec's own; "rule": #76's, the units above τ/2), its window in
     $M (`hi` the whole-state cap for a channel with no split unit and a cap) and its final δ;
     `infeasible` {channel: why} for each channel whose τ is outside its window.  `floor`
     {channel: δ} raises a channel's final δ to at least that (a `-wide` point: the master's
-    smallest feasible δ when the window's fit has no plan); the dollar gate is unchanged."""
+    smallest feasible δ when the window's fit has no plan); the dollar gate is unchanged.  With
+    `window_band` (`--window-band`, owner's approval, #112 comment, 2026-10-14) each channel with a
+    window also gets `band_lo` = L/τ and `band_hi` = U/τ (U the whole-state cap where `hi_m` is),
+    the spec's band in place of ±δ, and its `final_delta` becomes max(1 − band_lo, band_hi − 1),
+    which is for reporting; a channel whose τ is not strictly inside the window gets neither."""
     if set(ks) != set(sp.channels):
         raise ValueError(f"{sp.name}: K for {sorted(ks)}, channels {sorted(sp.channels)}")
     mass = unit_mass(sp, cells)
@@ -293,6 +301,10 @@ def plan_point(ks: dict, sp, cells: dict, rule: str, floor: dict | None = None) 
                 d = max(d, float(floor[c]))
         out["channels"][c] = {"k": k, "usd_m": total, "tau_m": tau, "free": free, "lo_m": lo,
                               "hi_m": hi, "whole_state_cap": whole, "final_delta": d}
+        if window_band and d is not None and 0 < lo / tau < 1 < hi / tau:
+            band_lo, band_hi = lo / tau, hi / tau
+            out["channels"][c].update(band_lo=band_lo, band_hi=band_hi,
+                                      final_delta=max(1.0 - band_lo, band_hi - 1.0))
         if window is None:
             out["infeasible"][c] = f"{c}: no dollar window"
         elif d is None:
@@ -323,15 +335,22 @@ def wide_floor(replan_json: str, floor: dict) -> dict | None:
     return out
 
 
+def window_keys(v: dict) -> dict:
+    """{"band_lo": text, "band_hi": text} of a `plan_point` channel that has them, written with
+    `repr` so the float is exact: the window is the owner's, a rounded key could move it."""
+    return {k: repr(float(v[k])) for k in ("band_lo", "band_hi")} if "band_lo" in v else {}
+
+
 def point_spec_text(base_text: str, pid: str, plan: dict) -> str:
     """The point's spec copy: the base TOML with each channel's K, its declared δ
     (`DECLARED_DELTA`, or the final δ when smaller) and its final δ (`replan.banned_text`), and
-    the scenario named after the point."""
+    the scenario named after the point.  A channel of `plan` with `band_lo`, `band_hi`
+    (`plan_point(window_band=True)`) gets them written, exactly (`repr`), as its band."""
     ch = plan["channels"]
     body = _replan().banned_text(
         base_text, [], deltas={c: min(DECLARED_DELTA, v["final_delta"]) for c, v in ch.items()},
         final_deltas={c: v["final_delta"] for c, v in ch.items()},
-        keys={c: {"k": str(v["k"])} for c, v in ch.items()})
+        keys={c: {"k": str(v["k"]), **window_keys(v)} for c, v in ch.items()})
     body, n = re.subn(r'(?m)^name = ".*"$', f'name = "{pid}"', body, count=1)
     if n != 1:
         raise ValueError("the base spec has no [scenario] name line")
@@ -616,8 +635,10 @@ class Stop(Exception):
 class Runner:
     """One host's points of the grid: `point` runs one through the chain and labels it."""
 
-    def __init__(self, grid: Grid, root: str, host: str, extract: str, cells: dict):
+    def __init__(self, grid: Grid, root: str, host: str, extract: str, cells: dict,
+                 window_band: bool = False):
         self.grid, self.root, self.host, self.extract, self.cells = grid, root, host, extract, cells
+        self.window_band = window_band      # `--window-band`: each channel's band is its dollar window
         self.plans = os.path.join(root, "_plans")
         self.deadline = grid.deadline()
 
@@ -657,7 +678,7 @@ class Runner:
         floor = dict(pt.get("delta_floor") or {})
         spec = os.path.join(pdir, "spec.toml")
         for attempt in range(1 + (len(ks) if pt.get("wide_of") else 0)):
-            plan = plan_point(ks, tdspec.load(base_path), self.cells, rule, floor)
+            plan = plan_point(ks, tdspec.load(base_path), self.cells, rule, floor, self.window_band)
             self.grid.update(pid, plan=plan)
             if plan["infeasible"]:
                 return "infeasible", "; ".join(plan["infeasible"].values()), None, []
@@ -675,7 +696,8 @@ class Runner:
             if info["stop"] == "cap":
                 raise Stop("stopped", f"replan.py killed at its cap ({(PLAN_S * len(ks) + CAP_S['replan']) / 60:g} min)")
             if info["rc"] == 1 and "no plan" in _text(log):
-                more = wide_floor(os.path.join(pdir, "replan.json"), floor) if pt.get("wide_of") else None
+                more = (wide_floor(os.path.join(pdir, "replan.json"), floor)
+                        if pt.get("wide_of") and not self.window_band else None)   # a window is never widened
                 if not more:
                     return "infeasible", _tail(log), None, []
                 floor.update(more)
@@ -728,7 +750,7 @@ class Runner:
         with open(os.path.join(out, "contig.json"), encoding="utf-8") as fh:
             contig = json.load(fh)
         failing = needs_retry(contig)
-        if not failing:
+        if not failing or self.window_band:     # a window band is the owner's: a wider start is no remedy
             return out
         retry = os.path.join(pdir, "draw_retry")
         if not finished(retry):
@@ -1369,7 +1391,7 @@ def cmd_smoke(a) -> int:
     os.makedirs(a.out, exist_ok=True)
     base_path, rule = STRUCTURES[pt["structure"]]
     base_path = os.path.join(ROOT, base_path)
-    plan = plan_point(pt["k"], tdspec.load(base_path), state_cells(a.extract), rule)
+    plan = plan_point(pt["k"], tdspec.load(base_path), state_cells(a.extract), rule, window_band=a.window_band)
     if plan["infeasible"]:
         raise SystemExit("; ".join(plan["infeasible"].values()))
     base, spec, plans = (os.path.join(a.out, x) for x in ("spec-base.toml", "spec.toml", "_plans"))
@@ -1424,7 +1446,7 @@ def cmd_run(a) -> int:
     pts = [grid.get(pid) for pid in grid.doc["points"]]
     todo = order([p for p in pts if p["host"] == a.host and p["label"] is None
                   and (not a.only or p["id"] in a.only)])
-    runner = Runner(grid, a.root, a.host, a.extract, state_cells(a.extract) if todo else {})
+    runner = Runner(grid, a.root, a.host, a.extract, state_cells(a.extract) if todo else {}, a.window_band)
     print(f"{GRID_NAME} on {a.host}: {len(todo)} points, {a.slots} slots, stop at {grid.doc['deadline']}",
           flush=True)
     try:
@@ -1455,6 +1477,9 @@ def parser() -> argparse.ArgumentParser:
     r.add_argument("--root", default=GRID_ROOT)
     r.add_argument("--extract", default=EXTRACT)
     r.add_argument("--notify", default=None, help="a command the run ends with (sweep.py's NOTIFY)")
+    r.add_argument("--window-band", action="store_true",
+                   help="each channel's band is its dollar window [L, U] (band_lo, band_hi), not ±δ "
+                        "(owner, #112 comment, 2026-10-14); off keeps the 10-13 grid reproducible")
     r.set_defaults(func=cmd_run)
     c = sub.add_parser("collect", help="copy another host's points here, sha256 checked, and merge GRID.json")
     c.add_argument("--from", dest="src", required=True, choices=sorted(SLOTS))
@@ -1474,6 +1499,7 @@ def parser() -> argparse.ArgumentParser:
     s.add_argument("--host", default=None, choices=sorted(SLOTS), help="default from the hostname")
     s.add_argument("--extract", default=EXTRACT)
     s.add_argument("--hours", type=float, default=2.0, help="the smoke's own stop")
+    s.add_argument("--window-band", action="store_true", help="as `run --window-band`")
     s.add_argument("--compare", nargs=2, default=None, metavar=("A", "B"),
                    help="two smoke.json (host:path over ssh): exit 0 when they match")
     s.set_defaults(func=cmd_smoke)
