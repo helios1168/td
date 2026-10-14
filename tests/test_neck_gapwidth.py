@@ -1,5 +1,8 @@
-"""NeckGraph's gap_width flag (G1 prototype, owner 2026-10-08): a Voronoi-adjacent pair across land
-in no ZCTA widens a passage, so a coverage gap no longer reads as a neck."""
+"""NeckGraph's gap_width flag (G1, owner 2026-10-08): a Voronoi-adjacent pair across land in no ZCTA
+widens a passage, so a coverage gap no longer reads as a neck.  On by default since the owner's
+2026-10-14 decision ("(a) Any water crossing ... except we should treat necks that are surrounded
+by empty or zero-opportunity zips the same way we treat water", #131); `gap_width=False` and
+`TD_NECK_GAP_WIDTH=0` are the opt-outs kept for comparison."""
 from td import audit
 
 
@@ -12,8 +15,9 @@ def test_gap_width_turns_coverage_gap_neck_into_none():
             "border": {("a", "b"): 50000.0, ("b", "c"): 50000.0, ("b", "s"): 1000.0},
             "connectors": [], "aland": dict.fromkeys(vs, 1e8),
             "voronoi_gaps": {("c", "s"): 30000.0}}
-    [nk] = audit.district_necks(set(vs), {}, audit.NeckGraph(poly))
+    [nk] = audit.district_necks(set(vs), {}, audit.NeckGraph(poly, gap_width=False))
     assert nk.zips == ("s",) and nk.width_km == 1.0
+    assert audit.district_necks(set(vs), {}, audit.NeckGraph(poly)) == []      # the default (R2)
     assert audit.district_necks(set(vs), {}, audit.NeckGraph(poly, gap_width=True)) == []
     # A gap pair across a state line adds nothing.
     poly["state"] = dict(poly["state"], s="NM")
@@ -58,8 +62,9 @@ def test_check_m1_gap_width_argument_overrides_the_environment():
     ledger, g = _gap_world()
     old = os.environ.pop(audit.GAP_WIDTH_ENV, None)
     try:
-        for env, arg, want in ((None, None, "fail"), ("1", None, "pass"), ("0", None, "fail"),
-                               ("1", False, "fail"), (None, True, "pass")):
+        for env, arg, want in ((None, None, "pass"), ("1", None, "pass"), ("0", None, "fail"),
+                               ("1", False, "fail"), (None, True, "pass"), ("0", True, "pass"),
+                               (None, False, "fail")):
             if env is None:
                 os.environ.pop(audit.GAP_WIDTH_ENV, None)
             else:
