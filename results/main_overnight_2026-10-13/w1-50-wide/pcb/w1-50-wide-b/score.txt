@@ -1,0 +1,219 @@
+# w1-50-wide-b
+dir: /Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/w1-50-wide/pcb/w1-50-wide-b
+eligible: no
+  - audit: M1 polygon contiguity fails
+  - M1: fail, 3 districts in pieces, 4 detached pieces (largest 0.348 τ), 8 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 23 mass necks listed beside M1
+  - $ WIFI_12 1,191.2M outside 850.0-1,150.0M
+  - $ WIFI_13 647.2M outside 850.0-1,150.0M
+  - $ WIFI_14 1,225.6M outside 850.0-1,150.0M
+  - $ WIFI_15 1,168.6M outside 850.0-1,150.0M
+  - $ WIFI_16 1,167.0M outside 850.0-1,150.0M
+  - $ WIFI_17 1,167.1M outside 850.0-1,150.0M
+  - $ WIFI_20 678.3M outside 850.0-1,150.0M (whole states: up to 1,600.0M)
+  - $ WIFI_21 670.9M outside 850.0-1,150.0M
+  - $ WIFI_23 835.9M outside 850.0-1,150.0M
+  - $ WIFI_27 833.1M outside 850.0-1,150.0M (whole states: up to 1,600.0M)
+  - $ WIFI_30 644.7M outside 850.0-1,150.0M
+  - $ WIFI_33 800.9M outside 850.0-1,150.0M
+  - $ WIFI_34 800.9M outside 850.0-1,150.0M
+  - $ WIFI_35 802.2M outside 850.0-1,150.0M
+  - $ WIFI_44 1,194.5M outside 850.0-1,150.0M
+  - $ WIFI_50 746.7M outside 850.0-1,150.0M (whole states: up to 1,600.0M)
+K: WIFI 50 = 50
+WIFI: K 50, $978M (no target), worst 34.1%, splits 13 CA FL GA IL MI MN NC NJ NY OH PA SC TX, thin 2, small 8, crowded 1, pieces 4, extent 1,541 km, max states 5
+    thin WIFI_13 RI 0 km
+    thin WIFI_14 DC 0 km
+    small WIFI_01 GA 0.107 tau
+    small WIFI_01 SC 0.081 tau
+    small WIFI_13 NY 0.025 tau
+    small WIFI_18 SC 0.040 tau
+    small WIFI_23 MI 0.000 tau
+    small WIFI_25 OH 0.126 tau
+    small WIFI_26 TX 0.006 tau
+    small WIFI_41 MI 0.192 tau
+    crowded SC
+    largest detached piece WIFI_14: 57 ZIPs in DC, 0.348 tau
+    largest detached piece WIFI_37: 32 ZIPs in NY, 0.331 tau
+    largest detached piece WIFI_13: 81 ZIPs in RI, 0.230 tau
+    multipart piece WIFI_01: part of 32258, 0.049 km2 (visual defect, not M1)
+    multipart piece WIFI_04: part of 92705, 0.385 km2 (visual defect, not M1)
+    multipart piece WIFI_04: part of 92705, 0.030 km2 (visual defect, not M1)
+    multipart piece WIFI_05: part of 93042, 67.426 km2 (visual defect, not M1)
+    multipart piece WIFI_05: part of 93041+93042, 20.290 km2 (visual defect, not M1)
+    multipart piece WIFI_06: part of 90704, 3.362 km2 (visual defect, not M1)
+    multipart piece WIFI_07: part of 93225, 2.090 km2 (visual defect, not M1)
+    multipart piece WIFI_10: part of 89445, 1,155.466 km2 (visual defect, not M1)
+    multipart piece WIFI_10: part of 89406, 53.179 km2 (visual defect, not M1)
+    multipart piece WIFI_10: part of 89830, 45.705 km2 (visual defect, not M1)
+    multipart piece WIFI_10: part of 89061, 7.370 km2 (visual defect, not M1)
+    multipart piece WIFI_12: part of 11772+11782, 8.426 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04737+04768, 137.714 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04945, 112.606 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04743, 46.254 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04732, 14.987 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04854, 12.165 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04854, 3.502 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 04854, 3.473 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 03870, 0.138 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 03870, 0.031 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 03870, 0.030 km2 (visual defect, not M1)
+    multipart piece WIFI_13: part of 02872, 1.659 km2 (visual defect, not M1)
+    multipart piece WIFI_14: part of 17859+17925+17930+17952+17953+17967+17982+17985+18036+18037+18053+18059+18065+18078+18103+18104+18201+18202+18211+18214+18216+18218+18219+18220+18221+18223+18225+18230+18231+18232+18234+18237+18239+18240+18241+18242+18245+18246+18248+18249+18250+18252+18254+18256+18603+18631+18635, 1,540.128 km2 (visual defect, not M1)
+    multipart piece WIFI_14: part of 15017+15018+15028+15031+15034+15047+15055+15064+15071+15082+15083+15089+15102+15122+15123+15126+15131+15132+15133+15135+15227+15228+15234+15241+15448+15479+15612+15617+15625+15631+15637+15640+15642+15647+15660+15663+15672+15678+15679+15683+15691+15695+15698, 720.500 km2 (visual defect, not M1)
+    multipart piece WIFI_14: part of 18037, 1.503 km2 (visual defect, not M1)
+    multipart piece WIFI_14: part of 18249, 0.449 km2 (visual defect, not M1)
+    multipart piece WIFI_14: part of 17859, 0.404 km2 (visual defect, not M1)
+    multipart piece WIFI_15: part of 33040, 0.151 km2 (visual defect, not M1)
+    multipart piece WIFI_19: part of 55315, 0.170 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 84511+84512+84515+84525+84530+84531+84532+84533+84534+84535+84536+84540, 22,941.768 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 84034, 922.483 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 84765, 94.194 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 84022, 94.134 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 84542, 22.359 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 82939, 8.148 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 83546, 7.234 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 84648, 4.024 km2 (visual defect, not M1)
+    multipart piece WIFI_20: part of 83873, 0.977 km2 (visual defect, not M1)
+    multipart piece WIFI_24: part of 78101+78108+78109+78121+78122+78123+78124+78130+78140+78143+78148+78150+78152+78154+78155+78160+78161+78220+78244+78263+78638+78655+78661+78670, 3,676.337 km2 (visual defect, not M1)
+    multipart piece WIFI_25: part of 42211, 12.390 km2 (visual defect, not M1)
+    multipart piece WIFI_25: part of 40212, 0.167 km2 (visual defect, not M1)
+    multipart piece WIFI_26: part of 70461, 1.395 km2 (visual defect, not M1)
+    multipart piece WIFI_26: part of 70563, 1.215 km2 (visual defect, not M1)
+    multipart piece WIFI_28: part of 21659, 0.014 km2 (visual defect, not M1)
+    multipart piece WIFI_29: part of 49630, 58.335 km2 (visual defect, not M1)
+    multipart piece WIFI_29: part of 49654, 21.481 km2 (visual defect, not M1)
+    multipart piece WIFI_31: part of 28227, 2.081 km2 (visual defect, not M1)
+    multipart piece WIFI_31: part of 28227, 0.279 km2 (visual defect, not M1)
+    multipart piece WIFI_32: part of 29628+29848, 302.202 km2 (visual defect, not M1)
+    multipart piece WIFI_33: part of 08902, 0.028 km2 (visual defect, not M1)
+    multipart piece WIFI_34: part of 08831, 0.102 km2 (visual defect, not M1)
+    multipart piece WIFI_35: part of 08867, 0.590 km2 (visual defect, not M1)
+    multipart piece WIFI_36: part of 11702+11706+11770, 24.136 km2 (visual defect, not M1)
+    multipart piece WIFI_36: part of 11693, 1.386 km2 (visual defect, not M1)
+    multipart piece WIFI_37: part of 10001+10004+10005+10006+10007+10011+10012+10013+10014+10018+10038+10119+10199+10271+10278+10279+10280+10282, 10.341 km2 (visual defect, not M1)
+    multipart piece WIFI_37: part of 10004+11231, 4.469 km2 (visual defect, not M1)
+    multipart piece WIFI_38: part of 11370, 1.677 km2 (visual defect, not M1)
+    multipart piece WIFI_39: part of 13618, 6.483 km2 (visual defect, not M1)
+    multipart piece WIFI_39: part of 13618, 6.370 km2 (visual defect, not M1)
+    multipart piece WIFI_39: part of 13618, 1.629 km2 (visual defect, not M1)
+    multipart piece WIFI_39: part of 10464, 1.098 km2 (visual defect, not M1)
+    multipart piece WIFI_39: part of 13859, 0.071 km2 (visual defect, not M1)
+    multipart piece WIFI_39: part of 13624, 0.039 km2 (visual defect, not M1)
+    multipart piece WIFI_40: part of 45011, 0.079 km2 (visual defect, not M1)
+    multipart piece WIFI_41: part of 43011, 0.626 km2 (visual defect, not M1)
+    multipart piece WIFI_41: part of 43456, 0.188 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 98221+98222+98243+98245+98250+98261+98279+98280+98286+98297, 770.863 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 97731, 123.361 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 98221, 21.195 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 98201, 1.792 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 97913, 1.439 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 98221, 0.877 km2 (visual defect, not M1)
+    multipart piece WIFI_42: part of 98262, 0.823 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 16910+16911+16912+16917+16930+16938+16939+17724+17731+17763+17765+17768+18210+18330+18353+18403+18407+18411+18413+18414+18419+18420+18421+18433+18434+18440+18441+18444+18446+18447+18452+18471+18507+18508+18512+18519+18602+18615+18616+18621+18623+18625+18626+18628+18629+18630+18632+18634+18640+18641+18651+18656+18657+18661+18701+18702+18704+18705+18706+18707+18708+18709+18828+18829+18844+18845+18846+18853+18854, 5,851.176 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 15012+15020+15024+15025+15030+15033+15037+15038+15045+15049+15051+15062+15063+15067+15068+15072+15075+15076+15087+15088+15129+15139+15144+15147+15236+15239+15332+15366+15367+15425+15428+15430+15601+15611+15613+15616+15618+15619+15620+15623+15624+15627+15629+15633+15634+15635+15636+15638+15639+15641+15644+15650+15656+15661+15662+15665+15666+15668+15671+15673+15674+15675+15676+15680+15682+15686+15688+15689+15690+15692+15693+15696+15697+15713+15716+15717+15720+15731+15748+15750+15754+15760+15762+15765+15774+15775+15779+15783+15957+16226+16228, 3,102.531 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 18405+18415+18417+18421+18431+18439+18443+18453+18456+18469, 989.902 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 15203+15210+15211+15219+15222+15233+15236+15282, 40.806 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 17071, 7.728 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 18708, 3.006 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 17033, 2.005 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 15147, 0.190 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 19002, 0.104 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 15236, 0.033 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 17406, 0.027 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 15076, 0.025 km2 (visual defect, not M1)
+    multipart piece WIFI_43: part of 15236, 0.005 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 16689+17003+17006+17007+17010+17011+17013+17015+17016+17018+17019+17022+17025+17027+17028+17034+17036+17040+17041+17042+17043+17046+17050+17053+17055+17057+17064+17065+17067+17070+17077+17078+17081+17090+17093+17102+17104+17110+17111+17113+17201+17202+17210+17221+17222+17223+17229+17235+17241+17244+17246+17254+17255+17261+17262+17265+17271+17318+17319+17323+17324+17343+17347+17353+17372+17502+17505+17543+17606+19544, 4,649.809 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 17505+17509+17527+17535+17560+17562+17566+17572+17576+17579+19031+19072+19087+19118+19127+19128+19301+19312+19320+19333+19335+19341+19345+19348+19355+19358+19365+19367+19369+19372+19375+19380+19382+19383+19401+19403+19405+19406+19422+19428+19436+19437+19444+19454+19462, 1,666.244 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 17872, 17.369 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 19437, 0.930 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 17812, 0.376 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 18354, 0.270 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 17938, 0.261 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 15714, 0.124 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 17758, 0.102 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 18644, 0.069 km2 (visual defect, not M1)
+    multipart piece WIFI_44: part of 15727, 0.060 km2 (visual defect, not M1)
+    multipart piece WIFI_46: part of 76240, 40.702 km2 (visual defect, not M1)
+    multipart piece WIFI_47: part of 77065, 0.064 km2 (visual defect, not M1)
+    multipart piece WIFI_48: part of 78026, 0.046 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 65.030 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54246, 58.836 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 40.033 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 31.809 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 20.334 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54814, 14.937 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54212, 11.339 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 7.342 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 6.183 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 5.419 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 5.363 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 5.353 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 4.247 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54246, 3.962 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 3.108 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 2.695 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54246, 2.659 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54814, 2.002 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54814, 1.988 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 1.361 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 1.256 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54850, 0.670 km2 (visual defect, not M1)
+    multipart piece WIFI_50: part of 54246, 0.000 km2 (visual defect, not M1)
+$ gate: 50 districts, 16 outside their window, 0 on the whole-state allowance
+    $ WIFI_12 1,191.2M outside 850.0-1,150.0M
+    $ WIFI_13 647.2M outside 850.0-1,150.0M
+    $ WIFI_14 1,225.6M outside 850.0-1,150.0M
+    $ WIFI_15 1,168.6M outside 850.0-1,150.0M
+    $ WIFI_16 1,167.0M outside 850.0-1,150.0M
+    $ WIFI_17 1,167.1M outside 850.0-1,150.0M
+    $ WIFI_20 678.3M outside 850.0-1,150.0M (whole states: up to 1,600.0M)
+    $ WIFI_21 670.9M outside 850.0-1,150.0M
+    $ WIFI_23 835.9M outside 850.0-1,150.0M
+    $ WIFI_27 833.1M outside 850.0-1,150.0M (whole states: up to 1,600.0M)
+    $ WIFI_30 644.7M outside 850.0-1,150.0M
+    $ WIFI_33 800.9M outside 850.0-1,150.0M
+    $ WIFI_34 800.9M outside 850.0-1,150.0M
+    $ WIFI_35 802.2M outside 850.0-1,150.0M
+    $ WIFI_44 1,194.5M outside 850.0-1,150.0M
+    $ WIFI_50 746.7M outside 850.0-1,150.0M (whole states: up to 1,600.0M)
+channel-state splits: 13: WIFI:CA WIFI:FL WIFI:GA WIFI:IL WIFI:MI WIFI:MN WIFI:NC WIFI:NJ WIFI:NY WIFI:OH WIFI:PA WIFI:SC WIFI:TX
+distinct split states: 13: CA FL GA IL MI MN NC NJ NY OH PA SC TX
+defects: 15.9322 = thin 2 + small 8 + crowded 1 + pieces 4.9322 (4 pieces weighing 1 + mass/tau each, on the ledger; M1's piece count 4)
+multipart pieces: 124 (listed, not in the defects sum)
+M1: fail: 3 districts in pieces, 4 detached pieces (largest 0.348 τ), 8 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 23 mass necks listed beside M1 (strict, on the ledger, necks across coverage gaps)
+    WIFI/WIFI_01: neck 5.38 km wide cuts off 288 ZIPs (29003...), 30.9% of its land area and 42.5% of its mass; cut 39819-39845 5.38 km
+    WIFI/WIFI_06: neck 7.15 km wide cuts off 4 ZIPs (92371...), 26.2% of its land area and 0.0% of its mass; cut 91702-92397 7.15 km
+    WIFI/WIFI_14: neck 1.64 km wide cuts off 170 ZIPs (17859...), 24.5% of its land area and 31.0% of its mass; cut 19112-19153 1.64 km
+    WIFI/WIFI_34: neck 6.45 km wide cuts off 12 ZIPs (07823...), 5.8% of its land area and 0.1% of its mass; cut 08825-08848 6.45 km
+    WIFI/WIFI_36: neck 8.98 km wide cuts off 35 ZIPs (11203...), 17.2% of its land area and 36.1% of its mass; cut 11414-11420 0.16 km, 11414-11430 2.00 km, 11416-11419 0.97 km, 11417-11419 0.98 km, 11417-11420 1.97 km, 11430-11693 1.49 km, ...
+    WIFI/WIFI_38: neck 1.33 km wide cuts off 18 ZIPs (11020...), 42.5% of its land area and 11.0% of its mass; cut 11361-11365 0.13 km, 11364-11365 1.20 km
+    WIFI/WIFI_43: neck 3.57 km wide cuts off 95 ZIPs (15012...), 8.7% of its land area and 22.5% of its mass; cut 15762-15957 3.57 km
+    WIFI/WIFI_44: neck 3.72 km wide cuts off 200 ZIPs (15537...), 22.1% of its land area and 47.2% of its mass; cut 15714-15722 3.72 km
+    WIFI/WIFI_01: mass neck (diagnostic, not M1) 5.38 km wide cuts off 288 ZIPs (29003...), 30.9% of its land area and 42.5% of its mass; cut 39819-39845 5.38 km
+    WIFI/WIFI_06: mass neck (diagnostic, not M1) 5.18 km wide cuts off 1 ZIPs (90212...), 0.1% of its land area and 5.8% of its mass; cut 90035-90212 2.30 km, 90067-90212 1.63 km, 90211-90212 1.25 km
+    WIFI/WIFI_07: mass neck (diagnostic, not M1) 3.32 km wide cuts off 2 ZIPs (91007...), 0.1% of its land area and 6.7% of its mass; cut 91007-91024 0.99 km, 91007-91107 2.33 km
+    WIFI/WIFI_08: mass neck (diagnostic, not M1) 2.79 km wide cuts off 1 ZIPs (94104...), 0.0% of its land area and 5.2% of its mass; cut 94103-94104 0.64 km, 94104-94105 0.52 km, 94104-94108 0.66 km, 94104-94111 0.76 km, 94104-94158 0.20 km
+    WIFI/WIFI_09: mass neck (diagnostic, not M1) 0.84 km wide cuts off 4 ZIPs (92606...), 1.9% of its land area and 14.6% of its mass; cut 92614-92626 0.58 km, 92701-92780 0.27 km
+    WIFI/WIFI_13: mass neck (diagnostic, not M1) 5.23 km wide cuts off 80 ZIPs (02802...), 2.3% of its land area and 34.8% of its mass; cut 02824-02876 0.05 km, 02824-02895 2.09 km, 02824-02896 3.09 km
+    WIFI/WIFI_14: mass neck (diagnostic, not M1) 1.64 km wide cuts off 170 ZIPs (17859...), 24.5% of its land area and 31.0% of its mass; cut 19112-19153 1.64 km
+    WIFI/WIFI_14: mass neck (diagnostic, not M1) 0.83 km wide cuts off 56 ZIPs (20001...), 0.6% of its land area and 27.8% of its mass; cut 20004-20530 0.26 km, 20408-20530 0.20 km, 20530-20535 0.19 km, 20530-20560 0.17 km
+    WIFI/WIFI_21: mass neck (diagnostic, not M1) 5.10 km wide cuts off 1 ZIPs (60606...), 0.1% of its land area and 21.7% of its mass; cut 60601-60606 0.28 km, 60602-60606 0.28 km, 60603-60606 0.29 km, 60604-60606 0.28 km, 60606-60607 1.29 km, 60606-60654 1.00 km, ...
+    WIFI/WIFI_25: mass neck (diagnostic, not M1) 5.81 km wide cuts off 26 ZIPs (45001...), 0.2% of its land area and 8.5% of its mass; cut 41011-45202 0.00 km, 41017-45204 4.63 km, 41071-45202 0.00 km, 41074-45202 0.10 km, 45202-45226 1.09 km
+    WIFI/WIFI_26: mass neck (diagnostic, not M1) 1.81 km wide cuts off 1 ZIPs (70163...), 0.0% of its land area and 6.3% of its mass; cut 70112-70163 0.07 km, 70113-70163 0.33 km, 70130-70163 0.24 km, 70139-70163 1.17 km
+    WIFI/WIFI_27: mass neck (diagnostic, not M1) 6.73 km wide cuts off 1 ZIPs (02110...), 0.0% of its land area and 5.3% of its mass; cut 02108-02110 0.21 km, 02109-02110 2.38 km, 02110-02111 0.92 km, 02110-02113 0.33 km, 02110-02133 0.17 km, 02110-02203 0.58 km, ...
+    WIFI/WIFI_30: mass neck (diagnostic, not M1) 3.20 km wide cuts off 1 ZIPs (55402...), 0.0% of its land area and 8.0% of its mass; cut 55401-55402 1.03 km, 55402-55403 1.30 km, 55402-55404 0.37 km, 55402-55415 0.50 km
+    WIFI/WIFI_33: mass neck (diagnostic, not M1) 3.50 km wide cuts off 1 ZIPs (07310...), 0.1% of its land area and 5.7% of its mass; cut 07302-07310 2.78 km, 07310-07311 0.72 km
+    WIFI/WIFI_35: mass neck (diagnostic, not M1) 9.21 km wide cuts off 1 ZIPs (07078...), 0.5% of its land area and 7.5% of its mass; cut 07039-07078 5.57 km, 07052-07078 1.22 km, 07078-07932 2.43 km
+    WIFI/WIFI_36: mass neck (diagnostic, not M1) 8.98 km wide cuts off 35 ZIPs (11203...), 17.2% of its land area and 36.1% of its mass; cut 11414-11420 0.16 km, 11414-11430 2.00 km, 11416-11419 0.97 km, 11417-11419 0.98 km, 11417-11420 1.97 km, 11430-11693 1.49 km, ...
+    WIFI/WIFI_37: mass neck (diagnostic, not M1) 0.85 km wide cuts off 31 ZIPs (10001...), 0.3% of its land area and 34.8% of its mass; cut 10005-10271 0.28 km, 10006-10271 0.06 km, 10038-10271 0.12 km, 10271-10279 0.29 km, 10271-10280 0.09 km
+    WIFI/WIFI_38: mass neck (diagnostic, not M1) 1.33 km wide cuts off 18 ZIPs (11020...), 42.5% of its land area and 11.0% of its mass; cut 11361-11365 0.13 km, 11364-11365 1.20 km
+    WIFI/WIFI_43: mass neck (diagnostic, not M1) 0.57 km wide cuts off 25 ZIPs (15012...), 1.4% of its land area and 14.6% of its mass; cut 15012-15428 0.57 km
+    WIFI/WIFI_44: mass neck (diagnostic, not M1) 0.23 km wide cuts off 45 ZIPs (17505...), 2.9% of its land area and 27.8% of its mass; cut 17505-17543 0.23 km
+    WIFI/WIFI_46: mass neck (diagnostic, not M1) 3.68 km wide cuts off 4 ZIPs (75024...), 0.2% of its land area and 19.4% of its mass; cut 75069-75072 3.68 km
+    WIFI/WIFI_48: mass neck (diagnostic, not M1) 3.77 km wide cuts off 1 ZIPs (78701...), 0.0% of its land area and 7.1% of its mass; cut 78701-78702 2.77 km, 78701-78712 0.99 km
+    WIFI/WIFI_49: mass neck (diagnostic, not M1) 6.70 km wide cuts off 1 ZIPs (24011...), 0.0% of its land area and 5.9% of its mass; cut 24011-24013 0.92 km, 24011-24014 1.00 km, 24011-24015 1.08 km, 24011-24016 1.99 km, 24011-24022 1.71 km
+shape: extent 1,541.5 km, 5 states per district
+balance: worst 34.09%, mean 12.92%
+review: none (rule: among eligible runs scored together, one split more than the fewest and fewer defects than every run at the fewest)
+verdict: w1-50-wide-b: INELIGIBLE (audit: M1 polygon contiguity fails; M1: fail, 3 districts in pieces, 4 detached pieces (largest 0.348 τ), 8 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 23 mass necks listed beside M1; $ WIFI_12 1,191.2M outside 850.0-1,150.0M; $ WIFI_13 647.2M outside 850.0-1,150.0M; $ WIFI_14 1,225.6M outside 850.0-1,150.0M; $ WIFI_15 1,168.6M outside 850.0-1,150.0M; $ WIFI_16 1,167.0M outside 850.0-1,150.0M; $ WIFI_17 1,167.1M outside 850.0-1,150.0M; $ WIFI_20 678.3M outside 850.0-1,150.0M (whole states: up to 1,600.0M); $ WIFI_21 670.9M outside 850.0-1,150.0M; $ WIFI_23 835.9M outside 850.0-1,150.0M; $ WIFI_27 833.1M outside 850.0-1,150.0M (whole states: up to 1,600.0M); $ WIFI_30 644.7M outside 850.0-1,150.0M; $ WIFI_33 800.9M outside 850.0-1,150.0M; $ WIFI_34 800.9M outside 850.0-1,150.0M; $ WIFI_35 802.2M outside 850.0-1,150.0M; $ WIFI_44 1,194.5M outside 850.0-1,150.0M; $ WIFI_50 746.7M outside 850.0-1,150.0M (whole states: up to 1,600.0M)) | 13 splits (13 states) | 15.9322 defects (thin 2, small 8, crowded 1, pieces 4 weighing 4.9322, largest 0.348 τ; multipart pieces 124, listed only) | extent 1,541 km, 5 states | worst 34.1%, mean 12.9%
+

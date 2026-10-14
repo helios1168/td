@@ -1,0 +1,44 @@
+{
+ "strict": {
+  "status": "fail",
+  "summary": "1 districts in pieces, 1 detached pieces (largest 0.199 \u03c4), 3 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1",
+  "split": 1,
+  "pieces": 1,
+  "largest_tau": 0.19942829997122555,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "FI/FI_08: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.0% of its land area and 12.8% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "FI/FI_18: neck 0.99 km wide cuts off 14 ZIPs (10464...), 5.9% of its land area and 4.5% of its mass; cut 10464-10475 0.27 km, 10466-10803 0.33 km, 10475-10803 0.39 km",
+   "national/national_09: neck 5.67 km wide cuts off 69 ZIPs (08023...), 20.9% of its land area and 2.2% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km"
+  ],
+  "mass_necks": 14,
+  "gap_width": false
+ },
+ "gap_width": {
+  "status": "fail",
+  "summary": "1 districts in pieces, 1 detached pieces (largest 0.199 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 10 mass necks listed beside M1",
+  "split": 1,
+  "pieces": 1,
+  "largest_tau": 0.19942829997122555,
+  "no_owner": 0,
+  "no_row": 0,
+  "double": 0,
+  "necks": [
+   "FI/FI_08: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.0% of its land area and 12.8% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km",
+   "national/national_09: neck 5.67 km wide cuts off 69 ZIPs (08023...), 20.9% of its land area and 2.2% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km"
+  ],
+  "mass_necks": 10,
+  "gap_width": true
+ },
+ "flips": [
+  {
+   "district": "FI/FI_18",
+   "strict": [
+    "FI/FI_18: neck 0.99 km wide cuts off 14 ZIPs (10464...), 5.9% of its land area and 4.5% of its mass; cut 10464-10475 0.27 km, 10466-10803 0.33 km, 10475-10803 0.39 km"
+   ],
+   "gap_width": []
+  }
+ ]
+}

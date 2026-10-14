@@ -1,0 +1,38 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "36551c9ad87013f6ae8f4fb8698c69076871a0e5d00520149d9103961f8f38c2",
+    "summary.svg": "5287c44abf01e5d37514e8a68417e61d22343f88abab91917715afbeb49c7e44",
+    "zip_WIFI.png": "c29302403eee7382bfde4dfa792f9459d1b082f64525fb283ecf6a6727e38774",
+    "zip_pages.pdf": "51c20213cc8587fc0153bdc3004cfa9aa16b5f3cfdf733a7476bb4fe2bd9bca3",
+    "zip_summary.png": "a1ec57b14711908cbfa3d636499f281b59257449f9ba2887b63ad1af76a05821"
+  },
+  "inputs": {
+    "districts.csv": "f02ba2e7393806934cd9834c75397fbdd7e78fb21ed163d3aaa40b1bc660ab75",
+    "ledger.csv": "b231bc90026f62d1616b70ef7362ebf10de752d3db7810e1e23d893b22f9c2fa",
+    "manifest.json": "52e605bfb4135f47c751d530cae9b19661fbecc2237bd3f34b599a0324c71cf9",
+    "run.json": "2e51503c84384850fb1dc7f2964c17cea2a2321548c055703382bfc6d9c146a8"
+  },
+  "label": "w1-48-wide: w1, K WIFI 48 = 48; FAILS M1",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "2 districts in pieces, 2 detached pieces (largest 0.414 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T14:52:03+00:00",
+  "renderer": {
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w1-48-wide: w1, K WIFI 48 = 48; FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}

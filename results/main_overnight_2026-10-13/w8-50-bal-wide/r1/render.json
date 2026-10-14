@@ -1,0 +1,41 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "4a8ed48aac969d4f8b8ef4293d5f56676e824e8e6699d42581f5eb11d540ffe5",
+    "summary.svg": "769b8f082d6316d477fcc4e2a44426c82c2411ff5a24bdb8cea23085d9a73093",
+    "zip_FI.png": "7bc749ad7451ddee03bb4b42f340a134e560fb9e3ae40482d40460a3f760cb3e",
+    "zip_WH.png": "4f8053d30773dbaf1cc75a9f9c9d07f88817b3c6a06034b3d066ee96539c1830",
+    "zip_WIFI.png": "84811bcacfe36b90689b3bd32b1a2b1afe0c3018303ee33b07c91d0ccd2a88b7",
+    "zip_national.png": "699b3a281681f45f76d3ec1c794aaa713a524e2de7ab1f6bd43e88f8a7b6782f",
+    "zip_pages.pdf": "84ce995e4e4668c770354b51aad65e6ee8eaa0e3026436416ef7f29c53a3f1ef",
+    "zip_summary.png": "9158e2d653db8e9e9dff16cf952b6844c3ca2bdb340ec4691d0a24dfa917a45a"
+  },
+  "inputs": {
+    "districts.csv": "53a831529d2d6687bedff91edaa3aabf66d8979887c2c78db9f8a50fc8d75e90",
+    "ledger.csv": "1c9a1b67e7e82e1b7a57c872fa99393dfeb39a4a70be0d4b2753a1b929141128",
+    "manifest.json": "62a99f3f1d752f1016d9aa4d9bd694481af1ac609f84c30e1b98c78147f9babd",
+    "run.json": "4b627e5f4c7d022bd0bbb4748d882dc2654ab8c37050305bd9846589acb43ba8"
+  },
+  "label": "w8-50-bal-wide: west8, K national 15, WH 11, FI 23, WIFI 1 = 50 (r1, not the final folder)",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "3 districts in pieces, 3 detached pieces (largest 0.462 \u03c4), 5 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 14 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T18:02:39+00:00",
+  "renderer": {
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w8-50-bal-wide: west8, K national 15, WH 11, FI 23, WIFI 1 = 50 (r1, not the final folder), FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}

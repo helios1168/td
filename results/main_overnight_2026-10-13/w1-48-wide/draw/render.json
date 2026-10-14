@@ -1,0 +1,38 @@
+{
+  "corridor": false,
+  "fac": {
+    "path": "/Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/fac_usd.json",
+    "sha256": "c9995e9be23c2322698263fe42379aa69fbf6d703083f575b4ceb9a502e9577d"
+  },
+  "gap_fill": "nearest",
+  "geo_cache": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/geo",
+  "images": {
+    "summary.png": "eaf45641fef3b0fd75319a59e4f5fe48f6f8d112957eaf3c741eac334b9d7f02",
+    "summary.svg": "e8fec4a6657c2afc51e117f0f3fc2d67274bb7f7f2e390831e67d367791d58d4",
+    "zip_WIFI.png": "931f3b36ec0324fb45e8c3c9288802a154de92719bdee6c47b6c40abba24c5c6",
+    "zip_pages.pdf": "eced66e6bbae749625c88d78b9b746b9947072df148ab7f65c3a1f94e3f4bd3a",
+    "zip_summary.png": "a8e779f1247eb53a27e263ba700b734d447453f268f12e136386065c78ba0bb1"
+  },
+  "inputs": {
+    "districts.csv": "186a83ef6fc93776673625b80b83c2b468d066d252c89998799c3d3977eb9b3f",
+    "ledger.csv": "50cdbdbac45ae59a787159307f951c1b879eb475eb195826cbfb71a2277ab1bc",
+    "manifest.json": "cfd214c7125ac823db2a3ee9580f9efd78cfd1fc820865cdded4c9ff3565626d",
+    "run.json": "67f58e2116d637043e75334d16e8e72fd840ec77ddfea3ab1abad49add335669"
+  },
+  "label": "w1-48-wide: w1, K WIFI 48 = 48 (draw, not the final folder)",
+  "m1": {
+    "diagnostic": null,
+    "status": "fail",
+    "summary": "3 districts in pieces, 4 detached pieces (largest 0.438 \u03c4), 2 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 15 mass necks listed beside M1"
+  },
+  "rendered_at": "2026-10-13T16:00:27+00:00",
+  "renderer": {
+    "code_sha256": "b134e46a90836beb3dc8cc40f937c38c4316cda33a1e095e867f8ee70d8a33a6",
+    "commit": "070f4d01ab0ed7a5451367d7eec77dc9893170a7",
+    "diff_sha256": null,
+    "dirty": false
+  },
+  "title": "w1-48-wide: w1, K WIFI 48 = 48 (draw, not the final folder), FAILS M1",
+  "zcta_shp": "/Users/Shared/sv-ntlee/td/runs/sweep/grid_2026-10-01/present/legacy/archive/data/tiger/2025/tl_2025_us_zcta520.shp",
+  "zip_cache": "/Users/Shared/sv-ntlee/td/runs/autonomous_2026-10-05/batch/geo"
+}

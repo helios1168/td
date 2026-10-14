@@ -1,0 +1,288 @@
+# w8-cmp-seed-wide-c-c1
+dir: /Users/Shared/sv-ntlee/td/runs/exp/main_overnight_2026-10-13/w8-cmp-seed-wide/pc/w8-cmp-seed-wide-c-c1
+eligible: no
+  - audit: M1 polygon contiguity fails
+  - M1: fail, 2 districts in pieces, 2 detached pieces (largest 0.477 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1
+  - $ FI_05 723.0M outside 765.0-1,035.0M
+  - $ FI_08 759.7M outside 765.0-1,035.0M
+  - $ FI_14 711.5M outside 765.0-1,035.0M
+  - $ FI_16 717.4M outside 765.0-1,035.0M
+  - $ FI_20 714.7M outside 765.0-1,035.0M
+  - $ FI_23 716.9M outside 765.0-1,035.0M
+  - $ WH_01 1,228.0M outside 850.0-1,150.0M
+  - $ WH_04 686.7M outside 850.0-1,150.0M
+  - $ WH_11 760.8M outside 850.0-1,150.0M
+  - $ national_07 1,520.9M outside 1,000.0-1,437.5M
+  - $ national_11 1,488.2M outside 1,000.0-1,437.5M
+K: FI 24 WH 11 WIFI 1 national 13 = 49
+FI: K 24, $818M (-9.1% of target), worst 13.0%, splits 9 CA FL GA IL NY OH PA TN TX, thin 1, small 2, crowded 0, pieces 1, extent 1,757 km, max states 5
+    thin FI_01 AL 0 km
+    small FI_02 TX 0.067 tau
+    small FI_10 GA 0.174 tau
+    largest detached piece FI_01: 656 ZIPs in AL, 0.477 tau
+    multipart piece FI_01: part of 42211, 12.390 km2 (visual defect, not M1)
+    multipart piece FI_01: part of 40212, 0.167 km2 (visual defect, not M1)
+    multipart piece FI_02: part of 70461, 1.395 km2 (visual defect, not M1)
+    multipart piece FI_02: part of 70563, 1.215 km2 (visual defect, not M1)
+    multipart piece FI_03: part of 90704, 3.362 km2 (visual defect, not M1)
+    multipart piece FI_04: part of 93042, 67.426 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 84511+84512+84515+84525+84530+84531+84532+84533+84534+84535+84536+84540, 22,941.768 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 89445, 1,155.466 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 98221+98222+98243+98245+98250+98261+98279+98280+98286+98297, 770.863 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 97731, 123.361 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 84022, 94.134 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 89406, 53.179 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 89830, 45.705 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 84542, 22.359 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 98221, 21.195 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 89061, 7.370 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 84648, 4.024 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 98201, 1.792 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 97913, 1.439 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 98221, 0.877 km2 (visual defect, not M1)
+    multipart piece FI_05: part of 98262, 0.823 km2 (visual defect, not M1)
+    multipart piece FI_06: part of 11706+11770+11772+11782, 29.901 km2 (visual defect, not M1)
+    multipart piece FI_06: part of 02872, 1.659 km2 (visual defect, not M1)
+    multipart piece FI_09: part of 33040, 0.151 km2 (visual defect, not M1)
+    multipart piece FI_09: part of 33763, 0.084 km2 (visual defect, not M1)
+    multipart piece FI_09: part of 32904, 0.024 km2 (visual defect, not M1)
+    multipart piece FI_09: part of 34683, 0.015 km2 (visual defect, not M1)
+    multipart piece FI_10: part of 33617, 0.019 km2 (visual defect, not M1)
+    multipart piece FI_11: part of 30805, 25.276 km2 (visual defect, not M1)
+    multipart piece FI_12: part of 60188, 0.271 km2 (visual defect, not M1)
+    multipart piece FI_13: part of 60517, 0.076 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04737+04768, 137.714 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04945, 112.606 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04743, 46.254 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04732, 14.987 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04854, 12.165 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04854, 3.502 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 04854, 3.473 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 03870, 0.138 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 03870, 0.031 km2 (visual defect, not M1)
+    multipart piece FI_14: part of 03870, 0.030 km2 (visual defect, not M1)
+    multipart piece FI_15: part of 21659, 0.014 km2 (visual defect, not M1)
+    multipart piece FI_16: part of 49630, 58.335 km2 (visual defect, not M1)
+    multipart piece FI_16: part of 49654, 21.481 km2 (visual defect, not M1)
+    multipart piece FI_16: part of 43456, 0.188 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 65.030 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54246, 58.836 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 40.033 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 31.809 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 20.334 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54814, 14.937 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54212, 11.339 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 7.342 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 6.183 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 5.419 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 5.363 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 5.353 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 4.247 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54246, 3.962 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 3.108 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 2.695 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54246, 2.659 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54814, 2.002 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54814, 1.988 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 1.361 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 1.256 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54850, 0.670 km2 (visual defect, not M1)
+    multipart piece FI_17: part of 54246, 0.000 km2 (visual defect, not M1)
+    multipart piece FI_19: part of 11702, 2.661 km2 (visual defect, not M1)
+    multipart piece FI_19: part of 11370, 1.677 km2 (visual defect, not M1)
+    multipart piece FI_19: part of 11693, 1.386 km2 (visual defect, not M1)
+    multipart piece FI_19: part of 10464, 1.098 km2 (visual defect, not M1)
+    multipart piece FI_20: part of 13618, 6.483 km2 (visual defect, not M1)
+    multipart piece FI_20: part of 13618, 6.370 km2 (visual defect, not M1)
+    multipart piece FI_20: part of 13618, 1.629 km2 (visual defect, not M1)
+    multipart piece FI_20: part of 13624, 0.039 km2 (visual defect, not M1)
+    multipart piece FI_22: part of 17252, 0.437 km2 (visual defect, not M1)
+    multipart piece FI_24: part of 75032, 0.109 km2 (visual defect, not M1)
+WH: K 11, $978M (-2.2% of target), worst 29.8%, splits 1 CA, thin 2, small 0, crowded 0, pieces 1, extent 1,779 km, max states 6
+    thin WH_10 MA 0 km
+    thin WH_10 NJ 0 km
+    largest detached piece WH_10: 539 ZIPs in MA, 0.272 tau
+    multipart piece WH_01: part of 42211, 12.390 km2 (visual defect, not M1)
+    multipart piece WH_01: part of 40212, 0.167 km2 (visual defect, not M1)
+    multipart piece WH_02: part of 70461, 1.395 km2 (visual defect, not M1)
+    multipart piece WH_02: part of 70563, 1.215 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 89445, 1,155.466 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 84022, 94.134 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 89406, 53.179 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 89830, 45.705 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 84542, 22.359 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 89061, 7.370 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 84648, 4.024 km2 (visual defect, not M1)
+    multipart piece WH_03: part of 90704, 3.362 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 98221+98222+98243+98245+98250+98261+98279+98280+98286+98297, 770.863 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 97731, 123.361 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 93042, 67.426 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 98221, 21.195 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 98201, 1.792 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 97913, 1.439 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 98221, 0.877 km2 (visual defect, not M1)
+    multipart piece WH_04: part of 98262, 0.823 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04737+04768, 137.714 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04945, 112.606 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04743, 46.254 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 11702+11706+11770+11772+11782, 32.562 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04732, 14.987 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04854, 12.165 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 13618, 6.483 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 13618, 6.370 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04854, 3.502 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 04854, 3.473 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 11370, 1.677 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 02872, 1.659 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 13618, 1.629 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 11693, 1.386 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 10464, 1.098 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 03870, 0.138 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 13624, 0.039 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 03870, 0.031 km2 (visual defect, not M1)
+    multipart piece WH_05: part of 03870, 0.030 km2 (visual defect, not M1)
+    multipart piece WH_07: part of 33040, 0.151 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 65.030 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54246, 58.836 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 49630, 58.335 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 40.033 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 31.809 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 49654, 21.481 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 20.334 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54814, 14.937 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54212, 11.339 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 7.342 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 6.183 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 5.419 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 5.363 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 5.353 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 4.247 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54246, 3.962 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 3.108 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 2.695 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54246, 2.659 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54814, 2.002 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54814, 1.988 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 1.361 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 1.256 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54850, 0.670 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 43456, 0.188 km2 (visual defect, not M1)
+    multipart piece WH_09: part of 54246, 0.000 km2 (visual defect, not M1)
+WIFI: K 1, $1,543M (no target), worst 0.0%, splits 0 , thin 0, small 0, crowded 0, pieces 0, extent 2,167 km, max states 8
+    multipart piece WIFI_01: part of 82933+82937+82939+82944, 938.446 km2 (visual defect, not M1)
+    multipart piece WIFI_01: part of 82939, 8.148 km2 (visual defect, not M1)
+    multipart piece WIFI_01: part of 83546, 7.234 km2 (visual defect, not M1)
+    multipart piece WIFI_01: part of 83873, 0.977 km2 (visual defect, not M1)
+national: K 13, $1,306M (+4.5% of target), worst 16.6%, splits 3 CA NY TX, thin 0, small 0, crowded 0, pieces 0, extent 1,720 km, max states 7
+    multipart piece national_01: part of 42211, 12.390 km2 (visual defect, not M1)
+    multipart piece national_01: part of 40212, 0.167 km2 (visual defect, not M1)
+    multipart piece national_03: part of 84034, 922.483 km2 (visual defect, not M1)
+    multipart piece national_03: part of 84765, 94.194 km2 (visual defect, not M1)
+    multipart piece national_03: part of 84022, 94.134 km2 (visual defect, not M1)
+    multipart piece national_03: part of 84542, 22.359 km2 (visual defect, not M1)
+    multipart piece national_03: part of 84648, 4.024 km2 (visual defect, not M1)
+    multipart piece national_04: part of 93042, 67.426 km2 (visual defect, not M1)
+    multipart piece national_04: part of 94544, 0.018 km2 (visual defect, not M1)
+    multipart piece national_04: part of 94536, 0.012 km2 (visual defect, not M1)
+    multipart piece national_04: part of 94609, 0.003 km2 (visual defect, not M1)
+    multipart piece national_05: part of 90704, 3.362 km2 (visual defect, not M1)
+    multipart piece national_06: part of 89445, 1,155.466 km2 (visual defect, not M1)
+    multipart piece national_06: part of 98221+98222+98243+98245+98250+98261+98279+98280+98286+98297, 770.863 km2 (visual defect, not M1)
+    multipart piece national_06: part of 97731, 123.361 km2 (visual defect, not M1)
+    multipart piece national_06: part of 89406, 53.179 km2 (visual defect, not M1)
+    multipart piece national_06: part of 89830, 45.705 km2 (visual defect, not M1)
+    multipart piece national_06: part of 98221, 21.195 km2 (visual defect, not M1)
+    multipart piece national_06: part of 89061, 7.370 km2 (visual defect, not M1)
+    multipart piece national_06: part of 98201, 1.792 km2 (visual defect, not M1)
+    multipart piece national_06: part of 97913, 1.439 km2 (visual defect, not M1)
+    multipart piece national_06: part of 98221, 0.877 km2 (visual defect, not M1)
+    multipart piece national_06: part of 98262, 0.823 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04737+04768, 137.714 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04945, 112.606 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04743, 46.254 km2 (visual defect, not M1)
+    multipart piece national_07: part of 11702+11706+11770+11772+11782, 32.562 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04732, 14.987 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04854, 12.165 km2 (visual defect, not M1)
+    multipart piece national_07: part of 10028+10029+10035+10128, 6.482 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04854, 3.502 km2 (visual defect, not M1)
+    multipart piece national_07: part of 04854, 3.473 km2 (visual defect, not M1)
+    multipart piece national_07: part of 11370, 1.677 km2 (visual defect, not M1)
+    multipart piece national_07: part of 02872, 1.659 km2 (visual defect, not M1)
+    multipart piece national_07: part of 11693, 1.386 km2 (visual defect, not M1)
+    multipart piece national_07: part of 10464, 1.098 km2 (visual defect, not M1)
+    multipart piece national_07: part of 03870, 0.138 km2 (visual defect, not M1)
+    multipart piece national_07: part of 03870, 0.031 km2 (visual defect, not M1)
+    multipart piece national_07: part of 03870, 0.030 km2 (visual defect, not M1)
+    multipart piece national_08: part of 43456, 0.188 km2 (visual defect, not M1)
+    multipart piece national_10: part of 33040, 0.151 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 65.030 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54246, 58.836 km2 (visual defect, not M1)
+    multipart piece national_11: part of 49630, 58.335 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 40.033 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 31.809 km2 (visual defect, not M1)
+    multipart piece national_11: part of 49654, 21.481 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 20.334 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54814, 14.937 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54212, 11.339 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 7.342 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 6.183 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 5.419 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 5.363 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 5.353 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 4.247 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54246, 3.962 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 3.108 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 2.695 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54246, 2.659 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54814, 2.002 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54814, 1.988 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 1.361 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 1.256 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54850, 0.670 km2 (visual defect, not M1)
+    multipart piece national_11: part of 54246, 0.000 km2 (visual defect, not M1)
+    multipart piece national_12: part of 70461, 1.395 km2 (visual defect, not M1)
+    multipart piece national_12: part of 70563, 1.215 km2 (visual defect, not M1)
+    multipart piece national_12: part of 75901, 0.013 km2 (visual defect, not M1)
+    multipart piece national_13: part of 13618, 6.483 km2 (visual defect, not M1)
+    multipart piece national_13: part of 13618, 6.370 km2 (visual defect, not M1)
+    multipart piece national_13: part of 13618, 1.629 km2 (visual defect, not M1)
+    multipart piece national_13: part of 13624, 0.039 km2 (visual defect, not M1)
+$ gate: 49 districts, 11 outside their window, 1 on the whole-state allowance
+    $ FI_05 723.0M outside 765.0-1,035.0M
+    $ FI_08 759.7M outside 765.0-1,035.0M
+    $ FI_14 711.5M outside 765.0-1,035.0M
+    $ FI_16 717.4M outside 765.0-1,035.0M
+    $ FI_20 714.7M outside 765.0-1,035.0M
+    $ FI_23 716.9M outside 765.0-1,035.0M
+    $ WH_01 1,228.0M outside 850.0-1,150.0M
+    $ WH_04 686.7M outside 850.0-1,150.0M
+    $ WH_11 760.8M outside 850.0-1,150.0M
+    $ national_07 1,520.9M outside 1,000.0-1,437.5M
+    $ national_11 1,488.2M outside 1,000.0-1,437.5M
+    WIFI_01 1,542.7M on the whole-state allowance (CO+ID+MT+ND+NE+NM+SD+WY, up to 1,600.0M)
+channel-state splits: 13: FI:CA FI:FL FI:GA FI:IL FI:NY FI:OH FI:PA FI:TN FI:TX WH:CA national:CA national:NY national:TX
+distinct split states: 9: CA FL GA IL NY OH PA TN TX
+defects: 7.7487 = thin 3 + small 2 + crowded 0 + pieces 2.7487 (2 pieces weighing 1 + mass/tau each, on the ledger; M1's piece count 2)
+multipart pieces: 221 (listed, not in the defects sum)
+M1: fail: 2 districts in pieces, 2 detached pieces (largest 0.477 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1 (strict, on the ledger, necks across coverage gaps)
+    FI/FI_01: neck 5.45 km wide cuts off 913 ZIPs (37601...), 48.1% of its land area and 54.2% of its mass; cut 41059-41085 1.29 km, 41075-41085 0.69 km, 41076-41085 3.47 km
+    FI/FI_08: neck 5.67 km wide cuts off 69 ZIPs (08023...), 21.1% of its land area and 13.4% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km
+    WH/WH_10: neck 3.49 km wide cuts off 597 ZIPs (07001...), 48.5% of its land area and 73.1% of its mass; cut 07302-07311 2.08 km, 07305-07311 0.69 km, 07310-07311 0.72 km
+    national/national_09: neck 5.67 km wide cuts off 597 ZIPs (07001...), 38.7% of its land area and 78.6% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km
+    FI/FI_01: mass neck (diagnostic, not M1) 3.47 km wide cuts off 655 ZIPs (35004...), 51.9% of its land area and 45.8% of its mass; cut 36101-36104 0.38 km, 36101-36107 0.11 km, 36101-36130 2.98 km
+    FI/FI_08: mass neck (diagnostic, not M1) 5.67 km wide cuts off 69 ZIPs (08023...), 21.1% of its land area and 13.4% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km
+    FI/FI_19: mass neck (diagnostic, not M1) 7.28 km wide cuts off 5 ZIPs (10017...), 0.1% of its land area and 10.6% of its mass; cut 10016-10017 1.60 km, 10017-10018 0.16 km, 10017-10020 0.08 km, 10017-10022 1.45 km, 10017-10036 0.32 km, 10017-10110 0.09 km, ...
+    WH/WH_02: mass neck (diagnostic, not M1) 1.81 km wide cuts off 1 ZIPs (70163...), 0.0% of its land area and 5.2% of its mass; cut 70112-70163 0.07 km, 70113-70163 0.33 km, 70130-70163 0.24 km, 70139-70163 1.17 km
+    WH/WH_05: mass neck (diagnostic, not M1) 5.95 km wide cuts off 1 ZIPs (10036...), 0.0% of its land area and 6.4% of its mass; cut 10017-10036 0.32 km, 10018-10036 2.19 km, 10019-10036 2.01 km, 10020-10036 0.31 km, 10036-10069 0.44 km, 10036-10110 0.40 km, ...
+    WH/WH_06: mass neck (diagnostic, not M1) 6.69 km wide cuts off 1 ZIPs (20006...), 0.0% of its land area and 20.9% of its mass; cut 20005-20006 0.60 km, 20006-20024 0.34 km, 20006-20036 1.28 km, 20006-20037 0.68 km, 20006-20052 0.80 km, 20006-20220 0.37 km, ...
+    WH/WH_08: mass neck (diagnostic, not M1) 5.10 km wide cuts off 1 ZIPs (60606...), 0.0% of its land area and 13.4% of its mass; cut 60601-60606 0.28 km, 60602-60606 0.28 km, 60603-60606 0.29 km, 60604-60606 0.28 km, 60606-60607 1.29 km, 60606-60654 1.00 km, ...
+    WH/WH_10: mass neck (diagnostic, not M1) 1.80 km wide cuts off 538 ZIPs (01001...), 51.5% of its land area and 26.7% of its mass; cut 02108-02133 0.57 km, 02110-02133 0.17 km, 02111-02133 0.14 km, 02114-02133 0.23 km, 02133-02203 0.69 km
+    WH/WH_11: mass neck (diagnostic, not M1) 8.07 km wide cuts off 1 ZIPs (19103...), 0.0% of its land area and 7.3% of its mass; cut 19102-19103 2.23 km, 19103-19104 1.26 km, 19103-19108 0.22 km, 19103-19109 0.68 km, 19103-19130 1.54 km, 19103-19146 2.14 km
+    national/national_07: mass neck (diagnostic, not M1) 9.69 km wide cuts off 8 ZIPs (10001...), 0.0% of its land area and 6.5% of its mass; cut 10001-10010 0.58 km, 10001-10016 0.64 km, 10002-10003 0.36 km, 10002-10012 0.51 km, 10002-10013 0.70 km, 10003-10009 1.54 km, ...
+    national/national_09: mass neck (diagnostic, not M1) 5.67 km wide cuts off 546 ZIPs (08023...), 61.3% of its land area and 21.4% of its mass; cut 08023-08069 3.34 km, 08023-08070 2.33 km
+    national/national_13: mass neck (diagnostic, not M1) 2.18 km wide cuts off 30 ZIPs (10017...), 0.0% of its land area and 26.3% of its mass; cut 10024-10025 2.18 km
+shape: extent 2,166.8 km, 8 states per district
+balance: worst 29.76%, mean 8.14%
+review: none (rule: among eligible runs scored together, one split more than the fewest and fewer defects than every run at the fewest)
+verdict: w8-cmp-seed-wide-c-c1: INELIGIBLE (audit: M1 polygon contiguity fails; M1: fail, 2 districts in pieces, 2 detached pieces (largest 0.477 τ), 4 necks, 0 channel ZCTAs with no owner, 0 (ZCTA, fine channel) cells with no row, 0 owned twice, 12 mass necks listed beside M1; $ FI_05 723.0M outside 765.0-1,035.0M; $ FI_08 759.7M outside 765.0-1,035.0M; $ FI_14 711.5M outside 765.0-1,035.0M; $ FI_16 717.4M outside 765.0-1,035.0M; $ FI_20 714.7M outside 765.0-1,035.0M; $ FI_23 716.9M outside 765.0-1,035.0M; $ WH_01 1,228.0M outside 850.0-1,150.0M; $ WH_04 686.7M outside 850.0-1,150.0M; $ WH_11 760.8M outside 850.0-1,150.0M; $ national_07 1,520.9M outside 1,000.0-1,437.5M; $ national_11 1,488.2M outside 1,000.0-1,437.5M) | 13 splits (9 states) | 7.7487 defects (thin 3, small 2, crowded 0, pieces 2 weighing 2.7487, largest 0.477 τ; multipart pieces 221, listed only) | extent 2,167 km, 8 states | worst 29.8%, mean 8.1%
+
