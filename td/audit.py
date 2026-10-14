@@ -15,7 +15,7 @@ Two share defects are kept apart (#70):
   the legacy `other`.  It fails the run (S26: a share exists only as a set of ZIPs).
 - a *vanished share* is a planned share drawn as no ZIPs.  It is listed, not failed (C8).
 
-**M1** (`docs/problem/MANDATES.md`, #108) is `check_m1`, on the polygon graph
+**M1** (`PROBLEM.md` ## Mandates, #108) is `check_m1`, on the polygon graph
 (`geo.polygon_graph`: every CONUS ZCTA, the TIGER ZCTA polygons' rook edges and the owner-approved
 connectors only).  It fails the run when a district's ZCTAs in the ledger are not one component
 of that graph, when a district has a neck (#121, `district_necks`: a connected part holding 5% of

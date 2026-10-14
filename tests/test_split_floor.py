@@ -105,7 +105,7 @@ def test_layouts_partition_the_units():
 
 def test_s13_forced_splits_on_the_extract():
     """The 11 mass-forced splits at s13's K (national 15, WH 12, FI 20) on NE + plains at ±10%
-    (docs/memory/facts/scenario-sweeps-2026-10.md); SKIP without `$TD_REPO`'s extract."""
+    (docs/archive/memory/facts/scenario-sweeps-2026-10.md); SKIP without `$TD_REPO`'s extract."""
     if not os.path.exists(split_floor.EXTRACT):
         print(f"SKIP  test_split_floor.py: no {split_floor.EXTRACT}; the s13 check did not run",
               flush=True)

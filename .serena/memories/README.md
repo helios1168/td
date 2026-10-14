@@ -1,4 +1,4 @@
 # Memories moved
 
-Project memory lives in `docs/memory/` (index: `docs/memory/INDEX.md`) since 2026-09-21.
+Project memory moved to `docs/archive/memory/` (index: `docs/archive/memory/INDEX.md`); the curator is retired.
 This directory is kept only so Serena does not recreate it.

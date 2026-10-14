@@ -6,7 +6,7 @@ The supplied Opus C1 example is **not** master-infeasible at δ=0 under MODEL's 
 
 ## Scope and reproducible commands
 
-Read `docs/problem/SPLITS.md` (including F1–F7, §2.1, §5), `docs/MODEL.md` (§1–5, including Claims 1–3, Proposition D, C7 and §4.8), and the relevant `td/master.py` / `td/supports.py` definitions from this managed worktree. Starting HEAD: `8875bf77c58873a5c60c2fd81eda54d87711018d`. Owner's 2026-10-05 polygon-ownership split key supersedes SPLITS's positive-opportunity key. No extract, instance_descaled file or data directory was opened for this verification. No production model was edited.
+Read `docs/archive/problem/SPLITS.md` (including F1–F7, §2.1, §5), `docs/MODEL.md` (§1–5, including Claims 1–3, Proposition D, C7 and §4.8), and the relevant `td/master.py` / `td/supports.py` definitions from this managed worktree. Starting HEAD: `8875bf77c58873a5c60c2fd81eda54d87711018d`. Owner's 2026-10-05 polygon-ownership split key supersedes SPLITS's positive-opportunity key. No extract, instance_descaled file or data directory was opened for this verification. No production model was edited.
 
 Assumptions / domains:
 

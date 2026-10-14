@@ -24,7 +24,7 @@ Per channel c with mass M_c over its units v (`td.spec.build`'s M_v) and K distr
   one within δ only passes this necessary bound (`parts_bound_ok`), it does not have a plan.
 
 The $ rule: K is allowed when the channel's $ per district is within ±10% of its target
-(national $1.25B, WH $1.0B, FI $900M, IFA $1.25B; `docs/problem/PROBLEM.md` row 2026-10-04).
+(national $1.25B, WH $1.0B, FI $900M, IFA $1.25B; `PROBLEM.md`, Band).
 A fine channel's $ per m_rel unit is the owner's 2026-10-01 total over the whole extract's m_rel,
 as `runs/sweep/grid_2026-10-01/prep.py` set it; a main-map channel's dollars sum its cells on the
 CONUS units it plans.  IFA's dollars are the whole extract's $62.14B (owner, 2026-10-04), so its
@@ -57,7 +57,7 @@ NE6 = ["CT", "MA", "ME", "NH", "RI", "VT"]
 OKKS = ["ID", "KS", "MT", "ND", "NE", "NM", "OK", "SD", "WY"]
 LAYOUTS = {"none": [], "ne": NE6, "ne_plains": NE6 + OKKS}
 # $ billion over the whole extract, the owner's 2026-10-01 figures
-# (docs/memory/facts/scenario-sweeps-2026-10.md § Dollars and K)
+# (docs/archive/memory/facts/scenario-sweeps-2026-10.md § Dollars and K)
 OWNER_USD_B = {"wh": 11.36, "fi": 20.69, "wells_wh": 4.44, "wells_fi": 4.63,
                "national_chase": 8.55, "ifa": 62.14}
 TARGET_USD_M = {"national": 1250.0, "WH": 1000.0, "FI": 900.0, "IFA": 1250.0}

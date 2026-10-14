@@ -16,8 +16,8 @@ model, the app, the notes and the old support pipeline.
 ## Layout
 
 - `export/`: the exporter, run on the work machine (`export/README.md`).
-- `docs/problem/`: the problem ledger and unknowns. `docs/lenses/`: lens and council output.
-  `docs/memory/`: facts and decisions.
+- `PROBLEM.md`: the goal, mandates and settled decisions. `notes/`: handoffs and research.
+  `docs/archive/`: old memory, lenses and problem briefs.
 - `tests/`: `run_all.py` runs every `test_*.py`.
 
 `docs/CODE_MAP.md` lists every file and its role.
@@ -32,4 +32,4 @@ uv venv .venv && uv pip install --python .venv/bin/python3 -r requirements.txt
 ```
 
 The confidential extract, `instance_descaled*.json.gz`, is gitignored and never committed
-(`docs/memory/workflow/confidential-data.md`).
+(`docs/archive/memory/workflow/confidential-data.md`).
