@@ -2,7 +2,7 @@
 channel (#120; ported from `runs/autonomous_2026-10-05/batch_border/zip_pages.py`, m5, gitignored).
 
     "$TD_PY" tools/maps/zip_pages.py <run_dir> <label> <out_dir> [--corridor] [--fac PATH]
-        [--cache DIR]
+        [--cache DIR] [--style exec]
 
 `tools/maps/render.py` calls `main`; this CLI is the same.  The pages are the primary view of a
 rendered run (owner, 2026-10-13): `zip_summary.png`, then one `zip_<channel>.png` per planning
@@ -17,6 +17,13 @@ bold.  A state is split in a channel when 2+ of its districts own ZCTAs there (`
 a split state has a thick dark outline, and the caption lists each channel's split states.  The
 Northeast inset (`NORTHEAST`) carries the small states; a state label that does not fit inside
 its state gets a leader line, and on the main map is left to the inset when the state is in it.
+
+`--style exec` (default off; the default output is unchanged) also writes `zip_exec_<channel>.png`
+per channel (`exec_page`), a layperson's map after the Census regions map: each district dissolved
+to one flat polygon in one of `EXEC_PALETTE`'s muted colours (no two neighbours alike), land in no
+ZCTA that lies against districts joined to them (`exec_fill_gaps`), thin district outlines, bold
+state borders, `N-08 · $1.2B` at the district's area centroid, the biggest metros lightly, a small
+legend; no pieces, necks or ZIP texture.  In `zip_pages.pdf` these pages follow the summary.
 
 Every page labels the major metros (`metros`): the `METROS` CBSA Metro Areas with the most
 opportunity $ in the run's ledger (owned rows, through the ledger's `cbsa`), each at its CBSA's
@@ -90,6 +97,11 @@ AREAS = os.path.join(geo.REFERENCE_DIR, "areas.csv.gz")
 PALETTE = ["#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6",
            "#bfef45", "#9a6324", "#469990", "#dcbeff", "#800000", "#aaffc3", "#808000",
            "#ffd8b1", "#000075", "#fabed4", "#ffe119"]
+# the executive style (`--style exec`): a few muted colours, after the Census regions map
+EXEC_PALETTE = ["#8fb8d0", "#e3bd86", "#a1c89f", "#dba3a3", "#bba9d2", "#e6d98f", "#92c8c2", "#cdb6a0",
+                "#a8b4c8"]
+EXEC_LAND, EXEC_STATE_LINE, EXEC_METROS, EXEC_GAP = "#efeee9", "#2c2c2c", 14, 0.4
+EXEC_HOLE_M2 = 1e10         # a hole in a district under 10,000 km2 is filled
 SCORE = os.path.join(ROOT, "tools", "looks", "score.py")
 METRO_HANDLE = Line2D([], [], marker="o", linestyle="none", markersize=4, markerfacecolor="#111111",
                       markeredgecolor="white", label="Major metro (CBSA)")
@@ -164,12 +176,13 @@ def neighbours(unions: dict) -> dict:
     return near
 
 
-def colouring(unions: dict, near: dict) -> dict:
-    """Greedy: no two districts within 5 km share a colour; among the free colours, the least used."""
+def colouring(unions: dict, near: dict, palette: list = PALETTE) -> dict:
+    """Greedy: no two districts within 5 km share a colour; among the free colours, the least used
+    (a short `palette` that runs out reuses the colour fewest neighbours already wear)."""
     out, used = {}, collections.Counter()
     for d in sorted(unions, key=lambda d: (-len(near[d]), d)):
-        taken = {out[x] for x in near[d] if x in out}
-        out[d] = min((c for c in PALETTE if c not in taken), key=lambda c: (used[c], PALETTE.index(c)))
+        taken = collections.Counter(out[x] for x in near[d] if x in out)
+        out[d] = min(palette, key=lambda c: (taken[c], used[c], palette.index(c)))
         used[out[d]] += 1
     return out
 
@@ -397,6 +410,102 @@ def page(run_dir, label, ch, ch_rows, polys, st, gap, other, other_names, names,
     return fig, path
 
 
+def exec_label_point(u):
+    """A district's area centroid; the centroid of its largest piece's pole when the centroid
+    falls outside the district (a crescent, a multipart district)."""
+    c = u.centroid
+    if u.contains(c):
+        return c
+    part = max(getattr(u, "geoms", [u]), key=lambda p: p.area)
+    return shapely.ops.polylabel(part, tolerance=2000) if part.geom_type == "Polygon" else part.representative_point()
+
+
+def exec_text(ch: str, d: str, usd: float) -> str:
+    """'N-08 · $1.2B': the channel's short name, the district number, its opportunity in $B."""
+    return f"{ABBR.get(ch, ch)}-{d.rsplit('_', 1)[1]} · \\${usd / 1000:.1f}B"
+
+
+def exec_fill_gaps(unions: dict, gap) -> dict:
+    """`unions` with the land in no ZCTA that mostly lies against districts (at least `EXEC_GAP`
+    of a piece's edge) joined to the district it shares the most edge with, so a district reads
+    as one flat shape; land beside no district stays land.  Display only."""
+    if gap is None or gap.is_empty:
+        return unions
+    ids = sorted(unions)
+    grown = [unions[d].buffer(300) for d in ids]
+    tree = shapely.STRtree(grown)
+    add = collections.defaultdict(list)
+    for piece in shapely.get_parts(gap):
+        edge = piece.boundary
+        hits = tree.query(piece.buffer(300), predicate="intersects")
+        if not len(hits) or edge.length == 0:
+            continue
+        contact = {ids[i]: edge.intersection(grown[i]).length for i in hits}
+        best = max(contact, key=contact.get)
+        if sum(contact.values()) >= EXEC_GAP * edge.length:
+            add[best].append(piece)
+    out = {d: (shapely.union_all([u] + add[d]).buffer(150).buffer(-150) if add[d] else u)
+           for d, u in unions.items()}
+    return {d: shapely.unary_union([shapely.Polygon(p.exterior, [r for r in p.interiors
+                                                                  if shapely.Polygon(r).area >= EXEC_HOLE_M2])
+                                    for p in shapely.get_parts(u) if p.geom_type == "Polygon"])
+            for d, u in out.items()}
+
+
+def exec_page(label, ch, ch_rows, polys, st, gap, dollars, out_dir, metro=()):
+    """The executive page (`--style exec`): each district dissolved into one flat-filled polygon
+    in a few muted colours, thin district outlines, bold state borders, the district id and $B at
+    the area centroid, the biggest metros labelled lightly and a small legend.  No ZIP texture,
+    pieces or necks.  The figure and `zip_exec_<ch>.png`."""
+    unions = {d: shapely.union_all([polys[z] for z in zs if z in polys]).buffer(150).buffer(-150)
+              for d, zs in ch_rows.items()}
+    colour = colouring(unions, neighbours(unions), EXEC_PALETTE)
+    unions = exec_fill_gaps(unions, gap)
+    fig = plt.figure(figsize=(20, 11.5), dpi=130, facecolor="white")
+    ax = fig.add_axes([0.005, 0.01, 0.99, 0.93])
+    x0, y0, x1, y1 = shapely.total_bounds(list(st.values()))
+    pad = 0.01 * (x1 - x0)
+    ax.set_xlim(x0 - pad, x1 + pad)
+    ax.set_ylim(y0 - pad, y1 + pad)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    for poly in st.values():
+        ax.add_patch(PathPatch(_polygon_path(poly), facecolor=EXEC_LAND, edgecolor="none", zorder=1))
+    for d, u in sorted(unions.items(), key=lambda kv: -kv[1].area):       # a small district on top
+        ax.add_patch(PathPatch(_polygon_path(u), facecolor=colour[d], edgecolor="white", linewidth=0.9,
+                               zorder=2))
+    for poly in st.values():
+        ax.add_patch(PathPatch(_polygon_path(poly), facecolor="none", edgecolor=EXEC_STATE_LINE,
+                               linewidth=1.5, joinstyle="round", zorder=3))
+    order = sorted(unions, key=lambda d: -unions[d].area)
+    pts = [(exec_label_point(unions[d]).x, exec_label_point(unions[d]).y, exec_text(ch, d, dollars[d]))
+           for d in order]
+    placed = place_labels(ax, pts, fs=9, marker=False, near=[(0, 0, "center", "center")],
+                          fits=lambda i, b: unions[order[i]].buffer(8000).intersection(shapely.box(*b.extents)).area
+                          >= 0.6 * shapely.box(*b.extents).area, fontweight="bold", color="#1b1b1b")
+    for t in placed:
+        t.set_path_effects([pe.withStroke(linewidth=2.4, foreground="white", alpha=0.85)])
+        if t.arrow_patch is not None:
+            t.arrow_patch.set_zorder(9)
+    place_labels(ax, list(metro[:EXEC_METROS]), fs=7, avoid=list(ax.texts), style="italic", color="#3a3a3a",
+                 alpha=0.9)
+    m = list(dollars.values())
+    t = TARGET.get(ch)
+    window = f"\\${min(m) / 1000:.1f}B to \\${max(m) / 1000:.1f}B per district"
+    if t:
+        window += f"  (target \\${t / 1e9:.1f}B ±{100 * DOLLAR_BAND:.0f}%)"
+    fig.suptitle(f"{label}  ·  {ch}", fontsize=18, fontweight="bold", y=0.975)
+    fig.legend(handles=[Patch(facecolor="none", edgecolor="none", label=window),
+                        Patch(facecolor="none", edgecolor="none", label="Label: district id · opportunity \\$")],
+               title=f"{ch}: {len(ch_rows)} districts", title_fontproperties=dict(weight="bold", size=11),
+               loc="lower left", bbox_to_anchor=(0.012, 0.03), fontsize=10, frameon=True, framealpha=0.92,
+               edgecolor="#b0b0b0", handlelength=0, handletextpad=0, borderpad=0.8, alignment="left")
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, f"zip_exec_{ch}.png")
+    fig.savefig(path, dpi=130, facecolor="white")
+    return fig, path
+
+
 def count_fill(n: int) -> str:
     """The summary's fill for `n` territories in a state: a light ramp, so labels stay legible."""
     if n <= 0:
@@ -519,6 +628,8 @@ def main(argv=None):
     ap.add_argument("--corridor", action="store_true")
     ap.add_argument("--fac", default=FAC_JSON, help="tables.json with `fac`, $M per m_rel")
     ap.add_argument("--cache", default=CACHE, help="the state shapes and the pickled geometry")
+    ap.add_argument("--style", choices=("default", "exec"), default="default",
+                    help="exec: also write the executive page zip_exec_<channel>.png (after the summary in the PDF)")
     a = ap.parse_args(argv)
     FAC = read_fac(a.fac)
     polys, st, gap = geometry(a.cache)
@@ -550,6 +661,7 @@ def main(argv=None):
                              a.out_dir)
     plt.close(fig)
     written = [path]
+    execs = []
     print(f"summary: {len(counts)} states, {sum(map(len, split_states(counts).values()))} (state, channel) "
           f"splits, {len(metro)} metros -> {path}", flush=True)
     for ch in sorted(owned, key=CHANNELS.index):
@@ -572,9 +684,14 @@ def main(argv=None):
                          {d: usd[ch][d] for d in rows}, insets, a.out_dir, extra, metro)
         plt.close(fig)
         written.append(path)
+        if a.style == "exec":
+            fig, xpath = exec_page(a.label, ch, rows, polys, st, gap, {d: usd[ch][d] for d in rows}, a.out_dir, metro)
+            plt.close(fig)
+            execs.append(xpath)
         print(f"{ch}: {len(rows)} districts, {sum(map(len, rows.values()))} ZCTAs, "
               f"{len(missing)} without polygon, splits {len(split)} -> {path}", flush=True)
     from PIL import Image                          # a raster PDF: the vector one runs to 100+ MB
+    written[1:1] = execs
     pages = [Image.open(p).convert("RGB") for p in written]
     written.append(os.path.join(a.out_dir, "zip_pages.pdf"))
     pages[0].save(written[-1], save_all=True, append_images=pages[1:], resolution=130)

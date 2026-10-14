@@ -13,6 +13,8 @@
   ledger (`zip_pages.state_territories`, `split_states`, `state_text`); the metros, the heaviest
   Metro Areas by $ named by their first principal city (`top_metros`, `metro_name`); and
   `place_labels` drops a label that would overlap one already placed.
+- The executive style (`zip_pages.py --style exec`): `exec_page` writes `zip_exec_<channel>.png` for
+  a toy run, its labels read `N-08 · $1.2B`, and a palette shorter than the neighbours need still colours every district.
 """
 from __future__ import annotations
 
@@ -228,3 +230,25 @@ def test_the_caption_prints_each_channels_final_band():
         assert summary.final_bands(WHOLE) == {"IFA": 3.1025}
     else:
         print(f"SKIP  test_maps.py: no {WHOLE}")
+
+
+def test_the_exec_style_writes_its_page_for_a_toy_run():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import shapely
+    zp = _load("maps_zip_pages", "zip_pages.py")
+    st = dict(zip(("A", "B"), _states()))
+    polys = {"00001": shapely.box(-40_000, -40_000, 0, 40_000), "00002": shapely.box(0, -40_000, 6_000, 40_000),
+             "00003": shapely.box(6_000, -40_000, 40_000, 0), "00004": shapely.box(6_000, 0, 40_000, 40_000)}
+    rows = {"national_01": {"00001", "00002"}, "national_08": {"00003"}, "national_09": {"00004"}}
+    usd = {"national_01": 1234.0, "national_08": 1180.0, "national_09": 960.0}
+    assert zp.exec_text("national", "national_08", 1234.0) == "N-08 · \\$1.2B"
+    unions = {d: shapely.union_all([polys[z] for z in zs]) for d, zs in rows.items()}
+    near = zp.neighbours(unions)
+    assert set(zp.colouring(unions, near, zp.EXEC_PALETTE[:2]).values()) <= set(zp.EXEC_PALETTE[:2])
+    assert len(zp.EXEC_PALETTE) <= 10
+    with tempfile.TemporaryDirectory() as tmp:
+        fig, path = zp.exec_page("toy", "national", rows, polys, st, None, usd, tmp)
+        plt.close(fig)
+        assert os.path.basename(path) == "zip_exec_national.png" and os.path.getsize(path) > 0
