@@ -267,7 +267,7 @@ def cmd_index(a) -> int:
         und = ", ".join(f"{c} {n}" for c, n in w["undrawn_zctas"].items()) or "0"
         lines.append(f"| {pid} | **{w['label']}** | {m1} | {inw} | {worst} | {spl} | {und} |")
         heur = "; ".join(f"{c}: {v['zctas']:,} ZCTAs, groups " + (", ".join(
-            f"{'+'.join(map(str, g['districts'] or []))} [{','.join(map(str, g['units'] or []))}] {g['status']}"
+            f"{' | '.join(map(str, g['districts'] or []))} [{','.join(map(str, g['units'] or []))}] {g['status']}"
             for g in v["groups"]) or "not recorded") for c, v in w.get("heuristic_groups", {}).items())
         sh = (w.get("summary") or {}).get("shape") or {}
         shp = "; ".join(f"{c} aspect≤{v['aspect_max']:g}, hull fill≥{v['hull_fill_min']:g}, bite≤{v['bite_max']:g}, "
