@@ -160,8 +160,14 @@ def _own_connected(zs: set, ng) -> bool:
 
 def test_a_neck_cut_row_is_broken_by_no_drawing_the_gate_accepts():
     """On random small graphs with relays, width-only (gap) edges and connectors: the rows
-    `repair.neck_cuts` builds from one drawing of a window hold for every other own-connected
-    drawing of the window in which district D1 has no gate neck (`necks_gate.cut_terms`)."""
+    `repair.neck_cuts` builds from one drawing of a window, of either kind (the default no-good
+    rows, `necks_gate.nogood_terms`, and the strong rows, `necks_gate.cut_terms`), hold for every
+    other own-connected drawing of the window in which district D1 has no gate neck."""
+    for rows in ("nogood", "strong"):
+        _random_rows_hold(rows)
+
+
+def _random_rows_hold(rows: str):
     gate, repair, *_ = _mods()
     rng = random.Random(142)
     built = checked = 0
@@ -173,7 +179,7 @@ def test_a_neck_cut_row_is_broken_by_no_drawing_the_gate_accepts():
         base = {z: rng.choice(["D1", "D2"]) for z in zs if z not in W}
         draws = [{z: rng.choice(["D1", "D2"]) for z in sorted(W)} for _ in range(14)]
         for first in draws[:3]:
-            cuts, _ = repair.neck_cuts("X", base, W, m, ng, first, {"D1"})
+            cuts, _ = repair.neck_cuts("X", base, W, m, ng, first, {"D1"}, rows)
             built += len(cuts)
             for other in draws:
                 d1 = {z for z, j in {**base, **other}.items() if j == "D1"}
@@ -181,8 +187,101 @@ def test_a_neck_cut_row_is_broken_by_no_drawing_the_gate_accepts():
                     continue
                 checked += 1
                 bad = [c.label for c in cuts if not c.holds(other)]
-                assert not bad, (bad, sorted(d1), polygon, m)
-    assert built >= 20 and checked >= 200, (built, checked)
+                assert not bad, (rows, bad, sorted(d1), polygon, m)
+    assert built >= 20 and checked >= 200, (rows, built, checked)
+
+
+def _milp_accepts(cut, own: dict) -> bool:
+    """Whether some binary t meets the two rows `draw._solve_group.add_neck_cut` (and
+    `plancheck.add_cut`) writes for `cut` with the window drawing `own`: they must hold exactly when
+    `cut.holds(own)`."""
+    j = cut.j
+    x = lambda z: 1.0 if own.get(z) == j else 0.0       # noqa: E731
+    big = cut.a_min - cut.share * cut.area_fixed
+    km = cut.const + sum(w * x(z) for z, w in cut.single) + sum(w * x(u) * x(v) for u, v, w in cut.pair)
+    for t in (0, 1):
+        width = km >= cut.need * t - 1e-9
+        area = (sum(cut.share * a * x(z) for z, a in cut.area) - big * sum(x(z) for z in cut.anchors)
+                + big * t >= cut.a_min - cut.share * cut.area_fixed - big * len(cut.anchors) - 1e-9)
+        if width and area:
+            return True
+    return False
+
+
+# the smallest drawing the strong rows of 8802f6c excluded and the gate accepts: `neckcut_search.py
+# --seed 1 --graphs 40000 --every-first --p-zero 0.5` at that commit (1 case in 582,968 drawings)
+_CE_KM = {("z0", "z1"): 7.0, ("z0", "z2"): 4.0, ("z0", "z3"): 12.0, ("z1", "z3"): 1.0,
+          ("z2", "z3"): 2.5, ("z2", "z4"): 1.0, ("z3", "z4"): 20.0}
+_CE_LAND = {"z0": 1e7, "z1": 3e8, "z2": 1e8, "z3": 3e8, "z4": 5e7}
+_CE_M = {"z0": 0.0, "z1": 1.0, "z2": 1.0, "z3": 0.0, "z4": 0.0}
+
+
+def _ce():
+    gate, repair, *_ = _mods()
+    zs = sorted(_CE_LAND)
+    polygon = {"vertices": zs, "edges": sorted(_CE_KM), "state": dict.fromkeys(zs, "TX"),
+               "border": {e: 1000.0 * x for e, x in _CE_KM.items()}, "connectors": [],
+               "aland": _CE_LAND, "voronoi_gaps": {}}
+    return repair, gate.gate_graph(polygon), {"z2": "D1", "z3": "D2"}, {"z0", "z1", "z4"}
+
+
+def test_the_default_neck_row_does_not_exclude_the_drawing_the_gate_accepts():
+    """D1 = {z1, z2, z4} with z0 left to D2 (window {z0, z1, z4}, z2 D1's, z3 D2's) has a 7.5 km neck; the
+    drawing that gives z0 to D1 and z1 to D2 is own-connected and the gate accepts it (z3, a relay
+    of zero opportunity, joins z2 and z4 across 2.5 and 20 km).  The default no-good row of the
+    first drawing excludes that drawing alone, so it holds for the accepted one; the strong row
+    (`--neck-rows strong`) holds for it too since the 2026-10-15 fix, which it did not before."""
+    repair, ng, base, W = _ce()
+    first, accepted = {"z0": "D2", "z1": "D1", "z4": "D1"}, {"z0": "D1", "z1": "D2", "z4": "D1"}
+    d1 = {z for z, j in {**base, **accepted}.items() if j == "D1"}
+    assert repair.district_necks({z for z, j in {**base, **first}.items() if j == "D1"}, _CE_M, ng)
+    assert _own_connected(d1, ng) and not repair.district_necks(d1, _CE_M, ng)
+    assert repair.neck_rows_mode() == "nogood"
+    for rows in (None, "nogood", "strong"):
+        cuts, labels = repair.neck_cuts("X", base, W, _CE_M, ng, first, {"D1"}, rows)
+        assert len(labels) >= 1 and len(cuts) >= 1, (rows, cuts)
+        if rows != "strong":        # a strong row binds only while the land stays small
+            assert not any(c.holds(first) for c in cuts), rows     # the neck drawing is cut
+        assert all(c.holds(accepted) for c in cuts), (rows, cuts)  # the accepted one is not
+
+
+def test_a_no_good_row_excludes_one_drawing_and_encodes_as_the_milp_rows_do():
+    """For the drawing X of j's part of W the row is Σ_{z in X}(1 - x_z) + Σ_{z in W - X} x_z >= 1:
+    over all 2^|W| drawings it fails for X alone, `NeckCut.holds` and the two linear rows of
+    `add_neck_cut` agree on each, and every neck of one district gives one row."""
+    repair, ng, base, W = _ce()
+    first = {"z0": "D2", "z1": "D1", "z4": "D1"}
+    cuts, labels = repair.neck_cuts("X", base, W, _CE_M, ng, first, {"D1"}, "nogood")
+    [cut] = cuts
+    assert cut.anchors == ("z1", "z4") and sorted(z for z, _ in cut.single) == ["z0"], cut
+    for pick in itertools.product(("D1", "D2"), repeat=3):
+        own = dict(zip(sorted(W), pick))
+        assert cut.holds(own) == (own != first), own
+        assert _milp_accepts(cut, own) == cut.holds(own), own
+    # the mode: nogood by default, `TD_NECK_ROWS` / `--neck-rows` selects strong, anything else is refused
+    saved = os.environ.pop(repair.NECK_ROWS_ENV, None)
+    try:
+        assert repair.neck_rows_mode() == "nogood"
+        os.environ[repair.NECK_ROWS_ENV] = "strong"
+        assert repair.neck_rows_mode() == "strong"
+        os.environ[repair.NECK_ROWS_ENV] = "bogus"
+        for call in (repair.neck_rows_mode,
+                     lambda: repair.neck_cuts("X", base, W, _CE_M, ng, first, {"D1"})):
+            try:
+                call()
+            except SystemExit:
+                continue
+            raise AssertionError("an unknown neck row type was accepted")
+        try:
+            repair.neck_cuts("X", base, W, _CE_M, ng, first, {"D1"}, "bogus")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("an unknown neck row type was accepted")
+    finally:
+        os.environ.pop(repair.NECK_ROWS_ENV, None)
+        if saved is not None:
+            os.environ[repair.NECK_ROWS_ENV] = saved
 
 
 def test_a_neck_cut_counts_the_relay_the_old_row_missed():
@@ -200,7 +299,7 @@ def test_a_neck_cut_counts_the_relay_the_old_row_missed():
     owner = {"a": "D1", "b": "D1", "c": "D1", "r": "D2"}
     [nk] = repair.district_necks({"a", "b", "c"}, m, ng)
     assert nk.zips == ("a",) and abs(nk.width_km - 4.0) < 1e-6, nk
-    cuts, labels = repair.neck_cuts("X", owner, {"r"}, m, ng, {"r": "D2"}, {"D1"})
+    cuts, labels = repair.neck_cuts("X", owner, {"r"}, m, ng, {"r": "D2"}, {"D1"}, "strong")
     assert len(labels) == 1 and len(cuts) == 1
     cut = cuts[0]
     assert abs(cut.const + sum(w for _, w in cut.single) - 4.0) < 1e-3, cut     # a-b 1 + a-r 3
@@ -208,7 +307,7 @@ def test_a_neck_cut_counts_the_relay_the_old_row_missed():
     # a side holding more than half the land outside the window (here a alone is fixed) also counts
     # the edges among the rest (`cut_terms`): a weaker row, still broken by the neck drawing
     cuts, labels = repair.neck_cuts("X", {"a": "D1", "r": "D2"}, {"b", "c"}, m, ng,
-                                    {"b": "D1", "c": "D1"}, {"D1"})
+                                    {"b": "D1", "c": "D1"}, {"D1"}, "strong")
     assert len(labels) == 1 and len(cuts) == 1
     assert cuts[0].const + sum(w for _, w in cuts[0].single) + sum(w for *_, w in cuts[0].pair) > 4.0
 
@@ -233,7 +332,7 @@ def test_a_neck_cut_counts_the_relay_edge_an_owned_window_relay_cuts():
     first, other = {"a": "D1", "r1": "D2"}, {"a": "D1", "r1": "D1"}
     assert repair.district_necks({"a", "b", "c"}, m, ng)               # the first map has a neck
     assert not repair.district_necks({"a", "b", "c", "r1"}, m, ng)      # the drawing the gate accepts
-    cuts, labels = repair.neck_cuts("X", base, {"a", "r1"}, m, ng, first, {"D1"})
+    cuts, labels = repair.neck_cuts("X", base, {"a", "r1"}, m, ng, first, {"D1"}, "strong")
     assert len(labels) == 1 and len(cuts) == 1
     assert not cuts[0].holds(first)                         # the neck drawing is still cut
     assert cuts[0].holds(other), cuts[0]                    # the accepted drawing is not
@@ -257,7 +356,7 @@ def test_a_widened_neck_cut_counts_an_optional_zero_opportunity_window_zip_as_a_
     first = {"a": "D1", "b": "D1", "r2": "D2"}
     other = {"a": "D1", "b": "D2", "r2": "D2"}
     assert _own_connected(set(base) | {"a", "b"}, ng) and _own_connected(set(base) | {"a"}, ng)
-    cuts, _ = repair.neck_cuts("X", base, {"a", "b", "r2"}, m, ng, first, {"D1"})
+    cuts, _ = repair.neck_cuts("X", base, {"a", "b", "r2"}, m, ng, first, {"D1"}, "strong")
     assert len(cuts) == 1
     cells = [Cell(z, "f", "X", {**base, **other}[z], m[z]) for z in zs]
     check = audit.check_m1(Run(cells, {"X": Channel(2)}, polygon=polygon, fine=("f",)))

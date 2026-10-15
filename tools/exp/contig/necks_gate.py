@@ -93,7 +93,7 @@ def nogood_terms(D: set, W: set) -> tuple:
     """(anchors, single) of the no-good row for the district whose ZCTAs are `D` and the window `W`
     (the notes' review §4.6; #142 ruling): with X = `D` ∩ W, the row
 
-        Σ_{z ∈ X} (1 - x_{z,j}) + Σ_{z ∈ W \ X} x_{z,j}  ≥  1
+        Σ_{z ∈ X} (1 - x_{z,j}) + Σ_{z ∈ W - X} x_{z,j}  ≥  1
 
     says district j's part of W is not X.  The ZCTAs outside W keep their owners, so a drawing
     that meets none of the row has j's set equal to D's and the same gate necks.  **Valid for every
@@ -105,9 +105,9 @@ def nogood_terms(D: set, W: set) -> tuple:
     widths of `cut_terms`: the repair may take more rounds.
 
     It is a `draw.NeckCut` as `draw._solve_group.add_neck_cut` and `plancheck.add_cut` build its
-    rows: `anchors` = X, `single` = [(z, 1.0)] for z in W \ X, `const` 0, `pair` (), `need` 1,
+    rows: `anchors` = X, `single` = [(z, 1.0)] for z in W - X, `const` 0, `pair` (), `need` 1,
     `share` 0 and `a_min` 1 (the area row is then t + Σ_{z ∈ X} (1 - x_{z,j}) ≥ 1 and the width row
-    Σ_{z ∈ W \ X} x_{z,j} ≥ t, t binary: they hold exactly when the no-good does).  A ZCTA of X that
+    Σ_{z ∈ W - X} x_{z,j} ≥ t, t binary: they hold exactly when the no-good does).  A ZCTA of X that
     j cannot own in the model is a constant 1 of the row, which `add_neck_cut` reads as 'never
     binds'."""
     X = set(D) & set(W)
