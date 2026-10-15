@@ -1349,3 +1349,13 @@ Run autonomously under the owner's delegation (#105). Package (m5, gitignored): 
 - **Shape calibration:** 80 owner verdicts on two sheets; no metric rule generalises (best 8/74 errors, 6-9 on the held-out sheet). Data: `runs/exp/looks_calibration_2026-10-14/`.
 
 Regenerate: `tools/exp/region_arith.py --search` (partitions), `tools/exp/contig/sealed.py run --partition <host.json> --root <dir> --host m5|m2` (branch `m5-studio/sealed`), IFA via `tools/exp/contig/kgrid_night.sh` on `m5-studio/ifa-night`.
+
+## Unsealed national grid with the window band, 2026-10-14 (day)
+
+Owner-approved (#112 comments): the band is the dollar window [L, U] (`band_lo`/`band_hi`, branch `m5-studio/window-band` 8a22136, reviewed clean), unsealed, `--drawable-alone` off, strict drawing, glue, the 2026-10-14 M1 gate. Package (m5, gitignored): `runs/exp/national_2026-10-14/` (`INDEX.md`, `STATUS.md`, `maps/`, `shape/`).
+
+- **Planning:** every one of the 15 points (ne_plains x6, nw49 x3, nw34 x3, w1 x3) plans inside its window (none did with the symmetric band). Needed: split rule R1 on ne-50/52-filight national and ne-52-bal FI; nw49 national `max_dist_km` 1500 (ND and SD cannot reach $1,000M within 1200 km on the full extract).
+- **Drawing:** exact drawing of large coupled groups (NY/NJ/PA, AL/FL, KY/TN in FI; DC+MD+DE+NJ+PA+WV in WIFI) did not finish; single solves ran 4-5 h.
+- **Warm start** (exact window repair from each point's first drawing, glue, merge, gate; branch `m5-studio/warm-start` 53dac30): **3 passing main maps**: ne-48-bal (pass/pass, 48/48 in window, 8 split states), ne-50-filight (gap-width pass, strict fails on 2 necks; 50/50; 9 states), ne-cmp-tierP (pass/pass, 49/49; 8 states). Each holds 3,629-5,618 ZCTAs placed by the realizer heuristic and verified by the exact gate.
+- **Fails:** ne-50-bal and ne-52-filight (FI_19 NY in 4 pieces), ne-52-bal (FI_18 NY, FI_07 NJ), nw49-48/52 (a 9-ZIP NY piece in WIFI); nw34 x3 national never drew; w1 x3 never drew before the stop.
+- **Bug found:** `sealed.py`'s score stage reads $ rates from the merged extract (CONUS cells only): FI reads ~2% high. The index numbers use the full extract.

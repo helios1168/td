@@ -29,3 +29,9 @@ Each item: what, where it stands, why deferred.
 ## Housekeeping
 - Stale worktrees under ~/.pi/worktrees (td-sealed, td-m1-water, td-region-arith, td-study-v2, td-ifa-night, td-night-run, td-calib, td-looks-explainer) and branches `cal`, `m5-studio/calibration-sheet`: remove after the owner's morning review.
 - Heartbeat schedule `td-night-heartbeat3`: delete when the night closes.
+
+## Added 2026-10-14 evening
+- `m5-studio/window-band` (8a22136): reviewed clean in two build-review runs; land after the owner's look (touches td/master.py, approved on #112).
+- `m5-studio/warm-start` (53dac30): warm.py/balance.py, not reviewed.
+- sealed.py score stage: pass `--extract` (the full dollar extract) to score.py; merged_extract overstates FI ~2%.
+- NY pieces after warm repair: ne-50-bal, ne-52-filight (FI_19), ne-52-bal (FI_18, FI_07), nw49-48/52 (WIFI, 9 ZIPs): bigger NY repair windows.
