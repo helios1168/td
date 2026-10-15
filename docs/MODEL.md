@@ -39,8 +39,8 @@ numbers so the Claim 3, S21 and S25/S26 references in code remain usable.
 | glue, warm start and sealed assembly | F11 | §11 | final audited ledger, not drawing optimality |
 | branch-and-cut comparison | F142 | §12 | exported fixed group; no neck constraint |
 
-Agent: modeler (openai-codex/gpt-6-astra). #143 phase 1: documentation only; executable
-Pyomo specifications and conformance tests are the issue's next phase.
+Agent: modeler (openai-codex/gpt-6-astra). #143 phases 1–2: formulation contracts and
+small-instance Pyomo specifications; these are not production solver backends.
 
 ## 0. F0 — national reference program
 
@@ -220,7 +220,19 @@ feasibility separates by channel; a map-level objective separates only if its ev
 Routing is supplied by the source audit, not established by the run-folder gate alone (§9).
 The existing ranking is not the F0 objective: `tools/looks/score.py:549`
 `def rank_key(s: dict) -> tuple:` returns splits first. F0 is a reference specification;
-phase 1 of #143 does not claim an executable F0 solver or Pyomo conformance certificate.
+no production F0 optimizer or national conformance certificate is claimed.
+
+**Pyomo specification:** `td.formulation.f0:build_model` implements these rows for one
+supplied routing structure, retaining $J=1,\ldots,54$ and total $K\in[48,54]$ on at most
+300 ZCTAs. The caller supplies the complete nonexempt $\mathcal B_{hc}$ and symbolic
+$\Phi_{\rm shape},\Phi_{\rm balance}$; no neck geometry, exception identity or numerical
+objective policy is invented. WIFI uses the genuine GDP disjunction $w=0$ or
+$(w=1\ \land\ x_{hcjz}\ge b_{hcj,s(z)}\ \forall z)$; the other rows are algebraic.
+Three ordered objectives are retained, with only shape active initially; solving that
+one alone is not a lexicographic certificate. The 60-ZCTA tests check routed coverage,
+48 active districts, dollars, the conditional cap, forbidden sets and P-flow, not an
+unavailable production F0 optimizer. Entry: `td/formulation/f0.py:18`
+`def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):`.
 
 ## 1. Cells, units, planning channels
 
@@ -960,6 +972,23 @@ allowed dollar-window slack. The final dollar gate still decides. Code:
 Joint groups share no free ZCTA or district, so P and mass feasibility factor, as does the
 sum of the objectives actually assembled per group. This is not separability of arbitrary
 F0 map evaluators, or a proof about N-connectivity.
+
+**Pyomo specification:** `td.formulation.f4:prepare` independently prepares pruning,
+geodesic and objective coefficients from the group inputs, taking F7 centers as fixed
+inputs; `td.formulation.f4:build_model` implements the base, optional move/target/land
+rows and complete P-connectivity, without DAG, repair-count or neck rows. Its flow
+extension uses $t_j\in\{0,1\}$, $x_v^j\le t_j\le\sum_v x_v^j$,
+$\sum_v r_v^j=t_j$, $r_v^j\le x_v^j$ and
+$\sum_u f^j_{uv}-\sum_w f^j_{vw}\ge x_v^j-|\Gamma_j|r_v^j$, with both-end capacities
+$f^j_{uv}\le|\Gamma_j|x_u^j,|\Gamma_j|x_v^j$; a body fixes $t_j=1$ and its root.
+This also permits an empty rootless district when `extra` meets its lower band, as the
+production separator loop does; the rootless-component/tree proof above applies to
+every nonempty selection. `tests/test_formulation.py` numerically compares optima at
+zero relative gap and fixed-point verdicts against the unchanged production solve path
+on 38-, 30- and 50-ZCTA grids, a 30-ZCTA multiple-body/pruning path, and a 30-ZCTA
+induced FI_PA export slice (slice-specific bodies/lists/band, not the original window).
+The spec is capped at 300 ZCTAs including bodies. Entry: `td/formulation/f4.py:115`
+`def build_model(data, *, connectivity=True):`.
 
 ### 4.2 F4.DAG and F4.SEQ — restricted-first drawing
 
@@ -1768,6 +1797,21 @@ validity. Entry on `m5-studio/bnc`: `tools/exp/bnc/sepcuts.py:102`
 component's boundary reduced from each endpoint's side; optional fractional separation
 uses vertex-capacity max flow and checks the resulting inequality numerically.
 
+**Pyomo specification:** `td.formulation.f142:build_model` shares the F4 base rows and
+objective, with named separator sets $S$ and the displayed inequalities; no branch-only
+module is imported. Because the full family is exponential, the builder returns its base
+relaxation and `td.formulation.f142:separate` materializes violated integer rows using
+component boundaries in $\Gamma_j$. A solve is certified only after an optimal integer
+solution has no violated separator; an intermediate relaxation's optimal objective is
+merely a lower bound on this fixed conditional group. Every failed round removes that integer assignment,
+so exact unlimited separation terminates and agrees with the finite-family formulation.
+The five F4 conformance instances compare its optimum and point verdicts with both the
+independent-flow F4 spec and production F4 (the mathematical model of arm a). An extra
+locally feasible disconnected point exercises nonempty separator generation; ordinary
+neighbor rows alone accept it. This does not execute or certify the branch's SCIP handler.
+Entries: `td/formulation/f142.py:17` `def build_model(data):` and
+`td/formulation/f142.py:28` `def separate(M, *, tolerance=1e-6):`.
+
 **Certificate domain for every arm:** `optimal` is numerical connected optimality of the
 exported model (relative gap 0, absolute gap $10^{-6}$); `feasible` is a connected incumbent;
 `infeasible` is absence of a connected assignment under the exported restrictions;
@@ -1815,10 +1859,19 @@ $$
 \sum_u f^j_{uv}-\sum_w f^j_{vw}\ge x^j_v-n_j r^j_v.
 $$
 
-The spanning-tree/rootless-component proof is F0's. Its certificate is conditional P/band
-infeasibility or optimality, independent of separator-code validity, not independent of the
-common exported data. Entry on `m5-studio/bnc`, `tools/exp/bnc/verify.py:34`:
-`def flow_model(inst, log=print):`.
+The spanning-tree/rootless-component proof is F0's **when every rootless district is
+required to select a vertex**. Entry on `m5-studio/bnc`, `tools/exp/bnc/verify.py:34`:
+`def flow_model(inst, log=print):`. **Phase-2 conformance finding:** the unconditional
+root row at `tools/exp/bnc/verify.py:51` `            model.addCons(quicksum(rv.values()) == 1)`
+excludes an empty rootless district. F4/F142 separators permit it when `extra` already
+meets the residual lower bound. A 30-vertex fixed-point check of that root-row restriction
+reproduces the difference (without executing SCIP), including sequential overweight-extra
+semantics: `tests/test_formulation.py:341`
+`def test_formulation_rootless_empty_extra_and_sequential_domain():`. Thus this verifier's
+infeasibility/optimum is a certificate for the **additional nonempty-rootless restriction**;
+it is a common-model certificate only when nonemptiness is implied by the base rows
+(e.g. positive residual lower mass for each rootless district). It is independent of
+separator-code validity, not of the common exported data. No production code is changed.
 
 ### 12.3 Phase-0 result: FI_NY window infeasibility, not F0 infeasibility
 
