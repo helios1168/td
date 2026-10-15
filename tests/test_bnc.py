@@ -9,12 +9,15 @@ instances of the real groups are checked too when they are on disk (a SKIP line 
 """
 from __future__ import annotations
 
+import contextlib
 import csv
 import importlib.util
+import io
 import json
 import os
 import sys
 import tempfile
+import types
 
 import numpy as np
 
@@ -36,6 +39,7 @@ def _mod(name: str, file: str):
 arms = _mod("bnc_arms", "arms.py")
 export = _mod("bnc_export", "export.py")
 bnc_run = _mod("bnc_run", "run.py")
+bnc_report = _mod("bnc_report", "report.py")
 
 TOL = 1e-6
 
@@ -238,3 +242,158 @@ def test_exported_instances_reproduce_the_runs_groups():
         again = export.roundtrip(inst.doc, draw)
         assert again["ok"], (n, again["problems"])
         assert set(inst.js) == set(m["districts"]) and len(inst.zs) == m["free_zctas"]
+
+
+# ------------------------------------------------------------------------------ report, widths, runner
+def _res(arm, status, objective, gate, seconds=10.0):
+    return {"instance": "S", "arm": arm, "status": status, "objective": objective, "gate": gate,
+            "seconds": seconds, "gap": 0.0, "nodes": 1, "note": "", "time_limit": 60.0, "threads": 1,
+            "code_commit": "x"}
+
+
+def _gate(m1="pass", in_window=True):
+    return {"m1": m1, "m1_items": ["i"] if m1 != "pass" else [], "map_m1": m1, "in_window": in_window,
+            "other_districts_outside_window": []}
+
+
+def test_report_winner_needs_the_m1_and_window_gates():
+    """A cheaper feasible drawing that fails M1 or the window, or has no gate result, is never
+    announced as the best connected drawing; it is listed as a failure / UNGATED."""
+    rs = [_res("a", "feasible", 1.0, _gate("fail")), _res("b", "feasible", 2.0, _gate(in_window=False)),
+          _res("c", "feasible", 3.0, None), _res("d", "feasible", 4.0, _gate())]
+    text = "\n".join(bnc_report.winners(rs))
+    assert "arm d's (objective 4" in text and "best connected drawing" in text, text
+    assert "arm a (feasible" in text and "arm b (feasible" in text and "UNGATED" in text, text
+    # no feasible drawing passes: nobody wins
+    lines = bnc_report.winners(rs[:3])
+    assert lines[0].startswith("- **S**: no arm finished") and "best connected" not in lines[0], lines
+    # an optimum with no gate result or a failing gate is not a winner either
+    for g in (None, _gate("fail")):
+        lines = bnc_report.winners([_res("a", "optimal", 1.0, g)])
+        assert "proved an optimum" not in lines[0], lines
+    table = bnc_report.table(rs)
+    assert table.count("**UNGATED**") == 2 and "no drawing" not in table, table
+    assert "| S | e |" not in table
+    none = bnc_report.table([_res("e", "not usable", None, None)])
+    assert "UNGATED" not in none and "no drawing" not in none
+
+
+def test_width_data_keeps_the_gates_inputs_of_the_group():
+    """The exported widths hold polygon borders, connectors, gap widths, land and relays of the
+    group's ZCTAs, bodies and neighbours, apart from the objective's border coefficients."""
+    name, inst = _instances()[0]
+    snap = json.loads(json.dumps(inst.doc["draw"]))
+    zs = snap["zs"]
+    zero = zs[0]
+    snap["m"][zero] = 0.0
+    a, b = zs[0], snap["adj"][zs[0]][0]
+    polygon = {"border": {tuple(sorted((a, b))): 1500.0, ("far1", "far2"): 9.0},
+               "connectors": [(zs[1], zs[2]), ("far1", zs[3])],
+               "gaps": {(a, zs[-1]): 250.0, ("far1", "far2"): 5.0},
+               "aland": {**{z: 1e6 for z in zs}, "far1": 2.0}, "state": {z: "ST" for z in zs}}
+    w = capture.width_data(polygon, snap)
+    assert w["border"] == [[*sorted((a, b)), 1500.0]], w["border"]
+    assert w["connectors"] == [sorted((zs[1], zs[2]))] and w["gaps"] == [[*sorted((a, zs[-1])), 250.0]], w
+    assert zero in w["relays"] and "far1" not in w["aland"] and w["aland"][zs[0]] == 1e6, w
+    assert snap["border"] is None, "the widths do not come from the objective's border"
+
+
+def _run_args(d, **kw):
+    """`threads` None as in the other tests: HiGHS's pool is sized by the first value a process uses (trap 18)."""
+    return types.SimpleNamespace(m2_dir=d, out=os.path.join(d, "runs", "exp", "bnc"),
+                                 instances=os.path.join(d, "inst"), frac_root=False, no_flow=False,
+                                 time_limit=60.0, threads=None, insts=["S"], arms=["a"], jobs=1, **kw)
+
+
+def test_runner_always_gates_writes_manifests_and_has_no_bypass():
+    name, inst = _instances()[0]
+    called = []
+
+    def fake_gate(inst_, owner, cfg, folder, log=print):
+        called.append(folder)
+        merged = os.path.join(folder, "merged")
+        os.makedirs(merged, exist_ok=True)
+        for d in (folder, merged):
+            with open(os.path.join(d, "ledger.csv"), "w") as fh:
+                fh.write("zip_code\n")
+        if len(called) == 2:
+            raise RuntimeError("gate broke")
+        return _gate()
+    with tempfile.TemporaryDirectory() as d:
+        a = _run_args(d)
+        os.makedirs(a.instances)
+        with open(os.path.join(d, "spec.toml"), "w") as fh:
+            fh.write("x")
+        with open(os.path.join(d, "extract.json"), "w") as fh:
+            fh.write("y")
+        with open(os.path.join(a.instances, "S.json.gz"), "wb") as fh:
+            fh.write(b"z")
+        cfg = {"spec": os.path.join(d, "spec.toml"), "extract": os.path.join(d, "extract.json"), "channel": "X"}
+        saved = (bnc_run.export.instances, bnc_run.inst_io.load, bnc_run.gate)
+        bnc_run.export.instances = lambda _d: {"S": cfg}
+        bnc_run.inst_io.load = lambda _p: inst
+        bnc_run.gate = fake_gate
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                assert bnc_run.one("S", "b", a) == 0
+                folder = os.path.join(a.out, "S", "b")
+                assert called == [folder], called
+                with open(os.path.join(folder, "result.json")) as fh:
+                    assert json.load(fh)["gate"]["m1"] == "pass"
+                for f in (folder, os.path.join(folder, "merged")):
+                    with open(os.path.join(f, "manifest.json")) as fh:
+                        assert json.load(fh)["status"] == "done", f
+                tracking = bnc_run.mandates().tracking(d, gate=lambda _d: "pass")
+                assert [t for t in tracking if t.startswith("run folder with a ledger")] == [], tracking
+                # a run whose gate raises leaves failed manifests, never a ledger without one
+                try:
+                    bnc_run.one("S", "b", a)
+                    raise AssertionError("the gate error was swallowed")
+                except RuntimeError as e:
+                    assert "gate broke" in str(e)
+                for f in (folder, os.path.join(folder, "merged")):
+                    with open(os.path.join(f, "manifest.json")) as fh:
+                        assert json.load(fh)["status"] == "failed", f
+        finally:
+            bnc_run.export.instances, bnc_run.inst_io.load, bnc_run.gate = saved
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        try:
+            bnc_run.main(["one", "FI_PA", "a", "--no-gate"])
+            raise AssertionError("--no-gate still parses")
+        except SystemExit as e:
+            assert e.code == 2
+
+
+def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():
+    class Child:
+        def __init__(self, cmd, **kw):
+            arm, out = cmd[5], cmd[cmd.index("--out") + 1]
+            self.returncode = {"a": 3, "b": 0, "c": 0}[arm]
+            if arm == "c":
+                with open(os.path.join(out, "S", "c", "result.json"), "w") as fh:
+                    json.dump(_res("c", "optimal", 1.0, _gate()), fh)
+
+        def poll(self):
+            return self.returncode
+    saved = bnc_run.subprocess, bnc_run.time
+    bnc_run.subprocess, bnc_run.time = types.SimpleNamespace(Popen=Child, DEVNULL=-3), types.SimpleNamespace(sleep=lambda s: None)
+    try:
+        with tempfile.TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
+            a = _run_args(d)
+            a.arms = ["a", "b", "c"]
+            for arm in "abc":
+                os.makedirs(os.path.join(a.out, "S", arm))
+                with open(os.path.join(a.out, "S", arm, "result.json"), "w") as fh:
+                    json.dump(_res(arm, "optimal", 0.5, _gate()), fh)
+            assert bnc_run.all_runs(a) == 1
+            for arm in "ab":      # rc 3, and rc 0 without a new result: the old measurement is not reported
+                assert not os.path.exists(os.path.join(a.out, "S", arm, "result.json"))
+                assert os.path.exists(os.path.join(a.out, "S", arm, "result.previous.json"))
+            with open(os.path.join(a.out, "REPORT.md")) as fh:
+                report = fh.read()
+            assert "| S | c |" in report and "| S | a |" not in report and "| S | b |" not in report, report
+            a.arms = ["c"]
+            assert bnc_run.all_runs(a) == 0
+    finally:
+        bnc_run.subprocess, bnc_run.time = saved

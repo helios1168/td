@@ -23,6 +23,11 @@ instance's `meta`: `faithful` (the same call with the run's own flags has the co
 `contig.json` recorded) and `roundtrip` (the MILP rebuilt from the instance alone by draw.py's code
 equals the exported one, column by column and row by row). Both are fatal on a mismatch.
 
+`widths` (a top-level section, apart from the objective's border coefficients in `draw.border`): for
+the group's ZCTAs, its bodies' ZCTAs and their neighbours, the gate's width data from the 2025 polygon
+graph (`capture.width_data`): `border` (polygon edges, metres), `connectors` (approved passages),
+`gaps` (land-only gap widths), `aland`, `state`, and `relays` (zero-opportunity ZCTAs of the set).
+
 | id | run | group |
 |---|---|---|
 | `FI_PA` | `main/ne-48-bal/rest-FI-WH-national/draw`, FI group 4 | 4 districts, 1,833 free ZCTAs, 12,115 columns |
@@ -42,7 +47,7 @@ export TD_REPO=/Users/Shared/sv-ntlee/td; TD_PY=$TD_REPO/.venv/bin/python3
 ## The arms (`arms.py`)
 
 All at `mip_rel_gap` 0 (trap 12), absolute gap 1e-6, one process each, `--threads` for HiGHS (one value
-per process, trap 18; SCIP runs one thread), `--time-limit` wall seconds.
+per process, trap 18; SCIP runs one thread, so the comparison runs use `--threads 1`), `--time-limit` wall seconds.
 
 - **a** draw.py's own solve path on the instance's call: `dag` False, single-commodity flow rows and
   per-layer separators (`--no-flow` drops the flow), then its solve-check-cut loop. It also starts from
@@ -72,23 +77,24 @@ One arm on one instance (log, `result.json`, `ledger.csv`, `merged/` under
 `$TD_REPO/runs/exp/bnc_2026-10-15/<instance>/<arm>/`):
 
 ```
-"$TD_PY" -u tools/exp/bnc/run.py one FI_PA b --time-limit 7200 --threads 4
+"$TD_PY" -u tools/exp/bnc/run.py one FI_PA b --time-limit 7200 --threads 1
 ```
 
-The long runs (4 instances × 4 arms, 2 h each, 4 at a time with 4 threads: 16 threads of 18 cores, so run
-nothing else heavy meanwhile; the REPORT is written at the end, or rerun `report.py`):
+The long runs (4 instances × 4 arms, 2 h each, 4 at a time with 1 thread each, the thread count SCIP runs
+with, so the arms compare like for like (A1); the REPORT is written at the end, or rerun `report.py`):
 
 ```
 cd <worktree>; export TD_REPO=/Users/Shared/sv-ntlee/td; TD_PY=$TD_REPO/.venv/bin/python3
-nohup "$TD_PY" -u tools/exp/bnc/run.py all --time-limit 7200 --threads 4 --jobs 4 \
+nohup "$TD_PY" -u tools/exp/bnc/run.py all --time-limit 7200 --threads 1 --jobs 4 \
     > "$TD_REPO/runs/exp/bnc_2026-10-15/all.log" 2>&1 &
 ```
 
-After a drawing is returned the gate runs on it: the group's ZCTAs replaced in the source map's full
+After a drawing is returned the gate always runs on it (there is no bypass): the group's ZCTAs replaced in the source map's full
 ledger (`warm/ne-48-bal/merged`, `warm/ne-50-bal/merged`, m2 `pass2_merged`), `tools/mandates/check.py`'s
 `m1` on the full graph (relays, necks as the gate has them) and `tools/looks/score.py`'s `dollar_gate`.
 `gate.m1` is the verdict of the group's districts (M1 is district-local), `gate.map_m1` the whole merged
-map's (it also carries the source map's other failing districts).
+map's (it also carries the source map's other failing districts). The arm folder and `merged/` each
+get a `manifest.json` (mandate T1, `run.write_manifest`), `failed` when the run raised.
 
 `"$TD_PY" tests/run_all.py -k bnc`: three grids on which every arm returns the same optimum and a
 connected drawing; the separator rows are valid and minimal; the round trip detects a change; the probe.

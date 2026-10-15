@@ -31,6 +31,17 @@ def _gap(x):
     return "-" if x is None else f"{100 * x:.3g}%"
 
 
+def drew(r: dict) -> bool:
+    """The arm returned a drawing."""
+    return r["status"] in ("optimal", "feasible")
+
+
+def passes(r: dict) -> bool:
+    """The drawing has a gate result and passes M1 (the group's districts) and the dollar windows."""
+    g = r.get("gate")
+    return bool(g) and g["m1"] == "pass" and bool(g["in_window"])
+
+
 def rows(out: str) -> list:
     res = []
     for path in sorted(glob.glob(os.path.join(out, "*", "*", "result.json"))):
@@ -45,9 +56,12 @@ def table(rs: list) -> str:
              "|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(rs, key=lambda r: (r["instance"], r["arm"])):
         g = r.get("gate")
-        m1 = "no drawing" if g is None else (f"{g['m1']} (map: {g['map_m1']})" if g["m1"] == "pass"
-                                              else f"**FAIL** ({len(g['m1_items'])} items)")
-        win = "-" if g is None else ("yes" if g["in_window"] else "**NO**")
+        if g is None:
+            m1 = win = "**UNGATED**" if drew(r) else "-"
+        else:
+            m1 = (f"{g['m1']} (map: {g['map_m1']})" if g["m1"] == "pass"
+                  else f"**FAIL** ({len(g['m1_items'])} items)")
+            win = "yes" if g["in_window"] else "**NO**"
         lines.append(f"| {r['instance']} | {r['arm']} | {r['status']} | {_fmt(r['seconds'])} | {_gap(r['gap'])} | "
                      f"{r['nodes'] if r['nodes'] is not None else '-'} | {_fmt(r['objective'], 4)} | {m1} | {win} |")
     return "\n".join(lines)
@@ -57,29 +71,29 @@ def winners(rs: list) -> list:
     out = []
     for inst in sorted({r["instance"] for r in rs}):
         mine = [r for r in rs if r["instance"] == inst]
-        ok = [r for r in mine if r["status"] == "optimal" and r.get("gate") and r["gate"]["m1"] == "pass"
-              and r["gate"]["in_window"]]
-        opt = [r for r in mine if r["status"] == "optimal"]
-        feas = [r for r in mine if r["status"] == "feasible" and r["objective"] is not None]
+        ok = [r for r in mine if r["status"] == "optimal" and passes(r)]
+        feas = [r for r in mine if r["status"] == "feasible" and r["objective"] is not None and passes(r)]
         inf = [r for r in mine if r["status"] == "infeasible"]
+        bad = [r for r in mine if drew(r) and not passes(r)]
         if ok:
             w = min(ok, key=lambda r: r["seconds"])
             out.append(f"- **{inst}**: arm {w['arm']} proved an optimum in {w['seconds']:.0f} s "
                        f"(objective {w['objective']:.6g}); its drawing passes M1 and the window.")
-        elif opt:
-            w = min(opt, key=lambda r: r["seconds"])
-            out.append(f"- **{inst}**: arm {w['arm']} proved an optimum in {w['seconds']:.0f} s, but the drawing "
-                       f"fails the gate (M1 {w.get('gate', {}).get('m1')}, window {w.get('gate', {}).get('in_window')}): a failure, not a result.")
         elif inf:
             w = min(inf, key=lambda r: r["seconds"])
             out.append(f"- **{inst}**: arm {w['arm']} proved that no connected drawing exists in the group "
                        f"under the model's rules ({w['seconds']:.0f} s).")
         elif feas:
             w = min(feas, key=lambda r: r["objective"])
-            out.append(f"- **{inst}**: no arm proved an optimum; the best connected drawing is arm {w['arm']}'s "
-                       f"(objective {w['objective']:.6g}, gap {_gap(w['gap'])}).")
+            out.append(f"- **{inst}**: no arm proved an optimum; the best connected drawing that passes M1 and "
+                       f"the window is arm {w['arm']}'s (objective {w['objective']:.6g}, gap {_gap(w['gap'])}).")
         else:
-            out.append(f"- **{inst}**: no arm finished (no connected drawing in the time limit).")
+            out.append(f"- **{inst}**: no arm finished (no drawing that passes M1 and the window in the time limit).")
+        for r in sorted(bad, key=lambda r: r["arm"]):
+            g = r.get("gate")
+            what = ("UNGATED: no gate result, so the drawing counts for nothing" if g is None else
+                    f"fails the gate (M1 {g['m1']}, in window {g['in_window']}): a failure, not a result")
+            out.append(f"  - arm {r['arm']} ({r['status']}, objective {_fmt(r['objective'], 6)}): {what}.")
     return out
 
 

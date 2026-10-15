@@ -14,6 +14,9 @@ written again here.  Each instance records
   its column and row counts compared with the ones the run's `contig.json` recorded;
 - the instance's base MILP (`dag` False, no flow, no repair rows, no neck cuts: the complete model
   the arms share), the group graph, the data to hand draw.py again (`capture.rebuild_args`);
+- `widths`: the gate's width data (polygon borders, connectors, gap widths, land areas, relays) of
+  the group's ZCTAs, bodies and neighbours, apart from the objective's border coefficients
+  (`capture.width_data`);
 - `roundtrip`: that MILP rebuilt from the instance alone by draw.py's code, compared column for
   column and row for row with the exported one (`roundtrip`).
 """
@@ -302,7 +305,7 @@ def _close(x, y) -> bool:
 
 
 # ------------------------------------------------------------------------------ the document
-def build_doc(name: str, cfg: dict, cap: dict) -> dict:
+def build_doc(name: str, cfg: dict, cap: dict, widths: dict) -> dict:
     snap, base, faithful, rec = cap["snap"], cap["base"], cap["faithful"], cap["recorded"]
     g = base["graph"]
     window = {j: [g["lo"] - g["fixed_mass"][j], g["hi"] - g["fixed_mass"][j]] for j in g["js"]}
@@ -324,10 +327,11 @@ def build_doc(name: str, cfg: dict, cap: dict) -> dict:
                                       "the columns and rows its contig.json recorded"},
                  "window": window, "window_zctas": cap.get("window"),
                  "base_counts": counts(base),
+                 "widths": {k: len(v) for k, v in widths.items()},
                  "start_vector": "none: draw.py's construct found no connected drawing"
                  if base["start"] is None else "present (constructed)"},
         "model": base["model"], "labels": base["labels"], "graph": g,
-        "draw": snap, "start": base["start"]}
+        "widths": widths, "draw": snap, "start": base["start"]}
 
 
 def export_one(name: str, cfg: dict, out_dir: str, log=print) -> dict:
@@ -339,7 +343,7 @@ def export_one(name: str, cfg: dict, out_dir: str, log=print) -> dict:
         cap = replay_draw(cfg, ctx, draw)
     else:
         cap = replay_repair(cfg, ctx, draw, ctx["repair"])
-    doc = build_doc(name, cfg, cap)
+    doc = build_doc(name, cfg, cap, capture.width_data(ctx["polygon"], cap["snap"]))
     f = doc["meta"]["faithful"]
     log(f"{name}: faithful columns {f['columns']} rows {f['rows']} ok={f['ok']}")
     if not f["ok"]:

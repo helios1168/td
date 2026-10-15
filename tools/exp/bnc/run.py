@@ -1,7 +1,7 @@
 """run.py -- one arm on one instance per process, then the gate on the merged map (#142, A1/A2).
 
-    "$TD_PY" -u tools/exp/bnc/run.py one <instance> <arm> --time-limit 7200 --threads 4
-    "$TD_PY" -u tools/exp/bnc/run.py all --time-limit 7200 --threads 4 [--insts ...] [--arms a b c d] [--jobs 1]
+    "$TD_PY" -u tools/exp/bnc/run.py one <instance> <arm> --time-limit 7200 --threads 1
+    "$TD_PY" -u tools/exp/bnc/run.py all --time-limit 7200 --threads 1 [--insts ...] [--arms a b c d] [--jobs 1]
 
 `one` writes `<out>/<instance>/<arm>/{result.json, ledger.csv, log}`, `out` being
 `$TD_REPO/runs/exp/bnc_2026-10-15` by default:
@@ -24,8 +24,14 @@ neck, `fail` otherwise (a failure is reported as one, never as a timing); `gate.
 whole merged map's status, which also carries the source map's other districts and is context
 only.  `gate.in_window` says whether every district of the group is inside its dollar window.
 
+The gate always runs on a returned drawing (no switch turns it off).  The arm folder and `merged/`
+each get a `manifest.json` (mandate T1, `contig/run.py`'s `write_manifest`): `running` at the start,
+`done` at the end, `failed` when the run raised.
+
 `all` runs each (instance, arm) as its own process (`one`), `--jobs` at a time (default 1, so that
-the times are comparable), and then writes `REPORT.md` (`report.py`).
+the times are comparable), and then writes `REPORT.md` (`report.py`).  A child that exits non-zero or
+leaves no `result.json` makes `all` exit 1; a `result.json` of an earlier run is moved to
+`result.previous.json` before its child starts, so a failed rerun never reports old measurements.
 """
 from __future__ import annotations
 
@@ -149,11 +155,42 @@ def gate(inst, owner: dict, cfg: dict, folder: str, log=print) -> dict:
 
 
 # ------------------------------------------------------------------------------ one process
+def manifests(folder: str, name: str, arm: str, cfg: dict, a, status: str, **more) -> None:
+    """Mandate T1's `manifest.json` in `folder` and, once the gate has made it, in `folder/merged`
+    (every folder under runs/exp with a `ledger.csv` needs one); a manifest of an earlier run is
+    replaced, not updated, at `running` (and in `merged/`)."""
+    if ROOT not in sys.path:
+        sys.path.insert(0, ROOT)
+    contig = capture._load("contig_run", os.path.join(capture.CONTIG, "run.py"))
+    params = {"instance": name, "arm": arm, "time_limit": a.time_limit, "threads": a.threads,
+              "frac_root": bool(a.frac_root), "no_flow": bool(a.no_flow)}
+    merged = os.path.join(folder, "merged")
+    for d in (folder, merged):
+        if not os.path.isdir(d):
+            continue
+        path = os.path.join(d, "manifest.json")
+        if os.path.exists(path) and (d == merged or status == "running"):
+            os.remove(path)
+        contig.write_manifest(d, "bnc", cfg["spec"], cfg["extract"], params, status=status, lane="bnc",
+                              **more)
+
+
 def one(name: str, arm: str, a) -> int:
-    arms = capture.sibling("bnc_arms", "arms.py")
     cfg = export.instances(a.m2_dir)[name]
     folder = os.path.join(a.out, name, arm)
     os.makedirs(folder, exist_ok=True)
+    manifests(folder, name, arm, cfg, a, "running")
+    try:
+        rc = _one(name, arm, a, cfg, folder)
+    except BaseException as e:
+        manifests(folder, name, arm, cfg, a, "failed", stop_reason=f"{type(e).__name__}: {e}")
+        raise
+    manifests(folder, name, arm, cfg, a, "done")
+    return rc
+
+
+def _one(name: str, arm: str, a, cfg: dict, folder: str) -> int:
+    arms = capture.sibling("bnc_arms", "arms.py")
     logf = open(os.path.join(folder, "log"), "w", encoding="utf-8")
 
     def log(*msg):
@@ -177,11 +214,10 @@ def one(name: str, arm: str, a) -> int:
         obj, why = inst.evaluate(owner, a.threads)
         result["objective_check"] = {"objective": obj, "problem": why}
         log(f"  the drawing on the instance's MILP: objective {obj} {why}")
-        if not a.no_gate:
-            result["gate"] = gate(inst, owner, cfg, folder, log)
-            g = result["gate"]
-            log(f"  gate: M1 of the group's districts {g['m1']} {g['m1_items'][:2]}, "
-                f"in window {g['in_window']}")
+        result["gate"] = gate(inst, owner, cfg, folder, log)
+        g = result["gate"]
+        log(f"  gate: M1 of the group's districts {g['m1']} {g['m1_items'][:2]}, "
+            f"in window {g['in_window']}")
     with open(os.path.join(folder, "result.json"), "w", encoding="utf-8") as fh:
         json.dump(result, fh, indent=1, sort_keys=True)
         fh.write("\n")
@@ -191,6 +227,7 @@ def one(name: str, arm: str, a) -> int:
 
 def all_runs(a) -> int:
     report = capture.sibling("bnc_report", "report.py")
+    failed = []
     jobs, running, todo = max(1, a.jobs), [], [(i, r) for i in a.insts for r in a.arms]
     py = sys.executable
     while todo or running:
@@ -199,8 +236,11 @@ def all_runs(a) -> int:
             cmd = [py, "-u", os.path.abspath(__file__), "one", i, r, "--time-limit", str(a.time_limit),
                    "--threads", str(a.threads), "--out", a.out, "--instances", a.instances,
                    "--m2-dir", a.m2_dir] + (["--frac-root"] if a.frac_root else []) \
-                + (["--no-flow"] if a.no_flow else []) + (["--no-gate"] if a.no_gate else [])
+                + (["--no-flow"] if a.no_flow else [])
             os.makedirs(os.path.join(a.out, i, r), exist_ok=True)
+            stale = os.path.join(a.out, i, r, "result.json")
+            if os.path.exists(stale):
+                os.replace(stale, os.path.join(a.out, i, r, "result.previous.json"))
             print("start", " ".join(cmd), flush=True)
             running.append((i, r, subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=open(
                 os.path.join(a.out, i, r, "stderr"), "w"))))
@@ -209,8 +249,13 @@ def all_runs(a) -> int:
             if item[2].poll() is not None:
                 print(f"done {item[0]} {item[1]} rc {item[2].returncode}", flush=True)
                 running.remove(item)
+                made = os.path.exists(os.path.join(a.out, item[0], item[1], "result.json"))
+                if item[2].returncode != 0 or not made:
+                    failed.append((item[0], item[1], item[2].returncode))
     report.write(a.out, a.instances)
-    return 0
+    for i, r, rc in failed:
+        print(f"FAILED {i} {r}: rc {rc} or no result.json (stderr in {os.path.join(a.out, i, r, 'stderr')})", flush=True)
+    return 1 if failed else 0
 
 
 def main(argv=None) -> int:
@@ -232,7 +277,6 @@ def main(argv=None) -> int:
         p.add_argument("--m2-dir", default=export.M2_DIR)
         p.add_argument("--frac-root", action="store_true", help="arm c: fractional separation at the root")
         p.add_argument("--no-flow", action="store_true", help="arm a without the flow rows")
-        p.add_argument("--no-gate", action="store_true")
     a = ap.parse_args(argv)
     a.instances = a.instances or os.path.join(a.out, "instances")
     return one(a.instance, a.arm, a) if a.cmd == "one" else all_runs(a)

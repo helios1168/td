@@ -199,6 +199,29 @@ def snapshot_args(a: dict, centres: list) -> dict:
         "centres": centres}
 
 
+def width_data(polygon: dict, snap: dict) -> dict:
+    """The gate's width data for a group (`snapshot_args`' `snap`), from `geo.polygon_graph`'s dict:
+    for the group's ZCTAs, its bodies' ZCTAs and their P-neighbours, `border` [[a, b, metres]] of
+    the polygon edges, `connectors` [[a, b]] (approved passages), `gaps` [[a, b, metres]] (land-only
+    gap widths), `aland` {zcta: m²}, `state`, and `relays`, the ZCTAs of the set with zero
+    opportunity in `snap["m"]` (a passage may run through them).  This is the data of the necks
+    (`td.audit.NeckGraph`), kept apart from `snap["border"]`, the objective's border coefficients."""
+    touched = set(snap["zs"]) | {y for ys in snap["adj"].values() for y in ys} \
+        | {z for bs in snap["bodies"].values() for b in bs for z in b}
+
+    def both(e):
+        return e[0] in touched and e[1] in touched
+    return {
+        "border": [[a, b, float(m)] for (a, b), m in sorted((tuple(sorted(e)), m) for e, m in
+                                                            polygon["border"].items()) if both((a, b))],
+        "connectors": [list(e) for e in sorted(tuple(sorted(e)) for e in polygon["connectors"]) if both(e)],
+        "gaps": [[a, b, float(m)] for (a, b), m in sorted((tuple(sorted(e)), m) for e, m in
+                                                          (polygon.get("gaps") or {}).items()) if both((a, b))],
+        "aland": {z: float(polygon["aland"][z]) for z in sorted(touched) if z in polygon["aland"]},
+        "state": {z: polygon["state"][z] for z in sorted(touched) if z in polygon.get("state", {})},
+        "relays": sorted(z for z in touched if snap["m"].get(z) == 0)}
+
+
 def rebuild_args(snap: dict) -> tuple:
     """(args, kwargs): `_solve_group`'s call from `snapshot_args`, on stand-ins for `inst` and
     `plan`; the solve must run inside `centres_patch` (the recorded `td.realize.centres`)."""
