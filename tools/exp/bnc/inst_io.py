@@ -136,7 +136,7 @@ class Inst:
         add_rows(h, extra_rows)
         return h
 
-    def evaluate(self, owner: dict) -> tuple:
+    def evaluate(self, owner: dict, threads: int | None = None) -> tuple:
         """(objective, "") of the group's MILP with the x columns fixed to `owner`'s drawing, the
         other columns free; (None, why) when `owner` breaks a row (the band, a unit row) or leaves
         a ZCTA of the group out.  The rules are the model's, so a drawing is judged by the same
@@ -148,7 +148,7 @@ class Inst:
         if bad:
             return None, f"{bad[0][0]} given to {bad[0][1]}, which may not own it"
         import highspy
-        h = self.highs(time_limit=60.0)
+        h = self.highs(threads=threads, time_limit=60.0)
         for (z, j), i in self.xcol.items():
             v = 1.0 if owner[z] == j else 0.0
             h.changeColBounds(i, v, v)

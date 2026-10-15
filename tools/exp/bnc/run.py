@@ -174,7 +174,7 @@ def one(name: str, arm: str, a) -> int:
     log(f"{name} arm {arm}: {result['status']} objective {result['objective']} bound {result['bound']} "
         f"gap {result['gap']} nodes {result['nodes']} in {result['seconds']:.1f}s; {result['note']}")
     if owner is not None:
-        obj, why = inst.evaluate(owner)
+        obj, why = inst.evaluate(owner, a.threads)
         result["objective_check"] = {"objective": obj, "problem": why}
         log(f"  the drawing on the instance's MILP: objective {obj} {why}")
         if not a.no_gate:

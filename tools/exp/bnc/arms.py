@@ -187,7 +187,7 @@ def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = Fa
           max_per_component=None) -> dict:
     """PySCIPOpt with a constraint handler adding integer separator rows as lazy cuts."""
     import pyscipopt
-    from pyscipopt import SCIP_RESULT, Conshdlr, Model, quicksum
+    from pyscipopt import SCIP_RESULT, Conshdlr, quicksum
     t0 = time.time()
     G = sepcuts.Graphs(inst)
     model, xs = scip_model(inst)

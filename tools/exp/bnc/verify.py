@@ -98,8 +98,15 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("instance")
     ap.add_argument("--time-limit", type=float, default=1800.0)
+    ap.add_argument("--out", default=None, help="also write the result as JSON here")
     a = ap.parse_args(argv)
-    print(run(inst_io.load(a.instance), a.time_limit))
+    res = run(inst_io.load(a.instance), a.time_limit)
+    res["time_limit"] = a.time_limit
+    print(res)
+    if a.out:
+        import json
+        with open(a.out, "w", encoding="utf-8") as fh:
+            json.dump(res, fh, indent=1)
     return 0
 
 

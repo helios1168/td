@@ -114,6 +114,16 @@ def write(out: str = OUT, instances: str | None = None) -> str:
         if r["arm"] == "d" and r.get("probe"):
             lines += ["## Arm d: the highspy lazy-constraint probe", "", r["probe"]["observed"], ""]
             break
+    checks = sorted(glob.glob(os.path.join(out, "*", "verify*.json")))
+    if checks:
+        lines += ["## Independent checks (`verify.py`: SCIP on the flow formulation, no cuts)", ""]
+        for path in checks:
+            with open(path, encoding="utf-8") as fh:
+                v = json.load(fh)
+            lines.append(f"- {v['instance']}: SCIP status `{v['scip_status']}`, {v['seconds']:.0f} s, {v['nodes']} nodes, "
+                         f"limit {v.get('time_limit', '?')} s" + ("" if v["objective"] is None else
+                         f", objective {v['objective']:.6g}, connected {v['connected']}"))
+        lines.append("")
     gaps = [r for r in rs if r.get("gate") and r["gate"]["other_districts_outside_window"]]
     if gaps:
         lines += ["## Context", "", "Districts of the source map outside the group (not the arm's):", ""] + [
