@@ -213,6 +213,32 @@ def test_a_neck_cut_counts_the_relay_the_old_row_missed():
     assert cuts[0].const + sum(w for _, w in cuts[0].single) + sum(w for *_, w in cuts[0].pair) > 4.0
 
 
+def test_a_neck_cut_counts_the_relay_edge_an_owned_window_relay_cuts():
+    """Five ZCTAs, D1 = {a, b, c} (a, r1 the window): a hangs off b by 1.5 km and joins c across
+    12 km; r2 (D2's, outside the window) and r1 (window) have no opportunity, r2 touching b and c
+    across 3 and 12 km and r1 across 12, r1 touching b across 3.  With r1 D2's the gate finds a neck;
+    if D1 owns r1 it accepts D1 (r2 is then a relay of the fixed part, with r1 cut off from it by
+    12 km).  The row built on the first map must hold on the second, which needs the r1-r2 edge that
+    owning r1 cuts, and must still break the first."""
+    gate, repair, *_ = _mods()
+    km = {("a", "b"): 1.5, ("a", "c"): 12.0, ("b", "r1"): 3.0, ("b", "r2"): 3.0, ("c", "r2"): 12.0,
+          ("r1", "r2"): 12.0}
+    zs = ["a", "b", "c", "r1", "r2"]
+    polygon = {"vertices": zs, "edges": sorted(km), "state": dict.fromkeys(zs, "TX"),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"a": 1e7, "b": 1e8, "c": 5e7, "r1": 1e6, "r2": 1e6}, "voronoi_gaps": {}}
+    m = {"a": 1.0, "b": 1.0, "c": 1.0, "r1": 0.0, "r2": 0.0}
+    ng = gate.gate_graph(polygon)
+    base = {"b": "D1", "c": "D1", "r2": "D2"}
+    first, other = {"a": "D1", "r1": "D2"}, {"a": "D1", "r1": "D1"}
+    assert repair.district_necks({"a", "b", "c"}, m, ng)               # the first map has a neck
+    assert not repair.district_necks({"a", "b", "c", "r1"}, m, ng)      # the drawing the gate accepts
+    cuts, labels = repair.neck_cuts("X", base, {"a", "r1"}, m, ng, first, {"D1"})
+    assert len(labels) == 1 and len(cuts) == 1
+    assert not cuts[0].holds(first)                         # the neck drawing is still cut
+    assert cuts[0].holds(other), cuts[0]                    # the accepted drawing is not
+
+
 def test_bridged_flags_a_relay_touching_two_nodes_and_a_width_only_edge():
     gate, *_ = _mods()
     inst, polygon = _c14(0.0)

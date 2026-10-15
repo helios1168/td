@@ -114,9 +114,10 @@ def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: froze
       of zero opportunity, an own edge too: j may not own it in the drawing, and it is a relay;
     - from a relay of `RA` outside W (on C's side in every drawing, and never j's) to everything it
       touches that is j's, a possible relay or in W and of zero opportunity, but for `core`;
-    - for a relay of `RA` in W, which j may own instead: the larger of its edges from A (j owns it,
+    - for a relay r of `RA` in W, which j may own instead: the larger of its edges from A (j owns it,
       it is off C) and its edges to the rest (j does not, it goes with C), all ends counted as
-      present.
+      present; and, only if j owns r, its edges to the relays that stay with C (`RA` outside W, the
+      other relays of `RA` in W): owning r cuts them.
 
     When A holds more than half of `area_fixed`, C may hold more than half of j's land and the gate
     then cuts off another part K of j instead, among the rest: the terms then count also every edge
@@ -201,12 +202,20 @@ def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: froze
     for r in sorted(ra_w):
         # j owns r (then the edges from A count: r lies outside A, off C) or not (then r is a relay
         # with C and its edges to the rest count): the row takes the larger of the two, all ends
-        # counted as present
+        # counted as present.  Owning r also cuts it off from the relays that stay with C, those of
+        # `ra_out` and the other relays of `ra_w` (which j may leave to C): those edges count only if
+        # j owns r, so they are a term of r's own (an edge in both its ends' terms only weakens the
+        # row)
         mine = [(u, r, True) for u in sorted(A) if r in width_nbrs(ng, u)]
+        relay_edges = [(v, r, False) for v in sorted(width_nbrs(ng, r))
+                       if v in ra_out or (v in ra_w and v != r)]
         theirs = [(v, r, False) for v in sorted(width_nbrs(ng, r))
                   if v not in ra_out and v not in ra_w and v not in core and v not in A]
         const += max(sum(c + sum(sg.values()) + sum(w for *_, w in pr)
                          for c, sg, pr in [terms_of(es)]) for es in (mine, theirs))
+        c, sg, pr = terms_of(relay_edges)
+        if c + sum(sg.values()) + sum(w for *_, w in pr) > 0:
+            single[r] += c + sum(sg.values()) + sum(w for *_, w in pr)
     return const, dict(single), pair
 
 
