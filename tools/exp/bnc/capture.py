@@ -39,6 +39,12 @@ def _load(name: str, path: str):
     return sys.modules[name]
 
 
+def sibling(name: str, file: str):
+    """Another module of this folder under a name that cannot clash with the repo's (`export/` is a
+    package at the root, `run` and `report` are names many tools use)."""
+    return _load(name, os.path.join(HERE, file))
+
+
 def load_draw():
     """`tools/exp/contig/draw.py` under the module name `run.py` and `repair.py` give it, so a
     patch made here is the one they see."""

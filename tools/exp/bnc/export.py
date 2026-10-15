@@ -369,8 +369,13 @@ def main(argv=None) -> int:
     metas = {}
     for name in names:
         metas[name] = export_one(name, table[name], a.out)
-    with open(os.path.join(a.out, "INDEX.json"), "w", encoding="utf-8") as fh:
-        json.dump(metas, fh, indent=1)
+    path = os.path.join(a.out, "INDEX.json")
+    old = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            old = json.load(fh)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump({k: {**old, **metas}[k] for k in table if k in {**old, **metas}}, fh, indent=1)
     return 0
 
 
