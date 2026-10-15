@@ -70,3 +70,19 @@ def assignment_domain(Z, districts, owner, W):
 def growth_permitted(status, *, uncapped):
     """A larger accepted search step requires a complete uncapped infeasibility proof."""
     return status == "infeasible" and uncapped
+
+
+def growth_sequence(W, candidates, *, limit, cap):
+    """F4.W's ordered assignment-domain recurrence, not a MILP solver.
+
+    candidates starts with the independently supplied trimmed adjacent ring,
+    followed by ball/corridor sets. Only strict, within-cap unions consume steps;
+    rejected proposals leave both the current domain and the step count intact.
+    """
+    current, accepted = frozenset(W), []
+    for V in candidates:
+        union = current | frozenset(V)
+        if len(accepted) < limit and len(current) < len(union) <= cap:
+            current = union
+            accepted.append(current)
+    return accepted

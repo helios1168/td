@@ -112,6 +112,12 @@ def test_formulation_growth_domain_and_proof_gate():
         for limit in (0, 1, 2, 3):
             initial = {f"z{i:02d}" for i in range(11)}
             got = repair.grow_windows(pieces, owner, initial, free, adj, 3, limit, cap)
+            # On this path nearest-first C vertices are z20,z21,...; no production
+            # neighborhood or hop routine supplies this expected adjacent ring.
+            ring = sorted(expected_ring)[:max(0, cap - len(initial))]
+            candidates = [ring] + [V for _, _, V in repair.steps(pieces, owner, free, adj, 3, cap)]
+            expected = f4w.growth_sequence(initial, candidates, limit=limit, cap=cap)
+            assert [frozenset(s[2]) for s in got] == expected
             assert len(got) <= limit and all(len(s[2]) <= cap for s in got)
     for status in ("infeasible", "unknown", "connected", "optimal"):
         expected = f4w.growth_permitted(status, uncapped=True)
@@ -124,3 +130,32 @@ def test_formulation_growth_domain_and_proof_gate():
             record = dict(status=status, cap=cap, shape="ball", window_zctas=1)
             assert repair.proved_infeasible([record], last) == \
                 f4w.growth_permitted(status, uncapped=not cap)
+
+
+def test_formulation_growth_unions_skip_over_cap_without_spending_steps():
+    """60 vertices: an over-cap proposal must not hide later smaller fitting unions."""
+    from tests.test_repair_scip import _line
+    repair = _repair_module()
+    inst, plan, owner, free, state, pieces = _line()
+    W = {f"z{i:02d}" for i in range(11)}
+    ring = {f"z{i:02d}" for i in range(20, 30)}
+    proposals = [W | {f"z{i:02d}" for i in range(11, 16)},  # union 26: over cap
+                 {"z11"},                                # union 22, candidate only 1
+                 W,                                      # no growth: no step spent
+                 {"z12", "z13"},                         # union 24
+                 {"z14"}]                                # union 25, if budget remains
+    explicit = [W | ring, W | ring | {"z11"},
+                W | ring | {"z11", "z12", "z13"},
+                W | ring | {"z11", "z12", "z13", "z14"}]
+    for limit in (0, 1, 2, 3, 4):
+        expected = f4w.growth_sequence(W, [ring, *proposals], limit=limit, cap=25)
+        assert expected == explicit[:limit]
+        with patch.object(repair, "steps", return_value=[("ball", i, V) for i, V in enumerate(proposals)]):
+            got = repair.grow_windows(pieces, owner, W, free, inst.units.zip_adj, 3, limit, 25)
+        assert [frozenset(V) for _, _, V in got] == expected
+        assert [k for _, k, _ in got] == list(range(1, len(expected) + 1))
+        previous = W
+        for enlarged in expected:
+            assert f4w.assignment_domain(owner, set(owner.values()), owner, previous) < \
+                f4w.assignment_domain(owner, set(owner.values()), owner, enlarged)
+            previous = enlarged

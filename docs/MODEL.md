@@ -1062,12 +1062,26 @@ for SCIP and $N=0$ for HiGHS; $C=2500$. These are search caps, not an M1 toleran
 Let $J(W)$ be owners in or adjacent to $W$, and $T$ the districts adjacent to any territory
 of $J(W)$ but not in $J(W)$. First add free ZIPs owned by $T$, choosing the nearest by
 hops through free ZIPs (then ZIP id; unreachable last) if the whole ring exceeds $C$.
-Then union the current window with each larger ball/corridor proposed at cap $C$,
-stopping when the next union exceeds $C$ or $N$ steps have been planned:
+Then inspect every ball/corridor proposed at cap $C$ in order. Accept its union with the
+current window exactly when the union strictly grows and fits; a candidate need not itself
+be larger than the current window. Skip an over-cap union and continue to later candidates.
+Only accepted unions consume the $N$-step budget (the adjacent-ring step included).
+
+Precisely, let $V_1$ be the trimmed adjacent ring, followed by the ordered ball/corridor
+candidates $V_2,\ldots,V_q$. Start $U_0=W_0$, $k_0=0$ and set
 
 $$
-W_0\subsetneq W_1\subsetneq\cdots\subsetneq W_k,\qquad k\le N,\quad |W_i|\le C.
+(U_i,k_i)=
+\begin{cases}
+(U_{i-1}\cup V_i,k_{i-1}+1),&
+ k_{i-1}<N\ \land\ |U_{i-1}|<|U_{i-1}\cup V_i|\le C,\\
+(U_{i-1},k_{i-1}),&\text{otherwise}.
+\end{cases}
 $$
+
+The accepted windows satisfy
+$W_0\subsetneq W_1\subsetneq\cdots\subsetneq W_k$, $k\le N$ and $|W_i|\le C$.
+This is a search-domain recurrence, not a change to any fixed-window MILP row.
 
 Each new window tries the split/holder cap first, then without it if infeasible. A solved
 step ends the sequence; an unknown ends growth immediately, including before an uncapped
@@ -1122,7 +1136,11 @@ independent flow model; it rejects DAG/neck callbacks rather than silently omitt
 both production engines (relative gap zero), including optimal values and chosen feasible
 and infeasible assignments. Separate checks exercise binding caps, opened units, the
 adjacent ring, wider steps, both caps and the infeasible/unknown growth gate in sequential
-and raced settlement. These are numerical checks, not a national performance claim.
+and raced settlement. `td/formulation/f4w.py:75`
+`def growth_sequence(W, candidates, *, limit, cap):` specifies the displayed recurrence.
+The 60-vertex growth checks compare the entire accepted sequence, including a smaller
+candidate whose union grows and an over-cap candidate followed by one that fits. These
+are numerical checks, not a national performance claim.
 
 ### 4.4 F4.N / F4.S — default no-good and opt-in strong neck rows
 
