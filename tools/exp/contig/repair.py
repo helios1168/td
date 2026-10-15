@@ -3,7 +3,7 @@ folder that fails M1.
 
     "$TD_PY" -u tools/exp/contig/repair.py <run_dir> --out <dir> [--extract PATH] [--plans PATH]
         [--h0 3] [--max-zctas 1500] [--time-limit 600] [--budget s] [--channels c ...] [--maps]
-        [--jobs N] [--neck-rows nogood|strong]
+        [--jobs N] [--neck-rows nogood|strong] [--engine highs|scip] [--grow-max N] [--grow-zctas N]
 
 Per planning channel with a detached piece on the drawn map (the ledger of `<run_dir>`, read
 back to each ZCTA's plan copy):
@@ -32,6 +32,23 @@ back to each ZCTA's plan copy):
   takes the largest h whose W fits), then the corridor's slack grows; the last window, when
   infeasible with the cap, is tried once more without it, and the rise in splits or cuts is
   reported.
+
+- **Engine** (#142 phase 2, `--engine highs|scip`, default highs): `scip` solves each window's
+  MILP, the same model and objective, rows, bounds and start, with PySCIPOpt and the constraint
+  handler of `tools/exp/bnc/arms.py` arm c (`tools/exp/bnc/scip_engine.py`: a disconnected integer
+  solution is cut off by lazy integer a,b-separator rows), `mip_rel_gap` 0, absolute gap 1e-6, one
+  thread, the window's time limit; the status keeps the terms above.  `TD_REPAIR_ENGINE` carries it
+  to the worker processes.
+- **Growth** (#142 phase 2, `--grow-max N`, default 3 with `--engine scip` and 0 with highs, so that
+  the HiGHS run is today's unless asked; `--grow-zctas`, default 2500): when the last window of a
+  piece's cluster (the largest, without the cap) is *proved* infeasible, `grow_windows` plans up to N
+  larger windows, none above `--grow-zctas`: first the window with the free ZCTAs of every district
+  adjacent to the districts of the window (the nearest ones when they do not fit), then the window
+  with the next of `steps`' windows (the ball or corridor widened).  Each is solved like a step
+  (with the cap, then without) and logged with its ZCTAs, districts, verdict and seconds
+  (`grow-adjacent` / `grow-wider` in the attempts).  The first one solved is kept; an unknown window
+  stops the growth (an unknown is never an infeasibility proof, so it never grows a window).
+  Neck windows do not grow.
 
 - **Necks** (#121): once no detached piece is left, each neck M1 lists is repaired like a piece
   (`_repair_neck`): the windows of `steps` around the side it cuts off, each re-solved with the
@@ -258,6 +275,27 @@ def _anchors(X: set, W: set, ng, target: float) -> set:
     return S
 
 
+ENGINE_ENV = "TD_REPAIR_ENGINE"
+ENGINES = ("highs", "scip")
+
+
+def engine_mode() -> str:
+    """The window solver, from `TD_REPAIR_ENGINE` (`--engine` sets it, so that the worker processes
+    inherit it): "highs" by default, "scip" for `tools/exp/bnc/scip_engine.py`; anything else is an error."""
+    mode = os.environ.get(ENGINE_ENV) or "highs"
+    if mode not in ENGINES:
+        raise SystemExit(f"{ENGINE_ENV}={mode!r}: not one of {', '.join(ENGINES)}")
+    return mode
+
+
+def scip_engine():
+    """`tools/exp/bnc/scip_engine.py`, loaded on first use (it needs pyscipopt only when it solves)."""
+    bnc = os.path.join(ROOT, "tools", "exp", "bnc")
+    if bnc not in sys.path:
+        sys.path.append(bnc)        # its siblings import each other by name; never ahead of ours
+    return _load("bnc_scip_engine", os.path.join("..", "bnc", "scip_engine.py"))
+
+
 NECK_ROWS_ENV = "TD_NECK_ROWS"
 NECK_ROWS = ("nogood", "strong")
 
@@ -347,8 +385,9 @@ def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check, rows: 
 def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,
                  log=print, flow: bool = False, keep_support: bool = False,
                  repairing: set = frozenset(), border: dict | None = None, ng=None,
-                 opened: frozenset = frozenset()):
-    """`draw.Group` of the window `W` (module docstring), everything outside fixed.  With
+                 opened: frozenset = frozenset(), engine: str | None = None):
+    """`draw.Group` of the window `W` (module docstring), everything outside fixed, solved by
+    `engine` (None: `engine_mode()`).  With
     `keep_support` (arm 1) a ZCTA may go only to a district whose plan holds its unit (an exclave
     or dropped ZCTA to any); else to any district of the window (a unit may change holders: an
     arm-2 move, reported by the audit's planned-against-drawn check).  Given `ng`
@@ -406,18 +445,23 @@ def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, ca
         def cutter(own):
             return neck_cuts(c, owner, W, mn, ng, own, check)
     t_end = time.time() + time_limit
+    engine = engine or engine_mode()
+    if engine not in ENGINES:
+        raise ValueError(f"engine {engine!r}: not one of {', '.join(ENGINES)}")
 
     def solve(_d, dag, seed):
         left = t_end - time.time()
         if left <= 1.0:
             return None
-        g = draw._solve_group(c, zs, allowed, bodies, body_of, outside, adj, m, p, unit_of,
-                              hold, plan, planned, support, inst, lo, hi, "arm1", False,
-                              min(left, time_limit / 4) if dag else left, log, extra, dag=dag,
-                              start=seed, count=count, layers=True, flow=flow, border=border,
-                              necks=cutter, neck_seed={z: owner[z] for z in zs})
+        with scip_engine().installed(draw) if engine == "scip" else contextlib.nullcontext():
+            g = draw._solve_group(c, zs, allowed, bodies, body_of, outside, adj, m, p, unit_of,
+                                  hold, plan, planned, support, inst, lo, hi, "arm1", False,
+                                  min(left, time_limit / 4) if dag else left, log, extra, dag=dag,
+                                  start=seed, count=count, layers=True, flow=flow, border=border,
+                                  necks=cutter, neck_seed={z: owner[z] for z in zs})
         log(f"  {c} window of {len(zs)} ZCTAs{' (dag)' if dag else ''}"
-            f"{'' if cap else ' (no cap)'}: {len(g.districts)} districts, {g.columns} columns"
+            f"{'' if cap else ' (no cap)'}{' [scip]' if engine == 'scip' else ''}: "
+            f"{len(g.districts)} districts, {g.columns} columns"
             f" -> {g.status} in {g.seconds:.1f}s, {g.iterations} solves, {g.cuts} cuts"
             f"{(' (' + g.note + ')') if g.note else ''}")
         return g
@@ -517,15 +561,33 @@ def _time_left(time_limit: float, deadline: float | None, log, what: str) -> flo
 
 def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, time_limit,
                     attempts, log, flow=False, keep_support=False, border=None, ng=None,
-                    deadline=None, opened=frozenset(), pool=None):
+                    deadline=None, opened=frozenset(), pool=None, grow=(0, 2500)):
     c = plan.channel
     adj = inst.units.zip_adj
     todo = steps(pieces, owner, free, adj, h0, max_zctas)
     todo = [(sh, k, W, True) for sh, k, W in todo] + [(sh, k, W, False) for sh, k, W in todo[-1:]]
     repairing = {j for j, _ in pieces}
+    n0 = len(attempts)
+    owner = _run_steps(inst, plan, owner, pieces, todo, repairing, p, state, time_limit, attempts,
+                       log, flow, keep_support, border, ng, deadline, opened, pool)
+    grow_max, grow_zctas = grow
+    if grow_max > 0 and todo and proved_infeasible(attempts[n0:], todo[-1]):
+        owner = _grow_cluster(inst, plan, owner, pieces, todo[-1][2], free, p, state, h0,
+                              grow_max, grow_zctas, time_limit, attempts, log, flow, keep_support,
+                              border, ng, deadline, opened, pool)
+    return owner
+
+
+def _run_steps(inst, plan, owner, pieces, todo, repairing, p, state, time_limit, attempts, log,
+               flow, keep_support, border, ng, deadline, opened, pool, stop_on_unknown=False):
+    """The windows of `todo` [(shape, k, W, cap)] in turn, or raced on `pool`, until one is solved;
+    an unknown window skips the later capped ones of its shape, or with `stop_on_unknown` (growth)
+    ends the sequence."""
+    c = plan.channel
     if pool is not None:
         return _race_cluster(inst, plan, owner, pieces, todo, repairing, state, time_limit,
-                             attempts, log, flow, keep_support, ng, deadline, opened, pool)
+                             attempts, log, flow, keep_support, ng, deadline, opened, pool,
+                             stop_on_unknown)
     skip = None
     for shape, k, W, cap in todo:
         if shape == skip and cap:
@@ -543,8 +605,73 @@ def _repair_cluster(inst, plan, owner, pieces, free, p, state, h0, max_zctas, ti
         if g.status in ("optimal", "connected"):
             break
         if g.status != "infeasible":
+            if stop_on_unknown:
+                break
             skip = shape
     return owner
+
+
+def proved_infeasible(new: list, last: tuple) -> bool:
+    """Whether the newest of the attempt records `new` is the proof that the last step `last`
+    (shape, k, W, cap) of a cluster's windows, run without the cap, has no drawing."""
+    return bool(new) and new[-1]["status"] == "infeasible" and not last[3] \
+        and not new[-1]["cap"] and new[-1]["shape"] == last[0] \
+        and new[-1]["window_zctas"] == len(last[2])
+
+
+def window_districts(owner: dict, W: set, adj: dict) -> set:
+    """The districts of the window `W`'s model (`solve_window`): those owning a ZCTA in or next to W."""
+    return {owner[z] for z in W} | {owner[y] for z in W for y in adj[z] if y in owner and y not in W}
+
+
+def grow_windows(pieces: list, owner: dict, W: set, free: set, adj: dict, h0: int,
+                 grow_max: int, grow_zctas: int) -> list:
+    """[(shape, k, W')] at most `grow_max` windows larger than the infeasible `W`, none above
+    `grow_zctas`, each holding the one before: "grow-adjacent", `W` with the free ZCTAs of every
+    district next to the districts of W (`window_districts`), the nearest to W by hops through free
+    ZCTAs when they do not all fit; then "grow-wider", the union with each window of `steps` (the ball
+    and corridor widened as the repair does, at `grow_zctas`) larger than the window so far that fits."""
+    out, cur = [], set(W)
+    js = window_districts(owner, cur, adj)
+    mine = {z for z, j in owner.items() if j in js}
+    touch = {owner[y] for z in mine for y in adj[z] if y in owner} - js
+    ring = {z for z in free if owner.get(z) in touch} - cur
+    room = grow_zctas - len(cur)
+    if ring and room > 0:
+        if len(ring) > room:
+            near = _hops(cur, free | cur, adj)
+            ring = set(sorted(ring, key=lambda z: (near.get(z, math.inf), z))[:room])
+        cur |= ring
+        out.append(("grow-adjacent", 1, set(cur)))
+    for _, _, V in steps(pieces, owner, free, adj, h0, grow_zctas):
+        if len(out) >= grow_max:
+            break
+        if len(V) <= len(cur):      # only a window larger than the one so far widens it
+            continue
+        nxt = cur | V
+        if len(nxt) > grow_zctas:
+            break
+        if nxt != cur:
+            cur = nxt
+            out.append(("grow-wider", len(out) + 1, set(cur)))
+    return out[:grow_max]
+
+
+def _grow_cluster(inst, plan, owner, pieces, W, free, p, state, h0, grow_max, grow_zctas,
+                  time_limit, attempts, log, flow, keep_support, border, ng, deadline, opened, pool):
+    """Windows larger than the one proved infeasible (`grow_windows`), each solved as a step (with
+    the cap, then without) until one is, or one is unknown."""
+    c = plan.channel
+    adj = inst.units.zip_adj
+    grown = grow_windows(pieces, owner, W, free, adj, h0, grow_max, grow_zctas)
+    log(f"{c}: {pieces[0][0]}: the window of {len(W)} ZCTAs is proved infeasible; "
+        + (f"growing by {len(grown)} step(s) to {', '.join(str(len(x[2])) for x in grown)} ZCTAs "
+           f"(at most {grow_max} steps, {grow_zctas} ZCTAs)" if grown
+           else f"no larger window within {grow_zctas} ZCTAs"))
+    todo = [(sh, k, V, cap) for sh, k, V in grown for cap in (True, False)]
+    return _run_steps(inst, plan, owner, pieces, todo, {j for j, _ in pieces}, p, state,
+                      time_limit, attempts, log, flow, keep_support, border, ng, deadline, opened,
+                      pool, stop_on_unknown=True)
 
 
 def _settle_cluster(inst, c, owner, pieces, step, g, before, seconds, state, attempts, log, flow,
@@ -554,8 +681,8 @@ def _settle_cluster(inst, c, owner, pieces, step, g, before, seconds, state, att
     shape, k, W, cap = step
     ch = inst.channels[c]
     adj, m = inst.units.zip_adj, ch.m
-    rec = {"channel": c, "shape": shape, "h" if shape == "ball" else "slack": k,
-           "window_zctas": len(W), "districts": g.districts,
+    rec = {"channel": c, "shape": shape, STEP_KEY[shape]: k,
+           "window_zctas": len(W), "districts": g.districts, "engine": engine_mode(),
            "cap": cap, "flow": flow, "keep_support": keep_support, "pieces_before": len(detached(owner, adj, m)),
            "cluster": [f"{j} {min(cc)} ({len(cc)} ZCTAs)" for j, cc in pieces],
            "piece_tau_before": [round(math.fsum(m.get(z, 0.0) for z in cc) / ch.tau, 4)
@@ -570,16 +697,21 @@ def _settle_cluster(inst, c, owner, pieces, step, g, before, seconds, state, att
     rec["pieces_after"] = len(detached(owner, adj, m))
     rec["group"] = g.report()
     attempts.append(rec)
-    log(f"{c}: {shape} {'h' if shape == 'ball' else 'slack'} = {k}, |W| = {len(W)}"
+    if shape.startswith("grow"):
+        log(f"{c}: {shape} step {k}, |W| = {len(W)} ZCTAs, {len(g.districts)} districts"
+            f"{'' if cap else ' (no cap)'}: {g.status}, pieces {rec['pieces_before']} -> "
+            f"{rec['pieces_after']}, {rec['seconds']}s")
+        return owner
+    log(f"{c}: {shape} {STEP_KEY[shape]} = {k}, |W| = {len(W)}"
         f"{'' if cap else ' (no cap)'}: {g.status}, pieces {rec['pieces_before']} -> "
         f"{rec['pieces_after']}, {rec['seconds']}s")
     return owner
 
 
 def _race_cluster(inst, plan, owner, pieces, todo, repairing, state, time_limit, attempts, log,
-                  flow, keep_support, ng, deadline, opened, pool):
-    """`_repair_cluster`'s windows as a race on `pool` (`_race`): an unknown window still skips
-    the later capped ones of its shape, as in the loop."""
+                  flow, keep_support, ng, deadline, opened, pool, stop_on_unknown=False):
+    """`_run_steps`' windows as a race on `pool` (`_race`): an unknown window still skips the later
+    capped ones of its shape, or stops the race with `stop_on_unknown`, as in the loop."""
     c = plan.channel
     before = map_figures(inst, c, owner, state)
     skip = []
@@ -598,6 +730,7 @@ def _race_cluster(inst, plan, owner, pieces, todo, repairing, state, time_limit,
                                 state, attempts, log, flow, keep_support, ng)
         if g.status not in ("optimal", "connected", "infeasible"):
             skip.append(todo[i][0])
+            return stop_on_unknown
         return g.status in ("optimal", "connected")
 
     _race(pool, len(todo), launch, settle, lambda i: not (todo[i][3] and todo[i][0] in skip))
@@ -614,7 +747,8 @@ def necks(owner: dict, m: dict, ng, districts=None) -> list:
             for nk in district_necks(by[j], m, ng)]
 
 
-STEP_KEY = {"ball": "h", "corridor": "slack", "own": "zctas"}   # a window step's size, by shape
+STEP_KEY = {"ball": "h", "corridor": "slack", "own": "zctas",   # a window step's size, by shape
+            "grow-adjacent": "grow", "grow-wider": "grow"}
 
 
 def own_window(owner: dict, j: str, side, opened: frozenset, unit_of: dict) -> set:
@@ -718,7 +852,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
                    time_limit: float, log=print, flow: bool = False,
                    keep_support: bool = False, border: dict | None = None, ng=None,
                    neck_time_limit: float | None = None, budget: float | None = None,
-                   open_units=(), pool=None) -> tuple:
+                   open_units=(), pool=None, grow_max: int = 0, grow_zctas: int = 2500) -> tuple:
     """(the repaired owner, [attempt records]); the owner changes only by a connected window.
     Per cluster of pieces (`clusters`), the windows of `steps` in turn while each is proved
     infeasible (an unknown one skips the rest of its shape), then the last one without the cap;
@@ -728,7 +862,9 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
     rounds repeat while they remove necks, at most three, each neck window with `neck_time_limit` seconds (default
     `time_limit`).  Every window solves with the border term over `border`.  With `budget`
     (seconds), no window starts once the channel has spent it, and the last gets what is left.
-    With `pool` (`WindowPool`, #123) each escalation is a race (`_race`), its result the loop's."""
+    With `pool` (`WindowPool`, #123) each escalation is a race (`_race`), its result the loop's.
+    With `grow_max` above 0 a cluster whose last window is proved infeasible grows (`grow_windows`,
+    module docstring), to at most `grow_zctas` ZCTAs."""
     deadline = None if budget is None else time.time() + budget
     c = plan.channel
     ch, units = inst.channels[c], inst.units
@@ -748,7 +884,7 @@ def repair_channel(inst, plan, owner: dict, p: dict, state: dict, h0: int, max_z
             if group:
                 owner = _repair_cluster(inst, plan, owner, group, free, p, state, h0, max_zctas,
                                         time_limit, attempts, log, flow, keep_support, border, ng,
-                                        deadline, opened, pool)
+                                        deadline, opened, pool, (grow_max, grow_zctas))
         left = detached(owner, adj, m)
         if len(left) >= len(pieces):
             break
@@ -1133,6 +1269,16 @@ def main(argv=None) -> int:
                     help="the neck row type (`neck_cuts`): nogood, the default (also read from "
                          f"{NECK_ROWS_ENV}), excludes the one neck drawing; strong is "
                          "`necks_gate.cut_terms`'s widths, unproven (#142)")
+    ap.add_argument("--engine", choices=ENGINES, default=None,
+                    help="the window solver (also read from " + ENGINE_ENV + "): highs, the default; "
+                         "scip, PySCIPOpt with the lazy separator constraint handler of "
+                         "tools/exp/bnc (arm c) on the same model (#142)")
+    ap.add_argument("--grow-max", type=int, default=None,
+                    help="windows tried after a piece's last window is proved infeasible: the "
+                         "adjacent districts' free ZCTAs, then the ball or corridor widened "
+                         "(default 3 with --engine scip, 0 with highs)")
+    ap.add_argument("--grow-zctas", type=int, default=2500,
+                    help="no grown window has more ZCTAs than this")
     ap.add_argument("--maps", action="store_true")
     ap.add_argument("--window", default=None,
                     help="LO,HI in m_rel: every channel's final band is intersected with it (a fixed "
@@ -1147,6 +1293,11 @@ def main(argv=None) -> int:
     if a.neck_rows:
         os.environ[NECK_ROWS_ENV] = a.neck_rows    # the worker processes inherit it
     a.neck_rows = neck_rows_mode()
+    if a.engine:
+        os.environ[ENGINE_ENV] = a.engine
+    a.engine = engine_mode()
+    if a.grow_max is None:
+        a.grow_max = 3 if a.engine == "scip" else 0
     output.check_out(a.out)
     commit = _commit()
     params = {k: v for k, v in vars(a).items() if k not in ("run_dir", "out")}
@@ -1192,7 +1343,8 @@ def main(argv=None) -> int:
                                    a.jobs, border, ng, h0=a.h0, max_zctas=a.max_zctas,
                                    time_limit=a.time_limit, flow=a.flow,
                                    keep_support=a.keep_support, neck_time_limit=a.neck_time_limit,
-                                   budget=a.budget, open_units=a.open_units)
+                                   budget=a.budget, open_units=a.open_units,
+                                   grow_max=a.grow_max, grow_zctas=a.grow_zctas)
     drawings = {}
     for c, plan in plans.items():
         owner = owners[c]
@@ -1205,7 +1357,8 @@ def main(argv=None) -> int:
                                              a.time_limit, flow=a.flow,
                                              keep_support=a.keep_support, border=border, ng=ng,
                                              neck_time_limit=a.neck_time_limit, budget=a.budget,
-                                             open_units=a.open_units)
+                                             open_units=a.open_units, grow_max=a.grow_max,
+                                             grow_zctas=a.grow_zctas)
         res = draw.Result(c, owner, [], set(), [], [], plan.delta, "repair", False)
         d = draw.drawing(inst, plan, res)
         drawings[c] = d
@@ -1233,6 +1386,7 @@ def main(argv=None) -> int:
                            "plans_file": a.plans_file, "label": a.label,
                            "flow": a.flow, "keep_support": a.keep_support,
                            "open_units": list(a.open_units), "neck_rows": a.neck_rows,
+                           "engine": a.engine, "grow_max": a.grow_max, "grow_zctas": a.grow_zctas,
                            "commit": commit},
                 "m1": report["m1"]})
     with open(os.path.join(a.out, "contig.json"), "w", encoding="utf-8") as fh:

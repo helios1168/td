@@ -186,6 +186,15 @@ def scip_model(inst):
 def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = False,
           max_per_component=None) -> dict:
     """PySCIPOpt with a constraint handler adding integer separator rows as lazy cuts."""
+    return scip_solve(inst, time_limit, log, frac_root, max_per_component)[0]
+
+
+def scip_solve(inst, time_limit: float, log=print, frac_root: bool = False,
+               max_per_component=None, start=None) -> tuple:
+    """(arm c's result, the incumbent's value of every column or None): `arm_c`'s solver, one
+    thread (SCIP built without parallel mode), importable by `repair.py --engine scip`
+    (`scip_engine.py`).  `start`, a value for every column, is given to SCIP as a primal solution
+    before the solve (kept only if it is feasible for the model and the handler)."""
     import pyscipopt
     from pyscipopt import SCIP_RESULT, Conshdlr, quicksum
     t0 = time.time()
@@ -264,18 +273,27 @@ def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = Fa
     model.addPyCons(cons)
     model.setRealParam("limits/gap", 0.0)
     model.setRealParam("limits/absgap", ABS_GAP)
-    model.setRealParam("limits/time", float(max(1.0, time_limit - (time.time() - t0))))
     log(f"  c: model built in {time.time() - t0:.1f}s ({inst.n} columns, {inst.n_rows} rows)")
+    started = None
+    if start is not None:
+        sol = model.createSol()
+        for i, v in enumerate(xs):
+            model.setSolVal(sol, v, float(start[i]))
+        started = bool(model.addSol(sol, free=True))
+        log(f"  c: start solution {'accepted' if started else 'rejected'}")
+    model.setRealParam("limits/time", float(max(1.0, time_limit - (time.time() - t0))))
     model.optimize()
     status = model.getStatus()
     out = _result("c", solver=f"pyscipopt {pyscipopt.__version__}", nodes=int(model.getNNodes()),
                   seconds=time.time() - t0, cuts=stats["cuts"], rounds=stats["calls"],
-                  note=f"scip status {status}; fractional rows {stats['frac']}")
+                  note=f"scip status {status}; fractional rows {stats['frac']}"
+                       + ("" if started is None else f"; start {'accepted' if started else 'rejected'}"))
+    full = None
     if model.getNSols() > 0:
         sol = model.getBestSol()
+        full = np.array([model.getSolVal(sol, v) for v in xs])
         x = np.zeros(inst.n)
-        for i in xcols:
-            x[i] = model.getSolVal(sol, xs[i])
+        x[xcols] = full[xcols]
         out.update(objective=float(model.getSolObjVal(sol)), owner=inst.owner_of(x))
         if G.detached(np.round(x)):
             raise RuntimeError("arm c: SCIP returned a disconnected solution")
@@ -288,7 +306,7 @@ def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = Fa
     elif out["owner"] is not None:
         out["status"] = "feasible"
         out["gap"] = _gap(out["objective"], out["bound"])
-    return out
+    return out, full
 
 
 # ------------------------------------------------------------------------------ arm d
