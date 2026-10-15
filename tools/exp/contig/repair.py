@@ -3,7 +3,7 @@ folder that fails M1.
 
     "$TD_PY" -u tools/exp/contig/repair.py <run_dir> --out <dir> [--extract PATH] [--plans PATH]
         [--h0 3] [--max-zctas 1500] [--time-limit 600] [--budget s] [--channels c ...] [--maps]
-        [--jobs N]
+        [--jobs N] [--neck-rows nogood|strong]
 
 Per planning channel with a detached piece on the drawn map (the ledger of `<run_dir>`, read
 back to each ZCTA's plan copy):
@@ -41,11 +41,14 @@ back to each ZCTA's plan copy):
   piece or a neck, runs the gate's exact neck check on each drawing its loop would keep
   (`necks_gate.gate_necks`: `td.audit.district_necks` with the channel's zero-opportunity ZCTAs as
   relays and the gate's width graph, #142), and each neck meeting W in a district of the window
-  adds a `draw.NeckCut` (`neck_cuts`): the width across the neck's side as the gate counts it
-  (polygon, gap and connector edges, and the edges to ZCTAs that may be relays; counted where the
-  ends are the district's), at least 10 km while its anchor sets stay the district's and its land
-  stays small enough for them to hold the 5% share; valid for every drawing the gate accepts
-  (`necks_gate.cut_terms` says when).  Districts with a neck on
+  adds a `draw.NeckCut` (`neck_cuts`). By default (`--neck-rows nogood`, #142) that is the no-good
+  row of the district's drawing of W (j's part of W is not the one that has the neck), valid for
+  every drawing the gate accepts because M1 judges a district on its own ZCTAs
+  (`necks_gate.nogood_terms`).  `--neck-rows strong` is the width across the neck's side as the gate
+  counts it (`necks_gate.cut_terms`: polygon, gap and connector edges, and the edges to ZCTAs that
+  may be relays; counted where the ends are the district's), at least 10 km while its anchor sets
+  stay the district's and its land stays small enough for them to hold the 5% share; unproven, off
+  by default.  Districts with a neck on
   the map that the window is not repairing are exempt (listed).  A window's drawing then has no
   neck meeting W in a district it is held to; its "optimal" is over the cut-augmented model and
   its "infeasible" proves that no drawing of W, the rest fixed, is connected, in the band and
@@ -255,27 +258,49 @@ def _anchors(X: set, W: set, ng, target: float) -> set:
     return S
 
 
-def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check) -> tuple:
+NECK_ROWS_ENV = "TD_NECK_ROWS"
+NECK_ROWS = ("nogood", "strong")
+
+
+def neck_rows_mode() -> str:
+    """The neck row type, from `TD_NECK_ROWS` (`--neck-rows` sets it, so that the worker processes
+    inherit it): "nogood" by default, "strong" for `necks_gate.cut_terms`; anything else is an error."""
+    mode = os.environ.get(NECK_ROWS_ENV) or "nogood"
+    if mode not in NECK_ROWS:
+        raise SystemExit(f"{NECK_ROWS_ENV}={mode!r}: not one of {', '.join(NECK_ROWS)}")
+    return mode
+
+
+def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check, rows: str | None = None) -> tuple:
     """([draw.NeckCut], [labels]) of the necks the window drawing `own` {ZCTA of W: district}
     must lose (#121): each neck M1 finds on the map `owner` with `own` in it, of a district in
     `check`, whose side meets W or has a width edge into W (a neck wholly outside W is the rest's).
-    Each gets one cut, its anchors (`_anchors`) holding `ANCHOR_MARGIN` times the share of the
-    district's land on that map (the cut binds while the district's land stays below
-    a_min / share).  `m` is `necks_gate.channel_mass`, so the necks are the gate's, relays
-    included, and the cut counts the gate's widths (`necks_gate.cut_terms`: border, gap and
-    connector widths, and the edges to zero-opportunity ZCTAs that may be relays).  The row is
-    valid for every drawing of W in which the district has no gate neck (`necks_gate.cut_terms`
-    says why, and what a side holding more than half of the land outside W costs): its left side
-    is at least the gate's cut of the part of the side the anchors hold, so a drawing the gate
-    accepts never breaks it.  A row that cannot bind (the fixed part already is as wide as a
-    passage) is dropped by `draw`."""
+    `m` is `necks_gate.channel_mass`, so the necks are the gate's, relays included.  `rows` None
+    reads `neck_rows_mode()`:
+
+    - "nogood" (the default, #142 ruling of 2026-10-15): one row per necked district, the no-good
+      of its drawing X of W (`necks_gate.nogood_terms`): j's part of W is not X.  Valid for every
+      drawing the gate accepts, because M1 judges a district on its own ZCTAs; weaker than the
+      widths below, so the repair may take more rounds.  Built for every proved neck, one whose
+      side joins the rest of its district by gap or relay edges alone included.
+    - "strong": one `NeckCut` per neck, its anchors (`_anchors`) holding `ANCHOR_MARGIN` times the
+      share of the district's land on that map (the cut binds while the district's land stays below
+      a_min / share), counting the gate's widths (`necks_gate.cut_terms`: border, gap and connector
+      widths, and the edges to zero-opportunity ZCTAs that may be relays).  Unproven:
+      `neckcut_search.py` finds drawings the gate accepts that break it.
+
+    A row that cannot bind (the strong row's fixed part already as wide as a passage) is dropped by
+    `draw`."""
+    rows = rows or neck_rows_mode()
+    if rows not in NECK_ROWS:
+        raise ValueError(f"neck rows {rows!r}: not one of {', '.join(NECK_ROWS)}")
     zero = necks_gate.zero_opportunity(m)
     new = {**owner, **own}
     by = collections.defaultdict(set)
     for z, j in new.items():
         if j in check:
             by[j].add(z)
-    cuts, labels = [], []
+    cuts, labels, nogood = [], [], {}
     for j in sorted(by):
         D = by[j]
         for nk in district_necks(D, m, ng):
@@ -287,6 +312,12 @@ def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check) -> tup
             label = audit.neck_item(c, j, nk)
             labels.append(label)
             if nk.status != "proved":
+                continue
+            if rows == "nogood":
+                if j not in nogood:         # every neck of j gives the same row
+                    anchors, single = necks_gate.nogood_terms(D, W)
+                    nogood[j] = draw.NeckCut(j, 0.0, single, (), anchors, 0.0, (), 1.0, 1.0, 0.0, label)
+                    cuts.append(nogood[j])
                 continue
             seen, stack = set(A), list(A)       # the rest: A's component of D, less A
             while stack:
@@ -1098,6 +1129,10 @@ def main(argv=None) -> int:
     ap.add_argument("--jobs", type=int, default=1,
                     help="processes (#123): each channel in its own, its windows raced, at most "
                          "this many solves at once; 1 is the sequential loop")
+    ap.add_argument("--neck-rows", choices=NECK_ROWS, default=None,
+                    help="the neck row type (`neck_cuts`): nogood, the default (also read from "
+                         f"{NECK_ROWS_ENV}), excludes the one neck drawing; strong is "
+                         "`necks_gate.cut_terms`'s widths, unproven (#142)")
     ap.add_argument("--maps", action="store_true")
     ap.add_argument("--window", default=None,
                     help="LO,HI in m_rel: every channel's final band is intersected with it (a fixed "
@@ -1109,6 +1144,9 @@ def main(argv=None) -> int:
                     help="diagnostic only: windows and audit at this final band, not the "
                          "scenario's; the folder is never a deliverable")
     a = ap.parse_args(argv)
+    if a.neck_rows:
+        os.environ[NECK_ROWS_ENV] = a.neck_rows    # the worker processes inherit it
+    a.neck_rows = neck_rows_mode()
     output.check_out(a.out)
     commit = _commit()
     params = {k: v for k, v in vars(a).items() if k not in ("run_dir", "out")}
@@ -1194,7 +1232,7 @@ def main(argv=None) -> int:
                            "neck_time_limit": a.neck_time_limit, "budget": a.budget,
                            "plans_file": a.plans_file, "label": a.label,
                            "flow": a.flow, "keep_support": a.keep_support,
-                           "open_units": list(a.open_units),
+                           "open_units": list(a.open_units), "neck_rows": a.neck_rows,
                            "commit": commit},
                 "m1": report["m1"]})
     with open(os.path.join(a.out, "contig.json"), "w", encoding="utf-8") as fh:

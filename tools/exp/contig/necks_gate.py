@@ -12,9 +12,12 @@ The gate judges a district with `td.audit.district_necks(zips, mass, ng, free=ze
 - the width of an edge is `audit.neck_widths`: the polygon border or gap width in whole cm plus, for
   an approved connector, the limit (#140, R1); a cut is a neck under 10 km.
 
-`gate_necks` is that call; `edge_km` is one edge's width in a row of a MILP.  `cut_terms` is the
-edge list of a `draw.NeckCut` row and `bridged` the condition of the plan check's wide-passage rows;
-each says under which condition it is valid for the gate's model."""
+`gate_necks` is that call; `edge_km` is one edge's width in a row of a MILP.  `nogood_terms` is a
+`draw.NeckCut` row that excludes one neck drawing and nothing else: the default row of the window
+repair (#142 ruling, 2026-10-15).  `cut_terms` is the edge list of the strengthened `draw.NeckCut`
+row, available behind `repair.py --neck-rows strong` and unproven (`tools/exp/contig/
+neckcut_search.py` finds drawings of the gate's that break it), and `bridged` the condition of the
+plan check's wide-passage rows; each says under which condition it is valid for the gate's model."""
 from __future__ import annotations
 
 import collections
@@ -84,6 +87,31 @@ def edge_km(ng, u: str, v: str, states: frozenset) -> float:
     `states` are the states of the district (read only with the pre-2026-10-14 land rule)."""
     a, b = sorted((u, v))
     return min(audit.neck_widths((a, b), ng, states).get((a, b), 0) / 1e5, NECK_KM)
+
+
+def nogood_terms(D: set, W: set) -> tuple:
+    """(anchors, single) of the no-good row for the district whose ZCTAs are `D` and the window `W`
+    (the notes' review §4.6; #142 ruling): with X = `D` ∩ W, the row
+
+        Σ_{z ∈ X} (1 - x_{z,j}) + Σ_{z ∈ W \ X} x_{z,j}  ≥  1
+
+    says district j's part of W is not X.  The ZCTAs outside W keep their owners, so a drawing
+    that meets none of the row has j's set equal to D's and the same gate necks.  **Valid for every
+    drawing the gate accepts**: M1 judges each district on its own ZCTAs (`gate_necks`: the
+    district's set, the gate's graph and the channel's zero-opportunity ZCTAs as relays, none of
+    which depends on how the other districts are drawn), so a drawing with j's set D has the neck
+    the gate found in D and is rejected; a drawing the gate accepts has a different j-part of W and
+    meets the row.  It excludes that one drawing of j (and no other), so it is weaker than the
+    widths of `cut_terms`: the repair may take more rounds.
+
+    It is a `draw.NeckCut` as `draw._solve_group.add_neck_cut` and `plancheck.add_cut` build its
+    rows: `anchors` = X, `single` = [(z, 1.0)] for z in W \ X, `const` 0, `pair` (), `need` 1,
+    `share` 0 and `a_min` 1 (the area row is then t + Σ_{z ∈ X} (1 - x_{z,j}) ≥ 1 and the width row
+    Σ_{z ∈ W \ X} x_{z,j} ≥ t, t binary: they hold exactly when the no-good does).  A ZCTA of X that
+    j cannot own in the model is a constant 1 of the row, which `add_neck_cut` reads as 'never
+    binds'."""
+    X = set(D) & set(W)
+    return tuple(sorted(X)), tuple((z, 1.0) for z in sorted(set(W) - X))
 
 
 def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: frozenset,
@@ -187,16 +215,18 @@ def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: froze
             if v in ra_out or v in ra_w:
                 continue
             if v not in A or (not (u in core and v in core) and (
-                    (not ng.own_edge(u, v) and u < v) or (ng.own_edge(u, v) and v in W and v in zero))):
+                    (not ng.own_edge(u, v) and u < v) or (v in W and v in zero))):
                 edges.append((u, v, True))
     for r in sorted(ra_out):            # relays that go with C: the edges to the rest of j
         edges += [(v, r, False) for v in sorted(width_nbrs(ng, r))
                   if v not in ra_out and v not in ra_w and v not in core]
     if widen:
+        maybe = W & set(zero)           # j may own them: then an edge between two of them is no relay edge
         rest = (fixed | W | relays) - A
         for z in sorted(rest):
             edges += [(z, y, False) for y in sorted(width_nbrs(ng, z))
-                      if y > z and y in rest and not (z in relays and y in relays)
+                      if y > z and y in rest and not (z in relays and y in relays
+                                                      and z not in maybe and y not in maybe)
                       and (z in relays or y in relays or not ng.own_edge(z, y))]
     const, single, pair = terms_of(edges)
     for r in sorted(ra_w):
