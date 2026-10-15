@@ -116,6 +116,17 @@ def commit() -> str:
         return "unknown"
 
 
+def provenance() -> dict:
+    """The code a result came from: the commit and whether tracked files differ from it (None when
+    git cannot say)."""
+    try:
+        dirty = bool(subprocess.check_output(
+            ["git", "-C", ROOT, "status", "--porcelain", "--untracked-files=no"], text=True).strip())
+    except Exception:
+        dirty = None
+    return {"code_commit": commit(), "code_dirty": dirty}
+
+
 # ------------------------------------------------------------------------------ the capture
 class Found(Exception):
     """Raised inside draw.py's call chain once the target group is captured."""

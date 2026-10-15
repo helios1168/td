@@ -8,11 +8,17 @@ final gap, nodes, M1 of the merged full map (less pre-existing failures outside 
 of the group is in its dollar window, the lazy-callback probe, and the winner per instance (the
 fastest arm with status `optimal`, else the best `feasible` objective, else "no arm finished").
 
-Only results of one campaign are tabled: the newest result (`finished`) names the code commit, time
-limit and threads, and a result is stale when any of them differs, when its settings differ from the
-newest result of the same arm, or when its instance file in `<out>/instances` no longer has its sha256.
-Stale results (an arm not rerun after a subset rerun) are listed under "Stale results excluded" and
-never reach the table or the winners.
+Only results of one campaign are tabled: the newest result (`finished`) names the code commit and
+dirty flag, time limit and threads, and a result is stale when any of them differs, when its settings
+differ from the newest result of the same arm, or when it cannot be tied to its instance: no recorded
+sha256, or no file with that sha256 (looked for in the `instances` argument, else the path the run
+recorded, else `<out>/instances`).  Stale results (an arm not rerun after a subset rerun) are listed
+under "Stale results excluded" and never reach the table or the winners.
+
+An independent check (`verify.py`'s `verify*.json`) is listed only when it recorded its code commit
+and the sha256 of its instance, that file is available and still has the sha256, and no tabled
+result of the instance was made on another file; the others are listed under "Independent checks
+excluded".
 """
 from __future__ import annotations
 
@@ -65,6 +71,20 @@ def _sha256(path: str) -> str:
     return h.hexdigest()
 
 
+def _instance_why(r: dict, out: str, instances: str | None, name: str) -> str:
+    """Why `r` (a result or a check, naming its instance) cannot be tied to its instance file, else ''."""
+    want = r.get("instance_sha256")
+    if not want:
+        return "no instance sha256 recorded"
+    path = (os.path.join(instances, f"{name}.json.gz") if instances else r.get("instance_path")
+            or os.path.join(out, "instances", f"{name}.json.gz"))
+    if not os.path.isfile(path):
+        return f"instance file {path} not available"
+    if _sha256(path) != want:
+        return "instance file changed"
+    return ""
+
+
 def split(out: str, instances: str | None = None) -> tuple:
     """(results of the campaign, [(stale result, why)]) of the results under `out`."""
     allr = _load(out)
@@ -76,15 +96,37 @@ def split(out: str, instances: str | None = None) -> tuple:
         arm_newest[r["arm"]] = r
     fresh, stale = [], []
     for r in allr:
-        why = [f"{k} {r.get(k)!r} != {newest.get(k)!r}" for k in ("code_commit", "time_limit", "threads")
+        why = [f"{k} {r.get(k)!r} != {newest.get(k)!r}" for k in ("code_commit", "code_dirty", "time_limit", "threads")
                if r.get(k) != newest.get(k)]
         if r.get("settings") != arm_newest[r["arm"]].get("settings"):
             why.append(f"settings {r.get('settings')!r} != {arm_newest[r['arm']].get('settings')!r}")
-        path = os.path.join(instances or os.path.join(out, "instances"), f"{r['instance']}.json.gz")
-        if r.get("instance_sha256") and os.path.exists(path) and _sha256(path) != r["instance_sha256"]:
-            why.append("instance file changed")
+        bad = _instance_why(r, out, instances, r["instance"])
+        if bad:
+            why.append(bad)
         (stale if why else fresh).append((r, "; ".join(why)) if why else r)
     return fresh, stale
+
+
+def checks(out: str, instances: str | None = None, rs: list | None = None) -> tuple:
+    """([verification results to list], [(path, why not)]) of `<out>/*/verify*.json`; `rs` are the
+    tabled results (default: those of `split`)."""
+    rs = rows(out, instances) if rs is None else rs
+    shas = {}
+    for r in rs:
+        shas.setdefault(r["instance"], set()).add(r.get("instance_sha256"))
+    ok, bad = [], []
+    for path in sorted(glob.glob(os.path.join(out, "*", "verify*.json"))):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                v = json.load(fh)
+            why = [] if v.get("code_commit") else ["no code commit recorded"]
+            why += [w for w in (_instance_why(v, out, instances, v["instance"]),) if w]
+            if v.get("instance_sha256") and shas.get(v["instance"], {v["instance_sha256"]}) != {v["instance_sha256"]}:
+                why.append("the tabled results of the instance were made on another file")
+        except (OSError, ValueError, KeyError) as e:
+            v, why = None, [f"unreadable ({type(e).__name__}: {e})"]
+        (bad if why else ok).append((path, "; ".join(why)) if why else v)
+    return ok, bad
 
 
 def rows(out: str, instances: str | None = None) -> list:
@@ -175,16 +217,18 @@ def write(out: str = OUT, instances: str | None = None) -> str:
         if r["arm"] == "d" and r.get("probe"):
             lines += ["## Arm d: the highspy lazy-constraint probe", "", r["probe"]["observed"], ""]
             break
-    checks = sorted(glob.glob(os.path.join(out, "*", "verify*.json")))
-    if checks:
+    good, unverified = checks(out, instances, rs)
+    if good:
         lines += ["## Independent checks (`verify.py`: SCIP on the flow formulation, no cuts)", ""]
-        for path in checks:
-            with open(path, encoding="utf-8") as fh:
-                v = json.load(fh)
+        for v in good:
             lines.append(f"- {v['instance']}: SCIP status `{v['scip_status']}`, {v['seconds']:.0f} s, {v['nodes']} nodes, "
                          f"limit {v.get('time_limit', '?')} s" + ("" if v["objective"] is None else
                          f", objective {v['objective']:.6g}, connected {v['connected']}"))
         lines.append("")
+    if unverified:
+        lines += ["## Independent checks excluded", "",
+                  "Not tied to the instance file and code of the campaign; rerun `verify.py`:", ""]
+        lines += [f"- {os.path.relpath(p, out)}: {why}" for p, why in unverified] + [""]
     gaps = [r for r in rs if r.get("gate") and r["gate"]["other_districts_outside_window"]]
     if gaps:
         lines += ["## Context", "", "Districts of the source map outside the group (not the arm's):", ""] + [

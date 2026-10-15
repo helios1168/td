@@ -19,6 +19,7 @@ columns and its own body vertices (fixed to 1).
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
 import math
 import os
@@ -44,9 +45,20 @@ def save(doc: dict, path: str) -> None:
         json.dump(doc, fh, separators=(",", ":"))
 
 
+def read(path: str) -> tuple:
+    """(the file's bytes, their sha256): hash what is parsed, so a file replaced later cannot be
+    recorded as the one that was solved."""
+    with open(path, "rb") as fh:
+        data = fh.read()
+    return data, hashlib.sha256(data).hexdigest()
+
+
+def loads(data: bytes, path: str = "") -> "Inst":
+    return Inst(json.loads(gzip.decompress(data).decode("utf-8")), path)
+
+
 def load(path: str) -> "Inst":
-    with gzip.open(path, "rt", encoding="utf-8") as fh:
-        return Inst(json.load(fh), path)
+    return loads(read(path)[0], path)
 
 
 class Inst:

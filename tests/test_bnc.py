@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import hashlib
 import importlib.util
 import io
 import json
@@ -329,9 +330,9 @@ def test_runner_always_gates_writes_manifests_and_has_no_bypass():
         with open(os.path.join(a.instances, "S.json.gz"), "wb") as fh:
             fh.write(b"z")
         cfg = {"spec": os.path.join(d, "spec.toml"), "extract": os.path.join(d, "extract.json"), "channel": "X"}
-        saved = (bnc_run.export.instances, bnc_run.inst_io.load, bnc_run.gate)
+        saved = (bnc_run.export.instances, bnc_run.inst_io.loads, bnc_run.gate)
         bnc_run.export.instances = lambda _d: {"S": cfg}
-        bnc_run.inst_io.load = lambda _p: inst
+        bnc_run.inst_io.loads = lambda _b, _p="": inst
         bnc_run.gate = fake_gate
         try:
             with contextlib.redirect_stdout(io.StringIO()):
@@ -339,7 +340,10 @@ def test_runner_always_gates_writes_manifests_and_has_no_bypass():
                 folder = os.path.join(a.out, "S", "b")
                 assert called == [folder], called
                 with open(os.path.join(folder, "result.json")) as fh:
-                    assert json.load(fh)["gate"]["m1"] == "pass"
+                    res = json.load(fh)
+                assert res["gate"]["m1"] == "pass"
+                assert res["instance_sha256"] == hashlib.sha256(b"z").hexdigest(), res
+                assert res["instance_path"] == os.path.join(os.path.abspath(a.instances), "S.json.gz"), res
                 for f in (folder, os.path.join(folder, "merged")):
                     with open(os.path.join(f, "manifest.json")) as fh:
                         assert json.load(fh)["status"] == "done", f
@@ -360,7 +364,7 @@ def test_runner_always_gates_writes_manifests_and_has_no_bypass():
                     assert json.load(fh)["gate"]["m1"] == "pass"
                 assert bnc_report.rows(a.out) == []
         finally:
-            bnc_run.export.instances, bnc_run.inst_io.load, bnc_run.gate = saved
+            bnc_run.export.instances, bnc_run.inst_io.loads, bnc_run.gate = saved
     err = io.StringIO()
     with contextlib.redirect_stderr(err):
         try:
@@ -368,6 +372,48 @@ def test_runner_always_gates_writes_manifests_and_has_no_bypass():
             raise AssertionError("--no-gate still parses")
         except SystemExit as e:
             assert e.code == 2
+
+
+def test_runner_records_the_instance_and_code_it_started_from_not_what_the_solve_left():
+    """The instance file is replaced during the solve (a re-export, say): the result keeps the hash of
+    the bytes that were solved, and the report then calls it stale instead of taking it for current."""
+    name, inst = _instances()[0]
+    with tempfile.TemporaryDirectory() as d:
+        a = _run_args(d)
+        os.makedirs(a.instances)
+        path = os.path.join(a.instances, "S.json.gz")
+        inst_io.save(json.loads(json.dumps(inst.doc, default=float)), path)
+        with open(path, "rb") as fh:
+            before = hashlib.sha256(fh.read()).hexdigest()
+        for f, text in (("spec.toml", "x"), ("extract.json", "y")):
+            with open(os.path.join(d, f), "w") as fh:
+                fh.write(text)
+        cfg = {"spec": os.path.join(d, "spec.toml"), "extract": os.path.join(d, "extract.json"), "channel": "X"}
+        solved = []
+
+        def fake_solve(arm, inst_, limit, threads, log, **kw):
+            solved.append(inst_.n)
+            with open(path, "wb") as fh:
+                fh.write(b"re-exported during the solve")
+            export.provenance = lambda: {"code_commit": "after", "code_dirty": True}
+            return {"arm": arm, "status": "infeasible", "objective": None, "bound": None, "gap": None, "nodes": 0,
+                    "seconds": 0.1, "note": "", "owner": None, "rounds": 0, "cuts": 0}
+        saved = (bnc_run.export.instances, arms.solve, export.provenance)
+        bnc_run.export.instances = lambda _d: {"S": cfg}
+        arms.solve = fake_solve
+        export.provenance = lambda: {"code_commit": "before", "code_dirty": False}
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                assert bnc_run.one("S", "a", a) == 0
+        finally:
+            bnc_run.export.instances, arms.solve, export.provenance = saved
+        with open(os.path.join(a.out, "S", "a", "result.json")) as fh:
+            res = json.load(fh)
+        assert solved == [inst.n], solved                   # the solve ran on the parsed original
+        assert res["instance_sha256"] == before and res["instance_path"] == os.path.abspath(path), res
+        assert res["code_commit"] == "before" and res["code_dirty"] is False, res
+        fresh, stale = bnc_report.split(a.out, a.instances)
+        assert fresh == [] and "instance file changed" in stale[0][1], (fresh, stale)
 
 
 def _verdict_world(bare=False):
@@ -471,8 +517,14 @@ def test_report_tables_only_the_campaign_of_the_newest_result():
     """After a subset rerun an older arm (other commit, limit, threads, settings or instance file) is
     listed as stale and neither tabled nor a winner."""
     with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "instances"))
+        with open(os.path.join(d, "instances", "S.json.gz"), "wb") as fh:
+            fh.write(b"inst")
+        sha = hashlib.sha256(b"inst").hexdigest()
+
         def put(arm, finished, **kw):
-            r = dict(_res(arm, "optimal", 1.0, _gate(), seconds=5.0 if arm == "a" else 50.0), finished=finished, **kw)
+            r = dict(_res(arm, "optimal", 1.0, _gate(), seconds=5.0 if arm == "a" else 50.0), finished=finished,
+                     **{"instance_sha256": sha, **kw})
             os.makedirs(os.path.join(d, "S", arm), exist_ok=True)
             with open(os.path.join(d, "S", arm, "result.json"), "w") as fh:
                 json.dump(r, fh)
@@ -487,12 +539,87 @@ def test_report_tables_only_the_campaign_of_the_newest_result():
             text = fh.read()
         assert "## Stale results excluded" in text and "| S | a |" not in text and "| S | d |" not in text, text
         assert "arm a proved" not in text and "arm b proved" in text, text
-        # the instance file changed since arm b ran
-        os.makedirs(os.path.join(d, "instances"))
-        with open(os.path.join(d, "instances", "S.json.gz"), "wb") as fh:
-            fh.write(b"new")
+        # the instance file is not the one arm b ran on
         put("b", "2026-10-15T10:00:00", instance_sha256="0" * 64)
         assert [r["arm"] for r in bnc_report.rows(d)] == ["c"]
+
+
+def test_report_admits_a_result_only_with_its_instance_file_and_hash():
+    """No recorded hash, no file, or another file: stale.  The file is looked for where the run
+    recorded it (a custom instance directory), unless the caller names a directory."""
+    with tempfile.TemporaryDirectory() as d:
+        custom = os.path.join(d, "elsewhere")
+        os.makedirs(custom)
+        path = os.path.join(custom, "S.json.gz")
+        with open(path, "wb") as fh:
+            fh.write(b"inst")
+        sha = hashlib.sha256(b"inst").hexdigest()
+
+        def put(arm, **kw):
+            r = dict(_res(arm, "optimal", 1.0, _gate()), finished="2026-10-15T10:00:00", **kw)
+            os.makedirs(os.path.join(d, "S", arm), exist_ok=True)
+            with open(os.path.join(d, "S", arm, "result.json"), "w") as fh:
+                json.dump(r, fh)
+
+        def verdict(**kw):
+            fresh, stale = bnc_report.split(d, **kw)
+            return sorted(r["arm"] for r in fresh), {r["arm"]: why for r, why in stale}
+        put("a", instance_sha256=sha, instance_path=path)       # run with --instances elsewhere
+        put("b", instance_path=path)                            # no hash
+        put("c", instance_sha256=sha)                           # no location: <out>/instances, which is empty
+        put("d", instance_sha256=sha, instance_path=os.path.join(d, "gone", "S.json.gz"))
+        fresh, stale = verdict()
+        assert fresh == ["a"], (fresh, stale)
+        assert "no instance sha256" in stale["b"] and "not available" in stale["c"] and "not available" in stale["d"], stale
+        # the caller's directory wins over the recorded path
+        assert verdict(instances=custom)[0] == ["a", "c", "d"]
+        assert "not available" in verdict(instances=os.path.join(d, "none"))[1]["a"]
+        with open(path, "wb") as fh:
+            fh.write(b"replaced")
+        assert "instance file changed" in verdict()[1]["a"]
+
+
+def test_report_lists_an_independent_check_only_for_the_campaigns_instance():
+    """A verification without a commit or hash, of a replaced or missing instance, or of another file
+    than the one the tabled results ran on, is excluded and says why."""
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "instances"))
+        path = os.path.join(d, "instances", "S.json.gz")
+        with open(path, "wb") as fh:
+            fh.write(b"inst")
+        sha = hashlib.sha256(b"inst").hexdigest()
+        os.makedirs(os.path.join(d, "S", "a"))
+        with open(os.path.join(d, "S", "a", "result.json"), "w") as fh:
+            json.dump(dict(_res("a", "optimal", 1.0, _gate()), finished="2026-10-15T10:00:00", instance_sha256=sha), fh)
+
+        def put(name, **kw):
+            v = {"instance": "S", "scip_status": "optimal", "seconds": 1.0, "nodes": 1, "objective": 1.0,
+                 "connected": True, "time_limit": 60.0, **kw}
+            with open(os.path.join(d, "S", name), "w") as fh:
+                json.dump(v, fh)
+        put("verify.json", instance_sha256=sha, instance_path=path, code_commit="x")
+        put("verify_nohash.json", code_commit="x")
+        put("verify_nocode.json", instance_sha256=sha)
+        put("verify_other.json", instance_sha256="0" * 64, code_commit="x")
+        ok, bad = bnc_report.checks(d)
+        assert len(ok) == 1 and ok[0]["instance_sha256"] == sha, ok
+        why = {os.path.basename(p): w for p, w in bad}
+        assert set(why) == {"verify_nohash.json", "verify_nocode.json", "verify_other.json"}, why
+        assert "no instance sha256" in why["verify_nohash.json"] and "no code commit" in why["verify_nocode.json"], why
+        assert "instance file changed" in why["verify_other.json"], why
+        with open(bnc_report.write(d)) as fh:
+            text = fh.read()
+        assert "## Independent checks excluded" in text and "verify_other.json" in text, text
+        # the instance is re-exported after the verification: the check no longer belongs to it
+        with open(path, "wb") as fh:
+            fh.write(b"re-exported")
+        ok, bad = bnc_report.checks(d)
+        assert ok == [] and len(bad) == 4 and all(w for _, w in bad), (ok, bad)
+        # the file is gone
+        os.remove(path)
+        assert bnc_report.checks(d)[0] == []
+        with open(bnc_report.write(d)) as fh:
+            assert "not available" in fh.read()
 
 
 def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():
@@ -501,8 +628,9 @@ def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():
             arm, out = cmd[5], cmd[cmd.index("--out") + 1]
             self.returncode = {"a": 3, "b": 0, "c": 0}[arm]
             if arm == "c":
+                inst = os.path.join(cmd[cmd.index("--instances") + 1], "S.json.gz")
                 with open(os.path.join(out, "S", "c", "result.json"), "w") as fh:
-                    json.dump(_res("c", "optimal", 1.0, _gate()), fh)
+                    json.dump(dict(_res("c", "optimal", 1.0, _gate()), instance_sha256=bnc_report._sha256(inst)), fh)
 
         def poll(self):
             return self.returncode
@@ -512,6 +640,9 @@ def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():
         with tempfile.TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
             a = _run_args(d)
             a.arms = ["a", "b", "c"]
+            os.makedirs(a.instances)
+            with open(os.path.join(a.instances, "S.json.gz"), "wb") as fh:
+                fh.write(b"inst")
             for arm in "abc":
                 os.makedirs(os.path.join(a.out, "S", arm))
                 with open(os.path.join(a.out, "S", arm, "result.json"), "w") as fh:

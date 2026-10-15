@@ -7,7 +7,7 @@
 `$TD_REPO/runs/exp/bnc_2026-10-15` by default:
 
 - `result.json`: the arm's result (`arms.py`: status, objective, bound, gap, nodes, seconds, rounds,
-  cuts, note), the settings (time limit, threads, instance sha256) and, when the arm returned a
+  cuts, note), the settings (time limit, threads, the instance's path and sha256 and the code commit and dirty flag, all taken before the solve) and, when the arm returned a
   drawing, `objective_check` (the drawing's cost on the instance's own MILP, `Inst.evaluate`) and
   `gate`;
 - `ledger.csv`: the drawing as the ledger rows of the group's ZCTAs (every fine-channel row of the
@@ -241,16 +241,17 @@ def _one(name: str, arm: str, a, cfg: dict, folder: str) -> int:
         print(line, flush=True)
         logf.write(f"{time.strftime('%H:%M:%S')} {line}\n")
         logf.flush()
-    path = os.path.join(a.instances, f"{name}.json.gz")
-    inst = inst_io.load(path)
+    path = os.path.abspath(os.path.join(a.instances, f"{name}.json.gz"))
+    data, digest = inst_io.read(path)        # the bytes solved are the bytes hashed, and the code is noted
+    prov = export.provenance()               # before the solve: a file or checkout changed during it is not recorded as the input
+    inst = inst_io.loads(data, path)
     kw = {"frac_root": a.frac_root} if arm == "c" else ({"flow": not a.no_flow} if arm == "a" else {})
     log(f"{name} arm {arm}: time limit {a.time_limit:g}s, threads {a.threads}, "
         f"{inst.n} columns, {inst.n_rows} rows, {len(inst.zs)} ZCTAs, {len(inst.js)} districts {kw}")
     result = arms.solve(arm, inst, a.time_limit, a.threads, log, **kw)
     owner = result.pop("owner")
-    result.update(instance=name, instance_sha256=export.sha256(path), time_limit=a.time_limit,
-                  threads=a.threads, settings=kw, finished=time.strftime("%Y-%m-%dT%H:%M:%S"),
-                  code_commit=export.commit())
+    result.update(instance=name, instance_sha256=digest, instance_path=path, time_limit=a.time_limit,
+                  threads=a.threads, settings=kw, finished=time.strftime("%Y-%m-%dT%H:%M:%S"), **prov)
     log(f"{name} arm {arm}: {result['status']} objective {result['objective']} bound {result['bound']} "
         f"gap {result['gap']} nodes {result['nodes']} in {result['seconds']:.1f}s; {result['note']}")
     if owner is not None:

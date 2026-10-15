@@ -28,6 +28,7 @@ import inst_io  # noqa: E402
 import sepcuts  # noqa: E402
 
 arms = capture.sibling("bnc_arms", "arms.py")
+export = capture.sibling("bnc_export", "export.py")
 
 
 def flow_model(inst, log=print):
@@ -100,8 +101,11 @@ def main(argv=None) -> int:
     ap.add_argument("--time-limit", type=float, default=1800.0)
     ap.add_argument("--out", default=None, help="also write the result as JSON here")
     a = ap.parse_args(argv)
-    res = run(inst_io.load(a.instance), a.time_limit)
-    res["time_limit"] = a.time_limit
+    path = os.path.abspath(a.instance)
+    data, digest = inst_io.read(path)
+    prov = export.provenance()
+    res = run(inst_io.loads(data, path), a.time_limit)
+    res.update(time_limit=a.time_limit, instance_sha256=digest, instance_path=path, **prov)
     print(res)
     if a.out:
         import json
