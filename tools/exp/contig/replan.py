@@ -250,9 +250,8 @@ def main(argv=None) -> int:
                          "the owner's and is never widened")
     checks = ng = None
     if any(ch.spec.drawable_alone for ch in inst.channels.values()):
-        from td import audit
         plancheck = _plancheck()
-        checks, ng = plancheck.Checks(), audit.NeckGraph(inst.polygon)
+        checks, ng = plancheck.Checks(), plancheck.necks_gate.gate_graph(inst.polygon)
     records = {}
 
     def plan_c(c):
@@ -306,7 +305,7 @@ def main(argv=None) -> int:
         write()
         s, inst = build(a.out_spec, a.extract)
         if checks is not None:      # the instance is rebuilt: its polygon graph is a new dict
-            ng = audit.NeckGraph(inst.polygon)
+            ng = plancheck.necks_gate.gate_graph(inst.polygon)
         for c in deltas:
             plans[c], reports[c] = plan_c(c)
     key = run.plans_key(a.out_spec, a.extract, a.plans)
