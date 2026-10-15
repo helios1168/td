@@ -1038,12 +1038,52 @@ hard window, without widening. Legacy `--window` intersects rather than replaces
 band: $[\max(L^{\rm fin},L^\$),\min(U^{\rm fin},U^\$)]$. For example,
 $\tau=1200$, $\delta=.15$ gives $[1020,1380]$, not the entire $[1000,1437.5]$.
 
-Entry: `tools/exp/contig/repair.py:347`
+Entry: `tools/exp/contig/repair.py:385`
 `def solve_window(inst, plan, owner: dict, W: set, p: dict, time_limit: float, cap: bool,`.
 It calls DAG then complete F4, with at most a quarter of the window limit for DAG,
 layer separators, optional flow and the neck callback (§4.4). Ball windows double their
 hop radius while proved infeasible, followed by near-shortest-path corridors up to the
-size cap. `--jobs` races windows in processes, one HiGHS thread each (trap 18).
+size cap. `--jobs` races windows in processes, with one solver thread each (trap 18).
+
+**Equivalent engines (#142 phase 2).** `--engine highs|scip` leaves this model unchanged.
+SCIP uses F142.c's separator handler on the actual window matrix, retaining repair-count,
+cap, DAG, optional flow and dynamically added neck rows, unlike the stripped phase-0
+export. The start is an incumbent hint, not a constraint. Relative gap is zero; SCIP's
+absolute objective gap is $10^{-6}$ throughout. The HiGHS path retains its loose first
+phase followed by the final $10^{-6}$ solve. An engine's unknown is not a proof; the
+DAG-only infeasibility cannot authorize growth. Entry: `tools/exp/bnc/scip_engine.py:120`
+`def installed(draw):`; matrix transfer: `tools/exp/bnc/scip_engine.py:51`
+`def instance_of(h, loc: dict) -> inst_io.Inst:`.
+
+**Growing the assignment restriction (#142 phase 2).** Previously the cluster stopped at
+its last standard uncapped window $W_0$. Now, only after that complete window is proved
+infeasible, try up to $N$ strict supersets, each of size at most $C$. Defaults are $N=3$
+for SCIP and $N=0$ for HiGHS; $C=2500$. These are search caps, not an M1 tolerance.
+Let $J(W)$ be owners in or adjacent to $W$, and $T$ the districts adjacent to any territory
+of $J(W)$ but not in $J(W)$. First add free ZIPs owned by $T$, choosing the nearest by
+hops through free ZIPs (then ZIP id; unreachable last) if the whole ring exceeds $C$.
+Then union the current window with each larger ball/corridor proposed at cap $C$,
+stopping when the next union exceeds $C$ or $N$ steps have been planned:
+
+$$
+W_0\subsetneq W_1\subsetneq\cdots\subsetneq W_k,\qquad k\le N,\quad |W_i|\le C.
+$$
+
+Each new window tries the split/holder cap first, then without it if infeasible. A solved
+step ends the sequence; an unknown ends growth immediately, including before an uncapped
+retry. Only a proved uncapped infeasibility advances to the next larger window. Parallel
+workers may solve later steps speculatively, but settle in this order. Neck-window searches
+do not grow. Entries: `tools/exp/contig/repair.py:614`
+`def proved_infeasible(new: list, last: tuple) -> bool:` and `tools/exp/contig/repair.py:627`
+`def grow_windows(pieces: list, owner: dict, W: set, free: set, adj: dict, h0: int,`.
+
+The relation to F0 remains a **window assignment restriction inside a heuristic**. Define
+$\mathcal R(W)=\{x:x_{zj}=\bar x_{zj}\ (z\notin W)\}$. Then
+$W\subseteq W'\Rightarrow\mathcal R(W)\subseteq\mathcal R(W')$: every old assignment still
+fixes the smaller outside set (**proved**). This enlarges the assignment search domain,
+not an F0 certificate. Rebuilt bodies, lists, cap rows, callback exemptions and normalized
+objective coefficients are conditional on each window; no monotonic local optimum or
+infeasibility implication from $W$ to $W'$ is asserted.
 
 **Repair counts/objective.** Let $h_v$ be the number of fixed holders, $Y_v^+$ its candidate
 new-holder columns and $s_v\in\{0,1\}$ the split indicator. Fix $s_v=1$ if $h_v\ge2$;
@@ -1075,6 +1115,15 @@ exempt from its callback, and remote outside pieces need not be connected by thi
 A local connected return therefore does not certify all M1 constraints; the full gate is
 required. Unknown or DAG-only failure is never an infeasibility certificate.
 
+**Small-instance specification and checks.** `td/formulation/f4w.py:22`
+`def build_model(data):` adds the named $V_W,O,h,s,S_0,Q_0$ and cap components to F4's
+independent flow model; it rejects DAG/neck callbacks rather than silently omitting them.
+`tests/test_formulation_repair.py` checks three nested windows on 60 vertices against
+both production engines (relative gap zero), including optimal values and chosen feasible
+and infeasible assignments. Separate checks exercise binding caps, opened units, the
+adjacent ring, wider steps, both caps and the infeasible/unknown growth gate in sequential
+and raced settlement. These are numerical checks, not a national performance claim.
+
 ### 4.4 F4.N / F4.S — default no-good and opt-in strong neck rows
 
 **F4.N relation to F0: exact exclusion of a nonexempt neck-failing ownership set within the
@@ -1093,7 +1142,7 @@ which does not implement the Manhattan exception: exception-bearing sets require
 explicit F0 exception record before this is an F0-valid cut. No main-map blanket exemption
 is inferred. An unresolved check supplies no proof and no no-good row.
 
-Entry: `tools/exp/contig/repair.py:274`
+Entry: `tools/exp/contig/repair.py:312`
 `def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check, rows: str | None = None) -> tuple:`;
 encoding: `tools/exp/contig/necks_gate.py:92` `def nogood_terms(D: set, W: set) -> tuple:`.
 It uses one binary $t$ with
@@ -1764,9 +1813,10 @@ headroom, and its $K=1$ special case need not return an interval contained in th
 
 ## 12. F142 — branch-and-cut comparison arms (#142 phase 0)
 
-All code in this section was read with `git show` on **`m5-studio/bnc` at `ae0b1b7`**;
-`tools/exp/bnc/` is not in this checkout. The branch's README and captured source define
-the experiment, not a replacement shipped drawing backend.
+The phase-0 comparison was originally read on **`m5-studio/bnc` at `ae0b1b7`**;
+`tools/exp/bnc/` is now present in this checkout. The historical experiment exports a
+stripped group model. Phase 2 additionally reuses its SCIP handler on F4.W's full window
+matrix (§4.3); that does not strip window-specific rows or change their certificate domain.
 
 ### 12.1 Common conditional model and certificates
 
@@ -1808,7 +1858,10 @@ so exact unlimited separation terminates and agrees with the finite-family formu
 The five F4 conformance instances compare its optimum and point verdicts with both the
 independent-flow F4 spec and production F4 (the mathematical model of arm a). An extra
 locally feasible disconnected point exercises nonempty separator generation; ordinary
-neighbor rows alone accept it. This does not execute or certify the branch's SCIP handler.
+neighbor rows alone accept it. Those original checks do not execute the SCIP handler.
+The additional `tests/test_formulation_repair.py` checks execute that handler through the
+production window adapter and compare it with the independent F4.W flow specification;
+its feasible and infeasible point verdicts agree on the tested 60-vertex instances.
 Entries: `td/formulation/f142.py:17` `def build_model(data):` and
 `td/formulation/f142.py:28` `def separate(M, *, tolerance=1e-6):`.
 
@@ -1841,11 +1894,16 @@ applies to each; the implementations differ in how they enforce the same P requi
   `--frac-root` optionally adds fractional root cuts. Entry on `m5-studio/bnc`, `tools/exp/bnc/arms.py:186`:
   `def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = False,`.
   SCIP's handler checks returned integer owners for disconnection. One thread in this build.
+  Phase 2 factors this into `tools/exp/bnc/arms.py:192`
+  `def scip_solve(inst, time_limit: float, log=print, frac_root: bool = False,`.
+  Its optional full-column start does not alter the feasible set. In F4.W the caller supplies
+  the current full matrix, so the same separator family enforces P connectivity alongside
+  window caps and outer neck cuts; its certificate is F4.W's, not the stripped export's.
 - **F142.d (probe only):** no working optimization formulation/backend. The intended model
   is §12.1 but the highspy lazy callback is never invoked in the 20-node probe; status is
   `not usable`. If the probe ever reports usable, the current function raises
   `NotImplementedError`, rather than silently solving without connectivity. Entry
-  on `m5-studio/bnc`, `tools/exp/bnc/arms.py:295`:
+  at `tools/exp/bnc/arms.py:313`:
   `def probe_highs_lazy(log=print) -> dict:`. It picks four vertices of a 20-node path at
   minimum cost with cheap disconnected endpoints, so a working callback must exclude that
   assignment. It is a capability test, not a fourth successful solve.
