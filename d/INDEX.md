@@ -14,7 +14,7 @@ Words used below
 - The exact drawing did not finish for large coupled groups (the Pennsylvania/Mid-Atlantic, Florida and Tennessee groups in FI; the Maryland group DC+MD+DE+NJ+PA+WV in WIFI). Every first attempt ended "no connected drawing", and the long retries (`main_r2`, `main_r2b`, `main_r2c`) hit the stop or were stopped by hand with those draws still unsolved.
 - The warm start (repair the first drawing instead of redrawing, glue, merge, gate) produced the passing maps. 3,629 to 5,618 of their ZCTAs are heuristic-placed; the gate still passes M1 and all districts are in window. Pass or fail is decided by the gate, not by how the area was drawn.
 - 3 more m5 points fail M1 after the warm start: ne-50-bal and ne-52-filight (FI_19 in NY, 4 detached pieces, largest 0.263 τ) and ne-52-bal (FI_18 NY and FI_07 NJ).
-- m2 has no complete passing map yet. nw34-48 and nw34-50 pass M1 on the WIFI channel alone, but their national channel was never drawn. nw49-48 and nw49-52 fail M1 with one 9-ZIP NY piece in a WIFI district. nw49-50, nw34-52 and the nw49-48/52 third repair pass were still running at 19:50 CDT; w1-48/50/52 never produced a drawing.
+- m2 has no complete passing map yet. nw34-48 and nw34-50 pass M1 on the WIFI channel alone, but their national channel was never drawn. nw49-48 and nw49-52 fail M1 with one 9-ZIP NY piece in a WIFI district. nw49-50 fails M1 (7 detached pieces in 4 districts, largest 0.338 τ); nw34-52's WIFI was repaired (national never drawn); the nw49-48/52 third repair passes did not join their pieces (final 21:03 CDT); w1-48/50/52 never produced a drawing.
 - Earlier passing maps for comparison: last night's ne-48-bal (fully exact draw) and IFA K48-K54 (7 maps).
 - Shape (section 3): 2 to 4 districts per candidate are flagged for eye review (`cut_edges >= 126 AND bite >= 0.18`); this is a look-at-the-page list, not a gate.
 
@@ -30,7 +30,7 @@ $ figures are scored with the full dollar extract. M1 detail is from each map's 
 
 Notes on the three
 - "FI 1.00" means the highest FI district sits at the top of its window ($1,034.6M of 1,035M). WIFI's three districts use the whole-state allowance (WIFI_03 $1,230.7M).
-- m2 (`warm_m2/`): no complete map passes yet; see section 4. nw49-50 and the nw49-48/52 third repair pass are still running (19:50 CDT), so those rows may still change.
+- m2 (`warm_m2/`): no complete map passes (final, 21:03 CDT); see section 4.
 - Source folders: `warm/<point>/merged` (ledger and gate), `warm/<point>/warm.json`, `warm/INDEX.md` (heuristic groups and the older shape numbers).
 
 ### Earlier passing maps (for comparison)
@@ -74,7 +74,7 @@ First attempt (`main/`, m5 and m2) and the long retries (`main_r2`, `main_r2b`, 
 | ne-52-bal | **Fails M1: FI_18 (NY, 21 ZIPs, 0.061 τ) and FI_07 (NJ, 7 ZIPs, 0.0006 τ) detached**; FI 17/23 in window. Repair r1, r2 and an r3 with NY/NJ opened ended infeasible or unknown. First draw: the TN group (AR+MO+TN, KY+TN) did not finish. 13,901 FI + 3,792 national ZCTAs heuristic-placed. | `warm/ne-52-bal` |
 | nw49-48 | **Fails M1: WIFI_27 (NY) has a detached 9-ZIP piece, 0.085 τ**; 1 WIFI district under the window (min $848.7M); 13,772 WIFI + 3,792 national ZCTAs heuristic-placed. The Mid-Atlantic group (DC+MD+DE+NJ+PA+WV, MD split) did not finish. A third repair pass with long windows was running at 19:50 CDT; result may change. | `warm_m2/nw49-48` |
 | nw49-52 | **Fails M1: WIFI_29 (NY) has a detached 9-ZIP piece, 0.090 τ**; 1 WIFI and 2 national districts outside the window; 15,873 WIFI + 8,027 national ZCTAs heuristic-placed. Third repair pass running at 19:50 CDT. | `warm_m2/nw49-52` |
-| nw49-50 | **Running.** Repair pass 1 ended 19:41 CDT with M1 failing: 4 districts in pieces, 7 detached pieces, largest 0.338 τ; the driver was still going. First draw: the same Mid-Atlantic group did not finish (15,235 WIFI + 4,805 national ZCTAs heuristic-placed). | `warm_m2/nw49-50`, `main_nw49/SEALED.json` |
+| nw49-50 | **Fails M1 (final, 21:03 CDT).** Repair ended with M1 failing: 4 districts in pieces, 7 detached pieces, largest 0.338 τ. First draw: the same Mid-Atlantic group did not finish (15,235 WIFI + 4,805 national ZCTAs heuristic-placed). | `warm_m2/nw49-50`, `main_nw49/SEALED.json` |
 | nw34-48 | **No complete map: the national channel (K 14) was never drawn.** Its WIFI channel (K 34) passes M1 (0 pieces) but WIFI_30 ($834.1M) is under the $850M window; 14,890 WIFI ZCTAs heuristic-placed (Mid-Atlantic MD group, unknown at its time limit). National draw (`main/`): "run.py wrote no ledger: the constructed drawing breaks a row (band or targets)". | `warm_m2/nw34-48`, `main/SEALED.json` (m2) |
 | nw34-50 | **No complete map: the national channel (K 15) was never drawn** (m2 `main/`: "run.py wrote no ledger: solve 1 (gap 0.05): Optimal, objective 2557.01, 3527.5s, 18455 rows"). Its WIFI channel (K 35) passes M1 and all 35 districts are in window; 15,528 WIFI ZCTAs heuristic-placed. | `warm_m2/nw34-50` |
 | nw34-52 | **Running, no verdict.** The warm driver crashed twice (gate rc 1 on the first drawing: 5 WIFI districts in pieces, 7 detached pieces, largest 0.173 τ, WIFI_28 NJ+PA 126 ZIPs); repair pass 1 was restarted at 19:44 CDT. National channel: "no constructed drawing: no move helps DC+MD+OH+PA#1 (691.611 against [1000, 1437.5])". | `warm_m2/nw34-52`, `main/SEALED.json` (m2) |
@@ -91,5 +91,5 @@ Other history: ne-48-bal, ne-50-filight and ne-cmp-tierP also ended "no connecte
 - ne-50-filight passes the gap-width M1 gate but fails the strict rule (2 necks, no pieces). It is a candidate under the owner-approved rule that the final exact gate decides.
 - Passing maps contain heuristic-placed ZCTAs (3,629 to 5,618): gate-verified, not drawn by the exact solver, so they may look rougher. The label for any of them is "passes (gate-verified; N ZCTAs placed by the realizer heuristic, not the exact draw)" (supervisor ruling 2026-10-14, `STATUS.md` 17:58 CDT).
 - The shape flags are an eye-review list only. `shape/` uses the study-v2 (land-only) definitions; the `shape` lines in `warm/INDEX.md` come from the earlier study.py and differ slightly (ne-48-bal FI max bite 0.4083 there, 0.409 here).
-- m2 work was still in progress when this was written (nw49-50, nw49-48/52 pass 3, nw34-52). Re-read `warm_m2/*.driver.log` before quoting section 4 rows marked running.
+- m2 work finished at 21:03 CDT; all m2 rows are final.
 - Masking: district dollars are shown; no per-rep shares, sales or rep/firm names are used.
