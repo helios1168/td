@@ -1,13 +1,14 @@
-# The support-master model
+# Territory-design formulations
 
-This file states td's model: the support master, the ZIP realizer, the ledger and the audit. It
-is #52 §4 (revision 7) written out in full, with the council's corrections of 2026-09-28
+F0 (§0) is the national reference problem. The stage IDs identify what each algorithm actually
+solves; none silently substitutes its objective or restrictions for F0. The support-master
+material retains #52 §4 (revision 7), with the council's corrections of 2026-09-28
 ([memo](https://github.com/helios1168/td/issues/52#issuecomment-5865965201)) applied here as the
 owner's answer OQ1 (i) directs. B2 (#65) verifies it. The C-numbers refer to the memo, the
 S-numbers to the decisions in `docs/archive/memory/decisions/support-refactor-2026-09-25.md`, and the OD
 and U-numbers to `PROBLEM.md` and `docs/archive/problem/UNKNOWNS.md`.
 
-## 0. Tags
+## Reading conventions and formulation map
 
 Every statement that could be false carries one tag. Definitions and algorithm steps carry none.
 
@@ -19,6 +20,205 @@ Every statement that could be false carries one tag. Definitions and algorithm s
   an open OD, or a settled S-decision, council item or issue.
 
 Papers are cited by key and result and listed in `docs/REFERENCES.md`.
+
+Formulation IDs are stable even when section numbers move. The older §4 drawability rows
+are now §3.6; their S27 label and all C/S/OD/U labels are retained. Sections 5–10 keep their
+numbers so the Claim 3, S21 and S25/S26 references in code remain usable.
+
+| stage | ID | section | certificate domain |
+|---|---|---|---|
+| national reference | F0 | §0 | complete routed national ledger; objective evaluators still inputs |
+| support family, master and drawability | F2 | §§2–3, proofs §5 | continuous support plans; bounds only over the stated drawing domain |
+| complete group / DAG / sequential draw | F4 / F4.DAG / F4.SEQ | §4 | fixed bodies, allowed owners and modeled band; P only |
+| window and neck repair | F4.W / F4.N / F4.S | §4 | window and checked districts, outside fixed; strong rows unproven |
+| single-district plan check / policy bans | F2.B / F2.C | §3.6.9 | current-M1 single-support test / no global certificate |
+| transport, rounding, repair, territory | F7 | §7 | exact transport theorem versus numerical heuristic implementation |
+| ledger and audit | F8 / F9 | §§8–9 | recorded assignment and supplied audit inputs |
+| glue, warm start and sealed assembly | F11 | §11 | final audited ledger, not drawing optimality |
+| branch-and-cut comparison | F142 | §12 | exported fixed group; no neck constraint |
+
+Agent: modeler (openai-codex/gpt-6-astra). #143 phase 1: documentation only; executable
+Pyomo specifications and conformance tests are the issue's next phase.
+
+## 0. F0 — national reference program
+
+**Domain and status.** F0 is the national (main-map) reference problem, not an algorithm or
+an IFA formulation. It transcribes §4 of the
+[review](https://github.com/helios1168/td/blob/m5-studio/national-approaches/notes/2026-10-14_national-approaches-review.md),
+read on `m5-studio/national-approaches`, as approved for #143. **Relation to F0: exact**, by
+definition. A feasibility certificate would certify the entire routed national ledger against
+all the rows below; a lexicographic optimum additionally requires owner-defined numerical
+$\Phi_{\rm shape}$ and $\Phi_{\rm balance}$. Neither is supplied by the current pipeline.
+
+The priority is the owner's “contiguity, shape, balance, splits”
+([#134 DECIDED](https://github.com/helios1168/td/issues/134#issuecomment-6162937688)); the band
+is hard, not a penalty ([#112](https://github.com/helios1168/td/issues/112#issuecomment-6168528181)).
+The #140 ruling says “keep manhattan excepted”
+([record](https://github.com/helios1168/td/issues/140#issuecomment-6163927218)), not that every
+district touching Manhattan is exempt. This section does not amend `PROBLEM.md`: its older
+window, connector and ranking text is reconciled against the decision/code record in §13.
+
+### 0.1 Sets, inputs and variables
+
+Let $Z$ be the explicitly shipped 2025 CONUS ZCTAs (including zero-opportunity territory),
+$F$ the scenario's fine channels, and $\mathcal H$ the permitted routing structures. For
+$h\in\mathcal H$, let $C_h$ be its planning channels and
+$\rho_h:Z\times F\to C_h$ its routing, obeying the settled national/fallback rules. Define
+
+$$
+Z_{hc}=\{z:\exists f,\ \rho_h(z,f)=c\},\qquad
+ d_{hcz}=\sum_{f:\rho_h(z,f)=c} r_f m_{zf},\qquad
+ Z^0_{hc}=\{z\in Z_{hc}:d_{hcz}=0\}.
+$$
+
+Here $m_{zf}$ is descaled opportunity and $r_f$ is the dollar rate from the **whole extract**,
+never recomputed after regional extraction. Dollars below are in $M. Other inputs are land
+$a_z$, state $s(z)$, P-adjacency $G=(Z,E_P)$ (rook polygon edges, committed connectors and
+committed R5 land-only gap adjacency), current #140 width data, and the fixed record of the
+**authorized Manhattan violation**. $\mathcal H$ is an input, not necessarily the five tested
+structures; $|\mathcal H|=1$ means a fixed structure. The two numerical map evaluators
+$\Phi_{\rm shape}(\lambda)$ and $\Phi_{\rm balance}(\lambda)$ are **owner-to-define inputs**.
+
+For each $h,c$ and label $j\in J=\{1,\ldots,54\}$, use binaries $q_h$ (structure),
+$y_{hcj}$ (active district), $x_{hcjz}$ (owns ZCTA), $b_{hcjs}$ (touches state),
+$w_{hcj}$ (whole-state WIFI allowance), $r_{hcjz}$ (connectivity root), and $p_{hcs}$
+(split state). The root symbol $r_{hcjz}$ is distinct from the input rate $r_f$.
+Directed P-edge flows $f_{hcj,uv}\ge0$ are continuous. Write
+$X_{hcj}=\{z:x_{hcjz}=1\}$ and $a(A)=\sum_{z\in A}a_z$.
+
+### 0.2 Routing, coverage and district count
+
+$$
+\begin{aligned}
+\sum_h q_h&=1,& y_{hcj}&\le q_h,\\
+\sum_j x_{hcjz}&=q_h &&(z\in Z_{hc}),\\
+x_{hcjz}&\le y_{hcj},& \sum_{z\in Z_{hc}}x_{hcjz}&\ge y_{hcj},\\
+K_{hc}:=\sum_j y_{hcj}&\ge q_h,&48\le\sum_{h,c}K_{hc}&\le54.
+\end{aligned}
+$$
+
+For the chosen $h$, $\lambda(z,f)=(h,\rho_h(z,f),j)$ where $x_{h,\rho_h(z,f),j,z}=1$.
+Thus fine channels routed together have the same ZCTA owner. No cell is inferred from a
+polygon or omitted because its mass is zero. F0 has no dropped-channel exception.
+
+### 0.3 Hard windows and WIFI's conditional whole-state cap
+
+Let $D_{hcj}=\sum_{z\in Z_{hc}}d_{hcz}x_{hcjz}$. The windows are
+
+| channel | $L_c$ | $U_c$ | conditional cap |
+|---|---:|---:|---:|
+| national | 1000 | 1437.5 | — |
+| WH | 850 | 1150 | — |
+| FI | 765 | 1035 | — |
+| WIFI | 850 | 1150 | 1600, whole-state districts only |
+
+For non-WIFI channels and for WIFI, respectively,
+
+$$
+L_c y_{hcj}\le D_{hcj}\le U_c y_{hcj},\qquad
+850y_{hcj}\le D_{hcj}\le1150y_{hcj}+450w_{hcj}.
+$$
+
+Exact state incidence and eligibility for the WIFI cap are
+
+$$
+\begin{aligned}
+x_{hcjz}&\le b_{hcj,s(z)},&
+b_{hcjs}&\le\sum_{z\in Z_{hc}:s(z)=s}x_{hcjz},\\
+w_{hcj}&\le y_{hcj},&
+x_{hcjz}&\ge w_{hcj}+b_{hcj,s(z)}-1.
+\end{aligned}
+$$
+
+The last row is imposed for WIFI: if $w=1$, every touched state's channel-footprint ZCTAs
+belong to that district, equivalent under coverage to exclusive ownership of each touched
+state. It does not grant 1600 to every WIFI district. Use exact dollars for the conceptual
+windows; reproducing the scorer instead uses its explicitly stated whole-dollar rounding,
+not a solver tolerance. Code evidence: `tools/looks/score.py:111`
+`WHOLE_STATE_CAP = {"WIFI": 1.6e9}       # a district of whole states only (owner, 2026-10-13)`;
+`tools/looks/score.py:334` `        whole = bool(st) and all(owners[ch, s] == {d} for s in st)`;
+`tools/looks/score.py:337` `        inside = lo is not None and round(lo) <= round(x) <= round(hi)`.
+
+### 0.4 P-connectivity
+
+On both directed arcs of each edge of $G[Z_{hc}]$, put $n=|Z_{hc}|$ and impose
+
+$$
+\begin{aligned}
+\sum_z r_{hcjz}&=y_{hcj},&r_{hcjz}&\le x_{hcjz},\\
+0\le f_{hcj,uv}&\le(n-1)x_{hcju},&f_{hcj,uv}&\le(n-1)x_{hcjv},\\
+\sum_{u:uz\in E_P}f_{hcj,uz}-\sum_{v:zv\in E_P}f_{hcj,zv}
+&\ge x_{hcjz}-nr_{hcjz}.
+\end{aligned}
+$$
+
+**Proof of equivalence.** Summing over a rootless selected component gives $0\ge|A|$,
+a contradiction. Conversely, a spanning tree rooted at the selected root routes one unit to
+every other selected vertex and satisfies the rows. Relays do **not** make P-paths; they
+enter only the width graph below. R5's land-only adjacency file is not shipped (§9).
+
+### 0.5 N-connectivity as a finite constraint family
+
+For candidate $X$, let $R_{hc}(X)\subseteq Z^0_{hc}\setminus X$ be zero-opportunity relays
+reachable from $X$ through chains of zero-opportunity ZCTAs. Build $H_{hc}(X)$ on
+$X\cup R_{hc}(X)$ with polygon, connector and gap widths as in §9: approved connectors
+unlimited, other widths floored to whole cm. Relays outside $X$ have no land or mass.
+For every nonempty proper $A\subset X$ connected on the district's **own P-graph**, impose
+
+$$
+.05a(X)\le a(A)\le .5a(X)
+\quad\Longrightarrow\quad
+\min_{T\subseteq R_{hc}(X)}
+\operatorname{cap}_{H_{hc}(X)}\bigl(\delta(A\cup T)\bigr)\ge W,
+\qquad W=1{,}000{,}000\ {\rm cm},
+$$
+
+except precisely the authorized Manhattan violation. The rest of $X$ may have several
+components; distinct small fringes joined only by relays are not one qualifying $A$.
+
+Equivalently, predefine the finite collection $\mathcal B_{hc}$ of ownership sets with a
+nonexempt neck. For every $B\in\mathcal B_{hc}$ and district $j$, impose
+
+$$
+\sum_{z\in B}(1-x_{hcjz})+
+\sum_{z\in Z_{hc}\setminus B}x_{hcjz}\ge y_{hcj}.
+$$
+
+**Proof.** For an active district the left side is the Hamming distance from $B$: the row
+excludes exactly $X=B$. Enumerating all forbidden sets therefore encodes precisely the neck
+rule. Exponential size is not a tractability claim. A time-limited neck search is **unknown**,
+not a mathematical violation or a feasibility proof. Current code has no Manhattan-specific
+acceptance path; a raw gate failure and an owner-applied exception must remain distinct (§9).
+
+### 0.6 Splits, objective and implementation boundary
+
+With $R_{hcs}=\sum_j b_{hcjs}$, impose
+
+$$
+2p_{hcs}\le R_{hcs}\le q_h+53p_{hcs}.
+$$
+
+These rows make $p_{hcs}=1$ exactly when at least two districts own territory in that
+channel-state, including zero-opportunity ZCTAs. The reference objective is
+
+$$
+\operatorname{lexmin}\left(
+\Phi_{\rm shape}(\lambda),\ \Phi_{\rm balance}(\lambda),\ \sum_{h,c,s}p_{hcs}
+\right).
+$$
+
+M1 and the windows are hard; shape has no hard gate in F0; K moves within its range. There
+is no automatic $\eta$, free list, support-size/diameter cap, regional seal, rule C or split
+cap. Such restrictions belong to the stage that adds them. With routing and K fixed,
+feasibility separates by channel; a map-level objective separates only if its evaluators do.
+
+**Code entry boundary.** No production function solves F0. Its M1 check starts at
+`td/audit.py:940`
+`def check_m1(run: Run, gap_width: bool | None = None, land_rule: bool | None = None) -> Check:`.
+Routing is supplied by the source audit, not established by the run-folder gate alone (§9).
+The existing ranking is not the F0 objective: `tools/looks/score.py:549`
+`def rank_key(s: dict) -> tuple:` returns splits first. F0 is a reference specification;
+phase 1 of #143 does not claim an executable F0 solver or Pyomo conformance certificate.
 
 ## 1. Cells, units, planning channels
 
@@ -58,7 +258,7 @@ only the extract's ZIPs, as before #114.
 **Zero opportunity.** A unit with M_v = 0 in channel c, and a channel whose units all have zero
 opportunity (τ_c = 0), are out of scope of this model: the loader drops such units from V_c, and
 such channels from the run, before solving, and reports each one **[policy #65 F1]**. So M_v > 0
-for every v ∈ V_c and τ_c > 0 for every channel solved. This is what the drawn shares (§4.1, §8),
+for every v ∈ V_c and τ_c > 0 for every channel solved. This is what the drawn shares (§3.6.1, §8),
 Proposition D and the divided formulas of Claim 2 need. ZIPs with m_z = 0 inside a unit with
 M_v > 0 stay in scope. No share convention for a zero-opportunity unit is assumed: a dropped
 unit's cells in D_c carry no opportunity and are not drawn in c by the master or the realizer.
@@ -70,7 +270,7 @@ blank and the same reason (§8), and the audit lists them without failing (§9).
 A **final tolerance** [L^fin_c, U^fin_c] ⊇ [L_c, U_c] is declared per scenario and judges the
 drawn map **[policy OD1]**.
 
-## 2. Supports and closure
+## 2. F2 inputs — supports and closure
 
 A support is a set of units that one district may draw from. With centroids p_u in the plane of
 the ZIP points and d(u, v) = ‖p_u − p_v‖, 𝒮_c is the family of sets S ⊆ V_c such that:
@@ -116,10 +316,10 @@ which reads each pair's own states, and then drops each S that is not connected 
   T contains no forbidden pair because S contains none, and T passes the filter by assumption.
 - C(S) ⊆ G, so Claim 1(i) still holds. In Claim 1(iii), "a connected footprint" now means one
   that is connected in its own contact graph.
-- `Family.adj` stays G, so the drawability rows (§4) and Proposition D do not change. A support
+- `Family.adj` stays G, so the drawability rows (§3.6) and Proposition D do not change. A support
   dropped by A is out of 𝒮_c, and so is every drawing that uses it as a footprint.
 
-## 3. The master
+## 3. F2 — the support master
 
 The master is one block per channel, with variables n_S ∈ ℤ≥0 (the number of districts drawn on
 support S) and t_{v,S} ∈ [0, 1] (their total share of unit v):
@@ -128,17 +328,17 @@ support S) and t_{v,S} ∈ [0, 1] (their total share of unit v):
 Σ_S n_S = K_c
 Σ_{S∋v} t_{v,S} = 1                                          v ∈ V_c
 η_c n_S ≤ t_{v,S} ≤ n_S                                      v ∈ S
-(L_c + μ_S) n_S ≤ Σ_{v∈S} M_v t_{v,S} ≤ (U_c − μ_S) n_S       band with rounding margin (§4.6)
+(L_c + μ_S) n_S ≤ Σ_{v∈S} M_v t_{v,S} ≤ (U_c − μ_S) n_S       band with rounding margin (§3.6.6)
 whole v ∈ S:                   n_S ≤ 1,  t_{v,S} = n_S
 clipped v ∈ S, |S| > 1:        n_S ≤ 1,  t_{v,S} = n_S
 clipped v, S = {v}:            t_{v,S} continuous, n_S ∈ ℤ≥0
 free v ∈ S:                    t_{v,S} continuous
 contact cap (optional):        Σ_{S∋v} n_S ≤ cap_v
-corridor floor (§4.2):         M_v t_{v,S} ≥ c_v(S) n_S                       v a cut vertex of G[S]
-border cap (§4.3):             Σ_{S∋v, N(v)∩S={u}} n_S ≤ b_{uv}              free v, u ∈ N(v)
-count cap (§4.4):              Σ_{S∋v} n_S ≤ |Z_v|
-Menger row (§4.5, optional):   n_S ≤ κ_v(S)                                   v a cut vertex of G[S]
-support ban (§4.9, #124):      n_S = 0                                        S banned (B or C)
+corridor floor (§3.6.2):         M_v t_{v,S} ≥ c_v(S) n_S                       v a cut vertex of G[S]
+border cap (§3.6.3):             Σ_{S∋v, N(v)∩S={u}} n_S ≤ b_{uv}              free v, u ∈ N(v)
+count cap (§3.6.4):              Σ_{S∋v} n_S ≤ |Z_v|
+Menger row (§3.6.5, optional):   n_S ≤ κ_v(S)                                   v a cut vertex of G[S]
+support ban (§3.6.9, #124):      n_S = 0                                        S banned (B or C)
 objective:                     min Σ_S w_S n_S
 ```
 
@@ -164,7 +364,7 @@ value, a spec parameter per channel, is a choice **[policy C3, #47]**:
 - It implies a contact cap: summing the row over S ∋ v gives Σ_{S∋v} n_S ≤ ⌊1/η_c⌋ **[proved]**.
 - The legacy solvers set it at articulation vertices: 0.25, or 0.10 and 0.05 in the grid
   solver (MATH_REVIEW §3.2 at the tag). They used it as a stand-in for a corridor, which it does
-  not prove exists. Here η_c applies to every unit of a support, and the corridor floor (§4.2)
+  not prove exists. Here η_c applies to every unit of a support, and the corridor floor (§3.6.2)
   does the corridor's job.
 
 ### 3.3 Extent and contact caps
@@ -183,15 +383,15 @@ among districts that lie inside it. A free unit may be split among any supports 
 w_S is the diameter of S, max_{u,v∈S} d(u, v). Alternatives are open **[claimed U38; the
 business choice goes to OD6]**. Claims 1–3 and every proposition here hold for any weights w_S ≥ 0
 that depend on S alone **[proved]**. Claim 1 carries the objective across unchanged, Claim 2
-replaces it (exact form) or keeps it without using its values (bisection), and Claim 3 and §4 do
+replaces it (exact form) or keeps it without using its values (bisection), and Claim 3 and §3.6 do
 not involve it.
 
-## 4. Drawability rows (S27)
+### 3.6 Drawability rows (S27; F2)
 
 S27 settles drawability in planning. This section states each row, what it is necessary for, and
 the correction the council requires.
 
-### 4.1 Drawings and read-back
+#### 3.6.1 Drawings and read-back
 
 A **drawing** of channel c gives every ZIP of every unit in V_c to one of K_c districts. District
 j's *footprint* is the set of units in which it owns at least one ZIP. Its *drawn share* of v is
@@ -213,7 +413,7 @@ graph.
 In short, these are the connected drawings that obey the same support family and policy rows as
 the master.
 
-### 4.2 The corridor floor (U39; #7, #14)
+#### 3.6.2 The corridor floor (U39; #7, #14)
 
 Take S ∈ 𝒮_c and a cut vertex v of G[S]. Let A_1, …, A_r (r ≥ 2) be the components of G[S] − v, and
 ∂_i ⊆ Z_v the ZIPs of v that have a ZIP-graph edge into a unit of A_i. Let ∂_{−i} = ∪_{k≠i} ∂_k.
@@ -243,7 +443,7 @@ condition, and how often it binds on the real extract, stay open **[claimed U39:
 Proposition D, which B2 checks; the E part is measured in D1 (#73)]**. A corridor piece left by the
 realizer means the floor missed a case, which is a master question.
 
-### 4.3 The border cap
+#### 3.6.3 The border cap
 
 b_{uv} is the number of v's ZIPs that have a ZIP-graph edge into unit u.
 
@@ -256,7 +456,7 @@ b_{uv} ≥ 1 **[proved]**. C2 keeps a counterexample to the printed row as a reg
 v adjacent only to u, with b_{uv} = 1, in a drawable plan that uses {u} twice and {u, v} once.
 The printed sum is 3 and the corrected sum is 1.
 
-### 4.4 The count cap
+#### 3.6.4 The count cap
 
 **C8 (the count cap is conditional).** Σ_{S∋v} n_S ≤ |Z_v| says every district planned on v can
 own a ZIP of v. It is necessary only if every planned share must be drawn as at least one ZIP. The
@@ -264,7 +464,7 @@ audit merely lists a planned share that vanishes (§9), so as the audit stands t
 **[policy C8, S27]**. In the read-back sense of Proposition D it never excludes a drawing
 **[proved]**.
 
-### 4.5 The Menger row (optional)
+#### 3.6.5 The Menger row (optional)
 
 **C9 (copies crossing a cut vertex need disjoint corridors).** For a cut vertex v of G[S] with
 components A_i, let κ^i_v(S) be the largest number of vertex-disjoint paths in G_v from ∂_i to
@@ -275,7 +475,7 @@ n_S ≤ κ_v(S) is necessary for the two-component case and for component versus
 Proposition D]**. It strengthens the drawability rows; it does not make them sufficient. It is
 optional and off by default. C3 (#68) may add it; its acceptance does not require it.
 
-### 4.6a The window band (`band_lo`, `band_hi`) **[policy, owner #112 comment, 2026-10-14]**
+#### 3.6.6a The window band (`band_lo`, `band_hi`) **[policy, owner #112 comment, 2026-10-14]**
 
 A channel may set `band_lo` and `band_hi` (0 < band_lo < 1 < band_hi). Its band is then the
 dollar window [L_c, U_c] = [τ_c · band_lo, τ_c · band_hi] itself, not [τ_c(1 − δ), τ_c(1 + δ)]:
@@ -287,7 +487,7 @@ search, so the smallest-δ searches (§5 Claim 2) solve the window once and repo
 (`master.window_feasibility`, method `window`), `exact_delta` too whether or not the channel has free
 units (the window branch comes before the free-unit rejection). Without the two keys everything is as before.
 
-### 4.6 The rounding margin μ_S (U33)
+#### 3.6.6 The rounding margin μ_S (U33)
 
 μ_S = Σ_{v∈S splittable} max_{z∈Z_v} m_z is the sum, over the splittable units of S, of the
 heaviest ZIP in each.
@@ -305,9 +505,9 @@ heaviest ZIP in each.
 - **A policy.** It removes plans that could be drawn, and it can make lumpy units infeasible at
   tight tolerances. The planning band sits inside the final tolerance by the margin **[policy OD1,
   C3]**. A channel turns it off with `margin = false`, which sets μ ≡ 0 for that channel only;
-  the default is on, and `run.json` records the setting per channel (§4.8) **[policy #84]**.
+  the default is on, and `run.json` records the setting per channel (§3.6.8) **[policy #84]**.
 
-### 4.7 What the rows are necessary for
+#### 3.6.7 What the rows are necessary for
 
 **Proposition D.** Let (n̂, t̂) be the read-back of a connected drawing in 𝒳_c(δ), with M_v > 0 for
 every v ∈ V_c (§1). Then (n̂, t̂)
@@ -337,7 +537,7 @@ most the least objective over 𝒳_c(δ), and its smallest feasible δ is at mos
 which 𝒳_c(δ) is non-empty **[proved]**. #52 §4 claimed this for the printed rows, which C6 and C7
 show to be false. It holds with the corrections.
 
-With μ_S > 0 the band row is strengthened by the margin, and that row is a policy (§4.6), not a
+With μ_S > 0 the band row is strengthened by the margin, and that row is a policy (§3.6.6), not a
 necessary condition. A connected unit v of two unit-mass ZIPs, free, with K_c = 2, η_c = 0.5 and
 band [0.5, 1.5], draws as one ZIP per district with drawn mass 1 each. But μ_{{v}} = 1 asks each
 planned mass to lie in [1.5, 0.5], which is empty **[proved]**. So the master with μ_S > 0 is a
@@ -348,10 +548,10 @@ Menger row and the other rows of §3 with μ ≡ 0 (Proposition D). No set of ro
 sufficient (§5, C10). A plan that passes every row can still fail to draw, and S28 makes that
 failure loud.
 
-### 4.8 The margin off (#84; council 2026-10-01, Est. 4)
+#### 3.6.8 The margin off (#84; council 2026-10-01, Est. 4)
 
 With `margin = false` a channel's band row is #52's, L_c n_S ≤ Σ_{v∈S} M_v t_{v,S} ≤ U_c n_S, and
-every other row is unchanged. Write μ°_S for the value §4.6's formula gives, which the master no
+every other row is unchanged. Write μ°_S for the value §3.6.6's formula gives, which the master no
 longer uses. What still holds:
 - **Claim 1** holds with μ_S = 0: each copy's footprint is S, the modes hold, and each planned mass
   lies in [L_c, U_c]. Its proof uses no property of μ_S. (iii) now covers plans that obey the
@@ -374,7 +574,7 @@ On the 51 scenario (extract of 2026-10-01), national's smallest δ is 0.0675 wit
 to false, as with the earlier in-memory zeroing of `supports.margin`, against 0.165 with the
 margin on.
 
-### 4.9 Drawable alone and support bans (#124 B, C)
+#### 3.6.9 Drawable alone and support bans (#124 B, C)
 
 The row n_S = 0 removes support S. B adds it lazily, and only when S is proved undrawable by any
 single district. C adds it after a drawing, as a policy. Both are off by default, and the owner
@@ -393,7 +593,7 @@ ZIP sets X ⊆ ∪_{v∈S} Z_v such that:
   more land than the rest reaches the rest only through a passage narrower than 10 km, widths
   as M1 measures them).
 
-Write 𝒳^N_c(δ) for the drawings in 𝒳_c(δ) (§4.1) in which no district has an M1 neck. M1
+Write 𝒳^N_c(δ) for the drawings in 𝒳_c(δ) (§3.6.1) in which no district has an M1 neck. M1
 requires this of every drawn map.
 
 **Proposition B.** If D_c(S, δ) = ∅, then n̂_S = 0 for the read-back (n̂, t̂) of every drawing
@@ -406,7 +606,7 @@ let X be its ZIPs. Because the footprint is S, X ⊆ ∪_{v∈S} Z_v and X meets
 - (a) The drawing obeys the modes. A whole v has one owner, and j owns a ZIP of v, so j owns
   all of Z_v. A clipped v that a multi-unit district holds is whole inside that district (§3.4),
   so j owns all of Z_v.
-- (b) The drawn shares obey η_c (§4.1).
+- (b) The drawn shares obey η_c (§3.6.1).
 - (c) Every drawn mass lies in [L_c, U_c].
 - (d) The drawing is connected.
 - (e) The drawing is in 𝒳^N_c(δ).
@@ -453,7 +653,7 @@ cases **[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
     Otherwise no wide-passage row is added (`wide_pairs` 0): the MILP is looser, never wrong.
   - *Neck cuts, the default no-good row* (#142, supervisor ruling 2026-10-15). `repair.neck_cuts`
     builds, for each district j with a proved neck on the incumbent, one row from the incumbent's
-    drawing X = (j's ZIPs) ∩ W of the window W (§4.6 of
+    drawing X = (j's ZIPs) ∩ W of the window W (§3.6.6 of
     `notes/2026-10-14_national-approaches-review.md`; `necks_gate.nogood_terms`):
 
         Σ_{z ∈ X ∩ W} (1 − x_{z,j}) + Σ_{z ∈ W∖X} x_{z,j} ≥ 1,
@@ -549,7 +749,7 @@ Assume η_c > 0 and 𝒮_c closed under connected subsets. Then **[proved]**:
 
 **C3 (Claim 1(iii) is conditional).** (iii) holds only for plans that obey the same support family
 and the same policy rows. The row η_c n_S ≤ t_{v,S} removes plans, so η_c is a policy, as μ_S is
-(§3.2, §4.6).
+(§3.2, §3.6.6).
 
 *Proof.*
 - (1) If n_S ≥ 1, then t_{v,S} ≥ η_c n_S > 0 for every v ∈ S, so the footprint is S, which is
@@ -592,7 +792,7 @@ positive integer, δ ≥ 0, and τ_c > 0 (§1), so the formulas below that divid
 **C4 (the smallest δ is a property of the master).** The exactness above belongs to the fixed,
 restricted whole/clipped master. It says nothing about whether the plan can be drawn on ZIPs.
 What does connect the two is the following **[proved]**:
-- By the Corollary of §4.7, the master's smallest δ with μ ≡ 0 is at most the smallest δ at which a
+- By the Corollary of §3.6.7, the master's smallest δ with μ ≡ 0 is at most the smallest δ at which a
   connected drawing in 𝒳_c exists.
 - By Corollary 3, a plan feasible with μ_S draws, before repair, with every mass in its band
   [L_c, U_c], and strictly inside it when μ_S > 0. Connectivity is not implied.
@@ -657,7 +857,7 @@ heaviest split ZIP it touches, either way below M*. If its planned mass lies in
 [L_c + μ_S, U_c − μ_S], its drawn mass lies in [L_c, U_c], and in (L_c, U_c) when μ_S > 0
 **[proved]**. With μ_S = 0 the endpoints can be reached: two whole singleton units of mass 1 and
 3, K_c = 2 and δ = 0.5 give the band [1, 3] and drawn masses 1 and 3 **[proved]**. In a unit the
-copy holds alone there is no error, so the sum may run over the units actually split, as §4.6
+copy holds alone there is no error, so the sum may run over the units actually split, as §3.6.6
 says, with the same closed and strict cases.
 
 **C5 (the scope of Claim 3).** The argument holds for an exact transport vertex, before repair,
@@ -721,7 +921,7 @@ The state-level context is from the v2 whole instance at δ = 5% on the pre-2025
 except CA, TX, NY and FL fits whole in one district (`docs/archive/memory/facts/state-border-snapping.md`,
 2026-09-07). It is not re-measured on the fresh extract **[claimed U35]**.
 
-## 7. The realizer (S21)
+## 7. F7 — the realizer (S21)
 
 Whole units need no realizer. If every unit is connected on the ZIP graph, a district made only of
 units it holds whole is connected **[proved]**: each unit is connected, its support is connected in
@@ -852,7 +1052,7 @@ remains is reported with one cause:
 How many pieces remain, by mode and cause, counted both as pieces and as districts in pieces, is
 open **[claimed U34]**. Bugs #1, #7 and #11 become tests in C4.
 
-## 8. The ledger (S25, S26)
+## 8. F8 — the ledger (S25, S26)
 
 The ledger's rules are policies **[policy S25, S26]**, except where a bullet is tagged.
 
@@ -873,7 +1073,7 @@ The ledger's rules are policies **[policy S25, S26]**, except where a bullet is 
 - Planned shares appear only in the run's diagnostics, beside the drawn ones, as Δ.
 - Reported shares, masses and bands come from the ledger, and maps are drawn only from it.
 
-## 9. The audit
+## 9. F9 — the audit
 
 One `scorecard.md` per run, in the run directory. Each check is a policy of #52 §4, with its
 source where one is named **[policy S28, OD1, OD3, C16]**:
@@ -955,9 +1155,9 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
   `wholeplan.py` and `glue.py` call `tools/exp/contig/necks_gate.py` (`gate_graph`, `gate_necks`
   with the channel's zero-opportunity ZCTAs from `channel_mass`, `edge_km`, `nogood_terms`,
   `cut_terms`, `bridged`), which wraps `audit.district_necks(free=)`, `audit.neck_relays` and
-  `audit.neck_widths`, so §4.9's widths are M1's again, and the default `repair.neck_cuts` row, the
+  `audit.neck_widths`, so §3.6.9's widths are M1's again, and the default `repair.neck_cuts` row, the
   no-good of a district's drawing of the window, is valid under the relays and the #140 connector
-  rule (§4.9). The master side (`td.supports.contact`)
+  rule (§3.6.9). The master side (`td.supports.contact`)
   still reads the pre-2026-10-14 land rule (§2 contact): it drops a connector that land
   replaces, so its rows can reject a drawing M1 now accepts (a plan it accepts is still accepted
   by M1's connector rule; a follow-up, not changed here);
@@ -974,13 +1174,13 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
 | item | here |
 |---|---|
 | C2, C19: closure and the National filter | §2 |
-| C3: Claim 1(iii) is conditional; η and μ_S are policies | §5 Claim 1, §3.2, §4.6 |
+| C3: Claim 1(iii) is conditional; η and μ_S are policies | §5 Claim 1, §3.2, §3.6.6 |
 | C4: the smallest δ is a property of the master | §5 Claim 2 |
 | C5: the scope of Claim 3 | §5 Claim 3 |
-| C6: the corridor floor | §4.2, Proposition D |
-| C7: the border cap | §4.3, Proposition D |
-| C8: the count cap is conditional | §4.4 |
-| C9: the Menger row | §4.5 |
+| C6: the corridor floor | §3.6.2, Proposition D |
+| C7: the border cap | §3.6.3, Proposition D |
+| C8: the count cap is conditional | §3.6.4 |
+| C9: the Menger row | §3.6.5 |
 | C10: clipped mode and connectivity | §5 C10 |
 | C11: every unit must be ZIP-connected | §7 |
 | C16: the mode guard on repair | §7 step 4, §9 |
