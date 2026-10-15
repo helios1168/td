@@ -290,6 +290,8 @@ def neck_cuts(c: str, owner: dict, W: set, m: dict, ng, own: dict, check) -> tup
                         seen.add(y)
                         stack.append(y)
             R = seen - A
+            if not R:
+                continue                        # A is all of its component of D: no rest to anchor, nothing to cut
             fixed_j = {z for z, k in owner.items() if k == j and z not in W}
             states = frozenset(ng.state.get(z, "") for z in fixed_j)
             const, single, pair = 0.0, [], []
