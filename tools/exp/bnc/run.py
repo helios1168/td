@@ -133,8 +133,8 @@ def m1_verdict(check, mine: set, base_items=None) -> dict:
     ("channel/district" ids) AND the same item (identical text) is in `base_items`, the gate's items
     on the unmodified source map (a callable, called only when it is needed).  Every other failure
     stays: a district of the group, a changed or new item of another district, and every coverage,
-    ownership, routing or fine-channel item.  A map the gate could not verify is `ungated`, never
-    `pass`.  Mass necks are listed beside M1 by the gate and are not failures.
+    ownership, routing or fine-channel item.  A map the gate could not verify, or whose necks it
+    could not measure, is `ungated`, never `pass`.  Mass necks are listed beside M1 by the gate and are not failures.
     {"m1": "pass" | "fail" | "ungated", "m1_items": the failures that count, "m1_excluded": the
     items left out and why they could be}."""
     if check.status == "pass":
@@ -151,6 +151,9 @@ def m1_verdict(check, mine: set, base_items=None) -> dict:
     kept = [i for i in failing if i not in excluded]
     if not kept and not excluded:
         kept = [f"gate status fail without an item: {check.summary}"]
+    if not kept and check.counts.get("necks") is None:      # necks never measured: no post-exclusion pass
+        return {"m1": "ungated", "m1_excluded": excluded,
+                "m1_items": [f"necks not verified (no border lengths): {check.summary}"]}
     return {"m1": "fail" if kept else "pass", "m1_items": kept, "m1_excluded": excluded}
 
 

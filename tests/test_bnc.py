@@ -446,6 +446,12 @@ def test_m1_verdict_never_drops_coverage_ownership_or_unverified_results():
     assert unv.status == "unverified"
     v = bnc_run.m1_verdict(unv, MINE, lambda: [])
     assert v["m1"] == "ungated" and v["m1_items"], v
+    # an unverified polygon graph with a pre-existing outside piece: the gate fails on the piece, the
+    # exclusion empties the list, and the unmeasured necks still keep the verdict off `pass`
+    bare_base = _verdict_check(bare_poly, owner)
+    assert bare_base.status == "fail" and bare_base.counts["necks"] is None, bare_base.items
+    v = bnc_run.m1_verdict(bare_base, MINE, lambda: bare_base.items)
+    assert v["m1"] == "ungated" and v["m1_items"] and len(v["m1_excluded"]) == 1, v
     assert not bnc_report.passes(_res("a", "optimal", 1.0, _gate(m1="ungated")))
     assert "**UNGATED**" in bnc_report.table([_res("a", "optimal", 1.0, _gate(m1="ungated"))])
 
