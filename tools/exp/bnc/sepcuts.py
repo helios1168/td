@@ -102,17 +102,21 @@ class Graphs:
     def row(self, j: str, a: str, b: str, sep) -> Row:
         """x_a + x_b − Σ_S x_s ≤ 1, with a body vertex's x = 1 moved to the bound."""
         i = self.inst
-        const = sum(1 for v in (a, b) if v in i.fixed[j])
+        rhs = 1.0
         idx, val = [], []
         for v in (a, b):
-            if v not in i.fixed[j]:
+            if v in i.fixed[j]:
+                rhs -= 1.0
+            else:
                 idx.append(i.xcol[v, j])
                 val.append(1.0)
         for s in sorted(sep):
-            if s not in i.fixed[j]:
+            if s in i.fixed[j]:         # never in a separator made from unselected vertices; kept valid
+                rhs += 1.0
+            else:
                 idx.append(i.xcol[s, j])
                 val.append(-1.0)
-        return (None, 1.0 - const, tuple(idx), tuple(val))
+        return (None, rhs, tuple(idx), tuple(val))
 
     def integer_cuts(self, x, max_per_component: int | None = None) -> list:
         """New separator rows cutting off the 0/1 drawing `x`: one per ZCTA a of each detached

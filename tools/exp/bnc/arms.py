@@ -156,13 +156,9 @@ def arm_b(inst, time_limit: float, threads: int, log=print, max_per_component=No
 
 
 # ------------------------------------------------------------------------------ arm c
-def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = False,
-          max_per_component=None) -> dict:
-    """PySCIPOpt with a constraint handler adding integer separator rows as lazy cuts."""
-    import pyscipopt
-    from pyscipopt import SCIP_RESULT, Conshdlr, Model, quicksum
-    t0 = time.time()
-    G = sepcuts.Graphs(inst)
+def scip_model(inst):
+    """(a PySCIPOpt model of the instance's base MILP, its variables by column)."""
+    from pyscipopt import Model, quicksum
     model = Model("bnc")
     model.hideOutput()
     xs = []
@@ -184,6 +180,17 @@ def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = Fa
             model.addCons(expr >= float(lo))
         if np.isfinite(hi):
             model.addCons(expr <= float(hi))
+    return model, xs
+
+
+def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = False,
+          max_per_component=None) -> dict:
+    """PySCIPOpt with a constraint handler adding integer separator rows as lazy cuts."""
+    import pyscipopt
+    from pyscipopt import SCIP_RESULT, Conshdlr, Model, quicksum
+    t0 = time.time()
+    G = sepcuts.Graphs(inst)
+    model, xs = scip_model(inst)
     xcols = sorted(inst.xcol.values())
     stats = {"cuts": 0, "calls": 0, "frac": 0}
 

@@ -129,6 +129,17 @@ def test_separator_rows_are_valid_and_minimal():
             assert not sepcuts.violated(r, xo), (name, "cuts off the connected optimum", r)
 
 
+def test_flow_formulation_confirms_the_optimum():
+    """verify.py's SCIP model with flow rows and no cuts reaches the arms' optimum (rooted, two
+    bodies and rootless districts)."""
+    verify = _mod("bnc_verify", "verify.py")
+    for name, inst in _instances():
+        r = verify.run(inst, 120.0, lambda *_: None)
+        ref = arms.solve("a", inst, 120.0, None, lambda *_: None)["objective"]
+        assert r["scip_status"] == "optimal" and r["connected"], (name, r)
+        assert abs(r["objective"] - ref) <= TOL * max(1.0, abs(ref)), (name, r["objective"], ref)
+
+
 def test_round_trip_detects_a_difference():
     draw = capture.load_draw()
     name, inst = _instances()[0]
