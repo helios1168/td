@@ -18,11 +18,13 @@
 
 The gate is `tools/mandates/check.py`'s `m1` on `merged/` (the full 2025 polygon graph with the
 connectors, relays and neck rule as the gate has them) and `tools/looks/score.py`'s `dollar_gate`
-(the whole-dollar windows).  M1 is district-local, so the verdict that belongs to the arm is that
-of the districts of the group: `gate.m1` is `pass` when none of them has a detached piece or a
-neck, `fail` otherwise (a failure is reported as one, never as a timing); `gate.map_m1` is the
-whole merged map's status, which also carries the source map's other districts and is context
-only.  `gate.in_window` says whether every district of the group is inside its dollar window.
+(the whole-dollar windows).  The M1 verdict of a drawing (`gate.m1`) is the real gate's verdict on the
+merged map: `pass`, `fail`, or `ungated` when the gate could not verify the map.  Only a failure proven
+to belong to a district outside the group that is already in the gate's items on the unmodified source
+map (the same item text) is left out; it is listed in `gate.m1_excluded`.  Every other item counts:
+the group's districts, changed or new items of other districts, and all coverage, ownership, routing
+and fine-channel items.  `gate.map_m1` is the merged map's own status.  `gate.in_window` says whether
+every district of the group is inside its dollar window.
 
 The gate always runs on a returned drawing (no switch turns it off).  The arm folder and `merged/`
 each get a `manifest.json` (mandate T1, `contig/run.py`'s `write_manifest`): `running` at the start,
@@ -31,7 +33,8 @@ each get a `manifest.json` (mandate T1, `contig/run.py`'s `write_manifest`): `ru
 `all` runs each (instance, arm) as its own process (`one`), `--jobs` at a time (default 1, so that
 the times are comparable), and then writes `REPORT.md` (`report.py`).  A child that exits non-zero or
 leaves no `result.json` makes `all` exit 1; a `result.json` of an earlier run is moved to
-`result.previous.json` before its child starts, so a failed rerun never reports old measurements.
+`result.previous.json` before its child starts (`one` does the same for a direct rerun), so a failed
+rerun never reports old measurements.
 """
 from __future__ import annotations
 
@@ -122,6 +125,35 @@ def merge(inst, owner: dict, base: str, cfg: dict, folder: str) -> dict:
                             "examples": bad[:5]}}
 
 
+def m1_verdict(check, mine: set, base_items=None) -> dict:
+    """The M1 verdict of a drawing: the gate's own verdict on the merged map (`check`, an
+    `audit.Check`), minus only the failures proven to lie outside the group.
+
+    A failure is excluded when it is a detached-piece or neck item of a district not in `mine`
+    ("channel/district" ids) AND the same item (identical text) is in `base_items`, the gate's items
+    on the unmodified source map (a callable, called only when it is needed).  Every other failure
+    stays: a district of the group, a changed or new item of another district, and every coverage,
+    ownership, routing or fine-channel item.  A map the gate could not verify is `ungated`, never
+    `pass`.  Mass necks are listed beside M1 by the gate and are not failures.
+    {"m1": "pass" | "fail" | "ungated", "m1_items": the failures that count, "m1_excluded": the
+    items left out and why they could be}."""
+    if check.status == "pass":
+        return {"m1": "pass", "m1_items": [], "m1_excluded": []}
+    if check.status != "fail":
+        return {"m1": "ungated", "m1_items": [f"gate status {check.status}: {check.summary}"],
+                "m1_excluded": []}
+    sc = mandates().score
+    failing = [i for i in check.items if mandates().audit.MASS_NECK not in i]
+    outside = [i for i in failing if (sc.NECK.search(i) or sc.PIECE.search(i))
+               and i.split(":", 1)[0] not in mine]
+    base = set(base_items()) if outside and base_items is not None else set()
+    excluded = [i for i in outside if i in base]
+    kept = [i for i in failing if i not in excluded]
+    if not kept and not excluded:
+        kept = [f"gate status fail without an item: {check.summary}"]
+    return {"m1": "fail" if kept else "pass", "m1_items": kept, "m1_excluded": excluded}
+
+
 def gate(inst, owner: dict, cfg: dict, folder: str, log=print) -> dict:
     """M1 and the dollar window of the merged map (module docstring)."""
     check = mandates()
@@ -131,8 +163,13 @@ def gate(inst, owner: dict, cfg: dict, folder: str, log=print) -> dict:
     g = check.m1(merged)
     log(f"  gate: M1 of the merged map {g['status']} in {time.time() - t0:.0f}s ({g['summary']})")
     mine = {f"{cfg['channel']}/{d}" for d in (info["ident"][j] for j in inst.js)}
-    items = [i for i in g["check"].items if i.split(":", 1)[0] in mine
-             and "mass neck" not in i and (check.score.NECK.search(i) or check.score.PIECE.search(i))]
+
+    def base_items():
+        t1 = time.time()
+        b = check.m1(cfg["gate_base"])
+        log(f"  gate: M1 of the unmodified source map {b['status']} in {time.time() - t1:.0f}s ({b['summary']})")
+        return b["check"].items
+    verdict = m1_verdict(g["check"], mine, base_items)
     sc = check.score
     ledger = export.read_csv(os.path.join(merged, "ledger.csv"))
     districts = export.read_csv(os.path.join(merged, "districts.csv"))
@@ -141,7 +178,7 @@ def gate(inst, owner: dict, cfg: dict, folder: str, log=print) -> dict:
     others = [r for r in rows if r["channel"] == cfg["channel"] and f"{r['channel']}/{r['district']}" not in mine
               and not r["ok"]]
     return {
-        "m1": "fail" if items else "pass", "m1_items": items,
+        **verdict,
         "map_m1": g["status"], "map_summary": g["summary"],
         "in_window": all(r["ok"] for r in ours),
         "districts": [{"copy": j, "id": info["ident"][j],
@@ -179,6 +216,9 @@ def one(name: str, arm: str, a) -> int:
     cfg = export.instances(a.m2_dir)[name]
     folder = os.path.join(a.out, name, arm)
     os.makedirs(folder, exist_ok=True)
+    stale = os.path.join(folder, "result.json")      # a failed attempt must not leave an old result to be reported
+    if os.path.exists(stale):
+        os.replace(stale, os.path.join(folder, "result.previous.json"))
     manifests(folder, name, arm, cfg, a, "running")
     try:
         rc = _one(name, arm, a, cfg, folder)
@@ -216,8 +256,8 @@ def _one(name: str, arm: str, a, cfg: dict, folder: str) -> int:
         log(f"  the drawing on the instance's MILP: objective {obj} {why}")
         result["gate"] = gate(inst, owner, cfg, folder, log)
         g = result["gate"]
-        log(f"  gate: M1 of the group's districts {g['m1']} {g['m1_items'][:2]}, "
-            f"in window {g['in_window']}")
+        log(f"  gate: M1 {g['m1']} {g['m1_items'][:2]} ({len(g['m1_excluded'])} excluded: outside the group "
+            f"and already in the source map), in window {g['in_window']}")
     with open(os.path.join(folder, "result.json"), "w", encoding="utf-8") as fh:
         json.dump(result, fh, indent=1, sort_keys=True)
         fh.write("\n")

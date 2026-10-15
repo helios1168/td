@@ -252,7 +252,7 @@ def _res(arm, status, objective, gate, seconds=10.0):
 
 
 def _gate(m1="pass", in_window=True):
-    return {"m1": m1, "m1_items": ["i"] if m1 != "pass" else [], "map_m1": m1, "in_window": in_window,
+    return {"m1": m1, "m1_items": ["i"] if m1 != "pass" else [], "m1_excluded": [], "map_m1": m1, "in_window": in_window,
             "other_districts_outside_window": []}
 
 
@@ -354,6 +354,11 @@ def test_runner_always_gates_writes_manifests_and_has_no_bypass():
                 for f in (folder, os.path.join(folder, "merged")):
                     with open(os.path.join(f, "manifest.json")) as fh:
                         assert json.load(fh)["status"] == "failed", f
+                # the first run's result.json was archived before the failed attempt: nothing to reuse
+                assert not os.path.exists(os.path.join(folder, "result.json"))
+                with open(os.path.join(folder, "result.previous.json")) as fh:
+                    assert json.load(fh)["gate"]["m1"] == "pass"
+                assert bnc_report.rows(a.out) == []
         finally:
             bnc_run.export.instances, bnc_run.inst_io.load, bnc_run.gate = saved
     err = io.StringIO()
@@ -363,6 +368,86 @@ def test_runner_always_gates_writes_manifests_and_has_no_bypass():
             raise AssertionError("--no-gate still parses")
         except SystemExit as e:
             assert e.code == 2
+
+
+def _verdict_world(bare=False):
+    """Channel X, fine channel f, k = 3.  Chain r1 - p1 - p2 - r2 with q1 - q2 hanging off p2; every
+    border 10 km (no neck).  D1 = p1 p2, D2 = q1 q2, D3 = r1 r2: D3 is in two pieces (a failure
+    outside the group {D1, D2}) in the base map."""
+    border = {("r1", "p1"): 1e4, ("p1", "p2"): 1e4, ("p2", "r2"): 1e4, ("p2", "q1"): 1e4, ("q1", "q2"): 1e4}
+    vs = sorted({z for e in border for z in e})
+    poly = {"vertices": vs, "edges": sorted(border), "state": dict.fromkeys(vs, "TX")}
+    if not bare:
+        poly.update(border=dict(border), connectors=[], aland=dict.fromkeys(vs, 1e8), voronoi_gaps={})
+    owner = {"r1": "D3", "p1": "D1", "p2": "D1", "r2": "D3", "q1": "D2", "q2": "D2"}
+    return poly, owner
+
+
+def _verdict_check(poly, owner, mass=None, drop=()):
+    from td import audit as td_audit
+    mass = mass or {}
+    cells = [td_audit.Cell(z, "f", "X", owner[z], mass.get(z, 1.0)) for z in poly["vertices"] if z not in drop]
+    return td_audit.check_m1(td_audit.Run(cells, {"X": td_audit.Channel(3)}, polygon=poly, fine=("f",)))
+
+
+MINE = {"X/D1", "X/D2"}
+
+
+def test_m1_verdict_is_the_gates_less_only_proven_preexisting_outside_failures():
+    poly, owner = _verdict_world()
+    base = _verdict_check(poly, owner)
+    assert base.status == "fail" and any("X/D3: detached piece" in i for i in base.items), base.items
+    # a failure of D3 that the base map has with the same text is excluded and listed; the rest passes
+    v = bnc_run.m1_verdict(base, MINE, lambda: base.items)
+    assert v["m1"] == "pass" and v["m1_items"] == [] and len(v["m1_excluded"]) == 1, v
+    assert v["m1_excluded"][0].startswith("X/D3: detached piece")
+    # without a base to compare with, nothing is excluded
+    assert bnc_run.m1_verdict(base, MINE)["m1"] == "fail"
+    assert bnc_run.m1_verdict(base, MINE, lambda: [])["m1"] == "fail"
+    # the same failure in a group district is never excluded, even when the base map has it too
+    mine_d3 = bnc_run.m1_verdict(base, MINE | {"X/D3"}, lambda: base.items)
+    assert mine_d3["m1"] == "fail" and mine_d3["m1_excluded"] == []
+    # a piece of the group's own district fails beside the excluded one
+    owner2 = dict(owner, q2="D1")
+    bad = _verdict_check(poly, owner2)
+    v = bnc_run.m1_verdict(bad, MINE, lambda: base.items)
+    assert v["m1"] == "fail" and any(i.startswith("X/D1: detached piece") for i in v["m1_items"]), v
+    assert len(v["m1_excluded"]) == 1
+    # an outside item whose text changed (its mass moved) is a new failure, not the base's
+    moved = _verdict_check(poly, owner, mass={"r2": 2.0})
+    v = bnc_run.m1_verdict(moved, MINE, lambda: base.items)
+    assert v["m1"] == "fail" and v["m1_excluded"] == [] and v["m1_items"], v
+
+
+def test_m1_verdict_never_drops_coverage_ownership_or_unverified_results():
+    poly, owner = _verdict_world()
+    clean = dict(owner, r2="D1")                       # D3 = r1 alone, connected: the map is clean
+    good = _verdict_check(poly, clean)
+    assert good.status == "pass" and bnc_run.m1_verdict(good, MINE)["m1"] == "pass"
+    # a missing zero-opportunity fine-channel row: no piece, no neck, and the gate fails
+    miss = _verdict_check(poly, clean, mass={"r1": 0.0}, drop=("r1",))
+    assert miss.status == "fail" and any("have no row" in i for i in miss.items), miss.items
+    v = bnc_run.m1_verdict(miss, MINE, lambda: miss.items)      # even when the base map has the same hole
+    assert v["m1"] == "fail" and v["m1_excluded"] == [] and any("have no row" in i for i in v["m1_items"]), v
+    # a ZCTA owned twice
+    from td import audit as td_audit
+    cells = [td_audit.Cell(z, "f", "X", clean[z], 1.0) for z in poly["vertices"]] + [td_audit.Cell("q1", "f", "X", "D1", 1.0)]
+    twice = td_audit.check_m1(td_audit.Run(cells, {"X": td_audit.Channel(3)}, polygon=poly, fine=("f",)))
+    v = bnc_run.m1_verdict(twice, MINE, lambda: twice.items)
+    assert twice.status == "fail" and v["m1"] == "fail" and any("owned by" in i for i in v["m1_items"]), v
+    # a coverage hole beside an excluded outside piece still fails
+    both = _verdict_check(poly, owner, mass={"q2": 0.0}, drop=("q2",))
+    base = _verdict_check(poly, owner, mass={"q2": 0.0})
+    v = bnc_run.m1_verdict(both, MINE, lambda: base.items)
+    assert v["m1"] == "fail" and len(v["m1_excluded"]) == 1 and any("have no row" in i for i in v["m1_items"]), v
+    # a gate that cannot check necks (no border lengths) is ungated, never a pass
+    bare_poly, _ = _verdict_world(bare=True)
+    unv = _verdict_check(bare_poly, clean)
+    assert unv.status == "unverified"
+    v = bnc_run.m1_verdict(unv, MINE, lambda: [])
+    assert v["m1"] == "ungated" and v["m1_items"], v
+    assert not bnc_report.passes(_res("a", "optimal", 1.0, _gate(m1="ungated")))
+    assert "**UNGATED**" in bnc_report.table([_res("a", "optimal", 1.0, _gate(m1="ungated"))])
 
 
 def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():

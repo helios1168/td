@@ -92,8 +92,10 @@ nohup "$TD_PY" -u tools/exp/bnc/run.py all --time-limit 7200 --threads 1 --jobs 
 After a drawing is returned the gate always runs on it (there is no bypass): the group's ZCTAs replaced in the source map's full
 ledger (`warm/ne-48-bal/merged`, `warm/ne-50-bal/merged`, m2 `pass2_merged`), `tools/mandates/check.py`'s
 `m1` on the full graph (relays, necks as the gate has them) and `tools/looks/score.py`'s `dollar_gate`.
-`gate.m1` is the verdict of the group's districts (M1 is district-local), `gate.map_m1` the whole merged
-map's (it also carries the source map's other failing districts). The arm folder and `merged/` each
+`gate.m1` is the gate's verdict on the whole merged map (`pass`, `fail` or `ungated`), less only the
+detached-piece and neck items of districts outside the group that the gate also reports, with the same text, on the
+unmodified source map (`gate.m1_excluded` lists them); coverage, ownership, routing and unverified results are never
+left out. `gate.map_m1` is the merged map's raw status. The arm folder and `merged/` each
 get a `manifest.json` (mandate T1, `run.write_manifest`), `failed` when the run raised.
 
 `"$TD_PY" tests/run_all.py -k bnc`: three grids on which every arm returns the same optimum and a

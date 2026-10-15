@@ -4,7 +4,7 @@
 
 Reads `<out>/<instance>/<arm>/result.json` and `<out>/instances/INDEX.json`; writes `<out>/REPORT.md`:
 the instances (size, the exported group's checks), one row per (instance, arm) with status, time,
-final gap, nodes, M1 of the group's districts on the merged full map and whether every district
+final gap, nodes, M1 of the merged full map (less pre-existing failures outside the group) and whether every district
 of the group is in its dollar window, the lazy-callback probe, and the winner per instance (the
 fastest arm with status `optimal`, else the best `feasible` objective, else "no arm finished").
 """
@@ -37,7 +37,7 @@ def drew(r: dict) -> bool:
 
 
 def passes(r: dict) -> bool:
-    """The drawing has a gate result and passes M1 (the group's districts) and the dollar windows."""
+    """The drawing has a gate result and passes M1 and the dollar windows."""
     g = r.get("gate")
     return bool(g) and g["m1"] == "pass" and bool(g["in_window"])
 
@@ -52,7 +52,7 @@ def rows(out: str) -> list:
 
 
 def table(rs: list) -> str:
-    lines = ["| instance | arm | status | time (s) | gap | nodes | objective | M1 (group's districts) | in window |",
+    lines = ["| instance | arm | status | time (s) | gap | nodes | objective | M1 | in window |",
              "|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(rs, key=lambda r: (r["instance"], r["arm"])):
         g = r.get("gate")
@@ -60,7 +60,7 @@ def table(rs: list) -> str:
             m1 = win = "**UNGATED**" if drew(r) else "-"
         else:
             m1 = (f"{g['m1']} (map: {g['map_m1']})" if g["m1"] == "pass"
-                  else f"**FAIL** ({len(g['m1_items'])} items)")
+                  else "**UNGATED**" if g["m1"] == "ungated" else f"**FAIL** ({len(g['m1_items'])} items)")
             win = "yes" if g["in_window"] else "**NO**"
         lines.append(f"| {r['instance']} | {r['arm']} | {r['status']} | {_fmt(r['seconds'])} | {_gap(r['gap'])} | "
                      f"{r['nodes'] if r['nodes'] is not None else '-'} | {_fmt(r['objective'], 4)} | {m1} | {win} |")
@@ -92,6 +92,8 @@ def winners(rs: list) -> list:
         for r in sorted(bad, key=lambda r: r["arm"]):
             g = r.get("gate")
             what = ("UNGATED: no gate result, so the drawing counts for nothing" if g is None else
+                    "UNGATED: the gate could not verify the merged map, so the drawing counts for nothing"
+                    if g["m1"] == "ungated" else
                     f"fails the gate (M1 {g['m1']}, in window {g['in_window']}): a failure, not a result")
             out.append(f"  - arm {r['arm']} ({r['status']}, objective {_fmt(r['objective'], 6)}): {what}.")
     return out
