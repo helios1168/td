@@ -456,6 +456,45 @@ def test_m1_verdict_never_drops_coverage_ownership_or_unverified_results():
     assert "**UNGATED**" in bnc_report.table([_res("a", "optimal", 1.0, _gate(m1="ungated"))])
 
 
+def test_m1_verdict_keeps_an_unresolved_neck_search_even_when_the_base_map_has_it():
+    unresolved = ("X/D3: neck unresolved (the search stopped at bound 1.5 km, under 5 km): listed as a neck")
+    chk = types.SimpleNamespace(status="fail", items=[unresolved], summary="1 unresolved", counts={"necks": 1})
+    v = bnc_run.m1_verdict(chk, MINE, lambda: [unresolved])
+    assert v["m1"] == "fail" and v["m1_items"] == [unresolved] and v["m1_excluded"] == [], v
+    proved = "X/D3: neck 1.00 km wide cuts off 2 ZIPs (a...), 5.0% of its land area and 1.0% of its mass; cut a-b 1.00 km"
+    chk = types.SimpleNamespace(status="fail", items=[proved, unresolved], summary="2", counts={"necks": 2})
+    v = bnc_run.m1_verdict(chk, MINE, lambda: [proved, unresolved])
+    assert v["m1"] == "fail" and v["m1_items"] == [unresolved] and v["m1_excluded"] == [proved], v
+
+
+def test_report_tables_only_the_campaign_of_the_newest_result():
+    """After a subset rerun an older arm (other commit, limit, threads, settings or instance file) is
+    listed as stale and neither tabled nor a winner."""
+    with tempfile.TemporaryDirectory() as d:
+        def put(arm, finished, **kw):
+            r = dict(_res(arm, "optimal", 1.0, _gate(), seconds=5.0 if arm == "a" else 50.0), finished=finished, **kw)
+            os.makedirs(os.path.join(d, "S", arm), exist_ok=True)
+            with open(os.path.join(d, "S", arm, "result.json"), "w") as fh:
+                json.dump(r, fh)
+        put("a", "2026-10-15T09:00:00", code_commit="old")      # fastest arm, but an older campaign
+        put("b", "2026-10-15T10:00:00")
+        put("c", "2026-10-15T10:01:00", settings={"frac_root": True})
+        put("d", "2026-10-15T08:00:00", time_limit=7.0)
+        fresh, stale = bnc_report.split(d)
+        assert sorted(r["arm"] for r in fresh) == ["b", "c"], fresh
+        assert sorted(r["arm"] for r, _ in stale) == ["a", "d"], stale
+        with open(bnc_report.write(d)) as fh:
+            text = fh.read()
+        assert "## Stale results excluded" in text and "| S | a |" not in text and "| S | d |" not in text, text
+        assert "arm a proved" not in text and "arm b proved" in text, text
+        # the instance file changed since arm b ran
+        os.makedirs(os.path.join(d, "instances"))
+        with open(os.path.join(d, "instances", "S.json.gz"), "wb") as fh:
+            fh.write(b"new")
+        put("b", "2026-10-15T10:00:00", instance_sha256="0" * 64)
+        assert [r["arm"] for r in bnc_report.rows(d)] == ["c"]
+
+
 def test_all_exits_nonzero_on_a_failed_child_and_drops_its_old_result():
     class Child:
         def __init__(self, cmd, **kw):

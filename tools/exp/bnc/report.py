@@ -7,10 +7,17 @@ the instances (size, the exported group's checks), one row per (instance, arm) w
 final gap, nodes, M1 of the merged full map (less pre-existing failures outside the group) and whether every district
 of the group is in its dollar window, the lazy-callback probe, and the winner per instance (the
 fastest arm with status `optimal`, else the best `feasible` objective, else "no arm finished").
+
+Only results of one campaign are tabled: the newest result (`finished`) names the code commit, time
+limit and threads, and a result is stale when any of them differs, when its settings differ from the
+newest result of the same arm, or when its instance file in `<out>/instances` no longer has its sha256.
+Stale results (an arm not rerun after a subset rerun) are listed under "Stale results excluded" and
+never reach the table or the winners.
 """
 from __future__ import annotations
 
 import glob
+import hashlib
 import json
 import os
 import sys
@@ -42,13 +49,47 @@ def passes(r: dict) -> bool:
     return bool(g) and g["m1"] == "pass" and bool(g["in_window"])
 
 
-def rows(out: str) -> list:
+def _load(out: str) -> list:
     res = []
     for path in sorted(glob.glob(os.path.join(out, "*", "*", "result.json"))):
         with open(path, encoding="utf-8") as fh:
-            r = json.load(fh)
-        res.append(r)
+            res.append(json.load(fh))
     return res
+
+
+def _sha256(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for b in iter(lambda: fh.read(1 << 20), b""):
+            h.update(b)
+    return h.hexdigest()
+
+
+def split(out: str, instances: str | None = None) -> tuple:
+    """(results of the campaign, [(stale result, why)]) of the results under `out`."""
+    allr = _load(out)
+    if not allr:
+        return [], []
+    newest = max(allr, key=lambda r: r.get("finished", ""))
+    arm_newest = {}
+    for r in sorted(allr, key=lambda r: r.get("finished", "")):
+        arm_newest[r["arm"]] = r
+    fresh, stale = [], []
+    for r in allr:
+        why = [f"{k} {r.get(k)!r} != {newest.get(k)!r}" for k in ("code_commit", "time_limit", "threads")
+               if r.get(k) != newest.get(k)]
+        if r.get("settings") != arm_newest[r["arm"]].get("settings"):
+            why.append(f"settings {r.get('settings')!r} != {arm_newest[r['arm']].get('settings')!r}")
+        path = os.path.join(instances or os.path.join(out, "instances"), f"{r['instance']}.json.gz")
+        if r.get("instance_sha256") and os.path.exists(path) and _sha256(path) != r["instance_sha256"]:
+            why.append("instance file changed")
+        (stale if why else fresh).append((r, "; ".join(why)) if why else r)
+    return fresh, stale
+
+
+def rows(out: str, instances: str | None = None) -> list:
+    """The results of the campaign (`split`)."""
+    return split(out, instances)[0]
 
 
 def table(rs: list) -> str:
@@ -100,7 +141,7 @@ def winners(rs: list) -> list:
 
 
 def write(out: str = OUT, instances: str | None = None) -> str:
-    rs = rows(out)
+    rs, stale = split(out, instances)
     index = os.path.join(instances or os.path.join(out, "instances"), "INDEX.json")
     lines = ["# #142 phase 0: exact ZIP drawing by lazy connectivity cuts, report", ""]
     if rs:
@@ -122,6 +163,10 @@ def write(out: str = OUT, instances: str | None = None) -> str:
                          f"{'ok' if t['ok'] else 'FAILED'} (objective max |diff| {t['objective_max_abs_diff']:.2g}) |")
         lines.append("")
     lines += ["## Results", "", table(rs), "", "## Winner per instance", ""] + winners(rs) + [""]
+    if stale:
+        lines += ["## Stale results excluded", "", "Not of the campaign of the newest result; rerun the arm to table it:", ""]
+        lines += [f"- {r['instance']} arm {r['arm']} ({r.get('finished', '?')}): {why}" for r, why in sorted(
+            stale, key=lambda t: (t[0]["instance"], t[0]["arm"]))] + [""]
     notes = [r for r in rs if r.get("note")]
     if notes:
         lines += ["## Notes", ""] + [f"- {r['instance']} arm {r['arm']}: {r['note']}" for r in sorted(

@@ -130,13 +130,13 @@ def m1_verdict(check, mine: set, base_items=None) -> dict:
     `audit.Check`), minus only the failures proven to lie outside the group.
 
     A failure is excluded when it is a detached-piece or neck item of a district not in `mine`
-    ("channel/district" ids) AND the same item (identical text) is in `base_items`, the gate's items
-    on the unmodified source map (a callable, called only when it is needed).  Every other failure
+    ("channel/district" ids) AND the same item (identical text) is in `base_items`, the gate's items on the unmodified source map (a callable, called only when it is needed).  Every other failure
     stays: a district of the group, a changed or new item of another district, and every coverage,
     ownership, routing or fine-channel item.  A map the gate could not verify, or whose necks it
     could not measure, is `ungated`, never `pass`.  Mass necks are listed beside M1 by the gate and are not failures.
     {"m1": "pass" | "fail" | "ungated", "m1_items": the failures that count, "m1_excluded": the
-    items left out and why they could be}."""
+    items left out and why they could be}.  An unresolved neck search (`td.audit.neck_item`) is never
+    left out: the gate could not show that neck is not one."""
     if check.status == "pass":
         return {"m1": "pass", "m1_items": [], "m1_excluded": []}
     if check.status != "fail":
@@ -147,7 +147,7 @@ def m1_verdict(check, mine: set, base_items=None) -> dict:
     outside = [i for i in failing if (sc.NECK.search(i) or sc.PIECE.search(i))
                and i.split(":", 1)[0] not in mine]
     base = set(base_items()) if outside and base_items is not None else set()
-    excluded = [i for i in outside if i in base]
+    excluded = [i for i in outside if i in base and " unresolved (" not in i]   # an unverified neck never passes
     kept = [i for i in failing if i not in excluded]
     if not kept and not excluded:
         kept = [f"gate status fail without an item: {check.summary}"]
