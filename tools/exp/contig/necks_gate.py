@@ -123,7 +123,8 @@ def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: froze
     `fixed | W`), `seed` the anchor set in A that j holds when the row binds, `area_fixed` the
     land of `fixed` (m²).
 
-    **Valid for every drawing of W in which j has no neck, as `draw.NeckCut` binds it**, that is
+    **Unproven; off by default (`repair.py --neck-rows strong`).**  It is meant to be valid for
+    every drawing of W in which j has no neck, as `draw.NeckCut` binds it, that is
     when C, the own-connected part of A that holds `seed`, holds the share of j's land.  If A holds
     at most half of `area_fixed`, C holds no more than half of j's land in every drawing (it lies
     in A, and j owns all of `fixed`), so the gate may cut C off, with every relay and every other

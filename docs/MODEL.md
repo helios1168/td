@@ -451,17 +451,54 @@ cases **[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
     left out of X is one) touching two nodes. With nothing bridged, a relay set touching one node
     at most goes with that node at no cost, so a cut of the gate's graph is a cut of the flow's.
     Otherwise no wide-passage row is added (`wide_pairs` 0): the MILP is looser, never wrong.
-  - *Neck cuts.* These are `draw.NeckCut` rows built by `repair.neck_cuts` from each necked
-    incumbent. NeckCut is valid for every connected X without an M1 neck whose anchors lie in
-    one component of it **and whose cut side A holds at most half of the land of the held ZIPs
-    outside the window** (#142; `necks_gate.cut_terms`; a neck failing it gets no row). Its left
-    side counts the gate's widths: for the part C of A that holds the anchors, all edges to
-    ZCTAs that are X's, or are or may be relays (zero opportunity, whoever owns them), with
-    the relays the gate's cut puts with C counted on their edges to the rest, and the edges
-    inside A that may join C to the rest of A. It is at least the gate's cut of C in every
-    drawing, so a drawing M1 accepts never breaks it; counting more only weakens a row.
-    `tests/test_neck_gate_parity.py` checks this on random graphs with relays, gap edges and
-    connectors.
+  - *Neck cuts, the default no-good row* (#142, supervisor ruling 2026-10-15). `repair.neck_cuts`
+    builds, for each district j with a proved neck on the incumbent, one row from the incumbent's
+    drawing X = (j's ZIPs) ∩ W of the window W (§4.6 of
+    `notes/2026-10-14_national-approaches-review.md`; `necks_gate.nogood_terms`):
+
+        Σ_{z ∈ X ∩ W} (1 − x_{z,j}) + Σ_{z ∈ W∖X} x_{z,j} ≥ 1,
+
+    the ZIPs outside W being constants. *Validity.* The gate (`check_m1`) judges each district on
+    its own: `audit.district_necks` takes the district's ZIPs, the gate's width graph, and the
+    channel's zero-opportunity ZIPs as relays (R3), and the relay set depends on zero opportunity
+    alone, not on how the other districts are drawn. A drawing of W in which j's part of W is X
+    leaves j's ZIPs equal to the incumbent's (everything outside W keeps its owner), so j has the
+    neck the gate found there and the gate rejects it. A drawing the gate accepts therefore has
+    another j-part of W and meets the row; the row excludes one drawing of j and nothing else. It
+    is weaker than any width row (the repair may take more rounds) and needs none of their side
+    conditions: the neck's side may be large, its relays may be j's or the window's, its rest may
+    join it by gap or relay edges alone. `draw.NeckCut` carries it unchanged in form: anchors
+    X ∩ W, `single` weight 1 on each ZIP of W∖X, `const` 0, `need` 1, `share` 0, `a_min` 1, so
+    that the two NeckCut rows read t + Σ_{z ∈ X∩W}(1 − x_{z,j}) ≥ 1 and Σ_{z ∈ W∖X} x_{z,j} ≥ t, which
+    hold for a binary t exactly when the no-good does; an anchor ZIP j cannot own makes the
+    row trivially true, as it should.
+  - *Neck cuts, the strong row* (`repair.py --neck-rows strong`, `TD_NECK_ROWS=strong`; **off by
+    default and unproven**). `necks_gate.cut_terms` builds a width row instead, valid for every
+    connected X without an M1 neck whose anchors lie in one component of it, if its argument
+    holds. Its left side counts the gate's
+    widths: for the part C of A that holds the anchors, all edges to ZCTAs that are X's, or
+    are or may be relays (zero opportunity, whoever owns them), with the relays the gate's cut
+    puts with C counted on their edges to the rest, and the edges inside A that may join C to
+    the rest of A. A window relay that X may own instead counts the larger of its two sides'
+    edges, plus its edges to the relays that stay with C if X owns it. When A holds at most
+    half of the land of the held ZIPs outside the window, C holds at most half of X's land in
+    every drawing and the gate may cut C off, so this is the whole row. **When A holds more
+    than half of it**, C may hold more than half of X's land and the gate then cuts another
+    part K of X off instead: the row is widened, and counts also every edge among the held and
+    window ZIPs and the possible relays outside A that is no own edge, and every edge from a
+    possible relay to them (an edge between two possible relays counts when either is a window
+    ZIP of zero opportunity, which X may own). That row is weaker and binds less next to
+    large relays, but is still built. **Status:** each round of review found a drawing the gate
+    accepts that a version of this row excluded (the last at 8802f6c:
+    `neckcut_search.py --seed 1 --graphs 40000 --every-first --p-zero 0.5`, 1 case in 582,968
+    drawings, kept as a regression in `tests/test_neck_gate_parity.py`); the present version has
+    0 on that run and on seeds 11 and 5, which is a search and not a proof, so the default stays
+    the no-good row. `tools/exp/contig/neckcut_search.py --rows nogood|strong` is the brute-force
+    search over random 5-ZIP graphs (every drawing of a window against every row built; exit 1 on
+    a row that breaks on a drawing the gate accepts); the default rows have 0 on seeds 11 and 5
+    (40,000 graphs each) and on the run above. `tests/test_neck_gate_parity.py` checks both kinds on random graphs with
+    relays, gap edges and connectors and the strong one by hand on the cases that broke earlier
+    versions.
   - *Widths in both kinds of row* are M1's widths (`audit.neck_widths`, through
     `necks_gate.edge_km`): a border or gap edge counts as its floored whole cm, an approved
     connector at full width (#140), capped at the limit less half a cm. With the pre-2026-10-14
@@ -916,10 +953,11 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
     shipped yet, so R5 is inactive on the real graph and `check_m1` says so.
   Since #142 the checks that run before the gate read this model: `repair.py`, `plancheck.py`,
   `wholeplan.py` and `glue.py` call `tools/exp/contig/necks_gate.py` (`gate_graph`, `gate_necks`
-  with the channel's zero-opportunity ZCTAs from `channel_mass`, `edge_km`, `cut_terms`,
-  `bridged`), which wraps `audit.district_necks(free=)`, `audit.neck_relays` and
-  `audit.neck_widths`, so §4.9's widths are M1's again, and a `repair.neck_cuts` row is valid
-  under the relays and the #140 connector rule (§4.9). The master side (`td.supports.contact`)
+  with the channel's zero-opportunity ZCTAs from `channel_mass`, `edge_km`, `nogood_terms`,
+  `cut_terms`, `bridged`), which wraps `audit.district_necks(free=)`, `audit.neck_relays` and
+  `audit.neck_widths`, so §4.9's widths are M1's again, and the default `repair.neck_cuts` row, the
+  no-good of a district's drawing of the window, is valid under the relays and the #140 connector
+  rule (§4.9). The master side (`td.supports.contact`)
   still reads the pre-2026-10-14 land rule (§2 contact): it drops a connector that land
   replaces, so its rows can reject a drawing M1 now accepts (a plan it accepts is still accepted
   by M1's connector rule; a follow-up, not changed here);
