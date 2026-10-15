@@ -9,7 +9,7 @@ Per planning channel, for each district with a detached piece under `td.audit.di
 to the district's other ZCTAs whose every ZCTA has zero mass in the channel (`mass.get(z, 0) == 0`)
 and is held by another district of the run; the path goes to the district.  It is applied only if
 every donor district keeps its failures by identity and size: a clean donor stays clean, and each
-detached piece and each neck (`td.audit.district_necks`, the part cut off) it has afterwards lies
+detached piece and each neck (the gate's, `necks_gate.gate_necks`, the part cut off) it has afterwards lies
 inside a different one it had before, so a new or enlarged piece or neck is refused even when the
 counts do not rise; the district itself ends with fewer pieces and no more necks than before.  On a refusal the donor that failed is kept off the next
 path, up to `--tries` paths per piece; a piece still detached is left as it is and listed under
@@ -51,6 +51,9 @@ def _load(name: str, file: str):
         sys.modules[name] = mod
         spec.loader.exec_module(mod)
     return sys.modules[name]
+
+
+necks_gate = _load("contig_necks_gate", "necks_gate.py")
 
 
 # ------------------------------------------------------------------------------ the search
@@ -185,15 +188,12 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
 
 # ------------------------------------------------------------------------------ the run
 def neck_counter(polygon: dict, mass: dict):
-    """necks_of(zips) -> the M1 necks `td.audit.district_necks` finds (each as the frozenset of ZCTAs
-    of the part cut off), on the polygon graph with gap width as `TD_NECK_GAP_WIDTH` sets it (the
-    gate's reading)."""
-    gap = os.environ.get(audit.GAP_WIDTH_ENV) == "1"
-    try:
-        ng = audit.NeckGraph(polygon, gap_width=gap)
-    except TypeError:                   # a NeckGraph that reads the environment itself
-        ng = audit.NeckGraph(polygon)
-    return (lambda zs: [frozenset(n.zips) for n in audit.district_necks(set(zs), mass, ng)]), ng
+    """necks_of(zips) -> the M1 necks the gate finds (`necks_gate.gate_necks`; each as the frozenset
+    of ZCTAs of the part cut off), on the gate's graph (`necks_gate.gate_graph`: gap width on unless
+    `TD_NECK_GAP_WIDTH` is "0", the connector rule of #140) with the zero-opportunity ZCTAs of
+    `mass` as relays (`necks_gate.channel_mass`)."""
+    ng = necks_gate.gate_graph(polygon)
+    return (lambda zs: [frozenset(n.zips) for n in necks_gate.gate_necks(zs, mass, ng)]), ng
 
 
 def main(argv=None) -> int:
@@ -223,7 +223,7 @@ def main(argv=None) -> int:
     adj = audit.adjacency(polygon)
     report, owner_after = {"channels": {}, "source": os.path.abspath(a.run_dir), "states": list(states)}, {}
     for c in plans:
-        m = inst.channels[c].m
+        m = necks_gate.channel_mass(inst, c)        # every ZCTA of the channel: the gate's relays
         if a.channels is not None and c not in a.channels:
             owner_after[c] = owners[c]
             continue

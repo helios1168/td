@@ -573,6 +573,13 @@ class NeckGraph:
         self._flow_net = {}
         self._wide = {}
 
+    def own_edge(self, a: str, b: str) -> bool:
+        """Whether ZCTAs a and b of one district touch the way its pieces are judged (`district_necks`'
+        cut-off part): on a polygon edge, an approved connector or a land-only gap edge (R5), never
+        a Voronoi width edge alone."""
+        return (b in self.border.get(a, ()) or b in self.connector.get(a, ())
+                or tuple(sorted((a, b))) in self.gap_land)
+
     def land_component(self, states: frozenset) -> dict:
         """{zip: component id} of the ZCTAs of `states` on the polygon edges alone (no connector)."""
         if states not in self._land:
@@ -633,6 +640,40 @@ class NeckGraph:
         return wide
 
 
+def neck_relays(own: set, g: NeckGraph, free) -> set:
+    """The relays of a district holding the ZCTAs `own` (R3, `district_necks`): the ZCTAs of `free`
+    that are not `own` and are reached from it through `free` ones alone, on the polygon edges, gap
+    edges and connectors of `g`.  `district_necks` reads its relays from here, and the neck checks
+    of `tools/exp/contig/necks_gate.py` too, so that they cannot differ."""
+    relay = set()
+    stack = list(own)
+    while stack:                                # the free ZCTAs the district reaches through free ones
+        z = stack.pop()
+        for y in (*g.border_cm.get(z, ()), *g.connector.get(z, ())):
+            if y in free and y not in own and y not in relay:
+                relay.add(y)
+                stack.append(y)
+    return relay
+
+
+def neck_widths(vertices, g: NeckGraph, states: frozenset) -> dict:
+    """{(a, b) with a < b: cm} the width of every edge of `g` among `vertices` as `district_necks`
+    counts it (the whole-cm borders, polygon and gap edges, plus `NECK_W_CM` for an approved
+    connector, 0 where `g` has the pre-2026-10-14 land rule and land would do within `states`),
+    each capped at `NECK_W_CM`; an edge of 0 cm is listed."""
+    vs = set(vertices)
+    width = {}
+    for z in vs:
+        for y, cm in g.border_cm.get(z, {}).items():
+            if y in vs and z < y:
+                width[z, y] = cm
+        for y in g.connector.get(z, ()):
+            if y in vs and z < y:
+                no = g.land_rule and g.land_would_do(z, y, states)
+                width[z, y] = width.get((z, y), 0) + (0 if no else NECK_W_CM)
+    return {e: min(cm, NECK_W_CM) for e, cm in width.items()}
+
+
 def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK_TIME,
                    by: str = "area", free=frozenset()) -> list:
     """[Neck] of one district (`zips`, `mass` {zip: m}): at most one per component of the district,
@@ -691,14 +732,8 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     import highspy
     import numpy as np
     states = frozenset(g.state.get(z, "") for z in zips)
-    own, relay = set(zips), set()
-    stack = list(own)
-    while stack:                                # the free ZCTAs the district reaches through free ones
-        z = stack.pop()
-        for y in (*g.border_cm.get(z, ()), *g.connector.get(z, ())):
-            if y in free and y not in own and y not in relay:
-                relay.add(y)
-                stack.append(y)
+    own = set(zips)
+    relay = neck_relays(own, g, free)
     weight = {z: g.aland.get(z, 0.0) for z in own} if by == "area" else mass
     area_tot = math.fsum(g.aland.get(z, 0.0) for z in zips)
     mass_tot = math.fsum(mass.get(z, 0.0) for z in zips)
@@ -706,22 +741,12 @@ def district_necks(zips: set, mass: dict, g: NeckGraph, time_limit: float = NECK
     need = NECK_SHARE * w_tot * (1 - NECK_TOL)
     half = 0.5 * w_tot * (1 + NECK_TOL)         # A holds no more than the rest
     narrow = NECK_W_CM - 1                      # the widest neck, in whole cm
-    width = {}                                  # (a, b) with a < b -> cm, capped at NECK_W_CM
-    for z in own | relay:
-        for y, cm in g.border_cm.get(z, {}).items():
-            if (y in own or y in relay) and z < y:
-                width[z, y] = cm
-        for y in g.connector.get(z, ()):
-            if (y in own or y in relay) and z < y:
-                no = g.land_rule and g.land_would_do(z, y, states)
-                width[z, y] = width.get((z, y), 0) + (0 if no else NECK_W_CM)
-    width = {e: min(cm, NECK_W_CM) for e, cm in width.items()}
+    width = neck_widths(own | relay, g, states)  # (a, b) with a < b -> cm, capped at NECK_W_CM
     adj, own_adj = collections.defaultdict(set), collections.defaultdict(set)
     for a, b in width:
         adj[a].add(b)
         adj[b].add(a)
-        if (a in own and b in own               # the district's own ZCTAs touch, no relay between:
-                and (b in g.border.get(a, ()) or b in g.connector.get(a, ()) or (a, b) in g.gap_land)):
+        if a in own and b in own and g.own_edge(a, b):  # the district's own ZCTAs touch, no relay between
             own_adj[a].add(b)
             own_adj[b].add(a)
 

@@ -13,8 +13,8 @@ ZIP: a district is the union of its units' ZIPs.  Each round:
    whole units), rounded up to 1e-4, with no cap: the owner accepts any band (2026-10-07);
 2. the master's plan there (`master.plan(..., banned=)`);
 3. each support in use, singletons included, checked once against M1 on its ZIP set (`m1_verdict`:
-   `td.audit.district_pieces` on the polygon graph and `td.audit.district_necks`, the gate's own
-   functions);
+   `td.audit.district_pieces` on the polygon graph and the gate's necks, `necks_gate.gate_necks`:
+   `td.audit.district_necks` with the channel's zero-opportunity ZCTAs as relays, #142);
 4. each support that fails is banned as its exact unit set, with the reason; one whose neck search
    stops on its time limit is `unknown` and never banned.
 
@@ -55,6 +55,7 @@ def _load(name: str, file: str):
 
 run = _load("contig_run", "run.py")
 replan = _load("contig_replan", "replan.py")
+necks_gate = _load("contig_necks_gate", "necks_gate.py")
 
 FORMULATION = "wholeplan"
 DELTA_STEP = 1e-4           # the planned δ is the exact smallest δ rounded up to this
@@ -66,14 +67,15 @@ def _name(s) -> str:
 
 def m1_verdict(zips: set, mass: dict, adj: dict, ng, time_limit: float = audit.NECK_TIME) -> dict:
     """M1 on one district's ZIP set, as the gate judges it (`td.audit.check_m1`): one piece on the
-    polygon graph `adj` and no neck.  {"status": pass | fail | unknown, "why"}; a neck search that
+    polygon graph `adj` and no neck.  `mass` is `necks_gate.channel_mass`: its zero-opportunity
+    ZCTAs are the necks' relays.  {"status": pass | fail | unknown, "why"}; a neck search that
     stops on its time limit is `unknown`, never a failure."""
     comps = audit.district_pieces(dict.fromkeys(zips, "S"), adj, mass)["S"]
     if len(comps) > 1:
         rest = sorted(comps[1:], key=lambda c: -len(c))
         return {"status": "fail", "why": f"{len(comps)} pieces on the polygon graph; detached "
                 + ", ".join(f"{len(c)} ZIPs from {min(c)}" for c in rest[:4])}
-    necks = audit.district_necks(set(zips), mass, ng, time_limit)
+    necks = necks_gate.gate_necks(zips, mass, ng, time_limit)
     proved = [nk for nk in necks if nk.status == "proved"]
     if proved:
         nk = min(proved, key=lambda n: n.width_km)
@@ -96,7 +98,8 @@ def loop(inst, c: str, polygon: dict, time_limit: float | None = None, max_round
         raise ValueError(f"{c}: units not whole: {split}")
     fam = supports.family(inst, c) if fam is None else fam
     adj = audit.adjacency(polygon)
-    ng = audit.NeckGraph(polygon)
+    ng = necks_gate.gate_graph(polygon)
+    mass = necks_gate.channel_mass(inst, c)
     verdicts, bans, rounds = {}, [], []
     out = {"status": None, "plan": None, "report": None, "delta": None, "rounds": rounds,
            "bans": bans, "verdicts": verdicts}
@@ -124,7 +127,7 @@ def loop(inst, c: str, polygon: dict, time_limit: float | None = None, max_round
             key = _name(s)
             if key not in verdicts:
                 zips = {z for v in s for z in units.zips[v]}
-                verdicts[key] = check(zips, ch.m, adj, ng)
+                verdicts[key] = check(zips, mass, adj, ng)
             v = verdicts[key]
             if v["status"] == "fail":
                 new.append({"support": key, "why": v["why"], "round": r})

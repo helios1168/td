@@ -6,13 +6,14 @@
 **B, drawable alone** (`drawable_alone = true`, `docs/MODEL.md` §4.9).  `drawable` asks whether
 one district can be drawn with footprint exactly S: every whole unit of S owned in full (a clipped
 unit of a multi-unit S is held whole, §3.4), each free unit giving a share of at least η_c (so a
-non-empty one), drawn mass in [L_c, U_c], connected on the ZIP graph and with no M1 neck
-(`td.audit.district_necks`).  A support of held units alone is one fixed ZIP set, judged directly.
+non-empty one), drawn mass in [L_c, U_c], connected on the ZIP graph and with no M1 neck as the
+gate finds it (`necks_gate.gate_necks`: `td.audit.district_necks` with the channel's
+zero-opportunity ZCTAs as relays, and its width graph; #142).  A support of held units alone is one fixed ZIP set, judged directly.
 Otherwise it is one MILP on S's ZIPs: x_z per ZIP of a free unit, the held units' components
 contracted to bodies, a single-commodity flow from the heaviest body (or from a chosen root ZIP
 when S holds no held unit) keeping the district connected, as `draw._solve_group`'s `flow` and
 `audit.district_necks`' rooted flow do, and its necks cut lazily by `draw.NeckCut` rows
-(`repair.neck_cuts`, valid for every connected district without a neck).  Its objective is the
+(`repair.neck_cuts`, valid for every connected district the gate accepts, `necks_gate.cut_terms`).  Its objective is the
 district's perimeter in km of shared border (trap 19: never a zero objective), and the solve
 stops at a 20% gap: only feasibility matters.  `infeasible` is HiGHS's proof on the cut-augmented
 model; a time limit, a neck the check leaves unresolved or a cut its own drawing meets is
@@ -84,6 +85,7 @@ def _load(name: str, file: str):
 
 draw = _load("contig_draw", "draw.py")
 repair = _load("contig_repair", "repair.py")
+necks_gate = _load("contig_necks_gate", "necks_gate.py")
 
 CHECK_TIME = 120.0          # seconds per `drawable` test
 CHECK_GAP = 0.2             # the test's perimeter objective only steers it: a 20% gap
@@ -124,6 +126,7 @@ def drawable(inst, c: str, s, delta: float, ng, time_limit: float = CHECK_TIME,
     t0 = time.time()
     ch, units = inst.channels[c], inst.units
     adj, m = units.zip_adj, ch.m
+    mn = necks_gate.channel_mass(inst, c)       # the gate's masses: its zero-opportunity relays
     if ch.spec.window:      # the owner's dollar window (#112): the one band, whatever δ is asked
         delta = ch.spec.window_delta
     lo, hi = (ch.tau * x for x in ch.spec.rel_band(delta))
@@ -141,7 +144,7 @@ def drawable(inst, c: str, s, delta: float, ng, time_limit: float = CHECK_TIME,
 
     def judge(X):
         """(status, why) of a connected candidate X from its necks."""
-        nks = audit.district_necks(set(X), m, ng)
+        nks = necks_gate.gate_necks(set(X), mn, ng)
         if not nks:
             return "drawable", f"a district of {len(X)} ZIPs with no neck"
         nk = nks[0]
@@ -251,7 +254,8 @@ def drawable(inst, c: str, s, delta: float, ng, time_limit: float = CHECK_TIME,
             row(1.0, 1.0, idx, val)                 # every other body is reached
     if not bodies:
         row(1.0, 1.0, list(range(r0, r0 + n_x)), [1.0] * n_x)
-    out["wide_pairs"] = wide_rows(inst, c, s, F, fixed, bodies, body_of, ix, nb, ng, h, nv, row)
+    out["wide_pairs"] = wide_rows(inst, c, s, F, fixed, bodies, body_of, ix, nb, ng, h, nv, row,
+                                  necks_gate.zero_opportunity(mn))
     nv = h.getNumCol()
     owner = dict.fromkeys(fixed, "S")
     keys = set()
@@ -317,7 +321,7 @@ def drawable(inst, c: str, s, delta: float, ng, time_limit: float = CHECK_TIME,
         if st2 == "unresolved":
             return done("unknown", why)
         own = {z: ("S" if z in X else "-") for z in F}
-        cuts, _ = repair.neck_cuts(c, owner, fset, m, ng, own, {"S"})
+        cuts, _ = repair.neck_cuts(c, owner, fset, mn, ng, own, {"S"})
         added = [cut for cut in cuts if add_cut(cut)]
         if not added or all(cut.holds(own) for cut in added):
             return done("unknown", f"a neck no new cut separates ({why[0].width_km:.2f} km)")
@@ -339,16 +343,20 @@ def certain_states(inst, s, fixed: set, ng) -> frozenset:
 
 
 def wide_rows(inst, c: str, s, F: list, fixed: set, bodies: list, body_of: dict, ix: dict,
-              nb: dict, ng, h, nv: int, row) -> int:
+              nb: dict, ng, h, nv: int, row, zero) -> int:
     """B's wide-passage rows: for the heaviest body b0 and each other body b, a flow from b0 to b
-    of at least `repair.NECK_KM`, each edge carrying at most its width (as M1 counts it, with the
-    states certain to be the district's: `certain_states`, `repair._edge_km`) and only when both
-    ends are the district's, required (q_b = 1) unless the smaller of the two bodies' land is
-    below the share of the district's.  Valid for every connected district without a neck: when
-    both bodies hold the share, a b0-b edge cut of width w gives a connected part (b0's side, or
-    when that is more than half, b's) holding the share and no more than the rest, cut off by at
-    most w, so w is at least 10 km and so is the flow (max-flow min-cut; contracting a body only
-    removes cuts).  Returns the number of pairs."""
+    of at least `necks_gate.NECK_KM`, each edge carrying at most its width (as the gate counts it,
+    `necks_gate.edge_km`, with the states certain to be the district's: `certain_states`) and only
+    when both ends are the district's, required (q_b = 1) unless the smaller of the two bodies'
+    land is below the share of the district's.  `zero` is the channel's zero-opportunity ZCTAs
+    (`necks_gate.zero_opportunity`), the gate's relays.  Valid for every connected district the
+    gate accepts, **when `necks_gate.bridged` of the district's possible ZCTAs is False** (else no
+    row is added and 0 is returned): when both bodies hold the share, a b0-b edge cut of width w
+    gives a connected part (b0's side, or when that is more than half, b's) holding the share and
+    no more than the rest, cut off by at most w, so w is at least 10 km and so is the flow
+    (max-flow min-cut; contracting a body only removes cuts).  With a width edge between two
+    ZCTAs that are no own edge, or a relay cluster touching two ZCTAs, a gate cut may cost an edge
+    the flow does not carry, and the argument fails.  Returns the number of pairs."""
     if len(bodies) < 2:
         return 0
     inf = highspy.kHighsInf
@@ -359,12 +367,14 @@ def wide_rows(inst, c: str, s, F: list, fixed: set, bodies: list, body_of: dict,
 
     def node(z):
         return z if z in fset else f"@{body_of[z]}"
+    if necks_gate.bridged(set(fixed), fset, ng, zero, node):
+        return 0
     width = collections.Counter()
     for z in list(F) + sorted(fixed):
-        for y in set(ng.border.get(z, ())) | ng.connector.get(z, set()):
+        for y in necks_gate.width_nbrs(ng, z):
             if (y in fset or y in body_of) and node(z) != node(y):
-                width[node(z), node(y)] += repair._edge_km(ng, z, y, states)
-    width = {e: min(w, repair.NECK_KM) for e, w in width.items() if w > 0}
+                width[node(z), node(y)] += necks_gate.edge_km(ng, z, y, states)
+    width = {e: min(w, necks_gate.NECK_KM) for e, w in width.items() if w > 0}
     arcs = sorted(width)
     b_area = [math.fsum(area[z] for z in b) for b in bodies]
     k = 0
@@ -389,7 +399,7 @@ def wide_rows(inst, c: str, s, F: list, fixed: set, bodies: list, body_of: dict,
             ins, outs = bal[v]
             idx, val = ins + outs, [1.0] * len(ins) + [-1.0] * len(outs)
             if v == src:                        # out - in >= the limit when q = 1
-                row(0.0, inf, idx + [q], [-x for x in val] + [-repair.NECK_KM])
+                row(0.0, inf, idx + [q], [-x for x in val] + [-necks_gate.NECK_KM])
             elif v != dst:
                 row(0.0, 0.0, idx, val)
         # q = 0 only when the smaller body holds no more than the share of the district's land
@@ -556,7 +566,7 @@ def causes(inst, plan, owner: dict, attempts: list, log_text: str, ng, h0: int,
     spent_piece = {j for cc, j in PIECE_LINE.findall(log_text) if cc == c}
     spent_neck = {j for cc, j in NECK_LINE.findall(log_text) if cc == c}
     left = [("piece", j, cc) for j, cc in repair.detached(owner, adj, m)]
-    left += [("neck", j, side) for j, side, _ in repair.necks(owner, m, ng)]
+    left += [("neck", j, side) for j, side, _ in repair.necks(owner, necks_gate.channel_mass(inst, c), ng)]
     out = []
     for kind, j, zs in left:
         mine = [(i, t) for i, t in enumerate(attempts)
@@ -701,7 +711,7 @@ class Steps:
 
     def neck_graph(self):
         from td import geo
-        return audit.NeckGraph(geo.polygon_graph())
+        return necks_gate.gate_graph(geo.polygon_graph())
 
     def plan_argv(self, spec: str, out_spec: str, report: str) -> list:
         a = self.a

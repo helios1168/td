@@ -417,7 +417,9 @@ So X ∈ D_c(S, δ), which contradicts D_c(S, δ) = ∅. ∎
 cases **[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
 - *Held units only.* By (a), X is the union of S's ZIPs. The test reports a mass outside the
   band by more than 1e-9 τ_c, two or more components, or an M1 neck the exact check proves
-  (`td.audit.district_necks`, status `proved`). An unresolved neck check gives `unknown`.
+  (the gate's: `necks_gate.gate_necks`, which is `td.audit.district_necks` with the channel's
+  zero-opportunity ZCTAs as relays, R3, on `necks_gate.gate_graph`; status `proved`; #142). An
+  unresolved neck check gives `unknown`.
 - *Otherwise.* HiGHS proves infeasible a MILP whose feasible set contains every X ∈ D_c(S, δ).
   Each of its rows holds for every such X:
   - x_z ∈ {0, 1} on the ZIPs of the free units, with the held ZIPs fixed in: this is (a).
@@ -440,15 +442,34 @@ cases **[proved, Sol verifier 8b0ddc7f, 2026-10-07]**.
     sub-cut of at least 10 km. Widths are whole cm in M1's check, so a cut without a neck is at
     least 1,000,000 cm, and the capped capacities sum to at least 10 km − 0.5 cm. By max-flow
     min-cut the flow exists. Contracting a component only removes cuts.
+    *Under M1's relays (R3) and gap edges (R2) the argument needs one more condition (#142)*:
+    a cut of the gate's graph may then use a relay, or an edge that is no polygon edge or
+    connector, which a flow over the held and free ZIPs alone does not carry. The rows are added
+    only when `necks_gate.bridged` is False for the district's possible ZIPs: no width edge
+    between two nodes (a body is one node) that is not an own edge (`NeckGraph.own_edge`), and
+    no connected set of zero-opportunity ZCTAs outside the held ZIPs (a free zero-opportunity ZIP
+    left out of X is one) touching two nodes. With nothing bridged, a relay set touching one node
+    at most goes with that node at no cost, so a cut of the gate's graph is a cut of the flow's.
+    Otherwise no wide-passage row is added (`wide_pairs` 0): the MILP is looser, never wrong.
   - *Neck cuts.* These are `draw.NeckCut` rows built by `repair.neck_cuts` from each necked
-    incumbent. NeckCut is valid for every district without a neck whose anchors lie in one
-    component of it, and X is connected.
-  - *Widths in both kinds of row* are at least M1's widths. A border counts as its floored whole
-    cm. A connector counts at full width unless land replaces it (the pre-2026-10-14 rule, §9: M1 now
-    counts it at full width always, so for connectors these widths are at most M1's) within a set of states that X
-    certainly owns ZIPs in: the held ZIPs' states, and the state of each free unit that lies in
-    one state (X meets it by (b)). M1 reads X's own states, which form a superset, and in a
-    superset land replaces a connector at least as often.
+    incumbent. NeckCut is valid for every connected X without an M1 neck whose anchors lie in
+    one component of it **and whose cut side A holds at most half of the land of the held ZIPs
+    outside the window** (#142; `necks_gate.cut_terms`; a neck failing it gets no row). Its left
+    side counts the gate's widths: for the part C of A that holds the anchors, all edges to
+    ZCTAs that are X's, or are or may be relays (zero opportunity, whoever owns them), with
+    the relays the gate's cut puts with C counted on their edges to the rest, and the edges
+    inside A that may join C to the rest of A. It is at least the gate's cut of C in every
+    drawing, so a drawing M1 accepts never breaks it; counting more only weakens a row.
+    `tests/test_neck_gate_parity.py` checks this on random graphs with relays, gap edges and
+    connectors.
+  - *Widths in both kinds of row* are M1's widths (`audit.neck_widths`, through
+    `necks_gate.edge_km`): a border or gap edge counts as its floored whole cm, an approved
+    connector at full width (#140), capped at the limit less half a cm. With the pre-2026-10-14
+    land rule on (`TD_NECK_PRE_2026_10_14_LAND_RULE=1`, §9) a connector counts 0 where land
+    replaces it within a set of states that X certainly owns ZIPs in: the held ZIPs' states
+    (and, in the wide-passage rows, the state of each free unit that lies in one state; X meets
+    it by (b)). M1 reads X's own states, which form a superset, and in a superset land replaces
+    a connector at least as often.
 - HiGHS proves infeasibility to its feasibility tolerance (1e-7, trap 14). A plan at the edge of
   a band is the same numerical corner as in the master. The verdict is cached monotonically in
   δ: an infeasible verdict at δ also holds at every δ′ ≤ δ, because the band only narrows. A
@@ -893,12 +914,15 @@ source where one is named **[policy S28, OD1, OD3, C16]**:
     each other across land in no ZCTA are adjacent, never across water (the Voronoi rows, which can
     cross water, only widen necks, never join pieces), behind G1's switch. `reference/2025/zcta_gap_land.csv.gz` is not
     shipped yet, so R5 is inactive on the real graph and `check_m1` says so.
-  The master side (`td.supports.contact`, `repair.neck_cuts`, `plancheck`) still reads the
-  pre-2026-10-14 land rule (§2 contact, §4.9 widths): it drops a connector that land replaces, so
-  its rows can reject a drawing M1 now accepts (a plan it accepts is still accepted by M1's
-  connector rule); the claim in §4.9 that its widths are at least M1's no longer holds for
-  connectors, and a `repair.neck_cuts` row built on the old connector width may cut a drawing the new rule
-  accepts (a follow-up, not changed here);
+  Since #142 the checks that run before the gate read this model: `repair.py`, `plancheck.py`,
+  `wholeplan.py` and `glue.py` call `tools/exp/contig/necks_gate.py` (`gate_graph`, `gate_necks`
+  with the channel's zero-opportunity ZCTAs from `channel_mass`, `edge_km`, `cut_terms`,
+  `bridged`), which wraps `audit.district_necks(free=)`, `audit.neck_relays` and
+  `audit.neck_widths`, so §4.9's widths are M1's again, and a `repair.neck_cuts` row is valid
+  under the relays and the #140 connector rule (§4.9). The master side (`td.supports.contact`)
+  still reads the pre-2026-10-14 land rule (§2 contact): it drops a connector that land
+  replaces, so its rows can reject a drawing M1 now accepts (a plan it accepts is still accepted
+  by M1's connector rule; a follow-up, not changed here);
 - mode compliance on the owners of cells with opportunity, with the metro exceptions listed
   (S14); a zero-opportunity ZCTA the territory pass gave to a district holding no opportunity in
   its unit is listed, not failed (#116; a state crossing is a split, owner 2026-10-05);
