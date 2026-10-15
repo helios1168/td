@@ -20,6 +20,7 @@ import types
 import numpy as np
 
 from tests import test_contig_realize as tcr
+from tests import test_realize as tr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BNC = os.path.join(HERE, "..", "tools", "exp", "bnc")
@@ -395,3 +396,60 @@ def test_growth_in_a_race_settles_as_the_loop_does():
     unknown = lambda W: "unknown" if len(W) > 14 else "infeasible"      # noqa: E731
     seq, _ = _run(repair, unknown, (3, 60))
     assert key(_race_run(repair, unknown, (3, 60))) == key(seq)
+
+
+# ------------------------------------------------------------------------------ growth, unstubbed
+def _grow_toy():
+    """A path p - b - a1 - a2 - c1 - c2 - c3 - c4 of three districts, K 3, τ 3, band (2.7, 3.3),
+    every ZCTA of mass 1 but p (2).  NY (p, b) and NJ (c1-c4) are split units, so free; CT (a1, a2) is
+    held whole.  The map has CT+NJ+NY#1 = {p, a1, a2} (4), p detached behind NY#1's b (1), and
+    NJ#1 = {c1-c4} (4).  The ball around p is {p, b}: NY#1 takes both (3) but CT+NJ+NY#1 keeps 2, so
+    no drawing exists.  With NJ's c1-c4 in the window (the adjacent districts' free ZCTAs), CT+NJ+NY#1
+    takes c1 and the map is {p, b} | {a1, a2, c1} | {c2, c3, c4}, each connected, each 3."""
+    path = ["p", "b", "a1", "a2", "c1", "c2", "c3", "c4"]
+    mass = dict.fromkeys(path, 1.0) | {"p": 2.0}
+    xy = {z: (float(i), 0.0) for i, z in enumerate(path)}
+    inst, xym = tr._toy({"NY": ["p", "b"], "CT": ["a1", "a2"], "NJ": path[4:]}, list(zip(path, path[1:])),
+                        mass, xy, {"NY": "free", "NJ": "free"}, k=3, delta=0.1, final_delta=0.1)
+    plan = tr._plan(inst, [({"CT", "NJ", "NY"}, {"CT": 1.0, "NJ": 0.25, "NY": 0.0001}),
+                           ({"NY"}, {"NY": 0.9999}), ({"NJ"}, {"NJ": 0.75})])
+    a, b, c = (cp.name for cp in plan.copies)
+    owner = {"p": a, "b": b, "a1": a, "a2": a} | dict.fromkeys(path[4:], c)
+    return inst, xym, plan, owner, (a, b, c)
+
+
+def test_a_window_scip_proves_infeasible_grows_and_the_grown_window_is_solved_by_scip():
+    """No stub: `repair_channel` with `--engine scip`.  SCIP proves the ball around the detached
+    piece infeasible (a solve, not the model's pre-check), with and without the cap; the adjacent
+    districts' free ZCTAs are added; SCIP solves that window, and the piece is gone."""
+    repair = _repair()
+    solve_window = repair.solve_window
+    inst, xy, plan, owner, (a, b, c) = _grow_toy()
+    adj, m = inst.units.zip_adj, inst.channels["X"].m
+    p = {z: (x / 1000.0, y / 1000.0) for z, (x, y) in xy.items()}
+    assert repair.detached(owner, adj, m) == [(a, frozenset({"p"}))]
+    lines, old = [], os.environ.get(repair.ENGINE_ENV)
+    try:
+        os.environ[repair.ENGINE_ENV] = "scip"
+        done, attempts = repair.repair_channel(inst, plan, owner, p, dict(inst.units.unit_of), h0=1,
+                                               max_zctas=100, time_limit=60.0, log=lines.append, grow_max=3)
+    finally:
+        if old is None:
+            os.environ.pop(repair.ENGINE_ENV, None)
+        else:
+            os.environ[repair.ENGINE_ENV] = old
+    assert repair.solve_window is solve_window
+    shapes = [(x["shape"], x["status"], x["cap"], x["window_zctas"]) for x in attempts]
+    assert shapes == [("ball", "infeasible", True, 2), ("ball", "infeasible", False, 2),
+                      ("grow-adjacent", "optimal", True, 6)], shapes
+    assert {x["engine"] for x in attempts} == {"scip"}
+    for x in attempts[:2]:      # a solve of the engine's own, not the pre-check's "reachable by no district"
+        assert x["note"] == "proved at solve 1" and x["group"]["iterations"] == 1 and x["group"]["columns"] > 0, x["group"]
+    assert any("window of 2 ZCTAs (no cap) [scip]" in x and "-> infeasible" in x and "1 solves" in x
+               for x in lines), lines
+    assert any("proved infeasible; growing by 1 step(s) to 6 ZCTAs" in x for x in lines), lines
+    assert any("window of 6 ZCTAs [scip]" in x and "-> optimal" in x for x in lines), lines
+    grown = attempts[2]
+    assert grown["districts"] == sorted((a, b, c)) and grown["pieces_before"] == 1 and grown["pieces_after"] == 0
+    assert repair.detached(done, adj, m) == []
+    assert done == {"p": b, "b": b, "a1": a, "a2": a, "c1": a, "c2": c, "c3": c, "c4": c}, done
