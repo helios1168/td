@@ -107,7 +107,7 @@ def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: froze
 
     - from a ZCTA of A to every ZCTA outside A and outside `RA` that is j's, or a possible relay
       (`audit.neck_relays` of `fixed | W`), or in W and of zero opportunity (j's or a relay:
-      counted as present either way), polygon, gap and connector edges alike;
+      counted as present either way; the widened rows below count it a possible relay too), polygon, gap and connector edges alike;
     - inside A, but for edges between two ZCTAs of `core` (both in C in every drawing: j's `fixed`
       ZCTAs of A connected to `seed`), every edge that is no own edge (`NeckGraph.own_edge`: C is a
       component of j's part of A, so it may join C to the rest of A), and every edge to a ZCTA of W
@@ -127,7 +127,7 @@ def cut_terms(nk, D: set, fixed: set, W: set, seed: set, ng, zero, states: froze
     A = set(nk.zips)
     area_a = sum(ng.aland.get(z, 0.0) for z in A)
     widen = area_a > 0.5 * (1 + audit.NECK_TOL) * area_fixed
-    relays = audit.neck_relays(fixed | W, ng, zero)
+    relays = audit.neck_relays(fixed | W, ng, zero) | (W & set(zero))      # as `bridged`'s candidates
     cut = {(a, b) for a, b, _ in nk.cut}
     side = set(A)                       # A and the relays of D it keeps, without a cut edge
     stack = list(A)

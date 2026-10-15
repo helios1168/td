@@ -239,6 +239,32 @@ def test_a_neck_cut_counts_the_relay_edge_an_owned_window_relay_cuts():
     assert cuts[0].holds(other), cuts[0]                    # the accepted drawing is not
 
 
+def test_a_widened_neck_cut_counts_an_optional_zero_opportunity_window_zip_as_a_relay():
+    """Five ZCTAs, D1 = {c, r1} plus a and b (the window is {a, b, r2}; r1 and r2 have no
+    opportunity).  The first map gives D1 a, b and leaves r2 to D2: the gate cuts r1 off (4 km).
+    The map that leaves b to D2 is connected and the gate accepts it, with r2 a relay of D1 that the
+    widened row must count: the optional zero ZCTA r2 is a possible relay (`bridged`'s candidates)."""
+    gate, repair, *_ = _mods()
+    zs = ["a", "b", "c", "r1", "r2"]
+    km = {("a", "r1"): 2.0, ("a", "r2"): 9.0, ("b", "c"): 12.0, ("b", "r2"): 12.0, ("c", "r1"): 2.0,
+          ("c", "r2"): 9.0}
+    polygon = {"vertices": zs, "edges": sorted(km), "state": dict.fromkeys(zs, "TX"),
+               "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
+               "aland": {"a": 1e7, "b": 1e8, "c": 5e7, "r1": 1e8, "r2": 1e8}, "voronoi_gaps": {}}
+    m = {"a": 1.0, "b": 1.0, "c": 1.0, "r1": 0.0, "r2": 0.0}
+    ng = gate.gate_graph(polygon)
+    base = {"c": "D1", "r1": "D1"}
+    first = {"a": "D1", "b": "D1", "r2": "D2"}
+    other = {"a": "D1", "b": "D2", "r2": "D2"}
+    assert _own_connected(set(base) | {"a", "b"}, ng) and _own_connected(set(base) | {"a"}, ng)
+    cuts, _ = repair.neck_cuts("X", base, {"a", "b", "r2"}, m, ng, first, {"D1"})
+    assert len(cuts) == 1
+    cells = [Cell(z, "f", "X", {**base, **other}[z], m[z]) for z in zs]
+    check = audit.check_m1(Run(cells, {"X": Channel(2)}, polygon=polygon, fine=("f",)))
+    assert check.status == "pass", check
+    assert all(cut.holds(other) for cut in cuts), cuts
+
+
 def test_bridged_flags_a_relay_touching_two_nodes_and_a_width_only_edge():
     gate, *_ = _mods()
     inst, polygon = _c14(0.0)
