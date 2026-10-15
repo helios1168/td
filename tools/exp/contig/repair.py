@@ -630,7 +630,8 @@ def grow_windows(pieces: list, owner: dict, W: set, free: set, adj: dict, h0: in
     `grow_zctas`, each holding the one before: "grow-adjacent", `W` with the free ZCTAs of every
     district next to the districts of W (`window_districts`), the nearest to W by hops through free
     ZCTAs when they do not all fit; then "grow-wider", the union with each window of `steps` (the ball
-    and corridor widened as the repair does, at `grow_zctas`) larger than the window so far that fits."""
+    and corridor widened as the repair does, at `grow_zctas`) that adds ZCTAs to the window so far
+    and fits; a union over the cap is skipped, later windows are still tried."""
     out, cur = [], set(W)
     js = window_districts(owner, cur, adj)
     mine = {z for z, j in owner.items() if j in js}
@@ -646,14 +647,11 @@ def grow_windows(pieces: list, owner: dict, W: set, free: set, adj: dict, h0: in
     for _, _, V in steps(pieces, owner, free, adj, h0, grow_zctas):
         if len(out) >= grow_max:
             break
-        if len(V) <= len(cur):      # only a window larger than the one so far widens it
-            continue
         nxt = cur | V
-        if len(nxt) > grow_zctas:
-            break
-        if nxt != cur:
-            cur = nxt
-            out.append(("grow-wider", len(out) + 1, set(cur)))
+        if len(nxt) <= len(cur) or len(nxt) > grow_zctas:   # no growth, or over the cap: next window
+            continue
+        cur = nxt
+        out.append(("grow-wider", len(out) + 1, set(cur)))
     return out[:grow_max]
 
 

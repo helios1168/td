@@ -266,16 +266,24 @@ def test_the_adjacent_districts_are_added_first():
 
 def test_a_proved_infeasible_window_grows_until_a_later_step_solves():
     """z32 is D's, which no district next to A and B touches: the adjacent step is infeasible, a
-    wider ball reaches it."""
+    wider ball reaches it.  Each step is a union that strictly grows the window, and each uses one
+    of grow_max, so the adjacent step (21) and three wider ones (26, 30, 34) take four before z32 is in."""
     repair = _repair()
-    attempts, _ = _run(repair, lambda W: "connected" if "z32" in W else "infeasible", (3, 60))
+    attempts, _ = _run(repair, lambda W: "connected" if "z32" in W else "infeasible", (5, 60))
     grow = [a for a in attempts if a["shape"].startswith("grow")]
     assert [a["shape"] for a in grow][0] == "grow-adjacent" and grow[0]["status"] == "infeasible", _shapes(attempts)
     assert grow[-1]["shape"] == "grow-wider" and grow[-1]["status"] == "connected", _shapes(attempts)
     sizes = [a["window_zctas"] for a in grow]
     assert sizes == sorted(sizes) and len(set(sizes)) > 1, sizes
     assert max(sizes) <= 60
-    assert len({a["grow"] for a in grow}) >= 2
+    assert len({a["grow"] for a in grow}) >= 2 and max(a["grow"] for a in grow) == 4
+    wider = sorted({(a["grow"], a["window_zctas"]) for a in grow if a["shape"] == "grow-wider"})
+    assert wider == [(2, 26), (3, 30), (4, 34)], wider
+    # three steps stop short of z32 (at 30) and the log names the step cap
+    short, lines = _run(repair, lambda W: "connected" if "z32" in W else "infeasible", (3, 60))
+    grow = [a for a in short if a["shape"].startswith("grow")]
+    assert max(a["window_zctas"] for a in grow) == 30 and all(a["status"] == "infeasible" for a in grow), _shapes(short)
+    assert any("growing by 3 step(s) to 21, 26, 30 ZCTAs (at most 3 steps, 60 ZCTAs)" in x for x in lines), lines
 
 
 def test_growth_stops_at_the_step_and_size_caps():
@@ -295,6 +303,19 @@ def test_growth_stops_at_the_step_and_size_caps():
     grow = [a for a in part if a["shape"].startswith("grow")]
     assert {a["window_zctas"] for a in grow} == {14}, [a["window_zctas"] for a in grow]
     assert max(a["window_zctas"] for a in attempts) <= 60
+
+
+def test_a_window_over_the_cap_does_not_end_growth_and_a_union_is_judged_not_its_part():
+    """With a 25-ZCTA cap the adjacent step holds 21: a later window is wider than that only as a
+    union with it, and a step over the cap is skipped, not the end of the steps."""
+    repair = _repair()
+    inst, plan, owner, free, state, pieces = _line()
+    W = {f"z{i:02d}" for i in range(11)}
+    got = repair.grow_windows(pieces, owner, W, free, inst.units.zip_adj, 3, 3, 25)
+    assert got[0][0] == "grow-adjacent" and len(got[0][2]) == 21, [(s, len(V)) for s, _, V in got]
+    assert any(shape == "grow-wider" and len(V) > 21 for shape, _, V in got), [(s, len(V)) for s, _, V in got]
+    sizes = [len(V) for _, _, V in got]
+    assert sizes == sorted(set(sizes)) and max(sizes) <= 25, sizes
 
 
 def test_growth_is_off_with_grow_max_zero():
