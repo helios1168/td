@@ -63,6 +63,8 @@ DEFAULT_MAX_SIZE = 6
 DEFAULT_MAX_DIST_KM = 900.0
 DROPPED = "dropped: zero opportunity"
 SHOW = 12                       # how many items an error message names
+IFA_USD_PER_M_REL = 1.2519681558        # $M per unit of m_rel (IFA, 2026-10-01 maps)
+IFA_WINDOW_M = (1000.0, 1437.5)         # the IFA $ window of the stakeholder maps, $M per district
 
 
 class SpecError(ValueError):

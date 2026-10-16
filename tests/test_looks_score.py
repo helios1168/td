@@ -267,8 +267,12 @@ def test_eligibility_with_a_gate():
     assert score.eligibility(checks, off, main, far, M1_PASS, [good]) == []
     assert score.eligibility(checks, off, main, far, M1_PASS, [good, bad]) == [
         "$ WH_02 1,200.0M outside 850.0-1,150.0M"]
-    assert score.eligibility({}, off, {"IFA": 49}, {"IFA": 1.227e9}, M1_PASS, [bad]) == [
+    # an IFA-only run keeps its band and average and adds the gate's failing districts (#105)
+    ifa_bad = dict(bad, channel="IFA", district="IFA_02", lo=1.0e9, hi=1.4375e9, usd=0.9e9)
+    assert score.eligibility({}, off, {"IFA": 49}, {"IFA": 1.227e9}, M1_PASS, [good]) == [
         "audit: no scorecard", "audit at ±15%: 1 outside"]
+    assert score.eligibility({}, off, {"IFA": 49}, {"IFA": 1.227e9}, M1_PASS, [good, ifa_bad]) == [
+        "audit: no scorecard", "audit at ±15%: 1 outside", "$ IFA_02 900.0M outside 1,000.0-1,437.5M"]
     assert score.eligibility(checks, off, main, far, M1_PASS) == [
         "audit at ±15%: 1 outside", "$ WH 500M is -50.0% of 1,000M", "$ national 2,000M is +60.0% of 1,250M"]
 
@@ -282,8 +286,8 @@ def test_write_dollars():
         with open(path, newline="") as fh:
             got = list(csv.reader(fh))
     assert got[0] == score.DOLLAR_COLUMNS and len(got) == 4
-    assert got[1] == ["WIFI", "W_01", "1500.000", "850.000", "1150.000", "1600.000", "A", "1", "1", "1"]
-    assert got[2] == ["WIFI", "W_02", "900.000", "850.000", "1150.000", "", "B", "0", "0", "1"]
+    assert got[1] == ["WIFI", "W_01", "1500.000000", "850.000000", "1150.000000", "1600.000000", "A", "1", "1", "1"]
+    assert got[2] == ["WIFI", "W_02", "900.000000", "850.000000", "1150.000000", "", "B", "0", "0", "1"]
 
 
 def _score_toy(ch: str, rates: dict, fine=None, run_json=None) -> dict:
@@ -336,8 +340,10 @@ def test_score_run_folder():
     assert "$ gate: 2 districts, 2 outside their window, 0 on the whole-state allowance" in score.report(hot)
     # An IFA-only run: no main K rule, and $ is the owner's whole-extract IFA total over K.
     ifa = _score_toy("IFA", {})
-    assert ifa["dollars"] == {"IFA": 62.14e9 / 2} and ifa["dollar_gate"] is None
-    assert ifa["why"] == [sc, m1, "$ IFA 31,070M is +2385.6% of 1,250M"]
+    # and each district is held to the IFA window, at the IFA rate on the ledger's own m_rel (#105)
+    assert ifa["dollars"] == {"IFA": 62.14e9 / 2} and len(ifa["dollar_gate"]) == 2
+    assert ifa["why"] == [sc, m1, "$ IFA_01 1.3M outside 1,000.0-1,437.5M",
+                          "$ IFA_02 1.3M outside 1,000.0-1,437.5M", "$ IFA 31,070M is +2385.6% of 1,250M"]
     # the scenario's fine channels come from run.json (#116): fi has no row at all
     both = _score_toy("WH", {"wh": 1.0e9}, fine=["wh", "fi"])
     assert both["m1"]["no_row"] == 2 + 6 and "from the ledger" not in both["m1"]["summary"]
@@ -377,3 +383,61 @@ def test_rank_and_review():
     assert [s["run"] for s in out] == ["b", "stale"] and b["review"] is None and stale["review"] is None
     ties = score.rank([_s("x", 3, 1, worst=0.09), _s("y", 3, 1, worst=0.08)])
     assert [s["run"] for s in ties] == ["y", "x"]
+
+
+def _score_ifa(masses):
+    """`score.score` on an IFA-only run folder whose IFA_01.. hold one ZIP each of the given m_rel;
+    `csv` is the `dollars.csv` `write_dollars` writes for its gate."""
+    with tempfile.TemporaryDirectory() as d:
+        ids = [f"IFA_{i:02d}" for i in range(1, len(masses) + 1)]
+        led = _rows("IFA", ((f"a{i}", j, m) for i, (j, m) in enumerate(zip(ids, masses), 1)))
+        with open(os.path.join(d, "ledger.csv"), "w", newline="") as fh:
+            w = csv.DictWriter(fh, list(led[0]))
+            w.writeheader()
+            w.writerows(led)
+        with open(os.path.join(d, "districts.csv"), "w", newline="") as fh:
+            w = csv.DictWriter(fh, ["channel", "district", "drawn_mass"])
+            w.writeheader()
+            w.writerows(_districts("IFA", masses))
+        with open(os.path.join(d, "scorecard.md"), "w") as fh:
+            fh.write(SCORECARD)
+        s = score.score(d, _geo(), {})
+        path = os.path.join(d, "dollars.csv")
+        score.write_dollars(path, s["dollar_gate"])
+        with open(path, newline="") as fh:
+            s["csv"] = list(csv.reader(fh))
+        return s
+
+
+def test_ifa_only_run_has_a_per_district_dollar_gate():
+    """#105 (owner, 2026-10-15): an IFA-only run's districts are held to $1,000M-$1,437.5M, $ being
+    the ledger's unrounded m_rel times the IFA rate; the reported `dollars` stays the whole-extract
+    IFA total over K (owner, 2026-10-04)."""
+    rate = score.tdspec.IFA_USD_PER_M_REL
+    assert score.IFA_RATES == {"ifa": rate * 1e6} and score.IFA_WINDOW == {"IFA": (1.0e9, 1.4375e9)}
+    lo_mass = 1000.0 / rate                            # 798.74236..., exactly $1,000M
+    under = _score_ifa([lo_mass - 1e-6, 900.0])         # IFA_01 is $1.25 below the window
+    gate = {r["district"]: r for r in under["dollar_gate"]}
+    assert not gate["IFA_01"]["ok"] and gate["IFA_02"]["ok"]
+    assert math.isclose(gate["IFA_01"]["usd"], (lo_mass - 1e-6) * rate * 1e6)
+    reason = "$ IFA_01 1,000.0M outside 1,000.0-1,437.5M"
+    assert reason in under["why"] and not under["eligible"]
+    assert under["dollars"] == {"IFA": 62.14e9 / 2}      # the reported average, unchanged
+    assert "$ gate: 2 districts, 1 outside their window" in score.report(under)
+    # one row per IFA district, unrounded to the whole dollar, the failing one flagged
+    assert under["csv"][0] == score.DOLLAR_COLUMNS and len(under["csv"]) == 3
+    row = under["csv"][1]
+    assert row[:2] == ["IFA", "IFA_01"] and row[3:5] == ["1000.000000", "1437.500000"] and row[-1] == "0"
+    assert float(row[2]) == round((lo_mass - 1e-6) * rate, 6) and row[2] == "999.999999"
+    assert under["csv"][2][:2] == ["IFA", "IFA_02"] and under["csv"][2][-1] == "1"
+    # all in the window, the edges included: no gate reason
+    inside = _score_ifa([lo_mass, 1437.5 / rate])
+    assert all(r["ok"] for r in inside["dollar_gate"])
+    assert not [w for w in inside["why"] if w.startswith("$ IFA_")]
+    # eligible: with the audit, bands, M1 and the gate all passing, nothing is left to fail
+    checks = {**score.scorecard_checks(SCORECARD), audit.M1_CHECK: "pass"}
+    ok = audit.Check(score.BAND_CHECK, "pass", "")
+    assert score.eligibility(checks, ok, {"IFA": 2}, {"IFA": 1.25e9}, M1_PASS, inside["dollar_gate"]) == []
+    assert score.eligibility(checks, ok, {"IFA": 2}, {"IFA": 1.25e9}, M1_PASS, under["dollar_gate"]) == [reason]
+    over = _score_ifa([1437.5 / rate + 1e-3, 900.0])
+    assert [r["ok"] for r in over["dollar_gate"]] == [False, True]
