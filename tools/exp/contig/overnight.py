@@ -542,19 +542,35 @@ class Grid:
 
 
 # ------------------------------------------------------------------------------ stages
+def _group_alive(pgid: int) -> bool:
+    """True while some process of the group `pgid` is left (the leader's exit does not end the group)."""
+    try:
+        os.killpg(pgid, 0)
+    except (ProcessLookupError, PermissionError):
+        return False
+    return True
+
+
 def _end(p) -> int:
-    """SIGINT to a stage's process group (its collectors stop their workers, `run.stop`), then
-    SIGKILL after `STOP_GRACE`; its exit code."""
-    for sig in (signal.SIGINT, signal.SIGKILL):
-        try:
-            os.killpg(p.pid, sig)
-        except (ProcessLookupError, PermissionError):
-            pass
-        try:
-            return p.wait(timeout=STOP_GRACE)
-        except subprocess.TimeoutExpired:
-            continue
-    return p.wait()
+    """SIGINT to a stage's process group (its collectors stop their workers, `run.stop`), then SIGKILL to
+    the group once `STOP_GRACE` has passed with a member left, whether or not the leader exited on the SIGINT
+    (a member that ignores it, or a worker still stopping, outlives the leader); the leader's exit code."""
+    end = time.time() + STOP_GRACE
+    try:
+        os.killpg(p.pid, signal.SIGINT)
+    except (ProcessLookupError, PermissionError):
+        pass
+    try:
+        rc = p.wait(timeout=STOP_GRACE)
+    except subprocess.TimeoutExpired:
+        rc = None
+    while _group_alive(p.pid) and time.time() < end:
+        time.sleep(0.05)
+    try:
+        os.killpg(p.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    return p.wait() if rc is None else rc
 
 
 def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | None = None) -> dict:

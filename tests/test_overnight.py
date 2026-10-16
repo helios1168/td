@@ -231,9 +231,12 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
     import _thread
     import signal
     # the stage starts a grandchild and sleeps; both are in the stage's group
-    script = ("import subprocess, sys, time; "
+    # the second grandchild ignores SIGINT: the leader exits on the group's SIGINT and it is left running
+    script = ("import signal, subprocess, sys, time; "
               "g = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
-              "print(g.pid, flush=True); time.sleep(60)")
+              "d = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'], "
+              "preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)); "
+              "print(g.pid, d.pid, flush=True); time.sleep(60)")
     with tempfile.TemporaryDirectory() as tmp:
         log = os.path.join(tmp, "s.log")
         seen = {}
@@ -243,20 +246,25 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
                 with overnight.LIVE_LOCK:
                     live = list(overnight.LIVE)
                 if live and open(log).read().strip():
-                    seen["stage"], seen["grandchild"] = live[0].pid, int(open(log).read().split()[0])
-                    break
+                    pids = open(log).read().split()
+                    if len(pids) == 2:
+                        seen["stage"], seen["grandchild"], seen["deaf"] = live[0].pid, int(pids[0]), int(pids[1])
+                        break
                 time.sleep(0.05)
             _thread.interrupt_main()
         threading.Thread(target=interrupt, daemon=True).start()
-        t0 = time.time()
+        t0, grace = time.time(), overnight.STOP_GRACE
+        overnight.STOP_GRACE = 3.0       # the SIGINT-ignoring member is killed when the grace is up
         try:
             overnight.child([sys.executable, "-c", script], log, 60, time.time() + 120)
         except KeyboardInterrupt:
             pass
         else:
             raise AssertionError("the interrupt never reached the launcher")
-    assert time.time() - t0 < 30 and not overnight.LIVE and {"stage", "grandchild"} <= set(seen)
-    for pid in (seen["stage"], seen["grandchild"]):
+        finally:
+            overnight.STOP_GRACE = grace
+    assert time.time() - t0 < 30 and not overnight.LIVE and {"stage", "grandchild", "deaf"} <= set(seen)
+    for pid in (seen["stage"], seen["grandchild"], seen["deaf"]):
         for _ in range(50):         # a killed grandchild is reaped by init a moment later
             try:
                 os.kill(pid, 0)
@@ -264,7 +272,7 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
                 break
             time.sleep(0.1)
         else:
-            os.killpg(pid, signal.SIGKILL) if pid == seen["stage"] else os.kill(pid, signal.SIGKILL)
+            os.killpg(seen["stage"], signal.SIGKILL)
             raise AssertionError(f"process {pid} of the interrupted stage is still running")
 
 
