@@ -668,23 +668,24 @@ def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | Non
         p = None
         with first_sigint():    # a second Ctrl-C during the cleanup below is held until the stage is ended
             try:
-                with hold_sigint():     # an interrupt after the Popen returns waits until the stage is in LIVE
-                    p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                                         env={**os.environ, **(env or {})}, start_new_session=True)
-                    with LIVE_LOCK:
-                        LIVE.add(p)
-                if HALT.is_set():       # set after the check above: `stop_all` may have taken its snapshot before the add
-                    raise Halted("the scheduler is unwinding")
-                rc = p.wait(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                stop = "deadline" if left <= cap else "cap"
-                rc = _end(p)
-            except BaseException:       # an interrupt: the stage has its own session, so nothing else ends or reaps it
-                if p is not None:
+                try:
+                    with hold_sigint():     # an interrupt after the Popen returns waits until the stage is in LIVE
+                        p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                             env={**os.environ, **(env or {})}, start_new_session=True)
+                        with LIVE_LOCK:
+                            LIVE.add(p)
+                    if HALT.is_set():       # set after the check above: `stop_all` may have taken its snapshot before the add
+                        raise Halted("the scheduler is unwinding")
+                    rc = p.wait(timeout=timeout)
+                except subprocess.TimeoutExpired:
+                    stop = "deadline" if left <= cap else "cap"
+                    rc = _end(p)
+            except BaseException:       # an interrupt (also one landing as the timeout teardown starts): the stage has
+                if p is not None:       # its own session, so nothing else ends or reaps it
                     _end(p)
                 raise
             finally:
-                if p is not None:
+                if p is not None:       # still registered until the stage is ended
                     with LIVE_LOCK:
                         LIVE.discard(p)
     return {"rc": rc, "seconds": round(time.time() - t0, 1), "stop": stop}
@@ -958,29 +959,39 @@ def schedule(todo: list, slots: int, deadline: float, work, need=slots_of, clock
         raise ValueError(f"points needing more than {slots} slots: {big}")
     queue, running, free = list(todo), {}, slots
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=slots) as pool:
-            try:
-                while queue or running:
-                    if clock() < deadline:
-                        for p in list(queue):
-                            if need(p) <= free:
-                                queue.remove(p)
-                                free -= need(p)
-                                running[pool.submit(work, p)] = p
-                    if not running:
-                        break
-                    done, _ = concurrent.futures.wait(running, timeout=poll,
-                                                      return_when=concurrent.futures.FIRST_COMPLETED)
-                    for f in done:
-                        p = running.pop(f)
-                        free += need(p)
-                        queue[:0] = f.result() or []
-            except BaseException:   # before the pool's exit joins the workers: they wait on their stages
-                HALT.set()
-                for f in running:
-                    f.cancel()
-                stop_all()
-                raise
+        with first_sigint():    # the first Ctrl-C raises; later ones wait until every stage is ended and the pool joined
+            with concurrent.futures.ThreadPoolExecutor(max_workers=slots) as pool:
+                try:
+                    while queue or running:
+                        if clock() < deadline:
+                            for p in list(queue):
+                                if need(p) <= free:
+                                    queue.remove(p)
+                                    free -= need(p)
+                                    running[pool.submit(work, p)] = p
+                        if not running:
+                            break
+                        done, _ = concurrent.futures.wait(running, timeout=poll,
+                                                          return_when=concurrent.futures.FIRST_COMPLETED)
+                        for f in done:
+                            p = running.pop(f)
+                            free += need(p)
+                            queue[:0] = f.result() or []
+                except BaseException as e:      # before the pool's exit joins the workers: they wait on their stages
+                    HALT.set()
+                    for f in running:
+                        f.cancel()
+                    interrupted = False
+                    for step in (stop_all, pool.shutdown):      # a first Ctrl-C landing on either entry is retried
+                        while True:
+                            try:
+                                step()
+                                break
+                            except KeyboardInterrupt:
+                                interrupted = True
+                    if interrupted and not isinstance(e, KeyboardInterrupt):
+                        raise KeyboardInterrupt from e
+                    raise
     finally:
         HALT.clear()
     return queue

@@ -449,6 +449,128 @@ def test_a_second_interrupt_on_entry_to_the_stage_cleanup_still_ends_the_group()
     assert sent, "the second interrupt was never delivered"
 
 
+def test_an_interrupt_on_entry_to_the_timeout_teardown_still_ends_the_group_and_keeps_it_in_live_until_then():
+    """The first Ctrl-C arrives on `_end`'s first line when the cap has expired: `child` must still end and reap the
+    stage group (it stays in LIVE until then) and raise the interrupt."""
+    import signal
+    sleeper = "import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); time.sleep(120)"
+    sent, procs, held = [], [], []
+
+    def interrupt(frame, event, arg):
+        if not sent and event == "line" and frame.f_code is overnight._end.__code__:
+            sent.append(1)
+            procs.extend(overnight.LIVE)
+            os.kill(os.getpid(), signal.SIGINT)
+        return interrupt
+    grace = overnight.STOP_GRACE
+    overnight.STOP_GRACE = 1.0
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            sys.settrace(interrupt)
+            try:
+                overnight.child([sys.executable, "-c", sleeper], os.path.join(tmp, "s.log"), 0.5, time.time() + 120)
+            except KeyboardInterrupt:
+                pass
+            else:
+                raise AssertionError("the interrupt was lost")
+            finally:
+                sys.settrace(None)
+    finally:
+        overnight.STOP_GRACE = grace
+        for p in procs:
+            if p.poll() is None or overnight._group_alive(p.pid):
+                held.append(p.pid)
+                try:
+                    os.killpg(p.pid, signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    pass
+            p.wait()
+    assert sent and len(procs) == 1, "the interrupt was never delivered on entry to the teardown"
+    assert not held, f"the stage group {held} was left running"
+    assert not overnight.LIVE
+
+
+def _scheduler_unwind_interrupted_at(where: str):
+    """`schedule` unwinding (its clock raises KeyboardInterrupt once the stage runs) with a first Ctrl-C landing on
+    entry to `stop_all` or to the pool's shutdown, and a later one while the groups are ended: the stage group is
+    ended and reaped, the interrupt is raised, and the halt is lifted only afterwards."""
+    import concurrent.futures
+    import signal
+    sleeper = "import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); time.sleep(120)"
+    sent, procs, timers, real_pool = [], [], [], concurrent.futures.ThreadPoolExecutor
+
+    def press():
+        sent.append(1)
+        procs.extend(overnight.LIVE)
+        timer = threading.Timer(0.25, lambda: os.kill(os.getpid(), signal.SIGINT))
+        timers.append(timer)
+        timer.start()
+        os.kill(os.getpid(), signal.SIGINT)
+
+    def trace(frame, event, arg):
+        if not sent and event == "line" and frame.f_code is overnight.stop_all.__code__:
+            press()
+        return trace
+
+    class Pool(real_pool):
+        def shutdown(self, *a, **k):
+            if where == "shutdown" and not sent:
+                press()
+            return super().shutdown(*a, **k)
+    grace, left = overnight.STOP_GRACE, []
+    overnight.STOP_GRACE = 1.0
+    concurrent.futures.ThreadPoolExecutor = Pool
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            pidfile = os.path.join(tmp, "pid")
+            code = f"import os; open({pidfile!r}, 'w').write(str(os.getpid())); " + sleeper
+
+            def work(p):
+                overnight.child([sys.executable, "-c", code], os.path.join(tmp, "a.log"), 120, time.time() + 300)
+
+            def clock():
+                if os.path.exists(pidfile) and open(pidfile).read():
+                    raise KeyboardInterrupt
+                return time.time()
+            if where == "stop_all":
+                sys.settrace(trace)
+            try:
+                overnight.schedule([{"id": "p", "k": {"x": 1}}], 1, time.time() + 300, work,
+                                   need=lambda p: 1, clock=clock, poll=0.05)
+            except KeyboardInterrupt:
+                pass
+            else:
+                raise AssertionError("the interrupt was lost")
+            finally:
+                sys.settrace(None)
+    finally:
+        concurrent.futures.ThreadPoolExecutor = real_pool
+        overnight.STOP_GRACE = grace
+        keep = signal.signal(signal.SIGINT, signal.SIG_IGN)     # a late press lands after the unwind: not a failure
+        for t in timers:
+            t.join()
+        signal.signal(signal.SIGINT, keep)
+        for p in procs:
+            if p.poll() is None or overnight._group_alive(p.pid):
+                left.append(p.pid)
+                try:
+                    os.killpg(p.pid, signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    pass
+            p.wait()
+    assert sent and len(procs) == 1, f"no interrupt was delivered on entry to {where}"
+    assert not left, f"the stage group {left} was left running"
+    assert not overnight.LIVE and not overnight.HALT.is_set()
+
+
+def test_an_interrupt_on_entry_to_stop_all_in_the_scheduler_unwind_still_ends_every_group():
+    _scheduler_unwind_interrupted_at("stop_all")
+
+
+def test_an_interrupt_on_entry_to_the_pool_shutdown_in_the_scheduler_unwind_still_ends_every_group():
+    _scheduler_unwind_interrupted_at("shutdown")
+
+
 def test_a_scheduler_interrupt_ends_the_live_stages_before_joining_and_starts_no_more():
     """The pool's exit joins its workers, and a worker waits on its stage: `schedule` must end the live stage
     groups itself, first, and refuse the next stage a worker would start."""
