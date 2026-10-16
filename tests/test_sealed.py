@@ -749,6 +749,56 @@ def test_glue_refuses_a_donor_whose_neck_is_new_or_enlarged_even_when_the_count_
     assert new == owner and "donor B would gain a neck" in rep["left"][0]["reason"]
 
 
+def test_glue_reads_the_gates_adjacency_with_the_land_only_gap_edges():
+    state = {"a1": "A", "a2": "A", "a3": "A", "b1": "B", "b2": "B"}
+    polygon = {"vertices": sorted(state), "edges": [("a1", "a2"), ("a2", "b1"), ("a3", "b1"), ("b1", "b2")],
+               "state": state,
+               "gaps": {("a2", "a3"): 40.0, ("a1", "b1"): 10.0}}           # a1-b1 face each other across two states
+    adj = glue.gate_adjacency(polygon)
+    assert adj == glue.audit.adjacency(polygon, gaps=True) and "a3" in adj["a2"] and "b1" not in adj["a1"]
+    old = os.environ.get(glue.audit.GAP_WIDTH_ENV)
+    os.environ[glue.audit.GAP_WIDTH_ENV] = "0"
+    try:
+        flat = glue.gate_adjacency(polygon)
+    finally:
+        os.environ.pop(glue.audit.GAP_WIDTH_ENV) if old is None else os.environ.update({glue.audit.GAP_WIDTH_ENV: old})
+    assert "a3" not in flat["a2"] and flat == glue.audit.adjacency(polygon)
+    # A = a1 a2 a3 is one piece across the gap edge a2~a3, so there is nothing to glue; without gap edges a3 is
+    # a piece, and the glue would move B's zero-opportunity ZCTA b1 into A
+    owner, mass = {"a1": "A", "a2": "A", "a3": "A", "b1": "B", "b2": "B"}, {"a1": 3.0, "a2": 2.0, "a3": 1.0, "b2": 1.0}
+    new, rep = glue.glue_channel(owner, adj, mass, NO_NECKS)
+    assert new == owner and rep == {"glued": [], "left": [], "moved": {}}
+    new, rep = glue.glue_channel(owner, flat, mass, NO_NECKS)
+    assert new["b1"] == "A" and rep["moved"] == {"b1": ["B", "A"]}
+
+
+def test_glue_keeps_an_unresolved_neck_unresolved_and_refuses_a_donor_move_that_leaves_one():
+    adj = _graph([("a1", "a2"), ("a2", "z3"), ("z3", "a5"), ("z3", "b1"), ("b1", "b2")])
+    owner = {"a1": "A", "a2": "A", "a5": "A", "z3": "B", "b1": "B", "b2": "B"}
+    mass = {"a1": 5.0, "a2": 4.0, "a5": 3.0, "b1": 2.0, "b2": 2.0}
+    cut = frozenset({"b1", "b2"})
+    unresolved = lambda zs: [glue.UnresolvedNeck({"b1"})] if frozenset(zs) == cut else []     # B without z3: unresolved
+    new, rep = glue.glue_channel(owner, adj, mass, unresolved)
+    assert new == owner and "donor B would have an unresolved neck check" in rep["left"][0]["reason"]
+    proved = lambda zs: [frozenset({"b1"})] if frozenset(zs) == cut else []                    # the same set, a proved neck
+    new, rep = glue.glue_channel(owner, adj, mass, proved)
+    assert new == owner and "donor B would gain a neck" in rep["left"][0]["reason"]
+    new, rep = glue.glue_channel(owner, adj, mass, NO_NECKS)
+    assert new["z3"] == "A"
+    # neck_counter keeps the gate's status instead of flattening it to the part cut off
+    Neck = glue.audit.Neck
+    real = glue.necks_gate.gate_necks
+    glue.necks_gate.gate_necks = lambda zs, m, ng, *a: [Neck(1.0, ("b1",), 0.1, 0.1, (), "proved"),
+                                                         Neck(2.0, ("b2",), 0.1, 0.1, (), "unresolved")]
+    try:
+        poly = {"vertices": ["b1", "b2"], "edges": [("b1", "b2")], "state": {"b1": "B", "b2": "B"},
+                "border": {("b1", "b2"): 1000.0}, "connectors": [], "aland": {"b1": 1e8, "b2": 1e8}}
+        got = glue.neck_counter(poly, {"b1": 1.0, "b2": 1.0})[0](["b1", "b2"])
+    finally:
+        glue.necks_gate.gate_necks = real
+    assert [isinstance(x, glue.UnresolvedNeck) for x in got] == [False, True] and got == [{"b1"}, {"b2"}]
+
+
 # ------------------------------------------------------------------------------ a drawing with detached pieces
 CONTIG_PIECES = {"channels": {
     "national": {"status": "connected", "connected": False, "undrawn_zctas": 0, "fixed_split": ["NY#1"], "groups": []},

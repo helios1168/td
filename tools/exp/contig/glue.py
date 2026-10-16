@@ -16,8 +16,12 @@ path, up to `--tries` paths per piece; a piece still detached is left as it is a
 `left` with the reason, its τ share and its size, for the owner.  A ZCTA with positive mass in the
 channel is never moved, and the check at the end of `glue_channel` stops the run if one was.
 
-The graph is `audit.adjacency` of the full polygon graph, the one M1 judges; only ZCTAs of the
-run's ledger can change owner, so on a `--states` region run a path stays inside the region.
+The graph is the gate's: `audit.adjacency` of the full polygon graph with the land-only gap edges when gap width
+is on (`gate_adjacency`, as `td.audit.check_m1` joins pieces, R5), for the glue paths, the donor and district
+piece checks and the pieces left; only ZCTAs of the run's ledger can change owner, so on a `--states` region run
+a path stays inside the region.  A neck check the search could not settle (`status` "unresolved", which the gate
+lists and fails) stays unresolved here (`UnresolvedNeck`); a donor whose check after the move is unresolved
+refuses the move.
 
 The output is a full run folder (`run.write_folder`, as `repair.py` writes it) when a ZCTA moved,
 with `glue.json` (per channel: `glued`, each path with its donors; `left`; `moved`) beside
@@ -98,12 +102,18 @@ def _inside(after: list, before: list) -> bool:
     return True
 
 
+class UnresolvedNeck(frozenset):
+    """A neck the gate's search stopped on without proof (`audit.Neck.status` "unresolved"): the ZCTAs of its
+    side, marked so that no check reads it as a proved part cut off."""
+
+
 def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIES,
                  tau: float | None = None) -> tuple:
     """(owner after, report) of one planning channel: `owner` {zip: district}, `adj` {zip: set of
     neighbours} (M1's graph), `mass` {zip: mass in the channel}, `necks_of(frozenset of zips)` the
-    M1 necks of a district holding them, each as the frozenset of ZCTAs of the part cut off (a
-    number n stands for n necks of unknown identity).  The report holds `glued` [{district, piece,
+    M1 necks of a district holding them, each as the frozenset of ZCTAs of the part cut off (an
+    `UnresolvedNeck` for a neck the search could not settle; a number n stands for n necks of unknown
+    identity).  The report holds `glued` [{district, piece,
     path, donors}], `left` [{district, first, zips, mass, tau_share, reason}] for the pieces
     still detached at the end, and `moved` {zip: [from, to]}."""
     owner = dict(owner)
@@ -114,7 +124,8 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
         zs = frozenset(zs)
         if zs not in memo:
             got = necks_of(zs)
-            memo[zs] = [None] * got if isinstance(got, int) else [frozenset(x) for x in got]
+            memo[zs] = [None] * got if isinstance(got, int) else [
+                x if isinstance(x, UnresolvedNeck) else frozenset(x) for x in got]
         return memo[zs]
 
     def detached(zs):
@@ -151,6 +162,8 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
                     bad.append((d, "would be left with no ZCTA"))
                 elif not _inside(detached(after), detached(before)):
                     bad.append((d, "would gain a piece"))
+                elif any(isinstance(x, UnresolvedNeck) for x in necks(after)):
+                    bad.append((d, "would have an unresolved neck check"))
                 elif not _inside(necks(after), necks(before)):
                     bad.append((d, "would gain a neck"))
             if bad:
@@ -187,13 +200,20 @@ def glue_channel(owner: dict, adj: dict, mass: dict, necks_of, tries: int = TRIE
 
 
 # ------------------------------------------------------------------------------ the run
+def gate_adjacency(polygon: dict, gap_width: bool | None = None) -> dict:
+    """`audit.adjacency` as `audit.check_m1` builds it: with the land-only gap edges (R5) when gap width is on
+    (`gap_width` None reads `audit.gap_width_on()`, as `necks_gate.gate_graph` does)."""
+    return audit.adjacency(polygon, gaps=audit.gap_width_on() if gap_width is None else gap_width)
+
+
 def neck_counter(polygon: dict, mass: dict):
     """necks_of(zips) -> the M1 necks the gate finds (`necks_gate.gate_necks`; each as the frozenset
-    of ZCTAs of the part cut off), on the gate's graph (`necks_gate.gate_graph`: gap width on unless
+    of ZCTAs of the part cut off, an `UnresolvedNeck` when the search left it unresolved), on the gate's graph (`necks_gate.gate_graph`: gap width on unless
     `TD_NECK_GAP_WIDTH` is "0", the connector rule of #140) with the zero-opportunity ZCTAs of
     `mass` as relays (`necks_gate.channel_mass`)."""
     ng = necks_gate.gate_graph(polygon)
-    return (lambda zs: [frozenset(n.zips) for n in necks_gate.gate_necks(zs, mass, ng)]), ng
+    return (lambda zs: [frozenset(n.zips) if n.status == "proved" else UnresolvedNeck(n.zips)
+                        for n in necks_gate.gate_necks(zs, mass, ng)]), ng
 
 
 def main(argv=None) -> int:
@@ -220,7 +240,7 @@ def main(argv=None) -> int:
     states = tuple(x for x in a.states.split(",") if x)
     s, ref, ext, polygon, inst, plans, reports, owners, src = repair.load(
         a.run_dir, a.extract, a.plans, a.plans_file, states)
-    adj = audit.adjacency(polygon)
+    adj = gate_adjacency(polygon)
     report, owner_after = {"channels": {}, "source": os.path.abspath(a.run_dir), "states": list(states)}, {}
     for c in plans:
         m = necks_gate.channel_mass(inst, c)        # every ZCTA of the channel: the gate's relays
@@ -249,7 +269,7 @@ def main(argv=None) -> int:
         res = draw.Result(c, owner_after[c], [], set(), [], [], plan.delta, "repair", False)
         drawings[c] = d = draw.drawing(inst, plan, res)
         entry = doc["channels"][c]
-        left = repair.detached(owner_after[c], inst.units.zip_adj, inst.channels[c].m)
+        left = repair.detached(owner_after[c], adj, inst.channels[c].m)
         if c in report["channels"] and report["channels"][c]["moved"]:
             entry["glue"] = {k: v for k, v in report["channels"][c].items() if k != "moved"}
             entry["glue"]["moved_zctas"] = len(report["channels"][c]["moved"])
