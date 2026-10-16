@@ -4,7 +4,7 @@
 # Spec scenarios/regions/ifa/ifa_night_sa_k<K><v>.toml; folders <sealed>/ifa/sa/k<K><v>[-rep].
 # Each solve is capped at 45 min of wall clock.  A drawing whose contig.json reports undrawn ZCTAs
 # or a channel status other than optimal/connected is a failure (the realizer fell back to a
-# non-contiguous assignment): exit 3, and it is never repaired or merged.
+# non-contiguous assignment): exit 3, and it is never repaired or merged.  The repair's exit status is the script's.
 set -uo pipefail
 K=$1; V=${2:-}
 S=scenarios/regions/ifa/ifa_night_sa_k$K$V.toml
@@ -25,4 +25,6 @@ sys.exit(1 if bad else 0)
 PY
 gtimeout 2700 "$TD_PY" -u tools/exp/contig/repair.py "$OUT" --out "$OUT-rep" --extract "$X" --states $ST \
   --window $W --flow --time-limit 240 --jobs 1 > "$N/k$K$V.rep.log" 2>&1
-echo "repair exit $?" >> "$N/k$K$V.rep.log"
+RC=$?
+echo "repair exit $RC" >> "$N/k$K$V.rep.log"
+exit $RC

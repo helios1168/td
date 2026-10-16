@@ -257,3 +257,75 @@ def test_an_interrupt_in_a_warm_point_ends_the_stages_still_running():
     finally:
         warm._point, warm.overnight.stop_all = real
     assert calls == ["stop_all"]
+
+
+# ------------------------------------------------------------------------------ C10, C11: the regional scripts
+import subprocess
+
+STUB_PY = '''#!/usr/bin/env python3
+import json, os, sys
+a = sys.argv[1:]
+if a[:1] == ["-"]:                      # the drawing check, a heredoc
+    sys.argv = ["-"] + a[1:]
+    exec(compile(sys.stdin.read(), "<stdin>", "exec"), {"__name__": "__main__"})
+    sys.exit(0)
+script = next(x for x in a if x.endswith(".py"))
+rest = a[a.index(script) + 1:]
+if script.endswith("state_extract.py"):
+    if os.environ.get("FAIL_EXTRACT"):
+        print("extract boom")
+        sys.exit(4)
+    open(rest[0], "w").write("extract")
+elif script.endswith("run.py"):
+    out = rest[rest.index("--out") + 1]
+    os.makedirs(out, exist_ok=True)
+    json.dump({"channels": {"IFA": {"undrawn_zctas": 0, "status": "connected", "connected": True}}},
+              open(os.path.join(out, "contig.json"), "w"))
+elif script.endswith("repair.py"):
+    sys.exit(int(os.environ.get("REPAIR_RC", "0")))
+'''
+
+
+def _script(name: str, args: list, tmp: str, spec: str, env: dict, sa: bool = False) -> tuple:
+    """Run tools/exp/contig/<name> from a scratch repo root with stubbed python and a pass-through gtimeout;
+    (exit status, the sa folder)."""
+    cwd, hub = os.path.join(tmp, "repo"), os.path.join(tmp, "hub")
+    os.makedirs(os.path.join(cwd, "scenarios", "regions", "ifa"))
+    os.makedirs(hub)
+    open(os.path.join(cwd, "scenarios", "regions", "ifa", spec), "w").write("[x]\ndelta = 0.1\n")
+    stub, gt = os.path.join(tmp, "td_py"), os.path.join(tmp, "bin", "gtimeout")
+    os.makedirs(os.path.dirname(gt))
+    open(stub, "w").write(STUB_PY)
+    open(gt, "w").write('#!/bin/sh\nshift\nexec "$@"\n')
+    os.chmod(stub, 0o755)
+    os.chmod(gt, 0o755)
+    sa_dir = os.path.join(hub, "runs", "exp", "sealed_2026-10-14", "ifa", "sa")
+    if sa:
+        os.makedirs(sa_dir)
+    got = subprocess.run(["bash", os.path.abspath(os.path.join(CONTIG, name)), *args], cwd=cwd, capture_output=True, text=True,
+                         env={**os.environ, "TD_PY": stub, "TD_REPO": hub, "PATH": os.path.dirname(gt) + os.pathsep + os.environ["PATH"],
+                              **env})
+    return got.returncode, sa_dir, got
+
+
+def test_region_night_makes_its_extract_folder_stops_on_a_failed_extract_and_returns_the_repair_status():
+    with tempfile.TemporaryDirectory() as tmp:                      # no runs/ yet: the script makes _inst itself
+        rc, sa, got = _script("region_night.sh", ["t", "TX"], tmp, "ifa_night_t.toml", {})
+        assert rc == 0, got.stderr
+        assert os.path.isfile(os.path.join(sa, "_inst", "t.json.gz")) and "repair exit 0" in open(os.path.join(sa, "t.rep.log")).read()
+    with tempfile.TemporaryDirectory() as tmp:
+        rc, sa, got = _script("region_night.sh", ["t", "TX"], tmp, "ifa_night_t.toml", {"REPAIR_RC": "5"})
+        assert rc == 5 and "repair exit 5" in open(os.path.join(sa, "t.rep.log")).read()
+    with tempfile.TemporaryDirectory() as tmp:                      # a failed extract: stop, no drawing, no repair
+        rc, sa, got = _script("region_night.sh", ["t", "TX"], tmp, "ifa_night_t.toml", {"FAIL_EXTRACT": "1"})
+        assert rc == 2 and "extract" in got.stderr and "failed (exit 4)" in got.stderr, (rc, got.stderr)
+        assert "extract boom" in open(os.path.join(sa, "t.run.log")).read()
+        assert not os.path.exists(os.path.join(sa, "t", "contig.json")) and not os.path.exists(os.path.join(sa, "t.rep.log"))
+
+
+def test_sa_night_returns_the_repair_status():
+    for rc_want in (0, 7):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, sa, got = _script("sa_night.sh", ["50"], tmp, "ifa_night_sa_k50.toml", {"REPAIR_RC": str(rc_want)}, sa=True)
+            assert rc == rc_want, (rc, got.stderr)
+            assert f"repair exit {rc_want}" in open(os.path.join(sa, "k50.rep.log")).read()
