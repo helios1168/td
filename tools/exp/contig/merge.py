@@ -60,8 +60,8 @@ import re
 from td import audit, data, geo, output, realize  # noqa: E402
 from td import spec as tdspec  # noqa: E402
 
-DOLLARS_PER_M_REL = 1.2519681558        # $M per unit of m_rel (IFA, 2026-10-01 maps)
-BAND_M = (1000.0, 1437.5)               # the IFA $ band of the stakeholder maps, $M
+DOLLARS_PER_M_REL = tdspec.IFA_USD_PER_M_REL      # $M per unit of m_rel (IFA); `--rate` overrides
+BAND_M = tdspec.IFA_WINDOW_M                      # the IFA $ band of the stakeholder maps, $M
 
 
 def _run():

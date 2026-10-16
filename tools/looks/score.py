@@ -17,22 +17,27 @@ with the display fill made deterministic; the display fill sizes no piece.
 A map is **eligible** when (PROBLEM.md row 2026-10-04, `runs/plan_2026-10-04/EXPERIMENTS.md` §1):
 - the audit passes at a plain ±`BAND` band: no check of `scorecard.md` other than the band check
   fails, and `td.audit.check_bands` passes on the ledger with every channel's band τ_c(1 ± BAND),
-  τ_c = the channel's ledger total / K_c.  A main-map run is exempt: the dollar gate below
-  replaces it;
+  τ_c = the channel's ledger total / K_c.  A run scored with a dollar gate (main map or IFA)
+  is exempt: the gate below replaces it, and the band stays information;
 - a main-map run (any run but an IFA-only one) passes the dollar gate (`dollar_gate`, main-map
   overnight grid, 2026-10-13): every district's $ lies in its channel's `WINDOWS`, edges
-  included, compared in whole dollars, and a channel without a window fails.  A district of a
+  included, compared in unrounded dollars, and a channel without a window fails.  A district of a
   channel in `WHOLE_STATE_CAP` (WIFI) that owns alone, in its channel, every state it owns a
-  ZCTA in may reach the cap, and its row says it took the allowance.  `--dollars-csv` writes the
-  rows to each run's `dollars.csv`.  $ is m_rel times the owner's dollar total over the
+  ZCTA in may reach the cap, and its row says it took the allowance.  The IFA district owning
+  alone every state it holds and holding exactly MD, DE and WV is the one waiver (PROBLEM.md,
+  #130): above its window, not below it, its row says `waiver`, and `report` names it.
+  `--dollars-csv` writes the rows to each run's `dollars.csv`.  $ is m_rel times the owner's dollar total over the
   extract's m_rel total, per fine channel (`DOLLARS`), summed over the district's drawn cells; on
   a dollar extract (`tools/exp/contig/dollarize.py`, $M) that rate is 1e6 for every fine
   channel;
-- an IFA-only run averages a $ per district within ±`DOLLAR_BAND` of its `TARGET`, edges
+- an IFA-only run passes the same district gate against `IFA_WINDOW` ($1,000M-$1,437.5M, edges
+  included, unrounded dollars; #105, owner, 2026-10-15), $ being the ledger's unrounded m_rel times
+  `td.spec.IFA_USD_PER_M_REL` (an IFA ledger keeps the original m_rel units, whatever the extract's
+  rate), and also averages a $ per district within ±`DOLLAR_BAND` of its `TARGET`, edges
   included, compared in whole dollars, $ being the owner's whole-extract IFA total over K (owner,
-  2026-10-04).  A run scored by `eligibility` without a gate is held to the same average rule on
-  every channel with a target, a channel without one, such as a combined channel (D11), printed
-  but not checked;
+  2026-10-04), the `dollars` it reports.  A run scored by `eligibility` without a gate is held
+  to the same average rule on every channel with a target, a channel without one, such as a
+  combined channel (D11), printed but not checked;
 - the main map's total K is in `MAIN_K`; an IFA-only run is exempt;
 - M1 holds (#108): `td.audit.check_m1` passes on the ledger with the committed polygon graph and
   its owner-approved connectors (`td.geo.polygon_graph`): every district one piece, every CONUS
@@ -96,6 +101,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from td import audit, data, geo           # noqa: E402
+from td import spec as tdspec              # noqa: E402
 
 HUB = os.environ.get("TD_REPO", ROOT)
 BAND = 0.15
@@ -109,9 +115,12 @@ DOLLARS = {"wh": 11.36e9, "fi": 20.69e9, "wells_wh": 4.44e9, "wells_fi": 4.63e9,
 WINDOWS = {"national": (1.0e9, 1.4375e9), "WH": (0.85e9, 1.15e9),      # $ per district, the main
            "FI": (0.765e9, 1.035e9), "WIFI": (0.85e9, 1.15e9)}           # map's gate (2026-10-13)
 WHOLE_STATE_CAP = {"WIFI": 1.6e9}       # a district of whole states only (owner, 2026-10-13)
+WAIVER = {"IFA": frozenset({"MD", "DE", "WV"})}    # the one IFA waiver district: exactly these states
 DOLLAR_COLUMNS = ["channel", "district", "usd_m", "lo_m", "hi_m", "whole_state_cap_m", "states",
-                  "whole_states", "allowance", "ok"]
+                  "whole_states", "allowance", "waiver", "ok"]       # (owner, 2026-10-08, #130)
 IFA_ONLY = {"IFA"}
+IFA_WINDOW = {"IFA": tuple(m * 1e6 for m in tdspec.IFA_WINDOW_M)}      # $ per district, IFA-only runs
+IFA_RATES = {"ifa": tdspec.IFA_USD_PER_M_REL * 1e6}     # $ per m_rel; IFA ledgers keep original units
 BAND_CHECK = "final bands on drawn mass"
 NECK = re.compile(r"^[^:]+: neck ")       # M1's neck items (`td.audit.neck_item`)
 PIECE = re.compile(r"^[^:]+: detached piece ")   # M1's detached-piece items (`td.audit.check_m1`)
@@ -313,12 +322,13 @@ def district_dollars(ch: str, ledger: list, rates: dict) -> dict:
     return out
 
 
-def dollar_gate(ledger: list, districts: list, rates: dict) -> list:
-    """The main map's dollar gate, one row per `districts.csv` row: `usd`, its channel's window
+def dollar_gate(ledger: list, districts: list, rates: dict, windows: dict = WINDOWS) -> list:
+    """The dollar gate, one row per `districts.csv` row: `usd`, its channel's window in `windows`
     `lo`, `hi` (None without one), `states` it owns a ZCTA in, `whole_states` when it owns each
     alone in its channel, `cap`, the channel's `WHOLE_STATE_CAP` for such a district (else None),
-    `allowance` when its $ is above `hi` and within the cap, and `ok`.  Whole dollars, edges
-    included; a channel without a window is never ok."""
+    `allowance` when its $ is above `hi` and within the cap, `waiver` when it is the channel's
+    `WAIVER` district (whole, exactly those states) at or above `lo`, and `ok`.  Unrounded dollars,
+    edges included; a channel without a window is never ok."""
     owners = collections.defaultdict(set)          # (channel, state) -> districts owning a ZCTA
     states = collections.defaultdict(set)          # (channel, district) -> states
     for r in ledger:
@@ -332,14 +342,15 @@ def dollar_gate(ledger: list, districts: list, rates: dict) -> list:
             usd[ch] = district_dollars(ch, ledger, rates)
         x, st = usd[ch].get(d, 0.0), sorted(states[ch, d])
         whole = bool(st) and all(owners[ch, s] == {d} for s in st)
-        lo, hi = WINDOWS.get(ch, (None, None))
+        lo, hi = windows.get(ch, (None, None))
         cap = WHOLE_STATE_CAP.get(ch) if whole else None
-        inside = lo is not None and round(lo) <= round(x) <= round(hi)
-        allowance = (not inside and lo is not None and cap is not None
-                     and round(lo) <= round(x) <= round(cap))
+        inside = lo is not None and lo <= x <= hi
+        allowance = not inside and lo is not None and cap is not None and lo <= x <= cap
+        waiver = (not inside and lo is not None and whole and x >= lo
+                  and frozenset(st) == WAIVER.get(ch))
         out.append({"channel": ch, "district": d, "usd": x, "lo": lo, "hi": hi, "states": st,
-                    "whole_states": whole, "cap": cap, "allowance": allowance,
-                    "ok": inside or allowance})
+                    "whole_states": whole, "cap": cap, "allowance": allowance, "waiver": waiver,
+                    "ok": inside or allowance or waiver})
     return out
 
 
@@ -353,15 +364,16 @@ def gate_reason(r: dict) -> str:
 
 
 def write_dollars(path: str, gate: list) -> None:
-    """`dollars.csv`: the `dollar_gate` rows, $ in $M."""
+    """`dollars.csv`: the `dollar_gate` rows, $ in $M at round-trip precision."""
     def m(v):
-        return "" if v is None else f"{v / 1e6:.3f}"
+        return "" if v is None else repr(v / 1e6)
     with open(path, "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(DOLLAR_COLUMNS)
         for r in gate:
             w.writerow([r["channel"], r["district"], m(r["usd"]), m(r["lo"]), m(r["hi"]), m(r["cap"]),
-                        ";".join(r["states"]), int(r["whole_states"]), int(r["allowance"]), int(r["ok"])])
+                        ";".join(r["states"]), int(r["whole_states"]), int(r["allowance"]), int(r["waiver"]),
+                        int(r["ok"])])
 
 
 def scorecard_checks(text: str) -> dict:
@@ -451,18 +463,18 @@ def fine_channels(run_dir: str):
 def eligibility(checks: dict, bands: audit.Check, ks: dict, dollars: dict,
                 m1: audit.Check | None = None, gate: list | None = None) -> list:
     """Why a run is not eligible, one reason per failed rule; empty when it is.  `m1` is the M1
-    check; a run without one is not eligible.  `gate`, the `dollar_gate` rows of a main-map run,
-    replaces the ±`BAND` band and the per-channel average with one reason per failing district;
-    an IFA-only run ignores it."""
+    check; a run without one is not eligible.  `gate`, the `dollar_gate` rows, adds one reason per
+    failing district; with a gate the ±`BAND` band is information only, and on a main-map run the
+    gate also replaces the per-channel average, which an IFA-only run keeps."""
     gated = gate is not None and set(ks) != IFA_ONLY
     why = [f"audit: {name} fails" for name, s in checks.items() if s == "fail" and name != BAND_CHECK]
     if m1 is None or m1.status != "pass":
         why.append(f"M1: {m1.status}, {m1.summary}" if m1 else "M1: not checked")
     if not checks:
         why.append("audit: no scorecard")
-    if bands.status != "pass" and not gated:
+    if bands.status != "pass" and gate is None:
         why.append(f"audit at ±{100 * BAND:.0f}%: {bands.summary}")
-    why += [gate_reason(r) for r in gate or () if gated and not r["ok"]]
+    why += [gate_reason(r) for r in gate or () if not r["ok"]]
     for ch, d in sorted(dollars.items()) if not gated else ():
         t = TARGET.get(ch)
         if t is None:
@@ -507,6 +519,7 @@ def score(run_dir: str, g: Geography | None = None, rates: dict | None = None) -
     gate = None
     if set(ks) == IFA_ONLY:              # owner, 2026-10-04: the whole-extract IFA total over K
         dollars = {ch: DOLLARS["ifa"] / k for ch, k in ks.items()}
+        gate = dollar_gate(ledger, districts, IFA_RATES, IFA_WINDOW)     # #105, owner, 2026-10-15
     else:
         rates = rates if rates is not None else rates_of(extract_path(run_dir))
         dollars = {ch: dollars_per_district(ch, k, ledger, rates) for ch, k in ks.items()}
@@ -607,6 +620,8 @@ def report(s: dict) -> str:
         lines += [f"    {gate_reason(r)}" for r in gate if not r["ok"]]
         lines += [f"    {r['district']} {r['usd'] / 1e6:,.1f}M on the whole-state allowance "
                   f"({'+'.join(r['states'])}, up to {r['cap'] / 1e6:,.1f}M)" for r in gate if r["allowance"]]
+        lines += [f"    {r['district']} {r['usd'] / 1e6:,.1f}M is the waiver district "
+                  f"({'+'.join(r['states'])})" for r in gate if r["waiver"]]
     lines += [f"channel-state splits: {s['splits']}: {' '.join(s['split_list'])}",
               f"distinct split states: {len(s['distinct'])}: {' '.join(s['distinct'])}",
               f"defects: {s['defects']:g} = thin {s['thin_links']} + small {s['small_pieces']} + crowded "
@@ -629,7 +644,7 @@ def main(argv=None) -> list:
     ap.add_argument("run_dirs", nargs="+")
     ap.add_argument("--extract", help="the extract (default: run.json's source under $TD_REPO)")
     ap.add_argument("--dollars-csv", action="store_true",
-                    help="write each main-map run's dollar gate to its dollars.csv")
+                    help="write each run's dollar gate (main map or IFA) to its dollars.csv")
     ap.add_argument("--m1-json", action="store_true",
                     help="write each run's M1, strict and across coverage gaps, to its m1.json")
     a = ap.parse_args(argv)
