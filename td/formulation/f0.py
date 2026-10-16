@@ -1,4 +1,4 @@
-"""F0, MODEL.md §0: one fixed routing structure, exact supplied neck family.
+"""F0, docs/F0.tex: one fixed routing structure, exact supplied neck family.
 
 The caller supplies the *complete* nonexempt forbidden ownership-set family and
 symbolic shape/balance evaluators. No geometry oracle or owner policy is invented.
@@ -15,15 +15,18 @@ WINDOWS = {"national": (1000, 1437.5), "WH": (850, 1150),
            "FI": (765, 1035), "WIFI": (850, 1150)}
 
 
-def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):
+def build_model(*, Z, F, rho, m, rates, state, E_P, manhattan, forbidden, shape, balance):
     """Build F0 for |H|=1; dollars in millions, J=1..54 and total K=48..54.
 
     rho[(z,f)] is a channel in WINDOWS; m[(z,f)] is descaled opportunity.
+    manhattan explicitly identifies Manhattan ZCTAs in Z (empty on a toy with none).
     forbidden[c] must explicitly list all nonexempt neck-failing sets for that
     channel footprint (an empty list asserts none). shape(model), balance(model)
     return symbolic expressions: they are instance inputs, not settled policies.
     """
-    Z, F = tuple(Z), tuple(F)
+    Z, F, manhattan = tuple(Z), tuple(F), frozenset(manhattan)
+    if not manhattan <= set(Z):
+        raise ValueError("Manhattan ZCTAs must belong to the explicit vertex set")
     if not 1 <= len(Z) <= 300:
         raise ValueError("F0 specification requires 1..300 explicit ZCTAs")
     if set(rho) != {(z, f) for z in Z for f in F}:
@@ -38,6 +41,7 @@ def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):
     M = pyo.ConcreteModel(name="F0")
     M.H = pyo.Set(initialize=["fixed"])
     M.Z = pyo.Set(initialize=Z, ordered=True)
+    M.Manhattan = pyo.Set(within=M.Z, initialize=sorted(manhattan))
     M.F = pyo.Set(initialize=F)
     M.C = pyo.Set(initialize=channels)
     M.J = pyo.RangeSet(1, 54)
@@ -59,6 +63,7 @@ def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):
     M.b = pyo.Var(M.H, M.C, M.J, M.S, domain=pyo.Binary)
     M.w = pyo.Var(M.H, M.C, M.J, domain=pyo.Binary)
     M.r = pyo.Var(M.HCJZ, domain=pyo.Binary)
+    M.t = pyo.Var(M.HCJZ, domain=pyo.Binary)
     M.p = pyo.Var(M.H, M.C, M.S, domain=pyo.Binary)
     M.structure = pyo.Constraint(expr=sum(M.q.values()) == 1)
     M.activation = pyo.Constraint(M.H, M.C, M.J, rule=lambda t, h, c, j: t.y[h, c, j] <= t.q[h])
@@ -106,6 +111,13 @@ def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):
     M.root_count = pyo.Constraint(M.H, M.C, M.J, rule=lambda t, h, c, j:
                                  sum(t.r[h, c, j, z] for z in t.Z_hc[h, c]) == t.y[h, c, j])
     M.root_owned = pyo.Constraint(M.HCJZ, rule=lambda t, h, c, j, z: t.r[h, c, j, z] <= t.x[h, c, j, z])
+    M.manhattan_root_count = pyo.Constraint(M.H, M.C, M.J, rule=lambda t, h, c, j:
+        sum(t.t[h, c, j, z] for z in t.Z_hc[h, c]) <= t.y[h, c, j])
+    M.manhattan_root_owned = pyo.Constraint(M.HCJZ, rule=lambda t, h, c, j, z:
+        t.t[h, c, j, z] <= t.x[h, c, j, z])
+    for h, c, j, z in M.HCJZ:
+        if z not in M.Manhattan:
+            M.t[h, c, j, z].fix(0)
     M.flow_tail = pyo.Constraint(M.HCJA, rule=lambda t, h, c, j, u, v:
                                 t.f[h, c, j, u, v] <= (len(t.Z_hc[h, c]) - 1) * t.x[h, c, j, u])
     M.flow_head = pyo.Constraint(M.HCJA, rule=lambda t, h, c, j, u, v:
@@ -113,7 +125,7 @@ def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):
     M.flow_balance = pyo.Constraint(M.HCJZ, rule=lambda t, h, c, j, z:
         sum(t.f[h, c, j, u, z] for u, v in arcs if v == z and (h, c, j, u, z) in t.HCJA)
         - sum(t.f[h, c, j, z, v] for u, v in arcs if u == z and (h, c, j, z, v) in t.HCJA)
-        >= t.x[h, c, j, z] - len(t.Z_hc[h, c]) * t.r[h, c, j, z])
+        >= t.x[h, c, j, z] - len(t.Z_hc[h, c]) * (t.r[h, c, j, z] + t.t[h, c, j, z]))
     M.B = pyo.Set(dimen=3, initialize=[(h, c, i) for h in M.H for c in M.C for i in range(len(B[c]))])
     M.neck = pyo.Constraint(M.B, M.J, rule=lambda t, h, c, i, j:
         sum(1 - t.x[h, c, j, z] for z in B[c][i])

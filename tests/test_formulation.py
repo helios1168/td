@@ -260,7 +260,7 @@ def _f0_instance(forbidden=None, split_wifi=False):
     counts = {j: sum(i >= nwifi and own[z] == j for i, z in enumerate(Z)) for j in range(1, kwh + 1)}
     mass = {(z, "fine"): (650 if i < 2 else 425 if i < nwifi else 1000 / counts[own[z]]) for i, z in enumerate(Z)}
     model = f0.build_model(Z=Z, F=["fine"], rho=rho, m=mass, rates={"fine": 1}, state=state,
-        E_P=list(zip(Z, Z[1:])), forbidden={"WIFI": forbidden or [], "WH": []},
+        E_P=list(zip(Z, Z[1:])), manhattan=(), forbidden={"WIFI": forbidden or [], "WH": []},
         shape=lambda t: sum(t.x["fixed", "WIFI", j, Z[0]] * j for j in t.J),
         balance=lambda t: sum(t.y.values()))
     for h, c, j, z in model.x:
@@ -310,6 +310,70 @@ def test_formulation_f0_routing_windows_gdp_neck_and_flow():
     # Likewise, the equal-mass exchange fails connectivity alone.
     broken.flow_balance.deactivate()
     assert _solve_f0(broken)
+
+
+def test_formulation_f0_manhattan_components_60():
+    """Owner #140 exception over production's component decomposition, not a raw-gate pass."""
+    from td.audit import _components
+
+    Z = [f"z{i:02d}" for i in range(60)]
+    own = {z: max(1, i - 11) for i, z in enumerate(Z)}
+    X = {z for z in Z if own[z] == 1}  # 13 ZCTAs; the other 47 districts are singletons.
+    cases = [
+        ((), (), True),                         # original single-root domain
+        ((), ("z00",), True),                   # connected Manhattan district
+        ((5,), (), False),                      # no Manhattan in either component
+        ((5,), ("z00",), True),                 # permitted detached Manhattan piece
+        ((5,), ("z59",), False),                # Manhattan owned by another district
+        ((2, 5), ("z00",), False),              # two extra pieces, only one Manhattan
+        ((2, 5), ("z00", "z03"), False),       # even two Manhattan roots cannot be used
+    ]
+    for cuts, manhattan, expected in cases:
+        edges = [(a, b) for i, (a, b) in enumerate(zip(Z, Z[1:])) if i not in cuts]
+        graph = nx.Graph()
+        graph.add_nodes_from(Z)
+        graph.add_edges_from(edges)
+        # Production has no exception path. Test its raw components against an
+        # independent graph implementation, then explicitly apply the owner rule.
+        parts = _components(X, {z: set(graph[z]) for z in Z})
+        assert {frozenset(p) for p in parts} == {
+            frozenset(p) for p in nx.connected_components(graph.subgraph(X))}
+        accepted = len(parts) == 1 or (len(parts) == 2 and
+                    any(set(p) & set(manhattan) for p in parts))
+        assert accepted == expected
+        def build(*, dollars=1000, forbidden=()):
+            model = f0.build_model(Z=Z, F=["fine"], rho={(z, "fine"): "WH" for z in Z},
+                m={(z, "fine"): dollars / len(X) if z in X else 1000 for z in Z},
+                rates={"fine": 1}, state=dict.fromkeys(Z, "NY"), E_P=edges,
+                manhattan=manhattan, forbidden={"WH": forbidden},
+                shape=lambda t: sum(t.y.values()), balance=lambda t: sum(t.y.values()))
+            for h, c, j, z in model.x:
+                model.x[h, c, j, z].fix(int(j == own[z]))
+            for h, c, j in model.y:
+                model.y[h, c, j].fix(int(j <= 48))
+            return model
+
+        model = build()
+        assert _solve_f0(model) == expected, (cuts, manhattan)
+        if expected:
+            assert pyo.value(model.Phi_shape) == 48
+            assert abs(pyo.value(model.D["fixed", "WH", 1]) - 1000) < 1e-8
+            # Manhattan never exempts a nonexempt neck or a dollar-window failure.
+            assert not _solve_f0(build(forbidden=[X]))
+            assert not _solve_f0(build(dollars=1200))
+    print("  FORMULATION F0: 60 ZCTAs; ordinary/Manhattan flow matches 7 component verdicts")
+
+
+def test_formulation_f0_authoritative_source():
+    root = Path(__file__).resolve().parents[1]
+    doc = (root / "docs/MODEL.md").read_text()
+    section = doc.split("## 0. F0 — national reference program", 1)[1].split("## 1.", 1)[0]
+    assert "[F0.tex](F0.tex)" in section and "[F0.pdf](F0.pdf)" in section
+    assert "$$" not in section and "### 0." not in section
+    assert "docs/F0.tex" in f0.__doc__
+    tex = (root / "docs/F0.tex").read_text()
+    assert r"\label{eq:flow}" in tex and r"\label{eq:neck}" in tex
+    assert (root / "docs/F0.pdf").read_bytes().startswith(b"%PDF-")
 
 
 def test_formulation_multiple_bodies_and_pruning_30():

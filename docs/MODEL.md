@@ -44,195 +44,11 @@ small-instance Pyomo specifications; these are not production solver backends.
 
 ## 0. F0 — national reference program
 
-**Domain and status.** F0 is the national (main-map) reference problem, not an algorithm or
-an IFA formulation. It transcribes §4 of the
-[review](https://github.com/helios1168/td/blob/m5-studio/national-approaches/notes/2026-10-14_national-approaches-review.md),
-read on `m5-studio/national-approaches`, as approved for #143. **Relation to F0: exact**, by
-definition. A feasibility certificate would certify the entire routed national ledger against
-all the rows below; a lexicographic optimum additionally requires owner-defined numerical
-$\Phi_{\rm shape}$ and $\Phi_{\rm balance}$. Neither is supplied by the current pipeline.
-
-The priority is the owner's “contiguity, shape, balance, splits”
-([#134 DECIDED](https://github.com/helios1168/td/issues/134#issuecomment-6162937688)); the band
-is hard, not a penalty ([#112](https://github.com/helios1168/td/issues/112#issuecomment-6168528181)).
-The #140 ruling says “keep manhattan excepted”
-([record](https://github.com/helios1168/td/issues/140#issuecomment-6163927218)), not that every
-district touching Manhattan is exempt. This section does not amend `PROBLEM.md`: its older
-window, connector and ranking text is reconciled against the decision/code record in §13.
-
-### 0.1 Sets, inputs and variables
-
-Let $Z$ be the explicitly shipped 2025 CONUS ZCTAs (including zero-opportunity territory),
-$F$ the scenario's fine channels, and $\mathcal H$ the permitted routing structures. For
-$h\in\mathcal H$, let $C_h$ be its planning channels and
-$\rho_h:Z\times F\to C_h$ its routing, obeying the settled national/fallback rules. Define
-
-$$
-Z_{hc}=\{z:\exists f,\ \rho_h(z,f)=c\},\qquad
- d_{hcz}=\sum_{f:\rho_h(z,f)=c} r_f m_{zf},\qquad
- Z^0_{hc}=\{z\in Z_{hc}:d_{hcz}=0\}.
-$$
-
-Here $m_{zf}$ is descaled opportunity and $r_f$ is the dollar rate from the **whole extract**,
-never recomputed after regional extraction. Dollars below are in \$M. Other inputs are land
-$a_z$, state $s(z)$, P-adjacency $G=(Z,E_P)$ (rook polygon edges, committed connectors and
-committed R5 land-only gap adjacency), current #140 width data, and the fixed record of the
-**authorized Manhattan violation**. $\mathcal H$ is an input, not necessarily the five tested
-structures; $|\mathcal H|=1$ means a fixed structure. The two numerical map evaluators
-$\Phi_{\rm shape}(\lambda)$ and $\Phi_{\rm balance}(\lambda)$ are **owner-to-define inputs**.
-
-For each $h,c$ and label $j\in J=\{1,\ldots,54\}$, use binaries $q_h$ (structure),
-$y_{hcj}$ (active district), $x_{hcjz}$ (owns ZCTA), $b_{hcjs}$ (touches state),
-$w_{hcj}$ (whole-state WIFI allowance), $r_{hcjz}$ (connectivity root), and $p_{hcs}$
-(split state). The root symbol $r_{hcjz}$ is distinct from the input rate $r_f$.
-Directed P-edge flows $f_{hcj,uv}\ge0$ are continuous. Write
-$X_{hcj}=\{z:x_{hcjz}=1\}$ and $a(A)=\sum_{z\in A}a_z$.
-
-### 0.2 Routing, coverage and district count
-
-$$
-\begin{aligned}
-\sum_h q_h&=1,& y_{hcj}&\le q_h,\\
-\sum_j x_{hcjz}&=q_h &&(z\in Z_{hc}),\\
-x_{hcjz}&\le y_{hcj},& \sum_{z\in Z_{hc}}x_{hcjz}&\ge y_{hcj},\\
-K_{hc}:=\sum_j y_{hcj}&\ge q_h,&48\le\sum_{h,c}K_{hc}&\le54.
-\end{aligned}
-$$
-
-For the chosen $h$, $\lambda(z,f)=(h,\rho_h(z,f),j)$ where $x_{h,\rho_h(z,f),j,z}=1$.
-Thus fine channels routed together have the same ZCTA owner. No cell is inferred from a
-polygon or omitted because its mass is zero. F0 has no dropped-channel exception.
-
-### 0.3 Hard windows and WIFI's conditional whole-state cap
-
-Let $D_{hcj}=\sum_{z\in Z_{hc}}d_{hcz}x_{hcjz}$. The windows are
-
-| channel | $L_c$ | $U_c$ | conditional cap |
-|---|---:|---:|---:|
-| national | 1000 | 1437.5 | — |
-| WH | 850 | 1150 | — |
-| FI | 765 | 1035 | — |
-| WIFI | 850 | 1150 | 1600, whole-state districts only |
-
-For non-WIFI channels and for WIFI, respectively,
-
-$$
-L_c y_{hcj}\le D_{hcj}\le U_c y_{hcj},\qquad
-850y_{hcj}\le D_{hcj}\le1150y_{hcj}+450w_{hcj}.
-$$
-
-Exact state incidence and eligibility for the WIFI cap are
-
-$$
-\begin{aligned}
-x_{hcjz}&\le b_{hcj,s(z)},&
-b_{hcjs}&\le\sum_{z\in Z_{hc}:s(z)=s}x_{hcjz},\\
-w_{hcj}&\le y_{hcj},&
-x_{hcjz}&\ge w_{hcj}+b_{hcj,s(z)}-1.
-\end{aligned}
-$$
-
-The last row is imposed for WIFI: if $w=1$, every touched state's channel-footprint ZCTAs
-belong to that district, equivalent under coverage to exclusive ownership of each touched
-state. It does not grant 1600 to every WIFI district. Use exact dollars for the conceptual
-windows; reproducing the scorer instead uses its explicitly stated whole-dollar rounding,
-not a solver tolerance. Code evidence: `tools/looks/score.py:111`
-`WHOLE_STATE_CAP = {"WIFI": 1.6e9}       # a district of whole states only (owner, 2026-10-13)`;
-`tools/looks/score.py:334` `        whole = bool(st) and all(owners[ch, s] == {d} for s in st)`;
-`tools/looks/score.py:337` `        inside = lo is not None and round(lo) <= round(x) <= round(hi)`.
-
-### 0.4 P-connectivity
-
-On both directed arcs of each edge of $G[Z_{hc}]$, put $n=|Z_{hc}|$ and impose
-
-$$
-\begin{aligned}
-\sum_z r_{hcjz}&=y_{hcj},&r_{hcjz}&\le x_{hcjz},\\
-0\le f_{hcj,uv}&\le(n-1)x_{hcju},&f_{hcj,uv}&\le(n-1)x_{hcjv},\\
-\sum_{u:uz\in E_P}f_{hcj,uz}-\sum_{v:zv\in E_P}f_{hcj,zv}
-&\ge x_{hcjz}-nr_{hcjz}.
-\end{aligned}
-$$
-
-**Proof of equivalence.** Summing over a rootless selected component gives $0\ge|A|$,
-a contradiction. Conversely, a spanning tree rooted at the selected root routes one unit to
-every other selected vertex and satisfies the rows. Relays do **not** make P-paths; they
-enter only the width graph below. R5's land-only adjacency file is not shipped (§9).
-
-### 0.5 N-connectivity as a finite constraint family
-
-For candidate $X$, let $R_{hc}(X)\subseteq Z^0_{hc}\setminus X$ be zero-opportunity relays
-reachable from $X$ through chains of zero-opportunity ZCTAs. Build $H_{hc}(X)$ on
-$X\cup R_{hc}(X)$ with polygon, connector and gap widths as in §9: approved connectors
-unlimited, other widths floored to whole cm. Relays outside $X$ have no land or mass.
-For every nonempty proper $A\subset X$ connected on the district's **own P-graph**, impose
-
-$$
-.05a(X)\le a(A)\le .5a(X)
-\quad\Longrightarrow\quad
-\min_{T\subseteq R_{hc}(X)}
-\operatorname{cap}_{H_{hc}(X)}\bigl(\delta(A\cup T)\bigr)\ge W,
-\qquad W=1{,}000{,}000\ {\rm cm},
-$$
-
-except precisely the authorized Manhattan violation. The rest of $X$ may have several
-components; distinct small fringes joined only by relays are not one qualifying $A$.
-
-Equivalently, predefine the finite collection $\mathcal B_{hc}$ of ownership sets with a
-nonexempt neck. For every $B\in\mathcal B_{hc}$ and district $j$, impose
-
-$$
-\sum_{z\in B}(1-x_{hcjz})+
-\sum_{z\in Z_{hc}\setminus B}x_{hcjz}\ge y_{hcj}.
-$$
-
-**Proof.** For an active district the left side is the Hamming distance from $B$: the row
-excludes exactly $X=B$. Enumerating all forbidden sets therefore encodes precisely the neck
-rule. Exponential size is not a tractability claim. A time-limited neck search is **unknown**,
-not a mathematical violation or a feasibility proof. Current code has no Manhattan-specific
-acceptance path; a raw gate failure and an owner-applied exception must remain distinct (§9).
-
-### 0.6 Splits, objective and implementation boundary
-
-With $R_{hcs}=\sum_j b_{hcjs}$, impose
-
-$$
-2p_{hcs}\le R_{hcs}\le q_h+53p_{hcs}.
-$$
-
-These rows make $p_{hcs}=1$ exactly when at least two districts own territory in that
-channel-state, including zero-opportunity ZCTAs. The reference objective is
-
-$$
-\operatorname{lexmin}\left(
-\Phi_{\rm shape}(\lambda),\ \Phi_{\rm balance}(\lambda),\ \sum_{h,c,s}p_{hcs}
-\right).
-$$
-
-M1 and the windows are hard; shape has no hard gate in F0; K moves within its range. There
-is no automatic $\eta$, free list, support-size/diameter cap, regional seal, rule C or split
-cap. Such restrictions belong to the stage that adds them. With routing and K fixed,
-feasibility separates by channel; a map-level objective separates only if its evaluators do.
-
-**Code entry boundary.** No production function solves F0. Its M1 check starts at
-`td/audit.py:940`
-`def check_m1(run: Run, gap_width: bool | None = None, land_rule: bool | None = None) -> Check:`.
-Routing is supplied by the source audit, not established by the run-folder gate alone (§9).
-The existing ranking is not the F0 objective: `tools/looks/score.py:549`
-`def rank_key(s: dict) -> tuple:` returns splits first. F0 is a reference specification;
-no production F0 optimizer or national conformance certificate is claimed.
-
-**Pyomo specification:** `td.formulation.f0:build_model` implements these rows for one
-supplied routing structure, retaining $J=1,\ldots,54$ and total $K\in[48,54]$ on at most
-300 ZCTAs. The caller supplies the complete nonexempt $\mathcal B_{hc}$ and symbolic
-$\Phi_{\rm shape},\Phi_{\rm balance}$; no neck geometry, exception identity or numerical
-objective policy is invented. WIFI uses the genuine GDP disjunction $w=0$ or
-$(w=1\ \land\ x_{hcjz}\ge b_{hcj,s(z)}\ \forall z)$; the other rows are algebraic.
-Three ordered objectives are retained, with only shape active initially; solving that
-one alone is not a lexicographic certificate. The 60-ZCTA tests check routed coverage,
-48 active districts, dollars, the conditional cap, forbidden sets and P-flow, not an
-unavailable production F0 optimizer. Entry: `td/formulation/f0.py:18`
-`def build_model(*, Z, F, rho, m, rates, state, E_P, forbidden, shape, balance):`.
+**F0 is stated authoritatively in [F0.tex](F0.tex), rendered as [F0.pdf](F0.pdf).**
+It assigns the complete routed national ledger to 48–54 districts, with hard dollar windows,
+connectivity and neck rules, and only the stated Manhattan exceptions. Shape, then balance,
+then state splits define its priority; the numerical shape and balance evaluators remain owner inputs.
+Model-sync updates the TeX source and rebuilds the PDF; the pipeline stages below are not F0 optimizers.
 
 ## 1. Cells, units, planning channels
 
@@ -1593,7 +1409,7 @@ The ledger's rules are policies **[policy S25, S26]**, except where a bullet is 
 **Relation to F0: heuristic pipeline certification boundary**, not a solver of its
 objective. The mathematical checks are coverage, counts, drawn bands and per-district
 P/N from F0, plus the scenario's stage-specific modes/policies. Entry:
-`td/audit.py:1229` `def audit(run: Run) -> list:`; M1 entry is cited in §0.6. There is no map
+`td/audit.py:1229` `def audit(run: Run) -> list:`; M1 entry is cited in [F0.tex](F0.tex), “Implementation boundary”. There is no map
 objective in this stage; the neck search minimizes cut width subject to a connected own
 side and the 5%–50% area range. **Certificate:** only the supplied ledger, graph, channel
 masses, routing and numerical checks. The raw gate does not apply the authorized Manhattan
@@ -1991,8 +1807,10 @@ and §18 branch checks are incorporated above, not reissued as new decisions. In
    splits first (`tools/looks/score.py:550`
    `    return (s["splits"], s["defects"], s["largest_extent_km"], s["states_per_district"], s["worst_dev"],`).
    No `PROBLEM.md` edit is made. Manhattan is not implemented as a gate exception; no
-   all-Manhattan-touching waiver is invented. F0's numerical shape/balance functions and
-   machine-readable exception identity remain owner inputs, not choices made here.
+   all-Manhattan-touching waiver is invented. F0's numerical shape/balance functions remain owner inputs, and
+   the Manhattan-neck identification needs owner confirmation; [F0.tex](F0.tex) states the
+   supervisor's reading explicitly. The detached-piece ruling of 2026-10-15 is encoded in
+   the F0 spec, not in the production gate.
 2. **Conditional proofs versus national certificates.** Aggregation is lossless for
    continuous explicit-copy plans only (§5 Claim 1), not for indivisible ZIP geography.
    F2's policies, margins and bans qualify its bounds (§3.6.7); F4's complete model is
@@ -2030,7 +1848,8 @@ and §18 branch checks are incorporated above, not reissued as new decisions. In
    provenance of the earlier timeouts. The third FI_NY flow record's missing hashes remain
    an evidence limitation, not a reason to infer national infeasibility.
 
-**F0 proposals:** none adopted. Choosing $\Phi_{\rm shape}$, $\Phi_{\rm balance}$ or expanding
+**F0 boundary:** the 2026-10-15 owner ruling on Manhattan detached pieces is incorporated
+in [F0.tex](F0.tex); the neck identification is flagged there for confirmation. Choosing $\Phi_{\rm shape}$, $\Phi_{\rm balance}$ or expanding
 the Manhattan exception would change or instantiate owner inputs and requires an owner
 record. Coarsening, rule C, finite column libraries, eta/free lists and regional sealing
 remain explicit restrictions/heuristics; none is silently made part of F0.
