@@ -784,3 +784,112 @@ def test_all_interrupted_ends_and_reaps_every_child_group_and_its_descendants():
             else:
                 os.kill(pid, signal.SIGKILL)
                 raise AssertionError(f"process {pid} of the interrupted campaign is still running")
+
+
+def _gone(pid: int) -> bool:
+    import time as real_time
+    for _ in range(50):         # a killed process is reaped by init a moment later
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        real_time.sleep(0.1)
+    return False
+
+
+def test_all_repeated_interrupts_still_end_and_reap_every_child_group():
+    """The first Ctrl-C starts the cleanup; the next ones, while the first group is still stopping (its child
+    ignores SIGINT, so it is killed when the grace is up), must not leave the other group running."""
+    import signal
+    import subprocess
+    import threading
+    import time as real_time
+    with tempfile.TemporaryDirectory() as d:
+        a = _run_args(d)
+        a.arms, a.jobs = ["a", "b"], 2
+        script = ("import os, signal, sys, time; signal.signal(signal.SIGINT, signal.SIG_IGN); "
+                  "open(sys.argv[1], 'w').write(str(os.getpid())); time.sleep(120)")
+        real_popen, procs, seen = subprocess.Popen, [], {"go": threading.Event()}
+
+        def popen(cmd, **kw):
+            procs.append(real_popen([sys.executable, "-c", script, os.path.join(d, "pid_" + cmd[5])], **kw))
+            return procs[-1]
+
+        def sleep(s):
+            if not seen["go"].is_set() and all(os.path.exists(os.path.join(d, "pid_" + x)) for x in "ab"):
+                seen["go"].set()
+                raise KeyboardInterrupt
+            real_time.sleep(0.05)
+
+        def presser():              # more Ctrl-C while the cleanup runs (the SIGINT-ignoring children take the grace)
+            seen["go"].wait(30)
+            for _ in range(4):
+                real_time.sleep(0.3)
+                os.kill(os.getpid(), signal.SIGINT)
+        saved, grace = (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE
+        bnc_run.END_GRACE = 1.5
+        bnc_run.subprocess = types.SimpleNamespace(Popen=popen, DEVNULL=subprocess.DEVNULL,
+                                                   TimeoutExpired=subprocess.TimeoutExpired)
+        bnc_run.time = types.SimpleNamespace(sleep=sleep, time=real_time.time)
+        os.makedirs(a.instances)
+        th = threading.Thread(target=presser, daemon=True)
+        th.start()
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                try:
+                    bnc_run.all_runs(a)
+                except KeyboardInterrupt:
+                    pass
+                else:
+                    raise AssertionError("the interrupt never reached the launcher")
+            th.join(30)
+        finally:
+            (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE = saved, grace
+            for p in procs:
+                if p.poll() is None:
+                    os.killpg(p.pid, signal.SIGKILL)
+                    p.wait()
+        assert len(procs) == 2 and not th.is_alive()
+        for p, arm in zip(procs, "ab"):
+            assert p.returncode is not None, "a child group's leader was never reaped"
+            assert _gone(int(open(os.path.join(d, "pid_" + arm)).read()))
+
+
+def test_an_interrupt_right_after_popen_returns_still_registers_and_ends_the_new_group():
+    """Ctrl-C landing between the Popen and the registration in `running` must not orphan the new group: the
+    interrupt waits until the group is registered, and the cleanup then ends and reaps it."""
+    import signal
+    import subprocess
+    with tempfile.TemporaryDirectory() as d:
+        a = _run_args(d)
+        a.arms, a.jobs = ["a"], 1
+        pid = os.path.join(d, "pid")
+        script = f"import os, time; open({pid!r}, 'w').write(str(os.getpid())); time.sleep(120)"
+        real_popen, procs = subprocess.Popen, []
+
+        def popen(cmd, **kw):
+            procs.append(real_popen([sys.executable, "-c", script], **kw))
+            os.kill(os.getpid(), signal.SIGINT)         # the signal is delivered before this function returns
+            return procs[-1]
+        saved, grace = (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE
+        bnc_run.END_GRACE = 5.0
+        bnc_run.subprocess = types.SimpleNamespace(Popen=popen, DEVNULL=subprocess.DEVNULL,
+                                                   TimeoutExpired=subprocess.TimeoutExpired)
+        os.makedirs(a.instances)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                try:
+                    bnc_run.all_runs(a)
+                except KeyboardInterrupt:
+                    pass
+                else:
+                    raise AssertionError("the interrupt was lost")
+        finally:
+            (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE = saved, grace
+            for p in procs:
+                if p.poll() is None:
+                    os.killpg(p.pid, signal.SIGKILL)
+                    p.wait()
+                    raise AssertionError("the new group was left running")
+        assert len(procs) == 1 and procs[0].returncode is not None
+        assert _gone(procs[0].pid)

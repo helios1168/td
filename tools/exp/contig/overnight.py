@@ -561,7 +561,38 @@ def _group_alive(pgid: int) -> bool:
     return True
 
 
+class hold_sigint:
+    """Defer SIGINT (Ctrl-C) over the block: the signal is noted, and with `raise_after` a KeyboardInterrupt is
+    raised once the block has ended and the old handler is back, so an interrupt never lands between a Popen and
+    its registration or in the middle of ending a stage group.  Only the main thread gets signals; elsewhere the
+    block is not held."""
+
+    def __init__(self, raise_after: bool = True):
+        self.raise_after, self.hit, self.old = raise_after, False, None
+
+    def __enter__(self):
+        if threading.current_thread() is threading.main_thread():
+            self.old = signal.signal(signal.SIGINT, self._note)
+        return self
+
+    def _note(self, signum, frame):
+        self.hit = True
+
+    def __exit__(self, *exc):
+        if self.old is not None:
+            signal.signal(signal.SIGINT, self.old)
+        if self.hit and self.raise_after and exc[0] is None:
+            raise KeyboardInterrupt
+        return False
+
+
 def _end(p) -> int:
+    """`_end_now` with an interrupt held until the group is signalled and reaped, then raised."""
+    with hold_sigint():
+        return _end_now(p)
+
+
+def _end_now(p) -> int:
     """SIGINT to a stage's process group (its collectors stop their workers, `run.stop`), then SIGKILL to
     the group once `STOP_GRACE` has passed with a member left, whether or not the leader exited on the SIGINT
     (a member that ignores it, or a worker still stopping, outlives the leader); the leader's exit code."""
@@ -593,11 +624,13 @@ def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | Non
         return {"rc": None, "seconds": 0.0, "stop": "deadline"}
     timeout, stop, t0 = min(cap, left), None, time.time()
     with open(log_path, "w") as lg:
-        p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                             env={**os.environ, **(env or {})}, start_new_session=True)
+        p = None
         try:
-            with LIVE_LOCK:
-                LIVE.add(p)
+            with hold_sigint():     # an interrupt after the Popen returns waits until the stage is in LIVE
+                p = subprocess.Popen(cmd, cwd=ROOT, stdout=lg, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                     env={**os.environ, **(env or {})}, start_new_session=True)
+                with LIVE_LOCK:
+                    LIVE.add(p)
             if HALT.is_set():       # set after the check above: `stop_all` may have taken its snapshot before the add
                 raise Halted("the scheduler is unwinding")
             rc = p.wait(timeout=timeout)
@@ -605,20 +638,35 @@ def child(cmd: list, log_path: str, cap: float, deadline: float, env: dict | Non
             stop = "deadline" if left <= cap else "cap"
             rc = _end(p)
         except BaseException:       # an interrupt: the stage has its own session, so nothing else ends or reaps it
-            _end(p)
+            if p is not None:
+                _end(p)
             raise
         finally:
-            with LIVE_LOCK:
-                LIVE.discard(p)
+            if p is not None:
+                with LIVE_LOCK:
+                    LIVE.discard(p)
     return {"rc": rc, "seconds": round(time.time() - t0, 1), "stop": stop}
 
 
 def stop_all() -> None:
-    """End every stage still running (the launcher stopped or interrupted)."""
-    with LIVE_LOCK:
-        procs = list(LIVE)
-    for p in procs:
-        _end(p)
+    """End every stage still running (the launcher stopped or interrupted).  An interrupt meanwhile is held until
+    every group is signalled and reaped (`hold_sigint`), then raised; one arriving before the hold is in place
+    retries it."""
+    done, interrupt = False, None
+    while not done:
+        try:
+            with hold_sigint(raise_after=False) as held:
+                with LIVE_LOCK:
+                    procs = list(LIVE)
+                for p in procs:
+                    _end_now(p)
+                done = True
+            if held.hit:
+                interrupt = KeyboardInterrupt()
+        except KeyboardInterrupt as e:
+            interrupt = e
+    if interrupt is not None:
+        raise interrupt
 
 
 def finished(folder: str) -> bool:

@@ -9,11 +9,13 @@ import json
 import math
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import threading
 import time
 import tomllib
+import types
 
 from td import spec as tdspec
 
@@ -283,6 +285,99 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
         else:
             os.killpg(seen["stage"], signal.SIGKILL)
             raise AssertionError(f"process {pid} of the interrupted stage is still running")
+
+
+def test_repeated_interrupts_during_stop_all_still_end_and_reap_every_stage_group():
+    """`stop_all` is the cleanup after the first Ctrl-C: more of them while the first stage group is stopping
+    (its stage ignores SIGINT, so it is killed when the grace is up) must not leave the others running."""
+    import signal
+    sleeper = ("import os, signal, sys, time; signal.signal(signal.SIGINT, signal.SIG_IGN); "
+               "open(sys.argv[1], 'w').write(str(os.getpid())); time.sleep(120)")
+    with tempfile.TemporaryDirectory() as tmp:
+        pidfiles = [os.path.join(tmp, f"pid{i}") for i in range(2)]
+        workers = [threading.Thread(target=overnight.child, daemon=True,
+                                    args=([sys.executable, "-c", sleeper, pf], os.path.join(tmp, f"s{i}.log"),
+                                          120, time.time() + 300))
+                   for i, pf in enumerate(pidfiles)]
+        for w in workers:
+            w.start()
+        for _ in range(200):
+            if all(os.path.exists(pf) and open(pf).read() for pf in pidfiles) and len(overnight.LIVE) == 2:
+                break
+            time.sleep(0.05)
+        else:
+            raise AssertionError("the stages never started")
+        pids = [int(open(pf).read()) for pf in pidfiles]
+
+        def presser():
+            for _ in range(4):
+                time.sleep(0.3)
+                os.kill(os.getpid(), signal.SIGINT)
+        th, grace = threading.Thread(target=presser, daemon=True), overnight.STOP_GRACE
+        overnight.STOP_GRACE = 1.5
+        th.start()
+        try:
+            overnight.stop_all()
+        except KeyboardInterrupt:
+            pass            # the held interrupt is raised once every group is ended
+        else:
+            raise AssertionError("the interrupt was lost")
+        finally:
+            overnight.STOP_GRACE = grace
+            th.join(30)
+            for w in workers:
+                w.join(30)
+        assert not th.is_alive() and not any(w.is_alive() for w in workers) and not overnight.LIVE
+        for pid in pids:
+            for _ in range(50):
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    break
+                time.sleep(0.1)
+            else:
+                os.kill(pid, 9)
+                raise AssertionError(f"stage {pid} is still running")
+
+
+def test_an_interrupt_right_after_popen_returns_still_registers_and_ends_the_new_stage():
+    """Ctrl-C landing between the Popen and the registration in LIVE must not orphan the stage's group."""
+    import signal
+    real_popen, procs = subprocess.Popen, []
+
+    def popen(cmd, **kw):
+        procs.append(real_popen(cmd, **kw))
+        os.kill(os.getpid(), signal.SIGINT)         # delivered before this function returns
+        return procs[-1]
+    with tempfile.TemporaryDirectory() as tmp:
+        saved, grace = overnight.subprocess, overnight.STOP_GRACE
+        overnight.subprocess = types.SimpleNamespace(Popen=popen, DEVNULL=subprocess.DEVNULL,
+                                                     STDOUT=subprocess.STDOUT,
+                                                     TimeoutExpired=subprocess.TimeoutExpired)
+        overnight.STOP_GRACE = 5.0
+        try:
+            overnight.child([sys.executable, "-c", "import time; time.sleep(120)"], os.path.join(tmp, "s.log"),
+                            60, time.time() + 120)
+        except KeyboardInterrupt:
+            pass
+        else:
+            raise AssertionError("the interrupt was lost")
+        finally:
+            overnight.subprocess, overnight.STOP_GRACE = saved, grace
+            for p in procs:
+                if p.poll() is None:
+                    os.killpg(p.pid, signal.SIGKILL)
+                    p.wait()
+                    raise AssertionError("the new stage group was left running")
+    assert len(procs) == 1 and procs[0].returncode is not None and not overnight.LIVE
+    for _ in range(50):
+        try:
+            os.killpg(procs[0].pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.1)
+    else:
+        raise AssertionError("a member of the stage group is still running")
 
 
 def test_a_scheduler_interrupt_ends_the_live_stages_before_joining_and_starts_no_more():

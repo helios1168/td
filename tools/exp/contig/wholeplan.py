@@ -11,6 +11,9 @@ ZIP: a district is the union of its units' ZIPs.  Each round:
 
 1. the smallest δ the master is feasible at with the bans so far (`master.exact_delta`, exact for
    whole units), rounded up to 1e-4, with no cap: the owner accepts any band (2026-10-07);
+   with a window band (`band_lo`, `band_hi`) there is no δ to minimise: the window's feasibility
+   (`master.window_feasibility`) is accepted, δ is the window's equivalent δ unrounded, and the
+   round records no `exact_delta` (a feasible window is not a smallest-δ certificate);
 2. the master's plan there (`master.plan(..., banned=)`);
 3. each support in use, singletons included, checked once against M1 on its ZIP set (`m1_verdict`:
    `td.audit.district_pieces` on the polygon graph and the gate's necks, `necks_gate.gate_necks`:
@@ -107,14 +110,19 @@ def loop(inst, c: str, polygon: dict, time_limit: float | None = None, max_round
         banned = [frozenset(b["support"].split("+")) for b in bans]
         t0 = time.time()
         d = master.exact_delta(inst, c, fam, time_limit, banned=banned)
-        rec = {"round": r, "bans_in": len(banned), "exact_delta": d.delta,
-               "delta_status": d.status}
+        window = d.method == "window"       # a window band: no δ to minimise, feasibility in the window only
+        rec = {"round": r, "bans_in": len(banned), "exact_delta": None if window else d.delta,
+               "delta_status": d.status, "delta_method": d.method}
         rounds.append(rec)
-        if d.status != "exact":
+        if d.status != ("converged" if window else "exact"):
             out["status"] = "no plan" if d.status == "infeasible" else "unknown delta"
             log(f"{c} round {r}: smallest δ {d.status} with {len(banned)} bans")
             return out
-        delta = math.ceil(d.delta / DELTA_STEP - 1e-9) * DELTA_STEP
+        if window:      # the window's equivalent δ is how the plan reports it, not a certified smallest δ
+            delta = d.delta
+            rec["window_feasible"] = True
+        else:
+            delta = math.ceil(d.delta / DELTA_STEP - 1e-9) * DELTA_STEP
         p, rep = master.plan(inst, c, delta, fam, time_limit=time_limit, banned=banned)
         rec.update(delta=delta, status=rep.get("status"), objective=p and p.objective,
                    seconds=round(time.time() - t0, 1))

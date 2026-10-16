@@ -48,6 +48,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -271,6 +272,45 @@ def _one(name: str, arm: str, a, cfg: dict, folder: str) -> int:
     return 0
 
 
+class hold_sigint:
+    """Defer SIGINT (Ctrl-C) over the block: the signal is noted, and with `raise_after` a KeyboardInterrupt is
+    raised once the block has ended and the old handler is back, so an interrupt never lands between two steps
+    that must go together (a Popen and its registration) or in the middle of a cleanup.  Only the main thread
+    gets signals; elsewhere the block is not held."""
+
+    def __init__(self, raise_after: bool = True):
+        self.raise_after, self.hit, self.old = raise_after, False, None
+
+    def __enter__(self):
+        if threading.current_thread() is threading.main_thread():
+            self.old = signal.signal(signal.SIGINT, self._note)
+        return self
+
+    def _note(self, signum, frame):
+        self.hit = True
+
+    def __exit__(self, *exc):
+        if self.old is not None:
+            signal.signal(signal.SIGINT, self.old)
+        if self.hit and self.raise_after and exc[0] is None:
+            raise KeyboardInterrupt
+        return False
+
+
+def reap_all(running: list) -> None:
+    """End every group of `running` (items `(instance, arm, Popen)`), removing each once reaped.  An interrupt
+    meanwhile is held until all are signalled and reaped (`hold_sigint`); one arriving before the hold is in
+    place retries it, so the groups are all ended however often Ctrl-C is pressed."""
+    while running:
+        try:
+            with hold_sigint(raise_after=False):
+                while running:
+                    end_group(running[0][2])
+                    running.pop(0)
+        except KeyboardInterrupt:
+            continue
+
+
 def end_group(proc) -> None:
     """End a campaign child's process group and reap its leader: SIGINT (the solver stops and writes), then SIGKILL
     to the group once `END_GRACE` seconds have passed with a member left, whether or not the leader exited (a solver
@@ -307,8 +347,7 @@ def all_runs(a) -> int:
     try:
         _drive(a, jobs, running, todo, failed)
     except BaseException:       # every child has its own session: an interrupt reaches none of them
-        for item in running:
-            end_group(item[2])
+        reap_all(running)
         raise
     report.write(a.out, a.instances)
     for i, r, rc in failed:
@@ -331,8 +370,9 @@ def _drive(a, jobs: int, running: list, todo: list, failed: list) -> None:
             if os.path.exists(stale):
                 os.replace(stale, os.path.join(a.out, i, r, "result.previous.json"))
             print("start", " ".join(cmd), flush=True)
-            running.append((i, r, subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=open(
-                os.path.join(a.out, i, r, "stderr"), "w"), start_new_session=True)))
+            with hold_sigint():     # an interrupt after the Popen returns waits until the group is in `running`
+                running.append((i, r, subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=open(
+                    os.path.join(a.out, i, r, "stderr"), "w"), start_new_session=True)))
         time.sleep(2)
         for item in list(running):
             if item[2].poll() is not None:

@@ -34,7 +34,7 @@ def _wholeplan():
     return _module("contig_wholeplan", "wholeplan.py")
 
 
-def _neck_toy(k: int, q_x: float = 10.0):
+def _neck_toy(k: int, q_x: float = 10.0, **channel):
     """PA (p0, 100 km², mass 1), NY (n1-n2-n3, whole; 1, 1 and 10 km², mass 0.01 each) and NJ
     (q0, 100 km², mass 1) on a path; n1-n2 and n2-n3 share 1 km of border, p0-n1 and n3-q0 20 km.
     PA+NY is a neck: n3's 10 km² (over 5% of the land) hangs off a 1 km passage.  NY+NJ is not:
@@ -45,7 +45,7 @@ def _neck_toy(k: int, q_x: float = 10.0):
     xy = {"p0": (0.0, 0.0), "n1": (1.0, 0.0), "n2": (2.0, 0.0), "n3": (3.0, 0.0), "q0": (q_x, 0.0)}
     mass = {"p0": 1.0, "q0": 1.0, "n1": 0.01, "n2": 0.01, "n3": 0.01}
     inst, _ = tr._toy({"PA": ["p0"], "NY": ["n1", "n2", "n3"], "NJ": ["q0"]}, edges, mass, xy,
-                      k=k, delta=0.1, eta=0.05)
+                      k=k, delta=0.1, eta=0.05, **channel)
     polygon = {"vertices": sorted(xy), "edges": edges, "state": dict(inst.units.unit_of),
                "border": {e: 1000.0 * x for e, x in km.items()}, "connectors": [],
                "aland": {"p0": 1e8, "q0": 1e8, "n1": 1e6, "n2": 1e6, "n3": 1e7}}
@@ -65,6 +65,28 @@ def test_a_district_failing_m1_is_banned_as_its_unit_set_and_the_replan_passes()
     assert sorted(wp._name(s) for s in res["plan"].n) == ["NJ+NY", "PA"]
     assert all(res["verdicts"][wp._name(s)]["status"] == "pass" for s in res["plan"].n)
     assert res["delta"] >= res["rounds"][-1]["exact_delta"]
+
+
+def test_a_window_band_loop_accepts_the_feasible_window_without_a_smallest_delta_certificate():
+    """With a window band there is no δ to minimise: a feasible window is accepted (not "unknown delta"), the
+    round records no exact δ and says the method was the window, and the neck ban and re-plan go on as usual;
+    a window nothing fits is "no plan", never widened."""
+    wp = _wholeplan()
+    inst, polygon = _neck_toy(2, band_lo=0.9, band_hi=1.1)
+    wd = inst.channels["X"].spec.window_delta
+    res = wp.loop(inst, "X", polygon, **QUIET)
+    assert res["status"] == "passed", res
+    assert [b["support"] for b in res["bans"]] == ["NY+PA"] and len(res["rounds"]) == 2
+    assert sorted(wp._name(s) for s in res["plan"].n) == ["NJ+NY", "PA"]
+    for rec in res["rounds"]:
+        assert rec["exact_delta"] is None and rec["delta_method"] == "window", rec
+        assert rec["delta_status"] == "converged" and rec["window_feasible"] is True, rec
+        assert rec["delta"] == wd, rec          # the window's own δ, not rounded up as a certificate
+    assert res["delta"] == wd
+    inst, polygon = _neck_toy(2, band_lo=0.999, band_hi=1.001)      # τ = 1.015: neither 1.0 nor 1.03 fits
+    res = wp.loop(inst, "X", polygon, **QUIET)
+    assert res["status"] == "no plan" and res["plan"] is None, res
+    assert res["rounds"][0]["exact_delta"] is None and res["rounds"][0]["delta_status"] == "infeasible"
 
 
 def test_with_no_plan_left_the_loop_says_no_plan_and_lists_every_ban():

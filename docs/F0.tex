@@ -151,13 +151,14 @@ By coverage, this is exclusive ownership of each touched state in that channel;
 several whole states may form one district. The allowance is optional and
 never grants 1600 to a split-state WIFI district. Zero-opportunity ZCTAs count.
 
-F0 uses exact dollars. The production scorer instead rounds to whole dollars;
-this is a declared numerical convention, not a solver tolerance:
-\path{tools/looks/score.py:337}
+F0 uses exact dollars, and the production scorer compares the same way: unrounded
+dollars, both ends included. There is no rounding to whole dollars and no
+tolerance; a district exactly at $L_c$ or $U_c$ is inside:
+\path{tools/looks/score.py:355}
 \begin{quote}\small
-\verb|inside = lo is not None and round(lo) <= round(x) <= round(hi)|
+\verb|inside = lo is not None and lo <= x <= hi|
 \end{quote}
-The cap and ownership test are at \path{tools/looks/score.py:111,334}:
+The cap and ownership test are at \path{tools/looks/score.py:117,354}:
 \begin{quote}\fontsize{7}{9}\selectfont
 \verb|WHOLE_STATE_CAP = {"WIFI": 1.6e9}       # a district of whole states only (owner, 2026-10-13)|\\
 \verb|whole = bool(st) and all(owners[ch, s] == {d} for s in st)|
@@ -315,8 +316,8 @@ The raw M1 check starts at \path{td/audit.py:940}:
 \end{quote}
 Routing is supplied by the source audit, not established by the run-folder
 gate alone. Ranking is not the F0 objective:
-\path{tools/looks/score.py:549} is \verb|def rank_key(s: dict) -> tuple:|;
-line 550 begins with splits, not shape:
+\path{tools/looks/score.py:573} is \verb|def rank_key(s: dict) -> tuple:|;
+line 574 begins with splits, not shape:
 \begin{quote}\fontsize{7}{9}\selectfont
 \verb|return (s["splits"], s["defects"], s["largest_extent_km"], s["states_per_district"], s["worst_dev"],|
 \end{quote}
@@ -353,8 +354,8 @@ M1 row of \texttt{PROBLEM.md}, citing \issue{108}, \issue{114},
 \issue{121}, and \issue{131}.
 \item \issue{112}: the band stays hard and K moves; direct dollar-window
 rows replace a stricter symmetric surrogate. Numerical windows and
-WIFI's conditional allowance match \path{tools/looks/score.py:109--111}
-and ownership at line 334, subject to the rounding distinction above.
+WIFI's conditional allowance match \path{tools/looks/score.py:115--117}
+and ownership at line 354, compared as unrounded dollars as stated above.
 \item \issue{134}: the recorded priority is contiguity, shape, balance,
 splits. This yields hard contiguity/windows and the lexicographic
 objective, not the production splits-first ranking.
