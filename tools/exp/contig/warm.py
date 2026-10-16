@@ -17,7 +17,7 @@ finals from `<main>/SEALED.json` (a run whose drawing finished), and does in `<r
 2. `glue/`: `glue.py` on the last pass.
 3. `sealed.Driver.finish` on that folder and the other runs' finals: merge, gate, `score.py` (with `--extract` the
    full dollar extract: the merged extract's rates are 2% off, see `sealed.score_cmd`), `land.py`
-   and the shape measures, the label of `sealed.label_point`.  `warm.json` holds the label, the
+   and the shape measures, the label of `sealed.label_point` (with the Manhattan-only waiver of `sealed.manhattan_verdict`).  `warm.json` holds the label, the
    undrawn ZCTAs the final ledger still carries per channel (`undrawn_zctas` of the final `contig.json`),
    the pieces and necks left, and the dollar window verdict.
 

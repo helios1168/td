@@ -61,6 +61,15 @@ def test_formulation_ifa_gate_items_and_windows_30():
             expected = verdict['passes'] and not (over or under)
             _truth(spec.ifa_model(items=items, manhattan=manhattan,
                                  districts=[(mass, 'in'), (900.0, 'in')]), expected)
+    # Independently expected, not derived from production: $999,999,999.75 is under the $1B floor, and
+    # $1,437,500,000.25 over the cap; neither is rounded into the window. Stale saved masses fail too.
+    rate = ifa_index.RATE
+    for dollars in (999_999_999.75, 1_437_500_000.25):
+        mass = dollars / 1e6 / rate
+        assert ifa_index.window_verdict({'A': {'m_rel': mass, 'window': 'in'}}) != ([], [])
+        _truth(spec.ifa_model(items=[], manhattan=manhattan, districts=[(mass, 'in')]), False)
+    _truth(spec.ifa_model(items=[], manhattan=manhattan, districts=[(900.0, 'in')]), True)
+    _truth(spec.ifa_model(items=[], manhattan=manhattan, districts=[(900.0, 'in')], mass_provenance=False), False)
     # Unresolved Manhattan sides and diagnostics cannot be waived.
     for kind in ('proved', 'unresolved'):
         with ifa_index.recorded_sides() as sides:
@@ -110,6 +119,14 @@ def test_formulation_assembly_gate_and_full_extract_30():
                 actual = sealed.label_point({'status': 'pass', 'summary': 'ok'}, normalized, [], False, gate_rc=rc)[0]
                 _truth(spec.assembly_model(gate_rc=rc, m1_pass=True, windows=[r['ok'] for r in rows],
                     eligible=True, hard=False, breaches=[], warm=warm), actual == 'passes')
+    # A gate that exited 1 passes only through the item-side adjudication; 2 and None never complete.
+    ok = {'status': 'fail', 'summary': '1 necks'}
+    for verdict in ({'passes': True, 'excepted': [('n', ['10001'])], 'blocking': []},
+                    {'passes': False, 'excepted': [], 'blocking': ['an item outside Manhattan']}):
+        for rc in (0, 1, 2, None):
+            actual = sealed.label_point(ok, normalized, [], False, gate_rc=rc, verdict=verdict)[0] == 'passes'
+            _truth(spec.assembly_model(gate_rc=rc, m1_pass=False, windows=[True], eligible=True, hard=False,
+                breaches=[], manhattan_pass=verdict['passes']), actual)
     chain = sealed.point_chain('p', '/p', [(('NY',), '/f')], '/spec', '/full', None, dict(sealed.CAPS))
     command = next(c for s, c, _, _ in chain if s == 'score')
     assert command[-2:] == ['--extract', '/full']

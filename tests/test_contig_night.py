@@ -168,8 +168,93 @@ def test_window_verdict_uses_the_unrounded_mass_not_the_rounded_dollars():
             "C": {"m_rel": 800.0, "usd_m": 1001.6, "window": "in"},
             "D": {"m_rel": 900.0, "usd_m": 1126.8, "window": "over"}}          # the recorded verdict is kept
     assert ifa_index.window_verdict(dist) == (["B", "D"], ["A"])
-    edge = {"E": {"m_rel": 1000.0 / rate, "usd_m": 1000.0}, "F": {"m_rel": 1437.5 / rate, "usd_m": 1437.5}}
-    assert ifa_index.window_verdict(edge) == ([], [])                          # the edges, in whole dollars, are in
+
+
+def test_window_verdict_rejects_a_sub_dollar_breach_and_keeps_the_edges():
+    rate = ifa_index.RATE
+    under = {"U": {"m_rel": 999_999_999.75 / 1e6 / rate, "window": "in"}}      # $999,999,999.75: rounds up to the floor
+    over = {"O": {"m_rel": 1_437_500_000.25 / 1e6 / rate, "window": "in"}}     # $1,437,500,000.25
+    assert round(under["U"]["m_rel"] * rate * 1e6) == 1_000_000_000 and round(over["O"]["m_rel"] * rate * 1e6) == 1_437_500_000
+    assert ifa_index.window_verdict(under) == ([], ["U"])
+    assert ifa_index.window_verdict(over) == (["O"], [])
+    ifa_index.RATE = 1.0                  # a rate with exact products: m_rel 1000 and 1437.5 are $1,000M and $1,437.5M
+    try:
+        edge = {"E": {"m_rel": 1000.0}, "F": {"m_rel": 1437.5}}
+        assert ifa_index.window_verdict(edge) == ([], [])                      # the edges are in
+    finally:
+        ifa_index.RATE = rate
+
+
+def _ledger(rows):
+    return [{"zip_code": z, "current_channel": f, "district": d} for z, f, d in rows]
+
+
+def _mass_extract() -> data.Extract:
+    return data.Extract(("ifa", "wh"), ["10001", "10002", "10002", "20001"], ["ifa", "ifa", "wh", "ifa"],
+                        [1.5, 2.25, 9.0, 4.0], [{}] * 4, [0.0] * 4)
+
+
+def test_current_masses_join_the_ledger_to_the_extract_and_refuse_a_cell_it_lacks():
+    ext = _mass_extract()
+    ledger = _ledger([("10001", "ifa", "IFA_01"), ("10002", "ifa", "IFA_01"), ("20001", "ifa", "IFA_02"),
+                      ("10002", "wh", "")])                                    # an unassigned cell holds no mass
+    assert ifa_index.current_masses(ledger, ext) == {"IFA_01": 3.75, "IFA_02": 4.0}
+    try:
+        ifa_index.current_masses(_ledger([("30001", "ifa", "IFA_01")]), ext)
+    except ValueError as e:
+        assert "30001/ifa" in str(e)
+    else:
+        raise AssertionError("a ledger cell with no extract mass was accepted")
+
+
+def test_saved_district_masses_that_disagree_with_current_ownership_are_rejected():
+    saved = {"IFA_01": {"m_rel": 3.75, "window": "in"}, "IFA_02": {"m_rel": 4.0, "window": "in"}}
+    got = ifa_index.checked_districts(saved, {"IFA_01": 3.75 * (1 + 1e-12), "IFA_02": 4.0})
+    assert got["IFA_01"]["m_rel"] == 3.75 * (1 + 1e-12) and got["IFA_02"]["window"] == "in"
+    for now in ({"IFA_01": 3.75, "IFA_02": 4.0 + 1e-3},                         # ownership moved a ZCTA's mass
+                {"IFA_01": 3.75},                                               # a district the ledger lacks
+                {"IFA_01": 3.75, "IFA_02": 4.0, "IFA_03": 1.0}):                # a district run.json lacks
+        try:
+            ifa_index.checked_districts(saved, now)
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted stale saved masses against {now}")
+
+
+def test_load_judges_the_window_on_the_current_ledger_not_on_run_json():
+    ext = data.Extract(("ifa",), ["10001", "10002"], ["ifa", "ifa"], [800.0, 1.0], [{}, {}], [0.0, 0.0])
+    real = (ifa_index.check_gate, ifa_index.manhattan_zips)
+    ifa_index.check_gate = lambda: types.SimpleNamespace(m1=lambda d, g=None: {
+        "check": types.SimpleNamespace(status="pass", summary="ok", items=[]), "diagnostic": None})
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            root, base = os.path.join(tmp, "root"), os.path.join(tmp, "full.json.gz")
+            data.write(ext, base)
+            d = os.path.join(root, "K48")
+            os.makedirs(d)
+            cols = "zip_code,current_channel,state,district\n"
+            open(os.path.join(d, "districts.csv"), "w").write("district,district_name\nIFA_01,one\n")
+            open(os.path.join(d, "manifest.json"), "w").write("{}")
+
+            def folder(rows, saved_m):
+                open(os.path.join(d, "ledger.csv"), "w").write(cols + "".join(f"{z},ifa,NY,{j}\n" for z, j in rows))
+                json.dump({"districts": {"IFA_01": {"m_rel": saved_m, "usd_m": saved_m * ifa_index.RATE,
+                                                    "window": "in"}}}, open(os.path.join(d, "run.json"), "w"))
+
+            folder([("10001", "IFA_01"), ("10002", "IFA_01")], 801.0)            # 801 m_rel = $1,002.8M: in
+            r = ifa_index.load(root, 48, frozenset(), extract=base)
+            assert r["over"] == [] and r["under"] == [] and r["in"] == 1
+            folder([("10001", "IFA_01")], 801.0)                                 # ZIP 10002 left: $1,001.6M, run.json stale
+            try:
+                ifa_index.load(root, 48, frozenset(), extract=base)
+            except ValueError as e:
+                assert "differs from the ledger" in str(e)
+            else:
+                raise AssertionError("a stale run.json mass kept the pass")
+            folder([("10001", "IFA_01")], 800.0)                                 # run.json agrees: $1,001.6M, in
+            assert ifa_index.load(root, 48, frozenset(), extract=base)["in"] == 1
+    finally:
+        ifa_index.check_gate, ifa_index.manhattan_zips = real
 
 
 # ------------------------------------------------------------------------------ C7, C8: warm.py

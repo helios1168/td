@@ -1529,7 +1529,7 @@ routing/mass audit. The index now runs the gate fresh, records its actual neck/p
 and excepts an item only if it is a proved neck or detached piece whose side intersects
 $H=\{z:\operatorname{primaryCounty}(z)=36061\}$. This replaces the district-name waiver;
 it does not change the raw F9 gate. Entry:
-`tools/exp/contig/ifa_index_night.py:100`
+`tools/exp/contig/ifa_index_night.py:107`
 `def m1_verdict(status: str, summary: str, items: list, sides: dict, manhattan, diagnostic=None) -> dict:`.
 Unresolved necks, coverage/ownership items, unverified status, diagnostics and unexplained
 failure block acceptance. Informational mass-neck items are ignored.
@@ -1549,21 +1549,25 @@ found every neck. Entry: `td/formulation/certificates.py:12`
 `def build_model(formulation, predicates):`. Each builder returns its own named model.
 
 F9.I's predicates are verified status, nondiagnostic input, explained failure, admissibility
-of every noninformational item, and every district's window. With recorded mass $m_j$, fixed
-IFA rate $r=1.2519681558$ million dollars per mass unit, and recorded window flag $w_j$,
-the implemented window predicate is
+of every noninformational item, matching mass provenance, and every district's window. With
+current mass $m_j$ (the folder's ledger joined to the full extract), fixed IFA rate
+$r=1.2519681558$ million dollars per mass unit, and recorded window flag $w_j$, the
+implemented window predicate is exact in real dollars:
 
 $$
-10^9\le\operatorname{round}(10^6rm_j)\le1.4375\,10^9,
+10^9\le 10^6rm_j\le1.4375\,10^9,
 \qquad w_j\notin\{\text{under},\text{over}\}.
 $$
 
-Entry: `tools/exp/contig/ifa_index_night.py:128`
-`        usd = round(v["m_rel"] * RATE * 1e6)`.
-This is whole-dollar rounding, not exact real-dollar feasibility; sub-dollar boundary
-breaches can be accepted. The mass is read from `run.json`, not recomputed by the index.
-Thus the certificate requires matching ledger/mass provenance; an index pass alone cannot
-establish that provenance. No numerical tolerance is added to F0 here.
+Entry: `tools/exp/contig/ifa_index_night.py:135`
+`        usd = v["m_rel"] * RATE * 1e6`.
+There is no rounding: a sub-dollar breach (for example \$999,999,999.75) is under the floor.
+The index does not trust `run.json`'s saved mass: `current_masses` sums the extract's $m_{zf}$
+over the ledger's cells $(z,f)$ of each district, `checked_districts` raises when the district
+sets differ or a saved mass is off the current one by more than relative $10^{-9}$, and a
+ledger cell with no extract mass raises. The predicate "matching mass provenance" is that
+check passing; a stale in-window `run.json` cannot keep a pass after an ownership change.
+No numerical tolerance is added to F0 here.
 `tests/test_formulation_certificates.py` numerically checks the spec against the production
 gate/side recorder and verdict on 30-vertex maps, including Manhattan and non-Manhattan
 pieces, coverage failure, unresolved necks, diagnostics and window breaches. It compares
@@ -1657,7 +1661,7 @@ extract's outside-channel cells; final scoring uses the full dollar extract (§1
 Entry: `tools/exp/contig/warm.py:103`
 `def source_extract(main_dir: str, pid: str, run_name: str, full: str) -> str:`.
 F11.W's acceptance specification is F11.R's conjunction below, since it invokes the same
-driver; it does not import the IFA index's Manhattan-item exception.
+driver, including the Manhattan item-side exception (§11.3).
 `final_undrawn` reads the source count, not final ZIP-by-ZIP provenance:
 `tools/exp/contig/warm.py:116`
 `    return {c: v["undrawn_zctas"] for c, v in sorted(ch.items()) if v.get("undrawn_zctas")}`.
@@ -1677,7 +1681,7 @@ and each regional support belongs to the national family. Equal relative bands a
 different regional means do not satisfy that premise. The implemented driver changes
 parameters and uses F2/F4/repair; it has no national optimum certificate.
 
-Entry: `tools/exp/contig/sealed.py:387`
+Entry: `tools/exp/contig/sealed.py:390`
 `def region_plan(sp, states, ks: dict, cells: dict, rule: str, window_band: bool = False,`.
 Independent channel partitions are supported; equal-or-disjoint state sets are **not**
 a driver requirement. When they are not aligned, combine cells using their designated
@@ -1688,7 +1692,7 @@ $$
 \qquad r=\operatorname{source}(\rho(z,f),s(z)).
 $$
 
-Entry: `tools/exp/contig/sealed.py:656`
+Entry: `tools/exp/contig/sealed.py:659`
 `def combine_point(runs: list, folders: dict, out: str, spec_path: str, extract_path: str) -> dict:`.
 `merge.py` alone still requires ZIP-disjoint sources. The strict driver accepts group
 statuses `optimal`/`connected`; its label “no connected drawing” also covers unknown/time
@@ -1696,21 +1700,28 @@ limits and is not an infeasibility proof. The historical sealed runs did not tes
 with window bands; blaming symmetric bands alone was an inference, not a controlled result.
 Optional hard shape-limit files are experimental restrictions, not F0 mandates.
 
-**Final label certificate (F11.R/W).** A pass now requires successful gate exit as well as
-raw M1 pass, every scorer dollar row passing, scorer eligibility, and no hard-shape breach.
-These are $P$ in §9.1's conjunction. Missing gate completion is failure, not success; a
-saved passing `m1.json` cannot override nonzero exit. Entry:
-`tools/exp/contig/sealed.py:891`
+**Final label certificate (F11.R/W).** A pass requires a completed exact gate, M1 acceptance,
+every scorer dollar row passing, scorer eligibility, and no hard-shape breach. M1 acceptance
+is the raw pass (gate exit 0) or, for a gate that exited 1, the shared item-side adjudication
+of §9.1 (`manhattan_verdict` re-runs the gate in-process and applies `m1_verdict`): every item
+must be a proved neck or detached piece whose side holds a primary-county-36061 ZCTA, and an
+unresolved neck, any other item, an unverified status, a diagnostic folder or a re-run that
+raises still vetoes. These are $P$ in §9.1's conjunction. Missing gate completion (no exit code,
+or a code other than 0 or 1) is failure, not success; a saved passing `m1.json` cannot override
+a nonzero exit. Entry:
+`tools/exp/contig/sealed.py:911`
 `def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),`.
 The score command now supplies the full extract, not the CONUS-cut merged extract, for
 $D_j=\sum_{(z,f):\lambda(z,f)=j}r_fm_{zf}$ with whole-extract $r_f$.
-Entry: `tools/exp/contig/sealed.py:612` `def score_cmd(folder: str, extract: str) -> list:`.
+Entry: `tools/exp/contig/sealed.py:615` `def score_cmd(folder: str, extract: str) -> list:`.
 Scorer window comparisons themselves round to whole dollars; this is numerical
-implementation behavior, not an F0 waiver. These labels still require **raw** M1 pass,
-so they can reject an authorized Manhattan-excepted map that F9.I accepts.
+implementation behavior, not an F0 waiver. The labels and F9.I now accept the same
+Manhattan-excepted maps. The sealed cut extracts carry no sales data
+(`state_extract.strip_sales`); `merge.py`'s merged extracts and `dollarize.py`'s dollar
+extracts are written by other modules and are not covered here.
 The 30-vertex conformance test calls the production dollar gate and label function,
-including a district below its floor and missing/nonzero gate exits, and checks the
-full-extract argument in the production command chain.
+including a district below its floor, missing/nonzero gate exits and a Manhattan-only
+failed gate, and checks the full-extract argument in the production command chain.
 
 For arithmetic screening only, a channel without conditional caps needs
 
@@ -1905,8 +1916,8 @@ and §18 branch checks are incorporated above, not reissued as new decisions. In
    the later #112/#134/#140 record, while §§3–12 describe code. The scorer still ranks
    splits first (`tools/looks/score.py:550`
    `    return (s["splits"], s["defects"], s["largest_extent_km"], s["states_per_district"], s["worst_dev"],`).
-   No `PROBLEM.md` edit is made. Manhattan is not implemented in the raw gate; F9.I now
-   applies item-side exceptions in the IFA index only, never an all-district waiver. F0's numerical shape/balance functions remain owner inputs, and
+   No `PROBLEM.md` edit is made. Manhattan is not implemented in the raw gate; the IFA index and
+   the sealed/warm labels apply the same item-side exceptions, never an all-district waiver. F0's numerical shape/balance functions remain owner inputs, and
    the Manhattan-neck identification needs owner confirmation; [F0.tex](F0.tex) states the
    supervisor's reading explicitly. The detached-piece ruling of 2026-10-15 is encoded in
    the F0 spec, not in the production gate.

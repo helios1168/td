@@ -76,7 +76,8 @@ to `<stage>.log` (trap 15; a hung HiGHS, as NY+NJ at K 7 on 2026-10-13, is kille
 of `tools/looks/study.py` (stage `shape`, `sealed.py shape`: a child killed at its cap or the
 `--hours` stop; every district's row in `shape-districts.json` and `.csv` beside the merged ledger,
 the channel summary and the limit breaches in `shape.json`).  **Labels**: `fails M1` (the gap-width
-verdict of `m1.json`), else `outside band` (a district outside its channel's dollar window,
+verdict of `m1.json`, or a gate that exited other than 0; a gate that exited 1 is re-run in-process and
+passes when every item it names is Manhattan's, owner 2026-10-14, td#140: `manhattan_verdict`), else `outside band` (a district outside its channel's dollar window,
 `dollars.csv`), else `ineligible` (`score.txt`'s `eligible: no` with its reasons, such as a main
 map K outside the allowed range), else `passes`; `fails shape` instead when the shape limits file
 says `"hard": true` and a district breaches one (a missing or non-finite value of a hard-limited measure is an `error`); `no connected drawing` (a run whose drawing failed as above, with no `k_alt` that drew),
@@ -130,6 +131,8 @@ def _load(name: str, path: str):
 
 
 overnight = _load("contig_overnight", os.path.join(HERE, "overnight.py"))
+state_extract = _load("contig_state_extract", os.path.join(HERE, "state_extract.py"))
+ifa_index = _load("contig_ifa_index_night", os.path.join(HERE, "ifa_index_night.py"))
 score = overnight.score
 child, Grid, schedule, fit_delta, Stop = (overnight.child, overnight.Grid, overnight.schedule,
                                           overnight.fit_delta, overnight.Stop)
@@ -446,16 +449,16 @@ def cut_extract(src: str, dst: str, cells, state_of: dict) -> str:
     `cells` (`run_cells`: the planning channel that owns a cell is the state's, not the fine
     channel's), written atomically; a ZCTA with no state in `state_of` is judged by its fine channel
     alone (`td.spec.build` places only the vertex set).  A channel whose cells are all gone is
-    dropped by the spec build."""
+    dropped by the spec build.  No sales data goes into the cut (`state_extract.strip_sales`)."""
     ext = data.load(src)
     fine = {f for _, f in cells}
     rows = [i for i, (z, f) in enumerate(zip(ext.z, ext.channel))
             if ((state_of[z], f) in cells if z in state_of else f in fine)]
     kept = {ext.channel[i] for i in rows}
-    cut = dataclasses.replace(
+    cut = state_extract.strip_sales(dataclasses.replace(
         ext, channels=tuple(f for f in ext.channels if f in kept), z=[ext.z[i] for i in rows],
         channel=[ext.channel[i] for i in rows], m_rel=[ext.m_rel[i] for i in rows],
-        share=[ext.share[i] for i in rows], share_free=[ext.share_free[i] for i in rows])
+        share=[ext.share[i] for i in rows], share_free=[ext.share_free[i] for i in rows]))
     data.write(cut, dst + ".tmp")
     os.replace(dst + ".tmp", dst)
     return dst
@@ -888,17 +891,41 @@ def cmd_shape(a) -> int:
 
 
 # ------------------------------------------------------------------------------ labels
+def manhattan_verdict(folder: str, gate_rc: int | None) -> dict | None:
+    """The shared item-side adjudication (`ifa_index_night.m1_verdict`, owner 2026-10-14, td#140) of the exact
+    gate on `folder`, re-run in-process so the sides are the ones the gate judged; None unless the gate
+    exited 1, the one code a completed gate gives to a failed M1 (0 passed outright, anything else did not
+    complete).  A re-run that raises is a blocking verdict, never an exception."""
+    if gate_rc != 1:
+        return None
+    try:
+        with ifa_index.recorded_sides() as sides:
+            gate = ifa_index.check_gate().m1(folder)
+        chk = gate["check"]
+        return ifa_index.m1_verdict(chk.status, chk.summary, chk.items, sides, ifa_index.manhattan_zips(),
+                                    gate["diagnostic"])
+    except Exception as e:     # the gate exits 1 on a crash too; a gate that cannot be re-run adjudicates nothing
+        return {"passes": False, "excepted": [], "blocking": [f"gate re-run failed: {type(e).__name__}: {e}"]}
+
+
 def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),
-                gate_rc: int | None = 0, gate_tail: str = "") -> tuple:
+                gate_rc: int | None = 0, gate_tail: str = "", verdict: dict | None = None) -> tuple:
     """(label, reason): `fails M1` on the gap-width verdict of `m1.json` or when the gate stage
     (`tools/mandates/check.py`, exact, gap width on) exited other than 0 (`gate_rc`: its nonzero code is a failed
     M1 or a diagnostic folder, and no `m1.json` makes up for it), else `outside band` when a
     district of `dollars.csv` is outside its window, else `ineligible` with the scorer's reasons
     (`eligible`, `why` of `overnight.read_score`: the main K outside its range, a failed audit check),
-    else `fails shape` for a breach under a hard limits file, else `passes`."""
-    if gate_rc != 0:
+    else `fails shape` for a breach under a hard limits file, else `passes`.  The one waiver is the Manhattan
+    exception (owner, 2026-10-14, td#140): with a `verdict` (`manhattan_verdict`, for a gate that exited 1)
+    that passes, the gate's failure and `m1.json`'s are waived; every item outside the exception, an
+    unresolved neck, a diagnostic folder and an unverified M1 still fail M1 (`verdict["blocking"]`)."""
+    if verdict is not None and gate_rc == 1:
+        if not verdict["passes"]:
+            return "fails M1", (f"the gate (check.py) exited 1" + (f": {gate_tail}" if gate_tail else "")
+                                + f"; {len(verdict['blocking'])} items outside the Manhattan exception, first {verdict['blocking'][0]}")
+    elif gate_rc != 0:
         return "fails M1", f"the gate (check.py) exited {gate_rc}" + (f": {gate_tail}" if gate_tail else "")
-    if m1["status"] != "pass":
+    elif m1["status"] != "pass":
         return "fails M1", f"M1 across coverage gaps: {m1['status']}, {m1['summary']}"
     bad = [r for r in rows if not r["ok"]]
     if bad:
@@ -1230,8 +1257,9 @@ class Driver(overnight.Runner):
             raise Stop("stopped" if info["stop"] == "cap" else "error",
                        f"shape measures failed under hard limits: {shape['error']}")
         overnight._write_json(os.path.join(merged, "shape.json"), shape)
+        verdict = manhattan_verdict(merged, gate_rc)
         label, reason = label_point(m1["gap_width"], rows, shape["breaches"], self.limits["hard"], eligible, why,
-                                   gate_rc, overnight._tail(os.path.join(pdir, "gate.log")))
+                                   gate_rc, overnight._tail(os.path.join(pdir, "gate.log")), verdict)
         looks = overnight.read_looks(os.path.join(merged, "score.txt"))
         bands = {}
         for c in sorted({r["channel"] for r in rows}):
@@ -1240,6 +1268,7 @@ class Driver(overnight.Runner):
                         "min_m": min(us, default=None), "max_m": max(us, default=None),
                         "avg_m": math.fsum(us) / len(us) if us else None}
         summary = {"m1_gap_width": m1["gap_width"]["status"], "m1_strict": m1["strict"]["status"],
+                   "m1_manhattan_excepted": [i for i, _ in verdict["excepted"]] if verdict else [],
                    "bands": bands, "splits": looks and looks["splits"], "shape": shape["summary"],
                    "shape_error": shape["error"], "shape_breaches": len(shape["breaches"]),
                    "shape_hard": self.limits["hard"]}

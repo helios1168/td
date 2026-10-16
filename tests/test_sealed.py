@@ -1012,6 +1012,40 @@ def test_a_gate_stage_that_exits_nonzero_vetoes_a_pass_whatever_m1_json_says():
     assert sealed.label_point(ok, rows, [], False, gate_rc=None)[0] == "fails M1"       # a gate that never reported
 
 
+def test_a_manhattan_only_failed_gate_passes_the_label_and_every_other_item_still_vetoes():
+    ok, bad = {"status": "pass", "summary": "ok"}, {"status": "fail", "summary": "1 necks"}
+    rows = [{"district": "W_01", "channel": "WIFI", "usd": 900.0, "lo": 850.0, "hi": 1150.0, "cap": None, "ok": True}]
+    manhattan = {"passes": True, "excepted": [("a neck in Manhattan", ["10001"])], "blocking": []}
+    assert sealed.label_point(bad, rows, [], False, gate_rc=1, verdict=manhattan) == ("passes", "")
+    other = {"passes": False, "excepted": [("a Manhattan neck", ["10001"])], "blocking": ["IFA/IFA_01: neck of 3 ZIPs"]}
+    label, why = sealed.label_point(bad, rows, [], False, gate_rc=1, gate_tail="x", verdict=other)
+    assert label == "fails M1" and "neck of 3 ZIPs" in why and "exited 1" in why
+    assert sealed.label_point(bad, rows, [], False, gate_rc=2, verdict=manhattan)[0] == "fails M1"    # not a completed gate
+    assert sealed.label_point(bad, rows, [], False, gate_rc=None, verdict=manhattan)[0] == "fails M1"
+    assert sealed.label_point(bad, rows + [dict(rows[0], ok=False, usd=800.0)], [], False, gate_rc=1,
+                              verdict=manhattan)[0] == "outside band"                                 # the band still decides
+    assert sealed.label_point(bad, rows, [], False, gate_rc=1)[0] == "fails M1"                       # no verdict: raw M1
+    assert sealed.manhattan_verdict("/nowhere", 0) is None and sealed.manhattan_verdict("/nowhere", 2) is None
+    crash = sealed.manhattan_verdict(os.path.join(tempfile.gettempdir(), "no-such-gate-folder"), 1)
+    assert crash["passes"] is False and "gate re-run failed" in crash["blocking"][0]                 # a crash is a veto
+
+
+def test_the_merge_waives_a_manhattan_only_failed_gate_and_vetoes_the_rest():
+    real = sealed.manhattan_verdict
+    try:
+        for verdict, want in (({"passes": True, "excepted": [("n", ["10001"])], "blocking": []}, "passes"),
+                              ({"passes": False, "excepted": [], "blocking": ["a neck without Manhattan"]}, "fails M1")):
+            sealed.manhattan_verdict = lambda folder, rc, v=verdict: v if rc == 1 else None
+            with tempfile.TemporaryDirectory() as tmp:
+                drv, pt = _merge_driver(tmp, rcs={"gate": 1})
+                _merged_folder(tmp, "toy-pt", shape_rows=[])
+                label, reason, final, extra = drv._merge(pt)
+                assert label == want, (label, reason)
+                assert extra["summary"]["m1_manhattan_excepted"] == (["n"] if want == "passes" else [])
+    finally:
+        sealed.manhattan_verdict = real
+
+
 def test_every_sealed_scoring_command_carries_the_full_dollar_extract_and_a_floor_district_stays_outside():
     extract = "/hub/instance_descaled_usd.json.gz"
     cmd = sealed.score_cmd("/m", extract)
@@ -1247,7 +1281,8 @@ def test_a_run_of_some_channels_reads_an_extract_cut_to_their_fine_channels():
         sp = tdspec.load(_toy_file(tmp))
         src = os.path.join(tmp, "toy-extract.json.gz")
         ext = data.Extract(("national_chase", "wh"), ["90001", "90001", "75001"], ["national_chase", "wh", "wh"],
-                           [1.0, 2.0, 3.0], [{}, {}, {}], [0.0, 0.0, 0.0], {}, {"note": "kept"})
+                           [1.0, 2.0, 3.0], [{"R1": 0.5}, {"R2": 1.0}, {"R1": 0.25}], [0.1, 0.2, 0.3],
+                           {"R1": "F1", "R2": "F2"}, {"note": "kept"})
         data.write(ext, src)
         plan = sealed.region_plan(sp, ("CA", "TX"), {"national": 2}, CELLS, "base")
         assert list(plan["channels"]) == ["national"] and plan["outside"] == ["WIFI"] and plan["absent"] == []
@@ -1266,6 +1301,9 @@ def test_a_run_of_some_channels_reads_an_extract_cut_to_their_fine_channels():
         cut = data.load(path)
         assert cut.channels == ("national_chase",) and cut.z == ["90001"] and cut.channel == ["national_chase"]
         assert cut.meta["note"] == "kept" and data.load(src).z == ["90001", "90001", "75001"]       # the source is untouched
+        assert cut.m_rel == [1.0]                                                                   # the model's column stays
+        assert cut.share == [{}] and cut.share_free == [0.0] and cut.firm == {}                    # no sales data in the cut
+        assert data.load(src).firm and any(data.load(src).share)                                    # the source carries it
 
 
 CT_TOY = """[scenario]

@@ -26,17 +26,19 @@ def build_model(formulation, predicates):
 
 
 def ifa_model(*, items, manhattan, verified=True, diagnostic=False, unexplained_failure=False,
-              districts=(), rate=1.2519681558):
+              districts=(), rate=1.2519681558, mass_provenance=True):
     """items: (kind, side) where kind is piece/proved/unresolved/other/mass.
 
-    Monetary comparison follows the index's whole-dollar rounding, not exact
-    real-dollar inequalities. districts: (mass, recorded_window).
+    Monetary comparison is exact real dollars, edges included (no rounding: $999,999,999.75
+    is under the $1B floor). districts: (current mass, recorded_window); mass_provenance is
+    the index's check that the saved masses match the ledger joined to the full extract.
     """
-    q = dict(verified=verified, nondiagnostic=not diagnostic, explained=not unexplained_failure)
+    q = dict(verified=verified, nondiagnostic=not diagnostic, explained=not unexplained_failure,
+             mass_provenance=bool(mass_provenance))
     for i, (kind, side) in enumerate(items):
         q[f'item_{i}'] = kind == 'mass' or (kind in ('piece', 'proved') and bool(set(side) & set(manhattan)))
     for j, (mass, window) in enumerate(districts):
-        dollars = round(mass * rate * 1e6)
+        dollars = mass * rate * 1e6
         q[f'window_{j}'] = 1_000_000_000 <= dollars <= 1_437_500_000 and window not in ('under', 'over')
     return build_model('F9.I', q)
 
@@ -53,9 +55,12 @@ def glue_model(*, zero_path, donor_nonempty, piece_containment, neck_containment
         recipient_neck_count=recipient_neck_count))
 
 
-def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=False):
-    return build_model('F11.W' if warm else 'F11.R', dict(gate_exit=gate_rc == 0,
-        m1=m1_pass, windows=all(windows), eligible=eligible, shape=not hard or not breaches))
+def assembly_model(*, gate_rc, m1_pass, windows, eligible, hard, breaches, warm=False, manhattan_pass=False):
+    """The final label: a completed gate (exit 0, or 1 for a failed M1), M1 accepted (raw pass on exit 0, or on
+    exit 1 the item-side Manhattan adjudication `manhattan_pass`), every window, eligibility, shape."""
+    return build_model('F11.W' if warm else 'F11.R', dict(gate_completed=gate_rc in (0, 1),
+        m1=(gate_rc == 0 and bool(m1_pass)) or (gate_rc == 1 and bool(manhattan_pass)),
+        windows=all(windows), eligible=eligible, shape=not hard or not breaches))
 
 
 def provenance_model(*, source, campaign_source, same_metadata, same_settings, instance_matches):

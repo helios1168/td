@@ -4,8 +4,8 @@
 
 Per K: the M1 verdict (a fresh run of the gate, `tools/mandates/check.py` `m1`, on the folder's ledger:
 every neck, piece, coverage and ownership item, and "unverified"), districts in, under and over the
-window (exact: the unrounded m_rel at the IFA rate against $1,000-1,437.5M in whole dollars, and run.json's
-own `window` verdict; the rounded `usd_m` is for display only), the worst district's $, the split states
+window (exact: the unrounded m_rel at the IFA rate against $1,000-1,437.5M, edges included, and run.json's
+own `window` verdict; the rounded `usd_m` decides nothing), the worst district's $, the split states
 (a state whose ledger rows sit in 2+ districts), the mean $ per district and the page links.
 
 A K is `passes` when the gate's verdict is clean except for the Manhattan items and every district is in the
@@ -15,6 +15,11 @@ neck or piece it names contains a ZCTA whose primary county is 36061 (`reference
 as `docs/F0.tex` defines the Manhattan set), and the index lists each excepted item.  Any other item (a neck
 or piece without Manhattan, an unresolved neck, a coverage or ownership item), a verdict of
 `unverified` or a diagnostic folder blocks the pass.
+
+The district masses are the current ones: the folder's ledger (`ledger.csv`, ZCTA and fine channel to
+district) joined to the full extract (`$TD_REPO/instance_descaled.json.gz`), never run.json's saved
+`m_rel`.  A saved mass that disagrees with them, a ledger cell with no extract mass or a district set
+that differs from run.json's raises: a connected ownership change cannot keep a pass on stale masses.
 """
 from __future__ import annotations
 
@@ -23,6 +28,7 @@ import contextlib
 import csv
 import importlib.util
 import json
+import math
 import os
 import re
 import sys
@@ -32,10 +38,11 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from td import audit, geo  # noqa: E402
+from td import audit, data, geo  # noqa: E402
 
 LO, HI = 1000.0, 1437.5         # the IFA window, $M per district
 RATE = 1.2519681558             # $M per m_rel (merge.py's DOLLARS_PER_M_REL, the IFA rate)
+MASS_RTOL = 1e-9                # saved vs recomputed district mass (summation order only)
 MANHATTAN_COUNTY = "36061"
 PIECE = re.compile(r"^(\S+)/(\S+): detached piece of (\d+) ZIPs \((\w+)\.\.\.\)")
 
@@ -118,14 +125,14 @@ def m1_verdict(status: str, summary: str, items: list, sides: dict, manhattan, d
 
 
 def window_verdict(dist: dict) -> tuple:
-    """(over, under) district lists, exact: the unrounded m_rel in dollars (`RATE`) against the owner's window
-    in whole dollars, edges included.  A district run.json records as outside its window (`window`, merge.py's
-    check against the m_rel bounds) is outside here too; the rounded `usd_m` and the rounded m_rel bounds
-    decide nothing."""
-    lo, hi = round(LO * 1e6), round(HI * 1e6)
+    """(over, under) district lists, exact: the unrounded m_rel in dollars (`RATE`) against the owner's window,
+    edges included, so a breach of any size is outside.  A district run.json records as outside its window
+    (`window`, merge.py's check against the m_rel bounds) is outside here too; the rounded `usd_m` and the
+    rounded m_rel bounds decide nothing."""
+    lo, hi = LO * 1e6, HI * 1e6
     over, under = [], []
     for j, v in sorted(dist.items()):
-        usd = round(v["m_rel"] * RATE * 1e6)
+        usd = v["m_rel"] * RATE * 1e6
         got = "under" if usd < lo else "over" if usd > hi else v.get("window", "in")
         if got == "over":
             over.append(j)
@@ -134,13 +141,45 @@ def window_verdict(dist: dict) -> tuple:
     return over, under
 
 
-def load(root: str, k: int, manhattan=None, g=None) -> dict:
+def current_masses(ledger: list, ext: data.Extract) -> dict:
+    """{district: m_rel} of the ledger's cells (ZCTA, fine channel) read from `ext`; a cell the extract does
+    not hold raises."""
+    mass = {(z, f): m for z, f, m in zip(ext.z, ext.channel, ext.m_rel)}
+    parts = collections.defaultdict(list)
+    for r in ledger:
+        if r["district"]:
+            key = (r["zip_code"], r["current_channel"])
+            if key not in mass:
+                raise ValueError(f"ledger cell {key[0]}/{key[1]} ({r['district']}) has no mass in the extract")
+            parts[r["district"]].append(mass[key])
+    return {j: math.fsum(ms) for j, ms in parts.items()}
+
+
+def checked_districts(saved: dict, now: dict) -> dict:
+    """run.json's `districts` with `m_rel` replaced by `now`, the masses of the current ledger; raises when
+    the district sets differ or a saved `m_rel` is off the current one by more than `MASS_RTOL`."""
+    if set(saved) != set(now):
+        raise ValueError(f"run.json districts and the ledger's differ: only in run.json "
+                         f"{sorted(set(saved) - set(now))}, only in the ledger {sorted(set(now) - set(saved))}")
+    off = sorted(j for j in saved if not math.isclose(saved[j]["m_rel"], now[j], rel_tol=MASS_RTOL, abs_tol=1e-12))
+    if off:
+        raise ValueError(f"run.json m_rel differs from the ledger joined to the extract in {len(off)} districts, "
+                         f"first {off[0]} (saved {saved[off[0]]['m_rel']!r}, current {now[off[0]]!r})")
+    return {j: {**v, "m_rel": now[j]} for j, v in saved.items()}
+
+
+def full_extract() -> str:
+    return os.path.join(os.environ.get("TD_REPO", ROOT), "instance_descaled.json.gz")
+
+
+def load(root: str, k: int, manhattan=None, g=None, extract=None) -> dict:
     d = os.path.join(root, f"K{k}")
     run = json.load(open(os.path.join(d, "run.json")))
-    dist = run["districts"]
     names = {r["district"]: r["district_name"] for r in csv.DictReader(open(os.path.join(d, "districts.csv")))}
+    ledger = list(csv.DictReader(open(os.path.join(d, "ledger.csv"))))
+    dist = checked_districts(run["districts"], current_masses(ledger, data.load(extract or full_extract())))
     held = collections.defaultdict(set)
-    for r in csv.DictReader(open(os.path.join(d, "ledger.csv"))):
+    for r in ledger:
         if r["district"]:
             held[r["state"]].add(r["district"])
     split = sorted(s for s, ds in held.items() if len(ds) > 1)
@@ -149,9 +188,9 @@ def load(root: str, k: int, manhattan=None, g=None) -> dict:
     chk = gate["check"]
     m1 = m1_verdict(chk.status, chk.summary, chk.items, sides,
                     manhattan_zips() if manhattan is None else manhattan, gate["diagnostic"])
-    usd = {j: v["usd_m"] for j, v in dist.items()}
-    over, under = window_verdict(dist)
     exact = {j: v["m_rel"] * RATE for j, v in dist.items()}
+    usd = dict(exact)
+    over, under = window_verdict(dist)
     worst = max(exact, key=lambda j: max(exact[j] - HI, LO - exact[j]))
     return {"k": k, "m1": m1, "m1_status": chk.status, "names": names, "split": split, "usd": usd, "worst": worst,
             "over": over, "under": under, "n": len(dist), "in": len(dist) - len(over) - len(under),
@@ -163,7 +202,7 @@ def main(argv) -> int:
     root = os.path.abspath(argv[0])
     ks = [int(x) for x in argv[1:]] or list(range(48, 55))
     out = ["# IFA K48..K54, night of 2026-10-14 (sealed root)", "",
-           "Window $1,000-1,437.5M per district (m_rel 798.74-1,148.19), judged on the unrounded mass. M1 under the",
+           "Window $1,000-1,437.5M per district (m_rel 798.74-1,148.19), judged on the unrounded mass of the current ledger. M1 under the",
            "water and empty-land gate (branch m5-studio/ifa-night), run fresh on each folder's ledger; Manhattan is",
            "the only allowed exception (owner, 2026-10-14, td#140): an item counts as Manhattan only when the neck or",
            "piece it names holds a ZCTA of county 36061, and every excepted item is listed below.",
