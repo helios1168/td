@@ -287,6 +287,56 @@ def test_an_interrupt_ends_and_reaps_the_stage_and_its_session():
             raise AssertionError(f"process {pid} of the interrupted stage is still running")
 
 
+def test_a_second_interrupt_before_the_cleanup_hold_is_installed_still_ends_the_stage_group():
+    """`child`'s cleanup after the first Ctrl-C: a second one arriving before `_end`'s hold has its handler in place
+    raises out of the hold's entry, and the cleanup retries instead of dropping the stage from LIVE unended."""
+    import _thread
+    import signal
+    sleeper = "import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); time.sleep(120)"
+    original, seen, procs = overnight.hold_sigint.__enter__, [0], []
+
+    def enter(held):
+        seen[0] += 1
+        if seen[0] == 2:            # the cleanup's hold (the first guards the Popen): the signal lands before it
+            procs.extend(overnight.LIVE)
+            os.kill(os.getpid(), signal.SIGINT)
+        return original(held)
+    overnight.hold_sigint.__enter__ = enter
+    grace = overnight.STOP_GRACE
+    overnight.STOP_GRACE = 1.0
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            def interrupt():
+                for _ in range(200):
+                    with overnight.LIVE_LOCK:
+                        if overnight.LIVE:
+                            break
+                    time.sleep(0.05)
+                _thread.interrupt_main()
+            threading.Thread(target=interrupt, daemon=True).start()
+            try:
+                overnight.child([sys.executable, "-c", sleeper], os.path.join(tmp, "s.log"), 60, time.time() + 120)
+            except KeyboardInterrupt:
+                pass
+            else:
+                raise AssertionError("the interrupt never reached the launcher")
+    finally:
+        overnight.hold_sigint.__enter__ = original
+        overnight.STOP_GRACE = grace
+        left = []
+        for p in procs:
+            if p.poll() is None:
+                left.append(p.pid)
+                try:
+                    os.killpg(p.pid, signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    pass
+            p.wait()
+    assert len(procs) == 1 and seen[0] >= 3, "the cleanup was not delivered the second interrupt and retried"
+    assert not left and not overnight.LIVE, f"the stage group {left} was left running"
+    assert not overnight._group_alive(procs[0].pid)
+
+
 def test_repeated_interrupts_during_stop_all_still_end_and_reap_every_stage_group():
     """`stop_all` is the cleanup after the first Ctrl-C: more of them while the first stage group is stopping
     (its stage ignores SIGINT, so it is killed when the grace is up) must not leave the others running."""

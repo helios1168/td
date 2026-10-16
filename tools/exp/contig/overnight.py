@@ -587,9 +587,19 @@ class hold_sigint:
 
 
 def _end(p) -> int:
-    """`_end_now` with an interrupt held until the group is signalled and reaped, then raised."""
-    with hold_sigint():
-        return _end_now(p)
+    """`_end_now` with an interrupt held until the group is signalled and reaped, then raised; one arriving before
+    the hold is in place retries it, so the group is ended however often Ctrl-C is pressed."""
+    interrupt, rc = False, None
+    while rc is None:
+        try:
+            with hold_sigint(raise_after=False) as held:
+                rc = _end_now(p)
+            interrupt = interrupt or held.hit
+        except KeyboardInterrupt:
+            interrupt = True
+    if interrupt:
+        raise KeyboardInterrupt
+    return rc
 
 
 def _end_now(p) -> int:

@@ -826,6 +826,7 @@ def test_all_repeated_interrupts_still_end_and_reap_every_child_group():
             for _ in range(4):
                 real_time.sleep(0.3)
                 os.kill(os.getpid(), signal.SIGINT)
+        left = []
         saved, grace = (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE
         bnc_run.END_GRACE = 1.5
         bnc_run.subprocess = types.SimpleNamespace(Popen=popen, DEVNULL=subprocess.DEVNULL,
@@ -846,9 +847,11 @@ def test_all_repeated_interrupts_still_end_and_reap_every_child_group():
         finally:
             (bnc_run.subprocess, bnc_run.time), bnc_run.END_GRACE = saved, grace
             for p in procs:
-                if p.poll() is None:
+                if p.poll() is None:        # the cleanup must have reaped it: kill it here, then fail below
+                    left.append(p.pid)
                     os.killpg(p.pid, signal.SIGKILL)
                     p.wait()
+        assert not left, f"the cleanup left child groups {left} running"
         assert len(procs) == 2 and not th.is_alive()
         for p, arm in zip(procs, "ab"):
             assert p.returncode is not None, "a child group's leader was never reaped"
