@@ -608,6 +608,13 @@ def combine_cmd(args_json: str, out: str, spec: str, extract: str) -> list:
             "--spec", spec, "--extract", extract]
 
 
+def score_cmd(folder: str, extract: str) -> list:
+    """`score.py` on a merged folder with the full dollar extract: the merged extract holds the CONUS cells only,
+    so its rates (the owner's total over its m_rel total) are 2% high and a district just below its floor would
+    read inside; the rates the plans' windows are in are the dollar extract's (score.py's `--extract`)."""
+    return overnight.score_cmd(folder) + ["--extract", extract]
+
+
 def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str, window: str | None,
                 caps: dict) -> list:
     """[(stage, command, cap, env)] of a point's merge, gate, score, land and shape."""
@@ -616,7 +623,7 @@ def point_chain(pid: str, pdir: str, finals: list, base_spec: str, extract: str,
     return [("merge", merge_cmd(base_spec, merged, os.path.join(pdir, "merged_extract.json.gz"), extract, sources,
                                 window), caps["merge"], GAP_ENV),
             ("gate", overnight.gate_cmd(merged), overnight.CAP_S["gate"], GAP_ENV),
-            ("score", overnight.score_cmd(merged), overnight.CAP_S["post"], GAP_ENV),
+            ("score", score_cmd(merged, extract), overnight.CAP_S["post"], GAP_ENV),
             ("land", overnight.land_cmd(merged), overnight.CAP_S["post"], None),
             ("shape", shape_cmd(merged, pid, merged), caps["shape"], None)]
 
@@ -880,11 +887,16 @@ def cmd_shape(a) -> int:
 
 
 # ------------------------------------------------------------------------------ labels
-def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=()) -> tuple:
-    """(label, reason): `fails M1` on the gap-width verdict of `m1.json`, else `outside band` when a
+def label_point(m1: dict, rows: list, breaches: list, hard: bool, eligible: bool = True, why=(),
+                gate_rc: int | None = 0, gate_tail: str = "") -> tuple:
+    """(label, reason): `fails M1` on the gap-width verdict of `m1.json` or when the gate stage
+    (`tools/mandates/check.py`, exact, gap width on) exited other than 0 (`gate_rc`: its nonzero code is a failed
+    M1 or a diagnostic folder, and no `m1.json` makes up for it), else `outside band` when a
     district of `dollars.csv` is outside its window, else `ineligible` with the scorer's reasons
     (`eligible`, `why` of `overnight.read_score`: the main K outside its range, a failed audit check),
     else `fails shape` for a breach under a hard limits file, else `passes`."""
+    if gate_rc != 0:
+        return "fails M1", f"the gate (check.py) exited {gate_rc}" + (f": {gate_tail}" if gate_tail else "")
     if m1["status"] != "pass":
         return "fails M1", f"M1 across coverage gaps: {m1['status']}, {m1['summary']}"
     bad = [r for r in rows if not r["ok"]]
@@ -1173,6 +1185,7 @@ class Driver(overnight.Runner):
                 raise Stop("stopped", f"merge killed at its cap ({cap / 60:g} min)")
             if not finished(merged):
                 raise Stop("error", f"merge.py exited {info['rc']}: {overnight._tail(os.path.join(pdir, 'merge.log'))}")
+        gate_rc = None
         for name in ("gate", "score", "land"):
             cmd, cap, env = chain[name]
             log = {"gate": os.path.join(pdir, "gate.log"), "score": os.path.join(merged, "score.txt"),
@@ -1180,6 +1193,8 @@ class Driver(overnight.Runner):
             info = self.stage(pid, name, cmd, log, cap, env)
             if info["stop"] == "cap":
                 raise Stop("stopped", f"{name} killed at its cap ({cap / 60:g} min)")
+            if name == "gate":
+                gate_rc = info["rc"]
         for f in ("m1.json", "dollars.csv", "score.txt"):
             if not os.path.exists(os.path.join(merged, f)):
                 raise Stop("error", f"score.py wrote no {f}: {overnight._tail(os.path.join(merged, 'score.txt'))}")
@@ -1214,7 +1229,8 @@ class Driver(overnight.Runner):
             raise Stop("stopped" if info["stop"] == "cap" else "error",
                        f"shape measures failed under hard limits: {shape['error']}")
         overnight._write_json(os.path.join(merged, "shape.json"), shape)
-        label, reason = label_point(m1["gap_width"], rows, shape["breaches"], self.limits["hard"], eligible, why)
+        label, reason = label_point(m1["gap_width"], rows, shape["breaches"], self.limits["hard"], eligible, why,
+                                   gate_rc, overnight._tail(os.path.join(pdir, "gate.log")))
         looks = overnight.read_looks(os.path.join(merged, "score.txt"))
         bands = {}
         for c in sorted({r["channel"] for r in rows}):

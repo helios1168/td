@@ -870,9 +870,9 @@ class _MergeStub(sealed.Driver):
     """A driver whose stages are canned except those named in `real`, which run through `overnight.child`;
     `on_merge` stands in for merge.py's output."""
 
-    def __init__(self, *a, real=(), on_merge=None, **kw):
+    def __init__(self, *a, real=(), on_merge=None, rcs=None, **kw):
         super().__init__(*a, **kw)
-        self.real, self.calls, self.on_merge = set(real), [], on_merge
+        self.real, self.calls, self.on_merge, self.rcs = set(real), [], on_merge, rcs or {}
 
     def stage(self, pid, name, cmd, log, cap, env=None):
         self.calls.append((name, cmd))
@@ -880,16 +880,16 @@ class _MergeStub(sealed.Driver):
             return super().stage(pid, name, cmd, log, cap, env)
         if name == "merge" and self.on_merge:
             self.on_merge()
-        return {"rc": 0, "stop": None, "seconds": 0.0}
+        return {"rc": self.rcs.get(name, 0), "stop": None, "seconds": 0.0}
 
 
-def _merge_driver(tmp, doc=None, caps=None, limits=None, real=(), on_merge=None):
+def _merge_driver(tmp, doc=None, caps=None, limits=None, real=(), on_merge=None, rcs=None):
     (pt,) = _validate(doc or _doc(), tmp)
     extract = os.path.join(tmp, "extract.json.gz")
     open(extract, "wb").write(b"toy")
     grid = sealed.open_state(tmp, "m5", extract, 1.0, "p", "sha", [pt])
     drv = _MergeStub(grid, tmp, "m5", extract, CELLS, {pt["id"]: pt}, caps or dict(sealed.CAPS), set(), None,
-                     limits or sealed.load_limits(None), real=real, on_merge=on_merge)
+                     limits or sealed.load_limits(None), real=real, on_merge=on_merge, rcs=rcs)
     for run in pt["runs"]:
         drv.note(pt["id"], run["name"], status="done", final=os.path.join(pt["id"], run["name"], "glue"))
     return drv, pt
@@ -942,6 +942,52 @@ def test_a_connected_in_band_map_with_total_k_47_is_labelled_ineligible_from_the
     assert sealed.label_point(bad, rows, [], False, False, why)[0] == "fails M1"          # M1 and the band come first
     assert sealed.label_point(ok, rows + [dict(rows[0], ok=False, usd=800.0)], [], False, False, why)[0] == "outside band"
     assert "ineligible" in sealed.LABELS
+
+
+def test_a_gate_stage_that_exits_nonzero_vetoes_a_pass_whatever_m1_json_says():
+    with tempfile.TemporaryDirectory() as tmp:
+        drv, pt = _merge_driver(tmp, rcs={"gate": 1})
+        _merged_folder(tmp, "toy-pt", shape_rows=[])          # m1.json, dollars.csv and score.txt all say pass
+        label, reason, final, extra = drv._merge(pt)
+        assert label == "fails M1" and "gate (check.py) exited 1" in reason
+    with tempfile.TemporaryDirectory() as tmp:               # the gate's tail goes into the reason
+        drv, pt = _merge_driver(tmp, rcs={"gate": 1})
+        _merged_folder(tmp, "toy-pt", shape_rows=[])
+        open(os.path.join(tmp, "toy-pt", "gate.log"), "w").write("x\nDIAGNOSTIC (band), not a deliverable\n")
+        assert "DIAGNOSTIC" in drv._merge(pt)[1]
+    ok, rows = {"status": "pass", "summary": "ok"}, [{"district": "W_01", "channel": "WIFI", "usd": 900.0, "lo": 850.0,
+                                                       "hi": 1150.0, "cap": None, "ok": True}]
+    assert sealed.label_point(ok, rows, [], False)[0] == "passes"
+    assert sealed.label_point(ok, rows, [], False, gate_rc=2, gate_tail="boom") == ("fails M1", "the gate (check.py) exited 2: boom")
+    assert sealed.label_point(ok, rows, [], False, gate_rc=None)[0] == "fails M1"       # a gate that never reported
+
+
+def test_every_sealed_scoring_command_carries_the_full_dollar_extract_and_a_floor_district_stays_outside():
+    extract = "/hub/instance_descaled_usd.json.gz"
+    cmd = sealed.score_cmd("/m", extract)
+    assert cmd[-2:] == ["--extract", extract] and "--dollars-csv" in cmd and cmd.count("--extract") == 1
+    chain = dict((s, c) for s, c, _, _ in sealed.point_chain("p", "/p", [(("A",), "/f")], "/spec.toml", extract, None,
+                                                             dict(sealed.CAPS)))
+    assert chain["score"] == sealed.score_cmd("/p/merged", extract) and chain["merge"][chain["merge"].index("--base-extract") + 1] == extract
+    with tempfile.TemporaryDirectory() as tmp:
+        drv, pt = _merge_driver(tmp)
+        _merged_folder(tmp, "toy-pt", shape_rows=[])
+        drv._merge(pt)
+        (score_call,) = [c for n, c in drv.calls if n == "score"]
+        assert score_call[-2:] == ["--extract", drv.extract]
+    # why: the merged extract holds fewer cells, so its rates are 2% high; a district $0.1M under its floor reads inside
+    total, d1 = sealed.score.DOLLARS["wh"] / 1e6, 849.9
+    ledger = [{"zip_code": z, "current_channel": "wh", "state": "A", "model_channel": "WH", "district": "WH_01",
+               "m_rel": str(m)} for z, m in (("a1", d1),)]
+    rates = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, whole in (("dollar", total), ("merged", total / 1.02)):
+            path = os.path.join(tmp, name + ".json.gz")
+            data.write(data.Extract(("wh",), ["a1", "a2"], ["wh", "wh"], [d1, whole - d1], [{}, {}], [0.0, 0.0]), path)
+            rates[name] = sealed.score.rates_of(path)
+    gate = lambda r: sealed.score.dollar_gate(ledger, [{"channel": "WH", "district": "WH_01"}], r)[0]
+    assert math.isclose(rates["dollar"]["wh"], 1e6) and not gate(rates["dollar"])["ok"]
+    assert gate(rates["merged"])["ok"]            # what scoring on the merged extract would have called inside
 
 
 def test_every_district_s_shape_measures_are_kept_beside_the_merged_ledger():

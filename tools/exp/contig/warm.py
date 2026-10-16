@@ -68,13 +68,6 @@ def warm_repair_cmd(src: str, out: str, plans: str, extract: str, jobs: int, npa
     return sealed._patched(cmd, "--budget", f"{budget:g}") + ["--states", ",".join(states)]
 
 
-_SCORE_CMD = overnight.score_cmd
-
-
-def _score_cmd(folder: str, extract: str) -> list:
-    return _SCORE_CMD(folder) + ["--extract", extract]
-
-
 def run_stage(drv, pid: str, name: str, cmd: list, log: str, cap: float, env=None) -> dict:
     info = drv.stage(pid, name, cmd, log, cap, env)
     print(f"[{pid}] {name}: rc {info['rc']}, stop {info['stop']}", flush=True)
@@ -103,10 +96,6 @@ def point_state(a, pt: dict, rdir: str):
     drv = sealed.Driver(grid, os.path.dirname(rdir), main["host"], extract, cells, {pid: pt}, dict(sealed.CAPS),
                         set(), None, sealed.load_limits(None), True, True)
     drv.plans = os.path.join(a.main, "_plans")
-    # the merged extract holds the CONUS cells only, so its rates (owner total over its m_rel total) are 1.02e6, not
-    # the dollar extract's 1e6, and score.py would read every district 2% high; the full extract's rates are the ones
-    # the plans' windows are in (score.py's docstring: "on a dollar extract that rate is 1e6")
-    overnight.score_cmd = lambda folder: _score_cmd(folder, extract)
     return drv, main["points"][pid]
 
 
