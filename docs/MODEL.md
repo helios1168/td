@@ -30,7 +30,7 @@ numbers so the Claim 3, S21 and S25/S26 references in code remain usable.
 | stage | ID | section | certificate domain |
 |---|---|---|---|
 | national reference | F0 | §0 | complete routed national ledger; objective evaluators still inputs |
-| support family, master and drawability | F2 | §§2–3, proofs §5 | continuous support plans; bounds only over the stated drawing domain |
+| support family, master and drawability | F2 / F2.W | §§2–3, proofs §5 | continuous support plans; bounds only over the stated drawing domain |
 | complete group / DAG / sequential draw | F4 / F4.DAG / F4.SEQ | §4 | fixed bodies, allowed owners and modeled band; P only |
 | window and neck repair | F4.W / F4.N / F4.S | §4 | window and checked districts, outside fixed; strong rows unproven |
 | single-district plan check / policy bans | F2.B / F2.C | §3.6.9 | current-M1 single-support test / no global certificate |
@@ -360,6 +360,48 @@ widened: there is no wider-δ retry, `--diag-final-delta` is capped at it, and t
 search, so the smallest-δ searches (§5 Claim 2) solve the window once and report that
 (`master.window_feasibility`, method `window`), `exact_delta` too whether or not the channel has free
 units (the window branch comes before the free-unit rejection). Without the two keys everything is as before.
+
+#### 3.6.6b F2.W — whole-unit window planning
+
+**Relation to F0: heuristic overall.** This is F2 with fixed routing, K, family and whole-unit
+ownership, followed by raw-gate support checks; it does not optimize F0 or implement its
+Manhattan exception. Its fixed-window master has the following reduced specification.
+Let $V$ be nonempty connected units of positive masses $M_v$, $\mathcal S$ the supplied
+support family, $B\subseteq\mathcal S$ the current bans, $K$ the district count and
+$[L,U]$ the fixed window. For $0<\eta\le1$ and contact caps at least one, use
+$a_{vS}=1[v\in S]$, $b_S=1[S\in B]$, binary $n_S$ and diameter weights $w_S$:
+
+$$
+\begin{aligned}
+\min\quad &\sum_{S\in\mathcal S}w_Sn_S,\\
+\sum_S n_S&=K,& \sum_S a_{vS}n_S&=1 &&(v\in V),\\
+Ln_S&\le\left(\sum_v M_va_{vS}\right)n_S\le Un_S &&&(S\in\mathcal S),\\
+n_S&\le1-b_S &&&(S\in\mathcal S).
+\end{aligned}
+$$
+
+**Reduction proof.** Whole-unit hold rows set $t_{vS}=n_S$ and $n_S\le1$; coverage
+makes each unit's contact count one. The margin is zero. Eta, count and contact caps
+are redundant under these hypotheses, as are corridor floors: a connected unit's total
+mass bounds the mass of each minimum internal path. Border rows apply only to free units.
+Thus these rows are exactly this specialization of F2, not a relaxation of its master.
+
+**Certificate.** A feasible fixed window now proceeds to support checks instead of stopping
+as `unknown delta`. Its reported $\delta_w=\max(1-L/\tau,U/\tau-1)$ is descriptive,
+not minimized or rounded up; `exact_delta` is null in every window round. Infeasibility
+certifies only this fixed family/window with its current bans; no widening follows.
+A completed zero-gap plan solve certifies the diameter optimum of this master, not a
+smallest $\delta$ or an F0 optimum. Support checks can add $n_S=0$ and repeat; an
+unknown check is not a ban. A final raw-gate pass is conditional on the modeled whole-unit
+ZIP sets, not full national ledger eligibility.
+
+Entry: `tools/exp/contig/wholeplan.py:93`
+`def loop(inst, c: str, polygon: dict, time_limit: float | None = None, max_rounds: int = 200,`.
+The window branch is `tools/exp/contig/wholeplan.py:113`
+`        window = d.method == "window"       # a window band: no δ to minimise, feasibility in the window only`.
+`td/formulation/f2w.py` independently specifies the reduced master; the 30-ZCTA conformance
+test compares its optimum and fixed feasible/infeasible points with F2, and checks the
+wholeplan window records. This contract does not change the legacy symmetric-band search.
 
 #### 3.6.6 The rounding margin μ_S (U33)
 
