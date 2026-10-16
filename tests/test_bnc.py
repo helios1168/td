@@ -249,7 +249,10 @@ def test_exported_instances_reproduce_the_runs_groups():
 def _res(arm, status, objective, gate, seconds=10.0):
     return {"instance": "S", "arm": arm, "status": status, "objective": objective, "gate": gate,
             "seconds": seconds, "gap": 0.0, "nodes": 1, "note": "", "time_limit": 60.0, "threads": 1,
-            "code_commit": "x"}
+            "code_commit": "x", "source_sha256": SRC}
+
+
+SRC = "f" * 64
 
 
 def _gate(m1="pass", in_window=True):
@@ -395,13 +398,13 @@ def test_runner_records_the_instance_and_code_it_started_from_not_what_the_solve
             solved.append(inst_.n)
             with open(path, "wb") as fh:
                 fh.write(b"re-exported during the solve")
-            export.provenance = lambda: {"code_commit": "after", "code_dirty": True}
+            export.provenance = lambda: {"code_commit": "after", "code_dirty": True, "source_sha256": "after"}
             return {"arm": arm, "status": "infeasible", "objective": None, "bound": None, "gap": None, "nodes": 0,
                     "seconds": 0.1, "note": "", "owner": None, "rounds": 0, "cuts": 0}
         saved = (bnc_run.export.instances, arms.solve, export.provenance)
         bnc_run.export.instances = lambda _d: {"S": cfg}
         arms.solve = fake_solve
-        export.provenance = lambda: {"code_commit": "before", "code_dirty": False}
+        export.provenance = lambda: {"code_commit": "before", "code_dirty": False, "source_sha256": "before"}
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 assert bnc_run.one("S", "a", a) == 0
@@ -411,7 +414,7 @@ def test_runner_records_the_instance_and_code_it_started_from_not_what_the_solve
             res = json.load(fh)
         assert solved == [inst.n], solved                   # the solve ran on the parsed original
         assert res["instance_sha256"] == before and res["instance_path"] == os.path.abspath(path), res
-        assert res["code_commit"] == "before" and res["code_dirty"] is False, res
+        assert res["code_commit"] == "before" and res["code_dirty"] is False and res["source_sha256"] == "before", res
         fresh, stale = bnc_report.split(a.out, a.instances)
         assert fresh == [] and "instance file changed" in stale[0][1], (fresh, stale)
 
@@ -544,6 +547,70 @@ def test_report_tables_only_the_campaign_of_the_newest_result():
         assert [r["arm"] for r in bnc_report.rows(d)] == ["c"]
 
 
+def test_source_fingerprint_is_the_content_of_the_sources_not_git_state_or_times():
+    def tree(d, a=b"x = 1\n", b=b"y = 2\n"):
+        for rel, body in (("td/a.py", a), ("tools/exp/bnc/b.py", b), ("tools/exp/bnc/notes.txt", b"ignored")):
+            os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
+            with open(os.path.join(d, rel), "wb") as fh:
+                fh.write(body)
+    with tempfile.TemporaryDirectory() as d1, tempfile.TemporaryDirectory() as d2, tempfile.TemporaryDirectory() as d3:
+        tree(d1)
+        tree(d2)
+        os.utime(os.path.join(d2, "td", "a.py"), (1, 1))                    # other times, same bytes
+        with open(os.path.join(d2, "tools", "exp", "bnc", "notes.txt"), "wb") as fh:
+            fh.write(b"other notes")                                         # not a source
+        tree(d3, a=b"x = 2\n")                                              # one byte of one source
+        f1, f2, f3 = (export.source_fingerprint(d) for d in (d1, d2, d3))
+        assert f1 == f2 != f3 and len(f1) == 64
+        os.rename(os.path.join(d1, "td", "a.py"), os.path.join(d1, "td", "c.py"))      # the same bytes under another name
+        assert export.source_fingerprint(d1) != f1
+    with tempfile.TemporaryDirectory() as empty:
+        try:
+            export.source_fingerprint(empty)
+        except FileNotFoundError:
+            pass
+        else:
+            raise AssertionError("fingerprinted a root with no sources")
+    prov = export.provenance()
+    assert prov["source_sha256"] == export.source_fingerprint() and {"code_commit", "code_dirty"} <= set(prov)
+
+
+def test_report_tables_only_results_of_the_campaigns_source_fingerprint():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "instances"))
+        with open(os.path.join(d, "instances", "S.json.gz"), "wb") as fh:
+            fh.write(b"inst")
+        sha = hashlib.sha256(b"inst").hexdigest()
+
+        def put(arm, finished, **kw):
+            r = dict(_res(arm, "optimal", 1.0, _gate()), finished=finished, **{"instance_sha256": sha, **kw})
+            if kw.get("source_sha256", 1) is None:
+                del r["source_sha256"]
+            os.makedirs(os.path.join(d, "S", arm), exist_ok=True)
+            with open(os.path.join(d, "S", arm, "result.json"), "w") as fh:
+                json.dump(r, fh)
+        put("a", "2026-10-15T09:00:00")
+        put("b", "2026-10-15T10:00:00")
+        put("d", "2026-10-15T10:02:00", source_sha256=None)           # the newest records no fingerprint at all
+        fresh, stale = bnc_report.split(d)
+        why = {r["arm"]: w for r, w in stale}
+        assert fresh == [] and sorted(why) == ["a", "b", "d"], (fresh, why)
+        assert "no source fingerprint recorded" in why["d"] and "source_sha256" in why["a"], why
+    with tempfile.TemporaryDirectory() as d:                            # same commit and dirty flag, other file content:
+        # the newest result (arm c) is the campaign, a and b are stale
+        os.makedirs(os.path.join(d, "instances"))
+        with open(os.path.join(d, "instances", "S.json.gz"), "wb") as fh:
+            fh.write(b"inst")
+        for arm, fin, src in (("a", "09", SRC), ("b", "10", SRC), ("c", "11", "e" * 64)):
+            os.makedirs(os.path.join(d, "S", arm))
+            with open(os.path.join(d, "S", arm, "result.json"), "w") as fh:
+                json.dump(dict(_res(arm, "optimal", 1.0, _gate()), finished=f"2026-10-15T{fin}:00:00",
+                               instance_sha256=hashlib.sha256(b"inst").hexdigest(), source_sha256=src), fh)
+        fresh, stale = bnc_report.split(d)
+        assert [r["arm"] for r in fresh] == ["c"] and sorted(r["arm"] for r, _ in stale) == ["a", "b"], (fresh, stale)
+        assert all("source_sha256" in w for _, w in stale), stale
+
+
 def test_report_admits_a_result_only_with_its_instance_file_and_hash():
     """No recorded hash, no file, or another file: stale.  The file is looked for where the run
     recorded it (a custom instance directory), unless the caller names a directory."""
@@ -597,14 +664,19 @@ def test_report_lists_an_independent_check_only_for_the_campaigns_instance():
                  "connected": True, "time_limit": 60.0, **kw}
             with open(os.path.join(d, "S", name), "w") as fh:
                 json.dump(v, fh)
-        put("verify.json", instance_sha256=sha, instance_path=path, code_commit="x")
-        put("verify_nohash.json", code_commit="x")
-        put("verify_nocode.json", instance_sha256=sha)
-        put("verify_other.json", instance_sha256="0" * 64, code_commit="x")
+        put("verify.json", instance_sha256=sha, instance_path=path, code_commit="x", source_sha256=SRC)
+        put("verify_nohash.json", code_commit="x", source_sha256=SRC)
+        put("verify_nocode.json", instance_sha256=sha, source_sha256=SRC)
+        put("verify_other.json", instance_sha256="0" * 64, code_commit="x", source_sha256=SRC)
+        put("verify_nosrc.json", instance_sha256=sha, code_commit="x")
+        put("verify_othersrc.json", instance_sha256=sha, code_commit="x", source_sha256="e" * 64)
         ok, bad = bnc_report.checks(d)
         assert len(ok) == 1 and ok[0]["instance_sha256"] == sha, ok
         why = {os.path.basename(p): w for p, w in bad}
-        assert set(why) == {"verify_nohash.json", "verify_nocode.json", "verify_other.json"}, why
+        assert set(why) == {"verify_nohash.json", "verify_nocode.json", "verify_other.json", "verify_nosrc.json",
+                            "verify_othersrc.json"}, why
+        assert "no source fingerprint" in why["verify_nosrc.json"], why
+        assert "other source code" in why["verify_othersrc.json"], why
         assert "no instance sha256" in why["verify_nohash.json"] and "no code commit" in why["verify_nocode.json"], why
         assert "instance file changed" in why["verify_other.json"], why
         with open(bnc_report.write(d)) as fh:
@@ -614,7 +686,7 @@ def test_report_lists_an_independent_check_only_for_the_campaigns_instance():
         with open(path, "wb") as fh:
             fh.write(b"re-exported")
         ok, bad = bnc_report.checks(d)
-        assert ok == [] and len(bad) == 4 and all(w for _, w in bad), (ok, bad)
+        assert ok == [] and len(bad) == 6 and all(w for _, w in bad), (ok, bad)
         # the file is gone
         os.remove(path)
         assert bnc_report.checks(d)[0] == []

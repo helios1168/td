@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import ast
 import csv
+import glob
 import hashlib
 import json
 import os
@@ -116,15 +117,35 @@ def commit() -> str:
         return "unknown"
 
 
+# the sources a solve and its gate run: the model code, the arms, the drawing code they capture and the gate
+SOURCE_GLOBS = ("td/**/*.py", "tools/exp/bnc/*.py", "tools/exp/contig/*.py", "tools/mandates/*.py",
+                "tools/looks/*.py")
+
+
+def source_fingerprint(root: str = ROOT) -> str:
+    """sha256 over the sorted (relative path, sha256 of the bytes) of the files `SOURCE_GLOBS` name under
+    `root`: the same bytes give the same value whatever git, a stash or a dirty tree says, and any edit
+    of any of them another.  Raises when none is found (a wrong root fingerprints nothing)."""
+    files = sorted({p for g in SOURCE_GLOBS for p in glob.glob(os.path.join(root, g), recursive=True)
+                    if os.path.isfile(p)})
+    if not files:
+        raise FileNotFoundError(f"no source files under {root} for {SOURCE_GLOBS}")
+    h = hashlib.sha256()
+    for p in files:
+        h.update(f"{os.path.relpath(p, root)}\0{sha256(p)}\n".encode())
+    return h.hexdigest()
+
+
 def provenance() -> dict:
-    """The code a result came from: the commit and whether tracked files differ from it (None when
-    git cannot say)."""
+    """The code a result came from: the commit, whether tracked files differ from it (None when git
+    cannot say), and `source_fingerprint`, the content of the sources themselves (a dirty tree at one
+    commit is many codes)."""
     try:
         dirty = bool(subprocess.check_output(
             ["git", "-C", ROOT, "status", "--porcelain", "--untracked-files=no"], text=True).strip())
     except Exception:
         dirty = None
-    return {"code_commit": commit(), "code_dirty": dirty}
+    return {"code_commit": commit(), "code_dirty": dirty, "source_sha256": source_fingerprint()}
 
 
 # ------------------------------------------------------------------------------ the capture

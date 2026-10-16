@@ -9,15 +9,18 @@ of the group is in its dollar window, the lazy-callback probe, and the winner pe
 fastest arm with status `optimal`, else the best `feasible` objective, else "no arm finished").
 
 Only results of one campaign are tabled: the newest result (`finished`) names the code commit and
-dirty flag, time limit and threads, and a result is stale when any of them differs, when its settings
-differ from the newest result of the same arm, or when it cannot be tied to its instance: no recorded
-sha256, or no file with that sha256 (looked for in the `instances` argument, else the path the run
-recorded, else `<out>/instances`).  Stale results (an arm not rerun after a subset rerun) are listed
+dirty flag, the source fingerprint (`export.source_fingerprint`, recorded before the solve: the content
+of the sources, which a commit and a dirty flag do not fix), time limit and threads, and a result is
+stale when it records no fingerprint, when any of them differs, when its settings differ from the
+newest result of the same arm, or when it cannot be tied to its instance: no recorded sha256, or no
+file with that sha256 (looked for in the `instances` argument, else the path the run recorded, else
+`<out>/instances`).  Stale results (an arm not rerun after a subset rerun) are listed
 under "Stale results excluded" and never reach the table or the winners.
 
-An independent check (`verify.py`'s `verify*.json`) is listed only when it recorded its code commit
-and the sha256 of its instance, that file is available and still has the sha256, and no tabled
-result of the instance was made on another file; the others are listed under "Independent checks
+An independent check (`verify.py`'s `verify*.json`) is listed only when it recorded its code commit,
+its source fingerprint and the sha256 of its instance, that file is available and still has the
+sha256, no tabled result of the instance was made on another file, and its fingerprint is the
+campaign's (that of the tabled results); the others are listed under "Independent checks
 excluded".
 """
 from __future__ import annotations
@@ -96,8 +99,10 @@ def split(out: str, instances: str | None = None) -> tuple:
         arm_newest[r["arm"]] = r
     fresh, stale = [], []
     for r in allr:
-        why = [f"{k} {r.get(k)!r} != {newest.get(k)!r}" for k in ("code_commit", "code_dirty", "time_limit", "threads")
-               if r.get(k) != newest.get(k)]
+        why = [] if r.get("source_sha256") else ["no source fingerprint recorded"]
+        why += [f"{k} {r.get(k)!r} != {newest.get(k)!r}"
+                for k in ("code_commit", "code_dirty", "source_sha256", "time_limit", "threads")
+                if r.get(k) != newest.get(k)]
         if r.get("settings") != arm_newest[r["arm"]].get("settings"):
             why.append(f"settings {r.get('settings')!r} != {arm_newest[r['arm']].get('settings')!r}")
         bad = _instance_why(r, out, instances, r["instance"])
@@ -114,12 +119,17 @@ def checks(out: str, instances: str | None = None, rs: list | None = None) -> tu
     shas = {}
     for r in rs:
         shas.setdefault(r["instance"], set()).add(r.get("instance_sha256"))
+    sources = {r.get("source_sha256") for r in rs}
     ok, bad = [], []
     for path in sorted(glob.glob(os.path.join(out, "*", "verify*.json"))):
         try:
             with open(path, encoding="utf-8") as fh:
                 v = json.load(fh)
             why = [] if v.get("code_commit") else ["no code commit recorded"]
+            if not v.get("source_sha256"):
+                why.append("no source fingerprint recorded")
+            elif sources and sources != {v["source_sha256"]}:
+                why.append("made on other source code than the tabled results")
             why += [w for w in (_instance_why(v, out, instances, v["instance"]),) if w]
             if v.get("instance_sha256") and shas.get(v["instance"], {v["instance_sha256"]}) != {v["instance_sha256"]}:
                 why.append("the tabled results of the instance were made on another file")
@@ -190,7 +200,7 @@ def write(out: str = OUT, instances: str | None = None) -> str:
         r0 = rs[0]
         lines += [f"Time limit {r0['time_limit']:g} s per run, {r0['threads']} thread(s) for the HiGHS arms "
                   f"(SCIP runs one), one process per run, `mip_rel_gap` 0, absolute gap 1e-6; "
-                  f"code commit {r0['code_commit']}.", ""]
+                  f"code commit {r0['code_commit']}, source fingerprint {r0['source_sha256'][:12]}.", ""]
     if os.path.exists(index):
         with open(index, encoding="utf-8") as fh:
             idx = json.load(fh)
