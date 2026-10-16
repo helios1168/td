@@ -140,11 +140,20 @@ def _row(ch, usd, lo=850.0, hi=1150.0, cap=None, ok=False, d=None):
 def test_label_order_m1_then_dollars_then_scorer():
     good, bad = {"status": "pass", "summary": "ok"}, {"status": "fail", "summary": "1 district in pieces"}
     ok, out = _row("WH", 900.0, ok=True), _row("WH", 840.8, d="WH_09")
-    assert overnight.label_of(bad, [out], False, ["x"])[0] == "fails M1"
-    assert overnight.label_of(good, [ok, out], False, ["x"]) == ("ineligible ($)", "WH_09 840.8M outside 850.0-1,150.0M")
-    assert overnight.label_of(good, [ok], True, []) == ("eligible", "")
-    assert overnight.label_of(good, [ok], False, ["audit: a fails", "main K 47 outside 48-54"]) == \
+    assert overnight.label_of(bad, [out], False, ["x"], 0)[0] == "fails M1"
+    assert overnight.label_of(good, [ok, out], False, ["x"], 0) == ("ineligible ($)", "WH_09 840.8M outside 850.0-1,150.0M")
+    assert overnight.label_of(good, [ok], True, [], 0) == ("eligible", "")
+    assert overnight.label_of(good, [ok], False, ["audit: a fails", "main K 47 outside 48-54"], 0) == \
         ("ineligible", "audit: a fails; main K 47 outside 48-54")
+    # the final gate's own exit code decides first: m1.json passing does not make a failed or unfinished gate pass
+    for rc in (1, 2, None):
+        label, reason = overnight.label_of(good, [ok], True, [], rc)
+        assert label == "fails M1" and "the gate (check.py) exited" in reason, (rc, label, reason)
+    bad_verdict = {"passes": False, "excepted": [], "blocking": ["X/Y: neck 1 km wide"]}
+    assert overnight.label_of(good, [ok], True, [], 1, bad_verdict)[0] == "fails M1"
+    manhattan = {"passes": True, "excepted": [("p", ["10001"])], "blocking": []}
+    assert overnight.label_of(bad, [ok], True, [], 1, manhattan) == ("eligible", "")      # the Manhattan exception
+    assert overnight.label_of(bad, [ok], True, [], 2, manhattan)[0] == "fails M1"         # only for a gate that exited 1
 
 
 def test_rerun_direction():
@@ -668,3 +677,139 @@ def test_base_specs_take_the_launchers_rewrites():
                 else {c: ["CA", "TX"] for c in sp.channels})               # replan.py --free's rewrite
         out = tdspec.parse(tomllib.loads(banned_text(copy, [], free=free)))
         assert {c: _free(cs) for c, cs in out.channels.items() if c in free} == free, structure
+
+
+# ------------------------------------------------------------------------------ the final label
+class _FakeGrid:
+    def __init__(self):
+        self.added, self.updated, self.stages = [], {}, []
+
+    def deadline(self):
+        return time.time() + 600
+
+    def update(self, pid, **fields):
+        self.updated.setdefault(pid, {}).update(fields)
+
+    def add(self, rec):
+        self.added.append(rec)
+
+    def stage(self, pid, name, info):
+        self.stages.append(name)
+
+
+class _FinalRunner(overnight.Runner):
+    """A runner whose stages are canned: `gate` returns `rc`/`stop` and writes `evidence` (a callable of the
+    folder and the path) when given."""
+
+    def __init__(self, root, extract, rc=0, stop=None, evidence=None):
+        super().__init__(_FakeGrid(), root, "m5", extract, {})
+        self.rc, self.stop, self.evidence, self.calls = rc, stop, evidence, []
+
+    def stage(self, pid, name, cmd, log, cap, env=None):
+        self.calls.append((name, cmd))
+        if name == "gate" and self.evidence:
+            self.evidence(cmd[-3], cmd[-1])
+        return {"rc": self.rc, "stop": self.stop, "seconds": 0.0}
+
+
+def _final_folder(tmp, m1_a=900.0, m1_b=900.0, m1_status="pass", dollars_ok=1, border=True):
+    """A dollar extract whose `wh` rate is 1e6 (cells a1, a2 and the rest) and a final folder `r1` whose districts
+    WH_01, WH_02 own a1, a2; `dollars.csv` says in-window (`dollars_ok`) whatever the extract's masses are."""
+    from td import data
+    whole = score.DOLLARS["wh"] / 1e6
+    extract = os.path.join(tmp, "extract.json.gz")
+    data.write(data.Extract(("wh",), ["a1", "a2", "a3"], ["wh"] * 3, [m1_a, m1_b, whole - m1_a - m1_b],
+                            [{}] * 3, [0.0] * 3), extract)
+    final = os.path.join(tmp, "toy-pt", "r1")
+    os.makedirs(final)
+    open(os.path.join(final, "ledger.csv"), "w").write(
+        "zip_code,current_channel,state,model_channel,district,reason,m_rel\n"
+        "a1,wh,A,WH,WH_01,,1.0\na2,wh,A,WH,WH_02,,1.0\n")
+    open(os.path.join(final, "districts.csv"), "w").write("channel,district,drawn_mass\nWH,WH_01,1\nWH,WH_02,1\n")
+    ok = {"status": m1_status, "summary": "toy"}
+    json.dump({"gap_width": ok, "strict": ok}, open(os.path.join(final, "m1.json"), "w"))
+    open(os.path.join(final, "dollars.csv"), "w").write(
+        "channel,district,usd_m,lo_m,hi_m,whole_state_cap_m,allowance,ok\n"
+        f"WH,WH_01,900.0,850,1150,,0,{dollars_ok}\nWH,WH_02,900.0,850,1150,,0,{dollars_ok}\n")
+    open(os.path.join(final, "score.txt"), "w").write("# toy\ndir: x\neligible: yes\n")
+    return extract, final
+
+
+def _evidence(final, path, necks=0, side=("10001",)):
+    doc = {"folder": os.path.abspath(final), "rc": 1, "status": "fail", "summary": "1 detached piece",
+           "diagnostic": None, "counts": {"necks": necks}, "items": ["WH/WH_01: detached piece of 1 ZIPs (10001...)"],
+           "sides": {"necks": {}, "pieces": [["WH_01", "10001", 1, list(side)]]}}
+    json.dump(doc, open(path, "w"))
+
+
+def _label_final(tmp, **kw):
+    runner_kw = {k: kw.pop(k) for k in ("rc", "stop", "evidence") if k in kw}
+    extract, final = _final_folder(tmp, **kw)
+    runner = _FinalRunner(tmp, extract, **runner_kw)
+    pt = {"id": "toy-pt", "structure": "ne_plains", "k": {"WH": 2}, "parent": None}
+    return runner, runner._label_final(pt, os.path.join(tmp, "toy-pt"), final)
+
+
+def test_the_final_label_needs_a_completed_gate_on_the_final_folder():
+    with tempfile.TemporaryDirectory() as tmp:
+        runner, got = _label_final(tmp)
+        assert got[:2] == ("eligible", "") and [n for n, _ in runner.calls] == ["gate"]
+        gate_cmd = runner.calls[0][1]
+        assert gate_cmd[2].endswith("ifa_index_night.py") and gate_cmd[-4:-2] == ["--gate", got[2]]
+        assert gate_cmd[-1] == os.path.join(tmp, "toy-pt", "gate-evidence.json")
+    for rc in (2, 137, None):               # a gate that crashed or was killed never passes, whatever m1.json says
+        with tempfile.TemporaryDirectory() as tmp:
+            label, reason = _label_final(tmp, rc=rc)[1][:2]
+            assert label == "fails M1" and "the gate (check.py) exited" in reason, (rc, label)
+    with tempfile.TemporaryDirectory() as tmp:       # exit 1 with no evidence adjudicates nothing
+        label, reason = _label_final(tmp, rc=1, m1_status="fail")[1][:2]
+        assert label == "fails M1" and "gate evidence unavailable" in reason
+    with tempfile.TemporaryDirectory() as tmp:       # killed at its cap: the point is stopped
+        try:
+            _label_final(tmp, stop="cap")
+        except overnight.Stop as e:
+            assert e.label == "stopped" and "final gate" in e.reason
+        else:
+            raise AssertionError("a gate killed at its cap was labelled")
+
+
+def test_the_final_label_takes_the_manhattan_exception_from_the_gate_evidence_only():
+    with tempfile.TemporaryDirectory() as tmp:       # a Manhattan-only piece, necks measured: m1.json's fail is waived
+        label, reason = _label_final(tmp, rc=1, m1_status="fail", evidence=_evidence)[1][:2]
+        assert (label, reason) == ("eligible", "")
+    with tempfile.TemporaryDirectory() as tmp:       # the piece is not Manhattan
+        label, reason = _label_final(tmp, rc=1, m1_status="fail",
+                                     evidence=lambda f, p: _evidence(f, p, side=("30001",)))[1][:2]
+        assert label == "fails M1" and "outside the Manhattan exception" in reason
+    with tempfile.TemporaryDirectory() as tmp:       # Manhattan-only, but the necks were never measured
+        label, reason = _label_final(tmp, rc=1, m1_status="fail",
+                                     evidence=lambda f, p: _evidence(f, p, necks=None))[1][:2]
+        assert label == "fails M1" and "outside the Manhattan exception" in reason
+    with tempfile.TemporaryDirectory() as tmp:       # a stale record of another folder is not this gate's
+        def stale(final, path):
+            _evidence(final + "-other", path)
+        label = _label_final(tmp, rc=1, m1_status="fail", evidence=stale)[1][0]
+        assert label == "fails M1"
+
+
+def test_the_final_label_judges_the_window_on_unrounded_full_extract_dollars():
+    for m1, want in ((849.99999975, "ineligible ($)"), (850.0, "eligible"), (1150.0, "eligible"),
+                     (1150.00000025, "ineligible ($)")):
+        with tempfile.TemporaryDirectory() as tmp:
+            runner, got = _label_final(tmp, m1_a=m1)          # dollars.csv says ok: the full extract decides
+            assert got[0] == want, (m1, got[:2])
+            if want != "eligible":
+                assert got[1].startswith("WH_01 ") and "outside" in got[1]
+    with tempfile.TemporaryDirectory() as tmp:       # the earned re-run is read off the exact rows too
+        runner, got = _label_final(tmp, m1_a=849.99999975)
+        assert "re-run toy-pt-WH1" in got[1] and [r["id"] for r in runner.grid.added] == ["toy-pt-WH1"]
+    with tempfile.TemporaryDirectory() as tmp:       # a ledger district districts.csv lacks stops the point
+        extract, final = _final_folder(tmp)
+        open(os.path.join(final, "districts.csv"), "w").write("channel,district,drawn_mass\nWH,WH_01,1\n")
+        try:
+            _FinalRunner(tmp, extract)._label_final({"id": "toy-pt", "structure": "ne_plains", "k": {"WH": 2},
+                                                     "parent": None}, os.path.join(tmp, "toy-pt"), final)
+        except overnight.Stop as e:
+            assert e.label == "error" and "exact dollar window" in e.reason and "WH_02" in e.reason
+        else:
+            raise AssertionError("a ledger district missing from districts.csv was labelled")

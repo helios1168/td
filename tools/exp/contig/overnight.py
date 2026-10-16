@@ -38,8 +38,13 @@ measures necks across coverage gaps (`td.audit.GAP_WIDTH_ENV` = "1", G3); `m1.js
 verdict beside it.  A point holds `slots_of` slots, its channels and at least two: `run.py` and
 `repair.py` pin HiGHS to one thread per worker only with `--jobs` above 1 (trap 18).
 
-**Labels** (`label_of`, on the last folder with a ledger): **fails M1** when M1 fails after pass
-2; **ineligible ($)** when a district is outside its dollar window, after the one re-run a
+**Labels** (`label_of`, on the last folder with a ledger, after one more gate stage there, `gate`, run as
+`ifa_index_night.py --gate` so the sides of the pieces and necks it judged are recorded next to the point): **fails M1**
+when that final gate did not complete (killed at its cap: **stopped**) or exited other than 0 and the
+Manhattan exception does not pass its evidence (`sealed.manhattan_verdict`: only a detached piece holding a
+36061 ZCTA and a neck whose cut-off side holds one, owner, 2026-10-14, td#140, and necks measured), or `m1.json` fails; **ineligible ($)** when a district is outside its dollar window, judged exactly (`sealed.exact_rows`: the
+ledger's cells at the full extract's masses and rates, unrounded dollars, the edges in; the ledger's districts must be
+`districts.csv`'s), after the one re-run a
 point earns (`rerun_k`: a channel whose failing districts are all under its window at K_c − 1,
 all over at K_c + 1, as its own point `<id>-<channel><K>`); **eligible** when the scorer finds no
 reason; **ineligible** with the scorer's reasons otherwise; **infeasible** for no plan within the
@@ -212,6 +217,11 @@ def _load(name: str, path: str):
 
 
 score = _load("looks_score", os.path.join(ROOT, "tools", "looks", "score.py"))
+
+
+def _sealed():
+    """`sealed.py`, loaded by path on first use: it loads this module, so it cannot be loaded at the top."""
+    return _load("contig_sealed", os.path.join(HERE, "sealed.py"))
 
 
 def _replan():
@@ -438,20 +448,15 @@ def read_score(path: str) -> tuple:
     raise ValueError(f"{path}: no eligible line")
 
 
-def label_of(m1: dict, rows: list, eligible: bool, why: list) -> tuple:
-    """(label, reason) of a point's last folder: M1 first (its gated verdict, `m1` as `m1.json`
-    holds it), then the dollar gate's rows, then the scorer."""
-    if m1["status"] != "pass":
-        return "fails M1", f"M1 across coverage gaps: {m1['status']}, {m1['summary']}"
-    bad = [r for r in rows if not r["ok"]]
-    if bad:
-        return "ineligible ($)", "; ".join(
-            f"{r['district']} {r['usd']:,.1f}M outside "
-            + ("no window" if r["lo"] is None else f"{r['lo']:,.1f}-{(r['cap'] or r['hi']):,.1f}M")
-            for r in bad)
-    if eligible:
-        return "eligible", ""
-    return "ineligible", "; ".join(why)
+def label_of(m1: dict, rows: list, eligible: bool, why: list, gate_rc: int | None, verdict: dict | None = None,
+             gate_tail: str = "") -> tuple:
+    """(label, reason) of a point's last folder: M1 first (the final gate's exit code `gate_rc` and, for a gate
+    that exited 1, the Manhattan adjudication `verdict` of its evidence, `sealed.manhattan_verdict`; else
+    `m1` as `m1.json` holds it), then the exact dollar rows (`sealed.exact_rows`), then the scorer.  These are
+    `sealed.label_point`'s, under this grid's names: `ineligible ($)` is its `outside band`, `eligible` its
+    `passes`.  A gate that did not complete is `gate_rc` None: `fails M1`, never a pass."""
+    label, reason = _sealed().label_point(m1, rows, [], False, eligible, why, gate_rc, gate_tail, verdict)
+    return {"outside band": "ineligible ($)", "passes": "eligible"}.get(label, label), reason
 
 
 def rerun_k(rows: list, ks: dict) -> dict | None:
@@ -663,6 +668,16 @@ class Runner:
         self.window_band = window_band      # `--window-band`: each channel's band is its dollar window
         self.plans = os.path.join(root, "_plans")
         self.deadline = grid.deadline()
+        self._masses = None             # (cell masses, rates) of the full dollar extract, `dollar_masses`
+        self._masses_lock = threading.Lock()
+
+    def dollar_masses(self) -> tuple:
+        """(cell masses, dollar rates) of the full dollar extract, read once: the exact window of every point."""
+        with self._masses_lock:
+            if self._masses is None:
+                sealed, ext = _sealed(), data.load(self.extract)
+                self._masses = (sealed.ifa_index.extract_masses(ext), score.dollar_rates(ext))
+            return self._masses
 
     def stage(self, pid: str, name: str, cmd: list, log: str, cap: float, env=None) -> dict:
         info = child(cmd, log, cap, self.deadline, env)
@@ -738,14 +753,42 @@ class Runner:
         for name in ("draw", "draw_retry", "r1", "r2"):
             folder = os.path.join(pdir, name)
             if os.path.exists(os.path.join(folder, "ledger.csv")):
-                self.stage(pid, f"score_{name}", score_cmd(folder), os.path.join(folder, "score.txt"),
+                self.stage(pid, f"score_{name}", score_cmd(folder) + ["--extract", self.extract],
+                           os.path.join(folder, "score.txt"),
                            CAP_S["post"], GAP_ENV)
                 self.stage(pid, f"land_{name}", land_cmd(folder), os.path.join(pdir, f"land_{name}.log"),
                            CAP_S["post"])
+        return self._label_final(pt, pdir, final)
+
+    def _label_final(self, pt: dict, pdir: str, final: str) -> tuple:
+        """(label, reason, final, new points) of the last folder `final`, after a gate stage there that is
+        recorded (`gate-evidence.json` in the point's folder) and finished: killed at its cap it ends the point
+        `stopped`, any exit other than 0 is judged by `label_of` (1 only with a Manhattan-only
+        `sealed.manhattan_verdict`), and the dollars are the exact ones of the full extract."""
+        pid, ks, sealed = pt["id"], pt["k"], _sealed()
+        evidence = os.path.join(pdir, sealed.ifa_index.EVIDENCE)
+        if os.path.exists(evidence):
+            os.remove(evidence)         # a stale record is never the gate's of this folder
+        log = os.path.join(pdir, "gate.log")
+        info = self.stage(pid, "gate", sealed.gate_cmd(final, evidence), log, CAP_S["gate"], GAP_ENV)
+        if info["stop"] == "cap":
+            raise Stop("stopped", f"the final gate killed at its cap ({CAP_S['gate'] / 60:g} min)")
+        gate_rc = info["rc"]
+        for f in ("m1.json", "dollars.csv", "score.txt"):
+            if not os.path.exists(os.path.join(final, f)):
+                raise Stop("error", f"score.py wrote no {f} in {final}: {_tail(os.path.join(final, 'score.txt'))}")
         with open(os.path.join(final, "m1.json"), encoding="utf-8") as fh:
             m1 = json.load(fh)["gap_width"]
-        rows = read_dollars(os.path.join(final, "dollars.csv"))
-        label, reason = label_of(m1, rows, *read_score(os.path.join(final, "score.txt")))
+        try:
+            rows = sealed.exact_rows(final, *self.dollar_masses())
+        except (OSError, ValueError, KeyError) as e:
+            raise Stop("error", f"exact dollar window of {final}: {type(e).__name__}: {e}")
+        try:
+            eligible, why = read_score(os.path.join(final, "score.txt"))
+        except ValueError as e:
+            raise Stop("error", f"score.py: {e}")
+        label, reason = label_of(m1, rows, eligible, why, gate_rc, sealed.manhattan_verdict(final, gate_rc),
+                                 _tail(log))
         new = []
         if label == "ineligible ($)" and pt.get("parent") is None:
             ks2 = rerun_k(rows, ks)

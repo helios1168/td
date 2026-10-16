@@ -1045,15 +1045,6 @@ class Driver(overnight.Runner):
         self.lock = threading.Lock()
         self.pending = collections.Counter()
         self.specs = {}
-        self._masses = None             # (cell masses, rates) of the full dollar extract, `dollar_masses`
-
-    def dollar_masses(self) -> tuple:
-        """(cell masses, dollar rates) of the full dollar extract, read once: the exact window of every point."""
-        with self.lock:
-            if self._masses is None:
-                ext = data.load(self.extract)
-                self._masses = (ifa_index.extract_masses(ext), score.dollar_rates(ext))
-            return self._masses
 
     # -- bookkeeping
     def spec_of(self, pt: dict):
