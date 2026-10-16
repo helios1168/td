@@ -268,3 +268,105 @@ def test_formulation_campaign_source_acceptance():
         for arm, source in [('a', None), ('b', 'e' * 64), ('c', SRC)]:
             _truth(spec.provenance_model(source=source, campaign_source=SRC, same_metadata=True,
                 same_settings=True, instance_matches=True), arm in admitted)
+
+
+def test_formulation_ifa_requires_measured_necks_30():
+    polygon = _polygon()
+    zs = polygon['vertices']
+    cells = [audit.Cell(z, 'ifa', 'IFA', 'B' if i == 0 or i >= 15 else 'A', 60.0)
+             for i, z in enumerate(zs)]
+    for measured in (True, False):
+        graph = dict(polygon)
+        if not measured:
+            del graph['border']
+        with ifa_index.recorded_sides() as sides:
+            check = audit.check_m1(audit.Run(cells, {'IFA': audit.Channel(2)}, polygon=graph, fine=('ifa',)))
+        assert check.status == 'fail' and (check.counts['necks'] is not None) == measured
+        for counts in (check.counts, {}, None):
+            accepted = ifa_index.m1_verdict(check.status, check.summary, check.items, sides, {zs[0]},
+                                           counts=counts)['passes']
+            assert accepted == (measured and counts == check.counts)
+            _truth(spec.ifa_model(items=[('piece', {zs[0]})], manhattan={zs[0]},
+                                 necks_measured=measured and counts == check.counts), accepted)
+
+
+def test_formulation_scorer_ifa_window_waiver_and_eligibility_30():
+    score = sealed.score
+    zs = _polygon()['vertices']
+    # A owns 15 ZIPs across MD+DE+WV, B owns PA. Zero-dollar ownership still ends whole-state status.
+    cases = [('lower_out', 1e9 - .25, False), ('lower', 1e9, True), ('upper', 1.4375e9, True),
+             ('waiver', 1.4375e9 + .25, True), ('extra_state', 1.9e9, False),
+             ('shared', 1.9e9, False), ('missing_state', 1.9e9, False)]
+    for variant, dollars, expected in cases:
+        cells = [(z, ('MD', 'DE', 'WV')[i % 3] if i < 15 else 'PA', 'A' if i < 15 else 'B',
+                  dollars if i == 0 else 1.2e9 if i == 15 else 0.0) for i, z in enumerate(zs)]
+        if variant == 'extra_state':
+            z, _, j, m = cells[1]
+            cells[1] = z, 'VA', j, m
+        elif variant == 'shared':
+            z, _, j, m = cells[-1]
+            cells[-1] = z, 'MD', j, m
+        elif variant == 'missing_state':
+            cells = [(z, 'MD' if s == 'WV' else s, j, m) for z, s, j, m in cells]
+        ledger = [dict(zip_code=z, state=s, district=j, m_rel=m, current_channel='ifa', model_channel='IFA')
+                  for z, s, j, m in cells]
+        rows = score.dollar_gate(ledger, [{'channel': 'IFA', 'district': j} for j in ('A', 'B')],
+                                 {'ifa': 1.0}, score.IFA_WINDOW)
+        assert all(r['ok'] for r in rows) == expected
+        for average, m1_pass, audit_ok in ((1.25e9, True, True), (1.125e9 - .75, True, True),
+                                           (1.375e9 + .75, True, True), (1.25e9, False, True),
+                                           (1.25e9, True, False)):
+            # The old symmetric band fails; a supplied district gate makes it informational.
+            why = score.eligibility({'coverage': 'pass' if audit_ok else 'fail'},
+                audit.Check(score.BAND_CHECK, 'fail', 'informational band'), {'IFA': 2}, {'IFA': average},
+                audit.Check(audit.M1_CHECK, 'pass' if m1_pass else 'fail', ''), rows)
+            _truth(spec.scorer_ifa_model(cells=cells, districts=['A', 'B'], rate=1.0, average=average,
+                                        audit_ok=audit_ok, m1_pass=m1_pass), not why)
+    # Same physical instance in native m_rel units, using the production IFA rate rather than $ units.
+    cells = [(z, 'NY', 'A' if i < 15 else 'B', 900.0 if i in (0, 15) else 0.0) for i, z in enumerate(zs)]
+    ledger = [dict(zip_code=z, state=s, district=j, m_rel=m, current_channel='ifa', model_channel='IFA')
+              for z, s, j, m in cells]
+    rows = score.dollar_gate(ledger, [{'channel': 'IFA', 'district': j} for j in ('A', 'B')],
+                             score.IFA_RATES, score.IFA_WINDOW)
+    _truth(spec.scorer_ifa_model(cells=cells, districts=['A', 'B'], average=1.25e9), all(r['ok'] for r in rows))
+
+
+def test_formulation_overnight_completed_gate_and_district_table_30():
+    from tests.test_overnight import _FinalRunner, _final_folder, _evidence, overnight
+    from unittest.mock import patch
+
+    zs = _polygon()['vertices']
+    for variant in ('clean', 'below', 'above', 'manhattan', 'unmeasured', 'crash', 'missing_gate', 'missing_district'):
+        with tempfile.TemporaryDirectory() as tmp:
+            extract, final = _final_folder(tmp)
+            total_a = {'below': 849.99999975, 'above': 1150.00000025}.get(variant, 900.0)
+            cells = [(z, 'wh', 'WH_01' if i < 15 else 'WH_02') for i, z in enumerate(zs)]
+            mass = {(z, 'wh'): total_a if i == 0 else 900.0 if i == 15 else 0.0 for i, z in enumerate(zs)}
+            # The extra off-map cell fixes the whole-extract conversion at $1M per mass unit.
+            ext_z = zs + ['99999']
+            ext_m = [mass[z, 'wh'] for z in zs] + [overnight.score.DOLLARS['wh'] / 1e6 - total_a - 900.0]
+            data.write(data.Extract(('wh',), ext_z, ['wh'] * 31, ext_m, [{}] * 31, [0.0] * 31), extract)
+            ledger = [dict(zip_code=z, current_channel=f, district=j, model_channel='WH', state='NY', reason='',
+                           m_rel=0.0) for z, f, j in cells]  # deliberately stale: full extract must win
+            listed = ['WH_01'] if variant == 'missing_district' else ['WH_01', 'WH_02']
+            for name, rows in (('ledger.csv', ledger), ('districts.csv', [dict(channel='WH', district=j) for j in listed])):
+                with open(os.path.join(final, name), 'w', newline='') as fh:
+                    writer = csv.DictWriter(fh, list(rows[0]))
+                    writer.writeheader()
+                    writer.writerows(rows)
+            rc = 1 if variant in ('manhattan', 'unmeasured') else 2 if variant == 'crash' else None if variant == 'missing_gate' else 0
+            evidence = (lambda f, p: _evidence(f, p, necks=None if variant == 'unmeasured' else 0)) if rc == 1 else None
+            runner = _FinalRunner(tmp, extract, rc=rc, evidence=evidence)
+            pt = dict(id='toy-pt', structure='ne_plains', k={'WH': 2}, parent='fixed')
+            with patch.object(overnight._sealed().ifa_index, 'manhattan_zips', return_value={'10001'}):
+                try:
+                    accepted = runner._label_final(pt, os.path.dirname(final), final)[0] == 'eligible'
+                except overnight.Stop as exc:
+                    assert variant == 'missing_district' and exc.label == 'error'
+                    accepted = False
+            assert accepted == (variant in ('clean', 'manhattan')), variant
+            assert [name for name, command in runner.calls] == ['gate']
+            _truth(spec.assembly_ledger_model(owned_cells=cells, extract_mass=mass, rates={'wh': 1e6},
+                bounds={j: (850e6, 1150e6) for j in ('WH_01', 'WH_02')}, listed_districts=listed,
+                gate_rc=rc, m1_pass=True, manhattan_pass=variant == 'manhattan', eligible=True,
+                hard=False, breaches=[]), accepted)

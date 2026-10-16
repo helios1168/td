@@ -1,6 +1,6 @@
 """Small fixed-evidence specifications, not territory optimizers.
 
-F9.I / F11.G / F11.R / F11.W / F142.P: certificate acceptance is the
+F9.I / F9.S / F11.G / F11.R / F11.W / F142.P: certificate acceptance is the
 conjunction of named evidence predicates. No predicate establishes evidence
 that its caller did not supply. Agent: modeler (openai-codex/gpt-6-astra).
 """
@@ -26,15 +26,15 @@ def build_model(formulation, predicates):
 
 
 def ifa_model(*, items, manhattan, verified=True, diagnostic=False, unexplained_failure=False,
-              districts=(), rate=1.2519681558, mass_provenance=True):
+              districts=(), rate=1.2519681558, mass_provenance=True, necks_measured=True):
     """items: (kind, side) where kind is piece/proved/unresolved/other/mass.
 
     Monetary comparison is exact real dollars, edges included (no rounding: $999,999,999.75
     is under the $1B floor). districts: (current mass, recorded_window); mass_provenance is
     the index's check that the saved masses match the ledger joined to the full extract.
     """
-    q = dict(verified=verified, nondiagnostic=not diagnostic, explained=not unexplained_failure,
-             mass_provenance=bool(mass_provenance))
+    q = dict(verified=verified, necks_measured=bool(necks_measured), nondiagnostic=not diagnostic,
+             explained=not unexplained_failure, mass_provenance=bool(mass_provenance))
     for i, (kind, side) in enumerate(items):
         q[f'item_{i}'] = kind == 'mass' or (kind in ('piece', 'proved') and bool(set(side) & set(manhattan)))
     for j, (mass, window) in enumerate(districts):
@@ -96,13 +96,15 @@ def provenance_model(*, source, campaign_source, same_metadata, same_settings, i
         metadata=same_metadata, settings=same_settings, instance=instance_matches))
 
 
-def assembly_ledger_model(*, owned_cells, extract_mass, rates, bounds, no_cell=(), **gate):
+def assembly_ledger_model(*, owned_cells, extract_mass, rates, bounds, no_cell=(), listed_districts=None, **gate):
     """F11.R/W with independently computed dollars, never production window flags.
 
     owned_cells: (ZIP, fine channel, district); bounds: district -> (lower, effective upper)
     in dollars, including an applicable whole-state cap supplied as the upper bound.
     no_cell contains validated zero-mass territory cells absent from the extract.
     Bounds and routing/whole-state classification are fixed evidence, not inferred here.
+    listed_districts is the separately recorded district set; None uses the bounds' keys.
+    District IDs are channel-qualified when multiple channels are present.
     """
     no_cell = set(no_cell)
     districts = {j for _, _, j in owned_cells if j}
@@ -110,10 +112,35 @@ def assembly_ledger_model(*, owned_cells, extract_mass, rates, bounds, no_cell=(
                   for z, f, j in owned_cells if j)
     dollars = {j: sum(rates[f] * extract_mass.get((z, f), 0.0)
                       for z, f, d in owned_cells if d == j) for j in districts}
-    windows = [covered, districts == set(bounds)]
+    listed = set(bounds) if listed_districts is None else set(listed_districts)
+    windows = [covered, districts == set(bounds), districts == listed]
     windows += [bounds[j][0] is not None and bounds[j][0] <= dollars[j] <= bounds[j][1]
                 for j in districts if j in bounds]
     model = assembly_model(windows=windows, **gate)
     model.J = pyo.Set(initialize=sorted(districts))
     model.D = pyo.Param(model.J, initialize=dollars)
+    return model
+
+
+def scorer_ifa_model(*, cells, districts, average, audit_ok=True, m1_pass=True,
+                     rate=1.2519681558e6):
+    """F9.S: fixed IFA ledger cells (ZIP, state, district, mass), independent dollar gate.
+
+    `audit_ok` excludes the informational band row; raw M1 and the whole-extract
+    average remain separate eligibility predicates. This is not an M1 solver.
+    `districts` is the scorer's supplied district table (not inferred coverage).
+    """
+    states = {j: {s for z, s, d, mass in cells if d == j} for j in districts}
+    owners = {s: {d for z, st, d, mass in cells if st == s and d}
+              for z, s, d, mass in cells}
+    dollars = {j: sum(mass * rate for z, s, d, mass in cells if d == j) for j in districts}
+    whole = {j: bool(states[j]) and all(owners[s] == {j} for s in states[j]) for j in districts}
+    q = dict(audit=bool(audit_ok), m1=bool(m1_pass), average=1_125_000_000 <= round(average) <= 1_375_000_000)
+    for j in districts:
+        upper_exempt = whole[j] and states[j] == {'MD', 'DE', 'WV'}
+        q[f'window_{j}'] = dollars[j] >= 1e9 and (dollars[j] <= 1.4375e9 or upper_exempt)
+    model = build_model('F9.S', q)
+    model.J = pyo.Set(initialize=sorted(districts))
+    model.D = pyo.Param(model.J, initialize=dollars)
+    model.whole = pyo.Param(model.J, initialize={j: int(whole[j]) for j in districts})
     return model
