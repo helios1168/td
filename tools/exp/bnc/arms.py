@@ -190,13 +190,15 @@ def arm_c(inst, time_limit: float, threads: int, log=print, frac_root: bool = Fa
 
 
 def scip_solve(inst, time_limit: float, log=print, frac_root: bool = False,
-               max_per_component=None, start=None) -> tuple:
+               max_per_component=None, start=None, heuristics: bool = True) -> tuple:
     """(arm c's result, the incumbent's value of every column or None): `arm_c`'s solver, one
     thread (SCIP built without parallel mode), importable by `repair.py --engine scip`
     (`scip_engine.py`).  `start`, a value for every column, is given to SCIP as a primal solution
-    before the solve (kept only if it is feasible for the model and the handler)."""
+    before the solve (kept only if it is feasible for the model and the handler).  With
+    `heuristics` false SCIP's primal heuristics are off (`scip_engine.py`'s retry after a native
+    crash of the default setting)."""
     import pyscipopt
-    from pyscipopt import SCIP_RESULT, Conshdlr, quicksum
+    from pyscipopt import SCIP_PARAMSETTING, SCIP_RESULT, Conshdlr, quicksum
     t0 = time.time()
     G = sepcuts.Graphs(inst)
     model, xs = scip_model(inst)
@@ -281,6 +283,9 @@ def scip_solve(inst, time_limit: float, log=print, frac_root: bool = False,
             model.setSolVal(sol, v, float(start[i]))
         started = bool(model.addSol(sol, free=True))
         log(f"  c: start solution {'accepted' if started else 'rejected'}")
+    if not heuristics:
+        model.setHeuristics(SCIP_PARAMSETTING.OFF)
+        log("  c: SCIP primal heuristics off")
     model.setRealParam("limits/time", float(max(1.0, time_limit - (time.time() - t0))))
     model.optimize()
     status = model.getStatus()
