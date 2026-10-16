@@ -909,9 +909,15 @@ def exact_rows(folder: str, mass: dict, rates: dict) -> list:
     def read(name):
         with open(os.path.join(folder, name), newline="", encoding="utf-8") as fh:
             return list(csv.DictReader(fh))
-    ledger = [dict(r, m_rel=ifa_index.cell_mass(r, mass)) if r["district"] else r for r in read("ledger.csv")]
+    ledger, districts = read("ledger.csv"), read("districts.csv")
+    owned = {(r["model_channel"], r["district"]) for r in ledger if r["district"]}
+    listed = {(r["channel"], r["district"]) for r in districts}
+    if owned != listed:         # the gate walks districts.csv: a district it lacks would never meet its window
+        raise ValueError(f"{folder}: ledger.csv and districts.csv name different districts: only in the ledger "
+                         f"{sorted(owned - listed)[:tdspec.SHOW]}, only in districts.csv {sorted(listed - owned)[:tdspec.SHOW]}")
+    ledger = [dict(r, m_rel=ifa_index.cell_mass(r, mass)) if r["district"] else r for r in ledger]
     out = []
-    for g in score.dollar_gate(ledger, read("districts.csv"), rates):
+    for g in score.dollar_gate(ledger, districts, rates):
         m = lambda v: None if v is None else v / 1e6
         out.append({"channel": g["channel"], "district": g["district"], "usd": g["usd"] / 1e6, "usd_exact": g["usd"],
                     "lo": m(g["lo"]), "hi": m(g["hi"]), "cap": m(g["cap"]), "allowance": g["allowance"],

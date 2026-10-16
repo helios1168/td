@@ -1127,11 +1127,46 @@ def test_the_merge_judges_the_dollar_window_on_unrounded_full_extract_masses():
                 assert extra["summary"]["bands"]["WH"]["out"] == 1
 
 
+def test_the_exact_window_needs_the_ledgers_districts_to_be_districts_csvs():
+    ledger = ("zip_code,current_channel,state,model_channel,district,reason,m_rel\n"
+              "a1,wh,A,WH,WH_01,,1.0\na2,wh,A,WH,WH_02,,1.0\n")
+    mass = {("a1", "wh"): 900.0, ("a2", "wh"): 900.0}
+    cases = (("channel,district,drawn_mass\nWH,WH_01,1\nWH,WH_02,1\n", True),
+             ("channel,district,drawn_mass\nWH,WH_01,1\n", False),                         # WH_02 is owned, not listed
+             ("channel,district,drawn_mass\nWH,WH_01,1\nWH,WH_02,1\nWH,WH_03,1\n", False),   # WH_03 owns nothing
+             ("channel,district,drawn_mass\nWH,WH_01,1\nFI,WH_02,1\n", False))            # WH_02 listed in another channel
+    for districts, ok in cases:
+        with tempfile.TemporaryDirectory() as tmp:
+            open(os.path.join(tmp, "ledger.csv"), "w").write(ledger)
+            open(os.path.join(tmp, "districts.csv"), "w").write(districts)
+            try:
+                rows = sealed.exact_rows(tmp, mass, {"wh": 1e6})
+            except ValueError as e:
+                assert not ok and "different districts" in str(e), (districts, e)
+            else:
+                assert ok and [r["district"] for r in rows] == ["WH_01", "WH_02"], districts
+    # through the merge: the unlisted district is an error, never a label that skips its window
+    with tempfile.TemporaryDirectory() as tmp:
+        drv, pt = _merge_driver(tmp)
+        merged = _merged_folder(tmp, "toy-pt", shape_rows=[])
+        ext = data.Extract(("wh",), ["a1", "a2", "a3"], ["wh"] * 3, [900.0, 900.0, sealed.score.DOLLARS["wh"] / 1e6 - 1800.0],
+                           [{}] * 3, [0.0] * 3)
+        data.write(ext, drv.extract)
+        open(os.path.join(merged, "ledger.csv"), "w").write(ledger)
+        open(os.path.join(merged, "districts.csv"), "w").write("channel,district,drawn_mass\nWH,WH_01,1\n")
+        try:
+            drv._merge(pt)
+        except sealed.Stop as e:
+            assert e.label == "error" and "exact dollar window" in e.reason and "WH_02" in e.reason, e.reason
+        else:
+            raise AssertionError("a ledger district missing from districts.csv was labelled")
+
+
 def test_a_ledger_cell_the_extract_lacks_stops_the_merge_unless_it_is_zero_mass_no_cell_territory():
-    for row, want in (("a9,wh,A,WH,WH_01,,0.0\n", "error"),
-                      (f"a9,wh,A,WH,WH_01,{sealed.ifa_index.audit.NO_CELL},0.0\n", "passes"),
-                      (f"a9,wh,A,WH,WH_01,{sealed.ifa_index.audit.NO_CELL},0.5\n", "error"),
-                      (f"a1,wh,A,WH,WH_01,{sealed.ifa_index.audit.NO_CELL},0.0\n", "error")):   # a1 is in the extract
+    for row, want in (("a9,wh,A,WIFI,WIFI_01,,0.0\n", "error"),
+                      (f"a9,wh,A,WIFI,WIFI_01,{sealed.ifa_index.audit.NO_CELL},0.0\n", "passes"),
+                      (f"a9,wh,A,WIFI,WIFI_01,{sealed.ifa_index.audit.NO_CELL},0.5\n", "error"),
+                      (f"a1,wh,A,WIFI,WIFI_01,{sealed.ifa_index.audit.NO_CELL},0.0\n", "error")):   # a1 is in the extract
         with tempfile.TemporaryDirectory() as tmp:
             drv, pt = _merge_driver(tmp)
             merged = _merged_folder(tmp, "toy-pt", shape_rows=[])
