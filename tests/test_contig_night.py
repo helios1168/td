@@ -46,3 +46,129 @@ def test_a_state_extract_carries_no_rep_shares_share_free_or_firm_map():
         geo.read_reference = real
     assert got.z == ["10001", "10002"] and got.m_rel == [1.0, 2.0]           # the model's column is kept
     assert got.share == [{}, {}] and got.share_free == [0.0, 0.0] and got.firm == {}
+
+
+# ------------------------------------------------------------------------------ C1, C2: the IFA index
+import csv
+import json
+
+from td import audit
+
+ifa_index = _import("contig_ifa_index_night", "ifa_index_night.py")
+score = ifa_index.check_gate().score
+
+# 10001 is New York County (36061); 10002 is not (a Bronx stand-in); the rest are elsewhere
+REF = {"zcta": ["10001", "10002", "20001", "20002", "30001", "30002", "30003", "40001"],
+       "county": ["36061", "36005", "11111", "11111", "22222", "22222", "22222", "33333"]}
+MANHATTAN = ifa_index.manhattan_zips(REF)
+
+
+def _toy_geo() -> "score.Geography":
+    """Chains 10001-10002-20001-20002, 30001-30002-30003-40001, every border 30 km (no neck)."""
+    state = {"10001": "NY", "10002": "NY", "20001": "B", "20002": "B", "30001": "C", "30002": "C",
+             "30003": "C", "40001": "D"}
+    xy = {z: (float(i), 0.0) for i, z in enumerate(sorted(state))}
+    edge = {z: {} for z in state}
+    for a, b in (("10001", "10002"), ("10002", "20001"), ("20001", "20002"), ("30001", "30002"),
+                 ("30002", "30003"), ("30003", "40001")):
+        edge[a][b] = edge[b][a] = 30.0
+    polygon = {"vertices": sorted(state), "edges": [(a, b) for a in edge for b in edge[a] if a < b],
+               "state": state, "border": {(a, b): 30e3 for a in edge for b in edge[a] if a < b},
+               "connectors": [], "aland": dict.fromkeys(state, 1e8)}
+    return score.Geography(state, xy, edge, polygon)
+
+
+def _toy_run(tmp: str, owners: dict) -> str:
+    """A run folder: channel IFA, one fine channel `ifa`, every ZIP at m_rel 1.0, `owners` {district: ZIPs}."""
+    state = _toy_geo().state
+    rows = [{"zip_code": z, "current_channel": "ifa", "state": state[z], "model_channel": "IFA", "district": j,
+             "m_rel": "1.0"} for j, zs in owners.items() for z in zs]
+    d = os.path.join(tmp, "K0")
+    os.makedirs(d)
+    for name, recs in (("ledger.csv", rows),
+                       ("districts.csv", [{"channel": "IFA", "district": j, "drawn_mass": str(len(zs))}
+                                          for j, zs in owners.items()])):
+        with open(os.path.join(d, name), "w", newline="") as fh:
+            w = csv.DictWriter(fh, list(recs[0]))
+            w.writeheader()
+            w.writerows(recs)
+    json.dump({"fine_channels": ["ifa"]}, open(os.path.join(d, "run.json"), "w"))
+    return d
+
+
+def _gate(owners: dict) -> dict:
+    with tempfile.TemporaryDirectory() as tmp:
+        d = _toy_run(tmp, owners)
+        with ifa_index.recorded_sides() as sides:
+            got = ifa_index.check_gate().m1(d, _toy_geo())
+        chk = got["check"]
+        return {"status": chk.status, "verdict": ifa_index.m1_verdict(
+            chk.status, chk.summary, chk.items, sides, MANHATTAN, got["diagnostic"]), "items": chk.items}
+
+
+def test_the_manhattan_exception_is_read_from_the_pieces_the_gate_names_not_from_a_district_name():
+    # X holds 10001 away from its 20001-20002 body (10002 is another district's): a detached Manhattan piece
+    only = _gate({"IFA_01": ["20001", "20002", "10001"], "IFA_02": ["10002"], "IFA_03": ["30001", "30002"],
+                  "IFA_04": ["30003", "40001"]})
+    assert only["status"] == "fail" and only["verdict"]["passes"]
+    (item, hit), = only["verdict"]["excepted"]
+    assert item.startswith("IFA/IFA_01: detached piece of 1 ZIPs (10001...)") and hit == ["10001"]
+    assert not only["verdict"]["blocking"]
+    # a second piece, 10002 (not county 36061) held by IFA_03, is not excepted
+    both = _gate({"IFA_01": ["20001", "20002", "10001"], "IFA_03": ["30001", "30002", "10002"],
+                  "IFA_04": ["30003", "40001"]})
+    v = both["verdict"]
+    assert not v["passes"] and [h for _, h in v["excepted"]] == [["10001"]]
+    assert v["excepted"][0][0].startswith("IFA/IFA_01: detached piece of 1 ZIPs (10001...)")
+    assert len(v["blocking"]) == 1 and v["blocking"][0].startswith("IFA/IFA_03: detached piece of 1 ZIPs (10002...)")
+
+
+def test_a_coverage_or_ownership_item_or_an_unverified_gate_blocks_the_pass_beside_the_manhattan_items():
+    manhattan_piece = {"IFA_01": ["20001", "20002", "10001"], "IFA_02": ["10002"], "IFA_03": ["30001", "30002"]}
+    got = _gate(manhattan_piece)                           # 30003 and 40001 have no owner and no row
+    assert not got["verdict"]["passes"] and got["verdict"]["excepted"]
+    assert any("no row" in b for b in got["verdict"]["blocking"])
+    v = ifa_index.m1_verdict("unverified", "no polygon graph: M1 is not checked", [], {"necks": {}, "pieces": {}},
+                             MANHATTAN)
+    assert not v["passes"] and "unverified" in v["blocking"][0]
+    v = ifa_index.m1_verdict("pass", "ok", [], {"necks": {}, "pieces": {}}, MANHATTAN, {"label": "tau 5%"})
+    assert not v["passes"] and "diagnostic" in v["blocking"][0]
+    assert ifa_index.m1_verdict("pass", "ok", [], {"necks": {}, "pieces": {}}, MANHATTAN)["passes"]
+
+
+def test_a_neck_is_excepted_only_when_its_proved_side_holds_a_manhattan_zcta():
+    neck = lambda zs, status="proved": audit.Neck(8.5, tuple(zs), 0.05, 0.4, (("a", "b", 1.0),), status)
+    with ifa_index.recorded_sides() as sides:
+        item_m = audit.neck_item("IFA", "IFA_12", neck(["10001", "10002", "20001"]))
+        item_o = audit.neck_item("IFA", "IFA_13", neck(["30001", "30002"]))
+        item_u = audit.neck_item("IFA", "IFA_14", neck(["10001"], "unresolved"))
+        mass = audit.neck_item("IFA", "IFA_12", neck(["10001"]), audit.MASS_NECK)
+    assert audit.neck_item is not None and audit.neck_item.__name__ == "neck_item"   # restored, not the wrapper
+    v = ifa_index.m1_verdict("fail", "3 necks", [item_m, item_o, item_u, mass], sides, MANHATTAN)
+    assert [(i, h) for i, h in v["excepted"]] == [(item_m, ["10001"])]
+    assert v["blocking"] == [item_o, item_u] and not v["passes"]       # the mass neck fails nothing; unresolved never excepted
+
+
+def test_the_recorder_restores_the_audit_functions_even_when_the_gate_raises():
+    real = audit.neck_item, audit.district_pieces
+    try:
+        with ifa_index.recorded_sides():
+            raise RuntimeError("gate died")
+    except RuntimeError:
+        pass
+    assert (audit.neck_item, audit.district_pieces) == real
+
+
+def test_window_verdict_uses_the_unrounded_mass_not_the_rounded_dollars():
+    rate = ifa_index.RATE
+    in_rounded = {"under": 798.741, "over": 1148.1922}    # usd_m rounds to 1000.0 and 1437.5, the window's edges
+    for kind, m in in_rounded.items():
+        assert round(m * rate, 1) in (1000.0, 1437.5)
+        assert (m * rate < 1000.0) or (m * rate > 1437.5)
+    dist = {"A": {"m_rel": 798.741, "usd_m": 1000.0, "window": "in"},          # 999.9966M: under
+            "B": {"m_rel": 1148.1922, "usd_m": 1437.5, "window": "in"},        # 1437.50002M: over
+            "C": {"m_rel": 800.0, "usd_m": 1001.6, "window": "in"},
+            "D": {"m_rel": 900.0, "usd_m": 1126.8, "window": "over"}}          # the recorded verdict is kept
+    assert ifa_index.window_verdict(dist) == (["B", "D"], ["A"])
+    edge = {"E": {"m_rel": 1000.0 / rate, "usd_m": 1000.0}, "F": {"m_rel": 1437.5 / rate, "usd_m": 1437.5}}
+    assert ifa_index.window_verdict(edge) == ([], [])                          # the edges, in whole dollars, are in
